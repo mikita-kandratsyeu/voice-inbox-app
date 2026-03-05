@@ -1,4 +1,6 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Inbox, Mic, Settings } from 'lucide-react-native';
 import React, { useRef } from 'react';
 import { Animated, StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native';
@@ -7,6 +9,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { InboxScreen } from '@/screens/inbox';
 import { SettingsScreen } from '@/screens/settings';
 import { colors, getColors } from '@/shared/config';
+
+import type { RootStackParamList } from './RootNavigator';
 
 export type BottomTabParamList = {
   Inbox: undefined;
@@ -61,6 +65,7 @@ const AnimatedTabButton = ({ children, onPress, onLongPress }: any) => {
 
 const RecordFAB = ({ bottomInset, iconColor }: { bottomInset: number; iconColor: string }) => {
   const scale = useRef(new Animated.Value(1)).current;
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const handlePressIn = () => {
     Animated.spring(scale, {
@@ -80,12 +85,17 @@ const RecordFAB = ({ bottomInset, iconColor }: { bottomInset: number; iconColor:
     }).start();
   };
 
+  const handlePress = () => {
+    navigation.navigate('RecordModal');
+  };
+
   const fabContainerStyle = [styles.fab, { bottom: bottomInset + 16, transform: [{ scale }] }];
 
   return (
     <Animated.View style={fabContainerStyle}>
       <TouchableOpacity
         activeOpacity={1}
+        onPress={handlePress}
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         style={styles.fabInner}

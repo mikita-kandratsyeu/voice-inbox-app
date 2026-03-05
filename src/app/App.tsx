@@ -8,7 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { getColors } from '@/shared/config';
 
-import { BottomTabNavigator } from './navigation/BottomTabNavigator';
+import { RootNavigator } from './navigation/RootNavigator';
 
 const App = () => {
   const isDark = useColorScheme() === 'dark';
@@ -39,7 +39,7 @@ const App = () => {
           backgroundColor={color.background.primary}
         />
         <NavigationContainer>
-          <BottomTabNavigator />
+          <RootNavigator />
         </NavigationContainer>
       </SafeAreaProvider>
     </GestureHandlerRootView>
