@@ -1,0 +1,122 @@
+import js from '@eslint/js';
+import globals from 'globals';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsParser from '@typescript-eslint/parser';
+import react from 'eslint-plugin-react';
+import reactHooks from 'eslint-plugin-react-hooks';
+import reactNative from 'eslint-plugin-react-native';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
+import prettier from 'eslint-plugin-prettier';
+import prettierConfig from 'eslint-config-prettier';
+
+const eslintConfig = [
+  {
+    ignores: [
+      '**/node_modules/**',
+      '**/.yarn/**',
+      '**/out/**',
+      '**/dist/**',
+      '**/build/**',
+      '**/ios/**',
+      '**/android/**',
+      '**/Pods/**',
+      '**/*.config.js',
+      '**/*.config.mjs',
+      '**/*.config.ts',
+      '**/.husky/**',
+      'coverage/**',
+      '.metro-health-check*',
+      '*.lock',
+    ],
+  },
+  js.configs.recommended,
+  {
+    files: ['**/*.{js,jsx,mjs,cjs,ts,tsx}'],
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true,
+        },
+      },
+      globals: {
+        ...globals.node,
+        ...globals.es2021,
+        __DEV__: 'readonly',
+        React: 'readonly',
+        JSX: 'readonly',
+      },
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+      react: react,
+      'react-hooks': reactHooks,
+      'react-native': reactNative,
+      'simple-import-sort': simpleImportSort,
+      prettier: prettier,
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
+    },
+    rules: {
+      ...prettierConfig.rules,
+      ...react.configs.recommended.rules,
+      ...react.configs['jsx-runtime'].rules,
+      ...reactHooks.configs.recommended.rules,
+      '@typescript-eslint/interface-name-prefix': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+      '@typescript-eslint/no-unused-expressions': [
+        'error',
+        {
+          allowShortCircuit: true,
+          allowTernary: true,
+          allowTaggedTemplates: true,
+        },
+      ],
+      '@typescript-eslint/no-shadow': 'off',
+      '@typescript-eslint/no-require-imports': 'off',
+      'react/display-name': 'off',
+      'react/react-in-jsx-scope': 'off',
+      'react-native/no-inline-styles': 'warn',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+      'no-var': 'error',
+      'no-debugger': 'off',
+      'no-shadow': 'off',
+      'no-unused-vars': 'off',
+      'no-unused-expressions': 'off',
+      'no-redeclare': 'off',
+      'no-undef': 'off',
+      'no-useless-escape': 'warn',
+      'no-constant-binary-expression': 'warn',
+      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      'prettier/prettier': ['error'],
+      'simple-import-sort/imports': 'error',
+      'simple-import-sort/exports': 'error',
+    },
+  },
+  {
+    files: ['**/*.{spec,test}.{js,jsx,ts,tsx}', '**/__tests__/**', '**/__mocks__/**'],
+    languageOptions: {
+      globals: {
+        ...globals.jest,
+      },
+    },
+  },
+];
+
+export default eslintConfig;
