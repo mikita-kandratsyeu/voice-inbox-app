@@ -21,9 +21,8 @@ export type BottomTabParamList = {
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
 const TAB_ICON_SIZE = 24;
-const CENTER_BUTTON_WIDTH = 90;
-const CENTER_BUTTON_HEIGHT = 48;
-const CENTER_BUTTON_RADIUS = 16;
+const CENTER_BUTTON_SIZE = 60;
+const CENTER_BUTTON_RADIUS = CENTER_BUTTON_SIZE / 2;
 
 const AnimatedTabButton = ({ children, onPress, onLongPress }: any) => {
   const scale = useRef(new Animated.Value(1)).current;
@@ -224,18 +223,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   centerButton: {
-    width: CENTER_BUTTON_WIDTH,
-    height: CENTER_BUTTON_HEIGHT,
+    width: CENTER_BUTTON_SIZE,
+    height: CENTER_BUTTON_SIZE,
     borderRadius: CENTER_BUTTON_RADIUS,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
-    marginBottom: 0,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 10,
+    marginBottom: CENTER_BUTTON_SIZE / 2,
   },
   centerButtonInner: {
-    width: CENTER_BUTTON_WIDTH,
-    height: CENTER_BUTTON_HEIGHT,
+    width: CENTER_BUTTON_SIZE,
+    height: CENTER_BUTTON_SIZE,
     borderRadius: CENTER_BUTTON_RADIUS,
     alignItems: 'center',
     justifyContent: 'center',
