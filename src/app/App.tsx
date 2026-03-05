@@ -1,24 +1,32 @@
 import '../../global.css';
 
-import { StatusBar, Text, useColorScheme, View } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Text, View } from 'react-native';
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+const Stack = createNativeStackNavigator();
 
+function HomeScreen() {
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
+    <View className="flex-1 items-center justify-center bg-white dark:bg-black">
+      <Text className="text-xl font-bold text-blue-500">Home Screen</Text>
+    </View>
   );
 }
 
-function AppContent() {
+function RootStack() {
   return (
-    <View className="flex-1 items-center justify-center bg-white dark:bg-black">
-      <Text className="text-xl font-bold text-blue-500">Welcome to Nativewind!</Text>
-    </View>
+    <Stack.Navigator>
+      <Stack.Screen name="Home" component={HomeScreen} />
+    </Stack.Navigator>
+  );
+}
+
+function App() {
+  return (
+    <NavigationContainer>
+      <RootStack />
+    </NavigationContainer>
   );
 }
 
