@@ -1,6 +1,14 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AlertCircle, CheckCircle2, Clock, Loader, MicOff, Pin } from 'lucide-react-native';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Loader,
+  MicOff,
+  Pin,
+  SearchX,
+} from 'lucide-react-native';
 import React from 'react';
 import { SectionList, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '@/app/navigation/RootNavigator';
 import type { RecordingStatus, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import { SearchBar, useSearchRecords } from '@/features/search-records';
 import { type Colors, getColors } from '@/shared/config';
 import { formatRelativeTime } from '@/shared/lib';
 import { EmptyState, SkeletonPulse, SwipeableCard } from '@/shared/ui';
@@ -64,16 +73,11 @@ const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
     );
   }
 
-  // idle
   return (
-    <TouchableOpacity
-      className="flex-row items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 dark:bg-gray-800"
-      onPress={onPress}
-      activeOpacity={0.75}
-    >
+    <View className="flex-row items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 dark:bg-gray-800">
       <MicOff size={11} color="#9ca3af" strokeWidth={2.5} />
       <Text className="text-xs font-medium text-gray-400 dark:text-gray-500">Нет транскрипта</Text>
-    </TouchableOpacity>
+    </View>
   );
 };
 
@@ -133,31 +137,37 @@ const RecordCard = ({
           {formatRelativeTime(item.createdAt)}
         </Text>
       </View>
-
-      {item.transcript ? (
+      {Boolean(item.transcript) && (
         <Text className="mb-3 text-sm leading-5" style={textSecondaryStyle} numberOfLines={2}>
           {item.transcript}
         </Text>
-      ) : null}
-
-      {showBottomRow ? (
+      )}
+      {showBottomRow && (
         <View className="flex-row items-center justify-between">
           <View className="flex-row flex-wrap gap-y-1">
             {hasTags ? item.tags!.map((tag) => <Tag key={tag} label={tag} />) : null}
           </View>
           {item.aiStatus ? <AiStatusPill aiStatus={item.aiStatus} onPress={onStatusPress} /> : null}
         </View>
-      ) : null}
+      )}
     </TouchableOpacity>
   );
 };
 
-const SectionHeader = ({ title, color }: { title: string; color: Colors }) => {
+const SectionHeader = ({
+  title,
+  color,
+  isFirst,
+}: {
+  title: string;
+  color: Colors;
+  isFirst?: boolean;
+}) => {
   const headerBgStyle = { backgroundColor: color.background.secondary };
   const headerTextStyle = { color: color.text.secondary };
 
   return (
-    <View className="mx-4 mb-2 mt-4" style={headerBgStyle}>
+    <View className={`mx-4 mb-3 ${isFirst ? 'mt-1' : 'mt-6'}`} style={headerBgStyle}>
       <Text className="text-xs font-semibold uppercase tracking-widest" style={headerTextStyle}>
         {title}
       </Text>
@@ -233,6 +243,8 @@ export const InboxScreen = () => {
   const { records, deleteRecord, togglePin, isLoaded, updateAiStatus } = useRecordStore();
   const insets = useSafeAreaInsets();
 
+  const { query, setQuery, sections, filtered, isSearching } = useSearchRecords(records);
+
   const handleStatusPress = (item: VoiceRecord) => {
     switch (item.aiStatus) {
       case 'idle':
@@ -261,18 +273,34 @@ export const InboxScreen = () => {
   const subtitleStyle = { color: color.text.secondary };
   const listContentStyle = {
     paddingBottom: 100,
-    paddingTop: 4,
+    paddingTop: 0,
     backgroundColor: color.background.secondary,
   };
   const listStyle = { backgroundColor: color.background.secondary };
 
-  const pinned = records.filter((r) => r.isPinned);
-  const all = records.filter((r) => !r.isPinned);
-  const sections = [
-    ...(pinned.length > 0 ? [{ title: 'Закреплённые', data: pinned }] : []),
-    ...(all.length > 0 ? [{ title: 'Все записи', data: all }] : []),
-  ];
   const totalCount = records.length;
+
+  const emptySearchContent = (
+    <View
+      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}
+    >
+      <View
+        className="mb-4 rounded-full p-5"
+        style={{ backgroundColor: color.background.tertiary }}
+      >
+        <SearchX size={40} color={color.icon.muted} strokeWidth={1.5} />
+      </View>
+      <Text
+        className="mb-2 text-center text-lg font-semibold"
+        style={{ color: color.text.primary }}
+      >
+        Ничего не найдено
+      </Text>
+      <Text className="text-center text-sm leading-5" style={{ color: color.text.secondary }}>
+        По запросу «{query}» записей не найдено
+      </Text>
+    </View>
+  );
 
   return (
     <View style={screenStyle}>
@@ -282,7 +310,7 @@ export const InboxScreen = () => {
         </Text>
         {isLoaded ? (
           <Text className="mt-1 text-sm" style={subtitleStyle}>
-            {totalCount} записей
+            {isSearching ? `${filtered.length} из ${totalCount} записей` : `${totalCount} записей`}
           </Text>
         ) : (
           <View
@@ -291,7 +319,6 @@ export const InboxScreen = () => {
           />
         )}
       </View>
-
       {!isLoaded ? (
         <InboxSkeleton color={color} />
       ) : totalCount === 0 ? (
@@ -300,31 +327,42 @@ export const InboxScreen = () => {
           description="Здесь будут отображаться ваши входящие голосовые сообщения"
         />
       ) : (
-        <SectionList
-          sections={sections}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <SwipeableCard
-              isPinned={item.isPinned}
-              onDelete={() => deleteRecord(item.id)}
-              onPin={() => togglePin(item.id)}
-            >
-              <RecordCard
-                item={item}
-                color={color}
-                onPress={() => navigation.navigate('RecordingDetail', { record: item })}
-                onStatusPress={() => handleStatusPress(item)}
-              />
-            </SwipeableCard>
+        <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
+          <SearchBar query={query} onChangeQuery={setQuery} color={color} />
+          {isSearching && filtered.length === 0 ? (
+            emptySearchContent
+          ) : (
+            <SectionList
+              sections={sections}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <SwipeableCard
+                  isPinned={item.isPinned}
+                  onDelete={() => deleteRecord(item.id)}
+                  onPin={() => togglePin(item.id)}
+                >
+                  <RecordCard
+                    item={item}
+                    color={color}
+                    onPress={() => navigation.navigate('RecordingDetail', { record: item })}
+                    onStatusPress={() => handleStatusPress(item)}
+                  />
+                </SwipeableCard>
+              )}
+              renderSectionHeader={({ section }) => (
+                <SectionHeader
+                  title={section.title}
+                  color={color}
+                  isFirst={section.title === sections[0]?.title}
+                />
+              )}
+              stickySectionHeadersEnabled={false}
+              contentContainerStyle={listContentStyle}
+              style={listStyle}
+              showsVerticalScrollIndicator={false}
+            />
           )}
-          renderSectionHeader={({ section }) => (
-            <SectionHeader title={section.title} color={color} />
-          )}
-          stickySectionHeadersEnabled={false}
-          contentContainerStyle={listContentStyle}
-          style={listStyle}
-          showsVerticalScrollIndicator={false}
-        />
+        </View>
       )}
     </View>
   );

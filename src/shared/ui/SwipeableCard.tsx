@@ -61,7 +61,10 @@ export const SwipeableCard = ({
   useAnimatedReaction(
     () => action.value,
     (current, previous) => {
-      if (current === previous || current === 'none') return;
+      if (current === previous || current === 'none') {
+        return;
+      }
+
       if (current === 'delete') {
         runOnJS(collapseAndDelete)();
       } else if (current === 'pin') {
@@ -99,41 +102,17 @@ export const SwipeableCard = ({
 
   const deleteReveal = useAnimatedStyle(() => {
     const progress = Math.min(Math.max(-translateX.value / SWIPE_THRESHOLD, 0), 1);
+
     return { opacity: progress };
   });
 
   const pinReveal = useAnimatedStyle(() => {
     const progress = Math.min(Math.max(translateX.value / SWIPE_THRESHOLD, 0), 1);
+
     return { opacity: progress };
   });
 
   const pinBgColor = isPinned ? colors.light.accent.unpin : colors.light.accent.pin;
-
-  const deleteBackgroundStyle = {
-    position: 'absolute' as const,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: '100%' as const,
-    borderRadius: 16,
-    backgroundColor: colors.light.accent.delete,
-    alignItems: 'flex-end' as const,
-    justifyContent: 'center' as const,
-    paddingRight: 24,
-  };
-
-  const pinBackgroundStyle = {
-    position: 'absolute' as const,
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: '100%' as const,
-    borderRadius: 16,
-    backgroundColor: pinBgColor,
-    alignItems: 'flex-start' as const,
-    justifyContent: 'center' as const,
-    paddingLeft: 24,
-  };
 
   const containerStyle = {
     overflow: 'hidden' as const,
@@ -145,16 +124,22 @@ export const SwipeableCard = ({
     marginHorizontal: 16,
     marginBottom: collapseHeight.interpolate({
       inputRange: [0, 1],
-      outputRange: [0, 12],
+      outputRange: [0, 16],
     }),
   };
 
   return (
     <RNAnimated.View style={containerStyle}>
-      <Animated.View style={[deleteBackgroundStyle, deleteReveal]}>
+      <Animated.View
+        className="absolute inset-y-0 right-0 w-full items-end justify-center rounded-2xl pr-6"
+        style={[{ backgroundColor: colors.light.accent.delete }, deleteReveal]}
+      >
         <Trash2 size={22} color={colors.light.icon.onAccent} strokeWidth={2} />
       </Animated.View>
-      <Animated.View style={[pinBackgroundStyle, pinReveal]}>
+      <Animated.View
+        className="absolute inset-y-0 left-0 w-full items-start justify-center rounded-2xl pl-6"
+        style={[{ backgroundColor: pinBgColor }, pinReveal]}
+      >
         {isPinned ? (
           <PinOff size={22} color={colors.light.icon.onAccent} strokeWidth={2} />
         ) : (

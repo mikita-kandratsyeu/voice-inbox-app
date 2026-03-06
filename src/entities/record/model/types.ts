@@ -29,4 +29,5 @@ export type VoiceRecord = {
   transcriptProgress?: number;
   isPinned?: boolean;
   tags?: string[];
+  audioPath?: string;
 };

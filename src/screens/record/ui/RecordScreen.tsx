@@ -1,4 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
+import dayjs from 'dayjs';
 import { Check, Mic, Pause, Play, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -7,20 +8,21 @@ import {
   KeyboardAvoidingView,
   Modal,
   PanResponder,
+  PermissionsAndroid,
   Platform,
   StatusBar,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
+import AudioRecorderPlayer, { type RecordBackType } from 'react-native-audio-recorder-player';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { Waveform } from '@/shared/ui';
+import { Button, Waveform } from '@/shared/ui';
 
 const ACCENT_BLUE = '#3d7ef6';
 const PAUSE_BTN_BG = 'rgba(255,255,255,0.18)';
@@ -42,6 +44,29 @@ const HEADER_TITLE: Record<RecordingState, string> = {
   paused: 'Пауза',
 };
 
+const audioRecorderPlayer = AudioRecorderPlayer;
+
+const requestMicPermission = async (): Promise<boolean> => {
+  if (Platform.OS === 'android') {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+        {
+          title: 'Разрешение на запись',
+          message: 'Приложению нужен доступ к микрофону для записи голоса.',
+          buttonPositive: 'Разрешить',
+          buttonNegative: 'Отмена',
+        },
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } catch {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 export const RecordScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -51,6 +76,9 @@ export const RecordScreen = () => {
   const [elapsed, setElapsed] = useState(0);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [title, setTitle] = useState('');
+  const [meterLevel, setMeterLevel] = useState<number | undefined>(undefined);
+
+  const audioPathRef = useRef<string | null>(null);
 
   const overlayOpacity = useRef(new Animated.Value(0)).current;
   const sheetTranslateY = useRef(new Animated.Value(300)).current;
@@ -60,7 +88,9 @@ export const RecordScreen = () => {
       onStartShouldSetPanResponder: () => true,
       onMoveShouldSetPanResponder: (_, { dy }) => dy > 5,
       onPanResponderMove: (_, { dy }) => {
-        if (dy > 0) sheetTranslateY.setValue(dy);
+        if (dy > 0) {
+          sheetTranslateY.setValue(dy);
+        }
       },
       onPanResponderRelease: (_, { dy, vy }) => {
         if (dy > 80 || vy > 0.5) {
@@ -90,43 +120,108 @@ export const RecordScreen = () => {
     }),
   ).current;
 
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const elapsedRef = useRef(0);
 
-  const startTimer = useCallback(() => {
-    if (intervalRef.current) return;
-    intervalRef.current = setInterval(() => {
-      setElapsed((prev) => prev + 1);
-    }, 1000);
+  const startRecording = useCallback(async () => {
+    const hasPermission = await requestMicPermission();
+
+    if (!hasPermission) {
+      return;
+    }
+
+    try {
+      audioRecorderPlayer.setSubscriptionDuration(0.1);
+
+      const path = await audioRecorderPlayer.startRecorder(undefined, undefined, true);
+      audioPathRef.current = path;
+
+      audioRecorderPlayer.addRecordBackListener((e: RecordBackType) => {
+        const secs = Math.floor(e.currentPosition / 1000);
+        elapsedRef.current = secs;
+        setElapsed(secs);
+
+        if (e.currentMetering !== undefined) {
+          setMeterLevel(e.currentMetering);
+        }
+      });
+
+      setState('recording');
+    } catch (err) {
+      console.warn('[RecordScreen] startRecorder failed:', err);
+    }
   }, []);
 
-  const stopTimer = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
+  const pauseRecording = useCallback(async () => {
+    try {
+      await audioRecorderPlayer.pauseRecorder();
+      audioRecorderPlayer.removeRecordBackListener();
+
+      setMeterLevel(undefined);
+      setState('paused');
+    } catch (err) {
+      console.warn('[RecordScreen] pauseRecorder failed:', err);
+    }
+  }, []);
+
+  const resumeRecording = useCallback(async () => {
+    try {
+      audioRecorderPlayer.setSubscriptionDuration(0.1);
+      await audioRecorderPlayer.resumeRecorder();
+
+      audioRecorderPlayer.addRecordBackListener((e: RecordBackType) => {
+        const secs = Math.floor(e.currentPosition / 1000);
+        elapsedRef.current = secs;
+        setElapsed(secs);
+
+        if (e.currentMetering !== undefined) {
+          setMeterLevel(e.currentMetering);
+        }
+      });
+
+      setState('recording');
+    } catch (err) {
+      console.warn('[RecordScreen] resumeRecorder failed:', err);
+    }
+  }, []);
+
+  const stopRecording = useCallback(async (): Promise<string | null> => {
+    try {
+      audioRecorderPlayer.removeRecordBackListener();
+      setMeterLevel(undefined);
+
+      const result = await audioRecorderPlayer.stopRecorder();
+
+      if (audioPathRef.current === null) {
+        audioPathRef.current = result;
+      }
+      return audioPathRef.current;
+    } catch (err) {
+      console.warn('[RecordScreen] stopRecorder failed:', err);
+      return null;
     }
   }, []);
 
   useEffect(() => {
-    return () => stopTimer();
-  }, [stopTimer]);
+    return () => {
+      audioRecorderPlayer.removeRecordBackListener();
+      audioRecorderPlayer.stopRecorder().catch(() => {});
+    };
+  }, []);
 
   const handleMicPress = () => {
-    startTimer();
-    setState('recording');
+    startRecording();
   };
 
   const handlePauseResume = () => {
     if (state === 'recording') {
-      stopTimer();
-      setState('paused');
+      pauseRecording();
     } else if (state === 'paused') {
-      startTimer();
-      setState('recording');
+      resumeRecording();
     }
   };
 
-  const handleDonePress = () => {
-    stopTimer();
+  const handleDonePress = async () => {
+    await stopRecording();
     setState('paused');
     setTitle('');
     overlayOpacity.setValue(0);
@@ -147,8 +242,8 @@ export const RecordScreen = () => {
     ]).start();
   };
 
-  const handleClose = () => {
-    stopTimer();
+  const handleClose = async () => {
+    await stopRecording();
     navigation.goBack();
   };
 
@@ -172,8 +267,7 @@ export const RecordScreen = () => {
 
   const handleSaveCancel = () => {
     closeModal(() => {
-      startTimer();
-      setState('recording');
+      resumeRecording();
     });
   };
 
@@ -186,12 +280,13 @@ export const RecordScreen = () => {
       summary: '',
       tasks: [],
       duration: formatTime(elapsed),
-      createdAt: new Date().toISOString(),
+      createdAt: dayjs().toISOString(),
       status: 'unread',
       aiStatus: 'idle',
       transcriptProgress: 0,
       isPinned: false,
       tags: [],
+      audioPath: audioPathRef.current ?? undefined,
     };
 
     addRecord(record);
@@ -199,45 +294,63 @@ export const RecordScreen = () => {
   };
 
   const topStyle = { paddingTop: Math.max(insets.top, 16) };
-  const controlsStyle = [styles.controls, { paddingBottom: Math.max(insets.bottom, 32) }];
+  const controlsPaddingBottom = { paddingBottom: Math.max(insets.bottom, 32) };
 
   return (
-    <View style={styles.container}>
+    <View className="flex-1" style={{ backgroundColor: ACCENT_BLUE }}>
       <StatusBar barStyle="light-content" backgroundColor={ACCENT_BLUE} />
 
-      <View style={[styles.top, topStyle]}>
-        <TouchableOpacity onPress={handleClose} style={styles.closeBtn} activeOpacity={0.7}>
-          <X size={20} color="#ffffff" strokeWidth={2.5} />
-        </TouchableOpacity>
-        <Text style={styles.topTitle}>{HEADER_TITLE[state]}</Text>
-        <View style={styles.topRight} />
+      <View className="flex-row items-center justify-between px-5 pb-2" style={topStyle}>
+        <Button
+          iconOnly
+          size="sm"
+          icon={<X size={20} color="#ffffff" strokeWidth={2.5} />}
+          onPress={handleClose}
+          activeOpacity={0.7}
+          containerStyle={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+        />
+        <Text className="text-base font-semibold tracking-wide text-white">
+          {HEADER_TITLE[state]}
+        </Text>
+        <View className="w-9" />
       </View>
-
-      <View style={styles.body}>
-        <Text style={styles.timer}>{formatTime(elapsed)}</Text>
-
-        <View style={styles.waveformWrapper}>
-          <Waveform isAnimating={state === 'recording'} color="rgba(255,255,255,0.65)" />
+      <View className="flex-1 items-center justify-center gap-9 px-6">
+        <Text className="text-[72px] font-light tracking-tight text-white">
+          {formatTime(elapsed)}
+        </Text>
+        <View className="w-full px-2">
+          <Waveform
+            isAnimating={state === 'recording'}
+            color="rgba(255,255,255,0.65)"
+            meterLevel={state === 'recording' ? meterLevel : undefined}
+          />
         </View>
-
         {state === 'idle' && (
-          <View style={styles.hint}>
-            <Text style={styles.hintTitle}>Запись работает оффлайн</Text>
-            <Text style={styles.hintSubtitle}>Транскрипция выполнится локально</Text>
+          <View className="items-center gap-1">
+            <Text className="text-[15px] font-medium text-white/90">Запись работает оффлайн</Text>
+            <Text className="text-[13px] text-white/55">Транскрипция выполнится локально</Text>
           </View>
         )}
       </View>
-
-      <View style={controlsStyle}>
+      <View
+        className="flex-row items-center justify-center gap-6 pt-4"
+        style={controlsPaddingBottom}
+      >
         {state === 'idle' ? (
-          <TouchableOpacity onPress={handleMicPress} style={styles.micBtn} activeOpacity={0.85}>
+          <TouchableOpacity
+            onPress={handleMicPress}
+            className="h-[72px] w-[72px] items-center justify-center rounded-full shadow-lg"
+            style={{ backgroundColor: DONE_BTN_BG }}
+            activeOpacity={0.85}
+          >
             <Mic size={30} color={ACCENT_BLUE} strokeWidth={2} />
           </TouchableOpacity>
         ) : (
           <>
             <TouchableOpacity
               onPress={handlePauseResume}
-              style={styles.pauseBtn}
+              className="h-14 w-14 items-center justify-center rounded-full"
+              style={{ backgroundColor: PAUSE_BTN_BG }}
               activeOpacity={0.8}
             >
               {state === 'paused' ? (
@@ -246,8 +359,12 @@ export const RecordScreen = () => {
                 <Pause size={22} color="#ffffff" strokeWidth={2} />
               )}
             </TouchableOpacity>
-
-            <TouchableOpacity onPress={handleDonePress} style={styles.doneBtn} activeOpacity={0.85}>
+            <TouchableOpacity
+              onPress={handleDonePress}
+              className="h-[68px] w-[68px] items-center justify-center rounded-full shadow-lg"
+              style={{ backgroundColor: DONE_BTN_BG }}
+              activeOpacity={0.85}
+            >
               <Check size={26} color={ACCENT_BLUE} strokeWidth={2.5} />
             </TouchableOpacity>
           </>
@@ -261,37 +378,42 @@ export const RecordScreen = () => {
         onRequestClose={handleSaveCancel}
         statusBarTranslucent
       >
-        <Animated.View style={[styles.modalOverlay, { opacity: overlayOpacity }]}>
+        <Animated.View
+          className="flex-1 justify-end"
+          style={{ opacity: overlayOpacity, backgroundColor: 'rgba(0,0,0,0.35)' }}
+        >
           <TouchableWithoutFeedback
             onPress={() => {
               Keyboard.dismiss();
               handleSaveCancel();
             }}
           >
-            <View style={styles.modalBackdrop} />
+            <View className="absolute inset-0" />
           </TouchableWithoutFeedback>
 
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.modalKav}
+            className="w-full"
           >
             <Animated.View
-              style={[
-                styles.modalSheet,
-                {
-                  paddingBottom: Math.max(insets.bottom, 24),
-                  transform: [{ translateY: sheetTranslateY }],
-                },
-              ]}
+              className="gap-4 rounded-t-3xl bg-white px-6"
+              style={{
+                paddingBottom: Math.max(insets.bottom, 24),
+                transform: [{ translateY: sheetTranslateY }],
+              }}
             >
-              <View style={styles.modalHandleRow} {...panResponder.panHandlers}>
-                <View style={styles.modalHandle} />
+              <View className="items-center pb-1 pt-3" {...panResponder.panHandlers}>
+                <View className="h-1 w-9 rounded-full bg-gray-200" />
               </View>
 
-              <Text style={styles.modalTitle}>Сохранить запись</Text>
-
+              <Text className="text-lg font-bold text-gray-900">Сохранить запись</Text>
               <TextInput
-                style={styles.input}
+                className="rounded-xl border-2 px-4 py-3 text-[15px]"
+                style={{
+                  borderColor: ACCENT_BLUE,
+                  color: '#1a1a2e',
+                  backgroundColor: '#f5f7ff',
+                }}
                 placeholder="Название записи"
                 placeholderTextColor="#b0b8c8"
                 value={title}
@@ -300,25 +422,26 @@ export const RecordScreen = () => {
                 returnKeyType="done"
                 onSubmitEditing={handleSaveConfirm}
               />
-
-              <Text style={styles.durationLabel}>Длительность: {formatTime(elapsed)}</Text>
-
-              <View style={styles.modalButtons}>
-                <TouchableOpacity
-                  style={styles.cancelBtn}
+              <Text className="-mt-1 text-[13px] text-gray-500">
+                Длительность: {formatTime(elapsed)}
+              </Text>
+              <View className="mt-1 flex-row gap-3">
+                <Button
+                  variant="secondary"
+                  label="Отмена"
                   onPress={handleSaveCancel}
                   activeOpacity={0.8}
-                >
-                  <Text style={styles.cancelBtnText}>Отмена</Text>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  style={styles.saveBtn}
+                  fullWidth
+                  containerStyle={{ backgroundColor: '#f3f4f6', borderRadius: 12 }}
+                />
+                <Button
+                  variant="primary"
+                  label="Сохранить"
                   onPress={handleSaveConfirm}
                   activeOpacity={0.85}
-                >
-                  <Text style={styles.saveBtnText}>Сохранить</Text>
-                </TouchableOpacity>
+                  fullWidth
+                  containerStyle={{ backgroundColor: ACCENT_BLUE, borderRadius: 12 }}
+                />
               </View>
             </Animated.View>
           </KeyboardAvoidingView>
@@ -327,184 +450,3 @@ export const RecordScreen = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: ACCENT_BLUE,
-  },
-  top: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-  },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  topTitle: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.2,
-  },
-  topRight: {
-    width: 36,
-  },
-  body: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    gap: 36,
-  },
-  timer: {
-    color: '#ffffff',
-    fontSize: 72,
-    fontWeight: '300',
-    letterSpacing: -2,
-  },
-  waveformWrapper: {
-    width: '100%',
-    paddingHorizontal: 8,
-  },
-  hint: {
-    alignItems: 'center',
-    gap: 4,
-  },
-  hintTitle: {
-    color: 'rgba(255,255,255,0.9)',
-    fontSize: 15,
-    fontWeight: '500',
-  },
-  hintSubtitle: {
-    color: 'rgba(255,255,255,0.55)',
-    fontSize: 13,
-  },
-  controls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 24,
-    paddingTop: 16,
-  },
-  micBtn: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: DONE_BTN_BG,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  pauseBtn: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: PAUSE_BTN_BG,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  doneBtn: {
-    width: 68,
-    height: 68,
-    borderRadius: 34,
-    backgroundColor: DONE_BTN_BG,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 12,
-    elevation: 6,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0,0,0,0.35)',
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  modalKav: {
-    width: '100%',
-  },
-  modalSheet: {
-    backgroundColor: '#ffffff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 24,
-    paddingTop: 0,
-    gap: 16,
-  },
-  modalHandleRow: {
-    paddingTop: 12,
-    paddingBottom: 4,
-    alignItems: 'center',
-  },
-  modalHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: '#e0e4ed',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1a1a2e',
-  },
-  input: {
-    borderWidth: 1.5,
-    borderColor: ACCENT_BLUE,
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 15,
-    color: '#1a1a2e',
-    backgroundColor: '#f5f7ff',
-  },
-  durationLabel: {
-    fontSize: 13,
-    color: '#8a93a8',
-    marginTop: -4,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 4,
-  },
-  cancelBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: '#f0f2f8',
-    alignItems: 'center',
-  },
-  cancelBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#4a5568',
-  },
-  saveBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: ACCENT_BLUE,
-    alignItems: 'center',
-  },
-  saveBtnText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#ffffff',
-  },
-});

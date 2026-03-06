@@ -91,7 +91,7 @@ const eslintConfig = [
       '@typescript-eslint/no-require-imports': 'off',
       'react/display-name': 'off',
       'react/react-in-jsx-scope': 'off',
-      'react-native/no-inline-styles': 'warn',
+      'react-native/no-inline-styles': 'off',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
       'no-var': 'error',
