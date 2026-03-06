@@ -146,12 +146,23 @@ const RecordCard = ({
   );
 };
 
-const SectionHeader = ({ title, color }: { title: string; color: Colors }) => {
+const SectionHeader = ({
+  title,
+  color,
+  isFirst,
+}: {
+  title: string;
+  color: Colors;
+  isFirst?: boolean;
+}) => {
   const headerBgStyle = { backgroundColor: color.background.secondary };
   const headerTextStyle = { color: color.text.secondary };
 
   return (
-    <View className="mx-4 mb-2 mt-4" style={headerBgStyle}>
+    <View
+      className={`mx-4 mb-3 ${isFirst ? 'mt-1' : 'mt-6'}`}
+      style={headerBgStyle}
+    >
       <Text className="text-xs font-semibold uppercase tracking-widest" style={headerTextStyle}>
         {title}
       </Text>
@@ -257,7 +268,7 @@ export const InboxScreen = () => {
   const subtitleStyle = { color: color.text.secondary };
   const listContentStyle = {
     paddingBottom: 100,
-    paddingTop: 4,
+    paddingTop: 0,
     backgroundColor: color.background.secondary,
   };
   const listStyle = { backgroundColor: color.background.secondary };
@@ -301,7 +312,6 @@ export const InboxScreen = () => {
           />
         )}
       </View>
-
       {!isLoaded ? (
         <InboxSkeleton color={color} />
       ) : totalCount === 0 ? (
@@ -333,7 +343,11 @@ export const InboxScreen = () => {
                 </SwipeableCard>
               )}
               renderSectionHeader={({ section }) => (
-                <SectionHeader title={section.title} color={color} />
+                <SectionHeader
+                  title={section.title}
+                  color={color}
+                  isFirst={section.title === sections[0]?.title}
+                />
               )}
               stickySectionHeadersEnabled={false}
               contentContainerStyle={listContentStyle}

@@ -124,7 +124,7 @@ export const SwipeableCard = ({
     marginHorizontal: 16,
     marginBottom: collapseHeight.interpolate({
       inputRange: [0, 1],
-      outputRange: [0, 12],
+      outputRange: [0, 16],
     }),
   };
 

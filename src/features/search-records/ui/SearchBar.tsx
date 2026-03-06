@@ -21,7 +21,7 @@ export const SearchBar = ({
 
   return (
     <View
-      className="mx-4 mb-4 mt-4 flex-row items-center gap-2 rounded-xl px-3 py-4"
+      className="mx-4 my-6 flex-row items-center gap-2 rounded-xl px-3 py-4"
       style={{
         backgroundColor: color.background.tertiary,
         borderWidth: 1,
