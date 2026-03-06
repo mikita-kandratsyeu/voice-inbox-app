@@ -27,7 +27,7 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RootStackParamList } from '@/app/navigation/RootNavigator';
 import type { RecordingStatus, TaskItem, TranscriptSegment, VoiceRecord } from '@/entities/record';
@@ -405,6 +405,7 @@ export const RecordingDetailScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'RecordingDetail'>>();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const insets = useSafeAreaInsets();
 
   const { record: routeRecord } = route.params;
   const { records, togglePin } = useRecordStore();
@@ -440,8 +441,8 @@ export const RecordingDetailScreen = () => {
   const pinActiveStyle = { backgroundColor: color.accent.primary + '1A' };
 
   return (
-    <SafeAreaView style={[styles.flex, screenBg]} edges={['top']}>
-      <View style={[styles.header, headerBg]}>
+    <View style={[styles.flex, screenBg]}>
+      <View style={[styles.header, headerBg, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={[styles.iconBtn, iconBtnBg]}
@@ -561,7 +562,7 @@ export const RecordingDetailScreen = () => {
           ) : null}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -572,7 +573,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingBottom: 12,
   },
   iconBtn: {
     width: 40,
