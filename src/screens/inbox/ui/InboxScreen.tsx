@@ -64,7 +64,6 @@ const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
     );
   }
 
-  // idle
   return (
     <TouchableOpacity
       className="flex-row items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 dark:bg-gray-800"
@@ -133,21 +132,19 @@ const RecordCard = ({
           {formatRelativeTime(item.createdAt)}
         </Text>
       </View>
-
-      {item.transcript ? (
+      {Boolean(item.transcript) && (
         <Text className="mb-3 text-sm leading-5" style={textSecondaryStyle} numberOfLines={2}>
           {item.transcript}
         </Text>
-      ) : null}
-
-      {showBottomRow ? (
+      )}
+      {showBottomRow && (
         <View className="flex-row items-center justify-between">
           <View className="flex-row flex-wrap gap-y-1">
             {hasTags ? item.tags!.map((tag) => <Tag key={tag} label={tag} />) : null}
           </View>
           {item.aiStatus ? <AiStatusPill aiStatus={item.aiStatus} onPress={onStatusPress} /> : null}
         </View>
-      ) : null}
+      )}
     </TouchableOpacity>
   );
 };

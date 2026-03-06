@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Inbox, Mic, Settings } from 'lucide-react-native';
 import React, { useRef } from 'react';
-import { Animated, StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Animated, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { InboxScreen } from '@/screens/inbox';
@@ -21,8 +21,6 @@ export type BottomTabParamList = {
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
 const TAB_ICON_SIZE = 24;
-const CENTER_BUTTON_SIZE = 60;
-const CENTER_BUTTON_RADIUS = CENTER_BUTTON_SIZE / 2;
 
 const AnimatedTabButton = ({ children, onPress, onLongPress }: any) => {
   const scale = useRef(new Animated.Value(1)).current;
@@ -45,12 +43,6 @@ const AnimatedTabButton = ({ children, onPress, onLongPress }: any) => {
     }).start();
   };
 
-  const tabIconStyle = {
-    transform: [{ scale }],
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-  };
-
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -58,9 +50,14 @@ const AnimatedTabButton = ({ children, onPress, onLongPress }: any) => {
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
       activeOpacity={1}
-      style={styles.tabButton}
+      className="my-0 flex-1 items-center justify-center py-0"
     >
-      <Animated.View style={tabIconStyle}>{children}</Animated.View>
+      <Animated.View
+        className="items-center justify-center"
+        style={{ transform: [{ scale }] }}
+      >
+        {children}
+      </Animated.View>
     </TouchableOpacity>
   );
 };
@@ -98,19 +95,25 @@ const CenterRecordButton = ({
   };
 
   return (
-    <View style={styles.centerButtonWrapper}>
+    <View className="flex-1 items-center justify-center">
       <Animated.View
-        style={[
-          styles.centerButton,
-          { backgroundColor: accentColor, shadowColor: accentColor, transform: [{ scale }] },
-        ]}
+        className="mb-[30px] h-[60px] w-[60px] rounded-full"
+        style={{
+          backgroundColor: accentColor,
+          shadowColor: accentColor,
+          shadowOffset: { width: 0, height: 6 },
+          shadowOpacity: 0.35,
+          shadowRadius: 12,
+          elevation: 10,
+          transform: [{ scale }],
+        }}
       >
         <TouchableOpacity
           activeOpacity={1}
           onPress={handlePress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          style={styles.centerButtonInner}
+          className="h-[60px] w-[60px] items-center justify-center rounded-full"
         >
           <Mic size={26} color={iconColor} strokeWidth={2} />
         </TouchableOpacity>
@@ -119,7 +122,7 @@ const CenterRecordButton = ({
   );
 };
 
-const EmptyScreen = () => <View style={styles.wrapper} />;
+const EmptyScreen = () => <View className="flex-1" />;
 
 export const BottomTabNavigator = () => {
   const insets = useSafeAreaInsets();
@@ -133,7 +136,7 @@ export const BottomTabNavigator = () => {
   const tabInactive = color.tab.inactive;
 
   return (
-    <View style={styles.wrapper}>
+    <View className="flex-1">
       <Tab.Navigator
         screenOptions={{
           headerShown: false,
@@ -207,36 +210,3 @@ export const BottomTabNavigator = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  wrapper: { flex: 1 },
-  tabButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 0,
-    marginVertical: 0,
-  },
-  centerButtonWrapper: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centerButton: {
-    width: CENTER_BUTTON_SIZE,
-    height: CENTER_BUTTON_SIZE,
-    borderRadius: CENTER_BUTTON_RADIUS,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 10,
-    marginBottom: CENTER_BUTTON_SIZE / 2,
-  },
-  centerButtonInner: {
-    width: CENTER_BUTTON_SIZE,
-    height: CENTER_BUTTON_SIZE,
-    borderRadius: CENTER_BUTTON_RADIUS,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

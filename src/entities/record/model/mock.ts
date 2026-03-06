@@ -1,11 +1,9 @@
+import dayjs from 'dayjs';
+
 import type { VoiceRecord } from './types';
 
-const daysAgo = (days: number, hours = 0): string => {
-  const d = new Date();
-  d.setDate(d.getDate() - days);
-  d.setHours(d.getHours() - hours);
-  return d.toISOString();
-};
+const daysAgo = (days: number, hours = 0): string =>
+  dayjs().subtract(days, 'day').subtract(hours, 'hour').toISOString();
 
 export const MOCK_RECORDS: VoiceRecord[] = [
   {

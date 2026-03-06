@@ -19,10 +19,11 @@ const App = () => {
 
   useEffect(() => {
     import('@/shared/lib').then(({ initDB }) => {
-      initDB();
-      import('@/entities/record').then(({ useRecordStore }) => {
-        useRecordStore.getState().load();
-      });
+      initDB().then(() =>
+        import('@/entities/record').then(({ useRecordStore }) => {
+          useRecordStore.getState().load();
+        }),
+      );
     });
   }, []);
 
