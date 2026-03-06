@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AlertCircle, CheckCircle2, Clock, Loader, MicOff, Pin } from 'lucide-react-native';
+import { AlertCircle, CheckCircle2, Clock, Loader, MicOff, Pin, SearchX } from 'lucide-react-native';
 import React from 'react';
 import { SectionList, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '@/app/navigation/RootNavigator';
 import type { RecordingStatus, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import { SearchBar, useSearchRecords } from '@/features/search-records';
 import { type Colors, getColors } from '@/shared/config';
 import { formatRelativeTime } from '@/shared/lib';
 import { EmptyState, SkeletonPulse, SwipeableCard } from '@/shared/ui';
@@ -226,6 +227,8 @@ export const InboxScreen = () => {
   const { records, deleteRecord, togglePin, isLoaded, updateAiStatus } = useRecordStore();
   const insets = useSafeAreaInsets();
 
+  const { query, setQuery, sections, filtered, isSearching } = useSearchRecords(records);
+
   const handleStatusPress = (item: VoiceRecord) => {
     switch (item.aiStatus) {
       case 'idle':
@@ -259,13 +262,27 @@ export const InboxScreen = () => {
   };
   const listStyle = { backgroundColor: color.background.secondary };
 
-  const pinned = records.filter((r) => r.isPinned);
-  const all = records.filter((r) => !r.isPinned);
-  const sections = [
-    ...(pinned.length > 0 ? [{ title: 'Закреплённые', data: pinned }] : []),
-    ...(all.length > 0 ? [{ title: 'Все записи', data: all }] : []),
-  ];
   const totalCount = records.length;
+
+  const emptySearchContent = (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
+      <View
+        className="mb-4 rounded-full p-5"
+        style={{ backgroundColor: color.background.tertiary }}
+      >
+        <SearchX size={40} color={color.icon.muted} strokeWidth={1.5} />
+      </View>
+      <Text
+        className="mb-2 text-center text-lg font-semibold"
+        style={{ color: color.text.primary }}
+      >
+        Ничего не найдено
+      </Text>
+      <Text className="text-center text-sm leading-5" style={{ color: color.text.secondary }}>
+        По запросу «{query}» записей не найдено
+      </Text>
+    </View>
+  );
 
   return (
     <View style={screenStyle}>
@@ -275,7 +292,7 @@ export const InboxScreen = () => {
         </Text>
         {isLoaded ? (
           <Text className="mt-1 text-sm" style={subtitleStyle}>
-            {totalCount} записей
+            {isSearching ? `${filtered.length} из ${totalCount} записей` : `${totalCount} записей`}
           </Text>
         ) : (
           <View
@@ -293,31 +310,38 @@ export const InboxScreen = () => {
           description="Здесь будут отображаться ваши входящие голосовые сообщения"
         />
       ) : (
-        <SectionList
-          sections={sections}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
-            <SwipeableCard
-              isPinned={item.isPinned}
-              onDelete={() => deleteRecord(item.id)}
-              onPin={() => togglePin(item.id)}
-            >
-              <RecordCard
-                item={item}
-                color={color}
-                onPress={() => navigation.navigate('RecordingDetail', { record: item })}
-                onStatusPress={() => handleStatusPress(item)}
-              />
-            </SwipeableCard>
+        <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
+          <SearchBar query={query} onChangeQuery={setQuery} color={color} />
+          {isSearching && filtered.length === 0 ? (
+            emptySearchContent
+          ) : (
+            <SectionList
+              sections={sections}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <SwipeableCard
+                  isPinned={item.isPinned}
+                  onDelete={() => deleteRecord(item.id)}
+                  onPin={() => togglePin(item.id)}
+                >
+                  <RecordCard
+                    item={item}
+                    color={color}
+                    onPress={() => navigation.navigate('RecordingDetail', { record: item })}
+                    onStatusPress={() => handleStatusPress(item)}
+                  />
+                </SwipeableCard>
+              )}
+              renderSectionHeader={({ section }) => (
+                <SectionHeader title={section.title} color={color} />
+              )}
+              stickySectionHeadersEnabled={false}
+              contentContainerStyle={listContentStyle}
+              style={listStyle}
+              showsVerticalScrollIndicator={false}
+            />
           )}
-          renderSectionHeader={({ section }) => (
-            <SectionHeader title={section.title} color={color} />
-          )}
-          stickySectionHeadersEnabled={false}
-          contentContainerStyle={listContentStyle}
-          style={listStyle}
-          showsVerticalScrollIndicator={false}
-        />
+        </View>
       )}
     </View>
   );
