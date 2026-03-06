@@ -65,14 +65,10 @@ const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
   }
 
   return (
-    <TouchableOpacity
-      className="flex-row items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 dark:bg-gray-800"
-      onPress={onPress}
-      activeOpacity={0.75}
-    >
+    <View className="flex-row items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 dark:bg-gray-800">
       <MicOff size={11} color="#9ca3af" strokeWidth={2.5} />
       <Text className="text-xs font-medium text-gray-400 dark:text-gray-500">Нет транскрипта</Text>
-    </TouchableOpacity>
+    </View>
   );
 };
 

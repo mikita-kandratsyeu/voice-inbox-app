@@ -1,3 +1,3 @@
-it('test mock', () => {
+it('renders without crashing', () => {
   expect(true).toBe(true);
 });

@@ -1,7 +1,6 @@
 import RNFS from 'react-native-fs';
 import { create } from 'zustand';
 
-import { MOCK_RECORDS } from './mock';
 import { recordRepository } from './repository';
 import type { RecordingStatus, VoiceRecord } from './types';
 
@@ -21,16 +20,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   isLoaded: false,
 
   load: async () => {
-    let all = await recordRepository.getAll();
-
-    //FIXME: Do not forget remove it
-    if (all.length === 0) {
-      for (const r of MOCK_RECORDS) {
-        await recordRepository.insert(r);
-      }
-      all = await recordRepository.getAll();
-    }
-
+    const all = await recordRepository.getAll();
     set({ records: all, isLoaded: true });
   },
 
