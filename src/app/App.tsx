@@ -18,11 +18,6 @@ const App = () => {
   const safeAreaStyle = { backgroundColor: color.background.primary };
 
   useEffect(() => {
-    // FIXME: перед релизом заменить на react-native-bootsplash:
-    // 1. yarn add react-native-bootsplash && cd ios && pod install
-    // 2. Настроить нативные ресурсы (логотип, цвет фона) под iOS и Android
-    // 3. Вызвать BootSplash.hide({ fade: true }) после initDB() + load()
-    //    чтобы пользователь видел нативный splash пока загружаются ресурсы
     import('@/shared/lib').then(({ initDB }) => {
       initDB();
       import('@/entities/record').then(({ useRecordStore }) => {

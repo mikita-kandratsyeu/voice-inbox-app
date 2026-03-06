@@ -15,8 +15,8 @@ const SCHEMA_VERSION = 3;
 export const initDB = () => {
   _db = open({ name: 'voice-inbox.db' });
 
-  // Drop and recreate if schema version changed
   let currentVersion = 0;
+
   try {
     const versionResult = _db.executeSync(
       "SELECT value FROM meta WHERE key = 'schema_version' LIMIT 1",
