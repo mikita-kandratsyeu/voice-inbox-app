@@ -1,6 +1,14 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { AlertCircle, CheckCircle2, Clock, Loader, MicOff, Pin, SearchX } from 'lucide-react-native';
+import {
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+  Loader,
+  MicOff,
+  Pin,
+  SearchX,
+} from 'lucide-react-native';
 import React from 'react';
 import { SectionList, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -159,10 +167,7 @@ const SectionHeader = ({
   const headerTextStyle = { color: color.text.secondary };
 
   return (
-    <View
-      className={`mx-4 mb-3 ${isFirst ? 'mt-1' : 'mt-6'}`}
-      style={headerBgStyle}
-    >
+    <View className={`mx-4 mb-3 ${isFirst ? 'mt-1' : 'mt-6'}`} style={headerBgStyle}>
       <Text className="text-xs font-semibold uppercase tracking-widest" style={headerTextStyle}>
         {title}
       </Text>
@@ -276,7 +281,9 @@ export const InboxScreen = () => {
   const totalCount = records.length;
 
   const emptySearchContent = (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}>
+    <View
+      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}
+    >
       <View
         className="mb-4 rounded-full p-5"
         style={{ backgroundColor: color.background.tertiary }}

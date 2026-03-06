@@ -6,7 +6,7 @@ import type { RecordingStatus, TaskItem, TranscriptSegment, VoiceRecord } from '
 
 const logDb = (op: string, details?: Record<string, unknown>) => {
   if (__DEV__) {
-    console.log(`[db] ${op}`, details ?? '');
+    console.warn(`[db] ${op}`, details ?? '');
   }
 };
 

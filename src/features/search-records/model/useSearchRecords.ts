@@ -7,11 +7,11 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
 
   const filtered = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
-    
+
     if (!trimmed) {
       return records;
     }
-    
+
     return records.filter(
       (r) =>
         r.title.toLowerCase().includes(trimmed) ||
