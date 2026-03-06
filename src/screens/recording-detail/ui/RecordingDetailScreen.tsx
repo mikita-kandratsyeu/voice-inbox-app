@@ -34,6 +34,7 @@ import { useRecordStore } from '@/entities/record';
 import type { Colors } from '@/shared/config';
 import { getColors } from '@/shared/config';
 import { formatRelativeTime } from '@/shared/lib';
+import { Button } from '@/shared/ui';
 import { AudioPlayer } from '@/widgets/audio-player';
 
 type Tab = 'transcript' | 'summary' | 'tasks';
@@ -132,17 +133,15 @@ const TranscriptProcessing = ({
           100%
         </Text>
       </View>
-      <TouchableOpacity
-        className="mt-1 flex-row items-center justify-center gap-2 rounded-full py-3.5"
-        style={{ backgroundColor: color.background.tertiary }}
+      <Button
+        variant="secondary"
+        size="lg"
+        icon={<X size={16} color={color.text.secondary} strokeWidth={2.5} />}
+        label="Отменить"
+        color={color}
         onPress={onCancel}
-        activeOpacity={0.75}
-      >
-        <X size={16} color={color.text.secondary} strokeWidth={2.5} />
-        <Text className="text-sm font-medium" style={{ color: color.text.secondary }}>
-          Отменить
-        </Text>
-      </TouchableOpacity>
+        className="mt-1"
+      />
     </View>
   );
 };
@@ -164,16 +163,14 @@ const TranscriptError = ({ onRetry }: { onRetry: () => void }) => (
       </View>
     </View>
     <View className="border-t border-red-200 dark:border-red-900">
-      <TouchableOpacity
-        className="flex-row items-center justify-center gap-2 py-3 active:opacity-70"
+      <Button
+        variant="danger"
+        icon={<RefreshCw size={14} color="#ef4444" strokeWidth={2.5} />}
+        label="Попробовать снова"
         onPress={onRetry}
         activeOpacity={0.7}
-      >
-        <RefreshCw size={14} color="#ef4444" strokeWidth={2.5} />
-        <Text className="text-sm font-semibold text-red-600 dark:text-red-400">
-          Попробовать снова
-        </Text>
-      </TouchableOpacity>
+        containerStyle={{ paddingVertical: 12 }}
+      />
     </View>
   </View>
 );
@@ -182,10 +179,7 @@ const AiStatusBadge = ({ aiStatus }: { aiStatus: RecordingStatus }) => {
   const cfg = AI_STATUS_CONFIG[aiStatus];
 
   return (
-    <View
-      className="gap-2.5 rounded-xl p-3"
-      style={{ backgroundColor: cfg.bgColor }}
-    >
+    <View className="gap-2.5 rounded-xl p-3" style={{ backgroundColor: cfg.bgColor }}>
       <View className="flex-row items-center gap-2">
         <CheckCircle2 size={18} color={cfg.iconColor} strokeWidth={2} />
         <Text className="text-sm font-semibold" style={{ color: cfg.iconColor }}>
@@ -226,21 +220,25 @@ const TabEmptyState = ({
     >
       {icon}
     </View>
-    <Text className="text-center text-[17px] font-bold tracking-tight" style={{ color: color.text.primary }}>
+    <Text
+      className="text-center text-[17px] font-bold tracking-tight"
+      style={{ color: color.text.primary }}
+    >
       {title}
     </Text>
     <Text className="text-center text-sm leading-5" style={{ color: color.text.secondary }}>
       {description}
     </Text>
-    <TouchableOpacity
-      className="mt-2 flex-row items-center gap-2 rounded-full px-7 py-3.5"
-      style={{ backgroundColor: color.accent.primary }}
+    <Button
+      variant="primary"
+      size="lg"
+      icon={buttonIcon}
+      label={buttonLabel}
+      color={color}
       onPress={onPress}
       activeOpacity={0.85}
-    >
-      {buttonIcon}
-      <Text className="text-[15px] font-semibold text-white">{buttonLabel}</Text>
-    </TouchableOpacity>
+      className="mt-2"
+    />
     <View className="flex-row items-center gap-1">
       {hintIcon ?? null}
       <Text className="text-xs" style={{ color: color.text.secondary }}>
@@ -289,17 +287,15 @@ const TranscriptTab = ({
           </Text>
         </View>
       ))}
-      <TouchableOpacity
-        className="mt-1 flex-row items-center justify-center gap-2 rounded-full py-3.5"
-        style={{ backgroundColor: color.background.tertiary }}
+      <Button
+        variant="secondary"
+        size="lg"
+        icon={<RefreshCw size={15} color={color.text.secondary} strokeWidth={2} />}
+        label="Перетранскрибировать"
+        color={color}
         onPress={onTranscribe}
-        activeOpacity={0.75}
-      >
-        <RefreshCw size={15} color={color.text.secondary} strokeWidth={2} />
-        <Text className="text-sm font-medium" style={{ color: color.text.secondary }}>
-          Перетранскрибировать
-        </Text>
-      </TouchableOpacity>
+        className="mt-1"
+      />
     </View>
   );
 };
@@ -407,10 +403,7 @@ const TabBar = ({
   onSelect: (tab: Tab) => void;
   color: Colors;
 }) => (
-  <View
-    className="flex-row border-b"
-    style={{ borderBottomColor: color.border.default }}
-  >
+  <View className="flex-row border-b" style={{ borderBottomColor: color.border.default }}>
     {(Object.keys(TAB_LABELS) as Tab[]).map((tab) => {
       const isActive = tab === active;
 
@@ -492,9 +485,8 @@ export const RecordingDetailScreen = () => {
     }
 
     const showStatusBadge =
-      liveRecord.aiStatus === 'done' &&
-      (liveRecord.transcriptSegments ?? []).length > 0;
-      
+      liveRecord.aiStatus === 'done' && (liveRecord.transcriptSegments ?? []).length > 0;
+
     return (
       <>
         {showStatusBadge && (
@@ -517,46 +509,53 @@ export const RecordingDetailScreen = () => {
         className="flex-row items-center justify-between px-4 pb-3"
         style={{ backgroundColor: color.background.secondary, paddingTop: insets.top + 12 }}
       >
-        <TouchableOpacity
+        <Button
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />}
+          color={color}
           onPress={() => navigation.goBack()}
-          className="h-10 w-10 items-center justify-center rounded-full"
-          style={iconBtnBg}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-          <ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />
-        </TouchableOpacity>
+        />
         <View className="flex-row items-center gap-2">
-          <TouchableOpacity
-            className="h-10 w-10 items-center justify-center rounded-full"
-            style={liveRecord.isPinned ? pinActiveStyle : iconBtnBg}
+          <Button
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={
+              <Pin
+                size={18}
+                color={liveRecord.isPinned ? color.accent.pin : color.icon.muted}
+                strokeWidth={2.2}
+                fill={liveRecord.isPinned ? color.accent.pin : 'transparent'}
+              />
+            }
+            color={color}
             onPress={() => togglePin(liveRecord.id)}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Pin
-              size={18}
-              color={liveRecord.isPinned ? color.accent.pin : color.icon.muted}
-              strokeWidth={2.2}
-              fill={liveRecord.isPinned ? color.accent.pin : 'transparent'}
-            />
-          </TouchableOpacity>
-          <TouchableOpacity
-            className="h-10 w-10 items-center justify-center rounded-full"
-            style={iconBtnBg}
+            containerStyle={liveRecord.isPinned ? pinActiveStyle : iconBtnBg}
+          />
+          <Button
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={<Share2 size={18} color={color.icon.muted} strokeWidth={2.2} />}
+            color={color}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Share2 size={18} color={color.icon.muted} strokeWidth={2.2} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            className="h-10 w-10 items-center justify-center rounded-full"
-            style={iconBtnBg}
+          />
+          <Button
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={<MoreVertical size={18} color={color.icon.muted} strokeWidth={2.2} />}
+            color={color}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <MoreVertical size={18} color={color.icon.muted} strokeWidth={2.2} />
-          </TouchableOpacity>
+          />
         </View>
       </View>
 
@@ -564,10 +563,7 @@ export const RecordingDetailScreen = () => {
         contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <View
-          className="gap-2 rounded-2xl p-4"
-          style={{ backgroundColor: color.background.card }}
-        >
+        <View className="gap-2 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
           <Text
             className="text-xl font-bold tracking-tight"
             style={{ color: color.text.primary }}

@@ -1,5 +1,5 @@
-import { create } from 'zustand';
 import RNFS from 'react-native-fs';
+import { create } from 'zustand';
 
 import { MOCK_RECORDS } from './mock';
 import { recordRepository } from './repository';

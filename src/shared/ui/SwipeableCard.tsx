@@ -108,7 +108,7 @@ export const SwipeableCard = ({
 
   const pinReveal = useAnimatedStyle(() => {
     const progress = Math.min(Math.max(translateX.value / SWIPE_THRESHOLD, 0), 1);
-    
+
     return { opacity: progress };
   });
 
@@ -132,19 +132,13 @@ export const SwipeableCard = ({
     <RNAnimated.View style={containerStyle}>
       <Animated.View
         className="absolute inset-y-0 right-0 w-full items-end justify-center rounded-2xl pr-6"
-        style={[
-          { backgroundColor: colors.light.accent.delete },
-          deleteReveal,
-        ]}
+        style={[{ backgroundColor: colors.light.accent.delete }, deleteReveal]}
       >
         <Trash2 size={22} color={colors.light.icon.onAccent} strokeWidth={2} />
       </Animated.View>
       <Animated.View
         className="absolute inset-y-0 left-0 w-full items-start justify-center rounded-2xl pl-6"
-        style={[
-          { backgroundColor: pinBgColor },
-          pinReveal,
-        ]}
+        style={[{ backgroundColor: pinBgColor }, pinReveal]}
       >
         {isPinned ? (
           <PinOff size={22} color={colors.light.icon.onAccent} strokeWidth={2} />

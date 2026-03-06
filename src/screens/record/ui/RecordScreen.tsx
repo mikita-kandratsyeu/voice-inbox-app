@@ -22,7 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { Waveform } from '@/shared/ui';
+import { Button, Waveform } from '@/shared/ui';
 
 const ACCENT_BLUE = '#3d7ef6';
 const PAUSE_BTN_BG = 'rgba(255,255,255,0.18)';
@@ -190,7 +190,7 @@ export const RecordScreen = () => {
       setMeterLevel(undefined);
 
       const result = await audioRecorderPlayer.stopRecorder();
-  
+
       if (audioPathRef.current === null) {
         audioPathRef.current = result;
       }
@@ -300,18 +300,15 @@ export const RecordScreen = () => {
     <View className="flex-1" style={{ backgroundColor: ACCENT_BLUE }}>
       <StatusBar barStyle="light-content" backgroundColor={ACCENT_BLUE} />
 
-      <View
-        className="flex-row items-center justify-between px-5 pb-2"
-        style={topStyle}
-      >
-        <TouchableOpacity
+      <View className="flex-row items-center justify-between px-5 pb-2" style={topStyle}>
+        <Button
+          iconOnly
+          size="sm"
+          icon={<X size={20} color="#ffffff" strokeWidth={2.5} />}
           onPress={handleClose}
-          className="h-9 w-9 items-center justify-center rounded-full"
-          style={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
           activeOpacity={0.7}
-        >
-          <X size={20} color="#ffffff" strokeWidth={2.5} />
-        </TouchableOpacity>
+          containerStyle={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
+        />
         <Text className="text-base font-semibold tracking-wide text-white">
           {HEADER_TITLE[state]}
         </Text>
@@ -330,12 +327,8 @@ export const RecordScreen = () => {
         </View>
         {state === 'idle' && (
           <View className="items-center gap-1">
-            <Text className="text-[15px] font-medium text-white/90">
-              Запись работает оффлайн
-            </Text>
-            <Text className="text-[13px] text-white/55">
-              Транскрипция выполнится локально
-            </Text>
+            <Text className="text-[15px] font-medium text-white/90">Запись работает оффлайн</Text>
+            <Text className="text-[13px] text-white/55">Транскрипция выполнится локально</Text>
           </View>
         )}
       </View>
@@ -409,16 +402,11 @@ export const RecordScreen = () => {
                 transform: [{ translateY: sheetTranslateY }],
               }}
             >
-              <View
-                className="items-center pb-1 pt-3"
-                {...panResponder.panHandlers}
-              >
+              <View className="items-center pb-1 pt-3" {...panResponder.panHandlers}>
                 <View className="h-1 w-9 rounded-full bg-gray-200" />
               </View>
 
-              <Text className="text-lg font-bold text-gray-900">
-                Сохранить запись
-              </Text>
+              <Text className="text-lg font-bold text-gray-900">Сохранить запись</Text>
               <TextInput
                 className="rounded-xl border-2 px-4 py-3 text-[15px]"
                 style={{
@@ -438,25 +426,22 @@ export const RecordScreen = () => {
                 Длительность: {formatTime(elapsed)}
               </Text>
               <View className="mt-1 flex-row gap-3">
-                <TouchableOpacity
-                  className="flex-1 items-center rounded-xl bg-gray-100 py-3.5"
+                <Button
+                  variant="secondary"
+                  label="Отмена"
                   onPress={handleSaveCancel}
                   activeOpacity={0.8}
-                >
-                  <Text className="text-[15px] font-semibold text-gray-600">
-                    Отмена
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  className="flex-1 items-center rounded-xl py-3.5"
-                  style={{ backgroundColor: ACCENT_BLUE }}
+                  fullWidth
+                  containerStyle={{ backgroundColor: '#f3f4f6', borderRadius: 12 }}
+                />
+                <Button
+                  variant="primary"
+                  label="Сохранить"
                   onPress={handleSaveConfirm}
                   activeOpacity={0.85}
-                >
-                  <Text className="text-[15px] font-semibold text-white">
-                    Сохранить
-                  </Text>
-                </TouchableOpacity>
+                  fullWidth
+                  containerStyle={{ backgroundColor: ACCENT_BLUE, borderRadius: 12 }}
+                />
               </View>
             </Animated.View>
           </KeyboardAvoidingView>

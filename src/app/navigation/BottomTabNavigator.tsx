@@ -52,10 +52,7 @@ const AnimatedTabButton = ({ children, onPress, onLongPress }: any) => {
       activeOpacity={1}
       className="my-0 flex-1 items-center justify-center py-0"
     >
-      <Animated.View
-        className="items-center justify-center"
-        style={{ transform: [{ scale }] }}
-      >
+      <Animated.View className="items-center justify-center" style={{ transform: [{ scale }] }}>
         {children}
       </Animated.View>
     </TouchableOpacity>

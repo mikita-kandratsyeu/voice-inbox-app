@@ -1,16 +1,10 @@
 import { Pause, Play, RotateCcw } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  GestureResponderEvent,
-  LayoutChangeEvent,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Animated, GestureResponderEvent, LayoutChangeEvent, Text, View } from 'react-native';
 import AudioRecorderPlayer, { type PlayBackType } from 'react-native-audio-recorder-player';
 
 import type { Colors } from '@/shared/config';
+import { Button } from '@/shared/ui';
 
 type AudioPlayerProps = {
   duration: string;
@@ -200,26 +194,30 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
       className="flex-row items-center gap-3 rounded-2xl p-4"
       style={{ backgroundColor: color.background.card }}
     >
-      <TouchableOpacity
+      <Button
+        iconOnly
+        size="lg"
+        variant="icon"
+        icon={
+          isPlaying ? (
+            <Pause size={20} color={color.icon.onAccent} strokeWidth={2.5} />
+          ) : (
+            <Play
+              size={20}
+              color={hasAudio ? color.icon.onAccent : color.text.secondary}
+              strokeWidth={2.5}
+              fill={hasAudio ? color.icon.onAccent : color.text.secondary}
+            />
+          )
+        }
+        color={color}
         onPress={handlePlayPause}
-        className="h-12 w-12 items-center justify-center rounded-full"
-        style={{
-          backgroundColor: hasAudio ? color.accent.primary : color.background.tertiary,
-        }}
         activeOpacity={0.85}
         disabled={!hasAudio}
-      >
-        {isPlaying ? (
-          <Pause size={20} color={color.icon.onAccent} strokeWidth={2.5} />
-        ) : (
-          <Play
-            size={20}
-            color={hasAudio ? color.icon.onAccent : color.text.secondary}
-            strokeWidth={2.5}
-            fill={hasAudio ? color.icon.onAccent : color.text.secondary}
-          />
-        )}
-      </TouchableOpacity>
+        containerStyle={{
+          backgroundColor: hasAudio ? color.accent.primary : color.background.tertiary,
+        }}
+      />
 
       <View className="flex-1 gap-1.5">
         <View
@@ -256,18 +254,21 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
           </Text>
         </View>
       </View>
-      <TouchableOpacity
+      <Button
+        iconOnly
+        size="sm"
+        icon={
+          <RotateCcw
+            size={18}
+            color={hasAudio ? color.text.secondary : color.background.tertiary}
+            strokeWidth={2}
+          />
+        }
         onPress={handleRestart}
-        className="h-9 w-9 items-center justify-center"
         activeOpacity={0.7}
         disabled={!hasAudio}
-      >
-        <RotateCcw
-          size={18}
-          color={hasAudio ? color.text.secondary : color.background.tertiary}
-          strokeWidth={2}
-        />
-      </TouchableOpacity>
+        containerStyle={{ backgroundColor: 'transparent' }}
+      />
     </View>
   );
 };
