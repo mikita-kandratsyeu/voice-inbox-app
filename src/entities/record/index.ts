@@ -1,3 +1,9 @@
 export { MOCK_RECORDS } from './model/mock';
 export { useRecordStore } from './model/store';
-export type { RecordStatus, VoiceRecord } from './model/types';
+export type {
+  RecordingStatus,
+  RecordStatus,
+  TaskItem,
+  TranscriptSegment,
+  VoiceRecord,
+} from './model/types';

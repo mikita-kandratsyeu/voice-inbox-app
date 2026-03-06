@@ -1,11 +1,22 @@
-import { CheckCircle, Clock, Pin } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { AlertCircle, CheckCircle2, Clock, Loader, MicOff, Pin } from 'lucide-react-native';
 import React from 'react';
-import { ActivityIndicator, SectionList, Text, useColorScheme, View } from 'react-native';
+import {
+  ActivityIndicator,
+  SectionList,
+  Text,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import type { VoiceRecord } from '@/entities/record';
+import type { RootStackParamList } from '@/app/navigation/RootNavigator';
+import type { RecordingStatus, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { type Colors, getColors } from '@/shared/config';
+import { formatRelativeTime } from '@/shared/lib';
 import { EmptyState, SwipeableCard } from '@/shared/ui';
 
 const Tag = ({ label }: { label: string }) => (
@@ -14,9 +25,76 @@ const Tag = ({ label }: { label: string }) => (
   </View>
 );
 
-const RecordCard = ({ item, color }: { item: VoiceRecord; color: Colors }) => {
-  const isListened = item.status === 'read';
+type AiStatusPillProps = {
+  aiStatus: RecordingStatus;
+  onPress: () => void;
+};
 
+const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
+  if (aiStatus === 'done') {
+    return (
+      <TouchableOpacity
+        onPress={onPress}
+        activeOpacity={0.7}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <CheckCircle2 size={20} color="#22c55e" strokeWidth={2} />
+      </TouchableOpacity>
+    );
+  }
+
+  if (aiStatus === 'processing') {
+    return (
+      <TouchableOpacity
+        className="flex-row items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 dark:bg-blue-950"
+        onPress={onPress}
+        activeOpacity={0.75}
+      >
+        <Loader size={11} color="#3b82f6" strokeWidth={2.5} />
+        <Text className="text-xs font-medium text-blue-500 dark:text-blue-400">
+          Транскрибируется...
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+
+  if (aiStatus === 'error') {
+    return (
+      <TouchableOpacity
+        className="flex-row items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 dark:bg-red-950"
+        onPress={onPress}
+        activeOpacity={0.75}
+      >
+        <AlertCircle size={11} color="#ef4444" strokeWidth={2.5} />
+        <Text className="text-xs font-medium text-red-500 dark:text-red-400">Ошибка</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  // idle
+  return (
+    <TouchableOpacity
+      className="flex-row items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 dark:bg-gray-800"
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
+      <MicOff size={11} color="#9ca3af" strokeWidth={2.5} />
+      <Text className="text-xs font-medium text-gray-400 dark:text-gray-500">Нет транскрипта</Text>
+    </TouchableOpacity>
+  );
+};
+
+const RecordCard = ({
+  item,
+  color,
+  onPress,
+  onStatusPress,
+}: {
+  item: VoiceRecord;
+  color: Colors;
+  onPress: () => void;
+  onStatusPress: () => void;
+}) => {
   const cardStyle = {
     shadowColor: color.shadow.color,
     shadowOffset: { width: 0, height: 1 },
@@ -29,8 +107,16 @@ const RecordCard = ({ item, color }: { item: VoiceRecord; color: Colors }) => {
   const textPrimaryStyle = { color: color.text.primary };
   const textSecondaryStyle = { color: color.text.secondary };
 
+  const hasTags = item.tags && item.tags.length > 0;
+  const showBottomRow = hasTags || !!item.aiStatus;
+
   return (
-    <View className="rounded-2xl p-4" style={cardStyle}>
+    <TouchableOpacity
+      className="rounded-2xl p-4"
+      style={cardStyle}
+      onPress={onPress}
+      activeOpacity={0.75}
+    >
       <View className="mb-1 flex-row items-start justify-between">
         <View className="mr-2 flex-1 flex-row items-center">
           {item.isPinned ? (
@@ -47,30 +133,29 @@ const RecordCard = ({ item, color }: { item: VoiceRecord; color: Colors }) => {
       </View>
 
       <View className="mb-3 flex-row items-center">
-        {isListened ? (
-          <CheckCircle size={14} color={color.accent.success} strokeWidth={2} />
-        ) : (
-          <Clock size={14} color={color.icon.muted} strokeWidth={2} />
-        )}
+        <Clock size={14} color={color.icon.muted} strokeWidth={2} />
         <Text className="ml-1 text-xs" style={textSecondaryStyle}>
           {item.duration}
           {'  '}
-          {item.createdAt}
+          {formatRelativeTime(item.createdAt)}
         </Text>
       </View>
 
-      <Text className="mb-3 text-sm leading-5" style={textSecondaryStyle} numberOfLines={2}>
-        {item.transcript}
-      </Text>
+      {item.transcript ? (
+        <Text className="mb-3 text-sm leading-5" style={textSecondaryStyle} numberOfLines={2}>
+          {item.transcript}
+        </Text>
+      ) : null}
 
-      {item.tags && item.tags.length > 0 ? (
-        <View className="flex-row flex-wrap">
-          {item.tags.map((tag) => (
-            <Tag key={tag} label={tag} />
-          ))}
+      {showBottomRow ? (
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row flex-wrap gap-y-1">
+            {hasTags ? item.tags!.map((tag) => <Tag key={tag} label={tag} />) : null}
+          </View>
+          {item.aiStatus ? <AiStatusPill aiStatus={item.aiStatus} onPress={onStatusPress} /> : null}
         </View>
       ) : null}
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -87,9 +172,44 @@ const SectionHeader = ({ title, color }: { title: string; color: Colors }) => {
   );
 };
 
+const simulateTranscription = (
+  id: string,
+  updateAiStatus: (id: string, status: RecordingStatus, progress?: number) => void,
+) => {
+  updateAiStatus(id, 'processing', 0);
+  let progress = 0;
+  const interval = setInterval(() => {
+    progress += Math.floor(Math.random() * 15) + 5;
+    if (progress >= 100) {
+      clearInterval(interval);
+      updateAiStatus(id, 'done', 100);
+    } else {
+      updateAiStatus(id, 'processing', Math.min(progress, 99));
+    }
+  }, 600);
+};
+
 export const InboxScreen = () => {
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
-  const { records, deleteRecord, togglePin, isLoaded } = useRecordStore();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { records, deleteRecord, togglePin, isLoaded, updateAiStatus } = useRecordStore();
+
+  const handleStatusPress = (item: VoiceRecord) => {
+    switch (item.aiStatus) {
+      case 'idle':
+        simulateTranscription(item.id, updateAiStatus);
+        break;
+      case 'processing':
+        navigation.navigate('RecordingDetail', { record: item });
+        break;
+      case 'error':
+        simulateTranscription(item.id, updateAiStatus);
+        break;
+      case 'done':
+        navigation.navigate('RecordingDetail', { record: item });
+        break;
+    }
+  };
 
   const loadingStyle = {
     flex: 1,
@@ -156,7 +276,12 @@ export const InboxScreen = () => {
               onDelete={() => deleteRecord(item.id)}
               onPin={() => togglePin(item.id)}
             >
-              <RecordCard item={item} color={color} />
+              <RecordCard
+                item={item}
+                color={color}
+                onPress={() => navigation.navigate('RecordingDetail', { record: item })}
+                onStatusPress={() => handleStatusPress(item)}
+              />
             </SwipeableCard>
           )}
           renderSectionHeader={({ section }) => (

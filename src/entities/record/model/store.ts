@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 import { MOCK_RECORDS } from './mock';
 import { recordRepository } from './repository';
-import type { VoiceRecord } from './types';
+import type { RecordingStatus, VoiceRecord } from './types';
 
 type RecordStore = {
   records: VoiceRecord[];
@@ -12,6 +12,7 @@ type RecordStore = {
   deleteRecord: (id: string) => void;
   togglePin: (id: string) => void;
   markAsRead: (id: string) => void;
+  updateAiStatus: (id: string, aiStatus: RecordingStatus, progress?: number) => void;
 };
 
 export const useRecordStore = create<RecordStore>((set, get) => ({
@@ -54,6 +55,14 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     recordRepository.markAsRead(id);
     set((s) => ({
       records: s.records.map((r) => (r.id === id ? { ...r, status: 'read' } : r)),
+    }));
+  },
+
+  updateAiStatus: (id, aiStatus, progress) => {
+    set((s) => ({
+      records: s.records.map((r) =>
+        r.id === id ? { ...r, aiStatus, transcriptProgress: progress ?? r.transcriptProgress } : r,
+      ),
     }));
   },
 }));
