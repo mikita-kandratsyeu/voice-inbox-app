@@ -4,6 +4,12 @@ import { getDB, recordsTable } from '@/shared/lib';
 
 import type { RecordingStatus, TaskItem, TranscriptSegment, VoiceRecord } from './types';
 
+const logDb = (op: string, details?: Record<string, unknown>) => {
+  if (__DEV__) {
+    console.log(`[db] ${op}`, details ?? '');
+  }
+};
+
 type RecordRowRaw = {
   id: string;
   title: string;
@@ -42,15 +48,18 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => ({
 
 export const recordRepository = {
   getAll: async (): Promise<VoiceRecord[]> => {
+    logDb('getAll');
     const db = getDB();
     const rows = await db
       .select()
       .from(recordsTable)
       .orderBy(desc(recordsTable.isPinned), desc(recordsTable.createdAt));
+    logDb('getAll', { count: rows.length });
     return rows.map(toRecord);
   },
 
   insert: async (record: VoiceRecord): Promise<void> => {
+    logDb('insert', { id: record.id, title: record.title });
     const db = getDB();
     await db
       .insert(recordsTable)
@@ -75,11 +84,13 @@ export const recordRepository = {
   },
 
   remove: async (id: string): Promise<void> => {
+    logDb('remove', { id });
     const db = getDB();
     await db.delete(recordsTable).where(eq(recordsTable.id, id));
   },
 
   togglePin: async (id: string, isPinned: boolean): Promise<void> => {
+    logDb('togglePin', { id, isPinned });
     const db = getDB();
     await db
       .update(recordsTable)
@@ -88,6 +99,7 @@ export const recordRepository = {
   },
 
   markAsRead: async (id: string): Promise<void> => {
+    logDb('markAsRead', { id });
     const db = getDB();
     await db.update(recordsTable).set({ status: 'read' }).where(eq(recordsTable.id, id));
   },
