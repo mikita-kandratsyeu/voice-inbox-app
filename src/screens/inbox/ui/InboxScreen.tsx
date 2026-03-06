@@ -2,22 +2,15 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AlertCircle, CheckCircle2, Clock, Loader, MicOff, Pin } from 'lucide-react-native';
 import React from 'react';
-import {
-  ActivityIndicator,
-  SectionList,
-  Text,
-  TouchableOpacity,
-  useColorScheme,
-  View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SectionList, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RootStackParamList } from '@/app/navigation/RootNavigator';
 import type { RecordingStatus, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { type Colors, getColors } from '@/shared/config';
 import { formatRelativeTime } from '@/shared/lib';
-import { EmptyState, SwipeableCard } from '@/shared/ui';
+import { EmptyState, SkeletonPulse, SwipeableCard } from '@/shared/ui';
 
 const Tag = ({ label }: { label: string }) => (
   <View className="mr-2 rounded-full bg-blue-50 px-3 py-1 dark:bg-blue-950">
@@ -172,6 +165,51 @@ const SectionHeader = ({ title, color }: { title: string; color: Colors }) => {
   );
 };
 
+const SkeletonBlock = ({ color, className }: { color: Colors; className: string }) => (
+  <View className={className} style={{ backgroundColor: color.background.tertiary }} />
+);
+
+const SkeletonCard = ({ color }: { color: Colors }) => (
+  <View
+    className="mx-4 mb-3 rounded-2xl p-4"
+    style={{
+      backgroundColor: color.background.card,
+      shadowColor: color.shadow.color,
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: color.shadow.opacity,
+      shadowRadius: 4,
+      elevation: 2,
+    }}
+  >
+    <SkeletonBlock color={color} className="mb-3 h-4 w-3/5 rounded-full" />
+    <SkeletonBlock color={color} className="mb-4 h-3 w-2/5 rounded-full" />
+    <SkeletonBlock color={color} className="mb-1.5 h-3 w-full rounded-full" />
+    <SkeletonBlock color={color} className="mb-4 h-3 w-4/5 rounded-full" />
+    <View className="flex-row gap-2">
+      <SkeletonBlock color={color} className="h-5 w-14 rounded-full" />
+      <SkeletonBlock color={color} className="h-5 w-16 rounded-full" />
+    </View>
+  </View>
+);
+
+const InboxSkeleton = ({ color }: { color: Colors }) => (
+  <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
+    <SkeletonPulse>
+      <View className="mx-4 mb-2 mt-4">
+        <SkeletonBlock color={color} className="h-3 w-28 rounded-full" />
+      </View>
+      <SkeletonCard color={color} />
+
+      <View className="mx-4 mb-2 mt-2">
+        <SkeletonBlock color={color} className="h-3 w-24 rounded-full" />
+      </View>
+      <SkeletonCard color={color} />
+      <SkeletonCard color={color} />
+      <SkeletonCard color={color} />
+    </SkeletonPulse>
+  </View>
+);
+
 const simulateTranscription = (
   id: string,
   updateAiStatus: (id: string, status: RecordingStatus, progress?: number) => void,
@@ -193,6 +231,7 @@ export const InboxScreen = () => {
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { records, deleteRecord, togglePin, isLoaded, updateAiStatus } = useRecordStore();
+  const insets = useSafeAreaInsets();
 
   const handleStatusPress = (item: VoiceRecord) => {
     switch (item.aiStatus) {
@@ -211,17 +250,12 @@ export const InboxScreen = () => {
     }
   };
 
-  const loadingStyle = {
-    flex: 1,
-    alignItems: 'center' as const,
-    justifyContent: 'center' as const,
-    backgroundColor: color.background.primary,
-  };
-  const screenStyle = { backgroundColor: color.background.primary };
+  const screenStyle = { flex: 1, backgroundColor: color.background.primary };
   const headerStyle = {
     backgroundColor: color.background.primary,
     borderBottomWidth: 1,
     borderBottomColor: color.border.default,
+    paddingTop: insets.top + 16,
   };
   const titleStyle = { color: color.text.primary };
   const subtitleStyle = { color: color.text.secondary };
@@ -232,36 +266,35 @@ export const InboxScreen = () => {
   };
   const listStyle = { backgroundColor: color.background.secondary };
 
-  if (!isLoaded) {
-    return (
-      <View style={loadingStyle}>
-        <ActivityIndicator size="large" color={color.accent.primary} />
-      </View>
-    );
-  }
-
   const pinned = records.filter((r) => r.isPinned);
   const all = records.filter((r) => !r.isPinned);
-
   const sections = [
     ...(pinned.length > 0 ? [{ title: 'Закреплённые', data: pinned }] : []),
     ...(all.length > 0 ? [{ title: 'Все записи', data: all }] : []),
   ];
-
   const totalCount = records.length;
 
   return (
-    <SafeAreaView className="flex-1" style={screenStyle} edges={['top']}>
-      <View className="px-4 pb-3 pt-4" style={headerStyle}>
+    <View style={screenStyle}>
+      <View className="px-4 pb-3" style={headerStyle}>
         <Text className="text-2xl font-bold" style={titleStyle}>
           Входящие
         </Text>
-        <Text className="mt-1 text-sm" style={subtitleStyle}>
-          {totalCount} записей
-        </Text>
+        {isLoaded ? (
+          <Text className="mt-1 text-sm" style={subtitleStyle}>
+            {totalCount} записей
+          </Text>
+        ) : (
+          <View
+            className="mt-2 h-3 w-20 rounded-full"
+            style={{ backgroundColor: color.background.tertiary }}
+          />
+        )}
       </View>
 
-      {totalCount === 0 ? (
+      {!isLoaded ? (
+        <InboxSkeleton color={color} />
+      ) : totalCount === 0 ? (
         <EmptyState
           title="Нет входящих"
           description="Здесь будут отображаться ваши входящие голосовые сообщения"
@@ -293,6 +326,6 @@ export const InboxScreen = () => {
           showsVerticalScrollIndicator={false}
         />
       )}
-    </SafeAreaView>
+    </View>
   );
 };
