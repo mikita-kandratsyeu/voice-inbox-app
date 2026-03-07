@@ -14,7 +14,7 @@ The project is designed as a solo‑friendly, production‑ready codebase: clean
   - Offline by default — recordings are stored locally first
 
 - 🧠 **AI‑ready structure**
-  - Tabs for *Transcript*, *Summary*, and *Tasks*
+  - Tabs for _Transcript_, _Summary_, and _Tasks_
   - Data model prepared for cloud STT + LLM summarization
 
 - 📁 **Inbox for all recordings**

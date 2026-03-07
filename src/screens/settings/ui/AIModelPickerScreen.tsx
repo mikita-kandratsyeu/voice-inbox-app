@@ -52,7 +52,7 @@ export const AIModelPickerScreen = () => {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Text className="mb-4 text-[13px] leading-5" style={{ color: color.text.secondary }}>
+        <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
           Выберите модель ИИ для генерации саммари и извлечения задач из транскриптов. Настройки
           применятся к следующей обработке.
         </Text>
@@ -86,7 +86,7 @@ export const AIModelPickerScreen = () => {
                   <View className="flex-1 mr-3">
                     <View className="flex-row items-center gap-2 mb-1">
                       <Text
-                        className="text-[15px] font-semibold"
+                        className="text-[16px] font-semibold"
                         style={{ color: color.text.primary }}
                       >
                         {model.name}
@@ -98,7 +98,7 @@ export const AIModelPickerScreen = () => {
                         }}
                       >
                         <Text
-                          className="text-[11px] font-medium"
+                          className="text-[12px] font-medium"
                           style={{ color: PROVIDER_COLOR[model.provider] ?? '#6b7280' }}
                         >
                           {model.provider}
@@ -106,13 +106,13 @@ export const AIModelPickerScreen = () => {
                       </View>
                     </View>
                     <Text
-                      className="text-[13px] leading-5 mb-1.5"
+                      className="text-[14px] leading-5 mb-1.5"
                       style={{ color: color.text.secondary }}
                     >
                       {model.description}
                     </Text>
                     <View className="flex-row items-center gap-3">
-                      <Text className="text-[12px]" style={{ color: color.text.secondary }}>
+                      <Text className="text-[14px]" style={{ color: color.text.secondary }}>
                         {model.contextWindow}
                       </Text>
                       <View className="flex-row items-center gap-1">
@@ -120,7 +120,7 @@ export const AIModelPickerScreen = () => {
                           className="h-2 w-2 rounded-full"
                           style={{ backgroundColor: SPEED_COLOR[model.speed] }}
                         />
-                        <Text className="text-[12px]" style={{ color: color.text.secondary }}>
+                        <Text className="text-[14px]" style={{ color: color.text.secondary }}>
                           {SPEED_LABEL[model.speed]}
                         </Text>
                       </View>

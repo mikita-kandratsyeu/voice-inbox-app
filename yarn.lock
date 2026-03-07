@@ -9306,6 +9306,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-keychain@npm:^10.0.0":
+  version: 10.0.0
+  resolution: "react-native-keychain@npm:10.0.0"
+  checksum: 10c0/a632ad27e58264506d2b373d329a867f042fb014e8a78db3a63031e953d61b5c98066eed1be238ee6c186d3f213d0efaa2a26526fb3a1d36a624c4460e982230
+  languageName: node
+  linkType: hard
+
 "react-native-mmkv@npm:^4.2.0":
   version: 4.2.0
   resolution: "react-native-mmkv@npm:4.2.0"
@@ -10962,6 +10969,7 @@ __metadata:
     react-native-dotenv: "npm:^3.4.11"
     react-native-fs: "npm:^2.20.0"
     react-native-gesture-handler: "npm:^2.30.0"
+    react-native-keychain: "npm:^10.0.0"
     react-native-mmkv: "npm:^4.2.0"
     react-native-nitro-modules: "npm:^0.35.0"
     react-native-reanimated: "npm:^4.2.2"

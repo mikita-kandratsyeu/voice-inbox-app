@@ -33,31 +33,35 @@ export const SettingsRow = ({
     ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
     : {};
 
-  let radiusClass = '';
+  const getRadiusClass = () => {
+    if (isFirst && isLast) {
+      return 'rounded-2xl';
+    }
+    if (isFirst) {
+      return 'rounded-t-2xl';
+    }
+    if (isLast) {
+      return 'rounded-b-2xl';
+    }
 
-  if (isFirst && isLast) {
-    radiusClass = 'rounded-2xl';
-  } else if (isFirst) {
-    radiusClass = 'rounded-t-2xl';
-  } else if (isLast) {
-    radiusClass = 'rounded-b-2xl';
-  }
+    return '';
+  };
 
   const content = (
     <View
-      className={`flex-row items-center px-4 py-3.5 ${radiusClass}`}
+      className={`flex-row items-center px-4 py-3.5 ${getRadiusClass()}`}
       style={[{ backgroundColor: color.background.card, minHeight: 52 }, borderStyle]}
     >
       {leftIcon && <View className="mr-3">{leftIcon}</View>}
       <Text
-        className="flex-1 text-[15px]"
+        className="flex-1 text-[16px]"
         style={{ color: dangerous ? color.accent.delete : color.text.primary }}
       >
         {label}
       </Text>
       {rightSlot && <View className="ml-2">{rightSlot}</View>}
       {!rightSlot && value && (
-        <Text className="mr-2 text-[14px]" style={{ color: color.text.secondary }}>
+        <Text className="mr-2 text-[16px]" style={{ color: color.text.secondary }}>
           {value}
         </Text>
       )}

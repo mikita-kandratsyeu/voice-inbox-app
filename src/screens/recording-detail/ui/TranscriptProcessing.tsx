@@ -47,7 +47,7 @@ export const TranscriptProcessing = ({ progress, color, onCancel }: TranscriptPr
           <Text className="text-base font-bold" style={{ color: color.text.primary }}>
             Транскрибируется...
           </Text>
-          <Text className="text-[13px]" style={{ color: color.text.secondary }}>
+          <Text className="text-[14px]" style={{ color: color.text.secondary }}>
             {timeLabel}
           </Text>
         </View>

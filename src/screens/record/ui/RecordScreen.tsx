@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useState } from 'react';
-import { StatusBar, Text, View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { PanResponder, StatusBar, Text, View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
@@ -45,6 +45,7 @@ export const RecordScreen = () => {
 
   const handleDonePress = async () => {
     await stopRecording();
+
     setTitle('');
     setShowSaveModal(true);
   };
@@ -63,8 +64,24 @@ export const RecordScreen = () => {
     navigation.goBack();
   };
 
+  const swipeDownResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, { dy }) => dy > 5,
+      onPanResponderRelease: (_, { dy, vy }) => {
+        if (dy > 80 || vy > 0.5) {
+          handleClose();
+        }
+      },
+    }),
+  ).current;
+
   return (
-    <View className="flex-1" style={{ backgroundColor: ACCENT_BLUE }}>
+    <View
+      className="flex-1"
+      style={{ backgroundColor: ACCENT_BLUE }}
+      {...swipeDownResponder.panHandlers}
+    >
       <StatusBar barStyle="light-content" backgroundColor={ACCENT_BLUE} />
 
       <RecordScreenHeader state={state} onClose={handleClose} />
@@ -82,8 +99,8 @@ export const RecordScreen = () => {
         </View>
         {state === 'idle' && (
           <View className="items-center gap-1">
-            <Text className="text-[15px] font-medium text-white/90">Запись работает оффлайн</Text>
-            <Text className="text-[13px] text-white/55">Транскрипция выполнится локально</Text>
+            <Text className="text-[16px] font-medium text-white/90">Запись работает оффлайн</Text>
+            <Text className="text-[14px] text-white/55">Транскрипция выполнится локально</Text>
           </View>
         )}
       </View>

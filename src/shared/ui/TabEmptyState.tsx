@@ -38,7 +38,7 @@ export const TabEmptyState = ({
       {icon}
     </View>
     <Text
-      className="text-center text-[17px] font-bold tracking-tight"
+      className="text-center text-[18px] font-bold tracking-tight"
       style={{ color: color.text.primary }}
     >
       {title}

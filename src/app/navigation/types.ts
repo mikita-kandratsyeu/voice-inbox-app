@@ -18,4 +18,5 @@ export type SettingsStackParamList = {
   WhisperModelPicker: undefined;
   StorageDetails: undefined;
   AboutApp: undefined;
+  AppLockSetup: undefined;
 };

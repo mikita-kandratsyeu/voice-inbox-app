@@ -4,6 +4,7 @@ import React from 'react';
 import {
   AboutAppScreen,
   AIModelPickerScreen,
+  AppLockSetupScreen,
   SettingsScreen,
   StorageDetailsScreen,
   WhisperModelPickerScreen,
@@ -29,6 +30,11 @@ export const SettingsNavigator = () => (
     <Stack.Screen
       name="StorageDetails"
       component={StorageDetailsScreen}
+      options={{ animation: 'slide_from_right' }}
+    />
+    <Stack.Screen
+      name="AppLockSetup"
+      component={AppLockSetupScreen}
       options={{ animation: 'slide_from_right' }}
     />
     <Stack.Screen

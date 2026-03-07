@@ -1,11 +1,15 @@
 import { useNavigation } from '@react-navigation/native';
-import { Check, Download, Loader } from 'lucide-react-native';
+import { Check, Download, Loader, Smartphone } from 'lucide-react-native';
 import React from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { WhisperModelId } from '@/entities/settings';
-import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import {
+  useSettingsStore,
+  useWhisperModelCompatibility,
+  WHISPER_MODELS,
+} from '@/entities/settings';
 import { getColors } from '@/shared/config';
 import { ScreenHeader } from '@/shared/ui';
 
@@ -30,6 +34,25 @@ const SPEED_COLOR: Record<string, string> = {
   very_slow: '#ef4444',
 };
 
+const getCardRadiusClass = (index: number, total: number): string => {
+  const isFirst = index === 0;
+  const isLast = index === total - 1;
+
+  if (isFirst && isLast) {
+    return 'rounded-2xl';
+  }
+
+  if (isFirst) {
+    return 'rounded-t-2xl';
+  }
+
+  if (isLast) {
+    return 'rounded-b-2xl';
+  }
+
+  return '';
+};
+
 export const WhisperModelPickerScreen = () => {
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const insets = useSafeAreaInsets();
@@ -39,6 +62,8 @@ export const WhisperModelPickerScreen = () => {
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
   const setWhisperModelStatus = useSettingsStore((s) => s.setWhisperModelStatus);
+
+  const compatibility = useWhisperModelCompatibility();
 
   const handleDownload = (id: WhisperModelId, sizeMb: number) => {
     Alert.alert('Скачать модель', `Для загрузки потребуется ~${sizeMb} МБ. Продолжить?`, [
@@ -60,9 +85,11 @@ export const WhisperModelPickerScreen = () => {
     const status = whisperModelStatuses[id] ?? 'not_downloaded';
     if (status !== 'downloaded') {
       const model = WHISPER_MODELS.find((m) => m.id === id);
+
       if (model) {
         handleDownload(id, model.sizeMb);
       }
+
       return;
     }
     setWhisperModel(id);
@@ -72,7 +99,6 @@ export const WhisperModelPickerScreen = () => {
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader title="Модель транскрипции" color={color} onBack={() => navigation.goBack()} />
-
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 16,
@@ -81,31 +107,22 @@ export const WhisperModelPickerScreen = () => {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Text className="mb-4 text-[13px] leading-5" style={{ color: color.text.secondary }}>
+        <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
           Whisper — офлайн-модель транскрипции от OpenAI. Модели хранятся на устройстве. Большие
           модели дают лучшее качество, но требуют больше памяти и работают медленнее.
         </Text>
-
         <View className="overflow-hidden rounded-2xl">
           {WHISPER_MODELS.map((model, index) => {
             const isSelected = model.id === selectedWhisperModel;
             const status = whisperModelStatuses[model.id] ?? 'not_downloaded';
             const isDownloaded = status === 'downloaded';
             const isDownloading = status === 'downloading';
-            const isFirst = index === 0;
             const isLast = index === WHISPER_MODELS.length - 1;
 
             const borderStyle = !isLast
               ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
               : {};
-            const radiusClass =
-              isFirst && isLast
-                ? 'rounded-2xl'
-                : isFirst
-                  ? 'rounded-t-2xl'
-                  : isLast
-                    ? 'rounded-b-2xl'
-                    : '';
+            const radiusClass = getCardRadiusClass(index, WHISPER_MODELS.length);
 
             return (
               <TouchableOpacity
@@ -119,7 +136,7 @@ export const WhisperModelPickerScreen = () => {
                   <View className="mr-3 flex-1">
                     <View className="mb-1 flex-row items-center gap-2">
                       <Text
-                        className="text-[15px] font-semibold"
+                        className="text-[16px] font-semibold"
                         style={{ color: color.text.primary }}
                       >
                         Whisper {model.name}
@@ -128,19 +145,19 @@ export const WhisperModelPickerScreen = () => {
                         className="rounded-full px-2 py-0.5"
                         style={{ backgroundColor: color.background.tertiary }}
                       >
-                        <Text className="text-[11px]" style={{ color: color.text.secondary }}>
+                        <Text className="text-[12px]" style={{ color: color.text.secondary }}>
                           {model.sizeLabel}
                         </Text>
                       </View>
                     </View>
                     <Text
-                      className="mb-1.5 text-[13px] leading-5"
+                      className="mb-1.5 text-[14px] leading-5"
                       style={{ color: color.text.secondary }}
                     >
                       {model.description}
                     </Text>
                     <View className="flex-row items-center gap-3">
-                      <Text className="text-[12px]" style={{ color: color.text.secondary }}>
+                      <Text className="text-[14px]" style={{ color: color.text.secondary }}>
                         Качество: {ACCURACY_LABEL[model.accuracy]}
                       </Text>
                       <View className="flex-row items-center gap-1">
@@ -148,25 +165,47 @@ export const WhisperModelPickerScreen = () => {
                           className="h-2 w-2 rounded-full"
                           style={{ backgroundColor: SPEED_COLOR[model.speed] }}
                         />
-                        <Text className="text-[12px]" style={{ color: color.text.secondary }}>
+                        <Text className="text-[14px]" style={{ color: color.text.secondary }}>
                           {SPEED_LABEL[model.speed]}
                         </Text>
                       </View>
                     </View>
+                    {compatibility && (
+                      <View className="mt-1.5 flex-row items-center gap-2">
+                        <Smartphone
+                          size={14}
+                          color={
+                            compatibility[model.id].isCompatible ? '#10b981' : color.accent.delete
+                          }
+                          strokeWidth={2}
+                        />
+                        <Text
+                          className="flex-1 text-[14px]"
+                          style={{
+                            color: compatibility[model.id].isCompatible
+                              ? '#10b981'
+                              : color.accent.delete,
+                          }}
+                        >
+                          {compatibility[model.id].isCompatible
+                            ? 'Совместимо с устройством'
+                            : compatibility[model.id].reason}
+                        </Text>
+                      </View>
+                    )}
                     {isDownloading ? (
                       <Text
-                        className="mt-1.5 text-[12px] font-medium"
+                        className="mt-1.5 text-[14px] font-medium"
                         style={{ color: color.accent.primary }}
                       >
                         Скачивание...
                       </Text>
                     ) : !isDownloaded ? (
-                      <Text className="mt-1.5 text-[12px]" style={{ color: color.text.secondary }}>
+                      <Text className="mt-1.5 text-[14px]" style={{ color: color.text.secondary }}>
                         Не скачана — нажмите для загрузки
                       </Text>
                     ) : null}
                   </View>
-
                   {isDownloading ? (
                     <Loader size={22} color={color.accent.primary} strokeWidth={2} />
                   ) : isDownloaded && isSelected ? (

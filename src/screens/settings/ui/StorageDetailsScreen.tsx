@@ -1,27 +1,14 @@
 import { useNavigation } from '@react-navigation/native';
 import { Bot, BrainCircuit, Clock, FileText, Mic, Mic2, Trash2, Type } from 'lucide-react-native';
-import React, { useState } from 'react';
-import { Alert, ScrollView, Text, useColorScheme, View } from 'react-native';
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, ScrollView, Text, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { getColors } from '@/shared/config';
+import { clearCache, getStorageStats, type StorageStats } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
-
-type StorageStats = {
-  audioMb: number;
-  transcriptKb: number;
-  cacheKb: number;
-  totalMb: number;
-};
-
-const MOCK_STORAGE: StorageStats = {
-  audioMb: 42.7,
-  transcriptKb: 380,
-  cacheKb: 1200,
-  totalMb: 44.5,
-};
 
 const formatModelSize = (mb: number): string => {
   if (mb >= 1000) {
@@ -34,23 +21,25 @@ const formatModelSize = (mb: number): string => {
 const StorageBar = ({
   audioMb,
   transcriptKb,
+  aiDataKb,
   cacheKb,
   modelsMb,
   totalMb,
   color,
 }: StorageStats & { modelsMb: number; color: ReturnType<typeof getColors> }) => {
-  const audioFrac = audioMb / totalMb;
-  const transcriptFrac = transcriptKb / 1024 / totalMb;
-  const cacheFrac = cacheKb / 1024 / totalMb;
-  const modelsFrac = modelsMb / totalMb;
+  const divisor = totalMb > 0 ? totalMb : 1;
+  const audioFrac = audioMb / divisor;
+  const transcriptFrac = transcriptKb / 1024 / divisor;
+  const cacheFrac = cacheKb / 1024 / divisor;
+  const modelsFrac = modelsMb / divisor;
 
   return (
     <View>
       <View className="mb-3 flex-row items-center justify-between">
-        <Text className="text-[15px] font-semibold" style={{ color: color.text.primary }}>
+        <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
           Использовано
         </Text>
-        <Text className="text-[15px] font-semibold" style={{ color: color.text.primary }}>
+        <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
           {totalMb >= 1000 ? `${(totalMb / 1000).toFixed(1)} ГБ` : `${totalMb.toFixed(1)} МБ`}
         </Text>
       </View>
@@ -72,11 +61,11 @@ const StorageBar = ({
               className="h-3 w-3 rounded-full"
               style={{ backgroundColor: color.accent.primary }}
             />
-            <Text className="text-[13px]" style={{ color: color.text.secondary }}>
+            <Text className="text-[14px]" style={{ color: color.text.secondary }}>
               Аудиозаписи
             </Text>
           </View>
-          <Text className="text-[13px]" style={{ color: color.text.primary }}>
+          <Text className="text-[14px]" style={{ color: color.text.primary }}>
             {audioMb.toFixed(1)} МБ
           </Text>
         </View>
@@ -86,12 +75,26 @@ const StorageBar = ({
               className="h-3 w-3 rounded-full"
               style={{ backgroundColor: color.accent.transcript }}
             />
-            <Text className="text-[13px]" style={{ color: color.text.secondary }}>
-              Транскрипты
+            <Text className="text-[14px]" style={{ color: color.text.secondary }}>
+              Транскрипты и данные
             </Text>
           </View>
-          <Text className="text-[13px]" style={{ color: color.text.primary }}>
-            {transcriptKb} КБ
+          <Text className="text-[14px]" style={{ color: color.text.primary }}>
+            {Math.round(transcriptKb)} КБ
+          </Text>
+        </View>
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center gap-2">
+            <View
+              className="h-3 w-3 rounded-full"
+              style={{ backgroundColor: color.accent.success }}
+            />
+            <Text className="text-[14px]" style={{ color: color.text.secondary }}>
+              ИИ обработка
+            </Text>
+          </View>
+          <Text className="text-[14px]" style={{ color: color.text.primary }}>
+            {Math.round(aiDataKb)} КБ
           </Text>
         </View>
         <View className="flex-row items-center justify-between">
@@ -100,12 +103,12 @@ const StorageBar = ({
               className="h-3 w-3 rounded-full"
               style={{ backgroundColor: color.accent.cache }}
             />
-            <Text className="text-[13px]" style={{ color: color.text.secondary }}>
+            <Text className="text-[14px]" style={{ color: color.text.secondary }}>
               Кэш
             </Text>
           </View>
-          <Text className="text-[13px]" style={{ color: color.text.primary }}>
-            {cacheKb} КБ
+          <Text className="text-[14px]" style={{ color: color.text.primary }}>
+            {Math.round(cacheKb)} КБ
           </Text>
         </View>
         {modelsMb > 0 && (
@@ -115,11 +118,11 @@ const StorageBar = ({
                 className="h-3 w-3 rounded-full"
                 style={{ backgroundColor: color.accent.success }}
               />
-              <Text className="text-[13px]" style={{ color: color.text.secondary }}>
+              <Text className="text-[14px]" style={{ color: color.text.secondary }}>
                 Whisper модели
               </Text>
             </View>
-            <Text className="text-[13px]" style={{ color: color.text.primary }}>
+            <Text className="text-[14px]" style={{ color: color.text.primary }}>
               {formatModelSize(modelsMb)}
             </Text>
           </View>
@@ -129,6 +132,14 @@ const StorageBar = ({
   );
 };
 
+const DEFAULT_STATS: StorageStats = {
+  audioMb: 0,
+  transcriptKb: 0,
+  aiDataKb: 0,
+  cacheKb: 0,
+  totalMb: 0,
+};
+
 export const StorageDetailsScreen = () => {
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const insets = useSafeAreaInsets();
@@ -136,7 +147,26 @@ export const StorageDetailsScreen = () => {
   const records = useRecordStore((s) => s.records);
   const deleteRecord = useRecordStore((s) => s.deleteRecord);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
-  const [stats] = useState<StorageStats>(MOCK_STORAGE);
+  const [stats, setStats] = useState<StorageStats>(DEFAULT_STATS);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isClearing, setIsClearing] = useState(false);
+
+  const refreshStats = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const paths = records.map((r) => r.audioPath).filter((p): p is string => Boolean(p));
+      const s = await getStorageStats(paths, records);
+      setStats(s);
+    } catch (err) {
+      console.warn('[StorageDetails] Failed to load stats:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [records]);
+
+  useEffect(() => {
+    refreshStats();
+  }, [refreshStats]);
 
   const audioCount = records.filter((r) => r.audioPath).length;
   const withTranscript = records.filter((r) => r.transcript && r.transcript.length > 0).length;
@@ -151,7 +181,24 @@ export const StorageDetailsScreen = () => {
   const handleClearCache = () => {
     Alert.alert('Очистить кэш', 'Временные файлы будут удалены. Продолжить?', [
       { text: 'Отмена', style: 'cancel' },
-      { text: 'Очистить', onPress: () => Alert.alert('Готово', 'Кэш очищен') },
+      {
+        text: 'Очистить',
+        onPress: async () => {
+          setIsClearing(true);
+          try {
+            const paths = records.map((r) => r.audioPath).filter((p): p is string => Boolean(p));
+            const freed = await clearCache(paths);
+            await refreshStats();
+            const freedKb = Math.round(freed / 1024);
+            Alert.alert('Готово', `Кэш очищен. Освобождено: ${freedKb} КБ`);
+          } catch (err) {
+            console.warn('[StorageDetails] Failed to clear cache:', err);
+            Alert.alert('Ошибка', 'Не удалось очистить кэш');
+          } finally {
+            setIsClearing(false);
+          }
+        },
+      },
     ]);
   };
 
@@ -187,9 +234,17 @@ export const StorageDetailsScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View className="mb-6 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
-          <StorageBar {...stats} modelsMb={modelsMb} totalMb={totalMb} color={color} />
+          {isLoading ? (
+            <View className="items-center justify-center py-8">
+              <ActivityIndicator size="large" color={color.accent.primary} />
+              <Text className="mt-3 text-[16px]" style={{ color: color.text.secondary }}>
+                Подсчёт размера...
+              </Text>
+            </View>
+          ) : (
+            <StorageBar {...stats} modelsMb={modelsMb} totalMb={totalMb} color={color} />
+          )}
         </View>
-
         <SettingsSection title="Детализация" color={color}>
           <SettingsRow
             label="Аудиозаписи"
@@ -201,9 +256,16 @@ export const StorageDetailsScreen = () => {
           />
           <SettingsRow
             label="Транскрипты и данные"
-            value={`${stats.transcriptKb} КБ`}
+            value={`${Math.round(stats.transcriptKb)} КБ`}
             color={color}
             leftIcon={<Type size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+            showChevron={false}
+          />
+          <SettingsRow
+            label="ИИ обработка"
+            value={`${Math.round(stats.aiDataKb)} КБ`}
+            color={color}
+            leftIcon={<Bot size={20} color={color.accent.success} strokeWidth={1.8} />}
             showChevron={false}
             isLast={downloadedModels.length === 0}
           />
@@ -225,7 +287,6 @@ export const StorageDetailsScreen = () => {
             </>
           )}
         </SettingsSection>
-
         <SettingsSection title="Статистика" color={color}>
           <SettingsRow
             label="Всего записей"
@@ -262,10 +323,10 @@ export const StorageDetailsScreen = () => {
         <SettingsSection title="Управление" color={color}>
           <SettingsRow
             label="Очистить кэш"
-            value={`${stats.cacheKb} КБ`}
+            value={isClearing ? 'Очистка...' : `${Math.round(stats.cacheKb)} КБ`}
             color={color}
             leftIcon={<Trash2 size={20} color={color.accent.cache} strokeWidth={1.8} />}
-            onPress={handleClearCache}
+            onPress={isClearing ? undefined : handleClearCache}
             isFirst
           />
           <SettingsRow

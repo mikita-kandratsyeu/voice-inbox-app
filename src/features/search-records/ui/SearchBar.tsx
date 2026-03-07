@@ -33,7 +33,7 @@ export const SearchBar = ({
         ref={inputRef}
         style={{
           flex: 1,
-          fontSize: 14,
+          fontSize: 16,
           color: color.text.primary,
           paddingVertical: 0,
           margin: 0,

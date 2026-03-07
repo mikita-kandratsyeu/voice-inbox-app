@@ -2,8 +2,8 @@
 
 ## Steps to Reproduce the Problem
 
-  1.
-  2.
+1.
+2.
 
 ## Expected Behavior
 
@@ -11,8 +11,9 @@
 
 ## Specifications
 
-  - Version:
-  - Platform:
+- Version:
+- Platform:
 
 ###### DO NOT REMOVE MENTION BELOW
+
 **Owner - @mikita-kandratsyeu**

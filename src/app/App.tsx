@@ -6,6 +6,8 @@ import { StatusBar, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
+import { OnboardingGate } from '@/features/onboarding';
 import { getColors } from '@/shared/config';
 
 import { RootNavigator } from './navigation/RootNavigator';
@@ -35,7 +37,11 @@ const App = () => {
           backgroundColor={color.background.primary}
         />
         <NavigationContainer>
-          <RootNavigator />
+          <OnboardingGate>
+            <AppLockGate>
+              <RootNavigator />
+            </AppLockGate>
+          </OnboardingGate>
         </NavigationContainer>
       </SafeAreaProvider>
     </GestureHandlerRootView>
