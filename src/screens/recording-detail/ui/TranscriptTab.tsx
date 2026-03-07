@@ -3,6 +3,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 
 import type { TranscriptSegment } from '@/entities/record';
+import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { Button, TabEmptyState } from '@/shared/ui';
 
@@ -13,6 +14,10 @@ type TranscriptTabProps = {
 };
 
 export const TranscriptTab = ({ segments, color, onTranscribe }: TranscriptTabProps) => {
+  const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const whisperModelName =
+    WHISPER_MODELS.find((m) => m.id === selectedWhisperModel)?.name ?? selectedWhisperModel;
+
   if (segments.length === 0) {
     return (
       <TabEmptyState
@@ -21,7 +26,7 @@ export const TranscriptTab = ({ segments, color, onTranscribe }: TranscriptTabPr
         description={'Нажмите кнопку ниже, чтобы\nтранскрибировать запись на устройстве.'}
         buttonLabel="Транскрибировать"
         buttonIcon={<Mic size={18} color="#fff" strokeWidth={2} />}
-        hint="Whisper · Оффлайн · Приватно"
+        hint={`Whisper ${whisperModelName} · Оффлайн · Приватно`}
         onPress={onTranscribe}
         color={color}
       />

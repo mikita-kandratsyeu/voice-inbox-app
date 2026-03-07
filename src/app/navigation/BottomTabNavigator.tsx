@@ -7,10 +7,10 @@ import { useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { InboxScreen } from '@/screens/inbox';
-import { SettingsScreen } from '@/screens/settings';
 import { getColors } from '@/shared/config';
 
 import { TAB_ICON_SIZE, TAB_ICONS, TAB_LABELS } from './config';
+import { SettingsNavigator } from './SettingsNavigator';
 import type { BottomTabParamList } from './types';
 import { AnimatedTabButton, CenterRecordButton, EmptyScreen } from './ui';
 
@@ -50,6 +50,7 @@ export const BottomTabNavigator = () => {
     tabBarItemStyle: {
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
+      paddingHorizontal: 16,
     },
     tabBarButton: (props: BottomTabBarButtonProps) => <AnimatedTabButton {...props} />,
     lazy: true,
@@ -89,8 +90,8 @@ export const BottomTabNavigator = () => {
           }}
         />
         <Tab.Screen
-          name="Settings"
-          component={SettingsScreen}
+          name="SettingsRoot"
+          component={SettingsNavigator}
           options={{
             tabBarLabel: TAB_LABELS.Settings,
             tabBarIcon: ({ color: c }) => (

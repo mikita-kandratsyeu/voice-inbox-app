@@ -3,11 +3,19 @@ import type { VoiceRecord } from '@/entities/record';
 export type BottomTabParamList = {
   Inbox: undefined;
   Record: undefined;
-  Settings: undefined;
+  SettingsRoot: undefined;
 };
 
 export type RootStackParamList = {
   Main: undefined;
   RecordModal: undefined;
   RecordingDetail: { record: VoiceRecord };
+};
+
+export type SettingsStackParamList = {
+  Settings: undefined;
+  AIModelPicker: undefined;
+  WhisperModelPicker: undefined;
+  StorageDetails: undefined;
+  AboutApp: undefined;
 };

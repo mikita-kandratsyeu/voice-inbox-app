@@ -17,7 +17,7 @@ export const CenterRecordButton = ({ iconColor, accentColor }: CenterRecordButto
 
   const handlePressIn = () => {
     Animated.spring(scale, {
-      toValue: 0.88,
+      toValue: 0.9,
       useNativeDriver: true,
       speed: 40,
       bounciness: 6,
@@ -40,14 +40,16 @@ export const CenterRecordButton = ({ iconColor, accentColor }: CenterRecordButto
   return (
     <View className="flex-1 items-center justify-center">
       <Animated.View
-        className="mb-[30px] h-[60px] w-[60px] rounded-full"
         style={{
+          width: 72,
+          height: 46,
+          borderRadius: 14,
           backgroundColor: accentColor,
           shadowColor: accentColor,
-          shadowOffset: { width: 0, height: 6 },
+          shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.35,
-          shadowRadius: 12,
-          elevation: 10,
+          shadowRadius: 8,
+          elevation: 6,
           transform: [{ scale }],
         }}
       >
@@ -56,9 +58,15 @@ export const CenterRecordButton = ({ iconColor, accentColor }: CenterRecordButto
           onPress={handlePress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          className="h-[60px] w-[60px] items-center justify-center rounded-full"
+          style={{
+            width: 72,
+            height: 46,
+            borderRadius: 14,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          <Mic size={26} color={iconColor} strokeWidth={2} />
+          <Mic size={24} color={iconColor} strokeWidth={2} />
         </TouchableOpacity>
       </Animated.View>
     </View>
