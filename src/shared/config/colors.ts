@@ -38,6 +38,12 @@ export const colors = {
       privacy: { border: '#c4b5fd', text: '#6d28d9' },
       ai: { border: '#fcd34d', text: '#b45309' },
     },
+    status: {
+      success: '#22c55e',
+      processing: { bg: '#eff6ff', text: '#3b82f6' },
+      error: { bg: '#fef2f2', text: '#ef4444' },
+      muted: { bg: '#f3f4f6', text: '#9ca3af' },
+    },
     shadow: {
       color: '#000000',
       opacity: 0.06,
@@ -82,6 +88,12 @@ export const colors = {
       privacy: { border: '#c4b5fd', text: '#6d28d9' },
       ai: { border: '#fcd34d', text: '#b45309' },
     },
+    status: {
+      success: '#22c55e',
+      processing: { bg: '#1e3a5f', text: '#60a5fa' },
+      error: { bg: '#450a0a', text: '#f87171' },
+      muted: { bg: '#374151', text: '#6b7280' },
+    },
     shadow: {
       color: '#000000',
       opacity: 0.3,
@@ -113,6 +125,12 @@ export type Colors = {
     zap: { color: string; bg: string };
     privacy: { border: string; text: string };
     ai: { border: string; text: string };
+  };
+  status: {
+    success: string;
+    processing: { bg: string; text: string };
+    error: { bg: string; text: string };
+    muted: { bg: string; text: string };
   };
   shadow: { color: string; opacity: number };
 };
