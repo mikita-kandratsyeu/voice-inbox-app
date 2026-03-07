@@ -62,7 +62,7 @@ export const InboxScreen = () => {
       ) : totalCount === 0 ? (
         <EmptyState
           title="Нет входящих"
-          description="Здесь будут отображаться ваши входящие голосовые сообщения"
+          description="Здесь будут отображаться ваши входящие голосовые заметки"
         />
       ) : (
         <View style={{ flex: 1, backgroundColor: color.background.secondary }}>

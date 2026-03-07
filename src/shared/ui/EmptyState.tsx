@@ -11,7 +11,7 @@ type EmptyStateProps = {
 
 export const EmptyState = ({
   title = 'Нет записей',
-  description = 'Здесь будут отображаться ваши входящие голосовые сообщения',
+  description = 'Здесь будут отображаться ваши входящие голосовые заметки',
 }: EmptyStateProps) => {
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
 

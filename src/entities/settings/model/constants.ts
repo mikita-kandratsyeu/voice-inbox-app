@@ -2,6 +2,14 @@ import type { AIModel, WhisperModel } from './types';
 
 export const AI_MODELS: AIModel[] = [
   {
+    id: 'arcee-ai/trinity-large-preview:free',
+    name: 'Trinity Large Preview Free',
+    provider: 'Arcee AI',
+    description: 'Мощная модель с поддержкой мультимодального ввода',
+    contextWindow: '131K токенов',
+    speed: 'medium',
+  },
+  {
     id: 'google/gemini-3-flash-preview',
     name: 'Gemini 3 Flash',
     provider: 'Google',
