@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { Github, Mail, Mic } from 'lucide-react-native';
+import { Mail, Mic } from 'lucide-react-native';
 import React from 'react';
 import { Linking, ScrollView, Text, useColorScheme, View } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
