@@ -12,6 +12,7 @@ export const requestMicPermission = async (): Promise<boolean> => {
           buttonNegative: 'Отмена',
         },
       );
+
       return granted === PermissionsAndroid.RESULTS.GRANTED;
     } catch {
       return false;

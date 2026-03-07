@@ -20,6 +20,8 @@ export const colors = {
       unpin: '#f59e0b',
       delete: '#ef4444',
       success: '#22c55e',
+      transcript: '#8b5cf6',
+      cache: '#f59e0b',
     },
     icon: {
       onAccent: '#ffffff',
@@ -54,6 +56,8 @@ export const colors = {
       unpin: '#f59e0b',
       delete: '#ef4444',
       success: '#22c55e',
+      transcript: '#8b5cf6',
+      cache: '#f59e0b',
     },
     icon: {
       onAccent: '#ffffff',
@@ -75,7 +79,15 @@ export type Colors = {
   background: { primary: string; secondary: string; tertiary: string; card: string };
   text: { primary: string; secondary: string; muted: string };
   border: { default: string };
-  accent: { primary: string; pin: string; unpin: string; delete: string; success: string };
+  accent: {
+    primary: string;
+    pin: string;
+    unpin: string;
+    delete: string;
+    success: string;
+    transcript: string;
+    cache: string;
+  };
   icon: { onAccent: string; muted: string };
   tab: { inactive: string };
   shadow: { color: string; opacity: number };

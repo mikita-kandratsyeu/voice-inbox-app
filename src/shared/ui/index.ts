@@ -1,7 +1,10 @@
 export type { ButtonProps, ButtonSize, ButtonVariant } from './Button';
 export { Button } from './Button';
 export { EmptyState } from './EmptyState';
+export { ScreenHeader } from './ScreenHeader';
 export { SectionHeader } from './SectionHeader';
+export { SettingsRow } from './SettingsRow';
+export { SettingsSection } from './SettingsSection';
 export { SkeletonPulse } from './SkeletonPulse';
 export { SwipeableCard } from './SwipeableCard';
 export { TabEmptyState } from './TabEmptyState';

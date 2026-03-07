@@ -6366,7 +6366,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"invariant@npm:^2.2.4":
+"invariant@npm:2.2.4, invariant@npm:^2.2.4":
   version: 2.2.4
   resolution: "invariant@npm:2.2.4"
   dependencies:
@@ -9220,6 +9220,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-document-picker@npm:^9.3.1":
+  version: 9.3.1
+  resolution: "react-native-document-picker@npm:9.3.1"
+  dependencies:
+    invariant: "npm:^2.2.4"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-windows: "*"
+  peerDependenciesMeta:
+    react-native-windows:
+      optional: true
+  checksum: 10c0/62ac1c1567fb4aabd791c03768e51b0898de727e37bb695cca9fc72c31eb3f2d75faf5bc7fb4be86a3e2b96b77cf948558b496412ecf17687ca006eb52ef6dd8
+  languageName: node
+  linkType: hard
+
 "react-native-dotenv@npm:^3.4.11":
   version: 3.4.11
   resolution: "react-native-dotenv@npm:3.4.11"
@@ -9268,6 +9284,17 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10c0/87d20b900aded7d44c90afb946a7aa03c23a94ca3dd547bdddc2303b85357e4aab22567a57b19f1558d6c8be7058e3dcf34faa1e15182d1604f90974266d9a1d
+  languageName: node
+  linkType: hard
+
+"react-native-mmkv@npm:^4.2.0":
+  version: 4.2.0
+  resolution: "react-native-mmkv@npm:4.2.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: "*"
+  checksum: 10c0/da2211a52f3a5c256906fcc75d0701d0ee21a7e08c1c630d360df5d1f822efebd7daadf598e052d41bbdc74c6677eee58c8dd6680025b71f777e8527e4e7e8a9
   languageName: node
   linkType: hard
 
@@ -9329,6 +9356,19 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10c0/6aa5ea4745c7d174909468b5d5cb75059856d907f0b039bf3650deb81c9afcbd356f2382d7a7424d4cc69597aea5a508484ee5dba91b9126e3b520bc10faefe9
+  languageName: node
+  linkType: hard
+
+"react-native-webview@npm:^13.16.1":
+  version: 13.16.1
+  resolution: "react-native-webview@npm:13.16.1"
+  dependencies:
+    escape-string-regexp: "npm:^4.0.0"
+    invariant: "npm:2.2.4"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/8fdf14447bc430100d78030b8fdb60df223bd51cdb25c06d58757962fea8ad0cd9cdb13a7aa40ff795c671d2b04a561cbeb2b5795d95780d7f0d3734573ebeeb
   languageName: node
   linkType: hard
 
@@ -10897,14 +10937,17 @@ __metadata:
     react: "npm:19.2.3"
     react-native: "npm:0.84.1"
     react-native-audio-recorder-player: "npm:^4.5.0"
+    react-native-document-picker: "npm:^9.3.1"
     react-native-dotenv: "npm:^3.4.11"
     react-native-fs: "npm:^2.20.0"
     react-native-gesture-handler: "npm:^2.30.0"
+    react-native-mmkv: "npm:^4.2.0"
     react-native-nitro-modules: "npm:^0.35.0"
     react-native-reanimated: "npm:^4.2.2"
     react-native-safe-area-context: "npm:^5.7.0"
     react-native-screens: "npm:^4.24.0"
     react-native-svg: "npm:^15.15.3"
+    react-native-webview: "npm:^13.16.1"
     react-native-worklets: "npm:~0.7.0"
     react-test-renderer: "npm:19.2.3"
     tailwindcss: "npm:^3.4.17"
