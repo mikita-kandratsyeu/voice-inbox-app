@@ -1,5 +1,5 @@
 import { Lock, Mic, Sparkles, Zap } from 'lucide-react-native';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Dimensions, FlatList, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import Animated, {
   interpolate,
@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getColors } from '@/shared/config';
 
 import { setHasSeenOnboarding } from '../lib/onboardingStorage';
-import { ONBOARDING_SLIDES, type OnboardingSlide } from '../model/constants';
+import { getOnboardingSlides, type OnboardingSlide } from '../model/constants';
 
 const ICON_MAP = {
   Mic,
@@ -34,36 +34,39 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<OnboardingSlide>);
 
-const SLIDE_COLORS = ONBOARDING_SLIDES.map((s) => s.iconColor);
-
 const DOT_SIZE = 8;
 const PILL_WIDTH = 20;
 const DOT_GAP = 4;
 const SLOT_WIDTH = PILL_WIDTH + DOT_GAP;
 const DOT_LEFT = (SLOT_WIDTH - DOT_SIZE) / 2;
 const PILL_LEFT = (SLOT_WIDTH - PILL_WIDTH) / 2;
-const PILL_POSITIONS = ONBOARDING_SLIDES.map((_, i) => i * SLOT_WIDTH + PILL_LEFT);
 
 const AnimatedProgressDots = ({
   scrollX,
   onDotPress,
   color,
+  slides,
 }: {
   scrollX: SharedValue<number>;
   onDotPress: (index: number) => void;
   color: ReturnType<typeof getColors>;
+  slides: OnboardingSlide[];
 }) => {
+  const pillPositions = slides.map((_, i) => i * SLOT_WIDTH + PILL_LEFT);
+  const slideColors = slides.map((s) => s.iconColor);
+
   const pillStyle = useAnimatedStyle(() => {
     const translateX = interpolate(
       scrollX.value,
-      ONBOARDING_SLIDES.map((_, i) => i * SCREEN_WIDTH),
-      PILL_POSITIONS,
+      slides.map((_, i) => i * SCREEN_WIDTH),
+      pillPositions,
     );
     const backgroundColor = interpolateColor(
       scrollX.value,
-      ONBOARDING_SLIDES.map((_, i) => i * SCREEN_WIDTH),
-      SLIDE_COLORS,
+      slides.map((_, i) => i * SCREEN_WIDTH),
+      slideColors,
     );
+
     return {
       transform: [{ translateX }],
       backgroundColor,
@@ -72,10 +75,8 @@ const AnimatedProgressDots = ({
 
   return (
     <View className="mb-6 flex-row justify-center" style={{ height: DOT_SIZE }}>
-      <View
-        style={{ position: 'relative', width: ONBOARDING_SLIDES.length * SLOT_WIDTH - DOT_GAP }}
-      >
-        {ONBOARDING_SLIDES.map((_, index) => (
+      <View style={{ position: 'relative', width: slides.length * SLOT_WIDTH - DOT_GAP }}>
+        {slides.map((_, index) => (
           <TouchableOpacity
             key={index}
             onPress={() => onDotPress(index)}
@@ -113,14 +114,19 @@ const AnimatedNextButton = ({
   label,
   onPress,
   scrollX,
+  slideColors,
+  iconOnAccent,
 }: {
   label: string;
   onPress: () => void;
   scrollX: SharedValue<number>;
+  slideColors: string[];
+  iconOnAccent: string;
 }) => {
   const animatedStyle = useAnimatedStyle(() => {
-    const inputRange = ONBOARDING_SLIDES.map((_, i) => i * SCREEN_WIDTH);
-    const backgroundColor = interpolateColor(scrollX.value, inputRange, SLIDE_COLORS);
+    const inputRange = slideColors.map((_, i) => i * SCREEN_WIDTH);
+    const backgroundColor = interpolateColor(scrollX.value, inputRange, slideColors);
+
     return {
       backgroundColor,
     };
@@ -134,7 +140,7 @@ const AnimatedNextButton = ({
           borderRadius: 9999,
           minHeight: 52,
           overflow: 'hidden',
-          backgroundColor: SLIDE_COLORS[0],
+          backgroundColor: slideColors[0],
         },
         animatedStyle,
       ]}
@@ -144,7 +150,9 @@ const AnimatedNextButton = ({
         activeOpacity={0.85}
         className="flex-1 flex-row items-center justify-center py-3.5 px-7"
       >
-        <Text className="text-[16px] font-semibold text-white">{label}</Text>
+        <Text className="text-[16px] font-semibold" style={{ color: iconOnAccent }}>
+          {label}
+        </Text>
       </TouchableOpacity>
     </Animated.View>
   );
@@ -161,10 +169,12 @@ const AnimatedSlideIcon = ({
   iconName,
   iconColor,
   iconBg,
+  iconOnAccent,
 }: {
   iconName: OnboardingSlide['iconName'];
   iconColor: string;
   iconBg: string;
+  iconOnAccent: string;
 }) => {
   const scale = useSharedValue(1);
   const IconComponent = ICON_MAP[iconName];
@@ -199,7 +209,7 @@ const AnimatedSlideIcon = ({
           iconAnimatedStyle,
         ]}
       >
-        <IconComponent size={48} color="#ffffff" strokeWidth={2} />
+        <IconComponent size={48} color={iconOnAccent} strokeWidth={2} />
       </Animated.View>
     </View>
   );
@@ -227,7 +237,12 @@ const SlideItem = ({ item, index, scrollX, color }: SlideItemProps) => {
       style={[{ width: SCREEN_WIDTH, paddingHorizontal: 32 }, animatedStyle]}
       className="flex-1 items-center justify-center"
     >
-      <AnimatedSlideIcon iconName={item.iconName} iconColor={item.iconColor} iconBg={item.iconBg} />
+      <AnimatedSlideIcon
+        iconName={item.iconName}
+        iconColor={item.iconColor}
+        iconBg={item.iconBg}
+        iconOnAccent={color.icon.onAccent}
+      />
 
       <Text
         className="mb-4 text-center text-[28px] font-bold leading-tight"
@@ -248,11 +263,11 @@ const SlideItem = ({ item, index, scrollX, color }: SlideItemProps) => {
           className="flex-row items-center gap-2 rounded-full border px-4 py-2"
           style={{
             backgroundColor: item.iconBg,
-            borderColor: '#c4b5fd',
+            borderColor: color.onboarding.privacy.border,
           }}
         >
           <Lock size={16} color={item.iconColor} strokeWidth={2} />
-          <Text className="text-sm font-semibold" style={{ color: '#6d28d9' }}>
+          <Text className="text-sm font-semibold" style={{ color: color.onboarding.privacy.text }}>
             100% Приватно
           </Text>
         </View>
@@ -262,23 +277,29 @@ const SlideItem = ({ item, index, scrollX, color }: SlideItemProps) => {
         <View className="flex-row gap-3">
           <View
             className="flex-1 items-center rounded-xl border px-3 py-2"
-            style={{ backgroundColor: item.iconBg, borderColor: '#fcd34d' }}
+            style={{
+              backgroundColor: item.iconBg,
+              borderColor: color.onboarding.ai.border,
+            }}
           >
-            <Text className="text-xs" style={{ color: '#b45309' }}>
+            <Text className="text-xs" style={{ color: color.onboarding.ai.text }}>
               Конспект
             </Text>
-            <Text className="text-sm font-semibold" style={{ color: '#b45309' }}>
+            <Text className="text-sm font-semibold" style={{ color: color.onboarding.ai.text }}>
               По запросу
             </Text>
           </View>
           <View
             className="flex-1 items-center rounded-xl border px-3 py-2"
-            style={{ backgroundColor: item.iconBg, borderColor: '#fcd34d' }}
+            style={{
+              backgroundColor: item.iconBg,
+              borderColor: color.onboarding.ai.border,
+            }}
           >
-            <Text className="text-xs" style={{ color: '#b45309' }}>
+            <Text className="text-xs" style={{ color: color.onboarding.ai.text }}>
               Задачи
             </Text>
-            <Text className="text-sm font-semibold" style={{ color: '#b45309' }}>
+            <Text className="text-sm font-semibold" style={{ color: color.onboarding.ai.text }}>
               По запросу
             </Text>
           </View>
@@ -290,6 +311,8 @@ const SlideItem = ({ item, index, scrollX, color }: SlideItemProps) => {
 
 export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const slides = useMemo(() => getOnboardingSlides(color), [color]);
+  const slideColors = useMemo(() => slides.map((s) => s.iconColor), [slides]);
   const insets = useSafeAreaInsets();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList<OnboardingSlide>>(null);
@@ -307,11 +330,13 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   };
 
   const handleNext = () => {
-    const lastIndex = ONBOARDING_SLIDES.length - 1;
+    const lastIndex = slides.length - 1;
+
     if (currentIndex >= lastIndex) {
       handleComplete();
       return;
     }
+
     flatListRef.current?.scrollToOffset({
       offset: (currentIndex + 1) * SCREEN_WIDTH,
       animated: true,
@@ -332,7 +357,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
     [color, scrollX],
   );
 
-  const isLastSlide = currentIndex === ONBOARDING_SLIDES.length - 1;
+  const isLastSlide = currentIndex === slides.length - 1;
 
   return (
     <View
@@ -354,10 +379,9 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           </TouchableOpacity>
         </View>
       )}
-
       <AnimatedFlatList
         ref={flatListRef}
-        data={ONBOARDING_SLIDES}
+        data={slides}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
         horizontal
@@ -370,14 +394,19 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           setCurrentIndex(index);
         }}
       />
-
       <View className="px-6" style={{ paddingBottom: insets.bottom + 48, paddingTop: 32 }}>
-        <AnimatedProgressDots scrollX={scrollX} onDotPress={handleDotPress} color={color} />
-
+        <AnimatedProgressDots
+          scrollX={scrollX}
+          onDotPress={handleDotPress}
+          color={color}
+          slides={slides}
+        />
         <AnimatedNextButton
           label={isLastSlide ? 'Начать' : 'Далее'}
           onPress={handleNext}
           scrollX={scrollX}
+          slideColors={slideColors}
+          iconOnAccent={color.icon.onAccent}
         />
       </View>
     </View>

@@ -30,6 +30,14 @@ export const colors = {
     tab: {
       inactive: '#9ca3af',
     },
+    onboarding: {
+      mic: { color: '#3b82f6', bg: '#dbeafe' },
+      lock: { color: '#8b5cf6', bg: '#ede9fe' },
+      sparkles: { color: '#f59e0b', bg: '#fef3c7' },
+      zap: { color: '#10b981', bg: '#d1fae5' },
+      privacy: { border: '#c4b5fd', text: '#6d28d9' },
+      ai: { border: '#fcd34d', text: '#b45309' },
+    },
     shadow: {
       color: '#000000',
       opacity: 0.06,
@@ -66,6 +74,14 @@ export const colors = {
     tab: {
       inactive: '#4b5563',
     },
+    onboarding: {
+      mic: { color: '#3b82f6', bg: '#dbeafe' },
+      lock: { color: '#8b5cf6', bg: '#ede9fe' },
+      sparkles: { color: '#f59e0b', bg: '#fef3c7' },
+      zap: { color: '#10b981', bg: '#d1fae5' },
+      privacy: { border: '#c4b5fd', text: '#6d28d9' },
+      ai: { border: '#fcd34d', text: '#b45309' },
+    },
     shadow: {
       color: '#000000',
       opacity: 0.3,
@@ -90,6 +106,14 @@ export type Colors = {
   };
   icon: { onAccent: string; muted: string };
   tab: { inactive: string };
+  onboarding: {
+    mic: { color: string; bg: string };
+    lock: { color: string; bg: string };
+    sparkles: { color: string; bg: string };
+    zap: { color: string; bg: string };
+    privacy: { border: string; text: string };
+    ai: { border: string; text: string };
+  };
   shadow: { color: string; opacity: number };
 };
 
