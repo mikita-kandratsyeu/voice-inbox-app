@@ -13,7 +13,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
     id: 'record',
     title: 'Записывайте мысли голосом',
     description:
-      'Быстро фиксируйте идеи, задачи и заметки. Просто нажмите на кнопку и говорите — всё остальное сделаем мы.',
+      'Быстро фиксируйте идеи, задачи и заметки. Просто нажмите на кнопку и говорите — всё остальное сделает приложение.',
     iconName: 'Mic',
     iconColor: '#3b82f6',
     iconBg: '#dbeafe',
@@ -42,8 +42,7 @@ export const ONBOARDING_SLIDES: OnboardingSlide[] = [
   {
     id: 'ready',
     title: 'Всё готово!',
-    description:
-      'Начните записывать свои мысли прямо сейчас. Voice Inbox всегда под рукой для ваших идей.',
+    description: 'Начните записывать свои мысли прямо сейчас. Всегда под рукой для ваших идей.',
     iconName: 'Zap',
     iconColor: '#10b981',
     iconBg: '#d1fae5',

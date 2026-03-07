@@ -1,4 +1,4 @@
-import { Check, Lock, Mic, Sparkles, Zap } from 'lucide-react-native';
+import { Lock, Mic, Sparkles, Zap } from 'lucide-react-native';
 import React, { useCallback, useRef, useState } from 'react';
 import { Dimensions, FlatList, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import Animated, {
@@ -8,7 +8,6 @@ import Animated, {
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
   withRepeat,
   withSequence,
   withTiming,
@@ -38,8 +37,8 @@ const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<OnboardingSli
 const SLIDE_COLORS = ONBOARDING_SLIDES.map((s) => s.iconColor);
 
 const DOT_SIZE = 8;
-const PILL_WIDTH = 24;
-const DOT_GAP = 8;
+const PILL_WIDTH = 20;
+const DOT_GAP = 4;
 const SLOT_WIDTH = PILL_WIDTH + DOT_GAP;
 const DOT_LEFT = (SLOT_WIDTH - DOT_SIZE) / 2;
 const PILL_LEFT = (SLOT_WIDTH - PILL_WIDTH) / 2;
@@ -151,69 +150,11 @@ const AnimatedNextButton = ({
   );
 };
 
-const AnimatedDot = ({ delayMs = 0 }: { delayMs?: number }) => {
-  const translateY = useSharedValue(0);
-
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      translateY.value = withRepeat(
-        withSequence(withTiming(-8, { duration: 750 }), withTiming(0, { duration: 750 })),
-        -1,
-        false,
-      );
-    }, delayMs);
-    return () => clearTimeout(timer);
-  }, [delayMs, translateY]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  return (
-    <Animated.View
-      style={[{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#60a5fa' }, animatedStyle]}
-    />
-  );
-};
-
 type SlideItemProps = {
   item: OnboardingSlide;
   index: number;
   scrollX: SharedValue<number>;
   color: ReturnType<typeof getColors>;
-};
-
-const AnimatedCheckIcon = ({ iconColor, iconBg }: { iconColor: string; iconBg: string }) => {
-  const scale = useSharedValue(0);
-
-  React.useEffect(() => {
-    scale.value = withDelay(
-      200,
-      withSequence(withTiming(1.15, { duration: 400 }), withTiming(1, { duration: 300 })),
-    );
-  }, [scale]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
-  return (
-    <Animated.View
-      style={[
-        {
-          width: 80,
-          height: 80,
-          borderRadius: 40,
-          backgroundColor: iconBg,
-          alignItems: 'center',
-          justifyContent: 'center',
-        },
-        animatedStyle,
-      ]}
-    >
-      <Check size={40} color={iconColor} strokeWidth={3} />
-    </Animated.View>
-  );
 };
 
 const AnimatedSlideIcon = ({
@@ -302,14 +243,6 @@ const SlideItem = ({ item, index, scrollX, color }: SlideItemProps) => {
         {item.description}
       </Text>
 
-      {item.extra === 'dots' && (
-        <View className="flex-row gap-2">
-          {[0, 1, 2].map((i) => (
-            <AnimatedDot key={i} delayMs={i * 200} />
-          ))}
-        </View>
-      )}
-
       {item.extra === 'privacy' && (
         <View
           className="flex-row items-center gap-2 rounded-full border px-4 py-2"
@@ -350,10 +283,6 @@ const SlideItem = ({ item, index, scrollX, color }: SlideItemProps) => {
             </Text>
           </View>
         </View>
-      )}
-
-      {item.extra === 'check' && (
-        <AnimatedCheckIcon iconColor={item.iconColor} iconBg={item.iconBg} />
       )}
     </Animated.View>
   );
