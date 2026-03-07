@@ -2,13 +2,14 @@ import { useNavigation } from '@react-navigation/native';
 import { Github, Mail, Mic } from 'lucide-react-native';
 import React from 'react';
 import { Linking, ScrollView, Text, useColorScheme, View } from 'react-native';
+import DeviceInfo from 'react-native-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getColors } from '@/shared/config';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
-const APP_VERSION = '0.0.1';
-const APP_BUILD = '1';
+const APP_VERSION = DeviceInfo.getVersion();
+const APP_BUILD = DeviceInfo.getBuildNumber();
 
 export const AboutAppScreen = () => {
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
@@ -27,7 +28,7 @@ export const AboutAppScreen = () => {
         }}
         showsVerticalScrollIndicator={false}
       >
-        {/* App Icon + Name */}
+        å
         <View className="mb-8 items-center">
           <View
             className="mb-4 h-20 w-20 items-center justify-center rounded-[22px]"
@@ -38,9 +39,6 @@ export const AboutAppScreen = () => {
           <Text className="text-[22px] font-bold" style={{ color: color.text.primary }}>
             Voice Inbox
           </Text>
-          <Text className="mt-1 text-[14px]" style={{ color: color.text.secondary }}>
-            Версия {APP_VERSION} (сборка {APP_BUILD})
-          </Text>
           <Text
             className="mt-3 text-center text-[13px] leading-5 px-4"
             style={{ color: color.text.secondary }}
@@ -49,7 +47,6 @@ export const AboutAppScreen = () => {
             транскрипты, саммари и задачи с помощью ИИ.
           </Text>
         </View>
-
         <SettingsSection title="Приложение" color={color}>
           <SettingsRow
             label="Версия"
@@ -67,7 +64,6 @@ export const AboutAppScreen = () => {
             isLast
           />
         </SettingsSection>
-
         <SettingsSection title="Разработчик" color={color}>
           <SettingsRow
             label="Mikita Kandratsyeu"
@@ -84,7 +80,6 @@ export const AboutAppScreen = () => {
             isLast
           />
         </SettingsSection>
-
         <SettingsSection title="Технологии" color={color}>
           <SettingsRow label="React Native 0.84" color={color} showChevron={false} isFirst />
           <SettingsRow label="NativeWind · Tailwind CSS" color={color} showChevron={false} />
@@ -98,7 +93,6 @@ export const AboutAppScreen = () => {
             isLast
           />
         </SettingsSection>
-
         <Text className="mt-2 text-center text-[12px]" style={{ color: color.text.secondary }}>
           © {new Date().getFullYear()} Voice Inbox. Все права защищены.
         </Text>
