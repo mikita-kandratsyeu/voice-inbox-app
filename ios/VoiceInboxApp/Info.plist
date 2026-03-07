@@ -35,6 +35,8 @@
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Используйте Face ID для быстрой разблокировки приложения.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Приложению нужен доступ к микрофону для записи голосовых заметок.</string>
 	<key>RCTNewArchEnabled</key>

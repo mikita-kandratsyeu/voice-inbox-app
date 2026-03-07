@@ -1,11 +1,21 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Bot, Download, HardDrive, Info, Mic, Shield, UploadCloud } from 'lucide-react-native';
+import {
+  Bot,
+  Download,
+  Fingerprint,
+  HardDrive,
+  Info,
+  Mic,
+  Shield,
+  UploadCloud,
+} from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert, Linking, ScrollView, Text, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
+import { useAppLockStore } from '@/entities/app-lock';
 import { useRecordStore } from '@/entities/record';
 import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { exportData, importData } from '@/features/sync-data';
@@ -19,6 +29,7 @@ export const SettingsScreen = () => {
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
   const records = useRecordStore((s) => s.records);
   const addRecord = useRecordStore((s) => s.addRecord);
   const [isExporting, setIsExporting] = useState(false);
@@ -140,11 +151,18 @@ export const SettingsScreen = () => {
 
         <SettingsSection title="Устройство" color={color}>
           <SettingsRow
+            label="Блокировка приложения"
+            value={isAppLockEnabled ? 'Вкл' : 'Выкл'}
+            color={color}
+            leftIcon={<Fingerprint size={20} color={color.accent.primary} strokeWidth={1.8} />}
+            onPress={() => navigation.navigate('AppLockSetup')}
+            isFirst
+          />
+          <SettingsRow
             label="Офлайн хранилище"
             color={color}
             leftIcon={<HardDrive size={20} color={color.accent.success} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('StorageDetails')}
-            isFirst
             isLast
           />
         </SettingsSection>
