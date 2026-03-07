@@ -113,7 +113,11 @@ export const Button = ({
   return (
     <TouchableOpacity
       className={containerClassName}
-      style={[variantKey === 'danger' ? DANGER_BG : bg, containerStyle]}
+      style={[
+        variantKey === 'danger' ? DANGER_BG : bg,
+        containerStyle,
+        disabled && { opacity: 0.4 },
+      ]}
       activeOpacity={activeOpacity}
       disabled={disabled}
       {...rest}

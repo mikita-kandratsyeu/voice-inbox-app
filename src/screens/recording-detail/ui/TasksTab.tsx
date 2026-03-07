@@ -40,6 +40,7 @@ export const TasksTab = ({ tasks, color, onToggle, onExtract }: TasksTabProps) =
         buttonIcon={<ListChecks size={18} color="#fff" strokeWidth={2} />}
         hint={hint}
         hintIcon={hintIcon}
+        disabled={isConnected === false}
         onPress={onExtract}
         color={color}
       />

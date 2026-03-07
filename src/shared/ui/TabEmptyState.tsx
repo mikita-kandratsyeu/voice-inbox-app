@@ -13,6 +13,7 @@ type TabEmptyStateProps = {
   buttonIcon: React.ReactNode;
   hint: string;
   hintIcon?: React.ReactNode;
+  disabled?: boolean;
   onPress: () => void;
   color: Colors;
 };
@@ -25,6 +26,7 @@ export const TabEmptyState = ({
   buttonIcon,
   hint,
   hintIcon,
+  disabled = false,
   onPress,
   color,
 }: TabEmptyStateProps) => (
@@ -52,6 +54,7 @@ export const TabEmptyState = ({
       color={color}
       onPress={onPress}
       activeOpacity={0.85}
+      disabled={disabled}
       className="mt-2"
     />
     <View className="flex-row items-center gap-1">
