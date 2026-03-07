@@ -134,7 +134,7 @@ export const AppLockSetupScreen = () => {
           className="flex-1 justify-center px-6"
           style={{ paddingTop: 24, paddingBottom: insets.bottom + 24 }}
         >
-          <Text className="mb-6 text-center text-[15px]" style={{ color: color.text.secondary }}>
+          <Text className="mb-6 text-center text-[16px]" style={{ color: color.text.secondary }}>
             Установите 4-значный PIN-код для защиты приложения
           </Text>
 
@@ -150,7 +150,7 @@ export const AppLockSetupScreen = () => {
               >
                 <View className="flex-row items-center gap-3">
                   <BioIcon size={20} color={color.accent.success} strokeWidth={1.8} />
-                  <Text className="text-[15px]" style={{ color: color.text.primary }}>
+                  <Text className="text-[16px]" style={{ color: color.text.primary }}>
                     {bioLabel}
                   </Text>
                 </View>

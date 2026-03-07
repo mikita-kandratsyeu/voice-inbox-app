@@ -24,10 +24,10 @@ const StatCard = ({
     style={{ backgroundColor: color.background.card }}
   >
     <View className="mb-2">{icon}</View>
-    <Text className="text-[22px] font-bold" style={{ color: color.text.primary }}>
+    <Text className="text-[24px] font-bold" style={{ color: color.text.primary }}>
       {value}
     </Text>
-    <Text className="mt-0.5 text-center text-[12px]" style={{ color: color.text.secondary }}>
+    <Text className="mt-0.5 text-center text-[14px]" style={{ color: color.text.secondary }}>
       {label}
     </Text>
   </View>

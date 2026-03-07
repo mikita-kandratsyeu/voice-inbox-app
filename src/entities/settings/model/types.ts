@@ -1,10 +1,4 @@
-export type AIModelId =
-  | 'gpt-4o'
-  | 'gpt-4o-mini'
-  | 'claude-3-5-sonnet'
-  | 'claude-3-haiku'
-  | 'gemini-1-5-pro'
-  | 'gemini-1-5-flash';
+export type AIModelId = 'google/gemini-3-flash-preview';
 
 export type WhisperModelId =
   | 'whisper-tiny'

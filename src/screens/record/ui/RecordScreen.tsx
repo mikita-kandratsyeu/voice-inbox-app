@@ -82,8 +82,8 @@ export const RecordScreen = () => {
         </View>
         {state === 'idle' && (
           <View className="items-center gap-1">
-            <Text className="text-[15px] font-medium text-white/90">Запись работает оффлайн</Text>
-            <Text className="text-[13px] text-white/55">Транскрипция выполнится локально</Text>
+            <Text className="text-[16px] font-medium text-white/90">Запись работает оффлайн</Text>
+            <Text className="text-[14px] text-white/55">Транскрипция выполнится локально</Text>
           </View>
         )}
       </View>

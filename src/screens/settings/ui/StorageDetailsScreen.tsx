@@ -36,10 +36,10 @@ const StorageBar = ({
   return (
     <View>
       <View className="mb-3 flex-row items-center justify-between">
-        <Text className="text-[15px] font-semibold" style={{ color: color.text.primary }}>
+        <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
           Использовано
         </Text>
-        <Text className="text-[15px] font-semibold" style={{ color: color.text.primary }}>
+        <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
           {totalMb >= 1000 ? `${(totalMb / 1000).toFixed(1)} ГБ` : `${totalMb.toFixed(1)} МБ`}
         </Text>
       </View>
@@ -61,11 +61,11 @@ const StorageBar = ({
               className="h-3 w-3 rounded-full"
               style={{ backgroundColor: color.accent.primary }}
             />
-            <Text className="text-[13px]" style={{ color: color.text.secondary }}>
+            <Text className="text-[14px]" style={{ color: color.text.secondary }}>
               Аудиозаписи
             </Text>
           </View>
-          <Text className="text-[13px]" style={{ color: color.text.primary }}>
+          <Text className="text-[14px]" style={{ color: color.text.primary }}>
             {audioMb.toFixed(1)} МБ
           </Text>
         </View>
@@ -75,11 +75,11 @@ const StorageBar = ({
               className="h-3 w-3 rounded-full"
               style={{ backgroundColor: color.accent.transcript }}
             />
-            <Text className="text-[13px]" style={{ color: color.text.secondary }}>
+            <Text className="text-[14px]" style={{ color: color.text.secondary }}>
               Транскрипты и данные
             </Text>
           </View>
-          <Text className="text-[13px]" style={{ color: color.text.primary }}>
+          <Text className="text-[14px]" style={{ color: color.text.primary }}>
             {Math.round(transcriptKb)} КБ
           </Text>
         </View>
@@ -89,11 +89,11 @@ const StorageBar = ({
               className="h-3 w-3 rounded-full"
               style={{ backgroundColor: color.accent.success }}
             />
-            <Text className="text-[13px]" style={{ color: color.text.secondary }}>
+            <Text className="text-[14px]" style={{ color: color.text.secondary }}>
               ИИ обработка
             </Text>
           </View>
-          <Text className="text-[13px]" style={{ color: color.text.primary }}>
+          <Text className="text-[14px]" style={{ color: color.text.primary }}>
             {Math.round(aiDataKb)} КБ
           </Text>
         </View>
@@ -103,11 +103,11 @@ const StorageBar = ({
               className="h-3 w-3 rounded-full"
               style={{ backgroundColor: color.accent.cache }}
             />
-            <Text className="text-[13px]" style={{ color: color.text.secondary }}>
+            <Text className="text-[14px]" style={{ color: color.text.secondary }}>
               Кэш
             </Text>
           </View>
-          <Text className="text-[13px]" style={{ color: color.text.primary }}>
+          <Text className="text-[14px]" style={{ color: color.text.primary }}>
             {Math.round(cacheKb)} КБ
           </Text>
         </View>
@@ -118,11 +118,11 @@ const StorageBar = ({
                 className="h-3 w-3 rounded-full"
                 style={{ backgroundColor: color.accent.success }}
               />
-              <Text className="text-[13px]" style={{ color: color.text.secondary }}>
+              <Text className="text-[14px]" style={{ color: color.text.secondary }}>
                 Whisper модели
               </Text>
             </View>
-            <Text className="text-[13px]" style={{ color: color.text.primary }}>
+            <Text className="text-[14px]" style={{ color: color.text.primary }}>
               {formatModelSize(modelsMb)}
             </Text>
           </View>
@@ -237,7 +237,7 @@ export const StorageDetailsScreen = () => {
           {isLoading ? (
             <View className="items-center justify-center py-8">
               <ActivityIndicator size="large" color={color.accent.primary} />
-              <Text className="mt-3 text-[15px]" style={{ color: color.text.secondary }}>
+              <Text className="mt-3 text-[16px]" style={{ color: color.text.secondary }}>
                 Подсчёт размера...
               </Text>
             </View>

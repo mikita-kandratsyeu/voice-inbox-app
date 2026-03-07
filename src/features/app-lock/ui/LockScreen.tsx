@@ -88,13 +88,7 @@ export const LockScreen = () => {
         paddingBottom: insets.bottom,
       }}
     >
-      <Text
-        className="mb-2 text-center text-xl font-semibold"
-        style={{ color: color.text.primary }}
-      >
-        Voice Inbox заблокирован
-      </Text>
-      <Text className="mb-8 text-center text-[15px]" style={{ color: color.text.secondary }}>
+      <Text className="mb-8 text-center text-[16px]" style={{ color: color.text.secondary }}>
         Введите PIN-код для входа
       </Text>
 

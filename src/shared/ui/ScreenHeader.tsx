@@ -42,7 +42,7 @@ export const ScreenHeader = ({ title, color, onBack, rightSlot }: ScreenHeaderPr
         ) : null}
       </View>
       <Text
-        className="flex-1 text-center text-[17px] font-semibold"
+        className="flex-1 text-center text-[18px] font-semibold"
         style={{ color: color.text.primary }}
       >
         {title}

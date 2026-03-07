@@ -184,7 +184,7 @@ export const SaveRecordModal = ({
 
             <Text className="text-lg font-bold text-gray-900">Сохранить запись</Text>
             <TextInput
-              className="rounded-xl border-2 px-4 py-3 text-[15px]"
+              className="rounded-xl border-2 px-4 py-3 text-[16px]"
               style={{
                 borderColor: ACCENT_BLUE,
                 color: '#1a1a2e',
@@ -198,7 +198,7 @@ export const SaveRecordModal = ({
               returnKeyType="done"
               onSubmitEditing={handleSave}
             />
-            <Text className="-mt-1 text-[13px] text-gray-500">
+            <Text className="-mt-1 text-[14px] text-gray-500">
               Длительность: {formatTime(elapsed)}
             </Text>
             <View className="mt-1 flex-row gap-3">

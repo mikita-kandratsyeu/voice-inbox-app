@@ -240,10 +240,10 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
           />
         </View>
         <View className="flex-row justify-between">
-          <Text className="text-[11px] font-medium" style={{ color: color.text.secondary }}>
+          <Text className="text-[12px] font-medium" style={{ color: color.text.secondary }}>
             {formatTime(elapsed)}
           </Text>
-          <Text className="text-[11px] font-medium" style={{ color: color.text.secondary }}>
+          <Text className="text-[12px] font-medium" style={{ color: color.text.secondary }}>
             {duration}
           </Text>
         </View>

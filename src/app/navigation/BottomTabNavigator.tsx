@@ -40,7 +40,7 @@ export const BottomTabNavigator = () => {
       paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
     },
     tabBarLabelStyle: {
-      fontSize: 11,
+      fontSize: 12,
       fontWeight: '500' as const,
       marginTop: 2,
     },

@@ -81,7 +81,7 @@ export const WhisperModelPickerScreen = () => {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Text className="mb-4 text-[13px] leading-5" style={{ color: color.text.secondary }}>
+        <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
           Whisper — офлайн-модель транскрипции от OpenAI. Модели хранятся на устройстве. Большие
           модели дают лучшее качество, но требуют больше памяти и работают медленнее.
         </Text>
@@ -119,7 +119,7 @@ export const WhisperModelPickerScreen = () => {
                   <View className="mr-3 flex-1">
                     <View className="mb-1 flex-row items-center gap-2">
                       <Text
-                        className="text-[15px] font-semibold"
+                        className="text-[16px] font-semibold"
                         style={{ color: color.text.primary }}
                       >
                         Whisper {model.name}
@@ -128,19 +128,19 @@ export const WhisperModelPickerScreen = () => {
                         className="rounded-full px-2 py-0.5"
                         style={{ backgroundColor: color.background.tertiary }}
                       >
-                        <Text className="text-[11px]" style={{ color: color.text.secondary }}>
+                        <Text className="text-[12px]" style={{ color: color.text.secondary }}>
                           {model.sizeLabel}
                         </Text>
                       </View>
                     </View>
                     <Text
-                      className="mb-1.5 text-[13px] leading-5"
+                      className="mb-1.5 text-[14px] leading-5"
                       style={{ color: color.text.secondary }}
                     >
                       {model.description}
                     </Text>
                     <View className="flex-row items-center gap-3">
-                      <Text className="text-[12px]" style={{ color: color.text.secondary }}>
+                      <Text className="text-[14px]" style={{ color: color.text.secondary }}>
                         Качество: {ACCURACY_LABEL[model.accuracy]}
                       </Text>
                       <View className="flex-row items-center gap-1">
@@ -148,20 +148,20 @@ export const WhisperModelPickerScreen = () => {
                           className="h-2 w-2 rounded-full"
                           style={{ backgroundColor: SPEED_COLOR[model.speed] }}
                         />
-                        <Text className="text-[12px]" style={{ color: color.text.secondary }}>
+                        <Text className="text-[14px]" style={{ color: color.text.secondary }}>
                           {SPEED_LABEL[model.speed]}
                         </Text>
                       </View>
                     </View>
                     {isDownloading ? (
                       <Text
-                        className="mt-1.5 text-[12px] font-medium"
+                        className="mt-1.5 text-[14px] font-medium"
                         style={{ color: color.accent.primary }}
                       >
                         Скачивание...
                       </Text>
                     ) : !isDownloaded ? (
-                      <Text className="mt-1.5 text-[12px]" style={{ color: color.text.secondary }}>
+                      <Text className="mt-1.5 text-[14px]" style={{ color: color.text.secondary }}>
                         Не скачана — нажмите для загрузки
                       </Text>
                     ) : null}

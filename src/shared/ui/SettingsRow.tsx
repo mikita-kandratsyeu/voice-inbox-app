@@ -54,14 +54,14 @@ export const SettingsRow = ({
     >
       {leftIcon && <View className="mr-3">{leftIcon}</View>}
       <Text
-        className="flex-1 text-[15px]"
+        className="flex-1 text-[16px]"
         style={{ color: dangerous ? color.accent.delete : color.text.primary }}
       >
         {label}
       </Text>
       {rightSlot && <View className="ml-2">{rightSlot}</View>}
       {!rightSlot && value && (
-        <Text className="mr-2 text-[14px]" style={{ color: color.text.secondary }}>
+        <Text className="mr-2 text-[16px]" style={{ color: color.text.secondary }}>
           {value}
         </Text>
       )}
