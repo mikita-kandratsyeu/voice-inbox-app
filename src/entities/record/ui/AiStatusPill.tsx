@@ -1,6 +1,8 @@
 import { AlertCircle, CheckCircle2, Loader, MicOff } from 'lucide-react-native';
 import React from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+
+import { getColors } from '@/shared/config';
 
 import type { RecordingStatus } from '../model/types';
 
@@ -10,6 +12,8 @@ type AiStatusPillProps = {
 };
 
 export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
+  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+
   if (aiStatus === 'done') {
     return (
       <TouchableOpacity
@@ -17,7 +21,7 @@ export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
         activeOpacity={0.7}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >
-        <CheckCircle2 size={20} color="#22c55e" strokeWidth={2} />
+        <CheckCircle2 size={20} color={color.status.success} strokeWidth={2} />
       </TouchableOpacity>
     );
   }
@@ -25,12 +29,13 @@ export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
   if (aiStatus === 'processing') {
     return (
       <TouchableOpacity
-        className="flex-row items-center gap-1 rounded-full bg-blue-50 px-2.5 py-1 dark:bg-blue-950"
+        className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
+        style={{ backgroundColor: color.status.processing.bg }}
         onPress={onPress}
         activeOpacity={0.75}
       >
-        <Loader size={11} color="#3b82f6" strokeWidth={2.5} />
-        <Text className="text-xs font-medium text-blue-500 dark:text-blue-400">
+        <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
+        <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
           Транскрибируется...
         </Text>
       </TouchableOpacity>
@@ -40,20 +45,28 @@ export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
   if (aiStatus === 'error') {
     return (
       <TouchableOpacity
-        className="flex-row items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 dark:bg-red-950"
+        className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
+        style={{ backgroundColor: color.status.error.bg }}
         onPress={onPress}
         activeOpacity={0.75}
       >
-        <AlertCircle size={11} color="#ef4444" strokeWidth={2.5} />
-        <Text className="text-xs font-medium text-red-500 dark:text-red-400">Ошибка</Text>
+        <AlertCircle size={11} color={color.status.error.text} strokeWidth={2.5} />
+        <Text className="text-xs font-medium" style={{ color: color.status.error.text }}>
+          Ошибка
+        </Text>
       </TouchableOpacity>
     );
   }
 
   return (
-    <View className="flex-row items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 dark:bg-gray-800">
-      <MicOff size={11} color="#9ca3af" strokeWidth={2.5} />
-      <Text className="text-xs font-medium text-gray-400 dark:text-gray-500">Нет транскрипта</Text>
+    <View
+      className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
+      style={{ backgroundColor: color.status.muted.bg }}
+    >
+      <MicOff size={11} color={color.status.muted.text} strokeWidth={2.5} />
+      <Text className="text-xs font-medium" style={{ color: color.status.muted.text }}>
+        Нет транскрипта
+      </Text>
     </View>
   );
 };
