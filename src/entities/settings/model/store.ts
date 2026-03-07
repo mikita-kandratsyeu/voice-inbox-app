@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { storage } from '@/shared/lib/mmkv';
+import { storage } from '@/shared/lib/async-storage';
 
 import type { AIModelId, SettingsState, WhisperModelId, WhisperModelStatus } from './types';
 
