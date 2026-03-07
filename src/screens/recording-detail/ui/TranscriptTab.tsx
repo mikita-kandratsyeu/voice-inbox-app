@@ -26,7 +26,7 @@ export const TranscriptTab = ({ segments, color, onTranscribe }: TranscriptTabPr
         description={'Нажмите кнопку ниже, чтобы\nтранскрибировать запись на устройстве.'}
         buttonLabel="Транскрибировать"
         buttonIcon={<Mic size={18} color="#fff" strokeWidth={2} />}
-        hint={`Whisper ${whisperModelName} · Оффлайн · Приватно`}
+        hint={`Whisper ${whisperModelName}`}
         onPress={onTranscribe}
         color={color}
       />
