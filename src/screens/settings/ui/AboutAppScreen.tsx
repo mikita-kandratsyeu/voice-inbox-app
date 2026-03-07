@@ -45,7 +45,7 @@ export const AboutAppScreen = () => {
             className="mt-3 text-center text-[13px] leading-5 px-4"
             style={{ color: color.text.secondary }}
           >
-            Офлайн-первое приложение для голосовых заметок. Захватывайте идеи голосом, получайте
+            Offline-first приложение для голосовых заметок. Захватывайте идеи голосом, получайте
             транскрипты, саммари и задачи с помощью ИИ.
           </Text>
         </View>
