@@ -5,3 +5,4 @@ export { getDB, initDB } from './db/client';
 export type { RecordInsert, RecordRow } from './db/schema';
 export { recordsTable } from './db/schema';
 export { storage } from './mmkv';
+export { useNetworkStatus } from './useNetworkStatus';

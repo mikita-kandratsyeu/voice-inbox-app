@@ -1,10 +1,11 @@
 import { useNavigation } from '@react-navigation/native';
-import { Bot, Clock, FileText, Mic, Mic2, Trash2, Type } from 'lucide-react-native';
+import { Bot, BrainCircuit, Clock, FileText, Mic, Mic2, Trash2, Type } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { Alert, ScrollView, Text, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
+import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { getColors } from '@/shared/config';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
@@ -22,16 +23,26 @@ const MOCK_STORAGE: StorageStats = {
   totalMb: 44.5,
 };
 
+const formatModelSize = (mb: number): string => {
+  if (mb >= 1000) {
+    return `${(mb / 1000).toFixed(1)} ГБ`;
+  }
+
+  return `${mb} МБ`;
+};
+
 const StorageBar = ({
   audioMb,
   transcriptKb,
   cacheKb,
+  modelsMb,
   totalMb,
   color,
-}: StorageStats & { color: ReturnType<typeof getColors> }) => {
+}: StorageStats & { modelsMb: number; color: ReturnType<typeof getColors> }) => {
   const audioFrac = audioMb / totalMb;
   const transcriptFrac = transcriptKb / 1024 / totalMb;
   const cacheFrac = cacheKb / 1024 / totalMb;
+  const modelsFrac = modelsMb / totalMb;
 
   return (
     <View>
@@ -40,7 +51,7 @@ const StorageBar = ({
           Использовано
         </Text>
         <Text className="text-[15px] font-semibold" style={{ color: color.text.primary }}>
-          {totalMb.toFixed(1)} МБ
+          {totalMb >= 1000 ? `${(totalMb / 1000).toFixed(1)} ГБ` : `${totalMb.toFixed(1)} МБ`}
         </Text>
       </View>
       <View
@@ -50,6 +61,9 @@ const StorageBar = ({
         <View style={{ flex: audioFrac, backgroundColor: color.accent.primary }} />
         <View style={{ flex: transcriptFrac, backgroundColor: color.accent.transcript }} />
         <View style={{ flex: cacheFrac, backgroundColor: color.accent.cache }} />
+        {modelsFrac > 0 && (
+          <View style={{ flex: modelsFrac, backgroundColor: color.accent.success }} />
+        )}
       </View>
       <View className="gap-2">
         <View className="flex-row items-center justify-between">
@@ -94,6 +108,22 @@ const StorageBar = ({
             {cacheKb} КБ
           </Text>
         </View>
+        {modelsMb > 0 && (
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-2">
+              <View
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: color.accent.success }}
+              />
+              <Text className="text-[13px]" style={{ color: color.text.secondary }}>
+                Whisper модели
+              </Text>
+            </View>
+            <Text className="text-[13px]" style={{ color: color.text.primary }}>
+              {formatModelSize(modelsMb)}
+            </Text>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -105,11 +135,18 @@ export const StorageDetailsScreen = () => {
   const navigation = useNavigation();
   const records = useRecordStore((s) => s.records);
   const deleteRecord = useRecordStore((s) => s.deleteRecord);
+  const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const [stats] = useState<StorageStats>(MOCK_STORAGE);
 
   const audioCount = records.filter((r) => r.audioPath).length;
   const withTranscript = records.filter((r) => r.transcript && r.transcript.length > 0).length;
   const processedByAI = records.filter((r) => r.aiStatus === 'done').length;
+
+  const downloadedModels = WHISPER_MODELS.filter(
+    (m) => (whisperModelStatuses[m.id] ?? 'not_downloaded') === 'downloaded',
+  );
+  const modelsMb = downloadedModels.reduce((sum, m) => sum + m.sizeMb, 0);
+  const totalMb = stats.totalMb + modelsMb;
 
   const handleClearCache = () => {
     Alert.alert('Очистить кэш', 'Временные файлы будут удалены. Продолжить?', [
@@ -150,7 +187,7 @@ export const StorageDetailsScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View className="mb-6 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
-          <StorageBar {...stats} color={color} />
+          <StorageBar {...stats} modelsMb={modelsMb} totalMb={totalMb} color={color} />
         </View>
 
         <SettingsSection title="Детализация" color={color}>
@@ -168,8 +205,25 @@ export const StorageDetailsScreen = () => {
             color={color}
             leftIcon={<Type size={20} color={color.accent.transcript} strokeWidth={1.8} />}
             showChevron={false}
-            isLast
+            isLast={downloadedModels.length === 0}
           />
+          {downloadedModels.length > 0 && (
+            <>
+              {downloadedModels.map((model, index) => (
+                <SettingsRow
+                  key={model.id}
+                  label={`Whisper ${model.name}`}
+                  value={formatModelSize(model.sizeMb)}
+                  color={color}
+                  leftIcon={
+                    <BrainCircuit size={20} color={color.accent.success} strokeWidth={1.8} />
+                  }
+                  showChevron={false}
+                  isLast={index === downloadedModels.length - 1}
+                />
+              ))}
+            </>
+          )}
         </SettingsSection>
 
         <SettingsSection title="Статистика" color={color}>
