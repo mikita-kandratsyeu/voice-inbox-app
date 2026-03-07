@@ -12,17 +12,20 @@ const KEYS = {
 
 const getStoredAIModel = (): AIModelId => {
   const val = storage.getString(KEYS.AI_MODEL);
+
   return (val as AIModelId) ?? 'gpt-4o-mini';
 };
 
 const getStoredWhisperModel = (): WhisperModelId => {
   const val = storage.getString(KEYS.WHISPER_MODEL);
+
   return (val as WhisperModelId) ?? 'whisper-base';
 };
 
 const getStoredWhisperStatuses = (): Partial<Record<WhisperModelId, WhisperModelStatus>> => {
   try {
     const raw = storage.getString(KEYS.WHISPER_STATUSES);
+
     return raw ? (JSON.parse(raw) as Partial<Record<WhisperModelId, WhisperModelStatus>>) : {};
   } catch {
     return {};
@@ -47,6 +50,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setWhisperModelStatus: (id: WhisperModelId, status: WhisperModelStatus) => {
     const current = get().whisperModelStatuses;
     const updated = { ...current, [id]: status };
+
     storage.set(KEYS.WHISPER_STATUSES, JSON.stringify(updated));
     set({ whisperModelStatuses: updated });
   },
