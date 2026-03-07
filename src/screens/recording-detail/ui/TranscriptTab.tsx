@@ -1,0 +1,57 @@
+import { Mic, RefreshCw } from 'lucide-react-native';
+import React from 'react';
+import { Text, View } from 'react-native';
+
+import type { TranscriptSegment } from '@/entities/record';
+import type { Colors } from '@/shared/config';
+import { Button, TabEmptyState } from '@/shared/ui';
+
+type TranscriptTabProps = {
+  segments: TranscriptSegment[];
+  color: Colors;
+  onTranscribe: () => void;
+};
+
+export const TranscriptTab = ({ segments, color, onTranscribe }: TranscriptTabProps) => {
+  if (segments.length === 0) {
+    return (
+      <TabEmptyState
+        icon={<Mic size={28} color={color.icon.muted} strokeWidth={1.8} />}
+        title="Транскрипт не создан"
+        description={'Нажмите кнопку ниже, чтобы\nтранскрибировать запись на устройстве.'}
+        buttonLabel="Транскрибировать"
+        buttonIcon={<Mic size={18} color="#fff" strokeWidth={2} />}
+        hint="Whisper · Оффлайн · Приватно"
+        onPress={onTranscribe}
+        color={color}
+      />
+    );
+  }
+
+  return (
+    <View className="gap-3.5 p-4">
+      {segments.map((seg) => (
+        <View key={seg.id} className="flex-row gap-2.5">
+          <Text
+            className="mt-0.5 min-w-9 text-xs font-semibold"
+            style={{ color: color.accent.primary }}
+          >
+            {seg.startTime}
+          </Text>
+          <Text className="flex-1 text-sm leading-[22px]" style={{ color: color.text.primary }}>
+            {seg.text}
+          </Text>
+        </View>
+      ))}
+      <Button
+        variant="secondary"
+        size="lg"
+        icon={<RefreshCw size={15} color={color.text.secondary} strokeWidth={2} />}
+        label="Перетранскрибировать"
+        color={color}
+        onPress={onTranscribe}
+        className="mt-1"
+      />
+    </View>
+  );
+};

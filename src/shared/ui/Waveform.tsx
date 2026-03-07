@@ -12,17 +12,13 @@ const randomHeight = () => BAR_MIN_HEIGHT + Math.random() * (BAR_MAX_HEIGHT - BA
 type WaveformProps = {
   isAnimating: boolean;
   color?: string;
-  /** Value in dB from metering (typically -160 to 0). When provided, drives real waveform. */
   meterLevel?: number;
 };
 
-/**
- * Converts a dB meter value (−160..0) to a bar height in [BAR_MIN_HEIGHT, BAR_MAX_HEIGHT].
- * Values below -60 dB map to near-silence; 0 dB maps to max height.
- */
 const meterToHeight = (db: number): number => {
   const clamped = Math.max(-60, Math.min(0, db));
-  const normalized = (clamped + 60) / 60; // 0..1
+  const normalized = (clamped + 60) / 60;
+
   return BAR_MIN_HEIGHT + normalized * (BAR_MAX_HEIGHT - BAR_MIN_HEIGHT);
 };
 
@@ -38,13 +34,13 @@ export const Waveform = ({
   const loops = useRef<Animated.CompositeAnimation[]>([]);
   const historyRef = useRef<number[]>(Array(BAR_COUNT).fill(BAR_MIN_HEIGHT));
 
-  // Drive bars from real meter data when available
   useEffect(() => {
-    if (!isAnimating || meterLevel === undefined) return;
+    if (!isAnimating || meterLevel === undefined) {
+      return;
+    }
 
     const targetHeight = meterToHeight(meterLevel);
 
-    // Shift history buffer and append the new sample
     historyRef.current = [...historyRef.current.slice(1), targetHeight];
 
     historyRef.current.forEach((h, i) => {
@@ -57,9 +53,8 @@ export const Waveform = ({
     });
   }, [meterLevel, isAnimating, bars]);
 
-  // Fallback synthetic animation when no meter data
   useEffect(() => {
-    if (meterLevel !== undefined) return; // real meter drives bars
+    if (meterLevel !== undefined) return;
 
     if (isAnimating) {
       loops.current = bars.map((bar, i) => {
@@ -81,6 +76,7 @@ export const Waveform = ({
           ]),
         );
         loop.start();
+
         return loop;
       });
     } else {

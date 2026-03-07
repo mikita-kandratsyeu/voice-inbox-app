@@ -4,6 +4,7 @@ import { Animated, GestureResponderEvent, LayoutChangeEvent, Text, View } from '
 import AudioRecorderPlayer, { type PlayBackType } from 'react-native-audio-recorder-player';
 
 import type { Colors } from '@/shared/config';
+import { formatTime } from '@/shared/lib';
 import { Button } from '@/shared/ui';
 
 type AudioPlayerProps = {
@@ -20,13 +21,6 @@ const parseDuration = (d: string) => {
   }
 
   return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
-};
-
-const formatTime = (seconds: number): string => {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-
-  return `${m}:${s.toString().padStart(2, '0')}`;
 };
 
 const player = AudioRecorderPlayer;

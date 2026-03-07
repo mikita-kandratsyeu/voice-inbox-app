@@ -6,3 +6,4 @@ export type {
   TranscriptSegment,
   VoiceRecord,
 } from './model/types';
+export { AiStatusPill, RecordCard } from './ui';

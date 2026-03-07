@@ -1,4 +1,5 @@
 export { formatRelativeTime, formatShortDate } from './date';
+export { formatTime } from './date';
 export type { Database } from './db/client';
 export { getDB, initDB } from './db/client';
 export type { RecordInsert, RecordRow } from './db/schema';

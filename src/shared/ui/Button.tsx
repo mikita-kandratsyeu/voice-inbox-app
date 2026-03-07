@@ -10,8 +10,8 @@ import {
 import type { Colors } from '@/shared/config';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'icon';
-
 export type ButtonSize = 'sm' | 'md' | 'lg';
+type VariantStyle = { bg: ViewStyle; textColor?: string; textClassName?: string };
 
 export type ButtonProps = TouchableOpacityProps & {
   label?: string;
@@ -24,8 +24,6 @@ export type ButtonProps = TouchableOpacityProps & {
   fullWidth?: boolean;
   className?: string;
 };
-
-type VariantStyle = { bg: ViewStyle; textColor?: string; textClassName?: string };
 
 const VARIANT_STYLES: Record<ButtonVariant, (color: Colors) => VariantStyle> = {
   primary: (color) => ({

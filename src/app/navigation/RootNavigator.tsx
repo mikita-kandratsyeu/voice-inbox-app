@@ -1,17 +1,11 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 
-import type { VoiceRecord } from '@/entities/record';
 import { RecordScreen } from '@/screens/record';
 import { RecordingDetailScreen } from '@/screens/recording-detail';
 
 import { BottomTabNavigator } from './BottomTabNavigator';
-
-export type RootStackParamList = {
-  Main: undefined;
-  RecordModal: undefined;
-  RecordingDetail: { record: VoiceRecord };
-};
+import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
