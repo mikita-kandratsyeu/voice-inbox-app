@@ -1,36 +1,136 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Voice Inbox — Web
+
+Web landing page for **Voice Inbox** — an offline-first voice notes app with AI transcription and summarization.
+
+---
+
+## About
+
+The site showcases Voice Inbox: explains features, walks through the workflow, and directs users to download the mobile app from the App Store and Google Play.
+
+---
+
+## Features
+
+- **Internationalization (i18n)** — English and Russian (`next-intl`)
+- **Light & dark theme** — toggle via `next-themes`
+- **Responsive layout** — Tailwind CSS v4
+- **SEO & Open Graph** — metadata, canonical URLs, dynamic OG images
+- **Pages** — home, Privacy Policy, Terms of Service
+- **API** — message endpoints (optional, Redis or in-memory)
+
+---
+
+## Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| Framework | Next.js 16 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 |
+| i18n | next-intl |
+| Theme | next-themes |
+| Icons | lucide-react |
+| Analytics | @vercel/analytics |
+
+---
+
+## Project Structure
+
+```
+web/
+├── app/
+│   ├── [locale]/           # Localized pages
+│   │   ├── page.tsx        # Home (landing)
+│   │   ├── privacy/        # Privacy Policy
+│   │   ├── terms/          # Terms of Service
+│   │   └── layout.tsx
+│   ├── api/                # API routes
+│   └── layout.tsx
+├── components/
+│   ├── landing/            # Landing sections
+│   │   ├── Hero.tsx
+│   │   ├── Features.tsx
+│   │   ├── HowItWorks.tsx
+│   │   ├── Benefits.tsx
+│   │   ├── CTASection.tsx
+│   │   ├── Header.tsx
+│   │   ├── Footer.tsx
+│   │   └── StoreButtons.tsx
+│   └── ui/                 # UI components
+│       ├── ThemeToggle.tsx
+│       ├── LanguageSwitcher.tsx
+│       └── AnimateOnScroll.tsx
+├── messages/               # Translations
+│   ├── en.json
+│   └── ru.json
+├── lib/                    # Utilities and config
+├── i18n/                   # next-intl config
+└── services/               # AI and other services
+```
+
+---
 
 ## Getting Started
 
-First, run the development server:
+### Install dependencies
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+yarn
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Development
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+yarn dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Learn More
+### Build & production
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+yarn build
+yarn start
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Linting
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+yarn lint
+yarn lint:fix
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Environment Variables
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Variable | Description |
+|----------|-------------|
+| `NEXT_PUBLIC_BASE_URL` | Base URL of the site (default: `https://voiceinbox.app`) |
+| `OPENROUTER_API_KEY` | OpenRouter API key (for AI services) |
+| `UPSTASH_REDIS_REST_URL` | Upstash Redis URL |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis token |
+| `APP_SECRET` | Secret for message API |
+
+Without Redis, an in-memory store is used (suitable for development).
+
+---
+
+## Localization
+
+- **Languages:** `en` (default), `ru`
+- **URLs:** `/` — English, `/ru` — Russian
+- **Translation files:** `messages/en.json`, `messages/ru.json`
+
+---
+
+## Deployment
+
+Recommended: [Vercel](https://vercel.com). Connect the repo and configure environment variables.
+
+---
+
+## Related
+
+- **Voice Inbox (mobile)** — React Native app in the monorepo root
