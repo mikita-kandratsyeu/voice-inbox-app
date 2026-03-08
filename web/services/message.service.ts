@@ -1,4 +1,4 @@
-import { getMessage, saveMessage } from '@/lib/redis';
+import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import { processTranscript } from '@/services/ai.service';
 import type { Message } from '@/types';
 
@@ -7,8 +7,13 @@ export async function createMessage(
   transcript: string,
   model: string,
   systemPrompt: string,
-): Promise<void> {
-  await saveMessage(id, { id, status: 'processing' });
+): Promise<{ created: boolean; syncToken?: string }> {
+  const created = await saveMessageIfNotExists(id, { id, status: 'processing' });
+  if (!created) {
+    return { created: false };
+  }
+
+  const syncToken = getSyncToken();
 
   processTranscript(transcript, model, systemPrompt)
     .then(async (result) => {
@@ -26,8 +31,10 @@ export async function createMessage(
         error: err instanceof Error ? err.message : 'Unknown error',
       });
     });
+
+  return { created: true, syncToken };
 }
 
-export async function getMessageById(id: string): Promise<Message | null> {
-  return getMessage(id);
+export async function getMessageById(id: string, syncToken?: string): Promise<Message | null> {
+  return getMessage(id, syncToken);
 }

@@ -49,4 +49,15 @@ export const memoryStore = {
       entry.expiresAt = Date.now() + seconds * 1000;
     }
   },
+
+  async setIfNotExists(key: string, value: string, options?: { ex?: number }): Promise<boolean> {
+    cleanupExpired();
+    const entry = kvStore.get(key);
+    if (entry && (entry.expiresAt === 0 || entry.expiresAt > Date.now())) {
+      return false;
+    }
+    const expiresAt = options?.ex ? Date.now() + options.ex * 1000 : 0;
+    kvStore.set(key, { value, expiresAt });
+    return true;
+  },
 };

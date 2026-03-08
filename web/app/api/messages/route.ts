@@ -1,4 +1,4 @@
-import { createMessage, getMessageById } from '@/services/message.service';
+import { createMessage } from '@/services/message.service';
 import { NextResponse } from 'next/server';
 
 type PostBody = {
@@ -41,20 +41,26 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ error: firstError }, { status: 400 });
   }
 
-  const existing = await getMessageById(body.id as string);
-  if (existing) {
-    return NextResponse.json({ error: 'Message with this id already exists' }, { status: 409 });
-  }
-
-  await createMessage(
+  const result = await createMessage(
     body.id as string,
     body.transcript as string,
     body.model as string,
     body.systemPrompt as string,
   );
 
-  return NextResponse.json({
+  if (!result.created) {
+    return NextResponse.json({ error: 'Message with this id already exists' }, { status: 409 });
+  }
+
+  const response = NextResponse.json({
     id: body.id,
     status: 'processing',
+    ...(result.syncToken && { syncToken: result.syncToken }),
   });
+
+  if (result.syncToken) {
+    response.headers.set('x-upstash-sync-token', result.syncToken);
+  }
+
+  return response;
 }

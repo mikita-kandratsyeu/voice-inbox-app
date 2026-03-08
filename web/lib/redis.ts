@@ -4,6 +4,7 @@ import { memoryStore } from '@/lib/memory-store';
 
 type KvClient = {
   set(key: string, value: string, options?: { ex?: number }): Promise<void>;
+  setIfNotExists(key: string, value: string, options?: { ex?: number }): Promise<boolean>;
   get(key: string): Promise<string | null>;
   incr(key: string): Promise<number>;
   expire(key: string, seconds: number): Promise<void>;
@@ -23,6 +24,14 @@ const kv: KvClient = useMemoryStore
   : {
       async set(key, value, options) {
         await redisClient!.set(key, value, options?.ex ? { ex: options.ex } : undefined);
+      },
+      async setIfNotExists(key, value, options) {
+        const result = await redisClient!.set(
+          key,
+          value,
+          options?.ex ? { nx: true, ex: options.ex } : { nx: true },
+        );
+        return result === 'OK';
       },
       async get(key) {
         return redisClient!.get<string>(key);
@@ -48,18 +57,70 @@ export async function saveMessage(id: string, data: Message): Promise<void> {
   });
 }
 
-export async function getMessage(id: string): Promise<Message | null> {
-  const raw = await kv.get(getMessageKey(id));
+export async function saveMessageIfNotExists(id: string, data: Message): Promise<boolean> {
+  return kv.setIfNotExists(getMessageKey(id), JSON.stringify(data), {
+    ex: MESSAGE_TTL_SECONDS,
+  });
+}
+
+const GET_RETRY_ATTEMPTS = 3;
+const GET_RETRY_DELAY_MS = 100;
+
+async function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function getMessage(id: string, syncToken?: string): Promise<Message | null> {
+  const key = getMessageKey(id);
+
+  const doGet = async (): Promise<string | object | null> => {
+    if (useMemoryStore) {
+      return kv.get(key);
+    }
+    if (syncToken && redisClient) {
+      const clientWithToken = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL!,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+      });
+      clientWithToken.readYourWritesSyncToken = syncToken;
+      return clientWithToken.get<string>(key);
+    }
+    return kv.get(key);
+  };
+
+  let raw: string | object | null = null;
+
+  if (!useMemoryStore && !syncToken) {
+    for (let attempt = 0; attempt < GET_RETRY_ATTEMPTS; attempt++) {
+      raw = await doGet();
+      if (raw) break;
+      if (attempt < GET_RETRY_ATTEMPTS - 1) {
+        await sleep(GET_RETRY_DELAY_MS * (attempt + 1));
+      }
+    }
+  } else {
+    raw = await doGet();
+  }
 
   if (!raw) {
     return null;
   }
 
   try {
-    return JSON.parse(raw) as Message;
+    if (typeof raw === 'object' && raw !== null) {
+      return raw as Message;
+    }
+    return JSON.parse(raw as string) as Message;
   } catch {
     return null;
   }
+}
+
+export function getSyncToken(): string | undefined {
+  if (!useMemoryStore && redisClient) {
+    return redisClient.readYourWritesSyncToken || undefined;
+  }
+  return undefined;
 }
 
 export const redis = kv;
