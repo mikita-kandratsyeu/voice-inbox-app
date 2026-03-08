@@ -9,7 +9,7 @@ export default defineConfig({
   out: './drizzle',
   ...(isDev && {
     dbCredentials: {
-      url: process.env.DATABASE_URL ?? 'file:./voice-inbox.db',
+      url: process.env.DATABASE_URL as string,
     },
   }),
 });
