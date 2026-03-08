@@ -6,7 +6,7 @@ import { Analytics } from '@vercel/analytics/next';
 
 import './globals.css';
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://voiceinbox.app';
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL as string;
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),

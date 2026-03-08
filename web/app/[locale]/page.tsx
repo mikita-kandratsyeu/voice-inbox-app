@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'metadata' });
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'https://voiceinbox.app';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL as string;
   const localePath = locale === 'en' ? '' : `/${locale}`;
   const canonicalUrl = `${baseUrl}${localePath}`;
 

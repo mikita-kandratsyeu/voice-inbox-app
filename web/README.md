@@ -75,7 +75,7 @@ web/
 
 | Variable | Description |
 |----------|-------------|
-| `NEXT_PUBLIC_BASE_URL` | Base URL of the site (default: `https://voiceinbox.app`) |
+| `NEXT_PUBLIC_BASE_URL` | Base URL of the site |
 | `OPENROUTER_API_KEY` | OpenRouter API key (for AI services) |
 | `UPSTASH_REDIS_REST_URL` | Upstash Redis URL |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis token |
