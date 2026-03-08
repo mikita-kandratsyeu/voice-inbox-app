@@ -1,0 +1,47 @@
+import { Lock, Mic, Sparkles, Zap } from 'lucide-react';
+import { useTranslations } from 'next-intl';
+
+const FEATURES = [
+  { id: 'record', icon: Mic },
+  { id: 'transcribe', icon: Lock },
+  { id: 'ai', icon: Sparkles },
+  { id: 'ready', icon: Zap },
+] as const;
+
+export function Features(): React.ReactElement {
+  const t = useTranslations();
+
+  return (
+    <section className="px-4 py-24 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-16 text-center">
+          <h2 className="mb-4 text-4xl font-black text-black dark:text-white sm:text-5xl">
+            {t('features.title')}
+          </h2>
+          <p className="mx-auto max-w-2xl text-lg text-black/60 dark:text-white/60">
+            {t('features.subtitle')}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          {FEATURES.map(({ id, icon: Icon }) => (
+            <div
+              key={id}
+              className="group cursor-pointer rounded-3xl border border-black/8 bg-white/80 p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)] transition-all duration-200 hover:-translate-y-2 hover:scale-[1.02] hover:shadow-xl dark:border-white/10 dark:bg-white/5 dark:shadow-[0_4px_24px_rgba(0,0,0,0.3)]"
+            >
+              <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-linear-to-br from-purple-500 to-pink-500 shadow-lg transition-transform duration-200 group-hover:scale-110 group-hover:rotate-3">
+                <Icon className="h-7 w-7 text-white" aria-hidden />
+              </div>
+              <h3 className="mb-3 text-2xl font-bold text-black dark:text-white">
+                {t(`features.${id}.title`)}
+              </h3>
+              <p className="leading-relaxed text-black/70 dark:text-white/70">
+                {t(`features.${id}.description`)}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}

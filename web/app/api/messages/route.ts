@@ -1,4 +1,4 @@
-import { createMessage } from '@/services/message.service';
+import { createMessage, getMessageById } from '@/services/message.service';
 import { NextResponse } from 'next/server';
 
 type PostBody = {
@@ -39,6 +39,11 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (firstError) {
     return NextResponse.json({ error: firstError }, { status: 400 });
+  }
+
+  const existing = await getMessageById(body.id as string);
+  if (existing) {
+    return NextResponse.json({ error: 'Message with this id already exists' }, { status: 409 });
   }
 
   await createMessage(

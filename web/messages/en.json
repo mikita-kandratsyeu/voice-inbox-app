@@ -1,0 +1,65 @@
+{
+  "hero": {
+    "headline1": "Your voice,",
+    "headline2": "organized locally",
+    "subtitle": "Stop typing. Start talking. Voice Inbox transforms your voice into organized, searchable notes with AI-powered transcription — all offline and completely private.",
+    "appStoreLabel": "Download on the",
+    "appStore": "App Store",
+    "googlePlayLabel": "Get it on",
+    "googlePlay": "Google Play",
+    "stats": {
+      "accuracy": { "value": "99.9%", "label": "Accuracy" },
+      "private": { "value": "100%", "label": "Private" }
+    }
+  },
+  "features": {
+    "title": "Everything you need",
+    "subtitle": "Powerful features designed for privacy and productivity",
+    "record": {
+      "title": "Record by voice",
+      "description": "Clear audio capture with advanced noise cancellation. Record anywhere, anytime."
+    },
+    "transcribe": {
+      "title": "Offline transcription",
+      "description": "Your conversations never leave your device. 100% private, 100% secure."
+    },
+    "ai": {
+      "title": "AI on demand",
+      "description": "Smart summaries, action items, and insights—powered by on-device AI."
+    },
+    "ready": {
+      "title": "Ready to go",
+      "description": "No setup, no login, no hassle. Open the app and start recording immediately."
+    }
+  },
+  "howItWorks": {
+    "title": "Simple. Fast. Powerful.",
+    "subtitle": "From voice to insights in seconds",
+    "step1": { "title": "Record", "description": "Tap the mic and speak naturally" },
+    "step2": { "title": "Transcribe", "description": "Offline AI converts speech to text" },
+    "step3": { "title": "Analyze", "description": "Get summaries and action items" }
+  },
+  "benefits": {
+    "title": "Why users love Voice Inbox",
+    "item0": "Offline transcription",
+    "item2": "Maximum privacy",
+    "item3": "Multi-language support",
+    "item4": "Smart AI insights"
+  },
+  "cta": {
+    "title": "Start capturing ideas today",
+    "subtitle": "Join thousands of professionals who trust Voice Inbox"
+  },
+  "footer": {
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "copyright": "© {year} Voice Inbox. All rights reserved."
+  },
+  "header": {
+    "appName": "Voice Inbox"
+  },
+  "metadata": {
+    "title": "Voice Inbox — AI-Powered Voice Notes",
+    "description": "Record, transcribe, and structure your ideas with AI. Offline transcription, optional AI processing, complete privacy. Available on iOS and Android."
+  }
+}
