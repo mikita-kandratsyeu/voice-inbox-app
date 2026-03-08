@@ -1,4 +1,4 @@
-import { Lock, Mic, Sparkles, Zap } from 'lucide-react-native';
+import { Lock, Mic, Shield, Sparkles, Zap } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Dimensions, FlatList, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import Animated, {
@@ -274,35 +274,17 @@ const SlideItem = ({ item, index, scrollX, color }: SlideItemProps) => {
       )}
 
       {item.extra === 'ai-features' && (
-        <View className="flex-row gap-3">
-          <View
-            className="flex-1 items-center rounded-xl border px-3 py-2"
-            style={{
-              backgroundColor: item.iconBg,
-              borderColor: color.onboarding.ai.border,
-            }}
-          >
-            <Text className="text-xs" style={{ color: color.onboarding.ai.text }}>
-              Конспект
-            </Text>
-            <Text className="text-sm font-semibold" style={{ color: color.onboarding.ai.text }}>
-              По запросу
-            </Text>
-          </View>
-          <View
-            className="flex-1 items-center rounded-xl border px-3 py-2"
-            style={{
-              backgroundColor: item.iconBg,
-              borderColor: color.onboarding.ai.border,
-            }}
-          >
-            <Text className="text-xs" style={{ color: color.onboarding.ai.text }}>
-              Задачи
-            </Text>
-            <Text className="text-sm font-semibold" style={{ color: color.onboarding.ai.text }}>
-              По запросу
-            </Text>
-          </View>
+        <View
+          className="flex-row items-center gap-2 rounded-full border px-4 py-2"
+          style={{
+            backgroundColor: item.iconBg,
+            borderColor: color.onboarding.ai.border,
+          }}
+        >
+          <Shield size={16} color={item.iconColor} strokeWidth={2} />
+          <Text className="text-sm font-semibold" style={{ color: color.onboarding.ai.text }}>
+            Ваши данные в безопасности
+          </Text>
         </View>
       )}
     </Animated.View>
