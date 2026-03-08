@@ -4,6 +4,9 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { Analytics } from '@vercel/analytics/next';
 
+import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
+import { YandexMetrika } from '@/components/analytics/YandexMetrika';
+
 import './globals.css';
 
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL as string;
@@ -26,6 +29,8 @@ export default async function RootLayout({
           <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
         </ThemeProvider>
         <Analytics />
+        <GoogleAnalytics />
+        <YandexMetrika />
       </body>
     </html>
   );
