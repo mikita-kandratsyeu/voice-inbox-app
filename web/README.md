@@ -71,38 +71,6 @@ web/
 
 ---
 
-## Getting Started
-
-### Install dependencies
-
-```bash
-yarn
-```
-
-### Development
-
-```bash
-yarn dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-### Build & production
-
-```bash
-yarn build
-yarn start
-```
-
-### Linting
-
-```bash
-yarn lint
-yarn lint:fix
-```
-
----
-
 ## Environment Variables
 
 | Variable | Description |
@@ -123,14 +91,3 @@ Without Redis, an in-memory store is used (suitable for development).
 - **URLs:** `/` — English, `/ru` — Russian
 - **Translation files:** `messages/en.json`, `messages/ru.json`
 
----
-
-## Deployment
-
-Recommended: [Vercel](https://vercel.com). Connect the repo and configure environment variables.
-
----
-
-## Related
-
-- **Voice Inbox (mobile)** — React Native app in the monorepo root
