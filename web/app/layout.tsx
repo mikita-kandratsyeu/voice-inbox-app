@@ -13,6 +13,9 @@ const baseUrl = process.env.NEXT_PUBLIC_BASE_URL as string;
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
+  verification: {
+    google: 'DkzhOPpo8WzVKEi9yjlUvpHh1dZhnLzknYyJ486BIaU',
+  },
 };
 
 export default async function RootLayout({
