@@ -12,26 +12,26 @@ export function Hero(): React.ReactElement {
       />
       <div className="mx-auto max-w-7xl text-center">
         <div className="mx-auto max-w-5xl">
-          <h1 className="mb-6 text-5xl font-black leading-tight sm:text-6xl lg:text-8xl">
+          <h1 className="animate-fade-in mb-6 text-5xl font-black leading-tight sm:text-6xl lg:text-8xl">
             {t('headline1')}
             <br />
-            <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
               {t('headline2')}
             </span>
           </h1>
 
-          <p className="mx-auto mb-12 max-w-3xl text-lg leading-relaxed text-black/70 dark:text-white/70 sm:text-xl lg:text-2xl">
+          <p className="animate-fade-in-delay-1 mx-auto mb-12 max-w-3xl text-lg leading-relaxed text-black/70 dark:text-white/70 sm:text-xl lg:text-2xl">
             {t('subtitle')}
           </p>
 
-          <div className="mb-16 flex flex-col items-center justify-center gap-4 sm:flex-row">
+          <div className="animate-fade-in-delay-2 mb-16 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <StoreButtons variant="hero" />
           </div>
 
-          <div className="mx-auto grid max-w-2xl grid-cols-2 gap-8">
+          <div className="animate-fade-in-delay-3 mx-auto grid max-w-2xl grid-cols-2 gap-8">
             <div className="text-center">
               <div className="mb-1 text-3xl font-black sm:text-4xl">
-                <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
                   {t('stats.accuracy.value')}
                 </span>
               </div>

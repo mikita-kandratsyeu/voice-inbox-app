@@ -9,12 +9,16 @@ export function Footer(): React.ReactElement {
     <footer className="mt-24 border-t border-black/8 dark:border-white/8">
       <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
         <div className="mb-8 flex flex-col items-center justify-between gap-8 md:flex-row">
-          <div className="flex items-center gap-3">
+          <Link
+            href="/"
+            className="flex items-center gap-3 transition-opacity hover:opacity-90"
+            aria-label="Voice Inbox"
+          >
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-purple-500 to-pink-500 shadow-lg">
               <Mic className="h-5 w-5 text-white" aria-hidden />
             </div>
             <span className="text-xl font-bold text-black dark:text-white">Voice Inbox</span>
-          </div>
+          </Link>
           <div className="flex gap-8">
             <Link
               href="/privacy"
