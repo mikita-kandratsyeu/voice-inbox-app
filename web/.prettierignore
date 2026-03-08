@@ -1,0 +1,20 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build
+.next
+out
+build
+dist
+
+# Cache
+.turbo
+.cache
+
+# Misc
+*.min.js
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
