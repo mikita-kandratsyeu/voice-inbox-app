@@ -1,65 +1,65 @@
+import {
+  apiError,
+  HttpStatus,
+  parseJsonBody,
+  requireAppSecret,
+  validateRequiredStrings,
+} from '@/lib/api';
 import { createMessage } from '@/services/message.service';
 import { NextResponse } from 'next/server';
 
-type PostBody = {
+type CreateMessageBody = {
   id?: unknown;
   transcript?: unknown;
   model?: unknown;
   systemPrompt?: unknown;
 };
 
-function validateString(value: unknown, field: string): string | null {
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    return `${field} is required`;
-  }
-
-  return null;
-}
+const HEADER_SYNC_TOKEN = 'x-upstash-sync-token';
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const appSecret = request.headers.get('x-app-secret');
+  const authError = requireAppSecret(request);
 
-  if (appSecret !== process.env.APP_SECRET) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (authError) {
+    return authError;
   }
 
-  let body: PostBody;
-  try {
-    body = (await request.json()) as PostBody;
-  } catch {
-    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  const body = await parseJsonBody<CreateMessageBody>(request);
+  if (!body) {
+    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST);
   }
 
-  const idError = validateString(body.id, 'id');
-  const transcriptError = validateString(body.transcript, 'transcript');
-  const modelError = validateString(body.model, 'model');
-  const systemPromptError = validateString(body.systemPrompt, 'systemPrompt');
-
-  const firstError = idError ?? transcriptError ?? modelError ?? systemPromptError;
-
-  if (firstError) {
-    return NextResponse.json({ error: firstError }, { status: 400 });
+  const validationError = validateRequiredStrings([
+    { value: body.id, name: 'id' },
+    { value: body.transcript, name: 'transcript' },
+    { value: body.model, name: 'model' },
+    { value: body.systemPrompt, name: 'systemPrompt' },
+  ]);
+  if (validationError) {
+    return apiError(validationError, HttpStatus.BAD_REQUEST);
   }
 
-  const result = await createMessage(
-    body.id as string,
-    body.transcript as string,
-    body.model as string,
-    body.systemPrompt as string,
-  );
+  const { id, transcript, model, systemPrompt } = body as {
+    id: string;
+    transcript: string;
+    model: string;
+    systemPrompt: string;
+  };
+
+  const result = await createMessage(id, transcript, model, systemPrompt);
 
   if (!result.created) {
-    return NextResponse.json({ error: 'Message with this id already exists' }, { status: 409 });
+    return apiError('Message with this id already exists', HttpStatus.CONFLICT);
   }
 
   const response = NextResponse.json({
-    id: body.id,
+    id,
     status: 'processing',
     ...(result.syncToken && { syncToken: result.syncToken }),
   });
 
   if (result.syncToken) {
-    response.headers.set('x-upstash-sync-token', result.syncToken);
+    response.headers.set(HEADER_SYNC_TOKEN, result.syncToken);
   }
 
   return response;

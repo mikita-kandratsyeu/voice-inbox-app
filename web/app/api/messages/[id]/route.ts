@@ -1,16 +1,31 @@
+import { apiError, HttpStatus } from '@/lib/api';
 import { getMessageById } from '@/services/message.service';
 import { NextResponse } from 'next/server';
 
-type RouteParams = { params: Promise<{ id: string }> };
+const SYNC_TOKEN_HEADERS = ['x-upstash-sync-token', 'upstash-sync-token'] as const;
 
-export async function GET(request: Request, { params }: RouteParams): Promise<NextResponse> {
+function getSyncToken(request: Request): string | undefined {
+  for (const header of SYNC_TOKEN_HEADERS) {
+    const value = request.headers.get(header);
+
+    if (value) {
+      return value;
+    }
+  }
+
+  return undefined;
+}
+
+type RouteContext = { params: Promise<{ id: string }> };
+
+export async function GET(request: Request, { params }: RouteContext): Promise<NextResponse> {
   const { id } = await params;
-  const syncToken =
-    request.headers.get('x-upstash-sync-token') ?? request.headers.get('upstash-sync-token');
-  const message = await getMessageById(id, syncToken ?? undefined);
+  const syncToken = getSyncToken(request);
+
+  const message = await getMessageById(id, syncToken);
 
   if (!message) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return apiError('Not found', HttpStatus.NOT_FOUND);
   }
 
   return NextResponse.json(message);
