@@ -5,6 +5,7 @@ import {
   requireAppSecret,
   validateRequiredStrings,
 } from '@/lib/api';
+import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
 import { createMessage } from '@/services/message.service';
 import { NextResponse } from 'next/server';
 
@@ -15,16 +16,20 @@ type CreateMessageBody = {
   systemPrompt?: unknown;
 };
 
-const HEADER_SYNC_TOKEN = 'x-upstash-sync-token';
-
-export async function POST(request: Request): Promise<NextResponse> {
+export const POST = async (request: Request): Promise<NextResponse> => {
   const authError = requireAppSecret(request);
 
   if (authError) {
     return authError;
   }
 
+  const deviceId = request.headers.get(HEADER_DEVICE_ID)?.trim();
+  if (!deviceId) {
+    return apiError('x-device-id header is required', HttpStatus.BAD_REQUEST);
+  }
+
   const body = await parseJsonBody<CreateMessageBody>(request);
+
   if (!body) {
     return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST);
   }
@@ -46,7 +51,24 @@ export async function POST(request: Request): Promise<NextResponse> {
     systemPrompt: string;
   };
 
-  const result = await createMessage(id, transcript, model, systemPrompt);
+  const result = await createMessage(id, transcript, model, systemPrompt, deviceId);
+
+  if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
+    return NextResponse.json(
+      {
+        error: 'Weekly AI limit reached',
+        usage: result.usage,
+      },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(
+            Math.ceil((new Date(result.usage.resetAt).getTime() - Date.now()) / 1000),
+          ),
+        },
+      },
+    );
+  }
 
   if (!result.created) {
     return apiError('Message with this id already exists', HttpStatus.CONFLICT);
@@ -63,4 +85,4 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   return response;
-}
+};

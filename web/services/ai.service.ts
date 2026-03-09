@@ -5,7 +5,7 @@ import {
   TooManyRequestsResponseError,
 } from '@openrouter/sdk/models/errors';
 
-const FALLBACK_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
+import { FALLBACK_MODEL } from '@/config/constants';
 
 async function callOpenRouter(
   transcript: string,

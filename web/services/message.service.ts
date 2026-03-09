@@ -1,16 +1,34 @@
+import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import { processTranscript } from '@/services/ai.service';
 import type { Message } from '@/types';
 
-export async function createMessage(
+type CreateMessageResult =
+  | { created: true; syncToken?: string }
+  | { created: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
+  | { created: false };
+
+export const createMessage = async (
   id: string,
   transcript: string,
   model: string,
   systemPrompt: string,
-): Promise<{ created: boolean; syncToken?: string }> {
+  deviceId: string,
+): Promise<CreateMessageResult> => {
   const created = await saveMessageIfNotExists(id, { id, status: 'processing' });
   if (!created) {
     return { created: false };
+  }
+
+  const limitResult = await checkAndIncrement(deviceId);
+  if (!limitResult.allowed) {
+    await saveMessage(id, {
+      id,
+      status: 'error',
+      error: 'Weekly AI limit reached',
+    });
+
+    return { created: false, limitExceeded: true, usage: limitResult.usage };
   }
 
   const syncToken = getSyncToken();
@@ -25,6 +43,7 @@ export async function createMessage(
       });
     })
     .catch(async (err) => {
+      await decrement(deviceId);
       await saveMessage(id, {
         id,
         status: 'error',
@@ -33,8 +52,7 @@ export async function createMessage(
     });
 
   return { created: true, syncToken };
-}
+};
 
-export async function getMessageById(id: string, syncToken?: string): Promise<Message | null> {
-  return getMessage(id, syncToken);
-}
+export const getMessageById = async (id: string, syncToken?: string): Promise<Message | null> =>
+  getMessage(id, syncToken);

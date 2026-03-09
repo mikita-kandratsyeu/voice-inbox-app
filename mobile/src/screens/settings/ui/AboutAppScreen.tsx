@@ -5,7 +5,7 @@ import { Image, Linking, ScrollView, Text, useColorScheme, View } from 'react-na
 import DeviceInfo from 'react-native-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getColors } from '@/shared/config';
+import { getColors, SUPPORT_EMAIL } from '@/shared/config';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 const APP_VERSION = DeviceInfo.getVersion();
@@ -53,15 +53,17 @@ export const AboutAppScreen = () => {
             isFirst
           />
         </SettingsSection>
-        <SettingsSection title="Помощь и обратная связь" color={color}>
-          <SettingsRow
-            label="Написать в поддержку"
-            color={color}
-            leftIcon={<Mail size={18} color={color.icon.muted} strokeWidth={1.8} />}
-            onPress={() => Linking.openURL('mailto:nickondr.production@gmail.com')}
-            isFirst
-          />
-        </SettingsSection>
+        {SUPPORT_EMAIL.length > 0 && (
+          <SettingsSection title="Помощь и обратная связь" color={color}>
+            <SettingsRow
+              label="Написать в поддержку"
+              color={color}
+              leftIcon={<Mail size={18} color={color.icon.muted} strokeWidth={1.8} />}
+              onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
+              isFirst
+            />
+          </SettingsSection>
+        )}
         <SettingsSection title="Технологии" color={color}>
           <SettingsRow label="React Native" color={color} showChevron={false} isFirst />
           <SettingsRow label="NativeWind" color={color} showChevron={false} />

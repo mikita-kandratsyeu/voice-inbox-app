@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
+import { BASE_URL_OR_FALLBACK } from '@/config/constants';
 import { Benefits } from '@/components/landing/Benefits';
 import { CTASection } from '@/components/landing/CTASection';
 import { Features } from '@/components/landing/Features';
@@ -17,9 +18,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'metadata' });
 
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL as string;
   const localePath = locale === 'en' ? '' : `/${locale}`;
-  const canonicalUrl = `${baseUrl}${localePath}`;
+  const canonicalUrl = `${BASE_URL_OR_FALLBACK}${localePath}`;
 
   return {
     title: t('title'),

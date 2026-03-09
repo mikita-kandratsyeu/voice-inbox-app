@@ -1,7 +1,9 @@
 import type { MetadataRoute } from 'next';
 
+import { BASE_URL_OR_FALLBACK } from '@/config/constants';
+
 export default function sitemap(): MetadataRoute.Sitemap {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL as string;
+  const baseUrl = BASE_URL_OR_FALLBACK;
 
   const routes = [
     { path: '', priority: 1 },

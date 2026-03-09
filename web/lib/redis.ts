@@ -1,5 +1,11 @@
 import { Redis } from '@upstash/redis';
 import type { Message } from '@/types';
+import {
+  GET_RETRY_ATTEMPTS,
+  GET_RETRY_DELAY_MS,
+  MESSAGE_KEY_PREFIX,
+  MESSAGE_TTL_SECONDS,
+} from '@/config/constants';
 import { memoryStore } from '@/lib/memory-store';
 
 type KvClient = {
@@ -7,6 +13,7 @@ type KvClient = {
   setIfNotExists(key: string, value: string, options?: { ex?: number }): Promise<boolean>;
   get(key: string): Promise<string | null>;
   incr(key: string): Promise<number>;
+  decr(key: string): Promise<number>;
   expire(key: string, seconds: number): Promise<void>;
 };
 
@@ -39,13 +46,13 @@ const kv: KvClient = useMemoryStore
       async incr(key) {
         return redisClient!.incr(key);
       },
+      async decr(key) {
+        return redisClient!.decr(key);
+      },
       async expire(key, seconds) {
         await redisClient!.expire(key, seconds);
       },
     };
-
-const MESSAGE_TTL_SECONDS = 3600;
-const MESSAGE_KEY_PREFIX = 'msg:';
 
 export function getMessageKey(id: string): string {
   return `${MESSAGE_KEY_PREFIX}${id}`;
@@ -62,9 +69,6 @@ export async function saveMessageIfNotExists(id: string, data: Message): Promise
     ex: MESSAGE_TTL_SECONDS,
   });
 }
-
-const GET_RETRY_ATTEMPTS = 3;
-const GET_RETRY_DELAY_MS = 100;
 
 async function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

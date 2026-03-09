@@ -8,6 +8,8 @@ import { Analytics } from '@vercel/analytics/next';
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import { YandexMetrika } from '@/components/analytics/YandexMetrika';
 
+import { BASE_URL_OR_FALLBACK } from '@/config/constants';
+
 import './globals.css';
 
 const onest = Onest({
@@ -15,10 +17,8 @@ const onest = Onest({
   variable: '--font-onest',
 });
 
-const baseUrl = process.env.NEXT_PUBLIC_BASE_URL as string;
-
 export const metadata: Metadata = {
-  metadataBase: new URL(baseUrl),
+  metadataBase: new URL(BASE_URL_OR_FALLBACK),
   icons: {
     icon: '/app-icon.svg',
   },

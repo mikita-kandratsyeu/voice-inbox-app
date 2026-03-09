@@ -38,6 +38,7 @@ export function YandexMetrika(): React.ReactElement | null {
       />
       <noscript>
         <div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={`https://mc.yandex.ru/watch/${id}`}
             style={{ position: 'absolute', left: '-9999px' }}

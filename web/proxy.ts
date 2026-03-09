@@ -2,32 +2,29 @@ import createMiddleware from 'next-intl/middleware';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+import {
+  RATE_LIMIT_KEY_PREFIX,
+  RATE_LIMIT_MAX_REQUESTS,
+  RATE_LIMIT_WINDOW_SECONDS,
+} from '@/config/constants';
 import { redis } from '@/lib/redis';
 import { routing } from '@/lib/i18n';
 
-const RATE_LIMIT_WINDOW_SECONDS = 60;
-const RATE_LIMIT_MAX_REQUESTS = 15;
-const RATE_LIMIT_KEY_PREFIX = 'rl:';
-
-function getClientIp(request: NextRequest): string {
+const getClientIp = (request: NextRequest): string => {
   const forwarded = request.headers.get('x-forwarded-for');
 
-  if (forwarded) {
-    return forwarded.split(',')[0]?.trim() ?? 'unknown';
-  }
+  return forwarded?.split(',')[0]?.trim() ?? 'unknown';
+};
 
-  return 'unknown';
-}
-
-function getRateLimitKey(ip: string): string {
+const getRateLimitKey = (ip: string): string => {
   const window = Math.floor(Date.now() / 1000 / RATE_LIMIT_WINDOW_SECONDS);
 
   return `${RATE_LIMIT_KEY_PREFIX}${ip}:${window}`;
-}
+};
 
 const intlMiddleware = createMiddleware(routing);
 
-export async function proxy(request: NextRequest): Promise<NextResponse> {
+export const proxy = async (request: NextRequest): Promise<NextResponse> => {
   if (request.method === 'POST' && request.nextUrl.pathname === '/api/messages') {
     const ip = getClientIp(request);
     const key = getRateLimitKey(ip);
@@ -53,7 +50,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   }
 
   return intlMiddleware(request);
-}
+};
 
 export const config = {
   matcher: ['/((?!api|trpc|_next|_vercel|.*\\..*).*)', '/api/messages'],
