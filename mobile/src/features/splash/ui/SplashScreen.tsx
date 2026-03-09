@@ -32,6 +32,8 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
   const logoScale = useSharedValue(0.85);
   const textOpacity = useSharedValue(0);
   const textTranslateY = useSharedValue(12);
+  const taglineOpacity = useSharedValue(0);
+  const taglineTranslateY = useSharedValue(8);
   const versionOpacity = useSharedValue(0);
   const containerOpacity = useSharedValue(1);
 
@@ -59,6 +61,20 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
         easing: Easing.out(Easing.cubic),
       }),
     );
+    taglineOpacity.value = withDelay(
+      SPLASH_FADE_IN_DURATION_MS * 0.6,
+      withTiming(1, {
+        duration: SPLASH_FADE_IN_DURATION_MS * 0.5,
+        easing: Easing.out(Easing.cubic),
+      }),
+    );
+    taglineTranslateY.value = withDelay(
+      SPLASH_FADE_IN_DURATION_MS * 0.6,
+      withTiming(0, {
+        duration: SPLASH_FADE_IN_DURATION_MS * 0.5,
+        easing: Easing.out(Easing.cubic),
+      }),
+    );
     versionOpacity.value = withDelay(
       SPLASH_FADE_IN_DURATION_MS * 0.7,
       withTiming(1, {
@@ -66,7 +82,15 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
         easing: Easing.out(Easing.cubic),
       }),
     );
-  }, [logoOpacity, logoScale, textOpacity, textTranslateY, versionOpacity]);
+  }, [
+    logoOpacity,
+    logoScale,
+    textOpacity,
+    textTranslateY,
+    taglineOpacity,
+    taglineTranslateY,
+    versionOpacity,
+  ]);
 
   const finishSplash = () => {
     onFinish();
@@ -102,6 +126,11 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
     transform: [{ translateY: textTranslateY.value }],
   }));
 
+  const taglineAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: taglineOpacity.value,
+    transform: [{ translateY: taglineTranslateY.value }],
+  }));
+
   const versionAnimatedStyle = useAnimatedStyle(() => ({
     opacity: versionOpacity.value,
   }));
@@ -123,10 +152,16 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
         />
       </Animated.View>
 
-      <Animated.View style={textAnimatedStyle}>
+      <Animated.View style={textAnimatedStyle} className="items-center">
         <Text className="text-3xl font-bold" style={{ color: color.text.primary }}>
           Voice Inbox
         </Text>
+        <Animated.Text
+          style={[taglineAnimatedStyle, { color: color.text.secondary }]}
+          className="mt-2 text-center text-base"
+        >
+          Умные голосовые заметки
+        </Animated.Text>
       </Animated.View>
 
       <Animated.View
