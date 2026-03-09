@@ -19,6 +19,9 @@ const baseUrl = process.env.NEXT_PUBLIC_BASE_URL as string;
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
+  icons: {
+    icon: '/app-icon.svg',
+  },
   verification: {
     google: 'DkzhOPpo8WzVKEi9yjlUvpHh1dZhnLzknYyJ486BIaU',
   },
@@ -33,7 +36,9 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning className={onest.variable}>
-      <body className={`${onest.className} min-h-screen bg-white text-black antialiased dark:bg-[#0a0a0a] dark:text-white`}>
+      <body
+        className={`${onest.className} min-h-screen bg-white text-black antialiased dark:bg-[#0a0a0a] dark:text-white`}
+      >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
         </ThemeProvider>
