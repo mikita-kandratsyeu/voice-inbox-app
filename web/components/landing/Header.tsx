@@ -1,4 +1,4 @@
-import { Mic } from 'lucide-react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/lib/i18n';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
@@ -15,9 +15,14 @@ export function Header(): React.ReactElement {
           className="flex h-16 cursor-pointer items-center gap-2.5 transition-opacity hover:opacity-90"
           aria-label={t('appName')}
         >
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-purple-500 to-pink-500 shadow-lg">
-            <Mic className="h-5 w-5 text-white" aria-hidden />
-          </div>
+          <Image
+            src="/app-icon.svg"
+            alt="App Icon"
+            width={36}
+            height={36}
+            className="h-9 w-9 rounded-xl shadow-lg"
+            aria-hidden
+          />
           <span className="text-xl font-bold text-black dark:text-white">{t('appName')}</span>
         </Link>
         <div className="flex items-center gap-2">

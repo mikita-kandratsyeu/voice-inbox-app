@@ -1,4 +1,4 @@
-import { Mic } from 'lucide-react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/lib/i18n';
 
@@ -14,9 +14,14 @@ export function Footer(): React.ReactElement {
             className="flex items-center gap-3 transition-opacity hover:opacity-90"
             aria-label="Voice Inbox"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-purple-500 to-pink-500 shadow-lg">
-              <Mic className="h-5 w-5 text-white" aria-hidden />
-            </div>
+            <Image
+              src="/app-icon.svg"
+              alt="App Icon"
+              width={40}
+              height={40}
+              className="h-10 w-10 rounded-xl shadow-lg"
+              aria-hidden
+            />
             <span className="text-xl font-bold text-black dark:text-white">Voice Inbox</span>
           </Link>
           <div className="flex gap-8">
