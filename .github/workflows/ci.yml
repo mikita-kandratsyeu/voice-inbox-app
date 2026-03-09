@@ -1,4 +1,4 @@
-name: CI
+name: CI (Mobile)
 
 on:
   push:
@@ -10,6 +10,9 @@ jobs:
   build:
     name: CI
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
 
     steps:
       - uses: actions/checkout@v4
@@ -25,10 +28,8 @@ jobs:
       - name: Checking node_modules cache
         uses: actions/cache@v4
         with:
-          path: |
-            node_modules
-            **/node_modules
-          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock', '**/.yarnrc.yml') }}
+          path: mobile/node_modules
+          key: ${{ runner.os }}-mobile-modules-${{ hashFiles('mobile/yarn.lock', 'mobile/.yarnrc.yml') }}
 
       - name: Install packages
         run: yarn install --immutable
