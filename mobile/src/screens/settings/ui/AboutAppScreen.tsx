@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
-import { Mail, Mic } from 'lucide-react-native';
+import { Mail } from 'lucide-react-native';
 import React from 'react';
-import { Linking, ScrollView, Text, useColorScheme, View } from 'react-native';
+import { Image, Linking, ScrollView, Text, useColorScheme, View } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -28,12 +28,11 @@ export const AboutAppScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View className="mb-8 items-center">
-          <View
-            className="mb-4 h-20 w-20 items-center justify-center rounded-[22px]"
-            style={{ backgroundColor: '#3b82f6' }}
-          >
-            <Mic size={40} color="#ffffff" strokeWidth={1.8} />
-          </View>
+          <Image
+            source={require('../../../shared/assets/app-icon.png')}
+            className="mb-4 h-20 w-20 rounded-[22px]"
+            resizeMode="cover"
+          />
           <Text className="text-[24px] font-bold" style={{ color: color.text.primary }}>
             Voice Inbox
           </Text>

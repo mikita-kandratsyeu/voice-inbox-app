@@ -19,7 +19,7 @@ import { useAppLockStore } from '@/entities/app-lock';
 import { useRecordStore } from '@/entities/record';
 import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { exportData, importData } from '@/features/sync-data';
-import { getColors } from '@/shared/config';
+import { getColors, WEBSITE_URL } from '@/shared/config';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
 export const SettingsScreen = () => {
@@ -172,7 +172,7 @@ export const SettingsScreen = () => {
             label="Политика конфиденциальности"
             color={color}
             leftIcon={<Shield size={20} color={color.icon.muted} strokeWidth={1.8} />}
-            onPress={() => Linking.openURL('https://voice-inbox.app/privacy')}
+            onPress={() => Linking.openURL(`${WEBSITE_URL}/privacy`)}
             isFirst
           />
           <SettingsRow
