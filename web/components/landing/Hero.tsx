@@ -12,6 +12,9 @@ export function Hero(): React.ReactElement {
       />
       <div className="mx-auto max-w-7xl text-center">
         <div className="mx-auto max-w-5xl">
+          <div className="animate-fade-in mb-6 inline-flex items-center rounded-full border border-purple-500/30 bg-purple-500/10 px-4 py-1.5 text-sm font-medium text-purple-600 dark:border-pink-500/30 dark:bg-pink-500/10 dark:text-pink-400">
+            {t('inDevelopment')}
+          </div>
           <h1 className="animate-fade-in mb-6 text-5xl font-black leading-tight sm:text-6xl lg:text-8xl">
             {t('headline1')}
             <br />

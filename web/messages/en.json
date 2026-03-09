@@ -1,8 +1,9 @@
 {
   "hero": {
+    "inDevelopment": "Coming soon",
     "headline1": "More ideas. ",
     "headline2": "Less typing.",
-    "subtitle": "Stop typing. Start talking. Voice Inbox transforms your voice into organized, searchable notes with AI-powered transcription.",
+    "subtitle": "Speak freely. AI turns speech into smart notes — search and find everything instantly.",
     "appStoreLabel": "Download on the",
     "appStore": "App Store",
     "googlePlayLabel": "Get it on",
@@ -17,7 +18,7 @@
     "subtitle": "Powerful features designed for privacy and productivity",
     "record": {
       "title": "Record by voice",
-      "description": "Clear audio capture with advanced noise cancellation. Record anywhere, anytime."
+      "description": "Record anywhere, anytime."
     },
     "transcribe": {
       "title": "Offline transcription",
@@ -25,7 +26,7 @@
     },
     "ai": {
       "title": "AI on demand",
-      "description": "Smart summaries, action items, and insights—powered by on-device AI."
+      "description": "Smart summaries, action items, and insights."
     },
     "ready": {
       "title": "Ready to go",
@@ -34,7 +35,7 @@
   },
   "howItWorks": {
     "title": "Simple. Fast. Powerful.",
-    "subtitle": "From voice to insights in seconds",
+    "subtitle": "From voice to insights",
     "step1": { "title": "Record", "description": "Tap the mic and speak naturally" },
     "step2": { "title": "Transcribe", "description": "Offline AI converts speech to text" },
     "step3": { "title": "Analyze", "description": "Get summaries and action items" }
@@ -48,7 +49,7 @@
   },
   "cta": {
     "title": "Start capturing ideas today",
-    "subtitle": "Join thousands of professionals who trust Voice Inbox"
+    "subtitle": "Be among the first to try Voice Inbox"
   },
   "footer": {
     "privacyPolicy": "Privacy Policy",
