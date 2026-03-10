@@ -184,8 +184,7 @@ export const StorageDetailsScreen = () => {
 
   useEffect(() => {
     refreshStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [refreshStats]);
 
   useEffect(() => {
     loadModelSizes(whisperModelStatuses);
@@ -193,7 +192,9 @@ export const StorageDetailsScreen = () => {
 
   const audioCount = records.filter((r) => r.audioPath).length;
   const withTranscript = records.filter((r) => r.transcript && r.transcript.length > 0).length;
-  const processedByAI = records.filter((r) => r.aiStatus === 'done').length;
+  const processedByAI = records.filter(
+    (r) => (r.summary && r.summary.length > 0) || (r.tasks && r.tasks.length > 0),
+  ).length;
 
   const modelsBytes = downloadedModels.reduce((sum, m) => {
     const realBytes = realModelSizes[m.id];

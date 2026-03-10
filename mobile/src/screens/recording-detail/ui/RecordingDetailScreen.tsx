@@ -2,7 +2,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { ActionSheetIOS, Alert, Platform, ScrollView, useColorScheme, View } from 'react-native';
+import { Alert, ScrollView, useColorScheme, View } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { TaskItem, VoiceRecord } from '@/entities/record';
@@ -80,28 +80,6 @@ export const RecordingDetailScreen = () => {
     });
   };
 
-  const handleMore = () => {
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options: ['Cancel', 'Rename', 'Delete'],
-          destructiveButtonIndex: 2,
-          cancelButtonIndex: 0,
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) promptRename(liveRecord);
-          if (buttonIndex === 2) promptDelete(liveRecord);
-        },
-      );
-    } else {
-      Alert.alert('Note actions', undefined, [
-        { text: 'Rename', onPress: () => promptRename(liveRecord) },
-        { text: 'Delete', style: 'destructive', onPress: () => promptDelete(liveRecord) },
-        { text: 'Cancel', style: 'cancel' },
-      ]);
-    }
-  };
-
   return (
     <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
       <RecordingDetailHeader
@@ -110,7 +88,8 @@ export const RecordingDetailScreen = () => {
         onBack={() => navigation.goBack()}
         onTogglePin={() => togglePin(liveRecord.id)}
         onShare={handleShare}
-        onMore={handleMore}
+        onRename={() => promptRename(liveRecord)}
+        onDelete={() => promptDelete(liveRecord)}
       />
 
       <ScrollView

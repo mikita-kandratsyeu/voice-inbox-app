@@ -1,3 +1,4 @@
+import { MenuView } from '@react-native-menu/menu';
 import { ChevronLeft, MoreVertical, Pin, Share2 } from 'lucide-react-native';
 import React from 'react';
 import { View } from 'react-native';
@@ -13,7 +14,8 @@ type RecordingDetailHeaderProps = {
   onBack: () => void;
   onTogglePin: () => void;
   onShare: () => void;
-  onMore: () => void;
+  onRename: () => void;
+  onDelete: () => void;
 };
 
 export const RecordingDetailHeader = ({
@@ -22,7 +24,8 @@ export const RecordingDetailHeader = ({
   onBack,
   onTogglePin,
   onShare,
-  onMore,
+  onRename,
+  onDelete,
 }: RecordingDetailHeaderProps) => {
   const insets = useSafeAreaInsets();
   const iconBtnBg = { backgroundColor: color.background.tertiary };
@@ -72,16 +75,39 @@ export const RecordingDetailHeader = ({
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         />
-        <Button
-          iconOnly
-          variant="icon"
-          size="md"
-          icon={<MoreVertical size={18} color={color.icon.muted} strokeWidth={2.2} />}
-          color={color}
-          onPress={onMore}
-          activeOpacity={0.7}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        />
+        <MenuView
+          title=""
+          shouldOpenOnLongPress={false}
+          onPressAction={({ nativeEvent }) => {
+            if (nativeEvent.event === 'rename') onRename();
+            if (nativeEvent.event === 'delete') onDelete();
+          }}
+          actions={[
+            {
+              id: 'rename',
+              title: 'Rename',
+              image: 'pencil',
+              imageColor: color.text.primary,
+            },
+            {
+              id: 'delete',
+              title: 'Delete',
+              image: 'trash',
+              imageColor: color.accent.delete,
+              attributes: { destructive: true },
+            },
+          ]}
+        >
+          <Button
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={<MoreVertical size={18} color={color.icon.muted} strokeWidth={2.2} />}
+            color={color}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          />
+        </MenuView>
       </View>
     </View>
   );

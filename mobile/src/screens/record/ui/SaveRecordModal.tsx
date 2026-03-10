@@ -125,7 +125,7 @@ export const SaveRecordModal = ({
       transcriptProgress: 0,
       isPinned: false,
       tags: [],
-      audioPath: audioPath ?? undefined,
+      audioPath: audioPath?.startsWith('file://') ? audioPath.slice(7) : (audioPath ?? undefined),
     };
 
     await onSave(record);
