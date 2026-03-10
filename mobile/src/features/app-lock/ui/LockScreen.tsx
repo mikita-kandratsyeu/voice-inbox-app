@@ -104,12 +104,12 @@ export const LockScreen = () => {
           useBiometrics &&
           biometryType && (
             <TouchableOpacity
-              className="h-16 w-16 items-center justify-center rounded-full"
+              className="h-24 w-24 items-center justify-center rounded-full"
               style={{ backgroundColor: color.background.tertiary }}
               onPress={handleBiometricPress}
               activeOpacity={0.7}
             >
-              <BioIcon size={28} color={color.accent.success} strokeWidth={1.8} />
+              <BioIcon size={40} color={color.accent.success} strokeWidth={1.8} />
             </TouchableOpacity>
           )
         }
