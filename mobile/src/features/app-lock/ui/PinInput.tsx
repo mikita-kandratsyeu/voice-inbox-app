@@ -156,10 +156,7 @@ export const PinInput = ({
             {row.map((key) => {
               if (key === '') {
                 return (
-                  <View
-                    key="spacer"
-                    className={`items-center justify-center ${bottomLeftSlot ? 'h-24 w-24' : 'h-16 w-16'}`}
-                  >
+                  <View key="spacer" className="h-16 w-16 items-center justify-center">
                     {bottomLeftSlot}
                   </View>
                 );
