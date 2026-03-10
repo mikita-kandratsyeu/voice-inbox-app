@@ -87,7 +87,11 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
         elapsedRef.current = totalSeconds;
       });
 
-      await player.startPlayer(audioPath);
+      await player.startPlayer(audioPath, {
+        AVAudioSessionCategoryKey: 'AVAudioSessionCategoryPlayback',
+        AVAudioSessionModeKey: 'AVAudioSessionModeDefault',
+        AVAudioSessionCategoryOptionKey: 'AVAudioSessionCategoryOptionDefaultToSpeaker',
+      });
 
       setIsPlaying(true);
     } catch (err) {
@@ -137,7 +141,11 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
         if (elapsedRef.current > 0) {
           await player.resumePlayer();
         } else {
-          await player.startPlayer(audioPath);
+          await player.startPlayer(audioPath, {
+            AVAudioSessionCategoryKey: 'AVAudioSessionCategoryPlayback',
+            AVAudioSessionModeKey: 'AVAudioSessionModeDefault',
+            AVAudioSessionCategoryOptionKey: 'AVAudioSessionCategoryOptionDefaultToSpeaker',
+          });
         }
         setIsPlaying(true);
       } catch (err) {

@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { BookOpen, Mail, Tag } from 'lucide-react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Image, Linking, ScrollView, Text, useColorScheme, View } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +13,7 @@ import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 const APP_VERSION = DeviceInfo.getVersion();
 
 export const AboutAppScreen = () => {
+  const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -19,7 +21,7 @@ export const AboutAppScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title="О приложении" color={color} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('about.title')} color={color} onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={{
@@ -42,13 +44,12 @@ export const AboutAppScreen = () => {
             className="mt-3 text-center text-[14px] leading-5 px-4"
             style={{ color: color.text.secondary }}
           >
-            Offline-first приложение для голосовых заметок. Захватывайте идеи голосом, получайте
-            транскрипты, саммари и задачи с помощью ИИ.
+            {t('about.description')}
           </Text>
         </View>
-        <SettingsSection title="Приложение" color={color}>
+        <SettingsSection title={t('about.app')} color={color}>
           <SettingsRow
-            label="Версия"
+            label={t('about.version')}
             value={APP_VERSION}
             color={color}
             leftIcon={<Tag size={18} color={color.icon.muted} strokeWidth={1.8} />}
@@ -56,7 +57,7 @@ export const AboutAppScreen = () => {
             isFirst
           />
           <SettingsRow
-            label="Показать онбординг"
+            label={t('about.showOnboarding')}
             color={color}
             leftIcon={<BookOpen size={18} color={color.icon.muted} strokeWidth={1.8} />}
             onPress={() => setForceShowOnboarding(true)}
@@ -64,9 +65,9 @@ export const AboutAppScreen = () => {
           />
         </SettingsSection>
         {SUPPORT_EMAIL.length > 0 && (
-          <SettingsSection title="Помощь и обратная связь" color={color}>
+          <SettingsSection title={t('about.helpAndFeedback')} color={color}>
             <SettingsRow
-              label="Написать в поддержку"
+              label={t('about.contactSupport')}
               color={color}
               leftIcon={<Mail size={18} color={color.icon.muted} strokeWidth={1.8} />}
               onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
@@ -74,21 +75,21 @@ export const AboutAppScreen = () => {
             />
           </SettingsSection>
         )}
-        <SettingsSection title="Технологии" color={color}>
+        <SettingsSection title={t('about.technologies')} color={color}>
           <SettingsRow label="React Native" color={color} showChevron={false} isFirst />
           <SettingsRow label="NativeWind" color={color} showChevron={false} />
           <SettingsRow label="SQLite" color={color} showChevron={false} />
           <SettingsRow label="MMKV Storage" color={color} showChevron={false} />
           <SettingsRow label="Zustand" color={color} showChevron={false} />
           <SettingsRow
-            label="Whisper (офлайн транскрипция)"
+            label={t('about.offlineTranscription')}
             color={color}
             showChevron={false}
             isLast
           />
         </SettingsSection>
         <Text className="mt-2 text-center text-[14px]" style={{ color: color.text.secondary }}>
-          © {new Date().getFullYear()} Voice Inbox. Все права защищены.
+          {t('about.copyright', { year: new Date().getFullYear() })}
         </Text>
       </ScrollView>
     </View>

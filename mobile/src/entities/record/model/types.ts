@@ -22,11 +22,14 @@ export type VoiceRecord = {
   summary?: string;
   tasks?: TaskItem[];
   duration: string;
+  durationMs?: number;
   createdAt: string;
   relativeTime?: string;
   status: RecordStatus;
   aiStatus?: RecordingStatus;
   transcriptProgress?: number;
+  // Метка прогресса для длинных записей: "Обработано N из M фрагментов..."
+  transcriptProgressLabel?: string;
   isPinned?: boolean;
   tags?: string[];
   audioPath?: string;

@@ -1,10 +1,11 @@
 import { useNavigation } from '@react-navigation/native';
 import { Fingerprint, ScanFace } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, Switch, Text, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { BIOMETRY_LABELS, useAppLockStore } from '@/entities/app-lock';
+import { useAppLockStore } from '@/entities/app-lock';
 import { PinInput } from '@/features/app-lock/ui/PinInput';
 import { getColors } from '@/shared/config';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
@@ -12,6 +13,7 @@ import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 type SetupStep = 'confirm' | 'initial';
 
 export const AppLockSetupScreen = () => {
+  const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -82,10 +84,10 @@ export const AppLockSetupScreen = () => {
   }, [setEnabled, setUseBiometrics, useBiometrics, biometryType, navigation]);
 
   const handleDisable = useCallback(() => {
-    Alert.alert('Отключить блокировку', 'Приложение больше не будет запрашивать PIN при входе.', [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(t('appLock.disableTitle'), t('appLock.disableMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Отключить',
+        text: t('appLock.disable'),
         style: 'destructive',
         onPress: async () => {
           await setEnabled(false);
@@ -93,6 +95,7 @@ export const AppLockSetupScreen = () => {
         },
       },
     ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setEnabled, navigation]);
 
   const handleToggleEnabled = useCallback(
@@ -116,18 +119,16 @@ export const AppLockSetupScreen = () => {
     [biometryType, setUseBiometrics],
   );
 
-  const bioLabel = biometryType ? (BIOMETRY_LABELS[biometryType] ?? biometryType) : 'Биометрия';
+  const bioLabel = biometryType
+    ? t(`appLock.biometry.${biometryType}` as 'appLock.biometry.FaceID') || biometryType
+    : t('common.biometrics');
   const isFaceBiometry =
     biometryType === 'FaceID' || biometryType === 'Face' || biometryType === 'OpticID';
   const BioIcon = isFaceBiometry ? ScanFace : Fingerprint;
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader
-        title="Блокировка приложения"
-        color={color}
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={t('appLock.title')} color={color} onBack={() => navigation.goBack()} />
 
       {!isEnabled ? (
         <View
@@ -135,7 +136,7 @@ export const AppLockSetupScreen = () => {
           style={{ paddingTop: 24, paddingBottom: insets.bottom + 24 }}
         >
           <Text className="mb-6 text-center text-[16px]" style={{ color: color.text.secondary }}>
-            Установите 4-значный PIN-код для защиты приложения
+            {t('appLock.setPinPrompt')}
           </Text>
 
           <View className="mb-6 min-h-[52px] justify-center">
@@ -180,7 +181,7 @@ export const AppLockSetupScreen = () => {
           <View className="mt-4 h-8 items-center justify-center">
             {step === 'confirm' && (
               <Text className="text-center text-sm" style={{ color: color.text.secondary }}>
-                Подтвердите PIN-код
+                {t('appLock.confirmPin')}
               </Text>
             )}
           </View>
@@ -193,9 +194,9 @@ export const AppLockSetupScreen = () => {
             paddingBottom: insets.bottom + 24,
           }}
         >
-          <SettingsSection title="Настройки" color={color}>
+          <SettingsSection title={t('appLock.settings')} color={color}>
             <SettingsRow
-              label="Блокировка приложения"
+              label={t('appLock.title')}
               color={color}
               leftIcon={<Fingerprint size={20} color={color.accent.primary} strokeWidth={1.8} />}
               rightSlot={
@@ -217,7 +218,7 @@ export const AppLockSetupScreen = () => {
             {biometryType && (
               <SettingsRow
                 label={bioLabel}
-                value={useBiometrics ? 'Вкл' : 'Выкл'}
+                value={useBiometrics ? t('settings.on') : t('settings.off')}
                 color={color}
                 leftIcon={<BioIcon size={20} color={color.accent.success} strokeWidth={1.8} />}
                 rightSlot={

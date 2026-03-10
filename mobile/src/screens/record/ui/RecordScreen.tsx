@@ -1,19 +1,25 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useRef, useState } from 'react';
-import { PanResponder, StatusBar, Text, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { PanResponder, StatusBar, Text, useColorScheme, View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { formatTimeWithMs } from '@/shared/lib';
+import { getColors } from '@/shared/config';
 import { Waveform } from '@/shared/ui';
 
-import { ACCENT_BLUE } from '../config';
 import { useRecording } from '../model/useRecording';
+import { RecordLimitBar } from './RecordLimitBar';
 import { RecordScreenControls } from './RecordScreenControls';
 import { RecordScreenHeader } from './RecordScreenHeader';
+import { RecordTimer } from './RecordTimer';
 import { SaveRecordModal } from './SaveRecordModal';
 
 export const RecordScreen = () => {
+  const { t } = useTranslation();
+  const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
+  const c = getColors(scheme);
+
   const navigation = useNavigation();
   const addRecord = useRecordStore((s) => s.addRecord);
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -29,7 +35,12 @@ export const RecordScreen = () => {
     pauseRecording,
     resumeRecording,
     stopRecording,
-  } = useRecording();
+  } = useRecording({
+    onLimitReached: () => {
+      setTitle('');
+      setShowSaveModal(true);
+    },
+  });
 
   useFocusEffect(
     useCallback(() => {
@@ -53,8 +64,7 @@ export const RecordScreen = () => {
   };
 
   const handleDonePress = async () => {
-    await stopRecording();
-
+    await pauseRecording();
     setTitle('');
     setShowSaveModal(true);
   };
@@ -64,7 +74,8 @@ export const RecordScreen = () => {
     resumeRecording();
   };
 
-  const handleSaveConfirm = (record: VoiceRecord) => {
+  const handleSaveConfirm = async (record: VoiceRecord) => {
+    await stopRecording();
     addRecord(record);
   };
 
@@ -88,21 +99,15 @@ export const RecordScreen = () => {
   return (
     <View
       className="flex-1"
-      style={{ backgroundColor: ACCENT_BLUE }}
+      style={{ backgroundColor: c.accent.primary }}
       {...swipeDownResponder.panHandlers}
     >
-      <StatusBar barStyle="light-content" backgroundColor={ACCENT_BLUE} />
-
+      <StatusBar barStyle="light-content" backgroundColor={c.accent.primary} />
       <RecordScreenHeader state={state} onClose={handleClose} />
-
       <View className="flex-1 items-center justify-center gap-9 px-6">
-        <View className="flex-row items-baseline">
-          <Text className="text-[72px] font-light tracking-tight text-white">
-            {formatTimeWithMs(elapsedMs).main}
-          </Text>
-          <Text className="ml-0.5 text-[36px] font-light tracking-tight text-white/85">
-            {formatTimeWithMs(elapsedMs).ms}
-          </Text>
+        <View className="items-center gap-3">
+          <RecordTimer elapsedMs={elapsedMs} />
+          <RecordLimitBar elapsedMs={elapsedMs} />
         </View>
         <View className="w-full px-2">
           <Waveform
@@ -111,17 +116,14 @@ export const RecordScreen = () => {
             meterLevel={state === 'recording' ? meterLevel : undefined}
           />
         </View>
-        {(state === 'idle' || state === 'recording') && (
-          <View className="items-center gap-1">
-            <Text className="text-[16px] font-medium text-white/90">Запись работает оффлайн</Text>
-            <Text className="text-[14px] text-white/55">Транскрипция выполнится локально</Text>
-          </View>
-        )}
+        <View className="items-center gap-1" style={{ opacity: state === 'paused' ? 0 : 1 }}>
+          <Text className="text-[16px] font-medium text-white/90">{t('record.offlineTitle')}</Text>
+          <Text className="text-[14px] text-white/55">{t('record.offlineSubtitle')}</Text>
+        </View>
       </View>
 
       <RecordScreenControls
         state={state}
-        onMicPress={startRecording}
         onPauseResume={handlePauseResume}
         onDonePress={handleDonePress}
       />
@@ -130,6 +132,7 @@ export const RecordScreen = () => {
         visible={showSaveModal}
         title={title}
         elapsed={elapsed}
+        elapsedMs={elapsedMs}
         audioPath={audioPathRef.current}
         onTitleChange={setTitle}
         onCancel={handleSaveCancel}

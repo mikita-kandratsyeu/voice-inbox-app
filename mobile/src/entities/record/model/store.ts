@@ -2,7 +2,7 @@ import RNFS from 'react-native-fs';
 import { create } from 'zustand';
 
 import { recordRepository } from './repository';
-import type { RecordingStatus, VoiceRecord } from './types';
+import type { RecordingStatus, TranscriptSegment, VoiceRecord } from './types';
 
 type RecordStore = {
   records: VoiceRecord[];
@@ -12,7 +12,18 @@ type RecordStore = {
   deleteRecord: (id: string) => Promise<void>;
   togglePin: (id: string) => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
-  updateAiStatus: (id: string, aiStatus: RecordingStatus, progress?: number) => void;
+  updateAiStatus: (
+    id: string,
+    aiStatus: RecordingStatus,
+    progress?: number,
+    progressLabel?: string,
+  ) => void;
+  renameRecord: (id: string, title: string) => Promise<void>;
+  updateTranscript: (
+    id: string,
+    transcript: string,
+    segments: TranscriptSegment[],
+  ) => Promise<void>;
 };
 
 export const useRecordStore = create<RecordStore>((set, get) => ({
@@ -62,10 +73,42 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     }));
   },
 
-  updateAiStatus: (id, aiStatus, progress) => {
+  updateAiStatus: (id, aiStatus, progress, progressLabel) => {
     set((s) => ({
       records: s.records.map((r) =>
-        r.id === id ? { ...r, aiStatus, transcriptProgress: progress ?? r.transcriptProgress } : r,
+        r.id === id
+          ? {
+              ...r,
+              aiStatus,
+              transcriptProgress: progress ?? r.transcriptProgress,
+              transcriptProgressLabel:
+                progress === 0 ? undefined : (progressLabel ?? r.transcriptProgressLabel),
+            }
+          : r,
+      ),
+    }));
+  },
+
+  renameRecord: async (id, title) => {
+    await recordRepository.rename(id, title);
+    set((s) => ({
+      records: s.records.map((r) => (r.id === id ? { ...r, title } : r)),
+    }));
+  },
+
+  updateTranscript: async (id, transcript, segments) => {
+    await recordRepository.updateTranscript(id, transcript, segments);
+    set((s) => ({
+      records: s.records.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              transcript,
+              transcriptSegments: segments,
+              aiStatus: 'done',
+              transcriptProgress: 100,
+            }
+          : r,
       ),
     }));
   },

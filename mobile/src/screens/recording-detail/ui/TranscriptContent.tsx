@@ -26,6 +26,7 @@ export const TranscriptContent = ({
     return (
       <TranscriptProcessing
         progress={record.transcriptProgress ?? 0}
+        progressLabel={record.transcriptProgressLabel}
         color={color}
         onCancel={onCancelTranscription}
       />
@@ -49,6 +50,7 @@ export const TranscriptContent = ({
       <TranscriptTab
         segments={record.transcriptSegments ?? []}
         color={color}
+        hasAudio={!!record.audioPath}
         onTranscribe={onTranscribe}
       />
     </>

@@ -71,15 +71,19 @@ const clearDirectoryContents = async (
   return { deletedBytes };
 };
 
+const normalizeFilePath = (path: string): string =>
+  path.startsWith('file://') ? path.slice(7) : path;
+
 const getFileSize = async (path: string): Promise<number> => {
   try {
-    const exists = await RNFS.exists(path);
+    const normalizedPath = normalizeFilePath(path);
+    const exists = await RNFS.exists(normalizedPath);
 
     if (!exists) {
       return 0;
     }
 
-    const stat = await RNFS.stat(path);
+    const stat = await RNFS.stat(normalizedPath);
 
     return stat.size;
   } catch {

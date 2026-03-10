@@ -1,5 +1,7 @@
+import { MenuView } from '@react-native-menu/menu';
 import { ChevronLeft, MoreVertical, Pin, Share2 } from 'lucide-react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -12,6 +14,9 @@ type RecordingDetailHeaderProps = {
   color: Colors;
   onBack: () => void;
   onTogglePin: () => void;
+  onShare: () => void;
+  onRename: () => void;
+  onDelete: () => void;
 };
 
 export const RecordingDetailHeader = ({
@@ -19,7 +24,11 @@ export const RecordingDetailHeader = ({
   color,
   onBack,
   onTogglePin,
+  onShare,
+  onRename,
+  onDelete,
 }: RecordingDetailHeaderProps) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const iconBtnBg = { backgroundColor: color.background.tertiary };
   const pinActiveStyle = { backgroundColor: color.accent.primary + '1A' };
@@ -64,18 +73,43 @@ export const RecordingDetailHeader = ({
           size="md"
           icon={<Share2 size={18} color={color.icon.muted} strokeWidth={2.2} />}
           color={color}
+          onPress={onShare}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         />
-        <Button
-          iconOnly
-          variant="icon"
-          size="md"
-          icon={<MoreVertical size={18} color={color.icon.muted} strokeWidth={2.2} />}
-          color={color}
-          activeOpacity={0.7}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        />
+        <MenuView
+          title=""
+          shouldOpenOnLongPress={false}
+          onPressAction={({ nativeEvent }) => {
+            if (nativeEvent.event === 'rename') onRename();
+            if (nativeEvent.event === 'delete') onDelete();
+          }}
+          actions={[
+            {
+              id: 'rename',
+              title: t('recordActions.rename'),
+              image: 'pencil',
+              imageColor: color.text.primary,
+            },
+            {
+              id: 'delete',
+              title: t('recordActions.delete'),
+              image: 'trash',
+              imageColor: color.accent.delete,
+              attributes: { destructive: true },
+            },
+          ]}
+        >
+          <Button
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={<MoreVertical size={18} color={color.icon.muted} strokeWidth={2.2} />}
+            color={color}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          />
+        </MenuView>
       </View>
     </View>
   );

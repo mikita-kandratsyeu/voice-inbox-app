@@ -18,6 +18,7 @@ type RecordRowRaw = {
   summary: string | null;
   tasks: string | null;
   duration: string | null;
+  durationMs: number | null;
   createdAt: string | null;
   relativeTime: string | null;
   status: string | null;
@@ -36,6 +37,7 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => ({
   summary: row.summary ?? '',
   tasks: JSON.parse(row.tasks ?? '[]') as TaskItem[],
   duration: row.duration ?? '0:00',
+  durationMs: row.durationMs ?? 0,
   createdAt: row.createdAt ?? '',
   relativeTime: row.relativeTime ?? '',
   status: (row.status ?? 'unread') as VoiceRecord['status'],
@@ -71,6 +73,7 @@ export const recordRepository = {
         summary: record.summary ?? '',
         tasks: JSON.stringify(record.tasks ?? []),
         duration: record.duration,
+        durationMs: record.durationMs ?? 0,
         createdAt: record.createdAt,
         relativeTime: record.relativeTime ?? '',
         status: record.status,
@@ -102,5 +105,29 @@ export const recordRepository = {
     logDb('markAsRead', { id });
     const db = getDB();
     await db.update(recordsTable).set({ status: 'read' }).where(eq(recordsTable.id, id));
+  },
+
+  rename: async (id: string, title: string): Promise<void> => {
+    logDb('rename', { id, title });
+    const db = getDB();
+    await db.update(recordsTable).set({ title }).where(eq(recordsTable.id, id));
+  },
+
+  updateTranscript: async (
+    id: string,
+    transcript: string,
+    segments: TranscriptSegment[],
+  ): Promise<void> => {
+    logDb('updateTranscript', { id, segmentsCount: segments.length });
+    const db = getDB();
+    await db
+      .update(recordsTable)
+      .set({
+        transcript,
+        transcriptSegments: JSON.stringify(segments),
+        aiStatus: 'done',
+        transcriptProgress: 100,
+      })
+      .where(eq(recordsTable.id, id));
   },
 };

@@ -1,6 +1,7 @@
 {
   "extends": "@react-native/typescript-config",
   "compilerOptions": {
+    "resolveJsonModule": true,
     "target": "ES2024",
     "lib": ["ES2024"],
     "module": "ESNext",
@@ -13,7 +14,8 @@
       "@features/*": ["src/features/*"],
       "@screens/*": ["src/screens/*"],
       "@shared/*": ["src/shared/*"],
-      "@widgets/*": ["src/widgets/*"]
+      "@widgets/*": ["src/widgets/*"],
+      "whisper.rn": ["node_modules/whisper.rn/lib/typescript/index.d.ts"]
     }
   },
   "include": ["**/*.ts", "**/*.tsx", "src/**/*", "nativewind-env.d.ts"],

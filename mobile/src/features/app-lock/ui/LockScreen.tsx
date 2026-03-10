@@ -1,6 +1,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import { Fingerprint, ScanFace } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -10,6 +11,7 @@ import { getColors } from '@/shared/config';
 import { PinInput } from './PinInput';
 
 export const LockScreen = () => {
+  const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const insets = useSafeAreaInsets();
   const [pin, setPin] = useState('');
@@ -71,8 +73,9 @@ export const LockScreen = () => {
     if (ok) {
       unlock();
     } else {
-      Alert.alert('Ошибка', 'Не удалось разблокировать. Попробуйте ввести PIN-код.');
+      Alert.alert(t('common.error'), t('appLock.unlockError'));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlockWithBiometrics, unlock]);
 
   const isFaceBiometry =
@@ -89,7 +92,7 @@ export const LockScreen = () => {
       }}
     >
       <Text className="mb-8 text-center text-[16px]" style={{ color: color.text.secondary }}>
-        Введите PIN-код для входа
+        {t('appLock.enterPin')}
       </Text>
 
       <PinInput

@@ -1,62 +1,70 @@
-import { Check, Mic, Pause, Play } from 'lucide-react-native';
+import { Check, Pause, Play } from 'lucide-react-native';
 import React from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getColors } from '@/shared/config';
+
 import type { RecordingState } from '../config';
-import { ACCENT_BLUE, DONE_BTN_BG, PAUSE_BTN_BG } from '../config';
+import { PAUSE_BTN_BG } from '../config';
 
 type RecordScreenControlsProps = {
   state: RecordingState;
-  onMicPress: () => void;
   onPauseResume: () => void;
   onDonePress: () => void;
 };
 
 export const RecordScreenControls = ({
   state,
-  onMicPress,
   onPauseResume,
   onDonePress,
 }: RecordScreenControlsProps) => {
+  const { t } = useTranslation();
+  const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
+  const c = getColors(scheme);
+
   const insets = useSafeAreaInsets();
-  const controlsPaddingBottom = { paddingBottom: Math.max(insets.bottom, 32) };
+  const controlsPaddingBottom = { paddingBottom: Math.max(insets.bottom, 36) };
+
+  const isIdle = state === 'idle';
+  const isPaused = state === 'paused';
 
   return (
-    <View className="flex-row items-center justify-center gap-6 pt-4" style={controlsPaddingBottom}>
-      {state === 'idle' ? (
-        <TouchableOpacity
-          onPress={onMicPress}
-          className="h-[72px] w-[72px] items-center justify-center rounded-full shadow-lg"
-          style={{ backgroundColor: DONE_BTN_BG }}
-          activeOpacity={0.85}
-        >
-          <Mic size={30} color={ACCENT_BLUE} strokeWidth={2} />
-        </TouchableOpacity>
-      ) : (
-        <>
-          <TouchableOpacity
-            onPress={onPauseResume}
-            className="h-14 w-14 items-center justify-center rounded-full"
-            style={{ backgroundColor: PAUSE_BTN_BG }}
-            activeOpacity={0.8}
-          >
-            {state === 'paused' ? (
-              <Play size={22} color="#ffffff" strokeWidth={2} />
-            ) : (
-              <Pause size={22} color="#ffffff" strokeWidth={2} />
-            )}
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={onDonePress}
-            className="h-[68px] w-[68px] items-center justify-center rounded-full shadow-lg"
-            style={{ backgroundColor: DONE_BTN_BG }}
-            activeOpacity={0.85}
-          >
-            <Check size={26} color={ACCENT_BLUE} strokeWidth={2.5} />
-          </TouchableOpacity>
-        </>
-      )}
+    <View
+      className="flex-row items-center justify-center gap-10 pt-4"
+      style={controlsPaddingBottom}
+    >
+      <TouchableOpacity
+        onPress={onPauseResume}
+        className="h-16 w-16 items-center justify-center rounded-full"
+        style={{
+          backgroundColor: PAUSE_BTN_BG,
+          opacity: isIdle ? 0.35 : 1,
+        }}
+        activeOpacity={0.75}
+        disabled={isIdle}
+        accessibilityLabel={isPaused ? t('record.resume') : t('record.paused')}
+      >
+        {isPaused ? (
+          <Play size={24} color={c.icon.onAccent} strokeWidth={2} />
+        ) : (
+          <Pause size={24} color={c.icon.onAccent} strokeWidth={2} />
+        )}
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={onDonePress}
+        className="h-20 w-20 items-center justify-center rounded-full shadow-lg"
+        style={{
+          backgroundColor: c.icon.onAccent,
+          opacity: isIdle ? 0.35 : 1,
+        }}
+        activeOpacity={0.85}
+        disabled={isIdle}
+        accessibilityLabel={t('record.finish')}
+      >
+        <Check size={30} color={c.accent.primary} strokeWidth={2.5} />
+      </TouchableOpacity>
     </View>
   );
 };

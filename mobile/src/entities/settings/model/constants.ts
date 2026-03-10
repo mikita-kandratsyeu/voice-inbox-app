@@ -6,8 +6,7 @@ const TRINITY_MODEL: AIModel = {
   id: 'arcee-ai/trinity-large-preview:free',
   name: 'Trinity Large Preview Free',
   provider: 'Arcee AI',
-  description: 'Мощная модель с поддержкой мультимодального ввода',
-  contextWindow: '131K токенов',
+  descriptionKey: 'aiModels.trinityDesc',
   speed: 'medium',
 };
 
@@ -15,14 +14,13 @@ const GEMINI_MODEL: AIModel = {
   id: 'google/gemini-3-flash-preview',
   name: 'Gemini 3 Flash',
   provider: 'Google',
-  description: 'Быстрая и эффективная модель для повседневных задач',
-  contextWindow: '1M токенов',
+  descriptionKey: 'aiModels.geminiDesc',
   speed: 'fast',
 };
 
 export const AI_MODELS: AIModel[] = [
-  ...(APP_ENV === 'development' ? [TRINITY_MODEL] : []),
   GEMINI_MODEL,
+  ...(APP_ENV === 'development' ? [TRINITY_MODEL] : []),
 ];
 
 export const WHISPER_MODELS: WhisperModel[] = [

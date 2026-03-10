@@ -1,32 +1,30 @@
 import { useNavigation } from '@react-navigation/native';
 import { Bot, BrainCircuit, Clock, FileText, Mic, Mic2, Trash2, Type } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, Text, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
+import type { WhisperModelId } from '@/entities/settings';
 import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import { getModelFileSizeBytes } from '@/features/model-manager';
 import { getColors } from '@/shared/config';
 import { clearCache, getStorageStats, type StorageStats } from '@/shared/lib';
+import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
-
-const formatModelSize = (mb: number): string => {
-  if (mb >= 1000) {
-    return `${(mb / 1000).toFixed(1)} ГБ`;
-  }
-
-  return `${mb} МБ`;
-};
 
 const StorageBar = ({
   audioMb,
   transcriptKb,
   aiDataKb,
   cacheKb,
-  modelsMb,
+  modelsBytes,
   totalMb,
   color,
-}: StorageStats & { modelsMb: number; color: ReturnType<typeof getColors> }) => {
+}: StorageStats & { modelsBytes: number; color: ReturnType<typeof getColors> }) => {
+  const { t } = useTranslation();
+  const modelsMb = modelsBytes / (1024 * 1024);
   const divisor = totalMb > 0 ? totalMb : 1;
   const audioFrac = audioMb / divisor;
   const transcriptFrac = transcriptKb / 1024 / divisor;
@@ -37,10 +35,12 @@ const StorageBar = ({
     <View>
       <View className="mb-3 flex-row items-center justify-between">
         <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
-          Использовано
+          {t('storage.used')}
         </Text>
         <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
-          {totalMb >= 1000 ? `${(totalMb / 1000).toFixed(1)} ГБ` : `${totalMb.toFixed(1)} МБ`}
+          {totalMb >= 1000
+            ? `${(totalMb / 1000).toFixed(1)} ${t('storage.gb')}`
+            : `${totalMb.toFixed(1)} ${t('storage.mb')}`}
         </Text>
       </View>
       <View
@@ -62,7 +62,7 @@ const StorageBar = ({
               style={{ backgroundColor: color.accent.primary }}
             />
             <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-              Аудиозаписи
+              {t('storage.audioRecords')}
             </Text>
           </View>
           <Text className="text-[14px]" style={{ color: color.text.primary }}>
@@ -76,11 +76,11 @@ const StorageBar = ({
               style={{ backgroundColor: color.accent.transcript }}
             />
             <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-              Транскрипты и данные
+              {t('storage.transcriptsAndData')}
             </Text>
           </View>
           <Text className="text-[14px]" style={{ color: color.text.primary }}>
-            {Math.round(transcriptKb)} КБ
+            {formatFileSize(transcriptKb * 1024)}
           </Text>
         </View>
         <View className="flex-row items-center justify-between">
@@ -90,28 +90,14 @@ const StorageBar = ({
               style={{ backgroundColor: color.accent.success }}
             />
             <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-              ИИ обработка
+              {t('storage.aiProcessing')}
             </Text>
           </View>
           <Text className="text-[14px]" style={{ color: color.text.primary }}>
-            {Math.round(aiDataKb)} КБ
+            {formatFileSize(aiDataKb * 1024)}
           </Text>
         </View>
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2">
-            <View
-              className="h-3 w-3 rounded-full"
-              style={{ backgroundColor: color.accent.cache }}
-            />
-            <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-              Кэш
-            </Text>
-          </View>
-          <Text className="text-[14px]" style={{ color: color.text.primary }}>
-            {Math.round(cacheKb)} КБ
-          </Text>
-        </View>
-        {modelsMb > 0 && (
+        {modelsBytes > 0 && (
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
               <View
@@ -119,14 +105,28 @@ const StorageBar = ({
                 style={{ backgroundColor: color.accent.success }}
               />
               <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-                Whisper модели
+                {t('storage.whisperModels')}
               </Text>
             </View>
             <Text className="text-[14px]" style={{ color: color.text.primary }}>
-              {formatModelSize(modelsMb)}
+              {formatFileSize(modelsBytes)}
             </Text>
           </View>
         )}
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center gap-2">
+            <View
+              className="h-3 w-3 rounded-full"
+              style={{ backgroundColor: color.accent.cache }}
+            />
+            <Text className="text-[14px]" style={{ color: color.text.secondary }}>
+              {t('storage.cacheLabel')}
+            </Text>
+          </View>
+          <Text className="text-[14px]" style={{ color: color.text.primary }}>
+            {formatFileSize(cacheKb * 1024)}
+          </Text>
+        </View>
       </View>
     </View>
   );
@@ -141,6 +141,7 @@ const DEFAULT_STATS: StorageStats = {
 };
 
 export const StorageDetailsScreen = () => {
+  const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -150,6 +151,28 @@ export const StorageDetailsScreen = () => {
   const [stats, setStats] = useState<StorageStats>(DEFAULT_STATS);
   const [isLoading, setIsLoading] = useState(true);
   const [isClearing, setIsClearing] = useState(false);
+  const [realModelSizes, setRealModelSizes] = useState<Partial<Record<WhisperModelId, number>>>({});
+
+  const downloadedModels = WHISPER_MODELS.filter(
+    (m) => (whisperModelStatuses[m.id] ?? 'not_downloaded') === 'downloaded',
+  );
+
+  const loadModelSizes = useCallback(async (statuses: typeof whisperModelStatuses) => {
+    const downloaded = WHISPER_MODELS.filter(
+      (m) => (statuses[m.id] ?? 'not_downloaded') === 'downloaded',
+    );
+    const entries = await Promise.all(
+      downloaded.map(async (m) => {
+        const bytes = await getModelFileSizeBytes(m.id);
+        return [m.id, bytes] as const;
+      }),
+    );
+    const updated: Partial<Record<WhisperModelId, number>> = {};
+    for (const [id, bytes] of entries) {
+      updated[id] = bytes;
+    }
+    setRealModelSizes(updated);
+  }, []);
 
   const refreshStats = useCallback(async () => {
     setIsLoading(true);
@@ -168,21 +191,27 @@ export const StorageDetailsScreen = () => {
     refreshStats();
   }, [refreshStats]);
 
+  useEffect(() => {
+    loadModelSizes(whisperModelStatuses);
+  }, [whisperModelStatuses, loadModelSizes]);
+
   const audioCount = records.filter((r) => r.audioPath).length;
   const withTranscript = records.filter((r) => r.transcript && r.transcript.length > 0).length;
-  const processedByAI = records.filter((r) => r.aiStatus === 'done').length;
+  const processedByAI = records.filter(
+    (r) => (r.summary && r.summary.length > 0) || (r.tasks && r.tasks.length > 0),
+  ).length;
 
-  const downloadedModels = WHISPER_MODELS.filter(
-    (m) => (whisperModelStatuses[m.id] ?? 'not_downloaded') === 'downloaded',
-  );
-  const modelsMb = downloadedModels.reduce((sum, m) => sum + m.sizeMb, 0);
-  const totalMb = stats.totalMb + modelsMb;
+  const modelsBytes = downloadedModels.reduce((sum, m) => {
+    const realBytes = realModelSizes[m.id];
+    return sum + (realBytes !== undefined ? realBytes : m.sizeMb * 1024 * 1024);
+  }, 0);
+  const totalMb = stats.totalMb + modelsBytes / (1024 * 1024);
 
   const handleClearCache = () => {
-    Alert.alert('Очистить кэш', 'Временные файлы будут удалены. Продолжить?', [
-      { text: 'Отмена', style: 'cancel' },
+    Alert.alert(t('storage.clearCache'), t('storage.clearCacheConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
       {
-        text: 'Очистить',
+        text: t('storage.clear'),
         onPress: async () => {
           setIsClearing(true);
           try {
@@ -190,10 +219,10 @@ export const StorageDetailsScreen = () => {
             const freed = await clearCache(paths);
             await refreshStats();
             const freedKb = Math.round(freed / 1024);
-            Alert.alert('Готово', `Кэш очищен. Освобождено: ${freedKb} КБ`);
+            Alert.alert(t('common.done'), t('storage.cacheCleared', { freed: freedKb }));
           } catch (err) {
             console.warn('[StorageDetails] Failed to clear cache:', err);
-            Alert.alert('Ошибка', 'Не удалось очистить кэш');
+            Alert.alert(t('common.error'), t('storage.cacheClearError'));
           } finally {
             setIsClearing(false);
           }
@@ -203,27 +232,23 @@ export const StorageDetailsScreen = () => {
   };
 
   const handleDeleteAll = () => {
-    Alert.alert(
-      'Удалить все данные',
-      'Все записи, транскрипты и аудио будут удалены безвозвратно. Продолжить?',
-      [
-        { text: 'Отмена', style: 'cancel' },
-        {
-          text: 'Удалить',
-          style: 'destructive',
-          onPress: async () => {
-            for (const r of records) {
-              await deleteRecord(r.id);
-            }
-          },
+    Alert.alert(t('storage.deleteAllData'), t('storage.deleteAllConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.delete'),
+        style: 'destructive',
+        onPress: async () => {
+          for (const r of records) {
+            await deleteRecord(r.id);
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title="Офлайн хранилище" color={color} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('storage.title')} color={color} onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={{
@@ -238,32 +263,35 @@ export const StorageDetailsScreen = () => {
             <View className="items-center justify-center py-8">
               <ActivityIndicator size="large" color={color.accent.primary} />
               <Text className="mt-3 text-[16px]" style={{ color: color.text.secondary }}>
-                Подсчёт размера...
+                {t('storage.loading')}
               </Text>
             </View>
           ) : (
-            <StorageBar {...stats} modelsMb={modelsMb} totalMb={totalMb} color={color} />
+            <StorageBar {...stats} modelsBytes={modelsBytes} totalMb={totalMb} color={color} />
           )}
         </View>
-        <SettingsSection title="Детализация" color={color}>
+        <SettingsSection title={t('storage.details')} color={color}>
           <SettingsRow
-            label="Аудиозаписи"
-            value={`${audioCount} файлов · ${stats.audioMb.toFixed(1)} МБ`}
+            label={t('storage.audioRecords')}
+            value={t('storage.audioFilesValue', {
+              count: audioCount,
+              size: stats.audioMb.toFixed(1),
+            })}
             color={color}
             leftIcon={<Mic2 size={20} color={color.accent.primary} strokeWidth={1.8} />}
             showChevron={false}
             isFirst
           />
           <SettingsRow
-            label="Транскрипты и данные"
-            value={`${Math.round(stats.transcriptKb)} КБ`}
+            label={t('storage.transcriptsAndData')}
+            value={formatFileSize(stats.transcriptKb * 1024)}
             color={color}
             leftIcon={<Type size={20} color={color.accent.transcript} strokeWidth={1.8} />}
             showChevron={false}
           />
           <SettingsRow
-            label="ИИ обработка"
-            value={`${Math.round(stats.aiDataKb)} КБ`}
+            label={t('storage.aiProcessing')}
+            value={formatFileSize(stats.aiDataKb * 1024)}
             color={color}
             leftIcon={<Bot size={20} color={color.accent.success} strokeWidth={1.8} />}
             showChevron={false}
@@ -271,25 +299,33 @@ export const StorageDetailsScreen = () => {
           />
           {downloadedModels.length > 0 && (
             <>
-              {downloadedModels.map((model, index) => (
-                <SettingsRow
-                  key={model.id}
-                  label={`Whisper ${model.name}`}
-                  value={formatModelSize(model.sizeMb)}
-                  color={color}
-                  leftIcon={
-                    <BrainCircuit size={20} color={color.accent.success} strokeWidth={1.8} />
-                  }
-                  showChevron={false}
-                  isLast={index === downloadedModels.length - 1}
-                />
-              ))}
+              {downloadedModels.map((model, index) => {
+                const realBytes = realModelSizes[model.id];
+                const sizeLabel =
+                  realBytes !== undefined
+                    ? formatFileSize(realBytes)
+                    : formatFileSize(model.sizeMb * 1024 * 1024);
+
+                return (
+                  <SettingsRow
+                    key={model.id}
+                    label={`Whisper ${model.name}`}
+                    value={sizeLabel}
+                    color={color}
+                    leftIcon={
+                      <BrainCircuit size={20} color={color.accent.success} strokeWidth={1.8} />
+                    }
+                    showChevron={false}
+                    isLast={index === downloadedModels.length - 1}
+                  />
+                );
+              })}
             </>
           )}
         </SettingsSection>
-        <SettingsSection title="Статистика" color={color}>
+        <SettingsSection title={t('storage.statistics')} color={color}>
           <SettingsRow
-            label="Всего записей"
+            label={t('storage.totalRecords')}
             value={String(records.length)}
             color={color}
             leftIcon={<Mic size={20} color={color.accent.primary} strokeWidth={1.8} />}
@@ -297,21 +333,21 @@ export const StorageDetailsScreen = () => {
             isFirst
           />
           <SettingsRow
-            label="С аудио"
+            label={t('storage.withAudio')}
             value={String(audioCount)}
             color={color}
             leftIcon={<Clock size={20} color={color.accent.success} strokeWidth={1.8} />}
             showChevron={false}
           />
           <SettingsRow
-            label="Транскриптов"
+            label={t('storage.transcripts')}
             value={String(withTranscript)}
             color={color}
             leftIcon={<FileText size={20} color={color.accent.transcript} strokeWidth={1.8} />}
             showChevron={false}
           />
           <SettingsRow
-            label="Обработано ИИ"
+            label={t('storage.aiProcessed')}
             value={String(processedByAI)}
             color={color}
             leftIcon={<Bot size={20} color={color.accent.cache} strokeWidth={1.8} />}
@@ -320,17 +356,17 @@ export const StorageDetailsScreen = () => {
           />
         </SettingsSection>
 
-        <SettingsSection title="Управление" color={color}>
+        <SettingsSection title={t('storage.management')} color={color}>
           <SettingsRow
-            label="Очистить кэш"
-            value={isClearing ? 'Очистка...' : `${Math.round(stats.cacheKb)} КБ`}
+            label={t('storage.clearCache')}
+            value={isClearing ? t('storage.loading') : formatFileSize(stats.cacheKb * 1024)}
             color={color}
             leftIcon={<Trash2 size={20} color={color.accent.cache} strokeWidth={1.8} />}
             onPress={isClearing ? undefined : handleClearCache}
             isFirst
           />
           <SettingsRow
-            label="Удалить все данные"
+            label={t('storage.deleteAllData')}
             color={color}
             leftIcon={<Trash2 size={20} color={color.accent.delete} strokeWidth={1.8} />}
             onPress={handleDeleteAll}

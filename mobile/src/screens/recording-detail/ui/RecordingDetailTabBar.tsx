@@ -4,7 +4,9 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import type { Colors } from '@/shared/config';
 
 import type { Tab } from '../config';
-import { TAB_LABELS } from '../config';
+import { getTabLabel } from '../config';
+
+const TABS: Tab[] = ['transcript', 'summary', 'tasks'];
 
 type RecordingDetailTabBarProps = {
   active: Tab;
@@ -14,7 +16,7 @@ type RecordingDetailTabBarProps = {
 
 export const RecordingDetailTabBar = ({ active, onSelect, color }: RecordingDetailTabBarProps) => (
   <View className="flex-row border-b" style={{ borderBottomColor: color.border.default }}>
-    {(Object.keys(TAB_LABELS) as Tab[]).map((tab) => {
+    {TABS.map((tab) => {
       const isActive = tab === active;
 
       return (
@@ -28,7 +30,7 @@ export const RecordingDetailTabBar = ({ active, onSelect, color }: RecordingDeta
             className="text-sm font-medium"
             style={{ color: isActive ? color.accent.primary : color.text.secondary }}
           >
-            {TAB_LABELS[tab]}
+            {getTabLabel(tab)}
           </Text>
           {isActive && (
             <View
