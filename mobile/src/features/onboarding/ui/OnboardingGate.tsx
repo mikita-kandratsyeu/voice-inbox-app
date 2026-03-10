@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 import { getHasSeenOnboarding } from '../lib/onboardingStorage';
+import { useOnboardingStore } from '../model/store';
 import { OnboardingScreen } from './OnboardingScreen';
 
 type OnboardingGateProps = {
@@ -9,9 +10,16 @@ type OnboardingGateProps = {
 
 export const OnboardingGate = ({ children }: OnboardingGateProps) => {
   const [hasSeen, setHasSeen] = useState(getHasSeenOnboarding);
+  const forceShow = useOnboardingStore((s) => s.forceShow);
+  const setForceShow = useOnboardingStore((s) => s.setForceShow);
 
-  if (!hasSeen) {
-    return <OnboardingScreen onComplete={() => setHasSeen(true)} />;
+  const handleComplete = () => {
+    setHasSeen(true);
+    setForceShow(false);
+  };
+
+  if (!hasSeen || forceShow) {
+    return <OnboardingScreen onComplete={handleComplete} />;
   }
 
   return <>{children}</>;

@@ -1,10 +1,11 @@
 import { useNavigation } from '@react-navigation/native';
-import { Mail } from 'lucide-react-native';
+import { BookOpen, Mail } from 'lucide-react-native';
 import React from 'react';
 import { Image, Linking, ScrollView, Text, useColorScheme, View } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useOnboardingStore } from '@/features/onboarding';
 import { getColors, SUPPORT_EMAIL } from '@/shared/config';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
@@ -14,6 +15,7 @@ export const AboutAppScreen = () => {
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const setForceShowOnboarding = useOnboardingStore((s) => s.setForceShow);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -51,6 +53,13 @@ export const AboutAppScreen = () => {
             color={color}
             showChevron={false}
             isFirst
+          />
+          <SettingsRow
+            label="Показать онбординг"
+            color={color}
+            leftIcon={<BookOpen size={18} color={color.icon.muted} strokeWidth={1.8} />}
+            onPress={() => setForceShowOnboarding(true)}
+            isLast
           />
         </SettingsSection>
         {SUPPORT_EMAIL.length > 0 && (
