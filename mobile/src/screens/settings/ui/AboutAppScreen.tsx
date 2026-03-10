@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { BookOpen, Mail } from 'lucide-react-native';
+import { BookOpen, Mail, Tag } from 'lucide-react-native';
 import React from 'react';
 import { Image, Linking, ScrollView, Text, useColorScheme, View } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
@@ -51,6 +51,7 @@ export const AboutAppScreen = () => {
             label="Версия"
             value={APP_VERSION}
             color={color}
+            leftIcon={<Tag size={18} color={color.icon.muted} strokeWidth={1.8} />}
             showChevron={false}
             isFirst
           />
