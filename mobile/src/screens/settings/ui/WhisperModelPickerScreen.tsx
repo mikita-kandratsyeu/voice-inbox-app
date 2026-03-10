@@ -1,16 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
-import { Check, Download, Loader, Smartphone, Trash2, X } from 'lucide-react-native';
+import { Check, Download, Smartphone, Trash2, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
-import Animated, {
-  cancelAnimation,
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { WhisperModelId } from '@/entities/settings';
@@ -23,71 +14,6 @@ import { useModelManager } from '@/features/model-manager';
 import { getModelFileSizeFormatted } from '@/features/model-manager';
 import { getColors } from '@/shared/config';
 import { ScreenHeader } from '@/shared/ui';
-
-const SpinningLoader = ({ color: iconColor }: { color: string }) => {
-  const rotation = useSharedValue(0);
-
-  useEffect(() => {
-    rotation.value = withRepeat(
-      withTiming(360, { duration: 900, easing: Easing.linear }),
-      -1,
-      false,
-    );
-    return () => {
-      cancelAnimation(rotation);
-    };
-  }, [rotation]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
-  }));
-
-  return (
-    <Animated.View style={animatedStyle}>
-      <Loader size={22} color={iconColor} strokeWidth={2} />
-    </Animated.View>
-  );
-};
-
-const SimulatedProgressBar = ({
-  trackColor,
-  barColor,
-  sizeMb,
-}: {
-  trackColor: string;
-  barColor: string;
-  sizeMb: number;
-}) => {
-  const progress = useSharedValue(0);
-
-  useEffect(() => {
-    // Предполагаем ~2 МБ/с — плавно доходим до 90% за расчётное время
-    const estimatedMs = Math.max((sizeMb / 2) * 1000, 3000);
-
-    progress.value = withSequence(
-      withTiming(0.9, { duration: estimatedMs, easing: Easing.out(Easing.quad) }),
-      // После 90% — медленно ползём к 98%, ждём реального завершения
-      withTiming(0.98, { duration: estimatedMs * 2, easing: Easing.out(Easing.quad) }),
-    );
-
-    return () => {
-      cancelAnimation(progress);
-    };
-  }, [progress, sizeMb]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    width: `${progress.value * 100}%`,
-  }));
-
-  return (
-    <View className="h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: trackColor }}>
-      <Animated.View
-        className="h-full rounded-full"
-        style={[{ backgroundColor: barColor }, animatedStyle]}
-      />
-    </View>
-  );
-};
 
 const ACCURACY_LABEL: Record<string, string> = {
   low: 'Базовое',
@@ -312,29 +238,15 @@ export const WhisperModelPickerScreen = () => {
                       </View>
                     )}
                     {isDownloading ? (
-                      <View className="mt-2">
-                        <View className="mb-1.5 flex-row items-center justify-between">
-                          <Text
-                            className="text-[13px] font-medium"
-                            style={{ color: color.accent.primary }}
-                          >
-                            Скачивание {model.sizeLabel}...
-                          </Text>
-                          <TouchableOpacity
-                            onPress={() => cancelDownload(model.id)}
-                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                          >
-                            <Text className="text-[13px]" style={{ color: color.text.secondary }}>
-                              Отмена
-                            </Text>
-                          </TouchableOpacity>
-                        </View>
-                        <SimulatedProgressBar
-                          trackColor={color.background.tertiary}
-                          barColor={color.accent.primary}
-                          sizeMb={model.sizeMb}
-                        />
-                      </View>
+                      <TouchableOpacity
+                        className="mt-2"
+                        onPress={() => cancelDownload(model.id)}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        <Text className="text-[13px]" style={{ color: color.text.secondary }}>
+                          Отмена
+                        </Text>
+                      </TouchableOpacity>
                     ) : isError ? (
                       <Text
                         className="mt-1.5 text-[14px] font-medium"
@@ -350,9 +262,7 @@ export const WhisperModelPickerScreen = () => {
                   </View>
 
                   <View className="items-center gap-2">
-                    {isDownloading ? (
-                      <SpinningLoader color={color.accent.primary} />
-                    ) : isDownloaded && isSelected ? (
+                    {isDownloaded && isSelected ? (
                       <View
                         className="h-6 w-6 items-center justify-center rounded-full"
                         style={{ backgroundColor: color.accent.primary }}

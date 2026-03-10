@@ -21,8 +21,8 @@ export const RecordScreenHeader = ({ state, onClose }: RecordScreenHeaderProps) 
     <View className="flex-row items-center justify-between px-5 pb-2" style={topStyle}>
       <Button
         iconOnly
-        size="sm"
-        icon={<X size={20} color="#ffffff" strokeWidth={2.5} />}
+        size="md"
+        icon={<X size={22} color="#ffffff" strokeWidth={2.5} />}
         onPress={onClose}
         activeOpacity={0.7}
         containerStyle={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
@@ -30,7 +30,7 @@ export const RecordScreenHeader = ({ state, onClose }: RecordScreenHeaderProps) 
       <Text className="text-base font-semibold tracking-wide text-white">
         {HEADER_TITLE[state]}
       </Text>
-      <View className="w-9" />
+      <View className="w-10" />
     </View>
   );
 };

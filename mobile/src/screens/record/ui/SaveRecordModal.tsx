@@ -10,15 +10,16 @@ import {
   Text,
   TextInput,
   TouchableWithoutFeedback,
+  useColorScheme,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
+import { getColors } from '@/shared/config';
 import { formatTime } from '@/shared/lib';
 import { Button } from '@/shared/ui';
 
-import { ACCENT_BLUE } from '../config';
 import { generateRecordId } from '../lib/generateRecordId';
 
 type SaveRecordModalProps = {
@@ -29,7 +30,7 @@ type SaveRecordModalProps = {
   audioPath: string | null;
   onTitleChange: (text: string) => void;
   onCancel: () => void;
-  onSave: (record: VoiceRecord) => void;
+  onSave: (record: VoiceRecord) => Promise<void> | void;
   onSaveComplete?: () => void;
 };
 
@@ -44,6 +45,9 @@ export const SaveRecordModal = ({
   onSave,
   onSaveComplete,
 }: SaveRecordModalProps) => {
+  const scheme = (useColorScheme() ?? 'light') as 'light' | 'dark';
+  const c = getColors(scheme);
+
   const insets = useSafeAreaInsets();
 
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -105,7 +109,7 @@ export const SaveRecordModal = ({
     closeModal(onCancel);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const record: VoiceRecord = {
       id: generateRecordId(),
       title: title.trim() || 'Новая запись',
@@ -124,7 +128,7 @@ export const SaveRecordModal = ({
       audioPath: audioPath ?? undefined,
     };
 
-    onSave(record);
+    await onSave(record);
     closeModal(() => onSaveComplete?.());
   };
 
@@ -189,7 +193,7 @@ export const SaveRecordModal = ({
             <TextInput
               className="rounded-xl border-2 px-4 py-3 text-[16px]"
               style={{
-                borderColor: ACCENT_BLUE,
+                borderColor: c.accent.primary,
                 color: '#1a1a2e',
                 backgroundColor: '#f5f7ff',
               }}
@@ -219,7 +223,7 @@ export const SaveRecordModal = ({
                 onPress={handleSave}
                 activeOpacity={0.85}
                 fullWidth
-                containerStyle={{ backgroundColor: ACCENT_BLUE, borderRadius: 12 }}
+                containerStyle={{ backgroundColor: c.accent.primary, borderRadius: 12 }}
               />
             </View>
           </Animated.View>

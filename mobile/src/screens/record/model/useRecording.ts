@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert } from 'react-native';
 import type { AudioSet, RecordBackType } from 'react-native-audio-recorder-player';
 import AudioRecorderPlayer, {
   AudioEncoderAndroidType,
@@ -7,32 +8,29 @@ import AudioRecorderPlayer, {
 } from 'react-native-audio-recorder-player';
 
 import type { RecordingState } from '../config';
+import { MAX_RECORDING_MS } from '../config';
 import { requestMicPermission } from '../lib/requestMicPermission';
 
 const audioRecorderPlayer = AudioRecorderPlayer;
 
-// WAV/PCM 16kHz mono — оптимальный формат для Whisper.
-// iOS: lpcm (линейный PCM) без сжатия, AudioSession в режиме measurement отключает системную обработку.
-// Android: VOICE_RECOGNITION отключает системный шумодав и AGC, что критично для точности Whisper.
 const RECORDING_AUDIO_SET: AudioSet = {
-  // iOS — линейный PCM, 16kHz, mono
   AVModeIOS: 'measurement',
   AVFormatIDKeyIOS: 'lpcm',
   AVSampleRateKeyIOS: 16000,
   AVNumberOfChannelsKeyIOS: 1,
-
-  // Android — WAV PCM через VOICE_RECOGNITION source
   AudioSourceAndroid: AudioSourceAndroidType.VOICE_RECOGNITION,
   OutputFormatAndroid: OutputFormatAndroidType.DEFAULT,
   AudioEncoderAndroid: AudioEncoderAndroidType.DEFAULT,
-
-  // Общие параметры: 16kHz, mono, 16-bit PCM (~256 kbps)
   AudioSamplingRate: 16000,
   AudioChannels: 1,
   AudioEncodingBitRate: 256000,
 };
 
-export const useRecording = () => {
+type UseRecordingOptions = {
+  onLimitReached?: () => void;
+};
+
+export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
   const [state, setState] = useState<RecordingState>('idle');
   const [elapsed, setElapsed] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -40,17 +38,43 @@ export const useRecording = () => {
 
   const audioPathRef = useRef<string | null>(null);
   const elapsedRef = useRef(0);
+  const limitReachedRef = useRef(false);
+
+  const onLimitReachedRef = useRef(onLimitReached);
+  onLimitReachedRef.current = onLimitReached;
 
   const addRecordBackListener = useCallback(() => {
     audioRecorderPlayer.addRecordBackListener((e: RecordBackType) => {
       const ms = e.currentPosition;
       const secs = Math.floor(ms / 1000);
-      elapsedRef.current = secs;
-      setElapsed(secs);
+
+      if (secs !== elapsedRef.current) {
+        elapsedRef.current = secs;
+        setElapsed(secs);
+      }
       setElapsedMs(ms);
 
       if (e.currentMetering !== undefined) {
         setMeterLevel(e.currentMetering);
+      }
+
+      if (ms >= MAX_RECORDING_MS && !limitReachedRef.current) {
+        limitReachedRef.current = true;
+        audioRecorderPlayer.removeRecordBackListener();
+        setMeterLevel(undefined);
+        audioRecorderPlayer
+          .stopRecorder()
+          .then((result) => {
+            if (audioPathRef.current === null) {
+              audioPathRef.current = result;
+            }
+            setState('paused');
+            Alert.alert('Запись остановлена', 'Достигнут максимальный лимит записи — 30 минут.', [
+              { text: 'OK' },
+            ]);
+            onLimitReachedRef.current?.();
+          })
+          .catch(() => {});
       }
     });
   }, []);
@@ -63,6 +87,7 @@ export const useRecording = () => {
     }
 
     try {
+      limitReachedRef.current = false;
       audioRecorderPlayer.setSubscriptionDuration(0.05);
 
       const path = await audioRecorderPlayer.startRecorder(undefined, RECORDING_AUDIO_SET, true);
