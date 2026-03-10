@@ -9,9 +9,16 @@ type TranscriptProcessingProps = {
   progress: number;
   color: Colors;
   onCancel: () => void;
+  // Метка для длинных записей: "Обработано N из M фрагментов..."
+  progressLabel?: string;
 };
 
-export const TranscriptProcessing = ({ progress, color, onCancel }: TranscriptProcessingProps) => {
+export const TranscriptProcessing = ({
+  progress,
+  color,
+  onCancel,
+  progressLabel,
+}: TranscriptProcessingProps) => {
   const animatedWidth = useRef(new Animated.Value(progress)).current;
   const clampedProgress = Math.min(100, Math.max(0, progress));
 
@@ -24,8 +31,9 @@ export const TranscriptProcessing = ({ progress, color, onCancel }: TranscriptPr
   }, [clampedProgress, animatedWidth]);
 
   const secondsLeft = Math.round(((100 - clampedProgress) / 100) * 60);
-  const timeLabel =
-    secondsLeft < 60
+  const timeLabel = progressLabel
+    ? progressLabel
+    : secondsLeft < 60
       ? `~${secondsLeft} сек осталось`
       : `~${Math.ceil(secondsLeft / 60)} мин осталось`;
 

@@ -25,6 +25,7 @@ type SaveRecordModalProps = {
   visible: boolean;
   title: string;
   elapsed: number;
+  elapsedMs: number;
   audioPath: string | null;
   onTitleChange: (text: string) => void;
   onCancel: () => void;
@@ -36,6 +37,7 @@ export const SaveRecordModal = ({
   visible,
   title,
   elapsed,
+  elapsedMs,
   audioPath,
   onTitleChange,
   onCancel,
@@ -112,6 +114,7 @@ export const SaveRecordModal = ({
       summary: '',
       tasks: [],
       duration: formatTime(elapsed),
+      durationMs: Math.round(elapsedMs),
       createdAt: dayjs().toISOString(),
       status: 'unread',
       aiStatus: 'idle',

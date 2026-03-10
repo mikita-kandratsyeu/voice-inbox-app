@@ -6,6 +6,7 @@ export type {
   AIModel,
   AIModelId,
   SettingsState,
+  TranscriptionLanguage,
   WhisperModel,
   WhisperModelId,
   WhisperModelStatus,

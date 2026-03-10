@@ -130,6 +130,7 @@ export const RecordScreen = () => {
         visible={showSaveModal}
         title={title}
         elapsed={elapsed}
+        elapsedMs={elapsedMs}
         audioPath={audioPathRef.current}
         onTitleChange={setTitle}
         onCancel={handleSaveCancel}

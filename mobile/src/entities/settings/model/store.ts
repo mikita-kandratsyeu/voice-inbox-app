@@ -2,12 +2,19 @@ import { create } from 'zustand';
 
 import { storage } from '@/shared/lib/async-storage';
 
-import type { AIModelId, SettingsState, WhisperModelId, WhisperModelStatus } from './types';
+import type {
+  AIModelId,
+  SettingsState,
+  TranscriptionLanguage,
+  WhisperModelId,
+  WhisperModelStatus,
+} from './types';
 
 const KEYS = {
   AI_MODEL: 'settings.aiModel',
   WHISPER_MODEL: 'settings.whisperModel',
   WHISPER_STATUSES: 'settings.whisperStatuses',
+  TRANSCRIPTION_LANGUAGE: 'settings.transcriptionLanguage',
 } as const;
 
 const getStoredAIModel = (): AIModelId => {
@@ -20,6 +27,11 @@ const getStoredWhisperModel = (): WhisperModelId => {
   const val = storage.getString(KEYS.WHISPER_MODEL);
 
   return (val as WhisperModelId) ?? 'whisper-base';
+};
+
+const getStoredTranscriptionLanguage = (): TranscriptionLanguage => {
+  const val = storage.getString(KEYS.TRANSCRIPTION_LANGUAGE);
+  return (val as TranscriptionLanguage) ?? 'auto';
 };
 
 const getStoredWhisperStatuses = (): Partial<Record<WhisperModelId, WhisperModelStatus>> => {
@@ -35,6 +47,7 @@ const getStoredWhisperStatuses = (): Partial<Record<WhisperModelId, WhisperModel
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   selectedAIModel: getStoredAIModel(),
   selectedWhisperModel: getStoredWhisperModel(),
+  transcriptionLanguage: getStoredTranscriptionLanguage(),
   whisperModelStatuses: getStoredWhisperStatuses(),
   whisperDownloadProgress: {},
   whisperDownloadBytes: {},
@@ -47,6 +60,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setWhisperModel: (id: WhisperModelId) => {
     storage.set(KEYS.WHISPER_MODEL, id);
     set({ selectedWhisperModel: id });
+  },
+
+  setTranscriptionLanguage: (lang: TranscriptionLanguage) => {
+    storage.set(KEYS.TRANSCRIPTION_LANGUAGE, lang);
+    set({ transcriptionLanguage: lang });
   },
 
   setWhisperModelStatus: (id: WhisperModelId, status: WhisperModelStatus) => {

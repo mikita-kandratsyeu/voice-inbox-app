@@ -10,6 +10,7 @@ export const recordsTable = sqliteTable(
     summary: text('summary').default(''),
     tasks: text('tasks').default('[]'),
     duration: text('duration').default('0:00'),
+    durationMs: integer('durationMs').default(0),
     createdAt: text('createdAt').default(''),
     relativeTime: text('relativeTime').default(''),
     status: text('status').default('unread'),

@@ -12,6 +12,7 @@ export const useTranscription = () => {
   const updateTranscript = useRecordStore((s) => s.updateTranscript);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
+  const transcriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
 
   const stopRef = useRef<(() => Promise<void>) | null>(null);
 
@@ -37,20 +38,28 @@ export const useTranscription = () => {
         const { stop, promise } = transcribeAudio({
           context,
           audioPath: record.audioPath,
-          language: 'auto',
-          onProgress: (progress) => {
-            updateAiStatus(record.id, 'processing', progress);
+          durationMs: record.durationMs ?? 0,
+          language: transcriptionLanguage,
+          onProgress: (current, total) => {
+            const percent = Math.round((current / total) * 100);
+            const label = `Обработано ${current} из ${total} фрагментов...`;
+            updateAiStatus(record.id, 'processing', percent, label);
           },
         });
 
         stopRef.current = stop;
 
-        const { segments, fullText } = await promise;
+        const { segments, fullText, skipped } = await promise;
         stopRef.current = null;
+
+        if (skipped) {
+          updateAiStatus(record.id, 'idle');
+          return;
+        }
 
         if (__DEV__) {
           console.warn(
-            `[whisper] recordId=${record.id} | model=${selectedWhisperModel} | segments=${segments.length}\n${fullText}`,
+            `[whisper] recordId=${record.id} | model=${selectedWhisperModel} | lang=${transcriptionLanguage} | segments=${segments.length}\n${fullText}`,
           );
         }
 
@@ -69,7 +78,13 @@ export const useTranscription = () => {
         }
       }
     },
-    [selectedWhisperModel, whisperModelStatuses, updateAiStatus, updateTranscript],
+    [
+      selectedWhisperModel,
+      whisperModelStatuses,
+      transcriptionLanguage,
+      updateAiStatus,
+      updateTranscript,
+    ],
   );
 
   const cancelTranscription = useCallback(

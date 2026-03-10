@@ -3,7 +3,6 @@ import type { AudioSet, RecordBackType } from 'react-native-audio-recorder-playe
 import AudioRecorderPlayer, {
   AudioEncoderAndroidType,
   AudioSourceAndroidType,
-  AVEncoderAudioQualityIOSType,
   OutputFormatAndroidType,
 } from 'react-native-audio-recorder-player';
 
@@ -12,23 +11,25 @@ import { requestMicPermission } from '../lib/requestMicPermission';
 
 const audioRecorderPlayer = AudioRecorderPlayer;
 
+// WAV/PCM 16kHz mono — оптимальный формат для Whisper.
+// iOS: lpcm (линейный PCM) без сжатия, AudioSession в режиме measurement отключает системную обработку.
+// Android: VOICE_RECOGNITION отключает системный шумодав и AGC, что критично для точности Whisper.
 const RECORDING_AUDIO_SET: AudioSet = {
-  // iOS
+  // iOS — линейный PCM, 16kHz, mono
   AVModeIOS: 'measurement',
-  AVFormatIDKeyIOS: 'aac',
-  AVSampleRateKeyIOS: 44100,
+  AVFormatIDKeyIOS: 'lpcm',
+  AVSampleRateKeyIOS: 16000,
   AVNumberOfChannelsKeyIOS: 1,
-  AVEncoderAudioQualityKeyIOS: AVEncoderAudioQualityIOSType.high,
 
-  // Android
-  AudioSourceAndroid: AudioSourceAndroidType.MIC,
-  OutputFormatAndroid: OutputFormatAndroidType.AAC_ADTS,
-  AudioEncoderAndroid: AudioEncoderAndroidType.AAC,
+  // Android — WAV PCM через VOICE_RECOGNITION source
+  AudioSourceAndroid: AudioSourceAndroidType.VOICE_RECOGNITION,
+  OutputFormatAndroid: OutputFormatAndroidType.DEFAULT,
+  AudioEncoderAndroid: AudioEncoderAndroidType.DEFAULT,
 
-  // Common
-  AudioSamplingRate: 44100,
+  // Общие параметры: 16kHz, mono, 16-bit PCM (~256 kbps)
+  AudioSamplingRate: 16000,
   AudioChannels: 1,
-  AudioEncodingBitRate: 128000,
+  AudioEncodingBitRate: 256000,
 };
 
 export const useRecording = () => {
