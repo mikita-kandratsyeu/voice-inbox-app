@@ -11,10 +11,11 @@ import { Button, TabEmptyState } from '@/shared/ui';
 type TranscriptTabProps = {
   segments: TranscriptSegment[];
   color: Colors;
+  hasAudio: boolean;
   onTranscribe: () => void;
 };
 
-export const TranscriptTab = ({ segments, color, onTranscribe }: TranscriptTabProps) => {
+export const TranscriptTab = ({ segments, color, hasAudio, onTranscribe }: TranscriptTabProps) => {
   const { t } = useTranslation();
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelName =
@@ -31,6 +32,7 @@ export const TranscriptTab = ({ segments, color, onTranscribe }: TranscriptTabPr
         hint={`Whisper ${whisperModelName}`}
         onPress={onTranscribe}
         color={color}
+        hideButton={!hasAudio}
       />
     );
   }
@@ -50,15 +52,17 @@ export const TranscriptTab = ({ segments, color, onTranscribe }: TranscriptTabPr
           </Text>
         </View>
       ))}
-      <Button
-        variant="secondary"
-        size="lg"
-        icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
-        label={t('recordingDetail.retranscribe')}
-        color={color}
-        onPress={onTranscribe}
-        className="mt-1"
-      />
+      {hasAudio && (
+        <Button
+          variant="secondary"
+          size="lg"
+          icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
+          label={t('recordingDetail.retranscribe')}
+          color={color}
+          onPress={onTranscribe}
+          className="mt-1"
+        />
+      )}
     </View>
   );
 };
