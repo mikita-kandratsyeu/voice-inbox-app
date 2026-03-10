@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { RecordBackType } from 'react-native-audio-recorder-player';
+import type { AudioSet, RecordBackType } from 'react-native-audio-recorder-player';
 import AudioRecorderPlayer from 'react-native-audio-recorder-player';
 
 import type { RecordingState } from '../config';
@@ -7,9 +7,14 @@ import { requestMicPermission } from '../lib/requestMicPermission';
 
 const audioRecorderPlayer = AudioRecorderPlayer;
 
+const RECORDING_AUDIO_SET: AudioSet = {
+  AVModeIOS: 'measurement',
+};
+
 export const useRecording = () => {
   const [state, setState] = useState<RecordingState>('idle');
   const [elapsed, setElapsed] = useState(0);
+  const [elapsedMs, setElapsedMs] = useState(0);
   const [meterLevel, setMeterLevel] = useState<number | undefined>(undefined);
 
   const audioPathRef = useRef<string | null>(null);
@@ -17,9 +22,11 @@ export const useRecording = () => {
 
   const addRecordBackListener = useCallback(() => {
     audioRecorderPlayer.addRecordBackListener((e: RecordBackType) => {
-      const secs = Math.floor(e.currentPosition / 1000);
+      const ms = e.currentPosition;
+      const secs = Math.floor(ms / 1000);
       elapsedRef.current = secs;
       setElapsed(secs);
+      setElapsedMs(ms);
 
       if (e.currentMetering !== undefined) {
         setMeterLevel(e.currentMetering);
@@ -35,9 +42,9 @@ export const useRecording = () => {
     }
 
     try {
-      audioRecorderPlayer.setSubscriptionDuration(0.1);
+      audioRecorderPlayer.setSubscriptionDuration(0.05);
 
-      const path = await audioRecorderPlayer.startRecorder(undefined, undefined, true);
+      const path = await audioRecorderPlayer.startRecorder(undefined, RECORDING_AUDIO_SET, true);
       audioPathRef.current = path;
 
       addRecordBackListener();
@@ -61,7 +68,7 @@ export const useRecording = () => {
 
   const resumeRecording = useCallback(async () => {
     try {
-      audioRecorderPlayer.setSubscriptionDuration(0.1);
+      audioRecorderPlayer.setSubscriptionDuration(0.05);
       await audioRecorderPlayer.resumeRecorder();
 
       addRecordBackListener();
@@ -98,6 +105,7 @@ export const useRecording = () => {
   return {
     state,
     elapsed,
+    elapsedMs,
     meterLevel,
     audioPathRef,
     startRecording,

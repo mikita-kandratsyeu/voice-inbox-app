@@ -13,7 +13,7 @@ const KEYS = {
 const getStoredAIModel = (): AIModelId => {
   const val = storage.getString(KEYS.AI_MODEL);
 
-  return (val as AIModelId) ?? 'gpt-4o-mini';
+  return (val as AIModelId) ?? 'google/gemini-3-flash-preview';
 };
 
 const getStoredWhisperModel = (): WhisperModelId => {

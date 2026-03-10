@@ -1,10 +1,10 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useRef, useState } from 'react';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import React, { useCallback, useRef, useState } from 'react';
 import { PanResponder, StatusBar, Text, View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { formatTime } from '@/shared/lib';
+import { formatTimeWithMs } from '@/shared/lib';
 import { Waveform } from '@/shared/ui';
 
 import { ACCENT_BLUE } from '../config';
@@ -22,6 +22,7 @@ export const RecordScreen = () => {
   const {
     state,
     elapsed,
+    elapsedMs,
     meterLevel,
     audioPathRef,
     startRecording,
@@ -29,6 +30,14 @@ export const RecordScreen = () => {
     resumeRecording,
     stopRecording,
   } = useRecording();
+
+  useFocusEffect(
+    useCallback(() => {
+      if (state === 'idle') {
+        startRecording();
+      }
+    }, [state, startRecording]),
+  );
 
   const handleClose = async () => {
     await stopRecording();
@@ -87,9 +96,14 @@ export const RecordScreen = () => {
       <RecordScreenHeader state={state} onClose={handleClose} />
 
       <View className="flex-1 items-center justify-center gap-9 px-6">
-        <Text className="text-[72px] font-light tracking-tight text-white">
-          {formatTime(elapsed)}
-        </Text>
+        <View className="flex-row items-baseline">
+          <Text className="text-[72px] font-light tracking-tight text-white">
+            {formatTimeWithMs(elapsedMs).main}
+          </Text>
+          <Text className="ml-0.5 text-[36px] font-light tracking-tight text-white/85">
+            {formatTimeWithMs(elapsedMs).ms}
+          </Text>
+        </View>
         <View className="w-full px-2">
           <Waveform
             isAnimating={state === 'recording'}
@@ -97,7 +111,7 @@ export const RecordScreen = () => {
             meterLevel={state === 'recording' ? meterLevel : undefined}
           />
         </View>
-        {state === 'idle' && (
+        {(state === 'idle' || state === 'recording') && (
           <View className="items-center gap-1">
             <Text className="text-[16px] font-medium text-white/90">Запись работает оффлайн</Text>
             <Text className="text-[14px] text-white/55">Транскрипция выполнится локально</Text>

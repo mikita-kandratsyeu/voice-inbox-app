@@ -147,7 +147,7 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       <Animated.View style={logoAnimatedStyle} className="mb-5">
         <Image
           source={require('../../../shared/assets/app-icon.png')}
-          className="h-24 w-24 rounded-[26px]"
+          className="h-28 w-28 rounded-[30px]"
           resizeMode="cover"
         />
       </Animated.View>

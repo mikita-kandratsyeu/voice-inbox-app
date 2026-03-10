@@ -15,12 +15,17 @@ type WaveformProps = {
   meterLevel?: number;
 };
 
+const METERING_SILENCE_THRESHOLD = -100;
+
 const meterToHeight = (db: number): number => {
   const clamped = Math.max(-60, Math.min(0, db));
   const normalized = (clamped + 60) / 60;
 
   return BAR_MIN_HEIGHT + normalized * (BAR_MAX_HEIGHT - BAR_MIN_HEIGHT);
 };
+
+const isMeteringValid = (db: number | undefined): boolean =>
+  db !== undefined && db > METERING_SILENCE_THRESHOLD;
 
 export const Waveform = ({
   isAnimating,
@@ -34,8 +39,10 @@ export const Waveform = ({
   const loops = useRef<Animated.CompositeAnimation[]>([]);
   const historyRef = useRef<number[]>(Array(BAR_COUNT).fill(BAR_MIN_HEIGHT));
 
+  const useRealMetering = isAnimating && isMeteringValid(meterLevel);
+
   useEffect(() => {
-    if (!isAnimating || meterLevel === undefined) {
+    if (!useRealMetering || meterLevel === undefined) {
       return;
     }
 
@@ -47,14 +54,14 @@ export const Waveform = ({
       Animated.spring(bars[i], {
         toValue: h,
         useNativeDriver: false,
-        speed: 40,
-        bounciness: 2,
+        speed: 60,
+        bounciness: 1,
       }).start();
     });
-  }, [meterLevel, isAnimating, bars]);
+  }, [meterLevel, useRealMetering, bars]);
 
   useEffect(() => {
-    if (meterLevel !== undefined) return;
+    if (useRealMetering) return;
 
     if (isAnimating) {
       loops.current = bars.map((bar, i) => {
@@ -94,7 +101,7 @@ export const Waveform = ({
     return () => {
       loops.current.forEach((l) => l.stop());
     };
-  }, [isAnimating, meterLevel, bars]);
+  }, [isAnimating, useRealMetering, bars]);
 
   return (
     <View style={styles.container}>

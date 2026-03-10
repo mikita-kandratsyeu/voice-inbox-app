@@ -19,9 +19,6 @@ export const SummaryTab = ({ summary, color, onGenerate }: SummaryTabProps) => {
   const { isConnected } = useNetworkStatus();
 
   if (!summary) {
-    const hint =
-      isConnected === false ? `${aiModelName} · Нет подключения к интернету` : aiModelName;
-
     const hintIcon =
       isConnected === false ? (
         <WifiOff size={14} color={color.accent.delete} strokeWidth={1.8} />
@@ -36,7 +33,7 @@ export const SummaryTab = ({ summary, color, onGenerate }: SummaryTabProps) => {
         description={'Нажмите кнопку ниже, чтобы\nсоздать краткий конспект с помощью ИИ.'}
         buttonLabel="Создать конспект"
         buttonIcon={<FileText size={18} color="#fff" strokeWidth={2} />}
-        hint={hint}
+        hint={aiModelName}
         hintIcon={hintIcon}
         disabled={isConnected === false}
         onPress={onGenerate}
