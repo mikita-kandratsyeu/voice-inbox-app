@@ -1,5 +1,5 @@
-import { useNavigation } from '@react-navigation/native';
-import React, { useRef, useState } from 'react';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import React, { useCallback, useRef, useState } from 'react';
 import { PanResponder, StatusBar, Text, View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -29,6 +29,14 @@ export const RecordScreen = () => {
     resumeRecording,
     stopRecording,
   } = useRecording();
+
+  useFocusEffect(
+    useCallback(() => {
+      if (state === 'idle') {
+        startRecording();
+      }
+    }, [state, startRecording]),
+  );
 
   const handleClose = async () => {
     await stopRecording();
