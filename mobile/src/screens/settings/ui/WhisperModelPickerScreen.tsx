@@ -1,7 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
-import { Check, Download, Smartphone, Trash2, X } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
-import { Alert, ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Alert, ScrollView, Text, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { WhisperModelId } from '@/entities/settings';
@@ -10,50 +9,11 @@ import {
   useWhisperModelCompatibility,
   WHISPER_MODELS,
 } from '@/entities/settings';
-import { useModelManager } from '@/features/model-manager';
-import { getModelFileSizeFormatted } from '@/features/model-manager';
+import { getModelFileSizeFormatted, useModelManager } from '@/features/model-manager';
 import { getColors } from '@/shared/config';
 import { ScreenHeader } from '@/shared/ui';
 
-const ACCURACY_LABEL: Record<string, string> = {
-  low: 'Базовое',
-  medium: 'Хорошее',
-  high: 'Высокое',
-  very_high: 'Отличное',
-};
-
-const SPEED_LABEL: Record<string, string> = {
-  fast: 'Быстро',
-  medium: 'Средне',
-  slow: 'Медленно',
-  very_slow: 'Очень медленно',
-};
-
-const SPEED_COLOR: Record<string, string> = {
-  fast: '#10b981',
-  medium: '#f59e0b',
-  slow: '#ef4444',
-  very_slow: '#ef4444',
-};
-
-const getCardRadiusClass = (index: number, total: number): string => {
-  const isFirst = index === 0;
-  const isLast = index === total - 1;
-
-  if (isFirst && isLast) {
-    return 'rounded-2xl';
-  }
-
-  if (isFirst) {
-    return 'rounded-t-2xl';
-  }
-
-  if (isLast) {
-    return 'rounded-b-2xl';
-  }
-
-  return '';
-};
+import { WhisperModelCard } from './WhisperModelCard';
 
 export const WhisperModelPickerScreen = () => {
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
@@ -93,12 +53,7 @@ export const WhisperModelPickerScreen = () => {
   const handleDownload = (id: WhisperModelId, sizeMb: number) => {
     Alert.alert('Скачать модель', `Для загрузки потребуется ~${sizeMb} МБ. Продолжить?`, [
       { text: 'Отмена', style: 'cancel' },
-      {
-        text: 'Скачать',
-        onPress: () => {
-          startDownload(id);
-        },
-      },
+      { text: 'Скачать', onPress: () => startDownload(id) },
     ]);
   };
 
@@ -123,17 +78,12 @@ export const WhisperModelPickerScreen = () => {
 
   const handleSelect = (id: WhisperModelId) => {
     const status = whisperModelStatuses[id] ?? 'not_downloaded';
-
     if (status === 'downloading') return;
-
     if (status !== 'downloaded') {
       const model = WHISPER_MODELS.find((m) => m.id === id);
-      if (model) {
-        handleDownload(id, model.sizeMb);
-      }
+      if (model) handleDownload(id, model.sizeMb);
       return;
     }
-
     setWhisperModel(id);
     navigation.goBack();
   };
@@ -154,159 +104,22 @@ export const WhisperModelPickerScreen = () => {
           модели дают лучшее качество, но требуют больше памяти и работают медленнее.
         </Text>
         <View className="overflow-hidden rounded-2xl">
-          {WHISPER_MODELS.map((model, index) => {
-            const isSelected = model.id === selectedWhisperModel;
-            const status = whisperModelStatuses[model.id] ?? 'not_downloaded';
-            const isDownloaded = status === 'downloaded';
-            const isDownloading = status === 'downloading';
-            const isError = status === 'error';
-            const isLast = index === WHISPER_MODELS.length - 1;
-            const displaySize = realSizes[model.id] ?? model.sizeLabel;
-
-            const borderStyle = !isLast
-              ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
-              : {};
-            const radiusClass = getCardRadiusClass(index, WHISPER_MODELS.length);
-
-            return (
-              <TouchableOpacity
-                key={model.id}
-                onPress={() => handleSelect(model.id)}
-                activeOpacity={0.7}
-                className={`px-4 py-4 ${radiusClass}`}
-                style={[{ backgroundColor: color.background.card }, borderStyle]}
-              >
-                <View className="flex-row items-center justify-between">
-                  <View className="mr-3 flex-1">
-                    <View className="mb-1 flex-row items-center gap-2">
-                      <Text
-                        className="text-[16px] font-semibold"
-                        style={{ color: color.text.primary }}
-                      >
-                        Whisper {model.name}
-                      </Text>
-                      <View
-                        className="rounded-full px-2 py-0.5"
-                        style={{ backgroundColor: color.background.tertiary }}
-                      >
-                        <Text className="text-[12px]" style={{ color: color.text.secondary }}>
-                          {displaySize}
-                        </Text>
-                      </View>
-                    </View>
-                    <Text
-                      className="mb-1.5 text-[14px] leading-5"
-                      style={{ color: color.text.secondary }}
-                    >
-                      {model.description}
-                    </Text>
-                    <View className="flex-row items-center gap-3">
-                      <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-                        Качество: {ACCURACY_LABEL[model.accuracy]}
-                      </Text>
-                      <View className="flex-row items-center gap-1">
-                        <View
-                          className="h-2 w-2 rounded-full"
-                          style={{ backgroundColor: SPEED_COLOR[model.speed] }}
-                        />
-                        <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-                          {SPEED_LABEL[model.speed]}
-                        </Text>
-                      </View>
-                    </View>
-                    {compatibility && (
-                      <View className="mt-1.5 flex-row items-center gap-2">
-                        <Smartphone
-                          size={14}
-                          color={
-                            compatibility[model.id].isCompatible ? '#10b981' : color.accent.delete
-                          }
-                          strokeWidth={2}
-                        />
-                        <Text
-                          className="flex-1 text-[14px]"
-                          style={{
-                            color: compatibility[model.id].isCompatible
-                              ? '#10b981'
-                              : color.accent.delete,
-                          }}
-                        >
-                          {compatibility[model.id].isCompatible
-                            ? 'Совместимо с устройством'
-                            : compatibility[model.id].reason}
-                        </Text>
-                      </View>
-                    )}
-                    {isDownloading ? (
-                      <TouchableOpacity
-                        className="mt-2"
-                        onPress={() => cancelDownload(model.id)}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                      >
-                        <Text className="text-[13px]" style={{ color: color.text.secondary }}>
-                          Отмена
-                        </Text>
-                      </TouchableOpacity>
-                    ) : isError ? (
-                      <Text
-                        className="mt-1.5 text-[14px] font-medium"
-                        style={{ color: color.accent.delete }}
-                      >
-                        Ошибка загрузки — нажмите для повтора
-                      </Text>
-                    ) : !isDownloaded ? (
-                      <Text className="mt-1.5 text-[14px]" style={{ color: color.text.secondary }}>
-                        Не скачана — нажмите для загрузки
-                      </Text>
-                    ) : null}
-                  </View>
-
-                  <View className="items-center gap-2">
-                    {isDownloaded && isSelected ? (
-                      <View
-                        className="h-6 w-6 items-center justify-center rounded-full"
-                        style={{ backgroundColor: color.accent.primary }}
-                      >
-                        <Check size={14} color="#ffffff" strokeWidth={2.5} />
-                      </View>
-                    ) : isDownloaded ? (
-                      <View
-                        className="h-6 w-6 rounded-full"
-                        style={{ borderWidth: 2, borderColor: color.border.default }}
-                      />
-                    ) : (
-                      <View
-                        className="h-8 w-8 items-center justify-center rounded-full"
-                        style={{ backgroundColor: color.background.tertiary }}
-                      >
-                        <Download size={16} color={color.accent.primary} strokeWidth={2} />
-                      </View>
-                    )}
-
-                    {isDownloaded && (
-                      <TouchableOpacity
-                        onPress={() => handleDelete(model.id)}
-                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                        className="h-7 w-7 items-center justify-center rounded-full"
-                        style={{ backgroundColor: color.background.tertiary }}
-                      >
-                        <Trash2 size={14} color={color.accent.delete} strokeWidth={2} />
-                      </TouchableOpacity>
-                    )}
-
-                    {isError && (
-                      <View
-                        className="h-8 w-8 items-center justify-center rounded-full"
-                        style={{ backgroundColor: color.background.tertiary }}
-                      >
-                        <X size={16} color={color.accent.delete} strokeWidth={2} />
-                      </View>
-                    )}
-                  </View>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+          {WHISPER_MODELS.map((model, index) => (
+            <WhisperModelCard
+              key={model.id}
+              model={model}
+              index={index}
+              total={WHISPER_MODELS.length}
+              status={whisperModelStatuses[model.id] ?? 'not_downloaded'}
+              isSelected={model.id === selectedWhisperModel}
+              displaySize={realSizes[model.id] ?? model.sizeLabel}
+              compatibility={compatibility ? compatibility[model.id] : null}
+              color={color}
+              onPress={handleSelect}
+              onDelete={handleDelete}
+              onCancelDownload={cancelDownload}
+            />
+          ))}
         </View>
       </ScrollView>
     </View>
