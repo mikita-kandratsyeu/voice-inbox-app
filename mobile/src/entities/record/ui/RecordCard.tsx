@@ -1,7 +1,8 @@
 import { Clock, Pin } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
 
 import type { VoiceRecord } from '@/entities/record';
 import type { Colors } from '@/shared/config';
@@ -18,7 +19,7 @@ type RecordCardProps = {
 };
 
 export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardProps) => {
-  useTranslation(); // subscribe to language changes so formatRelativeTime re-runs
+  useTranslation();
   const cardStyle = {
     shadowColor: color.shadow.color,
     shadowOffset: { width: 0, height: 1 },
@@ -35,11 +36,10 @@ export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardPr
   const showBottomRow = hasTags || !!item.aiStatus;
 
   return (
-    <TouchableOpacity
+    <Pressable
       className="rounded-2xl p-4"
-      style={cardStyle}
+      style={({ pressed }) => [cardStyle, { opacity: pressed ? 0.75 : 1 }]}
       onPress={onPress}
-      activeOpacity={0.75}
     >
       <View className="mb-1 flex-row items-start justify-between">
         <View className="mr-2 flex-1 flex-row items-center">
@@ -77,6 +77,6 @@ export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardPr
           {item.aiStatus ? <AiStatusPill aiStatus={item.aiStatus} onPress={onStatusPress} /> : null}
         </View>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 };
