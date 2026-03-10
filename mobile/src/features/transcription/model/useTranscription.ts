@@ -67,14 +67,16 @@ export const useTranscription = () => {
       } catch (err) {
         stopRef.current = null;
 
-        const isCancelled =
-          err instanceof Error && (err.message.includes('abort') || err.message.includes('cancel'));
+        const msg = err instanceof Error ? err.message.toLowerCase() : '';
+        const isCancelled = msg.includes('abort') || msg.includes('cancel') || msg.includes('stop');
 
-        if (!isCancelled) {
+        const wasCancelled = isCancelled || stopRef.current === null;
+
+        if (wasCancelled) {
+          updateAiStatus(record.id, 'idle');
+        } else {
           console.warn('[transcription] Failed:', err);
           updateAiStatus(record.id, 'error');
-        } else {
-          updateAiStatus(record.id, 'idle');
         }
       }
     },
@@ -88,12 +90,13 @@ export const useTranscription = () => {
   );
 
   const cancelTranscription = useCallback(
-    async (recordId: string): Promise<void> => {
-      if (stopRef.current) {
-        await stopRef.current();
-        stopRef.current = null;
-      }
+    (recordId: string): void => {
       updateAiStatus(recordId, 'idle');
+      if (stopRef.current) {
+        const stop = stopRef.current;
+        stopRef.current = null;
+        stop().catch(() => {});
+      }
     },
     [updateAiStatus],
   );

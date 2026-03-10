@@ -120,8 +120,20 @@ const transcribeShort = async ({
     throw new Error('abort');
   }
 
-  const result = await rawPromise;
+  let result: WhisperTranscribeResult;
+  try {
+    result = await rawPromise;
+  } catch (err) {
+    if (cancelled()) {
+      throw new Error('abort');
+    }
+    throw err;
+  }
   setStop(async () => {});
+
+  if (cancelled()) {
+    throw new Error('abort');
+  }
 
   return {
     segments: mapSegments(result),
@@ -177,8 +189,20 @@ const transcribeLong = async ({
 
     setStop(chunkStop);
 
-    const result = await rawPromise;
+    let result: WhisperTranscribeResult;
+    try {
+      result = await rawPromise;
+    } catch (chunkErr) {
+      if (cancelled()) {
+        throw new Error('abort');
+      }
+      throw chunkErr;
+    }
     setStop(async () => {});
+
+    if (cancelled()) {
+      throw new Error('abort');
+    }
 
     const chunkSegments = mapSegments(result, segmentOffset);
     allSegments.push(...chunkSegments);

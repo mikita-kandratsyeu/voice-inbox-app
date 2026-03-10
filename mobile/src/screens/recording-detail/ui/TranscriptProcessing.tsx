@@ -19,16 +19,20 @@ export const TranscriptProcessing = ({
   onCancel,
   progressLabel,
 }: TranscriptProcessingProps) => {
-  const animatedWidth = useRef(new Animated.Value(progress)).current;
+  const animatedWidth = useRef(new Animated.Value(0)).current;
   const clampedProgress = Math.min(100, Math.max(0, progress));
 
   useEffect(() => {
+    if (progress === 0) {
+      animatedWidth.setValue(0);
+      return;
+    }
     Animated.timing(animatedWidth, {
       toValue: clampedProgress,
       duration: 400,
       useNativeDriver: false,
     }).start();
-  }, [clampedProgress, animatedWidth]);
+  }, [clampedProgress, progress, animatedWidth]);
 
   const secondsLeft = Math.round(((100 - clampedProgress) / 100) * 60);
   const timeLabel = progressLabel
@@ -81,7 +85,7 @@ export const TranscriptProcessing = ({
       <Button
         variant="secondary"
         size="lg"
-        icon={<X size={16} color={color.text.secondary} strokeWidth={2.5} />}
+        icon={<X size={16} color={color.text.primary} strokeWidth={2.5} />}
         label="Отменить"
         color={color}
         onPress={onCancel}

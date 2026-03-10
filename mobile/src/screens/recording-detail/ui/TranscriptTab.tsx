@@ -51,7 +51,7 @@ export const TranscriptTab = ({ segments, color, onTranscribe }: TranscriptTabPr
       <Button
         variant="secondary"
         size="lg"
-        icon={<RefreshCw size={15} color={color.text.secondary} strokeWidth={2} />}
+        icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
         label="Перетранскрибировать"
         color={color}
         onPress={onTranscribe}

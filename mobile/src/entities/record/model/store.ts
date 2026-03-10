@@ -12,7 +12,12 @@ type RecordStore = {
   deleteRecord: (id: string) => Promise<void>;
   togglePin: (id: string) => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
-  updateAiStatus: (id: string, aiStatus: RecordingStatus, progress?: number, progressLabel?: string) => void;
+  updateAiStatus: (
+    id: string,
+    aiStatus: RecordingStatus,
+    progress?: number,
+    progressLabel?: string,
+  ) => void;
   updateTranscript: (
     id: string,
     transcript: string,
@@ -75,7 +80,8 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
               ...r,
               aiStatus,
               transcriptProgress: progress ?? r.transcriptProgress,
-              transcriptProgressLabel: progressLabel ?? r.transcriptProgressLabel,
+              transcriptProgressLabel:
+                progress === 0 ? undefined : (progressLabel ?? r.transcriptProgressLabel),
             }
           : r,
       ),
