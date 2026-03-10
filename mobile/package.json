@@ -6,8 +6,10 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "android": "react-native run-android",
-    "ios": "react-native run-ios",
+    "android": "APP_ENV=development react-native run-android",
+    "android:prod": "APP_ENV=production react-native run-android",
+    "ios": "APP_ENV=development react-native run-ios",
+    "ios:prod": "APP_ENV=production react-native run-ios",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "type:check": "tsc --noEmit",
@@ -16,7 +18,8 @@
     "format:check": "prettier --check .",
     "validate": "lint-staged && yarn type:check && yarn test",
     "prepare": "husky",
-    "start": "react-native start",
+    "start": "APP_ENV=development react-native start",
+    "start:prod": "APP_ENV=production react-native start",
     "test": "jest"
   },
   "dependencies": {
