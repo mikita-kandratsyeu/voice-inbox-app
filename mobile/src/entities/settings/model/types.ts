@@ -19,12 +19,7 @@ export type TranscriptionLanguage =
   | 'uk'
   | 'pl';
 
-export type WhisperModelId =
-  | 'whisper-tiny'
-  | 'whisper-base'
-  | 'whisper-small'
-  | 'whisper-medium'
-  | 'whisper-large-v3';
+export type WhisperModelId = 'whisper-tiny' | 'whisper-base' | 'whisper-small' | 'whisper-medium';
 
 export type WhisperModelStatus = 'not_downloaded' | 'downloading' | 'downloaded' | 'error';
 

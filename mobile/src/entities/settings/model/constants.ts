@@ -73,14 +73,4 @@ export const WHISPER_MODELS: WhisperModel[] = [
     speed: 'slow',
     status: 'not_downloaded',
   },
-  {
-    id: 'whisper-large-v3',
-    name: 'Large v3',
-    description: 'Максимальное качество, поддержка 99 языков',
-    sizeLabel: '3.1 ГБ',
-    sizeMb: 3100,
-    accuracy: 'very_high',
-    speed: 'very_slow',
-    status: 'not_downloaded',
-  },
 ];

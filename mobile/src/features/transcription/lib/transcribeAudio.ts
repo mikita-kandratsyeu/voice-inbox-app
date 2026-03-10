@@ -8,8 +8,8 @@ const MIN_DURATION_MS = 500;
 
 const CHUNK_THRESHOLD_MS = 30_000;
 
-const CHUNK_DURATION_SEC = 27;
-const CHUNK_OVERLAP_SEC = 3;
+const CHUNK_DURATION_SEC = 15;
+const CHUNK_OVERLAP_SEC = 2;
 
 const PROMPT_TAIL_LENGTH = 200;
 
@@ -212,6 +212,8 @@ const transcribeLong = async ({
     fullText = fullText.length > 0 ? `${fullText} ${chunkText}` : chunkText;
 
     onProgress?.(i + 1, total);
+
+    await new Promise<void>(resolve => setTimeout(resolve, 100));
   }
 
   return { segments: allSegments, fullText };

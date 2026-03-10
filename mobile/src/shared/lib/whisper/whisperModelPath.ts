@@ -9,7 +9,6 @@ const MODEL_FILE_NAMES: Record<WhisperModelId, string> = {
   'whisper-base': 'ggml-base.bin',
   'whisper-small': 'ggml-small.bin',
   'whisper-medium': 'ggml-medium.bin',
-  'whisper-large-v3': 'ggml-large-v3.bin',
 };
 
 export const getWhisperModelsDir = (): string => WHISPER_MODELS_DIR;
@@ -25,5 +24,4 @@ export const WHISPER_MODEL_DOWNLOAD_URLS: Record<WhisperModelId, string> = {
   'whisper-base': 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin',
   'whisper-small': 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin',
   'whisper-medium': 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.bin',
-  'whisper-large-v3': 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-large-v3.bin',
 };
