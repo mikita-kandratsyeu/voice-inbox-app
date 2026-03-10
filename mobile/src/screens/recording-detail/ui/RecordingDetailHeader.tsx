@@ -12,6 +12,8 @@ type RecordingDetailHeaderProps = {
   color: Colors;
   onBack: () => void;
   onTogglePin: () => void;
+  onShare: () => void;
+  onMore: () => void;
 };
 
 export const RecordingDetailHeader = ({
@@ -19,6 +21,8 @@ export const RecordingDetailHeader = ({
   color,
   onBack,
   onTogglePin,
+  onShare,
+  onMore,
 }: RecordingDetailHeaderProps) => {
   const insets = useSafeAreaInsets();
   const iconBtnBg = { backgroundColor: color.background.tertiary };
@@ -64,6 +68,7 @@ export const RecordingDetailHeader = ({
           size="md"
           icon={<Share2 size={18} color={color.icon.muted} strokeWidth={2.2} />}
           color={color}
+          onPress={onShare}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         />
@@ -73,6 +78,7 @@ export const RecordingDetailHeader = ({
           size="md"
           icon={<MoreVertical size={18} color={color.icon.muted} strokeWidth={2.2} />}
           color={color}
+          onPress={onMore}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         />

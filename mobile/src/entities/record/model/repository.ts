@@ -107,6 +107,12 @@ export const recordRepository = {
     await db.update(recordsTable).set({ status: 'read' }).where(eq(recordsTable.id, id));
   },
 
+  rename: async (id: string, title: string): Promise<void> => {
+    logDb('rename', { id, title });
+    const db = getDB();
+    await db.update(recordsTable).set({ title }).where(eq(recordsTable.id, id));
+  },
+
   updateTranscript: async (
     id: string,
     transcript: string,

@@ -2,12 +2,14 @@ import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { Alert, ScrollView, useColorScheme, View } from 'react-native';
+import { ActionSheetIOS, Alert, Platform, ScrollView, useColorScheme, View } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { TaskItem, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { useRecordActions } from '@/features/record-actions';
+import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
 import { getColors } from '@/shared/config';
 import { AudioPlayer } from '@/widgets/audio-player';
@@ -36,6 +38,10 @@ export const RecordingDetailScreen = () => {
   const [localTasks, setLocalTasks] = useState<TaskItem[]>(liveRecord.tasks ?? []);
 
   const { startTranscription, cancelTranscription } = useTranscription();
+  const { shareRecord } = useShareRecord();
+  const { promptRename, promptDelete } = useRecordActions({
+    onDeleted: () => navigation.goBack(),
+  });
 
   const handleToggleTask = (id: string) => {
     setLocalTasks((prev) => prev.map((t) => (t.id === id ? { ...t, isDone: !t.isDone } : t)));
@@ -68,6 +74,34 @@ export const RecordingDetailScreen = () => {
     // placeholder — will call AI API in the future
   };
 
+  const handleShare = () => {
+    shareRecord(liveRecord).catch((err: Error) => {
+      Alert.alert('Share failed', err.message);
+    });
+  };
+
+  const handleMore = () => {
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: ['Cancel', 'Rename', 'Delete'],
+          destructiveButtonIndex: 2,
+          cancelButtonIndex: 0,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) promptRename(liveRecord);
+          if (buttonIndex === 2) promptDelete(liveRecord);
+        },
+      );
+    } else {
+      Alert.alert('Note actions', undefined, [
+        { text: 'Rename', onPress: () => promptRename(liveRecord) },
+        { text: 'Delete', style: 'destructive', onPress: () => promptDelete(liveRecord) },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    }
+  };
+
   return (
     <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
       <RecordingDetailHeader
@@ -75,6 +109,8 @@ export const RecordingDetailScreen = () => {
         color={color}
         onBack={() => navigation.goBack()}
         onTogglePin={() => togglePin(liveRecord.id)}
+        onShare={handleShare}
+        onMore={handleMore}
       />
 
       <ScrollView

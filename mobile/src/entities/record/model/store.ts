@@ -18,6 +18,7 @@ type RecordStore = {
     progress?: number,
     progressLabel?: string,
   ) => void;
+  renameRecord: (id: string, title: string) => Promise<void>;
   updateTranscript: (
     id: string,
     transcript: string,
@@ -85,6 +86,13 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
             }
           : r,
       ),
+    }));
+  },
+
+  renameRecord: async (id, title) => {
+    await recordRepository.rename(id, title);
+    set((s) => ({
+      records: s.records.map((r) => (r.id === id ? { ...r, title } : r)),
     }));
   },
 
