@@ -11,6 +11,7 @@ import {
   UploadCloud,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, Linking, ScrollView, Text, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -23,6 +24,7 @@ import { getColors, WEBSITE_URL } from '@/shared/config';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
 export const SettingsScreen = () => {
+  const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
@@ -44,7 +46,7 @@ export const SettingsScreen = () => {
       setIsExporting(true);
       await exportData(records);
     } catch {
-      Alert.alert('Ошибка', 'Не удалось экспортировать данные');
+      Alert.alert(t('common.error'), t('importExport.exportError'));
     } finally {
       setIsExporting(false);
     }
@@ -56,33 +58,36 @@ export const SettingsScreen = () => {
       const result = await importData();
       if (!result.success) {
         if (result.error !== 'cancelled') {
-          Alert.alert('Ошибка', result.error);
+          Alert.alert(t('common.error'), result.error);
         }
         return;
       }
       Alert.alert(
-        'Импорт данных',
-        `Найдено ${result.records.length} записей. Импортировать? Существующие данные не будут удалены.`,
+        t('importExport.importTitle'),
+        t('importExport.importConfirm', { count: result.records.length }),
         [
-          { text: 'Отмена', style: 'cancel' },
+          { text: t('common.cancel'), style: 'cancel' },
           {
-            text: 'Импортировать',
+            text: t('importExport.import'),
             onPress: async () => {
               for (const record of result.records) {
                 try {
                   await addRecord(record);
                 } catch {
-                  Alert.alert('Ошибка', 'Не удалось импортировать запись');
+                  Alert.alert(t('common.error'), t('importExport.importRecordError'));
                   return;
                 }
               }
-              Alert.alert('Готово', `Импортировано ${result.records.length} записей`);
+              Alert.alert(
+                t('common.done'),
+                t('importExport.importSuccess', { count: result.records.length }),
+              );
             },
           },
         ],
       );
     } catch {
-      Alert.alert('Ошибка', 'Не удалось импортировать данные');
+      Alert.alert(t('common.error'), t('importExport.importError'));
     } finally {
       setIsImporting(false);
     }
@@ -100,7 +105,7 @@ export const SettingsScreen = () => {
         }}
       >
         <Text className="text-2xl font-bold" style={{ color: color.text.primary }}>
-          Настройки
+          {t('settings.title')}
         </Text>
       </View>
 
@@ -112,17 +117,17 @@ export const SettingsScreen = () => {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <SettingsSection title="Синхронизация" color={color}>
+        <SettingsSection title={t('settings.sync')} color={color}>
           <SettingsRow
-            label={isExporting ? 'Экспорт...' : 'Экспорт данных'}
-            value={`${records.length} записей`}
+            label={isExporting ? t('settings.exporting') : t('settings.export')}
+            value={t('inbox.recordsCount', { count: records.length })}
             color={color}
             leftIcon={<UploadCloud size={20} color={color.accent.primary} strokeWidth={1.8} />}
             onPress={handleExport}
             isFirst
           />
           <SettingsRow
-            label={isImporting ? 'Импорт...' : 'Импорт данных'}
+            label={isImporting ? t('settings.importing') : t('settings.import')}
             color={color}
             leftIcon={<Download size={20} color={color.accent.primary} strokeWidth={1.8} />}
             onPress={handleImport}
@@ -130,9 +135,9 @@ export const SettingsScreen = () => {
           />
         </SettingsSection>
 
-        <SettingsSection title="ИИ обработка" color={color}>
+        <SettingsSection title={t('settings.aiProcessing')} color={color}>
           <SettingsRow
-            label="ИИ модель"
+            label={t('settings.aiModel')}
             value={aiModelName}
             color={color}
             leftIcon={<Bot size={20} color={color.accent.transcript} strokeWidth={1.8} />}
@@ -140,7 +145,7 @@ export const SettingsScreen = () => {
             isFirst
           />
           <SettingsRow
-            label="Транскрипция"
+            label={t('settings.transcription')}
             value={`Whisper ${whisperModelName}`}
             color={color}
             leftIcon={<Mic size={20} color={color.accent.cache} strokeWidth={1.8} />}
@@ -149,17 +154,17 @@ export const SettingsScreen = () => {
           />
         </SettingsSection>
 
-        <SettingsSection title="Устройство" color={color}>
+        <SettingsSection title={t('settings.device')} color={color}>
           <SettingsRow
-            label="Блокировка приложения"
-            value={isAppLockEnabled ? 'Вкл' : 'Выкл'}
+            label={t('settings.appLock')}
+            value={isAppLockEnabled ? t('settings.on') : t('settings.off')}
             color={color}
             leftIcon={<Fingerprint size={20} color={color.accent.primary} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('AppLockSetup')}
             isFirst
           />
           <SettingsRow
-            label="Офлайн хранилище"
+            label={t('settings.offlineStorage')}
             color={color}
             leftIcon={<HardDrive size={20} color={color.accent.success} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('StorageDetails')}
@@ -167,16 +172,16 @@ export const SettingsScreen = () => {
           />
         </SettingsSection>
 
-        <SettingsSection title="Конфиденциальность" color={color}>
+        <SettingsSection title={t('settings.privacy')} color={color}>
           <SettingsRow
-            label="Политика конфиденциальности"
+            label={t('settings.privacyPolicy')}
             color={color}
             leftIcon={<Shield size={20} color={color.icon.muted} strokeWidth={1.8} />}
             onPress={() => Linking.openURL(`${WEBSITE_URL}/privacy`)}
             isFirst
           />
           <SettingsRow
-            label="О приложении"
+            label={t('settings.about')}
             color={color}
             leftIcon={<Info size={20} color={color.icon.muted} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('AboutApp')}

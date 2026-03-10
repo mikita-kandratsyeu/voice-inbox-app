@@ -1,5 +1,6 @@
 import { Search, X } from 'lucide-react-native';
 import React, { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TextInput, TouchableOpacity, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
@@ -11,12 +12,8 @@ type SearchBarProps = {
   placeholder?: string;
 };
 
-export const SearchBar = ({
-  query,
-  onChangeQuery,
-  color,
-  placeholder = 'Поиск по записям...',
-}: SearchBarProps) => {
+export const SearchBar = ({ query, onChangeQuery, color, placeholder }: SearchBarProps) => {
+  const { t } = useTranslation();
   const inputRef = useRef<TextInput>(null);
 
   return (
@@ -40,7 +37,7 @@ export const SearchBar = ({
           textAlignVertical: 'center',
           includeFontPadding: false,
         }}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t('search.placeholder')}
         placeholderTextColor={color.text.secondary}
         value={query}
         onChangeText={onChangeQuery}

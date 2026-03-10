@@ -1,5 +1,22 @@
 export type AIModelId = 'google/gemini-3-flash-preview' | 'arcee-ai/trinity-large-preview:free';
 
+// Языки, поддерживаемые Whisper. 'auto' — автоопределение.
+export type TranscriptionLanguage =
+  | 'auto'
+  | 'ru'
+  | 'en'
+  | 'de'
+  | 'fr'
+  | 'es'
+  | 'it'
+  | 'pt'
+  | 'zh'
+  | 'ja'
+  | 'ko'
+  | 'ar'
+  | 'uk'
+  | 'pl';
+
 export type WhisperModelId =
   | 'whisper-tiny'
   | 'whisper-base'
@@ -7,14 +24,13 @@ export type WhisperModelId =
   | 'whisper-medium'
   | 'whisper-large-v3';
 
-export type WhisperModelStatus = 'not_downloaded' | 'downloading' | 'downloaded';
+export type WhisperModelStatus = 'not_downloaded' | 'downloading' | 'downloaded' | 'error';
 
 export type AIModel = {
   id: AIModelId;
   name: string;
   provider: string;
-  description: string;
-  contextWindow: string;
+  descriptionKey: string;
   speed: 'fast' | 'medium' | 'slow';
 };
 
@@ -29,11 +45,27 @@ export type WhisperModel = {
   status: WhisperModelStatus;
 };
 
+export type DownloadBytes = {
+  written: number;
+  total: number;
+};
+
 export type SettingsState = {
   selectedAIModel: AIModelId;
   selectedWhisperModel: WhisperModelId;
+  transcriptionLanguage: TranscriptionLanguage;
   whisperModelStatuses: Partial<Record<WhisperModelId, WhisperModelStatus>>;
+  whisperDownloadProgress: Partial<Record<WhisperModelId, number>>;
+  whisperDownloadBytes: Partial<Record<WhisperModelId, DownloadBytes>>;
   setAIModel: (id: AIModelId) => void;
   setWhisperModel: (id: WhisperModelId) => void;
+  setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;
   setWhisperModelStatus: (id: WhisperModelId, status: WhisperModelStatus) => void;
+  setDownloadProgress: (
+    id: WhisperModelId,
+    progress: number,
+    bytesWritten?: number,
+    contentLength?: number,
+  ) => void;
+  removeWhisperModelStatus: (id: WhisperModelId) => void;
 };

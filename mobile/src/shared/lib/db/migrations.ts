@@ -26,6 +26,10 @@ CREATE INDEX IF NOT EXISTS \`idx_records_isPinned\` ON \`records\` (\`isPinned\`
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS \`idx_records_createdAt\` ON \`records\` (\`createdAt\`);`;
 
+const migration0001 = `ALTER TABLE \`records\` ADD \`durationMs\` integer DEFAULT 0;`;
+
+const migration0002 = `SELECT 1;`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -37,5 +41,7 @@ export const migrationsConfig = {
   },
   migrations: {
     m0000: migration0000,
+    m0001: migration0001,
+    m0002: migration0002,
   } as Record<string, string>,
 };

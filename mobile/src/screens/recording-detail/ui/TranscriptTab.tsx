@@ -1,5 +1,6 @@
 import { Mic, RefreshCw } from 'lucide-react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import type { TranscriptSegment } from '@/entities/record';
@@ -10,10 +11,12 @@ import { Button, TabEmptyState } from '@/shared/ui';
 type TranscriptTabProps = {
   segments: TranscriptSegment[];
   color: Colors;
+  hasAudio: boolean;
   onTranscribe: () => void;
 };
 
-export const TranscriptTab = ({ segments, color, onTranscribe }: TranscriptTabProps) => {
+export const TranscriptTab = ({ segments, color, hasAudio, onTranscribe }: TranscriptTabProps) => {
+  const { t } = useTranslation();
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelName =
     WHISPER_MODELS.find((m) => m.id === selectedWhisperModel)?.name ?? selectedWhisperModel;
@@ -22,13 +25,14 @@ export const TranscriptTab = ({ segments, color, onTranscribe }: TranscriptTabPr
     return (
       <TabEmptyState
         icon={<Mic size={28} color={color.icon.muted} strokeWidth={1.8} />}
-        title="Транскрипт не создан"
-        description={'Нажмите кнопку ниже, чтобы\nтранскрибировать запись на устройстве.'}
-        buttonLabel="Транскрибировать"
+        title={t('recordingDetail.transcriptNotCreated')}
+        description={t('recordingDetail.transcriptNotCreatedDesc')}
+        buttonLabel={t('recordingDetail.transcribe')}
         buttonIcon={<Mic size={18} color="#fff" strokeWidth={2} />}
         hint={`Whisper ${whisperModelName}`}
         onPress={onTranscribe}
         color={color}
+        hideButton={!hasAudio}
       />
     );
   }
@@ -48,15 +52,17 @@ export const TranscriptTab = ({ segments, color, onTranscribe }: TranscriptTabPr
           </Text>
         </View>
       ))}
-      <Button
-        variant="secondary"
-        size="lg"
-        icon={<RefreshCw size={15} color={color.text.secondary} strokeWidth={2} />}
-        label="Перетранскрибировать"
-        color={color}
-        onPress={onTranscribe}
-        className="mt-1"
-      />
+      {hasAudio && (
+        <Button
+          variant="secondary"
+          size="lg"
+          icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
+          label={t('recordingDetail.retranscribe')}
+          color={color}
+          onPress={onTranscribe}
+          className="mt-1"
+        />
+      )}
     </View>
   );
 };

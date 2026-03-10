@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 import type { VoiceRecord } from '@/entities/record';
 
 export const useSearchRecords = (records: VoiceRecord[]) => {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
 
   const filtered = useMemo(() => {
@@ -25,12 +27,17 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
 
   const sections = useMemo(
     () => [
-      ...(pinned.length > 0 ? [{ title: 'Закреплённые', data: pinned }] : []),
+      ...(pinned.length > 0 ? [{ title: t('inbox.pinned'), data: pinned }] : []),
       ...(all.length > 0
-        ? [{ title: query.trim() ? 'Результаты поиска' : 'Все записи', data: all }]
+        ? [
+            {
+              title: query.trim() ? t('inbox.searchResults') : t('inbox.allRecords'),
+              data: all,
+            },
+          ]
         : []),
     ],
-    [pinned, all, query],
+    [pinned, all, query, t],
   );
 
   return { query, setQuery, filtered, sections, isSearching: query.trim().length > 0 };

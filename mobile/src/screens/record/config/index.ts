@@ -1,2 +1,7 @@
 export type { RecordingState } from './recordConfig';
-export { ACCENT_BLUE, DONE_BTN_BG, HEADER_TITLE, PAUSE_BTN_BG } from './recordConfig';
+export {
+  getHeaderTitle,
+  MAX_RECORDING_MS,
+  PAUSE_BTN_BG,
+  WARNING_REMAINING_MS,
+} from './recordConfig';

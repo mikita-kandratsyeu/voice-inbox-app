@@ -1,0 +1,260 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "remove": "Remove",
+    "download": "Download",
+    "skip": "Skip",
+    "next": "Next",
+    "start": "Start",
+    "done": "Done",
+    "error": "Error",
+    "biometrics": "Biometrics"
+  },
+  "splash": {
+    "tagline": "Smart voice notes"
+  },
+  "tabs": {
+    "inbox": "Inbox",
+    "settings": "Settings"
+  },
+  "inbox": {
+    "title": "Inbox",
+    "emptyTitle": "No inbox",
+    "emptyDescription": "Your voice notes will appear here",
+    "recordsCount": "{{count}} records",
+    "recordsFiltered": "{{filtered}} of {{total}} records",
+    "pinned": "Pinned",
+    "allRecords": "All records",
+    "searchResults": "Search results"
+  },
+  "search": {
+    "placeholder": "Search records...",
+    "nothingFound": "Nothing found",
+    "nothingFoundFor": "No records found for \"{{query}}\""
+  },
+  "record": {
+    "newRecord": "New note",
+    "titlePlaceholder": "Note title",
+    "idle": "Ready to record",
+    "recording": "Recording...",
+    "paused": "Paused",
+    "resume": "Resume recording",
+    "finish": "Finish recording",
+    "recordStopped": "Recording stopped",
+    "recordStoppedMessage": "Maximum recording limit reached — 30 minutes.",
+    "saveModalTitle": "Save recording",
+    "duration": "Duration: {{time}}",
+    "offlineTitle": "Recording works offline",
+    "offlineSubtitle": "Transcription runs directly on your device"
+  },
+  "recordingDetail": {
+    "transcript": "Transcript",
+    "summary": "Summary",
+    "tasks": "Tasks",
+    "transcriptNotCreated": "Transcript not created",
+    "transcriptNotCreatedDesc": "Tap the button below to transcribe the recording on your device.",
+    "transcribe": "Transcribe",
+    "retranscribe": "Retranscribe",
+    "cancel": "Cancel",
+    "modelNotDownloaded": "Model not downloaded",
+    "modelNotDownloadedHint": "Download the Whisper model in Settings to transcribe.",
+    "shareFailed": "Share failed",
+    "summaryNotCreated": "Summary not created",
+    "summaryNotCreatedDesc": "Tap the button below to\ncreate a brief summary using AI.",
+    "generateSummary": "Generate summary",
+    "tasksNotExtracted": "Tasks not extracted",
+    "tasksNotExtractedDesc": "Tap the button below to\nautomatically find tasks using AI.",
+    "extractTasks": "Find tasks"
+  },
+  "aiStatus": {
+    "idle": "Awaiting processing",
+    "processing": "Transcribing...",
+    "done": "Transcript ready",
+    "error": "Transcription error",
+    "noTranscript": "No transcript"
+  },
+  "recordActions": {
+    "rename": "Rename",
+    "delete": "Delete",
+    "renameTitle": "Rename note",
+    "renamePrompt": "Enter a new name for the note",
+    "deleteTitle": "Delete note",
+    "deleteMessage": "Are you sure you want to delete \"{{title}}\"? This action cannot be undone."
+  },
+  "share": {
+    "shareNote": "Share note"
+  },
+  "settings": {
+    "title": "Settings",
+    "sync": "Sync",
+    "export": "Export data",
+    "exporting": "Exporting...",
+    "import": "Import data",
+    "importing": "Importing...",
+    "aiProcessing": "AI processing",
+    "aiModel": "AI model",
+    "transcription": "Transcription",
+    "device": "Device",
+    "appLock": "App lock",
+    "offlineStorage": "Offline storage",
+    "privacy": "Privacy",
+    "privacyPolicy": "Privacy policy",
+    "about": "About",
+    "on": "On",
+    "off": "Off"
+  },
+  "appLock": {
+    "title": "App lock",
+    "settings": "Settings",
+    "enterPin": "Enter PIN to unlock",
+    "unlockError": "Failed to unlock. Try entering your PIN.",
+    "disableTitle": "Disable lock",
+    "disableMessage": "The app will no longer ask for PIN on launch.",
+    "disable": "Disable",
+    "fingerprint": "Fingerprint",
+    "faceId": "Face recognition",
+    "biometry": {
+      "FaceID": "Face ID",
+      "TouchID": "Touch ID",
+      "Fingerprint": "Fingerprint",
+      "Face": "Face recognition",
+      "Iris": "Iris",
+      "OpticID": "Optic ID"
+    },
+    "setPinPrompt": "Set a 4-digit PIN to protect the app",
+    "confirmPin": "Confirm PIN"
+  },
+  "storage": {
+    "title": "Offline storage",
+    "details": "Details",
+    "statistics": "Statistics",
+    "management": "Management",
+    "audioRecords": "Audio records",
+    "transcriptsAndData": "Transcripts and data",
+    "aiProcessing": "AI processing",
+    "totalRecords": "Total records",
+    "withAudio": "With audio",
+    "transcripts": "Transcripts",
+    "aiProcessed": "AI processed",
+    "clearCache": "Clear cache",
+    "clearCacheConfirm": "Temporary files will be deleted. Continue?",
+    "clear": "Clear",
+    "deleteAllData": "Delete all data",
+    "deleteAllConfirm": "All records, transcripts and audio will be permanently deleted. Continue?",
+    "cacheCleared": "Cache cleared. Freed: {{ freed }} KB",
+    "cacheClearError": "Failed to clear cache",
+    "loading": "Loading...",
+    "used": "Used",
+    "whisperModels": "Whisper models",
+    "cacheLabel": "Cache",
+    "audioFilesValue": "{{count}} files · {{size}} MB",
+    "mb": "MB",
+    "gb": "GB"
+  },
+  "whisper": {
+    "modelTitle": "Transcription model",
+    "modelDescription": "Choose a Whisper model for on-device transcription. Larger models are more accurate but require more storage.",
+    "downloadModel": "Download model",
+    "downloadConfirm": "Download will require ~{{ size }} MB. Continue?",
+    "deleteModel": "Delete model",
+    "deleteConfirm": "The model will be removed from the device. Continue?",
+    "deleteConfirmWithName": "Whisper {{ name }} will be removed from the device. Continue?",
+    "recommended": "Recommended",
+    "compatible": "Compatible with device",
+    "tapToDownload": "Not downloaded — tap to download",
+    "downloadError": "Download error — tap to retry",
+    "qualityLabel": "Quality",
+    "speedLabel": "Speed",
+    "accuracy": {
+      "low": "Basic",
+      "medium": "Good",
+      "high": "High",
+      "very_high": "Excellent"
+    },
+    "speed": {
+      "fast": "Fast",
+      "medium": "Medium",
+      "slow": "Slow",
+      "very_slow": "Very slow"
+    },
+    "models": {
+      "tiny": "Tiny",
+      "base": "Base",
+      "small": "Small",
+      "medium": "Medium",
+      "large_v3": "Large v3",
+      "tinyDesc": "Minimal memory requirements, basic quality",
+      "baseDesc": "Good balance between speed and quality",
+      "smallDesc": "Improved quality for most languages",
+      "mediumDesc": "High transcription quality",
+      "large_v3Desc": "Maximum quality, 99 languages support"
+    }
+  },
+  "aiModels": {
+    "title": "AI model",
+    "description": "Choose an AI model for generating summaries and extracting tasks from transcripts. Settings apply to the next processing.",
+    "trinityDesc": "Powerful model with multimodal input support",
+    "geminiDesc": "Fast and efficient model for everyday tasks",
+    "speed": {
+      "fast": "Fast",
+      "medium": "Medium",
+      "slow": "Slow"
+    }
+  },
+  "onboarding": {
+    "recordTitle": "Record thoughts with voice",
+    "recordDesc": "Quickly capture ideas, tasks and notes. Just tap the button and speak — the app handles the rest.",
+    "transcribeTitle": "Offline transcription",
+    "transcribeDesc": "Voice-to-text conversion happens locally on your device. No servers, full privacy.",
+    "aiTitle": "AI processing on demand",
+    "aiDesc": "Structure your recordings with AI when needed. Voice is processed locally, text is sent over encrypted channel and never stored.",
+    "readyTitle": "All set!",
+    "readyDesc": "Start recording your thoughts right now. Always at hand for your ideas.",
+    "privacy": "100% Private",
+    "aiPrivacy": "Your data is secure",
+    "goToSlide": "Go to slide {{ index }}"
+  },
+  "importExport": {
+    "importTitle": "Import data",
+    "importMessage": "Select a JSON file exported from Voice Inbox.",
+    "importConfirm": "Found {{ count }} records. Import? Existing data will not be overwritten.",
+    "import": "Import",
+    "importSuccess": "Imported {{ count }} records",
+    "importError": "Failed to import data",
+    "importRecordError": "Failed to import record",
+    "exportError": "Failed to export data",
+    "fileNotSelected": "File not selected",
+    "invalidFormat": "Invalid file format",
+    "readError": "Failed to read file"
+  },
+  "permissions": {
+    "micTitle": "Recording permission",
+    "micMessage": "The app needs microphone access for voice recording.",
+    "allow": "Allow"
+  },
+  "device": {
+    "insufficientRam": "Insufficient RAM (need ~{{ required }}, available {{ available }})",
+    "lowDiskSpace": "Low free space (need ~{{ required }}, available {{ available }})",
+    "mb": "{{ value }} MB",
+    "gb": "{{ value }} GB"
+  },
+  "about": {
+    "title": "About",
+    "app": "App",
+    "version": "Version",
+    "showOnboarding": "Show onboarding",
+    "helpAndFeedback": "Help and feedback",
+    "contactSupport": "Contact support",
+    "technologies": "Technologies",
+    "offlineTranscription": "Whisper (offline transcription)",
+    "description": "Offline-first app for voice notes. Capture ideas with voice, get transcripts, summaries and tasks with AI.",
+    "copyright": "© {{ year }} Voice Inbox. All rights reserved."
+  },
+  "transcription": {
+    "progress": "Processed {{ current }} of {{ total }} segments...",
+    "secondsLeft": "~{{ count }} sec left",
+    "minutesLeft": "~{{ count }} min left"
+  }
+}

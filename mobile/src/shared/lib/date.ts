@@ -6,10 +6,20 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
-dayjs.locale('ru');
+
+const getDayjsLocale = (): string => {
+  try {
+    const i18n = require('i18next').default;
+    const lang = i18n?.language ?? 'en';
+    return lang.startsWith('ru') ? 'ru' : 'en';
+  } catch {
+    return 'en';
+  }
+};
 
 export const formatRelativeTime = (isoDate: string): string => {
-  const date = dayjs(isoDate);
+  const locale = getDayjsLocale();
+  const date = dayjs(isoDate).locale(locale);
 
   if (!date.isValid()) {
     return '';
@@ -25,7 +35,8 @@ export const formatRelativeTime = (isoDate: string): string => {
 };
 
 export const formatShortDate = (isoDate: string): string => {
-  const date = dayjs(isoDate);
+  const locale = getDayjsLocale();
+  const date = dayjs(isoDate).locale(locale);
 
   if (!date.isValid()) {
     return isoDate;
@@ -48,10 +59,10 @@ export const formatTimeWithMs = (milliseconds: number): { main: string; ms: stri
   const d = dayjs.duration(milliseconds, 'milliseconds');
   const totalMins = Math.floor(d.asMinutes());
   const secs = Math.floor(d.seconds());
-  const cs = Math.floor((milliseconds % 1000) / 10);
+  const tenths = Math.floor((milliseconds % 1000) / 100);
 
   return {
     main: `${totalMins}:${secs.toString().padStart(2, '0')}`,
-    ms: `.${cs.toString().padStart(2, '0')}`,
+    ms: `.${tenths}0`,
   };
 };

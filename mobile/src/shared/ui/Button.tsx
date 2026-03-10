@@ -32,7 +32,7 @@ const VARIANT_STYLES: Record<ButtonVariant, (color: Colors) => VariantStyle> = {
   }),
   secondary: (color) => ({
     bg: { backgroundColor: color.background.tertiary },
-    textColor: color.text.secondary,
+    textColor: color.text.primary,
   }),
   ghost: (color) => ({
     bg: {},

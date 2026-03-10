@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import React, { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Keyboard,
@@ -10,25 +11,27 @@ import {
   Text,
   TextInput,
   TouchableWithoutFeedback,
+  useColorScheme,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
+import { getColors } from '@/shared/config';
 import { formatTime } from '@/shared/lib';
 import { Button } from '@/shared/ui';
 
-import { ACCENT_BLUE } from '../config';
 import { generateRecordId } from '../lib/generateRecordId';
 
 type SaveRecordModalProps = {
   visible: boolean;
   title: string;
   elapsed: number;
+  elapsedMs: number;
   audioPath: string | null;
   onTitleChange: (text: string) => void;
   onCancel: () => void;
-  onSave: (record: VoiceRecord) => void;
+  onSave: (record: VoiceRecord) => Promise<void> | void;
   onSaveComplete?: () => void;
 };
 
@@ -36,12 +39,17 @@ export const SaveRecordModal = ({
   visible,
   title,
   elapsed,
+  elapsedMs,
   audioPath,
   onTitleChange,
   onCancel,
   onSave,
   onSaveComplete,
 }: SaveRecordModalProps) => {
+  const { t } = useTranslation();
+  const scheme = (useColorScheme() ?? 'light') as 'light' | 'dark';
+  const c = getColors(scheme);
+
   const insets = useSafeAreaInsets();
 
   const overlayOpacity = useRef(new Animated.Value(0)).current;
@@ -103,25 +111,26 @@ export const SaveRecordModal = ({
     closeModal(onCancel);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const record: VoiceRecord = {
       id: generateRecordId(),
-      title: title.trim() || 'Новая запись',
+      title: title.trim() || t('record.newRecord'),
       transcript: '',
       transcriptSegments: [],
       summary: '',
       tasks: [],
       duration: formatTime(elapsed),
+      durationMs: Math.round(elapsedMs),
       createdAt: dayjs().toISOString(),
       status: 'unread',
       aiStatus: 'idle',
       transcriptProgress: 0,
       isPinned: false,
       tags: [],
-      audioPath: audioPath ?? undefined,
+      audioPath: audioPath?.startsWith('file://') ? audioPath.slice(7) : (audioPath ?? undefined),
     };
 
-    onSave(record);
+    await onSave(record);
     closeModal(() => onSaveComplete?.());
   };
 
@@ -182,15 +191,15 @@ export const SaveRecordModal = ({
               <View className="h-1 w-9 rounded-full bg-gray-200" />
             </View>
 
-            <Text className="text-lg font-bold text-gray-900">Сохранить запись</Text>
+            <Text className="text-lg font-bold text-gray-900">{t('record.saveModalTitle')}</Text>
             <TextInput
               className="rounded-xl border-2 px-4 py-3 text-[16px]"
               style={{
-                borderColor: ACCENT_BLUE,
+                borderColor: c.accent.primary,
                 color: '#1a1a2e',
                 backgroundColor: '#f5f7ff',
               }}
-              placeholder="Название записи"
+              placeholder={t('record.titlePlaceholder')}
               placeholderTextColor="#b0b8c8"
               value={title}
               onChangeText={onTitleChange}
@@ -199,12 +208,12 @@ export const SaveRecordModal = ({
               onSubmitEditing={handleSave}
             />
             <Text className="-mt-1 text-[14px] text-gray-500">
-              Длительность: {formatTime(elapsed)}
+              {t('record.duration', { time: formatTime(elapsed) })}
             </Text>
             <View className="mt-1 flex-row gap-3">
               <Button
                 variant="secondary"
-                label="Отмена"
+                label={t('common.cancel')}
                 onPress={handleCancel}
                 activeOpacity={0.8}
                 fullWidth
@@ -212,11 +221,11 @@ export const SaveRecordModal = ({
               />
               <Button
                 variant="primary"
-                label="Сохранить"
+                label={t('common.save')}
                 onPress={handleSave}
                 activeOpacity={0.85}
                 fullWidth
-                containerStyle={{ backgroundColor: ACCENT_BLUE, borderRadius: 12 }}
+                containerStyle={{ backgroundColor: c.accent.primary, borderRadius: 12 }}
               />
             </View>
           </Animated.View>

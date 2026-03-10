@@ -1,5 +1,6 @@
 import { Clock, Pin } from 'lucide-react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -17,6 +18,7 @@ type RecordCardProps = {
 };
 
 export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardProps) => {
+  useTranslation(); // subscribe to language changes so formatRelativeTime re-runs
   const cardStyle = {
     shadowColor: color.shadow.color,
     shadowOffset: { width: 0, height: 1 },
