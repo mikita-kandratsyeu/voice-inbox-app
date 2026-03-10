@@ -103,4 +103,22 @@ export const recordRepository = {
     const db = getDB();
     await db.update(recordsTable).set({ status: 'read' }).where(eq(recordsTable.id, id));
   },
+
+  updateTranscript: async (
+    id: string,
+    transcript: string,
+    segments: TranscriptSegment[],
+  ): Promise<void> => {
+    logDb('updateTranscript', { id, segmentsCount: segments.length });
+    const db = getDB();
+    await db
+      .update(recordsTable)
+      .set({
+        transcript,
+        transcriptSegments: JSON.stringify(segments),
+        aiStatus: 'done',
+        transcriptProgress: 100,
+      })
+      .where(eq(recordsTable.id, id));
+  },
 };

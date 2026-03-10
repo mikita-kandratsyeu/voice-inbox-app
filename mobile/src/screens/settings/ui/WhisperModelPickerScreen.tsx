@@ -1,7 +1,15 @@
 import { useNavigation } from '@react-navigation/native';
-import { Check, Download, Loader, Smartphone } from 'lucide-react-native';
-import React from 'react';
+import { Check, Download, Loader, Smartphone, Trash2, X } from 'lucide-react-native';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { WhisperModelId } from '@/entities/settings';
@@ -10,8 +18,36 @@ import {
   useWhisperModelCompatibility,
   WHISPER_MODELS,
 } from '@/entities/settings';
+import { useModelManager } from '@/features/model-manager';
+import { getModelFileSizeFormatted } from '@/features/model-manager';
 import { getColors } from '@/shared/config';
+import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader } from '@/shared/ui';
+
+const SpinningLoader = ({ color: iconColor }: { color: string }) => {
+  const rotation = useSharedValue(0);
+
+  useEffect(() => {
+    rotation.value = withRepeat(
+      withTiming(360, { duration: 900, easing: Easing.linear }),
+      -1,
+      false,
+    );
+    return () => {
+      cancelAnimation(rotation);
+    };
+  }, [rotation]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value}deg` }],
+  }));
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <Loader size={22} color={iconColor} strokeWidth={2} />
+    </Animated.View>
+  );
+};
 
 const ACCURACY_LABEL: Record<string, string> = {
   low: 'Базовое',
@@ -60,10 +96,35 @@ export const WhisperModelPickerScreen = () => {
 
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
+  const whisperDownloadProgress = useSettingsStore((s) => s.whisperDownloadProgress);
+  const whisperDownloadBytes = useSettingsStore((s) => s.whisperDownloadBytes);
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
-  const setWhisperModelStatus = useSettingsStore((s) => s.setWhisperModelStatus);
 
   const compatibility = useWhisperModelCompatibility();
+  const { startDownload, cancelDownload, removeModel } = useModelManager();
+
+  const [realSizes, setRealSizes] = useState<Partial<Record<WhisperModelId, string>>>({});
+
+  const refreshRealSizes = useCallback(async () => {
+    const entries = await Promise.all(
+      WHISPER_MODELS.map(async (m) => {
+        const status = whisperModelStatuses[m.id] ?? 'not_downloaded';
+        if (status !== 'downloaded') return [m.id, null] as const;
+        const size = await getModelFileSizeFormatted(m.id);
+        return [m.id, size] as const;
+      }),
+    );
+
+    const updated: Partial<Record<WhisperModelId, string>> = {};
+    for (const [id, size] of entries) {
+      if (size) updated[id] = size;
+    }
+    setRealSizes(updated);
+  }, [whisperModelStatuses]);
+
+  useEffect(() => {
+    refreshRealSizes();
+  }, [refreshRealSizes]);
 
   const handleDownload = (id: WhisperModelId, sizeMb: number) => {
     Alert.alert('Скачать модель', `Для загрузки потребуется ~${sizeMb} МБ. Продолжить?`, [
@@ -71,27 +132,44 @@ export const WhisperModelPickerScreen = () => {
       {
         text: 'Скачать',
         onPress: () => {
-          setWhisperModelStatus(id, 'downloading');
-          // Mock: через 2 сек «скачивается»
-          setTimeout(() => {
-            setWhisperModelStatus(id, 'downloaded');
-          }, 2000);
+          startDownload(id);
         },
       },
     ]);
   };
 
+  const handleDelete = (id: WhisperModelId) => {
+    const model = WHISPER_MODELS.find((m) => m.id === id);
+    Alert.alert(
+      'Удалить модель',
+      `Файл модели Whisper ${model?.name ?? ''} будет удалён с устройства. Продолжить?`,
+      [
+        { text: 'Отмена', style: 'cancel' },
+        {
+          text: 'Удалить',
+          style: 'destructive',
+          onPress: async () => {
+            await removeModel(id);
+            await refreshRealSizes();
+          },
+        },
+      ],
+    );
+  };
+
   const handleSelect = (id: WhisperModelId) => {
     const status = whisperModelStatuses[id] ?? 'not_downloaded';
+
+    if (status === 'downloading') return;
+
     if (status !== 'downloaded') {
       const model = WHISPER_MODELS.find((m) => m.id === id);
-
       if (model) {
         handleDownload(id, model.sizeMb);
       }
-
       return;
     }
+
     setWhisperModel(id);
     navigation.goBack();
   };
@@ -117,7 +195,11 @@ export const WhisperModelPickerScreen = () => {
             const status = whisperModelStatuses[model.id] ?? 'not_downloaded';
             const isDownloaded = status === 'downloaded';
             const isDownloading = status === 'downloading';
+            const isError = status === 'error';
             const isLast = index === WHISPER_MODELS.length - 1;
+            const progress = whisperDownloadProgress[model.id] ?? 0;
+            const downloadBytes = whisperDownloadBytes[model.id];
+            const displaySize = realSizes[model.id] ?? model.sizeLabel;
 
             const borderStyle = !isLast
               ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
@@ -146,7 +228,7 @@ export const WhisperModelPickerScreen = () => {
                         style={{ backgroundColor: color.background.tertiary }}
                       >
                         <Text className="text-[12px]" style={{ color: color.text.secondary }}>
-                          {model.sizeLabel}
+                          {displaySize}
                         </Text>
                       </View>
                     </View>
@@ -194,11 +276,44 @@ export const WhisperModelPickerScreen = () => {
                       </View>
                     )}
                     {isDownloading ? (
+                      <View className="mt-2">
+                        <View className="mb-1.5 flex-row items-center justify-between">
+                          <Text
+                            className="text-[13px] font-medium"
+                            style={{ color: color.accent.primary }}
+                          >
+                            {downloadBytes
+                              ? `${formatFileSize(downloadBytes.written)} / ${formatFileSize(downloadBytes.total)}`
+                              : `Скачивание... ${progress}%`}
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => cancelDownload(model.id)}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <Text className="text-[13px]" style={{ color: color.text.secondary }}>
+                              Отмена
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                        <View
+                          className="h-1.5 overflow-hidden rounded-full"
+                          style={{ backgroundColor: color.background.tertiary }}
+                        >
+                          <View
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${progress}%`,
+                              backgroundColor: color.accent.primary,
+                            }}
+                          />
+                        </View>
+                      </View>
+                    ) : isError ? (
                       <Text
                         className="mt-1.5 text-[14px] font-medium"
-                        style={{ color: color.accent.primary }}
+                        style={{ color: color.accent.delete }}
                       >
-                        Скачивание...
+                        Ошибка загрузки — нажмите для повтора
                       </Text>
                     ) : !isDownloaded ? (
                       <Text className="mt-1.5 text-[14px]" style={{ color: color.text.secondary }}>
@@ -206,28 +321,51 @@ export const WhisperModelPickerScreen = () => {
                       </Text>
                     ) : null}
                   </View>
-                  {isDownloading ? (
-                    <Loader size={22} color={color.accent.primary} strokeWidth={2} />
-                  ) : isDownloaded && isSelected ? (
-                    <View
-                      className="h-6 w-6 items-center justify-center rounded-full"
-                      style={{ backgroundColor: color.accent.primary }}
-                    >
-                      <Check size={14} color="#ffffff" strokeWidth={2.5} />
-                    </View>
-                  ) : isDownloaded ? (
-                    <View
-                      className="h-6 w-6 rounded-full"
-                      style={{ borderWidth: 2, borderColor: color.border.default }}
-                    />
-                  ) : (
-                    <View
-                      className="h-8 w-8 items-center justify-center rounded-full"
-                      style={{ backgroundColor: color.background.tertiary }}
-                    >
-                      <Download size={16} color={color.accent.primary} strokeWidth={2} />
-                    </View>
-                  )}
+
+                  <View className="items-center gap-2">
+                    {isDownloading ? (
+                      <SpinningLoader color={color.accent.primary} />
+                    ) : isDownloaded && isSelected ? (
+                      <View
+                        className="h-6 w-6 items-center justify-center rounded-full"
+                        style={{ backgroundColor: color.accent.primary }}
+                      >
+                        <Check size={14} color="#ffffff" strokeWidth={2.5} />
+                      </View>
+                    ) : isDownloaded ? (
+                      <View
+                        className="h-6 w-6 rounded-full"
+                        style={{ borderWidth: 2, borderColor: color.border.default }}
+                      />
+                    ) : (
+                      <View
+                        className="h-8 w-8 items-center justify-center rounded-full"
+                        style={{ backgroundColor: color.background.tertiary }}
+                      >
+                        <Download size={16} color={color.accent.primary} strokeWidth={2} />
+                      </View>
+                    )}
+
+                    {isDownloaded && (
+                      <TouchableOpacity
+                        onPress={() => handleDelete(model.id)}
+                        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                        className="h-7 w-7 items-center justify-center rounded-full"
+                        style={{ backgroundColor: color.background.tertiary }}
+                      >
+                        <Trash2 size={14} color={color.accent.delete} strokeWidth={2} />
+                      </TouchableOpacity>
+                    )}
+
+                    {isError && (
+                      <View
+                        className="h-8 w-8 items-center justify-center rounded-full"
+                        style={{ backgroundColor: color.background.tertiary }}
+                      >
+                        <X size={16} color={color.accent.delete} strokeWidth={2} />
+                      </View>
+                    )}
+                  </View>
                 </View>
               </TouchableOpacity>
             );

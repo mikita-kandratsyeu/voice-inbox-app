@@ -36,6 +36,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   selectedAIModel: getStoredAIModel(),
   selectedWhisperModel: getStoredWhisperModel(),
   whisperModelStatuses: getStoredWhisperStatuses(),
+  whisperDownloadProgress: {},
+  whisperDownloadBytes: {},
 
   setAIModel: (id: AIModelId) => {
     storage.set(KEYS.AI_MODEL, id);
@@ -53,5 +55,45 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
     storage.set(KEYS.WHISPER_STATUSES, JSON.stringify(updated));
     set({ whisperModelStatuses: updated });
+  },
+
+  setDownloadProgress: (
+    id: WhisperModelId,
+    progress: number,
+    bytesWritten?: number,
+    contentLength?: number,
+  ) => {
+    const currentProgress = get().whisperDownloadProgress;
+    const currentBytes = get().whisperDownloadBytes;
+    const updatedBytes =
+      bytesWritten !== undefined && contentLength !== undefined
+        ? { ...currentBytes, [id]: { written: bytesWritten, total: contentLength } }
+        : currentBytes;
+    set({
+      whisperDownloadProgress: { ...currentProgress, [id]: progress },
+      whisperDownloadBytes: updatedBytes,
+    });
+  },
+
+  removeWhisperModelStatus: (id: WhisperModelId) => {
+    const currentStatuses = get().whisperModelStatuses;
+    const currentProgress = get().whisperDownloadProgress;
+    const currentBytes = get().whisperDownloadBytes;
+
+    const updatedStatuses = { ...currentStatuses };
+    delete updatedStatuses[id];
+
+    const updatedProgress = { ...currentProgress };
+    delete updatedProgress[id];
+
+    const updatedBytes = { ...currentBytes };
+    delete updatedBytes[id];
+
+    storage.set(KEYS.WHISPER_STATUSES, JSON.stringify(updatedStatuses));
+    set({
+      whisperModelStatuses: updatedStatuses,
+      whisperDownloadProgress: updatedProgress,
+      whisperDownloadBytes: updatedBytes,
+    });
   },
 }));

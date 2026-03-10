@@ -5,28 +5,24 @@ import { ActivityIndicator, Alert, ScrollView, Text, useColorScheme, View } from
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
+import type { WhisperModelId } from '@/entities/settings';
 import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import { getModelFileSizeBytes } from '@/features/model-manager';
 import { getColors } from '@/shared/config';
 import { clearCache, getStorageStats, type StorageStats } from '@/shared/lib';
+import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
-
-const formatModelSize = (mb: number): string => {
-  if (mb >= 1000) {
-    return `${(mb / 1000).toFixed(1)} ГБ`;
-  }
-
-  return `${mb} МБ`;
-};
 
 const StorageBar = ({
   audioMb,
   transcriptKb,
   aiDataKb,
   cacheKb,
-  modelsMb,
+  modelsBytes,
   totalMb,
   color,
-}: StorageStats & { modelsMb: number; color: ReturnType<typeof getColors> }) => {
+}: StorageStats & { modelsBytes: number; color: ReturnType<typeof getColors> }) => {
+  const modelsMb = modelsBytes / (1024 * 1024);
   const divisor = totalMb > 0 ? totalMb : 1;
   const audioFrac = audioMb / divisor;
   const transcriptFrac = transcriptKb / 1024 / divisor;
@@ -97,6 +93,22 @@ const StorageBar = ({
             {Math.round(aiDataKb)} КБ
           </Text>
         </View>
+        {modelsBytes > 0 && (
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-2">
+              <View
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: color.accent.success }}
+              />
+              <Text className="text-[14px]" style={{ color: color.text.secondary }}>
+                Whisper модели
+              </Text>
+            </View>
+            <Text className="text-[14px]" style={{ color: color.text.primary }}>
+              {formatFileSize(modelsBytes)}
+            </Text>
+          </View>
+        )}
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center gap-2">
             <View
@@ -111,22 +123,6 @@ const StorageBar = ({
             {Math.round(cacheKb)} КБ
           </Text>
         </View>
-        {modelsMb > 0 && (
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center gap-2">
-              <View
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: color.accent.success }}
-              />
-              <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-                Whisper модели
-              </Text>
-            </View>
-            <Text className="text-[14px]" style={{ color: color.text.primary }}>
-              {formatModelSize(modelsMb)}
-            </Text>
-          </View>
-        )}
       </View>
     </View>
   );
@@ -150,6 +146,28 @@ export const StorageDetailsScreen = () => {
   const [stats, setStats] = useState<StorageStats>(DEFAULT_STATS);
   const [isLoading, setIsLoading] = useState(true);
   const [isClearing, setIsClearing] = useState(false);
+  const [realModelSizes, setRealModelSizes] = useState<Partial<Record<WhisperModelId, number>>>({});
+
+  const downloadedModels = WHISPER_MODELS.filter(
+    (m) => (whisperModelStatuses[m.id] ?? 'not_downloaded') === 'downloaded',
+  );
+
+  const loadModelSizes = useCallback(async (statuses: typeof whisperModelStatuses) => {
+    const downloaded = WHISPER_MODELS.filter(
+      (m) => (statuses[m.id] ?? 'not_downloaded') === 'downloaded',
+    );
+    const entries = await Promise.all(
+      downloaded.map(async (m) => {
+        const bytes = await getModelFileSizeBytes(m.id);
+        return [m.id, bytes] as const;
+      }),
+    );
+    const updated: Partial<Record<WhisperModelId, number>> = {};
+    for (const [id, bytes] of entries) {
+      updated[id] = bytes;
+    }
+    setRealModelSizes(updated);
+  }, []);
 
   const refreshStats = useCallback(async () => {
     setIsLoading(true);
@@ -166,17 +184,22 @@ export const StorageDetailsScreen = () => {
 
   useEffect(() => {
     refreshStats();
-  }, [refreshStats]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    loadModelSizes(whisperModelStatuses);
+  }, [whisperModelStatuses, loadModelSizes]);
 
   const audioCount = records.filter((r) => r.audioPath).length;
   const withTranscript = records.filter((r) => r.transcript && r.transcript.length > 0).length;
   const processedByAI = records.filter((r) => r.aiStatus === 'done').length;
 
-  const downloadedModels = WHISPER_MODELS.filter(
-    (m) => (whisperModelStatuses[m.id] ?? 'not_downloaded') === 'downloaded',
-  );
-  const modelsMb = downloadedModels.reduce((sum, m) => sum + m.sizeMb, 0);
-  const totalMb = stats.totalMb + modelsMb;
+  const modelsBytes = downloadedModels.reduce((sum, m) => {
+    const realBytes = realModelSizes[m.id];
+    return sum + (realBytes !== undefined ? realBytes : m.sizeMb * 1024 * 1024);
+  }, 0);
+  const totalMb = stats.totalMb + modelsBytes / (1024 * 1024);
 
   const handleClearCache = () => {
     Alert.alert('Очистить кэш', 'Временные файлы будут удалены. Продолжить?', [
@@ -242,7 +265,7 @@ export const StorageDetailsScreen = () => {
               </Text>
             </View>
           ) : (
-            <StorageBar {...stats} modelsMb={modelsMb} totalMb={totalMb} color={color} />
+            <StorageBar {...stats} modelsBytes={modelsBytes} totalMb={totalMb} color={color} />
           )}
         </View>
         <SettingsSection title="Детализация" color={color}>
@@ -271,19 +294,27 @@ export const StorageDetailsScreen = () => {
           />
           {downloadedModels.length > 0 && (
             <>
-              {downloadedModels.map((model, index) => (
-                <SettingsRow
-                  key={model.id}
-                  label={`Whisper ${model.name}`}
-                  value={formatModelSize(model.sizeMb)}
-                  color={color}
-                  leftIcon={
-                    <BrainCircuit size={20} color={color.accent.success} strokeWidth={1.8} />
-                  }
-                  showChevron={false}
-                  isLast={index === downloadedModels.length - 1}
-                />
-              ))}
+              {downloadedModels.map((model, index) => {
+                const realBytes = realModelSizes[model.id];
+                const sizeLabel =
+                  realBytes !== undefined
+                    ? formatFileSize(realBytes)
+                    : formatFileSize(model.sizeMb * 1024 * 1024);
+
+                return (
+                  <SettingsRow
+                    key={model.id}
+                    label={`Whisper ${model.name}`}
+                    value={sizeLabel}
+                    color={color}
+                    leftIcon={
+                      <BrainCircuit size={20} color={color.accent.success} strokeWidth={1.8} />
+                    }
+                    showChevron={false}
+                    isLast={index === downloadedModels.length - 1}
+                  />
+                );
+              })}
             </>
           )}
         </SettingsSection>

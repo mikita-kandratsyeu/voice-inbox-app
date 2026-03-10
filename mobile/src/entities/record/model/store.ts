@@ -2,7 +2,7 @@ import RNFS from 'react-native-fs';
 import { create } from 'zustand';
 
 import { recordRepository } from './repository';
-import type { RecordingStatus, VoiceRecord } from './types';
+import type { RecordingStatus, TranscriptSegment, VoiceRecord } from './types';
 
 type RecordStore = {
   records: VoiceRecord[];
@@ -13,6 +13,11 @@ type RecordStore = {
   togglePin: (id: string) => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
   updateAiStatus: (id: string, aiStatus: RecordingStatus, progress?: number) => void;
+  updateTranscript: (
+    id: string,
+    transcript: string,
+    segments: TranscriptSegment[],
+  ) => Promise<void>;
 };
 
 export const useRecordStore = create<RecordStore>((set, get) => ({
@@ -66,6 +71,23 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     set((s) => ({
       records: s.records.map((r) =>
         r.id === id ? { ...r, aiStatus, transcriptProgress: progress ?? r.transcriptProgress } : r,
+      ),
+    }));
+  },
+
+  updateTranscript: async (id, transcript, segments) => {
+    await recordRepository.updateTranscript(id, transcript, segments);
+    set((s) => ({
+      records: s.records.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              transcript,
+              transcriptSegments: segments,
+              aiStatus: 'done',
+              transcriptProgress: 100,
+            }
+          : r,
       ),
     }));
   },

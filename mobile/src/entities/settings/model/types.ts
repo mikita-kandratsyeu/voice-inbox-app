@@ -7,7 +7,7 @@ export type WhisperModelId =
   | 'whisper-medium'
   | 'whisper-large-v3';
 
-export type WhisperModelStatus = 'not_downloaded' | 'downloading' | 'downloaded';
+export type WhisperModelStatus = 'not_downloaded' | 'downloading' | 'downloaded' | 'error';
 
 export type AIModel = {
   id: AIModelId;
@@ -29,11 +29,25 @@ export type WhisperModel = {
   status: WhisperModelStatus;
 };
 
+export type DownloadBytes = {
+  written: number;
+  total: number;
+};
+
 export type SettingsState = {
   selectedAIModel: AIModelId;
   selectedWhisperModel: WhisperModelId;
   whisperModelStatuses: Partial<Record<WhisperModelId, WhisperModelStatus>>;
+  whisperDownloadProgress: Partial<Record<WhisperModelId, number>>;
+  whisperDownloadBytes: Partial<Record<WhisperModelId, DownloadBytes>>;
   setAIModel: (id: AIModelId) => void;
   setWhisperModel: (id: WhisperModelId) => void;
   setWhisperModelStatus: (id: WhisperModelId, status: WhisperModelStatus) => void;
+  setDownloadProgress: (
+    id: WhisperModelId,
+    progress: number,
+    bytesWritten?: number,
+    contentLength?: number,
+  ) => void;
+  removeWhisperModelStatus: (id: WhisperModelId) => void;
 };

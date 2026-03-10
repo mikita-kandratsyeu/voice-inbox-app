@@ -2,11 +2,13 @@ import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
-import { ScrollView, useColorScheme, View } from 'react-native';
+import { Alert, ScrollView, useColorScheme, View } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { TaskItem, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import { useSettingsStore } from '@/entities/settings';
+import { useTranscription } from '@/features/transcription';
 import { getColors } from '@/shared/config';
 import { AudioPlayer } from '@/widgets/audio-player';
 
@@ -25,22 +27,37 @@ export const RecordingDetailScreen = () => {
 
   const { record: routeRecord } = route.params;
   const { records, togglePin } = useRecordStore();
+  const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
+  const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
 
   const liveRecord: VoiceRecord = records.find((r) => r.id === routeRecord.id) ?? routeRecord;
 
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
   const [localTasks, setLocalTasks] = useState<TaskItem[]>(liveRecord.tasks ?? []);
 
+  const { startTranscription, cancelTranscription } = useTranscription();
+
   const handleToggleTask = (id: string) => {
     setLocalTasks((prev) => prev.map((t) => (t.id === id ? { ...t, isDone: !t.isDone } : t)));
   };
 
   const handleRetranscribe = () => {
-    // placeholder — will trigger local Whisper in the future
+    const modelStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
+
+    if (modelStatus !== 'downloaded') {
+      Alert.alert(
+        'Модель не скачана',
+        'Для транскрипции необходимо скачать модель Whisper в настройках.',
+        [{ text: 'OK' }],
+      );
+      return;
+    }
+
+    startTranscription(liveRecord);
   };
 
   const handleCancelTranscription = () => {
-    // placeholder — will cancel Whisper job in the future
+    cancelTranscription(liveRecord.id);
   };
 
   const handleGenerateSummary = () => {
