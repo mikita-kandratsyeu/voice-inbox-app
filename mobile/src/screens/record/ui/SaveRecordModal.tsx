@@ -1,5 +1,6 @@
 import dayjs from 'dayjs';
 import React, { useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Animated,
   Keyboard,
@@ -45,6 +46,7 @@ export const SaveRecordModal = ({
   onSave,
   onSaveComplete,
 }: SaveRecordModalProps) => {
+  const { t } = useTranslation();
   const scheme = (useColorScheme() ?? 'light') as 'light' | 'dark';
   const c = getColors(scheme);
 
@@ -112,7 +114,7 @@ export const SaveRecordModal = ({
   const handleSave = async () => {
     const record: VoiceRecord = {
       id: generateRecordId(),
-      title: title.trim() || 'Новая запись',
+      title: title.trim() || t('record.newRecord'),
       transcript: '',
       transcriptSegments: [],
       summary: '',
@@ -189,7 +191,7 @@ export const SaveRecordModal = ({
               <View className="h-1 w-9 rounded-full bg-gray-200" />
             </View>
 
-            <Text className="text-lg font-bold text-gray-900">Сохранить запись</Text>
+            <Text className="text-lg font-bold text-gray-900">{t('record.saveModalTitle')}</Text>
             <TextInput
               className="rounded-xl border-2 px-4 py-3 text-[16px]"
               style={{
@@ -197,7 +199,7 @@ export const SaveRecordModal = ({
                 color: '#1a1a2e',
                 backgroundColor: '#f5f7ff',
               }}
-              placeholder="Название записи"
+              placeholder={t('record.titlePlaceholder')}
               placeholderTextColor="#b0b8c8"
               value={title}
               onChangeText={onTitleChange}
@@ -206,12 +208,12 @@ export const SaveRecordModal = ({
               onSubmitEditing={handleSave}
             />
             <Text className="-mt-1 text-[14px] text-gray-500">
-              Длительность: {formatTime(elapsed)}
+              {t('record.duration', { time: formatTime(elapsed) })}
             </Text>
             <View className="mt-1 flex-row gap-3">
               <Button
                 variant="secondary"
-                label="Отмена"
+                label={t('common.cancel')}
                 onPress={handleCancel}
                 activeOpacity={0.8}
                 fullWidth
@@ -219,7 +221,7 @@ export const SaveRecordModal = ({
               />
               <Button
                 variant="primary"
-                label="Сохранить"
+                label={t('common.save')}
                 onPress={handleSave}
                 activeOpacity={0.85}
                 fullWidth

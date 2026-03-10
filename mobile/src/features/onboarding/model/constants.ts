@@ -1,44 +1,31 @@
 import type { Colors } from '@/shared/config';
 
-export type OnboardingSlide = {
-  id: string;
-  title: string;
-  description: string;
-  iconName: 'Mic' | 'Lock' | 'Sparkles' | 'Zap';
-  iconColor: string;
-  iconBg: string;
-  extra?: 'dots' | 'privacy' | 'ai-features' | 'check';
-};
-
 const SLIDE_CONTENT = [
   {
     id: 'record',
-    title: 'Записывайте мысли голосом',
-    description:
-      'Быстро фиксируйте идеи, задачи и заметки. Просто нажмите на кнопку и говорите — всё остальное сделает приложение.',
+    titleKey: 'onboarding.recordTitle' as const,
+    descKey: 'onboarding.recordDesc' as const,
     iconName: 'Mic' as const,
     extra: 'dots' as const,
   },
   {
     id: 'transcribe',
-    title: 'Оффлайн транскрипция',
-    description:
-      'Преобразование голоса в текст происходит локально на вашем устройстве. Никаких серверов, полная приватность.',
+    titleKey: 'onboarding.transcribeTitle' as const,
+    descKey: 'onboarding.transcribeDesc' as const,
     iconName: 'Lock' as const,
     extra: 'privacy' as const,
   },
   {
     id: 'ai',
-    title: 'ИИ обработка по запросу',
-    description:
-      'Структурируйте записи с помощью ИИ когда нужно. Голос обрабатывается локально, текст передаётся по зашифрованному каналу и никогда не сохраняется.',
+    titleKey: 'onboarding.aiTitle' as const,
+    descKey: 'onboarding.aiDesc' as const,
     iconName: 'Sparkles' as const,
     extra: 'ai-features' as const,
   },
   {
     id: 'ready',
-    title: 'Всё готово!',
-    description: 'Начните записывать свои мысли прямо сейчас. Всегда под рукой для ваших идей.',
+    titleKey: 'onboarding.readyTitle' as const,
+    descKey: 'onboarding.readyDesc' as const,
     iconName: 'Zap' as const,
     extra: 'check' as const,
   },
@@ -51,7 +38,18 @@ const ICON_KEYS = {
   Zap: 'zap',
 } as const;
 
-export const getOnboardingSlides = (colors: Colors): OnboardingSlide[] =>
+export type OnboardingSlide = OnboardingSlideContent;
+export type OnboardingSlideContent = {
+  id: string;
+  titleKey: string;
+  descKey: string;
+  iconName: 'Mic' | 'Lock' | 'Sparkles' | 'Zap';
+  iconColor: string;
+  iconBg: string;
+  extra?: 'dots' | 'privacy' | 'ai-features' | 'check';
+};
+
+export const getOnboardingSlides = (colors: Colors): OnboardingSlideContent[] =>
   SLIDE_CONTENT.map((slide) => {
     const { color, bg } = colors.onboarding[ICON_KEYS[slide.iconName]];
     return {

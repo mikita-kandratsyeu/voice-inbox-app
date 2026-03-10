@@ -1,5 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,11 +12,13 @@ import {
 } from '@/entities/settings';
 import { getModelFileSizeFormatted, useModelManager } from '@/features/model-manager';
 import { getColors } from '@/shared/config';
+import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader } from '@/shared/ui';
 
 import { WhisperModelCard } from './WhisperModelCard';
 
 export const WhisperModelPickerScreen = () => {
+  const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -51,21 +54,21 @@ export const WhisperModelPickerScreen = () => {
   }, [refreshRealSizes]);
 
   const handleDownload = (id: WhisperModelId, sizeMb: number) => {
-    Alert.alert('Скачать модель', `Для загрузки потребуется ~${sizeMb} МБ. Продолжить?`, [
-      { text: 'Отмена', style: 'cancel' },
-      { text: 'Скачать', onPress: () => startDownload(id) },
+    Alert.alert(t('whisper.downloadModel'), t('whisper.downloadConfirm', { size: sizeMb }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.download'), onPress: () => startDownload(id) },
     ]);
   };
 
   const handleDelete = (id: WhisperModelId) => {
     const model = WHISPER_MODELS.find((m) => m.id === id);
     Alert.alert(
-      'Удалить модель',
-      `Файл модели Whisper ${model?.name ?? ''} будет удалён с устройства. Продолжить?`,
+      t('whisper.deleteModel'),
+      t('whisper.deleteConfirmWithName', { name: model?.name ?? '' }),
       [
-        { text: 'Отмена', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Удалить',
+          text: t('common.remove'),
           style: 'destructive',
           onPress: async () => {
             await removeModel(id);
@@ -90,7 +93,11 @@ export const WhisperModelPickerScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title="Модель транскрипции" color={color} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('whisper.modelTitle')}
+        color={color}
+        onBack={() => navigation.goBack()}
+      />
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 16,
@@ -100,8 +107,7 @@ export const WhisperModelPickerScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-          Whisper — офлайн-модель транскрипции от OpenAI. Модели хранятся на устройстве. Большие
-          модели дают лучшее качество, но требуют больше памяти и работают медленнее.
+          {t('whisper.modelDescription')}
         </Text>
         <View className="overflow-hidden rounded-2xl">
           {WHISPER_MODELS.map((model, index) => (
@@ -112,7 +118,7 @@ export const WhisperModelPickerScreen = () => {
               total={WHISPER_MODELS.length}
               status={whisperModelStatuses[model.id] ?? 'not_downloaded'}
               isSelected={model.id === selectedWhisperModel}
-              displaySize={realSizes[model.id] ?? model.sizeLabel}
+              displaySize={realSizes[model.id] ?? formatFileSize(model.sizeMb * 1024 * 1024)}
               compatibility={compatibility ? compatibility[model.id] : null}
               color={color}
               onPress={handleSelect}

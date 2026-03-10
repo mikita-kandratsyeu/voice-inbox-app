@@ -1,6 +1,7 @@
 import { MenuView } from '@react-native-menu/menu';
 import { ChevronLeft, MoreVertical, Pin, Share2 } from 'lucide-react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -27,6 +28,7 @@ export const RecordingDetailHeader = ({
   onRename,
   onDelete,
 }: RecordingDetailHeaderProps) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const iconBtnBg = { backgroundColor: color.background.tertiary };
   const pinActiveStyle = { backgroundColor: color.accent.primary + '1A' };
@@ -85,13 +87,13 @@ export const RecordingDetailHeader = ({
           actions={[
             {
               id: 'rename',
-              title: 'Rename',
+              title: t('recordActions.rename'),
               image: 'pencil',
               imageColor: color.text.primary,
             },
             {
               id: 'delete',
-              title: 'Delete',
+              title: t('recordActions.delete'),
               image: 'trash',
               imageColor: color.accent.delete,
               attributes: { destructive: true },

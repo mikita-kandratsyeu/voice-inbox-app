@@ -2,6 +2,7 @@ import { Alert } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import { i18n } from '@/shared/lib';
 
 type UseRecordActionsOptions = {
   onDeleted?: () => void;
@@ -12,12 +13,12 @@ export const useRecordActions = ({ onDeleted }: UseRecordActionsOptions = {}) =>
 
   const promptRename = (record: VoiceRecord) => {
     Alert.prompt(
-      'Rename note',
-      'Enter a new name for the note',
+      i18n.t('recordActions.renameTitle'),
+      i18n.t('recordActions.renamePrompt'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: i18n.t('common.cancel'), style: 'cancel' },
         {
-          text: 'Save',
+          text: i18n.t('common.save'),
           onPress: async (newTitle?: string) => {
             const trimmed = newTitle?.trim();
 
@@ -34,12 +35,12 @@ export const useRecordActions = ({ onDeleted }: UseRecordActionsOptions = {}) =>
 
   const promptDelete = (record: VoiceRecord) => {
     Alert.alert(
-      'Delete note',
-      `Are you sure you want to delete "${record.title}"? This action cannot be undone.`,
+      i18n.t('recordActions.deleteTitle'),
+      i18n.t('recordActions.deleteMessage', { title: record.title }),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: i18n.t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: i18n.t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             await deleteRecord(record.id);

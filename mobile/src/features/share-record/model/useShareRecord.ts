@@ -2,6 +2,7 @@ import { Share } from 'react-native';
 import RNFS from 'react-native-fs';
 
 import type { VoiceRecord } from '@/entities/record';
+import { i18n } from '@/shared/lib';
 
 const buildShareText = (record: VoiceRecord): string => {
   const lines: string[] = [];
@@ -48,7 +49,7 @@ export const useShareRecord = () => {
           message: text,
           url: `file://${filePath}`,
         },
-        { dialogTitle: 'Share note' },
+        { dialogTitle: i18n.t('share.shareNote') },
       );
     } catch (err) {
       const error = err as Error;

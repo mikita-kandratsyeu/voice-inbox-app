@@ -8,6 +8,8 @@ export type { Database } from './db/client';
 export { getDB, initDB } from './db/client';
 export type { RecordInsert, RecordRow } from './db/schema';
 export { recordsTable } from './db/schema';
+export type { SupportedLocale } from './i18n';
+export { i18n, initI18n } from './i18n';
 export { useNetworkStatus } from './useNetworkStatus';
 export {
   formatFileSize,

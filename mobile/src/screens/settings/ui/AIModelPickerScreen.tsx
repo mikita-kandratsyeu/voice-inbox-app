@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { Check } from 'lucide-react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,12 +9,6 @@ import type { AIModelId } from '@/entities/settings';
 import { AI_MODELS, useSettingsStore } from '@/entities/settings';
 import { getColors } from '@/shared/config';
 import { ScreenHeader } from '@/shared/ui';
-
-const SPEED_LABEL: Record<string, string> = {
-  fast: 'Быстрая',
-  medium: 'Средняя',
-  slow: 'Медленная',
-};
 
 const SPEED_COLOR: Record<string, string> = {
   fast: '#10b981',
@@ -28,6 +23,7 @@ const PROVIDER_COLOR: Record<string, string> = {
 };
 
 export const AIModelPickerScreen = () => {
+  const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -42,7 +38,7 @@ export const AIModelPickerScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title="ИИ модель" color={color} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('aiModels.title')} color={color} onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={{
@@ -53,8 +49,7 @@ export const AIModelPickerScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-          Выберите модель ИИ для генерации саммари и извлечения задач из транскриптов. Настройки
-          применятся к следующей обработке.
+          {t('aiModels.description')}
         </Text>
 
         <View className="overflow-hidden rounded-2xl">
@@ -109,19 +104,16 @@ export const AIModelPickerScreen = () => {
                       className="text-[14px] leading-5 mb-1.5"
                       style={{ color: color.text.secondary }}
                     >
-                      {model.description}
+                      {t(model.descriptionKey as 'aiModels.geminiDesc')}
                     </Text>
                     <View className="flex-row items-center gap-3">
-                      <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-                        {model.contextWindow}
-                      </Text>
                       <View className="flex-row items-center gap-1">
                         <View
                           className="h-2 w-2 rounded-full"
                           style={{ backgroundColor: SPEED_COLOR[model.speed] }}
                         />
                         <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-                          {SPEED_LABEL[model.speed]}
+                          {t(`aiModels.speed.${model.speed}`, { defaultValue: model.speed })}
                         </Text>
                       </View>
                     </View>

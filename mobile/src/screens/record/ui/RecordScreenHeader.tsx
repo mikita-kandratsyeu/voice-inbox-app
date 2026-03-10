@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button } from '@/shared/ui';
 
 import type { RecordingState } from '../config';
-import { HEADER_TITLE } from '../config';
+import { getHeaderTitle } from '../config';
 
 type RecordScreenHeaderProps = {
   state: RecordingState;
@@ -28,7 +28,7 @@ export const RecordScreenHeader = ({ state, onClose }: RecordScreenHeaderProps) 
         containerStyle={{ backgroundColor: 'rgba(255,255,255,0.2)' }}
       />
       <Text className="text-base font-semibold tracking-wide text-white">
-        {HEADER_TITLE[state]}
+        {getHeaderTitle(state)}
       </Text>
       <View className="w-10" />
     </View>

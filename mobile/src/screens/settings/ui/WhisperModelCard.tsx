@@ -1,11 +1,12 @@
 import { Check, Download, Smartphone, Trash2, X } from 'lucide-react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 import type { WhisperModel, WhisperModelId, WhisperModelStatus } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 
-import { ACCURACY_LABEL, RECOMMENDED_MODEL_ID, SPEED_LABEL } from '../config';
+import { getAccuracyLabel, getSpeedLabel, RECOMMENDED_MODEL_ID } from '../config';
 import { getCardRadiusClass, getSpeedColor } from '../lib';
 import { WhisperModelSpinner } from './WhisperModelSpinner';
 
@@ -41,6 +42,7 @@ export const WhisperModelCard = ({
   onDelete,
   onCancelDownload,
 }: WhisperModelCardProps) => {
+  const { t } = useTranslation();
   const isDownloaded = status === 'downloaded';
   const isDownloading = status === 'downloading';
   const isError = status === 'error';
@@ -83,19 +85,21 @@ export const WhisperModelCard = ({
                   className="text-[12px] font-medium"
                   style={{ color: color.status.processing.text }}
                 >
-                  Рекомендуется
+                  {t('whisper.recommended')}
                 </Text>
               </View>
             )}
           </View>
 
           <Text className="mb-1.5 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-            {model.description}
+            {t(
+              `whisper.models.${model.id.replace('whisper-', '').replace('-', '_')}Desc` as 'whisper.models.tinyDesc',
+            )}
           </Text>
 
           <View className="flex-row items-center gap-3">
             <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-              Качество: {ACCURACY_LABEL[model.accuracy]}
+              {t('whisper.qualityLabel')}: {getAccuracyLabel(model.accuracy)}
             </Text>
             <View className="flex-row items-center gap-1">
               <View
@@ -103,7 +107,7 @@ export const WhisperModelCard = ({
                 style={{ backgroundColor: getSpeedColor(model.speed, color) }}
               />
               <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-                {SPEED_LABEL[model.speed]}
+                {getSpeedLabel(model.speed)}
               </Text>
             </View>
           </View>
@@ -121,7 +125,7 @@ export const WhisperModelCard = ({
                   color: compatibility.isCompatible ? color.accent.success : color.accent.delete,
                 }}
               >
-                {compatibility.isCompatible ? 'Совместимо с устройством' : compatibility.reason}
+                {compatibility.isCompatible ? t('whisper.compatible') : compatibility.reason}
               </Text>
             </View>
           )}
@@ -133,16 +137,16 @@ export const WhisperModelCard = ({
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
               <Text className="text-[13px]" style={{ color: color.text.secondary }}>
-                Отмена
+                {t('common.cancel')}
               </Text>
             </TouchableOpacity>
           ) : isError ? (
             <Text className="mt-1.5 text-[14px] font-medium" style={{ color: color.accent.delete }}>
-              Ошибка загрузки — нажмите для повтора
+              {t('whisper.downloadError')}
             </Text>
           ) : !isDownloaded ? (
             <Text className="mt-1.5 text-[14px]" style={{ color: color.text.secondary }}>
-              Не скачана — нажмите для загрузки
+              {t('whisper.tapToDownload')}
             </Text>
           ) : null}
         </View>

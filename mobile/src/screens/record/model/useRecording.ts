@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
 import type { AudioSet, RecordBackType } from 'react-native-audio-recorder-player';
 import AudioRecorderPlayer, {
@@ -31,6 +32,7 @@ type UseRecordingOptions = {
 };
 
 export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
+  const { t } = useTranslation();
   const [state, setState] = useState<RecordingState>('idle');
   const [elapsed, setElapsed] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
@@ -69,7 +71,7 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
               audioPathRef.current = result;
             }
             setState('paused');
-            Alert.alert('Запись остановлена', 'Достигнут максимальный лимит записи — 30 минут.', [
+            Alert.alert(t('record.recordStopped'), t('record.recordStoppedMessage'), [
               { text: 'OK' },
             ]);
             onLimitReachedRef.current?.();
@@ -77,7 +79,7 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
           .catch(() => {});
       }
     });
-  }, []);
+  }, [t]);
 
   const startRecording = useCallback(async () => {
     const hasPermission = await requestMicPermission();

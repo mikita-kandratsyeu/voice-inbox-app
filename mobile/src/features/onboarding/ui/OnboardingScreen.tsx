@@ -1,5 +1,6 @@
 import { Lock, Mic, Shield, Sparkles, Zap } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Dimensions, FlatList, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import Animated, {
   interpolate,
@@ -17,7 +18,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getColors } from '@/shared/config';
 
 import { setHasSeenOnboarding } from '../lib/onboardingStorage';
-import { getOnboardingSlides, type OnboardingSlide } from '../model/constants';
+import { getOnboardingSlides, type OnboardingSlideContent } from '../model/constants';
 
 const ICON_MAP = {
   Mic,
@@ -32,7 +33,7 @@ type OnboardingScreenProps = {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<OnboardingSlide>);
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<OnboardingSlideContent>);
 
 const DOT_SIZE = 8;
 const PILL_WIDTH = 20;
@@ -46,11 +47,13 @@ const AnimatedProgressDots = ({
   onDotPress,
   color,
   slides,
+  t,
 }: {
   scrollX: SharedValue<number>;
   onDotPress: (index: number) => void;
   color: ReturnType<typeof getColors>;
-  slides: OnboardingSlide[];
+  slides: OnboardingSlideContent[];
+  t: (key: string, opts?: { index?: number }) => string;
 }) => {
   const pillPositions = slides.map((_, i) => i * SLOT_WIDTH + PILL_LEFT);
   const slideColors = slides.map((s) => s.iconColor);
@@ -81,7 +84,7 @@ const AnimatedProgressDots = ({
             key={index}
             onPress={() => onDotPress(index)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel={`Перейти к слайду ${index + 1}`}
+            accessibilityLabel={t('onboarding.goToSlide', { index: index + 1 })}
             style={{
               position: 'absolute',
               left: index * SLOT_WIDTH + DOT_LEFT,
@@ -159,7 +162,7 @@ const AnimatedNextButton = ({
 };
 
 type SlideItemProps = {
-  item: OnboardingSlide;
+  item: OnboardingSlideContent;
   index: number;
   scrollX: SharedValue<number>;
   color: ReturnType<typeof getColors>;
@@ -171,7 +174,7 @@ const AnimatedSlideIcon = ({
   iconBg,
   iconOnAccent,
 }: {
-  iconName: OnboardingSlide['iconName'];
+  iconName: OnboardingSlideContent['iconName'];
   iconColor: string;
   iconBg: string;
   iconOnAccent: string;
@@ -215,7 +218,13 @@ const AnimatedSlideIcon = ({
   );
 };
 
-const SlideItem = ({ item, index, scrollX, color }: SlideItemProps) => {
+const SlideItem = ({
+  item,
+  index,
+  scrollX,
+  color,
+  t,
+}: SlideItemProps & { t: (k: string) => string }) => {
   const animatedStyle = useAnimatedStyle(() => {
     const inputRange = [
       (index - 1) * SCREEN_WIDTH,
@@ -248,14 +257,14 @@ const SlideItem = ({ item, index, scrollX, color }: SlideItemProps) => {
         className="mb-4 text-center text-[28px] font-bold leading-tight"
         style={{ color: color.text.primary }}
       >
-        {item.title}
+        {t(item.titleKey)}
       </Text>
 
       <Text
         className="mb-6 text-center text-[18px] leading-7"
         style={{ color: color.text.secondary }}
       >
-        {item.description}
+        {t(item.descKey)}
       </Text>
 
       {item.extra === 'privacy' && (
@@ -268,7 +277,7 @@ const SlideItem = ({ item, index, scrollX, color }: SlideItemProps) => {
         >
           <Lock size={16} color={item.iconColor} strokeWidth={2} />
           <Text className="text-sm font-semibold" style={{ color: color.onboarding.privacy.text }}>
-            100% Приватно
+            {t('onboarding.privacy')}
           </Text>
         </View>
       )}
@@ -283,7 +292,7 @@ const SlideItem = ({ item, index, scrollX, color }: SlideItemProps) => {
         >
           <Shield size={16} color={item.iconColor} strokeWidth={2} />
           <Text className="text-sm font-semibold" style={{ color: color.onboarding.ai.text }}>
-            Ваши данные в безопасности
+            {t('onboarding.aiPrivacy')}
           </Text>
         </View>
       )}
@@ -292,12 +301,13 @@ const SlideItem = ({ item, index, scrollX, color }: SlideItemProps) => {
 };
 
 export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
+  const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const slides = useMemo(() => getOnboardingSlides(color), [color]);
   const slideColors = useMemo(() => slides.map((s) => s.iconColor), [slides]);
   const insets = useSafeAreaInsets();
   const [currentIndex, setCurrentIndex] = useState(0);
-  const flatListRef = useRef<FlatList<OnboardingSlide>>(null);
+  const flatListRef = useRef<FlatList<OnboardingSlideContent>>(null);
   const scrollX = useSharedValue(0);
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -333,10 +343,10 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   };
 
   const renderItem = useCallback(
-    ({ item, index }: { item: OnboardingSlide; index: number }) => (
-      <SlideItem item={item} index={index} scrollX={scrollX} color={color} />
+    ({ item, index }: { item: OnboardingSlideContent; index: number }) => (
+      <SlideItem item={item} index={index} scrollX={scrollX} color={color} t={t} />
     ),
-    [color, scrollX],
+    [color, scrollX, t],
   );
 
   const isLastSlide = currentIndex === slides.length - 1;
@@ -356,7 +366,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
           >
             <Text className="px-4 py-2 text-sm font-medium" style={{ color: color.text.secondary }}>
-              Пропустить
+              {t('common.skip')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -382,9 +392,10 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           onDotPress={handleDotPress}
           color={color}
           slides={slides}
+          t={t}
         />
         <AnimatedNextButton
-          label={isLastSlide ? 'Начать' : 'Далее'}
+          label={isLastSlide ? t('common.start') : t('common.next')}
           onPress={handleNext}
           scrollX={scrollX}
           slideColors={slideColors}

@@ -2,6 +2,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, useColorScheme, View } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
@@ -23,6 +24,7 @@ import { TasksTab } from './TasksTab';
 import { TranscriptContent } from './TranscriptContent';
 
 export const RecordingDetailScreen = () => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'RecordingDetail'>>();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
@@ -52,8 +54,8 @@ export const RecordingDetailScreen = () => {
 
     if (modelStatus !== 'downloaded') {
       Alert.alert(
-        'Модель не скачана',
-        'Для транскрипции необходимо скачать модель Whisper в настройках.',
+        t('recordingDetail.modelNotDownloaded'),
+        t('recordingDetail.modelNotDownloadedHint'),
         [{ text: 'OK' }],
       );
       return;
@@ -76,7 +78,7 @@ export const RecordingDetailScreen = () => {
 
   const handleShare = () => {
     shareRecord(liveRecord).catch((err: Error) => {
-      Alert.alert('Share failed', err.message);
+      Alert.alert(t('recordingDetail.shareFailed'), err.message);
     });
   };
 

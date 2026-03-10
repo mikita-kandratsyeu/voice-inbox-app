@@ -30,8 +30,7 @@ export type AIModel = {
   id: AIModelId;
   name: string;
   provider: string;
-  description: string;
-  contextWindow: string;
+  descriptionKey: string;
   speed: 'fast' | 'medium' | 'slow';
 };
 

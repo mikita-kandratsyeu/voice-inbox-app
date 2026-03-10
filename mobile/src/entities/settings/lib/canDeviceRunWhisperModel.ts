@@ -1,5 +1,7 @@
 import DeviceInfo from 'react-native-device-info';
 
+import { i18n } from '@/shared/lib';
+
 import type { WhisperModelId } from '../model/types';
 
 const MODEL_MIN_RAM_MB: Record<WhisperModelId, number> = {
@@ -39,19 +41,27 @@ export const canDeviceRunWhisperModel = async (
     const minDisk = MODEL_MIN_FREE_DISK_MB[modelId];
 
     const formatMb = (mb: number) =>
-      mb >= 1024 ? `${Math.round(mb / 1024)} ГБ` : `${Math.round(mb)} МБ`;
+      mb >= 1024
+        ? i18n.t('device.gb', { value: Math.round(mb / 1024) })
+        : i18n.t('device.mb', { value: Math.round(mb) });
 
     if (totalRamMB < minRam) {
       return {
         isCompatible: false,
-        reason: `Недостаточно RAM (нужно ~${formatMb(minRam)}, доступно ${formatMb(totalRamMB)})`,
+        reason: i18n.t('device.insufficientRam', {
+          required: formatMb(minRam),
+          available: formatMb(totalRamMB),
+        }),
       };
     }
 
     if (freeDiskMB < minDisk) {
       return {
         isCompatible: false,
-        reason: `Мало свободного места (нужно ~${formatMb(minDisk)}, доступно ${formatMb(freeDiskMB)})`,
+        reason: i18n.t('device.lowDiskSpace', {
+          required: formatMb(minDisk),
+          available: formatMb(freeDiskMB),
+        }),
       };
     }
 

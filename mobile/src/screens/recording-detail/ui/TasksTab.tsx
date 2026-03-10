@@ -1,5 +1,6 @@
 import { CheckCircle2, Circle, Cloud, ListChecks, WifiOff } from 'lucide-react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import type { TaskItem } from '@/entities/record';
@@ -16,6 +17,7 @@ type TasksTabProps = {
 };
 
 export const TasksTab = ({ tasks, color, onToggle, onExtract }: TasksTabProps) => {
+  const { t } = useTranslation();
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const aiModelName = AI_MODELS.find((m) => m.id === selectedAIModel)?.name ?? selectedAIModel;
   const { isConnected } = useNetworkStatus();
@@ -31,9 +33,9 @@ export const TasksTab = ({ tasks, color, onToggle, onExtract }: TasksTabProps) =
     return (
       <TabEmptyState
         icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
-        title="Задачи не извлечены"
-        description={'Нажмите кнопку ниже, чтобы\nавтоматически найти задачи с помощью ИИ.'}
-        buttonLabel="Найти задачи"
+        title={t('recordingDetail.tasksNotExtracted')}
+        description={t('recordingDetail.tasksNotExtractedDesc')}
+        buttonLabel={t('recordingDetail.extractTasks')}
         buttonIcon={<ListChecks size={18} color="#fff" strokeWidth={2} />}
         hint={aiModelName}
         hintIcon={hintIcon}

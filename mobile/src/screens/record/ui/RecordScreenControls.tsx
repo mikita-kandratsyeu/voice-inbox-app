@@ -1,5 +1,6 @@
 import { Check, Pause, Play } from 'lucide-react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,6 +20,7 @@ export const RecordScreenControls = ({
   onPauseResume,
   onDonePress,
 }: RecordScreenControlsProps) => {
+  const { t } = useTranslation();
   const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
   const c = getColors(scheme);
 
@@ -42,7 +44,7 @@ export const RecordScreenControls = ({
         }}
         activeOpacity={0.75}
         disabled={isIdle}
-        accessibilityLabel={isPaused ? 'Продолжить запись' : 'Пауза'}
+        accessibilityLabel={isPaused ? t('record.resume') : t('record.paused')}
       >
         {isPaused ? (
           <Play size={24} color={c.icon.onAccent} strokeWidth={2} />
@@ -59,7 +61,7 @@ export const RecordScreenControls = ({
         }}
         activeOpacity={0.85}
         disabled={isIdle}
-        accessibilityLabel="Завершить запись"
+        accessibilityLabel={t('record.finish')}
       >
         <Check size={30} color={c.accent.primary} strokeWidth={2.5} />
       </TouchableOpacity>

@@ -3,6 +3,7 @@ import { useCallback, useRef } from 'react';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { i18n } from '@/shared/lib';
 
 import { getWhisperContext } from '../lib/initWhisper';
 import { transcribeAudio } from '../lib/transcribeAudio';
@@ -42,7 +43,7 @@ export const useTranscription = () => {
           language: transcriptionLanguage,
           onProgress: (current, total) => {
             const percent = Math.round((current / total) * 100);
-            const label = `Обработано ${current} из ${total} фрагментов...`;
+            const label = i18n.t('transcription.progress', { current, total });
             updateAiStatus(record.id, 'processing', percent, label);
           },
         });

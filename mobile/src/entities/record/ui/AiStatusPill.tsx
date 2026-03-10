@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle2, Loader, MicOff } from 'lucide-react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 import { getColors } from '@/shared/config';
@@ -12,6 +13,7 @@ type AiStatusPillProps = {
 };
 
 export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
+  const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
 
   if (aiStatus === 'done') {
@@ -36,7 +38,7 @@ export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
       >
         <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
         <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
-          Транскрибируется...
+          {t('aiStatus.processing')}
         </Text>
       </TouchableOpacity>
     );
@@ -52,7 +54,7 @@ export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
       >
         <AlertCircle size={11} color={color.status.error.text} strokeWidth={2.5} />
         <Text className="text-xs font-medium" style={{ color: color.status.error.text }}>
-          Ошибка
+          {t('common.error')}
         </Text>
       </TouchableOpacity>
     );
@@ -65,7 +67,7 @@ export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
     >
       <MicOff size={11} color={color.status.muted.text} strokeWidth={2.5} />
       <Text className="text-xs font-medium" style={{ color: color.status.muted.text }}>
-        Нет транскрипта
+        {t('aiStatus.noTranscript')}
       </Text>
     </View>
   );

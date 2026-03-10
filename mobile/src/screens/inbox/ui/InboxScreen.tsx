@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { SectionList, useColorScheme, View } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
@@ -15,6 +16,7 @@ import { InboxHeader } from './InboxHeader';
 import { InboxSkeleton } from './InboxSkeleton';
 
 export const InboxScreen = () => {
+  const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { records, deleteRecord, togglePin, isLoaded, updateAiStatus } = useRecordStore();
@@ -60,10 +62,7 @@ export const InboxScreen = () => {
       {!isLoaded ? (
         <InboxSkeleton color={color} />
       ) : totalCount === 0 ? (
-        <EmptyState
-          title="Нет входящих"
-          description="Здесь будут отображаться ваши входящие голосовые заметки"
-        />
+        <EmptyState title={t('inbox.emptyTitle')} description={t('inbox.emptyDescription')} />
       ) : (
         <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
           <SearchBar query={query} onChangeQuery={setQuery} color={color} />

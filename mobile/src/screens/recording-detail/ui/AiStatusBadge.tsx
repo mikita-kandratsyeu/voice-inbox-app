@@ -4,14 +4,14 @@ import { Text, View } from 'react-native';
 
 import type { RecordingStatus } from '@/entities/record';
 
-import { AI_STATUS_CONFIG } from '../config';
+import { getAiStatusConfig } from '../config';
 
 type AiStatusBadgeProps = {
   aiStatus: RecordingStatus;
 };
 
 export const AiStatusBadge = ({ aiStatus }: AiStatusBadgeProps) => {
-  const cfg = AI_STATUS_CONFIG[aiStatus];
+  const cfg = getAiStatusConfig(aiStatus);
 
   return (
     <View className="gap-2.5 rounded-xl p-3" style={{ backgroundColor: cfg.bgColor }}>

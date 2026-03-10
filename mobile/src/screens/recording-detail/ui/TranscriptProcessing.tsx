@@ -1,5 +1,6 @@
 import { Mic, X } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Animated, Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
@@ -19,6 +20,7 @@ export const TranscriptProcessing = ({
   onCancel,
   progressLabel,
 }: TranscriptProcessingProps) => {
+  const { t } = useTranslation();
   const animatedWidth = useRef(new Animated.Value(0)).current;
   const clampedProgress = Math.min(100, Math.max(0, progress));
 
@@ -38,8 +40,8 @@ export const TranscriptProcessing = ({
   const timeLabel = progressLabel
     ? progressLabel
     : secondsLeft < 60
-      ? `~${secondsLeft} сек осталось`
-      : `~${Math.ceil(secondsLeft / 60)} мин осталось`;
+      ? t('transcription.secondsLeft', { count: secondsLeft })
+      : t('transcription.minutesLeft', { count: Math.ceil(secondsLeft / 60) });
 
   const trackWidthInterpolated = animatedWidth.interpolate({
     inputRange: [0, 100],
@@ -57,7 +59,7 @@ export const TranscriptProcessing = ({
         </View>
         <View className="gap-0.5">
           <Text className="text-base font-bold" style={{ color: color.text.primary }}>
-            Транскрибируется...
+            {t('aiStatus.processing')}
           </Text>
           <Text className="text-[14px]" style={{ color: color.text.secondary }}>
             {timeLabel}
@@ -86,7 +88,7 @@ export const TranscriptProcessing = ({
         variant="secondary"
         size="lg"
         icon={<X size={16} color={color.text.primary} strokeWidth={2.5} />}
-        label="Отменить"
+        label={t('recordingDetail.cancel')}
         color={color}
         onPress={onCancel}
         className="mt-1"

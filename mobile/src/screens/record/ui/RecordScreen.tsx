@@ -1,5 +1,6 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PanResponder, StatusBar, Text, useColorScheme, View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -15,6 +16,7 @@ import { RecordScreenHeader } from './RecordScreenHeader';
 import { SaveRecordModal } from './SaveRecordModal';
 
 export const RecordScreen = () => {
+  const { t } = useTranslation();
   const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
   const c = getColors(scheme);
 
@@ -122,8 +124,8 @@ export const RecordScreen = () => {
           />
         </View>
         <View className="items-center gap-1" style={{ opacity: state === 'paused' ? 0 : 1 }}>
-          <Text className="text-[16px] font-medium text-white/90">Запись работает оффлайн</Text>
-          <Text className="text-[14px] text-white/55">Транскрипция выполнится локально</Text>
+          <Text className="text-[16px] font-medium text-white/90">{t('record.offlineTitle')}</Text>
+          <Text className="text-[14px] text-white/55">{t('record.offlineSubtitle')}</Text>
         </View>
       </View>
 

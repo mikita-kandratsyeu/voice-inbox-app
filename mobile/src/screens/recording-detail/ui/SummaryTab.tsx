@@ -1,5 +1,6 @@
 import { Cloud, FileText, WifiOff } from 'lucide-react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import { AI_MODELS, useSettingsStore } from '@/entities/settings';
@@ -14,6 +15,7 @@ type SummaryTabProps = {
 };
 
 export const SummaryTab = ({ summary, color, onGenerate }: SummaryTabProps) => {
+  const { t } = useTranslation();
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const aiModelName = AI_MODELS.find((m) => m.id === selectedAIModel)?.name ?? selectedAIModel;
   const { isConnected } = useNetworkStatus();
@@ -29,9 +31,9 @@ export const SummaryTab = ({ summary, color, onGenerate }: SummaryTabProps) => {
     return (
       <TabEmptyState
         icon={<FileText size={28} color={color.icon.muted} strokeWidth={1.8} />}
-        title="Конспект не создан"
-        description={'Нажмите кнопку ниже, чтобы\nсоздать краткий конспект с помощью ИИ.'}
-        buttonLabel="Создать конспект"
+        title={t('recordingDetail.summaryNotCreated')}
+        description={t('recordingDetail.summaryNotCreatedDesc')}
+        buttonLabel={t('recordingDetail.generateSummary')}
         buttonIcon={<FileText size={18} color="#fff" strokeWidth={2} />}
         hint={aiModelName}
         hintIcon={hintIcon}

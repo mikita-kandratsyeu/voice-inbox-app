@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Image, Text, useColorScheme } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import Animated, {
@@ -24,6 +25,7 @@ type SplashScreenProps = {
 };
 
 export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
+  const { t } = useTranslation();
   const isDark = useColorScheme() === 'dark';
   const color = getColors(isDark ? 'dark' : 'light');
   const insets = useSafeAreaInsets();
@@ -160,7 +162,7 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
           style={[taglineAnimatedStyle, { color: color.text.secondary }]}
           className="mt-2 text-center text-base"
         >
-          Умные голосовые заметки
+          {t('splash.tagline')}
         </Animated.Text>
       </Animated.View>
 
