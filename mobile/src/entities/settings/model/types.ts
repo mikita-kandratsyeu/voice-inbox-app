@@ -1,6 +1,8 @@
-export type AIModelId = 'google/gemini-3-flash-preview' | 'arcee-ai/trinity-large-preview:free';
+export type AIModelId =
+  | 'google/gemini-3-flash-preview'
+  | 'arcee-ai/trinity-large-preview:free'
+  | 'openai/gpt-5-nano';
 
-// Языки, поддерживаемые Whisper. 'auto' — автоопределение.
 export type TranscriptionLanguage =
   | 'auto'
   | 'ru'

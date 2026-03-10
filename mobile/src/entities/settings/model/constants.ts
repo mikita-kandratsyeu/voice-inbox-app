@@ -18,8 +18,17 @@ const GEMINI_MODEL: AIModel = {
   speed: 'fast',
 };
 
+const OPENAI_MODEL: AIModel = {
+  id: 'openai/gpt-5-nano',
+  name: 'GPT-5 Nano',
+  provider: 'OpenAI',
+  descriptionKey: 'aiModels.openaiDesc',
+  speed: 'fast',
+};
+
 export const AI_MODELS: AIModel[] = [
   GEMINI_MODEL,
+  OPENAI_MODEL,
   ...(APP_ENV === 'development' ? [TRINITY_MODEL] : []),
 ];
 

@@ -197,6 +197,7 @@
     "description": "Choose an AI model for generating summaries and extracting tasks from transcripts. Settings apply to the next processing.",
     "trinityDesc": "Powerful model with multimodal input support",
     "geminiDesc": "Fast and efficient model for everyday tasks",
+    "openaiDesc": "Compact and fast model for quick AI processing",
     "speed": {
       "fast": "Fast",
       "medium": "Medium",
