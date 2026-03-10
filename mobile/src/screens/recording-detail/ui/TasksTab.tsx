@@ -21,9 +21,6 @@ export const TasksTab = ({ tasks, color, onToggle, onExtract }: TasksTabProps) =
   const { isConnected } = useNetworkStatus();
 
   if (tasks.length === 0) {
-    const hint =
-      isConnected === false ? `${aiModelName} · Нет подключения к интернету` : aiModelName;
-
     const hintIcon =
       isConnected === false ? (
         <WifiOff size={14} color={color.accent.delete} strokeWidth={1.8} />
@@ -38,7 +35,7 @@ export const TasksTab = ({ tasks, color, onToggle, onExtract }: TasksTabProps) =
         description={'Нажмите кнопку ниже, чтобы\nавтоматически найти задачи с помощью ИИ.'}
         buttonLabel="Найти задачи"
         buttonIcon={<ListChecks size={18} color="#fff" strokeWidth={2} />}
-        hint={hint}
+        hint={aiModelName}
         hintIcon={hintIcon}
         disabled={isConnected === false}
         onPress={onExtract}
