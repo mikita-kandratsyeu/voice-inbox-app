@@ -3,9 +3,9 @@ import '../../global.css';
 import { NavigationContainer } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { StatusBar, useColorScheme } from 'react-native';
+import BootSplash from 'react-native-bootsplash';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import RNSplashScreen from 'react-native-splash-screen';
 
 import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
 import { OnboardingGate } from '@/features/onboarding';
@@ -25,7 +25,7 @@ const App = () => {
       initDB().then(() =>
         import('@/entities/record').then(({ useRecordStore }) => {
           useRecordStore.getState().load();
-          RNSplashScreen.hide();
+          BootSplash.hide({ fade: true });
         }),
       );
     });
