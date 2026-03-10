@@ -21,8 +21,8 @@ const GEMINI_MODEL: AIModel = {
 };
 
 export const AI_MODELS: AIModel[] = [
-  ...(APP_ENV === 'development' ? [TRINITY_MODEL] : []),
   GEMINI_MODEL,
+  ...(APP_ENV === 'development' ? [TRINITY_MODEL] : []),
 ];
 
 export const WHISPER_MODELS: WhisperModel[] = [
