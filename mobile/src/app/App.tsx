@@ -5,10 +5,10 @@ import React, { useEffect } from 'react';
 import { StatusBar, useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import RNSplashScreen from 'react-native-splash-screen';
 
 import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
 import { OnboardingGate } from '@/features/onboarding';
-import { SplashGate } from '@/features/splash';
 import { getColors } from '@/shared/config';
 
 import { RootNavigator } from './navigation/RootNavigator';
@@ -25,6 +25,7 @@ const App = () => {
       initDB().then(() =>
         import('@/entities/record').then(({ useRecordStore }) => {
           useRecordStore.getState().load();
+          RNSplashScreen.hide();
         }),
       );
     });
@@ -38,13 +39,11 @@ const App = () => {
           backgroundColor={color.background.primary}
         />
         <NavigationContainer>
-          <SplashGate>
-            <OnboardingGate>
-              <AppLockGate>
-                <RootNavigator />
-              </AppLockGate>
-            </OnboardingGate>
-          </SplashGate>
+          <OnboardingGate>
+            <AppLockGate>
+              <RootNavigator />
+            </AppLockGate>
+          </OnboardingGate>
         </NavigationContainer>
       </SafeAreaProvider>
     </GestureHandlerRootView>

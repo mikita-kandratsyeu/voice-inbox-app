@@ -1,3 +1,0 @@
-export const SPLASH_MIN_DURATION_MS = 2000;
-export const SPLASH_FADE_IN_DURATION_MS = 600;
-export const SPLASH_FADE_OUT_DURATION_MS = 400;
