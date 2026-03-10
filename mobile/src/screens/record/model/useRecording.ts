@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AudioSet, RecordBackType } from 'react-native-audio-recorder-player';
-import AudioRecorderPlayer from 'react-native-audio-recorder-player';
+import AudioRecorderPlayer, {
+  AudioEncoderAndroidType,
+  AudioSourceAndroidType,
+  AVEncoderAudioQualityIOSType,
+  OutputFormatAndroidType,
+} from 'react-native-audio-recorder-player';
 
 import type { RecordingState } from '../config';
 import { requestMicPermission } from '../lib/requestMicPermission';
@@ -8,7 +13,22 @@ import { requestMicPermission } from '../lib/requestMicPermission';
 const audioRecorderPlayer = AudioRecorderPlayer;
 
 const RECORDING_AUDIO_SET: AudioSet = {
+  // iOS
   AVModeIOS: 'measurement',
+  AVFormatIDKeyIOS: 'aac',
+  AVSampleRateKeyIOS: 44100,
+  AVNumberOfChannelsKeyIOS: 1,
+  AVEncoderAudioQualityKeyIOS: AVEncoderAudioQualityIOSType.high,
+
+  // Android
+  AudioSourceAndroid: AudioSourceAndroidType.MIC,
+  OutputFormatAndroid: OutputFormatAndroidType.AAC_ADTS,
+  AudioEncoderAndroid: AudioEncoderAndroidType.AAC,
+
+  // Common
+  AudioSamplingRate: 44100,
+  AudioChannels: 1,
+  AudioEncodingBitRate: 128000,
 };
 
 export const useRecording = () => {

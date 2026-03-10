@@ -76,7 +76,7 @@ const StorageBar = ({
             </Text>
           </View>
           <Text className="text-[14px]" style={{ color: color.text.primary }}>
-            {Math.round(transcriptKb)} КБ
+            {formatFileSize(transcriptKb * 1024)}
           </Text>
         </View>
         <View className="flex-row items-center justify-between">
@@ -90,7 +90,7 @@ const StorageBar = ({
             </Text>
           </View>
           <Text className="text-[14px]" style={{ color: color.text.primary }}>
-            {Math.round(aiDataKb)} КБ
+            {formatFileSize(aiDataKb * 1024)}
           </Text>
         </View>
         {modelsBytes > 0 && (
@@ -120,7 +120,7 @@ const StorageBar = ({
             </Text>
           </View>
           <Text className="text-[14px]" style={{ color: color.text.primary }}>
-            {Math.round(cacheKb)} КБ
+            {formatFileSize(cacheKb * 1024)}
           </Text>
         </View>
       </View>
@@ -279,14 +279,14 @@ export const StorageDetailsScreen = () => {
           />
           <SettingsRow
             label="Транскрипты и данные"
-            value={`${Math.round(stats.transcriptKb)} КБ`}
+            value={formatFileSize(stats.transcriptKb * 1024)}
             color={color}
             leftIcon={<Type size={20} color={color.accent.transcript} strokeWidth={1.8} />}
             showChevron={false}
           />
           <SettingsRow
             label="ИИ обработка"
-            value={`${Math.round(stats.aiDataKb)} КБ`}
+            value={formatFileSize(stats.aiDataKb * 1024)}
             color={color}
             leftIcon={<Bot size={20} color={color.accent.success} strokeWidth={1.8} />}
             showChevron={false}
@@ -354,7 +354,7 @@ export const StorageDetailsScreen = () => {
         <SettingsSection title="Управление" color={color}>
           <SettingsRow
             label="Очистить кэш"
-            value={isClearing ? 'Очистка...' : `${Math.round(stats.cacheKb)} КБ`}
+            value={isClearing ? 'Очистка...' : formatFileSize(stats.cacheKb * 1024)}
             color={color}
             leftIcon={<Trash2 size={20} color={color.accent.cache} strokeWidth={1.8} />}
             onPress={isClearing ? undefined : handleClearCache}

@@ -8,6 +8,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
+  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,7 +22,6 @@ import {
 import { useModelManager } from '@/features/model-manager';
 import { getModelFileSizeFormatted } from '@/features/model-manager';
 import { getColors } from '@/shared/config';
-import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader } from '@/shared/ui';
 
 const SpinningLoader = ({ color: iconColor }: { color: string }) => {
@@ -46,6 +46,46 @@ const SpinningLoader = ({ color: iconColor }: { color: string }) => {
     <Animated.View style={animatedStyle}>
       <Loader size={22} color={iconColor} strokeWidth={2} />
     </Animated.View>
+  );
+};
+
+const SimulatedProgressBar = ({
+  trackColor,
+  barColor,
+  sizeMb,
+}: {
+  trackColor: string;
+  barColor: string;
+  sizeMb: number;
+}) => {
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    // Предполагаем ~2 МБ/с — плавно доходим до 90% за расчётное время
+    const estimatedMs = Math.max((sizeMb / 2) * 1000, 3000);
+
+    progress.value = withSequence(
+      withTiming(0.9, { duration: estimatedMs, easing: Easing.out(Easing.quad) }),
+      // После 90% — медленно ползём к 98%, ждём реального завершения
+      withTiming(0.98, { duration: estimatedMs * 2, easing: Easing.out(Easing.quad) }),
+    );
+
+    return () => {
+      cancelAnimation(progress);
+    };
+  }, [progress, sizeMb]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    width: `${progress.value * 100}%`,
+  }));
+
+  return (
+    <View className="h-1.5 overflow-hidden rounded-full" style={{ backgroundColor: trackColor }}>
+      <Animated.View
+        className="h-full rounded-full"
+        style={[{ backgroundColor: barColor }, animatedStyle]}
+      />
+    </View>
   );
 };
 
@@ -96,8 +136,6 @@ export const WhisperModelPickerScreen = () => {
 
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
-  const whisperDownloadProgress = useSettingsStore((s) => s.whisperDownloadProgress);
-  const whisperDownloadBytes = useSettingsStore((s) => s.whisperDownloadBytes);
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
 
   const compatibility = useWhisperModelCompatibility();
@@ -197,8 +235,6 @@ export const WhisperModelPickerScreen = () => {
             const isDownloading = status === 'downloading';
             const isError = status === 'error';
             const isLast = index === WHISPER_MODELS.length - 1;
-            const progress = whisperDownloadProgress[model.id] ?? 0;
-            const downloadBytes = whisperDownloadBytes[model.id];
             const displaySize = realSizes[model.id] ?? model.sizeLabel;
 
             const borderStyle = !isLast
@@ -282,9 +318,7 @@ export const WhisperModelPickerScreen = () => {
                             className="text-[13px] font-medium"
                             style={{ color: color.accent.primary }}
                           >
-                            {downloadBytes
-                              ? `${formatFileSize(downloadBytes.written)} / ${formatFileSize(downloadBytes.total)}`
-                              : `Скачивание... ${progress}%`}
+                            Скачивание {model.sizeLabel}...
                           </Text>
                           <TouchableOpacity
                             onPress={() => cancelDownload(model.id)}
@@ -295,18 +329,11 @@ export const WhisperModelPickerScreen = () => {
                             </Text>
                           </TouchableOpacity>
                         </View>
-                        <View
-                          className="h-1.5 overflow-hidden rounded-full"
-                          style={{ backgroundColor: color.background.tertiary }}
-                        >
-                          <View
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${progress}%`,
-                              backgroundColor: color.accent.primary,
-                            }}
-                          />
-                        </View>
+                        <SimulatedProgressBar
+                          trackColor={color.background.tertiary}
+                          barColor={color.accent.primary}
+                          sizeMb={model.sizeMb}
+                        />
                       </View>
                     ) : isError ? (
                       <Text

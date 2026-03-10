@@ -48,6 +48,12 @@ export const useTranscription = () => {
         const { segments, fullText } = await promise;
         stopRef.current = null;
 
+        if (__DEV__) {
+          console.warn(
+            `[whisper] recordId=${record.id} | model=${selectedWhisperModel} | segments=${segments.length}\n${fullText}`,
+          );
+        }
+
         await updateTranscript(record.id, fullText, segments);
       } catch (err) {
         stopRef.current = null;
