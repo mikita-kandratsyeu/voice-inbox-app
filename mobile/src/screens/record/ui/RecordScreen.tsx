@@ -6,13 +6,13 @@ import { PanResponder, StatusBar, Text, useColorScheme, View } from 'react-nativ
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { getColors } from '@/shared/config';
-import { formatTimeWithMs } from '@/shared/lib';
 import { Waveform } from '@/shared/ui';
 
 import { useRecording } from '../model/useRecording';
 import { RecordLimitBar } from './RecordLimitBar';
 import { RecordScreenControls } from './RecordScreenControls';
 import { RecordScreenHeader } from './RecordScreenHeader';
+import { RecordTimer } from './RecordTimer';
 import { SaveRecordModal } from './SaveRecordModal';
 
 export const RecordScreen = () => {
@@ -106,14 +106,7 @@ export const RecordScreen = () => {
       <RecordScreenHeader state={state} onClose={handleClose} />
       <View className="flex-1 items-center justify-center gap-9 px-6">
         <View className="items-center gap-3">
-          <View className="flex-row items-baseline">
-            <Text className="text-[72px] font-light tracking-tight text-white">
-              {formatTimeWithMs(elapsedMs).main}
-            </Text>
-            <Text className="ml-0.5 text-[36px] font-light tracking-tight text-white/85">
-              {formatTimeWithMs(elapsedMs).ms}
-            </Text>
-          </View>
+          <RecordTimer elapsedMs={elapsedMs} />
           <RecordLimitBar elapsedMs={elapsedMs} />
         </View>
         <View className="w-full px-2">

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { memo, useEffect, useRef } from 'react';
 import { Animated, Text, useColorScheme } from 'react-native';
 
 import { getColors } from '@/shared/config';
@@ -9,7 +9,7 @@ type RecordLimitBarProps = {
   elapsedMs: number;
 };
 
-export const RecordLimitBar = ({ elapsedMs }: RecordLimitBarProps) => {
+export const RecordLimitBar = memo(({ elapsedMs }: RecordLimitBarProps) => {
   const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
   const c = getColors(scheme);
 
@@ -41,4 +41,4 @@ export const RecordLimitBar = ({ elapsedMs }: RecordLimitBarProps) => {
       </Text>
     </Animated.View>
   );
-};
+});

@@ -59,10 +59,10 @@ export const formatTimeWithMs = (milliseconds: number): { main: string; ms: stri
   const d = dayjs.duration(milliseconds, 'milliseconds');
   const totalMins = Math.floor(d.asMinutes());
   const secs = Math.floor(d.seconds());
-  const cs = Math.floor((milliseconds % 1000) / 10);
+  const tenths = Math.floor((milliseconds % 1000) / 100);
 
   return {
     main: `${totalMins}:${secs.toString().padStart(2, '0')}`,
-    ms: `.${cs.toString().padStart(2, '0')}`,
+    ms: `.${tenths}0`,
   };
 };
