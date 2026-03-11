@@ -10,7 +10,7 @@ type RecordDetailTagProps = {
 
 export const RecordDetailTag = ({ label, color }: RecordDetailTagProps) => (
   <View
-    className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
+    className="flex-row items-center rounded-full px-3 py-1"
     style={{ backgroundColor: color.background.tertiary }}
   >
     <Text className="text-xs font-medium" style={{ color: color.accent.primary }}>

@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -20,6 +21,8 @@ type OnboardingSetupStepProps = {
 
 export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
   const { t } = useTranslation();
+  const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
+  const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const setAIModel = useSettingsStore((s) => s.setAIModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
@@ -66,12 +69,13 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
       >
         {AI_MODELS.map((model, index) => {
           const isLast = index === AI_MODELS.length - 1;
+          const isSelected = model.id === selectedAIModel;
           return (
             <TouchableOpacity
               key={model.id}
               onPress={() => setAIModel(model.id)}
               activeOpacity={0.7}
-              className={`px-4 py-3 ${!isLast ? 'border-b' : ''}`}
+              className={`px-4 py-3 flex-row items-center justify-between ${!isLast ? 'border-b' : ''}`}
               style={{
                 backgroundColor: color.background.card,
                 borderBottomColor: color.border.default,
@@ -80,6 +84,19 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
               <Text className="text-[15px] font-medium" style={{ color: color.text.primary }}>
                 {model.name}
               </Text>
+              {isSelected ? (
+                <View
+                  className="h-6 w-6 items-center justify-center rounded-full"
+                  style={{ backgroundColor: color.accent.primary }}
+                >
+                  <Check size={14} color="#ffffff" strokeWidth={2.5} />
+                </View>
+              ) : (
+                <View
+                  className="h-6 w-6 rounded-full"
+                  style={{ borderWidth: 2, borderColor: color.border.default }}
+                />
+              )}
             </TouchableOpacity>
           );
         })}
@@ -104,6 +121,7 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
           const isDownloading = status === 'downloading';
           const compat = compatibility?.[model.id];
           const isLast = index === WHISPER_MODELS.length - 1;
+          const isSelected = model.id === selectedWhisperModel;
           const displaySize = formatFileSize(model.sizeMb * 1024 * 1024);
 
           return (
@@ -112,13 +130,13 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
               onPress={() => handleWhisperPress(model.id)}
               activeOpacity={0.7}
               disabled={isDownloading}
-              className={`px-4 py-3 ${!isLast ? 'border-b' : ''}`}
+              className={`px-4 py-3 flex-row items-center justify-between ${!isLast ? 'border-b' : ''}`}
               style={{
                 backgroundColor: color.background.card,
                 borderBottomColor: color.border.default,
               }}
             >
-              <View className="flex-1">
+              <View className="mr-3 flex-1">
                 <View className="flex-row items-center gap-2">
                   <Text className="text-[15px] font-medium" style={{ color: color.text.primary }}>
                     Whisper {model.name}
@@ -142,6 +160,19 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
                   {compat && !compat.isCompatible && ` • ${compat.reason}`}
                 </Text>
               </View>
+              {isSelected ? (
+                <View
+                  className="h-6 w-6 items-center justify-center rounded-full"
+                  style={{ backgroundColor: color.accent.primary }}
+                >
+                  <Check size={14} color="#ffffff" strokeWidth={2.5} />
+                </View>
+              ) : (
+                <View
+                  className="h-6 w-6 rounded-full"
+                  style={{ borderWidth: 2, borderColor: color.border.default }}
+                />
+              )}
             </TouchableOpacity>
           );
         })}

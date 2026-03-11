@@ -1,7 +1,8 @@
 export type AIModelId =
-  | 'google/gemini-3-flash-preview'
+  | 'google/gemini-3.1-flash-lite-preview'
   | 'arcee-ai/trinity-large-preview:free'
-  | 'openai/gpt-5-nano';
+  | 'openai/gpt-5-nano'
+  | 'meta-llama/llama-3.3-70b-instruct';
 
 export type TranscriptionLanguage =
   | 'auto'
@@ -52,6 +53,7 @@ export type SettingsState = {
   selectedWhisperModel: WhisperModelId;
   transcriptionLanguage: TranscriptionLanguage;
   autoTranscribeOnSave: boolean;
+  autoAiAfterTranscription: boolean;
   whisperModelStatuses: Partial<Record<WhisperModelId, WhisperModelStatus>>;
   whisperDownloadProgress: Partial<Record<WhisperModelId, number>>;
   whisperDownloadBytes: Partial<Record<WhisperModelId, DownloadBytes>>;
@@ -59,6 +61,7 @@ export type SettingsState = {
   setWhisperModel: (id: WhisperModelId) => void;
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;
   setAutoTranscribeOnSave: (value: boolean) => void;
+  setAutoAiAfterTranscription: (value: boolean) => void;
   setWhisperModelStatus: (id: WhisperModelId, status: WhisperModelStatus) => void;
   setDownloadProgress: (
     id: WhisperModelId,

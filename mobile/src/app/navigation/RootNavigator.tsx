@@ -1,3 +1,4 @@
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 
@@ -9,17 +10,23 @@ import type { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
+const RecordScreenWithProvider = () => (
+  <BottomSheetModalProvider>
+    <RecordScreen />
+  </BottomSheetModalProvider>
+);
+
 export const RootNavigator = () => (
   <Stack.Navigator>
     <Stack.Screen name="Main" component={BottomTabNavigator} options={{ headerShown: false }} />
     <Stack.Screen
       name="RecordModal"
-      component={RecordScreen}
+      component={RecordScreenWithProvider}
       options={{
         headerShown: false,
         presentation: 'fullScreenModal',
         animation: 'slide_from_bottom',
-        gestureEnabled: true,
+        gestureEnabled: false,
       }}
     />
     <Stack.Screen

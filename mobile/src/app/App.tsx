@@ -1,14 +1,17 @@
 import '../../global.css';
 
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { NavigationContainer } from '@react-navigation/native';
 import React, { useEffect } from 'react';
-import { StatusBar, useColorScheme } from 'react-native';
+import { AppState, type AppStateStatus, StatusBar, useColorScheme } from 'react-native';
 import BootSplash from 'react-native-bootsplash';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { useRecordStore } from '@/entities/record';
 import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
 import { OnboardingGate } from '@/features/onboarding';
+import { releaseWhisperContext } from '@/features/transcription';
 import { getColors } from '@/shared/config';
 
 import { RootNavigator } from './navigation/RootNavigator';
@@ -31,20 +34,37 @@ const App = () => {
     });
   }, []);
 
+  useEffect(() => {
+    const handleAppStateChange = (state: AppStateStatus) => {
+      if (state !== 'background') return;
+
+      const records = useRecordStore.getState().records;
+      const isTranscribing = records.some((r) => r.aiStatus === 'processing');
+      if (!isTranscribing) {
+        releaseWhisperContext().catch(() => {});
+      }
+    };
+
+    const sub = AppState.addEventListener('change', handleAppStateChange);
+    return () => sub.remove();
+  }, []);
+
   return (
     <GestureHandlerRootView style={rootStyle}>
       <SafeAreaProvider style={safeAreaStyle}>
-        <StatusBar
-          barStyle={isDark ? 'light-content' : 'dark-content'}
-          backgroundColor={color.background.primary}
-        />
-        <NavigationContainer>
-          <OnboardingGate>
-            <AppLockGate>
-              <RootNavigator />
-            </AppLockGate>
-          </OnboardingGate>
-        </NavigationContainer>
+        <BottomSheetModalProvider>
+          <StatusBar
+            barStyle={isDark ? 'light-content' : 'dark-content'}
+            backgroundColor={color.background.primary}
+          />
+          <NavigationContainer>
+            <OnboardingGate>
+              <AppLockGate>
+                <RootNavigator />
+              </AppLockGate>
+            </OnboardingGate>
+          </NavigationContainer>
+        </BottomSheetModalProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

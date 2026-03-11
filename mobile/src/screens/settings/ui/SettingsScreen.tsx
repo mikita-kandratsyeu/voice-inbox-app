@@ -8,6 +8,7 @@ import {
   Info,
   Mic,
   Shield,
+  Sparkles,
   UploadCloud,
   Zap,
 } from 'lucide-react-native';
@@ -46,6 +47,8 @@ export const SettingsScreen = () => {
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
   const setAutoTranscribeOnSave = useSettingsStore((s) => s.setAutoTranscribeOnSave);
+  const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
+  const setAutoAiAfterTranscription = useSettingsStore((s) => s.setAutoAiAfterTranscription);
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
   const records = useRecordStore((s) => s.records);
   const addRecord = useRecordStore((s) => s.addRecord);
@@ -210,6 +213,24 @@ export const SettingsScreen = () => {
               <Switch
                 value={autoTranscribeOnSave}
                 onValueChange={setAutoTranscribeOnSave}
+                trackColor={{
+                  false: color.background.tertiary,
+                  true: color.accent.success,
+                }}
+                thumbColor="#fff"
+              />
+            }
+            showChevron={false}
+            onPress={undefined}
+          />
+          <SettingsRow
+            label={t('settings.autoAiAfterTranscription')}
+            color={color}
+            leftIcon={<Sparkles size={20} color={color.accent.primary} strokeWidth={1.8} />}
+            rightSlot={
+              <Switch
+                value={autoAiAfterTranscription}
+                onValueChange={setAutoAiAfterTranscription}
                 trackColor={{
                   false: color.background.tertiary,
                   true: color.accent.success,

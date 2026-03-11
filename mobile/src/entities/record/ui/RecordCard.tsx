@@ -99,7 +99,7 @@ export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardPr
         </Text>
       )}
       {hasTags && (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
+        <View className="flex-row flex-wrap gap-2">
           {item.tags!.map((tag) => (
             <Tag key={tag} label={tag} />
           ))}

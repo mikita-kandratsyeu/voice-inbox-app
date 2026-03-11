@@ -1,4 +1,5 @@
 export { AiStatusBadge } from './AiStatusBadge';
+export { AskAIModal } from './AskAIModal';
 export { RecordDetailTag } from './RecordDetailTag';
 export { RecordingDetailCard } from './RecordingDetailCard';
 export { RecordingDetailHeader } from './RecordingDetailHeader';

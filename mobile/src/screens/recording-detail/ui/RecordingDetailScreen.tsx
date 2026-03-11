@@ -18,6 +18,7 @@ import { getColors } from '@/shared/config';
 import { AudioPlayer } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
+import { AskAIModal } from './AskAIModal';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { RecordingDetailCard } from './RecordingDetailCard';
 import { RecordingDetailHeader } from './RecordingDetailHeader';
@@ -41,6 +42,7 @@ export const RecordingDetailScreen = () => {
   const liveRecord: VoiceRecord = records.find((r) => r.id === routeRecord.id) ?? routeRecord;
 
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
+  const [showAskAIModal, setShowAskAIModal] = useState(false);
   const [recordLanguage, setRecordLanguage] = useState<TranscriptionLanguage>(
     globalTranscriptionLanguage,
   );
@@ -102,6 +104,7 @@ export const RecordingDetailScreen = () => {
         onBack={() => navigation.goBack()}
         onTogglePin={() => togglePin(liveRecord.id)}
         onShare={handleShare}
+        onAskAI={() => setShowAskAIModal(true)}
         onRename={() => promptRename(liveRecord)}
         onDelete={() => promptDelete(liveRecord)}
       />
@@ -155,12 +158,20 @@ export const RecordingDetailScreen = () => {
               tasks={liveRecord.tasks ?? []}
               status={liveRecord.tasksStatus ?? 'idle'}
               hasTranscript={Boolean(liveRecord.transcript)}
+              recordTitle={liveRecord.title}
               color={color}
               onToggle={handleToggleTask}
               onExtract={handleExtractTasks}
             />
           )}
         </View>
+
+        <AskAIModal
+          visible={showAskAIModal}
+          record={liveRecord}
+          color={color}
+          onDismiss={() => setShowAskAIModal(false)}
+        />
       </ScrollView>
     </View>
   );

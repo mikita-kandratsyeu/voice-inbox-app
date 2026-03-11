@@ -1,7 +1,7 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PanResponder, StatusBar, Text, useColorScheme, View } from 'react-native';
+import { StatusBar, Text, useColorScheme, View } from 'react-native';
 import KeepAwake from 'react-native-keep-awake';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -92,24 +92,8 @@ export const RecordScreen = () => {
     navigation.goBack();
   };
 
-  const swipeDownResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, { dy }) => dy > 5,
-      onPanResponderRelease: (_, { dy, vy }) => {
-        if (dy > 80 || vy > 0.5) {
-          handleClose();
-        }
-      },
-    }),
-  ).current;
-
   return (
-    <View
-      className="flex-1"
-      style={{ backgroundColor: c.accent.primary }}
-      {...swipeDownResponder.panHandlers}
-    >
+    <View className="flex-1" style={{ backgroundColor: c.accent.primary }}>
       <KeepAwake />
       <StatusBar barStyle="light-content" backgroundColor={c.accent.primary} />
       <RecordScreenHeader state={state} onClose={handleClose} />

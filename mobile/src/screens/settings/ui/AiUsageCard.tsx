@@ -48,7 +48,6 @@ export const AiUsageCard = ({ usage, loading }: AiUsageCardProps) => {
     return null;
   }
 
-  const isLow = usage.remaining <= 10;
   const isExhausted = usage.remaining === 0;
   const progressPercent = Math.min(100, (usage.used / usage.limit) * 100);
 

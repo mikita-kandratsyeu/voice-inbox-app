@@ -77,6 +77,14 @@
     "tasksRetry": "Try again",
     "noTranscriptForAi": "Transcript required",
     "noTranscriptForAiDesc": "Transcribe the recording first to use AI features.",
+    "ask": "Ask AI",
+    "askPlaceholder": "Ask a question about this note...",
+    "askEmptyTitle": "Ask about your note",
+    "askEmptyDesc": "Get answers about the transcript using AI.",
+    "askButton": "Ask",
+    "askProcessing": "Answering...",
+    "askError": "Failed to get answer",
+    "askAnother": "Ask another question",
     "accessibility": {
       "cardLabel": "Voice note {{title}}, recorded {{date}}, duration {{duration}}",
       "tagsSuffix": ", tags: {{tags}}"
@@ -142,7 +150,8 @@
     "aiProcessing": "AI processing",
     "aiModel": "AI model",
     "transcription": "Transcription",
-    "autoTranscribeOnSave": "Auto-transcribe after recording",
+    "autoTranscribeOnSave": "Transcribe automatically",
+    "autoAiAfterTranscription": "Auto-summary after transcription",
     "device": "Device",
     "appLock": "App lock",
     "offlineStorage": "Offline storage",
@@ -245,6 +254,7 @@
     "trinityDesc": "Powerful model with multimodal input support",
     "geminiDesc": "Fast and efficient model for everyday tasks",
     "openaiDesc": "Compact and fast model for quick AI processing",
+    "metaLlamaDesc": "Open-source model with strong reasoning and instruction following",
     "speed": {
       "fast": "Fast",
       "medium": "Medium",
@@ -258,7 +268,7 @@
     "transcribeDesc": "Voice-to-text conversion happens locally on your device. No servers, full privacy.",
     "aiTitle": "AI processing on demand",
     "aiDesc": "Structure your recordings with AI when needed. Voice is processed locally, text is sent over encrypted channel and never stored.",
-    "readyTitle": "Almost all set!",
+    "readyTitle": "Almost all set",
     "readyDesc": "Start recording your thoughts right now. Always at hand for your ideas.",
     "setupTitle": "Setup",
     "setupDesc": "Choose an AI model and optionally download Whisper for offline transcription.",
@@ -304,6 +314,15 @@
     "offlineTranscription": "Whisper (offline transcription)",
     "description": "Offline-first app for voice notes. Capture ideas with voice, get transcripts, summaries and tasks with AI.",
     "copyright": "© {{ year }} Voice Inbox. All rights reserved."
+  },
+  "tasks": {
+    "addToCalendar": "Add to Calendar",
+    "addToReminder": "Add to Reminders",
+    "addAllToReminders": "Add all to Reminders",
+    "addAllShort": "Add all",
+    "addedToCalendar": "Added to Calendar",
+    "addedToReminders": "Added to Reminders",
+    "permissionDenied": "Permission denied. Enable access in Settings."
   },
   "transcription": {
     "progress": "Processed {{ current }} of {{ total }} segments...",

@@ -22,6 +22,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@gorhom/bottom-sheet": "^5.2.8",
     "@op-engineering/op-sqlite": "^15.2.5",
     "@react-native-community/netinfo": "^12.0.1",
     "@react-native-menu/menu": "^2.0.0",
@@ -30,6 +31,7 @@
     "@react-navigation/elements": "^2.9.10",
     "@react-navigation/native": "^7.1.33",
     "@react-navigation/native-stack": "^7.14.4",
+    "@wiicamp/react-native-reminders": "^2.1.1",
     "dayjs": "^1.11.19",
     "drizzle-orm": "^0.45.1",
     "i18next": "^25.8.17",
@@ -38,8 +40,10 @@
     "react": "19.2.3",
     "react-i18next": "^16.5.6",
     "react-native": "0.84.1",
+    "react-native-add-calendar-event": "^5.0.0",
     "react-native-audio-recorder-player": "^4.5.0",
     "react-native-bootsplash": "^7.1.0",
+    "react-native-calendar-events": "^2.2.0",
     "react-native-device-info": "^15.0.2",
     "react-native-document-picker": "^9.3.1",
     "react-native-fs": "^2.20.0",
