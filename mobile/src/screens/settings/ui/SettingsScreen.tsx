@@ -160,7 +160,9 @@ export const SettingsScreen = () => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            tintColor={color.accent.primary}
+            tintColor={color.status.processing.text}
+            colors={[color.status.processing.text]}
+            progressBackgroundColor={color.background.secondary}
           />
         }
       >
