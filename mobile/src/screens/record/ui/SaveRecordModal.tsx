@@ -64,30 +64,13 @@ export const SaveRecordModal = ({
           sheetTranslateY.setValue(dy);
         }
       },
-      onPanResponderRelease: (_, { dy, vy }) => {
-        if (dy > 80 || vy > 0.5) {
-          Animated.parallel([
-            Animated.timing(overlayOpacity, {
-              toValue: 0,
-              duration: 200,
-              useNativeDriver: true,
-            }),
-            Animated.timing(sheetTranslateY, {
-              toValue: 400,
-              duration: 200,
-              useNativeDriver: true,
-            }),
-          ]).start(() => {
-            onCancel();
-          });
-        } else {
-          Animated.spring(sheetTranslateY, {
-            toValue: 0,
-            useNativeDriver: true,
-            speed: 20,
-            bounciness: 4,
-          }).start();
-        }
+      onPanResponderRelease: () => {
+        Animated.spring(sheetTranslateY, {
+          toValue: 0,
+          useNativeDriver: true,
+          speed: 20,
+          bounciness: 4,
+        }).start();
       },
     }),
   ).current;
@@ -167,12 +150,7 @@ export const SaveRecordModal = ({
         className="flex-1 justify-end"
         style={{ opacity: overlayOpacity, backgroundColor: 'rgba(0,0,0,0.35)' }}
       >
-        <TouchableWithoutFeedback
-          onPress={() => {
-            Keyboard.dismiss();
-            handleCancel();
-          }}
-        >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View className="absolute inset-0" />
         </TouchableWithoutFeedback>
 

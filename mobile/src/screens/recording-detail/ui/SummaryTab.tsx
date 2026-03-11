@@ -1,4 +1,4 @@
-import { AlertCircle, Cloud, FileText, Loader, RefreshCw, WifiOff } from 'lucide-react-native';
+import { AlertCircle, Cloud, FileText, RefreshCw, WifiOff } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, View } from 'react-native';
@@ -47,7 +47,7 @@ export const SummaryTab = ({
         title={t('recordingDetail.summaryError')}
         description=""
         buttonLabel={t('recordingDetail.summaryRetry')}
-        buttonIcon={<Loader size={18} color="#fff" strokeWidth={2} />}
+        buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
         onPress={onGenerate}
         color={color}
       />

@@ -4,7 +4,6 @@ import {
   Circle,
   Cloud,
   ListChecks,
-  Loader,
   RefreshCw,
   WifiOff,
 } from 'lucide-react-native';
@@ -58,7 +57,7 @@ export const TasksTab = ({
         title={t('recordingDetail.tasksError')}
         description=""
         buttonLabel={t('recordingDetail.tasksRetry')}
-        buttonIcon={<Loader size={18} color="#fff" strokeWidth={2} />}
+        buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
         onPress={onExtract}
         color={color}
       />
