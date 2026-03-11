@@ -95,7 +95,11 @@
     "deleteMessage": "Are you sure you want to delete \"{{title}}\"? This action cannot be undone."
   },
   "share": {
-    "shareNote": "Share note"
+    "shareNote": "Share note",
+    "dateLabel": "Date",
+    "durationLabel": "Duration",
+    "tagsLabel": "Tags",
+    "exportedFrom": "Exported from Voice Inbox"
   },
   "settings": {
     "title": "Settings",

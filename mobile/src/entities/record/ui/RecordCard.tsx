@@ -19,7 +19,7 @@ type RecordCardProps = {
 };
 
 export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardProps) => {
-  useTranslation();
+  const { i18n } = useTranslation();
   const { isSwiping } = React.useContext(SwipeableCardContext);
   const cardStyle = {
     shadowColor: color.shadow.color,
@@ -87,7 +87,7 @@ export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardPr
         <Text style={[textSecondaryStyle, { marginLeft: 4, fontSize: 12 }]}>
           {item.duration}
           {'  '}
-          {formatRelativeTime(item.createdAt)}
+          {formatRelativeTime(item.createdAt, i18n.language)}
         </Text>
       </View>
       {Boolean(item.transcript) && (

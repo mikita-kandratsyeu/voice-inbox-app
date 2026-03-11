@@ -2,34 +2,49 @@ import { Share } from 'react-native';
 import RNFS from 'react-native-fs';
 
 import type { VoiceRecord } from '@/entities/record';
-import { i18n } from '@/shared/lib';
+import { formatShortDate, i18n } from '@/shared/lib';
 
 const buildShareText = (record: VoiceRecord): string => {
+  const locale = i18n.language ?? 'en';
   const lines: string[] = [];
 
   lines.push(`# ${record.title}`);
-  lines.push(`Date: ${record.createdAt}`);
-  lines.push(`Duration: ${record.duration}`);
+  lines.push('');
+
+  const dateLabel = i18n.t('share.dateLabel');
+  const durationLabel = i18n.t('share.durationLabel');
+  const dateValue = record.createdAt ? formatShortDate(record.createdAt, locale) : record.createdAt;
+  lines.push(`${dateLabel}: ${dateValue}`);
+  lines.push(`${durationLabel}: ${record.duration}`);
+
+  if (record.tags && record.tags.length > 0) {
+    lines.push('');
+    lines.push(`## ${i18n.t('share.tagsLabel')}`);
+    lines.push(record.tags.map((tag) => `#${tag}`).join(' '));
+  }
 
   if (record.transcript) {
     lines.push('');
-    lines.push('## Transcript');
+    lines.push(`## ${i18n.t('recordingDetail.transcript')}`);
     lines.push(record.transcript);
   }
 
   if (record.summary) {
     lines.push('');
-    lines.push('## Summary');
+    lines.push(`## ${i18n.t('recordingDetail.summary')}`);
     lines.push(record.summary);
   }
 
   if (record.tasks && record.tasks.length > 0) {
     lines.push('');
-    lines.push('## Tasks');
+    lines.push(`## ${i18n.t('recordingDetail.tasks')}`);
     record.tasks.forEach((t) => {
       lines.push(`- [${t.isDone ? 'x' : ' '}] ${t.text}`);
     });
   }
+
+  lines.push('');
+  lines.push(`— ${i18n.t('share.exportedFrom')}`);
 
   return lines.join('\n');
 };
