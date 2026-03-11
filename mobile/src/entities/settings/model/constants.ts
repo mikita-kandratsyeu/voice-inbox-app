@@ -11,8 +11,8 @@ const TRINITY_MODEL: AIModel = {
 };
 
 const GEMINI_MODEL: AIModel = {
-  id: 'google/gemini-3-flash-preview',
-  name: 'Gemini 3 Flash',
+  id: 'google/gemini-3.1-flash-lite-preview',
+  name: 'Gemini 3.1 Flash Lite',
   provider: 'Google',
   descriptionKey: 'aiModels.geminiDesc',
   speed: 'fast',

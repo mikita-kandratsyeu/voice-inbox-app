@@ -13,6 +13,7 @@ export { recordsTable } from './db/schema';
 export { hapticError, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from './haptics';
 export type { SupportedLocale } from './i18n';
 export { i18n, initI18n } from './i18n';
+export { parseTaskDeadline } from './parseTaskDeadline';
 export { useNetworkStatus } from './useNetworkStatus';
 export {
   formatFileSize,

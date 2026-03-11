@@ -73,6 +73,8 @@ export const useAiProcessing = () => {
           id: `${record.id}-task-${index}`,
           text: t.title,
           isDone: false,
+          deadline: t.deadline ?? undefined,
+          priority: t.priority,
         }));
 
         await updateSummary(record.id, summary);

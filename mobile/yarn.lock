@@ -3612,6 +3612,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@wiicamp/react-native-reminders@npm:^2.1.1":
+  version: 2.1.1
+  resolution: "@wiicamp/react-native-reminders@npm:2.1.1"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/cfe2d886a1982353a88cc24fc95cff6c21f5ac0478282321b97e6df43b8674cddb9ca9f1c4848c4e8ec21d803711de5f91ac8b237c0a989cc96e5a3bf707bb5d
+  languageName: node
+  linkType: hard
+
 "@xmldom/xmldom@npm:^0.8.8":
   version: 0.8.11
   resolution: "@xmldom/xmldom@npm:0.8.11"
@@ -9666,6 +9676,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-add-calendar-event@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "react-native-add-calendar-event@npm:5.0.0"
+  peerDependencies:
+    expo: ">=47.0.0"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: 10c0/9a05190c5a75c081c9a6a43e163c6e96e7a779cc5621ba2bb4e5c9c6011faedcae6c1c5ecb9d677536c0c67ee9e68564cdb29779809813bf100a9d07b342859a
+  languageName: node
+  linkType: hard
+
 "react-native-audio-recorder-player@npm:^4.5.0":
   version: 4.5.0
   resolution: "react-native-audio-recorder-player@npm:4.5.0"
@@ -9698,6 +9720,15 @@ __metadata:
   bin:
     react-native-bootsplash: cli.js
   checksum: 10c0/8ad4eabaa52f1feae9df56d1b812774434860348b6fa0f483c47b8d5d815fabf3a843b02eef0721a37f5989aef780a5718f5b6156736a9a2fee8aecf0582ebe7
+  languageName: node
+  linkType: hard
+
+"react-native-calendar-events@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "react-native-calendar-events@npm:2.2.0"
+  peerDependencies:
+    react-native: ">=0.60.0"
+  checksum: 10c0/7b54c2f5485acff6b165252f4a6d31d2d5ad7c853f60deffc43c0c3acc8b90dd9846c3a2844ff2444b8695a99ecb97dc4cdec696ac616935141cd2b9c017337d
   languageName: node
   linkType: hard
 
@@ -11621,6 +11652,7 @@ __metadata:
     "@types/react-test-renderer": "npm:^19.1.0"
     "@typescript-eslint/eslint-plugin": "npm:^8.18.0"
     "@typescript-eslint/parser": "npm:^8.18.0"
+    "@wiicamp/react-native-reminders": "npm:^2.1.1"
     babel-plugin-module-resolver: "npm:^5.0.0"
     dayjs: "npm:^1.11.19"
     dotenv: "npm:^17.3.1"
@@ -11645,8 +11677,10 @@ __metadata:
     react: "npm:19.2.3"
     react-i18next: "npm:^16.5.6"
     react-native: "npm:0.84.1"
+    react-native-add-calendar-event: "npm:^5.0.0"
     react-native-audio-recorder-player: "npm:^4.5.0"
     react-native-bootsplash: "npm:^7.1.0"
+    react-native-calendar-events: "npm:^2.2.0"
     react-native-device-info: "npm:^15.0.2"
     react-native-document-picker: "npm:^9.3.1"
     react-native-dotenv: "npm:^3.4.11"

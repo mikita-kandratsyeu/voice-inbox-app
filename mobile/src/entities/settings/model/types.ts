@@ -1,5 +1,5 @@
 export type AIModelId =
-  | 'google/gemini-3-flash-preview'
+  | 'google/gemini-3.1-flash-lite-preview'
   | 'arcee-ai/trinity-large-preview:free'
   | 'openai/gpt-5-nano';
 

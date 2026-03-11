@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import { storage } from '@/shared/lib/async-storage';
 
+import { AI_MODELS } from './constants';
 import type {
   AIModelId,
   SettingsState,
@@ -21,7 +22,7 @@ const KEYS = {
 const getStoredAIModel = (): AIModelId => {
   const val = storage.getString(KEYS.AI_MODEL);
 
-  return (val as AIModelId) ?? 'google/gemini-3-flash-preview';
+  return (val as AIModelId) ?? AI_MODELS[0].id;
 };
 
 const getStoredWhisperModel = (): WhisperModelId => {

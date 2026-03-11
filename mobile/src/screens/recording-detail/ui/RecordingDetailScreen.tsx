@@ -158,6 +158,7 @@ export const RecordingDetailScreen = () => {
               tasks={liveRecord.tasks ?? []}
               status={liveRecord.tasksStatus ?? 'idle'}
               hasTranscript={Boolean(liveRecord.transcript)}
+              recordTitle={liveRecord.title}
               color={color}
               onToggle={handleToggleTask}
               onExtract={handleExtractTasks}

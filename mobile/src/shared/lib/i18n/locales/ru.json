@@ -313,6 +313,14 @@
     "description": "Offline-first приложение для голосовых заметок. Захватывайте идеи голосом, получайте транскрипты, саммари и задачи с помощью ИИ.",
     "copyright": "© {{ year }} Voice Inbox. Все права защищены."
   },
+  "tasks": {
+    "addToCalendar": "Добавить в Календарь",
+    "addToReminder": "Добавить в Напоминания",
+    "addAllToReminders": "Добавить все в Напоминания",
+    "addedToCalendar": "Добавлено в Календарь",
+    "addedToReminders": "Добавлено в Напоминания",
+    "permissionDenied": "Доступ запрещён. Включите в Настройках."
+  },
   "transcription": {
     "progress": "Обработано {{ current }} из {{ total }} фрагментов...",
     "secondsLeft": "~{{ count }} сек осталось",

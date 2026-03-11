@@ -313,6 +313,14 @@
     "description": "Offline-first app for voice notes. Capture ideas with voice, get transcripts, summaries and tasks with AI.",
     "copyright": "© {{ year }} Voice Inbox. All rights reserved."
   },
+  "tasks": {
+    "addToCalendar": "Add to Calendar",
+    "addToReminder": "Add to Reminders",
+    "addAllToReminders": "Add all to Reminders",
+    "addedToCalendar": "Added to Calendar",
+    "addedToReminders": "Added to Reminders",
+    "permissionDenied": "Permission denied. Enable access in Settings."
+  },
   "transcription": {
     "progress": "Processed {{ current }} of {{ total }} segments...",
     "secondsLeft": "~{{ count }} sec left",

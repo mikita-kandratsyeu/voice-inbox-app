@@ -34,11 +34,15 @@
 		<true/>
 	</dict>
 	<key>NSFaceIDUsageDescription</key>
-	<string>Используйте Face ID для быстрой разблокировки приложения.</string>
+	<string>Use Face ID to quickly unlock the app.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string></string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Adding tasks from notes to Calendar</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Приложению нужен доступ к микрофону для записи голосовых заметок.</string>
+	<string>The app needs microphone access to record voice notes.</string>
+	<key>NSRemindersUsageDescription</key>
+	<string>Adding tasks from notes to Reminders</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

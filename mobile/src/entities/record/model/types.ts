@@ -12,6 +12,8 @@ export type TaskItem = {
   id: string;
   text: string;
   isDone: boolean;
+  deadline?: string | null;
+  priority?: 'high' | 'medium' | 'low';
 };
 
 export type VoiceRecord = {
