@@ -20,3 +20,8 @@ export type Message =
       tags: string[];
     }
   | { id: string; status: 'error'; error: string };
+
+export type AskMessage =
+  | { id: string; status: 'processing' }
+  | { id: string; status: 'done'; answer: string }
+  | { id: string; status: 'error'; error: string };

@@ -77,6 +77,14 @@
     "tasksRetry": "Повторить",
     "noTranscriptForAi": "Нужен транскрипт",
     "noTranscriptForAiDesc": "Сначала транскрибируйте запись, чтобы использовать функции ИИ.",
+    "ask": "Спросить ИИ",
+    "askPlaceholder": "Задайте вопрос по заметке...",
+    "askEmptyTitle": "Спросите о заметке",
+    "askEmptyDesc": "Получайте ответы по транскрипту с помощью ИИ.",
+    "askButton": "Спросить",
+    "askProcessing": "Ответ генерируется...",
+    "askError": "Не удалось получить ответ",
+    "askAnother": "Задать другой вопрос",
     "accessibility": {
       "cardLabel": "Голосовая заметка {{title}}, записана {{date}}, длительность {{duration}}",
       "tagsSuffix": ", теги: {{tags}}"

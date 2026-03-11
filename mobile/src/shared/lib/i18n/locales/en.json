@@ -77,6 +77,14 @@
     "tasksRetry": "Try again",
     "noTranscriptForAi": "Transcript required",
     "noTranscriptForAiDesc": "Transcribe the recording first to use AI features.",
+    "ask": "Ask AI",
+    "askPlaceholder": "Ask a question about this note...",
+    "askEmptyTitle": "Ask about your note",
+    "askEmptyDesc": "Get answers about the transcript using AI.",
+    "askButton": "Ask",
+    "askProcessing": "Answering...",
+    "askError": "Failed to get answer",
+    "askAnother": "Ask another question",
     "accessibility": {
       "cardLabel": "Voice note {{title}}, recorded {{date}}, duration {{duration}}",
       "tagsSuffix": ", tags: {{tags}}"

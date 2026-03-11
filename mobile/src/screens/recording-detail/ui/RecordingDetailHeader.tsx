@@ -1,5 +1,5 @@
 import { MenuView } from '@react-native-menu/menu';
-import { ChevronLeft, MoreVertical, Pin, Share2 } from 'lucide-react-native';
+import { ChevronLeft, MessageSquare, MoreVertical, Pin, Share2 } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -15,6 +15,7 @@ type RecordingDetailHeaderProps = {
   onBack: () => void;
   onTogglePin: () => void;
   onShare: () => void;
+  onAskAI: () => void;
   onRename: () => void;
   onDelete: () => void;
 };
@@ -25,6 +26,7 @@ export const RecordingDetailHeader = ({
   onBack,
   onTogglePin,
   onShare,
+  onAskAI,
   onRename,
   onDelete,
 }: RecordingDetailHeaderProps) => {
@@ -74,6 +76,16 @@ export const RecordingDetailHeader = ({
           icon={<Share2 size={18} color={color.text.primary} strokeWidth={2.2} />}
           color={color}
           onPress={onShare}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        />
+        <Button
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<MessageSquare size={18} color={color.text.primary} strokeWidth={2.2} />}
+          color={color}
+          onPress={onAskAI}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         />

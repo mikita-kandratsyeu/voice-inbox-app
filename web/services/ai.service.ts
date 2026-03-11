@@ -74,6 +74,39 @@ async function callOpenRouter(
   };
 }
 
+const ASK_QUESTION_SYSTEM_PROMPT = `Answer the user's question based ONLY on the transcript provided. Be concise. Use the same language as the question. If the transcript does not contain relevant information, say so.
+
+You MUST respond with a valid JSON object containing exactly one field: "answer" (string). Example: {"answer": "Your response here"}`;
+
+function extractAnswerFromResponse(responseContent: string): string {
+  const trimmed = responseContent.trim();
+  if (!trimmed) {
+    throw new Error('Invalid AI response: empty content');
+  }
+
+  if (trimmed.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(trimmed) as unknown;
+      if (parsed && typeof parsed === 'object') {
+        const obj = parsed as Record<string, unknown>;
+        const knownKeys = ['answer', 'response', 'text', 'content', 'result'];
+        for (const key of knownKeys) {
+          const val = obj[key];
+          if (typeof val === 'string' && val.length > 0) return val;
+        }
+        const firstString = Object.values(obj).find((v) => typeof v === 'string' && v.length > 0);
+        if (typeof firstString === 'string') return firstString;
+      }
+    } catch {
+      console.warn('Invalid AI response: JSON parse failed', responseContent);
+
+      return trimmed;
+    }
+  }
+
+  return trimmed;
+}
+
 export async function processTranscript(
   transcript: string,
   model: string,
@@ -86,6 +119,53 @@ export async function processTranscript(
       err instanceof TooManyRequestsResponseError || err instanceof ServiceUnavailableResponseError;
     if (isRetryable) {
       return await callOpenRouter(transcript, FALLBACK_MODEL, systemPrompt);
+    }
+    throw err;
+  }
+}
+
+export async function processAskQuestion(
+  transcript: string,
+  question: string,
+  model: string,
+): Promise<{ answer: string }> {
+  const userContent = `Transcript:\n\n${transcript}\n\nQuestion: ${question}`;
+
+  const callAsk = async (
+    content: string,
+    m: string,
+    sysPrompt: string,
+  ): Promise<{ answer: string }> => {
+    const response = await openRouterClient.chat.send({
+      chatGenerationParams: {
+        model: m,
+        messages: [
+          { role: 'system', content: sysPrompt },
+          { role: 'user', content },
+        ],
+        provider: { zdr: true },
+        responseFormat: { type: 'json_object' },
+        temperature: 0.3,
+        stream: false,
+      },
+    });
+
+    const responseContent = response.choices[0]?.message?.content;
+    if (typeof responseContent !== 'string') {
+      throw new Error('Invalid AI response: missing content');
+    }
+
+    const answer = extractAnswerFromResponse(responseContent);
+    return { answer };
+  };
+
+  try {
+    return await callAsk(userContent, model, ASK_QUESTION_SYSTEM_PROMPT);
+  } catch (err) {
+    const isRetryable =
+      err instanceof TooManyRequestsResponseError || err instanceof ServiceUnavailableResponseError;
+    if (isRetryable) {
+      return await callAsk(userContent, FALLBACK_MODEL, ASK_QUESTION_SYSTEM_PROMPT);
     }
     throw err;
   }
