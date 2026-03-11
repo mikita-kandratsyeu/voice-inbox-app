@@ -1,4 +1,3 @@
-import { Check, Download } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -12,7 +11,6 @@ import {
 } from '@/entities/settings';
 import { useModelManager } from '@/features/model-manager';
 import { RECOMMENDED_MODEL_ID } from '@/screens/settings/config';
-import { WhisperModelSpinner } from '@/screens/settings/ui/WhisperModelSpinner';
 import type { Colors } from '@/shared/config';
 import { formatFileSize } from '@/shared/lib/whisper';
 
@@ -22,9 +20,7 @@ type OnboardingSetupStepProps = {
 
 export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
   const { t } = useTranslation();
-  const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const setAIModel = useSettingsStore((s) => s.setAIModel);
-  const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
 
@@ -69,7 +65,6 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
         }}
       >
         {AI_MODELS.map((model, index) => {
-          const isSelected = model.id === selectedAIModel;
           const isLast = index === AI_MODELS.length - 1;
           return (
             <TouchableOpacity
@@ -82,19 +77,9 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
                 borderBottomColor: color.border.default,
               }}
             >
-              <View className="flex-row items-center justify-between">
-                <Text className="text-[15px] font-medium" style={{ color: color.text.primary }}>
-                  {model.name}
-                </Text>
-                {isSelected && (
-                  <View
-                    className="h-5 w-5 items-center justify-center rounded-full"
-                    style={{ backgroundColor: color.accent.primary }}
-                  >
-                    <Check size={12} color={color.icon.onAccent} strokeWidth={2.5} />
-                  </View>
-                )}
-              </View>
+              <Text className="text-[15px] font-medium" style={{ color: color.text.primary }}>
+                {model.name}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -116,8 +101,6 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
       >
         {WHISPER_MODELS.map((model, index) => {
           const status = whisperModelStatuses[model.id] ?? 'not_downloaded';
-          const isSelected = model.id === selectedWhisperModel;
-          const isDownloaded = status === 'downloaded';
           const isDownloading = status === 'downloading';
           const compat = compatibility?.[model.id];
           const isLast = index === WHISPER_MODELS.length - 1;
@@ -135,60 +118,29 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
                 borderBottomColor: color.border.default,
               }}
             >
-              <View className="flex-row items-center justify-between">
-                <View className="flex-1">
-                  <View className="flex-row items-center gap-2">
-                    <Text className="text-[15px] font-medium" style={{ color: color.text.primary }}>
-                      Whisper {model.name}
-                    </Text>
-                    {model.id === RECOMMENDED_MODEL_ID && (
-                      <View
-                        className="rounded-full px-2 py-0.5"
-                        style={{ backgroundColor: color.status.processing.bg }}
-                      >
-                        <Text
-                          className="text-[11px] font-medium"
-                          style={{ color: color.status.processing.text }}
-                        >
-                          {t('whisper.recommended')}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text className="text-xs" style={{ color: color.text.muted }}>
-                    {displaySize}
-                    {compat && !compat.isCompatible && ` • ${compat.reason}`}
+              <View className="flex-1">
+                <View className="flex-row items-center gap-2">
+                  <Text className="text-[15px] font-medium" style={{ color: color.text.primary }}>
+                    Whisper {model.name}
                   </Text>
-                </View>
-                <View className="items-center">
-                  {isDownloaded && isSelected ? (
+                  {model.id === RECOMMENDED_MODEL_ID && (
                     <View
-                      className="h-7 w-7 items-center justify-center rounded-full"
-                      style={{ backgroundColor: color.accent.primary }}
-                    >
-                      <Check size={14} color={color.icon.onAccent} strokeWidth={2.5} />
-                    </View>
-                  ) : isDownloaded ? (
-                    <View
-                      className="h-7 w-7 rounded-full"
-                      style={{ borderWidth: 2, borderColor: color.border.default }}
-                    />
-                  ) : isDownloading ? (
-                    <View
-                      className="h-7 w-7 items-center justify-center rounded-full"
+                      className="rounded-full px-2 py-0.5"
                       style={{ backgroundColor: color.status.processing.bg }}
                     >
-                      <WhisperModelSpinner color={color.status.processing.text} />
-                    </View>
-                  ) : (
-                    <View
-                      className="h-7 w-7 items-center justify-center rounded-full"
-                      style={{ backgroundColor: color.background.tertiary }}
-                    >
-                      <Download size={14} color={color.accent.primary} strokeWidth={2} />
+                      <Text
+                        className="text-[11px] font-medium"
+                        style={{ color: color.status.processing.text }}
+                      >
+                        {t('whisper.recommended')}
+                      </Text>
                     </View>
                   )}
                 </View>
+                <Text className="text-xs" style={{ color: color.text.muted }}>
+                  {displaySize}
+                  {compat && !compat.isCompatible && ` • ${compat.reason}`}
+                </Text>
               </View>
             </TouchableOpacity>
           );

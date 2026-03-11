@@ -58,7 +58,9 @@ const AnimatedProgressDots = ({
   t: (key: string, opts?: { index?: number }) => string;
 }) => {
   const pillPositions = slides.map((_, i) => i * SLOT_WIDTH + PILL_LEFT);
-  const slideColors = slides.map((s) => s.iconColor);
+  const slideColors = slides.map((s, i) =>
+    i === slides.length - 1 ? color.accent.primary : s.iconColor,
+  );
 
   const pillStyle = useAnimatedStyle(() => {
     const translateX = interpolate(
@@ -249,16 +251,8 @@ const SlideItem = ({
         style={[{ width: SCREEN_WIDTH, paddingHorizontal: 32 }, animatedStyle]}
         className="flex-1"
       >
-        <View className="mb-4 items-center">
-          <AnimatedSlideIcon
-            iconName={item.iconName}
-            iconColor={item.iconColor}
-            iconBg={item.iconBg}
-            iconOnAccent={color.icon.onAccent}
-          />
-        </View>
         <Text
-          className="mb-2 text-center text-[24px] font-bold leading-tight"
+          className="mb-2 mt-6 text-center text-[24px] font-bold leading-tight"
           style={{ color: color.text.primary }}
         >
           {t(item.titleKey)}
@@ -339,7 +333,11 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const slides = useMemo(() => getOnboardingSlides(color), [color]);
-  const slideColors = useMemo(() => slides.map((s) => s.iconColor), [slides]);
+  const slideColors = useMemo(() => {
+    const colors = slides.map((s) => s.iconColor);
+    colors[colors.length - 1] = color.accent.primary;
+    return colors;
+  }, [slides, color.accent.primary]);
   const insets = useSafeAreaInsets();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList<OnboardingSlideContent>>(null);
