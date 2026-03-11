@@ -9777,6 +9777,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-keep-awake@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "react-native-keep-awake@npm:4.0.0"
+  checksum: 10c0/73cabf9de1033e9157721280d23bdf1d7467d5e5db859dd706e43772388e4c9a12916f0c282ff44d4ef0d2a3eab246a2331bce2fff3a1834a2a73f646a5119c1
+  languageName: node
+  linkType: hard
+
 "react-native-keychain@npm:^10.0.0":
   version: 10.0.0
   resolution: "react-native-keychain@npm:10.0.0"
@@ -11601,6 +11608,7 @@ __metadata:
     react-native-fs: "npm:^2.20.0"
     react-native-gesture-handler: "npm:^2.30.0"
     react-native-haptic-feedback: "npm:^2.3.3"
+    react-native-keep-awake: "npm:^4.0.0"
     react-native-keychain: "npm:^10.0.0"
     react-native-localize: "npm:^3.7.0"
     react-native-mmkv: "npm:^4.2.0"

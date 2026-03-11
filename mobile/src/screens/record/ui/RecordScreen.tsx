@@ -2,6 +2,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PanResponder, StatusBar, Text, useColorScheme, View } from 'react-native';
+import KeepAwake from 'react-native-keep-awake';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
@@ -109,6 +110,7 @@ export const RecordScreen = () => {
       style={{ backgroundColor: c.accent.primary }}
       {...swipeDownResponder.panHandlers}
     >
+      <KeepAwake />
       <StatusBar barStyle="light-content" backgroundColor={c.accent.primary} />
       <RecordScreenHeader state={state} onClose={handleClose} />
       <View className="flex-1 items-center justify-center gap-9 px-6">
