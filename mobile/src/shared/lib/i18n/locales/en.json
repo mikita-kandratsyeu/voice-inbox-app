@@ -80,6 +80,24 @@
     "accessibility": {
       "cardLabel": "Voice note {{title}}, recorded {{date}}, duration {{duration}}",
       "tagsSuffix": ", tags: {{tags}}"
+    },
+    "audioLanguage": "Audio language",
+    "languageHint": "Select a language for more accurate Whisper transcription in this recording.",
+    "language": {
+      "auto": "Auto detect",
+      "ru": "Russian",
+      "en": "English",
+      "de": "German",
+      "fr": "French",
+      "es": "Spanish",
+      "it": "Italian",
+      "pt": "Portuguese",
+      "zh": "Chinese",
+      "ja": "Japanese",
+      "ko": "Korean",
+      "ar": "Arabic",
+      "uk": "Ukrainian",
+      "pl": "Polish"
     }
   },
   "aiStatus": {

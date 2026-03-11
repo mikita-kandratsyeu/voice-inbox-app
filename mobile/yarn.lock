@@ -3386,6 +3386,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/react-native-keep-awake@npm:^2.0.8":
+  version: 2.0.8
+  resolution: "@types/react-native-keep-awake@npm:2.0.8"
+  dependencies:
+    "@types/react": "npm:*"
+  checksum: 10c0/900262d00170e97b0cfaf4fc98c4d0aadcc36af2418a08b214e3ff587609ac7cff23ec81ac7a3c2d16ea8e9f8ba8dab03314e943fbbafc51b7da7a26a706afa6
+  languageName: node
+  linkType: hard
+
 "@types/react-test-renderer@npm:^19.1.0":
   version: 19.1.0
   resolution: "@types/react-test-renderer@npm:19.1.0"
@@ -11573,6 +11582,7 @@ __metadata:
     "@types/jest": "npm:^29.5.13"
     "@types/node": "npm:^25.3.5"
     "@types/react": "npm:^19.2.0"
+    "@types/react-native-keep-awake": "npm:^2.0.8"
     "@types/react-test-renderer": "npm:^19.1.0"
     "@typescript-eslint/eslint-plugin": "npm:^8.18.0"
     "@typescript-eslint/parser": "npm:^8.18.0"

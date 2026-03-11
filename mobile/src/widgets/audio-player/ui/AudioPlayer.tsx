@@ -1,11 +1,20 @@
-import { Pause, Play, RotateCcw } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, GestureResponderEvent, LayoutChangeEvent, Text, View } from 'react-native';
+import {
+  Animated,
+  GestureResponderEvent,
+  LayoutChangeEvent,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import AudioRecorderPlayer, { type PlayBackType } from 'react-native-audio-recorder-player';
 
 import type { Colors } from '@/shared/config';
 import { formatTime, hapticSelection } from '@/shared/lib';
-import { Button } from '@/shared/ui';
+
+const SKIP_SECONDS = 10;
+const PLAYBACK_SPEEDS = [1, 1.25, 1.5, 2] as const;
 
 type AudioPlayerProps = {
   duration: string;
@@ -30,10 +39,13 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
   const [isPlaying, setIsPlaying] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [trackWidth, setTrackWidth] = useState(0);
+  const [speedIndex, setSpeedIndex] = useState(0);
 
   const progressAnim = useRef(new Animated.Value(0)).current;
   const elapsedRef = useRef(0);
+  const isPlayerLoadedRef = useRef(false);
   const totalMs = totalSeconds * 1000;
+  const playbackSpeed = PLAYBACK_SPEEDS[speedIndex];
 
   const progress = totalSeconds > 0 ? elapsed / totalSeconds : 0;
 
@@ -49,55 +61,71 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
     try {
       player.removePlayBackListener();
       player.removePlaybackEndListener();
-
       await player.stopPlayer();
     } catch (err) {
       console.warn('[AudioPlayer] stopPlayer failed:', err);
     }
-
+    isPlayerLoadedRef.current = false;
     setIsPlaying(false);
     setElapsed(0);
-
     elapsedRef.current = 0;
     progressAnim.setValue(0);
   }, [progressAnim]);
 
-  const startPlayback = useCallback(async () => {
-    if (!audioPath) {
-      return;
-    }
-
+  const seekTo = useCallback(async (seekMs: number) => {
     try {
-      player.setSubscriptionDuration(0.1);
-
-      player.addPlayBackListener((e: PlayBackType) => {
-        const secs = Math.floor(e.currentPosition / 1000);
-
-        elapsedRef.current = secs;
-        setElapsed(secs);
-      });
-
-      player.addPlaybackEndListener(() => {
-        player.removePlayBackListener();
-        player.removePlaybackEndListener();
-
-        setIsPlaying(false);
-        setElapsed(totalSeconds);
-
-        elapsedRef.current = totalSeconds;
-      });
-
-      await player.startPlayer(audioPath, {
-        AVAudioSessionCategoryKey: 'AVAudioSessionCategoryPlayback',
-        AVAudioSessionModeKey: 'AVAudioSessionModeDefault',
-        AVAudioSessionCategoryOptionKey: 'AVAudioSessionCategoryOptionDefaultToSpeaker',
-      });
-
-      setIsPlaying(true);
+      await player.seekToPlayer(seekMs);
+      const secs = Math.floor(seekMs / 1000);
+      elapsedRef.current = secs;
+      setElapsed(secs);
     } catch (err) {
-      console.warn('[AudioPlayer] startPlayer failed:', err);
+      console.warn('[AudioPlayer] seekToPlayer failed:', err);
     }
-  }, [audioPath, totalSeconds]);
+  }, []);
+
+  const startPlayback = useCallback(
+    async (startSecs = 0) => {
+      if (!audioPath) {
+        return;
+      }
+
+      try {
+        player.setSubscriptionDuration(0.1);
+
+        player.addPlayBackListener((e: PlayBackType) => {
+          const secs = Math.floor(e.currentPosition / 1000);
+          elapsedRef.current = secs;
+          setElapsed(secs);
+        });
+
+        player.addPlaybackEndListener(() => {
+          player.removePlayBackListener();
+          player.removePlaybackEndListener();
+          setIsPlaying(false);
+          setElapsed(totalSeconds);
+          elapsedRef.current = totalSeconds;
+        });
+
+        await player.startPlayer(audioPath, {
+          AVAudioSessionCategoryKey: 'AVAudioSessionCategoryPlayback',
+          AVAudioSessionModeKey: 'AVAudioSessionModeDefault',
+          AVAudioSessionCategoryOptionKey: 'AVAudioSessionCategoryOptionDefaultToSpeaker',
+        });
+
+        await player.setPlaybackSpeed(playbackSpeed);
+
+        if (startSecs > 0) {
+          await seekTo(startSecs * 1000);
+        }
+
+        isPlayerLoadedRef.current = true;
+        setIsPlaying(true);
+      } catch (err) {
+        console.warn('[AudioPlayer] startPlayer failed:', err);
+      }
+    },
+    [audioPath, totalSeconds, playbackSpeed, seekTo],
+  );
 
   const handlePlayPause = async () => {
     if (!audioPath) {
@@ -108,8 +136,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
 
     if (elapsed >= totalSeconds && totalSeconds > 0) {
       await stopAndReset();
-      await startPlayback();
-
+      await startPlayback(0);
       return;
     }
 
@@ -117,7 +144,6 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
       try {
         await player.pausePlayer();
         player.removePlayBackListener();
-
         setIsPlaying(false);
       } catch (err) {
         console.warn('[AudioPlayer] pausePlayer failed:', err);
@@ -135,19 +161,16 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
         player.addPlaybackEndListener(() => {
           player.removePlayBackListener();
           player.removePlaybackEndListener();
-
           setIsPlaying(false);
           setElapsed(totalSeconds);
+          elapsedRef.current = totalSeconds;
         });
 
-        if (elapsedRef.current > 0) {
+        if (isPlayerLoadedRef.current) {
           await player.resumePlayer();
+          await player.setPlaybackSpeed(playbackSpeed);
         } else {
-          await player.startPlayer(audioPath, {
-            AVAudioSessionCategoryKey: 'AVAudioSessionCategoryPlayback',
-            AVAudioSessionModeKey: 'AVAudioSessionModeDefault',
-            AVAudioSessionCategoryOptionKey: 'AVAudioSessionCategoryOptionDefaultToSpeaker',
-          });
+          await startPlayback(elapsedRef.current);
         }
         setIsPlaying(true);
       } catch (err) {
@@ -157,26 +180,63 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
   };
 
   const handleRestart = async () => {
+    hapticSelection();
     await stopAndReset();
+  };
+
+  const handleSkipBack = async () => {
+    if (!hasAudio) return;
+    hapticSelection();
+    const seekMs = Math.max(0, elapsedRef.current * 1000 - SKIP_SECONDS * 1000);
+    const secs = Math.floor(seekMs / 1000);
+    elapsedRef.current = secs;
+    setElapsed(secs);
+    progressAnim.setValue(totalSeconds > 0 ? secs / totalSeconds : 0);
+    if (isPlayerLoadedRef.current) {
+      await seekTo(seekMs);
+    }
+  };
+
+  const handleSkipForward = async () => {
+    if (!hasAudio) return;
+    hapticSelection();
+    const seekMs = Math.min(totalMs, elapsedRef.current * 1000 + SKIP_SECONDS * 1000);
+    const secs = Math.floor(seekMs / 1000);
+    elapsedRef.current = secs;
+    setElapsed(secs);
+    progressAnim.setValue(totalSeconds > 0 ? secs / totalSeconds : 0);
+    if (isPlayerLoadedRef.current) {
+      await seekTo(seekMs);
+    }
+  };
+
+  const handleCycleSpeed = () => {
+    if (!hasAudio) return;
+    hapticSelection();
+    setSpeedIndex((i) => (i + 1) % PLAYBACK_SPEEDS.length);
   };
 
   const handleTrackPress = async (e: GestureResponderEvent) => {
     if (trackWidth === 0 || totalMs === 0 || !audioPath) {
       return;
     }
-
+    hapticSelection();
     const ratio = Math.max(0, Math.min(1, e.nativeEvent.locationX / trackWidth));
     const seekMs = Math.floor(ratio * totalMs);
-
-    try {
-      await player.seekToPlayer(seekMs);
-
-      setElapsed(Math.floor(seekMs / 1000));
-      elapsedRef.current = Math.floor(seekMs / 1000);
-    } catch (err) {
-      console.warn('[AudioPlayer] seekToPlayer failed:', err);
+    const secs = Math.floor(seekMs / 1000);
+    elapsedRef.current = secs;
+    setElapsed(secs);
+    progressAnim.setValue(totalSeconds > 0 ? secs / totalSeconds : 0);
+    if (isPlayerLoadedRef.current) {
+      await seekTo(seekMs);
     }
   };
+
+  useEffect(() => {
+    if (isPlaying && isPlayerLoadedRef.current) {
+      player.setPlaybackSpeed(playbackSpeed).catch(() => {});
+    }
+  }, [playbackSpeed, isPlaying]);
 
   useEffect(() => {
     return () => {
@@ -193,37 +253,11 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
 
   const hasAudio = Boolean(audioPath);
 
-  return (
-    <View
-      className="flex-row items-center gap-3 rounded-2xl p-4"
-      style={{ backgroundColor: color.background.card }}
-    >
-      <Button
-        iconOnly
-        size="lg"
-        variant="icon"
-        icon={
-          isPlaying ? (
-            <Pause size={20} color={color.icon.onAccent} strokeWidth={2.5} />
-          ) : (
-            <Play
-              size={20}
-              color={hasAudio ? color.icon.onAccent : color.text.secondary}
-              strokeWidth={2.5}
-              fill={hasAudio ? color.icon.onAccent : color.text.secondary}
-            />
-          )
-        }
-        color={color}
-        onPress={handlePlayPause}
-        activeOpacity={0.85}
-        disabled={!hasAudio}
-        containerStyle={{
-          backgroundColor: hasAudio ? color.accent.primary : color.background.tertiary,
-        }}
-      />
+  const speedLabel = playbackSpeed === 1 ? '1×' : `${playbackSpeed}×`;
 
-      <View className="flex-1 gap-1.5">
+  return (
+    <View className="gap-3 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
+      <View className="gap-1.5">
         <View
           className="h-1 justify-center overflow-visible rounded-sm"
           style={{ backgroundColor: color.background.tertiary }}
@@ -258,21 +292,91 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
           </Text>
         </View>
       </View>
-      <Button
-        iconOnly
-        size="sm"
-        icon={
-          <RotateCcw
-            size={18}
-            color={hasAudio ? color.text.secondary : color.background.tertiary}
-            strokeWidth={2}
-          />
-        }
-        onPress={handleRestart}
-        activeOpacity={0.7}
-        disabled={!hasAudio}
-        containerStyle={{ backgroundColor: 'transparent' }}
-      />
+
+      <View className="flex-row items-center justify-between" style={{ minHeight: 48 }}>
+        <View className="flex-row items-center gap-1">
+          <TouchableOpacity
+            onPress={handleSkipBack}
+            disabled={!hasAudio}
+            activeOpacity={0.6}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            className="h-10 w-10 items-center justify-center rounded-full"
+            style={{ backgroundColor: hasAudio ? color.background.tertiary : 'transparent' }}
+          >
+            <ChevronLeft
+              size={20}
+              color={hasAudio ? color.text.primary : color.text.muted}
+              strokeWidth={2.5}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handlePlayPause}
+            disabled={!hasAudio}
+            activeOpacity={0.85}
+            className="h-12 w-12 items-center justify-center rounded-full"
+            style={{
+              backgroundColor: hasAudio ? color.accent.primary : color.background.tertiary,
+            }}
+          >
+            {isPlaying ? (
+              <Pause size={22} color={color.icon.onAccent} strokeWidth={2.5} />
+            ) : (
+              <Play
+                size={22}
+                color={hasAudio ? color.icon.onAccent : color.text.muted}
+                strokeWidth={2.5}
+                fill={hasAudio ? color.icon.onAccent : color.text.muted}
+              />
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleSkipForward}
+            disabled={!hasAudio}
+            activeOpacity={0.6}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            className="h-10 w-10 items-center justify-center rounded-full"
+            style={{ backgroundColor: hasAudio ? color.background.tertiary : 'transparent' }}
+          >
+            <ChevronRight
+              size={20}
+              color={hasAudio ? color.text.primary : color.text.muted}
+              strokeWidth={2.5}
+            />
+          </TouchableOpacity>
+        </View>
+        <View className="flex-row items-center gap-1.5">
+          <TouchableOpacity
+            onPress={handleCycleSpeed}
+            disabled={!hasAudio}
+            activeOpacity={0.7}
+            className="min-w-[48px] items-center justify-center rounded-xl px-3 py-2.5"
+            style={{
+              backgroundColor: hasAudio ? color.background.tertiary : 'transparent',
+            }}
+          >
+            <Text
+              className="text-[13px] font-semibold tabular-nums"
+              style={{ color: hasAudio ? color.text.primary : color.text.muted }}
+            >
+              {speedLabel}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleRestart}
+            disabled={!hasAudio}
+            activeOpacity={0.6}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            className="h-10 w-10 items-center justify-center rounded-full"
+            style={{ backgroundColor: hasAudio ? color.background.tertiary : 'transparent' }}
+          >
+            <RotateCcw
+              size={18}
+              color={hasAudio ? color.text.primary : color.text.muted}
+              strokeWidth={2}
+            />
+          </TouchableOpacity>
+        </View>
+      </View>
     </View>
   );
 };

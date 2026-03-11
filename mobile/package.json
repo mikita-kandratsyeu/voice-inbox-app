@@ -73,6 +73,7 @@
     "@types/jest": "^29.5.13",
     "@types/node": "^25.3.5",
     "@types/react": "^19.2.0",
+    "@types/react-native-keep-awake": "^2.0.8",
     "@types/react-test-renderer": "^19.1.0",
     "@typescript-eslint/eslint-plugin": "^8.18.0",
     "@typescript-eslint/parser": "^8.18.0",

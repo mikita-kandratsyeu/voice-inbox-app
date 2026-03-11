@@ -1,13 +1,14 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, useColorScheme, View } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import type { TranscriptionLanguage } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
 import { useRecordActions } from '@/features/record-actions';
@@ -17,6 +18,7 @@ import { getColors } from '@/shared/config';
 import { AudioPlayer } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
+import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { RecordingDetailCard } from './RecordingDetailCard';
 import { RecordingDetailHeader } from './RecordingDetailHeader';
 import { RecordingDetailTabBar } from './RecordingDetailTabBar';
@@ -34,10 +36,19 @@ export const RecordingDetailScreen = () => {
   const { records, togglePin, toggleTask } = useRecordStore();
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const globalTranscriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
 
   const liveRecord: VoiceRecord = records.find((r) => r.id === routeRecord.id) ?? routeRecord;
 
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
+  const [recordLanguage, setRecordLanguage] = useState<TranscriptionLanguage>(
+    globalTranscriptionLanguage,
+  );
+
+  useEffect(() => {
+    setRecordLanguage(globalTranscriptionLanguage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset when switching records
+  }, [routeRecord.id]);
 
   const { startTranscription, cancelTranscription } = useTranscription();
   const { generateSummary, extractTasks } = useAiProcessing();
@@ -62,7 +73,7 @@ export const RecordingDetailScreen = () => {
       return;
     }
 
-    startTranscription(liveRecord);
+    startTranscription(liveRecord, recordLanguage);
   };
 
   const handleCancelTranscription = () => {
@@ -106,6 +117,14 @@ export const RecordingDetailScreen = () => {
             duration={liveRecord.duration}
             color={color}
             audioPath={liveRecord.audioPath}
+          />
+        </View>
+
+        <View className="overflow-hidden rounded-2xl">
+          <AudioLanguageSelector
+            value={recordLanguage}
+            color={color}
+            onSelect={setRecordLanguage}
           />
         </View>
 
