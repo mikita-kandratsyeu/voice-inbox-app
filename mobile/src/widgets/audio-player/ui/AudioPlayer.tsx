@@ -256,7 +256,13 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
   const speedLabel = playbackSpeed === 1 ? '1×' : `${playbackSpeed}×`;
 
   return (
-    <View className="gap-3 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
+    <View
+      className="gap-3 rounded-2xl"
+      style={{
+        backgroundColor: color.background.card,
+        padding: 16,
+      }}
+    >
       <View className="gap-1.5">
         <View
           className="h-1 justify-center overflow-visible rounded-sm"

@@ -1,5 +1,6 @@
 import '../../global.css';
 
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { NavigationContainer } from '@react-navigation/native';
 import React, { useEffect } from 'react';
 import { AppState, type AppStateStatus, StatusBar, useColorScheme } from 'react-native';
@@ -51,17 +52,19 @@ const App = () => {
   return (
     <GestureHandlerRootView style={rootStyle}>
       <SafeAreaProvider style={safeAreaStyle}>
-        <StatusBar
-          barStyle={isDark ? 'light-content' : 'dark-content'}
-          backgroundColor={color.background.primary}
-        />
-        <NavigationContainer>
-          <OnboardingGate>
-            <AppLockGate>
-              <RootNavigator />
-            </AppLockGate>
-          </OnboardingGate>
-        </NavigationContainer>
+        <BottomSheetModalProvider>
+          <StatusBar
+            barStyle={isDark ? 'light-content' : 'dark-content'}
+            backgroundColor={color.background.primary}
+          />
+          <NavigationContainer>
+            <OnboardingGate>
+              <AppLockGate>
+                <RootNavigator />
+              </AppLockGate>
+            </OnboardingGate>
+          </NavigationContainer>
+        </BottomSheetModalProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
