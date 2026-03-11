@@ -213,7 +213,7 @@ const transcribeLong = async ({
 
     onProgress?.(i + 1, total);
 
-    await new Promise<void>(resolve => setTimeout(resolve, 100));
+    await new Promise<void>((resolve) => setTimeout(resolve, 100));
   }
 
   return { segments: allSegments, fullText };

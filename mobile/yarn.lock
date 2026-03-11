@@ -9748,6 +9748,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-haptic-feedback@npm:^2.3.3":
+  version: 2.3.3
+  resolution: "react-native-haptic-feedback@npm:2.3.3"
+  peerDependencies:
+    react-native: ">=0.60.0"
+  checksum: 10c0/de65b6a0088cf8c14b6248eddb1275233c400a52f818eda640d1475ecaa38dc059b3c37fce7f0a0bd0c33c4e1fb7537bc31fed60e94d026638993dd5d916b35e
+  languageName: node
+  linkType: hard
+
 "react-native-is-edge-to-edge@npm:1.2.1":
   version: 1.2.1
   resolution: "react-native-is-edge-to-edge@npm:1.2.1"
@@ -11591,6 +11600,7 @@ __metadata:
     react-native-dotenv: "npm:^3.4.11"
     react-native-fs: "npm:^2.20.0"
     react-native-gesture-handler: "npm:^2.30.0"
+    react-native-haptic-feedback: "npm:^2.3.3"
     react-native-keychain: "npm:^10.0.0"
     react-native-localize: "npm:^3.7.0"
     react-native-mmkv: "npm:^4.2.0"

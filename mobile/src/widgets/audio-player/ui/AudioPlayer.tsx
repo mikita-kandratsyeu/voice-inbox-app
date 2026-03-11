@@ -4,7 +4,7 @@ import { Animated, GestureResponderEvent, LayoutChangeEvent, Text, View } from '
 import AudioRecorderPlayer, { type PlayBackType } from 'react-native-audio-recorder-player';
 
 import type { Colors } from '@/shared/config';
-import { formatTime } from '@/shared/lib';
+import { formatTime, hapticSelection } from '@/shared/lib';
 import { Button } from '@/shared/ui';
 
 type AudioPlayerProps = {
@@ -103,6 +103,8 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
     if (!audioPath) {
       return;
     }
+
+    hapticSelection();
 
     if (elapsed >= totalSeconds && totalSeconds > 0) {
       await stopAndReset();

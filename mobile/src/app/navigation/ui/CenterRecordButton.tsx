@@ -4,6 +4,8 @@ import { Mic } from 'lucide-react-native';
 import React, { useRef } from 'react';
 import { Animated, TouchableOpacity, View } from 'react-native';
 
+import { hapticLight } from '@/shared/lib';
+
 import type { RootStackParamList } from '../types';
 
 type CenterRecordButtonProps = {
@@ -34,6 +36,7 @@ export const CenterRecordButton = ({ iconColor, accentColor }: CenterRecordButto
   };
 
   const handlePress = () => {
+    hapticLight();
     navigation.navigate('RecordModal');
   };
 

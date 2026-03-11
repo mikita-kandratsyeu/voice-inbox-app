@@ -13,6 +13,7 @@ import Animated, {
 import { runOnJS } from 'react-native-worklets';
 
 import { colors } from '@/shared/config';
+import { hapticMedium } from '@/shared/lib';
 
 export const SwipeableCardContext = React.createContext({ isSwiping: false });
 
@@ -90,10 +91,12 @@ export const SwipeableCard = ({
     })
     .onEnd((e: PanGestureHandlerEventPayload) => {
       if (e.translationX < -SWIPE_THRESHOLD) {
+        runOnJS(hapticMedium)();
         translateX.value = withTiming(-CARD_FLY_DISTANCE, { duration: 220 }, () => {
           action.value = 'delete';
         });
       } else if (e.translationX > SWIPE_THRESHOLD) {
+        runOnJS(hapticMedium)();
         translateX.value = withTiming(SWIPE_THRESHOLD * 1.3, { duration: 80 }, () => {
           action.value = 'pin';
         });

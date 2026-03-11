@@ -60,13 +60,6 @@ export async function postAiMessage(body: AiApiRequestBody): Promise<AiApiResult
   const deviceId = await getDeviceId();
   const url = `${WEB_API_URL}/api/messages`;
 
-  console.log('[AI] postAiMessage: request', {
-    url,
-    urlConfigured: !!WEB_API_URL,
-    id: body.id,
-    model: body.model,
-  });
-
   let response: Response;
   try {
     response = await fetch(url, {
@@ -97,7 +90,7 @@ export async function postAiMessage(body: AiApiRequestBody): Promise<AiApiResult
   }
 
   const data = (await response.json()) as AiApiSuccessResponse;
-  console.log('[AI] postAiMessage: success', { id: data.id });
+
   return { ok: true, data };
 }
 
@@ -141,8 +134,6 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
   const url = `${WEB_API_URL}/api/messages/${id}`;
   const deadline = Date.now() + POLL_TIMEOUT_MS;
 
-  console.log('[AI] pollAiMessage: start', { id });
-
   while (Date.now() < deadline) {
     await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
 
@@ -163,7 +154,6 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
     const msg = (await response.json()) as MessageResponse;
 
     if (msg.status === 'done') {
-      console.log('[AI] pollAiMessage: success', { id });
       return { ok: true, result: { summary: msg.summary, tasks: msg.tasks, tags: msg.tags ?? [] } };
     }
 
