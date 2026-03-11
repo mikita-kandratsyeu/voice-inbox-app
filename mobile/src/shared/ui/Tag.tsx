@@ -6,7 +6,7 @@ type TagProps = {
 };
 
 export const Tag = ({ label }: TagProps) => (
-  <View className="mr-2 rounded-full bg-blue-50 px-3 py-1 dark:bg-blue-950">
+  <View className="rounded-full bg-blue-50 px-3 py-1 dark:bg-blue-950">
     <Text className="text-xs font-medium text-blue-500 dark:text-blue-400">{label}</Text>
   </View>
 );
