@@ -5,8 +5,6 @@ import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { AI_PROCESSING_SYSTEM_PROMPT, pollAiMessage, postAiMessage } from '@/shared/lib/ai-api';
 
-type ProcessingType = 'summary' | 'tasks';
-
 export const useAiProcessing = () => {
   const setSummaryStatus = useRecordStore((s) => s.setSummaryStatus);
   const setTasksStatus = useRecordStore((s) => s.setTasksStatus);
@@ -18,7 +16,7 @@ export const useAiProcessing = () => {
   const inFlightRef = useRef<Set<string>>(new Set());
 
   const processRecord = useCallback(
-    async (record: VoiceRecord, type: ProcessingType): Promise<void> => {
+    async (record: VoiceRecord): Promise<void> => {
       if (!record.transcript) return;
 
       const baseId = `${record.id}-ai`;
@@ -27,8 +25,8 @@ export const useAiProcessing = () => {
         return;
       }
 
-      if (type === 'summary') setSummaryStatus(record.id, 'processing');
-      if (type === 'tasks') setTasksStatus(record.id, 'processing');
+      setSummaryStatus(record.id, 'processing');
+      setTasksStatus(record.id, 'processing');
 
       const requestId = `${baseId}-${Date.now()}`;
       inFlightRef.current.add(baseId);
@@ -42,16 +40,16 @@ export const useAiProcessing = () => {
         });
 
         if (!postResult.ok) {
-          if (type === 'summary') setSummaryStatus(record.id, 'error');
-          if (type === 'tasks') setTasksStatus(record.id, 'error');
+          setSummaryStatus(record.id, 'error');
+          setTasksStatus(record.id, 'error');
           return;
         }
 
         const pollResult = await pollAiMessage(requestId, postResult.data.syncToken);
 
         if (!pollResult.ok) {
-          if (type === 'summary') setSummaryStatus(record.id, 'error');
-          if (type === 'tasks') setTasksStatus(record.id, 'error');
+          setSummaryStatus(record.id, 'error');
+          setTasksStatus(record.id, 'error');
           return;
         }
 
@@ -68,6 +66,9 @@ export const useAiProcessing = () => {
         if (tags.length > 0) {
           await updateTags(record.id, tags);
         }
+      } catch {
+        setSummaryStatus(record.id, 'error');
+        setTasksStatus(record.id, 'error');
       } finally {
         inFlightRef.current.delete(baseId);
       }
@@ -76,12 +77,12 @@ export const useAiProcessing = () => {
   );
 
   const generateSummary = useCallback(
-    (record: VoiceRecord): Promise<void> => processRecord(record, 'summary'),
+    (record: VoiceRecord): Promise<void> => processRecord(record),
     [processRecord],
   );
 
   const extractTasks = useCallback(
-    (record: VoiceRecord): Promise<void> => processRecord(record, 'tasks'),
+    (record: VoiceRecord): Promise<void> => processRecord(record),
     [processRecord],
   );
 
