@@ -22,8 +22,11 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
     );
   }, [records, query]);
 
-  const pinned = useMemo(() => filtered.filter((r) => r.isPinned), [filtered]);
-  const all = useMemo(() => filtered.filter((r) => !r.isPinned), [filtered]);
+  const sortByDateDesc = (a: VoiceRecord, b: VoiceRecord) =>
+    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+
+  const pinned = useMemo(() => filtered.filter((r) => r.isPinned).sort(sortByDateDesc), [filtered]);
+  const all = useMemo(() => filtered.filter((r) => !r.isPinned).sort(sortByDateDesc), [filtered]);
 
   const sections = useMemo(
     () => [
