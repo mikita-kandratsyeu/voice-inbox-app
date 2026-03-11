@@ -26,8 +26,17 @@ const OPENAI_MODEL: AIModel = {
   speed: 'medium',
 };
 
+const META_LLAMA_MODEL: AIModel = {
+  id: 'meta-llama/llama-3.3-70b-instruct',
+  name: 'Llama 3.3 70B',
+  provider: 'Meta',
+  descriptionKey: 'aiModels.metaLlamaDesc',
+  speed: 'fast',
+};
+
 export const AI_MODELS: AIModel[] = [
   GEMINI_MODEL,
+  META_LLAMA_MODEL,
   OPENAI_MODEL,
   ...(APP_ENV === 'development' ? [TRINITY_MODEL] : []),
 ];

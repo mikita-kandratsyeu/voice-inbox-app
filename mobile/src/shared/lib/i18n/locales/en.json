@@ -253,6 +253,7 @@
     "trinityDesc": "Powerful model with multimodal input support",
     "geminiDesc": "Fast and efficient model for everyday tasks",
     "openaiDesc": "Compact and fast model for quick AI processing",
+    "metaLlamaDesc": "Open-source model with strong reasoning and instruction following",
     "speed": {
       "fast": "Fast",
       "medium": "Medium",

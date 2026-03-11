@@ -1,7 +1,8 @@
 export type AIModelId =
   | 'google/gemini-3.1-flash-lite-preview'
   | 'arcee-ai/trinity-large-preview:free'
-  | 'openai/gpt-5-nano';
+  | 'openai/gpt-5-nano'
+  | 'meta-llama/llama-3.3-70b-instruct';
 
 export type TranscriptionLanguage =
   | 'auto'
