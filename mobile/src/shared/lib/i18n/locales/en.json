@@ -253,8 +253,12 @@
     "description": "Choose an AI model for generating summaries and extracting tasks from transcripts. Settings apply to the next processing.",
     "trinityDesc": "Powerful model with multimodal input support",
     "geminiDesc": "Fast and efficient model for everyday tasks",
+    "geminiDesc3_1": "Latest Google model. Fast responses, good for summaries and tasks.",
+    "geminiDesc2_5": "Lightweight Google model. Quick processing, low latency.",
     "openaiDesc": "Compact and fast model for quick AI processing",
     "metaLlamaDesc": "Open-source model with strong reasoning and instruction following",
+    "deepSeekDesc": "Efficient model with strong reasoning. Good for summaries and task extraction.",
+    "mistralDesc": "Compact Mistral model. Balanced speed and quality for summaries and tasks.",
     "speed": {
       "fast": "Fast",
       "medium": "Medium",

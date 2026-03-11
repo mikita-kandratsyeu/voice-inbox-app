@@ -10,13 +10,22 @@ const TRINITY_MODEL: AIModel = {
   speed: 'medium',
 };
 
-const GEMINI_MODEL: AIModel = {
-  id: 'google/gemini-3.1-flash-lite-preview',
-  name: 'Gemini 3.1 Flash Lite',
-  provider: 'Google',
-  descriptionKey: 'aiModels.geminiDesc',
-  speed: 'fast',
-};
+const GEMINI_MODELS: AIModel[] = [
+  {
+    id: 'google/gemini-3.1-flash-lite-preview',
+    name: 'Gemini 3.1 Flash Lite',
+    provider: 'Google',
+    descriptionKey: 'aiModels.geminiDesc3_1',
+    speed: 'fast',
+  },
+  {
+    id: 'google/gemini-2.5-flash-lite',
+    name: 'Gemini 2.5 Flash Lite',
+    provider: 'Google',
+    descriptionKey: 'aiModels.geminiDesc2_5',
+    speed: 'fast',
+  },
+];
 
 const OPENAI_MODEL: AIModel = {
   id: 'openai/gpt-5-nano',
@@ -34,10 +43,30 @@ const META_LLAMA_MODEL: AIModel = {
   speed: 'fast',
 };
 
+const DEEPSEEK_MODEL: AIModel = {
+  id: 'deepseek/deepseek-v3.2',
+  name: 'DeepSeek V3.2',
+  provider: 'DeepSeek',
+  descriptionKey: 'aiModels.deepSeekDesc',
+  speed: 'medium',
+};
+
+const MISTRAL_MODELS: AIModel[] = [
+  {
+    id: 'mistralai/mistral-small-3.2-24b-instruct',
+    name: 'Mistral Small 3.2',
+    provider: 'Mistral',
+    descriptionKey: 'aiModels.mistralDesc',
+    speed: 'medium',
+  },
+];
+
 export const AI_MODELS: AIModel[] = [
-  GEMINI_MODEL,
+  ...GEMINI_MODELS,
   META_LLAMA_MODEL,
+  DEEPSEEK_MODEL,
   OPENAI_MODEL,
+  ...MISTRAL_MODELS,
   ...(APP_ENV === 'development' ? [TRINITY_MODEL] : []),
 ];
 
