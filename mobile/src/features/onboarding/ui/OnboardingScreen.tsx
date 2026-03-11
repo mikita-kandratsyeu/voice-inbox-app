@@ -33,7 +33,7 @@ type OnboardingScreenProps = {
   onComplete: () => void;
 };
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<OnboardingSlideContent>);
 
@@ -249,21 +249,9 @@ const SlideItem = ({
     return (
       <Animated.View
         style={[{ width: SCREEN_WIDTH, paddingHorizontal: 32 }, animatedStyle]}
-        className="flex-1"
+        className="flex-1 items-center justify-center"
       >
-        <Text
-          className="mb-2 mt-6 text-center text-[24px] font-bold leading-tight"
-          style={{ color: color.text.primary }}
-        >
-          {t(item.titleKey)}
-        </Text>
-        <Text
-          className="mb-4 text-center text-[16px] leading-6"
-          style={{ color: color.text.secondary }}
-        >
-          {t(item.descKey)}
-        </Text>
-        <View className="flex-1 min-h-[200px]">
+        <View style={{ width: '100%', height: SCREEN_HEIGHT * 0.6 }}>
           <OnboardingSetupStep color={color} />
         </View>
       </Animated.View>

@@ -258,7 +258,7 @@
     "transcribeDesc": "Voice-to-text conversion happens locally on your device. No servers, full privacy.",
     "aiTitle": "AI processing on demand",
     "aiDesc": "Structure your recordings with AI when needed. Voice is processed locally, text is sent over encrypted channel and never stored.",
-    "readyTitle": "Almost all set!",
+    "readyTitle": "Almost all set",
     "readyDesc": "Start recording your thoughts right now. Always at hand for your ideas.",
     "setupTitle": "Setup",
     "setupDesc": "Choose an AI model and optionally download Whisper for offline transcription.",
