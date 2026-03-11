@@ -484,6 +484,8 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           scrollX={scrollX}
           slideColors={slideColors}
           iconOnAccent={color.icon.onAccent}
+          loading={isStartingDownload}
+          disabled={isStartingDownload}
         />
       </View>
     </View>
