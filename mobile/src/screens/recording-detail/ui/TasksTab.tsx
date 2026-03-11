@@ -16,7 +16,7 @@ import type { RecordingStatus, TaskItem } from '@/entities/record';
 import { AI_MODELS, useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useNetworkStatus } from '@/shared/lib';
-import { TabEmptyState } from '@/shared/ui';
+import { Button, TabEmptyState } from '@/shared/ui';
 
 type TasksTabProps = {
   tasks: TaskItem[];
@@ -125,16 +125,16 @@ export const TasksTab = ({
           </Text>
         </Pressable>
       ))}
-      <Pressable
-        className="flex-row items-center gap-1.5 self-start pt-1"
+      <Button
+        variant="secondary"
+        size="lg"
+        icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
+        label={t('recordingDetail.reextractTasks')}
+        color={color}
         onPress={onExtract}
         disabled={isConnected === false}
-      >
-        <RefreshCw size={13} color={color.text.secondary} strokeWidth={2} />
-        <Text className="text-xs" style={{ color: color.text.secondary }}>
-          {t('recordingDetail.reextractTasks')}
-        </Text>
-      </Pressable>
+        className="mt-1"
+      />
     </View>
   );
 };

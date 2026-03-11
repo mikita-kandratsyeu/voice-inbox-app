@@ -242,6 +242,11 @@
     "aiDesc": "Structure your recordings with AI when needed. Voice is processed locally, text is sent over encrypted channel and never stored.",
     "readyTitle": "All set!",
     "readyDesc": "Start recording your thoughts right now. Always at hand for your ideas.",
+    "setupTitle": "Setup",
+    "setupDesc": "Choose an AI model and optionally download Whisper for offline transcription.",
+    "setupAiModel": "AI model",
+    "setupWhisper": "Whisper (transcription)",
+    "setupWhisperHint": "Optional — you can download later in settings.",
     "privacy": "100% Private",
     "aiPrivacy": "Your data is secure",
     "goToSlide": "Go to slide {{ index }}"

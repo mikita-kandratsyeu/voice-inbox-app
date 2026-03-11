@@ -35,6 +35,7 @@ export const colors = {
       lock: { color: '#8b5cf6', bg: '#ede9fe' },
       sparkles: { color: '#f59e0b', bg: '#fef3c7' },
       zap: { color: '#10b981', bg: '#d1fae5' },
+      setup: { color: '#6366f1', bg: '#e0e7ff' },
       privacy: { border: '#c4b5fd', text: '#6d28d9' },
       ai: { border: '#fcd34d', text: '#b45309' },
     },
@@ -85,6 +86,7 @@ export const colors = {
       lock: { color: '#8b5cf6', bg: '#ede9fe' },
       sparkles: { color: '#f59e0b', bg: '#fef3c7' },
       zap: { color: '#10b981', bg: '#d1fae5' },
+      setup: { color: '#6366f1', bg: '#e0e7ff' },
       privacy: { border: '#c4b5fd', text: '#6d28d9' },
       ai: { border: '#fcd34d', text: '#b45309' },
     },
@@ -123,6 +125,7 @@ export type Colors = {
     lock: { color: string; bg: string };
     sparkles: { color: string; bg: string };
     zap: { color: string; bg: string };
+    setup: { color: string; bg: string };
     privacy: { border: string; text: string };
     ai: { border: string; text: string };
   };

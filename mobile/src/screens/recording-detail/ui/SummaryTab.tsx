@@ -1,13 +1,13 @@
 import { AlertCircle, Cloud, FileText, Loader, RefreshCw, WifiOff } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
 import type { RecordingStatus } from '@/entities/record';
 import { AI_MODELS, useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useNetworkStatus } from '@/shared/lib';
-import { TabEmptyState } from '@/shared/ui';
+import { Button, TabEmptyState } from '@/shared/ui';
 
 type SummaryTabProps = {
   summary: string;
@@ -94,16 +94,16 @@ export const SummaryTab = ({
       <Text className="text-sm leading-6" style={{ color: color.text.primary }}>
         {summary}
       </Text>
-      <Pressable
-        className="flex-row items-center gap-1.5 self-start"
+      <Button
+        variant="secondary"
+        size="lg"
+        icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
+        label={t('recordingDetail.regenerateSummary')}
+        color={color}
         onPress={onGenerate}
         disabled={isConnected === false}
-      >
-        <RefreshCw size={13} color={color.text.secondary} strokeWidth={2} />
-        <Text className="text-xs" style={{ color: color.text.secondary }}>
-          {t('recordingDetail.regenerateSummary')}
-        </Text>
-      </Pressable>
+        className="mt-1"
+      />
     </View>
   );
 };
