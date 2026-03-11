@@ -40,6 +40,9 @@ export const TranscriptContent = ({
   const showStatusBadge =
     record.aiStatus === 'done' && (record.transcriptSegments ?? []).length > 0;
 
+  const isAiProcessing =
+    record.summaryStatus === 'processing' || record.tasksStatus === 'processing';
+
   return (
     <>
       {showStatusBadge && (
@@ -52,6 +55,7 @@ export const TranscriptContent = ({
         color={color}
         hasAudio={!!record.audioPath}
         onTranscribe={onTranscribe}
+        isAiProcessing={isAiProcessing}
       />
     </>
   );

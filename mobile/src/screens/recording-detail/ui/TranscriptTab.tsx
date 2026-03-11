@@ -13,9 +13,16 @@ type TranscriptTabProps = {
   color: Colors;
   hasAudio: boolean;
   onTranscribe: () => void;
+  isAiProcessing?: boolean;
 };
 
-export const TranscriptTab = ({ segments, color, hasAudio, onTranscribe }: TranscriptTabProps) => {
+export const TranscriptTab = ({
+  segments,
+  color,
+  hasAudio,
+  onTranscribe,
+  isAiProcessing = false,
+}: TranscriptTabProps) => {
   const { t } = useTranslation();
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelName =
@@ -33,6 +40,7 @@ export const TranscriptTab = ({ segments, color, hasAudio, onTranscribe }: Trans
         onPress={onTranscribe}
         color={color}
         hideButton={!hasAudio}
+        disabled={isAiProcessing}
       />
     );
   }
@@ -60,6 +68,7 @@ export const TranscriptTab = ({ segments, color, hasAudio, onTranscribe }: Trans
           label={t('recordingDetail.retranscribe')}
           color={color}
           onPress={onTranscribe}
+          disabled={isAiProcessing}
           className="mt-1"
         />
       )}
