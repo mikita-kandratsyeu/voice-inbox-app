@@ -174,12 +174,7 @@ const AnimatedNextButton = ({
         className="flex-1 flex-row items-center justify-center gap-2 py-3.5 px-7"
       >
         {loading ? (
-          <>
-            <ActivityIndicator size="small" color={iconOnAccent} />
-            <Text className="text-[16px] font-semibold" style={{ color: iconOnAccent }}>
-              {label}
-            </Text>
-          </>
+          <ActivityIndicator size="small" color={iconOnAccent} />
         ) : (
           <Text className="text-[16px] font-semibold" style={{ color: iconOnAccent }}>
             {label}
