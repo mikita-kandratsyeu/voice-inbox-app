@@ -24,7 +24,7 @@ export default async function PrivacyPage({ params }: Props) {
       <Header />
       <main className="relative flex-1">
         <div
-          className="absolute inset-0 -z-10 animate-gradient-pulse bg-[radial-gradient(circle_at_20%_20%,rgba(168,85,247,0.2)_0%,transparent_50%),radial-gradient(circle_at_80%_80%,rgba(236,72,153,0.2)_0%,transparent_50%)] opacity-100"
+          className="absolute inset-0 -z-10 animate-gradient-pulse bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.2)_0%,transparent_50%),radial-gradient(circle_at_80%_80%,rgba(37,99,235,0.15)_0%,transparent_50%)] opacity-100"
           aria-hidden
         />
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
@@ -38,7 +38,7 @@ export default async function PrivacyPage({ params }: Props) {
               </p>
               <Link
                 href="/"
-                className="mt-8 inline-block font-medium text-purple-500 underline transition-all duration-200 hover:opacity-90 hover:underline-offset-4"
+                className="mt-8 inline-block font-medium text-blue-500 underline transition-all duration-200 hover:opacity-90 hover:underline-offset-4"
               >
                 ← Back to home
               </Link>

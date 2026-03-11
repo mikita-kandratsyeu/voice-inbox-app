@@ -14,7 +14,7 @@ export default function OpenGraphImage(): ImageResponse {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a0a1a 100%)',
+        background: 'linear-gradient(135deg, #0a0a0a 0%, #0f172a 100%)',
         fontFamily: 'system-ui, sans-serif',
       }}
     >
@@ -50,8 +50,8 @@ export default function OpenGraphImage(): ImageResponse {
                 y2="1024"
                 gradientUnits="userSpaceOnUse"
               >
-                <stop offset="0.25" stopColor="#A855F7" />
-                <stop offset="0.75" stopColor="#EC4899" />
+                <stop offset="0.25" stopColor="#3b82f6" />
+                <stop offset="0.75" stopColor="#2563eb" />
               </linearGradient>
             </defs>
             <g clipPath="url(#rounded-corners)">
