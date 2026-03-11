@@ -23,7 +23,7 @@ const OPENAI_MODEL: AIModel = {
   name: 'GPT-5 Nano',
   provider: 'OpenAI',
   descriptionKey: 'aiModels.openaiDesc',
-  speed: 'fast',
+  speed: 'medium',
 };
 
 export const AI_MODELS: AIModel[] = [

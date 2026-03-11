@@ -11,21 +11,32 @@ type AiStatusPillProps = {
   aiStatus: RecordingStatus;
   transcriptProgress?: number;
   transcriptProgressLabel?: string;
+  summaryStatus?: RecordingStatus;
+  tasksStatus?: RecordingStatus;
   onPress: () => void;
 };
+
+const isAiProcessing = (s?: RecordingStatus) => s === 'processing';
+const isAiError = (s?: RecordingStatus) => s === 'error';
 
 export const AiStatusPill = ({
   aiStatus,
   transcriptProgress,
   transcriptProgressLabel,
+  summaryStatus,
+  tasksStatus,
   onPress,
 }: AiStatusPillProps) => {
   const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const rotation = useRef(new Animated.Value(0)).current;
 
+  const aiProcessing = isAiProcessing(summaryStatus) || isAiProcessing(tasksStatus);
+  const aiError = isAiError(summaryStatus) || isAiError(tasksStatus);
+
   useEffect(() => {
-    if (aiStatus !== 'processing') return;
+    const isProcessing = aiStatus === 'processing' || aiProcessing;
+    if (!isProcessing) return;
     const anim = Animated.loop(
       Animated.timing(rotation, {
         toValue: 1,
@@ -36,11 +47,11 @@ export const AiStatusPill = ({
     );
     anim.start();
     return () => anim.stop();
-  }, [aiStatus, rotation]);
+  }, [aiStatus, aiProcessing, rotation]);
 
   const spin = rotation.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
 
-  if (aiStatus === 'done') {
+  if (aiStatus === 'done' && !aiProcessing && !aiError) {
     return null;
   }
 
@@ -63,7 +74,25 @@ export const AiStatusPill = ({
     );
   }
 
-  if (aiStatus === 'error') {
+  if (aiProcessing) {
+    return (
+      <TouchableOpacity
+        className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
+        style={{ backgroundColor: color.status.processing.bg }}
+        onPress={onPress}
+        activeOpacity={0.75}
+      >
+        <Animated.View style={{ transform: [{ rotate: spin }] }}>
+          <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
+        </Animated.View>
+        <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
+          {t('aiStatus.aiProcessing')}
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+
+  if (aiStatus === 'error' || aiError) {
     return (
       <TouchableOpacity
         className="flex-row items-center gap-1 rounded-full px-2.5 py-1"

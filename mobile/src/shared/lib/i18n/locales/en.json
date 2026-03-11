@@ -81,6 +81,7 @@
   "aiStatus": {
     "idle": "Awaiting processing",
     "processing": "Transcribing...",
+    "aiProcessing": "Generating summary...",
     "done": "Transcript ready",
     "error": "Transcription error",
     "noTranscript": "No transcript"

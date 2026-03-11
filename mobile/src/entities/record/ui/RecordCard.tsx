@@ -34,8 +34,14 @@ export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardPr
   const textSecondaryStyle = { color: color.text.secondary };
 
   const hasTags = item.tags && item.tags.length > 0;
+  const aiProcessing = item.summaryStatus === 'processing' || item.tasksStatus === 'processing';
+  const aiError = item.summaryStatus === 'error' || item.tasksStatus === 'error';
   const showStatusPill =
-    item.aiStatus === 'processing' || item.aiStatus === 'error' || item.aiStatus === 'idle';
+    item.aiStatus === 'processing' ||
+    item.aiStatus === 'error' ||
+    item.aiStatus === 'idle' ||
+    aiProcessing ||
+    aiError;
 
   return (
     <Pressable
@@ -66,9 +72,11 @@ export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardPr
         </View>
         {showStatusPill && (
           <AiStatusPill
-            aiStatus={item.aiStatus!}
+            aiStatus={item.aiStatus ?? 'done'}
             transcriptProgress={item.transcriptProgress}
             transcriptProgressLabel={item.transcriptProgressLabel}
+            summaryStatus={item.summaryStatus}
+            tasksStatus={item.tasksStatus}
             onPress={onStatusPress}
           />
         )}
