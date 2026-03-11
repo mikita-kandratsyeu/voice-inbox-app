@@ -76,7 +76,11 @@
     "tasksError": "Failed to extract tasks",
     "tasksRetry": "Try again",
     "noTranscriptForAi": "Transcript required",
-    "noTranscriptForAiDesc": "Transcribe the recording first to use AI features."
+    "noTranscriptForAiDesc": "Transcribe the recording first to use AI features.",
+    "accessibility": {
+      "cardLabel": "Voice note {{title}}, recorded {{date}}, duration {{duration}}",
+      "tagsSuffix": ", tags: {{tags}}"
+    }
   },
   "aiStatus": {
     "idle": "Awaiting processing",

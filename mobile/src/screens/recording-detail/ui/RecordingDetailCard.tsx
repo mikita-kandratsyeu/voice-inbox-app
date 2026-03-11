@@ -14,9 +14,25 @@ type RecordingDetailCardProps = {
 };
 
 export const RecordingDetailCard = ({ record, color }: RecordingDetailCardProps) => {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateStr = record.createdAt ? formatRelativeTime(record.createdAt, i18n.language) : '';
+  const tagsStr = record.tags && record.tags.length > 0 ? record.tags.join(', ') : '';
+  const baseLabel = t('recordingDetail.accessibility.cardLabel', {
+    title: record.title,
+    date: dateStr,
+    duration: record.duration,
+  });
+  const accessibilityLabel = tagsStr
+    ? baseLabel + t('recordingDetail.accessibility.tagsSuffix', { tags: tagsStr })
+    : baseLabel;
+
   return (
-    <View className="gap-2 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
+    <View
+      className="gap-2 rounded-2xl p-4"
+      style={{ backgroundColor: color.background.card }}
+      accessibilityRole="summary"
+      accessibilityLabel={accessibilityLabel}
+    >
       <Text
         className="text-xl font-bold tracking-tight"
         style={{ color: color.text.primary }}

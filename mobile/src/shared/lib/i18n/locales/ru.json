@@ -76,7 +76,11 @@
     "tasksError": "Не удалось извлечь задачи",
     "tasksRetry": "Повторить",
     "noTranscriptForAi": "Нужен транскрипт",
-    "noTranscriptForAiDesc": "Сначала транскрибируйте запись, чтобы использовать функции ИИ."
+    "noTranscriptForAiDesc": "Сначала транскрибируйте запись, чтобы использовать функции ИИ.",
+    "accessibility": {
+      "cardLabel": "Голосовая заметка {{title}}, записана {{date}}, длительность {{duration}}",
+      "tagsSuffix": ", теги: {{tags}}"
+    }
   },
   "aiStatus": {
     "idle": "Ожидает обработки",
