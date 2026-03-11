@@ -7,19 +7,9 @@ import relativeTime from 'dayjs/plugin/relativeTime';
 dayjs.extend(duration);
 dayjs.extend(relativeTime);
 
-const getDayjsLocale = (): string => {
-  try {
-    const i18n = require('i18next').default;
-    const lang = i18n?.language ?? 'en';
-    return lang.startsWith('ru') ? 'ru' : 'en';
-  } catch {
-    return 'en';
-  }
-};
-
-export const formatRelativeTime = (isoDate: string): string => {
-  const locale = getDayjsLocale();
-  const date = dayjs(isoDate).locale(locale);
+export const formatRelativeTime = (isoDate: string, locale = 'en'): string => {
+  const dayjsLocale = locale.startsWith('ru') ? 'ru' : 'en';
+  const date = dayjs(isoDate).locale(dayjsLocale);
 
   if (!date.isValid()) {
     return '';
@@ -31,12 +21,12 @@ export const formatRelativeTime = (isoDate: string): string => {
     return date.fromNow();
   }
 
-  return formatShortDate(isoDate);
+  return formatShortDate(isoDate, locale);
 };
 
-export const formatShortDate = (isoDate: string): string => {
-  const locale = getDayjsLocale();
-  const date = dayjs(isoDate).locale(locale);
+export const formatShortDate = (isoDate: string, locale = 'en'): string => {
+  const dayjsLocale = locale.startsWith('ru') ? 'ru' : 'en';
+  const date = dayjs(isoDate).locale(dayjsLocale);
 
   if (!date.isValid()) {
     return isoDate;

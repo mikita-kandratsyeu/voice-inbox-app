@@ -14,7 +14,7 @@ type RecordingDetailCardProps = {
 };
 
 export const RecordingDetailCard = ({ record, color }: RecordingDetailCardProps) => {
-  useTranslation(); // subscribe to language changes so formatRelativeTime re-runs
+  const { i18n } = useTranslation();
   return (
     <View className="gap-2 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
       <Text
@@ -34,7 +34,7 @@ export const RecordingDetailCard = ({ record, color }: RecordingDetailCardProps)
       )}
       {record.createdAt && (
         <Text className="mt-0.5 text-xs" style={{ color: color.text.secondary }}>
-          {formatRelativeTime(record.createdAt)}
+          {formatRelativeTime(record.createdAt, i18n.language)}
         </Text>
       )}
     </View>
