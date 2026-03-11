@@ -1,7 +1,7 @@
 import { AlertCircle, CheckCircle2, Loader, MicOff } from 'lucide-react-native';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Animated, Easing, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 import { getColors } from '@/shared/config';
 
@@ -15,6 +15,23 @@ type AiStatusPillProps = {
 export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
   const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const rotation = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (aiStatus !== 'processing') return;
+    const anim = Animated.loop(
+      Animated.timing(rotation, {
+        toValue: 1,
+        duration: 1000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
+    );
+    anim.start();
+    return () => anim.stop();
+  }, [aiStatus, rotation]);
+
+  const spin = rotation.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
 
   if (aiStatus === 'done') {
     return (
@@ -36,7 +53,9 @@ export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
         onPress={onPress}
         activeOpacity={0.75}
       >
-        <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
+        <Animated.View style={{ transform: [{ rotate: spin }] }}>
+          <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
+        </Animated.View>
         <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
           {t('aiStatus.processing')}
         </Text>
