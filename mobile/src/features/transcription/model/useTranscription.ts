@@ -3,7 +3,8 @@ import { useCallback, useRef } from 'react';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
-import { i18n } from '@/shared/lib';
+import { useAiProcessing } from '@/features/ai-processing';
+import { i18n, useNetworkStatus } from '@/shared/lib';
 
 import { getWhisperContext } from '../lib/initWhisper';
 import { transcribeAudio } from '../lib/transcribeAudio';
@@ -14,6 +15,9 @@ export const useTranscription = () => {
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const transcriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
+  const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
+  const { isConnected } = useNetworkStatus();
+  const { processRecord } = useAiProcessing();
 
   const stopRef = useRef<(() => Promise<void>) | null>(null);
 
@@ -67,6 +71,14 @@ export const useTranscription = () => {
         }
 
         await updateTranscript(record.id, fullText, segments);
+
+        if (autoAiAfterTranscription && isConnected) {
+          processRecord({
+            ...record,
+            transcript: fullText,
+            transcriptSegments: segments,
+          }).catch(() => {});
+        }
       } catch (err) {
         stopRef.current = null;
 
@@ -87,6 +99,9 @@ export const useTranscription = () => {
       selectedWhisperModel,
       whisperModelStatuses,
       transcriptionLanguage,
+      autoAiAfterTranscription,
+      isConnected,
+      processRecord,
       updateAiStatus,
       updateTranscript,
     ],

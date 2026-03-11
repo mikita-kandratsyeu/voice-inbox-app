@@ -150,7 +150,8 @@
     "aiProcessing": "ИИ обработка",
     "aiModel": "ИИ модель",
     "transcription": "Транскрипция",
-    "autoTranscribeOnSave": "Авто-транскрипция после записи",
+    "autoTranscribeOnSave": "Транскрибировать автоматически",
+    "autoAiAfterTranscription": "Авто-сводка после транскрипции",
     "device": "Устройство",
     "appLock": "Блокировка приложения",
     "offlineStorage": "Офлайн хранилище",
@@ -318,6 +319,7 @@
     "addToCalendar": "Добавить в Календарь",
     "addToReminder": "Добавить в Напоминания",
     "addAllToReminders": "Добавить все в Напоминания",
+    "addAllShort": "В Напоминания",
     "addedToCalendar": "Добавлено в Календарь",
     "addedToReminders": "Добавлено в Напоминания",
     "permissionDenied": "Доступ запрещён. Включите в Настройках."

@@ -106,5 +106,5 @@ export const useAiProcessing = () => {
     [processRecord],
   );
 
-  return { generateSummary, extractTasks };
+  return { generateSummary, extractTasks, processRecord };
 };

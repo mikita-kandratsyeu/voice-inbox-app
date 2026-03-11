@@ -53,6 +53,7 @@ export type SettingsState = {
   selectedWhisperModel: WhisperModelId;
   transcriptionLanguage: TranscriptionLanguage;
   autoTranscribeOnSave: boolean;
+  autoAiAfterTranscription: boolean;
   whisperModelStatuses: Partial<Record<WhisperModelId, WhisperModelStatus>>;
   whisperDownloadProgress: Partial<Record<WhisperModelId, number>>;
   whisperDownloadBytes: Partial<Record<WhisperModelId, DownloadBytes>>;
@@ -60,6 +61,7 @@ export type SettingsState = {
   setWhisperModel: (id: WhisperModelId) => void;
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;
   setAutoTranscribeOnSave: (value: boolean) => void;
+  setAutoAiAfterTranscription: (value: boolean) => void;
   setWhisperModelStatus: (id: WhisperModelId, status: WhisperModelStatus) => void;
   setDownloadProgress: (
     id: WhisperModelId,

@@ -182,33 +182,34 @@ export const TasksTab = ({
           </View>
         );
       })}
-      <Button
-        variant="secondary"
-        size="lg"
-        icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
-        label={t('recordingDetail.reextractTasks')}
-        color={color}
-        onPress={onExtract}
-        disabled={isConnected === false}
-        className="mt-1"
-      />
-      <Button
-        variant="secondary"
-        size="lg"
-        icon={<Bell size={15} color={color.text.primary} strokeWidth={2} />}
-        label={t('tasks.addAllToReminders')}
-        color={color}
-        onPress={async () => {
-          let added = 0;
-          for (const task of tasks) {
-            const ok = await addTaskToReminder(task, recordTitle, undefined, showPermissionAlert);
-            if (!ok) break;
-            added++;
-          }
-          if (added > 0) Alert.alert(t('tasks.addedToReminders'));
-        }}
-        className="mt-1"
-      />
+      <View className="mt-4 flex-row items-center justify-between gap-3">
+        <Button
+          variant="ghost"
+          size="md"
+          icon={<RefreshCw size={16} color={color.text.secondary} strokeWidth={2} />}
+          label={t('recordingDetail.reextractTasks')}
+          color={color}
+          onPress={onExtract}
+          disabled={isConnected === false}
+        />
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Bell size={16} color={color.icon.onAccent} strokeWidth={2} />}
+          label={t('tasks.addAllShort')}
+          color={color}
+          onPress={async () => {
+            let added = 0;
+            for (const task of tasks) {
+              const ok = await addTaskToReminder(task, recordTitle, undefined, showPermissionAlert);
+              if (!ok) break;
+              added++;
+            }
+            if (added > 0) Alert.alert(t('tasks.addedToReminders'));
+          }}
+          containerStyle={{ minWidth: 140 }}
+        />
+      </View>
     </View>
   );
 };

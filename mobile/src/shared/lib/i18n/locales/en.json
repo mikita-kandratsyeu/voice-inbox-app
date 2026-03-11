@@ -150,7 +150,8 @@
     "aiProcessing": "AI processing",
     "aiModel": "AI model",
     "transcription": "Transcription",
-    "autoTranscribeOnSave": "Auto-transcribe after recording",
+    "autoTranscribeOnSave": "Transcribe automatically",
+    "autoAiAfterTranscription": "Auto-summary after transcription",
     "device": "Device",
     "appLock": "App lock",
     "offlineStorage": "Offline storage",
@@ -318,6 +319,7 @@
     "addToCalendar": "Add to Calendar",
     "addToReminder": "Add to Reminders",
     "addAllToReminders": "Add all to Reminders",
+    "addAllShort": "Add all",
     "addedToCalendar": "Added to Calendar",
     "addedToReminders": "Added to Reminders",
     "permissionDenied": "Permission denied. Enable access in Settings."
