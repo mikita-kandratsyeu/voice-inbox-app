@@ -58,10 +58,18 @@ async function getDeviceId(): Promise<string> {
 
 export async function postAiMessage(body: AiApiRequestBody): Promise<AiApiResult> {
   const deviceId = await getDeviceId();
+  const url = `${WEB_API_URL}/api/messages`;
+
+  console.log('[AI] postAiMessage: request', {
+    url,
+    urlConfigured: !!WEB_API_URL,
+    id: body.id,
+    model: body.model,
+  });
 
   let response: Response;
   try {
-    response = await fetch(`${WEB_API_URL}/api/messages`, {
+    response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -71,20 +79,25 @@ export async function postAiMessage(body: AiApiRequestBody): Promise<AiApiResult
       body: JSON.stringify(body),
     });
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : 'Network error' };
+    const errorMsg = err instanceof Error ? err.message : 'Network error';
+    console.warn('[AI] postAiMessage: fetch failed', { error: errorMsg, url });
+    return { ok: false, error: errorMsg };
   }
 
   if (response.status === 429) {
     const json = (await response.json()) as AiApiLimitResponse;
+    console.warn('[AI] postAiMessage: limit exceeded', json.usage);
     return { ok: false, limitExceeded: true, usage: json.usage };
   }
 
   if (!response.ok) {
     const text = await response.text();
+    console.warn('[AI] postAiMessage: HTTP error', { status: response.status, body: text });
     return { ok: false, error: text || `HTTP ${response.status}` };
   }
 
   const data = (await response.json()) as AiApiSuccessResponse;
+  console.log('[AI] postAiMessage: success', { id: data.id });
   return { ok: true, data };
 }
 
@@ -125,32 +138,41 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
     headers['x-upstash-sync-token'] = syncToken;
   }
 
+  const url = `${WEB_API_URL}/api/messages/${id}`;
   const deadline = Date.now() + POLL_TIMEOUT_MS;
+
+  console.log('[AI] pollAiMessage: start', { id });
 
   while (Date.now() < deadline) {
     await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
 
     let response: Response;
     try {
-      response = await fetch(`${WEB_API_URL}/api/messages/${id}`, { headers });
-    } catch {
+      response = await fetch(url, { headers });
+    } catch (err) {
+      console.warn('[AI] pollAiMessage: fetch failed', { id, error: String(err) });
       continue;
     }
 
     if (!response.ok) {
+      const text = await response.text();
+      console.warn('[AI] pollAiMessage: HTTP error', { id, status: response.status, body: text });
       continue;
     }
 
     const msg = (await response.json()) as MessageResponse;
 
     if (msg.status === 'done') {
+      console.log('[AI] pollAiMessage: success', { id });
       return { ok: true, result: { summary: msg.summary, tasks: msg.tasks, tags: msg.tags ?? [] } };
     }
 
     if (msg.status === 'error') {
+      console.warn('[AI] pollAiMessage: server error', { id, error: msg.error });
       return { ok: false, error: msg.error };
     }
   }
 
+  console.warn('[AI] pollAiMessage: timeout', { id });
   return { ok: false, error: 'Timeout waiting for AI result' };
 }

@@ -40,6 +40,15 @@ export const useAiProcessing = () => {
         });
 
         if (!postResult.ok) {
+          const errorMsg =
+            'limitExceeded' in postResult && postResult.limitExceeded
+              ? 'Limit exceeded'
+              : postResult.error;
+          console.warn('[AI] processRecord: postAiMessage failed', {
+            recordId: record.id,
+            error: errorMsg,
+            limitExceeded: 'limitExceeded' in postResult && postResult.limitExceeded,
+          });
           setSummaryStatus(record.id, 'error');
           setTasksStatus(record.id, 'error');
           return;
@@ -48,6 +57,11 @@ export const useAiProcessing = () => {
         const pollResult = await pollAiMessage(requestId, postResult.data.syncToken);
 
         if (!pollResult.ok) {
+          console.warn('[AI] processRecord: pollAiMessage failed', {
+            recordId: record.id,
+            requestId,
+            error: pollResult.error,
+          });
           setSummaryStatus(record.id, 'error');
           setTasksStatus(record.id, 'error');
           return;
@@ -66,7 +80,11 @@ export const useAiProcessing = () => {
         if (tags.length > 0) {
           await updateTags(record.id, tags);
         }
-      } catch {
+      } catch (err) {
+        console.warn('[AI] processRecord: unexpected error', {
+          recordId: record.id,
+          error: err instanceof Error ? err.message : String(err),
+        });
         setSummaryStatus(record.id, 'error');
         setTasksStatus(record.id, 'error');
       } finally {
