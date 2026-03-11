@@ -294,7 +294,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
       </View>
 
       <View className="flex-row items-center justify-between" style={{ minHeight: 48 }}>
-        <View className="flex-row items-center gap-1">
+        <View className="flex-row items-center gap-2.5">
           <TouchableOpacity
             onPress={handleSkipBack}
             disabled={!hasAudio}
@@ -344,7 +344,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
             />
           </TouchableOpacity>
         </View>
-        <View className="flex-row items-center gap-1.5">
+        <View className="flex-row items-center gap-2.5">
           <TouchableOpacity
             onPress={handleCycleSpeed}
             disabled={!hasAudio}
