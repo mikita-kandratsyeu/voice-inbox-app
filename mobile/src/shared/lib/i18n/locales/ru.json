@@ -64,9 +64,19 @@
     "summaryNotCreated": "Сводка не создана",
     "summaryNotCreatedDesc": "Нажмите кнопку ниже, чтобы\nсоздать краткую сводку с помощью ИИ.",
     "generateSummary": "Создать сводку",
+    "regenerateSummary": "Пересоздать",
+    "summaryProcessing": "Создание сводки...",
+    "summaryError": "Не удалось создать сводку",
+    "summaryRetry": "Повторить",
     "tasksNotExtracted": "Задачи не извлечены",
     "tasksNotExtractedDesc": "Нажмите кнопку ниже, чтобы\nавтоматически найти задачи с помощью ИИ.",
-    "extractTasks": "Найти задачи"
+    "extractTasks": "Найти задачи",
+    "reextractTasks": "Переизвлечь",
+    "tasksProcessing": "Извлечение задач...",
+    "tasksError": "Не удалось извлечь задачи",
+    "tasksRetry": "Повторить",
+    "noTranscriptForAi": "Нужен транскрипт",
+    "noTranscriptForAiDesc": "Сначала транскрибируйте запись, чтобы использовать функции ИИ."
   },
   "aiStatus": {
     "idle": "Ожидает обработки",

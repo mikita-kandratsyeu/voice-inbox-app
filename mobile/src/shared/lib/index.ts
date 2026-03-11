@@ -1,3 +1,5 @@
+export type { AiApiResult, AiMessageResult, AiProcessingResult, AiTask } from './ai-api';
+export { AI_PROCESSING_SYSTEM_PROMPT, pollAiMessage, postAiMessage } from './ai-api';
 export type { StorageStats } from './async-storage';
 export { clearCache, getStorageStats, storage } from './async-storage';
 export type { AudioChunk } from './audio';

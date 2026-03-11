@@ -1,8 +1,9 @@
-import { Cloud, FileText, WifiOff } from 'lucide-react-native';
+import { AlertCircle, Cloud, FileText, Loader, RefreshCw, WifiOff } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
+import type { RecordingStatus } from '@/entities/record';
 import { AI_MODELS, useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useNetworkStatus } from '@/shared/lib';
@@ -10,15 +11,59 @@ import { TabEmptyState } from '@/shared/ui';
 
 type SummaryTabProps = {
   summary: string;
+  status: RecordingStatus;
+  hasTranscript?: boolean;
   color: Colors;
   onGenerate: () => void;
 };
 
-export const SummaryTab = ({ summary, color, onGenerate }: SummaryTabProps) => {
+export const SummaryTab = ({
+  summary,
+  status,
+  hasTranscript = true,
+  color,
+  onGenerate,
+}: SummaryTabProps) => {
   const { t } = useTranslation();
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const aiModelName = AI_MODELS.find((m) => m.id === selectedAIModel)?.name ?? selectedAIModel;
   const { isConnected } = useNetworkStatus();
+
+  if (status === 'processing') {
+    return (
+      <View className="items-center gap-3 p-8">
+        <ActivityIndicator color={color.accent.primary} />
+        <Text className="text-sm" style={{ color: color.text.secondary }}>
+          {t('recordingDetail.summaryProcessing')}
+        </Text>
+      </View>
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <TabEmptyState
+        icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
+        title={t('recordingDetail.summaryError')}
+        description=""
+        buttonLabel={t('recordingDetail.summaryRetry')}
+        buttonIcon={<Loader size={18} color="#fff" strokeWidth={2} />}
+        onPress={onGenerate}
+        color={color}
+      />
+    );
+  }
+
+  if (!hasTranscript) {
+    return (
+      <TabEmptyState
+        icon={<FileText size={28} color={color.icon.muted} strokeWidth={1.8} />}
+        title={t('recordingDetail.noTranscriptForAi')}
+        description={t('recordingDetail.noTranscriptForAiDesc')}
+        color={color}
+      />
+    );
+  }
 
   if (!summary) {
     const hintIcon =
@@ -49,6 +94,16 @@ export const SummaryTab = ({ summary, color, onGenerate }: SummaryTabProps) => {
       <Text className="text-sm leading-6" style={{ color: color.text.primary }}>
         {summary}
       </Text>
+      <Pressable
+        className="flex-row items-center gap-1.5 self-start"
+        onPress={onGenerate}
+        disabled={isConnected === false}
+      >
+        <RefreshCw size={13} color={color.text.secondary} strokeWidth={2} />
+        <Text className="text-xs" style={{ color: color.text.secondary }}>
+          {t('recordingDetail.regenerateSummary')}
+        </Text>
+      </Pressable>
     </View>
   );
 };

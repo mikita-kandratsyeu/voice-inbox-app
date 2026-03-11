@@ -64,9 +64,19 @@
     "summaryNotCreated": "Summary not created",
     "summaryNotCreatedDesc": "Tap the button below to\ncreate a brief summary using AI.",
     "generateSummary": "Generate summary",
+    "regenerateSummary": "Regenerate",
+    "summaryProcessing": "Generating summary...",
+    "summaryError": "Failed to generate summary",
+    "summaryRetry": "Try again",
     "tasksNotExtracted": "Tasks not extracted",
     "tasksNotExtractedDesc": "Tap the button below to\nautomatically find tasks using AI.",
-    "extractTasks": "Find tasks"
+    "extractTasks": "Find tasks",
+    "reextractTasks": "Re-extract",
+    "tasksProcessing": "Extracting tasks...",
+    "tasksError": "Failed to extract tasks",
+    "tasksRetry": "Try again",
+    "noTranscriptForAi": "Transcript required",
+    "noTranscriptForAiDesc": "Transcribe the recording first to use AI features."
   },
   "aiStatus": {
     "idle": "Awaiting processing",

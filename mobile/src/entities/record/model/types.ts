@@ -20,7 +20,9 @@ export type VoiceRecord = {
   transcript: string;
   transcriptSegments?: TranscriptSegment[];
   summary?: string;
+  summaryStatus?: RecordingStatus;
   tasks?: TaskItem[];
+  tasksStatus?: RecordingStatus;
   duration: string;
   durationMs?: number;
   createdAt: string;

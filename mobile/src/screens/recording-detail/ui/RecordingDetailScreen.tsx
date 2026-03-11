@@ -6,9 +6,10 @@ import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, useColorScheme, View } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
-import type { TaskItem, VoiceRecord } from '@/entities/record';
+import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { useAiProcessing } from '@/features/ai-processing';
 import { useRecordActions } from '@/features/record-actions';
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
@@ -30,23 +31,23 @@ export const RecordingDetailScreen = () => {
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
 
   const { record: routeRecord } = route.params;
-  const { records, togglePin } = useRecordStore();
+  const { records, togglePin, toggleTask } = useRecordStore();
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
 
   const liveRecord: VoiceRecord = records.find((r) => r.id === routeRecord.id) ?? routeRecord;
 
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
-  const [localTasks, setLocalTasks] = useState<TaskItem[]>(liveRecord.tasks ?? []);
 
   const { startTranscription, cancelTranscription } = useTranscription();
+  const { generateSummary, extractTasks } = useAiProcessing();
   const { shareRecord } = useShareRecord();
   const { promptRename, promptDelete } = useRecordActions({
     onDeleted: () => navigation.goBack(),
   });
 
-  const handleToggleTask = (id: string) => {
-    setLocalTasks((prev) => prev.map((t) => (t.id === id ? { ...t, isDone: !t.isDone } : t)));
+  const handleToggleTask = (taskId: string) => {
+    toggleTask(liveRecord.id, taskId).catch(() => {});
   };
 
   const handleRetranscribe = () => {
@@ -69,11 +70,11 @@ export const RecordingDetailScreen = () => {
   };
 
   const handleGenerateSummary = () => {
-    // placeholder — will call AI API in the future
+    generateSummary(liveRecord).catch(() => {});
   };
 
   const handleExtractTasks = () => {
-    // placeholder — will call AI API in the future
+    extractTasks(liveRecord).catch(() => {});
   };
 
   const handleShare = () => {
@@ -124,13 +125,17 @@ export const RecordingDetailScreen = () => {
           {activeTab === 'summary' && (
             <SummaryTab
               summary={liveRecord.summary ?? ''}
+              status={liveRecord.summaryStatus ?? 'idle'}
+              hasTranscript={Boolean(liveRecord.transcript)}
               color={color}
               onGenerate={handleGenerateSummary}
             />
           )}
           {activeTab === 'tasks' && (
             <TasksTab
-              tasks={localTasks}
+              tasks={liveRecord.tasks ?? []}
+              status={liveRecord.tasksStatus ?? 'idle'}
+              hasTranscript={Boolean(liveRecord.transcript)}
               color={color}
               onToggle={handleToggleTask}
               onExtract={handleExtractTasks}

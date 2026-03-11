@@ -130,4 +130,19 @@ export const recordRepository = {
       })
       .where(eq(recordsTable.id, id));
   },
+
+  updateSummary: async (id: string, summary: string): Promise<void> => {
+    logDb('updateSummary', { id });
+    const db = getDB();
+    await db.update(recordsTable).set({ summary }).where(eq(recordsTable.id, id));
+  },
+
+  updateTasks: async (id: string, tasks: TaskItem[]): Promise<void> => {
+    logDb('updateTasks', { id, count: tasks.length });
+    const db = getDB();
+    await db
+      .update(recordsTable)
+      .set({ tasks: JSON.stringify(tasks) })
+      .where(eq(recordsTable.id, id));
+  },
 };
