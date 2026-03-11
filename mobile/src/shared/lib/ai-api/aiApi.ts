@@ -37,6 +37,7 @@ export type AiTask = {
 export type AiProcessingResult = {
   summary: string;
   tasks: AiTask[];
+  tags: string[];
 };
 
 export type AiMessageResult =
@@ -48,7 +49,7 @@ const POLL_TIMEOUT_MS = 120_000;
 
 type MessageResponse =
   | { id: string; status: 'processing' }
-  | { id: string; status: 'done'; summary: string; tasks: AiTask[] }
+  | { id: string; status: 'done'; summary: string; tasks: AiTask[]; tags: string[] }
   | { id: string; status: 'error'; error: string };
 
 async function getDeviceId(): Promise<string> {
@@ -112,7 +113,7 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
     const msg = (await response.json()) as MessageResponse;
 
     if (msg.status === 'done') {
-      return { ok: true, result: { summary: msg.summary, tasks: msg.tasks } };
+      return { ok: true, result: { summary: msg.summary, tasks: msg.tasks, tags: msg.tags ?? [] } };
     }
 
     if (msg.status === 'error') {

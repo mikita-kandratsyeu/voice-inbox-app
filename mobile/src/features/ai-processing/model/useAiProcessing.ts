@@ -12,6 +12,7 @@ export const useAiProcessing = () => {
   const setTasksStatus = useRecordStore((s) => s.setTasksStatus);
   const updateSummary = useRecordStore((s) => s.updateSummary);
   const updateTasks = useRecordStore((s) => s.updateTasks);
+  const updateTags = useRecordStore((s) => s.updateTags);
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
 
   const inFlightRef = useRef<Set<string>>(new Set());
@@ -54,7 +55,7 @@ export const useAiProcessing = () => {
           return;
         }
 
-        const { summary, tasks: rawTasks } = pollResult.result;
+        const { summary, tasks: rawTasks, tags } = pollResult.result;
 
         const taskItems: TaskItem[] = rawTasks.map((t, index) => ({
           id: `${record.id}-task-${index}`,
@@ -64,11 +65,14 @@ export const useAiProcessing = () => {
 
         await updateSummary(record.id, summary);
         await updateTasks(record.id, taskItems);
+        if (tags.length > 0) {
+          await updateTags(record.id, tags);
+        }
       } finally {
         inFlightRef.current.delete(baseId);
       }
     },
-    [selectedAIModel, setSummaryStatus, setTasksStatus, updateSummary, updateTasks],
+    [selectedAIModel, setSummaryStatus, setTasksStatus, updateSummary, updateTasks, updateTags],
   );
 
   const generateSummary = useCallback(

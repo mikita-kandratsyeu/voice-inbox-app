@@ -19,24 +19,13 @@ export const InboxScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { records, deleteRecord, togglePin, isLoaded, updateAiStatus } = useRecordStore();
+  const { records, deleteRecord, togglePin, isLoaded } = useRecordStore();
 
   const { query, setQuery, sections, filtered, isSearching } = useSearchRecords(records);
 
   const handleStatusPress = (item: VoiceRecord) => {
-    switch (item.aiStatus) {
-      case 'idle':
-        console.warn(updateAiStatus);
-        break;
-      case 'processing':
-        navigation.navigate('RecordingDetail', { record: item });
-        break;
-      case 'error':
-        console.warn(updateAiStatus);
-        break;
-      case 'done':
-        navigation.navigate('RecordingDetail', { record: item });
-        break;
+    if (item.aiStatus === 'processing' || item.aiStatus === 'error' || item.aiStatus === 'idle') {
+      navigation.navigate('RecordingDetail', { record: item });
     }
   };
 

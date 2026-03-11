@@ -28,6 +28,7 @@ type RecordStore = {
   setTasksStatus: (id: string, status: RecordingStatus) => void;
   updateSummary: (id: string, summary: string) => Promise<void>;
   updateTasks: (id: string, tasks: TaskItem[]) => Promise<void>;
+  updateTags: (id: string, tags: string[]) => Promise<void>;
   toggleTask: (id: string, taskId: string) => Promise<void>;
 };
 
@@ -141,6 +142,13 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     await recordRepository.updateTasks(id, tasks);
     set((s) => ({
       records: s.records.map((r) => (r.id === id ? { ...r, tasks, tasksStatus: 'done' } : r)),
+    }));
+  },
+
+  updateTags: async (id, tags) => {
+    await recordRepository.updateTags(id, tags);
+    set((s) => ({
+      records: s.records.map((r) => (r.id === id ? { ...r, tags } : r)),
     }));
   },
 

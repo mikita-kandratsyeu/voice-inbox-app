@@ -145,4 +145,13 @@ export const recordRepository = {
       .set({ tasks: JSON.stringify(tasks) })
       .where(eq(recordsTable.id, id));
   },
+
+  updateTags: async (id: string, tags: string[]): Promise<void> => {
+    logDb('updateTags', { id, count: tags.length });
+    const db = getDB();
+    await db
+      .update(recordsTable)
+      .set({ tags: JSON.stringify(tags) })
+      .where(eq(recordsTable.id, id));
+  },
 };

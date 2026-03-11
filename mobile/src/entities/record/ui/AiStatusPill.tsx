@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2, Loader, MicOff } from 'lucide-react-native';
+import { AlertCircle, Loader, MicOff } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, Easing, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
@@ -9,10 +9,17 @@ import type { RecordingStatus } from '../model/types';
 
 type AiStatusPillProps = {
   aiStatus: RecordingStatus;
+  transcriptProgress?: number;
+  transcriptProgressLabel?: string;
   onPress: () => void;
 };
 
-export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
+export const AiStatusPill = ({
+  aiStatus,
+  transcriptProgress,
+  transcriptProgressLabel,
+  onPress,
+}: AiStatusPillProps) => {
   const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const rotation = useRef(new Animated.Value(0)).current;
@@ -34,15 +41,7 @@ export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
   const spin = rotation.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
 
   if (aiStatus === 'done') {
-    return (
-      <TouchableOpacity
-        onPress={onPress}
-        activeOpacity={0.7}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <CheckCircle2 size={20} color={color.status.success} strokeWidth={2} />
-      </TouchableOpacity>
-    );
+    return null;
   }
 
   if (aiStatus === 'processing') {
@@ -57,7 +56,8 @@ export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
           <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
         </Animated.View>
         <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
-          {t('aiStatus.processing')}
+          {transcriptProgressLabel ??
+            (transcriptProgress != null ? `${transcriptProgress}%` : t('aiStatus.processing'))}
         </Text>
       </TouchableOpacity>
     );

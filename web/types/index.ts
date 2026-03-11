@@ -7,6 +7,7 @@ export type AiResult = {
     priority: 'high' | 'medium' | 'low';
     deadline: string | null;
   }>;
+  tags: string[];
 };
 
 export type Message =
@@ -16,5 +17,6 @@ export type Message =
       status: 'done';
       summary: string;
       tasks: AiResult['tasks'];
+      tags: string[];
     }
   | { id: string; status: 'error'; error: string };

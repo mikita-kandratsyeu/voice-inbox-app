@@ -34,7 +34,8 @@ export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardPr
   const textSecondaryStyle = { color: color.text.secondary };
 
   const hasTags = item.tags && item.tags.length > 0;
-  const showBottomRow = hasTags || !!item.aiStatus;
+  const showStatusPill =
+    item.aiStatus === 'processing' || item.aiStatus === 'error' || item.aiStatus === 'idle';
 
   return (
     <Pressable
@@ -63,6 +64,14 @@ export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardPr
             {item.title}
           </Text>
         </View>
+        {showStatusPill && (
+          <AiStatusPill
+            aiStatus={item.aiStatus!}
+            transcriptProgress={item.transcriptProgress}
+            transcriptProgressLabel={item.transcriptProgressLabel}
+            onPress={onStatusPress}
+          />
+        )}
       </View>
 
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
@@ -81,14 +90,11 @@ export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardPr
           {item.transcript}
         </Text>
       )}
-      {showBottomRow && (
-        <View
-          style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
-            {hasTags ? item.tags!.map((tag) => <Tag key={tag} label={tag} />) : null}
-          </View>
-          {item.aiStatus ? <AiStatusPill aiStatus={item.aiStatus} onPress={onStatusPress} /> : null}
+      {hasTags && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
+          {item.tags!.map((tag) => (
+            <Tag key={tag} label={tag} />
+          ))}
         </View>
       )}
     </Pressable>
