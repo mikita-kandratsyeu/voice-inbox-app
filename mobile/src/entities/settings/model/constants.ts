@@ -18,8 +18,17 @@ const GEMINI_MODEL: AIModel = {
   speed: 'fast',
 };
 
+const OPENAI_MODEL: AIModel = {
+  id: 'openai/gpt-5-nano',
+  name: 'GPT-5 Nano',
+  provider: 'OpenAI',
+  descriptionKey: 'aiModels.openaiDesc',
+  speed: 'medium',
+};
+
 export const AI_MODELS: AIModel[] = [
   GEMINI_MODEL,
+  OPENAI_MODEL,
   ...(APP_ENV === 'development' ? [TRINITY_MODEL] : []),
 ];
 
@@ -62,16 +71,6 @@ export const WHISPER_MODELS: WhisperModel[] = [
     sizeMb: 1500,
     accuracy: 'high',
     speed: 'slow',
-    status: 'not_downloaded',
-  },
-  {
-    id: 'whisper-large-v3',
-    name: 'Large v3',
-    description: 'Максимальное качество, поддержка 99 языков',
-    sizeLabel: '3.1 ГБ',
-    sizeMb: 3100,
-    accuracy: 'very_high',
-    speed: 'very_slow',
     status: 'not_downloaded',
   },
 ];

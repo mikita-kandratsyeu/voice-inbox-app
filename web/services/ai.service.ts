@@ -61,9 +61,16 @@ async function callOpenRouter(
     };
   });
 
+  const rawTags = 'tags' in parsed && Array.isArray(parsed.tags) ? parsed.tags : [];
+  const tags = rawTags
+    .filter((tag: unknown) => typeof tag === 'string')
+    .map((tag: string) => tag.trim().toLowerCase())
+    .filter(Boolean) as string[];
+
   return {
     summary: String(parsed.summary),
     tasks,
+    tags,
   };
 }
 

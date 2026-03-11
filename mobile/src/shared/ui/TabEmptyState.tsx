@@ -9,13 +9,13 @@ type TabEmptyStateProps = {
   icon: React.ReactNode;
   title: string;
   description: string;
-  buttonLabel: string;
-  buttonIcon: React.ReactNode;
-  hint: string;
+  buttonLabel?: string;
+  buttonIcon?: React.ReactNode;
+  hint?: string;
   hintIcon?: React.ReactNode;
   disabled?: boolean;
   hideButton?: boolean;
-  onPress: () => void;
+  onPress?: () => void;
   color: Colors;
 };
 
@@ -48,7 +48,7 @@ export const TabEmptyState = ({
     <Text className="text-center text-sm leading-5" style={{ color: color.text.secondary }}>
       {description}
     </Text>
-    {!hideButton && (
+    {!hideButton && buttonLabel && onPress && (
       <Button
         variant="primary"
         size="lg"
@@ -61,11 +61,13 @@ export const TabEmptyState = ({
         className="mt-2"
       />
     )}
-    <View className="flex-row items-center gap-1">
-      {hintIcon ?? null}
-      <Text className="text-xs" style={{ color: color.text.secondary }}>
-        {hint}
-      </Text>
-    </View>
+    {hint !== undefined && (
+      <View className="flex-row items-center gap-1">
+        {hintIcon ?? null}
+        <Text className="text-xs" style={{ color: color.text.secondary }}>
+          {hint}
+        </Text>
+      </View>
+    )}
   </View>
 );

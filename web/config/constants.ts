@@ -15,7 +15,7 @@ export const RATE_LIMIT_MAX_REQUESTS = 15;
 export const RATE_LIMIT_KEY_PREFIX = 'rl:';
 
 // AI rate limit
-export const FREE_WEEKLY_LIMIT = 20;
+export const FREE_WEEKLY_LIMIT = 50;
 export const AI_WEEKLY_KEY_PREFIX = 'ai_weekly:';
 export const WEEK_TTL_SECONDS = 8 * 24 * 3600;
 

@@ -5,6 +5,7 @@ import { TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getColors } from '@/shared/config';
+import { hapticSelection, hapticSuccess } from '@/shared/lib';
 
 import type { RecordingState } from '../config';
 import { PAUSE_BTN_BG } from '../config';
@@ -36,7 +37,10 @@ export const RecordScreenControls = ({
       style={controlsPaddingBottom}
     >
       <TouchableOpacity
-        onPress={onPauseResume}
+        onPress={() => {
+          hapticSelection();
+          onPauseResume();
+        }}
         className="h-16 w-16 items-center justify-center rounded-full"
         style={{
           backgroundColor: PAUSE_BTN_BG,
@@ -53,7 +57,10 @@ export const RecordScreenControls = ({
         )}
       </TouchableOpacity>
       <TouchableOpacity
-        onPress={onDonePress}
+        onPress={() => {
+          hapticSuccess();
+          onDonePress();
+        }}
         className="h-20 w-20 items-center justify-center rounded-full shadow-lg"
         style={{
           backgroundColor: c.icon.onAccent,

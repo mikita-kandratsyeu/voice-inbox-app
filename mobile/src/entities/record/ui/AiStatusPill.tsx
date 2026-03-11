@@ -1,7 +1,7 @@
-import { AlertCircle, CheckCircle2, Loader, MicOff } from 'lucide-react-native';
-import React from 'react';
+import { AlertCircle, Loader, MicOff } from 'lucide-react-native';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Animated, Easing, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 import { getColors } from '@/shared/config';
 
@@ -9,23 +9,50 @@ import type { RecordingStatus } from '../model/types';
 
 type AiStatusPillProps = {
   aiStatus: RecordingStatus;
+  transcriptProgress?: number;
+  transcriptProgressLabel?: string;
+  summaryStatus?: RecordingStatus;
+  tasksStatus?: RecordingStatus;
   onPress: () => void;
 };
 
-export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
+const isAiProcessing = (s?: RecordingStatus) => s === 'processing';
+const isAiError = (s?: RecordingStatus) => s === 'error';
+
+export const AiStatusPill = ({
+  aiStatus,
+  transcriptProgress,
+  transcriptProgressLabel,
+  summaryStatus,
+  tasksStatus,
+  onPress,
+}: AiStatusPillProps) => {
   const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const rotation = useRef(new Animated.Value(0)).current;
 
-  if (aiStatus === 'done') {
-    return (
-      <TouchableOpacity
-        onPress={onPress}
-        activeOpacity={0.7}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      >
-        <CheckCircle2 size={20} color={color.status.success} strokeWidth={2} />
-      </TouchableOpacity>
+  const aiProcessing = isAiProcessing(summaryStatus) || isAiProcessing(tasksStatus);
+  const aiError = isAiError(summaryStatus) || isAiError(tasksStatus);
+
+  useEffect(() => {
+    const isProcessing = aiStatus === 'processing' || aiProcessing;
+    if (!isProcessing) return;
+    const anim = Animated.loop(
+      Animated.timing(rotation, {
+        toValue: 1,
+        duration: 1000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }),
     );
+    anim.start();
+    return () => anim.stop();
+  }, [aiStatus, aiProcessing, rotation]);
+
+  const spin = rotation.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+
+  if (aiStatus === 'done' && !aiProcessing && !aiError) {
+    return null;
   }
 
   if (aiStatus === 'processing') {
@@ -36,15 +63,36 @@ export const AiStatusPill = ({ aiStatus, onPress }: AiStatusPillProps) => {
         onPress={onPress}
         activeOpacity={0.75}
       >
-        <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
+        <Animated.View style={{ transform: [{ rotate: spin }] }}>
+          <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
+        </Animated.View>
         <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
-          {t('aiStatus.processing')}
+          {transcriptProgressLabel ??
+            (transcriptProgress != null ? `${transcriptProgress}%` : t('aiStatus.processing'))}
         </Text>
       </TouchableOpacity>
     );
   }
 
-  if (aiStatus === 'error') {
+  if (aiProcessing) {
+    return (
+      <TouchableOpacity
+        className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
+        style={{ backgroundColor: color.status.processing.bg }}
+        onPress={onPress}
+        activeOpacity={0.75}
+      >
+        <Animated.View style={{ transform: [{ rotate: spin }] }}>
+          <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
+        </Animated.View>
+        <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
+          {t('aiStatus.aiProcessing')}
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+
+  if (aiStatus === 'error' || aiError) {
     return (
       <TouchableOpacity
         className="flex-row items-center gap-1 rounded-full px-2.5 py-1"

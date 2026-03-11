@@ -9,7 +9,7 @@ export function CTASection(): React.ReactElement {
     <section className="px-4 py-24 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-5xl">
         <AnimateOnScroll>
-          <div className="relative overflow-hidden rounded-[2.5rem] bg-linear-to-br from-purple-500 to-pink-500 p-12 text-center shadow-[0_20px_60px_rgba(168,85,247,0.4)] sm:p-16">
+          <div className="relative overflow-hidden rounded-[2.5rem] bg-linear-to-br from-blue-500 to-blue-600 p-12 text-center shadow-[0_20px_60px_rgba(59,130,246,0.4)] sm:p-16">
             <div
               className="absolute right-0 top-0 h-64 w-64 rounded-full bg-white/10 blur-3xl"
               aria-hidden

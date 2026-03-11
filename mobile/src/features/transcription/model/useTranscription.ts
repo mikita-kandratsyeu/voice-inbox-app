@@ -18,7 +18,7 @@ export const useTranscription = () => {
   const stopRef = useRef<(() => Promise<void>) | null>(null);
 
   const startTranscription = useCallback(
-    async (record: VoiceRecord): Promise<void> => {
+    async (record: VoiceRecord, languageOverride?: string): Promise<void> => {
       if (!record.audioPath) {
         console.warn('[transcription] No audio path for record', record.id);
         return;
@@ -33,6 +33,8 @@ export const useTranscription = () => {
 
       updateAiStatus(record.id, 'processing', 0);
 
+      const language = languageOverride ?? transcriptionLanguage;
+
       try {
         const context = await getWhisperContext(selectedWhisperModel);
 
@@ -40,7 +42,7 @@ export const useTranscription = () => {
           context,
           audioPath: record.audioPath,
           durationMs: record.durationMs ?? 0,
-          language: transcriptionLanguage,
+          language,
           onProgress: (current, total) => {
             const percent = Math.round((current / total) * 100);
             const label = i18n.t('transcription.progress', { current, total });
@@ -60,7 +62,7 @@ export const useTranscription = () => {
 
         if (__DEV__) {
           console.warn(
-            `[whisper] recordId=${record.id} | model=${selectedWhisperModel} | lang=${transcriptionLanguage} | segments=${segments.length}\n${fullText}`,
+            `[whisper] recordId=${record.id} | model=${selectedWhisperModel} | lang=${language} | segments=${segments.length}\n${fullText}`,
           );
         }
 

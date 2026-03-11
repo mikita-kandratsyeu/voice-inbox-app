@@ -56,7 +56,7 @@ export const RecordingDetailHeader = ({
           icon={
             <Pin
               size={18}
-              color={record.isPinned ? color.accent.pin : color.icon.muted}
+              color={record.isPinned ? color.accent.pin : color.text.primary}
               strokeWidth={2.2}
               fill={record.isPinned ? color.accent.pin : 'transparent'}
             />
@@ -71,7 +71,7 @@ export const RecordingDetailHeader = ({
           iconOnly
           variant="icon"
           size="md"
-          icon={<Share2 size={18} color={color.icon.muted} strokeWidth={2.2} />}
+          icon={<Share2 size={18} color={color.text.primary} strokeWidth={2.2} />}
           color={color}
           onPress={onShare}
           activeOpacity={0.7}
@@ -104,7 +104,7 @@ export const RecordingDetailHeader = ({
             iconOnly
             variant="icon"
             size="md"
-            icon={<MoreVertical size={18} color={color.icon.muted} strokeWidth={2.2} />}
+            icon={<MoreVertical size={18} color={color.text.primary} strokeWidth={2.2} />}
             color={color}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

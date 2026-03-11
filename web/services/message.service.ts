@@ -40,6 +40,7 @@ export const createMessage = async (
         status: 'done',
         summary: result.summary,
         tasks: result.tasks,
+        tags: result.tags,
       });
     })
     .catch(async (err) => {

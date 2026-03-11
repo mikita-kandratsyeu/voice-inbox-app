@@ -8,6 +8,8 @@ import AudioRecorderPlayer, {
   OutputFormatAndroidType,
 } from 'react-native-audio-recorder-player';
 
+import { hapticLight } from '@/shared/lib';
+
 import type { RecordingState } from '../config';
 import { MAX_RECORDING_MS } from '../config';
 import { requestMicPermission } from '../lib/requestMicPermission';
@@ -97,6 +99,7 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
 
       addRecordBackListener();
       setState('recording');
+      hapticLight();
     } catch (err) {
       console.warn('[useRecording] startRecorder failed:', err);
     }

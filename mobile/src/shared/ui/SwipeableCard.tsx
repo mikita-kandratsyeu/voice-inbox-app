@@ -13,6 +13,9 @@ import Animated, {
 import { runOnJS } from 'react-native-worklets';
 
 import { colors } from '@/shared/config';
+import { hapticMedium } from '@/shared/lib';
+
+export const SwipeableCardContext = React.createContext({ isSwiping: false });
 
 const SWIPE_THRESHOLD = 80;
 const CARD_FLY_DISTANCE = 400;
@@ -35,6 +38,7 @@ export const SwipeableCard = ({
 }: SwipeableCardProps) => {
   const translateX = useSharedValue(0);
   const action = useSharedValue<SwipeAction>('none');
+  const [isSwiping, setIsSwiping] = React.useState(false);
 
   const collapseHeight = useRef(new RNAnimated.Value(1)).current;
   const collapseOpacity = useRef(new RNAnimated.Value(1)).current;
@@ -79,21 +83,30 @@ export const SwipeableCard = ({
   const pan = Gesture.Pan()
     .activeOffsetX([-10, 10])
     .failOffsetY([-15, 15])
+    .onStart(() => {
+      runOnJS(setIsSwiping)(true);
+    })
     .onUpdate((e: PanGestureHandlerEventPayload) => {
       translateX.value = e.translationX;
     })
     .onEnd((e: PanGestureHandlerEventPayload) => {
       if (e.translationX < -SWIPE_THRESHOLD) {
+        runOnJS(hapticMedium)();
         translateX.value = withTiming(-CARD_FLY_DISTANCE, { duration: 220 }, () => {
           action.value = 'delete';
         });
       } else if (e.translationX > SWIPE_THRESHOLD) {
+        runOnJS(hapticMedium)();
         translateX.value = withTiming(SWIPE_THRESHOLD * 1.3, { duration: 80 }, () => {
           action.value = 'pin';
         });
       } else {
         translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
       }
+      runOnJS(setIsSwiping)(false);
+    })
+    .onFinalize(() => {
+      runOnJS(setIsSwiping)(false);
     });
 
   const cardStyle = useAnimatedStyle(() => ({
@@ -115,7 +128,6 @@ export const SwipeableCard = ({
   const pinBgColor = isPinned ? colors.light.accent.unpin : colors.light.accent.pin;
 
   const containerStyle = {
-    overflow: 'hidden' as const,
     maxHeight: collapseHeight.interpolate({
       inputRange: [0, 1],
       outputRange: [0, 300],
@@ -129,26 +141,54 @@ export const SwipeableCard = ({
   };
 
   return (
-    <RNAnimated.View style={containerStyle}>
-      <Animated.View
-        className="absolute inset-y-0 right-0 w-full items-end justify-center rounded-2xl pr-6"
-        style={[{ backgroundColor: colors.light.accent.delete }, deleteReveal]}
-      >
-        <Trash2 size={22} color={colors.light.icon.onAccent} strokeWidth={2} />
-      </Animated.View>
-      <Animated.View
-        className="absolute inset-y-0 left-0 w-full items-start justify-center rounded-2xl pl-6"
-        style={[{ backgroundColor: pinBgColor }, pinReveal]}
-      >
-        {isPinned ? (
-          <PinOff size={22} color={colors.light.icon.onAccent} strokeWidth={2} />
-        ) : (
-          <Pin size={22} color={colors.light.icon.onAccent} strokeWidth={2} />
-        )}
-      </Animated.View>
-      <GestureDetector gesture={pan}>
-        <Animated.View style={cardStyle}>{children}</Animated.View>
-      </GestureDetector>
-    </RNAnimated.View>
+    <SwipeableCardContext.Provider value={{ isSwiping }}>
+      <RNAnimated.View style={containerStyle}>
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              right: 0,
+              width: '100%',
+              alignItems: 'flex-end',
+              justifyContent: 'center',
+              borderRadius: 16,
+              paddingRight: 24,
+              backgroundColor: colors.light.accent.delete,
+            },
+            deleteReveal,
+          ]}
+        >
+          <Trash2 size={22} color={colors.light.icon.onAccent} strokeWidth={2} />
+        </Animated.View>
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              bottom: 0,
+              left: 0,
+              width: '100%',
+              alignItems: 'flex-start',
+              justifyContent: 'center',
+              borderRadius: 16,
+              paddingLeft: 24,
+              backgroundColor: pinBgColor,
+            },
+            pinReveal,
+          ]}
+        >
+          {isPinned ? (
+            <PinOff size={22} color={colors.light.icon.onAccent} strokeWidth={2} />
+          ) : (
+            <Pin size={22} color={colors.light.icon.onAccent} strokeWidth={2} />
+          )}
+        </Animated.View>
+        <GestureDetector gesture={pan}>
+          <Animated.View style={cardStyle}>{children}</Animated.View>
+        </GestureDetector>
+      </RNAnimated.View>
+    </SwipeableCardContext.Provider>
   );
 };

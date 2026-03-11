@@ -1,12 +1,13 @@
 import { Clock, Pin } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
+import { Pressable } from 'react-native-gesture-handler';
 
 import type { VoiceRecord } from '@/entities/record';
 import type { Colors } from '@/shared/config';
 import { formatRelativeTime } from '@/shared/lib';
-import { Tag } from '@/shared/ui';
+import { SwipeableCardContext, Tag } from '@/shared/ui';
 
 import { AiStatusPill } from './AiStatusPill';
 
@@ -18,7 +19,8 @@ type RecordCardProps = {
 };
 
 export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardProps) => {
-  useTranslation(); // subscribe to language changes so formatRelativeTime re-runs
+  const { i18n } = useTranslation();
+  const { isSwiping } = React.useContext(SwipeableCardContext);
   const cardStyle = {
     shadowColor: color.shadow.color,
     shadowOffset: { width: 0, height: 1 },
@@ -32,51 +34,77 @@ export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardPr
   const textSecondaryStyle = { color: color.text.secondary };
 
   const hasTags = item.tags && item.tags.length > 0;
-  const showBottomRow = hasTags || !!item.aiStatus;
+  const aiProcessing = item.summaryStatus === 'processing' || item.tasksStatus === 'processing';
+  const aiError = item.summaryStatus === 'error' || item.tasksStatus === 'error';
+  const showStatusPill =
+    item.aiStatus === 'processing' ||
+    item.aiStatus === 'error' ||
+    item.aiStatus === 'idle' ||
+    aiProcessing ||
+    aiError;
 
   return (
-    <TouchableOpacity
-      className="rounded-2xl p-4"
-      style={cardStyle}
-      onPress={onPress}
-      activeOpacity={0.75}
+    <Pressable
+      style={({ pressed }) => [
+        cardStyle,
+        { borderRadius: 16, padding: 16, opacity: pressed && !isSwiping ? 0.75 : 1 },
+      ]}
+      onPress={isSwiping ? undefined : onPress}
     >
-      <View className="mb-1 flex-row items-start justify-between">
-        <View className="mr-2 flex-1 flex-row items-center">
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'flex-start',
+          justifyContent: 'space-between',
+          marginBottom: 4,
+        }}
+      >
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginRight: 8 }}>
           {item.isPinned ? (
             <Pin size={14} color={color.accent.pin} strokeWidth={2} style={pinIconStyle} />
           ) : null}
           <Text
-            className="flex-1 text-base font-semibold"
-            style={textPrimaryStyle}
+            style={[textPrimaryStyle, { flex: 1, fontSize: 15, fontWeight: '600' }]}
             numberOfLines={1}
           >
             {item.title}
           </Text>
         </View>
+        {showStatusPill && (
+          <AiStatusPill
+            aiStatus={item.aiStatus ?? 'done'}
+            transcriptProgress={item.transcriptProgress}
+            transcriptProgressLabel={item.transcriptProgressLabel}
+            summaryStatus={item.summaryStatus}
+            tasksStatus={item.tasksStatus}
+            onPress={onStatusPress}
+          />
+        )}
       </View>
 
-      <View className="mb-3 flex-row items-center">
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
         <Clock size={14} color={color.icon.muted} strokeWidth={2} />
-        <Text className="ml-1 text-xs" style={textSecondaryStyle}>
+        <Text style={[textSecondaryStyle, { marginLeft: 4, fontSize: 12 }]}>
           {item.duration}
           {'  '}
-          {formatRelativeTime(item.createdAt)}
+          {formatRelativeTime(item.createdAt, i18n.language)}
         </Text>
       </View>
       {Boolean(item.transcript) && (
-        <Text className="mb-3 text-sm leading-5" style={textSecondaryStyle} numberOfLines={2}>
+        <Text
+          style={[textSecondaryStyle, { fontSize: 14, lineHeight: 20, marginBottom: 12 }]}
+          numberOfLines={2}
+        >
           {item.transcript}
         </Text>
       )}
-      {showBottomRow && (
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row flex-wrap gap-y-1">
-            {hasTags ? item.tags!.map((tag) => <Tag key={tag} label={tag} />) : null}
-          </View>
-          {item.aiStatus ? <AiStatusPill aiStatus={item.aiStatus} onPress={onStatusPress} /> : null}
+      {hasTags && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
+          {item.tags!.map((tag) => (
+            <Tag key={tag} label={tag} />
+          ))}
         </View>
       )}
-    </TouchableOpacity>
+    </Pressable>
   );
 };

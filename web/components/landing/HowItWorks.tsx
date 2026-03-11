@@ -25,7 +25,7 @@ export function HowItWorks(): React.ReactElement {
             <AnimateOnScroll key={id} delay={index * 100}>
               <div className="flex items-center">
                 <div className="text-center">
-                  <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-3xl bg-gradient-to-br from-purple-500 to-pink-500 shadow-2xl transition-transform duration-200 hover:scale-105">
+                  <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-2xl transition-transform duration-200 hover:scale-105">
                     <span className="text-4xl font-black text-white">{index + 1}</span>
                   </div>
                   <h3 className="mb-2 text-2xl font-bold text-black dark:text-white">

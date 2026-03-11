@@ -1,4 +1,4 @@
-import { Lock, Mic, Shield, Sparkles, Zap } from 'lucide-react-native';
+import { Lock, Mic, Settings, Shield, Sparkles, Zap } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dimensions, FlatList, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
@@ -19,12 +19,14 @@ import { getColors } from '@/shared/config';
 
 import { setHasSeenOnboarding } from '../lib/onboardingStorage';
 import { getOnboardingSlides, type OnboardingSlideContent } from '../model/constants';
+import { OnboardingSetupStep } from './OnboardingSetupStep';
 
 const ICON_MAP = {
   Mic,
   Lock,
   Sparkles,
   Zap,
+  Settings,
 } as const;
 
 type OnboardingScreenProps = {
@@ -56,7 +58,9 @@ const AnimatedProgressDots = ({
   t: (key: string, opts?: { index?: number }) => string;
 }) => {
   const pillPositions = slides.map((_, i) => i * SLOT_WIDTH + PILL_LEFT);
-  const slideColors = slides.map((s) => s.iconColor);
+  const slideColors = slides.map((s, i) =>
+    i === slides.length - 1 ? color.accent.primary : s.iconColor,
+  );
 
   const pillStyle = useAnimatedStyle(() => {
     const translateX = interpolate(
@@ -241,6 +245,31 @@ const SlideItem = ({
     };
   });
 
+  if (item.extra === 'setup') {
+    return (
+      <Animated.View
+        style={[{ width: SCREEN_WIDTH, paddingHorizontal: 32 }, animatedStyle]}
+        className="flex-1"
+      >
+        <Text
+          className="mb-2 mt-6 text-center text-[24px] font-bold leading-tight"
+          style={{ color: color.text.primary }}
+        >
+          {t(item.titleKey)}
+        </Text>
+        <Text
+          className="mb-4 text-center text-[16px] leading-6"
+          style={{ color: color.text.secondary }}
+        >
+          {t(item.descKey)}
+        </Text>
+        <View className="flex-1 min-h-[200px]">
+          <OnboardingSetupStep color={color} />
+        </View>
+      </Animated.View>
+    );
+  }
+
   return (
     <Animated.View
       style={[{ width: SCREEN_WIDTH, paddingHorizontal: 32 }, animatedStyle]}
@@ -304,7 +333,11 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
   const slides = useMemo(() => getOnboardingSlides(color), [color]);
-  const slideColors = useMemo(() => slides.map((s) => s.iconColor), [slides]);
+  const slideColors = useMemo(() => {
+    const colors = slides.map((s) => s.iconColor);
+    colors[colors.length - 1] = color.accent.primary;
+    return colors;
+  }, [slides, color.accent.primary]);
   const insets = useSafeAreaInsets();
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList<OnboardingSlideContent>>(null);

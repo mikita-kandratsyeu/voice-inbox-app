@@ -7,18 +7,18 @@ export function Hero(): React.ReactElement {
   return (
     <section className="relative overflow-hidden px-4 pt-16 pb-24 sm:px-6 sm:pt-24 sm:pb-32 lg:px-8">
       <div
-        className="absolute inset-0 -z-10 animate-gradient-pulse bg-[radial-gradient(circle_at_20%_20%,rgba(168,85,247,0.25)_0%,transparent_50%),radial-gradient(circle_at_80%_80%,rgba(236,72,153,0.25)_0%,transparent_50%)] opacity-100"
+        className="absolute inset-0 -z-10 animate-gradient-pulse bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.25)_0%,transparent_50%),radial-gradient(circle_at_80%_80%,rgba(37,99,235,0.2)_0%,transparent_50%)] opacity-100"
         aria-hidden
       />
       <div className="mx-auto max-w-7xl text-center">
         <div className="mx-auto max-w-5xl">
-          <div className="animate-fade-in mb-6 inline-flex items-center rounded-full border border-purple-500/30 bg-purple-500/10 px-4 py-1.5 text-sm font-medium text-purple-600 dark:border-pink-500/30 dark:bg-pink-500/10 dark:text-pink-400">
+          <div className="animate-fade-in mb-6 inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-600 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400">
             {t('inDevelopment')}
           </div>
           <h1 className="animate-fade-in mb-6 text-5xl font-black leading-tight sm:text-6xl lg:text-8xl">
             {t('headline1')}
             <br />
-            <span className="bg-linear-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+            <span className="bg-linear-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">
               {t('headline2')}
             </span>
           </h1>
@@ -34,7 +34,7 @@ export function Hero(): React.ReactElement {
           <div className="animate-fade-in-delay-3 mx-auto grid max-w-2xl grid-cols-2 gap-8">
             <div className="text-center">
               <div className="mb-1 text-3xl font-black sm:text-4xl">
-                <span className="bg-linear-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">
                   {t('stats.accuracy.value')}
                 </span>
               </div>
@@ -44,7 +44,7 @@ export function Hero(): React.ReactElement {
             </div>
             <div className="text-center">
               <div className="mb-1 text-3xl font-black sm:text-4xl">
-                <span className="bg-gradient-to-r from-purple-500 to-pink-500 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">
                   {t('stats.private.value')}
                 </span>
               </div>

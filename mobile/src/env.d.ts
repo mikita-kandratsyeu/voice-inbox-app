@@ -6,4 +6,6 @@ declare module '@env' {
   export const WEBSITE_URL: string | undefined;
   export const DATABASE_URL: string | undefined;
   export const DB_LOG: string | undefined;
+  export const WEB_API_URL: string | undefined;
+  export const WEB_API_SECRET: string | undefined;
 }

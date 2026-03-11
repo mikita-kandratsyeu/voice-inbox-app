@@ -64,13 +64,46 @@
     "summaryNotCreated": "Summary not created",
     "summaryNotCreatedDesc": "Tap the button below to\ncreate a brief summary using AI.",
     "generateSummary": "Generate summary",
+    "regenerateSummary": "Regenerate",
+    "summaryProcessing": "Generating summary...",
+    "summaryError": "Failed to generate summary",
+    "summaryRetry": "Try again",
     "tasksNotExtracted": "Tasks not extracted",
     "tasksNotExtractedDesc": "Tap the button below to\nautomatically find tasks using AI.",
-    "extractTasks": "Find tasks"
+    "extractTasks": "Find tasks",
+    "reextractTasks": "Re-extract",
+    "tasksProcessing": "Extracting tasks...",
+    "tasksError": "Failed to extract tasks",
+    "tasksRetry": "Try again",
+    "noTranscriptForAi": "Transcript required",
+    "noTranscriptForAiDesc": "Transcribe the recording first to use AI features.",
+    "accessibility": {
+      "cardLabel": "Voice note {{title}}, recorded {{date}}, duration {{duration}}",
+      "tagsSuffix": ", tags: {{tags}}"
+    },
+    "audioLanguage": "Audio language",
+    "languageHint": "Select a language for more accurate Whisper transcription in this recording.",
+    "language": {
+      "auto": "Auto detect",
+      "ru": "Russian",
+      "en": "English",
+      "de": "German",
+      "fr": "French",
+      "es": "Spanish",
+      "it": "Italian",
+      "pt": "Portuguese",
+      "zh": "Chinese",
+      "ja": "Japanese",
+      "ko": "Korean",
+      "ar": "Arabic",
+      "uk": "Ukrainian",
+      "pl": "Polish"
+    }
   },
   "aiStatus": {
     "idle": "Awaiting processing",
     "processing": "Transcribing...",
+    "aiProcessing": "Generating summary...",
     "done": "Transcript ready",
     "error": "Transcription error",
     "noTranscript": "No transcript"
@@ -84,10 +117,23 @@
     "deleteMessage": "Are you sure you want to delete \"{{title}}\"? This action cannot be undone."
   },
   "share": {
-    "shareNote": "Share note"
+    "shareNote": "Share note",
+    "dateLabel": "Date",
+    "durationLabel": "Duration",
+    "tagsLabel": "Tags",
+    "exportedFrom": "Exported from Voice Inbox"
   },
   "settings": {
     "title": "Settings",
+    "aiUsage": {
+      "title": "AI processing limit",
+      "subtitle": "Weekly limit for summary and task requests",
+      "used": "{{used}} / {{limit}}",
+      "remaining": "Remaining: {{count}}",
+      "exhausted": "Limit exhausted",
+      "resetAt": "Resets: {{date}}",
+      "loading": "Loading..."
+    },
     "sync": "Sync",
     "export": "Export data",
     "exporting": "Exporting...",
@@ -96,6 +142,7 @@
     "aiProcessing": "AI processing",
     "aiModel": "AI model",
     "transcription": "Transcription",
+    "autoTranscribeOnSave": "Auto-transcribe after recording",
     "device": "Device",
     "appLock": "App lock",
     "offlineStorage": "Offline storage",
@@ -197,6 +244,7 @@
     "description": "Choose an AI model for generating summaries and extracting tasks from transcripts. Settings apply to the next processing.",
     "trinityDesc": "Powerful model with multimodal input support",
     "geminiDesc": "Fast and efficient model for everyday tasks",
+    "openaiDesc": "Compact and fast model for quick AI processing",
     "speed": {
       "fast": "Fast",
       "medium": "Medium",
@@ -210,8 +258,13 @@
     "transcribeDesc": "Voice-to-text conversion happens locally on your device. No servers, full privacy.",
     "aiTitle": "AI processing on demand",
     "aiDesc": "Structure your recordings with AI when needed. Voice is processed locally, text is sent over encrypted channel and never stored.",
-    "readyTitle": "All set!",
+    "readyTitle": "Almost all set!",
     "readyDesc": "Start recording your thoughts right now. Always at hand for your ideas.",
+    "setupTitle": "Setup",
+    "setupDesc": "Choose an AI model and optionally download Whisper for offline transcription.",
+    "setupAiModel": "AI model",
+    "setupWhisper": "Whisper (transcription)",
+    "setupWhisperHint": "Optional — you can download later in settings.",
     "privacy": "100% Private",
     "aiPrivacy": "Your data is secure",
     "goToSlide": "Go to slide {{ index }}"

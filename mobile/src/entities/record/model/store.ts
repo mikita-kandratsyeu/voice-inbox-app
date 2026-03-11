@@ -2,7 +2,7 @@ import RNFS from 'react-native-fs';
 import { create } from 'zustand';
 
 import { recordRepository } from './repository';
-import type { RecordingStatus, TranscriptSegment, VoiceRecord } from './types';
+import type { RecordingStatus, TaskItem, TranscriptSegment, VoiceRecord } from './types';
 
 type RecordStore = {
   records: VoiceRecord[];
@@ -24,6 +24,12 @@ type RecordStore = {
     transcript: string,
     segments: TranscriptSegment[],
   ) => Promise<void>;
+  setSummaryStatus: (id: string, status: RecordingStatus) => void;
+  setTasksStatus: (id: string, status: RecordingStatus) => void;
+  updateSummary: (id: string, summary: string) => Promise<void>;
+  updateTasks: (id: string, tasks: TaskItem[]) => Promise<void>;
+  updateTags: (id: string, tags: string[]) => Promise<void>;
+  toggleTask: (id: string, taskId: string) => Promise<void>;
 };
 
 export const useRecordStore = create<RecordStore>((set, get) => ({
@@ -110,6 +116,51 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
             }
           : r,
       ),
+    }));
+  },
+
+  setSummaryStatus: (id, summaryStatus) => {
+    set((s) => ({
+      records: s.records.map((r) => (r.id === id ? { ...r, summaryStatus } : r)),
+    }));
+  },
+
+  setTasksStatus: (id, tasksStatus) => {
+    set((s) => ({
+      records: s.records.map((r) => (r.id === id ? { ...r, tasksStatus } : r)),
+    }));
+  },
+
+  updateSummary: async (id, summary) => {
+    await recordRepository.updateSummary(id, summary);
+    set((s) => ({
+      records: s.records.map((r) => (r.id === id ? { ...r, summary, summaryStatus: 'done' } : r)),
+    }));
+  },
+
+  updateTasks: async (id, tasks) => {
+    await recordRepository.updateTasks(id, tasks);
+    set((s) => ({
+      records: s.records.map((r) => (r.id === id ? { ...r, tasks, tasksStatus: 'done' } : r)),
+    }));
+  },
+
+  updateTags: async (id, tags) => {
+    await recordRepository.updateTags(id, tags);
+    set((s) => ({
+      records: s.records.map((r) => (r.id === id ? { ...r, tags } : r)),
+    }));
+  },
+
+  toggleTask: async (id, taskId) => {
+    const record = get().records.find((r) => r.id === id);
+    if (!record?.tasks) return;
+    const updatedTasks: TaskItem[] = record.tasks.map((t) =>
+      t.id === taskId ? { ...t, isDone: !t.isDone } : t,
+    );
+    await recordRepository.updateTasks(id, updatedTasks);
+    set((s) => ({
+      records: s.records.map((r) => (r.id === id ? { ...r, tasks: updatedTasks } : r)),
     }));
   },
 }));

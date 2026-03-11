@@ -9,7 +9,6 @@ const MODEL_MIN_RAM_MB: Record<WhisperModelId, number> = {
   'whisper-base': 800,
   'whisper-small': 1600,
   'whisper-medium': 4000,
-  'whisper-large-v3': 7000,
 };
 
 const MODEL_MIN_FREE_DISK_MB: Record<WhisperModelId, number> = {
@@ -17,7 +16,6 @@ const MODEL_MIN_FREE_DISK_MB: Record<WhisperModelId, number> = {
   'whisper-base': 300,
   'whisper-small': 600,
   'whisper-medium': 2500,
-  'whisper-large-v3': 5000,
 };
 
 export type DeviceCompatibilityResult = {
@@ -84,7 +82,6 @@ export const checkAllModelsCompatibility = async (): Promise<
     'whisper-base',
     'whisper-small',
     'whisper-medium',
-    'whisper-large-v3',
   ];
 
   const results = await Promise.all(

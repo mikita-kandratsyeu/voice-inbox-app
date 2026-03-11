@@ -9,10 +9,20 @@ import {
   Mic,
   Shield,
   UploadCloud,
+  Zap,
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Linking, ScrollView, Text, useColorScheme, View } from 'react-native';
+import {
+  Alert,
+  Linking,
+  RefreshControl,
+  ScrollView,
+  Switch,
+  Text,
+  useColorScheme,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
@@ -21,7 +31,10 @@ import { useRecordStore } from '@/entities/record';
 import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { exportData, importData } from '@/features/sync-data';
 import { getColors, WEBSITE_URL } from '@/shared/config';
+import { getAiUsage } from '@/shared/lib/ai-api';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
+
+import { AiUsageCard } from './AiUsageCard';
 
 export const SettingsScreen = () => {
   const { t } = useTranslation();
@@ -31,11 +44,38 @@ export const SettingsScreen = () => {
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
+  const setAutoTranscribeOnSave = useSettingsStore((s) => s.setAutoTranscribeOnSave);
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
   const records = useRecordStore((s) => s.records);
   const addRecord = useRecordStore((s) => s.addRecord);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [aiUsage, setAiUsage] = useState<Awaited<ReturnType<typeof getAiUsage>>>(null);
+  const [aiUsageLoading, setAiUsageLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchAiUsage = useCallback(async () => {
+    const data = await getAiUsage();
+    setAiUsage(data ?? null);
+    return data;
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchAiUsage().finally(() => {
+      if (!cancelled) setAiUsageLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchAiUsage]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchAiUsage();
+    setRefreshing(false);
+  }, [fetchAiUsage]);
 
   const aiModelName = AI_MODELS.find((m) => m.id === selectedAIModel)?.name ?? selectedAIModel;
   const whisperModelName =
@@ -116,7 +156,18 @@ export const SettingsScreen = () => {
           paddingBottom: insets.bottom + 24,
         }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={color.status.processing.text}
+            colors={[color.status.processing.text]}
+            progressBackgroundColor={color.background.secondary}
+          />
+        }
       >
+        <AiUsageCard usage={aiUsage} loading={aiUsageLoading} />
+
         <SettingsSection title={t('settings.sync')} color={color}>
           <SettingsRow
             label={isExporting ? t('settings.exporting') : t('settings.export')}
@@ -150,6 +201,24 @@ export const SettingsScreen = () => {
             color={color}
             leftIcon={<Mic size={20} color={color.accent.cache} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('WhisperModelPicker')}
+          />
+          <SettingsRow
+            label={t('settings.autoTranscribeOnSave')}
+            color={color}
+            leftIcon={<Zap size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+            rightSlot={
+              <Switch
+                value={autoTranscribeOnSave}
+                onValueChange={setAutoTranscribeOnSave}
+                trackColor={{
+                  false: color.background.tertiary,
+                  true: color.accent.success,
+                }}
+                thumbColor="#fff"
+              />
+            }
+            showChevron={false}
+            onPress={undefined}
             isLast
           />
         </SettingsSection>

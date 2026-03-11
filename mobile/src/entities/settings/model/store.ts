@@ -15,6 +15,7 @@ const KEYS = {
   WHISPER_MODEL: 'settings.whisperModel',
   WHISPER_STATUSES: 'settings.whisperStatuses',
   TRANSCRIPTION_LANGUAGE: 'settings.transcriptionLanguage',
+  AUTO_TRANSCRIBE_ON_SAVE: 'settings.autoTranscribeOnSave',
 } as const;
 
 const getStoredAIModel = (): AIModelId => {
@@ -34,6 +35,11 @@ const getStoredTranscriptionLanguage = (): TranscriptionLanguage => {
   return (val as TranscriptionLanguage) ?? 'auto';
 };
 
+const getStoredAutoTranscribeOnSave = (): boolean => {
+  const val = storage.getString(KEYS.AUTO_TRANSCRIBE_ON_SAVE);
+  return val === 'true';
+};
+
 const getStoredWhisperStatuses = (): Partial<Record<WhisperModelId, WhisperModelStatus>> => {
   try {
     const raw = storage.getString(KEYS.WHISPER_STATUSES);
@@ -48,6 +54,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   selectedAIModel: getStoredAIModel(),
   selectedWhisperModel: getStoredWhisperModel(),
   transcriptionLanguage: getStoredTranscriptionLanguage(),
+  autoTranscribeOnSave: getStoredAutoTranscribeOnSave(),
   whisperModelStatuses: getStoredWhisperStatuses(),
   whisperDownloadProgress: {},
   whisperDownloadBytes: {},
@@ -65,6 +72,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => {
     storage.set(KEYS.TRANSCRIPTION_LANGUAGE, lang);
     set({ transcriptionLanguage: lang });
+  },
+
+  setAutoTranscribeOnSave: (value: boolean) => {
+    storage.set(KEYS.AUTO_TRANSCRIBE_ON_SAVE, String(value));
+    set({ autoTranscribeOnSave: value });
   },
 
   setWhisperModelStatus: (id: WhisperModelId, status: WhisperModelStatus) => {

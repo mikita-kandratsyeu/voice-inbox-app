@@ -1,6 +1,8 @@
-export type AIModelId = 'google/gemini-3-flash-preview' | 'arcee-ai/trinity-large-preview:free';
+export type AIModelId =
+  | 'google/gemini-3-flash-preview'
+  | 'arcee-ai/trinity-large-preview:free'
+  | 'openai/gpt-5-nano';
 
-// Языки, поддерживаемые Whisper. 'auto' — автоопределение.
 export type TranscriptionLanguage =
   | 'auto'
   | 'ru'
@@ -17,12 +19,7 @@ export type TranscriptionLanguage =
   | 'uk'
   | 'pl';
 
-export type WhisperModelId =
-  | 'whisper-tiny'
-  | 'whisper-base'
-  | 'whisper-small'
-  | 'whisper-medium'
-  | 'whisper-large-v3';
+export type WhisperModelId = 'whisper-tiny' | 'whisper-base' | 'whisper-small' | 'whisper-medium';
 
 export type WhisperModelStatus = 'not_downloaded' | 'downloading' | 'downloaded' | 'error';
 
@@ -54,12 +51,14 @@ export type SettingsState = {
   selectedAIModel: AIModelId;
   selectedWhisperModel: WhisperModelId;
   transcriptionLanguage: TranscriptionLanguage;
+  autoTranscribeOnSave: boolean;
   whisperModelStatuses: Partial<Record<WhisperModelId, WhisperModelStatus>>;
   whisperDownloadProgress: Partial<Record<WhisperModelId, number>>;
   whisperDownloadBytes: Partial<Record<WhisperModelId, DownloadBytes>>;
   setAIModel: (id: AIModelId) => void;
   setWhisperModel: (id: WhisperModelId) => void;
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;
+  setAutoTranscribeOnSave: (value: boolean) => void;
   setWhisperModelStatus: (id: WhisperModelId, status: WhisperModelStatus) => void;
   setDownloadProgress: (
     id: WhisperModelId,

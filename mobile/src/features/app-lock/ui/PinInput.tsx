@@ -4,6 +4,7 @@ import { Animated, Text, TouchableOpacity, View } from 'react-native';
 
 import { PIN_LENGTH } from '@/entities/app-lock';
 import type { Colors } from '@/shared/config';
+import { hapticError, hapticSelection, hapticSuccess } from '@/shared/lib';
 
 type PinInputProps = {
   pin: string;
@@ -136,6 +137,14 @@ export const PinInput = ({
   const dots = Array.from({ length: PIN_LENGTH }, (_, i) => i < pin.length || success);
 
   useEffect(() => {
+    if (success) {
+      hapticSuccess();
+    } else if (error) {
+      hapticError();
+    }
+  }, [success, error]);
+
+  useEffect(() => {
     if (success && onSuccessAnimationComplete) {
       const timer = setTimeout(onSuccessAnimationComplete, SUCCESS_ANIM_DURATION);
       return () => clearTimeout(timer);
@@ -167,7 +176,10 @@ export const PinInput = ({
                     key="back"
                     className="h-16 w-16 items-center justify-center rounded-full"
                     style={{ backgroundColor: color.background.tertiary }}
-                    onPress={onBackspace}
+                    onPress={() => {
+                      hapticSelection();
+                      onBackspace();
+                    }}
                     activeOpacity={0.7}
                   >
                     <Delete size={28} color={color.text.primary} strokeWidth={2} />
@@ -180,7 +192,10 @@ export const PinInput = ({
                   key={key}
                   className="h-16 w-16 items-center justify-center rounded-full"
                   style={{ backgroundColor: color.background.tertiary }}
-                  onPress={() => onDigit(key)}
+                  onPress={() => {
+                    hapticSelection();
+                    onDigit(key);
+                  }}
                   activeOpacity={0.7}
                 >
                   <Text className="text-3xl font-semibold" style={{ color: color.text.primary }}>

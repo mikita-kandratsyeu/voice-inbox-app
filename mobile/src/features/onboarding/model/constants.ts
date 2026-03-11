@@ -29,6 +29,13 @@ const SLIDE_CONTENT = [
     iconName: 'Zap' as const,
     extra: 'check' as const,
   },
+  {
+    id: 'setup',
+    titleKey: 'onboarding.setupTitle' as const,
+    descKey: 'onboarding.setupDesc' as const,
+    iconName: 'Settings' as const,
+    extra: 'setup' as const,
+  },
 ];
 
 const ICON_KEYS = {
@@ -36,6 +43,7 @@ const ICON_KEYS = {
   Lock: 'lock',
   Sparkles: 'sparkles',
   Zap: 'zap',
+  Settings: 'setup',
 } as const;
 
 export type OnboardingSlide = OnboardingSlideContent;
@@ -43,10 +51,10 @@ export type OnboardingSlideContent = {
   id: string;
   titleKey: string;
   descKey: string;
-  iconName: 'Mic' | 'Lock' | 'Sparkles' | 'Zap';
+  iconName: 'Mic' | 'Lock' | 'Sparkles' | 'Zap' | 'Settings';
   iconColor: string;
   iconBg: string;
-  extra?: 'dots' | 'privacy' | 'ai-features' | 'check';
+  extra?: 'dots' | 'privacy' | 'ai-features' | 'check' | 'setup';
 };
 
 export const getOnboardingSlides = (colors: Colors): OnboardingSlideContent[] =>
