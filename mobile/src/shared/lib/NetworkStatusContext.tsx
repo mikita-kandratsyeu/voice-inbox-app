@@ -1,9 +1,15 @@
 import NetInfo from '@react-native-community/netinfo';
-import { useEffect, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 
 const DELAY_MS = 100;
 
-export const useNetworkStatus = () => {
+type NetworkStatusContextValue = {
+  isConnected: boolean | null;
+};
+
+const NetworkStatusContext = createContext<NetworkStatusContextValue | null>(null);
+
+export const NetworkStatusProvider = ({ children }: { children: React.ReactNode }) => {
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -30,5 +36,17 @@ export const useNetworkStatus = () => {
     };
   }, []);
 
-  return { isConnected };
+  return (
+    <NetworkStatusContext.Provider value={{ isConnected }}>
+      {children}
+    </NetworkStatusContext.Provider>
+  );
+};
+
+export const useNetworkStatus = () => {
+  const context = useContext(NetworkStatusContext);
+  if (!context) {
+    throw new Error('useNetworkStatus must be used within NetworkStatusProvider');
+  }
+  return context;
 };

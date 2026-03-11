@@ -13,7 +13,7 @@ import { ActivityIndicator, Dimensions, Platform, Text, View } from 'react-nativ
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const MAX_SHEET_HEIGHT = SCREEN_HEIGHT * 0.8;
+const SNAP_POINTS = [SCREEN_HEIGHT * 0.5, SCREEN_HEIGHT * 0.75];
 
 import type { VoiceRecord } from '@/entities/record';
 import { AI_MODELS, useSettingsStore } from '@/entities/settings';
@@ -42,7 +42,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.35} />
+      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.6} />
     ),
     [],
   );
@@ -187,19 +187,72 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
     );
   };
 
-  const bottomPadding = Math.max(insets.bottom, 24) + 32;
+  const bottomPadding = Math.max(insets.bottom, 8) + 8;
+
+  const inputRow = hasTranscript && (
+    <View
+      className="mt-2 flex-row items-end gap-2 rounded-xl px-3 py-2.5"
+      style={{
+        backgroundColor: color.background.tertiary,
+        borderWidth: 1,
+        borderColor: questionInput.trim() ? color.accent.primary : color.border.default,
+      }}
+    >
+      <BottomSheetTextInput
+        style={{
+          flex: 1,
+          minWidth: 0,
+          maxHeight: 100,
+          fontSize: 16,
+          color: color.text.primary,
+          paddingVertical: 8,
+          paddingRight: 0,
+          margin: 0,
+          textAlignVertical: 'top',
+          includeFontPadding: false,
+        }}
+        placeholder={t('recordingDetail.askPlaceholder')}
+        placeholderTextColor={color.text.secondary}
+        value={questionInput}
+        onChangeText={setQuestionInput}
+        returnKeyType="send"
+        editable={isConnected !== false}
+        multiline
+        numberOfLines={3}
+        submitBehavior="blurAndSubmit"
+        onSubmitEditing={handleAsk}
+      />
+      <View style={{ flexShrink: 0, paddingBottom: 4 }}>
+        <Button
+          variant="primary"
+          size="md"
+          icon={<Send size={18} color="#fff" strokeWidth={2.5} />}
+          iconOnly
+          color={color}
+          containerStyle={{ backgroundColor: color.accent.primary }}
+          onPress={handleAsk}
+          disabled={!questionInput.trim() || isLoading || isConnected === false}
+        />
+      </View>
+    </View>
+  );
 
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
-      snapPoints={[MAX_SHEET_HEIGHT]}
+      snapPoints={SNAP_POINTS}
       enablePanDownToClose
-      keyboardBehavior={Platform.OS === 'ios' ? 'interactive' : 'fillParent'}
+      keyboardBehavior="extend"
       keyboardBlurBehavior="restore"
       enableBlurKeyboardOnGesture
+      android_keyboardInputMode={Platform.OS === 'android' ? 'adjustResize' : undefined}
       backdropComponent={renderBackdrop}
       onDismiss={handleDismiss}
-      backgroundStyle={{ backgroundColor: color.background.card }}
+      backgroundStyle={{
+        backgroundColor: color.background.card,
+        borderTopWidth: 1,
+        borderTopColor: color.border.default,
+      }}
       handleIndicatorStyle={{ backgroundColor: color.text.muted }}
     >
       <BottomSheetView
@@ -207,63 +260,23 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
           flex: 1,
           paddingHorizontal: 20,
           paddingBottom: bottomPadding,
-          maxHeight: MAX_SHEET_HEIGHT,
         }}
       >
-        {hasTranscript && (
-          <View
-            className="mb-4 flex-row items-center gap-2 rounded-xl px-3 py-2.5"
-            style={{
-              backgroundColor: color.background.tertiary,
-              borderWidth: 1,
-              borderColor: questionInput.trim() ? color.accent.primary : color.border.default,
-            }}
-          >
-            <BottomSheetTextInput
-              style={{
-                flex: 1,
-                fontSize: 16,
-                color: color.text.primary,
-                paddingVertical: 0,
-                margin: 0,
-                textAlignVertical: 'center',
-                includeFontPadding: false,
-              }}
-              placeholder={t('recordingDetail.askPlaceholder')}
-              placeholderTextColor={color.text.secondary}
-              value={questionInput}
-              onChangeText={setQuestionInput}
-              returnKeyType="send"
-              editable={isConnected !== false}
-              multiline
-              onSubmitEditing={handleAsk}
-            />
-            <Button
-              variant="primary"
-              size="md"
-              icon={<Send size={16} color="#fff" strokeWidth={2} />}
-              iconOnly
-              color={color}
-              onPress={handleAsk}
-              disabled={!questionInput.trim() || isLoading || isConnected === false}
-            />
-          </View>
-        )}
-
         {answer ? (
           <BottomSheetScrollView
             style={{ flex: 1 }}
             showsVerticalScrollIndicator={true}
             contentContainerStyle={{
-              paddingBottom: bottomPadding + 40,
+              paddingBottom: 8,
               flexGrow: 1,
             }}
           >
             {renderContent()}
           </BottomSheetScrollView>
         ) : (
-          renderContent()
+          <View style={{ flex: 1 }}>{renderContent()}</View>
         )}
+        {inputRow}
       </BottomSheetView>
     </BottomSheetModal>
   );

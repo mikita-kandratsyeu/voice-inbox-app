@@ -9,6 +9,27 @@ import { i18n, useNetworkStatus } from '@/shared/lib';
 import { getWhisperContext } from '../lib/initWhisper';
 import { transcribeAudio } from '../lib/transcribeAudio';
 
+const PROGRESS_THROTTLE_MS = 500;
+
+const createThrottledProgress = (
+  recordId: string,
+  updateAiStatus: (id: string, status: 'processing', progress?: number, label?: string) => void,
+) => {
+  let lastCall = 0;
+
+  return (current: number, total: number) => {
+    const now = Date.now();
+    const isComplete = current >= total;
+
+    if (isComplete || now - lastCall >= PROGRESS_THROTTLE_MS) {
+      lastCall = now;
+      const percent = Math.round((current / total) * 100);
+      const label = i18n.t('transcription.progress', { current, total });
+      updateAiStatus(recordId, 'processing', percent, label);
+    }
+  };
+};
+
 export const useTranscription = () => {
   const updateAiStatus = useRecordStore((s) => s.updateAiStatus);
   const updateTranscript = useRecordStore((s) => s.updateTranscript);
@@ -42,16 +63,14 @@ export const useTranscription = () => {
       try {
         const context = await getWhisperContext(selectedWhisperModel);
 
+        const throttledProgress = createThrottledProgress(record.id, updateAiStatus);
+
         const { stop, promise } = transcribeAudio({
           context,
           audioPath: record.audioPath,
           durationMs: record.durationMs ?? 0,
           language,
-          onProgress: (current, total) => {
-            const percent = Math.round((current / total) * 100);
-            const label = i18n.t('transcription.progress', { current, total });
-            updateAiStatus(record.id, 'processing', percent, label);
-          },
+          onProgress: throttledProgress,
         });
 
         stopRef.current = stop;

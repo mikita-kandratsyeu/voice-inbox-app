@@ -39,9 +39,13 @@
 	<string></string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>Adding tasks from notes to Calendar</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Adding tasks from notes to Calendar</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>The app needs microphone access to record voice notes.</string>
 	<key>NSRemindersUsageDescription</key>
+	<string>Adding tasks from notes to Reminders</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
 	<string>Adding tasks from notes to Reminders</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>

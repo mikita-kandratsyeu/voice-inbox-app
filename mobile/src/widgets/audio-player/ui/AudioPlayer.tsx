@@ -90,7 +90,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
       }
 
       try {
-        player.setSubscriptionDuration(0.1);
+        player.setSubscriptionDuration(0.25);
 
         player.addPlayBackListener((e: PlayBackType) => {
           const secs = Math.floor(e.currentPosition / 1000);
@@ -150,7 +150,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
       }
     } else {
       try {
-        player.setSubscriptionDuration(0.1);
+        player.setSubscriptionDuration(0.25);
 
         player.addPlayBackListener((e: PlayBackType) => {
           const secs = Math.floor(e.currentPosition / 1000);

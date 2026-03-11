@@ -61,6 +61,10 @@ export const InboxScreen = () => {
             <SectionList
               sections={sections}
               keyExtractor={(item) => item.id}
+              initialNumToRender={12}
+              maxToRenderPerBatch={10}
+              windowSize={11}
+              removeClippedSubviews={true}
               renderItem={({ item }) => (
                 <SwipeableCard
                   isPinned={item.isPinned}

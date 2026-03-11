@@ -94,7 +94,7 @@ export const RecordScreen = () => {
 
   return (
     <View className="flex-1" style={{ backgroundColor: c.accent.primary }}>
-      <KeepAwake />
+      {state === 'recording' && <KeepAwake />}
       <StatusBar barStyle="light-content" backgroundColor={c.accent.primary} />
       <RecordScreenHeader state={state} onClose={handleClose} />
       <View className="flex-1 items-center justify-center gap-9 px-6">

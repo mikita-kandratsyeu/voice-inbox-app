@@ -92,7 +92,7 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
 
     try {
       limitReachedRef.current = false;
-      audioRecorderPlayer.setSubscriptionDuration(0.05);
+      audioRecorderPlayer.setSubscriptionDuration(0.2);
 
       const path = await audioRecorderPlayer.startRecorder(undefined, RECORDING_AUDIO_SET, true);
       audioPathRef.current = path;
@@ -119,7 +119,7 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
 
   const resumeRecording = useCallback(async () => {
     try {
-      audioRecorderPlayer.setSubscriptionDuration(0.05);
+      audioRecorderPlayer.setSubscriptionDuration(0.2);
       await audioRecorderPlayer.resumeRecorder();
 
       addRecordBackListener();

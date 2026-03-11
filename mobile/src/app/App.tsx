@@ -13,6 +13,7 @@ import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
 import { OnboardingGate } from '@/features/onboarding';
 import { releaseWhisperContext } from '@/features/transcription';
 import { getColors } from '@/shared/config';
+import { NetworkStatusProvider } from '@/shared/lib';
 
 import { RootNavigator } from './navigation/RootNavigator';
 
@@ -52,19 +53,21 @@ const App = () => {
   return (
     <GestureHandlerRootView style={rootStyle}>
       <SafeAreaProvider style={safeAreaStyle}>
-        <BottomSheetModalProvider>
-          <StatusBar
-            barStyle={isDark ? 'light-content' : 'dark-content'}
-            backgroundColor={color.background.primary}
-          />
-          <NavigationContainer>
-            <OnboardingGate>
-              <AppLockGate>
-                <RootNavigator />
-              </AppLockGate>
-            </OnboardingGate>
-          </NavigationContainer>
-        </BottomSheetModalProvider>
+        <NetworkStatusProvider>
+          <BottomSheetModalProvider>
+            <StatusBar
+              barStyle={isDark ? 'light-content' : 'dark-content'}
+              backgroundColor={color.background.primary}
+            />
+            <NavigationContainer>
+              <OnboardingGate>
+                <AppLockGate>
+                  <RootNavigator />
+                </AppLockGate>
+              </OnboardingGate>
+            </NavigationContainer>
+          </BottomSheetModalProvider>
+        </NetworkStatusProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

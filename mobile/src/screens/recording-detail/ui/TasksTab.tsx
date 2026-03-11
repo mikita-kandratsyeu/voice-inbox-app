@@ -155,9 +155,9 @@ export const TasksTab = ({
             <MenuView
               title=""
               shouldOpenOnLongPress={false}
-              onPressAction={({ nativeEvent }) => {
+              onPressAction={async ({ nativeEvent }) => {
                 if (nativeEvent.event === 'addToCalendar') {
-                  addTaskToCalendar(
+                  await addTaskToCalendar(
                     task,
                     recordTitle,
                     () => Alert.alert(t('tasks.addedToCalendar')),
@@ -165,7 +165,7 @@ export const TasksTab = ({
                   );
                 }
                 if (nativeEvent.event === 'addToReminder') {
-                  addTaskToReminder(
+                  await addTaskToReminder(
                     task,
                     recordTitle,
                     () => Alert.alert(t('tasks.addedToReminders')),

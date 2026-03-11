@@ -1,7 +1,16 @@
 import { Lock, Mic, Settings, Shield, Sparkles, Zap } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Dimensions, FlatList, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  FlatList,
+  Text,
+  TouchableOpacity,
+  useColorScheme,
+  View,
+} from 'react-native';
 import Animated, {
   interpolate,
   interpolateColor,
@@ -15,6 +24,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useSettingsStore } from '@/entities/settings';
+import { useModelManager } from '@/features/model-manager';
 import { getColors } from '@/shared/config';
 
 import { setHasSeenOnboarding } from '../lib/onboardingStorage';
@@ -123,12 +134,16 @@ const AnimatedNextButton = ({
   scrollX,
   slideColors,
   iconOnAccent,
+  disabled,
+  loading,
 }: {
   label: string;
   onPress: () => void;
   scrollX: SharedValue<number>;
   slideColors: string[];
   iconOnAccent: string;
+  disabled?: boolean;
+  loading?: boolean;
 }) => {
   const animatedStyle = useAnimatedStyle(() => {
     const inputRange = slideColors.map((_, i) => i * SCREEN_WIDTH);
@@ -155,11 +170,21 @@ const AnimatedNextButton = ({
       <TouchableOpacity
         onPress={onPress}
         activeOpacity={0.85}
-        className="flex-1 flex-row items-center justify-center py-3.5 px-7"
+        disabled={disabled}
+        className="flex-1 flex-row items-center justify-center gap-2 py-3.5 px-7"
       >
-        <Text className="text-[16px] font-semibold" style={{ color: iconOnAccent }}>
-          {label}
-        </Text>
+        {loading ? (
+          <>
+            <ActivityIndicator size="small" color={iconOnAccent} />
+            <Text className="text-[16px] font-semibold" style={{ color: iconOnAccent }}>
+              {label}
+            </Text>
+          </>
+        ) : (
+          <Text className="text-[16px] font-semibold" style={{ color: iconOnAccent }}>
+            {label}
+          </Text>
+        )}
       </TouchableOpacity>
     </Animated.View>
   );
@@ -335,8 +360,13 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   }, [slides, color.accent.primary]);
   const insets = useSafeAreaInsets();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isStartingDownload, setIsStartingDownload] = useState(false);
   const flatListRef = useRef<FlatList<OnboardingSlideContent>>(null);
   const scrollX = useSharedValue(0);
+
+  const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
+  const { startDownload } = useModelManager();
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -352,15 +382,41 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const handleNext = () => {
     const lastIndex = slides.length - 1;
 
-    if (currentIndex >= lastIndex) {
+    if (currentIndex < lastIndex) {
+      flatListRef.current?.scrollToOffset({
+        offset: (currentIndex + 1) * SCREEN_WIDTH,
+        animated: true,
+      });
+      return;
+    }
+
+    const whisperStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
+
+    if (whisperStatus === 'downloaded') {
       handleComplete();
       return;
     }
 
-    flatListRef.current?.scrollToOffset({
-      offset: (currentIndex + 1) * SCREEN_WIDTH,
-      animated: true,
-    });
+    if (whisperStatus === 'downloading') {
+      handleComplete();
+      return;
+    }
+
+    Alert.alert(t('onboarding.downloadBeforeStart'), t('onboarding.downloadBeforeStartHint'), [
+      { text: t('common.skip'), style: 'cancel', onPress: handleComplete },
+      {
+        text: t('common.download'),
+        onPress: async () => {
+          setIsStartingDownload(true);
+          try {
+            await startDownload(selectedWhisperModel);
+            handleComplete();
+          } catch {
+            setIsStartingDownload(false);
+          }
+        },
+      },
+    ]);
   };
 
   const handleDotPress = (index: number) => {

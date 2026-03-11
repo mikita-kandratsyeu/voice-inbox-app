@@ -1,3 +1,6 @@
+# Disable prebuilt React Core - fixes RCTBridgeModule.h header not found with some native modules
+ENV['RCT_USE_PREBUILT_RNCORE'] = '0'
+
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(

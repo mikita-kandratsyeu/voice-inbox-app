@@ -38,13 +38,26 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
       return;
     }
     const model = WHISPER_MODELS.find((m) => m.id === id);
-    if (model) {
+    if (!model) return;
+
+    const isSmallModel = model.sizeMb <= 150;
+
+    if (isSmallModel) {
+      setWhisperModel(id);
+      startDownload(id);
+    } else {
       Alert.alert(
         t('whisper.downloadModel'),
         t('whisper.downloadConfirm', { size: model.sizeMb }),
         [
           { text: t('common.cancel'), style: 'cancel' },
-          { text: t('common.download'), onPress: () => startDownload(id) },
+          {
+            text: t('common.download'),
+            onPress: () => {
+              setWhisperModel(id);
+              startDownload(id);
+            },
+          },
         ],
       );
     }
