@@ -248,8 +248,15 @@ const SlideItem = ({
   if (item.extra === 'setup') {
     return (
       <Animated.View
-        style={[{ width: SCREEN_WIDTH, paddingHorizontal: 32 }, animatedStyle]}
-        className="flex-1 items-center justify-center"
+        style={[
+          {
+            width: SCREEN_WIDTH,
+            paddingHorizontal: 32,
+            paddingTop: 48,
+          },
+          animatedStyle,
+        ]}
+        className="flex-1 items-center"
       >
         <View style={{ width: '100%', height: SCREEN_HEIGHT * 0.6 }}>
           <OnboardingSetupStep color={color} />
