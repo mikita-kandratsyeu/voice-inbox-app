@@ -98,6 +98,15 @@
   },
   "settings": {
     "title": "Settings",
+    "aiUsage": {
+      "title": "AI processing limit",
+      "subtitle": "Weekly limit for summary and task requests",
+      "used": "{{used}} / {{limit}}",
+      "remaining": "Remaining: {{count}}",
+      "exhausted": "Limit exhausted",
+      "resetAt": "Resets: {{date}}",
+      "loading": "Loading..."
+    },
     "sync": "Sync",
     "export": "Export data",
     "exporting": "Exporting...",

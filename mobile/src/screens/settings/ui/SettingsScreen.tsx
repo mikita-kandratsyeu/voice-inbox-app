@@ -11,9 +11,18 @@ import {
   UploadCloud,
   Zap,
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Linking, ScrollView, Switch, Text, useColorScheme, View } from 'react-native';
+import {
+  Alert,
+  Linking,
+  RefreshControl,
+  ScrollView,
+  Switch,
+  Text,
+  useColorScheme,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
@@ -22,7 +31,10 @@ import { useRecordStore } from '@/entities/record';
 import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { exportData, importData } from '@/features/sync-data';
 import { getColors, WEBSITE_URL } from '@/shared/config';
+import { getAiUsage } from '@/shared/lib/ai-api';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
+
+import { AiUsageCard } from './AiUsageCard';
 
 export const SettingsScreen = () => {
   const { t } = useTranslation();
@@ -39,6 +51,31 @@ export const SettingsScreen = () => {
   const addRecord = useRecordStore((s) => s.addRecord);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [aiUsage, setAiUsage] = useState<Awaited<ReturnType<typeof getAiUsage>>>(null);
+  const [aiUsageLoading, setAiUsageLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchAiUsage = useCallback(async () => {
+    const data = await getAiUsage();
+    setAiUsage(data ?? null);
+    return data;
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchAiUsage().finally(() => {
+      if (!cancelled) setAiUsageLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchAiUsage]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchAiUsage();
+    setRefreshing(false);
+  }, [fetchAiUsage]);
 
   const aiModelName = AI_MODELS.find((m) => m.id === selectedAIModel)?.name ?? selectedAIModel;
   const whisperModelName =
@@ -119,7 +156,16 @@ export const SettingsScreen = () => {
           paddingBottom: insets.bottom + 24,
         }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={color.accent.primary}
+          />
+        }
       >
+        <AiUsageCard usage={aiUsage} loading={aiUsageLoading} />
+
         <SettingsSection title={t('settings.sync')} color={color}>
           <SettingsRow
             label={isExporting ? t('settings.exporting') : t('settings.export')}

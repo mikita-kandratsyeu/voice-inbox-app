@@ -88,6 +88,37 @@ export async function postAiMessage(body: AiApiRequestBody): Promise<AiApiResult
   return { ok: true, data };
 }
 
+export type AiUsage = {
+  used: number;
+  limit: number;
+  remaining: number;
+  resetAt: string;
+  resetAtUtc: string;
+};
+
+export async function getAiUsage(): Promise<AiUsage | null> {
+  const deviceId = await getDeviceId();
+
+  try {
+    const response = await fetch(`${WEB_API_URL}/api/ai-usage`, {
+      method: 'GET',
+      headers: {
+        'x-app-secret': WEB_API_SECRET ?? '',
+        'x-device-id': deviceId,
+      },
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const data = (await response.json()) as AiUsage;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 export async function pollAiMessage(id: string, syncToken?: string): Promise<AiMessageResult> {
   const headers: Record<string, string> = {};
   if (syncToken) {
