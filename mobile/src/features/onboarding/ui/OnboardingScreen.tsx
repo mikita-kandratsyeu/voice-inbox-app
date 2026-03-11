@@ -1,4 +1,4 @@
-import { Lock, Mic, Shield, Sparkles, Zap } from 'lucide-react-native';
+import { Lock, Mic, Settings, Shield, Sparkles, Zap } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dimensions, FlatList, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
@@ -19,12 +19,14 @@ import { getColors } from '@/shared/config';
 
 import { setHasSeenOnboarding } from '../lib/onboardingStorage';
 import { getOnboardingSlides, type OnboardingSlideContent } from '../model/constants';
+import { OnboardingSetupStep } from './OnboardingSetupStep';
 
 const ICON_MAP = {
   Mic,
   Lock,
   Sparkles,
   Zap,
+  Settings,
 } as const;
 
 type OnboardingScreenProps = {
@@ -240,6 +242,39 @@ const SlideItem = ({
       transform: [{ scale }, { translateX }],
     };
   });
+
+  if (item.extra === 'setup') {
+    return (
+      <Animated.View
+        style={[{ width: SCREEN_WIDTH, paddingHorizontal: 32 }, animatedStyle]}
+        className="flex-1"
+      >
+        <View className="mb-4 items-center">
+          <AnimatedSlideIcon
+            iconName={item.iconName}
+            iconColor={item.iconColor}
+            iconBg={item.iconBg}
+            iconOnAccent={color.icon.onAccent}
+          />
+        </View>
+        <Text
+          className="mb-2 text-center text-[24px] font-bold leading-tight"
+          style={{ color: color.text.primary }}
+        >
+          {t(item.titleKey)}
+        </Text>
+        <Text
+          className="mb-4 text-center text-[16px] leading-6"
+          style={{ color: color.text.secondary }}
+        >
+          {t(item.descKey)}
+        </Text>
+        <View className="flex-1 min-h-[200px]">
+          <OnboardingSetupStep color={color} />
+        </View>
+      </Animated.View>
+    );
+  }
 
   return (
     <Animated.View
