@@ -6,7 +6,7 @@ export { SectionHeader } from './SectionHeader';
 export { SettingsRow } from './SettingsRow';
 export { SettingsSection } from './SettingsSection';
 export { SkeletonPulse } from './SkeletonPulse';
-export { SwipeableCard } from './SwipeableCard';
+export { SwipeableCard, SwipeableCardContext } from './SwipeableCard';
 export { TabEmptyState } from './TabEmptyState';
 export { Tag } from './Tag';
 export { Waveform } from './Waveform';
