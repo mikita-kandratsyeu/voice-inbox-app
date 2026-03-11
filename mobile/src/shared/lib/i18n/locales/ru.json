@@ -96,6 +96,7 @@
     "aiProcessing": "ИИ обработка",
     "aiModel": "ИИ модель",
     "transcription": "Транскрипция",
+    "autoTranscribeOnSave": "Авто-транскрипция после записи",
     "device": "Устройство",
     "appLock": "Блокировка приложения",
     "offlineStorage": "Офлайн хранилище",

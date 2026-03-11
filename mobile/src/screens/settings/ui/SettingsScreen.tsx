@@ -9,10 +9,11 @@ import {
   Mic,
   Shield,
   UploadCloud,
+  Zap,
 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Linking, ScrollView, Text, useColorScheme, View } from 'react-native';
+import { Alert, Linking, ScrollView, Switch, Text, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
@@ -31,6 +32,8 @@ export const SettingsScreen = () => {
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
+  const setAutoTranscribeOnSave = useSettingsStore((s) => s.setAutoTranscribeOnSave);
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
   const records = useRecordStore((s) => s.records);
   const addRecord = useRecordStore((s) => s.addRecord);
@@ -150,6 +153,24 @@ export const SettingsScreen = () => {
             color={color}
             leftIcon={<Mic size={20} color={color.accent.cache} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('WhisperModelPicker')}
+          />
+          <SettingsRow
+            label={t('settings.autoTranscribeOnSave')}
+            color={color}
+            leftIcon={<Zap size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+            rightSlot={
+              <Switch
+                value={autoTranscribeOnSave}
+                onValueChange={setAutoTranscribeOnSave}
+                trackColor={{
+                  false: color.background.tertiary,
+                  true: color.accent.success,
+                }}
+                thumbColor="#fff"
+              />
+            }
+            showChevron={false}
+            onPress={undefined}
             isLast
           />
         </SettingsSection>

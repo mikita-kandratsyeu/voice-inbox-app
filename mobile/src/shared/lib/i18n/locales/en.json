@@ -96,6 +96,7 @@
     "aiProcessing": "AI processing",
     "aiModel": "AI model",
     "transcription": "Transcription",
+    "autoTranscribeOnSave": "Auto-transcribe after recording",
     "device": "Device",
     "appLock": "App lock",
     "offlineStorage": "Offline storage",

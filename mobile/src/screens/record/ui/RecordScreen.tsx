@@ -5,6 +5,8 @@ import { PanResponder, StatusBar, Text, useColorScheme, View } from 'react-nativ
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import { useSettingsStore } from '@/entities/settings';
+import { useTranscription } from '@/features/transcription';
 import { getColors } from '@/shared/config';
 import { Waveform } from '@/shared/ui';
 
@@ -22,6 +24,8 @@ export const RecordScreen = () => {
 
   const navigation = useNavigation();
   const addRecord = useRecordStore((s) => s.addRecord);
+  const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
+  const { startTranscription } = useTranscription();
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [title, setTitle] = useState('');
 
@@ -77,6 +81,9 @@ export const RecordScreen = () => {
   const handleSaveConfirm = async (record: VoiceRecord) => {
     await stopRecording();
     addRecord(record);
+    if (autoTranscribeOnSave) {
+      startTranscription(record);
+    }
   };
 
   const handleSaveComplete = () => {
