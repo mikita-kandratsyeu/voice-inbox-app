@@ -63,6 +63,6 @@ export const formatTimeWithMs = (milliseconds: number): { main: string; ms: stri
 
   return {
     main: `${totalMins}:${secs.toString().padStart(2, '0')}`,
-    ms: `.${tenths}0`,
+    ms: `.${tenths}`,
   };
 };
