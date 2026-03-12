@@ -1,27 +1,22 @@
 import type { BottomTabBarButtonProps } from '@react-navigation/bottom-tabs';
-import React, { useRef } from 'react';
-import { Animated, TouchableOpacity } from 'react-native';
+import React from 'react';
+import { TouchableOpacity } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 export const AnimatedTabButton = ({ children, onPress, onLongPress }: BottomTabBarButtonProps) => {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useSharedValue(1);
 
   const handlePressIn = () => {
-    Animated.spring(scale, {
-      toValue: 0.82,
-      useNativeDriver: true,
-      speed: 40,
-      bounciness: 6,
-    }).start();
+    scale.value = withSpring(0.82, { damping: 12, stiffness: 400 });
   };
 
   const handlePressOut = () => {
-    Animated.spring(scale, {
-      toValue: 1,
-      useNativeDriver: true,
-      speed: 20,
-      bounciness: 10,
-    }).start();
+    scale.value = withSpring(1, { damping: 10, stiffness: 200 });
   };
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
 
   return (
     <TouchableOpacity
@@ -32,7 +27,7 @@ export const AnimatedTabButton = ({ children, onPress, onLongPress }: BottomTabB
       activeOpacity={1}
       className="my-0 flex-1 items-center justify-center py-0"
     >
-      <Animated.View className="items-center justify-center" style={{ transform: [{ scale }] }}>
+      <Animated.View className="items-center justify-center" style={animatedStyle}>
         {children}
       </Animated.View>
     </TouchableOpacity>

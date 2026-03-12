@@ -1,7 +1,8 @@
 import { Mic, X } from 'lucide-react-native';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
 import { Button } from '@/shared/ui';
@@ -10,7 +11,6 @@ type TranscriptProcessingProps = {
   progress: number;
   color: Colors;
   onCancel: () => void;
-  // Метка для длинных записей: "Обработано N из M фрагментов..."
   progressLabel?: string;
 };
 
@@ -21,20 +21,17 @@ export const TranscriptProcessing = ({
   progressLabel,
 }: TranscriptProcessingProps) => {
   const { t } = useTranslation();
-  const animatedWidth = useRef(new Animated.Value(0)).current;
+  const animatedWidth = useSharedValue(0);
   const clampedProgress = Math.min(100, Math.max(0, progress));
 
   useEffect(() => {
     if (progress === 0) {
-      animatedWidth.setValue(0);
+      animatedWidth.value = 0;
       return;
     }
-    Animated.timing(animatedWidth, {
-      toValue: clampedProgress,
-      duration: 400,
-      useNativeDriver: false,
-    }).start();
-  }, [clampedProgress, progress, animatedWidth]);
+
+    animatedWidth.value = withTiming(clampedProgress, { duration: 400 });
+  }, [animatedWidth, clampedProgress, progress]);
 
   const secondsLeft = Math.round(((100 - clampedProgress) / 100) * 60);
   const timeLabel = progressLabel
@@ -43,10 +40,9 @@ export const TranscriptProcessing = ({
       ? t('transcription.secondsLeft', { count: secondsLeft })
       : t('transcription.minutesLeft', { count: Math.ceil(secondsLeft / 60) });
 
-  const trackWidthInterpolated = animatedWidth.interpolate({
-    inputRange: [0, 100],
-    outputRange: ['0%', '100%'],
-  });
+  const trackStyle = useAnimatedStyle(() => ({
+    width: `${animatedWidth.value}%`,
+  }));
 
   return (
     <View className="gap-3 p-4">
@@ -73,7 +69,7 @@ export const TranscriptProcessing = ({
       >
         <Animated.View
           className="h-1.5 rounded-sm"
-          style={{ width: trackWidthInterpolated, backgroundColor: color.accent.primary }}
+          style={[trackStyle, { backgroundColor: color.accent.primary }]}
         />
       </View>
       <View className="-mt-1 flex-row justify-between">

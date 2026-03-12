@@ -1,7 +1,15 @@
 import { AlertCircle, Loader, MicOff } from 'lucide-react-native';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, Easing, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { getColors } from '@/shared/config';
 
@@ -27,7 +35,7 @@ export const AiStatusPill = ({
 }: AiStatusPillProps) => {
   const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
-  const rotation = useRef(new Animated.Value(0)).current;
+  const rotation = useSharedValue(0);
 
   const aiProcessing = isAiProcessing(summaryStatus) || isAiProcessing(tasksStatus);
   const aiError = isAiError(summaryStatus) || isAiError(tasksStatus);
@@ -35,19 +43,13 @@ export const AiStatusPill = ({
   useEffect(() => {
     const isProcessing = aiStatus === 'processing' || aiProcessing;
     if (!isProcessing) return;
-    const anim = Animated.loop(
-      Animated.timing(rotation, {
-        toValue: 1,
-        duration: 1000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-    );
-    anim.start();
-    return () => anim.stop();
+    rotation.value = withRepeat(withTiming(1, { duration: 1000, easing: Easing.linear }), -1);
+    return () => cancelAnimation(rotation);
   }, [aiStatus, aiProcessing, rotation]);
 
-  const spin = rotation.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const spinStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotation.value * 360}deg` }],
+  }));
 
   if (aiStatus === 'done' && !aiProcessing && !aiError) {
     return null;
@@ -61,7 +63,7 @@ export const AiStatusPill = ({
         onPress={onPress}
         activeOpacity={0.75}
       >
-        <Animated.View style={{ transform: [{ rotate: spin }] }}>
+        <Animated.View style={spinStyle}>
           <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
         </Animated.View>
         <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
@@ -79,7 +81,7 @@ export const AiStatusPill = ({
         onPress={onPress}
         activeOpacity={0.75}
       >
-        <Animated.View style={{ transform: [{ rotate: spin }] }}>
+        <Animated.View style={spinStyle}>
           <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
         </Animated.View>
         <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>

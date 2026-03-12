@@ -1,7 +1,6 @@
 import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  Animated,
   GestureResponderEvent,
   LayoutChangeEvent,
   Text,
@@ -9,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import AudioRecorderPlayer, { type PlayBackType } from 'react-native-audio-recorder-player';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
 import { formatTime, hapticSelection } from '@/shared/lib';
@@ -41,7 +41,8 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
   const [trackWidth, setTrackWidth] = useState(0);
   const [speedIndex, setSpeedIndex] = useState(0);
 
-  const progressAnim = useRef(new Animated.Value(0)).current;
+  const progressValue = useSharedValue(0);
+  const trackWidthValue = useSharedValue(0);
   const elapsedRef = useRef(0);
   const isPlayerLoadedRef = useRef(false);
   const totalMs = totalSeconds * 1000;
@@ -50,12 +51,8 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
   const progress = totalSeconds > 0 ? elapsed / totalSeconds : 0;
 
   useEffect(() => {
-    Animated.timing(progressAnim, {
-      toValue: progress,
-      duration: 150,
-      useNativeDriver: false,
-    }).start();
-  }, [progress, progressAnim]);
+    progressValue.value = withTiming(progress, { duration: 150 });
+  }, [progress, progressValue]);
 
   const stopAndReset = useCallback(async () => {
     try {
@@ -69,8 +66,8 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
     setIsPlaying(false);
     setElapsed(0);
     elapsedRef.current = 0;
-    progressAnim.setValue(0);
-  }, [progressAnim]);
+    progressValue.value = 0;
+  }, [progressValue]);
 
   const seekTo = useCallback(async (seekMs: number) => {
     try {
@@ -191,7 +188,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
     const secs = Math.floor(seekMs / 1000);
     elapsedRef.current = secs;
     setElapsed(secs);
-    progressAnim.setValue(totalSeconds > 0 ? secs / totalSeconds : 0);
+    progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
     if (isPlayerLoadedRef.current) {
       await seekTo(seekMs);
     }
@@ -204,7 +201,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
     const secs = Math.floor(seekMs / 1000);
     elapsedRef.current = secs;
     setElapsed(secs);
-    progressAnim.setValue(totalSeconds > 0 ? secs / totalSeconds : 0);
+    progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
     if (isPlayerLoadedRef.current) {
       await seekTo(seekMs);
     }
@@ -226,11 +223,19 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
     const secs = Math.floor(seekMs / 1000);
     elapsedRef.current = secs;
     setElapsed(secs);
-    progressAnim.setValue(totalSeconds > 0 ? secs / totalSeconds : 0);
+    progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
     if (isPlayerLoadedRef.current) {
       await seekTo(seekMs);
     }
   };
+
+  const fillStyle = useAnimatedStyle(() => ({
+    width: `${progressValue.value * 100}%`,
+  }));
+
+  const thumbStyle = useAnimatedStyle(() => ({
+    left: progressValue.value * Math.max(0, trackWidthValue.value - 12),
+  }));
 
   useEffect(() => {
     if (isPlaying && isPlayerLoadedRef.current) {
@@ -245,11 +250,6 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
       player.stopPlayer().catch(() => {});
     };
   }, []);
-
-  const fillWidth = progressAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0%', '100%'],
-  });
 
   const hasAudio = Boolean(audioPath);
 
@@ -267,26 +267,27 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
         <View
           className="h-1 justify-center overflow-visible rounded-sm"
           style={{ backgroundColor: color.background.tertiary }}
-          onLayout={(e: LayoutChangeEvent) => setTrackWidth(e.nativeEvent.layout.width)}
+          onLayout={(e: LayoutChangeEvent) => {
+            const w = e.nativeEvent.layout.width;
+            setTrackWidth(w);
+            trackWidthValue.value = w;
+          }}
           onStartShouldSetResponder={() => hasAudio}
           onResponderGrant={handleTrackPress}
         >
           <Animated.View
             className="absolute left-0 top-0 h-1 rounded-sm"
-            style={{
-              width: fillWidth,
-              backgroundColor: hasAudio ? color.accent.primary : color.background.tertiary,
-            }}
+            style={[
+              fillStyle,
+              { backgroundColor: hasAudio ? color.accent.primary : color.background.tertiary },
+            ]}
           />
           <Animated.View
             className="absolute -top-1 h-3 w-3 rounded-full shadow-sm"
-            style={{
-              backgroundColor: hasAudio ? color.accent.primary : 'transparent',
-              left: progressAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, trackWidth - 12],
-              }),
-            }}
+            style={[
+              thumbStyle,
+              { backgroundColor: hasAudio ? color.accent.primary : 'transparent' },
+            ]}
           />
         </View>
         <View className="flex-row justify-between">

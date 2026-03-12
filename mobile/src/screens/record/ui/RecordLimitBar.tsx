@@ -1,5 +1,6 @@
-import React, { memo, useEffect, useRef } from 'react';
-import { Animated, Text, useColorScheme } from 'react-native';
+import React, { memo, useEffect } from 'react';
+import { Text, useColorScheme } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { getColors } from '@/shared/config';
 
@@ -13,20 +14,20 @@ export const RecordLimitBar = memo(({ elapsedMs }: RecordLimitBarProps) => {
   const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
   const c = getColors(scheme);
 
-  const animatedOpacity = useRef(new Animated.Value(0)).current;
+  const opacity = useSharedValue(0);
 
   const remainingMs = MAX_RECORDING_MS - elapsedMs;
   const isWarning = remainingMs <= WARNING_REMAINING_MS;
 
   useEffect(() => {
     if (isWarning) {
-      Animated.timing(animatedOpacity, {
-        toValue: 1,
-        duration: 400,
-        useNativeDriver: true,
-      }).start();
+      opacity.value = withTiming(1, { duration: 400 });
     }
-  }, [isWarning, animatedOpacity]);
+  }, [isWarning, opacity]);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
 
   const remainingMins = Math.ceil(remainingMs / 60000);
   const remainingSecs = Math.ceil(remainingMs / 1000);
@@ -35,7 +36,7 @@ export const RecordLimitBar = memo(({ elapsedMs }: RecordLimitBarProps) => {
     remainingMs <= 60000 ? `Осталось ${remainingSecs} сек` : `Осталось ${remainingMins} мин`;
 
   return (
-    <Animated.View style={{ opacity: animatedOpacity }}>
+    <Animated.View style={animatedStyle}>
       <Text className="text-[12px] font-semibold" style={{ color: c.accent.delete }}>
         {warningLabel}
       </Text>

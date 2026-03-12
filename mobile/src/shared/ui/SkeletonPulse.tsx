@@ -1,31 +1,29 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated } from 'react-native';
+import React, { useEffect } from 'react';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 
 type SkeletonPulseProps = {
   children: React.ReactNode;
 };
 
 export const SkeletonPulse = ({ children }: SkeletonPulseProps) => {
-  const opacity = useRef(new Animated.Value(1)).current;
+  const opacity = useSharedValue(1);
 
   useEffect(() => {
-    const pulse = Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, {
-          toValue: 0.35,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ]),
+    opacity.value = withRepeat(
+      withSequence(withTiming(0.35, { duration: 800 }), withTiming(1, { duration: 800 })),
+      -1,
     );
-    pulse.start();
-    return () => pulse.stop();
   }, [opacity]);
 
-  return <Animated.View style={{ opacity }}>{children}</Animated.View>;
+  const animatedStyle = useAnimatedStyle(() => ({
+    opacity: opacity.value,
+  }));
+
+  return <Animated.View style={animatedStyle}>{children}</Animated.View>;
 };

@@ -40,7 +40,6 @@ export const RecordScreen = () => {
     state,
     elapsed,
     elapsedMs,
-    meterLevel,
     audioPathRef,
     startRecording,
     pauseRecording,
@@ -112,7 +111,6 @@ export const RecordScreen = () => {
           <Waveform
             isAnimating={state === 'recording' && appState === 'active'}
             color="rgba(255,255,255,0.65)"
-            meterLevel={state === 'recording' && appState === 'active' ? meterLevel : undefined}
           />
         </View>
         <View className="items-center gap-1" style={{ opacity: state === 'paused' ? 0 : 1 }}>

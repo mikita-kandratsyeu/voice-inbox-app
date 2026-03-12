@@ -47,7 +47,6 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
   const [state, setState] = useState<RecordingState>('idle');
   const [elapsed, setElapsed] = useState(0);
   const [elapsedMs, setElapsedMs] = useState(0);
-  const [meterLevel, setMeterLevel] = useState<number | undefined>(undefined);
 
   const audioPathRef = useRef<string | null>(null);
   const elapsedRef = useRef(0);
@@ -91,9 +90,6 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
         setElapsed(secs);
         setElapsedMs(ms);
         updateRecordingLiveActivity(secs).catch(() => {});
-        if (e.currentMetering !== undefined) {
-          setMeterLevel(e.currentMetering);
-        }
       } else {
         const now = Date.now();
         if (now - lastLiveActivityUpdateRef.current >= 5000) {
@@ -109,7 +105,6 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
         }
         endRecordingLiveActivity().catch(() => {});
         audioRecorderPlayer.removeRecordBackListener();
-        setMeterLevel(undefined);
         audioRecorderPlayer
           .stopRecorder()
           .then((result) => {
@@ -159,7 +154,6 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
       await audioRecorderPlayer.pauseRecorder();
       audioRecorderPlayer.removeRecordBackListener();
 
-      setMeterLevel(undefined);
       setState('paused');
     } catch (err) {
       if (__DEV__) console.warn('[useRecording] pauseRecorder failed:', err);
@@ -186,7 +180,6 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
       endRecordingLiveActivity().catch(() => {});
 
       audioRecorderPlayer.removeRecordBackListener();
-      setMeterLevel(undefined);
 
       const result = await audioRecorderPlayer.stopRecorder();
 
@@ -211,7 +204,6 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
     state,
     elapsed,
     elapsedMs,
-    meterLevel,
     audioPathRef,
     startRecording,
     pauseRecording,

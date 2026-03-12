@@ -1,6 +1,5 @@
 import { Pin, PinOff, Trash2 } from 'lucide-react-native';
-import React, { useRef } from 'react';
-import { Animated as RNAnimated } from 'react-native';
+import React from 'react';
 import type { PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -10,7 +9,7 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { runOnJS } from 'react-native-worklets';
+import { scheduleOnRN } from 'react-native-worklets';
 
 import { colors } from '@/shared/config';
 import { hapticMedium } from '@/shared/lib';
@@ -20,6 +19,8 @@ export const SwipeableCardContext = React.createContext({ isSwiping: false });
 const SWIPE_THRESHOLD = 80;
 const CARD_FLY_DISTANCE = 400;
 const COLLAPSE_DURATION = 280;
+const MAX_HEIGHT = 300;
+const MARGIN_BOTTOM = 16;
 
 type SwipeAction = 'none' | 'delete' | 'pin';
 
@@ -40,26 +41,14 @@ export const SwipeableCard = ({
   const action = useSharedValue<SwipeAction>('none');
   const [isSwiping, setIsSwiping] = React.useState(false);
 
-  const collapseHeight = useRef(new RNAnimated.Value(1)).current;
-  const collapseOpacity = useRef(new RNAnimated.Value(1)).current;
+  const collapseHeight = useSharedValue(1);
+  const collapseOpacity = useSharedValue(1);
 
   const collapseAndDelete = () => {
-    RNAnimated.parallel([
-      RNAnimated.timing(collapseHeight, {
-        toValue: 0,
-        duration: COLLAPSE_DURATION,
-        useNativeDriver: false,
-      }),
-      RNAnimated.timing(collapseOpacity, {
-        toValue: 0,
-        duration: COLLAPSE_DURATION - 60,
-        useNativeDriver: false,
-      }),
-    ]).start(() => onDelete());
-  };
-
-  const triggerPin = () => {
-    runOnJS(onPin)();
+    collapseHeight.value = withTiming(0, { duration: COLLAPSE_DURATION });
+    collapseOpacity.value = withTiming(0, { duration: COLLAPSE_DURATION - 60 }, (finished) => {
+      if (finished) scheduleOnRN(onDelete);
+    });
   };
 
   useAnimatedReaction(
@@ -70,10 +59,10 @@ export const SwipeableCard = ({
       }
 
       if (current === 'delete') {
-        runOnJS(collapseAndDelete)();
+        scheduleOnRN(collapseAndDelete);
       } else if (current === 'pin') {
         translateX.value = withSpring(0, { damping: 14, stiffness: 300, mass: 0.6 }, () => {
-          runOnJS(triggerPin)();
+          scheduleOnRN(onPin);
         });
         action.value = 'none';
       }
@@ -84,29 +73,29 @@ export const SwipeableCard = ({
     .activeOffsetX([-10, 10])
     .failOffsetY([-15, 15])
     .onStart(() => {
-      runOnJS(setIsSwiping)(true);
+      scheduleOnRN(setIsSwiping, true);
     })
     .onUpdate((e: PanGestureHandlerEventPayload) => {
       translateX.value = e.translationX;
     })
     .onEnd((e: PanGestureHandlerEventPayload) => {
       if (e.translationX < -SWIPE_THRESHOLD) {
-        runOnJS(hapticMedium)();
+        scheduleOnRN(hapticMedium);
         translateX.value = withTiming(-CARD_FLY_DISTANCE, { duration: 220 }, () => {
           action.value = 'delete';
         });
       } else if (e.translationX > SWIPE_THRESHOLD) {
-        runOnJS(hapticMedium)();
+        scheduleOnRN(hapticMedium);
         translateX.value = withTiming(SWIPE_THRESHOLD * 1.3, { duration: 80 }, () => {
           action.value = 'pin';
         });
       } else {
         translateX.value = withSpring(0, { damping: 20, stiffness: 200 });
       }
-      runOnJS(setIsSwiping)(false);
+      scheduleOnRN(setIsSwiping, false);
     })
     .onFinalize(() => {
-      runOnJS(setIsSwiping)(false);
+      scheduleOnRN(setIsSwiping, false);
     });
 
   const cardStyle = useAnimatedStyle(() => ({
@@ -127,22 +116,16 @@ export const SwipeableCard = ({
 
   const pinBgColor = isPinned ? colors.light.accent.unpin : colors.light.accent.pin;
 
-  const containerStyle = {
-    maxHeight: collapseHeight.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 300],
-    }),
-    opacity: collapseOpacity,
+  const containerStyle = useAnimatedStyle(() => ({
+    maxHeight: collapseHeight.value * MAX_HEIGHT,
+    opacity: collapseOpacity.value,
     marginHorizontal: 16,
-    marginBottom: collapseHeight.interpolate({
-      inputRange: [0, 1],
-      outputRange: [0, 16],
-    }),
-  };
+    marginBottom: collapseHeight.value * MARGIN_BOTTOM,
+  }));
 
   return (
     <SwipeableCardContext.Provider value={{ isSwiping }}>
-      <RNAnimated.View style={containerStyle}>
+      <Animated.View style={containerStyle}>
         <Animated.View
           style={[
             {
@@ -188,7 +171,7 @@ export const SwipeableCard = ({
         <GestureDetector gesture={pan}>
           <Animated.View style={cardStyle}>{children}</Animated.View>
         </GestureDetector>
-      </RNAnimated.View>
+      </Animated.View>
     </SwipeableCardContext.Provider>
   );
 };

@@ -1,6 +1,12 @@
 import { Delete } from 'lucide-react-native';
-import React, { useEffect, useRef } from 'react';
-import { Animated, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+} from 'react-native-reanimated';
 
 import { PIN_LENGTH } from '@/entities/app-lock';
 import type { Colors } from '@/shared/config';
@@ -70,56 +76,42 @@ const AnimatedDot = ({
   success: boolean;
   color: Colors;
 }) => {
-  const scale = useRef(new Animated.Value(1)).current;
+  const scale = useSharedValue(1);
 
   useEffect(() => {
     if (success) {
-      Animated.sequence([
-        Animated.spring(scale, {
-          toValue: 1.2,
-          useNativeDriver: true,
-          speed: 14,
-          bounciness: 6,
-        }),
-        Animated.spring(scale, {
-          toValue: 1,
-          useNativeDriver: true,
-          speed: 14,
-          bounciness: 6,
-        }),
-      ]).start();
+      scale.value = withSequence(
+        withSpring(1.2, { damping: 12, stiffness: 200 }),
+        withSpring(1, { damping: 12, stiffness: 200 }),
+      );
     } else if (filled) {
-      Animated.sequence([
-        Animated.spring(scale, {
-          toValue: 1.3,
-          useNativeDriver: true,
-          speed: 12,
-          bounciness: 8,
-        }),
-        Animated.spring(scale, {
-          toValue: 1,
-          useNativeDriver: true,
-          speed: 12,
-          bounciness: 8,
-        }),
-      ]).start();
+      scale.value = withSequence(
+        withSpring(1.3, { damping: 10, stiffness: 180 }),
+        withSpring(1, { damping: 10, stiffness: 180 }),
+      );
     } else {
-      scale.setValue(1);
+      scale.value = 1;
     }
-  }, [filled, success, scale]);
+  }, [filled, scale, success]);
 
   const dotColor = getDotColor(filled, error, success, color);
   const borderColor = getBorderColor(filled, error, success, color);
 
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
   return (
     <Animated.View
       className="h-4 w-4 rounded-full"
-      style={{
-        backgroundColor: dotColor,
-        borderWidth: 2,
-        borderColor,
-        transform: [{ scale }],
-      }}
+      style={[
+        {
+          backgroundColor: dotColor,
+          borderWidth: 2,
+          borderColor,
+        },
+        animatedStyle,
+      ]}
     />
   );
 };
