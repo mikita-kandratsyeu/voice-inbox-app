@@ -34,7 +34,7 @@ export const RecordingDetailScreen = () => {
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
 
   const { record: routeRecord } = route.params;
-  const { records, togglePin, toggleTask } = useRecordStore();
+  const { records, togglePin, toggleTask, setSummaryStatus, setTasksStatus } = useRecordStore();
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const globalTranscriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
@@ -158,6 +158,10 @@ export const RecordingDetailScreen = () => {
               hasTranscript={Boolean(liveRecord.transcript)}
               color={color}
               onGenerate={handleGenerateSummary}
+              onDismissError={() => {
+                setSummaryStatus(liveRecord.id, 'done');
+                setTasksStatus(liveRecord.id, 'done');
+              }}
             />
           )}
           {activeTab === 'tasks' && (
@@ -169,6 +173,10 @@ export const RecordingDetailScreen = () => {
               color={color}
               onToggle={handleToggleTask}
               onExtract={handleExtractTasks}
+              onDismissError={() => {
+                setSummaryStatus(liveRecord.id, 'done');
+                setTasksStatus(liveRecord.id, 'done');
+              }}
             />
           )}
         </View>

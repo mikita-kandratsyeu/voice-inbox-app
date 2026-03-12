@@ -29,24 +29,30 @@ type RecordRowRaw = {
   audioPath: string | null;
 };
 
-const toRecord = (row: RecordRowRaw): VoiceRecord => ({
-  id: row.id,
-  title: row.title,
-  transcript: row.transcript ?? '',
-  transcriptSegments: JSON.parse(row.transcriptSegments ?? '[]') as TranscriptSegment[],
-  summary: row.summary ?? '',
-  tasks: JSON.parse(row.tasks ?? '[]') as TaskItem[],
-  duration: row.duration ?? '0:00',
-  durationMs: row.durationMs ?? 0,
-  createdAt: row.createdAt ?? '',
-  relativeTime: row.relativeTime ?? '',
-  status: (row.status ?? 'unread') as VoiceRecord['status'],
-  aiStatus: (row.aiStatus ?? 'idle') as RecordingStatus,
-  transcriptProgress: row.transcriptProgress ?? 0,
-  isPinned: Boolean(row.isPinned),
-  tags: JSON.parse(row.tags ?? '[]') as string[],
-  audioPath: row.audioPath ?? undefined,
-});
+const toRecord = (row: RecordRowRaw): VoiceRecord => {
+  const summary = row.summary ?? '';
+  const tasks = JSON.parse(row.tasks ?? '[]') as TaskItem[];
+  return {
+    id: row.id,
+    title: row.title,
+    transcript: row.transcript ?? '',
+    transcriptSegments: JSON.parse(row.transcriptSegments ?? '[]') as TranscriptSegment[],
+    summary,
+    tasks,
+    duration: row.duration ?? '0:00',
+    durationMs: row.durationMs ?? 0,
+    createdAt: row.createdAt ?? '',
+    relativeTime: row.relativeTime ?? '',
+    status: (row.status ?? 'unread') as VoiceRecord['status'],
+    aiStatus: (row.aiStatus ?? 'idle') as RecordingStatus,
+    transcriptProgress: row.transcriptProgress ?? 0,
+    isPinned: Boolean(row.isPinned),
+    tags: JSON.parse(row.tags ?? '[]') as string[],
+    audioPath: row.audioPath ?? undefined,
+    summaryStatus: summary ? ('done' as RecordingStatus) : undefined,
+    tasksStatus: tasks.length > 0 ? ('done' as RecordingStatus) : undefined,
+  };
+};
 
 export const recordRepository = {
   getAll: async (): Promise<VoiceRecord[]> => {

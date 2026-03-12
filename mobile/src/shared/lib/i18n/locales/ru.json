@@ -1,6 +1,7 @@
 {
   "common": {
     "cancel": "Отмена",
+    "close": "Закрыть",
     "save": "Сохранить",
     "delete": "Удалить",
     "remove": "Удалить",
@@ -89,6 +90,7 @@
     "regenerateSummary": "Пересоздать",
     "summaryProcessing": "Создание сводки...",
     "summaryError": "Не удалось создать сводку",
+    "summaryErrorBanner": "Ошибка при обновлении. Ниже — ранее созданная сводка.",
     "summaryRetry": "Повторить",
     "tasksNotExtracted": "Задачи не извлечены",
     "tasksNotExtractedDesc": "Нажмите кнопку ниже, чтобы\nавтоматически найти задачи с помощью ИИ.",
@@ -96,6 +98,7 @@
     "reextractTasks": "Переизвлечь",
     "tasksProcessing": "Извлечение задач...",
     "tasksError": "Не удалось извлечь задачи",
+    "tasksErrorBanner": "Ошибка при обновлении. Ниже — ранее извлечённые задачи.",
     "tasksRetry": "Повторить",
     "noTranscriptForAi": "Нужен транскрипт",
     "noTranscriptForAiDesc": "Сначала транскрибируйте запись, чтобы использовать функции ИИ.",
@@ -109,7 +112,9 @@
     "askButton": "Спросить",
     "askProcessing": "Ответ генерируется...",
     "askError": "Не удалось получить ответ",
+    "askErrorContinueHint": "Закройте окно, чтобы просмотреть сводку и задачи.",
     "askAnother": "Задать другой вопрос",
+    "continueViewing": "Продолжить просмотр",
     "accessibility": {
       "cardLabel": "Голосовая заметка {{title}}, записана {{date}}, длительность {{duration}}",
       "tagsSuffix": ", теги: {{tags}}"

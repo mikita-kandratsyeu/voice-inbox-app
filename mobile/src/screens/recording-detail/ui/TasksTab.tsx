@@ -4,23 +4,26 @@ import {
   Bell,
   CheckCircle2,
   Circle,
-  Cloud,
   ListChecks,
   MoreHorizontal,
   RefreshCw,
-  WifiOff,
 } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 
 import type { RecordingStatus, TaskItem } from '@/entities/record';
-import { AI_MODELS, useSettingsStore } from '@/entities/settings';
 import { useAddToCalendar } from '@/features/add-to-calendar';
 import { useAddToReminder } from '@/features/add-to-reminder';
 import type { Colors } from '@/shared/config';
-import { useNetworkStatus } from '@/shared/lib';
-import { Button, TabEmptyState } from '@/shared/ui';
+import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
+import {
+  AiTabErrorBanner,
+  AiTabHintIcon,
+  AiTabLoadingState,
+  Button,
+  TabEmptyState,
+} from '@/shared/ui';
 
 type TasksTabProps = {
   tasks: TaskItem[];
@@ -30,6 +33,7 @@ type TasksTabProps = {
   color: Colors;
   onToggle: (id: string) => void;
   onExtract: () => void;
+  onDismissError?: () => void;
 };
 
 export const TasksTab = ({
@@ -40,10 +44,11 @@ export const TasksTab = ({
   color,
   onToggle,
   onExtract,
+  onDismissError,
 }: TasksTabProps) => {
   const { t } = useTranslation();
-  const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
-  const aiModelName = AI_MODELS.find((m) => m.id === selectedAIModel)?.name ?? selectedAIModel;
+  const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
+  const aiModelName = useAiModelName();
   const { isConnected } = useNetworkStatus();
   const { addTaskToCalendar } = useAddToCalendar();
   const { addTaskToReminder } = useAddToReminder();
@@ -53,17 +58,10 @@ export const TasksTab = ({
   };
 
   if (status === 'processing') {
-    return (
-      <View className="items-center gap-3 p-8">
-        <ActivityIndicator color={color.accent.primary} />
-        <Text className="text-sm" style={{ color: color.text.secondary }}>
-          {t('recordingDetail.tasksProcessing')}
-        </Text>
-      </View>
-    );
+    return <AiTabLoadingState message={t('recordingDetail.tasksProcessing')} color={color} />;
   }
 
-  if (status === 'error') {
+  if (status === 'error' && tasks.length === 0) {
     return (
       <TabEmptyState
         icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
@@ -89,13 +87,6 @@ export const TasksTab = ({
   }
 
   if (tasks.length === 0) {
-    const hintIcon =
-      isConnected === false ? (
-        <WifiOff size={14} color={color.accent.delete} strokeWidth={1.8} />
-      ) : (
-        <Cloud size={14} color={color.text.secondary} strokeWidth={1.8} />
-      );
-
     return (
       <TabEmptyState
         icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
@@ -104,7 +95,7 @@ export const TasksTab = ({
         buttonLabel={t('recordingDetail.extractTasks')}
         buttonIcon={<ListChecks size={18} color="#fff" strokeWidth={2} />}
         hint={aiModelName}
-        hintIcon={hintIcon}
+        hintIcon={<AiTabHintIcon color={color} />}
         disabled={isConnected === false}
         onPress={onExtract}
         color={color}
@@ -114,6 +105,13 @@ export const TasksTab = ({
 
   return (
     <View className="gap-3.5 p-4">
+      {showBanner && (
+        <AiTabErrorBanner
+          message={t('recordingDetail.tasksErrorBanner')}
+          color={color}
+          onDismiss={handleDismiss}
+        />
+      )}
       {tasks.map((task) => {
         const menuActions = [
           {

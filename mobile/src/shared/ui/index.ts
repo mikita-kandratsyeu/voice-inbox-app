@@ -1,3 +1,6 @@
+export { AiTabErrorBanner } from './AiTabErrorBanner';
+export { AiTabHintIcon } from './AiTabHintIcon';
+export { AiTabLoadingState } from './AiTabLoadingState';
 export type { ButtonProps, ButtonSize, ButtonVariant } from './Button';
 export { Button } from './Button';
 export { EmptyState } from './EmptyState';

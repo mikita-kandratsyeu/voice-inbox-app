@@ -1,13 +1,18 @@
-import { AlertCircle, Cloud, FileText, RefreshCw, WifiOff } from 'lucide-react-native';
+import { AlertCircle, FileText, RefreshCw } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import type { RecordingStatus } from '@/entities/record';
-import { AI_MODELS, useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
-import { useNetworkStatus } from '@/shared/lib';
-import { Button, TabEmptyState } from '@/shared/ui';
+import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
+import {
+  AiTabErrorBanner,
+  AiTabHintIcon,
+  AiTabLoadingState,
+  Button,
+  TabEmptyState,
+} from '@/shared/ui';
 
 type SummaryTabProps = {
   summary: string;
@@ -15,6 +20,7 @@ type SummaryTabProps = {
   hasTranscript?: boolean;
   color: Colors;
   onGenerate: () => void;
+  onDismissError?: () => void;
 };
 
 export const SummaryTab = ({
@@ -23,24 +29,18 @@ export const SummaryTab = ({
   hasTranscript = true,
   color,
   onGenerate,
+  onDismissError,
 }: SummaryTabProps) => {
   const { t } = useTranslation();
-  const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
-  const aiModelName = AI_MODELS.find((m) => m.id === selectedAIModel)?.name ?? selectedAIModel;
+  const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
+  const aiModelName = useAiModelName();
   const { isConnected } = useNetworkStatus();
 
   if (status === 'processing') {
-    return (
-      <View className="items-center gap-3 p-8">
-        <ActivityIndicator color={color.accent.primary} />
-        <Text className="text-sm" style={{ color: color.text.secondary }}>
-          {t('recordingDetail.summaryProcessing')}
-        </Text>
-      </View>
-    );
+    return <AiTabLoadingState message={t('recordingDetail.summaryProcessing')} color={color} />;
   }
 
-  if (status === 'error') {
+  if (status === 'error' && !summary) {
     return (
       <TabEmptyState
         icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
@@ -66,13 +66,6 @@ export const SummaryTab = ({
   }
 
   if (!summary) {
-    const hintIcon =
-      isConnected === false ? (
-        <WifiOff size={14} color={color.accent.delete} strokeWidth={1.8} />
-      ) : (
-        <Cloud size={14} color={color.text.secondary} strokeWidth={1.8} />
-      );
-
     return (
       <TabEmptyState
         icon={<FileText size={28} color={color.icon.muted} strokeWidth={1.8} />}
@@ -81,7 +74,7 @@ export const SummaryTab = ({
         buttonLabel={t('recordingDetail.generateSummary')}
         buttonIcon={<FileText size={18} color="#fff" strokeWidth={2} />}
         hint={aiModelName}
-        hintIcon={hintIcon}
+        hintIcon={<AiTabHintIcon color={color} />}
         disabled={isConnected === false}
         onPress={onGenerate}
         color={color}
@@ -91,6 +84,13 @@ export const SummaryTab = ({
 
   return (
     <View className="gap-3.5 p-4">
+      {showBanner && (
+        <AiTabErrorBanner
+          message={t('recordingDetail.summaryErrorBanner')}
+          color={color}
+          onDismiss={handleDismiss}
+        />
+      )}
       <Text className="text-sm leading-6" style={{ color: color.text.primary }}>
         {summary}
       </Text>

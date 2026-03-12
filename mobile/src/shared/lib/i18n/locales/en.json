@@ -1,6 +1,7 @@
 {
   "common": {
     "cancel": "Cancel",
+    "close": "Close",
     "save": "Save",
     "delete": "Delete",
     "remove": "Remove",
@@ -89,6 +90,7 @@
     "regenerateSummary": "Regenerate",
     "summaryProcessing": "Generating summary...",
     "summaryError": "Failed to generate summary",
+    "summaryErrorBanner": "Update failed. Previously created summary is shown below.",
     "summaryRetry": "Try again",
     "tasksNotExtracted": "Tasks not extracted",
     "tasksNotExtractedDesc": "Tap the button below to\nautomatically find tasks using AI.",
@@ -96,6 +98,7 @@
     "reextractTasks": "Re-extract",
     "tasksProcessing": "Extracting tasks...",
     "tasksError": "Failed to extract tasks",
+    "tasksErrorBanner": "Update failed. Previously extracted tasks are shown below.",
     "tasksRetry": "Try again",
     "noTranscriptForAi": "Transcript required",
     "noTranscriptForAiDesc": "Transcribe the recording first to use AI features.",
@@ -109,7 +112,9 @@
     "askButton": "Ask",
     "askProcessing": "Answering...",
     "askError": "Failed to get answer",
+    "askErrorContinueHint": "Close to view summary and tasks.",
     "askAnother": "Ask another question",
+    "continueViewing": "Continue viewing",
     "accessibility": {
       "cardLabel": "Voice note {{title}}, recorded {{date}}, duration {{duration}}",
       "tagsSuffix": ", tags: {{tags}}"

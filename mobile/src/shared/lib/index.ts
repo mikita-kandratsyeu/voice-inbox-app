@@ -15,6 +15,8 @@ export type { SupportedLocale } from './i18n';
 export { i18n, initI18n } from './i18n';
 export { NetworkStatusProvider, useNetworkStatus } from './NetworkStatusContext';
 export { parseTaskDeadline } from './parseTaskDeadline';
+export { useAiModelName } from './useAiModelName';
+export { useAiTabBannerDismiss } from './useAiTabBannerDismiss';
 export {
   formatFileSize,
   getWhisperModelPath,

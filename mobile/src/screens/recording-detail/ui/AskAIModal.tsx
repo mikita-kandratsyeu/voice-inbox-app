@@ -78,8 +78,9 @@ const LoadingState = ({ color }: LoadingStateProps) => {
 type ErrorStateProps = {
   color: Colors;
   onRetry: () => void;
+  onClose: () => void;
 };
-const ErrorState = ({ color, onRetry }: ErrorStateProps) => {
+const ErrorState = ({ color, onRetry, onClose }: ErrorStateProps) => {
   const { t } = useTranslation();
   return (
     <View className="items-center gap-4 py-8">
@@ -87,14 +88,26 @@ const ErrorState = ({ color, onRetry }: ErrorStateProps) => {
       <Text className="text-center text-base font-semibold" style={{ color: color.text.primary }}>
         {t('recordingDetail.askError')}
       </Text>
-      <Button
-        variant="primary"
-        size="lg"
-        icon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
-        label={t('recordingDetail.summaryRetry')}
-        color={color}
-        onPress={onRetry}
-      />
+      <Text className="text-center text-sm" style={{ color: color.text.secondary }}>
+        {t('recordingDetail.askErrorContinueHint')}
+      </Text>
+      <View className="flex-row gap-3">
+        <Button
+          variant="secondary"
+          size="lg"
+          label={t('recordingDetail.continueViewing')}
+          color={color}
+          onPress={onClose}
+        />
+        <Button
+          variant="primary"
+          size="lg"
+          icon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
+          label={t('recordingDetail.summaryRetry')}
+          color={color}
+          onPress={onRetry}
+        />
+      </View>
     </View>
   );
 };
@@ -258,7 +271,14 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
   const renderContent = useCallback(() => {
     if (!hasTranscript) return <NoTranscriptState color={color} />;
     if (isLoading) return <LoadingState color={color} />;
-    if (error && !answer) return <ErrorState color={color} onRetry={handleRetry} />;
+    if (error && !answer)
+      return (
+        <ErrorState
+          color={color}
+          onRetry={handleRetry}
+          onClose={() => bottomSheetRef.current?.dismiss()}
+        />
+      );
     if (answer) return <AnswerContent color={color} question={question ?? ''} answer={answer} />;
     return (
       <EmptyState
