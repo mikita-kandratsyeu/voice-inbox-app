@@ -1,11 +1,11 @@
 import type { RouteProp } from '@react-navigation/native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check, ChevronLeft } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TextInput, useColorScheme, View } from 'react-native';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RootStackParamList } from '@/app/navigation/types';
@@ -34,14 +34,24 @@ export const EditTranscriptScreen = () => {
     });
 
   const handleBack = useCallback(() => {
+    KeyboardController.dismiss({ animated: false });
     reset();
     navigation.goBack();
   }, [navigation, reset]);
 
   const handleSave = useCallback(async () => {
+    KeyboardController.dismiss({ animated: false });
     await save();
     navigation.goBack();
   }, [navigation, save]);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        KeyboardController.dismiss({ animated: false });
+      };
+    }, []),
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.primary }}>
