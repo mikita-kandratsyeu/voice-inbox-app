@@ -355,8 +355,6 @@
     "showOnboarding": "Show onboarding",
     "helpAndFeedback": "Help and feedback",
     "contactSupport": "Contact support",
-    "technologies": "Technologies",
-    "offlineTranscription": "Whisper (offline transcription)",
     "description": "Offline-first app for voice notes. Capture ideas with voice, get transcripts, summaries and tasks with AI.",
     "copyright": "© {{ year }} Voice Inbox. All rights reserved."
   },

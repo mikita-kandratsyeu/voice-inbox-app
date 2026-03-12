@@ -75,19 +75,6 @@ export const AboutAppScreen = () => {
             />
           </SettingsSection>
         )}
-        <SettingsSection title={t('about.technologies')} color={color}>
-          <SettingsRow label="React Native" color={color} showChevron={false} isFirst />
-          <SettingsRow label="NativeWind" color={color} showChevron={false} />
-          <SettingsRow label="SQLite" color={color} showChevron={false} />
-          <SettingsRow label="MMKV Storage" color={color} showChevron={false} />
-          <SettingsRow label="Zustand" color={color} showChevron={false} />
-          <SettingsRow
-            label={t('about.offlineTranscription')}
-            color={color}
-            showChevron={false}
-            isLast
-          />
-        </SettingsSection>
         <Text className="mt-2 text-center text-[14px]" style={{ color: color.text.secondary }}>
           {t('about.copyright', { year: new Date().getFullYear() })}
         </Text>
