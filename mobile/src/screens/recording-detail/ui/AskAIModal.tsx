@@ -20,7 +20,7 @@ import { AI_MODELS, useSettingsStore } from '@/entities/settings';
 import { useAskAI } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
 import { useNetworkStatus } from '@/shared/lib';
-import { Button } from '@/shared/ui';
+import { Button, getInputFieldInputStyle, InputField } from '@/shared/ui';
 
 type AskAIModalProps = {
   visible: boolean;
@@ -189,51 +189,43 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
 
   const bottomPadding = Math.max(insets.bottom, 8) + 8;
 
-  const inputRow = hasTranscript && (
-    <View
-      className="mt-2 flex-row items-end gap-2 rounded-xl px-3 py-2.5"
-      style={{
-        backgroundColor: color.background.tertiary,
-        borderWidth: 1,
-        borderColor: questionInput.trim() ? color.accent.primary : color.border.default,
-      }}
-    >
-      <BottomSheetTextInput
-        style={{
-          flex: 1,
-          minWidth: 0,
-          maxHeight: 100,
-          fontSize: 16,
-          color: color.text.primary,
-          paddingVertical: 8,
-          paddingRight: 0,
-          margin: 0,
-          textAlignVertical: 'top',
-          includeFontPadding: false,
-        }}
-        placeholder={t('recordingDetail.askPlaceholder')}
-        placeholderTextColor={color.text.secondary}
-        value={questionInput}
-        onChangeText={setQuestionInput}
-        returnKeyType="send"
-        editable={isConnected !== false}
-        multiline
-        numberOfLines={3}
-        submitBehavior="blurAndSubmit"
-        onSubmitEditing={handleAsk}
+  const sendButton = (
+    <View style={{ flexShrink: 0, paddingBottom: 4 }}>
+      <Button
+        variant="primary"
+        size="md"
+        icon={<Send size={18} color="#fff" strokeWidth={2.5} />}
+        iconOnly
+        color={color}
+        containerStyle={{ backgroundColor: color.accent.primary }}
+        onPress={handleAsk}
+        disabled={!questionInput.trim() || isLoading || isConnected === false}
       />
-      <View style={{ flexShrink: 0, paddingBottom: 4 }}>
-        <Button
-          variant="primary"
-          size="md"
-          icon={<Send size={18} color="#fff" strokeWidth={2.5} />}
-          iconOnly
-          color={color}
-          containerStyle={{ backgroundColor: color.accent.primary }}
-          onPress={handleAsk}
-          disabled={!questionInput.trim() || isLoading || isConnected === false}
+    </View>
+  );
+
+  const inputRow = hasTranscript && (
+    <View className="mt-2">
+      <InputField
+        color={color}
+        hasValue={Boolean(questionInput.trim())}
+        multiline
+        rightElement={sendButton}
+      >
+        <BottomSheetTextInput
+          style={[getInputFieldInputStyle(color, true), { maxHeight: 100 }]}
+          placeholder={t('recordingDetail.askPlaceholder')}
+          placeholderTextColor={color.text.secondary}
+          value={questionInput}
+          onChangeText={setQuestionInput}
+          returnKeyType="send"
+          editable={isConnected !== false}
+          multiline
+          numberOfLines={3}
+          submitBehavior="blurAndSubmit"
+          onSubmitEditing={handleAsk}
         />
-      </View>
+      </InputField>
     </View>
   );
 
