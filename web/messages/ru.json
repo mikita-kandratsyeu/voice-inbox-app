@@ -41,7 +41,7 @@
     "step3": { "title": "Анализируйте", "description": "Получите резюме и задачи" }
   },
   "benefits": {
-    "title": "Почему пользователи любят Voice Inbox",
+    "title": "Почему пользователи любят Voice Inbox AI",
     "item0": "Оффлайн транскрипция",
     "item2": "Максимальная приватность",
     "item3": "Поддержка многих языков",
@@ -49,22 +49,22 @@
   },
   "cta": {
     "title": "Начните сохранять идеи сегодня",
-    "subtitle": "Будьте среди первых, кто попробует Voice Inbox"
+    "subtitle": "Будьте среди первых, кто попробует Voice Inbox AI"
   },
   "footer": {
     "privacyPolicy": "Политика конфиденциальности",
     "termsOfService": "Условия использования",
-    "copyright": "© {year} Voice Inbox. Все права защищены."
+    "copyright": "© {year} Voice Inbox AI. Все права защищены."
   },
   "header": {
-    "appName": "Voice Inbox"
+    "appName": "Voice Inbox AI"
   },
   "metadata": {
-    "title": "Voice Inbox — Голосовые заметки с ИИ",
+    "title": "Voice Inbox AI — Голосовые заметки с ИИ",
     "description": "Записывайте, транскрибируйте и структурируйте идеи с помощью ИИ. Оффлайн транскрипция, опциональная ИИ обработка, полная приватность. Доступно на iOS и Android.",
-    "privacyTitle": "Политика конфиденциальности — Voice Inbox",
-    "privacyDescription": "Как Voice Inbox обрабатывает ваши данные: локальное хранение, опциональная ИИ обработка и наша приверженность приватности.",
-    "termsTitle": "Условия использования — Voice Inbox",
-    "termsDescription": "Условия использования мобильного приложения Voice Inbox и связанных сервисов."
+    "privacyTitle": "Политика конфиденциальности — Voice Inbox AI",
+    "privacyDescription": "Как Voice Inbox AI обрабатывает ваши данные: локальное хранение, опциональная ИИ обработка и наша приверженность приватности.",
+    "termsTitle": "Условия использования — Voice Inbox AI",
+    "termsDescription": "Условия использования мобильного приложения Voice Inbox AI и связанных сервисов."
   }
 }

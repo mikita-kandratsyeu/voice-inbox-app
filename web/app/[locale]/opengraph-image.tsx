@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og';
 
-export const alt = 'Voice Inbox — AI-Powered Voice Notes';
+export const alt = 'Voice Inbox AI — AI-Powered Voice Notes';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
@@ -81,7 +81,7 @@ export default function OpenGraphImage(): ImageResponse {
             </g>
           </svg>
         </div>
-        <span style={{ fontSize: 48, fontWeight: 700, color: 'white' }}>Voice Inbox</span>
+        <span style={{ fontSize: 48, fontWeight: 700, color: 'white' }}>Voice Inbox AI</span>
       </div>
       <p
         style={{

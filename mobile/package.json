@@ -2,7 +2,7 @@
   "name": "voice-inbox-app",
   "version": "0.0.1",
   "author": "Mikita Kandratsyeu <nickondr.production@gmail.com>",
-  "description": "Voice Inbox",
+  "description": "Voice Inbox AI",
   "license": "UNLICENSED",
   "private": true,
   "scripts": {

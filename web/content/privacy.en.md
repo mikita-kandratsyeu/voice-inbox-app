@@ -2,7 +2,7 @@
 
 **Last updated: March 2025**
 
-Voice Inbox ("we", "our", or "the app") is an offline-first voice notes application. This Privacy Policy explains how we handle your data when you use the mobile app and our optional web API for AI processing.
+Voice Inbox AI ("we", "our", or "the app") is an offline-first voice notes application. This Privacy Policy explains how we handle your data when you use the mobile app and our optional web API for AI processing.
 
 ## 1. Data We Process
 
@@ -22,7 +22,7 @@ When you use AI features, your transcript is sent to AI providers via [OpenRoute
 
 ## 4. No Accounts, No Login
 
-Voice Inbox does not require an account or login. There is no user registration, and we do not collect personal information such as names, emails, or passwords.
+Voice Inbox AI does not require an account or login. There is no user registration, and we do not collect personal information such as names, emails, or passwords.
 
 ## 5. Data Retention
 
@@ -40,7 +40,7 @@ All communication with our API uses HTTPS encryption. The app supports an option
 
 ## 8. Children
 
-Voice Inbox is not directed at children under 13. We do not knowingly collect data from children.
+Voice Inbox AI is not directed at children under 13. We do not knowingly collect data from children.
 
 ## 9. Changes
 

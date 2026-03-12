@@ -12,7 +12,7 @@ export function Footer(): React.ReactElement {
           <Link
             href="/"
             className="flex items-center gap-3 transition-opacity hover:opacity-90"
-            aria-label="Voice Inbox"
+            aria-label="Voice Inbox AI"
           >
             <Image
               src="/app-icon.svg"
@@ -22,7 +22,7 @@ export function Footer(): React.ReactElement {
               className="h-10 w-10 rounded-xl shadow-lg"
               aria-hidden
             />
-            <span className="text-xl font-bold text-black dark:text-white">Voice Inbox</span>
+            <span className="text-xl font-bold text-black dark:text-white">Voice Inbox AI</span>
           </Link>
           <div className="flex gap-8">
             <Link

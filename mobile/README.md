@@ -1,6 +1,6 @@
-# Voice Inbox
+# Voice Inbox AI
 
-Voice Inbox is an **offline‑first voice notes** application built with React Native.  
+Voice Inbox AI is an **offline‑first voice notes** application built with React Native.  
 
 It lets you quickly capture ideas, meetings, and daily thoughts as audio, then turn them into **transcripts, concise summaries, and actionable tasks**.
 

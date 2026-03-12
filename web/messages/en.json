@@ -41,7 +41,7 @@
     "step3": { "title": "Analyze", "description": "Get summaries and action items" }
   },
   "benefits": {
-    "title": "Why users love Voice Inbox",
+    "title": "Why users love Voice Inbox AI",
     "item0": "Offline transcription",
     "item2": "Maximum privacy",
     "item3": "Multi-language support",
@@ -49,22 +49,22 @@
   },
   "cta": {
     "title": "Start capturing ideas today",
-    "subtitle": "Be among the first to try Voice Inbox"
+    "subtitle": "Be among the first to try Voice Inbox AI"
   },
   "footer": {
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
-    "copyright": "© {year} Voice Inbox. All rights reserved."
+    "copyright": "© {year} Voice Inbox AI. All rights reserved."
   },
   "header": {
-    "appName": "Voice Inbox"
+    "appName": "Voice Inbox AI"
   },
   "metadata": {
-    "title": "Voice Inbox — AI-Powered Voice Notes",
+    "title": "Voice Inbox AI — AI-Powered Voice Notes",
     "description": "Record, transcribe, and structure your ideas with AI. Offline transcription, optional AI processing, complete privacy. Available on iOS and Android.",
-    "privacyTitle": "Privacy Policy — Voice Inbox",
-    "privacyDescription": "How Voice Inbox handles your data: local storage, optional AI processing, and our commitment to privacy.",
-    "termsTitle": "Terms of Service — Voice Inbox",
-    "termsDescription": "Terms governing your use of the Voice Inbox mobile app and related services."
+    "privacyTitle": "Privacy Policy — Voice Inbox AI",
+    "privacyDescription": "How Voice Inbox AI handles your data: local storage, optional AI processing, and our commitment to privacy.",
+    "termsTitle": "Terms of Service — Voice Inbox AI",
+    "termsDescription": "Terms governing your use of the Voice Inbox AI mobile app and related services."
   }
 }

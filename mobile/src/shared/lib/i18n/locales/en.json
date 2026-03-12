@@ -160,7 +160,7 @@
     "dateLabel": "Date",
     "durationLabel": "Duration",
     "tagsLabel": "Tags",
-    "exportedFrom": "Exported from Voice Inbox",
+    "exportedFrom": "Exported from Voice Inbox AI",
     "noAudio": "No audio recording",
     "audioNotFound": "Audio file not found"
   },
@@ -326,7 +326,7 @@
   },
   "importExport": {
     "importTitle": "Import data",
-    "importMessage": "Select a JSON file exported from Voice Inbox.",
+    "importMessage": "Select a JSON file exported from Voice Inbox AI.",
     "importConfirm": "Found {{ count }} records. Import? Existing data will not be overwritten.",
     "import": "Import",
     "importSuccess": "Imported {{ count }} records",
@@ -356,7 +356,7 @@
     "helpAndFeedback": "Help and feedback",
     "contactSupport": "Contact support",
     "description": "Offline-first app for voice notes. Capture ideas with voice, get transcripts, summaries and tasks with AI.",
-    "copyright": "© {{ year }} Voice Inbox. All rights reserved."
+    "copyright": "© {{ year }} Voice Inbox AI. All rights reserved."
   },
   "tasks": {
     "addToCalendar": "Add to Calendar",

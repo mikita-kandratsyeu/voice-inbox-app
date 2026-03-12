@@ -38,7 +38,7 @@ export const AboutAppScreen = () => {
             resizeMode="cover"
           />
           <Text className="text-[24px] font-bold" style={{ color: color.text.primary }}>
-            Voice Inbox
+            Voice Inbox AI
           </Text>
           <Text
             className="mt-3 text-center text-[14px] leading-5 px-4"

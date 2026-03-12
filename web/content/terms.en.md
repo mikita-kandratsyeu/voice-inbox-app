@@ -2,23 +2,23 @@
 
 **Last updated: March 2025**
 
-These Terms of Service ("Terms") govern your use of the Voice Inbox mobile application and related web services. By using the app, you agree to these Terms.
+These Terms of Service ("Terms") govern your use of the Voice Inbox AI mobile application and related web services. By using the app, you agree to these Terms.
 
 ## 1. Description of Service
 
-Voice Inbox is an offline-first voice notes app that allows you to record audio, transcribe it on your device using Whisper, and optionally use AI to generate summaries, extract tasks, and answer questions about your transcripts.
+Voice Inbox AI is an offline-first voice notes app that allows you to record audio, transcribe it on your device using Whisper, and optionally use AI to generate summaries, extract tasks, and answer questions about your transcripts.
 
 Transcription runs locally on your device. AI features require an internet connection and send transcript text to our servers, which forward it to third-party AI providers.
 
 ## 2. Acceptable Use
 
-You agree to use Voice Inbox only for lawful purposes. You must not use the app to record, transcribe, or process content that infringes on others' rights, is illegal, harmful, or violates applicable laws.
+You agree to use Voice Inbox AI only for lawful purposes. You must not use the app to record, transcribe, or process content that infringes on others' rights, is illegal, harmful, or violates applicable laws.
 
 You must not attempt to circumvent rate limits, reverse engineer the app or API, or use the service in a way that could harm our infrastructure or other users.
 
 ## 3. No Warranty
 
-Voice Inbox is provided "as is" without warranties of any kind. We do not guarantee accuracy of transcription or AI-generated content. Use the app at your own risk.
+Voice Inbox AI is provided "as is" without warranties of any kind. We do not guarantee accuracy of transcription or AI-generated content. Use the app at your own risk.
 
 ## 4. Limitation of Liability
 

@@ -1,12 +1,12 @@
-# Voice Inbox — Web
+# Voice Inbox AI — Web
 
-Web landing page for **Voice Inbox** — an offline-first voice notes app with AI transcription and summarization.
+Web landing page for **Voice Inbox AI** — an offline-first voice notes app with AI transcription and summarization.
 
 ---
 
 ## About
 
-The site showcases Voice Inbox: explains features, walks through the workflow, and directs users to download the mobile app from the App Store and Google Play.
+The site showcases Voice Inbox AI: explains features, walks through the workflow, and directs users to download the mobile app from the App Store and Google Play.
 
 ---
 

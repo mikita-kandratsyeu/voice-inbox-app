@@ -24,6 +24,6 @@ export const exportData = async (records: VoiceRecord[]): Promise<void> => {
 
   await Share.share({
     url: `file://${filePath}`,
-    title: 'Экспорт данных Voice Inbox',
+    title: 'Экспорт данных Voice Inbox AI',
   });
 };

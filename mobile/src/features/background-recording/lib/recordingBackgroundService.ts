@@ -9,7 +9,7 @@ const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve,
 
 const getTaskOptions = (elapsedSeconds: number) => ({
   taskName: TASK_NAME,
-  taskTitle: 'Voice Inbox',
+  taskTitle: 'Voice Inbox AI',
   taskDesc: `Recording... ${formatDuration(elapsedSeconds)}`,
   taskIcon: {
     name: 'ic_launcher',

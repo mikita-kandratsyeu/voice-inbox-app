@@ -51,7 +51,7 @@ export const verifyBiometric = async (): Promise<boolean> => {
       service: SERVICE_BIOMETRIC,
       accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
       authenticationPrompt: {
-        title: 'Разблокировать Voice Inbox',
+        title: 'Разблокировать Voice Inbox AI',
         cancel: 'Отмена',
       },
     });
