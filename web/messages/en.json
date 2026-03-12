@@ -61,6 +61,10 @@
   },
   "metadata": {
     "title": "Voice Inbox — AI-Powered Voice Notes",
-    "description": "Record, transcribe, and structure your ideas with AI. Offline transcription, optional AI processing, complete privacy. Available on iOS and Android."
+    "description": "Record, transcribe, and structure your ideas with AI. Offline transcription, optional AI processing, complete privacy. Available on iOS and Android.",
+    "privacyTitle": "Privacy Policy — Voice Inbox",
+    "privacyDescription": "How Voice Inbox handles your data: local storage, optional AI processing, and our commitment to privacy.",
+    "termsTitle": "Terms of Service — Voice Inbox",
+    "termsDescription": "Terms governing your use of the Voice Inbox mobile app and related services."
   }
 }
