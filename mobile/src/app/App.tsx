@@ -47,7 +47,10 @@ const App = () => {
     };
 
     const sub = AppState.addEventListener('change', handleAppStateChange);
-    return () => sub.remove();
+    return () => {
+      sub.remove();
+      releaseWhisperContext().catch(() => {});
+    };
   }, []);
 
   return (

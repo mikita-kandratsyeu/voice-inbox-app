@@ -6,7 +6,7 @@ import { useSettingsStore } from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
 import { i18n, useNetworkStatus } from '@/shared/lib';
 
-import { getWhisperContext } from '../lib/initWhisper';
+import { getWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
 import { transcribeAudio } from '../lib/transcribeAudio';
 
 const PROGRESS_THROTTLE_MS = 500;
@@ -59,9 +59,11 @@ export const useTranscription = () => {
       updateAiStatus(record.id, 'processing', 0);
 
       const language = languageOverride ?? transcriptionLanguage;
+      let usedContext = false;
 
       try {
         const context = await getWhisperContext(selectedWhisperModel);
+        usedContext = true;
 
         const throttledProgress = createThrottledProgress(record.id, updateAiStatus);
 
@@ -111,6 +113,10 @@ export const useTranscription = () => {
         } else {
           console.warn('[transcription] Failed:', err);
           updateAiStatus(record.id, 'error');
+        }
+      } finally {
+        if (usedContext) {
+          scheduleIdleRelease();
         }
       }
     },
