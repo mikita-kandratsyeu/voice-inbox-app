@@ -31,10 +31,17 @@ const SLIDE_CONTENT = [
   },
   {
     id: 'setup',
-    titleKey: 'onboarding.setupTitle' as const,
-    descKey: 'onboarding.setupDesc' as const,
+    titleKey: 'onboarding.setupAiTitle' as const,
+    descKey: 'onboarding.setupAiDesc' as const,
     iconName: 'Settings' as const,
     extra: 'setup' as const,
+  },
+  {
+    id: 'setupWhisper',
+    titleKey: 'onboarding.setupWhisperTitle' as const,
+    descKey: 'onboarding.setupWhisperDesc' as const,
+    iconName: 'Settings' as const,
+    extra: 'setupWhisper' as const,
   },
 ];
 
@@ -54,7 +61,7 @@ export type OnboardingSlideContent = {
   iconName: 'Mic' | 'Lock' | 'Sparkles' | 'Zap' | 'Settings';
   iconColor: string;
   iconBg: string;
-  extra?: 'dots' | 'privacy' | 'ai-features' | 'check' | 'setup';
+  extra?: 'dots' | 'privacy' | 'ai-features' | 'check' | 'setup' | 'setupWhisper';
 };
 
 export const getOnboardingSlides = (colors: Colors): OnboardingSlideContent[] =>

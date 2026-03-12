@@ -1,1 +1,1 @@
-export const WHISPER_IDLE_RELEASE_MS = 3 * 60 * 1000;
+export const WHISPER_IDLE_RELEASE_MS = 2 * 60 * 1000;

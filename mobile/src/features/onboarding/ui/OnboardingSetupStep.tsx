@@ -1,7 +1,7 @@
-import { Check } from 'lucide-react-native';
+import { Check, Download } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 import type { WhisperModelId } from '@/entities/settings';
 import {
@@ -13,13 +13,20 @@ import {
 import { useModelManager } from '@/features/model-manager';
 import { RECOMMENDED_MODEL_ID } from '@/screens/settings/config';
 import type { Colors } from '@/shared/config';
+import { hapticSelection } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
 
 type OnboardingSetupStepProps = {
   color: Colors;
+  mode: 'ai' | 'whisper';
+  selectedColor?: string;
 };
 
-export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
+export const OnboardingSetupStep = ({
+  color,
+  mode,
+  selectedColor = color.accent.primary,
+}: OnboardingSetupStepProps) => {
   const { t } = useTranslation();
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
@@ -30,36 +37,100 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
   const compatibility = useWhisperModelCompatibility();
   const { startDownload } = useModelManager();
 
-  const handleWhisperPress = (id: WhisperModelId) => {
+  const handleWhisperSelect = (id: WhisperModelId) => {
+    hapticSelection();
+    setWhisperModel(id);
+  };
+
+  const handleWhisperDownload = (id: WhisperModelId) => {
     const status = whisperModelStatuses[id] ?? 'not_downloaded';
     if (status === 'downloading') return;
-    if (status === 'downloaded') {
-      setWhisperModel(id);
-      return;
-    }
+    if (status === 'downloaded') return;
+
     const model = WHISPER_MODELS.find((m) => m.id === id);
     if (!model) return;
 
     const isSmallModel = model.sizeMb <= 150;
 
-    if (isSmallModel) {
+    const doDownload = () => {
       setWhisperModel(id);
       startDownload(id);
+    };
+
+    if (isSmallModel) {
+      doDownload();
     } else {
       Alert.alert(
         t('whisper.downloadModel'),
         t('whisper.downloadConfirm', { size: model.sizeMb }),
         [
           { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('common.download'),
-            onPress: () => {
-              setWhisperModel(id);
-              startDownload(id);
-            },
-          },
+          { text: t('common.download'), onPress: doDownload },
         ],
       );
+    }
+  };
+
+  if (mode === 'ai') {
+    return (
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 16 }}
+        showsVerticalScrollIndicator={true}
+      >
+        <View
+          className="overflow-hidden rounded-xl"
+          style={{
+            backgroundColor: color.background.card,
+            borderWidth: 1,
+            borderColor: color.border.default,
+          }}
+        >
+          {AI_MODELS.map((model, index) => {
+            const isLast = index === AI_MODELS.length - 1;
+            const isSelected = model.id === selectedAIModel;
+            return (
+              <TouchableOpacity
+                key={model.id}
+                onPress={() => setAIModel(model.id)}
+                activeOpacity={0.7}
+                className={`px-4 py-2 flex-row items-center justify-between ${!isLast ? 'border-b' : ''}`}
+                style={{
+                  backgroundColor: color.background.card,
+                  borderBottomColor: color.border.default,
+                }}
+              >
+                <Text className="text-[15px] font-medium" style={{ color: color.text.primary }}>
+                  {model.name}
+                </Text>
+                {isSelected ? (
+                  <View
+                    className="h-6 w-6 items-center justify-center rounded-full"
+                    style={{ backgroundColor: selectedColor }}
+                  >
+                    <Check size={14} color="#ffffff" strokeWidth={2.5} />
+                  </View>
+                ) : (
+                  <View
+                    className="h-6 w-6 rounded-full"
+                    style={{ borderWidth: 2, borderColor: color.border.default }}
+                  />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </ScrollView>
+    );
+  }
+
+  const handleWhisperRowPress = (id: WhisperModelId) => {
+    const status = whisperModelStatuses[id] ?? 'not_downloaded';
+    if (status === 'downloading') return;
+    if (status === 'downloaded') {
+      handleWhisperSelect(id);
+    } else {
+      handleWhisperDownload(id);
     }
   };
 
@@ -67,60 +138,8 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
     <ScrollView
       className="flex-1"
       contentContainerStyle={{ paddingBottom: 16 }}
-      showsVerticalScrollIndicator={false}
+      showsVerticalScrollIndicator={true}
     >
-      <Text className="mb-3 text-sm font-semibold" style={{ color: color.text.secondary }}>
-        {t('onboarding.setupAiModel')}
-      </Text>
-      <View
-        className="mb-5 overflow-hidden rounded-xl"
-        style={{
-          backgroundColor: color.background.card,
-          borderWidth: 1,
-          borderColor: color.border.default,
-        }}
-      >
-        {AI_MODELS.map((model, index) => {
-          const isLast = index === AI_MODELS.length - 1;
-          const isSelected = model.id === selectedAIModel;
-          return (
-            <TouchableOpacity
-              key={model.id}
-              onPress={() => setAIModel(model.id)}
-              activeOpacity={0.7}
-              className={`px-4 py-3 flex-row items-center justify-between ${!isLast ? 'border-b' : ''}`}
-              style={{
-                backgroundColor: color.background.card,
-                borderBottomColor: color.border.default,
-              }}
-            >
-              <Text className="text-[15px] font-medium" style={{ color: color.text.primary }}>
-                {model.name}
-              </Text>
-              {isSelected ? (
-                <View
-                  className="h-6 w-6 items-center justify-center rounded-full"
-                  style={{ backgroundColor: color.accent.primary }}
-                >
-                  <Check size={14} color="#ffffff" strokeWidth={2.5} />
-                </View>
-              ) : (
-                <View
-                  className="h-6 w-6 rounded-full"
-                  style={{ borderWidth: 2, borderColor: color.border.default }}
-                />
-              )}
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      <Text className="mb-3 text-sm font-semibold" style={{ color: color.text.secondary }}>
-        {t('onboarding.setupWhisper')}
-      </Text>
-      <Text className="mb-3 text-xs" style={{ color: color.text.muted }}>
-        {t('onboarding.setupWhisperHint')}
-      </Text>
       <View
         className="overflow-hidden rounded-xl"
         style={{
@@ -132,6 +151,7 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
         {WHISPER_MODELS.map((model, index) => {
           const status = whisperModelStatuses[model.id] ?? 'not_downloaded';
           const isDownloading = status === 'downloading';
+          const isDownloaded = status === 'downloaded';
           const compat = compatibility?.[model.id];
           const isLast = index === WHISPER_MODELS.length - 1;
           const isSelected = model.id === selectedWhisperModel;
@@ -140,10 +160,10 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
           return (
             <TouchableOpacity
               key={model.id}
-              onPress={() => handleWhisperPress(model.id)}
+              onPress={() => handleWhisperRowPress(model.id)}
               activeOpacity={0.7}
               disabled={isDownloading}
-              className={`px-4 py-3 flex-row items-center justify-between ${!isLast ? 'border-b' : ''}`}
+              className={`flex-row items-center justify-between px-4 py-2 ${!isLast ? 'border-b' : ''}`}
               style={{
                 backgroundColor: color.background.card,
                 borderBottomColor: color.border.default,
@@ -173,18 +193,34 @@ export const OnboardingSetupStep = ({ color }: OnboardingSetupStepProps) => {
                   {compat && !compat.isCompatible && ` • ${compat.reason}`}
                 </Text>
               </View>
-              {isSelected ? (
+              {isDownloaded ? (
+                isSelected ? (
+                  <View
+                    className="h-6 w-6 items-center justify-center rounded-full"
+                    style={{ backgroundColor: selectedColor }}
+                  >
+                    <Check size={14} color="#ffffff" strokeWidth={2.5} />
+                  </View>
+                ) : (
+                  <View
+                    className="h-6 w-6 rounded-full"
+                    style={{ borderWidth: 2, borderColor: color.border.default }}
+                  />
+                )
+              ) : isDownloading ? (
                 <View
                   className="h-6 w-6 items-center justify-center rounded-full"
-                  style={{ backgroundColor: color.accent.primary }}
+                  style={{ backgroundColor: color.status.processing.bg }}
                 >
-                  <Check size={14} color="#ffffff" strokeWidth={2.5} />
+                  <ActivityIndicator size="small" color={color.status.processing.text} />
                 </View>
               ) : (
                 <View
-                  className="h-6 w-6 rounded-full"
-                  style={{ borderWidth: 2, borderColor: color.border.default }}
-                />
+                  className="h-6 w-6 items-center justify-center rounded-full"
+                  style={{ backgroundColor: color.background.tertiary }}
+                >
+                  <Download size={14} color={color.accent.primary} strokeWidth={2} />
+                </View>
               )}
             </TouchableOpacity>
           );

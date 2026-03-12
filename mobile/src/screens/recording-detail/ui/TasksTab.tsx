@@ -131,9 +131,9 @@ export const TasksTab = ({
         return (
           <View key={task.id} className="flex-row items-center gap-2 py-1">
             <Pressable
-              className="flex-1 flex-row items-center gap-3"
+              className="min-w-0 flex-1 flex-row items-center gap-3"
               onPress={() => onToggle(task.id)}
-              android_ripple={{ color: color.background.tertiary }}
+              style={{ minWidth: 0 }}
             >
               {task.isDone ? (
                 <CheckCircle2 size={20} color={color.accent.success} strokeWidth={2} />
@@ -141,7 +141,7 @@ export const TasksTab = ({
                 <Circle size={20} color={color.icon.muted} strokeWidth={2} />
               )}
               <Text
-                className="flex-1 text-sm leading-5"
+                className="min-w-0 flex-1 text-sm leading-5"
                 style={{
                   color: task.isDone ? color.text.secondary : color.text.primary,
                   textDecorationLine: task.isDone ? 'line-through' : undefined,
@@ -150,37 +150,42 @@ export const TasksTab = ({
                 {task.text}
               </Text>
             </Pressable>
-            <MenuView
-              title=""
-              shouldOpenOnLongPress={false}
-              onPressAction={async ({ nativeEvent }) => {
-                if (nativeEvent.event === 'addToCalendar') {
-                  await addTaskToCalendar(
-                    task,
-                    recordTitle,
-                    () => Alert.alert(t('tasks.addedToCalendar')),
-                    showPermissionAlert,
-                  );
-                }
-                if (nativeEvent.event === 'addToReminder') {
-                  await addTaskToReminder(
-                    task,
-                    recordTitle,
-                    () => Alert.alert(t('tasks.addedToReminders')),
-                    showPermissionAlert,
-                  );
-                }
-              }}
-              actions={menuActions}
-            >
-              <Pressable hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }} style={{ padding: 4 }}>
-                <MoreHorizontal size={18} color={color.icon.muted} strokeWidth={2} />
-              </Pressable>
-            </MenuView>
+            <View style={{ flexShrink: 0 }}>
+              <MenuView
+                title=""
+                shouldOpenOnLongPress={false}
+                onPressAction={async ({ nativeEvent }) => {
+                  if (nativeEvent.event === 'addToCalendar') {
+                    await addTaskToCalendar(
+                      task,
+                      recordTitle,
+                      () => Alert.alert(t('tasks.addedToCalendar')),
+                      showPermissionAlert,
+                    );
+                  }
+                  if (nativeEvent.event === 'addToReminder') {
+                    await addTaskToReminder(
+                      task,
+                      recordTitle,
+                      () => Alert.alert(t('tasks.addedToReminders')),
+                      showPermissionAlert,
+                    );
+                  }
+                }}
+                actions={menuActions}
+              >
+                <Pressable
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  style={{ padding: 4 }}
+                >
+                  <MoreHorizontal size={18} color={color.icon.muted} strokeWidth={2} />
+                </Pressable>
+              </MenuView>
+            </View>
           </View>
         );
       })}
-      <View className="mt-4 flex-row items-center justify-between gap-3">
+      <View className="mt-4 flex-row items-center gap-3">
         <Button
           variant="ghost"
           size="md"
@@ -189,6 +194,7 @@ export const TasksTab = ({
           color={color}
           onPress={onExtract}
           disabled={isConnected === false}
+          containerStyle={{ flex: 1, minWidth: 0 }}
         />
         <Button
           variant="primary"
@@ -205,7 +211,7 @@ export const TasksTab = ({
             }
             if (added > 0) Alert.alert(t('tasks.addedToReminders'));
           }}
-          containerStyle={{ minWidth: 140 }}
+          containerStyle={{ flex: 1, minWidth: 0 }}
         />
       </View>
     </View>

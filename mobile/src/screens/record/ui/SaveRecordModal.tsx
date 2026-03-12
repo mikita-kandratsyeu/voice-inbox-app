@@ -110,6 +110,7 @@ export const SaveRecordModal = ({
       ref={bottomSheetRef}
       enableDynamicSizing
       enablePanDownToClose={false}
+      enableOverDrag={false}
       keyboardBehavior={Platform.OS === 'ios' ? 'interactive' : 'fillParent'}
       keyboardBlurBehavior="restore"
       enableBlurKeyboardOnGesture

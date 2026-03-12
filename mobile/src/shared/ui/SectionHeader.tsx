@@ -9,7 +9,11 @@ type SectionHeaderProps = {
   isFirst?: boolean;
 };
 
-export const SectionHeader = ({ title, color, isFirst }: SectionHeaderProps) => {
+export const SectionHeader = React.memo(function SectionHeader({
+  title,
+  color,
+  isFirst,
+}: SectionHeaderProps) {
   const headerBgStyle = { backgroundColor: color.background.secondary };
   const headerTextStyle = { color: color.text.secondary };
 
@@ -20,4 +24,4 @@ export const SectionHeader = ({ title, color, isFirst }: SectionHeaderProps) => 
       </Text>
     </View>
   );
-};
+});

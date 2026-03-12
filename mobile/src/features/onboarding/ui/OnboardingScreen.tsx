@@ -272,11 +272,14 @@ const SlideItem = ({
     };
   });
 
-  if (item.extra === 'setup') {
+  const isSetupSlide = item.extra === 'setup' || item.extra === 'setupWhisper';
+  if (isSetupSlide) {
     const linkStyle = {
       color: color.accent.primary,
       textDecorationLine: 'underline' as const,
     };
+    const setupMode = item.extra === 'setupWhisper' ? 'whisper' : 'ai';
+    const showTerms = item.extra === 'setupWhisper';
 
     return (
       <Animated.View
@@ -284,66 +287,72 @@ const SlideItem = ({
           {
             width: SCREEN_WIDTH,
             paddingHorizontal: 32,
-            paddingTop: 32,
+            paddingTop: 48,
           },
           animatedStyle,
         ]}
         className="flex-1"
       >
-        <View style={{ width: '100%', alignItems: 'center', marginBottom: 24 }}>
+        <View style={{ width: '100%', alignItems: 'center', marginBottom: 20 }}>
           <Text
-            className="mb-4 text-center text-[28px] font-bold leading-tight"
+            className="mb-2 text-center text-[28px] font-bold leading-tight"
             style={{ color: color.text.primary }}
           >
             {t(item.titleKey)}
           </Text>
           <Text
-            className="mb-6 text-center text-[18px] leading-7"
+            className="mb-4 text-center text-[18px] leading-7"
             style={{ color: color.text.secondary }}
           >
             {t(item.descKey)}
           </Text>
         </View>
         <View style={{ flex: 1 }}>
-          <OnboardingSetupStep color={color} />
+          <OnboardingSetupStep
+            color={color}
+            mode={setupMode}
+            selectedColor={item.extra === 'setupWhisper' ? color.accent.primary : item.iconColor}
+          />
         </View>
-        <View className="mt-4 flex-row items-start gap-3">
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => {
-              hapticSelection();
-              onAgreeChange?.(!agreedToTerms);
-            }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <View
-              className="h-7 w-7 items-center justify-center rounded-md"
-              style={{
-                backgroundColor: agreedToTerms ? color.accent.primary : 'transparent',
-                borderWidth: 2,
-                borderColor: agreedToTerms ? color.accent.primary : color.text.secondary,
+        {showTerms && (
+          <View className="mt-4 flex-row items-start gap-3">
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={() => {
+                hapticSelection();
+                onAgreeChange?.(!agreedToTerms);
               }}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              {agreedToTerms && <Check size={16} color="#fff" strokeWidth={2.5} />}
-            </View>
-          </TouchableOpacity>
-          <Text className="flex-1 text-sm leading-5" style={{ color: color.text.secondary }}>
-            {t('onboarding.agreeToTermsPrefix')}
-            <Text
-              style={linkStyle}
-              onPress={() => WEBSITE_URL && Linking.openURL(`${WEBSITE_URL}/terms`)}
-            >
-              {t('onboarding.agreeToTermsLink')}
+              <View
+                className="h-7 w-7 items-center justify-center rounded-md"
+                style={{
+                  backgroundColor: agreedToTerms ? color.accent.primary : 'transparent',
+                  borderWidth: 2,
+                  borderColor: agreedToTerms ? color.accent.primary : color.text.secondary,
+                }}
+              >
+                {agreedToTerms && <Check size={16} color="#fff" strokeWidth={2.5} />}
+              </View>
+            </TouchableOpacity>
+            <Text className="flex-1 text-sm leading-5" style={{ color: color.text.secondary }}>
+              {t('onboarding.agreeToTermsPrefix')}
+              <Text
+                style={linkStyle}
+                onPress={() => WEBSITE_URL && Linking.openURL(`${WEBSITE_URL}/terms`)}
+              >
+                {t('onboarding.agreeToTermsLink')}
+              </Text>
+              {t('onboarding.agreeToTermsAnd')}
+              <Text
+                style={linkStyle}
+                onPress={() => WEBSITE_URL && Linking.openURL(`${WEBSITE_URL}/privacy`)}
+              >
+                {t('onboarding.agreeToTermsLink2')}
+              </Text>
             </Text>
-            {t('onboarding.agreeToTermsAnd')}
-            <Text
-              style={linkStyle}
-              onPress={() => WEBSITE_URL && Linking.openURL(`${WEBSITE_URL}/privacy`)}
-            >
-              {t('onboarding.agreeToTermsLink2')}
-            </Text>
-          </Text>
-        </View>
+          </View>
+        )}
       </Animated.View>
     );
   }
@@ -511,8 +520,8 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         paddingTop: insets.top,
       }}
     >
-      {!isLastSlide && (
-        <View className="absolute top-20 right-5 z-10">
+      <View className="flex-row justify-end px-5 py-3" style={{ minHeight: 48 }}>
+        {!isLastSlide && (
           <TouchableOpacity
             onPress={handleComplete}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -521,13 +530,14 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
               {t('common.skip')}
             </Text>
           </TouchableOpacity>
-        </View>
-      )}
+        )}
+      </View>
       <AnimatedFlatList
         ref={flatListRef}
         data={slides}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
+        className="flex-1"
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}

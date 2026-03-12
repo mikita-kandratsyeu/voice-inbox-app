@@ -88,6 +88,21 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
       : [];
   }, [filtered, filterStatus, query, t]);
 
+  const flattenedData = useMemo(() => {
+    const result: Array<
+      { type: 'header'; title: string; isFirst: boolean } | { type: 'record'; item: VoiceRecord }
+    > = [];
+    sections.forEach((section, idx) => {
+      result.push({
+        type: 'header',
+        title: section.title,
+        isFirst: idx === 0,
+      });
+      section.data.forEach((item) => result.push({ type: 'record', item }));
+    });
+    return result;
+  }, [sections]);
+
   const resetToDefault = useCallback(() => {
     setQuery('');
     setFilterStatus('all');
@@ -99,6 +114,7 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
     setQuery,
     filtered,
     sections,
+    flattenedData,
     isSearching: query.trim().length > 0,
     filterStatus,
     setFilterStatus,

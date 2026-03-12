@@ -13,7 +13,6 @@ import {
   ActivityIndicator,
   Dimensions,
   Keyboard,
-  Platform,
   Text,
   TouchableOpacity,
   View,
@@ -98,6 +97,7 @@ const ErrorState = ({ color, onRetry, onClose }: ErrorStateProps) => {
           label={t('recordingDetail.continueViewing')}
           color={color}
           onPress={onClose}
+          containerStyle={{ flex: 1, minWidth: 0 }}
         />
         <Button
           variant="primary"
@@ -106,6 +106,7 @@ const ErrorState = ({ color, onRetry, onClose }: ErrorStateProps) => {
           label={t('recordingDetail.summaryRetry')}
           color={color}
           onPress={onRetry}
+          containerStyle={{ flex: 1, minWidth: 0 }}
         />
       </View>
     </View>
@@ -345,7 +346,6 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
     </View>
   );
 
-  const keyboardBehavior = Platform.OS === 'ios' ? 'interactive' : 'extend';
   const contentContainerStyle = useMemo(
     () => ({
       flex: 1,
@@ -361,10 +361,10 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
       snapPoints={SNAP_POINTS}
       topInset={TOP_INSET}
       enablePanDownToClose
-      keyboardBehavior={keyboardBehavior}
+      enableOverDrag={false}
+      keyboardBehavior="interactive"
       keyboardBlurBehavior="none"
       enableBlurKeyboardOnGesture
-      android_keyboardInputMode={Platform.OS === 'android' ? 'adjustResize' : undefined}
       backdropComponent={renderBackdrop}
       onDismiss={handleDismiss}
       backgroundStyle={{
