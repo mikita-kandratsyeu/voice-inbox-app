@@ -1,5 +1,6 @@
-import NitroFS from 'react-native-nitro-fs';
 import { create } from 'zustand';
+
+import FS from '@/shared/lib/fs/fsAdapter';
 
 import { recordRepository } from './repository';
 import type { RecordingStatus, TaskItem, TranscriptSegment, VoiceRecord } from './types';
@@ -51,9 +52,9 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     const record = get().records.find((r) => r.id === id);
     if (record?.audioPath) {
       try {
-        const exists = await NitroFS.exists(record.audioPath);
+        const exists = await FS.exists(record.audioPath);
         if (exists) {
-          await NitroFS.unlink(record.audioPath);
+          await FS.unlink(record.audioPath);
         }
       } catch (err) {
         if (__DEV__) console.warn('[store] Failed to delete audio file:', err);

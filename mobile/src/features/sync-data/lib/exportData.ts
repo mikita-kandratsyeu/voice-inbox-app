@@ -1,7 +1,7 @@
 import { Share } from 'react-native';
-import NitroFS from 'react-native-nitro-fs';
 
 import type { VoiceRecord } from '@/entities/record';
+import FS from '@/shared/lib/fs/fsAdapter';
 
 type ExportPayload = {
   version: 1;
@@ -18,9 +18,9 @@ export const exportData = async (records: VoiceRecord[]): Promise<void> => {
 
   const json = JSON.stringify(payload, null, 2);
   const fileName = `voice-inbox-backup-${Date.now()}.json`;
-  const filePath = `${NitroFS.CACHE_DIR}/${fileName}`;
+  const filePath = `${FS.CACHE_DIR}/${fileName}`;
 
-  await NitroFS.writeFile(filePath, json, 'utf8');
+  await FS.writeFile(filePath, json, 'utf8');
 
   await Share.share({
     url: `file://${filePath}`,

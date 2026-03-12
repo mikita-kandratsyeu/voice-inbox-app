@@ -1,1 +1,1 @@
-export { fetch } from 'react-native-nitro-fetch';
+export const fetch = globalThis.fetch;
