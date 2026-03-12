@@ -50,9 +50,9 @@ export const TranscriptTab = ({
   return (
     <View className="gap-3.5 p-4">
       {segments.map((seg) => (
-        <View key={seg.id} className="flex-row gap-2.5">
+        <View key={seg.id} className="flex-row items-start gap-3">
           <Text
-            className="mt-0.5 min-w-9 text-xs font-semibold"
+            className="w-12 shrink-0 pt-0.5 text-xs font-semibold tabular-nums"
             style={{ color: color.accent.primary }}
           >
             {seg.startTime}
@@ -62,7 +62,7 @@ export const TranscriptTab = ({
           </Text>
         </View>
       ))}
-      <View className="mt-1 flex-row flex-wrap gap-2">
+      <View className="mt-2 flex-row flex-wrap gap-2">
         <Button
           variant="secondary"
           size="md"
