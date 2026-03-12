@@ -30,9 +30,20 @@ const createThrottledProgress = (
   };
 };
 
+const isFileNotFoundError = (err: unknown): boolean => {
+  const msg = err instanceof Error ? err.message.toLowerCase() : String(err).toLowerCase();
+  return (
+    msg.includes('enoent') ||
+    msg.includes('no such file') ||
+    msg.includes('file not found') ||
+    msg.includes('not found')
+  );
+};
+
 export const useTranscription = () => {
   const updateAiStatus = useRecordStore((s) => s.updateAiStatus);
   const updateTranscript = useRecordStore((s) => s.updateTranscript);
+  const clearAudioPath = useRecordStore((s) => s.clearAudioPath);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const transcriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
@@ -106,12 +117,14 @@ export const useTranscription = () => {
 
         const msg = err instanceof Error ? err.message.toLowerCase() : '';
         const isCancelled = msg.includes('abort') || msg.includes('cancel') || msg.includes('stop');
-
         const wasCancelled = isCancelled || stopRef.current === null;
 
         if (wasCancelled) {
           updateAiStatus(record.id, 'idle');
         } else {
+          if (isFileNotFoundError(err)) {
+            await clearAudioPath(record.id).catch(() => {});
+          }
           if (__DEV__) console.warn('[transcription] Failed:', err);
           updateAiStatus(record.id, 'error');
         }
@@ -130,6 +143,7 @@ export const useTranscription = () => {
       processRecord,
       updateAiStatus,
       updateTranscript,
+      clearAudioPath,
     ],
   );
 

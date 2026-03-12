@@ -30,6 +30,7 @@ type RecordStore = {
   updateTasks: (id: string, tasks: TaskItem[]) => Promise<void>;
   updateTags: (id: string, tags: string[]) => Promise<void>;
   toggleTask: (id: string, taskId: string) => Promise<void>;
+  clearAudioPath: (id: string) => Promise<void>;
 };
 
 export const useRecordStore = create<RecordStore>((set, get) => ({
@@ -161,6 +162,13 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     await recordRepository.updateTasks(id, updatedTasks);
     set((s) => ({
       records: s.records.map((r) => (r.id === id ? { ...r, tasks: updatedTasks } : r)),
+    }));
+  },
+
+  clearAudioPath: async (id) => {
+    await recordRepository.clearAudioPath(id);
+    set((s) => ({
+      records: s.records.map((r) => (r.id === id ? { ...r, audioPath: undefined } : r)),
     }));
   },
 }));

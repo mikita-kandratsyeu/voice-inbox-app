@@ -106,12 +106,16 @@ export const RecordingDetailHeader = ({
               image: 'pencil',
               imageColor: color.text.primary,
             },
-            {
-              id: 'shareAudio',
-              title: t('share.shareAudio'),
-              image: 'square.and.arrow.up',
-              imageColor: color.text.primary,
-            },
+            ...(record.audioPath
+              ? [
+                  {
+                    id: 'shareAudio' as const,
+                    title: t('share.shareAudio'),
+                    image: 'square.and.arrow.up' as const,
+                    imageColor: color.text.primary,
+                  },
+                ]
+              : []),
             {
               id: 'delete',
               title: t('recordActions.delete'),

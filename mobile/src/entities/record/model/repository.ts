@@ -160,4 +160,10 @@ export const recordRepository = {
       .set({ tags: JSON.stringify(tags) })
       .where(eq(recordsTable.id, id));
   },
+
+  clearAudioPath: async (id: string): Promise<void> => {
+    logDb('clearAudioPath', { id });
+    const db = getDB();
+    await db.update(recordsTable).set({ audioPath: null }).where(eq(recordsTable.id, id));
+  },
 };

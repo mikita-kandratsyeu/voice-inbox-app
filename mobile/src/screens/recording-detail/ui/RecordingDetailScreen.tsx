@@ -4,6 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, useColorScheme, View } from 'react-native';
+import RNFS from 'react-native-fs';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
@@ -34,7 +35,8 @@ export const RecordingDetailScreen = () => {
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
 
   const { record: routeRecord } = route.params;
-  const { records, togglePin, toggleTask, setSummaryStatus, setTasksStatus } = useRecordStore();
+  const { records, togglePin, toggleTask, setSummaryStatus, setTasksStatus, clearAudioPath } =
+    useRecordStore();
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const globalTranscriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
@@ -52,6 +54,18 @@ export const RecordingDetailScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset when switching records
   }, [routeRecord.id]);
 
+  useEffect(() => {
+    const path = liveRecord.audioPath;
+    if (!path?.trim()) return;
+
+    const normalizedPath = path.startsWith('file://') ? path.slice(7) : path;
+    RNFS.exists(normalizedPath).then((exists) => {
+      if (!exists) {
+        clearAudioPath(liveRecord.id).catch(() => {});
+      }
+    });
+  }, [liveRecord.id, liveRecord.audioPath, clearAudioPath]);
+
   const { startTranscription, cancelTranscription } = useTranscription();
   const { generateSummary, extractTasks } = useAiProcessing();
   const { shareRecord, shareAudio } = useShareRecord();
@@ -63,7 +77,7 @@ export const RecordingDetailScreen = () => {
     toggleTask(liveRecord.id, taskId).catch(() => {});
   };
 
-  const handleRetranscribe = () => {
+  const handleRetranscribe = async () => {
     const modelStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
 
     if (modelStatus !== 'downloaded') {
@@ -73,6 +87,17 @@ export const RecordingDetailScreen = () => {
         [{ text: 'OK' }],
       );
       return;
+    }
+
+    const path = liveRecord.audioPath;
+    if (path?.trim()) {
+      const normalizedPath = path.startsWith('file://') ? path.slice(7) : path;
+      const exists = await RNFS.exists(normalizedPath);
+      if (!exists) {
+        await clearAudioPath(liveRecord.id).catch(() => {});
+        Alert.alert(t('recordingDetail.shareFailed'), t('share.audioNotFound'));
+        return;
+      }
     }
 
     startTranscription(liveRecord, recordLanguage);
