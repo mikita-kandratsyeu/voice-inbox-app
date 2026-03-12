@@ -12,6 +12,11 @@ import {
   startRecordingBackgroundService,
   stopRecordingBackgroundService,
 } from '@/features/background-recording';
+import {
+  endRecordingLiveActivity,
+  startRecordingLiveActivity,
+  updateRecordingLiveActivity,
+} from '@/features/live-activity-recording';
 import { hapticLight } from '@/shared/lib';
 
 import type { RecordingState } from '../config';
@@ -59,6 +64,7 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
       if (secs !== elapsedRef.current) {
         elapsedRef.current = secs;
         setElapsed(secs);
+        updateRecordingLiveActivity(secs).catch(() => {});
       }
       setElapsedMs(ms);
 
@@ -71,6 +77,7 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
         if (Platform.OS === 'android') {
           stopRecordingBackgroundService().catch(() => {});
         }
+        endRecordingLiveActivity().catch(() => {});
         audioRecorderPlayer.removeRecordBackListener();
         setMeterLevel(undefined);
         audioRecorderPlayer
@@ -111,6 +118,7 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
       if (Platform.OS === 'android') {
         startRecordingBackgroundService().catch(() => {});
       }
+      startRecordingLiveActivity().catch(() => {});
     } catch (err) {
       if (__DEV__) console.warn('[useRecording] startRecorder failed:', err);
     }
@@ -145,6 +153,7 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
       if (Platform.OS === 'android') {
         stopRecordingBackgroundService().catch(() => {});
       }
+      endRecordingLiveActivity().catch(() => {});
 
       audioRecorderPlayer.removeRecordBackListener();
       setMeterLevel(undefined);

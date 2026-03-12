@@ -28,14 +28,15 @@ export const useAskAI = () => {
       if (inFlightRef.current) return;
 
       const requestId = `${record.id}-ask-${Date.now()}`;
+      const trimmedQuestion = question.trim();
       inFlightRef.current = true;
-      setState({ isLoading: true, error: null, question: question.trim(), answer: null });
+      setState({ isLoading: true, error: null, question: trimmedQuestion, answer: null });
 
       try {
         const postResult = await postAskQuestion({
           id: requestId,
           transcript: record.transcript,
-          question: question.trim(),
+          question: trimmedQuestion,
           model: selectedAIModel,
         });
 
@@ -62,7 +63,6 @@ export const useAskAI = () => {
         if (!pollResult.ok) {
           if (__DEV__)
             console.warn('[AI] askQuestion: pollAskResult failed', {
-              recordId: record.id,
               requestId,
               error: pollResult.error,
             });
