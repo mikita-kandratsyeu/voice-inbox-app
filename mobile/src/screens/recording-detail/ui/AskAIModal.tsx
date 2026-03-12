@@ -245,7 +245,12 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
         borderTopWidth: 1,
         borderTopColor: color.border.default,
       }}
-      handleIndicatorStyle={{ backgroundColor: color.text.muted }}
+      handleIndicatorStyle={{
+        width: 36,
+        height: 5,
+        borderRadius: 2.5,
+        backgroundColor: color.icon.muted,
+      }}
     >
       <BottomSheetView
         style={{
