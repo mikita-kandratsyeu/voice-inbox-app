@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState, type AppStateStatus, Platform } from 'react-native';
-import type { AudioSet, RecordBackType } from 'react-native-audio-recorder-player';
-import AudioRecorderPlayer, {
+import Sound, {
+  type AudioSet,
+  type RecordBackType,
   AudioEncoderAndroidType,
   AudioSourceAndroidType,
   OutputFormatAndroidType,
-} from 'react-native-audio-recorder-player';
+} from 'react-native-nitro-sound';
 
 import { useAppLockStore } from '@/entities/app-lock';
 import {
@@ -24,7 +25,7 @@ import type { RecordingState } from '../config';
 import { MAX_RECORDING_MS } from '../config';
 import { requestMicPermission } from '../lib/requestMicPermission';
 
-const audioRecorderPlayer = AudioRecorderPlayer;
+const audioRecorderPlayer = Sound;
 
 const RECORDING_AUDIO_SET: AudioSet = {
   AVModeIOS: 'measurement',

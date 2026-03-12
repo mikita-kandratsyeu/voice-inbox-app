@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import AudioRecorderPlayer, { type PlayBackType } from 'react-native-audio-recorder-player';
+import Sound, { type PlayBackType } from 'react-native-nitro-sound';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
@@ -32,7 +32,7 @@ const parseDuration = (d: string) => {
   return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
 };
 
-const player = AudioRecorderPlayer;
+const player = Sound;
 
 export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) => {
   const totalSeconds = parseDuration(duration);
