@@ -18,7 +18,12 @@ type RecordCardProps = {
   onStatusPress: () => void;
 };
 
-export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardProps) => {
+export const RecordCard = React.memo(function RecordCard({
+  item,
+  color,
+  onPress,
+  onStatusPress,
+}: RecordCardProps) {
   const { i18n } = useTranslation();
   const { isSwiping } = React.useContext(SwipeableCardContext);
   const cardStyle = {
@@ -107,4 +112,4 @@ export const RecordCard = ({ item, color, onPress, onStatusPress }: RecordCardPr
       )}
     </Pressable>
   );
-};
+});

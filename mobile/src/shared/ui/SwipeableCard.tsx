@@ -31,12 +31,12 @@ type SwipeableCardProps = {
   onPin: () => void;
 };
 
-export const SwipeableCard = ({
+export const SwipeableCard = React.memo(function SwipeableCard({
   children,
   isPinned = false,
   onDelete,
   onPin,
-}: SwipeableCardProps) => {
+}: SwipeableCardProps) {
   const translateX = useSharedValue(0);
   const action = useSharedValue<SwipeAction>('none');
   const [isSwiping, setIsSwiping] = React.useState(false);
@@ -174,4 +174,4 @@ export const SwipeableCard = ({
       </Animated.View>
     </SwipeableCardContext.Provider>
   );
-};
+});

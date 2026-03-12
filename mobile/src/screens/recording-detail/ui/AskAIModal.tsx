@@ -359,6 +359,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
       snapPoints={SNAP_POINTS}
       topInset={TOP_INSET}
       enablePanDownToClose
+      enableOverDrag={false}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="none"
       enableBlurKeyboardOnGesture

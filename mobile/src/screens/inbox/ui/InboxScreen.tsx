@@ -1,8 +1,9 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect } from 'react';
+import { FlashList } from '@shopify/flash-list';
+import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Platform, SectionList, useColorScheme, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, useColorScheme, View } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
@@ -16,6 +17,10 @@ import { EmptySearchState } from './EmptySearchState';
 import { InboxHeader } from './InboxHeader';
 import { InboxSkeleton } from './InboxSkeleton';
 
+type FlattenedItem =
+  | { type: 'header'; title: string; isFirst: boolean }
+  | { type: 'record'; item: VoiceRecord };
+
 export const InboxScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
@@ -25,7 +30,7 @@ export const InboxScreen = () => {
   const {
     query,
     setQuery,
-    sections,
+    flattenedData,
     filtered,
     isSearching,
     filterStatus,
@@ -41,11 +46,51 @@ export const InboxScreen = () => {
     return inboxFiltersReset.registerReset(resetToDefault);
   }, [inboxFiltersReset, resetToDefault]);
 
-  const handleStatusPress = (item: VoiceRecord) => {
-    if (item.aiStatus === 'processing' || item.aiStatus === 'error' || item.aiStatus === 'idle') {
+  const handleStatusPress = useCallback(
+    (item: VoiceRecord) => {
+      if (item.aiStatus === 'processing' || item.aiStatus === 'error' || item.aiStatus === 'idle') {
+        navigation.navigate('RecordingDetail', { record: item });
+      }
+    },
+    [navigation],
+  );
+
+  const handleRecordPress = useCallback(
+    (item: VoiceRecord) => {
       navigation.navigate('RecordingDetail', { record: item });
-    }
-  };
+    },
+    [navigation],
+  );
+
+  const renderItem = useCallback(
+    ({ item }: { item: FlattenedItem }) => {
+      if (item.type === 'header') {
+        return <SectionHeader title={item.title} color={color} isFirst={item.isFirst} />;
+      }
+      return (
+        <SwipeableCard
+          isPinned={item.item.isPinned}
+          onDelete={() => deleteRecord(item.item.id)}
+          onPin={() => togglePin(item.item.id)}
+        >
+          <RecordCard
+            item={item.item}
+            color={color}
+            onPress={() => handleRecordPress(item.item)}
+            onStatusPress={() => handleStatusPress(item.item)}
+          />
+        </SwipeableCard>
+      );
+    },
+    [color, deleteRecord, togglePin, handleRecordPress, handleStatusPress],
+  );
+
+  const getItemType = useCallback((item: FlattenedItem) => item.type, []);
+
+  const keyExtractor = useCallback((item: FlattenedItem) => {
+    if (item.type === 'header') return `header-${item.title}`;
+    return item.item.id;
+  }, []);
 
   const screenStyle = { flex: 1, backgroundColor: color.background.primary };
   const listContentStyle = {
@@ -92,35 +137,11 @@ export const InboxScreen = () => {
               description={t('inbox.emptyFilterDescription')}
             />
           ) : (
-            <SectionList
-              sections={sections}
-              keyExtractor={(item) => item.id}
-              initialNumToRender={12}
-              maxToRenderPerBatch={10}
-              windowSize={11}
-              removeClippedSubviews={true}
-              renderItem={({ item }) => (
-                <SwipeableCard
-                  isPinned={item.isPinned}
-                  onDelete={() => deleteRecord(item.id)}
-                  onPin={() => togglePin(item.id)}
-                >
-                  <RecordCard
-                    item={item}
-                    color={color}
-                    onPress={() => navigation.navigate('RecordingDetail', { record: item })}
-                    onStatusPress={() => handleStatusPress(item)}
-                  />
-                </SwipeableCard>
-              )}
-              renderSectionHeader={({ section }) => (
-                <SectionHeader
-                  title={section.title}
-                  color={color}
-                  isFirst={section.title === sections[0]?.title}
-                />
-              )}
-              stickySectionHeadersEnabled={false}
+            <FlashList
+              data={flattenedData}
+              renderItem={renderItem}
+              keyExtractor={keyExtractor}
+              getItemType={getItemType}
               contentContainerStyle={listContentStyle}
               style={listStyle}
               showsVerticalScrollIndicator={false}

@@ -4,6 +4,7 @@ const { withNativeWind } = require('nativewind/metro');
 /**
  * Metro configuration
  * https://reactnative.dev/docs/metro
+ * Hermes bytecode is compiled automatically during release builds (yarn ios:release).
  *
  * @type {import('@react-native/metro-config').MetroConfig}
  */

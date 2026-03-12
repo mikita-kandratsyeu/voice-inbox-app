@@ -5,12 +5,20 @@ import type { AudioSet, RecordBackType } from 'react-native-audio-recorder-playe
 import AudioRecorderPlayer, {
   AudioEncoderAndroidType,
   AudioSourceAndroidType,
-  AVEncodingOption,
-  AVModeIOSOption,
   OutputFormatAndroidType,
 } from 'react-native-audio-recorder-player';
 
 import { useAppLockStore } from '@/entities/app-lock';
+
+type AudioRecorderPlayerInstance = {
+  addRecordBackListener: (cb: (e: RecordBackType) => void) => void;
+  removeRecordBackListener: () => void;
+  startRecorder: (uri?: string, audioSets?: AudioSet, meteringEnabled?: boolean) => Promise<string>;
+  stopRecorder: () => Promise<string>;
+  setSubscriptionDuration: (sec: number) => void;
+  pauseRecorder: () => Promise<string>;
+  resumeRecorder: () => Promise<string>;
+};
 import {
   endRecordingLiveActivity,
   startRecordingLiveActivity,
@@ -22,20 +30,20 @@ import type { RecordingState } from '../config';
 import { MAX_RECORDING_MS } from '../config';
 import { requestMicPermission } from '../lib/requestMicPermission';
 
-const audioRecorderPlayer = new AudioRecorderPlayer();
+const audioRecorderPlayer = AudioRecorderPlayer as unknown as AudioRecorderPlayerInstance;
 
-const RECORDING_AUDIO_SET: AudioSet = {
-  AVModeIOS: AVModeIOSOption.measurement,
-  AVFormatIDKeyIOS: AVEncodingOption.lpcm,
+const RECORDING_AUDIO_SET = {
+  AVModeIOS: 'measurement',
+  AVFormatIDKeyIOS: 'lpcm',
   AVSampleRateKeyIOS: 16000,
   AVNumberOfChannelsKeyIOS: 1,
   AudioSourceAndroid: AudioSourceAndroidType.VOICE_RECOGNITION,
   OutputFormatAndroid: OutputFormatAndroidType.DEFAULT,
   AudioEncoderAndroid: AudioEncoderAndroidType.DEFAULT,
-  AudioSamplingRateAndroid: 16000,
-  AudioChannelsAndroid: 1,
-  AudioEncodingBitRateAndroid: 256000,
-};
+  AudioSamplingRate: 16000,
+  AudioChannels: 1,
+  AudioEncodingBitRate: 256000,
+} as AudioSet;
 
 type UseRecordingOptions = {
   onLimitReached?: () => void;
