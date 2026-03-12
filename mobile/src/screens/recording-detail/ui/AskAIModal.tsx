@@ -97,6 +97,7 @@ const ErrorState = ({ color, onRetry, onClose }: ErrorStateProps) => {
           label={t('recordingDetail.continueViewing')}
           color={color}
           onPress={onClose}
+          containerStyle={{ flex: 1, minWidth: 0 }}
         />
         <Button
           variant="primary"
@@ -105,6 +106,7 @@ const ErrorState = ({ color, onRetry, onClose }: ErrorStateProps) => {
           label={t('recordingDetail.summaryRetry')}
           color={color}
           onPress={onRetry}
+          containerStyle={{ flex: 1, minWidth: 0 }}
         />
       </View>
     </View>

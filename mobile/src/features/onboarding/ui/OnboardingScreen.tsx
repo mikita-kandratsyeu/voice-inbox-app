@@ -293,15 +293,15 @@ const SlideItem = ({
         ]}
         className="flex-1"
       >
-        <View style={{ width: '100%', alignItems: 'center', marginBottom: 32 }}>
+        <View style={{ width: '100%', alignItems: 'center', marginBottom: 20 }}>
           <Text
-            className="mb-4 text-center text-[28px] font-bold leading-tight"
+            className="mb-2 text-center text-[28px] font-bold leading-tight"
             style={{ color: color.text.primary }}
           >
             {t(item.titleKey)}
           </Text>
           <Text
-            className="mb-6 text-center text-[18px] leading-7"
+            className="mb-4 text-center text-[18px] leading-7"
             style={{ color: color.text.secondary }}
           >
             {t(item.descKey)}
@@ -520,8 +520,8 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         paddingTop: insets.top,
       }}
     >
-      {!isLastSlide && (
-        <View className="absolute top-20 right-5 z-10">
+      <View className="flex-row justify-end px-5 py-3" style={{ minHeight: 48 }}>
+        {!isLastSlide && (
           <TouchableOpacity
             onPress={handleComplete}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
@@ -530,13 +530,14 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
               {t('common.skip')}
             </Text>
           </TouchableOpacity>
-        </View>
-      )}
+        )}
+      </View>
       <AnimatedFlatList
         ref={flatListRef}
         data={slides}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
+        className="flex-1"
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}

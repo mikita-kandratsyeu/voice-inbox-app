@@ -73,7 +73,11 @@ export const OnboardingSetupStep = ({
 
   if (mode === 'ai') {
     return (
-      <View className="flex-1">
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 16 }}
+        showsVerticalScrollIndicator={true}
+      >
         <View
           className="overflow-hidden rounded-xl"
           style={{
@@ -90,7 +94,7 @@ export const OnboardingSetupStep = ({
                 key={model.id}
                 onPress={() => setAIModel(model.id)}
                 activeOpacity={0.7}
-                className={`px-4 py-3 flex-row items-center justify-between ${!isLast ? 'border-b' : ''}`}
+                className={`px-4 py-2 flex-row items-center justify-between ${!isLast ? 'border-b' : ''}`}
                 style={{
                   backgroundColor: color.background.card,
                   borderBottomColor: color.border.default,
@@ -116,7 +120,7 @@ export const OnboardingSetupStep = ({
             );
           })}
         </View>
-      </View>
+      </ScrollView>
     );
   }
 
@@ -136,9 +140,6 @@ export const OnboardingSetupStep = ({
       contentContainerStyle={{ paddingBottom: 16 }}
       showsVerticalScrollIndicator={true}
     >
-      <Text className="mb-3 text-xs" style={{ color: color.text.muted }}>
-        {t('onboarding.setupWhisperHint')}
-      </Text>
       <View
         className="overflow-hidden rounded-xl"
         style={{
@@ -162,7 +163,7 @@ export const OnboardingSetupStep = ({
               onPress={() => handleWhisperRowPress(model.id)}
               activeOpacity={0.7}
               disabled={isDownloading}
-              className={`flex-row items-center justify-between px-4 py-3 ${!isLast ? 'border-b' : ''}`}
+              className={`flex-row items-center justify-between px-4 py-2 ${!isLast ? 'border-b' : ''}`}
               style={{
                 backgroundColor: color.background.card,
                 borderBottomColor: color.border.default,
