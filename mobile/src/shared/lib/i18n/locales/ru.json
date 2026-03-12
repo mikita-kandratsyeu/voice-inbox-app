@@ -73,6 +73,7 @@
     "transcriptNotCreatedDesc": "Нажмите кнопку ниже, чтобы транскрибировать запись на устройстве.",
     "transcribe": "Транскрибировать",
     "editTranscript": "Редактировать",
+    "editTranscriptTitle": "Редактирование",
     "retranscribe": "Перетранскрибировать",
     "cancel": "Отменить",
     "modelNotDownloaded": "Модель не скачана",

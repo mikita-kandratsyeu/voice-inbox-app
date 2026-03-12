@@ -314,16 +314,17 @@ const SlideItem = ({
               hapticSelection();
               onAgreeChange?.(!agreedToTerms);
             }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <View
-              className="h-6 w-6 items-center justify-center rounded-md"
+              className="h-7 w-7 items-center justify-center rounded-md"
               style={{
-                backgroundColor: agreedToTerms ? color.accent.primary : color.background.tertiary,
-                borderWidth: agreedToTerms ? 0 : 2,
-                borderColor: color.border.default,
+                backgroundColor: agreedToTerms ? color.accent.primary : 'transparent',
+                borderWidth: 2,
+                borderColor: agreedToTerms ? color.accent.primary : color.text.secondary,
               }}
             >
-              {agreedToTerms && <Check size={14} color="#fff" strokeWidth={2.5} />}
+              {agreedToTerms && <Check size={16} color="#fff" strokeWidth={2.5} />}
             </View>
           </TouchableOpacity>
           <Text className="flex-1 text-sm leading-5" style={{ color: color.text.secondary }}>

@@ -10,6 +10,7 @@ export type RootStackParamList = {
   Main: undefined;
   RecordModal: undefined;
   RecordingDetail: { record: VoiceRecord };
+  EditTranscript: { record: VoiceRecord };
 };
 
 export type SettingsStackParamList = {

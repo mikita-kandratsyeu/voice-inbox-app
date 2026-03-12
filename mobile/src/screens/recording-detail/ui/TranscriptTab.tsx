@@ -1,54 +1,34 @@
 import { Mic, Pencil, RefreshCw } from 'lucide-react-native';
-import React, { useCallback, useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import type { TranscriptSegment } from '@/entities/record';
 import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
-import { useEditTranscript } from '@/features/edit-transcript';
 import type { Colors } from '@/shared/config';
 import { Button, TabEmptyState } from '@/shared/ui';
 
-import { EditTranscriptBottomSheet } from './EditTranscriptBottomSheet';
-
 type TranscriptTabProps = {
-  recordId: string;
   segments: TranscriptSegment[];
   color: Colors;
   hasAudio: boolean;
   onTranscribe: () => void;
+  onEditTranscript: () => void;
   isAiProcessing?: boolean;
 };
 
 export const TranscriptTab = ({
-  recordId,
   segments,
   color,
   hasAudio,
   onTranscribe,
+  onEditTranscript,
   isAiProcessing = false,
 }: TranscriptTabProps) => {
   const { t } = useTranslation();
-  const [showEditSheet, setShowEditSheet] = useState(false);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelName =
     WHISPER_MODELS.find((m) => m.id === selectedWhisperModel)?.name ?? selectedWhisperModel;
-
-  const { editedSegments, updateSegmentText, save, reset, hasChanges, isSaving } =
-    useEditTranscript({
-      recordId,
-      segments,
-    });
-
-  const handleCancelEdit = useCallback(() => {
-    reset();
-    setShowEditSheet(false);
-  }, [reset]);
-
-  const handleSheetDismiss = useCallback(() => {
-    reset();
-    setShowEditSheet(false);
-  }, [reset]);
 
   if (segments.length === 0) {
     return (
@@ -89,7 +69,7 @@ export const TranscriptTab = ({
           icon={<Pencil size={15} color={color.text.primary} strokeWidth={2} />}
           label={t('recordingDetail.editTranscript')}
           color={color}
-          onPress={() => setShowEditSheet(true)}
+          onPress={onEditTranscript}
           disabled={isAiProcessing}
         />
         {hasAudio && (
@@ -104,17 +84,6 @@ export const TranscriptTab = ({
           />
         )}
       </View>
-      <EditTranscriptBottomSheet
-        visible={showEditSheet}
-        segments={editedSegments}
-        color={color}
-        isSaving={isSaving}
-        hasChanges={hasChanges()}
-        onSegmentChange={updateSegmentText}
-        onSave={save}
-        onCancel={handleCancelEdit}
-        onDismiss={handleSheetDismiss}
-      />
     </View>
   );
 };

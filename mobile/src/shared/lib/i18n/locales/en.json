@@ -73,6 +73,7 @@
     "transcriptNotCreatedDesc": "Tap the button below to transcribe the recording on your device.",
     "transcribe": "Transcribe",
     "editTranscript": "Edit",
+    "editTranscriptTitle": "Edit",
     "retranscribe": "Retranscribe",
     "cancel": "Cancel",
     "modelNotDownloaded": "Model not downloaded",

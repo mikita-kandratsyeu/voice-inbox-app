@@ -1,6 +1,9 @@
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { View } from 'react-native';
 
+import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import type { Colors } from '@/shared/config';
 
@@ -22,6 +25,7 @@ export const TranscriptContent = ({
   onTranscribe,
   onCancelTranscription,
 }: TranscriptContentProps) => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   if (record.aiStatus === 'processing') {
     return (
       <TranscriptProcessing
@@ -51,11 +55,11 @@ export const TranscriptContent = ({
         </View>
       )}
       <TranscriptTab
-        recordId={record.id}
         segments={record.transcriptSegments ?? []}
         color={color}
         hasAudio={!!record.audioPath}
         onTranscribe={onTranscribe}
+        onEditTranscript={() => navigation.navigate('EditTranscript', { record })}
         isAiProcessing={isAiProcessing}
       />
     </>

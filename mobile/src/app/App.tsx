@@ -6,6 +6,7 @@ import React, { useEffect } from 'react';
 import { AppState, type AppStateStatus, StatusBar, useColorScheme } from 'react-native';
 import BootSplash from 'react-native-bootsplash';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
@@ -55,23 +56,25 @@ const App = () => {
 
   return (
     <GestureHandlerRootView style={rootStyle}>
-      <SafeAreaProvider style={safeAreaStyle}>
-        <NetworkStatusProvider>
-          <BottomSheetModalProvider>
-            <StatusBar
-              barStyle={isDark ? 'light-content' : 'dark-content'}
-              backgroundColor={color.background.primary}
-            />
-            <NavigationContainer>
-              <OnboardingGate>
-                <AppLockGate>
-                  <RootNavigator />
-                </AppLockGate>
-              </OnboardingGate>
-            </NavigationContainer>
-          </BottomSheetModalProvider>
-        </NetworkStatusProvider>
-      </SafeAreaProvider>
+      <KeyboardProvider>
+        <SafeAreaProvider style={safeAreaStyle}>
+          <NetworkStatusProvider>
+            <BottomSheetModalProvider>
+              <StatusBar
+                barStyle={isDark ? 'light-content' : 'dark-content'}
+                backgroundColor={color.background.primary}
+              />
+              <NavigationContainer>
+                <OnboardingGate>
+                  <AppLockGate>
+                    <RootNavigator />
+                  </AppLockGate>
+                </OnboardingGate>
+              </NavigationContainer>
+            </BottomSheetModalProvider>
+          </NetworkStatusProvider>
+        </SafeAreaProvider>
+      </KeyboardProvider>
     </GestureHandlerRootView>
   );
 };
