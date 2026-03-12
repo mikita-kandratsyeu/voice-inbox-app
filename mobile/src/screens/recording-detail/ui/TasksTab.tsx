@@ -133,7 +133,6 @@ export const TasksTab = ({
             <Pressable
               className="flex-1 flex-row items-center gap-3"
               onPress={() => onToggle(task.id)}
-              android_ripple={{ color: color.background.tertiary }}
             >
               {task.isDone ? (
                 <CheckCircle2 size={20} color={color.accent.success} strokeWidth={2} />

@@ -4,54 +4,8 @@ PODS:
     - hermes-engine/Pre-built (= 250829098.0.9)
   - hermes-engine/Pre-built (250829098.0.9)
   - MMKVCore (2.3.0)
-  - NitroAudioRecorderPlayer (4.5.0):
-    - hermes-engine
-    - NitroModules
-    - RCTRequired
-    - RCTTypeSafety
-    - React-callinvoker
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - NitroDeviceInfo (1.7.0):
     - NitroModules
-  - NitroFetch (0.1.7):
-    - hermes-engine
-    - NitroModules
-    - RCTRequired
-    - RCTTypeSafety
-    - React-callinvoker
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - NitroMmkv (4.2.0):
     - hermes-engine
     - MMKVCore (= 2.3.0)
@@ -1437,8 +1391,6 @@ PODS:
     - ReactNativeDependencies
   - react-native-add-calendar-event (5.0.0):
     - React-Core
-  - react-native-background-actions (4.0.1):
-    - React-Core
   - react-native-document-picker (9.3.1):
     - hermes-engine
     - RCTRequired
@@ -1990,6 +1942,8 @@ PODS:
     - React-utils (= 0.84.1)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.84.1)
+  - RNAudioRecorderPlayer (3.6.12):
+    - React-Core
   - RNBootSplash (7.1.0):
     - hermes-engine
     - RCTRequired
@@ -2356,9 +2310,7 @@ PODS:
 DEPENDENCIES:
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
-  - NitroAudioRecorderPlayer (from `../node_modules/react-native-audio-recorder-player`)
   - NitroDeviceInfo (from `../node_modules/react-native-nitro-device-info`)
-  - NitroFetch (from `../node_modules/react-native-nitro-fetch`)
   - NitroMmkv (from `../node_modules/react-native-mmkv`)
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
   - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
@@ -2399,7 +2351,6 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-add-calendar-event (from `../node_modules/react-native-add-calendar-event`)
-  - react-native-background-actions (from `../node_modules/react-native-background-actions`)
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - react-native-keep-awake (from `../node_modules/react-native-keep-awake`)
   - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
@@ -2441,6 +2392,7 @@ DEPENDENCIES:
   - ReactCodegen (from `build/generated/ios/ReactCodegen`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
+  - RNAudioRecorderPlayer (from `../node_modules/react-native-audio-recorder-player`)
   - RNBootSplash (from `../node_modules/react-native-bootsplash`)
   - RNCalendarEvents (from `../node_modules/react-native-calendar-events`)
   - RNFS (from `../node_modules/react-native-fs`)
@@ -2466,12 +2418,8 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-v250829098.0.9
-  NitroAudioRecorderPlayer:
-    :path: "../node_modules/react-native-audio-recorder-player"
   NitroDeviceInfo:
     :path: "../node_modules/react-native-nitro-device-info"
-  NitroFetch:
-    :path: "../node_modules/react-native-nitro-fetch"
   NitroMmkv:
     :path: "../node_modules/react-native-mmkv"
   NitroModules:
@@ -2550,8 +2498,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-add-calendar-event:
     :path: "../node_modules/react-native-add-calendar-event"
-  react-native-background-actions:
-    :path: "../node_modules/react-native-background-actions"
   react-native-document-picker:
     :path: "../node_modules/react-native-document-picker"
   react-native-keep-awake:
@@ -2634,6 +2580,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   ReactNativeDependencies:
     :podspec: "../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
+  RNAudioRecorderPlayer:
+    :path: "../node_modules/react-native-audio-recorder-player"
   RNBootSplash:
     :path: "../node_modules/react-native-bootsplash"
   RNCalendarEvents:
@@ -2667,9 +2615,7 @@ SPEC CHECKSUMS:
   FBLazyVector: baf9d0492aa305444465c798e972f87e6a60dc69
   hermes-engine: cba95b7533c6a58b3cb69d87650103551ec72e06
   MMKVCore: d078dce7d6586a888b2c2ef5343b6242678e3ee8
-  NitroAudioRecorderPlayer: e6b81de13ac47e5e6cc61e7fd591e87623dadc9c
   NitroDeviceInfo: d57597f4459e65c134fc5779b4f83bfccb4394af
-  NitroFetch: 5b3a8e4c33bc038bb2f56e837c7b62e932c6129d
   NitroMmkv: b935566bc3c4334a7ba78f8b7e1520b2982f15bf
   NitroModules: 6469493748b6f348b02459f73c2bce8e69534bc3
   op-sqlite: ddc4497aaeb4593a2e435bf3d81cbdcca1d44be6
@@ -2709,7 +2655,6 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 8016ed7590fbedc903dc2d8351f0e9ccc851dd5e
   React-microtasksnativemodule: e019e567dad322e87b49044496b1ef86ac64c41b
   react-native-add-calendar-event: 4eb42bdf84beb58de81f6d2ce1778a7632223dfe
-  react-native-background-actions: 48e6bad9e2a47e3b04858634c5a05ea11062f680
   react-native-document-picker: 860bfe280b030c266450947da04f46750ed13082
   react-native-keep-awake: 21ff40767cde4bd81021ffee12480aee4b5b91bb
   react-native-keyboard-controller: f412365d8dc88196abaa5679d3090720e600826f
@@ -2751,6 +2696,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 2701033208d8c8055a75be97727fefcb56bf6d3d
   ReactCommon: 72fd7add948b85461e4af21da4451d0c6f1fea5d
   ReactNativeDependencies: 20b5b4e5149dc40ab6b261603cd5d3574429e6a6
+  RNAudioRecorderPlayer: 11df0c7b614e9767ef24d896465c3a758c592de7
   RNBootSplash: 6a75f906b18730a98bc694e801314f155d90f57f
   RNCalendarEvents: f90f73666b6bcbb3cc8a491ffbb5e48c0db3de37
   RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
@@ -2766,6 +2712,6 @@ SPEC CHECKSUMS:
   whisper-rn: 73644d112ebf5202bb6a7a05b8c250b1b1795227
   Yoga: 447c8baf495b8d96457a46e6691a2c9952cbd07f
 
-PODFILE CHECKSUM: be0d79c1618169dc01cc1271ba1d949f1b2f8537
+PODFILE CHECKSUM: 411ca59f8ea8a1592b3a937ee5e2009dc5cb855d
 
 COCOAPODS: 1.16.2

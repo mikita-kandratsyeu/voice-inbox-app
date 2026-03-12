@@ -5,14 +5,12 @@ import type { AudioSet, RecordBackType } from 'react-native-audio-recorder-playe
 import AudioRecorderPlayer, {
   AudioEncoderAndroidType,
   AudioSourceAndroidType,
+  AVEncodingOption,
+  AVModeIOSOption,
   OutputFormatAndroidType,
 } from 'react-native-audio-recorder-player';
 
 import { useAppLockStore } from '@/entities/app-lock';
-import {
-  startRecordingBackgroundService,
-  stopRecordingBackgroundService,
-} from '@/features/background-recording';
 import {
   endRecordingLiveActivity,
   startRecordingLiveActivity,
@@ -24,19 +22,19 @@ import type { RecordingState } from '../config';
 import { MAX_RECORDING_MS } from '../config';
 import { requestMicPermission } from '../lib/requestMicPermission';
 
-const audioRecorderPlayer = AudioRecorderPlayer;
+const audioRecorderPlayer = new AudioRecorderPlayer();
 
 const RECORDING_AUDIO_SET: AudioSet = {
-  AVModeIOS: 'measurement',
-  AVFormatIDKeyIOS: 'lpcm',
+  AVModeIOS: AVModeIOSOption.measurement,
+  AVFormatIDKeyIOS: AVEncodingOption.lpcm,
   AVSampleRateKeyIOS: 16000,
   AVNumberOfChannelsKeyIOS: 1,
   AudioSourceAndroid: AudioSourceAndroidType.VOICE_RECOGNITION,
   OutputFormatAndroid: OutputFormatAndroidType.DEFAULT,
   AudioEncoderAndroid: AudioEncoderAndroidType.DEFAULT,
-  AudioSamplingRate: 16000,
-  AudioChannels: 1,
-  AudioEncodingBitRate: 256000,
+  AudioSamplingRateAndroid: 16000,
+  AudioChannelsAndroid: 1,
+  AudioEncodingBitRateAndroid: 256000,
 };
 
 type UseRecordingOptions = {
@@ -107,14 +105,11 @@ export const useRecording = ({
 
       if (ms >= MAX_RECORDING_MS && !limitReachedRef.current) {
         limitReachedRef.current = true;
-        if (Platform.OS === 'android') {
-          stopRecordingBackgroundService().catch(() => {});
-        }
         endRecordingLiveActivity().catch(() => {});
         audioRecorderPlayer.removeRecordBackListener();
         audioRecorderPlayer
           .stopRecorder()
-          .then((result) => {
+          .then((result: string) => {
             if (audioPathRef.current === null) {
               audioPathRef.current = result;
             }
@@ -147,9 +142,6 @@ export const useRecording = ({
       setState('recording');
       hapticLight();
 
-      if (Platform.OS === 'android') {
-        startRecordingBackgroundService().catch(() => {});
-      }
       startRecordingLiveActivity().catch(() => {});
     } catch (err) {
       if (__DEV__) console.warn('[useRecording] startRecorder failed:', err);
@@ -181,9 +173,6 @@ export const useRecording = ({
 
   const stopRecording = useCallback(async (): Promise<string | null> => {
     try {
-      if (Platform.OS === 'android') {
-        stopRecordingBackgroundService().catch(() => {});
-      }
       endRecordingLiveActivity().catch(() => {});
 
       audioRecorderPlayer.removeRecordBackListener();
@@ -224,9 +213,6 @@ export const useRecording = ({
   useEffect(() => {
     return () => {
       audioRecorderPlayer.removeRecordBackListener();
-      if (Platform.OS === 'android') {
-        stopRecordingBackgroundService().catch(() => {});
-      }
       endRecordingLiveActivity().catch(() => {});
       audioRecorderPlayer.stopRecorder().catch(() => {});
     };

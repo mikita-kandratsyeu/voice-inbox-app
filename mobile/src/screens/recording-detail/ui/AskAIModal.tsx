@@ -13,7 +13,6 @@ import {
   ActivityIndicator,
   Dimensions,
   Keyboard,
-  Platform,
   Text,
   TouchableOpacity,
   View,
@@ -345,7 +344,6 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
     </View>
   );
 
-  const keyboardBehavior = Platform.OS === 'ios' ? 'interactive' : 'extend';
   const contentContainerStyle = useMemo(
     () => ({
       flex: 1,
@@ -361,10 +359,9 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
       snapPoints={SNAP_POINTS}
       topInset={TOP_INSET}
       enablePanDownToClose
-      keyboardBehavior={keyboardBehavior}
+      keyboardBehavior="interactive"
       keyboardBlurBehavior="none"
       enableBlurKeyboardOnGesture
-      android_keyboardInputMode={Platform.OS === 'android' ? 'adjustResize' : undefined}
       backdropComponent={renderBackdrop}
       onDismiss={handleDismiss}
       backgroundStyle={{

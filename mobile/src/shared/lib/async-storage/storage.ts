@@ -1,5 +1,4 @@
-import { ANDROID_DATABASE_PATH, IOS_DOCUMENT_PATH } from '@op-engineering/op-sqlite';
-import { Platform } from 'react-native';
+import { IOS_DOCUMENT_PATH } from '@op-engineering/op-sqlite';
 import RNFS from 'react-native-fs';
 
 export type StorageStats = {
@@ -18,10 +17,7 @@ type RecordForStats = {
 };
 
 const DB_NAME = 'voice-inbox.db';
-const DB_PATH =
-  Platform.OS === 'android'
-    ? `${ANDROID_DATABASE_PATH ?? RNFS.DocumentDirectoryPath}/${DB_NAME}`
-    : `${IOS_DOCUMENT_PATH ?? RNFS.DocumentDirectoryPath}/${DB_NAME}`;
+const DB_PATH = `${IOS_DOCUMENT_PATH ?? RNFS.DocumentDirectoryPath}/${DB_NAME}`;
 
 const getDirectorySizeBytes = (path: string, excludePaths?: Set<string>): Promise<number> =>
   RNFS.readDir(path).then(async (items) => {
