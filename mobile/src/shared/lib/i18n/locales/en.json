@@ -33,6 +33,9 @@
     "filters": {
       "all": "All",
       "withoutTranscript": "Without transcript",
+      "withoutTranscriptShort": "No text",
+      "withoutSummary": "Without summary",
+      "moreFilters": "Filters",
       "read": "Read",
       "archived": "Archived",
       "pinned": "Pinned"

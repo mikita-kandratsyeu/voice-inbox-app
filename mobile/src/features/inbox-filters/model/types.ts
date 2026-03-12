@@ -4,5 +4,6 @@ export type InboxFilterStatus =
   | 'all'
   | Exclude<RecordStatus, 'unread'>
   | 'pinned'
-  | 'withoutTranscript';
+  | 'withoutTranscript'
+  | 'withoutSummary';
 export type InboxSortOption = 'dateDesc' | 'dateAsc' | 'durationDesc' | 'durationAsc' | 'titleAsc';

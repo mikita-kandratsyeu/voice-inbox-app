@@ -1,20 +1,16 @@
 import { MenuView } from '@react-native-menu/menu';
-import { ChevronDown, Inbox, Pin } from 'lucide-react-native';
+import { ArrowDownUp, Filter, LayoutList, Pin } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 import type { InboxFilterStatus, InboxSortOption } from '@/features/inbox-filters';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
-const FILTER_OPTIONS: InboxFilterStatus[] = [
-  'all',
-  'withoutTranscript',
-  'read',
-  'archived',
-  'pinned',
-];
+const PRIMARY_FILTERS: InboxFilterStatus[] = ['all', 'pinned'];
+
+const MENU_FILTERS: InboxFilterStatus[] = ['withoutTranscript', 'withoutSummary'];
 
 const SORT_OPTIONS: InboxSortOption[] = [
   'dateDesc',
@@ -23,6 +19,11 @@ const SORT_OPTIONS: InboxSortOption[] = [
   'durationAsc',
   'titleAsc',
 ];
+
+const FILTER_ICONS = {
+  all: LayoutList,
+  pinned: Pin,
+} as const;
 
 type InboxFilterBarProps = {
   filterStatus: InboxFilterStatus;
@@ -40,21 +41,20 @@ export const InboxFilterBar = ({
   color,
 }: InboxFilterBarProps) => {
   const { t } = useTranslation();
-
-  const getFilterIcon = (status: InboxFilterStatus, iconColor: string) => {
-    if (status === 'pinned') return <Pin size={14} strokeWidth={2} color={iconColor} />;
-    return <Inbox size={14} strokeWidth={2} color={iconColor} />;
-  };
+  const hasMenuFilterActive = MENU_FILTERS.includes(filterStatus);
 
   return (
-    <View className="mx-4 mb-3 flex-row items-center gap-2">
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8, flexGrow: 0 }}
+    <View className="mb-3 flex-row items-stretch gap-3 px-4">
+      <View
+        className="flex-1 flex-row overflow-hidden rounded-xl"
+        style={{
+          backgroundColor: color.background.tertiary,
+          padding: 4,
+        }}
       >
-        {FILTER_OPTIONS.map((status) => {
+        {PRIMARY_FILTERS.map((status) => {
           const isActive = filterStatus === status;
+          const Icon = FILTER_ICONS[status as keyof typeof FILTER_ICONS];
           return (
             <TouchableOpacity
               key={status}
@@ -63,24 +63,62 @@ export const InboxFilterBar = ({
                 onFilterChange(status);
               }}
               activeOpacity={0.7}
-              className="flex-row items-center gap-1.5 rounded-full px-3.5 py-2"
+              className="flex-1 flex-row items-center justify-center gap-1 py-3"
               style={{
-                backgroundColor: isActive ? color.accent.primary : color.background.tertiary,
+                backgroundColor: isActive ? color.accent.primary : 'transparent',
+                borderRadius: 8,
               }}
             >
-              {getFilterIcon(status, isActive ? '#fff' : color.text.primary)}
+              <Icon
+                size={14}
+                strokeWidth={2}
+                color={isActive ? color.icon.onAccent : color.text.secondary}
+              />
               <Text
-                className="text-[13px] font-medium"
+                className="text-[12px] font-medium"
                 style={{
-                  color: isActive ? '#fff' : color.text.primary,
+                  color: isActive ? color.icon.onAccent : color.text.primary,
                 }}
+                numberOfLines={1}
               >
                 {t(`inbox.filters.${status}`)}
               </Text>
             </TouchableOpacity>
           );
         })}
-      </ScrollView>
+      </View>
+      <MenuView
+        onPressAction={({ nativeEvent }) => {
+          hapticSelection();
+          const opt = nativeEvent.event as InboxFilterStatus;
+          if (MENU_FILTERS.includes(opt)) {
+            onFilterChange(opt);
+          }
+        }}
+        actions={MENU_FILTERS.map((opt) => ({
+          id: opt,
+          title: t(`inbox.filters.${opt}`),
+          state: filterStatus === opt ? 'on' : 'off',
+        }))}
+      >
+        <TouchableOpacity
+          onPress={() => hapticSelection()}
+          activeOpacity={0.7}
+          className="flex-row items-center justify-center rounded-xl px-3"
+          style={{
+            backgroundColor: hasMenuFilterActive ? color.accent.primary : color.background.tertiary,
+            paddingVertical: 12,
+            minWidth: 44,
+          }}
+          accessibilityLabel={t('inbox.filters.moreFilters')}
+        >
+          <Filter
+            size={16}
+            color={hasMenuFilterActive ? color.icon.onAccent : color.text.secondary}
+            strokeWidth={2}
+          />
+        </TouchableOpacity>
+      </MenuView>
       <MenuView
         onPressAction={({ nativeEvent }) => {
           hapticSelection();
@@ -92,18 +130,21 @@ export const InboxFilterBar = ({
         actions={SORT_OPTIONS.map((opt) => ({
           id: opt,
           title: t(`inbox.sort.${opt}`),
+          state: sortOption === opt ? 'on' : 'off',
         }))}
       >
         <TouchableOpacity
           onPress={() => hapticSelection()}
           activeOpacity={0.7}
-          className="flex-row items-center gap-1.5 rounded-full px-3 py-2"
-          style={{ backgroundColor: color.background.tertiary }}
+          className="flex-row items-center justify-center rounded-xl px-3"
+          style={{
+            backgroundColor: color.background.tertiary,
+            paddingVertical: 12,
+            minWidth: 44,
+          }}
+          accessibilityLabel={t(`inbox.sort.${sortOption}`)}
         >
-          <Text className="text-[13px] font-medium" style={{ color: color.text.primary }}>
-            {t(`inbox.sort.${sortOption}`)}
-          </Text>
-          <ChevronDown size={14} color={color.text.secondary} strokeWidth={2} />
+          <ArrowDownUp size={16} color={color.text.secondary} strokeWidth={2} />
         </TouchableOpacity>
       </MenuView>
     </View>

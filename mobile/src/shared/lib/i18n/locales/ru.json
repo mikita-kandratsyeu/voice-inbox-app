@@ -33,6 +33,9 @@
     "filters": {
       "all": "Все",
       "withoutTranscript": "Без транскрипта",
+      "withoutTranscriptShort": "Без текста",
+      "withoutSummary": "Без сводок",
+      "moreFilters": "Фильтры",
       "read": "Прочитанные",
       "archived": "В архиве",
       "pinned": "Закреплённые"

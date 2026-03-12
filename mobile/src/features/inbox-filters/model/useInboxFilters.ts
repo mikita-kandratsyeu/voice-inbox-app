@@ -28,6 +28,8 @@ export const useInboxFilters = () => {
         result = result.filter((r) => r.isPinned);
       } else if (filterStatus === 'withoutTranscript') {
         result = result.filter((r) => !r.transcript?.trim());
+      } else if (filterStatus === 'withoutSummary') {
+        result = result.filter((r) => !r.summary?.trim());
       } else if (filterStatus !== 'all') {
         result = result.filter((r) => r.status === filterStatus);
       }
