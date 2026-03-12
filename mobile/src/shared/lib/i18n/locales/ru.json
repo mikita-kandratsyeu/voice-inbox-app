@@ -173,6 +173,7 @@
     "appLock": "Блокировка приложения",
     "offlineStorage": "Офлайн хранилище",
     "privacy": "Конфиденциальность",
+    "termsOfService": "Пользовательское соглашение",
     "privacyPolicy": "Политика конфиденциальности",
     "about": "О приложении",
     "on": "Вкл",
@@ -299,6 +300,10 @@
     "setupAiModel": "ИИ модель",
     "setupWhisper": "Whisper (транскрипция)",
     "setupWhisperHint": "Опционально — можно скачать позже в настройках.",
+    "agreeToTermsPrefix": "Я прочитал и согласен с ",
+    "agreeToTermsLink": "пользовательским соглашением",
+    "agreeToTermsAnd": " и ",
+    "agreeToTermsLink2": "политикой конфиденциальности",
     "privacy": "100% Приватно",
     "aiPrivacy": "Ваши данные в безопасности",
     "goToSlide": "Перейти к слайду {{ index }}"

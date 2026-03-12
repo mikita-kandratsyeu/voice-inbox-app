@@ -173,6 +173,7 @@
     "appLock": "App lock",
     "offlineStorage": "Offline storage",
     "privacy": "Privacy",
+    "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy policy",
     "about": "About",
     "on": "On",
@@ -299,6 +300,10 @@
     "setupAiModel": "AI model",
     "setupWhisper": "Whisper (transcription)",
     "setupWhisperHint": "Optional — you can download later in settings.",
+    "agreeToTermsPrefix": "I have read and agree to the ",
+    "agreeToTermsLink": "Terms of Service",
+    "agreeToTermsAnd": " and ",
+    "agreeToTermsLink2": "Privacy Policy",
     "privacy": "100% Private",
     "aiPrivacy": "Your data is secure",
     "goToSlide": "Go to slide {{ index }}"
