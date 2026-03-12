@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Platform } from 'react-native';
+import { Alert, AppState, type AppStateStatus, Platform } from 'react-native';
 import type { AudioSet, RecordBackType } from 'react-native-audio-recorder-player';
 import AudioRecorderPlayer, {
   AudioEncoderAndroidType,
@@ -51,25 +51,55 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
 
   const audioPathRef = useRef<string | null>(null);
   const elapsedRef = useRef(0);
+  const elapsedMsRef = useRef(0);
   const limitReachedRef = useRef(false);
+  const appStateRef = useRef<AppStateStatus>(AppState.currentState);
+  const lastLiveActivityUpdateRef = useRef(0);
 
   const onLimitReachedRef = useRef(onLimitReached);
   onLimitReachedRef.current = onLimitReached;
+  const stateRef = useRef(state);
+  stateRef.current = state;
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      const prev = appStateRef.current;
+      appStateRef.current = next;
+      if (
+        Platform.OS === 'ios' &&
+        prev === 'background' &&
+        next === 'active' &&
+        stateRef.current === 'recording'
+      ) {
+        setElapsed(elapsedRef.current);
+        setElapsedMs(elapsedMsRef.current);
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   const addRecordBackListener = useCallback(() => {
     audioRecorderPlayer.addRecordBackListener((e: RecordBackType) => {
       const ms = e.currentPosition;
       const secs = Math.floor(ms / 1000);
+      const isBackground = Platform.OS === 'ios' && appStateRef.current === 'background';
 
-      if (secs !== elapsedRef.current) {
-        elapsedRef.current = secs;
+      elapsedRef.current = secs;
+      elapsedMsRef.current = ms;
+
+      if (!isBackground) {
         setElapsed(secs);
+        setElapsedMs(ms);
         updateRecordingLiveActivity(secs).catch(() => {});
-      }
-      setElapsedMs(ms);
-
-      if (e.currentMetering !== undefined) {
-        setMeterLevel(e.currentMetering);
+        if (e.currentMetering !== undefined) {
+          setMeterLevel(e.currentMetering);
+        }
+      } else {
+        const now = Date.now();
+        if (now - lastLiveActivityUpdateRef.current >= 5000) {
+          lastLiveActivityUpdateRef.current = now;
+          updateRecordingLiveActivity(secs).catch(() => {});
+        }
       }
 
       if (ms >= MAX_RECORDING_MS && !limitReachedRef.current) {
