@@ -7,6 +7,7 @@ import { SectionList, useColorScheme, View } from 'react-native';
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { RecordCard, useRecordStore } from '@/entities/record';
+import { InboxFilterBar } from '@/features/inbox-filters';
 import { SearchBar, useSearchRecords } from '@/features/search-records';
 import { getColors } from '@/shared/config';
 import { EmptyState, SectionHeader, SwipeableCard } from '@/shared/ui';
@@ -21,7 +22,17 @@ export const InboxScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { records, deleteRecord, togglePin, isLoaded } = useRecordStore();
 
-  const { query, setQuery, sections, filtered, isSearching } = useSearchRecords(records);
+  const {
+    query,
+    setQuery,
+    sections,
+    filtered,
+    isSearching,
+    filterStatus,
+    setFilterStatus,
+    sortOption,
+    setSortOption,
+  } = useSearchRecords(records);
 
   const handleStatusPress = (item: VoiceRecord) => {
     if (item.aiStatus === 'processing' || item.aiStatus === 'error' || item.aiStatus === 'idle') {
@@ -55,8 +66,20 @@ export const InboxScreen = () => {
       ) : (
         <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
           <SearchBar query={query} onChangeQuery={setQuery} color={color} />
+          <InboxFilterBar
+            filterStatus={filterStatus}
+            sortOption={sortOption}
+            onFilterChange={setFilterStatus}
+            onSortChange={setSortOption}
+            color={color}
+          />
           {isSearching && filtered.length === 0 ? (
             <EmptySearchState query={query} color={color} />
+          ) : filterStatus !== 'all' && filtered.length === 0 ? (
+            <EmptyState
+              title={t('inbox.emptyFilterTitle')}
+              description={t('inbox.emptyFilterDescription')}
+            />
           ) : (
             <SectionList
               sections={sections}

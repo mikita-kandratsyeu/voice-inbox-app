@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import type { AudioSet, RecordBackType } from 'react-native-audio-recorder-player';
 import AudioRecorderPlayer, {
   AudioEncoderAndroidType,
@@ -8,6 +8,10 @@ import AudioRecorderPlayer, {
   OutputFormatAndroidType,
 } from 'react-native-audio-recorder-player';
 
+import {
+  startRecordingBackgroundService,
+  stopRecordingBackgroundService,
+} from '@/features/background-recording';
 import { hapticLight } from '@/shared/lib';
 
 import type { RecordingState } from '../config';
@@ -64,6 +68,9 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
 
       if (ms >= MAX_RECORDING_MS && !limitReachedRef.current) {
         limitReachedRef.current = true;
+        if (Platform.OS === 'android') {
+          stopRecordingBackgroundService().catch(() => {});
+        }
         audioRecorderPlayer.removeRecordBackListener();
         setMeterLevel(undefined);
         audioRecorderPlayer
@@ -100,6 +107,10 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
       addRecordBackListener();
       setState('recording');
       hapticLight();
+
+      if (Platform.OS === 'android') {
+        startRecordingBackgroundService().catch(() => {});
+      }
     } catch (err) {
       if (__DEV__) console.warn('[useRecording] startRecorder failed:', err);
     }
@@ -131,6 +142,10 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
 
   const stopRecording = useCallback(async (): Promise<string | null> => {
     try {
+      if (Platform.OS === 'android') {
+        stopRecordingBackgroundService().catch(() => {});
+      }
+
       audioRecorderPlayer.removeRecordBackListener();
       setMeterLevel(undefined);
 

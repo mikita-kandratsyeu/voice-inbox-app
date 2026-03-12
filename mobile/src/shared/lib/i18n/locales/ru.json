@@ -27,7 +27,23 @@
     "recordsFiltered": "{{filtered}} из {{total}} записей",
     "pinned": "Закреплённые",
     "allRecords": "Все записи",
-    "searchResults": "Результаты поиска"
+    "searchResults": "Результаты поиска",
+    "emptyFilterTitle": "Нет записей",
+    "emptyFilterDescription": "Нет записей по выбранному фильтру",
+    "filters": {
+      "all": "Все",
+      "withoutTranscript": "Без транскрипта",
+      "read": "Прочитанные",
+      "archived": "В архиве",
+      "pinned": "Закреплённые"
+    },
+    "sort": {
+      "dateDesc": "Сначала новые",
+      "dateAsc": "Сначала старые",
+      "durationDesc": "Сначала длинные",
+      "durationAsc": "Сначала короткие",
+      "titleAsc": "По названию А–Я"
+    }
   },
   "search": {
     "placeholder": "Поиск по записям...",
@@ -56,6 +72,7 @@
     "transcriptNotCreated": "Транскрипт не создан",
     "transcriptNotCreatedDesc": "Нажмите кнопку ниже, чтобы транскрибировать запись на устройстве.",
     "transcribe": "Транскрибировать",
+    "editTranscript": "Редактировать",
     "retranscribe": "Перетранскрибировать",
     "cancel": "Отменить",
     "modelNotDownloaded": "Модель не скачана",

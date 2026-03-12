@@ -1412,6 +1412,8 @@ PODS:
     - ReactNativeDependencies
   - react-native-add-calendar-event (5.0.0):
     - React-Core
+  - react-native-background-actions (4.0.1):
+    - React-Core
   - react-native-document-picker (9.3.1):
     - hermes-engine
     - RCTRequired
@@ -2329,6 +2331,7 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-add-calendar-event (from `../node_modules/react-native-add-calendar-event`)
+  - react-native-background-actions (from `../node_modules/react-native-background-actions`)
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - react-native-keep-awake (from `../node_modules/react-native-keep-awake`)
   - "react-native-menu (from `../node_modules/@react-native-menu/menu`)"
@@ -2475,6 +2478,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-add-calendar-event:
     :path: "../node_modules/react-native-add-calendar-event"
+  react-native-background-actions:
+    :path: "../node_modules/react-native-background-actions"
   react-native-document-picker:
     :path: "../node_modules/react-native-document-picker"
   react-native-keep-awake:
@@ -2630,6 +2635,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 8016ed7590fbedc903dc2d8351f0e9ccc851dd5e
   React-microtasksnativemodule: e019e567dad322e87b49044496b1ef86ac64c41b
   react-native-add-calendar-event: 4eb42bdf84beb58de81f6d2ce1778a7632223dfe
+  react-native-background-actions: 48e6bad9e2a47e3b04858634c5a05ea11062f680
   react-native-document-picker: 860bfe280b030c266450947da04f46750ed13082
   react-native-keep-awake: 21ff40767cde4bd81021ffee12480aee4b5b91bb
   react-native-menu: b5652b6901671ec65c3cdcf1f3559d8caf6e0a47

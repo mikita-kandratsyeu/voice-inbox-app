@@ -51,6 +51,7 @@ export const TranscriptContent = ({
         </View>
       )}
       <TranscriptTab
+        recordId={record.id}
         segments={record.transcriptSegments ?? []}
         color={color}
         hasAudio={!!record.audioPath}

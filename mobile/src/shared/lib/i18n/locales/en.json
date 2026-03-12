@@ -27,7 +27,23 @@
     "recordsFiltered": "{{filtered}} of {{total}} records",
     "pinned": "Pinned",
     "allRecords": "All records",
-    "searchResults": "Search results"
+    "searchResults": "Search results",
+    "emptyFilterTitle": "No records",
+    "emptyFilterDescription": "No records match the selected filter",
+    "filters": {
+      "all": "All",
+      "withoutTranscript": "Without transcript",
+      "read": "Read",
+      "archived": "Archived",
+      "pinned": "Pinned"
+    },
+    "sort": {
+      "dateDesc": "Newest first",
+      "dateAsc": "Oldest first",
+      "durationDesc": "Longest first",
+      "durationAsc": "Shortest first",
+      "titleAsc": "Title A–Z"
+    }
   },
   "search": {
     "placeholder": "Search records...",
@@ -56,6 +72,7 @@
     "transcriptNotCreated": "Transcript not created",
     "transcriptNotCreatedDesc": "Tap the button below to transcribe the recording on your device.",
     "transcribe": "Transcribe",
+    "editTranscript": "Edit",
     "retranscribe": "Retranscribe",
     "cancel": "Cancel",
     "modelNotDownloaded": "Model not downloaded",
