@@ -67,8 +67,7 @@
     "noAppLockHint": "When you minimize the app, recording will continue in the background.",
     "saveModalTitle": "Save recording",
     "duration": "Duration: {{time}}",
-    "offlineTitle": "Recording works offline",
-    "offlineSubtitle": "Transcription runs directly on your device"
+    "offlineHint": "Offline-transcription on device"
   },
   "recordingDetail": {
     "transcript": "Transcript",

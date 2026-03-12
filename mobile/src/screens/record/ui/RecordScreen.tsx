@@ -143,20 +143,17 @@ export const RecordScreen = () => {
           />
         </View>
         <View className="items-center gap-1" style={{ opacity: state === 'paused' ? 0 : 1 }}>
-          <Text className="text-[16px] font-medium text-white/90">{t('record.offlineTitle')}</Text>
-          <Text className="text-[14px] text-white/55">{t('record.offlineSubtitle')}</Text>
-          <Text className="mt-2 text-center text-[13px] text-white/50">
+          <Text className="text-[16px] font-medium text-white/90">{t('record.offlineHint')}</Text>
+          <Text className="text-[13px] text-center" style={{ color: 'rgba(255,255,255,0.7)' }}>
             {isAppLockEnabled ? t('record.appLockHint') : t('record.noAppLockHint')}
           </Text>
         </View>
       </View>
-
       <RecordScreenControls
         state={state}
         onPauseResume={handlePauseResume}
         onDonePress={handleDonePress}
       />
-
       <SaveRecordModal
         visible={showSaveModal}
         title={title}
