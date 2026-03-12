@@ -3,14 +3,14 @@ import { BookOpen, Mail, Tag } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Linking, ScrollView, Text, useColorScheme, View } from 'react-native';
-import DeviceInfo from 'react-native-device-info';
+import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useOnboardingStore } from '@/features/onboarding';
 import { getColors, SUPPORT_EMAIL } from '@/shared/config';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
-const APP_VERSION = DeviceInfo.getVersion();
+const APP_VERSION = DeviceInfoModule.version;
 
 export const AboutAppScreen = () => {
   const { t } = useTranslation();
