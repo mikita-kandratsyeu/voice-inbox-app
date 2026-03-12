@@ -27,7 +27,26 @@
     "recordsFiltered": "{{filtered}} из {{total}} записей",
     "pinned": "Закреплённые",
     "allRecords": "Все записи",
-    "searchResults": "Результаты поиска"
+    "searchResults": "Результаты поиска",
+    "emptyFilterTitle": "Нет записей",
+    "emptyFilterDescription": "Нет записей по выбранному фильтру",
+    "filters": {
+      "all": "Все",
+      "withoutTranscript": "Без транскрипта",
+      "withoutTranscriptShort": "Без текста",
+      "withoutSummary": "Без сводок",
+      "moreFilters": "Фильтры",
+      "read": "Прочитанные",
+      "archived": "В архиве",
+      "pinned": "Закреплённые"
+    },
+    "sort": {
+      "dateDesc": "Сначала новые",
+      "dateAsc": "Сначала старые",
+      "durationDesc": "Сначала длинные",
+      "durationAsc": "Сначала короткие",
+      "titleAsc": "По названию А–Я"
+    }
   },
   "search": {
     "placeholder": "Поиск по записям...",
@@ -56,6 +75,8 @@
     "transcriptNotCreated": "Транскрипт не создан",
     "transcriptNotCreatedDesc": "Нажмите кнопку ниже, чтобы транскрибировать запись на устройстве.",
     "transcribe": "Транскрибировать",
+    "editTranscript": "Редактировать",
+    "editTranscriptTitle": "Редактирование",
     "retranscribe": "Перетранскрибировать",
     "cancel": "Отменить",
     "modelNotDownloaded": "Модель не скачана",
@@ -81,6 +102,9 @@
     "askPlaceholder": "Задайте вопрос по заметке...",
     "askEmptyTitle": "Спросите о заметке",
     "askEmptyDesc": "Получайте ответы по транскрипту с помощью ИИ.",
+    "askSuggested1": "О чём эта заметка?",
+    "askSuggested2": "Кратко перескажи",
+    "askSuggested3": "Какие главные выводы?",
     "askButton": "Спросить",
     "askProcessing": "Ответ генерируется...",
     "askError": "Не удалось получить ответ",
@@ -156,6 +180,7 @@
     "appLock": "Блокировка приложения",
     "offlineStorage": "Офлайн хранилище",
     "privacy": "Конфиденциальность",
+    "termsOfService": "Пользовательское соглашение",
     "privacyPolicy": "Политика конфиденциальности",
     "about": "О приложении",
     "on": "Вкл",
@@ -282,6 +307,10 @@
     "setupAiModel": "ИИ модель",
     "setupWhisper": "Whisper (транскрипция)",
     "setupWhisperHint": "Опционально — можно скачать позже в настройках.",
+    "agreeToTermsPrefix": "Я прочитал и согласен с ",
+    "agreeToTermsLink": "пользовательским соглашением",
+    "agreeToTermsAnd": " и ",
+    "agreeToTermsLink2": "политикой конфиденциальности",
     "privacy": "100% Приватно",
     "aiPrivacy": "Ваши данные в безопасности",
     "goToSlide": "Перейти к слайду {{ index }}"

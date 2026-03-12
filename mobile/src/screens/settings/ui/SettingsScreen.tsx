@@ -3,6 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   Bot,
   Download,
+  FileText,
   Fingerprint,
   HardDrive,
   Info,
@@ -264,11 +265,17 @@ export const SettingsScreen = () => {
 
         <SettingsSection title={t('settings.privacy')} color={color}>
           <SettingsRow
+            label={t('settings.termsOfService')}
+            color={color}
+            leftIcon={<FileText size={20} color={color.icon.muted} strokeWidth={1.8} />}
+            onPress={() => Linking.openURL(`${WEBSITE_URL}/terms`)}
+            isFirst
+          />
+          <SettingsRow
             label={t('settings.privacyPolicy')}
             color={color}
             leftIcon={<Shield size={20} color={color.icon.muted} strokeWidth={1.8} />}
             onPress={() => Linking.openURL(`${WEBSITE_URL}/privacy`)}
-            isFirst
           />
           <SettingsRow
             label={t('settings.about')}

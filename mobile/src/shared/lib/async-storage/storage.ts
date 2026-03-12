@@ -108,7 +108,7 @@ const getCacheSizeBytes = async (audioPaths: string[]): Promise<number> => {
         total += await getDirectorySizeBytes(dir, excludeSet);
       }
     } catch (err) {
-      console.warn('[storage] Failed to get cache size:', dir, err);
+      if (__DEV__) console.warn('[storage] Failed to get cache size:', dir, err);
     }
   }
   return total;
@@ -135,7 +135,7 @@ export const clearCache = async (audioPaths: string[]): Promise<number> => {
       const { deletedBytes } = await clearDirectoryContents(dir, keepSet);
       totalDeleted += deletedBytes;
     } catch (err) {
-      console.warn('[storage] Failed to clear cache dir:', dir, err);
+      if (__DEV__) console.warn('[storage] Failed to clear cache dir:', dir, err);
     }
   }
 

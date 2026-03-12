@@ -27,7 +27,26 @@
     "recordsFiltered": "{{filtered}} of {{total}} records",
     "pinned": "Pinned",
     "allRecords": "All records",
-    "searchResults": "Search results"
+    "searchResults": "Search results",
+    "emptyFilterTitle": "No records",
+    "emptyFilterDescription": "No records match the selected filter",
+    "filters": {
+      "all": "All",
+      "withoutTranscript": "Without transcript",
+      "withoutTranscriptShort": "No text",
+      "withoutSummary": "Without summary",
+      "moreFilters": "Filters",
+      "read": "Read",
+      "archived": "Archived",
+      "pinned": "Pinned"
+    },
+    "sort": {
+      "dateDesc": "Newest first",
+      "dateAsc": "Oldest first",
+      "durationDesc": "Longest first",
+      "durationAsc": "Shortest first",
+      "titleAsc": "Title A–Z"
+    }
   },
   "search": {
     "placeholder": "Search records...",
@@ -56,6 +75,8 @@
     "transcriptNotCreated": "Transcript not created",
     "transcriptNotCreatedDesc": "Tap the button below to transcribe the recording on your device.",
     "transcribe": "Transcribe",
+    "editTranscript": "Edit",
+    "editTranscriptTitle": "Edit",
     "retranscribe": "Retranscribe",
     "cancel": "Cancel",
     "modelNotDownloaded": "Model not downloaded",
@@ -81,6 +102,9 @@
     "askPlaceholder": "Ask a question about this note...",
     "askEmptyTitle": "Ask about your note",
     "askEmptyDesc": "Get answers about the transcript using AI.",
+    "askSuggested1": "What is this note about?",
+    "askSuggested2": "Summarize briefly",
+    "askSuggested3": "What are the key takeaways?",
     "askButton": "Ask",
     "askProcessing": "Answering...",
     "askError": "Failed to get answer",
@@ -156,6 +180,7 @@
     "appLock": "App lock",
     "offlineStorage": "Offline storage",
     "privacy": "Privacy",
+    "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy policy",
     "about": "About",
     "on": "On",
@@ -282,6 +307,10 @@
     "setupAiModel": "AI model",
     "setupWhisper": "Whisper (transcription)",
     "setupWhisperHint": "Optional — you can download later in settings.",
+    "agreeToTermsPrefix": "I have read and agree to the ",
+    "agreeToTermsLink": "Terms of Service",
+    "agreeToTermsAnd": " and ",
+    "agreeToTermsLink2": "Privacy Policy",
     "privacy": "100% Private",
     "aiPrivacy": "Your data is secure",
     "goToSlide": "Go to slide {{ index }}"

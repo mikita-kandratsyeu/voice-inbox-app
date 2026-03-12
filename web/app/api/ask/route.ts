@@ -3,6 +3,7 @@ import {
   HttpStatus,
   parseJsonBody,
   requireAppSecret,
+  validateDeviceId,
   validateRequiredStrings,
 } from '@/lib/api';
 import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
@@ -23,10 +24,13 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return authError;
   }
 
-  const deviceId = request.headers.get(HEADER_DEVICE_ID)?.trim();
-  if (!deviceId) {
-    return apiError('x-device-id header is required', HttpStatus.BAD_REQUEST);
+  const deviceId = request.headers.get(HEADER_DEVICE_ID);
+  const deviceIdError = validateDeviceId(deviceId);
+
+  if (deviceIdError) {
+    return apiError(deviceIdError, HttpStatus.BAD_REQUEST);
   }
+  const deviceIdTrimmed = deviceId!.trim();
 
   const body = await parseJsonBody<CreateAskBody>(request);
 
@@ -51,7 +55,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     model: string;
   };
 
-  const result = await createAsk(id, transcript, question, model, deviceId);
+  const result = await createAsk(id, transcript, question, model, deviceIdTrimmed);
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
     return NextResponse.json(

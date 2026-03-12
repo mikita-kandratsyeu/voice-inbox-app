@@ -1,4 +1,4 @@
-import { Mic, RefreshCw } from 'lucide-react-native';
+import { Mic, Pencil, RefreshCw } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -13,6 +13,7 @@ type TranscriptTabProps = {
   color: Colors;
   hasAudio: boolean;
   onTranscribe: () => void;
+  onEditTranscript: () => void;
   isAiProcessing?: boolean;
 };
 
@@ -21,6 +22,7 @@ export const TranscriptTab = ({
   color,
   hasAudio,
   onTranscribe,
+  onEditTranscript,
   isAiProcessing = false,
 }: TranscriptTabProps) => {
   const { t } = useTranslation();
@@ -60,18 +62,28 @@ export const TranscriptTab = ({
           </Text>
         </View>
       ))}
-      {hasAudio && (
+      <View className="mt-1 flex-row flex-wrap gap-2">
         <Button
           variant="secondary"
-          size="lg"
-          icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
-          label={t('recordingDetail.retranscribe')}
+          size="md"
+          icon={<Pencil size={15} color={color.text.primary} strokeWidth={2} />}
+          label={t('recordingDetail.editTranscript')}
           color={color}
-          onPress={onTranscribe}
+          onPress={onEditTranscript}
           disabled={isAiProcessing}
-          className="mt-1"
         />
-      )}
+        {hasAudio && (
+          <Button
+            variant="secondary"
+            size="md"
+            icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
+            label={t('recordingDetail.retranscribe')}
+            color={color}
+            onPress={onTranscribe}
+            disabled={isAiProcessing}
+          />
+        )}
+      </View>
     </View>
   );
 };

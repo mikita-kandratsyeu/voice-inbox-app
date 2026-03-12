@@ -1,6 +1,8 @@
 export type { ButtonProps, ButtonSize, ButtonVariant } from './Button';
 export { Button } from './Button';
 export { EmptyState } from './EmptyState';
+export type { InputFieldProps } from './InputField';
+export { getInputFieldInputStyle, InputField } from './InputField';
 export { ScreenHeader } from './ScreenHeader';
 export { SectionHeader } from './SectionHeader';
 export { SettingsRow } from './SettingsRow';

@@ -1412,6 +1412,8 @@ PODS:
     - ReactNativeDependencies
   - react-native-add-calendar-event (5.0.0):
     - React-Core
+  - react-native-background-actions (4.0.1):
+    - React-Core
   - react-native-document-picker (9.3.1):
     - hermes-engine
     - RCTRequired
@@ -1435,6 +1437,49 @@ PODS:
     - Yoga
   - react-native-keep-awake (4.0.0):
     - React
+  - react-native-keyboard-controller (1.20.7):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - react-native-keyboard-controller/common (= 1.20.7)
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - react-native-keyboard-controller/common (1.20.7):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - react-native-menu (2.0.0):
     - hermes-engine
     - RCTRequired
@@ -2329,8 +2374,10 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-add-calendar-event (from `../node_modules/react-native-add-calendar-event`)
+  - react-native-background-actions (from `../node_modules/react-native-background-actions`)
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - react-native-keep-awake (from `../node_modules/react-native-keep-awake`)
+  - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
   - "react-native-menu (from `../node_modules/@react-native-menu/menu`)"
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
@@ -2475,10 +2522,14 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   react-native-add-calendar-event:
     :path: "../node_modules/react-native-add-calendar-event"
+  react-native-background-actions:
+    :path: "../node_modules/react-native-background-actions"
   react-native-document-picker:
     :path: "../node_modules/react-native-document-picker"
   react-native-keep-awake:
     :path: "../node_modules/react-native-keep-awake"
+  react-native-keyboard-controller:
+    :path: "../node_modules/react-native-keyboard-controller"
   react-native-menu:
     :path: "../node_modules/@react-native-menu/menu"
   react-native-netinfo:
@@ -2630,8 +2681,10 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 8016ed7590fbedc903dc2d8351f0e9ccc851dd5e
   React-microtasksnativemodule: e019e567dad322e87b49044496b1ef86ac64c41b
   react-native-add-calendar-event: 4eb42bdf84beb58de81f6d2ce1778a7632223dfe
+  react-native-background-actions: 48e6bad9e2a47e3b04858634c5a05ea11062f680
   react-native-document-picker: 860bfe280b030c266450947da04f46750ed13082
   react-native-keep-awake: 21ff40767cde4bd81021ffee12480aee4b5b91bb
+  react-native-keyboard-controller: f412365d8dc88196abaa5679d3090720e600826f
   react-native-menu: b5652b6901671ec65c3cdcf1f3559d8caf6e0a47
   react-native-netinfo: ac0848a4773ef5bd015399444409b5ea9ed75fa3
   react-native-safe-area-context: 866dbfc3292621c18abe9857bda29485bf20607a

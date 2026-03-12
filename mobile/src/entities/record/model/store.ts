@@ -55,7 +55,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
           await RNFS.unlink(record.audioPath);
         }
       } catch (err) {
-        console.warn('[store] Failed to delete audio file:', err);
+        if (__DEV__) console.warn('[store] Failed to delete audio file:', err);
       }
     }
     await recordRepository.remove(id);

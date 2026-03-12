@@ -1,4 +1,4 @@
-import { Lock, Mic, Settings, Shield, Sparkles, Zap } from 'lucide-react-native';
+import { Check, Lock, Mic, Settings, Shield, Sparkles, Zap } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -6,6 +6,7 @@ import {
   Alert,
   Dimensions,
   FlatList,
+  Linking,
   Text,
   TouchableOpacity,
   useColorScheme,
@@ -26,9 +27,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useSettingsStore } from '@/entities/settings';
 import { useModelManager } from '@/features/model-manager';
-import { getColors } from '@/shared/config';
+import { getColors, WEBSITE_URL } from '@/shared/config';
+import { hapticSelection } from '@/shared/lib';
 
-import { setHasSeenOnboarding } from '../lib/onboardingStorage';
+import { getTermsAgreedAt, setHasSeenOnboarding, setTermsAgreedAt } from '../lib/onboardingStorage';
 import { getOnboardingSlides, type OnboardingSlideContent } from '../model/constants';
 import { OnboardingSetupStep } from './OnboardingSetupStep';
 
@@ -44,7 +46,7 @@ type OnboardingScreenProps = {
   onComplete: () => void;
 };
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<OnboardingSlideContent>);
 
@@ -163,6 +165,7 @@ const AnimatedNextButton = ({
           minHeight: 52,
           overflow: 'hidden',
           backgroundColor: slideColors[0],
+          opacity: disabled ? 0.5 : 1,
         },
         animatedStyle,
       ]}
@@ -190,6 +193,8 @@ type SlideItemProps = {
   index: number;
   scrollX: SharedValue<number>;
   color: ReturnType<typeof getColors>;
+  agreedToTerms?: boolean;
+  onAgreeChange?: (value: boolean) => void;
 };
 
 const AnimatedSlideIcon = ({
@@ -248,6 +253,8 @@ const SlideItem = ({
   scrollX,
   color,
   t,
+  agreedToTerms = false,
+  onAgreeChange,
 }: SlideItemProps & { t: (k: string) => string }) => {
   const animatedStyle = useAnimatedStyle(() => {
     const inputRange = [
@@ -266,20 +273,76 @@ const SlideItem = ({
   });
 
   if (item.extra === 'setup') {
+    const linkStyle = {
+      color: color.accent.primary,
+      textDecorationLine: 'underline' as const,
+    };
+
     return (
       <Animated.View
         style={[
           {
             width: SCREEN_WIDTH,
             paddingHorizontal: 32,
-            paddingTop: 48,
+            paddingTop: 32,
           },
           animatedStyle,
         ]}
-        className="flex-1 items-center"
+        className="flex-1"
       >
-        <View style={{ width: '100%', height: SCREEN_HEIGHT * 0.6 }}>
+        <View style={{ width: '100%', alignItems: 'center', marginBottom: 24 }}>
+          <Text
+            className="mb-4 text-center text-[28px] font-bold leading-tight"
+            style={{ color: color.text.primary }}
+          >
+            {t(item.titleKey)}
+          </Text>
+          <Text
+            className="mb-6 text-center text-[18px] leading-7"
+            style={{ color: color.text.secondary }}
+          >
+            {t(item.descKey)}
+          </Text>
+        </View>
+        <View style={{ flex: 1 }}>
           <OnboardingSetupStep color={color} />
+        </View>
+        <View className="mt-4 flex-row items-start gap-3">
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              hapticSelection();
+              onAgreeChange?.(!agreedToTerms);
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <View
+              className="h-7 w-7 items-center justify-center rounded-md"
+              style={{
+                backgroundColor: agreedToTerms ? color.accent.primary : 'transparent',
+                borderWidth: 2,
+                borderColor: agreedToTerms ? color.accent.primary : color.text.secondary,
+              }}
+            >
+              {agreedToTerms && <Check size={16} color="#fff" strokeWidth={2.5} />}
+            </View>
+          </TouchableOpacity>
+          <Text className="flex-1 text-sm leading-5" style={{ color: color.text.secondary }}>
+            {t('onboarding.agreeToTermsPrefix')}
+            <Text
+              style={linkStyle}
+              onPress={() => WEBSITE_URL && Linking.openURL(`${WEBSITE_URL}/terms`)}
+            >
+              {t('onboarding.agreeToTermsLink')}
+            </Text>
+            {t('onboarding.agreeToTermsAnd')}
+            <Text
+              style={linkStyle}
+              onPress={() => WEBSITE_URL && Linking.openURL(`${WEBSITE_URL}/privacy`)}
+            >
+              {t('onboarding.agreeToTermsLink2')}
+            </Text>
+          </Text>
         </View>
       </Animated.View>
     );
@@ -355,6 +418,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   }, [slides, color.accent.primary]);
   const insets = useSafeAreaInsets();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [agreedToTerms, setAgreedToTerms] = useState(() => getTermsAgreedAt() != null);
   const [isStartingDownload, setIsStartingDownload] = useState(false);
   const flatListRef = useRef<FlatList<OnboardingSlideContent>>(null);
   const scrollX = useSharedValue(0);
@@ -370,6 +434,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   });
 
   const handleComplete = () => {
+    setTermsAgreedAt();
     setHasSeenOnboarding();
     onComplete();
   };
@@ -423,9 +488,17 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
 
   const renderItem = useCallback(
     ({ item, index }: { item: OnboardingSlideContent; index: number }) => (
-      <SlideItem item={item} index={index} scrollX={scrollX} color={color} t={t} />
+      <SlideItem
+        item={item}
+        index={index}
+        scrollX={scrollX}
+        color={color}
+        t={t}
+        agreedToTerms={agreedToTerms}
+        onAgreeChange={setAgreedToTerms}
+      />
     ),
-    [color, scrollX, t],
+    [agreedToTerms, color, scrollX, t],
   );
 
   const isLastSlide = currentIndex === slides.length - 1;
@@ -480,7 +553,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           slideColors={slideColors}
           iconOnAccent={color.icon.onAccent}
           loading={isStartingDownload}
-          disabled={isStartingDownload}
+          disabled={isStartingDownload || (isLastSlide && !agreedToTerms)}
         />
       </View>
     </View>

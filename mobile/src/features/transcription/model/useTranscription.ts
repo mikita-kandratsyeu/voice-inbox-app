@@ -6,7 +6,7 @@ import { useSettingsStore } from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
 import { i18n, useNetworkStatus } from '@/shared/lib';
 
-import { getWhisperContext } from '../lib/initWhisper';
+import { getWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
 import { transcribeAudio } from '../lib/transcribeAudio';
 
 const PROGRESS_THROTTLE_MS = 500;
@@ -45,13 +45,14 @@ export const useTranscription = () => {
   const startTranscription = useCallback(
     async (record: VoiceRecord, languageOverride?: string): Promise<void> => {
       if (!record.audioPath) {
-        console.warn('[transcription] No audio path for record', record.id);
+        if (__DEV__) console.warn('[transcription] No audio path for record', record.id);
         return;
       }
 
       const modelStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
       if (modelStatus !== 'downloaded') {
-        console.warn('[transcription] Selected model not downloaded:', selectedWhisperModel);
+        if (__DEV__)
+          console.warn('[transcription] Selected model not downloaded:', selectedWhisperModel);
         updateAiStatus(record.id, 'error');
         return;
       }
@@ -59,9 +60,11 @@ export const useTranscription = () => {
       updateAiStatus(record.id, 'processing', 0);
 
       const language = languageOverride ?? transcriptionLanguage;
+      let usedContext = false;
 
       try {
         const context = await getWhisperContext(selectedWhisperModel);
+        usedContext = true;
 
         const throttledProgress = createThrottledProgress(record.id, updateAiStatus);
 
@@ -109,8 +112,12 @@ export const useTranscription = () => {
         if (wasCancelled) {
           updateAiStatus(record.id, 'idle');
         } else {
-          console.warn('[transcription] Failed:', err);
+          if (__DEV__) console.warn('[transcription] Failed:', err);
           updateAiStatus(record.id, 'error');
+        }
+      } finally {
+        if (usedContext) {
+          scheduleIdleRelease();
         }
       }
     },

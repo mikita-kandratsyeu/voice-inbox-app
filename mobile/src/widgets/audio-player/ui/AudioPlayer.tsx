@@ -63,7 +63,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
       player.removePlaybackEndListener();
       await player.stopPlayer();
     } catch (err) {
-      console.warn('[AudioPlayer] stopPlayer failed:', err);
+      if (__DEV__) console.warn('[AudioPlayer] stopPlayer failed:', err);
     }
     isPlayerLoadedRef.current = false;
     setIsPlaying(false);
@@ -79,7 +79,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
       elapsedRef.current = secs;
       setElapsed(secs);
     } catch (err) {
-      console.warn('[AudioPlayer] seekToPlayer failed:', err);
+      if (__DEV__) console.warn('[AudioPlayer] seekToPlayer failed:', err);
     }
   }, []);
 
@@ -121,7 +121,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
         isPlayerLoadedRef.current = true;
         setIsPlaying(true);
       } catch (err) {
-        console.warn('[AudioPlayer] startPlayer failed:', err);
+        if (__DEV__) console.warn('[AudioPlayer] startPlayer failed:', err);
       }
     },
     [audioPath, totalSeconds, playbackSpeed, seekTo],
@@ -146,7 +146,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
         player.removePlayBackListener();
         setIsPlaying(false);
       } catch (err) {
-        console.warn('[AudioPlayer] pausePlayer failed:', err);
+        if (__DEV__) console.warn('[AudioPlayer] pausePlayer failed:', err);
       }
     } else {
       try {
@@ -174,7 +174,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
         }
         setIsPlaying(true);
       } catch (err) {
-        console.warn('[AudioPlayer] resumePlayer failed:', err);
+        if (__DEV__) console.warn('[AudioPlayer] resumePlayer failed:', err);
       }
     }
   };

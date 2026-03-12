@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { VoiceRecord } from '@/entities/record';
+import { useInboxFilters } from '@/features/inbox-filters';
 
 const RELEVANCE = {
   title: 5,
@@ -14,6 +15,7 @@ const RELEVANCE = {
 const getRelevanceScore = (record: VoiceRecord, query: string): number => {
   const q = query.toLowerCase();
   let score = 0;
+
   if (record.title.toLowerCase().includes(q)) score += RELEVANCE.title;
   if (record.summary?.toLowerCase().includes(q)) score += RELEVANCE.summary;
   if (record.transcript?.toLowerCase().includes(q)) score += RELEVANCE.transcript;
@@ -37,8 +39,10 @@ const matchesQuery = (record: VoiceRecord, query: string): boolean => {
 export const useSearchRecords = (records: VoiceRecord[]) => {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
+  const { filterStatus, setFilterStatus, sortOption, setSortOption, filterRecords } =
+    useInboxFilters();
 
-  const filtered = useMemo(() => {
+  const searchFiltered = useMemo(() => {
     const trimmed = query.trim();
 
     if (!trimmed) {
@@ -55,26 +59,44 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
       .map(({ record }) => record);
   }, [records, query]);
 
-  const sortByDateDesc = (a: VoiceRecord, b: VoiceRecord) =>
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  const filtered = useMemo(() => filterRecords(searchFiltered), [searchFiltered, filterRecords]);
 
-  const pinned = useMemo(() => filtered.filter((r) => r.isPinned).sort(sortByDateDesc), [filtered]);
-  const all = useMemo(() => filtered.filter((r) => !r.isPinned).sort(sortByDateDesc), [filtered]);
+  const sections = useMemo(() => {
+    if (filterStatus === 'all') {
+      const pinned = filtered.filter((r) => r.isPinned);
+      const rest = filtered.filter((r) => !r.isPinned);
+      return [
+        ...(pinned.length > 0 ? [{ title: t('inbox.pinned'), data: pinned }] : []),
+        ...(rest.length > 0
+          ? [
+              {
+                title: query.trim() ? t('inbox.searchResults') : t('inbox.allRecords'),
+                data: rest,
+              },
+            ]
+          : []),
+      ];
+    }
 
-  const sections = useMemo(
-    () => [
-      ...(pinned.length > 0 ? [{ title: t('inbox.pinned'), data: pinned }] : []),
-      ...(all.length > 0
-        ? [
-            {
-              title: query.trim() ? t('inbox.searchResults') : t('inbox.allRecords'),
-              data: all,
-            },
-          ]
-        : []),
-    ],
-    [pinned, all, query, t],
-  );
+    return filtered.length > 0
+      ? [
+          {
+            title: t(`inbox.filters.${filterStatus}`),
+            data: filtered,
+          },
+        ]
+      : [];
+  }, [filtered, filterStatus, query, t]);
 
-  return { query, setQuery, filtered, sections, isSearching: query.trim().length > 0 };
+  return {
+    query,
+    setQuery,
+    filtered,
+    sections,
+    isSearching: query.trim().length > 0,
+    filterStatus,
+    setFilterStatus,
+    sortOption,
+    setSortOption,
+  };
 };

@@ -1,7 +1,7 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StatusBar, Text, useColorScheme, View } from 'react-native';
+import { AppState, StatusBar, Text, useColorScheme, View } from 'react-native';
 import KeepAwake from 'react-native-keep-awake';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -29,6 +29,12 @@ export const RecordScreen = () => {
   const { startTranscription } = useTranscription();
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [title, setTitle] = useState('');
+  const [appState, setAppState] = useState(AppState.currentState);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', setAppState);
+    return () => sub.remove();
+  }, []);
 
   const {
     state,
@@ -104,9 +110,9 @@ export const RecordScreen = () => {
         </View>
         <View className="w-full px-2">
           <Waveform
-            isAnimating={state === 'recording'}
+            isAnimating={state === 'recording' && appState === 'active'}
             color="rgba(255,255,255,0.65)"
-            meterLevel={state === 'recording' ? meterLevel : undefined}
+            meterLevel={state === 'recording' && appState === 'active' ? meterLevel : undefined}
           />
         </View>
         <View className="items-center gap-1" style={{ opacity: state === 'paused' ? 0 : 1 }}>

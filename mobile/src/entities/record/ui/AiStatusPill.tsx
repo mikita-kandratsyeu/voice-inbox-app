@@ -21,8 +21,6 @@ const isAiError = (s?: RecordingStatus) => s === 'error';
 
 export const AiStatusPill = ({
   aiStatus,
-  transcriptProgress,
-  transcriptProgressLabel,
   summaryStatus,
   tasksStatus,
   onPress,
@@ -67,8 +65,7 @@ export const AiStatusPill = ({
           <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
         </Animated.View>
         <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
-          {transcriptProgressLabel ??
-            (transcriptProgress != null ? `${transcriptProgress}%` : t('aiStatus.processing'))}
+          {t('aiStatus.processing')}
         </Text>
       </TouchableOpacity>
     );
