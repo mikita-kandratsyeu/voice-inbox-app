@@ -6,6 +6,7 @@ import React from 'react';
 import { useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { InboxScreen } from '@/screens/inbox';
 import { getColors } from '@/shared/config';
 
@@ -20,6 +21,7 @@ export const BottomTabNavigator = () => {
   const insets = useSafeAreaInsets();
   const isDark = useColorScheme() === 'dark';
   const tabBarHeight = 60 + insets.bottom;
+  const inboxFiltersReset = useInboxFiltersReset();
 
   const color = getColors(isDark ? 'dark' : 'light');
   const tabBg = color.background.primary;
@@ -62,6 +64,13 @@ export const BottomTabNavigator = () => {
         <Tab.Screen
           name="Inbox"
           component={InboxScreen}
+          listeners={
+            inboxFiltersReset
+              ? {
+                  tabPress: () => inboxFiltersReset.triggerReset(),
+                }
+              : undefined
+          }
           options={{
             tabBarLabel: TAB_LABELS.Inbox,
             tabBarIcon: ({ color: c }) => (

@@ -55,6 +55,7 @@
     "react-native-localize": "^3.7.0",
     "react-native-mmkv": "^4.2.0",
     "react-native-nitro-device-info": "^1.7.0",
+    "react-native-nitro-fetch": "^0.1.7",
     "react-native-nitro-modules": "^0.35.0",
     "react-native-reanimated": "^4.2.2",
     "react-native-safe-area-context": "^5.7.0",

@@ -2,6 +2,7 @@ import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 
+import { InboxFiltersResetProvider } from '@/features/inbox-filters';
 import { RecordScreen } from '@/screens/record';
 import { EditTranscriptScreen, RecordingDetailScreen } from '@/screens/recording-detail';
 
@@ -17,35 +18,37 @@ const RecordScreenWithProvider = () => (
 );
 
 export const RootNavigator = () => (
-  <Stack.Navigator>
-    <Stack.Screen name="Main" component={BottomTabNavigator} options={{ headerShown: false }} />
-    <Stack.Screen
-      name="RecordModal"
-      component={RecordScreenWithProvider}
-      options={{
-        headerShown: false,
-        presentation: 'fullScreenModal',
-        animation: 'slide_from_bottom',
-        gestureEnabled: false,
-      }}
-    />
-    <Stack.Screen
-      name="RecordingDetail"
-      component={RecordingDetailScreen}
-      options={{
-        headerShown: false,
-        animation: 'slide_from_right',
-        gestureEnabled: true,
-      }}
-    />
-    <Stack.Screen
-      name="EditTranscript"
-      component={EditTranscriptScreen}
-      options={{
-        headerShown: false,
-        animation: 'slide_from_right',
-        gestureEnabled: true,
-      }}
-    />
-  </Stack.Navigator>
+  <InboxFiltersResetProvider>
+    <Stack.Navigator>
+      <Stack.Screen name="Main" component={BottomTabNavigator} options={{ headerShown: false }} />
+      <Stack.Screen
+        name="RecordModal"
+        component={RecordScreenWithProvider}
+        options={{
+          headerShown: false,
+          presentation: 'fullScreenModal',
+          animation: 'slide_from_bottom',
+          gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="RecordingDetail"
+        component={RecordingDetailScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="EditTranscript"
+        component={EditTranscriptScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+    </Stack.Navigator>
+  </InboxFiltersResetProvider>
 );

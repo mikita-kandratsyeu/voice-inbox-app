@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -88,6 +88,12 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
       : [];
   }, [filtered, filterStatus, query, t]);
 
+  const resetToDefault = useCallback(() => {
+    setQuery('');
+    setFilterStatus('all');
+    setSortOption('dateDesc');
+  }, [setFilterStatus, setSortOption]);
+
   return {
     query,
     setQuery,
@@ -98,5 +104,6 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
     setFilterStatus,
     sortOption,
     setSortOption,
+    resetToDefault,
   };
 };

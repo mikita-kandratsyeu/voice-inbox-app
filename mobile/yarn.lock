@@ -9926,6 +9926,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-nitro-fetch@npm:^0.1.7":
+  version: 0.1.7
+  resolution: "react-native-nitro-fetch@npm:0.1.7"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: ^0.29.2
+    react-native-worklets-core: ^1.6.0
+  peerDependenciesMeta:
+    react-native-worklets-core:
+      optional: true
+  checksum: 10c0/6795616e0d961bd6c7683c34326f792023d2ff9ef2fcfc77cfb8ab58914b8e4c4a7510999b462d6972d7c98fb892d6876a626f2d0f664924b953c62ed5159a28
+  languageName: node
+  linkType: hard
+
 "react-native-nitro-modules@npm:^0.35.0":
   version: 0.35.0
   resolution: "react-native-nitro-modules@npm:0.35.0"
@@ -11726,6 +11741,7 @@ __metadata:
     react-native-localize: "npm:^3.7.0"
     react-native-mmkv: "npm:^4.2.0"
     react-native-nitro-device-info: "npm:^1.7.0"
+    react-native-nitro-fetch: "npm:^0.1.7"
     react-native-nitro-modules: "npm:^0.35.0"
     react-native-reanimated: "npm:^4.2.2"
     react-native-safe-area-context: "npm:^5.7.0"

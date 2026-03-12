@@ -1,6 +1,8 @@
 import { WEB_API_SECRET, WEB_API_URL } from '@env';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
+import { fetch } from '@/shared/lib/fetch';
+
 type AiApiRequestBody = {
   id: string;
   transcript: string;

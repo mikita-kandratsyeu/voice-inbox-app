@@ -1,13 +1,13 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Platform, SectionList, useColorScheme, View } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { RecordCard, useRecordStore } from '@/entities/record';
-import { InboxFilterBar } from '@/features/inbox-filters';
+import { InboxFilterBar, useInboxFiltersReset } from '@/features/inbox-filters';
 import { SearchBar, useSearchRecords } from '@/features/search-records';
 import { getColors } from '@/shared/config';
 import { EmptyState, SectionHeader, SwipeableCard } from '@/shared/ui';
@@ -32,7 +32,14 @@ export const InboxScreen = () => {
     setFilterStatus,
     sortOption,
     setSortOption,
+    resetToDefault,
   } = useSearchRecords(records);
+
+  const inboxFiltersReset = useInboxFiltersReset();
+  useEffect(() => {
+    if (!inboxFiltersReset) return;
+    return inboxFiltersReset.registerReset(resetToDefault);
+  }, [inboxFiltersReset, resetToDefault]);
 
   const handleStatusPress = (item: VoiceRecord) => {
     if (item.aiStatus === 'processing' || item.aiStatus === 'error' || item.aiStatus === 'idle') {

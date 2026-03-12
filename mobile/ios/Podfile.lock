@@ -29,6 +29,29 @@ PODS:
     - Yoga
   - NitroDeviceInfo (1.7.0):
     - NitroModules
+  - NitroFetch (0.1.7):
+    - hermes-engine
+    - NitroModules
+    - RCTRequired
+    - RCTTypeSafety
+    - React-callinvoker
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - NitroMmkv (4.2.0):
     - hermes-engine
     - MMKVCore (= 2.3.0)
@@ -2335,6 +2358,7 @@ DEPENDENCIES:
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - NitroAudioRecorderPlayer (from `../node_modules/react-native-audio-recorder-player`)
   - NitroDeviceInfo (from `../node_modules/react-native-nitro-device-info`)
+  - NitroFetch (from `../node_modules/react-native-nitro-fetch`)
   - NitroMmkv (from `../node_modules/react-native-mmkv`)
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
   - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
@@ -2446,6 +2470,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-audio-recorder-player"
   NitroDeviceInfo:
     :path: "../node_modules/react-native-nitro-device-info"
+  NitroFetch:
+    :path: "../node_modules/react-native-nitro-fetch"
   NitroMmkv:
     :path: "../node_modules/react-native-mmkv"
   NitroModules:
@@ -2643,6 +2669,7 @@ SPEC CHECKSUMS:
   MMKVCore: d078dce7d6586a888b2c2ef5343b6242678e3ee8
   NitroAudioRecorderPlayer: e6b81de13ac47e5e6cc61e7fd591e87623dadc9c
   NitroDeviceInfo: d57597f4459e65c134fc5779b4f83bfccb4394af
+  NitroFetch: 5b3a8e4c33bc038bb2f56e837c7b62e932c6129d
   NitroMmkv: b935566bc3c4334a7ba78f8b7e1520b2982f15bf
   NitroModules: 6469493748b6f348b02459f73c2bce8e69534bc3
   op-sqlite: ddc4497aaeb4593a2e435bf3d81cbdcca1d44be6
