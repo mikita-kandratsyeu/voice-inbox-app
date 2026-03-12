@@ -51,7 +51,8 @@ export const useTranscription = () => {
 
       const modelStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
       if (modelStatus !== 'downloaded') {
-        if (__DEV__) console.warn('[transcription] Selected model not downloaded:', selectedWhisperModel);
+        if (__DEV__)
+          console.warn('[transcription] Selected model not downloaded:', selectedWhisperModel);
         updateAiStatus(record.id, 'error');
         return;
       }

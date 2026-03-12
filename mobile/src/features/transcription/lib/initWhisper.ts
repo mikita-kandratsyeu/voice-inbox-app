@@ -50,7 +50,6 @@ export const getWhisperContext = async (modelId: WhisperModelId): Promise<Whispe
       if (cachedContext?.modelId === modelId) return cachedContext.context;
 
       if (cachedContext) {
-        const prev = cachedContext;
         cachedContext = null;
         try {
           await releaseAllWhisper();

@@ -85,7 +85,8 @@ export async function postAiMessage(body: AiApiRequestBody): Promise<AiApiResult
 
   if (!response.ok) {
     const text = await response.text();
-    if (__DEV__) console.warn('[AI] postAiMessage: HTTP error', { status: response.status, body: text });
+    if (__DEV__)
+      console.warn('[AI] postAiMessage: HTTP error', { status: response.status, body: text });
     return { ok: false, error: text || `HTTP ${response.status}` };
   }
 
@@ -147,7 +148,8 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
 
     if (!response.ok) {
       const text = await response.text();
-      if (__DEV__) console.warn('[AI] pollAiMessage: HTTP error', { id, status: response.status, body: text });
+      if (__DEV__)
+        console.warn('[AI] pollAiMessage: HTTP error', { id, status: response.status, body: text });
       continue;
     }
 
