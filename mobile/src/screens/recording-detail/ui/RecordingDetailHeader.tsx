@@ -15,6 +15,7 @@ type RecordingDetailHeaderProps = {
   onBack: () => void;
   onTogglePin: () => void;
   onShare: () => void;
+  onShareAudio: () => void;
   onAskAI: () => void;
   onRename: () => void;
   onDelete: () => void;
@@ -26,6 +27,7 @@ export const RecordingDetailHeader = ({
   onBack,
   onTogglePin,
   onShare,
+  onShareAudio,
   onAskAI,
   onRename,
   onDelete,
@@ -94,6 +96,7 @@ export const RecordingDetailHeader = ({
           shouldOpenOnLongPress={false}
           onPressAction={({ nativeEvent }) => {
             if (nativeEvent.event === 'rename') onRename();
+            if (nativeEvent.event === 'shareAudio') onShareAudio();
             if (nativeEvent.event === 'delete') onDelete();
           }}
           actions={[
@@ -101,6 +104,12 @@ export const RecordingDetailHeader = ({
               id: 'rename',
               title: t('recordActions.rename'),
               image: 'pencil',
+              imageColor: color.text.primary,
+            },
+            {
+              id: 'shareAudio',
+              title: t('share.shareAudio'),
+              image: 'square.and.arrow.up',
               imageColor: color.text.primary,
             },
             {

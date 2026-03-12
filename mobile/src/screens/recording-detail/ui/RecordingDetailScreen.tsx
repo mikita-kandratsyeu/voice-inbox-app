@@ -54,7 +54,7 @@ export const RecordingDetailScreen = () => {
 
   const { startTranscription, cancelTranscription } = useTranscription();
   const { generateSummary, extractTasks } = useAiProcessing();
-  const { shareRecord } = useShareRecord();
+  const { shareRecord, shareAudio } = useShareRecord();
   const { promptRename, promptDelete } = useRecordActions({
     onDeleted: () => navigation.goBack(),
   });
@@ -96,6 +96,12 @@ export const RecordingDetailScreen = () => {
     });
   };
 
+  const handleShareAudio = () => {
+    shareAudio(liveRecord).catch((err: Error) => {
+      Alert.alert(t('recordingDetail.shareFailed'), err.message);
+    });
+  };
+
   return (
     <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
       <RecordingDetailHeader
@@ -104,6 +110,7 @@ export const RecordingDetailScreen = () => {
         onBack={() => navigation.goBack()}
         onTogglePin={() => togglePin(liveRecord.id)}
         onShare={handleShare}
+        onShareAudio={handleShareAudio}
         onAskAI={() => setShowAskAIModal(true)}
         onRename={() => promptRename(liveRecord)}
         onDelete={() => promptDelete(liveRecord)}

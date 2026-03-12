@@ -150,10 +150,13 @@
   },
   "share": {
     "shareNote": "Share note",
+    "shareAudio": "Share audio",
     "dateLabel": "Date",
     "durationLabel": "Duration",
     "tagsLabel": "Tags",
-    "exportedFrom": "Exported from Voice Inbox"
+    "exportedFrom": "Exported from Voice Inbox",
+    "noAudio": "No audio recording",
+    "audioNotFound": "Audio file not found"
   },
   "settings": {
     "title": "Settings",
