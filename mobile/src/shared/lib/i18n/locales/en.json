@@ -63,6 +63,8 @@
     "finish": "Finish recording",
     "recordStopped": "Recording stopped",
     "recordStoppedMessage": "Maximum recording limit reached — 30 minutes.",
+    "appLockHint": "When you minimize the app, recording will be stopped and saved.",
+    "noAppLockHint": "When you minimize the app, recording will continue in the background.",
     "saveModalTitle": "Save recording",
     "duration": "Duration: {{time}}",
     "offlineTitle": "Recording works offline",

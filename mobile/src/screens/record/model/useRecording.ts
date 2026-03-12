@@ -8,6 +8,7 @@ import AudioRecorderPlayer, {
   OutputFormatAndroidType,
 } from 'react-native-audio-recorder-player';
 
+import { useAppLockStore } from '@/entities/app-lock';
 import {
   startRecordingBackgroundService,
   stopRecordingBackgroundService,
@@ -40,9 +41,13 @@ const RECORDING_AUDIO_SET: AudioSet = {
 
 type UseRecordingOptions = {
   onLimitReached?: () => void;
+  onRecordingStoppedByAppLock?: (path: string, elapsed: number, elapsedMs: number) => void;
 };
 
-export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
+export const useRecording = ({
+  onLimitReached,
+  onRecordingStoppedByAppLock,
+}: UseRecordingOptions = {}) => {
   const { t } = useTranslation();
   const [state, setState] = useState<RecordingState>('idle');
   const [elapsed, setElapsed] = useState(0);
@@ -57,6 +62,8 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
 
   const onLimitReachedRef = useRef(onLimitReached);
   onLimitReachedRef.current = onLimitReached;
+  const onRecordingStoppedByAppLockRef = useRef(onRecordingStoppedByAppLock);
+  onRecordingStoppedByAppLockRef.current = onRecordingStoppedByAppLock;
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -193,9 +200,34 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
     }
   }, []);
 
+  const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      if (
+        next === 'background' &&
+        isAppLockEnabled &&
+        (stateRef.current === 'recording' || stateRef.current === 'paused')
+      ) {
+        stateRef.current = 'idle';
+        stopRecording().then((path) => {
+          const cb = onRecordingStoppedByAppLockRef.current;
+          if (path && cb) {
+            cb(path, elapsedRef.current, elapsedMsRef.current);
+          }
+        });
+      }
+    });
+    return () => sub.remove();
+  }, [isAppLockEnabled, stopRecording]);
+
   useEffect(() => {
     return () => {
       audioRecorderPlayer.removeRecordBackListener();
+      if (Platform.OS === 'android') {
+        stopRecordingBackgroundService().catch(() => {});
+      }
+      endRecordingLiveActivity().catch(() => {});
       audioRecorderPlayer.stopRecorder().catch(() => {});
     };
   }, []);

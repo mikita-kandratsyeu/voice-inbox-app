@@ -1,16 +1,20 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppState, StatusBar, Text, useColorScheme, View } from 'react-native';
 import KeepAwake from 'react-native-keep-awake';
 
+import { useAppLockStore } from '@/entities/app-lock';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { useTranscription } from '@/features/transcription';
 import { getColors } from '@/shared/config';
+import { formatTime, i18n } from '@/shared/lib';
 import { Waveform } from '@/shared/ui';
 
+import { generateRecordId } from '../lib/generateRecordId';
 import { useRecording } from '../model/useRecording';
 import { RecordLimitBar } from './RecordLimitBar';
 import { RecordScreenControls } from './RecordScreenControls';
@@ -50,7 +54,32 @@ export const RecordScreen = () => {
       setTitle('');
       setShowSaveModal(true);
     },
+    onRecordingStoppedByAppLock: (path, elapsed, elapsedMs) => {
+      const record: VoiceRecord = {
+        id: generateRecordId(),
+        title: i18n.t('record.newRecord'),
+        transcript: '',
+        transcriptSegments: [],
+        summary: '',
+        tasks: [],
+        duration: formatTime(elapsed),
+        durationMs: Math.round(elapsedMs),
+        createdAt: dayjs().toISOString(),
+        status: 'unread',
+        aiStatus: 'idle',
+        transcriptProgress: 0,
+        isPinned: false,
+        tags: [],
+        audioPath: path.startsWith('file://') ? path.slice(7) : path,
+      };
+      useRecordStore.getState().addRecord(record);
+      if (useSettingsStore.getState().autoTranscribeOnSave) {
+        startTranscription(record);
+      }
+    },
   });
+
+  const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
 
   useFocusEffect(
     useCallback(() => {
@@ -116,6 +145,9 @@ export const RecordScreen = () => {
         <View className="items-center gap-1" style={{ opacity: state === 'paused' ? 0 : 1 }}>
           <Text className="text-[16px] font-medium text-white/90">{t('record.offlineTitle')}</Text>
           <Text className="text-[14px] text-white/55">{t('record.offlineSubtitle')}</Text>
+          <Text className="mt-2 text-center text-[13px] text-white/50">
+            {isAppLockEnabled ? t('record.appLockHint') : t('record.noAppLockHint')}
+          </Text>
         </View>
       </View>
 
