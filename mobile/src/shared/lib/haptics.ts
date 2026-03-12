@@ -11,7 +11,7 @@ const trigger = (type: HapticType) => {
   try {
     ReactNativeHapticFeedback.trigger(type, { enableVibrateFallback: true });
   } catch {
-    console.warn('Haptic feedback failed');
+    if (__DEV__) console.warn('Haptic feedback failed');
   }
 };
 

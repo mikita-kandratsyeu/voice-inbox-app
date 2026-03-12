@@ -73,19 +73,19 @@ export async function postAiMessage(body: AiApiRequestBody): Promise<AiApiResult
     });
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Network error';
-    console.warn('[AI] postAiMessage: fetch failed', { error: errorMsg, url });
+    if (__DEV__) console.warn('[AI] postAiMessage: fetch failed', { error: errorMsg, url });
     return { ok: false, error: errorMsg };
   }
 
   if (response.status === 429) {
     const json = (await response.json()) as AiApiLimitResponse;
-    console.warn('[AI] postAiMessage: limit exceeded', json.usage);
+    if (__DEV__) console.warn('[AI] postAiMessage: limit exceeded', json.usage);
     return { ok: false, limitExceeded: true, usage: json.usage };
   }
 
   if (!response.ok) {
     const text = await response.text();
-    console.warn('[AI] postAiMessage: HTTP error', { status: response.status, body: text });
+    if (__DEV__) console.warn('[AI] postAiMessage: HTTP error', { status: response.status, body: text });
     return { ok: false, error: text || `HTTP ${response.status}` };
   }
 
@@ -141,13 +141,13 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
     try {
       response = await fetch(url, { headers });
     } catch (err) {
-      console.warn('[AI] pollAiMessage: fetch failed', { id, error: String(err) });
+      if (__DEV__) console.warn('[AI] pollAiMessage: fetch failed', { id, error: String(err) });
       continue;
     }
 
     if (!response.ok) {
       const text = await response.text();
-      console.warn('[AI] pollAiMessage: HTTP error', { id, status: response.status, body: text });
+      if (__DEV__) console.warn('[AI] pollAiMessage: HTTP error', { id, status: response.status, body: text });
       continue;
     }
 
@@ -158,11 +158,11 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
     }
 
     if (msg.status === 'error') {
-      console.warn('[AI] pollAiMessage: server error', { id, error: msg.error });
+      if (__DEV__) console.warn('[AI] pollAiMessage: server error', { id, error: msg.error });
       return { ok: false, error: msg.error };
     }
   }
 
-  console.warn('[AI] pollAiMessage: timeout', { id });
+  if (__DEV__) console.warn('[AI] pollAiMessage: timeout', { id });
   return { ok: false, error: 'Timeout waiting for AI result' };
 }

@@ -101,7 +101,7 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
       setState('recording');
       hapticLight();
     } catch (err) {
-      console.warn('[useRecording] startRecorder failed:', err);
+      if (__DEV__) console.warn('[useRecording] startRecorder failed:', err);
     }
   }, [addRecordBackListener]);
 
@@ -113,7 +113,7 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
       setMeterLevel(undefined);
       setState('paused');
     } catch (err) {
-      console.warn('[useRecording] pauseRecorder failed:', err);
+      if (__DEV__) console.warn('[useRecording] pauseRecorder failed:', err);
     }
   }, []);
 
@@ -125,7 +125,7 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
       addRecordBackListener();
       setState('recording');
     } catch (err) {
-      console.warn('[useRecording] resumeRecorder failed:', err);
+      if (__DEV__) console.warn('[useRecording] resumeRecorder failed:', err);
     }
   }, [addRecordBackListener]);
 
@@ -141,7 +141,7 @@ export const useRecording = ({ onLimitReached }: UseRecordingOptions = {}) => {
       }
       return audioPathRef.current;
     } catch (err) {
-      console.warn('[useRecording] stopRecorder failed:', err);
+      if (__DEV__) console.warn('[useRecording] stopRecorder failed:', err);
       return null;
     }
   }, []);

@@ -44,11 +44,12 @@ export const useAiProcessing = () => {
             'limitExceeded' in postResult && postResult.limitExceeded
               ? 'Limit exceeded'
               : postResult.error;
-          console.warn('[AI] processRecord: postAiMessage failed', {
-            recordId: record.id,
-            error: errorMsg,
-            limitExceeded: 'limitExceeded' in postResult && postResult.limitExceeded,
-          });
+          if (__DEV__)
+            console.warn('[AI] processRecord: postAiMessage failed', {
+              recordId: record.id,
+              error: errorMsg,
+              limitExceeded: 'limitExceeded' in postResult && postResult.limitExceeded,
+            });
           setSummaryStatus(record.id, 'error');
           setTasksStatus(record.id, 'error');
           return;
@@ -57,11 +58,12 @@ export const useAiProcessing = () => {
         const pollResult = await pollAiMessage(requestId, postResult.data.syncToken);
 
         if (!pollResult.ok) {
-          console.warn('[AI] processRecord: pollAiMessage failed', {
-            recordId: record.id,
-            requestId,
-            error: pollResult.error,
-          });
+          if (__DEV__)
+            console.warn('[AI] processRecord: pollAiMessage failed', {
+              recordId: record.id,
+              requestId,
+              error: pollResult.error,
+            });
           setSummaryStatus(record.id, 'error');
           setTasksStatus(record.id, 'error');
           return;
@@ -83,10 +85,11 @@ export const useAiProcessing = () => {
           await updateTags(record.id, tags);
         }
       } catch (err) {
-        console.warn('[AI] processRecord: unexpected error', {
-          recordId: record.id,
-          error: err instanceof Error ? err.message : String(err),
-        });
+        if (__DEV__)
+          console.warn('[AI] processRecord: unexpected error', {
+            recordId: record.id,
+            error: err instanceof Error ? err.message : String(err),
+          });
         setSummaryStatus(record.id, 'error');
         setTasksStatus(record.id, 'error');
       } finally {

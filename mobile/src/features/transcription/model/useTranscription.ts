@@ -45,13 +45,13 @@ export const useTranscription = () => {
   const startTranscription = useCallback(
     async (record: VoiceRecord, languageOverride?: string): Promise<void> => {
       if (!record.audioPath) {
-        console.warn('[transcription] No audio path for record', record.id);
+        if (__DEV__) console.warn('[transcription] No audio path for record', record.id);
         return;
       }
 
       const modelStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
       if (modelStatus !== 'downloaded') {
-        console.warn('[transcription] Selected model not downloaded:', selectedWhisperModel);
+        if (__DEV__) console.warn('[transcription] Selected model not downloaded:', selectedWhisperModel);
         updateAiStatus(record.id, 'error');
         return;
       }
@@ -111,7 +111,7 @@ export const useTranscription = () => {
         if (wasCancelled) {
           updateAiStatus(record.id, 'idle');
         } else {
-          console.warn('[transcription] Failed:', err);
+          if (__DEV__) console.warn('[transcription] Failed:', err);
           updateAiStatus(record.id, 'error');
         }
       } finally {

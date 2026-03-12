@@ -65,7 +65,7 @@ export const canDeviceRunWhisperModel = async (
 
     return { isCompatible: true };
   } catch (error) {
-    console.warn('[canDeviceRunWhisperModel] Failed to check compatibility:', error);
+    if (__DEV__) console.warn('[canDeviceRunWhisperModel] Failed to check compatibility:', error);
 
     return {
       isCompatible: true,

@@ -44,10 +44,11 @@ export const useAskAI = () => {
             'limitExceeded' in postResult && postResult.limitExceeded
               ? 'Limit exceeded'
               : postResult.error;
-          console.warn('[AI] askQuestion: postAskQuestion failed', {
-            recordId: record.id,
-            error: errorMsg,
-          });
+          if (__DEV__)
+            console.warn('[AI] askQuestion: postAskQuestion failed', {
+              recordId: record.id,
+              error: errorMsg,
+            });
           setState((s) => ({
             ...s,
             isLoading: false,
@@ -59,11 +60,12 @@ export const useAskAI = () => {
         const pollResult = await pollAskResult(requestId, postResult.data.syncToken);
 
         if (!pollResult.ok) {
-          console.warn('[AI] askQuestion: pollAskResult failed', {
-            recordId: record.id,
-            requestId,
-            error: pollResult.error,
-          });
+          if (__DEV__)
+            console.warn('[AI] askQuestion: pollAskResult failed', {
+              recordId: record.id,
+              requestId,
+              error: pollResult.error,
+            });
           setState((s) => ({
             ...s,
             isLoading: false,
@@ -79,10 +81,11 @@ export const useAskAI = () => {
           answer: pollResult.result.answer,
         }));
       } catch (err) {
-        console.warn('[AI] askQuestion: unexpected error', {
-          recordId: record.id,
-          error: err instanceof Error ? err.message : String(err),
-        });
+        if (__DEV__)
+          console.warn('[AI] askQuestion: unexpected error', {
+            recordId: record.id,
+            error: err instanceof Error ? err.message : String(err),
+          });
         setState((s) => ({
           ...s,
           isLoading: false,

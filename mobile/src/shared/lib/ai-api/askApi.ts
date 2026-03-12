@@ -61,19 +61,20 @@ export async function postAskQuestion(body: AskApiRequestBody): Promise<AskApiRe
     });
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Network error';
-    console.warn('[AI] postAskQuestion: fetch failed', { error: errorMsg, url });
+    if (__DEV__) console.warn('[AI] postAskQuestion: fetch failed', { error: errorMsg, url });
     return { ok: false, error: errorMsg };
   }
 
   if (response.status === 429) {
     const json = (await response.json()) as AskApiLimitResponse;
-    console.warn('[AI] postAskQuestion: limit exceeded', json.usage);
+    if (__DEV__) console.warn('[AI] postAskQuestion: limit exceeded', json.usage);
     return { ok: false, limitExceeded: true, usage: json.usage };
   }
 
   if (!response.ok) {
     const text = await response.text();
-    console.warn('[AI] postAskQuestion: HTTP error', { status: response.status, body: text });
+    if (__DEV__)
+      console.warn('[AI] postAskQuestion: HTTP error', { status: response.status, body: text });
     return { ok: false, error: text || `HTTP ${response.status}` };
   }
 
@@ -98,13 +99,14 @@ export async function pollAskResult(id: string, syncToken?: string): Promise<Ask
     try {
       response = await fetch(url, { headers });
     } catch (err) {
-      console.warn('[AI] pollAskResult: fetch failed', { id, error: String(err) });
+      if (__DEV__) console.warn('[AI] pollAskResult: fetch failed', { id, error: String(err) });
       continue;
     }
 
     if (!response.ok) {
       const text = await response.text();
-      console.warn('[AI] pollAskResult: HTTP error', { id, status: response.status, body: text });
+      if (__DEV__)
+        console.warn('[AI] pollAskResult: HTTP error', { id, status: response.status, body: text });
       continue;
     }
 
@@ -115,11 +117,11 @@ export async function pollAskResult(id: string, syncToken?: string): Promise<Ask
     }
 
     if (msg.status === 'error') {
-      console.warn('[AI] pollAskResult: server error', { id, error: msg.error });
+      if (__DEV__) console.warn('[AI] pollAskResult: server error', { id, error: msg.error });
       return { ok: false, error: msg.error };
     }
   }
 
-  console.warn('[AI] pollAskResult: timeout', { id });
+  if (__DEV__) console.warn('[AI] pollAskResult: timeout', { id });
   return { ok: false, error: 'Timeout waiting for AI result' };
 }

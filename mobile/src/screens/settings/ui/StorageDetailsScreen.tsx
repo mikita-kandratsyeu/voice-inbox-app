@@ -181,7 +181,7 @@ export const StorageDetailsScreen = () => {
       const s = await getStorageStats(paths, records);
       setStats(s);
     } catch (err) {
-      console.warn('[StorageDetails] Failed to load stats:', err);
+      if (__DEV__) console.warn('[StorageDetails] Failed to load stats:', err);
     } finally {
       setIsLoading(false);
     }
@@ -221,7 +221,7 @@ export const StorageDetailsScreen = () => {
             const freedKb = Math.round(freed / 1024);
             Alert.alert(t('common.done'), t('storage.cacheCleared', { freed: freedKb }));
           } catch (err) {
-            console.warn('[StorageDetails] Failed to clear cache:', err);
+            if (__DEV__) console.warn('[StorageDetails] Failed to clear cache:', err);
             Alert.alert(t('common.error'), t('storage.cacheClearError'));
           } finally {
             setIsClearing(false);
