@@ -1,5 +1,5 @@
 import { Share } from 'react-native';
-import RNFS from 'react-native-fs';
+import NitroFS from 'react-native-nitro-fs';
 
 import type { VoiceRecord } from '@/entities/record';
 import { formatShortDate, i18n } from '@/shared/lib';
@@ -55,10 +55,10 @@ export const useShareRecord = () => {
   const shareRecord = async (record: VoiceRecord) => {
     const text = buildShareText(record);
     const fileName = `${record.title.replace(/[^a-zA-Z0-9\u0400-\u04FF\s]/g, '_')}.txt`;
-    const filePath = `${RNFS.CachesDirectoryPath}/${fileName}`;
+    const filePath = `${NitroFS.CACHE_DIR}/${fileName}`;
 
     try {
-      await RNFS.writeFile(filePath, text, 'utf8');
+      await NitroFS.writeFile(filePath, text, 'utf8');
 
       await Share.share(
         {
@@ -83,16 +83,16 @@ export const useShareRecord = () => {
     }
 
     const path = audioPath.startsWith('file://') ? audioPath.slice(7) : audioPath;
-    const exists = await RNFS.exists(path);
+    const exists = await NitroFS.exists(path);
     if (!exists) {
       throw new Error(i18n.t('share.audioNotFound'));
     }
 
     const ext = path.split('.').pop() ?? 'm4a';
     const fileName = `${record.title.replace(/[^a-zA-Z0-9\u0400-\u04FF\s]/g, '_')}.${ext}`;
-    const destPath = `${RNFS.CachesDirectoryPath}/${fileName}`;
+    const destPath = `${NitroFS.CACHE_DIR}/${fileName}`;
 
-    await RNFS.copyFile(path, destPath);
+    await NitroFS.copyFile(path, destPath);
 
     try {
       await Share.share(

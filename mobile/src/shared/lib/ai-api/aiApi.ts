@@ -1,5 +1,7 @@
 import { WEB_API_SECRET, WEB_API_URL } from '@env';
-import { getUniqueId } from 'react-native-device-info';
+import { DeviceInfoModule } from 'react-native-nitro-device-info';
+
+import { fetch } from '@/shared/lib/fetch';
 
 type AiApiRequestBody = {
   id: string;
@@ -52,12 +54,12 @@ type MessageResponse =
   | { id: string; status: 'done'; summary: string; tasks: AiTask[]; tags: string[] }
   | { id: string; status: 'error'; error: string };
 
-async function getDeviceId(): Promise<string> {
-  return getUniqueId();
+function getDeviceId(): string {
+  return DeviceInfoModule.uniqueId;
 }
 
 export async function postAiMessage(body: AiApiRequestBody): Promise<AiApiResult> {
-  const deviceId = await getDeviceId();
+  const deviceId = getDeviceId();
   const url = `${WEB_API_URL}/api/messages`;
 
   let response: Response;
@@ -104,7 +106,7 @@ export type AiUsage = {
 };
 
 export async function getAiUsage(): Promise<AiUsage | null> {
-  const deviceId = await getDeviceId();
+  const deviceId = getDeviceId();
 
   try {
     const response = await fetch(`${WEB_API_URL}/api/ai-usage`, {

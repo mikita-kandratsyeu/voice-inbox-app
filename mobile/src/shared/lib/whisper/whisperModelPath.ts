@@ -1,8 +1,8 @@
-import RNFS from 'react-native-fs';
+import NitroFS from 'react-native-nitro-fs';
 
 import type { WhisperModelId } from '@/entities/settings';
 
-const WHISPER_MODELS_DIR = `${RNFS.DocumentDirectoryPath}/whisper-models`;
+const WHISPER_MODELS_DIR = `${NitroFS.DOCUMENT_DIR}/whisper-models`;
 
 const MODEL_FILE_NAMES: Record<WhisperModelId, string> = {
   'whisper-tiny': 'ggml-tiny.bin',

@@ -1,4 +1,4 @@
-import DeviceInfo from 'react-native-device-info';
+import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
 import { i18n } from '@/shared/lib';
 
@@ -27,10 +27,8 @@ export const canDeviceRunWhisperModel = async (
   modelId: WhisperModelId,
 ): Promise<DeviceCompatibilityResult> => {
   try {
-    const [totalRamBytes, freeDiskBytes] = await Promise.all([
-      DeviceInfo.getTotalMemory(),
-      DeviceInfo.getFreeDiskStorage(),
-    ]);
+    const totalRamBytes = DeviceInfoModule.totalMemory;
+    const freeDiskBytes = DeviceInfoModule.getFreeDiskStorage();
 
     const totalRamMB = totalRamBytes / (1024 * 1024);
     const freeDiskMB = freeDiskBytes / (1024 * 1024);

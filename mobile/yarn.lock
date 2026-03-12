@@ -9870,15 +9870,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-device-info@npm:^15.0.2":
-  version: 15.0.2
-  resolution: "react-native-device-info@npm:15.0.2"
-  peerDependencies:
-    react-native: "*"
-  checksum: 10c0/c4a1d9ae049f42f0aa3c5aba539a9826d2400cb15a6d17815824204e4e842fbc15c80afec7387acd07e02f80a1fa49aaef1d4d6e96bc9ec53c42ba63046e8ce1
-  languageName: node
-  linkType: hard
-
 "react-native-document-picker@npm:^9.3.1":
   version: 9.3.1
   resolution: "react-native-document-picker@npm:9.3.1"
@@ -10020,6 +10011,45 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-nitro-device-info@npm:^1.7.0":
+  version: 1.7.0
+  resolution: "react-native-nitro-device-info@npm:1.7.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: 0.35.0
+  checksum: 10c0/602f2f7991af24d1d79032cbe0354301e6ad1ba28544579867646df7ba3d3a1d776f02a0017781b71738b4cca5d05ba738e69e66a3007ba57e4cff081b88f341
+  languageName: node
+  linkType: hard
+
+"react-native-nitro-fetch@npm:^0.1.7":
+  version: 0.1.7
+  resolution: "react-native-nitro-fetch@npm:0.1.7"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: ^0.29.2
+    react-native-worklets-core: ^1.6.0
+  peerDependenciesMeta:
+    react-native-worklets-core:
+      optional: true
+  checksum: 10c0/6795616e0d961bd6c7683c34326f792023d2ff9ef2fcfc77cfb8ab58914b8e4c4a7510999b462d6972d7c98fb892d6876a626f2d0f664924b953c62ed5159a28
+  languageName: node
+  linkType: hard
+
+"react-native-nitro-fs@npm:^0.8.2":
+  version: 0.8.2
+  resolution: "react-native-nitro-fs@npm:0.8.2"
+  dependencies:
+    react-native-safe-area-context: "npm:^5.6.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: "*"
+  checksum: 10c0/2720d9d87df1319f3bab474133e1a2f1b4b838d97e18be4912c034e7b9d06021f8c20ac80b9d5d7e1bd1e3868c3fd711a052399a54c51885b6097659a4d05cbc
+  languageName: node
+  linkType: hard
+
 "react-native-nitro-modules@npm:^0.35.0":
   version: 0.35.0
   resolution: "react-native-nitro-modules@npm:0.35.0"
@@ -10057,7 +10087,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-safe-area-context@npm:^5.7.0":
+"react-native-safe-area-context@npm:^5.6.2, react-native-safe-area-context@npm:^5.7.0":
   version: 5.7.0
   resolution: "react-native-safe-area-context@npm:5.7.0"
   peerDependencies:
@@ -11843,7 +11873,6 @@ __metadata:
     react-native-background-actions: "npm:^4.0.1"
     react-native-bootsplash: "npm:^7.1.0"
     react-native-calendar-events: "npm:^2.2.0"
-    react-native-device-info: "npm:^15.0.2"
     react-native-document-picker: "npm:^9.3.1"
     react-native-dotenv: "npm:^3.4.11"
     react-native-fs: "npm:^2.20.0"
@@ -11854,6 +11883,9 @@ __metadata:
     react-native-keychain: "npm:^10.0.0"
     react-native-localize: "npm:^3.7.0"
     react-native-mmkv: "npm:^4.2.0"
+    react-native-nitro-device-info: "npm:^1.7.0"
+    react-native-nitro-fetch: "npm:^0.1.7"
+    react-native-nitro-fs: "npm:^0.8.2"
     react-native-nitro-modules: "npm:^0.35.0"
     react-native-nitro-sound: "npm:^0.2.12"
     react-native-reanimated: "npm:^4.2.2"

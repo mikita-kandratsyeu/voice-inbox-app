@@ -4,7 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, useColorScheme, View } from 'react-native';
-import RNFS from 'react-native-fs';
+import NitroFS from 'react-native-nitro-fs';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
@@ -59,7 +59,7 @@ export const RecordingDetailScreen = () => {
     if (!path?.trim()) return;
 
     const normalizedPath = path.startsWith('file://') ? path.slice(7) : path;
-    RNFS.exists(normalizedPath).then((exists) => {
+    NitroFS.exists(normalizedPath).then((exists: boolean) => {
       if (!exists) {
         clearAudioPath(liveRecord.id).catch(() => {});
       }
@@ -92,7 +92,7 @@ export const RecordingDetailScreen = () => {
     const path = liveRecord.audioPath;
     if (path?.trim()) {
       const normalizedPath = path.startsWith('file://') ? path.slice(7) : path;
-      const exists = await RNFS.exists(normalizedPath);
+      const exists = await NitroFS.exists(normalizedPath);
       if (!exists) {
         await clearAudioPath(liveRecord.id).catch(() => {});
         Alert.alert(t('recordingDetail.shareFailed'), t('share.audioNotFound'));

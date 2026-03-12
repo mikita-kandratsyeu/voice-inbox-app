@@ -1,5 +1,7 @@
 import { WEB_API_SECRET, WEB_API_URL } from '@env';
-import { getUniqueId } from 'react-native-device-info';
+import { DeviceInfoModule } from 'react-native-nitro-device-info';
+
+import { fetch } from '@/shared/lib/fetch';
 
 type AskApiRequestBody = {
   id: string;
@@ -40,12 +42,12 @@ type AskResponse =
   | { id: string; status: 'done'; answer: string }
   | { id: string; status: 'error'; error: string };
 
-async function getDeviceId(): Promise<string> {
-  return getUniqueId();
+function getDeviceId(): string {
+  return DeviceInfoModule.uniqueId;
 }
 
 export async function postAskQuestion(body: AskApiRequestBody): Promise<AskApiResult> {
-  const deviceId = await getDeviceId();
+  const deviceId = getDeviceId();
   const url = `${WEB_API_URL}/api/ask`;
 
   let response: Response;

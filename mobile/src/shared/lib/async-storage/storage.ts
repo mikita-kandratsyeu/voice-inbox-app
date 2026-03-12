@@ -1,6 +1,6 @@
 import { ANDROID_DATABASE_PATH, IOS_DOCUMENT_PATH } from '@op-engineering/op-sqlite';
 import { Platform } from 'react-native';
-import RNFS from 'react-native-fs';
+import NitroFS from 'react-native-nitro-fs';
 
 export type StorageStats = {
   audioMb: number;
@@ -18,24 +18,28 @@ type RecordForStats = {
 };
 
 const DB_NAME = 'voice-inbox.db';
+const DOCUMENT_DIR = NitroFS.DOCUMENT_DIR;
+
 const DB_PATH =
   Platform.OS === 'android'
-    ? `${ANDROID_DATABASE_PATH ?? RNFS.DocumentDirectoryPath}/${DB_NAME}`
-    : `${IOS_DOCUMENT_PATH ?? RNFS.DocumentDirectoryPath}/${DB_NAME}`;
+    ? `${ANDROID_DATABASE_PATH ?? DOCUMENT_DIR}/${DB_NAME}`
+    : `${IOS_DOCUMENT_PATH ?? DOCUMENT_DIR}/${DB_NAME}`;
 
 const getDirectorySizeBytes = (path: string, excludePaths?: Set<string>): Promise<number> =>
-  RNFS.readDir(path).then(async (items) => {
+  NitroFS.readdir(path).then(async (items) => {
     let total = 0;
 
     for (const item of items) {
-      if (excludePaths?.has(item.path)) {
+      const fullPath = item.path;
+      if (excludePaths?.has(fullPath)) {
         continue;
       }
 
-      if (item.isFile()) {
-        total += item.size;
-      } else if (item.isDirectory()) {
-        total += await getDirectorySizeBytes(item.path, excludePaths);
+      const stat = await NitroFS.stat(fullPath);
+      if (stat.isFile) {
+        total += stat.size;
+      } else if (stat.isDirectory) {
+        total += await getDirectorySizeBytes(fullPath, excludePaths);
       }
     }
 
@@ -46,25 +50,27 @@ const clearDirectoryContents = async (
   path: string,
   keepPaths: Set<string>,
 ): Promise<{ deletedBytes: number }> => {
-  const items = await RNFS.readDir(path);
+  const items = await NitroFS.readdir(path);
   let deletedBytes = 0;
 
   for (const item of items) {
-    if (keepPaths.has(item.path)) {
+    const fullPath = item.path;
+    if (keepPaths.has(fullPath)) {
       continue;
     }
 
-    if (item.isFile()) {
-      deletedBytes += item.size;
-      await RNFS.unlink(item.path);
-    } else if (item.isDirectory()) {
-      const sub = await clearDirectoryContents(item.path, keepPaths);
+    const stat = await NitroFS.stat(fullPath);
+    if (stat.isFile) {
+      deletedBytes += stat.size;
+      await NitroFS.unlink(fullPath);
+    } else if (stat.isDirectory) {
+      const sub = await clearDirectoryContents(fullPath, keepPaths);
       deletedBytes += sub.deletedBytes;
 
-      const isEmpty = (await RNFS.readDir(item.path)).length === 0;
+      const isEmpty = (await NitroFS.readdir(fullPath)).length === 0;
 
       if (isEmpty) {
-        await RNFS.unlink(item.path);
+        await NitroFS.unlink(fullPath);
       }
     }
   }
@@ -77,13 +83,13 @@ const normalizeFilePath = (path: string): string =>
 const getFileSize = async (path: string): Promise<number> => {
   try {
     const normalizedPath = normalizeFilePath(path);
-    const exists = await RNFS.exists(normalizedPath);
+    const exists = await NitroFS.exists(normalizedPath);
 
     if (!exists) {
       return 0;
     }
 
-    const stat = await RNFS.stat(normalizedPath);
+    const stat = await NitroFS.stat(normalizedPath);
 
     return stat.size;
   } catch {
@@ -93,17 +99,12 @@ const getFileSize = async (path: string): Promise<number> => {
 
 const getCacheSizeBytes = async (audioPaths: string[]): Promise<number> => {
   const excludeSet = new Set(audioPaths.filter(Boolean));
-  const dirs = [
-    RNFS.CachesDirectoryPath,
-    ...(RNFS.TemporaryDirectoryPath !== RNFS.CachesDirectoryPath
-      ? [RNFS.TemporaryDirectoryPath]
-      : []),
-  ];
+  const dirs = [NitroFS.CACHE_DIR];
 
   let total = 0;
   for (const dir of dirs) {
     try {
-      const exists = await RNFS.exists(dir);
+      const exists = await NitroFS.exists(dir);
       if (exists) {
         total += await getDirectorySizeBytes(dir, excludeSet);
       }
@@ -116,17 +117,12 @@ const getCacheSizeBytes = async (audioPaths: string[]): Promise<number> => {
 
 export const clearCache = async (audioPaths: string[]): Promise<number> => {
   const keepSet = new Set(audioPaths);
-  const dirs = [
-    RNFS.CachesDirectoryPath,
-    ...(RNFS.TemporaryDirectoryPath !== RNFS.CachesDirectoryPath
-      ? [RNFS.TemporaryDirectoryPath]
-      : []),
-  ];
+  const dirs = [NitroFS.CACHE_DIR];
   let totalDeleted = 0;
 
   for (const dir of dirs) {
     try {
-      const exists = await RNFS.exists(dir);
+      const exists = await NitroFS.exists(dir);
 
       if (!exists) {
         continue;

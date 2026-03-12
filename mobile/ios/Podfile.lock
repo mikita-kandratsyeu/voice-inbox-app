@@ -4,6 +4,54 @@ PODS:
     - hermes-engine/Pre-built (= 250829098.0.9)
   - hermes-engine/Pre-built (250829098.0.9)
   - MMKVCore (2.3.0)
+  - NitroDeviceInfo (1.7.0):
+    - NitroModules
+  - NitroFetch (0.1.7):
+    - hermes-engine
+    - NitroModules
+    - RCTRequired
+    - RCTTypeSafety
+    - React-callinvoker
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - NitroFS (0.8.2):
+    - hermes-engine
+    - NitroModules
+    - RCTRequired
+    - RCTTypeSafety
+    - React-callinvoker
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - NitroMmkv (4.2.0):
     - hermes-engine
     - MMKVCore (= 2.3.0)
@@ -1988,8 +2036,6 @@ PODS:
     - Yoga
   - RNCalendarEvents (2.2.0):
     - React
-  - RNDeviceInfo (15.0.2):
-    - React-Core
   - RNFS (2.20.0):
     - React-Core
   - RNGestureHandler (2.30.0):
@@ -2333,6 +2379,9 @@ PODS:
 DEPENDENCIES:
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
+  - NitroDeviceInfo (from `../node_modules/react-native-nitro-device-info`)
+  - NitroFetch (from `../node_modules/react-native-nitro-fetch`)
+  - NitroFS (from `../node_modules/react-native-nitro-fs`)
   - NitroMmkv (from `../node_modules/react-native-mmkv`)
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
   - NitroSound (from `../node_modules/react-native-nitro-sound`)
@@ -2418,7 +2467,6 @@ DEPENDENCIES:
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - RNBootSplash (from `../node_modules/react-native-bootsplash`)
   - RNCalendarEvents (from `../node_modules/react-native-calendar-events`)
-  - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNKeychain (from `../node_modules/react-native-keychain`)
@@ -2442,6 +2490,12 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-v250829098.0.9
+  NitroDeviceInfo:
+    :path: "../node_modules/react-native-nitro-device-info"
+  NitroFetch:
+    :path: "../node_modules/react-native-nitro-fetch"
+  NitroFS:
+    :path: "../node_modules/react-native-nitro-fs"
   NitroMmkv:
     :path: "../node_modules/react-native-mmkv"
   NitroModules:
@@ -2610,8 +2664,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-bootsplash"
   RNCalendarEvents:
     :path: "../node_modules/react-native-calendar-events"
-  RNDeviceInfo:
-    :path: "../node_modules/react-native-device-info"
   RNFS:
     :path: "../node_modules/react-native-fs"
   RNGestureHandler:
@@ -2641,6 +2693,9 @@ SPEC CHECKSUMS:
   FBLazyVector: baf9d0492aa305444465c798e972f87e6a60dc69
   hermes-engine: cba95b7533c6a58b3cb69d87650103551ec72e06
   MMKVCore: d078dce7d6586a888b2c2ef5343b6242678e3ee8
+  NitroDeviceInfo: d57597f4459e65c134fc5779b4f83bfccb4394af
+  NitroFetch: 5b3a8e4c33bc038bb2f56e837c7b62e932c6129d
+  NitroFS: 67cb0daf2910b15216074d219ea6f5207d2014ad
   NitroMmkv: b935566bc3c4334a7ba78f8b7e1520b2982f15bf
   NitroModules: 6469493748b6f348b02459f73c2bce8e69534bc3
   NitroSound: 269e0592f6ca69ba1897f3e50babff4a331a1fb1
@@ -2725,7 +2780,6 @@ SPEC CHECKSUMS:
   ReactNativeDependencies: 20b5b4e5149dc40ab6b261603cd5d3574429e6a6
   RNBootSplash: 6a75f906b18730a98bc694e801314f155d90f57f
   RNCalendarEvents: f90f73666b6bcbb3cc8a491ffbb5e48c0db3de37
-  RNDeviceInfo: 4c852998208b60dc192ae3529e5867817719ad1e
   RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
   RNGestureHandler: 7e24c85e99d3aa91bfcb05a3f2bede9678a407d5
   RNKeychain: 4530fe0da3b91041852ceeb935ceeffcce8b657a
