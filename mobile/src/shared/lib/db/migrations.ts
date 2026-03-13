@@ -37,6 +37,8 @@ ALTER TABLE \`records\` ADD \`nextSteps\` text DEFAULT '[]';`;
 const migration0004 = `ALTER TABLE \`records\` ADD \`translatedTranscript\` text;--> statement-breakpoint
 ALTER TABLE \`records\` ADD \`translationLanguage\` text;`;
 
+const migration0005 = `ALTER TABLE \`records\` ADD \`embedding\` text;`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -52,5 +54,6 @@ export const migrationsConfig = {
     m0002: migration0002,
     m0003: migration0003,
     m0004: migration0004,
+    m0005: migration0005,
   } as Record<string, string>,
 };

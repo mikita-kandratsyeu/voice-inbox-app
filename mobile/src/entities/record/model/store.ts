@@ -50,6 +50,7 @@ type RecordStore = {
   ) => Promise<void>;
   toggleTask: (id: string, taskId: string) => Promise<void>;
   clearAudioPath: (id: string) => Promise<void>;
+  setEmbedding: (id: string, embedding: number[] | null) => void;
 };
 
 export const useRecordStore = create<RecordStore>((set, get) => ({
@@ -221,6 +222,14 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     await recordRepository.clearAudioPath(id);
     set((s) => ({
       records: s.records.map((r) => (r.id === id ? { ...r, audioPath: undefined } : r)),
+    }));
+  },
+
+  setEmbedding: (id, embedding) => {
+    set((s) => ({
+      records: s.records.map((r) =>
+        r.id === id ? { ...r, embedding: embedding ?? undefined } : r,
+      ),
     }));
   },
 }));

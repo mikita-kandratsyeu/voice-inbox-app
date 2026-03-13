@@ -1,7 +1,9 @@
 import { useMemo } from 'react';
+import { Platform } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import { cosineSimilarity, isEmbeddingAvailable } from '@/shared/lib/embeddings';
 
 function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
   if (a.size === 0 && b.size === 0) return 0;
@@ -25,6 +27,27 @@ export function useRelatedNotes(recordId: string, limit = 5): VoiceRecord[] {
   return useMemo(() => {
     const current = records.find((r) => r.id === recordId);
     if (!current) return [];
+
+    const useEmbeddings =
+      Platform.OS === 'ios' &&
+      isEmbeddingAvailable() &&
+      current.embedding &&
+      records.some((r) => r.id !== recordId && r.embedding);
+
+    if (useEmbeddings) {
+      const scored = records
+        .filter((r) => r.id !== recordId && r.embedding)
+        .map((record) => {
+          const similarity = cosineSimilarity(current.embedding!, record.embedding!);
+          return { record, score: similarity };
+        })
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, limit)
+        .map(({ record }) => record);
+
+      return scored;
+    }
 
     const tagsA = new Set((current.tags ?? []).map((t) => t.toLowerCase()));
     const keyPhrasesA = current.keyPhrases ?? [];
