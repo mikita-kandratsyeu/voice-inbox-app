@@ -168,24 +168,6 @@ export const SettingsScreen = () => {
       >
         <AiUsageCard usage={aiUsage} loading={aiUsageLoading} />
 
-        <SettingsSection title={t('settings.sync')} color={color}>
-          <SettingsRow
-            label={isExporting ? t('settings.exporting') : t('settings.export')}
-            value={t('inbox.recordsCount', { count: records.length })}
-            color={color}
-            leftIcon={<UploadCloud size={20} color={color.accent.primary} strokeWidth={1.8} />}
-            onPress={handleExport}
-            isFirst
-          />
-          <SettingsRow
-            label={isImporting ? t('settings.importing') : t('settings.import')}
-            color={color}
-            leftIcon={<Download size={20} color={color.accent.primary} strokeWidth={1.8} />}
-            onPress={handleImport}
-            isLast
-          />
-        </SettingsSection>
-
         <SettingsSection title={t('settings.aiProcessing')} color={color}>
           <SettingsRow
             label={t('settings.aiModel')}
@@ -243,6 +225,24 @@ export const SettingsScreen = () => {
             }
             showChevron={false}
             onPress={undefined}
+            isLast
+          />
+        </SettingsSection>
+
+        <SettingsSection title={t('settings.sync')} color={color}>
+          <SettingsRow
+            label={isExporting ? t('settings.exporting') : t('settings.export')}
+            value={t('inbox.recordsCount', { count: records.length })}
+            color={color}
+            leftIcon={<UploadCloud size={20} color={color.accent.primary} strokeWidth={1.8} />}
+            onPress={handleExport}
+            isFirst
+          />
+          <SettingsRow
+            label={isImporting ? t('settings.importing') : t('settings.import')}
+            color={color}
+            leftIcon={<Download size={20} color={color.accent.primary} strokeWidth={1.8} />}
+            onPress={handleImport}
             isLast
           />
         </SettingsSection>
