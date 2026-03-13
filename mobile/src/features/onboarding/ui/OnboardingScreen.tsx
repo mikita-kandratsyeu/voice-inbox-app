@@ -511,6 +511,8 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   );
 
   const isLastSlide = currentIndex === slides.length - 1;
+  const isOnLastTwoScreens = currentIndex >= slides.length - 2;
+  const showSkipButton = agreedToTerms && !isOnLastTwoScreens;
 
   return (
     <View
@@ -521,16 +523,16 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
       }}
     >
       <View className="flex-row justify-end px-5 py-3" style={{ minHeight: 48 }}>
-        {!isLastSlide && (
-          <TouchableOpacity
-            onPress={handleComplete}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          >
-            <Text className="px-4 py-2 text-sm font-medium" style={{ color: color.text.secondary }}>
-              {t('common.skip')}
-            </Text>
-          </TouchableOpacity>
-        )}
+        <TouchableOpacity
+          onPress={handleComplete}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          style={{ opacity: showSkipButton ? 1 : 0 }}
+          pointerEvents={showSkipButton ? 'auto' : 'none'}
+        >
+          <Text className="px-4 py-2 text-sm font-medium" style={{ color: color.text.secondary }}>
+            {t('common.skip')}
+          </Text>
+        </TouchableOpacity>
       </View>
       <AnimatedFlatList
         ref={flatListRef}
