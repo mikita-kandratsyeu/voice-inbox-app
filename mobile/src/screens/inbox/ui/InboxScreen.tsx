@@ -1,7 +1,7 @@
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { FlashList } from '@shopify/flash-list';
-import React, { useCallback, useEffect } from 'react';
+import { FlashList, type FlashListRef } from '@shopify/flash-list';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 
@@ -40,11 +40,23 @@ export const InboxScreen = () => {
     resetToDefault,
   } = useSearchRecords(records);
 
+  const listRef = useRef<FlashListRef<FlattenedItem>>(null);
   const inboxFiltersReset = useInboxFiltersReset();
+
   useEffect(() => {
     if (!inboxFiltersReset) return;
     return inboxFiltersReset.registerReset(resetToDefault);
   }, [inboxFiltersReset, resetToDefault]);
+
+  useFocusEffect(
+    useCallback(() => {
+      listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    }, []),
+  );
+
+  useEffect(() => {
+    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+  }, [filterStatus]);
 
   const handleStatusPress = useCallback(
     (item: VoiceRecord) => {
@@ -150,6 +162,8 @@ export const InboxScreen = () => {
             />
           ) : (
             <FlashList
+              ref={listRef}
+              key={filterStatus}
               data={flattenedData}
               renderItem={renderItem}
               keyExtractor={keyExtractor}

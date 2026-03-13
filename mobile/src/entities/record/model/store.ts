@@ -103,17 +103,19 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   },
 
   archiveRecord: async (id) => {
-    await recordRepository.archive(id);
     set((s) => ({
-      records: s.records.map((r) => (r.id === id ? { ...r, status: 'archived' as const } : r)),
+      records: s.records.map((r) =>
+        r.id === id ? { ...r, status: 'archived' as const, isPinned: false } : r,
+      ),
     }));
+    await recordRepository.archive(id);
   },
 
   unarchiveRecord: async (id) => {
-    await recordRepository.unarchive(id);
     set((s) => ({
       records: s.records.map((r) => (r.id === id ? { ...r, status: 'unread' as const } : r)),
     }));
+    await recordRepository.unarchive(id);
   },
 
   updateAiStatus: (id, aiStatus, progress, progressLabel) => {

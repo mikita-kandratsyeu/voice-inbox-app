@@ -140,7 +140,10 @@ export const recordRepository = {
   archive: async (id: string): Promise<void> => {
     logDb('archive', { id });
     const db = getDB();
-    await db.update(recordsTable).set({ status: 'archived' }).where(eq(recordsTable.id, id));
+    await db
+      .update(recordsTable)
+      .set({ status: 'archived', isPinned: 0 })
+      .where(eq(recordsTable.id, id));
   },
 
   unarchive: async (id: string): Promise<void> => {
