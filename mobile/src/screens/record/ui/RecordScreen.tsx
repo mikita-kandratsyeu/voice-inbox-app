@@ -15,6 +15,7 @@ import { formatTime, i18n } from '@/shared/lib';
 import { Waveform } from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';
+import { getAutoTitle } from '../lib/getAutoTitle';
 import { useRecording } from '../model/useRecording';
 import { RecordLimitBar } from './RecordLimitBar';
 import { RecordScreenControls } from './RecordScreenControls';
@@ -57,7 +58,7 @@ export const RecordScreen = () => {
     onRecordingStoppedByAppLock: (path, elapsed, elapsedMs) => {
       const record: VoiceRecord = {
         id: generateRecordId(),
-        title: i18n.t('record.newRecord'),
+        title: getAutoTitle(),
         transcript: '',
         transcriptSegments: [],
         summary: '',

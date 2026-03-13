@@ -13,10 +13,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
 import { getColors, useAppTheme } from '@/shared/config';
-import { formatTime } from '@/shared/lib';
+import { formatTime, hapticSuccess } from '@/shared/lib';
 import { Button } from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';
+import { getAutoTitle } from '../lib/getAutoTitle';
 
 type SaveRecordModalProps = {
   visible: boolean;
@@ -50,6 +51,7 @@ export const SaveRecordModal = ({
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const dismissReasonRef = useRef<DismissReason>('none');
+  const autoTitleRef = useRef<string>('');
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
@@ -61,6 +63,7 @@ export const SaveRecordModal = ({
   useEffect(() => {
     if (visible) {
       dismissReasonRef.current = 'none';
+      autoTitleRef.current = getAutoTitle();
       bottomSheetRef.current?.present();
     } else {
       bottomSheetRef.current?.dismiss();
@@ -81,9 +84,10 @@ export const SaveRecordModal = ({
   }, [onCancel]);
 
   const handleSave = useCallback(async () => {
+    const resolvedTitle = title.trim() || autoTitleRef.current || getAutoTitle();
     const record: VoiceRecord = {
       id: generateRecordId(),
-      title: title.trim() || t('record.newRecord'),
+      title: resolvedTitle,
       transcript: '',
       transcriptSegments: [],
       summary: '',
@@ -100,10 +104,13 @@ export const SaveRecordModal = ({
     };
 
     await onSave(record);
+    hapticSuccess();
     dismissReasonRef.current = 'save';
     bottomSheetRef.current?.dismiss();
     onSaveComplete?.();
-  }, [title, elapsed, elapsedMs, audioPath, t, onSave, onSaveComplete]);
+  }, [title, elapsed, elapsedMs, audioPath, onSave, onSaveComplete]);
+
+  const autoTitle = autoTitleRef.current || getAutoTitle();
 
   return (
     <BottomSheetModal
@@ -122,8 +129,9 @@ export const SaveRecordModal = ({
       <BottomSheetView
         style={{
           paddingHorizontal: 24,
+          paddingTop: 4,
           paddingBottom: Math.max(insets.bottom, 24),
-          gap: 16,
+          gap: 12,
         }}
       >
         <Text className="text-lg font-bold" style={{ color: c.text.primary }}>
@@ -137,23 +145,25 @@ export const SaveRecordModal = ({
             color: c.text.primary,
             backgroundColor: c.background.tertiary,
           }}
-          placeholder={t('record.titlePlaceholder')}
+          placeholder={autoTitle}
           placeholderTextColor={c.text.muted}
           value={title}
           onChangeText={onTitleChange}
           autoFocus
           returnKeyType="done"
           onSubmitEditing={handleSave}
+          accessibilityLabel={t('record.saveModalTitle')}
+          accessibilityHint={t('record.titleInputHint')}
         />
 
-        <Text className="-mt-1 text-[14px]" style={{ color: c.text.secondary }}>
+        <Text className="-mt-1 text-[13px]" style={{ color: c.text.secondary }}>
           {t('record.duration', { time: formatTime(elapsed) })}
         </Text>
 
         <View className="mt-1 flex-row gap-3">
           <Button
             variant="secondary"
-            label={t('common.cancel')}
+            label={t('record.continueRecording')}
             onPress={handleCancel}
             activeOpacity={0.8}
             fullWidth
@@ -162,6 +172,8 @@ export const SaveRecordModal = ({
               backgroundColor: c.background.tertiary,
               borderRadius: 12,
             }}
+            accessibilityLabel={t('record.continueRecording')}
+            accessibilityHint={t('record.resume')}
           />
           <Button
             variant="primary"
@@ -174,6 +186,7 @@ export const SaveRecordModal = ({
               backgroundColor: c.accent.primary,
               borderRadius: 12,
             }}
+            accessibilityLabel={t('common.save')}
           />
         </View>
       </BottomSheetView>
