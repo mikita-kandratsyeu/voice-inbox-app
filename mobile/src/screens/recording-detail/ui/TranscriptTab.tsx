@@ -1,5 +1,5 @@
 import { MenuView } from '@react-native-menu/menu';
-import { Languages, Mic, Pencil, RefreshCw } from 'lucide-react-native';
+import { Eye, Languages, Mic, Pencil, RefreshCw, Undo2 } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -9,13 +9,7 @@ import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { Button, TabEmptyState } from '@/shared/ui';
 
-const TRANSLATE_LANGUAGES = [
-  { id: 'ru', labelKey: 'recordingDetail.language.ru' },
-  { id: 'en', labelKey: 'recordingDetail.language.en' },
-  { id: 'de', labelKey: 'recordingDetail.language.de' },
-  { id: 'fr', labelKey: 'recordingDetail.language.fr' },
-  { id: 'es', labelKey: 'recordingDetail.language.es' },
-];
+import { TRANSLATE_LANGUAGES } from '../config/transcriptionLanguageConfig';
 
 type TranscriptTabProps = {
   segments: TranscriptSegment[];
@@ -94,7 +88,13 @@ export const TranscriptTab = ({
           <Button
             variant="secondary"
             size="md"
-            icon={<Languages size={15} color={color.text.primary} strokeWidth={2} />}
+            icon={
+              showTranslation ? (
+                <Undo2 size={15} color={color.text.primary} strokeWidth={2} />
+              ) : (
+                <Eye size={15} color={color.text.primary} strokeWidth={2} />
+              )
+            }
             label={
               showTranslation
                 ? t('recordingDetail.showOriginal')
@@ -114,14 +114,14 @@ export const TranscriptTab = ({
           <MenuView
             onPressAction={async ({ nativeEvent }) => {
               const lang = nativeEvent.event;
-              if (TRANSLATE_LANGUAGES.some((l) => l.id === lang)) {
+              if ((TRANSLATE_LANGUAGES as readonly string[]).includes(lang)) {
                 await onTranslate(lang);
                 setViewMode('translated');
               }
             }}
-            actions={TRANSLATE_LANGUAGES.map((l) => ({
-              id: l.id,
-              title: t(l.labelKey as 'recordingDetail.language.ru'),
+            actions={TRANSLATE_LANGUAGES.map((lang) => ({
+              id: lang,
+              title: t(`recordingDetail.language.${lang}`),
             }))}
           >
             <View>

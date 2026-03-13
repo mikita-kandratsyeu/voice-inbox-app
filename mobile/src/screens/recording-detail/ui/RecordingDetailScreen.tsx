@@ -1,7 +1,7 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, useColorScheme, View } from 'react-native';
 import RNFS from 'react-native-fs';
@@ -50,8 +50,12 @@ export const RecordingDetailScreen = () => {
     globalTranscriptionLanguage,
   );
 
+  const scrollRef = useRef<ScrollView>(null);
+
   useEffect(() => {
     setRecordLanguage(globalTranscriptionLanguage);
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+    setActiveTab('transcript');
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset when switching records
   }, [routeRecord.id]);
 
@@ -143,6 +147,7 @@ export const RecordingDetailScreen = () => {
       />
 
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
