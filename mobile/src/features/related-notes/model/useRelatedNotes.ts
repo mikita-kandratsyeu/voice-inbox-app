@@ -5,6 +5,18 @@ import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { cosineSimilarity, isEmbeddingAvailable } from '@/shared/lib/embeddings';
 
+const MIN_EMBEDDING_SIMILARITY = 0.45;
+
+function tokenize(text: string): Set<string> {
+  return new Set(
+    text
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .split(/\s+/)
+      .filter(Boolean),
+  );
+}
+
 function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
   if (a.size === 0 && b.size === 0) return 0;
   const intersection = [...a].filter((x) => b.has(x)).length;
@@ -19,6 +31,13 @@ function phraseOverlap(a: string[], b: string[]): number {
   const intersection = [...setA].filter((x) => setB.has(x)).length;
   const maxSize = Math.max(setA.size, setB.size, 1);
   return intersection / maxSize;
+}
+
+function textOverlap(textA: string, textB: string, maxChars = 1500): number {
+  if (!textA.trim() || !textB.trim()) return 0;
+  const a = tokenize(textA.slice(0, maxChars));
+  const b = tokenize(textB.slice(0, maxChars));
+  return jaccardSimilarity(a, b);
 }
 
 export function useRelatedNotes(recordId: string, limit = 5): VoiceRecord[] {
@@ -41,7 +60,7 @@ export function useRelatedNotes(recordId: string, limit = 5): VoiceRecord[] {
           const similarity = cosineSimilarity(current.embedding!, record.embedding!);
           return { record, score: similarity };
         })
-        .filter(({ score }) => score > 0)
+        .filter(({ score }) => score >= MIN_EMBEDDING_SIMILARITY)
         .sort((a, b) => b.score - a.score)
         .slice(0, limit)
         .map(({ record }) => record);
@@ -64,12 +83,27 @@ export function useRelatedNotes(recordId: string, limit = 5): VoiceRecord[] {
             ? phraseOverlap(keyPhrasesA, keyPhrasesB)
             : 0;
 
-        const weight = keyPhrasesA.length > 0 || keyPhrasesB.length > 0 ? 0.6 : 1;
-        const score = weight * tagScore + (1 - weight) * (phraseScore || tagScore);
+        const summaryScore =
+          current.summary && record.summary ? textOverlap(current.summary, record.summary, 800) : 0;
+        const transcriptScore =
+          current.transcript && record.transcript
+            ? textOverlap(current.transcript, record.transcript)
+            : 0;
+        const titleScore =
+          current.title && record.title ? textOverlap(current.title, record.title, 100) : 0;
+
+        const lexicalScore = summaryScore * 0.35 + transcriptScore * 0.4 + titleScore * 0.25;
+        const tagPhraseScore =
+          keyPhrasesA.length > 0 || keyPhrasesB.length > 0
+            ? 0.6 * tagScore + 0.4 * phraseScore
+            : tagScore;
+
+        const score =
+          tagPhraseScore > 0 || lexicalScore > 0 ? Math.max(tagPhraseScore, lexicalScore) : 0;
 
         return { record, score };
       })
-      .filter(({ score }) => score > 0)
+      .filter(({ score }) => score > 0.05)
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
       .map(({ record }) => record);

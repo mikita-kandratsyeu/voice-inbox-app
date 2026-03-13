@@ -57,7 +57,9 @@
   "search": {
     "placeholder": "Поиск по записям...",
     "nothingFound": "Ничего не найдено",
-    "nothingFoundFor": "По запросу «{{query}}» записей не найдено"
+    "nothingFoundFor": "По запросу «{{query}}» записей не найдено",
+    "typeMoreChars": "Введите больше символов",
+    "typeMoreCharsHint": "Введите минимум {{count}} символа для поиска"
   },
   "record": {
     "newRecord": "Новая запись",
@@ -212,7 +214,15 @@
     "privacyPolicy": "Политика конфиденциальности",
     "about": "О приложении",
     "on": "Вкл",
-    "off": "Выкл"
+    "off": "Выкл",
+    "updateEmbeddings": "Обновить все эмбеддинги",
+    "updatingEmbeddings": "Обновление...",
+    "updateEmbeddingsTitle": "Обновить эмбеддинги",
+    "updateEmbeddingsMessage": "Пересоздать эмбеддинги для {{count}} записей? Это улучшит поиск и качество похожих заметок.",
+    "updateEmbeddingsSuccess": "Обновлено: {{updated}}, пропущено (нет контента): {{skipped}}",
+    "updateEmbeddingsPartial": "Обновлено: {{updated}}, пропущено: {{skipped}}, ошибок: {{failed}}",
+    "updateEmbeddingsError": "Не удалось обновить эмбеддинги",
+    "updateEmbeddingsNoRecords": "Нет записей с контентом для обработки"
   },
   "appearance": {
     "title": "Внешний вид",

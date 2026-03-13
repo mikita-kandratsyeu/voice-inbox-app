@@ -10,6 +10,7 @@ import {
   Languages,
   Mic,
   Moon,
+  RefreshCw,
   Settings2,
   Shield,
   Sparkles,
@@ -18,13 +19,23 @@ import {
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Linking, RefreshControl, ScrollView, Switch, Text, View } from 'react-native';
+import {
+  Alert,
+  Linking,
+  Platform,
+  RefreshControl,
+  ScrollView,
+  Switch,
+  Text,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useAppLockStore } from '@/entities/app-lock';
 import { useRecordStore } from '@/entities/record';
 import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { exportData, importData } from '@/features/sync-data';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
 import { getAiUsage } from '@/shared/lib/ai-api';
@@ -54,6 +65,7 @@ export const SettingsScreen = () => {
   const [aiUsage, setAiUsage] = useState<Awaited<ReturnType<typeof getAiUsage>>>(null);
   const [aiUsageLoading, setAiUsageLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [isUpdatingEmbeddings, setIsUpdatingEmbeddings] = useState(false);
 
   const fetchAiUsage = useCallback(async () => {
     const data = await getAiUsage();
@@ -132,6 +144,51 @@ export const SettingsScreen = () => {
       setIsImporting(false);
     }
   };
+
+  const handleUpdateEmbeddings = useCallback(() => {
+    const recordsWithContent = records.filter(
+      (r) =>
+        (r.summary && r.summary.length > 0) ||
+        (r.transcript && r.transcript.length > 0) ||
+        (r.title && r.title.length > 0),
+    );
+    if (recordsWithContent.length === 0) {
+      Alert.alert(t('common.done'), t('settings.updateEmbeddingsNoRecords'));
+      return;
+    }
+    Alert.alert(
+      t('settings.updateEmbeddingsTitle'),
+      t('settings.updateEmbeddingsMessage', { count: recordsWithContent.length }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('settings.updateEmbeddings'),
+          onPress: async () => {
+            try {
+              setIsUpdatingEmbeddings(true);
+              const result = await regenerateAllEmbeddings(recordsWithContent);
+              const msg =
+                result.failed > 0
+                  ? t('settings.updateEmbeddingsPartial', {
+                      updated: result.updated,
+                      skipped: result.skipped,
+                      failed: result.failed,
+                    })
+                  : t('settings.updateEmbeddingsSuccess', {
+                      updated: result.updated,
+                      skipped: result.skipped,
+                    });
+              Alert.alert(t('common.done'), msg);
+            } catch {
+              Alert.alert(t('common.error'), t('settings.updateEmbeddingsError'));
+            } finally {
+              setIsUpdatingEmbeddings(false);
+            }
+          },
+        },
+      ],
+    );
+  }, [records, t]);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -225,10 +282,22 @@ export const SettingsScreen = () => {
             }
             showChevron={false}
             onPress={undefined}
-            isLast
+            isLast={Platform.OS !== 'ios'}
           />
+          {Platform.OS === 'ios' && (
+            <SettingsRow
+              label={
+                isUpdatingEmbeddings
+                  ? t('settings.updatingEmbeddings')
+                  : t('settings.updateEmbeddings')
+              }
+              color={color}
+              leftIcon={<RefreshCw size={20} color={color.accent.primary} strokeWidth={1.8} />}
+              onPress={isUpdatingEmbeddings ? undefined : handleUpdateEmbeddings}
+              isLast
+            />
+          )}
         </SettingsSection>
-
         <SettingsSection title={t('settings.sync')} color={color}>
           <SettingsRow
             label={isExporting ? t('settings.exporting') : t('settings.export')}

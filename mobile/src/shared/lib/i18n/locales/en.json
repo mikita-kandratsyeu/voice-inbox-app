@@ -57,7 +57,9 @@
   "search": {
     "placeholder": "Search records...",
     "nothingFound": "Nothing found",
-    "nothingFoundFor": "No records found for \"{{query}}\""
+    "nothingFoundFor": "No records found for \"{{query}}\"",
+    "typeMoreChars": "Type more characters",
+    "typeMoreCharsHint": "Enter at least {{count}} characters to search"
   },
   "record": {
     "newRecord": "New note",
@@ -212,7 +214,15 @@
     "privacyPolicy": "Privacy policy",
     "about": "About",
     "on": "On",
-    "off": "Off"
+    "off": "Off",
+    "updateEmbeddings": "Update all embeddings",
+    "updatingEmbeddings": "Updating...",
+    "updateEmbeddingsTitle": "Update embeddings",
+    "updateEmbeddingsMessage": "Regenerate embeddings for {{count}} records? This improves search and similar notes quality.",
+    "updateEmbeddingsSuccess": "Updated: {{updated}}, skipped (no content): {{skipped}}",
+    "updateEmbeddingsPartial": "Updated: {{updated}}, skipped: {{skipped}}, failed: {{failed}}",
+    "updateEmbeddingsError": "Failed to update embeddings",
+    "updateEmbeddingsNoRecords": "No records with content to process"
   },
   "appearance": {
     "title": "Appearance",

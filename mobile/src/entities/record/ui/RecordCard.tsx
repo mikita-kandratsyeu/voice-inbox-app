@@ -1,4 +1,4 @@
-import { Clock, Pin } from 'lucide-react-native';
+import { CheckCircle2, Clock, ListChecks, Pin } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -39,6 +39,10 @@ export const RecordCard = React.memo(function RecordCard({
   const textSecondaryStyle = { color: color.text.secondary };
 
   const hasTags = item.tags && item.tags.length > 0;
+  const tasks = item.tasks ?? [];
+  const hasTasks = tasks.length > 0;
+  const doneCount = tasks.filter((t) => t.isDone).length;
+  const allTasksDone = hasTasks && doneCount === tasks.length;
   const aiProcessing = item.summaryStatus === 'processing' || item.tasksStatus === 'processing';
   const aiError = item.summaryStatus === 'error' || item.tasksStatus === 'error';
   const showStatusPill =
@@ -104,6 +108,20 @@ export const RecordCard = React.memo(function RecordCard({
             {formatRelativeTime(item.createdAt, i18n.language)}
           </Text>
         </View>
+        {hasTasks && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            {allTasksDone ? (
+              <CheckCircle2 size={14} color={color.accent.success} strokeWidth={2} />
+            ) : (
+              <>
+                <ListChecks size={14} color={color.icon.muted} strokeWidth={2} />
+                <Text style={[textSecondaryStyle, { fontSize: 12 }]}>
+                  {doneCount}/{tasks.length}
+                </Text>
+              </>
+            )}
+          </View>
+        )}
         {item.classification && (
           <View
             style={{

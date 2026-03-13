@@ -10,8 +10,11 @@ type EmptySearchStateProps = {
   color: Colors;
 };
 
+const MIN_QUERY_LENGTH = 3;
+
 export const EmptySearchState = ({ query, color }: EmptySearchStateProps) => {
   const { t } = useTranslation();
+  const isShortQuery = query.trim().length > 0 && query.trim().length < MIN_QUERY_LENGTH;
   return (
     <View
       style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}
@@ -26,10 +29,12 @@ export const EmptySearchState = ({ query, color }: EmptySearchStateProps) => {
         className="mb-2 text-center text-lg font-semibold"
         style={{ color: color.text.primary }}
       >
-        {t('search.nothingFound')}
+        {isShortQuery ? t('search.typeMoreChars') : t('search.nothingFound')}
       </Text>
       <Text className="text-center text-sm leading-5" style={{ color: color.text.secondary }}>
-        {t('search.nothingFoundFor', { query })}
+        {isShortQuery
+          ? t('search.typeMoreCharsHint', { count: MIN_QUERY_LENGTH })
+          : t('search.nothingFoundFor', { query })}
       </Text>
     </View>
   );

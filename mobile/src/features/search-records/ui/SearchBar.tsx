@@ -57,7 +57,6 @@ export const SearchBar = ({ query, onChangeQuery, color, placeholder }: SearchBa
           onChangeText={onChangeQuery}
           returnKeyType="search"
           clearButtonMode="never"
-          autoCorrect={false}
           autoCapitalize="none"
         />
       </InputField>
