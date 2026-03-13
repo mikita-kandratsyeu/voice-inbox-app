@@ -4,14 +4,14 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check, ChevronLeft } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TextInput, useColorScheme, View } from 'react-native';
+import { Text, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
 import { useEditTranscript } from '@/features/edit-transcript';
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { getInputFieldInputStyle } from '@/shared/ui';
 import { Button } from '@/shared/ui';
 
@@ -20,7 +20,7 @@ export const EditTranscriptScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'EditTranscript'>>();
   const insets = useSafeAreaInsets();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
 
   const { record } = route.params;
   const records = useRecordStore((s) => s.records);

@@ -3,7 +3,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, useColorScheme, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import RNFS from 'react-native-fs';
 
 import type { RootStackParamList } from '@/app/navigation/types';
@@ -15,7 +15,7 @@ import { useAiProcessing } from '@/features/ai-processing';
 import { useRecordActions } from '@/features/record-actions';
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { AudioPlayer } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
@@ -33,7 +33,7 @@ export const RecordingDetailScreen = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'RecordingDetail'>>();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
 
   const { record: routeRecord } = route.params;
   const { records, togglePin, toggleTask, setSummaryStatus, setTasksStatus, clearAudioPath } =

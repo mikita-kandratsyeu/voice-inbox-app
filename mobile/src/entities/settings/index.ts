@@ -6,6 +6,8 @@ export type {
   AIModel,
   AIModelId,
   AiOutputLanguage,
+  AppLanguage,
+  AppTheme,
   SettingsState,
   SummaryStyle,
   TaskStrictness,

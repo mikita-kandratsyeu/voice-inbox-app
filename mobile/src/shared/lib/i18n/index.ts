@@ -1,6 +1,8 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
+import { storage } from '@/shared/lib/async-storage';
+
 import { DEFAULT_LOCALE, LOCALE_MAP, SUPPORTED_LOCALES } from './config';
 import en from './locales/en.json';
 import ru from './locales/ru.json';
@@ -10,7 +12,10 @@ const resources = {
   ru: { translation: ru },
 };
 
-// Lazily called only inside setImmediate, when the native bridge is ready.
+const APP_LANGUAGE_KEY = 'settings.appLanguage';
+
+type AppLanguage = 'system' | 'en' | 'ru';
+
 function getDeviceLocale(): string {
   try {
     const { getLocales } = require('react-native-localize') as {
@@ -23,13 +28,27 @@ function getDeviceLocale(): string {
       return LOCALE_MAP[primary] ?? LOCALE_MAP[tag] ?? DEFAULT_LOCALE;
     }
   } catch {
-    // react-native-localize not available or bridge not ready
+    if (__DEV__) {
+      console.warn('react-native-localize not available or bridge not ready');
+    }
   }
   return DEFAULT_LOCALE;
 }
 
+function getEffectiveLocale(): string {
+  const stored = storage.getString(APP_LANGUAGE_KEY) as AppLanguage | undefined;
+  if (stored === 'en' || stored === 'ru') return stored;
+  return getDeviceLocale();
+}
+
+export function applyAppLanguage(): void {
+  const locale = getEffectiveLocale();
+  if (i18n.language !== locale) {
+    i18n.changeLanguage(locale);
+  }
+}
+
 export function initI18n(): void {
-  // Initialize synchronously with the default locale — no native calls here.
   i18n.use(initReactI18next).init({
     resources,
     lng: DEFAULT_LOCALE,
@@ -40,15 +59,13 @@ export function initI18n(): void {
     },
   });
 
-  // Detect the device locale after the bridge is ready and switch if needed.
   setImmediate(() => {
     try {
-      const detected = getDeviceLocale();
-      if (detected !== DEFAULT_LOCALE && i18n.language !== detected) {
-        i18n.changeLanguage(detected);
-      }
+      applyAppLanguage();
     } catch {
-      // keep default locale
+      if (__DEV__) {
+        console.warn('Failed to apply app language');
+      }
     }
   });
 }

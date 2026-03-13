@@ -6,6 +6,8 @@ import { AI_MODELS } from './constants';
 import type {
   AIModelId,
   AiOutputLanguage,
+  AppLanguage,
+  AppTheme,
   SettingsState,
   SummaryStyle,
   TaskStrictness,
@@ -15,6 +17,8 @@ import type {
 } from './types';
 
 const KEYS = {
+  APP_THEME: 'settings.appTheme',
+  APP_LANGUAGE: 'settings.appLanguage',
   AI_MODEL: 'settings.aiModel',
   WHISPER_MODEL: 'settings.whisperModel',
   WHISPER_STATUSES: 'settings.whisperStatuses',
@@ -25,6 +29,16 @@ const KEYS = {
   AUTO_TRANSCRIBE_ON_SAVE: 'settings.autoTranscribeOnSave',
   AUTO_AI_AFTER_TRANSCRIPTION: 'settings.autoAiAfterTranscription',
 } as const;
+
+const getStoredAppTheme = (): AppTheme => {
+  const val = storage.getString(KEYS.APP_THEME);
+  return (val as AppTheme) ?? 'system';
+};
+
+const getStoredAppLanguage = (): AppLanguage => {
+  const val = storage.getString(KEYS.APP_LANGUAGE);
+  return (val as AppLanguage) ?? 'system';
+};
 
 const getStoredAIModel = (): AIModelId => {
   const val = storage.getString(KEYS.AI_MODEL);
@@ -79,6 +93,8 @@ const getStoredWhisperStatuses = (): Partial<Record<WhisperModelId, WhisperModel
 };
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
+  appTheme: getStoredAppTheme(),
+  appLanguage: getStoredAppLanguage(),
   selectedAIModel: getStoredAIModel(),
   selectedWhisperModel: getStoredWhisperModel(),
   transcriptionLanguage: getStoredTranscriptionLanguage(),
@@ -90,6 +106,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   whisperModelStatuses: getStoredWhisperStatuses(),
   whisperDownloadProgress: {},
   whisperDownloadBytes: {},
+
+  setAppTheme: (value: AppTheme) => {
+    storage.set(KEYS.APP_THEME, value);
+    set({ appTheme: value });
+  },
+
+  setAppLanguage: (value: AppLanguage) => {
+    storage.set(KEYS.APP_LANGUAGE, value);
+    set({ appLanguage: value });
+  },
 
   setAIModel: (id: AIModelId) => {
     storage.set(KEYS.AI_MODEL, id);

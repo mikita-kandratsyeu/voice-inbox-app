@@ -199,6 +199,9 @@
     "transcription": "Transcription",
     "autoTranscribeOnSave": "Transcribe automatically",
     "autoAiAfterTranscription": "Auto-summary after transcription",
+    "appearance": "Appearance",
+    "appLanguage": "App language",
+    "appTheme": "Theme",
     "device": "Device",
     "appLock": "App lock",
     "offlineStorage": "Offline storage",
@@ -208,6 +211,21 @@
     "about": "About",
     "on": "On",
     "off": "Off"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "language": "Language",
+    "theme": "Theme",
+    "languageOption": {
+      "system": "System",
+      "en": "English",
+      "ru": "Russian"
+    },
+    "themeOption": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    }
   },
   "appLock": {
     "title": "App lock",
@@ -390,7 +408,7 @@
     "showOnboarding": "Show onboarding",
     "helpAndFeedback": "Help and feedback",
     "contactSupport": "Contact support",
-    "description": "Offline-first app for voice notes. Capture ideas with voice, get transcripts, summaries and tasks with AI.",
+    "description": "Voice notes with on-device transcription. Summaries and tasks — with AI.",
     "copyright": "© {{ year }} Voice Inbox AI. All rights reserved."
   },
   "tasks": {

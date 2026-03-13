@@ -1,9 +1,9 @@
 import { Sparkles } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Text, useColorScheme, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import type { AiUsage } from '@/shared/lib/ai-api';
 
 const formatResetDate = (isoString: string, locale: string): string => {
@@ -24,7 +24,7 @@ type AiUsageCardProps = {
 
 export const AiUsageCard = ({ usage, loading }: AiUsageCardProps) => {
   const { t, i18n } = useTranslation();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
 
   if (loading) {
     return (

@@ -8,11 +8,11 @@ import {
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, useColorScheme, View } from 'react-native';
+import { Platform, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { formatTime } from '@/shared/lib';
 import { Button } from '@/shared/ui';
 
@@ -44,7 +44,7 @@ export const SaveRecordModal = ({
   onSaveComplete,
 }: SaveRecordModalProps) => {
   const { t } = useTranslation();
-  const scheme = (useColorScheme() ?? 'light') as 'light' | 'dark';
+  const scheme = useAppTheme();
   const c = getColors(scheme);
   const insets = useSafeAreaInsets();
 

@@ -2,7 +2,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppState, StatusBar, Text, useColorScheme, View } from 'react-native';
+import { AppState, StatusBar, Text, View } from 'react-native';
 import KeepAwake from 'react-native-keep-awake';
 
 import { useAppLockStore } from '@/entities/app-lock';
@@ -10,7 +10,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { useTranscription } from '@/features/transcription';
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { formatTime, i18n } from '@/shared/lib';
 import { Waveform } from '@/shared/ui';
 
@@ -24,7 +24,7 @@ import { SaveRecordModal } from './SaveRecordModal';
 
 export const RecordScreen = () => {
   const { t } = useTranslation();
-  const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
+  const scheme = useAppTheme();
   const c = getColors(scheme);
 
   const navigation = useNavigation();

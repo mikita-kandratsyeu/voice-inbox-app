@@ -9,7 +9,6 @@ import {
   Linking,
   Text,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from 'react-native';
 import Animated, {
@@ -27,7 +26,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useSettingsStore } from '@/entities/settings';
 import { useModelManager } from '@/features/model-manager';
-import { getColors, WEBSITE_URL } from '@/shared/config';
+import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
 import { getTermsAgreedAt, setHasSeenOnboarding, setTermsAgreedAt } from '../lib/onboardingStorage';
@@ -418,7 +417,7 @@ const SlideItem = ({
 
 export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const { t } = useTranslation();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
   const slides = useMemo(() => getOnboardingSlides(color), [color]);
   const slideColors = useMemo(() => {
     const colors = slides.map((s) => s.iconColor);

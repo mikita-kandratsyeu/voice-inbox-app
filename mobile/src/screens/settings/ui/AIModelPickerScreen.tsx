@@ -2,12 +2,12 @@ import { useNavigation } from '@react-navigation/native';
 import { Check } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AIModelId } from '@/entities/settings';
 import { AI_MODELS, useSettingsStore } from '@/entities/settings';
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { ScreenHeader } from '@/shared/ui';
 
 const SPEED_COLOR: Record<string, string> = {
@@ -24,7 +24,7 @@ const PROVIDER_COLOR: Record<string, string> = {
 
 export const AIModelPickerScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 

@@ -1,8 +1,8 @@
 import { Inbox } from 'lucide-react-native';
 import React from 'react';
-import { Text, useColorScheme, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 
 type EmptyStateProps = {
   title?: string;
@@ -13,7 +13,7 @@ export const EmptyState = ({
   title = 'Нет записей',
   description = 'Здесь будут отображаться ваши входящие голосовые заметки',
 }: EmptyStateProps) => {
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
 
   return (
     <View className="flex-1 items-center justify-center px-8">

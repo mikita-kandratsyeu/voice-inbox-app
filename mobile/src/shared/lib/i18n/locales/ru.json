@@ -199,6 +199,9 @@
     "transcription": "Транскрипция",
     "autoTranscribeOnSave": "Транскрибировать автоматически",
     "autoAiAfterTranscription": "Авто-сводка после транскрипции",
+    "appearance": "Внешний вид",
+    "appLanguage": "Язык приложения",
+    "appTheme": "Тема",
     "device": "Устройство",
     "appLock": "Блокировка приложения",
     "offlineStorage": "Офлайн хранилище",
@@ -208,6 +211,21 @@
     "about": "О приложении",
     "on": "Вкл",
     "off": "Выкл"
+  },
+  "appearance": {
+    "title": "Внешний вид",
+    "language": "Язык",
+    "theme": "Тема",
+    "languageOption": {
+      "system": "Система",
+      "en": "English",
+      "ru": "Русский"
+    },
+    "themeOption": {
+      "system": "Как в системе",
+      "light": "Светлая",
+      "dark": "Тёмная"
+    }
   },
   "appLock": {
     "title": "Блокировка приложения",
@@ -390,7 +408,7 @@
     "showOnboarding": "Показать онбординг",
     "helpAndFeedback": "Помощь и обратная связь",
     "contactSupport": "Написать в поддержку",
-    "description": "Offline-first приложение для голосовых заметок. Захватывайте идеи голосом, получайте транскрипты, саммари и задачи с помощью ИИ.",
+    "description": "Голосовые заметки с транскрипцией на устройстве. Резюме и задачи — с помощью ИИ.",
     "copyright": "© {{ year }} Voice Inbox AI. Все права защищены."
   },
   "tasks": {

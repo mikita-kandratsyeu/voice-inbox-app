@@ -2,14 +2,14 @@ import { useNavigation } from '@react-navigation/native';
 import { Bot, BrainCircuit, Clock, FileText, Mic, Mic2, Trash2, Type } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, ScrollView, Text, useColorScheme, View } from 'react-native';
+import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
 import type { WhisperModelId } from '@/entities/settings';
 import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { getModelFileSizeBytes } from '@/features/model-manager';
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { clearCache, getStorageStats, type StorageStats } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
@@ -142,7 +142,7 @@ const DEFAULT_STATS: StorageStats = {
 
 export const StorageDetailsScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const records = useRecordStore((s) => s.records);

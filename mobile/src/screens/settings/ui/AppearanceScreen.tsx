@@ -5,14 +5,14 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
+import type { AppLanguage, AppTheme } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { getColors, useAppTheme } from '@/shared/config';
+import { applyAppLanguage } from '@/shared/lib/i18n';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
-const SUMMARY_STYLES: SummaryStyle[] = ['brief', 'standard', 'detailed'];
-const TASK_STRICTNESS_OPTIONS: TaskStrictness[] = ['strict', 'balanced', 'soft'];
-const OUTPUT_LANGUAGES: AiOutputLanguage[] = ['same', 'ru', 'en'];
+const APP_LANGUAGES: AppLanguage[] = ['system', 'en', 'ru'];
+const APP_THEMES: AppTheme[] = ['system', 'light', 'dark'];
 
 type PickerRowProps<T extends string> = {
   options: T[];
@@ -72,23 +72,27 @@ function PickerSection<T extends string>({
   );
 }
 
-export const AiSettingsScreen = () => {
+export const AppearanceScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useAppTheme());
+  const theme = useAppTheme();
+  const color = getColors(theme);
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 
-  const summaryStyle = useSettingsStore((s) => s.summaryStyle);
-  const setSummaryStyle = useSettingsStore((s) => s.setSummaryStyle);
-  const taskStrictness = useSettingsStore((s) => s.taskStrictness);
-  const setTaskStrictness = useSettingsStore((s) => s.setTaskStrictness);
-  const aiOutputLanguage = useSettingsStore((s) => s.aiOutputLanguage);
-  const setAiOutputLanguage = useSettingsStore((s) => s.setAiOutputLanguage);
+  const appLanguage = useSettingsStore((s) => s.appLanguage);
+  const setAppLanguage = useSettingsStore((s) => s.setAppLanguage);
+  const appTheme = useSettingsStore((s) => s.appTheme);
+  const setAppTheme = useSettingsStore((s) => s.setAppTheme);
+
+  const handleLanguageSelect = (value: AppLanguage) => {
+    setAppLanguage(value);
+    applyAppLanguage();
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader
-        title={t('aiSettings.title')}
+        title={t('appearance.title')}
         color={color}
         onBack={() => navigation.goBack()}
       />
@@ -101,36 +105,22 @@ export const AiSettingsScreen = () => {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-          {t('aiSettings.description')}
-        </Text>
-
-        <SettingsSection title={t('aiSettings.summaryStyle')} color={color}>
+        <SettingsSection title={t('appearance.language')} color={color}>
           <PickerSection
-            options={SUMMARY_STYLES}
-            selected={summaryStyle}
-            onSelect={setSummaryStyle}
-            labelKey={(v) => t(`aiSettings.summaryStyle.${v}`)}
+            options={APP_LANGUAGES}
+            selected={appLanguage}
+            onSelect={handleLanguageSelect}
+            labelKey={(v) => t(`appearance.languageOption.${v}`)}
             color={color}
           />
         </SettingsSection>
 
-        <SettingsSection title={t('aiSettings.taskStrictness')} color={color}>
+        <SettingsSection title={t('appearance.theme')} color={color}>
           <PickerSection
-            options={TASK_STRICTNESS_OPTIONS}
-            selected={taskStrictness}
-            onSelect={setTaskStrictness}
-            labelKey={(v) => t(`aiSettings.taskStrictness.${v}`)}
-            color={color}
-          />
-        </SettingsSection>
-
-        <SettingsSection title={t('aiSettings.outputLanguage')} color={color}>
-          <PickerSection
-            options={OUTPUT_LANGUAGES}
-            selected={aiOutputLanguage}
-            onSelect={setAiOutputLanguage}
-            labelKey={(v) => t(`aiSettings.outputLanguage.${v}`)}
+            options={APP_THEMES}
+            selected={appTheme}
+            onSelect={setAppTheme}
+            labelKey={(v) => t(`appearance.themeOption.${v}`)}
             color={color}
           />
         </SettingsSection>

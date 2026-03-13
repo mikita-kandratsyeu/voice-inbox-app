@@ -3,7 +3,7 @@ import '../../global.css';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { NavigationContainer } from '@react-navigation/native';
 import React, { useEffect } from 'react';
-import { AppState, type AppStateStatus, StatusBar, useColorScheme } from 'react-native';
+import { AppState, type AppStateStatus, StatusBar } from 'react-native';
 import BootSplash from 'react-native-bootsplash';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -13,14 +13,15 @@ import { useRecordStore } from '@/entities/record';
 import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
 import { OnboardingGate } from '@/features/onboarding';
 import { releaseWhisperContext } from '@/features/transcription';
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { NetworkStatusProvider } from '@/shared/lib';
 
 import { RootNavigator } from './navigation/RootNavigator';
 
 const App = () => {
-  const isDark = useColorScheme() === 'dark';
-  const color = getColors(isDark ? 'dark' : 'light');
+  const theme = useAppTheme();
+  const color = getColors(theme);
+  const isDark = theme === 'dark';
 
   const rootStyle = { flex: 1 };
   const safeAreaStyle = { backgroundColor: color.background.primary };

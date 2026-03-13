@@ -2,19 +2,19 @@ import { useNavigation } from '@react-navigation/native';
 import { Fingerprint, ScanFace } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Switch, Text, useColorScheme, View } from 'react-native';
+import { Alert, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppLockStore } from '@/entities/app-lock';
 import { PinInput } from '@/features/app-lock/ui/PinInput';
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 type SetupStep = 'confirm' | 'initial';
 
 export const AppLockSetupScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [step, setStep] = useState<SetupStep>('initial');

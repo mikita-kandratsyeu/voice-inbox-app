@@ -1,3 +1,6 @@
+export type AppTheme = 'light' | 'dark' | 'system';
+export type AppLanguage = 'system' | 'en' | 'ru';
+
 export type AIModelId =
   | 'google/gemini-3.1-flash-lite-preview'
   | 'arcee-ai/trinity-large-preview:free'
@@ -55,6 +58,8 @@ export type DownloadBytes = {
 };
 
 export type SettingsState = {
+  appTheme: AppTheme;
+  appLanguage: AppLanguage;
   selectedAIModel: AIModelId;
   selectedWhisperModel: WhisperModelId;
   transcriptionLanguage: TranscriptionLanguage;
@@ -66,6 +71,8 @@ export type SettingsState = {
   whisperModelStatuses: Partial<Record<WhisperModelId, WhisperModelStatus>>;
   whisperDownloadProgress: Partial<Record<WhisperModelId, number>>;
   whisperDownloadBytes: Partial<Record<WhisperModelId, DownloadBytes>>;
+  setAppTheme: (value: AppTheme) => void;
+  setAppLanguage: (value: AppLanguage) => void;
   setAIModel: (id: AIModelId) => void;
   setWhisperModel: (id: WhisperModelId) => void;
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;
