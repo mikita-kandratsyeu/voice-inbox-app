@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -8,19 +7,11 @@ import type { Colors } from '@/shared/config';
 type InboxHeaderProps = {
   color: Colors;
   isLoaded: boolean;
-  totalCount: number;
-  filteredCount: number;
-  isSearching: boolean;
+  subtitleText: string;
+  title: string;
 };
 
-export const InboxHeader = ({
-  color,
-  isLoaded,
-  totalCount,
-  filteredCount,
-  isSearching,
-}: InboxHeaderProps) => {
-  const { t } = useTranslation();
+export const InboxHeader = ({ color, isLoaded, subtitleText, title }: InboxHeaderProps) => {
   const insets = useSafeAreaInsets();
 
   const headerStyle = {
@@ -35,13 +26,11 @@ export const InboxHeader = ({
   return (
     <View className="px-4 pb-3" style={headerStyle}>
       <Text className="text-2xl font-bold" style={titleStyle}>
-        {t('inbox.title')}
+        {title}
       </Text>
       {isLoaded ? (
         <Text className="mt-1 text-sm" style={subtitleStyle}>
-          {isSearching
-            ? t('inbox.recordsFiltered', { filtered: filteredCount, total: totalCount })
-            : t('inbox.recordsCount', { count: totalCount })}
+          {subtitleText}
         </Text>
       ) : (
         <View

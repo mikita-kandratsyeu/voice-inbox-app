@@ -3,11 +3,16 @@ import { Platform } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { cosineSimilarity, isEmbeddingAvailable } from '@/shared/lib/embeddings';
+import {
+  centeredCosineSimilarity,
+  computeCentroid,
+  isEmbeddingAvailable,
+} from '@/shared/lib/embeddings';
 
-const MIN_HYBRID_SCORE = 0.45;
-const EMBEDDING_WEIGHT = 0.5;
-const LEXICAL_WEIGHT = 0.5;
+const MIN_HYBRID_SCORE = 0.35;
+const MIN_LEXICAL_ONLY_SCORE = 0.08;
+const EMBEDDING_WEIGHT = 0.65;
+const LEXICAL_WEIGHT = 0.35;
 
 function tokenize(text: string): Set<string> {
   return new Set(
@@ -52,22 +57,25 @@ function getLexicalScore(current: VoiceRecord, record: VoiceRecord): number {
   const phraseScore =
     keyPhrasesA.length > 0 || keyPhrasesB.length > 0 ? phraseOverlap(keyPhrasesA, keyPhrasesB) : 0;
 
+  const titleScore =
+    current.title && record.title ? textOverlap(current.title, record.title, 100) : 0;
   const summaryScore =
     current.summary && record.summary ? textOverlap(current.summary, record.summary, 800) : 0;
   const transcriptScore =
     current.transcript && record.transcript
       ? textOverlap(current.transcript, record.transcript)
       : 0;
-  const titleScore =
-    current.title && record.title ? textOverlap(current.title, record.title, 100) : 0;
 
-  const lexicalScore = summaryScore * 0.35 + transcriptScore * 0.4 + titleScore * 0.25;
-  const tagPhraseScore =
-    keyPhrasesA.length > 0 || keyPhrasesB.length > 0
-      ? 0.6 * tagScore + 0.4 * phraseScore
-      : tagScore;
+  const textScore = titleScore * 0.35 + summaryScore * 0.45 + transcriptScore * 0.2;
 
-  return tagPhraseScore > 0 || lexicalScore > 0 ? Math.max(tagPhraseScore, lexicalScore) : 0;
+  const hasTagsOrPhrases =
+    tagsA.size > 0 || tagsB.size > 0 || keyPhrasesA.length > 0 || keyPhrasesB.length > 0;
+  const tagPhraseScore = hasTagsOrPhrases ? tagScore * 0.5 + phraseScore * 0.5 : 0;
+
+  if (hasTagsOrPhrases && tagPhraseScore > 0) {
+    return tagPhraseScore * 0.5 + textScore * 0.5;
+  }
+  return textScore;
 }
 
 export function useRelatedNotes(recordId: string, limit = 5): VoiceRecord[] {
@@ -84,10 +92,17 @@ export function useRelatedNotes(recordId: string, limit = 5): VoiceRecord[] {
       records.some((r) => r.id !== recordId && r.embedding);
 
     if (useEmbeddings) {
+      const allEmbeddings = records.filter((r) => r.embedding).map((r) => r.embedding as number[]);
+      const centroid = computeCentroid(allEmbeddings);
+
       const scored = records
         .filter((r) => r.id !== recordId && r.embedding)
         .map((record) => {
-          const embeddingScore = cosineSimilarity(current.embedding!, record.embedding!);
+          const embeddingScore = centeredCosineSimilarity(
+            current.embedding!,
+            record.embedding!,
+            centroid,
+          );
           const lexicalScore = getLexicalScore(current, record);
           const hybridScore = EMBEDDING_WEIGHT * embeddingScore + LEXICAL_WEIGHT * lexicalScore;
           return { record, score: hybridScore };
@@ -106,7 +121,7 @@ export function useRelatedNotes(recordId: string, limit = 5): VoiceRecord[] {
         const score = getLexicalScore(current, record);
         return { record, score };
       })
-      .filter(({ score }) => score > 0.05)
+      .filter(({ score }) => score > MIN_LEXICAL_ONLY_SCORE)
       .sort((a, b) => b.score - a.score)
       .slice(0, limit)
       .map(({ record }) => record);

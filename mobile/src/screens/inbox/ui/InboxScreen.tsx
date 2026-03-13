@@ -32,6 +32,7 @@ export const InboxScreen = () => {
     setQuery,
     flattenedData,
     filtered,
+    subtitleText,
     isSearching,
     filterStatus,
     setFilterStatus,
@@ -124,20 +125,17 @@ export const InboxScreen = () => {
   };
   const listStyle = { backgroundColor: color.background.secondary };
 
-  const totalCount = records.length;
-
   return (
     <View style={screenStyle}>
       <InboxHeader
         color={color}
         isLoaded={isLoaded}
-        totalCount={totalCount}
-        filteredCount={filtered.length}
-        isSearching={isSearching}
+        subtitleText={subtitleText}
+        title={t('inbox.title')}
       />
       {!isLoaded ? (
         <InboxSkeleton color={color} />
-      ) : totalCount === 0 ? (
+      ) : records.length === 0 ? (
         <EmptyState title={t('inbox.emptyTitle')} description={t('inbox.emptyDescription')} />
       ) : (
         <KeyboardAvoidingView

@@ -1,6 +1,13 @@
 import { Platform } from 'react-native';
 
+import { i18n } from '@/shared/lib';
+
 const MAX_TEXT_LENGTH = 2000;
+
+export function getEmbeddingLanguage(): string {
+  const lang = i18n.language ?? 'en';
+  return lang.startsWith('ru') ? 'ru' : 'en';
+}
 
 const AppleEmbeddings =
   Platform.OS === 'ios' ? require('@react-native-ai/apple').AppleEmbeddings : null;

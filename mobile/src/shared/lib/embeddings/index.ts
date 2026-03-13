@@ -2,7 +2,13 @@ export {
   checkEmbeddingAvailability,
   generateEmbedding,
   generateEmbeddings,
+  getEmbeddingLanguage,
   isEmbeddingAvailable,
   prepareEmbeddingModel,
 } from './appleEmbeddings';
-export { cosineSimilarity } from './cosineSimilarity';
+export {
+  centeredCosineSimilarity,
+  centerEmbedding,
+  computeCentroid,
+  cosineSimilarity,
+} from './cosineSimilarity';

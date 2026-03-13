@@ -1,8 +1,14 @@
 import type { VoiceRecord } from '@/entities/record';
-import { isEmbeddingAvailable } from '@/shared/lib/embeddings';
+import { useRecordStore } from '@/entities/record';
+import { recordRepository } from '@/entities/record/model/repository';
+import {
+  generateEmbedding,
+  getEmbeddingLanguage,
+  isEmbeddingAvailable,
+  prepareEmbeddingModel,
+} from '@/shared/lib/embeddings';
 
 import { buildEmbeddingText } from './buildEmbeddingText';
-import { generateAndSaveEmbeddingForRecord } from './generateAndSaveEmbedding';
 
 export type RegenerateResult = {
   updated: number;
@@ -17,6 +23,9 @@ export async function regenerateAllEmbeddings(
   const result: RegenerateResult = { updated: 0, skipped: 0, failed: 0 };
   if (!isEmbeddingAvailable()) return result;
 
+  const language = getEmbeddingLanguage();
+  await prepareEmbeddingModel(language);
+
   const total = records.length;
   for (let i = 0; i < records.length; i++) {
     onProgress?.(i + 1, total);
@@ -29,8 +38,14 @@ export async function regenerateAllEmbeddings(
     }
 
     try {
-      await generateAndSaveEmbeddingForRecord(record);
-      result.updated += 1;
+      const embedding = await generateEmbedding(text, language);
+      if (embedding) {
+        await recordRepository.updateEmbedding(record.id, embedding);
+        useRecordStore.getState().setEmbedding(record.id, embedding);
+        result.updated += 1;
+      } else {
+        result.skipped += 1;
+      }
     } catch {
       result.failed += 1;
     }
