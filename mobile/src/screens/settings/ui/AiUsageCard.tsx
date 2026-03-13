@@ -7,8 +7,6 @@ import { getColors, useAppTheme } from '@/shared/config';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { SkeletonPulse } from '@/shared/ui';
 
-const CARD_HEIGHT = 170;
-
 const formatResetDate = (isoString: string, locale: string): string => {
   const date = new Date(isoString);
   return date.toLocaleDateString(locale, {
@@ -68,7 +66,6 @@ export const AiUsageCard = ({ usage, loading }: AiUsageCardProps) => {
     <View
       className="mb-6 overflow-hidden rounded-2xl p-4"
       style={{
-        height: CARD_HEIGHT,
         borderWidth: 1,
         borderColor: color.border.default,
         backgroundColor: color.background.primary,
@@ -81,7 +78,7 @@ export const AiUsageCard = ({ usage, loading }: AiUsageCardProps) => {
         >
           <Sparkles size={20} color={color.accent.primary} strokeWidth={1.8} />
         </View>
-        <View className="flex-1">
+        <View className="min-w-0 flex-1">
           <Text className="text-base font-semibold" style={{ color: color.text.primary }}>
             {t('settings.aiUsage.title')}
           </Text>
@@ -96,7 +93,7 @@ export const AiUsageCard = ({ usage, loading }: AiUsageCardProps) => {
       ) : (
         <>
           <View className="mb-2">
-            <View className="mb-1 flex-row justify-between">
+            <View className="mb-1 flex-row flex-wrap items-center justify-between gap-x-2 gap-y-1">
               <Text
                 className="text-sm font-medium"
                 style={{
@@ -106,7 +103,7 @@ export const AiUsageCard = ({ usage, loading }: AiUsageCardProps) => {
                 {usageText}
               </Text>
               <Text
-                className="text-sm font-medium"
+                className="text-right text-sm font-medium"
                 style={{
                   color: isExhausted ? color.accent.delete : color.accent.primary,
                 }}
