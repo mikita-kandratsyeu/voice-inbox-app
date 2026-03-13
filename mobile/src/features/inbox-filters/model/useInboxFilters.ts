@@ -24,16 +24,22 @@ export const useInboxFilters = () => {
     (records: VoiceRecord[]): VoiceRecord[] => {
       let result = records;
 
-      if (filterStatus === 'pinned') {
-        result = result.filter((r) => r.isPinned);
-      } else if (filterStatus === 'withoutTranscript') {
-        result = result.filter((r) => !r.transcript?.trim());
-      } else if (filterStatus === 'withoutSummary') {
-        result = result.filter((r) => !r.summary?.trim());
-      } else if (['personal', 'work', 'meeting', 'idea', 'other'].includes(filterStatus)) {
-        result = result.filter((r) => r.classification === filterStatus);
-      } else if (filterStatus !== 'all') {
-        result = result.filter((r) => r.status === filterStatus);
+      if (filterStatus === 'archived') {
+        result = result.filter((r) => r.status === 'archived');
+      } else {
+        result = result.filter((r) => r.status !== 'archived');
+
+        if (filterStatus === 'pinned') {
+          result = result.filter((r) => r.isPinned);
+        } else if (filterStatus === 'withoutTranscript') {
+          result = result.filter((r) => !r.transcript?.trim());
+        } else if (filterStatus === 'withoutSummary') {
+          result = result.filter((r) => !r.summary?.trim());
+        } else if (['personal', 'work', 'meeting', 'idea', 'other'].includes(filterStatus)) {
+          result = result.filter((r) => r.classification === filterStatus);
+        } else if (filterStatus !== 'all') {
+          result = result.filter((r) => r.status === filterStatus);
+        }
       }
 
       return [...result].sort(sortFns[sortOption]);

@@ -137,6 +137,18 @@ export const recordRepository = {
     await db.update(recordsTable).set({ status: 'read' }).where(eq(recordsTable.id, id));
   },
 
+  archive: async (id: string): Promise<void> => {
+    logDb('archive', { id });
+    const db = getDB();
+    await db.update(recordsTable).set({ status: 'archived' }).where(eq(recordsTable.id, id));
+  },
+
+  unarchive: async (id: string): Promise<void> => {
+    logDb('unarchive', { id });
+    const db = getDB();
+    await db.update(recordsTable).set({ status: 'unread' }).where(eq(recordsTable.id, id));
+  },
+
   rename: async (id: string, title: string): Promise<void> => {
     logDb('rename', { id, title });
     const db = getDB();

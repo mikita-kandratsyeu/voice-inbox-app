@@ -7,6 +7,7 @@ import { Text, View } from 'react-native';
 import type { TranscriptSegment } from '@/entities/record';
 import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { Button, TabEmptyState } from '@/shared/ui';
 
 import { TRANSLATE_LANGUAGES } from '../config/transcriptionLanguageConfig';
@@ -37,6 +38,9 @@ export const TranscriptTab = ({
   isAiProcessing = false,
 }: TranscriptTabProps) => {
   const { t } = useTranslation();
+  const theme = useAppTheme();
+  const themeColors = getColors(theme);
+  const isDark = theme === 'dark';
   const [viewMode, setViewMode] = useState<'original' | 'translated'>('original');
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelName =
@@ -112,6 +116,8 @@ export const TranscriptTab = ({
         )}
         {onTranslate && segments.length > 0 && (
           <MenuView
+            key={theme}
+            themeVariant={isDark ? 'dark' : 'light'}
             onPressAction={async ({ nativeEvent }) => {
               const lang = nativeEvent.event;
               if ((TRANSLATE_LANGUAGES as readonly string[]).includes(lang)) {
@@ -125,6 +131,7 @@ export const TranscriptTab = ({
             actions={TRANSLATE_LANGUAGES.map((lang) => ({
               id: lang,
               title: t(`recordingDetail.language.${lang}`),
+              titleColor: themeColors.text.primary,
             }))}
           >
             <View>

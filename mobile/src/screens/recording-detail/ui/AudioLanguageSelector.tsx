@@ -6,6 +6,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 import type { TranscriptionLanguage } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
 import { TRANSCRIPTION_LANGUAGES } from '../config/transcriptionLanguageConfig';
@@ -18,6 +19,9 @@ type AudioLanguageSelectorProps = {
 
 export const AudioLanguageSelector = ({ value, color, onSelect }: AudioLanguageSelectorProps) => {
   const { t } = useTranslation();
+  const theme = useAppTheme();
+  const themeColors = getColors(theme);
+  const isDark = theme === 'dark';
   const label = t(`recordingDetail.language.${value}`);
 
   return (
@@ -29,6 +33,8 @@ export const AudioLanguageSelector = ({ value, color, onSelect }: AudioLanguageS
         </Text>
       </View>
       <MenuView
+        key={theme}
+        themeVariant={isDark ? 'dark' : 'light'}
         onPressAction={({ nativeEvent }) => {
           hapticSelection();
           const lang = nativeEvent.event as TranscriptionLanguage;
@@ -39,6 +45,7 @@ export const AudioLanguageSelector = ({ value, color, onSelect }: AudioLanguageS
         actions={TRANSCRIPTION_LANGUAGES.map((lang) => ({
           id: lang,
           title: t(`recordingDetail.language.${lang}`),
+          titleColor: themeColors.text.primary,
         }))}
       >
         <TouchableOpacity

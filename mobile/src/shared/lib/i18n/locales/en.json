@@ -164,6 +164,8 @@
   },
   "recordActions": {
     "rename": "Rename",
+    "archive": "Add to archive",
+    "unarchive": "Remove from archive",
     "delete": "Delete",
     "renameTitle": "Rename note",
     "renamePrompt": "Enter a new name for the note",

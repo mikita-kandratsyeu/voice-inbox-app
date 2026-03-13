@@ -18,6 +18,8 @@ type RecordStore = {
   deleteRecord: (id: string) => Promise<void>;
   togglePin: (id: string) => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
+  archiveRecord: (id: string) => Promise<void>;
+  unarchiveRecord: (id: string) => Promise<void>;
   updateAiStatus: (
     id: string,
     aiStatus: RecordingStatus,
@@ -97,6 +99,20 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     await recordRepository.markAsRead(id);
     set((s) => ({
       records: s.records.map((r) => (r.id === id ? { ...r, status: 'read' } : r)),
+    }));
+  },
+
+  archiveRecord: async (id) => {
+    await recordRepository.archive(id);
+    set((s) => ({
+      records: s.records.map((r) => (r.id === id ? { ...r, status: 'archived' as const } : r)),
+    }));
+  },
+
+  unarchiveRecord: async (id) => {
+    await recordRepository.unarchive(id);
+    set((s) => ({
+      records: s.records.map((r) => (r.id === id ? { ...r, status: 'unread' as const } : r)),
     }));
   },
 

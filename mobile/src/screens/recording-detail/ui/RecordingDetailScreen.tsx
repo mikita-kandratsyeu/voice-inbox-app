@@ -36,8 +36,16 @@ export const RecordingDetailScreen = () => {
   const color = getColors(useAppTheme());
 
   const { record: routeRecord } = route.params;
-  const { records, togglePin, toggleTask, setSummaryStatus, setTasksStatus, clearAudioPath } =
-    useRecordStore();
+  const {
+    records,
+    togglePin,
+    toggleTask,
+    setSummaryStatus,
+    setTasksStatus,
+    clearAudioPath,
+    archiveRecord,
+    unarchiveRecord,
+  } = useRecordStore();
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const globalTranscriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
@@ -143,6 +151,8 @@ export const RecordingDetailScreen = () => {
         onShareAudio={handleShareAudio}
         onAskAI={() => setShowAskAIModal(true)}
         onRename={() => promptRename(liveRecord)}
+        onArchive={() => archiveRecord(liveRecord.id)}
+        onUnarchive={() => unarchiveRecord(liveRecord.id)}
         onDelete={() => promptDelete(liveRecord)}
       />
 

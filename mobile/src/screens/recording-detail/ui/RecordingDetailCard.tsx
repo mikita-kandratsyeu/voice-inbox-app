@@ -41,6 +41,20 @@ export const RecordingDetailCard = ({ record, color }: RecordingDetailCardProps)
         >
           {record.title}
         </Text>
+        {record.status === 'archived' && (
+          <View
+            style={{
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 8,
+              backgroundColor: color.accent.archive,
+            }}
+          >
+            <Text style={{ fontSize: 12, color: color.icon.onAccent, fontWeight: '500' }}>
+              {t('inbox.filters.archived')}
+            </Text>
+          </View>
+        )}
         {record.classification && (
           <View
             style={{

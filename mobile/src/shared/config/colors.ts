@@ -19,6 +19,7 @@ export const colors = {
       pin: '#3b82f6',
       unpin: '#f59e0b',
       delete: '#ef4444',
+      archive: '#6b7280',
       success: '#34C759',
       transcript: '#8b5cf6',
       cache: '#f59e0b',
@@ -70,6 +71,7 @@ export const colors = {
       pin: '#3b82f6',
       unpin: '#f59e0b',
       delete: '#ef4444',
+      archive: '#6b7280',
       success: '#34C759',
       transcript: '#8b5cf6',
       cache: '#f59e0b',
@@ -114,6 +116,7 @@ export type Colors = {
     pin: string;
     unpin: string;
     delete: string;
+    archive: string;
     success: string;
     transcript: string;
     cache: string;

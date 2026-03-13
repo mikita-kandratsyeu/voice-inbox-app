@@ -1,4 +1,4 @@
-import { Pin, PinOff, Trash2 } from 'lucide-react-native';
+import { Archive, ArchiveRestore, Pin, PinOff } from 'lucide-react-native';
 import React from 'react';
 import type { PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -22,19 +22,22 @@ const COLLAPSE_DURATION = 280;
 const MAX_HEIGHT = 300;
 const MARGIN_BOTTOM = 16;
 
-type SwipeAction = 'none' | 'delete' | 'pin';
+type LeftSwipeAction = 'archive' | 'unarchive';
+type SwipeAction = 'none' | LeftSwipeAction | 'pin';
 
 type SwipeableCardProps = {
   children: React.ReactNode;
   isPinned?: boolean;
-  onDelete: () => void;
+  leftAction: LeftSwipeAction;
+  onLeftAction: () => void;
   onPin: () => void;
 };
 
 export const SwipeableCard = React.memo(function SwipeableCard({
   children,
   isPinned = false,
-  onDelete,
+  leftAction,
+  onLeftAction,
   onPin,
 }: SwipeableCardProps) {
   const translateX = useSharedValue(0);
@@ -44,10 +47,10 @@ export const SwipeableCard = React.memo(function SwipeableCard({
   const collapseHeight = useSharedValue(1);
   const collapseOpacity = useSharedValue(1);
 
-  const collapseAndDelete = () => {
+  const collapseAndExecute = () => {
     collapseHeight.value = withTiming(0, { duration: COLLAPSE_DURATION });
     collapseOpacity.value = withTiming(0, { duration: COLLAPSE_DURATION - 60 }, (finished) => {
-      if (finished) scheduleOnRN(onDelete);
+      if (finished) scheduleOnRN(onLeftAction);
     });
   };
 
@@ -58,8 +61,8 @@ export const SwipeableCard = React.memo(function SwipeableCard({
         return;
       }
 
-      if (current === 'delete') {
-        scheduleOnRN(collapseAndDelete);
+      if (current === 'archive' || current === 'unarchive') {
+        scheduleOnRN(collapseAndExecute);
       } else if (current === 'pin') {
         translateX.value = withSpring(0, { damping: 14, stiffness: 300, mass: 0.6 }, () => {
           scheduleOnRN(onPin);
@@ -82,7 +85,7 @@ export const SwipeableCard = React.memo(function SwipeableCard({
       if (e.translationX < -SWIPE_THRESHOLD) {
         scheduleOnRN(hapticMedium);
         translateX.value = withTiming(-CARD_FLY_DISTANCE, { duration: 220 }, () => {
-          action.value = 'delete';
+          action.value = leftAction;
         });
       } else if (e.translationX > SWIPE_THRESHOLD) {
         scheduleOnRN(hapticMedium);
@@ -102,7 +105,7 @@ export const SwipeableCard = React.memo(function SwipeableCard({
     transform: [{ translateX: translateX.value }],
   }));
 
-  const deleteReveal = useAnimatedStyle(() => {
+  const leftReveal = useAnimatedStyle(() => {
     const progress = Math.min(Math.max(-translateX.value / SWIPE_THRESHOLD, 0), 1);
 
     return { opacity: progress };
@@ -115,6 +118,9 @@ export const SwipeableCard = React.memo(function SwipeableCard({
   });
 
   const pinBgColor = isPinned ? colors.light.accent.unpin : colors.light.accent.pin;
+  const leftBgColor = colors.light.accent.archive;
+
+  const LeftIcon = leftAction === 'archive' ? Archive : ArchiveRestore;
 
   const containerStyle = useAnimatedStyle(() => ({
     maxHeight: collapseHeight.value * MAX_HEIGHT,
@@ -138,12 +144,12 @@ export const SwipeableCard = React.memo(function SwipeableCard({
               justifyContent: 'center',
               borderRadius: 16,
               paddingRight: 24,
-              backgroundColor: colors.light.accent.delete,
+              backgroundColor: leftBgColor,
             },
-            deleteReveal,
+            leftReveal,
           ]}
         >
-          <Trash2 size={22} color={colors.light.icon.onAccent} strokeWidth={2} />
+          <LeftIcon size={22} color={colors.light.icon.onAccent} strokeWidth={2} />
         </Animated.View>
         <Animated.View
           style={[

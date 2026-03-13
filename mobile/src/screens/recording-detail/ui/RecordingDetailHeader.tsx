@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
 import type { Colors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { Button } from '@/shared/ui';
 
 type RecordingDetailHeaderProps = {
@@ -18,6 +19,8 @@ type RecordingDetailHeaderProps = {
   onShareAudio: () => void;
   onAskAI: () => void;
   onRename: () => void;
+  onArchive: () => void;
+  onUnarchive: () => void;
   onDelete: () => void;
 };
 
@@ -30,10 +33,15 @@ export const RecordingDetailHeader = ({
   onShareAudio,
   onAskAI,
   onRename,
+  onArchive,
+  onUnarchive,
   onDelete,
 }: RecordingDetailHeaderProps) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const theme = useAppTheme();
+  const themeColors = getColors(theme);
+  const isDark = theme === 'dark';
   const iconBtnBg = { backgroundColor: color.background.tertiary };
   const pinActiveStyle = { backgroundColor: color.accent.primary + '1A' };
 
@@ -92,11 +100,15 @@ export const RecordingDetailHeader = ({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         />
         <MenuView
+          key={theme}
           title=""
+          themeVariant={isDark ? 'dark' : 'light'}
           shouldOpenOnLongPress={false}
           onPressAction={({ nativeEvent }) => {
             if (nativeEvent.event === 'rename') onRename();
             if (nativeEvent.event === 'shareAudio') onShareAudio();
+            if (nativeEvent.event === 'archive') onArchive();
+            if (nativeEvent.event === 'unarchive') onUnarchive();
             if (nativeEvent.event === 'delete') onDelete();
           }}
           actions={[
@@ -104,7 +116,8 @@ export const RecordingDetailHeader = ({
               id: 'rename',
               title: t('recordActions.rename'),
               image: 'pencil',
-              imageColor: color.text.primary,
+              imageColor: themeColors.text.primary,
+              titleColor: themeColors.text.primary,
             },
             ...(record.audioPath
               ? [
@@ -112,15 +125,32 @@ export const RecordingDetailHeader = ({
                     id: 'shareAudio' as const,
                     title: t('share.shareAudio'),
                     image: 'square.and.arrow.up' as const,
-                    imageColor: color.text.primary,
+                    imageColor: themeColors.text.primary,
+                    titleColor: themeColors.text.primary,
                   },
                 ]
               : []),
+            record.status === 'archived'
+              ? {
+                  id: 'unarchive' as const,
+                  title: t('recordActions.unarchive'),
+                  image: 'arrow.uturn.backward' as const,
+                  imageColor: themeColors.text.primary,
+                  titleColor: themeColors.text.primary,
+                }
+              : {
+                  id: 'archive' as const,
+                  title: t('recordActions.archive'),
+                  image: 'archivebox' as const,
+                  imageColor: themeColors.text.primary,
+                  titleColor: themeColors.text.primary,
+                },
             {
               id: 'delete',
               title: t('recordActions.delete'),
               image: 'trash',
-              imageColor: color.accent.delete,
+              imageColor: themeColors.accent.delete,
+              titleColor: themeColors.accent.delete,
               attributes: { destructive: true },
             },
           ]}

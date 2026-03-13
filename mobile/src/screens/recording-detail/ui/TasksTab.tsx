@@ -16,6 +16,7 @@ import type { RecordingStatus, TaskItem } from '@/entities/record';
 import { useAddToCalendar } from '@/features/add-to-calendar';
 import { useAddToReminder } from '@/features/add-to-reminder';
 import type { Colors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
 import {
   AiTabErrorBanner,
@@ -48,6 +49,9 @@ export const TasksTab = ({
   onExtract,
   onDismissError,
 }: TasksTabProps) => {
+  const theme = useAppTheme();
+  const themeColors = getColors(theme);
+  const isDark = theme === 'dark';
   const { t } = useTranslation();
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
   const aiModelName = useAiModelName();
@@ -120,13 +124,15 @@ export const TasksTab = ({
             id: 'addToCalendar',
             title: t('tasks.addToCalendar'),
             image: 'calendar',
-            imageColor: color.text.primary,
+            imageColor: themeColors.text.primary,
+            titleColor: themeColors.text.primary,
           },
           {
             id: 'addToReminder',
             title: t('tasks.addToReminder'),
             image: 'bell',
-            imageColor: color.text.primary,
+            imageColor: themeColors.text.primary,
+            titleColor: themeColors.text.primary,
           },
         ];
 
@@ -154,7 +160,9 @@ export const TasksTab = ({
             </Pressable>
             <View style={{ flexShrink: 0 }}>
               <MenuView
+                key={`task-menu-${task.id}-${theme}`}
                 title=""
+                themeVariant={isDark ? 'dark' : 'light'}
                 shouldOpenOnLongPress={false}
                 onPressAction={async ({ nativeEvent }) => {
                   if (nativeEvent.event === 'addToCalendar') {

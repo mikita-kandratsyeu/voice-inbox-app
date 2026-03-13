@@ -25,7 +25,7 @@ export const InboxScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { records, deleteRecord, togglePin, isLoaded } = useRecordStore();
+  const { records, archiveRecord, unarchiveRecord, togglePin, isLoaded } = useRecordStore();
 
   const {
     query,
@@ -67,10 +67,14 @@ export const InboxScreen = () => {
       if (item.type === 'header') {
         return <SectionHeader title={item.title} color={color} isFirst={item.isFirst} />;
       }
+      const isArchivedView = filterStatus === 'archived';
       return (
         <SwipeableCard
           isPinned={item.item.isPinned}
-          onDelete={() => deleteRecord(item.item.id)}
+          leftAction={isArchivedView ? 'unarchive' : 'archive'}
+          onLeftAction={() =>
+            isArchivedView ? unarchiveRecord(item.item.id) : archiveRecord(item.item.id)
+          }
           onPin={() => togglePin(item.item.id)}
         >
           <RecordCard
@@ -82,7 +86,15 @@ export const InboxScreen = () => {
         </SwipeableCard>
       );
     },
-    [color, deleteRecord, togglePin, handleRecordPress, handleStatusPress],
+    [
+      color,
+      filterStatus,
+      archiveRecord,
+      unarchiveRecord,
+      togglePin,
+      handleRecordPress,
+      handleStatusPress,
+    ],
   );
 
   const getItemType = useCallback((item: FlattenedItem) => item.type, []);
@@ -131,7 +143,7 @@ export const InboxScreen = () => {
           />
           {isSearching && filtered.length === 0 ? (
             <EmptySearchState query={query} color={color} />
-          ) : filterStatus !== 'all' && filtered.length === 0 ? (
+          ) : filtered.length === 0 ? (
             <EmptyState
               title={t('inbox.emptyFilterTitle')}
               description={t('inbox.emptyFilterDescription')}
