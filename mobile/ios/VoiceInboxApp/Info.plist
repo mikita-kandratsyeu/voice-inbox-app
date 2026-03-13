@@ -35,8 +35,6 @@
 	</dict>
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use Face ID to quickly unlock the app.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>Adding tasks from notes to Calendar</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>
