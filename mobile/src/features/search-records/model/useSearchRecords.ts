@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform } from 'react-native';
 
@@ -11,6 +11,8 @@ import {
   isEmbeddingAvailable,
   prepareEmbeddingModel,
 } from '@/shared/lib/embeddings';
+
+const SEMANTIC_SEARCH_DEBOUNCE_MS = 500;
 
 const RELEVANCE = {
   title: 5,
@@ -74,6 +76,9 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
       .map(({ record }) => record);
   }, [records, query]);
 
+  const lastSemanticQueryRef = useRef<string>('');
+  const cancelledRef = useRef(false);
+
   useEffect(() => {
     const trimmed = query.trim();
     if (
@@ -84,49 +89,61 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
     ) {
       setSemanticResults(null);
       setIsSemanticSearching(false);
+      lastSemanticQueryRef.current = '';
       return;
     }
 
-    let cancelled = false;
-    setIsSemanticSearching(true);
     setSemanticResults(null);
+    setIsSemanticSearching(true);
+    cancelledRef.current = false;
 
-    const run = async () => {
-      try {
-        const language = getEmbeddingLanguage();
-        await prepareEmbeddingModel(language);
-        const queryEmbedding = await generateEmbedding(trimmed, language);
-        if (cancelled || !queryEmbedding) {
-          setSemanticResults(null);
-          return;
-        }
+    const debounceId = setTimeout(() => {
+      const searchQuery = query.trim();
+      if (!searchQuery) return;
+      lastSemanticQueryRef.current = searchQuery;
 
-        const withEmbedding = records.filter((r): r is VoiceRecord & { embedding: number[] } =>
-          Boolean(r.embedding),
-        );
-        const scored = withEmbedding
-          .map((record) => ({
-            record,
-            score: cosineSimilarity(queryEmbedding, record.embedding),
-          }))
-          .filter(({ score }) => score > 0)
-          .sort((a, b) => b.score - a.score)
-          .map(({ record }) => record);
+      const run = async () => {
+        try {
+          const language = getEmbeddingLanguage();
+          await prepareEmbeddingModel(language);
+          const queryEmbedding = await generateEmbedding(searchQuery, language);
+          if (
+            cancelledRef.current ||
+            !queryEmbedding ||
+            lastSemanticQueryRef.current !== searchQuery
+          ) {
+            return;
+          }
 
-        if (!cancelled) {
+          const withEmbedding = records.filter((r): r is VoiceRecord & { embedding: number[] } =>
+            Boolean(r.embedding),
+          );
+          const scored = withEmbedding
+            .map((record) => ({
+              record,
+              score: cosineSimilarity(queryEmbedding, record.embedding),
+            }))
+            .filter(({ score }) => score > 0)
+            .sort((a, b) => b.score - a.score)
+            .map(({ record }) => record);
+
+          if (cancelledRef.current || lastSemanticQueryRef.current !== searchQuery) return;
+
           setSemanticResults(scored);
+        } catch (err) {
+          if (__DEV__) console.warn('[search] Semantic search failed:', err);
+          if (!cancelledRef.current) setSemanticResults(null);
+        } finally {
+          if (!cancelledRef.current) setIsSemanticSearching(false);
         }
-      } catch (err) {
-        if (__DEV__) console.warn('[search] Semantic search failed:', err);
-        if (!cancelled) setSemanticResults(null);
-      } finally {
-        if (!cancelled) setIsSemanticSearching(false);
-      }
-    };
+      };
 
-    run();
+      run();
+    }, SEMANTIC_SEARCH_DEBOUNCE_MS);
+
     return () => {
-      cancelled = true;
+      cancelledRef.current = true;
+      clearTimeout(debounceId);
     };
   }, [query, records]);
 
