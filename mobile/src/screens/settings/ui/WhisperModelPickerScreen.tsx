@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, Text, useColorScheme, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { WhisperModelId } from '@/entities/settings';
@@ -11,7 +11,7 @@ import {
   WHISPER_MODELS,
 } from '@/entities/settings';
 import { getModelFileSizeFormatted, useModelManager } from '@/features/model-manager';
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader } from '@/shared/ui';
 
@@ -19,7 +19,7 @@ import { WhisperModelCard } from './WhisperModelCard';
 
 export const WhisperModelPickerScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
 

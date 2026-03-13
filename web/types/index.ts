@@ -1,5 +1,7 @@
 export type MessageStatus = 'processing' | 'done' | 'error';
 
+export type RecordClassification = 'personal' | 'work' | 'meeting' | 'idea' | 'other';
+
 export type AiResult = {
   summary: string;
   tasks: Array<{
@@ -8,6 +10,9 @@ export type AiResult = {
     deadline: string | null;
   }>;
   tags: string[];
+  classification?: RecordClassification;
+  keyPhrases?: string[];
+  nextSteps?: string[];
 };
 
 export type Message =
@@ -18,6 +23,9 @@ export type Message =
       summary: string;
       tasks: AiResult['tasks'];
       tags: string[];
+      classification?: RecordClassification;
+      keyPhrases?: string[];
+      nextSteps?: string[];
     }
   | { id: string; status: 'error'; error: string };
 

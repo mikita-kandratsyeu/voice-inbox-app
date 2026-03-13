@@ -7,7 +7,10 @@ import {
   Fingerprint,
   HardDrive,
   Info,
+  Languages,
   Mic,
+  Moon,
+  Settings2,
   Shield,
   Sparkles,
   UploadCloud,
@@ -15,16 +18,7 @@ import {
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Alert,
-  Linking,
-  RefreshControl,
-  ScrollView,
-  Switch,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import { Alert, Linking, RefreshControl, ScrollView, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
@@ -32,7 +26,7 @@ import { useAppLockStore } from '@/entities/app-lock';
 import { useRecordStore } from '@/entities/record';
 import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { exportData, importData } from '@/features/sync-data';
-import { getColors, WEBSITE_URL } from '@/shared/config';
+import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
 import { getAiUsage } from '@/shared/lib/ai-api';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
@@ -40,7 +34,7 @@ import { AiUsageCard } from './AiUsageCard';
 
 export const SettingsScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
 
@@ -50,6 +44,8 @@ export const SettingsScreen = () => {
   const setAutoTranscribeOnSave = useSettingsStore((s) => s.setAutoTranscribeOnSave);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
   const setAutoAiAfterTranscription = useSettingsStore((s) => s.setAutoAiAfterTranscription);
+  const appLanguage = useSettingsStore((s) => s.appLanguage);
+  const appTheme = useSettingsStore((s) => s.appTheme);
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
   const records = useRecordStore((s) => s.records);
   const addRecord = useRecordStore((s) => s.addRecord);
@@ -172,24 +168,6 @@ export const SettingsScreen = () => {
       >
         <AiUsageCard usage={aiUsage} loading={aiUsageLoading} />
 
-        <SettingsSection title={t('settings.sync')} color={color}>
-          <SettingsRow
-            label={isExporting ? t('settings.exporting') : t('settings.export')}
-            value={t('inbox.recordsCount', { count: records.length })}
-            color={color}
-            leftIcon={<UploadCloud size={20} color={color.accent.primary} strokeWidth={1.8} />}
-            onPress={handleExport}
-            isFirst
-          />
-          <SettingsRow
-            label={isImporting ? t('settings.importing') : t('settings.import')}
-            color={color}
-            leftIcon={<Download size={20} color={color.accent.primary} strokeWidth={1.8} />}
-            onPress={handleImport}
-            isLast
-          />
-        </SettingsSection>
-
         <SettingsSection title={t('settings.aiProcessing')} color={color}>
           <SettingsRow
             label={t('settings.aiModel')}
@@ -205,6 +183,12 @@ export const SettingsScreen = () => {
             color={color}
             leftIcon={<Mic size={20} color={color.accent.cache} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('WhisperModelPicker')}
+          />
+          <SettingsRow
+            label={t('settings.aiSettings')}
+            color={color}
+            leftIcon={<Settings2 size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+            onPress={() => navigation.navigate('AiSettings')}
           />
           <SettingsRow
             label={t('settings.autoTranscribeOnSave')}
@@ -241,6 +225,43 @@ export const SettingsScreen = () => {
             }
             showChevron={false}
             onPress={undefined}
+            isLast
+          />
+        </SettingsSection>
+
+        <SettingsSection title={t('settings.sync')} color={color}>
+          <SettingsRow
+            label={isExporting ? t('settings.exporting') : t('settings.export')}
+            value={t('inbox.recordsCount', { count: records.length })}
+            color={color}
+            leftIcon={<UploadCloud size={20} color={color.accent.primary} strokeWidth={1.8} />}
+            onPress={handleExport}
+            isFirst
+          />
+          <SettingsRow
+            label={isImporting ? t('settings.importing') : t('settings.import')}
+            color={color}
+            leftIcon={<Download size={20} color={color.accent.primary} strokeWidth={1.8} />}
+            onPress={handleImport}
+            isLast
+          />
+        </SettingsSection>
+
+        <SettingsSection title={t('settings.appearance')} color={color}>
+          <SettingsRow
+            label={t('settings.appLanguage')}
+            value={t(`appearance.languageOption.${appLanguage}`)}
+            color={color}
+            leftIcon={<Languages size={20} color={color.accent.primary} strokeWidth={1.8} />}
+            onPress={() => navigation.navigate('Appearance')}
+            isFirst
+          />
+          <SettingsRow
+            label={t('settings.appTheme')}
+            value={t(`appearance.themeOption.${appTheme}`)}
+            color={color}
+            leftIcon={<Moon size={20} color={color.accent.primary} strokeWidth={1.8} />}
+            onPress={() => navigation.navigate('Appearance')}
             isLast
           />
         </SettingsSection>

@@ -1,11 +1,11 @@
 import { useNavigation } from '@react-navigation/native';
 import { Bot, Clock, FileText, Mic } from 'lucide-react-native';
 import React from 'react';
-import { Alert, ScrollView, Text, useColorScheme, View } from 'react-native';
+import { Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 const StatCard = ({
@@ -34,7 +34,7 @@ const StatCard = ({
 );
 
 export const AppStatsScreen = () => {
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const records = useRecordStore((s) => s.records);

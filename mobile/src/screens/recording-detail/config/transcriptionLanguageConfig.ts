@@ -7,12 +7,10 @@ export const TRANSCRIPTION_LANGUAGES: TranscriptionLanguage[] = [
   'de',
   'fr',
   'es',
-  'it',
-  'pt',
   'zh',
   'ja',
-  'ko',
-  'ar',
-  'uk',
-  'pl',
 ];
+
+export const TRANSLATE_LANGUAGES = TRANSCRIPTION_LANGUAGES.filter(
+  (l): l is Exclude<TranscriptionLanguage, 'auto'> => l !== 'auto',
+);

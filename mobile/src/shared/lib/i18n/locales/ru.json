@@ -39,7 +39,12 @@
       "moreFilters": "Фильтры",
       "read": "Прочитанные",
       "archived": "В архиве",
-      "pinned": "Закреплённые"
+      "pinned": "Закреплённые",
+      "personal": "Личное",
+      "work": "Работа",
+      "meeting": "Встреча",
+      "idea": "Идея",
+      "other": "Другое"
     },
     "sort": {
       "dateDesc": "Сначала новые",
@@ -80,6 +85,12 @@
     "editTranscript": "Редактировать",
     "editTranscriptTitle": "Редактирование",
     "retranscribe": "Перетранскрибировать",
+    "translate": "Перевести",
+    "translating": "Перевод...",
+    "showOriginal": "Показать оригинал",
+    "showTranslation": "Показать перевод ({{lang}})",
+    "translateLimitReached": "Лимит переводов исчерпан. Попробуйте на следующей неделе.",
+    "translateError": "Не удалось перевести. Проверьте подключение и попробуйте снова.",
     "cancel": "Отменить",
     "modelNotDownloaded": "Модель не скачана",
     "modelNotDownloadedHint": "Для транскрипции необходимо скачать модель Whisper в настройках.",
@@ -115,6 +126,9 @@
     "askErrorContinueHint": "Закройте окно, чтобы просмотреть сводку и задачи.",
     "askAnother": "Задать другой вопрос",
     "continueViewing": "Продолжить просмотр",
+    "keyPhrases": "Ключевые фразы",
+    "nextSteps": "Что сделать дальше",
+    "relatedNotes": "Похожие заметки",
     "accessibility": {
       "cardLabel": "Голосовая заметка {{title}}, записана {{date}}, длительность {{duration}}",
       "tagsSuffix": ", теги: {{tags}}"
@@ -173,7 +187,8 @@
       "remaining": "Осталось: {{count}}",
       "exhausted": "Лимит исчерпан",
       "resetAt": "Сброс: {{date}}",
-      "loading": "Загрузка..."
+      "loading": "Загрузка...",
+      "unavailable": "—"
     },
     "sync": "Синхронизация",
     "export": "Экспорт данных",
@@ -182,9 +197,13 @@
     "importing": "Импорт...",
     "aiProcessing": "ИИ обработка",
     "aiModel": "ИИ модель",
+    "aiSettings": "Настройки ИИ",
     "transcription": "Транскрипция",
     "autoTranscribeOnSave": "Транскрибировать автоматически",
     "autoAiAfterTranscription": "Авто-сводка после транскрипции",
+    "appearance": "Внешний вид",
+    "appLanguage": "Язык приложения",
+    "appTheme": "Тема",
     "device": "Устройство",
     "appLock": "Блокировка приложения",
     "offlineStorage": "Офлайн хранилище",
@@ -194,6 +213,21 @@
     "about": "О приложении",
     "on": "Вкл",
     "off": "Выкл"
+  },
+  "appearance": {
+    "title": "Внешний вид",
+    "language": "Язык",
+    "theme": "Тема",
+    "languageOption": {
+      "system": "Система",
+      "en": "English",
+      "ru": "Русский"
+    },
+    "themeOption": {
+      "system": "Как в системе",
+      "light": "Светлая",
+      "dark": "Тёмная"
+    }
   },
   "appLock": {
     "title": "Блокировка приложения",
@@ -233,21 +267,22 @@
     "clear": "Очистить",
     "deleteAllData": "Удалить все данные",
     "deleteAllConfirm": "Все записи, транскрипты и аудио будут удалены безвозвратно. Продолжить?",
-    "cacheCleared": "Кэш очищен. Освобождено: {{ freed }} КБ",
+    "cacheCleared": "Кэш очищен. Освобождено: {{ freed }} KB",
+    "cacheClearedMb": "Кэш очищен. Освобождено: {{ freed }} MB",
     "cacheClearError": "Не удалось очистить кэш",
     "loading": "Загрузка...",
     "used": "Использовано",
     "whisperModels": "Whisper модели",
     "cacheLabel": "Кэш",
-    "audioFilesValue": "{{count}} файлов · {{size}} МБ",
-    "mb": "МБ",
-    "gb": "ГБ"
+    "audioFilesValue": "{{count}} файлов · {{size}} MB",
+    "mb": "MB",
+    "gb": "GB"
   },
   "whisper": {
     "modelTitle": "Модель транскрипции",
     "modelDescription": "Выберите модель Whisper для офлайн-транскрипции. Большие модели точнее, но требуют больше места.",
     "downloadModel": "Скачать модель",
-    "downloadConfirm": "Для загрузки потребуется ~{{ size }} МБ. Продолжить?",
+    "downloadConfirm": "Для загрузки потребуется ~{{ size }} MB. Продолжить?",
     "deleteModel": "Удалить модель",
     "deleteConfirm": "Модель будет удалена с устройства. Продолжить?",
     "deleteConfirmWithName": "Модель Whisper {{ name }} будет удалена с устройства. Продолжить?",
@@ -282,6 +317,22 @@
       "mediumDesc": "Высокое качество транскрипции",
       "large_v3Desc": "Максимальное качество, поддержка 99 языков"
     }
+  },
+  "aiSettings": {
+    "title": "Настройки ИИ",
+    "description": "Настройте, как ИИ обрабатывает транскрипты. Изменения применятся к следующей обработке.",
+    "summaryStyle": "Стиль сводки",
+    "summaryStyle.brief": "Краткая (1–2 предложения)",
+    "summaryStyle.standard": "Стандартная (2–4 предложения)",
+    "summaryStyle.detailed": "Подробная (4–6 предложений)",
+    "taskStrictness": "Извлечение задач",
+    "taskStrictness.strict": "Строгая (только явные задачи)",
+    "taskStrictness.balanced": "Сбалансированная",
+    "taskStrictness.soft": "Мягкая (включая намерения)",
+    "outputLanguage": "Язык вывода",
+    "outputLanguage.same": "Как в транскрипте",
+    "outputLanguage.ru": "Всегда русский",
+    "outputLanguage.en": "Всегда английский"
   },
   "aiModels": {
     "title": "ИИ модель",
@@ -350,8 +401,8 @@
   "device": {
     "insufficientRam": "Недостаточно RAM (нужно ~{{ required }}, доступно {{ available }})",
     "lowDiskSpace": "Мало свободного места (нужно ~{{ required }}, доступно {{ available }})",
-    "mb": "{{ value }} МБ",
-    "gb": "{{ value }} ГБ"
+    "mb": "{{ value }} MB",
+    "gb": "{{ value }} GB"
   },
   "about": {
     "title": "О приложении",
@@ -360,7 +411,7 @@
     "showOnboarding": "Показать онбординг",
     "helpAndFeedback": "Помощь и обратная связь",
     "contactSupport": "Написать в поддержку",
-    "description": "Offline-first приложение для голосовых заметок. Захватывайте идеи голосом, получайте транскрипты, саммари и задачи с помощью ИИ.",
+    "description": "Голосовые заметки с транскрипцией на устройстве. Резюме и задачи — с помощью ИИ.",
     "copyright": "© {{ year }} Voice Inbox AI. Все права защищены."
   },
   "tasks": {
@@ -371,6 +422,13 @@
     "addedToCalendar": "Добавлено в Календарь",
     "addedToReminders": "Добавлено в Напоминания",
     "permissionDenied": "Доступ запрещён. Включите в Настройках."
+  },
+  "classification": {
+    "personal": "Личное",
+    "work": "Работа",
+    "meeting": "Встреча",
+    "idea": "Идея",
+    "other": "Другое"
   },
   "transcription": {
     "progress": "Обработано {{ current }} из {{ total }} фрагментов...",

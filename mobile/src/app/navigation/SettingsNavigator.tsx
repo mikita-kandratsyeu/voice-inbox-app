@@ -4,6 +4,8 @@ import React from 'react';
 import {
   AboutAppScreen,
   AIModelPickerScreen,
+  AiSettingsScreen,
+  AppearanceScreen,
   AppLockSetupScreen,
   SettingsScreen,
   StorageDetailsScreen,
@@ -18,8 +20,18 @@ export const SettingsNavigator = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="Settings" component={SettingsScreen} />
     <Stack.Screen
+      name="Appearance"
+      component={AppearanceScreen}
+      options={{ animation: 'slide_from_right' }}
+    />
+    <Stack.Screen
       name="AIModelPicker"
       component={AIModelPickerScreen}
+      options={{ animation: 'slide_from_right' }}
+    />
+    <Stack.Screen
+      name="AiSettings"
+      component={AiSettingsScreen}
       options={{ animation: 'slide_from_right' }}
     />
     <Stack.Screen

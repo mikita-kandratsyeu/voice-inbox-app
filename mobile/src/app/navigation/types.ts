@@ -15,7 +15,9 @@ export type RootStackParamList = {
 
 export type SettingsStackParamList = {
   Settings: undefined;
+  Appearance: undefined;
   AIModelPicker: undefined;
+  AiSettings: undefined;
   WhisperModelPicker: undefined;
   StorageDetails: undefined;
   AboutApp: undefined;

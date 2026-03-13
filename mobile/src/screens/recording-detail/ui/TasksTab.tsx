@@ -27,6 +27,7 @@ import {
 
 type TasksTabProps = {
   tasks: TaskItem[];
+  nextSteps?: string[];
   status: RecordingStatus;
   hasTranscript?: boolean;
   recordTitle: string;
@@ -38,6 +39,7 @@ type TasksTabProps = {
 
 export const TasksTab = ({
   tasks,
+  nextSteps = [],
   status,
   hasTranscript = true,
   recordTitle,
@@ -185,6 +187,29 @@ export const TasksTab = ({
           </View>
         );
       })}
+      {nextSteps.length > 0 && (
+        <View className="mt-4 gap-2">
+          <Text className="text-xs font-semibold uppercase" style={{ color: color.text.secondary }}>
+            {t('recordingDetail.nextSteps')}
+          </Text>
+          {nextSteps.map((step, idx) => (
+            <View
+              key={idx}
+              className="flex-row items-start gap-2"
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: 8,
+                backgroundColor: color.background.tertiary,
+              }}
+            >
+              <Text className="text-sm flex-1" style={{ color: color.text.primary }}>
+                {step}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
       <View className="mt-4 flex-row items-center gap-3">
         <Button
           variant="ghost"

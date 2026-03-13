@@ -3,14 +3,14 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList } from '@shopify/flash-list';
 import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Platform, useColorScheme, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, View } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { RecordCard, useRecordStore } from '@/entities/record';
 import { InboxFilterBar, useInboxFiltersReset } from '@/features/inbox-filters';
 import { SearchBar, useSearchRecords } from '@/features/search-records';
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { EmptyState, SectionHeader, SwipeableCard } from '@/shared/ui';
 
 import { EmptySearchState } from './EmptySearchState';
@@ -23,7 +23,7 @@ type FlattenedItem =
 
 export const InboxScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { records, deleteRecord, togglePin, isLoaded } = useRecordStore();
 

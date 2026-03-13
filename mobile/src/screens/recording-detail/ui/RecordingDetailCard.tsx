@@ -33,13 +33,29 @@ export const RecordingDetailCard = ({ record, color }: RecordingDetailCardProps)
       accessibilityRole="summary"
       accessibilityLabel={accessibilityLabel}
     >
-      <Text
-        className="text-xl font-bold tracking-tight"
-        style={{ color: color.text.primary }}
-        numberOfLines={2}
-      >
-        {record.title}
-      </Text>
+      <View className="flex-row items-center gap-2 flex-wrap">
+        <Text
+          className="flex-1 text-xl font-bold tracking-tight min-w-0"
+          style={{ color: color.text.primary }}
+          numberOfLines={2}
+        >
+          {record.title}
+        </Text>
+        {record.classification && (
+          <View
+            style={{
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 8,
+              backgroundColor: color.background.tertiary,
+            }}
+          >
+            <Text style={{ fontSize: 12, color: color.text.secondary }}>
+              {t(`classification.${record.classification}`)}
+            </Text>
+          </View>
+        )}
+      </View>
 
       {record.tags && record.tags.length > 0 && (
         <View className="flex-row flex-wrap gap-2">

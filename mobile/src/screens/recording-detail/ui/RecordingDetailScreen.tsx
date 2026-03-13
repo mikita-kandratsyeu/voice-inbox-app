@@ -1,9 +1,9 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, useColorScheme, View } from 'react-native';
+import { Alert, ScrollView, View } from 'react-native';
 import RNFS from 'react-native-fs';
 
 import type { RootStackParamList } from '@/app/navigation/types';
@@ -15,7 +15,7 @@ import { useAiProcessing } from '@/features/ai-processing';
 import { useRecordActions } from '@/features/record-actions';
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { AudioPlayer } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
@@ -24,6 +24,7 @@ import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { RecordingDetailCard } from './RecordingDetailCard';
 import { RecordingDetailHeader } from './RecordingDetailHeader';
 import { RecordingDetailTabBar } from './RecordingDetailTabBar';
+import { RelatedNotesSection } from './RelatedNotesSection';
 import { SummaryTab } from './SummaryTab';
 import { TasksTab } from './TasksTab';
 import { TranscriptContent } from './TranscriptContent';
@@ -32,7 +33,7 @@ export const RecordingDetailScreen = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'RecordingDetail'>>();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
 
   const { record: routeRecord } = route.params;
   const { records, togglePin, toggleTask, setSummaryStatus, setTasksStatus, clearAudioPath } =
@@ -49,8 +50,12 @@ export const RecordingDetailScreen = () => {
     globalTranscriptionLanguage,
   );
 
+  const scrollRef = useRef<ScrollView>(null);
+
   useEffect(() => {
     setRecordLanguage(globalTranscriptionLanguage);
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+    setActiveTab('transcript');
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset when switching records
   }, [routeRecord.id]);
 
@@ -142,6 +147,7 @@ export const RecordingDetailScreen = () => {
       />
 
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
@@ -179,6 +185,7 @@ export const RecordingDetailScreen = () => {
           {activeTab === 'summary' && (
             <SummaryTab
               summary={liveRecord.summary ?? ''}
+              keyPhrases={liveRecord.keyPhrases}
               status={liveRecord.summaryStatus ?? 'idle'}
               hasTranscript={Boolean(liveRecord.transcript)}
               color={color}
@@ -192,6 +199,7 @@ export const RecordingDetailScreen = () => {
           {activeTab === 'tasks' && (
             <TasksTab
               tasks={liveRecord.tasks ?? []}
+              nextSteps={liveRecord.nextSteps}
               status={liveRecord.tasksStatus ?? 'idle'}
               hasTranscript={Boolean(liveRecord.transcript)}
               recordTitle={liveRecord.title}
@@ -205,6 +213,8 @@ export const RecordingDetailScreen = () => {
             />
           )}
         </View>
+
+        <RelatedNotesSection recordId={liveRecord.id} color={color} />
 
         <AskAIModal
           visible={showAskAIModal}

@@ -1,10 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
-import { View } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { Alert, View } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
+import { useTranslate } from '@/features/translate';
 import type { Colors } from '@/shared/config';
 
 import { AiStatusBadge } from './AiStatusBadge';
@@ -25,7 +27,10 @@ export const TranscriptContent = ({
   onTranscribe,
   onCancelTranscription,
 }: TranscriptContentProps) => {
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { translate, isTranslating } = useTranslate(record.id);
+
   if (record.aiStatus === 'processing') {
     return (
       <TranscriptProcessing
@@ -47,6 +52,23 @@ export const TranscriptContent = ({
   const isAiProcessing =
     record.summaryStatus === 'processing' || record.tasksStatus === 'processing';
 
+  const handleTranslate = async (targetLanguage: string) => {
+    const result = await translate(targetLanguage);
+
+    if (!result.ok) {
+      const message =
+        result.error === 'limit'
+          ? t('recordingDetail.translateLimitReached')
+          : t('recordingDetail.translateError');
+
+      Alert.alert(t('common.error'), message);
+
+      return false;
+    }
+
+    return true;
+  };
+
   return (
     <>
       {showStatusBadge && (
@@ -56,10 +78,14 @@ export const TranscriptContent = ({
       )}
       <TranscriptTab
         segments={record.transcriptSegments ?? []}
+        translatedTranscript={record.translatedTranscript}
+        translationLanguage={record.translationLanguage}
         color={color}
         hasAudio={!!record.audioPath}
         onTranscribe={onTranscribe}
         onEditTranscript={() => navigation.navigate('EditTranscript', { record })}
+        onTranslate={handleTranslate}
+        isTranslating={isTranslating}
         isAiProcessing={isAiProcessing}
       />
     </>

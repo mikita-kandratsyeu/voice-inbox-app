@@ -5,20 +5,40 @@ import { storage } from '@/shared/lib/async-storage';
 import { AI_MODELS } from './constants';
 import type {
   AIModelId,
+  AiOutputLanguage,
+  AppLanguage,
+  AppTheme,
   SettingsState,
+  SummaryStyle,
+  TaskStrictness,
   TranscriptionLanguage,
   WhisperModelId,
   WhisperModelStatus,
 } from './types';
 
 const KEYS = {
+  APP_THEME: 'settings.appTheme',
+  APP_LANGUAGE: 'settings.appLanguage',
   AI_MODEL: 'settings.aiModel',
   WHISPER_MODEL: 'settings.whisperModel',
   WHISPER_STATUSES: 'settings.whisperStatuses',
   TRANSCRIPTION_LANGUAGE: 'settings.transcriptionLanguage',
+  SUMMARY_STYLE: 'settings.summaryStyle',
+  TASK_STRICTNESS: 'settings.taskStrictness',
+  AI_OUTPUT_LANGUAGE: 'settings.aiOutputLanguage',
   AUTO_TRANSCRIBE_ON_SAVE: 'settings.autoTranscribeOnSave',
   AUTO_AI_AFTER_TRANSCRIPTION: 'settings.autoAiAfterTranscription',
 } as const;
+
+const getStoredAppTheme = (): AppTheme => {
+  const val = storage.getString(KEYS.APP_THEME);
+  return (val as AppTheme) ?? 'system';
+};
+
+const getStoredAppLanguage = (): AppLanguage => {
+  const val = storage.getString(KEYS.APP_LANGUAGE);
+  return (val as AppLanguage) ?? 'system';
+};
 
 const getStoredAIModel = (): AIModelId => {
   const val = storage.getString(KEYS.AI_MODEL);
@@ -47,6 +67,21 @@ const getStoredAutoAiAfterTranscription = (): boolean => {
   return val === 'true';
 };
 
+const getStoredSummaryStyle = (): SummaryStyle => {
+  const val = storage.getString(KEYS.SUMMARY_STYLE);
+  return (val as SummaryStyle) ?? 'standard';
+};
+
+const getStoredTaskStrictness = (): TaskStrictness => {
+  const val = storage.getString(KEYS.TASK_STRICTNESS);
+  return (val as TaskStrictness) ?? 'balanced';
+};
+
+const getStoredAiOutputLanguage = (): AiOutputLanguage => {
+  const val = storage.getString(KEYS.AI_OUTPUT_LANGUAGE);
+  return (val as AiOutputLanguage) ?? 'same';
+};
+
 const getStoredWhisperStatuses = (): Partial<Record<WhisperModelId, WhisperModelStatus>> => {
   try {
     const raw = storage.getString(KEYS.WHISPER_STATUSES);
@@ -58,14 +93,29 @@ const getStoredWhisperStatuses = (): Partial<Record<WhisperModelId, WhisperModel
 };
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
+  appTheme: getStoredAppTheme(),
+  appLanguage: getStoredAppLanguage(),
   selectedAIModel: getStoredAIModel(),
   selectedWhisperModel: getStoredWhisperModel(),
   transcriptionLanguage: getStoredTranscriptionLanguage(),
+  summaryStyle: getStoredSummaryStyle(),
+  taskStrictness: getStoredTaskStrictness(),
+  aiOutputLanguage: getStoredAiOutputLanguage(),
   autoTranscribeOnSave: getStoredAutoTranscribeOnSave(),
   autoAiAfterTranscription: getStoredAutoAiAfterTranscription(),
   whisperModelStatuses: getStoredWhisperStatuses(),
   whisperDownloadProgress: {},
   whisperDownloadBytes: {},
+
+  setAppTheme: (value: AppTheme) => {
+    storage.set(KEYS.APP_THEME, value);
+    set({ appTheme: value });
+  },
+
+  setAppLanguage: (value: AppLanguage) => {
+    storage.set(KEYS.APP_LANGUAGE, value);
+    set({ appLanguage: value });
+  },
 
   setAIModel: (id: AIModelId) => {
     storage.set(KEYS.AI_MODEL, id);
@@ -80,6 +130,21 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => {
     storage.set(KEYS.TRANSCRIPTION_LANGUAGE, lang);
     set({ transcriptionLanguage: lang });
+  },
+
+  setSummaryStyle: (value: SummaryStyle) => {
+    storage.set(KEYS.SUMMARY_STYLE, value);
+    set({ summaryStyle: value });
+  },
+
+  setTaskStrictness: (value: TaskStrictness) => {
+    storage.set(KEYS.TASK_STRICTNESS, value);
+    set({ taskStrictness: value });
+  },
+
+  setAiOutputLanguage: (value: AiOutputLanguage) => {
+    storage.set(KEYS.AI_OUTPUT_LANGUAGE, value);
+    set({ aiOutputLanguage: value });
   },
 
   setAutoTranscribeOnSave: (value: boolean) => {

@@ -1,8 +1,8 @@
 import React, { memo, useEffect } from 'react';
-import { Text, useColorScheme } from 'react-native';
+import { Text } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 
 import { MAX_RECORDING_MS, WARNING_REMAINING_MS } from '../config';
 
@@ -11,7 +11,7 @@ type RecordLimitBarProps = {
 };
 
 export const RecordLimitBar = memo(({ elapsedMs }: RecordLimitBarProps) => {
-  const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
+  const scheme = useAppTheme();
   const c = getColors(scheme);
 
   const opacity = useSharedValue(0);

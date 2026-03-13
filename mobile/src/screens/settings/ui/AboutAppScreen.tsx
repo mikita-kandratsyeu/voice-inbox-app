@@ -2,19 +2,19 @@ import { useNavigation } from '@react-navigation/native';
 import { BookOpen, Mail, Tag } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Linking, ScrollView, Text, useColorScheme, View } from 'react-native';
+import { Image, Linking, ScrollView, Text, View } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useOnboardingStore } from '@/features/onboarding';
-import { getColors, SUPPORT_EMAIL } from '@/shared/config';
+import { getColors, SUPPORT_EMAIL, useAppTheme } from '@/shared/config';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 const APP_VERSION = DeviceInfoModule.version;
 
 export const AboutAppScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const setForceShowOnboarding = useOnboardingStore((s) => s.setForceShow);

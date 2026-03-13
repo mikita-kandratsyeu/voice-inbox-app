@@ -6,15 +6,23 @@ import {
   validateDeviceId,
   validateRequiredStrings,
 } from '@/lib/api';
+import { buildAiProcessingPrompt } from '@/lib/prompts';
 import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
 import { createMessage } from '@/services/message.service';
 import { NextResponse } from 'next/server';
+
+type AiProcessingOptions = {
+  summaryStyle?: 'brief' | 'standard' | 'detailed';
+  taskStrictness?: 'strict' | 'balanced' | 'soft';
+  outputLanguage?: 'same' | 'ru' | 'en';
+};
 
 type CreateMessageBody = {
   id?: unknown;
   transcript?: unknown;
   model?: unknown;
   systemPrompt?: unknown;
+  options?: AiProcessingOptions;
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
@@ -42,20 +50,33 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     { value: body.id, name: 'id' },
     { value: body.transcript, name: 'transcript' },
     { value: body.model, name: 'model' },
-    { value: body.systemPrompt, name: 'systemPrompt' },
   ]);
   if (validationError) {
     return apiError(validationError, HttpStatus.BAD_REQUEST);
   }
 
-  const { id, transcript, model, systemPrompt } = body as {
+  const { id, transcript, model, systemPrompt, options } = body as {
     id: string;
     transcript: string;
     model: string;
-    systemPrompt: string;
+    systemPrompt?: string;
+    options?: AiProcessingOptions;
   };
 
-  const result = await createMessage(id, transcript, model, systemPrompt, deviceIdTrimmed);
+  const resolvedSystemPrompt =
+    options != null ? buildAiProcessingPrompt(options) : (systemPrompt ?? '');
+
+  if (!resolvedSystemPrompt.trim()) {
+    return apiError('systemPrompt or options is required', HttpStatus.BAD_REQUEST);
+  }
+
+  const result = await createMessage(
+    id,
+    transcript,
+    model,
+    resolvedSystemPrompt,
+    deviceIdTrimmed,
+  );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
     return NextResponse.json(

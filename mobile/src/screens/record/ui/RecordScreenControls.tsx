@@ -1,10 +1,10 @@
 import { Check, Pause, Play } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, useColorScheme, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { hapticSelection, hapticSuccess } from '@/shared/lib';
 
 import type { RecordingState } from '../config';
@@ -22,7 +22,7 @@ export const RecordScreenControls = ({
   onDonePress,
 }: RecordScreenControlsProps) => {
   const { t } = useTranslation();
-  const scheme = (useColorScheme() ?? 'dark') as 'light' | 'dark';
+  const scheme = useAppTheme();
   const c = getColors(scheme);
 
   const insets = useSafeAreaInsets();

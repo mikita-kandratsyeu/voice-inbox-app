@@ -3,12 +3,12 @@ import {
   createBottomTabNavigator,
 } from '@react-navigation/bottom-tabs';
 import React from 'react';
-import { useColorScheme, View } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { InboxScreen } from '@/screens/inbox';
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 
 import { TAB_ICON_SIZE, TAB_ICONS, TAB_LABELS } from './config';
 import { SettingsNavigator } from './SettingsNavigator';
@@ -19,11 +19,11 @@ const Tab = createBottomTabNavigator<BottomTabParamList>();
 
 export const BottomTabNavigator = () => {
   const insets = useSafeAreaInsets();
-  const isDark = useColorScheme() === 'dark';
+  const theme = useAppTheme();
   const tabBarHeight = 60 + insets.bottom;
   const inboxFiltersReset = useInboxFiltersReset();
 
-  const color = getColors(isDark ? 'dark' : 'light');
+  const color = getColors(theme);
   const tabBg = color.background.primary;
   const tabBorder = color.border.default;
   const tabActive = color.accent.primary;

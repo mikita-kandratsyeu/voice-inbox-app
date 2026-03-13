@@ -2,17 +2,17 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Fingerprint, ScanFace } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppLockStore } from '@/entities/app-lock';
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 
 import { PinInput } from './PinInput';
 
 export const LockScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);

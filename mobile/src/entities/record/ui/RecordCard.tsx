@@ -87,13 +87,37 @@ export const RecordCard = React.memo(function RecordCard({
         )}
       </View>
 
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-        <Clock size={14} color={color.icon.muted} strokeWidth={2} />
-        <Text style={[textSecondaryStyle, { marginLeft: 4, fontSize: 12 }]}>
-          {item.duration}
-          {'  '}
-          {formatRelativeTime(item.createdAt, i18n.language)}
-        </Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: 12,
+          gap: 8,
+          flexWrap: 'wrap',
+        }}
+      >
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Clock size={14} color={color.icon.muted} strokeWidth={2} />
+          <Text style={[textSecondaryStyle, { marginLeft: 4, fontSize: 12 }]}>
+            {item.duration}
+            {'  '}
+            {formatRelativeTime(item.createdAt, i18n.language)}
+          </Text>
+        </View>
+        {item.classification && (
+          <View
+            style={{
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+              borderRadius: 6,
+              backgroundColor: color.background.tertiary,
+            }}
+          >
+            <Text style={[textSecondaryStyle, { fontSize: 11 }]}>
+              {i18n.t(`classification.${item.classification}`)}
+            </Text>
+          </View>
+        )}
       </View>
       {Boolean(item.transcript) && (
         <Text
@@ -106,7 +130,7 @@ export const RecordCard = React.memo(function RecordCard({
       {hasTags && (
         <View className="flex-row flex-wrap gap-2">
           {item.tags!.map((tag) => (
-            <Tag key={tag} label={tag} />
+            <Tag key={tag} label={tag} color={color} />
           ))}
         </View>
       )}

@@ -1,7 +1,7 @@
 import { AlertCircle, Loader, MicOff } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -11,7 +11,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { getColors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 
 import type { RecordingStatus } from '../model/types';
 
@@ -34,7 +34,7 @@ export const AiStatusPill = ({
   onPress,
 }: AiStatusPillProps) => {
   const { t } = useTranslation();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
   const rotation = useSharedValue(0);
 
   const aiProcessing = isAiProcessing(summaryStatus) || isAiProcessing(tasksStatus);

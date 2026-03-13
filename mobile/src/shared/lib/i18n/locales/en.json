@@ -39,7 +39,12 @@
       "moreFilters": "Filters",
       "read": "Read",
       "archived": "Archived",
-      "pinned": "Pinned"
+      "pinned": "Pinned",
+      "personal": "Personal",
+      "work": "Work",
+      "meeting": "Meeting",
+      "idea": "Idea",
+      "other": "Other"
     },
     "sort": {
       "dateDesc": "Newest first",
@@ -80,6 +85,12 @@
     "editTranscript": "Edit",
     "editTranscriptTitle": "Edit",
     "retranscribe": "Retranscribe",
+    "translate": "Translate",
+    "translating": "Translating...",
+    "showOriginal": "Show original",
+    "showTranslation": "Show translation ({{lang}})",
+    "translateLimitReached": "Translation limit reached. Try again next week.",
+    "translateError": "Failed to translate. Check your connection and try again.",
     "cancel": "Cancel",
     "modelNotDownloaded": "Model not downloaded",
     "modelNotDownloadedHint": "Download the Whisper model in Settings to transcribe.",
@@ -115,6 +126,9 @@
     "askErrorContinueHint": "Close to view summary and tasks.",
     "askAnother": "Ask another question",
     "continueViewing": "Continue viewing",
+    "keyPhrases": "Key phrases",
+    "nextSteps": "What to do next",
+    "relatedNotes": "Similar notes",
     "accessibility": {
       "cardLabel": "Voice note {{title}}, recorded {{date}}, duration {{duration}}",
       "tagsSuffix": ", tags: {{tags}}"
@@ -173,7 +187,8 @@
       "remaining": "Remaining: {{count}}",
       "exhausted": "Limit exhausted",
       "resetAt": "Resets: {{date}}",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "unavailable": "—"
     },
     "sync": "Sync",
     "export": "Export data",
@@ -182,9 +197,13 @@
     "importing": "Importing...",
     "aiProcessing": "AI processing",
     "aiModel": "AI model",
+    "aiSettings": "AI settings",
     "transcription": "Transcription",
     "autoTranscribeOnSave": "Transcribe automatically",
     "autoAiAfterTranscription": "Auto-summary after transcription",
+    "appearance": "Appearance",
+    "appLanguage": "App language",
+    "appTheme": "Theme",
     "device": "Device",
     "appLock": "App lock",
     "offlineStorage": "Offline storage",
@@ -194,6 +213,21 @@
     "about": "About",
     "on": "On",
     "off": "Off"
+  },
+  "appearance": {
+    "title": "Appearance",
+    "language": "Language",
+    "theme": "Theme",
+    "languageOption": {
+      "system": "System",
+      "en": "English",
+      "ru": "Russian"
+    },
+    "themeOption": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    }
   },
   "appLock": {
     "title": "App lock",
@@ -234,6 +268,7 @@
     "deleteAllData": "Delete all data",
     "deleteAllConfirm": "All records, transcripts and audio will be permanently deleted. Continue?",
     "cacheCleared": "Cache cleared. Freed: {{ freed }} KB",
+    "cacheClearedMb": "Cache cleared. Freed: {{ freed }} MB",
     "cacheClearError": "Failed to clear cache",
     "loading": "Loading...",
     "used": "Used",
@@ -282,6 +317,22 @@
       "mediumDesc": "High transcription quality",
       "large_v3Desc": "Maximum quality, 99 languages support"
     }
+  },
+  "aiSettings": {
+    "title": "AI settings",
+    "description": "Customize how AI processes your transcripts. Changes apply to the next processing.",
+    "summaryStyle": "Summary style",
+    "summaryStyle.brief": "Brief (1–2 sentences)",
+    "summaryStyle.standard": "Standard (2–4 sentences)",
+    "summaryStyle.detailed": "Detailed (4–6 sentences)",
+    "taskStrictness": "Task extraction",
+    "taskStrictness.strict": "Strict (explicit tasks only)",
+    "taskStrictness.balanced": "Balanced",
+    "taskStrictness.soft": "Soft (include intentions)",
+    "outputLanguage": "Output language",
+    "outputLanguage.same": "Same as transcript",
+    "outputLanguage.ru": "Always Russian",
+    "outputLanguage.en": "Always English"
   },
   "aiModels": {
     "title": "AI model",
@@ -360,7 +411,7 @@
     "showOnboarding": "Show onboarding",
     "helpAndFeedback": "Help and feedback",
     "contactSupport": "Contact support",
-    "description": "Offline-first app for voice notes. Capture ideas with voice, get transcripts, summaries and tasks with AI.",
+    "description": "Voice notes with on-device transcription. Summaries and tasks — with AI.",
     "copyright": "© {{ year }} Voice Inbox AI. All rights reserved."
   },
   "tasks": {
@@ -371,6 +422,13 @@
     "addedToCalendar": "Added to Calendar",
     "addedToReminders": "Added to Reminders",
     "permissionDenied": "Permission denied. Enable access in Settings."
+  },
+  "classification": {
+    "personal": "Personal",
+    "work": "Work",
+    "meeting": "Meeting",
+    "idea": "Idea",
+    "other": "Other"
   },
   "transcription": {
     "progress": "Processed {{ current }} of {{ total }} segments...",

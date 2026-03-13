@@ -10,7 +10,19 @@ import { hapticSelection } from '@/shared/lib';
 
 const PRIMARY_FILTERS: InboxFilterStatus[] = ['all', 'pinned'];
 
-const MENU_FILTERS: InboxFilterStatus[] = ['withoutTranscript', 'withoutSummary'];
+const CLASSIFICATION_FILTERS: InboxFilterStatus[] = [
+  'personal',
+  'work',
+  'meeting',
+  'idea',
+  'other',
+];
+
+const MENU_FILTERS: InboxFilterStatus[] = [
+  'withoutTranscript',
+  'withoutSummary',
+  ...CLASSIFICATION_FILTERS,
+];
 
 const SORT_OPTIONS: InboxSortOption[] = [
   'dateDesc',

@@ -9,7 +9,6 @@ import {
   Linking,
   Text,
   TouchableOpacity,
-  useColorScheme,
   View,
 } from 'react-native';
 import Animated, {
@@ -27,7 +26,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useSettingsStore } from '@/entities/settings';
 import { useModelManager } from '@/features/model-manager';
-import { getColors, WEBSITE_URL } from '@/shared/config';
+import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
 import { getTermsAgreedAt, setHasSeenOnboarding, setTermsAgreedAt } from '../lib/onboardingStorage';
@@ -418,7 +417,7 @@ const SlideItem = ({
 
 export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const { t } = useTranslation();
-  const color = getColors(useColorScheme() === 'dark' ? 'dark' : 'light');
+  const color = getColors(useAppTheme());
   const slides = useMemo(() => getOnboardingSlides(color), [color]);
   const slideColors = useMemo(() => {
     const colors = slides.map((s) => s.iconColor);
@@ -523,16 +522,19 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
       }}
     >
       <View className="flex-row justify-end px-5 py-3" style={{ minHeight: 48 }}>
-        <TouchableOpacity
-          onPress={handleComplete}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        <View
           style={{ opacity: showSkipButton ? 1 : 0 }}
           pointerEvents={showSkipButton ? 'auto' : 'none'}
         >
-          <Text className="px-4 py-2 text-sm font-medium" style={{ color: color.text.secondary }}>
-            {t('common.skip')}
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            onPress={handleComplete}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Text className="px-4 py-2 text-sm font-medium" style={{ color: color.text.secondary }}>
+              {t('common.skip')}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
       <AnimatedFlatList
         ref={flatListRef}

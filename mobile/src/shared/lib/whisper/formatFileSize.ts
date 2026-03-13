@@ -1,18 +1,7 @@
-const getUnits = (): { mb: string; gb: string; kb: string; b: string } => {
-  try {
-    const i18n = require('i18next').default;
-    const lang: string = i18n?.language ?? 'en';
-    if (lang.startsWith('ru')) {
-      return { mb: 'МБ', gb: 'ГБ', kb: 'КБ', b: 'Б' };
-    }
-  } catch {
-    // fallback to English
-  }
-  return { mb: 'MB', gb: 'GB', kb: 'KB', b: 'B' };
-};
+const UNITS = { mb: 'MB', gb: 'GB', kb: 'KB', b: 'B' } as const;
 
 export const formatFileSize = (bytes: number): string => {
-  const units = getUnits();
+  const units = UNITS;
 
   if (bytes === 0) return `0 ${units.b}`;
 

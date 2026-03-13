@@ -3,11 +3,18 @@ import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
 import { fetch } from '@/shared/lib/fetch';
 
+export type AiProcessingOptions = {
+  summaryStyle?: 'brief' | 'standard' | 'detailed';
+  taskStrictness?: 'strict' | 'balanced' | 'soft';
+  outputLanguage?: 'same' | 'ru' | 'en';
+};
+
 type AiApiRequestBody = {
   id: string;
   transcript: string;
   model: string;
-  systemPrompt: string;
+  systemPrompt?: string;
+  options?: AiProcessingOptions;
 };
 
 type AiApiSuccessResponse = {
@@ -36,10 +43,15 @@ export type AiTask = {
   deadline: string | null;
 };
 
+export type RecordClassification = 'personal' | 'work' | 'meeting' | 'idea' | 'other';
+
 export type AiProcessingResult = {
   summary: string;
   tasks: AiTask[];
   tags: string[];
+  classification?: RecordClassification;
+  keyPhrases?: string[];
+  nextSteps?: string[];
 };
 
 export type AiMessageResult =
@@ -51,7 +63,16 @@ const POLL_TIMEOUT_MS = 120_000;
 
 type MessageResponse =
   | { id: string; status: 'processing' }
-  | { id: string; status: 'done'; summary: string; tasks: AiTask[]; tags: string[] }
+  | {
+      id: string;
+      status: 'done';
+      summary: string;
+      tasks: AiTask[];
+      tags: string[];
+      classification?: RecordClassification;
+      keyPhrases?: string[];
+      nextSteps?: string[];
+    }
   | { id: string; status: 'error'; error: string };
 
 function getDeviceId(): string {
@@ -158,7 +179,17 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
     const msg = (await response.json()) as MessageResponse;
 
     if (msg.status === 'done') {
-      return { ok: true, result: { summary: msg.summary, tasks: msg.tasks, tags: msg.tags ?? [] } };
+      return {
+        ok: true,
+        result: {
+          summary: msg.summary,
+          tasks: msg.tasks,
+          tags: msg.tags ?? [],
+          ...(msg.classification && { classification: msg.classification }),
+          ...(msg.keyPhrases && { keyPhrases: msg.keyPhrases }),
+          ...(msg.nextSteps && { nextSteps: msg.nextSteps }),
+        },
+      };
     }
 
     if (msg.status === 'error') {

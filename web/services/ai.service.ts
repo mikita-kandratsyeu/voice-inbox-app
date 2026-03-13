@@ -1,5 +1,5 @@
 import { openRouterClient } from '@/lib/openrouter';
-import type { AiResult } from '@/types';
+import type { AiResult, RecordClassification } from '@/types';
 import {
   ServiceUnavailableResponseError,
   TooManyRequestsResponseError,
@@ -67,10 +67,43 @@ async function callOpenRouter(
     .map((tag: string) => tag.trim().toLowerCase())
     .filter(Boolean) as string[];
 
+  const validClassifications: RecordClassification[] = [
+    'personal',
+    'work',
+    'meeting',
+    'idea',
+    'other',
+  ];
+  const rawClassification = 'classification' in parsed ? parsed.classification : undefined;
+  const classification: RecordClassification | undefined =
+    typeof rawClassification === 'string' &&
+    validClassifications.includes(rawClassification as RecordClassification)
+      ? (rawClassification as RecordClassification)
+      : undefined;
+
+  const rawKeyPhrases = 'keyPhrases' in parsed && Array.isArray(parsed.keyPhrases)
+    ? parsed.keyPhrases
+    : [];
+  const keyPhrases = rawKeyPhrases
+    .filter((p: unknown) => typeof p === 'string')
+    .map((p: string) => p.trim())
+    .filter(Boolean) as string[];
+
+  const rawNextSteps = 'nextSteps' in parsed && Array.isArray(parsed.nextSteps)
+    ? parsed.nextSteps
+    : [];
+  const nextSteps = rawNextSteps
+    .filter((s: unknown) => typeof s === 'string')
+    .map((s: string) => s.trim())
+    .filter(Boolean) as string[];
+
   return {
     summary: String(parsed.summary),
     tasks,
     tags,
+    ...(classification && { classification }),
+    ...(keyPhrases.length > 0 && { keyPhrases }),
+    ...(nextSteps.length > 0 && { nextSteps }),
   };
 }
 
