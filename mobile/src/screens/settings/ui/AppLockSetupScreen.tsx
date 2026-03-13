@@ -128,7 +128,7 @@ export const AppLockSetupScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title={t('appLock.title')} color={color} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('appLock.title')} onBack={() => navigation.goBack()} />
 
       {!isEnabled ? (
         <View
@@ -194,10 +194,9 @@ export const AppLockSetupScreen = () => {
             paddingBottom: insets.bottom + 24,
           }}
         >
-          <SettingsSection title={t('appLock.settings')} color={color}>
+          <SettingsSection title={t('appLock.settings')}>
             <SettingsRow
               label={t('appLock.title')}
-              color={color}
               leftIcon={<Fingerprint size={20} color={color.accent.primary} strokeWidth={1.8} />}
               rightSlot={
                 <Switch
@@ -219,7 +218,6 @@ export const AppLockSetupScreen = () => {
               <SettingsRow
                 label={bioLabel}
                 value={useBiometrics ? t('settings.on') : t('settings.off')}
-                color={color}
                 leftIcon={<BioIcon size={20} color={color.accent.success} strokeWidth={1.8} />}
                 rightSlot={
                   <Switch

@@ -39,7 +39,7 @@ export const SummaryTab = ({
   const { isConnected } = useNetworkStatus();
 
   if (status === 'processing') {
-    return <AiTabLoadingState message={t('recordingDetail.summaryProcessing')} color={color} />;
+    return <AiTabLoadingState message={t('recordingDetail.summaryProcessing')} />;
   }
 
   if (status === 'error' && !summary) {
@@ -51,7 +51,6 @@ export const SummaryTab = ({
         buttonLabel={t('recordingDetail.summaryRetry')}
         buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
         onPress={onGenerate}
-        color={color}
       />
     );
   }
@@ -62,7 +61,6 @@ export const SummaryTab = ({
         icon={<FileText size={28} color={color.icon.muted} strokeWidth={1.8} />}
         title={t('recordingDetail.noTranscriptForAi')}
         description={t('recordingDetail.noTranscriptForAiDesc')}
-        color={color}
       />
     );
   }
@@ -76,10 +74,9 @@ export const SummaryTab = ({
         buttonLabel={t('recordingDetail.generateSummary')}
         buttonIcon={<FileText size={18} color="#fff" strokeWidth={2} />}
         hint={aiModelName}
-        hintIcon={<AiTabHintIcon color={color} />}
+        hintIcon={<AiTabHintIcon />}
         disabled={isConnected === false}
         onPress={onGenerate}
-        color={color}
       />
     );
   }
@@ -89,7 +86,6 @@ export const SummaryTab = ({
       {showBanner && (
         <AiTabErrorBanner
           message={t('recordingDetail.summaryErrorBanner')}
-          color={color}
           onDismiss={handleDismiss}
         />
       )}

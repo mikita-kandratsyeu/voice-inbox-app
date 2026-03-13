@@ -225,11 +225,10 @@ export const SettingsScreen = () => {
       >
         <AiUsageCard usage={aiUsage} loading={aiUsageLoading} />
 
-        <SettingsSection title={t('settings.aiProcessing')} color={color}>
+        <SettingsSection title={t('settings.aiProcessing')}>
           <SettingsRow
             label={t('settings.aiModel')}
             value={aiModelName}
-            color={color}
             leftIcon={<Bot size={20} color={color.accent.transcript} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('AIModelPicker')}
             isFirst
@@ -237,19 +236,16 @@ export const SettingsScreen = () => {
           <SettingsRow
             label={t('settings.transcription')}
             value={`Whisper ${whisperModelName}`}
-            color={color}
             leftIcon={<Mic size={20} color={color.accent.cache} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('WhisperModelPicker')}
           />
           <SettingsRow
             label={t('settings.aiSettings')}
-            color={color}
             leftIcon={<Settings2 size={20} color={color.accent.transcript} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('AiSettings')}
           />
           <SettingsRow
             label={t('settings.autoTranscribeOnSave')}
-            color={color}
             leftIcon={<Zap size={20} color={color.accent.transcript} strokeWidth={1.8} />}
             rightSlot={
               <Switch
@@ -267,7 +263,6 @@ export const SettingsScreen = () => {
           />
           <SettingsRow
             label={t('settings.autoAiAfterTranscription')}
-            color={color}
             leftIcon={<Sparkles size={20} color={color.accent.primary} strokeWidth={1.8} />}
             rightSlot={
               <Switch
@@ -291,36 +286,32 @@ export const SettingsScreen = () => {
                   ? t('settings.updatingEmbeddings')
                   : t('settings.updateEmbeddings')
               }
-              color={color}
               leftIcon={<RefreshCw size={20} color={color.accent.primary} strokeWidth={1.8} />}
               onPress={isUpdatingEmbeddings ? undefined : handleUpdateEmbeddings}
               isLast
             />
           )}
         </SettingsSection>
-        <SettingsSection title={t('settings.sync')} color={color}>
+        <SettingsSection title={t('settings.sync')}>
           <SettingsRow
             label={isExporting ? t('settings.exporting') : t('settings.export')}
             value={t('inbox.recordsCount', { count: records.length })}
-            color={color}
             leftIcon={<UploadCloud size={20} color={color.accent.primary} strokeWidth={1.8} />}
             onPress={handleExport}
             isFirst
           />
           <SettingsRow
             label={isImporting ? t('settings.importing') : t('settings.import')}
-            color={color}
             leftIcon={<Download size={20} color={color.accent.primary} strokeWidth={1.8} />}
             onPress={handleImport}
             isLast
           />
         </SettingsSection>
 
-        <SettingsSection title={t('settings.appearance')} color={color}>
+        <SettingsSection title={t('settings.appearance')}>
           <SettingsRow
             label={t('settings.appLanguage')}
             value={t(`appearance.languageOption.${appLanguage}`)}
-            color={color}
             leftIcon={<Languages size={20} color={color.accent.primary} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('Appearance')}
             isFirst
@@ -328,48 +319,42 @@ export const SettingsScreen = () => {
           <SettingsRow
             label={t('settings.appTheme')}
             value={t(`appearance.themeOption.${appTheme}`)}
-            color={color}
             leftIcon={<Moon size={20} color={color.accent.primary} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('Appearance')}
             isLast
           />
         </SettingsSection>
 
-        <SettingsSection title={t('settings.device')} color={color}>
+        <SettingsSection title={t('settings.device')}>
           <SettingsRow
             label={t('settings.appLock')}
             value={isAppLockEnabled ? t('settings.on') : t('settings.off')}
-            color={color}
             leftIcon={<Fingerprint size={20} color={color.accent.primary} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('AppLockSetup')}
             isFirst
           />
           <SettingsRow
             label={t('settings.offlineStorage')}
-            color={color}
             leftIcon={<HardDrive size={20} color={color.accent.success} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('StorageDetails')}
             isLast
           />
         </SettingsSection>
 
-        <SettingsSection title={t('settings.privacy')} color={color}>
+        <SettingsSection title={t('settings.privacy')}>
           <SettingsRow
             label={t('settings.termsOfService')}
-            color={color}
             leftIcon={<FileText size={20} color={color.icon.muted} strokeWidth={1.8} />}
             onPress={() => Linking.openURL(`${WEBSITE_URL}/terms`)}
             isFirst
           />
           <SettingsRow
             label={t('settings.privacyPolicy')}
-            color={color}
             leftIcon={<Shield size={20} color={color.icon.muted} strokeWidth={1.8} />}
             onPress={() => Linking.openURL(`${WEBSITE_URL}/privacy`)}
           />
           <SettingsRow
             label={t('settings.about')}
-            color={color}
             leftIcon={<Info size={20} color={color.icon.muted} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('AboutApp')}
             isLast

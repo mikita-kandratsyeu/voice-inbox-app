@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { colors } from '@/shared/config';
+import { getColors, useAppTheme } from '@/shared/config';
 import { hapticMedium } from '@/shared/lib';
 
 export const SwipeableCardContext = React.createContext({ isSwiping: false });
@@ -40,6 +40,7 @@ export const SwipeableCard = React.memo(function SwipeableCard({
   onLeftAction,
   onPin,
 }: SwipeableCardProps) {
+  const color = getColors(useAppTheme());
   const translateX = useSharedValue(0);
   const action = useSharedValue<SwipeAction>('none');
   const [isSwiping, setIsSwiping] = React.useState(false);
@@ -117,8 +118,8 @@ export const SwipeableCard = React.memo(function SwipeableCard({
     return { opacity: progress };
   });
 
-  const pinBgColor = isPinned ? colors.light.accent.unpin : colors.light.accent.pin;
-  const leftBgColor = colors.light.accent.archive;
+  const pinBgColor = isPinned ? color.accent.unpin : color.accent.pin;
+  const leftBgColor = color.accent.archive;
 
   const LeftIcon = leftAction === 'archive' ? Archive : ArchiveRestore;
 
@@ -149,7 +150,7 @@ export const SwipeableCard = React.memo(function SwipeableCard({
             leftReveal,
           ]}
         >
-          <LeftIcon size={22} color={colors.light.icon.onAccent} strokeWidth={2} />
+          <LeftIcon size={22} color={color.icon.onAccent} strokeWidth={2} />
         </Animated.View>
         <Animated.View
           style={[
@@ -169,9 +170,9 @@ export const SwipeableCard = React.memo(function SwipeableCard({
           ]}
         >
           {isPinned ? (
-            <PinOff size={22} color={colors.light.icon.onAccent} strokeWidth={2} />
+            <PinOff size={22} color={color.icon.onAccent} strokeWidth={2} />
           ) : (
-            <Pin size={22} color={colors.light.icon.onAccent} strokeWidth={2} />
+            <Pin size={22} color={color.icon.onAccent} strokeWidth={2} />
           )}
         </Animated.View>
         <GestureDetector gesture={pan}>

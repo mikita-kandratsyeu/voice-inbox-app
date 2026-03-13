@@ -3,16 +3,16 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
-import type { Colors } from '@/shared/config';
+import { useColors } from '@/shared/config';
 
 type AiTabErrorBannerProps = {
   message: string;
-  color: Colors;
   onDismiss: () => void;
 };
 
-export const AiTabErrorBanner = ({ message, color, onDismiss }: AiTabErrorBannerProps) => {
+export const AiTabErrorBanner = ({ message, onDismiss }: AiTabErrorBannerProps) => {
   const { t } = useTranslation();
+  const color = useColors();
 
   return (
     <View

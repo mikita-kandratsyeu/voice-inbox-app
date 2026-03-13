@@ -3,19 +3,19 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { Colors } from '@/shared/config';
+import { useColors } from '@/shared/config';
 
 import { Button } from './Button';
 
 type ScreenHeaderProps = {
   title: string;
-  color: Colors;
   onBack?: () => void;
   rightSlot?: React.ReactNode;
 };
 
-export const ScreenHeader = ({ title, color, onBack, rightSlot }: ScreenHeaderProps) => {
+export const ScreenHeader = ({ title, onBack, rightSlot }: ScreenHeaderProps) => {
   const insets = useSafeAreaInsets();
+  const color = useColors();
 
   return (
     <View

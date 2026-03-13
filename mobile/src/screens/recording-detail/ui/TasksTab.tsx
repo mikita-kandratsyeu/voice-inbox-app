@@ -64,7 +64,7 @@ export const TasksTab = ({
   };
 
   if (status === 'processing') {
-    return <AiTabLoadingState message={t('recordingDetail.tasksProcessing')} color={color} />;
+    return <AiTabLoadingState message={t('recordingDetail.tasksProcessing')} />;
   }
 
   if (status === 'error' && tasks.length === 0) {
@@ -76,7 +76,6 @@ export const TasksTab = ({
         buttonLabel={t('recordingDetail.tasksRetry')}
         buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
         onPress={onExtract}
-        color={color}
       />
     );
   }
@@ -87,7 +86,6 @@ export const TasksTab = ({
         icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
         title={t('recordingDetail.noTranscriptForAi')}
         description={t('recordingDetail.noTranscriptForAiDesc')}
-        color={color}
       />
     );
   }
@@ -101,10 +99,9 @@ export const TasksTab = ({
         buttonLabel={t('recordingDetail.extractTasks')}
         buttonIcon={<ListChecks size={18} color="#fff" strokeWidth={2} />}
         hint={aiModelName}
-        hintIcon={<AiTabHintIcon color={color} />}
+        hintIcon={<AiTabHintIcon />}
         disabled={isConnected === false}
         onPress={onExtract}
-        color={color}
       />
     );
   }
@@ -114,7 +111,6 @@ export const TasksTab = ({
       {showBanner && (
         <AiTabErrorBanner
           message={t('recordingDetail.tasksErrorBanner')}
-          color={color}
           onDismiss={handleDismiss}
         />
       )}

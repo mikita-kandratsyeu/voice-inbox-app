@@ -77,7 +77,7 @@ export const InboxScreen = () => {
   const renderItem = useCallback(
     ({ item }: { item: FlattenedItem }) => {
       if (item.type === 'header') {
-        return <SectionHeader title={item.title} color={color} isFirst={item.isFirst} />;
+        return <SectionHeader title={item.title} isFirst={item.isFirst} />;
       }
       const isArchivedView = filterStatus === 'archived';
       return (

@@ -299,7 +299,7 @@ export const StorageDetailsScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title={t('storage.title')} color={color} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('storage.title')} onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={{
@@ -323,14 +323,13 @@ export const StorageDetailsScreen = () => {
             <StorageBar {...stats} modelsBytes={modelsBytes} totalMb={totalMb} color={color} />
           )}
         </View>
-        <SettingsSection title={t('storage.details')} color={color}>
+        <SettingsSection title={t('storage.details')}>
           <SettingsRow
             label={t('storage.audioRecords')}
             value={t('storage.audioFilesValue', {
               count: audioCount,
               size: stats.audioMb.toFixed(1),
             })}
-            color={color}
             leftIcon={<Mic2 size={20} color={color.accent.primary} strokeWidth={1.8} />}
             showChevron={false}
             isFirst
@@ -338,14 +337,12 @@ export const StorageDetailsScreen = () => {
           <SettingsRow
             label={t('storage.transcriptsAndData')}
             value={formatFileSize(stats.transcriptKb * 1024)}
-            color={color}
             leftIcon={<Type size={20} color={color.accent.transcript} strokeWidth={1.8} />}
             showChevron={false}
           />
           <SettingsRow
             label={t('storage.aiProcessing')}
             value={formatFileSize(stats.aiDataKb * 1024)}
-            color={color}
             leftIcon={<Bot size={20} color={color.accent.success} strokeWidth={1.8} />}
             showChevron={false}
             isLast={downloadedModels.length === 0}
@@ -364,7 +361,6 @@ export const StorageDetailsScreen = () => {
                     key={model.id}
                     label={`Whisper ${model.name}`}
                     value={sizeLabel}
-                    color={color}
                     leftIcon={
                       <BrainCircuit size={20} color={color.accent.success} strokeWidth={1.8} />
                     }
@@ -376,11 +372,10 @@ export const StorageDetailsScreen = () => {
             </>
           )}
         </SettingsSection>
-        <SettingsSection title={t('storage.statistics')} color={color}>
+        <SettingsSection title={t('storage.statistics')}>
           <SettingsRow
             label={t('storage.totalRecords')}
             value={String(records.length)}
-            color={color}
             leftIcon={<Mic size={20} color={color.accent.primary} strokeWidth={1.8} />}
             showChevron={false}
             isFirst
@@ -388,39 +383,34 @@ export const StorageDetailsScreen = () => {
           <SettingsRow
             label={t('storage.withAudio')}
             value={String(audioCount)}
-            color={color}
             leftIcon={<Clock size={20} color={color.accent.success} strokeWidth={1.8} />}
             showChevron={false}
           />
           <SettingsRow
             label={t('storage.transcripts')}
             value={String(withTranscript)}
-            color={color}
             leftIcon={<FileText size={20} color={color.accent.transcript} strokeWidth={1.8} />}
             showChevron={false}
           />
           <SettingsRow
             label={t('storage.aiProcessed')}
             value={String(processedByAI)}
-            color={color}
             leftIcon={<Bot size={20} color={color.accent.cache} strokeWidth={1.8} />}
             showChevron={false}
             isLast
           />
         </SettingsSection>
 
-        <SettingsSection title={t('storage.management')} color={color}>
+        <SettingsSection title={t('storage.management')}>
           <SettingsRow
             label={t('storage.clearCache')}
             value={isClearing ? t('storage.loading') : formatFileSize(stats.cacheKb * 1024)}
-            color={color}
             leftIcon={<Trash2 size={20} color={color.accent.cache} strokeWidth={1.8} />}
             onPress={isClearing || stats.cacheKb * 1024 === 0 ? undefined : handleClearCache}
             isFirst
           />
           <SettingsRow
             label={t('storage.deleteAllData')}
-            color={color}
             leftIcon={<Trash2 size={20} color={color.accent.delete} strokeWidth={1.8} />}
             onPress={handleDeleteAll}
             dangerous

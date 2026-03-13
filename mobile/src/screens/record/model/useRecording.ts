@@ -73,23 +73,6 @@ export const useRecording = ({
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (next) => {
-      const prev = appStateRef.current;
-      appStateRef.current = next;
-      if (
-        Platform.OS === 'ios' &&
-        prev === 'background' &&
-        next === 'active' &&
-        stateRef.current === 'recording'
-      ) {
-        setElapsed(elapsedRef.current);
-        setElapsedMs(elapsedMsRef.current);
-      }
-    });
-    return () => sub.remove();
-  }, []);
-
   const addRecordBackListener = useCallback(() => {
     audioRecorderPlayer.addRecordBackListener((e: RecordBackType) => {
       const ms = e.currentPosition;
@@ -201,6 +184,19 @@ export const useRecording = ({
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {
+      const prev = appStateRef.current;
+      appStateRef.current = next;
+
+      if (
+        Platform.OS === 'ios' &&
+        prev === 'background' &&
+        next === 'active' &&
+        stateRef.current === 'recording'
+      ) {
+        setElapsed(elapsedRef.current);
+        setElapsedMs(elapsedMsRef.current);
+      }
+
       if (
         next === 'background' &&
         isAppLockEnabled &&

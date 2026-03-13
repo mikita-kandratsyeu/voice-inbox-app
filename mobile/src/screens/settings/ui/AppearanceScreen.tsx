@@ -91,11 +91,7 @@ export const AppearanceScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader
-        title={t('appearance.title')}
-        color={color}
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={t('appearance.title')} onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={{
@@ -105,7 +101,7 @@ export const AppearanceScreen = () => {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <SettingsSection title={t('appearance.language')} color={color}>
+        <SettingsSection title={t('appearance.language')}>
           <PickerSection
             options={APP_LANGUAGES}
             selected={appLanguage}
@@ -115,7 +111,7 @@ export const AppearanceScreen = () => {
           />
         </SettingsSection>
 
-        <SettingsSection title={t('appearance.theme')} color={color}>
+        <SettingsSection title={t('appearance.theme')}>
           <PickerSection
             options={APP_THEMES}
             selected={appTheme}

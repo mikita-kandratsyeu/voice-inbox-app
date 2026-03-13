@@ -21,7 +21,7 @@ export const AboutAppScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title={t('about.title')} color={color} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('about.title')} onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={{
@@ -47,28 +47,25 @@ export const AboutAppScreen = () => {
             {t('about.description')}
           </Text>
         </View>
-        <SettingsSection title={t('about.app')} color={color}>
+        <SettingsSection title={t('about.app')}>
           <SettingsRow
             label={t('about.version')}
             value={APP_VERSION}
-            color={color}
             leftIcon={<Tag size={18} color={color.icon.muted} strokeWidth={1.8} />}
             showChevron={false}
             isFirst
           />
           <SettingsRow
             label={t('about.showOnboarding')}
-            color={color}
             leftIcon={<BookOpen size={18} color={color.icon.muted} strokeWidth={1.8} />}
             onPress={() => setForceShowOnboarding(true)}
             isLast
           />
         </SettingsSection>
         {SUPPORT_EMAIL.length > 0 && (
-          <SettingsSection title={t('about.helpAndFeedback')} color={color}>
+          <SettingsSection title={t('about.helpAndFeedback')}>
             <SettingsRow
               label={t('about.contactSupport')}
-              color={color}
               leftIcon={<Mail size={18} color={color.icon.muted} strokeWidth={1.8} />}
               onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
               isFirst

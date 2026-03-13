@@ -14,7 +14,7 @@ import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
 import { OnboardingGate } from '@/features/onboarding';
 import { releaseWhisperContext } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
-import { NetworkStatusProvider } from '@/shared/lib';
+import { initDB, NetworkStatusProvider } from '@/shared/lib';
 
 import { RootNavigator } from './navigation/RootNavigator';
 
@@ -27,14 +27,14 @@ const App = () => {
   const safeAreaStyle = { backgroundColor: color.background.primary };
 
   useEffect(() => {
-    import('@/shared/lib').then(({ initDB }) => {
-      initDB().then(() =>
-        import('@/entities/record').then(({ useRecordStore }) => {
-          useRecordStore.getState().load();
-          BootSplash.hide({ fade: true });
-        }),
-      );
-    });
+    initDB()
+      .then(() => {
+        useRecordStore.getState().load();
+        BootSplash.hide({ fade: true });
+      })
+      .catch(() => {
+        BootSplash.hide({ fade: true });
+      });
   }, []);
 
   useEffect(() => {

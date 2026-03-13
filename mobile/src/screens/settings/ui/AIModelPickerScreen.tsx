@@ -38,7 +38,7 @@ export const AIModelPickerScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title={t('aiModels.title')} color={color} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('aiModels.title')} onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={{

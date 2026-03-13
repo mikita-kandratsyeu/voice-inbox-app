@@ -87,11 +87,7 @@ export const AiSettingsScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader
-        title={t('aiSettings.title')}
-        color={color}
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={t('aiSettings.title')} onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={{
@@ -105,7 +101,7 @@ export const AiSettingsScreen = () => {
           {t('aiSettings.description')}
         </Text>
 
-        <SettingsSection title={t('aiSettings.summaryStyle')} color={color}>
+        <SettingsSection title={t('aiSettings.summaryStyle')}>
           <PickerSection
             options={SUMMARY_STYLES}
             selected={summaryStyle}
@@ -115,7 +111,7 @@ export const AiSettingsScreen = () => {
           />
         </SettingsSection>
 
-        <SettingsSection title={t('aiSettings.taskStrictness')} color={color}>
+        <SettingsSection title={t('aiSettings.taskStrictness')}>
           <PickerSection
             options={TASK_STRICTNESS_OPTIONS}
             selected={taskStrictness}
@@ -125,7 +121,7 @@ export const AiSettingsScreen = () => {
           />
         </SettingsSection>
 
-        <SettingsSection title={t('aiSettings.outputLanguage')} color={color}>
+        <SettingsSection title={t('aiSettings.outputLanguage')}>
           <PickerSection
             options={OUTPUT_LANGUAGES}
             selected={aiOutputLanguage}

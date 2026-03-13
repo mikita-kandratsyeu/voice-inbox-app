@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useInboxFilters } from '@/features/inbox-filters';
 
 const MIN_QUERY_LENGTH = 3;
+const SEARCH_DEBOUNCE_MS = 300;
 
 const STOPWORDS = new Set([
   'в',
@@ -43,7 +44,12 @@ const RELEVANCE = {
   tasks: 1,
 } as const;
 
+const searchTextCache = new WeakMap<VoiceRecord, string>();
+
 function getRecordSearchText(record: VoiceRecord): string {
+  const cached = searchTextCache.get(record);
+  if (cached !== undefined) return cached;
+
   const parts = [
     record.title ?? '',
     record.summary ?? '',
@@ -52,7 +58,9 @@ function getRecordSearchText(record: VoiceRecord): string {
     ...(record.keyPhrases ?? []),
     ...(record.tasks ?? []).map((t) => t.text),
   ];
-  return parts.join(' ').toLowerCase();
+  const text = parts.join(' ').toLowerCase();
+  searchTextCache.set(record, text);
+  return text;
 }
 
 function getQueryWords(query: string): string[] {
@@ -108,11 +116,23 @@ const matchesQuery = (record: VoiceRecord, query: string): boolean => {
 export const useSearchRecords = (records: VoiceRecord[]) => {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { filterStatus, setFilterStatus, sortOption, setSortOption, filterRecords } =
     useInboxFilters();
 
+  useEffect(() => {
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, SEARCH_DEBOUNCE_MS);
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, [query]);
+
   const searchFiltered = useMemo(() => {
-    const trimmed = query.trim();
+    const trimmed = debouncedQuery.trim();
 
     if (!trimmed) {
       return records;
@@ -130,13 +150,13 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
         return new Date(b.record.createdAt).getTime() - new Date(a.record.createdAt).getTime();
       })
       .map(({ record }) => record);
-  }, [records, query]);
+  }, [records, debouncedQuery]);
 
   const filtered = useMemo(() => filterRecords(searchFiltered), [searchFiltered, filterRecords]);
 
   const sections = useMemo(() => {
     if (filterStatus === 'all') {
-      const isSearching = query.trim().length > 0;
+      const isSearching = debouncedQuery.trim().length > 0;
       const pinned = filtered.filter((r) => r.isPinned);
       const rest = filtered.filter((r) => !r.isPinned);
 
@@ -159,7 +179,7 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
           },
         ]
       : [];
-  }, [filtered, filterStatus, query, t]);
+  }, [filtered, filterStatus, debouncedQuery, t]);
 
   const flattenedData = useMemo(() => {
     const result: Array<
@@ -178,6 +198,7 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
 
   const resetToDefault = useCallback(() => {
     setQuery('');
+    setDebouncedQuery('');
     setFilterStatus('all');
     setSortOption('dateDesc');
   }, [setFilterStatus, setSortOption]);

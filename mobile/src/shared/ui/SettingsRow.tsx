@@ -2,12 +2,11 @@ import { ChevronRight } from 'lucide-react-native';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
-import type { Colors } from '@/shared/config';
+import { useColors } from '@/shared/config';
 
 type SettingsRowProps = {
   label: string;
   value?: string;
-  color: Colors;
   onPress?: () => void;
   leftIcon?: React.ReactNode;
   rightSlot?: React.ReactNode;
@@ -20,7 +19,6 @@ type SettingsRowProps = {
 export const SettingsRow = ({
   label,
   value,
-  color,
   onPress,
   leftIcon,
   rightSlot,
@@ -29,6 +27,7 @@ export const SettingsRow = ({
   isLast = false,
   dangerous = false,
 }: SettingsRowProps) => {
+  const color = useColors();
   const borderStyle = !isLast
     ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
     : {};

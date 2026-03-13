@@ -2,7 +2,8 @@ import { useColorScheme } from 'react-native';
 
 import { useSettingsStore } from '@/entities/settings';
 
-import type { ColorScheme } from './colors';
+import type { Colors, ColorScheme } from './colors';
+import { getColors } from './colors';
 
 export function useAppTheme(): ColorScheme {
   const appTheme = useSettingsStore((s) => s.appTheme);
@@ -12,4 +13,8 @@ export function useAppTheme(): ColorScheme {
     return systemScheme === 'dark' ? 'dark' : 'light';
   }
   return appTheme;
+}
+
+export function useColors(): Colors {
+  return getColors(useAppTheme());
 }

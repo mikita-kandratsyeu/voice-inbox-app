@@ -148,7 +148,7 @@ export const RecordCard = React.memo(function RecordCard({
       {hasTags && (
         <View className="flex-row flex-wrap gap-2">
           {item.tags!.map((tag) => (
-            <Tag key={tag} label={tag} color={color} />
+            <Tag key={tag} label={tag} />
           ))}
         </View>
       )}

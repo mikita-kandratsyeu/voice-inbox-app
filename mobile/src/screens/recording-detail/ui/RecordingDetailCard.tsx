@@ -74,7 +74,7 @@ export const RecordingDetailCard = ({ record, color }: RecordingDetailCardProps)
       {record.tags && record.tags.length > 0 && (
         <View className="flex-row flex-wrap gap-2">
           {record.tags.map((tag) => (
-            <RecordDetailTag key={tag} label={tag} color={color} />
+            <RecordDetailTag key={tag} label={tag} />
           ))}
         </View>
       )}

@@ -73,7 +73,7 @@ export const AppStatsScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title="Статистика" color={color} onBack={() => navigation.goBack()} />
+      <ScreenHeader title="Статистика" onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={{
@@ -112,11 +112,10 @@ export const AppStatsScreen = () => {
           />
         </View>
 
-        <SettingsSection title="Управление данными" color={color}>
-          <SettingsRow label="Очистить кэш" color={color} onPress={handleClearCache} isFirst />
+        <SettingsSection title="Управление данными">
+          <SettingsRow label="Очистить кэш" onPress={handleClearCache} isFirst />
           <SettingsRow
             label="Удалить все данные приложения"
-            color={color}
             onPress={handleDeleteAll}
             dangerous
             isLast
