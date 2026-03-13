@@ -115,8 +115,11 @@ export const TranscriptTab = ({
             onPressAction={async ({ nativeEvent }) => {
               const lang = nativeEvent.event;
               if ((TRANSLATE_LANGUAGES as readonly string[]).includes(lang)) {
-                await onTranslate(lang);
-                setViewMode('translated');
+                const ok = await onTranslate(lang);
+
+                if (ok) {
+                  setViewMode('translated');
+                }
               }
             }}
             actions={TRANSLATE_LANGUAGES.map((lang) => ({

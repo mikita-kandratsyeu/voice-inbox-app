@@ -3,6 +3,8 @@ import { useCallback, useState } from 'react';
 import { useRecordStore } from '@/entities/record';
 import { postTranslate } from '@/shared/lib/ai-api/translateApi';
 
+export type TranslateResult = { ok: true } | { ok: false; error: 'limit' | 'network' };
+
 export function useTranslate(recordId: string) {
   const records = useRecordStore((s) => s.records);
   const updateTranslation = useRecordStore((s) => s.updateTranslation);
@@ -12,8 +14,8 @@ export function useTranslate(recordId: string) {
   const transcript = record?.transcript ?? '';
 
   const translate = useCallback(
-    async (targetLanguage: string): Promise<boolean> => {
-      if (!transcript.trim()) return false;
+    async (targetLanguage: string): Promise<TranslateResult> => {
+      if (!transcript.trim()) return { ok: false, error: 'network' };
 
       setIsTranslating(true);
       try {
@@ -21,13 +23,16 @@ export function useTranslate(recordId: string) {
 
         if (!result.ok) {
           if ('limitExceeded' in result && result.limitExceeded) {
-            return false;
+            return { ok: false, error: 'limit' };
           }
-          throw new Error('error' in result ? result.error : 'Translation failed');
+
+          return { ok: false, error: 'network' };
         }
 
         await updateTranslation(recordId, result.translatedText, targetLanguage);
-        return true;
+        return { ok: true };
+      } catch {
+        return { ok: false, error: 'network' };
       } finally {
         setIsTranslating(false);
       }

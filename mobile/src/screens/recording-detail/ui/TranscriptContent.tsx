@@ -53,11 +53,20 @@ export const TranscriptContent = ({
     record.summaryStatus === 'processing' || record.tasksStatus === 'processing';
 
   const handleTranslate = async (targetLanguage: string) => {
-    const ok = await translate(targetLanguage);
-    if (!ok && !record.translatedTranscript) {
-      Alert.alert(t('common.error'), t('recordingDetail.translateLimitReached'));
+    const result = await translate(targetLanguage);
+
+    if (!result.ok) {
+      const message =
+        result.error === 'limit'
+          ? t('recordingDetail.translateLimitReached')
+          : t('recordingDetail.translateError');
+
+      Alert.alert(t('common.error'), message);
+
+      return false;
     }
-    return ok;
+
+    return true;
   };
 
   return (
