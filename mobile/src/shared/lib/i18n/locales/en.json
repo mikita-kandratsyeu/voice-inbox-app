@@ -267,6 +267,7 @@
     "deleteAllData": "Delete all data",
     "deleteAllConfirm": "All records, transcripts and audio will be permanently deleted. Continue?",
     "cacheCleared": "Cache cleared. Freed: {{ freed }} KB",
+    "cacheClearedMb": "Cache cleared. Freed: {{ freed }} MB",
     "cacheClearError": "Failed to clear cache",
     "loading": "Loading...",
     "used": "Used",

@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Bot, BrainCircuit, Clock, FileText, Mic, Mic2, Trash2, Type } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Alert, ScrollView, Text, View } from 'react-native';
+import { Alert, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
@@ -12,7 +12,7 @@ import { getModelFileSizeBytes } from '@/features/model-manager';
 import { getColors, useAppTheme } from '@/shared/config';
 import { clearCache, getStorageStats, type StorageStats } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
-import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
+import { ScreenHeader, SettingsRow, SettingsSection, SkeletonPulse } from '@/shared/ui';
 
 const StorageBar = ({
   audioMb,
@@ -66,7 +66,7 @@ const StorageBar = ({
             </Text>
           </View>
           <Text className="text-[14px]" style={{ color: color.text.primary }}>
-            {audioMb.toFixed(1)} МБ
+            {`${audioMb.toFixed(1)} ${t('storage.mb')}`}
           </Text>
         </View>
         <View className="flex-row items-center justify-between">
@@ -132,6 +132,41 @@ const StorageBar = ({
   );
 };
 
+function StorageBarSkeleton({ color }: { color: ReturnType<typeof getColors> }) {
+  return (
+    <SkeletonPulse>
+      <View className="mb-3 flex-row items-center justify-between">
+        <View className="h-4 w-12 rounded" style={{ backgroundColor: color.background.tertiary }} />
+        <View className="h-4 w-16 rounded" style={{ backgroundColor: color.background.tertiary }} />
+      </View>
+      <View
+        className="mb-4 h-3 overflow-hidden rounded-full"
+        style={{ backgroundColor: color.background.tertiary }}
+      />
+      <View className="gap-2">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <View key={i} className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-2">
+              <View
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: color.background.tertiary }}
+              />
+              <View
+                className="h-3.5 w-24 rounded"
+                style={{ backgroundColor: color.background.tertiary }}
+              />
+            </View>
+            <View
+              className="h-3.5 w-12 rounded"
+              style={{ backgroundColor: color.background.tertiary }}
+            />
+          </View>
+        ))}
+      </View>
+    </SkeletonPulse>
+  );
+}
+
 const DEFAULT_STATS: StorageStats = {
   audioMb: 0,
   transcriptKb: 0,
@@ -150,6 +185,7 @@ export const StorageDetailsScreen = () => {
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const [stats, setStats] = useState<StorageStats>(DEFAULT_STATS);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
   const [realModelSizes, setRealModelSizes] = useState<Partial<Record<WhisperModelId, number>>>({});
 
@@ -174,18 +210,26 @@ export const StorageDetailsScreen = () => {
     setRealModelSizes(updated);
   }, []);
 
-  const refreshStats = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const paths = records.map((r) => r.audioPath).filter((p): p is string => Boolean(p));
-      const s = await getStorageStats(paths, records);
-      setStats(s);
-    } catch (err) {
-      if (__DEV__) console.warn('[StorageDetails] Failed to load stats:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [records]);
+  const refreshStats = useCallback(
+    async (isPull = false) => {
+      if (isPull) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+      try {
+        const paths = records.map((r) => r.audioPath).filter((p): p is string => Boolean(p));
+        const s = await getStorageStats(paths, records);
+        setStats(s);
+      } catch (err) {
+        if (__DEV__) console.warn('[StorageDetails] Failed to load stats:', err);
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [records],
+  );
 
   useEffect(() => {
     refreshStats();
@@ -219,7 +263,12 @@ export const StorageDetailsScreen = () => {
             const freed = await clearCache(paths);
             await refreshStats();
             const freedKb = Math.round(freed / 1024);
-            Alert.alert(t('common.done'), t('storage.cacheCleared', { freed: freedKb }));
+            const freedMb = (freedKb / 1024).toFixed(1);
+            const msg =
+              freedKb >= 1024
+                ? t('storage.cacheClearedMb', { freed: freedMb })
+                : t('storage.cacheCleared', { freed: freedKb });
+            Alert.alert(t('common.done'), msg);
           } catch (err) {
             if (__DEV__) console.warn('[StorageDetails] Failed to clear cache:', err);
             Alert.alert(t('common.error'), t('storage.cacheClearError'));
@@ -241,6 +290,8 @@ export const StorageDetailsScreen = () => {
           for (const r of records) {
             await deleteRecord(r.id);
           }
+          await refreshStats();
+          navigation.goBack();
         },
       },
     ]);
@@ -257,15 +308,17 @@ export const StorageDetailsScreen = () => {
           paddingBottom: insets.bottom + 24,
         }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={() => refreshStats(true)}
+            tintColor={color.accent.primary}
+          />
+        }
       >
         <View className="mb-6 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
           {isLoading ? (
-            <View className="items-center justify-center py-8">
-              <ActivityIndicator size="large" color={color.accent.primary} />
-              <Text className="mt-3 text-[16px]" style={{ color: color.text.secondary }}>
-                {t('storage.loading')}
-              </Text>
-            </View>
+            <StorageBarSkeleton color={color} />
           ) : (
             <StorageBar {...stats} modelsBytes={modelsBytes} totalMb={totalMb} color={color} />
           )}
@@ -362,7 +415,7 @@ export const StorageDetailsScreen = () => {
             value={isClearing ? t('storage.loading') : formatFileSize(stats.cacheKb * 1024)}
             color={color}
             leftIcon={<Trash2 size={20} color={color.accent.cache} strokeWidth={1.8} />}
-            onPress={isClearing ? undefined : handleClearCache}
+            onPress={isClearing || stats.cacheKb * 1024 === 0 ? undefined : handleClearCache}
             isFirst
           />
           <SettingsRow

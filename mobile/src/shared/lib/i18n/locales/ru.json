@@ -266,21 +266,22 @@
     "clear": "Очистить",
     "deleteAllData": "Удалить все данные",
     "deleteAllConfirm": "Все записи, транскрипты и аудио будут удалены безвозвратно. Продолжить?",
-    "cacheCleared": "Кэш очищен. Освобождено: {{ freed }} КБ",
+    "cacheCleared": "Кэш очищен. Освобождено: {{ freed }} KB",
+    "cacheClearedMb": "Кэш очищен. Освобождено: {{ freed }} MB",
     "cacheClearError": "Не удалось очистить кэш",
     "loading": "Загрузка...",
     "used": "Использовано",
     "whisperModels": "Whisper модели",
     "cacheLabel": "Кэш",
-    "audioFilesValue": "{{count}} файлов · {{size}} МБ",
-    "mb": "МБ",
-    "gb": "ГБ"
+    "audioFilesValue": "{{count}} файлов · {{size}} MB",
+    "mb": "MB",
+    "gb": "GB"
   },
   "whisper": {
     "modelTitle": "Модель транскрипции",
     "modelDescription": "Выберите модель Whisper для офлайн-транскрипции. Большие модели точнее, но требуют больше места.",
     "downloadModel": "Скачать модель",
-    "downloadConfirm": "Для загрузки потребуется ~{{ size }} МБ. Продолжить?",
+    "downloadConfirm": "Для загрузки потребуется ~{{ size }} MB. Продолжить?",
     "deleteModel": "Удалить модель",
     "deleteConfirm": "Модель будет удалена с устройства. Продолжить?",
     "deleteConfirmWithName": "Модель Whisper {{ name }} будет удалена с устройства. Продолжить?",
@@ -399,8 +400,8 @@
   "device": {
     "insufficientRam": "Недостаточно RAM (нужно ~{{ required }}, доступно {{ available }})",
     "lowDiskSpace": "Мало свободного места (нужно ~{{ required }}, доступно {{ available }})",
-    "mb": "{{ value }} МБ",
-    "gb": "{{ value }} ГБ"
+    "mb": "{{ value }} MB",
+    "gb": "{{ value }} GB"
   },
   "about": {
     "title": "О приложении",
