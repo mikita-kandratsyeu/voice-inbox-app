@@ -5,7 +5,9 @@ import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { cosineSimilarity, isEmbeddingAvailable } from '@/shared/lib/embeddings';
 
-const MIN_EMBEDDING_SIMILARITY = 0.45;
+const MIN_HYBRID_SCORE = 0.45;
+const EMBEDDING_WEIGHT = 0.5;
+const LEXICAL_WEIGHT = 0.5;
 
 function tokenize(text: string): Set<string> {
   return new Set(
@@ -40,6 +42,34 @@ function textOverlap(textA: string, textB: string, maxChars = 1500): number {
   return jaccardSimilarity(a, b);
 }
 
+function getLexicalScore(current: VoiceRecord, record: VoiceRecord): number {
+  const tagsA = new Set((current.tags ?? []).map((t) => t.toLowerCase()));
+  const keyPhrasesA = current.keyPhrases ?? [];
+  const tagsB = new Set((record.tags ?? []).map((t) => t.toLowerCase()));
+  const keyPhrasesB = record.keyPhrases ?? [];
+
+  const tagScore = jaccardSimilarity(tagsA, tagsB);
+  const phraseScore =
+    keyPhrasesA.length > 0 || keyPhrasesB.length > 0 ? phraseOverlap(keyPhrasesA, keyPhrasesB) : 0;
+
+  const summaryScore =
+    current.summary && record.summary ? textOverlap(current.summary, record.summary, 800) : 0;
+  const transcriptScore =
+    current.transcript && record.transcript
+      ? textOverlap(current.transcript, record.transcript)
+      : 0;
+  const titleScore =
+    current.title && record.title ? textOverlap(current.title, record.title, 100) : 0;
+
+  const lexicalScore = summaryScore * 0.35 + transcriptScore * 0.4 + titleScore * 0.25;
+  const tagPhraseScore =
+    keyPhrasesA.length > 0 || keyPhrasesB.length > 0
+      ? 0.6 * tagScore + 0.4 * phraseScore
+      : tagScore;
+
+  return tagPhraseScore > 0 || lexicalScore > 0 ? Math.max(tagPhraseScore, lexicalScore) : 0;
+}
+
 export function useRelatedNotes(recordId: string, limit = 5): VoiceRecord[] {
   const records = useRecordStore((s) => s.records);
 
@@ -57,10 +87,12 @@ export function useRelatedNotes(recordId: string, limit = 5): VoiceRecord[] {
       const scored = records
         .filter((r) => r.id !== recordId && r.embedding)
         .map((record) => {
-          const similarity = cosineSimilarity(current.embedding!, record.embedding!);
-          return { record, score: similarity };
+          const embeddingScore = cosineSimilarity(current.embedding!, record.embedding!);
+          const lexicalScore = getLexicalScore(current, record);
+          const hybridScore = EMBEDDING_WEIGHT * embeddingScore + LEXICAL_WEIGHT * lexicalScore;
+          return { record, score: hybridScore };
         })
-        .filter(({ score }) => score >= MIN_EMBEDDING_SIMILARITY)
+        .filter(({ score }) => score >= MIN_HYBRID_SCORE)
         .sort((a, b) => b.score - a.score)
         .slice(0, limit)
         .map(({ record }) => record);
@@ -68,39 +100,10 @@ export function useRelatedNotes(recordId: string, limit = 5): VoiceRecord[] {
       return scored;
     }
 
-    const tagsA = new Set((current.tags ?? []).map((t) => t.toLowerCase()));
-    const keyPhrasesA = current.keyPhrases ?? [];
-
     const scored = records
       .filter((r) => r.id !== recordId)
       .map((record) => {
-        const tagsB = new Set((record.tags ?? []).map((t) => t.toLowerCase()));
-        const keyPhrasesB = record.keyPhrases ?? [];
-
-        const tagScore = jaccardSimilarity(tagsA, tagsB);
-        const phraseScore =
-          keyPhrasesA.length > 0 || keyPhrasesB.length > 0
-            ? phraseOverlap(keyPhrasesA, keyPhrasesB)
-            : 0;
-
-        const summaryScore =
-          current.summary && record.summary ? textOverlap(current.summary, record.summary, 800) : 0;
-        const transcriptScore =
-          current.transcript && record.transcript
-            ? textOverlap(current.transcript, record.transcript)
-            : 0;
-        const titleScore =
-          current.title && record.title ? textOverlap(current.title, record.title, 100) : 0;
-
-        const lexicalScore = summaryScore * 0.35 + transcriptScore * 0.4 + titleScore * 0.25;
-        const tagPhraseScore =
-          keyPhrasesA.length > 0 || keyPhrasesB.length > 0
-            ? 0.6 * tagScore + 0.4 * phraseScore
-            : tagScore;
-
-        const score =
-          tagPhraseScore > 0 || lexicalScore > 0 ? Math.max(tagPhraseScore, lexicalScore) : 0;
-
+        const score = getLexicalScore(current, record);
         return { record, score };
       })
       .filter(({ score }) => score > 0.05)
