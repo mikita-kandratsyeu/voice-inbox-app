@@ -1,51 +1,68 @@
 # Privacy Policy
 
-**Last updated: March 2025**
+**Last updated: March 2026**
 
-Voice Inbox AI ("we", "our", or "the app") is an offline-first voice notes application. This Privacy Policy explains how we handle your data when you use the mobile app and our optional web API for AI processing.
+Voice Inbox AI ("we", "our", or "the app") is an offline voice notes application. This Privacy Policy explains how we handle your data when you use the mobile app and the optional web API for AI processing.
 
 ## 1. Data We Process
 
-Voice recordings, transcripts, summaries, tasks, and tags are stored locally on your device. We do not have access to this data unless you explicitly use AI features that send data to our servers.
+Voice recordings, transcripts, summaries, tasks, and tags are stored locally on your device. We have no access to this data unless you use AI features that send data to our servers.
 
-When you use AI features (summaries, task extraction, Ask AI), the app sends your transcript text to our web API over HTTPS. The transcript is forwarded to third-party AI providers (e.g., OpenRouter, Google, OpenAI) to generate results. We do not store transcripts on our servers.
+When using AI features (summaries, task extraction, Ask AI), the app sends transcript text to our web API over HTTPS. The transcript is forwarded to third-party AI providers via the OpenRouter platform to generate results. We do not store transcripts on our servers.
+
+The app does not use any analytics SDKs, advertising trackers, or user behavior monitoring tools.
 
 ## 2. Our Web API
 
-Our API temporarily stores only the AI output (summary, tasks, tags) in a key-value store with a 1-hour expiration. After one hour, this data is automatically deleted. We never store transcripts permanently.
+Our API temporarily stores only the AI result (summary, tasks, tags) in a key-value store that expires after 1 hour. After one hour, this data is automatically deleted. We never store transcripts permanently.
 
-We use a device identifier (device ID) to enforce a weekly limit on free AI requests per device. This identifier is used only for rate limiting and is not linked to your identity.
+We use a device identifier (device ID) to limit the number of free AI requests per week per device. This identifier is used solely for rate limiting and is not linked to your identity.
 
 ## 3. Third-Party AI Providers
 
-When you use AI features, your transcript is sent to AI providers via [OpenRouter](https://openrouter.ai). We enforce **Zero Data Retention (ZDR)** on every request: we only route to endpoints where providers do not store your data. Under ZDR, providers neither retain nor train on your transcripts. OpenRouter's ZDR policy is documented [here](https://openrouter.ai/docs/guides/features/zdr).
+When you use AI features, your transcript is sent to third-party providers via [OpenRouter](https://openrouter.ai). All requests are routed exclusively through OpenRouter — we do not contact providers directly.
 
-## 4. No Accounts, No Login
+Current providers used via OpenRouter:
+- **OpenAI** — summary generation and task extraction
+- **Google** (Gemini) — summary generation and task extraction
+- **Meta** (Llama) — summary generation and task extraction
+- **DeepSeek** (DeepSeek) — summary generation and task extraction
+- **Mistral** (Mistral) — summary generation and task extraction
 
-Voice Inbox AI does not require an account or login. There is no user registration, and we do not collect personal information such as names, emails, or passwords.
+We apply **Zero Data Retention (ZDR)** to every request: routing goes only to endpoints where providers do not store your data or use it for model training. OpenRouter's ZDR policy is described [here](https://openrouter.ai/docs/guides/features/zdr).
 
-## 5. Data Retention
+## 4. No Accounts or Login
 
-**On your device:** Recordings, transcripts, and AI-generated content remain until you delete them or uninstall the app.
+Voice Inbox AI does not require an account or login. There is no user registration, and we do not collect personal data (names, emails, passwords).
 
-**On our servers:** AI results are stored for up to 1 hour, then automatically deleted. Device-based rate limit counters are stored for up to 8 days, then reset.
+## 5. Data Storage
+
+**On your device:** recordings, transcripts, and AI-generated content are stored until you delete them or uninstall the app.
+
+**On our servers:** AI results are stored for up to 1 hour, then automatically deleted. Per-device rate limit counters are stored for up to 8 days, then reset.
 
 ## 6. Your Rights
 
-You can export or delete all your data from the app at any time. AI processing is optional—you can use the app with offline transcription only and never send data to our servers.
+You retain full control over your data. You have the right to:
+
+- **Access** — all your data is stored locally and available at any time.
+- **Delete** — you can delete individual recordings or all app data via settings or by uninstalling the app.
+- **Export** — data can be exported from the app at any time.
+- **Opt out of AI processing** — you may use the app with offline transcription only and never send data to our servers.
+- **Object to processing** — if you have questions about data handling, contact us at the email below.
 
 ## 7. Security
 
-All communication with our API uses HTTPS encryption. The app supports an optional device lock (PIN or biometrics) to protect access to your data on the device.
+All communication with our API uses HTTPS encryption. The app supports optional device lock (PIN or biometrics) to protect access to your data.
 
 ## 8. Children
 
-Voice Inbox AI is not directed at children under 13. We do not knowingly collect data from children.
+Voice Inbox AI is not intended for children under 13. We do not knowingly collect data from children. If you become aware that a child is using the app, please contact us.
 
 ## 9. Changes
 
-We may update this Privacy Policy from time to time. The "Last updated" date at the top will reflect any changes. Continued use of the app after changes constitutes acceptance.
+We may update this Privacy Policy from time to time. The "Last updated" date at the top reflects any changes. We will notify you of material changes via push notification or upon the next app launch.
 
 ## 10. Contact
 
-For privacy-related questions, contact us at the support email provided in the app settings.
+Privacy inquiries: **mkandratsyeu@gmail.com**

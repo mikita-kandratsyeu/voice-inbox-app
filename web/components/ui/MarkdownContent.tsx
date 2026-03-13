@@ -11,7 +11,9 @@ type MarkdownContentProps = {
 
 const components: Components = {
   h1: ({ children }) => (
-    <h1 className="mb-2 text-4xl font-black text-black dark:text-white sm:text-5xl">{children}</h1>
+    <h1 className="mb-2 wrap-break-word text-2xl font-black text-black dark:text-white sm:text-4xl lg:text-5xl">
+      {children}
+    </h1>
   ),
   h2: ({ children }) => (
     <h2 className="mb-3 mt-8 text-xl font-bold text-black dark:text-white">{children}</h2>
@@ -43,7 +45,7 @@ const components: Components = {
 
 export function MarkdownContent({ content, className = '' }: MarkdownContentProps) {
   return (
-    <div className={className}>
+    <div className={`min-w-0 ${className}`}>
       <ReactMarkdown remarkPlugins={[remarkGfm]} components={components}>
         {content}
       </ReactMarkdown>
