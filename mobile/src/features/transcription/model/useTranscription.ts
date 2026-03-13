@@ -4,6 +4,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
+import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { i18n, useNetworkStatus } from '@/shared/lib';
 
 import { getWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
@@ -104,6 +105,13 @@ export const useTranscription = () => {
         }
 
         await updateTranscript(record.id, fullText, segments);
+
+        const recordWithTranscript = {
+          ...record,
+          transcript: fullText,
+          transcriptSegments: segments,
+        };
+        generateAndSaveEmbeddingForRecord(recordWithTranscript).catch(() => {});
 
         if (autoAiAfterTranscription && isConnected) {
           processRecord({

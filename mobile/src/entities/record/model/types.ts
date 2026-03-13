@@ -44,4 +44,5 @@ export type VoiceRecord = {
   translatedTranscript?: string;
   translationLanguage?: string;
   audioPath?: string;
+  embedding?: number[];
 };

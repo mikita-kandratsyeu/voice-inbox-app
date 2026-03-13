@@ -38,6 +38,7 @@ type RecordRowRaw = {
   translatedTranscript: string | null;
   translationLanguage: string | null;
   audioPath: string | null;
+  embedding: string | null;
 };
 
 const toRecord = (row: RecordRowRaw): VoiceRecord => {
@@ -65,6 +66,7 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     translatedTranscript: row.translatedTranscript ?? undefined,
     translationLanguage: row.translationLanguage ?? undefined,
     audioPath: row.audioPath ?? undefined,
+    embedding: row.embedding ? (JSON.parse(row.embedding) as number[]) : undefined,
     summaryStatus: summary ? ('done' as RecordingStatus) : undefined,
     tasksStatus: tasks.length > 0 ? ('done' as RecordingStatus) : undefined,
   };
@@ -109,6 +111,7 @@ export const recordRepository = {
         translatedTranscript: record.translatedTranscript ?? null,
         translationLanguage: record.translationLanguage ?? null,
         audioPath: record.audioPath ?? null,
+        embedding: record.embedding ? JSON.stringify(record.embedding) : null,
       })
       .onConflictDoNothing();
   },
@@ -227,5 +230,14 @@ export const recordRepository = {
     logDb('clearAudioPath', { id });
     const db = getDB();
     await db.update(recordsTable).set({ audioPath: null }).where(eq(recordsTable.id, id));
+  },
+
+  updateEmbedding: async (id: string, embedding: number[] | null): Promise<void> => {
+    logDb('updateEmbedding', { id });
+    const db = getDB();
+    await db
+      .update(recordsTable)
+      .set({ embedding: embedding ? JSON.stringify(embedding) : null })
+      .where(eq(recordsTable.id, id));
   },
 };

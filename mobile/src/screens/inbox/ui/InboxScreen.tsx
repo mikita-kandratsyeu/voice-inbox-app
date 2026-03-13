@@ -33,6 +33,7 @@ export const InboxScreen = () => {
     flattenedData,
     filtered,
     isSearching,
+    isSemanticSearching,
     filterStatus,
     setFilterStatus,
     sortOption,
@@ -130,7 +131,11 @@ export const InboxScreen = () => {
             color={color}
           />
           {isSearching && filtered.length === 0 ? (
-            <EmptySearchState query={query} color={color} />
+            isSemanticSearching ? (
+              <InboxSkeleton color={color} />
+            ) : (
+              <EmptySearchState query={query} color={color} />
+            )
           ) : filterStatus !== 'all' && filtered.length === 0 ? (
             <EmptyState
               title={t('inbox.emptyFilterTitle')}

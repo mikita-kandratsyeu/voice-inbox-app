@@ -10,6 +10,14 @@ export type { Database } from './db/client';
 export { getDB, initDB } from './db/client';
 export type { RecordInsert, RecordRow } from './db/schema';
 export { recordsTable } from './db/schema';
+export {
+  checkEmbeddingAvailability,
+  cosineSimilarity,
+  generateEmbedding,
+  generateEmbeddings,
+  isEmbeddingAvailable,
+  prepareEmbeddingModel,
+} from './embeddings';
 export { fetch } from './fetch';
 export { hapticError, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from './haptics';
 export type { SupportedLocale } from './i18n';

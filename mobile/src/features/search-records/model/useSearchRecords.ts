@@ -1,8 +1,18 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Platform } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useInboxFilters } from '@/features/inbox-filters';
+import { i18n } from '@/shared/lib';
+import {
+  cosineSimilarity,
+  generateEmbedding,
+  isEmbeddingAvailable,
+  prepareEmbeddingModel,
+} from '@/shared/lib/embeddings';
+
+const SEMANTIC_SEARCH_DEBOUNCE_MS = 500;
 
 const RELEVANCE = {
   title: 5,
@@ -36,13 +46,20 @@ const matchesQuery = (record: VoiceRecord, query: string): boolean => {
   );
 };
 
+function getEmbeddingLanguage(): string {
+  const lang = i18n.language ?? 'en';
+  return lang.startsWith('ru') ? 'ru' : 'en';
+}
+
 export const useSearchRecords = (records: VoiceRecord[]) => {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
+  const [semanticResults, setSemanticResults] = useState<VoiceRecord[] | null>(null);
+  const [isSemanticSearching, setIsSemanticSearching] = useState(false);
   const { filterStatus, setFilterStatus, sortOption, setSortOption, filterRecords } =
     useInboxFilters();
 
-  const searchFiltered = useMemo(() => {
+  const lexicalFiltered = useMemo(() => {
     const trimmed = query.trim();
 
     if (!trimmed) {
@@ -58,6 +75,83 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
       })
       .map(({ record }) => record);
   }, [records, query]);
+
+  const lastSemanticQueryRef = useRef<string>('');
+  const cancelledRef = useRef(false);
+
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (
+      !trimmed ||
+      Platform.OS !== 'ios' ||
+      !isEmbeddingAvailable() ||
+      !records.some((r) => r.embedding)
+    ) {
+      setSemanticResults(null);
+      setIsSemanticSearching(false);
+      lastSemanticQueryRef.current = '';
+      return;
+    }
+
+    setSemanticResults(null);
+    setIsSemanticSearching(true);
+    cancelledRef.current = false;
+
+    const debounceId = setTimeout(() => {
+      const searchQuery = query.trim();
+      if (!searchQuery) return;
+      lastSemanticQueryRef.current = searchQuery;
+
+      const run = async () => {
+        try {
+          const language = getEmbeddingLanguage();
+          await prepareEmbeddingModel(language);
+          const queryEmbedding = await generateEmbedding(searchQuery, language);
+          if (
+            cancelledRef.current ||
+            !queryEmbedding ||
+            lastSemanticQueryRef.current !== searchQuery
+          ) {
+            return;
+          }
+
+          const withEmbedding = records.filter((r): r is VoiceRecord & { embedding: number[] } =>
+            Boolean(r.embedding),
+          );
+          const scored = withEmbedding
+            .map((record) => ({
+              record,
+              score: cosineSimilarity(queryEmbedding, record.embedding),
+            }))
+            .filter(({ score }) => score > 0)
+            .sort((a, b) => b.score - a.score)
+            .map(({ record }) => record);
+
+          if (cancelledRef.current || lastSemanticQueryRef.current !== searchQuery) return;
+
+          setSemanticResults(scored);
+        } catch (err) {
+          if (__DEV__) console.warn('[search] Semantic search failed:', err);
+          if (!cancelledRef.current) setSemanticResults(null);
+        } finally {
+          if (!cancelledRef.current) setIsSemanticSearching(false);
+        }
+      };
+
+      run();
+    }, SEMANTIC_SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      cancelledRef.current = true;
+      clearTimeout(debounceId);
+    };
+  }, [query, records]);
+
+  const searchFiltered = useMemo(() => {
+    if (!query.trim()) return records;
+    if (semanticResults !== null) return semanticResults;
+    return lexicalFiltered;
+  }, [query, records, semanticResults, lexicalFiltered]);
 
   const filtered = useMemo(() => filterRecords(searchFiltered), [searchFiltered, filterRecords]);
 
@@ -116,6 +210,7 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
     sections,
     flattenedData,
     isSearching: query.trim().length > 0,
+    isSemanticSearching: isSemanticSearching,
     filterStatus,
     setFilterStatus,
     sortOption,

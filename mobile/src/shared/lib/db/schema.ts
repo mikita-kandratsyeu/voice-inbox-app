@@ -24,6 +24,7 @@ export const recordsTable = sqliteTable(
     translatedTranscript: text('translatedTranscript'),
     translationLanguage: text('translationLanguage'),
     audioPath: text('audioPath'),
+    embedding: text('embedding'),
   },
   (t) => [
     index('idx_records_isPinned').on(t.isPinned),

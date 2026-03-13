@@ -3,6 +3,7 @@ import { useCallback, useRef } from 'react';
 import type { TaskItem, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { pollAiMessage, postAiMessage } from '@/shared/lib/ai-api';
 
 export const useAiProcessing = () => {
@@ -110,6 +111,12 @@ export const useAiProcessing = () => {
             nextSteps: nextSteps ?? [],
           });
         }
+
+        await generateAndSaveEmbeddingForRecord({
+          ...record,
+          summary,
+          keyPhrases: keyPhrases ?? [],
+        });
       } catch (err) {
         if (__DEV__)
           console.warn('[AI] processRecord: unexpected error', {
