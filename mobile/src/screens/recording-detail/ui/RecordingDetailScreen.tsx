@@ -24,6 +24,7 @@ import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { RecordingDetailCard } from './RecordingDetailCard';
 import { RecordingDetailHeader } from './RecordingDetailHeader';
 import { RecordingDetailTabBar } from './RecordingDetailTabBar';
+import { RelatedNotesSection } from './RelatedNotesSection';
 import { SummaryTab } from './SummaryTab';
 import { TasksTab } from './TasksTab';
 import { TranscriptContent } from './TranscriptContent';
@@ -179,6 +180,7 @@ export const RecordingDetailScreen = () => {
           {activeTab === 'summary' && (
             <SummaryTab
               summary={liveRecord.summary ?? ''}
+              keyPhrases={liveRecord.keyPhrases}
               status={liveRecord.summaryStatus ?? 'idle'}
               hasTranscript={Boolean(liveRecord.transcript)}
               color={color}
@@ -192,6 +194,7 @@ export const RecordingDetailScreen = () => {
           {activeTab === 'tasks' && (
             <TasksTab
               tasks={liveRecord.tasks ?? []}
+              nextSteps={liveRecord.nextSteps}
               status={liveRecord.tasksStatus ?? 'idle'}
               hasTranscript={Boolean(liveRecord.transcript)}
               recordTitle={liveRecord.title}
@@ -205,6 +208,8 @@ export const RecordingDetailScreen = () => {
             />
           )}
         </View>
+
+        <RelatedNotesSection recordId={liveRecord.id} color={color} />
 
         <AskAIModal
           visible={showAskAIModal}

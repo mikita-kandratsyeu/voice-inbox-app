@@ -3,7 +3,7 @@ import { useCallback, useRef } from 'react';
 import type { TaskItem, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
-import { AI_PROCESSING_SYSTEM_PROMPT, pollAiMessage, postAiMessage } from '@/shared/lib/ai-api';
+import { pollAiMessage, postAiMessage } from '@/shared/lib/ai-api';
 
 export const useAiProcessing = () => {
   const setSummaryStatus = useRecordStore((s) => s.setSummaryStatus);
@@ -11,7 +11,11 @@ export const useAiProcessing = () => {
   const updateSummary = useRecordStore((s) => s.updateSummary);
   const updateTasks = useRecordStore((s) => s.updateTasks);
   const updateTags = useRecordStore((s) => s.updateTags);
+  const updateAiExtras = useRecordStore((s) => s.updateAiExtras);
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
+  const summaryStyle = useSettingsStore((s) => s.summaryStyle);
+  const taskStrictness = useSettingsStore((s) => s.taskStrictness);
+  const aiOutputLanguage = useSettingsStore((s) => s.aiOutputLanguage);
 
   const inFlightRef = useRef<Set<string>>(new Set());
 
@@ -36,7 +40,11 @@ export const useAiProcessing = () => {
           id: requestId,
           transcript: record.transcript,
           model: selectedAIModel,
-          systemPrompt: AI_PROCESSING_SYSTEM_PROMPT,
+          options: {
+            summaryStyle,
+            taskStrictness,
+            outputLanguage: aiOutputLanguage,
+          },
         });
 
         if (!postResult.ok) {
@@ -69,7 +77,14 @@ export const useAiProcessing = () => {
           return;
         }
 
-        const { summary, tasks: rawTasks, tags } = pollResult.result;
+        const {
+          summary,
+          tasks: rawTasks,
+          tags,
+          classification,
+          keyPhrases,
+          nextSteps,
+        } = pollResult.result;
 
         const taskItems: TaskItem[] = rawTasks.map((t, index) => ({
           id: `${record.id}-task-${index}`,
@@ -84,6 +99,17 @@ export const useAiProcessing = () => {
         if (tags.length > 0) {
           await updateTags(record.id, tags);
         }
+        if (
+          classification ||
+          (keyPhrases && keyPhrases.length > 0) ||
+          (nextSteps && nextSteps.length > 0)
+        ) {
+          await updateAiExtras(record.id, {
+            classification: classification ?? null,
+            keyPhrases: keyPhrases ?? [],
+            nextSteps: nextSteps ?? [],
+          });
+        }
       } catch (err) {
         if (__DEV__)
           console.warn('[AI] processRecord: unexpected error', {
@@ -96,7 +122,18 @@ export const useAiProcessing = () => {
         inFlightRef.current.delete(baseId);
       }
     },
-    [selectedAIModel, setSummaryStatus, setTasksStatus, updateSummary, updateTasks, updateTags],
+    [
+      selectedAIModel,
+      summaryStyle,
+      taskStrictness,
+      aiOutputLanguage,
+      setSummaryStatus,
+      setTasksStatus,
+      updateSummary,
+      updateTasks,
+      updateTags,
+      updateAiExtras,
+    ],
   );
 
   const generateSummary = useCallback(

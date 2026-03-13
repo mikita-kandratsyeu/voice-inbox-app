@@ -16,6 +16,7 @@ import {
 
 type SummaryTabProps = {
   summary: string;
+  keyPhrases?: string[];
   status: RecordingStatus;
   hasTranscript?: boolean;
   color: Colors;
@@ -25,6 +26,7 @@ type SummaryTabProps = {
 
 export const SummaryTab = ({
   summary,
+  keyPhrases = [],
   status,
   hasTranscript = true,
   color,
@@ -94,6 +96,30 @@ export const SummaryTab = ({
       <Text className="text-sm leading-6" style={{ color: color.text.primary }}>
         {summary}
       </Text>
+      {keyPhrases.length > 0 && (
+        <View className="gap-2">
+          <Text className="text-xs font-semibold uppercase" style={{ color: color.text.secondary }}>
+            {t('recordingDetail.keyPhrases')}
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            {keyPhrases.map((phrase) => (
+              <View
+                key={phrase}
+                style={{
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                  borderRadius: 8,
+                  backgroundColor: color.background.tertiary,
+                }}
+              >
+                <Text className="text-sm" style={{ color: color.text.primary }}>
+                  {phrase}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
       <Button
         variant="secondary"
         size="lg"

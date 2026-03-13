@@ -8,6 +8,7 @@ import {
   HardDrive,
   Info,
   Mic,
+  Settings2,
   Shield,
   Sparkles,
   UploadCloud,
@@ -205,6 +206,12 @@ export const SettingsScreen = () => {
             color={color}
             leftIcon={<Mic size={20} color={color.accent.cache} strokeWidth={1.8} />}
             onPress={() => navigation.navigate('WhisperModelPicker')}
+          />
+          <SettingsRow
+            label={t('settings.aiSettings')}
+            color={color}
+            leftIcon={<Settings2 size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+            onPress={() => navigation.navigate('AiSettings')}
           />
           <SettingsRow
             label={t('settings.autoTranscribeOnSave')}

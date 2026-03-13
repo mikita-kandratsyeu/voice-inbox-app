@@ -9,8 +9,8 @@
     "googlePlayLabel": "Get it on",
     "googlePlay": "Google Play",
     "stats": {
-      "accuracy": { "value": "99.9%", "label": "Accuracy" },
-      "private": { "value": "100%", "label": "Private" }
+      "accuracy": { "value": "Whisper-grade", "label": "Transcription" },
+      "private": { "value": "100% offline", "label": "On device" }
     }
   },
   "features": {
@@ -22,7 +22,7 @@
     },
     "transcribe": {
       "title": "Offline transcription",
-      "description": "Your conversations never leave your device. 100% private, 100% secure."
+      "description": "Transcription runs entirely on your device. AI processing is optional."
     },
     "ai": {
       "title": "AI processing",

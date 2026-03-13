@@ -1,9 +1,10 @@
-import type { RecordStatus } from '@/entities/record';
+import type { RecordClassification, RecordStatus } from '@/entities/record';
 
 export type InboxFilterStatus =
   | 'all'
   | Exclude<RecordStatus, 'unread'>
   | 'pinned'
   | 'withoutTranscript'
-  | 'withoutSummary';
+  | 'withoutSummary'
+  | RecordClassification;
 export type InboxSortOption = 'dateDesc' | 'dateAsc' | 'durationDesc' | 'durationAsc' | 'titleAsc';

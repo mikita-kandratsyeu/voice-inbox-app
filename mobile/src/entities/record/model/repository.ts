@@ -2,7 +2,13 @@ import { desc, eq } from 'drizzle-orm';
 
 import { getDB, recordsTable } from '@/shared/lib';
 
-import type { RecordingStatus, TaskItem, TranscriptSegment, VoiceRecord } from './types';
+import type {
+  RecordClassification,
+  RecordingStatus,
+  TaskItem,
+  TranscriptSegment,
+  VoiceRecord,
+} from './types';
 
 const logDb = (op: string, details?: Record<string, unknown>) => {
   if (__DEV__) {
@@ -26,6 +32,11 @@ type RecordRowRaw = {
   transcriptProgress: number | null;
   isPinned: number | null;
   tags: string | null;
+  classification: string | null;
+  keyPhrases: string | null;
+  nextSteps: string | null;
+  translatedTranscript: string | null;
+  translationLanguage: string | null;
   audioPath: string | null;
 };
 
@@ -48,6 +59,11 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     transcriptProgress: row.transcriptProgress ?? 0,
     isPinned: Boolean(row.isPinned),
     tags: JSON.parse(row.tags ?? '[]') as string[],
+    classification: (row.classification as VoiceRecord['classification']) ?? undefined,
+    keyPhrases: JSON.parse(row.keyPhrases ?? '[]') as string[],
+    nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
+    translatedTranscript: row.translatedTranscript ?? undefined,
+    translationLanguage: row.translationLanguage ?? undefined,
     audioPath: row.audioPath ?? undefined,
     summaryStatus: summary ? ('done' as RecordingStatus) : undefined,
     tasksStatus: tasks.length > 0 ? ('done' as RecordingStatus) : undefined,
@@ -87,6 +103,11 @@ export const recordRepository = {
         transcriptProgress: record.transcriptProgress ?? 0,
         isPinned: record.isPinned ? 1 : 0,
         tags: JSON.stringify(record.tags ?? []),
+        classification: record.classification ?? null,
+        keyPhrases: JSON.stringify(record.keyPhrases ?? []),
+        nextSteps: JSON.stringify(record.nextSteps ?? []),
+        translatedTranscript: record.translatedTranscript ?? null,
+        translationLanguage: record.translationLanguage ?? null,
         audioPath: record.audioPath ?? null,
       })
       .onConflictDoNothing();
@@ -158,6 +179,47 @@ export const recordRepository = {
     await db
       .update(recordsTable)
       .set({ tags: JSON.stringify(tags) })
+      .where(eq(recordsTable.id, id));
+  },
+
+  updateAiExtras: async (
+    id: string,
+    data: {
+      classification?: RecordClassification | null;
+      keyPhrases?: string[];
+      nextSteps?: string[];
+    },
+  ): Promise<void> => {
+    logDb('updateAiExtras', { id });
+    const db = getDB();
+    const updates: Record<string, unknown> = {};
+    if (data.classification !== undefined) {
+      updates.classification = data.classification ?? null;
+    }
+    if (data.keyPhrases !== undefined) {
+      updates.keyPhrases = JSON.stringify(data.keyPhrases);
+    }
+    if (data.nextSteps !== undefined) {
+      updates.nextSteps = JSON.stringify(data.nextSteps);
+    }
+    if (Object.keys(updates).length > 0) {
+      await db.update(recordsTable).set(updates).where(eq(recordsTable.id, id));
+    }
+  },
+
+  updateTranslation: async (
+    id: string,
+    translatedTranscript: string | null,
+    translationLanguage: string | null,
+  ): Promise<void> => {
+    logDb('updateTranslation', { id });
+    const db = getDB();
+    await db
+      .update(recordsTable)
+      .set({
+        translatedTranscript,
+        translationLanguage,
+      })
       .where(eq(recordsTable.id, id));
   },
 

@@ -41,6 +41,11 @@ export const createMessage = async (
         summary: result.summary,
         tasks: result.tasks,
         tags: result.tags,
+        ...(result.classification && { classification: result.classification }),
+        ...(result.keyPhrases && result.keyPhrases.length > 0 && {
+          keyPhrases: result.keyPhrases,
+        }),
+        ...(result.nextSteps && result.nextSteps.length > 0 && { nextSteps: result.nextSteps }),
       });
     })
     .catch(async (err) => {

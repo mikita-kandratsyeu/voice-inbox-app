@@ -39,7 +39,12 @@
       "moreFilters": "Фильтры",
       "read": "Прочитанные",
       "archived": "В архиве",
-      "pinned": "Закреплённые"
+      "pinned": "Закреплённые",
+      "personal": "Личное",
+      "work": "Работа",
+      "meeting": "Встреча",
+      "idea": "Идея",
+      "other": "Другое"
     },
     "sort": {
       "dateDesc": "Сначала новые",
@@ -80,6 +85,11 @@
     "editTranscript": "Редактировать",
     "editTranscriptTitle": "Редактирование",
     "retranscribe": "Перетранскрибировать",
+    "translate": "Перевести",
+    "translating": "Перевод...",
+    "showOriginal": "Показать оригинал",
+    "showTranslation": "Показать перевод ({{lang}})",
+    "translateLimitReached": "Лимит переводов исчерпан. Попробуйте на следующей неделе.",
     "cancel": "Отменить",
     "modelNotDownloaded": "Модель не скачана",
     "modelNotDownloadedHint": "Для транскрипции необходимо скачать модель Whisper в настройках.",
@@ -115,6 +125,9 @@
     "askErrorContinueHint": "Закройте окно, чтобы просмотреть сводку и задачи.",
     "askAnother": "Задать другой вопрос",
     "continueViewing": "Продолжить просмотр",
+    "keyPhrases": "Ключевые фразы",
+    "nextSteps": "Что сделать дальше",
+    "relatedNotes": "Похожие заметки",
     "accessibility": {
       "cardLabel": "Голосовая заметка {{title}}, записана {{date}}, длительность {{duration}}",
       "tagsSuffix": ", теги: {{tags}}"
@@ -182,6 +195,7 @@
     "importing": "Импорт...",
     "aiProcessing": "ИИ обработка",
     "aiModel": "ИИ модель",
+    "aiSettings": "Настройки ИИ",
     "transcription": "Транскрипция",
     "autoTranscribeOnSave": "Транскрибировать автоматически",
     "autoAiAfterTranscription": "Авто-сводка после транскрипции",
@@ -283,6 +297,22 @@
       "large_v3Desc": "Максимальное качество, поддержка 99 языков"
     }
   },
+  "aiSettings": {
+    "title": "Настройки ИИ",
+    "description": "Настройте, как ИИ обрабатывает транскрипты. Изменения применятся к следующей обработке.",
+    "summaryStyle": "Стиль сводки",
+    "summaryStyle.brief": "Краткая (1–2 предложения)",
+    "summaryStyle.standard": "Стандартная (2–4 предложения)",
+    "summaryStyle.detailed": "Подробная (4–6 предложений)",
+    "taskStrictness": "Извлечение задач",
+    "taskStrictness.strict": "Строгая (только явные задачи)",
+    "taskStrictness.balanced": "Сбалансированная",
+    "taskStrictness.soft": "Мягкая (включая намерения)",
+    "outputLanguage": "Язык вывода",
+    "outputLanguage.same": "Как в транскрипте",
+    "outputLanguage.ru": "Всегда русский",
+    "outputLanguage.en": "Всегда английский"
+  },
   "aiModels": {
     "title": "ИИ модель",
     "description": "Выберите модель ИИ для генерации сводок и извлечения задач из транскриптов. Настройки применятся к следующей обработке.",
@@ -371,6 +401,13 @@
     "addedToCalendar": "Добавлено в Календарь",
     "addedToReminders": "Добавлено в Напоминания",
     "permissionDenied": "Доступ запрещён. Включите в Настройках."
+  },
+  "classification": {
+    "personal": "Личное",
+    "work": "Работа",
+    "meeting": "Встреча",
+    "idea": "Идея",
+    "other": "Другое"
   },
   "transcription": {
     "progress": "Обработано {{ current }} из {{ total }} фрагментов...",

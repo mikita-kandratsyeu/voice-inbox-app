@@ -18,6 +18,11 @@ export const recordsTable = sqliteTable(
     transcriptProgress: integer('transcriptProgress').default(0),
     isPinned: integer('isPinned').default(0),
     tags: text('tags').default('[]'),
+    classification: text('classification'),
+    keyPhrases: text('keyPhrases').default('[]'),
+    nextSteps: text('nextSteps').default('[]'),
+    translatedTranscript: text('translatedTranscript'),
+    translationLanguage: text('translationLanguage'),
     audioPath: text('audioPath'),
   },
   (t) => [

@@ -2,7 +2,13 @@ import RNFS from 'react-native-fs';
 import { create } from 'zustand';
 
 import { recordRepository } from './repository';
-import type { RecordingStatus, TaskItem, TranscriptSegment, VoiceRecord } from './types';
+import type {
+  RecordClassification,
+  RecordingStatus,
+  TaskItem,
+  TranscriptSegment,
+  VoiceRecord,
+} from './types';
 
 type RecordStore = {
   records: VoiceRecord[];
@@ -29,6 +35,19 @@ type RecordStore = {
   updateSummary: (id: string, summary: string) => Promise<void>;
   updateTasks: (id: string, tasks: TaskItem[]) => Promise<void>;
   updateTags: (id: string, tags: string[]) => Promise<void>;
+  updateAiExtras: (
+    id: string,
+    data: {
+      classification?: RecordClassification | null;
+      keyPhrases?: string[];
+      nextSteps?: string[];
+    },
+  ) => Promise<void>;
+  updateTranslation: (
+    id: string,
+    translatedTranscript: string | null,
+    translationLanguage: string | null,
+  ) => Promise<void>;
   toggleTask: (id: string, taskId: string) => Promise<void>;
   clearAudioPath: (id: string) => Promise<void>;
 };
@@ -150,6 +169,39 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     await recordRepository.updateTags(id, tags);
     set((s) => ({
       records: s.records.map((r) => (r.id === id ? { ...r, tags } : r)),
+    }));
+  },
+
+  updateAiExtras: async (id, data) => {
+    await recordRepository.updateAiExtras(id, data);
+    set((s) => ({
+      records: s.records.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              ...(data.classification !== undefined && {
+                classification: data.classification ?? undefined,
+              }),
+              ...(data.keyPhrases !== undefined && { keyPhrases: data.keyPhrases }),
+              ...(data.nextSteps !== undefined && { nextSteps: data.nextSteps }),
+            }
+          : r,
+      ),
+    }));
+  },
+
+  updateTranslation: async (id, translatedTranscript, translationLanguage) => {
+    await recordRepository.updateTranslation(id, translatedTranscript, translationLanguage);
+    set((s) => ({
+      records: s.records.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              translatedTranscript: translatedTranscript ?? undefined,
+              translationLanguage: translationLanguage ?? undefined,
+            }
+          : r,
+      ),
     }));
   },
 

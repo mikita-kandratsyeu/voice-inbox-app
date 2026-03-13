@@ -22,6 +22,10 @@ export type TranscriptionLanguage =
   | 'uk'
   | 'pl';
 
+export type SummaryStyle = 'brief' | 'standard' | 'detailed';
+export type TaskStrictness = 'strict' | 'balanced' | 'soft';
+export type AiOutputLanguage = 'same' | 'ru' | 'en';
+
 export type WhisperModelId = 'whisper-tiny' | 'whisper-base' | 'whisper-small' | 'whisper-medium';
 
 export type WhisperModelStatus = 'not_downloaded' | 'downloading' | 'downloaded' | 'error';
@@ -54,6 +58,9 @@ export type SettingsState = {
   selectedAIModel: AIModelId;
   selectedWhisperModel: WhisperModelId;
   transcriptionLanguage: TranscriptionLanguage;
+  summaryStyle: SummaryStyle;
+  taskStrictness: TaskStrictness;
+  aiOutputLanguage: AiOutputLanguage;
   autoTranscribeOnSave: boolean;
   autoAiAfterTranscription: boolean;
   whisperModelStatuses: Partial<Record<WhisperModelId, WhisperModelStatus>>;
@@ -62,6 +69,9 @@ export type SettingsState = {
   setAIModel: (id: AIModelId) => void;
   setWhisperModel: (id: WhisperModelId) => void;
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;
+  setSummaryStyle: (value: SummaryStyle) => void;
+  setTaskStrictness: (value: TaskStrictness) => void;
+  setAiOutputLanguage: (value: AiOutputLanguage) => void;
   setAutoTranscribeOnSave: (value: boolean) => void;
   setAutoAiAfterTranscription: (value: boolean) => void;
   setWhisperModelStatus: (id: WhisperModelId, status: WhisperModelStatus) => void;

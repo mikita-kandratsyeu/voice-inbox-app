@@ -5,7 +5,10 @@ export { useSettingsStore } from './model/store';
 export type {
   AIModel,
   AIModelId,
+  AiOutputLanguage,
   SettingsState,
+  SummaryStyle,
+  TaskStrictness,
   TranscriptionLanguage,
   WhisperModel,
   WhisperModelId,

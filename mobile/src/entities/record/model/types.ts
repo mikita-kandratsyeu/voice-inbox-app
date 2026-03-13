@@ -1,5 +1,7 @@
 export type RecordStatus = 'unread' | 'read' | 'archived';
 
+export type RecordClassification = 'personal' | 'work' | 'meeting' | 'idea' | 'other';
+
 export type RecordingStatus = 'idle' | 'processing' | 'done' | 'error';
 
 export type TranscriptSegment = {
@@ -36,5 +38,10 @@ export type VoiceRecord = {
   transcriptProgressLabel?: string;
   isPinned?: boolean;
   tags?: string[];
+  classification?: RecordClassification;
+  keyPhrases?: string[];
+  nextSteps?: string[];
+  translatedTranscript?: string;
+  translationLanguage?: string;
   audioPath?: string;
 };

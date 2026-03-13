@@ -30,6 +30,8 @@ export const useInboxFilters = () => {
         result = result.filter((r) => !r.transcript?.trim());
       } else if (filterStatus === 'withoutSummary') {
         result = result.filter((r) => !r.summary?.trim());
+      } else if (['personal', 'work', 'meeting', 'idea', 'other'].includes(filterStatus)) {
+        result = result.filter((r) => r.classification === filterStatus);
       } else if (filterStatus !== 'all') {
         result = result.filter((r) => r.status === filterStatus);
       }
