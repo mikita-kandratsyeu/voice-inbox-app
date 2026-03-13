@@ -186,7 +186,8 @@
       "remaining": "Remaining: {{count}}",
       "exhausted": "Limit exhausted",
       "resetAt": "Resets: {{date}}",
-      "loading": "Loading..."
+      "loading": "Loading...",
+      "unavailable": "—"
     },
     "sync": "Sync",
     "export": "Export data",

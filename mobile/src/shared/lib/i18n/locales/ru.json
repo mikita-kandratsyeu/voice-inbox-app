@@ -186,7 +186,8 @@
       "remaining": "Осталось: {{count}}",
       "exhausted": "Лимит исчерпан",
       "resetAt": "Сброс: {{date}}",
-      "loading": "Загрузка..."
+      "loading": "Загрузка...",
+      "unavailable": "—"
     },
     "sync": "Синхронизация",
     "export": "Экспорт данных",

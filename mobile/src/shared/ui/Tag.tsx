@@ -1,12 +1,17 @@
 import React from 'react';
 import { Text, View } from 'react-native';
 
+import type { Colors } from '@/shared/config';
+
 type TagProps = {
   label: string;
+  color: Colors;
 };
 
-export const Tag = ({ label }: TagProps) => (
-  <View className="rounded-full bg-blue-50 px-3 py-1 dark:bg-blue-950">
-    <Text className="text-xs font-medium text-blue-500 dark:text-blue-400">{label}</Text>
+export const Tag = ({ label, color }: TagProps) => (
+  <View className="rounded-full px-3 py-1" style={{ backgroundColor: color.status.processing.bg }}>
+    <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
+      {label}
+    </Text>
   </View>
 );
