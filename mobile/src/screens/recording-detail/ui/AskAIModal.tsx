@@ -11,10 +11,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
-  Dimensions,
   Keyboard,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { KeyboardController } from 'react-native-keyboard-controller';
@@ -27,8 +27,6 @@ import type { Colors } from '@/shared/config';
 import { hapticSelection, useNetworkStatus } from '@/shared/lib';
 import { Button, getInputFieldInputStyle, InputField } from '@/shared/ui';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SNAP_POINTS = [SCREEN_HEIGHT * 0.5, SCREEN_HEIGHT * 0.75];
 const TOP_INSET = 48;
 
 const SUGGESTED_QUESTION_KEYS = ['askSuggested1', 'askSuggested2', 'askSuggested3'] as const;
@@ -209,6 +207,8 @@ const EmptyState = ({ color, isConnected, onSuggestedQuestion, disabled }: Empty
 export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProps) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
+  const snapPoints = useMemo(() => [screenHeight * 0.5, screenHeight * 0.75], [screenHeight]);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [questionInput, setQuestionInput] = useState('');
   const { askQuestion, reset, isLoading, error, question, answer } = useAskAI();
@@ -358,7 +358,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
-      snapPoints={SNAP_POINTS}
+      snapPoints={snapPoints}
       topInset={TOP_INSET}
       enablePanDownToClose
       enableOverDrag={false}

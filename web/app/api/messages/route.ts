@@ -70,13 +70,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return apiError('systemPrompt or options is required', HttpStatus.BAD_REQUEST);
   }
 
-  const result = await createMessage(
-    id,
-    transcript,
-    model,
-    resolvedSystemPrompt,
-    deviceIdTrimmed,
-  );
+  const result = await createMessage(id, transcript, model, resolvedSystemPrompt, deviceIdTrimmed);
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
     return NextResponse.json(

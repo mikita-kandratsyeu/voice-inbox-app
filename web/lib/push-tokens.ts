@@ -1,0 +1,137 @@
+import {
+  APP_FOREGROUND_KEY_PREFIX,
+  APP_FOREGROUND_TTL_SECONDS,
+  PUSH_LOCK_KEY_PREFIX,
+  PUSH_LOCK_TTL_SECONDS,
+  PUSH_PENDING_KEY_PREFIX,
+  PUSH_PENDING_TTL_SECONDS,
+  PUSH_TOKEN_KEY_PREFIX,
+  PUSH_TOKEN_TTL_SECONDS,
+} from '@/config/constants';
+import { redis } from '@/lib/redis';
+
+function getPushTokenKey(deviceId: string): string {
+  return `${PUSH_TOKEN_KEY_PREFIX}${deviceId}`;
+}
+
+function getAppForegroundKey(deviceId: string): string {
+  return `${APP_FOREGROUND_KEY_PREFIX}${deviceId}`;
+}
+
+export async function setAppForeground(deviceId: string): Promise<void> {
+  const key = getAppForegroundKey(deviceId);
+  await redis.set(key, '1', { ex: APP_FOREGROUND_TTL_SECONDS });
+}
+
+export async function clearAppForeground(deviceId: string): Promise<void> {
+  const key = getAppForegroundKey(deviceId);
+  await redis.del(key);
+}
+
+export async function isAppInForeground(deviceId: string): Promise<boolean> {
+  const key = getAppForegroundKey(deviceId);
+  const value = await redis.get(key);
+  return value != null;
+}
+
+type StoredPushData = { token: string; locale?: string | null };
+
+export async function savePushToken(
+  deviceId: string,
+  deviceToken: string,
+  locale?: string | null,
+): Promise<void> {
+  const key = getPushTokenKey(deviceId);
+  const data: StoredPushData = { token: deviceToken, locale: locale ?? null };
+  await redis.set(key, JSON.stringify(data), { ex: PUSH_TOKEN_TTL_SECONDS });
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[Push] savePushToken', { deviceId, key, locale: data.locale });
+  }
+}
+
+export async function getPushToken(deviceId: string): Promise<string | null> {
+  const data = await getPushTokenWithLocale(deviceId);
+  return data?.token ?? null;
+}
+
+function getPushPendingKey(deviceId: string): string {
+  return `${PUSH_PENDING_KEY_PREFIX}${deviceId}`;
+}
+
+function getPushLockKey(deviceId: string): string {
+  return `${PUSH_LOCK_KEY_PREFIX}${deviceId}`;
+}
+
+/**
+ * Registers one more completed AI task for this device.
+ * Returns true if this caller is the "leader" responsible for sending the push
+ * (acquired the debounce lock), false if another task already holds the lock.
+ *
+ * Pattern: leader waits for the debounce window, then reads+clears the counter
+ * and sends a single batched push. Non-leaders just increment and exit.
+ */
+export async function registerAiCompletion(deviceId: string): Promise<boolean> {
+  const countKey = getPushPendingKey(deviceId);
+  const lockKey = getPushLockKey(deviceId);
+
+  await redis.incr(countKey);
+  await redis.expire(countKey, PUSH_PENDING_TTL_SECONDS);
+
+  const isLeader = await redis.setIfNotExists(lockKey, '1', { ex: PUSH_LOCK_TTL_SECONDS });
+  return isLeader;
+}
+
+/**
+ * Called by the leader after the debounce window.
+ * Reads and clears the pending counter, releases the lock.
+ * Returns the number of completions to include in the push.
+ */
+export async function collectPendingAndUnlock(deviceId: string): Promise<number> {
+  const countKey = getPushPendingKey(deviceId);
+  const lockKey = getPushLockKey(deviceId);
+
+  const value = await redis.get(countKey);
+  const count = value ? parseInt(String(value), 10) || 0 : 0;
+
+  await redis.del(countKey);
+  await redis.del(lockKey);
+
+  return count;
+}
+
+export async function getPushTokenWithLocale(
+  deviceId: string,
+): Promise<{ token: string; locale: string | null } | null> {
+  const key = getPushTokenKey(deviceId);
+  const value = await redis.get(key);
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[Push] getPushTokenWithLocale', {
+      deviceId,
+      key,
+      hasValue: value != null,
+      valueType: typeof value,
+      valueLength: value != null ? String(value).length : 0,
+    });
+  }
+
+  if (value == null) return null;
+
+  let data: StoredPushData | null = null;
+  if (typeof value === 'object' && value !== null && 'token' in value) {
+    data = value as StoredPushData;
+  } else if (typeof value === 'string') {
+    if (value.startsWith('{')) {
+      try {
+        data = JSON.parse(value) as StoredPushData;
+      } catch {
+        return { token: value, locale: null };
+      }
+    } else {
+      return { token: value, locale: null };
+    }
+  }
+
+  return data?.token ? { token: data.token, locale: data.locale ?? null } : null;
+}

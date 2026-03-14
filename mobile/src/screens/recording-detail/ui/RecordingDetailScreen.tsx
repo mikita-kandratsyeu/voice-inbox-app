@@ -16,6 +16,7 @@ import { useRecordActions } from '@/features/record-actions';
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
+import { useIsTablet } from '@/shared/lib';
 import { AudioPlayer } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
@@ -34,6 +35,7 @@ export const RecordingDetailScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'RecordingDetail'>>();
   const color = getColors(useAppTheme());
+  const isTablet = useIsTablet();
 
   const { record: routeRecord } = route.params;
   const {
@@ -140,6 +142,9 @@ export const RecordingDetailScreen = () => {
     });
   };
 
+  const scrollPadding = isTablet ? 24 : 16;
+  const contentMaxWidth = isTablet ? 720 : undefined;
+
   return (
     <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
       <RecordingDetailHeader
@@ -158,73 +163,80 @@ export const RecordingDetailScreen = () => {
 
       <ScrollView
         ref={scrollRef}
-        contentContainerStyle={{ padding: 16, gap: 12, paddingBottom: 40 }}
+        contentContainerStyle={{
+          padding: scrollPadding,
+          gap: 12,
+          paddingBottom: 40,
+          alignItems: 'center',
+        }}
         showsVerticalScrollIndicator={false}
       >
-        <RecordingDetailCard record={liveRecord} color={color} />
+        <View style={{ width: '100%', maxWidth: contentMaxWidth, gap: 12 }}>
+          <RecordingDetailCard record={liveRecord} color={color} />
 
-        <View className="overflow-hidden rounded-2xl">
-          <AudioPlayer
-            duration={liveRecord.duration}
-            color={color}
-            audioPath={liveRecord.audioPath}
-          />
-        </View>
-
-        <View className="overflow-hidden rounded-2xl">
-          <AudioLanguageSelector
-            value={recordLanguage}
-            color={color}
-            onSelect={setRecordLanguage}
-          />
-        </View>
-
-        <View
-          className="overflow-hidden rounded-2xl"
-          style={{ backgroundColor: color.background.card }}
-        >
-          <RecordingDetailTabBar active={activeTab} onSelect={setActiveTab} color={color} />
-          {activeTab === 'transcript' && (
-            <TranscriptContent
-              record={liveRecord}
+          <View className="overflow-hidden rounded-2xl">
+            <AudioPlayer
+              duration={liveRecord.duration}
               color={color}
-              onTranscribe={handleRetranscribe}
-              onCancelTranscription={handleCancelTranscription}
+              audioPath={liveRecord.audioPath}
             />
-          )}
-          {activeTab === 'summary' && (
-            <SummaryTab
-              summary={liveRecord.summary ?? ''}
-              keyPhrases={liveRecord.keyPhrases}
-              status={liveRecord.summaryStatus ?? 'idle'}
-              hasTranscript={Boolean(liveRecord.transcript)}
-              color={color}
-              onGenerate={handleGenerateSummary}
-              onDismissError={() => {
-                setSummaryStatus(liveRecord.id, 'done');
-                setTasksStatus(liveRecord.id, 'done');
-              }}
-            />
-          )}
-          {activeTab === 'tasks' && (
-            <TasksTab
-              tasks={liveRecord.tasks ?? []}
-              nextSteps={liveRecord.nextSteps}
-              status={liveRecord.tasksStatus ?? 'idle'}
-              hasTranscript={Boolean(liveRecord.transcript)}
-              recordTitle={liveRecord.title}
-              color={color}
-              onToggle={handleToggleTask}
-              onExtract={handleExtractTasks}
-              onDismissError={() => {
-                setSummaryStatus(liveRecord.id, 'done');
-                setTasksStatus(liveRecord.id, 'done');
-              }}
-            />
-          )}
-        </View>
+          </View>
 
-        <RelatedNotesSection recordId={liveRecord.id} color={color} />
+          <View className="overflow-hidden rounded-2xl">
+            <AudioLanguageSelector
+              value={recordLanguage}
+              color={color}
+              onSelect={setRecordLanguage}
+            />
+          </View>
+
+          <View
+            className="overflow-hidden rounded-2xl"
+            style={{ backgroundColor: color.background.card }}
+          >
+            <RecordingDetailTabBar active={activeTab} onSelect={setActiveTab} color={color} />
+            {activeTab === 'transcript' && (
+              <TranscriptContent
+                record={liveRecord}
+                color={color}
+                onTranscribe={handleRetranscribe}
+                onCancelTranscription={handleCancelTranscription}
+              />
+            )}
+            {activeTab === 'summary' && (
+              <SummaryTab
+                summary={liveRecord.summary ?? ''}
+                keyPhrases={liveRecord.keyPhrases}
+                status={liveRecord.summaryStatus ?? 'idle'}
+                hasTranscript={Boolean(liveRecord.transcript)}
+                color={color}
+                onGenerate={handleGenerateSummary}
+                onDismissError={() => {
+                  setSummaryStatus(liveRecord.id, 'done');
+                  setTasksStatus(liveRecord.id, 'done');
+                }}
+              />
+            )}
+            {activeTab === 'tasks' && (
+              <TasksTab
+                tasks={liveRecord.tasks ?? []}
+                nextSteps={liveRecord.nextSteps}
+                status={liveRecord.tasksStatus ?? 'idle'}
+                hasTranscript={Boolean(liveRecord.transcript)}
+                recordTitle={liveRecord.title}
+                color={color}
+                onToggle={handleToggleTask}
+                onExtract={handleExtractTasks}
+                onDismissError={() => {
+                  setSummaryStatus(liveRecord.id, 'done');
+                  setTasksStatus(liveRecord.id, 'done');
+                }}
+              />
+            )}
+          </View>
+
+          <RelatedNotesSection recordId={liveRecord.id} color={color} />
+        </View>
 
         <AskAIModal
           visible={showAskAIModal}

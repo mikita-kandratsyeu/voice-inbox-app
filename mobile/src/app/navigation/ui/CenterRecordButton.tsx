@@ -12,9 +12,14 @@ import type { RootStackParamList } from '../types';
 type CenterRecordButtonProps = {
   iconColor: string;
   accentColor: string;
+  isTablet?: boolean;
 };
 
-export const CenterRecordButton = ({ iconColor, accentColor }: CenterRecordButtonProps) => {
+export const CenterRecordButton = ({
+  iconColor,
+  accentColor,
+  isTablet,
+}: CenterRecordButtonProps) => {
   const scale = useSharedValue(1);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
@@ -40,9 +45,9 @@ export const CenterRecordButton = ({ iconColor, accentColor }: CenterRecordButto
       <Animated.View
         style={[
           {
-            width: 72,
-            height: 46,
-            borderRadius: 14,
+            width: isTablet ? 88 : 72,
+            height: isTablet ? 52 : 46,
+            borderRadius: isTablet ? 16 : 14,
             backgroundColor: accentColor,
             shadowColor: accentColor,
             shadowOffset: { width: 0, height: 4 },
@@ -59,14 +64,14 @@ export const CenterRecordButton = ({ iconColor, accentColor }: CenterRecordButto
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           style={{
-            width: 72,
-            height: 46,
-            borderRadius: 14,
+            width: isTablet ? 88 : 72,
+            height: isTablet ? 52 : 46,
+            borderRadius: isTablet ? 16 : 14,
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <Mic size={24} color={iconColor} strokeWidth={2} />
+          <Mic size={isTablet ? 28 : 24} color={iconColor} strokeWidth={2} />
         </TouchableOpacity>
       </Animated.View>
     </View>

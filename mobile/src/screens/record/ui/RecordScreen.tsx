@@ -1,17 +1,19 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppState, StatusBar, Text, View } from 'react-native';
 import KeepAwake from 'react-native-keep-awake';
 
+import type { RootStackParamList } from '@/app/navigation/types';
 import { useAppLockStore } from '@/entities/app-lock';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { useTranscription } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
-import { formatTime, i18n } from '@/shared/lib';
+import { formatTime } from '@/shared/lib';
 import { Waveform } from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';
@@ -28,7 +30,7 @@ export const RecordScreen = () => {
   const scheme = useAppTheme();
   const c = getColors(scheme);
 
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const addRecord = useRecordStore((s) => s.addRecord);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
   const { startTranscription } = useTranscription();
@@ -52,6 +54,10 @@ export const RecordScreen = () => {
     stopRecording,
   } = useRecording({
     onLimitReached: () => {
+      setTitle('');
+      setShowSaveModal(true);
+    },
+    onAudioRouteChange: () => {
       setTitle('');
       setShowSaveModal(true);
     },

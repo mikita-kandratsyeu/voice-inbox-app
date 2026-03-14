@@ -1,4 +1,8 @@
 {
+  "push": {
+    "policyUpdateTitle": "Важное обновление",
+    "policyUpdateAck": "Понятно"
+  },
   "common": {
     "cancel": "Отмена",
     "close": "Закрыть",
@@ -71,11 +75,15 @@
     "finish": "Завершить запись",
     "recordStopped": "Запись остановлена",
     "recordStoppedMessage": "Достигнут максимальный лимит записи — 30 минут.",
+    "routeChangeTitle": "Запись приостановлена",
+    "routeChangeMessage": "Источник звука изменён. Запись сохранена до этой точки.",
     "appLockHint": "При сворачивании приложения запись будет остановлена и сохранена.",
     "noAppLockHint": "При сворачивании приложения запись продолжится в фоне.",
     "saveModalTitle": "Сохранить запись",
     "duration": "Длительность: {{time}}",
     "offlineHint": "Оффлайн-транскрипция на устройстве",
+    "startFailedTitle": "Запись не запустилась",
+    "startFailedMessage": "Не удалось начать запись. Проверьте доступ к микрофону и закройте другие приложения, использующие микрофон.",
     "continueRecording": "Продолжить",
     "titleInputHint": "Введите название или оставьте пустым для автоматического",
     "autoTitle": {
@@ -232,7 +240,20 @@
     "updateEmbeddingsSuccess": "Обновлено: {{updated}}, пропущено (нет контента): {{skipped}}",
     "updateEmbeddingsPartial": "Обновлено: {{updated}}, пропущено: {{skipped}}, ошибок: {{failed}}",
     "updateEmbeddingsError": "Не удалось обновить эмбеддинги",
-    "updateEmbeddingsNoRecords": "Нет записей с контентом для обработки"
+    "updateEmbeddingsNoRecords": "Нет записей с контентом для обработки",
+    "registerPush": "Зарегистрировать пуши",
+    "registeringPush": "Регистрация...",
+    "pushRegistered": "Push-уведомления включены",
+    "pushRegisterFailed": "Не удалось зарегистрировать пуши. Проверьте интернет и попробуйте снова.",
+    "permissionsSection": "Разрешения",
+    "permissionMicrophone": "Микрофон",
+    "permissionMicrophoneDesc": "Необходим для записи голоса",
+    "permissionNotifications": "Уведомления",
+    "permissionNotificationsDesc": "Оповещения о завершении ИИ обработки",
+    "permissionGranted": "Разрешено",
+    "permissionDenied": "Отказано",
+    "permissionNotDetermined": "Не задано",
+    "permissionOpenSettings": "Открыть настройки"
   },
   "appearance": {
     "title": "Внешний вид",
@@ -411,12 +432,33 @@
     "exportError": "Не удалось экспортировать данные",
     "fileNotSelected": "Файл не выбран",
     "invalidFormat": "Неверный формат файла",
-    "readError": "Не удалось прочитать файл"
+    "readError": "Не удалось прочитать файл",
+    "importSelectTitle": "Выберите записи для импорта",
+    "importSelectSubtitle": "{{ importable }} можно импортировать, {{ duplicates }} уже в приложении",
+    "selectAll": "Выбрать все",
+    "deselectAll": "Снять выбор",
+    "importSelected": "Импортировать {{ count }} записей",
+    "importing": "Импорт...",
+    "alreadyInApp": "Уже в приложении",
+    "alreadyInAppSection": "Уже в приложении",
+    "allAlreadyInApp": "Все записи из файла уже есть в приложении.",
+    "noRecordsInFile": "В файле нет записей."
   },
   "permissions": {
     "micTitle": "Разрешение на запись",
     "micMessage": "Приложению нужен доступ к микрофону для записи голоса.",
-    "allow": "Разрешить"
+    "allow": "Разрешить",
+    "onboardingTitle": "Разрешения",
+    "onboardingDesc": "Приложению нужен доступ к микрофону для записи и уведомления о завершении ИИ обработки.",
+    "micLabel": "Микрофон",
+    "micDesc": "Необходим для записи голоса",
+    "notificationsLabel": "Уведомления",
+    "notificationsDesc": "Узнавайте, когда ИИ закончит обработку",
+    "granted": "Разрешено",
+    "denied": "Отказано — нажмите для открытия настроек",
+    "notDetermined": "Нажмите для разрешения",
+    "grantAll": "Разрешить доступ",
+    "openSettings": "Открыть настройки"
   },
   "device": {
     "insufficientRam": "Недостаточно RAM (нужно ~{{ required }}, доступно {{ available }})",

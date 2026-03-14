@@ -81,17 +81,15 @@ async function callOpenRouter(
       ? (rawClassification as RecordClassification)
       : undefined;
 
-  const rawKeyPhrases = 'keyPhrases' in parsed && Array.isArray(parsed.keyPhrases)
-    ? parsed.keyPhrases
-    : [];
+  const rawKeyPhrases =
+    'keyPhrases' in parsed && Array.isArray(parsed.keyPhrases) ? parsed.keyPhrases : [];
   const keyPhrases = rawKeyPhrases
     .filter((p: unknown) => typeof p === 'string')
     .map((p: string) => p.trim())
     .filter(Boolean) as string[];
 
-  const rawNextSteps = 'nextSteps' in parsed && Array.isArray(parsed.nextSteps)
-    ? parsed.nextSteps
-    : [];
+  const rawNextSteps =
+    'nextSteps' in parsed && Array.isArray(parsed.nextSteps) ? parsed.nextSteps : [];
   const nextSteps = rawNextSteps
     .filter((s: unknown) => typeof s === 'string')
     .map((s: string) => s.trim())

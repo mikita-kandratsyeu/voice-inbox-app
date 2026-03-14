@@ -11,6 +11,7 @@ import { RecordCard, useRecordStore } from '@/entities/record';
 import { InboxFilterBar, useInboxFiltersReset } from '@/features/inbox-filters';
 import { SearchBar, useSearchRecords } from '@/features/search-records';
 import { getColors, useAppTheme } from '@/shared/config';
+import { useIsTablet } from '@/shared/lib';
 import { EmptyState, SectionHeader, SwipeableCard } from '@/shared/ui';
 
 import { EmptySearchState } from './EmptySearchState';
@@ -24,6 +25,7 @@ type FlattenedItem =
 export const InboxScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
+  const isTablet = useIsTablet();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { records, archiveRecord, unarchiveRecord, togglePin, isLoaded } = useRecordStore();
 
@@ -118,6 +120,7 @@ export const InboxScreen = () => {
   }, []);
 
   const screenStyle = { flex: 1, backgroundColor: color.background.primary };
+  const contentMaxWidth = isTablet ? 720 : undefined;
   const listContentStyle = {
     paddingBottom: 100,
     paddingTop: 0,
@@ -143,34 +146,36 @@ export const InboxScreen = () => {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
-          <SearchBar query={query} onChangeQuery={setQuery} color={color} />
-          <InboxFilterBar
-            filterStatus={filterStatus}
-            sortOption={sortOption}
-            onFilterChange={setFilterStatus}
-            onSortChange={setSortOption}
-            color={color}
-          />
-          {isSearching && filtered.length === 0 ? (
-            <EmptySearchState query={query} color={color} />
-          ) : filtered.length === 0 ? (
-            <EmptyState
-              title={t('inbox.emptyFilterTitle')}
-              description={t('inbox.emptyFilterDescription')}
+          <View style={{ flex: 1, alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}>
+            <SearchBar query={query} onChangeQuery={setQuery} color={color} />
+            <InboxFilterBar
+              filterStatus={filterStatus}
+              sortOption={sortOption}
+              onFilterChange={setFilterStatus}
+              onSortChange={setSortOption}
+              color={color}
             />
-          ) : (
-            <FlashList
-              ref={listRef}
-              key={filterStatus}
-              data={flattenedData}
-              renderItem={renderItem}
-              keyExtractor={keyExtractor}
-              getItemType={getItemType}
-              contentContainerStyle={listContentStyle}
-              style={listStyle}
-              showsVerticalScrollIndicator={false}
-            />
-          )}
+            {isSearching && filtered.length === 0 ? (
+              <EmptySearchState query={query} color={color} />
+            ) : filtered.length === 0 ? (
+              <EmptyState
+                title={t('inbox.emptyFilterTitle')}
+                description={t('inbox.emptyFilterDescription')}
+              />
+            ) : (
+              <FlashList
+                ref={listRef}
+                key={filterStatus}
+                data={flattenedData}
+                renderItem={renderItem}
+                keyExtractor={keyExtractor}
+                getItemType={getItemType}
+                contentContainerStyle={listContentStyle}
+                style={listStyle}
+                showsVerticalScrollIndicator={false}
+              />
+            )}
+          </View>
         </KeyboardAvoidingView>
       )}
     </View>

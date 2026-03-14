@@ -1,3 +1,11 @@
+import { sendPushNotification } from '@/lib/apns';
+import {
+  collectPendingAndUnlock,
+  getPushTokenWithLocale,
+  isAppInForeground,
+  registerAiCompletion,
+} from '@/lib/push-tokens';
+import { PUSH_DEBOUNCE_MS } from '@/config/constants';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import { processAskQuestion } from '@/services/ai.service';
@@ -48,6 +56,42 @@ export const createAsk = async (
         status: 'done',
         answer: result.answer,
       });
+
+      const inForeground = await isAppInForeground(deviceId);
+      if (inForeground) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Push] Ask complete: skip (app in foreground)', { deviceId });
+        }
+        return;
+      }
+
+      const isLeader = await registerAiCompletion(deviceId);
+      if (!isLeader) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Push] Ask complete: queued (leader will send)', { deviceId });
+        }
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, PUSH_DEBOUNCE_MS));
+
+      const count = await collectPendingAndUnlock(deviceId);
+      if (count === 0) return;
+
+      const data = await getPushTokenWithLocale(deviceId);
+      if (data) {
+        const sent = await sendPushNotification(
+          data.token,
+          { type: 'ai_complete', recordId: id },
+          data.locale,
+          count,
+        );
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Push] Ask complete: push', sent ? 'sent' : 'failed', { deviceId, count });
+        }
+      } else if (process.env.NODE_ENV !== 'production') {
+        console.warn('[Push] Ask complete: no token for deviceId', deviceId);
+      }
     })
     .catch(async (err) => {
       await decrement(deviceId);

@@ -15,7 +15,7 @@ type TranslateBody = {
   targetLanguage?: unknown;
 };
 
-const VALID_LANGUAGES = ['ru', 'en', 'de', 'fr', 'es', 'it', 'pt', 'zh', 'ja', 'ko', 'ar', 'uk', 'pl'];
+const VALID_LANGUAGES = ['ru', 'en', 'de', 'fr', 'es', 'zh', 'ja'];
 
 export const POST = async (request: Request): Promise<NextResponse> => {
   const authError = requireAppSecret(request);

@@ -1,6 +1,6 @@
 import { WEB_API_SECRET, WEB_API_URL } from '@env';
-import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
+import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { fetch } from '@/shared/lib/fetch';
 
 export type TranslateResult =
@@ -8,15 +8,11 @@ export type TranslateResult =
   | { ok: false; limitExceeded: true; usage: { used: number; limit: number; resetAt: string } }
   | { ok: false; error: string };
 
-function getDeviceId(): string {
-  return DeviceInfoModule.uniqueId;
-}
-
 export async function postTranslate(
   transcript: string,
   targetLanguage: string,
 ): Promise<TranslateResult> {
-  const deviceId = getDeviceId();
+  const deviceId = await getOrCreateDeviceId();
   const url = `${WEB_API_URL}/api/translate`;
 
   let response: Response;

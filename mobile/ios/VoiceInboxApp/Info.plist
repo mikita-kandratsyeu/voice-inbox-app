@@ -33,20 +33,29 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSFaceIDUsageDescription</key>
-	<string>Use Face ID to quickly unlock the app.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Adding tasks from notes to Calendar.</string>
 	<key>NSCalendarsUsageDescription</key>
 	<string>Adding tasks from notes to Calendar</string>
-	<key>NSCalendarsFullAccessUsageDescription</key>
-	<string>Adding tasks from notes to Calendar</string>
+	<key>NSFaceIDUsageDescription</key>
+	<string>Use Face ID to quickly unlock the app.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>The app needs microphone access to record voice notes.</string>
+	<key>NSRemindersFullAccessUsageDescription</key>
+	<string>Adding tasks from notes to Reminders.</string>
 	<key>NSRemindersUsageDescription</key>
 	<string>Adding tasks from notes to Reminders</string>
-	<key>NSRemindersFullAccessUsageDescription</key>
-	<string>Adding tasks from notes to Reminders</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
+	<true/>
 	<key>RCTNewArchEnabled</key>
 	<true/>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+		<string>remote-notification</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>BootSplash</string>
 	<key>UIRequiredDeviceCapabilities</key>
@@ -66,13 +75,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>UIBackgroundModes</key>
-	<array>
-		<string>audio</string>
-	</array>
-	<key>NSSupportsLiveActivities</key>
-	<true/>
-	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
-	<true/>
 </dict>
 </plist>

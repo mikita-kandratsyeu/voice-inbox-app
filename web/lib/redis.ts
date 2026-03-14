@@ -15,6 +15,7 @@ type KvClient = {
   incr(key: string): Promise<number>;
   decr(key: string): Promise<number>;
   expire(key: string, seconds: number): Promise<void>;
+  del(key: string): Promise<void>;
 };
 
 const useMemoryStore = !process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -51,6 +52,9 @@ const kv: KvClient = useMemoryStore
       },
       async expire(key, seconds) {
         await redisClient!.expire(key, seconds);
+      },
+      async del(key) {
+        await redisClient!.del(key);
       },
     };
 

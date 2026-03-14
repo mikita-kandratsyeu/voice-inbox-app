@@ -1,4 +1,8 @@
 {
+  "push": {
+    "policyUpdateTitle": "Important Update",
+    "policyUpdateAck": "Got it"
+  },
   "common": {
     "cancel": "Cancel",
     "close": "Close",
@@ -71,11 +75,15 @@
     "finish": "Finish recording",
     "recordStopped": "Recording stopped",
     "recordStoppedMessage": "Maximum recording limit reached — 30 minutes.",
+    "routeChangeTitle": "Recording paused",
+    "routeChangeMessage": "The audio source was switched. The recording has been saved up to this point.",
     "appLockHint": "When you minimize the app, recording will be stopped and saved.",
     "noAppLockHint": "When you minimize the app, recording will continue in the background.",
     "saveModalTitle": "Save recording",
     "duration": "Duration: {{time}}",
     "offlineHint": "Offline-transcription on device",
+    "startFailedTitle": "Recording failed",
+    "startFailedMessage": "Could not start recording. Check microphone permissions and ensure no other apps are using the microphone.",
     "continueRecording": "Continue",
     "titleInputHint": "Enter a title or leave blank to use the suggested name",
     "autoTitle": {
@@ -232,7 +240,20 @@
     "updateEmbeddingsSuccess": "Updated: {{updated}}, skipped (no content): {{skipped}}",
     "updateEmbeddingsPartial": "Updated: {{updated}}, skipped: {{skipped}}, failed: {{failed}}",
     "updateEmbeddingsError": "Failed to update embeddings",
-    "updateEmbeddingsNoRecords": "No records with content to process"
+    "updateEmbeddingsNoRecords": "No records with content to process",
+    "registerPush": "Register for push notifications",
+    "registeringPush": "Registering...",
+    "pushRegistered": "Push notifications enabled",
+    "pushRegisterFailed": "Failed to register for push notifications. Check your internet connection and try again.",
+    "permissionsSection": "Permissions",
+    "permissionMicrophone": "Microphone",
+    "permissionMicrophoneDesc": "Required for voice recording",
+    "permissionNotifications": "Notifications",
+    "permissionNotificationsDesc": "Get notified when AI processing completes",
+    "permissionGranted": "Granted",
+    "permissionDenied": "Denied",
+    "permissionNotDetermined": "Not set",
+    "permissionOpenSettings": "Open Settings"
   },
   "appearance": {
     "title": "Appearance",
@@ -411,12 +432,33 @@
     "exportError": "Failed to export data",
     "fileNotSelected": "File not selected",
     "invalidFormat": "Invalid file format",
-    "readError": "Failed to read file"
+    "readError": "Failed to read file",
+    "importSelectTitle": "Select records to import",
+    "importSelectSubtitle": "{{ importable }} can be imported, {{ duplicates }} already in app",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "importSelected": "Import {{ count }} records",
+    "importing": "Importing...",
+    "alreadyInApp": "Already in app",
+    "alreadyInAppSection": "Already in app",
+    "allAlreadyInApp": "All records from the file are already in your app.",
+    "noRecordsInFile": "No records found in the file."
   },
   "permissions": {
     "micTitle": "Recording permission",
     "micMessage": "The app needs microphone access for voice recording.",
-    "allow": "Allow"
+    "allow": "Allow",
+    "onboardingTitle": "Allow permissions",
+    "onboardingDesc": "The app needs access to your microphone for recording and notifications for AI processing updates.",
+    "micLabel": "Microphone",
+    "micDesc": "Required for voice recording",
+    "notificationsLabel": "Notifications",
+    "notificationsDesc": "Know when AI finishes processing",
+    "granted": "Granted",
+    "denied": "Denied — tap to open Settings",
+    "notDetermined": "Tap to allow",
+    "grantAll": "Grant permissions",
+    "openSettings": "Open Settings"
   },
   "device": {
     "insufficientRam": "Insufficient RAM (need ~{{ required }}, available {{ available }})",
