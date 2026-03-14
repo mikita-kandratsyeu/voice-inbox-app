@@ -15,6 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "validate": "lint-staged && yarn type:check && yarn test",
+    "fix:app-icon": "node scripts/fix-app-icon-alpha.mjs",
     "postinstall": "patch-package",
     "prepare": "husky",
     "start": "APP_ENV=development react-native start",
@@ -107,6 +108,7 @@
     "prettier-plugin-tailwindcss": "^0.5.11",
     "react-native-dotenv": "^3.4.11",
     "react-test-renderer": "19.2.3",
+    "sharp": "^0.33.5",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3"
   },
