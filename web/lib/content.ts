@@ -13,7 +13,7 @@ export async function getMarkdownContent(
 
   try {
     return await readFile(filePath, 'utf-8');
-  } catch (err) {
+  } catch {
     const fallbackPath = path.join(CONTENT_DIR, `${doc}.en.md`);
     return readFile(fallbackPath, 'utf-8');
   }

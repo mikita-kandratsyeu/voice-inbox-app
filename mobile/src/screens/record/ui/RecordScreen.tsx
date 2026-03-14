@@ -11,7 +11,7 @@ import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { useTranscription } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
-import { formatTime, i18n } from '@/shared/lib';
+import { formatTime } from '@/shared/lib';
 import { Waveform } from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';

@@ -4,11 +4,11 @@ import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
-  Dimensions,
   FlatList,
   Linking,
   Text,
   TouchableOpacity,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import Animated, {
@@ -45,8 +45,6 @@ type OnboardingScreenProps = {
   onComplete: () => void;
 };
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<OnboardingSlideContent>);
 
 const DOT_SIZE = 8;
@@ -58,12 +56,14 @@ const PILL_LEFT = (SLOT_WIDTH - PILL_WIDTH) / 2;
 
 const AnimatedProgressDots = ({
   scrollX,
+  screenWidth,
   onDotPress,
   color,
   slides,
   t,
 }: {
   scrollX: SharedValue<number>;
+  screenWidth: SharedValue<number>;
   onDotPress: (index: number) => void;
   color: ReturnType<typeof getColors>;
   slides: OnboardingSlideContent[];
@@ -77,12 +77,12 @@ const AnimatedProgressDots = ({
   const pillStyle = useAnimatedStyle(() => {
     const translateX = interpolate(
       scrollX.value,
-      slides.map((_, i) => i * SCREEN_WIDTH),
+      slides.map((_, i) => i * screenWidth.value),
       pillPositions,
     );
     const backgroundColor = interpolateColor(
       scrollX.value,
-      slides.map((_, i) => i * SCREEN_WIDTH),
+      slides.map((_, i) => i * screenWidth.value),
       slideColors,
     );
 
@@ -133,6 +133,7 @@ const AnimatedNextButton = ({
   label,
   onPress,
   scrollX,
+  screenWidth,
   slideColors,
   iconOnAccent,
   disabled,
@@ -141,13 +142,14 @@ const AnimatedNextButton = ({
   label: string;
   onPress: () => void;
   scrollX: SharedValue<number>;
+  screenWidth: SharedValue<number>;
   slideColors: string[];
   iconOnAccent: string;
   disabled?: boolean;
   loading?: boolean;
 }) => {
   const animatedStyle = useAnimatedStyle(() => {
-    const inputRange = slideColors.map((_, i) => i * SCREEN_WIDTH);
+    const inputRange = slideColors.map((_, i) => i * screenWidth.value);
     const backgroundColor = interpolateColor(scrollX.value, inputRange, slideColors);
 
     return {
@@ -191,6 +193,7 @@ type SlideItemProps = {
   item: OnboardingSlideContent;
   index: number;
   scrollX: SharedValue<number>;
+  screenWidth: SharedValue<number>;
   color: ReturnType<typeof getColors>;
   agreedToTerms?: boolean;
   onAgreeChange?: (value: boolean) => void;
@@ -250,6 +253,7 @@ const SlideItem = ({
   item,
   index,
   scrollX,
+  screenWidth,
   color,
   t,
   agreedToTerms = false,
@@ -257,9 +261,9 @@ const SlideItem = ({
 }: SlideItemProps & { t: (k: string) => string }) => {
   const animatedStyle = useAnimatedStyle(() => {
     const inputRange = [
-      (index - 1) * SCREEN_WIDTH,
-      index * SCREEN_WIDTH,
-      (index + 1) * SCREEN_WIDTH,
+      (index - 1) * screenWidth.value,
+      index * screenWidth.value,
+      (index + 1) * screenWidth.value,
     ];
     const opacity = interpolate(scrollX.value, inputRange, [0.4, 1, 0.4]);
     const scale = interpolate(scrollX.value, inputRange, [0.92, 1, 0.92]);
@@ -284,7 +288,7 @@ const SlideItem = ({
       <Animated.View
         style={[
           {
-            width: SCREEN_WIDTH,
+            width: screenWidth.value,
             paddingHorizontal: 32,
             paddingTop: 48,
           },
@@ -358,7 +362,7 @@ const SlideItem = ({
 
   return (
     <Animated.View
-      style={[{ width: SCREEN_WIDTH, paddingHorizontal: 32 }, animatedStyle]}
+      style={[{ width: screenWidth.value, paddingHorizontal: 32 }, animatedStyle]}
       className="flex-1 items-center justify-center"
     >
       <AnimatedSlideIcon
@@ -425,11 +429,17 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
     return colors;
   }, [slides, color.accent.primary]);
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [agreedToTerms, setAgreedToTerms] = useState(() => getTermsAgreedAt() != null);
   const [isStartingDownload, setIsStartingDownload] = useState(false);
   const flatListRef = useRef<FlatList<OnboardingSlideContent>>(null);
   const scrollX = useSharedValue(0);
+  const screenWidth = useSharedValue(windowWidth);
+
+  React.useEffect(() => {
+    screenWidth.value = windowWidth;
+  }, [windowWidth, screenWidth]);
 
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
@@ -452,7 +462,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
 
     if (currentIndex < lastIndex) {
       flatListRef.current?.scrollToOffset({
-        offset: (currentIndex + 1) * SCREEN_WIDTH,
+        offset: (currentIndex + 1) * windowWidth,
         animated: true,
       });
       return;
@@ -489,7 +499,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
 
   const handleDotPress = (index: number) => {
     flatListRef.current?.scrollToOffset({
-      offset: index * SCREEN_WIDTH,
+      offset: index * windowWidth,
       animated: true,
     });
   };
@@ -500,13 +510,14 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         item={item}
         index={index}
         scrollX={scrollX}
+        screenWidth={screenWidth}
         color={color}
         t={t}
         agreedToTerms={agreedToTerms}
         onAgreeChange={setAgreedToTerms}
       />
     ),
-    [agreedToTerms, color, scrollX, t],
+    [agreedToTerms, color, scrollX, screenWidth, t],
   );
 
   const isLastSlide = currentIndex === slides.length - 1;
@@ -548,13 +559,14 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         scrollEventThrottle={16}
         onScroll={scrollHandler}
         onMomentumScrollEnd={(e) => {
-          const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+          const index = Math.round(e.nativeEvent.contentOffset.x / windowWidth);
           setCurrentIndex(index);
         }}
       />
       <View className="px-6" style={{ paddingBottom: insets.bottom + 48, paddingTop: 32 }}>
         <AnimatedProgressDots
           scrollX={scrollX}
+          screenWidth={screenWidth}
           onDotPress={handleDotPress}
           color={color}
           slides={slides}
@@ -564,6 +576,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           label={isLastSlide ? t('common.start') : t('common.next')}
           onPress={handleNext}
           scrollX={scrollX}
+          screenWidth={screenWidth}
           slideColors={slideColors}
           iconOnAccent={color.icon.onAccent}
           loading={isStartingDownload}

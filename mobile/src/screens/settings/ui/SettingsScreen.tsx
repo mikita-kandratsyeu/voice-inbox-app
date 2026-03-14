@@ -61,7 +61,6 @@ export const SettingsScreen = () => {
   const appTheme = useSettingsStore((s) => s.appTheme);
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
   const records = useRecordStore((s) => s.records);
-  const addRecord = useRecordStore((s) => s.addRecord);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [aiUsage, setAiUsage] = useState<Awaited<ReturnType<typeof getAiUsage>>>(null);

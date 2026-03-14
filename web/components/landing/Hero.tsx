@@ -5,7 +5,7 @@ export function Hero(): React.ReactElement {
   const t = useTranslations('hero');
 
   return (
-    <section className="relative overflow-hidden px-4 pt-16 pb-24 sm:px-6 sm:pt-24 sm:pb-32 lg:px-8">
+    <section className="relative overflow-hidden px-4 pt-16 pb-24 sm:px-6 sm:pt-24 sm:pb-32 md:pt-28 md:pb-36 lg:px-8">
       <div
         className="absolute inset-0 -z-10 animate-gradient-pulse bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.25)_0%,transparent_50%),radial-gradient(circle_at_80%_80%,rgba(37,99,235,0.2)_0%,transparent_50%)] opacity-100"
         aria-hidden
@@ -15,7 +15,7 @@ export function Hero(): React.ReactElement {
           <div className="animate-fade-in mb-6 inline-flex items-center rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-1.5 text-sm font-medium text-blue-600 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-blue-400">
             {t('inDevelopment')}
           </div>
-          <h1 className="animate-fade-in mb-6 text-5xl font-black leading-tight sm:text-6xl lg:text-8xl">
+          <h1 className="animate-fade-in mb-6 text-5xl font-black leading-tight sm:text-6xl md:text-7xl lg:text-8xl">
             {t('headline1')}
             <br />
             <span className="bg-linear-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">
@@ -23,7 +23,7 @@ export function Hero(): React.ReactElement {
             </span>
           </h1>
 
-          <p className="animate-fade-in-delay-1 mx-auto mb-12 max-w-3xl text-lg leading-relaxed text-black/70 dark:text-white/70 sm:text-xl lg:text-2xl">
+          <p className="animate-fade-in-delay-1 mx-auto mb-12 max-w-3xl text-lg leading-relaxed text-black/70 dark:text-white/70 sm:text-xl md:text-xl lg:text-2xl">
             {t('subtitle')}
           </p>
 
@@ -44,7 +44,7 @@ export function Hero(): React.ReactElement {
             </div>
             <div className="text-center">
               <div className="mb-1 text-3xl font-black sm:text-4xl">
-                <span className="bg-gradient-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">
+                <span className="bg-linear-to-r from-blue-500 to-blue-600 bg-clip-text text-transparent">
                   {t('stats.private.value')}
                 </span>
               </div>

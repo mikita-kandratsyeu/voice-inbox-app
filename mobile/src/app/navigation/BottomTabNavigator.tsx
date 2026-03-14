@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { InboxScreen } from '@/screens/inbox';
 import { getColors, useAppTheme } from '@/shared/config';
+import { useIsTablet } from '@/shared/lib';
 
 import { TAB_ICON_SIZE, TAB_ICONS, TAB_LABELS } from './config';
 import { SettingsNavigator } from './SettingsNavigator';
@@ -20,7 +21,8 @@ const Tab = createBottomTabNavigator<BottomTabParamList>();
 export const BottomTabNavigator = () => {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
-  const tabBarHeight = 60 + insets.bottom;
+  const isTablet = useIsTablet();
+  const tabBarHeight = (isTablet ? 68 : 60) + insets.bottom;
   const inboxFiltersReset = useInboxFiltersReset();
 
   const color = getColors(theme);
@@ -42,7 +44,7 @@ export const BottomTabNavigator = () => {
       paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
     },
     tabBarLabelStyle: {
-      fontSize: 12,
+      fontSize: isTablet ? 13 : 12,
       fontWeight: '500' as const,
       marginTop: 2,
     },
@@ -52,7 +54,7 @@ export const BottomTabNavigator = () => {
     tabBarItemStyle: {
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
-      paddingHorizontal: 16,
+      paddingHorizontal: isTablet ? 32 : 16,
     },
     tabBarButton: (props: BottomTabBarButtonProps) => <AnimatedTabButton {...props} />,
     lazy: true,

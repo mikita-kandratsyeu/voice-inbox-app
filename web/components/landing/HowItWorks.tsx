@@ -9,11 +9,11 @@ export function HowItWorks(): React.ReactElement {
   const t = useTranslations();
 
   return (
-    <section className="px-4 py-24 sm:px-6 lg:px-8">
+    <section className="px-4 py-24 sm:px-6 md:px-8 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <AnimateOnScroll>
           <div className="mb-16 text-center">
-            <h2 className="mb-4 text-4xl font-black text-black dark:text-white sm:text-5xl">
+            <h2 className="mb-4 text-4xl font-black text-black dark:text-white sm:text-5xl md:text-5xl">
               {t('howItWorks.title')}
             </h2>
             <p className="text-lg text-black/60 dark:text-white/60">{t('howItWorks.subtitle')}</p>
@@ -25,7 +25,7 @@ export function HowItWorks(): React.ReactElement {
             <AnimateOnScroll key={id} delay={index * 100}>
               <div className="flex items-center">
                 <div className="text-center">
-                  <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-2xl transition-transform duration-200 hover:scale-105">
+                  <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-3xl bg-linear-to-br from-blue-500 to-blue-600 shadow-2xl transition-transform duration-200 hover:scale-105">
                     <span className="text-4xl font-black text-white">{index + 1}</span>
                   </div>
                   <h3 className="mb-2 text-2xl font-bold text-black dark:text-white">

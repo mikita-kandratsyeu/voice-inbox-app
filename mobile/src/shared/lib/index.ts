@@ -26,6 +26,7 @@ export { NetworkStatusProvider, useNetworkStatus } from './NetworkStatusContext'
 export { parseTaskDeadline } from './parseTaskDeadline';
 export { useAiModelName } from './useAiModelName';
 export { useAiTabBannerDismiss } from './useAiTabBannerDismiss';
+export { useIsTablet } from './useIsTablet';
 export {
   formatFileSize,
   getWhisperModelPath,
