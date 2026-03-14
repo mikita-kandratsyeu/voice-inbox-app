@@ -82,6 +82,8 @@
     "saveModalTitle": "Save recording",
     "duration": "Duration: {{time}}",
     "offlineHint": "Offline-transcription on device",
+    "startFailedTitle": "Recording failed",
+    "startFailedMessage": "Could not start recording. Check microphone permissions and ensure no other apps are using the microphone.",
     "continueRecording": "Continue",
     "titleInputHint": "Enter a title or leave blank to use the suggested name",
     "autoTitle": {

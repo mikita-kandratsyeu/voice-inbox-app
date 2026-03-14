@@ -540,7 +540,7 @@ const SlideItem = ({
           />
         </View>
         {showTerms && (
-          <View className="mt-4 flex-row items-start gap-3">
+          <View className="mt-4 flex-row items-center gap-3">
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={() => {

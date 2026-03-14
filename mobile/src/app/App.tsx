@@ -13,6 +13,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useRecordStore } from '@/entities/record';
 import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
 import { OnboardingGate } from '@/features/onboarding';
+import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { releaseWhisperContext } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
 import { initDB, NetworkStatusProvider } from '@/shared/lib';
@@ -84,6 +85,7 @@ const App = () => {
     const HEARTBEAT_THROTTLE_MS = 35_000;
 
     const sendForegroundHeartbeat = () => {
+      if (!getHasSeenOnboarding()) return;
       lastHeartbeatAt = Date.now();
       notifyAppForeground();
     };
@@ -120,7 +122,9 @@ const App = () => {
         unsubscribeStore?.();
         unsubscribeStore = null;
         if (state === 'background' || state === 'inactive') {
-          notifyAppBackground();
+          if (getHasSeenOnboarding()) {
+            notifyAppBackground();
+          }
         }
         if (state === 'background') {
           const records = useRecordStore.getState().records;

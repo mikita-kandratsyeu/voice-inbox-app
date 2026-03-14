@@ -59,6 +59,7 @@
     "react-native-nitro-device-info": "^1.7.0",
     "react-native-nitro-fetch": "^0.1.7",
     "react-native-nitro-modules": "^0.35.0",
+    "react-native-permissions": "^5.1.0",
     "react-native-reanimated": "^4.2.2",
     "react-native-safe-area-context": "^5.7.0",
     "react-native-screens": "^4.24.0",

@@ -2099,6 +2099,27 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNPermissions (5.5.1):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNReactNativeHapticFeedback (2.3.3):
     - hermes-engine
     - RCTRequired
@@ -2469,6 +2490,7 @@ DEPENDENCIES:
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNKeychain (from `../node_modules/react-native-keychain`)
   - RNLocalize (from `../node_modules/react-native-localize`)
+  - RNPermissions (from `../node_modules/react-native-permissions`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - "RNReminders (from `../node_modules/@wiicamp/react-native-reminders`)"
@@ -2670,6 +2692,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-keychain"
   RNLocalize:
     :path: "../node_modules/react-native-localize"
+  RNPermissions:
+    :path: "../node_modules/react-native-permissions"
   RNReactNativeHapticFeedback:
     :path: "../node_modules/react-native-haptic-feedback"
   RNReanimated:
@@ -2782,6 +2806,7 @@ SPEC CHECKSUMS:
   RNGestureHandler: d12854e4bbf1ba3087136dfec250325db35da67d
   RNKeychain: 797239c4488cdce85d77da8d6f4a87a6eac8b43f
   RNLocalize: f58affe87ebc5d779d8c314b79bb7d348d74bf82
+  RNPermissions: 5fad6490aed9de6471e22e849e0f3754190f4377
   RNReactNativeHapticFeedback: 1eec3b5c069ff2a0f1d1f9d61172bc8a72cad6f9
   RNReanimated: 72296a949b2e629ed59666d445fa7ac9ab066571
   RNReminders: e7bdf59616634b7ae180b18f6bf86dba531b0007
@@ -2791,6 +2816,6 @@ SPEC CHECKSUMS:
   whisper-rn: 6b811aabb7295a9665eb8c1c811975c32402a5b7
   Yoga: 447c8baf495b8d96457a46e6691a2c9952cbd07f
 
-PODFILE CHECKSUM: ab2f01a5b202781a50e8fecd4ab3fb6d3c83a048
+PODFILE CHECKSUM: b7221cc3fd0915d141ac62d3a2ff06c288cfe3ed
 
 COCOAPODS: 1.16.2

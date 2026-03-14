@@ -32,8 +32,11 @@ export async function checkPushPermission(): Promise<PushPermissionStatus> {
 
   return new Promise((resolve) => {
     PushNotificationIOS.checkPermissions((permissions) => {
-      const status = permissions.alert ? 'granted' : 'denied';
-      resolve(status);
+      if (permissions.alert) {
+        resolve('granted');
+      } else {
+        resolve('not-determined');
+      }
     });
   });
 }

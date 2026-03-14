@@ -1,6 +1,32 @@
 import { Linking, PermissionsAndroid, Platform } from 'react-native';
+import type { AudioSet } from 'react-native-audio-recorder-player';
+import AudioRecorderPlayer, {
+  AudioEncoderAndroidType,
+  AudioSourceAndroidType,
+  OutputFormatAndroidType,
+} from 'react-native-audio-recorder-player';
 
 export type MicPermissionStatus = 'granted' | 'denied' | 'not-determined';
+
+type RecorderInstance = {
+  startRecorder: (uri?: string, audioSets?: AudioSet, meteringEnabled?: boolean) => Promise<string>;
+  stopRecorder: () => Promise<string>;
+};
+
+const iosRecorder = AudioRecorderPlayer as unknown as RecorderInstance;
+
+const IOS_AUDIO_SET: AudioSet = {
+  AVModeIOS: 'measurement',
+  AVFormatIDKeyIOS: 'lpcm',
+  AVSampleRateKeyIOS: 16000,
+  AVNumberOfChannelsKeyIOS: 1,
+  AudioSourceAndroid: AudioSourceAndroidType.VOICE_RECOGNITION,
+  OutputFormatAndroid: OutputFormatAndroidType.DEFAULT,
+  AudioEncoderAndroid: AudioEncoderAndroidType.DEFAULT,
+  AudioSamplingRate: 16000,
+  AudioChannels: 1,
+  AudioEncodingBitRate: 256000,
+};
 
 export async function checkMicPermission(): Promise<MicPermissionStatus> {
   if (Platform.OS === 'android') {
@@ -8,11 +34,20 @@ export async function checkMicPermission(): Promise<MicPermissionStatus> {
     return result ? 'granted' : 'not-determined';
   }
 
-  // iOS: we rely on the NativeModules exposed by react-native-audio-recorder-player.
-  // The library requests mic access when startRecorder is called.
-  // Without react-native-permissions we cannot check status silently,
-  // so we return 'not-determined' as the initial unknown state.
-  return 'not-determined';
+  // iOS: check via react-native-permissions if available (does not trigger dialog)
+  // Note: check() can return 'denied' for "not determined" on first launch - we treat only
+  // 'blocked' as true denied (user chose "Don't Allow" and must use Settings).
+  try {
+    const { check, PERMISSIONS } = await import('react-native-permissions');
+    const status = await check(PERMISSIONS.IOS.MICROPHONE);
+
+    if (status === 'granted') return 'granted';
+    if (status === 'blocked') return 'denied';
+
+    return 'not-determined';
+  } catch {
+    return 'not-determined';
+  }
 }
 
 export async function requestMicPermission(): Promise<boolean> {
@@ -26,9 +61,28 @@ export async function requestMicPermission(): Promise<boolean> {
     return result === PermissionsAndroid.RESULTS.GRANTED;
   }
 
-  // iOS: the microphone dialog is shown by the OS when startRecorder is called.
-  // Returning true here allows the caller to proceed; the OS will prompt if needed.
-  return true;
+  // iOS: use react-native-permissions for proper request (no startRecorder errors)
+  try {
+    const { request, PERMISSIONS } = await import('react-native-permissions');
+    const status = await request(PERMISSIONS.IOS.MICROPHONE);
+
+    if (status === 'granted') return true;
+    if (status === 'denied' || status === 'blocked') {
+      await Linking.openSettings();
+      return false;
+    }
+    return false;
+  } catch {
+    // Fallback: try startRecorder for older setup or if permissions lib unavailable
+    try {
+      await iosRecorder.startRecorder(undefined, IOS_AUDIO_SET, false);
+      await iosRecorder.stopRecorder();
+      return true;
+    } catch {
+      await Linking.openSettings();
+      return false;
+    }
+  }
 }
 
 export async function openAppSettings(): Promise<void> {

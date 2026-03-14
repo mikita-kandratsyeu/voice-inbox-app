@@ -25,10 +25,10 @@ import {
   updateRecordingLiveActivity,
 } from '@/features/live-activity-recording';
 import { hapticLight } from '@/shared/lib';
+import { checkMicPermission, requestMicPermission } from '@/shared/lib/permissions';
 
 import type { RecordingState } from '../config';
 import { MAX_RECORDING_MS } from '../config';
-import { requestMicPermission } from '../lib/requestMicPermission';
 
 const audioRecorderPlayer = AudioRecorderPlayer as unknown as AudioRecorderPlayerInstance;
 
@@ -176,7 +176,8 @@ export const useRecording = ({
   }, [t]);
 
   const startRecording = useCallback(async () => {
-    const hasPermission = await requestMicPermission();
+    const status = await checkMicPermission();
+    const hasPermission = status === 'granted' ? true : await requestMicPermission();
 
     if (!hasPermission) {
       return;
@@ -197,8 +198,9 @@ export const useRecording = ({
       startRecordingLiveActivity().catch(() => {});
     } catch (err) {
       if (__DEV__) console.warn('[useRecording] startRecorder failed:', err);
+      Alert.alert(t('record.startFailedTitle'), t('record.startFailedMessage'), [{ text: 'OK' }]);
     }
-  }, [addRecordBackListener]);
+  }, [addRecordBackListener, t]);
 
   const pauseRecording = useCallback(async () => {
     try {
