@@ -41,10 +41,11 @@ export default async function PrivacyPage({ params }: Props) {
     <div className="flex min-h-screen flex-col transition-colors duration-300">
       <Header />
       <main className="relative flex-1">
-        <div
-          className="absolute inset-0 -z-10 animate-gradient-pulse bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.2)_0%,transparent_50%),radial-gradient(circle_at_80%_80%,rgba(37,99,235,0.15)_0%,transparent_50%)] opacity-100"
-          aria-hidden
-        />
+        <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden>
+          <div
+            className="absolute inset-0 animate-gradient-pulse bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.2)_0%,transparent_50%),radial-gradient(circle_at_80%_80%,rgba(37,99,235,0.15)_0%,transparent_50%)] opacity-100"
+          />
+        </div>
         <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
           <AnimateOnScroll>
             <div className="rounded-3xl border border-black/8 bg-white/80 p-8 shadow-[0_4px_24px_rgba(0,0,0,0.06)] dark:border-white/10 dark:bg-white/5 dark:shadow-[0_4px_24px_rgba(0,0,0,0.3)] sm:p-12">
