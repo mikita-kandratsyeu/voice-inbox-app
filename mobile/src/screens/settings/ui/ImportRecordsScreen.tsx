@@ -9,7 +9,7 @@ import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { getColors, useAppTheme } from '@/shared/config';
-import { formatRelativeTime } from '@/shared/lib';
+import { formatRelativeTime, useIsTablet } from '@/shared/lib';
 import { Button, ScreenHeader } from '@/shared/ui';
 
 type ImportRecordsRouteProp = RouteProp<SettingsStackParamList, 'ImportRecords'>;
@@ -103,6 +103,7 @@ export const ImportRecordsScreen = () => {
   const { t, i18n } = useTranslation();
   const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
+  const isTablet = useIsTablet();
   const navigation = useNavigation();
   const route = useRoute<ImportRecordsRouteProp>();
   const { records: fileRecords } = route.params;
@@ -232,7 +233,10 @@ export const ImportRecordsScreen = () => {
       />
 
       <View className="px-4 py-3" style={{ backgroundColor: color.background.primary }}>
-        <Text className="text-sm" style={{ color: color.text.secondary }}>
+        <Text
+          className="text-sm"
+          style={{ color: color.text.secondary, textAlign: 'center' }}
+        >
           {t('importExport.importSelectSubtitle', {
             importable: importable.length,
             duplicates: duplicates.length,
@@ -242,40 +246,67 @@ export const ImportRecordsScreen = () => {
           <View
             className="mt-3 flex-row items-center justify-center"
             style={{
-              gap: 16,
-              paddingVertical: 8,
-              paddingHorizontal: 12,
+              alignSelf: 'center',
+              maxWidth: isTablet ? 400 : undefined,
+              width: '100%',
               backgroundColor: color.background.tertiary,
-              borderRadius: 12,
+              borderRadius: isTablet ? 14 : 12,
+              padding: 4,
+              flexDirection: 'row',
             }}
           >
             <TouchableOpacity
               onPress={selectAll}
-              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
               activeOpacity={0.7}
-              style={{ paddingVertical: 8, paddingRight: 16, marginRight: 16 }}
+              style={{
+                flex: 1,
+                paddingVertical: isTablet ? 12 : 10,
+                paddingHorizontal: isTablet ? 20 : 16,
+                backgroundColor:
+                  selectedCount === importable.length ? color.accent.primary : 'transparent',
+                borderRadius: isTablet ? 10 : 8,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
               <Text
                 style={{
-                  fontSize: 15,
+                  fontSize: isTablet ? 16 : 15,
                   fontWeight: '600',
-                  color: color.accent.primary,
+                  color:
+                    selectedCount === importable.length
+                      ? color.icon.onAccent
+                      : color.accent.primary,
                 }}
               >
                 {t('importExport.selectAll')}
               </Text>
             </TouchableOpacity>
+            <View
+              style={{
+                width: 1,
+                height: isTablet ? 20 : 18,
+                backgroundColor: color.border.default,
+              }}
+            />
             <TouchableOpacity
               onPress={deselectAll}
-              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
               activeOpacity={0.7}
-              style={{ paddingVertical: 8 }}
+              style={{
+                flex: 1,
+                paddingVertical: isTablet ? 12 : 10,
+                paddingHorizontal: isTablet ? 20 : 16,
+                backgroundColor: selectedCount === 0 ? color.accent.primary : 'transparent',
+                borderRadius: isTablet ? 10 : 8,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
               <Text
                 style={{
-                  fontSize: 15,
+                  fontSize: isTablet ? 16 : 15,
                   fontWeight: '600',
-                  color: color.accent.primary,
+                  color: selectedCount === 0 ? color.icon.onAccent : color.text.secondary,
                 }}
               >
                 {t('importExport.deselectAll')}
