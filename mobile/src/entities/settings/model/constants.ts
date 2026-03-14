@@ -1,14 +1,4 @@
-import { APP_ENV } from '@env';
-
 import type { AIModel, WhisperModel } from './types';
-
-const TRINITY_MODEL: AIModel = {
-  id: 'arcee-ai/trinity-large-preview:free',
-  name: 'Trinity Large Preview Free',
-  provider: 'Arcee AI',
-  descriptionKey: 'aiModels.trinityDesc',
-  speed: 'medium',
-};
 
 const GEMINI_MODELS: AIModel[] = [
   {
@@ -67,7 +57,6 @@ export const AI_MODELS: AIModel[] = [
   DEEPSEEK_MODEL,
   OPENAI_MODEL,
   ...MISTRAL_MODELS,
-  ...(APP_ENV === 'development' ? [TRINITY_MODEL] : []),
 ];
 
 export const WHISPER_MODELS: WhisperModel[] = [
