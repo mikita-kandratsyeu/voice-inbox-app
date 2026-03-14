@@ -37,48 +37,36 @@ export default function OpenGraphImage(): ImageResponse {
             justifyContent: 'center',
           }}
         >
-          <svg width="48" height="48" viewBox="0 0 1024 1024" fill="none">
+          <svg width="48" height="48" viewBox="0 0 1032 1032" fill="none">
             <defs>
-              <clipPath id="rounded-corners">
-                <rect width="1024" height="1024" rx="341" ry="341" />
-              </clipPath>
               <linearGradient
-                id="paint0_linear"
-                x1="0"
+                id="og-icon-gradient"
+                x1="516"
                 y1="0"
-                x2="1024"
+                x2="516"
                 y2="1024"
                 gradientUnits="userSpaceOnUse"
               >
-                <stop offset="0.25" stopColor="#3b82f6" />
-                <stop offset="0.75" stopColor="#2563eb" />
+                <stop stopColor="#3B82F6" />
+                <stop offset="1" stopColor="#06B6D4" />
               </linearGradient>
             </defs>
-            <g clipPath="url(#rounded-corners)">
-              <rect width="1024" height="1024" fill="url(#paint0_linear)" />
-              <path
-                fillRule="evenodd"
-                clipRule="evenodd"
-                d="M670.41 280.601C666.719 270.466 652.393 270.466 648.702 280.601L643.911 293.771C636.329 314.614 619.91 331.033 599.067 338.615L585.897 343.406C575.762 347.097 575.762 361.423 585.897 365.114L599.067 369.905C619.91 377.487 636.329 393.906 643.911 414.749L648.702 427.919C652.393 438.054 666.719 438.054 670.41 427.919L675.201 414.749C682.783 393.906 699.202 377.487 720.045 369.905L733.215 365.114C743.35 361.423 743.35 347.097 733.215 343.406L720.045 338.615C699.202 331.033 682.783 314.614 675.201 293.771L670.41 280.601Z"
-                fill="white"
-              />
-              <path
-                d="M324 483.32C324 475.4 330.42 468.98 338.34 468.98C346.26 468.98 352.68 475.4 352.68 483.32V588.48C352.68 596.4 346.26 602.82 338.34 602.82C330.42 602.82 324 596.4 324 588.48V483.32Z"
-                fill="white"
-              />
-              <path
-                d="M538.144 492.88C538.144 484.96 544.564 478.54 552.484 478.54C560.404 478.54 566.824 484.96 566.824 492.88V578.92C566.824 586.84 560.404 593.26 552.484 593.26C544.564 593.26 538.144 586.84 538.144 578.92V492.88Z"
-                fill="white"
-              />
-              <path
-                d="M645.216 478.54C645.216 470.62 651.636 464.2 659.556 464.2C667.476 464.2 673.896 470.62 673.896 478.54V593.26C673.896 601.18 667.476 607.6 659.556 607.6C651.636 607.6 645.216 601.18 645.216 593.26V478.54Z"
-                fill="white"
-              />
-              <rect x="377.536" y="392.5" width="28.68" height="286.8" rx="14.34" fill="white" />
-              <rect x="484.608" y="411.62" width="28.68" height="248.56" rx="14.34" fill="white" />
-              <rect x="591.68" y="416.4" width="28.68" height="239" rx="14.34" fill="white" />
-              <rect x="431.072" y="320.8" width="28.68" height="430.2" rx="14.34" fill="white" />
-            </g>
+            <rect x="4" width="1024" height="1024" rx="320" fill="url(#og-icon-gradient)" />
+            <path d="M507 639H527V724H507V639Z" fill="white" />
+            <path
+              d="M437 739C437 730.716 443.716 724 452 724H582C590.284 724 597 730.716 597 739C597 747.284 590.284 754 582 754H452C443.716 754 437 747.284 437 739Z"
+              fill="white"
+            />
+            <circle cx="516" cy="512" r="144" stroke="white" strokeWidth="40" />
+            <circle cx="762" cy="266" r="30" fill="#10B981" />
+            <circle
+              cx="762"
+              cy="266"
+              r="52.5"
+              stroke="#10B981"
+              strokeOpacity="0.4"
+              strokeWidth="45"
+            />
           </svg>
         </div>
         <span style={{ fontSize: 48, fontWeight: 700, color: 'white' }}>Voice Inbox AI</span>
