@@ -7,7 +7,7 @@ export const startRecordingLiveActivity = async (): Promise<void> => {
   try {
     await RecordingLiveActivityModule.startActivity();
   } catch {
-    // Live Activity not available (e.g. iOS < 16.1)
+    if (__DEV__) console.warn('[startRecordingLiveActivity] failed');
   }
 };
 
@@ -16,7 +16,7 @@ export const updateRecordingLiveActivity = async (elapsedSeconds: number): Promi
   try {
     await RecordingLiveActivityModule.updateActivity(elapsedSeconds);
   } catch {
-    // Ignore
+    if (__DEV__) console.warn('[updateRecordingLiveActivity] failed');
   }
 };
 
@@ -25,7 +25,7 @@ export const endRecordingLiveActivity = async (): Promise<void> => {
   try {
     await RecordingLiveActivityModule.endActivity();
   } catch {
-    // Ignore
+    if (__DEV__) console.warn('[endRecordingLiveActivity] failed');
   }
 };
 

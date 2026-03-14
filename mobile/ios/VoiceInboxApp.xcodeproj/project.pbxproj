@@ -13,6 +13,15 @@
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		90C145FFD67FA237B6003153 /* libPods-VoiceInboxApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A28933E382B7BCE790CB0465 /* libPods-VoiceInboxApp.a */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* BootSplash.storyboard */; };
+		RW01000000000001 /* RecordingLiveActivityModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = RF01000000000001 /* RecordingLiveActivityModule.swift */; };
+		RW01000000000002 /* RecordingLiveActivityModule.m in Sources */ = {isa = PBXBuildFile; fileRef = RF01000000000002 /* RecordingLiveActivityModule.m */; };
+		RW02000000000001 /* RecordingActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = RF02000000000001 /* RecordingActivityAttributes.swift */; };
+		RW02000000000002 /* RecordingLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = RF02000000000002 /* RecordingLiveActivity.swift */; };
+		RW02000000000003 /* StopRecordingIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = RF02000000000003 /* StopRecordingIntent.swift */; };
+		RW02000000000004 /* RecordingWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = RF02000000000004 /* RecordingWidgetBundle.swift */; };
+		RW02000000000005 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A6F4CEC2F64113A00297CB8 /* WidgetKit.framework */; };
+		RW02000000000006 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A6F4CEE2F64113B00297CB8 /* SwiftUI.framework */; };
+		RW02000000000007 /* RecordingWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = RF02000000000010 /* RecordingWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -22,6 +31,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
+				RW02000000000007 /* RecordingWidget.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -44,6 +54,14 @@
 		E1F2A3B4C5D6E7F8A9B0C1D2 /* VoiceInboxApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VoiceInboxApp-Bridging-Header.h"; sourceTree = "<group>"; };
 		E2F3B4C5D6E7F8A9B0C1D2E3 /* VoiceInboxApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VoiceInboxApp.entitlements; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		RF01000000000001 /* RecordingLiveActivityModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingLiveActivityModule.swift; path = VoiceInboxApp/RecordingLiveActivityModule.swift; sourceTree = "<group>"; };
+		RF01000000000002 /* RecordingLiveActivityModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = RecordingLiveActivityModule.m; path = VoiceInboxApp/RecordingLiveActivityModule.m; sourceTree = "<group>"; };
+		RF02000000000001 /* RecordingActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingActivityAttributes.swift; path = RecordingWidget/RecordingActivityAttributes.swift; sourceTree = "<group>"; };
+		RF02000000000002 /* RecordingLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingLiveActivity.swift; path = RecordingWidget/RecordingLiveActivity.swift; sourceTree = "<group>"; };
+		RF02000000000003 /* StopRecordingIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = StopRecordingIntent.swift; path = RecordingWidget/StopRecordingIntent.swift; sourceTree = "<group>"; };
+		RF02000000000004 /* RecordingWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingWidgetBundle.swift; path = RecordingWidget/RecordingWidgetBundle.swift; sourceTree = "<group>"; };
+		RF02000000000010 /* RecordingWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RecordingWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		RF02000000000020 /* RecordingWidget-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Info.plist"; path = "RecordingWidget/Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -52,6 +70,15 @@
 			buildActionMask = 2147483647;
 			files = (
 				90C145FFD67FA237B6003153 /* libPods-VoiceInboxApp.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		RF02000000000030 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				RW02000000000005 /* WidgetKit.framework in Frameworks */,
+				RW02000000000006 /* SwiftUI.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -69,6 +96,8 @@
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 				E1F2A3B4C5D6E7F8A9B0C1D2 /* VoiceInboxApp-Bridging-Header.h */,
 				E2F3B4C5D6E7F8A9B0C1D2E3 /* VoiceInboxApp.entitlements */,
+				RF01000000000001 /* RecordingLiveActivityModule.swift */,
+				RF01000000000002 /* RecordingLiveActivityModule.m */,
 			);
 			name = VoiceInboxApp;
 			sourceTree = "<group>";
@@ -95,6 +124,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07FAE1A68108700A75B9A /* VoiceInboxApp */,
+				RF02000000000040 /* RecordingWidget */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
@@ -109,6 +139,7 @@
 			isa = PBXGroup;
 			children = (
 				13B07F961A680F5B00A75B9A /* VoiceInboxApp.app */,
+				RF02000000000010 /* RecordingWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -120,6 +151,19 @@
 				844C799124632529BEB33D29 /* Pods-VoiceInboxApp.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		RF02000000000040 /* RecordingWidget */ = {
+			isa = PBXGroup;
+			children = (
+				RF02000000000001 /* RecordingActivityAttributes.swift */,
+				RF02000000000002 /* RecordingLiveActivity.swift */,
+				RF02000000000003 /* StopRecordingIntent.swift */,
+				RF02000000000004 /* RecordingWidgetBundle.swift */,
+				RF02000000000020 /* Info.plist */,
+			);
+			name = RecordingWidget;
+			path = RecordingWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -142,11 +186,29 @@
 			buildRules = (
 			);
 			dependencies = (
+				RF02000000000050 /* PBXTargetDependency */,
 			);
 			name = VoiceInboxApp;
 			productName = VoiceInboxApp;
 			productReference = 13B07F961A680F5B00A75B9A /* VoiceInboxApp.app */;
 			productType = "com.apple.product-type.application";
+		};
+		RF02000000000060 /* RecordingWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = RF02000000000070 /* Build configuration list for PBXNativeTarget "RecordingWidget" */;
+			buildPhases = (
+				RF02000000000030 /* Frameworks */,
+				RF02000000000080 /* Sources */,
+				RF02000000000090 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RecordingWidget;
+			productName = RecordingWidget;
+			productReference = RF02000000000010 /* RecordingWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -159,6 +221,9 @@
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1120;
+					};
+					RF02000000000060 = {
+						CreatedOnToolsVersion = 15.0;
 					};
 				};
 			};
@@ -176,6 +241,7 @@
 			projectRoot = "";
 			targets = (
 				13B07F861A680F5B00A75B9A /* VoiceInboxApp */,
+				RF02000000000060 /* RecordingWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -189,6 +255,13 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				6AB6F3F4330AE4AFFE499295 /* PrivacyInfo.xcprivacy in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		RF02000000000090 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -295,10 +368,41 @@
 			buildActionMask = 2147483647;
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				RW01000000000001 /* RecordingLiveActivityModule.swift in Sources */,
+				RW01000000000002 /* RecordingLiveActivityModule.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		RF02000000000080 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				RW02000000000001 /* RecordingActivityAttributes.swift in Sources */,
+				RW02000000000002 /* RecordingLiveActivity.swift in Sources */,
+				RW02000000000003 /* StopRecordingIntent.swift in Sources */,
+				RW02000000000004 /* RecordingWidgetBundle.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		RF02000000000050 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = RF02000000000060 /* RecordingWidget */;
+			targetProxy = RF02000000000051 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin PBXContainerItemProxy section */
+		RF02000000000051 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = RF02000000000060;
+			remoteInfo = RecordingWidget;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
@@ -535,6 +639,54 @@
 			};
 			name = Release;
 		};
+		RF02000000000071 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 5;
+				DEVELOPMENT_TEAM = BNMZQ2R72J;
+				INFOPLIST_FILE = RecordingWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.3;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mkandratsyeu.voiceinboxai.RecordingWidget";
+				PRODUCT_NAME = RecordingWidget;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		RF02000000000072 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 5;
+				DEVELOPMENT_TEAM = BNMZQ2R72J;
+				INFOPLIST_FILE = RecordingWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0.3;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.mkandratsyeu.voiceinboxai.RecordingWidget";
+				PRODUCT_NAME = RecordingWidget;
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -552,6 +704,15 @@
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,
 				83CBBA211A601CBA00E9B192 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		RF02000000000070 /* Build configuration list for PBXNativeTarget "RecordingWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				RF02000000000071 /* Debug */,
+				RF02000000000072 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

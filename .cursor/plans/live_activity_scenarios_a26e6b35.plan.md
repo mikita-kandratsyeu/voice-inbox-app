@@ -4,25 +4,25 @@ overview: "Реализовать нативный модуль Live Activity д
 todos:
   - id: widget-extension-xcode
     content: Создать Widget Extension target в Xcode (папка RecordingWidget, pbxproj)
-    status: in_progress
+    status: completed
   - id: activity-attributes
     content: Создать RecordingActivityAttributes.swift с ContentState (elapsedSeconds, isStopped)
-    status: pending
+    status: completed
   - id: live-activity-ui
     content: Создать RecordingLiveActivity.swift (SwiftUI UI для Lock Screen и Dynamic Island)
-    status: pending
+    status: completed
   - id: stop-intent
     content: Создать StopRecordingIntent.swift (AppIntent → deep link voiceinbox://stop-recording)
-    status: pending
+    status: completed
   - id: native-module
     content: Создать RecordingLiveActivityModule.swift + .m (нативный RN модуль)
-    status: pending
+    status: completed
   - id: entitlements
     content: Добавить NSSupportsLiveActivities в entitlements
-    status: pending
+    status: completed
   - id: deeplink-handler
     content: Добавить обработку deep link voiceinbox://stop-recording в RecordScreen.tsx
-    status: pending
+    status: completed
 isProject: false
 ---
 
