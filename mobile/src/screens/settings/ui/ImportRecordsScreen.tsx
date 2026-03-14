@@ -168,16 +168,20 @@ export const ImportRecordsScreen = () => {
         </Text>
         {importable.length > 0 && (
           <View className="mt-2 flex-row gap-3">
-            <TouchableOpacity onPress={selectAll} hitSlop={8}>
-              <Text className="text-sm font-medium" style={{ color: color.accent.primary }}>
-                {t('importExport.selectAll')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={deselectAll} hitSlop={8}>
-              <Text className="text-sm font-medium" style={{ color: color.accent.primary }}>
-                {t('importExport.deselectAll')}
-              </Text>
-            </TouchableOpacity>
+            <Button
+              variant="ghost"
+              size="sm"
+              label={t('importExport.selectAll')}
+              onPress={selectAll}
+              color={color}
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              label={t('importExport.deselectAll')}
+              onPress={deselectAll}
+              color={color}
+            />
           </View>
         )}
       </View>
@@ -227,6 +231,7 @@ export const ImportRecordsScreen = () => {
                 : t('importExport.importSelected', { count: selectedCount })
             }
             variant="primary"
+            size="lg"
             fullWidth
             onPress={handleImport}
             disabled={selectedCount === 0 || isImporting}
