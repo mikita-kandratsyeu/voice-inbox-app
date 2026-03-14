@@ -18,6 +18,8 @@ Our API temporarily stores only the AI result (summary, tasks, tags) in a key-va
 
 We use a device identifier (device ID) to limit the number of free AI requests per week per device. This identifier is used solely for rate limiting and is not linked to your identity.
 
+If you enable push notifications, we store your push token (APNS device token) and app language on our servers. This data is used solely to send you notifications about completed AI processing and important updates. The push token is stored for 30 days and refreshed on every app launch. You can revoke notification permission at any time through iOS Settings.
+
 ## 3. Third-Party AI Providers
 
 When you use AI features, your transcript is sent to third-party providers via [OpenRouter](https://openrouter.ai). All requests are routed exclusively through OpenRouter — we do not contact providers directly.
@@ -39,7 +41,7 @@ Voice Inbox AI does not require an account or login. There is no user registrati
 
 **On your device:** recordings, transcripts, and AI-generated content are stored until you delete them or uninstall the app.
 
-**On our servers:** AI results are stored for up to 1 hour, then automatically deleted. Per-device rate limit counters are stored for up to 8 days, then reset.
+**On our servers:** AI results are stored for up to 1 hour, then automatically deleted. Per-device rate limit counters are stored for up to 8 days, then reset. Push tokens are stored for up to 30 days and refreshed on every app launch with notifications enabled.
 
 ## 6. Your Rights
 

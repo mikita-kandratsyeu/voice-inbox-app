@@ -1,12 +1,8 @@
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetScrollView,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Dimensions, ScrollView, Text } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,6 +10,8 @@ import { getColors, useAppTheme } from '@/shared/config';
 import { Button } from '@/shared/ui';
 
 import { usePushSheet } from './usePushSheet';
+
+const MAX_CONTENT_HEIGHT = Dimensions.get('window').height * 0.4;
 
 export const PolicyUpdateSheet = () => {
   const { t } = useTranslation();
@@ -65,12 +63,8 @@ export const PolicyUpdateSheet = () => {
         fontWeight: '600' as const,
         marginBottom: 4,
       },
-      bullet_list: {
-        marginVertical: 4,
-      },
-      ordered_list: {
-        marginVertical: 4,
-      },
+      bullet_list: { marginVertical: 4 },
+      ordered_list: { marginVertical: 4 },
       list_item: {
         color: color.text.secondary,
         fontSize: 14,
@@ -99,13 +93,10 @@ export const PolicyUpdateSheet = () => {
     [color],
   );
 
-  const bottomPadding = Math.max(insets.bottom, 24);
-
   return (
     <BottomSheetModal
       ref={sheetRef}
-      enableDynamicSizing={false}
-      snapPoints={['50%', '80%']}
+      enableDynamicSizing
       enablePanDownToClose={false}
       backdropComponent={renderBackdrop}
       backgroundStyle={{
@@ -121,37 +112,29 @@ export const PolicyUpdateSheet = () => {
       }}
       onDismiss={hide}
     >
-      <BottomSheetView
-        style={{
-          flex: 1,
-          paddingHorizontal: 20,
-          paddingTop: 8,
-          paddingBottom: bottomPadding,
-          gap: 12,
-        }}
-      >
-        <Markdown
+      <BottomSheetView>
+        <Text
           style={{
-            body: {
-              color: color.text.primary,
-              fontSize: 17,
-              fontWeight: '600',
-              marginBottom: 0,
-              lineHeight: 24,
-            },
+            color: color.text.primary,
+            fontSize: 17,
+            fontWeight: '600',
+            lineHeight: 24,
+            paddingHorizontal: 20,
+            paddingTop: 8,
+            marginBottom: 12,
           }}
         >
           {t('push.policyUpdateTitle')}
-        </Markdown>
+        </Text>
 
         {Boolean(message) && (
-          <BottomSheetScrollView
-            style={{ flex: 1 }}
+          <ScrollView
+            style={{ maxHeight: MAX_CONTENT_HEIGHT, paddingHorizontal: 20 }}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 8 }}
+            contentContainerStyle={{ paddingBottom: 4 }}
           >
             <Markdown style={markdownStyles}>{message}</Markdown>
-          </BottomSheetScrollView>
+          </ScrollView>
         )}
 
         <Button
@@ -161,6 +144,11 @@ export const PolicyUpdateSheet = () => {
           fullWidth
           color={color}
           onPress={hide}
+          containerStyle={{
+            marginHorizontal: 20,
+            marginTop: 16,
+            marginBottom: Math.max(insets.bottom, 24),
+          }}
         />
       </BottomSheetView>
     </BottomSheetModal>
