@@ -62,7 +62,9 @@ export const BottomTabNavigator = () => {
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
       paddingHorizontal: isTablet ? 48 : 16,
-      ...(isTablet ? { height: 72, paddingTop: 0, paddingBottom: 0, marginBottom: insets.bottom } : {}),
+      ...(isTablet
+        ? { height: 72, paddingTop: 0, paddingBottom: 0, marginBottom: insets.bottom }
+        : {}),
     },
     tabBarButton: (props: BottomTabBarButtonProps) => <AnimatedTabButton {...props} />,
     lazy: true,
@@ -70,9 +72,7 @@ export const BottomTabNavigator = () => {
 
   return (
     <View className="flex-1">
-      <Tab.Navigator
-        screenOptions={screenOptions}
-      >
+      <Tab.Navigator screenOptions={screenOptions}>
         <Tab.Screen
           name="Inbox"
           component={InboxScreen}
@@ -117,7 +117,11 @@ export const BottomTabNavigator = () => {
           options={{
             tabBarLabel: TAB_LABELS.Settings,
             tabBarIcon: ({ color: c }) => (
-              <TAB_ICONS.Settings size={isTablet ? 28 : TAB_ICON_SIZE} color={c} strokeWidth={1.8} />
+              <TAB_ICONS.Settings
+                size={isTablet ? 28 : TAB_ICON_SIZE}
+                color={c}
+                strokeWidth={1.8}
+              />
             ),
           }}
         />
