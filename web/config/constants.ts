@@ -27,3 +27,7 @@ export const GET_RETRY_DELAY_MS = 100;
 
 // AI service
 export const FALLBACK_MODEL = 'arcee-ai/trinity-large-preview:free';
+
+// Push notifications (iOS APNs)
+export const PUSH_TOKEN_KEY_PREFIX = 'push_token:';
+export const PUSH_TOKEN_TTL_SECONDS = 30 * 24 * 3600; // 30 days

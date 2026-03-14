@@ -22,7 +22,6 @@ export const AboutAppScreen = () => {
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader title={t('about.title')} onBack={() => navigation.goBack()} />
-
       <ScrollView
         contentContainerStyle={{
           paddingHorizontal: 16,
@@ -32,11 +31,13 @@ export const AboutAppScreen = () => {
         showsVerticalScrollIndicator={false}
       >
         <View className="mb-8 items-center">
-          <Image
-            source={require('../../../shared/assets/app-icon.png')}
-            className="mb-4 h-20 w-20 rounded-[22px]"
-            resizeMode="cover"
-          />
+          <View className="mb-4 h-20 w-20 overflow-hidden rounded-[22px]">
+            <Image
+              source={require('@/shared/assets/app-icon.png')}
+              className="h-full w-full"
+              resizeMode="cover"
+            />
+          </View>
           <Text className="text-[24px] font-bold" style={{ color: color.text.primary }}>
             Voice Inbox AI
           </Text>

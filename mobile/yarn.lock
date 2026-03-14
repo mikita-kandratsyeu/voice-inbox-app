@@ -2961,6 +2961,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-community/push-notification-ios@npm:^1.12.0":
+  version: 1.12.0
+  resolution: "@react-native-community/push-notification-ios@npm:1.12.0"
+  dependencies:
+    invariant: "npm:^2.2.4"
+  peerDependencies:
+    react: ">=16.6.3"
+    react-native: ">=0.58.4"
+  checksum: 10c0/7f6d375df05beeffe7fe2ba38bf30f9c3222760f691e5e4fd39bd6de504d0cdc844ea88fb522ec59248ed4a352b60d14522af9352f5399d9d1bd1f49cafd5605
+  languageName: node
+  linkType: hard
+
 "@react-native-menu/menu@npm:^2.0.0":
   version: 2.0.0
   resolution: "@react-native-menu/menu@npm:2.0.0"
@@ -11862,6 +11874,7 @@ __metadata:
     "@react-native-community/cli-platform-android": "npm:20.1.0"
     "@react-native-community/cli-platform-ios": "npm:20.1.0"
     "@react-native-community/netinfo": "npm:^12.0.1"
+    "@react-native-community/push-notification-ios": "npm:^1.12.0"
     "@react-native-menu/menu": "npm:^2.0.0"
     "@react-native/babel-preset": "npm:0.84.1"
     "@react-native/metro-config": "npm:0.84.1"

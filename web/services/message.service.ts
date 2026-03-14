@@ -1,3 +1,5 @@
+import { sendPushNotification } from '@/lib/apns';
+import { getPushToken } from '@/lib/push-tokens';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import { processTranscript } from '@/services/ai.service';
@@ -47,6 +49,11 @@ export const createMessage = async (
         }),
         ...(result.nextSteps && result.nextSteps.length > 0 && { nextSteps: result.nextSteps }),
       });
+
+      const token = await getPushToken(deviceId);
+      if (token) {
+        await sendPushNotification(token, { type: 'ai_complete', recordId: id });
+      }
     })
     .catch(async (err) => {
       await decrement(deviceId);

@@ -15,6 +15,7 @@ import { OnboardingGate } from '@/features/onboarding';
 import { releaseWhisperContext } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
 import { initDB, NetworkStatusProvider } from '@/shared/lib';
+import { usePushNotifications } from '@/shared/lib/push';
 
 import { RootNavigator } from './navigation/RootNavigator';
 
@@ -22,6 +23,8 @@ const App = () => {
   const theme = useAppTheme();
   const color = getColors(theme);
   const isDark = theme === 'dark';
+
+  const { setupAndRegister } = usePushNotifications();
 
   const rootStyle = { flex: 1 };
   const safeAreaStyle = { backgroundColor: color.background.primary };
@@ -31,11 +34,12 @@ const App = () => {
       .then(() => {
         useRecordStore.getState().load();
         BootSplash.hide({ fade: true });
+        setupAndRegister();
       })
       .catch(() => {
         BootSplash.hide({ fade: true });
       });
-  }, []);
+  }, [setupAndRegister]);
 
   useEffect(() => {
     const handleAppStateChange = (state: AppStateStatus) => {
