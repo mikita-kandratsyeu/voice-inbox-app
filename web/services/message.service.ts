@@ -1,3 +1,4 @@
+import { after } from 'next/server';
 import { sendPushNotification } from '@/lib/apns';
 import {
   collectPendingAndUnlock,
@@ -41,8 +42,9 @@ export const createMessage = async (
 
   const syncToken = getSyncToken();
 
-  processTranscript(transcript, model, systemPrompt)
-    .then(async (result) => {
+  after(async () => {
+    try {
+      const result = await processTranscript(transcript, model, systemPrompt);
       await saveMessage(id, {
         id,
         status: 'done',
@@ -92,15 +94,15 @@ export const createMessage = async (
       } else {
         console.warn('[Push] AI complete: no token for deviceId', deviceId);
       }
-    })
-    .catch(async (err) => {
+    } catch (err) {
       await decrement(deviceId);
       await saveMessage(id, {
         id,
         status: 'error',
         error: err instanceof Error ? err.message : 'Unknown error',
       });
-    });
+    }
+  });
 
   return { created: true, syncToken };
 };
