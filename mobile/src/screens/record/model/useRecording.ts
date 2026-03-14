@@ -32,6 +32,35 @@ import { requestMicPermission } from '../lib/requestMicPermission';
 
 const audioRecorderPlayer = AudioRecorderPlayer as unknown as AudioRecorderPlayerInstance;
 
+const SUBSCRIPTION_DURATION_MS = 200;
+const MAX_JUMP_FORWARD_MS = 400;
+const MAX_JUMP_BACKWARD_MS = 500;
+
+type SanitizeResult = { ms: number; routeChanged: boolean };
+
+/**
+ * Sanitizes currentPosition from the recorder. On iOS, switching audio sources
+ * (built-in mic, Bluetooth, etc.) can cause the native layer to report corrupted
+ * or erratic positions. We detect this and signal route change to stop the recording.
+ */
+function sanitizePosition(rawMs: number, lastValidMs: number): SanitizeResult {
+  if (rawMs < 0) {
+    return { ms: lastValidMs, routeChanged: false };
+  }
+
+  const capped = Math.min(rawMs, MAX_RECORDING_MS);
+
+  if (capped < lastValidMs - MAX_JUMP_BACKWARD_MS) {
+    return { ms: lastValidMs, routeChanged: true };
+  }
+
+  if (capped > lastValidMs + MAX_JUMP_FORWARD_MS) {
+    return { ms: lastValidMs + SUBSCRIPTION_DURATION_MS, routeChanged: true };
+  }
+
+  return { ms: capped, routeChanged: false };
+}
+
 const RECORDING_AUDIO_SET = {
   AVModeIOS: 'measurement',
   AVFormatIDKeyIOS: 'lpcm',
@@ -48,11 +77,13 @@ const RECORDING_AUDIO_SET = {
 type UseRecordingOptions = {
   onLimitReached?: () => void;
   onRecordingStoppedByAppLock?: (path: string, elapsed: number, elapsedMs: number) => void;
+  onAudioRouteChange?: () => void;
 };
 
 export const useRecording = ({
   onLimitReached,
   onRecordingStoppedByAppLock,
+  onAudioRouteChange,
 }: UseRecordingOptions = {}) => {
   const { t } = useTranslation();
   const [state, setState] = useState<RecordingState>('idle');
@@ -62,6 +93,7 @@ export const useRecording = ({
   const audioPathRef = useRef<string | null>(null);
   const elapsedRef = useRef(0);
   const elapsedMsRef = useRef(0);
+  const lastValidMsRef = useRef(0);
   const limitReachedRef = useRef(false);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const lastLiveActivityUpdateRef = useRef(0);
@@ -70,12 +102,40 @@ export const useRecording = ({
   onLimitReachedRef.current = onLimitReached;
   const onRecordingStoppedByAppLockRef = useRef(onRecordingStoppedByAppLock);
   onRecordingStoppedByAppLockRef.current = onRecordingStoppedByAppLock;
+  const onAudioRouteChangeRef = useRef(onAudioRouteChange);
+  onAudioRouteChangeRef.current = onAudioRouteChange;
   const stateRef = useRef(state);
   stateRef.current = state;
 
   const addRecordBackListener = useCallback(() => {
     audioRecorderPlayer.addRecordBackListener((e: RecordBackType) => {
-      const ms = e.currentPosition;
+      const { ms, routeChanged } = sanitizePosition(e.currentPosition, lastValidMsRef.current);
+      lastValidMsRef.current = ms;
+
+      if (routeChanged && Platform.OS === 'ios') {
+        const secs = Math.floor(ms / 1000);
+        elapsedRef.current = secs;
+        elapsedMsRef.current = ms;
+        setElapsed(secs);
+        setElapsedMs(ms);
+
+        audioRecorderPlayer.removeRecordBackListener();
+        audioRecorderPlayer
+          .pauseRecorder()
+          .then((result: string) => {
+            if (audioPathRef.current === null) {
+              audioPathRef.current = result;
+            }
+            setState('paused');
+            Alert.alert(t('record.routeChangeTitle'), t('record.routeChangeMessage'), [
+              { text: 'OK' },
+            ]);
+            onAudioRouteChangeRef.current?.();
+          })
+          .catch(() => {});
+        return;
+      }
+
       const secs = Math.floor(ms / 1000);
       const isBackground = Platform.OS === 'ios' && appStateRef.current === 'background';
 
@@ -124,7 +184,8 @@ export const useRecording = ({
 
     try {
       limitReachedRef.current = false;
-      audioRecorderPlayer.setSubscriptionDuration(0.2);
+      lastValidMsRef.current = 0;
+      audioRecorderPlayer.setSubscriptionDuration(SUBSCRIPTION_DURATION_MS / 1000);
 
       const path = await audioRecorderPlayer.startRecorder(undefined, RECORDING_AUDIO_SET, true);
       audioPathRef.current = path;
@@ -152,7 +213,7 @@ export const useRecording = ({
 
   const resumeRecording = useCallback(async () => {
     try {
-      audioRecorderPlayer.setSubscriptionDuration(0.2);
+      audioRecorderPlayer.setSubscriptionDuration(SUBSCRIPTION_DURATION_MS / 1000);
       await audioRecorderPlayer.resumeRecorder();
 
       addRecordBackListener();

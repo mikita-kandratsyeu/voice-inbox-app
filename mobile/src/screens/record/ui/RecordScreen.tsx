@@ -55,6 +55,10 @@ export const RecordScreen = () => {
       setTitle('');
       setShowSaveModal(true);
     },
+    onAudioRouteChange: () => {
+      setTitle('');
+      setShowSaveModal(true);
+    },
     onRecordingStoppedByAppLock: (path, elapsed, elapsedMs) => {
       const record: VoiceRecord = {
         id: generateRecordId(),
