@@ -117,30 +117,7 @@ export const SettingsScreen = () => {
         }
         return;
       }
-      Alert.alert(
-        t('importExport.importTitle'),
-        t('importExport.importConfirm', { count: result.records.length }),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('importExport.import'),
-            onPress: async () => {
-              for (const record of result.records) {
-                try {
-                  await addRecord(record);
-                } catch {
-                  Alert.alert(t('common.error'), t('importExport.importRecordError'));
-                  return;
-                }
-              }
-              Alert.alert(
-                t('common.done'),
-                t('importExport.importSuccess', { count: result.records.length }),
-              );
-            },
-          },
-        ],
-      );
+      navigation.navigate('ImportRecords', { records: result.records });
     } catch {
       Alert.alert(t('common.error'), t('importExport.importError'));
     } finally {

@@ -415,7 +415,17 @@
     "exportError": "Не удалось экспортировать данные",
     "fileNotSelected": "Файл не выбран",
     "invalidFormat": "Неверный формат файла",
-    "readError": "Не удалось прочитать файл"
+    "readError": "Не удалось прочитать файл",
+    "importSelectTitle": "Выберите записи для импорта",
+    "importSelectSubtitle": "{{ importable }} можно импортировать, {{ duplicates }} уже в приложении",
+    "selectAll": "Выбрать все",
+    "deselectAll": "Снять выбор",
+    "importSelected": "Импортировать {{ count }} записей",
+    "importing": "Импорт...",
+    "alreadyInApp": "Уже в приложении",
+    "alreadyInAppSection": "Уже в приложении",
+    "allAlreadyInApp": "Все записи из файла уже есть в приложении.",
+    "noRecordsInFile": "В файле нет записей."
   },
   "permissions": {
     "micTitle": "Разрешение на запись",

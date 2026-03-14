@@ -22,4 +22,5 @@ export type SettingsStackParamList = {
   StorageDetails: undefined;
   AboutApp: undefined;
   AppLockSetup: undefined;
+  ImportRecords: { records: VoiceRecord[] };
 };
