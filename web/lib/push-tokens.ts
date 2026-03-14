@@ -44,6 +44,7 @@ export async function savePushToken(
   const key = getPushTokenKey(deviceId);
   const data: StoredPushData = { token: deviceToken, locale: locale ?? null };
   await redis.set(key, JSON.stringify(data), { ex: PUSH_TOKEN_TTL_SECONDS });
+
   if (process.env.NODE_ENV !== 'production') {
     console.log('[Push] savePushToken', { deviceId, key, locale: data.locale });
   }

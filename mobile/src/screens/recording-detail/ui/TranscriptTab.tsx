@@ -59,7 +59,6 @@ export const TranscriptTab = ({
         buttonIcon={<Mic size={18} color="#fff" strokeWidth={2} />}
         hint={`Whisper ${whisperModelName}`}
         onPress={onTranscribe}
-        color={color}
         hideButton={!hasAudio}
         disabled={isAiProcessing}
       />
