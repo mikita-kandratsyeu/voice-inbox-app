@@ -240,7 +240,7 @@ export const ImportRecordsScreen = () => {
         </Text>
         {importable.length > 0 && (
           <View
-            className="mt-3 flex-row items-center"
+            className="mt-3 flex-row items-center justify-center"
             style={{
               gap: 16,
               paddingVertical: 8,
