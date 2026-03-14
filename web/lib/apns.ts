@@ -10,7 +10,10 @@ const APNS_KEY_PATH = process.env.APNS_KEY_PATH;
 const APNS_KEY_CONTENT = process.env.APNS_KEY_CONTENT;
 const APNS_TOPIC =
   process.env.APNS_TOPIC ?? process.env.APP_BUNDLE_ID ?? 'com.mkandratsyeu.voiceinboxai';
-const APNS_PRODUCTION = process.env.NODE_ENV === 'production';
+const APNS_PRODUCTION =
+  process.env.APNS_PRODUCTION !== undefined
+    ? process.env.APNS_PRODUCTION === 'true' || process.env.APNS_PRODUCTION === '1'
+    : process.env.NODE_ENV === 'production';
 
 let client: ApnsClient | null = null;
 
@@ -49,16 +52,21 @@ function getApnsClient(): ApnsClient | null {
   }
 
   try {
+    const host = APNS_PRODUCTION ? Host.production : Host.development;
     client = new ApnsClient({
       team: APNS_TEAM_ID,
       keyId: APNS_KEY_ID,
       signingKey,
       defaultTopic: APNS_TOPIC,
-      host: APNS_PRODUCTION ? Host.production : Host.development,
+      host,
     });
-
+    console.log('[APNS] client initialized', {
+      host: APNS_PRODUCTION ? 'production' : 'sandbox',
+      topic: APNS_TOPIC,
+    });
     return client;
-  } catch {
+  } catch (err) {
+    console.error('[APNS] client init failed:', err);
     return null;
   }
 }
@@ -79,6 +87,11 @@ export async function sendPushNotification(
 ): Promise<boolean> {
   const apns = getApnsClient();
   if (!apns) {
+    console.warn('[APNS] client not available', {
+      hasKeyId: !!APNS_KEY_ID,
+      hasTeamId: !!APNS_TEAM_ID,
+      hasKey: !!(APNS_KEY_CONTENT?.trim() || APNS_KEY_PATH),
+    });
     return false;
   }
 
@@ -97,10 +110,19 @@ export async function sendPushNotification(
   });
 
   try {
+    console.log('[APNS] sending', {
+      type: payload.type,
+      tokenLen: deviceToken.length,
+      tokenPrefix: deviceToken.slice(0, 8) + '...',
+    });
     await apns.send(notification);
+    console.log('[APNS] send ok', { type: payload.type });
     return true;
   } catch (err) {
-    console.error('[APNS] send failed:', err);
+    console.error('[APNS] send failed:', err, {
+      type: payload.type,
+      tokenLen: deviceToken.length,
+    });
     return false;
   }
 }

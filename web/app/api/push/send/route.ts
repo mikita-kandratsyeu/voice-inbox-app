@@ -40,9 +40,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const data = await getPushTokenWithLocale(deviceId!);
   if (!data) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('[Push] send: no token for deviceId', deviceId);
-    }
+    console.warn('[Push] send: no token for deviceId', deviceId);
     return apiError('Device not registered for push notifications', HttpStatus.NOT_FOUND);
   }
 
@@ -59,17 +57,14 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     message: typeof body.message === 'string' ? body.message : undefined,
   };
 
+  console.log('[Push] send request', { deviceId, type: payload.type });
   const sent = await sendPushNotification(data.token, payload, data.locale);
 
   if (!sent) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn('[Push] send: APNS failed', { deviceId, type: payload.type });
-    }
+    console.warn('[Push] send: APNS failed', { deviceId, type: payload.type });
     return apiError('Failed to send push notification', HttpStatus.BAD_REQUEST);
   }
 
-  if (process.env.NODE_ENV !== 'production') {
-    console.log('[Push] send: ok', { deviceId, type: payload.type });
-  }
+  console.log('[Push] send: ok', { deviceId, type: payload.type });
   return NextResponse.json({ ok: true });
 };

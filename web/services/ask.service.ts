@@ -86,10 +86,8 @@ export const createAsk = async (
           data.locale,
           count,
         );
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[Push] Ask complete: push', sent ? 'sent' : 'failed', { deviceId, count });
-        }
-      } else if (process.env.NODE_ENV !== 'production') {
+        console.log('[Push] Ask complete:', sent ? 'sent' : 'failed', { deviceId, count });
+      } else {
         console.warn('[Push] Ask complete: no token for deviceId', deviceId);
       }
     })

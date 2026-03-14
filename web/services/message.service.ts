@@ -88,10 +88,8 @@ export const createMessage = async (
           data.locale,
           count,
         );
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[Push] AI complete: push', sent ? 'sent' : 'failed', { deviceId, count });
-        }
-      } else if (process.env.NODE_ENV !== 'production') {
+        console.log('[Push] AI complete:', sent ? 'sent' : 'failed', { deviceId, count });
+      } else {
         console.warn('[Push] AI complete: no token for deviceId', deviceId);
       }
     })
