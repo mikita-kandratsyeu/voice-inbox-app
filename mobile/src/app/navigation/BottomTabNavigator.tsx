@@ -3,7 +3,7 @@ import {
   createBottomTabNavigator,
 } from '@react-navigation/bottom-tabs';
 import React from 'react';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useInboxFiltersReset } from '@/features/inbox-filters';
@@ -54,6 +54,7 @@ export const BottomTabNavigator = () => {
       fontSize: isTablet ? 14 : 12,
       fontWeight: '500' as const,
       marginTop: isTablet ? 4 : 2,
+      textAlign: 'center' as const,
     },
     tabBarIconStyle: {
       marginBottom: 0,
@@ -84,7 +85,19 @@ export const BottomTabNavigator = () => {
               : undefined
           }
           options={{
-            tabBarLabel: TAB_LABELS.Inbox,
+            tabBarLabel: ({ color: c }) => (
+              <View
+                style={{
+                  width: '100%',
+                  alignItems: 'center',
+                  marginTop: isTablet ? 4 : 2,
+                }}
+              >
+                <Text style={{ color: c, fontSize: isTablet ? 14 : 12, fontWeight: '500' }}>
+                  {TAB_LABELS.Inbox}
+                </Text>
+              </View>
+            ),
             tabBarIcon: ({ color: c }) => (
               <TAB_ICONS.Inbox size={isTablet ? 28 : TAB_ICON_SIZE} color={c} strokeWidth={1.8} />
             ),
@@ -115,7 +128,19 @@ export const BottomTabNavigator = () => {
           name="SettingsRoot"
           component={SettingsNavigator}
           options={{
-            tabBarLabel: TAB_LABELS.Settings,
+            tabBarLabel: ({ color: c }) => (
+              <View
+                style={{
+                  width: '100%',
+                  alignItems: 'center',
+                  marginTop: isTablet ? 4 : 2,
+                }}
+              >
+                <Text style={{ color: c, fontSize: isTablet ? 14 : 12, fontWeight: '500' }}>
+                  {TAB_LABELS.Settings}
+                </Text>
+              </View>
+            ),
             tabBarIcon: ({ color: c }) => (
               <TAB_ICONS.Settings
                 size={isTablet ? 28 : TAB_ICON_SIZE}
