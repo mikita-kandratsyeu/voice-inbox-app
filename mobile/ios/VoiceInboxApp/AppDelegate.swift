@@ -60,6 +60,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     RNCPushNotificationIOS.didFailToRegisterForRemoteNotificationsWithError(error)
   }
 
+  func application(
+    _ application: UIApplication,
+    handleEventsForBackgroundURLSession identifier: String,
+    completionHandler: @escaping () -> Void
+  ) {
+    RNFSManager.setCompletionHandlerForIdentifier(identifier, completionHandler: completionHandler)
+  }
+
   func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     didReceive response: UNNotificationResponse,

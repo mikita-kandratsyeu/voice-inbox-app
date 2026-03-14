@@ -6,3 +6,4 @@
 //
 
 #import <RNCPushNotificationIOS.h>
+#import <RNFSManager.h>

@@ -38,6 +38,7 @@ export const downloadWhisperModel = ({
     const { jobId, promise: downloadPromise } = RNFS.downloadFile({
       fromUrl: url,
       toFile: destPath,
+      background: true,
       progressDivider: 1,
       progressInterval: 250,
       progress: (res) => {
