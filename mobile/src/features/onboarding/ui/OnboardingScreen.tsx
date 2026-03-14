@@ -35,12 +35,7 @@ import {
   openAppSettings,
   requestMicPermission,
 } from '@/shared/lib/permissions';
-import {
-  checkPushPermission,
-  type PushPermissionStatus,
-  registerForPushToken,
-  sendTokenToBackend,
-} from '@/shared/lib/push';
+import { checkPushPermission, type PushPermissionStatus, requestPushPermission } from '@/shared/lib/push';
 
 import { getTermsAgreedAt, setHasSeenOnboarding, setTermsAgreedAt } from '../lib/onboardingStorage';
 import { getOnboardingSlides, type OnboardingSlideContent } from '../model/constants';
@@ -353,7 +348,6 @@ const PermissionsSlide = ({
 }: PermissionsSlideProps) => {
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
   const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
-  const [isRequestingPush, setIsRequestingPush] = useState(false);
 
   React.useEffect(() => {
     checkMicPermission().then(setMicStatus);
@@ -388,18 +382,8 @@ const PermissionsSlide = ({
       await openAppSettings();
       return;
     }
-    setIsRequestingPush(true);
-    try {
-      const token = await registerForPushToken();
-      if (token) {
-        await sendTokenToBackend(token);
-        setPushStatus('granted');
-      } else {
-        setPushStatus('denied');
-      }
-    } finally {
-      setIsRequestingPush(false);
-    }
+    const status = await requestPushPermission();
+    setPushStatus(status);
   };
 
   return (
@@ -437,17 +421,11 @@ const PermissionsSlide = ({
         />
         {Platform.OS === 'ios' && (
           <PermissionRow
-            icon={
-              isRequestingPush ? (
-                <ActivityIndicator size="small" color={color.accent.primary} />
-              ) : (
-                <Bell size={22} color={color.accent.primary} strokeWidth={2} />
-              )
-            }
+            icon={<Bell size={22} color={color.accent.primary} strokeWidth={2} />}
             label={t('permissions.notificationsLabel')}
             description={t('permissions.notificationsDesc')}
             status={pushStatus}
-            onPress={isRequestingPush ? () => {} : handlePushPress}
+            onPress={handlePushPress}
             color={color}
             t={t}
           />

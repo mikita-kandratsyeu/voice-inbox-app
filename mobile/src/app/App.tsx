@@ -18,13 +18,11 @@ import { releaseWhisperContext } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
 import { initDB, NetworkStatusProvider } from '@/shared/lib';
 import {
-  checkPushPermission,
+  ensurePushRegistered,
   notifyAppBackground,
   notifyAppForeground,
   PolicyUpdateSheet,
   type PushNotificationData,
-  registerForPushToken,
-  sendTokenToBackend,
   usePushNotifications,
   usePushSheet,
 } from '@/shared/lib/push';
@@ -75,14 +73,7 @@ const App = () => {
         }
 
         if (getHasSeenOnboarding()) {
-          const pushStatus = await checkPushPermission();
-          if (pushStatus === 'granted') {
-            const token = await registerForPushToken();
-
-            if (token) {
-              await sendTokenToBackend(token);
-            }
-          }
+          ensurePushRegistered().catch(() => {});
         }
       })
       .catch(() => {
@@ -117,6 +108,9 @@ const App = () => {
 
     const handleAppStateChange = (state: AppStateStatus) => {
       if (state === 'active') {
+        if (getHasSeenOnboarding()) {
+          ensurePushRegistered().catch(() => {});
+        }
         // Always send heartbeat on becoming active — regardless of AI status.
         // This covers the case where the user is in the app while AI is processing
         // but the foreground key expired (e.g. app was backgrounded briefly).

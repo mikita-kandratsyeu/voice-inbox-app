@@ -10,6 +10,23 @@ const PUSH_REGISTER_URL = `${WEB_API_URL}/api/push/register`;
 
 export type PushPermissionStatus = 'granted' | 'denied' | 'not-determined';
 
+/**
+ * Registers push token with backend if permission is granted.
+ * Call only when onboarding is done (caller must check).
+ * Used on app load and when app becomes active.
+ */
+export async function ensurePushRegistered(): Promise<void> {
+  if (Platform.OS !== 'ios') return;
+
+  const status = await checkPushPermission();
+  if (status !== 'granted') return;
+
+  const token = await registerForPushToken();
+  if (token) {
+    await sendTokenToBackend(token);
+  }
+}
+
 export async function requestPushPermission(): Promise<PushPermissionStatus> {
   if (Platform.OS !== 'ios') {
     return 'denied';
@@ -25,6 +42,11 @@ export async function requestPushPermission(): Promise<PushPermissionStatus> {
   return status;
 }
 
+// UNAuthorizationStatus from iOS: 0=notDetermined, 1=denied, 2=authorized, 3=provisional
+const UNAuthorizationStatusDenied = 1;
+const UNAuthorizationStatusAuthorized = 2;
+const UNAuthorizationStatusProvisional = 3;
+
 export async function checkPushPermission(): Promise<PushPermissionStatus> {
   if (Platform.OS !== 'ios') {
     return 'denied';
@@ -32,8 +54,14 @@ export async function checkPushPermission(): Promise<PushPermissionStatus> {
 
   return new Promise((resolve) => {
     PushNotificationIOS.checkPermissions((permissions) => {
-      if (permissions.alert) {
+      const status = permissions?.authorizationStatus;
+      if (
+        status === UNAuthorizationStatusAuthorized ||
+        status === UNAuthorizationStatusProvisional
+      ) {
         resolve('granted');
+      } else if (status === UNAuthorizationStatusDenied) {
+        resolve('denied');
       } else {
         resolve('not-determined');
       }

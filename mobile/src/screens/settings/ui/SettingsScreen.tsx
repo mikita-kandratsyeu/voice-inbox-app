@@ -47,8 +47,11 @@ import {
   openAppSettings,
   requestMicPermission,
 } from '@/shared/lib/permissions';
-import { checkPushPermission, type PushPermissionStatus } from '@/shared/lib/push';
-import { registerForPushToken, sendTokenToBackend } from '@/shared/lib/push';
+import {
+  checkPushPermission,
+  type PushPermissionStatus,
+  requestPushPermission,
+} from '@/shared/lib/push';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { AiUsageCard } from './AiUsageCard';
@@ -75,7 +78,6 @@ export const SettingsScreen = () => {
   const [aiUsageLoading, setAiUsageLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isUpdatingEmbeddings, setIsUpdatingEmbeddings] = useState(false);
-  const [isRegisteringPush, setIsRegisteringPush] = useState(false);
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
   const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
 
@@ -198,7 +200,7 @@ export const SettingsScreen = () => {
     );
   }, [records, t]);
 
-  const handleRetryPush = useCallback(async () => {
+  const handleNotificationsPress = useCallback(async () => {
     if (Platform.OS !== 'ios') return;
 
     if (pushStatus === 'denied') {
@@ -206,26 +208,13 @@ export const SettingsScreen = () => {
       return;
     }
 
-    setIsRegisteringPush(true);
-    try {
-      const token = await registerForPushToken();
-      if (!token) {
-        Alert.alert(t('common.error'), t('settings.pushRegisterFailed'));
-        setPushStatus('denied');
-        return;
-      }
-      const sent = await sendTokenToBackend(token);
-      if (sent) {
-        setPushStatus('granted');
-      } else {
-        Alert.alert(t('common.error'), t('settings.pushRegisterFailed'));
-      }
-    } catch {
-      Alert.alert(t('common.error'), t('settings.pushRegisterFailed'));
-    } finally {
-      setIsRegisteringPush(false);
-    }
-  }, [pushStatus, t]);
+    if (pushStatus === 'granted') return;
+
+    // not-determined: only request permission. Registration runs automatically
+    // on app load or when app becomes active (user backgrounds and returns).
+    const status = await requestPushPermission();
+    setPushStatus(status);
+  }, [pushStatus]);
 
   const handleMicPermission = useCallback(async () => {
     if (micStatus === 'denied') {
@@ -415,16 +404,12 @@ export const SettingsScreen = () => {
           />
           {Platform.OS === 'ios' && (
             <SettingsRow
-              label={
-                isRegisteringPush
-                  ? t('settings.registeringPush')
-                  : t('settings.permissionNotifications')
-              }
+              label={t('settings.permissionNotifications')}
               leftIcon={<Bell size={20} color={color.accent.primary} strokeWidth={1.8} />}
-              onPress={isRegisteringPush || pushStatus === 'granted' ? undefined : handleRetryPush}
-              showChevron={pushStatus !== 'granted' && !isRegisteringPush}
+              onPress={pushStatus === 'granted' ? undefined : handleNotificationsPress}
+              showChevron={pushStatus !== 'granted'}
               rightSlot={
-                pushStatus !== null && !isRegisteringPush ? (
+                pushStatus !== null ? (
                   <View
                     className="rounded-full px-2.5 py-1"
                     style={{

@@ -455,7 +455,7 @@
     "notificationsLabel": "Notifications",
     "notificationsDesc": "Know when AI finishes processing",
     "granted": "Granted",
-    "denied": "Denied — tap to open Settings",
+    "denied": "Denied",
     "notDetermined": "Tap to allow",
     "grantAll": "Grant permissions",
     "openSettings": "Open Settings"

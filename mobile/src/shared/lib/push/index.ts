@@ -3,6 +3,7 @@ export { PolicyUpdateSheet } from './PolicyUpdateSheet';
 export {
   checkPushPermission,
   type PushPermissionStatus,
+  ensurePushRegistered,
   registerForPushToken,
   requestPushPermission,
   sendTokenToBackend,
