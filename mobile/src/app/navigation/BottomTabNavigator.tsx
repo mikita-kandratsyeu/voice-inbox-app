@@ -22,7 +22,6 @@ export const BottomTabNavigator = () => {
   const insets = useSafeAreaInsets();
   const theme = useAppTheme();
   const isTablet = useIsTablet();
-  const tabBarHeight = (isTablet ? 68 : 60) + insets.bottom;
   const inboxFiltersReset = useInboxFiltersReset();
 
   const color = getColors(theme);
@@ -39,14 +38,22 @@ export const BottomTabNavigator = () => {
       backgroundColor: tabBg,
       borderTopColor: tabBorder,
       borderTopWidth: 1,
-      height: tabBarHeight,
-      paddingTop: 8,
-      paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+      ...(isTablet
+        ? {
+            height: 72 + insets.bottom,
+            paddingTop: 0,
+            paddingBottom: insets.bottom,
+          }
+        : {
+            height: 60 + insets.bottom,
+            paddingTop: 8,
+            paddingBottom: insets.bottom > 0 ? insets.bottom : 8,
+          }),
     },
     tabBarLabelStyle: {
-      fontSize: isTablet ? 13 : 12,
+      fontSize: isTablet ? 14 : 12,
       fontWeight: '500' as const,
-      marginTop: 2,
+      marginTop: isTablet ? 4 : 2,
     },
     tabBarIconStyle: {
       marginBottom: 0,
@@ -54,7 +61,8 @@ export const BottomTabNavigator = () => {
     tabBarItemStyle: {
       alignItems: 'center' as const,
       justifyContent: 'center' as const,
-      paddingHorizontal: isTablet ? 32 : 16,
+      paddingHorizontal: isTablet ? 48 : 16,
+      ...(isTablet ? { height: 72, paddingTop: 0, paddingBottom: 0, marginBottom: insets.bottom } : {}),
     },
     tabBarButton: (props: BottomTabBarButtonProps) => <AnimatedTabButton {...props} />,
     lazy: true,
@@ -62,7 +70,9 @@ export const BottomTabNavigator = () => {
 
   return (
     <View className="flex-1">
-      <Tab.Navigator screenOptions={screenOptions}>
+      <Tab.Navigator
+        screenOptions={screenOptions}
+      >
         <Tab.Screen
           name="Inbox"
           component={InboxScreen}
@@ -76,7 +86,7 @@ export const BottomTabNavigator = () => {
           options={{
             tabBarLabel: TAB_LABELS.Inbox,
             tabBarIcon: ({ color: c }) => (
-              <TAB_ICONS.Inbox size={TAB_ICON_SIZE} color={c} strokeWidth={1.8} />
+              <TAB_ICONS.Inbox size={isTablet ? 28 : TAB_ICON_SIZE} color={c} strokeWidth={1.8} />
             ),
           }}
         />
@@ -96,6 +106,7 @@ export const BottomTabNavigator = () => {
               <CenterRecordButton
                 iconColor={color.icon.onAccent}
                 accentColor={color.accent.primary}
+                isTablet={isTablet}
               />
             ),
           }}
@@ -106,7 +117,7 @@ export const BottomTabNavigator = () => {
           options={{
             tabBarLabel: TAB_LABELS.Settings,
             tabBarIcon: ({ color: c }) => (
-              <TAB_ICONS.Settings size={TAB_ICON_SIZE} color={c} strokeWidth={1.8} />
+              <TAB_ICONS.Settings size={isTablet ? 28 : TAB_ICON_SIZE} color={c} strokeWidth={1.8} />
             ),
           }}
         />
