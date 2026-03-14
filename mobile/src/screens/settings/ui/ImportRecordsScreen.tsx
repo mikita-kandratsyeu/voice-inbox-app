@@ -157,6 +157,19 @@ export const ImportRecordsScreen = () => {
       <ScreenHeader
         title={t('importExport.importSelectTitle')}
         onBack={() => navigation.goBack()}
+        rightSlot={
+          importable.length > 0 ? (
+            <Button
+              iconOnly
+              variant="icon"
+              size="md"
+              icon={<Check size={22} color={color.accent.primary} strokeWidth={2.5} />}
+              color={color}
+              onPress={handleImport}
+              disabled={selectedCount === 0 || isImporting}
+            />
+          ) : null
+        }
       />
 
       <View className="px-4 py-3" style={{ backgroundColor: color.background.primary }}>
@@ -209,36 +222,10 @@ export const ImportRecordsScreen = () => {
             ) : null
           }
           contentContainerStyle={{
-            paddingBottom: insets.bottom + 80,
+            paddingBottom: insets.bottom + 24,
           }}
         />
       ) : null}
-
-      {importable.length > 0 && (
-        <View
-          className="absolute left-0 right-0 border-t px-4 py-3"
-          style={{
-            bottom: 0,
-            backgroundColor: color.background.primary,
-            borderTopColor: color.border.default,
-            paddingBottom: insets.bottom + 12,
-          }}
-        >
-          <Button
-            label={
-              isImporting
-                ? t('importExport.importing')
-                : t('importExport.importSelected', { count: selectedCount })
-            }
-            variant="primary"
-            size="lg"
-            fullWidth
-            onPress={handleImport}
-            disabled={selectedCount === 0 || isImporting}
-            color={color}
-          />
-        </View>
-      )}
 
       {importable.length === 0 && duplicates.length > 0 && (
         <View className="flex-1 items-center justify-center px-6">
