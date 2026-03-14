@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
+  Bell,
   Bot,
   Download,
   FileText,
@@ -39,6 +40,7 @@ import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { exportData, importData } from '@/features/sync-data';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
 import { getAiUsage } from '@/shared/lib/ai-api';
+import { registerForPushToken, sendTokenToBackend } from '@/shared/lib/push';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { AiUsageCard } from './AiUsageCard';
@@ -66,6 +68,7 @@ export const SettingsScreen = () => {
   const [aiUsageLoading, setAiUsageLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isUpdatingEmbeddings, setIsUpdatingEmbeddings] = useState(false);
+  const [isRegisteringPush, setIsRegisteringPush] = useState(false);
 
   const fetchAiUsage = useCallback(async () => {
     const data = await getAiUsage();
@@ -189,6 +192,28 @@ export const SettingsScreen = () => {
       ],
     );
   }, [records, t]);
+
+  const handleRetryPush = useCallback(async () => {
+    if (Platform.OS !== 'ios') return;
+    setIsRegisteringPush(true);
+    try {
+      const token = await registerForPushToken();
+      if (!token) {
+        Alert.alert(t('common.error'), t('settings.pushRegisterFailed'));
+        return;
+      }
+      const sent = await sendTokenToBackend(token);
+      if (sent) {
+        Alert.alert(t('common.done'), t('settings.pushRegistered'));
+      } else {
+        Alert.alert(t('common.error'), t('settings.pushRegisterFailed'));
+      }
+    } catch {
+      Alert.alert(t('common.error'), t('settings.pushRegisterFailed'));
+    } finally {
+      setIsRegisteringPush(false);
+    }
+  }, [t]);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -333,6 +358,13 @@ export const SettingsScreen = () => {
             onPress={() => navigation.navigate('AppLockSetup')}
             isFirst
           />
+          {Platform.OS === 'ios' && (
+            <SettingsRow
+              label={isRegisteringPush ? t('settings.registeringPush') : t('settings.registerPush')}
+              leftIcon={<Bell size={20} color={color.accent.primary} strokeWidth={1.8} />}
+              onPress={isRegisteringPush ? undefined : handleRetryPush}
+            />
+          )}
           <SettingsRow
             label={t('settings.offlineStorage')}
             leftIcon={<HardDrive size={20} color={color.accent.success} strokeWidth={1.8} />}

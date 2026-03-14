@@ -5,14 +5,35 @@ import { ApnsClient, Host, Notification } from 'apns2';
 const APNS_KEY_ID = process.env.APNS_KEY_ID;
 const APNS_TEAM_ID = process.env.APNS_TEAM_ID;
 const APNS_KEY_PATH = process.env.APNS_KEY_PATH;
+const APNS_KEY_CONTENT = process.env.APNS_KEY_CONTENT;
 const APNS_TOPIC =
   process.env.APNS_TOPIC ?? process.env.APP_BUNDLE_ID ?? 'com.mkandratsyeu.voiceinboxai';
 const APNS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 let client: ApnsClient | null = null;
 
+function getSigningKey(): string | null {
+  if (APNS_KEY_CONTENT?.trim()) {
+    return APNS_KEY_CONTENT.trim();
+  }
+  if (APNS_KEY_PATH) {
+    try {
+      const keyPath = join(process.cwd(), APNS_KEY_PATH);
+      return readFileSync(keyPath, 'utf8');
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
 function getApnsClient(): ApnsClient | null {
-  if (!APNS_KEY_ID || !APNS_TEAM_ID || !APNS_KEY_PATH) {
+  if (!APNS_KEY_ID || !APNS_TEAM_ID) {
+    return null;
+  }
+
+  const signingKey = getSigningKey();
+  if (!signingKey) {
     return null;
   }
 
@@ -21,9 +42,6 @@ function getApnsClient(): ApnsClient | null {
   }
 
   try {
-    const keyPath = join(process.cwd(), APNS_KEY_PATH);
-    const signingKey = readFileSync(keyPath, 'utf8');
-
     client = new ApnsClient({
       team: APNS_TEAM_ID,
       keyId: APNS_KEY_ID,

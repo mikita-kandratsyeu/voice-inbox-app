@@ -232,7 +232,11 @@
     "updateEmbeddingsSuccess": "Updated: {{updated}}, skipped (no content): {{skipped}}",
     "updateEmbeddingsPartial": "Updated: {{updated}}, skipped: {{skipped}}, failed: {{failed}}",
     "updateEmbeddingsError": "Failed to update embeddings",
-    "updateEmbeddingsNoRecords": "No records with content to process"
+    "updateEmbeddingsNoRecords": "No records with content to process",
+    "registerPush": "Register for push notifications",
+    "registeringPush": "Registering...",
+    "pushRegistered": "Push notifications are now enabled. You will be notified when AI processing completes.",
+    "pushRegisterFailed": "Failed to register for push notifications. Check your internet connection and try again."
   },
   "appearance": {
     "title": "Appearance",
