@@ -240,7 +240,16 @@
     "registerPush": "Register for push notifications",
     "registeringPush": "Registering...",
     "pushRegistered": "Push notifications enabled",
-    "pushRegisterFailed": "Failed to register for push notifications. Check your internet connection and try again."
+    "pushRegisterFailed": "Failed to register for push notifications. Check your internet connection and try again.",
+    "permissionsSection": "Permissions",
+    "permissionMicrophone": "Microphone",
+    "permissionMicrophoneDesc": "Required for voice recording",
+    "permissionNotifications": "Notifications",
+    "permissionNotificationsDesc": "Get notified when AI processing completes",
+    "permissionGranted": "Granted",
+    "permissionDenied": "Denied",
+    "permissionNotDetermined": "Not set",
+    "permissionOpenSettings": "Open Settings"
   },
   "appearance": {
     "title": "Appearance",
@@ -434,7 +443,18 @@
   "permissions": {
     "micTitle": "Recording permission",
     "micMessage": "The app needs microphone access for voice recording.",
-    "allow": "Allow"
+    "allow": "Allow",
+    "onboardingTitle": "Allow permissions",
+    "onboardingDesc": "The app needs access to your microphone for recording and notifications for AI processing updates.",
+    "micLabel": "Microphone",
+    "micDesc": "Required for voice recording",
+    "notificationsLabel": "Notifications",
+    "notificationsDesc": "Know when AI finishes processing",
+    "granted": "Granted",
+    "denied": "Denied — tap to open Settings",
+    "notDetermined": "Tap to allow",
+    "grantAll": "Grant permissions",
+    "openSettings": "Open Settings"
   },
   "device": {
     "insufficientRam": "Insufficient RAM (need ~{{ required }}, available {{ available }})",

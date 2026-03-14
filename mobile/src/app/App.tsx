@@ -53,7 +53,7 @@ const App = () => {
 
   const handleNotification = useCallback(handlePushNotification, []);
 
-  const { setupAndRegister } = usePushNotifications({ onNotification: handleNotification });
+  usePushNotifications({ onNotification: handleNotification });
 
   const rootStyle = { flex: 1 };
   const safeAreaStyle = { backgroundColor: color.background.primary };
@@ -63,7 +63,6 @@ const App = () => {
       .then(async () => {
         await useRecordStore.getState().load();
         BootSplash.hide({ fade: true });
-        setupAndRegister();
 
         const initial = await PushNotificationIOS.getInitialNotification();
         if (initial) {
@@ -74,7 +73,7 @@ const App = () => {
       .catch(() => {
         BootSplash.hide({ fade: true });
       });
-  }, [setupAndRegister]);
+  }, []);
 
   useEffect(() => {
     let foregroundInterval: ReturnType<typeof setInterval> | null = null;

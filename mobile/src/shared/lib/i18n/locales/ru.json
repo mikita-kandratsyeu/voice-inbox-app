@@ -240,7 +240,16 @@
     "registerPush": "Зарегистрировать пуши",
     "registeringPush": "Регистрация...",
     "pushRegistered": "Push-уведомления включены",
-    "pushRegisterFailed": "Не удалось зарегистрировать пуши. Проверьте интернет и попробуйте снова."
+    "pushRegisterFailed": "Не удалось зарегистрировать пуши. Проверьте интернет и попробуйте снова.",
+    "permissionsSection": "Разрешения",
+    "permissionMicrophone": "Микрофон",
+    "permissionMicrophoneDesc": "Необходим для записи голоса",
+    "permissionNotifications": "Уведомления",
+    "permissionNotificationsDesc": "Оповещения о завершении ИИ обработки",
+    "permissionGranted": "Разрешено",
+    "permissionDenied": "Отказано",
+    "permissionNotDetermined": "Не задано",
+    "permissionOpenSettings": "Открыть настройки"
   },
   "appearance": {
     "title": "Внешний вид",
@@ -434,7 +443,18 @@
   "permissions": {
     "micTitle": "Разрешение на запись",
     "micMessage": "Приложению нужен доступ к микрофону для записи голоса.",
-    "allow": "Разрешить"
+    "allow": "Разрешить",
+    "onboardingTitle": "Разрешения",
+    "onboardingDesc": "Приложению нужен доступ к микрофону для записи и уведомления о завершении ИИ обработки.",
+    "micLabel": "Микрофон",
+    "micDesc": "Необходим для записи голоса",
+    "notificationsLabel": "Уведомления",
+    "notificationsDesc": "Узнавайте, когда ИИ закончит обработку",
+    "granted": "Разрешено",
+    "denied": "Отказано — нажмите для открытия настроек",
+    "notDetermined": "Нажмите для разрешения",
+    "grantAll": "Разрешить доступ",
+    "openSettings": "Открыть настройки"
   },
   "device": {
     "insufficientRam": "Недостаточно RAM (нужно ~{{ required }}, доступно {{ available }})",

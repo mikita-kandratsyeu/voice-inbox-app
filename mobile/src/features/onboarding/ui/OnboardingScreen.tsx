@@ -1,4 +1,4 @@
-import { Check, Lock, Mic, Settings, Shield, Sparkles, Zap } from 'lucide-react-native';
+import { Bell, Check, Lock, Mic, Settings, Shield, Sparkles, Zap } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -6,6 +6,7 @@ import {
   Alert,
   FlatList,
   Linking,
+  Platform,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -28,6 +29,18 @@ import { useSettingsStore } from '@/entities/settings';
 import { useModelManager } from '@/features/model-manager';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
+import {
+  checkMicPermission,
+  type MicPermissionStatus,
+  openAppSettings,
+  requestMicPermission,
+} from '@/shared/lib/permissions';
+import {
+  checkPushPermission,
+  type PushPermissionStatus,
+  registerForPushToken,
+  sendTokenToBackend,
+} from '@/shared/lib/push';
 
 import { getTermsAgreedAt, setHasSeenOnboarding, setTermsAgreedAt } from '../lib/onboardingStorage';
 import { getOnboardingSlides, type OnboardingSlideContent } from '../model/constants';
@@ -39,6 +52,7 @@ const ICON_MAP = {
   Sparkles,
   Zap,
   Settings,
+  Shield,
 } as const;
 
 type OnboardingScreenProps = {
@@ -194,6 +208,7 @@ type SlideItemProps = {
   index: number;
   scrollX: SharedValue<number>;
   screenWidth: SharedValue<number>;
+  windowWidth: number;
   color: ReturnType<typeof getColors>;
   agreedToTerms?: boolean;
   onAgreeChange?: (value: boolean) => void;
@@ -249,11 +264,205 @@ const AnimatedSlideIcon = ({
   );
 };
 
+type PermissionRowStatus = MicPermissionStatus | PushPermissionStatus;
+
+const PermissionRow = ({
+  icon,
+  label,
+  description,
+  status,
+  onPress,
+  color,
+  t,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+  status: PermissionRowStatus | null;
+  onPress: () => void;
+  color: ReturnType<typeof getColors>;
+  t: (k: string) => string;
+}) => {
+  const isGranted = status === 'granted';
+  const isDenied = status === 'denied';
+
+  const badgeText = isGranted
+    ? t('permissions.granted')
+    : isDenied
+      ? t('permissions.denied')
+      : t('permissions.notDetermined');
+
+  const badgeBg = isGranted
+    ? color.onboarding.zap.bg
+    : isDenied
+      ? color.status.error.bg
+      : color.background.tertiary;
+
+  const badgeTextColor = isGranted
+    ? color.accent.success
+    : isDenied
+      ? color.status.error.text
+      : color.text.secondary;
+
+  return (
+    <TouchableOpacity
+      activeOpacity={isGranted ? 1 : 0.7}
+      onPress={isGranted ? undefined : onPress}
+      className="flex-row items-center gap-4 rounded-2xl p-4"
+      style={{ backgroundColor: color.background.secondary }}
+    >
+      <View
+        className="h-11 w-11 items-center justify-center rounded-xl"
+        style={{ backgroundColor: color.background.tertiary }}
+      >
+        {icon}
+      </View>
+      <View className="flex-1">
+        <Text className="text-[15px] font-semibold" style={{ color: color.text.primary }}>
+          {label}
+        </Text>
+        <Text className="mt-0.5 text-[13px]" style={{ color: color.text.secondary }}>
+          {description}
+        </Text>
+      </View>
+      <View className="rounded-full px-3 py-1" style={{ backgroundColor: badgeBg }}>
+        <Text className="text-[12px] font-semibold" style={{ color: badgeTextColor }}>
+          {badgeText}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+type PermissionsSlideProps = {
+  color: ReturnType<typeof getColors>;
+  t: (k: string) => string;
+  windowWidth: number;
+  index: number;
+  scrollX: SharedValue<number>;
+  screenWidth: SharedValue<number>;
+};
+
+const PermissionsSlide = ({
+  color,
+  t,
+  windowWidth,
+  index,
+  scrollX,
+  screenWidth,
+}: PermissionsSlideProps) => {
+  const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
+  const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
+  const [isRequestingPush, setIsRequestingPush] = useState(false);
+
+  React.useEffect(() => {
+    checkMicPermission().then(setMicStatus);
+    if (Platform.OS === 'ios') {
+      checkPushPermission().then(setPushStatus);
+    }
+  }, []);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    const inputRange = [
+      (index - 1) * screenWidth.value,
+      index * screenWidth.value,
+      (index + 1) * screenWidth.value,
+    ];
+    const opacity = interpolate(scrollX.value, inputRange, [0.4, 1, 0.4]);
+    const scale = interpolate(scrollX.value, inputRange, [0.92, 1, 0.92]);
+    const translateX = interpolate(scrollX.value, inputRange, [-30, 0, 30]);
+    return { opacity, transform: [{ scale }, { translateX }] };
+  });
+
+  const handleMicPress = async () => {
+    if (micStatus === 'denied') {
+      await openAppSettings();
+      return;
+    }
+    const granted = await requestMicPermission();
+    setMicStatus(granted ? 'granted' : 'denied');
+  };
+
+  const handlePushPress = async () => {
+    if (pushStatus === 'denied') {
+      await openAppSettings();
+      return;
+    }
+    setIsRequestingPush(true);
+    try {
+      const token = await registerForPushToken();
+      if (token) {
+        await sendTokenToBackend(token);
+        setPushStatus('granted');
+      } else {
+        setPushStatus('denied');
+      }
+    } finally {
+      setIsRequestingPush(false);
+    }
+  };
+
+  return (
+    <Animated.View
+      style={[{ width: windowWidth, paddingHorizontal: 24, paddingTop: 48 }, animatedStyle]}
+      className="flex-1"
+    >
+      <View className="mb-8 items-center">
+        <View
+          className="mb-6 h-20 w-20 items-center justify-center rounded-full"
+          style={{ backgroundColor: '#e0f2fe' }}
+        >
+          <Shield size={40} color="#0ea5e9" strokeWidth={2} />
+        </View>
+        <Text
+          className="mb-3 text-center text-[28px] font-bold leading-tight"
+          style={{ color: color.text.primary }}
+        >
+          {t('permissions.onboardingTitle')}
+        </Text>
+        <Text className="text-center text-[16px] leading-6" style={{ color: color.text.secondary }}>
+          {t('permissions.onboardingDesc')}
+        </Text>
+      </View>
+
+      <View className="gap-3">
+        <PermissionRow
+          icon={<Mic size={22} color={color.accent.primary} strokeWidth={2} />}
+          label={t('permissions.micLabel')}
+          description={t('permissions.micDesc')}
+          status={micStatus}
+          onPress={handleMicPress}
+          color={color}
+          t={t}
+        />
+        {Platform.OS === 'ios' && (
+          <PermissionRow
+            icon={
+              isRequestingPush ? (
+                <ActivityIndicator size="small" color={color.accent.primary} />
+              ) : (
+                <Bell size={22} color={color.accent.primary} strokeWidth={2} />
+              )
+            }
+            label={t('permissions.notificationsLabel')}
+            description={t('permissions.notificationsDesc')}
+            status={pushStatus}
+            onPress={isRequestingPush ? () => {} : handlePushPress}
+            color={color}
+            t={t}
+          />
+        )}
+      </View>
+    </Animated.View>
+  );
+};
+
 const SlideItem = ({
   item,
   index,
   scrollX,
   screenWidth,
+  windowWidth,
   color,
   t,
   agreedToTerms = false,
@@ -275,6 +484,19 @@ const SlideItem = ({
     };
   });
 
+  if (item.extra === 'permissions') {
+    return (
+      <PermissionsSlide
+        color={color}
+        t={t}
+        windowWidth={windowWidth}
+        index={index}
+        scrollX={scrollX}
+        screenWidth={screenWidth}
+      />
+    );
+  }
+
   const isSetupSlide = item.extra === 'setup' || item.extra === 'setupWhisper';
   if (isSetupSlide) {
     const linkStyle = {
@@ -288,7 +510,7 @@ const SlideItem = ({
       <Animated.View
         style={[
           {
-            width: screenWidth.value,
+            width: windowWidth,
             paddingHorizontal: 32,
             paddingTop: 48,
           },
@@ -362,7 +584,7 @@ const SlideItem = ({
 
   return (
     <Animated.View
-      style={[{ width: screenWidth.value, paddingHorizontal: 32 }, animatedStyle]}
+      style={[{ width: windowWidth, paddingHorizontal: 32 }, animatedStyle]}
       className="flex-1 items-center justify-center"
     >
       <AnimatedSlideIcon
@@ -511,13 +733,14 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         index={index}
         scrollX={scrollX}
         screenWidth={screenWidth}
+        windowWidth={windowWidth}
         color={color}
         t={t}
         agreedToTerms={agreedToTerms}
         onAgreeChange={setAgreedToTerms}
       />
     ),
-    [agreedToTerms, color, scrollX, screenWidth, t],
+    [agreedToTerms, color, scrollX, screenWidth, t, windowWidth],
   );
 
   const isLastSlide = currentIndex === slides.length - 1;

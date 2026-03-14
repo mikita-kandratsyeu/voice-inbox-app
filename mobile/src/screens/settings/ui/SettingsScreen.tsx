@@ -22,6 +22,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
+  AppState,
   Linking,
   Platform,
   RefreshControl,
@@ -40,6 +41,13 @@ import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { exportData, importData } from '@/features/sync-data';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
 import { getAiUsage } from '@/shared/lib/ai-api';
+import {
+  checkMicPermission,
+  type MicPermissionStatus,
+  openAppSettings,
+  requestMicPermission,
+} from '@/shared/lib/permissions';
+import { checkPushPermission, type PushPermissionStatus } from '@/shared/lib/push';
 import { registerForPushToken, sendTokenToBackend } from '@/shared/lib/push';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
@@ -68,6 +76,8 @@ export const SettingsScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [isUpdatingEmbeddings, setIsUpdatingEmbeddings] = useState(false);
   const [isRegisteringPush, setIsRegisteringPush] = useState(false);
+  const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
+  const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
 
   const fetchAiUsage = useCallback(async () => {
     const data = await getAiUsage();
@@ -84,6 +94,25 @@ export const SettingsScreen = () => {
       cancelled = true;
     };
   }, [fetchAiUsage]);
+
+  const refreshPermissions = useCallback(async () => {
+    const mic = await checkMicPermission();
+    setMicStatus(mic);
+    if (Platform.OS === 'ios') {
+      const push = await checkPushPermission();
+      setPushStatus(push);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshPermissions();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        refreshPermissions();
+      }
+    });
+    return () => sub.remove();
+  }, [refreshPermissions]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -171,16 +200,23 @@ export const SettingsScreen = () => {
 
   const handleRetryPush = useCallback(async () => {
     if (Platform.OS !== 'ios') return;
+
+    if (pushStatus === 'denied') {
+      await openAppSettings();
+      return;
+    }
+
     setIsRegisteringPush(true);
     try {
       const token = await registerForPushToken();
       if (!token) {
         Alert.alert(t('common.error'), t('settings.pushRegisterFailed'));
+        setPushStatus('denied');
         return;
       }
       const sent = await sendTokenToBackend(token);
       if (sent) {
-        Alert.alert(t('common.done'), t('settings.pushRegistered'));
+        setPushStatus('granted');
       } else {
         Alert.alert(t('common.error'), t('settings.pushRegisterFailed'));
       }
@@ -189,7 +225,16 @@ export const SettingsScreen = () => {
     } finally {
       setIsRegisteringPush(false);
     }
-  }, [t]);
+  }, [pushStatus, t]);
+
+  const handleMicPermission = useCallback(async () => {
+    if (micStatus === 'denied') {
+      await openAppSettings();
+      return;
+    }
+    const granted = await requestMicPermission();
+    setMicStatus(granted ? 'granted' : 'denied');
+  }, [micStatus]);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -326,6 +371,96 @@ export const SettingsScreen = () => {
           />
         </SettingsSection>
 
+        <SettingsSection title={t('settings.permissionsSection')}>
+          <SettingsRow
+            label={t('settings.permissionMicrophone')}
+            leftIcon={<Mic size={20} color={color.accent.primary} strokeWidth={1.8} />}
+            onPress={micStatus === 'granted' ? undefined : handleMicPermission}
+            showChevron={micStatus !== 'granted'}
+            rightSlot={
+              micStatus !== null ? (
+                <View
+                  className="rounded-full px-2.5 py-1"
+                  style={{
+                    backgroundColor:
+                      micStatus === 'granted'
+                        ? '#d1fae5'
+                        : micStatus === 'denied'
+                          ? '#fee2e2'
+                          : color.background.tertiary,
+                  }}
+                >
+                  <Text
+                    className="text-[12px] font-semibold"
+                    style={{
+                      color:
+                        micStatus === 'granted'
+                          ? '#065f46'
+                          : micStatus === 'denied'
+                            ? '#991b1b'
+                            : color.text.secondary,
+                    }}
+                  >
+                    {micStatus === 'granted'
+                      ? t('settings.permissionGranted')
+                      : micStatus === 'denied'
+                        ? t('settings.permissionDenied')
+                        : t('settings.permissionNotDetermined')}
+                  </Text>
+                </View>
+              ) : null
+            }
+            isFirst
+            isLast={Platform.OS !== 'ios'}
+          />
+          {Platform.OS === 'ios' && (
+            <SettingsRow
+              label={
+                isRegisteringPush
+                  ? t('settings.registeringPush')
+                  : t('settings.permissionNotifications')
+              }
+              leftIcon={<Bell size={20} color={color.accent.primary} strokeWidth={1.8} />}
+              onPress={isRegisteringPush || pushStatus === 'granted' ? undefined : handleRetryPush}
+              showChevron={pushStatus !== 'granted' && !isRegisteringPush}
+              rightSlot={
+                pushStatus !== null && !isRegisteringPush ? (
+                  <View
+                    className="rounded-full px-2.5 py-1"
+                    style={{
+                      backgroundColor:
+                        pushStatus === 'granted'
+                          ? '#d1fae5'
+                          : pushStatus === 'denied'
+                            ? '#fee2e2'
+                            : color.background.tertiary,
+                    }}
+                  >
+                    <Text
+                      className="text-[12px] font-semibold"
+                      style={{
+                        color:
+                          pushStatus === 'granted'
+                            ? '#065f46'
+                            : pushStatus === 'denied'
+                              ? '#991b1b'
+                              : color.text.secondary,
+                      }}
+                    >
+                      {pushStatus === 'granted'
+                        ? t('settings.permissionGranted')
+                        : pushStatus === 'denied'
+                          ? t('settings.permissionDenied')
+                          : t('settings.permissionNotDetermined')}
+                    </Text>
+                  </View>
+                ) : null
+              }
+              isLast
+            />
+          )}
+        </SettingsSection>
+
         <SettingsSection title={t('settings.device')}>
           <SettingsRow
             label={t('settings.appLock')}
@@ -334,13 +469,6 @@ export const SettingsScreen = () => {
             onPress={() => navigation.navigate('AppLockSetup')}
             isFirst
           />
-          {Platform.OS === 'ios' && (
-            <SettingsRow
-              label={isRegisteringPush ? t('settings.registeringPush') : t('settings.registerPush')}
-              leftIcon={<Bell size={20} color={color.accent.primary} strokeWidth={1.8} />}
-              onPress={isRegisteringPush ? undefined : handleRetryPush}
-            />
-          )}
           <SettingsRow
             label={t('settings.offlineStorage')}
             leftIcon={<HardDrive size={20} color={color.accent.success} strokeWidth={1.8} />}

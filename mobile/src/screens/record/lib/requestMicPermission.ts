@@ -1,1 +1,1 @@
-export const requestMicPermission = async (): Promise<boolean> => true;
+export { requestMicPermission } from '@/shared/lib/permissions';
