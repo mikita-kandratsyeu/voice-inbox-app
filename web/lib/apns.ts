@@ -14,14 +14,19 @@ const APNS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 let client: ApnsClient | null = null;
 
+function normalizePem(key: string): string {
+  return key.trim().replace(/\\n/g, '\n');
+}
+
 function getSigningKey(): string | null {
   if (APNS_KEY_CONTENT?.trim()) {
-    return APNS_KEY_CONTENT.trim();
+    return normalizePem(APNS_KEY_CONTENT);
   }
   if (APNS_KEY_PATH) {
     try {
       const keyPath = join(process.cwd(), APNS_KEY_PATH);
-      return readFileSync(keyPath, 'utf8');
+      const fileKey = readFileSync(keyPath, 'utf8');
+      return fileKey.trim();
     } catch {
       return null;
     }
