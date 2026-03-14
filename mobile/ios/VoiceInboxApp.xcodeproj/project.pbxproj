@@ -213,6 +213,7 @@
 		};
 		2AB3179A2F647219005128A8 /* Run Script */ = {
 			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
 			files = (
 			);
@@ -228,6 +229,7 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "if [ \"${CONFIGURATION}\" == \"Release\" ]; then\n  echo \".env.production\" > /tmp/envfile\nelse\n  echo \".env\" > /tmp/envfile\nfi\n";
+			showEnvVarsInLog = 0;
 		};
 		71C7F2605B84F11347DF5229 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -304,7 +306,7 @@
 			baseConfigurationReference = B4E21B8E0F8E06F1FE22827F /* Pods-VoiceInboxApp.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = VoiceInboxApp/VoiceInboxApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -314,7 +316,7 @@
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = VoiceInboxApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -344,7 +346,7 @@
 			baseConfigurationReference = 844C799124632529BEB33D29 /* Pods-VoiceInboxApp.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = VoiceInboxApp/VoiceInboxApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
@@ -353,7 +355,7 @@
 				DEVELOPMENT_TEAM = BNMZQ2R72J;
 				INFOPLIST_FILE = VoiceInboxApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
-				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.lifestyle";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
