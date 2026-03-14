@@ -5,7 +5,7 @@ module.exports = {
       'module:react-native-dotenv',
       {
         moduleName: '@env',
-        path: `.env.${process.env.APP_ENV ?? 'development'}`,
+        path: '.env',
         allowUndefined: true,
       },
     ],
