@@ -12,6 +12,7 @@ import { NextResponse } from 'next/server';
 
 type RegisterBody = {
   deviceToken?: unknown;
+  locale?: unknown;
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
@@ -48,7 +49,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return apiError('Invalid deviceToken format', HttpStatus.BAD_REQUEST);
   }
 
-  await savePushToken(deviceIdTrimmed, deviceToken);
+  const locale =
+    typeof body.locale === 'string' && /^[a-z]{2}$/.test(body.locale) ? body.locale : null;
+
+  await savePushToken(deviceIdTrimmed, deviceToken, locale);
 
   return NextResponse.json({ ok: true });
 };

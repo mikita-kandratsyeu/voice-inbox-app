@@ -1,4 +1,8 @@
 {
+  "push": {
+    "policyUpdateTitle": "Important Update",
+    "policyUpdateAck": "Got it"
+  },
   "common": {
     "cancel": "Cancel",
     "close": "Close",
@@ -235,7 +239,7 @@
     "updateEmbeddingsNoRecords": "No records with content to process",
     "registerPush": "Register for push notifications",
     "registeringPush": "Registering...",
-    "pushRegistered": "Push notifications are now enabled. You will be notified when AI processing completes.",
+    "pushRegistered": "Push notifications enabled",
     "pushRegisterFailed": "Failed to register for push notifications. Check your internet connection and try again."
   },
   "appearance": {

@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { fetch } from '@/shared/lib/fetch';
+import { i18n } from '@/shared/lib/i18n';
 
 const PUSH_REGISTER_URL = `${WEB_API_URL}/api/push/register`;
 
@@ -86,7 +87,10 @@ export async function sendTokenToBackend(token: string): Promise<boolean> {
         'x-app-secret': WEB_API_SECRET ?? '',
         'x-device-id': deviceId,
       },
-      body: JSON.stringify({ deviceToken: token }),
+      body: JSON.stringify({
+        deviceToken: token,
+        locale: (i18n.language ?? 'en').slice(0, 2),
+      }),
     });
 
     if (!response.ok) {

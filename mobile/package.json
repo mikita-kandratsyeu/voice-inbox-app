@@ -54,6 +54,7 @@
     "react-native-keyboard-controller": "^1.20.7",
     "react-native-keychain": "^10.0.0",
     "react-native-localize": "^3.7.0",
+    "react-native-markdown-display": "^7.0.2",
     "react-native-mmkv": "^4.2.0",
     "react-native-nitro-device-info": "^1.7.0",
     "react-native-nitro-fetch": "^0.1.7",

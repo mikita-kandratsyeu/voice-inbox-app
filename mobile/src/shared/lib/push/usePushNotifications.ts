@@ -4,14 +4,15 @@ import { useCallback, useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import {
+  type PushPermissionStatus,
   registerForPushToken,
   sendTokenToBackend,
-  type PushPermissionStatus,
 } from './requestPermissionAndRegister';
 
 export type PushNotificationData = {
   type?: string;
   recordId?: string;
+  message?: string;
   [key: string]: unknown;
 };
 

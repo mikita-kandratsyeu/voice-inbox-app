@@ -1,5 +1,11 @@
 import { sendPushNotification } from '@/lib/apns';
-import { getPushToken } from '@/lib/push-tokens';
+import {
+  collectPendingAndUnlock,
+  getPushTokenWithLocale,
+  isAppInForeground,
+  registerAiCompletion,
+} from '@/lib/push-tokens';
+import { PUSH_DEBOUNCE_MS } from '@/config/constants';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import { processTranscript } from '@/services/ai.service';
@@ -44,15 +50,49 @@ export const createMessage = async (
         tasks: result.tasks,
         tags: result.tags,
         ...(result.classification && { classification: result.classification }),
-        ...(result.keyPhrases && result.keyPhrases.length > 0 && {
-          keyPhrases: result.keyPhrases,
-        }),
+        ...(result.keyPhrases &&
+          result.keyPhrases.length > 0 && {
+            keyPhrases: result.keyPhrases,
+          }),
         ...(result.nextSteps && result.nextSteps.length > 0 && { nextSteps: result.nextSteps }),
       });
 
-      const token = await getPushToken(deviceId);
-      if (token) {
-        await sendPushNotification(token, { type: 'ai_complete', recordId: id });
+      const inForeground = await isAppInForeground(deviceId);
+      if (inForeground) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Push] AI complete: skip (app in foreground)', { deviceId });
+        }
+        return;
+      }
+
+      // Register completion. Only the first caller (leader) waits and sends the push.
+      const isLeader = await registerAiCompletion(deviceId);
+      if (!isLeader) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Push] AI complete: queued (leader will send)', { deviceId });
+        }
+        return;
+      }
+
+      // Leader waits for debounce window to collect all parallel completions
+      await new Promise((resolve) => setTimeout(resolve, PUSH_DEBOUNCE_MS));
+
+      const count = await collectPendingAndUnlock(deviceId);
+      if (count === 0) return;
+
+      const data = await getPushTokenWithLocale(deviceId);
+      if (data) {
+        const sent = await sendPushNotification(
+          data.token,
+          { type: 'ai_complete', recordId: id },
+          data.locale,
+          count,
+        );
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Push] AI complete: push', sent ? 'sent' : 'failed', { deviceId, count });
+        }
+      } else if (process.env.NODE_ENV !== 'production') {
+        console.warn('[Push] AI complete: no token for deviceId', deviceId);
       }
     })
     .catch(async (err) => {

@@ -2,6 +2,8 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { ApnsClient, Host, Notification } from 'apns2';
 
+import { getPushMessages } from './push-messages';
+
 const APNS_KEY_ID = process.env.APNS_KEY_ID;
 const APNS_TEAM_ID = process.env.APNS_TEAM_ID;
 const APNS_KEY_PATH = process.env.APNS_KEY_PATH;
@@ -61,33 +63,21 @@ export type PushPayload = {
   recordId?: string;
   title?: string;
   body?: string;
-};
-
-const DEFAULT_MESSAGES: Record<PushPayload['type'], { title: string; body: string }> = {
-  ai_complete: {
-    title: 'Voice Inbox AI',
-    body: 'AI processing complete. Open to see your summary.',
-  },
-  policy_update: {
-    title: 'Voice Inbox AI',
-    body: 'We updated our Privacy Policy or Terms. Please review.',
-  },
-  limit_warning: {
-    title: 'Voice Inbox AI',
-    body: 'Your weekly AI limit is almost reached.',
-  },
+  message?: string;
 };
 
 export async function sendPushNotification(
   deviceToken: string,
   payload: PushPayload,
+  locale?: string | null,
+  completedCount?: number,
 ): Promise<boolean> {
   const apns = getApnsClient();
   if (!apns) {
     return false;
   }
 
-  const defaults = DEFAULT_MESSAGES[payload.type];
+  const defaults = getPushMessages(payload.type, locale, completedCount);
   const notification = new Notification(deviceToken, {
     alert: {
       title: payload.title ?? defaults.title,
@@ -97,13 +87,15 @@ export async function sendPushNotification(
     data: {
       type: payload.type,
       ...(payload.recordId && { recordId: payload.recordId }),
+      ...(payload.message && { message: payload.message }),
     },
   });
 
   try {
     await apns.send(notification);
     return true;
-  } catch {
+  } catch (err) {
+    console.error('[APNS] send failed:', err);
     return false;
   }
 }

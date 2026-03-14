@@ -31,3 +31,12 @@ export const FALLBACK_MODEL = 'arcee-ai/trinity-large-preview:free';
 // Push notifications (iOS APNs)
 export const PUSH_TOKEN_KEY_PREFIX = 'push_token:';
 export const PUSH_TOKEN_TTL_SECONDS = 30 * 24 * 3600; // 30 days
+export const APP_FOREGROUND_KEY_PREFIX = 'app_foreground:';
+export const APP_FOREGROUND_TTL_SECONDS = 60; // heartbeat every 40s, TTL 60s for safety margin
+
+// Push deduplication: batch multiple AI completions into one push
+export const PUSH_PENDING_KEY_PREFIX = 'push_pending:';
+export const PUSH_LOCK_KEY_PREFIX = 'push_lock:';
+export const PUSH_DEBOUNCE_MS = 10_000; // wait 10s to collect all completions
+export const PUSH_PENDING_TTL_SECONDS = 120; // safety TTL for pending counter
+export const PUSH_LOCK_TTL_SECONDS = 30; // lock TTL = debounce + buffer

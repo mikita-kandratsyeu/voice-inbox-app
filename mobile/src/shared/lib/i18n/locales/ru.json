@@ -1,4 +1,8 @@
 {
+  "push": {
+    "policyUpdateTitle": "Важное обновление",
+    "policyUpdateAck": "Понятно"
+  },
   "common": {
     "cancel": "Отмена",
     "close": "Закрыть",
@@ -235,7 +239,7 @@
     "updateEmbeddingsNoRecords": "Нет записей с контентом для обработки",
     "registerPush": "Зарегистрировать пуши",
     "registeringPush": "Регистрация...",
-    "pushRegistered": "Уведомления включены. Вы получите пуш, когда ИИ закончит обработку.",
+    "pushRegistered": "Push-уведомления включены",
     "pushRegisterFailed": "Не удалось зарегистрировать пуши. Проверьте интернет и попробуйте снова."
   },
   "appearance": {

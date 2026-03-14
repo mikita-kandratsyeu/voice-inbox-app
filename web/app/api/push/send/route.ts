@@ -1,6 +1,6 @@
 import { apiError, HttpStatus, parseJsonBody, requireAppSecret, validateDeviceId } from '@/lib/api';
 import { sendPushNotification, type PushPayload } from '@/lib/apns';
-import { getPushToken } from '@/lib/push-tokens';
+import { getPushTokenWithLocale } from '@/lib/push-tokens';
 import { HEADER_DEVICE_ID } from '@/config/constants';
 import { NextResponse } from 'next/server';
 
@@ -10,6 +10,7 @@ type SendPushBody = {
   title?: unknown;
   body?: unknown;
   recordId?: unknown;
+  message?: unknown;
 };
 
 const VALID_TYPES: PushPayload['type'][] = ['ai_complete', 'policy_update', 'limit_warning'];
@@ -37,8 +38,11 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return apiError(deviceIdError, HttpStatus.BAD_REQUEST);
   }
 
-  const deviceToken = await getPushToken(deviceId!);
-  if (!deviceToken) {
+  const data = await getPushTokenWithLocale(deviceId!);
+  if (!data) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[Push] send: no token for deviceId', deviceId);
+    }
     return apiError('Device not registered for push notifications', HttpStatus.NOT_FOUND);
   }
 
@@ -52,13 +56,20 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     title: typeof body.title === 'string' ? body.title : undefined,
     body: typeof body.body === 'string' ? body.body : undefined,
     recordId: typeof body.recordId === 'string' ? body.recordId : undefined,
+    message: typeof body.message === 'string' ? body.message : undefined,
   };
 
-  const sent = await sendPushNotification(deviceToken, payload);
+  const sent = await sendPushNotification(data.token, payload, data.locale);
 
   if (!sent) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('[Push] send: APNS failed', { deviceId, type: payload.type });
+    }
     return apiError('Failed to send push notification', HttpStatus.BAD_REQUEST);
   }
 
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[Push] send: ok', { deviceId, type: payload.type });
+  }
   return NextResponse.json({ ok: true });
 };

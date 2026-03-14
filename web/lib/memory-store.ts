@@ -84,4 +84,9 @@ export const memoryStore = {
 
     return true;
   },
+
+  del: async (key: string): Promise<void> => {
+    kvStore.delete(key);
+    counterStore.delete(key);
+  },
 };
