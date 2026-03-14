@@ -393,7 +393,7 @@
     }
   },
   "onboarding": {
-    "downloadBeforeStart": "Скачать выбранную модель Whisper для транскрипции?",
+    "downloadBeforeStart": "Скачать модель Whisper для транскрипции?",
     "downloadBeforeStartHint": "Можно пропустить и скачать позже в настройках.",
     "downloading": "Скачивание...",
     "recordTitle": "Записывайте мысли голосом",

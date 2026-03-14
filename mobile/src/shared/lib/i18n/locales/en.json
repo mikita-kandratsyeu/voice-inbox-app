@@ -393,7 +393,7 @@
     }
   },
   "onboarding": {
-    "downloadBeforeStart": "Download the selected Whisper model for transcription?",
+    "downloadBeforeStart": "Download the Whisper model for transcription?",
     "downloadBeforeStartHint": "You can skip and download later in settings.",
     "downloading": "Downloading...",
     "recordTitle": "Record thoughts with voice",
