@@ -18,10 +18,13 @@ import { releaseWhisperContext } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
 import { initDB, NetworkStatusProvider } from '@/shared/lib';
 import {
+  checkPushPermission,
   notifyAppBackground,
   notifyAppForeground,
   PolicyUpdateSheet,
   type PushNotificationData,
+  registerForPushToken,
+  sendTokenToBackend,
   usePushNotifications,
   usePushSheet,
 } from '@/shared/lib/push';
@@ -69,6 +72,17 @@ const App = () => {
         if (initial) {
           const data = initial.getData() as PushNotificationData | undefined;
           if (data) handlePushNotification(data);
+        }
+
+        if (getHasSeenOnboarding()) {
+          const pushStatus = await checkPushPermission();
+          if (pushStatus === 'granted') {
+            const token = await registerForPushToken();
+
+            if (token) {
+              await sendTokenToBackend(token);
+            }
+          }
         }
       })
       .catch(() => {
