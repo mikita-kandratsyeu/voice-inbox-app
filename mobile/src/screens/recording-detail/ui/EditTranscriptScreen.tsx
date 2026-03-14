@@ -1,7 +1,7 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Check, ChevronLeft } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TextInput, View } from 'react-native';
@@ -12,8 +12,7 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
 import { useEditTranscript } from '@/features/edit-transcript';
 import { getColors, useAppTheme } from '@/shared/config';
-import { getInputFieldInputStyle } from '@/shared/ui';
-import { Button } from '@/shared/ui';
+import { Button, getInputFieldInputStyle, ScreenHeader } from '@/shared/ui';
 
 export const EditTranscriptScreen = () => {
   const { t } = useTranslation();
@@ -55,30 +54,10 @@ export const EditTranscriptScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.primary }}>
-      <View
-        className="flex-row items-center justify-between border-b px-4 py-3"
-        style={{
-          paddingTop: insets.top + 12,
-          paddingBottom: 12,
-          backgroundColor: color.background.secondary,
-          borderBottomColor: color.border.default,
-        }}
-      >
-        <Button
-          iconOnly
-          variant="icon"
-          size="md"
-          icon={<ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />}
-          color={color}
-          onPress={handleBack}
-        />
-        <Text
-          className="flex-1 text-center text-lg font-semibold"
-          style={{ color: color.text.primary }}
-        >
-          {t('recordingDetail.editTranscriptTitle')}
-        </Text>
-        <View style={{ width: 44, alignItems: 'flex-end' }}>
+      <ScreenHeader
+        title={t('recordingDetail.editTranscriptTitle')}
+        onBack={handleBack}
+        rightSlot={
           <Button
             iconOnly
             variant="icon"
@@ -88,8 +67,8 @@ export const EditTranscriptScreen = () => {
             onPress={handleSave}
             disabled={isSaving || !hasChanges()}
           />
-        </View>
-      </View>
+        }
+      />
 
       <KeyboardAwareScrollView
         style={{ flex: 1 }}
