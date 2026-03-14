@@ -2,7 +2,7 @@ import { type RouteProp, useNavigation, useRoute } from '@react-navigation/nativ
 import { Check, Square } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, FlatList, Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
@@ -13,6 +13,91 @@ import { formatRelativeTime } from '@/shared/lib';
 import { Button, ScreenHeader } from '@/shared/ui';
 
 type ImportRecordsRouteProp = RouteProp<SettingsStackParamList, 'ImportRecords'>;
+
+type ImportRecordRowProps = {
+  item: VoiceRecord;
+  isSelected: boolean;
+  onToggle: (id: string) => void;
+  color: ReturnType<typeof getColors>;
+  t: (key: string) => string;
+  language: string;
+};
+
+const ImportRecordRow = React.memo(function ImportRecordRow({
+  item,
+  isSelected,
+  onToggle,
+  color,
+  t,
+  language,
+}: ImportRecordRowProps) {
+  return (
+    <Pressable
+      onPress={() => onToggle(item.id)}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        backgroundColor: color.background.card,
+        borderBottomWidth: 1,
+        borderBottomColor: color.border.default,
+      }}
+    >
+      <View
+        style={{
+          width: 24,
+          height: 24,
+          marginRight: 12,
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}
+      >
+        <View
+          style={{
+            position: 'absolute',
+            left: 1,
+            top: 1,
+            width: 22,
+            height: 22,
+            borderRadius: 4,
+            backgroundColor: color.accent.primary,
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: isSelected ? 1 : 0,
+          }}
+          pointerEvents="none"
+        >
+          <Check size={14} color="#ffffff" strokeWidth={2.5} />
+        </View>
+        <View
+          style={{
+            position: 'absolute',
+            left: 1,
+            top: 1,
+            width: 22,
+            height: 22,
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: isSelected ? 0 : 1,
+          }}
+          pointerEvents="none"
+        >
+          <Square size={20} color={color.icon.muted} strokeWidth={2} />
+        </View>
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 16, color: color.text.primary }} numberOfLines={1}>
+          {item.title || t('record.autoTitle.morning')}
+        </Text>
+        <Text style={{ marginTop: 2, fontSize: 12, color: color.text.secondary }}>
+          {formatRelativeTime(item.createdAt, language)} · {item.duration}
+        </Text>
+      </View>
+    </Pressable>
+  );
+});
 
 export const ImportRecordsScreen = () => {
   const { t, i18n } = useTranslation();
@@ -86,42 +171,16 @@ export const ImportRecordsScreen = () => {
   }, [addRecord, importable, navigation, selectedCount, selectedIds, t]);
 
   const renderImportableItem = useCallback(
-    ({ item }: { item: VoiceRecord }) => {
-      const isSelected = selectedIds.has(item.id);
-      return (
-        <TouchableOpacity
-          onPress={() => toggleRecord(item.id)}
-          activeOpacity={0.7}
-          className="flex-row items-center px-4 py-3.5"
-          style={{
-            backgroundColor: color.background.card,
-            borderBottomWidth: 1,
-            borderBottomColor: color.border.default,
-          }}
-        >
-          <View className="mr-3">
-            {isSelected ? (
-              <View
-                className="h-6 w-6 items-center justify-center rounded"
-                style={{ backgroundColor: color.accent.primary }}
-              >
-                <Check size={14} color="#ffffff" strokeWidth={2.5} />
-              </View>
-            ) : (
-              <Square size={24} color={color.icon.muted} strokeWidth={2} />
-            )}
-          </View>
-          <View className="flex-1">
-            <Text className="text-[16px]" style={{ color: color.text.primary }} numberOfLines={1}>
-              {item.title || t('record.autoTitle.morning')}
-            </Text>
-            <Text className="mt-0.5 text-xs" style={{ color: color.text.secondary }}>
-              {formatRelativeTime(item.createdAt, i18n.language)} · {item.duration}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      );
-    },
+    ({ item }: { item: VoiceRecord }) => (
+      <ImportRecordRow
+        item={item}
+        isSelected={selectedIds.has(item.id)}
+        onToggle={toggleRecord}
+        color={color}
+        t={t}
+        language={i18n.language}
+      />
+    ),
     [color, selectedIds, toggleRecord, t, i18n.language],
   );
 
@@ -180,21 +239,48 @@ export const ImportRecordsScreen = () => {
           })}
         </Text>
         {importable.length > 0 && (
-          <View className="mt-2 flex-row gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              label={t('importExport.selectAll')}
+          <View
+            className="mt-3 flex-row items-center"
+            style={{
+              gap: 16,
+              paddingVertical: 8,
+              paddingHorizontal: 12,
+              backgroundColor: color.background.tertiary,
+              borderRadius: 12,
+            }}
+          >
+            <TouchableOpacity
               onPress={selectAll}
-              color={color}
-            />
-            <Button
-              variant="ghost"
-              size="sm"
-              label={t('importExport.deselectAll')}
+              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+              activeOpacity={0.7}
+              style={{ paddingVertical: 8, paddingRight: 16, marginRight: 16 }}
+            >
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: '600',
+                  color: color.accent.primary,
+                }}
+              >
+                {t('importExport.selectAll')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={deselectAll}
-              color={color}
-            />
+              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+              activeOpacity={0.7}
+              style={{ paddingVertical: 8 }}
+            >
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontWeight: '600',
+                  color: color.accent.primary,
+                }}
+              >
+                {t('importExport.deselectAll')}
+              </Text>
+            </TouchableOpacity>
           </View>
         )}
       </View>
