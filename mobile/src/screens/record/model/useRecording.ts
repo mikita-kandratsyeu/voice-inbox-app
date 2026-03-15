@@ -126,10 +126,8 @@ export const useRecording = ({
             if (audioPathRef.current === null) {
               audioPathRef.current = result;
             }
+
             setState('paused');
-            Alert.alert(t('record.routeChangeTitle'), t('record.routeChangeMessage'), [
-              { text: 'OK' },
-            ]);
             onAudioRouteChangeRef.current?.();
           })
           .catch(() => {});

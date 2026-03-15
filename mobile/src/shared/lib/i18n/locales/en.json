@@ -75,8 +75,6 @@
     "finish": "Finish recording",
     "recordStopped": "Recording stopped",
     "recordStoppedMessage": "Maximum recording limit reached — 30 minutes.",
-    "routeChangeTitle": "Recording paused",
-    "routeChangeMessage": "The audio source was switched. The recording has been saved up to this point.",
     "appLockHint": "When you minimize the app, recording will be stopped and saved.",
     "noAppLockHint": "When you minimize the app, recording will continue in the background.",
     "saveModalTitle": "Save recording",

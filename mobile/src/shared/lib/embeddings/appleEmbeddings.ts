@@ -6,6 +6,7 @@ const MAX_TEXT_LENGTH = 2000;
 
 export function getEmbeddingLanguage(): string {
   const lang = i18n.language ?? 'en';
+
   return lang.startsWith('ru') ? 'ru' : 'en';
 }
 
@@ -14,15 +15,25 @@ const AppleEmbeddings =
 
 function truncateForEmbedding(text: string): string {
   if (text.length <= MAX_TEXT_LENGTH) return text;
+
   return text.slice(0, MAX_TEXT_LENGTH);
 }
 
+const APPLE_EMBEDDINGS_MIN_IOS = 17;
+
 export function isEmbeddingAvailable(): boolean {
-  return Platform.OS === 'ios';
+  if (Platform.OS !== 'ios') return false;
+
+  const version = parseInt(String(Platform.Version).split('.')[0], 10);
+
+  return !isNaN(version) && version >= APPLE_EMBEDDINGS_MIN_IOS;
 }
 
 export async function prepareEmbeddingModel(language: string): Promise<void> {
-  if (Platform.OS !== 'ios' || !AppleEmbeddings) return;
+  if (Platform.OS !== 'ios' || !AppleEmbeddings) {
+    return;
+  }
+
   try {
     await AppleEmbeddings.prepare(language);
   } catch (err) {
@@ -32,7 +43,9 @@ export async function prepareEmbeddingModel(language: string): Promise<void> {
 
 export async function generateEmbedding(text: string, language: string): Promise<number[] | null> {
   if (Platform.OS !== 'ios' || !AppleEmbeddings) return null;
+
   const trimmed = truncateForEmbedding(text).trim();
+
   if (!trimmed) return null;
 
   try {
@@ -49,12 +62,15 @@ export async function generateEmbeddings(
   language: string,
 ): Promise<(number[] | null)[]> {
   if (Platform.OS !== 'ios' || !AppleEmbeddings) return texts.map(() => null);
+
   const trimmed = texts.map((t) => truncateForEmbedding(t).trim()).filter(Boolean);
+
   if (trimmed.length === 0) return texts.map(() => null);
 
   try {
     const embeddings = await AppleEmbeddings.generateEmbeddings(trimmed, language);
     const result: (number[] | null)[] = [];
+
     let j = 0;
     for (let i = 0; i < texts.length; i++) {
       if (truncateForEmbedding(texts[i]).trim()) {
@@ -64,6 +80,7 @@ export async function generateEmbeddings(
         result.push(null);
       }
     }
+
     return result;
   } catch (err) {
     if (__DEV__) console.warn('[embeddings] generateMany failed:', err);
@@ -72,9 +89,13 @@ export async function generateEmbeddings(
 }
 
 export async function checkEmbeddingAvailability(language: string): Promise<boolean> {
-  if (Platform.OS !== 'ios' || !AppleEmbeddings) return false;
+  if (Platform.OS !== 'ios' || !AppleEmbeddings) {
+    return false;
+  }
+
   try {
     const info = await AppleEmbeddings.getInfo(language);
+
     return info.hasAvailableAssets;
   } catch {
     return false;
