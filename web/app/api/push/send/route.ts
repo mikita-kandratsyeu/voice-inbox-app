@@ -13,7 +13,12 @@ type SendPushBody = {
   message?: unknown;
 };
 
-const VALID_TYPES: PushPayload['type'][] = ['ai_complete', 'policy_update', 'limit_warning'];
+const VALID_TYPES: PushPayload['type'][] = [
+  'ai_complete',
+  'policy_update',
+  'limit_warning',
+  'limit_exceeded',
+];
 
 export const POST = async (request: Request): Promise<NextResponse> => {
   const authError = requireAppSecret(request);

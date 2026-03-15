@@ -5,6 +5,7 @@ import {
   getPushTokenWithLocale,
   isAppInForeground,
   registerAiCompletion,
+  sendLimitExceededPush,
 } from '@/lib/push-tokens';
 import { PUSH_DEBOUNCE_MS } from '@/config/constants';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
@@ -44,6 +45,7 @@ export const createAsk = async (
       status: 'error',
       error: 'Weekly AI limit reached',
     });
+    await sendLimitExceededPush(deviceId);
 
     return { created: false, limitExceeded: true, usage: limitResult.usage };
   }

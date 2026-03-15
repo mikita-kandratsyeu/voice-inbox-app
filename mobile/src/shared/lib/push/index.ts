@@ -1,5 +1,5 @@
 export { notifyAppBackground, notifyAppForeground } from './notifyForeground';
-export { PolicyUpdateSheet } from './PolicyUpdateSheet';
+export { PushNotificationSheet } from './PushNotificationSheet';
 export {
   checkPushPermission,
   ensurePushRegistered,

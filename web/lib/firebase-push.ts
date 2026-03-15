@@ -3,7 +3,7 @@ import * as admin from 'firebase-admin';
 import { getPushMessages } from './push-messages';
 
 export type PushPayload = {
-  type: 'ai_complete' | 'policy_update' | 'limit_warning';
+  type: 'ai_complete' | 'policy_update' | 'limit_warning' | 'limit_exceeded';
   recordId?: string;
   title?: string;
   body?: string;

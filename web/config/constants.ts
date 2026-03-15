@@ -40,3 +40,7 @@ export const PUSH_LOCK_KEY_PREFIX = 'push_lock:';
 export const PUSH_DEBOUNCE_MS = 10_000; // wait 10s to collect all completions
 export const PUSH_PENDING_TTL_SECONDS = 120; // safety TTL for pending counter
 export const PUSH_LOCK_TTL_SECONDS = 30; // lock TTL = debounce + buffer
+
+// Limit exceeded push: max 1 per device per 5 min to avoid spam
+export const LIMIT_PUSH_DEBOUNCE_KEY_PREFIX = 'limit_push_sent:';
+export const LIMIT_PUSH_DEBOUNCE_SECONDS = 300;

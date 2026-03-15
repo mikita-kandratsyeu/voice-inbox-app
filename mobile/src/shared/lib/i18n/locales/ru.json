@@ -1,7 +1,9 @@
 {
   "push": {
     "policyUpdateTitle": "Важное обновление",
-    "policyUpdateAck": "Понятно"
+    "policyUpdateAck": "Понятно",
+    "limitExceededTitle": "Лимит исчерпан",
+    "limitExceededMessage": "Недельный лимит ИИ исчерпан."
   },
   "common": {
     "cancel": "Отмена",

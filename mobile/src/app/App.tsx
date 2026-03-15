@@ -14,6 +14,7 @@ import { useRecordStore } from '@/entities/record';
 import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
 import { OnboardingGate } from '@/features/onboarding';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
+import { createHandlePushNotification } from '@/features/push-handling';
 import { releaseWhisperContext } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
 import { initDB, NetworkStatusProvider } from '@/shared/lib';
@@ -21,31 +22,21 @@ import {
   ensurePushRegistered,
   notifyAppBackground,
   notifyAppForeground,
-  PolicyUpdateSheet,
   type PushNotificationData,
+  PushNotificationSheet,
   usePushNotifications,
-  usePushSheet,
 } from '@/shared/lib/push';
 
 import { navigationRef } from './navigation/navigationRef';
 import { RootNavigator } from './navigation/RootNavigator';
 
-function handlePushNotification(data: PushNotificationData): void {
-  if (!data?.type) return;
-
-  if (data.type === 'ai_complete') {
+const handlePushNotification = createHandlePushNotification({
+  navigateToMain: () => {
     if (navigationRef.isReady()) {
       navigationRef.navigate('Main');
     }
-    return;
-  }
-
-  if (data.type === 'policy_update') {
-    const message = typeof data.message === 'string' ? data.message : '';
-    usePushSheet.getState().show(message);
-    return;
-  }
-}
+  },
+});
 
 const App = () => {
   const theme = useAppTheme();
@@ -184,7 +175,7 @@ const App = () => {
                   </AppLockGate>
                 </OnboardingGate>
               </NavigationContainer>
-              <PolicyUpdateSheet />
+              <PushNotificationSheet />
             </BottomSheetModalProvider>
           </NetworkStatusProvider>
         </SafeAreaProvider>

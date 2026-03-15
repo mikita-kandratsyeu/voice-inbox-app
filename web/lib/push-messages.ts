@@ -13,7 +13,7 @@ function aiCompleteBody(locale: PushLocale, count: number): string {
 }
 
 export function getPushMessages(
-  type: 'ai_complete' | 'policy_update' | 'limit_warning',
+  type: 'ai_complete' | 'policy_update' | 'limit_warning' | 'limit_exceeded',
   locale?: string | null,
   count?: number,
 ): { title: string; body: string } {
@@ -32,6 +32,12 @@ export function getPushMessages(
         loc === 'ru'
           ? 'Мы обновили условия. Пожалуйста, ознакомьтесь.'
           : 'We updated our terms. Please review.',
+    };
+  }
+  if (type === 'limit_exceeded') {
+    return {
+      title: 'Voice Inbox AI',
+      body: loc === 'ru' ? 'Недельный лимит ИИ исчерпан.' : 'Weekly AI limit reached.',
     };
   }
   return {
