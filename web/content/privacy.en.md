@@ -18,7 +18,7 @@ Our API temporarily stores only the AI result (summary, tasks, tags) in a key-va
 
 We use a device identifier (device ID) to limit the number of free AI requests per week per device. This identifier is used solely for rate limiting and is not linked to your identity.
 
-If you enable push notifications, we store your push token (APNS device token) and app language on our servers. This data is used solely to send you notifications about completed AI processing and important updates. The push token is stored for 30 days and refreshed on every app launch. You can revoke notification permission at any time through iOS Settings.
+If you enable push notifications, we store your push token (FCM) and app language on our servers. This data is used solely to send you notifications about completed AI processing and important updates. The push token is stored for 30 days and refreshed on every app launch. You can revoke notification permission at any time through iOS Settings.
 
 ## 3. Third-Party AI Providers
 

@@ -1,5 +1,5 @@
 import { after } from 'next/server';
-import { sendPushNotification } from '@/lib/apns';
+import { sendPushNotification } from '@/lib/push';
 import {
   collectPendingAndUnlock,
   getPushTokenWithLocale,
