@@ -1,9 +1,7 @@
 {
   "push": {
     "policyUpdateTitle": "Important Update",
-    "policyUpdateAck": "Got it",
-    "limitExceededTitle": "Limit Reached",
-    "limitExceededMessage": "Weekly AI limit reached."
+    "policyUpdateAck": "Got it"
   },
   "common": {
     "cancel": "Cancel",

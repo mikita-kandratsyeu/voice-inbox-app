@@ -1,4 +1,3 @@
-import { i18n } from '@/shared/lib/i18n';
 import { type PushNotificationData, usePushSheet } from '@/shared/lib/push';
 
 export type HandlePushNotificationDeps = {
@@ -12,14 +11,9 @@ const HANDLERS: Record<
   ai_complete: (_data, { navigateToMain }) => {
     navigateToMain();
   },
-  policy_update: (data, _deps) => {
-    const message = typeof data.message === 'string' ? data.message : '';
+  policy_update: (_data, _deps) => {
+    const message = typeof _data.message === 'string' ? _data.message : '';
     usePushSheet.getState().show(message);
-  },
-  limit_exceeded: (_data, _deps) => {
-    usePushSheet.getState().show(i18n.t('push.limitExceededMessage'), {
-      type: 'limit_exceeded',
-    });
   },
 };
 
