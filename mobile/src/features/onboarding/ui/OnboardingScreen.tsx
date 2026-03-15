@@ -35,7 +35,11 @@ import {
   openAppSettings,
   requestMicPermission,
 } from '@/shared/lib/permissions';
-import { checkPushPermission, type PushPermissionStatus, requestPushPermission } from '@/shared/lib/push';
+import {
+  checkPushPermission,
+  type PushPermissionStatus,
+  requestPushPermission,
+} from '@/shared/lib/push';
 
 import { getTermsAgreedAt, setHasSeenOnboarding, setTermsAgreedAt } from '../lib/onboardingStorage';
 import { getOnboardingSlides, type OnboardingSlideContent } from '../model/constants';

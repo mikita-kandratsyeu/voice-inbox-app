@@ -233,10 +233,7 @@ export const ImportRecordsScreen = () => {
       />
 
       <View className="px-4 py-3" style={{ backgroundColor: color.background.primary }}>
-        <Text
-          className="text-sm"
-          style={{ color: color.text.secondary, textAlign: 'center' }}
-        >
+        <Text className="text-sm" style={{ color: color.text.secondary, textAlign: 'center' }}>
           {t('importExport.importSelectSubtitle', {
             importable: importable.length,
             duplicates: duplicates.length,

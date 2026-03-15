@@ -4,11 +4,18 @@
  * Flattens onto white background so the output PNG has no alpha channel.
  */
 import { readdir, readFile, writeFile } from 'node:fs/promises';
-import { join, dirname } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const ICONSET = join(__dirname, '..', 'ios', 'VoiceInboxApp', 'Images.xcassets', 'AppIcon.appiconset');
+const ICONSET = join(
+  __dirname,
+  '..',
+  'ios',
+  'VoiceInboxApp',
+  'Images.xcassets',
+  'AppIcon.appiconset',
+);
 
 async function main() {
   const sharp = (await import('sharp')).default;
