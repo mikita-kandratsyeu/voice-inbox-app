@@ -1,4 +1,5 @@
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
+import { sendLimitExceededPush } from '@/lib/push-tokens';
 import { openRouterClient } from '@/lib/openrouter';
 
 const TRANSLATE_MODEL = 'google/gemini-2.5-flash-lite';
@@ -56,6 +57,7 @@ export async function translateTranscript(
 ): Promise<TranslateResult> {
   const limitResult = await checkAndIncrement(deviceId);
   if (!limitResult.allowed) {
+    await sendLimitExceededPush(deviceId);
     return { ok: false, limitExceeded: true, usage: limitResult.usage };
   }
 

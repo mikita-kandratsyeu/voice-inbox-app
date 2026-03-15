@@ -1,5 +1,5 @@
 import { WEB_API_SECRET, WEB_API_URL } from '@env';
-import PushNotificationIOS from '@react-native-community/push-notification-ios';
+import messaging from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
 
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
@@ -7,14 +7,13 @@ import { fetch } from '@/shared/lib/fetch';
 import { i18n } from '@/shared/lib/i18n';
 
 const PUSH_REGISTER_URL = `${WEB_API_URL}/api/push/register`;
+const PUSH_REGISTER_THROTTLE_MS = 5 * 60 * 1000;
+
+let lastRegisteredToken: string | null = null;
+let lastRegisterTime = 0;
 
 export type PushPermissionStatus = 'granted' | 'denied' | 'not-determined';
 
-/**
- * Registers push token with backend if permission is granted.
- * Call only when onboarding is done (caller must check).
- * Used on app load and when app becomes active.
- */
 export async function ensurePushRegistered(): Promise<void> {
   if (Platform.OS !== 'ios') return;
 
@@ -22,8 +21,17 @@ export async function ensurePushRegistered(): Promise<void> {
   if (status !== 'granted') return;
 
   const token = await registerForPushToken();
-  if (token) {
-    await sendTokenToBackend(token);
+  if (!token) return;
+
+  const now = Date.now();
+  if (lastRegisteredToken === token && now - lastRegisterTime < PUSH_REGISTER_THROTTLE_MS) {
+    return;
+  }
+
+  const ok = await sendTokenToBackend(token);
+  if (ok) {
+    lastRegisteredToken = token;
+    lastRegisterTime = now;
   }
 }
 
@@ -32,41 +40,27 @@ export async function requestPushPermission(): Promise<PushPermissionStatus> {
     return 'denied';
   }
 
-  const result = await PushNotificationIOS.requestPermissions({
-    alert: true,
-    badge: true,
-    sound: true,
-  });
+  const authStatus = await messaging().requestPermission();
+  const enabled =
+    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+    authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-  const status = result.alert ? 'granted' : 'denied';
-  return status;
+  return enabled ? 'granted' : 'denied';
 }
-
-// UNAuthorizationStatus from iOS: 0=notDetermined, 1=denied, 2=authorized, 3=provisional
-const UNAuthorizationStatusDenied = 1;
-const UNAuthorizationStatusAuthorized = 2;
-const UNAuthorizationStatusProvisional = 3;
 
 export async function checkPushPermission(): Promise<PushPermissionStatus> {
   if (Platform.OS !== 'ios') {
     return 'denied';
   }
 
-  return new Promise((resolve) => {
-    PushNotificationIOS.checkPermissions((permissions) => {
-      const status = permissions?.authorizationStatus;
-      if (
-        status === UNAuthorizationStatusAuthorized ||
-        status === UNAuthorizationStatusProvisional
-      ) {
-        resolve('granted');
-      } else if (status === UNAuthorizationStatusDenied) {
-        resolve('denied');
-      } else {
-        resolve('not-determined');
-      }
-    });
-  });
+  const authStatus = await messaging().hasPermission();
+  const enabled =
+    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+    authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+
+  if (enabled) return 'granted';
+  if (authStatus === messaging.AuthorizationStatus.DENIED) return 'denied';
+  return 'not-determined';
 }
 
 export async function registerForPushToken(): Promise<string | null> {
@@ -74,36 +68,12 @@ export async function registerForPushToken(): Promise<string | null> {
     return null;
   }
 
-  return new Promise((resolve) => {
-    const timeout = setTimeout(() => {
-      PushNotificationIOS.removeEventListener('register');
-      PushNotificationIOS.removeEventListener('registrationError');
-      resolve(null);
-    }, 15_000);
-
-    const onRegister = (token: string) => {
-      clearTimeout(timeout);
-      PushNotificationIOS.removeEventListener('register');
-      PushNotificationIOS.removeEventListener('registrationError');
-      resolve(token);
-    };
-
-    const onError = () => {
-      clearTimeout(timeout);
-      PushNotificationIOS.removeEventListener('register');
-      PushNotificationIOS.removeEventListener('registrationError');
-      resolve(null);
-    };
-
-    PushNotificationIOS.addEventListener('register', onRegister);
-    PushNotificationIOS.addEventListener('registrationError', onError);
-
-    PushNotificationIOS.requestPermissions().then(({ alert }) => {
-      if (!alert) {
-        onError();
-      }
-    });
-  });
+  try {
+    const token = await messaging().getToken();
+    return token ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function sendTokenToBackend(token: string): Promise<boolean> {

@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
 import { i18n } from '@/shared/lib';
@@ -5,10 +6,17 @@ import { i18n } from '@/shared/lib';
 import type { WhisperModelId } from '../model/types';
 
 const MODEL_MIN_RAM_MB: Record<WhisperModelId, number> = {
-  'whisper-tiny': 600,
-  'whisper-base': 800,
-  'whisper-small': 1600,
-  'whisper-medium': 4000,
+  'whisper-tiny': 1200,
+  'whisper-base': 1500,
+  'whisper-small': 3200,
+  'whisper-medium': 6000,
+};
+
+const MODEL_MIN_YEAR_CLASS: Record<WhisperModelId, number> = {
+  'whisper-tiny': 2013,
+  'whisper-base': 2015,
+  'whisper-small': 2017,
+  'whisper-medium': 2019,
 };
 
 const MODEL_MIN_FREE_DISK_MB: Record<WhisperModelId, number> = {
@@ -17,6 +25,8 @@ const MODEL_MIN_FREE_DISK_MB: Record<WhisperModelId, number> = {
   'whisper-small': 600,
   'whisper-medium': 2500,
 };
+
+const HEAVY_MODELS: WhisperModelId[] = ['whisper-small', 'whisper-medium'];
 
 export type DeviceCompatibilityResult = {
   isCompatible: boolean;
@@ -35,11 +45,34 @@ export const canDeviceRunWhisperModel = async (
 
     const minRam = MODEL_MIN_RAM_MB[modelId];
     const minDisk = MODEL_MIN_FREE_DISK_MB[modelId];
+    const minYearClass = MODEL_MIN_YEAR_CLASS[modelId];
 
     const formatMb = (mb: number) =>
       mb >= 1024
         ? i18n.t('device.gb', { value: Math.round(mb / 1024) })
         : i18n.t('device.mb', { value: Math.round(mb) });
+
+    if (
+      Platform.OS === 'android' &&
+      DeviceInfoModule.isLowRamDevice &&
+      HEAVY_MODELS.includes(modelId)
+    ) {
+      return {
+        isCompatible: false,
+        reason: i18n.t('device.lowRamDevice'),
+      };
+    }
+
+    const yearClass = DeviceInfoModule.deviceYearClass;
+    if (yearClass >= 0 && yearClass < minYearClass) {
+      return {
+        isCompatible: false,
+        reason: i18n.t('device.insufficientRam', {
+          required: formatMb(minRam),
+          available: formatMb(totalRamMB),
+        }),
+      };
+    }
 
     if (totalRamMB < minRam) {
       return {

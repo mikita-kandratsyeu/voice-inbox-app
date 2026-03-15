@@ -34,6 +34,7 @@ const OUTPUT_LANGUAGE_INSTRUCTIONS: Record<
 const OUTPUT_SCHEMA = `
 type Output = {
   summary: string;
+  suggestedTitle: string;
   tasks: Task[];
   tags: string[];
   classification: "personal" | "work" | "meeting" | "idea" | "other";
@@ -75,6 +76,8 @@ ${OUTPUT_SCHEMA}
 
 **summary:** ${summaryInstruction}
 
+**suggestedTitle:** A short 3–8 word phrase that captures the essence of the note. Use for replacing default note titles. Same language as summary. Be concise and descriptive.
+
 **tasks:** ${taskInstruction}
 - priority: high = urgent or time-sensitive; medium = important but not urgent; low = vague or nice-to-have
 - deadline: today is ${today}. Convert natural language (e.g. "next Monday") to ISO 8601. Use null if not mentioned.
@@ -98,7 +101,7 @@ Bad: "Schedule team meeting" (this is just the task again)
 If no tasks exist, suggest 1 clarifying or contextual next step.
 
 **If the transcript is too short or unclear:** return all fields with safe defaults
-(empty arrays for tasks/keyPhrases/nextSteps, short 1-sentence summary, classification "other").
+(empty arrays for tasks/keyPhrases/nextSteps, short 1-sentence summary, suggestedTitle e.g. "Voice note", classification "other").
 Never add fields outside the schema. Output must pass JSON.parse() without preprocessing.
 
 ## Examples
@@ -111,6 +114,7 @@ Input:
 Output:
 {
   "summary": "Говорящий обозначил две рабочие задачи: срочная отправка отчёта Ивану до пятницы и планирование встречи с командой на следующей неделе.",
+  "suggestedTitle": "Отчёт Ивану и встреча с командой",
   "tasks": [
     { "title": "Отправить отчёт Ивану", "priority": "high", "deadline": "2024-01-19" },
     { "title": "Запланировать встречу с командой", "priority": "medium", "deadline": "2024-01-22" }
@@ -128,6 +132,7 @@ Input: "Хм, надо бы что-то сделать с этим..."
 Output:
 {
   "summary": "Говорящий выразил неопределённое намерение без конкретных деталей.",
+  "suggestedTitle": "Неопределённое намерение",
   "tasks": [],
   "tags": ["заметка"],
   "classification": "other",

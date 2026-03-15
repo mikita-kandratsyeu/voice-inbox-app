@@ -95,8 +95,14 @@ async function callOpenRouter(
     .map((s: string) => s.trim())
     .filter(Boolean) as string[];
 
+  const suggestedTitle =
+    'suggestedTitle' in parsed && typeof parsed.suggestedTitle === 'string'
+      ? String(parsed.suggestedTitle).trim()
+      : '';
+
   return {
     summary: String(parsed.summary),
+    suggestedTitle: suggestedTitle || String(parsed.summary).slice(0, 50).trim() || 'Voice note',
     tasks,
     tags,
     ...(classification && { classification }),

@@ -13,7 +13,7 @@
     "@openrouter/sdk": "^0.9.11",
     "@upstash/redis": "^1.36.3",
     "@vercel/analytics": "^1.6.1",
-    "apns2": "^12.2.0",
+    "firebase-admin": "^13.7.0",
     "lucide-react": "^0.577.0",
     "next": "16.1.6",
     "next-intl": "^4.8.3",

@@ -1,10 +1,11 @@
 import { after } from 'next/server';
-import { sendPushNotification } from '@/lib/apns';
+import { sendPushNotification } from '@/lib/push';
 import {
   collectPendingAndUnlock,
   getPushTokenWithLocale,
   isAppInForeground,
   registerAiCompletion,
+  sendLimitExceededPush,
 } from '@/lib/push-tokens';
 import { PUSH_DEBOUNCE_MS } from '@/config/constants';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
@@ -36,6 +37,7 @@ export const createMessage = async (
       status: 'error',
       error: 'Weekly AI limit reached',
     });
+    await sendLimitExceededPush(deviceId);
 
     return { created: false, limitExceeded: true, usage: limitResult.usage };
   }
@@ -49,6 +51,7 @@ export const createMessage = async (
         id,
         status: 'done',
         summary: result.summary,
+        suggestedTitle: result.suggestedTitle,
         tasks: result.tasks,
         tags: result.tags,
         ...(result.classification && { classification: result.classification }),

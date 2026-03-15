@@ -1,7 +1,7 @@
 import '../../global.css';
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import PushNotificationIOS from '@react-native-community/push-notification-ios';
+import messaging from '@react-native-firebase/messaging';
 import { NavigationContainer } from '@react-navigation/native';
 import React, { useCallback, useEffect } from 'react';
 import { AppState, type AppStateStatus, StatusBar } from 'react-native';
@@ -14,6 +14,7 @@ import { useRecordStore } from '@/entities/record';
 import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
 import { OnboardingGate } from '@/features/onboarding';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
+import { createHandlePushNotification } from '@/features/push-handling';
 import { releaseWhisperContext } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
 import { initDB, NetworkStatusProvider } from '@/shared/lib';
@@ -21,32 +22,21 @@ import {
   ensurePushRegistered,
   notifyAppBackground,
   notifyAppForeground,
-  PolicyUpdateSheet,
   type PushNotificationData,
+  PushNotificationSheet,
   usePushNotifications,
-  usePushSheet,
 } from '@/shared/lib/push';
 
 import { navigationRef } from './navigation/navigationRef';
 import { RootNavigator } from './navigation/RootNavigator';
 
-function handlePushNotification(data: PushNotificationData): void {
-  if (!data?.type) return;
-
-  if (data.type === 'ai_complete') {
-    // Navigate to Inbox so user sees all completed notes
+const handlePushNotification = createHandlePushNotification({
+  navigateToMain: () => {
     if (navigationRef.isReady()) {
       navigationRef.navigate('Main');
     }
-    return;
-  }
-
-  if (data.type === 'policy_update') {
-    const message = typeof data.message === 'string' ? data.message : '';
-    usePushSheet.getState().show(message);
-    return;
-  }
-}
+  },
+});
 
 const App = () => {
   const theme = useAppTheme();
@@ -57,6 +47,15 @@ const App = () => {
 
   usePushNotifications({ onNotification: handleNotification });
 
+  useEffect(() => {
+    const unsubscribe = messaging().onNotificationOpenedApp((remoteMessage) => {
+      if (remoteMessage.data) {
+        handlePushNotification(remoteMessage.data as unknown as PushNotificationData);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
   const rootStyle = { flex: 1 };
   const safeAreaStyle = { backgroundColor: color.background.primary };
 
@@ -66,10 +65,9 @@ const App = () => {
         await useRecordStore.getState().load();
         BootSplash.hide({ fade: true });
 
-        const initial = await PushNotificationIOS.getInitialNotification();
-        if (initial) {
-          const data = initial.getData() as PushNotificationData | undefined;
-          if (data) handlePushNotification(data);
+        const initial = await messaging().getInitialNotification();
+        if (initial?.data) {
+          handlePushNotification(initial.data as unknown as PushNotificationData);
         }
 
         if (getHasSeenOnboarding()) {
@@ -85,9 +83,11 @@ const App = () => {
     let foregroundInterval: ReturnType<typeof setInterval> | null = null;
     let unsubscribeStore: (() => void) | null = null;
     let lastHeartbeatAt = 0;
-    // Heartbeat every 40s, TTL on server is 60s — plenty of margin
+    let lastForegroundAt = 0;
+
     const HEARTBEAT_INTERVAL_MS = 40_000;
     const HEARTBEAT_THROTTLE_MS = 35_000;
+    const FOREGROUND_ON_ACTIVE_THROTTLE_MS = 15_000;
 
     const sendForegroundHeartbeat = () => {
       if (!getHasSeenOnboarding()) return;
@@ -111,11 +111,14 @@ const App = () => {
         if (getHasSeenOnboarding()) {
           ensurePushRegistered().catch(() => {});
         }
-        // Always send heartbeat on becoming active — regardless of AI status.
-        // This covers the case where the user is in the app while AI is processing
-        // but the foreground key expired (e.g. app was backgrounded briefly).
-        lastHeartbeatAt = 0;
-        sendForegroundHeartbeat();
+        const now = Date.now();
+        const shouldSendForeground =
+          now - lastForegroundAt >= FOREGROUND_ON_ACTIVE_THROTTLE_MS || lastForegroundAt === 0;
+        if (shouldSendForeground) {
+          lastHeartbeatAt = 0;
+          sendForegroundHeartbeat();
+          lastForegroundAt = now;
+        }
         foregroundInterval = setInterval(maybeNotifyForeground, HEARTBEAT_INTERVAL_MS);
         unsubscribeStore = useRecordStore.subscribe(() => {
           if (AppState.currentState === 'active') {
@@ -133,6 +136,7 @@ const App = () => {
           if (getHasSeenOnboarding()) {
             notifyAppBackground();
           }
+          lastForegroundAt = 0;
         }
         if (state === 'background') {
           const records = useRecordStore.getState().records;
@@ -171,7 +175,7 @@ const App = () => {
                   </AppLockGate>
                 </OnboardingGate>
               </NavigationContainer>
-              <PolicyUpdateSheet />
+              <PushNotificationSheet />
             </BottomSheetModalProvider>
           </NetworkStatusProvider>
         </SafeAreaProvider>

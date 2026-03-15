@@ -1,5 +1,5 @@
 import { apiError, HttpStatus, parseJsonBody, requireAppSecret, validateDeviceId } from '@/lib/api';
-import { sendPushNotification, type PushPayload } from '@/lib/apns';
+import { sendPushNotification, type PushPayload } from '@/lib/push';
 import { getPushTokenWithLocale } from '@/lib/push-tokens';
 import { HEADER_DEVICE_ID } from '@/config/constants';
 import { NextResponse } from 'next/server';
@@ -13,7 +13,12 @@ type SendPushBody = {
   message?: unknown;
 };
 
-const VALID_TYPES: PushPayload['type'][] = ['ai_complete', 'policy_update', 'limit_warning'];
+const VALID_TYPES: PushPayload['type'][] = [
+  'ai_complete',
+  'policy_update',
+  'limit_warning',
+  'limit_exceeded',
+];
 
 export const POST = async (request: Request): Promise<NextResponse> => {
   const authError = requireAppSecret(request);
@@ -61,7 +66,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const sent = await sendPushNotification(data.token, payload, data.locale);
 
   if (!sent) {
-    console.warn('[Push] send: APNS failed', { deviceId, type: payload.type });
+    console.warn('[Push] send: failed', { deviceId, type: payload.type });
     return apiError('Failed to send push notification', HttpStatus.BAD_REQUEST);
   }
 

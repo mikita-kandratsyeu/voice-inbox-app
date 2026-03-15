@@ -23,7 +23,6 @@ import { useTranslation } from 'react-i18next';
 import {
   Alert,
   AppState,
-  Linking,
   Platform,
   RefreshControl,
   ScrollView,
@@ -42,6 +41,7 @@ import { openInAppBrowser } from '@/features/in-app-browser';
 import { exportData, importData } from '@/features/sync-data';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
 import { getAiUsage } from '@/shared/lib/ai-api';
+import { isEmbeddingAvailable } from '@/shared/lib/embeddings';
 import {
   checkMicPermission,
   type MicPermissionStatus,
@@ -313,9 +313,9 @@ export const SettingsScreen = () => {
             }
             showChevron={false}
             onPress={undefined}
-            isLast={Platform.OS !== 'ios'}
+            isLast={!isEmbeddingAvailable()}
           />
-          {Platform.OS === 'ios' && (
+          {isEmbeddingAvailable() && (
             <SettingsRow
               label={
                 isUpdatingEmbeddings

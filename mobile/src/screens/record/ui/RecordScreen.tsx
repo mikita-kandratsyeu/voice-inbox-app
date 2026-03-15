@@ -35,6 +35,7 @@ export const RecordScreen = () => {
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
   const { startTranscription } = useTranscription();
   const [showSaveModal, setShowSaveModal] = useState(false);
+  const [saveModalReason, setSaveModalReason] = useState<'user' | 'limit' | 'routeChange'>('user');
   const [title, setTitle] = useState('');
   const [appState, setAppState] = useState(AppState.currentState);
 
@@ -55,10 +56,12 @@ export const RecordScreen = () => {
   } = useRecording({
     onLimitReached: () => {
       setTitle('');
+      setSaveModalReason('limit');
       setShowSaveModal(true);
     },
     onAudioRouteChange: () => {
       setTitle('');
+      setSaveModalReason('routeChange');
       setShowSaveModal(true);
     },
     onRecordingStoppedByAppLock: (path, elapsed, elapsedMs) => {
@@ -112,12 +115,15 @@ export const RecordScreen = () => {
   const handleDonePress = async () => {
     await pauseRecording();
     setTitle('');
+    setSaveModalReason('user');
     setShowSaveModal(true);
   };
 
   const handleSaveCancel = () => {
     setShowSaveModal(false);
-    resumeRecording();
+    if (saveModalReason === 'user') {
+      resumeRecording();
+    }
   };
 
   const handleSaveConfirm = async (record: VoiceRecord) => {
@@ -171,6 +177,7 @@ export const RecordScreen = () => {
         onCancel={handleSaveCancel}
         onSave={handleSaveConfirm}
         onSaveComplete={handleSaveComplete}
+        allowResume={saveModalReason === 'user'}
       />
     </View>
   );

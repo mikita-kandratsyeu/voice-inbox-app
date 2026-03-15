@@ -4,6 +4,7 @@ export type RecordClassification = 'personal' | 'work' | 'meeting' | 'idea' | 'o
 
 export type AiResult = {
   summary: string;
+  suggestedTitle: string;
   tasks: Array<{
     title: string;
     priority: 'high' | 'medium' | 'low';
@@ -21,6 +22,7 @@ export type Message =
       id: string;
       status: 'done';
       summary: string;
+      suggestedTitle: string;
       tasks: AiResult['tasks'];
       tags: string[];
       classification?: RecordClassification;

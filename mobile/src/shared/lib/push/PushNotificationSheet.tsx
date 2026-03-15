@@ -13,12 +13,15 @@ import { usePushSheet } from './usePushSheet';
 
 const MAX_CONTENT_HEIGHT = Dimensions.get('window').height * 0.4;
 
-export const PolicyUpdateSheet = () => {
+export const PushNotificationSheet = () => {
   const { t } = useTranslation();
   const scheme = useAppTheme();
   const color = getColors(scheme);
   const insets = useSafeAreaInsets();
-  const { visible, message, hide } = usePushSheet();
+  const { visible, message, type, hide } = usePushSheet();
+
+  const title =
+    type === 'limit_exceeded' ? t('push.limitExceededTitle') : t('push.policyUpdateTitle');
   const sheetRef = useRef<BottomSheetModal>(null);
 
   useEffect(() => {
@@ -124,7 +127,7 @@ export const PolicyUpdateSheet = () => {
             marginBottom: 12,
           }}
         >
-          {t('push.policyUpdateTitle')}
+          {title}
         </Text>
 
         {Boolean(message) && (

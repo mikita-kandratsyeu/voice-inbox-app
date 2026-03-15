@@ -1,8 +1,10 @@
-import UIKit
+import FirebaseCore
+import FirebaseMessaging
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
 import RNBootSplash
+import UIKit
 import UserNotifications
 
 @main
@@ -16,6 +18,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    FirebaseApp.configure()
+
     let center = UNUserNotificationCenter.current()
     center.delegate = self
     application.registerForRemoteNotifications()
@@ -42,7 +46,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     _ application: UIApplication,
     didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
   ) {
-    RNCPushNotificationIOS.didRegisterForRemoteNotifications(withDeviceToken: deviceToken)
+    Messaging.messaging().apnsToken = deviceToken
   }
 
   func application(
@@ -50,14 +54,14 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     didReceiveRemoteNotification userInfo: [AnyHashable: Any],
     fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
   ) {
-    RNCPushNotificationIOS.didReceiveRemoteNotification(userInfo, fetchCompletionHandler: completionHandler)
+    completionHandler(.noData)
   }
 
   func application(
     _ application: UIApplication,
     didFailToRegisterForRemoteNotificationsWithError error: Error
   ) {
-    RNCPushNotificationIOS.didFailToRegisterForRemoteNotificationsWithError(error)
+    // Firebase will retry when network is available
   }
 
   func application(
@@ -73,7 +77,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     didReceive response: UNNotificationResponse,
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
-    RNCPushNotificationIOS.didReceive(response)
     completionHandler()
   }
 
@@ -88,7 +91,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
 
 class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
   override func sourceURL(for bridge: RCTBridge) -> URL? {
-    self.bundleURL()
+    bundleURL()
   }
 
   override func bundleURL() -> URL? {

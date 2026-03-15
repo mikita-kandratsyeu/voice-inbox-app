@@ -29,6 +29,7 @@ type SaveRecordModalProps = {
   onCancel: () => void;
   onSave: (record: VoiceRecord) => Promise<void> | void;
   onSaveComplete?: () => void;
+  allowResume?: boolean;
 };
 
 type DismissReason = 'none' | 'cancel' | 'save';
@@ -43,6 +44,7 @@ export const SaveRecordModal = ({
   onCancel,
   onSave,
   onSaveComplete,
+  allowResume = true,
 }: SaveRecordModalProps) => {
   const { t } = useTranslation();
   const scheme = useAppTheme();
@@ -161,20 +163,22 @@ export const SaveRecordModal = ({
         </Text>
 
         <View className="mt-1 flex-row gap-3">
-          <Button
-            variant="secondary"
-            label={t('record.continueRecording')}
-            onPress={handleCancel}
-            activeOpacity={0.8}
-            fullWidth
-            color={c}
-            containerStyle={{
-              backgroundColor: c.background.tertiary,
-              borderRadius: 12,
-            }}
-            accessibilityLabel={t('record.continueRecording')}
-            accessibilityHint={t('record.resume')}
-          />
+          {allowResume && (
+            <Button
+              variant="secondary"
+              label={t('record.continueRecording')}
+              onPress={handleCancel}
+              activeOpacity={0.8}
+              fullWidth
+              color={c}
+              containerStyle={{
+                backgroundColor: c.background.tertiary,
+                borderRadius: 12,
+              }}
+              accessibilityLabel={t('record.continueRecording')}
+              accessibilityHint={t('record.resume')}
+            />
+          )}
           <Button
             variant="primary"
             label={t('common.save')}

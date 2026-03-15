@@ -30,10 +30,13 @@ async function main() {
       .png()
       .toBuffer();
     await writeFile(inputPath, output);
+    // eslint-disable-next-line no-console
     console.log('Processed:', filename);
   }
 
+  // eslint-disable-next-line no-console
   console.log('Done. Alpha channel removed from all app icons.');
+  // eslint-disable-next-line no-console
   console.log('\nImportant: In Xcode, do Product → Clean Build Folder (⇧⌘K), then archive again.');
 }
 

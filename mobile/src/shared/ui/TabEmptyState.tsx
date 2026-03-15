@@ -45,21 +45,23 @@ export const TabEmptyState = ({
       >
         {title}
       </Text>
-      <Text className="text-center text-sm leading-5" style={{ color: color.text.secondary }}>
-        {description}
-      </Text>
       {!hideButton && buttonLabel && onPress && (
-        <Button
-          variant="primary"
-          size="lg"
-          icon={buttonIcon}
-          label={buttonLabel}
-          color={color}
-          onPress={onPress}
-          activeOpacity={0.85}
-          disabled={disabled}
-          className="mt-2"
-        />
+        <>
+          <Text className="text-center text-sm leading-5" style={{ color: color.text.secondary }}>
+            {description}
+          </Text>
+          <Button
+            variant="primary"
+            size="lg"
+            icon={buttonIcon}
+            label={buttonLabel}
+            color={color}
+            onPress={onPress}
+            activeOpacity={0.85}
+            disabled={disabled}
+            className="mt-2"
+          />
+        </>
       )}
       {hint !== undefined && (
         <View className="flex-row items-center gap-1">

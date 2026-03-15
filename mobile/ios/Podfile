@@ -1,7 +1,5 @@
-# Disable prebuilt React Core - fixes RCTBridgeModule.h header not found with some native modules
 ENV['RCT_USE_PREBUILT_RNCORE'] = '0'
 
-# Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
     "react-native/scripts/react_native_pods.rb",
@@ -14,25 +12,28 @@ require Pod::Executable.execute_command('node', ['-p',
     {paths: [process.argv[1]]},
   )', __dir__]).strip
 
-platform :ios, '17.0'
+platform :ios, '16.3'
+
 prepare_react_native_project!
+
 setup_permissions([
   'Microphone',
 ])
 
-linkage = ENV['USE_FRAMEWORKS']
-if linkage != nil
-  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
-  use_frameworks! :linkage => linkage.to_sym
-end
+linkage = ENV['USE_FRAMEWORKS'] || 'static'
+Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+use_frameworks! :linkage => linkage.to_sym
+$RNFirebaseAsStaticFramework = true
 
 target 'VoiceInboxApp' do
   config = use_native_modules!
 
+  pod 'GoogleUtilities', :modular_headers => true
+
   use_react_native!(
     :path => config[:reactNativePath],
-    # An absolute path to your application root.
-    :app_path => "#{Pod::Config.instance.installation_root}/.."
+    :app_path => "#{Pod::Config.instance.installation_root}/..",
+    :new_arch_enabled => true
   )
 
   post_install do |installer|
@@ -40,11 +41,72 @@ target 'VoiceInboxApp' do
       installer,
       config[:reactNativePath],
       :mac_catalyst_enabled => false,
-      # :ccache_enabled => true
     )
+
     installer.pods_project.targets.each do |target|
-      target.build_configurations.each do |config|
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '16.3'
+      target.build_configurations.each do |build_config|
+        build_config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
+        build_config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+      end
+    end
+
+    jsitooling_include = '$(PODS_ROOT)/../../node_modules/react-native/ReactCommon/jsitooling'
+    %w[RNWorklets RNReanimated].each do |pod_name|
+      Dir.glob(File.join(installer.sandbox.root, 'Target Support Files', pod_name, '*.xcconfig')).each do |xcconfig_path|
+        content = File.read(xcconfig_path)
+        unless content.include?(jsitooling_include)
+          content.sub!(/^HEADER_SEARCH_PATHS = (.*)$/) do |m|
+            "HEADER_SEARCH_PATHS = #{$1} \"#{jsitooling_include}\""
+          end
+          File.write(xcconfig_path, content)
+          Pod::UI.puts "Added jsitooling to HEADER_SEARCH_PATHS in #{pod_name}/#{File.basename(xcconfig_path)}".green
+        end
+      end
+    end
+
+    pods_to_fix = ['llama-rn', 'whisper-rn', 'op-sqlite']
+    installer.pods_project.targets.each do |t|
+      begin
+        next unless pods_to_fix.include?(t.name) || t.name =~ /llama|whisper|op-sqlite/i
+
+        t.build_phases.select { |p|
+          p.isa == 'PBXCopyFilesBuildPhase' &&
+          p.respond_to?(:dstSubfolderSpec) &&
+          p.dstSubfolderSpec.to_s == '16'
+        }.each do |phase|
+          Pod::UI.warn "[#{t.name}] Removing Copy Files → Headers phase"
+          t.build_phases.delete(phase)
+        end
+
+        headers_phases = t.build_phases.select { |p| p.isa == 'PBXHeadersBuildPhase' }
+        if headers_phases.count > 1
+          headers_phases[1..-1].each do |phase|
+            Pod::UI.warn "[#{t.name}] Removing extra Headers phase"
+            t.build_phases.delete(phase)
+          end
+        end
+
+        headers_phase = t.build_phases.find { |p| p.isa == 'PBXHeadersBuildPhase' }
+        if headers_phase && headers_phase.respond_to?(:files) && headers_phase.files
+          seen = {}
+          headers_phase.files.dup.each do |file_ref|
+            key = if file_ref.respond_to?(:display_name)
+              file_ref.display_name
+            elsif file_ref.respond_to?(:file_ref) && file_ref.file_ref
+              file_ref.file_ref.display_name
+            else
+              file_ref.uuid.to_s
+            end
+            if seen[key]
+              Pod::UI.warn "[#{t.name}] Removing duplicate header: #{key}"
+              headers_phase.files.delete(file_ref)
+            else
+              seen[key] = true
+            end
+          end
+        end
+      rescue => e
+        Pod::UI.warn "[#{t.name}] Cleanup skipped: #{e}"
       end
     end
   end
