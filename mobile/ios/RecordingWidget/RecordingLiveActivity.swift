@@ -1,5 +1,4 @@
 import ActivityKit
-import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -11,64 +10,62 @@ struct RecordingLiveActivity: Widget {
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     Image(systemName: "mic.fill")
-                        .foregroundColor(.red)
-                        .font(.title2)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.red)
+                        .frame(maxHeight: .infinity)
+                        .padding(.leading, 4)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    if !context.state.isStopped {
-                        Button(intent: StopRecordingIntent()) {
-                            Image(systemName: "stop.fill")
-                                .foregroundColor(.white)
-                                .padding(6)
-                                .background(Color.red)
-                                .clipShape(Circle())
-                        }
-                        .buttonStyle(.plain)
+                    if context.state.isStopped {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 20))
+                            .foregroundStyle(.green)
+                            .frame(maxHeight: .infinity)
+                            .padding(.trailing, 4)
                     }
                 }
                 DynamicIslandExpandedRegion(.center) {
                     if context.state.isStopped {
-                        HStack(spacing: 6) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.green)
-                            Text("Recording saved")
-                                .font(.subheadline)
-                                .foregroundColor(.primary)
-                        }
+                        Label(NSLocalizedString("recording.saved.short", comment: ""), systemImage: "checkmark.circle.fill")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(.green)
+                            .frame(maxHeight: .infinity)
                     } else {
-                        Text(timerText(seconds: context.state.elapsedSeconds))
-                            .font(.title3.monospacedDigit())
-                            .foregroundColor(.primary)
+                        VStack(spacing: 1) {
+                            Text(NSLocalizedString("recording.title", comment: ""))
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(.white)
+                            Text("Voice Inbox AI")
+                                .font(.system(size: 11))
+                                .foregroundStyle(.white.opacity(0.45))
+                        }
+                        .frame(maxHeight: .infinity)
                     }
                 }
             } compactLeading: {
-                Image(systemName: context.state.isStopped ? "checkmark.circle.fill" : "mic.fill")
-                    .foregroundColor(context.state.isStopped ? .green : .red)
+                Image(systemName: context.state.isStopped ? "checkmark" : "mic.fill")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(context.state.isStopped ? .green : .red)
             } compactTrailing: {
                 if context.state.isStopped {
-                    EmptyView()
+                    Text(NSLocalizedString("recording.saved.short", comment: ""))
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.green)
                 } else {
-                    Text(timerText(seconds: context.state.elapsedSeconds))
-                        .font(.caption.monospacedDigit())
-                        .foregroundColor(.primary)
+                    Text(NSLocalizedString("recording.indicator", comment: ""))
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.red)
                 }
             } minimal: {
                 Image(systemName: context.state.isStopped ? "checkmark.circle.fill" : "mic.fill")
-                    .foregroundColor(context.state.isStopped ? .green : .red)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(context.state.isStopped ? .green : .red)
             }
         }
     }
-
-    private func timerText(seconds: Int) -> String {
-        let h = seconds / 3600
-        let m = (seconds % 3600) / 60
-        let s = seconds % 60
-        if h > 0 {
-            return String(format: "%d:%02d:%02d", h, m, s)
-        }
-        return String(format: "%02d:%02d", m, s)
-    }
 }
+
+// MARK: - Lock Screen View
 
 private struct LockScreenView: View {
     let context: ActivityViewContext<RecordingActivityAttributes>
@@ -77,71 +74,81 @@ private struct LockScreenView: View {
         if context.state.isStopped {
             SavedView()
         } else {
-            RecordingView(elapsedSeconds: context.state.elapsedSeconds)
+            RecordingView()
         }
     }
 }
 
 private struct RecordingView: View {
-    let elapsedSeconds: Int
-
     var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: "mic.fill")
-                .font(.title)
-                .foregroundColor(.red)
+        HStack(alignment: .center, spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(Color.red.opacity(0.12))
+                    .frame(width: 52, height: 52)
+                Image(systemName: "mic.fill")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(.red)
+            }
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Recording")
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                Text(timerText(seconds: elapsedSeconds))
-                    .font(.subheadline.monospacedDigit())
-                    .foregroundColor(.secondary)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Voice Inbox AI")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                Text(NSLocalizedString("recording.title", comment: ""))
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.primary)
             }
 
             Spacer()
-
-            Button(intent: StopRecordingIntent()) {
-                Label("Stop", systemImage: "stop.fill")
-                    .font(.subheadline.bold())
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(Color.red)
-                    .clipShape(Capsule())
-            }
-            .buttonStyle(.plain)
         }
-        .padding()
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
         .activityBackgroundTint(Color(UIColor.systemBackground))
-    }
-
-    private func timerText(seconds: Int) -> String {
-        let h = seconds / 3600
-        let m = (seconds % 3600) / 60
-        let s = seconds % 60
-        if h > 0 {
-            return String(format: "%d:%02d:%02d", h, m, s)
-        }
-        return String(format: "%02d:%02d", m, s)
     }
 }
 
 private struct SavedView: View {
     var body: some View {
-        HStack(spacing: 16) {
-            Image(systemName: "checkmark.circle.fill")
-                .font(.title)
-                .foregroundColor(.green)
+        HStack(alignment: .center, spacing: 14) {
+            ZStack {
+                Circle()
+                    .fill(Color.green.opacity(0.12))
+                    .frame(width: 52, height: 52)
+                Image(systemName: "checkmark")
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundStyle(.green)
+            }
 
-            Text("Recording saved")
-                .font(.headline)
-                .foregroundColor(.primary)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Voice Inbox AI")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                Text(NSLocalizedString("recording.saved", comment: ""))
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.primary)
+            }
 
             Spacer()
         }
-        .padding()
+        .padding(.horizontal, 18)
+        .padding(.vertical, 14)
         .activityBackgroundTint(Color(UIColor.systemBackground))
+    }
+}
+
+// MARK: - Pulsing dot animation
+
+private struct PulsingDot: View {
+    @State private var pulsing = false
+
+    var body: some View {
+        Circle()
+            .fill(Color.red)
+            .frame(width: 7, height: 7)
+            .scaleEffect(pulsing ? 1.4 : 1.0)
+            .opacity(pulsing ? 0.5 : 1.0)
+            .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: pulsing)
+            .onAppear { pulsing = true }
     }
 }

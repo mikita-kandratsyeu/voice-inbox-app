@@ -51,7 +51,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     continue userActivity: NSUserActivity,
     restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
   ) -> Bool {
-    if userActivity.activityType == "StopRecordingIntent" {
+    let stopTypes = [
+      "voiceinbox.stop-recording",
+      "com.mkandratsyeu.voiceinboxai.StopRecordingIntent",
+    ]
+    if stopTypes.contains(userActivity.activityType) {
       if let url = URL(string: "voiceinbox://stop-recording") {
         RCTLinkingManager.application(application, open: url, options: [:])
       }

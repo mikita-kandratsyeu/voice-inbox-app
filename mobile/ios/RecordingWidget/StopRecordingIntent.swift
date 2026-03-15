@@ -6,6 +6,9 @@ struct StopRecordingIntent: AppIntent {
     static var openAppWhenRun: Bool = true
 
     func perform() async throws -> some IntentResult {
+        let activity = NSUserActivity(activityType: "voiceinbox.stop-recording")
+        activity.userInfo = ["action": "stop-recording"]
+        activity.becomeCurrent()
         return .result()
     }
 }

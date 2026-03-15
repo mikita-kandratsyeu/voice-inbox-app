@@ -1,0 +1,6 @@
+/* Live Activity */
+"recording.title" = "Запись...";
+"recording.stop" = "Стоп";
+"recording.saved" = "Запись сохранена";
+"recording.saved.short" = "Сохранено";
+"recording.indicator" = "REC";

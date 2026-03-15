@@ -23,6 +23,7 @@
 		RW02000000000005 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A6F4CEC2F64113A00297CB8 /* WidgetKit.framework */; };
 		RW02000000000006 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A6F4CEE2F64113B00297CB8 /* SwiftUI.framework */; };
 		RW02000000000007 /* RecordingWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = RF02000000000010 /* RecordingWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		RW02000000000008 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = RF02000000000030 /* Localizable.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,12 +71,15 @@
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		RF01000000000001 /* RecordingLiveActivityModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingLiveActivityModule.swift; path = VoiceInboxApp/RecordingLiveActivityModule.swift; sourceTree = "<group>"; };
 		RF01000000000002 /* RecordingLiveActivityModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = RecordingLiveActivityModule.m; path = VoiceInboxApp/RecordingLiveActivityModule.m; sourceTree = "<group>"; };
-		RF02000000000001 /* RecordingActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingActivityAttributes.swift; path = RecordingActivityAttributes.swift; sourceTree = "<group>"; };
-		RF02000000000002 /* RecordingLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingLiveActivity.swift; path = RecordingLiveActivity.swift; sourceTree = "<group>"; };
-		RF02000000000003 /* StopRecordingIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = StopRecordingIntent.swift; path = StopRecordingIntent.swift; sourceTree = "<group>"; };
-		RF02000000000004 /* RecordingWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingWidgetBundle.swift; path = RecordingWidgetBundle.swift; sourceTree = "<group>"; };
+		RF02000000000001 /* RecordingActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingActivityAttributes.swift; sourceTree = "<group>"; };
+		RF02000000000002 /* RecordingLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingLiveActivity.swift; sourceTree = "<group>"; };
+		RF02000000000003 /* StopRecordingIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StopRecordingIntent.swift; sourceTree = "<group>"; };
+		RF02000000000004 /* RecordingWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingWidgetBundle.swift; sourceTree = "<group>"; };
 		RF02000000000010 /* RecordingWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RecordingWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		RF02000000000020 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = Info.plist; sourceTree = "<group>"; };
+		RF02000000000020 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		RF02000000000031 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		RF02000000000032 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		RF02000000000030 /* Localizable.strings */ = {isa = PBXVariantGroup; children = (RF02000000000031 /* en */, RF02000000000032 /* ru */); name = Localizable.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -87,7 +91,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		RF02000000000030 /* Frameworks */ = {
+		RF02000000000035 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -179,6 +183,7 @@
 				RF02000000000003 /* StopRecordingIntent.swift */,
 				RF02000000000004 /* RecordingWidgetBundle.swift */,
 				RF02000000000020 /* Info.plist */,
+				RF02000000000030 /* Localizable.strings */,
 			);
 			path = RecordingWidget;
 			sourceTree = "<group>";
@@ -194,7 +199,6 @@
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
-				2AB3179A2F647219005128A8 /* Run Script */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				71C7F2605B84F11347DF5229 /* [CP] Embed Pods Frameworks */,
 				75D5911B8AA7F93868B8B906 /* [CP] Copy Pods Resources */,
@@ -215,7 +219,7 @@
 			buildConfigurationList = RF02000000000070 /* Build configuration list for PBXNativeTarget "RecordingWidget" */;
 			buildPhases = (
 				F6624E5AFFFBFB2A64982127 /* [CP] Check Pods Manifest.lock */,
-				RF02000000000030 /* Frameworks */,
+				RF02000000000035 /* Frameworks */,
 				RF02000000000080 /* Sources */,
 				RF02000000000090 /* Resources */,
 			);
@@ -251,6 +255,7 @@
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				ru,
 				Base,
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
@@ -280,6 +285,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				RW02000000000008 /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -302,26 +308,6 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nif [ \"${CONFIGURATION}\" = \"Release\" ]; then\n  export APP_ENV=production\nelse\n  export APP_ENV=development\nfi\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"\\\"$WITH_ENVIRONMENT\\\" \\\"$REACT_NATIVE_XCODE\\\"\"\n";
 		};
-		2AB3179A2F647219005128A8 /* Run Script */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Run Script";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "if [ \"${CONFIGURATION}\" == \"Release\" ]; then\n  echo \".env.production\" > /tmp/envfile\nelse\n  echo \".env\" > /tmp/envfile\nfi\n";
-			showEnvVarsInLog = 0;
-		};
 		71C7F2605B84F11347DF5229 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -330,9 +316,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VoiceInboxApp/Pods-VoiceInboxApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VoiceInboxApp/Pods-VoiceInboxApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -347,9 +337,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VoiceInboxApp/Pods-VoiceInboxApp-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VoiceInboxApp/Pods-VoiceInboxApp-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

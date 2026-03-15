@@ -47,6 +47,10 @@
 	<string>Adding tasks from notes to Reminders</string>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>voiceinbox.stop-recording</string>
+	</array>
 	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
 	<true/>
 	<key>RCTNewArchEnabled</key>
