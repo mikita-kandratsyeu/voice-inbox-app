@@ -463,6 +463,7 @@
   "device": {
     "insufficientRam": "Недостаточно RAM (нужно ~{{ required }}, доступно {{ available }})",
     "lowDiskSpace": "Мало свободного места (нужно ~{{ required }}, доступно {{ available }})",
+    "lowRamDevice": "Этой модели нужно больше RAM, чем может предоставить ваше устройство",
     "mb": "{{ value }} MB",
     "gb": "{{ value }} GB"
   },

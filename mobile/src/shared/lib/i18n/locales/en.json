@@ -463,6 +463,7 @@
   "device": {
     "insufficientRam": "Insufficient RAM (need ~{{ required }}, available {{ available }})",
     "lowDiskSpace": "Low free space (need ~{{ required }}, available {{ available }})",
+    "lowRamDevice": "This model needs more RAM than your device can provide",
     "mb": "{{ value }} MB",
     "gb": "{{ value }} GB"
   },
