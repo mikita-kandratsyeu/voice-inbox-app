@@ -58,7 +58,7 @@ export type AiMessageResult =
   | { ok: true; result: AiProcessingResult }
   | { ok: false; error: string };
 
-const POLL_INTERVAL_MS = 2000;
+const POLL_INTERVAL_MS = 4000;
 const POLL_TIMEOUT_MS = 120_000;
 
 type MessageResponse =

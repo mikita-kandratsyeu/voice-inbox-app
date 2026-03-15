@@ -34,7 +34,6 @@ function handlePushNotification(data: PushNotificationData): void {
   if (!data?.type) return;
 
   if (data.type === 'ai_complete') {
-    // Navigate to Inbox so user sees all completed notes
     if (navigationRef.isReady()) {
       navigationRef.navigate('Main');
     }
@@ -93,9 +92,11 @@ const App = () => {
     let foregroundInterval: ReturnType<typeof setInterval> | null = null;
     let unsubscribeStore: (() => void) | null = null;
     let lastHeartbeatAt = 0;
-    // Heartbeat every 40s, TTL on server is 60s — plenty of margin
+    let lastForegroundAt = 0;
+
     const HEARTBEAT_INTERVAL_MS = 40_000;
     const HEARTBEAT_THROTTLE_MS = 35_000;
+    const FOREGROUND_ON_ACTIVE_THROTTLE_MS = 15_000;
 
     const sendForegroundHeartbeat = () => {
       if (!getHasSeenOnboarding()) return;
@@ -119,11 +120,14 @@ const App = () => {
         if (getHasSeenOnboarding()) {
           ensurePushRegistered().catch(() => {});
         }
-        // Always send heartbeat on becoming active — regardless of AI status.
-        // This covers the case where the user is in the app while AI is processing
-        // but the foreground key expired (e.g. app was backgrounded briefly).
-        lastHeartbeatAt = 0;
-        sendForegroundHeartbeat();
+        const now = Date.now();
+        const shouldSendForeground =
+          now - lastForegroundAt >= FOREGROUND_ON_ACTIVE_THROTTLE_MS || lastForegroundAt === 0;
+        if (shouldSendForeground) {
+          lastHeartbeatAt = 0;
+          sendForegroundHeartbeat();
+          lastForegroundAt = now;
+        }
         foregroundInterval = setInterval(maybeNotifyForeground, HEARTBEAT_INTERVAL_MS);
         unsubscribeStore = useRecordStore.subscribe(() => {
           if (AppState.currentState === 'active') {
@@ -141,6 +145,7 @@ const App = () => {
           if (getHasSeenOnboarding()) {
             notifyAppBackground();
           }
+          lastForegroundAt = 0;
         }
         if (state === 'background') {
           const records = useRecordStore.getState().records;

@@ -7,14 +7,13 @@ import { fetch } from '@/shared/lib/fetch';
 import { i18n } from '@/shared/lib/i18n';
 
 const PUSH_REGISTER_URL = `${WEB_API_URL}/api/push/register`;
+const PUSH_REGISTER_THROTTLE_MS = 5 * 60 * 1000;
+
+let lastRegisteredToken: string | null = null;
+let lastRegisterTime = 0;
 
 export type PushPermissionStatus = 'granted' | 'denied' | 'not-determined';
 
-/**
- * Registers push token with backend if permission is granted.
- * Call only when onboarding is done (caller must check).
- * Used on app load and when app becomes active.
- */
 export async function ensurePushRegistered(): Promise<void> {
   if (Platform.OS !== 'ios') return;
 
@@ -22,8 +21,17 @@ export async function ensurePushRegistered(): Promise<void> {
   if (status !== 'granted') return;
 
   const token = await registerForPushToken();
-  if (token) {
-    await sendTokenToBackend(token);
+  if (!token) return;
+
+  const now = Date.now();
+  if (lastRegisteredToken === token && now - lastRegisterTime < PUSH_REGISTER_THROTTLE_MS) {
+    return;
+  }
+
+  const ok = await sendTokenToBackend(token);
+  if (ok) {
+    lastRegisteredToken = token;
+    lastRegisterTime = now;
   }
 }
 
