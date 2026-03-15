@@ -16,7 +16,7 @@ export type PushNotificationData = {
 };
 
 function extractData(remoteMessage: {
-  data?: Record<string, string> | null;
+  data?: Record<string, string | object> | null;
 }): PushNotificationData | undefined {
   const data = remoteMessage.data;
   if (!data || typeof data !== 'object') return undefined;
