@@ -91,6 +91,7 @@ export async function sendTokenToBackend(token: string): Promise<boolean> {
       body: JSON.stringify({
         deviceToken: token,
         locale: (i18n.language ?? 'en').slice(0, 2),
+        platform: Platform.OS,
       }),
     });
 

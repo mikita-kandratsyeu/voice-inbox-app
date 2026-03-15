@@ -13,7 +13,10 @@ import { NextResponse } from 'next/server';
 type RegisterBody = {
   deviceToken?: unknown;
   locale?: unknown;
+  platform?: unknown;
 };
+
+const VALID_PLATFORMS = ['ios', 'android'] as const;
 
 export const POST = async (request: Request): Promise<NextResponse> => {
   const authError = requireAppSecret(request);
@@ -52,7 +55,13 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const locale =
     typeof body.locale === 'string' && /^[a-z]{2}$/.test(body.locale) ? body.locale : null;
 
-  await savePushToken(deviceIdTrimmed, deviceToken, locale);
+  const platform =
+    typeof body.platform === 'string' &&
+    VALID_PLATFORMS.includes(body.platform as 'ios' | 'android')
+      ? (body.platform as 'ios' | 'android')
+      : null;
+
+  await savePushToken(deviceIdTrimmed, deviceToken, locale, platform);
 
   return NextResponse.json({ ok: true });
 };

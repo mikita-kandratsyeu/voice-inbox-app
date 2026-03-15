@@ -37,19 +37,35 @@ export async function isAppInForeground(deviceId: string): Promise<boolean> {
   return value != null;
 }
 
-type StoredPushData = { token: string; locale?: string | null };
+export type PushPlatform = 'ios' | 'android';
+
+type StoredPushData = {
+  token: string;
+  locale?: string | null;
+  platform?: PushPlatform | null;
+};
 
 export async function savePushToken(
   deviceId: string,
   deviceToken: string,
   locale?: string | null,
+  platform?: PushPlatform | null,
 ): Promise<void> {
   const key = getPushTokenKey(deviceId);
-  const data: StoredPushData = { token: deviceToken, locale: locale ?? null };
+  const data: StoredPushData = {
+    token: deviceToken,
+    locale: locale ?? null,
+    platform: platform ?? null,
+  };
   await redis.set(key, JSON.stringify(data), { ex: PUSH_TOKEN_TTL_SECONDS });
 
   if (process.env.NODE_ENV !== 'production') {
-    console.log('[Push] savePushToken', { deviceId, key, locale: data.locale });
+    console.log('[Push] savePushToken', {
+      deviceId,
+      key,
+      locale: data.locale,
+      platform: data.platform,
+    });
   }
 }
 
@@ -105,7 +121,7 @@ export async function collectPendingAndUnlock(deviceId: string): Promise<number>
 
 export async function getPushTokenWithLocale(
   deviceId: string,
-): Promise<{ token: string; locale: string | null } | null> {
+): Promise<{ token: string; locale: string | null; platform: PushPlatform | null } | null> {
   const key = getPushTokenKey(deviceId);
   const value = await redis.get(key);
 
@@ -129,14 +145,20 @@ export async function getPushTokenWithLocale(
       try {
         data = JSON.parse(value) as StoredPushData;
       } catch {
-        return { token: value, locale: null };
+        return { token: value, locale: null, platform: null };
       }
     } else {
-      return { token: value, locale: null };
+      return { token: value, locale: null, platform: null };
     }
   }
 
-  return data?.token ? { token: data.token, locale: data.locale ?? null } : null;
+  return data?.token
+    ? {
+        token: data.token,
+        locale: data.locale ?? null,
+        platform: data.platform ?? null,
+      }
+    : null;
 }
 
 export async function sendLimitExceededPush(deviceId: string): Promise<void> {
