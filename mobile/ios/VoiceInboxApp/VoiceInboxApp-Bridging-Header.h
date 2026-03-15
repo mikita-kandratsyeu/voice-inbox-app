@@ -5,5 +5,4 @@
 //  Bridging header for Objective-C modules used in Swift.
 //
 
-#import <RNCPushNotificationIOS.h>
 #import <RNFSManager.h>

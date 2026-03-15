@@ -1,7 +1,7 @@
 import '../../global.css';
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import PushNotificationIOS from '@react-native-community/push-notification-ios';
+import messaging from '@react-native-firebase/messaging';
 import { NavigationContainer } from '@react-navigation/native';
 import React, { useCallback, useEffect } from 'react';
 import { AppState, type AppStateStatus, StatusBar } from 'react-native';
@@ -57,6 +57,15 @@ const App = () => {
 
   usePushNotifications({ onNotification: handleNotification });
 
+  useEffect(() => {
+    const unsubscribe = messaging().onNotificationOpenedApp((remoteMessage) => {
+      if (remoteMessage.data) {
+        handlePushNotification(remoteMessage.data as unknown as PushNotificationData);
+      }
+    });
+    return unsubscribe;
+  }, []);
+
   const rootStyle = { flex: 1 };
   const safeAreaStyle = { backgroundColor: color.background.primary };
 
@@ -66,10 +75,9 @@ const App = () => {
         await useRecordStore.getState().load();
         BootSplash.hide({ fade: true });
 
-        const initial = await PushNotificationIOS.getInitialNotification();
-        if (initial) {
-          const data = initial.getData() as PushNotificationData | undefined;
-          if (data) handlePushNotification(data);
+        const initial = await messaging().getInitialNotification();
+        if (initial?.data) {
+          handlePushNotification(initial.data as unknown as PushNotificationData);
         }
 
         if (getHasSeenOnboarding()) {

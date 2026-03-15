@@ -1,5 +1,4 @@
-import type { PushNotification } from '@react-native-community/push-notification-ios';
-import PushNotificationIOS from '@react-native-community/push-notification-ios';
+import messaging from '@react-native-firebase/messaging';
 import { useCallback, useEffect } from 'react';
 import { Platform } from 'react-native';
 
@@ -15,6 +14,14 @@ export type PushNotificationData = {
   message?: string;
   [key: string]: unknown;
 };
+
+function extractData(remoteMessage: {
+  data?: Record<string, string> | null;
+}): PushNotificationData | undefined {
+  const data = remoteMessage.data;
+  if (!data || typeof data !== 'object') return undefined;
+  return data as unknown as PushNotificationData;
+}
 
 export function usePushNotifications(options?: {
   onNotification?: (data: PushNotificationData) => void;
@@ -38,19 +45,14 @@ export function usePushNotifications(options?: {
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
 
-    const onRemoteNotification = (notification: PushNotification) => {
-      const data = notification.getData() as PushNotificationData | undefined;
+    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+      const data = extractData(remoteMessage);
       if (data && onNotification) {
         onNotification(data);
       }
-      notification.finish(PushNotificationIOS.FetchResult.NoData);
-    };
+    });
 
-    PushNotificationIOS.addEventListener('notification', onRemoteNotification);
-
-    return () => {
-      PushNotificationIOS.removeEventListener('notification');
-    };
+    return unsubscribe;
   }, [onNotification]);
 
   return { setupAndRegister };
