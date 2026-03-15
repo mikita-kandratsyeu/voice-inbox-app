@@ -23,7 +23,6 @@ import { useTranslation } from 'react-i18next';
 import {
   Alert,
   AppState,
-  Linking,
   Platform,
   RefreshControl,
   ScrollView,
