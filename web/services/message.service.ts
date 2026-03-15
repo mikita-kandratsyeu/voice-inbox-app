@@ -49,6 +49,7 @@ export const createMessage = async (
         id,
         status: 'done',
         summary: result.summary,
+        suggestedTitle: result.suggestedTitle,
         tasks: result.tasks,
         tags: result.tags,
         ...(result.classification && { classification: result.classification }),
