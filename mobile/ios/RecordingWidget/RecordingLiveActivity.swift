@@ -9,51 +9,68 @@ struct RecordingLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: "mic.fill")
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(.red)
-                        .frame(maxHeight: .infinity)
-                        .padding(.leading, 6)
+                    if !context.state.isStopped {
+                        Image(systemName: "mic.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.red)
+                            .frame(maxHeight: .infinity)
+                            .padding(.leading, 6)
+                    }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    EmptyView()
+                    if context.state.isStopped {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(.green)
+                            .frame(maxHeight: .infinity)
+                            .padding(.trailing, 6)
+                    } else {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(Color.red)
+                                .frame(width: 7, height: 7)
+                            Text(NSLocalizedString("recording.indicator", comment: ""))
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(.red)
+                        }
+                        .frame(maxHeight: .infinity)
+                        .padding(.trailing, 6)
+                    }
                 }
                 DynamicIslandExpandedRegion(.center) {
                     if context.state.isStopped {
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                            Text(NSLocalizedString("recording.saved", comment: ""))
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(.white)
-                        }
-                        .frame(maxHeight: .infinity)
+//                        VStack(spacing: 2) {
+//                            Text(NSLocalizedString("recording.saved", comment: ""))
+//                                .font(.system(size: 15, weight: .semibold))
+//                                .foregroundStyle(.white)
+//                            Text("Voice Inbox AI")
+//                                .font(.system(size: 10))
+//                                .foregroundStyle(.white.opacity(0.4))
+//                        }
+//                        .frame(maxHeight: .infinity)
                     } else {
-                        VStack(spacing: 2) {
-                            Text(NSLocalizedString("recording.title", comment: ""))
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(.white)
-                            Text("Voice Inbox AI")
-                                .font(.system(size: 10))
-                                .foregroundStyle(.white.opacity(0.4))
-                        }
-                        .frame(maxHeight: .infinity)
+                        Text(NSLocalizedString("recording.title", comment: ""))
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxHeight: .infinity)
                     }
                 }
             } compactLeading: {
                 Image(systemName: context.state.isStopped ? "checkmark.circle.fill" : "mic.fill")
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(context.state.isStopped ? .green : .red)
             } compactTrailing: {
                 if context.state.isStopped {
                     Text(NSLocalizedString("recording.saved.short", comment: ""))
-                        .font(.system(size: 11, weight: .medium))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.green)
                 } else {
-                    HStack(spacing: 3) {
-                        PulsingDot()
+                    HStack(spacing: 4) {
+                        Circle()
+                            .fill(Color.red)
+                            .frame(width: 6, height: 6)
                         Text(NSLocalizedString("recording.indicator", comment: ""))
-                            .font(.system(size: 11, weight: .bold))
+                            .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(.red)
                     }
                 }
@@ -74,7 +91,7 @@ private struct LockScreenView: View {
     var body: some View {
         Group {
             if context.state.isStopped {
-                SavedView()
+//                SavedView()
             } else {
                 RecordingView()
             }
@@ -85,7 +102,6 @@ private struct LockScreenView: View {
 private struct RecordingView: View {
     var body: some View {
         HStack(spacing: 0) {
-            // Left — icon
             ZStack {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(Color.red.opacity(0.12))
@@ -96,31 +112,24 @@ private struct RecordingView: View {
                     .symbolEffect(.pulse)
             }
 
-            // Center — text
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Voice Inbox AI")
-                    .font(.system(size: 11, weight: .regular))
-                    .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
-                    .kerning(0.4)
-                Text(NSLocalizedString("recording.title", comment: ""))
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.primary)
-            }
-            .padding(.leading, 14)
+            Text(NSLocalizedString("recording.title", comment: ""))
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(.primary)
+                .padding(.leading, 14)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
 
-            Spacer()
-
-            // Right — duration indicator
-            VStack(spacing: 3) {
-                PulsingDot(color: .red, size: 9)
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(Color.red)
+                    .frame(width: 7, height: 7)
                 Text(NSLocalizedString("recording.indicator", comment: ""))
                     .font(.system(size: 11, weight: .bold, design: .monospaced))
                     .foregroundStyle(.red)
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .frame(maxHeight: .infinity)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .activityBackgroundTint(Color(UIColor.systemBackground))
     }
 }
@@ -137,26 +146,19 @@ private struct SavedView: View {
                     .foregroundStyle(.green)
             }
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Voice Inbox AI")
-                    .font(.system(size: 11, weight: .regular))
-                    .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
-                    .kerning(0.4)
-                Text(NSLocalizedString("recording.saved", comment: ""))
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(.primary)
-            }
-            .padding(.leading, 14)
-
-            Spacer()
+            Text(NSLocalizedString("recording.saved", comment: ""))
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(.primary)
+                .padding(.leading, 14)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
 
             Image(systemName: "checkmark.circle.fill")
-                .font(.system(size: 28))
+                .font(.system(size: 26))
                 .foregroundStyle(.green.opacity(0.8))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .frame(maxHeight: .infinity)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
         .activityBackgroundTint(Color(UIColor.systemBackground))
     }
 }
