@@ -70,12 +70,12 @@
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		RF01000000000001 /* RecordingLiveActivityModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingLiveActivityModule.swift; path = VoiceInboxApp/RecordingLiveActivityModule.swift; sourceTree = "<group>"; };
 		RF01000000000002 /* RecordingLiveActivityModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = RecordingLiveActivityModule.m; path = VoiceInboxApp/RecordingLiveActivityModule.m; sourceTree = "<group>"; };
-		RF02000000000001 /* RecordingActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingActivityAttributes.swift; path = RecordingWidget/RecordingActivityAttributes.swift; sourceTree = "<group>"; };
-		RF02000000000002 /* RecordingLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingLiveActivity.swift; path = RecordingWidget/RecordingLiveActivity.swift; sourceTree = "<group>"; };
-		RF02000000000003 /* StopRecordingIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = StopRecordingIntent.swift; path = RecordingWidget/StopRecordingIntent.swift; sourceTree = "<group>"; };
-		RF02000000000004 /* RecordingWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingWidgetBundle.swift; path = RecordingWidget/RecordingWidgetBundle.swift; sourceTree = "<group>"; };
+		RF02000000000001 /* RecordingActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingActivityAttributes.swift; path = RecordingActivityAttributes.swift; sourceTree = "<group>"; };
+		RF02000000000002 /* RecordingLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingLiveActivity.swift; path = RecordingLiveActivity.swift; sourceTree = "<group>"; };
+		RF02000000000003 /* StopRecordingIntent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = StopRecordingIntent.swift; path = StopRecordingIntent.swift; sourceTree = "<group>"; };
+		RF02000000000004 /* RecordingWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RecordingWidgetBundle.swift; path = RecordingWidgetBundle.swift; sourceTree = "<group>"; };
 		RF02000000000010 /* RecordingWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RecordingWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		RF02000000000020 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = RecordingWidget/Info.plist; sourceTree = "<group>"; };
+		RF02000000000020 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = Info.plist; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

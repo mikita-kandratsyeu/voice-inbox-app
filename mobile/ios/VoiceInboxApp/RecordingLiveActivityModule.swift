@@ -1,6 +1,13 @@
 import ActivityKit
 import Foundation
 
+struct RecordingActivityAttributes: ActivityAttributes {
+    struct ContentState: Codable, Hashable {
+        var elapsedSeconds: Int
+        var isStopped: Bool
+    }
+}
+
 @objc(RecordingLiveActivityModule)
 class RecordingLiveActivityModule: NSObject {
 

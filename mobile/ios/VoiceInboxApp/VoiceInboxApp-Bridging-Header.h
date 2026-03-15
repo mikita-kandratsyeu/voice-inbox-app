@@ -7,3 +7,4 @@
 
 #import <RNCPushNotificationIOS.h>
 #import <RNFSManager.h>
+#import <React/RCTLinkingManager.h>
