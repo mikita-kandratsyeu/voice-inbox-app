@@ -4,6 +4,7 @@ import type { TaskItem, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
+import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
 import { pollAiMessage, postAiMessage } from '@/shared/lib/ai-api';
 
 export const useAiProcessing = () => {
@@ -13,6 +14,7 @@ export const useAiProcessing = () => {
   const updateTasks = useRecordStore((s) => s.updateTasks);
   const updateTags = useRecordStore((s) => s.updateTags);
   const updateAiExtras = useRecordStore((s) => s.updateAiExtras);
+  const renameRecord = useRecordStore((s) => s.renameRecord);
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const summaryStyle = useSettingsStore((s) => s.summaryStyle);
   const taskStrictness = useSettingsStore((s) => s.taskStrictness);
@@ -80,6 +82,7 @@ export const useAiProcessing = () => {
 
         const {
           summary,
+          suggestedTitle,
           tasks: rawTasks,
           tags,
           classification,
@@ -97,6 +100,16 @@ export const useAiProcessing = () => {
 
         await updateSummary(record.id, summary);
         await updateTasks(record.id, taskItems);
+
+        if (suggestedTitle?.trim()) {
+          const currentRecord = useRecordStore.getState().records.find((r) => r.id === record.id);
+          if (currentRecord) {
+            const standardTitle = getAutoTitleForDate(currentRecord.createdAt);
+            if (currentRecord.title === standardTitle) {
+              await renameRecord(record.id, suggestedTitle.trim());
+            }
+          }
+        }
         if (tags.length > 0) {
           await updateTags(record.id, tags);
         }
@@ -140,6 +153,7 @@ export const useAiProcessing = () => {
       updateTasks,
       updateTags,
       updateAiExtras,
+      renameRecord,
     ],
   );
 

@@ -47,6 +47,7 @@ export type RecordClassification = 'personal' | 'work' | 'meeting' | 'idea' | 'o
 
 export type AiProcessingResult = {
   summary: string;
+  suggestedTitle?: string;
   tasks: AiTask[];
   tags: string[];
   classification?: RecordClassification;
@@ -67,6 +68,7 @@ type MessageResponse =
       id: string;
       status: 'done';
       summary: string;
+      suggestedTitle?: string;
       tasks: AiTask[];
       tags: string[];
       classification?: RecordClassification;
@@ -181,6 +183,11 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
           summary: msg.summary,
           tasks: msg.tasks,
           tags: msg.tags ?? [],
+          ...('suggestedTitle' in msg &&
+          typeof (msg as { suggestedTitle?: string }).suggestedTitle === 'string' &&
+          (msg as { suggestedTitle: string }).suggestedTitle.trim()
+            ? { suggestedTitle: (msg as { suggestedTitle: string }).suggestedTitle.trim() }
+            : {}),
           ...(msg.classification && { classification: msg.classification }),
           ...(msg.keyPhrases && { keyPhrases: msg.keyPhrases }),
           ...(msg.nextSteps && { nextSteps: msg.nextSteps }),
