@@ -38,6 +38,7 @@ import { useAppLockStore } from '@/entities/app-lock';
 import { useRecordStore } from '@/entities/record';
 import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
+import { openInAppBrowser } from '@/features/in-app-browser';
 import { exportData, importData } from '@/features/sync-data';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
 import { getAiUsage } from '@/shared/lib/ai-api';
@@ -290,7 +291,7 @@ export const SettingsScreen = () => {
                   false: color.background.tertiary,
                   true: color.accent.success,
                 }}
-                thumbColor="#fff"
+                thumbColor={color.icon.onAccent}
               />
             }
             showChevron={false}
@@ -307,7 +308,7 @@ export const SettingsScreen = () => {
                   false: color.background.tertiary,
                   true: color.accent.success,
                 }}
-                thumbColor="#fff"
+                thumbColor={color.icon.onAccent}
               />
             }
             showChevron={false}
@@ -342,7 +343,6 @@ export const SettingsScreen = () => {
             isLast
           />
         </SettingsSection>
-
         <SettingsSection title={t('settings.appearance')}>
           <SettingsRow
             label={t('settings.appLanguage')}
@@ -359,7 +359,6 @@ export const SettingsScreen = () => {
             isLast
           />
         </SettingsSection>
-
         <SettingsSection title={t('settings.permissionsSection')}>
           <SettingsRow
             label={t('settings.permissionMicrophone')}
@@ -373,9 +372,9 @@ export const SettingsScreen = () => {
                   style={{
                     backgroundColor:
                       micStatus === 'granted'
-                        ? '#d1fae5'
+                        ? color.onboarding.zap.bg
                         : micStatus === 'denied'
-                          ? '#fee2e2'
+                          ? color.status.error.bg
                           : color.background.tertiary,
                   }}
                 >
@@ -384,9 +383,9 @@ export const SettingsScreen = () => {
                     style={{
                       color:
                         micStatus === 'granted'
-                          ? '#065f46'
+                          ? color.accent.success
                           : micStatus === 'denied'
-                            ? '#991b1b'
+                            ? color.status.error.text
                             : color.text.secondary,
                     }}
                   >
@@ -415,9 +414,9 @@ export const SettingsScreen = () => {
                     style={{
                       backgroundColor:
                         pushStatus === 'granted'
-                          ? '#d1fae5'
+                          ? color.onboarding.zap.bg
                           : pushStatus === 'denied'
-                            ? '#fee2e2'
+                            ? color.status.error.bg
                             : color.background.tertiary,
                     }}
                   >
@@ -426,9 +425,9 @@ export const SettingsScreen = () => {
                       style={{
                         color:
                           pushStatus === 'granted'
-                            ? '#065f46'
+                            ? color.accent.success
                             : pushStatus === 'denied'
-                              ? '#991b1b'
+                              ? color.status.error.text
                               : color.text.secondary,
                       }}
                     >
@@ -445,7 +444,6 @@ export const SettingsScreen = () => {
             />
           )}
         </SettingsSection>
-
         <SettingsSection title={t('settings.device')}>
           <SettingsRow
             label={t('settings.appLock')}
@@ -466,13 +464,13 @@ export const SettingsScreen = () => {
           <SettingsRow
             label={t('settings.termsOfService')}
             leftIcon={<FileText size={20} color={color.icon.muted} strokeWidth={1.8} />}
-            onPress={() => Linking.openURL(`${WEBSITE_URL}/terms`)}
+            onPress={() => openInAppBrowser(`${WEBSITE_URL}/terms`)}
             isFirst
           />
           <SettingsRow
             label={t('settings.privacyPolicy')}
             leftIcon={<Shield size={20} color={color.icon.muted} strokeWidth={1.8} />}
-            onPress={() => Linking.openURL(`${WEBSITE_URL}/privacy`)}
+            onPress={() => openInAppBrowser(`${WEBSITE_URL}/privacy`)}
           />
           <SettingsRow
             label={t('settings.about')}

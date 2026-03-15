@@ -10264,6 +10264,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-inappbrowser-nitro@npm:^2.1.2":
+  version: 2.1.2
+  resolution: "react-native-inappbrowser-nitro@npm:2.1.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: "*"
+  checksum: 10c0/b336ee3d02fefb8bc046d741d9686dee7d08c4844f97ff6dce5df1cff4570197dc489e5a81afe2df2efb4a2dc203e9756fab710c95e711f805c262ce3f77ee6c
+  languageName: node
+  linkType: hard
+
 "react-native-is-edge-to-edge@npm:1.2.1":
   version: 1.2.1
   resolution: "react-native-is-edge-to-edge@npm:1.2.1"
@@ -10380,13 +10391,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-nitro-modules@npm:^0.35.0":
-  version: 0.35.0
-  resolution: "react-native-nitro-modules@npm:0.35.0"
+"react-native-nitro-modules@npm:^0.35.1":
+  version: 0.35.1
+  resolution: "react-native-nitro-modules@npm:0.35.1"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10c0/3e1360081b0b9b6fc315f062a65d48dc5398ca03effdf8869c00dce808ddd320a3fe1869077784c86c3b9dd3d500cb6fd84e0d0b07a73ecbe1598fb800a4b0bb
+  checksum: 10c0/59043373ad9541b3dff7fe802ecbf262f24b65356b2e4814f216d4ef091e4cae40bf83605fc34f6c13781380e88af779c7e0a9cd3229f7b0b60f09183f42b75d
   languageName: node
   linkType: hard
 
@@ -12289,6 +12300,7 @@ __metadata:
     react-native-fs: "npm:^2.20.0"
     react-native-gesture-handler: "npm:^2.30.0"
     react-native-haptic-feedback: "npm:^2.3.3"
+    react-native-inappbrowser-nitro: "npm:^2.1.2"
     react-native-keep-awake: "npm:^4.0.0"
     react-native-keyboard-controller: "npm:^1.20.7"
     react-native-keychain: "npm:^10.0.0"
@@ -12297,7 +12309,7 @@ __metadata:
     react-native-mmkv: "npm:^4.2.0"
     react-native-nitro-device-info: "npm:^1.7.0"
     react-native-nitro-fetch: "npm:^0.1.7"
-    react-native-nitro-modules: "npm:^0.35.0"
+    react-native-nitro-modules: "npm:^0.35.1"
     react-native-permissions: "npm:^5.1.0"
     react-native-reanimated: "npm:^4.2.2"
     react-native-safe-area-context: "npm:^5.7.0"
