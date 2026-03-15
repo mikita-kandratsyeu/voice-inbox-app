@@ -13,6 +13,7 @@
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		90C145FFD67FA237B6003153 /* libPods-VoiceInboxApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = A28933E382B7BCE790CB0465 /* libPods-VoiceInboxApp.a */; };
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* BootSplash.storyboard */; };
+		D445ED048735854CF7552D21 /* libPods-RecordingWidget.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 9B46AC2F3559CC555B2E3744 /* libPods-RecordingWidget.a */; };
 		RW01000000000001 /* RecordingLiveActivityModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = RF01000000000001 /* RecordingLiveActivityModule.swift */; };
 		RW01000000000002 /* RecordingLiveActivityModule.m in Sources */ = {isa = PBXBuildFile; fileRef = RF01000000000002 /* RecordingLiveActivityModule.m */; };
 		RW02000000000001 /* RecordingActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = RF02000000000001 /* RecordingActivityAttributes.swift */; };
@@ -49,15 +50,18 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		126B4651B1D357A06936E4C0 /* Pods-RecordingWidget.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RecordingWidget.debug.xcconfig"; path = "Target Support Files/Pods-RecordingWidget/Pods-RecordingWidget.debug.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* VoiceInboxApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VoiceInboxApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = VoiceInboxApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = VoiceInboxApp/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = VoiceInboxApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		1D1E4E5437816B160B2AD2A2 /* Pods-RecordingWidget.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RecordingWidget.release.xcconfig"; path = "Target Support Files/Pods-RecordingWidget/Pods-RecordingWidget.release.xcconfig"; sourceTree = "<group>"; };
 		2A6F4CEC2F64113A00297CB8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		2A6F4CEE2F64113B00297CB8 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = VoiceInboxApp/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = VoiceInboxApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		844C799124632529BEB33D29 /* Pods-VoiceInboxApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VoiceInboxApp.release.xcconfig"; path = "Target Support Files/Pods-VoiceInboxApp/Pods-VoiceInboxApp.release.xcconfig"; sourceTree = "<group>"; };
+		9B46AC2F3559CC555B2E3744 /* libPods-RecordingWidget.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-RecordingWidget.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A1B2C3D4E5F6A7B8C9D0E1F3 /* BootSplash.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = BootSplash.storyboard; path = VoiceInboxApp/BootSplash.storyboard; sourceTree = "<group>"; };
 		A28933E382B7BCE790CB0465 /* libPods-VoiceInboxApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-VoiceInboxApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		B4E21B8E0F8E06F1FE22827F /* Pods-VoiceInboxApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VoiceInboxApp.debug.xcconfig"; path = "Target Support Files/Pods-VoiceInboxApp/Pods-VoiceInboxApp.debug.xcconfig"; sourceTree = "<group>"; };
@@ -89,6 +93,7 @@
 			files = (
 				RW02000000000005 /* WidgetKit.framework in Frameworks */,
 				RW02000000000006 /* SwiftUI.framework in Frameworks */,
+				D445ED048735854CF7552D21 /* libPods-RecordingWidget.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,6 +124,7 @@
 				A28933E382B7BCE790CB0465 /* libPods-VoiceInboxApp.a */,
 				2A6F4CEC2F64113A00297CB8 /* WidgetKit.framework */,
 				2A6F4CEE2F64113B00297CB8 /* SwiftUI.framework */,
+				9B46AC2F3559CC555B2E3744 /* libPods-RecordingWidget.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -159,6 +165,8 @@
 			children = (
 				B4E21B8E0F8E06F1FE22827F /* Pods-VoiceInboxApp.debug.xcconfig */,
 				844C799124632529BEB33D29 /* Pods-VoiceInboxApp.release.xcconfig */,
+				126B4651B1D357A06936E4C0 /* Pods-RecordingWidget.debug.xcconfig */,
+				1D1E4E5437816B160B2AD2A2 /* Pods-RecordingWidget.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -206,6 +214,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = RF02000000000070 /* Build configuration list for PBXNativeTarget "RecordingWidget" */;
 			buildPhases = (
+				F6624E5AFFFBFB2A64982127 /* [CP] Check Pods Manifest.lock */,
 				RF02000000000030 /* Frameworks */,
 				RF02000000000080 /* Sources */,
 				RF02000000000090 /* Resources */,
@@ -321,13 +330,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VoiceInboxApp/Pods-VoiceInboxApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VoiceInboxApp/Pods-VoiceInboxApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -342,13 +347,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VoiceInboxApp/Pods-VoiceInboxApp-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-VoiceInboxApp/Pods-VoiceInboxApp-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -371,6 +372,28 @@
 			);
 			outputPaths = (
 				"$(DERIVED_FILE_DIR)/Pods-VoiceInboxApp-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F6624E5AFFFBFB2A64982127 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-RecordingWidget-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -648,6 +671,7 @@
 		};
 		RF02000000000071 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 126B4651B1D357A06936E4C0 /* Pods-RecordingWidget.debug.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -672,6 +696,7 @@
 		};
 		RF02000000000072 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 1D1E4E5437816B160B2AD2A2 /* Pods-RecordingWidget.release.xcconfig */;
 			buildSettings = {
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
