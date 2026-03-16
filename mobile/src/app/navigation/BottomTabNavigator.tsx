@@ -6,6 +6,7 @@ import React from 'react';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useImportAudioFile } from '@/features/import-audio-file';
 import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { InboxScreen } from '@/screens/inbox';
 import { getColors, useAppTheme } from '@/shared/config';
@@ -23,6 +24,7 @@ export const BottomTabNavigator = () => {
   const theme = useAppTheme();
   const isTablet = useIsTablet();
   const inboxFiltersReset = useInboxFiltersReset();
+  const { importAudioFile } = useImportAudioFile();
 
   const color = getColors(theme);
   const tabBg = color.background.primary;
@@ -120,6 +122,7 @@ export const BottomTabNavigator = () => {
                 iconColor={color.icon.onAccent}
                 accentColor={color.accent.primary}
                 isTablet={isTablet}
+                onLongPress={importAudioFile}
               />
             ),
           }}

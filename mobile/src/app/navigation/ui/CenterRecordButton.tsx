@@ -13,12 +13,14 @@ type CenterRecordButtonProps = {
   iconColor: string;
   accentColor: string;
   isTablet?: boolean;
+  onLongPress?: () => void;
 };
 
 export const CenterRecordButton = ({
   iconColor,
   accentColor,
   isTablet,
+  onLongPress,
 }: CenterRecordButtonProps) => {
   const scale = useSharedValue(1);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -61,6 +63,7 @@ export const CenterRecordButton = ({
         <TouchableOpacity
           activeOpacity={1}
           onPress={handlePress}
+          onLongPress={onLongPress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           style={{

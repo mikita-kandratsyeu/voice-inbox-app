@@ -444,6 +444,11 @@
     "alreadyInAppSection": "Already in app",
     "noRecordsInFile": "No records found in the file."
   },
+  "importAudio": {
+    "maxDurationTitle": "File too long",
+    "maxDurationMessage": "Recording must be no longer than {{ max }} minutes.",
+    "importError": "Could not add the audio file. Try another format (e.g. WAV, M4A, MP3)."
+  },
   "permissions": {
     "micTitle": "Recording permission",
     "micMessage": "The app needs microphone access for voice recording.",
