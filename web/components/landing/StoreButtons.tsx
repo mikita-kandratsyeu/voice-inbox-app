@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useTheme } from 'next-themes';
 import { useTranslations } from 'next-intl';
 
-import { APP_STORE_URL } from '@/config/constants';
+import { APP_STORE_URL, GOOGLE_PLAY_URL } from '@/config/constants';
 
 type Variant = 'hero' | 'cta';
 
@@ -38,6 +38,15 @@ export function StoreButtons({ variant = 'hero' }: StoreButtonsProps): React.Rea
         <Image
           src={`/app-store-badge-${theme}.svg`}
           alt={t('appStore')}
+          width={badgeWidth}
+          height={badgeHeight}
+          className="h-[54px] w-[180px] object-contain"
+        />
+      </a>
+      <a href={GOOGLE_PLAY_URL} className={linkClasses} aria-label={t('googlePlay')}>
+        <Image
+          src={`/google-play-badge-${theme}.svg`}
+          alt={t('googlePlay')}
           width={badgeWidth}
           height={badgeHeight}
           className="h-[54px] w-[180px] object-contain"
