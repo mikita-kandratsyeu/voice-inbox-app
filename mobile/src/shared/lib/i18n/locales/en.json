@@ -457,6 +457,7 @@
     "micTitle": "Recording permission",
     "micMessage": "The app needs microphone access for voice recording.",
     "allow": "Allow",
+    "deny": "Deny",
     "onboardingTitle": "Allow permissions",
     "onboardingDesc": "The app needs access to your microphone for recording and notifications for AI processing updates.",
     "micLabel": "Microphone",

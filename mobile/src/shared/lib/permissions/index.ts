@@ -1,2 +1,2 @@
-export type { MicPermissionStatus } from './micPermission';
+export type { MicPermissionStatus, RequestMicPermissionOptions } from './micPermission';
 export { checkMicPermission, openAppSettings, requestMicPermission } from './micPermission';

@@ -52,13 +52,31 @@ export async function checkMicPermission(): Promise<MicPermissionStatus> {
   }
 }
 
-export async function requestMicPermission(): Promise<boolean> {
+export type RequestMicPermissionOptions = {
+  title?: string;
+  message?: string;
+  buttonPositive?: string;
+  buttonNegative?: string;
+};
+
+const DEFAULT_MIC_OPTIONS: Required<RequestMicPermissionOptions> = {
+  title: 'Microphone permission',
+  message: 'Voice Inbox needs microphone access for voice recording.',
+  buttonPositive: 'Allow',
+  buttonNegative: 'Deny',
+};
+
+export async function requestMicPermission(
+  options?: RequestMicPermissionOptions,
+): Promise<boolean> {
+  const opts = { ...DEFAULT_MIC_OPTIONS, ...options };
+
   if (IS_ANDROID) {
     const result = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, {
-      title: 'Microphone permission',
-      message: 'Voice Inbox needs microphone access for voice recording.',
-      buttonPositive: 'Allow',
-      buttonNegative: 'Deny',
+      title: opts.title ?? DEFAULT_MIC_OPTIONS.title,
+      message: opts.message ?? DEFAULT_MIC_OPTIONS.message,
+      buttonPositive: opts.buttonPositive ?? DEFAULT_MIC_OPTIONS.buttonPositive,
+      buttonNegative: opts.buttonNegative ?? DEFAULT_MIC_OPTIONS.buttonNegative,
     });
     return result === PermissionsAndroid.RESULTS.GRANTED;
   }

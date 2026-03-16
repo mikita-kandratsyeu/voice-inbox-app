@@ -175,7 +175,15 @@ export const useRecording = ({
 
   const startRecording = useCallback(async () => {
     const status = await checkMicPermission();
-    const hasPermission = status === 'granted' ? true : await requestMicPermission();
+    const hasPermission =
+      status === 'granted'
+        ? true
+        : await requestMicPermission({
+            title: t('permissions.micTitle'),
+            message: t('permissions.micMessage'),
+            buttonPositive: t('permissions.allow'),
+            buttonNegative: t('permissions.deny'),
+          });
 
     if (!hasPermission) {
       return;

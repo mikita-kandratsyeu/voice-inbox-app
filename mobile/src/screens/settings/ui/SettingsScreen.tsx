@@ -217,9 +217,14 @@ export const SettingsScreen = () => {
       await openAppSettings();
       return;
     }
-    const granted = await requestMicPermission();
+    const granted = await requestMicPermission({
+      title: t('permissions.micTitle'),
+      message: t('permissions.micMessage'),
+      buttonPositive: t('permissions.allow'),
+      buttonNegative: t('permissions.deny'),
+    });
     setMicStatus(granted ? 'granted' : 'denied');
-  }, [micStatus]);
+  }, [micStatus, t]);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
