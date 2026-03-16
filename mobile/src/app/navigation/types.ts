@@ -7,7 +7,7 @@ export type BottomTabParamList = {
 };
 
 export type RootStackParamList = {
-  Main: undefined;
+  Main: undefined | { screen: 'SettingsRoot'; params: { screen: 'WhisperModelPicker' } };
   RecordModal: undefined;
   RecordingDetail: { record: VoiceRecord };
   EditTranscript: { record: VoiceRecord };

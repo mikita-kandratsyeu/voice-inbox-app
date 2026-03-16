@@ -99,7 +99,18 @@ export const RecordingDetailScreen = () => {
       Alert.alert(
         t('recordingDetail.modelNotDownloaded'),
         t('recordingDetail.modelNotDownloadedHint'),
-        [{ text: 'OK' }],
+        [
+          { text: t('common.ok') },
+          {
+            text: t('recordingDetail.goToWhisperSettings'),
+            onPress: () => {
+              navigation.navigate('Main', {
+                screen: 'SettingsRoot',
+                params: { screen: 'WhisperModelPicker' },
+              });
+            },
+          },
+        ],
       );
       return;
     }

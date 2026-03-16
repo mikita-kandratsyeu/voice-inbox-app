@@ -321,7 +321,9 @@ export const StorageDetailsScreen = () => {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={() => refreshStats(true)}
-              tintColor={color.accent.primary}
+              tintColor={color.status.processing.text}
+              colors={[color.status.processing.text]}
+              progressBackgroundColor={color.background.secondary}
             />
           }
         >

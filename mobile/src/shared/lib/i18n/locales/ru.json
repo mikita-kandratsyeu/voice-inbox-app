@@ -4,6 +4,7 @@
     "policyUpdateAck": "Понятно"
   },
   "common": {
+    "ok": "ОК",
     "cancel": "Отмена",
     "close": "Закрыть",
     "save": "Сохранить",
@@ -110,6 +111,7 @@
     "cancel": "Отменить",
     "modelNotDownloaded": "Модель не скачана",
     "modelNotDownloadedHint": "Для транскрипции необходимо скачать модель Whisper в настройках.",
+    "goToWhisperSettings": "Открыть настройки",
     "shareFailed": "Ошибка при отправке",
     "summaryNotCreated": "Сводка не создана",
     "summaryNotCreatedDesc": "Нажмите кнопку ниже, чтобы\nсоздать краткую сводку с помощью ИИ.",
