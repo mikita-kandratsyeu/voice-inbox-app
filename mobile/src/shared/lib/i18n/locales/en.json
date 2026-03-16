@@ -5,6 +5,7 @@
   },
   "common": {
     "ok": "OK",
+    "gotIt": "Got it",
     "cancel": "Cancel",
     "close": "Close",
     "save": "Save",
@@ -29,6 +30,8 @@
     "title": "Inbox",
     "emptyTitle": "No inbox",
     "emptyDescription": "Your voice notes will appear here",
+    "emptyImportHint": "Long-press the record button to import an audio file",
+    "swipeHint": "Swipe left to archive, right to pin",
     "filterSummary": "{{filterName}}: {{count}}",
     "recordsCount": "{{count}} records",
     "pinned": "Pinned",

@@ -12,6 +12,7 @@ export { SettingsRow } from './SettingsRow';
 export { SettingsSection } from './SettingsSection';
 export { SkeletonPulse } from './SkeletonPulse';
 export { SwipeableCard, SwipeableCardContext } from './SwipeableCard';
+export { SwipeHintBanner } from './SwipeHintBanner';
 export { TabEmptyState } from './TabEmptyState';
 export { Tag } from './Tag';
 export { Waveform } from './Waveform';

@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, Platform, View } from 'react-native';
 
@@ -12,7 +12,8 @@ import { InboxFilterBar, useInboxFiltersReset } from '@/features/inbox-filters';
 import { SearchBar, useSearchRecords } from '@/features/search-records';
 import { getColors, useAppTheme } from '@/shared/config';
 import { useIsTablet } from '@/shared/lib';
-import { EmptyState, SectionHeader, SwipeableCard } from '@/shared/ui';
+import { getHasSeenSwipeHint, setHasSeenSwipeHint } from '@/shared/lib/hintsStorage';
+import { EmptyState, SectionHeader, SwipeableCard, SwipeHintBanner } from '@/shared/ui';
 
 import { EmptySearchState } from './EmptySearchState';
 import { InboxHeader } from './InboxHeader';
@@ -45,6 +46,12 @@ export const InboxScreen = () => {
 
   const listRef = useRef<FlashListRef<FlattenedItem>>(null);
   const inboxFiltersReset = useInboxFiltersReset();
+  const [showSwipeHint, setShowSwipeHint] = useState(() => !getHasSeenSwipeHint());
+
+  const dismissSwipeHint = useCallback(() => {
+    setHasSeenSwipeHint();
+    setShowSwipeHint(false);
+  }, []);
 
   useEffect(() => {
     if (!inboxFiltersReset) return;
@@ -88,10 +95,14 @@ export const InboxScreen = () => {
         <SwipeableCard
           isPinned={item.item.isPinned}
           leftAction={isArchivedView ? 'unarchive' : 'archive'}
-          onLeftAction={() =>
-            isArchivedView ? unarchiveRecord(item.item.id) : archiveRecord(item.item.id)
-          }
-          onPin={() => togglePin(item.item.id)}
+          onLeftAction={() => {
+            dismissSwipeHint();
+            isArchivedView ? unarchiveRecord(item.item.id) : archiveRecord(item.item.id);
+          }}
+          onPin={() => {
+            dismissSwipeHint();
+            togglePin(item.item.id);
+          }}
         >
           <RecordCard
             item={item.item}
@@ -105,6 +116,7 @@ export const InboxScreen = () => {
     [
       color,
       filterStatus,
+      dismissSwipeHint,
       archiveRecord,
       unarchiveRecord,
       togglePin,
@@ -140,7 +152,11 @@ export const InboxScreen = () => {
       {!isLoaded ? (
         <InboxSkeleton color={color} />
       ) : records.length === 0 ? (
-        <EmptyState title={t('inbox.emptyTitle')} description={t('inbox.emptyDescription')} />
+        <EmptyState
+          title={t('inbox.emptyTitle')}
+          description={t('inbox.emptyDescription')}
+          hint={t('inbox.emptyImportHint')}
+        />
       ) : (
         <KeyboardAvoidingView
           style={{ flex: 1, backgroundColor: color.background.secondary }}
@@ -149,6 +165,7 @@ export const InboxScreen = () => {
         >
           <View style={{ flex: 1, alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}>
             <SearchBar query={query} onChangeQuery={setQuery} color={color} />
+            {showSwipeHint ? <SwipeHintBanner onDismiss={dismissSwipeHint} /> : null}
             <InboxFilterBar
               filterStatus={filterStatus}
               sortOption={sortOption}
