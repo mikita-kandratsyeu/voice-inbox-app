@@ -4,12 +4,16 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 
-import type { InboxFilterStatus, InboxSortOption } from '@/features/inbox-filters';
+import type {
+  InboxFilterStatus,
+  InboxSortOption,
+  PrimaryFilterStatus,
+} from '@/features/inbox-filters';
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
-const PRIMARY_FILTERS: InboxFilterStatus[] = ['all', 'pinned', 'archived'];
+const PRIMARY_FILTERS: PrimaryFilterStatus[] = ['all', 'pinned', 'archived'];
 
 const CLASSIFICATION_FILTERS: InboxFilterStatus[] = [
   'personal',
@@ -33,11 +37,11 @@ const SORT_OPTIONS: InboxSortOption[] = [
   'titleAsc',
 ];
 
-const FILTER_ICONS = {
+const FILTER_ICONS: Record<PrimaryFilterStatus, typeof LayoutList> = {
   all: LayoutList,
   pinned: Pin,
   archived: Archive,
-} as const;
+};
 
 type InboxFilterBarProps = {
   filterStatus: InboxFilterStatus;
@@ -79,7 +83,7 @@ export const InboxFilterBar = ({
       >
         {PRIMARY_FILTERS.map((status) => {
           const isActive = filterStatus === status;
-          const Icon = FILTER_ICONS[status as keyof typeof FILTER_ICONS];
+          const Icon = FILTER_ICONS[status];
           return (
             <TouchableOpacity
               key={status}

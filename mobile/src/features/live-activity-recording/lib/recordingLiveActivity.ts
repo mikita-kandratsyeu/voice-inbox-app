@@ -1,34 +1,42 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules } from 'react-native';
+
+import { IS_IOS } from '@/shared/lib/platform';
 
 const { RecordingLiveActivityModule } = NativeModules;
 
 export const startRecordingLiveActivity = async (): Promise<void> => {
-  if (Platform.OS !== 'ios' || !RecordingLiveActivityModule) return;
+  if (!IS_IOS || !RecordingLiveActivityModule) return;
   try {
     await RecordingLiveActivityModule.startActivity();
   } catch {
-    // Live Activity not available (e.g. iOS < 16.1)
+    if (__DEV__) {
+      console.warn('[startRecordingLiveActivity] Failed to start activity');
+    }
   }
 };
 
 export const updateRecordingLiveActivity = async (elapsedSeconds: number): Promise<void> => {
-  if (Platform.OS !== 'ios' || !RecordingLiveActivityModule) return;
+  if (!IS_IOS || !RecordingLiveActivityModule) return;
   try {
     await RecordingLiveActivityModule.updateActivity(elapsedSeconds);
   } catch {
-    // Ignore
+    if (__DEV__) {
+      console.warn('[updateRecordingLiveActivity] Failed to update activity');
+    }
   }
 };
 
 export const endRecordingLiveActivity = async (): Promise<void> => {
-  if (Platform.OS !== 'ios' || !RecordingLiveActivityModule) return;
+  if (!IS_IOS || !RecordingLiveActivityModule) return;
   try {
     await RecordingLiveActivityModule.endActivity();
   } catch {
-    // Ignore
+    if (__DEV__) {
+      console.warn('[endRecordingLiveActivity] Failed to end activity');
+    }
   }
 };
 
 export const isLiveActivityAvailable = (): boolean => {
-  return Platform.OS === 'ios' && Boolean(RecordingLiveActivityModule);
+  return IS_IOS && Boolean(RecordingLiveActivityModule);
 };

@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-import { Platform } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
@@ -8,6 +7,7 @@ import {
   computeCentroid,
   isEmbeddingAvailable,
 } from '@/shared/lib/embeddings';
+import { IS_IOS } from '@/shared/lib/platform';
 
 const MIN_HYBRID_SCORE = 0.35;
 const MIN_LEXICAL_ONLY_SCORE = 0.08;
@@ -86,7 +86,7 @@ export function useRelatedNotes(recordId: string, limit = 5): VoiceRecord[] {
     if (!current) return [];
 
     const useEmbeddings =
-      Platform.OS === 'ios' &&
+      IS_IOS &&
       isEmbeddingAvailable() &&
       current.embedding &&
       records.some((r) => r.id !== recordId && r.embedding);

@@ -7,4 +7,7 @@ export type InboxFilterStatus =
   | 'withoutTranscript'
   | 'withoutSummary'
   | RecordClassification;
+
+export type PrimaryFilterStatus = 'all' | 'pinned' | 'archived';
+
 export type InboxSortOption = 'dateDesc' | 'dateAsc' | 'durationDesc' | 'durationAsc' | 'titleAsc';

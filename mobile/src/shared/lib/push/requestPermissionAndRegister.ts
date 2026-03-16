@@ -6,11 +6,11 @@ import {
   hasPermission,
   requestPermission,
 } from '@react-native-firebase/messaging';
-import { Platform } from 'react-native';
 
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { fetch } from '@/shared/lib/fetch';
 import { i18n } from '@/shared/lib/i18n';
+import { IS_IOS, PLATFORM_OS } from '@/shared/lib/platform';
 
 const PUSH_REGISTER_URL = `${WEB_API_URL}/api/push/register`;
 const PUSH_REGISTER_THROTTLE_MS = 5 * 60 * 1000;
@@ -21,7 +21,7 @@ let lastRegisterTime = 0;
 export type PushPermissionStatus = 'granted' | 'denied' | 'not-determined';
 
 export async function ensurePushRegistered(): Promise<void> {
-  if (Platform.OS !== 'ios') return;
+  if (!IS_IOS) return;
 
   const status = await checkPushPermission();
   if (status !== 'granted') return;
@@ -42,7 +42,7 @@ export async function ensurePushRegistered(): Promise<void> {
 }
 
 export async function requestPushPermission(): Promise<PushPermissionStatus> {
-  if (Platform.OS !== 'ios') {
+  if (!IS_IOS) {
     return 'denied';
   }
 
@@ -55,7 +55,7 @@ export async function requestPushPermission(): Promise<PushPermissionStatus> {
 }
 
 export async function checkPushPermission(): Promise<PushPermissionStatus> {
-  if (Platform.OS !== 'ios') {
+  if (!IS_IOS) {
     return 'denied';
   }
 
@@ -70,7 +70,7 @@ export async function checkPushPermission(): Promise<PushPermissionStatus> {
 }
 
 export async function registerForPushToken(): Promise<string | null> {
-  if (Platform.OS !== 'ios') {
+  if (!IS_IOS) {
     return null;
   }
 
@@ -98,7 +98,7 @@ export async function sendTokenToBackend(token: string): Promise<boolean> {
       body: JSON.stringify({
         deviceToken: token,
         locale: (i18n.language ?? 'en').slice(0, 2),
-        platform: Platform.OS,
+        platform: PLATFORM_OS,
       }),
     });
 

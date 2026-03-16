@@ -2,7 +2,7 @@ import DocumentPicker from 'react-native-document-picker';
 import RNFS from 'react-native-fs';
 
 import type { RecordClassification, VoiceRecord } from '@/entities/record';
-import { i18n } from '@/shared/lib';
+import { i18n, isString, isStringArrayItem } from '@/shared/lib';
 
 type ExportPayload = {
   version: 1;
@@ -26,17 +26,17 @@ function normalizeRecord(raw: unknown): VoiceRecord {
   const base = raw as Partial<VoiceRecord>;
 
   const classification: VoiceRecord['classification'] =
-    typeof base.classification === 'string' &&
+    isString(base.classification) &&
     VALID_CLASSIFICATIONS.includes(base.classification as RecordClassification)
       ? (base.classification as RecordClassification)
       : undefined;
 
   const keyPhrases: string[] = Array.isArray(base.keyPhrases)
-    ? base.keyPhrases.filter((x): x is string => typeof x === 'string')
+    ? base.keyPhrases.filter(isStringArrayItem)
     : [];
 
   const nextSteps: string[] = Array.isArray(base.nextSteps)
-    ? base.nextSteps.filter((x): x is string => typeof x === 'string')
+    ? base.nextSteps.filter(isStringArrayItem)
     : [];
 
   return {
@@ -44,10 +44,10 @@ function normalizeRecord(raw: unknown): VoiceRecord {
     classification: classification ?? base.classification,
     keyPhrases: keyPhrases.length > 0 ? keyPhrases : (base.keyPhrases ?? []),
     nextSteps: nextSteps.length > 0 ? nextSteps : (base.nextSteps ?? []),
-    translatedTranscript:
-      typeof base.translatedTranscript === 'string' ? base.translatedTranscript : undefined,
-    translationLanguage:
-      typeof base.translationLanguage === 'string' ? base.translationLanguage : undefined,
+    translatedTranscript: isString(base.translatedTranscript)
+      ? base.translatedTranscript
+      : undefined,
+    translationLanguage: isString(base.translationLanguage) ? base.translationLanguage : undefined,
   } as VoiceRecord;
 }
 

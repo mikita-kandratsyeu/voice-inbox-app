@@ -20,16 +20,7 @@ import {
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Alert,
-  AppState,
-  Platform,
-  RefreshControl,
-  ScrollView,
-  Switch,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, AppState, RefreshControl, ScrollView, Switch, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
@@ -40,7 +31,7 @@ import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { exportData, importData } from '@/features/sync-data';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
-import { useIsTablet } from '@/shared/lib';
+import { IS_IOS, useIsTablet } from '@/shared/lib';
 import { getAiUsage } from '@/shared/lib/ai-api';
 import { isEmbeddingAvailable } from '@/shared/lib/embeddings';
 import {
@@ -105,7 +96,7 @@ export const SettingsScreen = () => {
   const refreshPermissions = useCallback(async () => {
     const mic = await checkMicPermission();
     setMicStatus(mic);
-    if (Platform.OS === 'ios') {
+    if (IS_IOS) {
       const push = await checkPushPermission();
       setPushStatus(push);
     }
@@ -206,7 +197,7 @@ export const SettingsScreen = () => {
   }, [records, t]);
 
   const handleNotificationsPress = useCallback(async () => {
-    if (Platform.OS !== 'ios') return;
+    if (!IS_IOS) return;
 
     if (pushStatus === 'denied') {
       await openAppSettings();
@@ -411,9 +402,9 @@ export const SettingsScreen = () => {
                 ) : null
               }
               isFirst
-              isLast={Platform.OS !== 'ios'}
+              isLast={!IS_IOS}
             />
-            {Platform.OS === 'ios' && (
+            {IS_IOS && (
               <SettingsRow
                 label={t('settings.permissionNotifications')}
                 leftIcon={<Bell size={20} color={color.accent.primary} strokeWidth={1.8} />}

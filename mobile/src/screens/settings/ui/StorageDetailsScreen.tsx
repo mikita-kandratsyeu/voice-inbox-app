@@ -6,9 +6,10 @@ import { Alert, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
-import type { WhisperModelId } from '@/entities/settings';
+import type { WhisperModelId, WhisperModelStatus } from '@/entities/settings';
 import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { getModelFileSizeBytes } from '@/features/model-manager';
+import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
 import { clearCache, getStorageStats, type StorageStats, useIsTablet } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
@@ -22,7 +23,7 @@ const StorageBar = ({
   modelsBytes,
   totalMb,
   color,
-}: StorageStats & { modelsBytes: number; color: ReturnType<typeof getColors> }) => {
+}: StorageStats & { modelsBytes: number; color: Colors }) => {
   const { t } = useTranslation();
   const modelsMb = modelsBytes / (1024 * 1024);
   const divisor = totalMb > 0 ? totalMb : 1;
@@ -132,7 +133,7 @@ const StorageBar = ({
   );
 };
 
-function StorageBarSkeleton({ color }: { color: ReturnType<typeof getColors> }) {
+function StorageBarSkeleton({ color }: { color: Colors }) {
   return (
     <SkeletonPulse>
       <View className="mb-3 flex-row items-center justify-between">
@@ -195,22 +196,25 @@ export const StorageDetailsScreen = () => {
     (m) => (whisperModelStatuses[m.id] ?? 'not_downloaded') === 'downloaded',
   );
 
-  const loadModelSizes = useCallback(async (statuses: typeof whisperModelStatuses) => {
-    const downloaded = WHISPER_MODELS.filter(
-      (m) => (statuses[m.id] ?? 'not_downloaded') === 'downloaded',
-    );
-    const entries = await Promise.all(
-      downloaded.map(async (m) => {
-        const bytes = await getModelFileSizeBytes(m.id);
-        return [m.id, bytes] as const;
-      }),
-    );
-    const updated: Partial<Record<WhisperModelId, number>> = {};
-    for (const [id, bytes] of entries) {
-      updated[id] = bytes;
-    }
-    setRealModelSizes(updated);
-  }, []);
+  const loadModelSizes = useCallback(
+    async (statuses: Partial<Record<WhisperModelId, WhisperModelStatus>>) => {
+      const downloaded = WHISPER_MODELS.filter(
+        (m) => (statuses[m.id] ?? 'not_downloaded') === 'downloaded',
+      );
+      const entries = await Promise.all(
+        downloaded.map(async (m) => {
+          const bytes = await getModelFileSizeBytes(m.id);
+          return [m.id, bytes] as const;
+        }),
+      );
+      const updated: Partial<Record<WhisperModelId, number>> = {};
+      for (const [id, bytes] of entries) {
+        updated[id] = bytes;
+      }
+      setRealModelSizes(updated);
+    },
+    [],
+  );
 
   const refreshStats = useCallback(
     async (isPull = false) => {

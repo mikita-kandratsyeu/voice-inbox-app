@@ -1,14 +1,14 @@
 import { WEB_API_SECRET, WEB_API_URL } from '@env';
-import { Platform } from 'react-native';
 
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { fetch } from '@/shared/lib/fetch';
+import { IS_IOS } from '@/shared/lib/platform';
 
 const FOREGROUND_URL = `${WEB_API_URL}/api/push/foreground`;
 const BACKGROUND_URL = `${WEB_API_URL}/api/push/background`;
 
 async function callPushStateApi(url: string): Promise<void> {
-  if (Platform.OS !== 'ios') return;
+  if (!IS_IOS) return;
 
   try {
     const deviceId = await getOrCreateDeviceId();

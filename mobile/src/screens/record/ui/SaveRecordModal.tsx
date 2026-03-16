@@ -8,12 +8,12 @@ import {
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
 import { getColors, useAppTheme } from '@/shared/config';
-import { formatTime, hapticSuccess } from '@/shared/lib';
+import { formatTime, hapticSuccess, modalKeyboardBehavior } from '@/shared/lib';
 import { Button } from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';
@@ -120,7 +120,7 @@ export const SaveRecordModal = ({
       enableDynamicSizing
       enablePanDownToClose={false}
       enableOverDrag={false}
-      keyboardBehavior={Platform.OS === 'ios' ? 'interactive' : 'fillParent'}
+      keyboardBehavior={modalKeyboardBehavior}
       keyboardBlurBehavior="restore"
       enableBlurKeyboardOnGesture
       backdropComponent={renderBackdrop}

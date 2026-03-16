@@ -3,6 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
+import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { SkeletonPulse } from '@/shared/ui';
@@ -23,7 +24,7 @@ type AiUsageCardProps = {
   loading: boolean;
 };
 
-function AiUsageSkeleton({ color }: { color: ReturnType<typeof getColors> }) {
+function AiUsageSkeleton({ color }: { color: Colors }) {
   return (
     <SkeletonPulse>
       <View className="mb-2">

@@ -2,6 +2,7 @@ import { WEB_API_SECRET, WEB_API_URL } from '@env';
 
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { fetch } from '@/shared/lib/fetch';
+import { isString } from '@/shared/lib/type-guards';
 
 export type AiProcessingOptions = {
   summaryStyle?: 'brief' | 'standard' | 'detailed';
@@ -184,7 +185,7 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
           tasks: msg.tasks,
           tags: msg.tags ?? [],
           ...('suggestedTitle' in msg &&
-          typeof (msg as { suggestedTitle?: string }).suggestedTitle === 'string' &&
+          isString((msg as { suggestedTitle?: string }).suggestedTitle) &&
           (msg as { suggestedTitle: string }).suggestedTitle.trim()
             ? { suggestedTitle: (msg as { suggestedTitle: string }).suggestedTitle.trim() }
             : {}),

@@ -1,7 +1,6 @@
-import { Platform } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
-import { i18n } from '@/shared/lib';
+import { i18n, IS_ANDROID } from '@/shared/lib';
 
 import type { WhisperModelId } from '../model/types';
 
@@ -52,11 +51,7 @@ export const canDeviceRunWhisperModel = async (
         ? i18n.t('device.gb', { value: Math.round(mb / 1024) })
         : i18n.t('device.mb', { value: Math.round(mb) });
 
-    if (
-      Platform.OS === 'android' &&
-      DeviceInfoModule.isLowRamDevice &&
-      HEAVY_MODELS.includes(modelId)
-    ) {
+    if (IS_ANDROID && DeviceInfoModule.isLowRamDevice && HEAVY_MODELS.includes(modelId)) {
       return {
         isCompatible: false,
         reason: i18n.t('device.lowRamDevice'),

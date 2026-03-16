@@ -1,4 +1,5 @@
 import { type PushNotificationData, usePushSheet } from '@/shared/lib/push';
+import { isString } from '@/shared/lib/type-guards';
 
 export type HandlePushNotificationDeps = {
   navigateToMain: () => void;
@@ -12,7 +13,7 @@ const HANDLERS: Record<
     navigateToMain();
   },
   policy_update: (_data, _deps) => {
-    const message = typeof _data.message === 'string' ? _data.message : '';
+    const message = isString(_data.message) ? _data.message : '';
     usePushSheet.getState().show(message);
   },
 };

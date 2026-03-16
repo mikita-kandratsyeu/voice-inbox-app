@@ -1,4 +1,6 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules } from 'react-native';
+
+import { IS_IOS } from '@/shared/lib/platform';
 
 export const WAV_TARGET_SAMPLE_RATE = 16000;
 export const WAV_TARGET_CHANNELS = 1;
@@ -19,8 +21,8 @@ export async function convertToWav(inputPath: string, outputPath: string): Promi
     return null;
   }
   try {
-    const inArg = Platform.OS === 'ios' ? toFileUri(inputPath) : inputPath;
-    const outArg = Platform.OS === 'ios' ? toFileUri(outputPath) : outputPath;
+    const inArg = IS_IOS ? toFileUri(inputPath) : inputPath;
+    const outArg = IS_IOS ? toFileUri(outputPath) : outputPath;
     const result = await AudioConverter.convertToWav(inArg, outArg);
     return result ?? null;
   } catch (e: unknown) {

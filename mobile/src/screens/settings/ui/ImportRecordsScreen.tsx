@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
 import { formatRelativeTime, useIsTablet } from '@/shared/lib';
 import { Button, ScreenHeader, SectionHeader } from '@/shared/ui';
@@ -18,7 +19,7 @@ type ImportRecordRowProps = {
   item: VoiceRecord;
   isSelected: boolean;
   onToggle: (id: string) => void;
-  color: ReturnType<typeof getColors>;
+  color: Colors;
   t: (key: string) => string;
   language: string;
 };

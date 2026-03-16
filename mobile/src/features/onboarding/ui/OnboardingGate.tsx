@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Platform } from 'react-native';
 
+import { IS_IOS } from '@/shared/lib';
 import { ensurePushRegistered } from '@/shared/lib/push';
 
 import { getHasSeenOnboarding } from '../lib/onboardingStorage';
@@ -19,7 +19,7 @@ export const OnboardingGate = ({ children }: OnboardingGateProps) => {
   const handleComplete = () => {
     setHasSeen(true);
     setForceShow(false);
-    if (Platform.OS === 'ios') {
+    if (IS_IOS) {
       ensurePushRegistered().catch(() => {});
     }
   };

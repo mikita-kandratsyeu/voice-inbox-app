@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Platform,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -27,8 +26,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSettingsStore } from '@/entities/settings';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { useModelManager } from '@/features/model-manager';
+import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
-import { hapticSelection, useIsTablet } from '@/shared/lib';
+import { hapticSelection, IS_IOS, useIsTablet } from '@/shared/lib';
 import {
   checkMicPermission,
   type MicPermissionStatus,
@@ -78,7 +78,7 @@ const AnimatedProgressDots = ({
   scrollX: SharedValue<number>;
   screenWidth: SharedValue<number>;
   onDotPress: (index: number) => void;
-  color: ReturnType<typeof getColors>;
+  color: Colors;
   slides: OnboardingSlideContent[];
   t: (key: string, opts?: { index?: number }) => string;
 }) => {
@@ -209,7 +209,7 @@ type SlideItemProps = {
   screenWidth: SharedValue<number>;
   windowWidth: number;
   contentMaxWidth?: number;
-  color: ReturnType<typeof getColors>;
+  color: Colors;
   agreedToTerms?: boolean;
   onAgreeChange?: (value: boolean) => void;
 };
@@ -280,7 +280,7 @@ const PermissionRow = ({
   description: string;
   status: PermissionRowStatus | null;
   onPress: () => void;
-  color: ReturnType<typeof getColors>;
+  color: Colors;
   t: (k: string) => string;
 }) => {
   const isGranted = status === 'granted';
@@ -335,7 +335,7 @@ const PermissionRow = ({
 };
 
 type PermissionsSlideProps = {
-  color: ReturnType<typeof getColors>;
+  color: Colors;
   t: (k: string) => string;
   windowWidth: number;
   contentMaxWidth?: number;
@@ -358,7 +358,7 @@ const PermissionsSlide = ({
 
   React.useEffect(() => {
     checkMicPermission().then(setMicStatus);
-    if (Platform.OS === 'ios') {
+    if (IS_IOS) {
       checkPushPermission().then(setPushStatus);
     }
   }, []);
@@ -437,7 +437,7 @@ const PermissionsSlide = ({
             color={color}
             t={t}
           />
-          {Platform.OS === 'ios' && (
+          {IS_IOS && (
             <PermissionRow
               icon={<Bell size={22} color={color.accent.primary} strokeWidth={2} />}
               label={t('permissions.notificationsLabel')}

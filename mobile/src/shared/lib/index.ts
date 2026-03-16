@@ -24,6 +24,16 @@ export type { SupportedLocale } from './i18n';
 export { applyAppLanguage, i18n, initI18n } from './i18n';
 export { NetworkStatusProvider, useNetworkStatus } from './NetworkStatusContext';
 export { parseTaskDeadline } from './parseTaskDeadline';
+export {
+  getIosVersion,
+  IS_ANDROID,
+  IS_IOS,
+  keyboardAvoidingBehavior,
+  keyboardVerticalOffset,
+  modalKeyboardBehavior,
+  PLATFORM_OS,
+} from './platform';
+export { isArray, isRecord, isString, isStringArrayItem } from './type-guards';
 export { useAiModelName } from './useAiModelName';
 export { useAiTabBannerDismiss } from './useAiTabBannerDismiss';
 export { useIsTablet } from './useIsTablet';

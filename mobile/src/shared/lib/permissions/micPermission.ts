@@ -1,10 +1,12 @@
-import { Linking, PermissionsAndroid, Platform } from 'react-native';
+import { Linking, PermissionsAndroid } from 'react-native';
 import type { AudioSet } from 'react-native-audio-recorder-player';
 import AudioRecorderPlayer, {
   AudioEncoderAndroidType,
   AudioSourceAndroidType,
   OutputFormatAndroidType,
 } from 'react-native-audio-recorder-player';
+
+import { IS_ANDROID } from '@/shared/lib/platform';
 
 export type MicPermissionStatus = 'granted' | 'denied' | 'not-determined';
 
@@ -29,7 +31,7 @@ const IOS_AUDIO_SET: AudioSet = {
 };
 
 export async function checkMicPermission(): Promise<MicPermissionStatus> {
-  if (Platform.OS === 'android') {
+  if (IS_ANDROID) {
     const result = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
     return result ? 'granted' : 'not-determined';
   }
@@ -51,7 +53,7 @@ export async function checkMicPermission(): Promise<MicPermissionStatus> {
 }
 
 export async function requestMicPermission(): Promise<boolean> {
-  if (Platform.OS === 'android') {
+  if (IS_ANDROID) {
     const result = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, {
       title: 'Microphone permission',
       message: 'Voice Inbox needs microphone access for voice recording.',

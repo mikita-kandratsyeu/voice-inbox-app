@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, Platform, View } from 'react-native';
+import { KeyboardAvoidingView, View } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
@@ -11,7 +11,7 @@ import { RecordCard, useRecordStore } from '@/entities/record';
 import { InboxFilterBar, useInboxFiltersReset } from '@/features/inbox-filters';
 import { SearchBar, useSearchRecords } from '@/features/search-records';
 import { getColors, useAppTheme } from '@/shared/config';
-import { useIsTablet } from '@/shared/lib';
+import { keyboardAvoidingBehavior, keyboardVerticalOffset, useIsTablet } from '@/shared/lib';
 import { getHasSeenSwipeHint, setHasSeenSwipeHint } from '@/shared/lib/hintsStorage';
 import { EmptyState, SectionHeader, SwipeableCard, SwipeHintBanner } from '@/shared/ui';
 
@@ -160,8 +160,8 @@ export const InboxScreen = () => {
       ) : (
         <KeyboardAvoidingView
           style={{ flex: 1, backgroundColor: color.background.secondary }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+          behavior={keyboardAvoidingBehavior}
+          keyboardVerticalOffset={keyboardVerticalOffset}
         >
           <View style={{ flex: 1, alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}>
             <SearchBar query={query} onChangeQuery={setQuery} color={color} />

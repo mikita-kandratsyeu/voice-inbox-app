@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, AppState, type AppStateStatus, Platform } from 'react-native';
+import { Alert, AppState, type AppStateStatus } from 'react-native';
 import type { AudioSet, RecordBackType } from 'react-native-audio-recorder-player';
 import AudioRecorderPlayer, {
   AudioEncoderAndroidType,
@@ -24,7 +24,7 @@ import {
   startRecordingLiveActivity,
   updateRecordingLiveActivity,
 } from '@/features/live-activity-recording';
-import { hapticLight } from '@/shared/lib';
+import { hapticLight, IS_IOS } from '@/shared/lib';
 import { checkMicPermission, requestMicPermission } from '@/shared/lib/permissions';
 
 import type { RecordingState } from '../config';
@@ -112,7 +112,7 @@ export const useRecording = ({
       const { ms, routeChanged } = sanitizePosition(e.currentPosition, lastValidMsRef.current);
       lastValidMsRef.current = ms;
 
-      if (routeChanged && Platform.OS === 'ios') {
+      if (routeChanged && IS_IOS) {
         const secs = Math.floor(ms / 1000);
         elapsedRef.current = secs;
         elapsedMsRef.current = ms;
@@ -135,7 +135,7 @@ export const useRecording = ({
       }
 
       const secs = Math.floor(ms / 1000);
-      const isBackground = Platform.OS === 'ios' && appStateRef.current === 'background';
+      const isBackground = IS_IOS && appStateRef.current === 'background';
 
       elapsedRef.current = secs;
       elapsedMsRef.current = ms;
@@ -249,7 +249,7 @@ export const useRecording = ({
       appStateRef.current = next;
 
       if (
-        Platform.OS === 'ios' &&
+        IS_IOS &&
         prev === 'background' &&
         next === 'active' &&
         stateRef.current === 'recording'

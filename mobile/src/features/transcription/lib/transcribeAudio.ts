@@ -3,6 +3,7 @@ import type { WhisperContext } from 'whisper.rn';
 import type { TranscriptSegment } from '@/entities/record';
 import type { AudioChunk } from '@/shared/lib/audio';
 import { splitAudioIntoChunks } from '@/shared/lib/audio';
+import { isArray, isRecord, isString } from '@/shared/lib/type-guards';
 
 const MIN_DURATION_MS = 500;
 
@@ -43,11 +44,11 @@ type WhisperSegment = { text: string; t0: number; t1: number };
 type WhisperTranscribeResult = { result: string; segments: WhisperSegment[] };
 
 const normalizeResult = (raw: unknown): WhisperTranscribeResult => {
-  if (raw && typeof raw === 'object' && 'result' in raw && 'segments' in raw) {
+  if (raw && isRecord(raw) && 'result' in raw && 'segments' in raw) {
     const r = raw as WhisperTranscribeResult;
     return {
-      result: typeof r.result === 'string' ? r.result : '',
-      segments: Array.isArray(r.segments) ? r.segments : [],
+      result: isString(r.result) ? r.result : '',
+      segments: isArray(r.segments) ? r.segments : [],
     };
   }
   return { result: '', segments: [] };

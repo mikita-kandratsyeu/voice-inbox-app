@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
+import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
 import { useIsTablet } from '@/shared/lib';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
@@ -20,7 +21,7 @@ type PickerRowProps<T extends string> = {
   selected: T;
   onSelect: (value: T) => void;
   labelKey: (value: T) => string;
-  color: ReturnType<typeof getColors>;
+  color: Colors;
 };
 
 function PickerSection<T extends string>({

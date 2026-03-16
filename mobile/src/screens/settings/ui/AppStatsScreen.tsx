@@ -5,6 +5,7 @@ import { Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
+import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
@@ -17,7 +18,7 @@ const StatCard = ({
   icon: React.ReactNode;
   label: string;
   value: string;
-  color: ReturnType<typeof getColors>;
+  color: Colors;
 }) => (
   <View
     className="flex-1 items-center rounded-2xl p-4"

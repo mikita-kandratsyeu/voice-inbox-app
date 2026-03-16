@@ -1,7 +1,8 @@
 import { getMessaging, onMessage } from '@react-native-firebase/messaging';
 import { useCallback, useEffect } from 'react';
-import { Platform } from 'react-native';
 
+import { IS_IOS } from '../platform';
+import { isRecord } from '../type-guards';
 import {
   type PushPermissionStatus,
   registerForPushToken,
@@ -19,7 +20,7 @@ function extractData(remoteMessage: {
   data?: Record<string, string | object> | null;
 }): PushNotificationData | undefined {
   const data = remoteMessage.data;
-  if (!data || typeof data !== 'object') return undefined;
+  if (!data || !isRecord(data)) return undefined;
   return data as unknown as PushNotificationData;
 }
 
@@ -31,7 +32,7 @@ export function usePushNotifications(options?: {
   const onPermissionChange = options?.onPermissionChange;
 
   const setupAndRegister = useCallback(async () => {
-    if (Platform.OS !== 'ios') return;
+    if (!IS_IOS) return;
 
     const token = await registerForPushToken();
     if (!token) return;
@@ -43,7 +44,7 @@ export function usePushNotifications(options?: {
   }, [onPermissionChange]);
 
   useEffect(() => {
-    if (Platform.OS !== 'ios') return;
+    if (!IS_IOS) return;
 
     const messaging = getMessaging();
     const unsubscribe = onMessage(messaging, async (remoteMessage) => {
