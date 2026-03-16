@@ -350,7 +350,7 @@
 				CODE_SIGN_ENTITLEMENTS = VoiceInboxApp/VoiceInboxApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = VoiceInboxApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
@@ -389,7 +389,7 @@
 				CODE_SIGN_ENTITLEMENTS = VoiceInboxApp/VoiceInboxApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 10;
+				CURRENT_PROJECT_VERSION = 11;
 				INFOPLIST_FILE = VoiceInboxApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
