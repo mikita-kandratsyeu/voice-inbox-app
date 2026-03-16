@@ -89,4 +89,9 @@ export const memoryStore = {
     kvStore.delete(key);
     counterStore.delete(key);
   },
+
+  listKeys: async (prefix: string): Promise<string[]> => {
+    cleanupExpired();
+    return Array.from(kvStore.keys()).filter((k) => k.startsWith(prefix));
+  },
 };

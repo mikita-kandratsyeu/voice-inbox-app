@@ -131,4 +131,19 @@ export function getSyncToken(): string | undefined {
   return undefined;
 }
 
+export async function listKeysByPrefix(prefix: string): Promise<string[]> {
+  if (redisClient) {
+    const pattern = `${prefix}*`;
+    const keys: string[] = [];
+    let cursor = 0;
+    do {
+      const [next, batch] = await redisClient.scan(cursor, { match: pattern, count: 100 });
+      cursor = typeof next === 'string' ? parseInt(next, 10) : next;
+      keys.push(...(batch ?? []));
+    } while (cursor !== 0);
+    return keys;
+  }
+  return memoryStore.listKeys(prefix);
+}
+
 export const redis = kv;

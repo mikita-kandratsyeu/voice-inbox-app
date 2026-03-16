@@ -23,63 +23,34 @@ The site showcases Voice Inbox AI: explains features, walks through the workflow
 
 ## Tech Stack
 
-| Category | Technology |
-|----------|------------|
+
+| Category  | Technology              |
+| --------- | ----------------------- |
 | Framework | Next.js 16 (App Router) |
-| Language | TypeScript |
-| Styling | Tailwind CSS v4 |
-| i18n | next-intl |
-| Theme | next-themes |
-| Icons | lucide-react |
-| Analytics | @vercel/analytics |
+| Language  | TypeScript              |
+| Styling   | Tailwind CSS v4         |
+| i18n      | next-intl               |
+| Theme     | next-themes             |
+| Icons     | lucide-react            |
+| Analytics | @vercel/analytics       |
 
----
-
-## Project Structure
-
-```
-web/
-├── app/
-│   ├── [locale]/           # Localized pages
-│   │   ├── page.tsx        # Home (landing)
-│   │   ├── privacy/        # Privacy Policy
-│   │   ├── terms/          # Terms of Service
-│   │   └── layout.tsx
-│   ├── api/                # API routes
-│   └── layout.tsx
-├── components/
-│   ├── landing/            # Landing sections
-│   │   ├── Hero.tsx
-│   │   ├── Features.tsx
-│   │   ├── HowItWorks.tsx
-│   │   ├── Benefits.tsx
-│   │   ├── CTASection.tsx
-│   │   ├── Header.tsx
-│   │   ├── Footer.tsx
-│   │   └── StoreButtons.tsx
-│   └── ui/                 # UI components
-│       ├── ThemeToggle.tsx
-│       ├── LanguageSwitcher.tsx
-│       └── AnimateOnScroll.tsx
-├── messages/               # Translations
-│   ├── en.json
-│   └── ru.json
-├── lib/                    # Utilities and config
-├── i18n/                   # next-intl config
-└── services/               # AI and other services
-```
 
 ---
 
 ## Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `NEXT_PUBLIC_BASE_URL` | Base URL of the site |
-| `OPENROUTER_API_KEY` | OpenRouter API key (for AI services) |
-| `UPSTASH_REDIS_REST_URL` | Upstash Redis URL |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis token |
-| `APP_SECRET` | Secret for message API |
+
+| Variable                   | Description                                                          |
+| -------------------------- | -------------------------------------------------------------------- |
+| `NEXT_PUBLIC_BASE_URL`     | Base URL of the site                                                 |
+| `OPENROUTER_API_KEY`       | OpenRouter API key (for AI services)                                 |
+| `UPSTASH_REDIS_REST_URL`   | Upstash Redis URL                                                    |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis token                                                  |
+| `APP_SECRET`               | Secret for message API                                               |
+| `ADMIN_SECRET`             | Key for admin panel access at `/admin` (optional)                    |
+| `VERCEL_TOKEN`             | Vercel API token for deployment status on admin dashboard (optional) |
+| `VERCEL_PROJECT_ID`        | Vercel project ID to filter deployments (optional)                   |
+
 
 Without Redis, an in-memory store is used (suitable for development).
 

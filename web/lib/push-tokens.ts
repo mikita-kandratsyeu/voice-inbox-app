@@ -11,7 +11,7 @@ import {
   PUSH_TOKEN_TTL_SECONDS,
 } from '@/config/constants';
 import { sendPushNotification } from '@/lib/push';
-import { redis } from '@/lib/redis';
+import { listKeysByPrefix, redis } from '@/lib/redis';
 
 function getPushTokenKey(deviceId: string): string {
   return `${PUSH_TOKEN_KEY_PREFIX}${deviceId}`;
@@ -117,6 +117,11 @@ export async function collectPendingAndUnlock(deviceId: string): Promise<number>
   await redis.del(lockKey);
 
   return count;
+}
+
+export async function getAllDeviceIdsWithPushTokens(): Promise<string[]> {
+  const keys = await listKeysByPrefix(PUSH_TOKEN_KEY_PREFIX);
+  return keys.map((key) => key.slice(PUSH_TOKEN_KEY_PREFIX.length));
 }
 
 export async function getPushTokenWithLocale(

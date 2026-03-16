@@ -44,3 +44,6 @@ export const PUSH_LOCK_TTL_SECONDS = 30; // lock TTL = debounce + buffer
 // Limit exceeded push: max 1 per device per 5 min to avoid spam
 export const LIMIT_PUSH_DEBOUNCE_KEY_PREFIX = 'limit_push_sent:';
 export const LIMIT_PUSH_DEBOUNCE_SECONDS = 300;
+
+// Admin panel (access by key from env ADMIN_SECRET)
+export const ADMIN_COOKIE_NAME = 'admin_key';

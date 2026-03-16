@@ -3,12 +3,21 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 import {
+  ADMIN_COOKIE_NAME,
   RATE_LIMIT_KEY_PREFIX,
   RATE_LIMIT_MAX_REQUESTS,
   RATE_LIMIT_WINDOW_SECONDS,
 } from '@/config/constants';
 import { redis } from '@/lib/redis';
 import { routing } from '@/lib/i18n';
+
+const ADMIN_SECRET = process.env.ADMIN_SECRET;
+
+function isAdminAuthenticated(request: NextRequest): boolean {
+  if (!ADMIN_SECRET?.trim()) return false;
+  const cookie = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
+  return cookie === ADMIN_SECRET;
+}
 
 const getClientIp = (request: NextRequest): string => {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -25,7 +34,21 @@ const getRateLimitKey = (ip: string): string => {
 const intlMiddleware = createMiddleware(routing);
 
 export const proxy = async (request: NextRequest): Promise<NextResponse> => {
-  if (request.method === 'POST' && request.nextUrl.pathname === '/api/messages') {
+  const { pathname } = request.nextUrl;
+
+  if (pathname.startsWith('/api/admin/')) {
+    if (pathname !== '/api/admin/login' && pathname !== '/api/admin/logout') {
+      if (!isAdminAuthenticated(request)) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    }
+    return NextResponse.next();
+  }
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    return NextResponse.next();
+  }
+
+  if (request.method === 'POST' && pathname === '/api/messages') {
     const ip = getClientIp(request);
     const key = getRateLimitKey(ip);
 
@@ -53,5 +76,11 @@ export const proxy = async (request: NextRequest): Promise<NextResponse> => {
 };
 
 export const config = {
-  matcher: ['/((?!api|trpc|_next|_vercel|.*\\..*).*)', '/api/messages'],
+  matcher: [
+    '/((?!api|trpc|_next|_vercel|.*\\..*).*)',
+    '/api/messages',
+    '/admin',
+    '/admin/:path*',
+    '/api/admin/:path*',
+  ],
 };
