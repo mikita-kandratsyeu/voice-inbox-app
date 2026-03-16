@@ -34,7 +34,13 @@ export function StoreButtons({ variant = 'hero' }: StoreButtonsProps): React.Rea
 
   return (
     <div className="flex flex-col items-center justify-center gap-2 sm:flex-row">
-      <a href={APP_STORE_URL} className={linkClasses} aria-label={t('appStore')}>
+      <a
+        href={APP_STORE_URL}
+        className={linkClasses}
+        aria-label={t('appStore')}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         <Image
           src={`/app-store-badge-${theme}.svg`}
           alt={t('appStore')}
@@ -43,7 +49,13 @@ export function StoreButtons({ variant = 'hero' }: StoreButtonsProps): React.Rea
           className="h-[54px] w-[180px] object-contain"
         />
       </a>
-      <a href={GOOGLE_PLAY_URL} className={linkClasses} aria-label={t('googlePlay')}>
+      <a
+        href={GOOGLE_PLAY_URL}
+        className={linkClasses}
+        aria-label={t('googlePlay')}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         <Image
           src={`/google-play-badge-${theme}.svg`}
           alt={t('googlePlay')}
