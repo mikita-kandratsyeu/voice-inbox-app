@@ -1,3 +1,5 @@
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
@@ -5,7 +7,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, View } from 'react-native';
 
-import type { RootStackParamList } from '@/app/navigation/types';
+import type { BottomTabParamList, RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { RecordCard, useRecordStore } from '@/entities/record';
 import { InboxFilterBar, useInboxFiltersReset } from '@/features/inbox-filters';
@@ -23,11 +25,16 @@ type FlattenedItem =
   | { type: 'header'; title: string; isFirst: boolean }
   | { type: 'record'; item: VoiceRecord };
 
+type InboxNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<BottomTabParamList, 'Inbox'>,
+  NativeStackNavigationProp<RootStackParamList>
+>;
+
 export const InboxScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
   const isTablet = useIsTablet();
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const navigation = useNavigation<InboxNavigationProp>();
   const { records, archiveRecord, unarchiveRecord, togglePin, isLoaded } = useRecordStore();
 
   const {
