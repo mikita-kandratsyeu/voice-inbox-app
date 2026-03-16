@@ -433,13 +433,13 @@
     "readError": "Failed to read file",
     "importSelectTitle": "Select records to import",
     "importSelectSubtitle": "{{ importable }} can be imported, {{ duplicates }} already in app",
+    "selectRecords": "Records",
     "selectAll": "Select all",
     "deselectAll": "Deselect all",
     "importSelected": "Import {{ count }} records",
     "importing": "Importing...",
     "alreadyInApp": "Already in app",
     "alreadyInAppSection": "Already in app",
-    "allAlreadyInApp": "All records from the file are already in your app.",
     "noRecordsInFile": "No records found in the file."
   },
   "permissions": {

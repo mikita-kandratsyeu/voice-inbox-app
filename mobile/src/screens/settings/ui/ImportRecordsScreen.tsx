@@ -1,8 +1,8 @@
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
-import { Check, Square } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, FlatList, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
@@ -10,7 +10,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { getColors, useAppTheme } from '@/shared/config';
 import { formatRelativeTime, useIsTablet } from '@/shared/lib';
-import { Button, ScreenHeader } from '@/shared/ui';
+import { Button, ScreenHeader, SectionHeader } from '@/shared/ui';
 
 type ImportRecordsRouteProp = RouteProp<SettingsStackParamList, 'ImportRecords'>;
 
@@ -32,70 +32,53 @@ const ImportRecordRow = React.memo(function ImportRecordRow({
   language,
 }: ImportRecordRowProps) {
   return (
-    <Pressable
+    <TouchableOpacity
       onPress={() => onToggle(item.id)}
+      activeOpacity={0.7}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
         paddingVertical: 14,
+        minHeight: 52,
         backgroundColor: color.background.card,
-        borderBottomWidth: 1,
-        borderBottomColor: color.border.default,
       }}
     >
-      <View
-        style={{
-          width: 24,
-          height: 24,
-          marginRight: 12,
-          alignItems: 'center',
-          justifyContent: 'center',
-          overflow: 'hidden',
-        }}
-      >
-        <View
-          style={{
-            position: 'absolute',
-            left: 1,
-            top: 1,
-            width: 22,
-            height: 22,
-            borderRadius: 4,
-            backgroundColor: color.accent.primary,
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: isSelected ? 1 : 0,
-          }}
-          pointerEvents="none"
-        >
-          <Check size={14} color="#ffffff" strokeWidth={2.5} />
-        </View>
-        <View
-          style={{
-            position: 'absolute',
-            left: 1,
-            top: 1,
-            width: 22,
-            height: 22,
-            alignItems: 'center',
-            justifyContent: 'center',
-            opacity: isSelected ? 0 : 1,
-          }}
-          pointerEvents="none"
-        >
-          <Square size={20} color={color.icon.muted} strokeWidth={2} />
-        </View>
+      <View style={{ marginRight: 12 }}>
+        {isSelected ? (
+          <View
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              backgroundColor: color.accent.primary,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Check size={14} color="#ffffff" strokeWidth={2.5} />
+          </View>
+        ) : (
+          <View
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              borderWidth: 2,
+              borderColor: color.border.default,
+            }}
+          />
+        )}
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 16, color: color.text.primary }} numberOfLines={1}>
           {item.title || t('record.autoTitle.morning')}
         </Text>
-        <Text style={{ marginTop: 2, fontSize: 12, color: color.text.secondary }}>
+        <Text style={{ marginTop: 2, fontSize: 13, color: color.text.secondary }}>
           {formatRelativeTime(item.createdAt, language)} · {item.duration}
         </Text>
       </View>
-    </Pressable>
+    </TouchableOpacity>
   );
 });
 
@@ -171,47 +154,6 @@ export const ImportRecordsScreen = () => {
     }
   }, [addRecord, importable, navigation, selectedCount, selectedIds, t]);
 
-  const renderImportableItem = useCallback(
-    ({ item }: { item: VoiceRecord }) => (
-      <ImportRecordRow
-        item={item}
-        isSelected={selectedIds.has(item.id)}
-        onToggle={toggleRecord}
-        color={color}
-        t={t}
-        language={i18n.language}
-      />
-    ),
-    [color, selectedIds, toggleRecord, t, i18n.language],
-  );
-
-  const renderDuplicateItem = useCallback(
-    ({ item }: { item: VoiceRecord }) => (
-      <View
-        className="flex-row items-center px-4 py-3.5"
-        style={{
-          backgroundColor: color.background.card,
-          borderBottomWidth: 1,
-          borderBottomColor: color.border.default,
-          opacity: 0.6,
-        }}
-      >
-        <View className="mr-3">
-          <Square size={24} color={color.icon.muted} strokeWidth={1.5} />
-        </View>
-        <View className="flex-1">
-          <Text className="text-[16px]" style={{ color: color.text.primary }} numberOfLines={1}>
-            {item.title || t('record.autoTitle.morning')}
-          </Text>
-          <Text className="mt-0.5 text-xs" style={{ color: color.text.secondary }}>
-            {formatRelativeTime(item.createdAt, i18n.language)} · {t('importExport.alreadyInApp')}
-          </Text>
-        </View>
-      </View>
-    ),
-    [color, t, i18n.language],
-  );
-
   const contentMaxWidth = isTablet ? 720 : undefined;
 
   return (
@@ -242,133 +184,200 @@ export const ImportRecordsScreen = () => {
           maxWidth: contentMaxWidth,
         }}
       >
-        <View className="px-4 py-3" style={{ backgroundColor: color.background.primary }}>
-          <Text className="text-sm" style={{ color: color.text.secondary, textAlign: 'center' }}>
-            {t('importExport.importSelectSubtitle', {
-              importable: importable.length,
-              duplicates: duplicates.length,
-            })}
-          </Text>
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 12,
+            paddingBottom: insets.bottom + 24,
+            flexGrow: 1,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
           {importable.length > 0 && (
-            <View
-              className="mt-3 flex-row items-center justify-center"
-              style={{
-                alignSelf: 'center',
-                maxWidth: isTablet ? 400 : undefined,
-                width: '100%',
-                backgroundColor: color.background.tertiary,
-                borderRadius: isTablet ? 14 : 12,
-                padding: 4,
-                flexDirection: 'row',
-              }}
-            >
-              <TouchableOpacity
-                onPress={selectAll}
-                activeOpacity={0.7}
-                style={{
-                  flex: 1,
-                  paddingVertical: isTablet ? 12 : 10,
-                  paddingHorizontal: isTablet ? 20 : 16,
-                  backgroundColor:
-                    selectedCount === importable.length ? color.accent.primary : 'transparent',
-                  borderRadius: isTablet ? 10 : 8,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
+            <>
+              <View style={{ marginBottom: 24 }}>
                 <Text
                   style={{
-                    fontSize: isTablet ? 16 : 15,
+                    fontSize: 12,
                     fontWeight: '600',
-                    color:
-                      selectedCount === importable.length
-                        ? color.icon.onAccent
-                        : color.accent.primary,
+                    textTransform: 'uppercase',
+                    letterSpacing: 1,
+                    color: color.text.secondary,
+                    marginBottom: 8,
+                    paddingHorizontal: 4,
                   }}
                 >
-                  {t('importExport.selectAll')}
+                  {t('importExport.selectRecords')}
                 </Text>
-              </TouchableOpacity>
-              <View
-                style={{
-                  width: 1,
-                  height: isTablet ? 20 : 18,
-                  backgroundColor: color.border.default,
-                }}
-              />
-              <TouchableOpacity
-                onPress={deselectAll}
-                activeOpacity={0.7}
-                style={{
-                  flex: 1,
-                  paddingVertical: isTablet ? 12 : 10,
-                  paddingHorizontal: isTablet ? 20 : 16,
-                  backgroundColor: selectedCount === 0 ? color.accent.primary : 'transparent',
-                  borderRadius: isTablet ? 10 : 8,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Text
+                <View
                   style={{
-                    fontSize: isTablet ? 16 : 15,
-                    fontWeight: '600',
-                    color: selectedCount === 0 ? color.icon.onAccent : color.text.secondary,
+                    flexDirection: 'row',
+                    backgroundColor: color.background.tertiary,
+                    borderRadius: 10,
+                    padding: 4,
                   }}
                 >
-                  {t('importExport.deselectAll')}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-
-        {importable.length > 0 ? (
-          <FlatList
-            data={importable}
-            keyExtractor={(item) => item.id}
-            renderItem={renderImportableItem}
-            ListFooterComponent={
-              duplicates.length > 0 ? (
-                <>
-                  <View
-                    className="px-4 py-2"
-                    style={{ backgroundColor: color.background.secondary }}
+                  <TouchableOpacity
+                    onPress={selectAll}
+                    activeOpacity={0.7}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      paddingHorizontal: 16,
+                      backgroundColor:
+                        selectedCount === importable.length ? color.accent.primary : 'transparent',
+                      borderRadius: 8,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
                   >
                     <Text
-                      className="text-xs font-semibold uppercase tracking-wider"
-                      style={{ color: color.text.secondary }}
+                      style={{
+                        fontSize: 15,
+                        fontWeight: '600',
+                        color:
+                          selectedCount === importable.length
+                            ? color.icon.onAccent
+                            : color.accent.primary,
+                      }}
                     >
-                      {t('importExport.alreadyInAppSection')}
+                      {t('importExport.selectAll')}
                     </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={deselectAll}
+                    activeOpacity={0.7}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      paddingHorizontal: 16,
+                      backgroundColor: selectedCount === 0 ? color.accent.primary : 'transparent',
+                      borderRadius: 8,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: '600',
+                        color: selectedCount === 0 ? color.icon.onAccent : color.text.secondary,
+                      }}
+                    >
+                      {t('importExport.deselectAll')}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: color.text.secondary,
+                  textAlign: 'center',
+                  marginBottom: 16,
+                  paddingHorizontal: 4,
+                }}
+              >
+                {t('importExport.importSelectSubtitle', {
+                  importable: importable.length,
+                  duplicates: duplicates.length,
+                })}
+              </Text>
+              <View
+                style={{
+                  marginBottom: 24,
+                  borderRadius: 16,
+                  overflow: 'hidden',
+                  borderWidth: 1,
+                  borderColor: color.border.default,
+                  backgroundColor: color.background.card,
+                }}
+              >
+                {importable.map((item, index) => (
+                  <View
+                    key={item.id}
+                    style={
+                      index < importable.length - 1
+                        ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
+                        : undefined
+                    }
+                  >
+                    <ImportRecordRow
+                      item={item}
+                      isSelected={selectedIds.has(item.id)}
+                      onToggle={toggleRecord}
+                      color={color}
+                      t={t}
+                      language={i18n.language}
+                    />
                   </View>
-                  {duplicates.map((item) => (
-                    <View key={item.id}>{renderDuplicateItem({ item })}</View>
-                  ))}
-                </>
-              ) : null
-            }
-            contentContainerStyle={{
-              paddingBottom: insets.bottom + 24,
-            }}
-          />
-        ) : null}
-
-        {importable.length === 0 && duplicates.length > 0 && (
-          <View className="flex-1 items-center justify-center px-6">
-            <Text className="text-center text-base" style={{ color: color.text.secondary }}>
-              {t('importExport.allAlreadyInApp')}
-            </Text>
-          </View>
-        )}
-
-        {importable.length === 0 && duplicates.length === 0 && (
-          <View className="flex-1 items-center justify-center px-6">
-            <Text className="text-center text-base" style={{ color: color.text.secondary }}>
-              {t('importExport.noRecordsInFile')}
-            </Text>
-          </View>
-        )}
+                ))}
+              </View>
+            </>
+          )}
+          {duplicates.length > 0 && (
+            <>
+              <SectionHeader
+                title={t('importExport.alreadyInAppSection')}
+                isFirst={importable.length === 0}
+              />
+              <View
+                style={{
+                  marginBottom: 24,
+                  borderRadius: 16,
+                  overflow: 'hidden',
+                  borderWidth: 1,
+                  borderColor: color.border.default,
+                  backgroundColor: color.background.card,
+                }}
+              >
+                {duplicates.map((item, index) => (
+                  <View
+                    key={item.id}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingHorizontal: 16,
+                      paddingVertical: 14,
+                      minHeight: 52,
+                      backgroundColor: color.background.card,
+                      opacity: 0.7,
+                      ...(index < duplicates.length - 1
+                        ? {
+                            borderBottomWidth: 1,
+                            borderBottomColor: color.border.default,
+                          }
+                        : {}),
+                    }}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 16, color: color.text.primary }} numberOfLines={1}>
+                        {item.title || t('record.autoTitle.morning')}
+                      </Text>
+                      <Text style={{ marginTop: 2, fontSize: 13, color: color.text.secondary }}>
+                        {formatRelativeTime(item.createdAt, i18n.language)} ·{' '}
+                        {t('importExport.alreadyInApp')}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+          {importable.length === 0 && duplicates.length === 0 && (
+            <View style={{ flex: 1, justifyContent: 'center', paddingVertical: 48 }}>
+              <Text
+                style={{
+                  textAlign: 'center',
+                  fontSize: 16,
+                  color: color.text.secondary,
+                }}
+              >
+                {t('importExport.noRecordsInFile')}
+              </Text>
+            </View>
+          )}
+        </ScrollView>
       </View>
     </View>
   );
