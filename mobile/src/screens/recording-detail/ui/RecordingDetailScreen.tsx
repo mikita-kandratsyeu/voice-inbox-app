@@ -1,7 +1,7 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, View } from 'react-native';
 import RNFS from 'react-native-fs';
@@ -38,21 +38,22 @@ export const RecordingDetailScreen = () => {
   const isTablet = useIsTablet();
 
   const { record: routeRecord } = route.params;
-  const {
-    records,
-    togglePin,
-    toggleTask,
-    setSummaryStatus,
-    setTasksStatus,
-    clearAudioPath,
-    archiveRecord,
-    unarchiveRecord,
-  } = useRecordStore();
+  const recordId = routeRecord.id;
+
+  const liveRecord: VoiceRecord =
+    useRecordStore((s) => s.records.find((r) => r.id === recordId)) ?? routeRecord;
+
+  const togglePin = useRecordStore((s) => s.togglePin);
+  const toggleTask = useRecordStore((s) => s.toggleTask);
+  const setSummaryStatus = useRecordStore((s) => s.setSummaryStatus);
+  const setTasksStatus = useRecordStore((s) => s.setTasksStatus);
+  const clearAudioPath = useRecordStore((s) => s.clearAudioPath);
+  const archiveRecord = useRecordStore((s) => s.archiveRecord);
+  const unarchiveRecord = useRecordStore((s) => s.unarchiveRecord);
+
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const globalTranscriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
-
-  const liveRecord: VoiceRecord = records.find((r) => r.id === routeRecord.id) ?? routeRecord;
 
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
   const [showAskAIModal, setShowAskAIModal] = useState(false);
@@ -84,15 +85,17 @@ export const RecordingDetailScreen = () => {
   const { startTranscription, cancelTranscription } = useTranscription();
   const { generateSummary, extractTasks } = useAiProcessing();
   const { shareRecord, shareAudio } = useShareRecord();
-  const { promptRename, promptDelete } = useRecordActions({
-    onDeleted: () => navigation.goBack(),
-  });
+  const onDeleted = useCallback(() => navigation.goBack(), [navigation]);
+  const { promptRename, promptDelete } = useRecordActions({ onDeleted });
 
-  const handleToggleTask = (taskId: string) => {
-    toggleTask(liveRecord.id, taskId).catch(() => {});
-  };
+  const handleToggleTask = useCallback(
+    (taskId: string) => {
+      toggleTask(liveRecord.id, taskId).catch(() => {});
+    },
+    [liveRecord.id, toggleTask],
+  );
 
-  const handleRetranscribe = async () => {
+  const handleRetranscribe = useCallback(async () => {
     const modelStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
 
     if (modelStatus !== 'downloaded') {
@@ -127,49 +130,76 @@ export const RecordingDetailScreen = () => {
     }
 
     startTranscription(liveRecord, recordLanguage);
-  };
+  }, [
+    t,
+    whisperModelStatuses,
+    selectedWhisperModel,
+    navigation,
+    liveRecord,
+    recordLanguage,
+    clearAudioPath,
+    startTranscription,
+  ]);
 
-  const handleCancelTranscription = () => {
+  const handleCancelTranscription = useCallback(() => {
     cancelTranscription(liveRecord.id);
-  };
+  }, [liveRecord.id, cancelTranscription]);
 
-  const handleGenerateSummary = () => {
+  const handleGenerateSummary = useCallback(() => {
     generateSummary(liveRecord).catch(() => {});
-  };
+  }, [liveRecord, generateSummary]);
 
-  const handleExtractTasks = () => {
+  const handleExtractTasks = useCallback(() => {
     extractTasks(liveRecord).catch(() => {});
-  };
+  }, [liveRecord, extractTasks]);
 
-  const handleShare = () => {
+  const handleShare = useCallback(() => {
     shareRecord(liveRecord).catch((err: Error) => {
       Alert.alert(t('recordingDetail.shareFailed'), err.message);
     });
-  };
+  }, [t, liveRecord, shareRecord]);
 
-  const handleShareAudio = () => {
+  const handleShareAudio = useCallback(() => {
     shareAudio(liveRecord).catch((err: Error) => {
       Alert.alert(t('recordingDetail.shareFailed'), err.message);
     });
-  };
+  }, [t, liveRecord, shareAudio]);
 
   const scrollPadding = isTablet ? 24 : 16;
   const contentMaxWidth = isTablet ? 720 : undefined;
+
+  const onBack = useCallback(() => navigation.goBack(), [navigation]);
+  const onTogglePin = useCallback(() => togglePin(liveRecord.id), [liveRecord.id, togglePin]);
+  const onAskAI = useCallback(() => setShowAskAIModal(true), []);
+  const onRename = useCallback(() => promptRename(liveRecord), [liveRecord, promptRename]);
+  const onArchive = useCallback(() => archiveRecord(liveRecord.id), [liveRecord.id, archiveRecord]);
+  const onUnarchive = useCallback(
+    () => unarchiveRecord(liveRecord.id),
+    [liveRecord.id, unarchiveRecord],
+  );
+  const onDelete = useCallback(() => promptDelete(liveRecord), [liveRecord, promptDelete]);
+
+  const handleDismissSummaryError = useCallback(() => {
+    setSummaryStatus(liveRecord.id, 'done');
+    setTasksStatus(liveRecord.id, 'done');
+  }, [liveRecord.id, setSummaryStatus, setTasksStatus]);
+
+  const onDismissAskAIModal = useCallback(() => setShowAskAIModal(false), []);
 
   return (
     <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
       <RecordingDetailHeader
         record={liveRecord}
         color={color}
-        onBack={() => navigation.goBack()}
-        onTogglePin={() => togglePin(liveRecord.id)}
+        onBack={onBack}
+        onTogglePin={onTogglePin}
         onShare={handleShare}
         onShareAudio={handleShareAudio}
-        onAskAI={() => setShowAskAIModal(true)}
-        onRename={() => promptRename(liveRecord)}
-        onArchive={() => archiveRecord(liveRecord.id)}
-        onUnarchive={() => unarchiveRecord(liveRecord.id)}
-        onDelete={() => promptDelete(liveRecord)}
+        onAskAI={onAskAI}
+        onRename={onRename}
+        onArchive={onArchive}
+        onUnarchive={onUnarchive}
+        onDelete={onDelete}
       />
 
       <ScrollView
@@ -206,15 +236,41 @@ export const RecordingDetailScreen = () => {
             style={{ backgroundColor: color.background.card }}
           >
             <RecordingDetailTabBar active={activeTab} onSelect={setActiveTab} color={color} />
-            {activeTab === 'transcript' && (
+            <View
+              style={
+                activeTab !== 'transcript'
+                  ? {
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      zIndex: -1,
+                    }
+                  : undefined
+              }
+            >
               <TranscriptContent
                 record={liveRecord}
                 color={color}
                 onTranscribe={handleRetranscribe}
                 onCancelTranscription={handleCancelTranscription}
               />
-            )}
-            {activeTab === 'summary' && (
+            </View>
+            <View
+              style={
+                activeTab !== 'summary'
+                  ? {
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      zIndex: -1,
+                    }
+                  : undefined
+              }
+            >
               <SummaryTab
                 summary={liveRecord.summary ?? ''}
                 keyPhrases={liveRecord.keyPhrases}
@@ -222,13 +278,23 @@ export const RecordingDetailScreen = () => {
                 hasTranscript={Boolean(liveRecord.transcript)}
                 color={color}
                 onGenerate={handleGenerateSummary}
-                onDismissError={() => {
-                  setSummaryStatus(liveRecord.id, 'done');
-                  setTasksStatus(liveRecord.id, 'done');
-                }}
+                onDismissError={handleDismissSummaryError}
               />
-            )}
-            {activeTab === 'tasks' && (
+            </View>
+            <View
+              style={
+                activeTab !== 'tasks'
+                  ? {
+                      position: 'absolute',
+                      left: 0,
+                      right: 0,
+                      opacity: 0,
+                      pointerEvents: 'none',
+                      zIndex: -1,
+                    }
+                  : undefined
+              }
+            >
               <TasksTab
                 tasks={liveRecord.tasks ?? []}
                 nextSteps={liveRecord.nextSteps}
@@ -238,22 +304,18 @@ export const RecordingDetailScreen = () => {
                 color={color}
                 onToggle={handleToggleTask}
                 onExtract={handleExtractTasks}
-                onDismissError={() => {
-                  setSummaryStatus(liveRecord.id, 'done');
-                  setTasksStatus(liveRecord.id, 'done');
-                }}
+                onDismissError={handleDismissSummaryError}
               />
-            )}
+            </View>
           </View>
 
           <RelatedNotesSection recordId={liveRecord.id} color={color} />
         </View>
-
         <AskAIModal
           visible={showAskAIModal}
           record={liveRecord}
           color={color}
-          onDismiss={() => setShowAskAIModal(false)}
+          onDismiss={onDismissAskAIModal}
         />
       </ScrollView>
     </View>

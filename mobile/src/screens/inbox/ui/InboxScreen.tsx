@@ -1,4 +1,4 @@
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import React, { useCallback, useEffect, useRef } from 'react';
@@ -51,11 +51,12 @@ export const InboxScreen = () => {
     return inboxFiltersReset.registerReset(resetToDefault);
   }, [inboxFiltersReset, resetToDefault]);
 
-  useFocusEffect(
-    useCallback(() => {
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('tabPress', () => {
       listRef.current?.scrollToOffset({ offset: 0, animated: true });
-    }, []),
-  );
+    });
+    return unsubscribe;
+  }, [navigation]);
 
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: true });
