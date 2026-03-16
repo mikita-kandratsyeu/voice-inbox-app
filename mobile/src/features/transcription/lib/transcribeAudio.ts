@@ -42,11 +42,22 @@ const formatTimestamp = (centiseconds: number): string => {
 type WhisperSegment = { text: string; t0: number; t1: number };
 type WhisperTranscribeResult = { result: string; segments: WhisperSegment[] };
 
+const normalizeResult = (raw: unknown): WhisperTranscribeResult => {
+  if (raw && typeof raw === 'object' && 'result' in raw && 'segments' in raw) {
+    const r = raw as WhisperTranscribeResult;
+    return {
+      result: typeof r.result === 'string' ? r.result : '',
+      segments: Array.isArray(r.segments) ? r.segments : [],
+    };
+  }
+  return { result: '', segments: [] };
+};
+
 const mapSegments = (result: WhisperTranscribeResult, offset: number = 0): TranscriptSegment[] =>
-  result.segments.map((seg, idx) => ({
+  (result.segments || []).map((seg, idx) => ({
     id: String(offset + idx),
-    startTime: formatTimestamp(seg.t0),
-    text: seg.text.trim(),
+    startTime: formatTimestamp(Number(seg?.t0) || 0),
+    text: (seg?.text ?? '').trim(),
   }));
 
 export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudioHandle => {
@@ -120,9 +131,9 @@ const transcribeShort = async ({
     throw new Error('abort');
   }
 
-  let result: WhisperTranscribeResult;
+  let raw: unknown;
   try {
-    result = await rawPromise;
+    raw = await rawPromise;
   } catch (err) {
     if (cancelled()) {
       throw new Error('abort');
@@ -135,9 +146,10 @@ const transcribeShort = async ({
     throw new Error('abort');
   }
 
+  const result = normalizeResult(raw);
   return {
     segments: mapSegments(result),
-    fullText: result.result.trim(),
+    fullText: (result.result ?? '').trim(),
   };
 };
 
@@ -189,9 +201,9 @@ const transcribeLong = async ({
 
     setStop(chunkStop);
 
-    let result: WhisperTranscribeResult;
+    let raw: unknown;
     try {
-      result = await rawPromise;
+      raw = await rawPromise;
     } catch (chunkErr) {
       if (cancelled()) {
         throw new Error('abort');
@@ -204,11 +216,12 @@ const transcribeLong = async ({
       throw new Error('abort');
     }
 
+    const result = normalizeResult(raw);
     const chunkSegments = mapSegments(result, segmentOffset);
     allSegments.push(...chunkSegments);
     segmentOffset += chunkSegments.length;
 
-    const chunkText = result.result.trim();
+    const chunkText = (result.result ?? '').trim();
     fullText = fullText.length > 0 ? `${fullText} ${chunkText}` : chunkText;
 
     onProgress?.(i + 1, total);

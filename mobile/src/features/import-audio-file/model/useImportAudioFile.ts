@@ -16,7 +16,7 @@ import { MAX_RECORDING_MS } from '@/screens/record/config';
 import { generateRecordId } from '@/screens/record/lib/generateRecordId';
 import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
 import { hapticMedium, hapticSuccess } from '@/shared/lib';
-import { getAudioDurationMs } from '@/shared/lib/audio';
+import { convertToWav, getAudioDurationMs } from '@/shared/lib/audio';
 import { formatTime } from '@/shared/lib/date';
 
 const RECORDINGS_DIR = `${RNFS.DocumentDirectoryPath}/recordings`;
@@ -77,6 +77,31 @@ export function useImportAudioFile() {
         destPath = normalizedSource;
       }
 
+      const needsConversion = !/\.wav$/i.test(ext);
+      if (needsConversion) {
+        const wavPath = `${RECORDINGS_DIR}/${recordId}.wav`;
+        const converted = await convertToWav(destPath, wavPath);
+        if (converted === null) {
+          Alert.alert(t('common.error'), t('importAudio.conversionError'));
+          try {
+            if (destPath !== normalizedSource) await RNFS.unlink(destPath);
+          } catch {
+            if (__DEV__) {
+              console.warn('[importAudioFile] Could not delete original file');
+            }
+          }
+          return;
+        }
+        try {
+          if (destPath !== normalizedSource) await RNFS.unlink(destPath);
+        } catch {
+          if (__DEV__) {
+            console.warn('[importAudioFile] Could not delete original file');
+          }
+        }
+        destPath = converted;
+      }
+
       let durationMs: number | null = null;
       try {
         durationMs = await getAudioDurationMs(destPath);
@@ -101,7 +126,9 @@ export function useImportAudioFile() {
         try {
           await RNFS.unlink(destPath);
         } catch {
-          // ignore
+          if (__DEV__) {
+            console.warn('[importAudioFile] Could not delete original file');
+          }
         }
         return;
       }

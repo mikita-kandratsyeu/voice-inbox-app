@@ -6,3 +6,4 @@
 //
 
 #import <RNFSManager.h>
+#import "AudioConverter.h"
