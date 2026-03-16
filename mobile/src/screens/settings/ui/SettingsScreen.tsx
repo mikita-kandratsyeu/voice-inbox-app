@@ -40,6 +40,7 @@ import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { exportData, importData } from '@/features/sync-data';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
+import { useIsTablet } from '@/shared/lib';
 import { getAiUsage } from '@/shared/lib/ai-api';
 import { isEmbeddingAvailable } from '@/shared/lib/embeddings';
 import {
@@ -61,7 +62,10 @@ export const SettingsScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
+  const isTablet = useIsTablet();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+
+  const contentMaxWidth = isTablet ? 720 : undefined;
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
@@ -242,180 +246,146 @@ export const SettingsScreen = () => {
         </Text>
       </View>
 
-      <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 12,
-          paddingBottom: insets.bottom + 24,
+      <View
+        style={{
+          flex: 1,
+          alignSelf: 'center',
+          width: '100%',
+          maxWidth: contentMaxWidth,
         }}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={color.status.processing.text}
-            colors={[color.status.processing.text]}
-            progressBackgroundColor={color.background.secondary}
-          />
-        }
       >
-        <AiUsageCard usage={aiUsage} loading={aiUsageLoading} />
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 12,
+            paddingBottom: insets.bottom + 24,
+          }}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={color.status.processing.text}
+              colors={[color.status.processing.text]}
+              progressBackgroundColor={color.background.secondary}
+            />
+          }
+        >
+          <AiUsageCard usage={aiUsage} loading={aiUsageLoading} />
 
-        <SettingsSection title={t('settings.aiProcessing')}>
-          <SettingsRow
-            label={t('settings.aiModel')}
-            value={aiModelName}
-            leftIcon={<Bot size={20} color={color.accent.transcript} strokeWidth={1.8} />}
-            onPress={() => navigation.navigate('AIModelPicker')}
-            isFirst
-          />
-          <SettingsRow
-            label={t('settings.transcription')}
-            value={`Whisper ${whisperModelName}`}
-            leftIcon={<Mic size={20} color={color.accent.cache} strokeWidth={1.8} />}
-            onPress={() => navigation.navigate('WhisperModelPicker')}
-          />
-          <SettingsRow
-            label={t('settings.aiSettings')}
-            leftIcon={<Settings2 size={20} color={color.accent.transcript} strokeWidth={1.8} />}
-            onPress={() => navigation.navigate('AiSettings')}
-          />
-          <SettingsRow
-            label={t('settings.autoTranscribeOnSave')}
-            leftIcon={<Zap size={20} color={color.accent.transcript} strokeWidth={1.8} />}
-            rightSlot={
-              <Switch
-                value={autoTranscribeOnSave}
-                onValueChange={setAutoTranscribeOnSave}
-                trackColor={{
-                  false: color.background.tertiary,
-                  true: color.accent.success,
-                }}
-                thumbColor={color.icon.onAccent}
-              />
-            }
-            showChevron={false}
-            onPress={undefined}
-          />
-          <SettingsRow
-            label={t('settings.autoAiAfterTranscription')}
-            leftIcon={<Sparkles size={20} color={color.accent.primary} strokeWidth={1.8} />}
-            rightSlot={
-              <Switch
-                value={autoAiAfterTranscription}
-                onValueChange={setAutoAiAfterTranscription}
-                trackColor={{
-                  false: color.background.tertiary,
-                  true: color.accent.success,
-                }}
-                thumbColor={color.icon.onAccent}
-              />
-            }
-            showChevron={false}
-            onPress={undefined}
-            isLast={!isEmbeddingAvailable()}
-          />
-          {isEmbeddingAvailable() && (
+          <SettingsSection title={t('settings.aiProcessing')}>
             <SettingsRow
-              label={
-                isUpdatingEmbeddings
-                  ? t('settings.updatingEmbeddings')
-                  : t('settings.updateEmbeddings')
+              label={t('settings.aiModel')}
+              value={aiModelName}
+              leftIcon={<Bot size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+              onPress={() => navigation.navigate('AIModelPicker')}
+              isFirst
+            />
+            <SettingsRow
+              label={t('settings.transcription')}
+              value={`Whisper ${whisperModelName}`}
+              leftIcon={<Mic size={20} color={color.accent.cache} strokeWidth={1.8} />}
+              onPress={() => navigation.navigate('WhisperModelPicker')}
+            />
+            <SettingsRow
+              label={t('settings.aiSettings')}
+              leftIcon={<Settings2 size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+              onPress={() => navigation.navigate('AiSettings')}
+            />
+            <SettingsRow
+              label={t('settings.autoTranscribeOnSave')}
+              leftIcon={<Zap size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+              rightSlot={
+                <Switch
+                  value={autoTranscribeOnSave}
+                  onValueChange={setAutoTranscribeOnSave}
+                  trackColor={{
+                    false: color.background.tertiary,
+                    true: color.accent.success,
+                  }}
+                  thumbColor={color.icon.onAccent}
+                />
               }
-              leftIcon={<RefreshCw size={20} color={color.accent.primary} strokeWidth={1.8} />}
-              onPress={isUpdatingEmbeddings ? undefined : handleUpdateEmbeddings}
+              showChevron={false}
+              onPress={undefined}
+            />
+            <SettingsRow
+              label={t('settings.autoAiAfterTranscription')}
+              leftIcon={<Sparkles size={20} color={color.accent.primary} strokeWidth={1.8} />}
+              rightSlot={
+                <Switch
+                  value={autoAiAfterTranscription}
+                  onValueChange={setAutoAiAfterTranscription}
+                  trackColor={{
+                    false: color.background.tertiary,
+                    true: color.accent.success,
+                  }}
+                  thumbColor={color.icon.onAccent}
+                />
+              }
+              showChevron={false}
+              onPress={undefined}
+              isLast={!isEmbeddingAvailable()}
+            />
+            {isEmbeddingAvailable() && (
+              <SettingsRow
+                label={
+                  isUpdatingEmbeddings
+                    ? t('settings.updatingEmbeddings')
+                    : t('settings.updateEmbeddings')
+                }
+                leftIcon={<RefreshCw size={20} color={color.accent.primary} strokeWidth={1.8} />}
+                onPress={isUpdatingEmbeddings ? undefined : handleUpdateEmbeddings}
+                isLast
+              />
+            )}
+          </SettingsSection>
+          <SettingsSection title={t('settings.sync')}>
+            <SettingsRow
+              label={isExporting ? t('settings.exporting') : t('settings.export')}
+              value={t('inbox.recordsCount', { count: records.length })}
+              leftIcon={<UploadCloud size={20} color={color.accent.primary} strokeWidth={1.8} />}
+              onPress={handleExport}
+              isFirst
+            />
+            <SettingsRow
+              label={isImporting ? t('settings.importing') : t('settings.import')}
+              leftIcon={<Download size={20} color={color.accent.primary} strokeWidth={1.8} />}
+              onPress={handleImport}
               isLast
             />
-          )}
-        </SettingsSection>
-        <SettingsSection title={t('settings.sync')}>
-          <SettingsRow
-            label={isExporting ? t('settings.exporting') : t('settings.export')}
-            value={t('inbox.recordsCount', { count: records.length })}
-            leftIcon={<UploadCloud size={20} color={color.accent.primary} strokeWidth={1.8} />}
-            onPress={handleExport}
-            isFirst
-          />
-          <SettingsRow
-            label={isImporting ? t('settings.importing') : t('settings.import')}
-            leftIcon={<Download size={20} color={color.accent.primary} strokeWidth={1.8} />}
-            onPress={handleImport}
-            isLast
-          />
-        </SettingsSection>
-        <SettingsSection title={t('settings.appearance')}>
-          <SettingsRow
-            label={t('settings.appLanguage')}
-            value={t(`appearance.languageOption.${appLanguage}`)}
-            leftIcon={<Languages size={20} color={color.accent.primary} strokeWidth={1.8} />}
-            onPress={() => navigation.navigate('Appearance')}
-            isFirst
-          />
-          <SettingsRow
-            label={t('settings.appTheme')}
-            value={t(`appearance.themeOption.${appTheme}`)}
-            leftIcon={<Moon size={20} color={color.accent.primary} strokeWidth={1.8} />}
-            onPress={() => navigation.navigate('Appearance')}
-            isLast
-          />
-        </SettingsSection>
-        <SettingsSection title={t('settings.permissionsSection')}>
-          <SettingsRow
-            label={t('settings.permissionMicrophone')}
-            leftIcon={<Mic size={20} color={color.accent.primary} strokeWidth={1.8} />}
-            onPress={micStatus === 'granted' ? undefined : handleMicPermission}
-            showChevron={micStatus !== 'granted'}
-            rightSlot={
-              micStatus !== null ? (
-                <View
-                  className="rounded-full px-2.5 py-1"
-                  style={{
-                    backgroundColor:
-                      micStatus === 'granted'
-                        ? color.onboarding.zap.bg
-                        : micStatus === 'denied'
-                          ? color.status.error.bg
-                          : color.background.tertiary,
-                  }}
-                >
-                  <Text
-                    className="text-[12px] font-semibold"
-                    style={{
-                      color:
-                        micStatus === 'granted'
-                          ? color.accent.success
-                          : micStatus === 'denied'
-                            ? color.status.error.text
-                            : color.text.secondary,
-                    }}
-                  >
-                    {micStatus === 'granted'
-                      ? t('settings.permissionGranted')
-                      : micStatus === 'denied'
-                        ? t('settings.permissionDenied')
-                        : t('settings.permissionNotDetermined')}
-                  </Text>
-                </View>
-              ) : null
-            }
-            isFirst
-            isLast={Platform.OS !== 'ios'}
-          />
-          {Platform.OS === 'ios' && (
+          </SettingsSection>
+          <SettingsSection title={t('settings.appearance')}>
             <SettingsRow
-              label={t('settings.permissionNotifications')}
-              leftIcon={<Bell size={20} color={color.accent.primary} strokeWidth={1.8} />}
-              onPress={pushStatus === 'granted' ? undefined : handleNotificationsPress}
-              showChevron={pushStatus !== 'granted'}
+              label={t('settings.appLanguage')}
+              value={t(`appearance.languageOption.${appLanguage}`)}
+              leftIcon={<Languages size={20} color={color.accent.primary} strokeWidth={1.8} />}
+              onPress={() => navigation.navigate('Appearance')}
+              isFirst
+            />
+            <SettingsRow
+              label={t('settings.appTheme')}
+              value={t(`appearance.themeOption.${appTheme}`)}
+              leftIcon={<Moon size={20} color={color.accent.primary} strokeWidth={1.8} />}
+              onPress={() => navigation.navigate('Appearance')}
+              isLast
+            />
+          </SettingsSection>
+          <SettingsSection title={t('settings.permissionsSection')}>
+            <SettingsRow
+              label={t('settings.permissionMicrophone')}
+              leftIcon={<Mic size={20} color={color.accent.primary} strokeWidth={1.8} />}
+              onPress={micStatus === 'granted' ? undefined : handleMicPermission}
+              showChevron={micStatus !== 'granted'}
               rightSlot={
-                pushStatus !== null ? (
+                micStatus !== null ? (
                   <View
                     className="rounded-full px-2.5 py-1"
                     style={{
                       backgroundColor:
-                        pushStatus === 'granted'
+                        micStatus === 'granted'
                           ? color.onboarding.zap.bg
-                          : pushStatus === 'denied'
+                          : micStatus === 'denied'
                             ? color.status.error.bg
                             : color.background.tertiary,
                     }}
@@ -424,62 +394,105 @@ export const SettingsScreen = () => {
                       className="text-[12px] font-semibold"
                       style={{
                         color:
-                          pushStatus === 'granted'
+                          micStatus === 'granted'
                             ? color.accent.success
-                            : pushStatus === 'denied'
+                            : micStatus === 'denied'
                               ? color.status.error.text
                               : color.text.secondary,
                       }}
                     >
-                      {pushStatus === 'granted'
+                      {micStatus === 'granted'
                         ? t('settings.permissionGranted')
-                        : pushStatus === 'denied'
+                        : micStatus === 'denied'
                           ? t('settings.permissionDenied')
                           : t('settings.permissionNotDetermined')}
                     </Text>
                   </View>
                 ) : null
               }
+              isFirst
+              isLast={Platform.OS !== 'ios'}
+            />
+            {Platform.OS === 'ios' && (
+              <SettingsRow
+                label={t('settings.permissionNotifications')}
+                leftIcon={<Bell size={20} color={color.accent.primary} strokeWidth={1.8} />}
+                onPress={pushStatus === 'granted' ? undefined : handleNotificationsPress}
+                showChevron={pushStatus !== 'granted'}
+                rightSlot={
+                  pushStatus !== null ? (
+                    <View
+                      className="rounded-full px-2.5 py-1"
+                      style={{
+                        backgroundColor:
+                          pushStatus === 'granted'
+                            ? color.onboarding.zap.bg
+                            : pushStatus === 'denied'
+                              ? color.status.error.bg
+                              : color.background.tertiary,
+                      }}
+                    >
+                      <Text
+                        className="text-[12px] font-semibold"
+                        style={{
+                          color:
+                            pushStatus === 'granted'
+                              ? color.accent.success
+                              : pushStatus === 'denied'
+                                ? color.status.error.text
+                                : color.text.secondary,
+                        }}
+                      >
+                        {pushStatus === 'granted'
+                          ? t('settings.permissionGranted')
+                          : pushStatus === 'denied'
+                            ? t('settings.permissionDenied')
+                            : t('settings.permissionNotDetermined')}
+                      </Text>
+                    </View>
+                  ) : null
+                }
+                isLast
+              />
+            )}
+          </SettingsSection>
+          <SettingsSection title={t('settings.device')}>
+            <SettingsRow
+              label={t('settings.appLock')}
+              value={isAppLockEnabled ? t('settings.on') : t('settings.off')}
+              leftIcon={<Fingerprint size={20} color={color.accent.primary} strokeWidth={1.8} />}
+              onPress={() => navigation.navigate('AppLockSetup')}
+              isFirst
+            />
+            <SettingsRow
+              label={t('settings.offlineStorage')}
+              leftIcon={<HardDrive size={20} color={color.accent.success} strokeWidth={1.8} />}
+              onPress={() => navigation.navigate('StorageDetails')}
               isLast
             />
-          )}
-        </SettingsSection>
-        <SettingsSection title={t('settings.device')}>
-          <SettingsRow
-            label={t('settings.appLock')}
-            value={isAppLockEnabled ? t('settings.on') : t('settings.off')}
-            leftIcon={<Fingerprint size={20} color={color.accent.primary} strokeWidth={1.8} />}
-            onPress={() => navigation.navigate('AppLockSetup')}
-            isFirst
-          />
-          <SettingsRow
-            label={t('settings.offlineStorage')}
-            leftIcon={<HardDrive size={20} color={color.accent.success} strokeWidth={1.8} />}
-            onPress={() => navigation.navigate('StorageDetails')}
-            isLast
-          />
-        </SettingsSection>
+          </SettingsSection>
 
-        <SettingsSection title={t('settings.privacy')}>
-          <SettingsRow
-            label={t('settings.termsOfService')}
-            leftIcon={<FileText size={20} color={color.icon.muted} strokeWidth={1.8} />}
-            onPress={() => openInAppBrowser(`${WEBSITE_URL}/terms`)}
-            isFirst
-          />
-          <SettingsRow
-            label={t('settings.privacyPolicy')}
-            leftIcon={<Shield size={20} color={color.icon.muted} strokeWidth={1.8} />}
-            onPress={() => openInAppBrowser(`${WEBSITE_URL}/privacy`)}
-          />
-          <SettingsRow
-            label={t('settings.about')}
-            leftIcon={<Info size={20} color={color.icon.muted} strokeWidth={1.8} />}
-            onPress={() => navigation.navigate('AboutApp')}
-            isLast
-          />
-        </SettingsSection>
-      </ScrollView>
+          <SettingsSection title={t('settings.privacy')}>
+            <SettingsRow
+              label={t('settings.termsOfService')}
+              leftIcon={<FileText size={20} color={color.icon.muted} strokeWidth={1.8} />}
+              onPress={() => openInAppBrowser(`${WEBSITE_URL}/terms`)}
+              isFirst
+            />
+            <SettingsRow
+              label={t('settings.privacyPolicy')}
+              leftIcon={<Shield size={20} color={color.icon.muted} strokeWidth={1.8} />}
+              onPress={() => openInAppBrowser(`${WEBSITE_URL}/privacy`)}
+            />
+            <SettingsRow
+              label={t('settings.about')}
+              leftIcon={<Info size={20} color={color.icon.muted} strokeWidth={1.8} />}
+              onPress={() => navigation.navigate('AboutApp')}
+              isLast
+            />
+          </SettingsSection>
+        </ScrollView>
+      </View>
     </View>
   );
 };

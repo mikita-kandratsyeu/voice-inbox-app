@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  Linking,
   Platform,
   Text,
   TouchableOpacity,
@@ -26,9 +25,10 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useSettingsStore } from '@/entities/settings';
+import { openInAppBrowser } from '@/features/in-app-browser';
 import { useModelManager } from '@/features/model-manager';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
+import { hapticSelection, useIsTablet } from '@/shared/lib';
 import {
   checkMicPermission,
   type MicPermissionStatus,
@@ -208,6 +208,7 @@ type SlideItemProps = {
   scrollX: SharedValue<number>;
   screenWidth: SharedValue<number>;
   windowWidth: number;
+  contentMaxWidth?: number;
   color: ReturnType<typeof getColors>;
   agreedToTerms?: boolean;
   onAgreeChange?: (value: boolean) => void;
@@ -337,6 +338,7 @@ type PermissionsSlideProps = {
   color: ReturnType<typeof getColors>;
   t: (k: string) => string;
   windowWidth: number;
+  contentMaxWidth?: number;
   index: number;
   scrollX: SharedValue<number>;
   screenWidth: SharedValue<number>;
@@ -346,6 +348,7 @@ const PermissionsSlide = ({
   color,
   t,
   windowWidth,
+  contentMaxWidth,
   index,
   scrollX,
   screenWidth,
@@ -395,45 +398,57 @@ const PermissionsSlide = ({
       style={[{ width: windowWidth, paddingHorizontal: 24, paddingTop: 48 }, animatedStyle]}
       className="flex-1"
     >
-      <View className="mb-8 items-center">
-        <View
-          className="mb-6 h-20 w-20 items-center justify-center rounded-full"
-          style={{ backgroundColor: '#e0f2fe' }}
-        >
-          <Shield size={40} color="#0ea5e9" strokeWidth={2} />
+      <View
+        style={{
+          flex: 1,
+          alignSelf: 'center',
+          width: '100%',
+          maxWidth: contentMaxWidth,
+        }}
+      >
+        <View className="mb-8 items-center">
+          <View
+            className="mb-6 h-20 w-20 items-center justify-center rounded-full"
+            style={{ backgroundColor: '#e0f2fe' }}
+          >
+            <Shield size={40} color="#0ea5e9" strokeWidth={2} />
+          </View>
+          <Text
+            className="mb-3 text-center text-[28px] font-bold leading-tight"
+            style={{ color: color.text.primary }}
+          >
+            {t('permissions.onboardingTitle')}
+          </Text>
+          <Text
+            className="text-center text-[16px] leading-6"
+            style={{ color: color.text.secondary }}
+          >
+            {t('permissions.onboardingDesc')}
+          </Text>
         </View>
-        <Text
-          className="mb-3 text-center text-[28px] font-bold leading-tight"
-          style={{ color: color.text.primary }}
-        >
-          {t('permissions.onboardingTitle')}
-        </Text>
-        <Text className="text-center text-[16px] leading-6" style={{ color: color.text.secondary }}>
-          {t('permissions.onboardingDesc')}
-        </Text>
-      </View>
 
-      <View className="gap-3">
-        <PermissionRow
-          icon={<Mic size={22} color={color.accent.primary} strokeWidth={2} />}
-          label={t('permissions.micLabel')}
-          description={t('permissions.micDesc')}
-          status={micStatus}
-          onPress={handleMicPress}
-          color={color}
-          t={t}
-        />
-        {Platform.OS === 'ios' && (
+        <View className="gap-3">
           <PermissionRow
-            icon={<Bell size={22} color={color.accent.primary} strokeWidth={2} />}
-            label={t('permissions.notificationsLabel')}
-            description={t('permissions.notificationsDesc')}
-            status={pushStatus}
-            onPress={handlePushPress}
+            icon={<Mic size={22} color={color.accent.primary} strokeWidth={2} />}
+            label={t('permissions.micLabel')}
+            description={t('permissions.micDesc')}
+            status={micStatus}
+            onPress={handleMicPress}
             color={color}
             t={t}
           />
-        )}
+          {Platform.OS === 'ios' && (
+            <PermissionRow
+              icon={<Bell size={22} color={color.accent.primary} strokeWidth={2} />}
+              label={t('permissions.notificationsLabel')}
+              description={t('permissions.notificationsDesc')}
+              status={pushStatus}
+              onPress={handlePushPress}
+              color={color}
+              t={t}
+            />
+          )}
+        </View>
       </View>
     </Animated.View>
   );
@@ -445,6 +460,7 @@ const SlideItem = ({
   scrollX,
   screenWidth,
   windowWidth,
+  contentMaxWidth,
   color,
   t,
   agreedToTerms = false,
@@ -472,6 +488,7 @@ const SlideItem = ({
         color={color}
         t={t}
         windowWidth={windowWidth}
+        contentMaxWidth={contentMaxWidth}
         index={index}
         scrollX={scrollX}
         screenWidth={screenWidth}
@@ -500,66 +517,75 @@ const SlideItem = ({
         ]}
         className="flex-1"
       >
-        <View style={{ width: '100%', alignItems: 'center', marginBottom: 20 }}>
-          <Text
-            className="mb-2 text-center text-[28px] font-bold leading-tight"
-            style={{ color: color.text.primary }}
-          >
-            {t(item.titleKey)}
-          </Text>
-          <Text
-            className="mb-4 text-center text-[18px] leading-7"
-            style={{ color: color.text.secondary }}
-          >
-            {t(item.descKey)}
-          </Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <OnboardingSetupStep
-            color={color}
-            mode={setupMode}
-            selectedColor={item.extra === 'setupWhisper' ? color.accent.primary : item.iconColor}
-          />
-        </View>
-        {showTerms && (
-          <View className="mt-4 flex-row items-center gap-3">
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={() => {
-                hapticSelection();
-                onAgreeChange?.(!agreedToTerms);
-              }}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        <View
+          style={{
+            flex: 1,
+            alignSelf: 'center',
+            width: '100%',
+            maxWidth: contentMaxWidth,
+          }}
+        >
+          <View style={{ width: '100%', alignItems: 'center', marginBottom: 20 }}>
+            <Text
+              className="mb-2 text-center text-[28px] font-bold leading-tight"
+              style={{ color: color.text.primary }}
             >
-              <View
-                className="h-7 w-7 items-center justify-center rounded-md"
-                style={{
-                  backgroundColor: agreedToTerms ? color.accent.primary : 'transparent',
-                  borderWidth: 2,
-                  borderColor: agreedToTerms ? color.accent.primary : color.text.secondary,
-                }}
-              >
-                {agreedToTerms && <Check size={16} color="#fff" strokeWidth={2.5} />}
-              </View>
-            </TouchableOpacity>
-            <Text className="flex-1 text-sm leading-5" style={{ color: color.text.secondary }}>
-              {t('onboarding.agreeToTermsPrefix')}
-              <Text
-                style={linkStyle}
-                onPress={() => WEBSITE_URL && Linking.openURL(`${WEBSITE_URL}/terms`)}
-              >
-                {t('onboarding.agreeToTermsLink')}
-              </Text>
-              {t('onboarding.agreeToTermsAnd')}
-              <Text
-                style={linkStyle}
-                onPress={() => WEBSITE_URL && Linking.openURL(`${WEBSITE_URL}/privacy`)}
-              >
-                {t('onboarding.agreeToTermsLink2')}
-              </Text>
+              {t(item.titleKey)}
+            </Text>
+            <Text
+              className="mb-4 text-center text-[18px] leading-7"
+              style={{ color: color.text.secondary }}
+            >
+              {t(item.descKey)}
             </Text>
           </View>
-        )}
+          <View style={{ flex: 1 }}>
+            <OnboardingSetupStep
+              color={color}
+              mode={setupMode}
+              selectedColor={item.extra === 'setupWhisper' ? color.accent.primary : item.iconColor}
+            />
+          </View>
+          {showTerms && (
+            <View className="mt-4 flex-row items-center gap-3">
+              <TouchableOpacity
+                activeOpacity={0.7}
+                onPress={() => {
+                  hapticSelection();
+                  onAgreeChange?.(!agreedToTerms);
+                }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <View
+                  className="h-7 w-7 items-center justify-center rounded-md"
+                  style={{
+                    backgroundColor: agreedToTerms ? color.accent.primary : 'transparent',
+                    borderWidth: 2,
+                    borderColor: agreedToTerms ? color.accent.primary : color.text.secondary,
+                  }}
+                >
+                  {agreedToTerms && <Check size={16} color="#fff" strokeWidth={2.5} />}
+                </View>
+              </TouchableOpacity>
+              <Text className="flex-1 text-sm leading-5" style={{ color: color.text.secondary }}>
+                {t('onboarding.agreeToTermsPrefix')}
+                <Text
+                  style={linkStyle}
+                  onPress={() => WEBSITE_URL && openInAppBrowser(`${WEBSITE_URL}/terms`)}
+                >
+                  {t('onboarding.agreeToTermsLink')}
+                </Text>
+                {t('onboarding.agreeToTermsAnd')}
+                <Text
+                  style={linkStyle}
+                  onPress={() => WEBSITE_URL && openInAppBrowser(`${WEBSITE_URL}/privacy`)}
+                >
+                  {t('onboarding.agreeToTermsLink2')}
+                </Text>
+              </Text>
+            </View>
+          )}
+        </View>
       </Animated.View>
     );
   }
@@ -569,56 +595,70 @@ const SlideItem = ({
       style={[{ width: windowWidth, paddingHorizontal: 32 }, animatedStyle]}
       className="flex-1 items-center justify-center"
     >
-      <AnimatedSlideIcon
-        iconName={item.iconName}
-        iconColor={item.iconColor}
-        iconBg={item.iconBg}
-        iconOnAccent={color.icon.onAccent}
-      />
-
-      <Text
-        className="mb-4 text-center text-[28px] font-bold leading-tight"
-        style={{ color: color.text.primary }}
+      <View
+        style={{
+          flex: 1,
+          alignSelf: 'center',
+          width: '100%',
+          maxWidth: contentMaxWidth,
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
       >
-        {t(item.titleKey)}
-      </Text>
+        <AnimatedSlideIcon
+          iconName={item.iconName}
+          iconColor={item.iconColor}
+          iconBg={item.iconBg}
+          iconOnAccent={color.icon.onAccent}
+        />
 
-      <Text
-        className="mb-6 text-center text-[18px] leading-7"
-        style={{ color: color.text.secondary }}
-      >
-        {t(item.descKey)}
-      </Text>
-
-      {item.extra === 'privacy' && (
-        <View
-          className="flex-row items-center gap-2 rounded-full border px-4 py-2"
-          style={{
-            backgroundColor: item.iconBg,
-            borderColor: color.onboarding.privacy.border,
-          }}
+        <Text
+          className="mb-4 text-center text-[28px] font-bold leading-tight"
+          style={{ color: color.text.primary }}
         >
-          <Lock size={16} color={item.iconColor} strokeWidth={2} />
-          <Text className="text-sm font-semibold" style={{ color: color.onboarding.privacy.text }}>
-            {t('onboarding.privacy')}
-          </Text>
-        </View>
-      )}
+          {t(item.titleKey)}
+        </Text>
 
-      {item.extra === 'ai-features' && (
-        <View
-          className="flex-row items-center gap-2 rounded-full border px-4 py-2"
-          style={{
-            backgroundColor: item.iconBg,
-            borderColor: color.onboarding.ai.border,
-          }}
+        <Text
+          className="mb-6 text-center text-[18px] leading-7"
+          style={{ color: color.text.secondary }}
         >
-          <Shield size={16} color={item.iconColor} strokeWidth={2} />
-          <Text className="text-sm font-semibold" style={{ color: color.onboarding.ai.text }}>
-            {t('onboarding.aiPrivacy')}
-          </Text>
-        </View>
-      )}
+          {t(item.descKey)}
+        </Text>
+
+        {item.extra === 'privacy' && (
+          <View
+            className="flex-row items-center gap-2 rounded-full border px-4 py-2"
+            style={{
+              backgroundColor: item.iconBg,
+              borderColor: color.onboarding.privacy.border,
+            }}
+          >
+            <Lock size={16} color={item.iconColor} strokeWidth={2} />
+            <Text
+              className="text-sm font-semibold"
+              style={{ color: color.onboarding.privacy.text }}
+            >
+              {t('onboarding.privacy')}
+            </Text>
+          </View>
+        )}
+
+        {item.extra === 'ai-features' && (
+          <View
+            className="flex-row items-center gap-2 rounded-full border px-4 py-2"
+            style={{
+              backgroundColor: item.iconBg,
+              borderColor: color.onboarding.ai.border,
+            }}
+          >
+            <Shield size={16} color={item.iconColor} strokeWidth={2} />
+            <Text className="text-sm font-semibold" style={{ color: color.onboarding.ai.text }}>
+              {t('onboarding.aiPrivacy')}
+            </Text>
+          </View>
+        )}
+      </View>
     </Animated.View>
   );
 };
@@ -626,6 +666,8 @@ const SlideItem = ({
 export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
+  const isTablet = useIsTablet();
+  const contentMaxWidth = isTablet ? 720 : undefined;
   const slides = useMemo(() => getOnboardingSlides(color), [color]);
   const slideColors = useMemo(() => {
     const colors = slides.map((s) => s.iconColor);
@@ -716,18 +758,19 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         scrollX={scrollX}
         screenWidth={screenWidth}
         windowWidth={windowWidth}
+        contentMaxWidth={contentMaxWidth}
         color={color}
         t={t}
         agreedToTerms={agreedToTerms}
         onAgreeChange={setAgreedToTerms}
       />
     ),
-    [agreedToTerms, color, scrollX, screenWidth, t, windowWidth],
+    [agreedToTerms, color, contentMaxWidth, scrollX, screenWidth, t, windowWidth],
   );
 
   const isLastSlide = currentIndex === slides.length - 1;
-  const isOnLastTwoScreens = currentIndex >= slides.length - 2;
-  const showSkipButton = agreedToTerms && !isOnLastTwoScreens;
+  const isOnLastThreeScreens = currentIndex >= slides.length - 3;
+  const showSkipButton = agreedToTerms && !isOnLastThreeScreens;
 
   return (
     <View
@@ -768,7 +811,16 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           setCurrentIndex(index);
         }}
       />
-      <View className="px-6" style={{ paddingBottom: insets.bottom + 48, paddingTop: 32 }}>
+      <View
+        style={{
+          paddingBottom: insets.bottom + 48,
+          paddingTop: 32,
+          paddingHorizontal: 24,
+          alignSelf: 'center',
+          width: '100%',
+          maxWidth: contentMaxWidth,
+        }}
+      >
         <AnimatedProgressDots
           scrollX={scrollX}
           screenWidth={screenWidth}

@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { getColors, useAppTheme } from '@/shared/config';
+import { useIsTablet } from '@/shared/lib';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
 const SUMMARY_STYLES: SummaryStyle[] = ['brief', 'standard', 'detailed'];
@@ -76,7 +77,9 @@ export const AiSettingsScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
+  const isTablet = useIsTablet();
   const navigation = useNavigation();
+  const contentMaxWidth = isTablet ? 720 : undefined;
 
   const summaryStyle = useSettingsStore((s) => s.summaryStyle);
   const setSummaryStyle = useSettingsStore((s) => s.setSummaryStyle);
@@ -88,49 +91,57 @@ export const AiSettingsScreen = () => {
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader title={t('aiSettings.title')} onBack={() => navigation.goBack()} />
-
-      <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 12,
-          paddingBottom: insets.bottom + 24,
+      <View
+        style={{
+          flex: 1,
+          alignSelf: 'center',
+          width: '100%',
+          maxWidth: contentMaxWidth,
         }}
-        showsVerticalScrollIndicator={false}
       >
-        <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-          {t('aiSettings.description')}
-        </Text>
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 12,
+            paddingBottom: insets.bottom + 24,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
+            {t('aiSettings.description')}
+          </Text>
 
-        <SettingsSection title={t('aiSettings.summaryStyle')}>
-          <PickerSection
-            options={SUMMARY_STYLES}
-            selected={summaryStyle}
-            onSelect={setSummaryStyle}
-            labelKey={(v) => t(`aiSettings.summaryStyle.${v}`)}
-            color={color}
-          />
-        </SettingsSection>
+          <SettingsSection title={t('aiSettings.summaryStyle')}>
+            <PickerSection
+              options={SUMMARY_STYLES}
+              selected={summaryStyle}
+              onSelect={setSummaryStyle}
+              labelKey={(v) => t(`aiSettings.summaryStyle.${v}`)}
+              color={color}
+            />
+          </SettingsSection>
 
-        <SettingsSection title={t('aiSettings.taskStrictness')}>
-          <PickerSection
-            options={TASK_STRICTNESS_OPTIONS}
-            selected={taskStrictness}
-            onSelect={setTaskStrictness}
-            labelKey={(v) => t(`aiSettings.taskStrictness.${v}`)}
-            color={color}
-          />
-        </SettingsSection>
+          <SettingsSection title={t('aiSettings.taskStrictness')}>
+            <PickerSection
+              options={TASK_STRICTNESS_OPTIONS}
+              selected={taskStrictness}
+              onSelect={setTaskStrictness}
+              labelKey={(v) => t(`aiSettings.taskStrictness.${v}`)}
+              color={color}
+            />
+          </SettingsSection>
 
-        <SettingsSection title={t('aiSettings.outputLanguage')}>
-          <PickerSection
-            options={OUTPUT_LANGUAGES}
-            selected={aiOutputLanguage}
-            onSelect={setAiOutputLanguage}
-            labelKey={(v) => t(`aiSettings.outputLanguage.${v}`)}
-            color={color}
-          />
-        </SettingsSection>
-      </ScrollView>
+          <SettingsSection title={t('aiSettings.outputLanguage')}>
+            <PickerSection
+              options={OUTPUT_LANGUAGES}
+              selected={aiOutputLanguage}
+              onSelect={setAiOutputLanguage}
+              labelKey={(v) => t(`aiSettings.outputLanguage.${v}`)}
+              color={color}
+            />
+          </SettingsSection>
+        </ScrollView>
+      </View>
     </View>
   );
 };

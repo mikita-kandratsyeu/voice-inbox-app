@@ -212,6 +212,8 @@ export const ImportRecordsScreen = () => {
     [color, t, i18n.language],
   );
 
+  const contentMaxWidth = isTablet ? 720 : undefined;
+
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader
@@ -232,130 +234,142 @@ export const ImportRecordsScreen = () => {
         }
       />
 
-      <View className="px-4 py-3" style={{ backgroundColor: color.background.primary }}>
-        <Text className="text-sm" style={{ color: color.text.secondary, textAlign: 'center' }}>
-          {t('importExport.importSelectSubtitle', {
-            importable: importable.length,
-            duplicates: duplicates.length,
-          })}
-        </Text>
-        {importable.length > 0 && (
-          <View
-            className="mt-3 flex-row items-center justify-center"
-            style={{
-              alignSelf: 'center',
-              maxWidth: isTablet ? 400 : undefined,
-              width: '100%',
-              backgroundColor: color.background.tertiary,
-              borderRadius: isTablet ? 14 : 12,
-              padding: 4,
-              flexDirection: 'row',
-            }}
-          >
-            <TouchableOpacity
-              onPress={selectAll}
-              activeOpacity={0.7}
-              style={{
-                flex: 1,
-                paddingVertical: isTablet ? 12 : 10,
-                paddingHorizontal: isTablet ? 20 : 16,
-                backgroundColor:
-                  selectedCount === importable.length ? color.accent.primary : 'transparent',
-                borderRadius: isTablet ? 10 : 8,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: isTablet ? 16 : 15,
-                  fontWeight: '600',
-                  color:
-                    selectedCount === importable.length
-                      ? color.icon.onAccent
-                      : color.accent.primary,
-                }}
-              >
-                {t('importExport.selectAll')}
-              </Text>
-            </TouchableOpacity>
+      <View
+        style={{
+          flex: 1,
+          alignSelf: 'center',
+          width: '100%',
+          maxWidth: contentMaxWidth,
+        }}
+      >
+        <View className="px-4 py-3" style={{ backgroundColor: color.background.primary }}>
+          <Text className="text-sm" style={{ color: color.text.secondary, textAlign: 'center' }}>
+            {t('importExport.importSelectSubtitle', {
+              importable: importable.length,
+              duplicates: duplicates.length,
+            })}
+          </Text>
+          {importable.length > 0 && (
             <View
+              className="mt-3 flex-row items-center justify-center"
               style={{
-                width: 1,
-                height: isTablet ? 20 : 18,
-                backgroundColor: color.border.default,
-              }}
-            />
-            <TouchableOpacity
-              onPress={deselectAll}
-              activeOpacity={0.7}
-              style={{
-                flex: 1,
-                paddingVertical: isTablet ? 12 : 10,
-                paddingHorizontal: isTablet ? 20 : 16,
-                backgroundColor: selectedCount === 0 ? color.accent.primary : 'transparent',
-                borderRadius: isTablet ? 10 : 8,
-                alignItems: 'center',
-                justifyContent: 'center',
+                alignSelf: 'center',
+                maxWidth: isTablet ? 400 : undefined,
+                width: '100%',
+                backgroundColor: color.background.tertiary,
+                borderRadius: isTablet ? 14 : 12,
+                padding: 4,
+                flexDirection: 'row',
               }}
             >
-              <Text
+              <TouchableOpacity
+                onPress={selectAll}
+                activeOpacity={0.7}
                 style={{
-                  fontSize: isTablet ? 16 : 15,
-                  fontWeight: '600',
-                  color: selectedCount === 0 ? color.icon.onAccent : color.text.secondary,
+                  flex: 1,
+                  paddingVertical: isTablet ? 12 : 10,
+                  paddingHorizontal: isTablet ? 20 : 16,
+                  backgroundColor:
+                    selectedCount === importable.length ? color.accent.primary : 'transparent',
+                  borderRadius: isTablet ? 10 : 8,
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                {t('importExport.deselectAll')}
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={{
+                    fontSize: isTablet ? 16 : 15,
+                    fontWeight: '600',
+                    color:
+                      selectedCount === importable.length
+                        ? color.icon.onAccent
+                        : color.accent.primary,
+                  }}
+                >
+                  {t('importExport.selectAll')}
+                </Text>
+              </TouchableOpacity>
+              <View
+                style={{
+                  width: 1,
+                  height: isTablet ? 20 : 18,
+                  backgroundColor: color.border.default,
+                }}
+              />
+              <TouchableOpacity
+                onPress={deselectAll}
+                activeOpacity={0.7}
+                style={{
+                  flex: 1,
+                  paddingVertical: isTablet ? 12 : 10,
+                  paddingHorizontal: isTablet ? 20 : 16,
+                  backgroundColor: selectedCount === 0 ? color.accent.primary : 'transparent',
+                  borderRadius: isTablet ? 10 : 8,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: isTablet ? 16 : 15,
+                    fontWeight: '600',
+                    color: selectedCount === 0 ? color.icon.onAccent : color.text.secondary,
+                  }}
+                >
+                  {t('importExport.deselectAll')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {importable.length > 0 ? (
+          <FlatList
+            data={importable}
+            keyExtractor={(item) => item.id}
+            renderItem={renderImportableItem}
+            ListFooterComponent={
+              duplicates.length > 0 ? (
+                <>
+                  <View
+                    className="px-4 py-2"
+                    style={{ backgroundColor: color.background.secondary }}
+                  >
+                    <Text
+                      className="text-xs font-semibold uppercase tracking-wider"
+                      style={{ color: color.text.secondary }}
+                    >
+                      {t('importExport.alreadyInAppSection')}
+                    </Text>
+                  </View>
+                  {duplicates.map((item) => (
+                    <View key={item.id}>{renderDuplicateItem({ item })}</View>
+                  ))}
+                </>
+              ) : null
+            }
+            contentContainerStyle={{
+              paddingBottom: insets.bottom + 24,
+            }}
+          />
+        ) : null}
+
+        {importable.length === 0 && duplicates.length > 0 && (
+          <View className="flex-1 items-center justify-center px-6">
+            <Text className="text-center text-base" style={{ color: color.text.secondary }}>
+              {t('importExport.allAlreadyInApp')}
+            </Text>
+          </View>
+        )}
+
+        {importable.length === 0 && duplicates.length === 0 && (
+          <View className="flex-1 items-center justify-center px-6">
+            <Text className="text-center text-base" style={{ color: color.text.secondary }}>
+              {t('importExport.noRecordsInFile')}
+            </Text>
           </View>
         )}
       </View>
-
-      {importable.length > 0 ? (
-        <FlatList
-          data={importable}
-          keyExtractor={(item) => item.id}
-          renderItem={renderImportableItem}
-          ListFooterComponent={
-            duplicates.length > 0 ? (
-              <>
-                <View className="px-4 py-2" style={{ backgroundColor: color.background.secondary }}>
-                  <Text
-                    className="text-xs font-semibold uppercase tracking-wider"
-                    style={{ color: color.text.secondary }}
-                  >
-                    {t('importExport.alreadyInAppSection')}
-                  </Text>
-                </View>
-                {duplicates.map((item) => (
-                  <View key={item.id}>{renderDuplicateItem({ item })}</View>
-                ))}
-              </>
-            ) : null
-          }
-          contentContainerStyle={{
-            paddingBottom: insets.bottom + 24,
-          }}
-        />
-      ) : null}
-
-      {importable.length === 0 && duplicates.length > 0 && (
-        <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-center text-base" style={{ color: color.text.secondary }}>
-            {t('importExport.allAlreadyInApp')}
-          </Text>
-        </View>
-      )}
-
-      {importable.length === 0 && duplicates.length === 0 && (
-        <View className="flex-1 items-center justify-center px-6">
-          <Text className="text-center text-base" style={{ color: color.text.secondary }}>
-            {t('importExport.noRecordsInFile')}
-          </Text>
-        </View>
-      )}
     </View>
   );
 };

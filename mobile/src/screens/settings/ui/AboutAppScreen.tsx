@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useOnboardingStore } from '@/features/onboarding';
 import { getColors, SUPPORT_EMAIL, useAppTheme } from '@/shared/config';
+import { useIsTablet } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 const APP_VERSION = DeviceInfoModule.version;
@@ -16,67 +17,78 @@ export const AboutAppScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
+  const isTablet = useIsTablet();
   const navigation = useNavigation();
   const setForceShowOnboarding = useOnboardingStore((s) => s.setForceShow);
+  const contentMaxWidth = isTablet ? 720 : undefined;
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader title={t('about.title')} onBack={() => navigation.goBack()} />
-      <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 24,
-          paddingBottom: insets.bottom + 24,
+      <View
+        style={{
+          flex: 1,
+          alignSelf: 'center',
+          width: '100%',
+          maxWidth: contentMaxWidth,
         }}
-        showsVerticalScrollIndicator={false}
       >
-        <View className="mb-8 items-center">
-          <View className="mb-4 h-20 w-20 overflow-hidden rounded-[22px]">
-            <Image
-              source={require('@/shared/assets/app-icon.png')}
-              className="h-full w-full"
-              resizeMode="cover"
-            />
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 24,
+            paddingBottom: insets.bottom + 24,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="mb-8 items-center">
+            <View className="mb-4 h-20 w-20 overflow-hidden rounded-[22px]">
+              <Image
+                source={require('@/shared/assets/app-icon.png')}
+                className="h-full w-full"
+                resizeMode="cover"
+              />
+            </View>
+            <Text className="text-[24px] font-bold" style={{ color: color.text.primary }}>
+              Voice Inbox AI
+            </Text>
+            <Text
+              className="mt-3 text-center text-[14px] leading-5 px-4"
+              style={{ color: color.text.secondary }}
+            >
+              {t('about.description')}
+            </Text>
           </View>
-          <Text className="text-[24px] font-bold" style={{ color: color.text.primary }}>
-            Voice Inbox AI
-          </Text>
-          <Text
-            className="mt-3 text-center text-[14px] leading-5 px-4"
-            style={{ color: color.text.secondary }}
-          >
-            {t('about.description')}
-          </Text>
-        </View>
-        <SettingsSection title={t('about.app')}>
-          <SettingsRow
-            label={t('about.version')}
-            value={APP_VERSION}
-            leftIcon={<Tag size={18} color={color.icon.muted} strokeWidth={1.8} />}
-            showChevron={false}
-            isFirst
-          />
-          <SettingsRow
-            label={t('about.showOnboarding')}
-            leftIcon={<BookOpen size={18} color={color.icon.muted} strokeWidth={1.8} />}
-            onPress={() => setForceShowOnboarding(true)}
-            isLast
-          />
-        </SettingsSection>
-        {SUPPORT_EMAIL.length > 0 && (
-          <SettingsSection title={t('about.helpAndFeedback')}>
+          <SettingsSection title={t('about.app')}>
             <SettingsRow
-              label={t('about.contactSupport')}
-              leftIcon={<Mail size={18} color={color.icon.muted} strokeWidth={1.8} />}
-              onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
+              label={t('about.version')}
+              value={APP_VERSION}
+              leftIcon={<Tag size={18} color={color.icon.muted} strokeWidth={1.8} />}
+              showChevron={false}
               isFirst
             />
+            <SettingsRow
+              label={t('about.showOnboarding')}
+              leftIcon={<BookOpen size={18} color={color.icon.muted} strokeWidth={1.8} />}
+              onPress={() => setForceShowOnboarding(true)}
+              isLast
+            />
           </SettingsSection>
-        )}
-        <Text className="mt-2 text-center text-[14px]" style={{ color: color.text.secondary }}>
-          {t('about.copyright', { year: new Date().getFullYear() })}
-        </Text>
-      </ScrollView>
+          {SUPPORT_EMAIL.length > 0 && (
+            <SettingsSection title={t('about.helpAndFeedback')}>
+              <SettingsRow
+                label={t('about.contactSupport')}
+                leftIcon={<Mail size={18} color={color.icon.muted} strokeWidth={1.8} />}
+                onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
+                isFirst
+              />
+            </SettingsSection>
+          )}
+          <Text className="mt-2 text-center text-[14px]" style={{ color: color.text.secondary }}>
+            {t('about.copyright', { year: new Date().getFullYear() })}
+          </Text>
+        </ScrollView>
+      </View>
     </View>
   );
 };

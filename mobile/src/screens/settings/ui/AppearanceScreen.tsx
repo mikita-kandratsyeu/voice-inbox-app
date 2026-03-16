@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AppLanguage, AppTheme } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { getColors, useAppTheme } from '@/shared/config';
+import { useIsTablet } from '@/shared/lib';
 import { applyAppLanguage } from '@/shared/lib/i18n';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
@@ -77,7 +78,9 @@ export const AppearanceScreen = () => {
   const theme = useAppTheme();
   const color = getColors(theme);
   const insets = useSafeAreaInsets();
+  const isTablet = useIsTablet();
   const navigation = useNavigation();
+  const contentMaxWidth = isTablet ? 720 : undefined;
 
   const appLanguage = useSettingsStore((s) => s.appLanguage);
   const setAppLanguage = useSettingsStore((s) => s.setAppLanguage);
@@ -92,35 +95,43 @@ export const AppearanceScreen = () => {
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader title={t('appearance.title')} onBack={() => navigation.goBack()} />
-
-      <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 12,
-          paddingBottom: insets.bottom + 24,
+      <View
+        style={{
+          flex: 1,
+          alignSelf: 'center',
+          width: '100%',
+          maxWidth: contentMaxWidth,
         }}
-        showsVerticalScrollIndicator={false}
       >
-        <SettingsSection title={t('appearance.language')}>
-          <PickerSection
-            options={APP_LANGUAGES}
-            selected={appLanguage}
-            onSelect={handleLanguageSelect}
-            labelKey={(v) => t(`appearance.languageOption.${v}`)}
-            color={color}
-          />
-        </SettingsSection>
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 12,
+            paddingBottom: insets.bottom + 24,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          <SettingsSection title={t('appearance.language')}>
+            <PickerSection
+              options={APP_LANGUAGES}
+              selected={appLanguage}
+              onSelect={handleLanguageSelect}
+              labelKey={(v) => t(`appearance.languageOption.${v}`)}
+              color={color}
+            />
+          </SettingsSection>
 
-        <SettingsSection title={t('appearance.theme')}>
-          <PickerSection
-            options={APP_THEMES}
-            selected={appTheme}
-            onSelect={setAppTheme}
-            labelKey={(v) => t(`appearance.themeOption.${v}`)}
-            color={color}
-          />
-        </SettingsSection>
-      </ScrollView>
+          <SettingsSection title={t('appearance.theme')}>
+            <PickerSection
+              options={APP_THEMES}
+              selected={appTheme}
+              onSelect={setAppTheme}
+              labelKey={(v) => t(`appearance.themeOption.${v}`)}
+              color={color}
+            />
+          </SettingsSection>
+        </ScrollView>
+      </View>
     </View>
   );
 };

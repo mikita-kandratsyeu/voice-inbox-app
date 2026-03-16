@@ -12,6 +12,7 @@ import {
 } from '@/entities/settings';
 import { getModelFileSizeFormatted, useModelManager } from '@/features/model-manager';
 import { getColors, useAppTheme } from '@/shared/config';
+import { useIsTablet } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader } from '@/shared/ui';
 
@@ -21,7 +22,9 @@ export const WhisperModelPickerScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
+  const isTablet = useIsTablet();
   const navigation = useNavigation();
+  const contentMaxWidth = isTablet ? 720 : undefined;
 
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
@@ -94,36 +97,45 @@ export const WhisperModelPickerScreen = () => {
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader title={t('whisper.modelTitle')} onBack={() => navigation.goBack()} />
-      <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: 16,
-          paddingTop: 12,
-          paddingBottom: insets.bottom + 24,
+      <View
+        style={{
+          flex: 1,
+          alignSelf: 'center',
+          width: '100%',
+          maxWidth: contentMaxWidth,
         }}
-        showsVerticalScrollIndicator={false}
       >
-        <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-          {t('whisper.modelDescription')}
-        </Text>
-        <View className="overflow-hidden rounded-2xl">
-          {WHISPER_MODELS.map((model, index) => (
-            <WhisperModelCard
-              key={model.id}
-              model={model}
-              index={index}
-              total={WHISPER_MODELS.length}
-              status={whisperModelStatuses[model.id] ?? 'not_downloaded'}
-              isSelected={model.id === selectedWhisperModel}
-              displaySize={realSizes[model.id] ?? formatFileSize(model.sizeMb * 1024 * 1024)}
-              compatibility={compatibility ? compatibility[model.id] : null}
-              color={color}
-              onPress={handleSelect}
-              onDelete={handleDelete}
-              onCancelDownload={cancelDownload}
-            />
-          ))}
-        </View>
-      </ScrollView>
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 12,
+            paddingBottom: insets.bottom + 24,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
+            {t('whisper.modelDescription')}
+          </Text>
+          <View className="overflow-hidden rounded-2xl">
+            {WHISPER_MODELS.map((model, index) => (
+              <WhisperModelCard
+                key={model.id}
+                model={model}
+                index={index}
+                total={WHISPER_MODELS.length}
+                status={whisperModelStatuses[model.id] ?? 'not_downloaded'}
+                isSelected={model.id === selectedWhisperModel}
+                displaySize={realSizes[model.id] ?? formatFileSize(model.sizeMb * 1024 * 1024)}
+                compatibility={compatibility ? compatibility[model.id] : null}
+                color={color}
+                onPress={handleSelect}
+                onDelete={handleDelete}
+                onCancelDownload={cancelDownload}
+              />
+            ))}
+          </View>
+        </ScrollView>
+      </View>
     </View>
   );
 };
