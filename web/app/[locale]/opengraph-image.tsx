@@ -3,6 +3,7 @@ import { ImageResponse } from 'next/og';
 export const alt = 'Voice Inbox AI — AI-Powered Voice Notes';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
+export const runtime = 'edge';
 
 export default function OpenGraphImage(): ImageResponse {
   return new ImageResponse(
@@ -82,6 +83,11 @@ export default function OpenGraphImage(): ImageResponse {
         AI-Powered Voice Notes. Private. Fast. Always available.
       </p>
     </div>,
-    { ...size },
+    {
+      ...size,
+      headers: {
+        'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=86400',
+      },
+    },
   );
 }
