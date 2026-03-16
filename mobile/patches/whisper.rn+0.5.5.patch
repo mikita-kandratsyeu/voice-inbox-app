@@ -1,0 +1,31 @@
+diff --git a/node_modules/whisper.rn/ios/RNWhisperContext.mm b/node_modules/whisper.rn/ios/RNWhisperContext.mm
+--- a/node_modules/whisper.rn/ios/RNWhisperContext.mm
++++ b/node_modules/whisper.rn/ios/RNWhisperContext.mm
+@@ -436,7 +436,12 @@
+                 NSMutableArray *segments = [[NSMutableArray alloc] init];
+                 for (int i = data->total_n_new - n_new; i < data->total_n_new; i++) {
+                     const char * text_cur = whisper_full_get_segment_text(ctx, i);
+-                    NSMutableString *mutable_ns_text = [NSMutableString stringWithUTF8String:text_cur];
++                    NSMutableString *mutable_ns_text = text_cur != nullptr
++                        ? [NSMutableString stringWithUTF8String:text_cur]
++                        : nil;
++                    if (mutable_ns_text == nil) {
++                        mutable_ns_text = [NSMutableString string];
++                    }
+ 
+                     if (data->tdrzEnable && whisper_full_get_segment_speaker_turn_next(ctx, i)) {
+                         [mutable_ns_text appendString:@" [SPEAKER_TURN]"];
+@@ -589,7 +594,12 @@
+     NSMutableArray *segments = [[NSMutableArray alloc] init];
+     for (int i = 0; i < n_segments; i++) {
+         const char * text_cur = whisper_full_get_segment_text(self->ctx, i);
+-        NSMutableString *mutable_ns_text = [NSMutableString stringWithUTF8String:text_cur];
++        NSMutableString *mutable_ns_text = text_cur != nullptr
++            ? [NSMutableString stringWithUTF8String:text_cur]
++            : nil;
++        if (mutable_ns_text == nil) {
++            mutable_ns_text = [NSMutableString string];
++        }
+ 
+         // Simplified condition
+         if (self->recordState.options[@"tdrzEnable"] &&

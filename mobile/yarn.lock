@@ -13077,7 +13077,7 @@ __metadata:
     sharp: "npm:^0.33.5"
     tailwindcss: "npm:^3.4.17"
     typescript: "npm:^5.8.3"
-    whisper.rn: "npm:^0.5.5"
+    whisper.rn: "npm:0.5.5"
     zustand: "npm:^5.0.11"
   languageName: unknown
   linkType: soft
@@ -13236,7 +13236,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"whisper.rn@npm:^0.5.5":
+"whisper.rn@npm:0.5.5":
   version: 0.5.5
   resolution: "whisper.rn@npm:0.5.5"
   dependencies:
