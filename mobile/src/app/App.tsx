@@ -1,7 +1,11 @@
 import '../../global.css';
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import messaging from '@react-native-firebase/messaging';
+import {
+  getInitialNotification,
+  getMessaging,
+  onNotificationOpenedApp,
+} from '@react-native-firebase/messaging';
 import { NavigationContainer } from '@react-navigation/native';
 import React, { useCallback, useEffect } from 'react';
 import { AppState, type AppStateStatus, StatusBar } from 'react-native';
@@ -48,7 +52,8 @@ const App = () => {
   usePushNotifications({ onNotification: handleNotification });
 
   useEffect(() => {
-    const unsubscribe = messaging().onNotificationOpenedApp((remoteMessage) => {
+    const messaging = getMessaging();
+    const unsubscribe = onNotificationOpenedApp(messaging, (remoteMessage) => {
       if (remoteMessage.data) {
         handlePushNotification(remoteMessage.data as unknown as PushNotificationData);
       }
@@ -65,7 +70,7 @@ const App = () => {
         await useRecordStore.getState().load();
         BootSplash.hide({ fade: true });
 
-        const initial = await messaging().getInitialNotification();
+        const initial = await getInitialNotification(getMessaging());
         if (initial?.data) {
           handlePushNotification(initial.data as unknown as PushNotificationData);
         }

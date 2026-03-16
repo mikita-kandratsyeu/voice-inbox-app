@@ -1,4 +1,4 @@
-import messaging from '@react-native-firebase/messaging';
+import { getMessaging, onMessage } from '@react-native-firebase/messaging';
 import { useCallback, useEffect } from 'react';
 import { Platform } from 'react-native';
 
@@ -45,7 +45,8 @@ export function usePushNotifications(options?: {
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
 
-    const unsubscribe = messaging().onMessage(async (remoteMessage) => {
+    const messaging = getMessaging();
+    const unsubscribe = onMessage(messaging, async (remoteMessage) => {
       const data = extractData(remoteMessage);
       if (data && onNotification) {
         onNotification(data);

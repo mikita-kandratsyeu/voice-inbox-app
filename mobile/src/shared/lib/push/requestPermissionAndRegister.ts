@@ -1,5 +1,11 @@
 import { WEB_API_SECRET, WEB_API_URL } from '@env';
-import messaging from '@react-native-firebase/messaging';
+import {
+  AuthorizationStatus,
+  getMessaging,
+  getToken,
+  hasPermission,
+  requestPermission,
+} from '@react-native-firebase/messaging';
 import { Platform } from 'react-native';
 
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
@@ -40,10 +46,10 @@ export async function requestPushPermission(): Promise<PushPermissionStatus> {
     return 'denied';
   }
 
-  const authStatus = await messaging().requestPermission();
+  const messaging = getMessaging();
+  const authStatus = await requestPermission(messaging);
   const enabled =
-    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-    authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+    authStatus === AuthorizationStatus.AUTHORIZED || authStatus === AuthorizationStatus.PROVISIONAL;
 
   return enabled ? 'granted' : 'denied';
 }
@@ -53,13 +59,13 @@ export async function checkPushPermission(): Promise<PushPermissionStatus> {
     return 'denied';
   }
 
-  const authStatus = await messaging().hasPermission();
+  const messaging = getMessaging();
+  const authStatus = await hasPermission(messaging);
   const enabled =
-    authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-    authStatus === messaging.AuthorizationStatus.PROVISIONAL;
+    authStatus === AuthorizationStatus.AUTHORIZED || authStatus === AuthorizationStatus.PROVISIONAL;
 
   if (enabled) return 'granted';
-  if (authStatus === messaging.AuthorizationStatus.DENIED) return 'denied';
+  if (authStatus === AuthorizationStatus.DENIED) return 'denied';
   return 'not-determined';
 }
 
@@ -69,7 +75,8 @@ export async function registerForPushToken(): Promise<string | null> {
   }
 
   try {
-    const token = await messaging().getToken();
+    const messaging = getMessaging();
+    const token = await getToken(messaging);
     return token ?? null;
   } catch {
     return null;
