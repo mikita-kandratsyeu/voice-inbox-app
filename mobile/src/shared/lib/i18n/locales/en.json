@@ -432,7 +432,7 @@
     "aiPrivacy": "Your data is secure",
     "goToSlide": "Go to slide {{ index }}",
     "restoreTitle": "Restore your data",
-    "restoreDesc": "Have a backup from another device?\nYou can restore your recordings now or later in Settings.",
+    "restoreDesc": "Have a backup from another device? You can restore your recordings now or later in Settings.",
     "restoreButton": "Restore from backup",
     "restoreImportAllConfirm": "Found {{ count }} records. Import all?",
     "restoreSuccess": "Imported {{ count }} records",
