@@ -8,7 +8,7 @@ import {
 } from '@react-native-firebase/messaging';
 import { NavigationContainer } from '@react-navigation/native';
 import React, { useCallback, useEffect } from 'react';
-import { AppState, type AppStateStatus, StatusBar } from 'react-native';
+import { AppState, type AppStateStatus, StatusBar, UIManager } from 'react-native';
 import BootSplash from 'react-native-bootsplash';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -21,7 +21,7 @@ import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorag
 import { createHandlePushNotification } from '@/features/push-handling';
 import { releaseWhisperContext } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
-import { initDB, NetworkStatusProvider } from '@/shared/lib';
+import { initDB, IS_ANDROID, NetworkStatusProvider } from '@/shared/lib';
 import {
   ensurePushRegistered,
   notifyAppBackground,
@@ -63,6 +63,12 @@ const App = () => {
 
   const rootStyle = { flex: 1 };
   const safeAreaStyle = { backgroundColor: color.background.primary };
+
+  useEffect(() => {
+    if (IS_ANDROID && UIManager.setLayoutAnimationEnabledExperimental) {
+      UIManager.setLayoutAnimationEnabledExperimental(true);
+    }
+  }, []);
 
   useEffect(() => {
     initDB()

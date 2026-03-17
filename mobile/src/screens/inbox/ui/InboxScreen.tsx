@@ -5,7 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, View } from 'react-native';
+import { KeyboardAvoidingView, LayoutAnimation, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { BottomTabParamList, RootStackParamList } from '@/app/navigation/types';
@@ -113,6 +113,7 @@ export const InboxScreen = () => {
           leftAction={isArchivedView ? 'unarchive' : 'archive'}
           onLeftAction={() => {
             dismissSwipeHint();
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             isArchivedView ? unarchiveRecord(item.item.id) : archiveRecord(item.item.id);
           }}
           onPin={() => {
