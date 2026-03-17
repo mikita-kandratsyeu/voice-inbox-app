@@ -216,26 +216,24 @@ export const StorageDetailsScreen = () => {
     [],
   );
 
-  const refreshStats = useCallback(
-    async (isPull = false) => {
-      if (isPull) {
-        setIsRefreshing(true);
-      } else {
-        setIsLoading(true);
-      }
-      try {
-        const paths = records.map((r) => r.audioPath).filter((p): p is string => Boolean(p));
-        const s = await getStorageStats(paths, records);
-        setStats(s);
-      } catch (err) {
-        if (__DEV__) console.warn('[StorageDetails] Failed to load stats:', err);
-      } finally {
-        setIsLoading(false);
-        setIsRefreshing(false);
-      }
-    },
-    [records],
-  );
+  const refreshStats = useCallback(async (isPull = false) => {
+    if (isPull) {
+      setIsRefreshing(true);
+    } else {
+      setIsLoading(true);
+    }
+    try {
+      const currentRecords = useRecordStore.getState().records;
+      const paths = currentRecords.map((r) => r.audioPath).filter((p): p is string => Boolean(p));
+      const s = await getStorageStats(paths, currentRecords);
+      setStats(s);
+    } catch (err) {
+      if (__DEV__) console.warn('[StorageDetails] Failed to load stats:', err);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, []);
 
   useEffect(() => {
     refreshStats();

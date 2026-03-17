@@ -1,4 +1,5 @@
 import { useCallback, useRef } from 'react';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { TaskItem, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
@@ -8,17 +9,34 @@ import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
 import { pollAiMessage, postAiMessage } from '@/shared/lib/ai-api';
 
 export const useAiProcessing = () => {
-  const setSummaryStatus = useRecordStore((s) => s.setSummaryStatus);
-  const setTasksStatus = useRecordStore((s) => s.setTasksStatus);
-  const updateSummary = useRecordStore((s) => s.updateSummary);
-  const updateTasks = useRecordStore((s) => s.updateTasks);
-  const updateTags = useRecordStore((s) => s.updateTags);
-  const updateAiExtras = useRecordStore((s) => s.updateAiExtras);
-  const renameRecord = useRecordStore((s) => s.renameRecord);
-  const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
-  const summaryStyle = useSettingsStore((s) => s.summaryStyle);
-  const taskStrictness = useSettingsStore((s) => s.taskStrictness);
-  const aiOutputLanguage = useSettingsStore((s) => s.aiOutputLanguage);
+  const {
+    setSummaryStatus,
+    setTasksStatus,
+    updateSummary,
+    updateTasks,
+    updateTags,
+    updateAiExtras,
+    renameRecord,
+  } = useRecordStore(
+    useShallow((s) => ({
+      setSummaryStatus: s.setSummaryStatus,
+      setTasksStatus: s.setTasksStatus,
+      updateSummary: s.updateSummary,
+      updateTasks: s.updateTasks,
+      updateTags: s.updateTags,
+      updateAiExtras: s.updateAiExtras,
+      renameRecord: s.renameRecord,
+    })),
+  );
+
+  const { selectedAIModel, summaryStyle, taskStrictness, aiOutputLanguage } = useSettingsStore(
+    useShallow((s) => ({
+      selectedAIModel: s.selectedAIModel,
+      summaryStyle: s.summaryStyle,
+      taskStrictness: s.taskStrictness,
+      aiOutputLanguage: s.aiOutputLanguage,
+    })),
+  );
 
   const inFlightRef = useRef<Set<string>>(new Set());
 

@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, View } from 'react-native';
 import RNFS from 'react-native-fs';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
@@ -40,20 +41,36 @@ export const RecordingDetailScreen = () => {
   const { record: routeRecord } = route.params;
   const recordId = routeRecord.id;
 
-  const liveRecord: VoiceRecord =
-    useRecordStore((s) => s.records.find((r) => r.id === recordId)) ?? routeRecord;
+  const {
+    liveRecord,
+    togglePin,
+    toggleTask,
+    setSummaryStatus,
+    setTasksStatus,
+    clearAudioPath,
+    archiveRecord,
+    unarchiveRecord,
+  } = useRecordStore(
+    useShallow((s) => ({
+      liveRecord: s.records.find((r) => r.id === recordId) ?? routeRecord,
+      togglePin: s.togglePin,
+      toggleTask: s.toggleTask,
+      setSummaryStatus: s.setSummaryStatus,
+      setTasksStatus: s.setTasksStatus,
+      clearAudioPath: s.clearAudioPath,
+      archiveRecord: s.archiveRecord,
+      unarchiveRecord: s.unarchiveRecord,
+    })),
+  );
 
-  const togglePin = useRecordStore((s) => s.togglePin);
-  const toggleTask = useRecordStore((s) => s.toggleTask);
-  const setSummaryStatus = useRecordStore((s) => s.setSummaryStatus);
-  const setTasksStatus = useRecordStore((s) => s.setTasksStatus);
-  const clearAudioPath = useRecordStore((s) => s.clearAudioPath);
-  const archiveRecord = useRecordStore((s) => s.archiveRecord);
-  const unarchiveRecord = useRecordStore((s) => s.unarchiveRecord);
-
-  const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
-  const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
-  const globalTranscriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
+  const { whisperModelStatuses, selectedWhisperModel, globalTranscriptionLanguage } =
+    useSettingsStore(
+      useShallow((s) => ({
+        whisperModelStatuses: s.whisperModelStatuses,
+        selectedWhisperModel: s.selectedWhisperModel,
+        globalTranscriptionLanguage: s.transcriptionLanguage,
+      })),
+    );
 
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
   const [showAskAIModal, setShowAskAIModal] = useState(false);

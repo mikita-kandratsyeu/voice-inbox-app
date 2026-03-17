@@ -19,6 +19,8 @@ function truncateForEmbedding(text: string): string {
 
 const APPLE_EMBEDDINGS_MIN_IOS = 17;
 
+let preparedLanguage: string | null = null;
+
 export function isEmbeddingAvailable(): boolean {
   if (!IS_IOS) return false;
 
@@ -31,8 +33,13 @@ export async function prepareEmbeddingModel(language: string): Promise<void> {
     return;
   }
 
+  if (preparedLanguage === language) {
+    return;
+  }
+
   try {
     await AppleEmbeddings.prepare(language);
+    preparedLanguage = language;
   } catch (err) {
     if (__DEV__) console.warn('[embeddings] prepare failed:', err);
   }

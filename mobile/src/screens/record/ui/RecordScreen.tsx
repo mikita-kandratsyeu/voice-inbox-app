@@ -127,10 +127,16 @@ export const RecordScreen = () => {
   };
 
   const handleSaveConfirm = async (record: VoiceRecord) => {
-    await stopRecording();
-    addRecord(record);
+    const path = await stopRecording();
+    const resolvedPath = path
+      ? path.startsWith('file://')
+        ? path.slice(7)
+        : path
+      : record.audioPath;
+    const recordWithPath: VoiceRecord = { ...record, audioPath: resolvedPath };
+    addRecord(recordWithPath);
     if (autoTranscribeOnSave) {
-      startTranscription(record);
+      startTranscription(recordWithPath);
     }
   };
 

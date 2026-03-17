@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 import AudioRecorderPlayer, { type PlayBackType } from 'react-native-audio-recorder-player';
-import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
 import { formatTime, hapticSelection } from '@/shared/lib';
@@ -44,15 +44,10 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
   const progressValue = useSharedValue(0);
   const trackWidthValue = useSharedValue(0);
   const elapsedRef = useRef(0);
+  const lastDisplayedSecsRef = useRef(0);
   const isPlayerLoadedRef = useRef(false);
   const totalMs = totalSeconds * 1000;
   const playbackSpeed = PLAYBACK_SPEEDS[speedIndex];
-
-  const progress = totalSeconds > 0 ? elapsed / totalSeconds : 0;
-
-  useEffect(() => {
-    progressValue.value = withTiming(progress, { duration: 150 });
-  }, [progress, progressValue]);
 
   const stopAndReset = useCallback(async () => {
     try {
@@ -66,19 +61,25 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
     setIsPlaying(false);
     setElapsed(0);
     elapsedRef.current = 0;
+    lastDisplayedSecsRef.current = 0;
     progressValue.value = 0;
   }, [progressValue]);
 
-  const seekTo = useCallback(async (seekMs: number) => {
-    try {
-      await player.seekToPlayer(seekMs);
-      const secs = Math.floor(seekMs / 1000);
-      elapsedRef.current = secs;
-      setElapsed(secs);
-    } catch (err) {
-      if (__DEV__) console.warn('[AudioPlayer] seekToPlayer failed:', err);
-    }
-  }, []);
+  const seekTo = useCallback(
+    async (seekMs: number) => {
+      try {
+        await player.seekToPlayer(seekMs);
+        const secs = Math.floor(seekMs / 1000);
+        elapsedRef.current = secs;
+        lastDisplayedSecsRef.current = secs;
+        setElapsed(secs);
+        progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
+      } catch (err) {
+        if (__DEV__) console.warn('[AudioPlayer] seekToPlayer failed:', err);
+      }
+    },
+    [totalSeconds, progressValue],
+  );
 
   const startPlayback = useCallback(
     async (startSecs = 0) => {
@@ -131,7 +132,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
 
     hapticSelection();
 
-    if (elapsed >= totalSeconds && totalSeconds > 0) {
+    if (elapsedRef.current >= totalSeconds && totalSeconds > 0) {
       await stopAndReset();
       await startPlayback(0);
       return;
@@ -152,7 +153,11 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
         player.addPlayBackListener((e: PlayBackType) => {
           const secs = Math.floor(e.currentPosition / 1000);
           elapsedRef.current = secs;
-          setElapsed(secs);
+          progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
+          if (secs !== lastDisplayedSecsRef.current) {
+            lastDisplayedSecsRef.current = secs;
+            setElapsed(secs);
+          }
         });
 
         player.addPlaybackEndListener(() => {
@@ -161,6 +166,8 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
           setIsPlaying(false);
           setElapsed(totalSeconds);
           elapsedRef.current = totalSeconds;
+          lastDisplayedSecsRef.current = totalSeconds;
+          progressValue.value = totalSeconds > 0 ? 1 : 0;
         });
 
         if (isPlayerLoadedRef.current) {
@@ -187,6 +194,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
     const seekMs = Math.max(0, elapsedRef.current * 1000 - SKIP_SECONDS * 1000);
     const secs = Math.floor(seekMs / 1000);
     elapsedRef.current = secs;
+    lastDisplayedSecsRef.current = secs;
     setElapsed(secs);
     progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
     if (isPlayerLoadedRef.current) {
@@ -200,6 +208,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
     const seekMs = Math.min(totalMs, elapsedRef.current * 1000 + SKIP_SECONDS * 1000);
     const secs = Math.floor(seekMs / 1000);
     elapsedRef.current = secs;
+    lastDisplayedSecsRef.current = secs;
     setElapsed(secs);
     progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
     if (isPlayerLoadedRef.current) {
@@ -222,6 +231,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
     const seekMs = Math.floor(ratio * totalMs);
     const secs = Math.floor(seekMs / 1000);
     elapsedRef.current = secs;
+    lastDisplayedSecsRef.current = secs;
     setElapsed(secs);
     progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
     if (isPlayerLoadedRef.current) {

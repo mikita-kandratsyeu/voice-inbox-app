@@ -6,6 +6,7 @@ import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, View } from 'react-native';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { BottomTabParamList, RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
@@ -35,7 +36,15 @@ export const InboxScreen = () => {
   const color = getColors(useAppTheme());
   const isTablet = useIsTablet();
   const navigation = useNavigation<InboxNavigationProp>();
-  const { records, archiveRecord, unarchiveRecord, togglePin, isLoaded } = useRecordStore();
+  const { records, isLoaded, archiveRecord, unarchiveRecord, togglePin } = useRecordStore(
+    useShallow((s) => ({
+      records: s.records,
+      isLoaded: s.isLoaded,
+      archiveRecord: s.archiveRecord,
+      unarchiveRecord: s.unarchiveRecord,
+      togglePin: s.togglePin,
+    })),
+  );
 
   const {
     query,
