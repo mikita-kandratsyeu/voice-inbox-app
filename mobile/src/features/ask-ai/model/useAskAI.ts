@@ -4,11 +4,14 @@ import type { VoiceRecord } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { pollAskResult, postAskQuestion } from '@/shared/lib/ai-api';
 
+export type AskAIHistoryItem = { question: string; answer: string };
+
 export type AskAIState = {
   isLoading: boolean;
   error: string | null;
   question: string | null;
   answer: string | null;
+  history: AskAIHistoryItem[];
 };
 
 export const useAskAI = () => {
@@ -18,6 +21,7 @@ export const useAskAI = () => {
     error: null,
     question: null,
     answer: null,
+    history: [],
   });
 
   const inFlightRef = useRef(false);
@@ -30,7 +34,13 @@ export const useAskAI = () => {
       const requestId = `${record.id}-ask-${Date.now()}`;
       const trimmedQuestion = question.trim();
       inFlightRef.current = true;
-      setState({ isLoading: true, error: null, question: trimmedQuestion, answer: null });
+      setState((s) => ({
+        ...s,
+        isLoading: true,
+        error: null,
+        question: trimmedQuestion,
+        answer: null,
+      }));
 
       try {
         const postResult = await postAskQuestion({
@@ -38,6 +48,8 @@ export const useAskAI = () => {
           transcript: record.transcript,
           question: trimmedQuestion,
           model: selectedAIModel,
+          summary: record.summary ?? undefined,
+          tasks: record.tasks?.map((t) => ({ text: t.text })) ?? undefined,
         });
 
         if (!postResult.ok) {
@@ -80,7 +92,7 @@ export const useAskAI = () => {
           error: null,
           answer: pollResult.result.answer,
         }));
-      } catch (err) {
+      } catch (err: unknown) {
         if (__DEV__)
           console.warn('[AI] askQuestion: unexpected error', {
             recordId: record.id,
@@ -99,8 +111,29 @@ export const useAskAI = () => {
   );
 
   const reset = useCallback(() => {
-    setState({ isLoading: false, error: null, question: null, answer: null });
+    setState({
+      isLoading: false,
+      error: null,
+      question: null,
+      answer: null,
+      history: [],
+    });
   }, []);
 
-  return { askQuestion, reset, ...state };
+  const askAnother = useCallback(() => {
+    setState((s) => {
+      const newHistory =
+        s.question && s.answer
+          ? [...s.history, { question: s.question, answer: s.answer }]
+          : s.history;
+      return {
+        ...s,
+        question: null,
+        answer: null,
+        history: newHistory,
+      };
+    });
+  }, []);
+
+  return { askQuestion, reset, askAnother, ...state };
 };

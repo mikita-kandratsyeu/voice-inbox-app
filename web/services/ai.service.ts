@@ -6,6 +6,7 @@ import {
 } from '@openrouter/sdk/models/errors';
 
 import { FALLBACK_MODEL } from '@/config/constants';
+import { ASK_QUESTION_SYSTEM_PROMPT } from '@/lib/prompts';
 
 async function callOpenRouter(
   transcript: string,
@@ -111,10 +112,6 @@ async function callOpenRouter(
   };
 }
 
-const ASK_QUESTION_SYSTEM_PROMPT = `Answer the user's question based ONLY on the transcript provided. Be concise. Use the same language as the question. If the transcript does not contain relevant information, say so.
-
-You MUST respond with a valid JSON object containing exactly one field: "answer" (string). Example: {"answer": "Your response here"}`;
-
 function extractAnswerFromResponse(responseContent: string): string {
   const trimmed = responseContent.trim();
   if (!trimmed) {
@@ -165,8 +162,19 @@ export async function processAskQuestion(
   transcript: string,
   question: string,
   model: string,
+  summary?: string,
+  tasks?: { text: string }[],
 ): Promise<{ answer: string }> {
-  const userContent = `Transcript:\n\n${transcript}\n\nQuestion: ${question}`;
+  const parts: string[] = ['Transcript:\n\n', transcript];
+  if (summary && summary.trim()) {
+    parts.push('\n\nSummary:\n\n', summary.trim());
+  }
+  if (tasks && tasks.length > 0) {
+    const taskLines = tasks.map((t) => `- ${t.text}`).join('\n');
+    parts.push('\n\nTasks:\n\n', taskLines);
+  }
+  parts.push('\n\nQuestion: ', question);
+  const userContent = parts.join('');
 
   const callAsk = async (
     content: string,

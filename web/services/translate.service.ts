@@ -1,24 +1,9 @@
+import { buildTranslatePrompt } from '@/lib/prompts';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
 import { sendLimitExceededPush } from '@/lib/push-tokens';
 import { openRouterClient } from '@/lib/openrouter';
 
 const TRANSLATE_MODEL = 'google/gemini-2.5-flash-lite';
-
-const LANGUAGE_NAMES: Record<string, string> = {
-  ru: 'Russian',
-  en: 'English',
-  de: 'German',
-  fr: 'French',
-  es: 'Spanish',
-  it: 'Italian',
-  pt: 'Portuguese',
-  zh: 'Chinese',
-  ja: 'Japanese',
-  ko: 'Korean',
-  ar: 'Arabic',
-  uk: 'Ukrainian',
-  pl: 'Polish',
-};
 
 type TranslateResult =
   | { ok: true; translatedText: string }
@@ -26,8 +11,7 @@ type TranslateResult =
   | { ok: false; error: string };
 
 async function callTranslate(transcript: string, targetLang: string): Promise<string> {
-  const langName = LANGUAGE_NAMES[targetLang] ?? targetLang;
-  const systemPrompt = `Translate the following text to ${langName}. Preserve the original formatting and structure. Return ONLY the translated text, no explanations.`;
+  const systemPrompt = buildTranslatePrompt(targetLang);
 
   const response = await openRouterClient.chat.send({
     chatGenerationParams: {

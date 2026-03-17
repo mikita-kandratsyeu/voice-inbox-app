@@ -18,6 +18,8 @@ type CreateAskBody = {
   transcript?: unknown;
   question?: unknown;
   model?: unknown;
+  summary?: unknown;
+  tasks?: unknown;
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
@@ -53,11 +55,13 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return apiError(validationError, HttpStatus.BAD_REQUEST);
   }
 
-  const { id, transcript, question, model } = body as {
+  const { id, transcript, question, model, summary, tasks } = body as {
     id: string;
     transcript: string;
     question: string;
     model: string;
+    summary?: string;
+    tasks?: { text: string }[];
   };
 
   const modelError = validateAllowedModel(model);
@@ -65,7 +69,25 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return apiError(modelError, HttpStatus.BAD_REQUEST);
   }
 
-  const result = await createAsk(id, transcript, question, model, deviceIdTrimmed);
+  const summaryStr =
+    typeof summary === 'string' && summary.trim().length > 0 ? summary.trim() : undefined;
+  const tasksList =
+    Array.isArray(tasks) &&
+    tasks.every(
+      (t): t is { text: string } => t && typeof t === 'object' && typeof t.text === 'string',
+    )
+      ? tasks
+      : undefined;
+
+  const result = await createAsk(
+    id,
+    transcript,
+    question,
+    model,
+    deviceIdTrimmed,
+    summaryStr,
+    tasksList,
+  );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
     return NextResponse.json(

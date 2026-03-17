@@ -1,3 +1,32 @@
+export const ASK_QUESTION_SYSTEM_PROMPT = `Answer the user's question based ONLY on the context provided (transcript, and if present: summary and list of tasks). Be concise. Use the same language as the question. If the context does not contain relevant information, say so.
+
+You MUST respond with a valid JSON object containing exactly one field: "answer" (string). Example: {"answer": "Your response here"}`;
+
+export const VALID_LANGUAGES = ['ru', 'en', 'de', 'fr', 'es', 'zh', 'ja'] as const;
+
+export type ValidLanguage = (typeof VALID_LANGUAGES)[number];
+
+export function isValidTranslateLanguage(s: string): s is ValidLanguage {
+  return (VALID_LANGUAGES as readonly string[]).includes(s);
+}
+
+const TRANSLATE_LANGUAGE_NAMES: Record<ValidLanguage, string> = {
+  ru: 'Russian',
+  en: 'English',
+  de: 'German',
+  fr: 'French',
+  es: 'Spanish',
+  zh: 'Chinese',
+  ja: 'Japanese',
+};
+
+export function buildTranslatePrompt(targetLangCode: string): string {
+  const langName = isValidTranslateLanguage(targetLangCode)
+    ? TRANSLATE_LANGUAGE_NAMES[targetLangCode]
+    : targetLangCode;
+  return `Translate the following text to ${langName}. Preserve the original formatting and structure. Return ONLY the translated text, no explanations.`;
+}
+
 export type AiProcessingOptions = {
   summaryStyle?: 'brief' | 'standard' | 'detailed';
   taskStrictness?: 'strict' | 'balanced' | 'soft';

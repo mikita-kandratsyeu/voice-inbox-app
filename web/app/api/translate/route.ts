@@ -9,6 +9,7 @@ import {
   validateRequiredStrings,
 } from '@/lib/api';
 import { HEADER_DEVICE_ID } from '@/config/constants';
+import { isValidTranslateLanguage } from '@/lib/prompts';
 import { translateTranscript } from '@/services/translate.service';
 import { NextResponse } from 'next/server';
 
@@ -16,8 +17,6 @@ type TranslateBody = {
   transcript?: unknown;
   targetLanguage?: unknown;
 };
-
-const VALID_LANGUAGES = ['ru', 'en', 'de', 'fr', 'es', 'zh', 'ja'];
 
 export const POST = async (request: Request): Promise<NextResponse> => {
   const authError = requireAppSecret(request);
@@ -55,7 +54,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     targetLanguage: string;
   };
 
-  if (!VALID_LANGUAGES.includes(targetLanguage)) {
+  if (!isValidTranslateLanguage(targetLanguage)) {
     return apiError('Invalid targetLanguage', HttpStatus.BAD_REQUEST);
   }
 

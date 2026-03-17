@@ -8,6 +8,8 @@ type AskApiRequestBody = {
   transcript: string;
   question: string;
   model: string;
+  summary?: string;
+  tasks?: { text: string }[];
 };
 
 type AskApiSuccessResponse = {

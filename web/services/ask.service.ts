@@ -28,6 +28,8 @@ export const createAsk = async (
   question: string,
   model: string,
   deviceId: string,
+  summary?: string,
+  tasks?: { text: string }[],
 ): Promise<CreateAskResult> => {
   const created = await saveMessageIfNotExists(id, {
     id,
@@ -54,7 +56,7 @@ export const createAsk = async (
 
   after(async () => {
     try {
-      const result = await processAskQuestion(transcript, question, model);
+      const result = await processAskQuestion(transcript, question, model, summary, tasks);
       await saveAskMessage(id, {
         id,
         status: 'done',

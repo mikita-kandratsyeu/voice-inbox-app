@@ -9,22 +9,8 @@ export type AIModelId =
   | 'deepseek/deepseek-v3.2'
   | 'google/gemini-2.5-flash-lite'
   | 'mistralai/mistral-small-3.2-24b-instruct';
-export type TranscriptionLanguage =
-  | 'auto'
-  | 'ru'
-  | 'en'
-  | 'de'
-  | 'fr'
-  | 'es'
-  | 'it'
-  | 'pt'
-  | 'zh'
-  | 'ja'
-  | 'ko'
-  | 'ar'
-  | 'uk'
-  | 'pl';
 
+export type TranscriptionLanguage = 'auto' | 'ru' | 'en' | 'de' | 'fr' | 'es' | 'zh' | 'ja';
 export type SummaryStyle = 'brief' | 'standard' | 'detailed';
 export type TaskStrictness = 'strict' | 'balanced' | 'soft';
 export type AiOutputLanguage = 'same' | 'ru' | 'en';
