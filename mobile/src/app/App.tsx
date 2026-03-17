@@ -40,6 +40,21 @@ const handlePushNotification = createHandlePushNotification({
       navigationRef.navigate('Main');
     }
   },
+  navigateToRecord: (recordId: string) => {
+    if (!navigationRef.isReady()) {
+      return;
+    }
+
+    const record = useRecordStore.getState().records.find((r) => r.id === recordId.split('-')[0]);
+
+    console.log('navigateToRecord', recordId, record, useRecordStore.getState().records);
+
+    if (record) {
+      navigationRef.navigate('RecordingDetail', { record });
+    } else {
+      navigationRef.navigate('Main');
+    }
+  },
 });
 
 const App = () => {
