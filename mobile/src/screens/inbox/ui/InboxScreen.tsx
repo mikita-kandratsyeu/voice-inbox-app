@@ -113,6 +113,7 @@ export const InboxScreen = () => {
           leftAction={isArchivedView ? 'unarchive' : 'archive'}
           onLeftAction={() => {
             dismissSwipeHint();
+            listRef.current?.prepareForLayoutAnimationRender();
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             isArchivedView ? unarchiveRecord(item.item.id) : archiveRecord(item.item.id);
           }}
@@ -145,7 +146,10 @@ export const InboxScreen = () => {
   const getItemType = useCallback((item: FlattenedItem) => item.type, []);
 
   const keyExtractor = useCallback((item: FlattenedItem) => {
-    if (item.type === 'header') return `header-${item.title}`;
+    if (item.type === 'header') {
+      return `header-${item.title}`;
+    }
+
     return item.item.id;
   }, []);
 

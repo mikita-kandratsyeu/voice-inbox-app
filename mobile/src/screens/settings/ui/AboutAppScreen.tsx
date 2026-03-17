@@ -1,14 +1,15 @@
 import { useNavigation } from '@react-navigation/native';
-import { BookOpen, Mail, Tag } from 'lucide-react-native';
-import React from 'react';
+import { BookOpen, Globe, Mail, Tag } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Linking, ScrollView, Text, View } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getStorefrontCountryCode } from '@/features/app-storefront/lib/storefront';
 import { useOnboardingStore } from '@/features/onboarding';
 import { getColors, SUPPORT_EMAIL, useAppTheme } from '@/shared/config';
-import { useIsTablet } from '@/shared/lib';
+import { isString, useIsTablet } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 const APP_VERSION = DeviceInfoModule.version;
@@ -21,6 +22,11 @@ export const AboutAppScreen = () => {
   const navigation = useNavigation();
   const setForceShowOnboarding = useOnboardingStore((s) => s.setForceShow);
   const contentMaxWidth = isTablet ? 720 : undefined;
+  const [storeRegion, setStoreRegion] = useState<string | null>(null);
+
+  useEffect(() => {
+    getStorefrontCountryCode().then(setStoreRegion);
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -67,6 +73,14 @@ export const AboutAppScreen = () => {
               showChevron={false}
               isFirst
             />
+            {isString(storeRegion) && (
+              <SettingsRow
+                label={t('about.storeRegion')}
+                value={storeRegion}
+                leftIcon={<Globe size={18} color={color.icon.muted} strokeWidth={1.8} />}
+                showChevron={false}
+              />
+            )}
             <SettingsRow
               label={t('about.showOnboarding')}
               leftIcon={<BookOpen size={18} color={color.icon.muted} strokeWidth={1.8} />}

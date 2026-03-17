@@ -45,12 +45,10 @@ export const SwipeableCard = React.memo(function SwipeableCard({
   const action = useSharedValue<SwipeAction>('none');
   const [isSwiping, setIsSwiping] = React.useState(false);
 
-  const collapseHeight = useSharedValue(1);
   const collapseOpacity = useSharedValue(1);
 
   const collapseAndExecute = () => {
-    collapseHeight.value = withTiming(0, { duration: COLLAPSE_DURATION });
-    collapseOpacity.value = withTiming(0, { duration: COLLAPSE_DURATION - 60 }, (finished) => {
+    collapseOpacity.value = withTiming(0, { duration: COLLAPSE_DURATION }, (finished) => {
       if (finished) scheduleOnRN(onLeftAction);
     });
   };
@@ -124,10 +122,10 @@ export const SwipeableCard = React.memo(function SwipeableCard({
   const LeftIcon = leftAction === 'archive' ? Archive : ArchiveRestore;
 
   const containerStyle = useAnimatedStyle(() => ({
-    maxHeight: collapseHeight.value * MAX_HEIGHT,
-    opacity: collapseOpacity.value,
+    maxHeight: MAX_HEIGHT,
     marginHorizontal: 16,
-    marginBottom: collapseHeight.value * MARGIN_BOTTOM,
+    marginBottom: MARGIN_BOTTOM,
+    opacity: collapseOpacity.value,
   }));
 
   return (

@@ -8,6 +8,9 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		2A15FAE82F696ECD00177049 /* StorefrontModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FAE72F696ECD00177049 /* StorefrontModule.swift */; };
+		2A15FAEA2F696F9E00177049 /* StoreKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A15FAE92F696F9E00177049 /* StoreKit.framework */; };
+		2A15FAEC2F69713C00177049 /* StorefrontModuleBridge.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FAEB2F69713C00177049 /* StorefrontModuleBridge.m */; };
 		30A2C95B84C68836EE2B2F34 /* Pods_VoiceInboxApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 82090AE397BB8348EDABFA80 /* Pods_VoiceInboxApp.framework */; };
 		6AB6F3F4330AE4AFFE499295 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
@@ -36,6 +39,9 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = VoiceInboxApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = VoiceInboxApp/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = VoiceInboxApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		2A15FAE72F696ECD00177049 /* StorefrontModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorefrontModule.swift; sourceTree = "<group>"; };
+		2A15FAE92F696F9E00177049 /* StoreKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = StoreKit.framework; path = System/Library/Frameworks/StoreKit.framework; sourceTree = SDKROOT; };
+		2A15FAEB2F69713C00177049 /* StorefrontModuleBridge.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = StorefrontModuleBridge.m; sourceTree = "<group>"; };
 		2A6F4CEC2F64113A00297CB8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		2A6F4CEE2F64113B00297CB8 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = VoiceInboxApp/AppDelegate.swift; sourceTree = "<group>"; };
@@ -47,8 +53,8 @@
 		A1C2E3F405060708090A0B02 /* AudioConverter.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = VoiceInboxApp/AudioConverter.mm; sourceTree = "<group>"; };
 		A9B8C7D6E5F4A3B2C1D0E9F7 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		B4E21B8E0F8E06F1FE22827F /* Pods-VoiceInboxApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VoiceInboxApp.debug.xcconfig"; path = "Target Support Files/Pods-VoiceInboxApp/Pods-VoiceInboxApp.debug.xcconfig"; sourceTree = "<group>"; };
-		E1F2A3B4C5D6E7F8A9B0C1D2 /* VoiceInboxApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VoiceInboxApp-Bridging-Header.h"; sourceTree = "<group>"; };
-		E2F3B4C5D6E7F8A9B0C1D2E3 /* VoiceInboxApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = VoiceInboxApp.entitlements; sourceTree = "<group>"; };
+		E1F2A3B4C5D6E7F8A9B0C1D2 /* VoiceInboxApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "VoiceInboxApp-Bridging-Header.h"; path = "VoiceInboxApp/VoiceInboxApp-Bridging-Header.h"; sourceTree = "<group>"; };
+		E2F3B4C5D6E7F8A9B0C1D2E3 /* VoiceInboxApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = VoiceInboxApp.entitlements; path = VoiceInboxApp/VoiceInboxApp.entitlements; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F1A2B3C4D5E6F7A8B9C0D1E3 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "VoiceInboxApp/GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -58,6 +64,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2A15FAEA2F696F9E00177049 /* StoreKit.framework in Frameworks */,
 				30A2C95B84C68836EE2B2F34 /* Pods_VoiceInboxApp.framework in Frameworks */,
 				A9B8C7D6E5F4A3B2C1D0E9F8 /* AudioToolbox.framework in Frameworks */,
 			);
@@ -69,6 +76,8 @@
 		13B07FAE1A68108700A75B9A /* VoiceInboxApp */ = {
 			isa = PBXGroup;
 			children = (
+				2A15FAEB2F69713C00177049 /* StorefrontModuleBridge.m */,
+				2A15FAE72F696ECD00177049 /* StorefrontModule.swift */,
 				A1C2E3F405060708090A0B01 /* AudioConverter.h */,
 				A1C2E3F405060708090A0B02 /* AudioConverter.mm */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
@@ -87,6 +96,7 @@
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				2A15FAE92F696F9E00177049 /* StoreKit.framework */,
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
 				2A6F4CEC2F64113A00297CB8 /* WidgetKit.framework */,
 				2A6F4CEE2F64113B00297CB8 /* SwiftUI.framework */,
@@ -322,6 +332,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2A15FAEC2F69713C00177049 /* StorefrontModuleBridge.m in Sources */,
+				2A15FAE82F696ECD00177049 /* StorefrontModule.swift in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 				A1C2E3F405060708090A0B03 /* AudioConverter.mm in Sources */,
 			);

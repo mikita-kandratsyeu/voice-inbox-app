@@ -481,6 +481,8 @@
     "title": "О приложении",
     "app": "Приложение",
     "version": "Версия",
+    "storeRegion": "App Store",
+    "unknown": "—",
     "showOnboarding": "Показать онбординг",
     "helpAndFeedback": "Помощь и обратная связь",
     "contactSupport": "Написать в поддержку",

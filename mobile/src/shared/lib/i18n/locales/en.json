@@ -481,6 +481,8 @@
     "title": "About",
     "app": "App",
     "version": "Version",
+    "storeRegion": "App Store",
+    "unknown": "—",
     "showOnboarding": "Show onboarding",
     "helpAndFeedback": "Help and feedback",
     "contactSupport": "Contact support",
