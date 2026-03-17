@@ -4015,20 +4015,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native/new-app-screen@npm:0.84.1":
-  version: 0.84.1
-  resolution: "@react-native/new-app-screen@npm:0.84.1"
-  peerDependencies:
-    "@types/react": ^19.1.0
-    react: "*"
-    react-native: "*"
-  peerDependenciesMeta:
-    "@types/react":
-      optional: true
-  checksum: 10c0/66e0f09230a5e43d822075be5982e7557e847d61062ea08596e8dc2a778894350eef98c3b53e970df72b8703d4139949e2755ace6901e08515bdcf605579ea79
-  languageName: node
-  linkType: hard
-
 "@react-native/normalize-colors@npm:0.84.1":
   version: 0.84.1
   resolution: "@react-native/normalize-colors@npm:0.84.1"
@@ -13024,7 +13010,6 @@ __metadata:
     "@react-native-menu/menu": "npm:^2.0.0"
     "@react-native/babel-preset": "npm:0.84.1"
     "@react-native/metro-config": "npm:0.84.1"
-    "@react-native/new-app-screen": "npm:0.84.1"
     "@react-native/typescript-config": "npm:0.84.1"
     "@react-navigation/bottom-tabs": "npm:^7.15.5"
     "@react-navigation/elements": "npm:^2.9.10"
