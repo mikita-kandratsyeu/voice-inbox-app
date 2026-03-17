@@ -221,6 +221,7 @@
       "unavailable": "—"
     },
     "sync": "Sync",
+    "backupRestore": "Backup & restore",
     "export": "Export data",
     "exporting": "Exporting...",
     "import": "Import data",
@@ -429,7 +430,13 @@
     "agreeToTermsLink2": "Privacy Policy",
     "privacy": "100% Private",
     "aiPrivacy": "Your data is secure",
-    "goToSlide": "Go to slide {{ index }}"
+    "goToSlide": "Go to slide {{ index }}",
+    "restoreTitle": "Restore your data",
+    "restoreDesc": "Have a backup from another device?\nYou can restore your recordings now or later in Settings.",
+    "restoreButton": "Restore from backup",
+    "restoreImportAllConfirm": "Found {{ count }} records. Import all?",
+    "restoreSuccess": "Imported {{ count }} records",
+    "restoreNoRecords": "No records in the file."
   },
   "importExport": {
     "importTitle": "Import data",

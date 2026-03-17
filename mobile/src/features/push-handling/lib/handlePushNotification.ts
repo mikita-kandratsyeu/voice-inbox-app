@@ -9,9 +9,6 @@ const HANDLERS: Record<
   string,
   (data: PushNotificationData, deps: HandlePushNotificationDeps) => void
 > = {
-  ai_complete: (_data, { navigateToMain }) => {
-    navigateToMain();
-  },
   policy_update: (_data, _deps) => {
     const message = isString(_data.message) ? _data.message : '';
     usePushSheet.getState().show(message);

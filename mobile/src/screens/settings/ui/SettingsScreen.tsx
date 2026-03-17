@@ -336,7 +336,7 @@ export const SettingsScreen = () => {
               />
             )}
           </SettingsSection>
-          <SettingsSection title={t('settings.sync')}>
+          <SettingsSection title={t('settings.backupRestore')}>
             <SettingsRow
               label={isExporting ? t('settings.exporting') : t('settings.export')}
               value={t('inbox.recordsCount', { count: records.length })}

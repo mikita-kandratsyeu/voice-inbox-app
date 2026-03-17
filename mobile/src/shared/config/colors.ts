@@ -38,6 +38,7 @@ export const colors = {
       zap: { color: '#10b981', bg: '#d1fae5' },
       setup: { color: '#6366f1', bg: '#e0e7ff' },
       shield: { color: '#0ea5e9', bg: '#e0f2fe' },
+      restore: { color: '#059669', bg: '#d1fae5' },
       privacy: { border: '#c4b5fd', text: '#6d28d9' },
       ai: { border: '#fcd34d', text: '#b45309' },
     },
@@ -91,6 +92,7 @@ export const colors = {
       zap: { color: '#10b981', bg: '#d1fae5' },
       setup: { color: '#6366f1', bg: '#e0e7ff' },
       shield: { color: '#0ea5e9', bg: '#e0f2fe' },
+      restore: { color: '#059669', bg: '#d1fae5' },
       privacy: { border: '#c4b5fd', text: '#6d28d9' },
       ai: { border: '#fcd34d', text: '#b45309' },
     },
@@ -132,6 +134,7 @@ export type Colors = {
     zap: { color: string; bg: string };
     setup: { color: string; bg: string };
     shield: { color: string; bg: string };
+    restore: { color: string; bg: string };
     privacy: { border: string; text: string };
     ai: { border: string; text: string };
   };

@@ -1,4 +1,14 @@
-import { Bell, Check, Lock, Mic, Settings, Shield, Sparkles, Zap } from 'lucide-react-native';
+import {
+  Bell,
+  Check,
+  Lock,
+  Mic,
+  Settings,
+  Shield,
+  Sparkles,
+  UploadCloud,
+  Zap,
+} from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,9 +33,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { useModelManager } from '@/features/model-manager';
+import { importData } from '@/features/sync-data';
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
 import { hapticSelection, IS_IOS, useIsTablet } from '@/shared/lib';
@@ -52,6 +64,7 @@ const ICON_MAP = {
   Zap,
   Settings,
   Shield,
+  UploadCloud,
 } as const;
 
 type OnboardingScreenProps = {
@@ -61,11 +74,11 @@ type OnboardingScreenProps = {
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<OnboardingSlideContent>);
 
 const DOT_SIZE = 8;
-const PILL_WIDTH = 20;
 const DOT_GAP = 4;
-const SLOT_WIDTH = PILL_WIDTH + DOT_GAP;
+const SLOT_WIDTH = DOT_SIZE + DOT_GAP * 2; // segment from dot to dot
+const PILL_WIDTH = SLOT_WIDTH;
 const DOT_LEFT = (SLOT_WIDTH - DOT_SIZE) / 2;
-const PILL_LEFT = (SLOT_WIDTH - PILL_WIDTH) / 2;
+const PILL_LEFT = 0;
 
 const AnimatedProgressDots = ({
   scrollX,
@@ -83,9 +96,7 @@ const AnimatedProgressDots = ({
   t: (key: string, opts?: { index?: number }) => string;
 }) => {
   const pillPositions = slides.map((_, i) => i * SLOT_WIDTH + PILL_LEFT);
-  const slideColors = slides.map((s, i) =>
-    i === slides.length - 1 ? color.accent.primary : s.iconColor,
-  );
+  const slideColors = slides.map((s) => s.iconColor);
 
   const pillStyle = useAnimatedStyle(() => {
     const translateX = interpolate(
@@ -212,6 +223,8 @@ type SlideItemProps = {
   color: Colors;
   agreedToTerms?: boolean;
   onAgreeChange?: (value: boolean) => void;
+  onRestorePress?: () => void;
+  isRestoring?: boolean;
 };
 
 const AnimatedSlideIcon = ({
@@ -470,6 +483,8 @@ const SlideItem = ({
   t,
   agreedToTerms = false,
   onAgreeChange,
+  onRestorePress,
+  isRestoring = false,
 }: SlideItemProps & { t: (k: string) => string }) => {
   const animatedStyle = useAnimatedStyle(() => {
     const inputRange = [
@@ -504,7 +519,7 @@ const SlideItem = ({
   const isSetupSlide = item.extra === 'setup' || item.extra === 'setupWhisper';
   if (isSetupSlide) {
     const linkStyle = {
-      color: color.accent.primary,
+      color: item.iconColor,
       textDecorationLine: 'underline' as const,
     };
     const setupMode = item.extra === 'setupWhisper' ? 'whisper' : 'ai';
@@ -545,11 +560,7 @@ const SlideItem = ({
             </Text>
           </View>
           <View style={{ flex: 1 }}>
-            <OnboardingSetupStep
-              color={color}
-              mode={setupMode}
-              selectedColor={item.extra === 'setupWhisper' ? color.accent.primary : item.iconColor}
-            />
+            <OnboardingSetupStep color={color} mode={setupMode} selectedColor={item.iconColor} />
           </View>
           {showTerms && (
             <View className="mt-4 flex-row items-center gap-3">
@@ -564,9 +575,9 @@ const SlideItem = ({
                 <View
                   className="h-7 w-7 items-center justify-center rounded-md"
                   style={{
-                    backgroundColor: agreedToTerms ? color.accent.primary : 'transparent',
+                    backgroundColor: agreedToTerms ? item.iconColor : 'transparent',
                     borderWidth: 2,
-                    borderColor: agreedToTerms ? color.accent.primary : color.text.secondary,
+                    borderColor: agreedToTerms ? item.iconColor : color.text.secondary,
                   }}
                 >
                   {agreedToTerms && <Check size={16} color="#fff" strokeWidth={2.5} />}
@@ -590,6 +601,80 @@ const SlideItem = ({
               </Text>
             </View>
           )}
+        </View>
+      </Animated.View>
+    );
+  }
+
+  if (item.extra === 'restore') {
+    return (
+      <Animated.View
+        style={[
+          {
+            width: windowWidth,
+            paddingHorizontal: 32,
+            paddingTop: 48,
+          },
+          animatedStyle,
+        ]}
+        className="flex-1"
+      >
+        <View
+          style={{
+            flex: 1,
+            alignSelf: 'center',
+            width: '100%',
+            maxWidth: contentMaxWidth,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <AnimatedSlideIcon
+            iconName={item.iconName}
+            iconColor={item.iconColor}
+            iconBg={item.iconBg}
+            iconOnAccent={color.icon.onAccent}
+          />
+          <Text
+            className="mb-2 text-center text-[28px] font-bold leading-tight"
+            style={{ color: color.text.primary }}
+          >
+            {t(item.titleKey)}
+          </Text>
+          <Text
+            className="mb-6 text-center text-[18px] leading-7"
+            style={{ color: color.text.secondary }}
+          >
+            {t(item.descKey)}
+          </Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              hapticSelection();
+              onRestorePress?.();
+            }}
+            disabled={isRestoring}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              paddingVertical: 14,
+              paddingHorizontal: 24,
+              borderRadius: 12,
+              backgroundColor: item.iconBg,
+              minWidth: 200,
+            }}
+          >
+            {isRestoring ? (
+              <ActivityIndicator size="small" color={item.iconColor} />
+            ) : (
+              <UploadCloud size={22} color={item.iconColor} strokeWidth={2} />
+            )}
+            <Text className="text-base font-semibold" style={{ color: item.iconColor }}>
+              {isRestoring ? t('importExport.importing') : t('onboarding.restoreButton')}
+            </Text>
+          </TouchableOpacity>
         </View>
       </Animated.View>
     );
@@ -674,19 +759,18 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const isTablet = useIsTablet();
   const contentMaxWidth = isTablet ? 720 : undefined;
   const slides = useMemo(() => getOnboardingSlides(color), [color]);
-  const slideColors = useMemo(() => {
-    const colors = slides.map((s) => s.iconColor);
-    colors[colors.length - 1] = color.accent.primary;
-    return colors;
-  }, [slides, color.accent.primary]);
+  const slideColors = useMemo(() => slides.map((s) => s.iconColor), [slides]);
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [agreedToTerms, setAgreedToTerms] = useState(() => getTermsAgreedAt() != null);
   const [isStartingDownload, setIsStartingDownload] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
   const flatListRef = useRef<FlatList<OnboardingSlideContent>>(null);
   const scrollX = useSharedValue(0);
   const screenWidth = useSharedValue(windowWidth);
+
+  const addRecord = useRecordStore((s) => s.addRecord);
 
   React.useEffect(() => {
     screenWidth.value = windowWidth;
@@ -695,6 +779,48 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const { startDownload } = useModelManager();
+
+  const handleRestore = useCallback(async () => {
+    setIsRestoring(true);
+    let showedConfirm = false;
+    try {
+      const result = await importData();
+      if (!result.success) {
+        if (result.error !== 'cancelled') {
+          Alert.alert(t('common.error'), result.error);
+        }
+        return;
+      }
+      if (result.records.length === 0) {
+        Alert.alert(t('common.done'), t('onboarding.restoreNoRecords'));
+        return;
+      }
+      showedConfirm = true;
+      Alert.alert(t('onboarding.restoreImportAllConfirm', { count: result.records.length }), '', [
+        { text: t('common.cancel'), style: 'cancel', onPress: () => setIsRestoring(false) },
+        {
+          text: t('importExport.import'),
+          onPress: async () => {
+            try {
+              for (const record of result.records) {
+                await addRecord(record);
+              }
+              Alert.alert(
+                t('common.done'),
+                t('onboarding.restoreSuccess', { count: result.records.length }),
+              );
+            } finally {
+              setIsRestoring(false);
+            }
+          },
+        },
+      ]);
+    } catch {
+      Alert.alert(t('common.error'), t('importExport.importError'));
+    } finally {
+      if (!showedConfirm) setIsRestoring(false);
+    }
+  }, [addRecord, t]);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -768,14 +894,26 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         t={t}
         agreedToTerms={agreedToTerms}
         onAgreeChange={setAgreedToTerms}
+        onRestorePress={handleRestore}
+        isRestoring={isRestoring}
       />
     ),
-    [agreedToTerms, color, contentMaxWidth, scrollX, screenWidth, t, windowWidth],
+    [
+      agreedToTerms,
+      color,
+      contentMaxWidth,
+      handleRestore,
+      isRestoring,
+      scrollX,
+      screenWidth,
+      t,
+      windowWidth,
+    ],
   );
 
   const isLastSlide = currentIndex === slides.length - 1;
-  const isOnLastThreeScreens = currentIndex >= slides.length - 3;
-  const showSkipButton = agreedToTerms && !isOnLastThreeScreens;
+  const isOnLastFourScreens = currentIndex >= slides.length - 4;
+  const showSkipButton = agreedToTerms && !isOnLastFourScreens;
 
   return (
     <View

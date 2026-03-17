@@ -219,7 +219,7 @@ export const OnboardingSetupStep = ({
                   className="h-6 w-6 items-center justify-center rounded-full"
                   style={{ backgroundColor: color.background.tertiary }}
                 >
-                  <Download size={14} color={color.accent.primary} strokeWidth={2} />
+                  <Download size={14} color={selectedColor} strokeWidth={2} />
                 </View>
               )}
             </TouchableOpacity>
