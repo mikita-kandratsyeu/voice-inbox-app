@@ -436,7 +436,8 @@
     "restoreButton": "Restore from backup",
     "restoreImportAllConfirm": "Found {{ count }} records. Import all?",
     "restoreSuccess": "Imported {{ count }} records",
-    "restoreNoRecords": "No records in the file."
+    "restoreNoRecords": "No records in the file.",
+    "restoreAllAlreadyInApp": "All records from the file are already in the app."
   },
   "importExport": {
     "importTitle": "Import data",

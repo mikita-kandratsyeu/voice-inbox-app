@@ -436,7 +436,8 @@
     "restoreButton": "Восстановить из копии",
     "restoreImportAllConfirm": "Найдено {{ count }} записей. Импортировать все?",
     "restoreSuccess": "Импортировано {{ count }} записей",
-    "restoreNoRecords": "В файле нет записей."
+    "restoreNoRecords": "В файле нет записей.",
+    "restoreAllAlreadyInApp": "Все записи из файла уже есть в приложении."
   },
   "importExport": {
     "importTitle": "Импорт данных",

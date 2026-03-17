@@ -63,14 +63,6 @@ export const createAsk = async (
         answer: result.answer,
       });
 
-      const inForeground = await isAppInForeground(deviceId);
-      if (inForeground) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[Push] Ask complete: skip (app in foreground)', { deviceId });
-        }
-        return;
-      }
-
       const isLeader = await registerAiCompletion(deviceId);
       if (!isLeader) {
         if (process.env.NODE_ENV !== 'production') {
@@ -81,8 +73,15 @@ export const createAsk = async (
 
       await new Promise((resolve) => setTimeout(resolve, PUSH_DEBOUNCE_MS));
 
+      const inForeground = await isAppInForeground(deviceId);
       const count = await collectPendingAndUnlock(deviceId);
       if (count === 0) return;
+      if (inForeground) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Push] Ask complete: skip (app in foreground after debounce)', { deviceId });
+        }
+        return;
+      }
 
       const data = await getPushTokenWithLocale(deviceId);
       if (data) {

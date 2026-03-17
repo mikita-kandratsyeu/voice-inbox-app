@@ -62,14 +62,6 @@ export const createMessage = async (
         ...(result.nextSteps && result.nextSteps.length > 0 && { nextSteps: result.nextSteps }),
       });
 
-      const inForeground = await isAppInForeground(deviceId);
-      if (inForeground) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[Push] AI complete: skip (app in foreground)', { deviceId });
-        }
-        return;
-      }
-
       // Register completion. Only the first caller (leader) waits and sends the push.
       const isLeader = await registerAiCompletion(deviceId);
       if (!isLeader) {
@@ -82,8 +74,15 @@ export const createMessage = async (
       // Leader waits for debounce window to collect all parallel completions
       await new Promise((resolve) => setTimeout(resolve, PUSH_DEBOUNCE_MS));
 
+      const inForeground = await isAppInForeground(deviceId);
       const count = await collectPendingAndUnlock(deviceId);
       if (count === 0) return;
+      if (inForeground) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log('[Push] AI complete: skip (app in foreground after debounce)', { deviceId });
+        }
+        return;
+      }
 
       const data = await getPushTokenWithLocale(deviceId);
       if (data) {

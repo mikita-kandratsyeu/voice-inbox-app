@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  ScrollView,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -445,7 +446,7 @@ const PermissionsSlide = ({
           </Text>
         </View>
 
-        <View className="gap-3">
+        <ScrollView contentContainerStyle={{ gap: 12 }}>
           <PermissionRow
             icon={<Mic size={22} color={color.accent.primary} strokeWidth={2} />}
             label={t('permissions.micLabel')}
@@ -455,18 +456,16 @@ const PermissionsSlide = ({
             color={color}
             t={t}
           />
-          {IS_IOS && (
-            <PermissionRow
-              icon={<Bell size={22} color={color.accent.primary} strokeWidth={2} />}
-              label={t('permissions.notificationsLabel')}
-              description={t('permissions.notificationsDesc')}
-              status={pushStatus}
-              onPress={handlePushPress}
-              color={color}
-              t={t}
-            />
-          )}
-        </View>
+          <PermissionRow
+            icon={<Bell size={22} color={color.accent.primary} strokeWidth={2} />}
+            label={t('permissions.notificationsLabel')}
+            description={t('permissions.notificationsDesc')}
+            status={pushStatus}
+            onPress={handlePushPress}
+            color={color}
+            t={t}
+          />
+        </ScrollView>
       </View>
     </Animated.View>
   );
@@ -770,6 +769,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const scrollX = useSharedValue(0);
   const screenWidth = useSharedValue(windowWidth);
 
+  const existingRecords = useRecordStore((s) => s.records);
   const addRecord = useRecordStore((s) => s.addRecord);
 
   React.useEffect(() => {
@@ -791,23 +791,30 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         }
         return;
       }
-      if (result.records.length === 0) {
-        Alert.alert(t('common.done'), t('onboarding.restoreNoRecords'));
+      const existingIds = new Set(existingRecords.map((r) => r.id));
+      const toImport = result.records.filter((r) => !existingIds.has(r.id));
+      if (toImport.length === 0) {
+        Alert.alert(
+          t('common.done'),
+          result.records.length > 0
+            ? t('onboarding.restoreAllAlreadyInApp')
+            : t('onboarding.restoreNoRecords'),
+        );
         return;
       }
       showedConfirm = true;
-      Alert.alert(t('onboarding.restoreImportAllConfirm', { count: result.records.length }), '', [
+      Alert.alert(t('onboarding.restoreImportAllConfirm', { count: toImport.length }), '', [
         { text: t('common.cancel'), style: 'cancel', onPress: () => setIsRestoring(false) },
         {
           text: t('importExport.import'),
           onPress: async () => {
             try {
-              for (const record of result.records) {
+              for (const record of toImport) {
                 await addRecord(record);
               }
               Alert.alert(
                 t('common.done'),
-                t('onboarding.restoreSuccess', { count: result.records.length }),
+                t('onboarding.restoreSuccess', { count: toImport.length }),
               );
             } finally {
               setIsRestoring(false);
@@ -820,7 +827,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
     } finally {
       if (!showedConfirm) setIsRestoring(false);
     }
-  }, [addRecord, t]);
+  }, [addRecord, existingRecords, t]);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {

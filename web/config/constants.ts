@@ -56,7 +56,7 @@ export const APP_FOREGROUND_TTL_SECONDS = 60; // heartbeat every 40s, TTL 60s fo
 // Push deduplication: batch multiple AI completions into one push
 export const PUSH_PENDING_KEY_PREFIX = 'push_pending:';
 export const PUSH_LOCK_KEY_PREFIX = 'push_lock:';
-export const PUSH_DEBOUNCE_MS = 10_000; // wait 10s to collect all completions
+export const PUSH_DEBOUNCE_MS = 15_000; // wait 15s to collect completions; leader re-checks foreground before sending
 export const PUSH_PENDING_TTL_SECONDS = 120; // safety TTL for pending counter
 export const PUSH_LOCK_TTL_SECONDS = 30; // lock TTL = debounce + buffer
 
