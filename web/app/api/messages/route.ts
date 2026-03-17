@@ -11,6 +11,7 @@ import {
 } from '@/lib/api';
 import { buildAiProcessingPrompt } from '@/lib/prompts';
 import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
+import { setAppForeground } from '@/lib/push-tokens';
 import { createMessage } from '@/services/message.service';
 import { NextResponse } from 'next/server';
 
@@ -79,6 +80,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!resolvedSystemPrompt.trim()) {
     return apiError('systemPrompt or options is required', HttpStatus.BAD_REQUEST);
   }
+
+  await setAppForeground(deviceIdTrimmed);
 
   const result = await createMessage(id, transcript, model, resolvedSystemPrompt, deviceIdTrimmed);
 

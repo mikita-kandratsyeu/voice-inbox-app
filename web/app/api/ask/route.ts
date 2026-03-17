@@ -10,6 +10,7 @@ import {
   validateRequiredStrings,
 } from '@/lib/api';
 import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
+import { setAppForeground } from '@/lib/push-tokens';
 import { createAsk } from '@/services/ask.service';
 import { NextResponse } from 'next/server';
 
@@ -78,6 +79,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     )
       ? tasks
       : undefined;
+
+  await setAppForeground(deviceIdTrimmed);
 
   const result = await createAsk(
     id,
