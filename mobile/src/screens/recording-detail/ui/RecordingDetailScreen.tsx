@@ -8,7 +8,6 @@ import RNFS from 'react-native-fs';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { RootStackParamList } from '@/app/navigation/types';
-import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';

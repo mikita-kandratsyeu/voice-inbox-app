@@ -47,8 +47,6 @@ const handlePushNotification = createHandlePushNotification({
 
     const record = useRecordStore.getState().records.find((r) => r.id === recordId.split('-')[0]);
 
-    console.log('navigateToRecord', recordId, record, useRecordStore.getState().records);
-
     if (record) {
       navigationRef.navigate('RecordingDetail', { record });
     } else {
