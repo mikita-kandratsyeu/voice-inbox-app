@@ -8,4 +8,5 @@ declare module '@env' {
   export const DB_LOG: string | undefined;
   export const WEB_API_URL: string | undefined;
   export const WEB_API_SECRET: string | undefined;
+  export const MOBILE_USER_AGENT: string | undefined;
 }
