@@ -100,7 +100,32 @@ export const RecordScreen = () => {
   );
 
   const handleClose = async () => {
-    await stopRecording();
+    const wasRecording = state === 'recording' || state === 'paused';
+    const path = await stopRecording();
+    if (wasRecording && path) {
+      const resolvedPath = path.startsWith('file://') ? path.slice(7) : path;
+      const record: VoiceRecord = {
+        id: generateRecordId(),
+        title: getAutoTitle(),
+        transcript: '',
+        transcriptSegments: [],
+        summary: '',
+        tasks: [],
+        duration: formatTime(elapsed),
+        durationMs: Math.round(elapsedMs),
+        createdAt: dayjs().toISOString(),
+        status: 'unread',
+        aiStatus: 'idle',
+        transcriptProgress: 0,
+        isPinned: false,
+        tags: [],
+        audioPath: resolvedPath,
+      };
+      addRecord(record);
+      if (autoTranscribeOnSave) {
+        startTranscription(record);
+      }
+    }
     navigation.goBack();
   };
 

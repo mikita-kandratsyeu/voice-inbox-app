@@ -253,7 +253,7 @@ export const SettingsScreen = () => {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingTop: 12,
+            paddingTop: 24,
             paddingBottom: insets.bottom + 24,
           }}
           showsVerticalScrollIndicator={false}
