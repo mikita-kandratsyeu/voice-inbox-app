@@ -4,6 +4,9 @@ import type { NextRequest } from 'next/server';
 
 import {
   ADMIN_COOKIE_NAME,
+  ADMIN_LOGIN_RATE_LIMIT_KEY_PREFIX,
+  ADMIN_LOGIN_RATE_LIMIT_MAX_ATTEMPTS,
+  ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS,
   RATE_LIMIT_KEY_PREFIX,
   RATE_LIMIT_MAX_REQUESTS,
   RATE_LIMIT_WINDOW_SECONDS,
@@ -27,8 +30,12 @@ const getClientIp = (request: NextRequest): string => {
 
 const getRateLimitKey = (ip: string): string => {
   const window = Math.floor(Date.now() / 1000 / RATE_LIMIT_WINDOW_SECONDS);
-
   return `${RATE_LIMIT_KEY_PREFIX}${ip}:${window}`;
+};
+
+const getAdminLoginRateLimitKey = (ip: string): string => {
+  const window = Math.floor(Date.now() / 1000 / ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS);
+  return `${ADMIN_LOGIN_RATE_LIMIT_KEY_PREFIX}${ip}:${window}`;
 };
 
 const intlMiddleware = createMiddleware(routing);
@@ -37,7 +44,33 @@ export const proxy = async (request: NextRequest): Promise<NextResponse> => {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith('/api/admin/')) {
-    if (pathname !== '/api/admin/login' && pathname !== '/api/admin/logout') {
+    if (pathname === '/api/admin/login') {
+      const ip = getClientIp(request);
+      const allowedIps = process.env.ADMIN_ALLOWED_IPS?.trim();
+      if (allowedIps) {
+        const list = allowedIps
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        if (list.length > 0 && !list.includes(ip)) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+      }
+      const loginKey = getAdminLoginRateLimitKey(ip);
+      const count = await redis.incr(loginKey);
+      if (count === 1) {
+        await redis.expire(loginKey, ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS);
+      }
+      if (count > ADMIN_LOGIN_RATE_LIMIT_MAX_ATTEMPTS) {
+        return NextResponse.json(
+          { error: 'Too many login attempts' },
+          {
+            status: 429,
+            headers: { 'Retry-After': String(ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS) },
+          },
+        );
+      }
+    } else if (pathname !== '/api/admin/logout') {
       if (!isAdminAuthenticated(request)) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }

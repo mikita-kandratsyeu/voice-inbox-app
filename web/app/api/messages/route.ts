@@ -1,8 +1,11 @@
 import {
   apiError,
+  checkDeviceRateLimit,
   HttpStatus,
   parseJsonBody,
   requireAppSecret,
+  requireMobileUserAgent,
+  validateAllowedModel,
   validateDeviceId,
   validateRequiredStrings,
 } from '@/lib/api';
@@ -27,18 +30,20 @@ type CreateMessageBody = {
 
 export const POST = async (request: Request): Promise<NextResponse> => {
   const authError = requireAppSecret(request);
+  if (authError) return authError;
 
-  if (authError) {
-    return authError;
-  }
+  const uaError = requireMobileUserAgent(request);
+  if (uaError) return uaError;
 
   const deviceId = request.headers.get(HEADER_DEVICE_ID);
   const deviceIdError = validateDeviceId(deviceId);
-
   if (deviceIdError) {
     return apiError(deviceIdError, HttpStatus.BAD_REQUEST);
   }
   const deviceIdTrimmed = deviceId!.trim();
+
+  const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed);
+  if (rateLimitError) return rateLimitError;
 
   const body = await parseJsonBody<CreateMessageBody>(request);
 
@@ -62,6 +67,11 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     systemPrompt?: string;
     options?: AiProcessingOptions;
   };
+
+  const modelError = validateAllowedModel(model);
+  if (modelError) {
+    return apiError(modelError, HttpStatus.BAD_REQUEST);
+  }
 
   const resolvedSystemPrompt =
     options != null ? buildAiProcessingPrompt(options) : (systemPrompt ?? '');

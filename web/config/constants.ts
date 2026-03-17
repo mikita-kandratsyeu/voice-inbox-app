@@ -14,6 +14,16 @@ export const RATE_LIMIT_WINDOW_SECONDS = 60;
 export const RATE_LIMIT_MAX_REQUESTS = 15;
 export const RATE_LIMIT_KEY_PREFIX = 'rl:';
 
+// Per-device rate limit (mobile API)
+export const RATE_LIMIT_DEVICE_KEY_PREFIX = 'rl_device:';
+export const RATE_LIMIT_DEVICE_WINDOW_SECONDS = 60;
+export const RATE_LIMIT_DEVICE_MAX_REQUESTS = 60;
+
+// Admin login rate limit (per IP)
+export const ADMIN_LOGIN_RATE_LIMIT_KEY_PREFIX = 'rl_admin_login:';
+export const ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS = 60;
+export const ADMIN_LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5;
+
 // AI rate limit
 export const FREE_WEEKLY_LIMIT = 50;
 export const AI_WEEKLY_KEY_PREFIX = 'ai_weekly:';
@@ -25,8 +35,17 @@ export const MESSAGE_KEY_PREFIX = 'msg:';
 export const GET_RETRY_ATTEMPTS = 3;
 export const GET_RETRY_DELAY_MS = 100;
 
-// AI service
+// AI service — allowlist must match mobile AI_MODELS (entities/settings/model/constants.ts)
 export const FALLBACK_MODEL = 'arcee-ai/trinity-large-preview:free';
+export const ALLOWED_AI_MODELS: string[] = [
+  'google/gemini-3.1-flash-lite-preview',
+  'google/gemini-2.5-flash-lite',
+  'meta-llama/llama-3.3-70b-instruct',
+  'deepseek/deepseek-v3.2',
+  'openai/gpt-5-nano',
+  'mistralai/mistral-small-3.2-24b-instruct',
+  FALLBACK_MODEL,
+];
 
 // Push notifications (iOS APNs)
 export const PUSH_TOKEN_KEY_PREFIX = 'push_token:';

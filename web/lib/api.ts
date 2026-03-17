@@ -1,12 +1,60 @@
 import { NextResponse } from 'next/server';
 
+import {
+  ALLOWED_AI_MODELS,
+  RATE_LIMIT_DEVICE_KEY_PREFIX,
+  RATE_LIMIT_DEVICE_MAX_REQUESTS,
+  RATE_LIMIT_DEVICE_WINDOW_SECONDS,
+} from '@/config/constants';
+import { redis } from '@/lib/redis';
+
 export const HttpStatus = {
   OK: 200,
   BAD_REQUEST: 400,
   UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
+  TOO_MANY_REQUESTS: 429,
 } as const;
+
+const MOBILE_USER_AGENT_SUBSTRING = process.env.MOBILE_USER_AGENT as string;
+
+export function validateAllowedModel(model: string): string | null {
+  const trimmed = typeof model === 'string' ? model.trim() : '';
+  if (!trimmed) return 'model is required';
+  if (!ALLOWED_AI_MODELS.includes(trimmed)) {
+    return `model must be one of: ${ALLOWED_AI_MODELS.join(', ')}`;
+  }
+  return null;
+}
+
+export function requireMobileUserAgent(request: Request): NextResponse | null {
+  const ua = request.headers.get('user-agent') ?? '';
+  if (!ua.includes(MOBILE_USER_AGENT_SUBSTRING)) {
+    return apiError('Forbidden', HttpStatus.FORBIDDEN);
+  }
+  return null;
+}
+
+export async function checkDeviceRateLimit(deviceId: string): Promise<NextResponse | null> {
+  const window = Math.floor(Date.now() / 1000 / RATE_LIMIT_DEVICE_WINDOW_SECONDS);
+  const key = `${RATE_LIMIT_DEVICE_KEY_PREFIX}${deviceId}:${window}`;
+  const count = await redis.incr(key);
+  if (count === 1) {
+    await redis.expire(key, RATE_LIMIT_DEVICE_WINDOW_SECONDS);
+  }
+  if (count > RATE_LIMIT_DEVICE_MAX_REQUESTS) {
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      {
+        status: HttpStatus.TOO_MANY_REQUESTS,
+        headers: { 'Retry-After': String(RATE_LIMIT_DEVICE_WINDOW_SECONDS) },
+      },
+    );
+  }
+  return null;
+}
 
 export function apiError(message: string, status: number = HttpStatus.BAD_REQUEST) {
   return NextResponse.json({ error: message }, { status });

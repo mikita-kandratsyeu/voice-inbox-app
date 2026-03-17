@@ -1,4 +1,10 @@
-import { apiError, HttpStatus, parseJsonBody, requireAppSecret } from '@/lib/api';
+import {
+  apiError,
+  HttpStatus,
+  parseJsonBody,
+  requireAppSecret,
+  requireMobileUserAgent,
+} from '@/lib/api';
 import { runBroadcast, type BroadcastInput } from '@/lib/broadcast-push';
 import { NextResponse } from 'next/server';
 
@@ -20,10 +26,10 @@ function toBroadcastInput(body: BroadcastBody): BroadcastInput {
 
 export const POST = async (request: Request): Promise<NextResponse> => {
   const authError = requireAppSecret(request);
+  if (authError) return authError;
 
-  if (authError) {
-    return authError;
-  }
+  const uaError = requireMobileUserAgent(request);
+  if (uaError) return uaError;
 
   const body = await parseJsonBody<BroadcastBody>(request);
 
