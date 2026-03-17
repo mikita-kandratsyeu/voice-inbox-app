@@ -356,6 +356,8 @@ type PermissionsSlideProps = {
   index: number;
   scrollX: SharedValue<number>;
   screenWidth: SharedValue<number>;
+  agreedToTerms?: boolean;
+  onAgreeChange?: (value: boolean) => void;
 };
 
 const PermissionsSlide = ({
@@ -366,6 +368,8 @@ const PermissionsSlide = ({
   index,
   scrollX,
   screenWidth,
+  agreedToTerms = false,
+  onAgreeChange,
 }: PermissionsSlideProps) => {
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
   const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
@@ -466,6 +470,44 @@ const PermissionsSlide = ({
             t={t}
           />
         </ScrollView>
+
+        <View className="mt-6 flex-row items-center gap-3">
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => {
+              hapticSelection();
+              onAgreeChange?.(!agreedToTerms);
+            }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <View
+              className="h-7 w-7 items-center justify-center rounded-md"
+              style={{
+                backgroundColor: agreedToTerms ? color.accent.primary : 'transparent',
+                borderWidth: 2,
+                borderColor: agreedToTerms ? color.accent.primary : color.text.secondary,
+              }}
+            >
+              {agreedToTerms && <Check size={16} color="#fff" strokeWidth={2.5} />}
+            </View>
+          </TouchableOpacity>
+          <Text className="flex-1 text-sm leading-5" style={{ color: color.text.secondary }}>
+            {t('onboarding.agreeToTermsPrefix')}
+            <Text
+              style={{ color: color.accent.primary, textDecorationLine: 'underline' }}
+              onPress={() => WEBSITE_URL && openInAppBrowser(`${WEBSITE_URL}/terms`)}
+            >
+              {t('onboarding.agreeToTermsLink')}
+            </Text>
+            {t('onboarding.agreeToTermsAnd')}
+            <Text
+              style={{ color: color.accent.primary, textDecorationLine: 'underline' }}
+              onPress={() => WEBSITE_URL && openInAppBrowser(`${WEBSITE_URL}/privacy`)}
+            >
+              {t('onboarding.agreeToTermsLink2')}
+            </Text>
+          </Text>
+        </View>
       </View>
     </Animated.View>
   );
@@ -511,18 +553,15 @@ const SlideItem = ({
         index={index}
         scrollX={scrollX}
         screenWidth={screenWidth}
+        agreedToTerms={agreedToTerms}
+        onAgreeChange={onAgreeChange}
       />
     );
   }
 
   const isSetupSlide = item.extra === 'setup' || item.extra === 'setupWhisper';
   if (isSetupSlide) {
-    const linkStyle = {
-      color: item.iconColor,
-      textDecorationLine: 'underline' as const,
-    };
     const setupMode = item.extra === 'setupWhisper' ? 'whisper' : 'ai';
-    const showTerms = item.extra === 'setupWhisper';
 
     return (
       <Animated.View
@@ -561,45 +600,6 @@ const SlideItem = ({
           <View style={{ flex: 1 }}>
             <OnboardingSetupStep color={color} mode={setupMode} selectedColor={item.iconColor} />
           </View>
-          {showTerms && (
-            <View className="mt-4 flex-row items-center gap-3">
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => {
-                  hapticSelection();
-                  onAgreeChange?.(!agreedToTerms);
-                }}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              >
-                <View
-                  className="h-7 w-7 items-center justify-center rounded-md"
-                  style={{
-                    backgroundColor: agreedToTerms ? item.iconColor : 'transparent',
-                    borderWidth: 2,
-                    borderColor: agreedToTerms ? item.iconColor : color.text.secondary,
-                  }}
-                >
-                  {agreedToTerms && <Check size={16} color="#fff" strokeWidth={2.5} />}
-                </View>
-              </TouchableOpacity>
-              <Text className="flex-1 text-sm leading-5" style={{ color: color.text.secondary }}>
-                {t('onboarding.agreeToTermsPrefix')}
-                <Text
-                  style={linkStyle}
-                  onPress={() => WEBSITE_URL && openInAppBrowser(`${WEBSITE_URL}/terms`)}
-                >
-                  {t('onboarding.agreeToTermsLink')}
-                </Text>
-                {t('onboarding.agreeToTermsAnd')}
-                <Text
-                  style={linkStyle}
-                  onPress={() => WEBSITE_URL && openInAppBrowser(`${WEBSITE_URL}/privacy`)}
-                >
-                  {t('onboarding.agreeToTermsLink2')}
-                </Text>
-              </Text>
-            </View>
-          )}
         </View>
       </Animated.View>
     );
@@ -919,6 +919,8 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   );
 
   const isLastSlide = currentIndex === slides.length - 1;
+  const permissionsSlideIndex = slides.findIndex((s) => s.id === 'permissions');
+  const isOnPermissionsSlide = permissionsSlideIndex >= 0 && currentIndex === permissionsSlideIndex;
   const isOnLastFourScreens = currentIndex >= slides.length - 4;
   const showSkipButton = agreedToTerms && !isOnLastFourScreens;
 
@@ -987,7 +989,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           slideColors={slideColors}
           iconOnAccent={color.icon.onAccent}
           loading={isStartingDownload}
-          disabled={isStartingDownload || (isLastSlide && !agreedToTerms)}
+          disabled={isStartingDownload || ((isOnPermissionsSlide || isLastSlide) && !agreedToTerms)}
         />
       </View>
     </View>
