@@ -66,31 +66,33 @@ export const RecordScreen = () => {
     },
     onRecordingStoppedByAppLock: (path, elapsed, elapsedMs) => {
       const recordId = generateRecordId();
-      persistRecordingToDocuments(path.startsWith('file://') ? path.slice(7) : path, recordId).then(
-        (newPath) => {
-          const record: VoiceRecord = {
-            id: recordId,
-            title: getAutoTitle(),
-            transcript: '',
-            transcriptSegments: [],
-            summary: '',
-            tasks: [],
-            duration: formatTime(elapsed),
-            durationMs: Math.round(elapsedMs),
-            createdAt: dayjs().toISOString(),
-            status: 'unread',
-            aiStatus: 'idle',
-            transcriptProgress: 0,
-            isPinned: false,
-            tags: [],
-            audioPath: newPath,
-          };
-          useRecordStore.getState().addRecord(record);
-          if (useSettingsStore.getState().autoTranscribeOnSave) {
-            startTranscription(record);
-          }
-        },
-      );
+      const resolvedPath = path.startsWith('file://') ? path.slice(7) : path;
+      const addRecordWithPath = (audioPath: string) => {
+        const record: VoiceRecord = {
+          id: recordId,
+          title: getAutoTitle(),
+          transcript: '',
+          transcriptSegments: [],
+          summary: '',
+          tasks: [],
+          duration: formatTime(elapsed),
+          durationMs: Math.round(elapsedMs),
+          createdAt: dayjs().toISOString(),
+          status: 'unread',
+          aiStatus: 'idle',
+          transcriptProgress: 0,
+          isPinned: false,
+          tags: [],
+          audioPath,
+        };
+        useRecordStore.getState().addRecord(record);
+        if (useSettingsStore.getState().autoTranscribeOnSave) {
+          startTranscription(record);
+        }
+      };
+      persistRecordingToDocuments(resolvedPath, recordId)
+        .then(addRecordWithPath)
+        .catch(() => addRecordWithPath(resolvedPath));
     },
   });
 
@@ -110,7 +112,12 @@ export const RecordScreen = () => {
     if (wasRecording && path) {
       const recordId = generateRecordId();
       const resolvedPath = path.startsWith('file://') ? path.slice(7) : path;
-      const audioPath = await persistRecordingToDocuments(resolvedPath, recordId);
+      let audioPath: string;
+      try {
+        audioPath = await persistRecordingToDocuments(resolvedPath, recordId);
+      } catch {
+        audioPath = resolvedPath;
+      }
       const record: VoiceRecord = {
         id: recordId,
         title: getAutoTitle(),
@@ -163,7 +170,11 @@ export const RecordScreen = () => {
     let audioPath = record.audioPath;
     if (path) {
       const resolvedPath = path.startsWith('file://') ? path.slice(7) : path;
-      audioPath = await persistRecordingToDocuments(resolvedPath, record.id);
+      try {
+        audioPath = await persistRecordingToDocuments(resolvedPath, record.id);
+      } catch {
+        audioPath = resolvedPath;
+      }
     }
     const recordWithPath: VoiceRecord = { ...record, audioPath };
     addRecord(recordWithPath);

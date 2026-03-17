@@ -24,7 +24,7 @@ import {
   startRecordingLiveActivity,
   updateRecordingLiveActivity,
 } from '@/features/live-activity-recording';
-import { hapticLight, IS_IOS } from '@/shared/lib';
+import { ensureRecordingsDir, hapticLight, IS_IOS, RECORDINGS_DIR } from '@/shared/lib';
 import { checkMicPermission, requestMicPermission } from '@/shared/lib/permissions';
 
 import type { RecordingState } from '../config';
@@ -38,11 +38,6 @@ const MAX_JUMP_BACKWARD_MS = 500;
 
 type SanitizeResult = { ms: number; routeChanged: boolean };
 
-/**
- * Sanitizes currentPosition from the recorder. On iOS, switching audio sources
- * (built-in mic, Bluetooth, etc.) can cause the native layer to report corrupted
- * or erratic positions. We detect this and signal route change to stop the recording.
- */
 function sanitizePosition(rawMs: number, lastValidMs: number): SanitizeResult {
   if (rawMs < 0) {
     return { ms: lastValidMs, routeChanged: false };
@@ -194,7 +189,15 @@ export const useRecording = ({
       lastValidMsRef.current = 0;
       audioRecorderPlayer.setSubscriptionDuration(SUBSCRIPTION_DURATION_MS / 1000);
 
-      const path = await audioRecorderPlayer.startRecorder(undefined, RECORDING_AUDIO_SET, true);
+      await ensureRecordingsDir();
+      const tempName = `rec-${Date.now()}-${Math.random().toString(36).slice(2, 10)}.m4a`;
+      const recordPath = `${RECORDINGS_DIR}/${tempName}`;
+      let path: string;
+      try {
+        path = await audioRecorderPlayer.startRecorder(recordPath, RECORDING_AUDIO_SET, true);
+      } catch {
+        path = await audioRecorderPlayer.startRecorder(undefined, RECORDING_AUDIO_SET, true);
+      }
       audioPathRef.current = path;
 
       addRecordBackListener();
