@@ -1731,27 +1731,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-webview (13.16.1):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - React-NativeModulesApple (0.84.1):
     - hermes-engine
     - React-callinvoker
@@ -2615,7 +2594,6 @@ DEPENDENCIES:
   - "react-native-menu (from `../node_modules/@react-native-menu/menu`)"
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
-  - react-native-webview (from `../node_modules/react-native-webview`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-networking (from `../node_modules/react-native/ReactCommon/react/networking`)
   - React-oscompat (from `../node_modules/react-native/ReactCommon/oscompat`)
@@ -2789,8 +2767,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/netinfo"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
-  react-native-webview:
-    :path: "../node_modules/react-native-webview"
   React-NativeModulesApple:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
   React-networking:
@@ -2960,7 +2936,6 @@ SPEC CHECKSUMS:
   react-native-menu: 2f87618b07c3ce5eeb0ef17d3ffee52e2575673b
   react-native-netinfo: c9fa0172bba6414449ea5b67fc92f2c99c20cb1d
   react-native-safe-area-context: 77b4164a2f78aba35dc07956dc448bea7f4bec7f
-  react-native-webview: 2ba9d8b5ac7b0c0678b5d255b0c73a5b80bf4677
   React-NativeModulesApple: 7dcb21dde521e4f5795447db38d0e5ed43cb8aac
   React-networking: 35e4b01a70356a5feccf1c4edb7aeb5c63e5cb3a
   React-oscompat: d25dec7213a964cdfae442e1967a680954ed0df1
