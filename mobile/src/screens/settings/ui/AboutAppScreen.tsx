@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { BookOpen, Globe, Mail, Tag } from 'lucide-react-native';
+import { BookOpen, Globe, Mail, Store, Tag } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Linking, ScrollView, Text, View } from 'react-native';
@@ -7,12 +7,13 @@ import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getStorefrontCountryCode } from '@/features/app-storefront/lib/storefront';
+import { openInAppBrowser } from '@/features/in-app-browser';
 import { useOnboardingStore } from '@/features/onboarding';
-import { getColors, SUPPORT_EMAIL, useAppTheme } from '@/shared/config';
+import { getColors, SUPPORT_EMAIL, useAppTheme, WEBSITE_URL } from '@/shared/config';
 import { isString, useIsTablet } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
-const APP_VERSION = DeviceInfoModule.version;
+const VERSION_DISPLAY = DeviceInfoModule.version;
 
 export const AboutAppScreen = () => {
   const { t } = useTranslation();
@@ -68,7 +69,7 @@ export const AboutAppScreen = () => {
           <SettingsSection title={t('about.app')}>
             <SettingsRow
               label={t('about.version')}
-              value={APP_VERSION}
+              value={VERSION_DISPLAY}
               leftIcon={<Tag size={18} color={color.icon.muted} strokeWidth={1.8} />}
               showChevron={false}
               isFirst
@@ -77,8 +78,15 @@ export const AboutAppScreen = () => {
               <SettingsRow
                 label={t('about.storeRegion')}
                 value={storeRegion}
-                leftIcon={<Globe size={18} color={color.icon.muted} strokeWidth={1.8} />}
+                leftIcon={<Store size={18} color={color.icon.muted} strokeWidth={1.8} />}
                 showChevron={false}
+              />
+            )}
+            {WEBSITE_URL.length > 0 && (
+              <SettingsRow
+                label={t('about.website')}
+                leftIcon={<Globe size={18} color={color.icon.muted} strokeWidth={1.8} />}
+                onPress={() => openInAppBrowser(WEBSITE_URL)}
               />
             )}
             <SettingsRow
@@ -88,6 +96,48 @@ export const AboutAppScreen = () => {
               isLast
             />
           </SettingsSection>
+          <View className="mb-6">
+            <Text
+              className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest"
+              style={{ color: color.text.secondary }}
+            >
+              {t('about.poweredBy')}
+            </Text>
+            <View className="flex-row flex-wrap gap-2">
+              <View
+                className="rounded-full px-3 py-1.5"
+                style={{ backgroundColor: color.background.tertiary }}
+              >
+                <Text className="text-xs font-medium" style={{ color: color.text.secondary }}>
+                  {t('about.badgeReactNative')}
+                </Text>
+              </View>
+              <View
+                className="rounded-full px-3 py-1.5"
+                style={{ backgroundColor: color.background.tertiary }}
+              >
+                <Text className="text-xs font-medium" style={{ color: color.text.secondary }}>
+                  {t('about.badgeWhisper')}
+                </Text>
+              </View>
+              <View
+                className="rounded-full px-3 py-1.5"
+                style={{ backgroundColor: color.background.tertiary }}
+              >
+                <Text className="text-xs font-medium" style={{ color: color.text.secondary }}>
+                  {t('about.badgeOpenRouter')}
+                </Text>
+              </View>
+              <View
+                className="rounded-full px-3 py-1.5"
+                style={{ backgroundColor: color.background.tertiary }}
+              >
+                <Text className="text-xs font-medium" style={{ color: color.text.secondary }}>
+                  {t('about.badgeAi')}
+                </Text>
+              </View>
+            </View>
+          </View>
           {SUPPORT_EMAIL.length > 0 && (
             <SettingsSection title={t('about.helpAndFeedback')}>
               <SettingsRow
@@ -95,6 +145,7 @@ export const AboutAppScreen = () => {
                 leftIcon={<Mail size={18} color={color.icon.muted} strokeWidth={1.8} />}
                 onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
                 isFirst
+                isLast
               />
             </SettingsSection>
           )}
