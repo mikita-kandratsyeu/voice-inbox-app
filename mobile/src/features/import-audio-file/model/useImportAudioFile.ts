@@ -18,15 +18,7 @@ import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
 import { hapticMedium, hapticSuccess } from '@/shared/lib';
 import { convertToWav, getAudioDurationMs } from '@/shared/lib/audio';
 import { formatTime } from '@/shared/lib/date';
-
-const RECORDINGS_DIR = `${RNFS.DocumentDirectoryPath}/recordings`;
-
-async function ensureRecordingsDir(): Promise<void> {
-  const exists = await RNFS.exists(RECORDINGS_DIR);
-  if (!exists) {
-    await RNFS.mkdir(RECORDINGS_DIR);
-  }
-}
+import { ensureRecordingsDir, RECORDINGS_DIR } from '@/shared/lib/recordings';
 
 export function useImportAudioFile() {
   const { t } = useTranslation();

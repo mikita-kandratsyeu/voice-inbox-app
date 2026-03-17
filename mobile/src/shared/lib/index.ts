@@ -33,6 +33,7 @@ export {
   modalKeyboardBehavior,
   PLATFORM_OS,
 } from './platform';
+export { ensureRecordingsDir, persistRecordingToDocuments, RECORDINGS_DIR } from './recordings';
 export { isArray, isRecord, isString, isStringArrayItem } from './type-guards';
 export { useAiModelName } from './useAiModelName';
 export { useAiTabBannerDismiss } from './useAiTabBannerDismiss';
