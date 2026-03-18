@@ -72,10 +72,12 @@ export const RecordScreen = () => {
     onRecordingStoppedByAppLock: (path, elapsed, elapsedMs) => {
       const recordId = generateRecordId();
       const resolvedPath = path.startsWith('file://') ? path.slice(7) : path;
+      const autoTitle = getAutoTitle();
+
       const addRecordWithPath = (audioPath: string) => {
         const record: VoiceRecord = {
           id: recordId,
-          title: getAutoTitle(),
+          title: autoTitle,
           transcript: '',
           transcriptSegments: [],
           summary: '',
@@ -90,11 +92,14 @@ export const RecordScreen = () => {
           tags: [],
           audioPath,
         };
+
         useRecordStore.getState().addRecord(record);
+
         if (useSettingsStore.getState().autoTranscribeOnSave) {
           startTranscription(record);
         }
       };
+
       persistRecordingToDocuments(resolvedPath, recordId)
         .then(addRecordWithPath)
         .catch(() => addRecordWithPath(resolvedPath));

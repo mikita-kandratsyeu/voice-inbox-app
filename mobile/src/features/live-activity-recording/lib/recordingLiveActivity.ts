@@ -4,8 +4,13 @@ import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
 import { IS_IOS } from '@/shared/lib/platform';
 
 const { RecordingActivityModule } = NativeModules;
+console.log('RecordingActivityModule ==>', RecordingActivityModule);
 
 const defaultTitle = getAutoTitle(false);
+
+export const isLiveActivityAvailable = (): boolean => {
+  return IS_IOS && Boolean(RecordingActivityModule);
+};
 
 export async function startRecordingLiveActivity(
   sessionId = `session-${Date.now()}`,
@@ -36,6 +41,11 @@ export async function endRecordingLiveActivity(): Promise<void> {
 
   return RecordingActivityModule.stop();
 }
-export const isLiveActivityAvailable = (): boolean => {
-  return IS_IOS && Boolean(RecordingActivityModule);
+
+export const endRecordingLiveActivitySuccessfully = (totalSeconds: number, title: string) => {
+  if (!isLiveActivityAvailable()) {
+    return;
+  }
+
+  return RecordingActivityModule.endSuccessfully(totalSeconds, title);
 };
