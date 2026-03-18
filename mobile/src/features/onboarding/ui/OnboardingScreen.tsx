@@ -470,7 +470,6 @@ const PermissionsSlide = ({
             t={t}
           />
         </ScrollView>
-
         <View className="mt-6 flex-row items-center gap-3">
           <TouchableOpacity
             activeOpacity={0.7}
@@ -483,12 +482,12 @@ const PermissionsSlide = ({
             <View
               className="h-7 w-7 items-center justify-center rounded-md"
               style={{
-                backgroundColor: agreedToTerms ? color.accent.primary : 'transparent',
+                backgroundColor: agreedToTerms ? color.onboarding.shield.color : 'transparent',
                 borderWidth: 2,
-                borderColor: agreedToTerms ? color.accent.primary : color.text.secondary,
+                borderColor: agreedToTerms ? color.onboarding.shield.color : color.text.secondary,
               }}
             >
-              {agreedToTerms && <Check size={16} color="#fff" strokeWidth={2.5} />}
+              {agreedToTerms && <Check size={16} color={color.icon.onAccent} strokeWidth={2.5} />}
             </View>
           </TouchableOpacity>
           <Text className="flex-1 text-sm leading-5" style={{ color: color.text.secondary }}>
