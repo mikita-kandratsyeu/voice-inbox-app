@@ -21,6 +21,11 @@ private func formatTime(_ seconds: Int) -> String {
     return String(format: "%02d:%02d", m, s)
 }
 
+private enum RecordingDeeplink {
+    static let stopRecordingString = "voiceinbox://stop-recording"
+    static let stopRecordingURL = URL(string: stopRecordingString)!
+}
+
 struct PulsingRecordIcon: View {
     let baseSize: CGFloat
     let pulseScale: CGFloat
@@ -74,7 +79,7 @@ struct RecordingLiveActivityView: View {
             }
             Spacer()
           
-            Link(destination: URL(string: "voiceinbox://stop-recording")!) {
+            Link(destination: RecordingDeeplink.stopRecordingURL) {
                      Image(systemName: "stop.fill")
                          .font(.title3)
                          .foregroundColor(.white)
@@ -121,7 +126,7 @@ struct RecordingWidgetLiveActivity: Widget {
                 }
                 // Third region
                 DynamicIslandExpandedRegion(.trailing) {
-                      Link(destination: URL(string: "voiceinbox://stop-recording")!) {
+                      Link(destination: RecordingDeeplink.stopRecordingURL) {
                           Image(systemName: "stop.fill")
                               .font(.title3)
                               .foregroundColor(.white)
