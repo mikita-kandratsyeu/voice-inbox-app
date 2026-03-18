@@ -207,7 +207,6 @@ export const useRecording = ({
       startRecordingLiveActivity().catch(() => {});
     } catch (err) {
       if (__DEV__) console.warn('[useRecording] startRecorder failed:', err);
-      Alert.alert(t('record.startFailedTitle'), t('record.startFailedMessage'), [{ text: 'OK' }]);
     }
   }, [addRecordBackListener, t]);
 
