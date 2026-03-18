@@ -73,6 +73,15 @@ struct RecordingLiveActivityView: View {
                     .foregroundColor(.secondary)
             }
             Spacer()
+          
+            Link(destination: URL(string: "voiceinbox://stop-recording")!) {
+                     Image(systemName: "stop.fill")
+                         .font(.title3)
+                         .foregroundColor(.white)
+                         .padding(10)
+                         .background(Color.red)
+                         .clipShape(Circle())
+                 }
         }
         .padding()
         .background(.ultraThinMaterial)
@@ -144,16 +153,17 @@ struct RecordingWidgetLiveActivity: Widget {
     }
 }
 
-//#Preview("Lock Screen", as: .content, using: RecordingAttributes(sessionId: "preview")) {
-//    RecordingWidgetLiveActivity()
-//} contentStates: {
-//    RecordingAttributes.ContentState(
-//        isRecording: true,
-//        elapsedSeconds: 125,
-//        title: "Демо запись"
-//    )
-//}
-//
+#Preview("Lock Screen", as: .content, using: RecordingAttributes(sessionId: "preview")) {
+    RecordingWidgetLiveActivity()
+} contentStates: {
+    RecordingAttributes.ContentState(
+        isRecording: true,
+        startDate: Date(),
+        elapsedSeconds: 125,
+        title: "Демо запись"
+    )
+}
+
 //#Preview("DI Expanded", as: .dynamicIsland(.expanded),
 //         using: RecordingAttributes(sessionId: "preview")) {
 //    RecordingWidgetLiveActivity()
