@@ -18,10 +18,11 @@ function getPeriodForHour(hour: number): string {
   return i18n.t('record.autoTitle.night');
 }
 
-export const getAutoTitle = (): string => {
+export const getAutoTitle = (useDate = true): string => {
   const hour = new Date().getHours();
   const date = dayjs().format('MMM D');
-  return `${getPeriodForHour(hour)} · ${date}`;
+
+  return `${getPeriodForHour(hour)} ${useDate ? `· ${date}` : ''}`;
 };
 
 export const getAutoTitleForDate = (isoDate: string): string => {

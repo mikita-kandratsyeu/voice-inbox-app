@@ -1,12 +1,15 @@
 import { NativeModules } from 'react-native';
 
+import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
 import { IS_IOS } from '@/shared/lib/platform';
 
 const { RecordingActivityModule } = NativeModules;
 
+const defaultTitle = getAutoTitle(false);
+
 export async function startRecordingLiveActivity(
   sessionId = `session-${Date.now()}`,
-  title = 'Запись идёт',
+  title = defaultTitle,
 ): Promise<void> {
   if (!isLiveActivityAvailable()) {
     return;
@@ -17,7 +20,7 @@ export async function startRecordingLiveActivity(
 
 export async function updateRecordingLiveActivity(
   elapsedSeconds: number,
-  title = 'Запись идёт',
+  title = defaultTitle,
 ): Promise<void> {
   if (!isLiveActivityAvailable()) {
     return;
