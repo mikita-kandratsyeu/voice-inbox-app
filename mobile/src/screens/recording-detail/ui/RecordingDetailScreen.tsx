@@ -86,18 +86,6 @@ export const RecordingDetailScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset when switching records
   }, [routeRecord.id]);
 
-  useEffect(() => {
-    const path = liveRecord.audioPath;
-    if (!path?.trim()) return;
-
-    const normalizedPath = path.startsWith('file://') ? path.slice(7) : path;
-    RNFS.exists(normalizedPath).then((exists) => {
-      if (!exists) {
-        clearAudioPath(liveRecord.id).catch(() => {});
-      }
-    });
-  }, [liveRecord.id, liveRecord.audioPath, clearAudioPath]);
-
   const { startTranscription, cancelTranscription } = useTranscription();
   const { generateSummary, extractTasks } = useAiProcessing();
   const { shareRecord, shareAudio } = useShareRecord();
