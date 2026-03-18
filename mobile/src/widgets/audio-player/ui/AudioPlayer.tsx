@@ -1,12 +1,6 @@
 import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  GestureResponderEvent,
-  LayoutChangeEvent,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { LayoutChangeEvent, Text, TouchableOpacity, View } from 'react-native';
 import AudioRecorderPlayer, { type PlayBackType } from 'react-native-audio-recorder-player';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
@@ -93,6 +87,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
         player.addPlayBackListener((e: PlayBackType) => {
           const secs = Math.floor(e.currentPosition / 1000);
           elapsedRef.current = secs;
+          progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
           setElapsed(secs);
         });
 
@@ -222,23 +217,6 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
     setSpeedIndex((i) => (i + 1) % PLAYBACK_SPEEDS.length);
   };
 
-  const handleTrackPress = async (e: GestureResponderEvent) => {
-    if (trackWidth === 0 || totalMs === 0 || !audioPath) {
-      return;
-    }
-    hapticSelection();
-    const ratio = Math.max(0, Math.min(1, e.nativeEvent.locationX / trackWidth));
-    const seekMs = Math.floor(ratio * totalMs);
-    const secs = Math.floor(seekMs / 1000);
-    elapsedRef.current = secs;
-    lastDisplayedSecsRef.current = secs;
-    setElapsed(secs);
-    progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
-    if (isPlayerLoadedRef.current) {
-      await seekTo(seekMs);
-    }
-  };
-
   const fillStyle = useAnimatedStyle(() => ({
     width: `${progressValue.value * 100}%`,
   }));
@@ -282,8 +260,6 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
             setTrackWidth(w);
             trackWidthValue.value = w;
           }}
-          onStartShouldSetResponder={() => hasAudio}
-          onResponderGrant={handleTrackPress}
         >
           <Animated.View
             className="absolute left-0 top-0 h-1 rounded-sm"
