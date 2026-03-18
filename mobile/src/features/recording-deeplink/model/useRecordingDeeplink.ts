@@ -3,8 +3,11 @@ import { useCallback } from 'react';
 import { endRecordingLiveActivity } from '@/features/live-activity-recording';
 import { useRecording } from '@/screens/record/model/useRecording';
 
+import { useRecordingDeeplinkStore } from './store';
+
 export const useRecordingDeeplink = () => {
   const { stopRecording } = useRecording();
+  const setRequestShowSaveModal = useRecordingDeeplinkStore((s) => s.setRequestShowSaveModal);
 
   const handleRecordingDeeplink = useCallback(
     async (url: URL) => {
@@ -16,13 +19,14 @@ export const useRecordingDeeplink = () => {
       try {
         await stopRecording();
         await endRecordingLiveActivity();
+        setRequestShowSaveModal(true);
       } catch (e) {
         if (__DEV__) {
           console.warn('[useRecordingDeeplink] failed to handle deeplink', e);
         }
       }
     },
-    [stopRecording],
+    [stopRecording, setRequestShowSaveModal],
   );
 
   return { handleRecordingDeeplink };
