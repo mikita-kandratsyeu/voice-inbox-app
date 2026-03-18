@@ -1,11 +1,13 @@
-import { open } from '@op-engineering/op-sqlite';
+import { IOS_DOCUMENT_PATH, open } from '@op-engineering/op-sqlite';
 import { drizzle } from 'drizzle-orm/op-sqlite';
 import { migrate } from 'drizzle-orm/op-sqlite/migrator';
 
+import { IS_IOS } from '../platform';
 import { migrationsConfig } from './migrations';
 import * as schema from './schema';
 
 let _db: ReturnType<typeof drizzle> | null = null;
+const DB_NAME = 'voice-inbox.db';
 
 export type Database = ReturnType<typeof drizzle<typeof schema>>;
 
@@ -18,7 +20,12 @@ export const getDB = (): Database => {
 };
 
 export const initDB = async (): Promise<void> => {
-  const sqlite = open({ name: 'voice-inbox.db' });
+  const openParams: { name: string; location?: string } = { name: DB_NAME };
+  if (IS_IOS && IOS_DOCUMENT_PATH) {
+    openParams.location = `${IOS_DOCUMENT_PATH}/`;
+  }
+
+  const sqlite = open(openParams);
   const db = drizzle(sqlite, { schema });
 
   await migrate(db, migrationsConfig);
