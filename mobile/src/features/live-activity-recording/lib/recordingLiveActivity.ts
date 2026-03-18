@@ -2,41 +2,37 @@ import { NativeModules } from 'react-native';
 
 import { IS_IOS } from '@/shared/lib/platform';
 
-const { RecordingLiveActivityModule } = NativeModules;
+const { RecordingActivityModule } = NativeModules;
 
-export const startRecordingLiveActivity = async (): Promise<void> => {
-  if (!IS_IOS || !RecordingLiveActivityModule) return;
-  try {
-    await RecordingLiveActivityModule.startActivity();
-  } catch {
-    if (__DEV__) {
-      console.warn('[startRecordingLiveActivity] Failed to start activity');
-    }
+export async function startRecordingLiveActivity(
+  sessionId = `session-${Date.now()}`,
+  title = 'Запись идёт',
+): Promise<void> {
+  if (!isLiveActivityAvailable()) {
+    return;
   }
-};
 
-export const updateRecordingLiveActivity = async (elapsedSeconds: number): Promise<void> => {
-  if (!IS_IOS || !RecordingLiveActivityModule) return;
-  try {
-    await RecordingLiveActivityModule.updateActivity(elapsedSeconds);
-  } catch {
-    if (__DEV__) {
-      console.warn('[updateRecordingLiveActivity] Failed to update activity');
-    }
+  return RecordingActivityModule.start(sessionId, title);
+}
+
+export async function updateRecordingLiveActivity(
+  elapsedSeconds: number,
+  title = 'Запись идёт',
+): Promise<void> {
+  if (!isLiveActivityAvailable()) {
+    return;
   }
-};
 
-export const endRecordingLiveActivity = async (): Promise<void> => {
-  if (!IS_IOS || !RecordingLiveActivityModule) return;
-  try {
-    await RecordingLiveActivityModule.endActivity();
-  } catch {
-    if (__DEV__) {
-      console.warn('[endRecordingLiveActivity] Failed to end activity');
-    }
+  return RecordingActivityModule.update(true, elapsedSeconds, title);
+}
+
+export async function endRecordingLiveActivity(): Promise<void> {
+  if (!isLiveActivityAvailable()) {
+    return;
   }
-};
 
+  return RecordingActivityModule.stop();
+}
 export const isLiveActivityAvailable = (): boolean => {
-  return IS_IOS && Boolean(RecordingLiveActivityModule);
+  return IS_IOS && Boolean(RecordingActivityModule);
 };

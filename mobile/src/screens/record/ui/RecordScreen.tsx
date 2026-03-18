@@ -109,6 +109,7 @@ export const RecordScreen = () => {
   const handleClose = async () => {
     const wasRecording = state === 'recording' || state === 'paused';
     const path = await stopRecording();
+
     if (wasRecording && path) {
       const recordId = generateRecordId();
       const resolvedPath = path.startsWith('file://') ? path.slice(7) : path;
@@ -167,7 +168,9 @@ export const RecordScreen = () => {
 
   const handleSaveConfirm = async (record: VoiceRecord) => {
     const path = await stopRecording();
+
     let audioPath = record.audioPath;
+
     if (path) {
       const resolvedPath = path.startsWith('file://') ? path.slice(7) : path;
       try {

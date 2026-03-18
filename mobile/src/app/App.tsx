@@ -31,6 +31,7 @@ import {
   usePushNotifications,
 } from '@/shared/lib/push';
 
+import { useInitDeepLinking } from './deep-linking';
 import { navigationRef } from './navigation/navigationRef';
 import { RootNavigator } from './navigation/RootNavigator';
 
@@ -62,6 +63,7 @@ const App = () => {
 
   const handleNotification = useCallback(handlePushNotification, []);
 
+  useInitDeepLinking();
   usePushNotifications({ onNotification: handleNotification });
 
   useEffect(() => {
