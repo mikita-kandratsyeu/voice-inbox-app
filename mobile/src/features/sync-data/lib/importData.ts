@@ -160,6 +160,7 @@ async function importFromZip(fileUri: string): Promise<ImportResult> {
 
 async function removeDirRecursive(path: string): Promise<void> {
   const items = await RNFS.readDir(path);
+
   for (const item of items) {
     if (item.isFile()) {
       await RNFS.unlink(item.path);
