@@ -32,7 +32,6 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
   const totalSeconds = parseDuration(duration);
   const [isPlaying, setIsPlaying] = useState(false);
   const [elapsed, setElapsed] = useState(0);
-  const [trackWidth, setTrackWidth] = useState(0);
   const [speedIndex, setSpeedIndex] = useState(0);
 
   const progressValue = useSharedValue(0);
@@ -117,7 +116,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
         if (__DEV__) console.warn('[AudioPlayer] startPlayer failed:', err);
       }
     },
-    [audioPath, totalSeconds, playbackSpeed, seekTo],
+    [audioPath, totalSeconds, playbackSpeed, seekTo, progressValue],
   );
 
   const handlePlayPause = async () => {
@@ -257,7 +256,6 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
           style={{ backgroundColor: color.background.tertiary }}
           onLayout={(e: LayoutChangeEvent) => {
             const w = e.nativeEvent.layout.width;
-            setTrackWidth(w);
             trackWidthValue.value = w;
           }}
         >
