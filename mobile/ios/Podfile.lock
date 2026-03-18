@@ -2514,6 +2514,14 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNZipArchive (7.0.2):
+    - React-Core
+    - RNZipArchive/Core (= 7.0.2)
+    - SSZipArchive (~> 2.5.5)
+  - RNZipArchive/Core (7.0.2):
+    - React-Core
+    - SSZipArchive (~> 2.5.5)
+  - SSZipArchive (2.5.5)
   - whisper-rn (0.5.5):
     - hermes-engine
     - RCTRequired
@@ -2644,6 +2652,7 @@ DEPENDENCIES:
   - RNScreens (from `../node_modules/react-native-screens`)
   - RNSVG (from `../node_modules/react-native-svg`)
   - RNWorklets (from `../node_modules/react-native-worklets`)
+  - RNZipArchive (from `../node_modules/react-native-zip-archive`)
   - whisper-rn (from `../node_modules/whisper.rn`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -2660,6 +2669,7 @@ SPEC REPOS:
     - MMKVCore
     - nanopb
     - PromisesObjC
+    - SSZipArchive
 
 EXTERNAL SOURCES:
   AppleLLM:
@@ -2867,6 +2877,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-svg"
   RNWorklets:
     :path: "../node_modules/react-native-worklets"
+  RNZipArchive:
+    :path: "../node_modules/react-native-zip-archive"
   whisper-rn:
     :path: "../node_modules/whisper.rn"
   Yoga:
@@ -2986,6 +2998,8 @@ SPEC CHECKSUMS:
   RNScreens: d0b84395f70841b48de7af26e45704ed4a24c62e
   RNSVG: 8e3f7761226162bf86d7420a0ba9445f3f0377f3
   RNWorklets: 7564836a83bc44a6ab3231cf9b9e4697d148b379
+  RNZipArchive: 4304f5100eab004eeb7349adc51997b3a28deb76
+  SSZipArchive: c69881e8ac5521f0e622291387add5f60f30f3c4
   whisper-rn: 5362c8bdef2e711637dafd72d5dabdfca91ea2cc
   Yoga: 9e495ad6f457c4ff504a8328981496b5cf41dd7f
 

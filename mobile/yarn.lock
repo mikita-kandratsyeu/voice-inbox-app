@@ -11247,6 +11247,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-zip-archive@npm:7.0.2":
+  version: 7.0.2
+  resolution: "react-native-zip-archive@npm:7.0.2"
+  peerDependencies:
+    react: ">=16.8.6"
+    react-native: ">=0.60.0"
+  checksum: 10c0/d769a4028c2165d5d428a0c32247d486b460a68d740abc043e435cadf98e73b7b6d9b0f9888251af17baeb40093aac775ed6dadfcf5eb0fb385bf38816e69626
+  languageName: node
+  linkType: hard
+
 "react-native@npm:0.84.1":
   version: 0.84.1
   resolution: "react-native@npm:0.84.1"
@@ -13062,6 +13072,7 @@ __metadata:
     react-native-screens: "npm:^4.24.0"
     react-native-svg: "npm:^15.15.3"
     react-native-worklets: "npm:~0.7.0"
+    react-native-zip-archive: "npm:7.0.2"
     react-test-renderer: "npm:19.2.3"
     sharp: "npm:^0.33.5"
     tailwindcss: "npm:^3.4.17"

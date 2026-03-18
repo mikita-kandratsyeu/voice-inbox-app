@@ -432,9 +432,9 @@ const PermissionsSlide = ({
         <View className="mb-8 items-center">
           <View
             className="mb-6 h-20 w-20 items-center justify-center rounded-full"
-            style={{ backgroundColor: '#e0f2fe' }}
+            style={{ backgroundColor: color.onboarding.shield.bg }}
           >
-            <Shield size={40} color="#0ea5e9" strokeWidth={2} />
+            <Shield size={40} color={color.onboarding.shield.color} strokeWidth={2} />
           </View>
           <Text
             className="mb-3 text-center text-[28px] font-bold leading-tight"
@@ -452,7 +452,7 @@ const PermissionsSlide = ({
 
         <ScrollView contentContainerStyle={{ gap: 12 }}>
           <PermissionRow
-            icon={<Mic size={22} color={color.accent.primary} strokeWidth={2} />}
+            icon={<Mic size={22} color={color.onboarding.shield.color} strokeWidth={2} />}
             label={t('permissions.micLabel')}
             description={t('permissions.micDesc')}
             status={micStatus}
@@ -461,7 +461,7 @@ const PermissionsSlide = ({
             t={t}
           />
           <PermissionRow
-            icon={<Bell size={22} color={color.accent.primary} strokeWidth={2} />}
+            icon={<Bell size={22} color={color.onboarding.shield.color} strokeWidth={2} />}
             label={t('permissions.notificationsLabel')}
             description={t('permissions.notificationsDesc')}
             status={pushStatus}
