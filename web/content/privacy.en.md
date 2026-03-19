@@ -16,7 +16,7 @@ The app does not use any analytics SDKs, advertising trackers, or user behavior 
 
 Our API temporarily stores only the AI result (summary, tasks, tags) in a key-value store that expires after 1 hour. After one hour, this data is automatically deleted. We never store transcripts permanently.
 
-We use a device identifier (device ID) to limit the number of free AI requests per week per device. This identifier is used solely for rate limiting and is not linked to your identity.
+Access to the API is authenticated using short-lived tokens that are bound to your device ID. We do not store these tokens on our servers; they are validated and then discarded. We use the device identifier to limit the number of free AI requests per week per device. This identifier is used solely for rate limiting and authentication and is not linked to your identity.
 
 If you enable push notifications, we store your push token (FCM) and app language on our servers. This data is used solely to send you notifications about completed AI processing and important updates. The push token is stored for 30 days and refreshed on every app launch. You can revoke notification permission at any time through iOS Settings.
 
@@ -55,7 +55,7 @@ You retain full control over your data. You have the right to:
 
 ## 7. Security
 
-All communication with our API uses HTTPS encryption. The app supports optional device lock (PIN or biometrics) to protect access to your data.
+All communication with our API uses HTTPS encryption. API requests are authenticated with short-lived tokens tied to your device; we do not store these tokens. The app supports optional device lock (PIN or biometrics) to protect access to your data.
 
 ## 8. Children
 
