@@ -3,12 +3,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BookOpen, Globe, Mail, Store, Tag } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
-import { getStorefrontCountryCode } from '@/features/app-storefront';
+import { getStorefrontCountryCode, useAdsSecretIconTap } from '@/features/app-storefront';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { useOnboardingStore } from '@/features/onboarding';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
@@ -26,6 +26,7 @@ export const AboutAppScreen = () => {
   const setForceShowOnboarding = useOnboardingStore((s) => s.setForceShow);
   const contentMaxWidth = isTablet ? 720 : undefined;
   const [storeRegion, setStoreRegion] = useState<string | null>(null);
+  const { onSecretIconPress } = useAdsSecretIconTap();
 
   useEffect(() => {
     getStorefrontCountryCode().then(setStoreRegion);
@@ -51,13 +52,18 @@ export const AboutAppScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           <View className="mb-8 items-center">
-            <View className="mb-4 h-20 w-20 overflow-hidden rounded-[22px]">
+            <Pressable
+              accessibilityLabel={t('about.title')}
+              accessibilityRole="image"
+              className="mb-4 h-20 w-20 overflow-hidden rounded-[22px]"
+              onPress={onSecretIconPress}
+            >
               <Image
                 source={require('@/shared/assets/app-icon.png')}
                 className="h-full w-full"
                 resizeMode="cover"
               />
-            </View>
+            </Pressable>
             <Text className="text-[24px] font-bold" style={{ color: color.text.primary }}>
               Voice Inbox AI
             </Text>

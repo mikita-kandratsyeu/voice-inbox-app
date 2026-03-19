@@ -3,6 +3,10 @@ import { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { AdRequestConfiguration, RewardedAdLoader } from 'yandex-mobile-ads';
 
+import {
+  getAdsForceDisabledSync,
+  isAdsSecretGestureEnabled,
+} from '@/features/app-storefront/lib/adsSecretGesture';
 import { isEUUserByStorefront } from '@/features/app-storefront/lib/storefront';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { claimAiBonus } from '@/shared/lib/ai-api';
@@ -95,6 +99,10 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
     }
 
     if (await isEUUserByStorefront()) {
+      return;
+    }
+
+    if (isAdsSecretGestureEnabled() && getAdsForceDisabledSync()) {
       return;
     }
 
