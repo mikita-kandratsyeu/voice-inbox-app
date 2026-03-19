@@ -1,7 +1,6 @@
-import { WEB_API_SECRET, WEB_API_URL } from '@env';
+import { WEB_API_URL } from '@env';
 
-import { getOrCreateDeviceId } from '@/shared/lib/device-id';
-import { fetch } from '@/shared/lib/fetch';
+import { fetchWithAuth } from '@/shared/lib/api-auth';
 
 type AskApiRequestBody = {
   id: string;
@@ -45,18 +44,13 @@ type AskResponse =
   | { id: string; status: 'error'; error: string };
 
 export async function postAskQuestion(body: AskApiRequestBody): Promise<AskApiResult> {
-  const deviceId = await getOrCreateDeviceId();
   const url = `${WEB_API_URL}/api/ask`;
 
   let response: Response;
   try {
-    response = await fetch(url, {
+    response = await fetchWithAuth(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-app-secret': WEB_API_SECRET ?? '',
-        'x-device-id': deviceId,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
   } catch (err) {
@@ -97,7 +91,7 @@ export async function pollAskResult(id: string, syncToken?: string): Promise<Ask
 
     let response: Response;
     try {
-      response = await fetch(url, { headers });
+      response = await fetchWithAuth(url, { headers });
     } catch (err) {
       if (__DEV__) console.warn('[AI] pollAskResult: fetch failed', { id, error: String(err) });
       continue;

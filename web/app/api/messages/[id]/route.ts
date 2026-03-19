@@ -1,4 +1,4 @@
-import { apiError, HttpStatus } from '@/lib/api';
+import { apiError, HttpStatus, requireAppAuth } from '@/lib/api';
 import { getMessageById } from '@/services/message.service';
 import { NextResponse } from 'next/server';
 
@@ -19,6 +19,9 @@ function getSyncToken(request: Request): string | undefined {
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(request: Request, { params }: RouteContext): Promise<NextResponse> {
+  const authError = await requireAppAuth();
+  if (authError) return authError;
+
   const { id } = await params;
   const syncToken = getSyncToken(request);
 

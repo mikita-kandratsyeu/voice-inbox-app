@@ -1,7 +1,6 @@
-import { WEB_API_SECRET, WEB_API_URL } from '@env';
+import { WEB_API_URL } from '@env';
 
-import { getOrCreateDeviceId } from '@/shared/lib/device-id';
-import { fetch } from '@/shared/lib/fetch';
+import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { isString } from '@/shared/lib/type-guards';
 
 export type AiProcessingOptions = {
@@ -79,18 +78,13 @@ type MessageResponse =
   | { id: string; status: 'error'; error: string };
 
 export async function postAiMessage(body: AiApiRequestBody): Promise<AiApiResult> {
-  const deviceId = await getOrCreateDeviceId();
   const url = `${WEB_API_URL}/api/messages`;
 
   let response: Response;
   try {
-    response = await fetch(url, {
+    response = await fetchWithAuth(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-app-secret': WEB_API_SECRET ?? '',
-        'x-device-id': deviceId,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
   } catch (err) {
@@ -126,16 +120,8 @@ export type AiUsage = {
 };
 
 export async function getAiUsage(): Promise<AiUsage | null> {
-  const deviceId = await getOrCreateDeviceId();
-
   try {
-    const response = await fetch(`${WEB_API_URL}/api/ai-usage`, {
-      method: 'GET',
-      headers: {
-        'x-app-secret': WEB_API_SECRET ?? '',
-        'x-device-id': deviceId,
-      },
-    });
+    const response = await fetchWithAuth(`${WEB_API_URL}/api/ai-usage`, { method: 'GET' });
 
     if (!response.ok) {
       return null;
@@ -162,7 +148,7 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
 
     let response: Response;
     try {
-      response = await fetch(url, { headers });
+      response = await fetchWithAuth(url, { headers });
     } catch (err) {
       if (__DEV__) console.warn('[AI] pollAiMessage: fetch failed', { id, error: String(err) });
       continue;

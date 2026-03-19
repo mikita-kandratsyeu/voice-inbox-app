@@ -1,11 +1,14 @@
+import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 import {
   ALLOWED_AI_MODELS,
+  HEADER_DEVICE_ID,
   RATE_LIMIT_DEVICE_KEY_PREFIX,
   RATE_LIMIT_DEVICE_MAX_REQUESTS,
   RATE_LIMIT_DEVICE_WINDOW_SECONDS,
 } from '@/config/constants';
+import { verifyAppToken } from '@/lib/jwt';
 import { redis } from '@/lib/redis';
 
 export const HttpStatus = {
@@ -18,7 +21,7 @@ export const HttpStatus = {
   TOO_MANY_REQUESTS: 429,
 } as const;
 
-const MOBILE_USER_AGENT_SUBSTRING = process.env.MOBILE_USER_AGENT as string;
+const MOBILE_USER_AGENT_SUBSTRING = process.env.MOBILE_USER_AGENT?.trim() ?? '';
 
 export function validateAllowedModel(model: string): string | null {
   const trimmed = typeof model === 'string' ? model.trim() : '';
@@ -29,8 +32,10 @@ export function validateAllowedModel(model: string): string | null {
   return null;
 }
 
-export function requireMobileUserAgent(request: Request): NextResponse | null {
-  const ua = request.headers.get('user-agent') ?? '';
+export async function requireMobileUserAgent(): Promise<NextResponse | null> {
+  if (!MOBILE_USER_AGENT_SUBSTRING) return null;
+  const headersList = await headers();
+  const ua = headersList.get('user-agent') ?? '';
   if (!ua.includes(MOBILE_USER_AGENT_SUBSTRING)) {
     return apiError('Forbidden', HttpStatus.FORBIDDEN);
   }
@@ -120,39 +125,42 @@ export async function parseJsonBody<T>(request: Request): Promise<T | null> {
   }
 }
 
-function getAcceptedSecrets(): string[] {
-  const primary = process.env.APP_SECRET;
-  const legacy = process.env.APP_SECRET_LEGACY;
-  const secrets: string[] = [];
-
-  if (primary) secrets.push(primary);
-
-  if (legacy) {
-    secrets.push(
-      ...legacy
-        .split(',')
-        .map((s) => s.trim())
-        .filter(Boolean),
-    );
-  }
-
-  return secrets;
+export function getAppSecret(): string | null {
+  const secret = process.env.APP_SECRET?.trim();
+  return secret || null;
 }
 
-export function requireAppSecret(request: Request): NextResponse | null {
+export function requireAppSecretForToken(request: Request): NextResponse | null {
   const secret = request.headers.get('x-app-secret')?.trim();
-
   if (!secret) {
     return apiError('Unauthorized', HttpStatus.UNAUTHORIZED);
   }
-
-  const accepted = getAcceptedSecrets();
-  if (accepted.length === 0) {
+  const accepted = getAppSecret();
+  if (!accepted) {
     return apiError('Server misconfiguration', HttpStatus.UNAUTHORIZED);
   }
-
-  if (!accepted.includes(secret)) {
+  if (secret !== accepted) {
     return apiError('Unauthorized', HttpStatus.UNAUTHORIZED);
+  }
+  return null;
+}
+
+export async function requireAppAuth(): Promise<NextResponse | null> {
+  const headersList = await headers();
+  const authHeader = headersList.get('authorization')?.trim();
+  const bearer = authHeader?.startsWith('Bearer ') ? authHeader.slice(7).trim() : null;
+  if (!bearer) {
+    return apiError('Unauthorized', HttpStatus.UNAUTHORIZED);
+  }
+
+  const payload = await verifyAppToken(bearer);
+  if (!payload) {
+    return apiError('Unauthorized', HttpStatus.UNAUTHORIZED);
+  }
+
+  const headerDeviceId = headersList.get(HEADER_DEVICE_ID)?.trim();
+  if (!headerDeviceId || headerDeviceId !== payload.deviceId) {
+    return apiError('Forbidden', HttpStatus.FORBIDDEN);
   }
 
   return null;

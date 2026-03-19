@@ -46,7 +46,9 @@ The site showcases Voice Inbox AI: explains features, walks through the workflow
 | `OPENROUTER_API_KEY`       | OpenRouter API key (for AI services)                                 |
 | `UPSTASH_REDIS_REST_URL`   | Upstash Redis URL                                                    |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis token                                                  |
-| `APP_SECRET`               | Secret for message API                                               |
+| `APP_SECRET`               | Secret used only to obtain JWT from `POST /api/token`                |
+| `JWT_SECRET`               | Secret to sign API JWTs (min 32 chars); required for API auth        |
+| `JWT_EXPIRES_IN`           | Optional JWT expiry (e.g. `1h`, `24h`; default `24h`)                |
 | `ADMIN_SECRET`             | Key for admin panel access at `/admin` (optional)                    |
 | `VERCEL_TOKEN`             | Vercel API token for deployment status on admin dashboard (optional) |
 | `VERCEL_PROJECT_ID`        | Vercel project ID to filter deployments (optional)                   |

@@ -3,7 +3,7 @@ import {
   checkDeviceRateLimit,
   HttpStatus,
   parseJsonBody,
-  requireAppSecret,
+  requireAppAuth,
   requireMobileUserAgent,
   validateDeviceId,
   validateRequiredStrings,
@@ -19,10 +19,10 @@ type TranslateBody = {
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
-  const authError = requireAppSecret(request);
+  const authError = await requireAppAuth();
   if (authError) return authError;
 
-  const uaError = requireMobileUserAgent(request);
+  const uaError = await requireMobileUserAgent();
   if (uaError) return uaError;
 
   const deviceId = request.headers.get(HEADER_DEVICE_ID);

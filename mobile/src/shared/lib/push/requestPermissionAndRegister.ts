@@ -1,4 +1,4 @@
-import { WEB_API_SECRET, WEB_API_URL } from '@env';
+import { WEB_API_URL } from '@env';
 import {
   AuthorizationStatus,
   getMessaging,
@@ -7,8 +7,7 @@ import {
   requestPermission,
 } from '@react-native-firebase/messaging';
 
-import { getOrCreateDeviceId } from '@/shared/lib/device-id';
-import { fetch } from '@/shared/lib/fetch';
+import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { i18n } from '@/shared/lib/i18n';
 import { IS_IOS, PLATFORM_OS } from '@/shared/lib/platform';
 
@@ -84,17 +83,12 @@ export async function registerForPushToken(): Promise<string | null> {
 }
 
 export async function sendTokenToBackend(token: string): Promise<boolean> {
-  const deviceId = await getOrCreateDeviceId();
   const url = PUSH_REGISTER_URL;
 
   try {
-    const response = await fetch(url, {
+    const response = await fetchWithAuth(url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-app-secret': WEB_API_SECRET ?? '',
-        'x-device-id': deviceId,
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         deviceToken: token,
         locale: (i18n.language ?? 'en').slice(0, 2),

@@ -4610,6 +4610,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jose@npm:^6.0.11":
+  version: 6.2.2
+  resolution: "jose@npm:6.2.2"
+  checksum: 10c0/201f4776d77eccd339de99fb3ba940fdf03db15e64be7a99b511e53c232e3f3818e3f21b95223d62f99315a2ab76b4251cedd94e067de56893e45273a8d2151b
+  languageName: node
+  linkType: hard
+
 "js-tokens@npm:^3.0.0 || ^4.0.0, js-tokens@npm:^4.0.0":
   version: 4.0.0
   resolution: "js-tokens@npm:4.0.0"
@@ -7752,6 +7759,7 @@ __metadata:
     eslint-config-prettier: "npm:^10"
     eslint-plugin-prettier: "npm:^5"
     firebase-admin: "npm:^13.7.0"
+    jose: "npm:^6.0.11"
     lucide-react: "npm:^0.577.0"
     next: "npm:16.1.7"
     next-intl: "npm:^4.8.3"

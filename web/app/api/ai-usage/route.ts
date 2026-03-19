@@ -2,7 +2,7 @@ import {
   apiError,
   checkDeviceRateLimit,
   HttpStatus,
-  requireAppSecret,
+  requireAppAuth,
   requireMobileUserAgent,
   validateDeviceId,
 } from '@/lib/api';
@@ -11,10 +11,10 @@ import { getUsage } from '@/lib/ai-rate-limit';
 import { NextResponse } from 'next/server';
 
 export const GET = async (request: Request): Promise<NextResponse> => {
-  const authError = requireAppSecret(request);
+  const authError = await requireAppAuth();
   if (authError) return authError;
 
-  const uaError = requireMobileUserAgent(request);
+  const uaError = await requireMobileUserAgent();
   if (uaError) return uaError;
 
   const deviceId = request.headers.get(HEADER_DEVICE_ID);

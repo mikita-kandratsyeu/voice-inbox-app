@@ -1,7 +1,6 @@
-import { WEB_API_SECRET, WEB_API_URL } from '@env';
+import { WEB_API_URL } from '@env';
 
-import { getOrCreateDeviceId } from '@/shared/lib/device-id';
-import { fetch } from '@/shared/lib/fetch';
+import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { IS_IOS } from '@/shared/lib/platform';
 
 const FOREGROUND_URL = `${WEB_API_URL}/api/push/foreground`;
@@ -11,15 +10,7 @@ async function callPushStateApi(url: string): Promise<void> {
   if (!IS_IOS) return;
 
   try {
-    const deviceId = await getOrCreateDeviceId();
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-app-secret': WEB_API_SECRET ?? '',
-        'x-device-id': deviceId,
-      },
-    });
+    const response = await fetchWithAuth(url, { method: 'POST' });
     if (!response.ok && __DEV__) {
       console.warn('[Push] state API failed', url, response.status);
     }
