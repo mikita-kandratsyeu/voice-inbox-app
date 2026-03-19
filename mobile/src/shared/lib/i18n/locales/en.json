@@ -185,6 +185,7 @@
   },
   "aiStatus": {
     "idle": "Awaiting processing",
+    "loading_model": "Loading model…",
     "processing": "Transcribing...",
     "aiProcessing": "Generating summary...",
     "done": "Transcript ready",

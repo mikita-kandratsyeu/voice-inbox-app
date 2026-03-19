@@ -29,6 +29,7 @@ const isAiError = (s?: RecordingStatus) => s === 'error';
 
 export const AiStatusPill = ({
   aiStatus,
+  transcriptProgressLabel,
   summaryStatus,
   tasksStatus,
   onPress,
@@ -40,12 +41,14 @@ export const AiStatusPill = ({
   const aiProcessing = isAiProcessing(summaryStatus) || isAiProcessing(tasksStatus);
   const aiError = isAiError(summaryStatus) || isAiError(tasksStatus);
 
+  const isTranscriptionInProgress = aiStatus === 'loading_model' || aiStatus === 'processing';
+
   useEffect(() => {
-    const isProcessing = aiStatus === 'processing' || aiProcessing;
+    const isProcessing = isTranscriptionInProgress || aiProcessing;
     if (!isProcessing) return;
     rotation.value = withRepeat(withTiming(1, { duration: 1000, easing: Easing.linear }), -1);
     return () => cancelAnimation(rotation);
-  }, [aiStatus, aiProcessing, rotation]);
+  }, [aiStatus, aiProcessing, isTranscriptionInProgress, rotation]);
 
   const spinStyle = useAnimatedStyle(() => ({
     transform: [{ rotate: `${rotation.value * 360}deg` }],
@@ -55,7 +58,11 @@ export const AiStatusPill = ({
     return null;
   }
 
-  if (aiStatus === 'processing') {
+  if (isTranscriptionInProgress) {
+    const label =
+      aiStatus === 'loading_model'
+        ? t('aiStatus.loading_model')
+        : (transcriptProgressLabel ?? t('aiStatus.processing'));
     return (
       <TouchableOpacity
         className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
@@ -67,7 +74,7 @@ export const AiStatusPill = ({
           <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
         </Animated.View>
         <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
-          {t('aiStatus.processing')}
+          {label}
         </Text>
       </TouchableOpacity>
     );

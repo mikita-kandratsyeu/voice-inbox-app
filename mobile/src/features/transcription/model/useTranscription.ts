@@ -88,7 +88,7 @@ export const useTranscription = () => {
         return;
       }
 
-      updateAiStatus(record.id, 'processing', 0, i18n.t('transcription.loadingModel'));
+      updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'));
       currentRecordIdRef.current = record.id;
 
       const language = languageOverride ?? transcriptionLanguage;
@@ -97,6 +97,8 @@ export const useTranscription = () => {
       try {
         const context = await getWhisperContext(selectedWhisperModel);
         usedContext = true;
+
+        updateAiStatus(record.id, 'processing', 0);
 
         const throttledProgress = createThrottledProgress(record.id, updateAiStatus);
 

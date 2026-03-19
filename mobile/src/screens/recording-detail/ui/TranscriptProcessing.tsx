@@ -9,16 +9,18 @@ import { Button } from '@/shared/ui';
 
 type TranscriptProcessingProps = {
   progress: number;
+  progressLabel?: string;
+  phase: 'loading_model' | 'processing';
   color: Colors;
   onCancel: () => void;
-  progressLabel?: string;
 };
 
 export const TranscriptProcessing = ({
   progress,
+  progressLabel,
+  phase,
   color,
   onCancel,
-  progressLabel,
 }: TranscriptProcessingProps) => {
   const { t } = useTranslation();
   const animatedWidth = useSharedValue(0);
@@ -55,7 +57,7 @@ export const TranscriptProcessing = ({
         </View>
         <View className="gap-0.5">
           <Text className="text-base font-bold" style={{ color: color.text.primary }}>
-            {t('aiStatus.processing')}
+            {t(`aiStatus.${phase}`)}
           </Text>
           <Text className="text-[14px]" style={{ color: color.text.secondary }}>
             {timeLabel}

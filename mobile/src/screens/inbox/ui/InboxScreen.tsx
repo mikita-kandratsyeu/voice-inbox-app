@@ -87,7 +87,12 @@ export const InboxScreen = () => {
 
   const handleStatusPress = useCallback(
     (item: VoiceRecord) => {
-      if (item.aiStatus === 'processing' || item.aiStatus === 'error' || item.aiStatus === 'idle') {
+      if (
+        item.aiStatus === 'loading_model' ||
+        item.aiStatus === 'processing' ||
+        item.aiStatus === 'error' ||
+        item.aiStatus === 'idle'
+      ) {
         navigation.navigate('RecordingDetail', { record: item });
       }
     },

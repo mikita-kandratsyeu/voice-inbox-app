@@ -2,7 +2,7 @@ export type RecordStatus = 'unread' | 'read' | 'archived';
 
 export type RecordClassification = 'personal' | 'work' | 'meeting' | 'idea' | 'other';
 
-export type RecordingStatus = 'idle' | 'processing' | 'done' | 'error';
+export type RecordingStatus = 'idle' | 'loading_model' | 'processing' | 'done' | 'error';
 
 export type TranscriptSegment = {
   id: string;
@@ -34,7 +34,6 @@ export type VoiceRecord = {
   status: RecordStatus;
   aiStatus?: RecordingStatus;
   transcriptProgress?: number;
-  // Метка прогресса для длинных записей: "Обработано N из M фрагментов..."
   transcriptProgressLabel?: string;
   isPinned?: boolean;
   tags?: string[];

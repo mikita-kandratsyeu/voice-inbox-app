@@ -31,11 +31,12 @@ export const TranscriptContent = ({
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { translate, isTranslating } = useTranslate(record.id);
 
-  if (record.aiStatus === 'processing') {
+  if (record.aiStatus === 'loading_model' || record.aiStatus === 'processing') {
     return (
       <TranscriptProcessing
         progress={record.transcriptProgress ?? 0}
         progressLabel={record.transcriptProgressLabel}
+        phase={record.aiStatus}
         color={color}
         onCancel={onCancelTranscription}
       />

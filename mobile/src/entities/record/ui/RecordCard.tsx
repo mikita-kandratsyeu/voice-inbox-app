@@ -46,6 +46,7 @@ export const RecordCard = React.memo(function RecordCard({
   const aiProcessing = item.summaryStatus === 'processing' || item.tasksStatus === 'processing';
   const aiError = item.summaryStatus === 'error' || item.tasksStatus === 'error';
   const showStatusPill =
+    item.aiStatus === 'loading_model' ||
     item.aiStatus === 'processing' ||
     item.aiStatus === 'error' ||
     item.aiStatus === 'idle' ||

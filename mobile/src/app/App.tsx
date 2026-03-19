@@ -123,7 +123,9 @@ const App = () => {
 
     const maybeNotifyForeground = () => {
       const records = useRecordStore.getState().records;
-      const isAiProcessing = records.some((r) => r.aiStatus === 'processing');
+      const isAiProcessing = records.some(
+        (r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing',
+      );
       if (!isAiProcessing) return;
 
       const now = Date.now();
@@ -166,7 +168,9 @@ const App = () => {
         }
         if (state === 'background') {
           const records = useRecordStore.getState().records;
-          const isTranscribing = records.some((r) => r.aiStatus === 'processing');
+          const isTranscribing = records.some(
+            (r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing',
+          );
           if (!isTranscribing) {
             releaseWhisperContext().catch(() => {});
           }
