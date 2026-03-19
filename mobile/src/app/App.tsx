@@ -1,192 +1,54 @@
 import '../../global.css';
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
-import {
-  getInitialNotification,
-  getMessaging,
-  onNotificationOpenedApp,
-} from '@react-native-firebase/messaging';
 import { NavigationContainer } from '@react-navigation/native';
-import React, { useCallback, useEffect } from 'react';
-import { AppState, type AppStateStatus, StatusBar, UIManager } from 'react-native';
-import BootSplash from 'react-native-bootsplash';
+import React, { useCallback } from 'react';
+import { StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { useRecordStore } from '@/entities/record';
+import {
+  useAndroidLayoutAnimation,
+  useAppBootstrap,
+  useAppForegroundLifecycle,
+  usePushNotificationOpenedApp,
+  useYandexMobileAdsInit,
+} from '@/features/app-lifecycle';
 import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
 import { OnboardingGate } from '@/features/onboarding';
-import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
-import { createHandlePushNotification } from '@/features/push-handling';
-import { releaseWhisperContext } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
-import { initDB, IS_ANDROID, NetworkStatusProvider } from '@/shared/lib';
+import { NetworkStatusProvider } from '@/shared/lib';
 import {
-  ensurePushRegistered,
-  notifyAppBackground,
-  notifyAppForeground,
   type PushNotificationData,
   PushNotificationSheet,
   usePushNotifications,
 } from '@/shared/lib/push';
 
 import { useInitDeepLinking } from './deep-linking';
+import { handlePushNotification } from './model/pushNavigationHandler';
 import { navigationRef } from './navigation/navigationRef';
 import { RootNavigator } from './navigation/RootNavigator';
-
-const handlePushNotification = createHandlePushNotification({
-  navigateToMain: () => {
-    if (navigationRef.isReady()) {
-      navigationRef.navigate('Main');
-    }
-  },
-  navigateToRecord: (recordId: string) => {
-    if (!navigationRef.isReady()) {
-      return;
-    }
-
-    const record = useRecordStore.getState().records.find((r) => r.id === recordId.split('-')[0]);
-
-    if (record) {
-      navigationRef.navigate('RecordingDetail', { record });
-    } else {
-      navigationRef.navigate('Main');
-    }
-  },
-});
 
 const App = () => {
   const theme = useAppTheme();
   const color = getColors(theme);
   const isDark = theme === 'dark';
 
-  const handleNotification = useCallback(handlePushNotification, []);
+  const onPushData = useCallback((data: PushNotificationData) => {
+    handlePushNotification(data);
+  }, []);
 
   useInitDeepLinking();
-  usePushNotifications({ onNotification: handleNotification });
-
-  useEffect(() => {
-    const messaging = getMessaging();
-    const unsubscribe = onNotificationOpenedApp(messaging, (remoteMessage) => {
-      if (remoteMessage.data) {
-        handlePushNotification(remoteMessage.data as unknown as PushNotificationData);
-      }
-    });
-    return unsubscribe;
-  }, []);
+  usePushNotifications({ onNotification: onPushData });
+  usePushNotificationOpenedApp(onPushData);
+  useAndroidLayoutAnimation();
+  useYandexMobileAdsInit();
+  useAppBootstrap(onPushData);
+  useAppForegroundLifecycle();
 
   const rootStyle = { flex: 1 };
   const safeAreaStyle = { backgroundColor: color.background.primary };
-
-  useEffect(() => {
-    if (IS_ANDROID && UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    initDB()
-      .then(async () => {
-        await useRecordStore.getState().load();
-        BootSplash.hide({ fade: true });
-
-        const initial = await getInitialNotification(getMessaging());
-        if (initial?.data) {
-          handlePushNotification(initial.data as unknown as PushNotificationData);
-        }
-
-        if (getHasSeenOnboarding()) {
-          ensurePushRegistered().catch(() => {});
-        }
-      })
-      .catch(() => {
-        BootSplash.hide({ fade: true });
-      });
-  }, []);
-
-  useEffect(() => {
-    let foregroundInterval: ReturnType<typeof setInterval> | null = null;
-    let unsubscribeStore: (() => void) | null = null;
-    let lastHeartbeatAt = 0;
-    let lastForegroundAt = 0;
-
-    const HEARTBEAT_INTERVAL_MS = 40_000;
-    const HEARTBEAT_THROTTLE_MS = 35_000;
-    const FOREGROUND_ON_ACTIVE_THROTTLE_MS = 15_000;
-
-    const sendForegroundHeartbeat = () => {
-      if (!getHasSeenOnboarding()) return;
-      lastHeartbeatAt = Date.now();
-      notifyAppForeground();
-    };
-
-    const maybeNotifyForeground = () => {
-      const records = useRecordStore.getState().records;
-      const isAiProcessing = records.some(
-        (r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing',
-      );
-      if (!isAiProcessing) return;
-
-      const now = Date.now();
-      if (now - lastHeartbeatAt >= HEARTBEAT_THROTTLE_MS) {
-        sendForegroundHeartbeat();
-      }
-    };
-
-    const handleAppStateChange = (state: AppStateStatus) => {
-      if (state === 'active') {
-        if (getHasSeenOnboarding()) {
-          ensurePushRegistered().catch(() => {});
-        }
-        const now = Date.now();
-        const shouldSendForeground =
-          now - lastForegroundAt >= FOREGROUND_ON_ACTIVE_THROTTLE_MS || lastForegroundAt === 0;
-        if (shouldSendForeground) {
-          lastHeartbeatAt = 0;
-          sendForegroundHeartbeat();
-          lastForegroundAt = now;
-        }
-        foregroundInterval = setInterval(maybeNotifyForeground, HEARTBEAT_INTERVAL_MS);
-        unsubscribeStore = useRecordStore.subscribe(() => {
-          if (AppState.currentState === 'active') {
-            maybeNotifyForeground();
-          }
-        });
-      } else {
-        if (foregroundInterval) {
-          clearInterval(foregroundInterval);
-          foregroundInterval = null;
-        }
-        unsubscribeStore?.();
-        unsubscribeStore = null;
-        if (state === 'background' || state === 'inactive') {
-          if (getHasSeenOnboarding()) {
-            notifyAppBackground();
-          }
-          lastForegroundAt = 0;
-        }
-        if (state === 'background') {
-          const records = useRecordStore.getState().records;
-          const isTranscribing = records.some(
-            (r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing',
-          );
-          if (!isTranscribing) {
-            releaseWhisperContext().catch(() => {});
-          }
-        }
-      }
-    };
-
-    handleAppStateChange(AppState.currentState);
-    const sub = AppState.addEventListener('change', handleAppStateChange);
-    return () => {
-      sub.remove();
-      if (foregroundInterval) clearInterval(foregroundInterval);
-      unsubscribeStore?.();
-      releaseWhisperContext().catch(() => {});
-    };
-  }, []);
 
   return (
     <GestureHandlerRootView style={rootStyle}>

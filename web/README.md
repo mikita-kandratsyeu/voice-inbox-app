@@ -49,7 +49,9 @@ The site showcases Voice Inbox AI: explains features, walks through the workflow
 | `APP_SECRET`               | Secret used only to obtain JWT from `POST /api/token`                |
 | `JWT_SECRET`               | Secret to sign API JWTs (min 32 chars); required for API auth        |
 | `JWT_EXPIRES_IN`           | Optional JWT expiry (e.g. `1h`, `24h`; default `24h`)                |
-| `ADMIN_SECRET`             | Key for admin panel access at `/admin` (optional)                    |
+| `DATABASE_URL`             | Neon Postgres — admin users + `AppConfig` (required for `/admin`)   |
+| `ADMIN_JWT_SECRET`         | Signs admin session JWT (min 32 chars); falls back to `JWT_SECRET`  |
+| `ADMIN_SEED_*`             | See `.env.example` — seed first admin via `yarn db:seed`             |
 | `VERCEL_TOKEN`             | Vercel API token for deployment status on admin dashboard (optional) |
 | `VERCEL_PROJECT_ID`        | Vercel project ID to filter deployments (optional)                   |
 

@@ -222,7 +222,12 @@
       "exhausted": "Limit exhausted",
       "resetAt": "Resets: {{date}}",
       "loading": "Loading...",
-      "unavailable": "—"
+      "unavailable": "—",
+      "claimBonus": "Watch ad for 5 bonus requests",
+      "claimBonusLoading": "Loading ad...",
+      "claimBonusError": "Something went wrong. Try again.",
+      "claimBonusCooldown": "Available again in 15 minutes",
+      "claimBonusSuccess": "+5 bonus requests"
     },
     "sync": "Sync",
     "backupRestore": "Backup & restore",

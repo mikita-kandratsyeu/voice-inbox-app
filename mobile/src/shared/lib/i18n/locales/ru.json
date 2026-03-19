@@ -222,7 +222,12 @@
       "exhausted": "Лимит исчерпан",
       "resetAt": "Сброс: {{date}}",
       "loading": "Загрузка...",
-      "unavailable": "—"
+      "unavailable": "—",
+      "claimBonus": "Посмотреть рекламу и получить 5 запросов",
+      "claimBonusLoading": "Загрузка рекламы...",
+      "claimBonusError": "Что-то пошло не так. Попробуйте снова.",
+      "claimBonusCooldown": "Доступно снова через 15 минут",
+      "claimBonusSuccess": "+5 бонусных запросов"
     },
     "sync": "Синхронизация",
     "backupRestore": "Резервная копия и восстановление",

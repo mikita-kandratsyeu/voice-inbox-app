@@ -28,6 +28,9 @@ export const ADMIN_LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5;
 export const FREE_WEEKLY_LIMIT = 50;
 export const AI_WEEKLY_KEY_PREFIX = 'ai_weekly:';
 export const WEEK_TTL_SECONDS = 8 * 24 * 3600;
+export const AI_BONUS_AMOUNT = 5;
+export const AI_BONUS_COOLDOWN_KEY_PREFIX = 'ai_bonus_cooldown:';
+export const AI_BONUS_COOLDOWN_SECONDS = 900; // 15 min
 
 // Redis / KV
 export const MESSAGE_TTL_SECONDS = 3600;
@@ -64,5 +67,5 @@ export const PUSH_LOCK_TTL_SECONDS = 30; // lock TTL = debounce + buffer
 export const LIMIT_PUSH_DEBOUNCE_KEY_PREFIX = 'limit_push_sent:';
 export const LIMIT_PUSH_DEBOUNCE_SECONDS = 300;
 
-// Admin panel (access by key from env ADMIN_SECRET)
+// Admin panel: HTTP-only cookie storing signed admin JWT
 export const ADMIN_COOKIE_NAME = 'admin_key';

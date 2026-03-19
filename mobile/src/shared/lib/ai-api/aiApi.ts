@@ -134,6 +134,31 @@ export async function getAiUsage(): Promise<AiUsage | null> {
   }
 }
 
+export type ClaimAiBonusResult =
+  | { ok: true; usage: AiUsage }
+  | { ok: false; error: string; cooldown?: boolean };
+
+export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
+  try {
+    const response = await fetchWithAuth(`${WEB_API_URL}/api/ai-usage/bonus`, { method: 'POST' });
+
+    if (response.status === 429) {
+      return { ok: false, error: 'Bonus claim is on cooldown', cooldown: true };
+    }
+
+    if (!response.ok) {
+      const text = await response.text();
+      return { ok: false, error: text || `HTTP ${response.status}` };
+    }
+
+    const usage = (await response.json()) as AiUsage;
+    return { ok: true, usage };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Network error';
+    return { ok: false, error: message };
+  }
+}
+
 export async function pollAiMessage(id: string, syncToken?: string): Promise<AiMessageResult> {
   const headers: Record<string, string> = {};
   if (syncToken) {

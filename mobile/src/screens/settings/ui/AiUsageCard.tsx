@@ -1,7 +1,7 @@
 import { Sparkles } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
@@ -22,6 +22,9 @@ const formatResetDate = (isoString: string, locale: string): string => {
 type AiUsageCardProps = {
   usage: AiUsage | null;
   loading: boolean;
+  onClaimBonus?: () => void;
+  claimLoading?: boolean;
+  claimError?: string | null;
 };
 
 function AiUsageSkeleton({ color }: { color: Colors }) {
@@ -48,9 +51,16 @@ function AiUsageSkeleton({ color }: { color: Colors }) {
   );
 }
 
-export const AiUsageCard = ({ usage, loading }: AiUsageCardProps) => {
+export const AiUsageCard = ({
+  usage,
+  loading,
+  onClaimBonus,
+  claimLoading = false,
+  claimError = null,
+}: AiUsageCardProps) => {
   const { t, i18n } = useTranslation();
   const color = getColors(useAppTheme());
+  const claimDisabled = claimError === 'claimCooldown';
 
   const isExhausted = usage ? usage.remaining === 0 : false;
   const progressPercent = usage ? Math.min(100, (usage.used / usage.limit) * 100) : 0;
@@ -126,9 +136,51 @@ export const AiUsageCard = ({ usage, loading }: AiUsageCardProps) => {
             </View>
           </View>
 
-          <Text className="text-xs" style={{ color: color.text.secondary, marginBottom: 6 }}>
+          <Text
+            className="text-xs"
+            style={{ color: color.text.secondary, marginBottom: onClaimBonus ? 12 : 6 }}
+          >
             {t('settings.aiUsage.resetAt', { date: resetDateText })}
           </Text>
+
+          {onClaimBonus && (
+            <View className="mt-1">
+              <Pressable
+                onPress={onClaimBonus}
+                disabled={claimLoading || claimDisabled}
+                className="flex-row items-center justify-center rounded-xl py-2.5"
+                style={{
+                  backgroundColor:
+                    claimLoading || claimDisabled
+                      ? color.background.tertiary
+                      : color.accent.primary + '20',
+                }}
+              >
+                {claimLoading ? (
+                  <ActivityIndicator size="small" color={color.accent.primary} />
+                ) : (
+                  <Text
+                    className="text-sm font-medium"
+                    style={{
+                      color:
+                        claimLoading || claimDisabled ? color.text.muted : color.accent.primary,
+                    }}
+                  >
+                    {claimDisabled && claimError === 'claimCooldown'
+                      ? t('settings.aiUsage.claimBonusCooldown')
+                      : t('settings.aiUsage.claimBonus')}
+                  </Text>
+                )}
+              </Pressable>
+              {claimError && claimError !== 'claimCooldown' && (
+                <Text className="mt-1.5 text-center text-xs" style={{ color: color.accent.delete }}>
+                  {claimError === 'claimAdFailed'
+                    ? t('settings.aiUsage.claimBonusError')
+                    : claimError}
+                </Text>
+              )}
+            </View>
+          )}
         </>
       )}
     </View>

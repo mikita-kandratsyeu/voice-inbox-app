@@ -27,6 +27,7 @@ import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useAppLockStore } from '@/entities/app-lock';
 import { useRecordStore } from '@/entities/record';
 import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { exportData, importData } from '@/features/sync-data';
@@ -82,6 +83,13 @@ export const SettingsScreen = () => {
     setAiUsage(data ?? null);
     return data;
   }, []);
+
+  const onBonusSuccess = useCallback(() => {
+    void fetchAiUsage();
+    Alert.alert(t('common.done'), t('settings.aiUsage.claimBonusSuccess'));
+  }, [fetchAiUsage, t]);
+
+  const { claim, loading: claimLoading, error: claimError } = useClaimAiBonus(onBonusSuccess);
 
   useEffect(() => {
     let cancelled = false;
@@ -267,7 +275,13 @@ export const SettingsScreen = () => {
             />
           }
         >
-          <AiUsageCard usage={aiUsage} loading={aiUsageLoading} />
+          <AiUsageCard
+            usage={aiUsage}
+            loading={aiUsageLoading}
+            onClaimBonus={claim}
+            claimLoading={claimLoading}
+            claimError={claimError}
+          />
 
           <SettingsSection title={t('settings.aiProcessing')}>
             <SettingsRow

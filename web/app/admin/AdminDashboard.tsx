@@ -54,6 +54,25 @@ type GitHubResponse = {
   error?: string;
 };
 
+type AppConfigApiResponse = {
+  ok: boolean;
+  editable?: boolean;
+  hint?: string;
+  values?: Record<string, string>;
+  effective?: {
+    amount: number;
+    cooldownSeconds: number;
+    cooldownKeyPrefix: string;
+  };
+  error?: string;
+};
+
+const BONUS_KEYS = {
+  amount: 'AI_BONUS_AMOUNT',
+  cooldownSeconds: 'AI_BONUS_COOLDOWN_SECONDS',
+  keyPrefix: 'AI_BONUS_COOLDOWN_KEY_PREFIX',
+} as const;
+
 export function AdminDashboard() {
   const router = useRouter();
   const [status, setStatus] = useState<StatusResponse | null>(null);
@@ -77,6 +96,74 @@ export function AdminDashboard() {
   const [deviceIdsLoading, setDeviceIdsLoading] = useState(false);
   const [github, setGithub] = useState<GitHubResponse | null>(null);
   const [githubLoading, setGithubLoading] = useState(false);
+
+  const [appConfigLoading, setAppConfigLoading] = useState(true);
+  const [appConfigEditable, setAppConfigEditable] = useState(false);
+  const [appConfigHint, setAppConfigHint] = useState<string | null>(null);
+  const [bonusAmount, setBonusAmount] = useState('');
+  const [bonusCooldownSec, setBonusCooldownSec] = useState('');
+  const [bonusKeyPrefix, setBonusKeyPrefix] = useState('');
+  const [appConfigSaving, setAppConfigSaving] = useState(false);
+  const [appConfigMessage, setAppConfigMessage] = useState<string | null>(null);
+  const [appConfigError, setAppConfigError] = useState<string | null>(null);
+
+  const fetchAppConfig = useCallback(async () => {
+    setAppConfigLoading(true);
+    setAppConfigError(null);
+    try {
+      const res = await fetch('/api/admin/app-config', { credentials: 'include' });
+      const data = (await res.json()) as AppConfigApiResponse;
+      if (!data.ok || !data.values) {
+        setAppConfigError(data.error ?? 'Failed to load config');
+        return;
+      }
+      setAppConfigEditable(!!data.editable);
+      setAppConfigHint(data.hint ?? null);
+      const v = data.values;
+      setBonusAmount(v[BONUS_KEYS.amount] ?? '');
+      setBonusCooldownSec(v[BONUS_KEYS.cooldownSeconds] ?? '');
+      setBonusKeyPrefix(v[BONUS_KEYS.keyPrefix] ?? '');
+    } catch {
+      setAppConfigError('Request failed');
+    } finally {
+      setAppConfigLoading(false);
+    }
+  }, []);
+
+  const handleSaveAppConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setAppConfigMessage(null);
+    setAppConfigError(null);
+    setAppConfigSaving(true);
+    try {
+      const res = await fetch('/api/admin/app-config', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          [BONUS_KEYS.amount]: bonusAmount.trim(),
+          [BONUS_KEYS.cooldownSeconds]: bonusCooldownSec.trim(),
+          [BONUS_KEYS.keyPrefix]: bonusKeyPrefix.trim(),
+        }),
+      });
+      const data = (await res.json()) as AppConfigApiResponse & { ok: boolean };
+      if (!res.ok || !data.ok) {
+        setAppConfigError((data as { error?: string }).error ?? 'Save failed');
+        return;
+      }
+      setAppConfigMessage('Saved.');
+      if (data.values) {
+        const v = data.values;
+        setBonusAmount(v[BONUS_KEYS.amount] ?? '');
+        setBonusCooldownSec(v[BONUS_KEYS.cooldownSeconds] ?? '');
+        setBonusKeyPrefix(v[BONUS_KEYS.keyPrefix] ?? '');
+      }
+    } catch {
+      setAppConfigError('Request failed');
+    } finally {
+      setAppConfigSaving(false);
+    }
+  };
 
   const fetchStatus = useCallback(async () => {
     setStatusLoading(true);
@@ -111,6 +198,10 @@ export function AdminDashboard() {
     const t = setInterval(fetchStatus, 60_000);
     return () => clearInterval(t);
   }, [fetchStatus]);
+
+  useEffect(() => {
+    fetchAppConfig();
+  }, [fetchAppConfig]);
 
   const fetchGithub = useCallback(async () => {
     setGithubLoading(true);
@@ -206,6 +297,13 @@ export function AdminDashboard() {
       <div className="mb-4 flex flex-wrap gap-2">
         <button
           type="button"
+          onClick={() => fetchAppConfig()}
+          className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-600 shadow-sm transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+        >
+          Refresh app config
+        </button>
+        <button
+          type="button"
           onClick={() => fetchStatus()}
           className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-600 shadow-sm transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
         >
@@ -219,6 +317,91 @@ export function AdminDashboard() {
           Refresh GitHub
         </button>
       </div>
+
+      <section className="mb-8 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+        <h2 className="mb-1 text-lg font-medium">App config — AI bonus (rewarded ad)</h2>
+        <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+          Values used by <code className="text-xs">getBonusConfig()</code> and{' '}
+          <code className="text-xs">POST /api/ai-usage/bonus</code>. Changing the cooldown key
+          prefix only affects new cooldown keys in Redis.
+        </p>
+        {appConfigLoading ? (
+          <p className="text-sm text-zinc-500">Loading…</p>
+        ) : (
+          <form onSubmit={handleSaveAppConfig} className="space-y-4">
+            {!appConfigEditable && appConfigHint && (
+              <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+                {appConfigHint}
+              </p>
+            )}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                  AI_BONUS_AMOUNT
+                </label>
+                <input
+                  type="number"
+                  min={1}
+                  required
+                  disabled={!appConfigEditable}
+                  value={bonusAmount}
+                  onChange={(e) => setBonusAmount(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 disabled:opacity-60"
+                />
+                <p className="mt-1 text-xs text-zinc-500">Extra AI requests granted per ad view.</p>
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                  AI_BONUS_COOLDOWN_SECONDS
+                </label>
+                <input
+                  type="number"
+                  min={60}
+                  required
+                  disabled={!appConfigEditable}
+                  value={bonusCooldownSec}
+                  onChange={(e) => setBonusCooldownSec(e.target.value)}
+                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 disabled:opacity-60"
+                />
+                <p className="mt-1 text-xs text-zinc-500">Min 60 seconds between bonus claims.</p>
+              </div>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                AI_BONUS_COOLDOWN_KEY_PREFIX
+              </label>
+              <input
+                type="text"
+                required
+                disabled={!appConfigEditable}
+                value={bonusKeyPrefix}
+                onChange={(e) => setBonusKeyPrefix(e.target.value)}
+                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 disabled:opacity-60"
+              />
+              <p className="mt-1 text-xs text-zinc-500">
+                Redis key prefix for per-device cooldown.
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="submit"
+                disabled={!appConfigEditable || appConfigSaving}
+                className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+              >
+                {appConfigSaving ? 'Saving…' : 'Save'}
+              </button>
+              {appConfigMessage && (
+                <span className="text-sm text-green-600 dark:text-green-400">
+                  {appConfigMessage}
+                </span>
+              )}
+              {appConfigError && (
+                <span className="text-sm text-red-600 dark:text-red-400">{appConfigError}</span>
+              )}
+            </div>
+          </form>
+        )}
+      </section>
 
       <div className="mb-8 space-y-4 lg:space-y-6">
         {/* Колонка: Vercel, затем GitHub */}
