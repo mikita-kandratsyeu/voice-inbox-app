@@ -7,6 +7,46 @@ import { claimAiBonus } from '@/shared/lib/ai-api';
 
 const DEMO_AD_UNIT_ID = 'demo-rewarded-yandex';
 
+function getErrorText(err: unknown): string {
+  if (err && typeof err === 'object' && 'description' in err) {
+    const d = (err as { description?: string }).description;
+    if (typeof d === 'string' && d.trim()) return d;
+  }
+  return err instanceof Error ? err.message : String(err);
+}
+
+function normalizeAdError(err: unknown): string {
+  const raw = getErrorText(err);
+  const lower = raw.toLowerCase();
+  if (
+    lower.includes('skadnetwork') ||
+    lower.includes('skad') ||
+    raw.includes('zq492l623r.skadnetwork')
+  ) {
+    return 'claimAdIosAd';
+  }
+  if (raw.trim().startsWith('{')) {
+    try {
+      const parsed = JSON.parse(raw) as { description?: string };
+      if (
+        typeof parsed.description === 'string' &&
+        parsed.description.toLowerCase().includes('skadnetwork')
+      ) {
+        return 'claimAdIosAd';
+      }
+    } catch {
+      if (__DEV__) {
+        console.error('normalizeAdError', raw);
+      }
+    }
+    return 'claimAdIosAd';
+  }
+  if (raw.length > 180) {
+    return 'claimAdFailed';
+  }
+  return raw;
+}
+
 function getAdUnitId(): string {
   const raw = YANDEX_REWARDED_AD_UNIT_ID ?? '';
   const id = typeof raw === 'string' && raw.trim();
@@ -36,13 +76,14 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
         if (result.ok) {
           onSuccess?.(result.usage);
         } else {
-          setError(result.cooldown ? 'claimCooldown' : result.error || 'claimError');
+          const err = result.cooldown ? 'claimCooldown' : result.error || 'claimError';
+          setError(err === 'bonus_no_usage' ? 'claimBonusNoUsage' : err);
         }
         setLoading(false);
       };
 
-      ad.onAdFailedToShow = () => {
-        setError('claimAdFailed');
+      ad.onAdFailedToShow = (adError?: { description?: string }) => {
+        setError(adError ? normalizeAdError(adError) : 'claimAdFailed');
         setLoading(false);
       };
 
@@ -52,8 +93,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
 
       await ad.show();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load ad';
-      setError(message);
+      setError(normalizeAdError(err));
       setLoading(false);
     }
   }, [loading, onSuccess]);

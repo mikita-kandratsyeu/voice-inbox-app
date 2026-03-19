@@ -25,7 +25,7 @@ export const ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS = 60;
 export const ADMIN_LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5;
 
 // AI rate limit
-export const FREE_WEEKLY_LIMIT = 50;
+export const FREE_WEEKLY_LIMIT = 20;
 export const AI_WEEKLY_KEY_PREFIX = 'ai_weekly:';
 export const WEEK_TTL_SECONDS = 8 * 24 * 3600;
 export const AI_BONUS_AMOUNT = 5;

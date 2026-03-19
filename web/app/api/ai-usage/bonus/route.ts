@@ -29,6 +29,11 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed);
   if (rateLimitError) return rateLimitError;
 
+  const usageBefore = await getUsage(deviceIdTrimmed);
+  if (usageBefore.used <= 0) {
+    return NextResponse.json({ error: 'bonus_no_usage' }, { status: HttpStatus.BAD_REQUEST });
+  }
+
   const bonus = await getBonusConfig();
   const cooldownKey = `${bonus.cooldownKeyPrefix}${deviceIdTrimmed}`;
   const inCooldown = await redis.get(cooldownKey);

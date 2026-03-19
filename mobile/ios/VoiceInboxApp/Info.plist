@@ -90,5 +90,38 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict>
+				<!-- Yandex Ads -->
+				<key>SKAdNetworkIdentifier</key>
+				<string>zq492l623r.skadnetwork</string>
+		</dict>
+		  <dict>
+        <!-- Google (ex. AdMob) -->
+        <key>SKAdNetworkIdentifier</key>
+        <string>cstr6suwn9.skadnetwork</string>
+    </dict>
+		<dict>
+        <!-- VK Реклама (ex. myTarget) -->
+        <key>SKAdNetworkIdentifier</key>
+        <string>n9x2a789qt.skadnetwork</string>
+    </dict>
+    <dict>
+        <!-- VK Реклама (ex. myTarget) -->
+        <key>SKAdNetworkIdentifier</key>
+        <string>r26jy69rpl.skadnetwork</string>
+    </dict>
+		 <dict>
+        <!-- UnityAds -->
+        <key>SKAdNetworkIdentifier</key>
+        <string>4dzt52r2t5.skadnetwork</string>
+    </dict>
+		<dict>
+        <!-- Applovin -->
+        <key>SKAdNetworkIdentifier</key>
+        <string>ludvb6z3bs.skadnetwork</string>
+    </dict>
+	</array>
 </dict>
 </plist>
