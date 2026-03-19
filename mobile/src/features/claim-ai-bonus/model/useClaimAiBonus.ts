@@ -11,6 +11,7 @@ import { isEUUserByStorefront } from '@/features/app-storefront/lib/storefront';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { claimAiBonus } from '@/shared/lib/ai-api';
 import { storage } from '@/shared/lib/async-storage';
+import { isRecord, isString } from '@/shared/lib/type-guards';
 
 const DEMO_AD_UNIT_ID = 'demo-rewarded-yandex';
 
@@ -39,9 +40,9 @@ function clearPersistedCooldown(): void {
 }
 
 function getErrorText(err: unknown): string {
-  if (err && typeof err === 'object' && 'description' in err) {
-    const d = (err as { description?: string }).description;
-    if (typeof d === 'string' && d.trim()) return d;
+  if (isRecord(err) && 'description' in err) {
+    const d = err.description;
+    if (isString(d) && d.trim()) return d;
   }
   return err instanceof Error ? err.message : String(err);
 }
@@ -60,7 +61,7 @@ function normalizeAdError(err: unknown): string {
     try {
       const parsed = JSON.parse(raw) as { description?: string };
       if (
-        typeof parsed.description === 'string' &&
+        isString(parsed.description) &&
         parsed.description.toLowerCase().includes('skadnetwork')
       ) {
         return 'claimAdIosAd';
@@ -80,9 +81,7 @@ function normalizeAdError(err: unknown): string {
 
 function getAdUnitId(): string {
   const raw = YANDEX_REWARDED_AD_UNIT_ID ?? '';
-  const id = typeof raw === 'string' && raw.trim();
-
-  return id ? raw.trim() : DEMO_AD_UNIT_ID;
+  return isString(raw) && raw.trim() ? raw.trim() : DEMO_AD_UNIT_ID;
 }
 
 export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {

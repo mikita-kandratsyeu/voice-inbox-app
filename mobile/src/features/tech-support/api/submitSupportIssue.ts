@@ -1,6 +1,7 @@
 import { WEB_API_URL } from '@env';
 
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { isString } from '@/shared/lib/type-guards';
 
 import type { SupportDiagnosticsPayload } from '../lib/collectSupportDiagnostics';
 
@@ -55,12 +56,12 @@ export async function submitSupportIssue(
     if (!response.ok) {
       return {
         ok: false,
-        error: typeof data.error === 'string' ? data.error : `Request failed (${response.status})`,
+        error: isString(data.error) ? data.error : `Request failed (${response.status})`,
         status: response.status,
       };
     }
 
-    if (data.ok && typeof data.id === 'string') {
+    if (data.ok && isString(data.id)) {
       return { ok: true, id: data.id };
     }
 

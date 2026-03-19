@@ -1,5 +1,7 @@
 import AudioRecorderPlayer, { type PlayBackType } from 'react-native-audio-recorder-player';
 
+import { isNumber } from '@/shared/lib/type-guards';
+
 import { getAudioDuration } from './getAudioDuration';
 
 const player = AudioRecorderPlayer;
@@ -36,7 +38,7 @@ export const getAudioDurationMs = async (audioPath: string): Promise<number | nu
 
       const onPlayback = (e: PlayBackType) => {
         const ev = e as PlayBackType & { duration?: number };
-        if (typeof ev.duration === 'number' && ev.duration > 0 && !resolved) {
+        if (isNumber(ev.duration) && ev.duration > 0 && !resolved) {
           resolved = true;
           clearTimeout(timeout);
           player.removePlayBackListener();
@@ -45,7 +47,7 @@ export const getAudioDurationMs = async (audioPath: string): Promise<number | nu
           resolve(Math.round(ev.duration));
           return;
         }
-        if (typeof ev.currentPosition === 'number') {
+        if (isNumber(ev.currentPosition)) {
           lastPositionMs = Math.max(lastPositionMs, ev.currentPosition);
         }
       };

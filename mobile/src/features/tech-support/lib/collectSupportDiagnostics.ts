@@ -5,6 +5,7 @@ import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
+import { isNumber, isString } from '@/shared/lib/type-guards';
 
 function safeNum(n: unknown): number | null {
   return typeof n === 'number' && Number.isFinite(n) ? n : null;
@@ -27,8 +28,7 @@ export async function collectSupportDiagnostics(): Promise<SupportDiagnosticsPay
   const d = DeviceInfoModule;
   const buildRaw =
     'buildNumber' in d ? (d as { buildNumber?: string | number }).buildNumber : undefined;
-  const buildNumber =
-    typeof buildRaw === 'string' || typeof buildRaw === 'number' ? String(buildRaw) : '';
+  const buildNumber = isString(buildRaw) || isNumber(buildRaw) ? String(buildRaw) : '';
 
   return {
     deviceId,
@@ -52,7 +52,7 @@ export async function collectSupportDiagnostics(): Promise<SupportDiagnosticsPay
       countryCode: l.countryCode,
     })),
     timeZone: RNLocalize.getTimeZone(),
-    userAgent: typeof MOBILE_USER_AGENT === 'string' ? MOBILE_USER_AGENT : '',
+    userAgent: isString(MOBILE_USER_AGENT) ? MOBILE_USER_AGENT : '',
     collectedAt: new Date().toISOString(),
   };
 }

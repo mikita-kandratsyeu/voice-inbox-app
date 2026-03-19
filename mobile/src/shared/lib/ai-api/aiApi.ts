@@ -158,7 +158,7 @@ export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
       const text = await response.text();
       try {
         const parsed = JSON.parse(text) as { error?: string };
-        if (typeof parsed.error === 'string' && parsed.error) {
+        if (isString(parsed.error) && parsed.error) {
           return { ok: false, error: parsed.error };
         }
       } catch {

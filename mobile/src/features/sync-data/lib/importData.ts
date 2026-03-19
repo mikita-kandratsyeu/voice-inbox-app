@@ -6,6 +6,7 @@ import type { RecordClassification, VoiceRecord } from '@/entities/record';
 import {
   ensureRecordingsDir,
   i18n,
+  isArray,
   isString,
   isStringArrayItem,
   RECORDINGS_DIR,
@@ -48,11 +49,11 @@ function normalizeRecord(raw: unknown): VoiceRecord {
       ? (base.classification as RecordClassification)
       : undefined;
 
-  const keyPhrases: string[] = Array.isArray(base.keyPhrases)
+  const keyPhrases: string[] = isArray(base.keyPhrases)
     ? base.keyPhrases.filter(isStringArrayItem)
     : [];
 
-  const nextSteps: string[] = Array.isArray(base.nextSteps)
+  const nextSteps: string[] = isArray(base.nextSteps)
     ? base.nextSteps.filter(isStringArrayItem)
     : [];
 
@@ -123,7 +124,7 @@ async function importFromZip(fileUri: string): Promise<ImportResult> {
   const raw = await RNFS.readFile(metadataPath, 'utf8');
   const payload = JSON.parse(raw) as ExportPayload;
 
-  if ((payload.version !== 1 && payload.version !== 2) || !Array.isArray(payload.records)) {
+  if ((payload.version !== 1 && payload.version !== 2) || !isArray(payload.records)) {
     await removeDirRecursive(extractDir);
 
     return { success: false, error: i18n.t('importExport.invalidFormat') };
@@ -195,7 +196,7 @@ export const importData = async (): Promise<ImportResult> => {
     const raw = await RNFS.readFile(uri, 'utf8');
     const payload = JSON.parse(raw) as ExportPayload;
 
-    if ((payload.version !== 1 && payload.version !== 2) || !Array.isArray(payload.records)) {
+    if ((payload.version !== 1 && payload.version !== 2) || !isArray(payload.records)) {
       return { success: false, error: i18n.t('importExport.invalidFormat') };
     }
 
