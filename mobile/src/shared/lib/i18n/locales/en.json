@@ -230,7 +230,7 @@
       "claimBonusLoading": "Loading ad...",
       "claimBonusError": "Something went wrong. Try again.",
       "claimBonusErrorIosAd": "Ad unavailable. Install the latest app update or try again later.",
-      "claimBonusCooldown": "Available again in 15 minutes",
+      "claimBonusCooldown": "Available again soon",
       "claimBonusSuccess": "+5 bonus requests",
       "claimBonusUnavailableHint": "The ad bonus unlocks after you start using your weekly AI quota.",
       "claimBonusNoUsage": "Use some AI requests first — the bonus refunds part of what you’ve already spent."
