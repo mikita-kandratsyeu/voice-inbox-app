@@ -49,7 +49,7 @@ The site showcases Voice Inbox AI: explains features, walks through the workflow
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis token                                                  |
 | `APP_SECRET`               | Secret used only to obtain JWT from `POST /api/token`                |
 | `JWT_SECRET`               | Secret to sign API JWTs (min 32 chars); required for API auth        |
-| `JWT_EXPIRES_IN`           | Optional JWT expiry (e.g. `1h`, `24h`; default `24h`)                |
+| `JWT_EXPIRES_IN`           | Optional mobile API JWT expiry (e.g. `1h`, `12h`, `24h`; default `12h`) |
 | `DATABASE_URL`             | Neon Postgres — admin users, `AppConfig`, **support issues** (required for `/admin` and `POST /api/support`) |
 | `ADMIN_JWT_SECRET`         | Signs admin session JWT (min 32 chars); falls back to `JWT_SECRET`  |
 | `ADMIN_SEED_*`             | See `.env.example` — seed first admin via `yarn db:seed`             |
