@@ -136,14 +136,22 @@ export async function getAiUsage(): Promise<AiUsage | null> {
 
 export type ClaimAiBonusResult =
   | { ok: true; usage: AiUsage }
-  | { ok: false; error: string; cooldown?: boolean };
+  | { ok: false; error: string; cooldown?: boolean; retryAfterSeconds?: number };
 
 export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
   try {
     const response = await fetchWithAuth(`${WEB_API_URL}/api/ai-usage/bonus`, { method: 'POST' });
 
     if (response.status === 429) {
-      return { ok: false, error: 'Bonus claim is on cooldown', cooldown: true };
+      const raw = response.headers.get('Retry-After');
+      const parsed = raw ? parseInt(raw, 10) : NaN;
+      const retryAfterSeconds = Number.isFinite(parsed) && parsed > 0 ? parsed : 900;
+      return {
+        ok: false,
+        error: 'Bonus claim is on cooldown',
+        cooldown: true,
+        retryAfterSeconds,
+      };
     }
 
     if (!response.ok) {
