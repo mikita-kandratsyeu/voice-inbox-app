@@ -112,7 +112,7 @@ export function useImportAudioFile() {
       if (durationMs > MAX_RECORDING_MS) {
         Alert.alert(
           t('importAudio.maxDurationTitle'),
-          t('importAudio.maxDurationMessage', { max: 30 }),
+          t('importAudio.maxDurationMessage', { max: 10 }),
           [{ text: t('common.ok') }],
         );
         try {

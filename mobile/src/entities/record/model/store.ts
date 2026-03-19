@@ -126,8 +126,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
               ...r,
               aiStatus,
               transcriptProgress: progress ?? r.transcriptProgress,
-              transcriptProgressLabel:
-                progress === 0 ? undefined : (progressLabel ?? r.transcriptProgressLabel),
+              transcriptProgressLabel: progressLabel ?? r.transcriptProgressLabel,
             }
           : r,
       ),

@@ -1,5 +1,6 @@
 export { formatFileSize } from './formatFileSize';
 export {
+  getWhisperLabel,
   getWhisperModelFileName,
   getWhisperModelPath,
   getWhisperModelsDir,

@@ -1,42 +1,50 @@
 import { NativeModules } from 'react-native';
 
+import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
 import { IS_IOS } from '@/shared/lib/platform';
 
-const { RecordingLiveActivityModule } = NativeModules;
+const { RecordingActivityModule } = NativeModules;
 
-export const startRecordingLiveActivity = async (): Promise<void> => {
-  if (!IS_IOS || !RecordingLiveActivityModule) return;
-  try {
-    await RecordingLiveActivityModule.startActivity();
-  } catch {
-    if (__DEV__) {
-      console.warn('[startRecordingLiveActivity] Failed to start activity');
-    }
-  }
-};
-
-export const updateRecordingLiveActivity = async (elapsedSeconds: number): Promise<void> => {
-  if (!IS_IOS || !RecordingLiveActivityModule) return;
-  try {
-    await RecordingLiveActivityModule.updateActivity(elapsedSeconds);
-  } catch {
-    if (__DEV__) {
-      console.warn('[updateRecordingLiveActivity] Failed to update activity');
-    }
-  }
-};
-
-export const endRecordingLiveActivity = async (): Promise<void> => {
-  if (!IS_IOS || !RecordingLiveActivityModule) return;
-  try {
-    await RecordingLiveActivityModule.endActivity();
-  } catch {
-    if (__DEV__) {
-      console.warn('[endRecordingLiveActivity] Failed to end activity');
-    }
-  }
-};
+const defaultTitle = getAutoTitle(false);
 
 export const isLiveActivityAvailable = (): boolean => {
-  return IS_IOS && Boolean(RecordingLiveActivityModule);
+  return IS_IOS && Boolean(RecordingActivityModule);
+};
+
+export async function startRecordingLiveActivity(
+  sessionId = `session-${Date.now()}`,
+  title = defaultTitle,
+): Promise<void> {
+  if (!isLiveActivityAvailable()) {
+    return;
+  }
+
+  return RecordingActivityModule.start(sessionId, title);
+}
+
+export async function updateRecordingLiveActivity(
+  elapsedSeconds: number,
+  title = defaultTitle,
+): Promise<void> {
+  if (!isLiveActivityAvailable()) {
+    return;
+  }
+
+  return RecordingActivityModule.update(true, elapsedSeconds, title);
+}
+
+export async function endRecordingLiveActivity(): Promise<void> {
+  if (!isLiveActivityAvailable()) {
+    return;
+  }
+
+  return RecordingActivityModule.stop();
+}
+
+export const endRecordingLiveActivitySuccessfully = (totalSeconds: number, title: string) => {
+  if (!isLiveActivityAvailable()) {
+    return;
+  }
+
+  return RecordingActivityModule.endSuccessfully(totalSeconds, title);
 };

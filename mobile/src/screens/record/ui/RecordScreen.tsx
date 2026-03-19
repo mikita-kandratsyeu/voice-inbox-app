@@ -11,6 +11,7 @@ import { useAppLockStore } from '@/entities/app-lock';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { useRecordingDeeplinkStore } from '@/features/recording-deeplink/model/store';
 import { useTranscription } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
 import { formatTime, persistRecordingToDocuments } from '@/shared/lib';
@@ -35,7 +36,11 @@ export const RecordScreen = () => {
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
   const { startTranscription } = useTranscription();
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [saveModalReason, setSaveModalReason] = useState<'user' | 'limit' | 'routeChange'>('user');
+  const [saveModalReason, setSaveModalReason] = useState<
+    'user' | 'limit' | 'routeChange' | 'deeplink'
+  >('user');
+  const requestShowSaveModal = useRecordingDeeplinkStore((s) => s.requestShowSaveModal);
+  const setRequestShowSaveModal = useRecordingDeeplinkStore((s) => s.setRequestShowSaveModal);
   const [title, setTitle] = useState('');
   const [appState, setAppState] = useState(AppState.currentState);
 
@@ -67,10 +72,12 @@ export const RecordScreen = () => {
     onRecordingStoppedByAppLock: (path, elapsed, elapsedMs) => {
       const recordId = generateRecordId();
       const resolvedPath = path.startsWith('file://') ? path.slice(7) : path;
+      const autoTitle = getAutoTitle();
+
       const addRecordWithPath = (audioPath: string) => {
         const record: VoiceRecord = {
           id: recordId,
-          title: getAutoTitle(),
+          title: autoTitle,
           transcript: '',
           transcriptSegments: [],
           summary: '',
@@ -85,16 +92,28 @@ export const RecordScreen = () => {
           tags: [],
           audioPath,
         };
+
         useRecordStore.getState().addRecord(record);
+
         if (useSettingsStore.getState().autoTranscribeOnSave) {
           startTranscription(record);
         }
       };
+
       persistRecordingToDocuments(resolvedPath, recordId)
         .then(addRecordWithPath)
         .catch(() => addRecordWithPath(resolvedPath));
     },
   });
+
+  useEffect(() => {
+    if (requestShowSaveModal && (state === 'recording' || state === 'paused')) {
+      setTitle('');
+      setSaveModalReason('deeplink');
+      setShowSaveModal(true);
+      setRequestShowSaveModal(false);
+    }
+  }, [requestShowSaveModal, state, setRequestShowSaveModal]);
 
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
 
@@ -109,6 +128,7 @@ export const RecordScreen = () => {
   const handleClose = async () => {
     const wasRecording = state === 'recording' || state === 'paused';
     const path = await stopRecording();
+
     if (wasRecording && path) {
       const recordId = generateRecordId();
       const resolvedPath = path.startsWith('file://') ? path.slice(7) : path;
@@ -167,7 +187,9 @@ export const RecordScreen = () => {
 
   const handleSaveConfirm = async (record: VoiceRecord) => {
     const path = await stopRecording();
+
     let audioPath = record.audioPath;
+
     if (path) {
       const resolvedPath = path.startsWith('file://') ? path.slice(7) : path;
       try {

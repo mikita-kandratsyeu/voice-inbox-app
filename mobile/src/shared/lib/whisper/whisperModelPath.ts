@@ -1,6 +1,6 @@
 import RNFS from 'react-native-fs';
 
-import type { WhisperModelId } from '@/entities/settings';
+import { WHISPER_MODELS, type WhisperModelId } from '@/entities/settings';
 
 const WHISPER_MODELS_DIR = `${RNFS.DocumentDirectoryPath}/whisper-models`;
 
@@ -24,4 +24,14 @@ export const WHISPER_MODEL_DOWNLOAD_URLS: Record<WhisperModelId, string> = {
   'whisper-base': 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin',
   'whisper-small': 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin',
   'whisper-medium': 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.bin',
+};
+
+export const getWhisperLabel = (modelId: string): string => {
+  const model = WHISPER_MODELS.find((model) => model.id === modelId);
+
+  if (model) {
+    return `Whisper ${model.name}`;
+  }
+
+  return 'Whisper model';
 };

@@ -3,32 +3,35 @@ import { Text, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
 
+import { isString } from '../lib';
 import { Button } from './Button';
 
 type TabEmptyStateProps = {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-  buttonLabel?: string;
   buttonIcon?: React.ReactNode;
+  buttonLabel?: string;
+  description: string;
+  disabled?: boolean;
+  extraHint?: string;
+  hideButton?: boolean;
   hint?: string;
   hintIcon?: React.ReactNode;
-  disabled?: boolean;
-  hideButton?: boolean;
+  icon: React.ReactNode;
   onPress?: () => void;
+  title: string;
 };
 
 export const TabEmptyState = ({
-  icon,
-  title,
-  description,
-  buttonLabel,
   buttonIcon,
+  buttonLabel,
+  description,
+  disabled = false,
+  extraHint,
+  hideButton = false,
   hint,
   hintIcon,
-  disabled = false,
-  hideButton = false,
+  icon,
   onPress,
+  title,
 }: TabEmptyStateProps) => {
   const color = useColors();
   return (
@@ -64,11 +67,16 @@ export const TabEmptyState = ({
         </>
       )}
       {hint !== undefined && (
-        <View className="flex-row items-center gap-1">
+        <View className="flex-col items-center gap-1">
           {hintIcon ?? null}
           <Text className="text-xs" style={{ color: color.text.secondary }}>
             {hint}
           </Text>
+          {isString(extraHint) && extraHint.length > 0 && (
+            <Text className="text-xs text-center" style={{ color: color.text.secondary }}>
+              {extraHint}
+            </Text>
+          )}
         </View>
       )}
     </View>

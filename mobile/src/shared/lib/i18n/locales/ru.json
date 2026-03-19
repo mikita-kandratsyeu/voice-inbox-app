@@ -1,4 +1,7 @@
 {
+  "download": {
+    "whisperLabel": "Загрузка модели Whisper"
+  },
   "push": {
     "policyUpdateTitle": "Важное обновление",
     "policyUpdateAck": "Понятно"
@@ -78,7 +81,7 @@
     "resume": "Продолжить запись",
     "finish": "Завершить запись",
     "recordStopped": "Запись остановлена",
-    "recordStoppedMessage": "Достигнут максимальный лимит записи — 30 минут.",
+    "recordStoppedMessage": "Достигнут максимальный лимит записи — 10 минут.",
     "appLockHint": "При сворачивании приложения запись будет остановлена и сохранена.",
     "noAppLockHint": "При сворачивании приложения запись продолжится в фоне.",
     "saveModalTitle": "Сохранить запись",
@@ -478,7 +481,7 @@
     "micLabel": "Микрофон",
     "micDesc": "Необходим для записи голоса",
     "notificationsLabel": "Уведомления",
-    "notificationsDesc": "Узнавайте, когда ИИ закончит обработку",
+    "notificationsDesc": "Сообщим, когда ИИ закончит обработку",
     "granted": "Разрешено",
     "denied": "Отказано",
     "notDetermined": "Нажмите для разрешения",
@@ -530,6 +533,7 @@
   "transcription": {
     "progress": "Обработано {{ current }} из {{ total }} фрагментов...",
     "secondsLeft": "~{{ count }} сек осталось",
-    "minutesLeft": "~{{ count }} мин осталось"
+    "minutesLeft": "~{{ count }} мин осталось",
+    "loadingModel": "Загрузка модели в память…"
   }
 }

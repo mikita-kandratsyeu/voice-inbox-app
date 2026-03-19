@@ -138,10 +138,10 @@ export const useRecording = ({
       if (!isBackground) {
         setElapsed(secs);
         setElapsedMs(ms);
-        updateRecordingLiveActivity(secs).catch(() => {});
       } else {
         const now = Date.now();
-        if (now - lastLiveActivityUpdateRef.current >= 5000) {
+
+        if (now - lastLiveActivityUpdateRef.current >= 1000) {
           lastLiveActivityUpdateRef.current = now;
           updateRecordingLiveActivity(secs).catch(() => {});
         }

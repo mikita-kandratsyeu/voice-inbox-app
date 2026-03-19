@@ -1,4 +1,7 @@
 {
+  "download": {
+    "whisperLabel": "Downloading Whisper model"
+  },
   "push": {
     "policyUpdateTitle": "Important Update",
     "policyUpdateAck": "Got it"
@@ -78,7 +81,7 @@
     "resume": "Resume recording",
     "finish": "Finish recording",
     "recordStopped": "Recording stopped",
-    "recordStoppedMessage": "Maximum recording limit reached — 30 minutes.",
+    "recordStoppedMessage": "Maximum recording limit reached — 10 minutes.",
     "appLockHint": "When you minimize the app, recording will be stopped and saved.",
     "noAppLockHint": "When you minimize the app, recording will continue in the background.",
     "saveModalTitle": "Save recording",
@@ -478,7 +481,7 @@
     "micLabel": "Microphone",
     "micDesc": "Required for voice recording",
     "notificationsLabel": "Notifications",
-    "notificationsDesc": "Know when AI finishes processing",
+    "notificationsDesc": "We’ll let you know when the AI has finished processing",
     "granted": "Granted",
     "denied": "Denied",
     "notDetermined": "Tap to allow",
@@ -530,6 +533,7 @@
   "transcription": {
     "progress": "Processed {{ current }} of {{ total }} segments...",
     "secondsLeft": "~{{ count }} sec left",
-    "minutesLeft": "~{{ count }} min left"
+    "minutesLeft": "~{{ count }} min left",
+    "loadingModel": "Loading model into memory…"
   }
 }

@@ -96,7 +96,6 @@ export const WhisperModelCard = ({
               `whisper.models.${model.id.replace('whisper-', '').replace('-', '_')}Desc` as 'whisper.models.tinyDesc',
             )}
           </Text>
-
           <View className="flex-row items-center gap-3">
             <Text className="text-[14px]" style={{ color: color.text.secondary }}>
               {t('whisper.qualityLabel')}: {getAccuracyLabel(model.accuracy)}
@@ -111,7 +110,6 @@ export const WhisperModelCard = ({
               </Text>
             </View>
           </View>
-
           {compatibility && (
             <View className="mt-1.5 flex-row items-center gap-2">
               <Smartphone
@@ -129,7 +127,6 @@ export const WhisperModelCard = ({
               </Text>
             </View>
           )}
-
           {isDownloading ? (
             <TouchableOpacity
               className="mt-2"
@@ -150,14 +147,13 @@ export const WhisperModelCard = ({
             </Text>
           ) : null}
         </View>
-
         <View className="items-center gap-2">
           {isDownloaded && isSelected ? (
             <View
               className="h-8 w-8 items-center justify-center rounded-full"
               style={{ backgroundColor: color.accent.primary }}
             >
-              <Check size={16} color="#ffffff" strokeWidth={2.5} />
+              <Check size={16} color={color.icon.onAccent} strokeWidth={2.5} />
             </View>
           ) : isDownloaded ? (
             <View
@@ -179,7 +175,6 @@ export const WhisperModelCard = ({
               <Download size={16} color={color.accent.primary} strokeWidth={2} />
             </View>
           )}
-
           {isDownloaded && (
             <TouchableOpacity
               onPress={() => onDelete(model.id)}
