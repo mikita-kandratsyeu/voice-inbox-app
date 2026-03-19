@@ -1,4 +1,5 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { AppState } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
@@ -53,9 +54,27 @@ export const useTranscription = () => {
   const { processRecord } = useAiProcessing();
 
   const stopRef = useRef<(() => Promise<void>) | null>(null);
+  const currentRecordIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state !== 'background') return;
+      const stop = stopRef.current;
+      const recordId = currentRecordIdRef.current;
+      if (!stop || !recordId) return;
+      stopRef.current = null;
+      currentRecordIdRef.current = null;
+      stop().catch(() => {});
+      updateAiStatus(recordId, 'idle');
+    });
+    return () => sub.remove();
+  }, [updateAiStatus]);
 
   const startTranscription = useCallback(
     async (record: VoiceRecord, languageOverride?: string): Promise<void> => {
+      if (AppState.currentState !== 'active') {
+        return;
+      }
       if (!record.audioPath) {
         if (__DEV__) console.warn('[transcription] No audio path for record', record.id);
         return;
@@ -69,7 +88,8 @@ export const useTranscription = () => {
         return;
       }
 
-      updateAiStatus(record.id, 'processing', 0);
+      updateAiStatus(record.id, 'processing', 0, i18n.t('transcription.loadingModel'));
+      currentRecordIdRef.current = record.id;
 
       const language = languageOverride ?? transcriptionLanguage;
       let usedContext = false;
@@ -92,6 +112,7 @@ export const useTranscription = () => {
 
         const { segments, fullText, skipped } = await promise;
         stopRef.current = null;
+        currentRecordIdRef.current = null;
 
         if (skipped) {
           updateAiStatus(record.id, 'idle');
@@ -122,6 +143,7 @@ export const useTranscription = () => {
         }
       } catch (err) {
         stopRef.current = null;
+        currentRecordIdRef.current = null;
 
         const msg = err instanceof Error ? err.message.toLowerCase() : '';
         const isCancelled = msg.includes('abort') || msg.includes('cancel') || msg.includes('stop');
@@ -137,6 +159,7 @@ export const useTranscription = () => {
           updateAiStatus(record.id, 'error');
         }
       } finally {
+        currentRecordIdRef.current = null;
         if (usedContext) {
           scheduleIdleRelease();
         }
@@ -157,6 +180,7 @@ export const useTranscription = () => {
 
   const cancelTranscription = useCallback(
     (recordId: string): void => {
+      currentRecordIdRef.current = null;
       updateAiStatus(recordId, 'idle');
       if (stopRef.current) {
         const stop = stopRef.current;

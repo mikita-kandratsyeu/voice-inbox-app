@@ -533,6 +533,8 @@
   "transcription": {
     "progress": "Processed {{ current }} of {{ total }} segments...",
     "secondsLeft": "~{{ count }} sec left",
-    "minutesLeft": "~{{ count }} min left"
+    "minutesLeft": "~{{ count }} min left",
+    "loadingModel": "Loading model into memory…",
+    "foregroundOnly": "Runs only when the app is in the foreground."
   }
 }

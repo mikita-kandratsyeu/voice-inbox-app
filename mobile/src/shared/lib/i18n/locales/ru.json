@@ -533,6 +533,8 @@
   "transcription": {
     "progress": "Обработано {{ current }} из {{ total }} фрагментов...",
     "secondsLeft": "~{{ count }} сек осталось",
-    "minutesLeft": "~{{ count }} мин осталось"
+    "minutesLeft": "~{{ count }} мин осталось",
+    "loadingModel": "Загрузка модели в память…",
+    "foregroundOnly": "Работает только когда приложение на переднем плане."
   }
 }

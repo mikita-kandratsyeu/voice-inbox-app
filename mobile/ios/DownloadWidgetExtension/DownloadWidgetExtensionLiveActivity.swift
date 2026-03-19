@@ -22,45 +22,45 @@ struct DownloadLiveActivityView: View {
     }
 
     var body: some View {
-        HStack(spacing: 14) {
-            ZStack {
-                Circle()
-                    .stroke(Color.blue.opacity(0.15), lineWidth: 3)
-                    .frame(width: 32, height: 32)
+        Link(destination: DownloadDeeplink.settingsUrl) {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .stroke(Color.blue.opacity(0.15), lineWidth: 3)
+                        .frame(width: 32, height: 32)
 
-                Circle()
-                    .trim(from: 0, to: 0.7)
-                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 3,
-                                                           lineCap: .round))
-                    .frame(width: 32, height: 32)
-                    .rotationEffect(.degrees(rotating ? 360 : 0))
-                    .onAppear {
-                        withAnimation(.linear(duration: 1.2)
-                            .repeatForever(autoreverses: false)) {
-                            rotating = true
+                    Circle()
+                        .trim(from: 0, to: 0.7)
+                        .stroke(Color.blue, style: StrokeStyle(lineWidth: 3,
+                                                               lineCap: .round))
+                        .frame(width: 32, height: 32)
+                        .rotationEffect(.degrees(rotating ? 360 : 0))
+                        .onAppear {
+                            withAnimation(.linear(duration: 1.2)
+                                .repeatForever(autoreverses: false)) {
+                                rotating = true
+                            }
                         }
-                    }
 
-                Image(systemName: "arrow.down")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.blue)
-            }
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.blue)
+                }
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(context.state.label)
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                    .lineLimit(1)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(context.state.label)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
 
-                Text(context.state.title)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .lineLimit(1)
-            }
+                    Text(context.state.title)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .lineLimit(1)
+                }
 
-            Spacer()
+                Spacer()
 
-            Link(destination: DownloadDeeplink.settingsUrl) {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.primary)
@@ -94,44 +94,56 @@ struct DownloadWidgetLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    SpinnerView()
-                        .frame(width: 32, height: 32)
-                        .frame(maxHeight: .infinity, alignment: .center)
+                    Link(destination: DownloadDeeplink.settingsUrl) {
+                        SpinnerView()
+                            .frame(width: 32, height: 32)
+                            .frame(maxHeight: .infinity, alignment: .center)
+                    }
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    VStack(alignment: .center, spacing: 3) {
-                      Text(context.state.label)
-                            .font(.headline)
-                            .lineLimit(1)
-
-                        Text(context.state.title)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
+                    Link(destination: DownloadDeeplink.settingsUrl) {
+                        VStack(alignment: .center, spacing: 3) {
+                            Text(context.state.label)
+                                .font(.headline)
+                                .lineLimit(1)
+                            Text(context.state.title)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     Link(destination: DownloadDeeplink.settingsUrl) {
                         Image(systemName: "arrow.right")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white)
-                        .padding(10)
-                        .background(Color.blue)
-                        .clipShape(Circle())
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white)
+                            .padding(10)
+                            .background(Color.blue)
+                            .clipShape(Circle())
                     }
                     .frame(maxHeight: .infinity, alignment: .center)
                 }
             } compactLeading: {
-                Image(systemName: "arrow.down.circle.fill")
-                    .foregroundColor(.blue)
+                Link(destination: DownloadDeeplink.settingsUrl) {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             } compactTrailing: {
-                Text("Whisper")
-                    .font(.caption2)
-                    .foregroundColor(.blue)
+                Link(destination: DownloadDeeplink.settingsUrl) {
+                    Text("Whisper")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             } minimal: {
-                Image(systemName: "arrow.down.circle.fill")
-                    .foregroundColor(.blue)
+                Link(destination: DownloadDeeplink.settingsUrl) {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .foregroundColor(.blue)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
             }
         }
     }
