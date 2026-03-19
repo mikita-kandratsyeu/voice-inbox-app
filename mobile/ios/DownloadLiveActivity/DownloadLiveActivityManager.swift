@@ -54,7 +54,7 @@ final class DownloadLiveActivityManager {
         let content = ActivityContent(state: state, staleDate: nil)
 
         Task {
-            await activity.end(content, dismissalPolicy: .default)
+            await activity.end(content, dismissalPolicy: .immediate)
             self.activity = nil
         }
     }
