@@ -1,10 +1,12 @@
 import { useCallback, useEffect } from 'react';
 import { Linking } from 'react-native';
 
+import { useDownloadingDeeplink } from '@/features/downloading-deeplink';
 import { useRecordingDeeplink } from '@/features/recording-deeplink/model/useRecordingDeeplink';
 
 export const useInitDeepLinking = () => {
   const { handleRecordingDeeplink } = useRecordingDeeplink();
+  const { handleDownloadingDeeplink } = useDownloadingDeeplink();
 
   const routeDeepLink = useCallback(
     (rawUrl: string) => {
@@ -12,11 +14,12 @@ export const useInitDeepLinking = () => {
         const url = new URL(rawUrl);
 
         handleRecordingDeeplink(url);
+        handleDownloadingDeeplink(url);
       } catch (e) {
         if (__DEV__) console.warn('[deeplink] invalid url', rawUrl, e);
       }
     },
-    [handleRecordingDeeplink],
+    [handleDownloadingDeeplink, handleRecordingDeeplink],
   );
 
   useEffect(() => {

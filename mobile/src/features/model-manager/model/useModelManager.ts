@@ -4,6 +4,11 @@ import type { WhisperModelId } from '@/entities/settings';
 import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 
 import { deleteWhisperModel } from '../lib/deleteWhisperModel';
+import {
+  startWhisperDownloadLiveActivity,
+  stopWhisperDownloadLiveActivity,
+  updateWhisperDownloadLiveActivity,
+} from '../lib/downloadLiveActivity';
 import { cancelWhisperModelDownload, downloadWhisperModel } from '../lib/downloadWhisperModel';
 
 export const useModelManager = () => {
@@ -21,18 +26,22 @@ export const useModelManager = () => {
       const model = WHISPER_MODELS.find((m) => m.id === modelId);
       const expectedBytes = (model?.sizeMb ?? 0) * 1024 * 1024;
 
+      await startWhisperDownloadLiveActivity(modelId);
+
       try {
         const { promise } = downloadWhisperModel({
           modelId,
           expectedBytes,
-          onProgress: (progress, bytesWritten, contentLength) => {
+          onProgress: async (progress, bytesWritten, contentLength) => {
             setDownloadProgress(modelId, progress, bytesWritten, contentLength);
+            await updateWhisperDownloadLiveActivity(progress / 100, modelId);
           },
         });
 
         await promise;
         setWhisperModelStatus(modelId, 'downloaded');
         setDownloadProgress(modelId, 100);
+        await stopWhisperDownloadLiveActivity();
       } catch (err) {
         const isCancelled =
           err instanceof Error && (err.message.includes('cancel') || err.message.includes('abort'));
@@ -43,6 +52,7 @@ export const useModelManager = () => {
           setWhisperModelStatus(modelId, 'not_downloaded');
         }
         setDownloadProgress(modelId, 0);
+        await stopWhisperDownloadLiveActivity();
       }
     },
     [setWhisperModelStatus, setDownloadProgress],
@@ -53,6 +63,7 @@ export const useModelManager = () => {
       await cancelWhisperModelDownload(modelId);
       setWhisperModelStatus(modelId, 'not_downloaded');
       setDownloadProgress(modelId, 0);
+      await stopWhisperDownloadLiveActivity();
     },
     [setWhisperModelStatus, setDownloadProgress],
   );
