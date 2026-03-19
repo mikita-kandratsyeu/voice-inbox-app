@@ -68,10 +68,12 @@ export const TabEmptyState = ({
       )}
       {hint !== undefined && (
         <View className="flex-col items-center gap-1">
-          {hintIcon ?? null}
-          <Text className="text-xs" style={{ color: color.text.secondary }}>
-            {hint}
-          </Text>
+          <View className="flex-row items-center gap-1">
+            {hintIcon ?? null}
+            <Text className="text-xs" style={{ color: color.text.secondary }}>
+              {hint}
+            </Text>
+          </View>
           {isString(extraHint) && extraHint.length > 0 && (
             <Text className="text-xs text-center" style={{ color: color.text.secondary }}>
               {extraHint}
