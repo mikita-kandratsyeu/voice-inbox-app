@@ -35,6 +35,10 @@ The project is designed as a solo‑friendly, production‑ready codebase: clean
   - NativeWind (Tailwind for React Native)
   - Clean folder structure and typed repositories
 
+### Advertising (Yandex Mobile Ads)
+
+Optional **banner** (note detail) and **rewarded** ad (bonus AI quota in Settings) use `yandex-mobile-ads`. They are **disabled** when `isEUUserByStorefront()` is true (EU App Store / Play country list in `features/app-storefront/lib/storefront.ts`), so the SDK is not initialized and no ad UI is shown. Env IDs: `.env.example` (`YANDEX_*_AD_UNIT_ID`). Legal copy lives in `web/content/privacy.*.md` and `terms.*.md`.
+
 ---
 
 ## Tech stack

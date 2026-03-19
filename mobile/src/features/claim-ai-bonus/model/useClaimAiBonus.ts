@@ -2,6 +2,7 @@ import { YANDEX_REWARDED_AD_UNIT_ID } from '@env';
 import { useCallback, useEffect, useState } from 'react';
 import { AdRequestConfiguration, RewardedAdLoader } from 'yandex-mobile-ads';
 
+import { isEUUserByStorefront } from '@/features/app-storefront/lib/storefront';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { claimAiBonus } from '@/shared/lib/ai-api';
 
@@ -59,7 +60,13 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
   const [error, setError] = useState<string | null>(null);
 
   const claim = useCallback(async () => {
-    if (loading) return;
+    if (loading) {
+      return;
+    }
+
+    if (await isEUUserByStorefront()) {
+      return;
+    }
 
     setLoading(true);
     setError(null);

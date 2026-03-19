@@ -27,6 +27,7 @@ import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useAppLockStore } from '@/entities/app-lock';
 import { useRecordStore } from '@/entities/record';
 import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import { useAdsAllowed } from '@/features/app-storefront';
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { openInAppBrowser } from '@/features/in-app-browser';
@@ -89,6 +90,7 @@ export const SettingsScreen = () => {
     Alert.alert(t('common.done'), t('settings.aiUsage.claimBonusSuccess'));
   }, [fetchAiUsage, t]);
 
+  const { adsAllowed } = useAdsAllowed();
   const { claim, loading: claimLoading, error: claimError } = useClaimAiBonus(onBonusSuccess);
 
   useEffect(() => {
@@ -278,7 +280,7 @@ export const SettingsScreen = () => {
           <AiUsageCard
             usage={aiUsage}
             loading={aiUsageLoading}
-            onClaimBonus={claim}
+            onClaimBonus={adsAllowed ? claim : undefined}
             claimLoading={claimLoading}
             claimError={claimError}
           />

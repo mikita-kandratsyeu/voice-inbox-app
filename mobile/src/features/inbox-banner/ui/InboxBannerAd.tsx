@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { BannerView } from 'yandex-mobile-ads';
 
+import { useAdsAllowed } from '@/features/app-storefront';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import type { Colors } from '@/shared/config';
 
@@ -17,6 +18,7 @@ type InboxBannerAdProps = {
 
 export function InboxBannerAd({ color, contentMaxWidth }: InboxBannerAdProps) {
   const { t } = useTranslation();
+  const { adsAllowed, resolved } = useAdsAllowed();
   const bannerSize = useInboxBannerSize(contentMaxWidth);
   const [loadFailed, setLoadFailed] = useState(false);
 
@@ -24,7 +26,7 @@ export function InboxBannerAd({ color, contentMaxWidth }: InboxBannerAdProps) {
     setLoadFailed(true);
   }, []);
 
-  if (!getHasSeenOnboarding() || loadFailed || !bannerSize) {
+  if (!resolved || !adsAllowed || !getHasSeenOnboarding() || loadFailed || !bannerSize) {
     return null;
   }
 

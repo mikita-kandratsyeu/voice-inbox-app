@@ -46,3 +46,9 @@ The project is designed as a solo‑friendly, production‑ready codebase: clean
 - **State:** React hooks (no global state manager yet)
 - **Data:** In‑memory(prepared for SQLite)
 - **Theming:** Custom light/dark theme with context + NativeWind `dark` mode
+
+---
+
+## Privacy & terms (web)
+
+Legal pages are built from Markdown in **`web/content/`** (`privacy.*.md`, `terms.*.md`). They should match the mobile app: optional **Yandex Mobile Ads** only outside EU storefronts — see `mobile/src/features/app-storefront/lib/storefront.ts` and `useAdsAllowed`.

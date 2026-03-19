@@ -12,3 +12,5 @@ Privacy Policy and Terms of Service are stored as Markdown files and rendered on
 ## Editing
 
 Edit the `.md` files directly. Changes will appear on the next build. Supports standard Markdown: headings, bold, links, lists.
+
+Privacy and Terms describe AI processing (OpenRouter), optional push tokens, and **mobile advertising (Yandex Mobile Ads) outside the EEA** — keep them aligned with the React Native app behavior (`isEUUserByStorefront` / `useAdsAllowed`).

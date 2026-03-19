@@ -6,7 +6,7 @@ import { Image, Linking, ScrollView, Text, View } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getStorefrontCountryCode } from '@/features/app-storefront/lib/storefront';
+import { getStorefrontCountryCode } from '@/features/app-storefront';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { useOnboardingStore } from '@/features/onboarding';
 import { getColors, SUPPORT_EMAIL, useAppTheme, WEBSITE_URL } from '@/shared/config';

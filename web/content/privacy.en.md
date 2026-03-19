@@ -10,7 +10,9 @@ Voice recordings, transcripts, summaries, tasks, and tags are stored locally on 
 
 When using AI features (summaries, task extraction, Ask AI), the app sends transcript text to our web API over HTTPS. The transcript is forwarded to third-party AI providers via the OpenRouter platform to generate results. We do not store transcripts on our servers.
 
-The app does not use any analytics SDKs, advertising trackers, or user behavior monitoring tools.
+The app does **not** use standalone analytics SDKs or user-behavior profiling tools for product analytics.
+
+**Advertising (App Store / Google Play storefront outside the EEA only):** If your App Store or Play Store country is **not** in the European Economic Area (EEA), the app may show ads through **Yandex Mobile Ads**: a banner on the note detail screen and an optional rewarded ad that can grant bonus AI quota. **We do not offer these advertising features** when your storefront country is in the EEA — they are disabled in the app for those regions. The ad SDK operates under Yandex’s policies; we use it only to serve ads, not for cross-app tracking or analytics on our behalf.
 
 ## 2. Our Web API
 
