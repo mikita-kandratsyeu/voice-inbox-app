@@ -57,7 +57,7 @@ export const TranscriptTab = ({
         description={t('recordingDetail.transcriptNotCreatedDesc')}
         buttonLabel={t('recordingDetail.transcribe')}
         buttonIcon={<Mic size={18} color="#fff" strokeWidth={2} />}
-        hint={`${whisperModelName}. ${t('transcription.foregroundOnly')}`}
+        hint={`Whisper ${whisperModelName}`}
         onPress={onTranscribe}
         hideButton={!hasAudio}
         disabled={isAiProcessing}
