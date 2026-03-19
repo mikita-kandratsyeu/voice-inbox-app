@@ -160,6 +160,7 @@ export const InboxScreen = () => {
 
   const screenStyle = { flex: 1, backgroundColor: color.background.primary };
   const contentMaxWidth = isTablet ? 720 : undefined;
+
   const listContentStyle = {
     paddingBottom: 100,
     paddingTop: 0,

@@ -30,6 +30,7 @@
     "settings": "Settings"
   },
   "inbox": {
+    "adLabel": "Ad",
     "title": "Inbox",
     "emptyTitle": "No inbox",
     "emptyDescription": "Your voice notes will appear here",

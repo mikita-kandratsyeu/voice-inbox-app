@@ -3,7 +3,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, View } from 'react-native';
+import { Alert, ScrollView, useWindowDimensions, View } from 'react-native';
 import RNFS from 'react-native-fs';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -12,6 +12,7 @@ import { useRecordStore } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
+import { InboxBannerAd } from '@/features/inbox-banner';
 import { useRecordActions } from '@/features/record-actions';
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
@@ -36,6 +37,7 @@ export const RecordingDetailScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'RecordingDetail'>>();
   const color = getColors(useAppTheme());
   const isTablet = useIsTablet();
+  const { width: windowWidth } = useWindowDimensions();
 
   const { record: routeRecord } = route.params;
   const recordId = routeRecord.id;
@@ -171,6 +173,7 @@ export const RecordingDetailScreen = () => {
 
   const scrollPadding = isTablet ? 24 : 16;
   const contentMaxWidth = isTablet ? 720 : undefined;
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   const onBack = useCallback(() => navigation.goBack(), [navigation]);
   const onTogglePin = useCallback(() => togglePin(liveRecord.id), [liveRecord.id, togglePin]);
@@ -314,6 +317,8 @@ export const RecordingDetailScreen = () => {
           </View>
 
           <RelatedNotesSection recordId={liveRecord.id} color={color} />
+
+          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </View>
         <AskAIModal
           visible={showAskAIModal}
