@@ -21,3 +21,20 @@ model AppConfig {
   value     String
   updatedAt DateTime @updatedAt
 }
+
+model SupportIssue {
+  id           String   @id @default(cuid())
+  deviceId     String
+  email        String?
+  subject      String?
+  message      String   @db.Text
+  diagnostics  Json
+  appLogs      String?  @db.Text
+  status       String   @default("open")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([deviceId])
+  @@index([createdAt(sort: Desc)])
+  @@index([status])
+}

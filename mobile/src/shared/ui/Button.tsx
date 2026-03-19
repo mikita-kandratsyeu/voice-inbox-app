@@ -1,9 +1,12 @@
 import React from 'react';
 import {
+  ActivityIndicator,
   type StyleProp,
+  StyleSheet,
   Text,
   TouchableOpacity,
   type TouchableOpacityProps,
+  View,
   type ViewStyle,
 } from 'react-native';
 
@@ -16,6 +19,7 @@ type VariantStyle = { bg: ViewStyle; textColor?: string; textClassName?: string 
 export type ButtonProps = TouchableOpacityProps & {
   label?: string;
   icon?: React.ReactNode;
+  loading?: boolean;
   variant?: ButtonVariant;
   size?: ButtonSize;
   iconOnly?: boolean;
@@ -65,6 +69,7 @@ const DANGER_BG = { backgroundColor: 'transparent' };
 export const Button = ({
   label,
   icon,
+  loading = false,
   variant = 'primary',
   size = 'md',
   iconOnly = false,
@@ -76,7 +81,7 @@ export const Button = ({
   className,
   ...rest
 }: ButtonProps) => {
-  const isIconOnly = iconOnly || (Boolean(icon) && !label);
+  const isIconOnly = iconOnly || (Boolean(icon) && !label && !loading);
   const variantKey = isIconOnly ? 'icon' : variant;
   const colorScheme =
     color ??
@@ -116,17 +121,50 @@ export const Button = ({
       style={[
         variantKey === 'danger' ? DANGER_BG : bg,
         containerStyle,
-        disabled && { opacity: 0.4 },
+        disabled && !loading && { opacity: 0.4 },
       ]}
       activeOpacity={activeOpacity}
-      disabled={disabled}
+      disabled={disabled || loading}
       {...rest}
     >
       {icon}
       {!isIconOnly && label && (
-        <Text className={textClassName} style={textStyle} numberOfLines={1}>
-          {label}
-        </Text>
+        <View className="items-center justify-center">
+          <Text
+            className={textClassName}
+            style={[textStyle, { opacity: loading ? 0 : 1 }]}
+            numberOfLines={1}
+          >
+            {label}
+          </Text>
+          {loading && (
+            <View
+              pointerEvents="none"
+              style={[
+                StyleSheet.absoluteFillObject,
+                { alignItems: 'center', justifyContent: 'center' },
+              ]}
+            >
+              <ActivityIndicator
+                size="small"
+                color={
+                  variantKey === 'primary'
+                    ? colorScheme.icon.onAccent
+                    : (textColor ?? colorScheme.text.primary)
+                }
+              />
+            </View>
+          )}
+        </View>
+      )}
+      {!isIconOnly && !label && loading && (
+        <ActivityIndicator
+          color={
+            variantKey === 'primary'
+              ? colorScheme.icon.onAccent
+              : (textColor ?? colorScheme.text.primary)
+          }
+        />
       )}
     </TouchableOpacity>
   );

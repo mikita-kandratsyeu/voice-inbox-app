@@ -526,6 +526,25 @@
     "badgeAi": "AI",
     "copyright": "© {{ year }} Voice Inbox AI. All rights reserved."
   },
+  "support": {
+    "title": "Contact support",
+    "intro": "Describe the issue. We attach device and app details automatically so we can help faster.",
+    "emailLabel": "Your email (optional)",
+    "emailPlaceholder": "you@example.com",
+    "subjectLabel": "Subject (optional)",
+    "subjectPlaceholder": "Short summary",
+    "messageLabel": "What happened?",
+    "messagePlaceholder": "Steps to reproduce, what you expected, what you saw…",
+    "messageHint": "At least {{ min }} characters.",
+    "logsLabel": "Extra details (optional)",
+    "logsHint": "Paste error text, screenshots description, or anything else that helps.",
+    "logsPlaceholder": "Optional",
+    "send": "Send",
+    "sending": "Sending…",
+    "success": "Thanks — request received (ref. {{ id }}).",
+    "errorTooShort": "Please write at least {{ min }} characters.",
+    "apiNotConfigured": "Support form is unavailable in this build (API URL missing). Use email if shown on the previous screen."
+  },
   "tasks": {
     "addToCalendar": "Add to Calendar",
     "addToReminder": "Add to Reminders",

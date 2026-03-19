@@ -10,6 +10,7 @@ import {
   ImportRecordsScreen,
   SettingsScreen,
   StorageDetailsScreen,
+  SupportScreen,
   WhisperModelPickerScreen,
 } from '@/screens/settings';
 
@@ -53,6 +54,11 @@ export const SettingsNavigator = () => (
     <Stack.Screen
       name="AboutApp"
       component={AboutAppScreen}
+      options={{ animation: 'slide_from_right' }}
+    />
+    <Stack.Screen
+      name="Support"
+      component={SupportScreen}
       options={{ animation: 'slide_from_right' }}
     />
     <Stack.Screen

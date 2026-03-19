@@ -19,6 +19,11 @@ export const RATE_LIMIT_DEVICE_KEY_PREFIX = 'rl_device:';
 export const RATE_LIMIT_DEVICE_WINDOW_SECONDS = 60;
 export const RATE_LIMIT_DEVICE_MAX_REQUESTS = 60;
 
+// Support form (mobile) — per device, rolling window
+export const SUPPORT_RATE_LIMIT_KEY_PREFIX = 'rl_support:';
+export const SUPPORT_RATE_LIMIT_WINDOW_SECONDS = 3600;
+export const SUPPORT_RATE_LIMIT_MAX_REQUESTS = 5;
+
 // Admin login rate limit (per IP)
 export const ADMIN_LOGIN_RATE_LIMIT_KEY_PREFIX = 'rl_admin_login:';
 export const ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS = 60;

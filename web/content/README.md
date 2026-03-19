@@ -13,4 +13,4 @@ Privacy Policy and Terms of Service are stored as Markdown files and rendered on
 
 Edit the `.md` files directly. Changes will appear on the next build. Supports standard Markdown: headings, bold, links, lists.
 
-Privacy and Terms describe AI processing (OpenRouter), optional push tokens, and **mobile advertising (Yandex Mobile Ads)** — including that **EEA storefronts currently have ads off** in the app; wording is time-stamped via “Last updated” and may change. Keep in sync with the app (`isEUUserByStorefront` / `useAdsAllowed`).
+Privacy and Terms describe AI processing (OpenRouter), optional push tokens, **in-app support** (optional email + message + technical diagnostics stored in our database), and **mobile advertising (Yandex Mobile Ads)** — including that **EEA storefronts currently have ads off** in the app; wording is time-stamped via “Last updated” and may change. Keep in sync with the app (`isEUUserByStorefront` / `useAdsAllowed`, support flow in `features/tech-support`).

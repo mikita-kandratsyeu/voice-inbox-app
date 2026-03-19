@@ -2,7 +2,7 @@
 
 **Last updated: March 2026**
 
-Voice Inbox AI ("we", "our", or "the app") is an offline voice notes application. This Privacy Policy explains how we handle your data when you use the mobile app and the optional web API for AI processing.
+Voice Inbox AI ("we", "our", or "the app") is an offline voice notes application. This Privacy Policy explains how we handle your data when you use the mobile app, the optional web API for AI processing, and optional in-app support requests.
 
 ## 1. Data We Process
 
@@ -20,7 +20,9 @@ Our API temporarily stores only the AI result (summary, tasks, tags) in a key-va
 
 Access to the API is authenticated using short-lived tokens that are bound to your device ID. We do not store these tokens on our servers; they are validated and then discarded. We use the device identifier to limit the number of free AI requests per week per device. This identifier is used solely for rate limiting and authentication and is not linked to your identity.
 
-If you enable push notifications, we store your push token (FCM) and app language on our servers. This data is used solely to send you notifications about completed AI processing and important updates. The push token is stored for 30 days and refreshed on every app launch. You can revoke notification permission at any time through iOS Settings.
+If you enable push notifications, we store your push token (FCM) and app language on our servers. This data is used solely to send you notifications about completed AI processing and important updates. The push token is stored for 30 days and refreshed on every app launch. You can revoke notification permission at any time in your device’s system settings (e.g. iOS Settings or Android app notification settings).
+
+**In-app support:** If you use the “Contact support” flow, you may send us a description of the issue and, optionally, your email (so we can reply), a short subject, and any extra text you choose to paste (for example, an error message). The app also attaches a **technical diagnostics** package (such as app version, OS version, device model, memory/disk hints, network type, locale, timezone, and an app-specific device identifier already used for API access — see above). These submissions are transmitted over HTTPS and stored in our database so we can review and respond to your request. We use this information only for customer support, troubleshooting, and protecting the service (for example, detecting abuse). We retain support records as long as needed to handle your inquiry and for our legitimate support and security purposes, unless applicable law requires otherwise.
 
 ## 3. Third-Party AI Providers
 
@@ -37,13 +39,13 @@ We apply **Zero Data Retention (ZDR)** to every request: routing goes only to en
 
 ## 4. No Accounts or Login
 
-Voice Inbox AI does not require an account or login. There is no user registration, and we do not collect personal data (names, emails, passwords).
+Voice Inbox AI does not require an account or login. There is no user registration. We do not ask for your name or a password. If you **voluntarily** include an email address in an in-app support request, we process it only to communicate with you about that request (see “In-app support” above).
 
 ## 5. Data Storage
 
 **On your device:** recordings, transcripts, and AI-generated content are stored until you delete them or uninstall the app.
 
-**On our servers:** AI results are stored for up to 1 hour, then automatically deleted. Per-device rate limit counters are stored for up to 8 days, then reset. Push tokens are stored for up to 30 days and refreshed on every app launch with notifications enabled.
+**On our servers:** AI results are stored for up to 1 hour, then automatically deleted. Per-device rate limit counters are stored for up to 8 days, then reset. Push tokens are stored for up to 30 days and refreshed on every app launch with notifications enabled. **Support requests** (including optional contact details and diagnostics you send through the support form) are stored in our database as described in section 2.
 
 ## 6. Your Rights
 
@@ -54,6 +56,7 @@ You retain full control over your data. You have the right to:
 - **Export** — data can be exported from the app at any time.
 - **Opt out of AI processing** — you may use the app with offline transcription only and never send data to our servers.
 - **Object to processing** — if you have questions about data handling, contact us at the email below.
+- **Support data** — for information you submitted through in-app support, you may contact us using the address below to ask questions or request deletion where applicable law allows.
 
 ## 7. Security
 

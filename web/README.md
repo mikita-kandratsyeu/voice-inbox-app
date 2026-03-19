@@ -17,7 +17,8 @@ The site showcases Voice Inbox AI: explains features, walks through the workflow
 - **Responsive layout** — Tailwind CSS v4
 - **SEO & Open Graph** — metadata, canonical URLs, dynamic OG images
 - **Pages** — home, Privacy Policy, Terms of Service (Markdown in `content/` — Yandex ads; EEA storefronts **currently** off in app, subject to policy updates)
-- **API** — message endpoints (optional, Redis or in-memory)
+- **API** — AI/sync/message endpoints (Redis or in-memory), mobile JWT auth, **in-app support** (`POST /api/support` → Postgres)
+- **Admin** — dashboard at `/admin` (bonus config, infra status, push, **support inbox**)
 
 ---
 
@@ -49,7 +50,7 @@ The site showcases Voice Inbox AI: explains features, walks through the workflow
 | `APP_SECRET`               | Secret used only to obtain JWT from `POST /api/token`                |
 | `JWT_SECRET`               | Secret to sign API JWTs (min 32 chars); required for API auth        |
 | `JWT_EXPIRES_IN`           | Optional JWT expiry (e.g. `1h`, `24h`; default `24h`)                |
-| `DATABASE_URL`             | Neon Postgres — admin users + `AppConfig` (required for `/admin`)   |
+| `DATABASE_URL`             | Neon Postgres — admin users, `AppConfig`, **support issues** (required for `/admin` and `POST /api/support`) |
 | `ADMIN_JWT_SECRET`         | Signs admin session JWT (min 32 chars); falls back to `JWT_SECRET`  |
 | `ADMIN_SEED_*`             | See `.env.example` — seed first admin via `yarn db:seed`             |
 | `VERCEL_TOKEN`             | Vercel API token for deployment status on admin dashboard (optional) |
