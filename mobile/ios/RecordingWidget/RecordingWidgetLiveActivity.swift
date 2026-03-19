@@ -56,9 +56,25 @@ struct PulsingRecordIcon: View {
     }
 }
 
-
 struct RecordingLiveActivityView: View {
     let context: ActivityViewContext<RecordingAttributes>
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var lockScreenBackground: some View {
+        Group {
+            if colorScheme == .light {
+                Color(.systemBackground).opacity(0.95)
+            } else {
+                Color(.secondarySystemBackground).opacity(0.95)
+            }
+        }
+    }
+
+    private var activityBackgroundTint: Color {
+        colorScheme == .light
+            ? Color.white.opacity(0.92)
+            : Color.black.opacity(0.45)
+    }
 
     var body: some View {
         HStack {
@@ -73,7 +89,11 @@ struct RecordingLiveActivityView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(context.state.title)
                     .font(.headline)
-                Text(formattedLiveActivityTime(from: context.state))
+                    .foregroundColor(.primary)
+              Text(
+                  timerInterval: context.state.startDate...Date(),
+                  countsDown: false
+              )
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
@@ -89,7 +109,8 @@ struct RecordingLiveActivityView: View {
                  }
         }
         .padding()
-        .background(.ultraThinMaterial)
+        .background(lockScreenBackground)
+        .activityBackgroundTint(activityBackgroundTint)
     }
 }
 

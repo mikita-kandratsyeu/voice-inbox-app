@@ -9,33 +9,47 @@ private enum DownloadDeeplink {
 struct DownloadLiveActivityView: View {
     let context: ActivityViewContext<DownloadAttributes>
     @State private var rotating = false
+    @Environment(\.colorScheme) private var colorScheme
+
+    private var lockScreenBackground: some View {
+        Group {
+            if colorScheme == .light {
+                Color(.systemBackground).opacity(0.95)
+            } else {
+                Color(.secondarySystemBackground).opacity(0.95)
+            }
+        }
+    }
 
     var body: some View {
         HStack(spacing: 14) {
             ZStack {
                 Circle()
                     .stroke(Color.blue.opacity(0.15), lineWidth: 3)
-                    .frame(width: 40, height: 40)
+                    .frame(width: 32, height: 32)
 
                 Circle()
                     .trim(from: 0, to: 0.7)
-                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                    .frame(width: 40, height: 40)
+                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 3,
+                                                           lineCap: .round))
+                    .frame(width: 32, height: 32)
                     .rotationEffect(.degrees(rotating ? 360 : 0))
                     .onAppear {
-                        withAnimation(.linear(duration: 1.2).repeatForever(autoreverses: false)) {
+                        withAnimation(.linear(duration: 1.2)
+                            .repeatForever(autoreverses: false)) {
                             rotating = true
                         }
                     }
 
                 Image(systemName: "arrow.down")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.blue)
             }
 
             VStack(alignment: .leading, spacing: 3) {
-              Text(context.state.label)
+                Text(context.state.label)
                     .font(.headline)
+                    .foregroundColor(.primary)
                     .lineLimit(1)
 
                 Text(context.state.title)
@@ -49,17 +63,29 @@ struct DownloadLiveActivityView: View {
             Link(destination: DownloadDeeplink.settingsUrl) {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.primary)
                     .padding(8)
-                    .background(Color.secondary.opacity(0.12))
+                    .background(colorScheme == .light
+                        ? Color.black.opacity(0.06)
+                        : Color.white.opacity(0.15))
                     .clipShape(Circle())
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(.ultraThinMaterial)
+        .background(lockScreenBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16,
+                                    style: .continuous))
+        .activityBackgroundTint(activityBackgroundTint)
+    }
+
+    private var activityBackgroundTint: Color {
+        colorScheme == .light
+            ? Color.white.opacity(0.92)
+            : Color.black.opacity(0.45)
     }
 }
+
 
 struct DownloadWidgetLiveActivity: Widget {
     var body: some WidgetConfiguration {
@@ -111,7 +137,6 @@ struct DownloadWidgetLiveActivity: Widget {
     }
 }
 
-// Отдельный view для спиннера чтобы @State работал в DynamicIsland
 struct SpinnerView: View {
     @State private var rotating = false
 
@@ -135,54 +160,4 @@ struct SpinnerView: View {
                 .foregroundColor(.blue)
         }
     }
-}
-
-#Preview("Lock Screen", as: .content, using: DownloadAttributes(id: "whisper-base")) {
-    DownloadWidgetLiveActivity()
-} contentStates: {
-    DownloadAttributes.ContentState(
-        modelId: "whisper-base",
-        progress: 0.0,
-        title: "Whisper Base (74 MB)",
-        label: "Downloading Whisper"
-    )
-    DownloadAttributes.ContentState(
-        modelId: "whisper-base",
-        progress: 0.45,
-        title: "Whisper Base (74 MB)",
-        label: "Downloading Whisper"
-    )
-}
-
-#Preview("DI Expanded", as: .dynamicIsland(.expanded), using: DownloadAttributes(id: "whisper-base")) {
-    DownloadWidgetLiveActivity()
-} contentStates: {
-    DownloadAttributes.ContentState(
-        modelId: "whisper-base",
-        progress: 0.45,
-        title: "Whisper Base (74 MB)",
-        label: "Downloading Whisper"
-    )
-}
-
-#Preview("DI Compact", as: .dynamicIsland(.compact), using: DownloadAttributes(id: "whisper-base")) {
-    DownloadWidgetLiveActivity()
-} contentStates: {
-    DownloadAttributes.ContentState(
-        modelId: "whisper-base",
-        progress: 0.45,
-        title: "Whisper Base (74 MB)",
-        label: "Downloading Whisper"
-    )
-}
-
-#Preview("DI Minimal", as: .dynamicIsland(.minimal), using: DownloadAttributes(id: "whisper-base")) {
-    DownloadWidgetLiveActivity()
-} contentStates: {
-    DownloadAttributes.ContentState(
-        modelId: "whisper-base",
-        progress: 0.45,
-        title: "Whisper Base (74 MB)",
-        label: "Downloading Whisper"
-    )
 }
