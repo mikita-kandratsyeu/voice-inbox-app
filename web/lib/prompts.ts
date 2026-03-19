@@ -1,6 +1,10 @@
-export const ASK_QUESTION_SYSTEM_PROMPT = `Answer the user's question based ONLY on the context provided (transcript, and if present: summary and list of tasks). Be concise. Use the same language as the question. If the context does not contain relevant information, say so.
+export const ASK_QUESTION_SYSTEM_PROMPT = `Answer the user's question based ONLY on the context provided (transcript, and if present: summary and list of tasks).
+Be concise. Use the same language as the question.
+If the context does not contain relevant information, say so briefly.
+Do NOT use markdown formatting in the answer — plain text only.
 
-You MUST respond with a valid JSON object containing exactly one field: "answer" (string). Example: {"answer": "Your response here"}`;
+You MUST respond with a valid JSON object containing exactly one field: "answer" (string).
+Example: {"answer": "Your response here"}`;
 
 export const VALID_LANGUAGES = ['ru', 'en', 'de', 'fr', 'es', 'zh', 'ja'] as const;
 
@@ -24,7 +28,7 @@ export function buildTranslatePrompt(targetLangCode: string): string {
   const langName = isValidTranslateLanguage(targetLangCode)
     ? TRANSLATE_LANGUAGE_NAMES[targetLangCode]
     : targetLangCode;
-  return `Translate the following text to ${langName}. Preserve the original formatting and structure. Return ONLY the translated text, no explanations.`;
+  return `Translate the following text to ${langName}. Preserve the original formatting and structure. Return ONLY the translated text, no explanations, no markdown.`;
 }
 
 export type AiProcessingOptions = {
@@ -46,7 +50,8 @@ const TASK_STRICTNESS_INSTRUCTIONS: Record<
   NonNullable<AiProcessingOptions['taskStrictness']>,
   string
 > = {
-  strict: 'Extract ONLY explicitly stated tasks. Ignore intentions, ideas, or vague plans.',
+  strict:
+    'Extract ONLY explicitly stated tasks with clear action verbs. Ignore intentions, ideas, or vague plans.',
   balanced: 'Extract explicit tasks and clearly implied actionable items. Use reasonable judgment.',
   soft: 'Extract tasks, intentions, ideas, and vague plans that could become actionable.',
 };
@@ -55,9 +60,9 @@ const OUTPUT_LANGUAGE_INSTRUCTIONS: Record<
   NonNullable<AiProcessingOptions['outputLanguage']>,
   string
 > = {
-  same: 'Write ALL text fields (summary, task titles, tags, keyPhrases, nextSteps) in the SAME language as the transcript.',
-  ru: 'Write ALL text fields (summary, task titles, tags, keyPhrases, nextSteps) in Russian, regardless of the transcript language.',
-  en: 'Write ALL text fields (summary, task titles, tags, keyPhrases, nextSteps) in English, regardless of the transcript language.',
+  same: 'Write ALL text fields (summary, suggestedTitle, task titles, tags, keyPhrases, nextSteps) in the SAME language as the transcript.',
+  ru: 'Write ALL text fields (summary, suggestedTitle, task titles, tags, keyPhrases, nextSteps) in Russian, regardless of the transcript language.',
+  en: 'Write ALL text fields (summary, suggestedTitle, task titles, tags, keyPhrases, nextSteps) in English, regardless of the transcript language.',
 };
 
 const OUTPUT_SCHEMA = `
@@ -74,7 +79,7 @@ type Output = {
 type Task = {
   title: string;
   priority: "high" | "medium" | "low";
-  deadline: string | null; // ISO 8601 (YYYY-MM-DD) or null
+  deadline: string | null;
 };
 `.trim();
 
@@ -90,7 +95,7 @@ export function buildAiProcessingPrompt(options?: AiProcessingOptions | null): s
   const today = new Date().toISOString().slice(0, 10);
 
   return `You are a structured data extractor for voice note transcripts.
-Return a single valid JSON object — no markdown, no code fences, no explanation.
+Return a single valid JSON object — no markdown, no code fences, no explanation, no trailing commas.
 
 ## LANGUAGE RULE (highest priority)
 ${languageInstruction}
@@ -103,39 +108,45 @@ ${OUTPUT_SCHEMA}
 
 ## Field Rules
 
-**summary:** ${summaryInstruction}
+**summary:** ${summaryInstruction} No bullet points or markdown — plain prose only.
 
-**suggestedTitle:** A short 3–8 word phrase that captures the essence of the note. Use for replacing default note titles. Same language as summary. Be concise and descriptive.
+**suggestedTitle:** A short 3–8 word phrase capturing the essence of the note.
+- Use title case for English, sentence case for other languages.
+- Same language as summary.
+- Do NOT use generic titles like "Voice note" or "Recording" unless the transcript is empty.
 
 **tasks:** ${taskInstruction}
-- priority: high = urgent or time-sensitive; medium = important but not urgent; low = vague or nice-to-have
-- deadline: today is ${today}. Convert natural language (e.g. "next Monday") to ISO 8601. Use null if not mentioned.
+- priority: high = urgent or time-sensitive; medium = important but not urgent; low = vague or nice-to-have.
+- deadline: today is ${today}. Convert natural language (e.g. "next Monday") to ISO 8601 (YYYY-MM-DD). If the date is unclear or not mentioned → null. Do NOT guess dates.
 
-**tags:** 2–5 lowercase tags, 1–2 words each (e.g. "meeting", "health", "finance")
+**tags:** 2–5 lowercase single or two-word tags (e.g. "meeting", "health", "finance").
+- Do NOT use generic tags like "note", "voice note", "recording", "audio", "заметка".
+- Tags must describe the topic, not the medium.
 
-**classification:**
-- personal — diary, mood, personal thoughts
-- work — job tasks, projects, colleagues
-- meeting — discussion, call, sync
-- idea — brainstorm, concept, creative
-- other — anything else
+**classification:** personal | work | meeting | idea | other.
+- If the transcript covers multiple topics, choose the dominant one.
+- personal — diary, mood, personal thoughts.
+- work — job tasks, projects, colleagues.
+- meeting — discussion, call, sync with others.
+- idea — brainstorm, concept, creative thinking.
+- other — anything that does not fit clearly.
 
-**keyPhrases:** 3–8 important terms, names, or short direct quotes from the transcript
+**keyPhrases:** 3–8 important terms, names, or short phrases (2–5 words each) from the transcript.
+- Do NOT quote long sentences. Extract terms and names only.
 
-**nextSteps:** 1–3 high-level follow-up actions prompted by the tasks.
-IMPORTANT: These are NOT a restatement of tasks.
-Write what to do to move forward, not what was said.
-Good: "Open calendar to schedule team sync"
-Bad: "Schedule team meeting" (this is just the task again)
-If no tasks exist, suggest 1 clarifying or contextual next step.
+**nextSteps:** Exactly 1–3 high-level follow-up actions prompted by the tasks.
+- These are NOT a restatement of tasks. Write what to do to move forward.
+- Good: "Open calendar to schedule team sync"
+- Bad: "Schedule team meeting" (just repeats the task)
+- If no tasks exist, suggest 1 clarifying or contextual next step.
 
-**If the transcript is too short or unclear:** return all fields with safe defaults
-(empty arrays for tasks/keyPhrases/nextSteps, short 1-sentence summary, suggestedTitle e.g. "Voice note", classification "other").
+**If the transcript is too short, unclear, or empty:** return safe defaults —
+empty arrays for tasks/keyPhrases/nextSteps/tags, 1-sentence summary, suggestedTitle = "Voice note", classification = "other".
 Never add fields outside the schema. Output must pass JSON.parse() without preprocessing.
 
 ## Examples
 
-### Example 1 — normal work transcript (Russian)
+### Example 1 — work transcript (Russian)
 
 Input:
 "Нужно срочно отправить отчёт Ивану до пятницы и запланировать встречу с командой на следующей неделе."
@@ -145,8 +156,8 @@ Output:
   "summary": "Говорящий обозначил две рабочие задачи: срочная отправка отчёта Ивану до пятницы и планирование встречи с командой на следующей неделе.",
   "suggestedTitle": "Отчёт Ивану и встреча с командой",
   "tasks": [
-    { "title": "Отправить отчёт Ивану", "priority": "high", "deadline": "2024-01-19" },
-    { "title": "Запланировать встречу с командой", "priority": "medium", "deadline": "2024-01-22" }
+    { "title": "Отправить отчёт Ивану", "priority": "high", "deadline": "${today}" },
+    { "title": "Запланировать встречу с командой", "priority": "medium", "deadline": null }
   ],
   "tags": ["отчёт", "встреча", "команда"],
   "classification": "work",
@@ -163,9 +174,28 @@ Output:
   "summary": "Говорящий выразил неопределённое намерение без конкретных деталей.",
   "suggestedTitle": "Неопределённое намерение",
   "tasks": [],
-  "tags": ["заметка"],
+  "tags": ["идея"],
   "classification": "other",
   "keyPhrases": ["что-то сделать"],
   "nextSteps": ["Уточнить, что именно требует действий"]
+}
+
+### Example 3 — idea transcript (English)
+
+Input:
+"I want to build a habit tracker app. Something simple, no accounts, just local storage. Maybe share it on Product Hunt."
+
+Output:
+{
+  "summary": "The speaker outlined an idea for a simple local-storage habit tracker app and mentioned a potential launch on Product Hunt.",
+  "suggestedTitle": "Habit Tracker App Idea",
+  "tasks": [
+    { "title": "Design habit tracker app concept", "priority": "medium", "deadline": null },
+    { "title": "Prepare Product Hunt launch", "priority": "low", "deadline": null }
+  ],
+  "tags": ["app", "productivity", "idea"],
+  "classification": "idea",
+  "keyPhrases": ["habit tracker", "local storage", "no accounts", "Product Hunt"],
+  "nextSteps": ["Sketch a basic wireframe of the app", "Research similar apps on Product Hunt"]
 }`;
 }

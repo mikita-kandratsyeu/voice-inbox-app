@@ -19,6 +19,15 @@
 		2A15FB092F6AC17400177049 /* RecordingLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FB082F6AC17400177049 /* RecordingLiveActivityManager.swift */; };
 		2A15FB0B2F6AC1A800177049 /* RecordingActivityModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FB0A2F6AC1A800177049 /* RecordingActivityModule.m */; };
 		2A15FB0D2F6AC21900177049 /* RecordingActivityModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A15FB0C2F6AC21900177049 /* RecordingActivityModule.swift */; };
+		2AADFDD52F6B33C90005C039 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A6F4CEC2F64113A00297CB8 /* WidgetKit.framework */; };
+		2AADFDD62F6B33C90005C039 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2A6F4CEE2F64113B00297CB8 /* SwiftUI.framework */; };
+		2AADFDE32F6B33CA0005C039 /* DownloadWidgetExtensionExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 2AADFDD42F6B33C80005C039 /* DownloadWidgetExtensionExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		2AADFDEA2F6BC2A50005C039 /* DownloadLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AADFDE92F6BC2A50005C039 /* DownloadLiveActivityAttributes.swift */; };
+		2AADFDEB2F6BC2A50005C039 /* DownloadLiveActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AADFDE92F6BC2A50005C039 /* DownloadLiveActivityAttributes.swift */; };
+		2AADFDED2F6BC2D10005C039 /* DownloadLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AADFDEC2F6BC2D10005C039 /* DownloadLiveActivityManager.swift */; };
+		2AADFDEE2F6BC2D10005C039 /* DownloadLiveActivityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AADFDEC2F6BC2D10005C039 /* DownloadLiveActivityManager.swift */; };
+		2AADFDF02F6BC3800005C039 /* DownloadActivityModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AADFDEF2F6BC3800005C039 /* DownloadActivityModule.swift */; };
+		2AADFDF32F6BC3B50005C039 /* DownloadActivityModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 2AADFDF22F6BC3B50005C039 /* DownloadActivityModule.m */; };
 		6AB6F3F4330AE4AFFE499295 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
@@ -37,6 +46,13 @@
 			remoteGlobalIDString = 2A15FAF02F6ABCF900177049;
 			remoteInfo = RecordingWidgetExtension;
 		};
+		2AADFDE12F6B33CA0005C039 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 83CBB9F71A601CBA00E9B192 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2AADFDD32F6B33C80005C039;
+			remoteInfo = DownloadWidgetExtensionExtension;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -46,6 +62,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
+				2AADFDE32F6B33CA0005C039 /* DownloadWidgetExtensionExtension.appex in Embed Foundation Extensions */,
 				2A15FB002F6ABCFB00177049 /* RecordingWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
@@ -69,6 +86,11 @@
 		2A15FB0C2F6AC21900177049 /* RecordingActivityModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecordingActivityModule.swift; sourceTree = "<group>"; };
 		2A6F4CEC2F64113A00297CB8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		2A6F4CEE2F64113B00297CB8 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		2AADFDD42F6B33C80005C039 /* DownloadWidgetExtensionExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DownloadWidgetExtensionExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		2AADFDE92F6BC2A50005C039 /* DownloadLiveActivityAttributes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadLiveActivityAttributes.swift; sourceTree = "<group>"; };
+		2AADFDEC2F6BC2D10005C039 /* DownloadLiveActivityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadLiveActivityManager.swift; sourceTree = "<group>"; };
+		2AADFDEF2F6BC3800005C039 /* DownloadActivityModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DownloadActivityModule.swift; sourceTree = "<group>"; };
+		2AADFDF22F6BC3B50005C039 /* DownloadActivityModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DownloadActivityModule.m; sourceTree = "<group>"; };
 		7139F58ACA70C5D9B80D95EB /* Pods-VoiceInboxApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-VoiceInboxApp.release.xcconfig"; path = "Target Support Files/Pods-VoiceInboxApp/Pods-VoiceInboxApp.release.xcconfig"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = VoiceInboxApp/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = VoiceInboxApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
@@ -91,6 +113,13 @@
 			);
 			target = 2A15FAF02F6ABCF900177049 /* RecordingWidgetExtension */;
 		};
+		2AADFDE62F6B33CA0005C039 /* Exceptions for "DownloadWidgetExtension" folder in "DownloadWidgetExtensionExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 2AADFDD32F6B33C80005C039 /* DownloadWidgetExtensionExtension */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -104,6 +133,18 @@
 			explicitFolders = (
 			);
 			path = RecordingWidget;
+			sourceTree = "<group>";
+		};
+		2AADFDD72F6B33C90005C039 /* DownloadWidgetExtension */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				2AADFDE62F6B33CA0005C039 /* Exceptions for "DownloadWidgetExtension" folder in "DownloadWidgetExtensionExtension" target */,
+			);
+			explicitFileTypes = {
+			};
+			explicitFolders = (
+			);
+			path = DownloadWidgetExtension;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -128,12 +169,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2AADFDD12F6B33C80005C039 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2AADFDD62F6B33C90005C039 /* SwiftUI.framework in Frameworks */,
+				2AADFDD52F6B33C90005C039 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		13B07FAE1A68108700A75B9A /* VoiceInboxApp */ = {
 			isa = PBXGroup;
 			children = (
+				2AADFDE82F6BC2880005C039 /* DownloadLiveActivity */,
 				2A15FB102F6ACC1400177049 /* StoreFront */,
 				2A15FB0E2F6ACA8100177049 /* LiveActivity */,
 				2A15FAEB2F69713C00177049 /* StorefrontModuleBridge.m */,
@@ -149,6 +200,7 @@
 				E1F2A3B4C5D6E7F8A9B0C1D2 /* VoiceInboxApp-Bridging-Header.h */,
 				E2F3B4C5D6E7F8A9B0C1D2E3 /* VoiceInboxApp.entitlements */,
 				2A15FB0A2F6AC1A800177049 /* RecordingActivityModule.m */,
+				2AADFDF22F6BC3B50005C039 /* DownloadActivityModule.m */,
 			);
 			name = VoiceInboxApp;
 			sourceTree = "<group>";
@@ -169,6 +221,16 @@
 				2A15FAE72F696ECD00177049 /* StorefrontModule.swift */,
 			);
 			path = StoreFront;
+			sourceTree = "<group>";
+		};
+		2AADFDE82F6BC2880005C039 /* DownloadLiveActivity */ = {
+			isa = PBXGroup;
+			children = (
+				2AADFDE92F6BC2A50005C039 /* DownloadLiveActivityAttributes.swift */,
+				2AADFDEC2F6BC2D10005C039 /* DownloadLiveActivityManager.swift */,
+				2AADFDEF2F6BC3800005C039 /* DownloadActivityModule.swift */,
+			);
+			path = DownloadLiveActivity;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
@@ -197,6 +259,7 @@
 				13B07FAE1A68108700A75B9A /* VoiceInboxApp */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				2A15FAF42F6ABCF900177049 /* RecordingWidget */,
+				2AADFDD72F6B33C90005C039 /* DownloadWidgetExtension */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
@@ -211,6 +274,7 @@
 			children = (
 				13B07F961A680F5B00A75B9A /* VoiceInboxApp.app */,
 				2A15FAF12F6ABCF900177049 /* RecordingWidgetExtension.appex */,
+				2AADFDD42F6B33C80005C039 /* DownloadWidgetExtensionExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -246,6 +310,7 @@
 			);
 			dependencies = (
 				2A15FAFF2F6ABCFB00177049 /* PBXTargetDependency */,
+				2AADFDE22F6B33CA0005C039 /* PBXTargetDependency */,
 			);
 			name = VoiceInboxApp;
 			productName = VoiceInboxApp;
@@ -272,6 +337,26 @@
 			productReference = 2A15FAF12F6ABCF900177049 /* RecordingWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
+		2AADFDD32F6B33C80005C039 /* DownloadWidgetExtensionExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2AADFDE72F6B33CA0005C039 /* Build configuration list for PBXNativeTarget "DownloadWidgetExtensionExtension" */;
+			buildPhases = (
+				2AADFDD02F6B33C80005C039 /* Sources */,
+				2AADFDD12F6B33C80005C039 /* Frameworks */,
+				2AADFDD22F6B33C80005C039 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				2AADFDD72F6B33C90005C039 /* DownloadWidgetExtension */,
+			);
+			name = DownloadWidgetExtensionExtension;
+			productName = DownloadWidgetExtensionExtension;
+			productReference = 2AADFDD42F6B33C80005C039 /* DownloadWidgetExtensionExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -286,6 +371,9 @@
 						LastSwiftMigration = 1120;
 					};
 					2A15FAF02F6ABCF900177049 = {
+						CreatedOnToolsVersion = 26.3;
+					};
+					2AADFDD32F6B33C80005C039 = {
 						CreatedOnToolsVersion = 26.3;
 					};
 				};
@@ -305,6 +393,7 @@
 			targets = (
 				13B07F861A680F5B00A75B9A /* VoiceInboxApp */,
 				2A15FAF02F6ABCF900177049 /* RecordingWidgetExtension */,
+				2AADFDD32F6B33C80005C039 /* DownloadWidgetExtensionExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -323,6 +412,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		2A15FAEF2F6ABCF900177049 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2AADFDD22F6B33C80005C039 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -445,12 +541,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				2A15FB0D2F6AC21900177049 /* RecordingActivityModule.swift in Sources */,
+				2AADFDF02F6BC3800005C039 /* DownloadActivityModule.swift in Sources */,
+				2AADFDF32F6BC3B50005C039 /* DownloadActivityModule.m in Sources */,
 				2A15FAEC2F69713C00177049 /* StorefrontModuleBridge.m in Sources */,
 				2A15FAE82F696ECD00177049 /* StorefrontModule.swift in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
 				2A15FB0B2F6AC1A800177049 /* RecordingActivityModule.m in Sources */,
 				2A15FB062F6ABEC800177049 /* RecordingAttributes.swift in Sources */,
+				2AADFDEA2F6BC2A50005C039 /* DownloadLiveActivityAttributes.swift in Sources */,
 				2A15FB092F6AC17400177049 /* RecordingLiveActivityManager.swift in Sources */,
+				2AADFDED2F6BC2D10005C039 /* DownloadLiveActivityManager.swift in Sources */,
 				A1C2E3F405060708090A0B03 /* AudioConverter.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -463,6 +563,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		2AADFDD02F6B33C80005C039 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2AADFDEE2F6BC2D10005C039 /* DownloadLiveActivityManager.swift in Sources */,
+				2AADFDEB2F6BC2A50005C039 /* DownloadLiveActivityAttributes.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -470,6 +579,11 @@
 			isa = PBXTargetDependency;
 			target = 2A15FAF02F6ABCF900177049 /* RecordingWidgetExtension */;
 			targetProxy = 2A15FAFE2F6ABCFB00177049 /* PBXContainerItemProxy */;
+		};
+		2AADFDE22F6B33CA0005C039 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2AADFDD32F6B33C80005C039 /* DownloadWidgetExtensionExtension */;
+			targetProxy = 2AADFDE12F6B33CA0005C039 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -627,6 +741,94 @@
 				MARKETING_VERSION = 1.0;
 				MTL_FAST_MATH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.mkandratsyeu.voiceinboxai.RecordingWidget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		2AADFDE42F6B33CA0005C039 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DownloadWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = DownloadWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mkandratsyeu.voiceinboxai.DownloadWidgetExtension;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		2AADFDE52F6B33CA0005C039 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = DownloadWidgetExtension/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = DownloadWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MARKETING_VERSION = 1.0;
+				MTL_FAST_MATH = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mkandratsyeu.voiceinboxai.DownloadWidgetExtension;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -846,6 +1048,15 @@
 			buildConfigurations = (
 				2A15FB032F6ABCFB00177049 /* Debug */,
 				2A15FB042F6ABCFB00177049 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2AADFDE72F6B33CA0005C039 /* Build configuration list for PBXNativeTarget "DownloadWidgetExtensionExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2AADFDE42F6B33CA0005C039 /* Debug */,
+				2AADFDE52F6B33CA0005C039 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
