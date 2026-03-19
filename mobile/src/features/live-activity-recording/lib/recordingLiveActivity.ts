@@ -4,7 +4,6 @@ import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
 import { IS_IOS } from '@/shared/lib/platform';
 
 const { RecordingActivityModule } = NativeModules;
-console.log('RecordingActivityModule ==>', RecordingActivityModule);
 
 const defaultTitle = getAutoTitle(false);
 
