@@ -34,7 +34,7 @@ struct DownloadLiveActivityView: View {
             }
 
             VStack(alignment: .leading, spacing: 3) {
-                Text("Загрузка модели Whisper")
+              Text(context.state.label)
                     .font(.headline)
                     .lineLimit(1)
 
@@ -74,7 +74,7 @@ struct DownloadWidgetLiveActivity: Widget {
                 }
                 DynamicIslandExpandedRegion(.center) {
                     VStack(alignment: .center, spacing: 3) {
-                        Text("Загрузка Whisper")
+                      Text(context.state.label)
                             .font(.headline)
                             .lineLimit(1)
 
@@ -143,12 +143,14 @@ struct SpinnerView: View {
     DownloadAttributes.ContentState(
         modelId: "whisper-base",
         progress: 0.0,
-        title: "Whisper Base (74 MB)"
+        title: "Whisper Base (74 MB)",
+        label: "Downloading Whisper"
     )
     DownloadAttributes.ContentState(
         modelId: "whisper-base",
         progress: 0.45,
-        title: "Whisper Base (74 MB)"
+        title: "Whisper Base (74 MB)",
+        label: "Downloading Whisper"
     )
 }
 
@@ -158,7 +160,8 @@ struct SpinnerView: View {
     DownloadAttributes.ContentState(
         modelId: "whisper-base",
         progress: 0.45,
-        title: "Whisper Base (74 MB)"
+        title: "Whisper Base (74 MB)",
+        label: "Downloading Whisper"
     )
 }
 
@@ -168,7 +171,8 @@ struct SpinnerView: View {
     DownloadAttributes.ContentState(
         modelId: "whisper-base",
         progress: 0.45,
-        title: "Whisper Base (74 MB)"
+        title: "Whisper Base (74 MB)",
+        label: "Downloading Whisper"
     )
 }
 
@@ -178,6 +182,7 @@ struct SpinnerView: View {
     DownloadAttributes.ContentState(
         modelId: "whisper-base",
         progress: 0.45,
-        title: "Whisper Base (74 MB)"
+        title: "Whisper Base (74 MB)",
+        label: "Downloading Whisper"
     )
 }

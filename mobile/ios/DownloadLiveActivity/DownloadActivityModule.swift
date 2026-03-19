@@ -7,11 +7,12 @@ class DownloadActivityModule: NSObject {
 
   @objc static func requiresMainQueueSetup() -> Bool { true }
 
-  @objc(start:modelId:title:resolver:rejecter:)
+  @objc(start:modelId:title:label:resolver:rejecter:)
   func start(
     sessionId: String,
     modelId: String,
     title: String,
+    label: String,
     resolver: @escaping RCTPromiseResolveBlock,
     rejecter: @escaping RCTPromiseRejectBlock
   ) {
@@ -21,17 +22,18 @@ class DownloadActivityModule: NSObject {
     }
 
     do {
-      try DownloadLiveActivityManager.shared.start(modelId: modelId, title: title)
+      try DownloadLiveActivityManager.shared.start(modelId: modelId, title: title, label: label)
       resolver(nil)
     } catch {
       rejecter("START_ERROR", error.localizedDescription, error)
     }
   }
 
-  @objc(update:title:resolver:rejecter:)
+  @objc(update:title:label:resolver:rejecter:)
   func update(
     progress: NSNumber,
     title: NSString,
+    label: NSString,
     resolver: @escaping RCTPromiseResolveBlock,
     rejecter: @escaping RCTPromiseRejectBlock
   ) {
@@ -42,7 +44,8 @@ class DownloadActivityModule: NSObject {
 
     DownloadLiveActivityManager.shared.update(
       progress: progress.doubleValue,
-      title: title as String
+      title: title as String,
+      label: label as String
     )
     resolver(nil)
   }

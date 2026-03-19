@@ -8,7 +8,7 @@ final class DownloadLiveActivityManager {
 
     private var activity: Activity<DownloadAttributes>?
 
-    func start(modelId: String, title: String) throws {
+  func start(modelId: String, title: String, label: String) throws {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         guard activity == nil else { return }
 
@@ -16,7 +16,8 @@ final class DownloadLiveActivityManager {
         let state = DownloadAttributes.ContentState(
             modelId: modelId,
             progress: 0,
-            title: title
+            title: title,
+            label: label
         )
 
         let content = ActivityContent(state: state, staleDate: nil)
@@ -28,14 +29,15 @@ final class DownloadLiveActivityManager {
         ) as Activity<DownloadAttributes>
     }
 
-    func update(progress: Double, title: String) {
+    func update(progress: Double, title: String, label: String) {
         guard let activity else { return }
 
         let currentState = activity.content.state
         let state = DownloadAttributes.ContentState(
             modelId: currentState.modelId,
             progress: min(max(progress, 0), 1),
-            title: title
+            title: title,
+            label: label
         )
 
         let content = ActivityContent(state: state, staleDate: nil)

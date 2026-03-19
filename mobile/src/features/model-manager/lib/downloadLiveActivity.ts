@@ -1,6 +1,7 @@
 import { NativeModules } from 'react-native';
 
 import { IS_IOS } from '@/shared/lib';
+import { i18n } from '@/shared/lib/i18n';
 import { getWhisperLabel } from '@/shared/lib/whisper';
 
 const { DownloadActivityModule } = NativeModules;
@@ -16,9 +17,10 @@ export const startWhisperDownloadLiveActivity = async (modelId: string): Promise
   }
 
   const title = getWhisperLabel(modelId) ?? 'Whisper model';
+  const label = i18n.t('download.whisperLabel');
   const sessionId = `whisper-${modelId}-${Date.now()}`;
 
-  return DownloadActivityModule.start(sessionId, modelId, title);
+  return DownloadActivityModule.start(sessionId, modelId, title, label);
 };
 
 export const updateWhisperDownloadLiveActivity = async (
@@ -37,7 +39,9 @@ export const updateWhisperDownloadLiveActivity = async (
   lastUpdateTime = now;
 
   const title = getWhisperLabel(modelId) ?? 'Whisper model';
-  return DownloadActivityModule.update(progress, title);
+  const label = i18n.t('download.whisperLabel');
+
+  return DownloadActivityModule.update(progress, title, label);
 };
 
 export const stopWhisperDownloadLiveActivity = async (): Promise<void> => {

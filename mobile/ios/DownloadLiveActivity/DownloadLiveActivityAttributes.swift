@@ -5,6 +5,7 @@ struct DownloadAttributes: ActivityAttributes {
         var modelId: String
         var progress: Double 
         var title: String
+        var label: String 
     }
 
     var id: String
