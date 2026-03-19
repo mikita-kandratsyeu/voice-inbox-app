@@ -284,7 +284,6 @@ export const SettingsScreen = () => {
             claimLoading={claimLoading}
             claimError={claimError}
           />
-
           <SettingsSection title={t('settings.aiProcessing')}>
             <SettingsRow
               label={t('settings.aiModel')}
