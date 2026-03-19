@@ -51,4 +51,4 @@ The project is designed as a solo‑friendly, production‑ready codebase: clean
 
 ## Privacy & terms (web)
 
-Legal pages are built from Markdown in **`web/content/`** (`privacy.*.md`, `terms.*.md`). They should match the mobile app: optional **Yandex Mobile Ads** only outside EU storefronts — see `mobile/src/features/app-storefront/lib/storefront.ts` and `useAdsAllowed`.
+Legal pages are built from Markdown in **`web/content/`** (`privacy.*.md`, `terms.*.md`). They describe **current** behavior (e.g. Yandex ads off for EU storefronts **for now**) and are tied to the “Last updated” date — revise when product or law changes. Code: `mobile/src/features/app-storefront/lib/storefront.ts`, `useAdsAllowed`.

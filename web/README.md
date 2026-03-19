@@ -16,7 +16,7 @@ The site showcases Voice Inbox AI: explains features, walks through the workflow
 - **Light & dark theme** — toggle via `next-themes`
 - **Responsive layout** — Tailwind CSS v4
 - **SEO & Open Graph** — metadata, canonical URLs, dynamic OG images
-- **Pages** — home, Privacy Policy, Terms of Service (Markdown sources in `content/` — includes disclosure of optional Yandex ads outside the EEA)
+- **Pages** — home, Privacy Policy, Terms of Service (Markdown in `content/` — Yandex ads; EEA storefronts **currently** off in app, subject to policy updates)
 - **API** — message endpoints (optional, Redis or in-memory)
 
 ---

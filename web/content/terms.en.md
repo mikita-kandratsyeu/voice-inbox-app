@@ -34,7 +34,7 @@ To the maximum extent permitted by law, we are not liable for any indirect, inci
 
 The app relies on third-party services (OpenRouter, OpenAI, Google, and others used via OpenRouter). Your use of those services is governed by their own terms and policies. We are not responsible for the actions or content of third parties.
 
-Where your app storefront region is outside the EEA, **Yandex Mobile Ads** may be used to display a banner and optional rewarded ads; these are not shown for EEA storefronts.
+*As of the “Last updated” date above*, where your app storefront region is outside the EEA, **Yandex Mobile Ads** may be used to display a banner and optional rewarded ads; for EEA storefronts these are not shown *at this time*. We may revise this with an updated policy (and any consent or controls required by law) if that changes.
 
 ## 7. Age Restrictions
 

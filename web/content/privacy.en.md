@@ -12,7 +12,7 @@ When using AI features (summaries, task extraction, Ask AI), the app sends trans
 
 The app does **not** use standalone analytics SDKs or user-behavior profiling tools for product analytics.
 
-**Advertising (App Store / Google Play storefront outside the EEA only):** If your App Store or Play Store country is **not** in the European Economic Area (EEA), the app may show ads through **Yandex Mobile Ads**: a banner on the note detail screen and an optional rewarded ad that can grant bonus AI quota. **We do not offer these advertising features** when your storefront country is in the EEA — they are disabled in the app for those regions. The ad SDK operates under Yandex’s policies; we use it only to serve ads, not for cross-app tracking or analytics on our behalf.
+**Advertising (Yandex Mobile Ads; EEA storefronts):** *As of the “Last updated” date above*, we only enable **Yandex Mobile Ads** — a banner on the note detail screen and an optional rewarded ad that can grant bonus AI quota — when your App Store or Play Store country is **outside** the European Economic Area (EEA). **For EEA storefronts, these features are currently turned off in the app.** We may change this in the future (for example, to show ads in the EEA where permitted and with any consent or controls required by law); if we do, we will update this Privacy Policy and the date at the top. The ad SDK operates under Yandex’s policies; we use it only to serve ads, not for cross-app tracking or analytics on our behalf.
 
 ## 2. Our Web API
 
