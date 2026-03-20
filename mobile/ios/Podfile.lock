@@ -1682,6 +1682,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-in-app-review (4.4.2):
+    - React-Core
   - react-native-keep-awake (4.0.0):
     - React
   - react-native-keyboard-controller (1.20.7):
@@ -2742,6 +2744,7 @@ DEPENDENCIES:
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-add-calendar-event (from `../node_modules/react-native-add-calendar-event`)
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
+  - react-native-in-app-review (from `../node_modules/react-native-in-app-review`)
   - react-native-keep-awake (from `../node_modules/react-native-keep-awake`)
   - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
   - "react-native-menu (from `../node_modules/@react-native-menu/menu`)"
@@ -2945,6 +2948,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-add-calendar-event"
   react-native-document-picker:
     :path: "../node_modules/react-native-document-picker"
+  react-native-in-app-review:
+    :path: "../node_modules/react-native-in-app-review"
   react-native-keep-awake:
     :path: "../node_modules/react-native-keep-awake"
   react-native-keyboard-controller:
@@ -3150,6 +3155,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: 3da114dcb32a85c76f305b053687644cce36cfed
   react-native-add-calendar-event: 4eb42bdf84beb58de81f6d2ce1778a7632223dfe
   react-native-document-picker: 6f0c87b994dd9cd4ea854f4c3e0718356dbc6fd8
+  react-native-in-app-review: 1516ba69d60d58053b7eb3aaaf8d2a5a74af8b57
   react-native-keep-awake: 21ff40767cde4bd81021ffee12480aee4b5b91bb
   react-native-keyboard-controller: 57b24bcb2cc595797a3fc284543a3c4b4cd3e441
   react-native-menu: bc5c44064dcffa722ea5e37c6a96a8074622d569
