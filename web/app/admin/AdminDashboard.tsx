@@ -3,6 +3,9 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import { AdminOperationsPanel } from './AdminOperationsPanel';
+import { AdminReleasesPanel } from './AdminReleasesPanel';
+import { AdminSecurityPanel } from './AdminSecurityPanel';
 import { AdminSupportPanel } from './AdminSupportPanel';
 
 type VercelDeploymentInfo = {
@@ -31,9 +34,16 @@ type UpstashStatus = {
   error?: string;
 };
 
+type DatabaseStatus = {
+  ok: boolean;
+  latencyMs?: number;
+  error?: string;
+};
+
 type StatusResponse = {
   vercel: VercelStatus;
   upstash: UpstashStatus;
+  database: DatabaseStatus;
   app: { baseUrl: string; env: string; devicesWithPush?: number };
 };
 
@@ -75,7 +85,28 @@ const BONUS_KEYS = {
   keyPrefix: 'AI_BONUS_COOLDOWN_KEY_PREFIX',
 } as const;
 
-type AdminTab = 'overview' | 'config' | 'support' | 'messaging';
+type BroadcastHistoryItem = {
+  id: string;
+  createdAt: string;
+  kind: string;
+  notifyType: string;
+  title: string | null;
+  sent: number;
+  failed: number;
+  total: number;
+  errorSample: string | null;
+  adminLogin: string;
+  deviceId: string | null;
+};
+
+type AdminTab =
+  | 'overview'
+  | 'config'
+  | 'support'
+  | 'releases'
+  | 'messaging'
+  | 'operations'
+  | 'security';
 
 export function AdminDashboard() {
   const router = useRouter();
@@ -111,6 +142,25 @@ export function AdminDashboard() {
   const [appConfigSaving, setAppConfigSaving] = useState(false);
   const [appConfigMessage, setAppConfigMessage] = useState<string | null>(null);
   const [appConfigError, setAppConfigError] = useState<string | null>(null);
+
+  const [broadcastConfirm, setBroadcastConfirm] = useState(false);
+  const [broadcastHistory, setBroadcastHistory] = useState<BroadcastHistoryItem[]>([]);
+  const [broadcastHistoryLoading, setBroadcastHistoryLoading] = useState(false);
+
+  const fetchBroadcastHistory = useCallback(async () => {
+    setBroadcastHistoryLoading(true);
+    try {
+      const res = await fetch('/api/admin/broadcast-history?limit=30', {
+        credentials: 'include',
+      });
+      const data = (await res.json()) as { ok?: boolean; items?: BroadcastHistoryItem[] };
+      setBroadcastHistory(data.ok && Array.isArray(data.items) ? data.items : []);
+    } catch {
+      setBroadcastHistory([]);
+    } finally {
+      setBroadcastHistoryLoading(false);
+    }
+  }, []);
 
   const fetchAppConfig = useCallback(async () => {
     setAppConfigLoading(true);
@@ -231,6 +281,10 @@ export function AdminDashboard() {
     fetchGithub();
   }, [fetchGithub]);
 
+  useEffect(() => {
+    if (adminTab === 'messaging') void fetchBroadcastHistory();
+  }, [adminTab, fetchBroadcastHistory]);
+
   const handleLogout = async () => {
     await fetch('/api/admin/logout', { method: 'POST', credentials: 'include' });
     router.refresh();
@@ -254,8 +308,10 @@ export function AdminDashboard() {
         }),
       });
       const data = await res.json();
-      if (res.ok) setSinglePushResult({ ok: true });
-      else setSinglePushResult({ error: (data as { error?: string }).error ?? 'Failed' });
+      if (res.ok) {
+        setSinglePushResult({ ok: true });
+        void fetchBroadcastHistory();
+      } else setSinglePushResult({ error: (data as { error?: string }).error ?? 'Failed' });
     } catch {
       setSinglePushResult({ error: 'Request failed' });
     } finally {
@@ -265,6 +321,7 @@ export function AdminDashboard() {
 
   const handleBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!broadcastConfirm) return;
     setBroadcastResult(null);
     setBroadcastLoading(true);
     try {
@@ -280,7 +337,11 @@ export function AdminDashboard() {
         }),
       });
       const data = await res.json();
-      if (res.ok) setBroadcastResult(data as BroadcastResult);
+      if (res.ok) {
+        setBroadcastResult(data as BroadcastResult);
+        setBroadcastConfirm(false);
+        void fetchBroadcastHistory();
+      }
     } finally {
       setBroadcastLoading(false);
     }
@@ -321,10 +382,31 @@ export function AdminDashboard() {
           </button>
           <button
             type="button"
+            onClick={() => setAdminTab('releases')}
+            className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${tabClass('releases')}`}
+          >
+            Release notes
+          </button>
+          <button
+            type="button"
             onClick={() => setAdminTab('messaging')}
             className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${tabClass('messaging')}`}
           >
             Push &amp; broadcast
+          </button>
+          <button
+            type="button"
+            onClick={() => setAdminTab('operations')}
+            className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${tabClass('operations')}`}
+          >
+            Operations
+          </button>
+          <button
+            type="button"
+            onClick={() => setAdminTab('security')}
+            className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${tabClass('security')}`}
+          >
+            Security
           </button>
         </nav>
       </aside>
@@ -348,7 +430,17 @@ export function AdminDashboard() {
             </button>
           </div>
           <div className="mx-auto mt-4 flex max-w-6xl gap-2 overflow-x-auto pb-1 md:hidden">
-            {(['overview', 'config', 'support', 'messaging'] as const).map((t) => (
+            {(
+              [
+                'overview',
+                'config',
+                'support',
+                'releases',
+                'messaging',
+                'operations',
+                'security',
+              ] as const
+            ).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -365,7 +457,13 @@ export function AdminDashboard() {
                     ? 'Config'
                     : t === 'support'
                       ? 'Support'
-                      : 'Push'}
+                      : t === 'releases'
+                        ? 'Releases'
+                        : t === 'messaging'
+                          ? 'Push'
+                          : t === 'operations'
+                            ? 'Ops'
+                            : 'Security'}
               </button>
             ))}
           </div>
@@ -389,6 +487,86 @@ export function AdminDashboard() {
                 >
                   Refresh GitHub
                 </button>
+              </div>
+
+              <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3 lg:gap-6">
+                <section className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                  <h2 className="border-b border-zinc-200 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
+                    Postgres
+                  </h2>
+                  <div className="p-4">
+                    {statusLoading ? (
+                      <p className="text-sm text-zinc-500">Loading…</p>
+                    ) : status?.database?.ok ? (
+                      <div className="space-y-1 text-sm">
+                        <p className="inline-flex items-center gap-2 font-medium text-green-600 dark:text-green-400">
+                          <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden />
+                          Connected
+                        </p>
+                        {typeof status.database?.latencyMs === 'number' && (
+                          <p className="text-xs text-zinc-500">
+                            Ping {status.database.latencyMs} ms
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-red-600 dark:text-red-400">
+                        {status?.database?.error ?? 'Unavailable'}
+                      </p>
+                    )}
+                  </div>
+                </section>
+
+                <section className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                  <h2 className="border-b border-zinc-200 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
+                    Upstash
+                  </h2>
+                  <div className="p-4">
+                    {statusLoading ? (
+                      <p className="text-sm text-zinc-500">Loading…</p>
+                    ) : status?.upstash.ok ? (
+                      <p className="inline-flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
+                        <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden />
+                        Connected
+                      </p>
+                    ) : (
+                      <p className="text-sm text-red-600 dark:text-red-400">
+                        {status?.upstash.error ?? 'Disconnected'}
+                      </p>
+                    )}
+                  </div>
+                </section>
+
+                <section className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                  <h2 className="border-b border-zinc-200 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
+                    App
+                  </h2>
+                  <div className="p-4">
+                    {statusLoading ? (
+                      <p className="text-sm text-zinc-500">Loading…</p>
+                    ) : status ? (
+                      <dl className="space-y-1.5 text-sm">
+                        <div>
+                          <dt className="text-xs font-medium text-zinc-400">URL</dt>
+                          <dd className="text-zinc-700 dark:text-zinc-300">
+                            {status.app.baseUrl || '—'}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs font-medium text-zinc-400">Env · Push devices</dt>
+                          <dd className="text-zinc-700 dark:text-zinc-300">
+                            {status.app.env}
+                            {typeof status.app.devicesWithPush === 'number' && (
+                              <> · {status.app.devicesWithPush}</>
+                            )}
+                          </dd>
+                        </div>
+                      </dl>
+                    ) : (
+                      <p className="text-sm text-zinc-500">Failed to load</p>
+                    )}
+                  </div>
+                </section>
               </div>
 
               <div className="mb-8 space-y-4 lg:space-y-6">
@@ -528,62 +706,6 @@ export function AdminDashboard() {
                     </div>
                   </section>
                 </div>
-
-                {/* Ряд: Upstash и App */}
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-6">
-                  <section className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-                    <h2 className="border-b border-zinc-200 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
-                      Upstash
-                    </h2>
-                    <div className="p-4">
-                      {statusLoading ? (
-                        <p className="text-sm text-zinc-500">Loading…</p>
-                      ) : status?.upstash.ok ? (
-                        <p className="inline-flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
-                          <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden />
-                          Connected
-                        </p>
-                      ) : (
-                        <p className="text-sm text-red-600 dark:text-red-400">
-                          {status?.upstash.error ?? 'Disconnected'}
-                        </p>
-                      )}
-                    </div>
-                  </section>
-
-                  <section className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-                    <h2 className="border-b border-zinc-200 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
-                      App
-                    </h2>
-                    <div className="p-4">
-                      {statusLoading ? (
-                        <p className="text-sm text-zinc-500">Loading…</p>
-                      ) : status ? (
-                        <dl className="space-y-1.5 text-sm">
-                          <div>
-                            <dt className="text-xs font-medium text-zinc-400">URL</dt>
-                            <dd className="text-zinc-700 dark:text-zinc-300">
-                              {status.app.baseUrl || '—'}
-                            </dd>
-                          </div>
-                          <div>
-                            <dt className="text-xs font-medium text-zinc-400">
-                              Env · Push devices
-                            </dt>
-                            <dd className="text-zinc-700 dark:text-zinc-300">
-                              {status.app.env}
-                              {typeof status.app.devicesWithPush === 'number' && (
-                                <> · {status.app.devicesWithPush}</>
-                              )}
-                            </dd>
-                          </div>
-                        </dl>
-                      ) : (
-                        <p className="text-sm text-zinc-500">Failed to load</p>
-                      )}
-                    </div>
-                  </section>
-                </div>
               </div>
             </>
           )}
@@ -694,6 +816,12 @@ export function AdminDashboard() {
           )}
 
           {adminTab === 'support' && <AdminSupportPanel />}
+
+          {adminTab === 'releases' && <AdminReleasesPanel />}
+
+          {adminTab === 'operations' && <AdminOperationsPanel />}
+
+          {adminTab === 'security' && <AdminSecurityPanel />}
 
           {adminTab === 'messaging' && (
             <>
@@ -859,10 +987,65 @@ export function AdminDashboard() {
                       />
                     </div>
                   )}
+                  <div className="xl:col-span-2 rounded-lg border border-dashed border-zinc-200 bg-zinc-50/90 p-4 dark:border-zinc-600 dark:bg-zinc-900/50">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
+                      Preview
+                    </p>
+                    <dl className="mt-2 space-y-1 text-sm text-zinc-700 dark:text-zinc-300">
+                      <div>
+                        <dt className="inline text-zinc-500">Type · </dt>
+                        <dd className="inline font-mono text-xs">{broadcastType}</dd>
+                      </div>
+                      {broadcastTitle ? (
+                        <div>
+                          <dt className="text-zinc-500">Title</dt>
+                          <dd>{broadcastTitle}</dd>
+                        </div>
+                      ) : null}
+                      {broadcastBody ? (
+                        <div>
+                          <dt className="text-zinc-500">Body</dt>
+                          <dd className="whitespace-pre-wrap">{broadcastBody}</dd>
+                        </div>
+                      ) : null}
+                      {broadcastType === 'policy_update' && broadcastMessage ? (
+                        <div>
+                          <dt className="text-zinc-500">Message</dt>
+                          <dd className="whitespace-pre-wrap font-mono text-xs">
+                            {broadcastMessage}
+                          </dd>
+                        </div>
+                      ) : null}
+                      <div>
+                        <dt className="inline text-zinc-500">Recipients · </dt>
+                        <dd className="inline">
+                          {statusLoading
+                            ? '…'
+                            : typeof status?.app.devicesWithPush === 'number'
+                              ? `${status.app.devicesWithPush} devices (last status refresh)`
+                              : '—'}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                  <div className="xl:col-span-2">
+                    <label className="flex cursor-pointer items-start gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+                      <input
+                        type="checkbox"
+                        checked={broadcastConfirm}
+                        onChange={(e) => setBroadcastConfirm(e.target.checked)}
+                        className="mt-1 rounded border-zinc-300"
+                      />
+                      <span>
+                        I confirm sending this broadcast to all registered push devices (see
+                        recipient count above).
+                      </span>
+                    </label>
+                  </div>
                   <div className="xl:col-span-2">
                     <button
                       type="submit"
-                      disabled={broadcastLoading}
+                      disabled={broadcastLoading || !broadcastConfirm}
                       className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
                     >
                       {broadcastLoading ? 'Sending…' : 'Send to all devices'}
@@ -875,6 +1058,58 @@ export function AdminDashboard() {
                     {broadcastResult.total}
                   </p>
                 )}
+                <div className="mt-8 border-t border-zinc-100 pt-6 dark:border-zinc-700">
+                  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                      Recent push / broadcast log
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => void fetchBroadcastHistory()}
+                      className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      Refresh
+                    </button>
+                  </div>
+                  {broadcastHistoryLoading && broadcastHistory.length === 0 ? (
+                    <p className="text-sm text-zinc-500">Loading…</p>
+                  ) : broadcastHistory.length === 0 ? (
+                    <p className="text-sm text-zinc-500">No entries yet.</p>
+                  ) : (
+                    <ul className="max-h-64 space-y-2 overflow-y-auto text-xs">
+                      {broadcastHistory.map((h) => (
+                        <li
+                          key={h.id}
+                          className="rounded border border-zinc-100 bg-zinc-50/80 p-2 dark:border-zinc-700 dark:bg-zinc-900/40"
+                        >
+                          <div className="flex flex-wrap gap-x-2 gap-y-1 text-zinc-500">
+                            <span>{new Date(h.createdAt).toLocaleString()}</span>
+                            <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                              {h.kind}
+                            </span>
+                            <span className="font-mono">{h.notifyType}</span>
+                            <span>{h.adminLogin}</span>
+                          </div>
+                          <p className="mt-1 text-zinc-600 dark:text-zinc-400">
+                            sent {h.sent} · failed {h.failed} · total {h.total}
+                            {h.deviceId && (
+                              <>
+                                {' '}
+                                · device <span className="font-mono">{h.deviceId}</span>
+                              </>
+                            )}
+                          </p>
+                          {h.title && (
+                            <p className="mt-0.5 text-zinc-700 dark:text-zinc-300">{h.title}</p>
+                          )}
+                          {h.errorSample && (
+                            <p className="mt-1 text-red-600 dark:text-red-400">{h.errorSample}</p>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </section>
             </>
           )}

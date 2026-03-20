@@ -25,6 +25,7 @@ function toBroadcastInput(body: BroadcastBody): BroadcastInput {
 }
 
 export const POST = async (request: Request): Promise<NextResponse> => {
+  const path = new URL(request.url).pathname;
   const authError = await requireAppAuth();
   if (authError) return authError;
 
@@ -34,7 +35,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const body = await parseJsonBody<BroadcastBody>(request);
 
   if (!body) {
-    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST);
+    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   const result = await runBroadcast(toBroadcastInput(body));

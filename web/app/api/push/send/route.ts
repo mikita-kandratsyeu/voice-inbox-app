@@ -29,6 +29,7 @@ const VALID_TYPES: PushPayload['type'][] = [
 ];
 
 export const POST = async (request: Request): Promise<NextResponse> => {
+  const path = new URL(request.url).pathname;
   const authError = await requireAppAuth();
   if (authError) return authError;
 
@@ -37,7 +38,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const body = await parseJsonBody<SendPushBody>(request);
   if (!body) {
-    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST);
+    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   const deviceId =
@@ -46,7 +47,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       : request.headers.get(HEADER_DEVICE_ID)?.trim();
   const deviceIdError = validateDeviceId(deviceId);
   if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST);
+    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
   const deviceIdTrimmed = deviceId!;
 
@@ -56,7 +57,9 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const data = await getPushTokenWithLocale(deviceIdTrimmed);
   if (!data) {
     console.warn('[Push] send: no token for deviceId', deviceIdTrimmed);
-    return apiError('Device not registered for push notifications', HttpStatus.NOT_FOUND);
+    return apiError('Device not registered for push notifications', HttpStatus.NOT_FOUND, {
+      pathname: path,
+    });
   }
 
   const type =
@@ -77,7 +80,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   if (!sent) {
     console.warn('[Push] send: failed', { deviceId, type: payload.type });
-    return apiError('Failed to send push notification', HttpStatus.BAD_REQUEST);
+    return apiError('Failed to send push notification', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   console.log('[Push] send: ok', { deviceId, type: payload.type });

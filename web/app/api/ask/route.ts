@@ -24,6 +24,7 @@ type CreateAskBody = {
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
+  const path = new URL(request.url).pathname;
   const authError = await requireAppAuth();
   if (authError) return authError;
 
@@ -33,7 +34,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const deviceId = request.headers.get(HEADER_DEVICE_ID);
   const deviceIdError = validateDeviceId(deviceId);
   if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST);
+    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
   const deviceIdTrimmed = deviceId!.trim();
 
@@ -43,7 +44,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const body = await parseJsonBody<CreateAskBody>(request);
 
   if (!body) {
-    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST);
+    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   const validationError = validateRequiredStrings([
@@ -53,7 +54,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     { value: body.model, name: 'model' },
   ]);
   if (validationError) {
-    return apiError(validationError, HttpStatus.BAD_REQUEST);
+    return apiError(validationError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   const { id, transcript, question, model, summary, tasks } = body as {
@@ -67,7 +68,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const modelError = validateAllowedModel(model);
   if (modelError) {
-    return apiError(modelError, HttpStatus.BAD_REQUEST);
+    return apiError(modelError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   const summaryStr =
@@ -110,7 +111,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   }
 
   if (!result.created) {
-    return apiError('Ask with this id already exists', HttpStatus.CONFLICT);
+    return apiError('Ask with this id already exists', HttpStatus.CONFLICT, { pathname: path });
   }
 
   const response = NextResponse.json({

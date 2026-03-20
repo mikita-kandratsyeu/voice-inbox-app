@@ -16,23 +16,71 @@ model AdminUser {
   updatedAt    DateTime @updatedAt
 }
 
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  createdAt  DateTime @default(now())
+  adminId    String
+  adminLogin String
+  action     String
+  metadata   Json?
+
+  @@index([createdAt(sort: Desc)])
+}
+
+model BroadcastHistory {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  kind           String
+  notifyType     String
+  title          String?
+  bodyPreview    String?  @db.Text
+  messagePreview String?  @db.Text
+  sent           Int
+  failed         Int
+  total          Int
+  errorSample    String?  @db.Text
+  adminId        String
+  adminLogin     String
+  deviceId       String?
+
+  @@index([createdAt(sort: Desc)])
+}
+
 model AppConfig {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
 }
 
+model ReleasePost {
+  id          String    @id @default(cuid())
+  locale      String
+  slug        String
+  title       String
+  version     String?
+  summary     String?   @db.Text
+  body        String    @db.Text
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([locale, slug])
+  @@index([locale, published, publishedAt(sort: Desc)])
+}
+
 model SupportIssue {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   deviceId     String
   email        String?
   subject      String?
-  message      String   @db.Text
+  message      String    @db.Text
   diagnostics  Json
-  appLogs      String?  @db.Text
-  status       String   @default("open")
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  appLogs      String?   @db.Text
+  status       String    @default("open")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  closedAt     DateTime?
 
   @@index([deviceId])
   @@index([createdAt(sort: Desc)])

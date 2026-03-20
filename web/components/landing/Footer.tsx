@@ -24,7 +24,13 @@ export function Footer(): React.ReactElement {
             />
             <span className="text-xl font-bold text-black dark:text-white">Voice Inbox AI</span>
           </Link>
-          <div className="flex gap-8">
+          <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
+            <Link
+              href="/releases"
+              className="font-medium text-black/70 transition-opacity hover:opacity-100 dark:text-white/70"
+            >
+              {t('releases')}
+            </Link>
             <Link
               href="/privacy"
               className="font-medium text-black/70 transition-opacity hover:opacity-100 dark:text-white/70"

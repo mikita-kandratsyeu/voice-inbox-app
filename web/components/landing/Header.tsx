@@ -25,7 +25,13 @@ export function Header(): React.ReactElement {
           />
           <span className="text-xl font-bold text-black dark:text-white">{t('appName')}</span>
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link
+            href="/releases"
+            className="inline-flex h-11 min-h-[44px] items-center rounded-lg border border-black/10 bg-black/5 px-4 text-base font-medium leading-none text-black transition-opacity hover:opacity-90 dark:border-white/10 dark:bg-white/5 dark:text-white"
+          >
+            {t('releases')}
+          </Link>
           <LanguageSwitcher />
           <ThemeToggle />
         </div>

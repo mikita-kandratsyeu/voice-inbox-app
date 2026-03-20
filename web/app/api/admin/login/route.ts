@@ -2,10 +2,9 @@ import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
 
 import { ADMIN_COOKIE_NAME } from '@/config/constants';
+import { getAdminCookieMaxAgeSeconds } from '@/lib/admin-cookie-max-age';
 import { signAdminSessionToken } from '@/lib/admin-jwt';
 import { prisma } from '@/lib/prisma';
-
-const COOKIE_MAX_AGE = 60 * 60 * 24; // 24 hours
 
 function cookieOptions() {
   return {
@@ -13,7 +12,7 @@ function cookieOptions() {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax' as const,
     path: '/',
-    maxAge: COOKIE_MAX_AGE,
+    maxAge: getAdminCookieMaxAgeSeconds(),
   };
 }
 

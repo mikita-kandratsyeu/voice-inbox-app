@@ -3,6 +3,8 @@ import {
   AI_BONUS_COOLDOWN_KEY_PREFIX,
   AI_BONUS_COOLDOWN_SECONDS,
 } from '@/config/constants';
+import { writeAdminAudit } from '@/lib/admin-audit';
+import { getAdminSession } from '@/lib/admin-session';
 import { BONUS_APP_CONFIG_KEYS, getBonusConfig } from '@/lib/app-config';
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
@@ -61,6 +63,11 @@ export async function PUT(request: Request): Promise<NextResponse> {
       { ok: false, error: 'DATABASE_URL is not configured' },
       { status: 503 },
     );
+  }
+
+  const admin = await getAdminSession();
+  if (!admin) {
+    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
   }
 
   let body: PutBody;
@@ -146,6 +153,10 @@ export async function PUT(request: Request): Promise<NextResponse> {
   const rows = await prisma.appConfig.findMany({ where: { key: { in: ALL_KEYS } } });
   const fromDb = Object.fromEntries(rows.map((r) => [r.key, r.value])) as Record<string, string>;
   const values = { ...DEFAULT_VALUES, ...fromDb };
+
+  await writeAdminAudit(admin, 'app_config.update', {
+    keys: updates.map((u) => u.key),
+  });
 
   return NextResponse.json({ ok: true, values, effective });
 }

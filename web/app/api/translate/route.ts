@@ -19,6 +19,7 @@ type TranslateBody = {
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
+  const path = new URL(request.url).pathname;
   const authError = await requireAppAuth();
   if (authError) return authError;
 
@@ -28,7 +29,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const deviceId = request.headers.get(HEADER_DEVICE_ID);
   const deviceIdError = validateDeviceId(deviceId);
   if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST);
+    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
   const deviceIdTrimmed = deviceId!.trim();
 
@@ -38,7 +39,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const body = await parseJsonBody<TranslateBody>(request);
 
   if (!body) {
-    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST);
+    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   const validationError = validateRequiredStrings([
@@ -46,7 +47,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     { value: body.targetLanguage, name: 'targetLanguage' },
   ]);
   if (validationError) {
-    return apiError(validationError, HttpStatus.BAD_REQUEST);
+    return apiError(validationError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   const { transcript, targetLanguage } = body as {
@@ -55,7 +56,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   };
 
   if (!isValidTranslateLanguage(targetLanguage)) {
-    return apiError('Invalid targetLanguage', HttpStatus.BAD_REQUEST);
+    return apiError('Invalid targetLanguage', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   const result = await translateTranscript(transcript, targetLanguage, deviceIdTrimmed);
@@ -78,7 +79,9 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   }
 
   if (!result.ok) {
-    return apiError('error' in result ? result.error : 'Translation failed', 500);
+    return apiError('error' in result ? result.error : 'Translation failed', 500, {
+      pathname: path,
+    });
   }
 
   return NextResponse.json({ translatedText: result.translatedText });

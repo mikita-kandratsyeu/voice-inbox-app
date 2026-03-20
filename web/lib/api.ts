@@ -11,6 +11,7 @@ import {
   SUPPORT_RATE_LIMIT_MAX_REQUESTS,
   SUPPORT_RATE_LIMIT_WINDOW_SECONDS,
 } from '@/config/constants';
+import { recordApiError } from '@/lib/api-telemetry';
 import { verifyAppToken } from '@/lib/jwt';
 import { redis } from '@/lib/redis';
 
@@ -83,7 +84,14 @@ export async function checkSupportRateLimit(deviceId: string): Promise<NextRespo
   return null;
 }
 
-export function apiError(message: string, status: number = HttpStatus.BAD_REQUEST) {
+export function apiError(
+  message: string,
+  status: number = HttpStatus.BAD_REQUEST,
+  opts?: { pathname?: string },
+) {
+  if (opts?.pathname && status >= 400) {
+    void recordApiError(opts.pathname, status);
+  }
   return NextResponse.json({ error: message }, { status });
 }
 

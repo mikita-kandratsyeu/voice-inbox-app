@@ -1,14 +1,16 @@
 import type { MetadataRoute } from 'next';
 
 import { BASE_URL_OR_FALLBACK } from '@/config/constants';
+import { allPublishedReleasePaths } from '@/lib/releases';
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = BASE_URL_OR_FALLBACK;
 
   const routes = [
     { path: '', priority: 1 },
     { path: '/privacy', priority: 0.8 },
     { path: '/terms', priority: 0.8 },
+    { path: '/releases', priority: 0.75 },
   ];
 
   const locales = [{ prefix: '' }, { prefix: '/ru' }];
@@ -25,6 +27,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
         priority,
       });
     }
+  }
+
+  const releasePaths = await allPublishedReleasePaths();
+  for (const { locale, slug } of releasePaths) {
+    const prefix = locale === 'en' ? '' : `/${locale}`;
+    entries.push({
+      url: `${baseUrl}${prefix}/releases/${slug}`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.72,
+    });
   }
 
   return entries;

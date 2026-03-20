@@ -112,3 +112,5 @@ export const config = {
     '/api/admin/:path*',
   ],
 };
+
+export { proxy as middleware };

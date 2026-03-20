@@ -54,10 +54,21 @@
   "footer": {
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
+    "releases": "Release notes",
     "copyright": "© {year} Voice Inbox AI. All rights reserved."
   },
   "header": {
-    "appName": "Voice Inbox AI"
+    "appName": "Voice Inbox AI",
+    "releases": "Release notes"
+  },
+  "releases": {
+    "pageTitle": "Release notes",
+    "pageSubtitle": "What's new in Voice Inbox AI",
+    "empty": "No releases published yet.",
+    "readMore": "Read more",
+    "backToList": "← All releases",
+    "backHome": "← Back to home",
+    "version": "Version"
   },
   "metadata": {
     "title": "Voice Inbox AI — AI-Powered Voice Notes",
@@ -65,6 +76,8 @@
     "privacyTitle": "Privacy Policy — Voice Inbox AI",
     "privacyDescription": "How Voice Inbox AI handles your data: local storage, optional AI processing, and our commitment to privacy.",
     "termsTitle": "Terms of Service — Voice Inbox AI",
-    "termsDescription": "Terms governing your use of the Voice Inbox AI mobile app and related services."
+    "termsDescription": "Terms governing your use of the Voice Inbox AI mobile app and related services.",
+    "releasesListTitle": "Release notes — Voice Inbox AI",
+    "releasesListDescription": "Changelog and updates for the Voice Inbox AI app on iOS and Android."
   }
 }

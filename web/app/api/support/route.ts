@@ -32,8 +32,9 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
+  const path = new URL(request.url).pathname;
   if (!process.env.DATABASE_URL?.trim()) {
-    return apiError('Support is not available', 503);
+    return apiError('Support is not available', 503, { pathname: path });
   }
 
   const authError = await requireAppAuth();
@@ -45,7 +46,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   const deviceId = request.headers.get(HEADER_DEVICE_ID);
   const deviceIdError = validateDeviceId(deviceId);
   if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST);
+    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
   const deviceIdTrimmed = deviceId!.trim();
 
@@ -54,22 +55,26 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const body = await parseJsonBody<SupportBody>(request);
   if (!body) {
-    return apiError('Invalid JSON', HttpStatus.BAD_REQUEST);
+    return apiError('Invalid JSON', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   const message = typeof body.message === 'string' ? body.message.trim() : '';
   if (message.length < MESSAGE_MIN) {
-    return apiError(`message must be at least ${MESSAGE_MIN} characters`, HttpStatus.BAD_REQUEST);
+    return apiError(`message must be at least ${MESSAGE_MIN} characters`, HttpStatus.BAD_REQUEST, {
+      pathname: path,
+    });
   }
   if (message.length > MESSAGE_MAX) {
-    return apiError(`message is too long (max ${MESSAGE_MAX})`, HttpStatus.BAD_REQUEST);
+    return apiError(`message is too long (max ${MESSAGE_MAX})`, HttpStatus.BAD_REQUEST, {
+      pathname: path,
+    });
   }
 
   let email: string | null = null;
   if (body.email !== undefined && body.email !== null && String(body.email).trim() !== '') {
     const e = String(body.email).trim();
     if (e.length > 254 || !EMAIL_RE.test(e)) {
-      return apiError('Invalid email', HttpStatus.BAD_REQUEST);
+      return apiError('Invalid email', HttpStatus.BAD_REQUEST, { pathname: path });
     }
     email = e;
   }
@@ -78,7 +83,9 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (typeof body.subject === 'string' && body.subject.trim()) {
     const s = body.subject.trim();
     if (s.length > SUBJECT_MAX) {
-      return apiError(`subject is too long (max ${SUBJECT_MAX})`, HttpStatus.BAD_REQUEST);
+      return apiError(`subject is too long (max ${SUBJECT_MAX})`, HttpStatus.BAD_REQUEST, {
+        pathname: path,
+      });
     }
     subject = s;
   }
@@ -87,19 +94,21 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (typeof body.appLogs === 'string' && body.appLogs.trim()) {
     const l = body.appLogs.trim();
     if (l.length > APP_LOGS_MAX) {
-      return apiError('appLogs is too long', HttpStatus.BAD_REQUEST);
+      return apiError('appLogs is too long', HttpStatus.BAD_REQUEST, { pathname: path });
     }
     appLogs = l;
   }
 
   if (!isPlainObject(body.diagnostics)) {
-    return apiError('diagnostics must be a JSON object', HttpStatus.BAD_REQUEST);
+    return apiError('diagnostics must be a JSON object', HttpStatus.BAD_REQUEST, {
+      pathname: path,
+    });
   }
 
   const diagnostics = body.diagnostics as Record<string, unknown>;
   const diagStr = JSON.stringify(diagnostics);
   if (diagStr.length > 100_000) {
-    return apiError('diagnostics payload is too large', HttpStatus.BAD_REQUEST);
+    return apiError('diagnostics payload is too large', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   try {
@@ -116,6 +125,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: true, id: row.id });
   } catch (e) {
     console.error('[support POST]', e);
-    return apiError('Failed to save request', 503);
+    return apiError('Failed to save request', 503, { pathname: path });
   }
 }

@@ -27,9 +27,16 @@ export function AdminSupportPanel() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'closed'>('open');
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [patching, setPatching] = useState<string | null>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search.trim()), 400);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const fetchPage = useCallback(
     async (append: boolean, cursorForNext: string | null) => {
@@ -37,6 +44,7 @@ export function AdminSupportPanel() {
       setError(null);
       try {
         const params = new URLSearchParams({ limit: '25', status: statusFilter });
+        if (debouncedSearch) params.set('q', debouncedSearch);
         if (append && cursorForNext) params.set('cursor', cursorForNext);
         const res = await fetch(`/api/admin/support?${params}`, { credentials: 'include' });
         const data = (await res.json()) as ListResponse;
@@ -52,7 +60,7 @@ export function AdminSupportPanel() {
         setLoading(false);
       }
     },
-    [statusFilter],
+    [statusFilter, debouncedSearch],
   );
 
   useEffect(() => {
@@ -96,7 +104,19 @@ export function AdminSupportPanel() {
             Messages from the in-app form (device diagnostics attached).
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+          <label className="sr-only" htmlFor="support-search">
+            Search
+          </label>
+          <input
+            id="support-search"
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search device, email, subject, message…"
+            autoComplete="off"
+            className="min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500 sm:min-w-[220px] sm:max-w-md"
+          />
           <label className="sr-only" htmlFor="support-filter">
             Status
           </label>
@@ -132,7 +152,7 @@ export function AdminSupportPanel() {
         <p className="text-sm text-zinc-500">Loading…</p>
       ) : items.length === 0 ? (
         <p className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-400">
-          No requests for this filter.
+          {debouncedSearch ? 'No requests match this search.' : 'No requests for this filter.'}
         </p>
       ) : (
         <ul className="space-y-3">

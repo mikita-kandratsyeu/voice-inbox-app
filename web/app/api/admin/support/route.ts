@@ -1,5 +1,9 @@
-import { prisma } from '@/lib/prisma';
+import { Prisma } from '@prisma/client';
 import { NextResponse } from 'next/server';
+
+import { writeAdminAudit } from '@/lib/admin-audit';
+import { getAdminSession } from '@/lib/admin-session';
+import { prisma } from '@/lib/prisma';
 
 const STATUSES = ['open', 'closed'] as const;
 type IssueStatus = (typeof STATUSES)[number];
@@ -17,9 +21,25 @@ export async function GET(request: Request): Promise<NextResponse> {
   const take = Math.min(Math.max(Number(searchParams.get('limit')) || 25, 1), 100);
   const cursor = searchParams.get('cursor')?.trim() || null;
   const statusFilter = searchParams.get('status')?.trim() || 'all';
+  const qRaw = searchParams.get('q')?.trim() ?? '';
+  const q = qRaw.length > 200 ? qRaw.slice(0, 200) : qRaw;
 
-  const where =
+  const statusWhere =
     statusFilter !== 'all' && isIssueStatus(statusFilter) ? { status: statusFilter } : {};
+
+  const searchWhere: Prisma.SupportIssueWhereInput | undefined = q
+    ? {
+        OR: [
+          { deviceId: { contains: q, mode: 'insensitive' } },
+          { email: { contains: q, mode: 'insensitive' } },
+          { subject: { contains: q, mode: 'insensitive' } },
+          { message: { contains: q, mode: 'insensitive' } },
+        ],
+      }
+    : undefined;
+
+  const where: Prisma.SupportIssueWhereInput =
+    searchWhere !== undefined ? { ...statusWhere, ...searchWhere } : statusWhere;
 
   try {
     const raw = await prisma.supportIssue.findMany({
@@ -46,6 +66,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         status: r.status,
         createdAt: r.createdAt.toISOString(),
         updatedAt: r.updatedAt.toISOString(),
+        closedAt: r.closedAt?.toISOString() ?? null,
       })),
       nextCursor,
     });
@@ -60,6 +81,11 @@ type PatchBody = { id?: unknown; status?: unknown };
 export async function PATCH(request: Request): Promise<NextResponse> {
   if (!process.env.DATABASE_URL?.trim()) {
     return NextResponse.json({ ok: false, error: 'Database not configured' }, { status: 503 });
+  }
+
+  const admin = await getAdminSession();
+  if (!admin) {
+    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
   }
 
   let body: PatchBody;
@@ -82,11 +108,16 @@ export async function PATCH(request: Request): Promise<NextResponse> {
     );
   }
 
+  const now = new Date();
   try {
     await prisma.supportIssue.update({
       where: { id },
-      data: { status: st },
+      data: {
+        status: st,
+        closedAt: st === 'closed' ? now : null,
+      },
     });
+    await writeAdminAudit(admin, 'support.status', { issueId: id, status: st });
     return NextResponse.json({ ok: true });
   } catch {
     return NextResponse.json({ ok: false, error: 'Not found or update failed' }, { status: 404 });

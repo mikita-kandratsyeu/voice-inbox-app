@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { BASE_URL_OR_FALLBACK } from '@/config/constants';
 import { getAllDeviceIdsWithPushTokens } from '@/lib/push-tokens';
+import { prisma } from '@/lib/prisma';
 import { redis } from '@/lib/redis';
 
 type VercelDeployment = {
@@ -88,6 +89,24 @@ async function getVercelStatus(): Promise<{
   }
 }
 
+async function getDatabaseStatus(): Promise<{
+  ok: boolean;
+  latencyMs?: number;
+  error?: string;
+}> {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return { ok: false, error: 'DATABASE_URL not set' };
+  }
+  const started = Date.now();
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    return { ok: true, latencyMs: Date.now() - started };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Query failed';
+    return { ok: false, error: msg };
+  }
+}
+
 async function getUpstashStatus(): Promise<{ ok: boolean; error?: string }> {
   if (
     !process.env.UPSTASH_REDIS_REST_URL?.trim() ||
@@ -109,15 +128,17 @@ async function getUpstashStatus(): Promise<{ ok: boolean; error?: string }> {
 }
 
 export async function GET(): Promise<NextResponse> {
-  const [vercel, upstash, deviceIds] = await Promise.all([
+  const [vercel, upstash, database, deviceIds] = await Promise.all([
     getVercelStatus(),
     getUpstashStatus(),
+    getDatabaseStatus(),
     getAllDeviceIdsWithPushTokens(),
   ]);
 
   return NextResponse.json({
     vercel,
     upstash,
+    database,
     app: {
       baseUrl: BASE_URL_OR_FALLBACK,
       env: process.env.NODE_ENV,

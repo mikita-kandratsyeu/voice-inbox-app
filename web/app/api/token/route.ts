@@ -9,13 +9,14 @@ const TOKEN_RATE_LIMIT_WINDOW_SECONDS = 60;
 const TOKEN_RATE_LIMIT_MAX_REQUESTS = 20;
 
 export async function POST(request: Request): Promise<NextResponse> {
+  const path = new URL(request.url).pathname;
   const authError = requireAppSecretForToken(request);
   if (authError) return authError;
 
   const deviceId = request.headers.get(HEADER_DEVICE_ID);
   const deviceIdError = validateDeviceId(deviceId);
   if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST);
+    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
   const deviceIdTrimmed = deviceId!.trim();
 
@@ -44,6 +45,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (process.env.NODE_ENV === 'development' && err instanceof Error) {
       console.error('[token] sign error', err.message);
     }
-    return apiError('Server misconfiguration', 500);
+    return apiError('Server misconfiguration', 500, { pathname: path });
   }
 }

@@ -54,10 +54,21 @@
   "footer": {
     "privacyPolicy": "Политика конфиденциальности",
     "termsOfService": "Условия использования",
+    "releases": "Релизы",
     "copyright": "© {year} Voice Inbox AI. Все права защищены."
   },
   "header": {
-    "appName": "Voice Inbox AI"
+    "appName": "Voice Inbox AI",
+    "releases": "Релизы"
+  },
+  "releases": {
+    "pageTitle": "Релизы",
+    "pageSubtitle": "Что нового в Voice Inbox AI",
+    "empty": "Пока нет опубликованных релизов.",
+    "readMore": "Подробнее",
+    "backToList": "← Все релизы",
+    "backHome": "← На главную",
+    "version": "Версия"
   },
   "metadata": {
     "title": "Voice Inbox AI — Голосовые заметки с ИИ",
@@ -65,6 +76,8 @@
     "privacyTitle": "Политика конфиденциальности — Voice Inbox AI",
     "privacyDescription": "Как Voice Inbox AI обрабатывает ваши данные: локальное хранение, опциональная ИИ обработка и наша приверженность приватности.",
     "termsTitle": "Условия использования — Voice Inbox AI",
-    "termsDescription": "Условия использования мобильного приложения Voice Inbox AI и связанных сервисов."
+    "termsDescription": "Условия использования мобильного приложения Voice Inbox AI и связанных сервисов.",
+    "releasesListTitle": "Релизы — Voice Inbox AI",
+    "releasesListDescription": "История обновлений приложения Voice Inbox AI для iOS и Android."
   }
 }

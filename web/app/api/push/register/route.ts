@@ -21,6 +21,7 @@ type RegisterBody = {
 const VALID_PLATFORMS = ['ios', 'android'] as const;
 
 export const POST = async (request: Request): Promise<NextResponse> => {
+  const path = new URL(request.url).pathname;
   const authError = await requireAppAuth();
   if (authError) return authError;
 
@@ -30,7 +31,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const deviceId = request.headers.get(HEADER_DEVICE_ID);
   const deviceIdError = validateDeviceId(deviceId);
   if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST);
+    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
   const deviceIdTrimmed = deviceId!.trim();
 
@@ -40,20 +41,20 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const body = await parseJsonBody<RegisterBody>(request);
 
   if (!body) {
-    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST);
+    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   const validationError = validateRequiredStrings([
     { value: body.deviceToken, name: 'deviceToken' },
   ]);
   if (validationError) {
-    return apiError(validationError, HttpStatus.BAD_REQUEST);
+    return apiError(validationError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   const deviceToken = String(body.deviceToken).trim();
 
   if (deviceToken.length < 64) {
-    return apiError('Invalid deviceToken format', HttpStatus.BAD_REQUEST);
+    return apiError('Invalid deviceToken format', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   const locale =

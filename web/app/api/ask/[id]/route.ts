@@ -19,6 +19,7 @@ function getSyncToken(request: Request): string | undefined {
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(request: Request, { params }: RouteContext): Promise<NextResponse> {
+  const path = new URL(request.url).pathname;
   const authError = await requireAppAuth();
   if (authError) return authError;
 
@@ -28,7 +29,7 @@ export async function GET(request: Request, { params }: RouteContext): Promise<N
   const message = await getAskById(id, syncToken);
 
   if (!message) {
-    return apiError('Not found', HttpStatus.NOT_FOUND);
+    return apiError('Not found', HttpStatus.NOT_FOUND, { pathname: path });
   }
 
   return NextResponse.json(message);
