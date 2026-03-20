@@ -20,7 +20,16 @@ import {
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, AppState, RefreshControl, ScrollView, Switch, Text, View } from 'react-native';
+import {
+  Alert,
+  AppState,
+  RefreshControl,
+  ScrollView,
+  Switch,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
@@ -31,6 +40,7 @@ import { useAdsAllowed } from '@/features/app-storefront';
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { openInAppBrowser } from '@/features/in-app-browser';
+import { InboxBannerAd } from '@/features/inbox-banner';
 import { exportData, importData } from '@/features/sync-data';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
 import { IS_IOS, useIsTablet } from '@/shared/lib';
@@ -59,6 +69,8 @@ export const SettingsScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
 
   const contentMaxWidth = isTablet ? 720 : undefined;
+  const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
@@ -502,6 +514,8 @@ export const SettingsScreen = () => {
               isLast
             />
           </SettingsSection>
+
+          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
     </View>

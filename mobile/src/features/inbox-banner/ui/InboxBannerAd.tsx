@@ -12,11 +12,11 @@ import { useInboxBannerSize } from '../model/useInboxBannerSize';
 
 type InboxBannerAdProps = {
   color: Colors;
-  /** Совпадает с maxWidth контента (например 720 на планшете). */
   contentMaxWidth: number;
+  density?: 'default' | 'compact';
 };
 
-export function InboxBannerAd({ color, contentMaxWidth }: InboxBannerAdProps) {
+export function InboxBannerAd({ color, contentMaxWidth, density = 'default' }: InboxBannerAdProps) {
   const { t } = useTranslation();
   const { adsAllowed, resolved } = useAdsAllowed();
   const bannerSize = useInboxBannerSize(contentMaxWidth);
@@ -30,21 +30,31 @@ export function InboxBannerAd({ color, contentMaxWidth }: InboxBannerAdProps) {
     return null;
   }
 
+  const compact = density === 'compact';
+
   return (
     <View
-      className="border-t px-3 pt-3 pb-1"
+      className={compact ? 'border-t px-3 pt-2 pb-1' : 'border-t px-3 pt-3 pb-1'}
       style={{
         borderTopColor: color.border.default,
         backgroundColor: color.background.secondary,
+        opacity: compact ? 0.94 : 1,
       }}
     >
       <Text
-        className="mb-2 text-center text-[10px] uppercase tracking-wide"
+        className={
+          compact
+            ? 'mb-1.5 text-center text-[9px] uppercase tracking-wide'
+            : 'mb-2 text-center text-[10px] uppercase tracking-wide'
+        }
         style={{ color: color.text.muted }}
       >
         {t('inbox.adLabel')}
       </Text>
-      <View className="items-center overflow-hidden rounded-xl" style={{ alignSelf: 'center' }}>
+      <View
+        className="items-center overflow-hidden rounded-xl"
+        style={{ alignSelf: 'center', opacity: compact ? 0.97 : 1 }}
+      >
         <BannerView
           size={bannerSize}
           adUnitId={getBannerAdUnitId()}

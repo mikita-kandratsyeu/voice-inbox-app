@@ -5,12 +5,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, LayoutAnimation, View } from 'react-native';
+import { KeyboardAvoidingView, LayoutAnimation, useWindowDimensions, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { BottomTabParamList, RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { RecordCard, useRecordStore } from '@/entities/record';
+import { InboxBannerAd } from '@/features/inbox-banner';
 import { InboxFilterBar, useInboxFiltersReset } from '@/features/inbox-filters';
 import { SearchBar, useSearchRecords } from '@/features/search-records';
 import { getColors, useAppTheme } from '@/shared/config';
@@ -35,6 +36,7 @@ export const InboxScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
   const isTablet = useIsTablet();
+  const { width: windowWidth } = useWindowDimensions();
   const navigation = useNavigation<InboxNavigationProp>();
   const { records, isLoaded, archiveRecord, unarchiveRecord, togglePin } = useRecordStore(
     useShallow((s) => ({
@@ -160,6 +162,7 @@ export const InboxScreen = () => {
 
   const screenStyle = { flex: 1, backgroundColor: color.background.primary };
   const contentMaxWidth = isTablet ? 720 : undefined;
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   const listContentStyle = {
     paddingBottom: 100,
@@ -179,11 +182,16 @@ export const InboxScreen = () => {
       {!isLoaded ? (
         <InboxSkeleton color={color} />
       ) : records.length === 0 ? (
-        <EmptyState
-          title={t('inbox.emptyTitle')}
-          description={t('inbox.emptyDescription')}
-          hint={t('inbox.emptyImportHint')}
-        />
+        <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <EmptyState
+              title={t('inbox.emptyTitle')}
+              description={t('inbox.emptyDescription')}
+              hint={t('inbox.emptyImportHint')}
+            />
+          </View>
+          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
+        </View>
       ) : (
         <KeyboardAvoidingView
           style={{ flex: 1, backgroundColor: color.background.secondary }}
