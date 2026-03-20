@@ -87,3 +87,11 @@ export const decrement = async (deviceId: string): Promise<void> => {
   const key = getWeekKey(deviceId);
   await redis.decr(key);
 };
+
+export const addBonus = async (deviceId: string, amount: number): Promise<void> => {
+  const key = getWeekKey(deviceId);
+  const raw = await redis.get(key);
+  const used = raw ? parseInt(raw, 10) : 0;
+  const newUsed = Math.max(0, used - amount);
+  await redis.set(key, String(newUsed), { ex: WEEK_TTL_SECONDS });
+};

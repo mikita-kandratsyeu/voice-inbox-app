@@ -1,6 +1,6 @@
 import * as Keychain from 'react-native-keychain';
 
-import { hashPin } from './hashPin';
+import { hashPin, needsPinHashMigration, verifyPinHash } from './hashPin';
 
 const SERVICE_PIN = 'voice-inbox-app-lock-pin';
 const SERVICE_BIOMETRIC = 'voice-inbox-app-lock-biometric';
@@ -21,7 +21,16 @@ export const verifyPinInKeychain = async (pin: string): Promise<boolean> => {
     return false;
   }
 
-  return creds.password === hashPin(pin);
+  const stored = creds.password;
+  if (!verifyPinHash(stored, pin)) {
+    return false;
+  }
+
+  if (needsPinHashMigration(stored)) {
+    await setPinInKeychain(pin);
+  }
+
+  return true;
 };
 
 export const hasPinInKeychain = async (): Promise<boolean> =>
@@ -51,8 +60,8 @@ export const verifyBiometric = async (): Promise<boolean> => {
       service: SERVICE_BIOMETRIC,
       accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
       authenticationPrompt: {
-        title: 'Разблокировать Voice Inbox AI',
-        cancel: 'Отмена',
+        title: 'Unlock Voice Inbox AI',
+        cancel: 'Cancel',
       },
     });
 

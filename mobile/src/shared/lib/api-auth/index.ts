@@ -3,6 +3,8 @@ import { WEB_API_SECRET, WEB_API_URL } from '@env';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { fetch } from '@/shared/lib/fetch';
 
+import { isNumber, isString } from '../type-guards';
+
 const TOKEN_URL = `${WEB_API_URL}/api/token`;
 const EXPIRY_BUFFER_MS = 60 * 1000;
 
@@ -40,9 +42,9 @@ async function fetchToken(): Promise<{ token: string; deviceId: string }> {
 
   const data = (await response.json()) as { access_token: string; expires_in: number };
   const access_token = data.access_token;
-  const expires_in = typeof data.expires_in === 'number' ? data.expires_in : 86400;
+  const expires_in = isNumber(data.expires_in) ? data.expires_in : 12 * 3600;
 
-  if (!access_token || typeof access_token !== 'string') {
+  if (!access_token || !isString(access_token)) {
     throw new Error('Invalid token response');
   }
 

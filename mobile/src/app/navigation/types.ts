@@ -21,6 +21,7 @@ export type SettingsStackParamList = {
   WhisperModelPicker: undefined;
   StorageDetails: undefined;
   AboutApp: undefined;
+  Support: undefined;
   AppLockSetup: undefined;
   ImportRecords: { records: VoiceRecord[] };
 };

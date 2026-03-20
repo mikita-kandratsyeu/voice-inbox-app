@@ -6,7 +6,7 @@ These Terms of Service ("Terms") govern your use of the Voice Inbox AI mobile ap
 
 ## 1. Service Description
 
-Voice Inbox AI is an offline voice notes app that lets you record audio, transcribe it on-device using Whisper, and optionally use AI to generate summaries, extract tasks, and answer questions based on transcripts.
+Voice Inbox AI is an offline voice notes app that lets you record audio, transcribe it on-device using Whisper, and optionally use AI to generate summaries, extract tasks, and answer questions based on transcripts. The app may offer an optional **in-app support** form that sends your message and technical diagnostics to our servers so we can help you.
 
 Transcription runs locally on your device. AI features require an internet connection and send transcript text to our servers, which forward it to third-party AI providers via the OpenRouter platform.
 
@@ -15,6 +15,8 @@ Transcription runs locally on your device. AI features require an internet conne
 You agree to use Voice Inbox AI for lawful purposes only. You may not record, transcribe, or process content that violates the rights of others, is illegal, harmful, or contrary to applicable law.
 
 You may not circumvent rate limits, reverse-engineer the app or API, or use the service in a way that harms our infrastructure or other users.
+
+You must not misuse the support channel (for example, by sending unlawful, harassing, or knowingly false content, spam, or attempts to gain unauthorized access to our systems).
 
 ## 3. Intellectual Property
 
@@ -32,7 +34,9 @@ To the maximum extent permitted by law, we are not liable for any indirect, inci
 
 ## 6. Third-Party Services
 
-The app relies on third-party services (OpenRouter, OpenAI, Google). Your use of those services is governed by their own terms and policies. We are not responsible for the actions or content of third parties.
+The app relies on third-party services (OpenRouter, OpenAI, Google, and others used via OpenRouter). Your use of those services is governed by their own terms and policies. We are not responsible for the actions or content of third parties.
+
+*As of the “Last updated” date above*, where your app storefront region is outside the EEA, **Yandex Mobile Ads** may be used to display a banner and optional rewarded ads; for EEA storefronts these are not shown *at this time*. We may revise this with an updated policy (and any consent or controls required by law) if that changes.
 
 ## 7. Age Restrictions
 

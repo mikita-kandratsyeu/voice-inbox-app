@@ -1,15 +1,17 @@
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BookOpen, Globe, Mail, Store, Tag } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Linking, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getStorefrontCountryCode } from '@/features/app-storefront/lib/storefront';
+import type { SettingsStackParamList } from '@/app/navigation/types';
+import { getStorefrontCountryCode, useAdsSecretIconTap } from '@/features/app-storefront';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { useOnboardingStore } from '@/features/onboarding';
-import { getColors, SUPPORT_EMAIL, useAppTheme, WEBSITE_URL } from '@/shared/config';
+import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
 import { isString, useIsTablet } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
@@ -20,10 +22,11 @@ export const AboutAppScreen = () => {
   const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const setForceShowOnboarding = useOnboardingStore((s) => s.setForceShow);
   const contentMaxWidth = isTablet ? 720 : undefined;
   const [storeRegion, setStoreRegion] = useState<string | null>(null);
+  const { onSecretIconPress } = useAdsSecretIconTap();
 
   useEffect(() => {
     getStorefrontCountryCode().then(setStoreRegion);
@@ -49,13 +52,18 @@ export const AboutAppScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           <View className="mb-8 items-center">
-            <View className="mb-4 h-20 w-20 overflow-hidden rounded-[22px]">
+            <Pressable
+              accessibilityLabel={t('about.title')}
+              accessibilityRole="image"
+              className="mb-4 h-20 w-20 overflow-hidden rounded-[22px]"
+              onPress={onSecretIconPress}
+            >
               <Image
                 source={require('@/shared/assets/app-icon.png')}
                 className="h-full w-full"
                 resizeMode="cover"
               />
-            </View>
+            </Pressable>
             <Text className="text-[24px] font-bold" style={{ color: color.text.primary }}>
               Voice Inbox AI
             </Text>
@@ -138,17 +146,15 @@ export const AboutAppScreen = () => {
               </View>
             </View>
           </View>
-          {SUPPORT_EMAIL.length > 0 && (
-            <SettingsSection title={t('about.helpAndFeedback')}>
-              <SettingsRow
-                label={t('about.contactSupport')}
-                leftIcon={<Mail size={18} color={color.icon.muted} strokeWidth={1.8} />}
-                onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
-                isFirst
-                isLast
-              />
-            </SettingsSection>
-          )}
+          <SettingsSection title={t('about.helpAndFeedback')}>
+            <SettingsRow
+              label={t('about.contactSupport')}
+              leftIcon={<Mail size={18} color={color.icon.muted} strokeWidth={1.8} />}
+              onPress={() => navigation.navigate('Support')}
+              isFirst
+              isLast
+            />
+          </SettingsSection>
           <Text className="mt-2 text-center text-[14px]" style={{ color: color.text.secondary }}>
             {t('about.copyright', { year: new Date().getFullYear() })}
           </Text>

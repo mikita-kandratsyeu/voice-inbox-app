@@ -6,4 +6,5 @@ export { AppLockSetupScreen } from './ui/AppLockSetupScreen';
 export { ImportRecordsScreen } from './ui/ImportRecordsScreen';
 export { SettingsScreen } from './ui/SettingsScreen';
 export { StorageDetailsScreen } from './ui/StorageDetailsScreen';
+export { SupportScreen } from './ui/SupportScreen';
 export { WhisperModelPickerScreen } from './ui/WhisperModelPickerScreen';

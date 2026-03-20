@@ -1,7 +1,7 @@
-import { Sparkles } from 'lucide-react-native';
+import { PlayCircle, Sparkles } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
@@ -22,6 +22,9 @@ const formatResetDate = (isoString: string, locale: string): string => {
 type AiUsageCardProps = {
   usage: AiUsage | null;
   loading: boolean;
+  onClaimBonus?: () => void;
+  claimLoading?: boolean;
+  claimError?: string | null;
 };
 
 function AiUsageSkeleton({ color }: { color: Colors }) {
@@ -48,9 +51,18 @@ function AiUsageSkeleton({ color }: { color: Colors }) {
   );
 }
 
-export const AiUsageCard = ({ usage, loading }: AiUsageCardProps) => {
+export const AiUsageCard = ({
+  usage,
+  loading,
+  onClaimBonus,
+  claimLoading = false,
+  claimError = null,
+}: AiUsageCardProps) => {
   const { t, i18n } = useTranslation();
   const color = getColors(useAppTheme());
+  const claimDisabled = claimError === 'claimCooldown';
+  const canShowBonusButton = Boolean(usage && usage.used >= 5);
+  const showBonusNoUsageHint = Boolean(usage && usage.used === 0 && onClaimBonus);
 
   const isExhausted = usage ? usage.remaining === 0 : false;
   const progressPercent = usage ? Math.min(100, (usage.used / usage.limit) * 100) : 0;
@@ -126,9 +138,96 @@ export const AiUsageCard = ({ usage, loading }: AiUsageCardProps) => {
             </View>
           </View>
 
-          <Text className="text-xs" style={{ color: color.text.secondary, marginBottom: 6 }}>
+          <Text
+            className="text-xs"
+            style={{
+              color: color.text.secondary,
+              marginBottom: onClaimBonus && (canShowBonusButton || showBonusNoUsageHint) ? 12 : 6,
+            }}
+          >
             {t('settings.aiUsage.resetAt', { date: resetDateText })}
           </Text>
+
+          {showBonusNoUsageHint && (
+            <Text className="mt-2 text-xs leading-4" style={{ color: color.text.secondary }}>
+              {t('settings.aiUsage.claimBonusUnavailableHint')}
+            </Text>
+          )}
+
+          {onClaimBonus && canShowBonusButton && (
+            <View className="mt-2">
+              <Pressable
+                onPress={onClaimBonus}
+                disabled={claimLoading || claimDisabled}
+                accessibilityRole="button"
+                accessibilityLabel={t('settings.aiUsage.claimBonus')}
+                className="overflow-hidden rounded-2xl"
+                style={{
+                  borderWidth: 1.5,
+                  borderColor:
+                    claimLoading || claimDisabled ? color.border.default : color.accent.primary,
+                  backgroundColor:
+                    claimLoading || claimDisabled
+                      ? color.background.tertiary
+                      : color.background.primary,
+                  minHeight: 52,
+                }}
+              >
+                {claimLoading ? (
+                  <View className="min-h-[52px] items-center justify-center py-3">
+                    <ActivityIndicator size="small" color={color.accent.primary} />
+                    <Text
+                      className="mt-2 text-center text-xs"
+                      style={{ color: color.text.secondary }}
+                    >
+                      {t('settings.aiUsage.claimBonusLoading')}
+                    </Text>
+                  </View>
+                ) : claimDisabled && claimError === 'claimCooldown' ? (
+                  <View className="min-h-[52px] items-center justify-center px-4 py-3.5">
+                    <Text
+                      className="text-center text-sm font-medium leading-5"
+                      style={{ color: color.text.muted }}
+                    >
+                      {t('settings.aiUsage.claimBonusCooldown')}
+                    </Text>
+                  </View>
+                ) : (
+                  <View className="min-h-[52px] flex-row items-center gap-3 px-4 py-3.5">
+                    <PlayCircle size={26} color={color.accent.primary} strokeWidth={1.75} />
+                    <View className="min-w-0 flex-1">
+                      <Text
+                        className="text-sm font-semibold leading-5"
+                        style={{ color: color.accent.primary }}
+                      >
+                        {t('settings.aiUsage.claimBonusTitle')}
+                      </Text>
+                      <Text
+                        className="mt-0.5 text-xs leading-4"
+                        style={{ color: color.text.secondary }}
+                      >
+                        {t('settings.aiUsage.claimBonusSubtitle')}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+              </Pressable>
+              {claimError && claimError !== 'claimCooldown' && (
+                <Text
+                  className="mt-2 px-1 text-center text-xs leading-4"
+                  style={{ color: color.accent.delete }}
+                >
+                  {claimError === 'claimAdFailed'
+                    ? t('settings.aiUsage.claimBonusError')
+                    : claimError === 'claimAdIosAd'
+                      ? t('settings.aiUsage.claimBonusErrorIosAd')
+                      : claimError === 'claimBonusNoUsage'
+                        ? t('settings.aiUsage.claimBonusNoUsage')
+                        : claimError}
+                </Text>
+              )}
+            </View>
+          )}
         </>
       )}
     </View>

@@ -7,6 +7,9 @@ import {
   RATE_LIMIT_DEVICE_KEY_PREFIX,
   RATE_LIMIT_DEVICE_MAX_REQUESTS,
   RATE_LIMIT_DEVICE_WINDOW_SECONDS,
+  SUPPORT_RATE_LIMIT_KEY_PREFIX,
+  SUPPORT_RATE_LIMIT_MAX_REQUESTS,
+  SUPPORT_RATE_LIMIT_WINDOW_SECONDS,
 } from '@/config/constants';
 import { verifyAppToken } from '@/lib/jwt';
 import { redis } from '@/lib/redis';
@@ -55,6 +58,25 @@ export async function checkDeviceRateLimit(deviceId: string): Promise<NextRespon
       {
         status: HttpStatus.TOO_MANY_REQUESTS,
         headers: { 'Retry-After': String(RATE_LIMIT_DEVICE_WINDOW_SECONDS) },
+      },
+    );
+  }
+  return null;
+}
+
+export async function checkSupportRateLimit(deviceId: string): Promise<NextResponse | null> {
+  const window = Math.floor(Date.now() / 1000 / SUPPORT_RATE_LIMIT_WINDOW_SECONDS);
+  const key = `${SUPPORT_RATE_LIMIT_KEY_PREFIX}${deviceId}:${window}`;
+  const count = await redis.incr(key);
+  if (count === 1) {
+    await redis.expire(key, SUPPORT_RATE_LIMIT_WINDOW_SECONDS);
+  }
+  if (count > SUPPORT_RATE_LIMIT_MAX_REQUESTS) {
+    return NextResponse.json(
+      { error: 'Too many support requests. Try again later.' },
+      {
+        status: HttpStatus.TOO_MANY_REQUESTS,
+        headers: { 'Retry-After': String(SUPPORT_RATE_LIMIT_WINDOW_SECONDS) },
       },
     );
   }

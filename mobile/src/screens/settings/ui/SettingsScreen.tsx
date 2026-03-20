@@ -20,15 +20,27 @@ import {
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, AppState, RefreshControl, ScrollView, Switch, Text, View } from 'react-native';
+import {
+  Alert,
+  AppState,
+  RefreshControl,
+  ScrollView,
+  Switch,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useAppLockStore } from '@/entities/app-lock';
 import { useRecordStore } from '@/entities/record';
 import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import { useAdsAllowed } from '@/features/app-storefront';
+import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { openInAppBrowser } from '@/features/in-app-browser';
+import { InboxBannerAd } from '@/features/inbox-banner';
 import { exportData, importData } from '@/features/sync-data';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
 import { IS_IOS, useIsTablet } from '@/shared/lib';
@@ -57,6 +69,8 @@ export const SettingsScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
 
   const contentMaxWidth = isTablet ? 720 : undefined;
+  const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
@@ -82,6 +96,14 @@ export const SettingsScreen = () => {
     setAiUsage(data ?? null);
     return data;
   }, []);
+
+  const onBonusSuccess = useCallback(() => {
+    void fetchAiUsage();
+    Alert.alert(t('common.done'), t('settings.aiUsage.claimBonusSuccess'));
+  }, [fetchAiUsage, t]);
+
+  const { adsAllowed } = useAdsAllowed();
+  const { claim, loading: claimLoading, error: claimError } = useClaimAiBonus(onBonusSuccess);
 
   useEffect(() => {
     let cancelled = false;
@@ -267,8 +289,13 @@ export const SettingsScreen = () => {
             />
           }
         >
-          <AiUsageCard usage={aiUsage} loading={aiUsageLoading} />
-
+          <AiUsageCard
+            usage={aiUsage}
+            loading={aiUsageLoading}
+            onClaimBonus={adsAllowed ? claim : undefined}
+            claimLoading={claimLoading}
+            claimError={claimError}
+          />
           <SettingsSection title={t('settings.aiProcessing')}>
             <SettingsRow
               label={t('settings.aiModel')}
@@ -487,6 +514,8 @@ export const SettingsScreen = () => {
               isLast
             />
           </SettingsSection>
+
+          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
     </View>

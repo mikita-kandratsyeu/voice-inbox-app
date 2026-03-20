@@ -19,15 +19,23 @@ export const RATE_LIMIT_DEVICE_KEY_PREFIX = 'rl_device:';
 export const RATE_LIMIT_DEVICE_WINDOW_SECONDS = 60;
 export const RATE_LIMIT_DEVICE_MAX_REQUESTS = 60;
 
+// Support form (mobile) — per device, rolling window
+export const SUPPORT_RATE_LIMIT_KEY_PREFIX = 'rl_support:';
+export const SUPPORT_RATE_LIMIT_WINDOW_SECONDS = 3600;
+export const SUPPORT_RATE_LIMIT_MAX_REQUESTS = 5;
+
 // Admin login rate limit (per IP)
 export const ADMIN_LOGIN_RATE_LIMIT_KEY_PREFIX = 'rl_admin_login:';
 export const ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS = 60;
 export const ADMIN_LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5;
 
 // AI rate limit
-export const FREE_WEEKLY_LIMIT = 50;
+export const FREE_WEEKLY_LIMIT = 20;
 export const AI_WEEKLY_KEY_PREFIX = 'ai_weekly:';
 export const WEEK_TTL_SECONDS = 8 * 24 * 3600;
+export const AI_BONUS_AMOUNT = 5;
+export const AI_BONUS_COOLDOWN_KEY_PREFIX = 'ai_bonus_cooldown:';
+export const AI_BONUS_COOLDOWN_SECONDS = 900; // 15 min
 
 // Redis / KV
 export const MESSAGE_TTL_SECONDS = 3600;
@@ -64,5 +72,5 @@ export const PUSH_LOCK_TTL_SECONDS = 30; // lock TTL = debounce + buffer
 export const LIMIT_PUSH_DEBOUNCE_KEY_PREFIX = 'limit_push_sent:';
 export const LIMIT_PUSH_DEBOUNCE_SECONDS = 300;
 
-// Admin panel (access by key from env ADMIN_SECRET)
+// Admin panel: HTTP-only cookie storing signed admin JWT
 export const ADMIN_COOKIE_NAME = 'admin_key';

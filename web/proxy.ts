@@ -11,16 +11,9 @@ import {
   RATE_LIMIT_MAX_REQUESTS,
   RATE_LIMIT_WINDOW_SECONDS,
 } from '@/config/constants';
+import { isAdminCookieValid } from '@/lib/admin-auth';
 import { redis } from '@/lib/redis';
 import { routing } from '@/lib/i18n';
-
-const ADMIN_SECRET = process.env.ADMIN_SECRET;
-
-function isAdminAuthenticated(request: NextRequest): boolean {
-  if (!ADMIN_SECRET?.trim()) return false;
-  const cookie = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
-  return cookie === ADMIN_SECRET;
-}
 
 const getClientIp = (request: NextRequest): string => {
   const forwarded = request.headers.get('x-forwarded-for');
@@ -71,7 +64,9 @@ export const proxy = async (request: NextRequest): Promise<NextResponse> => {
         );
       }
     } else if (pathname !== '/api/admin/logout') {
-      if (!isAdminAuthenticated(request)) {
+      const cookie = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
+      const allowed = await isAdminCookieValid(cookie);
+      if (!allowed) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
     }

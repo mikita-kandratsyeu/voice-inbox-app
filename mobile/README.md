@@ -35,6 +35,10 @@ The project is designed as a solo‑friendly, production‑ready codebase: clean
   - NativeWind (Tailwind for React Native)
   - Clean folder structure and typed repositories
 
+### Advertising (Yandex Mobile Ads)
+
+Optional **banner** (note detail) and **rewarded** ad (bonus AI quota in Settings) use `yandex-mobile-ads`. **Currently**, they are off when `isEUUserByStorefront()` is true (EU App Store / Play list in `features/app-storefront/lib/storefront.ts`) — SDK is not initialized and no ad UI is shown. If you later enable ads in the EEA, update the app, consent flows, and `web/content/privacy.*.md` / `terms.*.md`. Env: `.env.example` (`YANDEX_*_AD_UNIT_ID`).
+
 ---
 
 ## Tech stack

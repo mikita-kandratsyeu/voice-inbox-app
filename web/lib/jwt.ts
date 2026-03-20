@@ -1,7 +1,7 @@
 import * as jose from 'jose';
 
 const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN?.trim() || '24h';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN?.trim() || '12h';
 
 export type AppTokenPayload = {
   deviceId: string;
@@ -48,7 +48,7 @@ export async function verifyAppToken(token: string): Promise<AppTokenPayload | n
 
 export function getExpiresInSeconds(): number {
   const match = JWT_EXPIRES_IN.match(/^(\d+)(s|m|h|d)?$/);
-  if (!match) return 24 * 3600;
+  if (!match) return 12 * 3600;
   const value = parseInt(match[1], 10);
   const unit = match[2] ?? 's';
   switch (unit) {
@@ -61,6 +61,6 @@ export function getExpiresInSeconds(): number {
     case 'd':
       return value * 86400;
     default:
-      return 24 * 3600;
+      return 12 * 3600;
   }
 }

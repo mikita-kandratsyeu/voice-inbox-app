@@ -5,7 +5,8 @@ import { useState } from 'react';
 
 export function AdminLogin() {
   const router = useRouter();
-  const [key, setKey] = useState('');
+  const [login, setLogin] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -17,11 +18,11 @@ export function AdminLogin() {
       const res = await fetch('/api/admin/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key }),
+        body: JSON.stringify({ login: login.trim(), password }),
       });
       const data = await res.json();
       if (!res.ok) {
-        setError((data as { error?: string }).error ?? 'Invalid key');
+        setError((data as { error?: string }).error ?? 'Login failed');
         return;
       }
       router.refresh();
@@ -39,19 +40,37 @@ export function AdminLogin() {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
             <label
-              htmlFor="key"
+              htmlFor="login"
               className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400"
             >
-              Key
+              Login
             </label>
             <input
-              id="key"
-              type="password"
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
+              id="login"
+              type="text"
+              value={login}
+              onChange={(e) => setLogin(e.target.value)}
               className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-500"
-              placeholder="Enter admin key"
-              autoComplete="off"
+              placeholder="Admin login"
+              autoComplete="username"
+              required
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="password"
+              className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400"
+            >
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-500"
+              placeholder="Password"
+              autoComplete="current-password"
               required
             />
           </div>
@@ -65,7 +84,7 @@ export function AdminLogin() {
             disabled={loading}
             className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            {loading ? '…' : 'Enter'}
+            {loading ? '…' : 'Sign in'}
           </button>
         </form>
       </div>
