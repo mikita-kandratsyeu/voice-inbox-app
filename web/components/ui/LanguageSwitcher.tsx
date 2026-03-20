@@ -51,10 +51,10 @@ export function LanguageSwitcher(): React.ReactElement {
         aria-haspopup="listbox"
         aria-expanded={isOpen}
         aria-label="Select language"
-        className="flex h-11 min-h-[44px] cursor-pointer items-center justify-center gap-1.5 rounded-lg border border-black/10 bg-black/5 px-4 text-base font-medium leading-none text-black transition-opacity hover:opacity-90 dark:border-white/10 dark:bg-white/5 dark:text-white"
+        className="flex h-11 min-h-[44px] min-w-0 max-w-34 cursor-pointer items-center justify-center gap-1 rounded-lg border border-black/10 bg-black/5 px-2.5 text-sm font-medium leading-none text-black transition-opacity hover:opacity-90 dark:border-white/10 dark:bg-white/5 dark:text-white sm:max-w-none sm:gap-1.5 sm:px-4 sm:text-base"
       >
-        {currentLabel}
-        <ChevronDown className="h-4 w-4 transition-transform" aria-hidden />
+        <span className="min-w-0 truncate">{currentLabel}</span>
+        <ChevronDown className="h-4 w-4 shrink-0 transition-transform" aria-hidden />
       </button>
 
       {isOpen && (
