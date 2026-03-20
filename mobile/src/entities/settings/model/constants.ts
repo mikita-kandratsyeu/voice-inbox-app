@@ -1,4 +1,4 @@
-import type { AIModel, WhisperModel } from './types';
+import type { AIModel, WhisperModel, WhisperModelId } from './types';
 
 const GEMINI_MODELS: AIModel[] = [
   {
@@ -100,3 +100,5 @@ export const WHISPER_MODELS: WhisperModel[] = [
     status: 'not_downloaded',
   },
 ];
+
+export const DEFAULT_SELECTED_WHISPER_MODEL_ID: WhisperModelId = 'whisper-base';

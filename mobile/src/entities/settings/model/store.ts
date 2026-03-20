@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 import { storage } from '@/shared/lib/async-storage';
 
-import { AI_MODELS } from './constants';
+import { AI_MODELS, DEFAULT_SELECTED_WHISPER_MODEL_ID } from './constants';
 import type {
   AIModelId,
   AiOutputLanguage,
@@ -49,7 +49,7 @@ const getStoredAIModel = (): AIModelId => {
 const getStoredWhisperModel = (): WhisperModelId => {
   const val = storage.getString(KEYS.WHISPER_MODEL);
 
-  return (val as WhisperModelId) ?? 'whisper-base';
+  return (val as WhisperModelId) ?? DEFAULT_SELECTED_WHISPER_MODEL_ID;
 };
 
 const getStoredTranscriptionLanguage = (): TranscriptionLanguage => {

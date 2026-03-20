@@ -36,7 +36,11 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
-import { useSettingsStore } from '@/entities/settings';
+import {
+  DEFAULT_SELECTED_WHISPER_MODEL_ID,
+  getRecommendedWhisperModelId,
+  useSettingsStore,
+} from '@/entities/settings';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { useModelManager } from '@/features/model-manager';
 import { importData } from '@/features/sync-data';
@@ -778,6 +782,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   }, [windowWidth, screenWidth]);
 
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const { startDownload } = useModelManager();
 
@@ -872,6 +877,20 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
       anyWhisperDownloading
     ) {
       handleComplete();
+      return;
+    }
+
+    const defaultStatus =
+      whisperModelStatuses[DEFAULT_SELECTED_WHISPER_MODEL_ID] ?? 'not_downloaded';
+    const userLeftDefaultSelection =
+      selectedWhisperModel === DEFAULT_SELECTED_WHISPER_MODEL_ID &&
+      defaultStatus === 'not_downloaded';
+
+    if (userLeftDefaultSelection) {
+      const recommendedId = getRecommendedWhisperModelId();
+      setWhisperModel(recommendedId);
+      void startDownload(recommendedId).catch(() => {});
+      setTimeout(handleComplete, 120);
       return;
     }
 
