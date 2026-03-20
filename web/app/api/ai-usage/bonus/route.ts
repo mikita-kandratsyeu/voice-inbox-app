@@ -51,5 +51,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   await redis.set(cooldownKey, '1', { ex: bonus.cooldownSeconds });
 
   const usage = await getUsage(deviceIdTrimmed);
-  return NextResponse.json(usage);
+  return NextResponse.json({
+    ...usage,
+    bonusCooldownSeconds: bonus.cooldownSeconds,
+  });
 };

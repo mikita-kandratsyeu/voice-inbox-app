@@ -61,7 +61,7 @@ export const AiUsageCard = ({
   const { t, i18n } = useTranslation();
   const color = getColors(useAppTheme());
   const claimDisabled = claimError === 'claimCooldown';
-  const canShowBonusButton = Boolean(usage && usage.used >= 5);
+  const canShowBonusButton = Boolean(usage && usage.used > 5);
   const showBonusNoUsageHint = Boolean(usage && usage.used === 0 && onClaimBonus);
 
   const isExhausted = usage ? usage.remaining === 0 : false;

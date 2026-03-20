@@ -135,7 +135,7 @@ export async function getAiUsage(): Promise<AiUsage | null> {
 }
 
 export type ClaimAiBonusResult =
-  | { ok: true; usage: AiUsage }
+  | { ok: true; usage: AiUsage; cooldownSeconds: number }
   | { ok: false; error: string; cooldown?: boolean; retryAfterSeconds?: number };
 
 export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
@@ -167,8 +167,19 @@ export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
       return { ok: false, error: text || `HTTP ${response.status}` };
     }
 
-    const usage = (await response.json()) as AiUsage;
-    return { ok: true, usage };
+    const raw = (await response.json()) as AiUsage & { bonusCooldownSeconds?: number };
+    const usage: AiUsage = {
+      used: raw.used,
+      limit: raw.limit,
+      remaining: raw.remaining,
+      resetAt: raw.resetAt,
+      resetAtUtc: raw.resetAtUtc,
+    };
+    const cooldownSeconds =
+      typeof raw.bonusCooldownSeconds === 'number' && raw.bonusCooldownSeconds > 0
+        ? raw.bonusCooldownSeconds
+        : 900;
+    return { ok: true, usage, cooldownSeconds };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Network error';
     return { ok: false, error: message };

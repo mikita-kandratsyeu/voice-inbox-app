@@ -118,8 +118,10 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
       ad.onRewarded = async () => {
         const result = await claimAiBonus();
         if (result.ok) {
-          clearPersistedCooldown();
-          setCooldownUntil(null);
+          const sec = result.cooldownSeconds;
+          const until = Date.now() + sec * 1000;
+          persistCooldownUntil(until);
+          setCooldownUntil(until);
           onSuccess?.(result.usage);
         } else if (result.cooldown) {
           const sec = result.retryAfterSeconds ?? 900;
