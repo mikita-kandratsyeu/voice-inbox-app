@@ -7,6 +7,7 @@ import {
   validateDeviceId,
 } from '@/lib/api';
 import { HEADER_DEVICE_ID } from '@/config/constants';
+import { getBonusConfig } from '@/lib/app-config';
 import { getUsage } from '@/lib/ai-rate-limit';
 import { NextResponse } from 'next/server';
 
@@ -27,7 +28,10 @@ export const GET = async (request: Request): Promise<NextResponse> => {
   const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed);
   if (rateLimitError) return rateLimitError;
 
-  const usage = await getUsage(deviceIdTrimmed);
+  const [usage, bonus] = await Promise.all([getUsage(deviceIdTrimmed), getBonusConfig()]);
 
-  return NextResponse.json(usage);
+  return NextResponse.json({
+    ...usage,
+    bonusAmount: bonus.amount,
+  });
 };

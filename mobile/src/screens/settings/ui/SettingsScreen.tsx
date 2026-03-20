@@ -99,10 +99,14 @@ export const SettingsScreen = () => {
     return data;
   }, []);
 
-  const onBonusSuccess = useCallback(() => {
-    void fetchAiUsage();
-    Alert.alert(t('common.done'), t('settings.aiUsage.claimBonusSuccess'));
-  }, [fetchAiUsage, t]);
+  const onBonusSuccess = useCallback(
+    (usageAfterClaim: NonNullable<Awaited<ReturnType<typeof getAiUsage>>>) => {
+      void fetchAiUsage();
+      const count = usageAfterClaim.bonusAmount ?? 5;
+      Alert.alert(t('common.done'), t('settings.aiUsage.claimBonusSuccess', { count }));
+    },
+    [fetchAiUsage, t],
+  );
 
   const handleRateApp = useCallback(() => {
     void openAppReviewFromSettings();

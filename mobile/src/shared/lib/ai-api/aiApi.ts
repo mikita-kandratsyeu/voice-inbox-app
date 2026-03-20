@@ -117,7 +117,28 @@ export type AiUsage = {
   remaining: number;
   resetAt: string;
   resetAtUtc: string;
+  /** From API (admin-configurable bonus size); omit on older servers. */
+  bonusAmount?: number;
 };
+
+function parseAiUsagePayload(raw: Record<string, unknown>): AiUsage {
+  const bonusAmountRaw = raw.bonusAmount;
+  const bonusAmount =
+    typeof bonusAmountRaw === 'number' && bonusAmountRaw > 0
+      ? bonusAmountRaw
+      : typeof bonusAmountRaw === 'string' && /^\d+$/.test(bonusAmountRaw)
+        ? Math.max(1, parseInt(bonusAmountRaw, 10))
+        : undefined;
+
+  return {
+    used: Number(raw.used) || 0,
+    limit: Number(raw.limit) || 0,
+    remaining: Number(raw.remaining) || 0,
+    resetAt: String(raw.resetAt ?? ''),
+    resetAtUtc: String(raw.resetAtUtc ?? ''),
+    ...(bonusAmount != null ? { bonusAmount } : {}),
+  };
+}
 
 export async function getAiUsage(): Promise<AiUsage | null> {
   try {
@@ -127,8 +148,8 @@ export async function getAiUsage(): Promise<AiUsage | null> {
       return null;
     }
 
-    const data = (await response.json()) as AiUsage;
-    return data;
+    const data = (await response.json()) as Record<string, unknown>;
+    return parseAiUsagePayload(data);
   } catch {
     return null;
   }
@@ -167,14 +188,8 @@ export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
       return { ok: false, error: text || `HTTP ${response.status}` };
     }
 
-    const raw = (await response.json()) as AiUsage & { bonusCooldownSeconds?: number };
-    const usage: AiUsage = {
-      used: raw.used,
-      limit: raw.limit,
-      remaining: raw.remaining,
-      resetAt: raw.resetAt,
-      resetAtUtc: raw.resetAtUtc,
-    };
+    const raw = (await response.json()) as Record<string, unknown>;
+    const usage = parseAiUsagePayload(raw);
     const cooldownSeconds =
       typeof raw.bonusCooldownSeconds === 'number' && raw.bonusCooldownSeconds > 0
         ? raw.bonusCooldownSeconds

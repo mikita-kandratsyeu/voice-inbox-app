@@ -61,7 +61,8 @@ export const AiUsageCard = ({
   const { t, i18n } = useTranslation();
   const color = getColors(useAppTheme());
   const claimDisabled = claimError === 'claimCooldown';
-  const canShowBonusButton = Boolean(usage && usage.used > 5);
+  const bonusAmount = usage?.bonusAmount ?? 5;
+  const canShowBonusButton = Boolean(usage && usage.used > 0);
   const showBonusNoUsageHint = Boolean(usage && usage.used === 0 && onClaimBonus);
 
   const isExhausted = usage ? usage.remaining === 0 : false;
@@ -160,7 +161,7 @@ export const AiUsageCard = ({
                 onPress={onClaimBonus}
                 disabled={claimLoading || claimDisabled}
                 accessibilityRole="button"
-                accessibilityLabel={t('settings.aiUsage.claimBonus')}
+                accessibilityLabel={t('settings.aiUsage.claimBonus', { count: bonusAmount })}
                 className="overflow-hidden rounded-2xl"
                 style={{
                   borderWidth: 1.5,
@@ -206,7 +207,7 @@ export const AiUsageCard = ({
                         className="mt-0.5 text-xs leading-4"
                         style={{ color: color.text.secondary }}
                       >
-                        {t('settings.aiUsage.claimBonusSubtitle')}
+                        {t('settings.aiUsage.claimBonusSubtitle', { count: bonusAmount })}
                       </Text>
                     </View>
                   </View>

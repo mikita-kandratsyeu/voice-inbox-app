@@ -53,6 +53,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const usage = await getUsage(deviceIdTrimmed);
   return NextResponse.json({
     ...usage,
+    bonusAmount: bonus.amount,
     bonusCooldownSeconds: bonus.cooldownSeconds,
   });
 };
