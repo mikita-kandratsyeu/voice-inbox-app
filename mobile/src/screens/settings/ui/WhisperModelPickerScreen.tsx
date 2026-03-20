@@ -17,6 +17,7 @@ import { useIsTablet } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader } from '@/shared/ui';
 
+import { WhisperDefaultLanguageSection } from './WhisperDefaultLanguageSection';
 import { WhisperModelCard } from './WhisperModelCard';
 
 export const WhisperModelPickerScreen = () => {
@@ -118,6 +119,7 @@ export const WhisperModelPickerScreen = () => {
           <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
             {t('whisper.modelDescription')}
           </Text>
+          <WhisperDefaultLanguageSection color={color} />
           <View className="overflow-hidden rounded-2xl">
             {WHISPER_MODELS.map((model, index) => (
               <WhisperModelCard

@@ -5,12 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import type { TranscriptSegment } from '@/entities/record';
-import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import { TRANSLATE_LANGUAGES, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
 import { Button, TabEmptyState } from '@/shared/ui';
-
-import { TRANSLATE_LANGUAGES } from '../config/transcriptionLanguageConfig';
 
 type TranscriptTabProps = {
   segments: TranscriptSegment[];

@@ -1,4 +1,4 @@
-import type { TranscriptionLanguage } from '@/entities/settings';
+import type { TranscriptionLanguage } from '../model/types';
 
 export const TRANSCRIPTION_LANGUAGES: TranscriptionLanguage[] = [
   'auto',
