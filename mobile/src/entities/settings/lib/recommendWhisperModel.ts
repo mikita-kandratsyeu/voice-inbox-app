@@ -20,11 +20,7 @@ export function getRecommendedWhisperModelId(): WhisperModelId {
       return 'whisper-base';
     }
 
-    if (totalRamMB < 6200) {
-      return 'whisper-small';
-    }
-
-    return 'whisper-medium';
+    return 'whisper-small';
   } catch {
     return 'whisper-base';
   }
