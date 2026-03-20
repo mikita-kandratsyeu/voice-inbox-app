@@ -3,8 +3,14 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
-import type { WhisperModel, WhisperModelId, WhisperModelStatus } from '@/entities/settings';
+import type {
+  DownloadBytes,
+  WhisperModel,
+  WhisperModelId,
+  WhisperModelStatus,
+} from '@/entities/settings';
 import type { Colors } from '@/shared/config';
+import { formatFileSize } from '@/shared/lib/whisper';
 
 import { getAccuracyLabel, getSpeedLabel } from '../config';
 import { getCardRadiusClass, getSpeedColor } from '../lib';
@@ -28,6 +34,8 @@ type WhisperModelCardProps = {
   onPress: (id: WhisperModelId) => void;
   onDelete: (id: WhisperModelId) => void;
   onCancelDownload: (id: WhisperModelId) => void;
+  downloadPercent?: number;
+  downloadBytes?: DownloadBytes;
 };
 
 export const WhisperModelCard = ({
@@ -43,6 +51,8 @@ export const WhisperModelCard = ({
   onPress,
   onDelete,
   onCancelDownload,
+  downloadPercent = 0,
+  downloadBytes,
 }: WhisperModelCardProps) => {
   const { t } = useTranslation();
   const isDownloaded = status === 'downloaded';
@@ -50,6 +60,12 @@ export const WhisperModelCard = ({
   const isError = status === 'error';
   const isLast = index === total - 1;
   const isRecommended = model.id === recommendedModelId;
+  const pct = Math.min(100, Math.max(0, Math.round(downloadPercent)));
+  const showByteProgress =
+    downloadBytes !== undefined &&
+    downloadBytes.total > 0 &&
+    downloadBytes.written >= 0 &&
+    downloadBytes.written <= downloadBytes.total * 1.02;
 
   const borderStyle = !isLast
     ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
@@ -130,15 +146,36 @@ export const WhisperModelCard = ({
             </View>
           )}
           {isDownloading ? (
-            <TouchableOpacity
-              className="mt-2"
-              onPress={() => onCancelDownload(model.id)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
+            <View className="mt-2 gap-2">
+              <View
+                className="h-1.5 overflow-hidden rounded-full"
+                style={{ backgroundColor: color.background.tertiary }}
+              >
+                <View
+                  className="h-full rounded-full"
+                  style={{
+                    width: `${pct}%`,
+                    backgroundColor: color.status.processing.text,
+                  }}
+                />
+              </View>
               <Text className="text-[13px]" style={{ color: color.text.secondary }}>
-                {t('common.cancel')}
+                {showByteProgress
+                  ? t('whisper.downloadProgressBytes', {
+                      downloaded: formatFileSize(downloadBytes.written),
+                      total: formatFileSize(downloadBytes.total),
+                    })
+                  : t('whisper.downloadProgressPercent', { percent: pct })}
               </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => onCancelDownload(model.id)}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text className="text-[13px]" style={{ color: color.text.secondary }}>
+                  {t('common.cancel')}
+                </Text>
+              </TouchableOpacity>
+            </View>
           ) : isError ? (
             <Text className="mt-1.5 text-[14px] font-medium" style={{ color: color.accent.delete }}>
               {t('whisper.downloadError')}

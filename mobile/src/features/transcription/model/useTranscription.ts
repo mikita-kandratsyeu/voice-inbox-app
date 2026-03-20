@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { AppState } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -55,20 +55,6 @@ export const useTranscription = () => {
 
   const stopRef = useRef<(() => Promise<void>) | null>(null);
   const currentRecordIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state !== 'background') return;
-      const stop = stopRef.current;
-      const recordId = currentRecordIdRef.current;
-      if (!stop || !recordId) return;
-      stopRef.current = null;
-      currentRecordIdRef.current = null;
-      stop().catch(() => {});
-      updateAiStatus(recordId, 'idle');
-    });
-    return () => sub.remove();
-  }, [updateAiStatus]);
 
   const startTranscription = useCallback(
     async (record: VoiceRecord, languageOverride?: string): Promise<void> => {

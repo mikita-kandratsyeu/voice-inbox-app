@@ -30,6 +30,8 @@ export const WhisperModelPickerScreen = () => {
 
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
+  const whisperDownloadProgress = useSettingsStore((s) => s.whisperDownloadProgress);
+  const whisperDownloadBytes = useSettingsStore((s) => s.whisperDownloadBytes);
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
 
   const compatibility = useWhisperModelCompatibility();
@@ -136,6 +138,8 @@ export const WhisperModelPickerScreen = () => {
                 onPress={handleSelect}
                 onDelete={handleDelete}
                 onCancelDownload={cancelDownload}
+                downloadPercent={whisperDownloadProgress[model.id]}
+                downloadBytes={whisperDownloadBytes[model.id]}
               />
             ))}
           </View>

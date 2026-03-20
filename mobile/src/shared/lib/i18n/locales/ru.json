@@ -369,6 +369,8 @@
     "compatible": "Совместимо с устройством",
     "downloaded": "Скачано",
     "tapToDownload": "Не скачана — нажмите для загрузки",
+    "downloadProgressBytes": "{{downloaded}} из {{total}}",
+    "downloadProgressPercent": "{{percent}}%",
     "downloadError": "Ошибка загрузки — нажмите для повтора",
     "qualityLabel": "Качество",
     "speedLabel": "Скорость",

@@ -51,15 +51,16 @@ export const downloadWhisperModel = ({
       background: true,
       progressDivider: 1,
       progressInterval: 250,
+
+      begin: (res) => {
+        const total = res.contentLength > 0 ? res.contentLength : expectedBytes;
+        onProgress(0, 0, total);
+      },
       progress: (res) => {
         const total = res.contentLength > 0 ? res.contentLength : expectedBytes;
         const binPct = total > 0 ? res.bytesWritten / total : 0;
         const progress = Math.round(binPct * BIN_PROGRESS_WEIGHT * 100);
-        onProgress(
-          progress,
-          res.bytesWritten,
-          Math.round(expectedBytes + BIN_PROGRESS_WEIGHT * expectedBytes),
-        );
+        onProgress(progress, res.bytesWritten, total);
       },
     });
 
@@ -89,6 +90,10 @@ export const downloadWhisperModel = ({
           background: true,
           progressDivider: 1,
           progressInterval: 250,
+          begin: (res) => {
+            const zipTotal = res.contentLength > 0 ? res.contentLength : 1;
+            onProgress(Math.round(BIN_PROGRESS_WEIGHT * 100), 0, zipTotal);
+          },
           progress: (res) => {
             const total = res.contentLength > 0 ? res.contentLength : 1;
             const zipPct = res.bytesWritten / total;

@@ -11,6 +11,7 @@ export type {
   AiOutputLanguage,
   AppLanguage,
   AppTheme,
+  DownloadBytes,
   SettingsState,
   SummaryStyle,
   TaskStrictness,

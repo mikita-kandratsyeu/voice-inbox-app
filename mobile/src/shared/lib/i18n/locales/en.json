@@ -369,6 +369,8 @@
     "compatible": "Compatible with device",
     "downloaded": "Downloaded",
     "tapToDownload": "Not downloaded — tap to download",
+    "downloadProgressBytes": "{{downloaded}} of {{total}}",
+    "downloadProgressPercent": "{{percent}}%",
     "downloadError": "Download error — tap to retry",
     "qualityLabel": "Quality",
     "speedLabel": "Speed",
