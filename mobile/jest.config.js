@@ -1,6 +1,7 @@
 module.exports = {
   preset: 'react-native',
   moduleNameMapper: {
+    '^react-native-in-app-review$': '<rootDir>/__mocks__/react-native-in-app-review.js',
     '\\.(css|less|scss|sass)$': '<rootDir>/__mocks__/styleMock.js',
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@app/(.*)$': '<rootDir>/src/app/$1',

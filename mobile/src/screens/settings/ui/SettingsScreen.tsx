@@ -15,6 +15,7 @@ import {
   Settings2,
   Shield,
   Sparkles,
+  Star,
   UploadCloud,
   Zap,
 } from 'lucide-react-native';
@@ -36,6 +37,7 @@ import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useAppLockStore } from '@/entities/app-lock';
 import { useRecordStore } from '@/entities/record';
 import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import { openAppReviewFromSettings } from '@/features/app-review';
 import { useAdsAllowed } from '@/features/app-storefront';
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
@@ -101,6 +103,10 @@ export const SettingsScreen = () => {
     void fetchAiUsage();
     Alert.alert(t('common.done'), t('settings.aiUsage.claimBonusSuccess'));
   }, [fetchAiUsage, t]);
+
+  const handleRateApp = useCallback(() => {
+    void openAppReviewFromSettings();
+  }, []);
 
   const { adsAllowed } = useAdsAllowed();
   const { claim, loading: claimLoading, error: claimError } = useClaimAiBonus(onBonusSuccess);
@@ -506,6 +512,11 @@ export const SettingsScreen = () => {
               label={t('settings.privacyPolicy')}
               leftIcon={<Shield size={20} color={color.icon.muted} strokeWidth={1.8} />}
               onPress={() => openInAppBrowser(`${WEBSITE_URL}/privacy`)}
+            />
+            <SettingsRow
+              label={t('settings.rateApp')}
+              leftIcon={<Star size={20} color={color.accent.primary} strokeWidth={1.8} />}
+              onPress={handleRateApp}
             />
             <SettingsRow
               label={t('settings.about')}

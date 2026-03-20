@@ -16,6 +16,7 @@ import {
   useYandexMobileAdsInit,
 } from '@/features/app-lifecycle';
 import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
+import { AppRatingPromptRoot } from '@/features/app-review';
 import { OnboardingGate } from '@/features/onboarding';
 import { getColors, useAppTheme } from '@/shared/config';
 import { NetworkStatusProvider } from '@/shared/lib';
@@ -68,6 +69,7 @@ const App = () => {
                 </OnboardingGate>
               </NavigationContainer>
               <PushNotificationSheet />
+              <AppRatingPromptRoot />
             </BottomSheetModalProvider>
           </NetworkStatusProvider>
         </SafeAreaProvider>

@@ -22,6 +22,14 @@
     "error": "Error",
     "biometrics": "Biometrics"
   },
+  "appReview": {
+    "title": "Enjoying Voice Inbox AI?",
+    "message": "Your rating helps others discover the app. It only takes a moment.",
+    "rate": "Rate",
+    "later": "Maybe later",
+    "never": "Don’t ask again",
+    "a11yDismissBackdrop": "Dismiss"
+  },
   "splash": {
     "tagline": "Smart voice notes"
   },
@@ -256,6 +264,7 @@
     "privacy": "Privacy",
     "termsOfService": "Terms of Service",
     "privacyPolicy": "Privacy policy",
+    "rateApp": "Rate the app",
     "about": "About",
     "on": "On",
     "off": "Off",

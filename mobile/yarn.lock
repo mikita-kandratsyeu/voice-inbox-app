@@ -11066,6 +11066,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-in-app-review@npm:^4.4.2":
+  version: 4.4.2
+  resolution: "react-native-in-app-review@npm:4.4.2"
+  checksum: 10c0/723e3f8de622081dbf8f40c843d7404445b7db0541cbce14d21b13e4843b9662e5edfc4f871249630a7ecb83a521e4e17a6cffa8a4489dac9a3ea52f36846a4a
+  languageName: node
+  linkType: hard
+
 "react-native-inappbrowser-nitro@npm:^2.1.2":
   version: 2.1.2
   resolution: "react-native-inappbrowser-nitro@npm:2.1.2"
@@ -13162,6 +13169,7 @@ __metadata:
     react-native-fs: "npm:^2.20.0"
     react-native-gesture-handler: "npm:^2.30.0"
     react-native-haptic-feedback: "npm:^2.3.3"
+    react-native-in-app-review: "npm:^4.4.2"
     react-native-inappbrowser-nitro: "npm:^2.1.2"
     react-native-keep-awake: "npm:^4.0.0"
     react-native-keyboard-controller: "npm:^1.20.7"
