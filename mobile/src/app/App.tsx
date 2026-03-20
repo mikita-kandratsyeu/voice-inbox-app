@@ -2,13 +2,14 @@ import '../../global.css';
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { NavigationContainer } from '@react-navigation/native';
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import {
+  AnimatedBootSplash,
   useAndroidLayoutAnimation,
   useAppBootstrap,
   useAppForegroundLifecycle,
@@ -36,8 +37,19 @@ const App = () => {
   const color = getColors(theme);
   const isDark = theme === 'dark';
 
+  const [bootSplashVisible, setBootSplashVisible] = useState(true);
+  const [bootstrapReady, setBootstrapReady] = useState(false);
+
   const onPushData = useCallback((data: PushNotificationData) => {
     handlePushNotification(data);
+  }, []);
+
+  const onBootstrapReady = useCallback(() => {
+    setBootstrapReady(true);
+  }, []);
+
+  const onBootSplashAnimationEnd = useCallback(() => {
+    setBootSplashVisible(false);
   }, []);
 
   useInitDeepLinking();
@@ -45,7 +57,7 @@ const App = () => {
   usePushNotificationOpenedApp(onPushData);
   useAndroidLayoutAnimation();
   useYandexMobileAdsInit();
-  useAppBootstrap(onPushData);
+  useAppBootstrap(onPushData, { onBootstrapReady });
   useAppForegroundLifecycle();
 
   const rootStyle = { flex: 1 };
@@ -74,6 +86,9 @@ const App = () => {
           </NetworkStatusProvider>
         </SafeAreaProvider>
       </KeyboardProvider>
+      {bootSplashVisible && (
+        <AnimatedBootSplash ready={bootstrapReady} onAnimationEnd={onBootSplashAnimationEnd} />
+      )}
     </GestureHandlerRootView>
   );
 };

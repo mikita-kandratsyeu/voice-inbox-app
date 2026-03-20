@@ -1,6 +1,5 @@
 import { getInitialNotification, getMessaging } from '@react-native-firebase/messaging';
 import { useEffect } from 'react';
-import BootSplash from 'react-native-bootsplash';
 
 import { useRecordStore } from '@/entities/record';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
@@ -9,12 +8,21 @@ import { ensurePushRegistered, type PushNotificationData } from '@/shared/lib/pu
 
 type OnInitialPushData = (data: PushNotificationData) => void;
 
-export function useAppBootstrap(onInitialPushData: OnInitialPushData): void {
+type UseAppBootstrapOptions = {
+  onBootstrapReady?: () => void;
+};
+
+export function useAppBootstrap(
+  onInitialPushData: OnInitialPushData,
+  options?: UseAppBootstrapOptions,
+): void {
+  const { onBootstrapReady } = options ?? {};
+
   useEffect(() => {
     initDB()
       .then(async () => {
         await useRecordStore.getState().load();
-        BootSplash.hide({ fade: true });
+        onBootstrapReady?.();
 
         const initial = await getInitialNotification(getMessaging());
         if (initial?.data) {
@@ -26,7 +34,7 @@ export function useAppBootstrap(onInitialPushData: OnInitialPushData): void {
         }
       })
       .catch(() => {
-        BootSplash.hide({ fade: true });
+        onBootstrapReady?.();
       });
-  }, [onInitialPushData]);
+  }, [onBootstrapReady, onInitialPushData]);
 }
