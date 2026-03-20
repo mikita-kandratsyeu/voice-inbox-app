@@ -169,7 +169,7 @@ export const SaveRecordModal = ({
               label={t('record.continueRecording')}
               onPress={handleCancel}
               activeOpacity={0.8}
-              fullWidth
+              className="min-w-0 flex-1"
               color={c}
               containerStyle={{
                 backgroundColor: c.background.tertiary,
@@ -184,7 +184,7 @@ export const SaveRecordModal = ({
             label={t('common.save')}
             onPress={handleSave}
             activeOpacity={0.85}
-            fullWidth
+            className={allowResume ? 'min-w-0 flex-1' : 'w-full self-stretch'}
             color={c}
             containerStyle={{
               backgroundColor: c.accent.primary,
