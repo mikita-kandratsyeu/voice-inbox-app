@@ -76,6 +76,7 @@ export const SettingsScreen = () => {
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
   const setAutoTranscribeOnSave = useSettingsStore((s) => s.setAutoTranscribeOnSave);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
@@ -151,8 +152,13 @@ export const SettingsScreen = () => {
   }, [fetchAiUsage]);
 
   const aiModelName = AI_MODELS.find((m) => m.id === selectedAIModel)?.name ?? selectedAIModel;
-  const whisperModelName =
+  const whisperStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
+  const whisperModelLabel =
     WHISPER_MODELS.find((m) => m.id === selectedWhisperModel)?.name ?? selectedWhisperModel;
+  const transcriptionValue =
+    whisperStatus === 'not_downloaded'
+      ? t('settings.whisperModelNotSet')
+      : `Whisper ${whisperModelLabel}`;
 
   const handleExport = async () => {
     try {
@@ -316,7 +322,7 @@ export const SettingsScreen = () => {
             />
             <SettingsRow
               label={t('settings.transcription')}
-              value={`Whisper ${whisperModelName}`}
+              value={transcriptionValue}
               leftIcon={<Mic size={20} color={color.accent.cache} strokeWidth={1.8} />}
               onPress={() => navigation.navigate('WhisperModelPicker')}
             />

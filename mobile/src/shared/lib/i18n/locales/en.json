@@ -253,6 +253,7 @@
     "aiModel": "AI model",
     "aiSettings": "AI settings",
     "transcription": "Transcription",
+    "whisperModelNotSet": "Not set",
     "autoTranscribeOnSave": "Transcribe automatically",
     "autoAiAfterTranscription": "Auto-summary after transcription",
     "appearance": "Appearance",

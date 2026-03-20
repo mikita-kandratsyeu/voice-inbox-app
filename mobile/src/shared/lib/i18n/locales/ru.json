@@ -253,6 +253,7 @@
     "aiModel": "ИИ модель",
     "aiSettings": "Настройки ИИ",
     "transcription": "Транскрипция",
+    "whisperModelNotSet": "Не задано",
     "autoTranscribeOnSave": "Транскрибировать автоматически",
     "autoAiAfterTranscription": "Авто-сводка после транскрипции",
     "appearance": "Внешний вид",

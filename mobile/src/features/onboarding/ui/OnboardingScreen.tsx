@@ -192,7 +192,7 @@ const AnimatedNextButton = ({
           minHeight: 52,
           overflow: 'hidden',
           backgroundColor: slideColors[0],
-          opacity: disabled ? 0.5 : 1,
+          opacity: disabled && !loading ? 0.5 : 1,
         },
         animatedStyle,
       ]}
@@ -200,7 +200,7 @@ const AnimatedNextButton = ({
       <TouchableOpacity
         onPress={onPress}
         activeOpacity={0.85}
-        disabled={disabled}
+        disabled={disabled || loading}
         className="flex-1 flex-row items-center justify-center gap-2 py-3.5 px-7"
       >
         {loading ? (
@@ -764,6 +764,8 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [agreedToTerms, setAgreedToTerms] = useState(() => getTermsAgreedAt() != null);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [isFinishingOnboarding, setIsFinishingOnboarding] = useState(false);
+  const finishingRef = useRef(false);
   const flatListRef = useRef<FlatList<OnboardingSlideContent>>(null);
   const scrollX = useSharedValue(0);
   const screenWidth = useSharedValue(windowWidth);
@@ -834,7 +836,10 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
     },
   });
 
-  const handleComplete = () => {
+  const handleComplete = useCallback(() => {
+    if (finishingRef.current) return;
+    finishingRef.current = true;
+    setIsFinishingOnboarding(true);
     setTermsAgreedAt();
     setHasSeenOnboarding();
 
@@ -843,7 +848,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         onComplete();
       });
     });
-  };
+  }, [onComplete]);
 
   const handleNext = () => {
     const lastIndex = slides.length - 1;
@@ -941,10 +946,20 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           <TouchableOpacity
             onPress={handleComplete}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            disabled={isFinishingOnboarding}
           >
-            <Text className="px-4 py-2 text-sm font-medium" style={{ color: color.text.secondary }}>
-              {t('common.skip')}
-            </Text>
+            {isFinishingOnboarding ? (
+              <View className="min-h-[36px] min-w-[80px] items-center justify-center px-4 py-2">
+                <ActivityIndicator size="small" color={color.text.secondary} />
+              </View>
+            ) : (
+              <Text
+                className="px-4 py-2 text-sm font-medium"
+                style={{ color: color.text.secondary }}
+              >
+                {t('common.skip')}
+              </Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -989,7 +1004,10 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           screenWidth={screenWidth}
           slideColors={slideColors}
           iconOnAccent={color.icon.onAccent}
-          disabled={(isOnPermissionsSlide || isLastSlide) && !agreedToTerms}
+          disabled={
+            isFinishingOnboarding || ((isOnPermissionsSlide || isLastSlide) && !agreedToTerms)
+          }
+          loading={isFinishingOnboarding}
         />
       </View>
     </View>
