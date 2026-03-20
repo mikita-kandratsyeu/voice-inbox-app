@@ -3,12 +3,10 @@ export type AppLanguage = 'system' | 'en' | 'ru';
 
 export type AIModelId =
   | 'google/gemini-3.1-flash-lite-preview'
-  | 'arcee-ai/trinity-large-preview:free'
   | 'openai/gpt-5-nano'
-  | 'meta-llama/llama-3.3-70b-instruct'
   | 'deepseek/deepseek-v3.2'
   | 'google/gemini-2.5-flash-lite'
-  | 'mistralai/mistral-small-3.2-24b-instruct';
+  | 'arcee-ai/trinity-large-preview:free';
 
 export type TranscriptionLanguage = 'auto' | 'ru' | 'en' | 'de' | 'fr' | 'es' | 'zh' | 'ja';
 export type SummaryStyle = 'brief' | 'standard' | 'detailed';

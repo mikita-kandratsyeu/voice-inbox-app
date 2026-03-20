@@ -48,10 +48,8 @@ export const FALLBACK_MODEL = 'arcee-ai/trinity-large-preview:free';
 export const ALLOWED_AI_MODELS: string[] = [
   'google/gemini-3.1-flash-lite-preview',
   'google/gemini-2.5-flash-lite',
-  'meta-llama/llama-3.3-70b-instruct',
   'deepseek/deepseek-v3.2',
   'openai/gpt-5-nano',
-  'mistralai/mistral-small-3.2-24b-instruct',
   FALLBACK_MODEL,
 ];
 

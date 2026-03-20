@@ -17,47 +17,46 @@ const GEMINI_MODELS: AIModel[] = [
   },
 ];
 
-const OPENAI_MODEL: AIModel = {
-  id: 'openai/gpt-5-nano',
-  name: 'GPT-5 Nano',
-  provider: 'OpenAI',
-  descriptionKey: 'aiModels.openaiDesc',
-  speed: 'medium',
-};
-
-const META_LLAMA_MODEL: AIModel = {
-  id: 'meta-llama/llama-3.3-70b-instruct',
-  name: 'Llama 3.3 70B',
-  provider: 'Meta',
-  descriptionKey: 'aiModels.metaLlamaDesc',
-  speed: 'fast',
-};
-
-const DEEPSEEK_MODEL: AIModel = {
-  id: 'deepseek/deepseek-v3.2',
-  name: 'DeepSeek V3.2',
-  provider: 'DeepSeek',
-  descriptionKey: 'aiModels.deepSeekDesc',
-  speed: 'medium',
-};
-
-const MISTRAL_MODELS: AIModel[] = [
+const OPENAI_MODEL: AIModel[] = [
   {
-    id: 'mistralai/mistral-small-3.2-24b-instruct',
-    name: 'Mistral Small 3.2',
-    provider: 'Mistral',
-    descriptionKey: 'aiModels.mistralDesc',
+    id: 'openai/gpt-5-nano',
+    name: 'GPT-5 Nano',
+    provider: 'OpenAI',
+    descriptionKey: 'aiModels.openaiDesc  ',
     speed: 'medium',
   },
 ];
 
-export const AI_MODELS: AIModel[] = [
-  ...GEMINI_MODELS,
-  META_LLAMA_MODEL,
-  DEEPSEEK_MODEL,
-  OPENAI_MODEL,
-  ...MISTRAL_MODELS,
+const DEEPSEEK_MODEL: AIModel[] = [
+  {
+    id: 'deepseek/deepseek-v3.2',
+    name: 'DeepSeek V3.2',
+    provider: 'DeepSeek',
+    descriptionKey: 'aiModels.deepSeekDesc',
+    speed: 'medium',
+  },
 ];
+
+// FIXME: Models are not available in the API now. Will be added in Pro plan.
+// const MISTRAL_MODELS: AIModel[] = [
+//   {
+//     id: 'mistralai/mistral-small-3.2-24b-instruct',
+//     name: 'Mistral Small 3.2',
+//     provider: 'Mistral',
+//     descriptionKey: 'aiModels.mistralDesc',
+//     speed: 'medium',
+//   },
+// ];
+
+// const META_LLAMA_MODEL: AIModel = {
+//   id: 'meta-llama/llama-3.3-70b-instruct',
+//   name: 'Llama 3.3 70B',
+//   provider: 'Meta',
+//   descriptionKey: 'aiModels.metaLlamaDesc',
+//   speed: 'fast',
+// };
+
+export const AI_MODELS: AIModel[] = [...GEMINI_MODELS, ...DEEPSEEK_MODEL, ...OPENAI_MODEL];
 
 export const WHISPER_MODELS: WhisperModel[] = [
   {
