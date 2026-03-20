@@ -15,6 +15,7 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  InteractionManager,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -762,7 +763,6 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const { width: windowWidth } = useWindowDimensions();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [agreedToTerms, setAgreedToTerms] = useState(() => getTermsAgreedAt() != null);
-  const [isStartingDownload, setIsStartingDownload] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const flatListRef = useRef<FlatList<OnboardingSlideContent>>(null);
   const scrollX = useSharedValue(0);
@@ -837,7 +837,12 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const handleComplete = () => {
     setTermsAgreedAt();
     setHasSeenOnboarding();
-    onComplete();
+
+    InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(() => {
+        onComplete();
+      });
+    });
   };
 
   const handleNext = () => {
@@ -852,13 +857,15 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
     }
 
     const whisperStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
+    const anyWhisperDownloading = Object.values(whisperModelStatuses).some(
+      (s) => s === 'downloading',
+    );
 
-    if (whisperStatus === 'downloaded') {
-      handleComplete();
-      return;
-    }
-
-    if (whisperStatus === 'downloading') {
+    if (
+      whisperStatus === 'downloaded' ||
+      whisperStatus === 'downloading' ||
+      anyWhisperDownloading
+    ) {
       handleComplete();
       return;
     }
@@ -867,14 +874,9 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
       { text: t('common.skip'), style: 'cancel', onPress: handleComplete },
       {
         text: t('common.download'),
-        onPress: async () => {
-          setIsStartingDownload(true);
-          try {
-            await startDownload(selectedWhisperModel);
-            handleComplete();
-          } catch {
-            setIsStartingDownload(false);
-          }
+        onPress: () => {
+          void startDownload(selectedWhisperModel).catch(() => {});
+          setTimeout(handleComplete, 120);
         },
       },
     ]);
@@ -987,8 +989,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           screenWidth={screenWidth}
           slideColors={slideColors}
           iconOnAccent={color.icon.onAccent}
-          loading={isStartingDownload}
-          disabled={isStartingDownload || ((isOnPermissionsSlide || isLastSlide) && !agreedToTerms)}
+          disabled={(isOnPermissionsSlide || isLastSlide) && !agreedToTerms}
         />
       </View>
     </View>

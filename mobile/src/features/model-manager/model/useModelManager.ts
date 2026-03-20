@@ -26,15 +26,15 @@ export const useModelManager = () => {
       const model = WHISPER_MODELS.find((m) => m.id === modelId);
       const expectedBytes = (model?.sizeMb ?? 0) * 1024 * 1024;
 
-      await startWhisperDownloadLiveActivity(modelId);
+      await startWhisperDownloadLiveActivity(modelId).catch(() => {});
 
       try {
         const { promise } = downloadWhisperModel({
           modelId,
           expectedBytes,
-          onProgress: async (progress, bytesWritten, contentLength) => {
+          onProgress: (progress, bytesWritten, contentLength) => {
             setDownloadProgress(modelId, progress, bytesWritten, contentLength);
-            await updateWhisperDownloadLiveActivity(progress / 100, modelId);
+            void updateWhisperDownloadLiveActivity(progress / 100, modelId).catch(() => {});
           },
         });
 

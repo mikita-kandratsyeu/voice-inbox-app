@@ -48,14 +48,14 @@ final class DownloadLiveActivityManager {
     }
 
     func end() {
-        guard let activity else { return }
+        guard let current = activity else { return }
 
-        let state = activity.content.state
+        activity = nil
+        let state = current.content.state
         let content = ActivityContent(state: state, staleDate: nil)
 
         Task {
-            await activity.end(content, dismissalPolicy: .immediate)
-            self.activity = nil
+            await current.end(content, dismissalPolicy: .immediate)
         }
     }
 }

@@ -20,7 +20,9 @@ export const OnboardingGate = ({ children }: OnboardingGateProps) => {
     setHasSeen(true);
     setForceShow(false);
     if (IS_IOS) {
-      ensurePushRegistered().catch(() => {});
+      setTimeout(() => {
+        ensurePushRegistered().catch(() => {});
+      }, 400);
     }
   };
 
