@@ -6,12 +6,12 @@ import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } fr
 import type { WhisperModelId } from '@/entities/settings';
 import {
   AI_MODELS,
+  useRecommendedWhisperModelId,
   useSettingsStore,
   useWhisperModelCompatibility,
   WHISPER_MODELS,
 } from '@/entities/settings';
 import { useModelManager } from '@/features/model-manager';
-import { RECOMMENDED_MODEL_ID } from '@/screens/settings/config';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
@@ -35,6 +35,7 @@ export const OnboardingSetupStep = ({
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
 
   const compatibility = useWhisperModelCompatibility();
+  const recommendedModelId = useRecommendedWhisperModelId();
   const { startDownload } = useModelManager();
 
   const handleWhisperSelect = (id: WhisperModelId) => {
@@ -174,7 +175,7 @@ export const OnboardingSetupStep = ({
                   <Text className="text-[15px] font-medium" style={{ color: color.text.primary }}>
                     Whisper {model.name}
                   </Text>
-                  {model.id === RECOMMENDED_MODEL_ID && (
+                  {model.id === recommendedModelId && (
                     <View
                       className="rounded-full px-2 py-0.5"
                       style={{ backgroundColor: color.status.processing.bg }}

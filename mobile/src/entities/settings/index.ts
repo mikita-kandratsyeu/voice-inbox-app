@@ -1,4 +1,6 @@
 export { canDeviceRunWhisperModel } from './lib/canDeviceRunWhisperModel';
+export { getRecommendedWhisperModelId } from './lib/recommendWhisperModel';
+export { useRecommendedWhisperModelId } from './lib/useRecommendedWhisperModelId';
 export { useWhisperModelCompatibility } from './lib/useWhisperModelCompatibility';
 export { AI_MODELS, WHISPER_MODELS } from './model/constants';
 export { useSettingsStore } from './model/store';

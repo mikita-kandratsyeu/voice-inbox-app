@@ -1,7 +1,11 @@
 import { useCallback } from 'react';
 
 import type { WhisperModelId } from '@/entities/settings';
-import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import {
+  getRecommendedWhisperModelId,
+  useSettingsStore,
+  WHISPER_MODELS,
+} from '@/entities/settings';
 
 import { deleteWhisperModel } from '../lib/deleteWhisperModel';
 import {
@@ -74,7 +78,7 @@ export const useModelManager = () => {
       removeWhisperModelStatus(modelId);
 
       if (selectedWhisperModel === modelId) {
-        setWhisperModel('whisper-base');
+        setWhisperModel(getRecommendedWhisperModelId());
       }
     },
     [removeWhisperModelStatus, selectedWhisperModel, setWhisperModel],

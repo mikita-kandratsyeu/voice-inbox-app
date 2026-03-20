@@ -5,5 +5,3 @@ export const getAccuracyLabel = (key: string): string =>
 
 export const getSpeedLabel = (key: string): string =>
   i18n.t(`whisper.speed.${key}` as 'whisper.speed.fast');
-
-export const RECOMMENDED_MODEL_ID = 'whisper-base';

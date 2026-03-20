@@ -26,6 +26,22 @@ export const WHISPER_MODEL_DOWNLOAD_URLS: Record<WhisperModelId, string> = {
   'whisper-medium': 'https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-medium.bin',
 };
 
+export const WHISPER_COREML_ENCODER_ZIP: Record<WhisperModelId, string> = {
+  'whisper-tiny': 'ggml-tiny-encoder.mlmodelc.zip',
+  'whisper-base': 'ggml-base-encoder.mlmodelc.zip',
+  'whisper-small': 'ggml-small-encoder.mlmodelc.zip',
+  'whisper-medium': 'ggml-medium-encoder.mlmodelc.zip',
+};
+
+export const getWhisperCoreMlEncoderDirName = (modelId: WhisperModelId): string =>
+  WHISPER_COREML_ENCODER_ZIP[modelId].replace(/\.zip$/i, '');
+
+export const getWhisperCoreMlEncoderPath = (modelId: WhisperModelId): string =>
+  `${WHISPER_MODELS_DIR}/${getWhisperCoreMlEncoderDirName(modelId)}`;
+
+export const getWhisperCoreMlDownloadUrl = (modelId: WhisperModelId): string =>
+  `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${WHISPER_COREML_ENCODER_ZIP[modelId]}`;
+
 export const getWhisperLabel = (modelId: string): string => {
   const model = WHISPER_MODELS.find((model) => model.id === modelId);
 

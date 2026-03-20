@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import { initWhisper, releaseAllWhisper, type WhisperContext } from 'whisper.rn';
 
 import type { WhisperModelId } from '@/entities/settings';
@@ -59,7 +60,10 @@ export const getWhisperContext = async (modelId: WhisperModelId): Promise<Whispe
       }
 
       const filePath = getWhisperModelPath(modelId);
-      const context = await initWhisper({ filePath });
+      const context = await initWhisper({
+        filePath,
+        ...(Platform.OS === 'ios' ? { useCoreMLIos: true } : {}),
+      });
       cachedContext = { context, modelId };
       return context;
     } finally {

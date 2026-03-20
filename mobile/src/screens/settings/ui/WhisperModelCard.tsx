@@ -6,7 +6,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import type { WhisperModel, WhisperModelId, WhisperModelStatus } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 
-import { getAccuracyLabel, getSpeedLabel, RECOMMENDED_MODEL_ID } from '../config';
+import { getAccuracyLabel, getSpeedLabel } from '../config';
 import { getCardRadiusClass, getSpeedColor } from '../lib';
 import { WhisperModelSpinner } from './WhisperModelSpinner';
 
@@ -22,6 +22,7 @@ type WhisperModelCardProps = {
   status: WhisperModelStatus;
   isSelected: boolean;
   displaySize: string;
+  recommendedModelId: WhisperModelId;
   compatibility: CompatibilityInfo | null;
   color: Colors;
   onPress: (id: WhisperModelId) => void;
@@ -36,6 +37,7 @@ export const WhisperModelCard = ({
   status,
   isSelected,
   displaySize,
+  recommendedModelId,
   compatibility,
   color,
   onPress,
@@ -47,7 +49,7 @@ export const WhisperModelCard = ({
   const isDownloading = status === 'downloading';
   const isError = status === 'error';
   const isLast = index === total - 1;
-  const isRecommended = model.id === RECOMMENDED_MODEL_ID;
+  const isRecommended = model.id === recommendedModelId;
 
   const borderStyle = !isLast
     ? { borderBottomWidth: 1, borderBottomColor: color.border.default }

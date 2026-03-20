@@ -51,6 +51,10 @@ Push uses `@react-native-firebase/messaging`; crash reports use `@react-native-f
 4. After the app crashes, **launch it again** so the pending report can upload.
 5. Check the [Crashlytics dashboard](https://console.firebase.google.com/) within a few minutes. If nothing appears, add **`-FIRDebugEnabled`** under *Product → Scheme → Edit Scheme → Run → Arguments Passed on Launch* and look in the Xcode console for a log line containing **`Completed report submission`**.
 
+### Whisper (offline transcription)
+
+`whisper.rn` downloads **GGML** weights from Hugging Face. On **iOS**, after each `.bin` download the app also fetches the matching **`ggml-*-encoder.mlmodelc.zip`**, unzips it next to the `.bin`, and calls `initWhisper` with **`useCoreMLIos: true`** so the encoder can run on the Neural Engine when available (falls back to CPU if the bundle is missing or fails). **Android** only uses the `.bin` file. Models downloaded before this behavior was added have no Core ML bundle — **delete the model in Settings and download again** to pick up the encoder. The onboarding / model picker **“Recommended”** badge uses RAM and `isLowRamDevice` (Android) to suggest tiny → base → small → medium; nothing is auto-downloaded.
+
 ---
 
 ## Tech stack

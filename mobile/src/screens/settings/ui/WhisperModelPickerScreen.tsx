@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { WhisperModelId } from '@/entities/settings';
 import {
+  useRecommendedWhisperModelId,
   useSettingsStore,
   useWhisperModelCompatibility,
   WHISPER_MODELS,
@@ -31,6 +32,7 @@ export const WhisperModelPickerScreen = () => {
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
 
   const compatibility = useWhisperModelCompatibility();
+  const recommendedModelId = useRecommendedWhisperModelId();
   const { startDownload, cancelDownload, removeModel } = useModelManager();
 
   const [realSizes, setRealSizes] = useState<Partial<Record<WhisperModelId, string>>>({});
@@ -126,6 +128,7 @@ export const WhisperModelPickerScreen = () => {
                 status={whisperModelStatuses[model.id] ?? 'not_downloaded'}
                 isSelected={model.id === selectedWhisperModel}
                 displaySize={realSizes[model.id] ?? formatFileSize(model.sizeMb * 1024 * 1024)}
+                recommendedModelId={recommendedModelId}
                 compatibility={compatibility ? compatibility[model.id] : null}
                 color={color}
                 onPress={handleSelect}

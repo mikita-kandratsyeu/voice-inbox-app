@@ -7,7 +7,7 @@ import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanima
 import type { Colors } from '@/shared/config';
 import { formatTime, hapticSelection } from '@/shared/lib';
 
-const SKIP_SECONDS = 10;
+const SKIP_SECONDS = 5;
 const PLAYBACK_SPEEDS = [1, 1.25, 1.5, 2] as const;
 
 type AudioPlayerProps = {
