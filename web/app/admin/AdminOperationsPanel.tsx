@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { AdminExternalObservabilityLinks } from './AdminExternalObservabilityLinks';
+
 type SupportStats = {
   ok: boolean;
   totalOpen?: number;
@@ -101,6 +103,8 @@ export function AdminOperationsPanel() {
 
   return (
     <div className="space-y-8">
+      <AdminExternalObservabilityLinks />
+
       <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
         <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
           Support summary

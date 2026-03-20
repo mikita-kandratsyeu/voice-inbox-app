@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { BookOpen, Globe, Mail, Store, Tag } from 'lucide-react-native';
+import { BookOpen, Globe, Mail, Tag } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
@@ -8,14 +8,17 @@ import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
+import { getStoreListingUrl, openStoreListing } from '@/features/app-review';
 import { getStorefrontCountryCode, useAdsSecretIconTap } from '@/features/app-storefront';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { useOnboardingStore } from '@/features/onboarding';
 import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
-import { isString, useIsTablet } from '@/shared/lib';
+import { IS_ANDROID, IS_IOS, useIsTablet } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 const VERSION_DISPLAY = DeviceInfoModule.version;
+
+const storeListingUrl = getStoreListingUrl();
 
 export const AboutAppScreen = () => {
   const { t } = useTranslation();
@@ -25,12 +28,30 @@ export const AboutAppScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const setForceShowOnboarding = useOnboardingStore((s) => s.setForceShow);
   const contentMaxWidth = isTablet ? 720 : undefined;
-  const [storeRegion, setStoreRegion] = useState<string | null>(null);
   const { onSecretIconPress } = useAdsSecretIconTap();
+  const [storefrontRegion, setStorefrontRegion] = useState<string | null>(null);
 
   useEffect(() => {
-    getStorefrontCountryCode().then(setStoreRegion);
+    void getStorefrontCountryCode().then(setStorefrontRegion);
   }, []);
+
+  let distributionMarketLabel: string | null = null;
+  if (IS_IOS) {
+    distributionMarketLabel = t('about.marketAppStore');
+  } else if (IS_ANDROID) {
+    distributionMarketLabel = t('about.marketGooglePlay');
+  }
+
+  const storefrontRegionTrimmed = storefrontRegion?.trim() ?? '';
+  const distributionFooterText =
+    distributionMarketLabel != null
+      ? storefrontRegionTrimmed.length > 0
+        ? t('about.distributionMarketWithRegion', {
+            market: distributionMarketLabel,
+            region: storefrontRegionTrimmed,
+          })
+        : t('about.distributionMarket', { market: distributionMarketLabel })
+      : null;
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -79,17 +100,16 @@ export const AboutAppScreen = () => {
               label={t('about.version')}
               value={VERSION_DISPLAY}
               leftIcon={<Tag size={18} color={color.icon.muted} strokeWidth={1.8} />}
-              showChevron={false}
+              showChevron={Boolean(storeListingUrl)}
+              onPress={
+                storeListingUrl
+                  ? () => {
+                      void openStoreListing();
+                    }
+                  : undefined
+              }
               isFirst
             />
-            {isString(storeRegion) && (
-              <SettingsRow
-                label={t('about.storeRegion')}
-                value={storeRegion}
-                leftIcon={<Store size={18} color={color.icon.muted} strokeWidth={1.8} />}
-                showChevron={false}
-              />
-            )}
             {WEBSITE_URL.length > 0 && (
               <SettingsRow
                 label={t('about.website')}
@@ -158,6 +178,14 @@ export const AboutAppScreen = () => {
           <Text className="mt-2 text-center text-[14px]" style={{ color: color.text.secondary }}>
             {t('about.copyright', { year: new Date().getFullYear() })}
           </Text>
+          {distributionFooterText != null && (
+            <Text
+              className="mt-2 text-center text-xs leading-4"
+              style={{ color: color.text.secondary }}
+            >
+              {distributionFooterText}
+            </Text>
+          )}
         </ScrollView>
       </View>
     </View>

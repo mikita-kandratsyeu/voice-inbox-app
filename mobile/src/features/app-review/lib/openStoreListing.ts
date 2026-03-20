@@ -19,6 +19,11 @@ function pickStoreUrl(): string | null {
   return null;
 }
 
+/** Resolves the store listing URL for the current platform, if configured in env. */
+export function getStoreListingUrl(): string | null {
+  return pickStoreUrl();
+}
+
 export async function openStoreListing(): Promise<boolean> {
   const url = pickStoreUrl();
 

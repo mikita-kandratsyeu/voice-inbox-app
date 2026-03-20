@@ -1,6 +1,8 @@
+import { crash, getCrashlytics } from '@react-native-firebase/crashlytics';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
+  AlertTriangle,
   Bell,
   Bot,
   Download,
@@ -525,7 +527,7 @@ export const SettingsScreen = () => {
             />
             <SettingsRow
               label={t('settings.rateApp')}
-              leftIcon={<Star size={20} color={color.accent.primary} strokeWidth={1.8} />}
+              leftIcon={<Star size={20} color={color.icon.muted} strokeWidth={1.8} />}
               onPress={handleRateApp}
             />
             <SettingsRow
@@ -535,6 +537,21 @@ export const SettingsScreen = () => {
               isLast
             />
           </SettingsSection>
+          {__DEV__ && (
+            <SettingsSection title="Debug">
+              <SettingsRow
+                label="Test Crashlytics (native crash)"
+                leftIcon={
+                  <AlertTriangle size={20} color={color.status.error.text} strokeWidth={1.8} />
+                }
+                onPress={() => crash(getCrashlytics())}
+                showChevron={false}
+                isFirst
+                isLast
+                dangerous
+              />
+            </SettingsSection>
+          )}
 
           <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>

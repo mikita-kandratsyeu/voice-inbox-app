@@ -104,6 +104,9 @@ PODS:
   - FBLazyVector (0.84.1)
   - Firebase/CoreOnly (12.10.0):
     - FirebaseCore (~> 12.10.0)
+  - Firebase/Crashlytics (12.10.0):
+    - Firebase/CoreOnly
+    - FirebaseCrashlytics (~> 12.10.0)
   - Firebase/Messaging (12.10.0):
     - Firebase/CoreOnly
     - FirebaseMessaging (~> 12.10.0)
@@ -115,6 +118,15 @@ PODS:
     - FirebaseCore (~> 12.10.0)
   - FirebaseCoreInternal (12.10.0):
     - "GoogleUtilities/NSData+zlib (~> 8.1)"
+  - FirebaseCrashlytics (12.10.0):
+    - FirebaseCore (~> 12.10.0)
+    - FirebaseInstallations (~> 12.10.0)
+    - FirebaseRemoteConfigInterop (~> 12.10.0)
+    - FirebaseSessions (~> 12.10.0)
+    - GoogleDataTransport (~> 10.1)
+    - GoogleUtilities/Environment (~> 8.1)
+    - nanopb (~> 3.30910.0)
+    - PromisesObjC (~> 2.4)
   - FirebaseInstallations (12.10.0):
     - FirebaseCore (~> 12.10.0)
     - GoogleUtilities/Environment (~> 8.1)
@@ -129,6 +141,16 @@ PODS:
     - GoogleUtilities/Reachability (~> 8.1)
     - GoogleUtilities/UserDefaults (~> 8.1)
     - nanopb (~> 3.30910.0)
+  - FirebaseRemoteConfigInterop (12.10.0)
+  - FirebaseSessions (12.10.0):
+    - FirebaseCore (~> 12.10.0)
+    - FirebaseCoreExtension (~> 12.10.0)
+    - FirebaseInstallations (~> 12.10.0)
+    - GoogleDataTransport (~> 10.1)
+    - GoogleUtilities/Environment (~> 8.1)
+    - GoogleUtilities/UserDefaults (~> 8.1)
+    - nanopb (~> 3.30910.0)
+    - PromisesSwift (~> 2.1)
   - GoogleDataTransport (10.1.0):
     - nanopb (~> 3.30910.0)
     - PromisesObjC (~> 2.4)
@@ -320,6 +342,8 @@ PODS:
     - ReactNativeDependencies
     - Yoga
   - PromisesObjC (2.4.0)
+  - PromisesSwift (2.4.0):
+    - PromisesObjC (= 2.4.0)
   - QuickCrypto (1.0.17):
     - hermes-engine
     - NitroModules
@@ -2261,6 +2285,30 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNFBCrashlytics (23.8.8):
+    - Firebase/Crashlytics (= 12.10.0)
+    - FirebaseCoreExtension
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - RNFBApp
+    - Yoga
   - RNFBMessaging (23.8.8):
     - Firebase/Messaging (= 12.10.0)
     - FirebaseCoreExtension
@@ -2789,6 +2837,7 @@ DEPENDENCIES:
   - RNCalendarEvents (from `../node_modules/react-native-calendar-events`)
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
+  - "RNFBCrashlytics (from `../node_modules/@react-native-firebase/crashlytics`)"
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
@@ -2836,13 +2885,17 @@ SPEC REPOS:
     - FirebaseCore
     - FirebaseCoreExtension
     - FirebaseCoreInternal
+    - FirebaseCrashlytics
     - FirebaseInstallations
     - FirebaseMessaging
+    - FirebaseRemoteConfigInterop
+    - FirebaseSessions
     - GoogleDataTransport
     - GoogleUtilities
     - MMKVCore
     - nanopb
     - PromisesObjC
+    - PromisesSwift
     - SSZipArchive
     - VGSL
     - VGSLFundamentals
@@ -3038,6 +3091,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-clipboard/clipboard"
   RNFBApp:
     :path: "../node_modules/@react-native-firebase/app"
+  RNFBCrashlytics:
+    :path: "../node_modules/@react-native-firebase/crashlytics"
   RNFBMessaging:
     :path: "../node_modules/@react-native-firebase/messaging"
   RNFS:
@@ -3102,8 +3157,11 @@ SPEC CHECKSUMS:
   FirebaseCore: f4428e22415ea3b3eca652c2098413dabf2a23a9
   FirebaseCoreExtension: 3473a6ec16a91aee29fb75994a86c0220d2cddf3
   FirebaseCoreInternal: e7bbaeb00ab73011298f35ed223aa7371e212948
+  FirebaseCrashlytics: cd1baeb80302ec5ea1012f732ab94df7d76f09f7
   FirebaseInstallations: 047343aa91fd6a1ebfa3eb374ddecf36a8aaddfd
   FirebaseMessaging: ed18fb50634e6e85b5d3e77e628c21e2c928cc53
+  FirebaseRemoteConfigInterop: a169873f4093b241eb5e27a4fbad91af36d64b8d
+  FirebaseSessions: dba7635960740ad77cc2f3387d90ff22a7942f82
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   hermes-engine: cba95b7533c6a58b3cb69d87650103551ec72e06
@@ -3117,6 +3175,7 @@ SPEC CHECKSUMS:
   NitroModules: 1a806015521a13eb013743eb6edb825fe21e057a
   op-sqlite: ddc4497aaeb4593a2e435bf3d81cbdcca1d44be6
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
+  PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
   QuickCrypto: 43cd3d7410f825466814de5b6d4ac5f111d84bce
   RCTDeprecation: 7489702d717ceea80e271eeacb3fbca39fa3c056
   RCTRequired: 1cceac389e77dc5826c681cb782d864b0ed623fc
@@ -3200,6 +3259,7 @@ SPEC CHECKSUMS:
   RNCalendarEvents: f90f73666b6bcbb3cc8a491ffbb5e48c0db3de37
   RNCClipboard: d73fd4b2ac59e792596e7cd615b6321d577c1a2b
   RNFBApp: ff3a9aeb92a6c5d7423842de03bd06b701b41fb8
+  RNFBCrashlytics: 0fb6bec4ae5832abe4c0dd797f5a15e2af61494e
   RNFBMessaging: deb0ea86ae14038368a7b1a0d3414251419dc40f
   RNFS: 89de7d7f4c0f6bafa05343c578f61118c8282ed8
   RNGestureHandler: bf692d5a1f7b6ce7fe01fd4e6311ae1d543ddd3e

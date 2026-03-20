@@ -1,4 +1,5 @@
 declare module '@env' {
+  export const CRASHLYTICS_DEBUG: string | undefined;
   export const APP_ENV: string;
   export const APP_STORE_URL: string | undefined;
   export const GOOGLE_PLAY_URL: string | undefined;

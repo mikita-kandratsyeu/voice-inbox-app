@@ -39,6 +39,18 @@ The project is designed as a solo‑friendly, production‑ready codebase: clean
 
 Optional **banner** (note detail) and **rewarded** ad (bonus AI quota in Settings) use `yandex-mobile-ads`. **Currently**, they are off when `isEUUserByStorefront()` is true (EU App Store / Play list in `features/app-storefront/lib/storefront.ts`) — SDK is not initialized and no ad UI is shown. If you later enable ads in the EEA, update the app, consent flows, and `web/content/privacy.*.md` / `terms.*.md`. Env: `.env.example` (`YANDEX_*_AD_UNIT_ID`).
 
+### Firebase (FCM, Crashlytics)
+
+Push uses `@react-native-firebase/messaging`; crash reports use `@react-native-firebase/crashlytics`. **iOS:** `GoogleService-Info.plist` in the Xcode project (already present). **Android:** add `android/app/google-services.json` from the Firebase console (same project as iOS). Without it, the Android build fails after applying the Google Services / Crashlytics Gradle plugins. Enable **Crashlytics** for the Firebase app in the console. Release builds send crashes. Debug builds disable collection unless you set **`CRASHLYTICS_DEBUG=1`** in `.env` and keep **`mobile/firebase.json`** (`crashlytics_debug_enabled`). Then restart Metro with a clean cache and rebuild the native app. Support tickets include a `crashlytics` object in diagnostics (collection flag + previous-session crash).
+
+**Testing Crashlytics on iOS** (same flow as [Firebase: test your implementation](https://firebase.google.com/docs/crashlytics/ios/test-implementation)):
+
+1. Ensure dSYM upload is set up (RN Firebase adds a **Crashlytics** run script build phase; see Firebase [get started](https://firebase.google.com/docs/crashlytics/ios/get-started#set-up-dsym-uploading)).
+2. **Do not keep the Xcode debugger attached** when forcing a crash — it blocks reports. Build & run once, then **stop** the scheme in Xcode, then open the app from the **home screen** (or simulator springboard).
+3. In the app, use the **Debug → Test Crashlytics** row in Settings (`__DEV__` only), which calls `crash(getCrashlytics())`.
+4. After the app crashes, **launch it again** so the pending report can upload.
+5. Check the [Crashlytics dashboard](https://console.firebase.google.com/) within a few minutes. If nothing appears, add **`-FIRDebugEnabled`** under *Product → Scheme → Edit Scheme → Run → Arguments Passed on Launch* and look in the Xcode console for a log line containing **`Completed report submission`**.
+
 ---
 
 ## Tech stack

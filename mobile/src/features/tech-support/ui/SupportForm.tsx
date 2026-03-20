@@ -3,15 +3,15 @@ import { useTranslation } from 'react-i18next';
 import { Text, TextInput, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
-import { Button, getInputFieldInputStyle } from '@/shared/ui';
+import { getInputFieldInputStyle } from '@/shared/ui';
 
-import { useSupportForm } from '../model/useSupportForm';
+export type SupportFormModel = ReturnType<typeof import('../model/useSupportForm').useSupportForm>;
 
 type Props = {
   color: Colors;
-};
+} & SupportFormModel;
 
-export function SupportForm({ color }: Props) {
+export function SupportForm({ color, ...form }: Props) {
   const { t } = useTranslation();
   const {
     email,
@@ -25,9 +25,8 @@ export function SupportForm({ color }: Props) {
     loading,
     error,
     successId,
-    submit,
     messageMin,
-  } = useSupportForm();
+  } = form;
 
   const inputBase = [
     getInputFieldInputStyle(color, true),
@@ -132,17 +131,6 @@ export function SupportForm({ color }: Props) {
           editable={!loading}
         />
         <View style={feedbackSlotStyle}>{feedback}</View>
-        <Button
-          label={t('support.send')}
-          loading={loading}
-          activeOpacity={1}
-          onPress={() => {
-            void submit();
-          }}
-          color={color}
-          fullWidth
-          containerStyle={{ paddingVertical: 10 }}
-        />
       </View>
     </View>
   );

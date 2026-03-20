@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { useRecordStore } from '@/entities/record';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { initDB } from '@/shared/lib';
+import { syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
+import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { ensurePushRegistered, type PushNotificationData } from '@/shared/lib/push';
 
 type OnInitialPushData = (data: PushNotificationData) => void;
@@ -21,6 +23,9 @@ export function useAppBootstrap(
   useEffect(() => {
     initDB()
       .then(async () => {
+        const deviceId = await getOrCreateDeviceId();
+        await syncCrashlyticsUserId(deviceId);
+
         await useRecordStore.getState().load();
         onBootstrapReady?.();
 

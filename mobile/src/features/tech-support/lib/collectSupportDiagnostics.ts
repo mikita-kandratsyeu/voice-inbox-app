@@ -3,6 +3,7 @@ import NetInfo from '@react-native-community/netinfo';
 import * as RNLocalize from 'react-native-localize';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
+import { collectCrashlyticsDiagnostics } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 import { isNumber, isString } from '@/shared/lib/type-guards';
@@ -15,6 +16,7 @@ export type SupportDiagnosticsPayload = Record<string, unknown>;
 
 export async function collectSupportDiagnostics(): Promise<SupportDiagnosticsPayload> {
   const deviceId = await getOrCreateDeviceId();
+  const crashlytics = await collectCrashlyticsDiagnostics();
   const net = await NetInfo.fetch();
   const locales = RNLocalize.getLocales();
 
@@ -32,6 +34,7 @@ export async function collectSupportDiagnostics(): Promise<SupportDiagnosticsPay
 
   return {
     deviceId,
+    crashlytics,
     platform: IS_IOS ? 'ios' : IS_ANDROID ? 'android' : 'unknown',
     appVersion: String(d.version ?? ''),
     buildNumber,
