@@ -10,6 +10,43 @@ import type {
   VoiceRecord,
 } from './types';
 
+const AI_PERSIST_DEBOUNCE_MS = 750;
+const aiPersistTimers = new Map<string, ReturnType<typeof setTimeout>>();
+
+const flushPersistAiState = (id: string, aiStatus: RecordingStatus, transcriptProgress: number) => {
+  void recordRepository.persistAiState(id, aiStatus, transcriptProgress).catch((err) => {
+    if (__DEV__) console.warn('[recordStore] persistAiState failed', id, err);
+  });
+};
+
+const schedulePersistAiState = (
+  id: string,
+  aiStatus: RecordingStatus,
+  transcriptProgress: number,
+  immediate: boolean,
+) => {
+  const prev = aiPersistTimers.get(id);
+  if (prev) clearTimeout(prev);
+
+  if (immediate) {
+    aiPersistTimers.delete(id);
+    flushPersistAiState(id, aiStatus, transcriptProgress);
+    return;
+  }
+
+  const t = setTimeout(() => {
+    aiPersistTimers.delete(id);
+    flushPersistAiState(id, aiStatus, transcriptProgress);
+  }, AI_PERSIST_DEBOUNCE_MS);
+  aiPersistTimers.set(id, t);
+};
+
+const clearAiPersistDebounce = (id: string) => {
+  const t = aiPersistTimers.get(id);
+  if (t) clearTimeout(t);
+  aiPersistTimers.delete(id);
+};
+
 type RecordStore = {
   records: VoiceRecord[];
   isLoaded: boolean;
@@ -60,6 +97,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   isLoaded: false,
 
   load: async () => {
+    if (__DEV__) console.warn('[recordStore] load: refetching records from DB');
     const all = await recordRepository.getAll();
     set({ records: all, isLoaded: true });
   },
@@ -131,6 +169,16 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
           : r,
       ),
     }));
+
+    const updated = get().records.find((r) => r.id === id);
+    if (!updated) {
+      if (__DEV__) console.warn('[recordStore] updateAiStatus: record not in store', id);
+      return;
+    }
+
+    const p = updated.transcriptProgress ?? 0;
+    const terminal = aiStatus === 'idle' || aiStatus === 'error' || aiStatus === 'done';
+    schedulePersistAiState(id, aiStatus, p, terminal);
   },
 
   renameRecord: async (id, title) => {
@@ -141,6 +189,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   },
 
   updateTranscript: async (id, transcript, segments) => {
+    clearAiPersistDebounce(id);
     await recordRepository.updateTranscript(id, transcript, segments);
     set((s) => ({
       records: s.records.map((r) =>

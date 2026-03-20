@@ -247,6 +247,19 @@ export const recordRepository = {
     await db.update(recordsTable).set({ audioPath: null }).where(eq(recordsTable.id, id));
   },
 
+  persistAiState: async (
+    id: string,
+    aiStatus: RecordingStatus,
+    transcriptProgress: number,
+  ): Promise<void> => {
+    logDb('persistAiState', { id, aiStatus, transcriptProgress });
+    const db = getDB();
+    await db
+      .update(recordsTable)
+      .set({ aiStatus, transcriptProgress })
+      .where(eq(recordsTable.id, id));
+  },
+
   updateEmbedding: async (id: string, embedding: number[] | null): Promise<void> => {
     logDb('updateEmbedding', { id });
     const db = getDB();

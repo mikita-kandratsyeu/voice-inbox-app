@@ -6,6 +6,8 @@ import { Alert, View } from 'react-native';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
+import { useRecordStore } from '@/entities/record';
+import { hasActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import { useTranslate } from '@/features/translate';
 import type { Colors } from '@/shared/config';
 
@@ -31,27 +33,37 @@ export const TranscriptContent = ({
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { translate, isTranslating } = useTranslate(record.id);
 
-  if (record.aiStatus === 'loading_model' || record.aiStatus === 'processing') {
+  const recordFromStore = useRecordStore((s) => s.records.find((r) => r.id === record.id));
+  const r = recordFromStore ?? record;
+  const registryInFlight = hasActiveTranscriptionJob(record.id);
+
+  const isTranscriptionUiActive =
+    r.aiStatus === 'loading_model' ||
+    r.aiStatus === 'processing' ||
+    (registryInFlight && r.aiStatus !== 'done' && r.aiStatus !== 'error');
+
+  const processingPhase: 'loading_model' | 'processing' =
+    r.aiStatus === 'loading_model' ? 'loading_model' : 'processing';
+
+  if (isTranscriptionUiActive) {
     return (
       <TranscriptProcessing
-        progress={record.transcriptProgress ?? 0}
-        progressLabel={record.transcriptProgressLabel}
-        phase={record.aiStatus}
+        progress={r.transcriptProgress ?? 0}
+        progressLabel={r.transcriptProgressLabel}
+        phase={processingPhase}
         color={color}
         onCancel={onCancelTranscription}
       />
     );
   }
 
-  if (record.aiStatus === 'error') {
+  if (r.aiStatus === 'error') {
     return <TranscriptError onRetry={onTranscribe} />;
   }
 
-  const showStatusBadge =
-    record.aiStatus === 'done' && (record.transcriptSegments ?? []).length > 0;
+  const showStatusBadge = r.aiStatus === 'done' && (r.transcriptSegments ?? []).length > 0;
 
-  const isAiProcessing =
-    record.summaryStatus === 'processing' || record.tasksStatus === 'processing';
+  const isAiProcessing = r.summaryStatus === 'processing' || r.tasksStatus === 'processing';
 
   const handleTranslate = async (targetLanguage: string) => {
     const result = await translate(targetLanguage);
@@ -78,13 +90,13 @@ export const TranscriptContent = ({
         </View>
       )}
       <TranscriptTab
-        segments={record.transcriptSegments ?? []}
-        translatedTranscript={record.translatedTranscript}
-        translationLanguage={record.translationLanguage}
+        segments={r.transcriptSegments ?? []}
+        translatedTranscript={r.translatedTranscript}
+        translationLanguage={r.translationLanguage}
         color={color}
-        hasAudio={!!record.audioPath}
+        hasAudio={!!r.audioPath}
         onTranscribe={onTranscribe}
-        onEditTranscript={() => navigation.navigate('EditTranscript', { record })}
+        onEditTranscript={() => navigation.navigate('EditTranscript', { record: r })}
         onTranslate={handleTranslate}
         isTranslating={isTranslating}
         isAiProcessing={isAiProcessing}
