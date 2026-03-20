@@ -33,6 +33,7 @@ const VARIANT_STYLES: Record<ButtonVariant, (color: Colors) => VariantStyle> = {
   primary: (color) => ({
     bg: { backgroundColor: color.accent.primary },
     textClassName: 'text-white',
+    textColor: color.icon.onAccent,
   }),
   secondary: (color) => ({
     bg: { backgroundColor: color.background.tertiary },
@@ -104,7 +105,7 @@ export const Button = ({
   const containerClassName = [
     'flex-row items-center justify-center gap-2',
     sizeClasses,
-    fullWidth && 'flex-1',
+    fullWidth && 'w-full self-stretch',
     isIconOnly && 'rounded-full',
     className,
   ]

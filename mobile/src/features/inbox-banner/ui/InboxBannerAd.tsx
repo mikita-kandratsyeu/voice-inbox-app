@@ -14,9 +14,15 @@ type InboxBannerAdProps = {
   color: Colors;
   contentMaxWidth: number;
   density?: 'default' | 'compact';
+  surface?: 'default' | 'onAccentRecording';
 };
 
-export function InboxBannerAd({ color, contentMaxWidth, density = 'default' }: InboxBannerAdProps) {
+export function InboxBannerAd({
+  color,
+  contentMaxWidth,
+  density = 'default',
+  surface = 'default',
+}: InboxBannerAdProps) {
   const { t } = useTranslation();
   const { adsAllowed, resolved } = useAdsAllowed();
   const bannerSize = useInboxBannerSize(contentMaxWidth);
@@ -31,14 +37,23 @@ export function InboxBannerAd({ color, contentMaxWidth, density = 'default' }: I
   }
 
   const compact = density === 'compact';
+  const onAccent = surface === 'onAccentRecording';
 
   return (
     <View
-      className={compact ? 'border-t px-3 pt-2 pb-1' : 'border-t px-3 pt-3 pb-1'}
+      className={
+        onAccent
+          ? compact
+            ? 'px-3 pt-2 pb-1'
+            : 'px-3 pt-3 pb-1'
+          : compact
+            ? 'border-t px-3 pt-2 pb-1'
+            : 'border-t px-3 pt-3 pb-1'
+      }
       style={{
-        borderTopColor: color.border.default,
-        backgroundColor: color.background.secondary,
-        opacity: compact ? 0.94 : 1,
+        borderTopColor: onAccent ? 'transparent' : color.border.default,
+        backgroundColor: onAccent ? 'transparent' : color.background.secondary,
+        opacity: onAccent ? 1 : compact ? 0.94 : 1,
       }}
     >
       <Text
@@ -47,7 +62,7 @@ export function InboxBannerAd({ color, contentMaxWidth, density = 'default' }: I
             ? 'mb-1.5 text-center text-[9px] uppercase tracking-wide'
             : 'mb-2 text-center text-[10px] uppercase tracking-wide'
         }
-        style={{ color: color.text.muted }}
+        style={{ color: onAccent ? 'rgba(255,255,255,0.52)' : color.text.muted }}
       >
         {t('inbox.adLabel')}
       </Text>

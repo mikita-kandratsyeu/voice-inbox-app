@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppState, StatusBar, Text, View } from 'react-native';
+import { AppState, StatusBar, Text, useWindowDimensions, View } from 'react-native';
 import KeepAwake from 'react-native-keep-awake';
 
 import type { RootStackParamList } from '@/app/navigation/types';
@@ -11,10 +11,11 @@ import { useAppLockStore } from '@/entities/app-lock';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { InboxBannerAd } from '@/features/inbox-banner';
 import { useRecordingDeeplinkStore } from '@/features/recording-deeplink/model/store';
 import { useTranscription } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
-import { formatTime, persistRecordingToDocuments } from '@/shared/lib';
+import { formatTime, persistRecordingToDocuments, useIsTablet } from '@/shared/lib';
 import { Waveform } from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';
@@ -30,6 +31,9 @@ export const RecordScreen = () => {
   const { t } = useTranslation();
   const scheme = useAppTheme();
   const c = getColors(scheme);
+  const { width: windowWidth } = useWindowDimensions();
+  const isTablet = useIsTablet();
+  const bannerMaxWidth = (isTablet ? 720 : undefined) ?? windowWidth;
 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const addRecord = useRecordStore((s) => s.addRecord);
@@ -233,6 +237,12 @@ export const RecordScreen = () => {
           </Text>
         </View>
       </View>
+      <InboxBannerAd
+        color={c}
+        contentMaxWidth={bannerMaxWidth}
+        density="compact"
+        surface="onAccentRecording"
+      />
       <RecordScreenControls
         state={state}
         onPauseResume={handlePauseResume}
