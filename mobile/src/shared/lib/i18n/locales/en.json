@@ -90,7 +90,7 @@
     "resume": "Resume recording",
     "finish": "Finish recording",
     "recordStopped": "Recording stopped",
-    "recordStoppedMessage": "Maximum recording limit reached — 10 minutes.",
+    "recordStoppedMessage": "Maximum recording limit reached — 20 minutes.",
     "appLockHint": "When you minimize the app, recording will be stopped and saved.",
     "noAppLockHint": "When you minimize the app, recording will continue in the background.",
     "saveModalTitle": "Save recording",
@@ -492,6 +492,11 @@
     "noRecordsInFile": "No records found in the file."
   },
   "importAudio": {
+    "preparingTitle": "Importing audio",
+    "phasePreparing": "Please wait…",
+    "phaseCopying": "Copying file to the app…",
+    "phaseConverting": "Converting to a supported format…",
+    "phaseAnalyzing": "Reading duration — large files can take a while.",
     "maxDurationTitle": "File too long",
     "maxDurationMessage": "Recording must be no longer than {{ max }} minutes.",
     "importError": "Could not add the audio file. Try another format (e.g. WAV, M4A, MP3).",

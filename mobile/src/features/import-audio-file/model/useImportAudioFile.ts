@@ -20,6 +20,8 @@ import { convertToWav, getAudioDurationMs } from '@/shared/lib/audio';
 import { formatTime } from '@/shared/lib/date';
 import { ensureRecordingsDir, RECORDINGS_DIR } from '@/shared/lib/recordings';
 
+import type { ImportAudioPhase } from './types';
+
 export function useImportAudioFile() {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -27,6 +29,7 @@ export function useImportAudioFile() {
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
   const { startTranscription } = useTranscription();
   const [isImporting, setIsImporting] = useState(false);
+  const [importPhase, setImportPhase] = useState<ImportAudioPhase | null>(null);
 
   const importAudioFile = useCallback(async () => {
     if (isImporting) return;
@@ -53,6 +56,7 @@ export function useImportAudioFile() {
         return;
       }
 
+      setImportPhase('copying');
       setIsImporting(true);
 
       const sourceUri = fileUri;
@@ -71,6 +75,7 @@ export function useImportAudioFile() {
 
       const needsConversion = !/\.wav$/i.test(ext);
       if (needsConversion) {
+        setImportPhase('converting');
         const wavPath = `${RECORDINGS_DIR}/${recordId}.wav`;
         const converted = await convertToWav(destPath, wavPath);
         if (converted === null) {
@@ -94,6 +99,7 @@ export function useImportAudioFile() {
         destPath = converted;
       }
 
+      setImportPhase('analyzing');
       let durationMs: number | null = null;
       try {
         durationMs = await getAudioDurationMs(destPath);
@@ -112,7 +118,7 @@ export function useImportAudioFile() {
       if (durationMs > MAX_RECORDING_MS) {
         Alert.alert(
           t('importAudio.maxDurationTitle'),
-          t('importAudio.maxDurationMessage', { max: 10 }),
+          t('importAudio.maxDurationMessage', { max: MAX_RECORDING_MS / (60 * 1000) }),
           [{ text: t('common.ok') }],
         );
         try {
@@ -163,8 +169,9 @@ export function useImportAudioFile() {
       Alert.alert(t('common.error'), t('importAudio.importError'));
     } finally {
       setIsImporting(false);
+      setImportPhase(null);
     }
   }, [isImporting, t, addRecord, autoTranscribeOnSave, startTranscription, navigation]);
 
-  return { importAudioFile, isImporting };
+  return { importAudioFile, isImporting, importPhase };
 }
