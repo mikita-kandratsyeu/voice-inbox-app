@@ -131,7 +131,7 @@ export const WhisperModelPickerScreen = () => {
                 total={WHISPER_MODELS.length}
                 status={whisperModelStatuses[model.id] ?? 'not_downloaded'}
                 isSelected={model.id === selectedWhisperModel}
-                displaySize={realSizes[model.id] ?? formatFileSize(model.sizeMb * 1024 * 1024)}
+                displaySize={realSizes[model.id] || formatFileSize(model.sizeMb * 1024 * 1024)}
                 recommendedModelId={recommendedModelId}
                 compatibility={compatibility ? compatibility[model.id] : null}
                 color={color}

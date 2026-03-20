@@ -552,7 +552,6 @@ export const SettingsScreen = () => {
               />
             </SettingsSection>
           )}
-
           <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
