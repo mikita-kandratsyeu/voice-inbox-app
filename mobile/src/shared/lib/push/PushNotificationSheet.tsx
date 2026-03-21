@@ -115,14 +115,13 @@ export const PushNotificationSheet = () => {
       }}
       onDismiss={hide}
     >
-      <BottomSheetView>
+      <BottomSheetView style={{ paddingHorizontal: 20 }}>
         <Text
           style={{
             color: color.text.primary,
             fontSize: 17,
             fontWeight: '600',
             lineHeight: 24,
-            paddingHorizontal: 20,
             paddingTop: 8,
             marginBottom: 12,
           }}
@@ -132,7 +131,7 @@ export const PushNotificationSheet = () => {
 
         {Boolean(message) && (
           <ScrollView
-            style={{ maxHeight: MAX_CONTENT_HEIGHT, paddingHorizontal: 20 }}
+            style={{ maxHeight: MAX_CONTENT_HEIGHT }}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 4 }}
           >
@@ -148,7 +147,6 @@ export const PushNotificationSheet = () => {
           color={color}
           onPress={hide}
           containerStyle={{
-            marginHorizontal: 20,
             marginTop: 16,
             marginBottom: Math.max(insets.bottom, 24),
           }}
