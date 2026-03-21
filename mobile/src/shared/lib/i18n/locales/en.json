@@ -237,7 +237,7 @@
       "claimBonusSubtitle": "+{{count}} requests toward your weekly limit",
       "claimBonusLoading": "Loading ad...",
       "claimBonusError": "Something went wrong. Try again.",
-      "claimBonusErrorIosAd": "Ad unavailable. Install the latest app update or try again later.",
+      "claimBonusErrorIosAd": "Ad unavailable. Try again later.",
       "claimBonusCooldown": "Available again soon",
       "claimBonusSuccess": "+{{count}} bonus requests",
       "claimBonusUnavailableHint": "The ad bonus unlocks after you start using your weekly AI quota.",
