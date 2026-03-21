@@ -47,8 +47,8 @@ export function InboxBannerAd({
             ? 'px-3 pt-2 pb-1'
             : 'px-3 pt-3 pb-1'
           : compact
-            ? 'border-t px-3 pt-2 pb-1'
-            : 'border-t px-3 pt-3 pb-1'
+            ? 'border-t px-3 pt-2 pb-1 mt-2'
+            : 'border-t px-3 pt-3 pb-1 mt-3'
       }
       style={{
         borderTopColor: onAccent ? 'transparent' : color.border.default,

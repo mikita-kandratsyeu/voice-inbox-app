@@ -16,7 +16,11 @@ import { InboxBannerAd } from '@/features/inbox-banner';
 import { InboxFilterBar, useInboxFiltersReset } from '@/features/inbox-filters';
 import { SearchBar, useSearchRecords } from '@/features/search-records';
 import { getColors, useAppTheme } from '@/shared/config';
-import { keyboardAvoidingBehavior, keyboardVerticalOffset, useIsTablet } from '@/shared/lib';
+import {
+  keyboardAvoidingBehavior,
+  keyboardVerticalOffset,
+  useTabletContentMaxWidth,
+} from '@/shared/lib';
 import { getHasSeenSwipeHint, setHasSeenSwipeHint } from '@/shared/lib/hintsStorage';
 import { Button, EmptyState, SectionHeader, SwipeableCard, SwipeHintBanner } from '@/shared/ui';
 
@@ -36,8 +40,8 @@ type InboxNavigationProp = CompositeNavigationProp<
 export const InboxScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
-  const isTablet = useIsTablet();
   const { width: windowWidth } = useWindowDimensions();
+  const contentMaxWidth = useTabletContentMaxWidth();
   const navigation = useNavigation<InboxNavigationProp>();
   const { records, isLoaded, archiveRecord, unarchiveRecord, togglePin } = useRecordStore(
     useShallow((s) => ({
@@ -162,7 +166,6 @@ export const InboxScreen = () => {
   }, []);
 
   const screenStyle = { flex: 1, backgroundColor: color.background.primary };
-  const contentMaxWidth = isTablet ? 720 : undefined;
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   const listContentStyle = {

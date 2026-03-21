@@ -9,7 +9,7 @@ import type { AppLanguage, AppTheme } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
-import { useIsTablet } from '@/shared/lib';
+import { useTabletContentMaxWidth } from '@/shared/lib';
 import { applyAppLanguage } from '@/shared/lib/i18n';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
@@ -79,9 +79,8 @@ export const AppearanceScreen = () => {
   const theme = useAppTheme();
   const color = getColors(theme);
   const insets = useSafeAreaInsets();
-  const isTablet = useIsTablet();
   const navigation = useNavigation();
-  const contentMaxWidth = isTablet ? 720 : undefined;
+  const contentMaxWidth = useTabletContentMaxWidth();
 
   const appLanguage = useSettingsStore((s) => s.appLanguage);
   const setAppLanguage = useSettingsStore((s) => s.setAppLanguage);

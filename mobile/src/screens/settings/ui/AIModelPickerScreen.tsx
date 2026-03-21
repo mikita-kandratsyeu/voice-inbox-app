@@ -9,7 +9,7 @@ import type { AIModelId } from '@/entities/settings';
 import { AI_MODELS, useSettingsStore } from '@/entities/settings';
 import { InboxBannerAd } from '@/features/inbox-banner';
 import { getColors, useAppTheme } from '@/shared/config';
-import { useIsTablet } from '@/shared/lib';
+import { useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader } from '@/shared/ui';
 
 const SPEED_COLOR: Record<string, string> = {
@@ -28,9 +28,8 @@ export const AIModelPickerScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
-  const isTablet = useIsTablet();
   const navigation = useNavigation();
-  const contentMaxWidth = isTablet ? 720 : undefined;
+  const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 

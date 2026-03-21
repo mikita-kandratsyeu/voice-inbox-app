@@ -12,7 +12,12 @@ import { InboxBannerAd } from '@/features/inbox-banner';
 import { getModelFileSizeBytes } from '@/features/model-manager';
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
-import { clearCache, getStorageStats, type StorageStats, useIsTablet } from '@/shared/lib';
+import {
+  clearCache,
+  getStorageStats,
+  type StorageStats,
+  useTabletContentMaxWidth,
+} from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader, SettingsRow, SettingsSection, SkeletonPulse } from '@/shared/ui';
 
@@ -181,9 +186,8 @@ export const StorageDetailsScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
-  const isTablet = useIsTablet();
   const navigation = useNavigation();
-  const contentMaxWidth = isTablet ? 720 : undefined;
+  const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const records = useRecordStore((s) => s.records);

@@ -48,7 +48,7 @@ import { InboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import { exportData, importData } from '@/features/sync-data';
 import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
-import { IS_IOS, useIsTablet } from '@/shared/lib';
+import { IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { getAiUsage } from '@/shared/lib/ai-api';
 import { isEmbeddingAvailable } from '@/shared/lib/embeddings';
 import {
@@ -70,10 +70,9 @@ export const SettingsScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
-  const isTablet = useIsTablet();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
 
-  const contentMaxWidth = isTablet ? 720 : undefined;
+  const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 

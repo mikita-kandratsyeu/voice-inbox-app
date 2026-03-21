@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAppLockStore } from '@/entities/app-lock';
 import { PinInput } from '@/features/app-lock/ui/PinInput';
 import { getColors, useAppTheme } from '@/shared/config';
-import { useIsTablet } from '@/shared/lib';
+import { useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 type SetupStep = 'confirm' | 'initial';
@@ -17,9 +17,8 @@ export const AppLockSetupScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
-  const isTablet = useIsTablet();
   const navigation = useNavigation();
-  const contentMaxWidth = isTablet ? 720 : undefined;
+  const contentMaxWidth = useTabletContentMaxWidth();
   const [step, setStep] = useState<SetupStep>('initial');
   const [initialPin, setInitialPin] = useState('');
   const [pin, setPin] = useState('');

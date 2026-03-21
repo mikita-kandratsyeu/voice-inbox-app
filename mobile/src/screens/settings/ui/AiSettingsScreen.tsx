@@ -9,7 +9,7 @@ import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/
 import { useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
-import { useIsTablet } from '@/shared/lib';
+import { useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
 const SUMMARY_STYLES: SummaryStyle[] = ['brief', 'standard', 'detailed'];
@@ -78,9 +78,8 @@ export const AiSettingsScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
-  const isTablet = useIsTablet();
   const navigation = useNavigation();
-  const contentMaxWidth = isTablet ? 720 : undefined;
+  const contentMaxWidth = useTabletContentMaxWidth();
 
   const summaryStyle = useSettingsStore((s) => s.summaryStyle);
   const setSummaryStyle = useSettingsStore((s) => s.setSummaryStyle);

@@ -10,7 +10,7 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
 import { InboxBannerAd } from '@/features/inbox-banner';
 import { getColors, useAppTheme } from '@/shared/config';
-import { useIsTablet } from '@/shared/lib';
+import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { EmptyState, ScreenHeader, SectionHeader } from '@/shared/ui';
 
 import type { TaskWithRecord } from '../types';
@@ -43,7 +43,7 @@ export const AllTasksScreen = () => {
     })),
   );
 
-  const contentMaxWidth = isTablet ? 720 : undefined;
+  const contentMaxWidth = useTabletContentMaxWidth();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const filterPadH = isTablet ? 24 : 16;
   const filterPadV = isTablet ? 14 : 10;

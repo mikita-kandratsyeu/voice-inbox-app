@@ -19,7 +19,7 @@ import { useRecordActions } from '@/features/record-actions';
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
-import { useIsTablet } from '@/shared/lib';
+import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { AudioPlayer } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
@@ -206,7 +206,7 @@ export const RecordingDetailScreen = () => {
   }, [t, liveRecord, shareAudio]);
 
   const scrollPadding = isTablet ? 24 : 16;
-  const contentMaxWidth = isTablet ? 720 : undefined;
+  const contentMaxWidth = useTabletContentMaxWidth();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   const onBack = useCallback(() => navigation.goBack(), [navigation]);

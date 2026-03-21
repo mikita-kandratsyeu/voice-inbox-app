@@ -11,7 +11,7 @@ import { useRecordStore } from '@/entities/record';
 import { InboxBannerAd } from '@/features/inbox-banner';
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
-import { formatRelativeTime, useIsTablet } from '@/shared/lib';
+import { formatRelativeTime, useTabletContentMaxWidth } from '@/shared/lib';
 import { Button, ScreenHeader, SectionHeader } from '@/shared/ui';
 
 type ImportRecordsRouteProp = RouteProp<SettingsStackParamList, 'ImportRecords'>;
@@ -88,7 +88,6 @@ export const ImportRecordsScreen = () => {
   const { t, i18n } = useTranslation();
   const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
-  const isTablet = useIsTablet();
   const navigation = useNavigation();
   const route = useRoute<ImportRecordsRouteProp>();
   const { records: fileRecords } = route.params;
@@ -156,7 +155,7 @@ export const ImportRecordsScreen = () => {
     }
   }, [addRecord, importable, navigation, selectedCount, selectedIds, t]);
 
-  const contentMaxWidth = isTablet ? 720 : undefined;
+  const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 

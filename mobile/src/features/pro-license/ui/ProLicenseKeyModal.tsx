@@ -9,6 +9,7 @@ import {
   Pressable,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import Animated, {
@@ -27,7 +28,7 @@ import { hapticSuccess, useIsTablet } from '@/shared/lib';
 import { redeemProLicenseKey } from '@/shared/lib/ai-api/aiApi';
 
 import { setProExpiresAtMsSync } from '../lib/proEntitlementStorage';
-import { PRO_LICENSE_MODAL_MAX_WIDTH } from '../lib/proModalLayout';
+import { getProLicenseModalMaxWidth } from '../lib/proModalLayout';
 import { proLicenseMessageForRedeemError } from '../lib/redeemErrorMessage';
 
 type ProLicenseKeyModalProps = {
@@ -144,6 +145,8 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
   const isTablet = useIsTablet();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const modalMaxWidth = getProLicenseModalMaxWidth(isTablet, windowWidth, windowHeight);
   const [keyText, setKeyText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -219,7 +222,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
               className="w-full rounded-2xl px-6 py-8"
               style={{
                 backgroundColor: color.background.card,
-                maxWidth: isTablet ? PRO_LICENSE_MODAL_MAX_WIDTH : undefined,
+                maxWidth: modalMaxWidth,
               }}
             >
               <ActivityIndicator size="large" color={color.accent.primary} />
@@ -243,7 +246,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
               className={`overflow-hidden rounded-2xl ${isTablet ? 'p-6' : 'p-5'}`}
               style={{
                 width: '100%',
-                maxWidth: isTablet ? PRO_LICENSE_MODAL_MAX_WIDTH : undefined,
+                maxWidth: modalMaxWidth,
                 alignSelf: 'center',
                 backgroundColor: color.background.primary,
                 borderWidth: 1,

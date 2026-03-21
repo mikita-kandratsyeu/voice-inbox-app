@@ -19,7 +19,7 @@ import { InboxBannerAd } from '@/features/inbox-banner';
 import { useOnboardingStore } from '@/features/onboarding';
 import { ProLicenseKeyModal, useProEntitlement } from '@/features/pro-license';
 import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
-import { IS_ANDROID, IS_IOS, useIsTablet } from '@/shared/lib';
+import { IS_ANDROID, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 const VERSION_DISPLAY = DeviceInfoModule.version;
@@ -30,10 +30,9 @@ export const AboutAppScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
   const insets = useSafeAreaInsets();
-  const isTablet = useIsTablet();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const setForceShowOnboarding = useOnboardingStore((s) => s.setForceShow);
-  const contentMaxWidth = isTablet ? 720 : undefined;
+  const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const [proModalVisible, setProModalVisible] = useState(false);

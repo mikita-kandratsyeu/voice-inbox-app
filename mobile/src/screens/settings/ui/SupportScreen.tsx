@@ -10,7 +10,7 @@ import { InboxBannerAd } from '@/features/inbox-banner';
 import { SupportForm, useSupportForm } from '@/features/tech-support';
 import { getColors, useAppTheme } from '@/shared/config';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
-import { useIsTablet } from '@/shared/lib';
+import { useTabletContentMaxWidth } from '@/shared/lib';
 import { Button, ScreenHeader } from '@/shared/ui';
 
 export const SupportScreen = () => {
@@ -18,8 +18,7 @@ export const SupportScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const color = getColors(useAppTheme());
-  const isTablet = useIsTablet();
-  const contentMaxWidth = isTablet ? 720 : undefined;
+  const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const apiConfigured = Boolean(getWebApiUrl().trim());

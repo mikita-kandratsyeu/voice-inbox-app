@@ -46,7 +46,7 @@ import { useModelManager } from '@/features/model-manager';
 import { importData } from '@/features/sync-data';
 import type { Colors } from '@/shared/config';
 import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
-import { hapticSelection, IS_IOS, useIsTablet } from '@/shared/lib';
+import { hapticSelection, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import {
   checkMicPermission,
   type MicPermissionStatus,
@@ -759,8 +759,7 @@ const SlideItem = ({
 export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
-  const isTablet = useIsTablet();
-  const contentMaxWidth = isTablet ? 720 : undefined;
+  const contentMaxWidth = useTabletContentMaxWidth();
   const slides = useMemo(() => getOnboardingSlides(color), [color]);
   const slideColors = useMemo(() => slides.map((s) => s.iconColor), [slides]);
   const insets = useSafeAreaInsets();
