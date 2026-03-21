@@ -44,7 +44,7 @@ export function AdminLogin() {
             <Lock className="h-6 w-6" strokeWidth={2} aria-hidden />
           </div>
           <h1 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Voice Inbox Admin
+            Voice Inbox AI
           </h1>
           <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
             Sign in with your administrator credentials

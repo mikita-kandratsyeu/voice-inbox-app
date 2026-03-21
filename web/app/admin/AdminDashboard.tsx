@@ -589,7 +589,7 @@ export function AdminDashboard() {
             </div>
             <div className="min-w-0 leading-tight">
               <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                Voice Inbox
+                Voice Inbox AI
               </p>
               <p className="text-xs text-zinc-500 dark:text-zinc-400">Administration</p>
             </div>
@@ -620,7 +620,7 @@ export function AdminDashboard() {
           <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <p className="text-xs font-medium uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-                Voice Inbox · Admin
+                Voice Inbox AI · Admin
               </p>
               <h1 className="mt-1 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 md:text-2xl">
                 {currentMeta.label}

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Admin',
-  description: 'Voice Inbox admin panel',
+  title: 'Admin · Voice Inbox AI',
+  description: 'Voice Inbox AI admin panel',
   robots: { index: false, follow: false },
 };
 
