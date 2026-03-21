@@ -16,6 +16,7 @@ export type {
   SummaryStyle,
   TaskStrictness,
   TranscriptionLanguage,
+  WhisperDownloadPhase,
   WhisperModel,
   WhisperModelId,
   WhisperModelStatus,

@@ -36,8 +36,8 @@ export const useModelManager = () => {
         const { promise } = downloadWhisperModel({
           modelId,
           expectedBytes,
-          onProgress: (progress, bytesWritten, contentLength) => {
-            setDownloadProgress(modelId, progress, bytesWritten, contentLength);
+          onProgress: (progress, bytesWritten, contentLength, phase) => {
+            setDownloadProgress(modelId, progress, bytesWritten, contentLength, phase);
             void updateWhisperDownloadLiveActivity(progress / 100, modelId).catch(() => {});
           },
         });

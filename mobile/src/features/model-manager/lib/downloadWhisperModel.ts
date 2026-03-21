@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 import { unzip } from 'react-native-zip-archive';
 
-import type { WhisperModelId } from '@/entities/settings';
+import type { WhisperDownloadPhase, WhisperModelId } from '@/entities/settings';
 import {
   getWhisperCoreMlDownloadUrl,
   getWhisperModelPath,
@@ -14,7 +14,12 @@ import {
 type DownloadOptions = {
   modelId: WhisperModelId;
   expectedBytes: number;
-  onProgress: (progress: number, bytesWritten: number, contentLength: number) => void;
+  onProgress: (
+    progress: number,
+    bytesWritten: number,
+    contentLength: number,
+    phase: WhisperDownloadPhase,
+  ) => void;
 };
 
 type DownloadResult = {
@@ -54,13 +59,13 @@ export const downloadWhisperModel = ({
 
       begin: (res) => {
         const total = res.contentLength > 0 ? res.contentLength : expectedBytes;
-        onProgress(0, 0, total);
+        onProgress(0, 0, total, 'weights');
       },
       progress: (res) => {
         const total = res.contentLength > 0 ? res.contentLength : expectedBytes;
         const binPct = total > 0 ? res.bytesWritten / total : 0;
         const progress = Math.round(binPct * BIN_PROGRESS_WEIGHT * 100);
-        onProgress(progress, res.bytesWritten, total);
+        onProgress(progress, res.bytesWritten, total, 'weights');
       },
     });
 
@@ -92,7 +97,7 @@ export const downloadWhisperModel = ({
           progressInterval: 250,
           begin: (res) => {
             const zipTotal = res.contentLength > 0 ? res.contentLength : 1;
-            onProgress(Math.round(BIN_PROGRESS_WEIGHT * 100), 0, zipTotal);
+            onProgress(Math.round(BIN_PROGRESS_WEIGHT * 100), 0, zipTotal, 'coreml');
           },
           progress: (res) => {
             const total = res.contentLength > 0 ? res.contentLength : 1;
@@ -100,7 +105,7 @@ export const downloadWhisperModel = ({
             const combined = Math.round(
               (BIN_PROGRESS_WEIGHT + zipPct * COREML_PROGRESS_WEIGHT) * 100,
             );
-            onProgress(combined, res.bytesWritten, total);
+            onProgress(combined, res.bytesWritten, total, 'coreml');
           },
         });
 
@@ -115,7 +120,7 @@ export const downloadWhisperModel = ({
               `[whisper] Core ML encoder download failed (${zipResult.statusCode}), using CPU`,
             );
           }
-          onProgress(100, expectedBytes, expectedBytes);
+          onProgress(100, expectedBytes, expectedBytes, 'weights');
           return;
         }
 
@@ -129,7 +134,7 @@ export const downloadWhisperModel = ({
       }
     }
 
-    onProgress(100, expectedBytes, expectedBytes);
+    onProgress(100, expectedBytes, expectedBytes, 'weights');
   })();
 
   return { jobId: 0, promise };

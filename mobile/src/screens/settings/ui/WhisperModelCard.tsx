@@ -5,6 +5,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 import type {
   DownloadBytes,
+  WhisperDownloadPhase,
   WhisperModel,
   WhisperModelId,
   WhisperModelStatus,
@@ -36,6 +37,7 @@ type WhisperModelCardProps = {
   onCancelDownload: (id: WhisperModelId) => void;
   downloadPercent?: number;
   downloadBytes?: DownloadBytes;
+  downloadPhase?: WhisperDownloadPhase;
 };
 
 export const WhisperModelCard = ({
@@ -53,6 +55,7 @@ export const WhisperModelCard = ({
   onCancelDownload,
   downloadPercent = 0,
   downloadBytes,
+  downloadPhase,
 }: WhisperModelCardProps) => {
   const { t } = useTranslation();
   const isDownloaded = status === 'downloaded';
@@ -167,6 +170,13 @@ export const WhisperModelCard = ({
                     })
                   : t('whisper.downloadProgressPercent', { percent: pct })}
               </Text>
+              {downloadPhase != null && (
+                <Text className="text-[12px] leading-4" style={{ color: color.text.muted }}>
+                  {downloadPhase === 'coreml'
+                    ? t('whisper.downloadPhaseCoreMl')
+                    : t('whisper.downloadPhaseWeights')}
+                </Text>
+              )}
               <TouchableOpacity
                 onPress={() => onCancelDownload(model.id)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

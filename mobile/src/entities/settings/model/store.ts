@@ -12,6 +12,7 @@ import type {
   SummaryStyle,
   TaskStrictness,
   TranscriptionLanguage,
+  WhisperDownloadPhase,
   WhisperModelId,
   WhisperModelStatus,
 } from './types';
@@ -106,6 +107,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   whisperModelStatuses: getStoredWhisperStatuses(),
   whisperDownloadProgress: {},
   whisperDownloadBytes: {},
+  whisperDownloadPhase: {},
 
   setAppTheme: (value: AppTheme) => {
     storage.set(KEYS.APP_THEME, value);
@@ -170,16 +172,29 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     progress: number,
     bytesWritten?: number,
     contentLength?: number,
+    phase?: WhisperDownloadPhase,
   ) => {
     const currentProgress = get().whisperDownloadProgress;
     const currentBytes = get().whisperDownloadBytes;
+    const currentPhase = get().whisperDownloadPhase;
     const updatedBytes =
       bytesWritten !== undefined && contentLength !== undefined
         ? { ...currentBytes, [id]: { written: bytesWritten, total: contentLength } }
         : currentBytes;
+
+    const nextPhase = { ...currentPhase };
+    if (progress >= 100) {
+      delete nextPhase[id];
+    } else if (progress <= 0 && phase === undefined) {
+      delete nextPhase[id];
+    } else if (phase !== undefined) {
+      nextPhase[id] = phase;
+    }
+
     set({
       whisperDownloadProgress: { ...currentProgress, [id]: progress },
       whisperDownloadBytes: updatedBytes,
+      whisperDownloadPhase: nextPhase,
     });
   },
 
@@ -187,6 +202,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const currentStatuses = get().whisperModelStatuses;
     const currentProgress = get().whisperDownloadProgress;
     const currentBytes = get().whisperDownloadBytes;
+    const currentPhase = get().whisperDownloadPhase;
 
     const updatedStatuses = { ...currentStatuses };
     delete updatedStatuses[id];
@@ -197,11 +213,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const updatedBytes = { ...currentBytes };
     delete updatedBytes[id];
 
+    const updatedPhase = { ...currentPhase };
+    delete updatedPhase[id];
+
     storage.set(KEYS.WHISPER_STATUSES, JSON.stringify(updatedStatuses));
     set({
       whisperModelStatuses: updatedStatuses,
       whisperDownloadProgress: updatedProgress,
       whisperDownloadBytes: updatedBytes,
+      whisperDownloadPhase: updatedPhase,
     });
   },
 }));

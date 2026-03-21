@@ -372,6 +372,8 @@
     "tapToDownload": "Не скачана — нажмите для загрузки",
     "downloadProgressBytes": "{{downloaded}} из {{total}}",
     "downloadProgressPercent": "{{percent}}%",
+    "downloadPhaseWeights": "Загружаются веса модели…",
+    "downloadPhaseCoreMl": "Загружается Core ML encoder (Neural Engine).",
     "downloadError": "Ошибка загрузки — нажмите для повтора",
     "qualityLabel": "Качество",
     "speedLabel": "Скорость",

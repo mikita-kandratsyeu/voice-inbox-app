@@ -41,6 +41,8 @@ export type DownloadBytes = {
   total: number;
 };
 
+export type WhisperDownloadPhase = 'weights' | 'coreml';
+
 export type SettingsState = {
   appTheme: AppTheme;
   appLanguage: AppLanguage;
@@ -55,6 +57,7 @@ export type SettingsState = {
   whisperModelStatuses: Partial<Record<WhisperModelId, WhisperModelStatus>>;
   whisperDownloadProgress: Partial<Record<WhisperModelId, number>>;
   whisperDownloadBytes: Partial<Record<WhisperModelId, DownloadBytes>>;
+  whisperDownloadPhase: Partial<Record<WhisperModelId, WhisperDownloadPhase>>;
   setAppTheme: (value: AppTheme) => void;
   setAppLanguage: (value: AppLanguage) => void;
   setAIModel: (id: AIModelId) => void;
@@ -71,6 +74,7 @@ export type SettingsState = {
     progress: number,
     bytesWritten?: number,
     contentLength?: number,
+    phase?: WhisperDownloadPhase,
   ) => void;
   removeWhisperModelStatus: (id: WhisperModelId) => void;
 };

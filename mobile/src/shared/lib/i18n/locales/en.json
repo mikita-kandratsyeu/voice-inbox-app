@@ -372,6 +372,8 @@
     "tapToDownload": "Not downloaded — tap to download",
     "downloadProgressBytes": "{{downloaded}} of {{total}}",
     "downloadProgressPercent": "{{percent}}%",
+    "downloadPhaseWeights": "Downloading model weights…",
+    "downloadPhaseCoreMl": "Downloading Core ML encoder (Neural Engine).",
     "downloadError": "Download error — tap to retry",
     "qualityLabel": "Quality",
     "speedLabel": "Speed",
