@@ -4,6 +4,7 @@ export type {
   RecordingStatus,
   RecordStatus,
   TaskItem,
+  TaskSource,
   TranscriptSegment,
   VoiceRecord,
 } from './model/types';

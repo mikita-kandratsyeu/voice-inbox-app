@@ -74,6 +74,17 @@
       "titleAsc": "Title A–Z"
     }
   },
+  "allTasks": {
+    "title": "All tasks",
+    "openOnly": "Open only",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "emptyTitle": "No tasks",
+    "emptyDescription": "Tasks from your notes appear here, grouped by day.",
+    "emptyFiltered": "No open tasks",
+    "a11yOpenAllTasks": "All tasks from notes",
+    "openNote": "Open note"
+  },
   "search": {
     "placeholder": "Search records...",
     "nothingFound": "Nothing found",
@@ -138,6 +149,9 @@
     "summaryRetry": "Try again",
     "tasksNotExtracted": "Tasks not extracted",
     "tasksNotExtractedDesc": "Tap the button below to\nautomatically find tasks using AI.",
+    "addTaskPlaceholder": "New task",
+    "tasksManualHint": "Or add a task manually",
+    "tasksManualWithoutTranscriptHint": "You can add tasks without transcribing.",
     "extractTasks": "Find tasks",
     "reextractTasks": "Re-extract",
     "tasksProcessing": "Extracting tasks...",
@@ -577,7 +591,9 @@
     "addAllShort": "Add all",
     "addedToCalendar": "Added to Calendar",
     "addedToReminders": "Added to Reminders",
-    "permissionDenied": "Permission denied. Enable access in Settings."
+    "permissionDenied": "Permission denied. Enable access in Settings.",
+    "deleteTask": "Delete",
+    "deleteTaskConfirm": "Remove this task from the note?"
   },
   "classification": {
     "personal": "Personal",

@@ -74,6 +74,17 @@
       "titleAsc": "По названию А–Я"
     }
   },
+  "allTasks": {
+    "title": "Все задачи",
+    "openOnly": "Только открытые",
+    "today": "Сегодня",
+    "yesterday": "Вчера",
+    "emptyTitle": "Нет задач",
+    "emptyDescription": "Задачи из заметок отображаются здесь, сгруппированные по дням.",
+    "emptyFiltered": "Нет открытых задач",
+    "a11yOpenAllTasks": "Все задачи из заметок",
+    "openNote": "Открыть заметку"
+  },
   "search": {
     "placeholder": "Поиск по записям...",
     "nothingFound": "Ничего не найдено",
@@ -138,6 +149,9 @@
     "summaryRetry": "Повторить",
     "tasksNotExtracted": "Задачи не извлечены",
     "tasksNotExtractedDesc": "Нажмите кнопку ниже, чтобы\nавтоматически найти задачи с помощью ИИ.",
+    "addTaskPlaceholder": "Новая задача",
+    "tasksManualHint": "Или добавьте задачу вручную",
+    "tasksManualWithoutTranscriptHint": "Можно добавить задачи и без транскрипта.",
     "extractTasks": "Найти задачи",
     "reextractTasks": "Переизвлечь",
     "tasksProcessing": "Извлечение задач...",
@@ -577,7 +591,9 @@
     "addAllShort": "В Напоминания",
     "addedToCalendar": "Добавлено в Календарь",
     "addedToReminders": "Добавлено в Напоминания",
-    "permissionDenied": "Доступ запрещён. Включите в Настройках."
+    "permissionDenied": "Доступ запрещён. Включите в Настройках.",
+    "deleteTask": "Удалить",
+    "deleteTaskConfirm": "Удалить эту задачу из заметки?"
   },
   "classification": {
     "personal": "Личное",

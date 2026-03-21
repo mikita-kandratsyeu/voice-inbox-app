@@ -11,6 +11,7 @@ export type RootStackParamList = {
   RecordModal: undefined;
   RecordingDetail: { record: VoiceRecord };
   EditTranscript: { record: VoiceRecord };
+  AllTasks: undefined;
 };
 
 export type SettingsStackParamList = {

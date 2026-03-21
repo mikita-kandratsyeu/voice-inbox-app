@@ -3,6 +3,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { TaskItem, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import { mergeManualTasksWithAi } from '@/entities/record/model/mergeManualTasksWithAi';
 import { useSettingsStore } from '@/entities/settings';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
@@ -108,16 +109,20 @@ export const useAiProcessing = () => {
           nextSteps,
         } = pollResult.result;
 
-        const taskItems: TaskItem[] = rawTasks.map((t, index) => ({
+        const aiTaskItems: TaskItem[] = rawTasks.map((t, index) => ({
           id: `${record.id}-task-${index}`,
           text: t.title,
           isDone: false,
           deadline: t.deadline ?? undefined,
           priority: t.priority,
+          source: 'ai',
         }));
 
+        const latest = useRecordStore.getState().records.find((r) => r.id === record.id);
+        const mergedTasks = mergeManualTasksWithAi(latest?.tasks, aiTaskItems);
+
         await updateSummary(record.id, summary);
-        await updateTasks(record.id, taskItems);
+        await updateTasks(record.id, mergedTasks);
 
         if (suggestedTitle?.trim()) {
           const currentRecord = useRecordStore.getState().records.find((r) => r.id === record.id);

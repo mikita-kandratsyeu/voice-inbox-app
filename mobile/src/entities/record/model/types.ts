@@ -10,12 +10,15 @@ export type TranscriptSegment = {
   text: string;
 };
 
+export type TaskSource = 'manual' | 'ai';
+
 export type TaskItem = {
   id: string;
   text: string;
   isDone: boolean;
   deadline?: string | null;
   priority?: 'high' | 'medium' | 'low';
+  source?: TaskSource;
 };
 
 export type VoiceRecord = {

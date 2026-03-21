@@ -1,10 +1,12 @@
 import type { RouteProp } from '@react-navigation/native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, useWindowDimensions, View } from 'react-native';
+import { Alert, useWindowDimensions, View } from 'react-native';
 import RNFS from 'react-native-fs';
+import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { RootStackParamList } from '@/app/navigation/types';
@@ -36,6 +38,7 @@ export const RecordingDetailScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'RecordingDetail'>>();
   const color = getColors(useAppTheme());
+  const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
   const { width: windowWidth } = useWindowDimensions();
 
@@ -46,6 +49,7 @@ export const RecordingDetailScreen = () => {
     liveRecord,
     togglePin,
     toggleTask,
+    updateTasks,
     setSummaryStatus,
     setTasksStatus,
     clearAudioPath,
@@ -56,6 +60,7 @@ export const RecordingDetailScreen = () => {
       liveRecord: s.records.find((r) => r.id === recordId) ?? routeRecord,
       togglePin: s.togglePin,
       toggleTask: s.toggleTask,
+      updateTasks: s.updateTasks,
       setSummaryStatus: s.setSummaryStatus,
       setTasksStatus: s.setTasksStatus,
       clearAudioPath: s.clearAudioPath,
@@ -79,7 +84,15 @@ export const RecordingDetailScreen = () => {
     globalTranscriptionLanguage,
   );
 
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<React.ElementRef<typeof KeyboardAwareScrollView>>(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        KeyboardController.dismiss({ animated: false });
+      };
+    }, []),
+  );
 
   useEffect(() => {
     setRecordLanguage(globalTranscriptionLanguage);
@@ -99,6 +112,27 @@ export const RecordingDetailScreen = () => {
       toggleTask(liveRecord.id, taskId).catch(() => {});
     },
     [liveRecord.id, toggleTask],
+  );
+
+  const handleAddManualTask = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      const prev = liveRecord.tasks ?? [];
+      const id = `${liveRecord.id}-manual-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const next = [...prev, { id, text: trimmed, isDone: false, source: 'manual' as const }];
+      updateTasks(liveRecord.id, next).catch(() => {});
+    },
+    [liveRecord.id, liveRecord.tasks, updateTasks],
+  );
+
+  const handleDeleteTask = useCallback(
+    (taskId: string) => {
+      const prev = liveRecord.tasks ?? [];
+      const next = prev.filter((x) => x.id !== taskId);
+      updateTasks(liveRecord.id, next).catch(() => {});
+    },
+    [liveRecord.id, liveRecord.tasks, updateTasks],
   );
 
   const handleRetranscribe = useCallback(async () => {
@@ -193,6 +227,16 @@ export const RecordingDetailScreen = () => {
 
   const onDismissAskAIModal = useCallback(() => setShowAskAIModal(false), []);
 
+  const onSelectTab = useCallback(
+    (tab: Tab) => {
+      if (activeTab === 'tasks' && tab !== 'tasks') {
+        KeyboardController.dismiss({ animated: true });
+      }
+      setActiveTab(tab);
+    },
+    [activeTab],
+  );
+
   return (
     <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
       <RecordingDetailHeader
@@ -209,15 +253,18 @@ export const RecordingDetailScreen = () => {
         onDelete={onDelete}
       />
 
-      <ScrollView
+      <KeyboardAwareScrollView
         ref={scrollRef}
+        style={{ flex: 1 }}
         contentContainerStyle={{
           padding: scrollPadding,
           gap: 12,
-          paddingBottom: 40,
+          paddingBottom: insets.bottom + 40,
           alignItems: 'center',
         }}
+        keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        bottomOffset={16}
       >
         <View style={{ width: '100%', maxWidth: contentMaxWidth, gap: 12 }}>
           <RecordingDetailCard record={liveRecord} color={color} />
@@ -242,7 +289,7 @@ export const RecordingDetailScreen = () => {
             className="overflow-hidden rounded-2xl"
             style={{ backgroundColor: color.background.card }}
           >
-            <RecordingDetailTabBar active={activeTab} onSelect={setActiveTab} color={color} />
+            <RecordingDetailTabBar active={activeTab} onSelect={onSelectTab} color={color} />
             <View
               style={
                 activeTab !== 'transcript'
@@ -311,6 +358,8 @@ export const RecordingDetailScreen = () => {
                 color={color}
                 onToggle={handleToggleTask}
                 onExtract={handleExtractTasks}
+                onAddManualTask={handleAddManualTask}
+                onDeleteTask={handleDeleteTask}
                 onDismissError={handleDismissSummaryError}
               />
             </View>
@@ -326,7 +375,7 @@ export const RecordingDetailScreen = () => {
           color={color}
           onDismiss={onDismissAskAIModal}
         />
-      </ScrollView>
+      </KeyboardAwareScrollView>
     </View>
   );
 };

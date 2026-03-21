@@ -48,7 +48,7 @@ export const TabEmptyState = ({
       >
         {title}
       </Text>
-      {!hideButton && buttonLabel && onPress && (
+      {!hideButton && buttonLabel && onPress ? (
         <>
           <Text className="text-center text-sm leading-5" style={{ color: color.text.secondary }}>
             {description}
@@ -65,6 +65,12 @@ export const TabEmptyState = ({
             className="mt-2"
           />
         </>
+      ) : (
+        description.length > 0 && (
+          <Text className="text-center text-sm leading-5" style={{ color: color.text.secondary }}>
+            {description}
+          </Text>
+        )
       )}
       {hint !== undefined && (
         <View className="flex-col items-center gap-1">

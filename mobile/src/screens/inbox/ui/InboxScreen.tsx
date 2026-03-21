@@ -3,6 +3,7 @@ import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
+import { ListChecks } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, LayoutAnimation, useWindowDimensions, View } from 'react-native';
@@ -17,7 +18,7 @@ import { SearchBar, useSearchRecords } from '@/features/search-records';
 import { getColors, useAppTheme } from '@/shared/config';
 import { keyboardAvoidingBehavior, keyboardVerticalOffset, useIsTablet } from '@/shared/lib';
 import { getHasSeenSwipeHint, setHasSeenSwipeHint } from '@/shared/lib/hintsStorage';
-import { EmptyState, SectionHeader, SwipeableCard, SwipeHintBanner } from '@/shared/ui';
+import { Button, EmptyState, SectionHeader, SwipeableCard, SwipeHintBanner } from '@/shared/ui';
 
 import { EmptySearchState } from './EmptySearchState';
 import { InboxHeader } from './InboxHeader';
@@ -178,6 +179,20 @@ export const InboxScreen = () => {
         isLoaded={isLoaded}
         subtitleText={subtitleText}
         title={t('inbox.title')}
+        rightSlot={
+          isLoaded ? (
+            <Button
+              iconOnly
+              variant="icon"
+              size="md"
+              icon={<ListChecks size={22} color={color.text.primary} strokeWidth={2.2} />}
+              color={color}
+              onPress={() => navigation.navigate('AllTasks')}
+              accessibilityLabel={t('allTasks.a11yOpenAllTasks')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            />
+          ) : undefined
+        }
       />
       {!isLoaded ? (
         <InboxSkeleton color={color} />

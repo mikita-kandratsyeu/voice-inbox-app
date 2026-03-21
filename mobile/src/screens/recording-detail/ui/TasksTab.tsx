@@ -6,11 +6,13 @@ import {
   Circle,
   ListChecks,
   MoreHorizontal,
+  Plus,
   RefreshCw,
 } from 'lucide-react-native';
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { KeyboardController } from 'react-native-keyboard-controller';
 
 import type { RecordingStatus, TaskItem } from '@/entities/record';
 import { useAddToCalendar } from '@/features/add-to-calendar';
@@ -23,6 +25,8 @@ import {
   AiTabHintIcon,
   AiTabLoadingState,
   Button,
+  getInputFieldInputStyle,
+  InputField,
   TabEmptyState,
 } from '@/shared/ui';
 
@@ -35,7 +39,71 @@ type TasksTabProps = {
   color: Colors;
   onToggle: (id: string) => void;
   onExtract: () => void;
+  onAddManualTask: (text: string) => void;
+  onDeleteTask: (taskId: string) => void;
   onDismissError?: () => void;
+};
+
+const ManualTaskAddRow = ({
+  color,
+  onAdd,
+  hint,
+}: {
+  color: Colors;
+  onAdd: (text: string) => void;
+  hint?: string;
+}) => {
+  const { t } = useTranslation();
+  const [draft, setDraft] = useState('');
+
+  const submit = () => {
+    const text = draft.trim();
+    if (!text) return;
+    onAdd(text);
+    setDraft('');
+    KeyboardController.dismiss({ animated: true });
+  };
+
+  return (
+    <View className="gap-2">
+      {hint !== undefined && hint.length > 0 && (
+        <Text className="text-center text-sm leading-5" style={{ color: color.text.secondary }}>
+          {hint}
+        </Text>
+      )}
+      <InputField
+        color={color}
+        hasValue={draft.length > 0}
+        containerStyle={{ paddingVertical: 10 }}
+        rightElement={
+          <Pressable
+            onPress={submit}
+            disabled={draft.trim().length === 0}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
+            accessibilityLabel={t('recordingDetail.addTaskPlaceholder')}
+          >
+            <Plus
+              size={22}
+              color={draft.trim().length > 0 ? color.accent.primary : color.icon.muted}
+              strokeWidth={2}
+            />
+          </Pressable>
+        }
+      >
+        <TextInput
+          style={getInputFieldInputStyle(color)}
+          placeholder={t('recordingDetail.addTaskPlaceholder')}
+          placeholderTextColor={color.text.secondary}
+          value={draft}
+          onChangeText={setDraft}
+          onSubmitEditing={submit}
+          returnKeyType="done"
+          blurOnSubmit={false}
+        />
+      </InputField>
+    </View>
+  );
 };
 
 export const TasksTab = ({
@@ -47,6 +115,8 @@ export const TasksTab = ({
   color,
   onToggle,
   onExtract,
+  onAddManualTask,
+  onDeleteTask,
   onDismissError,
 }: TasksTabProps) => {
   const theme = useAppTheme();
@@ -69,40 +139,68 @@ export const TasksTab = ({
 
   if (status === 'error' && tasks.length === 0) {
     return (
-      <TabEmptyState
-        icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
-        title={t('recordingDetail.tasksError')}
-        description=""
-        buttonLabel={t('recordingDetail.tasksRetry')}
-        buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
-        onPress={onExtract}
-      />
+      <View>
+        <TabEmptyState
+          icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
+          title={t('recordingDetail.tasksError')}
+          description=""
+          buttonLabel={t('recordingDetail.tasksRetry')}
+          buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
+          onPress={onExtract}
+        />
+        <View className="px-6 pb-8">
+          <ManualTaskAddRow
+            color={color}
+            onAdd={onAddManualTask}
+            hint={t('recordingDetail.tasksManualHint')}
+          />
+        </View>
+      </View>
     );
   }
 
-  if (!hasTranscript) {
+  if (!hasTranscript && tasks.length === 0) {
     return (
-      <TabEmptyState
-        icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
-        title={t('recordingDetail.noTranscriptForAi')}
-        description={t('recordingDetail.noTranscriptForAiDesc')}
-      />
+      <View>
+        <TabEmptyState
+          icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
+          title={t('recordingDetail.noTranscriptForAi')}
+          description={t('recordingDetail.noTranscriptForAiDesc')}
+          hideButton
+        />
+        <View className="px-6 pb-8">
+          <ManualTaskAddRow
+            color={color}
+            onAdd={onAddManualTask}
+            hint={t('recordingDetail.tasksManualWithoutTranscriptHint')}
+          />
+        </View>
+      </View>
     );
   }
 
   if (tasks.length === 0) {
     return (
-      <TabEmptyState
-        icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
-        title={t('recordingDetail.tasksNotExtracted')}
-        description={t('recordingDetail.tasksNotExtractedDesc')}
-        buttonLabel={t('recordingDetail.extractTasks')}
-        buttonIcon={<ListChecks size={18} color="#fff" strokeWidth={2} />}
-        hint={aiModelName}
-        hintIcon={<AiTabHintIcon />}
-        disabled={isConnected === false}
-        onPress={onExtract}
-      />
+      <View>
+        <TabEmptyState
+          icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
+          title={t('recordingDetail.tasksNotExtracted')}
+          description={t('recordingDetail.tasksNotExtractedDesc')}
+          buttonLabel={t('recordingDetail.extractTasks')}
+          buttonIcon={<ListChecks size={18} color="#fff" strokeWidth={2} />}
+          hint={aiModelName}
+          hintIcon={<AiTabHintIcon />}
+          disabled={isConnected === false}
+          onPress={onExtract}
+        />
+        <View className="px-6 pb-8">
+          <ManualTaskAddRow
+            color={color}
+            onAdd={onAddManualTask}
+            hint={t('recordingDetail.tasksManualHint')}
+          />
+        </View>
+      </View>
     );
   }
 
@@ -130,12 +228,20 @@ export const TasksTab = ({
             imageColor: themeColors.text.primary,
             titleColor: themeColors.text.primary,
           },
+          {
+            id: 'deleteTask',
+            title: t('tasks.deleteTask'),
+            image: 'trash',
+            imageColor: themeColors.accent.delete,
+            titleColor: themeColors.accent.delete,
+            attributes: { destructive: true },
+          },
         ];
 
         return (
           <View key={task.id} className="flex-row items-center gap-2 py-1">
             <Pressable
-              className="min-w-0 flex-1 flex-row items-center gap-3"
+              className="min-w-0 flex-1 flex-row items-center gap-4 py-0.5"
               onPress={() => onToggle(task.id)}
               style={{ minWidth: 0 }}
             >
@@ -177,6 +283,16 @@ export const TasksTab = ({
                       showPermissionAlert,
                     );
                   }
+                  if (nativeEvent.event === 'deleteTask') {
+                    Alert.alert(t('tasks.deleteTask'), t('tasks.deleteTaskConfirm'), [
+                      { text: t('common.cancel'), style: 'cancel' },
+                      {
+                        text: t('tasks.deleteTask'),
+                        style: 'destructive',
+                        onPress: () => onDeleteTask(task.id),
+                      },
+                    ]);
+                  }
                 }}
                 actions={menuActions}
               >
@@ -191,6 +307,7 @@ export const TasksTab = ({
           </View>
         );
       })}
+      <ManualTaskAddRow color={color} onAdd={onAddManualTask} />
       {nextSteps.length > 0 && (
         <View className="mt-4 gap-2">
           <Text className="text-xs font-semibold uppercase" style={{ color: color.text.secondary }}>
@@ -222,7 +339,7 @@ export const TasksTab = ({
           label={t('recordingDetail.reextractTasks')}
           color={color}
           onPress={onExtract}
-          disabled={isConnected === false}
+          disabled={isConnected === false || !hasTranscript}
           containerStyle={{ flex: 1, minWidth: 0 }}
         />
         <Button
