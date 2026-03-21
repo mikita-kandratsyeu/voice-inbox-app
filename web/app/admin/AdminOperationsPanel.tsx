@@ -228,6 +228,15 @@ export function AdminOperationsPanel() {
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Config changes, support status, push actions, user management.
         </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <a
+            href="/api/admin/audit/export"
+            download
+            className="inline-flex rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+          >
+            Download CSV export
+          </a>
+        </div>
         {auditError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{auditError}</p>}
         {auditLoading && auditItems.length === 0 ? (
           <p className="mt-4 text-sm text-zinc-500">Loading…</p>

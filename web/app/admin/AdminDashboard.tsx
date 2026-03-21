@@ -167,6 +167,8 @@ export function AdminDashboard() {
   const [proLicenseList, setProLicenseList] = useState<ProLicenseRow[]>([]);
   const [proLicenseListLoading, setProLicenseListLoading] = useState(false);
   const [proLicenseError, setProLicenseError] = useState<string | null>(null);
+  const [proLicenseDeletingId, setProLicenseDeletingId] = useState<string | null>(null);
+  const [proLicenseResettingId, setProLicenseResettingId] = useState<string | null>(null);
 
   const [broadcastConfirm, setBroadcastConfirm] = useState(false);
   const [broadcastHistory, setBroadcastHistory] = useState<BroadcastHistoryItem[]>([]);
@@ -340,6 +342,64 @@ export function AdminDashboard() {
       setProLicenseError('Request failed');
     } finally {
       setProLicenseGenerating(false);
+    }
+  };
+
+  const handleDeleteProLicense = async (row: ProLicenseRow) => {
+    if (row.consumed) return;
+    if (
+      !window.confirm(
+        'Delete this unused license key? This cannot be undone. Redeemed keys cannot be deleted.',
+      )
+    ) {
+      return;
+    }
+    setProLicenseError(null);
+    setProLicenseDeletingId(row.id);
+    try {
+      const res = await fetch(`/api/admin/pro-licenses/${encodeURIComponent(row.id)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setProLicenseError(data.error ?? 'Delete failed');
+        return;
+      }
+      void fetchProLicenseList();
+    } catch {
+      setProLicenseError('Request failed');
+    } finally {
+      setProLicenseDeletingId(null);
+    }
+  };
+
+  const handleResetProLicense = async (row: ProLicenseRow) => {
+    if (!row.consumed) return;
+    if (
+      !window.confirm(
+        'Reset this redeemed key? It becomes activatable again. Pro time on the previous device will be reduced by the duration of this key (or removed if it would expire).',
+      )
+    ) {
+      return;
+    }
+    setProLicenseError(null);
+    setProLicenseResettingId(row.id);
+    try {
+      const res = await fetch(`/api/admin/pro-licenses/${encodeURIComponent(row.id)}/reset`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setProLicenseError(data.error ?? 'Reset failed');
+        return;
+      }
+      void fetchProLicenseList();
+    } catch {
+      setProLicenseError('Request failed');
+    } finally {
+      setProLicenseResettingId(null);
     }
   };
 
@@ -998,7 +1058,8 @@ export function AdminDashboard() {
                           <th className="py-2 pr-4 font-medium">Created</th>
                           <th className="py-2 pr-4 font-medium">Months</th>
                           <th className="py-2 pr-4 font-medium">Status</th>
-                          <th className="py-2 font-medium">Device</th>
+                          <th className="py-2 pr-4 font-medium">Device</th>
+                          <th className="py-2 font-medium"> </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1018,8 +1079,32 @@ export function AdminDashboard() {
                                 <span className="text-zinc-500">Unused</span>
                               )}
                             </td>
-                            <td className="py-2 font-mono text-xs text-zinc-600 dark:text-zinc-400">
+                            <td className="py-2 pr-4 font-mono text-xs text-zinc-600 dark:text-zinc-400">
                               {row.devicePrefix ?? '—'}
+                            </td>
+                            <td className="py-2 text-right">
+                              <div className="flex flex-wrap justify-end gap-2">
+                                {!row.consumed && (
+                                  <button
+                                    type="button"
+                                    disabled={proLicenseDeletingId === row.id}
+                                    onClick={() => void handleDeleteProLicense(row)}
+                                    className="rounded border border-red-200 bg-white px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:bg-zinc-800 dark:text-red-400 dark:hover:bg-red-950/40"
+                                  >
+                                    {proLicenseDeletingId === row.id ? 'Deleting…' : 'Delete'}
+                                  </button>
+                                )}
+                                {row.consumed && (
+                                  <button
+                                    type="button"
+                                    disabled={proLicenseResettingId === row.id}
+                                    onClick={() => void handleResetProLicense(row)}
+                                    className="rounded border border-amber-200 bg-white px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-900 dark:bg-zinc-800 dark:text-amber-200 dark:hover:bg-amber-950/40"
+                                  >
+                                    {proLicenseResettingId === row.id ? 'Resetting…' : 'Reset'}
+                                  </button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         ))}
