@@ -1,5 +1,4 @@
-import { WEB_API_URL } from '@env';
-
+import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { isString } from '@/shared/lib/type-guards';
 
@@ -78,7 +77,7 @@ type MessageResponse =
   | { id: string; status: 'error'; error: string };
 
 export async function postAiMessage(body: AiApiRequestBody): Promise<AiApiResult> {
-  const url = `${WEB_API_URL}/api/messages`;
+  const url = `${getWebApiUrl()}/api/messages`;
 
   let response: Response;
   try {
@@ -142,7 +141,7 @@ function parseAiUsagePayload(raw: Record<string, unknown>): AiUsage {
 
 export async function getAiUsage(): Promise<AiUsage | null> {
   try {
-    const response = await fetchWithAuth(`${WEB_API_URL}/api/ai-usage`, { method: 'GET' });
+    const response = await fetchWithAuth(`${getWebApiUrl()}/api/ai-usage`, { method: 'GET' });
 
     if (!response.ok) {
       return null;
@@ -161,7 +160,9 @@ export type ClaimAiBonusResult =
 
 export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
   try {
-    const response = await fetchWithAuth(`${WEB_API_URL}/api/ai-usage/bonus`, { method: 'POST' });
+    const response = await fetchWithAuth(`${getWebApiUrl()}/api/ai-usage/bonus`, {
+      method: 'POST',
+    });
 
     if (response.status === 429) {
       const raw = response.headers.get('Retry-After');
@@ -207,7 +208,7 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
     headers['x-upstash-sync-token'] = syncToken;
   }
 
-  const url = `${WEB_API_URL}/api/messages/${id}`;
+  const url = `${getWebApiUrl()}/api/messages/${id}`;
   const deadline = Date.now() + POLL_TIMEOUT_MS;
 
   while (Date.now() < deadline) {

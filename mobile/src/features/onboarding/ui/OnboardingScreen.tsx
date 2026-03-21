@@ -45,7 +45,7 @@ import { openInAppBrowser } from '@/features/in-app-browser';
 import { useModelManager } from '@/features/model-manager';
 import { importData } from '@/features/sync-data';
 import type { Colors } from '@/shared/config';
-import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
+import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
 import { hapticSelection, IS_IOS, useIsTablet } from '@/shared/lib';
 import {
   checkMicPermission,
@@ -499,14 +499,14 @@ const PermissionsSlide = ({
             {t('onboarding.agreeToTermsPrefix')}
             <Text
               style={{ color: color.accent.primary, textDecorationLine: 'underline' }}
-              onPress={() => WEBSITE_URL && openInAppBrowser(`${WEBSITE_URL}/terms`)}
+              onPress={() => getWebsiteUrl() && openInAppBrowser(`${getWebsiteUrl()}/terms`)}
             >
               {t('onboarding.agreeToTermsLink')}
             </Text>
             {t('onboarding.agreeToTermsAnd')}
             <Text
               style={{ color: color.accent.primary, textDecorationLine: 'underline' }}
-              onPress={() => WEBSITE_URL && openInAppBrowser(`${WEBSITE_URL}/privacy`)}
+              onPress={() => getWebsiteUrl() && openInAppBrowser(`${getWebsiteUrl()}/privacy`)}
             >
               {t('onboarding.agreeToTermsLink2')}
             </Text>

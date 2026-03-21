@@ -1,12 +1,12 @@
-import { APP_STORE_URL, GOOGLE_PLAY_URL } from '@env';
 import { Linking } from 'react-native';
 
+import { getAppStoreUrl, getGooglePlayUrl } from '@/shared/config/runtimeConfig';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 import { isString } from '@/shared/lib/type-guards';
 
 function pickStoreUrl(): string | null {
-  const ios = APP_STORE_URL?.trim();
-  const android = GOOGLE_PLAY_URL?.trim();
+  const ios = getAppStoreUrl().trim();
+  const android = getGooglePlayUrl().trim();
 
   if (IS_IOS && isString(ios) && ios.length > 0) {
     return ios;

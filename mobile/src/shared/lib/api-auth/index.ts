@@ -1,11 +1,13 @@
-import { WEB_API_SECRET, WEB_API_URL } from '@env';
-
+import { getWebApiSecret, getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { fetch } from '@/shared/lib/fetch';
 
 import { isNumber, isString } from '../type-guards';
 
-const TOKEN_URL = `${WEB_API_URL}/api/token`;
+function getTokenUrl(): string {
+  const base = getWebApiUrl().replace(/\/$/, '');
+  return `${base}/api/token`;
+}
 const EXPIRY_BUFFER_MS = 60 * 1000;
 
 let cachedToken: string | null = null;
@@ -20,13 +22,13 @@ export function clearApiToken(): void {
 
 async function fetchToken(): Promise<{ token: string; deviceId: string }> {
   const deviceId = await getOrCreateDeviceId();
-  const secret = WEB_API_SECRET?.trim();
+  const secret = getWebApiSecret().trim();
 
   if (!secret) {
     throw new Error('WEB_API_SECRET is not configured');
   }
 
-  const response = await fetch(TOKEN_URL, {
+  const response = await fetch(getTokenUrl(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -1,5 +1,4 @@
-import { WEB_API_URL } from '@env';
-
+import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 
 export type TranslateResult =
@@ -11,7 +10,7 @@ export async function postTranslate(
   transcript: string,
   targetLanguage: string,
 ): Promise<TranslateResult> {
-  const url = `${WEB_API_URL}/api/translate`;
+  const url = `${getWebApiUrl()}/api/translate`;
 
   let response: Response;
   try {

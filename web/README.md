@@ -56,7 +56,7 @@ The site showcases Voice Inbox AI: explains features, walks through the workflow
 | `ADMIN_SEED_*`             | See `.env.example` — seed first admin via `yarn db:seed`             |
 | `VERCEL_TOKEN`             | Vercel API token for deployment status on admin dashboard (optional) |
 | `VERCEL_PROJECT_ID`        | Vercel project ID to filter deployments (optional)                   |
-| `NEXT_PUBLIC_FIREBASE_CONSOLE_PROJECT_ID` | Optional; enables direct admin links to Firebase Crashlytics & Messaging |
+| `NEXT_PUBLIC_FIREBASE_CONSOLE_PROJECT_ID` | Optional; enables direct admin links to Firebase Crashlytics, Cloud Messaging & Remote Config |
 | `NEXT_PUBLIC_GOOGLE_ANALYTICS_ID`         | Optional; GA4 on the landing; admin shows link when set                |
 
 

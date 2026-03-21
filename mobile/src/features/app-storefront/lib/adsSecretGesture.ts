@@ -1,12 +1,12 @@
-import { ADS_SECRET_GESTURE } from '@env';
 import { useEffect, useState } from 'react';
 
+import { getAdsSecretGestureRaw } from '@/shared/config/runtimeConfig';
 import { storage } from '@/shared/lib/async-storage';
 
 const STORAGE_KEY = 'ads_force_disabled';
 
 export function isAdsSecretGestureEnabled(): boolean {
-  const raw = ADS_SECRET_GESTURE?.trim().toLowerCase();
+  const raw = getAdsSecretGestureRaw().trim().toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'yes';
 }
 

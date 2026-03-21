@@ -12,7 +12,7 @@ import { getStoreListingUrl, openStoreListing } from '@/features/app-review';
 import { getStorefrontCountryCode, useAdsSecretIconTap } from '@/features/app-storefront';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { useOnboardingStore } from '@/features/onboarding';
-import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
+import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
 import { IS_ANDROID, IS_IOS, useIsTablet } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
@@ -110,11 +110,11 @@ export const AboutAppScreen = () => {
               }
               isFirst
             />
-            {WEBSITE_URL.length > 0 && (
+            {getWebsiteUrl().length > 0 && (
               <SettingsRow
                 label={t('about.website')}
                 leftIcon={<Globe size={18} color={color.icon.muted} strokeWidth={1.8} />}
-                onPress={() => openInAppBrowser(WEBSITE_URL)}
+                onPress={() => openInAppBrowser(getWebsiteUrl())}
               />
             )}
             <SettingsRow

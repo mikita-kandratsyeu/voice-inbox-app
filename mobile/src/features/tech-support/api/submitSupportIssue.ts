@@ -1,5 +1,4 @@
-import { WEB_API_URL } from '@env';
-
+import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { isString } from '@/shared/lib/type-guards';
 
@@ -20,7 +19,7 @@ export type SubmitSupportIssueResult =
 export async function submitSupportIssue(
   input: SubmitSupportIssueInput,
 ): Promise<SubmitSupportIssueResult> {
-  const base = WEB_API_URL?.trim();
+  const base = getWebApiUrl().trim();
   if (!base) {
     return { ok: false, error: 'WEB_API_URL is not configured' };
   }

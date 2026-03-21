@@ -1,4 +1,3 @@
-import { YANDEX_REWARDED_AD_UNIT_ID } from '@env';
 import { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { AdRequestConfiguration, RewardedAdLoader } from 'yandex-mobile-ads';
@@ -8,6 +7,7 @@ import {
   isAdsSecretGestureEnabled,
 } from '@/features/app-storefront/lib/adsSecretGesture';
 import { isEUUserByStorefront } from '@/features/app-storefront/lib/storefront';
+import { getYandexRewardedAdUnitId } from '@/shared/config/runtimeConfig';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { claimAiBonus } from '@/shared/lib/ai-api';
 import { storage } from '@/shared/lib/async-storage';
@@ -101,7 +101,7 @@ function normalizeAdError(err: unknown): string {
 }
 
 function getAdUnitId(): string {
-  const raw = YANDEX_REWARDED_AD_UNIT_ID ?? '';
+  const raw = getYandexRewardedAdUnitId() ?? '';
   return isString(raw) && raw.trim() ? raw.trim() : DEMO_AD_UNIT_ID;
 }
 

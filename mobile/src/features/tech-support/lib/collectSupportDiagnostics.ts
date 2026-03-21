@@ -1,8 +1,8 @@
-import { MOBILE_USER_AGENT } from '@env';
 import NetInfo from '@react-native-community/netinfo';
 import * as RNLocalize from 'react-native-localize';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
+import { getMobileUserAgent } from '@/shared/config/runtimeConfig';
 import { collectCrashlyticsDiagnostics } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
@@ -27,6 +27,7 @@ export async function collectSupportDiagnostics(): Promise<SupportDiagnosticsPay
     freeDiskBytes = null;
   }
 
+  const userAgent = getMobileUserAgent();
   const d = DeviceInfoModule;
   const buildRaw =
     'buildNumber' in d ? (d as { buildNumber?: string | number }).buildNumber : undefined;
@@ -55,7 +56,7 @@ export async function collectSupportDiagnostics(): Promise<SupportDiagnosticsPay
       countryCode: l.countryCode,
     })),
     timeZone: RNLocalize.getTimeZone(),
-    userAgent: isString(MOBILE_USER_AGENT) ? MOBILE_USER_AGENT : '',
+    userAgent: isString(userAgent) ? userAgent : '',
     collectedAt: new Date().toISOString(),
   };
 }

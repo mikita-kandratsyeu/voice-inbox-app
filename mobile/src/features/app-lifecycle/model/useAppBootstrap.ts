@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 
 import { useRecordStore } from '@/entities/record';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
+import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
 import { initDB } from '@/shared/lib';
 import { syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
@@ -21,7 +22,8 @@ export function useAppBootstrap(
   const { onBootstrapReady } = options ?? {};
 
   useEffect(() => {
-    initDB()
+    initRuntimeConfig()
+      .then(() => initDB())
       .then(async () => {
         const deviceId = await getOrCreateDeviceId();
         await syncCrashlyticsUserId(deviceId);

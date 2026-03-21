@@ -46,7 +46,7 @@ import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { InboxBannerAd } from '@/features/inbox-banner';
 import { exportData, importData } from '@/features/sync-data';
-import { getColors, useAppTheme, WEBSITE_URL } from '@/shared/config';
+import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
 import { IS_IOS, useIsTablet } from '@/shared/lib';
 import { getAiUsage } from '@/shared/lib/ai-api';
 import { isEmbeddingAvailable } from '@/shared/lib/embeddings';
@@ -517,13 +517,13 @@ export const SettingsScreen = () => {
             <SettingsRow
               label={t('settings.termsOfService')}
               leftIcon={<FileText size={20} color={color.icon.muted} strokeWidth={1.8} />}
-              onPress={() => openInAppBrowser(`${WEBSITE_URL}/terms`)}
+              onPress={() => openInAppBrowser(`${getWebsiteUrl()}/terms`)}
               isFirst
             />
             <SettingsRow
               label={t('settings.privacyPolicy')}
               leftIcon={<Shield size={20} color={color.icon.muted} strokeWidth={1.8} />}
-              onPress={() => openInAppBrowser(`${WEBSITE_URL}/privacy`)}
+              onPress={() => openInAppBrowser(`${getWebsiteUrl()}/privacy`)}
             />
             <SettingsRow
               label={t('settings.rateApp')}

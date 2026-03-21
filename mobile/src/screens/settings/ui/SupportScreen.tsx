@@ -1,4 +1,3 @@
-import { WEB_API_URL } from '@env';
 import { useNavigation } from '@react-navigation/native';
 import { Check } from 'lucide-react-native';
 import React from 'react';
@@ -9,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { SupportForm, useSupportForm } from '@/features/tech-support';
 import { getColors, useAppTheme } from '@/shared/config';
+import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { useIsTablet } from '@/shared/lib';
 import { Button, ScreenHeader } from '@/shared/ui';
 
@@ -19,7 +19,7 @@ export const SupportScreen = () => {
   const color = getColors(useAppTheme());
   const isTablet = useIsTablet();
   const contentMaxWidth = isTablet ? 720 : undefined;
-  const apiConfigured = Boolean(WEB_API_URL?.trim());
+  const apiConfigured = Boolean(getWebApiUrl().trim());
   const supportForm = useSupportForm();
   const canSubmit = supportForm.message.trim().length >= supportForm.messageMin;
 

@@ -1,5 +1,4 @@
-import { WEB_API_URL } from '@env';
-
+import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 
 type AskApiRequestBody = {
@@ -44,7 +43,7 @@ type AskResponse =
   | { id: string; status: 'error'; error: string };
 
 export async function postAskQuestion(body: AskApiRequestBody): Promise<AskApiResult> {
-  const url = `${WEB_API_URL}/api/ask`;
+  const url = `${getWebApiUrl()}/api/ask`;
 
   let response: Response;
   try {
@@ -83,7 +82,7 @@ export async function pollAskResult(id: string, syncToken?: string): Promise<Ask
     headers['x-upstash-sync-token'] = syncToken;
   }
 
-  const url = `${WEB_API_URL}/api/ask/${id}`;
+  const url = `${getWebApiUrl()}/api/ask/${id}`;
   const deadline = Date.now() + POLL_TIMEOUT_MS;
 
   while (Date.now() < deadline) {

@@ -1,4 +1,3 @@
-import { WEB_API_URL } from '@env';
 import {
   AuthorizationStatus,
   getMessaging,
@@ -7,11 +6,14 @@ import {
   requestPermission,
 } from '@react-native-firebase/messaging';
 
+import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { i18n } from '@/shared/lib/i18n';
 import { IS_IOS, PLATFORM_OS } from '@/shared/lib/platform';
 
-const PUSH_REGISTER_URL = `${WEB_API_URL}/api/push/register`;
+function getPushRegisterUrl(): string {
+  return `${getWebApiUrl().replace(/\/$/, '')}/api/push/register`;
+}
 const PUSH_REGISTER_THROTTLE_MS = 5 * 60 * 1000;
 
 let lastRegisteredToken: string | null = null;
@@ -83,7 +85,7 @@ export async function registerForPushToken(): Promise<string | null> {
 }
 
 export async function sendTokenToBackend(token: string): Promise<boolean> {
-  const url = PUSH_REGISTER_URL;
+  const url = getPushRegisterUrl();
 
   try {
     const response = await fetchWithAuth(url, {

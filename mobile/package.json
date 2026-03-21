@@ -30,6 +30,7 @@
     "@react-native-firebase/app": "^23.8.8",
     "@react-native-firebase/crashlytics": "23.8.8",
     "@react-native-firebase/messaging": "^23.8.8",
+    "@react-native-firebase/remote-config": "23.8.8",
     "@react-native-menu/menu": "^2.0.0",
     "@react-navigation/bottom-tabs": "^7.15.5",
     "@react-navigation/elements": "^2.9.10",

@@ -31,6 +31,11 @@ function buildLinks(): LinkItem[] {
         label: 'Firebase — Cloud Messaging',
         href: firebaseProjectUrl(firebaseProjectId, '/messaging'),
       },
+      {
+        label: 'Firebase — Remote Config',
+        href: firebaseProjectUrl(firebaseProjectId, '/config'),
+        caption: 'Mobile release config (WEB_API_URL, ad units, etc.).',
+      },
     );
   } else {
     items.push(
@@ -38,7 +43,7 @@ function buildLinks(): LinkItem[] {
         label: 'Firebase Console',
         href: 'https://console.firebase.google.com/',
         caption:
-          'Set NEXT_PUBLIC_FIREBASE_CONSOLE_PROJECT_ID for direct links to Crashlytics & FCM.',
+          'Set NEXT_PUBLIC_FIREBASE_CONSOLE_PROJECT_ID for direct links to Crashlytics, FCM & Remote Config.',
       },
       {
         label: 'Firebase — Crashlytics (pick project)',

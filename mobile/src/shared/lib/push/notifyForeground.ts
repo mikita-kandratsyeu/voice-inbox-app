@@ -1,10 +1,14 @@
-import { WEB_API_URL } from '@env';
-
+import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { IS_IOS } from '@/shared/lib/platform';
 
-const FOREGROUND_URL = `${WEB_API_URL}/api/push/foreground`;
-const BACKGROUND_URL = `${WEB_API_URL}/api/push/background`;
+function getForegroundUrl(): string {
+  return `${getWebApiUrl().replace(/\/$/, '')}/api/push/foreground`;
+}
+
+function getBackgroundUrl(): string {
+  return `${getWebApiUrl().replace(/\/$/, '')}/api/push/background`;
+}
 
 async function callPushStateApi(url: string): Promise<void> {
   if (!IS_IOS) return;
@@ -22,9 +26,9 @@ async function callPushStateApi(url: string): Promise<void> {
 }
 
 export async function notifyAppForeground(): Promise<void> {
-  await callPushStateApi(FOREGROUND_URL);
+  await callPushStateApi(getForegroundUrl());
 }
 
 export async function notifyAppBackground(): Promise<void> {
-  await callPushStateApi(BACKGROUND_URL);
+  await callPushStateApi(getBackgroundUrl());
 }
