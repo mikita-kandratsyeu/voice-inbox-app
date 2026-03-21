@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { AdminCard, adminBtnSecondaryClass } from './admin-ui';
 import { AdminExternalObservabilityLinks } from './AdminExternalObservabilityLinks';
 
 type SupportStats = {
@@ -105,33 +106,28 @@ export function AdminOperationsPanel() {
     <div className="space-y-8">
       <AdminExternalObservabilityLinks />
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-        <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Support summary
-        </h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Open tickets and average time to close (closed tickets, last 5000 updates).
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <a
-            href="/api/admin/support/export"
-            download
-            className="inline-flex rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-          >
-            Download CSV export
-          </a>
-          <button
-            type="button"
-            onClick={() => void fetchStats()}
-            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-          >
-            Refresh stats
-          </button>
-        </div>
+      <AdminCard
+        title="Support summary"
+        description="Open tickets and average time to close (closed tickets, last 5000 updates)."
+        headerRight={
+          <div className="flex flex-wrap gap-2">
+            <a href="/api/admin/support/export" download className={adminBtnSecondaryClass}>
+              Download CSV
+            </a>
+            <button
+              type="button"
+              onClick={() => void fetchStats()}
+              className={adminBtnSecondaryClass}
+            >
+              Refresh stats
+            </button>
+          </div>
+        }
+      >
         {statsLoading ? (
-          <p className="mt-4 text-sm text-zinc-500">Loading…</p>
+          <p className="text-sm text-zinc-500">Loading…</p>
         ) : stats?.ok ? (
-          <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+          <dl className="grid gap-3 text-sm sm:grid-cols-2">
             <div className="rounded-lg border border-zinc-100 bg-zinc-50/80 p-3 dark:border-zinc-700 dark:bg-zinc-900/40">
               <dt className="text-xs font-medium text-zinc-400">Open (all)</dt>
               <dd className="text-lg font-semibold text-zinc-900 dark:text-zinc-100">
@@ -165,22 +161,26 @@ export function AdminOperationsPanel() {
             </div>
           </dl>
         ) : (
-          <p className="mt-4 text-sm text-red-600 dark:text-red-400">{stats?.error ?? 'Error'}</p>
+          <p className="text-sm text-red-600 dark:text-red-400">{stats?.error ?? 'Error'}</p>
         )}
-      </section>
+      </AdminCard>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-        <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          API errors (today, UTC)
-        </h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          {obs?.vercelWebAnalyticsNote ??
-            'Histogram of 4xx/5xx from routes using apiError(), stored in Redis.'}
-        </p>
+      <AdminCard
+        title="API errors (today, UTC)"
+        description={
+          obs?.vercelWebAnalyticsNote ??
+          'Histogram of 4xx/5xx from routes using apiError(), stored in Redis.'
+        }
+        headerRight={
+          <button type="button" onClick={() => void fetchObs()} className={adminBtnSecondaryClass}>
+            Refresh
+          </button>
+        }
+      >
         {obsLoading ? (
-          <p className="mt-4 text-sm text-zinc-500">Loading…</p>
+          <p className="text-sm text-zinc-500">Loading…</p>
         ) : obs?.ok ? (
-          <div className="mt-4 space-y-2 text-sm">
+          <div className="space-y-2 text-sm">
             {!obs.apiErrorsToday ? (
               <p className="text-zinc-500">
                 Redis not configured — error histogram is only stored with Upstash.
@@ -210,40 +210,26 @@ export function AdminOperationsPanel() {
             )}
           </div>
         ) : (
-          <p className="mt-4 text-sm text-red-600 dark:text-red-400">{obs?.error ?? 'Error'}</p>
+          <p className="text-sm text-red-600 dark:text-red-400">{obs?.error ?? 'Error'}</p>
         )}
-        <button
-          type="button"
-          onClick={() => void fetchObs()}
-          className="mt-4 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-        >
-          Refresh
-        </button>
-      </section>
+      </AdminCard>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-        <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Admin audit log
-        </h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Config changes, support status, push actions, user management.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-2">
-          <a
-            href="/api/admin/audit/export"
-            download
-            className="inline-flex rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-          >
-            Download CSV export
+      <AdminCard
+        title="Admin audit log"
+        description="Config changes, support status, push actions, user management."
+        headerRight={
+          <a href="/api/admin/audit/export" download className={adminBtnSecondaryClass}>
+            Download CSV
           </a>
-        </div>
+        }
+      >
         {auditError && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{auditError}</p>}
         {auditLoading && auditItems.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500">Loading…</p>
+          <p className="text-sm text-zinc-500">Loading…</p>
         ) : auditItems.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500">No entries.</p>
+          <p className="text-sm text-zinc-500">No entries.</p>
         ) : (
-          <ul className="mt-4 max-h-[min(60vh,480px)] space-y-2 overflow-y-auto text-sm">
+          <ul className="max-h-[min(60vh,480px)] space-y-2 overflow-y-auto text-sm">
             {auditItems.map((row) => (
               <li
                 key={row.id}
@@ -272,12 +258,12 @@ export function AdminOperationsPanel() {
             type="button"
             disabled={auditLoading}
             onClick={() => void fetchAuditPage(true, auditCursor)}
-            className="mt-4 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+            className={`${adminBtnSecondaryClass} mt-4`}
           >
             {auditLoading ? 'Loading…' : 'Load more'}
           </button>
         )}
-      </section>
+      </AdminCard>
     </div>
   );
 }

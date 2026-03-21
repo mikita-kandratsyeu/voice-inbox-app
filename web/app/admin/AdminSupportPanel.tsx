@@ -2,6 +2,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import {
+  AdminEmptyState,
+  AdminPanelHeading,
+  adminBtnSecondaryClass,
+  adminInputClass,
+  adminSelectClass,
+} from './admin-ui';
+
 const PUSH_MESSAGE_MAX = 3500;
 
 function guessLocaleFromDiagnostics(diagnostics: unknown): 'en' | 'ru' | undefined {
@@ -227,52 +235,48 @@ export function AdminSupportPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Support requests
-          </h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Messages from the in-app form (device diagnostics attached).
-          </p>
-        </div>
-        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
-          <label className="sr-only" htmlFor="support-search">
-            Search
-          </label>
-          <input
-            id="support-search"
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search device, email, subject, message…"
-            autoComplete="off"
-            className="min-w-0 flex-1 rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500 sm:min-w-[220px] sm:max-w-md"
-          />
-          <label className="sr-only" htmlFor="support-filter">
-            Status
-          </label>
-          <select
-            id="support-filter"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as 'all' | 'open' | 'closed')}
-            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-          >
-            <option value="open">Open</option>
-            <option value="closed">Closed</option>
-            <option value="all">All</option>
-          </select>
-          <button
-            type="button"
-            onClick={() => {
-              void fetchPage(false, null);
-            }}
-            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-sm transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-          >
-            Refresh
-          </button>
-        </div>
-      </div>
+      <AdminPanelHeading
+        title="Support requests"
+        description="Messages from the in-app form (device diagnostics attached)."
+        actions={
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+            <label className="sr-only" htmlFor="support-search">
+              Search
+            </label>
+            <input
+              id="support-search"
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search device, email, subject, message…"
+              autoComplete="off"
+              className={`min-w-0 flex-1 sm:min-w-[220px] sm:max-w-md ${adminInputClass}`}
+            />
+            <label className="sr-only" htmlFor="support-filter">
+              Status
+            </label>
+            <select
+              id="support-filter"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'open' | 'closed')}
+              className={adminSelectClass}
+            >
+              <option value="open">Open</option>
+              <option value="closed">Closed</option>
+              <option value="all">All</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => {
+                void fetchPage(false, null);
+              }}
+              className={adminBtnSecondaryClass}
+            >
+              Refresh
+            </button>
+          </div>
+        }
+      />
 
       {error && (
         <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
@@ -283,9 +287,11 @@ export function AdminSupportPanel() {
       {loading && items.length === 0 ? (
         <p className="text-sm text-zinc-500">Loading…</p>
       ) : items.length === 0 ? (
-        <p className="rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900/50 dark:text-zinc-400">
-          {debouncedSearch ? 'No requests match this search.' : 'No requests for this filter.'}
-        </p>
+        <AdminEmptyState
+          title={
+            debouncedSearch ? 'No requests match this search.' : 'No requests for this filter.'
+          }
+        />
       ) : (
         <ul className="space-y-3">
           {items.map((row) => {

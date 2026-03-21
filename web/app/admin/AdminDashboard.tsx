@@ -1,8 +1,30 @@
 'use client';
 
+import {
+  AppWindow,
+  Cloud,
+  Database,
+  LayoutDashboard,
+  LifeBuoy,
+  LogOut,
+  Radio,
+  Rocket,
+  Settings,
+  Shield,
+  Wrench,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 
+import {
+  AdminMetricCard,
+  AdminStatusBadge,
+  adminBtnPrimaryClass,
+  adminBtnSecondaryClass,
+  adminCardSurfaceClass,
+  adminInputClass,
+  adminSelectClass,
+} from './admin-ui';
 import { AdminOperationsPanel } from './AdminOperationsPanel';
 import { AdminReleasesPanel } from './AdminReleasesPanel';
 import { AdminSecurityPanel } from './AdminSecurityPanel';
@@ -123,6 +145,64 @@ type AdminTab =
   | 'messaging'
   | 'operations'
   | 'security';
+
+const ADMIN_TAB_META: Record<
+  AdminTab,
+  { label: string; short: string; description: string; icon: typeof LayoutDashboard }
+> = {
+  overview: {
+    label: 'Overview',
+    short: 'Overview',
+    description: 'Health checks, deployments, and recent commits',
+    icon: LayoutDashboard,
+  },
+  config: {
+    label: 'App configuration',
+    short: 'Config',
+    description: 'AI limits, Pro keys, and environment-backed variables',
+    icon: Settings,
+  },
+  support: {
+    label: 'Support',
+    short: 'Support',
+    description: 'In-app support requests and replies',
+    icon: LifeBuoy,
+  },
+  releases: {
+    label: 'Release notes',
+    short: 'Releases',
+    description: 'Landing changelog posts per locale',
+    icon: Rocket,
+  },
+  messaging: {
+    label: 'Push & broadcast',
+    short: 'Push',
+    description: 'Targeted push and broadcast to registered devices',
+    icon: Radio,
+  },
+  operations: {
+    label: 'Operations',
+    short: 'Ops',
+    description: 'Observability links, metrics, exports, audit log',
+    icon: Wrench,
+  },
+  security: {
+    label: 'Security',
+    short: 'Security',
+    description: 'Access policy, passwords, and admin accounts',
+    icon: Shield,
+  },
+};
+
+const ADMIN_TAB_ORDER: AdminTab[] = [
+  'overview',
+  'config',
+  'support',
+  'releases',
+  'messaging',
+  'operations',
+  'security',
+];
 
 export function AdminDashboard() {
   const router = useRouter();
@@ -494,119 +574,87 @@ export function AdminDashboard() {
 
   const tabClass = (t: AdminTab) =>
     adminTab === t
-      ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
-      : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800';
+      ? 'bg-indigo-600 text-white shadow-sm dark:bg-indigo-500'
+      : 'text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800/80';
+
+  const currentMeta = ADMIN_TAB_META[adminTab];
 
   return (
     <div className="flex min-h-screen">
-      <aside className="sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r border-zinc-200 bg-white/90 py-6 dark:border-zinc-800 dark:bg-zinc-950/80 md:flex">
-        <p className="px-3 text-xs font-semibold uppercase tracking-wider text-zinc-400">Menu</p>
-        <nav className="mt-4 flex flex-col gap-1 pr-2">
-          <button
-            type="button"
-            onClick={() => setAdminTab('overview')}
-            className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${tabClass('overview')}`}
-          >
-            Overview
-          </button>
-          <button
-            type="button"
-            onClick={() => setAdminTab('config')}
-            className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${tabClass('config')}`}
-          >
-            App configuration
-          </button>
-          <button
-            type="button"
-            onClick={() => setAdminTab('support')}
-            className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${tabClass('support')}`}
-          >
-            Support
-          </button>
-          <button
-            type="button"
-            onClick={() => setAdminTab('releases')}
-            className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${tabClass('releases')}`}
-          >
-            Release notes
-          </button>
-          <button
-            type="button"
-            onClick={() => setAdminTab('messaging')}
-            className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${tabClass('messaging')}`}
-          >
-            Push &amp; broadcast
-          </button>
-          <button
-            type="button"
-            onClick={() => setAdminTab('operations')}
-            className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${tabClass('operations')}`}
-          >
-            Operations
-          </button>
-          <button
-            type="button"
-            onClick={() => setAdminTab('security')}
-            className={`rounded-lg px-3 py-2 text-left text-sm font-medium ${tabClass('security')}`}
-          >
-            Security
-          </button>
+      <aside className="sticky top-0 z-20 hidden h-screen w-60 shrink-0 flex-col border-r border-zinc-200/80 bg-white/90 py-5 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/90 md:flex">
+        <div className="px-4 pb-6">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-md shadow-indigo-600/20 dark:bg-indigo-500">
+              <AppWindow className="h-4 w-4" strokeWidth={2} aria-hidden />
+            </div>
+            <div className="min-w-0 leading-tight">
+              <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+                Voice Inbox
+              </p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Administration</p>
+            </div>
+          </div>
+        </div>
+        <p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
+          Navigate
+        </p>
+        <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pr-3">
+          {ADMIN_TAB_ORDER.map((t) => {
+            const { label, icon: NavIcon } = ADMIN_TAB_META[t];
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setAdminTab(t)}
+                className={`flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-colors ${tabClass(t)}`}
+              >
+                <NavIcon className="h-4 w-4 shrink-0 opacity-90" strokeWidth={2} aria-hidden />
+                <span className="min-w-0">{label}</span>
+              </button>
+            );
+          })}
         </nav>
       </aside>
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-10 border-b border-zinc-200 bg-zinc-100/95 px-4 py-4 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/95 md:px-8">
-          <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 md:text-2xl">
-                Voice Inbox — Admin
+        <header className="sticky top-0 z-10 border-b border-zinc-200/80 bg-white/85 px-4 py-4 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/85 md:px-8">
+          <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <p className="text-xs font-medium uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+                Voice Inbox · Admin
+              </p>
+              <h1 className="mt-1 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 md:text-2xl">
+                {currentMeta.label}
               </h1>
-              <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                Infrastructure, app settings, support inbox, and push
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
+                {currentMeta.description}
               </p>
             </div>
             <button
               type="button"
               onClick={handleLogout}
-              className="self-start rounded-lg border border-zinc-300 px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800 sm:self-auto"
+              className={`${adminBtnSecondaryClass} shrink-0 self-start sm:mt-0.5`}
             >
-              Logout
+              <LogOut className="h-4 w-4" strokeWidth={2} aria-hidden />
+              Log out
             </button>
           </div>
-          <div className="mx-auto mt-4 flex max-w-6xl gap-2 overflow-x-auto pb-1 md:hidden">
-            {(
-              [
-                'overview',
-                'config',
-                'support',
-                'releases',
-                'messaging',
-                'operations',
-                'security',
-              ] as const
-            ).map((t) => (
+          <div className="mx-auto mt-4 flex max-w-6xl gap-2 overflow-x-auto pb-0.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {ADMIN_TAB_ORDER.map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setAdminTab(t)}
-                className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-medium ${
+                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                   adminTab === t
-                    ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900'
+                    ? 'bg-indigo-600 text-white dark:bg-indigo-500'
                     : 'bg-white text-zinc-600 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-600'
                 }`}
               >
-                {t === 'overview'
-                  ? 'Overview'
-                  : t === 'config'
-                    ? 'Config'
-                    : t === 'support'
-                      ? 'Support'
-                      : t === 'releases'
-                        ? 'Releases'
-                        : t === 'messaging'
-                          ? 'Push'
-                          : t === 'operations'
-                            ? 'Ops'
-                            : 'Security'}
+                {(() => {
+                  const I = ADMIN_TAB_META[t].icon;
+                  return <I className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />;
+                })()}
+                {ADMIN_TAB_META[t].short}
               </button>
             ))}
           </div>
@@ -615,108 +663,97 @@ export function AdminDashboard() {
         <div className="mx-auto max-w-6xl px-4 py-6 md:px-8">
           {adminTab === 'overview' && (
             <>
-              <div className="mb-4 flex flex-wrap gap-2">
+              <div className="mb-6 flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => fetchStatus()}
-                  className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-600 shadow-sm transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  className={adminBtnSecondaryClass}
                 >
                   Refresh status
                 </button>
                 <button
                   type="button"
                   onClick={() => fetchGithub()}
-                  className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-600 shadow-sm transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  className={adminBtnSecondaryClass}
                 >
                   Refresh GitHub
                 </button>
               </div>
 
               <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3 lg:gap-6">
-                <section className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-                  <h2 className="border-b border-zinc-200 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
-                    Postgres
-                  </h2>
-                  <div className="p-4">
-                    {statusLoading ? (
-                      <p className="text-sm text-zinc-500">Loading…</p>
-                    ) : status?.database?.ok ? (
-                      <div className="space-y-1 text-sm">
-                        <p className="inline-flex items-center gap-2 font-medium text-green-600 dark:text-green-400">
-                          <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden />
-                          Connected
-                        </p>
-                        {typeof status.database?.latencyMs === 'number' && (
-                          <p className="text-xs text-zinc-500">
-                            Ping {status.database.latencyMs} ms
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-red-600 dark:text-red-400">
-                        {status?.database?.error ?? 'Unavailable'}
-                      </p>
-                    )}
-                  </div>
-                </section>
-
-                <section className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-                  <h2 className="border-b border-zinc-200 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
-                    Upstash
-                  </h2>
-                  <div className="p-4">
-                    {statusLoading ? (
-                      <p className="text-sm text-zinc-500">Loading…</p>
-                    ) : status?.upstash.ok ? (
-                      <p className="inline-flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
-                        <span className="h-2 w-2 rounded-full bg-green-500" aria-hidden />
+                <AdminMetricCard title="Postgres" icon={Database}>
+                  {statusLoading ? (
+                    <p className="text-sm text-zinc-500">Loading…</p>
+                  ) : status?.database?.ok ? (
+                    <div className="space-y-2 text-sm">
+                      <AdminStatusBadge tone="success">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
                         Connected
-                      </p>
-                    ) : (
-                      <p className="text-sm text-red-600 dark:text-red-400">
-                        {status?.upstash.error ?? 'Disconnected'}
-                      </p>
-                    )}
-                  </div>
-                </section>
+                      </AdminStatusBadge>
+                      {typeof status.database?.latencyMs === 'number' && (
+                        <p className="text-xs text-zinc-500">Ping {status.database.latencyMs} ms</p>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      {status?.database?.error ?? 'Unavailable'}
+                    </p>
+                  )}
+                </AdminMetricCard>
 
-                <section className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-                  <h2 className="border-b border-zinc-200 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
-                    App
-                  </h2>
-                  <div className="p-4">
-                    {statusLoading ? (
-                      <p className="text-sm text-zinc-500">Loading…</p>
-                    ) : status ? (
-                      <dl className="space-y-1.5 text-sm">
-                        <div>
-                          <dt className="text-xs font-medium text-zinc-400">URL</dt>
-                          <dd className="text-zinc-700 dark:text-zinc-300">
-                            {status.app.baseUrl || '—'}
-                          </dd>
-                        </div>
-                        <div>
-                          <dt className="text-xs font-medium text-zinc-400">Env · Push devices</dt>
-                          <dd className="text-zinc-700 dark:text-zinc-300">
-                            {status.app.env}
-                            {typeof status.app.devicesWithPush === 'number' && (
-                              <> · {status.app.devicesWithPush}</>
-                            )}
-                          </dd>
-                        </div>
-                      </dl>
-                    ) : (
-                      <p className="text-sm text-zinc-500">Failed to load</p>
-                    )}
-                  </div>
-                </section>
+                <AdminMetricCard title="Upstash" icon={Cloud}>
+                  {statusLoading ? (
+                    <p className="text-sm text-zinc-500">Loading…</p>
+                  ) : status?.upstash.ok ? (
+                    <AdminStatusBadge tone="success">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+                      Connected
+                    </AdminStatusBadge>
+                  ) : (
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      {status?.upstash.error ?? 'Disconnected'}
+                    </p>
+                  )}
+                </AdminMetricCard>
+
+                <AdminMetricCard title="App" icon={AppWindow}>
+                  {statusLoading ? (
+                    <p className="text-sm text-zinc-500">Loading…</p>
+                  ) : status ? (
+                    <dl className="space-y-2 text-sm">
+                      <div>
+                        <dt className="text-xs font-medium uppercase tracking-wide text-zinc-400">
+                          URL
+                        </dt>
+                        <dd className="mt-0.5 text-zinc-800 dark:text-zinc-200">
+                          {status.app.baseUrl || '—'}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs font-medium uppercase tracking-wide text-zinc-400">
+                          Environment · Push devices
+                        </dt>
+                        <dd className="mt-0.5 text-zinc-800 dark:text-zinc-200">
+                          {status.app.env}
+                          {typeof status.app.devicesWithPush === 'number' && (
+                            <> · {status.app.devicesWithPush}</>
+                          )}
+                        </dd>
+                      </div>
+                    </dl>
+                  ) : (
+                    <p className="text-sm text-zinc-500">Failed to load</p>
+                  )}
+                </AdminMetricCard>
               </div>
 
               <div className="mb-8 space-y-4 lg:space-y-6">
                 {/* Колонка: Vercel, затем GitHub */}
                 <div className="flex flex-col gap-4 lg:gap-6">
-                  <section className="flex min-h-[260px] max-h-[60vh] flex-col rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-                    <h2 className="shrink-0 border-b border-zinc-200 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
+                  <section
+                    className={`flex min-h-[260px] max-h-[60vh] flex-col ${adminCardSurfaceClass}`}
+                  >
+                    <h2 className="shrink-0 border-b border-zinc-100 px-4 py-3 text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
                       Vercel
                     </h2>
                     <div className="min-h-0 flex-1 overflow-auto p-4">
@@ -799,8 +836,10 @@ export function AdminDashboard() {
                     </div>
                   </section>
 
-                  <section className="flex min-h-[260px] max-h-[60vh] flex-col rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-                    <h2 className="shrink-0 border-b border-zinc-200 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
+                  <section
+                    className={`flex min-h-[260px] max-h-[60vh] flex-col ${adminCardSurfaceClass}`}
+                  >
+                    <h2 className="shrink-0 border-b border-zinc-100 px-4 py-3 text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
                       GitHub
                     </h2>
                     <div className="flex min-h-0 flex-1 flex-col overflow-auto p-4">
@@ -859,13 +898,13 @@ export function AdminDashboard() {
                 <button
                   type="button"
                   onClick={() => fetchAppConfig()}
-                  className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-600 shadow-sm transition-colors hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  className={adminBtnSecondaryClass}
                 >
                   Refresh
                 </button>
               </div>
 
-              <section className="mb-8 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+              <section className={`mb-8 ${adminCardSurfaceClass} p-5`}>
                 <h2 className="mb-1 text-lg font-medium">AI bonus (rewarded ad)</h2>
                 <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
                   Values used by <code className="text-xs">getBonusConfig()</code> and{' '}
@@ -893,7 +932,7 @@ export function AdminDashboard() {
                           disabled={!appConfigEditable}
                           value={bonusAmount}
                           onChange={(e) => setBonusAmount(e.target.value)}
-                          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 disabled:opacity-60"
+                          className={`${adminInputClass} disabled:opacity-60`}
                         />
                         <p className="mt-1 text-xs text-zinc-500">
                           Extra AI requests granted per ad view.
@@ -910,7 +949,7 @@ export function AdminDashboard() {
                           disabled={!appConfigEditable}
                           value={bonusCooldownSec}
                           onChange={(e) => setBonusCooldownSec(e.target.value)}
-                          className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 disabled:opacity-60"
+                          className={`${adminInputClass} disabled:opacity-60`}
                         />
                         <p className="mt-1 text-xs text-zinc-500">
                           Min 60 seconds between bonus claims.
@@ -927,7 +966,7 @@ export function AdminDashboard() {
                         disabled={!appConfigEditable}
                         value={bonusKeyPrefix}
                         onChange={(e) => setBonusKeyPrefix(e.target.value)}
-                        className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 disabled:opacity-60"
+                        className={`${adminInputClass} font-mono disabled:opacity-60`}
                       />
                       <p className="mt-1 text-xs text-zinc-500">
                         Redis key prefix for per-device cooldown.
@@ -950,7 +989,7 @@ export function AdminDashboard() {
                             disabled={!appConfigEditable}
                             value={weeklyLimitFree}
                             onChange={(e) => setWeeklyLimitFree(e.target.value)}
-                            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 disabled:opacity-60"
+                            className={`${adminInputClass} disabled:opacity-60`}
                           />
                           <p className="mt-1 text-xs text-zinc-500">Free tier (non-Pro devices).</p>
                         </div>
@@ -966,7 +1005,7 @@ export function AdminDashboard() {
                             disabled={!appConfigEditable}
                             value={weeklyLimitPro}
                             onChange={(e) => setWeeklyLimitPro(e.target.value)}
-                            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 disabled:opacity-60"
+                            className={`${adminInputClass} disabled:opacity-60`}
                           />
                           <p className="mt-1 text-xs text-zinc-500">
                             Pro tier; must be ≥ free (validated on save).
@@ -978,7 +1017,7 @@ export function AdminDashboard() {
                       <button
                         type="submit"
                         disabled={!appConfigEditable || appConfigSaving}
-                        className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                        className={adminBtnPrimaryClass}
                       >
                         {appConfigSaving ? 'Saving…' : 'Save'}
                       </button>
@@ -997,7 +1036,7 @@ export function AdminDashboard() {
                 )}
               </section>
 
-              <section className="mb-8 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+              <section className={`mb-8 ${adminCardSurfaceClass} p-5`}>
                 <h2 className="mb-1 text-lg font-medium">Pro license keys</h2>
                 <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
                   One-time keys; plaintext is shown only once. Each key activates on a single
@@ -1011,7 +1050,7 @@ export function AdminDashboard() {
                     <select
                       value={proLicenseMonths}
                       onChange={(e) => setProLicenseMonths(e.target.value)}
-                      className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                      className={adminSelectClass}
                     >
                       <option value="1">1</option>
                       <option value="3">3</option>
@@ -1023,14 +1062,14 @@ export function AdminDashboard() {
                     type="button"
                     disabled={proLicenseGenerating}
                     onClick={() => void handleGenerateProLicense()}
-                    className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                    className={adminBtnPrimaryClass}
                   >
                     {proLicenseGenerating ? 'Generating…' : 'Generate key'}
                   </button>
                   <button
                     type="button"
                     onClick={() => void fetchProLicenseList()}
-                    className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-600 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                    className={adminBtnSecondaryClass}
                   >
                     Refresh list
                   </button>
@@ -1129,7 +1168,7 @@ export function AdminDashboard() {
 
           {adminTab === 'messaging' && (
             <>
-              <section className="mb-8 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+              <section className={`mb-8 ${adminCardSurfaceClass} p-5`}>
                 <h2 className="mb-4 text-lg font-medium">Send to one device</h2>
                 <form onSubmit={handleSinglePush} className="space-y-4">
                   <div>
@@ -1142,7 +1181,7 @@ export function AdminDashboard() {
                       <select
                         value={deviceIds.includes(singleDeviceId) ? singleDeviceId : ''}
                         onChange={(e) => setSingleDeviceId(e.target.value)}
-                        className="mb-2 w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                        className={`mb-2 w-full ${adminInputClass} font-mono`}
                       >
                         <option value="">— Choose device —</option>
                         {deviceIds.map((id) => (
@@ -1157,7 +1196,7 @@ export function AdminDashboard() {
                       value={singleDeviceId}
                       onChange={(e) => setSingleDeviceId(e.target.value)}
                       required
-                      className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                      className={`${adminInputClass} font-mono`}
                       placeholder="UUID or Android ID (or choose above)"
                     />
                   </div>
@@ -1168,7 +1207,7 @@ export function AdminDashboard() {
                     <select
                       value={singleType}
                       onChange={(e) => setSingleType(e.target.value)}
-                      className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                      className={adminSelectClass}
                     >
                       <option value="policy_update">Policy update</option>
                       <option value="limit_warning">Limit warning</option>
@@ -1184,7 +1223,7 @@ export function AdminDashboard() {
                       type="text"
                       value={singleTitle}
                       onChange={(e) => setSingleTitle(e.target.value)}
-                      className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                      className={adminInputClass}
                       placeholder="Override default title"
                     />
                   </div>
@@ -1196,7 +1235,7 @@ export function AdminDashboard() {
                       type="text"
                       value={singleBody}
                       onChange={(e) => setSingleBody(e.target.value)}
-                      className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                      className={adminInputClass}
                       placeholder="Override default body"
                     />
                   </div>
@@ -1209,7 +1248,7 @@ export function AdminDashboard() {
                         value={singleMessage}
                         onChange={(e) => setSingleMessage(e.target.value)}
                         rows={2}
-                        className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                        className={`${adminInputClass} font-mono`}
                         placeholder="Markdown message"
                       />
                     </div>
@@ -1217,7 +1256,7 @@ export function AdminDashboard() {
                   <button
                     type="submit"
                     disabled={singlePushLoading}
-                    className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                    className={adminBtnPrimaryClass}
                   >
                     {singlePushLoading ? 'Sending…' : 'Send push'}
                   </button>
@@ -1232,7 +1271,7 @@ export function AdminDashboard() {
                 )}
               </section>
 
-              <section className="mt-8 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+              <section className={`mt-8 ${adminCardSurfaceClass} p-5`}>
                 <h2 className="mb-4 text-lg font-medium">Push broadcast</h2>
                 <form
                   onSubmit={handleBroadcast}
@@ -1245,7 +1284,7 @@ export function AdminDashboard() {
                     <select
                       value={broadcastType}
                       onChange={(e) => setBroadcastType(e.target.value)}
-                      className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                      className={adminSelectClass}
                     >
                       <option value="policy_update">Policy update</option>
                       <option value="limit_warning">Limit warning</option>
@@ -1261,7 +1300,7 @@ export function AdminDashboard() {
                       type="text"
                       value={broadcastTitle}
                       onChange={(e) => setBroadcastTitle(e.target.value)}
-                      className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder-zinc-400 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                      className={adminInputClass}
                       placeholder="Override default title"
                     />
                   </div>
@@ -1273,7 +1312,7 @@ export function AdminDashboard() {
                       value={broadcastBody}
                       onChange={(e) => setBroadcastBody(e.target.value)}
                       rows={2}
-                      className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder-zinc-400 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                      className={adminInputClass}
                       placeholder="Override default body"
                     />
                   </div>
@@ -1286,7 +1325,7 @@ export function AdminDashboard() {
                         value={broadcastMessage}
                         onChange={(e) => setBroadcastMessage(e.target.value)}
                         rows={4}
-                        className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm text-zinc-900 placeholder-zinc-400 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                        className={`${adminInputClass} font-mono`}
                         placeholder="Markdown text for policy update…"
                       />
                     </div>
@@ -1350,7 +1389,7 @@ export function AdminDashboard() {
                     <button
                       type="submit"
                       disabled={broadcastLoading || !broadcastConfirm}
-                      className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                      className={adminBtnPrimaryClass}
                     >
                       {broadcastLoading ? 'Sending…' : 'Send to all devices'}
                     </button>

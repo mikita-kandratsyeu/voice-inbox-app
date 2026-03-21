@@ -2,6 +2,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import {
+  AdminPanelHeading,
+  adminBtnPrimaryClass,
+  adminBtnSecondaryClass,
+  adminCardSurfaceClass,
+  adminInputClass,
+  adminSelectClass,
+} from './admin-ui';
+
 type ReleaseItem = {
   id: string;
   locale: string;
@@ -184,45 +193,37 @@ export function AdminReleasesPanel() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Release notes (landing blog)
-          </h2>
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Markdown body. Slug: lowercase, digits, hyphens. Separate post per locale (en / ru).
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="sr-only" htmlFor="rel-locale-filter">
-            Filter list
-          </label>
-          <select
-            id="rel-locale-filter"
-            value={listLocale}
-            onChange={(e) => setListLocale(e.target.value as 'all' | 'en' | 'ru')}
-            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
-          >
-            <option value="all">All locales</option>
-            <option value="en">English only</option>
-            <option value="ru">Russian only</option>
-          </select>
-          <button
-            type="button"
-            onClick={() => void fetchList()}
-            className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-          >
-            Refresh list
-          </button>
-          <button
-            type="button"
-            onClick={newRelease}
-            className="rounded-lg bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-          >
-            New release
-          </button>
-        </div>
-      </div>
+      <AdminPanelHeading
+        title="Release notes (landing blog)"
+        description="Markdown body. Slug: lowercase, digits, hyphens. Separate post per locale (en / ru)."
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="sr-only" htmlFor="rel-locale-filter">
+              Filter list
+            </label>
+            <select
+              id="rel-locale-filter"
+              value={listLocale}
+              onChange={(e) => setListLocale(e.target.value as 'all' | 'en' | 'ru')}
+              className={adminSelectClass}
+            >
+              <option value="all">All locales</option>
+              <option value="en">English only</option>
+              <option value="ru">Russian only</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => void fetchList()}
+              className={adminBtnSecondaryClass}
+            >
+              Refresh list
+            </button>
+            <button type="button" onClick={newRelease} className={adminBtnPrimaryClass}>
+              New release
+            </button>
+          </div>
+        }
+      />
 
       {listError && (
         <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
@@ -231,8 +232,8 @@ export function AdminReleasesPanel() {
       )}
 
       <div className="grid gap-8 lg:grid-cols-2">
-        <section className="rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-          <h3 className="border-b border-zinc-200 px-4 py-3 text-sm font-semibold text-zinc-500 dark:border-zinc-600 dark:text-zinc-400">
+        <section className={adminCardSurfaceClass}>
+          <h3 className="border-b border-zinc-100 px-4 py-3 text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
             Posts
           </h3>
           <div className="max-h-[min(70vh,520px)] overflow-y-auto p-2">
@@ -272,8 +273,8 @@ export function AdminReleasesPanel() {
           </div>
         </section>
 
-        <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-          <h3 className="mb-4 text-sm font-semibold text-zinc-500 dark:text-zinc-400">
+        <section className={`${adminCardSurfaceClass} p-5`}>
+          <h3 className="mb-4 text-sm font-semibold text-zinc-600 dark:text-zinc-300">
             {editingId ? 'Edit release' : 'New release'}
           </h3>
           <form onSubmit={handleSave} className="space-y-3">
@@ -285,7 +286,7 @@ export function AdminReleasesPanel() {
                   onChange={(e) =>
                     setForm((f) => ({ ...f, locale: e.target.value as 'en' | 'ru' }))
                   }
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                  className={adminSelectClass}
                 >
                   <option value="en">en</option>
                   <option value="ru">ru</option>
@@ -297,7 +298,7 @@ export function AdminReleasesPanel() {
                   value={form.slug}
                   onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
                   required
-                  className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                  className={`${adminInputClass} font-mono`}
                   placeholder="1-4-0"
                 />
               </div>
@@ -308,7 +309,7 @@ export function AdminReleasesPanel() {
                 value={form.title}
                 onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
                 required
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                className={adminInputClass}
               />
             </div>
             <div>
@@ -318,7 +319,7 @@ export function AdminReleasesPanel() {
               <input
                 value={form.version}
                 onChange={(e) => setForm((f) => ({ ...f, version: e.target.value }))}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                className={adminInputClass}
                 placeholder="1.4.0"
               />
             </div>
@@ -330,7 +331,7 @@ export function AdminReleasesPanel() {
                 value={form.summary}
                 onChange={(e) => setForm((f) => ({ ...f, summary: e.target.value }))}
                 rows={2}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                className={adminInputClass}
               />
             </div>
             <div>
@@ -342,7 +343,7 @@ export function AdminReleasesPanel() {
                 onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
                 required
                 rows={12}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 font-mono text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                className={`${adminInputClass} font-mono`}
               />
             </div>
             <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
@@ -362,15 +363,11 @@ export function AdminReleasesPanel() {
                 type="datetime-local"
                 value={form.publishedAtLocal}
                 onChange={(e) => setForm((f) => ({ ...f, publishedAtLocal: e.target.value }))}
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                className={adminInputClass}
               />
             </div>
             <div className="flex flex-wrap gap-2 pt-2">
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-              >
+              <button type="submit" disabled={saving} className={adminBtnPrimaryClass}>
                 {saving ? 'Saving…' : editingId ? 'Save changes' : 'Create'}
               </button>
               {editingId && (

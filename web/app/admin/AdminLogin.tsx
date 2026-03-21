@@ -1,7 +1,10 @@
 'use client';
 
+import { Lock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+
+import { adminBtnPrimaryClass, adminInputClass } from './admin-ui';
 
 export function AdminLogin() {
   const router = useRouter();
@@ -34,14 +37,24 @@ export function AdminLogin() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-        <h1 className="mb-6 text-center text-xl font-semibold">Admin</h1>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-12">
+      <div className="w-full max-w-[400px] rounded-2xl border border-zinc-200/90 bg-white/90 p-8 shadow-xl shadow-zinc-950/10 backdrop-blur dark:border-zinc-700 dark:bg-zinc-900/95 dark:shadow-black/40">
+        <div className="mb-8 flex flex-col items-center text-center">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-lg shadow-indigo-600/25 dark:bg-indigo-500">
+            <Lock className="h-6 w-6" strokeWidth={2} aria-hidden />
+          </div>
+          <h1 className="text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+            Voice Inbox Admin
+          </h1>
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+            Sign in with your administrator credentials
+          </p>
+        </div>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div>
             <label
               htmlFor="login"
-              className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400"
+              className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
             >
               Login
             </label>
@@ -50,7 +63,7 @@ export function AdminLogin() {
               type="text"
               value={login}
               onChange={(e) => setLogin(e.target.value)}
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-500"
+              className={adminInputClass}
               placeholder="Admin login"
               autoComplete="username"
               required
@@ -59,7 +72,7 @@ export function AdminLogin() {
           <div>
             <label
               htmlFor="password"
-              className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400"
+              className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
             >
               Password
             </label>
@@ -68,23 +81,26 @@ export function AdminLogin() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-500"
+              className={adminInputClass}
               placeholder="Password"
               autoComplete="current-password"
               required
             />
           </div>
           {error && (
-            <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+            <p
+              className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900/40 dark:bg-red-950/50 dark:text-red-200"
+              role="alert"
+            >
               {error}
             </p>
           )}
           <button
             type="submit"
             disabled={loading}
-            className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className={`${adminBtnPrimaryClass} w-full py-2.5`}
           >
-            {loading ? '…' : 'Sign in'}
+            {loading ? 'Signing in…' : 'Sign in'}
           </button>
         </form>
       </div>

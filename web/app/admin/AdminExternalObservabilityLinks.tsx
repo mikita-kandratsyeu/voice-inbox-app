@@ -1,5 +1,7 @@
 'use client';
 
+import { AdminCard } from './admin-ui';
+
 type LinkItem = {
   label: string;
   href: string;
@@ -100,22 +102,18 @@ export function AdminExternalObservabilityLinks() {
   const links = buildLinks();
 
   return (
-    <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-      <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-        External logging &amp; crash tools
-      </h2>
-      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-        Third-party dashboards tied to this stack (mobile crashes, web analytics, Redis metrics, AI
-        usage).
-      </p>
-      <ul className="mt-4 divide-y divide-zinc-100 dark:divide-zinc-700">
+    <AdminCard
+      title="External logging & crash tools"
+      description="Third-party dashboards tied to this stack (mobile crashes, web analytics, Redis metrics, AI usage)."
+    >
+      <ul className="divide-y divide-zinc-100 dark:divide-zinc-800">
         {links.map((item) => (
           <li key={item.label} className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0">
             <a
               href={item.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+              className="text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700 hover:underline dark:text-indigo-400 dark:hover:text-indigo-300"
             >
               {item.label}
               <span className="ml-1 text-zinc-400" aria-hidden>
@@ -123,11 +121,13 @@ export function AdminExternalObservabilityLinks() {
               </span>
             </a>
             {item.caption ? (
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">{item.caption}</p>
+              <p className="text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                {item.caption}
+              </p>
             ) : null}
           </li>
         ))}
       </ul>
-    </section>
+    </AdminCard>
   );
 }

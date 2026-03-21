@@ -22,7 +22,7 @@ const OPENAI_MODEL: AIModel[] = [
     id: 'openai/gpt-5-nano',
     name: 'GPT-5 Nano',
     provider: 'OpenAI',
-    descriptionKey: 'aiModels.openaiDesc  ',
+    descriptionKey: 'aiModels.openaiDesc',
     speed: 'medium',
   },
 ];

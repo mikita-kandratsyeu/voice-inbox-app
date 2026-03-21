@@ -2,6 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import {
+  AdminCard,
+  adminBtnPrimaryClass,
+  adminBtnSecondaryClass,
+  adminInputClass,
+} from './admin-ui';
+
 type AccessPolicy = {
   ok: boolean;
   ipAllowlistEnabled?: boolean;
@@ -128,18 +135,23 @@ export function AdminSecurityPanel() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-        <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Access policy (non-secret)
-        </h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Environment-driven settings. IP list is not shown, only whether it is enabled and how many
-          entries.
-        </p>
+      <AdminCard
+        title="Access policy (non-secret)"
+        description="Environment-driven settings. IP list is not shown, only whether it is enabled and how many entries."
+        headerRight={
+          <button
+            type="button"
+            onClick={() => void loadPolicy()}
+            className={adminBtnSecondaryClass}
+          >
+            Refresh
+          </button>
+        }
+      >
         {policyLoading ? (
-          <p className="mt-4 text-sm text-zinc-500">Loading…</p>
+          <p className="text-sm text-zinc-500">Loading…</p>
         ) : policy?.ok ? (
-          <dl className="mt-4 space-y-2 text-sm">
+          <dl className="space-y-2 text-sm">
             <div className="flex flex-wrap justify-between gap-2 border-b border-zinc-100 py-2 dark:border-zinc-700">
               <dt className="text-zinc-500">ADMIN_ALLOWED_IPS</dt>
               <dd className="font-medium text-zinc-900 dark:text-zinc-100">
@@ -174,25 +186,15 @@ export function AdminSecurityPanel() {
             </div>
           </dl>
         ) : (
-          <p className="mt-4 text-sm text-red-600 dark:text-red-400">{policy?.error ?? 'Error'}</p>
+          <p className="text-sm text-red-600 dark:text-red-400">{policy?.error ?? 'Error'}</p>
         )}
-        <button
-          type="button"
-          onClick={() => void loadPolicy()}
-          className="mt-4 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
-        >
-          Refresh
-        </button>
-      </section>
+      </AdminCard>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-        <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Admin accounts
-        </h2>
+      <AdminCard title="Admin accounts">
         {usersLoading ? (
-          <p className="mt-4 text-sm text-zinc-500">Loading…</p>
+          <p className="text-sm text-zinc-500">Loading…</p>
         ) : (
-          <ul className="mt-4 space-y-2 text-sm">
+          <ul className="space-y-2 text-sm">
             {users.map((u) => (
               <li
                 key={u.id}
@@ -206,13 +208,10 @@ export function AdminSecurityPanel() {
             ))}
           </ul>
         )}
-      </section>
+      </AdminCard>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-        <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Change your password
-        </h2>
-        <form onSubmit={handlePassword} className="mt-4 max-w-md space-y-3">
+      <AdminCard title="Change your password">
+        <form onSubmit={handlePassword} className="max-w-md space-y-3">
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
               Current password
@@ -223,7 +222,7 @@ export function AdminSecurityPanel() {
               value={currentPw}
               onChange={(e) => setCurrentPw(e.target.value)}
               required
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+              className={adminInputClass}
             />
           </div>
           <div>
@@ -237,29 +236,26 @@ export function AdminSecurityPanel() {
               onChange={(e) => setNewPw(e.target.value)}
               required
               minLength={10}
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+              className={adminInputClass}
             />
           </div>
-          <button
-            type="submit"
-            disabled={pwSaving}
-            className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-          >
+          <button type="submit" disabled={pwSaving} className={adminBtnPrimaryClass}>
             {pwSaving ? 'Saving…' : 'Update password'}
           </button>
           {pwMsg && <p className="text-sm text-green-600 dark:text-green-400">{pwMsg}</p>}
           {pwErr && <p className="text-sm text-red-600 dark:text-red-400">{pwErr}</p>}
         </form>
-      </section>
+      </AdminCard>
 
-      <section className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
-        <h2 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Create admin
-        </h2>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Login: letters, digits, <code className="text-xs">._@-</code> · password min 10.
-        </p>
-        <form onSubmit={handleCreate} className="mt-4 max-w-md space-y-3">
+      <AdminCard
+        title="Create admin"
+        description={
+          <>
+            Login: letters, digits, <code className="text-xs">._@-</code> · password min 10.
+          </>
+        }
+      >
+        <form onSubmit={handleCreate} className="max-w-md space-y-3">
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
               Login
@@ -269,7 +265,7 @@ export function AdminSecurityPanel() {
               value={newLogin}
               onChange={(e) => setNewLogin(e.target.value)}
               required
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+              className={adminInputClass}
             />
           </div>
           <div>
@@ -282,20 +278,16 @@ export function AdminSecurityPanel() {
               onChange={(e) => setNewUserPassword(e.target.value)}
               required
               minLength={10}
-              className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+              className={adminInputClass}
             />
           </div>
-          <button
-            type="submit"
-            disabled={createSaving}
-            className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-          >
+          <button type="submit" disabled={createSaving} className={adminBtnPrimaryClass}>
             {createSaving ? 'Creating…' : 'Create admin'}
           </button>
           {createMsg && <p className="text-sm text-green-600 dark:text-green-400">{createMsg}</p>}
           {createErr && <p className="text-sm text-red-600 dark:text-red-400">{createErr}</p>}
         </form>
-      </section>
+      </AdminCard>
     </div>
   );
 }
