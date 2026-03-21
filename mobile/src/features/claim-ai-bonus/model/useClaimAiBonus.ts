@@ -44,7 +44,23 @@ function getErrorText(err: unknown): string {
     const d = err.description;
     if (isString(d) && d.trim()) return d;
   }
+
   return err instanceof Error ? err.message : String(err);
+}
+
+function parseYandexJsonError(raw: string): { description: string } | null {
+  const t = raw.trim();
+
+  if (!t.startsWith('{')) return null;
+
+  try {
+    const parsed = JSON.parse(t) as { description?: string };
+    return isString(parsed.description) && parsed.description.trim()
+      ? { description: parsed.description }
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function normalizeAdError(err: unknown): string {
@@ -57,21 +73,26 @@ function normalizeAdError(err: unknown): string {
   ) {
     return 'claimAdIosAd';
   }
-  if (raw.trim().startsWith('{')) {
-    try {
-      const parsed = JSON.parse(raw) as { description?: string };
-      if (
-        isString(parsed.description) &&
-        parsed.description.toLowerCase().includes('skadnetwork')
-      ) {
-        return 'claimAdIosAd';
-      }
-    } catch {
-      if (__DEV__) {
-        console.error('normalizeAdError', raw);
-      }
-    }
+
+  const fromJson = parseYandexJsonError(raw);
+  const textForHeuristics = fromJson?.description ?? raw;
+  const heuristicsLower = textForHeuristics.toLowerCase();
+
+  if (heuristicsLower.includes('skadnetwork') || heuristicsLower.includes('skad')) {
     return 'claimAdIosAd';
+  }
+  if (
+    heuristicsLower.includes('no ads available') ||
+    heuristicsLower.includes('нет доступной рекламы')
+  ) {
+    return 'claimAdNoInventory';
+  }
+
+  if (raw.trim().startsWith('{')) {
+    if (fromJson == null && __DEV__) {
+      console.error('normalizeAdError: invalid JSON', raw);
+    }
+    return 'claimAdFailed';
   }
   if (raw.length > 180) {
     return 'claimAdFailed';
@@ -82,6 +103,26 @@ function normalizeAdError(err: unknown): string {
 function getAdUnitId(): string {
   const raw = YANDEX_REWARDED_AD_UNIT_ID ?? '';
   return isString(raw) && raw.trim() ? raw.trim() : DEMO_AD_UNIT_ID;
+}
+
+function serializeAdErrorForLog(err: unknown): unknown {
+  if (err == null) return err;
+  if (err instanceof Error) {
+    return { name: err.name, message: err.message, stack: err.stack };
+  }
+  if (isRecord(err)) {
+    return err;
+  }
+  return String(err);
+}
+
+function logRewardedAdDebug(phase: 'loadAd' | 'showAd', err: unknown): void {
+  if (!__DEV__) return;
+  console.warn('[rewardedAd]', phase, {
+    adUnitId: getAdUnitId(),
+    description: getErrorText(err),
+    raw: serializeAdErrorForLog(err),
+  });
 }
 
 export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
@@ -137,6 +178,14 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
       };
 
       ad.onAdFailedToShow = (adError?: { description?: string }) => {
+        if (adError != null) {
+          logRewardedAdDebug('showAd', adError);
+        } else if (__DEV__) {
+          console.warn('[rewardedAd]', 'showAd', {
+            adUnitId: getAdUnitId(),
+            note: 'onAdFailedToShow without error payload',
+          });
+        }
         setError(adError ? normalizeAdError(adError) : 'claimAdFailed');
         setLoading(false);
       };
@@ -147,6 +196,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
 
       await ad.show();
     } catch (err) {
+      logRewardedAdDebug('loadAd', err);
       setError(normalizeAdError(err));
       setLoading(false);
     }

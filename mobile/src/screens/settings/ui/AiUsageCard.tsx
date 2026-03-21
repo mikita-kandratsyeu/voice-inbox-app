@@ -1,3 +1,4 @@
+import type { TFunction } from 'i18next';
 import { PlayCircle, Sparkles } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +19,87 @@ const formatResetDate = (isoString: string, locale: string): string => {
     minute: '2-digit',
   });
 };
+
+function getAiUsageStatusText(usage: AiUsage | null, isExhausted: boolean, t: TFunction): string {
+  if (!usage) {
+    return t('settings.aiUsage.unavailable');
+  }
+
+  if (isExhausted) {
+    return t('settings.aiUsage.exhausted');
+  }
+
+  return t('settings.aiUsage.remaining', { count: usage.remaining });
+}
+
+function resolveClaimBonusErrorMessage(claimError: string, t: TFunction): string {
+  switch (claimError) {
+    case 'claimAdFailed':
+      return t('settings.aiUsage.claimBonusError');
+    case 'claimAdIosAd':
+      return t('settings.aiUsage.claimBonusErrorIosAd');
+    case 'claimAdNoInventory':
+      return t('settings.aiUsage.claimBonusErrorNoInventory');
+    case 'claimBonusNoUsage':
+      return t('settings.aiUsage.claimBonusNoUsage');
+    default:
+      return claimError;
+  }
+}
+
+type ClaimBonusPressableBodyProps = {
+  color: Colors;
+  claimLoading: boolean;
+  claimDisabled: boolean;
+  bonusAmount: number;
+  t: TFunction;
+};
+
+function ClaimBonusPressableBody({
+  color,
+  claimLoading,
+  claimDisabled,
+  bonusAmount,
+  t,
+}: ClaimBonusPressableBodyProps) {
+  if (claimLoading) {
+    return (
+      <View className="min-h-[52px] items-center justify-center py-3">
+        <ActivityIndicator size="small" color={color.accent.primary} />
+        <Text className="mt-2 text-center text-xs" style={{ color: color.text.secondary }}>
+          {t('settings.aiUsage.claimBonusLoading')}
+        </Text>
+      </View>
+    );
+  }
+
+  if (claimDisabled) {
+    return (
+      <View className="min-h-[52px] items-center justify-center px-4 py-3.5">
+        <Text
+          className="text-center text-sm font-medium leading-5"
+          style={{ color: color.text.muted }}
+        >
+          {t('settings.aiUsage.claimBonusCooldown')}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <View className="min-h-[52px] flex-row items-center gap-3 px-4 py-3.5">
+      <PlayCircle size={26} color={color.accent.primary} strokeWidth={1.75} />
+      <View className="min-w-0 flex-1">
+        <Text className="text-sm font-semibold leading-5" style={{ color: color.accent.primary }}>
+          {t('settings.aiUsage.claimBonusTitle')}
+        </Text>
+        <Text className="mt-0.5 text-xs leading-4" style={{ color: color.text.secondary }}>
+          {t('settings.aiUsage.claimBonusSubtitle', { count: bonusAmount })}
+        </Text>
+      </View>
+    </View>
+  );
+}
 
 type AiUsageCardProps = {
   usage: AiUsage | null;
@@ -69,11 +151,7 @@ export const AiUsageCard = ({
   const progressPercent = usage ? Math.min(100, (usage.used / usage.limit) * 100) : 0;
 
   const usageText = usage ? `${usage.used} / ${usage.limit}` : '—';
-  const statusText = usage
-    ? isExhausted
-      ? t('settings.aiUsage.exhausted')
-      : t('settings.aiUsage.remaining', { count: usage.remaining })
-    : t('settings.aiUsage.unavailable');
+  const statusText = getAiUsageStatusText(usage, isExhausted, t);
   const resetDateText = usage ? formatResetDate(usage.resetAt, i18n.language) : '—';
 
   return (
@@ -174,57 +252,20 @@ export const AiUsageCard = ({
                   minHeight: 52,
                 }}
               >
-                {claimLoading ? (
-                  <View className="min-h-[52px] items-center justify-center py-3">
-                    <ActivityIndicator size="small" color={color.accent.primary} />
-                    <Text
-                      className="mt-2 text-center text-xs"
-                      style={{ color: color.text.secondary }}
-                    >
-                      {t('settings.aiUsage.claimBonusLoading')}
-                    </Text>
-                  </View>
-                ) : claimDisabled && claimError === 'claimCooldown' ? (
-                  <View className="min-h-[52px] items-center justify-center px-4 py-3.5">
-                    <Text
-                      className="text-center text-sm font-medium leading-5"
-                      style={{ color: color.text.muted }}
-                    >
-                      {t('settings.aiUsage.claimBonusCooldown')}
-                    </Text>
-                  </View>
-                ) : (
-                  <View className="min-h-[52px] flex-row items-center gap-3 px-4 py-3.5">
-                    <PlayCircle size={26} color={color.accent.primary} strokeWidth={1.75} />
-                    <View className="min-w-0 flex-1">
-                      <Text
-                        className="text-sm font-semibold leading-5"
-                        style={{ color: color.accent.primary }}
-                      >
-                        {t('settings.aiUsage.claimBonusTitle')}
-                      </Text>
-                      <Text
-                        className="mt-0.5 text-xs leading-4"
-                        style={{ color: color.text.secondary }}
-                      >
-                        {t('settings.aiUsage.claimBonusSubtitle', { count: bonusAmount })}
-                      </Text>
-                    </View>
-                  </View>
-                )}
+                <ClaimBonusPressableBody
+                  color={color}
+                  claimLoading={claimLoading}
+                  claimDisabled={claimDisabled}
+                  bonusAmount={bonusAmount}
+                  t={t}
+                />
               </Pressable>
               {claimError && claimError !== 'claimCooldown' && (
                 <Text
                   className="mt-2 px-1 text-center text-xs leading-4"
                   style={{ color: color.accent.delete }}
                 >
-                  {claimError === 'claimAdFailed'
-                    ? t('settings.aiUsage.claimBonusError')
-                    : claimError === 'claimAdIosAd'
-                      ? t('settings.aiUsage.claimBonusErrorIosAd')
-                      : claimError === 'claimBonusNoUsage'
-                        ? t('settings.aiUsage.claimBonusNoUsage')
-                        : claimError}
+                  {resolveClaimBonusErrorMessage(claimError, t)}
                 </Text>
               )}
             </View>

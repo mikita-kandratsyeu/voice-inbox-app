@@ -238,6 +238,7 @@
       "claimBonusLoading": "Загрузка рекламы...",
       "claimBonusError": "Что-то пошло не так. Попробуйте снова.",
       "claimBonusErrorIosAd": "Сейчас не удалось загрузить рекламу. Попробуйте через несколько минут.",
+      "claimBonusErrorNoInventory": "Сейчас нет доступной рекламы. Попробуйте позже.",
       "claimBonusCooldown": "Скоро снова будет доступно",
       "claimBonusSuccess": "+{{count}} бонусных запросов",
       "claimBonusUnavailableHint": "Бонус за рекламу доступен после того, как вы начнёте тратить недельный лимит ИИ.",
