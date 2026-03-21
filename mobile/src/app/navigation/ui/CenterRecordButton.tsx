@@ -1,9 +1,16 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Mic } from 'lucide-react-native';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { TouchableOpacity, View } from 'react-native';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { hapticLight } from '@/shared/lib';
 
@@ -23,7 +30,19 @@ export const CenterRecordButton = ({
   onLongPress,
 }: CenterRecordButtonProps) => {
   const scale = useSharedValue(1);
+  const breath = useSharedValue(0);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
+  useEffect(() => {
+    breath.value = withRepeat(
+      withTiming(1, {
+        duration: 2400,
+        easing: Easing.inOut(Easing.ease),
+      }),
+      -1,
+      true,
+    );
+  }, [breath]);
 
   const handlePressIn = () => {
     scale.value = withSpring(0.9, { damping: 12, stiffness: 400 });
@@ -33,9 +52,12 @@ export const CenterRecordButton = ({
     scale.value = withSpring(1, { damping: 10, stiffness: 200 });
   };
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    const breathScale = 1 + 0.035 * breath.value;
+    return {
+      transform: [{ scale: scale.value * breathScale }],
+    };
+  });
 
   const handlePress = () => {
     hapticLight();
