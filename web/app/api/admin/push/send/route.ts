@@ -23,6 +23,8 @@ const VALID_TYPES: PushPayload['type'][] = [
   'limit_exceeded',
 ];
 
+const MAX_MESSAGE_CHARS = 3500;
+
 export async function POST(request: Request): Promise<NextResponse> {
   const path = new URL(request.url).pathname;
   const admin = await getAdminSession();
@@ -55,11 +57,22 @@ export async function POST(request: Request): Promise<NextResponse> {
       ? (body.type as PushPayload['type'])
       : 'policy_update';
 
+  const rawMessage = typeof body.message === 'string' ? body.message : undefined;
+  if (rawMessage !== undefined && rawMessage.length > MAX_MESSAGE_CHARS) {
+    return apiError(
+      `message is too long (max ${MAX_MESSAGE_CHARS} characters)`,
+      HttpStatus.BAD_REQUEST,
+      {
+        pathname: path,
+      },
+    );
+  }
+
   const payload: PushPayload = {
     type,
     title: typeof body.title === 'string' ? body.title : undefined,
     body: typeof body.body === 'string' ? body.body : undefined,
-    message: typeof body.message === 'string' ? body.message : undefined,
+    message: rawMessage,
     recordId: typeof body.recordId === 'string' ? body.recordId : undefined,
   };
 

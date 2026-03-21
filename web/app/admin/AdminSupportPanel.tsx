@@ -2,6 +2,41 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+const PUSH_MESSAGE_MAX = 3500;
+
+function guessLocaleFromDiagnostics(diagnostics: unknown): 'en' | 'ru' | undefined {
+  if (!diagnostics || typeof diagnostics !== 'object') return undefined;
+  const locales = (diagnostics as { locales?: unknown }).locales;
+  if (!Array.isArray(locales) || locales.length === 0) return undefined;
+  const first = locales[0];
+  if (!first || typeof first !== 'object' || !('languageCode' in first)) return undefined;
+  const code = String((first as { languageCode: unknown }).languageCode).toLowerCase();
+  if (code === 'ru' || code === 'en') return code;
+  return undefined;
+}
+
+function supportPushNotificationCopy(locale: 'en' | 'ru' | undefined): {
+  title: string;
+  body: string;
+} {
+  if (locale === 'ru') {
+    return {
+      title: 'Voice Inbox AI',
+      body: 'Ответ по вашему обращению в поддержку. Откройте приложение.',
+    };
+  }
+  return {
+    title: 'Voice Inbox AI',
+    body: 'Reply to your support request. Open the app to read.',
+  };
+}
+
+type ReplyDraft = {
+  markdown: string;
+  resolutionHint: string;
+  locale: 'auto' | 'en' | 'ru';
+};
+
 type SupportItem = {
   id: string;
   deviceId: string;
@@ -32,6 +67,28 @@ export function AdminSupportPanel() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [patching, setPatching] = useState<string | null>(null);
+  const [replyOpenId, setReplyOpenId] = useState<string | null>(null);
+  const [replyDrafts, setReplyDrafts] = useState<Record<string, ReplyDraft>>({});
+  const [aiLoadingId, setAiLoadingId] = useState<string | null>(null);
+  const [pushLoadingId, setPushLoadingId] = useState<string | null>(null);
+  const [inlineSuccessId, setInlineSuccessId] = useState<string | null>(null);
+
+  const getDraft = useCallback(
+    (id: string): ReplyDraft =>
+      replyDrafts[id] ?? { markdown: '', resolutionHint: '', locale: 'auto' },
+    [replyDrafts],
+  );
+
+  const setDraftField = useCallback((id: string, patch: Partial<ReplyDraft>) => {
+    setReplyDrafts((prev) => {
+      const base: ReplyDraft = prev[id] ?? {
+        markdown: '',
+        resolutionHint: '',
+        locale: 'auto',
+      };
+      return { ...prev, [id]: { ...base, ...patch } };
+    });
+  }, []);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search.trim()), 400);
@@ -66,6 +123,81 @@ export function AdminSupportPanel() {
   useEffect(() => {
     void fetchPage(false, null);
   }, [fetchPage]);
+
+  const handleGenerateDraft = async (row: SupportItem) => {
+    const d = getDraft(row.id);
+    setAiLoadingId(row.id);
+    setError(null);
+    try {
+      const localeForApi =
+        d.locale === 'auto' ? guessLocaleFromDiagnostics(row.diagnostics) : d.locale;
+      const res = await fetch('/api/admin/ai/support-reply-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          subject: row.subject,
+          message: row.message,
+          resolutionHint: d.resolutionHint.trim() || undefined,
+          ...(localeForApi ? { locale: localeForApi } : {}),
+        }),
+      });
+      const data = (await res.json()) as { ok?: boolean; markdown?: string; error?: string };
+      if (!res.ok || !data.ok || typeof data.markdown !== 'string') {
+        setError(data.error ?? 'AI draft failed');
+        return;
+      }
+      setDraftField(row.id, { markdown: data.markdown.slice(0, PUSH_MESSAGE_MAX) });
+    } catch {
+      setError('AI draft request failed');
+    } finally {
+      setAiLoadingId(null);
+    }
+  };
+
+  const handleSendPush = async (row: SupportItem) => {
+    const d = getDraft(row.id);
+    const message = d.markdown.trim();
+    if (!message) {
+      setError('Add in-app message text (Markdown) before sending.');
+      return;
+    }
+    if (message.length > PUSH_MESSAGE_MAX) {
+      setError(`Message is too long (max ${PUSH_MESSAGE_MAX} characters).`);
+      return;
+    }
+    setPushLoadingId(row.id);
+    setError(null);
+    setInlineSuccessId(null);
+    try {
+      const notifyLocale =
+        d.locale === 'auto' ? guessLocaleFromDiagnostics(row.diagnostics) : d.locale;
+      const { title, body } = supportPushNotificationCopy(notifyLocale);
+      const res = await fetch('/api/admin/push/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          deviceId: row.deviceId,
+          type: 'policy_update',
+          title,
+          body,
+          message,
+        }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? 'Push failed');
+        return;
+      }
+      setInlineSuccessId(row.id);
+      window.setTimeout(() => setInlineSuccessId(null), 5000);
+    } catch {
+      setError('Push request failed');
+    } finally {
+      setPushLoadingId(null);
+    }
+  };
 
   const handlePatch = async (id: string, status: 'open' | 'closed') => {
     setPatching(id);
@@ -218,13 +350,118 @@ export function AdminSupportPanel() {
                     </select>
                     <button
                       type="button"
-                      onClick={() => setExpanded(isOpen ? null : row.id)}
+                      onClick={() => {
+                        setExpanded(isOpen ? null : row.id);
+                      }}
                       className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
                     >
                       {isOpen ? 'Hide details' : 'Diagnostics & logs'}
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => setReplyOpenId((cur) => (cur === row.id ? null : row.id))}
+                      className="text-sm font-medium text-violet-600 hover:underline dark:text-violet-400"
+                    >
+                      {replyOpenId === row.id ? 'Hide push reply' : 'Notify user (push)'}
+                    </button>
                   </div>
                 </div>
+                {replyOpenId === row.id && (
+                  <div className="space-y-3 border-t border-violet-100 bg-violet-50/50 p-4 dark:border-violet-900/40 dark:bg-violet-950/20">
+                    <p className="text-xs text-zinc-600 dark:text-zinc-400">
+                      Sends a <span className="font-mono">policy_update</span> push: the system
+                      notification uses support-specific title/body (by language below); the in-app
+                      sheet shows the Markdown below. Optional notes are only for AI draft
+                      generation.
+                    </p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <div className="sm:col-span-2">
+                        <label
+                          className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                          htmlFor={`hint-${row.id}`}
+                        >
+                          Resolution notes (optional, for AI only)
+                        </label>
+                        <textarea
+                          id={`hint-${row.id}`}
+                          value={getDraft(row.id).resolutionHint}
+                          onChange={(e) =>
+                            setDraftField(row.id, { resolutionHint: e.target.value })
+                          }
+                          rows={2}
+                          placeholder="e.g. Fixed sync on server, please reopen the app"
+                          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                          htmlFor={`locale-${row.id}`}
+                        >
+                          Reply language hint (AI)
+                        </label>
+                        <select
+                          id={`locale-${row.id}`}
+                          value={getDraft(row.id).locale}
+                          onChange={(e) =>
+                            setDraftField(row.id, {
+                              locale: e.target.value as ReplyDraft['locale'],
+                            })
+                          }
+                          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                        >
+                          <option value="auto">
+                            Auto ({guessLocaleFromDiagnostics(row.diagnostics) ?? 'from message'})
+                          </option>
+                          <option value="en">English</option>
+                          <option value="ru">Russian</option>
+                        </select>
+                      </div>
+                      <div className="flex items-end">
+                        <button
+                          type="button"
+                          disabled={aiLoadingId === row.id}
+                          onClick={() => void handleGenerateDraft(row)}
+                          className="w-full rounded-lg border border-violet-300 bg-white px-3 py-2 text-sm font-medium text-violet-800 shadow-sm hover:bg-violet-50 disabled:opacity-50 dark:border-violet-700 dark:bg-violet-950/80 dark:text-violet-200 dark:hover:bg-violet-900/60"
+                        >
+                          {aiLoadingId === row.id ? 'Generating…' : 'Generate Markdown (AI)'}
+                        </button>
+                      </div>
+                      <div className="sm:col-span-2">
+                        <label
+                          className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400"
+                          htmlFor={`md-${row.id}`}
+                        >
+                          In-app message (Markdown, max {PUSH_MESSAGE_MAX})
+                        </label>
+                        <textarea
+                          id={`md-${row.id}`}
+                          value={getDraft(row.id).markdown}
+                          onChange={(e) => setDraftField(row.id, { markdown: e.target.value })}
+                          rows={8}
+                          placeholder={'## What we changed\n\n- …'}
+                          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 font-mono text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                        />
+                        <p className="mt-1 text-xs text-zinc-500">
+                          {getDraft(row.id).markdown.length} / {PUSH_MESSAGE_MAX}
+                        </p>
+                      </div>
+                    </div>
+                    {inlineSuccessId === row.id && (
+                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                        Push sent to this device.
+                      </p>
+                    )}
+                    <button
+                      type="button"
+                      disabled={pushLoadingId === row.id}
+                      onClick={() => void handleSendPush(row)}
+                      className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-violet-700 disabled:opacity-50 dark:bg-violet-700 dark:hover:bg-violet-600"
+                    >
+                      {pushLoadingId === row.id ? 'Sending…' : 'Send push'}
+                    </button>
+                  </div>
+                )}
                 {isOpen && (
                   <div className="space-y-3 border-t border-zinc-100 bg-zinc-50/80 p-4 dark:border-zinc-700/80 dark:bg-zinc-900/40">
                     <div>
