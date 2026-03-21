@@ -1,17 +1,14 @@
-import { CheckCircle2 } from 'lucide-react-native';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import {
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  Text,
-  TextInput,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetTextInput,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
+import { CheckCircle2 } from 'lucide-react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -21,14 +18,14 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
-import { hapticSuccess, useIsTablet } from '@/shared/lib';
+import { hapticSuccess, modalKeyboardBehavior } from '@/shared/lib';
 import { redeemProLicenseKey } from '@/shared/lib/ai-api/aiApi';
 
 import { setProExpiresAtMsSync } from '../lib/proEntitlementStorage';
-import { getProLicenseModalMaxWidth } from '../lib/proModalLayout';
 import { proLicenseMessageForRedeemError } from '../lib/redeemErrorMessage';
 
 type ProLicenseKeyModalProps = {
@@ -144,9 +141,8 @@ function ProActivationSuccessPanel({ color, expiresAtIso, onDismiss }: SuccessPa
 export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicenseKeyModalProps) {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
-  const isTablet = useIsTablet();
-  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
-  const modalMaxWidth = getProLicenseModalMaxWidth(isTablet, windowWidth, windowHeight);
+  const insets = useSafeAreaInsets();
+  const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [keyText, setKeyText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -162,7 +158,19 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
     }
   }, [visible]);
 
+  useEffect(() => {
+    if (visible) {
+      bottomSheetRef.current?.present();
+    } else {
+      bottomSheetRef.current?.dismiss();
+    }
+  }, [visible]);
+
   const finishSuccess = useCallback(() => {
+    onClose();
+  }, [onClose]);
+
+  const handleSheetDismiss = useCallback(() => {
     onClose();
   }, [onClose]);
 
@@ -203,125 +211,118 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
 
   const showActivatingOverlay = busy && phase !== 'success';
 
+  const renderBackdrop = useCallback(
+    (props: BottomSheetBackdropProps) => (
+      <BottomSheetBackdrop {...props} pressBehavior={busy ? 'none' : 'close'} opacity={0.45} />
+    ),
+    [busy],
+  );
+
+  const canDismissByGesture = !busy;
+
   return (
-    <Modal
-      visible={visible}
-      animationType="fade"
-      transparent
-      statusBarTranslucent
-      onRequestClose={handleClose}
+    <BottomSheetModal
+      ref={bottomSheetRef}
+      enableDynamicSizing
+      enablePanDownToClose={canDismissByGesture}
+      enableOverDrag={false}
+      keyboardBehavior={modalKeyboardBehavior}
+      keyboardBlurBehavior="restore"
+      enableBlurKeyboardOnGesture
+      backdropComponent={renderBackdrop}
+      onDismiss={handleSheetDismiss}
+      backgroundStyle={{
+        backgroundColor: color.background.primary,
+        borderTopWidth: 1,
+        borderTopColor: color.border.default,
+      }}
+      handleIndicatorStyle={{
+        width: 36,
+        height: 5,
+        borderRadius: 2.5,
+        backgroundColor: color.icon.muted,
+      }}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1"
-        style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+      <BottomSheetView
+        style={{
+          paddingHorizontal: 24,
+          paddingTop: 8,
+          paddingBottom: Math.max(insets.bottom, 24),
+        }}
       >
         {showActivatingOverlay ? (
-          <View className={`flex-1 items-center justify-center ${isTablet ? 'px-12' : 'px-6'}`}>
-            <View
-              className="w-full rounded-2xl px-6 py-8"
-              style={{
-                backgroundColor: color.background.card,
-                maxWidth: modalMaxWidth,
-              }}
+          <View className="items-center py-4">
+            <ActivityIndicator size="large" color={color.accent.primary} />
+            <Text
+              className="mt-5 text-center text-[16px] font-semibold leading-6"
+              style={{ color: color.text.primary }}
             >
-              <ActivityIndicator size="large" color={color.accent.primary} />
-              <Text
-                className={`mt-5 text-center font-semibold leading-6 ${isTablet ? 'text-[17px]' : 'text-[16px]'}`}
-                style={{ color: color.text.primary }}
-              >
-                {t('proLicense.activatingTitle')}
-              </Text>
-              <Text
-                className={`mt-2 text-center leading-5 ${isTablet ? 'text-[15px]' : 'text-[14px]'}`}
-                style={{ color: color.text.secondary }}
-              >
-                {t('proLicense.activatingSubtitle')}
-              </Text>
-            </View>
+              {t('proLicense.activatingTitle')}
+            </Text>
+            <Text
+              className="mt-2 text-center text-[14px] leading-5"
+              style={{ color: color.text.secondary }}
+            >
+              {t('proLicense.activatingSubtitle')}
+            </Text>
           </View>
+        ) : phase === 'success' && successExpiresAt != null ? (
+          <ProActivationSuccessPanel
+            color={color}
+            expiresAtIso={successExpiresAt}
+            onDismiss={finishSuccess}
+          />
         ) : (
-          <View className={`flex-1 justify-center ${isTablet ? 'px-10' : 'px-5'}`}>
-            <View
-              className={`overflow-hidden rounded-2xl ${isTablet ? 'p-6' : 'p-5'}`}
+          <>
+            <Text className="text-lg font-semibold" style={{ color: color.text.primary }}>
+              {t('proLicense.modalTitle')}
+            </Text>
+            <Text className="mt-2 text-sm leading-5" style={{ color: color.text.secondary }}>
+              {t('proLicense.modalSubtitle')}
+            </Text>
+            <BottomSheetTextInput
+              value={keyText}
+              onChangeText={setKeyText}
+              autoCapitalize="characters"
+              autoCorrect={false}
+              editable={!busy}
+              placeholder={t('proLicense.keyPlaceholder')}
+              placeholderTextColor={color.text.muted}
+              className="mt-4 rounded-xl border px-3 py-3 font-mono text-base"
               style={{
-                width: '100%',
-                maxWidth: modalMaxWidth,
-                alignSelf: 'center',
-                backgroundColor: color.background.primary,
-                borderWidth: 1,
                 borderColor: color.border.default,
+                color: color.text.primary,
+                backgroundColor: color.background.secondary,
               }}
-            >
-              {phase === 'success' && successExpiresAt != null ? (
-                <ProActivationSuccessPanel
-                  color={color}
-                  expiresAtIso={successExpiresAt}
-                  onDismiss={finishSuccess}
-                />
-              ) : (
-                <>
-                  <Text
-                    className={`font-semibold ${isTablet ? 'text-xl' : 'text-lg'}`}
-                    style={{ color: color.text.primary }}
-                  >
-                    {t('proLicense.modalTitle')}
-                  </Text>
-                  <Text
-                    className={`mt-2 leading-5 ${isTablet ? 'text-[15px]' : 'text-sm'}`}
-                    style={{ color: color.text.secondary }}
-                  >
-                    {t('proLicense.modalSubtitle')}
-                  </Text>
-                  <TextInput
-                    value={keyText}
-                    onChangeText={setKeyText}
-                    autoCapitalize="characters"
-                    autoCorrect={false}
-                    editable={!busy}
-                    placeholder={t('proLicense.keyPlaceholder')}
-                    placeholderTextColor={color.text.muted}
-                    className={`mt-4 rounded-xl border px-3 font-mono ${isTablet ? 'py-3.5 text-lg' : 'py-3 text-base'}`}
-                    style={{
-                      borderColor: color.border.default,
-                      color: color.text.primary,
-                      backgroundColor: color.background.secondary,
-                    }}
-                  />
-                  {error != null && error.length > 0 && (
-                    <Text className="mt-2 text-sm" style={{ color: color.accent.delete }}>
-                      {error}
-                    </Text>
-                  )}
-                  <View className="mt-5 flex-row justify-end gap-2">
-                    <Pressable onPress={handleClose} className="rounded-xl px-4 py-2.5">
-                      <Text
-                        className="text-base font-medium"
-                        style={{ color: color.text.secondary }}
-                      >
-                        {t('common.cancel')}
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => void handleSubmit()}
-                      disabled={!keyText.trim()}
-                      className="rounded-xl px-4 py-2.5"
-                      style={{
-                        backgroundColor: color.accent.primary,
-                        opacity: !keyText.trim() ? 0.5 : 1,
-                      }}
-                    >
-                      <Text className="text-base font-semibold" style={{ color: '#ffffff' }}>
-                        {t('proLicense.activate')}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </>
-              )}
+            />
+            {error != null && error.length > 0 && (
+              <Text className="mt-2 text-sm" style={{ color: color.accent.delete }}>
+                {error}
+              </Text>
+            )}
+            <View className="mt-5 flex-row justify-end gap-2">
+              <Pressable onPress={handleClose} className="rounded-xl px-4 py-2.5">
+                <Text className="text-base font-medium" style={{ color: color.text.secondary }}>
+                  {t('common.cancel')}
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => void handleSubmit()}
+                disabled={!keyText.trim()}
+                className="rounded-xl px-4 py-2.5"
+                style={{
+                  backgroundColor: color.accent.primary,
+                  opacity: !keyText.trim() ? 0.5 : 1,
+                }}
+              >
+                <Text className="text-base font-semibold" style={{ color: '#ffffff' }}>
+                  {t('proLicense.activate')}
+                </Text>
+              </Pressable>
             </View>
-          </View>
+          </>
         )}
-      </KeyboardAvoidingView>
-    </Modal>
+      </BottomSheetView>
+    </BottomSheetModal>
   );
 }

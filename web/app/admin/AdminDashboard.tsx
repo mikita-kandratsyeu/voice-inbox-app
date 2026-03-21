@@ -638,7 +638,7 @@ export function AdminDashboard() {
               Log out
             </button>
           </div>
-          <div className="mx-auto mt-4 flex max-w-6xl gap-2 overflow-x-auto pb-0.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mx-auto mt-4 flex max-w-6xl gap-2 overflow-x-auto pt-2 pb-0.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {ADMIN_TAB_ORDER.map((t) => (
               <button
                 key={t}
