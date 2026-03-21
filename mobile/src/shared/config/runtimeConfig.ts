@@ -1,4 +1,14 @@
-import * as Env from '@env';
+import {
+  ADS_SECRET_GESTURE,
+  APP_STORE_URL,
+  GOOGLE_PLAY_URL,
+  MOBILE_USER_AGENT,
+  WEB_API_SECRET,
+  WEB_API_URL,
+  WEBSITE_URL,
+  YANDEX_BANNER_AD_UNIT_ID,
+  YANDEX_REWARDED_AD_UNIT_ID,
+} from '@env';
 import remoteConfig from '@react-native-firebase/remote-config';
 
 type RemoteKey =
@@ -26,15 +36,15 @@ export type RuntimeConfigSnapshot = {
 
 function buildEmbedded(): RuntimeConfigSnapshot {
   return {
-    websiteUrl: Env.WEBSITE_URL?.trim() ?? '',
-    appStoreUrl: Env.APP_STORE_URL?.trim() ?? '',
-    googlePlayUrl: Env.GOOGLE_PLAY_URL?.trim() ?? '',
-    webApiUrl: Env.WEB_API_URL?.trim() ?? '',
-    webApiSecret: Env.WEB_API_SECRET?.trim() ?? '',
-    mobileUserAgent: Env.MOBILE_USER_AGENT?.trim() ?? '',
-    yandexRewardedAdUnitId: Env.YANDEX_REWARDED_AD_UNIT_ID?.trim() ?? '',
-    yandexBannerAdUnitId: Env.YANDEX_BANNER_AD_UNIT_ID?.trim() ?? '',
-    adsSecretGesture: Env.ADS_SECRET_GESTURE?.trim() ?? '',
+    websiteUrl: WEBSITE_URL?.trim() ?? '',
+    appStoreUrl: APP_STORE_URL?.trim() ?? '',
+    googlePlayUrl: GOOGLE_PLAY_URL?.trim() ?? '',
+    webApiUrl: WEB_API_URL?.trim() ?? '',
+    webApiSecret: WEB_API_SECRET?.trim() ?? '',
+    mobileUserAgent: MOBILE_USER_AGENT?.trim() ?? '',
+    yandexRewardedAdUnitId: YANDEX_REWARDED_AD_UNIT_ID?.trim() ?? '',
+    yandexBannerAdUnitId: YANDEX_BANNER_AD_UNIT_ID?.trim() ?? '',
+    adsSecretGesture: ADS_SECRET_GESTURE?.trim() ?? '',
   };
 }
 
