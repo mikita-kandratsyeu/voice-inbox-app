@@ -2,12 +2,13 @@ import { type RouteProp, useNavigation, useRoute } from '@react-navigation/nativ
 import { Check } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import { InboxBannerAd } from '@/features/inbox-banner';
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
 import { formatRelativeTime, useIsTablet } from '@/shared/lib';
@@ -156,6 +157,8 @@ export const ImportRecordsScreen = () => {
   }, [addRecord, importable, navigation, selectedCount, selectedIds, t]);
 
   const contentMaxWidth = isTablet ? 720 : undefined;
+  const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -378,6 +381,7 @@ export const ImportRecordsScreen = () => {
               </Text>
             </View>
           )}
+          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
         </ScrollView>
       </View>
     </View>

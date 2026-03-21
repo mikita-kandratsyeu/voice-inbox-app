@@ -8,6 +8,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
+import { InboxBannerAd } from '@/features/inbox-banner';
 import { getColors, useAppTheme } from '@/shared/config';
 import { useIsTablet } from '@/shared/lib';
 import { EmptyState, ScreenHeader, SectionHeader } from '@/shared/ui';
@@ -43,7 +44,7 @@ export const AllTasksScreen = () => {
   );
 
   const contentMaxWidth = isTablet ? 720 : undefined;
-  const bannerPad = contentMaxWidth ?? windowWidth;
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const filterPadH = isTablet ? 24 : 16;
   const filterPadV = isTablet ? 14 : 10;
 
@@ -151,6 +152,12 @@ export const AllTasksScreen = () => {
 
   const empty = sectionList.length === 0 || sectionList.every((s) => s.data.length === 0);
 
+  const listFooter = (
+    <View style={{ paddingBottom: insets.bottom }}>
+      <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
+    </View>
+  );
+
   return (
     <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
       <ScreenHeader title={t('allTasks.title')} onBack={() => navigation.goBack()} />
@@ -197,13 +204,16 @@ export const AllTasksScreen = () => {
 
       {empty ? (
         <View
-          className="flex-1 justify-center px-6"
-          style={{ maxWidth: bannerPad, alignSelf: 'center', width: '100%' }}
+          className="flex-1"
+          style={{ maxWidth: bannerMaxWidth, alignSelf: 'center', width: '100%' }}
         >
-          <EmptyState
-            title={openOnly ? t('allTasks.emptyFiltered') : t('allTasks.emptyTitle')}
-            description={t('allTasks.emptyDescription')}
-          />
+          <View className="flex-1 justify-center px-6">
+            <EmptyState
+              title={openOnly ? t('allTasks.emptyFiltered') : t('allTasks.emptyTitle')}
+              description={t('allTasks.emptyDescription')}
+            />
+          </View>
+          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
         </View>
       ) : (
         <SectionList<TaskWithRecord, Section>
@@ -211,8 +221,9 @@ export const AllTasksScreen = () => {
           keyExtractor={keyExtractor}
           renderItem={renderItem}
           renderSectionHeader={renderSectionHeader}
+          ListFooterComponent={listFooter}
           contentContainerStyle={{
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: 24,
             paddingTop: 8,
           }}
           stickySectionHeadersEnabled={false}

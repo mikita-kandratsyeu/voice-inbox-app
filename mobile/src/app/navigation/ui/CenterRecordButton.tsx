@@ -36,7 +36,7 @@ export const CenterRecordButton = ({
   useEffect(() => {
     breath.value = withRepeat(
       withTiming(1, {
-        duration: 2400,
+        duration: 2100,
         easing: Easing.inOut(Easing.ease),
       }),
       -1,
@@ -53,9 +53,11 @@ export const CenterRecordButton = ({
   };
 
   const animatedStyle = useAnimatedStyle(() => {
-    const breathScale = 1 + 0.035 * breath.value;
+    const breathScale = 1 + 0.055 * breath.value;
     return {
       transform: [{ scale: scale.value * breathScale }],
+      shadowOpacity: 0.26 + 0.2 * breath.value,
+      shadowRadius: 6 + 5 * breath.value,
     };
   });
 

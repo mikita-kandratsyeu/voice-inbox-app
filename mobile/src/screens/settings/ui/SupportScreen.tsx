@@ -2,10 +2,11 @@ import { useNavigation } from '@react-navigation/native';
 import { Check } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Text, useWindowDimensions, View } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { InboxBannerAd } from '@/features/inbox-banner';
 import { SupportForm, useSupportForm } from '@/features/tech-support';
 import { getColors, useAppTheme } from '@/shared/config';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
@@ -19,6 +20,8 @@ export const SupportScreen = () => {
   const color = getColors(useAppTheme());
   const isTablet = useIsTablet();
   const contentMaxWidth = isTablet ? 720 : undefined;
+  const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const apiConfigured = Boolean(getWebApiUrl().trim());
   const supportForm = useSupportForm();
   const canSubmit = supportForm.message.trim().length >= supportForm.messageMin;
@@ -71,6 +74,7 @@ export const SupportScreen = () => {
           ) : (
             <SupportForm color={color} {...supportForm} />
           )}
+          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </KeyboardAwareScrollView>
       </View>
     </View>

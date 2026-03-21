@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BookOpen, Globe, Mail, Tag } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,6 +15,7 @@ import {
   useEuStorefront,
 } from '@/features/app-storefront';
 import { openInAppBrowser } from '@/features/in-app-browser';
+import { InboxBannerAd } from '@/features/inbox-banner';
 import { useOnboardingStore } from '@/features/onboarding';
 import { ProLicenseKeyModal, useProEntitlement } from '@/features/pro-license';
 import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
@@ -33,6 +34,8 @@ export const AboutAppScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const setForceShowOnboarding = useOnboardingStore((s) => s.setForceShow);
   const contentMaxWidth = isTablet ? 720 : undefined;
+  const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const [proModalVisible, setProModalVisible] = useState(false);
   const { refresh: refreshProEntitlement } = useProEntitlement();
   const { isEU } = useEuStorefront();
@@ -209,6 +212,7 @@ export const AboutAppScreen = () => {
               {distributionFooterText}
             </Text>
           )}
+          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
     </View>

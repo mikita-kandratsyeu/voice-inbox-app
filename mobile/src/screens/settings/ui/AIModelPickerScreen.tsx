@@ -2,11 +2,12 @@ import { useNavigation } from '@react-navigation/native';
 import { Check } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AIModelId } from '@/entities/settings';
 import { AI_MODELS, useSettingsStore } from '@/entities/settings';
+import { InboxBannerAd } from '@/features/inbox-banner';
 import { getColors, useAppTheme } from '@/shared/config';
 import { useIsTablet } from '@/shared/lib';
 import { ScreenHeader } from '@/shared/ui';
@@ -30,6 +31,8 @@ export const AIModelPickerScreen = () => {
   const isTablet = useIsTablet();
   const navigation = useNavigation();
   const contentMaxWidth = isTablet ? 720 : undefined;
+  const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const setAIModel = useSettingsStore((s) => s.setAIModel);
@@ -146,6 +149,7 @@ export const AIModelPickerScreen = () => {
               );
             })}
           </View>
+          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
     </View>

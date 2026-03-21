@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, Text, View } from 'react-native';
+import { Alert, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { WhisperModelId } from '@/entities/settings';
@@ -11,6 +11,7 @@ import {
   useWhisperModelCompatibility,
   WHISPER_MODELS,
 } from '@/entities/settings';
+import { InboxBannerAd } from '@/features/inbox-banner';
 import { getModelFileSizeFormatted, useModelManager } from '@/features/model-manager';
 import { getColors, useAppTheme } from '@/shared/config';
 import { useIsTablet } from '@/shared/lib';
@@ -27,6 +28,8 @@ export const WhisperModelPickerScreen = () => {
   const isTablet = useIsTablet();
   const navigation = useNavigation();
   const contentMaxWidth = isTablet ? 720 : undefined;
+  const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
@@ -145,6 +148,7 @@ export const WhisperModelPickerScreen = () => {
               />
             ))}
           </View>
+          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
     </View>

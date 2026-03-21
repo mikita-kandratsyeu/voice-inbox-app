@@ -2,12 +2,13 @@ import { useNavigation } from '@react-navigation/native';
 import { Bot, BrainCircuit, Clock, FileText, Mic, Mic2, Trash2, Type } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Alert, RefreshControl, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
 import type { WhisperModelId, WhisperModelStatus } from '@/entities/settings';
 import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import { InboxBannerAd } from '@/features/inbox-banner';
 import { getModelFileSizeBytes } from '@/features/model-manager';
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
@@ -183,6 +184,8 @@ export const StorageDetailsScreen = () => {
   const isTablet = useIsTablet();
   const navigation = useNavigation();
   const contentMaxWidth = isTablet ? 720 : undefined;
+  const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const records = useRecordStore((s) => s.records);
   const deleteRecord = useRecordStore((s) => s.deleteRecord);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
@@ -430,6 +433,7 @@ export const StorageDetailsScreen = () => {
               isLast
             />
           </SettingsSection>
+          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
     </View>
