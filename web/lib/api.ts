@@ -4,6 +4,9 @@ import { NextResponse } from 'next/server';
 import {
   ALLOWED_AI_MODELS,
   HEADER_DEVICE_ID,
+  PRO_LICENSE_REDEEM_KEY_PREFIX,
+  PRO_LICENSE_REDEEM_MAX_ATTEMPTS,
+  PRO_LICENSE_REDEEM_WINDOW_SECONDS,
   RATE_LIMIT_DEVICE_KEY_PREFIX,
   RATE_LIMIT_DEVICE_MAX_REQUESTS,
   RATE_LIMIT_DEVICE_WINDOW_SECONDS,
@@ -59,6 +62,30 @@ export async function checkDeviceRateLimit(deviceId: string): Promise<NextRespon
       {
         status: HttpStatus.TOO_MANY_REQUESTS,
         headers: { 'Retry-After': String(RATE_LIMIT_DEVICE_WINDOW_SECONDS) },
+      },
+    );
+  }
+  return null;
+}
+
+export async function checkProLicenseRedeemRateLimit(
+  deviceId: string,
+): Promise<NextResponse | null> {
+  const window = Math.floor(Date.now() / 1000 / PRO_LICENSE_REDEEM_WINDOW_SECONDS);
+  const key = `${PRO_LICENSE_REDEEM_KEY_PREFIX}${deviceId}:${window}`;
+  const count = await redis.incr(key);
+  if (count === 1) {
+    await redis.expire(key, PRO_LICENSE_REDEEM_WINDOW_SECONDS);
+  }
+  if (count > PRO_LICENSE_REDEEM_MAX_ATTEMPTS) {
+    return NextResponse.json(
+      {
+        error: 'Too many activation attempts. Try again later.',
+        code: 'rate_limit',
+      },
+      {
+        status: HttpStatus.TOO_MANY_REQUESTS,
+        headers: { 'Retry-After': String(PRO_LICENSE_REDEEM_WINDOW_SECONDS) },
       },
     );
   }

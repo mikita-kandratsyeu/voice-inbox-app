@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { Alert } from 'react-native';
 
-import { isAdsSecretGestureEnabled, toggleAdsForceDisabled } from '../lib/adsSecretGesture';
+import { isAdsSecretGestureEnabled } from '../lib/adsSecretGesture';
 
 const TAP_TARGET = 7;
 const TAP_WINDOW_MS = 2500;
@@ -11,8 +10,15 @@ type TapState = {
   resetTimer: ReturnType<typeof setTimeout> | null;
 };
 
-export function useAdsSecretIconTap(): { onSecretIconPress: () => void } {
+type Options = {
+  onOpenProModal?: () => void;
+};
+
+export function useAdsSecretIconTap(options?: Options): { onSecretIconPress: () => void } {
+  const onOpenProModal = options?.onOpenProModal;
   const tapRef = useRef<TapState>({ count: 0, resetTimer: null });
+  const openRef = useRef(onOpenProModal);
+  openRef.current = onOpenProModal;
 
   useEffect(() => {
     const tapState = tapRef.current;
@@ -38,14 +44,7 @@ export function useAdsSecretIconTap(): { onSecretIconPress: () => void } {
     if (r.count >= TAP_TARGET) {
       r.count = 0;
       r.resetTimer = null;
-      const adsHidden = toggleAdsForceDisabled();
-      Alert.alert(
-        adsHidden ? 'Ads off' : 'Ads on',
-        adsHidden
-          ? 'Local ad hiding enabled (banners + bonus ad).'
-          : 'Ads follow normal rules again.',
-      );
-
+      openRef.current?.();
       return;
     }
 

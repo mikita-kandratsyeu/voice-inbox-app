@@ -84,5 +84,23 @@ model SupportIssue {
 
   @@index([deviceId])
   @@index([createdAt(sort: Desc)])
-  @@index([status])
+    @@index([status])
+  }
+  
+model ProLicenseKey {
+  id                  String    @id @default(cuid())
+  keyHash             String    @unique
+  durationMonths      Int
+  createdAt           DateTime  @default(now())
+  createdByAdminId    String
+  consumedAt          DateTime?
+  consumedByDeviceId  String?
+
+  @@index([createdAt(sort: Desc)])
+}
+
+model DeviceProEntitlement {
+  deviceId  String   @id
+  expiresAt DateTime
+  updatedAt DateTime @updatedAt
 }

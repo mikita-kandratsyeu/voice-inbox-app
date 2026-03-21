@@ -75,6 +75,8 @@ type AppConfigApiResponse = {
     amount: number;
     cooldownSeconds: number;
     cooldownKeyPrefix: string;
+    freeWeeklyLimit: number;
+    proWeeklyLimit: number;
   };
   error?: string;
 };
@@ -83,6 +85,11 @@ const BONUS_KEYS = {
   amount: 'AI_BONUS_AMOUNT',
   cooldownSeconds: 'AI_BONUS_COOLDOWN_SECONDS',
   keyPrefix: 'AI_BONUS_COOLDOWN_KEY_PREFIX',
+} as const;
+
+const WEEKLY_KEYS = {
+  free: 'AI_WEEKLY_LIMIT_FREE',
+  pro: 'AI_WEEKLY_LIMIT_PRO',
 } as const;
 
 type BroadcastHistoryItem = {
@@ -97,6 +104,15 @@ type BroadcastHistoryItem = {
   errorSample: string | null;
   adminLogin: string;
   deviceId: string | null;
+};
+
+type ProLicenseRow = {
+  id: string;
+  durationMonths: number;
+  createdAt: string;
+  consumed: boolean;
+  consumedAt: string | null;
+  devicePrefix: string | null;
 };
 
 type AdminTab =
@@ -139,9 +155,18 @@ export function AdminDashboard() {
   const [bonusAmount, setBonusAmount] = useState('');
   const [bonusCooldownSec, setBonusCooldownSec] = useState('');
   const [bonusKeyPrefix, setBonusKeyPrefix] = useState('');
+  const [weeklyLimitFree, setWeeklyLimitFree] = useState('');
+  const [weeklyLimitPro, setWeeklyLimitPro] = useState('');
   const [appConfigSaving, setAppConfigSaving] = useState(false);
   const [appConfigMessage, setAppConfigMessage] = useState<string | null>(null);
   const [appConfigError, setAppConfigError] = useState<string | null>(null);
+
+  const [proLicenseMonths, setProLicenseMonths] = useState<string>('12');
+  const [proLicenseGenerating, setProLicenseGenerating] = useState(false);
+  const [proLicensePlainKey, setProLicensePlainKey] = useState<string | null>(null);
+  const [proLicenseList, setProLicenseList] = useState<ProLicenseRow[]>([]);
+  const [proLicenseListLoading, setProLicenseListLoading] = useState(false);
+  const [proLicenseError, setProLicenseError] = useState<string | null>(null);
 
   const [broadcastConfirm, setBroadcastConfirm] = useState(false);
   const [broadcastHistory, setBroadcastHistory] = useState<BroadcastHistoryItem[]>([]);
@@ -178,6 +203,8 @@ export function AdminDashboard() {
       setBonusAmount(v[BONUS_KEYS.amount] ?? '');
       setBonusCooldownSec(v[BONUS_KEYS.cooldownSeconds] ?? '');
       setBonusKeyPrefix(v[BONUS_KEYS.keyPrefix] ?? '');
+      setWeeklyLimitFree(v[WEEKLY_KEYS.free] ?? '');
+      setWeeklyLimitPro(v[WEEKLY_KEYS.pro] ?? '');
     } catch {
       setAppConfigError('Request failed');
     } finally {
@@ -199,6 +226,8 @@ export function AdminDashboard() {
           [BONUS_KEYS.amount]: bonusAmount.trim(),
           [BONUS_KEYS.cooldownSeconds]: bonusCooldownSec.trim(),
           [BONUS_KEYS.keyPrefix]: bonusKeyPrefix.trim(),
+          [WEEKLY_KEYS.free]: weeklyLimitFree.trim(),
+          [WEEKLY_KEYS.pro]: weeklyLimitPro.trim(),
         }),
       });
       const data = (await res.json()) as AppConfigApiResponse & { ok: boolean };
@@ -212,6 +241,8 @@ export function AdminDashboard() {
         setBonusAmount(v[BONUS_KEYS.amount] ?? '');
         setBonusCooldownSec(v[BONUS_KEYS.cooldownSeconds] ?? '');
         setBonusKeyPrefix(v[BONUS_KEYS.keyPrefix] ?? '');
+        setWeeklyLimitFree(v[WEEKLY_KEYS.free] ?? '');
+        setWeeklyLimitPro(v[WEEKLY_KEYS.pro] ?? '');
       }
     } catch {
       setAppConfigError('Request failed');
@@ -254,11 +285,63 @@ export function AdminDashboard() {
     return () => clearInterval(t);
   }, [fetchStatus]);
 
+  const fetchProLicenseList = useCallback(async () => {
+    setProLicenseListLoading(true);
+    setProLicenseError(null);
+    try {
+      const res = await fetch('/api/admin/pro-licenses', { credentials: 'include' });
+      const data = (await res.json()) as { ok?: boolean; items?: ProLicenseRow[]; error?: string };
+      if (!res.ok || !data.ok) {
+        setProLicenseError(data.error ?? 'Failed to load keys');
+        setProLicenseList([]);
+        return;
+      }
+      setProLicenseList(Array.isArray(data.items) ? data.items : []);
+    } catch {
+      setProLicenseError('Request failed');
+      setProLicenseList([]);
+    } finally {
+      setProLicenseListLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (adminTab === 'config') {
       void fetchAppConfig();
+      void fetchProLicenseList();
     }
-  }, [adminTab, fetchAppConfig]);
+  }, [adminTab, fetchAppConfig, fetchProLicenseList]);
+
+  const handleGenerateProLicense = async () => {
+    setProLicenseError(null);
+    setProLicensePlainKey(null);
+    setProLicenseGenerating(true);
+    try {
+      const months = parseInt(proLicenseMonths, 10);
+      const res = await fetch('/api/admin/pro-licenses', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ durationMonths: months }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        plainKey?: string;
+        error?: string;
+        hint?: string;
+      };
+      if (!res.ok || !data.ok || !data.plainKey) {
+        setProLicenseError(data.error ?? 'Generate failed');
+        return;
+      }
+      setProLicensePlainKey(data.plainKey);
+      void fetchProLicenseList();
+    } catch {
+      setProLicenseError('Request failed');
+    } finally {
+      setProLicenseGenerating(false);
+    }
+  };
 
   const fetchGithub = useCallback(async () => {
     setGithubLoading(true);
@@ -790,6 +873,47 @@ export function AdminDashboard() {
                         Redis key prefix for per-device cooldown.
                       </p>
                     </div>
+                    <div className="border-t border-zinc-200 pt-4 dark:border-zinc-600">
+                      <h3 className="mb-3 text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                        Weekly AI limits (rolling ISO week)
+                      </h3>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                            AI_WEEKLY_LIMIT_FREE
+                          </label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={500}
+                            required
+                            disabled={!appConfigEditable}
+                            value={weeklyLimitFree}
+                            onChange={(e) => setWeeklyLimitFree(e.target.value)}
+                            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 disabled:opacity-60"
+                          />
+                          <p className="mt-1 text-xs text-zinc-500">Free tier (non-Pro devices).</p>
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                            AI_WEEKLY_LIMIT_PRO
+                          </label>
+                          <input
+                            type="number"
+                            min={1}
+                            max={500}
+                            required
+                            disabled={!appConfigEditable}
+                            value={weeklyLimitPro}
+                            onChange={(e) => setWeeklyLimitPro(e.target.value)}
+                            className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100 disabled:opacity-60"
+                          />
+                          <p className="mt-1 text-xs text-zinc-500">
+                            Pro tier; must be ≥ free (validated on save).
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                     <div className="flex flex-wrap items-center gap-3">
                       <button
                         type="submit"
@@ -810,6 +934,101 @@ export function AdminDashboard() {
                       )}
                     </div>
                   </form>
+                )}
+              </section>
+
+              <section className="mb-8 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-800">
+                <h2 className="mb-1 text-lg font-medium">Pro license keys</h2>
+                <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
+                  One-time keys; plaintext is shown only once. Each key activates on a single
+                  device.
+                </p>
+                <div className="mb-4 flex flex-wrap items-end gap-3">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                      Duration (months)
+                    </label>
+                    <select
+                      value={proLicenseMonths}
+                      onChange={(e) => setProLicenseMonths(e.target.value)}
+                      className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-zinc-900 dark:border-zinc-600 dark:bg-zinc-700 dark:text-zinc-100"
+                    >
+                      <option value="1">1</option>
+                      <option value="3">3</option>
+                      <option value="6">6</option>
+                      <option value="12">12</option>
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={proLicenseGenerating}
+                    onClick={() => void handleGenerateProLicense()}
+                    className="rounded-lg bg-zinc-900 px-4 py-2 font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                  >
+                    {proLicenseGenerating ? 'Generating…' : 'Generate key'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void fetchProLicenseList()}
+                    className="rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-600 shadow-sm hover:bg-zinc-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
+                  >
+                    Refresh list
+                  </button>
+                </div>
+                {proLicensePlainKey && (
+                  <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 dark:border-amber-900 dark:bg-amber-950/40">
+                    <p className="text-sm font-medium text-amber-950 dark:text-amber-100">
+                      Copy this key now — it will not be shown again.
+                    </p>
+                    <code className="mt-1 block break-all text-sm text-amber-900 dark:text-amber-200">
+                      {proLicensePlainKey}
+                    </code>
+                  </div>
+                )}
+                {proLicenseError && (
+                  <p className="mb-4 text-sm text-red-600 dark:text-red-400">{proLicenseError}</p>
+                )}
+                {proLicenseListLoading ? (
+                  <p className="text-sm text-zinc-500">Loading keys…</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-left text-sm">
+                      <thead>
+                        <tr className="border-b border-zinc-200 dark:border-zinc-600">
+                          <th className="py-2 pr-4 font-medium">Created</th>
+                          <th className="py-2 pr-4 font-medium">Months</th>
+                          <th className="py-2 pr-4 font-medium">Status</th>
+                          <th className="py-2 font-medium">Device</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {proLicenseList.map((row) => (
+                          <tr
+                            key={row.id}
+                            className="border-b border-zinc-100 dark:border-zinc-700/80"
+                          >
+                            <td className="py-2 pr-4 text-zinc-600 dark:text-zinc-400">
+                              {formatDate(new Date(row.createdAt).getTime())}
+                            </td>
+                            <td className="py-2 pr-4">{row.durationMonths}</td>
+                            <td className="py-2 pr-4">
+                              {row.consumed ? (
+                                <span className="text-green-700 dark:text-green-400">Redeemed</span>
+                              ) : (
+                                <span className="text-zinc-500">Unused</span>
+                              )}
+                            </td>
+                            <td className="py-2 font-mono text-xs text-zinc-600 dark:text-zinc-400">
+                              {row.devicePrefix ?? '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    {proLicenseList.length === 0 && (
+                      <p className="mt-2 text-sm text-zinc-500">No keys yet.</p>
+                    )}
+                  </div>
                 )}
               </section>
             </>

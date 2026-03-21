@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last updated: March 2026**
+**Last updated: April 2026**
 
 Voice Inbox AI ("we", "our", or "the app") is an offline voice notes application. This Privacy Policy explains how we handle your data when you use the mobile app, the optional web API for AI processing, and optional in-app support requests.
 
@@ -26,6 +26,10 @@ If you enable push notifications, we store your push token (FCM) and app languag
 
 **In-app support:** If you use the “Contact support” flow, you may send us a description of the issue and, optionally, your email (so we can reply), a short subject, and any extra text you choose to paste (for example, an error message). The app also attaches a **technical diagnostics** package (such as app version, OS version, device model, memory/disk hints, network type, locale, timezone, an app-specific device identifier already used for API access — see above, and whether Firebase Crashlytics collection is enabled and whether the previous app session ended in a crash). These submissions are transmitted over HTTPS and stored in our database so we can review and respond to your request. We use this information only for customer support, troubleshooting, and protecting the service (for example, detecting abuse). We retain support records as long as needed to handle your inquiry and for our legitimate support and security purposes, unless applicable law requires otherwise.
 
+**Voice Inbox Pro (license keys):** If you activate **Voice Inbox Pro** using a license key, the app sends the key to our API over HTTPS. We **do not** store the key in readable form on our servers; we store a **cryptographic hash** of the key for validation, the **activation time**, and associate the entitlement with your **app device identifier** (the same identifier used for API access and rate limiting — see above). We store the **expiry time** of your Pro access so we can enforce limits and support. Pro status may also be **cached locally** on your device (for example, to show your expiry date offline). **Each license key can only be activated on one device**; the same key cannot be used to activate Pro on a second device.
+
+**Subscriptions (App Store / Google Play):** If we offer in-app subscriptions, **payment processing** and core subscription management are handled by **Apple** and/or **Google** under their terms. We may use a **third-party subscription status service** (for example, to verify purchases, renewals, and cancellations) so we can enable or extend Pro features on your device. That service processes data under its own privacy policy; we use it only to deliver entitlements you purchased. We will update this Privacy Policy when subscriptions go live.
+
 ## 3. Third-Party AI Providers
 
 When you use AI features, your transcript is sent to third-party providers via [OpenRouter](https://openrouter.ai). All requests are routed exclusively through OpenRouter — we do not contact providers directly.
@@ -47,7 +51,7 @@ Voice Inbox AI does not require an account or login. There is no user registrati
 
 **On your device:** recordings, transcripts, and AI-generated content are stored until you delete them or uninstall the app.
 
-**On our servers:** AI results are stored for up to 1 hour, then automatically deleted. Per-device rate limit counters are stored for up to 8 days, then reset. Push tokens are stored for up to 30 days and refreshed on every app launch with notifications enabled. **Support requests** (including optional contact details and diagnostics you send through the support form) are stored in our database as described in section 2.
+**On our servers:** AI results are stored for up to 1 hour, then automatically deleted. Per-device rate limit counters are stored for up to 8 days, then reset. Push tokens are stored for up to 30 days and refreshed on every app launch with notifications enabled. **Support requests** (including optional contact details and diagnostics you send through the support form) are stored in our database as described in section 2. **Pro entitlements** (device identifier, expiry, and license-key metadata such as hashes and activation records) are stored as long as needed to provide the feature and prevent abuse.
 
 ## 6. Your Rights
 

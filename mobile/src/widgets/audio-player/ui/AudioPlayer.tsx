@@ -8,6 +8,8 @@ import type { Colors } from '@/shared/config';
 import { formatTime, hapticSelection } from '@/shared/lib';
 
 const SKIP_SECONDS = 5;
+const SKIP_HOLD_START_MS = 400;
+const SKIP_REPEAT_MS = 220;
 const PLAYBACK_SPEEDS = [1, 1.25, 1.5, 2] as const;
 
 type AudioPlayerProps = {
@@ -39,6 +41,8 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
   const elapsedRef = useRef(0);
   const lastDisplayedSecsRef = useRef(0);
   const isPlayerLoadedRef = useRef(false);
+  const skipHoldTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const skipHoldIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const totalMs = totalSeconds * 1000;
   const playbackSpeed = PLAYBACK_SPEEDS[speedIndex];
 
@@ -182,33 +186,72 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
     await stopAndReset();
   };
 
-  const handleSkipBack = async () => {
-    if (!hasAudio) return;
-    hapticSelection();
-    const seekMs = Math.max(0, elapsedRef.current * 1000 - SKIP_SECONDS * 1000);
-    const secs = Math.floor(seekMs / 1000);
-    elapsedRef.current = secs;
-    lastDisplayedSecsRef.current = secs;
-    setElapsed(secs);
-    progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
-    if (isPlayerLoadedRef.current) {
-      await seekTo(seekMs);
+  const clearSkipHoldTimers = useCallback(() => {
+    if (skipHoldTimeoutRef.current) {
+      clearTimeout(skipHoldTimeoutRef.current);
+      skipHoldTimeoutRef.current = null;
     }
-  };
+    if (skipHoldIntervalRef.current) {
+      clearInterval(skipHoldIntervalRef.current);
+      skipHoldIntervalRef.current = null;
+    }
+  }, []);
 
-  const handleSkipForward = async () => {
-    if (!hasAudio) return;
-    hapticSelection();
-    const seekMs = Math.min(totalMs, elapsedRef.current * 1000 + SKIP_SECONDS * 1000);
-    const secs = Math.floor(seekMs / 1000);
-    elapsedRef.current = secs;
-    lastDisplayedSecsRef.current = secs;
-    setElapsed(secs);
-    progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
-    if (isPlayerLoadedRef.current) {
-      await seekTo(seekMs);
-    }
-  };
+  const performSkipBack = useCallback(
+    async (withHaptic: boolean) => {
+      if (!audioPath) return;
+      if (withHaptic) hapticSelection();
+      const seekMs = Math.max(0, elapsedRef.current * 1000 - SKIP_SECONDS * 1000);
+      const secs = Math.floor(seekMs / 1000);
+      elapsedRef.current = secs;
+      lastDisplayedSecsRef.current = secs;
+      setElapsed(secs);
+      progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
+      if (isPlayerLoadedRef.current) {
+        await seekTo(seekMs);
+      }
+    },
+    [audioPath, seekTo, totalSeconds, progressValue],
+  );
+
+  const performSkipForward = useCallback(
+    async (withHaptic: boolean) => {
+      if (!audioPath) return;
+      if (withHaptic) hapticSelection();
+      const seekMs = Math.min(totalMs, elapsedRef.current * 1000 + SKIP_SECONDS * 1000);
+      const secs = Math.floor(seekMs / 1000);
+      elapsedRef.current = secs;
+      lastDisplayedSecsRef.current = secs;
+      setElapsed(secs);
+      progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
+      if (isPlayerLoadedRef.current) {
+        await seekTo(seekMs);
+      }
+    },
+    [audioPath, seekTo, totalMs, totalSeconds, progressValue],
+  );
+
+  const beginSkipBackHold = useCallback(() => {
+    if (!audioPath) return;
+    clearSkipHoldTimers();
+    void performSkipBack(true);
+    skipHoldTimeoutRef.current = setTimeout(() => {
+      skipHoldIntervalRef.current = setInterval(() => {
+        void performSkipBack(false);
+      }, SKIP_REPEAT_MS);
+    }, SKIP_HOLD_START_MS);
+  }, [audioPath, clearSkipHoldTimers, performSkipBack]);
+
+  const beginSkipForwardHold = useCallback(() => {
+    if (!audioPath) return;
+    clearSkipHoldTimers();
+    void performSkipForward(true);
+    skipHoldTimeoutRef.current = setTimeout(() => {
+      skipHoldIntervalRef.current = setInterval(() => {
+        void performSkipForward(false);
+      }, SKIP_REPEAT_MS);
+    }, SKIP_HOLD_START_MS);
+  }, [audioPath, clearSkipHoldTimers, performSkipForward]);
 
   const handleCycleSpeed = () => {
     if (!hasAudio) return;
@@ -232,11 +275,12 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
 
   useEffect(() => {
     return () => {
+      clearSkipHoldTimers();
       player.removePlayBackListener();
       player.removePlaybackEndListener();
       player.stopPlayer().catch(() => {});
     };
-  }, []);
+  }, [clearSkipHoldTimers]);
 
   const hasAudio = Boolean(audioPath);
 
@@ -287,7 +331,8 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
       <View className="flex-row items-center justify-between" style={{ minHeight: 48 }}>
         <View className="flex-row items-center gap-2.5">
           <TouchableOpacity
-            onPress={handleSkipBack}
+            onPressIn={beginSkipBackHold}
+            onPressOut={clearSkipHoldTimers}
             disabled={!hasAudio}
             activeOpacity={0.6}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -321,7 +366,8 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
             )}
           </TouchableOpacity>
           <TouchableOpacity
-            onPress={handleSkipForward}
+            onPressIn={beginSkipForwardHold}
+            onPressOut={clearSkipHoldTimers}
             disabled={!hasAudio}
             activeOpacity={0.6}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}

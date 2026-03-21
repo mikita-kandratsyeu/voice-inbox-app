@@ -45,6 +45,7 @@ import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { InboxBannerAd } from '@/features/inbox-banner';
+import { useProEntitlement } from '@/features/pro-license';
 import { exportData, importData } from '@/features/sync-data';
 import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
 import { IS_IOS, useIsTablet } from '@/shared/lib';
@@ -117,6 +118,7 @@ export const SettingsScreen = () => {
 
   const { adsAllowed } = useAdsAllowed();
   const { claim, loading: claimLoading, error: claimError } = useClaimAiBonus(onBonusSuccess);
+  const { refresh: refreshProEntitlement } = useProEntitlement();
 
   useEffect(() => {
     let cancelled = false;
@@ -149,9 +151,9 @@ export const SettingsScreen = () => {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await fetchAiUsage();
+    await Promise.all([fetchAiUsage(), refreshProEntitlement({ force: true })]);
     setRefreshing(false);
-  }, [fetchAiUsage]);
+  }, [fetchAiUsage, refreshProEntitlement]);
 
   const aiModelName = AI_MODELS.find((m) => m.id === selectedAIModel)?.name ?? selectedAIModel;
   const whisperStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';

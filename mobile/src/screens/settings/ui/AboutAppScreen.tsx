@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BookOpen, Globe, Mail, Tag } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
@@ -9,9 +9,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import { getStoreListingUrl, openStoreListing } from '@/features/app-review';
-import { getStorefrontCountryCode, useAdsSecretIconTap } from '@/features/app-storefront';
+import {
+  getStorefrontCountryCode,
+  useAdsSecretIconTap,
+  useEuStorefront,
+} from '@/features/app-storefront';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { useOnboardingStore } from '@/features/onboarding';
+import { ProLicenseKeyModal, useProEntitlement } from '@/features/pro-license';
 import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
 import { IS_ANDROID, IS_IOS, useIsTablet } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
@@ -28,8 +33,21 @@ export const AboutAppScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const setForceShowOnboarding = useOnboardingStore((s) => s.setForceShow);
   const contentMaxWidth = isTablet ? 720 : undefined;
-  const { onSecretIconPress } = useAdsSecretIconTap();
+  const [proModalVisible, setProModalVisible] = useState(false);
+  const { refresh: refreshProEntitlement } = useProEntitlement();
+  const { isEU } = useEuStorefront();
   const [storefrontRegion, setStorefrontRegion] = useState<string | null>(null);
+
+  const openProModal = useCallback(() => setProModalVisible(true), []);
+  const { onSecretIconPress } = useAdsSecretIconTap(
+    isEU === false ? { onOpenProModal: openProModal } : undefined,
+  );
+
+  useEffect(() => {
+    if (isEU === true) {
+      setProModalVisible(false);
+    }
+  }, [isEU]);
 
   useEffect(() => {
     void getStorefrontCountryCode().then(setStorefrontRegion);
@@ -55,6 +73,11 @@ export const AboutAppScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
+      <ProLicenseKeyModal
+        visible={proModalVisible}
+        onClose={() => setProModalVisible(false)}
+        onActivated={() => void refreshProEntitlement({ force: true })}
+      />
       <ScreenHeader title={t('about.title')} onBack={() => navigation.goBack()} />
       <View
         style={{

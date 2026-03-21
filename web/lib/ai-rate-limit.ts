@@ -1,4 +1,6 @@
-import { AI_WEEKLY_KEY_PREFIX, FREE_WEEKLY_LIMIT, WEEK_TTL_SECONDS } from '@/config/constants';
+import { AI_WEEKLY_KEY_PREFIX, WEEK_TTL_SECONDS } from '@/config/constants';
+import { getAiWeeklyLimits } from '@/lib/app-config';
+import { isProDevice } from '@/lib/pro-entitlement';
 import { redis } from '@/lib/redis';
 
 export type AiUsage = {
@@ -35,10 +37,16 @@ const formatResetAtUtc = (date: Date): string => {
   return `${y}-${m}-${d} ${h}:${min}:${s} UTC`;
 };
 
-const buildUsage = (used: number, resetAt: Date): AiUsage => ({
-  used: Math.min(used, FREE_WEEKLY_LIMIT),
-  limit: FREE_WEEKLY_LIMIT,
-  remaining: Math.max(0, FREE_WEEKLY_LIMIT - used),
+export async function getWeeklyLimitForDevice(deviceId: string): Promise<number> {
+  const { freeWeeklyLimit, proWeeklyLimit } = await getAiWeeklyLimits();
+  const pro = await isProDevice(deviceId);
+  return pro ? proWeeklyLimit : freeWeeklyLimit;
+}
+
+const buildUsage = (used: number, resetAt: Date, limit: number): AiUsage => ({
+  used: Math.min(used, limit),
+  limit,
+  remaining: Math.max(0, limit - used),
   resetAt: resetAt.toISOString(),
   resetAtUtc: formatResetAtUtc(resetAt),
 });
@@ -59,11 +67,13 @@ export const getUsage = async (deviceId: string): Promise<AiUsage> => {
   const raw = await redis.get(key);
   const used = raw ? parseInt(raw, 10) : 0;
   const resetAt = getResetAt();
+  const limit = await getWeeklyLimitForDevice(deviceId);
 
-  return buildUsage(used, resetAt);
+  return buildUsage(used, resetAt, limit);
 };
 
 export const checkAndIncrement = async (deviceId: string): Promise<CheckResult> => {
+  const limit = await getWeeklyLimitForDevice(deviceId);
   const key = getWeekKey(deviceId);
   const count = await redis.incr(key);
 
@@ -72,8 +82,8 @@ export const checkAndIncrement = async (deviceId: string): Promise<CheckResult> 
   }
 
   const resetAt = getResetAt();
-  const usage = buildUsage(count, resetAt);
-  const allowed = count <= FREE_WEEKLY_LIMIT;
+  const usage = buildUsage(count, resetAt, limit);
+  const allowed = count <= limit;
 
   if (!allowed) {
     await redis.decr(key);

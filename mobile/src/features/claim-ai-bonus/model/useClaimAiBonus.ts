@@ -7,6 +7,7 @@ import {
   isAdsSecretGestureEnabled,
 } from '@/features/app-storefront/lib/adsSecretGesture';
 import { isEUUserByStorefront } from '@/features/app-storefront/lib/storefront';
+import { useProEntitlement } from '@/features/pro-license';
 import { getYandexRewardedAdUnitId } from '@/shared/config/runtimeConfig';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { claimAiBonus } from '@/shared/lib/ai-api';
@@ -126,6 +127,7 @@ function logRewardedAdDebug(phase: 'loadAd' | 'showAd', err: unknown): void {
 }
 
 export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
+  const { isProActive } = useProEntitlement();
   const [loading, setLoading] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(readPersistedCooldownUntil);
   const [error, setError] = useState<string | null>(null);
@@ -143,6 +145,10 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
     }
 
     if (isAdsSecretGestureEnabled() && getAdsForceDisabledSync()) {
+      return;
+    }
+
+    if (isProActive) {
       return;
     }
 
@@ -200,7 +206,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
       setError(normalizeAdError(err));
       setLoading(false);
     }
-  }, [loading, onSuccess]);
+  }, [loading, onSuccess, isProActive]);
 
   const clearError = useCallback(() => setError(null), []);
 

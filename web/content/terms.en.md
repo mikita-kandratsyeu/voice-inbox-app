@@ -1,6 +1,6 @@
 # Terms of Service
 
-**Last updated: March 2026**
+**Last updated: April 2026**
 
 These Terms of Service ("Terms") govern your use of the Voice Inbox AI mobile application and related web services. By using the app, you agree to these Terms.
 
@@ -18,42 +18,48 @@ You may not circumvent rate limits, reverse-engineer the app or API, or use the 
 
 You must not misuse the support channel (for example, by sending unlawful, harassing, or knowingly false content, spam, or attempts to gain unauthorized access to our systems).
 
-## 3. Intellectual Property
+## 3. Voice Inbox Pro, license keys, and subscriptions
+
+The app may offer a **free tier** of AI usage with weekly limits. **Voice Inbox Pro** is an optional upgrade that provides **higher limits** and **disables advertising** where the app shows ads. **License keys** may be issued in limited cases (for example, support, promotions, or special programs). You may not resell, share, or transfer a license key except where we expressly allow. **Each key can only be activated once on one device**; activation on that device is final for that key.
+
+If we introduce **in-app subscriptions** through the **Apple App Store** or **Google Play**, the platform is the **merchant of record** for the payment. Your purchase is governed by the platform’s terms and refund rules. We may use a **third-party subscription status service** to verify purchases and keep Pro features in sync. Nothing in these Terms overrides mandatory consumer rights in your country.
+
+## 4. Intellectual Property
 
 All content you create (voice recordings, transcripts, notes) belongs to you. You grant us a limited, non-transferable license to process that content solely to provide the app's features.
 
 The app itself, its code, design, trademarks, and logos belong to the developer. You are granted a limited, revocable, non-transferable license to use the app for personal, non-commercial purposes.
 
-## 4. Disclaimer of Warranties
+## 5. Disclaimer of Warranties
 
 Voice Inbox AI is provided "as is" without warranties of any kind. We do not guarantee the accuracy of transcriptions or AI-generated content. Use the app at your own risk.
 
-## 5. Limitation of Liability
+## 6. Limitation of Liability
 
 To the maximum extent permitted by law, we are not liable for any indirect, incidental, special, or consequential damages arising from your use of the app or our services, including data loss, accuracy of AI output, or service interruptions.
 
-## 6. Third-Party Services
+## 7. Third-Party Services
 
 The app relies on third-party services (OpenRouter, OpenAI, Google, and others used via OpenRouter). Your use of those services is governed by their own terms and policies. We are not responsible for the actions or content of third parties.
 
 *As of the “Last updated” date above*, where your app storefront region is outside the EEA, **Yandex Mobile Ads** may be used to display a banner and optional rewarded ads; for EEA storefronts these are not shown *at this time*. We may revise this with an updated policy (and any consent or controls required by law) if that changes.
 
-## 7. Age Restrictions
+## 8. Age Restrictions
 
 The app is not intended for persons under 13 years of age. By using the app, you confirm that you are at least 13 years old.
 
-## 8. Changes to Terms
+## 9. Changes to Terms
 
 We may update these Terms at any time. We will notify you of material changes via push notification or upon the next app launch. The last updated date is always shown at the top of this document.
 
-## 9. Termination
+## 10. Termination
 
 You may stop using the app at any time. We may suspend or discontinue the API or services with reasonable notice where possible.
 
-## 10. Governing Law
+## 11. Governing Law
 
 These Terms are governed by the laws of the jurisdiction where the developer is located. Any disputes shall be resolved in the competent courts of the developer's place of business.
 
-## 11. Contact
+## 12. Contact
 
 Questions about these Terms: **mkandratsyeu@gmail.com**

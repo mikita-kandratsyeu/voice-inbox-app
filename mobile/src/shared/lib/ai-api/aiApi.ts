@@ -202,6 +202,94 @@ export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
   }
 }
 
+export type ProLicenseStatus = {
+  active: boolean;
+  expiresAt: string | null;
+  weeklyLimitFree: number;
+  weeklyLimitPro: number;
+};
+
+export async function fetchProLicenseStatus(): Promise<ProLicenseStatus | null> {
+  try {
+    const response = await fetchWithAuth(`${getWebApiUrl()}/api/pro-license/status`, {
+      method: 'GET',
+    });
+    if (!response.ok) {
+      return null;
+    }
+    const raw = (await response.json()) as Record<string, unknown>;
+    const active = Boolean(raw.active);
+    const expiresAt =
+      typeof raw.expiresAt === 'string' && raw.expiresAt.trim() ? raw.expiresAt.trim() : null;
+    const weeklyLimitFree =
+      typeof raw.weeklyLimitFree === 'number' && raw.weeklyLimitFree > 0 ? raw.weeklyLimitFree : 20;
+    const weeklyLimitPro =
+      typeof raw.weeklyLimitPro === 'number' && raw.weeklyLimitPro > 0 ? raw.weeklyLimitPro : 75;
+    return { active, expiresAt, weeklyLimitFree, weeklyLimitPro };
+  } catch {
+    return null;
+  }
+}
+
+export type ProLicenseRedeemErrorCode =
+  | 'invalid_key'
+  | 'used_elsewhere'
+  | 'server_error'
+  | 'rate_limit'
+  | 'activation_failed'
+  | 'invalid_response'
+  | 'network';
+
+export type RedeemProLicenseResult =
+  | { ok: true; expiresAt: string }
+  | { ok: false; error: string; code?: ProLicenseRedeemErrorCode; status?: number };
+
+function parseRedeemErrorCode(raw: unknown): ProLicenseRedeemErrorCode | undefined {
+  if (
+    raw === 'invalid_key' ||
+    raw === 'used_elsewhere' ||
+    raw === 'server_error' ||
+    raw === 'rate_limit'
+  ) {
+    return raw;
+  }
+  return undefined;
+}
+
+export async function redeemProLicenseKey(key: string): Promise<RedeemProLicenseResult> {
+  try {
+    const response = await fetchWithAuth(`${getWebApiUrl()}/api/pro-license/redeem`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key }),
+    });
+    const raw = (await response.json()) as { error?: string; code?: unknown; expiresAt?: string };
+    if (!response.ok) {
+      const serverCode = parseRedeemErrorCode(raw.code);
+      const code: ProLicenseRedeemErrorCode =
+        serverCode ??
+        (response.status === 429 ? 'rate_limit' : undefined) ??
+        (response.status >= 500 ? 'server_error' : undefined) ??
+        'activation_failed';
+      return {
+        ok: false,
+        error: typeof raw.error === 'string' && raw.error.trim() ? raw.error : 'Activation failed',
+        code,
+        status: response.status,
+      };
+    }
+    const expiresAt =
+      typeof raw.expiresAt === 'string' && raw.expiresAt.trim() ? raw.expiresAt.trim() : '';
+    if (!expiresAt) {
+      return { ok: false, error: 'Invalid server response', code: 'invalid_response' };
+    }
+    return { ok: true, expiresAt };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Network error';
+    return { ok: false, error: message, code: 'network' };
+  }
+}
+
 export async function pollAiMessage(id: string, syncToken?: string): Promise<AiMessageResult> {
   const headers: Record<string, string> = {};
   if (syncToken) {

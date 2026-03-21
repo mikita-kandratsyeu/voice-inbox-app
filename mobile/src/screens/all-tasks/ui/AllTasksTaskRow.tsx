@@ -101,7 +101,7 @@ export const AllTasksTaskRow = React.memo(function AllTasksTaskRow({
 
   return (
     <View
-      className="mx-4 mb-2"
+      className="mx-4 mb-4"
       style={[
         cardShadowStyle,
         { borderRadius: CARD_RADIUS, backgroundColor: color.background.card },

@@ -22,6 +22,28 @@
     "error": "Ошибка",
     "biometrics": "Биометрия"
   },
+  "proLicense": {
+    "modalTitle": "Активация Pro",
+    "modalSubtitle": "Введите лицензионный ключ. Pro привязан только к этому устройству.",
+    "keyPlaceholder": "VI-XXXX-XXXX-XXXX",
+    "activate": "Активировать",
+    "activatingTitle": "Активация Pro",
+    "activatingSubtitle": "Подождите…",
+    "activeUntil": "Voice Inbox AI Pro · действует до {{date}}",
+    "successTitle": "Поздравляем!",
+    "successSubtitle": "Pro активирован: больше лимитов AI и без рекламы.",
+    "successUntil": "Действует до {{date}}",
+    "successButton": "Отлично",
+    "errors": {
+      "invalidKey": "Неверный лицензионный ключ",
+      "usedElsewhere": "Этот ключ уже активирован на другом устройстве",
+      "serverError": "Не удалось активировать лицензию. Попробуйте позже.",
+      "rateLimit": "Слишком много попыток активации. Попробуйте позже.",
+      "activationFailed": "Не удалось активировать",
+      "invalidResponse": "Некорректный ответ сервера",
+      "network": "Ошибка сети. Проверьте подключение."
+    }
+  },
   "appReview": {
     "title": "Нравится Voice Inbox AI?",
     "message": "Ваша оценка помогает другим узнать о приложении. Это займёт пару секунд.",

@@ -22,6 +22,28 @@
     "error": "Error",
     "biometrics": "Biometrics"
   },
+  "proLicense": {
+    "modalTitle": "Activate Pro",
+    "modalSubtitle": "Enter the license key you received. Your Pro subscription is tied to this device only.",
+    "keyPlaceholder": "VI-XXXX-XXXX-XXXX",
+    "activate": "Activate",
+    "activatingTitle": "Activating Pro",
+    "activatingSubtitle": "Please wait…",
+    "activeUntil": "Voice Inbox AI Pro · active until {{date}}",
+    "successTitle": "You're Pro!",
+    "successSubtitle": "Higher AI limits and no ads — enjoy.",
+    "successUntil": "Active until {{date}}",
+    "successButton": "Awesome",
+    "errors": {
+      "invalidKey": "Invalid license key",
+      "usedElsewhere": "This key is already activated on another device",
+      "serverError": "Could not activate license. Try again later.",
+      "rateLimit": "Too many activation attempts. Try again later.",
+      "activationFailed": "Activation failed",
+      "invalidResponse": "Invalid server response",
+      "network": "Network error. Check your connection."
+    }
+  },
   "appReview": {
     "title": "Enjoying Voice Inbox AI?",
     "message": "Your rating helps others discover the app. It only takes a moment.",

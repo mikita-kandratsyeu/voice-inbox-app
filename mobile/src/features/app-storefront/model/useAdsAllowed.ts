@@ -1,28 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useProEntitlement } from '@/features/pro-license';
 
 import { isAdsSecretGestureEnabled, useAdsForceDisabled } from '../lib/adsSecretGesture';
-import { isEUUserByStorefront } from '../lib/storefront';
+import { useEuStorefront } from './useEuStorefront';
 
 export function useAdsAllowed(): { adsAllowed: boolean; resolved: boolean } {
-  const [isEU, setIsEU] = useState<boolean | null>(null);
+  const { isEU } = useEuStorefront();
   const forceAdsOff = useAdsForceDisabled();
   const secretGesture = isAdsSecretGestureEnabled();
-
-  useEffect(() => {
-    let cancelled = false;
-    void isEUUserByStorefront().then((eu) => {
-      if (!cancelled) {
-        setIsEU(eu);
-      }
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { isProActive } = useProEntitlement();
 
   const storefrontAllows = isEU === false;
-  const adsAllowed = storefrontAllows && !(secretGesture && forceAdsOff);
+  const adsAllowed = storefrontAllows && !(secretGesture && forceAdsOff) && !isProActive;
 
   return {
     resolved: isEU !== null,
