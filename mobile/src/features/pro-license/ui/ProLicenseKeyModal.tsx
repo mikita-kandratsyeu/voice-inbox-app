@@ -23,10 +23,11 @@ import Animated, {
 
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
-import { hapticSuccess } from '@/shared/lib';
+import { hapticSuccess, useIsTablet } from '@/shared/lib';
 import { redeemProLicenseKey } from '@/shared/lib/ai-api/aiApi';
 
 import { setProExpiresAtMsSync } from '../lib/proEntitlementStorage';
+import { PRO_LICENSE_MODAL_MAX_WIDTH } from '../lib/proModalLayout';
 import { proLicenseMessageForRedeemError } from '../lib/redeemErrorMessage';
 
 type ProLicenseKeyModalProps = {
@@ -142,6 +143,7 @@ function ProActivationSuccessPanel({ color, expiresAtIso, onDismiss }: SuccessPa
 export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicenseKeyModalProps) {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
+  const isTablet = useIsTablet();
   const [keyText, setKeyText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -212,20 +214,23 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
         style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
       >
         {showActivatingOverlay ? (
-          <View className="flex-1 items-center justify-center px-6">
+          <View className={`flex-1 items-center justify-center ${isTablet ? 'px-12' : 'px-6'}`}>
             <View
-              className="w-full max-w-sm rounded-2xl px-6 py-8"
-              style={{ backgroundColor: color.background.card }}
+              className="w-full rounded-2xl px-6 py-8"
+              style={{
+                backgroundColor: color.background.card,
+                maxWidth: isTablet ? PRO_LICENSE_MODAL_MAX_WIDTH : undefined,
+              }}
             >
               <ActivityIndicator size="large" color={color.accent.primary} />
               <Text
-                className="mt-5 text-center text-[16px] font-semibold leading-6"
+                className={`mt-5 text-center font-semibold leading-6 ${isTablet ? 'text-[17px]' : 'text-[16px]'}`}
                 style={{ color: color.text.primary }}
               >
                 {t('proLicense.activatingTitle')}
               </Text>
               <Text
-                className="mt-2 text-center text-[14px] leading-5"
+                className={`mt-2 text-center leading-5 ${isTablet ? 'text-[15px]' : 'text-[14px]'}`}
                 style={{ color: color.text.secondary }}
               >
                 {t('proLicense.activatingSubtitle')}
@@ -233,10 +238,13 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
             </View>
           </View>
         ) : (
-          <View className="flex-1 justify-center px-5">
+          <View className={`flex-1 justify-center ${isTablet ? 'px-10' : 'px-5'}`}>
             <View
-              className="overflow-hidden rounded-2xl p-5"
+              className={`overflow-hidden rounded-2xl ${isTablet ? 'p-6' : 'p-5'}`}
               style={{
+                width: '100%',
+                maxWidth: isTablet ? PRO_LICENSE_MODAL_MAX_WIDTH : undefined,
+                alignSelf: 'center',
                 backgroundColor: color.background.primary,
                 borderWidth: 1,
                 borderColor: color.border.default,
@@ -250,10 +258,16 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
                 />
               ) : (
                 <>
-                  <Text className="text-lg font-semibold" style={{ color: color.text.primary }}>
+                  <Text
+                    className={`font-semibold ${isTablet ? 'text-xl' : 'text-lg'}`}
+                    style={{ color: color.text.primary }}
+                  >
                     {t('proLicense.modalTitle')}
                   </Text>
-                  <Text className="mt-2 text-sm leading-5" style={{ color: color.text.secondary }}>
+                  <Text
+                    className={`mt-2 leading-5 ${isTablet ? 'text-[15px]' : 'text-sm'}`}
+                    style={{ color: color.text.secondary }}
+                  >
                     {t('proLicense.modalSubtitle')}
                   </Text>
                   <TextInput
@@ -264,7 +278,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
                     editable={!busy}
                     placeholder={t('proLicense.keyPlaceholder')}
                     placeholderTextColor={color.text.muted}
-                    className="mt-4 rounded-xl border px-3 py-3 font-mono text-base"
+                    className={`mt-4 rounded-xl border px-3 font-mono ${isTablet ? 'py-3.5 text-lg' : 'py-3 text-base'}`}
                     style={{
                       borderColor: color.border.default,
                       color: color.text.primary,

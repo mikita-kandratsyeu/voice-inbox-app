@@ -1,0 +1,1 @@
+export const PRO_LICENSE_MODAL_MAX_WIDTH = 544;
