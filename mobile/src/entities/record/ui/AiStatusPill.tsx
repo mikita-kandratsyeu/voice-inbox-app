@@ -12,7 +12,6 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { getColors, useAppTheme } from '@/shared/config';
-import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 
 import type { RecordingStatus } from '../model/types';
 
@@ -69,7 +68,7 @@ export const AiStatusPill = ({
         accessibilityRole="button"
         hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
         className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
-        style={{ backgroundColor: color.status.processing.bg, minHeight: IOS_MIN_TOUCH_TARGET }}
+        style={{ backgroundColor: color.status.processing.bg }}
         onPress={onPress}
         activeOpacity={0.75}
       >
@@ -89,7 +88,7 @@ export const AiStatusPill = ({
         accessibilityRole="button"
         hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
         className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
-        style={{ backgroundColor: color.status.processing.bg, minHeight: IOS_MIN_TOUCH_TARGET }}
+        style={{ backgroundColor: color.status.processing.bg }}
         onPress={onPress}
         activeOpacity={0.75}
       >
@@ -109,7 +108,7 @@ export const AiStatusPill = ({
         accessibilityRole="button"
         hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
         className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
-        style={{ backgroundColor: color.status.error.bg, minHeight: IOS_MIN_TOUCH_TARGET }}
+        style={{ backgroundColor: color.status.error.bg }}
         onPress={onPress}
         activeOpacity={0.75}
       >
