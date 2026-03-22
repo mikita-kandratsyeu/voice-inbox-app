@@ -1,5 +1,4 @@
 import {
-  ADS_SECRET_GESTURE,
   APP_STORE_URL,
   GOOGLE_PLAY_URL,
   MOBILE_USER_AGENT,
@@ -19,8 +18,7 @@ type RemoteKey =
   | 'WEB_API_SECRET'
   | 'MOBILE_USER_AGENT'
   | 'YANDEX_REWARDED_AD_UNIT_ID'
-  | 'YANDEX_BANNER_AD_UNIT_ID'
-  | 'ADS_SECRET_GESTURE';
+  | 'YANDEX_BANNER_AD_UNIT_ID';
 
 export type RuntimeConfigSnapshot = {
   websiteUrl: string;
@@ -31,7 +29,6 @@ export type RuntimeConfigSnapshot = {
   mobileUserAgent: string;
   yandexRewardedAdUnitId: string;
   yandexBannerAdUnitId: string;
-  adsSecretGesture: string;
 };
 
 function buildEmbedded(): RuntimeConfigSnapshot {
@@ -44,7 +41,6 @@ function buildEmbedded(): RuntimeConfigSnapshot {
     mobileUserAgent: MOBILE_USER_AGENT?.trim() ?? '',
     yandexRewardedAdUnitId: YANDEX_REWARDED_AD_UNIT_ID?.trim() ?? '',
     yandexBannerAdUnitId: YANDEX_BANNER_AD_UNIT_ID?.trim() ?? '',
-    adsSecretGesture: ADS_SECRET_GESTURE?.trim() ?? '',
   };
 }
 
@@ -58,7 +54,6 @@ function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
     MOBILE_USER_AGENT: s.mobileUserAgent,
     YANDEX_REWARDED_AD_UNIT_ID: s.yandexRewardedAdUnitId,
     YANDEX_BANNER_AD_UNIT_ID: s.yandexBannerAdUnitId,
-    ADS_SECRET_GESTURE: s.adsSecretGesture,
   };
 }
 
@@ -92,7 +87,6 @@ function mergeRemote(
       'YANDEX_BANNER_AD_UNIT_ID',
       embedded.yandexBannerAdUnitId,
     ),
-    adsSecretGesture: readRemoteString(rc, 'ADS_SECRET_GESTURE', embedded.adsSecretGesture),
   };
 }
 
@@ -149,8 +143,4 @@ export function getYandexRewardedAdUnitId(): string {
 
 export function getYandexBannerAdUnitId(): string {
   return snapshot.yandexBannerAdUnitId;
-}
-
-export function getAdsSecretGestureRaw(): string {
-  return snapshot.adsSecretGesture;
 }

@@ -65,6 +65,7 @@ import {
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { AiUsageCard } from './AiUsageCard';
+import { SettingsInternalProSection } from './SettingsInternalProSection';
 
 export const SettingsScreen = () => {
   const { t } = useTranslation();
@@ -553,6 +554,7 @@ export const SettingsScreen = () => {
               />
             </SettingsSection>
           )}
+          <SettingsInternalProSection color={color} />
           <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>

@@ -1,23 +1,18 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BookOpen, Globe, Mail, Tag } from 'lucide-react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { Image, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import { getStoreListingUrl, openStoreListing } from '@/features/app-review';
-import {
-  getStorefrontCountryCode,
-  useAdsSecretIconTap,
-  useEuStorefront,
-} from '@/features/app-storefront';
+import { getStorefrontCountryCode } from '@/features/app-storefront';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { InboxBannerAd } from '@/features/inbox-banner';
 import { useOnboardingStore } from '@/features/onboarding';
-import { ProLicenseKeyModal, useProEntitlement } from '@/features/pro-license';
 import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
 import { IS_ANDROID, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
@@ -35,21 +30,7 @@ export const AboutAppScreen = () => {
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
-  const [proModalVisible, setProModalVisible] = useState(false);
-  const { refresh: refreshProEntitlement } = useProEntitlement();
-  const { isEU } = useEuStorefront();
   const [storefrontRegion, setStorefrontRegion] = useState<string | null>(null);
-
-  const openProModal = useCallback(() => setProModalVisible(true), []);
-  const { onSecretIconPress } = useAdsSecretIconTap(
-    isEU === false ? { onOpenProModal: openProModal } : undefined,
-  );
-
-  useEffect(() => {
-    if (isEU === true) {
-      setProModalVisible(false);
-    }
-  }, [isEU]);
 
   useEffect(() => {
     void getStorefrontCountryCode().then(setStorefrontRegion);
@@ -75,11 +56,6 @@ export const AboutAppScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ProLicenseKeyModal
-        visible={proModalVisible}
-        onClose={() => setProModalVisible(false)}
-        onActivated={() => void refreshProEntitlement({ force: true })}
-      />
       <ScreenHeader title={t('about.title')} onBack={() => navigation.goBack()} />
       <View
         style={{
@@ -98,18 +74,17 @@ export const AboutAppScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           <View className="mb-8 items-center">
-            <Pressable
+            <View
               accessibilityLabel={t('about.title')}
               accessibilityRole="image"
               className="mb-4 h-20 w-20 overflow-hidden rounded-[22px]"
-              onPress={onSecretIconPress}
             >
               <Image
                 source={require('@/shared/assets/app-icon.png')}
                 className="h-full w-full"
                 resizeMode="cover"
               />
-            </Pressable>
+            </View>
             <Text className="text-[24px] font-bold" style={{ color: color.text.primary }}>
               Voice Inbox AI
             </Text>

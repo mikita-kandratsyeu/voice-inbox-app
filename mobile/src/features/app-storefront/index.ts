@@ -1,9 +1,4 @@
-export {
-  getAdsForceDisabledSync,
-  isAdsSecretGestureEnabled,
-  toggleAdsForceDisabled,
-} from './lib/adsSecretGesture';
 export { getStorefrontCountryCode, isEUUserByStorefront } from './lib/storefront';
+export { isTestflightInternalBuild } from './lib/testflightInternalBuild';
 export { useAdsAllowed } from './model/useAdsAllowed';
-export { useAdsSecretIconTap } from './model/useAdsSecretIconTap';
 export { useEuStorefront } from './model/useEuStorefront';

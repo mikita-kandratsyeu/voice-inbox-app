@@ -2,10 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { AdRequestConfiguration, RewardedAdLoader } from 'yandex-mobile-ads';
 
-import {
-  getAdsForceDisabledSync,
-  isAdsSecretGestureEnabled,
-} from '@/features/app-storefront/lib/adsSecretGesture';
 import { isEUUserByStorefront } from '@/features/app-storefront/lib/storefront';
 import { useProEntitlement } from '@/features/pro-license';
 import { getYandexRewardedAdUnitId } from '@/shared/config/runtimeConfig';
@@ -15,7 +11,6 @@ import { storage } from '@/shared/lib/async-storage';
 import { isRecord, isString } from '@/shared/lib/type-guards';
 
 const DEMO_AD_UNIT_ID = 'demo-rewarded-yandex';
-
 const AI_BONUS_COOLDOWN_UNTIL_KEY = 'ai_bonus_cooldown_until_ms';
 
 function readPersistedCooldownUntil(): number | null {
@@ -141,10 +136,6 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
     }
 
     if (await isEUUserByStorefront()) {
-      return;
-    }
-
-    if (isAdsSecretGestureEnabled() && getAdsForceDisabledSync()) {
       return;
     }
 

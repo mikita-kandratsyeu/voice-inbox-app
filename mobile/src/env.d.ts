@@ -11,5 +11,5 @@ declare module '@env' {
   export const MOBILE_USER_AGENT: string | undefined;
   export const YANDEX_REWARDED_AD_UNIT_ID: string | undefined;
   export const YANDEX_BANNER_AD_UNIT_ID: string | undefined;
-  export const ADS_SECRET_GESTURE: string | undefined;
+  export const TESTFLIGHT_INTERNAL_BUILD: string | undefined;
 }

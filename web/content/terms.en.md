@@ -18,11 +18,9 @@ You may not circumvent rate limits, reverse-engineer the app or API, or use the 
 
 You must not misuse the support channel (for example, by sending unlawful, harassing, or knowingly false content, spam, or attempts to gain unauthorized access to our systems).
 
-## 3. Voice Inbox AI Pro, license keys, and subscriptions
+## 3. Paid features and subscriptions
 
-The app may offer a **free tier** of AI usage with weekly limits. **Voice Inbox AI Pro** is an optional upgrade that provides **higher limits** and **disables advertising** where the app shows ads. **License keys** may be issued in limited cases (for example, support, promotions, or special programs). You may not resell, share, or transfer a license key except where we expressly allow. **Each key can only be activated once on one device**; activation on that device is final for that key.
-
-If we introduce **in-app subscriptions** through the **Apple App Store** or **Google Play**, the platform is the **merchant of record** for the payment. Your purchase is governed by the platform’s terms and refund rules. We may use a **third-party subscription status service** to verify purchases and keep Pro features in sync. Nothing in these Terms overrides mandatory consumer rights in your country.
+The app may offer a **free tier** of AI usage with weekly limits. **Optional paid upgrades** (for example, higher limits or disabling advertising where the app shows ads) are offered only through **in-app purchases** in the **Apple App Store** or **Google Play**, where the platform is the **merchant of record** for the payment. Your purchase is governed by the platform’s terms and refund rules. We may use a **third-party subscription status service** to verify purchases and keep paid entitlements in sync. Nothing in these Terms overrides mandatory consumer rights in your country.
 
 ## 4. Intellectual Property
 

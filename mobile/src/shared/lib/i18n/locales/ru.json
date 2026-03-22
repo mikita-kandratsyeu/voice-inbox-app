@@ -326,7 +326,9 @@
     "permissionGranted": "Разрешено",
     "permissionDenied": "Отказано",
     "permissionNotDetermined": "Не задано",
-    "permissionOpenSettings": "Открыть настройки"
+    "permissionOpenSettings": "Открыть настройки",
+    "internalBuildSection": "Внутренняя сборка",
+    "activatePro": "Активировать Pro"
   },
   "appearance": {
     "title": "Внешний вид",

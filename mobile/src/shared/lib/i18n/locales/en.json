@@ -326,7 +326,9 @@
     "permissionGranted": "Granted",
     "permissionDenied": "Denied",
     "permissionNotDetermined": "Not set",
-    "permissionOpenSettings": "Open Settings"
+    "permissionOpenSettings": "Open Settings",
+    "internalBuildSection": "Internal",
+    "activatePro": "Activate Pro"
   },
   "appearance": {
     "title": "Appearance",
