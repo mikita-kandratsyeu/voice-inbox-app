@@ -30,7 +30,7 @@ export const ADMIN_LOGIN_RATE_LIMIT_WINDOW_SECONDS = 60;
 export const ADMIN_LOGIN_RATE_LIMIT_MAX_ATTEMPTS = 5;
 
 // AI rate limit (defaults; overridable via AppConfig AI_WEEKLY_LIMIT_FREE / AI_WEEKLY_LIMIT_PRO)
-export const FREE_WEEKLY_LIMIT = 20;
+export const FREE_WEEKLY_LIMIT = 10;
 export const PRO_WEEKLY_LIMIT = 75;
 export const AI_WEEKLY_KEY_PREFIX = 'ai_weekly:';
 export const WEEK_TTL_SECONDS = 8 * 24 * 3600;
