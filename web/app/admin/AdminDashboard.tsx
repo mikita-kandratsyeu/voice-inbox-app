@@ -1038,6 +1038,9 @@ export function AdminDashboard() {
 
               <section className={`mb-8 ${adminCardSurfaceClass} p-5`}>
                 <h2 className="mb-1 text-lg font-medium">Pro license keys</h2>
+                <p className="mb-2 text-sm font-medium text-amber-800 dark:text-amber-200">
+                  For internal TestFlight builds only.
+                </p>
                 <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
                   One-time keys; plaintext is shown only once. Each key activates on a single
                   device.
