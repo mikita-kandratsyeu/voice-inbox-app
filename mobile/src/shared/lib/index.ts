@@ -22,6 +22,7 @@ export { fetch } from './fetch';
 export { hapticError, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from './haptics';
 export type { SupportedLocale } from './i18n';
 export { applyAppLanguage, i18n, initI18n } from './i18n';
+export { IOS_MIN_TOUCH_TARGET, iosHitSlopForVisualSize } from './iosTouchTarget';
 export { NetworkStatusProvider, useNetworkStatus } from './NetworkStatusContext';
 export { parseTaskDeadline } from './parseTaskDeadline';
 export {

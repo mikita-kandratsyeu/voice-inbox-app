@@ -8,7 +8,7 @@ import {
 import { CheckCircle2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -24,6 +24,7 @@ import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
 import { hapticSuccess, modalKeyboardBehavior } from '@/shared/lib';
 import { redeemProLicenseKey } from '@/shared/lib/ai-api/aiApi';
+import { Button } from '@/shared/ui';
 
 import { setProExpiresAtMsSync } from '../lib/proEntitlementStorage';
 import { proLicenseMessageForRedeemError } from '../lib/redeemErrorMessage';
@@ -125,15 +126,14 @@ function ProActivationSuccessPanel({ color, expiresAtIso, onDismiss }: SuccessPa
           {t('proLicense.successUntil', { date: dateText })}
         </Text>
       )}
-      <Pressable
+      <Button
+        variant="primary"
+        label={t('proLicense.successButton')}
+        color={color}
         onPress={onDismiss}
-        className="mt-6 w-full rounded-xl py-3.5"
-        style={{ backgroundColor: color.accent.primary }}
-      >
-        <Text className="text-center text-base font-semibold" style={{ color: '#ffffff' }}>
-          {t('proLicense.successButton')}
-        </Text>
-      </Pressable>
+        fullWidth
+        className="mt-6"
+      />
     </Animated.View>
   );
 }
@@ -300,25 +300,21 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
                 {error}
               </Text>
             )}
-            <View className="mt-5 flex-row justify-end gap-2">
-              <Pressable onPress={handleClose} className="rounded-xl px-4 py-2.5">
-                <Text className="text-base font-medium" style={{ color: color.text.secondary }}>
-                  {t('common.cancel')}
-                </Text>
-              </Pressable>
-              <Pressable
+            <View className="mt-5 flex-row flex-wrap items-center justify-end gap-3">
+              <Button
+                variant="ghost"
+                label={t('common.cancel')}
+                color={color}
+                onPress={handleClose}
+                disabled={busy}
+              />
+              <Button
+                variant="primary"
+                label={t('proLicense.activate')}
+                color={color}
                 onPress={() => void handleSubmit()}
-                disabled={!keyText.trim()}
-                className="rounded-xl px-4 py-2.5"
-                style={{
-                  backgroundColor: color.accent.primary,
-                  opacity: !keyText.trim() ? 0.5 : 1,
-                }}
-              >
-                <Text className="text-base font-semibold" style={{ color: '#ffffff' }}>
-                  {t('proLicense.activate')}
-                </Text>
-              </Pressable>
+                disabled={!keyText.trim() || busy}
+              />
             </View>
           </>
         )}

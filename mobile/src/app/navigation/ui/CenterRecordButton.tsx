@@ -2,6 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Mic } from 'lucide-react-native';
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing,
@@ -29,6 +30,7 @@ export const CenterRecordButton = ({
   isTablet,
   onLongPress,
 }: CenterRecordButtonProps) => {
+  const { t } = useTranslation();
   const scale = useSharedValue(1);
   const breath = useSharedValue(0);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -85,6 +87,8 @@ export const CenterRecordButton = ({
         ]}
       >
         <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={t('tabs.record')}
           activeOpacity={1}
           onPress={handlePress}
           onLongPress={onLongPress}

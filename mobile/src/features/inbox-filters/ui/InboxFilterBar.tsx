@@ -12,6 +12,7 @@ import type {
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
+import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 
 const PRIMARY_FILTERS: PrimaryFilterStatus[] = ['all', 'pinned', 'archived'];
 
@@ -65,6 +66,8 @@ export const InboxFilterBar = ({
   const hasMenuFilterActive = MENU_FILTERS.includes(filterStatus);
 
   const buttonStyle = {
+    minHeight: IOS_MIN_TOUCH_TARGET,
+    minWidth: IOS_MIN_TOUCH_TARGET,
     paddingVertical: 10,
     borderRadius: 8,
     alignItems: 'center' as const,
@@ -87,6 +90,7 @@ export const InboxFilterBar = ({
           return (
             <TouchableOpacity
               key={status}
+              accessibilityRole="button"
               onPress={() => {
                 hapticSelection();
                 onFilterChange(status);
@@ -132,12 +136,12 @@ export const InboxFilterBar = ({
           }))}
         >
           <TouchableOpacity
+            accessibilityRole="button"
             onPress={() => hapticSelection()}
             activeOpacity={0.7}
             style={[
               buttonStyle,
               {
-                minWidth: 40,
                 paddingHorizontal: 8,
                 backgroundColor: hasMenuFilterActive ? color.accent.primary : 'transparent',
               },
@@ -177,12 +181,12 @@ export const InboxFilterBar = ({
           }))}
         >
           <TouchableOpacity
+            accessibilityRole="button"
             onPress={() => hapticSelection()}
             activeOpacity={0.7}
             style={[
               buttonStyle,
               {
-                minWidth: 40,
                 paddingHorizontal: 8,
                 backgroundColor: sortOption !== 'dateDesc' ? color.accent.primary : 'transparent',
               },

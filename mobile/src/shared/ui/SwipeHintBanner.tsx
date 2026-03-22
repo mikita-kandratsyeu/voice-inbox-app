@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
 import { getColors, useAppTheme } from '@/shared/config';
+import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 
 type SwipeHintBannerProps = {
   onDismiss: () => void;
@@ -23,12 +24,15 @@ export const SwipeHintBanner = ({ onDismiss }: SwipeHintBannerProps) => {
         {t('inbox.swipeHint')}
       </Text>
       <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('common.gotIt')}
         onPress={onDismiss}
-        hitSlop={12}
-        className="rounded-lg px-3 py-1.5"
+        hitSlop={8}
+        className="min-w-[44px] items-center justify-center rounded-lg px-3 py-2"
         style={({ pressed }) => ({
           opacity: pressed ? 0.7 : 1,
           backgroundColor: color.accent.primary + '30',
+          minHeight: IOS_MIN_TOUCH_TARGET,
         })}
       >
         <Text className="text-sm font-semibold" style={{ color: color.accent.primary }}>

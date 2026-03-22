@@ -226,12 +226,13 @@ export const WhisperModelCard = ({
           )}
           {isDownloaded && (
             <TouchableOpacity
+              accessibilityRole="button"
+              accessibilityLabel={t('common.delete')}
               onPress={() => onDelete(model.id)}
-              hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-              className="h-7 w-7 items-center justify-center rounded-full"
+              className="h-11 w-11 items-center justify-center rounded-full"
               style={{ backgroundColor: color.background.tertiary }}
             >
-              <Trash2 size={14} color={color.accent.delete} strokeWidth={2} />
+              <Trash2 size={18} color={color.accent.delete} strokeWidth={2} />
             </TouchableOpacity>
           )}
 

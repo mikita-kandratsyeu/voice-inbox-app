@@ -27,7 +27,7 @@ export const ScreenHeader = ({ title, onBack, rightSlot }: ScreenHeaderProps) =>
         paddingTop: insets.top + 12,
       }}
     >
-      <View className="w-10">
+      <View className="min-w-[44px]">
         {onBack ? (
           <Button
             iconOnly
@@ -47,7 +47,7 @@ export const ScreenHeader = ({ title, onBack, rightSlot }: ScreenHeaderProps) =>
       >
         {title}
       </Text>
-      <View className="w-10 items-end">{rightSlot ?? null}</View>
+      <View className="min-w-[44px] items-end">{rightSlot ?? null}</View>
     </View>
   );
 };

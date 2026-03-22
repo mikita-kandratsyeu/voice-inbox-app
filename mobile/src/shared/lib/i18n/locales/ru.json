@@ -19,6 +19,7 @@
     "next": "Далее",
     "start": "Начать",
     "done": "Готово",
+    "clear": "Очистить",
     "error": "Ошибка",
     "biometrics": "Биометрия"
   },
@@ -57,6 +58,7 @@
   },
   "tabs": {
     "inbox": "Входящие",
+    "record": "Запись",
     "settings": "Настройки"
   },
   "inbox": {
@@ -113,6 +115,14 @@
     "nothingFoundFor": "По запросу «{{query}}» записей не найдено",
     "typeMoreChars": "Введите больше символов",
     "typeMoreCharsHint": "Введите минимум {{count}} символа для поиска"
+  },
+  "audioPlayer": {
+    "skipBack": "Назад",
+    "skipForward": "Вперёд",
+    "play": "Воспроизвести",
+    "pause": "Пауза",
+    "restart": "С начала",
+    "playbackSpeed": "Скорость воспроизведения {{speed}}"
   },
   "record": {
     "newRecord": "Новая запись",

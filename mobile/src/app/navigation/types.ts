@@ -10,6 +10,7 @@ export type RootStackParamList = {
   Main: undefined | { screen: 'SettingsRoot'; params: { screen: 'WhisperModelPicker' } };
   RecordModal: undefined;
   RecordingDetail: { record: VoiceRecord };
+  WhisperModelPickerRoot: undefined;
   EditTranscript: { record: VoiceRecord };
   AllTasks: undefined;
 };

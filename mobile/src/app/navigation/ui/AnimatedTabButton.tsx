@@ -20,6 +20,7 @@ export const AnimatedTabButton = ({ children, onPress, onLongPress }: BottomTabB
 
   return (
     <TouchableOpacity
+      accessibilityRole="button"
       onPress={onPress ?? undefined}
       onLongPress={onLongPress ?? undefined}
       onPressIn={handlePressIn}

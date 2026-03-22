@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { TextInput, TouchableOpacity, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
+import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
 import { getInputFieldInputStyle, InputField } from '@/shared/ui';
 
 type SearchBarProps = {
@@ -28,7 +29,9 @@ export const SearchBar = ({ query, onChangeQuery, color, placeholder }: SearchBa
           onChangeQuery('');
           inputRef.current?.focus();
         }}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        accessibilityRole="button"
+        accessibilityLabel={t('common.clear')}
+        hitSlop={iosHitSlopForVisualSize(16, 16)}
         activeOpacity={0.7}
       >
         <View

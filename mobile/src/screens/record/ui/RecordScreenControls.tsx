@@ -37,6 +37,7 @@ export const RecordScreenControls = ({
       style={controlsPaddingBottom}
     >
       <TouchableOpacity
+        accessibilityRole="button"
         onPress={() => {
           hapticSelection();
           onPauseResume();
@@ -57,6 +58,7 @@ export const RecordScreenControls = ({
         )}
       </TouchableOpacity>
       <TouchableOpacity
+        accessibilityRole="button"
         onPress={() => {
           hapticSuccess();
           onDonePress();

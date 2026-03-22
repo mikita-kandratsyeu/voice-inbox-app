@@ -19,6 +19,7 @@
     "next": "Next",
     "start": "Start",
     "done": "Done",
+    "clear": "Clear",
     "error": "Error",
     "biometrics": "Biometrics"
   },
@@ -57,6 +58,7 @@
   },
   "tabs": {
     "inbox": "Inbox",
+    "record": "Record",
     "settings": "Settings"
   },
   "inbox": {
@@ -113,6 +115,14 @@
     "nothingFoundFor": "No records found for \"{{query}}\"",
     "typeMoreChars": "Type more characters",
     "typeMoreCharsHint": "Enter at least {{count}} characters to search"
+  },
+  "audioPlayer": {
+    "skipBack": "Skip back",
+    "skipForward": "Skip forward",
+    "play": "Play",
+    "pause": "Pause",
+    "restart": "Restart from beginning",
+    "playbackSpeed": "Playback speed {{speed}}"
   },
   "record": {
     "newRecord": "New note",

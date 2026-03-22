@@ -1,11 +1,13 @@
 import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LayoutChangeEvent, Text, TouchableOpacity, View } from 'react-native';
 import AudioRecorderPlayer, { type PlayBackType } from 'react-native-audio-recorder-player';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
 import { formatTime, hapticSelection } from '@/shared/lib';
+import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 
 const SKIP_SECONDS = 5;
 const SKIP_HOLD_START_MS = 400;
@@ -31,6 +33,7 @@ const parseDuration = (d: string) => {
 const player = AudioRecorderPlayer;
 
 export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) => {
+  const { t } = useTranslation();
   const totalSeconds = parseDuration(duration);
   const [isPlaying, setIsPlaying] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -328,15 +331,19 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
         </View>
       </View>
 
-      <View className="flex-row items-center justify-between" style={{ minHeight: 48 }}>
+      <View
+        className="flex-row items-center justify-between"
+        style={{ minHeight: IOS_MIN_TOUCH_TARGET }}
+      >
         <View className="flex-row items-center gap-2.5">
           <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t('audioPlayer.skipBack')}
             onPressIn={beginSkipBackHold}
             onPressOut={clearSkipHoldTimers}
             disabled={!hasAudio}
             activeOpacity={0.6}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            className="h-10 w-10 items-center justify-center rounded-full"
+            className="h-11 w-11 items-center justify-center rounded-full"
             style={{ backgroundColor: hasAudio ? color.background.tertiary : 'transparent' }}
           >
             <ChevronLeft
@@ -346,6 +353,8 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
             />
           </TouchableOpacity>
           <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={isPlaying ? t('audioPlayer.pause') : t('audioPlayer.play')}
             onPress={handlePlayPause}
             disabled={!hasAudio}
             activeOpacity={0.85}
@@ -366,12 +375,13 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
             )}
           </TouchableOpacity>
           <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t('audioPlayer.skipForward')}
             onPressIn={beginSkipForwardHold}
             onPressOut={clearSkipHoldTimers}
             disabled={!hasAudio}
             activeOpacity={0.6}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            className="h-10 w-10 items-center justify-center rounded-full"
+            className="h-11 w-11 items-center justify-center rounded-full"
             style={{ backgroundColor: hasAudio ? color.background.tertiary : 'transparent' }}
           >
             <ChevronRight
@@ -383,10 +393,12 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
         </View>
         <View className="flex-row items-center gap-2.5">
           <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t('audioPlayer.playbackSpeed', { speed: speedLabel })}
             onPress={handleCycleSpeed}
             disabled={!hasAudio}
             activeOpacity={0.7}
-            className="min-w-[48px] items-center justify-center rounded-xl px-3 py-2.5"
+            className="min-h-[44px] min-w-[48px] items-center justify-center rounded-xl px-3 py-2.5"
             style={{
               backgroundColor: hasAudio ? color.background.tertiary : 'transparent',
             }}
@@ -399,11 +411,12 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t('audioPlayer.restart')}
             onPress={handleRestart}
             disabled={!hasAudio}
             activeOpacity={0.6}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            className="h-10 w-10 items-center justify-center rounded-full"
+            className="h-11 w-11 items-center justify-center rounded-full"
             style={{ backgroundColor: hasAudio ? color.background.tertiary : 'transparent' }}
           >
             <RotateCcw

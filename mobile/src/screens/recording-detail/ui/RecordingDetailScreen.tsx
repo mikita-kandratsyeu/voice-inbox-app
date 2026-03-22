@@ -147,10 +147,7 @@ export const RecordingDetailScreen = () => {
           {
             text: t('recordingDetail.goToWhisperSettings'),
             onPress: () => {
-              navigation.navigate('Main', {
-                screen: 'SettingsRoot',
-                params: { screen: 'WhisperModelPicker' },
-              });
+              navigation.push('WhisperModelPickerRoot');
             },
           },
         ],

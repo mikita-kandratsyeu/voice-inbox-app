@@ -6,6 +6,7 @@ import { InboxFiltersResetProvider } from '@/features/inbox-filters';
 import { AllTasksScreen } from '@/screens/all-tasks';
 import { RecordScreen } from '@/screens/record';
 import { EditTranscriptScreen, RecordingDetailScreen } from '@/screens/recording-detail';
+import { WhisperModelPickerScreen } from '@/screens/settings';
 
 import { BottomTabNavigator } from './BottomTabNavigator';
 import type { RootStackParamList } from './types';
@@ -35,6 +36,15 @@ export const RootNavigator = () => (
       <Stack.Screen
         name="RecordingDetail"
         component={RecordingDetailScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="WhisperModelPickerRoot"
+        component={WhisperModelPickerScreen}
         options={{
           headerShown: false,
           animation: 'slide_from_right',
