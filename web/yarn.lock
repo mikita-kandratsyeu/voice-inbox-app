@@ -8398,6 +8398,7 @@ __metadata:
     "@upstash/redis": "npm:^1.36.3"
     "@vercel/analytics": "npm:^1.6.1"
     bcryptjs: "npm:^2.4.3"
+    dotenv: "npm:^16.6.1"
     eslint: "npm:^9"
     eslint-config-next: "npm:16.1.6"
     eslint-config-prettier: "npm:^10"
