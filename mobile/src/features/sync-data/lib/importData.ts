@@ -75,6 +75,38 @@ function isRelativeAudioPath(path: string): boolean {
   return p.length > 0 && !p.startsWith('/') && !p.startsWith('file://');
 }
 
+function toFsPath(uri: string): string {
+  return uri.startsWith('file://') ? uri.slice(7) : uri;
+}
+
+function pathOrNameLooksLikeZip(uri: string, name: string): boolean {
+  const n = name.trim().toLowerCase();
+  if (n.endsWith('.zip')) {
+    return true;
+  }
+  const pathOnly = uri.split('?')[0].split('#')[0].toLowerCase();
+  return pathOnly.endsWith('.zip');
+}
+
+async function fileHasZipLocalHeader(fsPath: string): Promise<boolean> {
+  try {
+    if (!(await RNFS.exists(fsPath))) {
+      return false;
+    }
+    const head = await RNFS.read(fsPath, 2, 0, 'ascii');
+    return head === 'PK';
+  } catch {
+    return false;
+  }
+}
+
+async function shouldTreatAsZipArchive(uri: string, name: string): Promise<boolean> {
+  if (pathOrNameLooksLikeZip(uri, name)) {
+    return true;
+  }
+  return fileHasZipLocalHeader(toFsPath(uri));
+}
+
 async function copyAudioFromExtractToApp(
   extractDir: string,
   relativeAudioPath: string,
@@ -105,7 +137,7 @@ async function copyAudioFromExtractToApp(
 async function importFromZip(fileUri: string): Promise<ImportResult> {
   const timestamp = Date.now();
   const extractDir = `${RNFS.CachesDirectoryPath}/import-extract-${timestamp}`;
-  const zipPath = fileUri.startsWith('file://') ? fileUri.slice(7) : fileUri;
+  const zipPath = toFsPath(fileUri);
 
   try {
     await unzip(zipPath, extractDir);
@@ -187,7 +219,7 @@ export const importData = async (): Promise<ImportResult> => {
     }
 
     const fileName = (file as { name?: string }).name ?? '';
-    const isZip = fileName.toLowerCase().endsWith('.zip');
+    const isZip = await shouldTreatAsZipArchive(uri, fileName);
 
     if (isZip) {
       return importFromZip(uri);

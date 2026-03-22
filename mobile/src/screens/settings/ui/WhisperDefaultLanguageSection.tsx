@@ -47,6 +47,7 @@ export const WhisperDefaultLanguageSection = ({ color }: WhisperDefaultLanguageS
           id: lang,
           title: t(`recordingDetail.language.${lang}`),
           titleColor: themeColors.text.primary,
+          state: lang === transcriptionLanguage ? 'on' : 'off',
         }))}
       >
         <TouchableOpacity

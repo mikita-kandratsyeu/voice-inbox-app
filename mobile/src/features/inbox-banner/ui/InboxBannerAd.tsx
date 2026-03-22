@@ -24,7 +24,7 @@ export function InboxBannerAd({
   surface = 'default',
 }: InboxBannerAdProps) {
   const { t } = useTranslation();
-  const { adsAllowed, resolved } = useAdsAllowed();
+  const { adsAllowed } = useAdsAllowed();
   const bannerSize = useInboxBannerSize(contentMaxWidth);
   const [loadFailed, setLoadFailed] = useState(false);
 
@@ -32,7 +32,7 @@ export function InboxBannerAd({
     setLoadFailed(true);
   }, []);
 
-  if (!resolved || !adsAllowed || !getHasSeenOnboarding() || loadFailed || !bannerSize) {
+  if (!adsAllowed || !getHasSeenOnboarding() || loadFailed || !bannerSize) {
     return null;
   }
 

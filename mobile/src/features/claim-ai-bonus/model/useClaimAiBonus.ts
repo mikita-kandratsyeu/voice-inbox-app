@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { AdRequestConfiguration, RewardedAdLoader } from 'yandex-mobile-ads';
 
-import { isEUUserByStorefront } from '@/features/app-storefront/lib/storefront';
 import { useProEntitlement } from '@/features/pro-license';
 import { getYandexRewardedAdUnitId } from '@/shared/config/runtimeConfig';
 import type { AiUsage } from '@/shared/lib/ai-api';
@@ -132,10 +131,6 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
 
   const claim = useCallback(async () => {
     if (loading) {
-      return;
-    }
-
-    if (await isEUUserByStorefront()) {
       return;
     }
 

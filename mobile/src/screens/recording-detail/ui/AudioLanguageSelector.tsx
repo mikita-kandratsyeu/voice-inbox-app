@@ -45,6 +45,7 @@ export const AudioLanguageSelector = ({ value, color, onSelect }: AudioLanguageS
           id: lang,
           title: t(`recordingDetail.language.${lang}`),
           titleColor: themeColors.text.primary,
+          state: lang === value ? 'on' : 'off',
         }))}
       >
         <TouchableOpacity

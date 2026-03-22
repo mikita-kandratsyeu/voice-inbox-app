@@ -1,4 +1,4 @@
-import { Check, Download, Smartphone, Trash2, X } from 'lucide-react-native';
+import { Check, Download, Smartphone, X } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -194,9 +194,22 @@ export const WhisperModelCard = ({
             <Text className="mt-1.5 text-[14px]" style={{ color: color.text.secondary }}>
               {t('whisper.tapToDownload')}
             </Text>
-          ) : null}
+          ) : (
+            <TouchableOpacity
+              onPress={() => onDelete(model.id)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              activeOpacity={0.7}
+              className="mt-2 self-start"
+              accessibilityRole="button"
+              accessibilityLabel={t('common.remove')}
+            >
+              <Text className="text-[13px]" style={{ color: color.text.secondary }}>
+                {t('common.remove')}
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
-        <View className="items-center gap-2">
+        <View className="items-center">
           {isDownloaded && isSelected ? (
             <View
               className="h-8 w-8 items-center justify-center rounded-full"
@@ -224,18 +237,6 @@ export const WhisperModelCard = ({
               <Download size={16} color={color.accent.primary} strokeWidth={2} />
             </View>
           )}
-          {isDownloaded && (
-            <TouchableOpacity
-              accessibilityRole="button"
-              accessibilityLabel={t('common.delete')}
-              onPress={() => onDelete(model.id)}
-              className="h-11 w-11 items-center justify-center rounded-full"
-              style={{ backgroundColor: color.background.tertiary }}
-            >
-              <Trash2 size={18} color={color.accent.delete} strokeWidth={2} />
-            </TouchableOpacity>
-          )}
-
           {isError && (
             <View
               className="h-8 w-8 items-center justify-center rounded-full"

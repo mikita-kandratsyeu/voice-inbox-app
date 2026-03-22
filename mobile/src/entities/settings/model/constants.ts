@@ -17,7 +17,7 @@ const GEMINI_MODELS: AIModel[] = [
   },
 ];
 
-const OPENAI_MODEL: AIModel[] = [
+const OPENAI_MODELS: AIModel[] = [
   {
     id: 'openai/gpt-5-nano',
     name: 'GPT-5 Nano',
@@ -27,7 +27,7 @@ const OPENAI_MODEL: AIModel[] = [
   },
 ];
 
-const DEEPSEEK_MODEL: AIModel[] = [
+const DEEPSEEK_MODELS: AIModel[] = [
   {
     id: 'deepseek/deepseek-v3.2',
     name: 'DeepSeek V3.2',
@@ -37,7 +37,22 @@ const DEEPSEEK_MODEL: AIModel[] = [
   },
 ];
 
-export const AI_MODELS: AIModel[] = [...GEMINI_MODELS, ...DEEPSEEK_MODEL, ...OPENAI_MODEL];
+const MINIMAX_MODELS: AIModel[] = [
+  {
+    id: 'minimax/minimax-m2.5',
+    name: 'MiniMax M2.5',
+    provider: 'MiniMax',
+    descriptionKey: 'aiModels.minimaxDesc',
+    speed: 'fast',
+  },
+];
+
+export const AI_MODELS: AIModel[] = [
+  ...GEMINI_MODELS,
+  ...MINIMAX_MODELS,
+  ...OPENAI_MODELS,
+  ...DEEPSEEK_MODELS,
+];
 
 export const WHISPER_MODELS: WhisperModel[] = [
   {
