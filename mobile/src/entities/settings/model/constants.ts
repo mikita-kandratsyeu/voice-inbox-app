@@ -37,32 +37,13 @@ const DEEPSEEK_MODEL: AIModel[] = [
   },
 ];
 
-// FIXME: Models are not available in the API now. Will be added in Pro plan.
-// const MISTRAL_MODELS: AIModel[] = [
-//   {
-//     id: 'mistralai/mistral-small-3.2-24b-instruct',
-//     name: 'Mistral Small 3.2',
-//     provider: 'Mistral',
-//     descriptionKey: 'aiModels.mistralDesc',
-//     speed: 'medium',
-//   },
-// ];
-
-// const META_LLAMA_MODEL: AIModel = {
-//   id: 'meta-llama/llama-3.3-70b-instruct',
-//   name: 'Llama 3.3 70B',
-//   provider: 'Meta',
-//   descriptionKey: 'aiModels.metaLlamaDesc',
-//   speed: 'fast',
-// };
-
 export const AI_MODELS: AIModel[] = [...GEMINI_MODELS, ...DEEPSEEK_MODEL, ...OPENAI_MODEL];
 
 export const WHISPER_MODELS: WhisperModel[] = [
   {
     id: 'whisper-tiny',
     name: 'Tiny',
-    description: 'Минимальные требования к памяти, базовое качество',
+    description: 'whisper.models.tinyDesc',
     sizeLabel: '75 MB',
     sizeMb: 75,
     accuracy: 'low',
@@ -72,7 +53,7 @@ export const WHISPER_MODELS: WhisperModel[] = [
   {
     id: 'whisper-base',
     name: 'Base',
-    description: 'Хороший баланс между скоростью и качеством',
+    description: 'whisper.models.baseDesc',
     sizeLabel: '145 MB',
     sizeMb: 145,
     accuracy: 'medium',
@@ -82,7 +63,7 @@ export const WHISPER_MODELS: WhisperModel[] = [
   {
     id: 'whisper-small',
     name: 'Small',
-    description: 'Улучшенное качество для большинства языков',
+    description: 'whisper.models.smallDesc',
     sizeLabel: '466 MB',
     sizeMb: 466,
     accuracy: 'medium',
@@ -92,7 +73,7 @@ export const WHISPER_MODELS: WhisperModel[] = [
   {
     id: 'whisper-medium',
     name: 'Medium',
-    description: 'Высокое качество транскрипции',
+    description: 'whisper.models.mediumDesc',
     sizeLabel: '1.5 GB',
     sizeMb: 1500,
     accuracy: 'high',
