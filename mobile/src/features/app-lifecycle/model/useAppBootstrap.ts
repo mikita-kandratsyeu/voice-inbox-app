@@ -23,27 +23,54 @@ export function useAppBootstrap(
   const { onBootstrapReady } = options ?? {};
 
   useEffect(() => {
+    let cancelled = false;
+    let deferredInitTimer: ReturnType<typeof setTimeout> | null = null;
+
     initRuntimeConfig()
       .then(() => initDB())
       .then(async () => {
-        const deviceId = await getOrCreateDeviceId();
-        await syncCrashlyticsUserId(deviceId);
-        await syncAnalyticsUserId(deviceId);
-
         await useRecordStore.getState().load();
-        onBootstrapReady?.();
 
-        const initial = await getInitialNotification(getMessaging());
-        if (initial?.data) {
-          onInitialPushData(initial.data as unknown as PushNotificationData);
+        if (!cancelled) {
+          onBootstrapReady?.();
         }
 
-        if (getHasSeenOnboarding()) {
-          ensurePushRegistered().catch(() => {});
-        }
+        void (async () => {
+          try {
+            const deviceId = await getOrCreateDeviceId();
+            await Promise.all([syncCrashlyticsUserId(deviceId), syncAnalyticsUserId(deviceId)]);
+          } catch {
+            if (__DEV__) console.warn('[bootstrap] failed to sync analytics/crashlytics user id');
+          }
+        })();
+
+        deferredInitTimer = setTimeout(() => {
+          void (async () => {
+            try {
+              const initial = await getInitialNotification(getMessaging());
+              if (!cancelled && initial?.data) {
+                onInitialPushData(initial.data as unknown as PushNotificationData);
+              }
+            } catch {
+              if (__DEV__) console.warn('[bootstrap] failed to read initial push notification');
+            }
+
+            if (getHasSeenOnboarding()) {
+              ensurePushRegistered().catch(() => {});
+            }
+          })();
+        }, 0);
       })
       .catch(() => {
-        onBootstrapReady?.();
+        if (!cancelled) {
+          onBootstrapReady?.();
+        }
       });
+    return () => {
+      cancelled = true;
+      if (deferredInitTimer) {
+        clearTimeout(deferredInitTimer);
+      }
+    };
   }, [onBootstrapReady, onInitialPushData]);
 }

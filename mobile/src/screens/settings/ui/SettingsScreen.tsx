@@ -95,7 +95,7 @@ export const SettingsScreen = () => {
   const appLanguage = useSettingsStore((s) => s.appLanguage);
   const appTheme = useSettingsStore((s) => s.appTheme);
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
-  const records = useRecordStore((s) => s.records);
+  const recordsCount = useRecordStore((s) => s.records.length);
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [aiUsage, setAiUsage] = useState<Awaited<ReturnType<typeof getAiUsage>>>(null);
@@ -108,6 +108,7 @@ export const SettingsScreen = () => {
   const [automationSheet, setAutomationSheet] = useState<AutomationFeatureKind | null>(null);
   const [planPaywallVisible, setPlanPaywallVisible] = useState(false);
   const [internalUpgradeVisible, setInternalUpgradeVisible] = useState(false);
+  const [showDeferredBanner, setShowDeferredBanner] = useState(false);
   const { refresh: refreshProEntitlement, isProActive: proEntitlementActive } = useProEntitlement();
   const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
   const monetizationMode = getMonetizationMode();
@@ -155,11 +156,15 @@ export const SettingsScreen = () => {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([fetchAiUsage(), fetchProWeeklyLimit()]).finally(() => {
-      if (!cancelled) setAiUsageLoading(false);
-    });
+    const timer = setTimeout(() => {
+      Promise.all([fetchAiUsage(), fetchProWeeklyLimit()]).finally(() => {
+        if (!cancelled) setAiUsageLoading(false);
+      });
+    }, 0);
+
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
   }, [fetchAiUsage, fetchProWeeklyLimit]);
 
@@ -173,14 +178,29 @@ export const SettingsScreen = () => {
   }, []);
 
   useEffect(() => {
-    refreshPermissions();
+    const timer = setTimeout(() => {
+      refreshPermissions();
+    }, 0);
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
         refreshPermissions();
       }
     });
-    return () => sub.remove();
+    return () => {
+      clearTimeout(timer);
+      sub.remove();
+    };
   }, [refreshPermissions]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowDeferredBanner(true);
+    }, 1200);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -208,6 +228,7 @@ export const SettingsScreen = () => {
   const handleExport = async () => {
     try {
       setIsExporting(true);
+      const records = useRecordStore.getState().records;
       await exportData(records);
     } catch {
       Alert.alert(t('common.error'), t('importExport.exportError'));
@@ -235,6 +256,7 @@ export const SettingsScreen = () => {
   };
 
   const handleUpdateEmbeddings = useCallback(() => {
+    const records = useRecordStore.getState().records;
     const recordsWithContent = records.filter(
       (r) =>
         (r.summary && r.summary.length > 0) ||
@@ -277,7 +299,7 @@ export const SettingsScreen = () => {
         },
       ],
     );
-  }, [records, t]);
+  }, [t]);
 
   const handleNotificationsPress = useCallback(async () => {
     if (!IS_IOS) return;
@@ -468,7 +490,7 @@ export const SettingsScreen = () => {
           <SettingsSection title={t('settings.backupRestore')}>
             <SettingsRow
               label={isExporting ? t('settings.exporting') : t('settings.export')}
-              value={t('inbox.recordsCount', { count: records.length })}
+              value={t('inbox.recordsCount', { count: recordsCount })}
               leftIcon={<UploadCloud size={20} color={color.accent.primary} strokeWidth={1.8} />}
               onPress={handleExport}
               isFirst
@@ -636,7 +658,9 @@ export const SettingsScreen = () => {
               />
             </SettingsSection>
           )}
-          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
+          {showDeferredBanner ? (
+            <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
+          ) : null}
         </ScrollView>
         <ProLicenseKeyModal
           visible={internalUpgradeVisible}

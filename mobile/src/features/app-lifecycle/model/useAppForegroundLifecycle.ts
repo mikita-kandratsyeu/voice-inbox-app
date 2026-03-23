@@ -13,7 +13,6 @@ const FOREGROUND_ON_ACTIVE_THROTTLE_MS = 15_000;
 export function useAppForegroundLifecycle(): void {
   useEffect(() => {
     let foregroundInterval: ReturnType<typeof setInterval> | null = null;
-    let unsubscribeStore: (() => void) | null = null;
     let lastHeartbeatAt = 0;
     let lastForegroundAt = 0;
 
@@ -50,18 +49,11 @@ export function useAppForegroundLifecycle(): void {
           lastForegroundAt = now;
         }
         foregroundInterval = setInterval(maybeNotifyForeground, HEARTBEAT_INTERVAL_MS);
-        unsubscribeStore = useRecordStore.subscribe(() => {
-          if (AppState.currentState === 'active') {
-            maybeNotifyForeground();
-          }
-        });
       } else {
         if (foregroundInterval) {
           clearInterval(foregroundInterval);
           foregroundInterval = null;
         }
-        unsubscribeStore?.();
-        unsubscribeStore = null;
         if (state === 'background' || state === 'inactive') {
           if (getHasSeenOnboarding()) {
             notifyAppBackground();
@@ -85,7 +77,6 @@ export function useAppForegroundLifecycle(): void {
     return () => {
       sub.remove();
       if (foregroundInterval) clearInterval(foregroundInterval);
-      unsubscribeStore?.();
       releaseWhisperContext().catch(() => {});
     };
   }, []);
