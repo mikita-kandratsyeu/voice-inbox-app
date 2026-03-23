@@ -2,6 +2,7 @@ import { Zap } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { getShowProUpsellHints } from '@/features/app-storefront';
 import { useProEntitlement } from '@/features/pro-license';
@@ -46,7 +47,8 @@ export function SettingsPlanStatusCard({ color }: SettingsPlanStatusCardProps) {
       : t('settings.planStatus.freeSubtitle');
 
   return (
-    <View
+    <Animated.View
+      entering={FadeIn.duration(160).delay(24)}
       className="mb-6 overflow-hidden rounded-2xl p-4"
       style={{
         borderWidth: 1,
@@ -70,6 +72,6 @@ export function SettingsPlanStatusCard({ color }: SettingsPlanStatusCardProps) {
           </Text>
         </View>
       </View>
-    </View>
+    </Animated.View>
   );
 }
