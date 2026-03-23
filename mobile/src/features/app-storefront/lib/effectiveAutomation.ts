@@ -1,19 +1,8 @@
-import { getSubscriptionsPubliclyAvailable } from '../model/monetizationPublicConfig';
-import { isTestflightInternalBuild } from './testflightInternalBuild';
-
 export function shouldApplyAutoTranscribeOnSave(
   persistedToggle: boolean,
   isProActive: boolean,
 ): boolean {
-  if (!persistedToggle || !isProActive) {
-    return false;
-  }
-
-  if (isTestflightInternalBuild()) {
-    return true;
-  }
-
-  return getSubscriptionsPubliclyAvailable();
+  return persistedToggle && isProActive;
 }
 
 export function shouldApplyAutoAiAfterTranscription(

@@ -1,7 +1,4 @@
-import {
-  isSubscriptionsPubliclyAvailable,
-  isTestflightInternalBuild,
-} from '@/shared/config/buildEnv';
+import { isSubscriptionsPubliclyAvailable } from '@/shared/config/buildEnv';
 
 export function getSubscriptionsPubliclyAvailable(): boolean {
   return isSubscriptionsPubliclyAvailable();
@@ -20,13 +17,5 @@ export function getShowComingSoonInsteadOfPurchase(): boolean {
 }
 
 export function isAutomationUiLockedForPublicStore(isProActive: boolean): boolean {
-  if (isSubscriptionsPubliclyAvailable()) {
-    return false;
-  }
-
-  if (isTestflightInternalBuild()) {
-    return !isProActive;
-  }
-
-  return true;
+  return !isProActive;
 }
