@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
-import { fetchProLicenseStatus } from '@/shared/lib/ai-api/aiApi';
+import { fetchProLicenseStatus } from '@/shared/lib/ai-api/proLicenseApi';
 import { storage } from '@/shared/lib/async-storage';
 
 import {

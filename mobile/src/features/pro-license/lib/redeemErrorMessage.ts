@@ -1,6 +1,6 @@
 import type { TFunction } from 'i18next';
 
-import type { ProLicenseRedeemErrorCode } from '@/shared/lib/ai-api/aiApi';
+import type { ProLicenseRedeemErrorCode } from '@/shared/lib/ai-api/proLicenseApi';
 
 const I18N_KEY: Record<ProLicenseRedeemErrorCode, string> = {
   invalid_key: 'proLicense.errors.invalidKey',

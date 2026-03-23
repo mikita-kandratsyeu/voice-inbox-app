@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { hapticSuccess, modalKeyboardBehavior } from '@/shared/lib';
-import { redeemProLicenseKey } from '@/shared/lib/ai-api/aiApi';
+import { redeemProLicenseKey } from '@/shared/lib/ai-api/proLicenseApi';
 import { Button } from '@/shared/ui';
 
 import { setProExpiresAtMsSync } from '../lib/proEntitlementStorage';
