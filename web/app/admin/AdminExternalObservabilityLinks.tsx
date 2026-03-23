@@ -22,8 +22,13 @@ function buildLinks(): LinkItem[] {
   if (firebaseProjectId) {
     items.push(
       {
-        label: 'Firebase — project overview',
+        label: 'Firebase — Project overview',
         href: firebaseProjectUrl(firebaseProjectId, '/overview'),
+      },
+      {
+        label: 'Firebase — Analytics',
+        href: firebaseProjectUrl(firebaseProjectId, '/analytics'),
+        caption: 'Mobile events from @react-native-firebase/analytics.',
       },
       {
         label: 'Firebase — Crashlytics',
@@ -45,7 +50,11 @@ function buildLinks(): LinkItem[] {
         label: 'Firebase Console',
         href: 'https://console.firebase.google.com/',
         caption:
-          'Set NEXT_PUBLIC_FIREBASE_CONSOLE_PROJECT_ID for direct links to Crashlytics, FCM & Remote Config.',
+          'Set NEXT_PUBLIC_FIREBASE_CONSOLE_PROJECT_ID for direct links to Analytics, Crashlytics, FCM & Remote Config.',
+      },
+      {
+        label: 'Firebase — Analytics (pick project)',
+        href: 'https://console.firebase.google.com/',
       },
       {
         label: 'Firebase — Crashlytics (pick project)',

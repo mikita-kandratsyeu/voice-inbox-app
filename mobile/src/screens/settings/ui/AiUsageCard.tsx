@@ -2,9 +2,8 @@ import type { TFunction } from 'i18next';
 import { PlayCircle, Sparkles } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
 import type { AiUsage } from '@/shared/lib/ai-api';
@@ -25,12 +24,10 @@ function getAiUsageStatusText(usage: AiUsage | null, isExhausted: boolean, t: TF
   if (!usage) {
     return t('settings.aiUsage.unavailable');
   }
-
   if (isExhausted) {
     return t('settings.aiUsage.exhausted');
   }
-
-  return t('settings.aiUsage.remaining', { count: usage.remaining });
+  return '';
 }
 
 function resolveClaimBonusErrorMessage(claimError: string, t: TFunction): string {
@@ -143,58 +140,50 @@ export const AiUsageCard = ({
 }: AiUsageCardProps) => {
   const { t, i18n } = useTranslation();
   const color = getColors(useAppTheme());
-  const { isProActive, expiresAtMs } = useProEntitlement();
+
   const claimDisabled = claimError === 'claimCooldown';
   const bonusAmount = usage?.bonusAmount ?? 5;
   const canShowBonusButton = Boolean(usage && usage.used > 0);
   const showBonusNoUsageHint = Boolean(usage && usage.used === 0 && onClaimBonus);
 
   const isExhausted = usage ? usage.remaining === 0 : false;
-  const progressPercent = usage ? Math.min(100, (usage.used / usage.limit) * 100) : 0;
+  const progressPercent =
+    usage && usage.limit > 0 ? Math.min(100, (usage.used / usage.limit) * 100) : 0;
 
   const usageText = usage ? `${usage.used} / ${usage.limit}` : '—';
   const statusText = getAiUsageStatusText(usage, isExhausted, t);
   const resetDateText = usage ? formatResetDate(usage.resetAt, i18n.language) : '—';
 
-  const proExpiresText =
-    isProActive && expiresAtMs != null
-      ? new Date(expiresAtMs).toLocaleString(i18n.language, {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
-      : null;
+  const progressA11y = usage
+    ? t('settings.aiUsage.a11yProgress', {
+        used: usage.used,
+        limit: usage.limit,
+      })
+    : t('settings.aiUsage.title');
 
   return (
     <View
-      className="mb-6 overflow-hidden rounded-2xl p-4"
+      className="mb-7 overflow-hidden rounded-2xl p-5"
       style={{
         borderWidth: 1,
         borderColor: color.border.default,
         backgroundColor: color.background.primary,
       }}
     >
-      <View className="mb-3 flex-row items-center">
+      <View className="mb-4 flex-row items-center">
         <View
-          className="mr-3 rounded-full p-2"
-          style={{ backgroundColor: color.accent.primary + '20' }}
+          className="mr-3 h-14 w-14 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: color.background.tertiary }}
         >
-          <Sparkles size={20} color={color.accent.primary} strokeWidth={1.8} />
+          <Sparkles size={22} color={color.accent.primary} strokeWidth={1.8} />
         </View>
         <View className="min-w-0 flex-1">
           <Text className="text-base font-semibold" style={{ color: color.text.primary }}>
             {t('settings.aiUsage.title')}
           </Text>
-          <Text className="mt-0.5 text-sm" style={{ color: color.text.secondary }}>
+          <Text className="mt-1 text-sm leading-5" style={{ color: color.text.secondary }}>
             {t('settings.aiUsage.subtitle')}
           </Text>
-          {proExpiresText != null && (
-            <Text className="mt-1.5 text-xs font-medium" style={{ color: color.accent.primary }}>
-              {t('proLicense.activeUntil', { date: proExpiresText })}
-            </Text>
-          )}
         </View>
       </View>
 
@@ -203,26 +192,48 @@ export const AiUsageCard = ({
       ) : (
         <>
           <View className="mb-2">
-            <View className="mb-1 flex-row flex-wrap items-center justify-between gap-x-2 gap-y-1">
-              <Text
-                className="text-sm font-medium"
-                style={{
-                  color: isExhausted ? color.accent.delete : color.text.primary,
-                }}
-              >
-                {usageText}
-              </Text>
-              <Text
-                className="text-right text-sm font-medium"
-                style={{
-                  color: isExhausted ? color.accent.delete : color.accent.primary,
-                }}
-              >
-                {statusText}
-              </Text>
+            <View className="mb-2 flex-row flex-wrap items-center justify-between gap-x-2 gap-y-1">
+              {usage == null && (
+                <Text className="text-sm font-medium" style={{ color: color.text.secondary }}>
+                  {statusText}
+                </Text>
+              )}
+              {usage != null && !isExhausted && (
+                <Text
+                  className="text-[15px] font-semibold"
+                  style={[styles.tabular, { color: color.text.primary }]}
+                  accessibilityLabel={progressA11y}
+                >
+                  {usageText}
+                </Text>
+              )}
+              {usage != null && isExhausted && (
+                <>
+                  <Text
+                    className="text-[15px] font-semibold"
+                    style={[styles.tabular, { color: color.accent.delete }]}
+                    accessibilityLabel={progressA11y}
+                  >
+                    {usageText}
+                  </Text>
+                  <Text
+                    className="max-w-[58%] text-right text-sm font-medium leading-5"
+                    style={{ color: color.accent.delete }}
+                  >
+                    {statusText}
+                  </Text>
+                </>
+              )}
             </View>
             <View
-              className="h-2 overflow-hidden rounded-full"
+              accessibilityRole="progressbar"
+              accessibilityValue={{
+                min: 0,
+                max: 100,
+                now: Math.round(progressPercent),
+              }}
+              accessibilityLabel={progressA11y}
+              className="h-2.5 overflow-hidden rounded-full"
               style={{ backgroundColor: color.background.tertiary }}
             >
               <View
@@ -236,7 +247,7 @@ export const AiUsageCard = ({
           </View>
 
           <Text
-            className="text-xs"
+            className="text-xs leading-4"
             style={{
               color: color.text.secondary,
               marginBottom: onClaimBonus && (canShowBonusButton || showBonusNoUsageHint) ? 12 : 6,
@@ -293,3 +304,9 @@ export const AiUsageCard = ({
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  tabular: {
+    fontVariant: ['tabular-nums'],
+  },
+});

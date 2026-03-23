@@ -6,6 +6,7 @@ import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } fr
 import type { WhisperModelId } from '@/entities/settings';
 import {
   AI_MODELS,
+  getRecommendedAIModelId,
   useRecommendedWhisperModelId,
   useSettingsStore,
   useWhisperModelCompatibility,
@@ -36,6 +37,7 @@ export const OnboardingSetupStep = ({
 
   const compatibility = useWhisperModelCompatibility();
   const recommendedModelId = useRecommendedWhisperModelId();
+  const recommendedAIModelId = getRecommendedAIModelId();
   const { startDownload } = useModelManager();
 
   const handleWhisperSelect = (id: WhisperModelId) => {
@@ -101,9 +103,24 @@ export const OnboardingSetupStep = ({
                   borderBottomColor: color.border.default,
                 }}
               >
-                <Text className="text-[15px] font-medium" style={{ color: color.text.primary }}>
-                  {model.name}
-                </Text>
+                <View className="mr-3 flex-1 flex-row items-center gap-2">
+                  <Text className="text-[15px] font-medium" style={{ color: color.text.primary }}>
+                    {model.name}
+                  </Text>
+                  {model.id === recommendedAIModelId && (
+                    <View
+                      className="rounded-full px-2 py-0.5"
+                      style={{ backgroundColor: color.status.processing.bg }}
+                    >
+                      <Text
+                        className="text-[11px] font-medium"
+                        style={{ color: color.status.processing.text }}
+                      >
+                        {t('whisper.recommended')}
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 {isSelected ? (
                   <View
                     className="h-6 w-6 items-center justify-center rounded-full"

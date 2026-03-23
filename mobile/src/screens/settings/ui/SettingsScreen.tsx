@@ -1,5 +1,5 @@
 import { crash, getCrashlytics } from '@react-native-firebase/crashlytics';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   AlertTriangle,
@@ -40,7 +40,7 @@ import { useAppLockStore } from '@/entities/app-lock';
 import { useRecordStore } from '@/entities/record';
 import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { openAppReviewFromSettings } from '@/features/app-review';
-import { useAdsAllowed } from '@/features/app-storefront';
+import { isAutomationUiLockedForPublicStore, useAdsAllowed } from '@/features/app-storefront';
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { openInAppBrowser } from '@/features/in-app-browser';
@@ -48,8 +48,10 @@ import { InboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import { exportData, importData } from '@/features/sync-data';
 import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
+import { isCrashlyticsDebugEnabled } from '@/shared/config/buildEnv';
 import { IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { getAiUsage } from '@/shared/lib/ai-api';
+import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { isEmbeddingAvailable } from '@/shared/lib/embeddings';
 import {
   checkMicPermission,
@@ -62,10 +64,12 @@ import {
   type PushPermissionStatus,
   requestPushPermission,
 } from '@/shared/lib/push';
-import { SettingsRow, SettingsSection } from '@/shared/ui';
+import { SCREEN_PADDING, SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { AiUsageCard } from './AiUsageCard';
+import { AutomationComingSoonSheet, type AutomationFeatureKind } from './AutomationComingSoonSheet';
 import { SettingsInternalProSection } from './SettingsInternalProSection';
+import { SettingsPlanStatusCard } from './SettingsPlanStatusCard';
 
 export const SettingsScreen = () => {
   const { t } = useTranslation();
@@ -96,6 +100,15 @@ export const SettingsScreen = () => {
   const [isUpdatingEmbeddings, setIsUpdatingEmbeddings] = useState(false);
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
   const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
+  const [automationSheet, setAutomationSheet] = useState<AutomationFeatureKind | null>(null);
+  const { refresh: refreshProEntitlement, isProActive: proEntitlementActive } = useProEntitlement();
+  const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
+
+  useFocusEffect(
+    useCallback(() => {
+      void logAnalyticsEvent('settings_opened');
+    }, []),
+  );
 
   const fetchAiUsage = useCallback(async () => {
     const data = await getAiUsage();
@@ -118,7 +131,6 @@ export const SettingsScreen = () => {
 
   const { adsAllowed } = useAdsAllowed();
   const { claim, loading: claimLoading, error: claimError } = useClaimAiBonus(onBonusSuccess);
-  const { refresh: refreshProEntitlement } = useProEntitlement();
 
   useEffect(() => {
     let cancelled = false;
@@ -271,12 +283,13 @@ export const SettingsScreen = () => {
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <View
-        className="px-4 pb-3"
         style={{
           backgroundColor: color.background.primary,
           borderBottomWidth: 1,
           borderBottomColor: color.border.default,
           paddingTop: insets.top + 16,
+          paddingHorizontal: SCREEN_PADDING,
+          paddingBottom: 12,
         }}
       >
         <Text className="text-2xl font-bold" style={{ color: color.text.primary }}>
@@ -294,9 +307,9 @@ export const SettingsScreen = () => {
       >
         <ScrollView
           contentContainerStyle={{
-            paddingHorizontal: 16,
+            paddingHorizontal: SCREEN_PADDING,
             paddingTop: 24,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: insets.bottom + 28,
           }}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -309,6 +322,7 @@ export const SettingsScreen = () => {
             />
           }
         >
+          <SettingsPlanStatusCard color={color} />
           <AiUsageCard
             usage={aiUsage}
             loading={aiUsageLoading}
@@ -316,6 +330,56 @@ export const SettingsScreen = () => {
             claimLoading={claimLoading}
             claimError={claimError}
           />
+          <SettingsSection title={t('settings.automation')}>
+            <SettingsRow
+              label={t('settings.autoTranscribeOnSave')}
+              leftIcon={<Zap size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+              rightSlot={
+                <View
+                  className="flex-row items-center gap-2"
+                  pointerEvents={automationLocked ? 'none' : 'box-none'}
+                >
+                  <Switch
+                    disabled={automationLocked}
+                    value={automationLocked ? false : autoTranscribeOnSave}
+                    onValueChange={setAutoTranscribeOnSave}
+                    trackColor={{
+                      false: color.background.tertiary,
+                      true: color.accent.success,
+                    }}
+                    thumbColor={color.icon.onAccent}
+                  />
+                </View>
+              }
+              showChevron={false}
+              onPress={automationLocked ? () => setAutomationSheet('autoTranscribe') : undefined}
+              isFirst
+            />
+            <SettingsRow
+              label={t('settings.autoAiAfterTranscription')}
+              leftIcon={<Sparkles size={20} color={color.accent.primary} strokeWidth={1.8} />}
+              rightSlot={
+                <View
+                  className="flex-row items-center gap-2"
+                  pointerEvents={automationLocked ? 'none' : 'box-none'}
+                >
+                  <Switch
+                    disabled={automationLocked}
+                    value={automationLocked ? false : autoAiAfterTranscription}
+                    onValueChange={setAutoAiAfterTranscription}
+                    trackColor={{
+                      false: color.background.tertiary,
+                      true: color.accent.success,
+                    }}
+                    thumbColor={color.icon.onAccent}
+                  />
+                </View>
+              }
+              showChevron={false}
+              onPress={automationLocked ? () => setAutomationSheet('autoAi') : undefined}
+              isLast
+            />
+          </SettingsSection>
           <SettingsSection title={t('settings.aiProcessing')}>
             <SettingsRow
               label={t('settings.aiModel')}
@@ -334,40 +398,6 @@ export const SettingsScreen = () => {
               label={t('settings.aiSettings')}
               leftIcon={<Settings2 size={20} color={color.accent.transcript} strokeWidth={1.8} />}
               onPress={() => navigation.navigate('AiSettings')}
-            />
-            <SettingsRow
-              label={t('settings.autoTranscribeOnSave')}
-              leftIcon={<Zap size={20} color={color.accent.transcript} strokeWidth={1.8} />}
-              rightSlot={
-                <Switch
-                  value={autoTranscribeOnSave}
-                  onValueChange={setAutoTranscribeOnSave}
-                  trackColor={{
-                    false: color.background.tertiary,
-                    true: color.accent.success,
-                  }}
-                  thumbColor={color.icon.onAccent}
-                />
-              }
-              showChevron={false}
-              onPress={undefined}
-            />
-            <SettingsRow
-              label={t('settings.autoAiAfterTranscription')}
-              leftIcon={<Sparkles size={20} color={color.accent.primary} strokeWidth={1.8} />}
-              rightSlot={
-                <Switch
-                  value={autoAiAfterTranscription}
-                  onValueChange={setAutoAiAfterTranscription}
-                  trackColor={{
-                    false: color.background.tertiary,
-                    true: color.accent.success,
-                  }}
-                  thumbColor={color.icon.onAccent}
-                />
-              }
-              showChevron={false}
-              onPress={undefined}
               isLast={!isEmbeddingAvailable()}
             />
             {isEmbeddingAvailable() && (
@@ -539,7 +569,7 @@ export const SettingsScreen = () => {
               isLast
             />
           </SettingsSection>
-          {__DEV__ && (
+          {__DEV__ && isCrashlyticsDebugEnabled() && (
             <SettingsSection title="Debug">
               <SettingsRow
                 label="Test Crashlytics (native crash)"
@@ -557,6 +587,11 @@ export const SettingsScreen = () => {
           <SettingsInternalProSection color={color} />
           <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
+        <AutomationComingSoonSheet
+          visible={automationSheet !== null}
+          feature={automationSheet ?? 'autoTranscribe'}
+          onClose={() => setAutomationSheet(null)}
+        />
       </View>
     </View>
   );

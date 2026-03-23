@@ -6,7 +6,7 @@ import { ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'r
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AIModelId } from '@/entities/settings';
-import { AI_MODELS, useSettingsStore } from '@/entities/settings';
+import { AI_MODELS, getRecommendedAIModelId, useSettingsStore } from '@/entities/settings';
 import { InboxBannerAd } from '@/features/inbox-banner';
 import { getColors, useAppTheme } from '@/shared/config';
 import { useTabletContentMaxWidth } from '@/shared/lib';
@@ -16,12 +16,6 @@ const SPEED_COLOR: Record<string, string> = {
   fast: '#10b981',
   medium: '#f59e0b',
   slow: '#ef4444',
-};
-
-const PROVIDER_COLOR: Record<string, string> = {
-  OpenAI: '#10a37f',
-  Anthropic: '#c96442',
-  Google: '#4285f4',
 };
 
 export const AIModelPickerScreen = () => {
@@ -35,6 +29,7 @@ export const AIModelPickerScreen = () => {
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const setAIModel = useSettingsStore((s) => s.setAIModel);
+  const recommendedAIModelId = getRecommendedAIModelId();
 
   const handleSelect = (id: AIModelId) => {
     setAIModel(id);
@@ -91,26 +86,26 @@ export const AIModelPickerScreen = () => {
                 >
                   <View className="flex-row items-center justify-between">
                     <View className="flex-1 mr-3">
-                      <View className="flex-row items-center gap-2 mb-1">
+                      <View className="mb-1 flex-row flex-wrap items-center gap-2">
                         <Text
                           className="text-[16px] font-semibold"
                           style={{ color: color.text.primary }}
                         >
                           {model.name}
                         </Text>
-                        <View
-                          className="rounded-full px-2 py-0.5"
-                          style={{
-                            backgroundColor: (PROVIDER_COLOR[model.provider] ?? '#6b7280') + '20',
-                          }}
-                        >
-                          <Text
-                            className="text-[12px] font-medium"
-                            style={{ color: PROVIDER_COLOR[model.provider] ?? '#6b7280' }}
+                        {model.id === recommendedAIModelId && (
+                          <View
+                            className="rounded-full px-2 py-0.5"
+                            style={{ backgroundColor: color.status.processing.bg }}
                           >
-                            {model.provider}
-                          </Text>
-                        </View>
+                            <Text
+                              className="text-[12px] font-medium"
+                              style={{ color: color.status.processing.text }}
+                            >
+                              {t('whisper.recommended')}
+                            </Text>
+                          </View>
+                        )}
                       </View>
                       <Text
                         className="text-[14px] leading-5 mb-1.5"

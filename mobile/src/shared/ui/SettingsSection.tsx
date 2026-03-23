@@ -11,9 +11,9 @@ type SettingsSectionProps = {
 export const SettingsSection = ({ title, children }: SettingsSectionProps) => {
   const color = useColors();
   return (
-    <View className="mb-6">
+    <View className="mb-7">
       <Text
-        className="mb-2 px-1 text-xs font-semibold uppercase tracking-widest"
+        className="mb-2.5 px-1 text-xs font-semibold uppercase tracking-widest"
         style={{ color: color.text.secondary }}
       >
         {title}

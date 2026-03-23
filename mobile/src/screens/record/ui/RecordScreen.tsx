@@ -1,7 +1,7 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AppState, StatusBar, Text, View } from 'react-native';
 import KeepAwake from 'react-native-keep-awake';
@@ -11,15 +11,22 @@ import { useAppLockStore } from '@/entities/app-lock';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import {
+  getMaxRecordingMsForTier,
+  shouldApplyAutoTranscribeOnSave,
+} from '@/features/app-storefront';
+import { useProEntitlement } from '@/features/pro-license';
 import { useRecordingDeeplinkStore } from '@/features/recording-deeplink/model/store';
 import { useTranscription } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
 import { formatTime, persistRecordingToDocuments } from '@/shared/lib';
+import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { Waveform } from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';
 import { getAutoTitle } from '../lib/getAutoTitle';
 import { useRecording } from '../model/useRecording';
+import { RecordDurationLimit } from './RecordDurationLimit';
 import { RecordLimitBar } from './RecordLimitBar';
 import { RecordScreenControls } from './RecordScreenControls';
 import { RecordScreenHeader } from './RecordScreenHeader';
@@ -34,6 +41,9 @@ export const RecordScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const addRecord = useRecordStore((s) => s.addRecord);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
+  const { isProActive } = useProEntitlement();
+  const maxRecordingMs = useMemo(() => getMaxRecordingMsForTier(isProActive), [isProActive]);
+  const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(autoTranscribeOnSave, isProActive);
   const { startTranscription } = useTranscription();
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [saveModalReason, setSaveModalReason] = useState<
@@ -59,7 +69,9 @@ export const RecordScreen = () => {
     resumeRecording,
     stopRecording,
   } = useRecording({
+    maxRecordingMs,
     onLimitReached: () => {
+      void logAnalyticsEvent('recording_limit_hit');
       setTitle('');
       setSaveModalReason('limit');
       setShowSaveModal(true);
@@ -95,7 +107,8 @@ export const RecordScreen = () => {
 
         useRecordStore.getState().addRecord(record);
 
-        if (useSettingsStore.getState().autoTranscribeOnSave) {
+        const persist = useSettingsStore.getState().autoTranscribeOnSave;
+        if (shouldApplyAutoTranscribeOnSave(persist, isProActive)) {
           startTranscription(record);
         }
       };
@@ -156,7 +169,7 @@ export const RecordScreen = () => {
         audioPath,
       };
       addRecord(record);
-      if (autoTranscribeOnSave) {
+      if (applyAutoTranscribe) {
         startTranscription(record);
       }
     }
@@ -200,7 +213,7 @@ export const RecordScreen = () => {
     }
     const recordWithPath: VoiceRecord = { ...record, audioPath };
     addRecord(recordWithPath);
-    if (autoTranscribeOnSave) {
+    if (applyAutoTranscribe) {
       startTranscription(recordWithPath);
     }
   };
@@ -218,12 +231,13 @@ export const RecordScreen = () => {
       <View className="flex-1 items-center justify-center gap-9 px-6">
         <View className="items-center gap-3">
           <RecordTimer elapsedMs={elapsedMs} />
-          <RecordLimitBar elapsedMs={elapsedMs} />
+          <RecordDurationLimit elapsedMs={elapsedMs} maxRecordingMs={maxRecordingMs} />
+          <RecordLimitBar elapsedMs={elapsedMs} maxRecordingMs={maxRecordingMs} />
         </View>
         <View className="w-full px-2">
           <Waveform
             isAnimating={state === 'recording' && appState === 'active'}
-            color="rgba(255,255,255,0.65)"
+            color="rgba(255,255,255,0.58)"
           />
         </View>
         <View className="items-center gap-1" style={{ opacity: state === 'paused' ? 0 : 1 }}>
@@ -249,6 +263,7 @@ export const RecordScreen = () => {
         onSave={handleSaveConfirm}
         onSaveComplete={handleSaveComplete}
         allowResume={saveModalReason === 'user'}
+        contextHint={saveModalReason === 'limit' ? t('record.saveAfterLimitHint') : null}
       />
     </View>
   );

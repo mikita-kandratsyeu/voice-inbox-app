@@ -30,9 +30,8 @@
     "activate": "Активировать",
     "activatingTitle": "Активация Pro",
     "activatingSubtitle": "Подождите…",
-    "activeUntil": "Voice Inbox AI Pro · действует до {{date}}",
     "successTitle": "Поздравляем!",
-    "successSubtitle": "Pro активирован: больше лимитов AI и без рекламы.",
+    "successSubtitle": "Pro активирован: больше лимитов ИИ и без рекламы.",
     "successUntil": "Действует до {{date}}",
     "successButton": "Отлично",
     "errors": {
@@ -64,8 +63,8 @@
   "inbox": {
     "adLabel": "Реклама",
     "title": "Входящие",
-    "emptyTitle": "Нет входящих",
-    "emptyDescription": "Здесь будут отображаться ваши входящие голосовые заметки",
+    "emptyTitle": "Сделайте первую запись",
+    "emptyDescription": "Записи и импортированные заметки появятся здесь.",
     "emptyImportHint": "Долгое нажатие на кнопку записи — загрузить аудиофайл",
     "swipeHint": "Свайп влево — в архив, вправо — закрепить",
     "filterSummary": "{{filterName}}: {{count}}",
@@ -103,11 +102,14 @@
     "openOnly": "Только открытые",
     "today": "Сегодня",
     "yesterday": "Вчера",
-    "emptyTitle": "Нет задач",
-    "emptyDescription": "Задачи из заметок отображаются здесь, сгруппированные по дням.",
+    "emptyTitle": "Пока нет задач",
+    "emptyDescription": "Задачи из заметок появятся здесь, сгруппированные по дням.",
     "emptyFiltered": "Нет открытых задач",
     "a11yOpenAllTasks": "Все задачи из заметок",
     "openNote": "Открыть заметку"
+  },
+  "ai": {
+    "limitWeeklyExceeded": "Недельный лимит ИИ исчерпан. Он обновится в дату из Настроек — там же можно получить небольшой бонус за короткую рекламу."
   },
   "search": {
     "placeholder": "Поиск по записям...",
@@ -133,7 +135,12 @@
     "resume": "Продолжить запись",
     "finish": "Завершить запись",
     "recordStopped": "Запись остановлена",
-    "recordStoppedMessage": "Достигнут максимальный лимит записи — 20 минут.",
+    "recordStoppedMessage": "Достигнут лимит длины ({{maxMinutes}} мин). Аудио в порядке — сохраните, когда будете готовы.",
+    "limitRemainingCalm": "До {{maxMinutes}} мин на заметку · осталось {{minutes}} мин {{seconds}} сек",
+    "limitSoftWarning": "Почти лимит — осталось {{minutes}} мин {{seconds}} сек",
+    "limitFinalWarning": "Завершаем — осталось {{seconds}} сек",
+    "limitProgress": "{{current}} / {{max}}",
+    "saveAfterLimitHint": "Более длинные записи появятся в одном из следующих обновлений.",
     "appLockHint": "При сворачивании приложения запись будет остановлена и сохранена.",
     "noAppLockHint": "При сворачивании приложения запись продолжится в фоне.",
     "saveModalTitle": "Сохранить запись",
@@ -179,8 +186,8 @@
     "summaryError": "Не удалось создать сводку",
     "summaryErrorBanner": "Ошибка при обновлении. Ниже — ранее созданная сводка.",
     "summaryRetry": "Повторить",
-    "tasksNotExtracted": "Задачи не извлечены",
-    "tasksNotExtractedDesc": "Нажмите кнопку ниже, чтобы\nавтоматически найти задачи с помощью ИИ.",
+    "tasksNotExtracted": "Пока нет задач",
+    "tasksNotExtractedDesc": "Найдите задачи с ИИ или добавьте вручную.",
     "addTaskPlaceholder": "Новая задача",
     "tasksManualHint": "Или добавьте задачу вручную",
     "tasksManualWithoutTranscriptHint": "Можно добавить задачи и без транскрипта.",
@@ -272,9 +279,10 @@
     "aiUsage": {
       "title": "Лимит ИИ обработки",
       "subtitle": "Еженедельный лимит запросов на сводки и задачи",
+      "a11yProgress": "Использовано {{used}} из {{limit}} ИИ-запросов на этой неделе",
       "used": "{{used}} / {{limit}}",
       "remaining": "Осталось: {{count}}",
-      "exhausted": "Лимит исчерпан",
+      "exhausted": "Недельная квота использована",
       "resetAt": "Сброс: {{date}}",
       "loading": "Загрузка...",
       "unavailable": "—",
@@ -296,6 +304,7 @@
     "exporting": "Экспорт...",
     "import": "Импорт данных",
     "importing": "Импорт...",
+    "automation": "Автоматизация",
     "aiProcessing": "ИИ обработка",
     "aiModel": "ИИ модель",
     "aiSettings": "Настройки ИИ",
@@ -338,7 +347,22 @@
     "permissionNotDetermined": "Не задано",
     "permissionOpenSettings": "Открыть настройки",
     "internalBuildSection": "Внутренняя сборка",
-    "activatePro": "Активировать Pro"
+    "activatePro": "Активировать Pro",
+    "planStatus": {
+      "freeTitle": "Бесплатный план",
+      "freeSubtitleSoon": "Расширенный Pro с автоматизацией скоро появится.",
+      "freeSubtitle": "Вы на бесплатном плане.",
+      "proTitle": "Pro",
+      "proSubtitle": "Спасибо за поддержку приложения.",
+      "proActiveUntil": "Активен до {{date}}"
+    },
+    "automationSoon": {
+      "badge": "Скоро",
+      "autoTranscribeTitle": "Автотранскрипция",
+      "autoTranscribeBody": "Автоматически расшифровывать новые заметки после сохранения или импорта. Это будет частью Pro при запуске подписок — сейчас можно вручную запустить транскрипцию в заметке.",
+      "autoAiTitle": "Авто ИИ после транскрипции",
+      "autoAiBody": "Сводка и задачи сразу после готовой расшифровки. Запланировано как функция Pro. ИИ по-прежнему доступен вручную в каждой заметке."
+    }
   },
   "appearance": {
     "title": "Внешний вид",
@@ -597,7 +621,7 @@
     "badgeReactNative": "React Native",
     "badgeWhisper": "Whisper",
     "badgeOpenRouter": "OpenRouter",
-    "badgeAi": "AI",
+    "badgeAi": "ИИ",
     "copyright": "© {{ year }} Voice Inbox AI. Все права защищены."
   },
   "support": {

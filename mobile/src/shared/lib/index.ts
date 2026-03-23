@@ -5,7 +5,7 @@ export { clearCache, getStorageStats, storage } from './async-storage';
 export type { AudioChunk } from './audio';
 export { splitAudioIntoChunks } from './audio';
 export { formatRelativeTime, formatShortDate } from './date';
-export { formatTime, formatTimeWithMs } from './date';
+export { formatDurationMmSs, formatTime, formatTimeWithMs } from './date';
 export type { Database } from './db/client';
 export { getDB, initDB } from './db/client';
 export type { RecordInsert, RecordRow } from './db/schema';

@@ -11,8 +11,12 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import {
+  getMaxRecordingMsForTier,
+  shouldApplyAutoTranscribeOnSave,
+} from '@/features/app-storefront';
+import { useProEntitlement } from '@/features/pro-license';
 import { useTranscription } from '@/features/transcription';
-import { MAX_RECORDING_MS } from '@/screens/record/config';
 import { generateRecordId } from '@/screens/record/lib/generateRecordId';
 import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
 import { hapticMedium, hapticSuccess } from '@/shared/lib';
@@ -27,6 +31,9 @@ export function useImportAudioFile() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const addRecord = useRecordStore((s) => s.addRecord);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
+  const { isProActive } = useProEntitlement();
+  const maxImportMs = getMaxRecordingMsForTier(isProActive);
+  const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(autoTranscribeOnSave, isProActive);
   const { startTranscription } = useTranscription();
   const [isImporting, setIsImporting] = useState(false);
   const [importPhase, setImportPhase] = useState<ImportAudioPhase | null>(null);
@@ -109,16 +116,16 @@ export function useImportAudioFile() {
         }
       }
       if (durationMs == null || durationMs <= 0) {
-        durationMs = MAX_RECORDING_MS;
+        durationMs = maxImportMs;
         if (__DEV__) {
           console.warn('[importAudioFile] Could not get duration, using max');
         }
       }
 
-      if (durationMs > MAX_RECORDING_MS) {
+      if (durationMs > maxImportMs) {
         Alert.alert(
           t('importAudio.maxDurationTitle'),
-          t('importAudio.maxDurationMessage', { max: MAX_RECORDING_MS / (60 * 1000) }),
+          t('importAudio.maxDurationMessage', { max: maxImportMs / (60 * 1000) }),
           [{ text: t('common.ok') }],
         );
         try {
@@ -153,7 +160,7 @@ export function useImportAudioFile() {
       await addRecord(record);
       hapticSuccess();
 
-      if (autoTranscribeOnSave) {
+      if (applyAutoTranscribe) {
         startTranscription(record);
       }
 
@@ -171,7 +178,7 @@ export function useImportAudioFile() {
       setIsImporting(false);
       setImportPhase(null);
     }
-  }, [isImporting, t, addRecord, autoTranscribeOnSave, startTranscription, navigation]);
+  }, [isImporting, t, addRecord, applyAutoTranscribe, maxImportMs, startTranscription, navigation]);
 
   return { importAudioFile, isImporting, importPhase };
 }

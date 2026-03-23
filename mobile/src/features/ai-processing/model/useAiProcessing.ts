@@ -8,6 +8,8 @@ import { useSettingsStore } from '@/entities/settings';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
 import { pollAiMessage, postAiMessage } from '@/shared/lib/ai-api';
+import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
+import { logAnalyticsEvent } from '@/shared/lib/analytics';
 
 export const useAiProcessing = () => {
   const {
@@ -56,6 +58,7 @@ export const useAiProcessing = () => {
 
       const requestId = `${baseId}-${Date.now()}`;
       inFlightRef.current.add(baseId);
+      void logAnalyticsEvent('ai_action_started', { action: 'summary_tasks' });
 
       try {
         const postResult = await postAiMessage({
@@ -72,7 +75,7 @@ export const useAiProcessing = () => {
         if (!postResult.ok) {
           const errorMsg =
             'limitExceeded' in postResult && postResult.limitExceeded
-              ? 'Limit exceeded'
+              ? getAiWeeklyLimitExceededMessage()
               : postResult.error;
           if (__DEV__)
             console.warn('[AI] processRecord: postAiMessage failed', {
@@ -82,6 +85,10 @@ export const useAiProcessing = () => {
             });
           setSummaryStatus(record.id, 'error');
           setTasksStatus(record.id, 'error');
+          void logAnalyticsEvent('ai_action_failed', {
+            action: 'summary_tasks',
+            reason: 'limitExceeded' in postResult && postResult.limitExceeded ? 'limit' : 'post',
+          });
           return;
         }
 
@@ -96,6 +103,10 @@ export const useAiProcessing = () => {
             });
           setSummaryStatus(record.id, 'error');
           setTasksStatus(record.id, 'error');
+          void logAnalyticsEvent('ai_action_failed', {
+            action: 'summary_tasks',
+            reason: 'poll',
+          });
           return;
         }
 
@@ -153,6 +164,7 @@ export const useAiProcessing = () => {
           summary,
           keyPhrases: keyPhrases ?? [],
         });
+        void logAnalyticsEvent('ai_action_success', { action: 'summary_tasks' });
       } catch (err) {
         if (__DEV__)
           console.warn('[AI] processRecord: unexpected error', {
@@ -161,6 +173,10 @@ export const useAiProcessing = () => {
           });
         setSummaryStatus(record.id, 'error');
         setTasksStatus(record.id, 'error');
+        void logAnalyticsEvent('ai_action_failed', {
+          action: 'summary_tasks',
+          reason: 'exception',
+        });
       } finally {
         inFlightRef.current.delete(baseId);
       }
