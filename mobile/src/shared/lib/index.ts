@@ -34,7 +34,15 @@ export {
   modalKeyboardBehavior,
   PLATFORM_OS,
 } from './platform';
-export { ensureRecordingsDir, persistRecordingToDocuments, RECORDINGS_DIR } from './recordings';
+export {
+  audioPathFromDbValue,
+  audioPathToDbValue,
+  ensureRecordingsDir,
+  getRecordingsRelativePath,
+  persistRecordingToDocuments,
+  RECORDINGS_DIR,
+  resolveAudioPath,
+} from './recordings';
 export { isArray, isNumber, isRecord, isString, isStringArrayItem } from './type-guards';
 export { useAiModelName } from './useAiModelName';
 export { useAiTabBannerDismiss } from './useAiTabBannerDismiss';

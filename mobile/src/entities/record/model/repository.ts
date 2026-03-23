@@ -1,6 +1,12 @@
 import { desc, eq } from 'drizzle-orm';
 
-import { getDB, recordsTable } from '@/shared/lib';
+import {
+  audioPathFromDbValue,
+  audioPathToDbValue,
+  getDB,
+  getRecordingsRelativePath,
+  recordsTable,
+} from '@/shared/lib';
 
 import type {
   RecordClassification,
@@ -65,7 +71,7 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
     translatedTranscript: row.translatedTranscript ?? undefined,
     translationLanguage: row.translationLanguage ?? undefined,
-    audioPath: row.audioPath ?? undefined,
+    audioPath: audioPathFromDbValue(row.audioPath),
     embedding: row.embedding ? (JSON.parse(row.embedding) as number[]) : undefined,
     summaryStatus: summary ? ('done' as RecordingStatus) : undefined,
     tasksStatus: tasks.length > 0 ? ('done' as RecordingStatus) : undefined,
@@ -81,6 +87,16 @@ export const recordRepository = {
       .from(recordsTable)
       .orderBy(desc(recordsTable.isPinned), desc(recordsTable.createdAt));
     logDb('getAll', { count: rows.length });
+
+    for (const row of rows) {
+      if (!row.audioPath) continue;
+      const relative = getRecordingsRelativePath(row.audioPath);
+      if (!relative) continue;
+      if (row.audioPath === relative) continue;
+
+      await db.update(recordsTable).set({ audioPath: relative }).where(eq(recordsTable.id, row.id));
+    }
+
     return rows.map(toRecord);
   },
 
@@ -110,7 +126,7 @@ export const recordRepository = {
         nextSteps: JSON.stringify(record.nextSteps ?? []),
         translatedTranscript: record.translatedTranscript ?? null,
         translationLanguage: record.translationLanguage ?? null,
-        audioPath: record.audioPath ?? null,
+        audioPath: audioPathToDbValue(record.audioPath),
         embedding: record.embedding ? JSON.stringify(record.embedding) : null,
       })
       .onConflictDoNothing();

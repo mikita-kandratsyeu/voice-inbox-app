@@ -2,6 +2,46 @@ import RNFS from 'react-native-fs';
 
 export const RECORDINGS_DIR = `${RNFS.DocumentDirectoryPath}/recordings`;
 
+const RECORDINGS_RELATIVE_PREFIX = 'recordings/';
+const RECORDINGS_ABS_MARKER = '/recordings/';
+
+function normalizeAudioPath(audioPath: string): string {
+  return audioPath.startsWith('file://') ? audioPath.slice(7) : audioPath;
+}
+
+export function getRecordingsRelativePath(audioPath: string): string | null {
+  const normalized = normalizeAudioPath(audioPath);
+  if (normalized.startsWith(RECORDINGS_RELATIVE_PREFIX)) {
+    return normalized;
+  }
+
+  const idx = normalized.lastIndexOf(RECORDINGS_ABS_MARKER);
+  if (idx === -1) return null;
+
+  return normalized.slice(idx + 1);
+}
+
+export function resolveAudioPath(audioPath: string): string {
+  const normalized = normalizeAudioPath(audioPath);
+
+  const relative = getRecordingsRelativePath(normalized);
+  if (relative) {
+    return `${RNFS.DocumentDirectoryPath}/${relative}`;
+  }
+
+  return normalized;
+}
+
+export function audioPathToDbValue(audioPath: string | null | undefined): string | null {
+  if (!audioPath?.trim()) return null;
+  return getRecordingsRelativePath(audioPath) ?? audioPath;
+}
+
+export function audioPathFromDbValue(audioPath: string | null | undefined): string | undefined {
+  if (!audioPath?.trim()) return undefined;
+  return resolveAudioPath(audioPath);
+}
+
 export async function ensureRecordingsDir(): Promise<void> {
   const exists = await RNFS.exists(RECORDINGS_DIR);
   if (!exists) {
