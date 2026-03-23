@@ -427,8 +427,10 @@
   "appLock": {
     "title": "Блокировка приложения",
     "settings": "Настройки",
-    "enterPin": "Введите PIN-код для входа",
+    "enterPin": "Введите {{digits}}-значный PIN-код для входа",
     "unlockError": "Не удалось разблокировать. Попробуйте ввести PIN-код.",
+    "tryAgainIn": "Попробуйте снова через {{seconds}} сек",
+    "biometricPromptTitle": "Разблокируйте Voice Inbox AI",
     "disableTitle": "Отключить блокировку",
     "disableMessage": "Приложение больше не будет запрашивать PIN при входе.",
     "disable": "Отключить",
@@ -442,8 +444,10 @@
       "Iris": "Радужная оболочка",
       "OpticID": "Optic ID"
     },
-    "setPinPrompt": "Установите 4-значный PIN-код для защиты приложения",
-    "confirmPin": "Подтвердите PIN-код"
+    "setPinPrompt": "Установите {{digits}}-значный PIN-код для защиты приложения",
+    "confirmPin": "Подтвердите {{digits}}-значный PIN-код",
+    "pinLengthTitle": "Длина PIN-кода",
+    "pinLengthOption": "{{digits}}-значный"
   },
   "storage": {
     "title": "Офлайн хранилище",

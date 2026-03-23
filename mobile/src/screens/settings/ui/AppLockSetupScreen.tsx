@@ -2,10 +2,11 @@ import { useNavigation } from '@react-navigation/native';
 import { Fingerprint, ScanFace } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Switch, Text, View } from 'react-native';
+import { Alert, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppLockStore } from '@/entities/app-lock';
+import { PIN_LENGTH_OPTIONS } from '@/entities/app-lock';
 import { PinInput } from '@/features/app-lock/ui/PinInput';
 import { useColors } from '@/shared/config';
 import { useTabletContentMaxWidth } from '@/shared/lib';
@@ -28,8 +29,10 @@ export const AppLockSetupScreen = () => {
   const {
     isEnabled,
     useBiometrics,
+    pinLength,
     setEnabled,
     setUseBiometrics,
+    setPinLength,
     setPin: savePin,
     checkBiometryAvailable,
     biometryType,
@@ -41,12 +44,12 @@ export const AppLockSetupScreen = () => {
 
   const handleDigit = useCallback(
     async (digit: string) => {
-      if (pin.length >= 4) return;
+      if (pin.length >= pinLength) return;
 
       const next = pin + digit;
       setPin(next);
 
-      if (next.length === 4) {
+      if (next.length === pinLength) {
         if (step === 'initial') {
           setInitialPin(next);
           setStep('confirm');
@@ -70,7 +73,7 @@ export const AppLockSetupScreen = () => {
         }
       }
     },
-    [pin, step, initialPin, savePin],
+    [pin, pinLength, step, initialPin, savePin],
   );
 
   const handleBackspace = useCallback(() => {
@@ -145,7 +148,7 @@ export const AppLockSetupScreen = () => {
             style={{ paddingTop: 24, paddingBottom: insets.bottom + 24 }}
           >
             <Text className="mb-6 text-center text-[16px]" style={{ color: color.text.secondary }}>
-              {t('appLock.setPinPrompt')}
+              {t('appLock.setPinPrompt', { digits: pinLength })}
             </Text>
 
             <View className="mb-6 min-h-[52px] justify-center">
@@ -176,9 +179,50 @@ export const AppLockSetupScreen = () => {
                 </View>
               )}
             </View>
+            <View className="mb-6">
+              <Text
+                className="mb-2 text-center text-[14px]"
+                style={{ color: color.text.secondary }}
+              >
+                {t('appLock.pinLengthTitle')}
+              </Text>
+              <View className="flex-row items-center justify-center gap-2">
+                {PIN_LENGTH_OPTIONS.map((length) => {
+                  const selected = pinLength === length;
+                  return (
+                    <TouchableOpacity
+                      key={length}
+                      onPress={() => {
+                        if (step !== 'initial') return;
+                        setPin('');
+                        setInitialPin('');
+                        setPinLength(length);
+                      }}
+                      activeOpacity={0.8}
+                      className="rounded-full px-4 py-2"
+                      style={{
+                        backgroundColor: selected
+                          ? color.accent.primary
+                          : color.background.tertiary,
+                      }}
+                    >
+                      <Text
+                        className="text-[13px] font-medium"
+                        style={{
+                          color: selected ? color.icon.onAccent : color.text.secondary,
+                        }}
+                      >
+                        {t('appLock.pinLengthOption', { digits: length })}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
 
             <PinInput
               pin={pin}
+              pinLength={pinLength}
               color={color}
               onDigit={handleDigit}
               onBackspace={handleBackspace}
@@ -190,7 +234,7 @@ export const AppLockSetupScreen = () => {
             <View className="mt-4 h-8 items-center justify-center">
               {step === 'confirm' && (
                 <Text className="text-center text-sm" style={{ color: color.text.secondary }}>
-                  {t('appLock.confirmPin')}
+                  {t('appLock.confirmPin', { digits: pinLength })}
                 </Text>
               )}
             </View>

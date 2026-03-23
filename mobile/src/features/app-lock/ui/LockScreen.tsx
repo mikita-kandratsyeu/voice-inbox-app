@@ -1,6 +1,5 @@
-import { useFocusEffect } from '@react-navigation/native';
 import { Fingerprint, ScanFace } from 'lucide-react-native';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,6 +9,9 @@ import { useColors } from '@/shared/config';
 
 import { PinInput } from './PinInput';
 
+const BIOMETRIC_PROMPT_DEBOUNCE_MS = 1500;
+const LOCKOUT_STEPS_MS = [5000, 15000, 60000] as const;
+
 export const LockScreen = () => {
   const { t } = useTranslation();
   const color = useColors();
@@ -17,50 +19,122 @@ export const LockScreen = () => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+  const [lockoutNow, setLockoutNow] = useState(Date.now());
+  const failedAttemptsRef = useRef(0);
+  const isBiometricPromptOpenRef = useRef(false);
+  const lastBiometricPromptAtRef = useRef(0);
+  const autoBiometricTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pinRef = useRef(pin);
+  pinRef.current = pin;
 
   const {
     unlock,
     verifyPin,
     unlockWithBiometrics,
     useBiometrics,
+    pinLength,
     biometryType,
     checkBiometryAvailable,
   } = useAppLockStore();
 
-  useFocusEffect(
-    useCallback(() => {
-      checkBiometryAvailable();
-      if (useBiometrics) {
-        unlockWithBiometrics().then((ok) => {
-          if (ok) unlock();
-        });
+  const runBiometricUnlock = useCallback(async () => {
+    const now = Date.now();
+    if (isBiometricPromptOpenRef.current) {
+      return false;
+    }
+    if (now - lastBiometricPromptAtRef.current < BIOMETRIC_PROMPT_DEBOUNCE_MS) {
+      return false;
+    }
+
+    isBiometricPromptOpenRef.current = true;
+    lastBiometricPromptAtRef.current = now;
+    try {
+      return await unlockWithBiometrics();
+    } finally {
+      isBiometricPromptOpenRef.current = false;
+    }
+  }, [unlockWithBiometrics]);
+
+  React.useEffect(() => {
+    void checkBiometryAvailable();
+
+    if (!useBiometrics) {
+      return;
+    }
+
+    autoBiometricTimerRef.current = setTimeout(() => {
+      if (pinRef.current.length > 0) {
+        return;
       }
-    }, [checkBiometryAvailable, useBiometrics, unlockWithBiometrics, unlock]),
-  );
+
+      void runBiometricUnlock().then((ok) => {
+        if (ok) {
+          unlock();
+        }
+      });
+    }, 350);
+
+    return () => {
+      if (autoBiometricTimerRef.current) {
+        clearTimeout(autoBiometricTimerRef.current);
+        autoBiometricTimerRef.current = null;
+      }
+    };
+  }, [checkBiometryAvailable, runBiometricUnlock, unlock, useBiometrics]);
+
+  const isLockedOut = lockoutUntil != null && lockoutUntil > lockoutNow;
+  const remainingLockoutSeconds = isLockedOut
+    ? Math.max(1, Math.ceil((lockoutUntil - lockoutNow) / 1000))
+    : 0;
+
+  React.useEffect(() => {
+    if (!isLockedOut) {
+      return;
+    }
+    const timer = setInterval(() => {
+      setLockoutNow(Date.now());
+    }, 250);
+    return () => clearInterval(timer);
+  }, [isLockedOut]);
+
+  React.useEffect(() => {
+    if (!isLockedOut && lockoutUntil != null) {
+      setLockoutUntil(null);
+    }
+  }, [isLockedOut, lockoutUntil]);
 
   const handleDigit = useCallback(
     async (digit: string) => {
-      if (pin.length >= 4) {
+      if (isLockedOut || pin.length >= pinLength) {
         return;
       }
 
       const next = pin + digit;
       setPin(next);
 
-      if (next.length === 4) {
+      if (next.length === pinLength) {
         const ok = await verifyPin(next);
 
         if (ok) {
           setError(false);
-          setSuccess(true);
+          setSuccess(false);
+          setPin('');
+          failedAttemptsRef.current = 0;
+          setLockoutUntil(null);
+          unlock();
         } else {
+          failedAttemptsRef.current += 1;
           setError(true);
           setPin('');
+          const lockoutMs =
+            LOCKOUT_STEPS_MS[Math.min(failedAttemptsRef.current - 1, LOCKOUT_STEPS_MS.length - 1)];
+          setLockoutUntil(Date.now() + lockoutMs);
           setTimeout(() => setError(false), 500);
         }
       }
     },
-    [pin, verifyPin],
+    [isLockedOut, pin, pinLength, verifyPin, unlock],
   );
 
   const handleBackspace = useCallback(() => {
@@ -68,15 +142,14 @@ export const LockScreen = () => {
   }, []);
 
   const handleBiometricPress = useCallback(async () => {
-    const ok = await unlockWithBiometrics();
+    const ok = await runBiometricUnlock();
 
     if (ok) {
       unlock();
     } else {
       Alert.alert(t('common.error'), t('appLock.unlockError'));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unlockWithBiometrics, unlock]);
+  }, [runBiometricUnlock, t, unlock]);
 
   const isFaceBiometry =
     biometryType === 'FaceID' || biometryType === 'Face' || biometryType === 'OpticID';
@@ -92,17 +165,22 @@ export const LockScreen = () => {
       }}
     >
       <Text className="mb-8 text-center text-[16px]" style={{ color: color.text.secondary }}>
-        {t('appLock.enterPin')}
+        {t('appLock.enterPin', { digits: pinLength })}
       </Text>
+      {isLockedOut && (
+        <Text className="mb-4 text-center text-[14px]" style={{ color: color.accent.delete }}>
+          {t('appLock.tryAgainIn', { seconds: remainingLockoutSeconds })}
+        </Text>
+      )}
 
       <PinInput
         pin={pin}
+        pinLength={pinLength}
         color={color}
         onDigit={handleDigit}
         onBackspace={handleBackspace}
         error={error}
         success={success}
-        onSuccessAnimationComplete={unlock}
         bottomLeftSlot={
           useBiometrics &&
           biometryType && (
@@ -111,6 +189,7 @@ export const LockScreen = () => {
               style={{ backgroundColor: color.background.tertiary }}
               onPress={handleBiometricPress}
               activeOpacity={0.7}
+              disabled={isLockedOut}
             >
               <BioIcon size={28} color={color.accent.success} strokeWidth={1.8} />
             </TouchableOpacity>

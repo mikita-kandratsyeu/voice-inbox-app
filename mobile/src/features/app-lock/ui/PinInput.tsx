@@ -8,12 +8,13 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 
-import { PIN_LENGTH } from '@/entities/app-lock';
+import { DEFAULT_PIN_LENGTH } from '@/entities/app-lock';
 import type { Colors } from '@/shared/config';
 import { hapticError, hapticSelection, hapticSuccess } from '@/shared/lib';
 
 type PinInputProps = {
   pin: string;
+  pinLength?: number;
   color: Colors;
   onDigit: (digit: string) => void;
   onBackspace: () => void;
@@ -118,6 +119,7 @@ const AnimatedDot = ({
 
 export const PinInput = ({
   pin,
+  pinLength = DEFAULT_PIN_LENGTH,
   color,
   onDigit,
   onBackspace,
@@ -126,7 +128,7 @@ export const PinInput = ({
   onSuccessAnimationComplete,
   bottomLeftSlot,
 }: PinInputProps) => {
-  const dots = Array.from({ length: PIN_LENGTH }, (_, i) => i < pin.length || success);
+  const dots = Array.from({ length: pinLength }, (_, i) => i < pin.length || success);
 
   useEffect(() => {
     if (success) {

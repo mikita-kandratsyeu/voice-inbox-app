@@ -427,8 +427,10 @@
   "appLock": {
     "title": "App lock",
     "settings": "Settings",
-    "enterPin": "Enter PIN to unlock",
+    "enterPin": "Enter {{digits}}-digit PIN to unlock",
     "unlockError": "Failed to unlock. Try entering your PIN.",
+    "tryAgainIn": "Try again in {{seconds}} sec",
+    "biometricPromptTitle": "Unlock Voice Inbox AI",
     "disableTitle": "Disable lock",
     "disableMessage": "The app will no longer ask for PIN on launch.",
     "disable": "Disable",
@@ -442,8 +444,10 @@
       "Iris": "Iris",
       "OpticID": "Optic ID"
     },
-    "setPinPrompt": "Set a 4-digit PIN to protect the app",
-    "confirmPin": "Confirm PIN"
+    "setPinPrompt": "Set a {{digits}}-digit PIN to protect the app",
+    "confirmPin": "Confirm {{digits}}-digit PIN",
+    "pinLengthTitle": "PIN length",
+    "pinLengthOption": "{{digits}} digits"
   },
   "storage": {
     "title": "Offline storage",

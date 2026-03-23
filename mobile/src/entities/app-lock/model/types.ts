@@ -2,9 +2,11 @@ export type AppLockState = {
   isEnabled: boolean;
   useBiometrics: boolean;
   isLocked: boolean;
+  pinLength: number;
   biometryType: BiometryType | null;
   setEnabled: (enabled: boolean) => Promise<void>;
   setUseBiometrics: (use: boolean) => Promise<void>;
+  setPinLength: (length: number) => void;
   setLocked: (locked: boolean) => void;
   setPin: (pin: string) => Promise<boolean>;
   verifyPin: (pin: string) => Promise<boolean>;

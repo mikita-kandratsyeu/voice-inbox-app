@@ -1,5 +1,7 @@
 import * as Keychain from 'react-native-keychain';
 
+import { i18n } from '@/shared/lib/i18n';
+
 import { hashPin, needsPinHashMigration, verifyPinHash } from './hashPin';
 
 const SERVICE_PIN = 'voice-inbox-app-lock-pin';
@@ -60,8 +62,8 @@ export const verifyBiometric = async (): Promise<boolean> => {
       service: SERVICE_BIOMETRIC,
       accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_CURRENT_SET,
       authenticationPrompt: {
-        title: 'Unlock Voice Inbox AI',
-        cancel: 'Cancel',
+        title: i18n.t('appLock.biometricPromptTitle'),
+        cancel: i18n.t('common.cancel'),
       },
     });
 

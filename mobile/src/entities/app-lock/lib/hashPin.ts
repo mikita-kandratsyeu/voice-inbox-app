@@ -6,6 +6,34 @@ const SALT_BYTES = 16;
 const KEY_BYTES = 32;
 const DIGEST = 'sha256';
 
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+function parseByteList(part: string): Uint8Array | null {
+  if (!part.includes(',')) return null;
+  const numbers = part
+    .split(',')
+    .map((v) => Number(v.trim()))
+    .filter((v) => Number.isInteger(v) && v >= 0 && v <= 255);
+
+  if (numbers.length === 0) return null;
+  return Uint8Array.from(numbers);
+}
+
+function base64ToBytes(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const out = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) {
+    out[i] = binary.charCodeAt(i);
+  }
+  return out;
+}
+
 function legacyHashPin(pin: string): string {
   let hash = 0;
 
@@ -18,7 +46,7 @@ function legacyHashPin(pin: string): string {
   return `pin_${Math.abs(hash).toString(36)}`;
 }
 
-function parseStoredPinHash(stored: string): { salt: Buffer; expected: Buffer } | null {
+function parseStoredPinHash(stored: string): { salt: Uint8Array; expected: Uint8Array } | null {
   if (!stored.startsWith(`${VERSION_PREFIX}$`)) {
     return null;
   }
@@ -29,8 +57,22 @@ function parseStoredPinHash(stored: string): { salt: Buffer; expected: Buffer } 
   }
 
   try {
-    const salt = Buffer.from(parts[1], 'base64');
-    const expected = Buffer.from(parts[2], 'base64');
+    let salt: Uint8Array = base64ToBytes(parts[1]);
+    let expected: Uint8Array = base64ToBytes(parts[2]);
+
+    if (salt.length !== SALT_BYTES) {
+      const parsed = parseByteList(parts[1]);
+      if (parsed) {
+        salt = parsed;
+      }
+    }
+    if (expected.length !== KEY_BYTES) {
+      const parsed = parseByteList(parts[2]);
+      if (parsed) {
+        expected = parsed;
+      }
+    }
+
     if (salt.length !== SALT_BYTES || expected.length !== KEY_BYTES) {
       return null;
     }
@@ -43,7 +85,7 @@ function parseStoredPinHash(stored: string): { salt: Buffer; expected: Buffer } 
 export function hashPin(pin: string): string {
   const salt = QuickCrypto.randomBytes(SALT_BYTES);
   const derived = QuickCrypto.pbkdf2Sync(pin, salt, PBKDF2_ITERATIONS, KEY_BYTES, DIGEST);
-  return `${VERSION_PREFIX}$${salt.toString('base64')}$${derived.toString('base64')}`;
+  return `${VERSION_PREFIX}$${bytesToBase64(salt)}$${bytesToBase64(derived)}`;
 }
 
 export function verifyPinHash(stored: string, pin: string): boolean {
@@ -57,5 +99,14 @@ export function verifyPinHash(stored: string, pin: string): boolean {
 }
 
 export function needsPinHashMigration(stored: string): boolean {
-  return !stored.startsWith(`${VERSION_PREFIX}$`);
+  if (!stored.startsWith(`${VERSION_PREFIX}$`)) {
+    return true;
+  }
+
+  const parts = stored.split('$');
+  if (parts.length !== 3) {
+    return true;
+  }
+
+  return parts[1].includes(',') || parts[2].includes(',');
 }
