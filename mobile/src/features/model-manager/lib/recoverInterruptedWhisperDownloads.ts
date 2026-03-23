@@ -2,6 +2,7 @@ import type { WhisperModelId, WhisperModelStatus } from '@/entities/settings/mod
 import { storage } from '@/shared/lib/async-storage';
 
 import { deleteWhisperModel } from './deleteWhisperModel';
+import { stopWhisperDownloadLiveActivity } from './downloadLiveActivity';
 
 const WHISPER_STATUSES_STORAGE_KEY = 'settings.whisperStatuses';
 
@@ -30,6 +31,7 @@ const recoverInterruptedWhisperDownloads = (): void => {
     storage.set(WHISPER_STATUSES_STORAGE_KEY, JSON.stringify(next));
 
     queueMicrotask(() => {
+      void stopWhisperDownloadLiveActivity().catch(() => {});
       void Promise.all(interrupted.map((modelId) => deleteWhisperModel(modelId))).catch(() => {});
     });
   } catch {
