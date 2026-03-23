@@ -19,6 +19,12 @@ import { AutomationComingSoonSheet } from './AutomationComingSoonSheet';
 const APP_LANGUAGES: AppLanguage[] = ['system', 'en', 'ru'];
 const APP_THEMES: AppTheme[] = ['system', 'light', 'dark'];
 
+const ACCENT_SWATCH_SIZE = 44;
+const ACCENT_SWATCH_RING = 3;
+const ACCENT_SWATCH_FILL = 36;
+const ACCENT_SWATCH_FILL_SELECTED = ACCENT_SWATCH_SIZE - 2 * ACCENT_SWATCH_RING - 4;
+const ACCENT_SWATCH_PAD_UNSELECTED = (ACCENT_SWATCH_SIZE - ACCENT_SWATCH_FILL) / 2;
+
 type PickerRowProps<T extends string> = {
   options: T[];
   selected: T;
@@ -175,6 +181,7 @@ export const AppearanceScreen = () => {
               >
                 {ACCENT_COLOR_SWATCHES.map(({ id, previewHex }) => {
                   const selected = accentColorId === id;
+                  const fillSize = selected ? ACCENT_SWATCH_FILL_SELECTED : ACCENT_SWATCH_FILL;
                   return (
                     <TouchableOpacity
                       key={id}
@@ -183,17 +190,36 @@ export const AppearanceScreen = () => {
                       accessibilityState={{ selected }}
                       onPress={() => handleAccentSelect(id)}
                       activeOpacity={0.75}
-                      className="h-11 w-11 items-center justify-center rounded-full"
                       style={{
-                        borderWidth: selected ? 3 : 0,
-                        borderColor: selected ? color.accent.primary : 'transparent',
-                        padding: selected ? 0 : 3,
+                        width: ACCENT_SWATCH_SIZE,
+                        height: ACCENT_SWATCH_SIZE,
+                        alignItems: 'center',
+                        justifyContent: 'center',
                       }}
                     >
                       <View
-                        className="h-9 w-9 rounded-full"
-                        style={{ backgroundColor: previewHex }}
-                      />
+                        style={{
+                          width: ACCENT_SWATCH_SIZE,
+                          height: ACCENT_SWATCH_SIZE,
+                          borderRadius: ACCENT_SWATCH_SIZE / 2,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderWidth: selected ? ACCENT_SWATCH_RING : 0,
+                          borderColor: selected ? color.accent.primary : 'transparent',
+                          padding: selected ? 0 : ACCENT_SWATCH_PAD_UNSELECTED,
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: fillSize,
+                            height: fillSize,
+                            borderRadius: fillSize / 2,
+                            backgroundColor: previewHex,
+                            borderWidth: 1,
+                            borderColor: color.border.default,
+                          }}
+                        />
+                      </View>
                     </TouchableOpacity>
                   );
                 })}

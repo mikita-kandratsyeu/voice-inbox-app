@@ -138,39 +138,15 @@ export const RecordScreen = () => {
   );
 
   const handleClose = async () => {
-    const wasRecording = state === 'recording' || state === 'paused';
-    const path = await stopRecording();
-
-    if (wasRecording && path) {
-      const recordId = generateRecordId();
-      const resolvedPath = path.startsWith('file://') ? path.slice(7) : path;
-      let audioPath: string;
-      try {
-        audioPath = await persistRecordingToDocuments(resolvedPath, recordId);
-      } catch {
-        audioPath = resolvedPath;
-      }
-      const record: VoiceRecord = {
-        id: recordId,
-        title: getAutoTitle(),
-        transcript: '',
-        transcriptSegments: [],
-        summary: '',
-        tasks: [],
-        duration: formatTime(elapsed),
-        durationMs: Math.round(elapsedMs),
-        createdAt: dayjs().toISOString(),
-        status: 'unread',
-        aiStatus: 'idle',
-        transcriptProgress: 0,
-        isPinned: false,
-        tags: [],
-        audioPath,
-      };
-      addRecord(record);
-      if (applyAutoTranscribe) {
-        startTranscription(record);
-      }
+    if (showSaveModal) {
+      return;
+    }
+    if (state === 'recording' || state === 'paused') {
+      await pauseRecording();
+      setTitle('');
+      setSaveModalReason('user');
+      setShowSaveModal(true);
+      return;
     }
     navigation.goBack();
   };

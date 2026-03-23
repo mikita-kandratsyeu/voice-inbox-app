@@ -380,8 +380,10 @@
     },
     "accentColor": {
       "title": "Accent color",
-      "subtitle": "Subscribe to Pro to unlock custom accent colors.",
-      "proTitle": "Accent color is a Pro feature",
+      "subtitle": "Other shades are part of Pro.",
+      "a11yLockedHint": "Requires Pro.",
+      "a11yIncludedHint": "Available without a subscription.",
+      "proTitle": "Accent color",
       "proBody": "Upgrade to Pro to personalize buttons, highlights, and progress accents across the app.",
       "option": {
         "default": "Classic",
