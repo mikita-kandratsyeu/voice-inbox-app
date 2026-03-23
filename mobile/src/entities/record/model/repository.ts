@@ -24,11 +24,10 @@ const logDb = (op: string, details?: Record<string, unknown>) => {
   }
 };
 
-type RecordRowRaw = {
+type RecordListQueryRow = {
   id: string;
   title: string;
   transcript: string | null;
-  transcriptSegments: string | null;
   summary: string | null;
   tasks: string | null;
   duration: string | null;
@@ -46,6 +45,10 @@ type RecordRowRaw = {
   translatedTranscript: string | null;
   translationLanguage: string | null;
   audioPath: string | null;
+};
+
+type RecordRowRaw = RecordListQueryRow & {
+  transcriptSegments: string | null;
   embedding: string | null;
 };
 
@@ -80,7 +83,7 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
   };
 };
 
-const toRecordListItem = (row: RecordRowRaw): RecordListItem => {
+const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
   const summary = row.summary ?? '';
   const tasks = JSON.parse(row.tasks ?? '[]') as TaskItem[];
 
@@ -111,12 +114,35 @@ const toRecordListItem = (row: RecordRowRaw): RecordListItem => {
   };
 };
 
+const recordListColumns = {
+  id: recordsTable.id,
+  title: recordsTable.title,
+  transcript: recordsTable.transcript,
+  summary: recordsTable.summary,
+  tasks: recordsTable.tasks,
+  duration: recordsTable.duration,
+  durationMs: recordsTable.durationMs,
+  createdAt: recordsTable.createdAt,
+  relativeTime: recordsTable.relativeTime,
+  status: recordsTable.status,
+  aiStatus: recordsTable.aiStatus,
+  transcriptProgress: recordsTable.transcriptProgress,
+  isPinned: recordsTable.isPinned,
+  tags: recordsTable.tags,
+  classification: recordsTable.classification,
+  keyPhrases: recordsTable.keyPhrases,
+  nextSteps: recordsTable.nextSteps,
+  translatedTranscript: recordsTable.translatedTranscript,
+  translationLanguage: recordsTable.translationLanguage,
+  audioPath: recordsTable.audioPath,
+} as const;
+
 export const recordRepository = {
   getAllList: async (): Promise<RecordListItem[]> => {
     logDb('getAllList');
     const db = getDB();
     const rows = await db
-      .select()
+      .select(recordListColumns)
       .from(recordsTable)
       .orderBy(desc(recordsTable.isPinned), desc(recordsTable.createdAt));
     logDb('getAllList', { count: rows.length });

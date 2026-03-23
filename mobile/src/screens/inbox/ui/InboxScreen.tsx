@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { ListChecks } from 'lucide-react-native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KeyboardAvoidingView, LayoutAnimation, useWindowDimensions, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
@@ -24,9 +24,12 @@ import {
 import { getHasSeenSwipeHint, setHasSeenSwipeHint } from '@/shared/lib/hintsStorage';
 import { Button, EmptyState, SectionHeader, SwipeableCard, SwipeHintBanner } from '@/shared/ui';
 
+import { countFlattenedRecords, trimFlattenedInboxItems } from '../lib/trimFlattenedInboxItems';
 import { EmptySearchState } from './EmptySearchState';
 import { InboxHeader } from './InboxHeader';
 import { InboxSkeleton } from './InboxSkeleton';
+
+const INBOX_RECORD_PAGE_SIZE = 48;
 
 type FlattenedItem =
   | { type: 'header'; title: string; isFirst: boolean }
@@ -56,6 +59,7 @@ export const InboxScreen = () => {
   const {
     query,
     setQuery,
+    debouncedQuery,
     flattenedData,
     filtered,
     subtitleText,
@@ -66,6 +70,24 @@ export const InboxScreen = () => {
     setSortOption,
     resetToDefault,
   } = useSearchRecords(records);
+
+  const totalFlattenedRecords = useMemo(
+    () => countFlattenedRecords(flattenedData),
+    [flattenedData],
+  );
+
+  const [visibleRecordCount, setVisibleRecordCount] = useState(INBOX_RECORD_PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleRecordCount(INBOX_RECORD_PAGE_SIZE);
+  }, [filterStatus, sortOption, debouncedQuery]);
+
+  const pagedFlattenedData = useMemo(
+    () => trimFlattenedInboxItems(flattenedData, visibleRecordCount),
+    [flattenedData, visibleRecordCount],
+  );
+
+  const canLoadMoreInbox = totalFlattenedRecords > visibleRecordCount;
 
   const listRef = useRef<FlashListRef<FlattenedItem>>(null);
   const inboxFiltersReset = useInboxFiltersReset();
@@ -165,6 +187,11 @@ export const InboxScreen = () => {
     return item.item.id;
   }, []);
 
+  const onListEndReached = useCallback(() => {
+    if (!canLoadMoreInbox) return;
+    setVisibleRecordCount((c) => c + INBOX_RECORD_PAGE_SIZE);
+  }, [canLoadMoreInbox]);
+
   const screenStyle = { flex: 1, backgroundColor: color.background.primary };
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
@@ -237,10 +264,12 @@ export const InboxScreen = () => {
               <FlashList
                 ref={listRef}
                 key={filterStatus}
-                data={flattenedData}
+                data={pagedFlattenedData}
                 renderItem={renderItem}
                 keyExtractor={keyExtractor}
                 getItemType={getItemType}
+                onEndReached={onListEndReached}
+                onEndReachedThreshold={0.35}
                 contentContainerStyle={listContentStyle}
                 style={listStyle}
                 showsVerticalScrollIndicator={false}

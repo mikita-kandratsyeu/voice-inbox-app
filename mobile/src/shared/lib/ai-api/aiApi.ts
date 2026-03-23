@@ -1,3 +1,4 @@
+import { FREE_WEEKLY_LIMIT, PRO_WEEKLY_LIMIT } from '@/shared/config/constants';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { isNumber, isString } from '@/shared/lib/type-guards';
@@ -238,9 +239,13 @@ export async function fetchProLicenseStatus(): Promise<ProLicenseStatus | null> 
     const active = Boolean(raw.active);
     const expiresAt = isString(raw.expiresAt) && raw.expiresAt.trim() ? raw.expiresAt.trim() : null;
     const weeklyLimitFree =
-      isNumber(raw.weeklyLimitFree) && raw.weeklyLimitFree > 0 ? raw.weeklyLimitFree : 10;
+      isNumber(raw.weeklyLimitFree) && raw.weeklyLimitFree > 0
+        ? raw.weeklyLimitFree
+        : FREE_WEEKLY_LIMIT;
     const weeklyLimitPro =
-      isNumber(raw.weeklyLimitPro) && raw.weeklyLimitPro > 0 ? raw.weeklyLimitPro : 75;
+      isNumber(raw.weeklyLimitPro) && raw.weeklyLimitPro > 0
+        ? raw.weeklyLimitPro
+        : PRO_WEEKLY_LIMIT;
     return { active, expiresAt, weeklyLimitFree, weeklyLimitPro };
   } catch {
     return null;

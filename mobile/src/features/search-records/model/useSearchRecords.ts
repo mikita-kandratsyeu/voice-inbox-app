@@ -304,6 +304,7 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
   return {
     query,
     setQuery,
+    debouncedQuery,
     filtered,
     subtitleText,
     sections,
