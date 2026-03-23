@@ -85,16 +85,27 @@ export async function fetchProLicenseStatus(
     return proLicenseStatusCache.data;
   }
 
-  if (force) {
-    invalidateProLicenseStatusCache();
-  }
-
+  let joinedInFlight = false;
   while (proLicenseStatusInFlight) {
+    joinedInFlight = true;
     await proLicenseStatusInFlight;
   }
 
   if (!force && proLicenseStatusCache && Date.now() < proLicenseStatusCache.expiresAt) {
     return proLicenseStatusCache.data;
+  }
+
+  if (
+    force &&
+    joinedInFlight &&
+    proLicenseStatusCache &&
+    Date.now() < proLicenseStatusCache.expiresAt
+  ) {
+    return proLicenseStatusCache.data;
+  }
+
+  if (force) {
+    invalidateProLicenseStatusCache();
   }
 
   proLicenseStatusInFlight = (async () => {

@@ -146,16 +146,15 @@ export function useSettingsScreen() {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([
-      fetchAiUsage(),
-      getAiWeeklyLimits({ force: true }).then((limits) => {
-        if (limits?.proWeeklyLimit && limits.proWeeklyLimit > 0) {
-          setProWeeklyLimit(limits.proWeeklyLimit);
-        }
-      }),
-      refreshProEntitlement({ force: true }),
-    ]);
-    setRefreshing(false);
+    try {
+      await Promise.all([fetchAiUsage(), refreshProEntitlement({ force: true })]);
+      const limits = await getAiWeeklyLimits();
+      if (limits?.proWeeklyLimit && limits.proWeeklyLimit > 0) {
+        setProWeeklyLimit(limits.proWeeklyLimit);
+      }
+    } finally {
+      setRefreshing(false);
+    }
   }, [fetchAiUsage, refreshProEntitlement]);
 
   const aiModelName = AI_MODELS.find((m) => m.id === selectedAIModel)?.name ?? selectedAIModel;
