@@ -345,7 +345,7 @@ export const SettingsScreen = () => {
                     onValueChange={setAutoTranscribeOnSave}
                     trackColor={{
                       false: color.background.tertiary,
-                      true: color.accent.success,
+                      true: color.accent.primary,
                     }}
                     thumbColor={color.icon.onAccent}
                   />
@@ -369,7 +369,7 @@ export const SettingsScreen = () => {
                     onValueChange={setAutoAiAfterTranscription}
                     trackColor={{
                       false: color.background.tertiary,
-                      true: color.accent.success,
+                      true: color.accent.primary,
                     }}
                     thumbColor={color.icon.onAccent}
                   />

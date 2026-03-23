@@ -169,9 +169,9 @@ export const AppLockSetupScreen = () => {
                     onValueChange={(v) => setUseBiometrics(v)}
                     trackColor={{
                       false: color.background.tertiary,
-                      true: color.accent.success,
+                      true: color.accent.primary,
                     }}
-                    thumbColor="#fff"
+                    thumbColor={color.icon.onAccent}
                   />
                 </View>
               )}
@@ -213,9 +213,9 @@ export const AppLockSetupScreen = () => {
                     onValueChange={handleToggleEnabled}
                     trackColor={{
                       false: color.background.tertiary,
-                      true: color.accent.success,
+                      true: color.accent.primary,
                     }}
-                    thumbColor="#fff"
+                    thumbColor={color.icon.onAccent}
                   />
                 }
                 showChevron={false}
@@ -234,9 +234,9 @@ export const AppLockSetupScreen = () => {
                       onValueChange={handleToggleBiometrics}
                       trackColor={{
                         false: color.background.tertiary,
-                        true: color.accent.success,
+                        true: color.accent.primary,
                       }}
-                      thumbColor="#fff"
+                      thumbColor={color.icon.onAccent}
                     />
                   }
                   showChevron={false}

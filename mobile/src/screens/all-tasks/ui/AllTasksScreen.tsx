@@ -196,7 +196,7 @@ export const AllTasksScreen = () => {
             value={openOnly}
             onValueChange={setOpenOnly}
             trackColor={{ false: color.background.tertiary, true: color.accent.primary }}
-            thumbColor={color.background.primary}
+            thumbColor={color.icon.onAccent}
             style={isTablet ? { transform: [{ scale: 1.12 }] } : undefined}
           />
         </View>
