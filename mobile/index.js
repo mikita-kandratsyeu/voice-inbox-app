@@ -1,3 +1,5 @@
+import '@/features/model-manager/lib/recoverInterruptedWhisperDownloads';
+
 import { getMessaging, setBackgroundMessageHandler } from '@react-native-firebase/messaging';
 import { AppRegistry } from 'react-native';
 
