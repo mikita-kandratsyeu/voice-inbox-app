@@ -5,7 +5,7 @@ export function shouldApplyAutoTranscribeOnSave(
   persistedToggle: boolean,
   isProActive: boolean,
 ): boolean {
-  if (!persistedToggle) {
+  if (!persistedToggle || !isProActive) {
     return false;
   }
 
@@ -13,11 +13,7 @@ export function shouldApplyAutoTranscribeOnSave(
     return true;
   }
 
-  if (!getSubscriptionsPubliclyAvailable()) {
-    return false;
-  }
-
-  return isProActive;
+  return getSubscriptionsPubliclyAvailable();
 }
 
 export function shouldApplyAutoAiAfterTranscription(

@@ -18,12 +18,6 @@ const SPEED_COLOR: Record<string, string> = {
   slow: '#ef4444',
 };
 
-const PROVIDER_COLOR: Record<string, string> = {
-  OpenAI: '#10a37f',
-  Anthropic: '#c96442',
-  Google: '#4285f4',
-};
-
 export const AIModelPickerScreen = () => {
   const { t } = useTranslation();
   const color = getColors(useAppTheme());
@@ -112,19 +106,6 @@ export const AIModelPickerScreen = () => {
                             </Text>
                           </View>
                         )}
-                        <View
-                          className="rounded-full px-2 py-0.5"
-                          style={{
-                            backgroundColor: (PROVIDER_COLOR[model.provider] ?? '#6b7280') + '20',
-                          }}
-                        >
-                          <Text
-                            className="text-[12px] font-medium"
-                            style={{ color: PROVIDER_COLOR[model.provider] ?? '#6b7280' }}
-                          >
-                            {model.provider}
-                          </Text>
-                        </View>
                       </View>
                       <Text
                         className="text-[14px] leading-5 mb-1.5"

@@ -1,6 +1,6 @@
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { Zap } from 'lucide-react-native';
+import { Crown } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -98,7 +98,7 @@ export function AutomationComingSoonSheet({
             className="mb-4 h-14 w-14 items-center justify-center rounded-2xl"
             style={{ backgroundColor: c.background.tertiary }}
           >
-            <Zap size={28} color={c.accent.primary} strokeWidth={1.75} />
+            <Crown size={28} color={c.accent.primary} strokeWidth={1.75} />
           </View>
           <Text className="mb-2 text-center text-xl font-bold" style={{ color: c.text.primary }}>
             {title}

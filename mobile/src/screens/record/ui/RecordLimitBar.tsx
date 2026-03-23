@@ -60,8 +60,19 @@ export const RecordLimitBar = memo(({ elapsedMs, maxRecordingMs }: RecordLimitBa
   const mainColor = tone === 'final' ? c.accent.delete : 'rgba(255,200,120,0.95)';
 
   return (
-    <View className="min-h-[36px] items-center justify-center gap-1 px-2">
-      <Text className="text-center text-[13px] font-medium leading-5" style={{ color: mainColor }}>
+    <View
+      className="max-w-[92%] items-center justify-center px-3 py-2.5"
+      style={{
+        borderRadius: 12,
+        backgroundColor: 'rgba(255,255,255,0.14)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.22)',
+      }}
+    >
+      <Text
+        className="text-center text-[13px] font-semibold leading-5"
+        style={{ color: mainColor }}
+      >
         {mainText}
       </Text>
     </View>

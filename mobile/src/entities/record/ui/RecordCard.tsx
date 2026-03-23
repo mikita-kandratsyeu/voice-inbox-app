@@ -66,7 +66,7 @@ export const RecordCard = React.memo(function RecordCard({
           flexDirection: 'row',
           alignItems: 'flex-start',
           justifyContent: 'space-between',
-          marginBottom: 4,
+          marginBottom: 10,
         }}
       >
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginRight: 8 }}>

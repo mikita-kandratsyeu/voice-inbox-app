@@ -4,7 +4,6 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
-import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
 import { getColors, useAppTheme } from '@/shared/config';
 import type { AiUsage } from '@/shared/lib/ai-api';
@@ -143,7 +142,7 @@ export const AiUsageCard = ({
 }: AiUsageCardProps) => {
   const { t, i18n } = useTranslation();
   const color = getColors(useAppTheme());
-  const { isProActive, expiresAtMs } = useProEntitlement();
+
   const claimDisabled = claimError === 'claimCooldown';
   const bonusAmount = usage?.bonusAmount ?? 5;
   const canShowBonusButton = Boolean(usage && usage.used > 0);
@@ -155,17 +154,6 @@ export const AiUsageCard = ({
   const usageText = usage ? `${usage.used} / ${usage.limit}` : '—';
   const statusText = getAiUsageStatusText(usage, isExhausted, t);
   const resetDateText = usage ? formatResetDate(usage.resetAt, i18n.language) : '—';
-
-  const proExpiresText =
-    isProActive && expiresAtMs != null
-      ? new Date(expiresAtMs).toLocaleString(i18n.language, {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-        })
-      : null;
 
   return (
     <View
@@ -190,11 +178,6 @@ export const AiUsageCard = ({
           <Text className="mt-0.5 text-sm" style={{ color: color.text.secondary }}>
             {t('settings.aiUsage.subtitle')}
           </Text>
-          {proExpiresText != null && (
-            <Text className="mt-1.5 text-xs font-medium" style={{ color: color.accent.primary }}>
-              {t('proLicense.activeUntil', { date: proExpiresText })}
-            </Text>
-          )}
         </View>
       </View>
 
@@ -204,22 +187,29 @@ export const AiUsageCard = ({
         <>
           <View className="mb-2">
             <View className="mb-1 flex-row flex-wrap items-center justify-between gap-x-2 gap-y-1">
-              <Text
-                className="text-sm font-medium"
-                style={{
-                  color: isExhausted ? color.accent.delete : color.text.primary,
-                }}
-              >
-                {usageText}
-              </Text>
-              <Text
-                className="text-right text-sm font-medium"
-                style={{
-                  color: isExhausted ? color.accent.delete : color.accent.primary,
-                }}
-              >
-                {statusText}
-              </Text>
+              {usage == null && (
+                <Text className="text-sm font-medium" style={{ color: color.text.secondary }}>
+                  {statusText}
+                </Text>
+              )}
+              {usage != null && !isExhausted && (
+                <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
+                  {usageText}
+                </Text>
+              )}
+              {usage != null && isExhausted && (
+                <>
+                  <Text className="text-sm font-medium" style={{ color: color.accent.delete }}>
+                    {usageText}
+                  </Text>
+                  <Text
+                    className="text-right text-sm font-medium"
+                    style={{ color: color.accent.delete }}
+                  >
+                    {statusText}
+                  </Text>
+                </>
+              )}
             </View>
             <View
               className="h-2 overflow-hidden rounded-full"

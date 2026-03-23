@@ -19,6 +19,14 @@ export function getShowComingSoonInsteadOfPurchase(): boolean {
   return !getPaymentsEnabled();
 }
 
-export function isAutomationUiLockedForPublicStore(): boolean {
-  return !isSubscriptionsPubliclyAvailable() && !isTestflightInternalBuild();
+export function isAutomationUiLockedForPublicStore(isProActive: boolean): boolean {
+  if (isSubscriptionsPubliclyAvailable()) {
+    return false;
+  }
+
+  if (isTestflightInternalBuild()) {
+    return !isProActive;
+  }
+
+  return true;
 }

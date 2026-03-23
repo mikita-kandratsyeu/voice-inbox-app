@@ -358,16 +358,16 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
             onPress={handlePlayPause}
             disabled={!hasAudio}
             activeOpacity={0.85}
-            className="h-12 w-12 items-center justify-center rounded-full"
+            className="h-11 w-11 items-center justify-center rounded-full"
             style={{
               backgroundColor: hasAudio ? color.accent.primary : color.background.tertiary,
             }}
           >
             {isPlaying ? (
-              <Pause size={22} color={color.icon.onAccent} strokeWidth={2.5} />
+              <Pause size={20} color={color.icon.onAccent} strokeWidth={2.5} />
             ) : (
               <Play
-                size={22}
+                size={20}
                 color={hasAudio ? color.icon.onAccent : color.text.muted}
                 strokeWidth={2.5}
                 fill={hasAudio ? color.icon.onAccent : color.text.muted}
@@ -398,7 +398,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
             onPress={handleCycleSpeed}
             disabled={!hasAudio}
             activeOpacity={0.7}
-            className="min-h-[44px] min-w-[48px] items-center justify-center rounded-xl px-3 py-2.5"
+            className="h-11 min-w-11 items-center justify-center rounded-full px-3"
             style={{
               backgroundColor: hasAudio ? color.background.tertiary : 'transparent',
             }}

@@ -26,6 +26,7 @@ import { Waveform } from '@/shared/ui';
 import { generateRecordId } from '../lib/generateRecordId';
 import { getAutoTitle } from '../lib/getAutoTitle';
 import { useRecording } from '../model/useRecording';
+import { RecordDurationLimit } from './RecordDurationLimit';
 import { RecordLimitBar } from './RecordLimitBar';
 import { RecordScreenControls } from './RecordScreenControls';
 import { RecordScreenHeader } from './RecordScreenHeader';
@@ -230,12 +231,13 @@ export const RecordScreen = () => {
       <View className="flex-1 items-center justify-center gap-9 px-6">
         <View className="items-center gap-3">
           <RecordTimer elapsedMs={elapsedMs} />
+          <RecordDurationLimit elapsedMs={elapsedMs} maxRecordingMs={maxRecordingMs} />
           <RecordLimitBar elapsedMs={elapsedMs} maxRecordingMs={maxRecordingMs} />
         </View>
         <View className="w-full px-2">
           <Waveform
             isAnimating={state === 'recording' && appState === 'active'}
-            color="rgba(255,255,255,0.65)"
+            color="rgba(255,255,255,0.58)"
           />
         </View>
         <View className="items-center gap-1" style={{ opacity: state === 'paused' ? 0 : 1 }}>

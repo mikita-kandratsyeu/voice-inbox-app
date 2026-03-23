@@ -45,6 +45,14 @@ export const formatTime = (seconds: number): string => {
   return `${totalMins}:${secs.toString().padStart(2, '0')}`;
 };
 
+export const formatDurationMmSs = (milliseconds: number): string => {
+  const totalSecs = Math.floor(Math.max(0, milliseconds) / 1000);
+  const mins = Math.floor(totalSecs / 60);
+  const secs = totalSecs % 60;
+
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+};
+
 export const formatTimeWithMs = (milliseconds: number): { main: string; ms: string } => {
   const d = dayjs.duration(milliseconds, 'milliseconds');
   const totalMins = Math.floor(d.asMinutes());
