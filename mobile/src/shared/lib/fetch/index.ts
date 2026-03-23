@@ -1,6 +1,6 @@
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
 
-import { getMobileUserAgent } from '@/shared/config/runtimeConfig';
+import { getMobileUserAgent } from '@/shared/config/buildEnv';
 
 export async function fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
   const headers = new Headers(init?.headers ?? undefined);

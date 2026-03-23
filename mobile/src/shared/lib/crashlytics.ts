@@ -1,4 +1,3 @@
-import { CRASHLYTICS_DEBUG } from '@env';
 import {
   didCrashOnPreviousExecution,
   getCrashlytics,
@@ -6,13 +5,14 @@ import {
   setUserId,
 } from '@react-native-firebase/crashlytics';
 
+import { isCrashlyticsDebugEnabled } from '@/shared/config/buildEnv';
+
 function isCrashlyticsCollectionWanted(): boolean {
   if (!__DEV__) {
     return true;
   }
 
-  const v = CRASHLYTICS_DEBUG?.trim().toLowerCase();
-  return v === '1' || v === 'true' || v === 'yes';
+  return isCrashlyticsDebugEnabled();
 }
 
 export async function initCrashlytics(): Promise<void> {

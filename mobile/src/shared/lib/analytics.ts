@@ -1,4 +1,3 @@
-import { ANALYTICS_DEBUG } from '@env';
 import {
   getAnalytics,
   logScreenView,
@@ -6,14 +5,14 @@ import {
   setUserId,
 } from '@react-native-firebase/analytics';
 
+import { isAnalyticsDebugEnabled } from '@/shared/config/buildEnv';
+
 function isAnalyticsCollectionWanted(): boolean {
   if (!__DEV__) {
     return true;
   }
 
-  const v = ANALYTICS_DEBUG?.trim().toLowerCase();
-
-  return v === '1' || v === 'true' || v === 'yes';
+  return isAnalyticsDebugEnabled();
 }
 
 export async function initAnalytics(): Promise<void> {

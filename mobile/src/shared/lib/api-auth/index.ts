@@ -1,4 +1,5 @@
-import { getWebApiSecret, getWebApiUrl } from '@/shared/config/runtimeConfig';
+import { getWebApiSecret } from '@/shared/config/buildEnv';
+import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { fetch } from '@/shared/lib/fetch';
 
@@ -22,7 +23,7 @@ export function clearApiToken(): void {
 
 async function fetchToken(): Promise<{ token: string; deviceId: string }> {
   const deviceId = await getOrCreateDeviceId();
-  const secret = getWebApiSecret().trim();
+  const secret = getWebApiSecret();
 
   if (!secret) {
     throw new Error('WEB_API_SECRET is not configured');

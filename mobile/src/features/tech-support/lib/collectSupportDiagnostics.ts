@@ -2,7 +2,7 @@ import NetInfo from '@react-native-community/netinfo';
 import * as RNLocalize from 'react-native-localize';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
-import { getMobileUserAgent } from '@/shared/config/runtimeConfig';
+import { getMobileUserAgent } from '@/shared/config/buildEnv';
 import { collectCrashlyticsDiagnostics } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';

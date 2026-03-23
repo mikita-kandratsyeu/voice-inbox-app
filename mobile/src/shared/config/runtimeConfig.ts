@@ -1,8 +1,6 @@
 import {
   APP_STORE_URL,
   GOOGLE_PLAY_URL,
-  MOBILE_USER_AGENT,
-  WEB_API_SECRET,
   WEB_API_URL,
   WEBSITE_URL,
   YANDEX_BANNER_AD_UNIT_ID,
@@ -23,8 +21,6 @@ export type RuntimeConfigSnapshot = {
   appStoreUrl: string;
   googlePlayUrl: string;
   webApiUrl: string;
-  webApiSecret: string;
-  mobileUserAgent: string;
   yandexRewardedAdUnitId: string;
   yandexBannerAdUnitId: string;
 };
@@ -35,8 +31,6 @@ function buildEmbedded(): RuntimeConfigSnapshot {
     appStoreUrl: APP_STORE_URL?.trim() ?? '',
     googlePlayUrl: GOOGLE_PLAY_URL?.trim() ?? '',
     webApiUrl: WEB_API_URL?.trim() ?? '',
-    webApiSecret: WEB_API_SECRET?.trim() ?? '',
-    mobileUserAgent: MOBILE_USER_AGENT?.trim() ?? '',
     yandexRewardedAdUnitId: YANDEX_REWARDED_AD_UNIT_ID?.trim() ?? '',
     yandexBannerAdUnitId: YANDEX_BANNER_AD_UNIT_ID?.trim() ?? '',
   };
@@ -71,8 +65,6 @@ function mergeRemote(
     appStoreUrl: readRemoteString(rc, 'APP_STORE_URL', embedded.appStoreUrl),
     googlePlayUrl: readRemoteString(rc, 'GOOGLE_PLAY_URL', embedded.googlePlayUrl),
     webApiUrl: readRemoteString(rc, 'WEB_API_URL', embedded.webApiUrl),
-    webApiSecret: embedded.webApiSecret,
-    mobileUserAgent: embedded.mobileUserAgent,
     yandexRewardedAdUnitId: readRemoteString(
       rc,
       'YANDEX_REWARDED_AD_UNIT_ID',
@@ -123,14 +115,6 @@ export function getGooglePlayUrl(): string {
 
 export function getWebApiUrl(): string {
   return snapshot.webApiUrl;
-}
-
-export function getWebApiSecret(): string {
-  return snapshot.webApiSecret;
-}
-
-export function getMobileUserAgent(): string {
-  return snapshot.mobileUserAgent;
 }
 
 export function getYandexRewardedAdUnitId(): string {
