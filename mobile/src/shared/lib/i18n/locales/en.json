@@ -279,9 +279,10 @@
     "aiUsage": {
       "title": "AI processing limit",
       "subtitle": "Weekly limit for summary and task requests",
+      "a11yProgress": "{{used}} of {{limit}} AI requests used this week",
       "used": "{{used}} / {{limit}}",
       "remaining": "Remaining: {{count}}",
-      "exhausted": "Weekly quota used — resets on the date below",
+      "exhausted": "Weekly quota used",
       "resetAt": "Resets: {{date}}",
       "loading": "Loading...",
       "unavailable": "—",
