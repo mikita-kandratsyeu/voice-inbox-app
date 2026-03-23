@@ -8,8 +8,15 @@ private enum DownloadDeeplink {
 
 struct DownloadLiveActivityView: View {
     let context: ActivityViewContext<DownloadAttributes>
-    @State private var rotating = false
     @Environment(\.colorScheme) private var colorScheme
+
+    private var clampedProgress: Double {
+        min(max(context.state.progress, 0), 1)
+    }
+
+    private var progressPercentText: String {
+        "\(Int((clampedProgress * 100).rounded()))%"
+    }
 
     private var lockScreenBackground: some View {
         Group {
@@ -24,28 +31,9 @@ struct DownloadLiveActivityView: View {
     var body: some View {
         Link(destination: DownloadDeeplink.settingsUrl) {
             HStack(spacing: 14) {
-                ZStack {
-                    Circle()
-                        .stroke(Color.blue.opacity(0.15), lineWidth: 3)
-                        .frame(width: 32, height: 32)
-
-                    Circle()
-                        .trim(from: 0, to: 0.7)
-                        .stroke(Color.blue, style: StrokeStyle(lineWidth: 3,
-                                                               lineCap: .round))
-                        .frame(width: 32, height: 32)
-                        .rotationEffect(.degrees(rotating ? 360 : 0))
-                        .onAppear {
-                            withAnimation(.linear(duration: 1.2)
-                                .repeatForever(autoreverses: false)) {
-                                rotating = true
-                            }
-                        }
-
-                    Image(systemName: "arrow.down")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.blue)
-                }
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundColor(.blue)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(context.state.label)
@@ -57,18 +45,23 @@ struct DownloadLiveActivityView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
+
+                    ProgressView(value: clampedProgress)
+                        .progressViewStyle(.linear)
+                        .tint(.blue)
                 }
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.primary)
-                    .padding(8)
+                Text(progressPercentText)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(.blue)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
                     .background(colorScheme == .light
                         ? Color.black.opacity(0.06)
                         : Color.white.opacity(0.15))
-                    .clipShape(Circle())
+                    .clipShape(Capsule())
             }
         }
         .padding(.horizontal, 16)
@@ -95,8 +88,9 @@ struct DownloadWidgetLiveActivity: Widget {
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     Link(destination: DownloadDeeplink.settingsUrl) {
-                        SpinnerView()
-                            .frame(width: 32, height: 32)
+                        Image(systemName: "arrow.down.circle.fill")
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundColor(.blue)
                             .frame(maxHeight: .infinity, alignment: .center)
                     }
                 }
@@ -110,18 +104,25 @@ struct DownloadWidgetLiveActivity: Widget {
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .lineLimit(1)
+                            ProgressView(value: min(max(context.state.progress, 0), 1))
+                                .progressViewStyle(.linear)
+                                .tint(.blue)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     }
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     Link(destination: DownloadDeeplink.settingsUrl) {
-                        Image(systemName: "arrow.right")
-                            .font(.system(size: 13, weight: .semibold))
+                        Text("\(Int((min(max(context.state.progress, 0), 1) * 100).rounded()))%")
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .monospacedDigit()
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.9)
                             .foregroundColor(.white)
+                            .frame(minWidth: 36)
                             .padding(10)
                             .background(Color.blue)
-                            .clipShape(Circle())
+                            .clipShape(Capsule())
                     }
                     .frame(maxHeight: .infinity, alignment: .center)
                 }
@@ -133,8 +134,10 @@ struct DownloadWidgetLiveActivity: Widget {
                 }
             } compactTrailing: {
                 Link(destination: DownloadDeeplink.settingsUrl) {
-                    Text("Whisper")
+                    Text("\(Int((min(max(context.state.progress, 0), 1) * 100).rounded()))%")
                         .font(.caption2)
+                        .monospacedDigit()
+                        .lineLimit(1)
                         .foregroundColor(.blue)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -145,31 +148,6 @@ struct DownloadWidgetLiveActivity: Widget {
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
-        }
-    }
-}
-
-struct SpinnerView: View {
-    @State private var rotating = false
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .stroke(Color.blue.opacity(0.15), lineWidth: 2.5)
-
-            Circle()
-                .trim(from: 0, to: 0.7)
-                .stroke(Color.blue, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
-                .rotationEffect(.degrees(rotating ? 360 : 0))
-                .onAppear {
-                    withAnimation(.linear(duration: 1.2).repeatForever(autoreverses: false)) {
-                        rotating = true
-                    }
-                }
-
-            Image(systemName: "arrow.down")
-                .font(.system(size: 10, weight: .semibold))
-                .foregroundColor(.blue)
         }
     }
 }

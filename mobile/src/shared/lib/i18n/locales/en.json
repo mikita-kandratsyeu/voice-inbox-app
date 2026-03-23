@@ -1,6 +1,6 @@
 {
   "download": {
-    "whisperLabel": "Downloading Whisper model"
+    "whisperLabel": "Downloading model"
   },
   "push": {
     "policyUpdateTitle": "Important Update",

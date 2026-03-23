@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,7 +12,7 @@ import {
   WHISPER_MODELS,
 } from '@/entities/settings';
 import { InboxBannerAd } from '@/features/inbox-banner';
-import { getModelFileSizeFormatted, useModelManager } from '@/features/model-manager';
+import { getModelFileSizeBytes, useModelManager } from '@/features/model-manager';
 import { useColors } from '@/shared/config';
 import { useTabletContentMaxWidth } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
@@ -42,16 +42,23 @@ export const WhisperModelPickerScreen = () => {
   const { startDownload, cancelDownload, removeModel } = useModelManager();
 
   const [realSizes, setRealSizes] = useState<Partial<Record<WhisperModelId, string>>>({});
+  const refreshRequestIdRef = useRef(0);
 
   const refreshRealSizes = useCallback(async () => {
+    const requestId = ++refreshRequestIdRef.current;
     const entries = await Promise.all(
       WHISPER_MODELS.map(async (m) => {
         const status = whisperModelStatuses[m.id] ?? 'not_downloaded';
         if (status !== 'downloaded') return [m.id, null] as const;
-        const size = await getModelFileSizeFormatted(m.id);
-        return [m.id, size] as const;
+        const bytes = await getModelFileSizeBytes(m.id);
+        if (bytes <= 0) return [m.id, null] as const;
+        return [m.id, formatFileSize(bytes)] as const;
       }),
     );
+
+    if (requestId !== refreshRequestIdRef.current) {
+      return;
+    }
 
     const updated: Partial<Record<WhisperModelId, string>> = {};
     for (const [id, size] of entries) {
