@@ -1,6 +1,8 @@
+import { AI_WEEKLY_LIMITS_CACHE_TTL_MS } from '@/shared/config/constants';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
-import { isString } from '@/shared/lib/type-guards';
+import { storage } from '@/shared/lib/async-storage';
+import { isNumber, isString } from '@/shared/lib/type-guards';
 
 export type AiProcessingOptions = {
   summaryStyle?: 'brief' | 'standard' | 'detailed';
@@ -123,9 +125,9 @@ export type AiUsage = {
 function parseAiUsagePayload(raw: Record<string, unknown>): AiUsage {
   const bonusAmountRaw = raw.bonusAmount;
   const bonusAmount =
-    typeof bonusAmountRaw === 'number' && bonusAmountRaw > 0
+    isNumber(bonusAmountRaw) && bonusAmountRaw > 0
       ? bonusAmountRaw
-      : typeof bonusAmountRaw === 'string' && /^\d+$/.test(bonusAmountRaw)
+      : isString(bonusAmountRaw) && /^\d+$/.test(bonusAmountRaw)
         ? Math.max(1, parseInt(bonusAmountRaw, 10))
         : undefined;
 
@@ -192,7 +194,7 @@ export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
     const raw = (await response.json()) as Record<string, unknown>;
     const usage = parseAiUsagePayload(raw);
     const cooldownSeconds =
-      typeof raw.bonusCooldownSeconds === 'number' && raw.bonusCooldownSeconds > 0
+      isNumber(raw.bonusCooldownSeconds) && raw.bonusCooldownSeconds > 0
         ? raw.bonusCooldownSeconds
         : 900;
     return { ok: true, usage, cooldownSeconds };
@@ -209,6 +211,93 @@ export type ProLicenseStatus = {
   weeklyLimitPro: number;
 };
 
+export type AiWeeklyLimits = {
+  freeWeeklyLimit: number;
+  proWeeklyLimit: number;
+};
+
+type AiWeeklyLimitsCachePayload = AiWeeklyLimits & { savedAtMs: number };
+
+const AI_WEEKLY_LIMITS_CACHE_KEY = 'ai_weekly_limits_cache_v1';
+
+let inMemoryAiWeeklyLimitsCache: AiWeeklyLimitsCachePayload | null = null;
+
+function normalizeWeeklyLimits(raw: unknown): AiWeeklyLimits | null {
+  if (!raw || typeof raw !== 'object') {
+    return null;
+  }
+
+  const obj = raw as Record<string, unknown>;
+  const free = isNumber(obj.freeWeeklyLimit) ? obj.freeWeeklyLimit : NaN;
+  const pro = isNumber(obj.proWeeklyLimit) ? obj.proWeeklyLimit : NaN;
+
+  if (!Number.isFinite(free) || !Number.isFinite(pro) || free <= 0 || pro <= 0) {
+    return null;
+  }
+
+  return {
+    freeWeeklyLimit: Math.floor(free),
+    proWeeklyLimit: Math.floor(pro),
+  };
+}
+
+function getCachedAiWeeklyLimits(maxAgeMs: number): AiWeeklyLimits | null {
+  const now = Date.now();
+  if (inMemoryAiWeeklyLimitsCache && now - inMemoryAiWeeklyLimitsCache.savedAtMs <= maxAgeMs) {
+    return {
+      freeWeeklyLimit: inMemoryAiWeeklyLimitsCache.freeWeeklyLimit,
+      proWeeklyLimit: inMemoryAiWeeklyLimitsCache.proWeeklyLimit,
+    };
+  }
+
+  const raw = storage.getString(AI_WEEKLY_LIMITS_CACHE_KEY);
+  if (!raw) {
+    return null;
+  }
+  try {
+    const parsed = JSON.parse(raw) as Partial<AiWeeklyLimitsCachePayload>;
+    const limits = normalizeWeeklyLimits(parsed);
+    const savedAtMs = isNumber(parsed.savedAtMs) ? parsed.savedAtMs : 0;
+    if (!limits || savedAtMs <= 0 || now - savedAtMs > maxAgeMs) {
+      return null;
+    }
+    inMemoryAiWeeklyLimitsCache = { ...limits, savedAtMs };
+    return limits;
+  } catch {
+    return null;
+  }
+}
+
+function upsertAiWeeklyLimitsCache(limits: AiWeeklyLimits): void {
+  const payload: AiWeeklyLimitsCachePayload = { ...limits, savedAtMs: Date.now() };
+  inMemoryAiWeeklyLimitsCache = payload;
+  storage.set(AI_WEEKLY_LIMITS_CACHE_KEY, JSON.stringify(payload));
+}
+
+export async function getAiWeeklyLimits(options?: {
+  force?: boolean;
+}): Promise<AiWeeklyLimits | null> {
+  if (!options?.force) {
+    const cached = getCachedAiWeeklyLimits(AI_WEEKLY_LIMITS_CACHE_TTL_MS);
+
+    if (cached) {
+      return cached;
+    }
+  }
+
+  const status = await fetchProLicenseStatus();
+  if (status) {
+    const limits: AiWeeklyLimits = {
+      freeWeeklyLimit: status.weeklyLimitFree,
+      proWeeklyLimit: status.weeklyLimitPro,
+    };
+    upsertAiWeeklyLimitsCache(limits);
+    return limits;
+  }
+
+  return getCachedAiWeeklyLimits(Number.MAX_SAFE_INTEGER);
+}
+
 export async function fetchProLicenseStatus(): Promise<ProLicenseStatus | null> {
   try {
     const response = await fetchWithAuth(`${getWebApiUrl()}/api/pro-license/status`, {
@@ -219,12 +308,11 @@ export async function fetchProLicenseStatus(): Promise<ProLicenseStatus | null> 
     }
     const raw = (await response.json()) as Record<string, unknown>;
     const active = Boolean(raw.active);
-    const expiresAt =
-      typeof raw.expiresAt === 'string' && raw.expiresAt.trim() ? raw.expiresAt.trim() : null;
+    const expiresAt = isString(raw.expiresAt) && raw.expiresAt.trim() ? raw.expiresAt.trim() : null;
     const weeklyLimitFree =
-      typeof raw.weeklyLimitFree === 'number' && raw.weeklyLimitFree > 0 ? raw.weeklyLimitFree : 20;
+      isNumber(raw.weeklyLimitFree) && raw.weeklyLimitFree > 0 ? raw.weeklyLimitFree : 20;
     const weeklyLimitPro =
-      typeof raw.weeklyLimitPro === 'number' && raw.weeklyLimitPro > 0 ? raw.weeklyLimitPro : 75;
+      isNumber(raw.weeklyLimitPro) && raw.weeklyLimitPro > 0 ? raw.weeklyLimitPro : 75;
     return { active, expiresAt, weeklyLimitFree, weeklyLimitPro };
   } catch {
     return null;
@@ -273,13 +361,12 @@ export async function redeemProLicenseKey(key: string): Promise<RedeemProLicense
         'activation_failed';
       return {
         ok: false,
-        error: typeof raw.error === 'string' && raw.error.trim() ? raw.error : 'Activation failed',
+        error: isString(raw.error) && raw.error.trim() ? raw.error : 'Activation failed',
         code,
         status: response.status,
       };
     }
-    const expiresAt =
-      typeof raw.expiresAt === 'string' && raw.expiresAt.trim() ? raw.expiresAt.trim() : '';
+    const expiresAt = isString(raw.expiresAt) && raw.expiresAt.trim() ? raw.expiresAt.trim() : '';
     if (!expiresAt) {
       return { ok: false, error: 'Invalid server response', code: 'invalid_response' };
     }

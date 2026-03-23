@@ -54,8 +54,7 @@ import { exportData, importData } from '@/features/sync-data';
 import { getWebsiteUrl, useColors } from '@/shared/config';
 import { isCrashlyticsDebugEnabled } from '@/shared/config/buildEnv';
 import { IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
-import { getAiUsage } from '@/shared/lib/ai-api';
-import { fetchProLicenseStatus } from '@/shared/lib/ai-api/aiApi';
+import { getAiUsage, getAiWeeklyLimits } from '@/shared/lib/ai-api';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { isEmbeddingAvailable } from '@/shared/lib/embeddings';
 import {
@@ -126,13 +125,13 @@ export const SettingsScreen = () => {
   }, []);
 
   const fetchProWeeklyLimit = useCallback(async () => {
-    const status = await fetchProLicenseStatus();
+    const limits = await getAiWeeklyLimits();
 
-    if (status) {
-      if (status.weeklyLimitPro > 0) {
-        setProWeeklyLimit(status.weeklyLimitPro);
+    if (limits) {
+      if (limits.proWeeklyLimit > 0) {
+        setProWeeklyLimit(limits.proWeeklyLimit);
       }
-      return status;
+      return limits;
     }
 
     return null;
@@ -187,11 +186,15 @@ export const SettingsScreen = () => {
     setRefreshing(true);
     await Promise.all([
       fetchAiUsage(),
-      fetchProWeeklyLimit(),
+      getAiWeeklyLimits({ force: true }).then((limits) => {
+        if (limits?.proWeeklyLimit && limits.proWeeklyLimit > 0) {
+          setProWeeklyLimit(limits.proWeeklyLimit);
+        }
+      }),
       refreshProEntitlement({ force: true }),
     ]);
     setRefreshing(false);
-  }, [fetchAiUsage, fetchProWeeklyLimit, refreshProEntitlement]);
+  }, [fetchAiUsage, refreshProEntitlement]);
 
   const aiModelName = AI_MODELS.find((m) => m.id === selectedAIModel)?.name ?? selectedAIModel;
   const whisperStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
