@@ -388,6 +388,21 @@
       "autoTranscribeBody": "Автоматически расшифровывать новые заметки после сохранения или импорта аудио.",
       "autoAiTitle": "Авто ИИ после транскрипции",
       "autoAiBody": "Сводка и задачи сразу после готовой расшифровки. ИИ по-прежнему доступен вручную в каждой заметке."
+    },
+    "internalTech": {
+      "title": "Внутренняя сборка",
+      "hint": "Нажмите на строку, чтобы скопировать значение.",
+      "webApiUrl": "Базовый URL API (WEB_API_URL)",
+      "websiteUrl": "Сайт (WEBSITE_URL)",
+      "userAgent": "User-Agent клиента (MOBILE_USER_AGENT)",
+      "databaseUrl": "URL базы (пароль скрыт)",
+      "appEnv": "APP_ENV",
+      "webApiSecret": "WEB_API_SECRET",
+      "secretConfigured": "Задан",
+      "secretNotSet": "Не задан",
+      "appVersion": "Версия / сборка",
+      "empty": "—",
+      "copied": "Скопировано в буфер"
     }
   },
   "appearance": {

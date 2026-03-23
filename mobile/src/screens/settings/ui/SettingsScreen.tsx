@@ -72,6 +72,7 @@ import { SCREEN_PADDING, SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { AiUsageCard } from './AiUsageCard';
 import { AutomationComingSoonSheet, type AutomationFeatureKind } from './AutomationComingSoonSheet';
+import { SettingsInternalTechInfo } from './SettingsInternalTechInfo';
 import { SettingsPlanPaywallSheet } from './SettingsPlanPaywallSheet';
 import { SettingsPlanStatusCard } from './SettingsPlanStatusCard';
 
@@ -195,7 +196,7 @@ export const SettingsScreen = () => {
     setRefreshing(true);
     await Promise.all([
       fetchAiUsage(),
-      getAiWeeklyLimits({ force: true }).then((limits) => {
+      getAiWeeklyLimits().then((limits) => {
         if (limits?.proWeeklyLimit && limits.proWeeklyLimit > 0) {
           setProWeeklyLimit(limits.proWeeklyLimit);
         }
@@ -647,6 +648,7 @@ export const SettingsScreen = () => {
               />
             </SettingsSection>
           )}
+          <SettingsInternalTechInfo />
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
         <ProLicenseKeyModal
