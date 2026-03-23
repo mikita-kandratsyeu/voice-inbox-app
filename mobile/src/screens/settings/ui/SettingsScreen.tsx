@@ -55,6 +55,7 @@ import { getWebsiteUrl, useColors } from '@/shared/config';
 import { isCrashlyticsDebugEnabled } from '@/shared/config/buildEnv';
 import { IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { getAiUsage } from '@/shared/lib/ai-api';
+import { fetchProLicenseStatus } from '@/shared/lib/ai-api/aiApi';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { isEmbeddingAvailable } from '@/shared/lib/embeddings';
 import {
@@ -100,6 +101,7 @@ export const SettingsScreen = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [aiUsage, setAiUsage] = useState<Awaited<ReturnType<typeof getAiUsage>>>(null);
   const [aiUsageLoading, setAiUsageLoading] = useState(true);
+  const [proWeeklyLimit, setProWeeklyLimit] = useState<number>(75);
   const [refreshing, setRefreshing] = useState(false);
   const [isUpdatingEmbeddings, setIsUpdatingEmbeddings] = useState(false);
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
@@ -110,7 +112,6 @@ export const SettingsScreen = () => {
   const { refresh: refreshProEntitlement, isProActive: proEntitlementActive } = useProEntitlement();
   const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
   const monetizationMode = getMonetizationMode();
-  const proAiLimit = aiUsage?.limit ?? 75;
 
   useFocusEffect(
     useCallback(() => {
@@ -122,6 +123,19 @@ export const SettingsScreen = () => {
     const data = await getAiUsage();
     setAiUsage(data ?? null);
     return data;
+  }, []);
+
+  const fetchProWeeklyLimit = useCallback(async () => {
+    const status = await fetchProLicenseStatus();
+
+    if (status) {
+      if (status.weeklyLimitPro > 0) {
+        setProWeeklyLimit(status.weeklyLimitPro);
+      }
+      return status;
+    }
+
+    return null;
   }, []);
 
   const onBonusSuccess = useCallback(
@@ -142,13 +156,13 @@ export const SettingsScreen = () => {
 
   useEffect(() => {
     let cancelled = false;
-    fetchAiUsage().finally(() => {
+    Promise.all([fetchAiUsage(), fetchProWeeklyLimit()]).finally(() => {
       if (!cancelled) setAiUsageLoading(false);
     });
     return () => {
       cancelled = true;
     };
-  }, [fetchAiUsage]);
+  }, [fetchAiUsage, fetchProWeeklyLimit]);
 
   const refreshPermissions = useCallback(async () => {
     const mic = await checkMicPermission();
@@ -171,9 +185,13 @@ export const SettingsScreen = () => {
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([fetchAiUsage(), refreshProEntitlement({ force: true })]);
+    await Promise.all([
+      fetchAiUsage(),
+      fetchProWeeklyLimit(),
+      refreshProEntitlement({ force: true }),
+    ]);
     setRefreshing(false);
-  }, [fetchAiUsage, refreshProEntitlement]);
+  }, [fetchAiUsage, fetchProWeeklyLimit, refreshProEntitlement]);
 
   const aiModelName = AI_MODELS.find((m) => m.id === selectedAIModel)?.name ?? selectedAIModel;
   const whisperStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
@@ -351,7 +369,7 @@ export const SettingsScreen = () => {
           <SettingsPlanStatusCard
             color={color}
             monetizationMode={monetizationMode}
-            aiLimit={proAiLimit}
+            aiLimit={proWeeklyLimit}
             onPress={handlePlanCardPress}
           />
           <AiUsageCard
@@ -628,7 +646,7 @@ export const SettingsScreen = () => {
         <SettingsPlanPaywallSheet
           visible={planPaywallVisible}
           mode={monetizationMode}
-          aiLimit={proAiLimit}
+          proAiLimit={proWeeklyLimit}
           onClose={() => setPlanPaywallVisible(false)}
           onUpgradePress={handleUpgradePress}
         />

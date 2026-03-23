@@ -14,7 +14,7 @@ import { Button } from '@/shared/ui';
 type SettingsPlanPaywallSheetProps = {
   visible: boolean;
   mode: MonetizationMode;
-  aiLimit: number;
+  proAiLimit: number;
   onClose: () => void;
   onUpgradePress?: () => void;
 };
@@ -41,7 +41,7 @@ function FeatureRow({ text }: FeatureRowProps) {
 export function SettingsPlanPaywallSheet({
   visible,
   mode,
-  aiLimit,
+  proAiLimit,
   onClose,
   onUpgradePress,
 }: SettingsPlanPaywallSheetProps) {
@@ -147,7 +147,7 @@ export function SettingsPlanPaywallSheet({
               </Text>
             </View>
           </View>
-          <FeatureRow text={t('settings.planPaywall.features.aiLimit', { limit: aiLimit })} />
+          <FeatureRow text={t('settings.planPaywall.features.aiLimit', { limit: proAiLimit })} />
           <FeatureRow text={t('settings.planPaywall.features.recordingUpTo30Min')} />
           <FeatureRow text={t('settings.planPaywall.features.autoAi')} />
           <FeatureRow text={t('settings.planPaywall.features.autoTranscription')} />
