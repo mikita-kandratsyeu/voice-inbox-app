@@ -6,6 +6,94 @@ import { formatShortDate, i18n } from '@/shared/lib';
 
 const toFileUri = (path: string): string => (path.startsWith('file://') ? path : `file://${path}`);
 
+const SHARE_WRAP_WIDTH = 72;
+
+function wrapParagraphToWidth(paragraph: string, maxWidth: number): string {
+  const normalized = paragraph.replace(/\s+/g, ' ').trim();
+  if (!normalized) {
+    return '';
+  }
+  if (normalized.length <= maxWidth) {
+    return normalized;
+  }
+
+  const words = normalized.split(' ');
+  const outLines: string[] = [];
+  let line = '';
+
+  const flush = () => {
+    if (line) {
+      outLines.push(line);
+      line = '';
+    }
+  };
+
+  for (const word of words) {
+    if (!word) {
+      continue;
+    }
+    if (word.length >= maxWidth) {
+      flush();
+      let rest = word;
+      while (rest.length > maxWidth) {
+        outLines.push(rest.slice(0, maxWidth));
+        rest = rest.slice(maxWidth);
+      }
+      line = rest;
+      continue;
+    }
+
+    const candidate = line ? `${line} ${word}` : word;
+    if (candidate.length <= maxWidth) {
+      line = candidate;
+    } else {
+      flush();
+      line = word;
+    }
+  }
+  flush();
+
+  return outLines.join('\n');
+}
+
+function formatPlainTranscriptForShare(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  const blocks = trimmed
+    .split(/\n\s*\n/)
+    .map((b) => b.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+
+  return blocks.map((b) => wrapParagraphToWidth(b, SHARE_WRAP_WIDTH)).join('\n\n');
+}
+
+function formatSegmentBlockForShare(startTime: string, text: string): string {
+  const wrapped = wrapParagraphToWidth(text.trim(), SHARE_WRAP_WIDTH);
+  if (!wrapped) {
+    return '';
+  }
+  const lines = wrapped.split('\n');
+  const prefix = `[${startTime}] `;
+  const hangIndent = ' '.repeat(prefix.length);
+
+  return lines.map((line, i) => (i === 0 ? prefix + line : hangIndent + line)).join('\n');
+}
+
+function formatTranscriptForShare(record: VoiceRecord): string {
+  const segments = record.transcriptSegments ?? [];
+  if (segments.length > 0) {
+    return segments
+      .map((s) => formatSegmentBlockForShare(s.startTime, s.text))
+      .filter(Boolean)
+      .join('\n\n');
+  }
+
+  return formatPlainTranscriptForShare(record.transcript ?? '');
+}
+
 const buildShareText = (record: VoiceRecord): string => {
   const locale = i18n.language ?? 'en';
   const lines: string[] = [];
@@ -25,16 +113,17 @@ const buildShareText = (record: VoiceRecord): string => {
     lines.push(record.tags.map((tag) => `#${tag}`).join(' '));
   }
 
-  if (record.transcript) {
+  const transcriptBody = formatTranscriptForShare(record);
+  if (transcriptBody) {
     lines.push('');
     lines.push(`## ${i18n.t('recordingDetail.transcript')}`);
-    lines.push(record.transcript);
+    lines.push(transcriptBody);
   }
 
   if (record.summary) {
     lines.push('');
     lines.push(`## ${i18n.t('recordingDetail.summary')}`);
-    lines.push(record.summary);
+    lines.push(formatPlainTranscriptForShare(record.summary));
   }
 
   if (record.tasks && record.tasks.length > 0) {

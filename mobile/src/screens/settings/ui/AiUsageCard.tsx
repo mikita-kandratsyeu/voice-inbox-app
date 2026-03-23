@@ -163,7 +163,7 @@ export const AiUsageCard = ({
 
   return (
     <View
-      className="mb-7 overflow-hidden rounded-2xl p-5"
+      className="mb-8 overflow-hidden rounded-2xl p-5"
       style={{
         borderWidth: 1,
         borderColor: color.border.default,

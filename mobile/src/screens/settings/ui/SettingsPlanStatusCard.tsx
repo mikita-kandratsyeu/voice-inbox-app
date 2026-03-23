@@ -77,7 +77,7 @@ export function SettingsPlanStatusCard({ color }: SettingsPlanStatusCardProps) {
   return (
     <Animated.View
       entering={FadeIn.duration(160).delay(24)}
-      className="mb-7 overflow-hidden rounded-2xl p-5"
+      className="mb-4 overflow-hidden rounded-2xl p-5"
       style={[
         {
           borderWidth: 1,
