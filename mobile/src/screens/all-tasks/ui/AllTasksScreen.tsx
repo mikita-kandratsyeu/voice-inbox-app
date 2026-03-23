@@ -8,7 +8,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
-import { InboxBannerAd } from '@/features/inbox-banner';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { EmptyState, ScreenHeader, SectionHeader } from '@/shared/ui';
@@ -154,7 +154,7 @@ export const AllTasksScreen = () => {
 
   const listFooter = (
     <View style={{ paddingBottom: insets.bottom }}>
-      <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
+      <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
     </View>
   );
 
@@ -213,7 +213,7 @@ export const AllTasksScreen = () => {
               description={t('allTasks.emptyDescription')}
             />
           </View>
-          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
         </View>
       ) : (
         <SectionList<TaskWithRecord, Section>

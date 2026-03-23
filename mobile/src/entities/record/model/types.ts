@@ -47,4 +47,16 @@ export type VoiceRecord = {
   translationLanguage?: string;
   audioPath?: string;
   embedding?: number[];
+  detailsHydrated?: boolean;
+};
+
+export type RecordListItem = Omit<VoiceRecord, 'transcriptSegments' | 'embedding'> & {
+  transcriptSegments?: TranscriptSegment[];
+  embedding?: number[];
+  detailsHydrated?: boolean;
+};
+
+export type RecordHeavyFields = {
+  transcriptSegments: TranscriptSegment[];
+  embedding?: number[];
 };

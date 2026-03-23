@@ -12,7 +12,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { BottomTabParamList, RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { RecordCard, useRecordStore } from '@/entities/record';
-import { InboxBannerAd } from '@/features/inbox-banner';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { InboxFilterBar, useInboxFiltersReset } from '@/features/inbox-filters';
 import { SearchBar, useSearchRecords } from '@/features/search-records';
 import { useColors } from '@/shared/config';
@@ -208,7 +208,7 @@ export const InboxScreen = () => {
               hint={t('inbox.emptyImportHint')}
             />
           </View>
-          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
         </View>
       ) : (
         <KeyboardAvoidingView

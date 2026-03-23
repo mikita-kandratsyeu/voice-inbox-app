@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRecordStore } from '@/entities/record';
 import type { WhisperModelId, WhisperModelStatus } from '@/entities/settings';
 import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
-import { InboxBannerAd } from '@/features/inbox-banner';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { getModelFileSizeBytes } from '@/features/model-manager';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
@@ -437,7 +437,7 @@ export const StorageDetailsScreen = () => {
               isLast
             />
           </SettingsSection>
-          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
     </View>

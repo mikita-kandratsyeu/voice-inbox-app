@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, View } from 'react-native';
 
@@ -34,8 +34,15 @@ export const TranscriptContent = ({
   const { translate, isTranslating } = useTranslate(record.id);
 
   const recordFromStore = useRecordStore((s) => s.records.find((r) => r.id === record.id));
+  const hydrateRecordDetails = useRecordStore((s) => s.hydrateRecordDetails);
   const r = recordFromStore ?? record;
   const registryInFlight = hasActiveTranscriptionJob(record.id);
+
+  useEffect(() => {
+    if (!r.detailsHydrated) {
+      void hydrateRecordDetails(record.id);
+    }
+  }, [hydrateRecordDetails, r.detailsHydrated, record.id]);
 
   const isTranscriptionUiActive =
     r.aiStatus === 'loading_model' ||

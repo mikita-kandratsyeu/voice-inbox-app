@@ -6,7 +6,7 @@ import { ActivityIndicator, Text, useWindowDimensions, View } from 'react-native
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { InboxBannerAd } from '@/features/inbox-banner';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { SupportForm, useSupportForm } from '@/features/tech-support';
 import { useColors } from '@/shared/config';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
@@ -73,7 +73,7 @@ export const SupportScreen = () => {
           ) : (
             <SupportForm color={color} {...supportForm} />
           )}
-          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </KeyboardAwareScrollView>
       </View>
     </View>

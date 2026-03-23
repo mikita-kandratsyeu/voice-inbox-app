@@ -1,7 +1,9 @@
 export { useRecordStore } from './model/store';
 export type {
   RecordClassification,
+  RecordHeavyFields,
   RecordingStatus,
+  RecordListItem,
   RecordStatus,
   TaskItem,
   TaskSource,

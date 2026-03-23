@@ -23,10 +23,7 @@ export function useAppForegroundLifecycle(): void {
     };
 
     const maybeNotifyForeground = () => {
-      const records = useRecordStore.getState().records;
-      const isAiProcessing = records.some(
-        (r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing',
-      );
+      const isAiProcessing = useRecordStore.getState().hasActiveAiJobs;
       if (!isAiProcessing) return;
 
       const now = Date.now();
@@ -61,10 +58,7 @@ export function useAppForegroundLifecycle(): void {
           lastForegroundAt = 0;
         }
         if (state === 'background') {
-          const records = useRecordStore.getState().records;
-          const isTranscribing = records.some(
-            (r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing',
-          );
+          const isTranscribing = useRecordStore.getState().hasActiveAiJobs;
           if (!isTranscribing) {
             releaseWhisperContext().catch(() => {});
           }

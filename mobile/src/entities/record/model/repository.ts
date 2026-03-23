@@ -10,7 +10,9 @@ import {
 
 import type {
   RecordClassification,
+  RecordHeavyFields,
   RecordingStatus,
+  RecordListItem,
   TaskItem,
   TranscriptSegment,
   VoiceRecord,
@@ -78,7 +80,59 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
   };
 };
 
+const toRecordListItem = (row: RecordRowRaw): RecordListItem => {
+  const summary = row.summary ?? '';
+  const tasks = JSON.parse(row.tasks ?? '[]') as TaskItem[];
+
+  return {
+    id: row.id,
+    title: row.title,
+    transcript: row.transcript ?? '',
+    summary,
+    tasks,
+    duration: row.duration ?? '0:00',
+    durationMs: row.durationMs ?? 0,
+    createdAt: row.createdAt ?? '',
+    relativeTime: row.relativeTime ?? '',
+    status: (row.status ?? 'unread') as VoiceRecord['status'],
+    aiStatus: (row.aiStatus ?? 'idle') as RecordingStatus,
+    transcriptProgress: row.transcriptProgress ?? 0,
+    isPinned: Boolean(row.isPinned),
+    tags: JSON.parse(row.tags ?? '[]') as string[],
+    classification: (row.classification as VoiceRecord['classification']) ?? undefined,
+    keyPhrases: JSON.parse(row.keyPhrases ?? '[]') as string[],
+    nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
+    translatedTranscript: row.translatedTranscript ?? undefined,
+    translationLanguage: row.translationLanguage ?? undefined,
+    audioPath: audioPathFromDbValue(row.audioPath),
+    detailsHydrated: false,
+    summaryStatus: summary ? ('done' as RecordingStatus) : undefined,
+    tasksStatus: tasks.length > 0 ? ('done' as RecordingStatus) : undefined,
+  };
+};
+
 export const recordRepository = {
+  getAllList: async (): Promise<RecordListItem[]> => {
+    logDb('getAllList');
+    const db = getDB();
+    const rows = await db
+      .select()
+      .from(recordsTable)
+      .orderBy(desc(recordsTable.isPinned), desc(recordsTable.createdAt));
+    logDb('getAllList', { count: rows.length });
+
+    for (const row of rows) {
+      if (!row.audioPath) continue;
+      const relative = getRecordingsRelativePath(row.audioPath);
+      if (!relative) continue;
+      if (row.audioPath === relative) continue;
+
+      await db.update(recordsTable).set({ audioPath: relative }).where(eq(recordsTable.id, row.id));
+    }
+
+    return rows.map(toRecordListItem);
+  },
+
   getAll: async (): Promise<VoiceRecord[]> => {
     logDb('getAll');
     const db = getDB();
@@ -98,6 +152,28 @@ export const recordRepository = {
     }
 
     return rows.map(toRecord);
+  },
+
+  getHeavyFields: async (id: string): Promise<RecordHeavyFields> => {
+    logDb('getHeavyFields', { id });
+    const db = getDB();
+    const rows = await db
+      .select({
+        transcriptSegments: recordsTable.transcriptSegments,
+        embedding: recordsTable.embedding,
+      })
+      .from(recordsTable)
+      .where(eq(recordsTable.id, id))
+      .limit(1);
+    const row = rows[0];
+    if (!row) {
+      return { transcriptSegments: [], embedding: undefined };
+    }
+
+    return {
+      transcriptSegments: JSON.parse(row.transcriptSegments ?? '[]') as TranscriptSegment[],
+      embedding: row.embedding ? (JSON.parse(row.embedding) as number[]) : undefined,
+    };
   },
 
   insert: async (record: VoiceRecord): Promise<void> => {

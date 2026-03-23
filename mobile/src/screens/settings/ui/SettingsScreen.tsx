@@ -48,7 +48,7 @@ import {
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { openInAppBrowser } from '@/features/in-app-browser';
-import { InboxBannerAd } from '@/features/inbox-banner';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { ProLicenseKeyModal, useProEntitlement } from '@/features/pro-license';
 import { exportData, importData } from '@/features/sync-data';
 import { getWebsiteUrl, useColors } from '@/shared/config';
@@ -108,7 +108,6 @@ export const SettingsScreen = () => {
   const [automationSheet, setAutomationSheet] = useState<AutomationFeatureKind | null>(null);
   const [planPaywallVisible, setPlanPaywallVisible] = useState(false);
   const [internalUpgradeVisible, setInternalUpgradeVisible] = useState(false);
-  const [showDeferredBanner, setShowDeferredBanner] = useState(false);
   const { refresh: refreshProEntitlement, isProActive: proEntitlementActive } = useProEntitlement();
   const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
   const monetizationMode = getMonetizationMode();
@@ -191,16 +190,6 @@ export const SettingsScreen = () => {
       sub.remove();
     };
   }, [refreshPermissions]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowDeferredBanner(true);
-    }, 1200);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, []);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -658,9 +647,7 @@ export const SettingsScreen = () => {
               />
             </SettingsSection>
           )}
-          {showDeferredBanner ? (
-            <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
-          ) : null}
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
         <ProLicenseKeyModal
           visible={internalUpgradeVisible}

@@ -5,6 +5,7 @@ import { recordRepository } from './repository';
 import type {
   RecordClassification,
   RecordingStatus,
+  RecordListItem,
   TaskItem,
   TranscriptSegment,
   VoiceRecord,
@@ -47,10 +48,18 @@ const clearAiPersistDebounce = (id: string) => {
   aiPersistTimers.delete(id);
 };
 
+const isActiveAiStatus = (status?: RecordingStatus): boolean =>
+  status === 'loading_model' || status === 'processing';
+
+const computeHasActiveAiJobs = (records: Array<VoiceRecord | RecordListItem>): boolean =>
+  records.some((r) => isActiveAiStatus(r.aiStatus));
+
 type RecordStore = {
-  records: VoiceRecord[];
+  records: RecordListItem[];
+  hasActiveAiJobs: boolean;
   isLoaded: boolean;
   load: () => Promise<void>;
+  hydrateRecordDetails: (id: string) => Promise<void>;
   addRecord: (record: VoiceRecord) => Promise<void>;
   deleteRecord: (id: string) => Promise<void>;
   togglePin: (id: string) => Promise<void>;
@@ -94,17 +103,46 @@ type RecordStore = {
 
 export const useRecordStore = create<RecordStore>((set, get) => ({
   records: [],
+  hasActiveAiJobs: false,
   isLoaded: false,
 
   load: async () => {
     if (__DEV__) console.warn('[recordStore] load: refetching records from DB');
-    const all = await recordRepository.getAll();
-    set({ records: all, isLoaded: true });
+    const all = await recordRepository.getAllList();
+    set({ records: all, hasActiveAiJobs: computeHasActiveAiJobs(all), isLoaded: true });
+  },
+
+  hydrateRecordDetails: async (id) => {
+    const existing = get().records.find((r) => r.id === id);
+    if (!existing || existing.detailsHydrated) return;
+
+    const heavy = await recordRepository.getHeavyFields(id);
+    set((s) => ({
+      records: s.records.map((r) =>
+        r.id === id
+          ? {
+              ...r,
+              transcriptSegments: heavy.transcriptSegments,
+              embedding: heavy.embedding,
+              detailsHydrated: true,
+            }
+          : r,
+      ),
+    }));
   },
 
   addRecord: async (record) => {
     await recordRepository.insert(record);
-    set((s) => ({ records: [record, ...s.records] }));
+    const nextRecord: RecordListItem = {
+      ...record,
+      transcriptSegments: undefined,
+      embedding: undefined,
+      detailsHydrated: false,
+    };
+    set((s) => {
+      const next = [nextRecord, ...s.records];
+      return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
+    });
   },
 
   deleteRecord: async (id) => {
@@ -120,7 +158,10 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
       }
     }
     await recordRepository.remove(id);
-    set((s) => ({ records: s.records.filter((r) => r.id !== id) }));
+    set((s) => {
+      const next = s.records.filter((r) => r.id !== id);
+      return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
+    });
   },
 
   togglePin: async (id) => {
@@ -157,8 +198,8 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   },
 
   updateAiStatus: (id, aiStatus, progress, progressLabel) => {
-    set((s) => ({
-      records: s.records.map((r) =>
+    set((s) => {
+      const next = s.records.map((r) =>
         r.id === id
           ? {
               ...r,
@@ -167,8 +208,9 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
               transcriptProgressLabel: progressLabel ?? r.transcriptProgressLabel,
             }
           : r,
-      ),
-    }));
+      );
+      return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
+    });
 
     const updated = get().records.find((r) => r.id === id);
     if (!updated) {
@@ -191,19 +233,21 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   updateTranscript: async (id, transcript, segments) => {
     clearAiPersistDebounce(id);
     await recordRepository.updateTranscript(id, transcript, segments);
-    set((s) => ({
-      records: s.records.map((r) =>
+    set((s) => {
+      const next = s.records.map((r) =>
         r.id === id
           ? {
               ...r,
               transcript,
               transcriptSegments: segments,
-              aiStatus: 'done',
+              detailsHydrated: true,
+              aiStatus: 'done' as RecordingStatus,
               transcriptProgress: 100,
             }
           : r,
-      ),
-    }));
+      );
+      return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
+    });
   },
 
   setSummaryStatus: (id, summaryStatus) => {
@@ -294,7 +338,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   setEmbedding: (id, embedding) => {
     set((s) => ({
       records: s.records.map((r) =>
-        r.id === id ? { ...r, embedding: embedding ?? undefined } : r,
+        r.id === id ? { ...r, embedding: embedding ?? undefined, detailsHydrated: true } : r,
       ),
     }));
   },

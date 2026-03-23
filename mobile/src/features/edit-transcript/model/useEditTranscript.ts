@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import type { TranscriptSegment } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
@@ -13,6 +13,10 @@ export const useEditTranscript = ({ recordId, segments, onSaved }: UseEditTransc
   const updateTranscript = useRecordStore((s) => s.updateTranscript);
   const [editedSegments, setEditedSegments] = useState<TranscriptSegment[]>(segments);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    setEditedSegments(segments);
+  }, [recordId, segments]);
 
   const updateSegmentText = useCallback((segmentId: string, text: string) => {
     setEditedSegments((prev) => prev.map((s) => (s.id === segmentId ? { ...s, text } : s)));

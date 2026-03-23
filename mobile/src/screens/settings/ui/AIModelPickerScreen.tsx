@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AIModelId } from '@/entities/settings';
 import { AI_MODELS, getRecommendedAIModelId, useSettingsStore } from '@/entities/settings';
-import { InboxBannerAd } from '@/features/inbox-banner';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useColors } from '@/shared/config';
 import { useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader } from '@/shared/ui';
@@ -143,7 +143,7 @@ export const AIModelPickerScreen = () => {
               );
             })}
           </View>
-          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
     </View>

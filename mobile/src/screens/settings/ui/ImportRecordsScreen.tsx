@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { InboxBannerAd } from '@/features/inbox-banner';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { formatRelativeTime, useTabletContentMaxWidth } from '@/shared/lib';
@@ -380,7 +380,7 @@ export const ImportRecordsScreen = () => {
               </Text>
             </View>
           )}
-          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
         </ScrollView>
       </View>
     </View>

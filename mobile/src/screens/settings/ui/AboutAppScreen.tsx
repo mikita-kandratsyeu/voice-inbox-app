@@ -11,7 +11,7 @@ import type { SettingsStackParamList } from '@/app/navigation/types';
 import { getStoreListingUrl, openStoreListing } from '@/features/app-review';
 import { getStorefrontCountryCode } from '@/features/app-storefront';
 import { openInAppBrowser } from '@/features/in-app-browser';
-import { InboxBannerAd } from '@/features/inbox-banner';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useOnboardingStore } from '@/features/onboarding';
 import { getWebsiteUrl, useColors } from '@/shared/config';
 import { IS_ANDROID, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
@@ -186,7 +186,7 @@ export const AboutAppScreen = () => {
               {distributionFooterText}
             </Text>
           )}
-          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
     </View>

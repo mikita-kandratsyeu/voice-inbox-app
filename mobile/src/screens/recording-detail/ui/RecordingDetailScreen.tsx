@@ -14,7 +14,7 @@ import { useRecordStore } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
-import { InboxBannerAd } from '@/features/inbox-banner';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useRecordActions } from '@/features/record-actions';
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
@@ -55,6 +55,7 @@ export const RecordingDetailScreen = () => {
     clearAudioPath,
     archiveRecord,
     unarchiveRecord,
+    hydrateRecordDetails,
   } = useRecordStore(
     useShallow((s) => ({
       liveRecord: s.records.find((r) => r.id === recordId) ?? routeRecord,
@@ -66,6 +67,7 @@ export const RecordingDetailScreen = () => {
       clearAudioPath: s.clearAudioPath,
       archiveRecord: s.archiveRecord,
       unarchiveRecord: s.unarchiveRecord,
+      hydrateRecordDetails: s.hydrateRecordDetails,
     })),
   );
 
@@ -100,6 +102,10 @@ export const RecordingDetailScreen = () => {
     setActiveTab('transcript');
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset when switching records
   }, [routeRecord.id]);
+
+  useEffect(() => {
+    void hydrateRecordDetails(recordId);
+  }, [hydrateRecordDetails, recordId]);
 
   const { startTranscription, cancelTranscription } = useTranscription();
   const { generateSummary, extractTasks } = useAiProcessing();
@@ -364,7 +370,7 @@ export const RecordingDetailScreen = () => {
 
           <RelatedNotesSection recordId={liveRecord.id} color={color} />
 
-          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </View>
         <AskAIModal
           visible={showAskAIModal}

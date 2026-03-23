@@ -11,7 +11,7 @@ import {
   useWhisperModelCompatibility,
   WHISPER_MODELS,
 } from '@/entities/settings';
-import { InboxBannerAd } from '@/features/inbox-banner';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { getModelFileSizeBytes, useModelManager } from '@/features/model-manager';
 import { useColors } from '@/shared/config';
 import { useTabletContentMaxWidth } from '@/shared/lib';
@@ -154,7 +154,7 @@ export const WhisperModelPickerScreen = () => {
               />
             ))}
           </View>
-          <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
     </View>

@@ -2,7 +2,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check } from 'lucide-react-native';
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
@@ -23,8 +23,15 @@ export const EditTranscriptScreen = () => {
 
   const { record } = route.params;
   const records = useRecordStore((s) => s.records);
+  const hydrateRecordDetails = useRecordStore((s) => s.hydrateRecordDetails);
   const liveRecord = records.find((r) => r.id === record.id) ?? record;
   const segments = liveRecord.transcriptSegments ?? [];
+
+  useEffect(() => {
+    if (!liveRecord.detailsHydrated) {
+      void hydrateRecordDetails(record.id);
+    }
+  }, [hydrateRecordDetails, liveRecord.detailsHydrated, record.id]);
 
   const { editedSegments, updateSegmentText, save, reset, hasChanges, isSaving } =
     useEditTranscript({
