@@ -49,7 +49,7 @@ export function AutomationComingSoonSheet({
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.35} />
+      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.45} />
     ),
     [],
   );
@@ -67,44 +67,56 @@ export function AutomationComingSoonSheet({
     <BottomSheetModal
       ref={ref}
       enableDynamicSizing
+      enablePanDownToClose
+      enableOverDrag={false}
       keyboardBehavior={modalKeyboardBehavior}
+      keyboardBlurBehavior="restore"
+      enableBlurKeyboardOnGesture
       backdropComponent={renderBackdrop}
       onDismiss={onClose}
-      backgroundStyle={{ backgroundColor: c.background.card }}
-      handleIndicatorStyle={{ backgroundColor: c.text.muted }}
+      backgroundStyle={{
+        backgroundColor: c.background.primary,
+        borderTopWidth: 1,
+        borderTopColor: c.border.default,
+      }}
+      handleIndicatorStyle={{
+        width: 36,
+        height: 5,
+        borderRadius: 2.5,
+        backgroundColor: c.icon.muted,
+      }}
     >
       <BottomSheetView
         style={{
           paddingHorizontal: 24,
           paddingTop: 8,
-          paddingBottom: Math.max(insets.bottom, 20),
-          gap: 16,
+          paddingBottom: Math.max(insets.bottom, 24),
         }}
       >
-        <View
-          className="mb-1 items-center justify-center rounded-2xl py-4"
-          style={{ backgroundColor: c.accent.primary + '18' }}
-        >
-          <Zap size={28} color={c.accent.primary} strokeWidth={1.75} />
+        <View className="mb-1 items-center">
+          <View
+            className="mb-4 h-14 w-14 items-center justify-center rounded-2xl"
+            style={{ backgroundColor: c.background.tertiary }}
+          >
+            <Zap size={28} color={c.accent.primary} strokeWidth={1.75} />
+          </View>
+          <Text className="mb-2 text-center text-xl font-bold" style={{ color: c.text.primary }}>
+            {title}
+          </Text>
+          <Text className="mb-6 text-center text-sm leading-5" style={{ color: c.text.secondary }}>
+            {body}
+          </Text>
         </View>
-        <Text className="text-lg font-bold" style={{ color: c.text.primary }}>
-          {title}
-        </Text>
-        <Text className="text-[15px] leading-6" style={{ color: c.text.secondary }}>
-          {body}
-        </Text>
-        <Text
-          className="text-xs font-semibold uppercase tracking-wide"
-          style={{ color: c.text.muted }}
-        >
-          {t('settings.automationSoon.badge')}
-        </Text>
+
         <Button
           variant="primary"
-          label={t('common.done')}
+          size="lg"
+          fullWidth
+          label={t('common.gotIt')}
           onPress={() => ref.current?.dismiss()}
           color={c}
-          containerStyle={{ backgroundColor: c.accent.primary, borderRadius: 14 }}
+          activeOpacity={0.85}
+          accessibilityLabel={t('common.gotIt')}
         />
       </BottomSheetView>
     </BottomSheetModal>

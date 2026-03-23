@@ -351,18 +351,7 @@ export const SettingsScreen = () => {
               label={t('settings.autoTranscribeOnSave')}
               leftIcon={<Zap size={20} color={color.accent.transcript} strokeWidth={1.8} />}
               rightSlot={
-                <View
-                  className="flex-row items-center gap-2"
-                  pointerEvents={automationLocked ? 'none' : 'box-none'}
-                >
-                  {automationLocked ? (
-                    <Text
-                      className="text-[11px] font-bold uppercase tracking-wide"
-                      style={{ color: color.text.muted }}
-                    >
-                      {t('settings.soonBadge')}
-                    </Text>
-                  ) : null}
+                <View pointerEvents={automationLocked ? 'none' : 'box-none'}>
                   <Switch
                     disabled={automationLocked}
                     value={automationLocked ? false : autoTranscribeOnSave}
@@ -382,18 +371,7 @@ export const SettingsScreen = () => {
               label={t('settings.autoAiAfterTranscription')}
               leftIcon={<Sparkles size={20} color={color.accent.primary} strokeWidth={1.8} />}
               rightSlot={
-                <View
-                  className="flex-row items-center gap-2"
-                  pointerEvents={automationLocked ? 'none' : 'box-none'}
-                >
-                  {automationLocked && (
-                    <Text
-                      className="text-[11px] font-bold uppercase tracking-wide"
-                      style={{ color: color.text.muted }}
-                    >
-                      {t('settings.soonBadge')}
-                    </Text>
-                  )}
+                <View pointerEvents={automationLocked ? 'none' : 'box-none'}>
                   <Switch
                     disabled={automationLocked}
                     value={automationLocked ? false : autoAiAfterTranscription}

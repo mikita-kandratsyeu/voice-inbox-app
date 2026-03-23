@@ -355,13 +355,11 @@
       "proActiveUntil": "Active until {{date}}"
     },
     "automationSoon": {
-      "badge": "Coming soon",
       "autoTranscribeTitle": "Auto-transcribe",
       "autoTranscribeBody": "Automatically transcribe new notes after you save or import audio. This will be part of Pro when subscriptions launch — for now, tap Transcribe anytime on a note.",
       "autoAiTitle": "Auto AI after transcription",
       "autoAiBody": "Runs summary and tasks right after transcription finishes. Planned as a Pro automation feature. You can still run AI manually from each note."
-    },
-    "soonBadge": "Soon"
+    }
   },
   "appearance": {
     "title": "Appearance",

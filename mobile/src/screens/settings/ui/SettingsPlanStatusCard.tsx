@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react-native';
+import { Zap } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -56,10 +56,10 @@ export function SettingsPlanStatusCard({ color }: SettingsPlanStatusCardProps) {
     >
       <View className="flex-row items-center">
         <View
-          className="mr-3 rounded-full p-2"
-          style={{ backgroundColor: color.accent.primary + '22' }}
+          className="mr-3 h-14 w-14 items-center justify-center rounded-2xl"
+          style={{ backgroundColor: color.background.tertiary }}
         >
-          <Sparkles size={20} color={color.accent.primary} strokeWidth={1.8} />
+          <Zap size={28} color={color.accent.primary} strokeWidth={1.75} />
         </View>
         <View className="min-w-0 flex-1">
           <Text className="text-base font-semibold" style={{ color: color.text.primary }}>

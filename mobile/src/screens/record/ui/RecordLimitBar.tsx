@@ -42,13 +42,12 @@ export const RecordLimitBar = memo(({ elapsedMs, maxRecordingMs }: RecordLimitBa
     prevToneRef.current = tone;
   }, [tone]);
 
+  if (tone === 'calm') {
+    return null;
+  }
+
   const remainingMins = Math.floor(remainingMs / 60000);
   const remainingSecsInMinute = Math.min(59, Math.ceil((remainingMs % 60000) / 1000));
-  const lineCalm = t('record.limitRemainingCalm', {
-    minutes: remainingMins,
-    seconds: remainingSecsInMinute,
-    maxMinutes: Math.max(1, Math.round(maxRecordingMs / 60000)),
-  });
   const lineSoft = t('record.limitSoftWarning', {
     minutes: remainingMins,
     seconds: remainingSecsInMinute,
@@ -57,13 +56,8 @@ export const RecordLimitBar = memo(({ elapsedMs, maxRecordingMs }: RecordLimitBa
     seconds: Math.max(1, Math.ceil(remainingMs / 1000)),
   });
 
-  const mainText = tone === 'final' ? lineFinal : tone === 'soft' ? lineSoft : lineCalm;
-  const mainColor =
-    tone === 'final'
-      ? c.accent.delete
-      : tone === 'soft'
-        ? 'rgba(255,200,120,0.95)'
-        : 'rgba(255,255,255,0.78)';
+  const mainText = tone === 'final' ? lineFinal : lineSoft;
+  const mainColor = tone === 'final' ? c.accent.delete : 'rgba(255,200,120,0.95)';
 
   return (
     <View className="min-h-[36px] items-center justify-center gap-1 px-2">
