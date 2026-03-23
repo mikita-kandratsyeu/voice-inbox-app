@@ -1,4 +1,8 @@
-import { FREE_WEEKLY_LIMIT, PRO_WEEKLY_LIMIT } from '@/shared/config/constants';
+import {
+  FREE_WEEKLY_LIMIT,
+  PRO_LICENSE_STATUS_CACHE_MS,
+  PRO_WEEKLY_LIMIT,
+} from '@/shared/config/productLimits';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { isNumber, isString } from '@/shared/lib/type-guards';
@@ -214,8 +218,10 @@ export type AiWeeklyLimits = {
   proWeeklyLimit: number;
 };
 
-export async function getAiWeeklyLimits(): Promise<AiWeeklyLimits | null> {
-  const status = await fetchProLicenseStatus();
+export async function getAiWeeklyLimits(options?: {
+  force?: boolean;
+}): Promise<AiWeeklyLimits | null> {
+  const status = await fetchProLicenseStatus({ force: options?.force === true });
 
   if (!status) {
     return null;
@@ -227,7 +233,23 @@ export async function getAiWeeklyLimits(): Promise<AiWeeklyLimits | null> {
   };
 }
 
-export async function fetchProLicenseStatus(): Promise<ProLicenseStatus | null> {
+type ProLicenseStatusCacheEntry = {
+  data: ProLicenseStatus;
+  expiresAt: number;
+};
+
+let proLicenseStatusCache: ProLicenseStatusCacheEntry | null = null;
+let proLicenseStatusInFlight: Promise<ProLicenseStatus | null> | null = null;
+
+export function invalidateProLicenseStatusCache(): void {
+  proLicenseStatusCache = null;
+}
+
+export type FetchProLicenseStatusOptions = {
+  force?: boolean;
+};
+
+async function fetchProLicenseStatusFromNetwork(): Promise<ProLicenseStatus | null> {
   try {
     const response = await fetchWithAuth(`${getWebApiUrl()}/api/pro-license/status`, {
       method: 'GET',
@@ -249,6 +271,46 @@ export async function fetchProLicenseStatus(): Promise<ProLicenseStatus | null> 
     return { active, expiresAt, weeklyLimitFree, weeklyLimitPro };
   } catch {
     return null;
+  }
+}
+
+export async function fetchProLicenseStatus(
+  options?: FetchProLicenseStatusOptions,
+): Promise<ProLicenseStatus | null> {
+  const force = options?.force === true;
+  const now = Date.now();
+
+  if (!force && proLicenseStatusCache && now < proLicenseStatusCache.expiresAt) {
+    return proLicenseStatusCache.data;
+  }
+
+  if (force) {
+    invalidateProLicenseStatusCache();
+  }
+
+  while (proLicenseStatusInFlight) {
+    await proLicenseStatusInFlight;
+  }
+
+  if (!force && proLicenseStatusCache && Date.now() < proLicenseStatusCache.expiresAt) {
+    return proLicenseStatusCache.data;
+  }
+
+  proLicenseStatusInFlight = (async () => {
+    const result = await fetchProLicenseStatusFromNetwork();
+    if (result) {
+      proLicenseStatusCache = {
+        data: result,
+        expiresAt: Date.now() + PRO_LICENSE_STATUS_CACHE_MS,
+      };
+    }
+    return result;
+  })();
+
+  try {
+    return await proLicenseStatusInFlight;
+  } finally {
+    proLicenseStatusInFlight = null;
   }
 }
 
@@ -303,6 +365,7 @@ export async function redeemProLicenseKey(key: string): Promise<RedeemProLicense
     if (!expiresAt) {
       return { ok: false, error: 'Invalid server response', code: 'invalid_response' };
     }
+    invalidateProLicenseStatusCache();
     return { ok: true, expiresAt };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Network error';

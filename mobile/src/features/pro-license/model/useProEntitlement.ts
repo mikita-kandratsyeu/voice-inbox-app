@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 
 import { fetchProLicenseStatus } from '@/shared/lib/ai-api/aiApi';
@@ -10,9 +10,11 @@ import {
   PRO_ENTITLEMENT_STORAGE_KEY,
   setProExpiresAtMsSync,
 } from '../lib/proEntitlementStorage';
-
-const MIN_BACKGROUND_FETCH_INTERVAL_MS = 45_000;
-const MIN_ATTEMPT_INTERVAL_MS = 12_000;
+import {
+  PRO_LICENSE_MIN_ATTEMPT_MS,
+  PRO_LICENSE_MIN_BACKGROUND_FETCH_MS,
+  PRO_LICENSE_MIN_FOREGROUND_REFRESH_MS,
+} from '../lib/syncIntervals';
 
 let lastSuccessfulFetchAt = 0;
 let lastAttemptAt = 0;
@@ -24,16 +26,16 @@ function syncProLicenseFromServer(force: boolean): Promise<void> {
     if (
       !force &&
       lastSuccessfulFetchAt > 0 &&
-      now - lastSuccessfulFetchAt < MIN_BACKGROUND_FETCH_INTERVAL_MS
+      now - lastSuccessfulFetchAt < PRO_LICENSE_MIN_BACKGROUND_FETCH_MS
     ) {
       return;
     }
-    if (!force && lastAttemptAt > 0 && now - lastAttemptAt < MIN_ATTEMPT_INTERVAL_MS) {
+    if (!force && lastAttemptAt > 0 && now - lastAttemptAt < PRO_LICENSE_MIN_ATTEMPT_MS) {
       return;
     }
     lastAttemptAt = now;
 
-    const status = await fetchProLicenseStatus();
+    const status = await fetchProLicenseStatus({ force });
     if (status == null) {
       return;
     }
@@ -82,6 +84,8 @@ export function useProEntitlement(): {
     getExpiresSnapshot,
   );
   const [hydrated, setHydrated] = useState(false);
+  const hasLeftActiveRef = useRef(false);
+  const lastForegroundRefreshAtRef = useRef(0);
 
   const isProActive = expiresAtMs != null && expiresAtMs > Date.now();
 
@@ -97,7 +101,20 @@ export function useProEntitlement(): {
   useEffect(() => {
     const sub = AppState.addEventListener('change', (s) => {
       if (s === 'active') {
+        if (!hasLeftActiveRef.current) {
+          return;
+        }
+        const now = Date.now();
+        const lastFg = lastForegroundRefreshAtRef.current;
+        if (lastFg > 0 && now - lastFg < PRO_LICENSE_MIN_FOREGROUND_REFRESH_MS) {
+          return;
+        }
+        lastForegroundRefreshAtRef.current = now;
         void refresh();
+        return;
+      }
+      if (s === 'background' || s === 'inactive') {
+        hasLeftActiveRef.current = true;
       }
     });
     return () => sub.remove();

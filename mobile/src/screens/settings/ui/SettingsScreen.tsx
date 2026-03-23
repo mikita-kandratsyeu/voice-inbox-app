@@ -196,7 +196,7 @@ export const SettingsScreen = () => {
     setRefreshing(true);
     await Promise.all([
       fetchAiUsage(),
-      getAiWeeklyLimits().then((limits) => {
+      getAiWeeklyLimits({ force: true }).then((limits) => {
         if (limits?.proWeeklyLimit && limits.proWeeklyLimit > 0) {
           setProWeeklyLimit(limits.proWeeklyLimit);
         }
