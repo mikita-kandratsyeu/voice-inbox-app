@@ -19,6 +19,7 @@ type AudioRecorderPlayerInstance = {
   pauseRecorder: () => Promise<string>;
   resumeRecorder: () => Promise<string>;
 };
+import { FREE_MAX_RECORDING_MS } from '@/features/app-storefront';
 import {
   endRecordingLiveActivity,
   startRecordingLiveActivity,
@@ -28,7 +29,6 @@ import { ensureRecordingsDir, hapticLight, IS_IOS, RECORDINGS_DIR } from '@/shar
 import { checkMicPermission, requestMicPermission } from '@/shared/lib/permissions';
 
 import type { RecordingState } from '../config';
-import { MAX_RECORDING_MS } from '../config';
 
 const audioRecorderPlayer = AudioRecorderPlayer as unknown as AudioRecorderPlayerInstance;
 
@@ -38,44 +38,16 @@ const MAX_JUMP_BACKWARD_MS = 500;
 
 type SanitizeResult = { ms: number; routeChanged: boolean };
 
-function sanitizePosition(rawMs: number, lastValidMs: number): SanitizeResult {
-  if (rawMs < 0) {
-    return { ms: lastValidMs, routeChanged: false };
-  }
-
-  const capped = Math.min(rawMs, MAX_RECORDING_MS);
-
-  if (capped < lastValidMs - MAX_JUMP_BACKWARD_MS) {
-    return { ms: lastValidMs, routeChanged: true };
-  }
-
-  if (capped > lastValidMs + MAX_JUMP_FORWARD_MS) {
-    return { ms: lastValidMs + SUBSCRIPTION_DURATION_MS, routeChanged: true };
-  }
-
-  return { ms: capped, routeChanged: false };
-}
-
-const RECORDING_AUDIO_SET = {
-  AVModeIOS: 'measurement',
-  AVFormatIDKeyIOS: 'lpcm',
-  AVSampleRateKeyIOS: 16000,
-  AVNumberOfChannelsKeyIOS: 1,
-  AudioSourceAndroid: AudioSourceAndroidType.VOICE_RECOGNITION,
-  OutputFormatAndroid: OutputFormatAndroidType.DEFAULT,
-  AudioEncoderAndroid: AudioEncoderAndroidType.DEFAULT,
-  AudioSamplingRate: 16000,
-  AudioChannels: 1,
-  AudioEncodingBitRate: 256000,
-} as AudioSet;
-
 type UseRecordingOptions = {
+  /** Defaults to free tier max when omitted (e.g. deeplink-only stop helper). */
+  maxRecordingMs?: number;
   onLimitReached?: () => void;
   onRecordingStoppedByAppLock?: (path: string, elapsed: number, elapsedMs: number) => void;
   onAudioRouteChange?: () => void;
 };
 
 export const useRecording = ({
+  maxRecordingMs = FREE_MAX_RECORDING_MS,
   onLimitReached,
   onRecordingStoppedByAppLock,
   onAudioRouteChange,
@@ -92,6 +64,8 @@ export const useRecording = ({
   const limitReachedRef = useRef(false);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const lastLiveActivityUpdateRef = useRef(0);
+  const maxRecordingMsRef = useRef(maxRecordingMs);
+  maxRecordingMsRef.current = maxRecordingMs;
 
   const onLimitReachedRef = useRef(onLimitReached);
   onLimitReachedRef.current = onLimitReached;
@@ -101,6 +75,25 @@ export const useRecording = ({
   onAudioRouteChangeRef.current = onAudioRouteChange;
   const stateRef = useRef(state);
   stateRef.current = state;
+
+  const sanitizePosition = useCallback((rawMs: number, lastValidMs: number): SanitizeResult => {
+    const cap = maxRecordingMsRef.current;
+    if (rawMs < 0) {
+      return { ms: lastValidMs, routeChanged: false };
+    }
+
+    const capped = Math.min(rawMs, cap);
+
+    if (capped < lastValidMs - MAX_JUMP_BACKWARD_MS) {
+      return { ms: lastValidMs, routeChanged: true };
+    }
+
+    if (capped > lastValidMs + MAX_JUMP_FORWARD_MS) {
+      return { ms: lastValidMs + SUBSCRIPTION_DURATION_MS, routeChanged: true };
+    }
+
+    return { ms: capped, routeChanged: false };
+  }, []);
 
   const addRecordBackListener = useCallback(() => {
     audioRecorderPlayer.addRecordBackListener((e: RecordBackType) => {
@@ -147,7 +140,8 @@ export const useRecording = ({
         }
       }
 
-      if (ms >= MAX_RECORDING_MS && !limitReachedRef.current) {
+      const hardCap = maxRecordingMsRef.current;
+      if (ms >= hardCap && !limitReachedRef.current) {
         limitReachedRef.current = true;
         endRecordingLiveActivity().catch(() => {});
         audioRecorderPlayer.removeRecordBackListener();
@@ -158,15 +152,19 @@ export const useRecording = ({
               audioPathRef.current = result;
             }
             setState('paused');
-            Alert.alert(t('record.recordStopped'), t('record.recordStoppedMessage'), [
-              { text: 'OK' },
-            ]);
+            Alert.alert(
+              t('record.recordStopped'),
+              t('record.recordStoppedMessage', {
+                maxMinutes: Math.max(1, Math.round(maxRecordingMsRef.current / 60000)),
+              }),
+              [{ text: t('common.ok') }],
+            );
             onLimitReachedRef.current?.();
           })
           .catch(() => {});
       }
     });
-  }, [t]);
+  }, [sanitizePosition, t]);
 
   const startRecording = useCallback(async () => {
     const status = await checkMicPermission();
@@ -304,3 +302,16 @@ export const useRecording = ({
     stopRecording,
   };
 };
+
+const RECORDING_AUDIO_SET = {
+  AVModeIOS: 'measurement',
+  AVFormatIDKeyIOS: 'lpcm',
+  AVSampleRateKeyIOS: 16000,
+  AVNumberOfChannelsKeyIOS: 1,
+  AudioSourceAndroid: AudioSourceAndroidType.VOICE_RECOGNITION,
+  OutputFormatAndroid: OutputFormatAndroidType.DEFAULT,
+  AudioEncoderAndroid: AudioEncoderAndroidType.DEFAULT,
+  AudioSamplingRate: 16000,
+  AudioChannels: 1,
+  AudioEncodingBitRate: 256000,
+} as AudioSet;

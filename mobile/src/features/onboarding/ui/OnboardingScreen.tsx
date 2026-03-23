@@ -47,6 +47,7 @@ import { importData } from '@/features/sync-data';
 import type { Colors } from '@/shared/config';
 import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
 import { hapticSelection, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
+import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import {
   checkMicPermission,
   type MicPermissionStatus,
@@ -846,6 +847,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
     setIsFinishingOnboarding(true);
     setTermsAgreedAt();
     setHasSeenOnboarding();
+    void logAnalyticsEvent('onboarding_completed');
 
     InteractionManager.runAfterInteractions(() => {
       requestAnimationFrame(() => {

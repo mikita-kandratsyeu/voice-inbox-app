@@ -5,7 +5,9 @@ import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
+import { shouldApplyAutoAiAfterTranscription } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
+import { useProEntitlement } from '@/features/pro-license';
 import { i18n, useNetworkStatus } from '@/shared/lib';
 
 import { getWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
@@ -67,6 +69,7 @@ export const useTranscription = () => {
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const transcriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
+  const { isProActive } = useProEntitlement();
   const { isConnected } = useNetworkStatus();
   const { processRecord } = useAiProcessing();
 
@@ -163,7 +166,10 @@ export const useTranscription = () => {
         };
         generateAndSaveEmbeddingForRecord(recordWithTranscript).catch(() => {});
 
-        if (autoAiAfterTranscription && isConnected) {
+        if (
+          shouldApplyAutoAiAfterTranscription(autoAiAfterTranscription, isProActive) &&
+          isConnected
+        ) {
           processRecord({
             ...record,
             transcript: fullText,
@@ -216,6 +222,7 @@ export const useTranscription = () => {
       whisperModelStatuses,
       transcriptionLanguage,
       autoAiAfterTranscription,
+      isProActive,
       isConnected,
       processRecord,
       updateAiStatus,

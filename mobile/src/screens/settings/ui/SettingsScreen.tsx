@@ -1,5 +1,5 @@
 import { crash, getCrashlytics } from '@react-native-firebase/crashlytics';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   AlertTriangle,
@@ -40,7 +40,7 @@ import { useAppLockStore } from '@/entities/app-lock';
 import { useRecordStore } from '@/entities/record';
 import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { openAppReviewFromSettings } from '@/features/app-review';
-import { useAdsAllowed } from '@/features/app-storefront';
+import { isAutomationUiLockedForPublicStore, useAdsAllowed } from '@/features/app-storefront';
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { openInAppBrowser } from '@/features/in-app-browser';
@@ -50,6 +50,7 @@ import { exportData, importData } from '@/features/sync-data';
 import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
 import { IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { getAiUsage } from '@/shared/lib/ai-api';
+import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { isEmbeddingAvailable } from '@/shared/lib/embeddings';
 import {
   checkMicPermission,
@@ -65,7 +66,9 @@ import {
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { AiUsageCard } from './AiUsageCard';
+import { AutomationComingSoonSheet, type AutomationFeatureKind } from './AutomationComingSoonSheet';
 import { SettingsInternalProSection } from './SettingsInternalProSection';
+import { SettingsPlanStatusCard } from './SettingsPlanStatusCard';
 
 export const SettingsScreen = () => {
   const { t } = useTranslation();
@@ -96,6 +99,14 @@ export const SettingsScreen = () => {
   const [isUpdatingEmbeddings, setIsUpdatingEmbeddings] = useState(false);
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
   const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
+  const [automationSheet, setAutomationSheet] = useState<AutomationFeatureKind | null>(null);
+  const automationLocked = isAutomationUiLockedForPublicStore();
+
+  useFocusEffect(
+    useCallback(() => {
+      void logAnalyticsEvent('settings_opened');
+    }, []),
+  );
 
   const fetchAiUsage = useCallback(async () => {
     const data = await getAiUsage();
@@ -309,6 +320,7 @@ export const SettingsScreen = () => {
             />
           }
         >
+          <SettingsPlanStatusCard color={color} />
           <AiUsageCard
             usage={aiUsage}
             loading={aiUsageLoading}
@@ -339,35 +351,63 @@ export const SettingsScreen = () => {
               label={t('settings.autoTranscribeOnSave')}
               leftIcon={<Zap size={20} color={color.accent.transcript} strokeWidth={1.8} />}
               rightSlot={
-                <Switch
-                  value={autoTranscribeOnSave}
-                  onValueChange={setAutoTranscribeOnSave}
-                  trackColor={{
-                    false: color.background.tertiary,
-                    true: color.accent.success,
-                  }}
-                  thumbColor={color.icon.onAccent}
-                />
+                <View
+                  className="flex-row items-center gap-2"
+                  pointerEvents={automationLocked ? 'none' : 'box-none'}
+                >
+                  {automationLocked ? (
+                    <Text
+                      className="text-[11px] font-bold uppercase tracking-wide"
+                      style={{ color: color.text.muted }}
+                    >
+                      {t('settings.soonBadge')}
+                    </Text>
+                  ) : null}
+                  <Switch
+                    disabled={automationLocked}
+                    value={automationLocked ? false : autoTranscribeOnSave}
+                    onValueChange={setAutoTranscribeOnSave}
+                    trackColor={{
+                      false: color.background.tertiary,
+                      true: color.accent.success,
+                    }}
+                    thumbColor={color.icon.onAccent}
+                  />
+                </View>
               }
               showChevron={false}
-              onPress={undefined}
+              onPress={automationLocked ? () => setAutomationSheet('autoTranscribe') : undefined}
             />
             <SettingsRow
               label={t('settings.autoAiAfterTranscription')}
               leftIcon={<Sparkles size={20} color={color.accent.primary} strokeWidth={1.8} />}
               rightSlot={
-                <Switch
-                  value={autoAiAfterTranscription}
-                  onValueChange={setAutoAiAfterTranscription}
-                  trackColor={{
-                    false: color.background.tertiary,
-                    true: color.accent.success,
-                  }}
-                  thumbColor={color.icon.onAccent}
-                />
+                <View
+                  className="flex-row items-center gap-2"
+                  pointerEvents={automationLocked ? 'none' : 'box-none'}
+                >
+                  {automationLocked && (
+                    <Text
+                      className="text-[11px] font-bold uppercase tracking-wide"
+                      style={{ color: color.text.muted }}
+                    >
+                      {t('settings.soonBadge')}
+                    </Text>
+                  )}
+                  <Switch
+                    disabled={automationLocked}
+                    value={automationLocked ? false : autoAiAfterTranscription}
+                    onValueChange={setAutoAiAfterTranscription}
+                    trackColor={{
+                      false: color.background.tertiary,
+                      true: color.accent.success,
+                    }}
+                    thumbColor={color.icon.onAccent}
+                  />
+                </View>
               }
               showChevron={false}
-              onPress={undefined}
+              onPress={automationLocked ? () => setAutomationSheet('autoAi') : undefined}
               isLast={!isEmbeddingAvailable()}
             />
             {isEmbeddingAvailable() && (
@@ -557,6 +597,11 @@ export const SettingsScreen = () => {
           <SettingsInternalProSection color={color} />
           <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
+        <AutomationComingSoonSheet
+          visible={automationSheet !== null}
+          feature={automationSheet ?? 'autoTranscribe'}
+          onClose={() => setAutomationSheet(null)}
+        />
       </View>
     </View>
   );

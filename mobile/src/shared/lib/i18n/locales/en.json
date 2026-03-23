@@ -109,6 +109,9 @@
     "a11yOpenAllTasks": "All tasks from notes",
     "openNote": "Open note"
   },
+  "ai": {
+    "limitWeeklyExceeded": "You’ve used this week’s AI quota. It resets on the date shown in Settings — or watch a short ad there for a small bonus."
+  },
   "search": {
     "placeholder": "Search records...",
     "nothingFound": "Nothing found",
@@ -133,7 +136,11 @@
     "resume": "Resume recording",
     "finish": "Finish recording",
     "recordStopped": "Recording stopped",
-    "recordStoppedMessage": "Maximum recording limit reached — 20 minutes.",
+    "recordStoppedMessage": "Maximum length reached ({{maxMinutes}} min). Your audio is safe — save when you're ready.",
+    "limitRemainingCalm": "Up to {{maxMinutes}} min per note · {{minutes}} min {{seconds}} sec left",
+    "limitSoftWarning": "Almost full — {{minutes}} min {{seconds}} sec left",
+    "limitFinalWarning": "Wrapping up — {{seconds}} sec left",
+    "saveAfterLimitHint": "Longer recordings will be available in a future update.",
     "appLockHint": "When you minimize the app, recording will be stopped and saved.",
     "noAppLockHint": "When you minimize the app, recording will continue in the background.",
     "saveModalTitle": "Save recording",
@@ -274,7 +281,7 @@
       "subtitle": "Weekly limit for summary and task requests",
       "used": "{{used}} / {{limit}}",
       "remaining": "Remaining: {{count}}",
-      "exhausted": "Limit exhausted",
+      "exhausted": "Weekly quota used — resets on the date below",
       "resetAt": "Resets: {{date}}",
       "loading": "Loading...",
       "unavailable": "—",
@@ -338,7 +345,23 @@
     "permissionNotDetermined": "Not set",
     "permissionOpenSettings": "Open Settings",
     "internalBuildSection": "Internal",
-    "activatePro": "Activate Pro"
+    "activatePro": "Activate Pro",
+    "planStatus": {
+      "freeTitle": "Free plan",
+      "freeSubtitleSoon": "Pro with more automation is coming soon.",
+      "freeSubtitle": "You’re on the free plan.",
+      "proTitle": "Pro",
+      "proSubtitle": "Thank you for supporting the app.",
+      "proActiveUntil": "Active until {{date}}"
+    },
+    "automationSoon": {
+      "badge": "Coming soon",
+      "autoTranscribeTitle": "Auto-transcribe",
+      "autoTranscribeBody": "Automatically transcribe new notes after you save or import audio. This will be part of Pro when subscriptions launch — for now, tap Transcribe anytime on a note.",
+      "autoAiTitle": "Auto AI after transcription",
+      "autoAiBody": "Runs summary and tasks right after transcription finishes. Planned as a Pro automation feature. You can still run AI manually from each note."
+    },
+    "soonBadge": "Soon"
   },
   "appearance": {
     "title": "Appearance",
@@ -493,9 +516,9 @@
     "transcribeTitle": "Offline transcription",
     "transcribeDesc": "Voice-to-text conversion happens locally on your device. No servers, full privacy.",
     "aiTitle": "AI processing",
-    "aiDesc": "Structure your recordings with AI when needed. Voice is processed locally, text is sent over encrypted channel and never stored.",
+    "aiDesc": "Run summaries and tasks when you want — open a note and tap AI. Voice stays on device for transcription; only text goes out securely. Optional automation is planned for a later update.",
     "readyTitle": "Almost all set",
-    "readyDesc": "Start recording your thoughts right now. Always at hand for your ideas.",
+    "readyDesc": "You can record and transcribe offline now, and use AI manually anytime. More automation will arrive in a future update.",
     "setupTitle": "Setup",
     "setupDesc": "Choose an AI model and optionally download Whisper for offline transcription.",
     "setupAiTitle": "AI model",

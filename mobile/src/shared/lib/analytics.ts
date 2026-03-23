@@ -1,5 +1,6 @@
 import {
   getAnalytics,
+  logEvent,
   logScreenView,
   setAnalyticsCollectionEnabled,
   setUserId,
@@ -7,7 +8,7 @@ import {
 
 import { isAnalyticsDebugEnabled } from '@/shared/config/buildEnv';
 
-function isAnalyticsCollectionWanted(): boolean {
+export function isAnalyticsCollectionWanted(): boolean {
   if (!__DEV__) {
     return true;
   }
@@ -44,5 +45,18 @@ export async function logAnalyticsScreenView(screenName: string): Promise<void> 
     });
   } catch {
     if (__DEV__) console.warn('Analytics screen view failed');
+  }
+}
+
+export async function logAnalyticsEvent(
+  name: string,
+  params?: Record<string, string | number | boolean>,
+): Promise<void> {
+  if (!isAnalyticsCollectionWanted() || !name.trim()) return;
+
+  try {
+    await logEvent(getAnalytics(), name, params);
+  } catch {
+    if (__DEV__) console.warn('Analytics event failed', name);
   }
 }

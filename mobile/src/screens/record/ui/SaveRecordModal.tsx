@@ -30,6 +30,7 @@ type SaveRecordModalProps = {
   onSave: (record: VoiceRecord) => Promise<void> | void;
   onSaveComplete?: () => void;
   allowResume?: boolean;
+  contextHint?: string | null;
 };
 
 type DismissReason = 'none' | 'cancel' | 'save';
@@ -45,6 +46,7 @@ export const SaveRecordModal = ({
   onSave,
   onSaveComplete,
   allowResume = true,
+  contextHint = null,
 }: SaveRecordModalProps) => {
   const { t } = useTranslation();
   const scheme = useAppTheme();
@@ -161,6 +163,12 @@ export const SaveRecordModal = ({
         <Text className="-mt-1 text-[13px]" style={{ color: c.text.secondary }}>
           {t('record.duration', { time: formatTime(elapsed) })}
         </Text>
+
+        {contextHint && (
+          <Text className="text-[13px] leading-5" style={{ color: c.text.muted }}>
+            {contextHint}
+          </Text>
+        )}
 
         <View className="mt-1 flex-row gap-3">
           {allowResume && (

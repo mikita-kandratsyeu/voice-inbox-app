@@ -3,6 +3,8 @@ import { useCallback, useRef, useState } from 'react';
 import type { VoiceRecord } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { pollAskResult, postAskQuestion } from '@/shared/lib/ai-api';
+import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
+import { logAnalyticsEvent } from '@/shared/lib/analytics';
 
 export type AskAIHistoryItem = { question: string; answer: string };
 
@@ -41,6 +43,7 @@ export const useAskAI = () => {
         question: trimmedQuestion,
         answer: null,
       }));
+      void logAnalyticsEvent('ai_action_started', { action: 'ask' });
 
       try {
         const postResult = await postAskQuestion({
@@ -55,7 +58,7 @@ export const useAskAI = () => {
         if (!postResult.ok) {
           const errorMsg =
             'limitExceeded' in postResult && postResult.limitExceeded
-              ? 'Limit exceeded'
+              ? getAiWeeklyLimitExceededMessage()
               : postResult.error;
           if (__DEV__)
             console.warn('[AI] askQuestion: postAskQuestion failed', {
@@ -67,6 +70,10 @@ export const useAskAI = () => {
             isLoading: false,
             error: errorMsg,
           }));
+          void logAnalyticsEvent('ai_action_failed', {
+            action: 'ask',
+            reason: 'limitExceeded' in postResult && postResult.limitExceeded ? 'limit' : 'post',
+          });
           return;
         }
 
@@ -83,6 +90,7 @@ export const useAskAI = () => {
             isLoading: false,
             error: pollResult.error,
           }));
+          void logAnalyticsEvent('ai_action_failed', { action: 'ask', reason: 'poll' });
           return;
         }
 
@@ -92,6 +100,7 @@ export const useAskAI = () => {
           error: null,
           answer: pollResult.result.answer,
         }));
+        void logAnalyticsEvent('ai_action_success', { action: 'ask' });
       } catch (err: unknown) {
         if (__DEV__)
           console.warn('[AI] askQuestion: unexpected error', {
@@ -103,6 +112,7 @@ export const useAskAI = () => {
           isLoading: false,
           error: err instanceof Error ? err.message : 'Unknown error',
         }));
+        void logAnalyticsEvent('ai_action_failed', { action: 'ask', reason: 'exception' });
       } finally {
         inFlightRef.current = false;
       }
