@@ -18,7 +18,7 @@ import type { RecordingStatus, TaskItem } from '@/entities/record';
 import { useAddToCalendar } from '@/features/add-to-calendar';
 import { useAddToReminder } from '@/features/add-to-reminder';
 import type { Colors } from '@/shared/config';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useAppTheme } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
 import {
   AiTabErrorBanner,
@@ -120,7 +120,6 @@ export const TasksTab = ({
   onDismissError,
 }: TasksTabProps) => {
   const theme = useAppTheme();
-  const themeColors = getColors(theme);
   const isDark = theme === 'dark';
   const { t } = useTranslation();
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
@@ -218,22 +217,22 @@ export const TasksTab = ({
             id: 'addToCalendar',
             title: t('tasks.addToCalendar'),
             image: 'calendar',
-            imageColor: themeColors.text.primary,
-            titleColor: themeColors.text.primary,
+            imageColor: color.text.primary,
+            titleColor: color.text.primary,
           },
           {
             id: 'addToReminder',
             title: t('tasks.addToReminder'),
             image: 'bell',
-            imageColor: themeColors.text.primary,
-            titleColor: themeColors.text.primary,
+            imageColor: color.text.primary,
+            titleColor: color.text.primary,
           },
           {
             id: 'deleteTask',
             title: t('tasks.deleteTask'),
             image: 'trash',
-            imageColor: themeColors.accent.delete,
-            titleColor: themeColors.accent.delete,
+            imageColor: color.accent.delete,
+            titleColor: color.accent.delete,
             attributes: { destructive: true },
           },
         ];

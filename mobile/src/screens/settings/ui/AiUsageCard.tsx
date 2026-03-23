@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { SkeletonPulse } from '@/shared/ui';
 
@@ -139,7 +139,7 @@ export const AiUsageCard = ({
   claimError = null,
 }: AiUsageCardProps) => {
   const { t, i18n } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
 
   const claimDisabled = claimError === 'claimCooldown';
   const bonusAmount = usage?.bonusAmount ?? 5;

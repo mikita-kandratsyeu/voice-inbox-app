@@ -47,7 +47,7 @@ import { openInAppBrowser } from '@/features/in-app-browser';
 import { InboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import { exportData, importData } from '@/features/sync-data';
-import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
+import { getWebsiteUrl, useColors } from '@/shared/config';
 import { isCrashlyticsDebugEnabled } from '@/shared/config/buildEnv';
 import { IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { getAiUsage } from '@/shared/lib/ai-api';
@@ -73,7 +73,7 @@ import { SettingsPlanStatusCard } from './SettingsPlanStatusCard';
 
 export const SettingsScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
 

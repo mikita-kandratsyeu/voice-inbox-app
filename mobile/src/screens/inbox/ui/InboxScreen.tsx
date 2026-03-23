@@ -15,7 +15,7 @@ import { RecordCard, useRecordStore } from '@/entities/record';
 import { InboxBannerAd } from '@/features/inbox-banner';
 import { InboxFilterBar, useInboxFiltersReset } from '@/features/inbox-filters';
 import { SearchBar, useSearchRecords } from '@/features/search-records';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import {
   keyboardAvoidingBehavior,
   keyboardVerticalOffset,
@@ -39,7 +39,7 @@ type InboxNavigationProp = CompositeNavigationProp<
 
 export const InboxScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const { width: windowWidth } = useWindowDimensions();
   const contentMaxWidth = useTabletContentMaxWidth();
   const navigation = useNavigation<InboxNavigationProp>();

@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
 import { useEditTranscript } from '@/features/edit-transcript';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { Button, getInputFieldInputStyle, ScreenHeader } from '@/shared/ui';
 
 export const EditTranscriptScreen = () => {
@@ -19,7 +19,7 @@ export const EditTranscriptScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'EditTranscript'>>();
   const insets = useSafeAreaInsets();
-  const color = getColors(useAppTheme());
+  const color = useColors();
 
   const { record } = route.params;
   const records = useRecordStore((s) => s.records);

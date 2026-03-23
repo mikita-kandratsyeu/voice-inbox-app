@@ -13,7 +13,7 @@ import {
 } from '@/entities/settings';
 import { InboxBannerAd } from '@/features/inbox-banner';
 import { getModelFileSizeFormatted, useModelManager } from '@/features/model-manager';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { useTabletContentMaxWidth } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader } from '@/shared/ui';
@@ -23,7 +23,7 @@ import { WhisperModelCard } from './WhisperModelCard';
 
 export const WhisperModelPickerScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const contentMaxWidth = useTabletContentMaxWidth();

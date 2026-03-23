@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { hapticSelection, hapticSuccess } from '@/shared/lib';
 
 import type { RecordingState } from '../config';
@@ -22,8 +22,7 @@ export const RecordScreenControls = ({
   onDonePress,
 }: RecordScreenControlsProps) => {
   const { t } = useTranslation();
-  const scheme = useAppTheme();
-  const c = getColors(scheme);
+  const c = useColors();
 
   const insets = useSafeAreaInsets();
   const controlsPaddingBottom = { paddingBottom: Math.max(insets.bottom, 36) };

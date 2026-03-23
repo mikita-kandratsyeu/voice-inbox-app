@@ -6,7 +6,7 @@ import { Dimensions, ScrollView, Text } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { Button } from '@/shared/ui';
 
 import { usePushSheet } from './usePushSheet';
@@ -15,8 +15,7 @@ const MAX_CONTENT_HEIGHT = Dimensions.get('window').height * 0.4;
 
 export const PushNotificationSheet = () => {
   const { t } = useTranslation();
-  const scheme = useAppTheme();
-  const color = getColors(scheme);
+  const color = useColors();
   const insets = useSafeAreaInsets();
   const { visible, message, type, hide } = usePushSheet();
 

@@ -45,7 +45,7 @@ import { openInAppBrowser } from '@/features/in-app-browser';
 import { useModelManager } from '@/features/model-manager';
 import { importData } from '@/features/sync-data';
 import type { Colors } from '@/shared/config';
-import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
+import { getWebsiteUrl, useColors } from '@/shared/config';
 import { hapticSelection, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import {
@@ -759,7 +759,7 @@ const SlideItem = ({
 
 export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const { t } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const contentMaxWidth = useTabletContentMaxWidth();
   const slides = useMemo(() => getOnboardingSlides(color), [color]);
   const slideColors = useMemo(() => slides.map((s) => s.iconColor), [slides]);

@@ -12,7 +12,7 @@ import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { formatTime, hapticSuccess, modalKeyboardBehavior } from '@/shared/lib';
 import { Button } from '@/shared/ui';
 
@@ -49,8 +49,7 @@ export const SaveRecordModal = ({
   contextHint = null,
 }: SaveRecordModalProps) => {
   const { t } = useTranslation();
-  const scheme = useAppTheme();
-  const c = getColors(scheme);
+  const c = useColors();
   const insets = useSafeAreaInsets();
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);

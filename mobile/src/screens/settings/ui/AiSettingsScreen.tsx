@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
@@ -76,7 +76,7 @@ function PickerSection<T extends string>({
 
 export const AiSettingsScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const contentMaxWidth = useTabletContentMaxWidth();

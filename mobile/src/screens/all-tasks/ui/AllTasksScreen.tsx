@@ -9,7 +9,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
 import { InboxBannerAd } from '@/features/inbox-banner';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { EmptyState, ScreenHeader, SectionHeader } from '@/shared/ui';
 
@@ -30,7 +30,7 @@ type Section = { dayKey: string; title: string; data: TaskWithRecord[] };
 export const AllTasksScreen = () => {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
   const { width: windowWidth } = useWindowDimensions();

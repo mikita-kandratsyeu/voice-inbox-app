@@ -10,7 +10,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { InboxBannerAd } from '@/features/inbox-banner';
 import type { Colors } from '@/shared/config';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { formatRelativeTime, useTabletContentMaxWidth } from '@/shared/lib';
 import { Button, ScreenHeader, SectionHeader } from '@/shared/ui';
 
@@ -86,7 +86,7 @@ const ImportRecordRow = React.memo(function ImportRecordRow({
 
 export const ImportRecordsScreen = () => {
   const { t, i18n } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute<ImportRecordsRouteProp>();

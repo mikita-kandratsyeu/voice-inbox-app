@@ -9,7 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ImportAudioProgressOverlay, useImportAudioFile } from '@/features/import-audio-file';
 import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { InboxScreen } from '@/screens/inbox';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { useIsTablet } from '@/shared/lib';
 
 import { TAB_ICON_SIZE, TAB_ICONS, TAB_LABELS } from './config';
@@ -21,12 +21,11 @@ const Tab = createBottomTabNavigator<BottomTabParamList>();
 
 export const BottomTabNavigator = () => {
   const insets = useSafeAreaInsets();
-  const theme = useAppTheme();
   const isTablet = useIsTablet();
   const inboxFiltersReset = useInboxFiltersReset();
   const { importAudioFile, isImporting, importPhase } = useImportAudioFile();
 
-  const color = getColors(theme);
+  const color = useColors();
   const tabBg = color.background.primary;
   const tabBorder = color.border.default;
   const tabActive = color.accent.primary;

@@ -6,7 +6,7 @@ import {
   RECORDING_FINAL_WARNING_REMAINING_MS,
   RECORDING_SOFT_WARNING_REMAINING_MS,
 } from '@/features/app-storefront';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 
 type RecordLimitBarProps = {
@@ -16,8 +16,7 @@ type RecordLimitBarProps = {
 
 export const RecordLimitBar = memo(({ elapsedMs, maxRecordingMs }: RecordLimitBarProps) => {
   const { t } = useTranslation();
-  const scheme = useAppTheme();
-  const c = getColors(scheme);
+  const c = useColors();
 
   const remainingMs = Math.max(0, maxRecordingMs - elapsedMs);
 

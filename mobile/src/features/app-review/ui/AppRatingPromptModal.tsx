@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { Button } from '@/shared/ui';
 
 import { setNeverAskAppReview } from '../lib/appReviewStorage';
@@ -19,8 +19,7 @@ type AppRatingPromptModalProps = {
 
 export const AppRatingPromptModal = ({ visible, onDismiss }: AppRatingPromptModalProps) => {
   const { t } = useTranslation();
-  const theme = useAppTheme();
-  const c = getColors(theme);
+  const c = useColors();
   const insets = useSafeAreaInsets();
   const sheetRef = useRef<BottomSheetModal>(null);
 

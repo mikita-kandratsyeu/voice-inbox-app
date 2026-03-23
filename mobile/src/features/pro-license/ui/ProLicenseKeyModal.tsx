@@ -21,7 +21,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Colors } from '@/shared/config';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { hapticSuccess, modalKeyboardBehavior } from '@/shared/lib';
 import { redeemProLicenseKey } from '@/shared/lib/ai-api/aiApi';
 import { Button } from '@/shared/ui';
@@ -140,7 +140,7 @@ function ProActivationSuccessPanel({ color, expiresAtIso, onDismiss }: SuccessPa
 
 export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicenseKeyModalProps) {
   const { t } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [keyText, setKeyText] = useState('');

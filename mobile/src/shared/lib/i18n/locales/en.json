@@ -377,6 +377,23 @@
       "system": "System",
       "light": "Light",
       "dark": "Dark"
+    },
+    "accentColor": {
+      "title": "Accent color",
+      "subtitle": "Subscribe to Pro to unlock custom accent colors.",
+      "proTitle": "Accent color is a Pro feature",
+      "proBody": "Upgrade to Pro to personalize buttons, highlights, and progress accents across the app.",
+      "option": {
+        "default": "Classic",
+        "indigo": "Indigo",
+        "violet": "Violet",
+        "fuchsia": "Fuchsia",
+        "rose": "Rose",
+        "orange": "Orange",
+        "amber": "Amber",
+        "emerald": "Emerald",
+        "cyan": "Cyan"
+      }
     }
   },
   "appLock": {

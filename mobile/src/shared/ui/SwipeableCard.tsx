@@ -11,7 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { hapticMedium } from '@/shared/lib';
 
 export const SwipeableCardContext = React.createContext({ isSwiping: false });
@@ -40,7 +40,7 @@ export const SwipeableCard = React.memo(function SwipeableCard({
   onLeftAction,
   onPin,
 }: SwipeableCardProps) {
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const translateX = useSharedValue(0);
   const action = useSharedValue<SwipeAction>('none');
   const [isSwiping, setIsSwiping] = React.useState(false);

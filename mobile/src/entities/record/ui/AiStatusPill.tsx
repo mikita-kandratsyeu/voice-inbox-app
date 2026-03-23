@@ -11,7 +11,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 
 import type { RecordingStatus } from '../model/types';
 
@@ -35,7 +35,7 @@ export const AiStatusPill = ({
   onPress,
 }: AiStatusPillProps) => {
   const { t } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const rotation = useSharedValue(0);
 
   const aiProcessing = isAiProcessing(summaryStatus) || isAiProcessing(tasksStatus);

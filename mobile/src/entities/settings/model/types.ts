@@ -1,3 +1,5 @@
+import type { AccentColorId } from '@/shared/config';
+
 export type AppTheme = 'light' | 'dark' | 'system';
 export type AppLanguage = 'system' | 'en' | 'ru';
 
@@ -46,6 +48,7 @@ export type WhisperDownloadPhase = 'weights' | 'coreml';
 
 export type SettingsState = {
   appTheme: AppTheme;
+  accentColorId: AccentColorId;
   appLanguage: AppLanguage;
   selectedAIModel: AIModelId;
   selectedWhisperModel: WhisperModelId;
@@ -60,6 +63,7 @@ export type SettingsState = {
   whisperDownloadBytes: Partial<Record<WhisperModelId, DownloadBytes>>;
   whisperDownloadPhase: Partial<Record<WhisperModelId, WhisperDownloadPhase>>;
   setAppTheme: (value: AppTheme) => void;
+  setAccentColorId: (value: AccentColorId) => void;
   setAppLanguage: (value: AppLanguage) => void;
   setAIModel: (id: AIModelId) => void;
   setWhisperModel: (id: WhisperModelId) => void;

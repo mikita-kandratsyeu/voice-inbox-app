@@ -2,12 +2,13 @@ import '../../global.css';
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { NavigationContainer } from '@react-navigation/native';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+import { useSettingsStore } from '@/entities/settings';
 import {
   AnimatedBootSplash,
   useAndroidLayoutAnimation,
@@ -36,7 +37,8 @@ import { RootNavigator } from './navigation/RootNavigator';
 
 const App = () => {
   const theme = useAppTheme();
-  const color = getColors(theme);
+  const accentColorId = useSettingsStore((s) => s.accentColorId);
+  const color = useMemo(() => getColors(theme, accentColorId), [theme, accentColorId]);
   const isDark = theme === 'dark';
 
   const [bootSplashVisible, setBootSplashVisible] = useState(true);

@@ -6,12 +6,12 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { modalKeyboardBehavior } from '@/shared/lib/platform';
 import { Button } from '@/shared/ui';
 
-export type AutomationFeatureKind = 'autoTranscribe' | 'autoAi';
+export type AutomationFeatureKind = 'autoTranscribe' | 'autoAi' | 'accentColor';
 
 type AutomationComingSoonSheetProps = {
   visible: boolean;
@@ -25,8 +25,7 @@ export function AutomationComingSoonSheet({
   onClose,
 }: AutomationComingSoonSheetProps) {
   const { t } = useTranslation();
-  const scheme = useAppTheme();
-  const c = getColors(scheme);
+  const c = useColors();
   const insets = useSafeAreaInsets();
   const ref = useRef<BottomSheetModal>(null);
 
@@ -34,14 +33,24 @@ export function AutomationComingSoonSheet({
     if (visible) {
       ref.current?.present();
       void logAnalyticsEvent('premium_hint_opened', {
-        feature: feature === 'autoTranscribe' ? 'auto_whisper' : 'auto_ai',
+        feature:
+          feature === 'autoTranscribe'
+            ? 'auto_whisper'
+            : feature === 'autoAi'
+              ? 'auto_ai'
+              : 'accent_color',
       });
-      void logAnalyticsEvent(
-        feature === 'autoTranscribe'
-          ? 'premium_feature_tapped_auto_whisper'
-          : 'premium_feature_tapped_auto_ai',
-        { surface: 'settings_sheet' },
-      );
+      if (feature === 'autoTranscribe') {
+        void logAnalyticsEvent('premium_feature_tapped_auto_whisper', {
+          surface: 'settings_sheet',
+        });
+      } else if (feature === 'autoAi') {
+        void logAnalyticsEvent('premium_feature_tapped_auto_ai', { surface: 'settings_sheet' });
+      } else {
+        void logAnalyticsEvent('premium_feature_tapped_accent_color', {
+          surface: 'appearance_sheet',
+        });
+      }
     } else {
       ref.current?.dismiss();
     }
@@ -57,11 +66,15 @@ export function AutomationComingSoonSheet({
   const title =
     feature === 'autoTranscribe'
       ? t('settings.automationSoon.autoTranscribeTitle')
-      : t('settings.automationSoon.autoAiTitle');
+      : feature === 'autoAi'
+        ? t('settings.automationSoon.autoAiTitle')
+        : t('appearance.accentColor.proTitle');
   const body =
     feature === 'autoTranscribe'
       ? t('settings.automationSoon.autoTranscribeBody')
-      : t('settings.automationSoon.autoAiBody');
+      : feature === 'autoAi'
+        ? t('settings.automationSoon.autoAiBody')
+        : t('appearance.accentColor.proBody');
 
   return (
     <BottomSheetModal

@@ -7,7 +7,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import type { TranscriptionLanguage } from '@/entities/settings';
 import { TRANSCRIPTION_LANGUAGES, useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useAppTheme } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
 type WhisperDefaultLanguageSectionProps = {
@@ -17,7 +17,6 @@ type WhisperDefaultLanguageSectionProps = {
 export const WhisperDefaultLanguageSection = ({ color }: WhisperDefaultLanguageSectionProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
-  const themeColors = getColors(theme);
   const isDark = theme === 'dark';
 
   const transcriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
@@ -46,7 +45,7 @@ export const WhisperDefaultLanguageSection = ({ color }: WhisperDefaultLanguageS
         actions={TRANSCRIPTION_LANGUAGES.map((lang) => ({
           id: lang,
           title: t(`recordingDetail.language.${lang}`),
-          titleColor: themeColors.text.primary,
+          titleColor: color.text.primary,
           state: lang === transcriptionLanguage ? 'on' : 'off',
         }))}
       >

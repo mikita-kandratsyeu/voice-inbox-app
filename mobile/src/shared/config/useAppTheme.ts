@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 
 import { useSettingsStore } from '@/entities/settings';
@@ -16,5 +17,7 @@ export function useAppTheme(): ColorScheme {
 }
 
 export function useColors(): Colors {
-  return getColors(useAppTheme());
+  const scheme = useAppTheme();
+  const accentColorId = useSettingsStore((s) => s.accentColorId);
+  return useMemo(() => getColors(scheme, accentColorId), [scheme, accentColorId]);
 }

@@ -22,3 +22,4 @@ export type {
   WhisperModelId,
   WhisperModelStatus,
 } from './model/types';
+export type { AccentColorId } from '@/shared/config';

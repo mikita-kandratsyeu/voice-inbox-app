@@ -1,17 +1,20 @@
 import { useNavigation } from '@react-navigation/native';
-import { Check } from 'lucide-react-native';
-import React from 'react';
+import { Check, Crown } from 'lucide-react-native';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AppLanguage, AppTheme } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
-import type { Colors } from '@/shared/config';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useProEntitlement } from '@/features/pro-license';
+import type { AccentColorId, Colors } from '@/shared/config';
+import { ACCENT_COLOR_SWATCHES, useColors } from '@/shared/config';
 import { useTabletContentMaxWidth } from '@/shared/lib';
 import { applyAppLanguage } from '@/shared/lib/i18n';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
+
+import { AutomationComingSoonSheet } from './AutomationComingSoonSheet';
 
 const APP_LANGUAGES: AppLanguage[] = ['system', 'en', 'ru'];
 const APP_THEMES: AppTheme[] = ['system', 'light', 'dark'];
@@ -76,20 +79,31 @@ function PickerSection<T extends string>({
 
 export const AppearanceScreen = () => {
   const { t } = useTranslation();
-  const theme = useAppTheme();
-  const color = getColors(theme);
+  const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const contentMaxWidth = useTabletContentMaxWidth();
+  const [accentProSheet, setAccentProSheet] = useState(false);
+  const { isProActive } = useProEntitlement();
 
   const appLanguage = useSettingsStore((s) => s.appLanguage);
   const setAppLanguage = useSettingsStore((s) => s.setAppLanguage);
   const appTheme = useSettingsStore((s) => s.appTheme);
   const setAppTheme = useSettingsStore((s) => s.setAppTheme);
+  const accentColorId = useSettingsStore((s) => s.accentColorId);
+  const setAccentColorId = useSettingsStore((s) => s.setAccentColorId);
 
   const handleLanguageSelect = (value: AppLanguage) => {
     setAppLanguage(value);
     applyAppLanguage();
+  };
+
+  const handleAccentSelect = (id: AccentColorId) => {
+    if (!isProActive) {
+      setAccentProSheet(true);
+      return;
+    }
+    setAccentColorId(id);
   };
 
   return (
@@ -130,8 +144,75 @@ export const AppearanceScreen = () => {
               color={color}
             />
           </SettingsSection>
+
+          <View className="mb-7">
+            <View className="mb-2.5 flex-row items-center justify-between px-1">
+              <Text
+                className="text-xs font-semibold uppercase tracking-widest"
+                style={{ color: color.text.secondary }}
+              >
+                {t('appearance.accentColor.title')}
+              </Text>
+              {!isProActive ? (
+                <View className="flex-row items-center gap-1">
+                  <Crown size={14} color={color.accent.primary} strokeWidth={2} />
+                  <Text className="text-xs font-semibold" style={{ color: color.accent.primary }}>
+                    Pro
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+            <View
+              className="overflow-hidden rounded-2xl"
+              style={{ borderWidth: 1, borderColor: color.border.default }}
+            >
+              <View
+                className="flex-row flex-wrap px-4 py-4"
+                style={{
+                  backgroundColor: color.background.card,
+                  gap: 12,
+                }}
+              >
+                {ACCENT_COLOR_SWATCHES.map(({ id, previewHex }) => {
+                  const selected = accentColorId === id;
+                  return (
+                    <TouchableOpacity
+                      key={id}
+                      accessibilityRole="button"
+                      accessibilityLabel={t(`appearance.accentColor.option.${id}`)}
+                      accessibilityState={{ selected }}
+                      onPress={() => handleAccentSelect(id)}
+                      activeOpacity={0.75}
+                      className="h-11 w-11 items-center justify-center rounded-full"
+                      style={{
+                        borderWidth: selected ? 3 : 0,
+                        borderColor: selected ? color.accent.primary : 'transparent',
+                        padding: selected ? 0 : 3,
+                      }}
+                    >
+                      <View
+                        className="h-9 w-9 rounded-full"
+                        style={{ backgroundColor: previewHex }}
+                      />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+            {!isProActive ? (
+              <Text className="mt-2 px-1 text-xs leading-5" style={{ color: color.text.secondary }}>
+                {t('appearance.accentColor.subtitle')}
+              </Text>
+            ) : null}
+          </View>
         </ScrollView>
       </View>
+
+      <AutomationComingSoonSheet
+        visible={accentProSheet}
+        feature="accentColor"
+        onClose={() => setAccentProSheet(false)}
+      />
     </View>
   );
 };

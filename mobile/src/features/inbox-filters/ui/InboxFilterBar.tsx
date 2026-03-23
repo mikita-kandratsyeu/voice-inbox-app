@@ -10,7 +10,7 @@ import type {
   PrimaryFilterStatus,
 } from '@/features/inbox-filters';
 import type { Colors } from '@/shared/config';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useAppTheme } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 
@@ -61,7 +61,6 @@ export const InboxFilterBar = ({
 }: InboxFilterBarProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
-  const themeColors = getColors(theme);
   const isDark = theme === 'dark';
   const hasMenuFilterActive = MENU_FILTERS.includes(filterStatus);
 
@@ -131,7 +130,7 @@ export const InboxFilterBar = ({
           actions={MENU_FILTERS.map((opt) => ({
             id: opt,
             title: t(`inbox.filters.${opt}`),
-            titleColor: themeColors.text.primary,
+            titleColor: color.text.primary,
             state: filterStatus === opt ? 'on' : 'off',
           }))}
         >
@@ -176,7 +175,7 @@ export const InboxFilterBar = ({
           actions={SORT_OPTIONS.map((opt) => ({
             id: opt,
             title: t(`inbox.sort.${opt}`),
-            titleColor: themeColors.text.primary,
+            titleColor: color.text.primary,
             state: sortOption === opt ? 'on' : 'off',
           }))}
         >

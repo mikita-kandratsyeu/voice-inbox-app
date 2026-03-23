@@ -6,13 +6,13 @@ import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAppLockStore } from '@/entities/app-lock';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 
 import { PinInput } from './PinInput';
 
 export const LockScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const insets = useSafeAreaInsets();
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);

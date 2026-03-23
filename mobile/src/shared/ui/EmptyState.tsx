@@ -2,7 +2,7 @@ import { Inbox, Upload } from 'lucide-react-native';
 import React from 'react';
 import { Text, View } from 'react-native';
 
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 
 type EmptyStateProps = {
   title?: string;
@@ -11,7 +11,7 @@ type EmptyStateProps = {
 };
 
 export const EmptyState = ({ title, description, hint }: EmptyStateProps) => {
-  const color = getColors(useAppTheme());
+  const color = useColors();
 
   return (
     <View className="flex-1 items-center justify-center px-8">

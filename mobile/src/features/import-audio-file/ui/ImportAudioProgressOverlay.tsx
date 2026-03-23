@@ -2,7 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, Text, View } from 'react-native';
 
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 
 import type { ImportAudioPhase } from '../model/types';
 
@@ -13,7 +13,7 @@ type ImportAudioProgressOverlayProps = {
 
 export const ImportAudioProgressOverlay = ({ visible, phase }: ImportAudioProgressOverlayProps) => {
   const { t } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
 
   const messageKey =
     phase === 'copying'

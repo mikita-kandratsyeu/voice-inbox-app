@@ -11,7 +11,7 @@ import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { InboxBannerAd } from '@/features/inbox-banner';
 import { getModelFileSizeBytes } from '@/features/model-manager';
 import type { Colors } from '@/shared/config';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import {
   clearCache,
   getStorageStats,
@@ -184,7 +184,7 @@ const DEFAULT_STATS: StorageStats = {
 
 export const StorageDetailsScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const contentMaxWidth = useTabletContentMaxWidth();

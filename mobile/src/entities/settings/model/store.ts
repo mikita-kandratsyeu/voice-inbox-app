@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+import { parseAccentColorId } from '@/shared/config';
 import { storage } from '@/shared/lib/async-storage';
 
 import { AI_MODELS, DEFAULT_SELECTED_WHISPER_MODEL_ID } from './constants';
@@ -19,6 +20,7 @@ import type {
 
 const KEYS = {
   APP_THEME: 'settings.appTheme',
+  ACCENT_COLOR_ID: 'settings.accentColorId',
   APP_LANGUAGE: 'settings.appLanguage',
   AI_MODEL: 'settings.aiModel',
   WHISPER_MODEL: 'settings.whisperModel',
@@ -34,6 +36,10 @@ const KEYS = {
 const getStoredAppTheme = (): AppTheme => {
   const val = storage.getString(KEYS.APP_THEME);
   return (val as AppTheme) ?? 'system';
+};
+
+const getStoredAccentColorId = () => {
+  return parseAccentColorId(storage.getString(KEYS.ACCENT_COLOR_ID));
 };
 
 const getStoredAppLanguage = (): AppLanguage => {
@@ -95,6 +101,7 @@ const getStoredWhisperStatuses = (): Partial<Record<WhisperModelId, WhisperModel
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   appTheme: getStoredAppTheme(),
+  accentColorId: getStoredAccentColorId(),
   appLanguage: getStoredAppLanguage(),
   selectedAIModel: getStoredAIModel(),
   selectedWhisperModel: getStoredWhisperModel(),
@@ -112,6 +119,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAppTheme: (value: AppTheme) => {
     storage.set(KEYS.APP_THEME, value);
     set({ appTheme: value });
+  },
+
+  setAccentColorId: (value) => {
+    storage.set(KEYS.ACCENT_COLOR_ID, value);
+    set({ accentColorId: value });
   },
 
   setAppLanguage: (value: AppLanguage) => {

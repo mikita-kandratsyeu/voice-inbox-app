@@ -3,7 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 
 type SwipeHintBannerProps = {
@@ -12,7 +12,7 @@ type SwipeHintBannerProps = {
 
 export const SwipeHintBanner = ({ onDismiss }: SwipeHintBannerProps) => {
   const { t } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
 
   return (
     <View

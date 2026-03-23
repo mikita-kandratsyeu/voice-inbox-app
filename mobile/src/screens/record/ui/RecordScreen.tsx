@@ -18,7 +18,7 @@ import {
 import { useProEntitlement } from '@/features/pro-license';
 import { useRecordingDeeplinkStore } from '@/features/recording-deeplink/model/store';
 import { useTranscription } from '@/features/transcription';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { formatTime, persistRecordingToDocuments } from '@/shared/lib';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { Waveform } from '@/shared/ui';
@@ -35,8 +35,7 @@ import { SaveRecordModal } from './SaveRecordModal';
 
 export const RecordScreen = () => {
   const { t } = useTranslation();
-  const scheme = useAppTheme();
-  const c = getColors(scheme);
+  const c = useColors();
 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const addRecord = useRecordStore((s) => s.addRecord);

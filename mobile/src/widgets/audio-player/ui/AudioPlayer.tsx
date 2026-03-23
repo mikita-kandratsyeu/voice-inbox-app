@@ -364,13 +364,13 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
             }}
           >
             {isPlaying ? (
-              <Pause size={20} color={color.icon.onAccent} strokeWidth={2.5} />
+              <Pause size={20} color={color.icon.onAccent} strokeWidth={2.5} fill="none" />
             ) : (
               <Play
                 size={20}
                 color={hasAudio ? color.icon.onAccent : color.text.muted}
                 strokeWidth={2.5}
-                fill={hasAudio ? color.icon.onAccent : color.text.muted}
+                fill="none"
               />
             )}
           </TouchableOpacity>

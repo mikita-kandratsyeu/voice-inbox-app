@@ -13,7 +13,7 @@ import { getStorefrontCountryCode } from '@/features/app-storefront';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { InboxBannerAd } from '@/features/inbox-banner';
 import { useOnboardingStore } from '@/features/onboarding';
-import { getColors, getWebsiteUrl, useAppTheme } from '@/shared/config';
+import { getWebsiteUrl, useColors } from '@/shared/config';
 import { IS_ANDROID, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
@@ -23,7 +23,7 @@ const storeListingUrl = getStoreListingUrl();
 
 export const AboutAppScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const setForceShowOnboarding = useOnboardingStore((s) => s.setForceShow);

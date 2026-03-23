@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { InboxBannerAd } from '@/features/inbox-banner';
 import { SupportForm, useSupportForm } from '@/features/tech-support';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { useTabletContentMaxWidth } from '@/shared/lib';
 import { Button, ScreenHeader } from '@/shared/ui';
@@ -17,7 +17,7 @@ export const SupportScreen = () => {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;

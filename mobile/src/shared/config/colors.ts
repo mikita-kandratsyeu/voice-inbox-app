@@ -1,3 +1,5 @@
+import { type AccentColorId, DEFAULT_ACCENT_COLOR_ID, mergeColorsWithAccent } from './accentColors';
+
 export const colors = {
   light: {
     background: {
@@ -147,4 +149,18 @@ export type Colors = {
   shadow: { color: string; opacity: number };
 };
 
-export const getColors = (scheme: ColorScheme): Colors => colors[scheme] as Colors;
+export function getColors(
+  scheme: ColorScheme,
+  accentColorId: AccentColorId = DEFAULT_ACCENT_COLOR_ID,
+): Colors {
+  const base = colors[scheme] as Colors;
+  return mergeColorsWithAccent(base, scheme, accentColorId);
+}
+
+export type { AccentColorId } from './accentColors';
+export {
+  ACCENT_COLOR_IDS,
+  ACCENT_COLOR_SWATCHES,
+  DEFAULT_ACCENT_COLOR_ID,
+  parseAccentColorId,
+} from './accentColors';

@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { AIModelId } from '@/entities/settings';
 import { AI_MODELS, getRecommendedAIModelId, useSettingsStore } from '@/entities/settings';
 import { InboxBannerAd } from '@/features/inbox-banner';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader } from '@/shared/ui';
 
@@ -20,7 +20,7 @@ const SPEED_COLOR: Record<string, string> = {
 
 export const AIModelPickerScreen = () => {
   const { t } = useTranslation();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const contentMaxWidth = useTabletContentMaxWidth();
