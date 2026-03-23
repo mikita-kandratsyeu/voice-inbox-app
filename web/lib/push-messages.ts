@@ -1,7 +1,14 @@
 export type PushLocale = 'en' | 'ru';
 
 const DEFAULT_LOCALE: PushLocale = 'en';
-const SUPPORTED_LOCALES: PushLocale[] = ['en', 'ru'];
+
+/** Locales we store on devices and use for push copy selection. */
+export const PUSH_LOCALES: readonly PushLocale[] = ['en', 'ru'];
+
+/** Normalize app / device locale to a push bucket (unknown → English). */
+export function normalizePushLocale(locale?: string | null): PushLocale {
+  return locale === 'ru' ? 'ru' : DEFAULT_LOCALE;
+}
 
 function aiCompleteBody(locale: PushLocale, count: number): string {
   if (locale === 'ru') {
@@ -18,7 +25,7 @@ export function getPushMessages(
   count?: number,
 ): { title: string; body: string } {
   const loc: PushLocale =
-    locale && SUPPORTED_LOCALES.includes(locale as PushLocale)
+    locale && (PUSH_LOCALES as readonly string[]).includes(locale)
       ? (locale as PushLocale)
       : DEFAULT_LOCALE;
 

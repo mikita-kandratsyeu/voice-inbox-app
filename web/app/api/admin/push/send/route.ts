@@ -4,6 +4,11 @@ import { writeAdminAudit } from '@/lib/admin-audit';
 import { getAdminSession } from '@/lib/admin-session';
 import { apiError, HttpStatus, parseJsonBody, validateDeviceId } from '@/lib/api';
 import { writeBroadcastHistory } from '@/lib/broadcast-history-log';
+import {
+  buildPayloadForDevice,
+  parseLooseBroadcastBody,
+  validateBroadcastMessageLengths,
+} from '@/lib/broadcast-push';
 import { sendPushNotification, type PushPayload } from '@/lib/push';
 import { getPushTokenWithLocale } from '@/lib/push-tokens';
 
@@ -13,17 +18,9 @@ type SendPushBody = {
   title?: unknown;
   body?: unknown;
   message?: unknown;
+  i18n?: unknown;
   recordId?: unknown;
 };
-
-const VALID_TYPES: PushPayload['type'][] = [
-  'ai_complete',
-  'policy_update',
-  'limit_warning',
-  'limit_exceeded',
-];
-
-const MAX_MESSAGE_CHARS = 3500;
 
 export async function POST(request: Request): Promise<NextResponse> {
   const path = new URL(request.url).pathname;
@@ -52,27 +49,21 @@ export async function POST(request: Request): Promise<NextResponse> {
     });
   }
 
-  const type =
-    typeof body.type === 'string' && VALID_TYPES.includes(body.type as PushPayload['type'])
-      ? (body.type as PushPayload['type'])
-      : 'policy_update';
-
-  const rawMessage = typeof body.message === 'string' ? body.message : undefined;
-  if (rawMessage !== undefined && rawMessage.length > MAX_MESSAGE_CHARS) {
-    return apiError(
-      `message is too long (max ${MAX_MESSAGE_CHARS} characters)`,
-      HttpStatus.BAD_REQUEST,
-      {
-        pathname: path,
-      },
-    );
+  const broadcastPart = parseLooseBroadcastBody({
+    type: body.type,
+    title: body.title,
+    body: body.body,
+    message: body.message,
+    i18n: body.i18n,
+  });
+  const lenErr = validateBroadcastMessageLengths(broadcastPart);
+  if (lenErr) {
+    return apiError(lenErr, HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
+  const basePayload = buildPayloadForDevice(broadcastPart, data.locale);
   const payload: PushPayload = {
-    type,
-    title: typeof body.title === 'string' ? body.title : undefined,
-    body: typeof body.body === 'string' ? body.body : undefined,
-    message: rawMessage,
+    ...basePayload,
     recordId: typeof body.recordId === 'string' ? body.recordId : undefined,
   };
 
@@ -81,7 +72,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   if (!sent) {
     await writeBroadcastHistory(admin, {
       kind: 'single_device',
-      notifyType: type,
+      notifyType: payload.type,
       title: payload.title,
       body: payload.body,
       message: payload.message,
@@ -97,7 +88,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   await writeBroadcastHistory(admin, {
     kind: 'single_device',
-    notifyType: type,
+    notifyType: payload.type,
     title: payload.title,
     body: payload.body,
     message: payload.message,

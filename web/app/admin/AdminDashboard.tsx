@@ -212,9 +212,17 @@ export function AdminDashboard() {
   const [broadcastLoading, setBroadcastLoading] = useState(false);
   const [broadcastResult, setBroadcastResult] = useState<BroadcastResult | null>(null);
   const [broadcastType, setBroadcastType] = useState<string>('policy_update');
-  const [broadcastTitle, setBroadcastTitle] = useState('');
-  const [broadcastBody, setBroadcastBody] = useState('');
-  const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [broadcastLocaleTab, setBroadcastLocaleTab] = useState<'en' | 'ru'>('en');
+  const [broadcastI18n, setBroadcastI18n] = useState({
+    en: { title: '', body: '', message: '' },
+    ru: { title: '', body: '', message: '' },
+  });
+  const [broadcastPolicyAiBrief, setBroadcastPolicyAiBrief] = useState('');
+  const [broadcastPolicyAiLocale, setBroadcastPolicyAiLocale] = useState<'en' | 'ru' | null>(null);
+  const [broadcastPolicyAiError, setBroadcastPolicyAiError] = useState<{
+    locale: 'en' | 'ru';
+    message: string;
+  } | null>(null);
   const [singleDeviceId, setSingleDeviceId] = useState('');
   const [singleType, setSingleType] = useState<string>('policy_update');
   const [singleTitle, setSingleTitle] = useState('');
@@ -548,16 +556,28 @@ export function AdminDashboard() {
     setBroadcastResult(null);
     setBroadcastLoading(true);
     try {
+      const i18n: Partial<
+        Record<'en' | 'ru', { title?: string; body?: string; message?: string }>
+      > = {};
+      for (const loc of ['en', 'ru'] as const) {
+        const row = broadcastI18n[loc];
+        const pack: { title?: string; body?: string; message?: string } = {};
+        const t = row.title.trim();
+        const b = row.body.trim();
+        const m = row.message.trim();
+        if (t) pack.title = t;
+        if (b) pack.body = b;
+        if (m) pack.message = m;
+        if (Object.keys(pack).length) i18n[loc] = pack;
+      }
+      const payload: { type: string; i18n?: typeof i18n } = { type: broadcastType };
+      if (Object.keys(i18n).length) payload.i18n = i18n;
+
       const res = await fetch('/api/admin/broadcast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          type: broadcastType,
-          ...(broadcastTitle && { title: broadcastTitle }),
-          ...(broadcastBody && { body: broadcastBody }),
-          ...(broadcastMessage && { message: broadcastMessage }),
-        }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (res.ok) {
@@ -567,6 +587,59 @@ export function AdminDashboard() {
       }
     } finally {
       setBroadcastLoading(false);
+    }
+  };
+
+  const handleBroadcastPolicyAiMarkdown = async (locale: 'en' | 'ru') => {
+    setBroadcastPolicyAiLocale(locale);
+    setBroadcastPolicyAiError(null);
+    try {
+      const contextParts = [
+        broadcastI18n[locale].title.trim(),
+        broadcastI18n[locale].body.trim(),
+        broadcastI18n[locale].message.trim(),
+      ].filter(Boolean);
+      const res = await fetch('/api/admin/ai/push-policy-markdown', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          locale,
+          brief: broadcastPolicyAiBrief.trim() || undefined,
+          context: contextParts.length ? contextParts.join('\n\n') : undefined,
+        }),
+      });
+      let data: { ok?: boolean; markdown?: string; error?: string };
+      try {
+        data = (await res.json()) as { ok?: boolean; markdown?: string; error?: string };
+      } catch {
+        setBroadcastPolicyAiError({
+          locale,
+          message: 'Invalid response from server (not JSON).',
+        });
+        return;
+      }
+      if (res.ok && data.ok && typeof data.markdown === 'string') {
+        setBroadcastPolicyAiError(null);
+        setBroadcastI18n((prev) => ({
+          ...prev,
+          [locale]: { ...prev[locale], message: data.markdown as string },
+        }));
+        return;
+      }
+      const fromBody =
+        typeof data.error === 'string' && data.error.trim() ? data.error.trim() : null;
+      setBroadcastPolicyAiError({
+        locale,
+        message: fromBody ?? `Request failed (${res.status}).`,
+      });
+    } catch (e) {
+      setBroadcastPolicyAiError({
+        locale,
+        message: e instanceof Error ? e.message : 'Network or unexpected error.',
+      });
+    } finally {
+      setBroadcastPolicyAiLocale(null);
     }
   };
 
@@ -1275,7 +1348,12 @@ export function AdminDashboard() {
               </section>
 
               <section className={`mt-8 ${adminCardSurfaceClass} p-5`}>
-                <h2 className="mb-4 text-lg font-medium">Push broadcast</h2>
+                <h2 className="mb-2 text-lg font-medium">Push broadcast</h2>
+                <p className="mb-4 text-sm text-zinc-600 dark:text-zinc-400">
+                  Copy is selected per device from its registered push locale (English or Russian).
+                  If a field is empty in that language, the English version is used when available,
+                  then Firebase defaults.
+                </p>
                 <form
                   onSubmit={handleBroadcast}
                   className="space-y-4 xl:grid xl:grid-cols-2 xl:gap-6 xl:space-y-0"
@@ -1295,14 +1373,38 @@ export function AdminDashboard() {
                       <option value="ai_complete">AI complete</option>
                     </select>
                   </div>
+                  <div className="xl:col-span-2 flex flex-wrap gap-2 border-b border-zinc-200 pb-3 dark:border-zinc-600">
+                    {(['en', 'ru'] as const).map((loc) => (
+                      <button
+                        key={loc}
+                        type="button"
+                        onClick={() => setBroadcastLocaleTab(loc)}
+                        className={
+                          broadcastLocaleTab === loc
+                            ? 'rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white dark:bg-indigo-500'
+                            : 'rounded-md px-3 py-1.5 text-sm font-medium text-zinc-600 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:bg-zinc-800/80'
+                        }
+                      >
+                        {loc === 'en' ? 'English (en)' : 'Russian (ru)'}
+                      </button>
+                    ))}
+                  </div>
                   <div className="xl:col-span-2">
                     <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
                       Title (optional)
                     </label>
                     <input
                       type="text"
-                      value={broadcastTitle}
-                      onChange={(e) => setBroadcastTitle(e.target.value)}
+                      value={broadcastI18n[broadcastLocaleTab].title}
+                      onChange={(e) =>
+                        setBroadcastI18n((p) => ({
+                          ...p,
+                          [broadcastLocaleTab]: {
+                            ...p[broadcastLocaleTab],
+                            title: e.target.value,
+                          },
+                        }))
+                      }
                       className={adminInputClass}
                       placeholder="Override default title"
                     />
@@ -1312,56 +1414,122 @@ export function AdminDashboard() {
                       Body (optional)
                     </label>
                     <textarea
-                      value={broadcastBody}
-                      onChange={(e) => setBroadcastBody(e.target.value)}
+                      value={broadcastI18n[broadcastLocaleTab].body}
+                      onChange={(e) =>
+                        setBroadcastI18n((p) => ({
+                          ...p,
+                          [broadcastLocaleTab]: {
+                            ...p[broadcastLocaleTab],
+                            body: e.target.value,
+                          },
+                        }))
+                      }
                       rows={2}
                       className={adminInputClass}
                       placeholder="Override default body"
                     />
                   </div>
                   {broadcastType === 'policy_update' && (
-                    <div className="xl:col-span-2">
-                      <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                        Message (optional, Markdown)
-                      </label>
-                      <textarea
-                        value={broadcastMessage}
-                        onChange={(e) => setBroadcastMessage(e.target.value)}
-                        rows={4}
-                        className={`${adminInputClass} font-mono`}
-                        placeholder="Markdown text for policy update…"
-                      />
-                    </div>
+                    <>
+                      <div className="xl:col-span-2">
+                        <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                          Brief for AI (optional, shared)
+                        </label>
+                        <textarea
+                          value={broadcastPolicyAiBrief}
+                          onChange={(e) => {
+                            setBroadcastPolicyAiError(null);
+                            setBroadcastPolicyAiBrief(e.target.value);
+                          }}
+                          rows={2}
+                          className={adminInputClass}
+                          placeholder="What should the notice say? Used when generating Markdown below."
+                        />
+                      </div>
+                      <div className="xl:col-span-2">
+                        <div className="mb-1 flex flex-wrap items-end justify-between gap-2">
+                          <label className="block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                            Message (optional, Markdown) — {broadcastLocaleTab.toUpperCase()}
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => void handleBroadcastPolicyAiMarkdown(broadcastLocaleTab)}
+                            disabled={broadcastPolicyAiLocale !== null}
+                            className="rounded-md border border-zinc-300 bg-white px-2.5 py-1 text-xs font-medium text-zinc-700 hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                          >
+                            {broadcastPolicyAiLocale === broadcastLocaleTab
+                              ? 'Generating…'
+                              : 'Generate Markdown (AI)'}
+                          </button>
+                        </div>
+                        <textarea
+                          value={broadcastI18n[broadcastLocaleTab].message}
+                          onChange={(e) => {
+                            setBroadcastPolicyAiError((prev) =>
+                              prev?.locale === broadcastLocaleTab ? null : prev,
+                            );
+                            setBroadcastI18n((p) => ({
+                              ...p,
+                              [broadcastLocaleTab]: {
+                                ...p[broadcastLocaleTab],
+                                message: e.target.value,
+                              },
+                            }));
+                          }}
+                          rows={4}
+                          className={`${adminInputClass} font-mono`}
+                          placeholder="Markdown for this locale…"
+                        />
+                        {broadcastPolicyAiError?.locale === broadcastLocaleTab ? (
+                          <p className="mt-2 text-sm text-red-600 dark:text-red-400">
+                            {broadcastPolicyAiError.message}
+                          </p>
+                        ) : null}
+                      </div>
+                    </>
                   )}
                   <div className="xl:col-span-2 rounded-lg border border-dashed border-zinc-200 bg-zinc-50/90 p-4 dark:border-zinc-600 dark:bg-zinc-900/50">
                     <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">
                       Preview
                     </p>
-                    <dl className="mt-2 space-y-1 text-sm text-zinc-700 dark:text-zinc-300">
+                    <dl className="mt-2 space-y-3 text-sm text-zinc-700 dark:text-zinc-300">
                       <div>
                         <dt className="inline text-zinc-500">Type · </dt>
                         <dd className="inline font-mono text-xs">{broadcastType}</dd>
                       </div>
-                      {broadcastTitle ? (
-                        <div>
-                          <dt className="text-zinc-500">Title</dt>
-                          <dd>{broadcastTitle}</dd>
-                        </div>
-                      ) : null}
-                      {broadcastBody ? (
-                        <div>
-                          <dt className="text-zinc-500">Body</dt>
-                          <dd className="whitespace-pre-wrap">{broadcastBody}</dd>
-                        </div>
-                      ) : null}
-                      {broadcastType === 'policy_update' && broadcastMessage ? (
-                        <div>
-                          <dt className="text-zinc-500">Message</dt>
-                          <dd className="whitespace-pre-wrap font-mono text-xs">
-                            {broadcastMessage}
-                          </dd>
-                        </div>
-                      ) : null}
+                      {(['en', 'ru'] as const).map((loc) => {
+                        const row = broadcastI18n[loc];
+                        const has = row.title.trim() || row.body.trim() || row.message.trim();
+                        if (!has) return null;
+                        return (
+                          <div
+                            key={loc}
+                            className="rounded-md border border-zinc-200/80 bg-white/60 p-2 dark:border-zinc-600 dark:bg-zinc-950/40"
+                          >
+                            <dt className="text-xs font-semibold uppercase text-zinc-500">
+                              Locale {loc}
+                            </dt>
+                            {row.title.trim() ? (
+                              <div className="mt-1">
+                                <span className="text-zinc-500">Title · </span>
+                                {row.title.trim()}
+                              </div>
+                            ) : null}
+                            {row.body.trim() ? (
+                              <div className="mt-1 whitespace-pre-wrap">
+                                <span className="text-zinc-500">Body · </span>
+                                {row.body.trim()}
+                              </div>
+                            ) : null}
+                            {broadcastType === 'policy_update' && row.message.trim() ? (
+                              <div className="mt-1 whitespace-pre-wrap font-mono text-xs">
+                                <span className="text-zinc-500">Message · </span>
+                                {row.message.trim()}
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
                       <div>
                         <dt className="inline text-zinc-500">Recipients · </dt>
                         <dd className="inline">

@@ -4,23 +4,21 @@ import { writeAdminAudit } from '@/lib/admin-audit';
 import { getAdminSession } from '@/lib/admin-session';
 import { apiError, HttpStatus, parseJsonBody } from '@/lib/api';
 import { writeBroadcastHistory } from '@/lib/broadcast-history-log';
-import { parseBroadcastBody, runBroadcast, type BroadcastInput } from '@/lib/broadcast-push';
+import {
+  parseBroadcastBody,
+  parseLooseBroadcastBody,
+  resolveBroadcastStrings,
+  runBroadcast,
+  validateBroadcastMessageLengths,
+} from '@/lib/broadcast-push';
 
 type BroadcastBody = {
   type?: unknown;
   title?: unknown;
   body?: unknown;
   message?: unknown;
+  i18n?: unknown;
 };
-
-function toBroadcastInput(body: BroadcastBody): BroadcastInput {
-  return {
-    type: typeof body.type === 'string' ? body.type : undefined,
-    title: typeof body.title === 'string' ? body.title : undefined,
-    body: typeof body.body === 'string' ? body.body : undefined,
-    message: typeof body.message === 'string' ? body.message : undefined,
-  };
-}
 
 export async function POST(request: Request): Promise<NextResponse> {
   const path = new URL(request.url).pathname;
@@ -34,17 +32,23 @@ export async function POST(request: Request): Promise<NextResponse> {
     return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
-  const input = toBroadcastInput(body);
+  const input = parseLooseBroadcastBody(body);
+  const lenErr = validateBroadcastMessageLengths(input);
+  if (lenErr) {
+    return apiError(lenErr, HttpStatus.BAD_REQUEST, { pathname: path });
+  }
+
   const parsed = parseBroadcastBody(input);
+  const previewEn = resolveBroadcastStrings(input, 'en');
 
   try {
     const result = await runBroadcast(input);
     await writeBroadcastHistory(admin, {
       kind: 'broadcast',
       notifyType: parsed.type,
-      title: body.title as string | undefined,
-      body: body.body as string | undefined,
-      message: body.message as string | undefined,
+      title: previewEn.title,
+      body: previewEn.body,
+      message: previewEn.message,
       sent: result.sent,
       failed: result.failed,
       total: result.total,

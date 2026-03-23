@@ -5,7 +5,11 @@ import {
   requireAppAuth,
   requireMobileUserAgent,
 } from '@/lib/api';
-import { runBroadcast, type BroadcastInput } from '@/lib/broadcast-push';
+import {
+  parseLooseBroadcastBody,
+  runBroadcast,
+  validateBroadcastMessageLengths,
+} from '@/lib/broadcast-push';
 import { NextResponse } from 'next/server';
 
 type BroadcastBody = {
@@ -13,16 +17,8 @@ type BroadcastBody = {
   title?: unknown;
   body?: unknown;
   message?: unknown;
+  i18n?: unknown;
 };
-
-function toBroadcastInput(body: BroadcastBody): BroadcastInput {
-  return {
-    type: typeof body.type === 'string' ? body.type : undefined,
-    title: typeof body.title === 'string' ? body.title : undefined,
-    body: typeof body.body === 'string' ? body.body : undefined,
-    message: typeof body.message === 'string' ? body.message : undefined,
-  };
-}
 
 export const POST = async (request: Request): Promise<NextResponse> => {
   const path = new URL(request.url).pathname;
@@ -38,7 +34,13 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
-  const result = await runBroadcast(toBroadcastInput(body));
+  const input = parseLooseBroadcastBody(body);
+  const lenErr = validateBroadcastMessageLengths(input);
+  if (lenErr) {
+    return apiError(lenErr, HttpStatus.BAD_REQUEST, { pathname: path });
+  }
+
+  const result = await runBroadcast(input);
   console.log('[Push] broadcast done', result);
   return NextResponse.json(result);
 };
