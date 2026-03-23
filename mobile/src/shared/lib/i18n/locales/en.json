@@ -350,7 +350,7 @@
     "activatePro": "Activate Pro",
     "planStatus": {
       "freeTitle": "Free plan",
-      "freeSubtitleSoon": "Pro with more automation is coming soon.",
+      "freeSubtitleSoon": "Pro is coming soon.",
       "freeSubtitle": "You’re on the free plan.",
       "proTitle": "Pro",
       "proSubtitle": "Thank you for supporting the app.",
@@ -359,9 +359,9 @@
     "automationSoon": {
       "badge": "Coming soon",
       "autoTranscribeTitle": "Auto-transcribe",
-      "autoTranscribeBody": "Automatically transcribe new notes after you save or import audio. This will be part of Pro when subscriptions launch — for now, tap Transcribe anytime on a note.",
+      "autoTranscribeBody": "Automatically transcribe new notes after you save or import audio.",
       "autoAiTitle": "Auto AI after transcription",
-      "autoAiBody": "Runs summary and tasks right after transcription finishes. Planned as a Pro automation feature. You can still run AI manually from each note."
+      "autoAiBody": "Runs summary and tasks right after transcription finishes. You can still run AI manually from each note."
     }
   },
   "appearance": {
