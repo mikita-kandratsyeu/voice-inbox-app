@@ -346,15 +346,39 @@
     "permissionDenied": "Denied",
     "permissionNotDetermined": "Not set",
     "permissionOpenSettings": "Open Settings",
-    "internalBuildSection": "Internal",
-    "activatePro": "Activate Pro",
     "planStatus": {
       "freeTitle": "Free plan",
-      "freeSubtitleSoon": "Pro is coming soon.",
-      "freeSubtitle": "You’re on the free plan.",
+      "freeValueSubtitle": "Up to 75 AI requests per week in Pro and no ads.",
+      "freeValueSubtitleSoon": "Pro is coming soon: up to 75 AI requests per week and no ads.",
+      "freeValueSubtitleAvailable": "Up to 75 AI requests per week in Pro. Available now.",
+      "comparePlansCta": "Compare plans",
+      "soonBadge": "Coming soon",
+      "availableBadge": "Available",
       "proTitle": "Pro",
-      "proSubtitle": "Thank you for supporting the app.",
-      "proActiveUntil": "Active until {{date}}"
+      "proValueSubtitle": "Higher AI limits, automation, and no ads.",
+      "proActiveUntil": "Active until {{date}}",
+      "a11yUnknownDate": "unknown date",
+      "a11yOpenPlans": "Open plan comparison",
+      "a11yOpenPlansHint": "Opens a screen with Free and Pro plans",
+      "a11yCurrentPlanPro": "Current plan Pro, active until {{date}}",
+      "a11yCurrentPlanHint": "This is information about your current plan"
+    },
+    "planPaywall": {
+      "title": "Choose your plan",
+      "subtitle": "Compare Free and Pro",
+      "freeTitle": "Free",
+      "freeBody": "Core features with standard AI limits.",
+      "proTitle": "Pro",
+      "upgrade": "Upgrade",
+      "comingSoon": "Coming soon",
+      "iapNotReady": "In-app purchase is not available in this build yet.",
+      "features": {
+        "aiLimit75": "Up to 75 AI requests per week",
+        "autoAi": "Auto AI after transcription",
+        "autoTranscription": "Auto transcription for new notes",
+        "accentColor": "Accent color customization",
+        "noAds": "No ads"
+      }
     },
     "automationSoon": {
       "badge": "Coming soon",

@@ -346,15 +346,39 @@
     "permissionDenied": "Отказано",
     "permissionNotDetermined": "Не задано",
     "permissionOpenSettings": "Открыть настройки",
-    "internalBuildSection": "Внутренняя сборка",
-    "activatePro": "Активировать Pro",
     "planStatus": {
       "freeTitle": "Бесплатный план",
-      "freeSubtitleSoon": "Расширенный Pro скоро появится.",
-      "freeSubtitle": "Вы на бесплатном плане.",
+      "freeValueSubtitle": "До 75 ИИ-запросов в неделю в Pro и без рекламы.",
+      "freeValueSubtitleSoon": "Pro скоро: до 75 ИИ-запросов в неделю и без рекламы.",
+      "freeValueSubtitleAvailable": "До 75 ИИ-запросов в неделю в Pro. Уже доступно.",
+      "comparePlansCta": "Смотреть планы",
+      "soonBadge": "Скоро",
+      "availableBadge": "Доступно",
       "proTitle": "Pro",
-      "proSubtitle": "Спасибо за поддержку приложения.",
-      "proActiveUntil": "Активен до {{date}}"
+      "proValueSubtitle": "Расширенный лимит ИИ, автоматизация и без рекламы.",
+      "proActiveUntil": "Активен до {{date}}",
+      "a11yUnknownDate": "дата не указана",
+      "a11yOpenPlans": "Открыть сравнение планов",
+      "a11yOpenPlansHint": "Откроется экран с планами Free и Pro",
+      "a11yCurrentPlanPro": "Текущий план Pro, активен до {{date}}",
+      "a11yCurrentPlanHint": "Это информация о текущем плане"
+    },
+    "planPaywall": {
+      "title": "Выберите план",
+      "subtitle": "Сравнение Free и Pro",
+      "freeTitle": "Бесплатный",
+      "freeBody": "Базовые возможности и стандартные лимиты ИИ.",
+      "proTitle": "Pro",
+      "upgrade": "Перейти на Pro",
+      "comingSoon": "Скоро",
+      "iapNotReady": "Покупка в приложении пока недоступна в этой сборке.",
+      "features": {
+        "aiLimit75": "До 75 ИИ-запросов в неделю",
+        "autoAi": "Авто-ИИ после транскрипции",
+        "autoTranscription": "Авто-транскрипция новых записей",
+        "accentColor": "Кастомизация акцентного цвета",
+        "noAds": "Без рекламы"
+      }
     },
     "automationSoon": {
       "badge": "Скоро",

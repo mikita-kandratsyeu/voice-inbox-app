@@ -40,12 +40,16 @@ import { useAppLockStore } from '@/entities/app-lock';
 import { useRecordStore } from '@/entities/record';
 import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { openAppReviewFromSettings } from '@/features/app-review';
-import { isAutomationUiLockedForPublicStore, useAdsAllowed } from '@/features/app-storefront';
+import {
+  getMonetizationMode,
+  isAutomationUiLockedForPublicStore,
+  useAdsAllowed,
+} from '@/features/app-storefront';
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { InboxBannerAd } from '@/features/inbox-banner';
-import { useProEntitlement } from '@/features/pro-license';
+import { ProLicenseKeyModal, useProEntitlement } from '@/features/pro-license';
 import { exportData, importData } from '@/features/sync-data';
 import { getWebsiteUrl, useColors } from '@/shared/config';
 import { isCrashlyticsDebugEnabled } from '@/shared/config/buildEnv';
@@ -68,7 +72,7 @@ import { SCREEN_PADDING, SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { AiUsageCard } from './AiUsageCard';
 import { AutomationComingSoonSheet, type AutomationFeatureKind } from './AutomationComingSoonSheet';
-import { SettingsInternalProSection } from './SettingsInternalProSection';
+import { SettingsPlanPaywallSheet } from './SettingsPlanPaywallSheet';
 import { SettingsPlanStatusCard } from './SettingsPlanStatusCard';
 
 export const SettingsScreen = () => {
@@ -101,8 +105,11 @@ export const SettingsScreen = () => {
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
   const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
   const [automationSheet, setAutomationSheet] = useState<AutomationFeatureKind | null>(null);
+  const [planPaywallVisible, setPlanPaywallVisible] = useState(false);
+  const [internalUpgradeVisible, setInternalUpgradeVisible] = useState(false);
   const { refresh: refreshProEntitlement, isProActive: proEntitlementActive } = useProEntitlement();
   const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
+  const monetizationMode = getMonetizationMode();
 
   useFocusEffect(
     useCallback(() => {
@@ -280,6 +287,24 @@ export const SettingsScreen = () => {
     setMicStatus(granted ? 'granted' : 'denied');
   }, [micStatus, t]);
 
+  const handlePlanCardPress = useCallback(() => {
+    if (proEntitlementActive) {
+      return;
+    }
+    setPlanPaywallVisible(true);
+  }, [proEntitlementActive]);
+
+  const handleUpgradePress = useCallback(() => {
+    if (monetizationMode === 'internal_license') {
+      setPlanPaywallVisible(false);
+      setInternalUpgradeVisible(true);
+      return;
+    }
+    if (monetizationMode === 'iap_public') {
+      Alert.alert(t('settings.planPaywall.upgrade'), t('settings.planPaywall.iapNotReady'));
+    }
+  }, [monetizationMode, t]);
+
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <View
@@ -322,7 +347,11 @@ export const SettingsScreen = () => {
             />
           }
         >
-          <SettingsPlanStatusCard color={color} />
+          <SettingsPlanStatusCard
+            color={color}
+            monetizationMode={monetizationMode}
+            onPress={handlePlanCardPress}
+          />
           <AiUsageCard
             usage={aiUsage}
             loading={aiUsageLoading}
@@ -584,9 +613,22 @@ export const SettingsScreen = () => {
               />
             </SettingsSection>
           )}
-          <SettingsInternalProSection color={color} />
           <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
+        <ProLicenseKeyModal
+          visible={internalUpgradeVisible}
+          onClose={() => setInternalUpgradeVisible(false)}
+          onActivated={() => {
+            setInternalUpgradeVisible(false);
+            void refreshProEntitlement({ force: true });
+          }}
+        />
+        <SettingsPlanPaywallSheet
+          visible={planPaywallVisible}
+          mode={monetizationMode}
+          onClose={() => setPlanPaywallVisible(false)}
+          onUpgradePress={handleUpgradePress}
+        />
         <AutomationComingSoonSheet
           visible={automationSheet !== null}
           feature={automationSheet ?? 'autoTranscribe'}
