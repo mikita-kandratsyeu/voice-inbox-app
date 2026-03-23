@@ -8,15 +8,14 @@ function normalizeApiPath(pathname: string): string {
 
 const DAY_TTL_SECONDS = 3 * 24 * 3600;
 
-/**
- * Per-day API error histogram in Redis (Upstash). No-op without Redis env.
- * Vercel Web Analytics counts page views client-side; this covers /api error rates.
- */
 export async function recordApiError(pathname: string, status: number): Promise<void> {
   if (status < 400) return;
   const url = process.env.UPSTASH_REDIS_REST_URL?.trim();
   const token = process.env.UPSTASH_REDIS_REST_TOKEN?.trim();
-  if (!url || !token) return;
+
+  if (!url || !token) {
+    return;
+  }
 
   const day = new Date().toISOString().slice(0, 10);
   const key = `admin:api_err:${day}`;
@@ -26,8 +25,8 @@ export async function recordApiError(pathname: string, status: number): Promise<
     const client = new Redis({ url, token });
     await client.hincrby(key, field, 1);
     await client.expire(key, DAY_TTL_SECONDS);
-  } catch {
-    /* ignore */
+  } catch (err) {
+    console.error('[recordApiError] error', err);
   }
 }
 
