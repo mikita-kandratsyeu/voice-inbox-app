@@ -18,7 +18,7 @@ import { InboxBannerAd } from '@/features/inbox-banner';
 import { useRecordActions } from '@/features/record-actions';
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
-import { getColors, useAppTheme } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { AudioPlayer } from '@/widgets/audio-player';
 
@@ -37,7 +37,7 @@ export const RecordingDetailScreen = () => {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'RecordingDetail'>>();
-  const color = getColors(useAppTheme());
+  const color = useColors();
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
   const { width: windowWidth } = useWindowDimensions();
