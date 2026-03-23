@@ -374,10 +374,12 @@
       "iapNotReady": "In-app purchase is not available in this build yet.",
       "features": {
         "aiLimit75": "Up to 75 AI requests per week",
+        "recordingUpTo30Min": "Up to 30 minutes per recording",
         "autoAi": "Auto AI after transcription",
         "autoTranscription": "Auto transcription for new notes",
         "accentColor": "Accent color customization",
-        "noAds": "No ads"
+        "noAds": "No ads",
+        "earlyAccess": "Early access to new Pro features"
       }
     },
     "automationSoon": {
