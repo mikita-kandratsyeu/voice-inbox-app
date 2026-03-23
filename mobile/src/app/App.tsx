@@ -2,7 +2,7 @@ import '../../global.css';
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { NavigationContainer } from '@react-navigation/native';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -22,6 +22,7 @@ import { OnboardingGate } from '@/features/onboarding';
 import { TranscriptionKeepAwake } from '@/features/transcription';
 import { getColors, useAppTheme } from '@/shared/config';
 import { NetworkStatusProvider } from '@/shared/lib';
+import { logAnalyticsScreenView } from '@/shared/lib/analytics';
 import {
   type PushNotificationData,
   PushNotificationSheet,
@@ -40,6 +41,7 @@ const App = () => {
 
   const [bootSplashVisible, setBootSplashVisible] = useState(true);
   const [bootstrapReady, setBootstrapReady] = useState(false);
+  const routeNameRef = useRef<string | undefined>(undefined);
 
   const onPushData = useCallback((data: PushNotificationData) => {
     handlePushNotification(data);
@@ -74,7 +76,20 @@ const App = () => {
                 barStyle={isDark ? 'light-content' : 'dark-content'}
                 backgroundColor={color.background.primary}
               />
-              <NavigationContainer ref={navigationRef}>
+              <NavigationContainer
+                ref={navigationRef}
+                onReady={() => {
+                  routeNameRef.current = navigationRef.getCurrentRoute()?.name;
+                }}
+                onStateChange={() => {
+                  const previous = routeNameRef.current;
+                  const current = navigationRef.getCurrentRoute()?.name;
+                  if (current != null && current !== previous) {
+                    routeNameRef.current = current;
+                    void logAnalyticsScreenView(current);
+                  }
+                }}
+              >
                 <OnboardingGate>
                   <AppLockGate>
                     <TranscriptionKeepAwake />

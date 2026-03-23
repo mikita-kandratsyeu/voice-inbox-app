@@ -5,6 +5,7 @@ import { useRecordStore } from '@/entities/record';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
 import { initDB } from '@/shared/lib';
+import { syncAnalyticsUserId } from '@/shared/lib/analytics';
 import { syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { ensurePushRegistered, type PushNotificationData } from '@/shared/lib/push';
@@ -27,6 +28,7 @@ export function useAppBootstrap(
       .then(async () => {
         const deviceId = await getOrCreateDeviceId();
         await syncCrashlyticsUserId(deviceId);
+        await syncAnalyticsUserId(deviceId);
 
         await useRecordStore.getState().load();
         onBootstrapReady?.();

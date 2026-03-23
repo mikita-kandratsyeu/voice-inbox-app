@@ -15,8 +15,6 @@ type RemoteKey =
   | 'APP_STORE_URL'
   | 'GOOGLE_PLAY_URL'
   | 'WEB_API_URL'
-  | 'WEB_API_SECRET'
-  | 'MOBILE_USER_AGENT'
   | 'YANDEX_REWARDED_AD_UNIT_ID'
   | 'YANDEX_BANNER_AD_UNIT_ID';
 
@@ -50,8 +48,6 @@ function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
     APP_STORE_URL: s.appStoreUrl,
     GOOGLE_PLAY_URL: s.googlePlayUrl,
     WEB_API_URL: s.webApiUrl,
-    WEB_API_SECRET: s.webApiSecret,
-    MOBILE_USER_AGENT: s.mobileUserAgent,
     YANDEX_REWARDED_AD_UNIT_ID: s.yandexRewardedAdUnitId,
     YANDEX_BANNER_AD_UNIT_ID: s.yandexBannerAdUnitId,
   };
@@ -75,8 +71,8 @@ function mergeRemote(
     appStoreUrl: readRemoteString(rc, 'APP_STORE_URL', embedded.appStoreUrl),
     googlePlayUrl: readRemoteString(rc, 'GOOGLE_PLAY_URL', embedded.googlePlayUrl),
     webApiUrl: readRemoteString(rc, 'WEB_API_URL', embedded.webApiUrl),
-    webApiSecret: readRemoteString(rc, 'WEB_API_SECRET', embedded.webApiSecret),
-    mobileUserAgent: readRemoteString(rc, 'MOBILE_USER_AGENT', embedded.mobileUserAgent),
+    webApiSecret: embedded.webApiSecret,
+    mobileUserAgent: embedded.mobileUserAgent,
     yandexRewardedAdUnitId: readRemoteString(
       rc,
       'YANDEX_REWARDED_AD_UNIT_ID',
