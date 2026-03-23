@@ -20,8 +20,9 @@ import {
 import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
 import { AppRatingPromptRoot } from '@/features/app-review';
 import { OnboardingGate } from '@/features/onboarding';
+import { useProEntitlement, useResetAccentWhenNotPro } from '@/features/pro-license';
 import { TranscriptionKeepAwake } from '@/features/transcription';
-import { getColors, useAppTheme } from '@/shared/config';
+import { DEFAULT_ACCENT_COLOR_ID, getColors, useAppTheme } from '@/shared/config';
 import { NetworkStatusProvider } from '@/shared/lib';
 import { logAnalyticsScreenView } from '@/shared/lib/analytics';
 import {
@@ -37,8 +38,11 @@ import { RootNavigator } from './navigation/RootNavigator';
 
 const App = () => {
   const theme = useAppTheme();
+  const { isProActive } = useProEntitlement();
   const accentColorId = useSettingsStore((s) => s.accentColorId);
-  const color = useMemo(() => getColors(theme, accentColorId), [theme, accentColorId]);
+
+  const resolvedAccent = isProActive ? accentColorId : DEFAULT_ACCENT_COLOR_ID;
+  const color = useMemo(() => getColors(theme, resolvedAccent), [theme, resolvedAccent]);
   const isDark = theme === 'dark';
 
   const [bootSplashVisible, setBootSplashVisible] = useState(true);
@@ -64,6 +68,7 @@ const App = () => {
   useYandexMobileAdsInit();
   useAppBootstrap(onPushData, { onBootstrapReady });
   useAppForegroundLifecycle();
+  useResetAccentWhenNotPro();
 
   const rootStyle = { flex: 1 };
   const safeAreaStyle = { backgroundColor: color.background.primary };
