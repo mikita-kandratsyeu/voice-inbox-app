@@ -348,9 +348,9 @@
     "permissionOpenSettings": "Open Settings",
     "planStatus": {
       "freeTitle": "Free plan",
-      "freeValueSubtitle": "Up to 75 AI requests per week in Pro and no ads.",
-      "freeValueSubtitleSoon": "Pro is coming soon: up to 75 AI requests per week and no ads.",
-      "freeValueSubtitleAvailable": "Up to 75 AI requests per week in Pro. Available now.",
+      "freeValueSubtitle": "Up to {{limit}} AI requests per week in Pro and no ads.",
+      "freeValueSubtitleSoon": "Pro is coming soon: up to {{limit}} AI requests per week and no ads.",
+      "freeValueSubtitleAvailable": "Up to {{limit}} AI requests per week in Pro. Available now.",
       "comparePlansCta": "Compare plans",
       "soonBadge": "Coming soon",
       "availableBadge": "Available",
@@ -373,7 +373,7 @@
       "comingSoon": "Coming soon",
       "iapNotReady": "In-app purchase is not available in this build yet.",
       "features": {
-        "aiLimit75": "Up to 75 AI requests per week",
+        "aiLimit": "Up to {{limit}} AI requests per week",
         "recordingUpTo30Min": "Up to 30 minutes per recording",
         "autoAi": "Auto AI after transcription",
         "autoTranscription": "Auto transcription for new notes",

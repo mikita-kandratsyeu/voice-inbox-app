@@ -20,12 +20,14 @@ import { logAnalyticsEvent } from '@/shared/lib/analytics';
 type SettingsPlanStatusCardProps = {
   color: Colors;
   monetizationMode: MonetizationMode;
+  aiLimit: number;
   onPress?: () => void;
 };
 
 export function SettingsPlanStatusCard({
   color,
   monetizationMode,
+  aiLimit,
   onPress,
 }: SettingsPlanStatusCardProps) {
   const { t, i18n } = useTranslation();
@@ -81,16 +83,16 @@ export function SettingsPlanStatusCard({
     ? t('settings.planStatus.proTitle')
     : t('settings.planStatus.freeTitle');
 
-  let subtitle = t('settings.planStatus.freeValueSubtitle');
+  let subtitle = t('settings.planStatus.freeValueSubtitle', { limit: aiLimit });
   if (isProActive) {
     subtitle =
       proExpiresText != null
         ? t('settings.planStatus.proActiveUntil', { date: proExpiresText })
         : t('settings.planStatus.proValueSubtitle');
   } else if (monetizationMode === 'coming_soon') {
-    subtitle = t('settings.planStatus.freeValueSubtitleSoon');
+    subtitle = t('settings.planStatus.freeValueSubtitleSoon', { limit: aiLimit });
   } else if (monetizationMode === 'iap_public') {
-    subtitle = t('settings.planStatus.freeValueSubtitleAvailable');
+    subtitle = t('settings.planStatus.freeValueSubtitleAvailable', { limit: aiLimit });
   }
 
   let statusBadge: string | null = null;

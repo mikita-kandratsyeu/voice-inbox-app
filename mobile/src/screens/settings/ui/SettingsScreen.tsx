@@ -110,6 +110,7 @@ export const SettingsScreen = () => {
   const { refresh: refreshProEntitlement, isProActive: proEntitlementActive } = useProEntitlement();
   const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
   const monetizationMode = getMonetizationMode();
+  const proAiLimit = aiUsage?.limit ?? 75;
 
   useFocusEffect(
     useCallback(() => {
@@ -350,6 +351,7 @@ export const SettingsScreen = () => {
           <SettingsPlanStatusCard
             color={color}
             monetizationMode={monetizationMode}
+            aiLimit={proAiLimit}
             onPress={handlePlanCardPress}
           />
           <AiUsageCard
@@ -626,6 +628,7 @@ export const SettingsScreen = () => {
         <SettingsPlanPaywallSheet
           visible={planPaywallVisible}
           mode={monetizationMode}
+          aiLimit={proAiLimit}
           onClose={() => setPlanPaywallVisible(false)}
           onUpgradePress={handleUpgradePress}
         />

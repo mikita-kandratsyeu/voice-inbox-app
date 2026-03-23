@@ -348,9 +348,9 @@
     "permissionOpenSettings": "Открыть настройки",
     "planStatus": {
       "freeTitle": "Бесплатный план",
-      "freeValueSubtitle": "До 75 ИИ-запросов в неделю в Pro и без рекламы.",
-      "freeValueSubtitleSoon": "Pro скоро: до 75 ИИ-запросов в неделю и без рекламы.",
-      "freeValueSubtitleAvailable": "До 75 ИИ-запросов в неделю в Pro. Уже доступно.",
+      "freeValueSubtitle": "До {{limit}} ИИ-запросов в неделю в Pro и без рекламы.",
+      "freeValueSubtitleSoon": "Pro скоро: до {{limit}} ИИ-запросов в неделю и без рекламы.",
+      "freeValueSubtitleAvailable": "До {{limit}} ИИ-запросов в неделю в Pro. Уже доступно.",
       "comparePlansCta": "Смотреть планы",
       "soonBadge": "Скоро",
       "availableBadge": "Доступно",
@@ -373,7 +373,7 @@
       "comingSoon": "Скоро",
       "iapNotReady": "Покупка в приложении пока недоступна в этой сборке.",
       "features": {
-        "aiLimit75": "До 75 ИИ-запросов в неделю",
+        "aiLimit": "До {{limit}} ИИ-запросов в неделю",
         "recordingUpTo30Min": "До 30 минут на одну запись",
         "autoAi": "Авто-ИИ после транскрипции",
         "autoTranscription": "Авто-транскрипция новых записей",
