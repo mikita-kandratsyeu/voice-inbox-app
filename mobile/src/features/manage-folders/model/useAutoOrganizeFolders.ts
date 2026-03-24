@@ -15,7 +15,7 @@ import {
   getAutoOrganizeWeeklyLimitExceededMessage,
 } from '@/shared/lib/ai-api/limitUserMessage';
 
-const MIN_NOTES_TO_AUTO_ORGANIZE = 12;
+const MIN_NOTES_TO_AUTO_ORGANIZE = 5;
 const MAX_NOTES_FOR_SINGLE_REQUEST = 120;
 const ALLOWED_ICONS = new Set<string>(FOLDER_ICON_KEYS);
 

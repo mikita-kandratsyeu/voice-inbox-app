@@ -433,7 +433,7 @@ export const InboxScreen = () => {
               />
             ) : (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                {canAutoOrganize ? (
+                {canAutoOrganize && (
                   <Button
                     iconOnly
                     variant="icon"
@@ -448,7 +448,7 @@ export const InboxScreen = () => {
                     loading={isAutoOrganizing}
                     disabled={isAutoOrganizing}
                   />
-                ) : null}
+                )}
                 <Button
                   iconOnly
                   variant="icon"
