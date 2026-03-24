@@ -5,6 +5,7 @@ import RNFS from 'react-native-fs';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import { buildShareText, RECORD_TEXT_EXPORT_EXTENSION } from '@/features/share-record';
 import { hapticError, hapticSuccess } from '@/shared/lib';
 
 type UseBatchRecordActionsParams = {
@@ -63,19 +64,10 @@ export const useBatchRecordActions = ({ onComplete }: UseBatchRecordActionsParam
       if (records.length === 0) return;
 
       try {
-        const lines = records.map((r) => {
-          const header = `# ${r.title}\n${r.createdAt}`;
-          const transcript = r.transcript ? `\n\n## Transcript\n${r.transcript}` : '';
-          const summary = r.summary ? `\n\n## Summary\n${r.summary}` : '';
-          const tasks =
-            r.tasks && r.tasks.length > 0
-              ? `\n\n## Tasks\n${r.tasks.map((t) => `- [${t.isDone ? 'x' : ' '}] ${t.text}`).join('\n')}`
-              : '';
-          return `${header}${transcript}${summary}${tasks}`;
-        });
+        const lines = records.map((record) => buildShareText(record));
 
         const content = lines.join('\n\n---\n\n');
-        const fileName = `voice-inbox-export-${Date.now()}.md`;
+        const fileName = `voice-inbox-export-${Date.now()}.${RECORD_TEXT_EXPORT_EXTENSION}`;
         const filePath = `${RNFS.CachesDirectoryPath}/${fileName}`;
 
         await RNFS.writeFile(filePath, content, 'utf8');

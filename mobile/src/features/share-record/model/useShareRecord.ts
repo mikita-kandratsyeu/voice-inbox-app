@@ -5,6 +5,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { formatShortDate, i18n } from '@/shared/lib';
 
 const toFileUri = (path: string): string => (path.startsWith('file://') ? path : `file://${path}`);
+export const RECORD_TEXT_EXPORT_EXTENSION = 'txt';
 
 const SHARE_WRAP_WIDTH = 72;
 
@@ -94,7 +95,7 @@ function formatTranscriptForShare(record: VoiceRecord): string {
   return formatPlainTranscriptForShare(record.transcript ?? '');
 }
 
-const buildShareText = (record: VoiceRecord): string => {
+export const buildShareText = (record: VoiceRecord): string => {
   const locale = i18n.language ?? 'en';
   const lines: string[] = [];
 
@@ -135,7 +136,7 @@ const buildShareText = (record: VoiceRecord): string => {
   }
 
   lines.push('');
-  lines.push(`— ${i18n.t('share.exportedFrom')}`);
+  lines.push(i18n.t('share.exportedFrom'));
 
   return lines.join('\n');
 };
@@ -143,7 +144,7 @@ const buildShareText = (record: VoiceRecord): string => {
 export const useShareRecord = () => {
   const shareRecord = async (record: VoiceRecord) => {
     const text = buildShareText(record);
-    const fileName = `${record.title.replace(/[^a-zA-Z0-9\u0400-\u04FF\s]/g, '_')}.txt`;
+    const fileName = `${record.title.replace(/[^a-zA-Z0-9\u0400-\u04FF\s]/g, '_')}.${RECORD_TEXT_EXPORT_EXTENSION}`;
     const filePath = `${RNFS.CachesDirectoryPath}/${fileName}`;
 
     try {

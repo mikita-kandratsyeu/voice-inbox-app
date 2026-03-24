@@ -25,6 +25,57 @@ type TranscriptTabProps = {
   isAiProcessing?: boolean;
 };
 
+const MAX_PARAGRAPH_LENGTH = 360;
+
+const buildReadableParagraphs = (text: string): string[] => {
+  const normalized = text.replace(/\r\n/g, '\n').trim();
+  if (!normalized) return [];
+
+  const paragraphs = normalized
+    .split(/\n\s*\n/)
+    .map((part) =>
+      part
+        .replace(/[ \t]+\n/g, '\n')
+        .replace(/[ \t]{2,}/g, ' ')
+        .trim(),
+    )
+    .filter(Boolean);
+
+  if (paragraphs.length > 1) {
+    return paragraphs;
+  }
+
+  const single = paragraphs[0] ?? '';
+  if (single.length <= MAX_PARAGRAPH_LENGTH) {
+    return single ? [single] : [];
+  }
+
+  const sentences = single
+    .split(/(?<=[.!?])\s+(?=[A-ZА-ЯЁІЇЄҐ0-9])/u)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (sentences.length <= 1) {
+    return [single];
+  }
+
+  const chunks: string[] = [];
+  let current = '';
+
+  for (const sentence of sentences) {
+    const candidate = current ? `${current} ${sentence}` : sentence;
+    if (candidate.length <= MAX_PARAGRAPH_LENGTH) {
+      current = candidate;
+    } else {
+      if (current) chunks.push(current);
+      current = sentence;
+    }
+  }
+  if (current) chunks.push(current);
+
+  return chunks.length > 0 ? chunks : [single];
+};
+
 export const TranscriptTab = ({
   segments,
   translatedTranscript,
@@ -48,6 +99,7 @@ export const TranscriptTab = ({
 
   const hasTranslation = Boolean(translatedTranscript?.trim());
   const showTranslation = hasTranslation && viewMode === 'translated';
+  const translatedParagraphs = buildReadableParagraphs(translatedTranscript ?? '');
 
   if (segments.length === 0) {
     return (
@@ -155,10 +207,29 @@ export const TranscriptTab = ({
         </View>
       </View>
       {showTranslation ? (
-        <View className="p-4">
-          <Text className="text-sm leading-[22px]" style={{ color: color.text.primary }}>
-            {translatedTranscript}
-          </Text>
+        <View className="px-4 pb-4">
+          <View
+            className="rounded-2xl p-4"
+            style={{
+              backgroundColor: color.background.secondary,
+              borderWidth: 1,
+              borderColor: color.border.default,
+            }}
+          >
+            {translatedParagraphs.map((paragraph, idx) => (
+              <Text
+                key={`${idx}-${paragraph.slice(0, 18)}`}
+                className="text-[15px] leading-7"
+                style={{
+                  color: color.text.primary,
+                  marginBottom: idx === translatedParagraphs.length - 1 ? 0 : 14,
+                }}
+                selectable
+              >
+                {paragraph}
+              </Text>
+            ))}
+          </View>
         </View>
       ) : (
         <TranscriptHighlight
