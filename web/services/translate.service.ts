@@ -1,9 +1,8 @@
 import { buildTranslatePrompt } from '@/lib/prompts';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
 import { sendLimitExceededPush } from '@/lib/push-tokens';
+import { SYSTEM_MICRO_TASK_MODEL } from '@/config/constants';
 import { openRouterClient } from '@/lib/openrouter';
-
-const TRANSLATE_MODEL = 'google/gemini-2.5-flash-lite';
 
 type TranslateResult =
   | { ok: true; translatedText: string }
@@ -15,7 +14,7 @@ async function callTranslate(transcript: string, targetLang: string): Promise<st
 
   const response = await openRouterClient.chat.send({
     chatGenerationParams: {
-      model: TRANSLATE_MODEL,
+      model: SYSTEM_MICRO_TASK_MODEL,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: transcript },

@@ -1,58 +1,38 @@
-import type { AIModel, WhisperModel, WhisperModelId } from './types';
+import type { AIModel, UserFacingAIModel, WhisperModel, WhisperModelId } from './types';
 
-const GEMINI_MODELS: AIModel[] = [
-  {
-    id: 'google/gemini-3.1-flash-lite-preview',
-    name: 'Gemini 3.1 Flash Lite',
-    provider: 'Google',
-    descriptionKey: 'aiModels.geminiDesc3_1',
-    speed: 'fast',
-  },
+export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
   {
     id: 'google/gemini-2.5-flash-lite',
     name: 'Gemini 2.5 Flash Lite',
     provider: 'Google',
     descriptionKey: 'aiModels.geminiDesc2_5',
     speed: 'fast',
+    tierLabelKey: 'aiModels.tierFast',
+    supportTierCode: 'fast',
   },
-];
-
-const OPENAI_MODELS: AIModel[] = [
   {
-    id: 'openai/gpt-5-nano',
-    name: 'GPT-5 Nano',
-    provider: 'OpenAI',
-    descriptionKey: 'aiModels.openaiDesc',
-    speed: 'medium',
+    id: 'google/gemini-3.1-flash-lite-preview',
+    name: 'Gemini 3.1 Flash Lite',
+    provider: 'Google',
+    descriptionKey: 'aiModels.geminiDesc3_1',
+    speed: 'fast',
+    tierLabelKey: 'aiModels.tierSmart',
+    supportTierCode: 'smarter',
   },
-];
-
-const DEEPSEEK_MODELS: AIModel[] = [
-  {
-    id: 'deepseek/deepseek-v3.2',
-    name: 'DeepSeek V3.2',
-    provider: 'DeepSeek',
-    descriptionKey: 'aiModels.deepSeekDesc',
-    speed: 'medium',
-  },
-];
-
-const MINIMAX_MODELS: AIModel[] = [
   {
     id: 'minimax/minimax-m2.7',
     name: 'MiniMax M2.7',
     provider: 'MiniMax',
     descriptionKey: 'aiModels.minimaxDesc',
     speed: 'fast',
+    tierLabelKey: 'aiModels.tierPremium',
+    supportTierCode: 'premium_experimental',
   },
 ];
 
-export const AI_MODELS: AIModel[] = [
-  ...GEMINI_MODELS,
-  ...MINIMAX_MODELS,
-  ...OPENAI_MODELS,
-  ...DEEPSEEK_MODELS,
-];
+export const AI_MODELS: AIModel[] = USER_FACING_AI_MODELS.map(
+  ({ tierLabelKey: _t, supportTierCode: _s, ...m }) => m,
+);
 
 export const WHISPER_MODELS: WhisperModel[] = [
   {

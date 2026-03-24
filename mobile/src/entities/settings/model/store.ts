@@ -3,9 +3,9 @@ import { create } from 'zustand';
 import { parseAccentColorId } from '@/shared/config';
 import { storage } from '@/shared/lib/async-storage';
 
-import { AI_MODELS, DEFAULT_SELECTED_WHISPER_MODEL_ID } from './constants';
+import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
+import { DEFAULT_SELECTED_WHISPER_MODEL_ID, USER_FACING_AI_MODELS } from './constants';
 import type {
-  AIModelId,
   AiOutputLanguage,
   AppLanguage,
   AppTheme,
@@ -13,6 +13,7 @@ import type {
   SummaryStyle,
   TaskStrictness,
   TranscriptionLanguage,
+  UserSelectableAIModelId,
   WhisperDownloadPhase,
   WhisperModelId,
   WhisperModelStatus,
@@ -47,10 +48,19 @@ const getStoredAppLanguage = (): AppLanguage => {
   return (val as AppLanguage) ?? 'system';
 };
 
-const getStoredAIModel = (): AIModelId => {
-  const val = storage.getString(KEYS.AI_MODEL);
+const USER_SELECTABLE_SET = new Set<string>(USER_FACING_AI_MODELS.map((m) => m.id));
 
-  return (val as AIModelId) ?? AI_MODELS[0].id;
+const normalizeStoredAIModel = (raw: string | undefined): UserSelectableAIModelId => {
+  if (raw && USER_SELECTABLE_SET.has(raw)) {
+    return raw as UserSelectableAIModelId;
+  }
+
+  return RECOMMENDED_AI_MODEL_ID;
+};
+
+const getStoredAIModel = (): UserSelectableAIModelId => {
+  const val = storage.getString(KEYS.AI_MODEL);
+  return normalizeStoredAIModel(val);
 };
 
 const getStoredWhisperModel = (): WhisperModelId => {
@@ -131,7 +141,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ appLanguage: value });
   },
 
-  setAIModel: (id: AIModelId) => {
+  setAIModel: (id: UserSelectableAIModelId) => {
     storage.set(KEYS.AI_MODEL, id);
     set({ selectedAIModel: id });
   },

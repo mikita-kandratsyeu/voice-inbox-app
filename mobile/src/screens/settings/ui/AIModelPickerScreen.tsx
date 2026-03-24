@@ -5,8 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { AIModelId } from '@/entities/settings';
-import { AI_MODELS, getRecommendedAIModelId, useSettingsStore } from '@/entities/settings';
+import type { UserSelectableAIModelId } from '@/entities/settings';
+import {
+  RECOMMENDED_AI_MODEL_ID,
+  USER_FACING_AI_MODELS,
+  useSettingsStore,
+} from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useColors } from '@/shared/config';
 import { useTabletContentMaxWidth } from '@/shared/lib';
@@ -29,9 +33,8 @@ export const AIModelPickerScreen = () => {
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const setAIModel = useSettingsStore((s) => s.setAIModel);
-  const recommendedAIModelId = getRecommendedAIModelId();
 
-  const handleSelect = (id: AIModelId) => {
+  const handleSelect = (id: UserSelectableAIModelId) => {
     setAIModel(id);
     navigation.goBack();
   };
@@ -60,10 +63,10 @@ export const AIModelPickerScreen = () => {
           </Text>
 
           <View className="overflow-hidden rounded-2xl">
-            {AI_MODELS.map((model, index) => {
+            {USER_FACING_AI_MODELS.map((model, index) => {
               const isSelected = model.id === selectedAIModel;
               const isFirst = index === 0;
-              const isLast = index === AI_MODELS.length - 1;
+              const isLast = index === USER_FACING_AI_MODELS.length - 1;
               const borderStyle = !isLast
                 ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
                 : {};
@@ -91,9 +94,9 @@ export const AIModelPickerScreen = () => {
                           className="text-[16px] font-semibold"
                           style={{ color: color.text.primary }}
                         >
-                          {model.name}
+                          {t(model.tierLabelKey)}
                         </Text>
-                        {model.id === recommendedAIModelId && (
+                        {model.id === RECOMMENDED_AI_MODEL_ID && (
                           <View
                             className="rounded-full px-2 py-0.5"
                             style={{ backgroundColor: color.status.processing.bg }}
@@ -107,6 +110,12 @@ export const AIModelPickerScreen = () => {
                           </View>
                         )}
                       </View>
+                      <Text
+                        className="text-[13px] leading-5 mb-1"
+                        style={{ color: color.text.muted }}
+                      >
+                        {model.name}
+                      </Text>
                       <Text
                         className="text-[14px] leading-5 mb-1.5"
                         style={{ color: color.text.secondary }}

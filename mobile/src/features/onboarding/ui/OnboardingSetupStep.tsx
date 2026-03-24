@@ -5,8 +5,8 @@ import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } fr
 
 import type { WhisperModelId } from '@/entities/settings';
 import {
-  AI_MODELS,
-  getRecommendedAIModelId,
+  RECOMMENDED_AI_MODEL_ID,
+  USER_FACING_AI_MODELS,
   useRecommendedWhisperModelId,
   useSettingsStore,
   useWhisperModelCompatibility,
@@ -37,7 +37,6 @@ export const OnboardingSetupStep = ({
 
   const compatibility = useWhisperModelCompatibility();
   const recommendedModelId = useRecommendedWhisperModelId();
-  const recommendedAIModelId = getRecommendedAIModelId();
   const { startDownload } = useModelManager();
 
   const handleWhisperSelect = (id: WhisperModelId) => {
@@ -89,8 +88,8 @@ export const OnboardingSetupStep = ({
             borderColor: color.border.default,
           }}
         >
-          {AI_MODELS.map((model, index) => {
-            const isLast = index === AI_MODELS.length - 1;
+          {USER_FACING_AI_MODELS.map((model, index) => {
+            const isLast = index === USER_FACING_AI_MODELS.length - 1;
             const isSelected = model.id === selectedAIModel;
             return (
               <TouchableOpacity
@@ -106,11 +105,11 @@ export const OnboardingSetupStep = ({
                   borderBottomColor: color.border.default,
                 }}
               >
-                <View className="mr-3 flex-1 flex-row items-center gap-2">
+                <View className="mr-3 flex-1 flex-row flex-wrap items-center gap-2">
                   <Text className="text-[15px] font-medium" style={{ color: color.text.primary }}>
                     {model.name}
                   </Text>
-                  {model.id === recommendedAIModelId && (
+                  {model.id === RECOMMENDED_AI_MODEL_ID && (
                     <View
                       className="rounded-full px-2 py-0.5"
                       style={{ backgroundColor: color.status.processing.bg }}

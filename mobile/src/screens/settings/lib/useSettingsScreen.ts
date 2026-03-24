@@ -7,7 +7,7 @@ import { Alert, AppState } from 'react-native';
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useAppLockStore } from '@/entities/app-lock';
 import { useRecordStore } from '@/entities/record';
-import { AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import { USER_FACING_AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { openAppReviewFromSettings } from '@/features/app-review';
 import {
   getMonetizationMode,
@@ -157,7 +157,8 @@ export function useSettingsScreen() {
     }
   }, [fetchAiUsage, refreshProEntitlement]);
 
-  const aiModelName = AI_MODELS.find((m) => m.id === selectedAIModel)?.name ?? selectedAIModel;
+  const userFacing = USER_FACING_AI_MODELS.find((m) => m.id === selectedAIModel);
+  const aiModelName = userFacing?.name ?? selectedAIModel;
   const whisperStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
   const whisperModelLabel =
     WHISPER_MODELS.find((m) => m.id === selectedWhisperModel)?.name ?? selectedWhisperModel;

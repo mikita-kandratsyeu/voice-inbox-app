@@ -2,6 +2,7 @@ import NetInfo from '@react-native-community/netinfo';
 import * as RNLocalize from 'react-native-localize';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
+import { getAiSettingsDiagnostics } from '@/entities/settings';
 import { getMobileUserAgent } from '@/shared/config/buildEnv';
 import { collectCrashlyticsDiagnostics } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
@@ -28,6 +29,7 @@ export async function collectSupportDiagnostics(): Promise<SupportDiagnosticsPay
   }
 
   const userAgent = getMobileUserAgent();
+  const aiSettings = getAiSettingsDiagnostics();
   const d = DeviceInfoModule;
   const buildRaw =
     'buildNumber' in d ? (d as { buildNumber?: string | number }).buildNumber : undefined;
@@ -43,6 +45,7 @@ export async function collectSupportDiagnostics(): Promise<SupportDiagnosticsPay
     systemVersion: d.systemVersion ?? '',
     brand: d.brand ?? '',
     model: d.model ?? '',
+    aiSettings: aiSettings,
     deviceYearClass: safeNum(d.deviceYearClass),
     isLowRamDevice: typeof d.isLowRamDevice === 'boolean' ? d.isLowRamDevice : null,
     totalMemoryBytes: safeNum(d.totalMemory),

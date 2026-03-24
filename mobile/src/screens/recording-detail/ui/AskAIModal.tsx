@@ -31,11 +31,11 @@ import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboa
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
-import { AI_MODELS, useSettingsStore } from '@/entities/settings';
 import { type AskAIHistoryItem, useAskAI } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
 import { hapticSelection, useNetworkStatus } from '@/shared/lib';
 import { type AiUsage, getAiUsage } from '@/shared/lib/ai-api';
+import { useAiModelName } from '@/shared/lib/useAiModelName';
 import { Button, getInputFieldInputStyle, InputField } from '@/shared/ui';
 
 const TOP_INSET = 48;
@@ -271,8 +271,7 @@ const EmptyState = ({
   disabled,
 }: EmptyStateProps) => {
   const { t } = useTranslation();
-  const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
-  const aiModelName = AI_MODELS.find((m) => m.id === selectedAIModel)?.name ?? selectedAIModel;
+  const aiModelName = useAiModelName();
   const hintIcon =
     isConnected === false ? (
       <WifiOff size={12} color={color.accent.delete} strokeWidth={1.8} />

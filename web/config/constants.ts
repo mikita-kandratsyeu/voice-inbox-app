@@ -44,8 +44,8 @@ export const MESSAGE_KEY_PREFIX = 'msg:';
 export const GET_RETRY_ATTEMPTS = 3;
 export const GET_RETRY_DELAY_MS = 100;
 
-// AI service — allowlist must match mobile AI_MODELS (entities/settings/model/constants.ts)
 export const FALLBACK_MODEL = 'arcee-ai/trinity-large-preview:free';
+export const SYSTEM_MICRO_TASK_MODEL = 'openai/gpt-5-nano';
 export const ALLOWED_AI_MODELS: string[] = [
   'deepseek/deepseek-v3.2',
   'google/gemini-2.5-flash-lite',
