@@ -6,7 +6,6 @@ import { useFolderStore } from '@/entities/folder';
 import { FOLDER_ICON_KEYS, type FolderIconKey } from '@/entities/folder/lib/folderLucideIcons';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { useSettingsStore } from '@/entities/settings';
 import { useProEntitlement } from '@/features/pro-license';
 import { DEFAULT_FOLDER_BRAND_HEX } from '@/shared/lib';
 import { pollAutoOrganizeFolders, postAutoOrganizeFolders } from '@/shared/lib/ai-api';
@@ -25,7 +24,6 @@ function sanitizeFolderIcon(icon: string): FolderIconKey {
 
 export function useAutoOrganizeFolders(records: VoiceRecord[]) {
   const { t, i18n } = useTranslation();
-  const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const { isProActive } = useProEntitlement();
   const { folders, createFolder } = useFolderStore();
   const setRecordFolder = useRecordStore((s) => s.setRecordFolder);
@@ -78,7 +76,6 @@ export function useAutoOrganizeFolders(records: VoiceRecord[]) {
       const requestId = `auto-organize-${Date.now()}`;
       const postResult = await postAutoOrganizeFolders({
         id: requestId,
-        model: selectedAIModel,
         appLanguage: i18n.language,
         existingFolders: folders.map((f) => ({
           name: f.name,
@@ -141,7 +138,6 @@ export function useAutoOrganizeFolders(records: VoiceRecord[]) {
     isProActive,
     isRunning,
     i18n.language,
-    selectedAIModel,
     setRecordFolder,
     t,
   ]);

@@ -6,7 +6,6 @@ import {
   parseJsonBody,
   requireAppAuth,
   requireMobileUserAgent,
-  validateAllowedModel,
   validateDeviceId,
   validateRequiredStrings,
 } from '@/lib/api';
@@ -25,7 +24,6 @@ type NotePayload = {
 
 type RequestBody = {
   id?: unknown;
-  model?: unknown;
   appLanguage?: unknown;
   existingFolders?: unknown;
   notes?: unknown;
@@ -52,22 +50,13 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const body = await parseJsonBody<RequestBody>(request);
   if (!body) return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });
 
-  const validationError = validateRequiredStrings([
-    { value: body.id, name: 'id' },
-    { value: body.model, name: 'model' },
-  ]);
+  const validationError = validateRequiredStrings([{ value: body.id, name: 'id' }]);
   if (validationError) {
     return apiError(validationError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   if (!Array.isArray(body.notes) || body.notes.length === 0) {
     return apiError('notes must be a non-empty array', HttpStatus.BAD_REQUEST, { pathname: path });
-  }
-
-  const model = String(body.model);
-  const modelError = validateAllowedModel(model);
-  if (modelError) {
-    return apiError(modelError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   const sanitizedNotes = (body.notes as unknown[])
@@ -138,7 +127,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     notes: sanitizedNotes,
   });
 
-  const result = await createAutoOrganizeRequest(String(body.id), payload, model, deviceIdTrimmed);
+  const result = await createAutoOrganizeRequest(String(body.id), payload, deviceIdTrimmed);
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
     const error =

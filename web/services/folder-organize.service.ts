@@ -6,7 +6,7 @@ import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@
 import { redis } from '@/lib/redis';
 import { processAutoOrganizeFolders } from '@/services/ai.service';
 import type { AutoOrganizeMessage, AutoOrganizeResult, Message } from '@/types';
-import { WEEK_TTL_SECONDS } from '@/config/constants';
+import { SYSTEM_MICRO_TASK_MODEL, WEEK_TTL_SECONDS } from '@/config/constants';
 
 const AUTO_ORGANIZE_FREE_WEEKLY_LIMIT = 2;
 const AUTO_ORGANIZE_WEEKLY_KEY_PREFIX = 'ai_auto_organize_weekly:';
@@ -77,7 +77,6 @@ async function decrementAutoOrganize(deviceId: string): Promise<void> {
 export const createAutoOrganizeRequest = async (
   id: string,
   notesPayload: string,
-  model: string,
   deviceId: string,
 ): Promise<CreateAutoOrganizeResult> => {
   const created = await saveMessageIfNotExists(id, {
@@ -121,7 +120,7 @@ export const createAutoOrganizeRequest = async (
 
   after(async () => {
     try {
-      const result = await processAutoOrganizeFolders(notesPayload, model);
+      const result = await processAutoOrganizeFolders(notesPayload, SYSTEM_MICRO_TASK_MODEL);
       await saveAutoOrganizeMessage(id, {
         id,
         status: 'done',

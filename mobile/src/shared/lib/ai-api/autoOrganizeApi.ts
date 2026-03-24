@@ -13,7 +13,6 @@ type NoteForOrganize = {
 
 type RequestBody = {
   id: string;
-  model: string;
   appLanguage?: string;
   existingFolders?: Array<{ name: string; icon?: string; color?: string }>;
   notes: NoteForOrganize[];
