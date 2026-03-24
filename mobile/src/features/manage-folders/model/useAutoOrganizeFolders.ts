@@ -10,7 +10,10 @@ import { useSettingsStore } from '@/entities/settings';
 import { useProEntitlement } from '@/features/pro-license';
 import { DEFAULT_FOLDER_BRAND_HEX } from '@/shared/lib';
 import { pollAutoOrganizeFolders, postAutoOrganizeFolders } from '@/shared/lib/ai-api';
-import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
+import {
+  getAiWeeklyLimitExceededMessage,
+  getAutoOrganizeWeeklyLimitExceededMessage,
+} from '@/shared/lib/ai-api/limitUserMessage';
 
 const MIN_NOTES_TO_AUTO_ORGANIZE = 12;
 const MAX_NOTES_FOR_SINGLE_REQUEST = 120;
@@ -83,7 +86,9 @@ export function useAutoOrganizeFolders(records: VoiceRecord[]) {
       if (!postResult.ok) {
         const msg =
           'limitExceeded' in postResult && postResult.limitExceeded
-            ? getAiWeeklyLimitExceededMessage()
+            ? postResult.reason === 'auto_organize_free_limit'
+              ? getAutoOrganizeWeeklyLimitExceededMessage()
+              : getAiWeeklyLimitExceededMessage()
             : postResult.error;
         Alert.alert(t('common.error'), msg);
         return;

@@ -141,8 +141,12 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const result = await createAutoOrganizeRequest(String(body.id), payload, model, deviceIdTrimmed);
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
+    const error =
+      result.reason === 'auto_organize_free_limit'
+        ? 'Weekly auto organize limit reached'
+        : 'Weekly AI limit reached';
     return NextResponse.json(
-      { error: 'Weekly AI limit reached', usage: result.usage },
+      { error, reason: result.reason, usage: result.usage },
       {
         status: 429,
         headers: {

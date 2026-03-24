@@ -280,7 +280,7 @@
     "title": "Настройки",
     "aiUsage": {
       "title": "Лимит генераций",
-      "subtitle": "Еженедельный лимит на сводки, задачи и ответы",
+      "subtitle": "Еженедельный лимит на сводки, задачи, ответы и автоорганизацию папок",
       "a11yProgress": "Использовано {{used}} из {{limit}} генераций на этой неделе",
       "used": "{{used}} / {{limit}}",
       "remaining": "Осталось: {{count}}",
@@ -357,7 +357,7 @@
       "soonBadge": "Скоро",
       "availableBadge": "Доступно",
       "proTitle": "Pro",
-      "proValueSubtitle": "Расширенный лимит генераций, автоматизация и без рекламы.",
+      "proValueSubtitle": "Расширенный лимит генераций, автоорганизация папок и без рекламы.",
       "proActiveUntil": "Активен до {{date}}",
       "a11yUnknownDate": "дата не указана",
       "a11yOpenPlans": "Открыть сравнение планов",
@@ -366,19 +366,20 @@
       "a11yCurrentPlanHint": "Это информация о текущем плане"
     },
     "planPaywall": {
-      "title": "Выберите план",
-      "subtitle": "Сравнение Free и Pro",
+      "title": "Выберите подходящий план",
+      "subtitle": "Сравнение возможностей Free и Pro",
       "freeTitle": "Бесплатный",
-      "freeBody": "Базовые возможности и стандартный лимит генераций.",
+      "freeBody": "Базовые возможности для ежедневного использования и стандартный недельный лимит генераций.",
       "proTitle": "Pro",
       "upgrade": "Перейти на Pro",
       "comingSoon": "Скоро",
       "iapNotReady": "Покупка в приложении пока недоступна в этой сборке.",
       "features": {
         "aiLimit": "До {{limit}} генераций в неделю",
-        "recordingUpTo30Min": "До 30 минут на одну запись",
-        "autoAi": "Автогенерация после транскрипции",
-        "autoTranscription": "Авто-транскрипция новых записей",
+        "recordingUpTo30Min": "Длинные записи: до 30 минут",
+        "autoAi": "Автосводка и задачи после транскрипции",
+        "autoOrganizeFolders": "Автоорганизация папок (в рамках общего недельного лимита)",
+        "autoTranscription": "Автотранскрипция новых записей",
         "colorCustomization": "Кастомизация приложения",
         "noAds": "Без рекламы",
         "earlyAccess": "Ранний доступ к новым Pro-функциям"
@@ -796,6 +797,7 @@
     "autoOrganizeStepAnalyzing": "Анализируем темы в заметках...",
     "autoOrganizeStepCreatingFolders": "Подбираем папки, цвета и иконки...",
     "autoOrganizeStepDistributingNotes": "Распределяем заметки по папкам...",
+    "autoOrganizeLimitExceededDescription": "Во Free доступно 2 автоорганизации в неделю. Перейдите на Pro для безлимитной автоорганизации.",
     "autoOrganizeFailedDescription": "Не удалось автоматически разложить заметки. Попробуйте еще раз.",
     "autoOrganizeDoneTitle": "Папки обновлены",
     "autoOrganizeDoneDescription": "ИИ создал папки и распределил заметки."

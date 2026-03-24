@@ -20,7 +20,11 @@ type RequestBody = {
 };
 
 type PostResponse = { id: string; status: 'processing'; syncToken?: string };
-type LimitResponse = { error: string; usage: { used: number; limit: number; resetAt: string } };
+type LimitResponse = {
+  error: string;
+  reason?: 'weekly_generation_limit' | 'auto_organize_free_limit';
+  usage: { used: number; limit: number; resetAt: string };
+};
 
 type PollResponse =
   | { id: string; status: 'processing' }
@@ -36,7 +40,12 @@ type PollResponse =
 
 export type AutoOrganizeApiResult =
   | { ok: true; data: PostResponse }
-  | { ok: false; limitExceeded: true; usage: LimitResponse['usage'] }
+  | {
+      ok: false;
+      limitExceeded: true;
+      reason?: LimitResponse['reason'];
+      usage: LimitResponse['usage'];
+    }
   | { ok: false; limitExceeded?: false; error: string };
 
 export type AutoOrganizePollResult =
@@ -61,7 +70,7 @@ export async function postAutoOrganizeFolders(body: RequestBody): Promise<AutoOr
 
   if (response.status === 429) {
     const json = (await response.json()) as LimitResponse;
-    return { ok: false, limitExceeded: true, usage: json.usage };
+    return { ok: false, limitExceeded: true, reason: json.reason, usage: json.usage };
   }
   if (!response.ok) {
     const text = await response.text();

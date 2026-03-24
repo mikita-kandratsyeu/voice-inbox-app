@@ -1,17 +1,77 @@
 import { after } from 'next/server';
 
-import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
+import { checkAndIncrement, decrement, getResetAt } from '@/lib/ai-rate-limit';
+import { isProDevice } from '@/lib/pro-entitlement';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
+import { redis } from '@/lib/redis';
 import { processAutoOrganizeFolders } from '@/services/ai.service';
 import type { AutoOrganizeMessage, AutoOrganizeResult, Message } from '@/types';
+import { WEEK_TTL_SECONDS } from '@/config/constants';
+
+const AUTO_ORGANIZE_FREE_WEEKLY_LIMIT = 2;
+const AUTO_ORGANIZE_WEEKLY_KEY_PREFIX = 'ai_auto_organize_weekly:';
 
 type CreateAutoOrganizeResult =
   | { created: true; syncToken?: string }
-  | { created: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
+  | {
+      created: false;
+      limitExceeded: true;
+      reason: 'weekly_generation_limit' | 'auto_organize_free_limit';
+      usage: import('@/lib/ai-rate-limit').AiUsage;
+    }
   | { created: false };
 
 function saveAutoOrganizeMessage(id: string, data: AutoOrganizeMessage): Promise<void> {
   return saveMessage(id, data as unknown as Message);
+}
+
+function getAutoOrganizeWeekKey(deviceId: string): string {
+  const now = new Date();
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+
+  return `${AUTO_ORGANIZE_WEEKLY_KEY_PREFIX}${deviceId}:${d.getUTCFullYear()}:${weekNo}`;
+}
+
+async function checkAndIncrementAutoOrganize(
+  deviceId: string,
+): Promise<{ allowed: true } | { allowed: false; usage: import('@/lib/ai-rate-limit').AiUsage }> {
+  const pro = await isProDevice(deviceId);
+  if (pro) {
+    return { allowed: true };
+  }
+
+  const key = getAutoOrganizeWeekKey(deviceId);
+  const count = await redis.incr(key);
+  if (count === 1) {
+    await redis.expire(key, WEEK_TTL_SECONDS);
+  }
+
+  const resetAt = getResetAt();
+  if (count > AUTO_ORGANIZE_FREE_WEEKLY_LIMIT) {
+    await redis.decr(key);
+    return {
+      allowed: false,
+      usage: {
+        used: AUTO_ORGANIZE_FREE_WEEKLY_LIMIT,
+        limit: AUTO_ORGANIZE_FREE_WEEKLY_LIMIT,
+        remaining: 0,
+        resetAt: resetAt.toISOString(),
+        resetAtUtc: resetAt.toISOString().replace('T', ' ').replace('.000Z', ' UTC'),
+      },
+    };
+  }
+
+  return { allowed: true };
+}
+
+async function decrementAutoOrganize(deviceId: string): Promise<void> {
+  const pro = await isProDevice(deviceId);
+  if (pro) return;
+  const key = getAutoOrganizeWeekKey(deviceId);
+  await redis.decr(key);
 }
 
 export const createAutoOrganizeRequest = async (
@@ -26,14 +86,35 @@ export const createAutoOrganizeRequest = async (
   } as unknown as Message);
   if (!created) return { created: false };
 
-  const limitResult = await checkAndIncrement(deviceId);
-  if (!limitResult.allowed) {
+  const generationLimitResult = await checkAndIncrement(deviceId);
+  if (!generationLimitResult.allowed) {
     await saveAutoOrganizeMessage(id, {
       id,
       status: 'error',
       error: 'Weekly AI limit reached',
     });
-    return { created: false, limitExceeded: true, usage: limitResult.usage };
+    return {
+      created: false,
+      limitExceeded: true,
+      reason: 'weekly_generation_limit',
+      usage: generationLimitResult.usage,
+    };
+  }
+
+  const limitResult = await checkAndIncrementAutoOrganize(deviceId);
+  if (!limitResult.allowed) {
+    await decrement(deviceId);
+    await saveAutoOrganizeMessage(id, {
+      id,
+      status: 'error',
+      error: 'Weekly auto organize limit reached',
+    });
+    return {
+      created: false,
+      limitExceeded: true,
+      reason: 'auto_organize_free_limit',
+      usage: limitResult.usage,
+    };
   }
 
   const syncToken = getSyncToken();
@@ -48,6 +129,7 @@ export const createAutoOrganizeRequest = async (
       });
     } catch (err) {
       await decrement(deviceId);
+      await decrementAutoOrganize(deviceId);
       await saveAutoOrganizeMessage(id, {
         id,
         status: 'error',
