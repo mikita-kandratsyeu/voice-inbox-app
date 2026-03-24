@@ -161,13 +161,20 @@ export const FolderFormModal = ({
   const SelectedIconComponent = folderIconComponents[selectedIcon];
 
   const H_PAD = 20;
-  const ICON_COLS = 6;
+  const PHONE_ICON_COLS = 6;
   const ICON_GAP = 10;
-  const iconSize = Math.floor((width - H_PAD * 2 - ICON_GAP * (ICON_COLS - 1)) / ICON_COLS);
+  const availableIconGridWidth = width - H_PAD * 2;
+  const isTablet = width >= 768;
+  const iconCols = isTablet ? FOLDER_ICON_KEYS.length : PHONE_ICON_COLS;
+  const calculatedIconSize = Math.floor(
+    (availableIconGridWidth - ICON_GAP * (iconCols - 1)) / iconCols,
+  );
+  const iconSize = isTablet ? Math.min(calculatedIconSize, 64) : calculatedIconSize;
+  const iconGridWidth = iconSize * iconCols + ICON_GAP * (iconCols - 1);
 
   const iconRows: FolderIconKey[][] = [];
-  for (let i = 0; i < FOLDER_ICON_KEYS.length; i += ICON_COLS) {
-    iconRows.push(FOLDER_ICON_KEYS.slice(i, i + ICON_COLS));
+  for (let i = 0; i < FOLDER_ICON_KEYS.length; i += iconCols) {
+    iconRows.push(FOLDER_ICON_KEYS.slice(i, i + iconCols));
   }
 
   return (
@@ -264,9 +271,17 @@ export const FolderFormModal = ({
           <Text style={[SECTION_LABEL_STYLE, { color: color.text.secondary }]}>
             {t('folders.iconLabel')}
           </Text>
-          <View style={{ gap: ICON_GAP, marginBottom: 24 }}>
+          <View
+            style={{ gap: ICON_GAP, marginBottom: 24, width: iconGridWidth, alignSelf: 'center' }}
+          >
             {iconRows.map((row, rowIdx) => (
-              <View key={rowIdx} style={{ flexDirection: 'row', gap: ICON_GAP }}>
+              <View
+                key={rowIdx}
+                style={{
+                  flexDirection: 'row',
+                  gap: ICON_GAP,
+                }}
+              >
                 {row.map((key) => {
                   const IconComp = folderIconComponents[key];
                   const isActive = selectedIcon === key;
@@ -285,7 +300,7 @@ export const FolderFormModal = ({
                       }}
                     >
                       <IconComp
-                        size={Math.floor(iconSize * 0.45)}
+                        size={Math.floor(iconSize * 0.42)}
                         strokeWidth={1.75}
                         color={isActive ? color.icon.onAccent : color.text.secondary}
                       />

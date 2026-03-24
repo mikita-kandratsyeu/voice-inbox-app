@@ -2,7 +2,6 @@ import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
-  BottomSheetScrollView,
   BottomSheetTextInput,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
@@ -28,7 +27,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import { KeyboardController } from 'react-native-keyboard-controller';
+import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -522,9 +521,9 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
 
   const contentContainerStyle = useMemo(
     () => ({
-      flex: 1,
       paddingHorizontal: 20,
       paddingBottom: bottomPadding,
+      flexGrow: 1,
     }),
     [bottomPadding],
   );
@@ -554,19 +553,17 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
       }}
     >
       <BottomSheetView style={contentContainerStyle}>
-        {answer ? (
-          <BottomSheetScrollView
-            style={{ flex: 1 }}
-            showsVerticalScrollIndicator
-            contentContainerStyle={{ paddingBottom: 8, flexGrow: 1 }}
-          >
-            {renderContent()}
-          </BottomSheetScrollView>
-        ) : (
+        <KeyboardAwareScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 8 }}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={Boolean(answer)}
+          bottomOffset={16}
+        >
           <View style={{ flex: 1 }}>{renderContent()}</View>
-        )}
-        {inputRow}
-        {usageFooter}
+          {inputRow}
+          {usageFooter}
+        </KeyboardAwareScrollView>
       </BottomSheetView>
     </BottomSheetModal>
   );
