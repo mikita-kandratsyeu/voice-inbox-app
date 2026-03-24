@@ -797,7 +797,7 @@
     "autoOrganizeStepAnalyzing": "Анализируем темы в заметках...",
     "autoOrganizeStepCreatingFolders": "Подбираем папки, цвета и иконки...",
     "autoOrganizeStepDistributingNotes": "Распределяем заметки по папкам...",
-    "autoOrganizeLimitExceededDescription": "Во Free доступно 2 автоорганизации в неделю. Перейдите на Pro для безлимитной автоорганизации.",
+    "autoOrganizeLimitExceededDescription": "В Free доступно 2 автоорганизации в неделю. Перейдите на Pro, чтобы снять это ограничение.",
     "autoOrganizeFailedDescription": "Не удалось автоматически разложить заметки. Попробуйте еще раз.",
     "autoOrganizeDoneTitle": "Папки обновлены",
     "autoOrganizeDoneDescription": "ИИ создал папки и распределил заметки."

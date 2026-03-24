@@ -791,7 +791,7 @@
     "autoOrganizeStepAnalyzing": "Analyzing note topics...",
     "autoOrganizeStepCreatingFolders": "Choosing folders, colors, and icons...",
     "autoOrganizeStepDistributingNotes": "Sorting notes into folders...",
-    "autoOrganizeLimitExceededDescription": "Free includes 2 auto-organizations per week. Upgrade to Pro for unlimited auto-organization.",
+    "autoOrganizeLimitExceededDescription": "Free includes 2 auto-organizations per week. Upgrade to Pro to remove this limit.",
     "autoOrganizeFailedDescription": "Couldn't organize notes automatically. Please try again.",
     "autoOrganizeDoneTitle": "Folders updated",
     "autoOrganizeDoneDescription": "AI created folders and organized your notes."
