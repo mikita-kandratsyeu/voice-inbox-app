@@ -2,7 +2,16 @@ import { type RouteProp, useNavigation, useRoute } from '@react-navigation/nativ
 import { Check } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
@@ -114,6 +123,10 @@ export const ImportRecordsScreen = () => {
     () => new Set(importable.map((r) => r.id)),
   );
   const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<{ current: number; total: number }>({
+    current: 0,
+    total: 0,
+  });
 
   const selectAll = useCallback(() => {
     setSelectedIds(new Set(importable.map((r) => r.id)));
@@ -142,9 +155,12 @@ export const ImportRecordsScreen = () => {
 
     const toImport = importable.filter((r) => selectedIds.has(r.id));
     setIsImporting(true);
+    setImportProgress({ current: 0, total: toImport.length });
     try {
-      for (const record of toImport) {
+      for (let i = 0; i < toImport.length; i += 1) {
+        const record = toImport[i];
         await addRecord(record);
+        setImportProgress({ current: i + 1, total: toImport.length });
       }
       navigation.goBack();
       Alert.alert(t('common.done'), t('importExport.importSuccess', { count: toImport.length }));
@@ -152,6 +168,7 @@ export const ImportRecordsScreen = () => {
       Alert.alert(t('common.error'), t('importExport.importRecordError'));
     } finally {
       setIsImporting(false);
+      setImportProgress({ current: 0, total: 0 });
     }
   }, [addRecord, importable, navigation, selectedCount, selectedIds, t]);
 
@@ -383,6 +400,44 @@ export const ImportRecordsScreen = () => {
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
         </ScrollView>
       </View>
+      <Modal visible={isImporting} transparent animationType="fade" statusBarTranslucent>
+        <View
+          className="flex-1 items-center justify-center px-6"
+          style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+        >
+          <View
+            className="w-full max-w-sm rounded-2xl px-6 py-8"
+            style={{ backgroundColor: color.background.card }}
+          >
+            <View className="items-center justify-center">
+              <ActivityIndicator size="large" color={color.accent.primary} />
+            </View>
+            <Text
+              className="mt-5 text-center text-[16px] font-semibold leading-6"
+              style={{ color: color.text.primary }}
+            >
+              {t('importExport.importingTitle')}
+            </Text>
+            <Text
+              className="mt-2 text-center text-[14px] leading-5"
+              style={{ color: color.text.secondary }}
+            >
+              {t('importExport.importingDescription')}
+            </Text>
+            {importProgress.total > 0 ? (
+              <Text
+                className="mt-3 text-center text-[13px] font-medium leading-5"
+                style={{ color: color.accent.primary }}
+              >
+                {t('importExport.importingProgressCounter', {
+                  current: importProgress.current,
+                  total: importProgress.total,
+                })}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };

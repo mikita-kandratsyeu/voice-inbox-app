@@ -149,7 +149,7 @@ export const RecordCard = React.memo(function RecordCard({
               )}
             </View>
           )}
-          {item.classification && (
+          {item.classification && !item.folderId && (
             <View
               style={{
                 paddingHorizontal: 6,

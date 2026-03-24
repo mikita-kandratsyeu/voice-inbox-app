@@ -9,6 +9,8 @@ export type {
 export { claimAiBonus, getAiUsage, pollAiMessage, postAiMessage } from './aiApi';
 export type { AskApiResult, AskMessageResult } from './askApi';
 export { pollAskResult, postAskQuestion } from './askApi';
+export type { AutoOrganizeApiResult, AutoOrganizePollResult } from './autoOrganizeApi';
+export { pollAutoOrganizeFolders, postAutoOrganizeFolders } from './autoOrganizeApi';
 export type {
   AiWeeklyLimits,
   ProLicenseRedeemErrorCode,

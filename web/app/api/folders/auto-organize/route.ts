@@ -1,0 +1,170 @@
+import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
+import {
+  apiError,
+  checkDeviceRateLimit,
+  HttpStatus,
+  parseJsonBody,
+  requireAppAuth,
+  requireMobileUserAgent,
+  validateAllowedModel,
+  validateDeviceId,
+  validateRequiredStrings,
+} from '@/lib/api';
+import { createAutoOrganizeRequest } from '@/services/folder-organize.service';
+import { NextResponse } from 'next/server';
+
+type NotePayload = {
+  id: string;
+  title?: string;
+  transcript?: string;
+  summary?: string;
+  tags?: string[];
+  classification?: string;
+  tasks?: Array<{ text: string }>;
+};
+
+type RequestBody = {
+  id?: unknown;
+  model?: unknown;
+  appLanguage?: unknown;
+  existingFolders?: unknown;
+  notes?: unknown;
+};
+
+export const POST = async (request: Request): Promise<NextResponse> => {
+  const path = new URL(request.url).pathname;
+  const authError = await requireAppAuth();
+  if (authError) return authError;
+
+  const uaError = await requireMobileUserAgent();
+  if (uaError) return uaError;
+
+  const deviceId = request.headers.get(HEADER_DEVICE_ID);
+  const deviceIdError = validateDeviceId(deviceId);
+  if (deviceIdError) {
+    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
+  }
+  const deviceIdTrimmed = deviceId!.trim();
+
+  const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed);
+  if (rateLimitError) return rateLimitError;
+
+  const body = await parseJsonBody<RequestBody>(request);
+  if (!body) return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });
+
+  const validationError = validateRequiredStrings([
+    { value: body.id, name: 'id' },
+    { value: body.model, name: 'model' },
+  ]);
+  if (validationError) {
+    return apiError(validationError, HttpStatus.BAD_REQUEST, { pathname: path });
+  }
+
+  if (!Array.isArray(body.notes) || body.notes.length === 0) {
+    return apiError('notes must be a non-empty array', HttpStatus.BAD_REQUEST, { pathname: path });
+  }
+
+  const model = String(body.model);
+  const modelError = validateAllowedModel(model);
+  if (modelError) {
+    return apiError(modelError, HttpStatus.BAD_REQUEST, { pathname: path });
+  }
+
+  const sanitizedNotes = (body.notes as unknown[])
+    .map((n) => {
+      if (!n || typeof n !== 'object') return null;
+      const obj = n as Record<string, unknown>;
+      const noteId = typeof obj.id === 'string' ? obj.id.trim() : '';
+      if (!noteId) return null;
+      const tasks =
+        Array.isArray(obj.tasks) && obj.tasks.length > 0
+          ? (obj.tasks as unknown[])
+              .map((t) =>
+                t && typeof t === 'object' && typeof (t as { text?: unknown }).text === 'string'
+                  ? { text: (t as { text: string }).text }
+                  : null,
+              )
+              .filter(Boolean)
+          : undefined;
+      const next: NotePayload = {
+        id: noteId,
+        ...(typeof obj.title === 'string' && obj.title.trim() ? { title: obj.title.trim() } : {}),
+        ...(typeof obj.transcript === 'string' && obj.transcript.trim()
+          ? { transcript: obj.transcript.trim() }
+          : {}),
+        ...(typeof obj.summary === 'string' && obj.summary.trim()
+          ? { summary: obj.summary.trim() }
+          : {}),
+        ...(Array.isArray(obj.tags)
+          ? { tags: obj.tags.filter((x): x is string => typeof x === 'string') }
+          : {}),
+        ...(typeof obj.classification === 'string' && obj.classification.trim()
+          ? { classification: obj.classification.trim() }
+          : {}),
+        ...(tasks && tasks.length > 0 ? { tasks: tasks as Array<{ text: string }> } : {}),
+      };
+      return next;
+    })
+    .filter(Boolean) as NotePayload[];
+
+  if (sanitizedNotes.length === 0) {
+    return apiError('No valid notes provided', HttpStatus.BAD_REQUEST, { pathname: path });
+  }
+
+  const appLanguage =
+    typeof body.appLanguage === 'string' && body.appLanguage.trim()
+      ? body.appLanguage.trim().toLowerCase().slice(0, 2)
+      : undefined;
+  const existingFolders = Array.isArray(body.existingFolders)
+    ? (body.existingFolders as unknown[])
+        .map((f) => {
+          if (!f || typeof f !== 'object') return null;
+          const obj = f as Record<string, unknown>;
+          const name = typeof obj.name === 'string' ? obj.name.trim() : '';
+          if (!name) return null;
+          return {
+            name,
+            ...(typeof obj.icon === 'string' && obj.icon.trim() ? { icon: obj.icon.trim() } : {}),
+            ...(typeof obj.color === 'string' && obj.color.trim()
+              ? { color: obj.color.trim() }
+              : {}),
+          };
+        })
+        .filter(Boolean)
+    : [];
+  const payload = JSON.stringify({
+    ...(appLanguage ? { appLanguage } : {}),
+    ...(existingFolders.length > 0 ? { existingFolders } : {}),
+    notes: sanitizedNotes,
+  });
+
+  const result = await createAutoOrganizeRequest(String(body.id), payload, model, deviceIdTrimmed);
+
+  if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
+    return NextResponse.json(
+      { error: 'Weekly AI limit reached', usage: result.usage },
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(
+            Math.ceil((new Date(result.usage.resetAt).getTime() - Date.now()) / 1000),
+          ),
+        },
+      },
+    );
+  }
+
+  if (!result.created) {
+    return apiError('Auto organize request with this id already exists', HttpStatus.CONFLICT, {
+      pathname: path,
+    });
+  }
+
+  const response = NextResponse.json({
+    id: String(body.id),
+    status: 'processing',
+    ...(result.syncToken && { syncToken: result.syncToken }),
+  });
+  if (result.syncToken) response.headers.set(HEADER_SYNC_TOKEN, result.syncToken);
+  return response;
+};

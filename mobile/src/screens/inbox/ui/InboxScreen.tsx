@@ -3,7 +3,7 @@ import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import { CheckSquare, Folder, ListChecks } from 'lucide-react-native';
+import { CheckSquare, Folder, ListChecks, WandSparkles } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -32,7 +32,11 @@ import {
 } from '@/features/batch-select';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { InboxFilterBar, useInboxFiltersReset } from '@/features/inbox-filters';
-import { useManageFolders } from '@/features/manage-folders';
+import {
+  AutoOrganizeProgressOverlay,
+  useAutoOrganizeFolders,
+  useManageFolders,
+} from '@/features/manage-folders';
 import { useProEntitlement } from '@/features/pro-license';
 import { SearchBar, useSearchRecords } from '@/features/search-records';
 import { useColors } from '@/shared/config';
@@ -95,6 +99,13 @@ export const InboxScreen = () => {
     handleSave: handleFolderSave,
     handleDelete: handleFolderDelete,
   } = useManageFolders();
+  const {
+    runAutoOrganize,
+    isRunning: isAutoOrganizing,
+    canRun: canAutoOrganize,
+    overlayVisible: autoOrganizeOverlayVisible,
+    overlayMode: autoOrganizeOverlayMode,
+  } = useAutoOrganizeFolders(records);
 
   const folderFilteredRecords = useMemo(() => {
     if (!activeFolderId) return records;
@@ -422,6 +433,22 @@ export const InboxScreen = () => {
               />
             ) : (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                {canAutoOrganize ? (
+                  <Button
+                    iconOnly
+                    variant="icon"
+                    size="md"
+                    icon={<WandSparkles size={20} color={color.text.primary} strokeWidth={2.2} />}
+                    color={color}
+                    onPress={() => {
+                      void runAutoOrganize();
+                    }}
+                    accessibilityLabel={t('folders.autoOrganizeButton')}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    loading={isAutoOrganizing}
+                    disabled={isAutoOrganizing}
+                  />
+                ) : null}
                 <Button
                   iconOnly
                   variant="icon"
@@ -556,6 +583,10 @@ export const InboxScreen = () => {
         onSave={handleFolderSave}
         onDelete={editingFolder ? () => handleFolderDelete(editingFolder.id) : undefined}
         onClose={closeFolderModal}
+      />
+      <AutoOrganizeProgressOverlay
+        visible={autoOrganizeOverlayVisible}
+        mode={autoOrganizeOverlayMode}
       />
     </View>
   );

@@ -35,3 +35,20 @@ export type AskMessage =
   | { id: string; status: 'processing' }
   | { id: string; status: 'done'; answer: string }
   | { id: string; status: 'error'; error: string };
+
+export type AutoOrganizeResult = {
+  folders: Array<{
+    name: string;
+    icon: string;
+    color: string;
+  }>;
+  assignments: Array<{
+    recordId: string;
+    folderName: string;
+  }>;
+};
+
+export type AutoOrganizeMessage =
+  | { id: string; status: 'processing' }
+  | { id: string; status: 'done'; result: AutoOrganizeResult }
+  | { id: string; status: 'error'; error: string };

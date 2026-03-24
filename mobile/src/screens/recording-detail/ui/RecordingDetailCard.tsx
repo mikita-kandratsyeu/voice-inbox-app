@@ -28,8 +28,41 @@ export const RecordingDetailCard = ({
   folderPlacement,
 }: RecordingDetailCardProps) => {
   const { t, i18n } = useTranslation();
+  const normalizeLabel = (s: string): string =>
+    s
+      .toLowerCase()
+      .trim()
+      .replace(/[^\p{L}\p{N}\s]/gu, '')
+      .replace(/\s+/g, ' ');
+  const labelsAreClose = (a: string, b: string): boolean => {
+    const x = normalizeLabel(a);
+    const y = normalizeLabel(b);
+    if (!x || !y) return false;
+    if (x === y) return true;
+
+    if (Math.min(x.length, y.length) >= 4 && (x.startsWith(y) || y.startsWith(x))) return true;
+    return false;
+  };
+
   const dateStr = record.createdAt ? formatRelativeTime(record.createdAt, i18n.language) : '';
   const tagsStr = record.tags && record.tags.length > 0 ? record.tags.join(', ') : '';
+  const classificationLabel = record.classification
+    ? t(`classification.${record.classification}`)
+    : null;
+  const hasClassificationDuplicateInTags =
+    classificationLabel != null &&
+    Array.isArray(record.tags) &&
+    record.tags.some((tag) => labelsAreClose(tag, classificationLabel));
+  const hasClassificationDuplicateInFolder =
+    classificationLabel != null &&
+    folderPlacement.kind === 'folder' &&
+    labelsAreClose(folderPlacement.folder.name, classificationLabel);
+  const showClassificationBadge =
+    classificationLabel != null &&
+    folderPlacement.kind !== 'folder' &&
+    !hasClassificationDuplicateInTags &&
+    !hasClassificationDuplicateInFolder;
+
   const baseLabel = t('recordingDetail.accessibility.cardLabel', {
     title: record.title,
     date: dateStr,
@@ -68,7 +101,7 @@ export const RecordingDetailCard = ({
             </Text>
           </View>
         )}
-        {record.classification && (
+        {showClassificationBadge && (
           <View
             style={{
               paddingHorizontal: 8,
@@ -77,9 +110,7 @@ export const RecordingDetailCard = ({
               backgroundColor: color.background.tertiary,
             }}
           >
-            <Text style={{ fontSize: 12, color: color.text.secondary }}>
-              {t(`classification.${record.classification}`)}
-            </Text>
+            <Text style={{ fontSize: 12, color: color.text.secondary }}>{classificationLabel}</Text>
           </View>
         )}
       </View>

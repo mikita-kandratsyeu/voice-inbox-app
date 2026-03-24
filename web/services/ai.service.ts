@@ -1,12 +1,12 @@
 import { openRouterClient } from '@/lib/openrouter';
-import type { AiResult, RecordClassification } from '@/types';
+import type { AiResult, AutoOrganizeResult, RecordClassification } from '@/types';
 import {
   ServiceUnavailableResponseError,
   TooManyRequestsResponseError,
 } from '@openrouter/sdk/models/errors';
 
 import { FALLBACK_MODEL } from '@/config/constants';
-import { ASK_QUESTION_SYSTEM_PROMPT } from '@/lib/prompts';
+import { ASK_QUESTION_SYSTEM_PROMPT, AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT } from '@/lib/prompts';
 
 async function callOpenRouter(
   transcript: string,
@@ -211,6 +211,140 @@ export async function processAskQuestion(
       err instanceof TooManyRequestsResponseError || err instanceof ServiceUnavailableResponseError;
     if (isRetryable) {
       return await callAsk(userContent, FALLBACK_MODEL, ASK_QUESTION_SYSTEM_PROMPT);
+    }
+    throw err;
+  }
+}
+
+const ALLOWED_FOLDER_ICONS = new Set([
+  'briefcase',
+  'home',
+  'lightbulb',
+  'music',
+  'star',
+  'heart',
+  'plane',
+  'rocket',
+  'palette',
+  'flame',
+  'globe',
+  'graduation',
+]);
+
+const ALLOWED_FOLDER_COLORS = new Set([
+  '#3b82f6',
+  '#22c55e',
+  '#f59e0b',
+  '#ef4444',
+  '#8b5cf6',
+  '#06b6d4',
+  '#ec4899',
+  '#84cc16',
+]);
+
+const DEFAULT_AUTO_FOLDER_ICON = 'briefcase';
+const DEFAULT_AUTO_FOLDER_COLOR = '#3b82f6';
+
+function parseAutoOrganizeResult(rawContent: string): AutoOrganizeResult {
+  const trimmed = rawContent.trim();
+  const withoutFences = trimmed.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '');
+  const objectSlice = (() => {
+    const start = withoutFences.indexOf('{');
+    const end = withoutFences.lastIndexOf('}');
+    if (start === -1 || end === -1 || end <= start) return withoutFences;
+    return withoutFences.slice(start, end + 1);
+  })();
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(objectSlice);
+  } catch {
+    throw new Error('Invalid AI response: malformed JSON');
+  }
+
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Invalid AI response: expected object');
+  }
+
+  const obj = parsed as {
+    folders?: Array<{ name?: unknown; icon?: unknown; color?: unknown }>;
+    assignments?: Array<{ recordId?: unknown; folderName?: unknown }>;
+  };
+
+  if (!Array.isArray(obj.folders) || !Array.isArray(obj.assignments)) {
+    throw new Error('Invalid AI response: missing folders or assignments');
+  }
+
+  const folders = obj.folders
+    .map((f) => ({
+      name: typeof f?.name === 'string' ? f.name.trim() : '',
+      icon:
+        typeof f?.icon === 'string' && ALLOWED_FOLDER_ICONS.has(f.icon.trim())
+          ? f.icon.trim()
+          : DEFAULT_AUTO_FOLDER_ICON,
+      color:
+        typeof f?.color === 'string' && ALLOWED_FOLDER_COLORS.has(f.color.trim().toLowerCase())
+          ? f.color.trim().toLowerCase()
+          : DEFAULT_AUTO_FOLDER_COLOR,
+    }))
+    .filter((f) => Boolean(f.name));
+
+  if (folders.length === 0) {
+    throw new Error('Invalid AI response: no valid folders');
+  }
+
+  const folderNameSet = new Set(folders.map((f) => f.name.toLowerCase()));
+  const assignments = obj.assignments
+    .map((a) => ({
+      recordId: typeof a?.recordId === 'string' ? a.recordId.trim() : '',
+      folderName: typeof a?.folderName === 'string' ? a.folderName.trim() : '',
+    }))
+    .filter((a) => Boolean(a.recordId) && folderNameSet.has(a.folderName.toLowerCase()));
+
+  if (assignments.length === 0) {
+    throw new Error('Invalid AI response: no valid assignments');
+  }
+
+  return { folders, assignments };
+}
+
+export async function processAutoOrganizeFolders(
+  notesJsonPayload: string,
+  model: string,
+): Promise<AutoOrganizeResult> {
+  const callOrganize = async (m: string): Promise<AutoOrganizeResult> => {
+    const response = await openRouterClient.chat.send({
+      chatGenerationParams: {
+        model: m,
+        messages: [
+          { role: 'system', content: AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT },
+          { role: 'user', content: notesJsonPayload },
+        ],
+        provider: { zdr: true },
+        responseFormat: { type: 'json_object' },
+        temperature: 0.2,
+        stream: false,
+      },
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (typeof content !== 'string') {
+      throw new Error('Invalid AI response: missing content');
+    }
+
+    return parseAutoOrganizeResult(content);
+  };
+
+  try {
+    return await callOrganize(model);
+  } catch (err) {
+    const isParseFailure =
+      err instanceof Error &&
+      (err.message.includes('Invalid AI response') || err.message.includes('malformed JSON'));
+    const isRetryable =
+      err instanceof TooManyRequestsResponseError || err instanceof ServiceUnavailableResponseError;
+    if (isRetryable || isParseFailure) {
+      return await callOrganize(FALLBACK_MODEL);
     }
     throw err;
   }

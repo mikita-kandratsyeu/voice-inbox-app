@@ -153,7 +153,6 @@ export const SettingsScreen = () => {
           visible={settings.internalUpgradeVisible}
           onClose={() => settings.setInternalUpgradeVisible(false)}
           onActivated={() => {
-            settings.setInternalUpgradeVisible(false);
             void settings.refreshProEntitlement({ force: true });
           }}
         />

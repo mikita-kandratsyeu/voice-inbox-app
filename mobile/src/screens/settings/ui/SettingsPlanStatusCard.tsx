@@ -1,7 +1,7 @@
 import { Crown } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -23,6 +23,8 @@ type SettingsPlanStatusCardProps = {
   aiLimit: number;
   onPress?: () => void;
 };
+
+const CARD_RADIUS = 16;
 
 export function SettingsPlanStatusCard({
   color,
@@ -110,6 +112,10 @@ export function SettingsPlanStatusCard({
   const accessibilityHint = isProActive
     ? t('settings.planStatus.a11yCurrentPlanHint')
     : t('settings.planStatus.a11yOpenPlansHint');
+  const cardBaseTint = isProActive ? '14' : '0f';
+  const gradientStrength = isProActive
+    ? { topOrb: '30', bottomOrb: '1a' }
+    : { topOrb: '22', bottomOrb: '12' };
 
   return (
     <Pressable
@@ -125,11 +131,44 @@ export function SettingsPlanStatusCard({
         style={[
           {
             borderWidth: 1,
-            backgroundColor: color.background.primary,
+            borderRadius: CARD_RADIUS,
+            backgroundColor: `${color.accent.primary}${cardBaseTint}`,
           },
           animatedBorderStyle,
         ]}
       >
+        <View pointerEvents="none" style={{ ...StyleSheet.absoluteFill }}>
+          <View
+            style={{
+              ...StyleSheet.absoluteFill,
+              borderRadius: CARD_RADIUS,
+              overflow: 'hidden',
+            }}
+          >
+            <View
+              style={{
+                position: 'absolute',
+                top: -28,
+                right: -24,
+                width: 170,
+                height: 115,
+                borderRadius: 999,
+                backgroundColor: `${color.accent.primary}${gradientStrength.topOrb}`,
+              }}
+            />
+            <View
+              style={{
+                position: 'absolute',
+                bottom: -62,
+                left: -26,
+                width: 190,
+                height: 130,
+                borderRadius: 999,
+                backgroundColor: `${color.accent.primary}${gradientStrength.bottomOrb}`,
+              }}
+            />
+          </View>
+        </View>
         <View className="flex-row items-center">
           <View
             className="mr-3 h-14 w-14 items-center justify-center rounded-2xl"

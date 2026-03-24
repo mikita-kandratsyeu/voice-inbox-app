@@ -2,7 +2,16 @@ import { useNavigation } from '@react-navigation/native';
 import { Bot, BrainCircuit, Clock, FileText, Mic, Mic2, Trash2, Type } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, RefreshControl, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
@@ -197,6 +206,8 @@ export const StorageDetailsScreen = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [deleteAllProgress, setDeleteAllProgress] = useState({ current: 0, total: 0 });
   const [realModelSizes, setRealModelSizes] = useState<Partial<Record<WhisperModelId, number>>>({});
 
   const downloadedModels = WHISPER_MODELS.filter(
@@ -298,11 +309,22 @@ export const StorageDetailsScreen = () => {
         text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
-          for (const r of records) {
-            await deleteRecord(r.id);
+          setIsDeletingAll(true);
+          setDeleteAllProgress({ current: 0, total: records.length });
+          try {
+            for (let i = 0; i < records.length; i += 1) {
+              const r = records[i];
+              await deleteRecord(r.id);
+              setDeleteAllProgress({ current: i + 1, total: records.length });
+            }
+            await refreshStats();
+            navigation.goBack();
+          } catch {
+            Alert.alert(t('common.error'), t('storage.deleteAllError'));
+          } finally {
+            setIsDeletingAll(false);
+            setDeleteAllProgress({ current: 0, total: 0 });
           }
-          await refreshStats();
-          navigation.goBack();
         },
       },
     ]);
@@ -432,7 +454,7 @@ export const StorageDetailsScreen = () => {
             <SettingsRow
               label={t('storage.deleteAllData')}
               leftIcon={<Trash2 size={20} color={color.accent.delete} strokeWidth={1.8} />}
-              onPress={handleDeleteAll}
+              onPress={isDeletingAll ? undefined : handleDeleteAll}
               dangerous
               isLast
             />
@@ -440,6 +462,44 @@ export const StorageDetailsScreen = () => {
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
+      <Modal visible={isDeletingAll} transparent animationType="fade" statusBarTranslucent>
+        <View
+          className="flex-1 items-center justify-center px-6"
+          style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
+        >
+          <View
+            className="w-full max-w-sm rounded-2xl px-6 py-8"
+            style={{ backgroundColor: color.background.card }}
+          >
+            <View className="items-center justify-center">
+              <ActivityIndicator size="large" color={color.accent.primary} />
+            </View>
+            <Text
+              className="mt-5 text-center text-[16px] font-semibold leading-6"
+              style={{ color: color.text.primary }}
+            >
+              {t('storage.deleteAllLoadingTitle')}
+            </Text>
+            <Text
+              className="mt-2 text-center text-[14px] leading-5"
+              style={{ color: color.text.secondary }}
+            >
+              {t('storage.deleteAllLoadingDescription')}
+            </Text>
+            {deleteAllProgress.total > 0 ? (
+              <Text
+                className="mt-3 text-center text-[13px] font-medium leading-5"
+                style={{ color: color.accent.primary }}
+              >
+                {t('storage.deleteAllProgressCounter', {
+                  current: deleteAllProgress.current,
+                  total: deleteAllProgress.total,
+                })}
+              </Text>
+            ) : null}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
