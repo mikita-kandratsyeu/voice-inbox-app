@@ -5,7 +5,9 @@ export {
   ACCENT_COLOR_SWATCHES_DEFAULT_FIRST,
   colors,
   DEFAULT_ACCENT_COLOR_ID,
+  getAccentColorSwatches,
   getAccentColorSwatchesCurrentFirst,
+  getAccentPreviewHex,
   getColors,
   parseAccentColorId,
 } from './colors';

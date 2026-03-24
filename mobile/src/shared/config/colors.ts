@@ -163,6 +163,8 @@ export {
   ACCENT_COLOR_SWATCHES,
   ACCENT_COLOR_SWATCHES_DEFAULT_FIRST,
   DEFAULT_ACCENT_COLOR_ID,
+  getAccentColorSwatches,
   getAccentColorSwatchesCurrentFirst,
+  getAccentPreviewHex,
   parseAccentColorId,
 } from './accentColors';

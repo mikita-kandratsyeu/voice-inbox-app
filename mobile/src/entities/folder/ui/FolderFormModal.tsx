@@ -15,9 +15,10 @@ import { useSettingsStore } from '@/entities/settings/model/store';
 import { useProEntitlement } from '@/features/pro-license';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import {
-  ACCENT_COLOR_SWATCHES,
   type AccentColorId,
   getAccentColorSwatchesCurrentFirst,
+  getAccentPreviewHex,
+  useAppTheme,
   useColors,
 } from '@/shared/config';
 import { DEFAULT_FOLDER_BRAND_HEX, hapticError } from '@/shared/lib';
@@ -40,8 +41,8 @@ const ACCENT_SWATCH_FILL_SELECTED = ACCENT_SWATCH_SIZE - 2 * ACCENT_SWATCH_RING 
 const ACCENT_SWATCH_PAD_UNSELECTED = (ACCENT_SWATCH_SIZE - ACCENT_SWATCH_FILL) / 2;
 
 const hexEquals = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
-const getPreviewHexByAccentId = (id: AccentColorId) =>
-  ACCENT_COLOR_SWATCHES.find((swatch) => swatch.id === id)?.previewHex ?? DEFAULT_FOLDER_BRAND_HEX;
+const getPreviewHexByAccentId = (id: AccentColorId, scheme: 'light' | 'dark') =>
+  getAccentPreviewHex(id, scheme) ?? DEFAULT_FOLDER_BRAND_HEX;
 
 const SECTION_LABEL_STYLE = {
   fontSize: 12,
@@ -68,13 +69,14 @@ export const FolderFormModal = ({
 }: FolderFormModalProps) => {
   const { t } = useTranslation();
   const color = useColors();
+  const scheme = useAppTheme();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const ref = useRef<BottomSheetModal>(null);
   const { isProActive } = useProEntitlement();
   const accentColorId = useSettingsStore((state) => state.accentColorId);
-  const globalAccentHex = getPreviewHexByAccentId(accentColorId);
-  const colorSwatches = getAccentColorSwatchesCurrentFirst(accentColorId);
+  const globalAccentHex = getPreviewHexByAccentId(accentColorId, scheme);
+  const colorSwatches = getAccentColorSwatchesCurrentFirst(accentColorId, scheme);
 
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState(false);

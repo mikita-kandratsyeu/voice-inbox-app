@@ -9,7 +9,7 @@ import type { AppLanguage, AppTheme } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { useProEntitlement } from '@/features/pro-license';
 import type { AccentColorId, Colors } from '@/shared/config';
-import { ACCENT_COLOR_SWATCHES_DEFAULT_FIRST, useColors } from '@/shared/config';
+import { getAccentColorSwatches, useAppTheme, useColors } from '@/shared/config';
 import { useTabletContentMaxWidth } from '@/shared/lib';
 import { applyAppLanguage } from '@/shared/lib/i18n';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
@@ -86,6 +86,7 @@ function PickerSection<T extends string>({
 export const AppearanceScreen = () => {
   const { t } = useTranslation();
   const color = useColors();
+  const scheme = useAppTheme();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const contentMaxWidth = useTabletContentMaxWidth();
@@ -98,6 +99,7 @@ export const AppearanceScreen = () => {
   const setAppTheme = useSettingsStore((s) => s.setAppTheme);
   const accentColorId = useSettingsStore((s) => s.accentColorId);
   const setAccentColorId = useSettingsStore((s) => s.setAccentColorId);
+  const accentSwatches = getAccentColorSwatches(scheme);
 
   const handleLanguageSelect = (value: AppLanguage) => {
     setAppLanguage(value);
@@ -179,7 +181,7 @@ export const AppearanceScreen = () => {
                   gap: 12,
                 }}
               >
-                {ACCENT_COLOR_SWATCHES_DEFAULT_FIRST.map(({ id, previewHex }) => {
+                {accentSwatches.map(({ id, previewHex }) => {
                   const selected = accentColorId === id;
                   const fillSize = selected ? ACCENT_SWATCH_FILL_SELECTED : ACCENT_SWATCH_FILL;
                   return (
@@ -205,7 +207,7 @@ export const AppearanceScreen = () => {
                           alignItems: 'center',
                           justifyContent: 'center',
                           borderWidth: selected ? ACCENT_SWATCH_RING : 0,
-                          borderColor: selected ? color.accent.primary : 'transparent',
+                          borderColor: selected ? previewHex : 'transparent',
                           padding: selected ? 0 : ACCENT_SWATCH_PAD_UNSELECTED,
                         }}
                       >

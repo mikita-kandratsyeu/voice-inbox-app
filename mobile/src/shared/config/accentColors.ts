@@ -75,10 +75,30 @@ export const ACCENT_COLOR_SWATCHES_DEFAULT_FIRST = [...ACCENT_COLOR_SWATCHES].so
   return 0;
 });
 
-export const getAccentColorSwatchesCurrentFirst = (currentId: AccentColorId) => [
-  ...ACCENT_COLOR_SWATCHES.filter((swatch) => swatch.id === currentId),
-  ...ACCENT_COLOR_SWATCHES.filter((swatch) => swatch.id !== currentId),
-];
+export const getAccentPreviewHex = (id: AccentColorId, scheme: ColorScheme): string => {
+  if (id === DEFAULT_ACCENT_COLOR_ID) {
+    return ACCENT_COLOR_SWATCHES[0].previewHex;
+  }
+
+  const patch = ACCENT_PATCHES[id]?.[scheme];
+
+  return patch?.primary ?? ACCENT_COLOR_SWATCHES[0].previewHex;
+};
+
+export const getAccentColorSwatches = (scheme: ColorScheme) =>
+  ACCENT_COLOR_IDS.map((id) => ({ id, previewHex: getAccentPreviewHex(id, scheme) }));
+
+export const getAccentColorSwatchesCurrentFirst = (
+  currentId: AccentColorId,
+  scheme: ColorScheme,
+) => {
+  const swatches = getAccentColorSwatches(scheme);
+
+  return [
+    ...swatches.filter((swatch) => swatch.id === currentId),
+    ...swatches.filter((swatch) => swatch.id !== currentId),
+  ];
+};
 
 export function parseAccentColorId(raw: string | undefined | null): AccentColorId {
   if (raw && (ACCENT_COLOR_IDS as readonly string[]).includes(raw)) {
