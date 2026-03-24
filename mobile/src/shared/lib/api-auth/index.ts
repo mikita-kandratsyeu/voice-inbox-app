@@ -15,10 +15,13 @@ let cachedToken: string | null = null;
 let cachedExpiresAt = 0;
 let cachedDeviceId: string | null = null;
 
+let tokenFetchInFlight: Promise<{ token: string; deviceId: string }> | null = null;
+
 export function clearApiToken(): void {
   cachedToken = null;
   cachedExpiresAt = 0;
   cachedDeviceId = null;
+  tokenFetchInFlight = null;
 }
 
 async function fetchToken(): Promise<{ token: string; deviceId: string }> {
@@ -61,7 +64,16 @@ async function getTokenAndDeviceId(): Promise<{ token: string; deviceId: string 
   if (cachedToken && cachedDeviceId && Date.now() < cachedExpiresAt - EXPIRY_BUFFER_MS) {
     return { token: cachedToken, deviceId: cachedDeviceId };
   }
-  return fetchToken();
+
+  if (tokenFetchInFlight) {
+    return tokenFetchInFlight;
+  }
+
+  tokenFetchInFlight = fetchToken().finally(() => {
+    tokenFetchInFlight = null;
+  });
+
+  return tokenFetchInFlight;
 }
 
 export async function getAuthHeaders(): Promise<Record<string, string>> {

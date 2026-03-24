@@ -27,8 +27,7 @@ export function useAppBootstrap(
     let cancelled = false;
     let deferredInitTimer: ReturnType<typeof setTimeout> | null = null;
 
-    initRuntimeConfig()
-      .then(() => initDB())
+    Promise.all([initRuntimeConfig(), initDB()])
       .then(async () => {
         await Promise.all([useRecordStore.getState().load(), useFolderStore.getState().load()]);
 
