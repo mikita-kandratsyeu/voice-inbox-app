@@ -12,7 +12,7 @@ import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 const SKIP_SECONDS = 5;
 const SKIP_HOLD_START_MS = 400;
 const SKIP_REPEAT_MS = 220;
-const PLAYBACK_SPEEDS = [1, 1.25, 1.5, 2] as const;
+const PLAYBACK_SPEEDS = [1, 1.25, 1.5, 2, 2.25] as const;
 
 type AudioPlayerProps = {
   duration: string;
@@ -45,7 +45,6 @@ export const AudioPlayer = ({ duration, color, audioPath, onPositionChange }: Au
   const elapsedRef = useRef(0);
   const lastDisplayedSecsRef = useRef(0);
   const isPlayerLoadedRef = useRef(false);
-  const skipHoldTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipHoldIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const onPositionChangeRef = useRef(onPositionChange);
   onPositionChangeRef.current = onPositionChange;
@@ -197,10 +196,6 @@ export const AudioPlayer = ({ duration, color, audioPath, onPositionChange }: Au
   };
 
   const clearSkipHoldTimers = useCallback(() => {
-    if (skipHoldTimeoutRef.current) {
-      clearTimeout(skipHoldTimeoutRef.current);
-      skipHoldTimeoutRef.current = null;
-    }
     if (skipHoldIntervalRef.current) {
       clearInterval(skipHoldIntervalRef.current);
       skipHoldIntervalRef.current = null;
@@ -244,23 +239,17 @@ export const AudioPlayer = ({ duration, color, audioPath, onPositionChange }: Au
   const beginSkipBackHold = useCallback(() => {
     if (!audioPath) return;
     clearSkipHoldTimers();
-    void performSkipBack(true);
-    skipHoldTimeoutRef.current = setTimeout(() => {
-      skipHoldIntervalRef.current = setInterval(() => {
-        void performSkipBack(false);
-      }, SKIP_REPEAT_MS);
-    }, SKIP_HOLD_START_MS);
+    skipHoldIntervalRef.current = setInterval(() => {
+      void performSkipBack(false);
+    }, SKIP_REPEAT_MS);
   }, [audioPath, clearSkipHoldTimers, performSkipBack]);
 
   const beginSkipForwardHold = useCallback(() => {
     if (!audioPath) return;
     clearSkipHoldTimers();
-    void performSkipForward(true);
-    skipHoldTimeoutRef.current = setTimeout(() => {
-      skipHoldIntervalRef.current = setInterval(() => {
-        void performSkipForward(false);
-      }, SKIP_REPEAT_MS);
-    }, SKIP_HOLD_START_MS);
+    skipHoldIntervalRef.current = setInterval(() => {
+      void performSkipForward(false);
+    }, SKIP_REPEAT_MS);
   }, [audioPath, clearSkipHoldTimers, performSkipForward]);
 
   const handleCycleSpeed = () => {
@@ -346,7 +335,9 @@ export const AudioPlayer = ({ duration, color, audioPath, onPositionChange }: Au
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel={t('audioPlayer.skipBack')}
-            onPressIn={beginSkipBackHold}
+            onPress={() => void performSkipBack(true)}
+            onLongPress={beginSkipBackHold}
+            delayLongPress={SKIP_HOLD_START_MS}
             onPressOut={clearSkipHoldTimers}
             disabled={!hasAudio}
             activeOpacity={0.6}
@@ -384,7 +375,9 @@ export const AudioPlayer = ({ duration, color, audioPath, onPositionChange }: Au
           <TouchableOpacity
             accessibilityRole="button"
             accessibilityLabel={t('audioPlayer.skipForward')}
-            onPressIn={beginSkipForwardHold}
+            onPress={() => void performSkipForward(true)}
+            onLongPress={beginSkipForwardHold}
+            delayLongPress={SKIP_HOLD_START_MS}
             onPressOut={clearSkipHoldTimers}
             disabled={!hasAudio}
             activeOpacity={0.6}
