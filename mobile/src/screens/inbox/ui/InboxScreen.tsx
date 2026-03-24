@@ -3,7 +3,7 @@ import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import { Folder, ListChecks } from 'lucide-react-native';
+import { CheckSquare, Folder, ListChecks } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -418,16 +418,28 @@ export const InboxScreen = () => {
                 onPress={handleSelectAll}
               />
             ) : (
-              <Button
-                iconOnly
-                variant="icon"
-                size="md"
-                icon={<ListChecks size={22} color={color.text.primary} strokeWidth={2.2} />}
-                color={color}
-                onPress={() => navigation.navigate('AllTasks')}
-                accessibilityLabel={t('allTasks.a11yOpenAllTasks')}
-                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              />
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Button
+                  iconOnly
+                  variant="icon"
+                  size="md"
+                  icon={<CheckSquare size={21} color={color.text.primary} strokeWidth={2.3} />}
+                  color={color}
+                  onPress={() => enterBatchMode()}
+                  accessibilityLabel={t('batch.a11yEnterSelectMode')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                />
+                <Button
+                  iconOnly
+                  variant="icon"
+                  size="md"
+                  icon={<ListChecks size={22} color={color.text.primary} strokeWidth={2.2} />}
+                  color={color}
+                  onPress={() => navigation.navigate('AllTasks')}
+                  accessibilityLabel={t('allTasks.a11yOpenAllTasks')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                />
+              </View>
             )
           ) : undefined
         }

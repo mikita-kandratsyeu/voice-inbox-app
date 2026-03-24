@@ -740,6 +740,7 @@
     "selectedCount_other": "{{count}} selected",
     "selectAll": "Select all",
     "deselectAll": "Deselect all",
+    "a11yEnterSelectMode": "Enable multi-select",
     "archive": "Archive",
     "unarchive": "Unarchive",
     "delete": "Delete",

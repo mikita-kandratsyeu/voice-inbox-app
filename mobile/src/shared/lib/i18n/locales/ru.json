@@ -743,6 +743,7 @@
     "selectedCount_other": "Выбрано {{count}}",
     "selectAll": "Выбрать все",
     "deselectAll": "Снять выбор",
+    "a11yEnterSelectMode": "Включить мультивыбор",
     "archive": "В архив",
     "unarchive": "Из архива",
     "delete": "Удалить",
