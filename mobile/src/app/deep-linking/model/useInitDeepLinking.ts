@@ -3,6 +3,7 @@ import { Linking } from 'react-native';
 
 import { navigationRef } from '@/app/navigation/navigationRef';
 import { useDownloadingDeeplink } from '@/features/downloading-deeplink';
+import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useRecordingDeeplink } from '@/features/recording-deeplink/model/useRecordingDeeplink';
 
 const START_RECORDING_URL = 'voiceinbox://record/start';
@@ -25,6 +26,10 @@ export const useInitDeepLinking = () => {
   const handleStartRecording = useCallback((rawUrl: string) => {
     const normalized = rawUrl.replace(/\/+$/, '');
     if (normalized !== START_RECORDING_URL) return false;
+
+    if (!getHasSeenOnboarding()) {
+      return true;
+    }
 
     if (navigationRef.isReady()) {
       navigationRef.navigate('RecordModal');

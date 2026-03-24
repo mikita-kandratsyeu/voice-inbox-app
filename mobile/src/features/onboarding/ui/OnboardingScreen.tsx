@@ -36,11 +36,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
-import {
-  DEFAULT_SELECTED_WHISPER_MODEL_ID,
-  getRecommendedWhisperModelId,
-  useSettingsStore,
-} from '@/entities/settings';
+import { useSettingsStore } from '@/entities/settings';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { useModelManager } from '@/features/model-manager';
 import { importData } from '@/features/sync-data';
@@ -60,7 +56,12 @@ import {
   requestPushPermission,
 } from '@/shared/lib/push';
 
-import { getTermsAgreedAt, setHasSeenOnboarding, setTermsAgreedAt } from '../lib/onboardingStorage';
+import {
+  getHasSeenOnboarding,
+  getTermsAgreedAt,
+  setHasSeenOnboarding,
+  setTermsAgreedAt,
+} from '../lib/onboardingStorage';
 import { getOnboardingSlides, type OnboardingSlideContent } from '../model/constants';
 import { OnboardingSetupStep } from './OnboardingSetupStep';
 
@@ -766,6 +767,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const hasSeenOnboarding = useMemo(() => getHasSeenOnboarding(), []);
   const [agreedToTerms, setAgreedToTerms] = useState(() => getTermsAgreedAt() != null);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isFinishingOnboarding, setIsFinishingOnboarding] = useState(false);
@@ -782,7 +784,6 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   }, [windowWidth, screenWidth]);
 
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
-  const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const { startDownload } = useModelManager();
 
@@ -881,20 +882,6 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
       return;
     }
 
-    const defaultStatus =
-      whisperModelStatuses[DEFAULT_SELECTED_WHISPER_MODEL_ID] ?? 'not_downloaded';
-    const userLeftDefaultSelection =
-      selectedWhisperModel === DEFAULT_SELECTED_WHISPER_MODEL_ID &&
-      defaultStatus === 'not_downloaded';
-
-    if (userLeftDefaultSelection) {
-      const recommendedId = getRecommendedWhisperModelId();
-      setWhisperModel(recommendedId);
-      void startDownload(recommendedId).catch(() => {});
-      setTimeout(handleComplete, 120);
-      return;
-    }
-
     Alert.alert(t('onboarding.downloadBeforeStart'), t('onboarding.downloadBeforeStartHint'), [
       { text: t('common.skip'), style: 'cancel', onPress: handleComplete },
       {
@@ -948,7 +935,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const permissionsSlideIndex = slides.findIndex((s) => s.id === 'permissions');
   const isOnPermissionsSlide = permissionsSlideIndex >= 0 && currentIndex === permissionsSlideIndex;
   const isOnLastFourScreens = currentIndex >= slides.length - 4;
-  const showSkipButton = agreedToTerms && !isOnLastFourScreens;
+  const showSkipButton = hasSeenOnboarding && !isOnLastFourScreens;
 
   return (
     <View

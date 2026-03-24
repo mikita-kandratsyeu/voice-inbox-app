@@ -101,8 +101,8 @@
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER).quickAction.startRecording</string>
 			<key>UIApplicationShortcutItemTitle</key>
 			<string>Start recording</string>
-			<key>UIApplicationShortcutItemIconType</key>
-			<string>UIApplicationShortcutIconTypeMicrophone</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>mic.fill</string>
 		</dict>
 	</array>
 	<key>SKAdNetworkItems</key>

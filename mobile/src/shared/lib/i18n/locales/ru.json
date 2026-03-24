@@ -656,7 +656,7 @@
     "notificationsDesc": "Сообщим, когда ИИ закончит обработку",
     "granted": "Разрешено",
     "denied": "Отказано",
-    "notDetermined": "Нажмите для разрешения",
+    "notDetermined": "Разрешить",
     "grantAll": "Разрешить доступ",
     "openSettings": "Открыть настройки"
   },
