@@ -11,9 +11,15 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useSettingsStore } from '@/entities/settings/model/store';
 import { useProEntitlement } from '@/features/pro-license';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
-import { ACCENT_COLOR_SWATCHES, type AccentColorId, useColors } from '@/shared/config';
+import {
+  ACCENT_COLOR_SWATCHES,
+  type AccentColorId,
+  getAccentColorSwatchesCurrentFirst,
+  useColors,
+} from '@/shared/config';
 import { DEFAULT_FOLDER_BRAND_HEX, hapticError } from '@/shared/lib';
 import { modalKeyboardBehavior } from '@/shared/lib/platform';
 import { Button } from '@/shared/ui';
@@ -34,6 +40,8 @@ const ACCENT_SWATCH_FILL_SELECTED = ACCENT_SWATCH_SIZE - 2 * ACCENT_SWATCH_RING 
 const ACCENT_SWATCH_PAD_UNSELECTED = (ACCENT_SWATCH_SIZE - ACCENT_SWATCH_FILL) / 2;
 
 const hexEquals = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+const getPreviewHexByAccentId = (id: AccentColorId) =>
+  ACCENT_COLOR_SWATCHES.find((swatch) => swatch.id === id)?.previewHex ?? DEFAULT_FOLDER_BRAND_HEX;
 
 const SECTION_LABEL_STYLE = {
   fontSize: 12,
@@ -64,10 +72,13 @@ export const FolderFormModal = ({
   const { width } = useWindowDimensions();
   const ref = useRef<BottomSheetModal>(null);
   const { isProActive } = useProEntitlement();
+  const accentColorId = useSettingsStore((state) => state.accentColorId);
+  const globalAccentHex = getPreviewHexByAccentId(accentColorId);
+  const colorSwatches = getAccentColorSwatchesCurrentFirst(accentColorId);
 
   const [name, setName] = useState('');
   const [nameError, setNameError] = useState(false);
-  const [selectedColor, setSelectedColor] = useState(DEFAULT_FOLDER_BRAND_HEX);
+  const [selectedColor, setSelectedColor] = useState(globalAccentHex);
   const [selectedIcon, setSelectedIcon] = useState<FolderIconKey>(DEFAULT_FOLDER_ICON_KEY);
   const [folderProSheet, setFolderProSheet] = useState(false);
 
@@ -79,10 +90,10 @@ export const FolderFormModal = ({
       setSelectedIcon(parseFolderIconKey(folder.icon));
     } else {
       setName('');
-      setSelectedColor(DEFAULT_FOLDER_BRAND_HEX);
+      setSelectedColor(globalAccentHex);
       setSelectedIcon(DEFAULT_FOLDER_ICON_KEY);
     }
-  }, [folder, visible]);
+  }, [folder, visible, globalAccentHex]);
 
   useEffect(() => {
     if (visible) {
@@ -358,7 +369,7 @@ export const FolderFormModal = ({
                 gap: 12,
               }}
             >
-              {ACCENT_COLOR_SWATCHES.map(({ id, previewHex }) => {
+              {colorSwatches.map(({ id, previewHex }) => {
                 const selected = hexEquals(selectedColor, previewHex);
                 const fillSize = selected ? ACCENT_SWATCH_FILL_SELECTED : ACCENT_SWATCH_FILL;
                 const locked = !isProActive && id !== 'default';
@@ -388,7 +399,7 @@ export const FolderFormModal = ({
                         alignItems: 'center',
                         justifyContent: 'center',
                         borderWidth: selected ? ACCENT_SWATCH_RING : 0,
-                        borderColor: selected ? color.accent.primary : 'transparent',
+                        borderColor: selected ? previewHex : 'transparent',
                         padding: selected ? 0 : ACCENT_SWATCH_PAD_UNSELECTED,
                       }}
                     >

@@ -2,8 +2,10 @@ export type { AccentColorId, Colors, ColorScheme } from './colors';
 export {
   ACCENT_COLOR_IDS,
   ACCENT_COLOR_SWATCHES,
+  ACCENT_COLOR_SWATCHES_DEFAULT_FIRST,
   colors,
   DEFAULT_ACCENT_COLOR_ID,
+  getAccentColorSwatchesCurrentFirst,
   getColors,
   parseAccentColorId,
 } from './colors';

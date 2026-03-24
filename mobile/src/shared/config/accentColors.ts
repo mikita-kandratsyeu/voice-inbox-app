@@ -69,10 +69,22 @@ export const ACCENT_COLOR_SWATCHES: { id: AccentColorId; previewHex: string }[] 
   { id: 'cyan', previewHex: '#06b6d4' },
 ];
 
+export const ACCENT_COLOR_SWATCHES_DEFAULT_FIRST = [...ACCENT_COLOR_SWATCHES].sort((a, b) => {
+  if (a.id === 'default') return -1;
+  if (b.id === 'default') return 1;
+  return 0;
+});
+
+export const getAccentColorSwatchesCurrentFirst = (currentId: AccentColorId) => [
+  ...ACCENT_COLOR_SWATCHES.filter((swatch) => swatch.id === currentId),
+  ...ACCENT_COLOR_SWATCHES.filter((swatch) => swatch.id !== currentId),
+];
+
 export function parseAccentColorId(raw: string | undefined | null): AccentColorId {
   if (raw && (ACCENT_COLOR_IDS as readonly string[]).includes(raw)) {
     return raw as AccentColorId;
   }
+
   return DEFAULT_ACCENT_COLOR_ID;
 }
 

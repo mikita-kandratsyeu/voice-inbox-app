@@ -9,7 +9,7 @@ import type { AppLanguage, AppTheme } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { useProEntitlement } from '@/features/pro-license';
 import type { AccentColorId, Colors } from '@/shared/config';
-import { ACCENT_COLOR_SWATCHES, useColors } from '@/shared/config';
+import { ACCENT_COLOR_SWATCHES_DEFAULT_FIRST, useColors } from '@/shared/config';
 import { useTabletContentMaxWidth } from '@/shared/lib';
 import { applyAppLanguage } from '@/shared/lib/i18n';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
@@ -179,7 +179,7 @@ export const AppearanceScreen = () => {
                   gap: 12,
                 }}
               >
-                {ACCENT_COLOR_SWATCHES.map(({ id, previewHex }) => {
+                {ACCENT_COLOR_SWATCHES_DEFAULT_FIRST.map(({ id, previewHex }) => {
                   const selected = accentColorId === id;
                   const fillSize = selected ? ACCENT_SWATCH_FILL_SELECTED : ACCENT_SWATCH_FILL;
                   return (

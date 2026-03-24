@@ -161,6 +161,8 @@ export type { AccentColorId } from './accentColors';
 export {
   ACCENT_COLOR_IDS,
   ACCENT_COLOR_SWATCHES,
+  ACCENT_COLOR_SWATCHES_DEFAULT_FIRST,
   DEFAULT_ACCENT_COLOR_ID,
+  getAccentColorSwatchesCurrentFirst,
   parseAccentColorId,
 } from './accentColors';
