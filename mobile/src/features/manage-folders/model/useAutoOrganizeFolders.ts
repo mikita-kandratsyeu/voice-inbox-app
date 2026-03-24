@@ -57,7 +57,10 @@ export function useAutoOrganizeFolders(records: VoiceRecord[]) {
   );
 
   const runAutoOrganize = useCallback(async () => {
-    if (isRunning) return;
+    if (isRunning) {
+      return;
+    }
+
     if (eligibleNotes.length < MIN_NOTES_TO_AUTO_ORGANIZE) {
       Alert.alert(
         t('folders.autoOrganizeMinTitle'),
@@ -66,6 +69,7 @@ export function useAutoOrganizeFolders(records: VoiceRecord[]) {
           count: eligibleNotes.length,
         }),
       );
+
       return;
     }
 
@@ -149,7 +153,6 @@ export function useAutoOrganizeFolders(records: VoiceRecord[]) {
     isRunning,
     overlayVisible: isRunning || showSuccess,
     overlayMode,
-    canRun: eligibleNotes.length >= MIN_NOTES_TO_AUTO_ORGANIZE,
     eligibleCount: eligibleNotes.length,
     minRequired: MIN_NOTES_TO_AUTO_ORGANIZE,
   };

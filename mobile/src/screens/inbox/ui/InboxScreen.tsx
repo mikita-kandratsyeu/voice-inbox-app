@@ -102,7 +102,6 @@ export const InboxScreen = () => {
   const {
     runAutoOrganize,
     isRunning: isAutoOrganizing,
-    canRun: canAutoOrganize,
     overlayVisible: autoOrganizeOverlayVisible,
     overlayMode: autoOrganizeOverlayMode,
   } = useAutoOrganizeFolders(records);
@@ -433,22 +432,20 @@ export const InboxScreen = () => {
               />
             ) : (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                {canAutoOrganize && (
-                  <Button
-                    iconOnly
-                    variant="icon"
-                    size="md"
-                    icon={<WandSparkles size={20} color={color.text.primary} strokeWidth={2.2} />}
-                    color={color}
-                    onPress={() => {
-                      void runAutoOrganize();
-                    }}
-                    accessibilityLabel={t('folders.autoOrganizeButton')}
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    loading={isAutoOrganizing}
-                    disabled={isAutoOrganizing}
-                  />
-                )}
+                <Button
+                  iconOnly
+                  variant="icon"
+                  size="md"
+                  icon={<WandSparkles size={20} color={color.text.primary} strokeWidth={2.2} />}
+                  color={color}
+                  onPress={() => {
+                    void runAutoOrganize();
+                  }}
+                  accessibilityLabel={t('folders.autoOrganizeButton')}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  loading={isAutoOrganizing}
+                  disabled={isAutoOrganizing}
+                />
                 <Button
                   iconOnly
                   variant="icon"
