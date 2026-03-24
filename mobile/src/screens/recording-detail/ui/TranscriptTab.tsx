@@ -80,7 +80,7 @@ export const TranscriptTab = ({
           color={color}
         />
       )}
-      <View className="mt-2 flex-row flex-wrap gap-2">
+      <View className="mt-2 flex-row flex-wrap gap-2 px-4 pb-4">
         {hasTranslation && (
           <Button
             variant="secondary"

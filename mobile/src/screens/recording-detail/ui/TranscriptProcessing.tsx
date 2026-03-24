@@ -25,6 +25,7 @@ export const TranscriptProcessing = ({
   const { t } = useTranslation();
   const animatedWidth = useSharedValue(0);
   const clampedProgress = Math.min(100, Math.max(0, progress));
+  const showLongBatteryHint = phase === 'processing' && clampedProgress < 40;
 
   useEffect(() => {
     if (progress === 0) {
@@ -63,6 +64,16 @@ export const TranscriptProcessing = ({
             {timeLabel}
           </Text>
         </View>
+      </View>
+      <View className="rounded-xl p-3" style={{ backgroundColor: color.background.tertiary }}>
+        <Text className="text-xs" style={{ color: color.text.secondary }}>
+          {t('transcription.batteryHint')}
+        </Text>
+        {showLongBatteryHint && (
+          <Text className="mt-1 text-xs" style={{ color: color.text.secondary }}>
+            {t('transcription.batteryHintLong')}
+          </Text>
+        )}
       </View>
 
       <View
