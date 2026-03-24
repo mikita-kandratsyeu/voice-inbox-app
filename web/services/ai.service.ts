@@ -6,6 +6,23 @@ import {
 } from '@openrouter/sdk/models/errors';
 
 import { FALLBACK_MODEL } from '@/config/constants';
+
+const RETRYABLE_OPENROUTER_ERROR_NAMES = new Set([
+  'BadGatewayResponseError',
+  'GatewayTimeoutResponseError',
+  'InternalServerResponseError',
+]);
+
+function isRetryableOpenRouterError(err: unknown): boolean {
+  if (
+    err instanceof TooManyRequestsResponseError ||
+    err instanceof ServiceUnavailableResponseError
+  ) {
+    return true;
+  }
+
+  return err instanceof Error && RETRYABLE_OPENROUTER_ERROR_NAMES.has(err.name);
+}
 import { ASK_QUESTION_SYSTEM_PROMPT, AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT } from '@/lib/prompts';
 
 async function callOpenRouter(
@@ -149,9 +166,7 @@ export async function processTranscript(
   try {
     return await callOpenRouter(transcript, model, systemPrompt);
   } catch (err) {
-    const isRetryable =
-      err instanceof TooManyRequestsResponseError || err instanceof ServiceUnavailableResponseError;
-    if (isRetryable) {
+    if (isRetryableOpenRouterError(err)) {
       return await callOpenRouter(transcript, FALLBACK_MODEL, systemPrompt);
     }
     throw err;
@@ -207,9 +222,7 @@ export async function processAskQuestion(
   try {
     return await callAsk(userContent, model, ASK_QUESTION_SYSTEM_PROMPT);
   } catch (err) {
-    const isRetryable =
-      err instanceof TooManyRequestsResponseError || err instanceof ServiceUnavailableResponseError;
-    if (isRetryable) {
+    if (isRetryableOpenRouterError(err)) {
       return await callAsk(userContent, FALLBACK_MODEL, ASK_QUESTION_SYSTEM_PROMPT);
     }
     throw err;
@@ -341,8 +354,7 @@ export async function processAutoOrganizeFolders(
     const isParseFailure =
       err instanceof Error &&
       (err.message.includes('Invalid AI response') || err.message.includes('malformed JSON'));
-    const isRetryable =
-      err instanceof TooManyRequestsResponseError || err instanceof ServiceUnavailableResponseError;
+    const isRetryable = isRetryableOpenRouterError(err);
     if (isRetryable || isParseFailure) {
       return await callOrganize(FALLBACK_MODEL);
     }
