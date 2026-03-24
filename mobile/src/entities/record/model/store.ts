@@ -54,6 +54,18 @@ const isActiveAiStatus = (status?: RecordingStatus): boolean =>
 const computeHasActiveAiJobs = (records: Array<VoiceRecord | RecordListItem>): boolean =>
   records.some((r) => isActiveAiStatus(r.aiStatus));
 
+const updateRecord = (
+  records: RecordListItem[],
+  id: string,
+  patch: Partial<RecordListItem>,
+): RecordListItem[] => {
+  const idx = records.findIndex((r) => r.id === id);
+  if (idx === -1) return records;
+  const next = [...records];
+  next[idx] = { ...next[idx], ...patch };
+  return next;
+};
+
 type RecordStore = {
   records: RecordListItem[];
   hasActiveAiJobs: boolean;
@@ -118,16 +130,11 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
 
     const heavy = await recordRepository.getHeavyFields(id);
     set((s) => ({
-      records: s.records.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              transcriptSegments: heavy.transcriptSegments,
-              embedding: heavy.embedding,
-              detailsHydrated: true,
-            }
-          : r,
-      ),
+      records: updateRecord(s.records, id, {
+        transcriptSegments: heavy.transcriptSegments,
+        embedding: heavy.embedding,
+        detailsHydrated: true,
+      }),
     }));
   },
 
@@ -170,45 +177,39 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     const nextPinned = !rec.isPinned;
     await recordRepository.togglePin(id, nextPinned);
     set((s) => ({
-      records: s.records.map((r) => (r.id === id ? { ...r, isPinned: nextPinned } : r)),
+      records: updateRecord(s.records, id, { isPinned: nextPinned }),
     }));
   },
 
   markAsRead: async (id) => {
     await recordRepository.markAsRead(id);
     set((s) => ({
-      records: s.records.map((r) => (r.id === id ? { ...r, status: 'read' } : r)),
+      records: updateRecord(s.records, id, { status: 'read' }),
     }));
   },
 
   archiveRecord: async (id) => {
     set((s) => ({
-      records: s.records.map((r) =>
-        r.id === id ? { ...r, status: 'archived' as const, isPinned: false } : r,
-      ),
+      records: updateRecord(s.records, id, { status: 'archived', isPinned: false }),
     }));
     await recordRepository.archive(id);
   },
 
   unarchiveRecord: async (id) => {
     set((s) => ({
-      records: s.records.map((r) => (r.id === id ? { ...r, status: 'unread' as const } : r)),
+      records: updateRecord(s.records, id, { status: 'unread' }),
     }));
     await recordRepository.unarchive(id);
   },
 
   updateAiStatus: (id, aiStatus, progress, progressLabel) => {
     set((s) => {
-      const next = s.records.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              aiStatus,
-              transcriptProgress: progress ?? r.transcriptProgress,
-              transcriptProgressLabel: progressLabel ?? r.transcriptProgressLabel,
-            }
-          : r,
-      );
+      const existing = s.records.find((r) => r.id === id);
+      if (!existing) return s;
+      const patch: Partial<RecordListItem> = { aiStatus };
+      if (progress !== undefined) patch.transcriptProgress = progress;
+      if (progressLabel !== undefined) patch.transcriptProgressLabel = progressLabel;
+      const next = updateRecord(s.records, id, patch);
       return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
     });
 
@@ -226,7 +227,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   renameRecord: async (id, title) => {
     await recordRepository.rename(id, title);
     set((s) => ({
-      records: s.records.map((r) => (r.id === id ? { ...r, title } : r)),
+      records: updateRecord(s.records, id, { title }),
     }));
   },
 
@@ -234,85 +235,69 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     clearAiPersistDebounce(id);
     await recordRepository.updateTranscript(id, transcript, segments);
     set((s) => {
-      const next = s.records.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              transcript,
-              transcriptSegments: segments,
-              detailsHydrated: true,
-              aiStatus: 'done' as RecordingStatus,
-              transcriptProgress: 100,
-            }
-          : r,
-      );
+      const next = updateRecord(s.records, id, {
+        transcript,
+        transcriptSegments: segments,
+        detailsHydrated: true,
+        aiStatus: 'done' as RecordingStatus,
+        transcriptProgress: 100,
+      });
       return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
     });
   },
 
   setSummaryStatus: (id, summaryStatus) => {
     set((s) => ({
-      records: s.records.map((r) => (r.id === id ? { ...r, summaryStatus } : r)),
+      records: updateRecord(s.records, id, { summaryStatus }),
     }));
   },
 
   setTasksStatus: (id, tasksStatus) => {
     set((s) => ({
-      records: s.records.map((r) => (r.id === id ? { ...r, tasksStatus } : r)),
+      records: updateRecord(s.records, id, { tasksStatus }),
     }));
   },
 
   updateSummary: async (id, summary) => {
     await recordRepository.updateSummary(id, summary);
     set((s) => ({
-      records: s.records.map((r) => (r.id === id ? { ...r, summary, summaryStatus: 'done' } : r)),
+      records: updateRecord(s.records, id, { summary, summaryStatus: 'done' }),
     }));
   },
 
   updateTasks: async (id, tasks) => {
     await recordRepository.updateTasks(id, tasks);
     set((s) => ({
-      records: s.records.map((r) => (r.id === id ? { ...r, tasks, tasksStatus: 'done' } : r)),
+      records: updateRecord(s.records, id, { tasks, tasksStatus: 'done' }),
     }));
   },
 
   updateTags: async (id, tags) => {
     await recordRepository.updateTags(id, tags);
     set((s) => ({
-      records: s.records.map((r) => (r.id === id ? { ...r, tags } : r)),
+      records: updateRecord(s.records, id, { tags }),
     }));
   },
 
   updateAiExtras: async (id, data) => {
     await recordRepository.updateAiExtras(id, data);
-    set((s) => ({
-      records: s.records.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              ...(data.classification !== undefined && {
-                classification: data.classification ?? undefined,
-              }),
-              ...(data.keyPhrases !== undefined && { keyPhrases: data.keyPhrases }),
-              ...(data.nextSteps !== undefined && { nextSteps: data.nextSteps }),
-            }
-          : r,
-      ),
-    }));
+    set((s) => {
+      const patch: Partial<RecordListItem> = {};
+      if (data.classification !== undefined)
+        patch.classification = data.classification ?? undefined;
+      if (data.keyPhrases !== undefined) patch.keyPhrases = data.keyPhrases;
+      if (data.nextSteps !== undefined) patch.nextSteps = data.nextSteps;
+      return { records: updateRecord(s.records, id, patch) };
+    });
   },
 
   updateTranslation: async (id, translatedTranscript, translationLanguage) => {
     await recordRepository.updateTranslation(id, translatedTranscript, translationLanguage);
     set((s) => ({
-      records: s.records.map((r) =>
-        r.id === id
-          ? {
-              ...r,
-              translatedTranscript: translatedTranscript ?? undefined,
-              translationLanguage: translationLanguage ?? undefined,
-            }
-          : r,
-      ),
+      records: updateRecord(s.records, id, {
+        translatedTranscript: translatedTranscript ?? undefined,
+        translationLanguage: translationLanguage ?? undefined,
+      }),
     }));
   },
 
@@ -324,22 +309,23 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     );
     await recordRepository.updateTasks(id, updatedTasks);
     set((s) => ({
-      records: s.records.map((r) => (r.id === id ? { ...r, tasks: updatedTasks } : r)),
+      records: updateRecord(s.records, id, { tasks: updatedTasks }),
     }));
   },
 
   clearAudioPath: async (id) => {
     await recordRepository.clearAudioPath(id);
     set((s) => ({
-      records: s.records.map((r) => (r.id === id ? { ...r, audioPath: undefined } : r)),
+      records: updateRecord(s.records, id, { audioPath: undefined }),
     }));
   },
 
   setEmbedding: (id, embedding) => {
     set((s) => ({
-      records: s.records.map((r) =>
-        r.id === id ? { ...r, embedding: embedding ?? undefined, detailsHydrated: true } : r,
-      ),
+      records: updateRecord(s.records, id, {
+        embedding: embedding ?? undefined,
+        detailsHydrated: true,
+      }),
     }));
   },
 }));

@@ -81,6 +81,7 @@ export const RecordingDetailScreen = () => {
     );
 
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
+  const [mountedTabs, setMountedTabs] = useState<Set<Tab>>(new Set(['transcript']));
   const [showAskAIModal, setShowAskAIModal] = useState(false);
   const [recordLanguage, setRecordLanguage] = useState<TranscriptionLanguage>(
     globalTranscriptionLanguage,
@@ -100,6 +101,7 @@ export const RecordingDetailScreen = () => {
     setRecordLanguage(globalTranscriptionLanguage);
     scrollRef.current?.scrollTo({ y: 0, animated: true });
     setActiveTab('transcript');
+    setMountedTabs(new Set(['transcript']));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only reset when switching records
   }, [routeRecord.id]);
 
@@ -235,6 +237,7 @@ export const RecordingDetailScreen = () => {
       if (activeTab === 'tasks' && tab !== 'tasks') {
         KeyboardController.dismiss({ animated: true });
       }
+      setMountedTabs((prev) => new Set([...prev, tab]));
       setActiveTab(tab);
     },
     [activeTab],
@@ -293,79 +296,46 @@ export const RecordingDetailScreen = () => {
             style={{ backgroundColor: color.background.card }}
           >
             <RecordingDetailTabBar active={activeTab} onSelect={onSelectTab} color={color} />
-            <View
-              style={
-                activeTab !== 'transcript'
-                  ? {
-                      position: 'absolute',
-                      left: 0,
-                      right: 0,
-                      opacity: 0,
-                      pointerEvents: 'none',
-                      zIndex: -1,
-                    }
-                  : undefined
-              }
-            >
-              <TranscriptContent
-                record={liveRecord}
-                color={color}
-                onTranscribe={handleRetranscribe}
-                onCancelTranscription={handleCancelTranscription}
-              />
-            </View>
-            <View
-              style={
-                activeTab !== 'summary'
-                  ? {
-                      position: 'absolute',
-                      left: 0,
-                      right: 0,
-                      opacity: 0,
-                      pointerEvents: 'none',
-                      zIndex: -1,
-                    }
-                  : undefined
-              }
-            >
-              <SummaryTab
-                summary={liveRecord.summary ?? ''}
-                keyPhrases={liveRecord.keyPhrases}
-                status={liveRecord.summaryStatus ?? 'idle'}
-                hasTranscript={Boolean(liveRecord.transcript)}
-                color={color}
-                onGenerate={handleGenerateSummary}
-                onDismissError={handleDismissSummaryError}
-              />
-            </View>
-            <View
-              style={
-                activeTab !== 'tasks'
-                  ? {
-                      position: 'absolute',
-                      left: 0,
-                      right: 0,
-                      opacity: 0,
-                      pointerEvents: 'none',
-                      zIndex: -1,
-                    }
-                  : undefined
-              }
-            >
-              <TasksTab
-                tasks={liveRecord.tasks ?? []}
-                nextSteps={liveRecord.nextSteps}
-                status={liveRecord.tasksStatus ?? 'idle'}
-                hasTranscript={Boolean(liveRecord.transcript)}
-                recordTitle={liveRecord.title}
-                color={color}
-                onToggle={handleToggleTask}
-                onExtract={handleExtractTasks}
-                onAddManualTask={handleAddManualTask}
-                onDeleteTask={handleDeleteTask}
-                onDismissError={handleDismissSummaryError}
-              />
-            </View>
+            {mountedTabs.has('transcript') && (
+              <View style={activeTab !== 'transcript' ? { display: 'none' } : undefined}>
+                <TranscriptContent
+                  record={liveRecord}
+                  color={color}
+                  onTranscribe={handleRetranscribe}
+                  onCancelTranscription={handleCancelTranscription}
+                />
+              </View>
+            )}
+            {mountedTabs.has('summary') && (
+              <View style={activeTab !== 'summary' ? { display: 'none' } : undefined}>
+                <SummaryTab
+                  summary={liveRecord.summary ?? ''}
+                  keyPhrases={liveRecord.keyPhrases}
+                  status={liveRecord.summaryStatus ?? 'idle'}
+                  hasTranscript={Boolean(liveRecord.transcript)}
+                  color={color}
+                  onGenerate={handleGenerateSummary}
+                  onDismissError={handleDismissSummaryError}
+                />
+              </View>
+            )}
+            {mountedTabs.has('tasks') && (
+              <View style={activeTab !== 'tasks' ? { display: 'none' } : undefined}>
+                <TasksTab
+                  tasks={liveRecord.tasks ?? []}
+                  nextSteps={liveRecord.nextSteps}
+                  status={liveRecord.tasksStatus ?? 'idle'}
+                  hasTranscript={Boolean(liveRecord.transcript)}
+                  recordTitle={liveRecord.title}
+                  color={color}
+                  onToggle={handleToggleTask}
+                  onExtract={handleExtractTasks}
+                  onAddManualTask={handleAddManualTask}
+                  onDeleteTask={handleDeleteTask}
+                  onDismissError={handleDismissSummaryError}
+                />
+              </View>
+            )}
           </View>
 
           <RelatedNotesSection recordId={liveRecord.id} color={color} />

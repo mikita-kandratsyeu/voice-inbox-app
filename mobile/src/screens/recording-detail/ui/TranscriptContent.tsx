@@ -3,6 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, View } from 'react-native';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
@@ -33,8 +34,12 @@ export const TranscriptContent = ({
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { translate, isTranslating } = useTranslate(record.id);
 
-  const recordFromStore = useRecordStore((s) => s.records.find((r) => r.id === record.id));
-  const hydrateRecordDetails = useRecordStore((s) => s.hydrateRecordDetails);
+  const { recordFromStore, hydrateRecordDetails } = useRecordStore(
+    useShallow((s) => ({
+      recordFromStore: s.records.find((r) => r.id === record.id),
+      hydrateRecordDetails: s.hydrateRecordDetails,
+    })),
+  );
   const r = recordFromStore ?? record;
   const registryInFlight = hasActiveTranscriptionJob(record.id);
 

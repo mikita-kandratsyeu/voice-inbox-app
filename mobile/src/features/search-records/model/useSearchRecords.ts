@@ -57,12 +57,7 @@ const RELEVANCE = {
   tasks: 1,
 } as const;
 
-const searchTextCache = new WeakMap<VoiceRecord, string>();
-
-function getRecordSearchText(record: VoiceRecord): string {
-  const cached = searchTextCache.get(record);
-  if (cached !== undefined) return cached;
-
+function buildSearchText(record: VoiceRecord): string {
   const parts = [
     record.title ?? '',
     record.summary ?? '',
@@ -71,9 +66,7 @@ function getRecordSearchText(record: VoiceRecord): string {
     ...(record.keyPhrases ?? []),
     ...(record.tasks ?? []).map((t) => t.text),
   ];
-  const text = parts.join(' ').toLowerCase();
-  searchTextCache.set(record, text);
-  return text;
+  return parts.join(' ').toLowerCase();
 }
 
 function getQueryWords(query: string): string[] {
@@ -84,15 +77,14 @@ function getQueryWords(query: string): string[] {
     .filter((w) => w.length >= 2 && !STOPWORDS.has(w));
 }
 
-function matchesQueryWords(record: VoiceRecord, words: string[]): boolean {
+function matchesQueryWords(text: string, words: string[]): boolean {
   if (words.length === 0) return false;
-  const text = getRecordSearchText(record);
   return words.every(
     (word) => text.includes(word) || (word.length >= 4 && text.includes(word.slice(0, 4))),
   );
 }
 
-const getRelevanceScore = (record: VoiceRecord, query: string): number => {
+function getRelevanceScore(record: VoiceRecord, query: string, searchText: string): number {
   const q = query.toLowerCase();
   let score = 0;
 
@@ -105,17 +97,16 @@ const getRelevanceScore = (record: VoiceRecord, query: string): number => {
   if (score > 0) return score;
 
   const words = getQueryWords(query);
-  const text = getRecordSearchText(record);
   for (const word of words) {
-    if (text.includes(word)) score += 2;
-    else if (word.length >= 4 && text.includes(word.slice(0, 4))) score += 1;
+    if (searchText.includes(word)) score += 2;
+    else if (word.length >= 4 && searchText.includes(word.slice(0, 4))) score += 1;
   }
   return score;
-};
+}
 
-const matchesQuery = (record: VoiceRecord, query: string): boolean => {
+function matchesQuery(record: VoiceRecord, query: string, searchText: string): boolean {
   const words = getQueryWords(query);
-  if (words.length > 0 && matchesQueryWords(record, words)) return true;
+  if (words.length > 0 && matchesQueryWords(searchText, words)) return true;
   const q = query.toLowerCase();
   return (
     record.title.toLowerCase().includes(q) ||
@@ -124,7 +115,7 @@ const matchesQuery = (record: VoiceRecord, query: string): boolean => {
     record.tags?.some((tag) => tag.toLowerCase().includes(q)) ||
     !!record.tasks?.some((t) => t.text.toLowerCase().includes(q))
   );
-};
+}
 
 export const useSearchRecords = (records: VoiceRecord[]) => {
   const { t } = useTranslation();
@@ -135,6 +126,24 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { filterStatus, setFilterStatus, sortOption, setSortOption, filterRecords } =
     useInboxFilters();
+
+  // Cache search text by record id. Rebuilt only when `records` reference changes.
+  // Using Map<id> instead of WeakMap<record> because the store creates new record
+  // objects on every update, causing WeakMap to miss on every lookup.
+  const searchTextById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of records) {
+      map.set(r.id, buildSearchText(r));
+    }
+    return map;
+  }, [records]);
+
+  // Centroid depends only on record embeddings, not on the search query.
+  // Separating it avoids recomputing on every keystroke.
+  const embeddingCentroid = useMemo(() => {
+    const embeddings = records.filter((r) => r.embedding).map((r) => r.embedding as number[]);
+    return embeddings.length > 0 ? computeCentroid(embeddings) : null;
+  }, [records]);
 
   useEffect(() => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -187,16 +196,15 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
   const searchFiltered = useMemo(() => {
     const trimmed = debouncedQuery.trim();
 
-    if (!trimmed) {
-      return records;
-    }
-
-    if (trimmed.length < MIN_QUERY_LENGTH) {
+    if (!trimmed || trimmed.length < MIN_QUERY_LENGTH) {
       return records;
     }
 
     const useSemantics =
-      !isSemanticPending && queryEmbedding !== null && records.some((r) => r.embedding);
+      !isSemanticPending &&
+      queryEmbedding !== null &&
+      embeddingCentroid !== null &&
+      records.some((r) => r.embedding);
 
     if (useSemantics) {
       const maxLexical =
@@ -206,15 +214,13 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
         RELEVANCE.tags +
         RELEVANCE.tasks;
 
-      const allEmbeddings = records.filter((r) => r.embedding).map((r) => r.embedding as number[]);
-      const centroid = computeCentroid(allEmbeddings);
-
       return records
         .map((r) => {
-          const lexicalRaw = getRelevanceScore(r, trimmed);
+          const searchText = searchTextById.get(r.id) ?? buildSearchText(r);
+          const lexicalRaw = getRelevanceScore(r, trimmed, searchText);
           const lexicalNorm = Math.min(lexicalRaw / maxLexical, 1);
           const semanticScore = r.embedding
-            ? centeredCosineSimilarity(queryEmbedding, r.embedding, centroid)
+            ? centeredCosineSimilarity(queryEmbedding, r.embedding, embeddingCentroid)
             : 0;
           const hybridScore =
             SEMANTIC_SCORE_WEIGHT * semanticScore + LEXICAL_SCORE_WEIGHT * lexicalNorm;
@@ -231,15 +237,27 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
         .map(({ record }) => record);
     }
 
-    const matching = records.filter((r) => matchesQuery(r, trimmed));
+    const matching = records.filter((r) =>
+      matchesQuery(r, trimmed, searchTextById.get(r.id) ?? buildSearchText(r)),
+    );
     return matching
-      .map((r) => ({ record: r, score: getRelevanceScore(r, trimmed) }))
+      .map((r) => ({
+        record: r,
+        score: getRelevanceScore(r, trimmed, searchTextById.get(r.id) ?? buildSearchText(r)),
+      }))
       .sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
         return new Date(b.record.createdAt).getTime() - new Date(a.record.createdAt).getTime();
       })
       .map(({ record }) => record);
-  }, [records, debouncedQuery, queryEmbedding, isSemanticPending]);
+  }, [
+    records,
+    debouncedQuery,
+    queryEmbedding,
+    isSemanticPending,
+    searchTextById,
+    embeddingCentroid,
+  ]);
 
   const filtered = useMemo(() => filterRecords(searchFiltered), [searchFiltered, filterRecords]);
 
