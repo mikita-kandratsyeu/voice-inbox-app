@@ -1,5 +1,6 @@
 import Clipboard from '@react-native-clipboard/clipboard';
-import React, { useCallback } from 'react';
+import NetInfo from '@react-native-community/netinfo';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
@@ -31,16 +32,50 @@ function buildNumberDisplay(): string {
   return '';
 }
 
+function readAppUsedMemoryBytes(): number | null {
+  const d = DeviceInfoModule as unknown as { getUsedMemory?: () => unknown };
+  if (typeof d.getUsedMemory === 'function') {
+    try {
+      const used = d.getUsedMemory();
+      if (isNumber(used) && Number.isFinite(used) && used > 0) return used;
+    } catch {
+      if (__DEV__) console.warn('[readAppUsedMemoryBytes] Failed to read used memory');
+    }
+  }
+
+  const perfMem = (
+    globalThis as unknown as { performance?: { memory?: { usedJSHeapSize?: unknown } } }
+  ).performance?.memory?.usedJSHeapSize;
+  if (isNumber(perfMem) && Number.isFinite(perfMem) && perfMem > 0) {
+    return perfMem;
+  }
+
+  return null;
+}
+
+function formatMemoryDisplay(bytes: number | null): string {
+  if (!isNumber(bytes) || bytes <= 0) return '—';
+  const mb = bytes / (1024 * 1024);
+  return `${mb.toFixed(1)} MB`;
+}
+
+function readTotalMemoryBytes(): number | null {
+  const total = (DeviceInfoModule as unknown as { totalMemory?: unknown }).totalMemory;
+  if (isNumber(total) && Number.isFinite(total) && total > 0) return total;
+  return null;
+}
+
 type TechRowProps = {
   label: string;
   value: string;
   copyText: string;
   onCopy: (text: string) => void;
   color: ReturnType<typeof useColors>;
+  valueColor?: string;
   isLast?: boolean;
 };
 
-const TechRow = ({ label, value, copyText, onCopy, color, isLast }: TechRowProps) => {
+const TechRow = ({ label, value, copyText, onCopy, color, valueColor, isLast }: TechRowProps) => {
   const canCopy = copyText.trim().length > 0;
 
   return (
@@ -57,7 +92,7 @@ const TechRow = ({ label, value, copyText, onCopy, color, isLast }: TechRowProps
       </Text>
       <Text
         className="mt-1 font-mono text-[13px] leading-5"
-        style={{ color: color.text.primary }}
+        style={{ color: valueColor ?? color.text.primary }}
         selectable
       >
         {value}
@@ -69,6 +104,13 @@ const TechRow = ({ label, value, copyText, onCopy, color, isLast }: TechRowProps
 export const SettingsInternalTechInfo = () => {
   const { t } = useTranslation();
   const color = useColors();
+  const [memoryDisplay, setMemoryDisplay] = useState<string>('—');
+  const [cpuDisplay, setCpuDisplay] = useState<string>('—');
+  const [memoryMb, setMemoryMb] = useState<number | null>(null);
+  const [cpuPercent, setCpuPercent] = useState<number | null>(null);
+  const [networkType, setNetworkType] = useState<string>('—');
+  const [networkStatus, setNetworkStatus] = useState<string>('—');
+  const [cellularGeneration, setCellularGeneration] = useState<string>('—');
 
   const onCopy = useCallback(
     (text: string) => {
@@ -78,6 +120,96 @@ export const SettingsInternalTechInfo = () => {
     },
     [t],
   );
+
+  useEffect(() => {
+    if (!isTestflightInternalBuild()) {
+      return;
+    }
+
+    let cancelled = false;
+    let prevTick = Date.now();
+    const INTERVAL_MS = 2000;
+
+    const update = () => {
+      const now = Date.now();
+      const lagMs = Math.max(0, now - prevTick - INTERVAL_MS);
+      prevTick = now;
+
+      const usedMemory = readAppUsedMemoryBytes();
+      const totalMemory = readTotalMemoryBytes();
+      const jsLoadPercent = Math.min(100, Math.round((lagMs / INTERVAL_MS) * 100));
+      const usedMemoryMb = isNumber(usedMemory) ? usedMemory / (1024 * 1024) : null;
+      const totalMemoryMb = isNumber(totalMemory) ? totalMemory / (1024 * 1024) : null;
+      const memoryPercent =
+        usedMemoryMb != null && totalMemoryMb != null && totalMemoryMb > 0
+          ? Math.min(100, Math.round((usedMemoryMb / totalMemoryMb) * 100))
+          : null;
+      const memoryValue =
+        usedMemoryMb != null && totalMemoryMb != null
+          ? `${usedMemoryMb.toFixed(1)} / ${totalMemoryMb.toFixed(1)} MB (${memoryPercent ?? 0}%)`
+          : formatMemoryDisplay(usedMemory);
+
+      if (!cancelled) {
+        setMemoryDisplay(memoryValue);
+        setCpuDisplay(`${jsLoadPercent}% (JS)`);
+        setMemoryMb(usedMemoryMb);
+        setCpuPercent(jsLoadPercent);
+      }
+    };
+
+    update();
+    const id = setInterval(update, INTERVAL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isTestflightInternalBuild()) {
+      return;
+    }
+
+    const updateNetwork = (state: {
+      type: string;
+      isConnected: boolean | null;
+      details?: { cellularGeneration?: string | null } | null;
+    }) => {
+      setNetworkType(state.type || '—');
+      setNetworkStatus(
+        state.isConnected == null
+          ? t('settings.internalTech.unknown')
+          : state.isConnected
+            ? t('settings.internalTech.online')
+            : t('settings.internalTech.offline'),
+      );
+      setCellularGeneration(state.details?.cellularGeneration ?? '—');
+    };
+
+    void NetInfo.fetch().then((state) => {
+      updateNetwork({
+        type: String(state.type ?? 'unknown'),
+        isConnected: state.isConnected ?? null,
+        details:
+          state.type === 'cellular'
+            ? { cellularGeneration: state.details?.cellularGeneration ?? null }
+            : null,
+      });
+    });
+
+    const unsubscribe = NetInfo.addEventListener((state) => {
+      updateNetwork({
+        type: String(state.type ?? 'unknown'),
+        isConnected: state.isConnected ?? null,
+        details:
+          state.type === 'cellular'
+            ? { cellularGeneration: state.details?.cellularGeneration ?? null }
+            : null,
+      });
+    });
+
+    return unsubscribe;
+  }, [t]);
 
   if (!isTestflightInternalBuild()) {
     return null;
@@ -98,9 +230,37 @@ export const SettingsInternalTechInfo = () => {
   const build = buildNumberDisplay();
   const versionCopyText =
     ver.length > 0 ? (build.length > 0 ? `${ver} (${build})` : ver) : build.length > 0 ? build : '';
+  const systemName = String(DeviceInfoModule.systemName ?? '').trim();
+  const systemVersion = String(DeviceInfoModule.systemVersion ?? '').trim();
+  const osVersion = [systemName, systemVersion].filter(Boolean).join(' ');
+  const brand = String(DeviceInfoModule.brand ?? '').trim();
+  const model = String(DeviceInfoModule.model ?? '').trim();
+  const deviceModel = [brand, model].filter(Boolean).join(' ');
+  const deviceType = DeviceInfoModule.isTablet
+    ? t('settings.internalTech.deviceTypeTablet')
+    : t('settings.internalTech.deviceTypePhone');
 
   const empty = t('settings.internalTech.empty');
   const versionDisplay = versionCopyText || empty;
+  const dangerColor = color.accent.delete;
+  const warningColor = color.accent.cache;
+  const okColor = color.accent.aiData;
+  const cpuValueColor =
+    cpuPercent == null
+      ? color.text.primary
+      : cpuPercent <= 20
+        ? okColor
+        : cpuPercent <= 45
+          ? warningColor
+          : dangerColor;
+  const memoryValueColor =
+    memoryMb == null
+      ? color.text.primary
+      : memoryMb <= 250
+        ? okColor
+        : memoryMb <= 500
+          ? warningColor
+          : dangerColor;
 
   return (
     <View
@@ -166,6 +326,64 @@ export const SettingsInternalTechInfo = () => {
         copyText={versionCopyText}
         onCopy={onCopy}
         color={color}
+      />
+      <TechRow
+        label={t('settings.internalTech.deviceModel')}
+        value={deviceModel || empty}
+        copyText={deviceModel}
+        onCopy={onCopy}
+        color={color}
+      />
+      <TechRow
+        label={t('settings.internalTech.osVersion')}
+        value={osVersion || empty}
+        copyText={osVersion}
+        onCopy={onCopy}
+        color={color}
+      />
+      <TechRow
+        label={t('settings.internalTech.deviceType')}
+        value={deviceType}
+        copyText={deviceType}
+        onCopy={onCopy}
+        color={color}
+      />
+      <TechRow
+        label={t('settings.internalTech.networkType')}
+        value={networkType || empty}
+        copyText={networkType}
+        onCopy={onCopy}
+        color={color}
+      />
+      <TechRow
+        label={t('settings.internalTech.networkStatus')}
+        value={networkStatus || empty}
+        copyText={networkStatus}
+        onCopy={onCopy}
+        color={color}
+      />
+      <TechRow
+        label={t('settings.internalTech.cellularGeneration')}
+        value={cellularGeneration || empty}
+        copyText={cellularGeneration}
+        onCopy={onCopy}
+        color={color}
+      />
+      <TechRow
+        label={t('settings.internalTech.cpuUsage')}
+        value={cpuDisplay}
+        copyText={cpuDisplay}
+        onCopy={onCopy}
+        color={color}
+        valueColor={cpuValueColor}
+      />
+      <TechRow
+        label={t('settings.internalTech.memoryUsage')}
+        value={memoryDisplay}
+        copyText={memoryDisplay}
+        onCopy={onCopy}
+        color={color}
+        valueColor={memoryValueColor}
         isLast
       />
     </View>
