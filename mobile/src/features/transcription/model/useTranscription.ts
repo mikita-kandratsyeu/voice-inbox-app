@@ -236,7 +236,13 @@ export const useTranscription = () => {
       devLog('cancel requested', { recordId });
       invalidateTranscriptionJob(recordId);
       currentRecordIdRef.current = null;
-      updateAiStatus(recordId, 'idle');
+      const existing = useRecordStore.getState().records.find((r) => r.id === recordId);
+      const hasTranscript = Boolean(existing?.transcript?.trim());
+      if (hasTranscript) {
+        updateAiStatus(recordId, 'done', 100);
+      } else {
+        updateAiStatus(recordId, 'idle');
+      }
       if (stopRef.current) {
         const stop = stopRef.current;
         stopRef.current = null;

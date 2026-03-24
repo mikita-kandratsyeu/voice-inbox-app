@@ -49,11 +49,12 @@ export const RecordCard = React.memo(function RecordCard({
   const allTasksDone = hasTasks && doneCount === tasks.length;
   const aiProcessing = item.summaryStatus === 'processing' || item.tasksStatus === 'processing';
   const aiError = item.summaryStatus === 'error' || item.tasksStatus === 'error';
+  const hasTranscriptPreview = Boolean(item.transcript?.trim());
   const showStatusPill =
     item.aiStatus === 'loading_model' ||
     item.aiStatus === 'processing' ||
     item.aiStatus === 'error' ||
-    item.aiStatus === 'idle' ||
+    (item.aiStatus === 'idle' && !hasTranscriptPreview) ||
     aiProcessing ||
     aiError;
 

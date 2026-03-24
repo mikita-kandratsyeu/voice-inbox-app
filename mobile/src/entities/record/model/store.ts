@@ -212,7 +212,11 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
       if (!existing) return s;
       const patch: Partial<RecordListItem> = { aiStatus };
       if (progress !== undefined) patch.transcriptProgress = progress;
-      if (progressLabel !== undefined) patch.transcriptProgressLabel = progressLabel;
+      if (progressLabel !== undefined) {
+        patch.transcriptProgressLabel = progressLabel;
+      } else if (aiStatus === 'idle' || aiStatus === 'done' || aiStatus === 'error') {
+        patch.transcriptProgressLabel = undefined;
+      }
       const next = updateRecord(s.records, id, patch);
       return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
     });
