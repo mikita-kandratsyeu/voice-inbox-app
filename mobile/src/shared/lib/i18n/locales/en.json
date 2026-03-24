@@ -366,23 +366,24 @@
       "a11yCurrentPlanHint": "This is information about your current plan"
     },
     "planPaywall": {
-      "title": "Choose the plan that fits you",
-      "subtitle": "Feature comparison: Free vs Pro",
+      "title": "Let AI do the heavy lifting",
+      "subtitle": "Auto summaries and tasks right after transcription—no extra taps.",
       "freeTitle": "Free",
-      "freeBody": "Core features for everyday use with a standard weekly generation limit.",
+      "freeLimits": {
+        "manualAi": "AI runs manually only—you start summary and tasks in each note",
+        "recording": "Up to {{minutes}} minutes per recording",
+        "weeklyAi": "Up to {{limit}} AI requests per week"
+      },
       "proTitle": "Pro",
-      "upgrade": "Upgrade",
+      "upgrade": "Unlock Pro",
       "comingSoon": "Coming soon",
       "iapNotReady": "In-app purchase is not available in this build yet.",
       "features": {
-        "aiLimit": "Up to {{limit}} generations per week",
-        "recordingUpTo30Min": "Long recordings up to 30 minutes",
-        "autoAi": "Auto summaries and tasks after transcription",
-        "autoOrganizeFolders": "Folder auto-organization (within the overall weekly limit)",
+        "aiLimit": "Up to {{limit}} AI requests per week",
+        "recordingUpTo30Min": "Recordings up to 30 minutes",
+        "autoAi": "Auto-AI: summary and tasks right after transcription",
         "autoTranscription": "Auto transcription for new notes",
-        "colorCustomization": "App personalization",
-        "noAds": "No ads",
-        "earlyAccess": "Early access to new Pro features"
+        "noAds": "No ads"
       }
     },
     "automationSoon": {

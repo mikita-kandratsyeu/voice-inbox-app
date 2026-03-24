@@ -159,6 +159,7 @@ export const SettingsScreen = () => {
         <SettingsPlanPaywallSheet
           visible={settings.planPaywallVisible}
           mode={settings.monetizationMode}
+          freeAiLimit={settings.freeWeeklyLimit}
           proAiLimit={settings.proWeeklyLimit}
           onClose={() => settings.setPlanPaywallVisible(false)}
           onUpgradePress={settings.handleUpgradePress}

@@ -18,7 +18,7 @@ import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import { exportData, importData } from '@/features/sync-data';
-import { useColors } from '@/shared/config';
+import { FREE_WEEKLY_LIMIT, useColors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
 import { getAiUsage, getAiWeeklyLimits } from '@/shared/lib/ai-api';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
@@ -59,6 +59,7 @@ export function useSettingsScreen() {
   const [aiUsage, setAiUsage] = useState<Awaited<ReturnType<typeof getAiUsage>>>(null);
   const [aiUsageLoading, setAiUsageLoading] = useState(true);
   const [proWeeklyLimit, setProWeeklyLimit] = useState<number>(75);
+  const [freeWeeklyLimit, setFreeWeeklyLimit] = useState<number>(FREE_WEEKLY_LIMIT);
   const [refreshing, setRefreshing] = useState(false);
   const [isUpdatingEmbeddings, setIsUpdatingEmbeddings] = useState(false);
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
@@ -87,6 +88,9 @@ export function useSettingsScreen() {
     const limits = await getAiWeeklyLimits();
     if (limits?.proWeeklyLimit && limits.proWeeklyLimit > 0) {
       setProWeeklyLimit(limits.proWeeklyLimit);
+    }
+    if (limits?.freeWeeklyLimit && limits.freeWeeklyLimit > 0) {
+      setFreeWeeklyLimit(limits.freeWeeklyLimit);
     }
     return limits;
   }, []);
@@ -151,6 +155,9 @@ export function useSettingsScreen() {
       const limits = await getAiWeeklyLimits();
       if (limits?.proWeeklyLimit && limits.proWeeklyLimit > 0) {
         setProWeeklyLimit(limits.proWeeklyLimit);
+      }
+      if (limits?.freeWeeklyLimit && limits.freeWeeklyLimit > 0) {
+        setFreeWeeklyLimit(limits.freeWeeklyLimit);
       }
     } finally {
       setRefreshing(false);
@@ -290,6 +297,7 @@ export function useSettingsScreen() {
     navigation,
     monetizationMode,
     proWeeklyLimit,
+    freeWeeklyLimit,
     proEntitlementActive,
     refreshProEntitlement,
     refreshing,
