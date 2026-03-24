@@ -5,7 +5,7 @@ import { TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/shared/config';
-import { hapticSelection, hapticSuccess } from '@/shared/lib';
+import { hapticSelection } from '@/shared/lib';
 
 import type { RecordingState } from '../config';
 import { PAUSE_BTN_BG } from '../config';
@@ -59,7 +59,7 @@ export const RecordScreenControls = ({
       <TouchableOpacity
         accessibilityRole="button"
         onPress={() => {
-          hapticSuccess();
+          hapticSelection();
           onDonePress();
         }}
         className="h-20 w-20 items-center justify-center rounded-full shadow-lg"

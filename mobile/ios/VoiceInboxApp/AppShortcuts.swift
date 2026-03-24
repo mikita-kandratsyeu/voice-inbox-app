@@ -2,7 +2,9 @@ import AppIntents
 import UIKit
 
 @available(iOS 16.0, *)
-struct StartRecordingIntent: AppIntent {
+struct StartRecordingIntent: AppIntent, InstanceDisplayRepresentable {
+  static let shortcutSystemImageName = "mic.fill"
+
   static var title: LocalizedStringResource = LocalizedStringResource(
     "Start Voice Recording",
     table: "AppShortcuts"
@@ -12,6 +14,13 @@ struct StartRecordingIntent: AppIntent {
   )
 
   static var openAppWhenRun: Bool = true
+
+  var displayRepresentation: DisplayRepresentation {
+    DisplayRepresentation(
+      title: Self.title,
+      image: DisplayRepresentation.Image(systemName: Self.shortcutSystemImageName)
+    )
+  }
 
   func perform() async throws -> some IntentResult {
     guard let url = URL(string: "voiceinbox://record/start") else {
@@ -38,7 +47,7 @@ struct VoiceInboxAppShortcuts: AppShortcutsProvider {
         "Запись в \(.applicationName)",
       ],
       shortTitle: LocalizedStringResource("Start Recording", table: "AppShortcuts"),
-      systemImageName: "mic.circle.fill"
+      systemImageName: "mic.fill"
     )
   }
 }

@@ -39,6 +39,7 @@
 		B0C1D2E3F4A5B6C7D8E9F0A1 /* AppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0C1D2E3F4A5B6C7D8E9F0A0 /* AppShortcuts.swift */; };
 		B1C2D3E4F5A6B7C8D9E0F1A2 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5A6B7C8D9E0F1A0 /* AppShortcuts.strings */; };
 		B2C3D4E5F6A7B8C9D0E1F2A3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A0 /* Localizable.strings */; };
+		C4D5E6F7A8B9C0D1E2F3A4 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = C4D5E6F7A8B9C0D1E2F3A0 /* InfoPlist.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -107,10 +108,12 @@
 		EE891B88985ED259648B1BB1 /* Pods_VoiceInboxApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_VoiceInboxApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F1A2B3C4D5E6F7A8B9C0D1E3 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "VoiceInboxApp/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		B0C1D2E3F4A5B6C7D8E9F0A0 /* AppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppShortcuts.swift; path = VoiceInboxApp/AppShortcuts.swift; sourceTree = "<group>"; };
-		B1C2D3E4F5A6B7C8D9E0F1B1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
-		B1C2D3E4F5A6B7C8D9E0F1B2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
-		B2C3D4E5F6A7B8C9D0E1F2B1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-		B2C3D4E5F6A7B8C9D0E1F2B2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		B1C2D3E4F5A6B7C8D9E0F1B1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = VoiceInboxApp/en.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		B1C2D3E4F5A6B7C8D9E0F1B2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = VoiceInboxApp/ru.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		B2C3D4E5F6A7B8C9D0E1F2B1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = VoiceInboxApp/en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		B2C3D4E5F6A7B8C9D0E1F2B2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = VoiceInboxApp/ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		C4D5E6F7A8B9C0D1E2F3B1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = VoiceInboxApp/en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		C4D5E6F7A8B9C0D1E2F3B2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = VoiceInboxApp/ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -181,6 +184,7 @@
 				B0C1D2E3F4A5B6C7D8E9F0A0 /* AppShortcuts.swift */,
 				B1C2D3E4F5A6B7C8D9E0F1A0 /* AppShortcuts.strings */,
 				B2C3D4E5F6A7B8C9D0E1F2A0 /* Localizable.strings */,
+				C4D5E6F7A8B9C0D1E2F3A0 /* InfoPlist.strings */,
 				A1B2C3D4E5F6A7B8C9D0E1F3 /* BootSplash.storyboard */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				F1A2B3C4D5E6F7A8B9C0D1E3 /* GoogleService-Info.plist */,
@@ -296,6 +300,15 @@
 				B2C3D4E5F6A7B8C9D0E1F2B2 /* ru */,
 			);
 			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		C4D5E6F7A8B9C0D1E2F3A0 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C4D5E6F7A8B9C0D1E2F3B1 /* en */,
+				C4D5E6F7A8B9C0D1E2F3B2 /* ru */,
+			);
+			name = InfoPlist.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
@@ -422,6 +435,7 @@
 				F1A2B3C4D5E6F7A8B9C0D1E2 /* GoogleService-Info.plist in Resources */,
 				B1C2D3E4F5A6B7C8D9E0F1A2 /* AppShortcuts.strings in Resources */,
 				B2C3D4E5F6A7B8C9D0E1F2A3 /* Localizable.strings in Resources */,
+				C4D5E6F7A8B9C0D1E2F3A4 /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

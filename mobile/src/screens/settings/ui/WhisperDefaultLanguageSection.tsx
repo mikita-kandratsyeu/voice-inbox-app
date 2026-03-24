@@ -52,7 +52,6 @@ export const WhisperDefaultLanguageSection = ({ color }: WhisperDefaultLanguageS
         <TouchableOpacity
           className="flex-row items-center justify-between rounded-xl px-4 py-3"
           style={{ backgroundColor: color.background.tertiary }}
-          onPress={() => hapticSelection()}
           activeOpacity={0.7}
         >
           <Text className="text-[16px]" style={{ color: color.text.primary }}>

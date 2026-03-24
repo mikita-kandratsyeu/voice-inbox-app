@@ -19,7 +19,7 @@ import { useProEntitlement } from '@/features/pro-license';
 import { useTranscription } from '@/features/transcription';
 import { generateRecordId } from '@/screens/record/lib/generateRecordId';
 import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
-import { hapticMedium, hapticSuccess } from '@/shared/lib';
+import { hapticError, hapticMedium, hapticSuccess } from '@/shared/lib';
 import { convertToWav, getAudioDurationMs } from '@/shared/lib/audio';
 import { formatTime } from '@/shared/lib/date';
 import { ensureRecordingsDir, RECORDINGS_DIR } from '@/shared/lib/recordings';
@@ -86,6 +86,7 @@ export function useImportAudioFile() {
         const wavPath = `${RECORDINGS_DIR}/${recordId}.wav`;
         const converted = await convertToWav(destPath, wavPath);
         if (converted === null) {
+          hapticError();
           Alert.alert(t('common.error'), t('importAudio.conversionError'));
           try {
             if (destPath !== normalizedSource) await RNFS.unlink(destPath);
@@ -123,6 +124,7 @@ export function useImportAudioFile() {
       }
 
       if (durationMs > maxImportMs) {
+        hapticError();
         Alert.alert(
           t('importAudio.maxDurationTitle'),
           t('importAudio.maxDurationMessage', { max: maxImportMs / (60 * 1000) }),
@@ -173,6 +175,7 @@ export function useImportAudioFile() {
       if (__DEV__) {
         console.warn('[importAudioFile]', err);
       }
+      hapticError();
       Alert.alert(t('common.error'), t('importAudio.importError'));
     } finally {
       setIsImporting(false);

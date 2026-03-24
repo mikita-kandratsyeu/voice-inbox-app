@@ -22,7 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { hapticSuccess, modalKeyboardBehavior } from '@/shared/lib';
+import { hapticError, hapticSuccess, modalKeyboardBehavior } from '@/shared/lib';
 import { redeemProLicenseKey } from '@/shared/lib/ai-api/proLicenseApi';
 import { Button } from '@/shared/ui';
 
@@ -206,6 +206,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
       setPhase('success');
       return;
     }
+    hapticError();
     setError(proLicenseMessageForRedeemError(t, result));
   }, [keyText, busy, onActivated, t]);
 

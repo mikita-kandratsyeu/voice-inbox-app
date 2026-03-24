@@ -95,7 +95,10 @@ export const OnboardingSetupStep = ({
             return (
               <TouchableOpacity
                 key={model.id}
-                onPress={() => setAIModel(model.id)}
+                onPress={() => {
+                  hapticSelection();
+                  setAIModel(model.id);
+                }}
                 activeOpacity={0.7}
                 className={`px-4 py-2 flex-row items-center justify-between ${!isLast ? 'border-b' : ''}`}
                 style={{

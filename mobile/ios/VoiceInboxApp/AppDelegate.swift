@@ -14,6 +14,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
 
+  private var startRecordingQuickActionType: String {
+    let bid = Bundle.main.bundleIdentifier ?? ""
+    return "\(bid).quickAction.startRecording"
+  }
+
+  private func handleQuickAction(_ shortcutItem: UIApplicationShortcutItem, application: UIApplication) -> Bool {
+    guard shortcutItem.type == startRecordingQuickActionType,
+          let url = URL(string: "voiceinbox://record/start") else { return false }
+    return RCTLinkingManager.application(application, open: url, options: [:])
+  }
+
   func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
@@ -39,7 +50,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
       launchOptions: launchOptions
     )
 
+    if let shortcutItem = launchOptions?[UIApplication.LaunchOptionsKey.shortcutItem] as? UIApplicationShortcutItem {
+      _ = handleQuickAction(shortcutItem, application: application)
+    }
+
     return true
+  }
+
+  func application(
+    _ application: UIApplication,
+    performActionFor shortcutItem: UIApplicationShortcutItem,
+    completionHandler: @escaping (Bool) -> Void
+  ) {
+    completionHandler(handleQuickAction(shortcutItem, application: application))
   }
 
   func application(

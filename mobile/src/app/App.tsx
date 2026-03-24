@@ -32,7 +32,7 @@ import {
 } from '@/shared/lib/push';
 import { WarmupBottomSheet } from '@/shared/ui';
 
-import { useInitDeepLinking } from './deep-linking';
+import { flushPendingRecordModalNavigation, useInitDeepLinking } from './deep-linking';
 import { handlePushNotification } from './model/pushNavigationHandler';
 import { navigationRef } from './navigation/navigationRef';
 import { RootNavigator } from './navigation/RootNavigator';
@@ -88,6 +88,7 @@ const App = () => {
                 ref={navigationRef}
                 onReady={() => {
                   routeNameRef.current = navigationRef.getCurrentRoute()?.name;
+                  flushPendingRecordModalNavigation();
                 }}
                 onStateChange={() => {
                   const previous = routeNameRef.current;

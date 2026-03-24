@@ -136,7 +136,6 @@ export const InboxFilterBar = ({
         >
           <TouchableOpacity
             accessibilityRole="button"
-            onPress={() => hapticSelection()}
             activeOpacity={0.7}
             style={[
               buttonStyle,
@@ -181,7 +180,6 @@ export const InboxFilterBar = ({
         >
           <TouchableOpacity
             accessibilityRole="button"
-            onPress={() => hapticSelection()}
             activeOpacity={0.7}
             style={[
               buttonStyle,

@@ -7,6 +7,17 @@ import { useRecordingDeeplink } from '@/features/recording-deeplink/model/useRec
 
 const START_RECORDING_URL = 'voiceinbox://record/start';
 
+const pendingRecordModalOpenRef = { current: false };
+
+export const flushPendingRecordModalNavigation = () => {
+  if (!pendingRecordModalOpenRef.current || !navigationRef.isReady()) {
+    return;
+  }
+
+  pendingRecordModalOpenRef.current = false;
+  navigationRef.navigate('RecordModal');
+};
+
 export const useInitDeepLinking = () => {
   const { handleRecordingDeeplink } = useRecordingDeeplink();
   const { handleDownloadingDeeplink } = useDownloadingDeeplink();
@@ -17,6 +28,8 @@ export const useInitDeepLinking = () => {
 
     if (navigationRef.isReady()) {
       navigationRef.navigate('RecordModal');
+    } else {
+      pendingRecordModalOpenRef.current = true;
     }
     return true;
   }, []);
