@@ -35,11 +35,11 @@
 		A1B2C3D4E5F6A7B8C9D0E1F2 /* BootSplash.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D4E5F6A7B8C9D0E1F3 /* BootSplash.storyboard */; };
 		A1C2E3F405060708090A0B03 /* VoiceInboxApp/AudioConverter.mm in Sources */ = {isa = PBXBuildFile; fileRef = A1C2E3F405060708090A0B02 /* VoiceInboxApp/AudioConverter.mm */; };
 		A9B8C7D6E5F4A3B2C1D0E9F8 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9B8C7D6E5F4A3B2C1D0E9F7 /* AudioToolbox.framework */; };
-		F1A2B3C4D5E6F7A8B9C0D1E2 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F7A8B9C0D1E3 /* GoogleService-Info.plist */; };
 		B0C1D2E3F4A5B6C7D8E9F0A1 /* AppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0C1D2E3F4A5B6C7D8E9F0A0 /* AppShortcuts.swift */; };
 		B1C2D3E4F5A6B7C8D9E0F1A2 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = B1C2D3E4F5A6B7C8D9E0F1A0 /* AppShortcuts.strings */; };
 		B2C3D4E5F6A7B8C9D0E1F2A3 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = B2C3D4E5F6A7B8C9D0E1F2A0 /* Localizable.strings */; };
 		C4D5E6F7A8B9C0D1E2F3A4 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = C4D5E6F7A8B9C0D1E2F3A0 /* InfoPlist.strings */; };
+		F1A2B3C4D5E6F7A8B9C0D1E2 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F1A2B3C4D5E6F7A8B9C0D1E3 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -102,11 +102,6 @@
 		A1C2E3F405060708090A0B01 /* VoiceInboxApp/AudioConverter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = VoiceInboxApp/AudioConverter.h; sourceTree = "<group>"; };
 		A1C2E3F405060708090A0B02 /* VoiceInboxApp/AudioConverter.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = VoiceInboxApp/AudioConverter.mm; sourceTree = "<group>"; };
 		A9B8C7D6E5F4A3B2C1D0E9F7 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
-		E1F2A3B4C5D6E7F8A9B0C1D2 /* VoiceInboxApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "VoiceInboxApp-Bridging-Header.h"; path = "VoiceInboxApp/VoiceInboxApp-Bridging-Header.h"; sourceTree = "<group>"; };
-		E2F3B4C5D6E7F8A9B0C1D2E3 /* VoiceInboxApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = VoiceInboxApp.entitlements; path = VoiceInboxApp/VoiceInboxApp.entitlements; sourceTree = "<group>"; };
-		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		EE891B88985ED259648B1BB1 /* Pods_VoiceInboxApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_VoiceInboxApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		F1A2B3C4D5E6F7A8B9C0D1E3 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "VoiceInboxApp/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		B0C1D2E3F4A5B6C7D8E9F0A0 /* AppShortcuts.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppShortcuts.swift; path = VoiceInboxApp/AppShortcuts.swift; sourceTree = "<group>"; };
 		B1C2D3E4F5A6B7C8D9E0F1B1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = VoiceInboxApp/en.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		B1C2D3E4F5A6B7C8D9E0F1B2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = VoiceInboxApp/ru.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
@@ -114,6 +109,11 @@
 		B2C3D4E5F6A7B8C9D0E1F2B2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = VoiceInboxApp/ru.lproj/Localizable.strings; sourceTree = "<group>"; };
 		C4D5E6F7A8B9C0D1E2F3B1 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = VoiceInboxApp/en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		C4D5E6F7A8B9C0D1E2F3B2 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = VoiceInboxApp/ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		E1F2A3B4C5D6E7F8A9B0C1D2 /* VoiceInboxApp-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "VoiceInboxApp-Bridging-Header.h"; path = "VoiceInboxApp/VoiceInboxApp-Bridging-Header.h"; sourceTree = "<group>"; };
+		E2F3B4C5D6E7F8A9B0C1D2E3 /* VoiceInboxApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = VoiceInboxApp.entitlements; path = VoiceInboxApp/VoiceInboxApp.entitlements; sourceTree = "<group>"; };
+		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		EE891B88985ED259648B1BB1 /* Pods_VoiceInboxApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_VoiceInboxApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1A2B3C4D5E6F7A8B9C0D1E3 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "VoiceInboxApp/GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -282,36 +282,6 @@
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
-
-/* Begin PBXVariantGroup section */
-		B1C2D3E4F5A6B7C8D9E0F1A0 /* AppShortcuts.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				B1C2D3E4F5A6B7C8D9E0F1B1 /* en */,
-				B1C2D3E4F5A6B7C8D9E0F1B2 /* ru */,
-			);
-			name = AppShortcuts.strings;
-			sourceTree = "<group>";
-		};
-		B2C3D4E5F6A7B8C9D0E1F2A0 /* Localizable.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				B2C3D4E5F6A7B8C9D0E1F2B1 /* en */,
-				B2C3D4E5F6A7B8C9D0E1F2B2 /* ru */,
-			);
-			name = Localizable.strings;
-			sourceTree = "<group>";
-		};
-		C4D5E6F7A8B9C0D1E2F3A0 /* InfoPlist.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				C4D5E6F7A8B9C0D1E2F3B1 /* en */,
-				C4D5E6F7A8B9C0D1E2F3B2 /* ru */,
-			);
-			name = InfoPlist.strings;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
 
 /* Begin PBXNativeTarget section */
 		13B07F861A680F5B00A75B9A /* VoiceInboxApp */ = {
@@ -642,6 +612,36 @@
 		};
 /* End PBXTargetDependency section */
 
+/* Begin PBXVariantGroup section */
+		B1C2D3E4F5A6B7C8D9E0F1A0 /* AppShortcuts.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B1C2D3E4F5A6B7C8D9E0F1B1 /* en */,
+				B1C2D3E4F5A6B7C8D9E0F1B2 /* ru */,
+			);
+			name = AppShortcuts.strings;
+			sourceTree = "<group>";
+		};
+		B2C3D4E5F6A7B8C9D0E1F2A0 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B2C3D4E5F6A7B8C9D0E1F2B1 /* en */,
+				B2C3D4E5F6A7B8C9D0E1F2B2 /* ru */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
+		C4D5E6F7A8B9C0D1E2F3A0 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C4D5E6F7A8B9C0D1E2F3B1 /* en */,
+				C4D5E6F7A8B9C0D1E2F3B2 /* ru */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -653,7 +653,7 @@
 				CODE_SIGN_ENTITLEMENTS = VoiceInboxApp/VoiceInboxApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 65;
+				CURRENT_PROJECT_VERSION = 66;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = VoiceInboxApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
@@ -692,7 +692,7 @@
 				CODE_SIGN_ENTITLEMENTS = VoiceInboxApp/VoiceInboxApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 65;
+				CURRENT_PROJECT_VERSION = 66;
 				INFOPLIST_FILE = VoiceInboxApp/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Voice Inbox AI";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
@@ -732,7 +732,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 65;
+				CURRENT_PROJECT_VERSION = 66;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
@@ -778,7 +778,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 65;
+				CURRENT_PROJECT_VERSION = 66;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
@@ -820,7 +820,7 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 65;
+				CURRENT_PROJECT_VERSION = 66;
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
@@ -866,7 +866,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
-				CURRENT_PROJECT_VERSION = 65;
+				CURRENT_PROJECT_VERSION = 66;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
