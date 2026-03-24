@@ -577,7 +577,7 @@
   },
   "aiModels": {
     "title": "Generation model",
-    "description": "Pick a speed, quality, or premium tier for summaries and tasks. Three focused options; other models run on our side when useful.",
+    "description": "Pick a speed, quality, or premium tier for summaries and tasks. Three focused options, other models run on our side when useful.",
     "tierFast": "Fast",
     "tierSmart": "Smarter",
     "tierPremium": "Premium",
