@@ -798,7 +798,7 @@
     "autoOrganizeButton": "AI organize notes",
     "autoOrganizeButtonDisabledA11y": "AI organize unavailable: {{count}} of {{min}} notes",
     "autoOrganizeMinTitle": "Not enough notes yet",
-    "autoOrganizeMinDescription": "Need at least {{min}} notes. Now: {{count}}.",
+    "autoOrganizeMinDescription": "Add at least {{min}} notes so AI can suggest meaningful folders. You have {{count}} right now.",
     "autoOrganizeLoadingTitle": "AI is organizing notes",
     "autoOrganizeLoadingDescription": "Creating folders and sorting notes. This can take up to a minute.",
     "autoOrganizeStepAnalyzing": "Analyzing note topics...",

@@ -804,7 +804,7 @@
     "autoOrganizeButton": "ИИ разложит заметки",
     "autoOrganizeButtonDisabledA11y": "ИИ недоступен: {{count}} из {{min}} заметок",
     "autoOrganizeMinTitle": "Пока мало заметок",
-    "autoOrganizeMinDescription": "Нужно минимум {{min}} заметок. Сейчас: {{count}}.",
+    "autoOrganizeMinDescription": "Чтобы ИИ мог предложить осмысленные папки, нужно не меньше {{min}} заметок, а у вас пока {{count}}.",
     "autoOrganizeLoadingTitle": "ИИ организует заметки",
     "autoOrganizeLoadingDescription": "Создаем папки и распределяем записи. Это может занять до минуты.",
     "autoOrganizeStepAnalyzing": "Анализируем темы в заметках...",

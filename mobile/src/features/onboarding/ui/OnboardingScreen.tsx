@@ -144,6 +144,7 @@ const AnimatedProgressDots = ({
           />
         ))}
         <Animated.View
+          pointerEvents="none"
           style={[
             {
               position: 'absolute',
