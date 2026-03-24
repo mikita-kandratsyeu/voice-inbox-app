@@ -50,7 +50,7 @@ export const ALLOWED_AI_MODELS: string[] = [
   'deepseek/deepseek-v3.2',
   'google/gemini-2.5-flash-lite',
   'google/gemini-3.1-flash-lite-preview',
-  'minimax/minimax-m2.5',
+  'minimax/minimax-m2.7',
   'openai/gpt-5-nano',
   FALLBACK_MODEL,
 ];

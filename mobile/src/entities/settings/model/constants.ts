@@ -39,8 +39,8 @@ const DEEPSEEK_MODELS: AIModel[] = [
 
 const MINIMAX_MODELS: AIModel[] = [
   {
-    id: 'minimax/minimax-m2.5',
-    name: 'MiniMax M2.5',
+    id: 'minimax/minimax-m2.7',
+    name: 'MiniMax M2.7',
     provider: 'MiniMax',
     descriptionKey: 'aiModels.minimaxDesc',
     speed: 'fast',
