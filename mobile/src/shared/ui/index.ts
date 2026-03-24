@@ -16,4 +16,5 @@ export { SwipeableCard, SwipeableCardContext } from './SwipeableCard';
 export { SwipeHintBanner } from './SwipeHintBanner';
 export { TabEmptyState } from './TabEmptyState';
 export { Tag } from './Tag';
+export { WarmupBottomSheet } from './WarmupBottomSheet';
 export { Waveform } from './Waveform';

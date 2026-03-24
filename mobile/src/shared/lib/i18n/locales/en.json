@@ -21,7 +21,8 @@
     "done": "Done",
     "clear": "Clear",
     "error": "Error",
-    "biometrics": "Biometrics"
+    "biometrics": "Biometrics",
+    "pro": "Pro"
   },
   "proLicense": {
     "modalTitle": "Activate Pro",
@@ -66,7 +67,7 @@
     "emptyTitle": "Start your first recording",
     "emptyDescription": "Voice notes you record or import will show up here.",
     "emptyImportHint": "Long-press the record button to import an audio file",
-    "swipeHint": "Swipe left to archive, right to pin",
+    "swipeHint": "Swipe left to archive, right to pin. Long press a card to select notes, then tap Folder to move them.",
     "filterSummary": "{{filterName}}: {{count}}",
     "recordsCount": "{{count}} records",
     "pinned": "Pinned",
@@ -377,7 +378,7 @@
         "recordingUpTo30Min": "Up to 30 minutes per recording",
         "autoAi": "Auto AI after transcription",
         "autoTranscription": "Auto transcription for new notes",
-        "accentColor": "Accent color customization",
+        "colorCustomization": "Customize accent and folder colors",
         "noAds": "No ads",
         "earlyAccess": "Early access to new Pro features"
       }
@@ -730,5 +731,44 @@
     "secondsLeft": "~{{ count }} sec left",
     "minutesLeft": "~{{ count }} min left",
     "loadingModel": "Loading model into memory…"
+  },
+  "batch": {
+    "selectedCount_one": "{{count}} selected",
+    "selectedCount_other": "{{count}} selected",
+    "selectAll": "Select all",
+    "deselectAll": "Deselect all",
+    "archive": "Archive",
+    "unarchive": "Unarchive",
+    "delete": "Delete",
+    "export": "Export",
+    "moveToFolder": "Folder",
+    "deleteTitle_one": "Delete {{count}} note?",
+    "deleteTitle_other": "Delete {{count}} notes?",
+    "deleteConfirm_one": "This note will be permanently deleted.",
+    "deleteConfirm_other": "These {{count}} notes will be permanently deleted.",
+    "exportFailed": "Failed to export. Try again."
+  },
+  "folders": {
+    "all": "All",
+    "create": "New folder",
+    "edit": "Edit folder",
+    "delete": "Delete folder",
+    "deleteTitle": "Delete folder",
+    "deleteConfirm": "Records will not be deleted — they will move to All.",
+    "nameRequired": "Please enter a folder name.",
+    "nameLabel": "Name",
+    "namePlaceholder": "Folder name",
+    "iconLabel": "Icon",
+    "colorLabel": "Color",
+    "colorHint": "Shown on badge and as a left stripe on cards when viewing All.",
+    "colorProTitle": "Folder colors",
+    "colorProBody": "Upgrade to Pro to pick different colors for each folder — they show on badges and as left stripes on cards when viewing All.",
+    "pickerInboxOnly": "Inbox only",
+    "moveToFolderTitle": "Move to folder",
+    "moveToFolderMenu": "Move to folder",
+    "detailInbox": "Inbox",
+    "detailFolderRemoved": "Folder unavailable",
+    "detailA11yInbox": "Saved in inbox",
+    "detailA11yFolder": "Folder: {{name}}"
   }
 }

@@ -163,7 +163,7 @@ export const AppearanceScreen = () => {
                 <View className="flex-row items-center gap-1">
                   <Crown size={14} color={color.accent.primary} strokeWidth={2} />
                   <Text className="text-xs font-semibold" style={{ color: color.accent.primary }}>
-                    Pro
+                    {t('common.pro')}
                   </Text>
                 </View>
               ) : null}

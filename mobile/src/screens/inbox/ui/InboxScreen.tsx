@@ -6,19 +6,40 @@ import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import { ListChecks } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { KeyboardAvoidingView, LayoutAnimation, useWindowDimensions, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  LayoutAnimation,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { BottomTabParamList, RootStackParamList } from '@/app/navigation/types';
+import {
+  FolderChipBar,
+  FolderFormModal,
+  FolderPickerSheet,
+  useFolderStore,
+} from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 import { RecordCard, useRecordStore } from '@/entities/record';
+import {
+  BatchActionBar,
+  BatchCheckbox,
+  useBatchRecordActions,
+  useBatchSelect,
+} from '@/features/batch-select';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { InboxFilterBar, useInboxFiltersReset } from '@/features/inbox-filters';
+import { useManageFolders } from '@/features/manage-folders';
+import { useProEntitlement } from '@/features/pro-license';
 import { SearchBar, useSearchRecords } from '@/features/search-records';
 import { useColors } from '@/shared/config';
 import {
   keyboardAvoidingBehavior,
   keyboardVerticalOffset,
+  resolveDisplayFolderColor,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { getHasSeenSwipeHint, setHasSeenSwipeHint } from '@/shared/lib/hintsStorage';
@@ -56,6 +77,38 @@ export const InboxScreen = () => {
     })),
   );
 
+  const { folders, activeFolderId, setActiveFolder } = useFolderStore(
+    useShallow((s) => ({
+      folders: s.folders,
+      activeFolderId: s.activeFolderId,
+      setActiveFolder: s.setActiveFolder,
+    })),
+  );
+  const { isProActive } = useProEntitlement();
+
+  const {
+    modalVisible: folderModalVisible,
+    editingFolder,
+    openCreateModal: openCreateFolderModal,
+    openEditModal: openEditFolderModal,
+    closeModal: closeFolderModal,
+    handleSave: handleFolderSave,
+    handleDelete: handleFolderDelete,
+  } = useManageFolders();
+
+  const folderFilteredRecords = useMemo(() => {
+    if (!activeFolderId) return records;
+    return records.filter((r) => r.folderId === activeFolderId);
+  }, [records, activeFolderId]);
+
+  const folderColorById = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const f of folders) {
+      m.set(f.id, f.color);
+    }
+    return m;
+  }, [folders]);
+
   const {
     query,
     setQuery,
@@ -69,7 +122,7 @@ export const InboxScreen = () => {
     sortOption,
     setSortOption,
     resetToDefault,
-  } = useSearchRecords(records);
+  } = useSearchRecords(folderFilteredRecords);
 
   const totalFlattenedRecords = useMemo(
     () => countFlattenedRecords(flattenedData),
@@ -98,6 +151,72 @@ export const InboxScreen = () => {
     setShowSwipeHint(false);
   }, []);
 
+  const batchSelect = useBatchSelect();
+
+  const enterBatchMode = useCallback(
+    (initialId?: string) => {
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      batchSelect.enterSelectMode(initialId);
+    },
+    [batchSelect],
+  );
+
+  const exitBatchMode = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    batchSelect.exitSelectMode();
+  }, [batchSelect]);
+
+  const visibleRecordIds = useMemo(() => filtered.map((r) => r.id), [filtered]);
+
+  const { batchArchive, batchUnarchive, batchDelete, batchExport, batchMoveToFolder } =
+    useBatchRecordActions({
+      onComplete: exitBatchMode,
+    });
+
+  const [folderPickerVisible, setFolderPickerVisible] = useState(false);
+
+  const handleOpenBatchFolderPicker = useCallback(() => {
+    setFolderPickerVisible(true);
+  }, []);
+
+  const handleCloseBatchFolderPicker = useCallback(() => {
+    setFolderPickerVisible(false);
+  }, []);
+
+  const handleBatchFolderPicked = useCallback(
+    (folderId: string | null) => {
+      void batchMoveToFolder([...batchSelect.selectedIds], folderId);
+    },
+    [batchMoveToFolder, batchSelect.selectedIds],
+  );
+
+  const isArchivedView = filterStatus === 'archived';
+
+  const handleBatchArchive = useCallback(() => {
+    void batchArchive([...batchSelect.selectedIds]);
+  }, [batchArchive, batchSelect.selectedIds]);
+
+  const handleBatchUnarchive = useCallback(() => {
+    void batchUnarchive([...batchSelect.selectedIds]);
+  }, [batchUnarchive, batchSelect.selectedIds]);
+
+  const handleBatchDelete = useCallback(() => {
+    batchDelete([...batchSelect.selectedIds]);
+  }, [batchDelete, batchSelect.selectedIds]);
+
+  const handleBatchExport = useCallback(() => {
+    const selectedRecords = filtered.filter((r) => batchSelect.selectedIds.has(r.id));
+    void batchExport(selectedRecords);
+  }, [batchExport, filtered, batchSelect.selectedIds]);
+
+  const handleSelectAll = useCallback(() => {
+    if (batchSelect.selectedIds.size === visibleRecordIds.length) {
+      batchSelect.clearSelection();
+    } else {
+      batchSelect.selectAll(visibleRecordIds);
+    }
+  }, [batchSelect, visibleRecordIds]);
+
   useEffect(() => {
     if (!inboxFiltersReset) return;
     return inboxFiltersReset.registerReset(resetToDefault);
@@ -106,16 +225,26 @@ export const InboxScreen = () => {
   useEffect(() => {
     const unsubscribe = navigation.addListener('tabPress', () => {
       listRef.current?.scrollToOffset({ offset: 0, animated: true });
+      if (batchSelect.isSelectMode) exitBatchMode();
     });
     return unsubscribe;
-  }, [navigation]);
+  }, [navigation, batchSelect.isSelectMode, exitBatchMode]);
 
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: true });
   }, [filterStatus]);
 
+  useEffect(() => {
+    if (batchSelect.isSelectMode) exitBatchMode();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterStatus]);
+
   const handleStatusPress = useCallback(
     (item: VoiceRecord) => {
+      if (batchSelect.isSelectMode) {
+        batchSelect.toggleItem(item.id);
+        return;
+      }
       if (
         item.aiStatus === 'loading_model' ||
         item.aiStatus === 'processing' ||
@@ -125,14 +254,27 @@ export const InboxScreen = () => {
         navigation.navigate('RecordingDetail', { record: item });
       }
     },
-    [navigation],
+    [navigation, batchSelect],
   );
 
   const handleRecordPress = useCallback(
     (item: VoiceRecord) => {
+      if (batchSelect.isSelectMode) {
+        batchSelect.toggleItem(item.id);
+        return;
+      }
       navigation.navigate('RecordingDetail', { record: item });
     },
-    [navigation],
+    [navigation, batchSelect],
+  );
+
+  const handleRecordLongPress = useCallback(
+    (item: VoiceRecord) => {
+      if (!batchSelect.isSelectMode) {
+        enterBatchMode(item.id);
+      }
+    },
+    [batchSelect.isSelectMode, enterBatchMode],
   );
 
   const renderItem = useCallback(
@@ -140,7 +282,49 @@ export const InboxScreen = () => {
       if (item.type === 'header') {
         return <SectionHeader title={item.title} isFirst={item.isFirst} />;
       }
-      const isArchivedView = filterStatus === 'archived';
+
+      const isSelected = batchSelect.selectedIds.has(item.item.id);
+      const folderStripeColor =
+        !activeFolderId && item.item.folderId
+          ? resolveDisplayFolderColor(folderColorById.get(item.item.folderId), isProActive)
+          : undefined;
+
+      if (batchSelect.isSelectMode) {
+        const toggle = () => batchSelect.toggleItem(item.item.id);
+        return (
+          <View
+            style={{
+              marginHorizontal: 16,
+              marginBottom: 16,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: isSelected }}
+          >
+            <TouchableOpacity
+              onPress={toggle}
+              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: isSelected }}
+              style={{ paddingRight: 10, alignSelf: 'stretch', justifyContent: 'center' }}
+            >
+              <BatchCheckbox isSelected={isSelected} color={color} size={22} />
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <RecordCard
+                item={item.item}
+                color={color}
+                folderAccentColor={folderStripeColor}
+                onPress={toggle}
+                onStatusPress={toggle}
+                onLongPress={toggle}
+              />
+            </View>
+          </View>
+        );
+      }
+
       return (
         <SwipeableCard
           isPinned={item.item.isPinned}
@@ -159,21 +343,28 @@ export const InboxScreen = () => {
           <RecordCard
             item={item.item}
             color={color}
+            folderAccentColor={folderStripeColor}
             onPress={() => handleRecordPress(item.item)}
             onStatusPress={() => handleStatusPress(item.item)}
+            onLongPress={() => handleRecordLongPress(item.item)}
           />
         </SwipeableCard>
       );
     },
     [
       color,
-      filterStatus,
+      activeFolderId,
+      folderColorById,
+      isProActive,
+      isArchivedView,
       dismissSwipeHint,
       archiveRecord,
       unarchiveRecord,
       togglePin,
       handleRecordPress,
       handleStatusPress,
+      handleRecordLongPress,
+      batchSelect,
     ],
   );
 
@@ -183,7 +374,6 @@ export const InboxScreen = () => {
     if (item.type === 'header') {
       return `header-${item.title}`;
     }
-
     return item.item.id;
   }, []);
 
@@ -202,27 +392,53 @@ export const InboxScreen = () => {
   };
   const listStyle = { backgroundColor: color.background.secondary };
 
+  const allSelected =
+    visibleRecordIds.length > 0 && batchSelect.selectedIds.size === visibleRecordIds.length;
+
   return (
-    <View style={screenStyle}>
+    <View style={[screenStyle, { flex: 1 }]}>
       <InboxHeader
         color={color}
         isLoaded={isLoaded}
-        subtitleText={subtitleText}
+        subtitleText={
+          batchSelect.isSelectMode
+            ? t('batch.selectedCount', { count: batchSelect.selectedIds.size })
+            : subtitleText
+        }
         title={t('inbox.title')}
         rightSlot={
           isLoaded ? (
-            <Button
-              iconOnly
-              variant="icon"
-              size="md"
-              icon={<ListChecks size={22} color={color.text.primary} strokeWidth={2.2} />}
-              color={color}
-              onPress={() => navigation.navigate('AllTasks')}
-              accessibilityLabel={t('allTasks.a11yOpenAllTasks')}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            />
+            batchSelect.isSelectMode ? (
+              <Button
+                iconOnly={false}
+                variant="icon"
+                size="md"
+                label={allSelected ? t('batch.deselectAll') : t('batch.selectAll')}
+                color={color}
+                onPress={handleSelectAll}
+              />
+            ) : (
+              <Button
+                iconOnly
+                variant="icon"
+                size="md"
+                icon={<ListChecks size={22} color={color.text.primary} strokeWidth={2.2} />}
+                color={color}
+                onPress={() => navigation.navigate('AllTasks')}
+                accessibilityLabel={t('allTasks.a11yOpenAllTasks')}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              />
+            )
           ) : undefined
         }
+      />
+      <FolderChipBar
+        folders={folders}
+        activeFolderId={activeFolderId}
+        color={color}
+        onSelect={setActiveFolder}
+        onCreatePress={openCreateFolderModal}
+        onEditPress={openEditFolderModal}
       />
       {!isLoaded ? (
         <InboxSkeleton color={color} />
@@ -244,15 +460,21 @@ export const InboxScreen = () => {
           keyboardVerticalOffset={keyboardVerticalOffset}
         >
           <View style={{ flex: 1, alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}>
-            <SearchBar query={query} onChangeQuery={setQuery} color={color} />
-            {showSwipeHint ? <SwipeHintBanner onDismiss={dismissSwipeHint} /> : null}
-            <InboxFilterBar
-              filterStatus={filterStatus}
-              sortOption={sortOption}
-              onFilterChange={setFilterStatus}
-              onSortChange={setSortOption}
-              color={color}
-            />
+            {!batchSelect.isSelectMode && (
+              <SearchBar query={query} onChangeQuery={setQuery} color={color} />
+            )}
+            {showSwipeHint && !batchSelect.isSelectMode ? (
+              <SwipeHintBanner onDismiss={dismissSwipeHint} />
+            ) : null}
+            {!batchSelect.isSelectMode && (
+              <InboxFilterBar
+                filterStatus={filterStatus}
+                sortOption={sortOption}
+                onFilterChange={setFilterStatus}
+                onSortChange={setSortOption}
+                color={color}
+              />
+            )}
             {isSearching && filtered.length === 0 ? (
               <EmptySearchState query={query} color={color} />
             ) : filtered.length === 0 ? (
@@ -273,11 +495,42 @@ export const InboxScreen = () => {
                 contentContainerStyle={listContentStyle}
                 style={listStyle}
                 showsVerticalScrollIndicator={false}
+                extraData={batchSelect.selectedIds}
               />
             )}
           </View>
         </KeyboardAvoidingView>
       )}
+
+      {batchSelect.isSelectMode && (
+        <BatchActionBar
+          count={batchSelect.selectedIds.size}
+          color={color}
+          showUnarchive={isArchivedView}
+          onArchive={handleBatchArchive}
+          onUnarchive={handleBatchUnarchive}
+          onDelete={handleBatchDelete}
+          onExport={handleBatchExport}
+          onMoveToFolder={handleOpenBatchFolderPicker}
+          onCancel={exitBatchMode}
+        />
+      )}
+
+      <FolderPickerSheet
+        visible={folderPickerVisible}
+        title={t('folders.moveToFolderTitle')}
+        folders={folders}
+        onClose={handleCloseBatchFolderPicker}
+        onSelect={handleBatchFolderPicked}
+      />
+
+      <FolderFormModal
+        visible={folderModalVisible}
+        folder={editingFolder}
+        onSave={handleFolderSave}
+        onDelete={editingFolder ? () => handleFolderDelete(editingFolder.id) : undefined}
+        onClose={closeFolderModal}
+      />
     </View>
   );
 };

@@ -14,15 +14,19 @@ import { AiStatusPill } from './AiStatusPill';
 type RecordCardProps = {
   item: VoiceRecord;
   color: Colors;
+  folderAccentColor?: string;
   onPress: () => void;
   onStatusPress: () => void;
+  onLongPress?: () => void;
 };
 
 export const RecordCard = React.memo(function RecordCard({
   item,
   color,
+  folderAccentColor,
   onPress,
   onStatusPress,
+  onLongPress,
 }: RecordCardProps) {
   const { i18n } = useTranslation();
   const { isSwiping } = React.useContext(SwipeableCardContext);
@@ -53,106 +57,129 @@ export const RecordCard = React.memo(function RecordCard({
     aiProcessing ||
     aiError;
 
+  const showFolderStripe = Boolean(folderAccentColor);
+
   return (
     <Pressable
       style={({ pressed }) => [
         cardStyle,
-        { borderRadius: 16, padding: 16, opacity: pressed && !isSwiping ? 0.75 : 1 },
+        {
+          borderRadius: 16,
+          padding: 0,
+          overflow: 'hidden',
+          flexDirection: 'row',
+          opacity: pressed && !isSwiping ? 0.75 : 1,
+        },
       ]}
       onPress={isSwiping ? undefined : onPress}
+      onLongPress={isSwiping ? undefined : onLongPress}
+      delayLongPress={350}
     >
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          marginBottom: 10,
-        }}
-      >
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginRight: 8 }}>
-          {item.isPinned ? (
-            <Pin size={14} color={color.accent.pin} strokeWidth={2} style={pinIconStyle} />
-          ) : null}
-          <Text
-            style={[textPrimaryStyle, { flex: 1, fontSize: 15, fontWeight: '600' }]}
-            numberOfLines={1}
-          >
-            {item.title}
-          </Text>
-        </View>
-        {showStatusPill && (
-          <AiStatusPill
-            aiStatus={item.aiStatus ?? 'done'}
-            transcriptProgress={item.transcriptProgress}
-            transcriptProgressLabel={item.transcriptProgressLabel}
-            summaryStatus={item.summaryStatus}
-            tasksStatus={item.tasksStatus}
-            onPress={onStatusPress}
-          />
-        )}
-      </View>
-
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          marginBottom: 12,
-          gap: 8,
-          flexWrap: 'wrap',
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Clock size={14} color={color.icon.muted} strokeWidth={2} />
-          <Text style={[textSecondaryStyle, { marginLeft: 4, fontSize: 12 }]}>
-            {item.duration}
-            {'  '}
-            {formatRelativeTime(item.createdAt, i18n.language)}
-          </Text>
-        </View>
-        {hasTasks && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            {allTasksDone ? (
-              <CheckCircle2 size={14} color={color.accent.success} strokeWidth={2} />
-            ) : (
-              <>
-                <ListChecks size={14} color={color.icon.muted} strokeWidth={2} />
-                <Text style={[textSecondaryStyle, { fontSize: 12 }]}>
-                  {doneCount}/{tasks.length}
-                </Text>
-              </>
-            )}
-          </View>
-        )}
-        {item.classification && (
-          <View
-            style={{
-              paddingHorizontal: 6,
-              paddingVertical: 2,
-              borderRadius: 6,
-              backgroundColor: color.background.tertiary,
-            }}
-          >
-            <Text style={[textSecondaryStyle, { fontSize: 11 }]}>
-              {i18n.t(`classification.${item.classification}`)}
+      {showFolderStripe ? (
+        <View
+          style={{
+            width: 4,
+            alignSelf: 'stretch',
+            backgroundColor: folderAccentColor,
+          }}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        />
+      ) : null}
+      <View style={{ flex: 1, padding: 16 }}>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            marginBottom: 10,
+          }}
+        >
+          <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginRight: 8 }}>
+            {item.isPinned ? (
+              <Pin size={14} color={color.accent.pin} strokeWidth={2} style={pinIconStyle} />
+            ) : null}
+            <Text
+              style={[textPrimaryStyle, { flex: 1, fontSize: 15, fontWeight: '600' }]}
+              numberOfLines={1}
+            >
+              {item.title}
             </Text>
           </View>
+          {showStatusPill && (
+            <AiStatusPill
+              aiStatus={item.aiStatus ?? 'done'}
+              transcriptProgress={item.transcriptProgress}
+              transcriptProgressLabel={item.transcriptProgressLabel}
+              summaryStatus={item.summaryStatus}
+              tasksStatus={item.tasksStatus}
+              onPress={onStatusPress}
+            />
+          )}
+        </View>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 12,
+            gap: 8,
+            flexWrap: 'wrap',
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Clock size={14} color={color.icon.muted} strokeWidth={2} />
+            <Text style={[textSecondaryStyle, { marginLeft: 4, fontSize: 12 }]}>
+              {item.duration}
+              {'  '}
+              {formatRelativeTime(item.createdAt, i18n.language)}
+            </Text>
+          </View>
+          {hasTasks && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              {allTasksDone ? (
+                <CheckCircle2 size={14} color={color.accent.success} strokeWidth={2} />
+              ) : (
+                <>
+                  <ListChecks size={14} color={color.icon.muted} strokeWidth={2} />
+                  <Text style={[textSecondaryStyle, { fontSize: 12 }]}>
+                    {doneCount}/{tasks.length}
+                  </Text>
+                </>
+              )}
+            </View>
+          )}
+          {item.classification && (
+            <View
+              style={{
+                paddingHorizontal: 6,
+                paddingVertical: 2,
+                borderRadius: 6,
+                backgroundColor: color.background.tertiary,
+              }}
+            >
+              <Text style={[textSecondaryStyle, { fontSize: 11 }]}>
+                {i18n.t(`classification.${item.classification}`)}
+              </Text>
+            </View>
+          )}
+        </View>
+        {Boolean(item.transcript) && (
+          <Text
+            style={[textSecondaryStyle, { fontSize: 14, lineHeight: 20, marginBottom: 12 }]}
+            numberOfLines={2}
+          >
+            {item.transcript}
+          </Text>
+        )}
+        {hasTags && (
+          <View className="flex-row flex-wrap gap-2">
+            {item.tags!.map((tag) => (
+              <Tag key={tag} label={tag} />
+            ))}
+          </View>
         )}
       </View>
-      {Boolean(item.transcript) && (
-        <Text
-          style={[textSecondaryStyle, { fontSize: 14, lineHeight: 20, marginBottom: 12 }]}
-          numberOfLines={2}
-        >
-          {item.transcript}
-        </Text>
-      )}
-      {hasTags && (
-        <View className="flex-row flex-wrap gap-2">
-          {item.tags!.map((tag) => (
-            <Tag key={tag} label={tag} />
-          ))}
-        </View>
-      )}
     </Pressable>
   );
 });

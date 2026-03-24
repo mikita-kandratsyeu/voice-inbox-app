@@ -1,16 +1,31 @@
 import { useCallback, useEffect } from 'react';
 import { Linking } from 'react-native';
 
+import { navigationRef } from '@/app/navigation/navigationRef';
 import { useDownloadingDeeplink } from '@/features/downloading-deeplink';
 import { useRecordingDeeplink } from '@/features/recording-deeplink/model/useRecordingDeeplink';
+
+const START_RECORDING_URL = 'voiceinbox://record/start';
 
 export const useInitDeepLinking = () => {
   const { handleRecordingDeeplink } = useRecordingDeeplink();
   const { handleDownloadingDeeplink } = useDownloadingDeeplink();
 
+  const handleStartRecording = useCallback((rawUrl: string) => {
+    const normalized = rawUrl.replace(/\/+$/, '');
+    if (normalized !== START_RECORDING_URL) return false;
+
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('RecordModal');
+    }
+    return true;
+  }, []);
+
   const routeDeepLink = useCallback(
     (rawUrl: string) => {
       try {
+        if (handleStartRecording(rawUrl)) return;
+
         const url = new URL(rawUrl);
 
         handleRecordingDeeplink(url);
@@ -19,7 +34,7 @@ export const useInitDeepLinking = () => {
         if (__DEV__) console.warn('[deeplink] invalid url', rawUrl, e);
       }
     },
-    [handleDownloadingDeeplink, handleRecordingDeeplink],
+    [handleDownloadingDeeplink, handleRecordingDeeplink, handleStartRecording],
   );
 
   useEffect(() => {

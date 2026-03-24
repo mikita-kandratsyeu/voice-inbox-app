@@ -31,20 +31,20 @@ const ACCENT_PATCHES: Record<
     dark: { primary: '#8b5cf6', processingBg: '#2e1065', processingText: '#c4b5fd' },
   },
   fuchsia: {
-    light: { primary: '#d946ef', processingBg: '#fdf4ff', processingText: '#a21caf' },
-    dark: { primary: '#d946ef', processingBg: '#4a044e', processingText: '#f0abfc' },
+    light: { primary: '#c026d3', processingBg: '#fdf4ff', processingText: '#86198f' },
+    dark: { primary: '#e879f9', processingBg: '#4a044e', processingText: '#f0abfc' },
   },
   rose: {
     light: { primary: '#f43f5e', processingBg: '#fff1f2', processingText: '#e11d48' },
     dark: { primary: '#f43f5e', processingBg: '#4c0519', processingText: '#fb7185' },
   },
   orange: {
-    light: { primary: '#f97316', processingBg: '#fff7ed', processingText: '#c2410c' },
-    dark: { primary: '#f97316', processingBg: '#431407', processingText: '#fdba74' },
+    light: { primary: '#ea580c', processingBg: '#fff7ed', processingText: '#9a3412' },
+    dark: { primary: '#fb923c', processingBg: '#7c2d12', processingText: '#fdba74' },
   },
   amber: {
-    light: { primary: '#f59e0b', processingBg: '#fffbeb', processingText: '#d97706' },
-    dark: { primary: '#f59e0b', processingBg: '#422006', processingText: '#fcd34d' },
+    light: { primary: '#d97706', processingBg: '#fffbeb', processingText: '#92400e' },
+    dark: { primary: '#fbbf24', processingBg: '#422006', processingText: '#fde68a' },
   },
   emerald: {
     light: { primary: '#10b981', processingBg: '#ecfdf5', processingText: '#047857' },
@@ -61,10 +61,10 @@ export const ACCENT_COLOR_SWATCHES: { id: AccentColorId; previewHex: string }[] 
   { id: 'default', previewHex: '#3b82f6' },
   { id: 'indigo', previewHex: '#6366f1' },
   { id: 'violet', previewHex: '#8b5cf6' },
-  { id: 'fuchsia', previewHex: '#d946ef' },
+  { id: 'fuchsia', previewHex: '#c026d3' },
   { id: 'rose', previewHex: '#f43f5e' },
-  { id: 'orange', previewHex: '#f97316' },
-  { id: 'amber', previewHex: '#f59e0b' },
+  { id: 'orange', previewHex: '#ea580c' },
+  { id: 'amber', previewHex: '#d97706' },
   { id: 'emerald', previewHex: '#10b981' },
   { id: 'cyan', previewHex: '#06b6d4' },
 ];

@@ -9,5 +9,6 @@ export type {
   TaskSource,
   TranscriptSegment,
   VoiceRecord,
+  WordToken,
 } from './model/types';
 export { AiStatusPill, RecordCard } from './ui';

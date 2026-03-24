@@ -20,6 +20,7 @@ import { TranscriptTab } from './TranscriptTab';
 type TranscriptContentProps = {
   record: VoiceRecord;
   color: Colors;
+  currentPositionMs?: number;
   onTranscribe: () => void;
   onCancelTranscription: () => void;
 };
@@ -27,6 +28,7 @@ type TranscriptContentProps = {
 export const TranscriptContent = ({
   record,
   color,
+  currentPositionMs = 0,
   onTranscribe,
   onCancelTranscription,
 }: TranscriptContentProps) => {
@@ -105,6 +107,7 @@ export const TranscriptContent = ({
         segments={r.transcriptSegments ?? []}
         translatedTranscript={r.translatedTranscript}
         translationLanguage={r.translationLanguage}
+        currentPositionMs={currentPositionMs}
         color={color}
         hasAudio={!!r.audioPath}
         onTranscribe={onTranscribe}

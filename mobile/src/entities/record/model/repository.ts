@@ -45,6 +45,7 @@ type RecordListQueryRow = {
   translatedTranscript: string | null;
   translationLanguage: string | null;
   audioPath: string | null;
+  folderId: string | null;
 };
 
 type RecordRowRaw = RecordListQueryRow & {
@@ -78,6 +79,7 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     translationLanguage: row.translationLanguage ?? undefined,
     audioPath: audioPathFromDbValue(row.audioPath),
     embedding: row.embedding ? (JSON.parse(row.embedding) as number[]) : undefined,
+    folderId: row.folderId ?? null,
     summaryStatus: summary ? ('done' as RecordingStatus) : undefined,
     tasksStatus: tasks.length > 0 ? ('done' as RecordingStatus) : undefined,
   };
@@ -108,6 +110,7 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
     translatedTranscript: row.translatedTranscript ?? undefined,
     translationLanguage: row.translationLanguage ?? undefined,
     audioPath: audioPathFromDbValue(row.audioPath),
+    folderId: row.folderId ?? null,
     detailsHydrated: false,
     summaryStatus: summary ? ('done' as RecordingStatus) : undefined,
     tasksStatus: tasks.length > 0 ? ('done' as RecordingStatus) : undefined,
@@ -135,6 +138,7 @@ const recordListColumns = {
   translatedTranscript: recordsTable.translatedTranscript,
   translationLanguage: recordsTable.translationLanguage,
   audioPath: recordsTable.audioPath,
+  folderId: recordsTable.folderId,
 } as const;
 
 export const recordRepository = {
@@ -230,6 +234,7 @@ export const recordRepository = {
         translationLanguage: record.translationLanguage ?? null,
         audioPath: audioPathToDbValue(record.audioPath),
         embedding: record.embedding ? JSON.stringify(record.embedding) : null,
+        folderId: record.folderId ?? null,
       })
       .onConflictDoNothing();
   },

@@ -18,6 +18,7 @@ type AudioPlayerProps = {
   duration: string;
   color: Colors;
   audioPath?: string;
+  onPositionChange?: (positionMs: number) => void;
 };
 
 const parseDuration = (d: string) => {
@@ -32,7 +33,7 @@ const parseDuration = (d: string) => {
 
 const player = AudioRecorderPlayer;
 
-export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) => {
+export const AudioPlayer = ({ duration, color, audioPath, onPositionChange }: AudioPlayerProps) => {
   const { t } = useTranslation();
   const totalSeconds = parseDuration(duration);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -46,6 +47,8 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
   const isPlayerLoadedRef = useRef(false);
   const skipHoldTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const skipHoldIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onPositionChangeRef = useRef(onPositionChange);
+  onPositionChangeRef.current = onPositionChange;
   const totalMs = totalSeconds * 1000;
   const playbackSpeed = PLAYBACK_SPEEDS[speedIndex];
 
@@ -95,6 +98,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
           elapsedRef.current = secs;
           progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
           setElapsed(secs);
+          onPositionChangeRef.current?.(e.currentPosition);
         });
 
         player.addPlaybackEndListener(() => {
@@ -103,6 +107,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
           setIsPlaying(false);
           setElapsed(totalSeconds);
           elapsedRef.current = totalSeconds;
+          onPositionChangeRef.current?.(totalSeconds * 1000);
         });
 
         await player.startPlayer(audioPath, {
@@ -155,6 +160,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
           const secs = Math.floor(e.currentPosition / 1000);
           elapsedRef.current = secs;
           progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
+          onPositionChangeRef.current?.(e.currentPosition);
           if (secs !== lastDisplayedSecsRef.current) {
             lastDisplayedSecsRef.current = secs;
             setElapsed(secs);
@@ -169,6 +175,7 @@ export const AudioPlayer = ({ duration, color, audioPath }: AudioPlayerProps) =>
           elapsedRef.current = totalSeconds;
           lastDisplayedSecsRef.current = totalSeconds;
           progressValue.value = totalSeconds > 0 ? 1 : 0;
+          onPositionChangeRef.current?.(totalSeconds * 1000);
         });
 
         if (isPlayerLoadedRef.current) {

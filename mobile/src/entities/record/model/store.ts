@@ -1,6 +1,8 @@
 import RNFS from 'react-native-fs';
 import { create } from 'zustand';
 
+import { folderRepository } from '@/entities/folder/model/repository';
+
 import { recordRepository } from './repository';
 import type {
   RecordClassification,
@@ -111,6 +113,8 @@ type RecordStore = {
   toggleTask: (id: string, taskId: string) => Promise<void>;
   clearAudioPath: (id: string) => Promise<void>;
   setEmbedding: (id: string, embedding: number[] | null) => void;
+  setRecordFolder: (id: string, folderId: string | null) => Promise<void>;
+  detachRecordsFromDeletedFolder: (folderId: string) => void;
 };
 
 export const useRecordStore = create<RecordStore>((set, get) => ({
@@ -326,6 +330,19 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
         embedding: embedding ?? undefined,
         detailsHydrated: true,
       }),
+    }));
+  },
+
+  setRecordFolder: async (id, folderId) => {
+    await folderRepository.updateRecordFolder(id, folderId);
+    set((s) => ({
+      records: updateRecord(s.records, id, { folderId }),
+    }));
+  },
+
+  detachRecordsFromDeletedFolder: (folderId) => {
+    set((s) => ({
+      records: s.records.map((r) => (r.folderId === folderId ? { ...r, folderId: null } : r)),
     }));
   },
 }));

@@ -19,6 +19,7 @@ type RecordingDetailHeaderProps = {
   onShareAudio: () => void;
   onAskAI: () => void;
   onRename: () => void;
+  onMoveToFolder: () => void;
   onArchive: () => void;
   onUnarchive: () => void;
   onDelete: () => void;
@@ -33,6 +34,7 @@ export const RecordingDetailHeader = ({
   onShareAudio,
   onAskAI,
   onRename,
+  onMoveToFolder,
   onArchive,
   onUnarchive,
   onDelete,
@@ -105,6 +107,7 @@ export const RecordingDetailHeader = ({
           shouldOpenOnLongPress={false}
           onPressAction={({ nativeEvent }) => {
             if (nativeEvent.event === 'rename') onRename();
+            if (nativeEvent.event === 'moveToFolder') onMoveToFolder();
             if (nativeEvent.event === 'shareAudio') onShareAudio();
             if (nativeEvent.event === 'archive') onArchive();
             if (nativeEvent.event === 'unarchive') onUnarchive();
@@ -115,6 +118,13 @@ export const RecordingDetailHeader = ({
               id: 'rename',
               title: t('recordActions.rename'),
               image: 'pencil',
+              imageColor: color.text.primary,
+              titleColor: color.text.primary,
+            },
+            {
+              id: 'moveToFolder',
+              title: t('folders.moveToFolderMenu'),
+              image: 'folder',
               imageColor: color.text.primary,
               titleColor: color.text.primary,
             },

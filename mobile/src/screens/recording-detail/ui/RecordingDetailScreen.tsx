@@ -1,7 +1,7 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, useWindowDimensions, View } from 'react-native';
 import RNFS from 'react-native-fs';
@@ -10,17 +10,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { RootStackParamList } from '@/app/navigation/types';
+import { FolderPickerSheet, useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
+import { useProEntitlement } from '@/features/pro-license';
 import { useRecordActions } from '@/features/record-actions';
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
 import { useColors } from '@/shared/config';
-import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
-import { AudioPlayer } from '@/widgets/audio-player';
+import { resolveDisplayFolderColor, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import { AudioPlayer, usePlaybackPosition } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
 import { AskAIModal } from './AskAIModal';
@@ -56,6 +58,7 @@ export const RecordingDetailScreen = () => {
     archiveRecord,
     unarchiveRecord,
     hydrateRecordDetails,
+    setRecordFolder,
   } = useRecordStore(
     useShallow((s) => ({
       liveRecord: s.records.find((r) => r.id === recordId) ?? routeRecord,
@@ -68,8 +71,24 @@ export const RecordingDetailScreen = () => {
       archiveRecord: s.archiveRecord,
       unarchiveRecord: s.unarchiveRecord,
       hydrateRecordDetails: s.hydrateRecordDetails,
+      setRecordFolder: s.setRecordFolder,
     })),
   );
+
+  const folders = useFolderStore(useShallow((s) => s.folders));
+  const { isProActive } = useProEntitlement();
+
+  const folderPlacement = useMemo(() => {
+    const fid = liveRecord.folderId;
+    if (!fid) return { kind: 'inbox' as const };
+    const f = folders.find((x) => x.id === fid);
+    if (!f) return { kind: 'missing' as const };
+    return {
+      kind: 'folder' as const,
+      folder: f,
+      tintHex: resolveDisplayFolderColor(f.color, isProActive),
+    };
+  }, [liveRecord.folderId, folders, isProActive]);
 
   const { whisperModelStatuses, selectedWhisperModel, globalTranscriptionLanguage } =
     useSettingsStore(
@@ -83,6 +102,8 @@ export const RecordingDetailScreen = () => {
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
   const [mountedTabs, setMountedTabs] = useState<Set<Tab>>(new Set(['transcript']));
   const [showAskAIModal, setShowAskAIModal] = useState(false);
+  const [folderPickerVisible, setFolderPickerVisible] = useState(false);
+  const { currentPositionMs, onPositionUpdate } = usePlaybackPosition();
   const [recordLanguage, setRecordLanguage] = useState<TranscriptionLanguage>(
     globalTranscriptionLanguage,
   );
@@ -224,6 +245,14 @@ export const RecordingDetailScreen = () => {
     [liveRecord.id, unarchiveRecord],
   );
   const onDelete = useCallback(() => promptDelete(liveRecord), [liveRecord, promptDelete]);
+  const onMoveToFolderMenu = useCallback(() => setFolderPickerVisible(true), []);
+  const onCloseFolderPicker = useCallback(() => setFolderPickerVisible(false), []);
+  const onDetailFolderPicked = useCallback(
+    (folderId: string | null) => {
+      void setRecordFolder(liveRecord.id, folderId);
+    },
+    [liveRecord.id, setRecordFolder],
+  );
 
   const handleDismissSummaryError = useCallback(() => {
     setSummaryStatus(liveRecord.id, 'done');
@@ -254,9 +283,19 @@ export const RecordingDetailScreen = () => {
         onShareAudio={handleShareAudio}
         onAskAI={onAskAI}
         onRename={onRename}
+        onMoveToFolder={onMoveToFolderMenu}
         onArchive={onArchive}
         onUnarchive={onUnarchive}
         onDelete={onDelete}
+      />
+
+      <FolderPickerSheet
+        visible={folderPickerVisible}
+        title={t('folders.moveToFolderTitle')}
+        folders={folders}
+        currentFolderId={liveRecord.folderId ?? null}
+        onClose={onCloseFolderPicker}
+        onSelect={onDetailFolderPicked}
       />
 
       <KeyboardAwareScrollView
@@ -273,13 +312,18 @@ export const RecordingDetailScreen = () => {
         bottomOffset={16}
       >
         <View style={{ width: '100%', maxWidth: contentMaxWidth, gap: 12 }}>
-          <RecordingDetailCard record={liveRecord} color={color} />
+          <RecordingDetailCard
+            record={liveRecord}
+            color={color}
+            folderPlacement={folderPlacement}
+          />
 
           <View className="overflow-hidden rounded-2xl">
             <AudioPlayer
               duration={liveRecord.duration}
               color={color}
               audioPath={liveRecord.audioPath}
+              onPositionChange={onPositionUpdate}
             />
           </View>
 
@@ -301,6 +345,7 @@ export const RecordingDetailScreen = () => {
                 <TranscriptContent
                   record={liveRecord}
                   color={color}
+                  currentPositionMs={currentPositionMs}
                   onTranscribe={handleRetranscribe}
                   onCancelTranscription={handleCancelTranscription}
                 />

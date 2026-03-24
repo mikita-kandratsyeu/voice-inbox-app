@@ -1,6 +1,7 @@
 import { getInitialNotification, getMessaging } from '@react-native-firebase/messaging';
 import { useEffect } from 'react';
 
+import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
@@ -29,7 +30,7 @@ export function useAppBootstrap(
     initRuntimeConfig()
       .then(() => initDB())
       .then(async () => {
-        await useRecordStore.getState().load();
+        await Promise.all([useRecordStore.getState().load(), useFolderStore.getState().load()]);
 
         if (!cancelled) {
           onBootstrapReady?.();

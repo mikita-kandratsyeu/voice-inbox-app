@@ -1,6 +1,6 @@
 import type { WhisperContext } from 'whisper.rn';
 
-import type { TranscriptSegment } from '@/entities/record';
+import type { TranscriptSegment, WordToken } from '@/entities/record';
 import type { AudioChunk } from '@/shared/lib/audio';
 import { splitAudioIntoChunks } from '@/shared/lib/audio';
 import { isArray, isRecord, isString } from '@/shared/lib/type-guards';
@@ -40,7 +40,8 @@ const formatTimestamp = (centiseconds: number): string => {
   return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
 };
 
-type WhisperSegment = { text: string; t0: number; t1: number };
+type WhisperToken = { text: string; t0: number; t1: number };
+type WhisperSegment = { text: string; t0: number; t1: number; tokens?: WhisperToken[] };
 type WhisperTranscribeResult = { result: string; segments: WhisperSegment[] };
 
 const normalizeResult = (raw: unknown): WhisperTranscribeResult => {
@@ -54,11 +55,34 @@ const normalizeResult = (raw: unknown): WhisperTranscribeResult => {
   return { result: '', segments: [] };
 };
 
-const mapSegments = (result: WhisperTranscribeResult, offset: number = 0): TranscriptSegment[] =>
+const CENTISECONDS_TO_MS = 10;
+
+const mapTokens = (
+  tokens: WhisperToken[] | undefined,
+  chunkOffsetMs = 0,
+): WordToken[] | undefined => {
+  if (!tokens || tokens.length === 0) return undefined;
+  return tokens
+    .filter((tok) => tok.text && !tok.text.startsWith('['))
+    .map((tok) => ({
+      text: tok.text,
+      startMs: Number(tok.t0) * CENTISECONDS_TO_MS + chunkOffsetMs,
+      endMs: Number(tok.t1) * CENTISECONDS_TO_MS + chunkOffsetMs,
+    }));
+};
+
+const mapSegments = (
+  result: WhisperTranscribeResult,
+  offset: number = 0,
+  chunkOffsetMs = 0,
+): TranscriptSegment[] =>
   (result.segments || []).map((seg, idx) => ({
     id: String(offset + idx),
     startTime: formatTimestamp(Number(seg?.t0) || 0),
+    startMs: Number(seg?.t0 ?? 0) * CENTISECONDS_TO_MS + chunkOffsetMs,
+    endMs: Number(seg?.t1 ?? 0) * CENTISECONDS_TO_MS + chunkOffsetMs,
     text: (seg?.text ?? '').trim(),
+    tokens: mapTokens(seg?.tokens, chunkOffsetMs),
   }));
 
 export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudioHandle => {
@@ -149,7 +173,7 @@ const transcribeShort = async ({
 
   const result = normalizeResult(raw);
   return {
-    segments: mapSegments(result),
+    segments: mapSegments(result, 0, 0),
     fullText: (result.result ?? '').trim(),
   };
 };
@@ -218,7 +242,7 @@ const transcribeLong = async ({
     }
 
     const result = normalizeResult(raw);
-    const chunkSegments = mapSegments(result, segmentOffset);
+    const chunkSegments = mapSegments(result, segmentOffset, chunk.offsetMs);
     allSegments.push(...chunkSegments);
     segmentOffset += chunkSegments.length;
 

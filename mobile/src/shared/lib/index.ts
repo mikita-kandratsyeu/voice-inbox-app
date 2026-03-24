@@ -8,8 +8,8 @@ export { formatRelativeTime, formatShortDate } from './date';
 export { formatDurationMmSs, formatTime, formatTimeWithMs } from './date';
 export type { Database } from './db/client';
 export { getDB, initDB } from './db/client';
-export type { RecordInsert, RecordRow } from './db/schema';
-export { recordsTable } from './db/schema';
+export type { FolderInsert, FolderRow, RecordInsert, RecordRow } from './db/schema';
+export { foldersTable, recordsTable } from './db/schema';
 export {
   checkEmbeddingAvailability,
   cosineSimilarity,
@@ -19,6 +19,15 @@ export {
   prepareEmbeddingModel,
 } from './embeddings';
 export { fetch } from './fetch';
+export {
+  DEFAULT_FOLDER_BRAND_HEX,
+  folderChipActiveForeground,
+  isDarkSurfaceColor,
+  parseRgbFromHex,
+  relativeLuminanceFromHex,
+  resolveDisplayFolderColor,
+  withAlphaHex,
+} from './folderColor';
 export { hapticError, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from './haptics';
 export type { SupportedLocale } from './i18n';
 export { applyAppLanguage, i18n, initI18n } from './i18n';

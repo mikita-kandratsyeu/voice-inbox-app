@@ -151,7 +151,7 @@ export function SettingsPlanPaywallSheet({
           <FeatureRow text={t('settings.planPaywall.features.recordingUpTo30Min')} />
           <FeatureRow text={t('settings.planPaywall.features.autoAi')} />
           <FeatureRow text={t('settings.planPaywall.features.autoTranscription')} />
-          <FeatureRow text={t('settings.planPaywall.features.accentColor')} />
+          <FeatureRow text={t('settings.planPaywall.features.colorCustomization')} />
           <FeatureRow text={t('settings.planPaywall.features.earlyAccess')} />
           <FeatureRow text={t('settings.planPaywall.features.noAds')} />
         </View>

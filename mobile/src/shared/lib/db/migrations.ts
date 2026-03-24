@@ -39,14 +39,35 @@ ALTER TABLE \`records\` ADD \`translationLanguage\` text;`;
 
 const migration0005 = `ALTER TABLE \`records\` ADD \`embedding\` text;`;
 
+const migration0006 = `CREATE TABLE IF NOT EXISTS \`folders\` (
+\`id\` text PRIMARY KEY NOT NULL,
+\`name\` text NOT NULL,
+\`color\` text DEFAULT '#6b7280',
+\`icon\` text DEFAULT '📁',
+\`sortOrder\` integer DEFAULT 0,
+\`createdAt\` text NOT NULL
+);
+--> statement-breakpoint
+ALTER TABLE \`records\` ADD \`folderId\` text;
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS \`idx_records_folderId\` ON \`records\` (\`folderId\`);`;
+
 export const migrationsConfig = {
   journal: {
-    entries: journal.entries.map((e) => ({
-      idx: e.idx,
-      when: e.when,
-      tag: e.tag,
-      breakpoints: e.breakpoints ?? true,
-    })),
+    entries: [
+      ...journal.entries.map((e) => ({
+        idx: e.idx,
+        when: e.when,
+        tag: e.tag,
+        breakpoints: e.breakpoints ?? true,
+      })),
+      {
+        idx: 6,
+        when: 1775000000000,
+        tag: '0006_folders',
+        breakpoints: true,
+      },
+    ],
   },
   migrations: {
     m0000: migration0000,
@@ -55,5 +76,6 @@ export const migrationsConfig = {
     m0003: migration0003,
     m0004: migration0004,
     m0005: migration0005,
+    m0006: migration0006,
   } as Record<string, string>,
 };

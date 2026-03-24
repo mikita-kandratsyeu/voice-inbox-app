@@ -6,6 +6,7 @@ import { Text, View } from 'react-native';
 
 import type { TranscriptSegment } from '@/entities/record';
 import { TRANSLATE_LANGUAGES, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import { TranscriptHighlight } from '@/features/transcript-highlight';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { Button, TabEmptyState } from '@/shared/ui';
@@ -14,6 +15,7 @@ type TranscriptTabProps = {
   segments: TranscriptSegment[];
   translatedTranscript?: string;
   translationLanguage?: string;
+  currentPositionMs?: number;
   color: Colors;
   hasAudio: boolean;
   onTranscribe: () => void;
@@ -27,6 +29,7 @@ export const TranscriptTab = ({
   segments,
   translatedTranscript,
   translationLanguage,
+  currentPositionMs = 0,
   color,
   hasAudio,
   onTranscribe,
@@ -63,25 +66,19 @@ export const TranscriptTab = ({
   }
 
   return (
-    <View className="gap-3.5 p-4">
+    <View>
       {showTranslation ? (
-        <Text className="text-sm leading-[22px]" style={{ color: color.text.primary }}>
-          {translatedTranscript}
-        </Text>
+        <View className="p-4">
+          <Text className="text-sm leading-[22px]" style={{ color: color.text.primary }}>
+            {translatedTranscript}
+          </Text>
+        </View>
       ) : (
-        segments.map((seg) => (
-          <View key={seg.id} className="flex-row items-start gap-3">
-            <Text
-              className="w-12 shrink-0 pt-0.5 text-xs font-semibold tabular-nums"
-              style={{ color: color.accent.primary }}
-            >
-              {seg.startTime}
-            </Text>
-            <Text className="flex-1 text-sm leading-[22px]" style={{ color: color.text.primary }}>
-              {seg.text}
-            </Text>
-          </View>
-        ))
+        <TranscriptHighlight
+          segments={segments}
+          currentPositionMs={currentPositionMs}
+          color={color}
+        />
       )}
       <View className="mt-2 flex-row flex-wrap gap-2">
         {hasTranslation && (

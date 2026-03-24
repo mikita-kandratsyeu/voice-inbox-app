@@ -4,10 +4,19 @@ export type RecordClassification = 'personal' | 'work' | 'meeting' | 'idea' | 'o
 
 export type RecordingStatus = 'idle' | 'loading_model' | 'processing' | 'done' | 'error';
 
+export type WordToken = {
+  text: string;
+  startMs: number;
+  endMs: number;
+};
+
 export type TranscriptSegment = {
   id: string;
   startTime: string;
+  startMs?: number;
+  endMs?: number;
   text: string;
+  tokens?: WordToken[];
 };
 
 export type TaskSource = 'manual' | 'ai';
@@ -47,6 +56,7 @@ export type VoiceRecord = {
   translationLanguage?: string;
   audioPath?: string;
   embedding?: number[];
+  folderId?: string | null;
   detailsHydrated?: boolean;
 };
 

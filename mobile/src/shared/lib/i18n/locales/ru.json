@@ -21,7 +21,8 @@
     "done": "Готово",
     "clear": "Очистить",
     "error": "Ошибка",
-    "biometrics": "Биометрия"
+    "biometrics": "Биометрия",
+    "pro": "Pro"
   },
   "proLicense": {
     "modalTitle": "Активация Pro",
@@ -66,7 +67,7 @@
     "emptyTitle": "Сделайте первую запись",
     "emptyDescription": "Записи и импортированные заметки появятся здесь.",
     "emptyImportHint": "Долгое нажатие на кнопку записи — загрузить аудиофайл",
-    "swipeHint": "Свайп влево — в архив, вправо — закрепить",
+    "swipeHint": "Свайп влево — в архив, вправо — закрепить. Долгое нажатие на карточку — выбор записей, затем «Папка» для переноса.",
     "filterSummary": "{{filterName}}: {{count}}",
     "recordsCount": "{{count}} записей",
     "pinned": "Закреплённые",
@@ -377,7 +378,7 @@
         "recordingUpTo30Min": "До 30 минут на одну запись",
         "autoAi": "Авто-ИИ после транскрипции",
         "autoTranscription": "Авто-транскрипция новых записей",
-        "accentColor": "Кастомизация акцентного цвета",
+        "colorCustomization": "Кастомизация цветов акцента и папок",
         "noAds": "Без рекламы",
         "earlyAccess": "Ранний доступ к новым Pro-функциям"
       }
@@ -730,5 +731,50 @@
     "secondsLeft": "~{{ count }} сек осталось",
     "minutesLeft": "~{{ count }} мин осталось",
     "loadingModel": "Загрузка модели в память…"
+  },
+  "batch": {
+    "selectedCount_one": "Выбрана {{count}} запись",
+    "selectedCount_two": "Выбраны {{count}} записи",
+    "selectedCount_few": "Выбрано {{count}} записи",
+    "selectedCount_many": "Выбрано {{count}} записей",
+    "selectedCount_other": "Выбрано {{count}}",
+    "selectAll": "Выбрать все",
+    "deselectAll": "Снять выбор",
+    "archive": "В архив",
+    "unarchive": "Из архива",
+    "delete": "Удалить",
+    "export": "Экспорт",
+    "moveToFolder": "Папка",
+    "deleteTitle_one": "Удалить {{count}} запись?",
+    "deleteTitle_two": "Удалить {{count}} записи?",
+    "deleteTitle_few": "Удалить {{count}} записи?",
+    "deleteTitle_many": "Удалить {{count}} записей?",
+    "deleteTitle_other": "Удалить {{count}}?",
+    "deleteConfirm_one": "Запись будет удалена безвозвратно.",
+    "deleteConfirm_other": "{{count}} записей будут удалены безвозвратно.",
+    "exportFailed": "Не удалось экспортировать. Попробуйте снова."
+  },
+  "folders": {
+    "all": "Все",
+    "create": "Новая папка",
+    "edit": "Изменить папку",
+    "delete": "Удалить папку",
+    "deleteTitle": "Удалить папку",
+    "deleteConfirm": "Записи не будут удалены — они переместятся в «Все».",
+    "nameRequired": "Введите название папки.",
+    "nameLabel": "Название",
+    "namePlaceholder": "Название папки",
+    "iconLabel": "Иконка",
+    "colorLabel": "Цвет",
+    "colorHint": "Отображается на бедже и полоской слева на карточках в разделе «Все».",
+    "colorProTitle": "Цвета папок",
+    "colorProBody": "С подпиской Pro можно выбрать разные цвета для папок — они видны на бедже и полосках на карточках в «Все».",
+    "pickerInboxOnly": "Только во входящих",
+    "moveToFolderTitle": "Переместить в папку",
+    "moveToFolderMenu": "Переместить в папку",
+    "detailInbox": "Входящие",
+    "detailFolderRemoved": "Папка недоступна",
+    "detailA11yInbox": "Сохранено во входящих",
+    "detailA11yFolder": "Папка: {{name}}"
   }
 }

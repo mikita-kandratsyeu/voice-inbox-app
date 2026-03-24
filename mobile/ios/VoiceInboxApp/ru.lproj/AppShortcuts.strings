@@ -1,0 +1,7 @@
+/* App Shortcuts phrases for Siri (Russian) */
+/* These keys must match the English phrases from AppShortcuts.swift.
+   The values are what Siri will recognize in Russian. */
+
+"Start recording in ${applicationName}" = "Начать запись в ${applicationName}";
+"New voice note in ${applicationName}" = "Новая голосовая заметка в ${applicationName}";
+"Record in ${applicationName}" = "Запись в ${applicationName}";
