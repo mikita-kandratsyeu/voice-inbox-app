@@ -25,6 +25,8 @@ export const colors = {
       success: '#34C759',
       transcript: '#8b5cf6',
       cache: '#f59e0b',
+      aiData: '#16a34a',
+      models: '#0891b2',
     },
     icon: {
       onAccent: '#ffffff',
@@ -79,6 +81,8 @@ export const colors = {
       success: '#34C759',
       transcript: '#8b5cf6',
       cache: '#f59e0b',
+      aiData: '#4ade80',
+      models: '#22d3ee',
     },
     icon: {
       onAccent: '#ffffff',
@@ -126,6 +130,8 @@ export type Colors = {
     success: string;
     transcript: string;
     cache: string;
+    aiData: string;
+    models: string;
   };
   icon: { onAccent: string; muted: string };
   tab: { inactive: string };

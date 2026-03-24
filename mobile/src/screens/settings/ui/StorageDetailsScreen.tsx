@@ -30,11 +30,6 @@ import {
 import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader, SettingsRow, SettingsSection, SkeletonPulse } from '@/shared/ui';
 
-const STORAGE_COLORS = {
-  aiData: '#22c55e',
-  models: '#06b6d4',
-} as const;
-
 const StorageBar = ({
   audioMb,
   transcriptKb,
@@ -71,10 +66,10 @@ const StorageBar = ({
       >
         <View style={{ flex: audioFrac, backgroundColor: color.accent.primary }} />
         <View style={{ flex: transcriptFrac, backgroundColor: color.accent.transcript }} />
-        <View style={{ flex: aiDataFrac, backgroundColor: STORAGE_COLORS.aiData }} />
+        <View style={{ flex: aiDataFrac, backgroundColor: color.accent.aiData }} />
         <View style={{ flex: cacheFrac, backgroundColor: color.accent.cache }} />
         {modelsFrac > 0 && (
-          <View style={{ flex: modelsFrac, backgroundColor: STORAGE_COLORS.models }} />
+          <View style={{ flex: modelsFrac, backgroundColor: color.accent.models }} />
         )}
       </View>
       <View className="gap-2">
@@ -110,7 +105,7 @@ const StorageBar = ({
           <View className="flex-row items-center gap-2">
             <View
               className="h-3 w-3 rounded-full"
-              style={{ backgroundColor: STORAGE_COLORS.aiData }}
+              style={{ backgroundColor: color.accent.aiData }}
             />
             <Text className="text-[14px]" style={{ color: color.text.primary }}>
               {t('storage.aiProcessing')}
@@ -125,7 +120,7 @@ const StorageBar = ({
             <View className="flex-row items-center gap-2">
               <View
                 className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: STORAGE_COLORS.models }}
+                style={{ backgroundColor: color.accent.models }}
               />
               <Text className="text-[14px]" style={{ color: color.text.primary }}>
                 {t('storage.whisperModels')}
@@ -392,7 +387,7 @@ export const StorageDetailsScreen = () => {
             <SettingsRow
               label={t('storage.aiProcessing')}
               value={formatFileSize(stats.aiDataKb * 1024)}
-              leftIcon={<Bot size={20} color={STORAGE_COLORS.aiData} strokeWidth={1.8} />}
+              leftIcon={<Bot size={20} color={color.accent.aiData} strokeWidth={1.8} />}
               showChevron={false}
               isLast={downloadedModels.length === 0}
             />
@@ -411,7 +406,7 @@ export const StorageDetailsScreen = () => {
                       label={`Whisper ${model.name}`}
                       value={sizeLabel}
                       leftIcon={
-                        <BrainCircuit size={20} color={STORAGE_COLORS.models} strokeWidth={1.8} />
+                        <BrainCircuit size={20} color={color.accent.models} strokeWidth={1.8} />
                       }
                       showChevron={false}
                       isLast={index === downloadedModels.length - 1}
@@ -444,7 +439,7 @@ export const StorageDetailsScreen = () => {
             <SettingsRow
               label={t('storage.aiProcessed')}
               value={String(processedByAI)}
-              leftIcon={<Bot size={20} color={color.accent.cache} strokeWidth={1.8} />}
+              leftIcon={<Bot size={20} color={color.accent.aiData} strokeWidth={1.8} />}
               showChevron={false}
               isLast
             />
