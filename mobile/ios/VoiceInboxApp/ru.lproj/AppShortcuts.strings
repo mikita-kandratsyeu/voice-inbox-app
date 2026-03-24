@@ -5,3 +5,9 @@
 "Start recording in ${applicationName}" = "Начать запись в ${applicationName}";
 "New voice note in ${applicationName}" = "Новая голосовая заметка в ${applicationName}";
 "Record in ${applicationName}" = "Запись в ${applicationName}";
+"Create voice note in ${applicationName}" = "Создать голосовую заметку в ${applicationName}";
+"Take a voice note in ${applicationName}" = "Сделать голосовую заметку в ${applicationName}";
+"Open recorder in ${applicationName}" = "Открыть запись в ${applicationName}";
+"Start voice memo in ${applicationName}" = "Начать голосовую заметку в ${applicationName}";
+"Capture note in ${applicationName}" = "Записать заметку в ${applicationName}";
+"Quick note in ${applicationName}" = "Быстрая заметка в ${applicationName}";

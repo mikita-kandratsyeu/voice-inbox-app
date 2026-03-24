@@ -5,3 +5,9 @@
 "Start recording in ${applicationName}" = "Start recording in ${applicationName}";
 "New voice note in ${applicationName}" = "New voice note in ${applicationName}";
 "Record in ${applicationName}" = "Record in ${applicationName}";
+"Create voice note in ${applicationName}" = "Create voice note in ${applicationName}";
+"Take a voice note in ${applicationName}" = "Take a voice note in ${applicationName}";
+"Open recorder in ${applicationName}" = "Open recorder in ${applicationName}";
+"Start voice memo in ${applicationName}" = "Start voice memo in ${applicationName}";
+"Capture note in ${applicationName}" = "Capture note in ${applicationName}";
+"Quick note in ${applicationName}" = "Quick note in ${applicationName}";
