@@ -3,7 +3,7 @@ import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import { ListChecks } from 'lucide-react-native';
+import { Folder, ListChecks } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -481,6 +481,17 @@ export const InboxScreen = () => {
               <EmptyState
                 title={t('inbox.emptyFilterTitle')}
                 description={t('inbox.emptyFilterDescription')}
+                hint={activeFolderId ? t('inbox.emptyFolderHint') : undefined}
+                hintIcon={
+                  activeFolderId ? (
+                    <Folder
+                      size={20}
+                      color={color.accent.primary}
+                      strokeWidth={2}
+                      style={{ marginRight: 12 }}
+                    />
+                  ) : undefined
+                }
               />
             ) : (
               <FlashList

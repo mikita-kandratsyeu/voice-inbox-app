@@ -8,9 +8,10 @@ type EmptyStateProps = {
   title?: string;
   description?: string;
   hint?: string;
+  hintIcon?: React.ReactNode;
 };
 
-export const EmptyState = ({ title, description, hint }: EmptyStateProps) => {
+export const EmptyState = ({ title, description, hint, hintIcon }: EmptyStateProps) => {
   const color = useColors();
 
   return (
@@ -39,12 +40,14 @@ export const EmptyState = ({ title, description, hint }: EmptyStateProps) => {
           className="mt-8 max-w-sm flex-row items-center rounded-xl px-4 py-3"
           style={{ backgroundColor: color.background.tertiary }}
         >
-          <Upload
-            size={20}
-            color={color.accent.primary}
-            strokeWidth={2}
-            style={{ marginRight: 12 }}
-          />
+          {hintIcon ?? (
+            <Upload
+              size={20}
+              color={color.accent.primary}
+              strokeWidth={2}
+              style={{ marginRight: 12 }}
+            />
+          )}
           <Text className="flex-1 text-sm leading-5" style={{ color: color.text.secondary }}>
             {hint}
           </Text>
