@@ -89,8 +89,8 @@ export const RecordingDetailCard = ({
           flexDirection: 'row',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: 8,
-          marginTop: 2,
+          gap: 6,
+          marginTop: 0,
         }}
         accessibilityRole="text"
         accessibilityLabel={
@@ -106,15 +106,15 @@ export const RecordingDetailCard = ({
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 6,
-              paddingHorizontal: 10,
-              paddingVertical: 6,
-              borderRadius: 10,
+              gap: 4,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 999,
               backgroundColor: color.background.tertiary,
             }}
           >
-            <Inbox size={16} color={color.text.secondary} strokeWidth={2} />
-            <Text style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }}>
+            <Inbox size={14} color={color.text.secondary} strokeWidth={2} />
+            <Text style={{ fontSize: 12, fontWeight: '600', color: color.text.secondary }}>
               {t('folders.detailInbox')}
             </Text>
           </View>
@@ -122,13 +122,13 @@ export const RecordingDetailCard = ({
         {folderPlacement.kind === 'missing' ? (
           <View
             style={{
-              paddingHorizontal: 10,
-              paddingVertical: 6,
-              borderRadius: 10,
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 999,
               backgroundColor: color.background.tertiary,
             }}
           >
-            <Text style={{ fontSize: 13, fontWeight: '500', color: color.text.muted }}>
+            <Text style={{ fontSize: 12, fontWeight: '500', color: color.text.muted }}>
               {t('folders.detailFolderRemoved')}
             </Text>
           </View>
@@ -138,26 +138,24 @@ export const RecordingDetailCard = ({
             style={{
               flexDirection: 'row',
               alignItems: 'center',
-              gap: 8,
+              gap: 4,
               maxWidth: '100%',
-              paddingHorizontal: 10,
-              paddingVertical: 6,
-              borderRadius: 10,
-              backgroundColor: withAlphaHex(folderPlacement.tintHex, 0.18),
-              borderWidth: 1,
-              borderColor: withAlphaHex(folderPlacement.tintHex, 0.4),
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: 999,
+              backgroundColor: withAlphaHex(folderPlacement.tintHex, 0.14),
             }}
           >
             <FolderLucideIcon
               iconId={folderPlacement.folder.icon}
-              size={18}
+              size={14}
               color={folderPlacement.tintHex}
               strokeWidth={2}
             />
             <Text
               style={{
                 flexShrink: 1,
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: '600',
                 color: color.text.primary,
               }}

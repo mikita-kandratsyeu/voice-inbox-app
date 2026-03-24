@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, View } from 'react-native';
+import { Alert } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { RootStackParamList } from '@/app/navigation/types';
@@ -12,7 +12,6 @@ import { hasActiveTranscriptionJob } from '@/features/transcription/model/transc
 import { useTranslate } from '@/features/translate';
 import type { Colors } from '@/shared/config';
 
-import { AiStatusBadge } from './AiStatusBadge';
 import { TranscriptError } from './TranscriptError';
 import { TranscriptProcessing } from './TranscriptProcessing';
 import { TranscriptTab } from './TranscriptTab';
@@ -75,8 +74,6 @@ export const TranscriptContent = ({
     return <TranscriptError onRetry={onTranscribe} />;
   }
 
-  const showStatusBadge = r.aiStatus === 'done' && (r.transcriptSegments ?? []).length > 0;
-
   const isAiProcessing = r.summaryStatus === 'processing' || r.tasksStatus === 'processing';
 
   const handleTranslate = async (targetLanguage: string) => {
@@ -98,11 +95,6 @@ export const TranscriptContent = ({
 
   return (
     <>
-      {showStatusBadge && (
-        <View className="px-4 pt-4">
-          <AiStatusBadge aiStatus="done" />
-        </View>
-      )}
       <TranscriptTab
         segments={r.transcriptSegments ?? []}
         translatedTranscript={r.translatedTranscript}

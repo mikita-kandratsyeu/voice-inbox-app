@@ -67,6 +67,93 @@ export const TranscriptTab = ({
 
   return (
     <View>
+      <View className="pt-3">
+        <View className="flex-row flex-wrap gap-2 px-4 pb-4">
+          {hasTranslation && (
+            <Button
+              variant="secondary"
+              size="md"
+              icon={
+                showTranslation ? (
+                  <Undo2 size={15} color={color.text.primary} strokeWidth={2} />
+                ) : (
+                  <Eye size={15} color={color.text.primary} strokeWidth={2} />
+                )
+              }
+              label={
+                showTranslation
+                  ? t('recordingDetail.showOriginal')
+                  : t('recordingDetail.showTranslation', {
+                      lang: translationLanguage
+                        ? t(
+                            `recordingDetail.language.${translationLanguage}` as 'recordingDetail.language.ru',
+                          )
+                        : '',
+                    })
+              }
+              color={color}
+              onPress={() => setViewMode(showTranslation ? 'original' : 'translated')}
+            />
+          )}
+          {onTranslate && segments.length > 0 && (
+            <MenuView
+              key={theme}
+              themeVariant={isDark ? 'dark' : 'light'}
+              onPressAction={async ({ nativeEvent }) => {
+                const lang = nativeEvent.event;
+                if ((TRANSLATE_LANGUAGES as readonly string[]).includes(lang)) {
+                  const ok = await onTranslate(lang);
+
+                  if (ok) {
+                    setViewMode('translated');
+                  }
+                }
+              }}
+              actions={TRANSLATE_LANGUAGES.map((lang) => ({
+                id: lang,
+                title: t(`recordingDetail.language.${lang}`),
+                titleColor: color.text.primary,
+              }))}
+            >
+              <View>
+                <Button
+                  variant="secondary"
+                  size="md"
+                  icon={<Languages size={15} color={color.text.primary} strokeWidth={2} />}
+                  label={
+                    isTranslating
+                      ? t('recordingDetail.translating')
+                      : t('recordingDetail.translate')
+                  }
+                  color={color}
+                  onPress={() => {}}
+                  disabled={isAiProcessing || isTranslating}
+                />
+              </View>
+            </MenuView>
+          )}
+          <Button
+            variant="secondary"
+            size="md"
+            icon={<Pencil size={15} color={color.text.primary} strokeWidth={2} />}
+            label={t('recordingDetail.editTranscript')}
+            color={color}
+            onPress={onEditTranscript}
+            disabled={isAiProcessing}
+          />
+          {hasAudio && (
+            <Button
+              variant="secondary"
+              size="md"
+              icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
+              label={t('recordingDetail.retranscribe')}
+              color={color}
+              onPress={onTranscribe}
+              disabled={isAiProcessing}
+            />
+          )}
+        </View>
+      </View>
       {showTranslation ? (
         <View className="p-4">
           <Text className="text-sm leading-[22px]" style={{ color: color.text.primary }}>
@@ -80,89 +167,6 @@ export const TranscriptTab = ({
           color={color}
         />
       )}
-      <View className="mt-2 flex-row flex-wrap gap-2 px-4 pb-4">
-        {hasTranslation && (
-          <Button
-            variant="secondary"
-            size="md"
-            icon={
-              showTranslation ? (
-                <Undo2 size={15} color={color.text.primary} strokeWidth={2} />
-              ) : (
-                <Eye size={15} color={color.text.primary} strokeWidth={2} />
-              )
-            }
-            label={
-              showTranslation
-                ? t('recordingDetail.showOriginal')
-                : t('recordingDetail.showTranslation', {
-                    lang: translationLanguage
-                      ? t(
-                          `recordingDetail.language.${translationLanguage}` as 'recordingDetail.language.ru',
-                        )
-                      : '',
-                  })
-            }
-            color={color}
-            onPress={() => setViewMode(showTranslation ? 'original' : 'translated')}
-          />
-        )}
-        {onTranslate && segments.length > 0 && (
-          <MenuView
-            key={theme}
-            themeVariant={isDark ? 'dark' : 'light'}
-            onPressAction={async ({ nativeEvent }) => {
-              const lang = nativeEvent.event;
-              if ((TRANSLATE_LANGUAGES as readonly string[]).includes(lang)) {
-                const ok = await onTranslate(lang);
-
-                if (ok) {
-                  setViewMode('translated');
-                }
-              }
-            }}
-            actions={TRANSLATE_LANGUAGES.map((lang) => ({
-              id: lang,
-              title: t(`recordingDetail.language.${lang}`),
-              titleColor: color.text.primary,
-            }))}
-          >
-            <View>
-              <Button
-                variant="secondary"
-                size="md"
-                icon={<Languages size={15} color={color.text.primary} strokeWidth={2} />}
-                label={
-                  isTranslating ? t('recordingDetail.translating') : t('recordingDetail.translate')
-                }
-                color={color}
-                onPress={() => {}}
-                disabled={isAiProcessing || isTranslating}
-              />
-            </View>
-          </MenuView>
-        )}
-        <Button
-          variant="secondary"
-          size="md"
-          icon={<Pencil size={15} color={color.text.primary} strokeWidth={2} />}
-          label={t('recordingDetail.editTranscript')}
-          color={color}
-          onPress={onEditTranscript}
-          disabled={isAiProcessing}
-        />
-        {hasAudio && (
-          <Button
-            variant="secondary"
-            size="md"
-            icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
-            label={t('recordingDetail.retranscribe')}
-            color={color}
-            onPress={onTranscribe}
-            disabled={isAiProcessing}
-          />
-        )}
-      </View>
     </View>
   );
 };

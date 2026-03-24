@@ -732,7 +732,7 @@
     "secondsLeft": "~{{ count }} sec left",
     "minutesLeft": "~{{ count }} min left",
     "loadingModel": "Loading model into memory…",
-    "batteryHint": "Transcription runs only while the app is open. Battery usage may increase.",
+    "batteryHint": "Transcription works only while the app is open. Battery usage may increase.",
     "batteryHintLong": "For long processing, it is recommended to connect to a power source."
   },
   "batch": {

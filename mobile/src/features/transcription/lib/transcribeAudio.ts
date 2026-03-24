@@ -85,6 +85,25 @@ const mapSegments = (
     tokens: mapTokens(seg?.tokens, chunkOffsetMs),
   }));
 
+const resolveChunkTimestampOffsetMs = (
+  result: WhisperTranscribeResult,
+  chunkOffsetMs: number,
+): number => {
+  if (chunkOffsetMs <= 0) return 0;
+  if (!result.segments || result.segments.length === 0) return chunkOffsetMs;
+
+  const segmentStartMs = result.segments
+    .map((seg) => Number(seg?.t0 ?? 0) * CENTISECONDS_TO_MS)
+    .filter((value) => Number.isFinite(value));
+
+  if (segmentStartMs.length === 0) return chunkOffsetMs;
+
+  const minStartMs = Math.min(...segmentStartMs);
+  const ABSOLUTE_TS_TOLERANCE_MS = 1500;
+
+  return minStartMs >= chunkOffsetMs - ABSOLUTE_TS_TOLERANCE_MS ? 0 : chunkOffsetMs;
+};
+
 export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudioHandle => {
   const { context, audioPath, durationMs, language = 'auto', onProgress } = options;
 
@@ -242,7 +261,8 @@ const transcribeLong = async ({
     }
 
     const result = normalizeResult(raw);
-    const chunkSegments = mapSegments(result, segmentOffset, chunk.offsetMs);
+    const timestampOffsetMs = resolveChunkTimestampOffsetMs(result, chunk.offsetMs);
+    const chunkSegments = mapSegments(result, segmentOffset, timestampOffsetMs);
     allSegments.push(...chunkSegments);
     segmentOffset += chunkSegments.length;
 

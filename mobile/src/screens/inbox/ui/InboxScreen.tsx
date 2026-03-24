@@ -219,8 +219,11 @@ export const InboxScreen = () => {
 
   useEffect(() => {
     if (!inboxFiltersReset) return;
-    return inboxFiltersReset.registerReset(resetToDefault);
-  }, [inboxFiltersReset, resetToDefault]);
+    return inboxFiltersReset.registerReset(() => {
+      resetToDefault();
+      setActiveFolder(null);
+    });
+  }, [inboxFiltersReset, resetToDefault, setActiveFolder]);
 
   useEffect(() => {
     const unsubscribe = navigation.addListener('tabPress', () => {
