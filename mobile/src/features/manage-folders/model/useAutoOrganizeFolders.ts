@@ -17,12 +17,9 @@ import {
 const MIN_NOTES_TO_AUTO_ORGANIZE = 5;
 const MAX_NOTES_FOR_SINGLE_REQUEST = 60;
 const ALLOWED_ICONS = new Set<string>(FOLDER_ICON_KEYS);
-
-const MAX_TRANSCRIPT_CHARS_FOR_AUTO_ORGANIZE = 2500;
-const MAX_SUMMARY_CHARS_FOR_AUTO_ORGANIZE = 600;
-const MAX_TASKS_FOR_AUTO_ORGANIZE = 12;
-const MAX_TASK_TEXT_CHARS_FOR_AUTO_ORGANIZE = 200;
-const MAX_TAGS_FOR_AUTO_ORGANIZE = 8;
+const MAX_TRANSCRIPT_CHARS_FOR_AUTO_ORGANIZE = 900;
+const MAX_SUMMARY_CHARS_FOR_AUTO_ORGANIZE = 360;
+const MAX_TITLE_CHARS_FOR_AUTO_ORGANIZE = 100;
 
 function truncateText(s: string | undefined, maxChars: number): string | undefined {
   if (!isString(s)) return undefined;
@@ -76,25 +73,21 @@ export function useAutoOrganizeFolders(records: VoiceRecord[]) {
       records
         .filter((r) => r.status !== 'archived')
         .slice(0, MAX_NOTES_FOR_SINGLE_REQUEST)
-        .map((r) => ({
-          id: r.id,
-          title: r.title.trim(),
-          transcript:
-            r.summary && r.summary.trim()
-              ? undefined
-              : truncateText(r.transcript, MAX_TRANSCRIPT_CHARS_FOR_AUTO_ORGANIZE),
-          summary: truncateText(r.summary, MAX_SUMMARY_CHARS_FOR_AUTO_ORGANIZE),
-          tags: Array.isArray(r.tags) ? r.tags.slice(0, MAX_TAGS_FOR_AUTO_ORGANIZE) : undefined,
-          classification: r.classification,
-          tasks: r.tasks
-            ? r.tasks
-                .slice(0, MAX_TASKS_FOR_AUTO_ORGANIZE)
-                .map((task) => ({
-                  text: truncateText(task.text, MAX_TASK_TEXT_CHARS_FOR_AUTO_ORGANIZE) ?? '',
-                }))
-                .filter((t) => Boolean(t.text))
-            : undefined,
-        })),
+        .map((r) => {
+          const titleTrimmed = r.title.trim();
+          return {
+            id: r.id,
+            ...(titleTrimmed
+              ? { title: titleTrimmed.slice(0, MAX_TITLE_CHARS_FOR_AUTO_ORGANIZE) }
+              : {}),
+            transcript:
+              r.summary && r.summary.trim()
+                ? undefined
+                : truncateText(r.transcript, MAX_TRANSCRIPT_CHARS_FOR_AUTO_ORGANIZE),
+            summary: truncateText(r.summary, MAX_SUMMARY_CHARS_FOR_AUTO_ORGANIZE),
+            classification: r.classification,
+          };
+        }),
     [records],
   );
 

@@ -170,10 +170,9 @@ Assignment rules:
 Input assumptions:
 - You will receive a list of notes.
 - You may receive existingFolders with name/icon/color. Treat these as available folders you can reuse.
-- Each note has at least:
-  - recordId: string
-  - text or transcription content
-- You may also receive optional metadata like title or summary. Use it if helpful.
+- Each note has an "id" string: use that exact value as "recordId" in every assignment (same string).
+- Each note has a short "summary" and/or "transcript" excerpt (already truncated for speed). Prefer summary when both exist.
+- Optional: "title", "classification". Use them if they clarify the topic.
 
 Output schema:
 {
