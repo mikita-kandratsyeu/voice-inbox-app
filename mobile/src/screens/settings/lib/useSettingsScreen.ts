@@ -1,6 +1,6 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState } from 'react-native';
 
@@ -68,7 +68,11 @@ export function useSettingsScreen() {
   const [planPaywallVisible, setPlanPaywallVisible] = useState(false);
   const [internalUpgradeVisible, setInternalUpgradeVisible] = useState(false);
 
-  const { refresh: refreshProEntitlement, isProActive: proEntitlementActive } = useProEntitlement();
+  const {
+    refresh: refreshProEntitlement,
+    isProActive: proEntitlementActive,
+    expiresAtMs,
+  } = useProEntitlement();
   const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
   const monetizationMode = getMonetizationMode();
 
@@ -84,8 +88,8 @@ export function useSettingsScreen() {
     return data;
   }, []);
 
-  const fetchProWeeklyLimit = useCallback(async () => {
-    const limits = await getAiWeeklyLimits();
+  const fetchProWeeklyLimit = useCallback(async (options?: { force?: boolean }) => {
+    const limits = await getAiWeeklyLimits({ force: options?.force === true });
     if (limits?.proWeeklyLimit && limits.proWeeklyLimit > 0) {
       setProWeeklyLimit(limits.proWeeklyLimit);
     }
@@ -113,16 +117,38 @@ export function useSettingsScreen() {
 
   useEffect(() => {
     let cancelled = false;
+
     const timer = setTimeout(() => {
       Promise.all([fetchAiUsage(), fetchProWeeklyLimit()]).finally(() => {
         if (!cancelled) setAiUsageLoading(false);
       });
     }, 0);
+
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
   }, [fetchAiUsage, fetchProWeeklyLimit]);
+
+  const prevProSnapshotRef = useRef<{ isProActive: boolean; expiresAtMs: number | null } | null>(
+    null,
+  );
+  useEffect(() => {
+    const prev = prevProSnapshotRef.current;
+    const next = { isProActive: proEntitlementActive, expiresAtMs };
+    prevProSnapshotRef.current = next;
+
+    if (!prev) return;
+
+    const proTierChanged = prev.isProActive !== proEntitlementActive;
+    const expiresChanged = prev.expiresAtMs !== expiresAtMs;
+    const shouldRefresh = proTierChanged || (proEntitlementActive && expiresChanged);
+
+    if (!shouldRefresh) return;
+
+    void fetchAiUsage();
+    void fetchProWeeklyLimit({ force: true });
+  }, [proEntitlementActive, expiresAtMs, fetchAiUsage, fetchProWeeklyLimit]);
 
   const refreshPermissions = useCallback(async () => {
     const mic = await checkMicPermission();
@@ -152,17 +178,11 @@ export function useSettingsScreen() {
     setRefreshing(true);
     try {
       await Promise.all([fetchAiUsage(), refreshProEntitlement({ force: true })]);
-      const limits = await getAiWeeklyLimits();
-      if (limits?.proWeeklyLimit && limits.proWeeklyLimit > 0) {
-        setProWeeklyLimit(limits.proWeeklyLimit);
-      }
-      if (limits?.freeWeeklyLimit && limits.freeWeeklyLimit > 0) {
-        setFreeWeeklyLimit(limits.freeWeeklyLimit);
-      }
+      await fetchProWeeklyLimit({ force: true });
     } finally {
       setRefreshing(false);
     }
-  }, [fetchAiUsage, refreshProEntitlement]);
+  }, [fetchAiUsage, fetchProWeeklyLimit, refreshProEntitlement]);
 
   const userFacing = USER_FACING_AI_MODELS.find((m) => m.id === selectedAIModel);
   const aiModelName = userFacing?.name ?? selectedAIModel;
