@@ -16,6 +16,10 @@
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
   },
+  "resolutions": {
+    "effect": "3.20.0",
+    "@tootallnate/once": "3.0.1"
+  },
   "dependencies": {
     "@openrouter/sdk": "^0.9.11",
     "@prisma/client": "^6.5.0",

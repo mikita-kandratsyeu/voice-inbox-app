@@ -126,6 +126,11 @@
       "eslint --fix"
     ]
   },
+  "resolutions": {
+    "fast-xml-parser": "5.5.7",
+    "markdown-it": "12.3.2",
+    "esbuild": "0.25.12"
+  },
   "engines": {
     "node": ">= 24.x"
   },
