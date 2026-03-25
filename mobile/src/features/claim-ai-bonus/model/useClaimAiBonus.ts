@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import { AdRequestConfiguration, RewardedAdLoader } from 'yandex-mobile-ads';
 
-import { ensureYandexMobileAdsInitialized } from '@/features/app-lifecycle/model/yandexMobileAdsState';
 import { useProEntitlement } from '@/features/pro-license';
 import { getYandexRewardedAdUnitId } from '@/shared/config/runtimeConfig';
 import type { AiUsage } from '@/shared/lib/ai-api';
@@ -143,7 +142,6 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
     setError(null);
 
     try {
-      await ensureYandexMobileAdsInitialized();
       const loader = await RewardedAdLoader.create();
       const config = new AdRequestConfiguration({
         adUnitId: getAdUnitId(),
