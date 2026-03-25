@@ -67,6 +67,7 @@ export const RecordScreen = () => {
     pauseRecording,
     resumeRecording,
     stopRecording,
+    discardRecording,
   } = useRecording({
     maxRecordingMs,
     onLimitReached: () => {
@@ -198,6 +199,12 @@ export const RecordScreen = () => {
     navigation.goBack();
   };
 
+  const handleSaveModalDiscard = async () => {
+    await discardRecording();
+    setShowSaveModal(false);
+    navigation.goBack();
+  };
+
   return (
     <View className="flex-1" style={{ backgroundColor: c.accent.primary }}>
       {state === 'recording' && <KeepAwake />}
@@ -237,6 +244,7 @@ export const RecordScreen = () => {
         onCancel={handleSaveCancel}
         onSave={handleSaveConfirm}
         onSaveComplete={handleSaveComplete}
+        onDiscard={handleSaveModalDiscard}
         allowResume={saveModalReason === 'user'}
         contextHint={saveModalReason === 'limit' ? t('record.saveAfterLimitHint') : null}
       />

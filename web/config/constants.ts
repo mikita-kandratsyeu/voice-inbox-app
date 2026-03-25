@@ -44,14 +44,37 @@ export const MESSAGE_KEY_PREFIX = 'msg:';
 export const GET_RETRY_ATTEMPTS = 3;
 export const GET_RETRY_DELAY_MS = 100;
 
-export const FALLBACK_MODEL = 'deepseek/deepseek-v3.2';
+/** System micro-tasks (folder organize, translation primary, etc.). */
 export const SYSTEM_MICRO_TASK_MODEL = 'openai/gpt-5-nano';
+
+export const AI_MODEL_GEMINI_2_5_FLASH_LITE = 'google/gemini-2.5-flash-lite';
+export const AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW = 'google/gemini-3.1-flash-lite-preview';
+export const AI_MODEL_DEEPSEEK_V3_2 = 'deepseek/deepseek-v3.2';
+
+export const SYSTEM_TASK_MODEL_FALLBACK_CHAIN: readonly string[] = [
+  AI_MODEL_GEMINI_2_5_FLASH_LITE,
+  AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW,
+  AI_MODEL_DEEPSEEK_V3_2,
+];
+
+/**
+ * When the user-selected chat model hits transport errors: same ordered fallbacks.
+ */
+export const USER_AI_MODEL_FALLBACK_CHAIN: readonly string[] = [
+  AI_MODEL_GEMINI_2_5_FLASH_LITE,
+  AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW,
+  AI_MODEL_DEEPSEEK_V3_2,
+];
+
+/** First step after primary failure (admin drafts, legacy single-fallback call sites). */
+export const FALLBACK_MODEL = AI_MODEL_GEMINI_2_5_FLASH_LITE;
+
 export const ALLOWED_AI_MODELS: string[] = [
-  'google/gemini-2.5-flash-lite',
-  'google/gemini-3.1-flash-lite-preview',
+  AI_MODEL_GEMINI_2_5_FLASH_LITE,
+  AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW,
   'minimax/minimax-m2.7',
   'openai/gpt-5-nano',
-  FALLBACK_MODEL,
+  AI_MODEL_DEEPSEEK_V3_2,
 ];
 
 // Push notifications (iOS APNs)

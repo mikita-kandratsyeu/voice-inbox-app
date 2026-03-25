@@ -10,7 +10,6 @@ export {
   RECORDING_SOFT_WARNING_REMAINING_MS,
 } from './lib/recordingDurationLimits';
 export { getStorefrontCountryCode } from './lib/storefront';
-export { isTestflightInternalBuild } from './lib/testflightInternalBuild';
 export type { MonetizationMode } from './model/monetizationPublicConfig';
 export {
   getMonetizationMode,

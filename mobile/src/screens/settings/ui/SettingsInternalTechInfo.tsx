@@ -65,6 +65,19 @@ function readTotalMemoryBytes(): number | null {
   return null;
 }
 
+function resourceGaugeColor(
+  value: number | null,
+  okAtOrBelow: number,
+  warnAtOrBelow: number,
+  palette: { primary: string; ok: string; warn: string; danger: string },
+): string {
+  if (value == null) return palette.primary;
+  if (value <= okAtOrBelow) return palette.ok;
+  if (value <= warnAtOrBelow) return palette.warn;
+
+  return palette.danger;
+}
+
 type TechRowProps = {
   label: string;
   value: string;
@@ -245,22 +258,14 @@ export const SettingsInternalTechInfo = () => {
   const dangerColor = color.accent.delete;
   const warningColor = color.accent.cache;
   const okColor = color.accent.aiData;
-  const cpuValueColor =
-    cpuPercent == null
-      ? color.text.primary
-      : cpuPercent <= 20
-        ? okColor
-        : cpuPercent <= 45
-          ? warningColor
-          : dangerColor;
-  const memoryValueColor =
-    memoryMb == null
-      ? color.text.primary
-      : memoryMb <= 250
-        ? okColor
-        : memoryMb <= 500
-          ? warningColor
-          : dangerColor;
+  const gaugePalette = {
+    primary: color.text.primary,
+    ok: okColor,
+    warn: warningColor,
+    danger: dangerColor,
+  };
+  const cpuValueColor = resourceGaugeColor(cpuPercent, 20, 45, gaugePalette);
+  const memoryValueColor = resourceGaugeColor(memoryMb, 250, 500, gaugePalette);
 
   return (
     <View

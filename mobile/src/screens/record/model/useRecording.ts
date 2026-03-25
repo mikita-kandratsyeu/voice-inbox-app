@@ -7,6 +7,7 @@ import AudioRecorderPlayer, {
   AudioSourceAndroidType,
   OutputFormatAndroidType,
 } from 'react-native-audio-recorder-player';
+import RNFS from 'react-native-fs';
 
 import { useAppLockStore } from '@/entities/app-lock';
 
@@ -35,6 +36,7 @@ const audioRecorderPlayer = AudioRecorderPlayer as unknown as AudioRecorderPlaye
 const SUBSCRIPTION_DURATION_MS = 200;
 const MAX_JUMP_FORWARD_MS = 400;
 const MAX_JUMP_BACKWARD_MS = 500;
+const IOS_ROUTE_CHANGE_SUPPRESS_MS = 2800;
 
 type SanitizeResult = { ms: number; routeChanged: boolean };
 
@@ -64,6 +66,7 @@ export const useRecording = ({
   const limitReachedRef = useRef(false);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const lastLiveActivityUpdateRef = useRef(0);
+  const routeChangeSuppressedUntilRef = useRef(0);
   const maxRecordingMsRef = useRef(maxRecordingMs);
   maxRecordingMsRef.current = maxRecordingMs;
 
@@ -100,7 +103,7 @@ export const useRecording = ({
       const { ms, routeChanged } = sanitizePosition(e.currentPosition, lastValidMsRef.current);
       lastValidMsRef.current = ms;
 
-      if (routeChanged && IS_IOS) {
+      if (routeChanged && IS_IOS && Date.now() >= routeChangeSuppressedUntilRef.current) {
         const secs = Math.floor(ms / 1000);
         elapsedRef.current = secs;
         elapsedMsRef.current = ms;
@@ -198,6 +201,7 @@ export const useRecording = ({
       }
       audioPathRef.current = path;
 
+      routeChangeSuppressedUntilRef.current = Date.now() + IOS_ROUTE_CHANGE_SUPPRESS_MS;
       addRecordBackListener();
       setState('recording');
       hapticLight();
@@ -224,6 +228,7 @@ export const useRecording = ({
       audioRecorderPlayer.setSubscriptionDuration(SUBSCRIPTION_DURATION_MS / 1000);
       await audioRecorderPlayer.resumeRecorder();
 
+      routeChangeSuppressedUntilRef.current = Date.now() + IOS_ROUTE_CHANGE_SUPPRESS_MS;
       addRecordBackListener();
       setState('recording');
     } catch (err) {
@@ -247,6 +252,38 @@ export const useRecording = ({
       if (__DEV__) console.warn('[useRecording] stopRecorder failed:', err);
       return null;
     }
+  }, []);
+
+  const discardRecording = useCallback(async () => {
+    endRecordingLiveActivity().catch(() => {});
+    audioRecorderPlayer.removeRecordBackListener();
+
+    try {
+      await audioRecorderPlayer.stopRecorder();
+    } catch {
+      /* already stopped */
+    }
+
+    const path = audioPathRef.current;
+    if (path) {
+      const clean = path.startsWith('file://') ? path.slice(7) : path;
+      try {
+        if (await RNFS.exists(clean)) {
+          await RNFS.unlink(clean);
+        }
+      } catch {
+        if (__DEV__) console.warn('[useRecording] unlink failed:', clean);
+      }
+    }
+
+    audioPathRef.current = null;
+    limitReachedRef.current = false;
+    lastValidMsRef.current = 0;
+    elapsedRef.current = 0;
+    elapsedMsRef.current = 0;
+    setElapsed(0);
+    setElapsedMs(0);
+    setState('idle');
   }, []);
 
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
@@ -300,6 +337,7 @@ export const useRecording = ({
     pauseRecording,
     resumeRecording,
     stopRecording,
+    discardRecording,
   };
 };
 

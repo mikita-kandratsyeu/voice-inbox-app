@@ -26,6 +26,7 @@ export {
   parseRgbFromHex,
   relativeLuminanceFromHex,
   resolveDisplayFolderColor,
+  resolveFolderColorForCurrentScheme,
   withAlphaHex,
 } from './folderColor';
 export { hapticError, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from './haptics';

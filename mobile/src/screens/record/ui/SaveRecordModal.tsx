@@ -6,14 +6,20 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import dayjs from 'dayjs';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Alert, Keyboard, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useColors } from '@/shared/config';
-import { formatTime, hapticSuccess, modalKeyboardBehavior } from '@/shared/lib';
+import {
+  formatTime,
+  hapticSuccess,
+  iosHitSlopForVisualSize,
+  IS_IOS,
+  modalKeyboardBehavior,
+} from '@/shared/lib';
 import { Button } from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';
@@ -29,11 +35,12 @@ type SaveRecordModalProps = {
   onCancel: () => void;
   onSave: (record: VoiceRecord) => Promise<void> | void;
   onSaveComplete?: () => void;
+  onDiscard?: () => void | Promise<void>;
   allowResume?: boolean;
   contextHint?: string | null;
 };
 
-type DismissReason = 'none' | 'cancel' | 'save';
+type DismissReason = 'none' | 'cancel' | 'save' | 'discard';
 
 export const SaveRecordModal = ({
   visible,
@@ -45,12 +52,14 @@ export const SaveRecordModal = ({
   onCancel,
   onSave,
   onSaveComplete,
+  onDiscard,
   allowResume = true,
   contextHint = null,
 }: SaveRecordModalProps) => {
   const { t } = useTranslation();
   const c = useColors();
   const insets = useSafeAreaInsets();
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const dismissReasonRef = useRef<DismissReason>('none');
@@ -63,6 +72,14 @@ export const SaveRecordModal = ({
     [],
   );
 
+  useLayoutEffect(() => {
+    if (visible) {
+      setKeyboardVisible(true);
+    } else {
+      setKeyboardVisible(false);
+    }
+  }, [visible]);
+
   useEffect(() => {
     if (visible) {
       dismissReasonRef.current = 'none';
@@ -73,8 +90,21 @@ export const SaveRecordModal = ({
     }
   }, [visible]);
 
+  useEffect(() => {
+    const showEvent = IS_IOS ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = IS_IOS ? 'keyboardWillHide' : 'keyboardDidHide';
+    const show = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hide = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+
   const handleDismiss = useCallback(() => {
-    if (dismissReasonRef.current !== 'save' && dismissReasonRef.current !== 'cancel') {
+    const reason = dismissReasonRef.current;
+    if (reason !== 'save' && reason !== 'cancel' && reason !== 'discard') {
       onCancel();
     }
     dismissReasonRef.current = 'none';
@@ -85,6 +115,21 @@ export const SaveRecordModal = ({
     onCancel();
     bottomSheetRef.current?.dismiss();
   }, [onCancel]);
+
+  const handleDiscardPress = useCallback(() => {
+    if (!onDiscard) return;
+    Alert.alert(t('record.discardRecordingTitle'), t('record.discardRecordingMessage'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('record.discardRecordingConfirm'),
+        style: 'destructive',
+        onPress: () => {
+          dismissReasonRef.current = 'discard';
+          void Promise.resolve(onDiscard());
+        },
+      },
+    ]);
+  }, [onDiscard, t]);
 
   const handleSave = useCallback(async () => {
     const resolvedTitle = title.trim() || autoTitleRef.current || getAutoTitle();
@@ -133,7 +178,7 @@ export const SaveRecordModal = ({
         style={{
           paddingHorizontal: 24,
           paddingTop: 4,
-          paddingBottom: Math.max(insets.bottom, 24),
+          paddingBottom: keyboardVisible ? 8 : Math.max(insets.bottom, 24),
           gap: 12,
         }}
       >
@@ -158,17 +203,14 @@ export const SaveRecordModal = ({
           accessibilityLabel={t('record.saveModalTitle')}
           accessibilityHint={t('record.titleInputHint')}
         />
-
         <Text className="-mt-1 text-[13px]" style={{ color: c.text.secondary }}>
           {t('record.duration', { time: formatTime(elapsed) })}
         </Text>
-
         {contextHint && (
           <Text className="text-[13px] leading-5" style={{ color: c.text.muted }}>
             {contextHint}
           </Text>
         )}
-
         <View className="mt-1 flex-row gap-3">
           {allowResume && (
             <Button
@@ -200,6 +242,21 @@ export const SaveRecordModal = ({
             accessibilityLabel={t('common.save')}
           />
         </View>
+        {onDiscard && (
+          <TouchableOpacity
+            accessibilityRole="button"
+            accessibilityLabel={t('record.discardRecording')}
+            accessibilityHint={t('record.discardRecordingA11yHint')}
+            onPress={handleDiscardPress}
+            activeOpacity={0.7}
+            hitSlop={iosHitSlopForVisualSize(120, 22)}
+            className="min-h-[44px] items-center justify-center px-2"
+          >
+            <Text className="text-[15px] font-semibold" style={{ color: c.accent.delete }}>
+              {t('record.discardRecording')}
+            </Text>
+          </TouchableOpacity>
+        )}
       </BottomSheetView>
     </BottomSheetModal>
   );

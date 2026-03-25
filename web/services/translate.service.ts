@@ -1,7 +1,11 @@
-import { buildTranslatePrompt } from '@/lib/prompts';
+import {
+  isRetryableOpenRouterTransportError,
+  withSequentialModelFallback,
+} from '@/lib/ai-model-fallback';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
+import { buildTranslatePrompt } from '@/lib/prompts';
 import { sendLimitExceededPush } from '@/lib/push-tokens';
-import { SYSTEM_MICRO_TASK_MODEL } from '@/config/constants';
+import { SYSTEM_MICRO_TASK_MODEL, SYSTEM_TASK_MODEL_FALLBACK_CHAIN } from '@/config/constants';
 import { openRouterClient } from '@/lib/openrouter';
 
 type TranslateResult =
@@ -9,12 +13,16 @@ type TranslateResult =
   | { ok: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
   | { ok: false; error: string };
 
-async function callTranslate(transcript: string, targetLang: string): Promise<string> {
+async function callTranslate(
+  transcript: string,
+  targetLang: string,
+  model: string,
+): Promise<string> {
   const systemPrompt = buildTranslatePrompt(targetLang);
 
   const response = await openRouterClient.chat.send({
     chatGenerationParams: {
-      model: SYSTEM_MICRO_TASK_MODEL,
+      model,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: transcript },
@@ -45,7 +53,14 @@ export async function translateTranscript(
   }
 
   try {
-    const translatedText = await callTranslate(transcript, targetLanguage);
+    const models = [SYSTEM_MICRO_TASK_MODEL, ...SYSTEM_TASK_MODEL_FALLBACK_CHAIN];
+    const translatedText = await withSequentialModelFallback(
+      models,
+      (m) => callTranslate(transcript, targetLanguage, m),
+      (err) =>
+        isRetryableOpenRouterTransportError(err) ||
+        (err instanceof Error && err.message.includes('Invalid translation')),
+    );
     return { ok: true, translatedText };
   } catch (err) {
     await decrement(deviceId);

@@ -1,6 +1,68 @@
-import { ACCENT_COLOR_SWATCHES, type Colors } from '@/shared/config';
+import {
+  ACCENT_COLOR_IDS,
+  ACCENT_COLOR_SWATCHES,
+  type AccentColorId,
+  type Colors,
+  type ColorScheme,
+  DEFAULT_ACCENT_COLOR_ID,
+  getAccentPreviewHex,
+} from '@/shared/config';
 
 export const DEFAULT_FOLDER_BRAND_HEX = ACCENT_COLOR_SWATCHES[0].previewHex;
+
+function accentHexKeysForId(id: AccentColorId): string[] {
+  const light = getAccentPreviewHex(id, 'light');
+  const dark = getAccentPreviewHex(id, 'dark');
+  if (light.toLowerCase() === dark.toLowerCase()) return [light];
+  return [light, dark];
+}
+
+export function resolveFolderColorForCurrentScheme(
+  storedHex: string | null | undefined,
+  scheme: ColorScheme,
+): string {
+  const raw = storedHex?.trim();
+  if (!raw) {
+    return DEFAULT_FOLDER_BRAND_HEX;
+  }
+
+  const normalized = raw.toLowerCase();
+
+  for (const id of ACCENT_COLOR_IDS) {
+    for (const h of accentHexKeysForId(id)) {
+      if (h.toLowerCase() === normalized) {
+        return getAccentPreviewHex(id, scheme);
+      }
+    }
+  }
+
+  const rgb = parseRgbFromHex(raw);
+  if (!rgb) {
+    return DEFAULT_FOLDER_BRAND_HEX;
+  }
+
+  let bestId: AccentColorId = DEFAULT_ACCENT_COLOR_ID;
+  let bestDist = Infinity;
+
+  for (const id of ACCENT_COLOR_IDS) {
+    for (const h of accentHexKeysForId(id)) {
+      const p = parseRgbFromHex(h);
+
+      if (!p) {
+        continue;
+      }
+
+      const d = (p.r - rgb.r) ** 2 + (p.g - rgb.g) ** 2 + (p.b - rgb.b) ** 2;
+
+      if (d < bestDist) {
+        bestDist = d;
+        bestId = id;
+      }
+    }
+  }
+
+  return getAccentPreviewHex(bestId, scheme);
+}
 
 export function resolveDisplayFolderColor(
   storedHex: string | null | undefined,

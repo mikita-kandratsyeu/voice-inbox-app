@@ -14,6 +14,7 @@ import { openInAppBrowser } from '@/features/in-app-browser';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useOnboardingStore } from '@/features/onboarding';
 import { getWebsiteUrl, useColors } from '@/shared/config';
+import { isTestflightInternalBuild } from '@/shared/config/buildEnv';
 import { IS_ANDROID, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
@@ -37,6 +38,7 @@ export const AboutAppScreen = () => {
   }, []);
 
   let distributionMarketLabel: string | null = null;
+
   if (IS_IOS) {
     distributionMarketLabel = t('about.marketAppStore');
   } else if (IS_ANDROID) {
@@ -178,7 +180,7 @@ export const AboutAppScreen = () => {
           <Text className="mt-2 text-center text-[14px]" style={{ color: color.text.secondary }}>
             {t('about.copyright', { year: new Date().getFullYear() })}
           </Text>
-          {distributionFooterText != null && (
+          {(__DEV__ || isTestflightInternalBuild()) && distributionFooterText != null && (
             <Text
               className="mt-2 text-center text-xs leading-4"
               style={{ color: color.text.secondary }}

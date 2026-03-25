@@ -1,29 +1,13 @@
 import { openRouterClient } from '@/lib/openrouter';
-import type { AiResult, AutoOrganizeResult, RecordClassification } from '@/types';
 import {
-  ServiceUnavailableResponseError,
-  TooManyRequestsResponseError,
-} from '@openrouter/sdk/models/errors';
-
-import { FALLBACK_MODEL } from '@/config/constants';
-
-const RETRYABLE_OPENROUTER_ERROR_NAMES = new Set([
-  'BadGatewayResponseError',
-  'GatewayTimeoutResponseError',
-  'InternalServerResponseError',
-]);
-
-function isRetryableOpenRouterError(err: unknown): boolean {
-  if (
-    err instanceof TooManyRequestsResponseError ||
-    err instanceof ServiceUnavailableResponseError
-  ) {
-    return true;
-  }
-
-  return err instanceof Error && RETRYABLE_OPENROUTER_ERROR_NAMES.has(err.name);
-}
+  isRetryableOpenRouterTransportError,
+  withSequentialModelFallback,
+} from '@/lib/ai-model-fallback';
+import { normalizeAutoOrganizeFolderColor } from '@/lib/folder-accent-colors';
 import { ASK_QUESTION_SYSTEM_PROMPT, AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT } from '@/lib/prompts';
+import type { AiResult, AutoOrganizeResult, RecordClassification } from '@/types';
+
+import { SYSTEM_TASK_MODEL_FALLBACK_CHAIN, USER_AI_MODEL_FALLBACK_CHAIN } from '@/config/constants';
 
 async function callOpenRouter(
   transcript: string,
@@ -163,14 +147,13 @@ export async function processTranscript(
   model: string,
   systemPrompt: string,
 ): Promise<AiResult> {
-  try {
-    return await callOpenRouter(transcript, model, systemPrompt);
-  } catch (err) {
-    if (isRetryableOpenRouterError(err)) {
-      return await callOpenRouter(transcript, FALLBACK_MODEL, systemPrompt);
-    }
-    throw err;
-  }
+  const models = [model, ...USER_AI_MODEL_FALLBACK_CHAIN];
+
+  return withSequentialModelFallback(
+    models,
+    (m) => callOpenRouter(transcript, m, systemPrompt),
+    isRetryableOpenRouterTransportError,
+  );
 }
 
 export async function processAskQuestion(
@@ -216,17 +199,17 @@ export async function processAskQuestion(
     }
 
     const answer = extractAnswerFromResponse(responseContent);
+
     return { answer };
   };
 
-  try {
-    return await callAsk(userContent, model, ASK_QUESTION_SYSTEM_PROMPT);
-  } catch (err) {
-    if (isRetryableOpenRouterError(err)) {
-      return await callAsk(userContent, FALLBACK_MODEL, ASK_QUESTION_SYSTEM_PROMPT);
-    }
-    throw err;
-  }
+  const models = [model, ...USER_AI_MODEL_FALLBACK_CHAIN];
+
+  return withSequentialModelFallback(
+    models,
+    (m) => callAsk(userContent, m, ASK_QUESTION_SYSTEM_PROMPT),
+    isRetryableOpenRouterTransportError,
+  );
 }
 
 const ALLOWED_FOLDER_ICONS = new Set([
@@ -244,19 +227,7 @@ const ALLOWED_FOLDER_ICONS = new Set([
   'graduation',
 ]);
 
-const ALLOWED_FOLDER_COLORS = new Set([
-  '#3b82f6',
-  '#22c55e',
-  '#f59e0b',
-  '#ef4444',
-  '#8b5cf6',
-  '#06b6d4',
-  '#ec4899',
-  '#84cc16',
-]);
-
 const DEFAULT_AUTO_FOLDER_ICON = 'briefcase';
-const DEFAULT_AUTO_FOLDER_COLOR = '#3b82f6';
 
 function parseAutoOrganizeResult(rawContent: string): AutoOrganizeResult {
   const trimmed = rawContent.trim();
@@ -295,10 +266,9 @@ function parseAutoOrganizeResult(rawContent: string): AutoOrganizeResult {
         typeof f?.icon === 'string' && ALLOWED_FOLDER_ICONS.has(f.icon.trim())
           ? f.icon.trim()
           : DEFAULT_AUTO_FOLDER_ICON,
-      color:
-        typeof f?.color === 'string' && ALLOWED_FOLDER_COLORS.has(f.color.trim().toLowerCase())
-          ? f.color.trim().toLowerCase()
-          : DEFAULT_AUTO_FOLDER_COLOR,
+      color: normalizeAutoOrganizeFolderColor(
+        typeof f?.color === 'string' ? f.color : '',
+      ).toLowerCase(),
     }))
     .filter((f) => Boolean(f.name));
 
@@ -319,6 +289,13 @@ function parseAutoOrganizeResult(rawContent: string): AutoOrganizeResult {
   }
 
   return { folders, assignments };
+}
+
+function isAutoOrganizeParseFailure(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    (err.message.includes('Invalid AI response') || err.message.includes('malformed JSON'))
+  );
 }
 
 export async function processAutoOrganizeFolders(
@@ -348,16 +325,10 @@ export async function processAutoOrganizeFolders(
     return parseAutoOrganizeResult(content);
   };
 
-  try {
-    return await callOrganize(model);
-  } catch (err) {
-    const isParseFailure =
-      err instanceof Error &&
-      (err.message.includes('Invalid AI response') || err.message.includes('malformed JSON'));
-    const isRetryable = isRetryableOpenRouterError(err);
-    if (isRetryable || isParseFailure) {
-      return await callOrganize(FALLBACK_MODEL);
-    }
-    throw err;
-  }
+  const models = [model, ...SYSTEM_TASK_MODEL_FALLBACK_CHAIN];
+  return withSequentialModelFallback(
+    models,
+    callOrganize,
+    (err) => isRetryableOpenRouterTransportError(err) || isAutoOrganizeParseFailure(err),
+  );
 }

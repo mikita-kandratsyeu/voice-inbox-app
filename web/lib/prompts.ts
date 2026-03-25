@@ -1,3 +1,5 @@
+import { formatAutoOrganizeFolderColorsPromptBlock } from './folder-accent-colors';
+
 export const SUPPORT_REPLY_DRAFT_SYSTEM_PROMPT = `You help support staff write the in-app message body for Voice Inbox users.
 The app renders this text inside a bottom sheet as Markdown. Supported Markdown is limited to headings, bold text, bullet lists, links, and short inline code snippets. Do not use HTML.
 
@@ -129,14 +131,7 @@ Allowed folder icons:
 - graduation
 
 Allowed folder colors:
-- #3b82f6
-- #22c55e
-- #f59e0b
-- #ef4444
-- #8b5cf6
-- #06b6d4
-- #ec4899
-- #84cc16
+${formatAutoOrganizeFolderColorsPromptBlock()}
 
 Icon selection guidance:
 - Pick the icon that best matches the folder meaning.

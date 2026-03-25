@@ -151,6 +151,11 @@
     "startFailedTitle": "Recording failed",
     "startFailedMessage": "Could not start recording. Check microphone permissions and ensure no other apps are using the microphone.",
     "continueRecording": "Continue",
+    "discardRecording": "Delete recording",
+    "discardRecordingTitle": "Delete this recording?",
+    "discardRecordingMessage": "The audio will be removed and will not be saved.",
+    "discardRecordingConfirm": "Delete",
+    "discardRecordingA11yHint": "Asks for confirmation, then removes this audio without saving",
     "titleInputHint": "Enter a title or leave blank to use the suggested name",
     "autoTitle": {
       "morning": "Morning note",
@@ -757,8 +762,7 @@
     "secondsLeft": "~{{ count }} sec left",
     "minutesLeft": "~{{ count }} min left",
     "loadingModel": "Loading model into memory…",
-    "batteryHint": "Transcription works only while the app is open. Battery usage may increase.",
-    "batteryHintLong": "For long processing, it is recommended to connect to a power source."
+    "batteryHint": "Transcription works only while the app is open. Battery usage may increase."
   },
   "batch": {
     "selectedCount_one": "{{count}} selected",

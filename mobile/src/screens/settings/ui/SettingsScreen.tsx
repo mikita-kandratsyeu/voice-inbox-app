@@ -1,5 +1,12 @@
 import React from 'react';
-import { RefreshControl, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import {
+  Platform,
+  RefreshControl,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
@@ -60,7 +67,7 @@ export const SettingsScreen = () => {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: SCREEN_PADDING,
-            paddingTop: 24,
+            paddingTop: 44,
             paddingBottom: insets.bottom + 28,
           }}
           showsVerticalScrollIndicator={false}
@@ -71,6 +78,7 @@ export const SettingsScreen = () => {
               tintColor={settings.color.status.processing.text}
               colors={[settings.color.status.processing.text]}
               progressBackgroundColor={settings.color.background.secondary}
+              progressViewOffset={Platform.OS === 'android' ? 12 : undefined}
             />
           }
         >

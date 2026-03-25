@@ -21,7 +21,11 @@ import {
   useAppTheme,
   useColors,
 } from '@/shared/config';
-import { DEFAULT_FOLDER_BRAND_HEX, hapticError } from '@/shared/lib';
+import {
+  DEFAULT_FOLDER_BRAND_HEX,
+  hapticError,
+  resolveFolderColorForCurrentScheme,
+} from '@/shared/lib';
 import { modalKeyboardBehavior } from '@/shared/lib/platform';
 import { Button } from '@/shared/ui';
 
@@ -88,14 +92,14 @@ export const FolderFormModal = ({
     setNameError(false);
     if (folder) {
       setName(folder.name);
-      setSelectedColor(folder.color);
+      setSelectedColor(resolveFolderColorForCurrentScheme(folder.color, scheme));
       setSelectedIcon(parseFolderIconKey(folder.icon));
     } else {
       setName('');
       setSelectedColor(globalAccentHex);
       setSelectedIcon(DEFAULT_FOLDER_ICON_KEY);
     }
-  }, [folder, visible, globalAccentHex]);
+  }, [folder, visible, globalAccentHex, scheme]);
 
   useEffect(() => {
     if (visible) {
