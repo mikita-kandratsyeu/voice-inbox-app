@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { AdRequestConfiguration, RewardedAdLoader } from 'yandex-mobile-ads';
 
@@ -11,6 +11,9 @@ import { isRecord, isString } from '@/shared/lib/type-guards';
 
 const DEMO_AD_UNIT_ID = 'demo-rewarded-yandex';
 const AI_BONUS_COOLDOWN_UNTIL_KEY = 'ai_bonus_cooldown_until_ms';
+
+type RewardedAdLoaderInstance = Awaited<ReturnType<typeof RewardedAdLoader.create>>;
+type RewardedAdInstance = Awaited<ReturnType<RewardedAdLoaderInstance['loadAd']>>;
 
 function readPersistedCooldownUntil(): number | null {
   try {
@@ -129,25 +132,21 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
   const displayError =
     cooldownUntil != null && cooldownUntil > Date.now() ? 'claimCooldown' : error;
 
-  const claim = useCallback(async () => {
-    if (loading) {
-      return;
-    }
+  const isProActiveRef = useRef(isProActive);
+  useEffect(() => {
+    isProActiveRef.current = isProActive;
+  }, [isProActive]);
 
-    if (isProActive) {
-      return;
-    }
+  const onSuccessRef = useRef(onSuccess);
+  useEffect(() => {
+    onSuccessRef.current = onSuccess;
+  }, [onSuccess]);
 
-    setLoading(true);
-    setError(null);
+  const preloadedAdRef = useRef<RewardedAdInstance | null>(null);
+  const preloadPromiseRef = useRef<Promise<RewardedAdInstance | null> | null>(null);
 
-    try {
-      const loader = await RewardedAdLoader.create();
-      const config = new AdRequestConfiguration({
-        adUnitId: getAdUnitId(),
-      });
-      const ad = await loader.loadAd(config);
-
+  const setupAdHandlers = useCallback(
+    (ad: RewardedAdInstance) => {
       ad.onRewarded = async () => {
         const result = await claimAiBonus();
         if (result.ok) {
@@ -155,7 +154,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
           const until = Date.now() + sec * 1000;
           persistCooldownUntil(until);
           setCooldownUntil(until);
-          onSuccess?.(result.usage);
+          onSuccessRef.current?.(result.usage);
         } else if (result.cooldown) {
           const sec = result.retryAfterSeconds ?? 900;
           const until = Date.now() + sec * 1000;
@@ -185,14 +184,90 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
       ad.onAdDismissed = () => {
         setLoading(false);
       };
+    },
+    [setCooldownUntil, setError, setLoading],
+  );
 
+  const preloadAd = useCallback(async (): Promise<RewardedAdInstance | null> => {
+    if (isProActiveRef.current) return null;
+    if (preloadedAdRef.current) return preloadedAdRef.current;
+    if (preloadPromiseRef.current) return preloadPromiseRef.current;
+
+    const promise = (async (): Promise<RewardedAdInstance | null> => {
+      try {
+        const loader = await RewardedAdLoader.create();
+        const config = new AdRequestConfiguration({
+          adUnitId: getAdUnitId(),
+        });
+        const ad = await loader.loadAd(config);
+
+        if (isProActiveRef.current) return null;
+
+        setupAdHandlers(ad);
+        preloadedAdRef.current = ad;
+        return ad;
+      } catch (err) {
+        if (__DEV__) {
+          logRewardedAdDebug('loadAd', err);
+        }
+        return null;
+      } finally {
+        preloadPromiseRef.current = null;
+      }
+    })();
+
+    preloadPromiseRef.current = promise;
+    return promise;
+  }, [setupAdHandlers]);
+
+  useEffect(() => {
+    if (isProActive) {
+      preloadedAdRef.current = null;
+      preloadPromiseRef.current = null;
+    }
+  }, [isProActive]);
+
+  const claim = useCallback(async () => {
+    if (loading) {
+      return;
+    }
+
+    if (isProActive) {
+      return;
+    }
+
+    if (cooldownUntil != null && cooldownUntil > Date.now()) {
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      let ad = preloadedAdRef.current;
+      if (!ad && preloadPromiseRef.current) {
+        ad = await preloadPromiseRef.current;
+      }
+
+      if (ad) {
+        preloadedAdRef.current = null;
+        await ad.show();
+        return;
+      }
+
+      const loader = await RewardedAdLoader.create();
+      const config = new AdRequestConfiguration({
+        adUnitId: getAdUnitId(),
+      });
+      ad = await loader.loadAd(config);
+      setupAdHandlers(ad);
       await ad.show();
     } catch (err) {
       logRewardedAdDebug('loadAd', err);
       setError(normalizeAdError(err));
       setLoading(false);
     }
-  }, [loading, onSuccess, isProActive]);
+  }, [loading, isProActive, cooldownUntil, setupAdHandlers]);
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -207,12 +282,34 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
   }, [cooldownUntil]);
 
   useEffect(() => {
+    if (isProActive) return;
+    if (cooldownUntil != null) return;
+    if (loading) return;
+    if (preloadedAdRef.current) return;
+    if (preloadPromiseRef.current) return;
+
+    if (error != null && error !== 'claimAdFailed') return;
+
+    const id = setTimeout(() => {
+      void preloadAd();
+    }, 800);
+    return () => clearTimeout(id);
+  }, [cooldownUntil, error, isProActive, loading, preloadAd]);
+
+  useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {
       if (next === 'active') {
         setCooldownUntil(readPersistedCooldownUntil());
       }
     });
     return () => sub.remove();
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      preloadedAdRef.current = null;
+      preloadPromiseRef.current = null;
+    };
   }, []);
 
   return { claim, loading, error: displayError, clearError };

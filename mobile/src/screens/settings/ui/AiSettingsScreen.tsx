@@ -2,11 +2,12 @@ import { useNavigation } from '@react-navigation/native';
 import { Check } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { useTabletContentMaxWidth } from '@/shared/lib';
@@ -83,6 +84,8 @@ export const AiSettingsScreen = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const contentMaxWidth = useTabletContentMaxWidth();
+  const { width: windowWidth } = useWindowDimensions();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   const summaryStyle = useSettingsStore((s) => s.summaryStyle);
   const setSummaryStyle = useSettingsStore((s) => s.setSummaryStyle);
@@ -113,7 +116,6 @@ export const AiSettingsScreen = () => {
           <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
             {t('aiSettings.description')}
           </Text>
-
           <SettingsSection title={t('aiSettings.summaryStyle')}>
             <PickerSection
               options={SUMMARY_STYLES}
@@ -123,7 +125,6 @@ export const AiSettingsScreen = () => {
               color={color}
             />
           </SettingsSection>
-
           <SettingsSection title={t('aiSettings.taskStrictness')}>
             <PickerSection
               options={TASK_STRICTNESS_OPTIONS}
@@ -133,7 +134,6 @@ export const AiSettingsScreen = () => {
               color={color}
             />
           </SettingsSection>
-
           <SettingsSection title={t('aiSettings.outputLanguage')}>
             <PickerSection
               options={OUTPUT_LANGUAGES}
@@ -143,6 +143,7 @@ export const AiSettingsScreen = () => {
               color={color}
             />
           </SettingsSection>
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
     </View>

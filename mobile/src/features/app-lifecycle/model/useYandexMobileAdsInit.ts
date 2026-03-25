@@ -4,6 +4,26 @@ import { MobileAds } from 'yandex-mobile-ads';
 
 import { useProEntitlement } from '@/features/pro-license';
 
+let initialized = false;
+let initializePromise: Promise<void> | null = null;
+
+async function ensureMobileAdsInitialized(): Promise<void> {
+  if (initialized) return;
+  if (initializePromise) return initializePromise;
+
+  initializePromise = Promise.resolve()
+    .then(() => MobileAds.initialize())
+    .then(() => {
+      initialized = true;
+    })
+    .catch((err) => {
+      initializePromise = null;
+      throw err;
+    });
+
+  return initializePromise;
+}
+
 export function useYandexMobileAdsInit(): void {
   const { isProActive } = useProEntitlement();
 
@@ -13,12 +33,14 @@ export function useYandexMobileAdsInit(): void {
     }
 
     let cancelled = false;
-    let initialized = false;
 
     const initAds = () => {
       if (cancelled || initialized) return;
-      initialized = true;
-      void MobileAds.initialize();
+      void ensureMobileAdsInitialized().catch((err) => {
+        if (__DEV__) {
+          console.warn('[ads:init] MobileAds.initialize failed', err);
+        }
+      });
     };
 
     const deferredInitTimer = setTimeout(() => {

@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { BannerView } from 'yandex-mobile-ads';
@@ -26,13 +26,55 @@ export function InboxBannerAd({
   const { t } = useTranslation();
   const { adsAllowed } = useAdsAllowed();
   const bannerSize = useInboxBannerSize(contentMaxWidth);
-  const [loadFailed, setLoadFailed] = useState(false);
+  const [, setRetryAttempt] = useState(0);
+  const [nextTryAt, setNextTryAt] = useState<number | null>(null);
+  const [permanentlyDisabled, setPermanentlyDisabled] = useState(false);
+
+  const isRetrySuppressed = nextTryAt != null && nextTryAt > Date.now();
 
   const onAdFailedToLoad = useCallback(() => {
-    setLoadFailed(true);
+    setRetryAttempt((attempt) => {
+      const nextAttempt = attempt + 1;
+
+      if (nextAttempt > 6) {
+        setPermanentlyDisabled(true);
+        setNextTryAt(null);
+
+        return attempt;
+      }
+
+      const delayMs = Math.min(15_000, 1_000 * 2 ** nextAttempt);
+      setNextTryAt(Date.now() + delayMs);
+      return nextAttempt;
+    });
   }, []);
 
-  if (!adsAllowed || !getHasSeenOnboarding() || loadFailed || !bannerSize) {
+  useEffect(() => {
+    if (nextTryAt == null) return;
+
+    const delay = nextTryAt - Date.now();
+    if (delay <= 0) {
+      setNextTryAt(null);
+      return;
+    }
+
+    const id = setTimeout(() => setNextTryAt(null), delay);
+    return () => clearTimeout(id);
+  }, [nextTryAt]);
+
+  useEffect(() => {
+    setRetryAttempt(0);
+    setNextTryAt(null);
+    setPermanentlyDisabled(false);
+  }, [adsAllowed, bannerSize]);
+
+  if (
+    !adsAllowed ||
+    !getHasSeenOnboarding() ||
+    permanentlyDisabled ||
+    isRetrySuppressed ||
+    !bannerSize
+  ) {
     return null;
   }
 
@@ -47,8 +89,8 @@ export function InboxBannerAd({
             ? 'px-3 pt-2 pb-1'
             : 'px-3 pt-3 pb-1'
           : compact
-            ? 'border-t px-3 pt-2 pb-1 mt-2'
-            : 'border-t px-3 pt-3 pb-1 mt-3'
+            ? 'border-t px-3 pt-2 pb-1 mt-1'
+            : 'border-t px-3 pt-3 pb-1 mt-1'
       }
       style={{
         borderTopColor: onAccent ? 'transparent' : color.border.default,

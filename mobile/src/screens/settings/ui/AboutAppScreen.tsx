@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BookOpen, Globe, Mail, Tag } from 'lucide-react-native';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
@@ -9,13 +9,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import { getStoreListingUrl, openStoreListing } from '@/features/app-review';
-import { getStorefrontCountryCode } from '@/features/app-storefront';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useOnboardingStore } from '@/features/onboarding';
 import { getWebsiteUrl, useColors } from '@/shared/config';
-import { isTestflightInternalBuild } from '@/shared/config/buildEnv';
-import { IS_ANDROID, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
+import { useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 const VERSION_DISPLAY = DeviceInfoModule.version;
@@ -31,30 +29,6 @@ export const AboutAppScreen = () => {
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
-  const [storefrontRegion, setStorefrontRegion] = useState<string | null>(null);
-
-  useEffect(() => {
-    void getStorefrontCountryCode().then(setStorefrontRegion);
-  }, []);
-
-  let distributionMarketLabel: string | null = null;
-
-  if (IS_IOS) {
-    distributionMarketLabel = t('about.marketAppStore');
-  } else if (IS_ANDROID) {
-    distributionMarketLabel = t('about.marketGooglePlay');
-  }
-
-  const storefrontRegionTrimmed = storefrontRegion?.trim() ?? '';
-  const distributionFooterText =
-    distributionMarketLabel != null
-      ? storefrontRegionTrimmed.length > 0
-        ? t('about.distributionMarketWithRegion', {
-            market: distributionMarketLabel,
-            region: storefrontRegionTrimmed,
-          })
-        : t('about.distributionMarket', { market: distributionMarketLabel })
-      : null;
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -187,17 +161,9 @@ export const AboutAppScreen = () => {
               isLast
             />
           </SettingsSection>
-          <Text className="mt-2 text-center text-[14px]" style={{ color: color.text.secondary }}>
+          <Text className="text-center text-[14px]" style={{ color: color.text.secondary }}>
             {t('about.copyright', { year: new Date().getFullYear() })}
           </Text>
-          {(__DEV__ || isTestflightInternalBuild()) && distributionFooterText != null && (
-            <Text
-              className="mt-2 text-center text-xs leading-4"
-              style={{ color: color.text.secondary }}
-            >
-              {distributionFooterText}
-            </Text>
-          )}
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>

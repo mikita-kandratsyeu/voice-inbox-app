@@ -7,7 +7,7 @@ import { FOLDER_ICON_KEYS, type FolderIconKey } from '@/entities/folder/lib/fold
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useProEntitlement } from '@/features/pro-license';
-import { DEFAULT_FOLDER_BRAND_HEX } from '@/shared/lib';
+import { DEFAULT_FOLDER_BRAND_HEX, useNetworkStatus } from '@/shared/lib';
 import { pollAutoOrganizeFolders, postAutoOrganizeFolders } from '@/shared/lib/ai-api';
 import {
   getAiWeeklyLimitExceededMessage,
@@ -18,6 +18,22 @@ const MIN_NOTES_TO_AUTO_ORGANIZE = 5;
 const MAX_NOTES_FOR_SINGLE_REQUEST = 120;
 const ALLOWED_ICONS = new Set<string>(FOLDER_ICON_KEYS);
 
+function isLikelyNetworkError(raw: string): boolean {
+  const lower = raw.toLowerCase();
+
+  return (
+    lower.includes('nsurlerror') ||
+    lower.includes('kcferrordomaincfnetwork') ||
+    lower.includes('failed to connect') ||
+    lower.includes('econnrefused') ||
+    lower.includes('ehostunreachable') ||
+    lower.includes('/api/token') ||
+    lower.includes('ne udalos podkluchitsya') ||
+    lower.includes('не удалось подключиться') ||
+    lower.includes('network error')
+  );
+}
+
 function sanitizeFolderIcon(icon: string): FolderIconKey {
   return ALLOWED_ICONS.has(icon) ? (icon as FolderIconKey) : 'briefcase';
 }
@@ -25,6 +41,7 @@ function sanitizeFolderIcon(icon: string): FolderIconKey {
 export function useAutoOrganizeFolders(records: VoiceRecord[]) {
   const { t, i18n } = useTranslation();
   const { isProActive } = useProEntitlement();
+  const { isConnected } = useNetworkStatus();
   const { folders, createFolder } = useFolderStore();
   const setRecordFolder = useRecordStore((s) => s.setRecordFolder);
   const [isRunning, setIsRunning] = useState(false);
@@ -71,6 +88,11 @@ export function useAutoOrganizeFolders(records: VoiceRecord[]) {
       return;
     }
 
+    if (isConnected === false) {
+      Alert.alert(t('common.error'), t('folders.autoOrganizeFailedDescription'));
+      return;
+    }
+
     setIsRunning(true);
     try {
       const requestId = `auto-organize-${Date.now()}`;
@@ -91,7 +113,11 @@ export function useAutoOrganizeFolders(records: VoiceRecord[]) {
               ? getAutoOrganizeWeeklyLimitExceededMessage()
               : getAiWeeklyLimitExceededMessage()
             : postResult.error;
-        Alert.alert(t('common.error'), msg);
+        const safeMsg =
+          typeof msg === 'string' && isLikelyNetworkError(msg)
+            ? t('folders.autoOrganizeFailedDescription')
+            : msg;
+        Alert.alert(t('common.error'), safeMsg);
         return;
       }
 
@@ -136,6 +162,7 @@ export function useAutoOrganizeFolders(records: VoiceRecord[]) {
     eligibleNotes,
     folders,
     isProActive,
+    isConnected,
     isRunning,
     i18n.language,
     setRecordFolder,

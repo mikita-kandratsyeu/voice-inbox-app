@@ -22,7 +22,9 @@ export function DeferredInboxBannerAd({ delayMs = 1200, ...props }: DeferredInbo
     return () => clearTimeout(timer);
   }, [delayMs]);
 
-  if (!visible) return null;
+  if (!visible) {
+    return null;
+  }
 
   return <InboxBannerAd {...props} />;
 }

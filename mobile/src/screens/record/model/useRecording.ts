@@ -235,12 +235,11 @@ export const useRecording = ({
       addRecordBackListener();
       setState('recording');
 
-      // Ensure Live Activity doesn't count paused "waiting" time.
       updateRecordingLiveActivity(elapsedRef.current, undefined, true).catch(() => {});
     } catch (err) {
       if (__DEV__) console.warn('[useRecording] resumeRecorder failed:', err);
     }
-  }, [addRecordBackListener, updateRecordingLiveActivity]);
+  }, [addRecordBackListener]);
 
   const stopRecording = useCallback(async (): Promise<string | null> => {
     try {
