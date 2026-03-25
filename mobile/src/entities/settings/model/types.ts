@@ -8,7 +8,10 @@ export type UserSelectableAIModelId =
   | 'google/gemini-3.1-flash-lite-preview'
   | 'minimax/minimax-m2.7';
 
-export type AIModelId = UserSelectableAIModelId | 'deepseek/deepseek-v3.2' | 'qwen/qwen3.5-9b';
+export type AIModelId =
+  | UserSelectableAIModelId
+  | 'deepseek/deepseek-v3.2'
+  | 'google/gemini-2.5-flash';
 
 export type TranscriptionLanguage = 'auto' | 'ru' | 'en' | 'de' | 'fr' | 'es' | 'zh' | 'ja';
 export type SummaryStyle = 'brief' | 'standard' | 'detailed';

@@ -298,17 +298,96 @@ function isAutoOrganizeParseFailure(err: unknown): boolean {
   );
 }
 
+function compactAutoOrganizeInput(notesJsonPayload: string): string {
+  try {
+    const parsed = JSON.parse(notesJsonPayload) as unknown;
+    if (!parsed || typeof parsed !== 'object') return notesJsonPayload;
+    const obj = parsed as { notes?: unknown };
+    if (!Array.isArray(obj.notes)) return notesJsonPayload;
+
+    const MAX_TRANSCRIPT_CHARS = 2500;
+    const MAX_SUMMARY_CHARS = 600;
+    const MAX_TASKS = 12;
+    const MAX_TASK_TEXT_CHARS = 200;
+    const MAX_TAGS = 8;
+
+    const truncateText = (s: unknown, maxChars: number): string | undefined => {
+      if (typeof s !== 'string') return undefined;
+      const trimmed = s.trim();
+      if (!trimmed) return undefined;
+      return trimmed.length <= maxChars ? trimmed : `${trimmed.slice(0, maxChars)}...`;
+    };
+
+    const compactNotes = obj.notes
+      .map((note) => {
+        if (!note || typeof note !== 'object') return null;
+        const n = note as Record<string, unknown>;
+
+        const summary = truncateText(n.summary, MAX_SUMMARY_CHARS);
+        const transcript = truncateText(n.transcript, MAX_TRANSCRIPT_CHARS);
+
+        const next: Record<string, unknown> = { ...n };
+
+        if (summary) {
+          next.summary = summary;
+          delete next.transcript;
+        } else if (transcript) {
+          next.transcript = transcript;
+        } else {
+          delete next.transcript;
+        }
+
+        if (Array.isArray(n.tags)) {
+          next.tags = n.tags
+            .filter((t) => typeof t === 'string')
+            .map((t) => t.trim())
+            .filter(Boolean)
+            .slice(0, MAX_TAGS);
+        }
+
+        if (Array.isArray(n.tasks)) {
+          next.tasks = n.tasks
+            .slice(0, MAX_TASKS)
+            .map((t) => ({
+              text: truncateText(
+                t && typeof t === 'object' ? (t as Record<string, unknown>).text : undefined,
+                MAX_TASK_TEXT_CHARS,
+              ),
+            }))
+            .filter((t) => Boolean(t.text));
+        }
+
+        if (typeof n.title === 'string') {
+          next.title = n.title.trim().slice(0, 120);
+        }
+
+        if (typeof n.classification === 'string') {
+          next.classification = n.classification.trim();
+        }
+
+        return next;
+      })
+      .filter(Boolean);
+
+    return JSON.stringify({ ...obj, notes: compactNotes });
+  } catch {
+    return notesJsonPayload;
+  }
+}
+
 export async function processAutoOrganizeFolders(
   notesJsonPayload: string,
   model: string,
 ): Promise<AutoOrganizeResult> {
+  const compactPayload = compactAutoOrganizeInput(notesJsonPayload);
+
   const callOrganize = async (m: string): Promise<AutoOrganizeResult> => {
     const response = await openRouterClient.chat.send({
       chatGenerationParams: {
         model: m,
         messages: [
           { role: 'system', content: AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT },
-          { role: 'user', content: notesJsonPayload },
+          { role: 'user', content: compactPayload },
         ],
         provider: { zdr: true },
         responseFormat: { type: 'json_object' },

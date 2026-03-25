@@ -7,7 +7,7 @@ import { FOLDER_ICON_KEYS, type FolderIconKey } from '@/entities/folder/lib/fold
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useProEntitlement } from '@/features/pro-license';
-import { DEFAULT_FOLDER_BRAND_HEX, useNetworkStatus } from '@/shared/lib';
+import { DEFAULT_FOLDER_BRAND_HEX, isString, useNetworkStatus } from '@/shared/lib';
 import { pollAutoOrganizeFolders, postAutoOrganizeFolders } from '@/shared/lib/ai-api';
 import {
   getAiWeeklyLimitExceededMessage,
@@ -15,8 +15,25 @@ import {
 } from '@/shared/lib/ai-api/limitUserMessage';
 
 const MIN_NOTES_TO_AUTO_ORGANIZE = 5;
-const MAX_NOTES_FOR_SINGLE_REQUEST = 120;
+const MAX_NOTES_FOR_SINGLE_REQUEST = 60;
 const ALLOWED_ICONS = new Set<string>(FOLDER_ICON_KEYS);
+
+const MAX_TRANSCRIPT_CHARS_FOR_AUTO_ORGANIZE = 2500;
+const MAX_SUMMARY_CHARS_FOR_AUTO_ORGANIZE = 600;
+const MAX_TASKS_FOR_AUTO_ORGANIZE = 12;
+const MAX_TASK_TEXT_CHARS_FOR_AUTO_ORGANIZE = 200;
+const MAX_TAGS_FOR_AUTO_ORGANIZE = 8;
+
+function truncateText(s: string | undefined, maxChars: number): string | undefined {
+  if (!isString(s)) return undefined;
+
+  const trimmed = s.trim();
+
+  if (!trimmed) return undefined;
+  if (trimmed.length <= maxChars) return trimmed;
+
+  return `${trimmed.slice(0, maxChars)}...`;
+}
 
 function isLikelyNetworkError(raw: string): boolean {
   const lower = raw.toLowerCase();
@@ -61,12 +78,22 @@ export function useAutoOrganizeFolders(records: VoiceRecord[]) {
         .slice(0, MAX_NOTES_FOR_SINGLE_REQUEST)
         .map((r) => ({
           id: r.id,
-          title: r.title,
-          transcript: r.transcript,
-          summary: r.summary,
-          tags: r.tags,
+          title: r.title.trim(),
+          transcript:
+            r.summary && r.summary.trim()
+              ? undefined
+              : truncateText(r.transcript, MAX_TRANSCRIPT_CHARS_FOR_AUTO_ORGANIZE),
+          summary: truncateText(r.summary, MAX_SUMMARY_CHARS_FOR_AUTO_ORGANIZE),
+          tags: Array.isArray(r.tags) ? r.tags.slice(0, MAX_TAGS_FOR_AUTO_ORGANIZE) : undefined,
           classification: r.classification,
-          tasks: r.tasks?.map((task) => ({ text: task.text })),
+          tasks: r.tasks
+            ? r.tasks
+                .slice(0, MAX_TASKS_FOR_AUTO_ORGANIZE)
+                .map((task) => ({
+                  text: truncateText(task.text, MAX_TASK_TEXT_CHARS_FOR_AUTO_ORGANIZE) ?? '',
+                }))
+                .filter((t) => Boolean(t.text))
+            : undefined,
         })),
     [records],
   );
