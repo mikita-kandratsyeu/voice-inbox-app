@@ -217,7 +217,10 @@ export const useRecording = ({
       await audioRecorderPlayer.pauseRecorder();
       audioRecorderPlayer.removeRecordBackListener();
 
+      const secs = elapsedRef.current;
       setState('paused');
+
+      updateRecordingLiveActivity(secs, undefined, false).catch(() => {});
     } catch (err) {
       if (__DEV__) console.warn('[useRecording] pauseRecorder failed:', err);
     }
@@ -231,10 +234,13 @@ export const useRecording = ({
       routeChangeSuppressedUntilRef.current = Date.now() + IOS_ROUTE_CHANGE_SUPPRESS_MS;
       addRecordBackListener();
       setState('recording');
+
+      // Ensure Live Activity doesn't count paused "waiting" time.
+      updateRecordingLiveActivity(elapsedRef.current, undefined, true).catch(() => {});
     } catch (err) {
       if (__DEV__) console.warn('[useRecording] resumeRecorder failed:', err);
     }
-  }, [addRecordBackListener]);
+  }, [addRecordBackListener, updateRecordingLiveActivity]);
 
   const stopRecording = useCallback(async (): Promise<string | null> => {
     try {

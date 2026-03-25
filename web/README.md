@@ -19,7 +19,7 @@ The site showcases Voice Inbox AI: explains features, walks through the workflow
 - **Pages** — home, Privacy Policy, Terms of Service (Markdown in `content/` — Yandex ads when not on paid ad-free tier, subject to policy updates)
 - **API** — AI/sync/message endpoints (Redis or in-memory), mobile JWT auth, **in-app support** (`POST /api/support` → Postgres)
 - **Admin** — dashboard at `/admin` (bonus config, infra status incl. Postgres ping, push with preview/history, support inbox with search & CSV export, **release notes** for the landing blog, audit log, API error histogram via Redis, admin users & access policy)
-- **Release notes** — `/releases` and `/releases/[slug]` (localized); content from Postgres, edited in admin (**Release notes** tab)
+- **Blog** — `/releases` and `/releases/[slug]` (localized); content from Postgres, edited in admin (**Blog** tab)
 
 ---
 

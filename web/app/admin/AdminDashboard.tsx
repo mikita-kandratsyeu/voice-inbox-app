@@ -169,7 +169,7 @@ const ADMIN_TAB_META: Record<
     icon: LifeBuoy,
   },
   releases: {
-    label: 'Release notes',
+    label: 'Blog',
     short: 'Releases',
     description: 'Landing changelog posts per locale',
     icon: Rocket,

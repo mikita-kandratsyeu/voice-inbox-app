@@ -31,7 +31,7 @@ struct DownloadLiveActivityView: View {
     var body: some View {
         Link(destination: DownloadDeeplink.settingsUrl) {
             HStack(spacing: 14) {
-                Image(systemName: "arrow.down.circle.fill")
+                Image(systemName: "tray.and.arrow.down.fill")
                     .font(.system(size: 26, weight: .semibold))
                     .foregroundColor(.blue)
 
@@ -45,10 +45,6 @@ struct DownloadLiveActivityView: View {
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .lineLimit(1)
-
-                    ProgressView(value: clampedProgress)
-                        .progressViewStyle(.linear)
-                        .tint(.blue)
                 }
 
                 Spacer()
@@ -88,7 +84,7 @@ struct DownloadWidgetLiveActivity: Widget {
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     Link(destination: DownloadDeeplink.settingsUrl) {
-                        Image(systemName: "arrow.down.circle.fill")
+                        Image(systemName: "tray.and.arrow.down.fill")
                             .font(.system(size: 24, weight: .semibold))
                             .foregroundColor(.blue)
                             .frame(maxHeight: .infinity, alignment: .center)
@@ -104,9 +100,6 @@ struct DownloadWidgetLiveActivity: Widget {
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                                 .lineLimit(1)
-                            ProgressView(value: min(max(context.state.progress, 0), 1))
-                                .progressViewStyle(.linear)
-                                .tint(.blue)
                         }
                         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                     }
@@ -128,7 +121,7 @@ struct DownloadWidgetLiveActivity: Widget {
                 }
             } compactLeading: {
                 Link(destination: DownloadDeeplink.settingsUrl) {
-                    Image(systemName: "arrow.down.circle.fill")
+                    Image(systemName: "tray.and.arrow.down.fill")
                         .foregroundColor(.blue)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
@@ -143,7 +136,7 @@ struct DownloadWidgetLiveActivity: Widget {
                 }
             } minimal: {
                 Link(destination: DownloadDeeplink.settingsUrl) {
-                    Image(systemName: "arrow.down.circle.fill")
+                    Image(systemName: "tray.and.arrow.down.fill")
                         .foregroundColor(.blue)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }

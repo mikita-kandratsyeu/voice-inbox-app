@@ -194,7 +194,7 @@ export function AdminReleasesPanel() {
   return (
     <div className="space-y-8">
       <AdminPanelHeading
-        title="Release notes (landing blog)"
+        title="Blog (landing page)"
         description="Markdown body. Slug: lowercase, digits, hyphens. Separate post per locale (en / ru)."
         actions={
           <div className="flex flex-wrap items-center gap-2">

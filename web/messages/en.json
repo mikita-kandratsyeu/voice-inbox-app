@@ -54,15 +54,15 @@
   "footer": {
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
-    "releases": "Release notes",
+    "releases": "Blog",
     "copyright": "© {year} Voice Inbox AI. All rights reserved."
   },
   "header": {
     "appName": "Voice Inbox AI",
-    "releases": "Release notes"
+    "releases": "Blog"
   },
   "releases": {
-    "pageTitle": "Release notes",
+    "pageTitle": "Blog",
     "pageSubtitle": "What's new in Voice Inbox AI",
     "empty": "No releases published yet.",
     "readMore": "Read more",
@@ -77,7 +77,7 @@
     "privacyDescription": "How Voice Inbox AI handles your data: local storage, optional AI processing, and our commitment to privacy.",
     "termsTitle": "Terms of Service — Voice Inbox AI",
     "termsDescription": "Terms governing your use of the Voice Inbox AI mobile app and related services.",
-    "releasesListTitle": "Release notes — Voice Inbox AI",
+    "releasesListTitle": "Blog — Voice Inbox AI",
     "releasesListDescription": "Changelog and updates for the Voice Inbox AI app on iOS and Android.",
     "error400Title": "Bad request — Voice Inbox AI",
     "error400Description": "The request could not be processed. Check the link or return to the home page.",

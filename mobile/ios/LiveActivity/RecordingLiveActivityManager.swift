@@ -32,9 +32,11 @@ final class RecordingLiveActivityManager {
         guard let activity else { return }
       
         let currentState = activity.content.state
+        let now = Date()
+        let alignedStartDate = now.addingTimeInterval(-TimeInterval(elapsedSeconds))
         let state = RecordingAttributes.ContentState(
             isRecording: isRecording,
-            startDate: currentState.startDate,
+            startDate: alignedStartDate,
             elapsedSeconds: elapsedSeconds,
             title: title
         )

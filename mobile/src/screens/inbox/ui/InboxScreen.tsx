@@ -169,7 +169,9 @@ export const InboxScreen = () => {
   const [searchFocusSignal, setSearchFocusSignal] = useState(0);
 
   const showInboxSearchBar =
-    !batchSelect.isSelectMode && (searchBarExplicitOpen || query.trim().length > 0);
+    records.length > 0 &&
+    !batchSelect.isSelectMode &&
+    (searchBarExplicitOpen || query.trim().length > 0);
 
   const handleSearchHeaderPress = useCallback(() => {
     const barVisible = searchBarExplicitOpen || query.trim().length > 0;
@@ -452,32 +454,34 @@ export const InboxScreen = () => {
               />
             ) : (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Button
-                  iconOnly
-                  variant="icon"
-                  size="md"
-                  icon={
-                    <Search
-                      size={21}
-                      color={
-                        searchBarExplicitOpen || query.trim().length > 0
-                          ? color.accent.primary
-                          : color.text.primary
-                      }
-                      strokeWidth={2.2}
-                    />
-                  }
-                  color={color}
-                  onPress={handleSearchHeaderPress}
-                  accessibilityLabel={
-                    !showInboxSearchBar
-                      ? t('search.a11yOpen')
-                      : query.trim() === ''
-                        ? t('search.a11yHide')
-                        : t('search.a11yFocus')
-                  }
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                />
+                {records.length > 0 && (
+                  <Button
+                    iconOnly
+                    variant="icon"
+                    size="md"
+                    icon={
+                      <Search
+                        size={21}
+                        color={
+                          searchBarExplicitOpen || query.trim().length > 0
+                            ? color.accent.primary
+                            : color.text.primary
+                        }
+                        strokeWidth={2.2}
+                      />
+                    }
+                    color={color}
+                    onPress={handleSearchHeaderPress}
+                    accessibilityLabel={
+                      !showInboxSearchBar
+                        ? t('search.a11yOpen')
+                        : query.trim() === ''
+                          ? t('search.a11yHide')
+                          : t('search.a11yFocus')
+                    }
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  />
+                )}
                 <Button
                   iconOnly
                   variant="icon"
@@ -558,9 +562,6 @@ export const InboxScreen = () => {
                 onCleared={() => setSearchBarExplicitOpen(false)}
               />
             )}
-            {showSwipeHint && !batchSelect.isSelectMode && (
-              <SwipeHintBanner onDismiss={dismissSwipeHint} />
-            )}
             {!batchSelect.isSelectMode && (
               <InboxFilterBar
                 filterStatus={filterStatus}
@@ -569,6 +570,11 @@ export const InboxScreen = () => {
                 onSortChange={setSortOption}
                 color={color}
               />
+            )}
+            {showSwipeHint && !batchSelect.isSelectMode && (
+              <View style={{ marginTop: showInboxSearchBar ? 4 : 0 }}>
+                <SwipeHintBanner onDismiss={dismissSwipeHint} />
+              </View>
             )}
             {isSearching && filtered.length === 0 ? (
               <EmptySearchState query={query} color={color} />

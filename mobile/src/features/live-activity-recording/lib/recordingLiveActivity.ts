@@ -24,13 +24,15 @@ export async function startRecordingLiveActivity(
 
 export async function updateRecordingLiveActivity(
   elapsedSeconds: number,
-  title = defaultTitle,
+  title?: string,
+  isRecording = true,
 ): Promise<void> {
   if (!isLiveActivityAvailable()) {
     return;
   }
 
-  return RecordingActivityModule.update(true, elapsedSeconds, title);
+  const resolvedTitle = title ?? defaultTitle;
+  return RecordingActivityModule.update(isRecording, elapsedSeconds, resolvedTitle);
 }
 
 export async function endRecordingLiveActivity(): Promise<void> {

@@ -392,7 +392,7 @@
       "freeTitle": "Free",
       "freeLimits": {
         "manualAi": "AI runs manually only—you start summary and tasks in each note",
-        "recording": "Up to {{minutes}} minutes per recording",
+        "recording": "Recordings up to {{minutes}} minutes",
         "weeklyAi": "Up to {{limit}} AI requests per week"
       },
       "proTitle": "Pro",

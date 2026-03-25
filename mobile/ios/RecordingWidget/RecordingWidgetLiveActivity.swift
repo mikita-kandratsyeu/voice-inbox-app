@@ -3,6 +3,10 @@ import WidgetKit
 import SwiftUI
 
 private func formattedLiveActivityTime(from state: RecordingAttributes.ContentState) -> String {
+    if !state.isRecording {
+        return formatTime(state.elapsedSeconds)
+    }
+
     let base = state.elapsedSeconds
     let start = state.startDate
 
@@ -81,7 +85,7 @@ struct RecordingLiveActivityView: View {
             if context.state.isRecording {
               PulsingRecordIcon(baseSize: 12, pulseScale: 1.8)
             } else {
-                Image(systemName: "stop.circle")
+                Image(systemName: "pause.circle")
                     .foregroundColor(.red)
                     .font(.title2)
             }
@@ -90,12 +94,20 @@ struct RecordingLiveActivityView: View {
                 Text(context.state.title)
                     .font(.headline)
                     .foregroundColor(.primary)
-              Text(
-                  timerInterval: context.state.startDate...Date(),
-                  countsDown: false
-              )
+                if context.state.isRecording {
+                    Text(
+                        timerInterval: context.state.startDate...Date(),
+                        countsDown: false
+                    )
                     .font(.subheadline)
                     .foregroundColor(.secondary)
+                    .monospacedDigit()
+                } else {
+                    Text(formatTime(context.state.elapsedSeconds))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .monospacedDigit()
+                }
             }
             Spacer()
           
@@ -126,7 +138,7 @@ struct RecordingWidgetLiveActivity: Widget {
                         PulsingRecordIcon(baseSize: 12, pulseScale: 1.8)
                         .frame(maxHeight: .infinity, alignment: .center)
                     } else {
-                        Image(systemName: "mic.slash.fill")
+                        Image(systemName: "pause.circle")
                             .foregroundColor(.red)
                             .frame(maxHeight: .infinity, alignment: .center)
                     }
@@ -161,7 +173,7 @@ struct RecordingWidgetLiveActivity: Widget {
                 if context.state.isRecording {
                     PulsingRecordIcon(baseSize: 8, pulseScale: 1.6)
                 } else {
-                    Image(systemName: "mic.fill")
+                    Image(systemName: "pause.circle")
                         .foregroundColor(.red)
                 }
             } compactTrailing: {
@@ -172,7 +184,7 @@ struct RecordingWidgetLiveActivity: Widget {
                 if context.state.isRecording {
                     PulsingRecordIcon(baseSize: 7, pulseScale: 1.5)
                 } else {
-                    Image(systemName: "mic.fill")
+                    Image(systemName: "pause.circle")
                 }
             }
         }

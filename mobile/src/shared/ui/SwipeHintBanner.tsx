@@ -16,7 +16,7 @@ export const SwipeHintBanner = ({ onDismiss }: SwipeHintBannerProps) => {
 
   return (
     <View
-      className="mx-4 mb-2 mt-1 flex-row items-center rounded-xl px-4 py-3"
+      className="mx-4 my-2.5 flex-row items-center rounded-xl px-4 py-3"
       style={{ backgroundColor: color.accent.primary + '18' }}
     >
       <Info size={18} color={color.accent.primary} strokeWidth={2} style={{ marginRight: 10 }} />

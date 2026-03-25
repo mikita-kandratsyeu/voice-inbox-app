@@ -54,15 +54,15 @@
   "footer": {
     "privacyPolicy": "Политика конфиденциальности",
     "termsOfService": "Условия использования",
-    "releases": "Релизы",
+    "releases": "Блог",
     "copyright": "© {year} Voice Inbox AI. Все права защищены."
   },
   "header": {
     "appName": "Voice Inbox AI",
-    "releases": "Релизы"
+    "releases": "Блог"
   },
   "releases": {
-    "pageTitle": "Релизы",
+    "pageTitle": "Блог",
     "pageSubtitle": "Что нового в Voice Inbox AI",
     "empty": "Пока нет опубликованных релизов.",
     "readMore": "Подробнее",
@@ -77,7 +77,7 @@
     "privacyDescription": "Как Voice Inbox AI обрабатывает ваши данные: локальное хранение, опциональная ИИ обработка и наша приверженность приватности.",
     "termsTitle": "Условия использования — Voice Inbox AI",
     "termsDescription": "Условия использования мобильного приложения Voice Inbox AI и связанных сервисов.",
-    "releasesListTitle": "Релизы — Voice Inbox AI",
+    "releasesListTitle": "Блог — Voice Inbox AI",
     "releasesListDescription": "История обновлений приложения Voice Inbox AI для iOS и Android.",
     "error400Title": "Некорректный запрос — Voice Inbox AI",
     "error400Description": "Запрос не удалось обработать. Проверьте ссылку или вернитесь на главную.",
