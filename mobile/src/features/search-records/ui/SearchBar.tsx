@@ -44,7 +44,7 @@ export const SearchBar = ({ query, onChangeQuery, color, placeholder }: SearchBa
     ) : undefined;
 
   return (
-    <View className="mx-4 my-6">
+    <View className="mx-4 mt-6 mb-2.5">
       <InputField
         color={color}
         hasValue={Boolean(query)}

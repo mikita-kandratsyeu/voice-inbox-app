@@ -74,7 +74,7 @@ export const InboxFilterBar = ({
   };
 
   return (
-    <View className="mb-3 flex-row items-stretch px-4" style={{ gap: 8 }}>
+    <View className="mb-0 flex-row items-stretch px-4" style={{ gap: 8 }}>
       <View
         className="flex-1 min-w-0 flex-row overflow-hidden rounded-xl"
         style={{

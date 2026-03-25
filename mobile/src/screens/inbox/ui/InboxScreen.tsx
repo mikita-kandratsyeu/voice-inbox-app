@@ -505,9 +505,9 @@ export const InboxScreen = () => {
             {!batchSelect.isSelectMode && (
               <SearchBar query={query} onChangeQuery={setQuery} color={color} />
             )}
-            {showSwipeHint && !batchSelect.isSelectMode ? (
+            {showSwipeHint && !batchSelect.isSelectMode && (
               <SwipeHintBanner onDismiss={dismissSwipeHint} />
-            ) : null}
+            )}
             {!batchSelect.isSelectMode && (
               <InboxFilterBar
                 filterStatus={filterStatus}
