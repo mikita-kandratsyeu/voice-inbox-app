@@ -200,7 +200,7 @@ export const SaveRecordModal = ({
           autoFocus
           returnKeyType="done"
           onSubmitEditing={handleSave}
-          accessibilityLabel={t('record.saveModalTitle')}
+          accessibilityLabel={t('record.titlePlaceholder')}
           accessibilityHint={t('record.titleInputHint')}
         />
         <Text className="-mt-1 text-[13px]" style={{ color: c.text.secondary }}>

@@ -75,11 +75,28 @@ export const WhisperModelCard = ({
     : {};
   const radiusClass = getCardRadiusClass(index, total);
 
+  const rowStatusA11y = isError
+    ? t('whisper.a11yRowError')
+    : isDownloading
+      ? t('whisper.a11yRowDownloading')
+      : isDownloaded
+        ? isSelected
+          ? t('whisper.a11yRowSelected')
+          : t('whisper.a11yRowDownloaded')
+        : t('whisper.a11yRowNotDownloaded');
+  const cardA11yLabel = `${t('whisper.a11yModelPrefix', { name: model.name })}, ${rowStatusA11y}`;
+
   return (
     <TouchableOpacity
       key={model.id}
       onPress={() => onPress(model.id)}
       activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={cardA11yLabel}
+      accessibilityState={{
+        selected: isDownloaded && isSelected,
+        disabled: isDownloading,
+      }}
       className={`px-4 py-4 ${radiusClass}`}
       style={[{ backgroundColor: color.background.card }, borderStyle]}
     >
@@ -180,6 +197,8 @@ export const WhisperModelCard = ({
               <TouchableOpacity
                 onPress={() => onCancelDownload(model.id)}
                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.cancel')}
               >
                 <Text className="text-[13px]" style={{ color: color.text.secondary }}>
                   {t('common.cancel')}

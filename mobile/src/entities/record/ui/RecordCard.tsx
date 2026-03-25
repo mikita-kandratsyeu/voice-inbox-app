@@ -18,6 +18,10 @@ type RecordCardProps = {
   onPress: () => void;
   onStatusPress: () => void;
   onLongPress?: () => void;
+  /** `null` disables the default long-press hint (e.g. batch selection mode). */
+  a11yHint?: string | null;
+  /** When the parent row exposes accessibility (e.g. batch checkbox), hide this card from the tree. */
+  hideAccessibilitySubtree?: boolean;
 };
 
 export const RecordCard = React.memo(function RecordCard({
@@ -27,8 +31,10 @@ export const RecordCard = React.memo(function RecordCard({
   onPress,
   onStatusPress,
   onLongPress,
+  a11yHint,
+  hideAccessibilitySubtree = false,
 }: RecordCardProps) {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const { isSwiping } = React.useContext(SwipeableCardContext);
   const cardStyle = {
     shadowColor: color.shadow.color,
@@ -60,22 +66,23 @@ export const RecordCard = React.memo(function RecordCard({
 
   const showFolderStripe = Boolean(folderAccentColor);
 
-  return (
-    <Pressable
-      style={({ pressed }) => [
-        cardStyle,
-        {
-          borderRadius: 16,
-          padding: 0,
-          overflow: 'hidden',
-          flexDirection: 'row',
-          opacity: pressed && !isSwiping ? 0.75 : 1,
-        },
-      ]}
-      onPress={isSwiping ? undefined : onPress}
-      onLongPress={isSwiping ? undefined : onLongPress}
-      delayLongPress={350}
-    >
+  const resolvedA11yHint =
+    a11yHint === null
+      ? undefined
+      : (a11yHint ?? (onLongPress ? t('inbox.recordCardLongPressHint') : undefined));
+
+  const baseContainerStyle = [
+    cardStyle,
+    {
+      borderRadius: 16,
+      padding: 0,
+      overflow: 'hidden' as const,
+      flexDirection: 'row' as const,
+    },
+  ];
+
+  const cardBody = (
+    <>
       {showFolderStripe ? (
         <View
           style={{
@@ -181,6 +188,35 @@ export const RecordCard = React.memo(function RecordCard({
           </View>
         )}
       </View>
+    </>
+  );
+
+  if (hideAccessibilitySubtree) {
+    return (
+      <View
+        style={baseContainerStyle}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        {cardBody}
+      </View>
+    );
+  }
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={item.title}
+      accessibilityHint={resolvedA11yHint}
+      style={({ pressed }) => [
+        ...baseContainerStyle,
+        { opacity: pressed && !isSwiping ? 0.75 : 1 },
+      ]}
+      onPress={isSwiping ? undefined : onPress}
+      onLongPress={isSwiping ? undefined : onLongPress}
+      delayLongPress={350}
+    >
+      {cardBody}
     </Pressable>
   );
 });

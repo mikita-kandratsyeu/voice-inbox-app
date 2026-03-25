@@ -113,6 +113,7 @@ export const FolderPickerSheet = ({
           onPress={pickInbox}
           activeOpacity={0.7}
           accessibilityRole="button"
+          accessibilityLabel={t('folders.pickerInboxOnly')}
           accessibilityState={{ selected: showChecks && currentFolderId == null }}
           style={{
             flexDirection: 'row',
@@ -143,6 +144,7 @@ export const FolderPickerSheet = ({
               onPress={() => pickFolder(folder.id)}
               activeOpacity={0.7}
               accessibilityRole="button"
+              accessibilityLabel={folder.name}
               accessibilityState={{ selected }}
               style={{
                 flexDirection: 'row',

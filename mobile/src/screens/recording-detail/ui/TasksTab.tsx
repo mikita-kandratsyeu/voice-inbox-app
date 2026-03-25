@@ -81,7 +81,8 @@ const ManualTaskAddRow = ({
             disabled={draft.trim().length === 0}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             accessibilityRole="button"
-            accessibilityLabel={t('recordingDetail.addTaskPlaceholder')}
+            accessibilityLabel={t('tasks.addTask')}
+            accessibilityState={{ disabled: draft.trim().length === 0 }}
           >
             <Plus
               size={22}
@@ -95,6 +96,7 @@ const ManualTaskAddRow = ({
           style={getInputFieldInputStyle(color)}
           placeholder={t('recordingDetail.addTaskPlaceholder')}
           placeholderTextColor={color.text.secondary}
+          accessibilityLabel={t('recordingDetail.addTaskPlaceholder')}
           value={draft}
           onChangeText={setDraft}
           onSubmitEditing={submit}
@@ -243,6 +245,9 @@ export const TasksTab = ({
               className="min-w-0 flex-1 flex-row items-center gap-4 py-0.5"
               onPress={() => onToggle(task.id)}
               style={{ minWidth: 0 }}
+              accessibilityRole="checkbox"
+              accessibilityLabel={task.text}
+              accessibilityState={{ checked: task.isDone }}
             >
               {task.isDone ? (
                 <CheckCircle2 size={20} color={color.accent.success} strokeWidth={2} />
@@ -298,6 +303,8 @@ export const TasksTab = ({
                 <Pressable
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   style={{ padding: 4 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('tasks.taskMenu')}
                 >
                   <MoreHorizontal size={18} color={color.icon.muted} strokeWidth={2} />
                 </Pressable>

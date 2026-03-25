@@ -198,6 +198,8 @@ const AnswerContent = ({
             onCopy(answer);
           }}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={t('recordingDetail.askCopy')}
           className="flex-row items-center gap-2 rounded-xl px-4 py-2.5"
           style={{ backgroundColor: color.background.tertiary }}
         >
@@ -212,6 +214,8 @@ const AnswerContent = ({
             onShare(shareText, record.title);
           }}
           activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={t('recordingDetail.askShare')}
           className="flex-row items-center gap-2 rounded-xl px-4 py-2.5"
           style={{ backgroundColor: color.background.tertiary }}
         >
@@ -305,6 +309,9 @@ const EmptyState = ({
             }}
             disabled={disabled || isConnected === false}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={questionText}
+            accessibilityState={{ disabled: Boolean(disabled || isConnected === false) }}
             className="rounded-xl px-4 py-3"
             style={{ backgroundColor: color.background.tertiary }}
           >
@@ -479,6 +486,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
           containerStyle={{ backgroundColor: color.accent.primary }}
           onPress={handleAsk}
           disabled={!questionInput.trim() || isLoading || isConnected === false}
+          accessibilityLabel={t('recordingDetail.askSend')}
         />
       </View>
     ),
@@ -497,6 +505,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
           style={[getInputFieldInputStyle(color, true), { maxHeight: 100 }]}
           placeholder={t('recordingDetail.askPlaceholder')}
           placeholderTextColor={color.text.secondary}
+          accessibilityLabel={t('recordingDetail.askPlaceholder')}
           value={questionInput}
           onChangeText={setQuestionInput}
           returnKeyType="send"

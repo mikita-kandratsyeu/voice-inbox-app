@@ -1,10 +1,33 @@
 import { Fingerprint, ScanFace } from 'lucide-react-native';
+import type { TFunction } from 'i18next';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useAppLockStore } from '@/entities/app-lock';
+import { useAppLockStore, type BiometryType } from '@/entities/app-lock';
+
+function biometricUnlockA11yLabel(t: TFunction, type: BiometryType | null) {
+  if (!type) {
+    return t('common.biometrics');
+  }
+  switch (type) {
+    case 'FaceID':
+      return t('appLock.biometry.FaceID');
+    case 'TouchID':
+      return t('appLock.biometry.TouchID');
+    case 'Fingerprint':
+      return t('appLock.biometry.Fingerprint');
+    case 'Face':
+      return t('appLock.biometry.Face');
+    case 'Iris':
+      return t('appLock.biometry.Iris');
+    case 'OpticID':
+      return t('appLock.biometry.OpticID');
+    default:
+      return t('common.biometrics');
+  }
+}
 import { useColors } from '@/shared/config';
 
 import { PinInput } from './PinInput';
@@ -190,6 +213,9 @@ export const LockScreen = () => {
               onPress={handleBiometricPress}
               activeOpacity={0.7}
               disabled={isLockedOut}
+              accessibilityRole="button"
+              accessibilityLabel={biometricUnlockA11yLabel(t, biometryType)}
+              accessibilityState={{ disabled: isLockedOut }}
             >
               <BioIcon size={28} color={color.accent.success} strokeWidth={1.8} />
             </TouchableOpacity>

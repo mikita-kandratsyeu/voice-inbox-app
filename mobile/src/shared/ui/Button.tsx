@@ -90,6 +90,8 @@ export const Button = ({
   activeOpacity = 0.75,
   disabled,
   className,
+  accessibilityLabel: accessibilityLabelProp,
+  accessibilityState: accessibilityStateProp,
   ...rest
 }: ButtonProps) => {
   const isIconOnly = iconOnly || (Boolean(icon) && !label && !loading);
@@ -126,9 +128,19 @@ export const Button = ({
 
   const textStyle = textColor ? { color: textColor } : undefined;
 
+  const accessibilityLabel =
+    accessibilityLabelProp ?? (!isIconOnly && label ? label : undefined);
+  const accessibilityState = {
+    ...accessibilityStateProp,
+    disabled: Boolean(disabled || loading || accessibilityStateProp?.disabled),
+    ...(loading ? { busy: true as const } : {}),
+  };
+
   return (
     <TouchableOpacity
       accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={accessibilityState}
       className={containerClassName}
       style={[
         variantKey === 'danger' ? DANGER_BG : bg,

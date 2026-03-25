@@ -71,7 +71,7 @@ export const TranscriptContent = ({
   }
 
   if (r.aiStatus === 'error') {
-    return <TranscriptError onRetry={onTranscribe} />;
+    return <TranscriptError color={color} onRetry={onTranscribe} />;
   }
 
   const isAiProcessing = r.summaryStatus === 'processing' || r.tasksStatus === 'processing';

@@ -124,6 +124,7 @@ export function SettingsPlanStatusCard({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
+      accessibilityState={{ disabled: onPress == null }}
     >
       <Animated.View
         entering={FadeIn.duration(160).delay(24)}

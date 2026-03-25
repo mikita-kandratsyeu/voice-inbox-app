@@ -132,6 +132,7 @@ const AnimatedProgressDots = ({
             key={index}
             onPress={() => onDotPress(index)}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="button"
             accessibilityLabel={t('onboarding.goToSlide', { index: index + 1 })}
             style={{
               position: 'absolute',
@@ -208,6 +209,9 @@ const AnimatedNextButton = ({
         onPress={onPress}
         activeOpacity={0.85}
         disabled={disabled || loading}
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        accessibilityState={{ disabled: Boolean(disabled || loading) }}
         className="flex-1 flex-row items-center justify-center gap-2 py-3.5 px-7"
       >
         {loading ? (
@@ -330,6 +334,9 @@ const PermissionRow = ({
     <TouchableOpacity
       activeOpacity={isGranted ? 1 : 0.7}
       onPress={isGranted ? undefined : onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}, ${badgeText}`}
+      accessibilityState={{ disabled: isGranted }}
       className="flex-row items-center gap-4 rounded-2xl p-4"
       style={{ backgroundColor: color.background.secondary }}
     >
@@ -486,6 +493,9 @@ const PermissionsSlide = ({
               onAgreeChange?.(!agreedToTerms);
             }}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityRole="checkbox"
+            accessibilityLabel={t('onboarding.termsCheckboxA11y')}
+            accessibilityState={{ checked: Boolean(agreedToTerms) }}
           >
             <View
               className="h-7 w-7 items-center justify-center rounded-md"
@@ -660,6 +670,11 @@ const SlideItem = ({
               onRestorePress?.();
             }}
             disabled={isRestoring}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isRestoring ? t('importExport.importing') : t('onboarding.restoreButton')
+            }
+            accessibilityState={{ disabled: isRestoring }}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
@@ -955,6 +970,9 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
             onPress={handleComplete}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             disabled={isFinishingOnboarding}
+            accessibilityRole="button"
+            accessibilityLabel={t('common.skip')}
+            accessibilityState={{ disabled: isFinishingOnboarding }}
           >
             {isFinishingOnboarding ? (
               <View className="min-h-[36px] min-w-[80px] items-center justify-center px-4 py-2">

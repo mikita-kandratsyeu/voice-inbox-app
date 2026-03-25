@@ -48,6 +48,9 @@ export const AudioLanguageSelector = ({ value, color, onSelect }: AudioLanguageS
         }))}
       >
         <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={`${t('recordingDetail.audioLanguage')}, ${label}`}
+          accessibilityHint={t('recordingDetail.languageHint')}
           className="flex-row items-center justify-between rounded-xl px-4 py-3"
           style={{ backgroundColor: color.background.tertiary }}
           activeOpacity={0.7}

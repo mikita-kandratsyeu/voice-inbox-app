@@ -1,5 +1,6 @@
 import { Delete } from 'lucide-react-native';
 import React, { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -128,6 +129,7 @@ export const PinInput = ({
   onSuccessAnimationComplete,
   bottomLeftSlot,
 }: PinInputProps) => {
+  const { t } = useTranslation();
   const dots = Array.from({ length: pinLength }, (_, i) => i < pin.length || success);
 
   useEffect(() => {
@@ -175,6 +177,8 @@ export const PinInput = ({
                       onBackspace();
                     }}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('appLock.backspace')}
                   >
                     <Delete size={28} color={color.text.primary} strokeWidth={2} />
                   </TouchableOpacity>
@@ -191,6 +195,8 @@ export const PinInput = ({
                     onDigit(key);
                   }}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={key}
                 >
                   <Text className="text-3xl font-semibold" style={{ color: color.text.primary }}>
                     {key}

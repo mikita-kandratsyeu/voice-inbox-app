@@ -56,6 +56,7 @@ export const SearchBar = ({ query, onChangeQuery, color, placeholder }: SearchBa
           style={getInputFieldInputStyle(color)}
           placeholder={placeholder ?? t('search.placeholder')}
           placeholderTextColor={color.text.secondary}
+          accessibilityLabel={placeholder ?? t('search.placeholder')}
           value={query}
           onChangeText={onChangeQuery}
           returnKeyType="search"

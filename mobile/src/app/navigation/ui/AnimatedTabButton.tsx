@@ -3,7 +3,14 @@ import React from 'react';
 import { TouchableOpacity } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
-export const AnimatedTabButton = ({ children, onPress, onLongPress }: BottomTabBarButtonProps) => {
+export const AnimatedTabButton = ({
+  children,
+  onPress,
+  onLongPress,
+  onPressIn,
+  onPressOut,
+  ...rest
+}: BottomTabBarButtonProps) => {
   const scale = useSharedValue(1);
 
   const handlePressIn = () => {
@@ -20,11 +27,18 @@ export const AnimatedTabButton = ({ children, onPress, onLongPress }: BottomTabB
 
   return (
     <TouchableOpacity
+      {...rest}
       accessibilityRole="button"
       onPress={onPress ?? undefined}
       onLongPress={onLongPress ?? undefined}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
+      onPressIn={(e) => {
+        onPressIn?.(e);
+        handlePressIn();
+      }}
+      onPressOut={(e) => {
+        onPressOut?.(e);
+        handlePressOut();
+      }}
       activeOpacity={1}
       className="my-0 flex-1 items-center justify-center py-0"
     >

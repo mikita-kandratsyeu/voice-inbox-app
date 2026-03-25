@@ -1,5 +1,6 @@
 import { ChevronLeft } from 'lucide-react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,6 +15,7 @@ type ScreenHeaderProps = {
 };
 
 export const ScreenHeader = ({ title, onBack, rightSlot }: ScreenHeaderProps) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const color = useColors();
 
@@ -38,6 +40,7 @@ export const ScreenHeader = ({ title, onBack, rightSlot }: ScreenHeaderProps) =>
             onPress={onBack}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel={t('common.goBack')}
           />
         ) : null}
       </View>

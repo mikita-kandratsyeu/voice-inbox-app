@@ -72,6 +72,9 @@ export const TranscriptProcessing = ({
       <View
         className="h-1.5 overflow-hidden rounded-sm"
         style={{ backgroundColor: color.background.tertiary }}
+        accessibilityRole="progressbar"
+        accessibilityValue={{ min: 0, max: 100, now: clampedProgress }}
+        accessibilityLabel={t(`aiStatus.${phase}`)}
       >
         <Animated.View
           className="h-1.5 rounded-sm"

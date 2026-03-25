@@ -48,7 +48,7 @@ export const RecordScreenControls = ({
         }}
         activeOpacity={0.75}
         disabled={isIdle}
-        accessibilityLabel={isPaused ? t('record.resume') : t('record.paused')}
+        accessibilityLabel={isPaused ? t('record.resume') : t('record.pause')}
       >
         {isPaused ? (
           <Play size={24} color={c.icon.onAccent} strokeWidth={2} />

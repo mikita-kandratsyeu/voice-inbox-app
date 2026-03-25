@@ -73,6 +73,8 @@ export const EditTranscriptScreen = () => {
             color={color}
             onPress={handleSave}
             disabled={isSaving || !hasChanges()}
+            accessibilityLabel={t('common.save')}
+            accessibilityState={{ disabled: isSaving || !hasChanges() }}
           />
         }
       />
@@ -108,6 +110,7 @@ export const EditTranscriptScreen = () => {
                 },
               ]}
               placeholderTextColor={color.text.secondary}
+              accessibilityLabel={`${t('recordingDetail.transcript')}, ${seg.startTime}`}
               value={seg.text}
               onChangeText={(text) => updateSegmentText(seg.id, text)}
               multiline

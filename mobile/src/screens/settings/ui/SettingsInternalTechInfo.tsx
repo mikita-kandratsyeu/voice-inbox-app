@@ -95,6 +95,7 @@ const TechRow = ({ label, value, copyText, onCopy, color, valueColor, isLast }: 
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityState={{ disabled: !canCopy }}
       disabled={!canCopy}
       onPress={() => onCopy(copyText)}
       className={isLast ? 'py-3' : 'border-b py-3'}

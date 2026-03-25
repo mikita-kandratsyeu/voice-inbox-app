@@ -25,6 +25,7 @@ export const RecordingDetailTabBar = ({ active, onSelect, color }: RecordingDeta
           key={tab}
           accessibilityRole="button"
           accessibilityLabel={getTabLabel(tab)}
+          accessibilityState={{ selected: isActive }}
           className="relative flex-1 items-center justify-center py-3"
           style={{ minHeight: IOS_MIN_TOUCH_TARGET }}
           onPress={() => onSelect(tab)}

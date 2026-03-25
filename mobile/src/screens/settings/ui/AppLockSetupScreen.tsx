@@ -170,6 +170,7 @@ export const AppLockSetupScreen = () => {
                   <Switch
                     value={useBiometrics}
                     onValueChange={(v) => setUseBiometrics(v)}
+                    accessibilityLabel={bioLabel}
                     trackColor={{
                       false: color.background.tertiary,
                       true: color.accent.primary,
@@ -199,6 +200,9 @@ export const AppLockSetupScreen = () => {
                         setPinLength(length);
                       }}
                       activeOpacity={0.8}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('appLock.pinLengthOption', { digits: length })}
+                      accessibilityState={{ selected }}
                       className="rounded-full px-4 py-2"
                       style={{
                         backgroundColor: selected
@@ -255,6 +259,7 @@ export const AppLockSetupScreen = () => {
                   <Switch
                     value={isEnabled}
                     onValueChange={handleToggleEnabled}
+                    accessibilityLabel={t('appLock.title')}
                     trackColor={{
                       false: color.background.tertiary,
                       true: color.accent.primary,
@@ -276,6 +281,7 @@ export const AppLockSetupScreen = () => {
                     <Switch
                       value={useBiometrics}
                       onValueChange={handleToggleBiometrics}
+                      accessibilityLabel={bioLabel}
                       trackColor={{
                         false: color.background.tertiary,
                         true: color.accent.primary,

@@ -14,7 +14,13 @@ export const AiStatusBadge = ({ aiStatus }: AiStatusBadgeProps) => {
   const cfg = getAiStatusConfig(aiStatus);
 
   return (
-    <View className="gap-2.5 rounded-xl p-3" style={{ backgroundColor: cfg.bgColor }}>
+    <View
+      accessible
+      accessibilityRole="text"
+      accessibilityLabel={cfg.label}
+      className="gap-2.5 rounded-xl p-3"
+      style={{ backgroundColor: cfg.bgColor }}
+    >
       <View className="flex-row items-center gap-2">
         <CheckCircle2 size={18} color={cfg.iconColor} strokeWidth={2} />
         <Text className="text-sm font-semibold" style={{ color: cfg.iconColor }}>

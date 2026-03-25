@@ -42,6 +42,7 @@ export const SettingsAutomationSection = ({
             disabled={automationLocked}
             value={automationLocked ? false : autoTranscribeOnSave}
             onValueChange={setAutoTranscribeOnSave}
+            accessibilityLabel={t('settings.autoTranscribeOnSave')}
             trackColor={{
               false: color.background.tertiary,
               true: color.accent.primary,
@@ -66,6 +67,7 @@ export const SettingsAutomationSection = ({
             disabled={automationLocked}
             value={automationLocked ? false : autoAiAfterTranscription}
             onValueChange={setAutoAiAfterTranscription}
+            accessibilityLabel={t('settings.autoAiAfterTranscription')}
             trackColor={{
               false: color.background.tertiary,
               true: color.accent.primary,

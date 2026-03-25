@@ -99,6 +99,9 @@ export const OnboardingSetupStep = ({
                   setAIModel(model.id);
                 }}
                 activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={model.name}
+                accessibilityState={{ selected: isSelected }}
                 className={`px-4 py-2 flex-row items-center justify-between ${!isLast ? 'border-b' : ''}`}
                 style={{
                   backgroundColor: color.background.card,
@@ -183,6 +186,20 @@ export const OnboardingSetupStep = ({
               onPress={() => handleWhisperRowPress(model.id)}
               activeOpacity={0.7}
               disabled={isDownloading}
+              accessibilityRole="button"
+              accessibilityLabel={`${t('whisper.a11yModelPrefix', { name: model.name })}, ${
+                isDownloaded
+                  ? isSelected
+                    ? t('whisper.a11yRowSelected')
+                    : t('whisper.a11yRowDownloaded')
+                  : isDownloading
+                    ? t('whisper.a11yRowDownloading')
+                    : t('whisper.a11yRowNotDownloaded')
+              }`}
+              accessibilityState={{
+                selected: isDownloaded && isSelected,
+                disabled: isDownloading,
+              }}
               className={`flex-row items-center justify-between px-4 py-2 ${!isLast ? 'border-b' : ''}`}
               style={{
                 backgroundColor: color.background.card,

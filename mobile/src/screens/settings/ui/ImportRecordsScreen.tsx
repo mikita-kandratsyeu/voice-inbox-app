@@ -46,6 +46,9 @@ const ImportRecordRow = React.memo(function ImportRecordRow({
     <TouchableOpacity
       onPress={() => onToggle(item.id)}
       activeOpacity={0.7}
+      accessibilityRole="checkbox"
+      accessibilityLabel={item.title}
+      accessibilityState={{ checked: isSelected }}
       style={{
         flexDirection: 'row',
         alignItems: 'center',

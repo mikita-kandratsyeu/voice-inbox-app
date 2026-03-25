@@ -38,6 +38,8 @@ export const RelatedNotesSection = ({ recordId, color }: RelatedNotesSectionProp
         {relatedNotes.map((record) => (
           <Pressable
             key={record.id}
+            accessibilityRole="button"
+            accessibilityLabel={record.title}
             onPress={() => handlePress(record)}
             className="flex-row items-center gap-3 p-3 rounded-xl"
             style={{ backgroundColor: color.background.card }}

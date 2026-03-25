@@ -60,6 +60,7 @@ export const RecordingDetailHeader = ({
         onPress={onBack}
         activeOpacity={0.7}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        accessibilityLabel={t('common.goBack')}
       />
       <View className="flex-row items-center gap-2">
         <Button
@@ -79,6 +80,7 @@ export const RecordingDetailHeader = ({
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           containerStyle={record.isPinned ? pinActiveStyle : iconBtnBg}
+          accessibilityLabel={record.isPinned ? t('recordActions.unpin') : t('recordActions.pin')}
         />
         <Button
           iconOnly
@@ -89,6 +91,7 @@ export const RecordingDetailHeader = ({
           onPress={onShare}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel={t('share.shareNote')}
         />
         <Button
           iconOnly
@@ -99,6 +102,7 @@ export const RecordingDetailHeader = ({
           onPress={onAskAI}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel={t('recordingDetail.askButton')}
         />
         <MenuView
           key={theme}
@@ -170,8 +174,10 @@ export const RecordingDetailHeader = ({
             size="md"
             icon={<MoreVertical size={18} color={color.text.primary} strokeWidth={2.2} />}
             color={color}
+            onPress={() => {}}
             activeOpacity={0.7}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel={t('common.moreActions')}
           />
         </MenuView>
       </View>

@@ -180,6 +180,7 @@ export const TranscriptTab = ({
                   color={color}
                   onPress={() => {}}
                   disabled={isAiProcessing || isTranslating}
+                  accessibilityHint={t('recordingDetail.translateMenuHint')}
                 />
               </View>
             </MenuView>

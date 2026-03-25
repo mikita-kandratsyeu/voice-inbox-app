@@ -125,6 +125,7 @@ export const SummaryTab = ({
         onPress={onGenerate}
         disabled={isConnected === false}
         className="mt-1"
+        accessibilityState={{ disabled: isConnected === false }}
       />
     </View>
   );

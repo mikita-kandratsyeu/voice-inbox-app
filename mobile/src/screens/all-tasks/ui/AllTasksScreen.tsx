@@ -195,6 +195,7 @@ export const AllTasksScreen = () => {
           <Switch
             value={openOnly}
             onValueChange={setOpenOnly}
+            accessibilityLabel={t('allTasks.openOnly')}
             trackColor={{ false: color.background.tertiary, true: color.accent.primary }}
             thumbColor={color.icon.onAccent}
             style={isTablet ? { transform: [{ scale: 1.12 }] } : undefined}

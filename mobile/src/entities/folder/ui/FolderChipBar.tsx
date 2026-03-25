@@ -37,6 +37,7 @@ const AllChip = ({ label, isActive, color, onPress }: AllChipProps) => (
     onPress={onPress}
     activeOpacity={0.7}
     accessibilityRole="button"
+    accessibilityLabel={label}
     accessibilityState={{ selected: isActive }}
     style={{
       flexDirection: 'row',
@@ -93,6 +94,7 @@ const FolderChip = ({
       delayLongPress={400}
       activeOpacity={0.7}
       accessibilityRole="button"
+      accessibilityLabel={folder.name}
       accessibilityState={{ selected: isActive }}
       style={{
         flexDirection: 'row',

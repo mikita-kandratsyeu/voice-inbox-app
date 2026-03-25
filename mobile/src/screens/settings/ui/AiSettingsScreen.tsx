@@ -44,6 +44,9 @@ function PickerSection<T extends string>({
             key={opt}
             onPress={() => onSelect(opt)}
             activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel={labelKey(opt)}
+            accessibilityState={{ selected: isSelected }}
             className="flex-row items-center justify-between px-4 py-3.5"
             style={
               !isLast

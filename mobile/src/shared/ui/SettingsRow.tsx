@@ -70,9 +70,16 @@ export const SettingsRow = ({
     </View>
   );
 
+  const a11yLabel = value ? `${label}, ${value}` : label;
+
   if (onPress) {
     return (
-      <TouchableOpacity accessibilityRole="button" onPress={onPress} activeOpacity={0.7}>
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={a11yLabel}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
         {content}
       </TouchableOpacity>
     );

@@ -66,6 +66,7 @@ export const AiStatusPill = ({
     return (
       <TouchableOpacity
         accessibilityRole="button"
+        accessibilityLabel={label}
         hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
         className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
         style={{ backgroundColor: color.status.processing.bg }}
@@ -83,9 +84,11 @@ export const AiStatusPill = ({
   }
 
   if (aiProcessing) {
+    const aiLabel = t('aiStatus.aiProcessing');
     return (
       <TouchableOpacity
         accessibilityRole="button"
+        accessibilityLabel={aiLabel}
         hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
         className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
         style={{ backgroundColor: color.status.processing.bg }}
@@ -96,16 +99,18 @@ export const AiStatusPill = ({
           <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
         </Animated.View>
         <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
-          {t('aiStatus.aiProcessing')}
+          {aiLabel}
         </Text>
       </TouchableOpacity>
     );
   }
 
   if (aiStatus === 'error' || aiError) {
+    const errLabel = t('common.error');
     return (
       <TouchableOpacity
         accessibilityRole="button"
+        accessibilityLabel={errLabel}
         hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
         className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
         style={{ backgroundColor: color.status.error.bg }}
@@ -114,7 +119,7 @@ export const AiStatusPill = ({
       >
         <AlertCircle size={11} color={color.status.error.text} strokeWidth={2.5} />
         <Text className="text-xs font-medium" style={{ color: color.status.error.text }}>
-          {t('common.error')}
+          {errLabel}
         </Text>
       </TouchableOpacity>
     );

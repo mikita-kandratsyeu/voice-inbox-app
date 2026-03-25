@@ -90,6 +90,7 @@ export const InboxFilterBar = ({
             <TouchableOpacity
               key={status}
               accessibilityRole="button"
+              accessibilityState={{ selected: isActive }}
               onPress={() => {
                 hapticSelection();
                 onFilterChange(status);

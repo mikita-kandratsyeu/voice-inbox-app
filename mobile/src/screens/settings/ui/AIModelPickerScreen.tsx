@@ -84,6 +84,9 @@ export const AIModelPickerScreen = () => {
                   key={model.id}
                   onPress={() => handleSelect(model.id)}
                   activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t(model.tierLabelKey)}, ${model.name}`}
+                  accessibilityState={{ selected: isSelected }}
                   className={`px-4 py-4 ${radiusClass}`}
                   style={[{ backgroundColor: color.background.card }, borderStyle]}
                 >

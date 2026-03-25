@@ -43,6 +43,8 @@ const ActionButton = ({
       onPress={onPress}
       disabled={disabled}
       accessibilityRole="button"
+      accessibilityLabel={label}
+      accessibilityState={{ disabled }}
       hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
       style={{ alignItems: 'center', gap: 4, minWidth: 52, opacity: disabled ? 0.4 : 1 }}
     >

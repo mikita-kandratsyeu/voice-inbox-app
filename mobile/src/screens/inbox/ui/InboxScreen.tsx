@@ -3,13 +3,13 @@ import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import { CheckSquare, Folder, ListChecks, WandSparkles } from 'lucide-react-native';
+import { Folder, Folders, GalleryHorizontalEnd, ListTodo } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   KeyboardAvoidingView,
   LayoutAnimation,
-  TouchableOpacity,
+  Pressable,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -305,26 +305,25 @@ export const InboxScreen = () => {
       if (batchSelect.isSelectMode) {
         const toggle = () => batchSelect.toggleItem(item.item.id);
         return (
-          <View
+          <Pressable
+            onPress={toggle}
+            accessibilityRole="checkbox"
+            accessibilityLabel={item.item.title}
+            accessibilityState={{ checked: isSelected }}
             style={{
               marginHorizontal: 16,
               marginBottom: 16,
               flexDirection: 'row',
               alignItems: 'center',
             }}
-            accessibilityRole="checkbox"
-            accessibilityState={{ checked: isSelected }}
           >
-            <TouchableOpacity
-              onPress={toggle}
-              hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: isSelected }}
+            <View
               style={{ paddingRight: 10, alignSelf: 'stretch', justifyContent: 'center' }}
+              pointerEvents="none"
             >
               <BatchCheckbox isSelected={isSelected} color={color} size={22} />
-            </TouchableOpacity>
-            <View style={{ flex: 1 }}>
+            </View>
+            <View style={{ flex: 1 }} pointerEvents="box-none">
               <RecordCard
                 item={item.item}
                 color={color}
@@ -332,9 +331,11 @@ export const InboxScreen = () => {
                 onPress={toggle}
                 onStatusPress={toggle}
                 onLongPress={toggle}
+                a11yHint={null}
+                hideAccessibilitySubtree
               />
             </View>
-          </View>
+          </Pressable>
         );
       }
 
@@ -436,7 +437,7 @@ export const InboxScreen = () => {
                   iconOnly
                   variant="icon"
                   size="md"
-                  icon={<WandSparkles size={20} color={color.text.primary} strokeWidth={2.2} />}
+                  icon={<Folders size={20} color={color.text.primary} strokeWidth={2.2} />}
                   color={color}
                   onPress={() => {
                     void runAutoOrganize();
@@ -450,7 +451,9 @@ export const InboxScreen = () => {
                   iconOnly
                   variant="icon"
                   size="md"
-                  icon={<CheckSquare size={21} color={color.text.primary} strokeWidth={2.3} />}
+                  icon={
+                    <GalleryHorizontalEnd size={21} color={color.text.primary} strokeWidth={2.3} />
+                  }
                   color={color}
                   onPress={() => enterBatchMode()}
                   accessibilityLabel={t('batch.a11yEnterSelectMode')}
@@ -460,7 +463,7 @@ export const InboxScreen = () => {
                   iconOnly
                   variant="icon"
                   size="md"
-                  icon={<ListChecks size={22} color={color.text.primary} strokeWidth={2.2} />}
+                  icon={<ListTodo size={22} color={color.text.primary} strokeWidth={2.2} />}
                   color={color}
                   onPress={() => navigation.navigate('AllTasks')}
                   accessibilityLabel={t('allTasks.a11yOpenAllTasks')}

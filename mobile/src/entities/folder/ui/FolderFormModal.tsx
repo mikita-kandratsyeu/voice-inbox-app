@@ -258,6 +258,7 @@ export const FolderFormModal = ({
                 onChangeText={handleNameChange}
                 placeholder={t('folders.namePlaceholder')}
                 placeholderTextColor={color.text.muted}
+                accessibilityLabel={t('folders.namePlaceholder')}
                 style={{
                   flex: 1,
                   fontSize: 16,
@@ -307,6 +308,9 @@ export const FolderFormModal = ({
                       key={key}
                       onPress={() => setSelectedIcon(key)}
                       activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={t(`folders.iconNames.${key}`)}
+                      accessibilityState={{ selected: isActive }}
                       style={{
                         width: iconSize,
                         height: iconSize,
