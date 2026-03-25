@@ -67,7 +67,7 @@ export const SettingsScreen = () => {
         <ScrollView
           contentContainerStyle={{
             paddingHorizontal: SCREEN_PADDING,
-            paddingTop: 44,
+            paddingTop: 16,
             paddingBottom: insets.bottom + 28,
           }}
           showsVerticalScrollIndicator={false}

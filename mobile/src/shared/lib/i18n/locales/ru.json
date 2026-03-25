@@ -427,6 +427,7 @@
       "secretNotSet": "Не задан",
       "appVersion": "Версия / сборка",
       "deviceModel": "Устройство",
+      "deviceId": "ID устройства",
       "osVersion": "Версия ОС",
       "deviceType": "Тип устройства",
       "deviceTypePhone": "Телефон",

@@ -14,6 +14,7 @@ import {
   isTestflightInternalBuild,
 } from '@/shared/config/buildEnv';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
+import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
 function redactCredentialsInUrl(url: string): string {
@@ -125,6 +126,7 @@ export const SettingsInternalTechInfo = () => {
   const [networkType, setNetworkType] = useState<string>('—');
   const [networkStatus, setNetworkStatus] = useState<string>('—');
   const [cellularGeneration, setCellularGeneration] = useState<string>('—');
+  const [deviceId, setDeviceId] = useState<string>('—');
 
   const onCopy = useCallback(
     (text: string) => {
@@ -176,6 +178,25 @@ export const SettingsInternalTechInfo = () => {
     return () => {
       cancelled = true;
       clearInterval(id);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isTestflightInternalBuild()) {
+      return;
+    }
+
+    let cancelled = false;
+    void getOrCreateDeviceId()
+      .then((id) => {
+        if (!cancelled) setDeviceId(id);
+      })
+      .catch(() => {
+        if (!cancelled) setDeviceId('—');
+      });
+
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -337,6 +358,13 @@ export const SettingsInternalTechInfo = () => {
         label={t('settings.internalTech.deviceModel')}
         value={deviceModel || empty}
         copyText={deviceModel}
+        onCopy={onCopy}
+        color={color}
+      />
+      <TechRow
+        label={t('settings.internalTech.deviceId')}
+        value={deviceId || empty}
+        copyText={deviceId !== '—' ? deviceId : ''}
         onCopy={onCopy}
         color={color}
       />

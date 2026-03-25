@@ -427,6 +427,7 @@
       "secretNotSet": "Not set",
       "appVersion": "App version / build",
       "deviceModel": "Device",
+      "deviceId": "Device ID",
       "osVersion": "OS version",
       "deviceType": "Device type",
       "deviceTypePhone": "Phone",
