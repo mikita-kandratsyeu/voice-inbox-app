@@ -93,13 +93,18 @@ export const TranscriptTab = ({
   const theme = useAppTheme();
   const isDark = theme === 'dark';
   const [viewMode, setViewMode] = useState<'original' | 'translated'>('original');
+
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
+
   const whisperModelName =
     WHISPER_MODELS.find((m) => m.id === selectedWhisperModel)?.name ?? selectedWhisperModel;
+  const whisperStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
 
   const hasTranslation = Boolean(translatedTranscript?.trim());
   const showTranslation = hasTranslation && viewMode === 'translated';
   const translatedParagraphs = buildReadableParagraphs(translatedTranscript ?? '');
+  const hint = whisperStatus === 'not_downloaded' ? undefined : `Whisper ${whisperModelName}`;
 
   if (segments.length === 0) {
     return (
@@ -109,7 +114,7 @@ export const TranscriptTab = ({
         description={t('recordingDetail.transcriptNotCreatedDesc')}
         buttonLabel={t('recordingDetail.transcribe')}
         buttonIcon={<Mic size={18} color="#fff" strokeWidth={2} />}
-        hint={`Whisper ${whisperModelName}`}
+        hint={hint}
         onPress={onTranscribe}
         hideButton={!hasAudio}
         disabled={isAiProcessing}
