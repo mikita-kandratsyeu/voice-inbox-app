@@ -11,6 +11,7 @@ import {
   Rocket,
   Settings,
   Shield,
+  Wallet,
   Wrench,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
@@ -25,6 +26,7 @@ import {
   adminInputClass,
   adminSelectClass,
 } from './admin-ui';
+import { AdminBudgetPanel } from './AdminBudgetPanel';
 import { AdminOperationsPanel } from './AdminOperationsPanel';
 import { AdminReleasesPanel } from './AdminReleasesPanel';
 import { AdminSecurityPanel } from './AdminSecurityPanel';
@@ -144,6 +146,7 @@ type AdminTab =
   | 'releases'
   | 'messaging'
   | 'operations'
+  | 'budget'
   | 'security';
 
 const ADMIN_TAB_META: Record<
@@ -186,6 +189,12 @@ const ADMIN_TAB_META: Record<
     description: 'Observability links, metrics, exports, audit log',
     icon: Wrench,
   },
+  budget: {
+    label: 'Budget',
+    short: 'Budget',
+    description: 'Manual expense ledger and running totals',
+    icon: Wallet,
+  },
   security: {
     label: 'Security',
     short: 'Security',
@@ -201,6 +210,7 @@ const ADMIN_TAB_ORDER: AdminTab[] = [
   'releases',
   'messaging',
   'operations',
+  'budget',
   'security',
 ];
 
@@ -689,8 +699,8 @@ export function AdminDashboard() {
         </nav>
       </aside>
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-10 border-b border-zinc-200/80 bg-white/85 px-4 py-4 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/85 md:px-8">
-          <div className="mx-auto flex max-w-6xl flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <header className="sticky top-0 z-10 border-b border-zinc-200/80 bg-white/85 px-4 py-4 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/85 md:px-8 lg:px-10">
+          <div className="mx-auto flex max-w-screen-2xl flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
               <p className="text-xs font-medium uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
                 Voice Inbox AI · Admin
@@ -711,7 +721,7 @@ export function AdminDashboard() {
               Log out
             </button>
           </div>
-          <div className="mx-auto mt-4 flex max-w-6xl gap-2 overflow-x-auto pt-2 pb-0.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <div className="mx-auto mt-4 flex max-w-screen-2xl gap-2 overflow-x-auto pt-2 pb-0.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {ADMIN_TAB_ORDER.map((t) => (
               <button
                 key={t}
@@ -733,7 +743,7 @@ export function AdminDashboard() {
           </div>
         </header>
 
-        <div className="mx-auto max-w-6xl px-4 py-6 md:px-8">
+        <div className="mx-auto w-full max-w-screen-2xl px-4 py-6 md:px-8 lg:px-10">
           {adminTab === 'overview' && (
             <>
               <div className="mb-6 flex flex-wrap gap-2">
@@ -1239,6 +1249,8 @@ export function AdminDashboard() {
           {adminTab === 'releases' && <AdminReleasesPanel />}
 
           {adminTab === 'operations' && <AdminOperationsPanel />}
+
+          {adminTab === 'budget' && <AdminBudgetPanel />}
 
           {adminTab === 'security' && <AdminSecurityPanel />}
 
