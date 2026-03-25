@@ -490,7 +490,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
         />
       </View>
     ),
-    [color, handleAsk, questionInput, isLoading, isConnected],
+    [color, handleAsk, questionInput, isLoading, isConnected, t],
   );
 
   const inputRow = hasTranscript && (

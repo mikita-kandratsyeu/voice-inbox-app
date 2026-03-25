@@ -15,6 +15,7 @@ type RecordScreenHeaderProps = {
 };
 
 export const RecordScreenHeader = ({ state, onClose }: RecordScreenHeaderProps) => {
+  const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const topStyle = { paddingTop: Math.max(insets.top, 16) };
 

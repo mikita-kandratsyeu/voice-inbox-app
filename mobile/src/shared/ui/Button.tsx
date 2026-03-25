@@ -128,8 +128,7 @@ export const Button = ({
 
   const textStyle = textColor ? { color: textColor } : undefined;
 
-  const accessibilityLabel =
-    accessibilityLabelProp ?? (!isIconOnly && label ? label : undefined);
+  const accessibilityLabel = accessibilityLabelProp ?? (!isIconOnly && label ? label : undefined);
   const accessibilityState = {
     ...accessibilityStateProp,
     disabled: Boolean(disabled || loading || accessibilityStateProp?.disabled),

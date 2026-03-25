@@ -78,6 +78,29 @@
     "termsTitle": "Terms of Service — Voice Inbox AI",
     "termsDescription": "Terms governing your use of the Voice Inbox AI mobile app and related services.",
     "releasesListTitle": "Release notes — Voice Inbox AI",
-    "releasesListDescription": "Changelog and updates for the Voice Inbox AI app on iOS and Android."
+    "releasesListDescription": "Changelog and updates for the Voice Inbox AI app on iOS and Android.",
+    "error400Title": "Bad request — Voice Inbox AI",
+    "error400Description": "The request could not be processed. Check the link or return to the home page.",
+    "error500Title": "Server error — Voice Inbox AI",
+    "error500Description": "We could not load this page. Please try again in a moment."
+  },
+  "httpErrors": {
+    "backHome": "← Back to home",
+    "400": {
+      "badge": "Bad request",
+      "title": "We couldn't process this request",
+      "description": "The link may be wrong or outdated. Check the address or open the home page."
+    },
+    "500": {
+      "badge": "Server error",
+      "title": "Something went wrong on our side",
+      "description": "Please try again in a moment. If the problem persists, come back later."
+    },
+    "runtime": {
+      "badge": "Something went wrong",
+      "title": "This page hit an error",
+      "description": "You can try loading again. If nothing changes, go back to the home page.",
+      "retry": "Try again"
+    }
   }
 }

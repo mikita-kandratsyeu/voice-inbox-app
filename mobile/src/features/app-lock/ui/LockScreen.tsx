@@ -1,11 +1,11 @@
-import { Fingerprint, ScanFace } from 'lucide-react-native';
 import type { TFunction } from 'i18next';
+import { Fingerprint, ScanFace } from 'lucide-react-native';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useAppLockStore, type BiometryType } from '@/entities/app-lock';
+import { type BiometryType, useAppLockStore } from '@/entities/app-lock';
 
 function biometricUnlockA11yLabel(t: TFunction, type: BiometryType | null) {
   if (!type) {
