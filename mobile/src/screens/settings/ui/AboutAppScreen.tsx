@@ -166,6 +166,16 @@ export const AboutAppScreen = () => {
                   {t('about.badgeAi')}
                 </Text>
               </View>
+              {__DEV__ && (
+                <View
+                  className="rounded-full px-3 py-1.5"
+                  style={{ backgroundColor: color.background.tertiary }}
+                >
+                  <Text className="text-xs font-medium" style={{ color: color.text.secondary }}>
+                    __DEV__
+                  </Text>
+                </View>
+              )}
             </View>
           </View>
           <SettingsSection title={t('about.helpAndFeedback')}>

@@ -117,6 +117,9 @@
     "limitWeeklyExceeded": "You’ve used this week’s generation limit. It resets on the date shown in Settings — or watch a short ad there for a small bonus."
   },
   "search": {
+    "a11yOpen": "Open search",
+    "a11yHide": "Hide search",
+    "a11yFocus": "Focus search field",
     "placeholder": "Search records...",
     "nothingFound": "Nothing found",
     "nothingFoundFor": "No records found for \"{{query}}\"",

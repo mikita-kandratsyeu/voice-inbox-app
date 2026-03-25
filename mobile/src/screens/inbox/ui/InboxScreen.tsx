@@ -3,13 +3,14 @@ import type { CompositeNavigationProp } from '@react-navigation/native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import { Folder, Folders, GalleryHorizontalEnd, ListTodo } from 'lucide-react-native';
+import { Folder, Folders, GalleryHorizontalEnd, ListTodo, Search } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   KeyboardAvoidingView,
   LayoutAnimation,
   Pressable,
+  ScrollView,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -153,6 +154,7 @@ export const InboxScreen = () => {
   const canLoadMoreInbox = totalFlattenedRecords > visibleRecordCount;
 
   const listRef = useRef<FlashListRef<FlattenedItem>>(null);
+  const folderChipScrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const inboxFiltersReset = useInboxFiltersReset();
   const [showSwipeHint, setShowSwipeHint] = useState(() => !getHasSeenSwipeHint());
 
@@ -162,6 +164,22 @@ export const InboxScreen = () => {
   }, []);
 
   const batchSelect = useBatchSelect();
+
+  const [searchBarExplicitOpen, setSearchBarExplicitOpen] = useState(false);
+  const [searchFocusSignal, setSearchFocusSignal] = useState(0);
+
+  const showInboxSearchBar =
+    !batchSelect.isSelectMode && (searchBarExplicitOpen || query.trim().length > 0);
+
+  const handleSearchHeaderPress = useCallback(() => {
+    const barVisible = searchBarExplicitOpen || query.trim().length > 0;
+    if (barVisible && query.trim() === '') {
+      setSearchBarExplicitOpen(false);
+    } else {
+      setSearchBarExplicitOpen(true);
+      setSearchFocusSignal((n) => n + 1);
+    }
+  }, [searchBarExplicitOpen, query]);
 
   const enterBatchMode = useCallback(
     (initialId?: string) => {
@@ -238,6 +256,7 @@ export const InboxScreen = () => {
   useEffect(() => {
     const unsubscribe = navigation.addListener('tabPress', () => {
       listRef.current?.scrollToOffset({ offset: 0, animated: true });
+      folderChipScrollRef.current?.scrollTo({ x: 0, y: 0, animated: true });
       if (batchSelect.isSelectMode) exitBatchMode();
     });
     return unsubscribe;
@@ -400,7 +419,7 @@ export const InboxScreen = () => {
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   const listContentStyle = {
-    paddingBottom: 100,
+    paddingBottom: 80,
     paddingTop: 0,
     backgroundColor: color.background.secondary,
   };
@@ -433,6 +452,32 @@ export const InboxScreen = () => {
               />
             ) : (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Button
+                  iconOnly
+                  variant="icon"
+                  size="md"
+                  icon={
+                    <Search
+                      size={21}
+                      color={
+                        searchBarExplicitOpen || query.trim().length > 0
+                          ? color.accent.primary
+                          : color.text.primary
+                      }
+                      strokeWidth={2.2}
+                    />
+                  }
+                  color={color}
+                  onPress={handleSearchHeaderPress}
+                  accessibilityLabel={
+                    !showInboxSearchBar
+                      ? t('search.a11yOpen')
+                      : query.trim() === ''
+                        ? t('search.a11yHide')
+                        : t('search.a11yFocus')
+                  }
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                />
                 <Button
                   iconOnly
                   variant="icon"
@@ -481,6 +526,7 @@ export const InboxScreen = () => {
         onSelect={setActiveFolder}
         onCreatePress={openCreateFolderModal}
         onEditPress={openEditFolderModal}
+        scrollRef={folderChipScrollRef}
       />
       {!isLoaded ? (
         <InboxSkeleton color={color} />
@@ -502,8 +548,15 @@ export const InboxScreen = () => {
           keyboardVerticalOffset={keyboardVerticalOffset}
         >
           <View style={{ flex: 1, alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}>
-            {!batchSelect.isSelectMode && (
-              <SearchBar query={query} onChangeQuery={setQuery} color={color} />
+            {showInboxSearchBar && (
+              <SearchBar
+                query={query}
+                onChangeQuery={setQuery}
+                color={color}
+                variant="compact"
+                focusSignal={searchFocusSignal}
+                onCleared={() => setSearchBarExplicitOpen(false)}
+              />
             )}
             {showSwipeHint && !batchSelect.isSelectMode && (
               <SwipeHintBanner onDismiss={dismissSwipeHint} />
@@ -554,7 +607,6 @@ export const InboxScreen = () => {
           </View>
         </KeyboardAvoidingView>
       )}
-
       {batchSelect.isSelectMode && (
         <BatchActionBar
           count={batchSelect.selectedIds.size}

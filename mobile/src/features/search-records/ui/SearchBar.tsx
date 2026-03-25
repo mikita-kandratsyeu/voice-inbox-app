@@ -1,5 +1,5 @@
 import { Search, X } from 'lucide-react-native';
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -12,11 +12,31 @@ type SearchBarProps = {
   onChangeQuery: (text: string) => void;
   color: Colors;
   placeholder?: string;
+  variant?: 'default' | 'compact';
+  focusSignal?: number;
+  onCleared?: () => void;
 };
 
-export const SearchBar = ({ query, onChangeQuery, color, placeholder }: SearchBarProps) => {
+export const SearchBar = ({
+  query,
+  onChangeQuery,
+  color,
+  placeholder,
+  variant = 'default',
+  focusSignal = 0,
+  onCleared,
+}: SearchBarProps) => {
   const { t } = useTranslation();
   const inputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    if (focusSignal <= 0) {
+      return;
+    }
+
+    const id = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(id);
+  }, [focusSignal]);
 
   const searchIcon = (
     <Search size={16} color={query ? color.accent.primary : color.icon.muted} strokeWidth={2} />
@@ -27,7 +47,11 @@ export const SearchBar = ({ query, onChangeQuery, color, placeholder }: SearchBa
       <TouchableOpacity
         onPress={() => {
           onChangeQuery('');
-          inputRef.current?.focus();
+          if (onCleared) {
+            onCleared();
+          } else {
+            inputRef.current?.focus();
+          }
         }}
         accessibilityRole="button"
         accessibilityLabel={t('common.clear')}
@@ -43,8 +67,10 @@ export const SearchBar = ({ query, onChangeQuery, color, placeholder }: SearchBa
       </TouchableOpacity>
     ) : undefined;
 
+  const containerClassName = variant === 'compact' ? 'mx-4 mt-2.5' : 'mx-4 mt-6 mb-2.5';
+
   return (
-    <View className="mx-4 mt-6 mb-2.5">
+    <View className={containerClassName}>
       <InputField
         color={color}
         hasValue={Boolean(query)}

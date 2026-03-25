@@ -23,6 +23,7 @@ type FolderChipBarProps = {
   onSelect: (id: string | null) => void;
   onCreatePress: () => void;
   onEditPress: (folder: Folder) => void;
+  scrollRef?: React.RefObject<React.ComponentRef<typeof ScrollView> | null>;
 };
 
 type AllChipProps = {
@@ -138,6 +139,7 @@ export const FolderChipBar = ({
   onSelect,
   onCreatePress,
   onEditPress,
+  scrollRef,
 }: FolderChipBarProps) => {
   const { t } = useTranslation();
   const { isProActive } = useProEntitlement();
@@ -154,6 +156,7 @@ export const FolderChipBar = ({
       }}
     >
       <ScrollView
+        ref={scrollRef}
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 10 }}
