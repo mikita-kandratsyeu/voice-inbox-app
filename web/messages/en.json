@@ -86,6 +86,11 @@
   },
   "httpErrors": {
     "backHome": "← Back to home",
+    "404": {
+      "badge": "Page not found",
+      "title": "This page does not exist",
+      "description": "The link may be broken or the page was moved. Open the home page to continue."
+    },
     "400": {
       "badge": "Bad request",
       "title": "We couldn't process this request",
