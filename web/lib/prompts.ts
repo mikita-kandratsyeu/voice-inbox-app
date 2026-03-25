@@ -165,14 +165,25 @@ Language rule:
 Assignment rules:
 - Base assignment on the main topic or intent of each note.
 - Choose the single best folder, even if a note could fit multiple folders.
-- Be consistent across similar notes.
+- Be consistent across similar notes: notes with the same classification and similar content should usually share a folder.
+
+Evidence priority (when signals disagree, trust higher items more, but use lower items to disambiguate):
+1) "classification" when present: personal -> home-life themes; work -> job, clients, admin; meeting -> meetings, calls, syncs; idea -> thoughts, plans, brainstorms; other -> use transcript/summary.
+2) "summary" — primary semantic signal when present.
+3) "title" — short label; use when summary/transcript are thin.
+4) "transcript" — excerpt, often start and end of the note; the end may contain decisions or tasks — weigh it when choosing the folder.
+
+Accuracy rules:
+- Do not invent topics not supported by each note's fields.
+- If a note is sparse (only title or very short text), place it in the broadest folder that still fits; avoid orphan one-note micro-categories.
+- When reusing an existing folder from existingFolders, match meaning, not just similar words — use the exact "name" string from existingFolders in your "folders" list and in assignments.
 
 Input assumptions:
 - You will receive a list of notes.
 - You may receive existingFolders with name/icon/color. Treat these as available folders you can reuse.
 - Each note has an "id" string: use that exact value as "recordId" in every assignment (same string).
-- Each note has a short "summary" and/or "transcript" excerpt (already truncated for speed). Prefer summary when both exist.
-- Optional: "title", "classification". Use them if they clarify the topic.
+- Each note may have "summary" and/or "transcript". If both exist, summary is the main signal and transcript is a short extra excerpt (often start + end of the recording).
+- Optional: "title", "classification". Use them as described above.
 
 Output schema:
 {

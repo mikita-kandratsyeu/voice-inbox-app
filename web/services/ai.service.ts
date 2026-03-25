@@ -7,6 +7,8 @@ import {
   AUTO_ORGANIZE_MAX_SUMMARY_CHARS,
   AUTO_ORGANIZE_MAX_TITLE_CHARS,
   AUTO_ORGANIZE_MAX_TRANSCRIPT_CHARS,
+  AUTO_ORGANIZE_TRANSCRIPT_HINT_MAX_CHARS,
+  smartTranscriptExcerpt,
 } from '@/lib/auto-organize-input-limits';
 import { normalizeAutoOrganizeFolderColor } from '@/lib/folder-accent-colors';
 import { ASK_QUESTION_SYSTEM_PROMPT, AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT } from '@/lib/prompts';
@@ -264,7 +266,7 @@ function parseAutoOrganizeResult(rawContent: string): AutoOrganizeResult {
     throw new Error('Invalid AI response: missing folders or assignments');
   }
 
-  const folders = obj.folders
+  const folderRows = obj.folders
     .map((f) => ({
       name: typeof f?.name === 'string' ? f.name.trim() : '',
       icon:
@@ -277,23 +279,108 @@ function parseAutoOrganizeResult(rawContent: string): AutoOrganizeResult {
     }))
     .filter((f) => Boolean(f.name));
 
-  if (folders.length === 0) {
+  if (folderRows.length === 0) {
     throw new Error('Invalid AI response: no valid folders');
   }
 
-  const folderNameSet = new Set(folders.map((f) => f.name.toLowerCase()));
-  const assignments = obj.assignments
-    .map((a) => ({
-      recordId: typeof a?.recordId === 'string' ? a.recordId.trim() : '',
-      folderName: typeof a?.folderName === 'string' ? a.folderName.trim() : '',
-    }))
-    .filter((a) => Boolean(a.recordId) && folderNameSet.has(a.folderName.toLowerCase()));
+  const canonicalByLower = new Map<string, (typeof folderRows)[0]>();
+  for (const f of folderRows) {
+    const k = f.name.toLowerCase();
+    if (!canonicalByLower.has(k)) {
+      canonicalByLower.set(k, f);
+    }
+  }
+  const folders = [...canonicalByLower.values()];
+
+  const seenRecordIds = new Set<string>();
+  const assignments: AutoOrganizeResult['assignments'] = [];
+
+  for (const raw of obj.assignments) {
+    const recordId = typeof raw?.recordId === 'string' ? raw.recordId.trim() : '';
+    const folderName = typeof raw?.folderName === 'string' ? raw.folderName.trim() : '';
+    if (!recordId) {
+      throw new Error('Invalid AI response: assignment with empty recordId');
+    }
+    if (seenRecordIds.has(recordId)) {
+      throw new Error('Invalid AI response: duplicate recordId in assignments');
+    }
+    seenRecordIds.add(recordId);
+    if (!folderName) {
+      throw new Error('Invalid AI response: assignment with empty folderName');
+    }
+    const canon = canonicalByLower.get(folderName.toLowerCase());
+    if (!canon) {
+      throw new Error(`Invalid AI response: unknown folder in assignment: ${folderName}`);
+    }
+    assignments.push({ recordId, folderName: canon.name });
+  }
 
   if (assignments.length === 0) {
     throw new Error('Invalid AI response: no valid assignments');
   }
 
   return { folders, assignments };
+}
+
+function extractExpectedNoteIdsFromCompactPayload(compactPayload: string): string[] {
+  try {
+    const p = JSON.parse(compactPayload) as { notes?: unknown };
+    if (!Array.isArray(p.notes)) return [];
+    return p.notes
+      .map((n) => {
+        if (!n || typeof n !== 'object') return '';
+        const id = (n as { id?: unknown }).id;
+        return typeof id === 'string' ? id.trim() : '';
+      })
+      .filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
+function assertAutoOrganizeComplete(result: AutoOrganizeResult, expectedIds: string[]): void {
+  if (expectedIds.length === 0) {
+    return;
+  }
+
+  if (result.folders.length < 3 || result.folders.length > 8) {
+    throw new Error(`Invalid AI response: folders must be 3-8, got ${result.folders.length}`);
+  }
+
+  const expected = new Set(expectedIds);
+  const got = new Set(result.assignments.map((a) => a.recordId));
+
+  if (got.size !== result.assignments.length) {
+    throw new Error('Invalid AI response: duplicate recordId in assignments');
+  }
+
+  if (got.size !== expected.size) {
+    throw new Error(`Invalid AI response: expected ${expected.size} assignments, got ${got.size}`);
+  }
+
+  for (const id of expected) {
+    if (!got.has(id)) {
+      throw new Error(`Invalid AI response: missing assignment for note id`);
+    }
+  }
+
+  for (const id of got) {
+    if (!expected.has(id)) {
+      throw new Error('Invalid AI response: unexpected recordId in assignments');
+    }
+  }
+}
+
+function buildAutoOrganizeRepairUserSuffix(expectedIds: string[]): string {
+  return `\n\n---\nYour previous JSON failed validation. Output one new valid JSON object only.
+
+Fix all issues:
+- "folders": 3 to 8 items; each "name" unique; icons and colors must be allowed values.
+- "assignments": exactly ${expectedIds.length} objects — one per input note, no duplicates.
+- Every "recordId" must be exactly one of these strings (copy verbatim, including case and punctuation):
+${JSON.stringify(expectedIds)}
+- Every "folderName" in assignments must exactly match a "name" in "folders" (same spelling and casing as in "folders").
+- Re-read classifications, summaries, titles, and transcripts; fix any inconsistent or missing assignments.`;
 }
 
 function isAutoOrganizeParseFailure(err: unknown): boolean {
@@ -327,7 +414,14 @@ function compactAutoOrganizeInput(notesJsonPayload: string): string {
         if (!id) return null;
 
         const summary = truncateText(n.summary, AUTO_ORGANIZE_MAX_SUMMARY_CHARS);
-        const transcript = truncateText(n.transcript, AUTO_ORGANIZE_MAX_TRANSCRIPT_CHARS);
+        const rawTranscript =
+          typeof n.transcript === 'string' && n.transcript.trim() ? n.transcript.trim() : '';
+
+        const transcriptOut = rawTranscript
+          ? summary
+            ? smartTranscriptExcerpt(rawTranscript, AUTO_ORGANIZE_TRANSCRIPT_HINT_MAX_CHARS)
+            : smartTranscriptExcerpt(rawTranscript, AUTO_ORGANIZE_MAX_TRANSCRIPT_CHARS)
+          : undefined;
 
         const next: Record<string, unknown> = { id };
 
@@ -337,8 +431,9 @@ function compactAutoOrganizeInput(notesJsonPayload: string): string {
 
         if (summary) {
           next.summary = summary;
-        } else if (transcript) {
-          next.transcript = transcript;
+        }
+        if (transcriptOut) {
+          next.transcript = transcriptOut;
         }
 
         if (typeof n.classification === 'string' && n.classification.trim()) {
@@ -371,18 +466,22 @@ export async function processAutoOrganizeFolders(
   model: string,
 ): Promise<AutoOrganizeResult> {
   const compactPayload = compactAutoOrganizeInput(notesJsonPayload);
+  let expectedIds = extractExpectedNoteIdsFromCompactPayload(compactPayload);
+  if (expectedIds.length === 0) {
+    expectedIds = extractExpectedNoteIdsFromCompactPayload(notesJsonPayload);
+  }
 
-  const callOrganize = async (m: string): Promise<AutoOrganizeResult> => {
+  const sendOrganize = async (m: string, userContent: string): Promise<AutoOrganizeResult> => {
     const response = await openRouterClient.chat.send({
       chatGenerationParams: {
         model: m,
         messages: [
           { role: 'system', content: AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT },
-          { role: 'user', content: compactPayload },
+          { role: 'user', content: userContent },
         ],
         provider: { zdr: true },
         responseFormat: { type: 'json_object' },
-        temperature: 0.2,
+        temperature: 0.12,
         stream: false,
       },
     });
@@ -392,13 +491,27 @@ export async function processAutoOrganizeFolders(
       throw new Error('Invalid AI response: missing content');
     }
 
-    return parseAutoOrganizeResult(content);
+    const result = parseAutoOrganizeResult(content);
+    assertAutoOrganizeComplete(result, expectedIds);
+    return result;
+  };
+
+  const organizeWithRepair = async (m: string): Promise<AutoOrganizeResult> => {
+    try {
+      return await sendOrganize(m, compactPayload);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '';
+      if (!msg.startsWith('Invalid AI response')) {
+        throw e;
+      }
+      return await sendOrganize(m, compactPayload + buildAutoOrganizeRepairUserSuffix(expectedIds));
+    }
   };
 
   const models = [model, ...SYSTEM_TASK_MODEL_FALLBACK_CHAIN];
   return withSequentialModelFallback(
     models,
-    callOrganize,
+    organizeWithRepair,
     (err) => isRetryableOpenRouterTransportError(err) || isAutoOrganizeParseFailure(err),
   );
 }

@@ -17,9 +17,13 @@ import {
 const MIN_NOTES_TO_AUTO_ORGANIZE = 5;
 const MAX_NOTES_FOR_SINGLE_REQUEST = 60;
 const ALLOWED_ICONS = new Set<string>(FOLDER_ICON_KEYS);
+/** Keep in sync with `web/lib/auto-organize-input-limits.ts`. */
 const MAX_TRANSCRIPT_CHARS_FOR_AUTO_ORGANIZE = 900;
+const MAX_TRANSCRIPT_HINT_CHARS_FOR_AUTO_ORGANIZE = 280;
 const MAX_SUMMARY_CHARS_FOR_AUTO_ORGANIZE = 360;
 const MAX_TITLE_CHARS_FOR_AUTO_ORGANIZE = 100;
+
+const TRANSCRIPT_EXCERPT_GAP = '\n…\n';
 
 function truncateText(s: string | undefined, maxChars: number): string | undefined {
   if (!isString(s)) return undefined;
@@ -30,6 +34,18 @@ function truncateText(s: string | undefined, maxChars: number): string | undefin
   if (trimmed.length <= maxChars) return trimmed;
 
   return `${trimmed.slice(0, maxChars)}...`;
+}
+
+function smartTranscriptExcerpt(s: string | undefined, maxChars: number): string | undefined {
+  if (!isString(s)) return undefined;
+  const t = s.trim();
+  if (!t) return undefined;
+  if (t.length <= maxChars) return t;
+  if (maxChars <= TRANSCRIPT_EXCERPT_GAP.length + 2) return t.slice(0, maxChars);
+  const budget = maxChars - TRANSCRIPT_EXCERPT_GAP.length;
+  const headLen = Math.ceil(budget / 2);
+  const tailLen = Math.floor(budget / 2);
+  return `${t.slice(0, headLen)}${TRANSCRIPT_EXCERPT_GAP}${t.slice(-tailLen)}`;
 }
 
 function isLikelyNetworkError(raw: string): boolean {
@@ -75,15 +91,18 @@ export function useAutoOrganizeFolders(records: VoiceRecord[]) {
         .slice(0, MAX_NOTES_FOR_SINGLE_REQUEST)
         .map((r) => {
           const titleTrimmed = r.title.trim();
+          const hasSummary = Boolean(r.summary?.trim());
           return {
             id: r.id,
             ...(titleTrimmed
               ? { title: titleTrimmed.slice(0, MAX_TITLE_CHARS_FOR_AUTO_ORGANIZE) }
               : {}),
-            transcript:
-              r.summary && r.summary.trim()
-                ? undefined
-                : truncateText(r.transcript, MAX_TRANSCRIPT_CHARS_FOR_AUTO_ORGANIZE),
+            transcript: smartTranscriptExcerpt(
+              r.transcript,
+              hasSummary
+                ? MAX_TRANSCRIPT_HINT_CHARS_FOR_AUTO_ORGANIZE
+                : MAX_TRANSCRIPT_CHARS_FOR_AUTO_ORGANIZE,
+            ),
             summary: truncateText(r.summary, MAX_SUMMARY_CHARS_FOR_AUTO_ORGANIZE),
             classification: r.classification,
           };
