@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
-import { MobileAds } from 'yandex-mobile-ads';
 
 import { useProEntitlement } from '@/features/pro-license';
+
+import { ensureYandexMobileAdsInitialized } from './yandexMobileAdsState';
 
 export function useYandexMobileAdsInit(): void {
   const { isProActive } = useProEntitlement();
@@ -18,7 +19,7 @@ export function useYandexMobileAdsInit(): void {
     const initAds = () => {
       if (cancelled || initialized) return;
       initialized = true;
-      void MobileAds.initialize();
+      void ensureYandexMobileAdsInitialized();
     };
 
     const deferredInitTimer = setTimeout(() => {
