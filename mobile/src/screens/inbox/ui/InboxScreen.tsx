@@ -184,9 +184,9 @@ export const InboxScreen = () => {
   }, [searchBarExplicitOpen, query]);
 
   const enterBatchMode = useCallback(
-    (initialId?: string) => {
+    (initialId?: string, options?: { haptic?: boolean }) => {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-      batchSelect.enterSelectMode(initialId);
+      batchSelect.enterSelectMode(initialId, options);
     },
     [batchSelect],
   );
@@ -504,7 +504,7 @@ export const InboxScreen = () => {
                     <GalleryHorizontalEnd size={21} color={color.text.primary} strokeWidth={2.3} />
                   }
                   color={color}
-                  onPress={() => enterBatchMode()}
+                  onPress={() => enterBatchMode(undefined, { haptic: false })}
                   accessibilityLabel={t('batch.a11yEnterSelectMode')}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 />

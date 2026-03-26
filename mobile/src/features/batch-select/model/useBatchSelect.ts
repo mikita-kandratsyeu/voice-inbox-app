@@ -5,7 +5,7 @@ import { hapticLight, hapticMedium, hapticSelection } from '@/shared/lib';
 export type BatchSelectState = {
   isSelectMode: boolean;
   selectedIds: Set<string>;
-  enterSelectMode: (initialId?: string) => void;
+  enterSelectMode: (initialId?: string, options?: { haptic?: boolean }) => void;
   exitSelectMode: () => void;
   toggleItem: (id: string) => void;
   selectAll: (ids: string[]) => void;
@@ -16,8 +16,9 @@ export const useBatchSelect = (): BatchSelectState => {
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
-  const enterSelectMode = useCallback((initialId?: string) => {
-    hapticMedium();
+  const enterSelectMode = useCallback((initialId?: string, options?: { haptic?: boolean }) => {
+    const shouldHaptic = options?.haptic ?? true;
+    if (shouldHaptic) hapticMedium();
     setIsSelectMode(true);
     if (initialId) {
       setSelectedIds(new Set([initialId]));
