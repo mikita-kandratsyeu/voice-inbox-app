@@ -312,7 +312,7 @@
       "unavailable": "—",
       "claimBonus": "Watch ad for {{count}} bonus generations",
       "claimBonusTitle": "Bonus for watching",
-      "claimBonusSubtitle": "+{{count}} generations toward your weekly limit",
+      "claimBonusSubtitle": "Restore {{count}} generations in your weekly limit",
       "claimBonusLoading": "Loading ad...",
       "claimBonusError": "Something went wrong. Try again.",
       "claimBonusErrorIosAd": "We couldn’t load an ad just now. Please try again in a few minutes.",
@@ -857,6 +857,22 @@
     "autoOrganizeLimitExceededDescription": "Free includes 2 auto-organizations per week. Upgrade to Pro to remove this limit.",
     "autoOrganizeFailedDescription": "Couldn't organize notes automatically. Please try again.",
     "autoOrganizeDoneTitle": "Folders updated",
-    "autoOrganizeDoneDescription": "AI created folders and organized your notes."
+    "autoOrganizeDoneDescription": "AI created folders and organized your notes.",
+    "autoOrganizeReviewTitle": "AI organize notes",
+    "autoOrganizeReviewSubtitle": "Review suggested folders and assignments, then confirm.",
+    "autoOrganizeReviewFoldersSection": "Folders",
+    "autoOrganizeReviewFolderNamePlaceholder": "Folder name",
+    "autoOrganizeReviewFolderNoteCount": "{{count}} notes",
+    "autoOrganizeReviewNoFolders": "No new folders.",
+    "autoOrganizeReviewAssignmentsSection": "Assignments",
+    "autoOrganizeReviewStats": "{{folders}} folders · {{assignments}} notes",
+    "autoOrganizeReviewUnknownNote": "Note",
+    "autoOrganizeReviewNoAssignments": "No notes to assign.",
+    "autoOrganizeReviewMoveTo": "Folder: {{folder}}",
+    "autoOrganizeReviewPickFolderTitle": "Move to folder",
+    "autoOrganizeReviewInbox": "Inbox",
+    "autoOrganizeReviewFolderRemoved": "Folder unavailable",
+    "autoOrganizeReviewUnknownFolder": "Folder",
+    "autoOrganizeReviewUnnamedFolder": "Untitled"
   }
 }

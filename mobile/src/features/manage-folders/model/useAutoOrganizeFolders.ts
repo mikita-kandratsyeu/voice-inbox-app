@@ -2,21 +2,26 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
 
-import { useFolderStore } from '@/entities/folder';
-import { FOLDER_ICON_KEYS, type FolderIconKey } from '@/entities/folder/lib/folderLucideIcons';
 import type { VoiceRecord } from '@/entities/record';
-import { useRecordStore } from '@/entities/record';
-import { useProEntitlement } from '@/features/pro-license';
-import { DEFAULT_FOLDER_BRAND_HEX, isString, useNetworkStatus } from '@/shared/lib';
+import { useFolderStore } from '@/entities/folder';
+import { isString, useNetworkStatus } from '@/shared/lib';
 import { pollAutoOrganizeFolders, postAutoOrganizeFolders } from '@/shared/lib/ai-api';
 import {
   getAiWeeklyLimitExceededMessage,
   getAutoOrganizeWeeklyLimitExceededMessage,
 } from '@/shared/lib/ai-api/limitUserMessage';
 
+type AutoOrganizeResult = {
+  folders: Array<{ name: string; icon: string; color: string }>;
+  assignments: Array<{ recordId: string; folderName: string }>;
+};
+
+type UseAutoOrganizeFoldersOptions = {
+  onResult?: (result: AutoOrganizeResult) => void | Promise<void>;
+};
+
 const MIN_NOTES_TO_AUTO_ORGANIZE = 5;
 const MAX_NOTES_FOR_SINGLE_REQUEST = 60;
-const ALLOWED_ICONS = new Set<string>(FOLDER_ICON_KEYS);
 /** Keep in sync with `web/lib/auto-organize-input-limits.ts`. */
 const MAX_TRANSCRIPT_CHARS_FOR_AUTO_ORGANIZE = 900;
 const MAX_TRANSCRIPT_HINT_CHARS_FOR_AUTO_ORGANIZE = 280;
@@ -64,18 +69,11 @@ function isLikelyNetworkError(raw: string): boolean {
   );
 }
 
-function sanitizeFolderIcon(icon: string): FolderIconKey {
-  return ALLOWED_ICONS.has(icon) ? (icon as FolderIconKey) : 'briefcase';
-}
-
-export function useAutoOrganizeFolders(records: VoiceRecord[]) {
+export function useAutoOrganizeFolders(records: VoiceRecord[], options?: UseAutoOrganizeFoldersOptions) {
   const { t, i18n } = useTranslation();
-  const { isProActive } = useProEntitlement();
   const { isConnected } = useNetworkStatus();
-  const { folders, createFolder } = useFolderStore();
-  const setRecordFolder = useRecordStore((s) => s.setRecordFolder);
+  const folders = useFolderStore((s) => s.folders);
   const [isRunning, setIsRunning] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -166,46 +164,20 @@ export function useAutoOrganizeFolders(records: VoiceRecord[]) {
         return;
       }
 
-      const folderByName = new Map(folders.map((f) => [f.name.trim().toLowerCase(), f.id]));
-      for (const generatedFolder of pollResult.result.folders) {
-        const key = generatedFolder.name.trim().toLowerCase();
-        if (!key || folderByName.has(key)) continue;
-        const created = await createFolder(
-          generatedFolder.name.trim(),
-          isProActive
-            ? generatedFolder.color || DEFAULT_FOLDER_BRAND_HEX
-            : DEFAULT_FOLDER_BRAND_HEX,
-          sanitizeFolderIcon(generatedFolder.icon),
-        );
-        folderByName.set(key, created.id);
-      }
-
-      for (const assignment of pollResult.result.assignments) {
-        const folderId = folderByName.get(assignment.folderName.trim().toLowerCase());
-        if (!folderId) continue;
-        await setRecordFolder(assignment.recordId, folderId);
-      }
-
-      setShowSuccess(true);
-      if (successTimerRef.current) clearTimeout(successTimerRef.current);
-      successTimerRef.current = setTimeout(() => {
-        setShowSuccess(false);
-      }, 2400);
+      await options?.onResult?.(pollResult.result);
     } catch {
       Alert.alert(t('common.error'), t('folders.autoOrganizeFailedDescription'));
     } finally {
       setIsRunning(false);
     }
   }, [
-    createFolder,
     eligibleNotes,
     folders,
-    isProActive,
     isConnected,
     isRunning,
     i18n.language,
-    setRecordFolder,
     t,
+    options,
   ]);
 
   const overlayMode: 'loading' | 'success' = isRunning ? 'loading' : 'success';
@@ -213,7 +185,7 @@ export function useAutoOrganizeFolders(records: VoiceRecord[]) {
   return {
     runAutoOrganize,
     isRunning,
-    overlayVisible: isRunning || showSuccess,
+    overlayVisible: isRunning,
     overlayMode,
     eligibleCount: eligibleNotes.length,
     minRequired: MIN_NOTES_TO_AUTO_ORGANIZE,

@@ -12,9 +12,15 @@ type ScreenHeaderProps = {
   title: string;
   onBack?: () => void;
   rightSlot?: React.ReactNode;
+  titleAlign?: 'left' | 'center';
 };
 
-export const ScreenHeader = ({ title, onBack, rightSlot }: ScreenHeaderProps) => {
+export const ScreenHeader = ({
+  title,
+  onBack,
+  rightSlot,
+  titleAlign = 'center',
+}: ScreenHeaderProps) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const color = useColors();
@@ -45,8 +51,11 @@ export const ScreenHeader = ({ title, onBack, rightSlot }: ScreenHeaderProps) =>
         ) : null}
       </View>
       <Text
-        className="flex-1 text-center text-[18px] font-semibold"
-        style={{ color: color.text.primary }}
+        className={`flex-1 text-[18px] font-semibold ${titleAlign === 'center' ? 'text-center' : 'text-left'}`}
+        style={[
+          { color: color.text.primary },
+          titleAlign === 'left' ? { paddingLeft: onBack ? 8 : 0 } : null,
+        ]}
       >
         {title}
       </Text>

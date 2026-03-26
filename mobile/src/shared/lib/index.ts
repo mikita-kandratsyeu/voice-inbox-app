@@ -57,6 +57,7 @@ export { isArray, isNumber, isRecord, isString, isStringArrayItem } from './type
 export { useAiModelName } from './useAiModelName';
 export { useAiTabBannerDismiss } from './useAiTabBannerDismiss';
 export { useIsTablet } from './useIsTablet';
+export { useScrollToTopOnTabPress } from './useScrollToTopOnTabPress';
 export { useTabletContentMaxWidth } from './useTabletContentMaxWidth';
 export {
   formatFileSize,

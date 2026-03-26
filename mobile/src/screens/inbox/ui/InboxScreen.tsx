@@ -16,7 +16,11 @@ import {
 } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
-import type { BottomTabParamList, RootStackParamList } from '@/app/navigation/types';
+import type {
+  BottomTabParamList,
+  InboxStackParamList,
+  RootStackParamList,
+} from '@/app/navigation/types';
 import {
   FolderChipBar,
   FolderFormModal,
@@ -45,6 +49,7 @@ import {
   keyboardAvoidingBehavior,
   keyboardVerticalOffset,
   resolveDisplayFolderColor,
+  useScrollToTopOnTabPress,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { getHasSeenSwipeHint, setHasSeenSwipeHint } from '@/shared/lib/hintsStorage';
@@ -63,7 +68,10 @@ type FlattenedItem =
 
 type InboxNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<BottomTabParamList, 'Inbox'>,
-  NativeStackNavigationProp<RootStackParamList>
+  CompositeNavigationProp<
+    NativeStackNavigationProp<InboxStackParamList>,
+    NativeStackNavigationProp<RootStackParamList>
+  >
 >;
 
 export const InboxScreen = () => {
@@ -105,7 +113,11 @@ export const InboxScreen = () => {
     isRunning: isAutoOrganizing,
     overlayVisible: autoOrganizeOverlayVisible,
     overlayMode: autoOrganizeOverlayMode,
-  } = useAutoOrganizeFolders(records);
+  } = useAutoOrganizeFolders(records, {
+    onResult: (result) => {
+      navigation.navigate('AutoOrganizeReview', { result });
+    },
+  });
 
   const folderFilteredRecords = useMemo(() => {
     if (!activeFolderId) return records;
@@ -255,14 +267,10 @@ export const InboxScreen = () => {
     });
   }, [inboxFiltersReset, resetToDefault, setActiveFolder]);
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('tabPress', () => {
-      listRef.current?.scrollToOffset({ offset: 0, animated: true });
-      folderChipScrollRef.current?.scrollTo({ x: 0, y: 0, animated: true });
-      if (batchSelect.isSelectMode) exitBatchMode();
-    });
-    return unsubscribe;
-  }, [navigation, batchSelect.isSelectMode, exitBatchMode]);
+  useScrollToTopOnTabPress(listRef, () => {
+    folderChipScrollRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+    if (batchSelect.isSelectMode) exitBatchMode();
+  });
 
   useEffect(() => {
     listRef.current?.scrollToOffset({ offset: 0, animated: true });

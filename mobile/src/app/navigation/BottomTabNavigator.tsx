@@ -8,11 +8,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ImportAudioProgressOverlay, useImportAudioFile } from '@/features/import-audio-file';
 import { useInboxFiltersReset } from '@/features/inbox-filters';
-import { InboxScreen } from '@/screens/inbox';
 import { useColors } from '@/shared/config';
 import { useIsTablet } from '@/shared/lib';
 
 import { TAB_ICON_SIZE, TAB_ICONS, TAB_LABELS } from './config';
+import { InboxNavigator } from './InboxNavigator';
 import { SettingsNavigator } from './SettingsNavigator';
 import type { BottomTabParamList } from './types';
 import { AnimatedTabButton, CenterRecordButton, EmptyScreen } from './ui';
@@ -78,7 +78,7 @@ export const BottomTabNavigator = () => {
       <Tab.Navigator screenOptions={screenOptions}>
         <Tab.Screen
           name="Inbox"
-          component={InboxScreen}
+          component={InboxNavigator}
           listeners={
             inboxFiltersReset
               ? {

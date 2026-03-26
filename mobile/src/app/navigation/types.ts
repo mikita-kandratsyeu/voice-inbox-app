@@ -6,6 +6,16 @@ export type BottomTabParamList = {
   SettingsRoot: undefined;
 };
 
+export type InboxStackParamList = {
+  InboxHome: undefined;
+  AutoOrganizeReview: {
+    result: {
+      folders: Array<{ name: string; icon: string; color: string }>;
+      assignments: Array<{ recordId: string; folderName: string }>;
+    };
+  };
+};
+
 export type RootStackParamList = {
   Main: undefined | { screen: 'SettingsRoot'; params: { screen: 'WhisperModelPicker' } };
   RecordModal: undefined;

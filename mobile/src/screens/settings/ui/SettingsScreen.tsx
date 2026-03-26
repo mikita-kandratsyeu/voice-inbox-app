@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
   Platform,
   RefreshControl,
@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { ProLicenseKeyModal } from '@/features/pro-license';
 import { isCrashlyticsDebugEnabled } from '@/shared/config/buildEnv';
-import { useTabletContentMaxWidth } from '@/shared/lib';
+import { useScrollToTopOnTabPress, useTabletContentMaxWidth } from '@/shared/lib';
 import { SCREEN_PADDING } from '@/shared/ui';
 
 import { useSettingsScreen } from '../lib/useSettingsScreen';
@@ -34,10 +34,12 @@ import { SettingsPlanStatusCard } from './SettingsPlanStatusCard';
 
 export const SettingsScreen = () => {
   const settings = useSettingsScreen();
+  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const insets = useSafeAreaInsets();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
+  useScrollToTopOnTabPress(scrollRef);
 
   return (
     <View style={{ flex: 1, backgroundColor: settings.color.background.secondary }}>
@@ -65,6 +67,7 @@ export const SettingsScreen = () => {
         }}
       >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={{
             paddingHorizontal: SCREEN_PADDING,
             paddingTop: 16,
