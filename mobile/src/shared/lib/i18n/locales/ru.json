@@ -867,7 +867,6 @@
     "autoOrganizeReviewTitle": "ИИ разложит заметки",
     "autoOrganizeReviewSubtitle": "Проверьте предложенные папки и распределение, затем подтвердите.",
     "autoOrganizeReviewFoldersSection": "Папки",
-    "autoOrganizeReviewFolderNamePlaceholder": "Название папки",
     "autoOrganizeReviewFolderNoteCount_0": "Пока нет заметок",
     "autoOrganizeReviewFolderNoteCount_one": "{{count}} заметка",
     "autoOrganizeReviewFolderNoteCount_few": "{{count}} заметки",

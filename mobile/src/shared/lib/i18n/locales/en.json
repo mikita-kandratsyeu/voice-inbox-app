@@ -861,7 +861,6 @@
     "autoOrganizeReviewTitle": "AI organize notes",
     "autoOrganizeReviewSubtitle": "Review suggested folders and assignments, then confirm.",
     "autoOrganizeReviewFoldersSection": "Folders",
-    "autoOrganizeReviewFolderNamePlaceholder": "Folder name",
     "autoOrganizeReviewFolderNoteCount": "{{count}} notes",
     "autoOrganizeReviewNoFolders": "No new folders.",
     "autoOrganizeReviewAssignmentsSection": "Assignments",
