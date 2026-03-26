@@ -130,7 +130,6 @@ export function AutomationComingSoonSheet({
             {body}
           </Text>
         </View>
-
         <Button
           variant="primary"
           size="lg"

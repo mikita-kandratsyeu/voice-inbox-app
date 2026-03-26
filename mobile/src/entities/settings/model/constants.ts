@@ -111,3 +111,15 @@ export const getWhisperModelVariantId = (
   modelId: WhisperModelId,
   format: WhisperModelWeightsFormat,
 ): WhisperModelVariantId => `${modelId}:${format}`;
+
+export const getWhisperModelDisplayName = (
+  modelId: WhisperModelId,
+  format: WhisperModelWeightsFormat,
+): string => {
+  const modelName =
+    WHISPER_MODELS.find((model) => model.id === modelId)?.name ??
+    modelId.replace(/^whisper-/, '').replace(/(^\w|\s\w)/g, (char) => char.toUpperCase());
+  const formatLabel = format === 'q5_1' ? 'compact' : 'full';
+
+  return `Whisper ${modelName} (${formatLabel})`;
+};

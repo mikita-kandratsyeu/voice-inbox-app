@@ -19,6 +19,7 @@ import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
 import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { getModelFileSizeBytes } from '@/features/model-manager';
 import type { Colors } from '@/shared/config';
@@ -407,7 +408,7 @@ export const StorageDetailsScreen = () => {
                   return (
                     <SettingsRow
                       key={`${model.id}:${model.format}`}
-                      label={`Whisper ${model.name} (${model.format})`}
+                      label={getWhisperModelDisplayName(model.id, model.format)}
                       value={formatFileSize(model.bytes)}
                       leftIcon={
                         <BrainCircuit size={20} color={color.accent.models} strokeWidth={1.8} />
@@ -492,7 +493,7 @@ export const StorageDetailsScreen = () => {
             >
               {t('storage.deleteAllLoadingDescription')}
             </Text>
-            {deleteAllProgress.total > 0 ? (
+            {deleteAllProgress.total > 0 && (
               <Text
                 className="mt-3 text-center text-[13px] font-medium leading-5"
                 style={{ color: color.accent.primary }}
@@ -502,7 +503,7 @@ export const StorageDetailsScreen = () => {
                   total: deleteAllProgress.total,
                 })}
               </Text>
-            ) : null}
+            )}
           </View>
         </View>
       </Modal>

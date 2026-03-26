@@ -9,8 +9,8 @@ import {
   getWhisperModelVariantId,
   TRANSLATE_LANGUAGES,
   useSettingsStore,
-  WHISPER_MODELS,
 } from '@/entities/settings';
+import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
 import { TranscriptHighlight } from '@/features/transcript-highlight';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
@@ -104,9 +104,6 @@ export const TranscriptTab = ({
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
-
-  const whisperModelName =
-    WHISPER_MODELS.find((m) => m.id === selectedWhisperModel)?.name ?? selectedWhisperModel;
   const whisperVariantId = getWhisperModelVariantId(
     selectedWhisperModel,
     selectedWhisperModelFormat,
@@ -116,7 +113,10 @@ export const TranscriptTab = ({
   const hasTranslation = Boolean(translatedTranscript?.trim());
   const showTranslation = hasTranslation && viewMode === 'translated';
   const translatedParagraphs = buildReadableParagraphs(translatedTranscript ?? '');
-  const hint = whisperStatus === 'not_downloaded' ? undefined : `Whisper ${whisperModelName}`;
+  const hint =
+    whisperStatus === 'not_downloaded'
+      ? undefined
+      : getWhisperModelDisplayName(selectedWhisperModel, selectedWhisperModelFormat);
 
   if (segments.length === 0) {
     return (
