@@ -281,6 +281,17 @@ export const InboxScreen = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterStatus]);
 
+  const handleRecordPress = useCallback(
+    (item: VoiceRecord) => {
+      if (batchSelect.isSelectMode) {
+        batchSelect.toggleItem(item.id);
+        return;
+      }
+      navigation.navigate('RecordingDetail', { record: item });
+    },
+    [navigation, batchSelect],
+  );
+
   const handleStatusPress = useCallback(
     (item: VoiceRecord) => {
       if (batchSelect.isSelectMode) {
@@ -291,21 +302,16 @@ export const InboxScreen = () => {
         item.aiStatus === 'loading_model' ||
         item.aiStatus === 'processing' ||
         item.aiStatus === 'error' ||
-        item.aiStatus === 'idle'
+        item.aiStatus === 'idle' ||
+        item.summaryStatus === 'processing' ||
+        item.summaryStatus === 'error' ||
+        item.tasksStatus === 'processing' ||
+        item.tasksStatus === 'error' ||
+        item.translationStatus === 'processing' ||
+        item.translationStatus === 'error'
       ) {
         navigation.navigate('RecordingDetail', { record: item });
       }
-    },
-    [navigation, batchSelect],
-  );
-
-  const handleRecordPress = useCallback(
-    (item: VoiceRecord) => {
-      if (batchSelect.isSelectMode) {
-        batchSelect.toggleItem(item.id);
-        return;
-      }
-      navigation.navigate('RecordingDetail', { record: item });
     },
     [navigation, batchSelect],
   );

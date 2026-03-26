@@ -110,6 +110,7 @@ type RecordStore = {
     translatedTranscript: string | null,
     translationLanguage: string | null,
   ) => Promise<void>;
+  setTranslationStatus: (id: string, status: RecordingStatus) => void;
   toggleTask: (id: string, taskId: string) => Promise<void>;
   clearAudioPath: (id: string) => Promise<void>;
   setEmbedding: (id: string, embedding: number[] | null) => void;
@@ -305,7 +306,14 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
       records: updateRecord(s.records, id, {
         translatedTranscript: translatedTranscript ?? undefined,
         translationLanguage: translationLanguage ?? undefined,
+        translationStatus: translatedTranscript ? 'done' : 'idle',
       }),
+    }));
+  },
+
+  setTranslationStatus: (id, translationStatus) => {
+    set((s) => ({
+      records: updateRecord(s.records, id, { translationStatus }),
     }));
   },
 

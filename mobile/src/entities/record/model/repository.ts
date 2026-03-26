@@ -77,6 +77,9 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
     translatedTranscript: row.translatedTranscript ?? undefined,
     translationLanguage: row.translationLanguage ?? undefined,
+    translationStatus: row.translatedTranscript
+      ? ('done' as RecordingStatus)
+      : ('idle' as RecordingStatus),
     audioPath: audioPathFromDbValue(row.audioPath),
     embedding: row.embedding ? (JSON.parse(row.embedding) as number[]) : undefined,
     folderId: row.folderId ?? null,
@@ -109,6 +112,9 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
     translatedTranscript: row.translatedTranscript ?? undefined,
     translationLanguage: row.translationLanguage ?? undefined,
+    translationStatus: row.translatedTranscript
+      ? ('done' as RecordingStatus)
+      : ('idle' as RecordingStatus),
     audioPath: audioPathFromDbValue(row.audioPath),
     folderId: row.folderId ?? null,
     detailsHydrated: false,

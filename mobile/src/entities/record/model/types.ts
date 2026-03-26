@@ -54,6 +54,7 @@ export type VoiceRecord = {
   nextSteps?: string[];
   translatedTranscript?: string;
   translationLanguage?: string;
+  translationStatus?: RecordingStatus;
   audioPath?: string;
   embedding?: number[];
   folderId?: string | null;

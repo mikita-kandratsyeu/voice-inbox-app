@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
+import RNFS from 'react-native-fs';
 
 import type { TranscriptSegment, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
@@ -9,6 +10,7 @@ import { shouldApplyAutoAiAfterTranscription } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import { i18n, useNetworkStatus } from '@/shared/lib';
+import { getWhisperModelPath } from '@/shared/lib/whisper';
 
 import { getWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
 import { transcribeAudio } from '../lib/transcribeAudio';
@@ -74,6 +76,7 @@ export const useTranscription = () => {
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
+  const setWhisperModelStatus = useSettingsStore((s) => s.setWhisperModelStatus);
   const transcriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
   const { isProActive } = useProEntitlement();
@@ -99,6 +102,19 @@ export const useTranscription = () => {
       const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
       if (modelStatus !== 'downloaded') {
         devLog('model not downloaded', { model: selectedWhisperModel });
+        updateAiStatus(record.id, 'error');
+        return;
+      }
+
+      const modelPath = getWhisperModelPath(selectedWhisperModel, selectedWhisperModelFormat);
+      const hasModelFile = await RNFS.exists(modelPath);
+      if (!hasModelFile) {
+        devLog('model file missing on disk', {
+          model: selectedWhisperModel,
+          format: selectedWhisperModelFormat,
+          modelPath,
+        });
+        setWhisperModelStatus(selectedWhisperModel, selectedWhisperModelFormat, 'not_downloaded');
         updateAiStatus(record.id, 'error');
         return;
       }
@@ -284,6 +300,15 @@ export const useTranscription = () => {
           updateAiStatus(record.id, 'idle');
         } else {
           await removeTranscriptionCheckpoint(record.id).catch(() => {});
+          const msg = err instanceof Error ? err.message.toLowerCase() : '';
+          const isModelLoadFailure = msg.includes('failed to load the model');
+          if (isModelLoadFailure) {
+            setWhisperModelStatus(
+              selectedWhisperModel,
+              selectedWhisperModelFormat,
+              'not_downloaded',
+            );
+          }
           if (isFileNotFoundError(err)) {
             await clearAudioPath(record.id).catch(() => {});
           }
@@ -309,6 +334,7 @@ export const useTranscription = () => {
       updateAiStatus,
       updateTranscript,
       clearAudioPath,
+      setWhisperModelStatus,
     ],
   );
 

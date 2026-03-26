@@ -54,6 +54,8 @@ export const RecordCard = React.memo(function RecordCard({
   const doneCount = tasks.filter((t) => t.isDone).length;
   const allTasksDone = hasTasks && doneCount === tasks.length;
   const aiProcessing = item.summaryStatus === 'processing' || item.tasksStatus === 'processing';
+  const translationProcessing = item.translationStatus === 'processing';
+  const translationError = item.translationStatus === 'error';
   const aiError = item.summaryStatus === 'error' || item.tasksStatus === 'error';
   const hasTranscriptPreview = Boolean(item.transcript?.trim());
   const showStatusPill =
@@ -62,8 +64,9 @@ export const RecordCard = React.memo(function RecordCard({
     item.aiStatus === 'error' ||
     (item.aiStatus === 'idle' && !hasTranscriptPreview) ||
     aiProcessing ||
-    aiError;
-
+    aiError ||
+    translationProcessing ||
+    translationError;
   const showFolderStripe = Boolean(folderAccentColor);
 
   const resolvedA11yHint =
@@ -121,6 +124,7 @@ export const RecordCard = React.memo(function RecordCard({
               transcriptProgressLabel={item.transcriptProgressLabel}
               summaryStatus={item.summaryStatus}
               tasksStatus={item.tasksStatus}
+              translationStatus={item.translationStatus}
               onPress={onStatusPress}
             />
           )}

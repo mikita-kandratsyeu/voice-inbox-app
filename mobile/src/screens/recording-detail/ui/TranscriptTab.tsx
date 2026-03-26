@@ -97,7 +97,9 @@ export const TranscriptTab = ({
   const { t } = useTranslation();
   const theme = useAppTheme();
   const isDark = theme === 'dark';
-  const [viewMode, setViewMode] = useState<'original' | 'translated'>('original');
+  const [viewMode, setViewMode] = useState<'original' | 'translated'>(
+    translatedTranscript?.trim() ? 'translated' : 'original',
+  );
 
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);

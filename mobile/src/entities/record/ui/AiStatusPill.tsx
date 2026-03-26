@@ -21,6 +21,7 @@ type AiStatusPillProps = {
   transcriptProgressLabel?: string;
   summaryStatus?: RecordingStatus;
   tasksStatus?: RecordingStatus;
+  translationStatus?: RecordingStatus;
   onPress: () => void;
 };
 
@@ -32,14 +33,19 @@ export const AiStatusPill = ({
   transcriptProgressLabel,
   summaryStatus,
   tasksStatus,
+  translationStatus,
   onPress,
 }: AiStatusPillProps) => {
   const { t } = useTranslation();
   const color = useColors();
   const rotation = useSharedValue(0);
 
-  const aiProcessing = isAiProcessing(summaryStatus) || isAiProcessing(tasksStatus);
-  const aiError = isAiError(summaryStatus) || isAiError(tasksStatus);
+  const aiProcessing =
+    isAiProcessing(summaryStatus) ||
+    isAiProcessing(tasksStatus) ||
+    isAiProcessing(translationStatus);
+  const aiError =
+    isAiError(summaryStatus) || isAiError(tasksStatus) || isAiError(translationStatus);
 
   const isTranscriptionInProgress = aiStatus === 'loading_model' || aiStatus === 'processing';
 
@@ -84,7 +90,12 @@ export const AiStatusPill = ({
   }
 
   if (aiProcessing) {
-    const aiLabel = t('aiStatus.aiProcessing');
+    const aiLabel =
+      translationStatus === 'processing' &&
+      summaryStatus !== 'processing' &&
+      tasksStatus !== 'processing'
+        ? t('recordingDetail.translating')
+        : t('aiStatus.aiProcessing');
     return (
       <TouchableOpacity
         accessibilityRole="button"
@@ -106,7 +117,10 @@ export const AiStatusPill = ({
   }
 
   if (aiStatus === 'error' || aiError) {
-    const errLabel = t('common.error');
+    const errLabel =
+      translationStatus === 'error' && summaryStatus !== 'error' && tasksStatus !== 'error'
+        ? t('recordingDetail.translateError')
+        : t('common.error');
     return (
       <TouchableOpacity
         accessibilityRole="button"

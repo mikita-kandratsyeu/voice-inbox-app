@@ -175,7 +175,6 @@ export const WhisperModelPickerScreen = () => {
                   <TouchableOpacity
                     key={format}
                     onPress={() => {
-                      console.log('selected', selected);
                       if (selected) {
                         return;
                       }
