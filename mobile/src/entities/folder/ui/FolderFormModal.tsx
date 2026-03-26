@@ -284,8 +284,6 @@ export const FolderFormModal = ({
               </Text>
             ) : null}
           </View>
-
-          {/* Icon picker */}
           <Text style={[SECTION_LABEL_STYLE, { color: color.text.secondary }]}>
             {t('folders.iconLabel')}
           </Text>

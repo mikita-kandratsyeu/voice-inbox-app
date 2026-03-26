@@ -282,7 +282,6 @@ export const AutoOrganizeReviewScreen = () => {
           />
         </ScrollView>
       </View>
-
       <BottomSheetModal
         ref={pickerRef}
         enableDynamicSizing
@@ -324,7 +323,6 @@ export const AutoOrganizeReviewScreen = () => {
           />
         </BottomSheetScrollView>
       </BottomSheetModal>
-
       <FolderFormModal
         visible={Boolean(editingFolderTarget)}
         folder={editingFolder}

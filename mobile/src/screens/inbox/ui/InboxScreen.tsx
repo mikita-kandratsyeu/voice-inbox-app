@@ -634,7 +634,6 @@ export const InboxScreen = () => {
           onCancel={exitBatchMode}
         />
       )}
-
       <FolderPickerSheet
         visible={folderPickerVisible}
         title={t('folders.moveToFolderTitle')}
@@ -642,7 +641,6 @@ export const InboxScreen = () => {
         onClose={handleCloseBatchFolderPicker}
         onSelect={handleBatchFolderPicked}
       />
-
       <FolderFormModal
         visible={folderModalVisible}
         folder={editingFolder}

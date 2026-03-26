@@ -288,7 +288,6 @@ export const RecordingDetailScreen = () => {
         onUnarchive={onUnarchive}
         onDelete={onDelete}
       />
-
       <FolderPickerSheet
         visible={folderPickerVisible}
         title={t('folders.moveToFolderTitle')}
@@ -297,7 +296,6 @@ export const RecordingDetailScreen = () => {
         onClose={onCloseFolderPicker}
         onSelect={onDetailFolderPicked}
       />
-
       <KeyboardAwareScrollView
         ref={scrollRef}
         style={{ flex: 1 }}

@@ -108,7 +108,6 @@ export const FolderPickerSheet = ({
         >
           {title}
         </Text>
-
         <TouchableOpacity
           onPress={pickInbox}
           activeOpacity={0.7}
@@ -131,11 +130,10 @@ export const FolderPickerSheet = ({
           >
             {t('folders.pickerInboxOnly')}
           </Text>
-          {showChecks && currentFolderId == null ? (
+          {showChecks && currentFolderId == null && (
             <Check size={20} color={color.accent.primary} strokeWidth={2.5} />
-          ) : null}
+          )}
         </TouchableOpacity>
-
         {folders.map((folder) => {
           const selected = showChecks && currentFolderId === folder.id;
           return (
@@ -169,7 +167,7 @@ export const FolderPickerSheet = ({
               >
                 {folder.name}
               </Text>
-              {selected ? <Check size={20} color={color.accent.primary} strokeWidth={2.5} /> : null}
+              {selected && <Check size={20} color={color.accent.primary} strokeWidth={2.5} />}
             </TouchableOpacity>
           );
         })}
