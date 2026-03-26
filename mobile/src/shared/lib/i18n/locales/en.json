@@ -164,7 +164,8 @@
     "discardRecordingTitle": "Delete this recording?",
     "discardRecordingMessage": "The audio will be removed and will not be saved.",
     "discardRecordingConfirm": "Delete",
-    "discardRecordingA11yHint": "Asks for confirmation, then removes this audio without saving",
+    "discardRecordingHold": "Hold to delete",
+    "discardRecordingA11yHint": "Hold to delete this recording without saving",
     "titleInputHint": "Enter a title or leave blank to use the suggested name",
     "autoTitle": {
       "morning": "Morning note",

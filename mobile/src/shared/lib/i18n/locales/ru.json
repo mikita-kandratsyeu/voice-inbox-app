@@ -164,7 +164,8 @@
     "discardRecordingTitle": "Удалить эту запись?",
     "discardRecordingMessage": "Аудио будет удалено и не сохранится.",
     "discardRecordingConfirm": "Удалить",
-    "discardRecordingA11yHint": "Запросит подтверждение и удалит аудио без сохранения",
+    "discardRecordingHold": "Удерживайте, чтобы удалить",
+    "discardRecordingA11yHint": "Удерживайте, чтобы удалить запись без сохранения",
     "titleInputHint": "Введите название или оставьте пустым для автоматического",
     "autoTitle": {
       "morning": "Утренняя заметка",

@@ -8,7 +8,7 @@ import {
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Keyboard, Text, TouchableOpacity, View } from 'react-native';
+import { Keyboard, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -118,18 +118,9 @@ export const SaveRecordModal = ({
 
   const handleDiscardPress = useCallback(() => {
     if (!onDiscard) return;
-    Alert.alert(t('record.discardRecordingTitle'), t('record.discardRecordingMessage'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('record.discardRecordingConfirm'),
-        style: 'destructive',
-        onPress: () => {
-          dismissReasonRef.current = 'discard';
-          void Promise.resolve(onDiscard());
-        },
-      },
-    ]);
-  }, [onDiscard, t]);
+    dismissReasonRef.current = 'discard';
+    void Promise.resolve(onDiscard());
+  }, [onDiscard]);
 
   const handleSave = useCallback(async () => {
     const resolvedTitle = title.trim() || autoTitleRef.current || getAutoTitle();
@@ -243,19 +234,19 @@ export const SaveRecordModal = ({
           />
         </View>
         {onDiscard && (
-          <TouchableOpacity
+          <Pressable
             accessibilityRole="button"
-            accessibilityLabel={t('record.discardRecording')}
+            accessibilityLabel={t('record.discardRecordingHold')}
             accessibilityHint={t('record.discardRecordingA11yHint')}
-            onPress={handleDiscardPress}
-            activeOpacity={0.7}
-            hitSlop={iosHitSlopForVisualSize(120, 22)}
+            onLongPress={handleDiscardPress}
+            delayLongPress={350}
+            hitSlop={iosHitSlopForVisualSize(160, 28)}
             className="min-h-[44px] items-center justify-center px-2"
           >
             <Text className="text-[15px] font-semibold" style={{ color: c.accent.delete }}>
-              {t('record.discardRecording')}
+              {t('record.discardRecordingHold')}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         )}
       </BottomSheetView>
     </BottomSheetModal>
