@@ -11,7 +11,7 @@ export type UserSelectableAIModelId =
 export type AIModelId =
   | UserSelectableAIModelId
   | 'deepseek/deepseek-v3.2'
-  | 'google/gemini-2.5-flash';
+  | 'google/gemini-2.5-flash-lite';
 
 export type TranscriptionLanguage = 'auto' | 'ru' | 'en' | 'de' | 'fr' | 'es' | 'zh' | 'ja';
 export type SummaryStyle = 'brief' | 'standard' | 'detailed';
