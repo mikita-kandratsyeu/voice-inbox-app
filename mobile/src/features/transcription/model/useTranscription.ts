@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -251,6 +251,37 @@ export const useTranscription = () => {
     },
     [updateAiStatus],
   );
+
+  const cancelTranscriptionToIdleOnBackground = useCallback(
+    (recordId: string): void => {
+      devLog('cancel requested (background)', { recordId });
+      invalidateTranscriptionJob(recordId);
+      currentRecordIdRef.current = null;
+      updateAiStatus(recordId, 'idle');
+      if (stopRef.current) {
+        const stop = stopRef.current;
+        stopRef.current = null;
+        stop().catch(() => {});
+      }
+    },
+    [updateAiStatus],
+  );
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'background') {
+        const recordId = currentRecordIdRef.current;
+
+        if (!recordId) {
+          return;
+        }
+
+        cancelTranscriptionToIdleOnBackground(recordId);
+      }
+    });
+
+    return () => sub.remove();
+  }, [cancelTranscriptionToIdleOnBackground]);
 
   return { startTranscription, cancelTranscription };
 };
