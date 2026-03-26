@@ -6,7 +6,14 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check, ChevronRight } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { InboxStackParamList } from '@/app/navigation/types';
@@ -72,6 +79,7 @@ export const AutoOrganizeReviewScreen = () => {
   });
 
   const [editingFolderTarget, setEditingFolderTarget] = useState<EditingFolderTarget | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
 
   const [assignments, setAssignments] = useState<AssignmentDraft[]>(() => {
     const existingIdByLower = new Map<string, string>();
@@ -196,56 +204,71 @@ export const AutoOrganizeReviewScreen = () => {
   );
 
   const apply = useCallback(async () => {
+    if (isApplying) return;
+    setIsApplying(true);
+
     const existingById = new Map(folders.map((f) => [f.id, f]));
     const existingNameToId = new Map<string, string>();
-    for (const f of folders) {
-      const key = f.name.trim().toLowerCase();
-      if (key) existingNameToId.set(key, f.id);
-    }
 
-    const createdIdByTemp = new Map<string, string>();
-    for (const pf of proposedFolders) {
-      const name = pf.name.trim();
-      const key = name.toLowerCase();
-      if (!key) continue;
-      const existingId = existingNameToId.get(key);
-      if (existingId) {
-        createdIdByTemp.set(pf.tempId, existingId);
-        continue;
+    try {
+      for (const f of folders) {
+        const key = f.name.trim().toLowerCase();
+        if (key) existingNameToId.set(key, f.id);
       }
 
-      const created = await createFolder(
-        name,
-        isProActive ? pf.color || DEFAULT_FOLDER_BRAND_HEX : DEFAULT_FOLDER_BRAND_HEX,
-        pf.icon,
-      );
-      createdIdByTemp.set(pf.tempId, created.id);
-      existingById.set(created.id, created);
-      existingNameToId.set(key, created.id);
-    }
+      const createdIdByTemp = new Map<string, string>();
 
-    for (const a of assignments) {
-      if (a.destination.kind === 'inbox') {
-        await setRecordFolder(a.recordId, null);
-        continue;
-      }
-      if (a.destination.kind === 'existingFolder') {
-        if (existingById.has(a.destination.folderId)) {
-          await setRecordFolder(a.recordId, a.destination.folderId);
+      for (const pf of proposedFolders) {
+        const name = pf.name.trim();
+        const key = name.toLowerCase();
+
+        if (!key) continue;
+
+        const existingId = existingNameToId.get(key);
+
+        if (existingId) {
+          createdIdByTemp.set(pf.tempId, existingId);
+          continue;
         }
-        continue;
-      }
-      const folderId = createdIdByTemp.get(a.destination.tempId);
-      if (!folderId) continue;
-      await setRecordFolder(a.recordId, folderId);
-    }
 
-    goBackOrInboxHome();
+        const created = await createFolder(
+          name,
+          isProActive ? pf.color || DEFAULT_FOLDER_BRAND_HEX : DEFAULT_FOLDER_BRAND_HEX,
+          pf.icon,
+        );
+        createdIdByTemp.set(pf.tempId, created.id);
+        existingById.set(created.id, created);
+        existingNameToId.set(key, created.id);
+      }
+
+      for (const a of assignments) {
+        if (a.destination.kind === 'inbox') {
+          await setRecordFolder(a.recordId, null);
+          continue;
+        }
+
+        if (a.destination.kind === 'existingFolder') {
+          if (existingById.has(a.destination.folderId)) {
+            await setRecordFolder(a.recordId, a.destination.folderId);
+          }
+          continue;
+        }
+
+        const folderId = createdIdByTemp.get(a.destination.tempId);
+        if (!folderId) continue;
+        await setRecordFolder(a.recordId, folderId);
+      }
+
+      goBackOrInboxHome();
+    } finally {
+      setIsApplying(false);
+    }
   }, [
     assignments,
     createFolder,
     folders,
     isProActive,
+    isApplying,
     proposedFolders,
     setRecordFolder,
     goBackOrInboxHome,
@@ -331,11 +354,19 @@ export const AutoOrganizeReviewScreen = () => {
             iconOnly
             variant="icon"
             size="md"
-            icon={<Check size={22} color={color.accent.success} strokeWidth={2.5} />}
+            accessibilityState={{ disabled: isApplying }}
+            icon={
+              isApplying ? (
+                <ActivityIndicator size="small" color={color.accent.primary} />
+              ) : (
+                <Check size={22} color={color.accent.primary} strokeWidth={2.5} />
+              )
+            }
             color={color}
             onPress={() => {
               void apply();
             }}
+            disabled={isApplying}
           />
         }
       />
