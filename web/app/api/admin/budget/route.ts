@@ -90,7 +90,6 @@ type PostBody = {
 };
 
 export async function POST(request: Request): Promise<NextResponse> {
-  const path = new URL(request.url).pathname;
   const admin = await getAdminSession();
   if (!admin) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: HttpStatus.UNAUTHORIZED });

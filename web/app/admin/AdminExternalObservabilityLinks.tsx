@@ -188,7 +188,12 @@ export function AdminExternalObservabilityLinks() {
                   key={`${group.title}:${item.href}:${item.label}`}
                   className="flex flex-col gap-1 py-3 first:pt-0 last:pb-0"
                 >
-                  <a href={item.href} target="_blank" rel="noopener noreferrer" className={linkClass}>
+                  <a
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={linkClass}
+                  >
                     {item.label}
                     <span className="ml-1 text-zinc-400" aria-hidden>
                       ↗

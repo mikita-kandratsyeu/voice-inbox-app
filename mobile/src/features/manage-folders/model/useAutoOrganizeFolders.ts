@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
 
-import type { VoiceRecord } from '@/entities/record';
 import { useFolderStore } from '@/entities/folder';
+import type { VoiceRecord } from '@/entities/record';
 import { isString, useNetworkStatus } from '@/shared/lib';
 import { pollAutoOrganizeFolders, postAutoOrganizeFolders } from '@/shared/lib/ai-api';
 import {
@@ -69,7 +69,10 @@ function isLikelyNetworkError(raw: string): boolean {
   );
 }
 
-export function useAutoOrganizeFolders(records: VoiceRecord[], options?: UseAutoOrganizeFoldersOptions) {
+export function useAutoOrganizeFolders(
+  records: VoiceRecord[],
+  options?: UseAutoOrganizeFoldersOptions,
+) {
   const { t, i18n } = useTranslation();
   const { isConnected } = useNetworkStatus();
   const folders = useFolderStore((s) => s.folders);
@@ -170,15 +173,7 @@ export function useAutoOrganizeFolders(records: VoiceRecord[], options?: UseAuto
     } finally {
       setIsRunning(false);
     }
-  }, [
-    eligibleNotes,
-    folders,
-    isConnected,
-    isRunning,
-    i18n.language,
-    t,
-    options,
-  ]);
+  }, [eligibleNotes, folders, isConnected, isRunning, i18n.language, t, options]);
 
   const overlayMode: 'loading' | 'success' = isRunning ? 'loading' : 'success';
 

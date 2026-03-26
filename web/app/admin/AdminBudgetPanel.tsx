@@ -141,7 +141,11 @@ function BudgetExpenseRow({ item, onTotals, onReplace, onRemove }: BudgetRowProp
         method: 'DELETE',
         credentials: 'include',
       });
-      const data = (await res.json()) as { ok?: boolean; totals?: Record<string, number>; error?: string };
+      const data = (await res.json()) as {
+        ok?: boolean;
+        totals?: Record<string, number>;
+        error?: string;
+      };
       if (!res.ok || !data.ok || !data.totals) {
         setError(data.error ?? 'Delete failed');
         return;
@@ -228,7 +232,11 @@ function BudgetExpenseRow({ item, onTotals, onReplace, onRemove }: BudgetRowProp
               {deleting ? '…' : 'Delete'}
             </button>
           </div>
-          {error ? <p className="max-w-[12rem] text-left text-[11px] text-red-600 dark:text-red-400">{error}</p> : null}
+          {error ? (
+            <p className="max-w-[12rem] text-left text-[11px] text-red-600 dark:text-red-400">
+              {error}
+            </p>
+          ) : null}
         </div>
       </td>
     </tr>
@@ -338,7 +346,9 @@ export function AdminBudgetPanel() {
           <h3 className="mb-3 text-sm font-medium text-zinc-800 dark:text-zinc-200">New expense</h3>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:items-end">
             <div className="lg:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">Date</label>
+              <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+                Date
+              </label>
               <input
                 type="date"
                 value={nDate}
@@ -430,10 +440,18 @@ export function AdminBudgetPanel() {
                 <thead>
                   <tr className="border-b border-zinc-200 dark:border-zinc-600">
                     <th className="py-2 pr-2 font-medium text-zinc-600 dark:text-zinc-400">Date</th>
-                    <th className="py-2 pr-2 font-medium text-zinc-600 dark:text-zinc-400">Category</th>
-                    <th className="py-2 pr-2 font-medium text-zinc-600 dark:text-zinc-400">Description</th>
-                    <th className="py-2 pr-2 font-medium text-zinc-600 dark:text-zinc-400">Amount</th>
-                    <th className="py-2 text-right font-medium text-zinc-600 dark:text-zinc-400"> </th>
+                    <th className="py-2 pr-2 font-medium text-zinc-600 dark:text-zinc-400">
+                      Category
+                    </th>
+                    <th className="py-2 pr-2 font-medium text-zinc-600 dark:text-zinc-400">
+                      Description
+                    </th>
+                    <th className="py-2 pr-2 font-medium text-zinc-600 dark:text-zinc-400">
+                      Amount
+                    </th>
+                    <th className="py-2 text-right font-medium text-zinc-600 dark:text-zinc-400">
+                      {' '}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -470,7 +488,9 @@ export function AdminBudgetPanel() {
                       key={cur}
                       className="flex items-baseline justify-between gap-4 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50"
                     >
-                      <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">{cur}</span>
+                      <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+                        {cur}
+                      </span>
                       <span>{formatCents(cents, cur)}</span>
                     </li>
                   ))}
