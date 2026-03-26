@@ -562,6 +562,11 @@
     "downloadPhaseWeights": "Загружаются веса модели…",
     "downloadPhaseCoreMl": "Загружается Core ML encoder (Neural Engine).",
     "downloadError": "Ошибка загрузки — нажмите для повтора",
+    "weightsFormatTitle": "Качество распознавания",
+    "weightsFormatQ5": "Быстро",
+    "weightsFormatFull": "Точно",
+    "weightsFormatQ5Hint": "Работает быстрее и требует меньше памяти. Подходит для большинства записей.",
+    "weightsFormatFullHint": "Лучше распознает речь, но работает медленнее. Подходит для точного распознавания.",
     "qualityLabel": "Качество",
     "speedLabel": "Скорость",
     "accuracy": {

@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import type { WhisperModelId, WhisperModelStatus } from '@/entities/settings';
-import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import { getWhisperModelSizeMb, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { getModelFileSizeBytes } from '@/features/model-manager';
 import type { Colors } from '@/shared/config';
@@ -207,6 +207,7 @@ export const StorageDetailsScreen = () => {
   const folders = useFolderStore((s) => s.folders);
   const deleteFolder = useFolderStore((s) => s.deleteFolder);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
+  const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
   const [stats, setStats] = useState<StorageStats>(DEFAULT_STATS);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -226,7 +227,7 @@ export const StorageDetailsScreen = () => {
       );
       const entries = await Promise.all(
         downloaded.map(async (m) => {
-          const bytes = await getModelFileSizeBytes(m.id);
+          const bytes = await getModelFileSizeBytes(m.id, whisperModelWeightsFormat);
           return [m.id, bytes] as const;
         }),
       );
@@ -236,7 +237,7 @@ export const StorageDetailsScreen = () => {
       }
       setRealModelSizes(updated);
     },
-    [],
+    [whisperModelWeightsFormat],
   );
 
   const refreshStats = useCallback(async (isPull = false) => {
@@ -274,7 +275,12 @@ export const StorageDetailsScreen = () => {
 
   const modelsBytes = downloadedModels.reduce((sum, m) => {
     const realBytes = realModelSizes[m.id];
-    return sum + (realBytes !== undefined ? realBytes : m.sizeMb * 1024 * 1024);
+    return (
+      sum +
+      (realBytes !== undefined
+        ? realBytes
+        : getWhisperModelSizeMb(m.id, whisperModelWeightsFormat) * 1024 * 1024)
+    );
   }, 0);
   const totalMb = stats.totalMb + modelsBytes / (1024 * 1024);
 
@@ -410,7 +416,9 @@ export const StorageDetailsScreen = () => {
                   const sizeLabel =
                     realBytes !== undefined
                       ? formatFileSize(realBytes)
-                      : formatFileSize(model.sizeMb * 1024 * 1024);
+                      : formatFileSize(
+                          getWhisperModelSizeMb(model.id, whisperModelWeightsFormat) * 1024 * 1024,
+                        );
 
                   return (
                     <SettingsRow

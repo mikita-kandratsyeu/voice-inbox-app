@@ -562,6 +562,11 @@
     "downloadPhaseWeights": "Downloading model weights…",
     "downloadPhaseCoreMl": "Downloading Core ML encoder (Neural Engine).",
     "downloadError": "Download error — tap to retry",
+    "weightsFormatTitle": "Recognition quality",
+    "weightsFormatQ5": "Fast",
+    "weightsFormatFull": "Accurate",
+    "weightsFormatQ5Hint": "Runs faster and uses less memory. Best for most recordings.",
+    "weightsFormatFullHint": "Recognizes speech more accurately, but runs slower. Best for precise transcription.",
     "qualityLabel": "Quality",
     "speedLabel": "Speed",
     "accuracy": {

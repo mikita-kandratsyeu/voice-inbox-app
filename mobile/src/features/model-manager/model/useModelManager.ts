@@ -3,8 +3,9 @@ import { useCallback } from 'react';
 import type { WhisperModelId } from '@/entities/settings';
 import {
   getRecommendedWhisperModelId,
+  getWhisperModelSizeMb,
   useSettingsStore,
-  WHISPER_MODELS,
+  type WhisperModelWeightsFormat,
 } from '@/entities/settings';
 
 import { deleteWhisperModel } from '../lib/deleteWhisperModel';
@@ -21,20 +22,25 @@ export const useModelManager = () => {
   const removeWhisperModelStatus = useSettingsStore((s) => s.removeWhisperModelStatus);
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
 
   const startDownload = useCallback(
-    async (modelId: WhisperModelId): Promise<void> => {
+    async (
+      modelId: WhisperModelId,
+      options?: { format?: WhisperModelWeightsFormat; expectedBytes?: number },
+    ): Promise<void> => {
       setWhisperModelStatus(modelId, 'downloading');
       setDownloadProgress(modelId, 0);
-
-      const model = WHISPER_MODELS.find((m) => m.id === modelId);
-      const expectedBytes = (model?.sizeMb ?? 0) * 1024 * 1024;
+      const format = options?.format ?? whisperModelWeightsFormat;
+      const expectedBytes =
+        options?.expectedBytes ?? getWhisperModelSizeMb(modelId, format) * 1024 * 1024;
 
       await startWhisperDownloadLiveActivity(modelId).catch(() => {});
 
       try {
         const { promise } = downloadWhisperModel({
           modelId,
+          format,
           expectedBytes,
           onProgress: (progress, bytesWritten, contentLength, phase) => {
             setDownloadProgress(modelId, progress, bytesWritten, contentLength, phase);
@@ -59,7 +65,7 @@ export const useModelManager = () => {
         await stopWhisperDownloadLiveActivity();
       }
     },
-    [setWhisperModelStatus, setDownloadProgress],
+    [setWhisperModelStatus, setDownloadProgress, whisperModelWeightsFormat],
   );
 
   const cancelDownload = useCallback(
@@ -78,10 +84,10 @@ export const useModelManager = () => {
       removeWhisperModelStatus(modelId);
 
       if (selectedWhisperModel === modelId) {
-        setWhisperModel(getRecommendedWhisperModelId());
+        setWhisperModel(getRecommendedWhisperModelId(whisperModelWeightsFormat));
       }
     },
-    [removeWhisperModelStatus, selectedWhisperModel, setWhisperModel],
+    [removeWhisperModelStatus, selectedWhisperModel, setWhisperModel, whisperModelWeightsFormat],
   );
 
   return { startDownload, cancelDownload, removeModel };

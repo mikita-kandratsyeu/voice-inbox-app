@@ -4,7 +4,11 @@ import { parseAccentColorId } from '@/shared/config';
 import { storage } from '@/shared/lib/async-storage';
 
 import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
-import { DEFAULT_SELECTED_WHISPER_MODEL_ID, USER_FACING_AI_MODELS } from './constants';
+import {
+  DEFAULT_SELECTED_WHISPER_MODEL_ID,
+  DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
+  USER_FACING_AI_MODELS,
+} from './constants';
 import type {
   AiOutputLanguage,
   AppLanguage,
@@ -17,6 +21,7 @@ import type {
   WhisperDownloadPhase,
   WhisperModelId,
   WhisperModelStatus,
+  WhisperModelWeightsFormat,
 } from './types';
 
 const KEYS = {
@@ -25,6 +30,7 @@ const KEYS = {
   APP_LANGUAGE: 'settings.appLanguage',
   AI_MODEL: 'settings.aiModel',
   WHISPER_MODEL: 'settings.whisperModel',
+  WHISPER_MODEL_WEIGHTS_FORMAT: 'settings.whisperModelWeightsFormat',
   WHISPER_STATUSES: 'settings.whisperStatuses',
   TRANSCRIPTION_LANGUAGE: 'settings.transcriptionLanguage',
   SUMMARY_STYLE: 'settings.summaryStyle',
@@ -67,6 +73,12 @@ const getStoredWhisperModel = (): WhisperModelId => {
   const val = storage.getString(KEYS.WHISPER_MODEL);
 
   return (val as WhisperModelId) ?? DEFAULT_SELECTED_WHISPER_MODEL_ID;
+};
+
+const getStoredWhisperModelWeightsFormat = (): WhisperModelWeightsFormat => {
+  const val = storage.getString(KEYS.WHISPER_MODEL_WEIGHTS_FORMAT);
+  if (val === 'full') return 'full';
+  return DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT;
 };
 
 const getStoredTranscriptionLanguage = (): TranscriptionLanguage => {
@@ -115,6 +127,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   appLanguage: getStoredAppLanguage(),
   selectedAIModel: getStoredAIModel(),
   selectedWhisperModel: getStoredWhisperModel(),
+  whisperModelWeightsFormat: getStoredWhisperModelWeightsFormat(),
   transcriptionLanguage: getStoredTranscriptionLanguage(),
   summaryStyle: getStoredSummaryStyle(),
   taskStrictness: getStoredTaskStrictness(),
@@ -149,6 +162,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setWhisperModel: (id: WhisperModelId) => {
     storage.set(KEYS.WHISPER_MODEL, id);
     set({ selectedWhisperModel: id });
+  },
+
+  setWhisperModelWeightsFormat: (value: WhisperModelWeightsFormat) => {
+    storage.set(KEYS.WHISPER_MODEL_WEIGHTS_FORMAT, value);
+    storage.set(KEYS.WHISPER_STATUSES, JSON.stringify({}));
+    set({
+      whisperModelWeightsFormat: value,
+      whisperModelStatuses: {},
+      whisperDownloadProgress: {},
+      whisperDownloadBytes: {},
+      whisperDownloadPhase: {},
+    });
   },
 
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => {

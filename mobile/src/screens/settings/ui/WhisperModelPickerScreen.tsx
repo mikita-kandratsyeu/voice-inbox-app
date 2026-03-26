@@ -1,11 +1,13 @@
 import { useNavigation } from '@react-navigation/native';
+import { SlidersHorizontal } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { WhisperModelId } from '@/entities/settings';
 import {
+  getWhisperModelSizeMb,
   useRecommendedWhisperModelId,
   useSettingsStore,
   useWhisperModelCompatibility,
@@ -35,7 +37,9 @@ export const WhisperModelPickerScreen = () => {
   const whisperDownloadProgress = useSettingsStore((s) => s.whisperDownloadProgress);
   const whisperDownloadBytes = useSettingsStore((s) => s.whisperDownloadBytes);
   const whisperDownloadPhase = useSettingsStore((s) => s.whisperDownloadPhase);
+  const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
+  const setWhisperModelWeightsFormat = useSettingsStore((s) => s.setWhisperModelWeightsFormat);
 
   const compatibility = useWhisperModelCompatibility();
   const recommendedModelId = useRecommendedWhisperModelId();
@@ -50,7 +54,7 @@ export const WhisperModelPickerScreen = () => {
       WHISPER_MODELS.map(async (m) => {
         const status = whisperModelStatuses[m.id] ?? 'not_downloaded';
         if (status !== 'downloaded') return [m.id, null] as const;
-        const bytes = await getModelFileSizeBytes(m.id);
+        const bytes = await getModelFileSizeBytes(m.id, whisperModelWeightsFormat);
         if (bytes <= 0) return [m.id, null] as const;
         return [m.id, formatFileSize(bytes)] as const;
       }),
@@ -65,7 +69,7 @@ export const WhisperModelPickerScreen = () => {
       if (size) updated[id] = size;
     }
     setRealSizes(updated);
-  }, [whisperModelStatuses]);
+  }, [whisperModelStatuses, whisperModelWeightsFormat]);
 
   useEffect(() => {
     refreshRealSizes();
@@ -74,7 +78,14 @@ export const WhisperModelPickerScreen = () => {
   const handleDownload = (id: WhisperModelId, sizeMb: number) => {
     Alert.alert(t('whisper.downloadModel'), t('whisper.downloadConfirm', { size: sizeMb }), [
       { text: t('common.cancel'), style: 'cancel' },
-      { text: t('common.download'), onPress: () => startDownload(id) },
+      {
+        text: t('common.download'),
+        onPress: () =>
+          startDownload(id, {
+            format: whisperModelWeightsFormat,
+            expectedBytes: sizeMb * 1024 * 1024,
+          }),
+      },
     ]);
   };
 
@@ -102,7 +113,7 @@ export const WhisperModelPickerScreen = () => {
     if (status === 'downloading') return;
     if (status !== 'downloaded') {
       const model = WHISPER_MODELS.find((m) => m.id === id);
-      if (model) handleDownload(id, model.sizeMb);
+      if (model) handleDownload(id, getWhisperModelSizeMb(model.id, whisperModelWeightsFormat));
       return;
     }
     setWhisperModel(id);
@@ -132,6 +143,57 @@ export const WhisperModelPickerScreen = () => {
             {t('whisper.modelDescription')}
           </Text>
           <WhisperDefaultLanguageSection color={color} />
+          <View
+            className="mb-6 gap-2 rounded-2xl p-4"
+            style={{ backgroundColor: color.background.card }}
+          >
+            <View className="flex-row items-center gap-2">
+              <SlidersHorizontal size={18} color={color.icon.muted} strokeWidth={2} />
+              <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
+                {t('whisper.weightsFormatTitle')}
+              </Text>
+            </View>
+            <View
+              className="flex-row rounded-xl p-1"
+              style={{ backgroundColor: color.background.tertiary }}
+            >
+              {(['q5_1', 'full'] as const).map((format) => {
+                const selected = whisperModelWeightsFormat === format;
+                return (
+                  <TouchableOpacity
+                    key={format}
+                    onPress={() => {
+                      if (!selected) setWhisperModelWeightsFormat(format);
+                    }}
+                    activeOpacity={0.8}
+                    className="flex-1 items-center justify-center rounded-lg px-3 py-3"
+                    style={{
+                      minHeight: 44,
+                      backgroundColor: selected ? color.background.card : 'transparent',
+                      borderWidth: selected ? 1 : 0,
+                      borderColor: selected ? color.accent.primary : 'transparent',
+                    }}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                  >
+                    <Text
+                      className="text-center text-[16px] font-medium"
+                      style={{ color: selected ? color.accent.primary : color.text.secondary }}
+                    >
+                      {format === 'q5_1'
+                        ? t('whisper.weightsFormatQ5')
+                        : t('whisper.weightsFormatFull')}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+            <Text className="text-xs" style={{ color: color.text.muted }}>
+              {whisperModelWeightsFormat === 'q5_1'
+                ? t('whisper.weightsFormatQ5Hint')
+                : t('whisper.weightsFormatFullHint')}
+            </Text>
+          </View>
           <View className="overflow-hidden rounded-2xl">
             {WHISPER_MODELS.map((model, index) => (
               <WhisperModelCard
@@ -141,7 +203,12 @@ export const WhisperModelPickerScreen = () => {
                 total={WHISPER_MODELS.length}
                 status={whisperModelStatuses[model.id] ?? 'not_downloaded'}
                 isSelected={model.id === selectedWhisperModel}
-                displaySize={realSizes[model.id] || formatFileSize(model.sizeMb * 1024 * 1024)}
+                displaySize={
+                  realSizes[model.id] ||
+                  formatFileSize(
+                    getWhisperModelSizeMb(model.id, whisperModelWeightsFormat) * 1024 * 1024,
+                  )
+                }
                 recommendedModelId={recommendedModelId}
                 compatibility={compatibility ? compatibility[model.id] : null}
                 color={color}

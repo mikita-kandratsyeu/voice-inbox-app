@@ -5,9 +5,9 @@ export {
   getWhisperCoreMlEncoderDirName,
   getWhisperCoreMlEncoderPath,
   getWhisperLabel,
+  getWhisperModelDownloadUrl,
   getWhisperModelFileName,
   getWhisperModelPath,
   getWhisperModelsDir,
   WHISPER_COREML_ENCODER_ZIP,
-  WHISPER_MODEL_DOWNLOAD_URLS,
 } from './whisperModelPath';

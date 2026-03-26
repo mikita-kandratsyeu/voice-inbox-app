@@ -2,9 +2,11 @@ import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
 import { IS_ANDROID } from '@/shared/lib';
 
-import type { WhisperModelId } from '../model/types';
+import type { WhisperModelId, WhisperModelWeightsFormat } from '../model/types';
 
-export function getRecommendedWhisperModelId(): WhisperModelId {
+export function getRecommendedWhisperModelId(
+  format: WhisperModelWeightsFormat = 'q5_1',
+): WhisperModelId {
   try {
     const totalRamMB = DeviceInfoModule.totalMemory / (1024 * 1024);
 
@@ -12,13 +14,20 @@ export function getRecommendedWhisperModelId(): WhisperModelId {
       return 'whisper-tiny';
     }
 
-    if (totalRamMB < 2600) {
-      return 'whisper-tiny';
+    if (format === 'full') {
+      if (totalRamMB < 3200) {
+        return 'whisper-tiny';
+      }
+
+      if (totalRamMB < 5200) {
+        return 'whisper-base';
+      }
+
+      return 'whisper-small';
     }
 
-    if (totalRamMB < 4200) {
-      return 'whisper-base';
-    }
+    if (totalRamMB < 2600) return 'whisper-tiny';
+    if (totalRamMB < 4200) return 'whisper-base';
 
     return 'whisper-small';
   } catch {

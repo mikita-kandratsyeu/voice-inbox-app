@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import { initWhisper, releaseAllWhisper, type WhisperContext } from 'whisper.rn';
 
-import type { WhisperModelId } from '@/entities/settings';
+import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
 import { getWhisperModelPath } from '@/shared/lib/whisper';
 
 import { WHISPER_IDLE_RELEASE_MS } from '../config/constants';
@@ -9,6 +9,7 @@ import { WHISPER_IDLE_RELEASE_MS } from '../config/constants';
 type CachedContext = {
   context: WhisperContext;
   modelId: WhisperModelId;
+  format: WhisperModelWeightsFormat;
 };
 
 let cachedContext: CachedContext | null = null;
@@ -32,15 +33,18 @@ export const scheduleIdleRelease = (): void => {
   }, WHISPER_IDLE_RELEASE_MS);
 };
 
-export const getWhisperContext = async (modelId: WhisperModelId): Promise<WhisperContext> => {
-  if (cachedContext?.modelId === modelId) {
+export const getWhisperContext = async (
+  modelId: WhisperModelId,
+  format: WhisperModelWeightsFormat = 'q5_1',
+): Promise<WhisperContext> => {
+  if (cachedContext?.modelId === modelId && cachedContext.format === format) {
     clearIdleTimer();
     return cachedContext.context;
   }
 
   if (initPromise) {
     await initPromise;
-    if (cachedContext?.modelId === modelId) {
+    if (cachedContext?.modelId === modelId && cachedContext.format === format) {
       clearIdleTimer();
       return cachedContext.context;
     }
@@ -48,7 +52,9 @@ export const getWhisperContext = async (modelId: WhisperModelId): Promise<Whispe
 
   initPromise = (async () => {
     try {
-      if (cachedContext?.modelId === modelId) return cachedContext.context;
+      if (cachedContext?.modelId === modelId && cachedContext.format === format) {
+        return cachedContext.context;
+      }
 
       if (cachedContext) {
         cachedContext = null;
@@ -59,12 +65,12 @@ export const getWhisperContext = async (modelId: WhisperModelId): Promise<Whispe
         }
       }
 
-      const filePath = getWhisperModelPath(modelId);
+      const filePath = getWhisperModelPath(modelId, format);
       const context = await initWhisper({
         filePath,
         ...(Platform.OS === 'ios' ? { useCoreMLIos: true } : {}),
       });
-      cachedContext = { context, modelId };
+      cachedContext = { context, modelId, format };
       return context;
     } finally {
       initPromise = null;

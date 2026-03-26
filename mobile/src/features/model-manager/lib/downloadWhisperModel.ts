@@ -2,17 +2,22 @@ import { Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 import { unzip } from 'react-native-zip-archive';
 
-import type { WhisperDownloadPhase, WhisperModelId } from '@/entities/settings';
+import type {
+  WhisperDownloadPhase,
+  WhisperModelId,
+  WhisperModelWeightsFormat,
+} from '@/entities/settings';
 import {
   getWhisperCoreMlDownloadUrl,
+  getWhisperModelDownloadUrl,
   getWhisperModelPath,
   getWhisperModelsDir,
   removeWhisperCoreMlEncoder,
-  WHISPER_MODEL_DOWNLOAD_URLS,
 } from '@/shared/lib/whisper';
 
 type DownloadOptions = {
   modelId: WhisperModelId;
+  format?: WhisperModelWeightsFormat;
   expectedBytes: number;
   onProgress: (
     progress: number,
@@ -37,11 +42,12 @@ const coreMlZipTempPath = (modelsDir: string, modelId: WhisperModelId): string =
 
 export const downloadWhisperModel = ({
   modelId,
+  format = 'q5_1',
   expectedBytes,
   onProgress,
 }: DownloadOptions): DownloadResult => {
-  const url = WHISPER_MODEL_DOWNLOAD_URLS[modelId];
-  const destPath = getWhisperModelPath(modelId);
+  const url = getWhisperModelDownloadUrl(modelId, format);
+  const destPath = getWhisperModelPath(modelId, format);
   const modelsDir = getWhisperModelsDir();
 
   const promise = (async () => {
@@ -147,11 +153,10 @@ export const cancelWhisperModelDownload = async (modelId: WhisperModelId): Promi
     activeDownloads.delete(modelId);
   }
 
-  const destPath = getWhisperModelPath(modelId);
-  const exists = await RNFS.exists(destPath);
-  if (exists) {
-    await RNFS.unlink(destPath);
-  }
+  const qPath = getWhisperModelPath(modelId, 'q5_1');
+  const fullPath = getWhisperModelPath(modelId, 'full');
+  if (await RNFS.exists(qPath)) await RNFS.unlink(qPath);
+  if (fullPath !== qPath && (await RNFS.exists(fullPath))) await RNFS.unlink(fullPath);
 
   const zipPath = coreMlZipTempPath(getWhisperModelsDir(), modelId);
   const zipExists = await RNFS.exists(zipPath);

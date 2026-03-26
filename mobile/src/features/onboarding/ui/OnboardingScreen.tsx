@@ -903,7 +903,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
       {
         text: t('common.download'),
         onPress: () => {
-          void startDownload(selectedWhisperModel).catch(() => {});
+          void startDownload(selectedWhisperModel, { format: 'q5_1' }).catch(() => {});
           setTimeout(handleComplete, 120);
         },
       },

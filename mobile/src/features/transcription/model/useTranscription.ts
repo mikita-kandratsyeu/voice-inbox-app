@@ -72,6 +72,7 @@ export const useTranscription = () => {
   const updateTranscript = useRecordStore((s) => s.updateTranscript);
   const clearAudioPath = useRecordStore((s) => s.clearAudioPath);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const transcriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
@@ -92,6 +93,7 @@ export const useTranscription = () => {
         devLog('aborted: no audio path', { recordId: record.id });
         return;
       }
+      const audioPath = record.audioPath;
 
       const modelStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
       if (modelStatus !== 'downloaded') {
@@ -117,7 +119,7 @@ export const useTranscription = () => {
       let usedContext = false;
 
       try {
-        const context = await getWhisperContext(selectedWhisperModel);
+        const context = await getWhisperContext(selectedWhisperModel, whisperModelWeightsFormat);
         usedContext = true;
 
         if (!isActiveTranscriptionJob(record.id, jobGen)) {
@@ -128,9 +130,9 @@ export const useTranscription = () => {
         updateAiStatus(record.id, 'processing', 0);
 
         const throttledProgress = createThrottledProgress(record.id, jobGen, updateAiStatus);
-        const normalizedAudioPath = record.audioPath.startsWith('file://')
-          ? record.audioPath.slice(7)
-          : record.audioPath;
+        const normalizedAudioPath = audioPath.startsWith('file://')
+          ? audioPath.slice(7)
+          : audioPath;
         const checkpoint = await getTranscriptionCheckpoint(record.id);
         const canResumeFromCheckpoint =
           checkpoint &&
@@ -153,7 +155,7 @@ export const useTranscription = () => {
         }) => {
           const { stop, promise } = transcribeAudio({
             context,
-            audioPath: record.audioPath,
+            audioPath,
             durationMs: record.durationMs ?? 0,
             language,
             onProgress: throttledProgress,
@@ -168,7 +170,7 @@ export const useTranscription = () => {
 
               saveTranscriptionCheckpoint({
                 recordId: record.id,
-                audioPath: record.audioPath ?? '',
+                audioPath,
                 modelId: selectedWhisperModel,
                 language,
                 totalChunks,
@@ -296,6 +298,7 @@ export const useTranscription = () => {
     },
     [
       selectedWhisperModel,
+      whisperModelWeightsFormat,
       whisperModelStatuses,
       transcriptionLanguage,
       autoAiAfterTranscription,

@@ -1,4 +1,10 @@
-import type { AIModel, UserFacingAIModel, WhisperModel, WhisperModelId } from './types';
+import type {
+  AIModel,
+  UserFacingAIModel,
+  WhisperModel,
+  WhisperModelId,
+  WhisperModelWeightsFormat,
+} from './types';
 
 export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
   {
@@ -78,3 +84,24 @@ export const WHISPER_MODELS: WhisperModel[] = [
 ];
 
 export const DEFAULT_SELECTED_WHISPER_MODEL_ID: WhisperModelId = 'whisper-base';
+export const DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT: WhisperModelWeightsFormat = 'q5_1';
+
+const WHISPER_MODEL_SIZES_MB: Record<WhisperModelWeightsFormat, Record<WhisperModelId, number>> = {
+  q5_1: {
+    'whisper-tiny': 31,
+    'whisper-base': 57,
+    'whisper-small': 182,
+    'whisper-medium': 1500,
+  },
+  full: {
+    'whisper-tiny': 75,
+    'whisper-base': 145,
+    'whisper-small': 466,
+    'whisper-medium': 1500,
+  },
+};
+
+export const getWhisperModelSizeMb = (
+  modelId: WhisperModelId,
+  format: WhisperModelWeightsFormat,
+): number => WHISPER_MODEL_SIZES_MB[format][modelId];

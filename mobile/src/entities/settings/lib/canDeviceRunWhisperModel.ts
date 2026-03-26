@@ -2,7 +2,7 @@ import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
 import { i18n, IS_ANDROID } from '@/shared/lib';
 
-import type { WhisperModelId } from '../model/types';
+import type { WhisperModelId, WhisperModelWeightsFormat } from '../model/types';
 
 const MODEL_MIN_RAM_MB: Record<WhisperModelId, number> = {
   'whisper-tiny': 1200,
@@ -18,11 +18,19 @@ const MODEL_MIN_YEAR_CLASS: Record<WhisperModelId, number> = {
   'whisper-medium': 2019,
 };
 
-const MODEL_MIN_FREE_DISK_MB: Record<WhisperModelId, number> = {
-  'whisper-tiny': 200,
-  'whisper-base': 300,
-  'whisper-small': 600,
-  'whisper-medium': 2500,
+const MODEL_MIN_FREE_DISK_MB: Record<WhisperModelWeightsFormat, Record<WhisperModelId, number>> = {
+  q5_1: {
+    'whisper-tiny': 200,
+    'whisper-base': 300,
+    'whisper-small': 600,
+    'whisper-medium': 2500,
+  },
+  full: {
+    'whisper-tiny': 300,
+    'whisper-base': 450,
+    'whisper-small': 1100,
+    'whisper-medium': 2500,
+  },
 };
 
 const HEAVY_MODELS: WhisperModelId[] = ['whisper-small', 'whisper-medium'];
@@ -34,6 +42,7 @@ export type DeviceCompatibilityResult = {
 
 export const canDeviceRunWhisperModel = async (
   modelId: WhisperModelId,
+  format: WhisperModelWeightsFormat = 'q5_1',
 ): Promise<DeviceCompatibilityResult> => {
   try {
     const totalRamBytes = DeviceInfoModule.totalMemory;
@@ -43,7 +52,7 @@ export const canDeviceRunWhisperModel = async (
     const freeDiskMB = freeDiskBytes / (1024 * 1024);
 
     const minRam = MODEL_MIN_RAM_MB[modelId];
-    const minDisk = MODEL_MIN_FREE_DISK_MB[modelId];
+    const minDisk = MODEL_MIN_FREE_DISK_MB[format][modelId];
     const minYearClass = MODEL_MIN_YEAR_CLASS[modelId];
 
     const formatMb = (mb: number) =>
@@ -103,6 +112,12 @@ export const canDeviceRunWhisperModel = async (
 export const checkAllModelsCompatibility = async (): Promise<
   Record<WhisperModelId, DeviceCompatibilityResult>
 > => {
+  return checkAllModelsCompatibilityByFormat('q5_1');
+};
+
+export const checkAllModelsCompatibilityByFormat = async (
+  format: WhisperModelWeightsFormat,
+): Promise<Record<WhisperModelId, DeviceCompatibilityResult>> => {
   const modelIds: WhisperModelId[] = [
     'whisper-tiny',
     'whisper-base',
@@ -111,7 +126,7 @@ export const checkAllModelsCompatibility = async (): Promise<
   ];
 
   const results = await Promise.all(
-    modelIds.map(async (id) => ({ id, result: await canDeviceRunWhisperModel(id) })),
+    modelIds.map(async (id) => ({ id, result: await canDeviceRunWhisperModel(id, format) })),
   );
 
   return Object.fromEntries(results.map(({ id, result }) => [id, result])) as Record<

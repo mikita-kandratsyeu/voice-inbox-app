@@ -61,7 +61,7 @@ export { useScrollToTopOnTabPress } from './useScrollToTopOnTabPress';
 export { useTabletContentMaxWidth } from './useTabletContentMaxWidth';
 export {
   formatFileSize,
+  getWhisperModelDownloadUrl,
   getWhisperModelPath,
   getWhisperModelsDir,
-  WHISPER_MODEL_DOWNLOAD_URLS,
 } from './whisper';

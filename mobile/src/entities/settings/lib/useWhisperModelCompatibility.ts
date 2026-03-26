@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 
+import { useSettingsStore } from '../model/store';
 import type { WhisperModelId } from '../model/types';
 import {
-  checkAllModelsCompatibility,
+  checkAllModelsCompatibilityByFormat,
   type DeviceCompatibilityResult,
 } from './canDeviceRunWhisperModel';
 
@@ -10,11 +11,12 @@ export type CompatibilityMap = Record<WhisperModelId, DeviceCompatibilityResult>
 
 export const useWhisperModelCompatibility = (): CompatibilityMap => {
   const [compatibility, setCompatibility] = useState<CompatibilityMap>(null);
+  const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
 
   useEffect(() => {
     let cancelled = false;
 
-    checkAllModelsCompatibility().then((result) => {
+    checkAllModelsCompatibilityByFormat(whisperModelWeightsFormat).then((result) => {
       if (!cancelled) {
         setCompatibility(result);
       }
@@ -23,7 +25,7 @@ export const useWhisperModelCompatibility = (): CompatibilityMap => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [whisperModelWeightsFormat]);
 
   return compatibility;
 };

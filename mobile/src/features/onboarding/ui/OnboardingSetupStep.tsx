@@ -5,6 +5,7 @@ import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } fr
 
 import type { WhisperModelId } from '@/entities/settings';
 import {
+  getWhisperModelSizeMb,
   RECOMMENDED_AI_MODEL_ID,
   USER_FACING_AI_MODELS,
   useRecommendedWhisperModelId,
@@ -49,27 +50,21 @@ export const OnboardingSetupStep = ({
     if (status === 'downloading') return;
     if (status === 'downloaded') return;
 
-    const model = WHISPER_MODELS.find((m) => m.id === id);
-    if (!model) return;
-
-    const isSmallModel = model.sizeMb <= 150;
+    const sizeMb = getWhisperModelSizeMb(id, 'q5_1');
+    const isSmallModel = sizeMb <= 150;
 
     const doDownload = () => {
       setWhisperModel(id);
-      startDownload(id);
+      startDownload(id, { format: 'q5_1', expectedBytes: sizeMb * 1024 * 1024 });
     };
 
     if (isSmallModel) {
       doDownload();
     } else {
-      Alert.alert(
-        t('whisper.downloadModel'),
-        t('whisper.downloadConfirm', { size: model.sizeMb }),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          { text: t('common.download'), onPress: doDownload },
-        ],
-      );
+      Alert.alert(t('whisper.downloadModel'), t('whisper.downloadConfirm', { size: sizeMb }), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.download'), onPress: doDownload },
+      ]);
     }
   };
 
@@ -178,7 +173,7 @@ export const OnboardingSetupStep = ({
           const compat = compatibility?.[model.id];
           const isLast = index === WHISPER_MODELS.length - 1;
           const isSelected = model.id === selectedWhisperModel;
-          const displaySize = formatFileSize(model.sizeMb * 1024 * 1024);
+          const displaySize = formatFileSize(getWhisperModelSizeMb(model.id, 'q5_1') * 1024 * 1024);
 
           return (
             <TouchableOpacity

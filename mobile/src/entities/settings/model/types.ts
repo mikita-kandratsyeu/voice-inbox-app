@@ -19,6 +19,7 @@ export type TaskStrictness = 'strict' | 'balanced' | 'soft';
 export type AiOutputLanguage = 'same' | 'ru' | 'en';
 
 export type WhisperModelId = 'whisper-tiny' | 'whisper-base' | 'whisper-small' | 'whisper-medium';
+export type WhisperModelWeightsFormat = 'q5_1' | 'full';
 
 export type WhisperModelStatus = 'not_downloaded' | 'downloading' | 'downloaded' | 'error';
 
@@ -67,6 +68,7 @@ export type SettingsState = {
   appLanguage: AppLanguage;
   selectedAIModel: UserSelectableAIModelId;
   selectedWhisperModel: WhisperModelId;
+  whisperModelWeightsFormat: WhisperModelWeightsFormat;
   transcriptionLanguage: TranscriptionLanguage;
   summaryStyle: SummaryStyle;
   taskStrictness: TaskStrictness;
@@ -82,6 +84,7 @@ export type SettingsState = {
   setAppLanguage: (value: AppLanguage) => void;
   setAIModel: (id: UserSelectableAIModelId) => void;
   setWhisperModel: (id: WhisperModelId) => void;
+  setWhisperModelWeightsFormat: (value: WhisperModelWeightsFormat) => void;
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;
   setSummaryStyle: (value: SummaryStyle) => void;
   setTaskStrictness: (value: TaskStrictness) => void;
