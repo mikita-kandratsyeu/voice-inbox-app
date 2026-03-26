@@ -12,12 +12,13 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import RNFS from 'react-native-fs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
-import type { WhisperModelId, WhisperModelStatus } from '@/entities/settings';
-import { getWhisperModelSizeMb, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
+import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { getModelFileSizeBytes } from '@/features/model-manager';
 import type { Colors } from '@/shared/config';
@@ -28,7 +29,7 @@ import {
   type StorageStats,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
-import { formatFileSize } from '@/shared/lib/whisper';
+import { formatFileSize, getWhisperModelPath } from '@/shared/lib/whisper';
 import { ScreenHeader, SettingsRow, SettingsSection, SkeletonPulse } from '@/shared/ui';
 
 const StorageBar = ({
@@ -194,6 +195,13 @@ const DEFAULT_STATS: StorageStats = {
   totalMb: 0,
 };
 
+type DownloadedModelVariant = {
+  id: WhisperModelId;
+  name: string;
+  format: WhisperModelWeightsFormat;
+  bytes: number;
+};
+
 export const StorageDetailsScreen = () => {
   const { t } = useTranslation();
   const color = useColors();
@@ -206,7 +214,6 @@ export const StorageDetailsScreen = () => {
   const deleteRecord = useRecordStore((s) => s.deleteRecord);
   const folders = useFolderStore((s) => s.folders);
   const deleteFolder = useFolderStore((s) => s.deleteFolder);
-  const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
   const [stats, setStats] = useState<StorageStats>(DEFAULT_STATS);
   const [isLoading, setIsLoading] = useState(true);
@@ -214,31 +221,24 @@ export const StorageDetailsScreen = () => {
   const [isClearing, setIsClearing] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [deleteAllProgress, setDeleteAllProgress] = useState({ current: 0, total: 0 });
-  const [realModelSizes, setRealModelSizes] = useState<Partial<Record<WhisperModelId, number>>>({});
+  const [downloadedVariants, setDownloadedVariants] = useState<DownloadedModelVariant[]>([]);
 
-  const downloadedModels = WHISPER_MODELS.filter(
-    (m) => (whisperModelStatuses[m.id] ?? 'not_downloaded') === 'downloaded',
-  );
-
-  const loadModelSizes = useCallback(
-    async (statuses: Partial<Record<WhisperModelId, WhisperModelStatus>>) => {
-      const downloaded = WHISPER_MODELS.filter(
-        (m) => (statuses[m.id] ?? 'not_downloaded') === 'downloaded',
-      );
-      const entries = await Promise.all(
-        downloaded.map(async (m) => {
-          const bytes = await getModelFileSizeBytes(m.id, whisperModelWeightsFormat);
-          return [m.id, bytes] as const;
+  const loadModelSizes = useCallback(async () => {
+    const formats: WhisperModelWeightsFormat[] = ['q5_1', 'full'];
+    const entries = await Promise.all(
+      WHISPER_MODELS.flatMap((model) =>
+        formats.map(async (format) => {
+          const path = getWhisperModelPath(model.id, format);
+          const exists = await RNFS.exists(path);
+          if (!exists) return null;
+          const bytes = await getModelFileSizeBytes(model.id, format);
+          if (bytes <= 0) return null;
+          return { id: model.id, name: model.name, format, bytes } as DownloadedModelVariant;
         }),
-      );
-      const updated: Partial<Record<WhisperModelId, number>> = {};
-      for (const [id, bytes] of entries) {
-        updated[id] = bytes;
-      }
-      setRealModelSizes(updated);
-    },
-    [whisperModelWeightsFormat],
-  );
+      ),
+    );
+    setDownloadedVariants(entries.filter((x): x is DownloadedModelVariant => x != null));
+  }, []);
 
   const refreshStats = useCallback(async (isPull = false) => {
     if (isPull) {
@@ -264,8 +264,8 @@ export const StorageDetailsScreen = () => {
   }, [refreshStats]);
 
   useEffect(() => {
-    loadModelSizes(whisperModelStatuses);
-  }, [whisperModelStatuses, loadModelSizes]);
+    loadModelSizes();
+  }, [whisperModelWeightsFormat, loadModelSizes]);
 
   const audioCount = records.filter((r) => r.audioPath).length;
   const withTranscript = records.filter((r) => r.transcript && r.transcript.length > 0).length;
@@ -273,15 +273,7 @@ export const StorageDetailsScreen = () => {
     (r) => (r.summary && r.summary.length > 0) || (r.tasks && r.tasks.length > 0),
   ).length;
 
-  const modelsBytes = downloadedModels.reduce((sum, m) => {
-    const realBytes = realModelSizes[m.id];
-    return (
-      sum +
-      (realBytes !== undefined
-        ? realBytes
-        : getWhisperModelSizeMb(m.id, whisperModelWeightsFormat) * 1024 * 1024)
-    );
-  }, 0);
+  const modelsBytes = downloadedVariants.reduce((sum, m) => sum + m.bytes, 0);
   const totalMb = stats.totalMb + modelsBytes / (1024 * 1024);
 
   const handleClearCache = () => {
@@ -407,29 +399,21 @@ export const StorageDetailsScreen = () => {
               value={formatFileSize(stats.aiDataKb * 1024)}
               leftIcon={<Bot size={20} color={color.accent.aiData} strokeWidth={1.8} />}
               showChevron={false}
-              isLast={downloadedModels.length === 0}
+              isLast={downloadedVariants.length === 0}
             />
-            {downloadedModels.length > 0 && (
+            {downloadedVariants.length > 0 && (
               <>
-                {downloadedModels.map((model, index) => {
-                  const realBytes = realModelSizes[model.id];
-                  const sizeLabel =
-                    realBytes !== undefined
-                      ? formatFileSize(realBytes)
-                      : formatFileSize(
-                          getWhisperModelSizeMb(model.id, whisperModelWeightsFormat) * 1024 * 1024,
-                        );
-
+                {downloadedVariants.map((model, index) => {
                   return (
                     <SettingsRow
-                      key={model.id}
-                      label={`Whisper ${model.name}`}
-                      value={sizeLabel}
+                      key={`${model.id}:${model.format}`}
+                      label={`Whisper ${model.name} (${model.format})`}
+                      value={formatFileSize(model.bytes)}
                       leftIcon={
                         <BrainCircuit size={20} color={color.accent.models} strokeWidth={1.8} />
                       }
                       showChevron={false}
-                      isLast={index === downloadedModels.length - 1}
+                      isLast={index === downloadedVariants.length - 1}
                     />
                   );
                 })}

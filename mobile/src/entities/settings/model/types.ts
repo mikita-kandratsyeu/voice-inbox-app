@@ -20,6 +20,7 @@ export type AiOutputLanguage = 'same' | 'ru' | 'en';
 
 export type WhisperModelId = 'whisper-tiny' | 'whisper-base' | 'whisper-small' | 'whisper-medium';
 export type WhisperModelWeightsFormat = 'q5_1' | 'full';
+export type WhisperModelVariantId = `${WhisperModelId}:${WhisperModelWeightsFormat}`;
 
 export type WhisperModelStatus = 'not_downloaded' | 'downloading' | 'downloaded' | 'error';
 
@@ -68,6 +69,7 @@ export type SettingsState = {
   appLanguage: AppLanguage;
   selectedAIModel: UserSelectableAIModelId;
   selectedWhisperModel: WhisperModelId;
+  selectedWhisperModelFormat: WhisperModelWeightsFormat;
   whisperModelWeightsFormat: WhisperModelWeightsFormat;
   transcriptionLanguage: TranscriptionLanguage;
   summaryStyle: SummaryStyle;
@@ -75,10 +77,10 @@ export type SettingsState = {
   aiOutputLanguage: AiOutputLanguage;
   autoTranscribeOnSave: boolean;
   autoAiAfterTranscription: boolean;
-  whisperModelStatuses: Partial<Record<WhisperModelId, WhisperModelStatus>>;
-  whisperDownloadProgress: Partial<Record<WhisperModelId, number>>;
-  whisperDownloadBytes: Partial<Record<WhisperModelId, DownloadBytes>>;
-  whisperDownloadPhase: Partial<Record<WhisperModelId, WhisperDownloadPhase>>;
+  whisperModelStatuses: Partial<Record<WhisperModelVariantId, WhisperModelStatus>>;
+  whisperDownloadProgress: Partial<Record<WhisperModelVariantId, number>>;
+  whisperDownloadBytes: Partial<Record<WhisperModelVariantId, DownloadBytes>>;
+  whisperDownloadPhase: Partial<Record<WhisperModelVariantId, WhisperDownloadPhase>>;
   setAppTheme: (value: AppTheme) => void;
   setAccentColorId: (value: AccentColorId) => void;
   setAppLanguage: (value: AppLanguage) => void;
@@ -91,13 +93,21 @@ export type SettingsState = {
   setAiOutputLanguage: (value: AiOutputLanguage) => void;
   setAutoTranscribeOnSave: (value: boolean) => void;
   setAutoAiAfterTranscription: (value: boolean) => void;
-  setWhisperModelStatus: (id: WhisperModelId, status: WhisperModelStatus) => void;
+  setWhisperModelStatus: (
+    id: WhisperModelId,
+    format: WhisperModelWeightsFormat,
+    status: WhisperModelStatus,
+  ) => void;
+  setWhisperModelStatuses: (
+    statuses: Partial<Record<WhisperModelVariantId, WhisperModelStatus>>,
+  ) => void;
   setDownloadProgress: (
     id: WhisperModelId,
+    format: WhisperModelWeightsFormat,
     progress: number,
     bytesWritten?: number,
     contentLength?: number,
     phase?: WhisperDownloadPhase,
   ) => void;
-  removeWhisperModelStatus: (id: WhisperModelId) => void;
+  removeWhisperModelStatus: (id: WhisperModelId, format: WhisperModelWeightsFormat) => void;
 };

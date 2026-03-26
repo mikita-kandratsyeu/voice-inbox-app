@@ -13,6 +13,7 @@ export {
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
   getWhisperModelSizeMb,
+  getWhisperModelVariantId,
   USER_FACING_AI_MODELS,
   WHISPER_MODELS,
 } from './model/constants';
@@ -36,6 +37,7 @@ export type {
   WhisperModel,
   WhisperModelId,
   WhisperModelStatus,
+  WhisperModelVariantId,
   WhisperModelWeightsFormat,
 } from './model/types';
 export type { AccentColorId } from '@/shared/config';

@@ -567,6 +567,8 @@
     "weightsFormatFull": "Accurate",
     "weightsFormatQ5Hint": "Runs faster and uses less memory. Best for most recordings.",
     "weightsFormatFullHint": "Recognizes speech more accurately, but runs slower. Best for precise transcription.",
+    "weightsFormatChangeBlockedTitle": "Finish the current download first",
+    "weightsFormatChangeBlockedBody": "A model is downloading now. Wait until it finishes or cancel the download to switch quality mode.",
     "qualityLabel": "Quality",
     "speedLabel": "Speed",
     "accuracy": {

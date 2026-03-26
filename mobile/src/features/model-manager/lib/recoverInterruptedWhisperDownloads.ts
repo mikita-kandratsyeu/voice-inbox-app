@@ -1,4 +1,8 @@
-import type { WhisperModelId, WhisperModelStatus } from '@/entities/settings/model/types';
+import type {
+  WhisperModelStatus,
+  WhisperModelVariantId,
+  WhisperModelWeightsFormat,
+} from '@/entities/settings/model/types';
 import { storage } from '@/shared/lib/async-storage';
 
 import { deleteWhisperModel } from './deleteWhisperModel';
@@ -13,11 +17,11 @@ const recoverInterruptedWhisperDownloads = (): void => {
       return;
     }
 
-    const parsed = JSON.parse(raw) as Partial<Record<WhisperModelId, WhisperModelStatus>>;
-    const interrupted: WhisperModelId[] = [];
-    const next: Partial<Record<WhisperModelId, WhisperModelStatus>> = { ...parsed };
+    const parsed = JSON.parse(raw) as Partial<Record<WhisperModelVariantId, WhisperModelStatus>>;
+    const interrupted: WhisperModelVariantId[] = [];
+    const next: Partial<Record<WhisperModelVariantId, WhisperModelStatus>> = { ...parsed };
 
-    for (const id of Object.keys(next) as WhisperModelId[]) {
+    for (const id of Object.keys(next) as WhisperModelVariantId[]) {
       if (next[id] === 'downloading') {
         next[id] = 'not_downloaded';
         interrupted.push(id);
@@ -32,7 +36,15 @@ const recoverInterruptedWhisperDownloads = (): void => {
 
     queueMicrotask(() => {
       void stopWhisperDownloadLiveActivity().catch(() => {});
-      void Promise.all(interrupted.map((modelId) => deleteWhisperModel(modelId))).catch(() => {});
+      void Promise.all(
+        interrupted.map((variantId) => {
+          const [modelId, format] = variantId.split(':');
+          return deleteWhisperModel(
+            modelId as Parameters<typeof deleteWhisperModel>[0],
+            format as WhisperModelWeightsFormat,
+          );
+        }),
+      ).catch(() => {});
     });
   } catch {
     if (__DEV__) {

@@ -5,7 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import type { TranscriptSegment } from '@/entities/record';
-import { TRANSLATE_LANGUAGES, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import {
+  getWhisperModelVariantId,
+  TRANSLATE_LANGUAGES,
+  useSettingsStore,
+  WHISPER_MODELS,
+} from '@/entities/settings';
 import { TranscriptHighlight } from '@/features/transcript-highlight';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
@@ -95,11 +100,16 @@ export const TranscriptTab = ({
   const [viewMode, setViewMode] = useState<'original' | 'translated'>('original');
 
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
 
   const whisperModelName =
     WHISPER_MODELS.find((m) => m.id === selectedWhisperModel)?.name ?? selectedWhisperModel;
-  const whisperStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
+  const whisperVariantId = getWhisperModelVariantId(
+    selectedWhisperModel,
+    selectedWhisperModelFormat,
+  );
+  const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
 
   const hasTranslation = Boolean(translatedTranscript?.trim());
   const showTranslation = hasTranslation && viewMode === 'translated';

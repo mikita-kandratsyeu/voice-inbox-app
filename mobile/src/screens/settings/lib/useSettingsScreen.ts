@@ -8,7 +8,12 @@ import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useAppLockStore } from '@/entities/app-lock';
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
-import { USER_FACING_AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import {
+  getWhisperModelVariantId,
+  USER_FACING_AI_MODELS,
+  useSettingsStore,
+  WHISPER_MODELS,
+} from '@/entities/settings';
 import { openAppReviewFromSettings } from '@/features/app-review';
 import {
   getMonetizationMode,
@@ -45,6 +50,7 @@ export function useSettingsScreen() {
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
   const setAutoTranscribeOnSave = useSettingsStore((s) => s.setAutoTranscribeOnSave);
@@ -187,7 +193,11 @@ export function useSettingsScreen() {
 
   const userFacing = USER_FACING_AI_MODELS.find((m) => m.id === selectedAIModel);
   const aiModelName = userFacing?.name ?? selectedAIModel;
-  const whisperStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
+  const whisperVariantId = getWhisperModelVariantId(
+    selectedWhisperModel,
+    selectedWhisperModelFormat,
+  );
+  const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
   const whisperModelLabel =
     WHISPER_MODELS.find((m) => m.id === selectedWhisperModel)?.name ?? selectedWhisperModel;
   const transcriptionValue =

@@ -567,6 +567,8 @@
     "weightsFormatFull": "Точно",
     "weightsFormatQ5Hint": "Работает быстрее и требует меньше памяти. Подходит для большинства записей.",
     "weightsFormatFullHint": "Лучше распознает речь, но работает медленнее. Подходит для точного распознавания.",
+    "weightsFormatChangeBlockedTitle": "Сначала завершите загрузку",
+    "weightsFormatChangeBlockedBody": "Сейчас загружается модель. Дождитесь завершения загрузки или отмените её, чтобы сменить режим качества.",
     "qualityLabel": "Качество",
     "speedLabel": "Скорость",
     "accuracy": {

@@ -3,15 +3,16 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
-import type { WhisperModelId } from '@/entities/settings';
 import {
   getWhisperModelSizeMb,
+  getWhisperModelVariantId,
   RECOMMENDED_AI_MODEL_ID,
   USER_FACING_AI_MODELS,
   useRecommendedWhisperModelId,
   useSettingsStore,
   useWhisperModelCompatibility,
   WHISPER_MODELS,
+  type WhisperModelId,
 } from '@/entities/settings';
 import { useModelManager } from '@/features/model-manager';
 import type { Colors } from '@/shared/config';
@@ -46,7 +47,8 @@ export const OnboardingSetupStep = ({
   };
 
   const handleWhisperDownload = (id: WhisperModelId) => {
-    const status = whisperModelStatuses[id] ?? 'not_downloaded';
+    const variantId = getWhisperModelVariantId(id, 'q5_1');
+    const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
     if (status === 'downloading') return;
     if (status === 'downloaded') return;
 
@@ -143,7 +145,8 @@ export const OnboardingSetupStep = ({
   }
 
   const handleWhisperRowPress = (id: WhisperModelId) => {
-    const status = whisperModelStatuses[id] ?? 'not_downloaded';
+    const variantId = getWhisperModelVariantId(id, 'q5_1');
+    const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
     if (status === 'downloading') return;
     if (status === 'downloaded') {
       handleWhisperSelect(id);
@@ -167,7 +170,8 @@ export const OnboardingSetupStep = ({
         }}
       >
         {WHISPER_MODELS.map((model, index) => {
-          const status = whisperModelStatuses[model.id] ?? 'not_downloaded';
+          const variantId = getWhisperModelVariantId(model.id, 'q5_1');
+          const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
           const isDownloading = status === 'downloading';
           const isDownloaded = status === 'downloaded';
           const compat = compatibility?.[model.id];

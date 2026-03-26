@@ -13,7 +13,7 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import { FolderPickerSheet, useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
-import { useSettingsStore } from '@/entities/settings';
+import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
@@ -90,14 +90,19 @@ export const RecordingDetailScreen = () => {
     };
   }, [liveRecord.folderId, folders, isProActive]);
 
-  const { whisperModelStatuses, selectedWhisperModel, globalTranscriptionLanguage } =
-    useSettingsStore(
-      useShallow((s) => ({
-        whisperModelStatuses: s.whisperModelStatuses,
-        selectedWhisperModel: s.selectedWhisperModel,
-        globalTranscriptionLanguage: s.transcriptionLanguage,
-      })),
-    );
+  const {
+    whisperModelStatuses,
+    selectedWhisperModel,
+    selectedWhisperModelFormat,
+    globalTranscriptionLanguage,
+  } = useSettingsStore(
+    useShallow((s) => ({
+      whisperModelStatuses: s.whisperModelStatuses,
+      selectedWhisperModel: s.selectedWhisperModel,
+      selectedWhisperModelFormat: s.selectedWhisperModelFormat,
+      globalTranscriptionLanguage: s.transcriptionLanguage,
+    })),
+  );
 
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
   const [mountedTabs, setMountedTabs] = useState<Set<Tab>>(new Set(['transcript']));
@@ -165,7 +170,8 @@ export const RecordingDetailScreen = () => {
   );
 
   const handleRetranscribe = useCallback(async () => {
-    const modelStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
+    const variantId = getWhisperModelVariantId(selectedWhisperModel, selectedWhisperModelFormat);
+    const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
 
     if (modelStatus !== 'downloaded') {
       Alert.alert(
@@ -200,6 +206,7 @@ export const RecordingDetailScreen = () => {
     t,
     whisperModelStatuses,
     selectedWhisperModel,
+    selectedWhisperModelFormat,
     navigation,
     liveRecord,
     recordLanguage,

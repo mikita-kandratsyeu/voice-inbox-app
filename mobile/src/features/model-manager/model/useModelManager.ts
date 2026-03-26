@@ -1,12 +1,16 @@
 import { useCallback } from 'react';
+import RNFS from 'react-native-fs';
 
-import type { WhisperModelId } from '@/entities/settings';
 import {
   getRecommendedWhisperModelId,
   getWhisperModelSizeMb,
+  getWhisperModelVariantId,
   useSettingsStore,
+  WHISPER_MODELS,
+  type WhisperModelId,
   type WhisperModelWeightsFormat,
 } from '@/entities/settings';
+import { getWhisperModelPath } from '@/shared/lib/whisper';
 
 import { deleteWhisperModel } from '../lib/deleteWhisperModel';
 import {
@@ -18,10 +22,12 @@ import { cancelWhisperModelDownload, downloadWhisperModel } from '../lib/downloa
 
 export const useModelManager = () => {
   const setWhisperModelStatus = useSettingsStore((s) => s.setWhisperModelStatus);
+  const setWhisperModelStatuses = useSettingsStore((s) => s.setWhisperModelStatuses);
   const setDownloadProgress = useSettingsStore((s) => s.setDownloadProgress);
   const removeWhisperModelStatus = useSettingsStore((s) => s.removeWhisperModelStatus);
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
+  const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
 
   const startDownload = useCallback(
@@ -29,9 +35,9 @@ export const useModelManager = () => {
       modelId: WhisperModelId,
       options?: { format?: WhisperModelWeightsFormat; expectedBytes?: number },
     ): Promise<void> => {
-      setWhisperModelStatus(modelId, 'downloading');
-      setDownloadProgress(modelId, 0);
       const format = options?.format ?? whisperModelWeightsFormat;
+      setWhisperModelStatus(modelId, format, 'downloading');
+      setDownloadProgress(modelId, format, 0);
       const expectedBytes =
         options?.expectedBytes ?? getWhisperModelSizeMb(modelId, format) * 1024 * 1024;
 
@@ -43,25 +49,25 @@ export const useModelManager = () => {
           format,
           expectedBytes,
           onProgress: (progress, bytesWritten, contentLength, phase) => {
-            setDownloadProgress(modelId, progress, bytesWritten, contentLength, phase);
+            setDownloadProgress(modelId, format, progress, bytesWritten, contentLength, phase);
             void updateWhisperDownloadLiveActivity(progress / 100, modelId).catch(() => {});
           },
         });
 
         await promise;
-        setWhisperModelStatus(modelId, 'downloaded');
-        setDownloadProgress(modelId, 100);
+        setWhisperModelStatus(modelId, format, 'downloaded');
+        setDownloadProgress(modelId, format, 100);
         await stopWhisperDownloadLiveActivity();
       } catch (err) {
         const isCancelled =
           err instanceof Error && (err.message.includes('cancel') || err.message.includes('abort'));
 
         if (!isCancelled) {
-          setWhisperModelStatus(modelId, 'error');
+          setWhisperModelStatus(modelId, format, 'error');
         } else {
-          setWhisperModelStatus(modelId, 'not_downloaded');
+          setWhisperModelStatus(modelId, format, 'not_downloaded');
         }
-        setDownloadProgress(modelId, 0);
+        setDownloadProgress(modelId, format, 0);
         await stopWhisperDownloadLiveActivity();
       }
     },
@@ -70,25 +76,62 @@ export const useModelManager = () => {
 
   const cancelDownload = useCallback(
     async (modelId: WhisperModelId): Promise<void> => {
+      const format = whisperModelWeightsFormat;
       await cancelWhisperModelDownload(modelId);
-      setWhisperModelStatus(modelId, 'not_downloaded');
-      setDownloadProgress(modelId, 0);
+      setWhisperModelStatus(modelId, format, 'not_downloaded');
+      setDownloadProgress(modelId, format, 0);
       await stopWhisperDownloadLiveActivity();
     },
-    [setWhisperModelStatus, setDownloadProgress],
+    [setWhisperModelStatus, setDownloadProgress, whisperModelWeightsFormat],
   );
 
   const removeModel = useCallback(
     async (modelId: WhisperModelId): Promise<void> => {
-      await deleteWhisperModel(modelId);
-      removeWhisperModelStatus(modelId);
+      await deleteWhisperModel(modelId, whisperModelWeightsFormat);
+      removeWhisperModelStatus(modelId, whisperModelWeightsFormat);
 
-      if (selectedWhisperModel === modelId) {
+      if (
+        selectedWhisperModel === modelId &&
+        selectedWhisperModelFormat === whisperModelWeightsFormat
+      ) {
         setWhisperModel(getRecommendedWhisperModelId(whisperModelWeightsFormat));
       }
     },
-    [removeWhisperModelStatus, selectedWhisperModel, setWhisperModel, whisperModelWeightsFormat],
+    [
+      removeWhisperModelStatus,
+      selectedWhisperModel,
+      selectedWhisperModelFormat,
+      setWhisperModel,
+      whisperModelWeightsFormat,
+    ],
   );
 
-  return { startDownload, cancelDownload, removeModel };
+  const syncDownloadedStatusesForFormat = useCallback(
+    async (format: WhisperModelWeightsFormat): Promise<void> => {
+      const checks = await Promise.all(
+        WHISPER_MODELS.map(async (model) => ({
+          id: model.id,
+          exists: await RNFS.exists(getWhisperModelPath(model.id, format)),
+        })),
+      );
+
+      if (useSettingsStore.getState().whisperModelWeightsFormat !== format) {
+        return;
+      }
+
+      const nextStatuses = { ...useSettingsStore.getState().whisperModelStatuses };
+      for (const item of checks) {
+        const key = getWhisperModelVariantId(item.id, format);
+        if (item.exists) {
+          nextStatuses[key] = 'downloaded';
+        } else if (nextStatuses[key] === 'downloaded') {
+          delete nextStatuses[key];
+        }
+      }
+      setWhisperModelStatuses(nextStatuses);
+    },
+    [setWhisperModelStatuses],
+  );
+
+  return { startDownload, cancelDownload, removeModel, syncDownloadedStatusesForFormat };
 };

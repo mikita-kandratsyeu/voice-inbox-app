@@ -3,7 +3,7 @@ import { AppState } from 'react-native';
 
 import type { TranscriptSegment, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { useSettingsStore } from '@/entities/settings';
+import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
 import { shouldApplyAutoAiAfterTranscription } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
@@ -72,7 +72,7 @@ export const useTranscription = () => {
   const updateTranscript = useRecordStore((s) => s.updateTranscript);
   const clearAudioPath = useRecordStore((s) => s.clearAudioPath);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
-  const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
+  const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const transcriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
@@ -95,7 +95,8 @@ export const useTranscription = () => {
       }
       const audioPath = record.audioPath;
 
-      const modelStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
+      const variantId = getWhisperModelVariantId(selectedWhisperModel, selectedWhisperModelFormat);
+      const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
       if (modelStatus !== 'downloaded') {
         devLog('model not downloaded', { model: selectedWhisperModel });
         updateAiStatus(record.id, 'error');
@@ -119,7 +120,7 @@ export const useTranscription = () => {
       let usedContext = false;
 
       try {
-        const context = await getWhisperContext(selectedWhisperModel, whisperModelWeightsFormat);
+        const context = await getWhisperContext(selectedWhisperModel, selectedWhisperModelFormat);
         usedContext = true;
 
         if (!isActiveTranscriptionJob(record.id, jobGen)) {
@@ -298,7 +299,7 @@ export const useTranscription = () => {
     },
     [
       selectedWhisperModel,
-      whisperModelWeightsFormat,
+      selectedWhisperModelFormat,
       whisperModelStatuses,
       transcriptionLanguage,
       autoAiAfterTranscription,

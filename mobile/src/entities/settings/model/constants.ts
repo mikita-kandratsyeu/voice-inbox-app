@@ -3,6 +3,7 @@ import type {
   UserFacingAIModel,
   WhisperModel,
   WhisperModelId,
+  WhisperModelVariantId,
   WhisperModelWeightsFormat,
 } from './types';
 
@@ -105,3 +106,8 @@ export const getWhisperModelSizeMb = (
   modelId: WhisperModelId,
   format: WhisperModelWeightsFormat,
 ): number => WHISPER_MODEL_SIZES_MB[format][modelId];
+
+export const getWhisperModelVariantId = (
+  modelId: WhisperModelId,
+  format: WhisperModelWeightsFormat,
+): WhisperModelVariantId => `${modelId}:${format}`;

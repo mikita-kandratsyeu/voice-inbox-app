@@ -5,13 +5,15 @@ import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { WhisperModelId } from '@/entities/settings';
 import {
   getWhisperModelSizeMb,
+  getWhisperModelVariantId,
   useRecommendedWhisperModelId,
   useSettingsStore,
   useWhisperModelCompatibility,
   WHISPER_MODELS,
+  type WhisperModelId,
+  type WhisperModelVariantId,
 } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { getModelFileSizeBytes, useModelManager } from '@/features/model-manager';
@@ -37,6 +39,7 @@ export const WhisperModelPickerScreen = () => {
   const whisperDownloadProgress = useSettingsStore((s) => s.whisperDownloadProgress);
   const whisperDownloadBytes = useSettingsStore((s) => s.whisperDownloadBytes);
   const whisperDownloadPhase = useSettingsStore((s) => s.whisperDownloadPhase);
+  const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
   const setWhisperModelWeightsFormat = useSettingsStore((s) => s.setWhisperModelWeightsFormat);
@@ -45,18 +48,22 @@ export const WhisperModelPickerScreen = () => {
   const recommendedModelId = useRecommendedWhisperModelId();
   const { startDownload, cancelDownload, removeModel } = useModelManager();
 
-  const [realSizes, setRealSizes] = useState<Partial<Record<WhisperModelId, string>>>({});
+  const [realSizes, setRealSizes] = useState<Partial<Record<WhisperModelVariantId, string>>>({});
   const refreshRequestIdRef = useRef(0);
+  const hasActiveWhisperDownload = Object.values(whisperModelStatuses).some(
+    (status) => status === 'downloading',
+  );
 
   const refreshRealSizes = useCallback(async () => {
     const requestId = ++refreshRequestIdRef.current;
     const entries = await Promise.all(
       WHISPER_MODELS.map(async (m) => {
-        const status = whisperModelStatuses[m.id] ?? 'not_downloaded';
-        if (status !== 'downloaded') return [m.id, null] as const;
+        const variantId = getWhisperModelVariantId(m.id, whisperModelWeightsFormat);
+        const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
+        if (status !== 'downloaded') return [variantId, null] as const;
         const bytes = await getModelFileSizeBytes(m.id, whisperModelWeightsFormat);
-        if (bytes <= 0) return [m.id, null] as const;
-        return [m.id, formatFileSize(bytes)] as const;
+        if (bytes <= 0) return [variantId, null] as const;
+        return [variantId, formatFileSize(bytes)] as const;
       }),
     );
 
@@ -64,11 +71,14 @@ export const WhisperModelPickerScreen = () => {
       return;
     }
 
-    const updated: Partial<Record<WhisperModelId, string>> = {};
-    for (const [id, size] of entries) {
-      if (size) updated[id] = size;
-    }
-    setRealSizes(updated);
+    setRealSizes((prev) => {
+      const next = { ...prev };
+      for (const [id, size] of entries) {
+        if (size) next[id] = size;
+        else delete next[id];
+      }
+      return next;
+    });
   }, [whisperModelStatuses, whisperModelWeightsFormat]);
 
   useEffect(() => {
@@ -109,7 +119,8 @@ export const WhisperModelPickerScreen = () => {
   };
 
   const handleSelect = (id: WhisperModelId) => {
-    const status = whisperModelStatuses[id] ?? 'not_downloaded';
+    const variantId = getWhisperModelVariantId(id, whisperModelWeightsFormat);
+    const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
     if (status === 'downloading') return;
     if (status !== 'downloaded') {
       const model = WHISPER_MODELS.find((m) => m.id === id);
@@ -159,11 +170,25 @@ export const WhisperModelPickerScreen = () => {
             >
               {(['q5_1', 'full'] as const).map((format) => {
                 const selected = whisperModelWeightsFormat === format;
+
                 return (
                   <TouchableOpacity
                     key={format}
                     onPress={() => {
-                      if (!selected) setWhisperModelWeightsFormat(format);
+                      console.log('selected', selected);
+                      if (selected) {
+                        return;
+                      }
+
+                      if (hasActiveWhisperDownload) {
+                        Alert.alert(
+                          t('whisper.weightsFormatChangeBlockedTitle'),
+                          t('whisper.weightsFormatChangeBlockedBody'),
+                        );
+                        return;
+                      }
+
+                      setWhisperModelWeightsFormat(format);
                     }}
                     activeOpacity={0.8}
                     className="flex-1 items-center justify-center rounded-lg px-3 py-3"
@@ -172,9 +197,12 @@ export const WhisperModelPickerScreen = () => {
                       backgroundColor: selected ? color.background.card : 'transparent',
                       borderWidth: selected ? 1 : 0,
                       borderColor: selected ? color.accent.primary : 'transparent',
+                      opacity: hasActiveWhisperDownload && !selected ? 0.6 : 1,
                     }}
                     accessibilityRole="button"
-                    accessibilityState={{ selected }}
+                    accessibilityState={{
+                      selected,
+                    }}
                   >
                     <Text
                       className="text-center text-[16px] font-medium"
@@ -195,31 +223,42 @@ export const WhisperModelPickerScreen = () => {
             </Text>
           </View>
           <View className="overflow-hidden rounded-2xl">
-            {WHISPER_MODELS.map((model, index) => (
-              <WhisperModelCard
-                key={model.id}
-                model={model}
-                index={index}
-                total={WHISPER_MODELS.length}
-                status={whisperModelStatuses[model.id] ?? 'not_downloaded'}
-                isSelected={model.id === selectedWhisperModel}
-                displaySize={
-                  realSizes[model.id] ||
-                  formatFileSize(
-                    getWhisperModelSizeMb(model.id, whisperModelWeightsFormat) * 1024 * 1024,
-                  )
-                }
-                recommendedModelId={recommendedModelId}
-                compatibility={compatibility ? compatibility[model.id] : null}
-                color={color}
-                onPress={handleSelect}
-                onDelete={handleDelete}
-                onCancelDownload={cancelDownload}
-                downloadPercent={whisperDownloadProgress[model.id]}
-                downloadBytes={whisperDownloadBytes[model.id]}
-                downloadPhase={whisperDownloadPhase[model.id]}
-              />
-            ))}
+            {WHISPER_MODELS.map((model, index) => {
+              const variantId = getWhisperModelVariantId(model.id, whisperModelWeightsFormat);
+              const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
+              const fallbackSize = formatFileSize(
+                getWhisperModelSizeMb(model.id, whisperModelWeightsFormat) * 1024 * 1024,
+              );
+              const downloadedSize = realSizes[variantId];
+              const displaySize =
+                status === 'downloaded' && downloadedSize !== undefined
+                  ? downloadedSize
+                  : fallbackSize;
+
+              return (
+                <WhisperModelCard
+                  key={model.id}
+                  model={model}
+                  index={index}
+                  total={WHISPER_MODELS.length}
+                  status={status}
+                  isSelected={
+                    model.id === selectedWhisperModel &&
+                    selectedWhisperModelFormat === whisperModelWeightsFormat
+                  }
+                  displaySize={displaySize}
+                  recommendedModelId={recommendedModelId}
+                  compatibility={compatibility ? compatibility[model.id] : null}
+                  color={color}
+                  onPress={handleSelect}
+                  onDelete={handleDelete}
+                  onCancelDownload={cancelDownload}
+                  downloadPercent={whisperDownloadProgress[variantId]}
+                  downloadBytes={whisperDownloadBytes[variantId]}
+                  downloadPhase={whisperDownloadPhase[variantId]}
+                />
+              );
+            })}
           </View>
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>

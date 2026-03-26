@@ -7,6 +7,7 @@ import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
 import {
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
+  getWhisperModelVariantId,
   USER_FACING_AI_MODELS,
 } from './constants';
 import type {
@@ -21,6 +22,7 @@ import type {
   WhisperDownloadPhase,
   WhisperModelId,
   WhisperModelStatus,
+  WhisperModelVariantId,
   WhisperModelWeightsFormat,
 } from './types';
 
@@ -31,6 +33,7 @@ const KEYS = {
   AI_MODEL: 'settings.aiModel',
   WHISPER_MODEL: 'settings.whisperModel',
   WHISPER_MODEL_WEIGHTS_FORMAT: 'settings.whisperModelWeightsFormat',
+  WHISPER_SELECTED_MODEL_FORMAT: 'settings.whisperSelectedModelFormat',
   WHISPER_STATUSES: 'settings.whisperStatuses',
   TRANSCRIPTION_LANGUAGE: 'settings.transcriptionLanguage',
   SUMMARY_STYLE: 'settings.summaryStyle',
@@ -81,6 +84,16 @@ const getStoredWhisperModelWeightsFormat = (): WhisperModelWeightsFormat => {
   return DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT;
 };
 
+const getInitialSelectedWhisperModel = (): WhisperModelId => {
+  return getStoredWhisperModel();
+};
+
+const getStoredSelectedWhisperModelFormat = (): WhisperModelWeightsFormat => {
+  const val = storage.getString(KEYS.WHISPER_SELECTED_MODEL_FORMAT);
+  if (val === 'full') return 'full';
+  return DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT;
+};
+
 const getStoredTranscriptionLanguage = (): TranscriptionLanguage => {
   const val = storage.getString(KEYS.TRANSCRIPTION_LANGUAGE);
   return (val as TranscriptionLanguage) ?? 'auto';
@@ -111,11 +124,12 @@ const getStoredAiOutputLanguage = (): AiOutputLanguage => {
   return (val as AiOutputLanguage) ?? 'same';
 };
 
-const getStoredWhisperStatuses = (): Partial<Record<WhisperModelId, WhisperModelStatus>> => {
+const getStoredWhisperStatuses = (): Partial<Record<WhisperModelVariantId, WhisperModelStatus>> => {
   try {
     const raw = storage.getString(KEYS.WHISPER_STATUSES);
-
-    return raw ? (JSON.parse(raw) as Partial<Record<WhisperModelId, WhisperModelStatus>>) : {};
+    return raw
+      ? (JSON.parse(raw) as Partial<Record<WhisperModelVariantId, WhisperModelStatus>>)
+      : {};
   } catch {
     return {};
   }
@@ -126,7 +140,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   accentColorId: getStoredAccentColorId(),
   appLanguage: getStoredAppLanguage(),
   selectedAIModel: getStoredAIModel(),
-  selectedWhisperModel: getStoredWhisperModel(),
+  selectedWhisperModel: getInitialSelectedWhisperModel(),
+  selectedWhisperModelFormat: getStoredSelectedWhisperModelFormat(),
   whisperModelWeightsFormat: getStoredWhisperModelWeightsFormat(),
   transcriptionLanguage: getStoredTranscriptionLanguage(),
   summaryStyle: getStoredSummaryStyle(),
@@ -161,18 +176,21 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setWhisperModel: (id: WhisperModelId) => {
     storage.set(KEYS.WHISPER_MODEL, id);
-    set({ selectedWhisperModel: id });
+    const format = get().whisperModelWeightsFormat;
+    storage.set(KEYS.WHISPER_SELECTED_MODEL_FORMAT, format);
+    set({ selectedWhisperModel: id, selectedWhisperModelFormat: format });
   },
 
   setWhisperModelWeightsFormat: (value: WhisperModelWeightsFormat) => {
+    const hasActiveDownload = Object.values(get().whisperModelStatuses).some(
+      (status) => status === 'downloading',
+    );
+    if (hasActiveDownload) {
+      return;
+    }
     storage.set(KEYS.WHISPER_MODEL_WEIGHTS_FORMAT, value);
-    storage.set(KEYS.WHISPER_STATUSES, JSON.stringify({}));
     set({
       whisperModelWeightsFormat: value,
-      whisperModelStatuses: {},
-      whisperDownloadProgress: {},
-      whisperDownloadBytes: {},
-      whisperDownloadPhase: {},
     });
   },
 
@@ -206,62 +224,77 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     set({ autoAiAfterTranscription: value });
   },
 
-  setWhisperModelStatus: (id: WhisperModelId, status: WhisperModelStatus) => {
+  setWhisperModelStatus: (
+    id: WhisperModelId,
+    format: WhisperModelWeightsFormat,
+    status: WhisperModelStatus,
+  ) => {
     const current = get().whisperModelStatuses;
-    const updated = { ...current, [id]: status };
+    const key = getWhisperModelVariantId(id, format);
+    const updated = { ...current, [key]: status };
 
     storage.set(KEYS.WHISPER_STATUSES, JSON.stringify(updated));
     set({ whisperModelStatuses: updated });
   },
 
+  setWhisperModelStatuses: (
+    statuses: Partial<Record<WhisperModelVariantId, WhisperModelStatus>>,
+  ) => {
+    storage.set(KEYS.WHISPER_STATUSES, JSON.stringify(statuses));
+    set({ whisperModelStatuses: statuses });
+  },
+
   setDownloadProgress: (
     id: WhisperModelId,
+    format: WhisperModelWeightsFormat,
     progress: number,
     bytesWritten?: number,
     contentLength?: number,
     phase?: WhisperDownloadPhase,
   ) => {
+    const key = getWhisperModelVariantId(id, format);
     const currentProgress = get().whisperDownloadProgress;
     const currentBytes = get().whisperDownloadBytes;
     const currentPhase = get().whisperDownloadPhase;
     const updatedBytes =
       bytesWritten !== undefined && contentLength !== undefined
-        ? { ...currentBytes, [id]: { written: bytesWritten, total: contentLength } }
+        ? { ...currentBytes, [key]: { written: bytesWritten, total: contentLength } }
         : currentBytes;
 
     const nextPhase = { ...currentPhase };
     if (progress >= 100) {
-      delete nextPhase[id];
+      delete nextPhase[key];
     } else if (progress <= 0 && phase === undefined) {
-      delete nextPhase[id];
+      delete nextPhase[key];
     } else if (phase !== undefined) {
-      nextPhase[id] = phase;
+      nextPhase[key] = phase;
     }
 
     set({
-      whisperDownloadProgress: { ...currentProgress, [id]: progress },
+      whisperDownloadProgress: { ...currentProgress, [key]: progress },
       whisperDownloadBytes: updatedBytes,
       whisperDownloadPhase: nextPhase,
     });
   },
 
-  removeWhisperModelStatus: (id: WhisperModelId) => {
+  removeWhisperModelStatus: (id: WhisperModelId, format: WhisperModelWeightsFormat) => {
+    const key = getWhisperModelVariantId(id, format);
     const currentStatuses = get().whisperModelStatuses;
     const currentProgress = get().whisperDownloadProgress;
     const currentBytes = get().whisperDownloadBytes;
     const currentPhase = get().whisperDownloadPhase;
 
     const updatedStatuses = { ...currentStatuses };
-    delete updatedStatuses[id];
+    delete updatedStatuses[key];
 
     const updatedProgress = { ...currentProgress };
-    delete updatedProgress[id];
+    delete updatedProgress[key];
 
     const updatedBytes = { ...currentBytes };
-    delete updatedBytes[id];
+    delete updatedBytes[key];
 
     const updatedPhase = { ...currentPhase };
-    delete updatedPhase[id];
+    delete updatedPhase[key];
 
     storage.set(KEYS.WHISPER_STATUSES, JSON.stringify(updatedStatuses));
     set({

@@ -36,7 +36,7 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useRecordStore } from '@/entities/record';
-import { useSettingsStore } from '@/entities/settings';
+import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { useModelManager } from '@/features/model-manager';
 import { importData } from '@/features/sync-data';
@@ -884,7 +884,8 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
       return;
     }
 
-    const whisperStatus = whisperModelStatuses[selectedWhisperModel] ?? 'not_downloaded';
+    const selectedVariantId = getWhisperModelVariantId(selectedWhisperModel, 'q5_1');
+    const whisperStatus = whisperModelStatuses[selectedVariantId] ?? 'not_downloaded';
     const anyWhisperDownloading = Object.values(whisperModelStatuses).some(
       (s) => s === 'downloading',
     );
