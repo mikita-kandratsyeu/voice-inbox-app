@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import type { WhisperModelId, WhisperModelStatus } from '@/entities/settings';
 import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
@@ -203,6 +204,8 @@ export const StorageDetailsScreen = () => {
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const records = useRecordStore((s) => s.records);
   const deleteRecord = useRecordStore((s) => s.deleteRecord);
+  const folders = useFolderStore((s) => s.folders);
+  const deleteFolder = useFolderStore((s) => s.deleteFolder);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const [stats, setStats] = useState<StorageStats>(DEFAULT_STATS);
   const [isLoading, setIsLoading] = useState(true);
@@ -311,13 +314,22 @@ export const StorageDetailsScreen = () => {
         text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
+          const totalToDelete = records.length + folders.length;
           setIsDeletingAll(true);
-          setDeleteAllProgress({ current: 0, total: records.length });
+          setDeleteAllProgress({ current: 0, total: totalToDelete });
           try {
+            let deleted = 0;
             for (let i = 0; i < records.length; i += 1) {
               const r = records[i];
               await deleteRecord(r.id);
-              setDeleteAllProgress({ current: i + 1, total: records.length });
+              deleted += 1;
+              setDeleteAllProgress({ current: deleted, total: totalToDelete });
+            }
+            for (let i = 0; i < folders.length; i += 1) {
+              const f = folders[i];
+              await deleteFolder(f.id);
+              deleted += 1;
+              setDeleteAllProgress({ current: deleted, total: totalToDelete });
             }
             await refreshStats();
             navigation.goBack();

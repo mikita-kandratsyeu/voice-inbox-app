@@ -6,6 +6,7 @@ import { Alert, AppState } from 'react-native';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useAppLockStore } from '@/entities/app-lock';
+import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { USER_FACING_AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { openAppReviewFromSettings } from '@/features/app-review';
@@ -198,7 +199,12 @@ export function useSettingsScreen() {
     try {
       setIsExporting(true);
       const records = useRecordStore.getState().records;
-      await exportData(records);
+      const folderStore = useFolderStore.getState();
+      if (!folderStore.isLoaded) {
+        await folderStore.load();
+      }
+      const folders = useFolderStore.getState().folders;
+      await exportData(records, folders);
     } catch {
       Alert.alert(t('common.error'), t('importExport.exportError'));
     } finally {

@@ -2,14 +2,16 @@ import { Share } from 'react-native';
 import RNFS from 'react-native-fs';
 import { zip } from 'react-native-zip-archive';
 
+import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 
 const METADATA_FILENAME = 'metadata.json';
 const AUDIO_DIR_NAME = 'audio';
 
 type ExportPayload = {
-  version: 2;
+  version: 3;
   exportedAt: string;
+  folders: Folder[];
   records: (Omit<VoiceRecord, 'audioPath'> & { audioPath?: string })[];
 };
 
@@ -30,7 +32,7 @@ function getAudioExtension(audioPath: string): string {
   return match?.[0] ?? '.m4a';
 }
 
-export const exportData = async (records: VoiceRecord[]): Promise<void> => {
+export const exportData = async (records: VoiceRecord[], folders: Folder[]): Promise<void> => {
   const timestamp = Date.now();
   const exportDir = `${RNFS.CachesDirectoryPath}/voice-inbox-export-${timestamp}`;
   const audioDir = `${exportDir}/${AUDIO_DIR_NAME}`;
@@ -67,8 +69,9 @@ export const exportData = async (records: VoiceRecord[]): Promise<void> => {
   }
 
   const payload: ExportPayload = {
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
+    folders,
     records: recordsForPayload,
   };
 

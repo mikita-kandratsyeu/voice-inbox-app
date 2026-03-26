@@ -2,6 +2,7 @@ import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check, ChevronRight } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -27,6 +28,8 @@ type ProposedFolderDraft = {
   color: string;
 };
 
+type EditingFolderTarget = { kind: 'existing'; id: string } | { kind: 'proposed'; tempId: string };
+
 type AssignmentDraft = {
   recordId: string;
   destination:
@@ -38,7 +41,7 @@ type AssignmentDraft = {
 export const AutoOrganizeReviewScreen = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<InboxStackParamList>>();
   const route = useRoute<AutoOrganizeReviewRouteProp>();
   const color = useColors();
 
@@ -47,6 +50,7 @@ export const AutoOrganizeReviewScreen = () => {
   const { isProActive } = useProEntitlement();
   const folders = useFolderStore((s) => s.folders);
   const createFolder = useFolderStore((s) => s.createFolder);
+  const updateFolder = useFolderStore((s) => s.updateFolder);
   const setRecordFolder = useRecordStore((s) => s.setRecordFolder);
   const records = useRecordStore((s) => s.records);
 
@@ -63,13 +67,20 @@ export const AutoOrganizeReviewScreen = () => {
       tempId: `p-${idx}-${f.name.trim().toLowerCase() || 'folder'}`,
       name: f.name.trim(),
       icon: f.icon,
-      color: f.color,
+      color: isProActive ? f.color : DEFAULT_FOLDER_BRAND_HEX,
     }));
   });
 
-  const [editingTempId, setEditingTempId] = useState<string | null>(null);
+  const [editingFolderTarget, setEditingFolderTarget] = useState<EditingFolderTarget | null>(null);
 
   const [assignments, setAssignments] = useState<AssignmentDraft[]>(() => {
+    const existingIdByLower = new Map<string, string>();
+    for (const f of folders) {
+      const key = f.name.trim().toLowerCase();
+      if (!key) continue;
+      existingIdByLower.set(key, f.id);
+    }
+
     const tempIdByLower = new Map<string, string>();
     for (const f of result.folders) {
       const key = f.name.trim().toLowerCase();
@@ -80,6 +91,13 @@ export const AutoOrganizeReviewScreen = () => {
 
     return result.assignments.map((a) => {
       const key = a.folderName.trim().toLowerCase();
+      const existingId = existingIdByLower.get(key);
+      if (existingId) {
+        return {
+          recordId: a.recordId,
+          destination: { kind: 'existingFolder', folderId: existingId },
+        };
+      }
       const tempId = tempIdByLower.get(key);
       return {
         recordId: a.recordId,
@@ -111,6 +129,43 @@ export const AutoOrganizeReviewScreen = () => {
     return m;
   }, [assignments]);
 
+  const existingFolderNoteCountById = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const a of assignments) {
+      if (a.destination.kind !== 'existingFolder') continue;
+      m.set(a.destination.folderId, (m.get(a.destination.folderId) ?? 0) + 1);
+    }
+    return m;
+  }, [assignments]);
+
+  const existingFolderIdByLowerName = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const f of folders) {
+      const key = f.name.trim().toLowerCase();
+      if (!key) continue;
+      m.set(key, f.id);
+    }
+    return m;
+  }, [folders]);
+
+  const visibleProposedFolders = useMemo(
+    () =>
+      proposedFolders.filter((pf) => {
+        const key = pf.name.trim().toLowerCase();
+        if (!key) return true;
+        return !existingFolderIdByLowerName.has(key);
+      }),
+    [existingFolderIdByLowerName, proposedFolders],
+  );
+
+  const reviewFolders = useMemo(
+    () => [
+      ...folders.map((f) => ({ kind: 'existing' as const, folder: f })),
+      ...visibleProposedFolders.map((f) => ({ kind: 'proposed' as const, folder: f })),
+    ],
+    [folders, visibleProposedFolders],
+  );
+
   const openPicker = useCallback((recordId: string) => {
     setPicker({ visible: true, recordId });
   }, []);
@@ -118,6 +173,15 @@ export const AutoOrganizeReviewScreen = () => {
   const closePicker = useCallback(() => {
     setPicker({ visible: false, recordId: null });
   }, []);
+
+  const goBackOrInboxHome = useCallback(() => {
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+      return;
+    }
+
+    navigation.navigate('InboxHome');
+  }, [navigation]);
 
   const pickDestination = useCallback(
     (dest: AssignmentDraft['destination']) => {
@@ -176,15 +240,15 @@ export const AutoOrganizeReviewScreen = () => {
       await setRecordFolder(a.recordId, folderId);
     }
 
-    navigation.goBack();
+    goBackOrInboxHome();
   }, [
     assignments,
     createFolder,
     folders,
     isProActive,
-    navigation,
     proposedFolders,
     setRecordFolder,
+    goBackOrInboxHome,
   ]);
 
   const contentMaxWidth = useTabletContentMaxWidth();
@@ -238,25 +302,30 @@ export const AutoOrganizeReviewScreen = () => {
   );
 
   const editingFolder = useMemo((): Folder | null => {
-    if (!editingTempId) return null;
-    const f = proposedFolders.find((x) => x.tempId === editingTempId);
+    if (!editingFolderTarget) return null;
+
+    if (editingFolderTarget.kind === 'existing') {
+      return folders.find((x) => x.id === editingFolderTarget.id) ?? null;
+    }
+
+    const f = proposedFolders.find((x) => x.tempId === editingFolderTarget.tempId);
     if (!f) return null;
     return {
       id: f.tempId,
       name: f.name,
       icon: f.icon,
-      color: f.color || DEFAULT_FOLDER_BRAND_HEX,
+      color: isProActive ? f.color || DEFAULT_FOLDER_BRAND_HEX : DEFAULT_FOLDER_BRAND_HEX,
       sortOrder: 0,
       createdAt: new Date().toISOString(),
     };
-  }, [editingTempId, proposedFolders]);
+  }, [editingFolderTarget, folders, isProActive, proposedFolders]);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader
         title={t('folders.autoOrganizeReviewTitle')}
-        onBack={() => navigation.goBack()}
-        titleAlign="left"
+        onBack={goBackOrInboxHome}
+        titleAlign="center"
         rightSlot={
           <Button
             iconOnly
@@ -301,63 +370,74 @@ export const AutoOrganizeReviewScreen = () => {
               backgroundColor: color.background.card,
             }}
           >
-            {proposedFolders.map((f, idx) => (
-              <Pressable
-                key={f.tempId}
-                onPress={() => setEditingTempId(f.tempId)}
-                style={{
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  borderBottomWidth: idx < proposedFolders.length - 1 ? 1 : 0,
-                  borderBottomColor: color.border.default,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 12,
-                }}
-              >
-                <View
+            {reviewFolders.map((item, idx) => {
+              const isProposed = item.kind === 'proposed';
+              const folderId = isProposed ? item.folder.tempId : item.folder.id;
+              const folderName = item.folder.name.trim();
+              const folderColor =
+                isProposed && !isProActive
+                  ? DEFAULT_FOLDER_BRAND_HEX
+                  : item.folder.color || DEFAULT_FOLDER_BRAND_HEX;
+              const IconComp = folderIconComponents[parseFolderIconKey(item.folder.icon)];
+              const noteCount = isProposed
+                ? (proposedFolderNoteCountByTempId.get(item.folder.tempId) ?? 0)
+                : (existingFolderNoteCountById.get(item.folder.id) ?? 0);
+
+              return (
+                <Pressable
+                  key={`${item.kind}-${folderId}`}
+                  onPress={() => {
+                    if (isProposed) {
+                      setEditingFolderTarget({ kind: 'proposed', tempId: item.folder.tempId });
+                      return;
+                    }
+                    setEditingFolderTarget({ kind: 'existing', id: item.folder.id });
+                  }}
                   style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 12,
+                    paddingHorizontal: 16,
+                    paddingVertical: 14,
+                    borderBottomWidth: idx < reviewFolders.length - 1 ? 1 : 0,
+                    borderBottomColor: color.border.default,
+                    flexDirection: 'row',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: color.background.tertiary,
-                    borderWidth: 1,
-                    borderColor: color.border.default,
+                    gap: 12,
                   }}
                 >
-                  {(() => {
-                    const IconComp = folderIconComponents[parseFolderIconKey(f.icon)];
-                    return (
-                      <IconComp
-                        size={20}
-                        color={f.color || DEFAULT_FOLDER_BRAND_HEX}
-                        strokeWidth={2}
-                      />
-                    );
-                  })()}
-                </View>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text
-                    style={{ fontSize: 16, fontWeight: '600', color: color.text.primary }}
-                    numberOfLines={1}
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: color.background.tertiary,
+                      borderWidth: 1,
+                      borderColor: color.border.default,
+                    }}
                   >
-                    {f.name.trim() || t('folders.autoOrganizeReviewUnnamedFolder')}
-                  </Text>
-                  <Text
-                    style={{ marginTop: 2, fontSize: 13, color: color.text.secondary }}
-                    numberOfLines={1}
-                  >
-                    {t('folders.autoOrganizeReviewFolderNoteCount', {
-                      count: proposedFolderNoteCountByTempId.get(f.tempId) ?? 0,
-                    })}
-                  </Text>
-                </View>
-                <ChevronRight size={18} color={color.text.secondary} strokeWidth={2.4} />
-              </Pressable>
-            ))}
-            {proposedFolders.length === 0 && (
+                    <IconComp size={20} color={folderColor} strokeWidth={2} />
+                  </View>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text
+                      style={{ fontSize: 16, fontWeight: '600', color: color.text.primary }}
+                      numberOfLines={1}
+                    >
+                      {folderName || t('folders.autoOrganizeReviewUnnamedFolder')}
+                    </Text>
+                    <Text
+                      style={{ marginTop: 2, fontSize: 13, color: color.text.secondary }}
+                      numberOfLines={1}
+                    >
+                      {t('folders.autoOrganizeReviewFolderNoteCount', {
+                        count: noteCount,
+                      })}
+                    </Text>
+                  </View>
+                  <ChevronRight size={18} color={color.text.secondary} strokeWidth={2.4} />
+                </Pressable>
+              );
+            })}
+            {reviewFolders.length === 0 && (
               <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
                 <Text style={{ fontSize: 14, color: color.text.secondary }}>
                   {t('folders.autoOrganizeReviewNoFolders')}
@@ -498,7 +578,7 @@ export const AutoOrganizeReviewScreen = () => {
                 ) : null}
               </TouchableOpacity>
             ))}
-            {proposedFolders.map((pf) => (
+            {visibleProposedFolders.map((pf) => (
               <TouchableOpacity
                 key={`p-${pf.tempId}`}
                 onPress={() => pickDestination({ kind: 'proposedFolder', tempId: pf.tempId })}
@@ -532,17 +612,30 @@ export const AutoOrganizeReviewScreen = () => {
       </BottomSheetModal>
 
       <FolderFormModal
-        visible={Boolean(editingTempId)}
+        visible={Boolean(editingFolderTarget)}
         folder={editingFolder}
-        onClose={() => setEditingTempId(null)}
-        onSave={(name, folderColor, icon) => {
-          if (!editingTempId) return;
+        onClose={() => setEditingFolderTarget(null)}
+        onSave={async (name, folderColor, icon) => {
+          if (!editingFolderTarget) return;
+
+          if (editingFolderTarget.kind === 'existing') {
+            await updateFolder(editingFolderTarget.id, {
+              name,
+              color: folderColor,
+              icon,
+            });
+            setEditingFolderTarget(null);
+            return;
+          }
+
           setProposedFolders((prev) =>
             prev.map((x) =>
-              x.tempId === editingTempId ? { ...x, name, color: folderColor, icon } : x,
+              x.tempId === editingFolderTarget.tempId
+                ? { ...x, name, color: folderColor, icon }
+                : x,
             ),
           );
-          setEditingTempId(null);
+          setEditingFolderTarget(null);
         }}
       />
     </View>

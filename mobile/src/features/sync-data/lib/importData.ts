@@ -2,6 +2,9 @@ import DocumentPicker from 'react-native-document-picker';
 import RNFS from 'react-native-fs';
 import { unzip } from 'react-native-zip-archive';
 
+import type { Folder } from '@/entities/folder';
+import { useFolderStore } from '@/entities/folder';
+import { folderRepository } from '@/entities/folder/model/repository';
 import type { RecordClassification, VoiceRecord } from '@/entities/record';
 import {
   ensureRecordingsDir,
@@ -26,7 +29,14 @@ type ExportPayloadV2 = {
   records: (Omit<VoiceRecord, 'audioPath'> & { audioPath?: string })[];
 };
 
-type ExportPayload = ExportPayloadV1 | ExportPayloadV2;
+type ExportPayloadV3 = {
+  version: 3;
+  exportedAt: string;
+  folders: Folder[];
+  records: (Omit<VoiceRecord, 'audioPath'> & { audioPath?: string })[];
+};
+
+type ExportPayload = ExportPayloadV1 | ExportPayloadV2 | ExportPayloadV3;
 
 type ImportResult =
   | { success: true; records: VoiceRecord[]; exportedAt: string }
@@ -156,10 +166,48 @@ async function importFromZip(fileUri: string): Promise<ImportResult> {
   const raw = await RNFS.readFile(metadataPath, 'utf8');
   const payload = JSON.parse(raw) as ExportPayload;
 
-  if ((payload.version !== 1 && payload.version !== 2) || !isArray(payload.records)) {
+  if (
+    (payload.version !== 1 && payload.version !== 2 && payload.version !== 3) ||
+    !isArray(payload.records)
+  ) {
     await removeDirRecursive(extractDir);
 
     return { success: false, error: i18n.t('importExport.invalidFormat') };
+  }
+
+  if (payload.version === 3 && isArray(payload.folders)) {
+    const foldersToRestore = payload.folders
+      .filter(
+        (f) => f && isString((f as Partial<Folder>).id) && isString((f as Partial<Folder>).name),
+      )
+      .map((f) => {
+        const folder = f as Partial<Folder>;
+        return {
+          id: folder.id as string,
+          name: folder.name as string,
+          color: (folder.color as string | undefined) ?? '#6b7280',
+          icon: (folder.icon as string | undefined) ?? '📁',
+          sortOrder:
+            typeof folder.sortOrder === 'number' && Number.isFinite(folder.sortOrder)
+              ? folder.sortOrder
+              : 0,
+          createdAt: isString(folder.createdAt) ? folder.createdAt : new Date().toISOString(),
+        } satisfies Folder;
+      });
+
+    // Restore folders before importing records, so record.folderId associations remain valid.
+    for (const folder of foldersToRestore) {
+      await folderRepository.insert(folder);
+      await folderRepository.update(folder.id, {
+        name: folder.name,
+        color: folder.color,
+        icon: folder.icon,
+        sortOrder: folder.sortOrder,
+      });
+    }
+
+    // Refresh Zustand state/order.
+    await useFolderStore.getState().load();
   }
 
   const records: VoiceRecord[] = [];
@@ -228,8 +276,44 @@ export const importData = async (): Promise<ImportResult> => {
     const raw = await RNFS.readFile(uri, 'utf8');
     const payload = JSON.parse(raw) as ExportPayload;
 
-    if ((payload.version !== 1 && payload.version !== 2) || !isArray(payload.records)) {
+    if (
+      (payload.version !== 1 && payload.version !== 2 && payload.version !== 3) ||
+      !isArray(payload.records)
+    ) {
       return { success: false, error: i18n.t('importExport.invalidFormat') };
+    }
+
+    if (payload.version === 3 && isArray(payload.folders)) {
+      const foldersToRestore = payload.folders
+        .filter(
+          (f) => f && isString((f as Partial<Folder>).id) && isString((f as Partial<Folder>).name),
+        )
+        .map((f) => {
+          const folder = f as Partial<Folder>;
+          return {
+            id: folder.id as string,
+            name: folder.name as string,
+            color: (folder.color as string | undefined) ?? '#6b7280',
+            icon: (folder.icon as string | undefined) ?? '📁',
+            sortOrder:
+              typeof folder.sortOrder === 'number' && Number.isFinite(folder.sortOrder)
+                ? folder.sortOrder
+                : 0,
+            createdAt: isString(folder.createdAt) ? folder.createdAt : new Date().toISOString(),
+          } satisfies Folder;
+        });
+
+      for (const folder of foldersToRestore) {
+        await folderRepository.insert(folder);
+        await folderRepository.update(folder.id, {
+          name: folder.name,
+          color: folder.color,
+          icon: folder.icon,
+          sortOrder: folder.sortOrder,
+        });
+      }
+
+      await useFolderStore.getState().load();
     }
 
     const records = payload.records.map((r) => {
