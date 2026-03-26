@@ -3,47 +3,31 @@ import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@g
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Check, ChevronRight } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { InboxStackParamList } from '@/app/navigation/types';
 import type { Folder } from '@/entities/folder';
 import { FolderFormModal, useFolderStore } from '@/entities/folder';
-import { folderIconComponents, parseFolderIconKey } from '@/entities/folder/lib/folderLucideIcons';
 import { useRecordStore } from '@/entities/record';
+import {
+  type AssignmentDraft,
+  AutoOrganizeDestinationPickerContent,
+  AutoOrganizeReviewAssignmentsSection,
+  AutoOrganizeReviewFoldersSection,
+  type ReviewFolderItem,
+  useAutoOrganizeReview,
+} from '@/features/auto-organize-review';
 import { useProEntitlement } from '@/features/pro-license';
 import { useColors } from '@/shared/config';
 import { DEFAULT_FOLDER_BRAND_HEX, useTabletContentMaxWidth } from '@/shared/lib';
-import { Button, ScreenHeader, SectionHeader } from '@/shared/ui';
+import { Button, ScreenHeader } from '@/shared/ui';
 
 type AutoOrganizeReviewRouteProp = RouteProp<InboxStackParamList, 'AutoOrganizeReview'>;
-
-type ProposedFolderDraft = {
-  tempId: string;
-  name: string;
-  icon: string;
-  color: string;
-};
-
 type EditingFolderTarget = { kind: 'existing'; id: string } | { kind: 'proposed'; tempId: string };
-
-type AssignmentDraft = {
-  recordId: string;
-  destination:
-    | { kind: 'inbox' }
-    | { kind: 'existingFolder'; folderId: string }
-    | { kind: 'proposedFolder'; tempId: string };
-};
 
 export const AutoOrganizeReviewScreen = () => {
   const { t } = useTranslation();
@@ -69,118 +53,13 @@ export const AutoOrganizeReviewScreen = () => {
     return m;
   }, [records, t]);
 
-  const [proposedFolders, setProposedFolders] = useState<ProposedFolderDraft[]>(() => {
-    return result.folders.map((f, idx) => ({
-      tempId: `p-${idx}-${f.name.trim().toLowerCase() || 'folder'}`,
-      name: f.name.trim(),
-      icon: f.icon,
-      color: isProActive ? f.color : DEFAULT_FOLDER_BRAND_HEX,
-    }));
-  });
-
   const [editingFolderTarget, setEditingFolderTarget] = useState<EditingFolderTarget | null>(null);
-  const [isApplying, setIsApplying] = useState(false);
-
-  const [assignments, setAssignments] = useState<AssignmentDraft[]>(() => {
-    const existingIdByLower = new Map<string, string>();
-    for (const f of folders) {
-      const key = f.name.trim().toLowerCase();
-      if (!key) continue;
-      existingIdByLower.set(key, f.id);
-    }
-
-    const tempIdByLower = new Map<string, string>();
-    for (const f of result.folders) {
-      const key = f.name.trim().toLowerCase();
-      if (!key) continue;
-      const tempId = `p-${tempIdByLower.size}-${key}`;
-      tempIdByLower.set(key, tempId);
-    }
-
-    return result.assignments.map((a) => {
-      const key = a.folderName.trim().toLowerCase();
-      const existingId = existingIdByLower.get(key);
-      if (existingId) {
-        return {
-          recordId: a.recordId,
-          destination: { kind: 'existingFolder', folderId: existingId },
-        };
-      }
-      const tempId = tempIdByLower.get(key);
-      return {
-        recordId: a.recordId,
-        destination: tempId ? { kind: 'proposedFolder', tempId } : { kind: 'inbox' },
-      };
-    });
-  });
-
   const [picker, setPicker] = useState<{ visible: boolean; recordId: string | null }>({
     visible: false,
     recordId: null,
   });
+
   const pickerRef = useRef<BottomSheetModal>(null);
-
-  useEffect(() => {
-    if (picker.visible) {
-      requestAnimationFrame(() => pickerRef.current?.present());
-    } else {
-      pickerRef.current?.dismiss();
-    }
-  }, [picker.visible]);
-
-  const proposedFolderNoteCountByTempId = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const a of assignments) {
-      if (a.destination.kind !== 'proposedFolder') continue;
-      m.set(a.destination.tempId, (m.get(a.destination.tempId) ?? 0) + 1);
-    }
-    return m;
-  }, [assignments]);
-
-  const existingFolderNoteCountById = useMemo(() => {
-    const m = new Map<string, number>();
-    for (const a of assignments) {
-      if (a.destination.kind !== 'existingFolder') continue;
-      m.set(a.destination.folderId, (m.get(a.destination.folderId) ?? 0) + 1);
-    }
-    return m;
-  }, [assignments]);
-
-  const existingFolderIdByLowerName = useMemo(() => {
-    const m = new Map<string, string>();
-    for (const f of folders) {
-      const key = f.name.trim().toLowerCase();
-      if (!key) continue;
-      m.set(key, f.id);
-    }
-    return m;
-  }, [folders]);
-
-  const visibleProposedFolders = useMemo(
-    () =>
-      proposedFolders.filter((pf) => {
-        const key = pf.name.trim().toLowerCase();
-        if (!key) return true;
-        return !existingFolderIdByLowerName.has(key);
-      }),
-    [existingFolderIdByLowerName, proposedFolders],
-  );
-
-  const reviewFolders = useMemo(
-    () => [
-      ...folders.map((f) => ({ kind: 'existing' as const, folder: f })),
-      ...visibleProposedFolders.map((f) => ({ kind: 'proposed' as const, folder: f })),
-    ],
-    [folders, visibleProposedFolders],
-  );
-
-  const openPicker = useCallback((recordId: string) => {
-    setPicker({ visible: true, recordId });
-  }, []);
-
-  const closePicker = useCallback(() => {
-    setPicker({ visible: false, recordId: null });
-  }, []);
 
   const goBackOrInboxHome = useCallback(() => {
     if (navigation.canGoBack()) {
@@ -191,90 +70,68 @@ export const AutoOrganizeReviewScreen = () => {
     navigation.navigate('InboxHome');
   }, [navigation]);
 
+  useEffect(() => {
+    if (picker.visible) {
+      requestAnimationFrame(() => pickerRef.current?.present());
+    } else {
+      pickerRef.current?.dismiss();
+    }
+  }, [picker.visible]);
+
+  const {
+    assignments,
+    proposedFolders,
+    setProposedFolders,
+    visibleProposedFolders,
+    reviewFolders,
+    proposedFolderNoteCountByTempId,
+    existingFolderNoteCountById,
+    isApplying,
+    apply,
+    setAssignmentDestination,
+  } = useAutoOrganizeReview({
+    result,
+    folders,
+    isProActive,
+    createFolder,
+    setRecordFolder,
+    onApplied: goBackOrInboxHome,
+  });
+
+  const openPicker = useCallback((recordId: string) => {
+    setPicker({ visible: true, recordId });
+  }, []);
+
+  const closePicker = useCallback(() => {
+    setPicker({ visible: false, recordId: null });
+  }, []);
+
   const pickDestination = useCallback(
     (dest: AssignmentDraft['destination']) => {
       const rid = picker.recordId;
       if (!rid) return;
-      setAssignments((prev) =>
-        prev.map((a) => (a.recordId === rid ? { ...a, destination: dest } : a)),
-      );
+      setAssignmentDestination(rid, dest);
       closePicker();
     },
-    [closePicker, picker.recordId],
+    [closePicker, picker.recordId, setAssignmentDestination],
   );
 
-  const apply = useCallback(async () => {
-    if (isApplying) return;
-    setIsApplying(true);
-
-    const existingById = new Map(folders.map((f) => [f.id, f]));
-    const existingNameToId = new Map<string, string>();
-
-    try {
-      for (const f of folders) {
-        const key = f.name.trim().toLowerCase();
-        if (key) existingNameToId.set(key, f.id);
-      }
-
-      const createdIdByTemp = new Map<string, string>();
-
-      for (const pf of proposedFolders) {
-        const name = pf.name.trim();
-        const key = name.toLowerCase();
-
-        if (!key) continue;
-
-        const existingId = existingNameToId.get(key);
-
-        if (existingId) {
-          createdIdByTemp.set(pf.tempId, existingId);
-          continue;
-        }
-
-        const created = await createFolder(
-          name,
-          isProActive ? pf.color || DEFAULT_FOLDER_BRAND_HEX : DEFAULT_FOLDER_BRAND_HEX,
-          pf.icon,
-        );
-        createdIdByTemp.set(pf.tempId, created.id);
-        existingById.set(created.id, created);
-        existingNameToId.set(key, created.id);
-      }
-
-      for (const a of assignments) {
-        if (a.destination.kind === 'inbox') {
-          await setRecordFolder(a.recordId, null);
-          continue;
-        }
-
-        if (a.destination.kind === 'existingFolder') {
-          if (existingById.has(a.destination.folderId)) {
-            await setRecordFolder(a.recordId, a.destination.folderId);
-          }
-          continue;
-        }
-
-        const folderId = createdIdByTemp.get(a.destination.tempId);
-        if (!folderId) continue;
-        await setRecordFolder(a.recordId, folderId);
-      }
-
-      goBackOrInboxHome();
-    } finally {
-      setIsApplying(false);
-    }
-  }, [
-    assignments,
-    createFolder,
-    folders,
-    isProActive,
-    isApplying,
-    proposedFolders,
-    setRecordFolder,
-    goBackOrInboxHome,
-  ]);
-
   const contentMaxWidth = useTabletContentMaxWidth();
+  const assignmentsSectionLabel = t('folders.autoOrganizeReviewAssignmentsSection', {
+    defaultValue: t('folders.autoOrganizeReviewAssignmentsSection'),
+  });
+  const moveToLabel = useCallback(
+    (folder: string) =>
+      t('folders.autoOrganizeReviewMoveTo', {
+        folder,
+      }),
+    [t],
+  );
+  const getRecordTitle = useCallback(
+    (recordId: string) =>
+      recordTitleById.get(recordId) ?? t('folders.autoOrganizeReviewUnknownNote'),
+    [recordTitleById, t],
+  );
 
   const destinationLabel = useCallback(
     (d: AssignmentDraft['destination']) => {
@@ -390,134 +247,39 @@ export const AutoOrganizeReviewScreen = () => {
           <Text style={{ fontSize: 13, color: color.text.secondary, marginBottom: 8 }}>
             {t('folders.autoOrganizeReviewSubtitle')}
           </Text>
-          <SectionHeader title={t('folders.autoOrganizeReviewFoldersSection')} isFirst />
-          <View
-            style={{
-              marginBottom: 16,
-              borderRadius: 16,
-              overflow: 'hidden',
-              borderWidth: 1,
-              borderColor: color.border.default,
-              backgroundColor: color.background.card,
+          <AutoOrganizeReviewFoldersSection
+            color={color}
+            isProActive={isProActive}
+            reviewFolders={reviewFolders}
+            proposedFolderNoteCountByTempId={proposedFolderNoteCountByTempId}
+            existingFolderNoteCountById={existingFolderNoteCountById}
+            onPressFolder={(item: ReviewFolderItem) => {
+              if (item.kind === 'proposed') {
+                setEditingFolderTarget({ kind: 'proposed', tempId: item.folder.tempId });
+                return;
+              }
+              setEditingFolderTarget({ kind: 'existing', id: item.folder.id });
             }}
-          >
-            {reviewFolders.map((item, idx) => {
-              const isProposed = item.kind === 'proposed';
-              const folderId = isProposed ? item.folder.tempId : item.folder.id;
-              const folderName = item.folder.name.trim();
-              const folderColor =
-                isProposed && !isProActive
-                  ? DEFAULT_FOLDER_BRAND_HEX
-                  : item.folder.color || DEFAULT_FOLDER_BRAND_HEX;
-              const IconComp = folderIconComponents[parseFolderIconKey(item.folder.icon)];
-              const noteCount = isProposed
-                ? (proposedFolderNoteCountByTempId.get(item.folder.tempId) ?? 0)
-                : (existingFolderNoteCountById.get(item.folder.id) ?? 0);
-
-              return (
-                <Pressable
-                  key={`${item.kind}-${folderId}`}
-                  onPress={() => {
-                    if (isProposed) {
-                      setEditingFolderTarget({ kind: 'proposed', tempId: item.folder.tempId });
-                      return;
-                    }
-                    setEditingFolderTarget({ kind: 'existing', id: item.folder.id });
-                  }}
-                  style={{
-                    paddingHorizontal: 16,
-                    paddingVertical: 14,
-                    borderBottomWidth: idx < reviewFolders.length - 1 ? 1 : 0,
-                    borderBottomColor: color.border.default,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 12,
-                  }}
-                >
-                  <View
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 12,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: color.background.tertiary,
-                      borderWidth: 1,
-                      borderColor: color.border.default,
-                    }}
-                  >
-                    <IconComp size={20} color={folderColor} strokeWidth={2} />
-                  </View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text
-                      style={{ fontSize: 16, fontWeight: '600', color: color.text.primary }}
-                      numberOfLines={1}
-                    >
-                      {folderName || t('folders.autoOrganizeReviewUnnamedFolder')}
-                    </Text>
-                    <Text
-                      style={{ marginTop: 2, fontSize: 13, color: color.text.secondary }}
-                      numberOfLines={1}
-                    >
-                      {t('folders.autoOrganizeReviewFolderNoteCount', {
-                        count: noteCount,
-                      })}
-                    </Text>
-                  </View>
-                  <ChevronRight size={18} color={color.text.secondary} strokeWidth={2.4} />
-                </Pressable>
-              );
-            })}
-            {reviewFolders.length === 0 && (
-              <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
-                <Text style={{ fontSize: 14, color: color.text.secondary }}>
-                  {t('folders.autoOrganizeReviewNoFolders')}
-                </Text>
-              </View>
-            )}
-          </View>
-          <SectionHeader
-            title={t('folders.autoOrganizeReviewAssignmentsSection', {
-              defaultValue: t('folders.autoOrganizeReviewAssignmentsSection'),
-            })}
-            isFirst={false}
+            noFoldersLabel={t('folders.autoOrganizeReviewNoFolders')}
+            unnamedFolderLabel={t('folders.autoOrganizeReviewUnnamedFolder')}
+            folderSectionLabel={t('folders.autoOrganizeReviewFoldersSection')}
+            getFolderNoteCountLabel={(count) =>
+              t('folders.autoOrganizeReviewFolderNoteCount', {
+                count,
+              })
+            }
           />
-          <View>
-            {assignments.map((a, idx) => (
-              <View
-                key={`${a.recordId}-${idx}`}
-                style={{
-                  marginBottom: 10,
-                  borderRadius: 14,
-                  overflow: 'hidden',
-                  borderWidth: 1,
-                  borderColor: color.border.default,
-                  backgroundColor: color.background.card,
-                }}
-              >
-                <Pressable
-                  onPress={() => openPicker(a.recordId)}
-                  style={{ paddingHorizontal: 14, paddingVertical: 12 }}
-                >
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: color.text.primary }}>
-                    {recordTitleById.get(a.recordId) ?? t('folders.autoOrganizeReviewUnknownNote')}
-                  </Text>
-                  <Text style={{ marginTop: 3, fontSize: 13, color: color.text.secondary }}>
-                    {t('folders.autoOrganizeReviewMoveTo', {
-                      folder: destinationLabel(a.destination),
-                    })}
-                  </Text>
-                </Pressable>
-              </View>
-            ))}
-            {assignments.length === 0 ? (
-              <View style={{ paddingVertical: 28 }}>
-                <Text style={{ textAlign: 'center', fontSize: 14, color: color.text.secondary }}>
-                  {t('folders.autoOrganizeReviewNoAssignments')}
-                </Text>
-              </View>
-            ) : null}
-          </View>
+          <AutoOrganizeReviewAssignmentsSection
+            color={color}
+            assignments={assignments}
+            onOpenPicker={openPicker}
+            getRecordTitle={getRecordTitle}
+            getDestinationLabel={destinationLabel}
+            assignmentsSectionLabel={assignmentsSectionLabel}
+            unknownNoteLabel={t('folders.autoOrganizeReviewUnknownNote')}
+            noAssignmentsLabel={t('folders.autoOrganizeReviewNoAssignments')}
+            getMoveToLabel={moveToLabel}
+          />
         </ScrollView>
       </View>
 
@@ -548,97 +310,18 @@ export const AutoOrganizeReviewScreen = () => {
             paddingBottom: Math.max(insets.bottom, 24),
           }}
         >
-          <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '600',
-              color: color.text.primary,
-              textAlign: 'center',
-              paddingTop: 4,
-              marginBottom: 14,
-            }}
-          >
-            {t('folders.autoOrganizeReviewPickFolderTitle')}
-          </Text>
-
-          <View
-            style={{
-              borderRadius: 16,
-              overflow: 'hidden',
-              borderWidth: 1,
-              borderColor: color.border.default,
-              backgroundColor: color.background.card,
-            }}
-          >
-            <TouchableOpacity
-              onPress={() => pickDestination({ kind: 'inbox' })}
-              activeOpacity={0.7}
-              style={{
-                paddingHorizontal: 16,
-                paddingVertical: 14,
-                borderBottomWidth: 1,
-                borderBottomColor: color.border.default,
-                flexDirection: 'row',
-                alignItems: 'center',
-              }}
-            >
-              <Text style={{ fontSize: 16, color: color.text.primary, flex: 1 }}>
-                {t('folders.autoOrganizeReviewInbox')}
-              </Text>
-              {isDestinationSelected({ kind: 'inbox' }) ? (
-                <Check size={18} color={color.accent.primary} strokeWidth={2.6} />
-              ) : null}
-            </TouchableOpacity>
-            {folders.map((f) => (
-              <TouchableOpacity
-                key={f.id}
-                onPress={() => pickDestination({ kind: 'existingFolder', folderId: f.id })}
-                activeOpacity={0.7}
-                style={{
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  borderBottomWidth: 1,
-                  borderBottomColor: color.border.default,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{ fontSize: 16, color: color.text.primary, flex: 1 }}>{f.name}</Text>
-                {isDestinationSelected({ kind: 'existingFolder', folderId: f.id }) ? (
-                  <Check size={18} color={color.accent.primary} strokeWidth={2.6} />
-                ) : null}
-              </TouchableOpacity>
-            ))}
-            {visibleProposedFolders.map((pf) => (
-              <TouchableOpacity
-                key={`p-${pf.tempId}`}
-                onPress={() => pickDestination({ kind: 'proposedFolder', tempId: pf.tempId })}
-                activeOpacity={0.7}
-                style={{
-                  paddingHorizontal: 16,
-                  paddingVertical: 14,
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{ fontSize: 16, color: color.text.primary, flex: 1 }}>
-                  {pf.name.trim() || t('folders.autoOrganizeReviewUnnamedFolder')}
-                </Text>
-                {isDestinationSelected({ kind: 'proposedFolder', tempId: pf.tempId }) ? (
-                  <Check size={18} color={color.accent.primary} strokeWidth={2.6} />
-                ) : null}
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={{ marginTop: 12 }}>
-            <Button
-              label={t('common.cancel')}
-              color={color}
-              variant="secondary"
-              onPress={closePicker}
-            />
-          </View>
+          <AutoOrganizeDestinationPickerContent
+            color={color}
+            folders={folders}
+            visibleProposedFolders={visibleProposedFolders}
+            onPickDestination={pickDestination}
+            isDestinationSelected={isDestinationSelected}
+            onClose={closePicker}
+            pickFolderTitle={t('folders.autoOrganizeReviewPickFolderTitle')}
+            inboxLabel={t('folders.autoOrganizeReviewInbox')}
+            unnamedFolderLabel={t('folders.autoOrganizeReviewUnnamedFolder')}
+            cancelLabel={t('common.cancel')}
+          />
         </BottomSheetScrollView>
       </BottomSheetModal>
 
