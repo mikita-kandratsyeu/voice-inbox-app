@@ -81,7 +81,12 @@ export function useAutoOrganizeFolders(
 
   useEffect(() => {
     return () => {
-      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      const timerId = successTimerRef.current;
+
+      if (timerId) {
+        clearTimeout(timerId);
+      }
     };
   }, []);
 
