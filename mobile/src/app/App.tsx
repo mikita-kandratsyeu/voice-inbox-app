@@ -21,7 +21,7 @@ import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
 import { AppRatingPromptRoot } from '@/features/app-review';
 import { OnboardingGate } from '@/features/onboarding';
 import { useProEntitlement, useResetAccentWhenNotPro } from '@/features/pro-license';
-import { TranscriptionKeepAwake } from '@/features/transcription';
+import { TranscriptionKeepAwake, TranscriptionResumePrompt } from '@/features/transcription';
 import { DEFAULT_ACCENT_COLOR_ID, getColors, useAppTheme } from '@/shared/config';
 import { NetworkStatusProvider } from '@/shared/lib';
 import { logAnalyticsScreenView } from '@/shared/lib/analytics';
@@ -102,6 +102,7 @@ const App = () => {
                 <OnboardingGate>
                   <AppLockGate>
                     <TranscriptionKeepAwake />
+                    <TranscriptionResumePrompt />
                     <RootNavigator />
                   </AppLockGate>
                 </OnboardingGate>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
-import type { VoiceRecord } from '@/entities/record';
+import type { TranscriptSegment, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
@@ -13,6 +13,11 @@ import { i18n, useNetworkStatus } from '@/shared/lib';
 import { getWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
 import { transcribeAudio } from '../lib/transcribeAudio';
 import {
+  getTranscriptionCheckpoint,
+  removeTranscriptionCheckpoint,
+  saveTranscriptionCheckpoint,
+} from '../lib/transcriptionCheckpoint';
+import {
   beginTranscriptionJob,
   endTranscriptionJobIfCurrent,
   invalidateTranscriptionJob,
@@ -20,6 +25,7 @@ import {
 } from './transcriptionJobRegistry';
 
 const PROGRESS_THROTTLE_MS = 500;
+const CHECKPOINT_EVERY_N_CHUNKS = 2;
 
 const devLog = (event: string, payload?: Record<string, unknown>) => {
   if (__DEV__) console.warn(`[transcription] ${event}`, payload ?? '');
@@ -75,6 +81,7 @@ export const useTranscription = () => {
 
   const stopRef = useRef<(() => Promise<void>) | null>(null);
   const currentRecordIdRef = useRef<string | null>(null);
+  const backgroundCancelledRef = useRef<Set<string>>(new Set());
 
   const startTranscription = useCallback(
     async (record: VoiceRecord, languageOverride?: string): Promise<void> => {
@@ -121,18 +128,80 @@ export const useTranscription = () => {
         updateAiStatus(record.id, 'processing', 0);
 
         const throttledProgress = createThrottledProgress(record.id, jobGen, updateAiStatus);
+        const normalizedAudioPath = record.audioPath.startsWith('file://')
+          ? record.audioPath.slice(7)
+          : record.audioPath;
+        const checkpoint = await getTranscriptionCheckpoint(record.id);
+        const canResumeFromCheckpoint =
+          checkpoint &&
+          checkpoint.audioPath === normalizedAudioPath &&
+          checkpoint.modelId === selectedWhisperModel &&
+          checkpoint.language === language;
+        const resume =
+          canResumeFromCheckpoint && checkpoint
+            ? {
+                startChunkIndex: checkpoint.lastCompletedChunkIndex + 1,
+                fullText: checkpoint.fullText,
+                segments: checkpoint.segments,
+              }
+            : undefined;
 
-        const { stop, promise } = transcribeAudio({
-          context,
-          audioPath: record.audioPath,
-          durationMs: record.durationMs ?? 0,
-          language,
-          onProgress: throttledProgress,
-        });
+        const runTranscription = async (resumePayload?: {
+          startChunkIndex: number;
+          fullText: string;
+          segments: TranscriptSegment[];
+        }) => {
+          const { stop, promise } = transcribeAudio({
+            context,
+            audioPath: record.audioPath,
+            durationMs: record.durationMs ?? 0,
+            language,
+            onProgress: throttledProgress,
+            resume: resumePayload,
+            onChunkCompleted: ({ chunkIndex, totalChunks, fullText, segments }) => {
+              if (!isActiveTranscriptionJob(record.id, jobGen)) {
+                return;
+              }
+              const shouldPersist =
+                (chunkIndex + 1) % CHECKPOINT_EVERY_N_CHUNKS === 0 || chunkIndex + 1 >= totalChunks;
+              if (!shouldPersist) return;
 
-        stopRef.current = stop;
+              saveTranscriptionCheckpoint({
+                recordId: record.id,
+                audioPath: record.audioPath ?? '',
+                modelId: selectedWhisperModel,
+                language,
+                totalChunks,
+                lastCompletedChunkIndex: chunkIndex,
+                fullText,
+                segments,
+              }).catch(() => {});
+            },
+          });
 
-        const { segments, fullText, skipped } = await promise;
+          stopRef.current = stop;
+          return promise;
+        };
+
+        let transcriptionResult: Awaited<ReturnType<typeof runTranscription>>;
+        try {
+          transcriptionResult = await runTranscription(resume);
+        } catch (resumeErr) {
+          if (resume) {
+            if (__DEV__) {
+              console.warn('[transcription] resume failed, retrying from start', {
+                recordId: record.id,
+                err: resumeErr instanceof Error ? resumeErr.message : String(resumeErr),
+              });
+            }
+            await removeTranscriptionCheckpoint(record.id).catch(() => {});
+            transcriptionResult = await runTranscription(undefined);
+          } else {
+            throw resumeErr;
+          }
+        }
+
+        const { segments, fullText, skipped } = transcriptionResult;
 
         if (isActiveTranscriptionJob(record.id, jobGen)) {
           stopRef.current = null;
@@ -146,6 +215,7 @@ export const useTranscription = () => {
 
         if (skipped) {
           devLog('skipped (duration too short)', { recordId: record.id });
+          await removeTranscriptionCheckpoint(record.id).catch(() => {});
           updateAiStatus(record.id, 'idle');
           return;
         }
@@ -158,6 +228,7 @@ export const useTranscription = () => {
 
         devLog('saving transcript', { recordId: record.id, segments: segments.length });
         await updateTranscript(record.id, fullText, segments);
+        await removeTranscriptionCheckpoint(record.id).catch(() => {});
 
         const recordWithTranscript = {
           ...record,
@@ -202,8 +273,14 @@ export const useTranscription = () => {
         });
 
         if (wasCancelled) {
+          if (!backgroundCancelledRef.current.has(record.id)) {
+            await removeTranscriptionCheckpoint(record.id).catch(() => {});
+          } else {
+            backgroundCancelledRef.current.delete(record.id);
+          }
           updateAiStatus(record.id, 'idle');
         } else {
+          await removeTranscriptionCheckpoint(record.id).catch(() => {});
           if (isFileNotFoundError(err)) {
             await clearAudioPath(record.id).catch(() => {});
           }
@@ -248,6 +325,7 @@ export const useTranscription = () => {
         stopRef.current = null;
         stop().catch(() => {});
       }
+      removeTranscriptionCheckpoint(recordId).catch(() => {});
     },
     [updateAiStatus],
   );
@@ -255,6 +333,7 @@ export const useTranscription = () => {
   const cancelTranscriptionToIdleOnBackground = useCallback(
     (recordId: string): void => {
       devLog('cancel requested (background)', { recordId });
+      backgroundCancelledRef.current.add(recordId);
       invalidateTranscriptionJob(recordId);
       currentRecordIdRef.current = null;
       updateAiStatus(recordId, 'idle');

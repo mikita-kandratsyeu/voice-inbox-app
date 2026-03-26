@@ -790,7 +790,11 @@
     "secondsLeft": "~{{ count }} sec left",
     "minutesLeft": "~{{ count }} min left",
     "loadingModel": "Loading model into memory…",
-    "batteryHint": "Transcription works only while the app is open. Battery usage may increase."
+    "batteryHint": "Transcription works only while the app is open. Battery usage may increase.",
+    "resumeTitle": "Unfinished transcription found",
+    "resumeBody": "\"{{title}}\" was interrupted. Continue where you left off?",
+    "continue": "Continue",
+    "cancelResume": "Cancel transcription"
   },
   "batch": {
     "selectedCount_one": "{{count}} selected",

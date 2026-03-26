@@ -20,6 +20,17 @@ export type TranscribeAudioOptions = {
   durationMs: number;
   language?: string;
   onProgress?: (current: number, total: number) => void;
+  resume?: {
+    startChunkIndex: number;
+    fullText: string;
+    segments: TranscriptSegment[];
+  };
+  onChunkCompleted?: (payload: {
+    chunkIndex: number;
+    totalChunks: number;
+    fullText: string;
+    segments: TranscriptSegment[];
+  }) => void;
 };
 
 export type TranscribeAudioResult = {
@@ -105,7 +116,15 @@ const resolveChunkTimestampOffsetMs = (
 };
 
 export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudioHandle => {
-  const { context, audioPath, durationMs, language = 'auto', onProgress } = options;
+  const {
+    context,
+    audioPath,
+    durationMs,
+    language = 'auto',
+    onProgress,
+    resume,
+    onChunkCompleted,
+  } = options;
 
   let cancelled = false;
   let activeStop: (() => Promise<void>) | null = null;
@@ -141,6 +160,8 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
       language,
       totalDurationSec: durationMs / 1000,
       onProgress,
+      resume,
+      onChunkCompleted,
       cancelled: () => cancelled,
       setStop: (fn) => {
         activeStop = fn;
@@ -203,6 +224,17 @@ type LongOptions = {
   language: string;
   totalDurationSec: number;
   onProgress?: (current: number, total: number) => void;
+  resume?: {
+    startChunkIndex: number;
+    fullText: string;
+    segments: TranscriptSegment[];
+  };
+  onChunkCompleted?: (payload: {
+    chunkIndex: number;
+    totalChunks: number;
+    fullText: string;
+    segments: TranscriptSegment[];
+  }) => void;
   cancelled: () => boolean;
   setStop: (fn: () => Promise<void>) => void;
 };
@@ -213,6 +245,8 @@ const transcribeLong = async ({
   language,
   totalDurationSec,
   onProgress,
+  resume,
+  onChunkCompleted,
   cancelled,
   setStop,
 }: LongOptions): Promise<TranscribeAudioResult> => {
@@ -223,11 +257,16 @@ const transcribeLong = async ({
   );
 
   const total = chunks.length;
-  const allSegments: TranscriptSegment[] = [];
-  let fullText = '';
-  let segmentOffset = 0;
+  const startChunkIndex = Math.max(0, Math.min(resume?.startChunkIndex ?? 0, total));
+  const allSegments: TranscriptSegment[] = [...(resume?.segments ?? [])];
+  let fullText = (resume?.fullText ?? '').trim();
+  let segmentOffset = allSegments.length;
 
-  for (let i = 0; i < chunks.length; i++) {
+  if (startChunkIndex > 0) {
+    onProgress?.(startChunkIndex, total);
+  }
+
+  for (let i = startChunkIndex; i < chunks.length; i++) {
     if (cancelled()) {
       throw new Error('abort');
     }
@@ -270,6 +309,12 @@ const transcribeLong = async ({
     fullText = fullText.length > 0 ? `${fullText} ${chunkText}` : chunkText;
 
     onProgress?.(i + 1, total);
+    onChunkCompleted?.({
+      chunkIndex: i,
+      totalChunks: total,
+      fullText,
+      segments: allSegments,
+    });
 
     await new Promise<void>((resolve) => setTimeout(resolve, 200));
   }
