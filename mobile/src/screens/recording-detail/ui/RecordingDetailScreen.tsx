@@ -25,7 +25,6 @@ import { NitroFS } from '@/shared/lib/fs';
 import { AudioPlayer, usePlaybackPosition } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
-import { AskAIModal } from './AskAIModal';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { RecordingDetailCard } from './RecordingDetailCard';
 import { RecordingDetailHeader } from './RecordingDetailHeader';
@@ -110,7 +109,6 @@ export const RecordingDetailScreen = () => {
 
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
   const [mountedTabs, setMountedTabs] = useState<Set<Tab>>(new Set(['transcript']));
-  const [showAskAIModal, setShowAskAIModal] = useState(false);
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
   const { currentPositionMs, onPositionUpdate } = usePlaybackPosition();
   const [recordLanguage, setRecordLanguage] = useState<TranscriptionLanguage>(
@@ -253,7 +251,9 @@ export const RecordingDetailScreen = () => {
 
   const onBack = useCallback(() => navigation.goBack(), [navigation]);
   const onTogglePin = useCallback(() => togglePin(liveRecord.id), [liveRecord.id, togglePin]);
-  const onAskAI = useCallback(() => setShowAskAIModal(true), []);
+  const onAskAI = useCallback(() => {
+    navigation.navigate('RecordingAskAI', { record: liveRecord });
+  }, [navigation, liveRecord]);
   const onRename = useCallback(() => promptRename(liveRecord), [liveRecord, promptRename]);
   const onArchive = useCallback(() => archiveRecord(liveRecord.id), [liveRecord.id, archiveRecord]);
   const onUnarchive = useCallback(
@@ -277,8 +277,6 @@ export const RecordingDetailScreen = () => {
   const handleSwitchToSmartMode = useCallback(() => {
     setAiExecutionMode('smart_hybrid');
   }, [setAiExecutionMode]);
-
-  const onDismissAskAIModal = useCallback(() => setShowAskAIModal(false), []);
 
   const onSelectTab = useCallback(
     (tab: Tab) => {
@@ -429,14 +427,6 @@ export const RecordingDetailScreen = () => {
 
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </View>
-        {!isPrivateMode && (
-          <AskAIModal
-            visible={showAskAIModal}
-            record={liveRecord}
-            color={color}
-            onDismiss={onDismissAskAIModal}
-          />
-        )}
       </KeyboardAwareScrollView>
     </View>
   );

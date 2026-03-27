@@ -235,6 +235,8 @@
     "askPlaceholder": "Ask a question about this note...",
     "askEmptyTitle": "Ask about your note",
     "askEmptyDesc": "Get answers about the transcript using AI.",
+    "askSuggestedSection": "Quick prompts",
+    "askOfflineNetworkHint": "You're offline. Connect to use Ask in Smart mode.",
     "askSuggested1": "What is this note about?",
     "askSuggested2": "Summarize briefly",
     "askSuggested3": "What are the key takeaways?",

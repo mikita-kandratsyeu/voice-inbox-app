@@ -235,6 +235,8 @@
     "askPlaceholder": "Задайте вопрос по заметке...",
     "askEmptyTitle": "Спросите о заметке",
     "askEmptyDesc": "Получайте ответы по транскрипту автоматически.",
+    "askSuggestedSection": "Быстрые вопросы",
+    "askOfflineNetworkHint": "Нет сети. Подключитесь для Ask в режиме Smart.",
     "askSuggested1": "О чём эта заметка?",
     "askSuggested2": "Кратко перескажи",
     "askSuggested3": "Какие главные выводы?",
