@@ -120,7 +120,7 @@
     "privateModeLimitedTooLong": "This note is too long for Limited Private mode. Switch to Smart mode.",
     "privateModeParseFailed": "The local model could not produce a valid response. Try again or switch to Smart mode.",
     "privateModeEmptyAnswer": "The local model returned an empty answer. Try again or switch to Smart mode.",
-    "privateModeUnsupportedLocale": "Apple Private mode is unavailable for your current device language/region. Enable Apple Intelligence and set Siri/system language to English (US).",
+    "privateModeUnsupportedLocale": "Apple Intelligence is unavailable for your current device.",
     "privateModeGenericError": "The local request failed. Try again or switch to Smart mode."
   },
   "search": {
@@ -244,7 +244,6 @@
     "askProcessing": "Answering...",
     "askError": "Failed to get answer",
     "askErrorContinueHint": "Close to view summary and tasks.",
-    "switchToSmartMode": "Switch to Smart",
     "privateModeErrorHint": "This error is related to Private Offline AI. You can switch to Smart and retry.",
     "askAnother": "Ask another question",
     "askCopy": "Copy answer",

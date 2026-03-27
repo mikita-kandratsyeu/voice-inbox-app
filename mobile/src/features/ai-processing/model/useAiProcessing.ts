@@ -15,6 +15,8 @@ export const useAiProcessing = () => {
   const {
     setSummaryStatus,
     setTasksStatus,
+    setSummaryError,
+    setTasksError,
     updateSummary,
     updateTasks,
     updateTags,
@@ -24,6 +26,8 @@ export const useAiProcessing = () => {
     useShallow((s) => ({
       setSummaryStatus: s.setSummaryStatus,
       setTasksStatus: s.setTasksStatus,
+      setSummaryError: s.setSummaryError,
+      setTasksError: s.setTasksError,
       updateSummary: s.updateSummary,
       updateTasks: s.updateTasks,
       updateTags: s.updateTags,
@@ -64,6 +68,8 @@ export const useAiProcessing = () => {
 
       setSummaryStatus(record.id, 'processing');
       setTasksStatus(record.id, 'processing');
+      setSummaryError(record.id, undefined);
+      setTasksError(record.id, undefined);
 
       const requestId = `${baseId}-${Date.now()}`;
       inFlightRef.current.add(baseId);
@@ -101,6 +107,8 @@ export const useAiProcessing = () => {
             });
           setSummaryStatus(record.id, 'error');
           setTasksStatus(record.id, 'error');
+          setSummaryError(record.id, errorMsg);
+          setTasksError(record.id, errorMsg);
           void logAnalyticsEvent('ai_action_failed', {
             action: 'summary_tasks',
             reason: runResult.limitExceeded ? 'limit' : 'run',
@@ -179,6 +187,9 @@ export const useAiProcessing = () => {
           });
         setSummaryStatus(record.id, 'error');
         setTasksStatus(record.id, 'error');
+        const errorMsg = err instanceof Error ? err.message : String(err);
+        setSummaryError(record.id, errorMsg);
+        setTasksError(record.id, errorMsg);
         void logAnalyticsEvent('ai_action_failed', {
           action: 'summary_tasks',
           reason: 'exception',
@@ -198,6 +209,8 @@ export const useAiProcessing = () => {
       privateCapabilityTier,
       setSummaryStatus,
       setTasksStatus,
+      setSummaryError,
+      setTasksError,
       updateSummary,
       updateTasks,
       updateTags,

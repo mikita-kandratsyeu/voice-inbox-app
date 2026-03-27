@@ -113,16 +113,6 @@ const ErrorState = ({
           ? t('recordingDetail.privateModeErrorHint')
           : t('recordingDetail.askErrorContinueHint')}
       </Text>
-      {showPrivateModeCta && onSwitchToSmartMode ? (
-        <Button
-          variant="secondary"
-          size="lg"
-          label={t('recordingDetail.switchToSmartMode')}
-          color={color}
-          onPress={onSwitchToSmartMode}
-          containerStyle={{ width: '100%' }}
-        />
-      ) : null}
       <View className="flex-row gap-3">
         <Button
           variant="secondary"

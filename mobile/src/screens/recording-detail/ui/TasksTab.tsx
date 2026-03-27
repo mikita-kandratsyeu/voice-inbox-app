@@ -34,6 +34,7 @@ type TasksTabProps = {
   tasks: TaskItem[];
   nextSteps?: string[];
   status: RecordingStatus;
+  errorMessage?: string;
   hasTranscript?: boolean;
   recordTitle: string;
   color: Colors;
@@ -114,6 +115,7 @@ export const TasksTab = ({
   tasks,
   nextSteps = [],
   status,
+  errorMessage,
   hasTranscript = true,
   recordTitle,
   color,
@@ -148,22 +150,13 @@ export const TasksTab = ({
         <TabEmptyState
           icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
           title={t('recordingDetail.tasksError')}
-          description={showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : ''}
+          description={
+            errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '')
+          }
           buttonLabel={t('recordingDetail.tasksRetry')}
           buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
           onPress={onExtract}
         />
-        {showPrivateModeCta && onSwitchToSmartMode ? (
-          <View className="px-6 pb-2">
-            <Button
-              variant="secondary"
-              size="lg"
-              label={t('recordingDetail.switchToSmartMode')}
-              color={color}
-              onPress={onSwitchToSmartMode}
-            />
-          </View>
-        ) : null}
         <View className="px-6 pb-8">
           <ManualTaskAddRow
             color={color}

@@ -370,6 +370,7 @@ export const RecordingDetailScreen = () => {
                   summary={liveRecord.summary ?? ''}
                   keyPhrases={liveRecord.keyPhrases}
                   status={liveRecord.summaryStatus ?? 'idle'}
+                  errorMessage={liveRecord.summaryError}
                   hasTranscript={Boolean(liveRecord.transcript)}
                   color={color}
                   onGenerate={handleGenerateSummary}
@@ -385,6 +386,7 @@ export const RecordingDetailScreen = () => {
                   tasks={liveRecord.tasks ?? []}
                   nextSteps={liveRecord.nextSteps}
                   status={liveRecord.tasksStatus ?? 'idle'}
+                  errorMessage={liveRecord.tasksError}
                   hasTranscript={Boolean(liveRecord.transcript)}
                   recordTitle={liveRecord.title}
                   color={color}

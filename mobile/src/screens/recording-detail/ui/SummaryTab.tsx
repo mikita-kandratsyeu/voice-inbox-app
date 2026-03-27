@@ -1,5 +1,5 @@
 import { AlertCircle, FileText, RefreshCw } from 'lucide-react-native';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -18,6 +18,7 @@ type SummaryTabProps = {
   summary: string;
   keyPhrases?: string[];
   status: RecordingStatus;
+  errorMessage?: string;
   hasTranscript?: boolean;
   color: Colors;
   onGenerate: () => void;
@@ -27,20 +28,24 @@ type SummaryTabProps = {
 };
 
 export const SummaryTab = ({
-  summary,
-  keyPhrases = [],
-  status,
-  hasTranscript = true,
   color,
-  onGenerate,
+  errorMessage,
+  hasTranscript = true,
+  keyPhrases = [],
   onDismissError,
+  onGenerate,
   showPrivateModeCta = false,
-  onSwitchToSmartMode,
+  status,
+  summary,
 }: SummaryTabProps) => {
   const { t } = useTranslation();
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
   const aiModelName = useAiModelName();
   const { isConnected } = useNetworkStatus();
+
+  const errMessage = useMemo(() => {
+    return errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '');
+  }, [errorMessage, showPrivateModeCta, t]);
 
   if (status === 'processing') {
     return <AiTabLoadingState message={t('recordingDetail.summaryProcessing')} />;
@@ -52,20 +57,11 @@ export const SummaryTab = ({
         <TabEmptyState
           icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
           title={t('recordingDetail.summaryError')}
-          description={showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : ''}
+          description={errMessage}
           buttonLabel={t('recordingDetail.summaryRetry')}
           buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
           onPress={onGenerate}
         />
-        {showPrivateModeCta && onSwitchToSmartMode ? (
-          <Button
-            variant="secondary"
-            size="lg"
-            label={t('recordingDetail.switchToSmartMode')}
-            color={color}
-            onPress={onSwitchToSmartMode}
-          />
-        ) : null}
       </View>
     );
   }
@@ -98,12 +94,7 @@ export const SummaryTab = ({
 
   return (
     <View className="gap-3.5 p-4">
-      {showBanner && (
-        <AiTabErrorBanner
-          message={t('recordingDetail.summaryErrorBanner')}
-          onDismiss={handleDismiss}
-        />
-      )}
+      {showBanner && <AiTabErrorBanner message={errMessage} onDismiss={handleDismiss} />}
       <Text className="text-sm leading-6" style={{ color: color.text.primary }}>
         {summary}
       </Text>

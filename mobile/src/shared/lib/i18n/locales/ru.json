@@ -120,7 +120,7 @@
     "privateModeLimitedTooLong": "В ограниченном Приватном Оффлайн ИИ режиме заметка слишком длинная. Переключитесь на Smart режим.",
     "privateModeParseFailed": "Локальная модель не смогла корректно сформировать ответ. Попробуйте еще раз или перейдите в Smart режим.",
     "privateModeEmptyAnswer": "Локальная модель вернула пустой ответ. Попробуйте еще раз или перейдите в Smart режим.",
-    "privateModeUnsupportedLocale": "Приватный режим Apple недоступен для текущего языка/региона устройства. Для работы включите Apple Intelligence и установите язык Siri/системы на English (US).",
+    "privateModeUnsupportedLocale": "Apple Intelligence недоступен для текущего устройства.",
     "privateModeGenericError": "Не удалось выполнить запрос локально. Попробуйте еще раз или перейдите в Smart режим."
   },
   "search": {
@@ -244,7 +244,6 @@
     "askProcessing": "Ответ генерируется...",
     "askError": "Не удалось получить ответ",
     "askErrorContinueHint": "Закройте окно, чтобы просмотреть сводку и задачи.",
-    "switchToSmartMode": "Переключиться на Smart",
     "privateModeErrorHint": "Ошибка связана с Приватным Офлайн ИИ. Можно временно перейти в Smart и повторить.",
     "askAnother": "Задать другой вопрос",
     "askCopy": "Копировать ответ",
