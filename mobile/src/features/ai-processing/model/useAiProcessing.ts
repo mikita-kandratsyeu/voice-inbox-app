@@ -32,16 +32,23 @@ export const useAiProcessing = () => {
     })),
   );
 
-  const { selectedAIModel, summaryStyle, taskStrictness, aiOutputLanguage, aiExecutionMode } =
-    useSettingsStore(
-      useShallow((s) => ({
-        selectedAIModel: s.selectedAIModel,
-        summaryStyle: s.summaryStyle,
-        taskStrictness: s.taskStrictness,
-        aiOutputLanguage: s.aiOutputLanguage,
-        aiExecutionMode: s.aiExecutionMode,
-      })),
-    );
+  const {
+    selectedAIModel,
+    summaryStyle,
+    taskStrictness,
+    aiOutputLanguage,
+    aiExecutionMode,
+    privateCapabilityTier,
+  } = useSettingsStore(
+    useShallow((s) => ({
+      selectedAIModel: s.selectedAIModel,
+      summaryStyle: s.summaryStyle,
+      taskStrictness: s.taskStrictness,
+      aiOutputLanguage: s.aiOutputLanguage,
+      aiExecutionMode: s.aiExecutionMode,
+      privateCapabilityTier: s.privateCapabilityTier,
+    })),
+  );
 
   const inFlightRef = useRef<Set<string>>(new Set());
 
@@ -60,7 +67,11 @@ export const useAiProcessing = () => {
 
       const requestId = `${baseId}-${Date.now()}`;
       inFlightRef.current.add(baseId);
-      void logAnalyticsEvent('ai_action_started', { action: 'summary_tasks' });
+      void logAnalyticsEvent('ai_action_started', {
+        action: 'summary_tasks',
+        mode: aiExecutionMode,
+        tier: privateCapabilityTier,
+      });
 
       try {
         const runResult = await AIOrchestrator.runSummaryTasks(
@@ -71,6 +82,7 @@ export const useAiProcessing = () => {
             taskStrictness,
             aiOutputLanguage,
             aiExecutionMode,
+            privateCapabilityTier,
           },
         );
 
@@ -85,12 +97,16 @@ export const useAiProcessing = () => {
               limitExceeded: runResult.limitExceeded,
               provider: runResult.provider,
               mode: runResult.mode,
+              tier: privateCapabilityTier,
             });
           setSummaryStatus(record.id, 'error');
           setTasksStatus(record.id, 'error');
           void logAnalyticsEvent('ai_action_failed', {
             action: 'summary_tasks',
             reason: runResult.limitExceeded ? 'limit' : 'run',
+            mode: runResult.mode,
+            provider: runResult.provider,
+            tier: privateCapabilityTier,
           });
           return;
         }
@@ -149,7 +165,12 @@ export const useAiProcessing = () => {
           summary,
           keyPhrases: keyPhrases ?? [],
         });
-        void logAnalyticsEvent('ai_action_success', { action: 'summary_tasks' });
+        void logAnalyticsEvent('ai_action_success', {
+          action: 'summary_tasks',
+          mode: runResult.mode,
+          provider: runResult.provider,
+          tier: privateCapabilityTier,
+        });
       } catch (err) {
         if (__DEV__)
           console.warn('[AI] processRecord: unexpected error', {
@@ -161,6 +182,8 @@ export const useAiProcessing = () => {
         void logAnalyticsEvent('ai_action_failed', {
           action: 'summary_tasks',
           reason: 'exception',
+          mode: aiExecutionMode,
+          tier: privateCapabilityTier,
         });
       } finally {
         inFlightRef.current.delete(baseId);
@@ -172,6 +195,7 @@ export const useAiProcessing = () => {
       taskStrictness,
       aiOutputLanguage,
       aiExecutionMode,
+      privateCapabilityTier,
       setSummaryStatus,
       setTasksStatus,
       updateSummary,

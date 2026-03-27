@@ -104,6 +104,12 @@ export const AiSettingsScreen = () => {
   const setAiExecutionMode = useSettingsStore((s) => s.setAiExecutionMode);
   const privateCapabilityTier = useSettingsStore((s) => s.privateCapabilityTier);
   const isPrivateAiExperimentEnabled = isExperimentalPrivateAiEnabled();
+  const handleExecutionModeSelect = (mode: AiExecutionMode) => {
+    if (mode === 'private_experimental' && privateCapabilityTier === 'unavailable') {
+      return;
+    }
+    setAiExecutionMode(mode);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -132,7 +138,7 @@ export const AiSettingsScreen = () => {
               <PickerSection
                 options={AI_EXECUTION_MODES}
                 selected={aiExecutionMode}
-                onSelect={setAiExecutionMode}
+                onSelect={handleExecutionModeSelect}
                 labelKey={(v) => t(`aiSettings.executionMode.${v}`)}
                 color={color}
               />

@@ -22,6 +22,7 @@ export const useAskAI = () => {
   const taskStrictness = useSettingsStore((s) => s.taskStrictness);
   const aiOutputLanguage = useSettingsStore((s) => s.aiOutputLanguage);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateCapabilityTier = useSettingsStore((s) => s.privateCapabilityTier);
   const [state, setState] = useState<AskAIState>({
     isLoading: false,
     error: null,
@@ -47,7 +48,11 @@ export const useAskAI = () => {
         question: trimmedQuestion,
         answer: null,
       }));
-      void logAnalyticsEvent('ai_action_started', { action: 'ask' });
+      void logAnalyticsEvent('ai_action_started', {
+        action: 'ask',
+        mode: aiExecutionMode,
+        tier: privateCapabilityTier,
+      });
 
       try {
         const runResult = await AIOrchestrator.runAsk(
@@ -64,6 +69,7 @@ export const useAskAI = () => {
             taskStrictness,
             aiOutputLanguage,
             aiExecutionMode,
+            privateCapabilityTier,
           },
         );
 
@@ -78,6 +84,7 @@ export const useAskAI = () => {
               limitExceeded: runResult.limitExceeded,
               provider: runResult.provider,
               mode: runResult.mode,
+              tier: privateCapabilityTier,
             });
           setState((s) => ({
             ...s,
@@ -87,6 +94,9 @@ export const useAskAI = () => {
           void logAnalyticsEvent('ai_action_failed', {
             action: 'ask',
             reason: runResult.limitExceeded ? 'limit' : 'run',
+            mode: runResult.mode,
+            provider: runResult.provider,
+            tier: privateCapabilityTier,
           });
           return;
         }
@@ -97,7 +107,12 @@ export const useAskAI = () => {
           error: null,
           answer: runResult.result.answer,
         }));
-        void logAnalyticsEvent('ai_action_success', { action: 'ask' });
+        void logAnalyticsEvent('ai_action_success', {
+          action: 'ask',
+          mode: runResult.mode,
+          provider: runResult.provider,
+          tier: privateCapabilityTier,
+        });
       } catch (err: unknown) {
         if (__DEV__)
           console.warn('[AI] askQuestion: unexpected error', {
@@ -109,12 +124,24 @@ export const useAskAI = () => {
           isLoading: false,
           error: err instanceof Error ? err.message : 'Unknown error',
         }));
-        void logAnalyticsEvent('ai_action_failed', { action: 'ask', reason: 'exception' });
+        void logAnalyticsEvent('ai_action_failed', {
+          action: 'ask',
+          reason: 'exception',
+          mode: aiExecutionMode,
+          tier: privateCapabilityTier,
+        });
       } finally {
         inFlightRef.current = false;
       }
     },
-    [selectedAIModel, summaryStyle, taskStrictness, aiOutputLanguage, aiExecutionMode],
+    [
+      selectedAIModel,
+      summaryStyle,
+      taskStrictness,
+      aiOutputLanguage,
+      aiExecutionMode,
+      privateCapabilityTier,
+    ],
   );
 
   const reset = useCallback(() => {

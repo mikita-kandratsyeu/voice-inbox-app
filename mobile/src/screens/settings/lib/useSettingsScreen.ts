@@ -10,6 +10,7 @@ import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import {
   getWhisperModelVariantId,
+  syncPrivateCapabilityTier,
   USER_FACING_AI_MODELS,
   useSettingsStore,
 } from '@/entities/settings';
@@ -169,11 +170,13 @@ export function useSettingsScreen() {
   }, []);
 
   useEffect(() => {
+    syncPrivateCapabilityTier();
     const timer = setTimeout(() => {
       refreshPermissions();
     }, 0);
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
+        syncPrivateCapabilityTier();
         refreshPermissions();
       }
     });

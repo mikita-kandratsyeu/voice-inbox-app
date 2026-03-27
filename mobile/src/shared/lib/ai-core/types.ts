@@ -15,6 +15,7 @@ export type AiExecutionContext = {
   taskStrictness: TaskStrictness;
   aiOutputLanguage: AiOutputLanguage;
   aiExecutionMode: 'smart_hybrid' | 'private_experimental';
+  privateCapabilityTier: 'full' | 'limited' | 'unavailable';
 };
 
 export type SummaryTaskRequest = {

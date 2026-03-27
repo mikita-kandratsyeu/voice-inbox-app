@@ -3,8 +3,10 @@ export {
   type AiSettingsDiagnostics,
   getAiSettingsDiagnostics,
 } from './lib/getAiSettingsDiagnostics';
+export { resolvePrivateAiCapabilityTier } from './lib/privateAiCapability';
 export { RECOMMENDED_AI_MODEL_ID } from './lib/recommendAiModel';
 export { getRecommendedWhisperModelId } from './lib/recommendWhisperModel';
+export { syncPrivateCapabilityTier } from './lib/syncPrivateCapabilityTier';
 export { TRANSCRIPTION_LANGUAGES, TRANSLATE_LANGUAGES } from './lib/transcriptionLanguages';
 export { useRecommendedWhisperModelId } from './lib/useRecommendedWhisperModelId';
 export { useWhisperModelCompatibility } from './lib/useWhisperModelCompatibility';
