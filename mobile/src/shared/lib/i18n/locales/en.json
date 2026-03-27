@@ -610,7 +610,7 @@
     "title": "AI settings",
     "description": "Customize how AI processes your transcripts. Changes apply to the next processing.",
     "executionMode": "Execution mode",
-    "executionMode.smart_hybrid": "Smart (cloud)",
+    "executionMode.smart_hybrid": "Smart",
     "executionMode.private_experimental": "Private Offline (experimental)",
     "privateCapabilityTier": {
       "full": "Your device is ready for the full Private experimental mode.",

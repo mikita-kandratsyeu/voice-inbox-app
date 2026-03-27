@@ -610,7 +610,7 @@
     "title": "Настройки генерации",
     "description": "Настройте, как формируются сводки и задачи. Изменения применятся к следующей генерации.",
     "executionMode": "Режим генерации",
-    "executionMode.smart_hybrid": "Smart (облако)",
+    "executionMode.smart_hybrid": "Smart",
     "executionMode.private_experimental": "Private Offline (эксперимент)",
     "privateCapabilityTier": {
       "full": "Устройство готово к полному экспериментальному режиму Private.",
