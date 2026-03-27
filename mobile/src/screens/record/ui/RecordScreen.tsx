@@ -50,6 +50,8 @@ export const RecordScreen = () => {
   >('user');
   const requestShowSaveModal = useRecordingDeeplinkStore((s) => s.requestShowSaveModal);
   const setRequestShowSaveModal = useRecordingDeeplinkStore((s) => s.setRequestShowSaveModal);
+  const pauseResumeRequestTick = useRecordingDeeplinkStore((s) => s.pauseResumeRequestTick);
+  const handledPauseResumeTickRef = useRef(0);
   const [title, setTitle] = useState('');
   const [appState, setAppState] = useState(AppState.currentState);
 
@@ -127,6 +129,20 @@ export const RecordScreen = () => {
       setRequestShowSaveModal(false);
     }
   }, [requestShowSaveModal, state, setRequestShowSaveModal]);
+
+  useEffect(() => {
+    if (pauseResumeRequestTick === handledPauseResumeTickRef.current) {
+      return;
+    }
+
+    handledPauseResumeTickRef.current = pauseResumeRequestTick;
+
+    if (state === 'recording') {
+      pauseRecording();
+    } else if (state === 'paused') {
+      resumeRecording();
+    }
+  }, [pauseResumeRequestTick, state, pauseRecording, resumeRecording]);
 
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
 
