@@ -64,7 +64,7 @@
 	<key>NSRemindersUsageDescription</key>
 	<string>Adding tasks from notes to Reminders</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
-	<true/>
+	<false/>
 	<key>NSSupportsLiveActivities</key>
 	<true/>
 	<key>NSSupportsLiveActivitiesFrequentUpdates</key>
