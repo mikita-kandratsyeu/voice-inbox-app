@@ -5,8 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { UserSelectableAIModelId } from '@/entities/settings';
+import type { LocalAiModelId, UserSelectableAIModelId } from '@/entities/settings';
 import {
+  LOCAL_AI_MODELS,
   RECOMMENDED_AI_MODEL_ID,
   USER_FACING_AI_MODELS,
   useSettingsStore,
@@ -33,11 +34,22 @@ export const AIModelPickerScreen = () => {
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const setAIModel = useSettingsStore((s) => s.setAIModel);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
+  const setLocalAiModel = useSettingsStore((s) => s.setLocalAiModel);
 
   const handleSelect = (id: UserSelectableAIModelId) => {
     setAIModel(id);
     navigation.goBack();
   };
+
+  const handleSelectLocal = (id: LocalAiModelId) => {
+    setLocalAiModel(id);
+    navigation.goBack();
+  };
+
+  const isPrivateMode = aiExecutionMode === 'private_experimental';
+  const models = isPrivateMode ? LOCAL_AI_MODELS : USER_FACING_AI_MODELS;
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -59,14 +71,16 @@ export const AIModelPickerScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-            {t('aiModels.description')}
+            {isPrivateMode ? t('aiModels.privateDescription') : t('aiModels.description')}
           </Text>
 
           <View className="overflow-hidden rounded-2xl">
-            {USER_FACING_AI_MODELS.map((model, index) => {
-              const isSelected = model.id === selectedAIModel;
+            {models.map((model, index) => {
+              const isSelected = isPrivateMode
+                ? model.id === selectedLocalAiModel
+                : model.id === selectedAIModel;
               const isFirst = index === 0;
-              const isLast = index === USER_FACING_AI_MODELS.length - 1;
+              const isLast = index === models.length - 1;
               const borderStyle = !isLast
                 ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
                 : {};
@@ -78,14 +92,22 @@ export const AIModelPickerScreen = () => {
                     : isLast
                       ? 'rounded-b-2xl'
                       : '';
+              const speed = model.speed;
+              const tierLabel = !isPrivateMode
+                ? t((model as { tierLabelKey: string }).tierLabelKey as 'aiModels.tierFast')
+                : model.name;
 
               return (
                 <TouchableOpacity
                   key={model.id}
-                  onPress={() => handleSelect(model.id)}
+                  onPress={() =>
+                    isPrivateMode
+                      ? handleSelectLocal(model.id as LocalAiModelId)
+                      : handleSelect(model.id as UserSelectableAIModelId)
+                  }
                   activeOpacity={0.7}
                   accessibilityRole="button"
-                  accessibilityLabel={`${t(model.tierLabelKey)}, ${model.name}`}
+                  accessibilityLabel={model.name}
                   accessibilityState={{ selected: isSelected }}
                   className={`px-4 py-4 ${radiusClass}`}
                   style={[{ backgroundColor: color.background.card }, borderStyle]}
@@ -97,9 +119,9 @@ export const AIModelPickerScreen = () => {
                           className="text-[16px] font-semibold"
                           style={{ color: color.text.primary }}
                         >
-                          {t(model.tierLabelKey)}
+                          {tierLabel}
                         </Text>
-                        {model.id === RECOMMENDED_AI_MODEL_ID && (
+                        {!isPrivateMode && model.id === RECOMMENDED_AI_MODEL_ID ? (
                           <View
                             className="rounded-full px-2 py-0.5"
                             style={{ backgroundColor: color.status.processing.bg }}
@@ -111,7 +133,20 @@ export const AIModelPickerScreen = () => {
                               {t('whisper.recommended')}
                             </Text>
                           </View>
-                        )}
+                        ) : null}
+                        {isPrivateMode ? (
+                          <View
+                            className="rounded-full px-2 py-0.5"
+                            style={{ backgroundColor: color.status.processing.bg }}
+                          >
+                            <Text
+                              className="text-[12px] font-medium"
+                              style={{ color: color.status.processing.text }}
+                            >
+                              {t('aiModels.privateModeLabel')}
+                            </Text>
+                          </View>
+                        ) : null}
                       </View>
                       <Text
                         className="text-[13px] leading-5 mb-1"
@@ -129,10 +164,10 @@ export const AIModelPickerScreen = () => {
                         <View className="flex-row items-center gap-1">
                           <View
                             className="h-2 w-2 rounded-full"
-                            style={{ backgroundColor: SPEED_COLOR[model.speed] }}
+                            style={{ backgroundColor: SPEED_COLOR[speed] }}
                           />
                           <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-                            {t(`aiModels.speed.${model.speed}`, { defaultValue: model.speed })}
+                            {t(`aiModels.speed.${speed}`, { defaultValue: speed })}
                           </Text>
                         </View>
                       </View>

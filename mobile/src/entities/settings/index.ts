@@ -12,10 +12,12 @@ export { useRecommendedWhisperModelId } from './lib/useRecommendedWhisperModelId
 export { useWhisperModelCompatibility } from './lib/useWhisperModelCompatibility';
 export {
   AI_MODELS,
+  DEFAULT_LOCAL_AI_MODEL_ID,
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
   getWhisperModelSizeMb,
   getWhisperModelVariantId,
+  LOCAL_AI_MODELS,
   USER_FACING_AI_MODELS,
   WHISPER_MODELS,
 } from './model/constants';
@@ -30,6 +32,7 @@ export type {
   AppLanguage,
   AppTheme,
   DownloadBytes,
+  LocalAiModelId,
   PrivateCapabilityTier,
   SettingsState,
   SummaryStyle,

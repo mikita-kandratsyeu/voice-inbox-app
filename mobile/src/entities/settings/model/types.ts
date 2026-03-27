@@ -7,6 +7,7 @@ export type UserSelectableAIModelId =
   | 'google/gemini-2.5-flash-lite'
   | 'google/gemini-3.1-flash-lite-preview'
   | 'minimax/minimax-m2.7';
+export type LocalAiModelId = 'apple/on-device-foundation';
 
 export type AIModelId =
   | UserSelectableAIModelId
@@ -70,6 +71,7 @@ export type SettingsState = {
   accentColorId: AccentColorId;
   appLanguage: AppLanguage;
   selectedAIModel: UserSelectableAIModelId;
+  selectedLocalAiModel: LocalAiModelId;
   selectedWhisperModel: WhisperModelId;
   selectedWhisperModelFormat: WhisperModelWeightsFormat;
   whisperModelWeightsFormat: WhisperModelWeightsFormat;
@@ -89,6 +91,7 @@ export type SettingsState = {
   setAccentColorId: (value: AccentColorId) => void;
   setAppLanguage: (value: AppLanguage) => void;
   setAIModel: (id: UserSelectableAIModelId) => void;
+  setLocalAiModel: (id: LocalAiModelId) => void;
   setWhisperModel: (id: WhisperModelId) => void;
   setWhisperModelWeightsFormat: (value: WhisperModelWeightsFormat) => void;
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;

@@ -1,5 +1,6 @@
 import type {
   AIModel,
+  LocalAiModelId,
   UserFacingAIModel,
   WhisperModel,
   WhisperModelId,
@@ -40,6 +41,24 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
 export const AI_MODELS: AIModel[] = USER_FACING_AI_MODELS.map(
   ({ tierLabelKey: _t, supportTierCode: _s, ...m }) => m,
 );
+
+export const LOCAL_AI_MODELS: Array<{
+  id: LocalAiModelId;
+  name: string;
+  provider: string;
+  descriptionKey: string;
+  speed: 'fast' | 'medium' | 'slow';
+}> = [
+  {
+    id: 'apple/on-device-foundation',
+    name: 'Apple On-Device',
+    provider: 'Apple',
+    descriptionKey: 'aiModels.localAppleDesc',
+    speed: 'medium',
+  },
+];
+
+export const DEFAULT_LOCAL_AI_MODEL_ID: LocalAiModelId = 'apple/on-device-foundation';
 
 export const WHISPER_MODELS: WhisperModel[] = [
   {

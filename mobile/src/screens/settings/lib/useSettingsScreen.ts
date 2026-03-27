@@ -10,6 +10,7 @@ import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import {
   getWhisperModelVariantId,
+  LOCAL_AI_MODELS,
   syncPrivateCapabilityTier,
   USER_FACING_AI_MODELS,
   useSettingsStore,
@@ -51,6 +52,7 @@ export function useSettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
+  const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
@@ -198,7 +200,11 @@ export function useSettingsScreen() {
   }, [fetchAiUsage, fetchProWeeklyLimit, refreshProEntitlement]);
 
   const userFacing = USER_FACING_AI_MODELS.find((m) => m.id === selectedAIModel);
-  const aiModelName = userFacing?.name ?? selectedAIModel;
+  const localModel = LOCAL_AI_MODELS.find((m) => m.id === selectedLocalAiModel);
+  const aiModelName =
+    aiExecutionMode === 'private_experimental'
+      ? (localModel?.name ?? selectedLocalAiModel)
+      : (userFacing?.name ?? selectedAIModel);
   const whisperVariantId = getWhisperModelVariantId(
     selectedWhisperModel,
     selectedWhisperModelFormat,

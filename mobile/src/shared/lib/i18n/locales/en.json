@@ -638,6 +638,8 @@
   "aiModels": {
     "title": "Generation model",
     "description": "Pick a speed, accuracy, or best quality.",
+    "privateDescription": "Private Offline mode uses local on-device models. Cloud models are disabled in this mode.",
+    "privateModeLabel": "On-device",
     "tierFast": "Fast",
     "tierSmart": "Smarter",
     "tierPremium": "Maximum",
@@ -649,6 +651,7 @@
     "metaLlamaDesc": "Open-source model with strong reasoning and instruction following",
     "deepSeekDesc": "Efficient model with strong reasoning.",
     "minimaxDesc": "Best quality for complex summaries and important notes.",
+    "localAppleDesc": "Apple Foundation Models running on-device with Core ML / ANE acceleration.",
     "mistralDesc": "Compact Mistral model. Balanced speed and quality for summaries and tasks.",
     "speed": {
       "fast": "Fast",

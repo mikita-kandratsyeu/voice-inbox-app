@@ -6,9 +6,11 @@ import { storage } from '@/shared/lib/async-storage';
 
 import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
 import {
+  DEFAULT_LOCAL_AI_MODEL_ID,
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
   getWhisperModelVariantId,
+  LOCAL_AI_MODELS,
   USER_FACING_AI_MODELS,
 } from './constants';
 import type {
@@ -16,6 +18,7 @@ import type {
   AiOutputLanguage,
   AppLanguage,
   AppTheme,
+  LocalAiModelId,
   PrivateCapabilityTier,
   SettingsState,
   SummaryStyle,
@@ -34,6 +37,7 @@ const KEYS = {
   ACCENT_COLOR_ID: 'settings.accentColorId',
   APP_LANGUAGE: 'settings.appLanguage',
   AI_MODEL: 'settings.aiModel',
+  LOCAL_AI_MODEL: 'settings.localAiModel',
   WHISPER_MODEL: 'settings.whisperModel',
   WHISPER_MODEL_WEIGHTS_FORMAT: 'settings.whisperModelWeightsFormat',
   WHISPER_SELECTED_MODEL_FORMAT: 'settings.whisperSelectedModelFormat',
@@ -75,6 +79,16 @@ const normalizeStoredAIModel = (raw: string | undefined): UserSelectableAIModelI
 const getStoredAIModel = (): UserSelectableAIModelId => {
   const val = storage.getString(KEYS.AI_MODEL);
   return normalizeStoredAIModel(val);
+};
+
+const LOCAL_AI_MODEL_SET = new Set<string>(LOCAL_AI_MODELS.map((m) => m.id));
+
+const getStoredLocalAiModel = (): LocalAiModelId => {
+  const val = storage.getString(KEYS.LOCAL_AI_MODEL);
+  if (val && LOCAL_AI_MODEL_SET.has(val)) {
+    return val as LocalAiModelId;
+  }
+  return DEFAULT_LOCAL_AI_MODEL_ID;
 };
 
 const getStoredWhisperModel = (): WhisperModelId => {
@@ -160,6 +174,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   accentColorId: getStoredAccentColorId(),
   appLanguage: getStoredAppLanguage(),
   selectedAIModel: getStoredAIModel(),
+  selectedLocalAiModel: getStoredLocalAiModel(),
   selectedWhisperModel: getInitialSelectedWhisperModel(),
   selectedWhisperModelFormat: getStoredSelectedWhisperModelFormat(),
   whisperModelWeightsFormat: getStoredWhisperModelWeightsFormat(),
@@ -194,6 +209,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAIModel: (id: UserSelectableAIModelId) => {
     storage.set(KEYS.AI_MODEL, id);
     set({ selectedAIModel: id });
+  },
+
+  setLocalAiModel: (id: LocalAiModelId) => {
+    storage.set(KEYS.LOCAL_AI_MODEL, id);
+    set({ selectedLocalAiModel: id });
   },
 
   setWhisperModel: (id: WhisperModelId) => {
