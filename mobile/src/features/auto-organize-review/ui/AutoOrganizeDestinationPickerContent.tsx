@@ -33,6 +33,27 @@ export const AutoOrganizeDestinationPickerContent = ({
   unnamedFolderLabel,
   cancelLabel,
 }: Props) => {
+  const rows = [
+    {
+      key: 'inbox',
+      label: inboxLabel,
+      onPress: () => onPickDestination({ kind: 'inbox' }),
+      selected: isDestinationSelected({ kind: 'inbox' }),
+    },
+    ...folders.map((f) => ({
+      key: `existing-${f.id}`,
+      label: f.name,
+      onPress: () => onPickDestination({ kind: 'existingFolder', folderId: f.id }),
+      selected: isDestinationSelected({ kind: 'existingFolder', folderId: f.id }),
+    })),
+    ...visibleProposedFolders.map((pf) => ({
+      key: `proposed-${pf.tempId}`,
+      label: pf.name.trim() || unnamedFolderLabel,
+      onPress: () => onPickDestination({ kind: 'proposedFolder', tempId: pf.tempId }),
+      selected: isDestinationSelected({ kind: 'proposedFolder', tempId: pf.tempId }),
+    })),
+  ];
+
   return (
     <>
       <Text
@@ -56,61 +77,22 @@ export const AutoOrganizeDestinationPickerContent = ({
           backgroundColor: color.background.card,
         }}
       >
-        <TouchableOpacity
-          onPress={() => onPickDestination({ kind: 'inbox' })}
-          activeOpacity={0.7}
-          style={{
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            borderBottomWidth: 1,
-            borderBottomColor: color.border.default,
-            flexDirection: 'row',
-            alignItems: 'center',
-          }}
-        >
-          <Text style={{ fontSize: 16, color: color.text.primary, flex: 1 }}>{inboxLabel}</Text>
-          {isDestinationSelected({ kind: 'inbox' }) && (
-            <Check size={18} color={color.accent.primary} strokeWidth={2.6} />
-          )}
-        </TouchableOpacity>
-        {folders.map((f) => (
+        {rows.map((row, index) => (
           <TouchableOpacity
-            key={f.id}
-            onPress={() => onPickDestination({ kind: 'existingFolder', folderId: f.id })}
+            key={row.key}
+            onPress={row.onPress}
             activeOpacity={0.7}
             style={{
               paddingHorizontal: 16,
               paddingVertical: 14,
-              borderBottomWidth: 1,
+              borderBottomWidth: index < rows.length - 1 ? 1 : 0,
               borderBottomColor: color.border.default,
               flexDirection: 'row',
               alignItems: 'center',
             }}
           >
-            <Text style={{ fontSize: 16, color: color.text.primary, flex: 1 }}>{f.name}</Text>
-            {isDestinationSelected({ kind: 'existingFolder', folderId: f.id }) && (
-              <Check size={18} color={color.accent.primary} strokeWidth={2.6} />
-            )}
-          </TouchableOpacity>
-        ))}
-        {visibleProposedFolders.map((pf) => (
-          <TouchableOpacity
-            key={`p-${pf.tempId}`}
-            onPress={() => onPickDestination({ kind: 'proposedFolder', tempId: pf.tempId })}
-            activeOpacity={0.7}
-            style={{
-              paddingHorizontal: 16,
-              paddingVertical: 14,
-              flexDirection: 'row',
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ fontSize: 16, color: color.text.primary, flex: 1 }}>
-              {pf.name.trim() || unnamedFolderLabel}
-            </Text>
-            {isDestinationSelected({ kind: 'proposedFolder', tempId: pf.tempId }) && (
-              <Check size={18} color={color.accent.primary} strokeWidth={2.6} />
-            )}
+            <Text style={{ fontSize: 16, color: color.text.primary, flex: 1 }}>{row.label}</Text>
+            {row.selected && <Check size={18} color={color.accent.primary} strokeWidth={2.6} />}
           </TouchableOpacity>
         ))}
       </View>

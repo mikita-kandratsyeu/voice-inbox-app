@@ -38,11 +38,16 @@ export const AutoOrganizeReviewAssignmentsSection = ({
             key={`${a.recordId}-${idx}`}
             style={{
               marginBottom: 10,
-              borderRadius: 14,
+              borderRadius: 16,
               overflow: 'hidden',
               borderWidth: 1,
               borderColor: color.border.default,
               backgroundColor: color.background.card,
+              shadowColor: color.shadow.color,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: color.shadow.opacity,
+              shadowRadius: 4,
+              elevation: 2,
             }}
           >
             <Pressable

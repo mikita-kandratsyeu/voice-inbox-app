@@ -45,6 +45,11 @@ export const AutoOrganizeReviewFoldersSection = ({
           borderWidth: 1,
           borderColor: color.border.default,
           backgroundColor: color.background.card,
+          shadowColor: color.shadow.color,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: color.shadow.opacity,
+          shadowRadius: 4,
+          elevation: 2,
         }}
       >
         {reviewFolders.map((item, idx) => {
