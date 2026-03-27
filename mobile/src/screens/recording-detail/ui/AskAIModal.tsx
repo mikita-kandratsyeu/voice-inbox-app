@@ -589,7 +589,6 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
           <InputField
             color={color}
             hasValue={Boolean(questionInput.trim())}
-            multiline
             rightElement={sendButton}
             containerStyle={{ minHeight: 52 }}
           >

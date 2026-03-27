@@ -9,7 +9,6 @@ export type InputFieldProps = {
   hasValue?: boolean;
   leftIcon?: React.ReactNode;
   rightElement?: React.ReactNode;
-  multiline?: boolean;
   children: React.ReactNode;
   containerStyle?: StyleProp<ViewStyle>;
 };
@@ -39,7 +38,6 @@ export const InputField = ({
   hasValue = false,
   leftIcon,
   rightElement,
-  multiline = false,
   children,
   containerStyle,
 }: InputFieldProps) => {

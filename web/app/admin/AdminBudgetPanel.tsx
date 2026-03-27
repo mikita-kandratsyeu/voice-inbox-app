@@ -11,6 +11,7 @@ import {
   adminInputClass,
   adminSelectClass,
 } from './admin-ui';
+import Link from 'next/link';
 
 type BudgetItem = {
   id: string;
@@ -335,9 +336,9 @@ export function AdminBudgetPanel() {
         description="Manual expense lines; amounts are stored exactly (minor units). Totals update from the database after each change."
         headerRight={
           <div className="flex items-center gap-2">
-            <a href="/api/admin/budget/export" className={adminBtnSecondaryClass}>
+            <Link href="/api/admin/budget/export" className={adminBtnSecondaryClass}>
               Export CSV
-            </a>
+            </Link>
             <button
               type="button"
               onClick={() => void fetchList()}
