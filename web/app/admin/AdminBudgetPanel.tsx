@@ -334,9 +334,18 @@ export function AdminBudgetPanel() {
         title="Budget ledger"
         description="Manual expense lines; amounts are stored exactly (minor units). Totals update from the database after each change."
         headerRight={
-          <button type="button" onClick={() => void fetchList()} className={adminBtnSecondaryClass}>
-            Refresh
-          </button>
+          <div className="flex items-center gap-2">
+            <a href="/api/admin/budget/export" className={adminBtnSecondaryClass}>
+              Export CSV
+            </a>
+            <button
+              type="button"
+              onClick={() => void fetchList()}
+              className={adminBtnSecondaryClass}
+            >
+              Refresh
+            </button>
+          </div>
         }
       >
         <section
