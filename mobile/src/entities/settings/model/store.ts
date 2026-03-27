@@ -89,23 +89,46 @@ const getStoredAIModel = (): UserSelectableAIModelId => {
 };
 
 const LOCAL_AI_MODEL_SET = new Set<string>(LOCAL_AI_MODELS.map((m) => m.id));
+const GEMMA_LOCAL_AI_MODEL_ID: LocalAiModelId = 'local/gemma-2-2b-it-q4_k_m';
 
 const getStoredLocalAiModel = (): LocalAiModelId => {
   const val = storage.getString(KEYS.LOCAL_AI_MODEL);
+
   if (val === LEGACY_APPLE_LOCAL_AI_MODEL) {
-    storage.set(KEYS.LOCAL_AI_MODEL, DEFAULT_LOCAL_AI_MODEL_ID);
-    return DEFAULT_LOCAL_AI_MODEL_ID;
+    storage.set(KEYS.LOCAL_AI_MODEL, GEMMA_LOCAL_AI_MODEL_ID);
+    return GEMMA_LOCAL_AI_MODEL_ID;
   }
+
   if (val && LOCAL_AI_MODEL_SET.has(val)) {
     return val as LocalAiModelId;
   }
+
   return DEFAULT_LOCAL_AI_MODEL_ID;
 };
 
 const getStoredLocalLlmStatuses = (): Partial<Record<LocalAiModelId, WhisperModelStatus>> => {
   try {
     const raw = storage.getString(KEYS.LOCAL_LLM_STATUSES);
-    return raw ? (JSON.parse(raw) as Partial<Record<LocalAiModelId, WhisperModelStatus>>) : {};
+
+    if (!raw) return {};
+
+    const parsed = JSON.parse(raw) as Record<string, WhisperModelStatus>;
+
+    if (
+      Object.prototype.hasOwnProperty.call(parsed, LEGACY_APPLE_LOCAL_AI_MODEL) &&
+      parsed[LEGACY_APPLE_LOCAL_AI_MODEL] !== undefined
+    ) {
+      const legacyStatus = parsed[LEGACY_APPLE_LOCAL_AI_MODEL];
+
+      delete parsed[LEGACY_APPLE_LOCAL_AI_MODEL];
+
+      if (parsed[GEMMA_LOCAL_AI_MODEL_ID] === undefined) {
+        parsed[GEMMA_LOCAL_AI_MODEL_ID] = legacyStatus;
+      }
+
+      storage.set(KEYS.LOCAL_LLM_STATUSES, JSON.stringify(parsed));
+    }
+    return parsed as Partial<Record<LocalAiModelId, WhisperModelStatus>>;
   } catch {
     return {};
   }
@@ -119,7 +142,9 @@ const getStoredWhisperModel = (): WhisperModelId => {
 
 const getStoredWhisperModelWeightsFormat = (): WhisperModelWeightsFormat => {
   const val = storage.getString(KEYS.WHISPER_MODEL_WEIGHTS_FORMAT);
+
   if (val === 'full') return 'full';
+
   return DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT;
 };
 
@@ -129,42 +154,51 @@ const getInitialSelectedWhisperModel = (): WhisperModelId => {
 
 const getStoredSelectedWhisperModelFormat = (): WhisperModelWeightsFormat => {
   const val = storage.getString(KEYS.WHISPER_SELECTED_MODEL_FORMAT);
+
   if (val === 'full') return 'full';
+
   return DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT;
 };
 
 const getStoredTranscriptionLanguage = (): TranscriptionLanguage => {
   const val = storage.getString(KEYS.TRANSCRIPTION_LANGUAGE);
+
   return (val as TranscriptionLanguage) ?? 'auto';
 };
 
 const getStoredAutoTranscribeOnSave = (): boolean => {
   const val = storage.getString(KEYS.AUTO_TRANSCRIBE_ON_SAVE);
+
   return val === 'true';
 };
 
 const getStoredAutoAiAfterTranscription = (): boolean => {
   const val = storage.getString(KEYS.AUTO_AI_AFTER_TRANSCRIPTION);
+
   return val === 'true';
 };
 
 const getStoredSummaryStyle = (): SummaryStyle => {
   const val = storage.getString(KEYS.SUMMARY_STYLE);
+
   return (val as SummaryStyle) ?? 'standard';
 };
 
 const getStoredTaskStrictness = (): TaskStrictness => {
   const val = storage.getString(KEYS.TASK_STRICTNESS);
+
   return (val as TaskStrictness) ?? 'balanced';
 };
 
 const getStoredAiOutputLanguage = (): AiOutputLanguage => {
   const val = storage.getString(KEYS.AI_OUTPUT_LANGUAGE);
+
   return (val as AiOutputLanguage) ?? 'same';
 };
 
 const getStoredAiExecutionMode = (): AiExecutionMode => {
   const val = storage.getString(KEYS.AI_EXECUTION_MODE);
+
   if (!isExperimentalPrivateAiEnabled()) {
     return 'smart_hybrid';
   }
@@ -174,13 +208,16 @@ const getStoredAiExecutionMode = (): AiExecutionMode => {
 
 const getStoredPrivateCapabilityTier = (): PrivateCapabilityTier => {
   const val = storage.getString(KEYS.PRIVATE_CAPABILITY_TIER);
+
   if (val === 'full' || val === 'limited') return val;
+
   return 'unavailable';
 };
 
 const getStoredWhisperStatuses = (): Partial<Record<WhisperModelVariantId, WhisperModelStatus>> => {
   try {
     const raw = storage.getString(KEYS.WHISPER_STATUSES);
+
     return raw
       ? (JSON.parse(raw) as Partial<Record<WhisperModelVariantId, WhisperModelStatus>>)
       : {};
