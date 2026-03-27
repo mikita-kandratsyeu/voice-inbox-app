@@ -51,14 +51,21 @@ export const SettingsRow = ({
       className={`flex-row items-center px-4 py-3.5 ${getRadiusClass()}`}
       style={[{ backgroundColor: color.background.card, minHeight: 52 }, borderStyle]}
     >
-      {leftIcon && <View className="mr-3">{leftIcon}</View>}
-      <Text
-        className="flex-1 text-[16px]"
-        style={{ color: dangerous ? color.accent.delete : color.text.primary }}
-      >
-        {label}
-      </Text>
-      {rightSlot && <View className="ml-2">{rightSlot}</View>}
+      {leftIcon && (
+        <View className="mr-3 h-6 w-6 items-center justify-center self-center">{leftIcon}</View>
+      )}
+      <View className="flex-1 justify-center">
+        <Text
+          className="text-[16px]"
+          style={{
+            color: dangerous ? color.accent.delete : color.text.primary,
+            lineHeight: 21,
+          }}
+        >
+          {label}
+        </Text>
+      </View>
+      {rightSlot && <View className="ml-2 self-center">{rightSlot}</View>}
       {!rightSlot && value && (
         <Text className="mr-2 text-[16px]" style={{ color: color.text.secondary }}>
           {value}
