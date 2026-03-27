@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import { parseAccentColorId } from '@/shared/config';
 import { isExperimentalPrivateAiEnabled } from '@/shared/config/buildEnv';
+import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { storage } from '@/shared/lib/async-storage';
 
 import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
@@ -32,6 +33,8 @@ import type {
   WhisperModelWeightsFormat,
 } from './types';
 
+const LEGACY_APPLE_LOCAL_AI_MODEL = 'apple/on-device-foundation' as const;
+
 const KEYS = {
   APP_THEME: 'settings.appTheme',
   ACCENT_COLOR_ID: 'settings.accentColorId',
@@ -53,6 +56,7 @@ const KEYS = {
   PRIVATE_PREVIOUS_THEME: 'settings.private.previousTheme',
   PRIVATE_PREVIOUS_AUTO_TRANSCRIBE: 'settings.private.previousAutoTranscribeOnSave',
   PRIVATE_PREVIOUS_AUTO_AI: 'settings.private.previousAutoAiAfterTranscription',
+  LOCAL_LLM_STATUSES: 'settings.localLlmStatuses',
 } as const;
 
 const getStoredAppTheme = (): AppTheme => {
@@ -88,10 +92,23 @@ const LOCAL_AI_MODEL_SET = new Set<string>(LOCAL_AI_MODELS.map((m) => m.id));
 
 const getStoredLocalAiModel = (): LocalAiModelId => {
   const val = storage.getString(KEYS.LOCAL_AI_MODEL);
+  if (val === LEGACY_APPLE_LOCAL_AI_MODEL) {
+    storage.set(KEYS.LOCAL_AI_MODEL, DEFAULT_LOCAL_AI_MODEL_ID);
+    return DEFAULT_LOCAL_AI_MODEL_ID;
+  }
   if (val && LOCAL_AI_MODEL_SET.has(val)) {
     return val as LocalAiModelId;
   }
   return DEFAULT_LOCAL_AI_MODEL_ID;
+};
+
+const getStoredLocalLlmStatuses = (): Partial<Record<LocalAiModelId, WhisperModelStatus>> => {
+  try {
+    const raw = storage.getString(KEYS.LOCAL_LLM_STATUSES);
+    return raw ? (JSON.parse(raw) as Partial<Record<LocalAiModelId, WhisperModelStatus>>) : {};
+  } catch {
+    return {};
+  }
 };
 
 const getStoredWhisperModel = (): WhisperModelId => {
@@ -193,6 +210,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   whisperDownloadProgress: {},
   whisperDownloadBytes: {},
   whisperDownloadPhase: {},
+  localLlmModelStatuses: getStoredLocalLlmStatuses(),
+  localLlmDownloadProgress: {},
+  localLlmDownloadBytes: {},
 
   setAppTheme: (value: AppTheme) => {
     storage.set(KEYS.APP_THEME, value);
@@ -282,6 +302,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
 
     if (wasPrivate && nextValue !== 'private_experimental') {
+      void releaseLocalLlmSession();
       const prevTheme = storage.getString(KEYS.PRIVATE_PREVIOUS_THEME) as AppTheme | undefined;
       const prevAutoTranscribe = storage.getString(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE);
       const prevAutoAi = storage.getString(KEYS.PRIVATE_PREVIOUS_AUTO_AI);
@@ -410,6 +431,59 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       whisperDownloadProgress: updatedProgress,
       whisperDownloadBytes: updatedBytes,
       whisperDownloadPhase: updatedPhase,
+    });
+  },
+
+  setLocalLlmModelStatus: (id: LocalAiModelId, status: WhisperModelStatus) => {
+    const current = get().localLlmModelStatuses;
+    const updated = { ...current, [id]: status };
+    storage.set(KEYS.LOCAL_LLM_STATUSES, JSON.stringify(updated));
+    set({ localLlmModelStatuses: updated });
+  },
+
+  setLocalLlmModelStatuses: (statuses: Partial<Record<LocalAiModelId, WhisperModelStatus>>) => {
+    storage.set(KEYS.LOCAL_LLM_STATUSES, JSON.stringify(statuses));
+    set({ localLlmModelStatuses: statuses });
+  },
+
+  setLocalLlmDownloadProgress: (
+    id: LocalAiModelId,
+    progress: number,
+    bytesWritten?: number,
+    contentLength?: number,
+  ) => {
+    const currentProgress = get().localLlmDownloadProgress;
+    const currentBytes = get().localLlmDownloadBytes;
+    const updatedBytes =
+      bytesWritten !== undefined && contentLength !== undefined
+        ? { ...currentBytes, [id]: { written: bytesWritten, total: contentLength } }
+        : currentBytes;
+
+    set({
+      localLlmDownloadProgress: { ...currentProgress, [id]: progress },
+      localLlmDownloadBytes: updatedBytes,
+    });
+  },
+
+  removeLocalLlmModelStatus: (id: LocalAiModelId) => {
+    const currentStatuses = get().localLlmModelStatuses;
+    const currentProgress = get().localLlmDownloadProgress;
+    const currentBytes = get().localLlmDownloadBytes;
+
+    const updatedStatuses = { ...currentStatuses };
+    delete updatedStatuses[id];
+
+    const updatedProgress = { ...currentProgress };
+    delete updatedProgress[id];
+
+    const updatedBytes = { ...currentBytes };
+    delete updatedBytes[id];
+
+    storage.set(KEYS.LOCAL_LLM_STATUSES, JSON.stringify(updatedStatuses));
+    set({
+      localLlmModelStatuses: updatedStatuses,
+      localLlmDownloadProgress: updatedProgress,
+      localLlmDownloadBytes: updatedBytes,
     });
   },
 }));

@@ -7,6 +7,7 @@ import { useFolderStore } from '@/entities/folder/model/store';
 import { useRecordStore } from '@/entities/record/model/store';
 import { RECOMMENDED_AI_MODEL_ID } from '@/entities/settings/lib/recommendAiModel';
 import {
+  DEFAULT_LOCAL_AI_MODEL_ID,
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
 } from '@/entities/settings/model/constants';
@@ -82,6 +83,7 @@ export async function performHardReset(): Promise<void> {
   const cacheRoot = getCachesDirectoryPath();
   await removePathRecursive(`${docRoot}/recordings`);
   await removePathRecursive(`${docRoot}/whisper-models`);
+  await removePathRecursive(`${docRoot}/local-llm-models`);
   await removePathRecursive(`${docRoot}/transcription-checkpoints`);
   await removePathRecursive(cacheRoot);
 
@@ -114,5 +116,9 @@ export async function performHardReset(): Promise<void> {
     whisperDownloadProgress: {},
     whisperDownloadBytes: {},
     whisperDownloadPhase: {},
+    selectedLocalAiModel: DEFAULT_LOCAL_AI_MODEL_ID,
+    localLlmModelStatuses: {},
+    localLlmDownloadProgress: {},
+    localLlmDownloadBytes: {},
   });
 }

@@ -53,6 +53,7 @@ export function useSettingsScreen() {
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
+  const localLlmModelStatuses = useSettingsStore((s) => s.localLlmModelStatuses);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
@@ -201,9 +202,13 @@ export function useSettingsScreen() {
 
   const userFacing = USER_FACING_AI_MODELS.find((m) => m.id === selectedAIModel);
   const localModel = LOCAL_AI_MODELS.find((m) => m.id === selectedLocalAiModel);
+  const localLlmDownloaded =
+    (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
   const aiModelBaseName =
     aiExecutionMode === 'private_experimental'
-      ? (localModel?.name ?? selectedLocalAiModel)
+      ? localLlmDownloaded
+        ? (localModel?.name ?? selectedLocalAiModel)
+        : `${localModel?.name ?? selectedLocalAiModel} (${t('aiModels.notDownloadedSuffix')})`
       : (userFacing?.name ?? selectedAIModel);
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const whisperVariantId = getWhisperModelVariantId(

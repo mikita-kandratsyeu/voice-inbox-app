@@ -42,6 +42,7 @@
     "dayjs": "^1.11.19",
     "drizzle-orm": "^0.45.1",
     "i18next": "^25.8.17",
+    "llama.rn": "^0.12.0-rc.2",
     "lucide-react-native": "^0.577.0",
     "nativewind": "^4.2.3",
     "react": "19.2.3",

@@ -265,6 +265,29 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - llama-rn (0.12.0-rc.2):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React
+    - React-callinvoker
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - MMKVCore (2.3.0)
   - nanopb (3.30910.0):
     - nanopb/decode (= 3.30910.0)
@@ -2881,6 +2904,7 @@ DEPENDENCIES:
   - GoogleUtilities
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - InappbrowserNitro (from `../node_modules/react-native-inappbrowser-nitro`)
+  - llama-rn (from `../node_modules/llama.rn`)
   - NitroAudioRecorderPlayer (from `../node_modules/react-native-audio-recorder-player`)
   - NitroDeviceInfo (from `../node_modules/react-native-nitro-device-info`)
   - NitroFetch (from `../node_modules/react-native-nitro-fetch`)
@@ -3055,6 +3079,8 @@ EXTERNAL SOURCES:
     :tag: hermes-v250829098.0.9
   InappbrowserNitro:
     :path: "../node_modules/react-native-inappbrowser-nitro"
+  llama-rn:
+    :path: "../node_modules/llama.rn"
   NitroAudioRecorderPlayer:
     :path: "../node_modules/react-native-audio-recorder-player"
   NitroDeviceInfo:
@@ -3319,6 +3345,7 @@ SPEC CHECKSUMS:
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   hermes-engine: 0437e9839a87c1d737989c1116dd08492d271607
   InappbrowserNitro: c6ede24dc5a9d2340441578ac7f48e409aafce64
+  llama-rn: 008a9f239336bbcfb7472425d7b2c5b554264338
   MMKVCore: d078dce7d6586a888b2c2ef5343b6242678e3ee8
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   NitroAudioRecorderPlayer: 591eafbd1908d214a84b401a2233c5b181106363

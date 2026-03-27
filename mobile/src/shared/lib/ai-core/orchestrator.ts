@@ -24,16 +24,19 @@ function resolveMode(
 function guardPrivateMode(request: { transcript: string }, ctx: AiExecutionContext) {
   if (ctx.aiExecutionMode !== 'private_experimental') return null;
 
-  if (ctx.privateCapabilityTier === 'unavailable') {
+  if (!ctx.isLocalLlmModelDownloaded) {
     return {
       ok: false as const,
       provider: 'cloud' as const,
       mode: ctx.aiExecutionMode,
-      error: i18n.t('ai.privateModeUnavailable'),
+      error: i18n.t('ai.privateModeModelNotDownloaded'),
     };
   }
 
-  if (ctx.privateCapabilityTier === 'limited' && request.transcript.length > 5000) {
+  if (
+    (ctx.privateCapabilityTier === 'limited' || ctx.privateCapabilityTier === 'unavailable') &&
+    request.transcript.length > 5000
+  ) {
     return {
       ok: false as const,
       provider: 'cloud' as const,

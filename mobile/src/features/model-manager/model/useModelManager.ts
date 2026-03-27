@@ -1,17 +1,28 @@
 import { useCallback } from 'react';
 
 import {
+  getLocalAiModelEntry,
   getRecommendedWhisperModelId,
   getWhisperModelSizeMb,
   getWhisperModelVariantId,
+  LOCAL_AI_MODELS,
+  type LocalAiModelId,
   useSettingsStore,
   WHISPER_MODELS,
   type WhisperModelId,
+  type WhisperModelStatus,
   type WhisperModelWeightsFormat,
 } from '@/entities/settings';
+import {
+  cancelLocalLlmModelDownload,
+  localLlmModelDownloader,
+} from '@/features/model-manager/lib/local-llm-download';
+import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { NitroFS } from '@/shared/lib/fs';
+import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 import { getWhisperModelPath } from '@/shared/lib/whisper';
 
+import { deleteLocalLlmModel } from '../lib/deleteLocalLlmModel';
 import { deleteWhisperModel } from '../lib/deleteWhisperModel';
 import {
   startWhisperDownloadLiveActivity,
@@ -29,6 +40,11 @@ export const useModelManager = () => {
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
+  const setLocalLlmModelStatus = useSettingsStore((s) => s.setLocalLlmModelStatus);
+  const setLocalLlmModelStatuses = useSettingsStore((s) => s.setLocalLlmModelStatuses);
+  const setLocalLlmDownloadProgress = useSettingsStore((s) => s.setLocalLlmDownloadProgress);
+  const removeLocalLlmModelStatus = useSettingsStore((s) => s.removeLocalLlmModelStatus);
+  const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
 
   const startDownload = useCallback(
     async (
@@ -113,6 +129,82 @@ export const useModelManager = () => {
     ],
   );
 
+  const startLocalLlmDownload = useCallback(
+    async (modelId: LocalAiModelId): Promise<void> => {
+      const entry = getLocalAiModelEntry(modelId);
+      if (!entry) return;
+
+      setLocalLlmModelStatus(modelId, 'downloading');
+      setLocalLlmDownloadProgress(modelId, 0);
+      const expectedBytes = entry.sizeMb * 1024 * 1024;
+
+      try {
+        await localLlmModelDownloader.startDownload({
+          modelId,
+          expectedBytes,
+          onProgress: (progress: number, bytesWritten: number, contentLength: number) => {
+            setLocalLlmDownloadProgress(modelId, progress, bytesWritten, contentLength);
+          },
+        });
+        setLocalLlmModelStatus(modelId, 'downloaded');
+        setLocalLlmDownloadProgress(modelId, 100);
+      } catch (err) {
+        const isCancelled =
+          err instanceof Error && (err.message.includes('cancel') || err.message.includes('abort'));
+
+        if (!isCancelled) {
+          setLocalLlmModelStatus(modelId, 'error');
+        } else {
+          setLocalLlmModelStatus(modelId, 'not_downloaded');
+        }
+        setLocalLlmDownloadProgress(modelId, 0);
+      }
+    },
+    [setLocalLlmDownloadProgress, setLocalLlmModelStatus],
+  );
+
+  const cancelLocalLlmDownloadFn = useCallback(
+    async (modelId: LocalAiModelId): Promise<void> => {
+      await cancelLocalLlmModelDownload();
+      setLocalLlmModelStatus(modelId, 'not_downloaded');
+      setLocalLlmDownloadProgress(modelId, 0);
+    },
+    [setLocalLlmDownloadProgress, setLocalLlmModelStatus],
+  );
+
+  const removeLocalLlmModelFn = useCallback(
+    async (modelId: LocalAiModelId): Promise<void> => {
+      await deleteLocalLlmModel(modelId);
+      removeLocalLlmModelStatus(modelId);
+      if (selectedLocalAiModel === modelId) {
+        void releaseLocalLlmSession();
+      }
+    },
+    [removeLocalLlmModelStatus, selectedLocalAiModel],
+  );
+
+  const syncLocalLlmDownloadedStatuses = useCallback(async (): Promise<void> => {
+    const prev = useSettingsStore.getState().localLlmModelStatuses;
+    const next: Partial<Record<LocalAiModelId, WhisperModelStatus>> = { ...prev };
+
+    const checks = await Promise.all(
+      LOCAL_AI_MODELS.map(async (m) => ({
+        id: m.id,
+        exists: await NitroFS.exists(getLocalLlmModelPath(m.id)),
+      })),
+    );
+
+    for (const item of checks) {
+      if (item.exists) {
+        next[item.id] = 'downloaded';
+      } else if (next[item.id] === 'downloaded') {
+        delete next[item.id];
+      }
+    }
+
+    setLocalLlmModelStatuses(next);
+  }, [setLocalLlmModelStatuses]);
+
   const syncDownloadedStatusesForFormat = useCallback(
     async (format: WhisperModelWeightsFormat): Promise<void> => {
       const checks = await Promise.all(
@@ -140,5 +232,14 @@ export const useModelManager = () => {
     [setWhisperModelStatuses],
   );
 
-  return { startDownload, cancelDownload, removeModel, syncDownloadedStatusesForFormat };
+  return {
+    startDownload,
+    cancelDownload,
+    removeModel,
+    syncDownloadedStatusesForFormat,
+    startLocalLlmDownload,
+    cancelLocalLlmDownload: cancelLocalLlmDownloadFn,
+    removeLocalLlmModel: removeLocalLlmModelFn,
+    syncLocalLlmDownloadedStatuses,
+  };
 };

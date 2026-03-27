@@ -1,5 +1,6 @@
 import type {
   AiOutputLanguage,
+  LocalAiModelId,
   SummaryStyle,
   TaskStrictness,
   UserSelectableAIModelId,
@@ -11,6 +12,8 @@ export type AiProviderKind = 'cloud' | 'local';
 
 export type AiExecutionContext = {
   selectedAIModel: UserSelectableAIModelId;
+  selectedLocalAiModel: LocalAiModelId;
+  isLocalLlmModelDownloaded: boolean;
   summaryStyle: SummaryStyle;
   taskStrictness: TaskStrictness;
   aiOutputLanguage: AiOutputLanguage;

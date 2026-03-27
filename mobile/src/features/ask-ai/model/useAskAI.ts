@@ -18,11 +18,15 @@ export type AskAIState = {
 
 export const useAskAI = () => {
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
+  const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
+  const localLlmModelStatuses = useSettingsStore((s) => s.localLlmModelStatuses);
   const summaryStyle = useSettingsStore((s) => s.summaryStyle);
   const taskStrictness = useSettingsStore((s) => s.taskStrictness);
   const aiOutputLanguage = useSettingsStore((s) => s.aiOutputLanguage);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateCapabilityTier = useSettingsStore((s) => s.privateCapabilityTier);
+  const isLocalLlmModelDownloaded =
+    (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
   const [state, setState] = useState<AskAIState>({
     isLoading: false,
     error: null,
@@ -65,6 +69,8 @@ export const useAskAI = () => {
           },
           {
             selectedAIModel,
+            selectedLocalAiModel,
+            isLocalLlmModelDownloaded,
             summaryStyle,
             taskStrictness,
             aiOutputLanguage,
@@ -136,6 +142,8 @@ export const useAskAI = () => {
     },
     [
       selectedAIModel,
+      selectedLocalAiModel,
+      isLocalLlmModelDownloaded,
       summaryStyle,
       taskStrictness,
       aiOutputLanguage,

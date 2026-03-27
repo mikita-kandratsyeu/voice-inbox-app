@@ -38,6 +38,8 @@ export const useAiProcessing = () => {
 
   const {
     selectedAIModel,
+    selectedLocalAiModel,
+    localLlmModelStatuses,
     summaryStyle,
     taskStrictness,
     aiOutputLanguage,
@@ -46,6 +48,8 @@ export const useAiProcessing = () => {
   } = useSettingsStore(
     useShallow((s) => ({
       selectedAIModel: s.selectedAIModel,
+      selectedLocalAiModel: s.selectedLocalAiModel,
+      localLlmModelStatuses: s.localLlmModelStatuses,
       summaryStyle: s.summaryStyle,
       taskStrictness: s.taskStrictness,
       aiOutputLanguage: s.aiOutputLanguage,
@@ -53,6 +57,9 @@ export const useAiProcessing = () => {
       privateCapabilityTier: s.privateCapabilityTier,
     })),
   );
+
+  const isLocalLlmModelDownloaded =
+    (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
 
   const inFlightRef = useRef<Set<string>>(new Set());
 
@@ -87,6 +94,8 @@ export const useAiProcessing = () => {
           { id: requestId, transcript: record.transcript },
           {
             selectedAIModel,
+            selectedLocalAiModel,
+            isLocalLlmModelDownloaded,
             summaryStyle,
             taskStrictness,
             aiOutputLanguage,
@@ -205,6 +214,8 @@ export const useAiProcessing = () => {
     },
     [
       selectedAIModel,
+      selectedLocalAiModel,
+      isLocalLlmModelDownloaded,
       summaryStyle,
       taskStrictness,
       aiOutputLanguage,

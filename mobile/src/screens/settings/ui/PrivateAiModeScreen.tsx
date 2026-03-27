@@ -28,9 +28,6 @@ export const PrivateAiModeScreen = () => {
   const privateCapabilityTier = useSettingsStore((s) => s.privateCapabilityTier);
 
   const handleSelectMode = (mode: AiExecutionMode) => {
-    if (mode === 'private_experimental' && privateCapabilityTier === 'unavailable') {
-      return;
-    }
     if (mode === 'private_experimental' && aiExecutionMode !== 'private_experimental') {
       Alert.alert(
         t('privateAiMode.enableAlertTitle'),
@@ -90,8 +87,6 @@ export const PrivateAiModeScreen = () => {
             {AI_EXECUTION_MODES.map((mode, index) => {
               const isSelected = aiExecutionMode === mode;
               const isLast = index === AI_EXECUTION_MODES.length - 1;
-              const isDisabled =
-                mode === 'private_experimental' && privateCapabilityTier === 'unavailable';
               return (
                 <TouchableOpacity
                   key={mode}
@@ -99,14 +94,13 @@ export const PrivateAiModeScreen = () => {
                   activeOpacity={0.7}
                   className="flex-row items-center justify-between px-4 py-3.5"
                   style={{
-                    opacity: isDisabled ? 0.55 : 1,
                     ...(!isLast
                       ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
                       : {}),
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={t(`aiSettings.executionMode.${mode}`)}
-                  accessibilityState={{ selected: isSelected, disabled: isDisabled }}
+                  accessibilityState={{ selected: isSelected }}
                 >
                   <Text className="text-[16px]" style={{ color: color.text.primary }}>
                     {t(`aiSettings.executionMode.${mode}`)}

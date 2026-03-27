@@ -42,23 +42,46 @@ export const AI_MODELS: AIModel[] = USER_FACING_AI_MODELS.map(
   ({ tierLabelKey: _t, supportTierCode: _s, ...m }) => m,
 );
 
-export const LOCAL_AI_MODELS: Array<{
+export type LocalAiModelCatalogEntry = {
   id: LocalAiModelId;
   name: string;
   provider: string;
   descriptionKey: string;
   speed: 'fast' | 'medium' | 'slow';
-}> = [
+  fileName: string;
+  sizeMb: number;
+  downloadUrl: string;
+};
+
+export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
+  {
+    id: 'local/qwen3-1.7b-q4_k_m',
+    name: 'Qwen3 1.7B',
+    provider: 'Qwen',
+    descriptionKey: 'aiModels.localQwen3Desc',
+    speed: 'fast',
+    fileName: 'Qwen3-1.7B-Q4_K_M.gguf',
+    sizeMb: 1200,
+    downloadUrl:
+      'https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf',
+  },
   {
     id: 'apple/on-device-foundation',
     name: 'Apple On-Device',
     provider: 'Apple',
     descriptionKey: 'aiModels.localAppleDesc',
     speed: 'medium',
+    fileName: 'gemma-2-2b-it-Q4_K_M.gguf',
+    sizeMb: 1600,
+    downloadUrl:
+      'https://huggingface.co/codegood/gemma-2b-it-Q4_K_M-GGUF/resolve/main/gemma-2b-it.Q4_K_M.gguf',
   },
 ];
 
-export const DEFAULT_LOCAL_AI_MODEL_ID: LocalAiModelId = 'apple/on-device-foundation';
+export const DEFAULT_LOCAL_AI_MODEL_ID: LocalAiModelId = 'local/qwen3-1.7b-q4_k_m';
+
+export const getLocalAiModelEntry = (id: LocalAiModelId): LocalAiModelCatalogEntry | undefined =>
+  LOCAL_AI_MODELS.find((m) => m.id === id);
 
 export const WHISPER_MODELS: WhisperModel[] = [
   {
