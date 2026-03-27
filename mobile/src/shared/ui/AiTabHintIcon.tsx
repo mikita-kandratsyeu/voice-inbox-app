@@ -12,9 +12,9 @@ export const AiTabHintIcon = ({ size = 14 }: AiTabHintIconProps) => {
   const { isConnected } = useNetworkStatus();
   const color = useColors();
 
-  return isConnected === false ? (
-    <WifiOff size={size} color={color.accent.delete} strokeWidth={1.8} />
-  ) : (
-    <Cloud size={size} color={color.text.secondary} strokeWidth={1.8} />
-  );
+  if (isConnected === false) {
+    <WifiOff size={size} color={color.accent.delete} strokeWidth={1.8} />;
+  }
+
+  return null;
 };

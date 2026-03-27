@@ -333,11 +333,10 @@ const EmptyState = ({
 }: EmptyStateProps) => {
   const { t } = useTranslation();
   const aiModelName = useAiModelName();
+
   const hintIcon = showOfflineState ? (
     <WifiOff size={12} color={color.accent.delete} strokeWidth={1.8} />
-  ) : (
-    <Cloud size={12} color={color.text.secondary} strokeWidth={1.8} />
-  );
+  ) : null;
 
   const suggestedQuestions = useMemo(() => buildSuggestedQuestions(t, record), [t, record]);
 
