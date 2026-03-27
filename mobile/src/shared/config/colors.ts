@@ -43,6 +43,7 @@ export const colors = {
       setup: { color: '#6366f1', bg: '#e0e7ff' },
       shield: { color: '#0ea5e9', bg: '#e0f2fe' },
       restore: { color: '#059669', bg: '#d1fae5' },
+      privateSlide: { color: '#0d9488', bg: '#ccfbf1', chipBorder: '#5eead4', chipText: '#115e59' },
       privacy: { border: '#c4b5fd', text: '#6d28d9' },
       ai: { border: '#fcd34d', text: '#b45309' },
     },
@@ -99,6 +100,12 @@ export const colors = {
       setup: { color: '#6366f1', bg: '#e0e7ff' },
       shield: { color: '#0ea5e9', bg: '#e0f2fe' },
       restore: { color: '#059669', bg: '#d1fae5' },
+      privateSlide: {
+        color: '#2dd4bf',
+        bg: '#134e4a',
+        chipBorder: '#0d9488',
+        chipText: '#ccfbf1',
+      },
       privacy: { border: '#c4b5fd', text: '#6d28d9' },
       ai: { border: '#fcd34d', text: '#b45309' },
     },
@@ -157,6 +164,12 @@ export const privateModeColors: Colors = {
     setup: { color: '#7f8cff', bg: '#1a2148' },
     shield: { color: '#67c6ff', bg: '#102b3b' },
     restore: { color: '#45d6a2', bg: '#123127' },
+    privateSlide: {
+      color: '#5eead4',
+      bg: '#0f2c2a',
+      chipBorder: '#2dd4bf',
+      chipText: '#ecfdfa',
+    },
     privacy: { border: '#3b6aa1', text: '#8ebdff' },
     ai: { border: '#7f8cff', text: '#b7beff' },
   },
@@ -200,6 +213,7 @@ export type Colors = {
     setup: { color: string; bg: string };
     shield: { color: string; bg: string };
     restore: { color: string; bg: string };
+    privateSlide: { color: string; bg: string; chipBorder: string; chipText: string };
     privacy: { border: string; text: string };
     ai: { border: string; text: string };
   };
