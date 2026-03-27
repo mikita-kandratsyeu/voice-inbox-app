@@ -92,15 +92,8 @@ type ErrorStateProps = {
   onRetry: () => void;
   onClose: () => void;
   showPrivateModeCta?: boolean;
-  onSwitchToSmartMode?: () => void;
 };
-const ErrorState = ({
-  color,
-  onRetry,
-  onClose,
-  showPrivateModeCta = false,
-  onSwitchToSmartMode,
-}: ErrorStateProps) => {
+const ErrorState = ({ color, onRetry, onClose, showPrivateModeCta = false }: ErrorStateProps) => {
   const { t } = useTranslation();
   return (
     <View className="items-center gap-4 py-8">
@@ -414,7 +407,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
     useAskAI();
   const { isConnected } = useNetworkStatus();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
-  const setAiExecutionMode = useSettingsStore((s) => s.setAiExecutionMode);
+
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
   const hasTranscript = Boolean(record.transcript);
 
@@ -508,9 +501,6 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
   const handleRetry = useCallback(() => {
     if (question) askQuestion(record, question);
   }, [question, record, askQuestion]);
-  const handleSwitchToSmartMode = useCallback(() => {
-    setAiExecutionMode('smart_hybrid');
-  }, [setAiExecutionMode]);
 
   const handleCopy = useCallback((text: string) => {
     Clipboard.setString(text);
@@ -534,7 +524,6 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
           onRetry={handleRetry}
           onClose={() => bottomSheetRef.current?.dismiss()}
           showPrivateModeCta={aiExecutionMode === 'private_experimental'}
-          onSwitchToSmartMode={handleSwitchToSmartMode}
         />
       );
 
@@ -574,7 +563,6 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
     disableByNetwork,
     handleRetry,
     aiExecutionMode,
-    handleSwitchToSmartMode,
     handleSuggestedQuestion,
     handleCopy,
     handleShare,
