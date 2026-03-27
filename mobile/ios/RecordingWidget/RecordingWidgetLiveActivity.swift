@@ -31,29 +31,9 @@ private enum RecordingDeeplink {
 
 private extension RecordingLiveActivityView {
     var containerBackground: some ShapeStyle {
-        if colorScheme == .light {
-            return AnyShapeStyle(
-                LinearGradient(
-                    colors: [
-                        Color.white.opacity(0.94),
-                        Color.white.opacity(0.78)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-        } else {
-            return AnyShapeStyle(
-                LinearGradient(
-                    colors: [
-                        Color.white.opacity(0.10),
-                        Color.black.opacity(0.42)
-                    ],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
-        }
+        colorScheme == .light
+            ? Color.white.opacity(0.96)
+            : Color.black.opacity(0.82)
     }
 
     var containerBorder: Color {

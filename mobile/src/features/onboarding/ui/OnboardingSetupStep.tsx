@@ -17,7 +17,7 @@ import {
 import { useModelManager } from '@/features/model-manager';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
-import { formatFileSize } from '@/shared/lib/whisper';
+import { formatFileSize, getWhisperLabel } from '@/shared/lib/whisper';
 
 type OnboardingSetupStepProps = {
   color: Colors;
@@ -179,6 +179,10 @@ export const OnboardingSetupStep = ({
           const isSelected = model.id === selectedWhisperModel;
           const displaySize = formatFileSize(getWhisperModelSizeMb(model.id, 'q5_1') * 1024 * 1024);
 
+          if (model.id === 'whisper-medium') {
+            return null;
+          }
+
           return (
             <TouchableOpacity
               key={model.id}
@@ -208,7 +212,7 @@ export const OnboardingSetupStep = ({
               <View className="mr-3 flex-1">
                 <View className="flex-row items-center gap-2">
                   <Text className="text-[15px] font-medium" style={{ color: color.text.primary }}>
-                    Whisper {model.name}
+                    {getWhisperLabel(model.id)}
                   </Text>
                   {model.id === recommendedModelId && (
                     <View

@@ -234,6 +234,10 @@ export const WhisperModelPickerScreen = () => {
                   ? downloadedSize
                   : fallbackSize;
 
+              if (whisperModelWeightsFormat === 'q5_1' && model.id === 'whisper-medium') {
+                return null;
+              }
+
               return (
                 <WhisperModelCard
                   key={model.id}
