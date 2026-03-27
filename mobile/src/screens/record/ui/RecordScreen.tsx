@@ -40,6 +40,9 @@ export const RecordScreen = () => {
 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const addRecord = useRecordStore((s) => s.addRecord);
+  const activeTranscriptionRecord = useRecordStore((s) =>
+    s.records.find((r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing'),
+  );
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
   const { isProActive } = useProEntitlement();
   const maxRecordingMs = useMemo(() => getMaxRecordingMsForTier(isProActive), [isProActive]);
@@ -156,8 +159,19 @@ export const RecordScreen = () => {
             t('record.blockedByTranscriptionMessage'),
             [
               {
-                text: t('common.ok'),
+                text: t('common.cancel'),
+                style: 'cancel',
                 onPress: () => navigation.goBack(),
+              },
+              {
+                text: t('common.open'),
+                onPress: () => {
+                  if (activeTranscriptionRecord) {
+                    navigation.replace('RecordingDetail', { record: activeTranscriptionRecord });
+                  } else {
+                    navigation.goBack();
+                  }
+                },
               },
             ],
           );
@@ -165,7 +179,7 @@ export const RecordScreen = () => {
         }
         startRecording();
       }
-    }, [state, startRecording, t, navigation]),
+    }, [state, startRecording, t, navigation, activeTranscriptionRecord]),
   );
 
   const handleClose = async () => {

@@ -13,6 +13,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { useRecordStore } from '@/entities/record';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import { hapticLight } from '@/shared/lib';
 
@@ -35,6 +36,9 @@ export const CenterRecordButton = ({
   const scale = useSharedValue(1);
   const breath = useSharedValue(0);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const activeTranscriptionRecord = useRecordStore((s) =>
+    s.records.find((r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing'),
+  );
 
   useEffect(() => {
     breath.value = withRepeat(
@@ -69,6 +73,17 @@ export const CenterRecordButton = ({
       Alert.alert(
         t('record.blockedByTranscriptionTitle'),
         t('record.blockedByTranscriptionMessage'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.open'),
+            onPress: () => {
+              if (activeTranscriptionRecord) {
+                navigation.navigate('RecordingDetail', { record: activeTranscriptionRecord });
+              }
+            },
+          },
+        ],
       );
       return;
     }
