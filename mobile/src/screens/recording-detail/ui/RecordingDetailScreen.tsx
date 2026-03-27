@@ -140,7 +140,10 @@ export const RecordingDetailScreen = () => {
   }, [hydrateRecordDetails, recordId]);
 
   const { startTranscription, cancelTranscription } = useTranscription();
-  const { generateSummary, extractTasks } = useAiProcessing();
+  const { generateSummary, extractTasks, cancelAiGeneration } = useAiProcessing();
+  const handleCancelAiGeneration = useCallback(() => {
+    cancelAiGeneration(liveRecord.id);
+  }, [cancelAiGeneration, liveRecord.id]);
   const { shareRecord, shareAudio } = useShareRecord();
   const onDeleted = useCallback(() => navigation.goBack(), [navigation]);
   const { promptRename, promptDelete } = useRecordActions({ onDeleted });
@@ -393,6 +396,8 @@ export const RecordingDetailScreen = () => {
                   onDismissError={handleDismissSummaryError}
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onSwitchToSmartMode={handleSwitchToSmartMode}
+                  showProcessingCancel={isPrivateMode}
+                  onCancelProcessing={handleCancelAiGeneration}
                 />
               </View>
             )}
@@ -413,6 +418,8 @@ export const RecordingDetailScreen = () => {
                   onDismissError={handleDismissSummaryError}
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onSwitchToSmartMode={handleSwitchToSmartMode}
+                  showProcessingCancel={isPrivateMode}
+                  onCancelProcessing={handleCancelAiGeneration}
                 />
               </View>
             )}

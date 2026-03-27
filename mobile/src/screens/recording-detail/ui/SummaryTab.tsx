@@ -26,6 +26,8 @@ type SummaryTabProps = {
   onDismissError?: () => void;
   showPrivateModeCta?: boolean;
   onSwitchToSmartMode?: () => void;
+  showProcessingCancel?: boolean;
+  onCancelProcessing?: () => void;
 };
 
 export const SummaryTab = ({
@@ -35,7 +37,9 @@ export const SummaryTab = ({
   keyPhrases = [],
   onDismissError,
   onGenerate,
+  onCancelProcessing,
   showPrivateModeCta = false,
+  showProcessingCancel = false,
   status,
   summary,
 }: SummaryTabProps) => {
@@ -51,7 +55,13 @@ export const SummaryTab = ({
   }, [errorMessage, showPrivateModeCta, t]);
 
   if (status === 'processing') {
-    return <AiTabLoadingState message={t('recordingDetail.summaryProcessing')} />;
+    return (
+      <AiTabLoadingState
+        message={t('recordingDetail.summaryProcessing')}
+        showCancelButton={showProcessingCancel}
+        onCancel={onCancelProcessing}
+      />
+    );
   }
 
   if (status === 'error' && !summary) {

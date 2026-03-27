@@ -9,6 +9,7 @@ import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generati
 import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
+import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 
 export const useAiProcessing = () => {
@@ -62,6 +63,32 @@ export const useAiProcessing = () => {
     (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
 
   const inFlightRef = useRef<Set<string>>(new Set());
+  const cancelTokensRef = useRef<Map<string, { cancelled: boolean }>>(new Map());
+
+  const cancelAiGeneration = useCallback((recordId: string) => {
+    const token = cancelTokensRef.current.get(recordId);
+    if (token) {
+      token.cancelled = true;
+    }
+
+    if (useSettingsStore.getState().aiExecutionMode === 'private_experimental') {
+      void releaseLocalLlmSession();
+    }
+  }, []);
+
+  const applyCancelledUiState = useCallback(
+    (recordId: string) => {
+      const latest = useRecordStore.getState().records.find((r) => r.id === recordId);
+      const hadSummary = Boolean(latest?.summary?.trim());
+      const hadTasks = (latest?.tasks?.length ?? 0) > 0;
+
+      setSummaryStatus(recordId, hadSummary ? 'done' : 'idle');
+      setTasksStatus(recordId, hadTasks ? 'done' : 'idle');
+      setSummaryError(recordId, undefined);
+      setTasksError(recordId, undefined);
+    },
+    [setSummaryError, setSummaryStatus, setTasksError, setTasksStatus],
+  );
 
   const processRecord = useCallback(
     async (record: VoiceRecord): Promise<void> => {
@@ -80,6 +107,9 @@ export const useAiProcessing = () => {
       setTasksStatus(record.id, 'processing');
       setSummaryError(record.id, undefined);
       setTasksError(record.id, undefined);
+
+      const cancelToken = { cancelled: false };
+      cancelTokensRef.current.set(record.id, cancelToken);
 
       const requestId = `${baseId}-${Date.now()}`;
       inFlightRef.current.add(baseId);
@@ -103,6 +133,16 @@ export const useAiProcessing = () => {
             privateCapabilityTier,
           },
         );
+
+        if (cancelToken.cancelled) {
+          applyCancelledUiState(record.id);
+          void logAnalyticsEvent('ai_action_cancelled', {
+            action: 'summary_tasks',
+            mode: aiExecutionMode,
+            tier: privateCapabilityTier,
+          });
+          return;
+        }
 
         if (!runResult.ok) {
           const errorMsg = runResult.limitExceeded
@@ -192,6 +232,15 @@ export const useAiProcessing = () => {
           tier: privateCapabilityTier,
         });
       } catch (err) {
+        if (cancelToken.cancelled) {
+          applyCancelledUiState(record.id);
+          void logAnalyticsEvent('ai_action_cancelled', {
+            action: 'summary_tasks',
+            mode: aiExecutionMode,
+            tier: privateCapabilityTier,
+          });
+          return;
+        }
         if (__DEV__)
           console.warn('[AI] processRecord: unexpected error', {
             recordId: record.id,
@@ -210,6 +259,7 @@ export const useAiProcessing = () => {
         });
       } finally {
         inFlightRef.current.delete(baseId);
+        cancelTokensRef.current.delete(record.id);
       }
     },
     [
@@ -221,6 +271,7 @@ export const useAiProcessing = () => {
       aiOutputLanguage,
       aiExecutionMode,
       privateCapabilityTier,
+      applyCancelledUiState,
       setSummaryStatus,
       setTasksStatus,
       setSummaryError,
@@ -243,5 +294,5 @@ export const useAiProcessing = () => {
     [processRecord],
   );
 
-  return { generateSummary, extractTasks, processRecord };
+  return { generateSummary, extractTasks, processRecord, cancelAiGeneration };
 };

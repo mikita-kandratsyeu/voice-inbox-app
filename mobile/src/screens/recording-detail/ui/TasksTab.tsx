@@ -46,6 +46,8 @@ type TasksTabProps = {
   onDismissError?: () => void;
   showPrivateModeCta?: boolean;
   onSwitchToSmartMode?: () => void;
+  showProcessingCancel?: boolean;
+  onCancelProcessing?: () => void;
 };
 
 const ManualTaskAddRow = ({
@@ -125,7 +127,9 @@ export const TasksTab = ({
   onAddManualTask,
   onDeleteTask,
   onDismissError,
+  onCancelProcessing,
   showPrivateModeCta = false,
+  showProcessingCancel = false,
   onSwitchToSmartMode: _onSwitchToSmartMode,
 }: TasksTabProps) => {
   const theme = useAppTheme();
@@ -145,7 +149,13 @@ export const TasksTab = ({
   };
 
   if (status === 'processing') {
-    return <AiTabLoadingState message={t('recordingDetail.tasksProcessing')} />;
+    return (
+      <AiTabLoadingState
+        message={t('recordingDetail.tasksProcessing')}
+        showCancelButton={showProcessingCancel}
+        onCancel={onCancelProcessing}
+      />
+    );
   }
 
   if (status === 'error' && tasks.length === 0) {
