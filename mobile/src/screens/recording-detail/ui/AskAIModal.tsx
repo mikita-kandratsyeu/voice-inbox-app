@@ -20,6 +20,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
+  Keyboard,
+  Platform,
   ScrollView,
   Share,
   Text,
@@ -28,6 +30,7 @@ import {
   View,
 } from 'react-native';
 import { KeyboardController } from 'react-native-keyboard-controller';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -395,6 +398,8 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [questionInput, setQuestionInput] = useState('');
   const [aiUsage, setAiUsage] = useState<AiUsage | null>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const contentOpacity = useSharedValue(1);
   const { askQuestion, reset, askAnother, isLoading, error, question, answer, history } =
     useAskAI();
   const { isConnected } = useNetworkStatus();
@@ -434,8 +439,34 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
     if (!visible) {
       reset();
       setQuestionInput('');
+      setKeyboardHeight(0);
     }
   }, [visible, reset]);
+
+  useEffect(() => {
+    if (!visible) return;
+
+    const onShow = (event: { endCoordinates: { height: number } }) => {
+      setKeyboardHeight(event.endCoordinates.height);
+    };
+    const onHide = () => {
+      setKeyboardHeight(0);
+    };
+
+    const showSub =
+      Platform.OS === 'ios'
+        ? Keyboard.addListener('keyboardWillChangeFrame', onShow)
+        : Keyboard.addListener('keyboardDidShow', onShow);
+    const hideSub =
+      Platform.OS === 'ios'
+        ? Keyboard.addListener('keyboardWillHide', onHide)
+        : Keyboard.addListener('keyboardDidHide', onHide);
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, [visible]);
 
   const handleDismiss = useCallback(() => {
     onDismiss?.();
@@ -448,6 +479,10 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
     setQuestionInput('');
     askQuestion(record, q);
   }, [questionInput, hasTranscript, isLoading, isConnected, record, askQuestion]);
+
+  const handleInputFocus = useCallback(() => {
+    bottomSheetRef.current?.snapToIndex(1);
+  }, []);
 
   const handleSuggestedQuestion = useCallback(
     (q: string) => {
@@ -579,6 +614,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
               multiline
               numberOfLines={1}
               submitBehavior="blurAndSubmit"
+              onFocus={handleInputFocus}
               onSubmitEditing={handleAsk}
             />
           </InputField>
@@ -591,12 +627,42 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
           )}
         </View>
       ) : null,
-    [shouldShowInputRow, color, questionInput, sendButton, t, isConnected, handleAsk, aiUsage],
+    [
+      shouldShowInputRow,
+      color,
+      questionInput,
+      sendButton,
+      t,
+      isConnected,
+      handleAsk,
+      handleInputFocus,
+      aiUsage,
+    ],
   );
 
   const bottomPadding = useMemo(
     () => Math.max(insets.bottom, 8) + (shouldShowInputRow ? 100 : 8),
     [insets.bottom, shouldShowInputRow],
+  );
+  const isKeyboardOpen = keyboardHeight > 0;
+  useEffect(() => {
+    contentOpacity.value = withTiming(isKeyboardOpen ? 0 : 1, { duration: 140 });
+  }, [isKeyboardOpen, contentOpacity]);
+  const contentAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: contentOpacity.value,
+  }));
+
+  const inputContainerStyle = useMemo(
+    () => ({
+      position: 'absolute' as const,
+      left: 0,
+      right: 0,
+      ...(isKeyboardOpen ? { top: 10 } : { bottom: keyboardHeight }),
+      backgroundColor: color.background.card,
+      paddingTop: 10,
+      paddingBottom: Math.max(insets.bottom, 8),
+    }),
+    [isKeyboardOpen, keyboardHeight, color.background.card, insets.bottom],
   );
 
   const contentContainerStyle = useMemo(
@@ -633,31 +699,20 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
       }}
     >
       <BottomSheetView style={contentContainerStyle}>
-        <ScrollView
-          style={{ flex: 1 }}
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 4 }}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={Boolean(answer)}
+        <Animated.View
+          style={[{ flex: 1 }, contentAnimatedStyle]}
+          pointerEvents={isKeyboardOpen ? 'none' : 'auto'}
         >
-          <View style={{ flex: 1 }}>{renderContent()}</View>
-        </ScrollView>
-        {inputRow && (
-          <View
-            style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: 0,
-              backgroundColor: color.background.card,
-              borderTopWidth: 1,
-              borderTopColor: color.border.default,
-              paddingTop: 10,
-              paddingBottom: Math.max(insets.bottom, 8),
-            }}
+          <ScrollView
+            style={{ flex: 1 }}
+            contentContainerStyle={{ flexGrow: 1, paddingBottom: 4 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={Boolean(answer)}
           >
-            {inputRow}
-          </View>
-        )}
+            <View style={{ flex: 1 }}>{renderContent()}</View>
+          </ScrollView>
+        </Animated.View>
+        {inputRow && <View style={inputContainerStyle}>{inputRow}</View>}
       </BottomSheetView>
     </BottomSheetModal>
   );
