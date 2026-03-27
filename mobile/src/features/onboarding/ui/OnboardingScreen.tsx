@@ -845,7 +845,11 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           },
         },
       ]);
-    } catch {
+    } catch (err) {
+      if (__DEV__) {
+        console.warn('[onboarding] restore failed', err);
+      }
+
       Alert.alert(t('common.error'), t('importExport.importError'));
     } finally {
       if (!showedConfirm) setIsRestoring(false);

@@ -13,7 +13,7 @@ import {
   isStringArrayItem,
   RECORDINGS_DIR,
 } from '@/shared/lib';
-import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
+import { getCachesDirectoryPath, getReadableDocumentPickerFsPath, NitroFS } from '@/shared/lib/fs';
 
 const METADATA_FILENAME = 'metadata.json';
 
@@ -86,7 +86,13 @@ function isRelativeAudioPath(path: string): boolean {
 }
 
 function toFsPath(uri: string): string {
-  return uri.startsWith('file://') ? uri.slice(7) : uri;
+  const noScheme = uri.startsWith('file://') ? uri.slice(7) : uri;
+  const noSuffix = noScheme.split('?')[0]?.split('#')[0] ?? noScheme;
+  try {
+    return decodeURIComponent(noSuffix);
+  } catch {
+    return noSuffix;
+  }
 }
 
 function pathOrNameLooksLikeZip(uri: string, name: string): boolean {
@@ -146,6 +152,44 @@ async function copyAudioFromExtractToApp(
   }
 }
 
+async function readTextWithFileSchemeFallback(
+  path: string,
+  encoding: 'utf8' | 'ascii',
+): Promise<string> {
+  try {
+    return await NitroFS.readFile(path, encoding);
+  } catch {
+    return NitroFS.readFile(`file://${path}`, encoding);
+  }
+}
+
+function decodeBase64ToUtf8(base64: string): string {
+  const binary = atob(base64);
+  let escaped = '';
+  for (let i = 0; i < binary.length; i += 1) {
+    escaped += `%${binary.charCodeAt(i).toString(16).padStart(2, '0')}`;
+  }
+  return decodeURIComponent(escaped);
+}
+
+async function readUtf8WithAllFallbacks(path: string): Promise<string> {
+  try {
+    return await NitroFS.readFile(path, 'utf8');
+  } catch {
+    try {
+      return await NitroFS.readFile(`file://${path}`, 'utf8');
+    } catch {
+      try {
+        const base64 = await NitroFS.readFile(path, 'base64');
+        return decodeBase64ToUtf8(base64);
+      } catch {
+        const base64 = await NitroFS.readFile(`file://${path}`, 'base64');
+        return decodeBase64ToUtf8(base64);
+      }
+    }
+  }
+}
+
 async function importFromZip(fileUri: string): Promise<ImportResult> {
   const timestamp = Date.now();
   const extractDir = `${getCachesDirectoryPath()}/import-extract-${timestamp}`;
@@ -165,7 +209,8 @@ async function importFromZip(fileUri: string): Promise<ImportResult> {
     return { success: false, error: i18n.t('importExport.invalidFormat') };
   }
 
-  const raw = await NitroFS.readFile(metadataPath, 'utf8');
+  const raw = await readUtf8WithAllFallbacks(metadataPath);
+
   const payload = JSON.parse(raw) as ExportPayload;
 
   if (
@@ -218,7 +263,11 @@ async function importFromZip(fileUri: string): Promise<ImportResult> {
     const record = normalizeRecord(r) as VoiceRecord & { audioPath?: string };
     const relativePath = record.audioPath;
 
-    if (payload.version === 2 && relativePath && isRelativeAudioPath(relativePath)) {
+    if (
+      (payload.version === 2 || payload.version === 3) &&
+      relativePath &&
+      isRelativeAudioPath(relativePath)
+    ) {
       const newPath = await copyAudioFromExtractToApp(extractDir, relativePath, record.id);
       if (newPath) {
         record.audioPath = newPath;
@@ -263,21 +312,34 @@ export const importData = async (): Promise<ImportResult> => {
       copyTo: 'cachesDirectory',
     });
 
-    const uri =
-      (file as { uri?: string; fileUri?: string }).fileUri ?? (file as { uri?: string }).uri;
+    const fileLike = file as {
+      uri?: string;
+      fileUri?: string;
+      fileCopyUri?: string;
+      name?: string;
+    };
+    const fsPath = await getReadableDocumentPickerFsPath(fileLike);
+    const uri = fileLike.fileCopyUri ?? fileLike.fileUri ?? fileLike.uri;
 
-    if (!uri) {
+    if (!uri || !fsPath) {
+      if (__DEV__) {
+        console.warn('[importData] picker path is not readable', {
+          uri: fileLike.uri,
+          fileUri: fileLike.fileUri,
+          fileCopyUri: fileLike.fileCopyUri,
+        });
+      }
       return { success: false, error: i18n.t('importExport.fileNotSelected') };
     }
 
-    const fileName = (file as { name?: string }).name ?? '';
+    const fileName = fileLike.name ?? '';
     const isZip = await shouldTreatAsZipArchive(uri, fileName);
 
     if (isZip) {
-      return importFromZip(uri);
+      return await importFromZip(fsPath);
     }
 
-    const raw = await NitroFS.readFile(uri.startsWith('file://') ? uri.slice(7) : uri, 'utf8');
+    const raw = await readTextWithFileSchemeFallback(fsPath, 'utf8');
     const payload = JSON.parse(raw) as ExportPayload;
 
     if (
@@ -328,7 +390,9 @@ export const importData = async (): Promise<ImportResult> => {
 
     return { success: true, records, exportedAt: payload.exportedAt };
   } catch (err: unknown) {
-    if ((err as { code?: string })?.code === 'DOCUMENT_PICKER_CANCELED') {
+    const code = (err as { code?: string })?.code;
+
+    if (code === 'DOCUMENT_PICKER_CANCELED' || code === 'E_DOCUMENT_PICKER_CANCELED') {
       return { success: false, error: 'cancelled' };
     }
 

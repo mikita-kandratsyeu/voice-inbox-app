@@ -21,7 +21,7 @@ import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
 import { hapticError, hapticMedium, hapticSuccess } from '@/shared/lib';
 import { convertToWav, getAudioDurationMs } from '@/shared/lib/audio';
 import { formatTime } from '@/shared/lib/date';
-import { NitroFS } from '@/shared/lib/fs';
+import { getReadableDocumentPickerFsPath, NitroFS } from '@/shared/lib/fs';
 import { ensureRecordingsDir, RECORDINGS_DIR } from '@/shared/lib/recordings';
 
 import type { ImportAudioPhase } from './types';
@@ -58,16 +58,25 @@ export function useImportAudioFile() {
         copyTo: 'cachesDirectory',
       });
 
-      const fileUri = (file as { uri?: string; fileUri?: string }).fileUri ?? file.uri;
-      if (!fileUri) {
+      const sourcePath = await getReadableDocumentPickerFsPath(
+        file as { uri?: string; fileUri?: string; fileCopyUri?: string },
+      );
+      if (!sourcePath) {
+        if (__DEV__) {
+          const pickerFile = file as { uri?: string; fileUri?: string; fileCopyUri?: string };
+          console.warn('[importAudioFile] picker path is not readable', {
+            uri: pickerFile.uri,
+            fileUri: pickerFile.fileUri,
+            fileCopyUri: pickerFile.fileCopyUri,
+          });
+        }
         return;
       }
 
       setImportPhase('copying');
       setIsImporting(true);
 
-      const sourceUri = fileUri;
-      const normalizedSource = sourceUri.startsWith('file://') ? sourceUri.slice(7) : sourceUri;
+      const normalizedSource = sourcePath;
 
       await ensureRecordingsDir();
       const recordId = generateRecordId();
