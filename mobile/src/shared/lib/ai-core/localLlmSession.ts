@@ -5,6 +5,8 @@ import type { LocalAiModelId } from '@/entities/settings';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 
+const LOCAL_LLM_N_CTX = 4096;
+
 let context: LlamaContext | null = null;
 let loadedModelId: LocalAiModelId | null = null;
 
@@ -26,7 +28,7 @@ export async function ensureLocalLlmLoaded(modelId: LocalAiModelId): Promise<Lla
 
   const ctx = await initLlama({
     model: path,
-    n_ctx: 8192,
+    n_ctx: LOCAL_LLM_N_CTX,
     n_gpu_layers: 99,
     use_mmap: true,
     use_mlock: false,

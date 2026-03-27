@@ -10,11 +10,25 @@ import type {
   SummaryTaskResult,
 } from './types';
 
-const SAFE_LOCAL_SUMMARY_CHARS = 6000;
+const LOCAL_LLM_MAX_TRANSCRIPT_CHARS = 6000;
+
+const LOCAL_LLM_SUMMARY_MAX_TOKENS = 680;
+const LOCAL_LLM_ASK_MAX_TOKENS = 450;
 
 function getMaxTranscriptChars(tier: AiExecutionContext['privateCapabilityTier']): number {
   if (tier === 'limited' || tier === 'unavailable') return 5000;
   return 14000;
+}
+
+function sliceTranscriptForLocalLlm(
+  transcript: string,
+  tier: AiExecutionContext['privateCapabilityTier'],
+): string {
+  const tierCap = getMaxTranscriptChars(tier);
+  const capped = transcript.slice(0, tierCap);
+  return capped.length > LOCAL_LLM_MAX_TRANSCRIPT_CHARS
+    ? capped.slice(0, LOCAL_LLM_MAX_TRANSCRIPT_CHARS)
+    : capped;
 }
 
 function normalizePriority(value: string): AiTask['priority'] {
@@ -105,24 +119,20 @@ export async function runLocalSummaryTasks(
   ctx: AiExecutionContext,
 ): Promise<SummaryTaskResult> {
   try {
-    const maxChars = getMaxTranscriptChars(ctx.privateCapabilityTier);
-    const transcript = request.transcript.slice(0, maxChars);
+    const candidateTranscript = sliceTranscriptForLocalLlm(
+      request.transcript,
+      ctx.privateCapabilityTier,
+    );
+
     const systemPrompt =
-      'You summarize voice notes. Return strict JSON only with keys: summary (string), suggestedTitle (string), tasks (array of {title, priority: high|medium|low, deadline: string|null}), tags (string[]), classification (personal|work|meeting|idea|other), keyPhrases (string[]), nextSteps (string[]). No markdown.';
+      'Voice note → JSON only, no markdown. Keys: summary, suggestedTitle, tasks, tags, classification, keyPhrases, nextSteps. tasks: [{title,priority,deadline}]; priority: high|medium|low; deadline string|null; classification: personal|work|meeting|idea|other.';
 
     const buildUserPrompt = (transcriptText: string) =>
       [
-        `Output language: ${ctx.aiOutputLanguage}.`,
-        `Summary style: ${ctx.summaryStyle}.`,
-        `Task strictness: ${ctx.taskStrictness}.`,
+        `Lang: ${ctx.aiOutputLanguage}. Style: ${ctx.summaryStyle}. Tasks: ${ctx.taskStrictness}.`,
         'Transcript:',
         transcriptText,
       ].join('\n');
-
-    const candidateTranscript =
-      transcript.length > SAFE_LOCAL_SUMMARY_CHARS
-        ? transcript.slice(0, SAFE_LOCAL_SUMMARY_CHARS)
-        : transcript;
 
     const raw = await generateWithLocalLlm(
       ctx.selectedLocalAiModel,
@@ -130,7 +140,7 @@ export async function runLocalSummaryTasks(
         { role: 'system', content: systemPrompt },
         { role: 'user', content: buildUserPrompt(candidateTranscript) },
       ],
-      { maxTokens: 900, temperature: 0.2 },
+      { maxTokens: LOCAL_LLM_SUMMARY_MAX_TOKENS, temperature: 0.2 },
     );
 
     const jsonPayload = extractJsonObject(raw);
@@ -186,24 +196,20 @@ export async function runLocalAsk(
   ctx: AiExecutionContext,
 ): Promise<AskTaskResult> {
   try {
-    const transcript = request.transcript.slice(
-      0,
-      getMaxTranscriptChars(ctx.privateCapabilityTier),
-    );
+    const transcript = sliceTranscriptForLocalLlm(request.transcript, ctx.privateCapabilityTier);
     const raw = await generateWithLocalLlm(
       ctx.selectedLocalAiModel,
       [
         {
           role: 'system',
-          content:
-            'You answer questions about a voice note transcript. Keep answers concise, factual, and grounded in the transcript.',
+          content: 'Answer from the transcript only. Short, factual.',
         },
         {
           role: 'user',
-          content: `Transcript:\n${transcript}\n\nQuestion:\n${request.question}`,
+          content: `Q: ${request.question}\n\nTranscript:\n${transcript}`,
         },
       ],
-      { maxTokens: 600, temperature: 0.25 },
+      { maxTokens: LOCAL_LLM_ASK_MAX_TOKENS, temperature: 0.25 },
     );
 
     const answer = raw.trim();
