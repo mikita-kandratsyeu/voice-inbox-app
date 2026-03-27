@@ -42,6 +42,7 @@ import {
 import { getWhisperLabel } from '@/shared/lib/whisper';
 
 import type { AutomationFeatureKind } from '../ui/AutomationComingSoonSheet';
+import { performHardReset } from './hardReset';
 
 export function useSettingsScreen() {
   const { t } = useTranslation();
@@ -74,6 +75,7 @@ export function useSettingsScreen() {
   const [automationSheet, setAutomationSheet] = useState<AutomationFeatureKind | null>(null);
   const [planPaywallVisible, setPlanPaywallVisible] = useState(false);
   const [internalUpgradeVisible, setInternalUpgradeVisible] = useState(false);
+  const [isHardResetting, setIsHardResetting] = useState(false);
 
   const {
     refresh: refreshProEntitlement,
@@ -326,6 +328,35 @@ export function useSettingsScreen() {
     }
   }, [monetizationMode, t]);
 
+  const handleHardReset = useCallback(() => {
+    Alert.alert(
+      'Hard reset',
+      'This will delete ALL local app data including recordings, settings, database, and keychain secrets. Continue?',
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: 'Hard reset',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setIsHardResetting(true);
+              await performHardReset();
+              Alert.alert(t('common.done'), 'Hard reset complete. Please fully restart the app.');
+            } catch (err) {
+              if (__DEV__) {
+                console.warn('[settings] hard reset failed', err);
+              }
+
+              Alert.alert(t('common.error'), 'Hard reset failed');
+            } finally {
+              setIsHardResetting(false);
+            }
+          },
+        },
+      ],
+    );
+  }, [t]);
+
   return {
     t,
     color,
@@ -374,5 +405,7 @@ export function useSettingsScreen() {
     setPlanPaywallVisible,
     automationSheet,
     handleUpgradePress,
+    handleHardReset,
+    isHardResetting,
   };
 }

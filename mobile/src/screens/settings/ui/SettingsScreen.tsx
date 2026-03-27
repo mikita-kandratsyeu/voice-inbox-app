@@ -41,6 +41,9 @@ export const SettingsScreen = () => {
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   useScrollToTopOnTabPress(scrollRef);
 
+  const showDebugSection = __DEV__ || isTestflightInternalBuild();
+  const showCrashlyticsButton = __DEV__ && isCrashlyticsDebugEnabled();
+
   return (
     <View style={{ flex: 1, backgroundColor: settings.color.background.secondary }}>
       <View
@@ -154,8 +157,13 @@ export const SettingsScreen = () => {
             navigation={settings.navigation}
             onRateApp={settings.handleRateApp}
           />
-          {(__DEV__ || isTestflightInternalBuild()) && isCrashlyticsDebugEnabled() && (
-            <SettingsDebugSection color={settings.color} />
+          {showDebugSection && (
+            <SettingsDebugSection
+              color={settings.color}
+              onHardReset={settings.handleHardReset}
+              isHardResetting={settings.isHardResetting}
+              showCrashlyticsButton={showCrashlyticsButton}
+            />
           )}
           <SettingsInternalTechInfo />
           <DeferredInboxBannerAd color={settings.color} contentMaxWidth={bannerMaxWidth} />
