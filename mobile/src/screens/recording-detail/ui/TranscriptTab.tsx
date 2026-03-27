@@ -1,6 +1,6 @@
 import { MenuView } from '@react-native-menu/menu';
 import { Eye, Languages, Mic, Pencil, RefreshCw, Undo2 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -17,6 +17,7 @@ import { useAppTheme } from '@/shared/config';
 import { Button, TabEmptyState } from '@/shared/ui';
 
 type TranscriptTabProps = {
+  recordId: string;
   segments: TranscriptSegment[];
   translatedTranscript?: string;
   translationLanguage?: string;
@@ -82,6 +83,7 @@ const buildReadableParagraphs = (text: string): string[] => {
 };
 
 export const TranscriptTab = ({
+  recordId,
   segments,
   translatedTranscript,
   translationLanguage,
@@ -97,9 +99,11 @@ export const TranscriptTab = ({
   const { t } = useTranslation();
   const theme = useAppTheme();
   const isDark = theme === 'dark';
-  const [viewMode, setViewMode] = useState<'original' | 'translated'>(
-    translatedTranscript?.trim() ? 'translated' : 'original',
-  );
+  const [viewMode, setViewMode] = useState<'original' | 'translated'>('original');
+
+  useEffect(() => {
+    setViewMode('original');
+  }, [recordId]);
 
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);

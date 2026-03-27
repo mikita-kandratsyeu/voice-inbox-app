@@ -96,6 +96,7 @@ export const TranscriptContent = ({
   return (
     <>
       <TranscriptTab
+        recordId={r.id}
         segments={r.transcriptSegments ?? []}
         translatedTranscript={r.translatedTranscript}
         translationLanguage={r.translationLanguage}
