@@ -1,8 +1,11 @@
+import { X } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Text, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
+
+import { Button } from './Button';
 
 type AiTabLoadingStateProps = {
   message: string;
@@ -19,7 +22,7 @@ export const AiTabLoadingState = ({
 }: AiTabLoadingStateProps) => {
   const color = useColors();
   const { t } = useTranslation();
-  const label = cancelLabel ?? t('common.cancel');
+  const label = cancelLabel ?? t('recordingDetail.cancel');
 
   return (
     <View className="items-center gap-3 p-8">
@@ -28,17 +31,15 @@ export const AiTabLoadingState = ({
         {message}
       </Text>
       {showCancelButton && onCancel ? (
-        <Pressable
+        <Button
+          variant="secondary"
+          size="lg"
+          icon={<X size={16} color={color.text.primary} strokeWidth={2.5} />}
+          label={label}
+          color={color}
           onPress={onCancel}
-          accessibilityRole="button"
-          accessibilityLabel={label}
-          className="mt-1 rounded-xl px-4 py-2.5"
-          style={{ backgroundColor: color.background.tertiary }}
-        >
-          <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
-            {label}
-          </Text>
-        </Pressable>
+          className="mt-1"
+        />
       ) : null}
     </View>
   );

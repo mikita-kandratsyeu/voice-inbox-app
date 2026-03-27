@@ -65,17 +65,6 @@ export const useAiProcessing = () => {
   const inFlightRef = useRef<Set<string>>(new Set());
   const cancelTokensRef = useRef<Map<string, { cancelled: boolean }>>(new Map());
 
-  const cancelAiGeneration = useCallback((recordId: string) => {
-    const token = cancelTokensRef.current.get(recordId);
-    if (token) {
-      token.cancelled = true;
-    }
-
-    if (useSettingsStore.getState().aiExecutionMode === 'private_experimental') {
-      void releaseLocalLlmSession();
-    }
-  }, []);
-
   const applyCancelledUiState = useCallback(
     (recordId: string) => {
       const latest = useRecordStore.getState().records.find((r) => r.id === recordId);
@@ -88,6 +77,21 @@ export const useAiProcessing = () => {
       setTasksError(recordId, undefined);
     },
     [setSummaryError, setSummaryStatus, setTasksError, setTasksStatus],
+  );
+
+  const cancelAiGeneration = useCallback(
+    (recordId: string) => {
+      const token = cancelTokensRef.current.get(recordId);
+      if (!token) return;
+
+      token.cancelled = true;
+      applyCancelledUiState(recordId);
+
+      if (useSettingsStore.getState().aiExecutionMode === 'private_experimental') {
+        void releaseLocalLlmSession();
+      }
+    },
+    [applyCancelledUiState],
   );
 
   const processRecord = useCallback(
