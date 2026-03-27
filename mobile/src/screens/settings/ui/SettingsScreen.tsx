@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { ProLicenseKeyModal } from '@/features/pro-license';
-import { isCrashlyticsDebugEnabled } from '@/shared/config/buildEnv';
+import { isCrashlyticsDebugEnabled, isTestflightInternalBuild } from '@/shared/config/buildEnv';
 import { useScrollToTopOnTabPress, useTabletContentMaxWidth } from '@/shared/lib';
 import { SCREEN_PADDING } from '@/shared/ui';
 
@@ -154,7 +154,7 @@ export const SettingsScreen = () => {
             navigation={settings.navigation}
             onRateApp={settings.handleRateApp}
           />
-          {__DEV__ && isCrashlyticsDebugEnabled() && (
+          {(__DEV__ || isTestflightInternalBuild()) && isCrashlyticsDebugEnabled() && (
             <SettingsDebugSection color={settings.color} />
           )}
           <SettingsInternalTechInfo />

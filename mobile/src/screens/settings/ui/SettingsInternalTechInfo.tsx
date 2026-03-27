@@ -138,7 +138,7 @@ export const SettingsInternalTechInfo = () => {
   );
 
   useEffect(() => {
-    if (!isTestflightInternalBuild()) {
+    if (!(__DEV__ || isTestflightInternalBuild())) {
       return;
     }
 
