@@ -120,7 +120,8 @@
     "privateModeLimitedTooLong": "This note is too long for Limited Private mode. Switch to Smart mode.",
     "privateModeParseFailed": "The local model could not produce a valid response. Try again or switch to Smart mode.",
     "privateModeEmptyAnswer": "The local model returned an empty answer. Try again or switch to Smart mode.",
-    "privateModeUnsupportedLocale": "Apple Intelligence is unavailable for your current device.",
+    "privateModeUnsupportedLocale": "The local model does not support the current language or locale for this request. Try English in AI settings or switch to Smart mode.",
+    "privateModeTooLongForLocal": "This text is too long for the local model. Shorten the note or switch to Smart mode.",
     "privateModeGenericError": "The local request failed. Try again or switch to Smart mode."
   },
   "search": {
