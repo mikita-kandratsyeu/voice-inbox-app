@@ -1,5 +1,5 @@
 import { Platform } from 'react-native';
-import RNFS from 'react-native-fs';
+import RNBlobUtil from 'react-native-blob-util';
 import { unzip } from 'react-native-zip-archive';
 
 import type { WhisperModelId } from '@/entities/settings';
@@ -20,6 +20,20 @@ import type {
 const BIN_PROGRESS_WEIGHT = 0.88;
 const COREML_PROGRESS_WEIGHT = 0.12;
 
+type BlobTask = {
+  cancel: () => Promise<unknown> | unknown;
+  progress: (
+    config: { interval?: number; count?: number },
+    cb: (received: number | string, total: number | string) => void,
+  ) => void;
+  then: Promise<unknown>['then'];
+  catch: Promise<unknown>['catch'];
+};
+
+type BlobResponse = {
+  info: () => { status: number };
+};
+
 const coreMlZipTempPath = (modelsDir: string, modelId: WhisperModelId): string =>
   `${modelsDir}/.${modelId}.coreml-encoder.zip`;
 
@@ -36,11 +50,14 @@ class WhisperModelDownloader {
   private snapshot: WhisperDownloadSnapshot = emptySnapshot();
   private listeners = new Set<(s: WhisperDownloadSnapshot) => void>();
   private runPromise: Promise<void> | null = null;
-
-  private activeJobId: number | null = null;
-  private activeDownloadSettlement: Promise<void> | null = null;
-
+  private cancelInFlight: Promise<void> | null = null;
   private cancelRequested = false;
+  private lastLoggedProgressBucket = -1;
+  private activeTask: BlobTask | null = null;
+  private activeDownloadSettlement: Promise<void> | null = null;
+  private taskCounter = 1;
+  private sessionCounter = 1;
+  private activeSessionId: number | null = null;
 
   getSnapshot = (): WhisperDownloadSnapshot => ({ ...this.snapshot });
 
@@ -53,9 +70,7 @@ class WhisperModelDownloader {
 
   private emit = (): void => {
     const s = this.getSnapshot();
-    for (const l of this.listeners) {
-      l(s);
-    }
+    for (const l of this.listeners) l(s);
   };
 
   private setSnapshot = (patch: Partial<WhisperDownloadSnapshot>): void => {
@@ -68,65 +83,111 @@ class WhisperModelDownloader {
     this.emit();
   };
 
-  private async deletePartialArtifacts(modelId: WhisperModelId): Promise<void> {
+  private async deletePartialArtifacts(
+    modelId: WhisperModelId,
+    opts?: { sessionId?: number; force?: boolean },
+  ): Promise<void> {
+    if (!opts?.force && opts?.sessionId != null && this.activeSessionId !== opts.sessionId) {
+      if (__DEV__) {
+        console.warn('[whisper-download] skip cleanup from stale session', {
+          sessionId: opts.sessionId,
+          activeSessionId: this.activeSessionId,
+          modelId,
+        });
+      }
+      return;
+    }
+
     const qPath = getWhisperModelPath(modelId, 'q5_1');
     const fullPath = getWhisperModelPath(modelId, 'full');
     if (await NitroFS.exists(qPath)) await NitroFS.unlink(qPath);
     if (fullPath !== qPath && (await NitroFS.exists(fullPath))) await NitroFS.unlink(fullPath);
 
     const zipPath = coreMlZipTempPath(getWhisperModelsDir(), modelId);
-    if (await NitroFS.exists(zipPath)) {
-      await NitroFS.unlink(zipPath);
-    }
+    if (await NitroFS.exists(zipPath)) await NitroFS.unlink(zipPath);
   }
 
-  private async awaitActiveDownloadSettled(): Promise<void> {
-    if (this.activeDownloadSettlement) {
-      await this.activeDownloadSettlement.catch(() => {});
+  private async awaitActiveDownloadSettledWithTimeout(timeoutMs: number): Promise<void> {
+    if (!this.activeDownloadSettlement) {
+      this.activeTask = null;
+      return;
     }
-    this.activeJobId = null;
+
+    let didTimeout = false;
+    const timeoutPromise = new Promise<void>((resolve) => {
+      setTimeout(() => {
+        didTimeout = true;
+        resolve();
+      }, timeoutMs);
+    });
+
+    await Promise.race([this.activeDownloadSettlement.catch(() => {}), timeoutPromise]);
+
+    if (__DEV__ && didTimeout) {
+      console.warn('[whisper-download] native task did not settle in time, forcing JS cleanup');
+    }
+
+    this.activeTask = null;
     this.activeDownloadSettlement = null;
   }
 
   private async verifyPartialFileNotGrowing(path: string): Promise<void> {
-    const isExists = await NitroFS.exists(path);
-
-    if (!isExists) {
-      return;
-    }
-
-    const a = (await NitroFS.stat(path)).size;
-    await new Promise((r) => setTimeout(r, 140));
-    const isExists2 = await NitroFS.exists(path);
-
-    if (!isExists2) {
-      return;
-    }
-    const b = (await NitroFS.stat(path)).size;
-
-    if (b !== a && __DEV__) {
-      console.warn('[whisper] Download target still changed size after cancel; cleaning up again');
+    const existsA = await NitroFS.exists(path);
+    if (!existsA) return;
+    const sizeA = (await NitroFS.stat(path)).size;
+    await new Promise((r) => setTimeout(r, 160));
+    const existsB = await NitroFS.exists(path);
+    if (!existsB) return;
+    const sizeB = (await NitroFS.stat(path)).size;
+    if (sizeB !== sizeA && __DEV__) {
+      console.warn('[whisper-download] file still growing after cancel, deleting again');
       await NitroFS.unlink(path).catch(() => {});
     }
   }
 
-  private attachDownload(jobId: number, promise: Promise<{ statusCode: number }>): void {
-    this.activeJobId = jobId;
+  private startBlobDownload(
+    url: string,
+    toFile: string,
+    onProgressRaw: (received: number, total: number) => void,
+  ): Promise<BlobResponse> {
+    const task = RNBlobUtil.config({ path: toFile, fileCache: true }).fetch('GET', url) as BlobTask;
+    const jobId = this.taskCounter++;
+
+    task.progress({ interval: 250 }, (received, total) => {
+      const r = Number(received) || 0;
+      const t = Number(total) || 0;
+      onProgressRaw(r, t);
+    });
+
+    this.activeTask = task;
     this.setSnapshot({ jobId });
+
+    const promise = task as unknown as Promise<BlobResponse>;
     this.activeDownloadSettlement = promise.then(
       () => {},
       () => {},
     );
+
+    return promise;
   }
 
   private async runDownloadPipeline(options: StartWhisperModelDownloadOptions): Promise<void> {
     const { modelId, expectedBytes, onProgress } = options;
     const format = options.format ?? 'q5_1';
-    const url = getWhisperModelDownloadUrl(modelId, format);
-    const destPath = getWhisperModelPath(modelId, format);
+    const weightsUrl = getWhisperModelDownloadUrl(modelId, format);
+    const weightsPath = getWhisperModelPath(modelId, format);
     const modelsDir = getWhisperModelsDir();
 
+    const sessionId = this.sessionCounter++;
+    this.activeSessionId = sessionId;
+
     this.cancelRequested = false;
+    this.lastLoggedProgressBucket = -1;
+
+    if (__DEV__) {
+      console.warn('[whisper-download] start', { modelId, format, expectedBytes, sessionId });
+    }
+
     this.setSnapshot({
       machineState: 'pending',
       modelId,
@@ -136,158 +197,114 @@ class WhisperModelDownloader {
       lastError: null,
     });
 
-    const dirExists = await NitroFS.exists(modelsDir);
-
-    if (!dirExists) {
+    if (!(await NitroFS.exists(modelsDir))) {
       await NitroFS.mkdir(modelsDir);
     }
 
-    if (this.cancelRequested) {
-      this.setSnapshot({ machineState: 'cancelled' });
-      await this.deletePartialArtifacts(modelId);
-      this.resetSnapshot();
-      throw new Error('cancelled');
-    }
-
     this.setSnapshot({ machineState: 'downloading', phase: 'weights' });
+    let latestWeights = 0;
+    let lastWeightsEmitTs = 0;
+    let lastWeightsProgress = -1;
 
-    const { jobId: weightsJobId, promise: weightsPromise } = RNFS.downloadFile({
-      fromUrl: url,
-      toFile: destPath,
-      background: true,
-      progressDivider: 1,
-      progressInterval: 250,
-      begin: (res) => {
-        const total = res.contentLength > 0 ? res.contentLength : expectedBytes;
-        onProgress(0, 0, total, 'weights');
-      },
-      progress: (res) => {
-        const total = res.contentLength > 0 ? res.contentLength : expectedBytes;
-        const binPct = total > 0 ? res.bytesWritten / total : 0;
-        const progress = Math.round(binPct * BIN_PROGRESS_WEIGHT * 100);
-        onProgress(progress, res.bytesWritten, total, 'weights');
-      },
-    });
-
-    this.attachDownload(weightsJobId, weightsPromise);
-
-    let weightsResult: { statusCode: number };
+    let weightsRes: BlobResponse;
     try {
-      weightsResult = await weightsPromise;
+      weightsRes = await this.startBlobDownload(weightsUrl, weightsPath, (received, totalRaw) => {
+        const total = totalRaw > 0 ? totalRaw : expectedBytes;
+        latestWeights = Math.max(latestWeights, received);
+        const pct = total > 0 ? Math.min(1, latestWeights / total) : 0;
+        const progress = Math.round(pct * BIN_PROGRESS_WEIGHT * 100);
+        const now = Date.now();
+        const shouldEmit = progress !== lastWeightsProgress && now - lastWeightsEmitTs >= 180;
+        if (shouldEmit || progress === 100 || progress === 0) {
+          lastWeightsEmitTs = now;
+          lastWeightsProgress = progress;
+          onProgress(progress, latestWeights, total, 'weights');
+        }
+        if (__DEV__) {
+          const bucket = Math.floor(progress / 10);
+          if (bucket > this.lastLoggedProgressBucket) {
+            this.lastLoggedProgressBucket = bucket;
+            console.warn('[whisper-download] weights progress', {
+              progress,
+              written: latestWeights,
+              total,
+            });
+          }
+        }
+      });
     } catch {
-      if (this.cancelRequested) {
-        this.setSnapshot({ machineState: 'cancelled' });
-        await this.deletePartialArtifacts(modelId);
-        this.resetSnapshot();
-        throw new Error('cancelled');
-      }
+      if (this.cancelRequested) throw new Error('cancelled');
       throw new Error('Download failed');
     }
-
-    this.activeJobId = null;
+    this.activeTask = null;
     this.activeDownloadSettlement = null;
     this.setSnapshot({ jobId: null });
 
-    if (weightsResult.statusCode !== 200) {
-      await NitroFS.exists(destPath).then((exists) => {
-        if (exists) return NitroFS.unlink(destPath);
-      });
-
-      throw new Error(`Download failed with status ${weightsResult.statusCode}`);
+    if (weightsRes.info().status !== 200) {
+      if (await NitroFS.exists(weightsPath)) await NitroFS.unlink(weightsPath).catch(() => {});
+      throw new Error(`Download failed with status ${weightsRes.info().status}`);
     }
-
-    if (this.cancelRequested) {
-      this.setSnapshot({ machineState: 'cancelled' });
-      await this.deletePartialArtifacts(modelId);
-      this.resetSnapshot();
-
-      throw new Error('cancelled');
-    }
+    if (this.cancelRequested) throw new Error('cancelled');
 
     if (Platform.OS === 'ios') {
       const zipPath = coreMlZipTempPath(modelsDir, modelId);
       const coreUrl = getWhisperCoreMlDownloadUrl(modelId);
+      let latestZip = 0;
+      let zipTotal = 1;
+      let lastZipEmitTs = 0;
+      let lastZipProgress = -1;
 
       try {
         await NitroFS.unlink(zipPath).catch(() => {});
         await removeWhisperCoreMlEncoder(modelId).catch(() => {});
-
-        if (this.cancelRequested) {
-          this.setSnapshot({ machineState: 'cancelled' });
-          await this.deletePartialArtifacts(modelId);
-          this.resetSnapshot();
-          throw new Error('cancelled');
-        }
-
         this.setSnapshot({ phase: 'coreml' });
 
-        const { jobId: zipJobId, promise: zipPromise } = RNFS.downloadFile({
-          fromUrl: coreUrl,
-          toFile: zipPath,
-          background: true,
-          progressDivider: 1,
-          progressInterval: 250,
-          begin: (res) => {
-            const zipTotal = res.contentLength > 0 ? res.contentLength : 1;
-            onProgress(Math.round(BIN_PROGRESS_WEIGHT * 100), 0, zipTotal, 'coreml');
-          },
-          progress: (res) => {
-            const total = res.contentLength > 0 ? res.contentLength : 1;
-            const zipPct = res.bytesWritten / total;
+        let zipRes: BlobResponse;
+        try {
+          zipRes = await this.startBlobDownload(coreUrl, zipPath, (received, totalRaw) => {
+            zipTotal = totalRaw > 0 ? totalRaw : Math.max(zipTotal, 1);
+            latestZip = Math.max(latestZip, received);
+            const zipPct = Math.min(1, latestZip / zipTotal);
             const combined = Math.round(
               (BIN_PROGRESS_WEIGHT + zipPct * COREML_PROGRESS_WEIGHT) * 100,
             );
-            onProgress(combined, res.bytesWritten, total, 'coreml');
-          },
-        });
-
-        this.attachDownload(zipJobId, zipPromise);
-
-        let zipResult: { statusCode: number };
-        try {
-          zipResult = await zipPromise;
+            const now = Date.now();
+            const shouldEmit = combined !== lastZipProgress && now - lastZipEmitTs >= 180;
+            if (shouldEmit || combined >= 100) {
+              lastZipEmitTs = now;
+              lastZipProgress = combined;
+              onProgress(combined, latestZip, zipTotal, 'coreml');
+            }
+          });
         } catch {
-          if (this.cancelRequested) {
-            this.setSnapshot({ machineState: 'cancelled' });
-            await this.deletePartialArtifacts(modelId);
-            this.resetSnapshot();
-            throw new Error('cancelled');
-          }
+          if (this.cancelRequested) throw new Error('cancelled');
           throw new Error('Core ML encoder download failed');
         }
 
-        this.activeJobId = null;
+        this.activeTask = null;
         this.activeDownloadSettlement = null;
         this.setSnapshot({ jobId: null });
 
-        if (this.cancelRequested) {
-          this.setSnapshot({ machineState: 'cancelled' });
-          await this.deletePartialArtifacts(modelId);
-          this.resetSnapshot();
-          throw new Error('cancelled');
-        }
-
-        if (zipResult.statusCode !== 200) {
+        if (zipRes.info().status === 200) {
+          await unzip(zipPath, modelsDir);
+          await NitroFS.unlink(zipPath).catch(() => {});
+        } else {
           await NitroFS.unlink(zipPath).catch(() => {});
           if (__DEV__) {
             console.warn(
-              `[whisper] Core ML encoder download failed (${zipResult.statusCode}), using CPU`,
+              `[whisper-download] Core ML encoder failed (${zipRes.info().status}), using CPU`,
             );
           }
-          onProgress(100, expectedBytes, expectedBytes, 'weights');
-        } else {
-          await unzip(zipPath, modelsDir);
-          await NitroFS.unlink(zipPath).catch(() => {});
         }
       } catch (e) {
-        await NitroFS.unlink(coreMlZipTempPath(modelsDir, modelId)).catch(() => {});
-        if (__DEV__) {
-          console.warn('[whisper] Core ML encoder setup failed, using CPU', e);
-        }
+        await NitroFS.unlink(zipPath).catch(() => {});
+        if (__DEV__) console.warn('[whisper-download] coreml setup failed, using CPU', e);
       }
     }
 
+    if (this.cancelRequested) throw new Error('cancelled');
     onProgress(100, expectedBytes, expectedBytes, 'weights');
+    if (__DEV__) console.warn('[whisper-download] completed', { modelId, format, sessionId });
     this.setSnapshot({ machineState: 'completed', phase: null, jobId: null });
     this.resetSnapshot();
   }
@@ -297,26 +314,23 @@ class WhisperModelDownloader {
       await this.runDownloadPipeline(options);
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
-      if (error.message === 'cancelled') {
-        throw error;
-      }
-
       const msg = error.message.toLowerCase();
-      const isAbort =
-        msg.includes('cancel') ||
-        msg.includes('abort') ||
-        this.cancelRequested ||
-        (msg.includes('stop') && msg.includes('download'));
+      const isCancel =
+        error.message === 'cancelled' || msg.includes('cancel') || this.cancelRequested;
 
-      if (isAbort || this.snapshot.machineState === 'cancelled') {
+      if (isCancel) {
         this.setSnapshot({ machineState: 'cancelled', lastError: null });
-        await this.deletePartialArtifacts(options.modelId);
+        await this.deletePartialArtifacts(options.modelId, {
+          sessionId: this.activeSessionId ?? undefined,
+        }).catch(() => {});
         this.resetSnapshot();
         throw new Error('cancelled');
       }
 
       this.setSnapshot({ machineState: 'failed', lastError: error });
-      await this.deletePartialArtifacts(options.modelId).catch(() => {});
+      await this.deletePartialArtifacts(options.modelId, {
+        sessionId: this.activeSessionId ?? undefined,
+      }).catch(() => {});
       this.resetSnapshot();
       throw error;
     }
@@ -325,46 +339,79 @@ class WhisperModelDownloader {
   startDownload = async (options: StartWhisperModelDownloadOptions): Promise<void> => {
     const format = options.format ?? 'q5_1';
 
+    if (this.cancelInFlight) {
+      if (__DEV__) console.warn('[whisper-download] waiting for in-flight cancel before restart');
+      await this.cancelInFlight.catch(() => {});
+    }
+
     if (this.runPromise) {
-      if (this.snapshot.modelId === options.modelId && this.snapshot.format === format) {
-        return this.runPromise;
+      if (this.cancelRequested) {
+        await Promise.race([
+          this.runPromise.catch(() => {}),
+          new Promise<void>((resolve) => setTimeout(resolve, 1800)),
+        ]);
       }
-      throw new Error('Another Whisper model download is already in progress');
+
+      if (this.runPromise) {
+        if (this.cancelRequested) {
+          throw new Error('Whisper download is still cancelling. Please retry in a moment.');
+        }
+        if (this.snapshot.modelId === options.modelId && this.snapshot.format === format) {
+          return this.runPromise;
+        }
+        throw new Error('Another Whisper model download is already in progress');
+      }
     }
 
     this.runPromise = this.executeDownload(options).finally(() => {
       this.runPromise = null;
+      this.activeTask = null;
+      this.activeDownloadSettlement = null;
+      this.activeSessionId = null;
     });
 
     return this.runPromise;
   };
 
   cancelWhisperModelDownload = async (modelId: WhisperModelId): Promise<void> => {
-    if (this.snapshot.modelId !== modelId) {
-      await this.deletePartialArtifacts(modelId);
-      return;
-    }
+    if (this.cancelInFlight) return this.cancelInFlight;
 
-    this.cancelRequested = true;
+    this.cancelInFlight = (async () => {
+      if (this.snapshot.modelId !== modelId) {
+        await this.deletePartialArtifacts(modelId, { force: true });
+        return;
+      }
 
-    if (this.activeJobId != null) {
-      const format = this.snapshot.format ?? 'q5_1';
-      const beforeSizePath = getWhisperModelPath(modelId, format);
+      const cancelSessionId = this.activeSessionId;
+      this.cancelRequested = true;
+      if (__DEV__) {
+        console.warn('[whisper-download] cancel requested', {
+          modelId,
+          jobId: this.snapshot.jobId,
+          sessionId: cancelSessionId,
+        });
+      }
 
-      await RNFS.stopDownload(this.activeJobId);
-      await this.awaitActiveDownloadSettled();
-      await this.verifyPartialFileNotGrowing(beforeSizePath);
-    } else {
-      await this.awaitActiveDownloadSettled();
-    }
+      const beforePath = getWhisperModelPath(modelId, this.snapshot.format ?? 'q5_1');
 
-    await this.deletePartialArtifacts(modelId);
-    this.setSnapshot({ machineState: 'cancelled', jobId: null, phase: null });
-    this.resetSnapshot();
+      try {
+        await this.activeTask?.cancel?.();
+      } catch {
+        // best effort; verify and cleanup below
+      }
 
-    if (this.runPromise) {
-      await this.runPromise.catch(() => {});
-    }
+      await this.awaitActiveDownloadSettledWithTimeout(1800);
+      await this.verifyPartialFileNotGrowing(beforePath);
+      await this.deletePartialArtifacts(modelId, {
+        sessionId: cancelSessionId ?? undefined,
+      });
+      this.setSnapshot({ machineState: 'cancelled', jobId: null, phase: null });
+      this.resetSnapshot();
+    })().finally(() => {
+      this.cancelInFlight = null;
+    });
+
+    return this.cancelInFlight;
   };
 }
 

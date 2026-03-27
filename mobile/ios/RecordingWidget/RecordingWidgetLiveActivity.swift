@@ -253,6 +253,7 @@ struct RecordingWidgetLiveActivity: Widget {
                 }
             }
         }
+        .keylineTint(.clear)
     }
 }
 

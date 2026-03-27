@@ -88,14 +88,6 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
   }
 
   func application(
-    _ application: UIApplication,
-    handleEventsForBackgroundURLSession identifier: String,
-    completionHandler: @escaping () -> Void
-  ) {
-    RNFSManager.setCompletionHandlerForIdentifier(identifier, completionHandler: completionHandler)
-  }
-  
-  func application(
     _ app: UIApplication,
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey : Any] = [:]

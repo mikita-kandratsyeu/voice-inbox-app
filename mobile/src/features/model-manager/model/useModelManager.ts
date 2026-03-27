@@ -75,13 +75,21 @@ export const useModelManager = () => {
 
   const cancelDownload = useCallback(
     async (modelId: WhisperModelId): Promise<void> => {
-      const format = whisperModelWeightsFormat;
-      await cancelWhisperModelDownload(modelId);
-      setWhisperModelStatus(modelId, format, 'not_downloaded');
-      setDownloadProgress(modelId, format, 0);
-      await stopWhisperDownloadLiveActivity();
+      // Immediate UI reset for both formats to avoid stuck "downloading" flags.
+      setWhisperModelStatus(modelId, 'q5_1', 'not_downloaded');
+      setWhisperModelStatus(modelId, 'full', 'not_downloaded');
+      setDownloadProgress(modelId, 'q5_1', 0);
+      setDownloadProgress(modelId, 'full', 0);
+      await stopWhisperDownloadLiveActivity().catch(() => {});
+
+      // Do native/network cancellation in background so UI remains responsive.
+      void cancelWhisperModelDownload(modelId).catch((err) => {
+        if (__DEV__) {
+          console.warn('[whisper-download] background cancel failed', err);
+        }
+      });
     },
-    [setWhisperModelStatus, setDownloadProgress, whisperModelWeightsFormat],
+    [setWhisperModelStatus, setDownloadProgress],
   );
 
   const removeModel = useCallback(

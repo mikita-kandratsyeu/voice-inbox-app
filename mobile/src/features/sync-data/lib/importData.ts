@@ -13,7 +13,7 @@ import {
   isStringArrayItem,
   RECORDINGS_DIR,
 } from '@/shared/lib';
-import { getCachesDirectoryPath, NitroFS, readAsciiBytes } from '@/shared/lib/fs';
+import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
 const METADATA_FILENAME = 'metadata.json';
 
@@ -105,7 +105,7 @@ async function fileHasZipLocalHeader(fsPath: string): Promise<boolean> {
     if (!isExists) {
       return false;
     }
-    const head = await readAsciiBytes(fsPath, 2, 0);
+    const head = (await NitroFS.readFile(fsPath, 'ascii')).slice(0, 2);
     return head === 'PK';
   } catch {
     return false;

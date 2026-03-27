@@ -245,6 +245,7 @@ struct DownloadWidgetLiveActivity: Widget {
                 .buttonStyle(.plain)
             }
         }
+        .keylineTint(.clear)
     }
 }
 
