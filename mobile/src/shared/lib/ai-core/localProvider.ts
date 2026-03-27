@@ -79,7 +79,6 @@ async function generateText(
     throw new Error(i18n.t('ai.privateModeUnavailable'));
   }
 
-  // Apple Foundation Models on iOS run on-device using Apple acceleration stack (Core ML / ANE).
   const parts = (await AppleFoundationModels.generateText(messages, {
     temperature: 0.2,
     topP: 0.9,
@@ -91,6 +90,7 @@ async function generateText(
 
 function mapLocalError(err: unknown): string {
   const message = err instanceof Error ? err.message : String(err);
+  const normalized = message.toLowerCase();
 
   if (message.includes('privateModeUnavailable')) {
     return i18n.t('ai.privateModeUnavailable');
@@ -105,6 +105,10 @@ function mapLocalError(err: unknown): string {
 
   if (message.includes('Local answer is empty')) {
     return i18n.t('ai.privateModeEmptyAnswer');
+  }
+
+  if (normalized.includes('unsupported language') || normalized.includes('unsupported locale')) {
+    return i18n.t('ai.privateModeUnsupportedLocale');
   }
 
   return i18n.t('ai.privateModeGenericError');
@@ -139,12 +143,14 @@ export async function runLocalSummaryTasks(
     );
 
     const jsonPayload = extractJsonObject(raw);
+
     if (!jsonPayload) {
       throw new Error('Invalid local summary response');
     }
 
     const parsed = JSON.parse(jsonPayload) as Record<string, unknown>;
     const summary = typeof parsed.summary === 'string' ? parsed.summary.trim() : '';
+
     if (!summary) {
       throw new Error('Local summary is empty');
     }

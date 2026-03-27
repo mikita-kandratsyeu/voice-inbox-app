@@ -120,6 +120,7 @@
     "privateModeLimitedTooLong": "This note is too long for Limited Private mode. Switch to Smart mode.",
     "privateModeParseFailed": "The local model could not produce a valid response. Try again or switch to Smart mode.",
     "privateModeEmptyAnswer": "The local model returned an empty answer. Try again or switch to Smart mode.",
+    "privateModeUnsupportedLocale": "Apple Private mode is unavailable for your current device language/region. Enable Apple Intelligence and set Siri/system language to English (US).",
     "privateModeGenericError": "The local request failed. Try again or switch to Smart mode."
   },
   "search": {
@@ -632,7 +633,7 @@
     "outputLanguage.en": "Always English"
   },
   "privateAiMode": {
-    "title": "Private Offline AI",
+    "title": "AI mode",
     "description": "Control the experimental mode where generation runs locally on device. This section is separated so the mode can be enabled or disabled easily."
   },
   "aiModels": {
