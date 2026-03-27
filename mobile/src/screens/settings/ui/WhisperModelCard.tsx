@@ -1,4 +1,4 @@
-import { Check, Download, Smartphone, X } from 'lucide-react-native';
+import { Check, Download, RotateCcw, Smartphone } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -11,7 +11,7 @@ import type {
   WhisperModelStatus,
 } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
-import { formatFileSize } from '@/shared/lib/whisper';
+import { formatFileSize, getWhisperLabel } from '@/shared/lib/whisper';
 
 import { getAccuracyLabel, getSpeedLabel } from '../config';
 import { getCardRadiusClass, getSpeedColor } from '../lib';
@@ -104,7 +104,7 @@ export const WhisperModelCard = ({
         <View className="mr-3 flex-1">
           <View className="mb-1 flex-row flex-wrap items-center gap-2">
             <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
-              Whisper {model.name}
+              {getWhisperLabel(model.id)}
             </Text>
             <View
               className="rounded-full px-2 py-0.5"
@@ -253,15 +253,11 @@ export const WhisperModelCard = ({
               className="h-8 w-8 items-center justify-center rounded-full"
               style={{ backgroundColor: color.background.tertiary }}
             >
-              <Download size={16} color={color.accent.primary} strokeWidth={2} />
-            </View>
-          )}
-          {isError && (
-            <View
-              className="h-8 w-8 items-center justify-center rounded-full"
-              style={{ backgroundColor: color.background.tertiary }}
-            >
-              <X size={16} color={color.accent.delete} strokeWidth={2} />
+              {isError ? (
+                <RotateCcw size={16} color={color.accent.primary} strokeWidth={2} />
+              ) : (
+                <Download size={16} color={color.accent.primary} strokeWidth={2} />
+              )}
             </View>
           )}
         </View>

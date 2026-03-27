@@ -12,7 +12,6 @@ import {
   getWhisperModelVariantId,
   USER_FACING_AI_MODELS,
   useSettingsStore,
-  WHISPER_MODELS,
 } from '@/entities/settings';
 import { openAppReviewFromSettings } from '@/features/app-review';
 import {
@@ -40,6 +39,7 @@ import {
   type PushPermissionStatus,
   requestPushPermission,
 } from '@/shared/lib/push';
+import { getWhisperLabel } from '@/shared/lib/whisper';
 
 import type { AutomationFeatureKind } from '../ui/AutomationComingSoonSheet';
 
@@ -198,12 +198,11 @@ export function useSettingsScreen() {
     selectedWhisperModelFormat,
   );
   const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
-  const whisperModelLabel =
-    WHISPER_MODELS.find((m) => m.id === selectedWhisperModel)?.name ?? selectedWhisperModel;
+
   const transcriptionValue =
     whisperStatus === 'not_downloaded'
       ? t('settings.whisperModelNotSet')
-      : `Whisper ${whisperModelLabel}`;
+      : getWhisperLabel(selectedWhisperModel);
 
   const handleExport = useCallback(async () => {
     try {

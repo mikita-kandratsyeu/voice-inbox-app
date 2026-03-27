@@ -31,14 +31,14 @@ struct DownloadLiveActivityView: View {
 
                 trailingProgress
             }
-            .padding(.horizontal, 12)
+            .padding(.horizontal, 16)
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                RoundedRectangle(cornerRadius: 28)
                     .fill(containerBackground)
+                    .padding(.horizontal, -6)
             )
-            .padding(.horizontal, 8)
         }
         .activityBackgroundTint(activityBackgroundTint)
         .activitySystemActionForegroundColor(systemActionForeground)
@@ -50,7 +50,7 @@ private extension DownloadLiveActivityView {
         ZStack {
             Circle()
                 .fill(leftIconBackground)
-                .frame(width: 64, height: 64)
+                .frame(width: 56, height: 56)
 
             Image(systemName: "arrow.down.circle.fill")
                 .font(.system(size: 20, weight: .semibold))
@@ -79,7 +79,7 @@ private extension DownloadLiveActivityView {
             Circle()
                 .fill(trailingButtonFill)
                 .background(.ultraThinMaterial, in: Circle())
-                .frame(width: 64, height: 64)
+                .frame(width: 56, height: 56)
 
             Text(progressPercentText)
                 .font(.system(size: 16, weight: .semibold, design: .rounded))
@@ -100,9 +100,7 @@ private extension DownloadLiveActivityView {
     }
 
     var containerBorder: Color {
-        colorScheme == .light
-            ? Color.black.opacity(0.08)
-            : Color.white.opacity(0.08)
+      .clear
     }
 
     var leftIconBackground: Color {
@@ -120,7 +118,7 @@ private extension DownloadLiveActivityView {
     var trailingButtonFill: Color {
         colorScheme == .light
             ? Color.black.opacity(0.07)
-            : Color.white.opacity(0.10)
+            : Color.white.opacity(0.18)
     }
 
     var trailingButtonForeground: Color {
@@ -198,7 +196,7 @@ struct DownloadWidgetLiveActivity: Widget {
                         ZStack {
                             Circle()
                                 .fill(Color.primary.opacity(0.10))
-                                .background(.ultraThinMaterial, in: Circle())
+                                .background(.regularMaterial, in: Circle())
                                 .frame(width: 50, height: 50)
 
                             Image(systemName: "gearshape.fill")
@@ -245,7 +243,6 @@ struct DownloadWidgetLiveActivity: Widget {
                 .buttonStyle(.plain)
             }
         }
-        .keylineTint(.clear)
     }
 }
 

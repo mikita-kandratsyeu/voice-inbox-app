@@ -159,7 +159,7 @@ export function useAutoOrganizeFolders(
               : getAiWeeklyLimitExceededMessage()
             : postResult.error;
         const safeMsg =
-          typeof msg === 'string' && isLikelyNetworkError(msg)
+          isString(msg) && isLikelyNetworkError(msg)
             ? t('folders.autoOrganizeFailedDescription')
             : msg;
         Alert.alert(t('common.error'), safeMsg);

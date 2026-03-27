@@ -57,9 +57,7 @@ private extension RecordingLiveActivityView {
     }
 
     var containerBorder: Color {
-        colorScheme == .light
-            ? Color.black.opacity(0.08)
-            : Color.white.opacity(0.08)
+      .clear
     }
 
     var leftIconBackground: Color {
@@ -77,7 +75,7 @@ private extension RecordingLiveActivityView {
     var trailingButtonFill: Color {
         colorScheme == .light
             ? Color.black.opacity(0.06)
-            : Color.white.opacity(0.10)
+            : Color.white.opacity(0.18)
     }
 
     var trailingButtonForeground: Color {
@@ -145,7 +143,7 @@ struct RecordingLiveActivityView: View {
                 ZStack {
                     Circle()
                         .fill(trailingButtonFill)
-                        .background(.ultraThinMaterial, in: Circle())
+                        .background(.regularMaterial, in: Circle())
                         .frame(width: 64, height: 64)
 
                     Image(systemName: context.state.isRecording ? "pause.fill" : "play.fill")
@@ -155,14 +153,14 @@ struct RecordingLiveActivityView: View {
             }
             .frame(width: 72)
         }
-        .padding(.horizontal, 8)
+        .padding(.horizontal, 12)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
         .background(
-            RoundedRectangle(cornerRadius: 30, style: .continuous)
+            RoundedRectangle(cornerRadius: 30)
                 .fill(containerBackground)
+                .padding(.horizontal, -6)
         )
-        .padding(.horizontal, 8)
         .activityBackgroundTint(activityBackgroundTint)
         .activitySystemActionForegroundColor(systemActionForeground)
     }
@@ -253,7 +251,6 @@ struct RecordingWidgetLiveActivity: Widget {
                 }
             }
         }
-        .keylineTint(.clear)
     }
 }
 
