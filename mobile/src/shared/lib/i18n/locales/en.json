@@ -756,6 +756,8 @@
     "phaseAnalyzing": "Reading duration — large files can take a while.",
     "maxDurationTitle": "File too long",
     "maxDurationMessage": "Recording must be no longer than {{ max }} minutes.",
+    "durationUnknownTitle": "Could not read duration",
+    "durationUnknownMessage": "The app could not read this file's length, so the {{ max }}-minute limit cannot be verified. Try WAV, M4A, or MP3, or re-export the file.",
     "importError": "Could not add the audio file. Try another format (e.g. WAV, M4A, MP3).",
     "conversionError": "Could not convert the audio file. Try a different file or format."
   },

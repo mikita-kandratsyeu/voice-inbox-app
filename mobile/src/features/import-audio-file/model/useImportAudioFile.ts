@@ -130,17 +130,30 @@ export function useImportAudioFile() {
         }
       }
       if (durationMs == null || durationMs <= 0) {
-        durationMs = maxImportMs;
-        if (__DEV__) {
-          console.warn('[importAudioFile] Could not get duration, using max');
+        hapticError();
+        const maxMinutes = Math.round(maxImportMs / (60 * 1000));
+        Alert.alert(
+          t('importAudio.durationUnknownTitle'),
+          t('importAudio.durationUnknownMessage', { max: maxMinutes }),
+          [{ text: t('common.ok') }],
+        );
+        try {
+          await NitroFS.unlink(destPath);
+        } catch {
+          if (__DEV__) {
+            console.warn('[importAudioFile] Could not delete file after unknown duration');
+          }
         }
+        return;
       }
 
       if (durationMs > maxImportMs) {
         hapticError();
         Alert.alert(
           t('importAudio.maxDurationTitle'),
-          t('importAudio.maxDurationMessage', { max: maxImportMs / (60 * 1000) }),
+          t('importAudio.maxDurationMessage', {
+            max: Math.round(maxImportMs / (60 * 1000)),
+          }),
           [{ text: t('common.ok') }],
         );
         try {
