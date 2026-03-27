@@ -24,17 +24,6 @@ private func formattedLiveActivityTime(from state: RecordingAttributes.ContentSt
       return formatTime(seconds)
 }
 
-@ViewBuilder
-private func liveActivityTimerText(from state: RecordingAttributes.ContentState) -> some View {
-    if state.isRecording {
-        Text(timerInterval: state.startDate...Date.distantFuture, countsDown: false)
-            .monospacedDigit()
-    } else {
-        Text(formattedLiveActivityTime(from: state))
-            .monospacedDigit()
-    }
-}
-
 private enum RecordingDeeplink {
     static let stopRecordingString = "voiceinbox://stop-recording"
     static let stopRecordingURL = URL(string: stopRecordingString)!
@@ -116,9 +105,10 @@ struct RecordingLiveActivityView: View {
 
             Spacer()
 
-            liveActivityTimerText(from: context.state)
+            Text(formattedLiveActivityTime(from: context.state))
                 .font(.system(size: 34, weight: .semibold, design: .rounded))
                 .dynamicTypeSize(.medium)
+                .monospacedDigit()
                 .minimumScaleFactor(0.8)
                 .foregroundStyle(timerForeground)
                 .lineLimit(1)
@@ -179,8 +169,9 @@ struct RecordingWidgetLiveActivity: Widget {
                     VStack {
                         Spacer(minLength: 0)
 
-                        liveActivityTimerText(from: context.state)
+                        Text(formattedLiveActivityTime(from: context.state))
                             .font(.system(size: 32, weight: .medium, design: .rounded))
+                            .monospacedDigit()
                             .foregroundStyle(.primary)
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
@@ -221,8 +212,9 @@ struct RecordingWidgetLiveActivity: Widget {
                         .foregroundStyle(Color.accentColor)
                 }
             } compactTrailing: {
-                liveActivityTimerText(from: context.state)
+                Text(formattedLiveActivityTime(from: context.state))
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
                     .foregroundStyle(.primary)
                     .transaction { transaction in
                         transaction.animation = nil
