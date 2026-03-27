@@ -58,9 +58,12 @@ export const useAiProcessing = () => {
 
   const processRecord = useCallback(
     async (record: VoiceRecord): Promise<void> => {
-      if (!record.transcript) return;
-
       const baseId = `${record.id}-ai`;
+      const hasTranscript = Boolean(record.transcript?.trim());
+
+      if (!hasTranscript) {
+        return;
+      }
 
       if (inFlightRef.current.has(baseId)) {
         return;

@@ -23,6 +23,9 @@ const AppleFoundationModels = IS_IOS
   ? require('@react-native-ai/apple').AppleFoundationModels
   : null;
 
+const SAFE_LOCAL_SUMMARY_CHARS = 6000;
+const MIN_LOCAL_SUMMARY_CHARS = 1000;
+
 function getMaxTranscriptChars(tier: AiExecutionContext['privateCapabilityTier']): number {
   if (tier === 'limited') return 5000;
   return 14000;
@@ -71,6 +74,19 @@ function safeTasks(value: unknown): AiTask[] {
     .filter((item): item is AiTask => item !== null);
 }
 
+function isUnsupportedLocaleError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  const normalized = message.toLowerCase();
+
+  return normalized.includes('unsupported language') || normalized.includes('unsupported locale');
+}
+
+function nextSmallerLength(currentLength: number): number {
+  const halved = Math.floor(currentLength * 0.72);
+
+  return Math.max(MIN_LOCAL_SUMMARY_CHARS, halved);
+}
+
 async function generateText(
   messages: AppleMessage[],
   options?: Record<string, unknown>,
@@ -107,6 +123,10 @@ function mapLocalError(err: unknown): string {
     return i18n.t('ai.privateModeEmptyAnswer');
   }
 
+  if (message.includes('Local summary too long for current model')) {
+    return i18n.t('ai.privateModeTooLongForLocal');
+  }
+
   if (normalized.includes('unsupported language') || normalized.includes('unsupported locale')) {
     return i18n.t('ai.privateModeUnsupportedLocale');
   }
@@ -119,28 +139,52 @@ export async function runLocalSummaryTasks(
   ctx: AiExecutionContext,
 ): Promise<SummaryTaskResult> {
   try {
-    const transcript = request.transcript.slice(
-      0,
-      getMaxTranscriptChars(ctx.privateCapabilityTier),
-    );
+    const maxChars = getMaxTranscriptChars(ctx.privateCapabilityTier);
+    const transcript = request.transcript.slice(0, maxChars);
     const systemPrompt =
       'You summarize voice notes. Return strict JSON only with keys: summary (string), suggestedTitle (string), tasks (array of {title, priority: high|medium|low, deadline: string|null}), tags (string[]), classification (personal|work|meeting|idea|other), keyPhrases (string[]), nextSteps (string[]). No markdown.';
 
-    const userPrompt = [
-      `Output language: ${ctx.aiOutputLanguage}.`,
-      `Summary style: ${ctx.summaryStyle}.`,
-      `Task strictness: ${ctx.taskStrictness}.`,
-      'Transcript:',
-      transcript,
-    ].join('\n');
-
-    const raw = await generateText(
+    const buildUserPrompt = (transcriptText: string) =>
       [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      { maxTokens: 900 },
-    );
+        `Output language: ${ctx.aiOutputLanguage}.`,
+        `Summary style: ${ctx.summaryStyle}.`,
+        `Task strictness: ${ctx.taskStrictness}.`,
+        'Transcript:',
+        transcriptText,
+      ].join('\n');
+
+    let raw: string | null = null;
+    let cursorLength =
+      transcript.length > SAFE_LOCAL_SUMMARY_CHARS ? SAFE_LOCAL_SUMMARY_CHARS : transcript.length;
+    let lastErr: unknown = null;
+
+    while (raw == null) {
+      const candidateTranscript = transcript.slice(0, cursorLength);
+      try {
+        raw = await generateText(
+          [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: buildUserPrompt(candidateTranscript) },
+          ],
+          { maxTokens: 900 },
+        );
+      } catch (err) {
+        lastErr = err;
+        if (!isUnsupportedLocaleError(err) || cursorLength <= MIN_LOCAL_SUMMARY_CHARS) {
+          break;
+        }
+        const nextLength = nextSmallerLength(cursorLength);
+        if (nextLength === cursorLength) break;
+        cursorLength = nextLength;
+      }
+    }
+
+    if (raw == null) {
+      if (isUnsupportedLocaleError(lastErr)) {
+        throw new Error('Local summary too long for current model');
+      }
+      throw lastErr instanceof Error ? lastErr : new Error(String(lastErr));
+    }
 
     const jsonPayload = extractJsonObject(raw);
 
