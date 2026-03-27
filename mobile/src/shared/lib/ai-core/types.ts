@@ -7,7 +7,7 @@ import type {
 import type { AiProcessingResult } from '@/shared/lib/ai-api';
 
 export type AiTaskIntent = 'summary_tasks' | 'ask';
-export type AiProviderKind = 'cloud';
+export type AiProviderKind = 'cloud' | 'local';
 
 export type AiExecutionContext = {
   selectedAIModel: UserSelectableAIModelId;

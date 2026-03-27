@@ -2,6 +2,7 @@ import { isExperimentalPrivateAiEnabled } from '@/shared/config/buildEnv';
 import { i18n } from '@/shared/lib';
 
 import { runCloudAsk, runCloudSummaryTasks } from './cloudProvider';
+import { runLocalAsk, runLocalSummaryTasks } from './localProvider';
 import type {
   AiExecutionContext,
   AskRequest,
@@ -56,6 +57,10 @@ export const AIOrchestrator = {
     const guardResult = guardPrivateMode(request, effectiveCtx);
     if (guardResult) return guardResult;
 
+    if (effectiveCtx.aiExecutionMode === 'private_experimental') {
+      return runLocalSummaryTasks(request, effectiveCtx);
+    }
+
     return runCloudSummaryTasks(request, effectiveCtx);
   },
 
@@ -66,6 +71,10 @@ export const AIOrchestrator = {
     };
     const guardResult = guardPrivateMode(request, effectiveCtx);
     if (guardResult) return guardResult;
+
+    if (effectiveCtx.aiExecutionMode === 'private_experimental') {
+      return runLocalAsk(request, effectiveCtx);
+    }
 
     return runCloudAsk(request, effectiveCtx);
   },
