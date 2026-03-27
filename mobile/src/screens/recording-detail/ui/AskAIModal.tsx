@@ -8,11 +8,11 @@ import {
 import Clipboard from '@react-native-clipboard/clipboard';
 import {
   AlertCircle,
+  ArrowRight,
   Cloud,
   Copy,
   MessageSquare,
   RefreshCw,
-  Send,
   Share2,
   WifiOff,
 } from 'lucide-react-native';
@@ -20,14 +20,14 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
-  Keyboard,
+  ScrollView,
   Share,
   Text,
   TouchableOpacity,
   useWindowDimensions,
   View,
 } from 'react-native';
-import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
+import { KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -160,6 +160,7 @@ type AnswerContentProps = {
   onCopy: (text: string) => void;
   onShare: (text: string, title: string) => void;
   onAskAnother: () => void;
+  onFollowUpQuestion: (question: string) => void;
 };
 const AnswerContent = ({
   color,
@@ -170,12 +171,26 @@ const AnswerContent = ({
   onCopy,
   onShare,
   onAskAnother,
+  onFollowUpQuestion,
 }: AnswerContentProps) => {
   const { t } = useTranslation();
   const shareText = `${answer}\n\n— ${record.title}`;
+  const followUpQuestions = useMemo(() => buildFollowUpQuestions(t, record), [t, record]);
 
   return (
     <View className="gap-4 pb-4">
+      <View
+        className="rounded-xl px-3 py-2"
+        style={{
+          backgroundColor: color.background.tertiary,
+          borderWidth: 1,
+          borderColor: color.border.default,
+        }}
+      >
+        <Text className="text-xs" style={{ color: color.text.secondary }}>
+          {t('recordingDetail.askEmptyTitle')} • {record.title}
+        </Text>
+      </View>
       {history.map((item, index) => (
         <AnswerBlock
           key={`${index}-${item.question.slice(0, 20)}`}
@@ -232,6 +247,31 @@ const AnswerContent = ({
         color={color}
         onPress={onAskAnother}
       />
+      <View className="gap-2">
+        <Text className="text-xs font-semibold" style={{ color: color.text.secondary }}>
+          {t('recordingDetail.nextSteps')}
+        </Text>
+        <View className="flex-row flex-wrap gap-2">
+          {followUpQuestions.map((followUpQuestion) => (
+            <TouchableOpacity
+              key={followUpQuestion}
+              onPress={() => {
+                hapticSelection();
+                onFollowUpQuestion(followUpQuestion);
+              }}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={followUpQuestion}
+              className="rounded-xl px-3 py-2"
+              style={{ backgroundColor: color.background.tertiary }}
+            >
+              <Text className="text-sm" style={{ color: color.text.primary }}>
+                {followUpQuestion}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
     </View>
   );
 };
@@ -258,6 +298,16 @@ function buildSuggestedQuestions(
   }
   const staticQuestions = SUGGESTED_QUESTION_KEYS.map((key) => t(`recordingDetail.${key}`));
   return [...dynamic, ...staticQuestions].slice(0, SUGGESTED_QUESTION_LIMIT);
+}
+
+function buildFollowUpQuestions(
+  t: (key: string, opts?: { task?: string }) => string,
+  record: VoiceRecord,
+): string[] {
+  const list: string[] = [t('recordingDetail.askSuggested2'), t('recordingDetail.askSuggested3')];
+  if (record.tasks && record.tasks.length > 0) list.push(t('recordingDetail.askSuggestedTasks'));
+  if (record.summary?.trim()) list.push(t('recordingDetail.askSuggestedSummary'));
+  return list.slice(0, SUGGESTED_QUESTION_LIMIT);
 }
 
 type EmptyStateProps = {
@@ -287,18 +337,22 @@ const EmptyState = ({
 
   return (
     <View className="gap-3 py-4">
-      <View
-        className="mb-1 h-[48px] w-[48px] items-center justify-center rounded-full"
-        style={{ backgroundColor: color.background.tertiary }}
-      >
-        <MessageSquare size={22} color={color.icon.muted} strokeWidth={1.8} />
+      <View className="flex-row items-center gap-6 mb-1">
+        <View
+          className="h-[48px] w-[48px] items-center justify-center rounded-full"
+          style={{ backgroundColor: color.background.tertiary }}
+        >
+          <MessageSquare size={22} color={color.icon.muted} strokeWidth={1.8} />
+        </View>
+        <View className="gap-1">
+          <Text className="text-base font-semibold" style={{ color: color.text.primary }}>
+            {t('recordingDetail.askEmptyTitle')}
+          </Text>
+          <Text className="text-sm" style={{ color: color.text.secondary }}>
+            {t('recordingDetail.askEmptyDesc')}
+          </Text>
+        </View>
       </View>
-      <Text className="text-base font-semibold" style={{ color: color.text.primary }}>
-        {t('recordingDetail.askEmptyTitle')}
-      </Text>
-      <Text className="text-sm" style={{ color: color.text.secondary }}>
-        {t('recordingDetail.askEmptyDesc')}
-      </Text>
       <View className="mt-2 gap-2">
         {suggestedQuestions.map((questionText) => (
           <TouchableOpacity
@@ -347,11 +401,15 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
   const hasTranscript = Boolean(record.transcript);
 
   useEffect(() => {
-    if (!visible) return;
+    if (!visible) {
+      return;
+    }
+
     let cancelled = false;
     getAiUsage().then((data) => {
       if (!cancelled) setAiUsage(data ?? null);
     });
+
     return () => {
       cancelled = true;
     };
@@ -378,14 +436,6 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
       setQuestionInput('');
     }
   }, [visible, reset]);
-
-  useEffect(() => {
-    if (!visible) return;
-    const sub = Keyboard.addListener('keyboardDidHide', () => {
-      bottomSheetRef.current?.snapToIndex(1);
-    });
-    return () => sub.remove();
-  }, [visible]);
 
   const handleDismiss = useCallback(() => {
     onDismiss?.();
@@ -425,6 +475,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
   const renderContent = useCallback(() => {
     if (!hasTranscript) return <NoTranscriptState color={color} />;
     if (isLoading) return <LoadingState color={color} />;
+
     if (error && !answer)
       return (
         <ErrorState
@@ -433,6 +484,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
           onClose={() => bottomSheetRef.current?.dismiss()}
         />
       );
+
     if (answer)
       return (
         <AnswerContent
@@ -444,8 +496,10 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
           onCopy={handleCopy}
           onShare={handleShare}
           onAskAnother={askAnother}
+          onFollowUpQuestion={handleSuggestedQuestion}
         />
       );
+
     return (
       <EmptyState
         color={color}
@@ -472,7 +526,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
     askAnother,
   ]);
 
-  const bottomPadding = useMemo(() => Math.max(insets.bottom, 8) + 8, [insets.bottom]);
+  const shouldShowInputRow = hasTranscript && !isLoading;
 
   const sendButton = useMemo(
     () => (
@@ -480,7 +534,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
         <Button
           variant="primary"
           size="md"
-          icon={<Send size={18} color="#fff" strokeWidth={2.5} />}
+          icon={<ArrowRight size={18} color="#fff" strokeWidth={2.5} />}
           iconOnly
           color={color}
           containerStyle={{ backgroundColor: color.accent.primary }}
@@ -493,38 +547,56 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
     [color, handleAsk, questionInput, isLoading, isConnected, t],
   );
 
-  const inputRow = hasTranscript && (
-    <View style={{ marginTop: 8, flexShrink: 0 }}>
-      <InputField
-        color={color}
-        hasValue={Boolean(questionInput.trim())}
-        multiline
-        rightElement={sendButton}
-      >
-        <BottomSheetTextInput
-          style={[getInputFieldInputStyle(color, true), { maxHeight: 100 }]}
-          placeholder={t('recordingDetail.askPlaceholder')}
-          placeholderTextColor={color.text.secondary}
-          accessibilityLabel={t('recordingDetail.askPlaceholder')}
-          value={questionInput}
-          onChangeText={setQuestionInput}
-          returnKeyType="send"
-          editable={isConnected !== false}
-          multiline
-          numberOfLines={3}
-          submitBehavior="blurAndSubmit"
-          onSubmitEditing={handleAsk}
-        />
-      </InputField>
-    </View>
+  const inputRow = useMemo(
+    () =>
+      shouldShowInputRow ? (
+        <View style={{ flexShrink: 0, paddingHorizontal: 20 }}>
+          <InputField
+            color={color}
+            hasValue={Boolean(questionInput.trim())}
+            multiline
+            rightElement={sendButton}
+            containerStyle={{ minHeight: 52 }}
+          >
+            <BottomSheetTextInput
+              style={[
+                getInputFieldInputStyle(color, true),
+                {
+                  minHeight: 24,
+                  maxHeight: 100,
+                  textAlignVertical: (questionInput.trim().length > 0 ? 'top' : 'center') as
+                    | 'top'
+                    | 'center',
+                },
+              ]}
+              placeholder={t('recordingDetail.askPlaceholder')}
+              placeholderTextColor={color.text.secondary}
+              accessibilityLabel={t('recordingDetail.askPlaceholder')}
+              value={questionInput}
+              onChangeText={setQuestionInput}
+              returnKeyType="send"
+              editable={isConnected !== false}
+              multiline
+              numberOfLines={1}
+              submitBehavior="blurAndSubmit"
+              onSubmitEditing={handleAsk}
+            />
+          </InputField>
+          {aiUsage && (
+            <View className="mt-2 flex-row justify-end">
+              <Text className="text-xs" style={{ color: color.text.secondary }}>
+                {t('recordingDetail.askUsage', { used: aiUsage.used, limit: aiUsage.limit })}
+              </Text>
+            </View>
+          )}
+        </View>
+      ) : null,
+    [shouldShowInputRow, color, questionInput, sendButton, t, isConnected, handleAsk, aiUsage],
   );
 
-  const usageFooter = hasTranscript && aiUsage && (
-    <View className="mt-2 flex-row justify-center py-2">
-      <Text className="text-xs" style={{ color: color.text.secondary }}>
-        {t('recordingDetail.askUsage', { used: aiUsage.used, limit: aiUsage.limit })}
-      </Text>
-    </View>
+  const bottomPadding = useMemo(
+    () => Math.max(insets.bottom, 8) + (shouldShowInputRow ? 100 : 8),
+    [insets.bottom, shouldShowInputRow],
   );
 
   const contentContainerStyle = useMemo(
@@ -561,17 +633,31 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
       }}
     >
       <BottomSheetView style={contentContainerStyle}>
-        <KeyboardAwareScrollView
+        <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 8 }}
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 4 }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={Boolean(answer)}
-          bottomOffset={16}
         >
           <View style={{ flex: 1 }}>{renderContent()}</View>
-          {inputRow}
-          {usageFooter}
-        </KeyboardAwareScrollView>
+        </ScrollView>
+        {inputRow && (
+          <View
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: color.background.card,
+              borderTopWidth: 1,
+              borderTopColor: color.border.default,
+              paddingTop: 10,
+              paddingBottom: Math.max(insets.bottom, 8),
+            }}
+          >
+            {inputRow}
+          </View>
+        )}
       </BottomSheetView>
     </BottomSheetModal>
   );

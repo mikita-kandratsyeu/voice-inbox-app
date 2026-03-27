@@ -53,7 +53,7 @@ export const InputField = ({
           backgroundColor: color.background.tertiary,
           borderWidth: 1,
           borderColor,
-          alignItems: multiline ? 'flex-end' : 'center',
+          alignItems: 'center',
         },
         containerStyle,
       ]}
