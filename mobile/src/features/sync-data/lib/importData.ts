@@ -3,12 +3,15 @@ import { unzip } from 'react-native-zip-archive';
 
 import type { Folder } from '@/entities/folder';
 import { useFolderStore } from '@/entities/folder';
+import { DEFAULT_FOLDER_ICON_KEY } from '@/entities/folder/lib/folderLucideIcons';
 import { folderRepository } from '@/entities/folder/model/repository';
 import type { RecordClassification, VoiceRecord } from '@/entities/record';
 import {
+  DEFAULT_FOLDER_BRAND_HEX,
   ensureRecordingsDir,
   i18n,
   isArray,
+  isNumber,
   isString,
   isStringArrayItem,
   RECORDINGS_DIR,
@@ -102,6 +105,25 @@ function pathOrNameLooksLikeZip(uri: string, name: string): boolean {
   }
   const pathOnly = uri.split('?')[0].split('#')[0].toLowerCase();
   return pathOnly.endsWith('.zip');
+}
+
+function isPathInsideDir(path: string, dir: string): boolean {
+  const normalizedPath = path.replace(/\/+$/, '');
+  const normalizedDir = dir.replace(/\/+$/, '');
+  return normalizedPath === normalizedDir || normalizedPath.startsWith(`${normalizedDir}/`);
+}
+
+async function unlinkIfExists(path: string): Promise<void> {
+  try {
+    const exists = await NitroFS.exists(path);
+    if (exists) {
+      await NitroFS.unlink(path);
+    }
+  } catch {
+    if (__DEV__) {
+      console.warn('[unlinkIfExists] failed to unlink', path);
+    }
+  }
 }
 
 async function fileHasZipLocalHeader(fsPath: string): Promise<boolean> {
@@ -201,93 +223,127 @@ async function importFromZip(fileUri: string): Promise<ImportResult> {
     return { success: false, error: i18n.t('importExport.invalidFormat') };
   }
 
-  const metadataPath = `${extractDir}/${METADATA_FILENAME}`;
-  const metadataExists = await NitroFS.exists(metadataPath);
+  try {
+    const metadataPath = `${extractDir}/${METADATA_FILENAME}`;
+    const metadataExists = await NitroFS.exists(metadataPath);
 
-  if (!metadataExists) {
-    await removeDirRecursive(extractDir);
-    return { success: false, error: i18n.t('importExport.invalidFormat') };
-  }
-
-  const raw = await readUtf8WithAllFallbacks(metadataPath);
-
-  const payload = JSON.parse(raw) as ExportPayload;
-
-  if (
-    (payload.version !== 1 && payload.version !== 2 && payload.version !== 3) ||
-    !isArray(payload.records)
-  ) {
-    await removeDirRecursive(extractDir);
-
-    return { success: false, error: i18n.t('importExport.invalidFormat') };
-  }
-
-  if (payload.version === 3 && isArray(payload.folders)) {
-    const foldersToRestore = payload.folders
-      .filter(
-        (f) => f && isString((f as Partial<Folder>).id) && isString((f as Partial<Folder>).name),
-      )
-      .map((f) => {
-        const folder = f as Partial<Folder>;
-        return {
-          id: folder.id as string,
-          name: folder.name as string,
-          color: (folder.color as string | undefined) ?? '#6b7280',
-          icon: (folder.icon as string | undefined) ?? '📁',
-          sortOrder:
-            typeof folder.sortOrder === 'number' && Number.isFinite(folder.sortOrder)
-              ? folder.sortOrder
-              : 0,
-          createdAt: isString(folder.createdAt) ? folder.createdAt : new Date().toISOString(),
-        } satisfies Folder;
-      });
-
-    // Restore folders before importing records, so record.folderId associations remain valid.
-    for (const folder of foldersToRestore) {
-      await folderRepository.insert(folder);
-      await folderRepository.update(folder.id, {
-        name: folder.name,
-        color: folder.color,
-        icon: folder.icon,
-        sortOrder: folder.sortOrder,
-      });
+    if (!metadataExists) {
+      return { success: false, error: i18n.t('importExport.invalidFormat') };
     }
 
-    // Refresh Zustand state/order.
-    await useFolderStore.getState().load();
-  }
+    const raw = await readUtf8WithAllFallbacks(metadataPath);
 
-  const records: VoiceRecord[] = [];
-
-  for (const r of payload.records) {
-    const record = normalizeRecord(r) as VoiceRecord & { audioPath?: string };
-    const relativePath = record.audioPath;
+    const payload = JSON.parse(raw) as ExportPayload;
 
     if (
-      (payload.version === 2 || payload.version === 3) &&
-      relativePath &&
-      isRelativeAudioPath(relativePath)
+      (payload.version !== 1 && payload.version !== 2 && payload.version !== 3) ||
+      !isArray(payload.records)
     ) {
-      const newPath = await copyAudioFromExtractToApp(extractDir, relativePath, record.id);
-      if (newPath) {
-        record.audioPath = newPath;
+      return { success: false, error: i18n.t('importExport.invalidFormat') };
+    }
+
+    if (payload.version === 3 && isArray(payload.folders)) {
+      const foldersToRestore = payload.folders
+        .filter(
+          (f) => f && isString((f as Partial<Folder>).id) && isString((f as Partial<Folder>).name),
+        )
+        .map((f) => {
+          const folder = f as Partial<Folder>;
+          return {
+            id: folder.id as string,
+            name: folder.name as string,
+            color: (folder.color as string | undefined) ?? DEFAULT_FOLDER_BRAND_HEX,
+            icon: (folder.icon as string | undefined) ?? DEFAULT_FOLDER_ICON_KEY,
+            sortOrder:
+              isNumber(folder.sortOrder) && Number.isFinite(folder.sortOrder)
+                ? folder.sortOrder
+                : 0,
+            createdAt: isString(folder.createdAt) ? folder.createdAt : new Date().toISOString(),
+          } satisfies Folder;
+        });
+
+      for (const folder of foldersToRestore) {
+        await folderRepository.insert(folder);
+        await folderRepository.update(folder.id, {
+          name: folder.name,
+          color: folder.color,
+          icon: folder.icon,
+          sortOrder: folder.sortOrder,
+        });
+      }
+
+      await useFolderStore.getState().load();
+    }
+
+    if (payload.version !== 3) {
+      const legacyFolderIds = Array.from(
+        new Set(
+          payload.records
+            .map((r) => (r as { folderId?: unknown }).folderId)
+            .filter((v): v is string => isString(v) && v.trim().length > 0),
+        ),
+      );
+
+      for (const [index, folderId] of legacyFolderIds.entries()) {
+        const legacyFolder: Folder = {
+          id: folderId,
+          name: `Imported folder ${index + 1}`,
+          color: DEFAULT_FOLDER_BRAND_HEX,
+          icon: DEFAULT_FOLDER_ICON_KEY,
+          sortOrder: index,
+          createdAt: new Date().toISOString(),
+        };
+
+        try {
+          await folderRepository.insert(legacyFolder);
+          await folderRepository.update(legacyFolder.id, {
+            name: legacyFolder.name,
+            color: legacyFolder.color,
+            icon: legacyFolder.icon,
+            sortOrder: legacyFolder.sortOrder,
+          });
+        } catch {
+          if (__DEV__) {
+            console.warn('[importFromZip] failed to insert legacy folder', legacyFolder);
+          }
+        }
+      }
+
+      await useFolderStore.getState().load();
+    }
+
+    const records: VoiceRecord[] = [];
+
+    for (const r of payload.records) {
+      const record = normalizeRecord(r) as VoiceRecord & { audioPath?: string };
+      const relativePath = record.audioPath;
+
+      if (
+        (payload.version === 2 || payload.version === 3) &&
+        relativePath &&
+        isRelativeAudioPath(relativePath)
+      ) {
+        const newPath = await copyAudioFromExtractToApp(extractDir, relativePath, record.id);
+        if (newPath) {
+          record.audioPath = newPath;
+        } else {
+          delete record.audioPath;
+        }
       } else {
         delete record.audioPath;
       }
-    } else {
-      delete record.audioPath;
+
+      records.push(record as VoiceRecord);
     }
 
-    records.push(record as VoiceRecord);
+    return {
+      success: true,
+      records,
+      exportedAt: payload.exportedAt,
+    };
+  } finally {
+    await removeDirRecursive(extractDir).catch(() => {});
   }
-
-  await removeDirRecursive(extractDir);
-
-  return {
-    success: true,
-    records,
-    exportedAt: payload.exportedAt,
-  };
 }
 
 async function removeDirRecursive(path: string): Promise<void> {
@@ -306,6 +362,8 @@ async function removeDirRecursive(path: string): Promise<void> {
 }
 
 export const importData = async (): Promise<ImportResult> => {
+  let pickedFsPath: string | null = null;
+
   try {
     const [file] = await DocumentPicker.pick({
       type: [DocumentPicker.types.allFiles],
@@ -319,6 +377,7 @@ export const importData = async (): Promise<ImportResult> => {
       name?: string;
     };
     const fsPath = await getReadableDocumentPickerFsPath(fileLike);
+    pickedFsPath = fsPath;
     const uri = fileLike.fileCopyUri ?? fileLike.fileUri ?? fileLike.uri;
 
     if (!uri || !fsPath) {
@@ -359,10 +418,10 @@ export const importData = async (): Promise<ImportResult> => {
           return {
             id: folder.id as string,
             name: folder.name as string,
-            color: (folder.color as string | undefined) ?? '#6b7280',
-            icon: (folder.icon as string | undefined) ?? '📁',
+            color: (folder.color as string | undefined) ?? DEFAULT_FOLDER_BRAND_HEX,
+            icon: (folder.icon as string | undefined) ?? DEFAULT_FOLDER_ICON_KEY,
             sortOrder:
-              typeof folder.sortOrder === 'number' && Number.isFinite(folder.sortOrder)
+              isNumber(folder.sortOrder) && Number.isFinite(folder.sortOrder)
                 ? folder.sortOrder
                 : 0,
             createdAt: isString(folder.createdAt) ? folder.createdAt : new Date().toISOString(),
@@ -397,5 +456,9 @@ export const importData = async (): Promise<ImportResult> => {
     }
 
     return { success: false, error: i18n.t('importExport.readError') };
+  } finally {
+    if (pickedFsPath && isPathInsideDir(pickedFsPath, getCachesDirectoryPath())) {
+      await unlinkIfExists(pickedFsPath);
+    }
   }
 };

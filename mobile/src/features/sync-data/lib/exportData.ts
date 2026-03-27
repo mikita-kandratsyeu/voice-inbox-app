@@ -3,6 +3,7 @@ import { zip } from 'react-native-zip-archive';
 
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
+import { i18n } from '@/shared/lib';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
 const METADATA_FILENAME = 'metadata.json';
@@ -28,6 +29,32 @@ async function removeDirRecursive(path: string): Promise<void> {
   await NitroFS.unlink(path);
 }
 
+async function unlinkIfExists(path: string): Promise<void> {
+  try {
+    const exists = await NitroFS.exists(path);
+    if (exists) {
+      await NitroFS.unlink(path);
+    }
+  } catch {
+    if (__DEV__) {
+      console.warn('[unlinkIfExists] failed to unlink', path);
+    }
+  }
+}
+
+async function removeDirRecursiveIfExists(path: string): Promise<void> {
+  try {
+    const exists = await NitroFS.exists(path);
+    if (exists) {
+      await removeDirRecursive(path);
+    }
+  } catch {
+    if (__DEV__) {
+      console.warn('[removeDirRecursiveIfExists] failed to remove directory', path);
+    }
+  }
+}
+
 function getAudioExtension(audioPath: string): string {
   const match = audioPath.match(/\.[a-zA-Z0-9]+$/);
   return match?.[0] ?? '.m4a';
@@ -40,52 +67,55 @@ export const exportData = async (records: VoiceRecord[], folders: Folder[]): Pro
   const audioDir = `${exportDir}/${AUDIO_DIR_NAME}`;
   const zipPath = `${cache}/voice-inbox-backup-${timestamp}.zip`;
 
-  await NitroFS.mkdir(exportDir);
-  await NitroFS.mkdir(audioDir);
+  try {
+    await NitroFS.mkdir(exportDir);
+    await NitroFS.mkdir(audioDir);
 
-  const recordsForPayload: ExportPayload['records'] = [];
+    const recordsForPayload: ExportPayload['records'] = [];
 
-  for (const record of records) {
-    const srcPath = record.audioPath?.trim();
-    if (srcPath) {
-      const normalizedSrc = srcPath.startsWith('file://') ? srcPath.slice(7) : srcPath;
-      const exists = await NitroFS.exists(normalizedSrc);
-      if (exists) {
-        const ext = getAudioExtension(normalizedSrc);
-        const destPath = `${audioDir}/${record.id}${ext}`;
-        try {
-          await NitroFS.copyFile(normalizedSrc, destPath);
-          recordsForPayload.push({
-            ...record,
-            audioPath: `${AUDIO_DIR_NAME}/${record.id}${ext}`,
-          });
-        } catch {
+    for (const record of records) {
+      const srcPath = record.audioPath?.trim();
+      if (srcPath) {
+        const normalizedSrc = srcPath.startsWith('file://') ? srcPath.slice(7) : srcPath;
+        const exists = await NitroFS.exists(normalizedSrc);
+        if (exists) {
+          const ext = getAudioExtension(normalizedSrc);
+          const destPath = `${audioDir}/${record.id}${ext}`;
+          try {
+            await NitroFS.copyFile(normalizedSrc, destPath);
+            recordsForPayload.push({
+              ...record,
+              audioPath: `${AUDIO_DIR_NAME}/${record.id}${ext}`,
+            });
+          } catch {
+            recordsForPayload.push(record);
+          }
+        } else {
           recordsForPayload.push(record);
         }
       } else {
         recordsForPayload.push(record);
       }
-    } else {
-      recordsForPayload.push(record);
     }
+
+    const payload: ExportPayload = {
+      version: 3,
+      exportedAt: new Date().toISOString(),
+      folders,
+      records: recordsForPayload,
+    };
+
+    const json = JSON.stringify(payload, null, 2);
+    await NitroFS.writeFile(`${exportDir}/${METADATA_FILENAME}`, json, 'utf8');
+
+    await zip(exportDir, zipPath);
+
+    await Share.share({
+      url: `file://${zipPath}`,
+      title: i18n.t('export.title'),
+    });
+  } finally {
+    await removeDirRecursiveIfExists(exportDir);
+    await unlinkIfExists(zipPath);
   }
-
-  const payload: ExportPayload = {
-    version: 3,
-    exportedAt: new Date().toISOString(),
-    folders,
-    records: recordsForPayload,
-  };
-
-  const json = JSON.stringify(payload, null, 2);
-  await NitroFS.writeFile(`${exportDir}/${METADATA_FILENAME}`, json, 'utf8');
-
-  await zip(exportDir, zipPath);
-
-  await removeDirRecursive(exportDir);
-
-  await Share.share({
-    url: `file://${zipPath}`,
-    title: 'Экспорт данных Voice Inbox AI',
-  });
 };

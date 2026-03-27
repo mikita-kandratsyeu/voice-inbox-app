@@ -696,6 +696,9 @@
     "alreadyInAppSection": "Already in app",
     "noRecordsInFile": "No records found in the file."
   },
+  "export": {
+    "title": "Export Voice Inbox AI data"
+  },
   "importAudio": {
     "preparingTitle": "Importing audio",
     "phasePreparing": "Please wait…",

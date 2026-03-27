@@ -696,6 +696,9 @@
     "alreadyInAppSection": "Уже в приложении",
     "noRecordsInFile": "В файле нет записей."
   },
+  "export": {
+    "title": "Экспорт данных Voice Inbox AI"
+  },
   "importAudio": {
     "preparingTitle": "Импорт аудио",
     "phasePreparing": "Подождите…",
