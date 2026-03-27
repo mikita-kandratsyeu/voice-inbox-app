@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import RNFS from 'react-native-fs';
 
 import {
   getRecommendedWhisperModelId,
@@ -10,6 +9,7 @@ import {
   type WhisperModelId,
   type WhisperModelWeightsFormat,
 } from '@/entities/settings';
+import { NitroFS } from '@/shared/lib/fs';
 import { getWhisperModelPath } from '@/shared/lib/whisper';
 
 import { deleteWhisperModel } from '../lib/deleteWhisperModel';
@@ -18,7 +18,7 @@ import {
   stopWhisperDownloadLiveActivity,
   updateWhisperDownloadLiveActivity,
 } from '../lib/downloadLiveActivity';
-import { cancelWhisperModelDownload, downloadWhisperModel } from '../lib/downloadWhisperModel';
+import { cancelWhisperModelDownload, whisperModelDownloader } from '../lib/whisper-download';
 
 export const useModelManager = () => {
   const setWhisperModelStatus = useSettingsStore((s) => s.setWhisperModelStatus);
@@ -44,7 +44,7 @@ export const useModelManager = () => {
       await startWhisperDownloadLiveActivity(modelId).catch(() => {});
 
       try {
-        const { promise } = downloadWhisperModel({
+        await whisperModelDownloader.startDownload({
           modelId,
           format,
           expectedBytes,
@@ -54,7 +54,6 @@ export const useModelManager = () => {
           },
         });
 
-        await promise;
         setWhisperModelStatus(modelId, format, 'downloaded');
         setDownloadProgress(modelId, format, 100);
         await stopWhisperDownloadLiveActivity();
@@ -111,7 +110,7 @@ export const useModelManager = () => {
       const checks = await Promise.all(
         WHISPER_MODELS.map(async (model) => ({
           id: model.id,
-          exists: await RNFS.exists(getWhisperModelPath(model.id, format)),
+          exists: await NitroFS.exists(getWhisperModelPath(model.id, format)),
         })),
       );
 

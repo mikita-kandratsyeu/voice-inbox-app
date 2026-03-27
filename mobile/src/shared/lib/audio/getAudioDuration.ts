@@ -1,4 +1,4 @@
-import RNFS from 'react-native-fs';
+import { NitroFS } from '@/shared/lib/fs';
 
 const WAV_SAMPLE_RATE_OFFSET = 24;
 const WAV_CHANNELS_OFFSET = 22;
@@ -21,14 +21,14 @@ const base64ToBytes = (base64: string): number[] => {
 };
 
 export const getAudioDuration = async (audioPath: string): Promise<number> => {
-  const stat = await RNFS.stat(audioPath);
+  const stat = await NitroFS.stat(audioPath);
   const fileSizeBytes = Number(stat.size);
 
   if (fileSizeBytes <= WAV_HEADER_SIZE) {
     return 0;
   }
 
-  const fileBase64 = await RNFS.readFile(audioPath, 'base64');
+  const fileBase64 = await NitroFS.readFile(audioPath, 'base64');
   const allBytes = base64ToBytes(fileBase64);
 
   if (allBytes.length < WAV_HEADER_SIZE) {

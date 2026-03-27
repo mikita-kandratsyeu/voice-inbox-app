@@ -1,8 +1,6 @@
-import RNFS from 'react-native-fs';
-
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
-import { formatFileSize } from '@/shared/lib/whisper';
-import { getWhisperModelPath } from '@/shared/lib/whisper';
+import { NitroFS } from '@/shared/lib/fs';
+import { formatFileSize, getWhisperModelPath } from '@/shared/lib/whisper';
 
 export const getModelFileSizeBytes = async (
   modelId: WhisperModelId,
@@ -10,11 +8,11 @@ export const getModelFileSizeBytes = async (
 ): Promise<number> => {
   try {
     const path = getWhisperModelPath(modelId, format);
-    const exists = await RNFS.exists(path);
+    const exists = await NitroFS.exists(path);
 
     if (!exists) return 0;
 
-    const stat = await RNFS.stat(path);
+    const stat = await NitroFS.stat(path);
     return stat.size;
   } catch {
     return 0;

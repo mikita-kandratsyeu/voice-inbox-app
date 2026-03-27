@@ -7,9 +7,9 @@ import AudioRecorderPlayer, {
   AudioSourceAndroidType,
   OutputFormatAndroidType,
 } from 'react-native-audio-recorder-player';
-import RNFS from 'react-native-fs';
 
 import { useAppLockStore } from '@/entities/app-lock';
+import { NitroFS } from '@/shared/lib/fs';
 
 type AudioRecorderPlayerInstance = {
   addRecordBackListener: (cb: (e: RecordBackType) => void) => void;
@@ -273,8 +273,10 @@ export const useRecording = ({
     if (path) {
       const clean = path.startsWith('file://') ? path.slice(7) : path;
       try {
-        if (await RNFS.exists(clean)) {
-          await RNFS.unlink(clean);
+        const isExists = await NitroFS.exists(clean);
+
+        if (isExists) {
+          await NitroFS.unlink(clean);
         }
       } catch {
         if (__DEV__) console.warn('[useRecording] unlink failed:', clean);

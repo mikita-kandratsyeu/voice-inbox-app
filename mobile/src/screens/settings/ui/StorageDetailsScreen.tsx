@@ -12,7 +12,6 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
-import RNFS from 'react-native-fs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useFolderStore } from '@/entities/folder';
@@ -30,6 +29,7 @@ import {
   type StorageStats,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
+import { NitroFS } from '@/shared/lib/fs';
 import { formatFileSize, getWhisperModelPath } from '@/shared/lib/whisper';
 import { ScreenHeader, SettingsRow, SettingsSection, SkeletonPulse } from '@/shared/ui';
 
@@ -230,7 +230,7 @@ export const StorageDetailsScreen = () => {
       WHISPER_MODELS.flatMap((model) =>
         formats.map(async (format) => {
           const path = getWhisperModelPath(model.id, format);
-          const exists = await RNFS.exists(path);
+          const exists = await NitroFS.exists(path);
           if (!exists) return null;
           const bytes = await getModelFileSizeBytes(model.id, format);
           if (bytes <= 0) return null;

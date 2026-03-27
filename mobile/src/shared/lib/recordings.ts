@@ -1,6 +1,6 @@
-import RNFS from 'react-native-fs';
+import { getDocumentDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
-export const RECORDINGS_DIR = `${RNFS.DocumentDirectoryPath}/recordings`;
+export const RECORDINGS_DIR = `${getDocumentDirectoryPath()}/recordings`;
 
 const RECORDINGS_RELATIVE_PREFIX = 'recordings/';
 const RECORDINGS_ABS_MARKER = '/recordings/';
@@ -26,7 +26,7 @@ export function resolveAudioPath(audioPath: string): string {
 
   const relative = getRecordingsRelativePath(normalized);
   if (relative) {
-    return `${RNFS.DocumentDirectoryPath}/${relative}`;
+    return `${getDocumentDirectoryPath()}/${relative}`;
   }
 
   return normalized;
@@ -43,9 +43,9 @@ export function audioPathFromDbValue(audioPath: string | null | undefined): stri
 }
 
 export async function ensureRecordingsDir(): Promise<void> {
-  const exists = await RNFS.exists(RECORDINGS_DIR);
+  const exists = await NitroFS.exists(RECORDINGS_DIR);
   if (!exists) {
-    await RNFS.mkdir(RECORDINGS_DIR);
+    await NitroFS.mkdir(RECORDINGS_DIR);
   }
 }
 
@@ -60,9 +60,9 @@ export async function persistRecordingToDocuments(
     const destPath = `${RECORDINGS_DIR}/${recordId}${ext}`;
     if (normalized !== destPath) {
       try {
-        await RNFS.moveFile(normalized, destPath);
+        await NitroFS.rename(normalized, destPath);
       } catch (err) {
-        if (__DEV__) console.warn('[recordings] moveFile failed, using original path:', err);
+        if (__DEV__) console.warn('[recordings] rename failed, using original path:', err);
         return normalized;
       }
       return destPath;
@@ -74,9 +74,9 @@ export async function persistRecordingToDocuments(
     await ensureRecordingsDir();
     const ext = normalized.match(/\.[a-zA-Z0-9]+$/)?.[0] ?? '.m4a';
     const destPath = `${RECORDINGS_DIR}/${recordId}${ext}`;
-    await RNFS.copyFile(normalized, destPath);
+    await NitroFS.copyFile(normalized, destPath);
     try {
-      await RNFS.unlink(normalized);
+      await NitroFS.unlink(normalized);
     } catch {
       if (__DEV__) {
         console.warn('[recordings] Could not delete temp file after copy:', normalized);

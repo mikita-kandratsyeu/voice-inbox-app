@@ -1,9 +1,8 @@
-import RNFS from 'react-native-fs';
-
 import type { TranscriptSegment } from '@/entities/record';
 import type { WhisperModelId } from '@/entities/settings';
+import { getDocumentDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
-const CHECKPOINTS_DIR = `${RNFS.DocumentDirectoryPath}/transcription-checkpoints`;
+const CHECKPOINTS_DIR = `${getDocumentDirectoryPath()}/transcription-checkpoints`;
 const CHECKPOINT_SCHEMA_VERSION = 1;
 const CHECKPOINT_TTL_MS = 12 * 60 * 60 * 1000;
 
@@ -26,9 +25,10 @@ const normalizeAudioPath = (path: string): string =>
   path.startsWith('file://') ? path.slice(7) : path;
 
 const ensureCheckpointsDir = async (): Promise<void> => {
-  const exists = await RNFS.exists(CHECKPOINTS_DIR);
+  const exists = await NitroFS.exists(CHECKPOINTS_DIR);
+
   if (!exists) {
-    await RNFS.mkdir(CHECKPOINTS_DIR);
+    await NitroFS.mkdir(CHECKPOINTS_DIR);
   }
 };
 
@@ -42,7 +42,7 @@ export const saveTranscriptionCheckpoint = async (
     audioPath: normalizeAudioPath(checkpoint.audioPath),
     updatedAt: Date.now(),
   };
-  await RNFS.writeFile(getCheckpointPath(checkpoint.recordId), JSON.stringify(payload), 'utf8');
+  await NitroFS.writeFile(getCheckpointPath(checkpoint.recordId), JSON.stringify(payload), 'utf8');
 };
 
 export const getTranscriptionCheckpoint = async (
@@ -50,9 +50,13 @@ export const getTranscriptionCheckpoint = async (
 ): Promise<TranscriptionCheckpoint | null> => {
   try {
     const path = getCheckpointPath(recordId);
-    const exists = await RNFS.exists(path);
-    if (!exists) return null;
-    const raw = await RNFS.readFile(path, 'utf8');
+    const exists = await NitroFS.exists(path);
+
+    if (!exists) {
+      return null;
+    }
+
+    const raw = await NitroFS.readFile(path, 'utf8');
     const parsed = JSON.parse(raw) as Partial<TranscriptionCheckpoint>;
 
     if (
@@ -67,11 +71,6 @@ export const getTranscriptionCheckpoint = async (
       !Array.isArray(parsed.segments) ||
       typeof parsed.updatedAt !== 'number'
     ) {
-      return null;
-    }
-
-    if (Date.now() - parsed.updatedAt > CHECKPOINT_TTL_MS) {
-      await RNFS.unlink(path).catch(() => {});
       return null;
     }
 
@@ -94,21 +93,33 @@ export const getTranscriptionCheckpoint = async (
 
 export const removeTranscriptionCheckpoint = async (recordId: string): Promise<void> => {
   const path = getCheckpointPath(recordId);
-  const exists = await RNFS.exists(path);
-  if (!exists) return;
-  await RNFS.unlink(path);
+  const exists = await NitroFS.exists(path);
+
+  if (!exists) {
+    return;
+  }
+
+  await NitroFS.unlink(path);
 };
 
 export const listTranscriptionCheckpoints = async (): Promise<TranscriptionCheckpoint[]> => {
   try {
-    const exists = await RNFS.exists(CHECKPOINTS_DIR);
-    if (!exists) return [];
-    const files = await RNFS.readDir(CHECKPOINTS_DIR);
-    const records = await Promise.all(
-      files
-        .filter((f) => f.isFile() && f.name.endsWith('.json'))
-        .map((f) => RNFS.readFile(f.path, 'utf8')),
-    );
+    const exists = await NitroFS.exists(CHECKPOINTS_DIR);
+
+    if (!exists) {
+      return [];
+    }
+
+    const entries = await NitroFS.readdir(CHECKPOINTS_DIR);
+    const jsonFiles = [];
+
+    for (const f of entries) {
+      const st = await NitroFS.stat(f.path);
+      if (st.isFile && f.name.endsWith('.json')) {
+        jsonFiles.push(f);
+      }
+    }
+    const records = await Promise.all(jsonFiles.map((f) => NitroFS.readFile(f.path, 'utf8')));
 
     const valid = records
       .map((raw) => {
@@ -147,6 +158,7 @@ export const listTranscriptionCheckpoints = async (): Promise<TranscriptionCheck
 
     const now = Date.now();
     const fresh: TranscriptionCheckpoint[] = [];
+
     for (const item of valid) {
       if (now - item.updatedAt <= CHECKPOINT_TTL_MS) {
         fresh.push(item);

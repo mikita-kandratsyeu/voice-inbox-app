@@ -1,5 +1,6 @@
 import { IOS_DOCUMENT_PATH } from '@op-engineering/op-sqlite';
-import RNFS from 'react-native-fs';
+
+import { getCachesDirectoryPath, getDocumentDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
 export type StorageStats = {
   audioMb: number;
@@ -17,32 +18,34 @@ type RecordForStats = {
 };
 
 const DB_NAME = 'voice-inbox.db';
-const DB_PATH = `${IOS_DOCUMENT_PATH ?? RNFS.DocumentDirectoryPath}/${DB_NAME}`;
+const DB_PATH = `${IOS_DOCUMENT_PATH ?? getDocumentDirectoryPath()}/${DB_NAME}`;
 
-const getDirectorySizeBytes = (path: string, excludePaths?: Set<string>): Promise<number> =>
-  RNFS.readDir(path).then(async (items) => {
-    let total = 0;
+const getDirectorySizeBytes = async (path: string, excludePaths?: Set<string>): Promise<number> => {
+  let total = 0;
+  const items = await NitroFS.readdir(path);
 
-    for (const item of items) {
-      if (excludePaths?.has(item.path)) {
-        continue;
-      }
-
-      if (item.isFile()) {
-        total += item.size;
-      } else if (item.isDirectory()) {
-        total += await getDirectorySizeBytes(item.path, excludePaths);
-      }
+  for (const item of items) {
+    if (excludePaths?.has(item.path)) {
+      continue;
     }
 
-    return total;
-  });
+    const st = await NitroFS.stat(item.path);
+
+    if (st.isFile) {
+      total += st.size;
+    } else if (st.isDirectory) {
+      total += await getDirectorySizeBytes(item.path, excludePaths);
+    }
+  }
+
+  return total;
+};
 
 const clearDirectoryContents = async (
   path: string,
   keepPaths: Set<string>,
 ): Promise<{ deletedBytes: number }> => {
-  const items = await RNFS.readDir(path);
+  const items = await NitroFS.readdir(path);
   let deletedBytes = 0;
 
   for (const item of items) {
@@ -50,17 +53,19 @@ const clearDirectoryContents = async (
       continue;
     }
 
-    if (item.isFile()) {
-      deletedBytes += item.size;
-      await RNFS.unlink(item.path);
-    } else if (item.isDirectory()) {
+    const st = await NitroFS.stat(item.path);
+
+    if (st.isFile) {
+      deletedBytes += st.size;
+      await NitroFS.unlink(item.path);
+    } else if (st.isDirectory) {
       const sub = await clearDirectoryContents(item.path, keepPaths);
       deletedBytes += sub.deletedBytes;
 
-      const isEmpty = (await RNFS.readDir(item.path)).length === 0;
+      const children = await NitroFS.readdir(item.path);
 
-      if (isEmpty) {
-        await RNFS.unlink(item.path);
+      if (children.length === 0) {
+        await NitroFS.unlink(item.path);
       }
     }
   }
@@ -73,13 +78,13 @@ const normalizeFilePath = (path: string): string =>
 const getFileSize = async (path: string): Promise<number> => {
   try {
     const normalizedPath = normalizeFilePath(path);
-    const exists = await RNFS.exists(normalizedPath);
+    const exists = await NitroFS.exists(normalizedPath);
 
     if (!exists) {
       return 0;
     }
 
-    const stat = await RNFS.stat(normalizedPath);
+    const stat = await NitroFS.stat(normalizedPath);
 
     return stat.size;
   } catch {
@@ -89,50 +94,35 @@ const getFileSize = async (path: string): Promise<number> => {
 
 const getCacheSizeBytes = async (audioPaths: string[]): Promise<number> => {
   const excludeSet = new Set(audioPaths.filter(Boolean));
-  const dirs = [
-    RNFS.CachesDirectoryPath,
-    ...(RNFS.TemporaryDirectoryPath !== RNFS.CachesDirectoryPath
-      ? [RNFS.TemporaryDirectoryPath]
-      : []),
-  ];
+  const dir = getCachesDirectoryPath();
 
-  let total = 0;
-  for (const dir of dirs) {
-    try {
-      const exists = await RNFS.exists(dir);
-      if (exists) {
-        total += await getDirectorySizeBytes(dir, excludeSet);
-      }
-    } catch (err) {
-      if (__DEV__) console.warn('[storage] Failed to get cache size:', dir, err);
+  try {
+    const exists = await NitroFS.exists(dir);
+    if (exists) {
+      return await getDirectorySizeBytes(dir, excludeSet);
     }
+  } catch (err) {
+    if (__DEV__) console.warn('[storage] Failed to get cache size:', dir, err);
   }
-  return total;
+  return 0;
 };
 
 export const clearCache = async (audioPaths: string[]): Promise<number> => {
   const keepSet = new Set(audioPaths);
-  const dirs = [
-    RNFS.CachesDirectoryPath,
-    ...(RNFS.TemporaryDirectoryPath !== RNFS.CachesDirectoryPath
-      ? [RNFS.TemporaryDirectoryPath]
-      : []),
-  ];
+  const dir = getCachesDirectoryPath();
   let totalDeleted = 0;
 
-  for (const dir of dirs) {
-    try {
-      const exists = await RNFS.exists(dir);
+  try {
+    const exists = await NitroFS.exists(dir);
 
-      if (!exists) {
-        continue;
-      }
-
-      const { deletedBytes } = await clearDirectoryContents(dir, keepSet);
-      totalDeleted += deletedBytes;
-    } catch (err) {
-      if (__DEV__) console.warn('[storage] Failed to clear cache dir:', dir, err);
+    if (!exists) {
+      return 0;
     }
+
+    const { deletedBytes } = await clearDirectoryContents(dir, keepSet);
+    totalDeleted += deletedBytes;
+  } catch (err) {
+    if (__DEV__) console.warn('[storage] Failed to clear cache dir:', dir, err);
   }
 
   return totalDeleted;

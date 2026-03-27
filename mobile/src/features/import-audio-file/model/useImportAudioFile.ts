@@ -5,7 +5,6 @@ import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
-import RNFS from 'react-native-fs';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
@@ -22,6 +21,7 @@ import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
 import { hapticError, hapticMedium, hapticSuccess } from '@/shared/lib';
 import { convertToWav, getAudioDurationMs } from '@/shared/lib/audio';
 import { formatTime } from '@/shared/lib/date';
+import { NitroFS } from '@/shared/lib/fs';
 import { ensureRecordingsDir, RECORDINGS_DIR } from '@/shared/lib/recordings';
 
 import type { ImportAudioPhase } from './types';
@@ -75,7 +75,7 @@ export function useImportAudioFile() {
       let destPath = `${RECORDINGS_DIR}/${recordId}${ext}`;
 
       try {
-        await RNFS.copyFile(normalizedSource, destPath);
+        await NitroFS.copyFile(normalizedSource, destPath);
       } catch {
         destPath = normalizedSource;
       }
@@ -89,7 +89,7 @@ export function useImportAudioFile() {
           hapticError();
           Alert.alert(t('common.error'), t('importAudio.conversionError'));
           try {
-            if (destPath !== normalizedSource) await RNFS.unlink(destPath);
+            if (destPath !== normalizedSource) await NitroFS.unlink(destPath);
           } catch {
             if (__DEV__) {
               console.warn('[importAudioFile] Could not delete original file');
@@ -98,7 +98,7 @@ export function useImportAudioFile() {
           return;
         }
         try {
-          if (destPath !== normalizedSource) await RNFS.unlink(destPath);
+          if (destPath !== normalizedSource) await NitroFS.unlink(destPath);
         } catch {
           if (__DEV__) {
             console.warn('[importAudioFile] Could not delete original file');
@@ -131,7 +131,7 @@ export function useImportAudioFile() {
           [{ text: t('common.ok') }],
         );
         try {
-          await RNFS.unlink(destPath);
+          await NitroFS.unlink(destPath);
         } catch {
           if (__DEV__) {
             console.warn('[importAudioFile] Could not delete original file');

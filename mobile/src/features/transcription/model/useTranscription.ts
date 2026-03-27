@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
-import RNFS from 'react-native-fs';
 
 import type { TranscriptSegment, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
@@ -10,6 +9,7 @@ import { shouldApplyAutoAiAfterTranscription } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import { i18n, useNetworkStatus } from '@/shared/lib';
+import { NitroFS } from '@/shared/lib/fs';
 import { getWhisperModelPath } from '@/shared/lib/whisper';
 
 import { getWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
@@ -107,7 +107,7 @@ export const useTranscription = () => {
       }
 
       const modelPath = getWhisperModelPath(selectedWhisperModel, selectedWhisperModelFormat);
-      const hasModelFile = await RNFS.exists(modelPath);
+      const hasModelFile = await NitroFS.exists(modelPath);
       if (!hasModelFile) {
         devLog('model file missing on disk', {
           model: selectedWhisperModel,

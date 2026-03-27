@@ -1,12 +1,11 @@
-import RNFS from 'react-native-fs';
-
 import {
   WHISPER_MODELS,
   type WhisperModelId,
   type WhisperModelWeightsFormat,
 } from '@/entities/settings';
+import { getDocumentDirectoryPath } from '@/shared/lib/fs';
 
-const WHISPER_MODELS_DIR = `${RNFS.DocumentDirectoryPath}/whisper-models`;
+const whisperModelsDir = (): string => `${getDocumentDirectoryPath()}/whisper-models`;
 
 const MODEL_FILE_NAMES: Record<WhisperModelWeightsFormat, Record<WhisperModelId, string>> = {
   q5_1: {
@@ -23,12 +22,12 @@ const MODEL_FILE_NAMES: Record<WhisperModelWeightsFormat, Record<WhisperModelId,
   },
 };
 
-export const getWhisperModelsDir = (): string => WHISPER_MODELS_DIR;
+export const getWhisperModelsDir = (): string => whisperModelsDir();
 
 export const getWhisperModelPath = (
   modelId: WhisperModelId,
   format: WhisperModelWeightsFormat = 'q5_1',
-): string => `${WHISPER_MODELS_DIR}/${MODEL_FILE_NAMES[format][modelId]}`;
+): string => `${whisperModelsDir()}/${MODEL_FILE_NAMES[format][modelId]}`;
 
 export const getWhisperModelFileName = (
   modelId: WhisperModelId,
@@ -70,7 +69,7 @@ export const getWhisperCoreMlEncoderDirName = (modelId: WhisperModelId): string 
   WHISPER_COREML_ENCODER_ZIP[modelId].replace(/\.zip$/i, '');
 
 export const getWhisperCoreMlEncoderPath = (modelId: WhisperModelId): string =>
-  `${WHISPER_MODELS_DIR}/${getWhisperCoreMlEncoderDirName(modelId)}`;
+  `${whisperModelsDir()}/${getWhisperCoreMlEncoderDirName(modelId)}`;
 
 export const getWhisperCoreMlDownloadUrl = (modelId: WhisperModelId): string =>
   `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${WHISPER_COREML_ENCODER_ZIP[modelId]}`;

@@ -1,12 +1,12 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Share } from 'react-native';
-import RNFS from 'react-native-fs';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { buildShareText, RECORD_TEXT_EXPORT_EXTENSION } from '@/features/share-record';
 import { hapticError, hapticSuccess } from '@/shared/lib';
+import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
 type UseBatchRecordActionsParams = {
   onComplete: () => void;
@@ -68,9 +68,9 @@ export const useBatchRecordActions = ({ onComplete }: UseBatchRecordActionsParam
 
         const content = lines.join('\n\n---\n\n');
         const fileName = `voice-inbox-export-${Date.now()}.${RECORD_TEXT_EXPORT_EXTENSION}`;
-        const filePath = `${RNFS.CachesDirectoryPath}/${fileName}`;
+        const filePath = `${getCachesDirectoryPath()}/${fileName}`;
 
-        await RNFS.writeFile(filePath, content, 'utf8');
+        await NitroFS.writeFile(filePath, content, 'utf8');
 
         await Share.share({
           url: `file://${filePath}`,

@@ -1,7 +1,8 @@
 import { IOS_DOCUMENT_PATH, IOS_LIBRARY_PATH, open } from '@op-engineering/op-sqlite';
 import { drizzle } from 'drizzle-orm/op-sqlite';
 import { migrate } from 'drizzle-orm/op-sqlite/migrator';
-import RNFS from 'react-native-fs';
+
+import { NitroFS } from '@/shared/lib/fs';
 
 import { IS_IOS } from '../platform';
 import { migrationsConfig } from './migrations';
@@ -18,12 +19,12 @@ async function migrateIosSqliteFromLibraryToDocumentsIfNeeded(): Promise<void> {
   const newPath = `${docBase}/${DB_NAME}`;
   const oldPath = `${libBase}/${DB_NAME}`;
 
-  const newExists = await RNFS.exists(newPath);
-  const oldExists = await RNFS.exists(oldPath);
+  const newExists = await NitroFS.exists(newPath);
+  const oldExists = await NitroFS.exists(oldPath);
   if (newExists || !oldExists) return;
 
   try {
-    await RNFS.copyFile(oldPath, newPath);
+    await NitroFS.copyFile(oldPath, newPath);
   } catch (err) {
     if (__DEV__) console.warn('[db] Failed to copy voice-inbox.db Library → Documents', err);
   }

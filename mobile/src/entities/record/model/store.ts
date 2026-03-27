@@ -1,7 +1,7 @@
-import RNFS from 'react-native-fs';
 import { create } from 'zustand';
 
 import { folderRepository } from '@/entities/folder/model/repository';
+import { NitroFS } from '@/shared/lib/fs';
 
 import { recordRepository } from './repository';
 import type {
@@ -161,9 +161,9 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     const record = get().records.find((r) => r.id === id);
     if (record?.audioPath) {
       try {
-        const exists = await RNFS.exists(record.audioPath);
+        const exists = await NitroFS.exists(record.audioPath);
         if (exists) {
-          await RNFS.unlink(record.audioPath);
+          await NitroFS.unlink(record.audioPath);
         }
       } catch (err) {
         if (__DEV__) console.warn('[store] Failed to delete audio file:', err);

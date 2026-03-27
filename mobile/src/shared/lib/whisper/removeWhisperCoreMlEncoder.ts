@@ -1,24 +1,24 @@
-import RNFS from 'react-native-fs';
-
 import type { WhisperModelId } from '@/entities/settings';
+import { NitroFS } from '@/shared/lib/fs';
 
 import { getWhisperCoreMlEncoderPath } from './whisperModelPath';
 
 async function removeDirectoryRecursive(dir: string): Promise<void> {
-  if (!(await RNFS.exists(dir))) {
+  if (!(await NitroFS.exists(dir))) {
     return;
   }
 
-  const items = await RNFS.readDir(dir);
+  const items = await NitroFS.readdir(dir);
 
   for (const item of items) {
-    if (item.isDirectory()) {
+    const st = await NitroFS.stat(item.path);
+    if (st.isDirectory) {
       await removeDirectoryRecursive(item.path);
     } else {
-      await RNFS.unlink(item.path);
+      await NitroFS.unlink(item.path);
     }
   }
-  await RNFS.unlink(dir);
+  await NitroFS.unlink(dir);
 }
 
 export async function removeWhisperCoreMlEncoder(modelId: WhisperModelId): Promise<void> {

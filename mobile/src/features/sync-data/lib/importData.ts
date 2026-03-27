@@ -1,5 +1,4 @@
 import DocumentPicker from 'react-native-document-picker';
-import RNFS from 'react-native-fs';
 import { unzip } from 'react-native-zip-archive';
 
 import type { Folder } from '@/entities/folder';
@@ -14,6 +13,7 @@ import {
   isStringArrayItem,
   RECORDINGS_DIR,
 } from '@/shared/lib';
+import { getCachesDirectoryPath, NitroFS, readAsciiBytes } from '@/shared/lib/fs';
 
 const METADATA_FILENAME = 'metadata.json';
 
@@ -100,10 +100,12 @@ function pathOrNameLooksLikeZip(uri: string, name: string): boolean {
 
 async function fileHasZipLocalHeader(fsPath: string): Promise<boolean> {
   try {
-    if (!(await RNFS.exists(fsPath))) {
+    const isExists = await NitroFS.exists(fsPath);
+
+    if (!isExists) {
       return false;
     }
-    const head = await RNFS.read(fsPath, 2, 0, 'ascii');
+    const head = await readAsciiBytes(fsPath, 2, 0);
     return head === 'PK';
   } catch {
     return false;
@@ -124,7 +126,7 @@ async function copyAudioFromExtractToApp(
 ): Promise<string | undefined> {
   const fullPath = `${extractDir}/${relativeAudioPath}`.replace(/\/+/g, '/');
   const normalized = fullPath.startsWith('file://') ? fullPath.slice(7) : fullPath;
-  const exists = await RNFS.exists(normalized);
+  const exists = await NitroFS.exists(normalized);
 
   if (!exists) {
     return undefined;
@@ -136,7 +138,7 @@ async function copyAudioFromExtractToApp(
   const destPath = `${RECORDINGS_DIR}/${recordId}${ext}`;
 
   try {
-    await RNFS.copyFile(normalized, destPath);
+    await NitroFS.copyFile(normalized, destPath);
 
     return destPath;
   } catch {
@@ -146,7 +148,7 @@ async function copyAudioFromExtractToApp(
 
 async function importFromZip(fileUri: string): Promise<ImportResult> {
   const timestamp = Date.now();
-  const extractDir = `${RNFS.CachesDirectoryPath}/import-extract-${timestamp}`;
+  const extractDir = `${getCachesDirectoryPath()}/import-extract-${timestamp}`;
   const zipPath = toFsPath(fileUri);
 
   try {
@@ -156,14 +158,14 @@ async function importFromZip(fileUri: string): Promise<ImportResult> {
   }
 
   const metadataPath = `${extractDir}/${METADATA_FILENAME}`;
-  const metadataExists = await RNFS.exists(metadataPath);
+  const metadataExists = await NitroFS.exists(metadataPath);
 
   if (!metadataExists) {
     await removeDirRecursive(extractDir);
     return { success: false, error: i18n.t('importExport.invalidFormat') };
   }
 
-  const raw = await RNFS.readFile(metadataPath, 'utf8');
+  const raw = await NitroFS.readFile(metadataPath, 'utf8');
   const payload = JSON.parse(raw) as ExportPayload;
 
   if (
@@ -240,16 +242,18 @@ async function importFromZip(fileUri: string): Promise<ImportResult> {
 }
 
 async function removeDirRecursive(path: string): Promise<void> {
-  const items = await RNFS.readDir(path);
+  const items = await NitroFS.readdir(path);
 
   for (const item of items) {
-    if (item.isFile()) {
-      await RNFS.unlink(item.path);
+    const st = await NitroFS.stat(item.path);
+
+    if (st.isFile) {
+      await NitroFS.unlink(item.path);
     } else {
       await removeDirRecursive(item.path);
     }
   }
-  await RNFS.unlink(path);
+  await NitroFS.unlink(path);
 }
 
 export const importData = async (): Promise<ImportResult> => {
@@ -273,7 +277,7 @@ export const importData = async (): Promise<ImportResult> => {
       return importFromZip(uri);
     }
 
-    const raw = await RNFS.readFile(uri, 'utf8');
+    const raw = await NitroFS.readFile(uri.startsWith('file://') ? uri.slice(7) : uri, 'utf8');
     const payload = JSON.parse(raw) as ExportPayload;
 
     if (

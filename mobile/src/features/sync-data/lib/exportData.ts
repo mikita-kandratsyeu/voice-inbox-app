@@ -1,9 +1,9 @@
 import { Share } from 'react-native';
-import RNFS from 'react-native-fs';
 import { zip } from 'react-native-zip-archive';
 
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
+import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
 const METADATA_FILENAME = 'metadata.json';
 const AUDIO_DIR_NAME = 'audio';
@@ -16,15 +16,16 @@ type ExportPayload = {
 };
 
 async function removeDirRecursive(path: string): Promise<void> {
-  const items = await RNFS.readDir(path);
+  const items = await NitroFS.readdir(path);
   for (const item of items) {
-    if (item.isFile()) {
-      await RNFS.unlink(item.path);
+    const st = await NitroFS.stat(item.path);
+    if (st.isFile) {
+      await NitroFS.unlink(item.path);
     } else {
       await removeDirRecursive(item.path);
     }
   }
-  await RNFS.unlink(path);
+  await NitroFS.unlink(path);
 }
 
 function getAudioExtension(audioPath: string): string {
@@ -34,12 +35,13 @@ function getAudioExtension(audioPath: string): string {
 
 export const exportData = async (records: VoiceRecord[], folders: Folder[]): Promise<void> => {
   const timestamp = Date.now();
-  const exportDir = `${RNFS.CachesDirectoryPath}/voice-inbox-export-${timestamp}`;
+  const cache = getCachesDirectoryPath();
+  const exportDir = `${cache}/voice-inbox-export-${timestamp}`;
   const audioDir = `${exportDir}/${AUDIO_DIR_NAME}`;
-  const zipPath = `${RNFS.CachesDirectoryPath}/voice-inbox-backup-${timestamp}.zip`;
+  const zipPath = `${cache}/voice-inbox-backup-${timestamp}.zip`;
 
-  await RNFS.mkdir(exportDir);
-  await RNFS.mkdir(audioDir);
+  await NitroFS.mkdir(exportDir);
+  await NitroFS.mkdir(audioDir);
 
   const recordsForPayload: ExportPayload['records'] = [];
 
@@ -47,12 +49,12 @@ export const exportData = async (records: VoiceRecord[], folders: Folder[]): Pro
     const srcPath = record.audioPath?.trim();
     if (srcPath) {
       const normalizedSrc = srcPath.startsWith('file://') ? srcPath.slice(7) : srcPath;
-      const exists = await RNFS.exists(normalizedSrc);
+      const exists = await NitroFS.exists(normalizedSrc);
       if (exists) {
         const ext = getAudioExtension(normalizedSrc);
         const destPath = `${audioDir}/${record.id}${ext}`;
         try {
-          await RNFS.copyFile(normalizedSrc, destPath);
+          await NitroFS.copyFile(normalizedSrc, destPath);
           recordsForPayload.push({
             ...record,
             audioPath: `${AUDIO_DIR_NAME}/${record.id}${ext}`,
@@ -76,7 +78,7 @@ export const exportData = async (records: VoiceRecord[], folders: Folder[]): Pro
   };
 
   const json = JSON.stringify(payload, null, 2);
-  await RNFS.writeFile(`${exportDir}/${METADATA_FILENAME}`, json, 'utf8');
+  await NitroFS.writeFile(`${exportDir}/${METADATA_FILENAME}`, json, 'utf8');
 
   await zip(exportDir, zipPath);
 

@@ -11043,6 +11043,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-nitro-fs@npm:^0.8.2":
+  version: 0.8.2
+  resolution: "react-native-nitro-fs@npm:0.8.2"
+  dependencies:
+    react-native-safe-area-context: "npm:^5.6.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: "*"
+  checksum: 10c0/2720d9d87df1319f3bab474133e1a2f1b4b838d97e18be4912c034e7b9d06021f8c20ac80b9d5d7e1bd1e3868c3fd711a052399a54c51885b6097659a4d05cbc
+  languageName: node
+  linkType: hard
+
 "react-native-nitro-modules@npm:^0.35.1":
   version: 0.35.1
   resolution: "react-native-nitro-modules@npm:0.35.1"
@@ -11117,7 +11130,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-safe-area-context@npm:^5.7.0":
+"react-native-safe-area-context@npm:^5.6.2, react-native-safe-area-context@npm:^5.7.0":
   version: 5.7.0
   resolution: "react-native-safe-area-context@npm:5.7.0"
   peerDependencies:
@@ -13076,6 +13089,7 @@ __metadata:
     react-native-mmkv: "npm:^4.2.0"
     react-native-nitro-device-info: "npm:^1.7.0"
     react-native-nitro-fetch: "npm:^0.1.7"
+    react-native-nitro-fs: "npm:^0.8.2"
     react-native-nitro-modules: "npm:^0.35.1"
     react-native-permissions: "npm:^5.1.0"
     react-native-quick-base64: "npm:^2.2.2"

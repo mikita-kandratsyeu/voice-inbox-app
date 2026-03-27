@@ -4,7 +4,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, useWindowDimensions, View } from 'react-native';
-import RNFS from 'react-native-fs';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
@@ -22,6 +21,7 @@ import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
 import { useColors } from '@/shared/config';
 import { resolveDisplayFolderColor, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import { NitroFS } from '@/shared/lib/fs';
 import { AudioPlayer, usePlaybackPosition } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
@@ -193,7 +193,8 @@ export const RecordingDetailScreen = () => {
     const path = liveRecord.audioPath;
     if (path?.trim()) {
       const normalizedPath = path.startsWith('file://') ? path.slice(7) : path;
-      const exists = await RNFS.exists(normalizedPath);
+      const exists = await NitroFS.exists(normalizedPath);
+
       if (!exists) {
         await clearAudioPath(liveRecord.id).catch(() => {});
         Alert.alert(t('recordingDetail.shareFailed'), t('share.audioNotFound'));

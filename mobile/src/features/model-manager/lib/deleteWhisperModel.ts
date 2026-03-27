@@ -1,6 +1,5 @@
-import RNFS from 'react-native-fs';
-
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
+import { NitroFS } from '@/shared/lib/fs';
 import {
   getWhisperModelPath,
   getWhisperModelsDir,
@@ -12,11 +11,17 @@ export const deleteWhisperModel = async (
   format: WhisperModelWeightsFormat,
 ): Promise<void> => {
   const modelPath = getWhisperModelPath(modelId, format);
-  if (await RNFS.exists(modelPath)) await RNFS.unlink(modelPath);
+  const isExists = await NitroFS.exists(modelPath);
+
+  if (isExists) {
+    await NitroFS.unlink(modelPath);
+  }
 
   const coreMlZipTemp = `${getWhisperModelsDir()}/.${modelId}.coreml-encoder.zip`;
-  if (await RNFS.exists(coreMlZipTemp)) {
-    await RNFS.unlink(coreMlZipTemp);
+  const isCoreMlZipTempExists = await NitroFS.exists(coreMlZipTemp);
+
+  if (isCoreMlZipTempExists) {
+    await NitroFS.unlink(coreMlZipTemp);
   }
 
   await removeWhisperCoreMlEncoder(modelId).catch(() => {});
