@@ -205,6 +205,7 @@ export function useSettingsScreen() {
     aiExecutionMode === 'private_experimental'
       ? (localModel?.name ?? selectedLocalAiModel)
       : (userFacing?.name ?? selectedAIModel);
+  const isPrivateMode = aiExecutionMode === 'private_experimental';
   const whisperVariantId = getWhisperModelVariantId(
     selectedWhisperModel,
     selectedWhisperModelFormat,
@@ -386,6 +387,7 @@ export function useSettingsScreen() {
     claim,
     claimLoading,
     claimError,
+    isPrivateMode,
     automationLocked,
     autoTranscribeOnSave,
     setAutoTranscribeOnSave,

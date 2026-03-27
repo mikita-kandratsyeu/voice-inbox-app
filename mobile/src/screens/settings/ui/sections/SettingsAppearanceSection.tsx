@@ -14,6 +14,7 @@ type Props = {
   navigation: NativeStackNavigationProp<SettingsStackParamList>;
   appLanguage: AppLanguage;
   appTheme: AppTheme;
+  isPrivateMode: boolean;
 };
 
 export const SettingsAppearanceSection = ({
@@ -22,6 +23,7 @@ export const SettingsAppearanceSection = ({
   navigation,
   appLanguage,
   appTheme,
+  isPrivateMode,
 }: Props) => (
   <SettingsSection title={t('settings.appearance')}>
     <SettingsRow
@@ -30,13 +32,16 @@ export const SettingsAppearanceSection = ({
       leftIcon={<Languages size={20} color={color.accent.primary} strokeWidth={1.8} />}
       onPress={() => navigation.navigate('Appearance')}
       isFirst
+      isLast={isPrivateMode}
     />
-    <SettingsRow
-      label={t('settings.appTheme')}
-      value={t(`appearance.themeOption.${appTheme}`)}
-      leftIcon={<Moon size={20} color={color.accent.primary} strokeWidth={1.8} />}
-      onPress={() => navigation.navigate('Appearance')}
-      isLast
-    />
+    {!isPrivateMode && (
+      <SettingsRow
+        label={t('settings.appTheme')}
+        value={t(`appearance.themeOption.${appTheme}`)}
+        leftIcon={<Moon size={20} color={color.accent.primary} strokeWidth={1.8} />}
+        onPress={() => navigation.navigate('Appearance')}
+        isLast
+      />
+    )}
   </SettingsSection>
 );

@@ -22,6 +22,7 @@ type TranscriptContentProps = {
   currentPositionMs?: number;
   onTranscribe: () => void;
   onCancelTranscription: () => void;
+  isPrivateMode?: boolean;
 };
 
 export const TranscriptContent = ({
@@ -30,6 +31,7 @@ export const TranscriptContent = ({
   currentPositionMs = 0,
   onTranscribe,
   onCancelTranscription,
+  isPrivateMode = false,
 }: TranscriptContentProps) => {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
@@ -108,6 +110,7 @@ export const TranscriptContent = ({
         onTranslate={handleTranslate}
         isTranslating={isTranslating}
         isAiProcessing={isAiProcessing}
+        isPrivateMode={isPrivateMode}
       />
     </>
   );

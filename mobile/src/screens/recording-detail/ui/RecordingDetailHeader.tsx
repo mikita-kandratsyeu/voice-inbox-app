@@ -13,6 +13,7 @@ import { Button } from '@/shared/ui';
 type RecordingDetailHeaderProps = {
   record: VoiceRecord;
   color: Colors;
+  isPrivateMode?: boolean;
   onBack: () => void;
   onTogglePin: () => void;
   onShare: () => void;
@@ -28,6 +29,7 @@ type RecordingDetailHeaderProps = {
 export const RecordingDetailHeader = ({
   record,
   color,
+  isPrivateMode = false,
   onBack,
   onTogglePin,
   onShare,
@@ -93,17 +95,19 @@ export const RecordingDetailHeader = ({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityLabel={t('share.shareNote')}
         />
-        <Button
-          iconOnly
-          variant="icon"
-          size="md"
-          icon={<MessageSquare size={18} color={color.text.primary} strokeWidth={2.2} />}
-          color={color}
-          onPress={onAskAI}
-          activeOpacity={0.7}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel={t('recordingDetail.askButton')}
-        />
+        {!isPrivateMode && (
+          <Button
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={<MessageSquare size={18} color={color.text.primary} strokeWidth={2.2} />}
+            color={color}
+            onPress={onAskAI}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel={t('recordingDetail.askButton')}
+          />
+        )}
         <MenuView
           key={theme}
           title=""
@@ -125,13 +129,17 @@ export const RecordingDetailHeader = ({
               imageColor: color.text.primary,
               titleColor: color.text.primary,
             },
-            {
-              id: 'moveToFolder',
-              title: t('folders.moveToFolderMenu'),
-              image: 'folder',
-              imageColor: color.text.primary,
-              titleColor: color.text.primary,
-            },
+            ...(!isPrivateMode
+              ? [
+                  {
+                    id: 'moveToFolder' as const,
+                    title: t('folders.moveToFolderMenu'),
+                    image: 'folder' as const,
+                    imageColor: color.text.primary,
+                    titleColor: color.text.primary,
+                  },
+                ]
+              : []),
             ...(record.audioPath
               ? [
                   {

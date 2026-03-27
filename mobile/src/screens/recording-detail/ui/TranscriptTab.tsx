@@ -29,6 +29,7 @@ type TranscriptTabProps = {
   onTranslate?: (targetLanguage: string) => Promise<boolean>;
   isTranslating?: boolean;
   isAiProcessing?: boolean;
+  isPrivateMode?: boolean;
 };
 
 const MAX_PARAGRAPH_LENGTH = 360;
@@ -95,6 +96,7 @@ export const TranscriptTab = ({
   onTranslate,
   isTranslating = false,
   isAiProcessing = false,
+  isPrivateMode = false,
 }: TranscriptTabProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
@@ -142,7 +144,7 @@ export const TranscriptTab = ({
     <View>
       <View className="pt-3">
         <View className="flex-row flex-wrap gap-2 px-4 pb-4">
-          {hasTranslation && (
+          {hasTranslation && !isPrivateMode && (
             <Button
               variant="secondary"
               size="md"
@@ -168,7 +170,7 @@ export const TranscriptTab = ({
               onPress={() => setViewMode(showTranslation ? 'original' : 'translated')}
             />
           )}
-          {onTranslate && segments.length > 0 && (
+          {onTranslate && segments.length > 0 && !isPrivateMode && (
             <MenuView
               key={theme}
               themeVariant={isDark ? 'dark' : 'light'}

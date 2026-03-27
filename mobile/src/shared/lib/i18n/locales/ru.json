@@ -387,9 +387,11 @@
       "freeValueSubtitle": "До {{limit}} генераций в неделю в Pro и без рекламы.",
       "freeValueSubtitleSoon": "Pro скоро: до {{limit}} генераций в неделю и без рекламы.",
       "freeValueSubtitleAvailable": "До {{limit}} генераций в неделю в Pro. Уже доступно.",
+      "privateModeSubtitle": "Режим Private включен. Часть функций временно скрыта.",
       "comparePlansCta": "Смотреть планы",
       "soonBadge": "Скоро",
       "availableBadge": "Доступно",
+      "privateBadge": "Private",
       "proTitle": "Pro",
       "proValueSubtitle": "Расширенный лимит генераций, автоорганизация папок и без рекламы.",
       "proActiveUntil": "Активен до {{date}}",
@@ -634,7 +636,17 @@
   },
   "privateAiMode": {
     "title": "ИИ движок",
-    "description": "Управляйте экспериментальным режимом, в котором генерации выполняются локально на устройстве."
+    "description": "Управляйте экспериментальным режимом, в котором генерации выполняются локально на устройстве.",
+    "enableAlertTitle": "Включить экспериментальный режим Private?",
+    "enableAlertBattery": "Режим Private экспериментальный и может быстрее разряжать батарею.",
+    "enableAlertItemTranslate": "Кнопка перевода в заметках будет скрыта.",
+    "enableAlertItemAskAi": "Кнопка Ask AI будет скрыта.",
+    "enableAlertItemAutoOrganize": "Авто-организация папок будет скрыта.",
+    "enableAlertItemFolders": "Папки и действия с папками будут скрыты в интерфейсе.",
+    "enableAlertItemTheme": "Выбор темы и цвета будет скрыт. В Private используется защищенная темная схема.",
+    "enableAlertItemLimits": "Лимиты AI-генераций будут скрыты.",
+    "enableAlertItemAutomation": "Автоматизации будут выключены и скрыты.",
+    "enableAlertRestore": "При возврате в Smart режим прежние настройки и отображение папок восстановятся."
   },
   "aiModels": {
     "title": "Модель генерации",

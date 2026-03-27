@@ -50,6 +50,9 @@ const KEYS = {
   PRIVATE_CAPABILITY_TIER: 'settings.privateCapabilityTier',
   AUTO_TRANSCRIBE_ON_SAVE: 'settings.autoTranscribeOnSave',
   AUTO_AI_AFTER_TRANSCRIPTION: 'settings.autoAiAfterTranscription',
+  PRIVATE_PREVIOUS_THEME: 'settings.private.previousTheme',
+  PRIVATE_PREVIOUS_AUTO_TRANSCRIBE: 'settings.private.previousAutoTranscribeOnSave',
+  PRIVATE_PREVIOUS_AUTO_AI: 'settings.private.previousAutoAiAfterTranscription',
 } as const;
 
 const getStoredAppTheme = (): AppTheme => {
@@ -257,7 +260,59 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   setAiExecutionMode: (value: AiExecutionMode) => {
+    const currentState = get();
+    const wasPrivate = currentState.aiExecutionMode === 'private_experimental';
     const nextValue = isExperimentalPrivateAiEnabled() ? value : 'smart_hybrid';
+
+    if (!wasPrivate && nextValue === 'private_experimental') {
+      storage.set(KEYS.PRIVATE_PREVIOUS_THEME, currentState.appTheme);
+      storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE, String(currentState.autoTranscribeOnSave));
+      storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_AI, String(currentState.autoAiAfterTranscription));
+
+      // Private mode uses isolated defaults and disables cloud-like automations.
+      storage.set(KEYS.AUTO_TRANSCRIBE_ON_SAVE, 'false');
+      storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, 'false');
+      set({
+        aiExecutionMode: nextValue,
+        autoTranscribeOnSave: false,
+        autoAiAfterTranscription: false,
+      });
+      storage.set(KEYS.AI_EXECUTION_MODE, nextValue);
+      return;
+    }
+
+    if (wasPrivate && nextValue !== 'private_experimental') {
+      const prevTheme = storage.getString(KEYS.PRIVATE_PREVIOUS_THEME) as AppTheme | undefined;
+      const prevAutoTranscribe = storage.getString(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE);
+      const prevAutoAi = storage.getString(KEYS.PRIVATE_PREVIOUS_AUTO_AI);
+
+      const restoredTheme = prevTheme === 'light' || prevTheme === 'dark' || prevTheme === 'system';
+      const restoredAutoTranscribe =
+        prevAutoTranscribe == null
+          ? currentState.autoTranscribeOnSave
+          : prevAutoTranscribe === 'true';
+      const restoredAutoAi =
+        prevAutoAi == null ? currentState.autoAiAfterTranscription : prevAutoAi === 'true';
+
+      if (restoredTheme) {
+        storage.set(KEYS.APP_THEME, prevTheme);
+      }
+      storage.set(KEYS.AUTO_TRANSCRIBE_ON_SAVE, String(restoredAutoTranscribe));
+      storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, String(restoredAutoAi));
+      storage.remove(KEYS.PRIVATE_PREVIOUS_THEME);
+      storage.remove(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE);
+      storage.remove(KEYS.PRIVATE_PREVIOUS_AUTO_AI);
+
+      set({
+        aiExecutionMode: nextValue,
+        ...(restoredTheme ? { appTheme: prevTheme } : {}),
+        autoTranscribeOnSave: restoredAutoTranscribe,
+        autoAiAfterTranscription: restoredAutoAi,
+      });
+      storage.set(KEYS.AI_EXECUTION_MODE, nextValue);
+      return;
+    }
+
     storage.set(KEYS.AI_EXECUTION_MODE, nextValue);
     set({ aiExecutionMode: nextValue });
   },

@@ -15,6 +15,7 @@ type BatchActionBarProps = {
   onDelete: () => void;
   onExport: () => void;
   onMoveToFolder: () => void;
+  hideMoveToFolder?: boolean;
   onCancel: () => void;
 };
 
@@ -63,6 +64,7 @@ export const BatchActionBar = ({
   onDelete,
   onExport,
   onMoveToFolder,
+  hideMoveToFolder = false,
   onCancel,
 }: BatchActionBarProps) => {
   const { t } = useTranslation();
@@ -154,13 +156,15 @@ export const BatchActionBar = ({
           }}
           style={{ flexGrow: 0, maxWidth: '82%' }}
         >
-          <ActionButton
-            icon={(c) => <FolderInput size={20} strokeWidth={2} color={c} />}
-            label={t('batch.moveToFolder')}
-            onPress={handleMoveToFolder}
-            disabled={disabled}
-            color={color}
-          />
+          {!hideMoveToFolder && (
+            <ActionButton
+              icon={(c) => <FolderInput size={20} strokeWidth={2} color={c} />}
+              label={t('batch.moveToFolder')}
+              onPress={handleMoveToFolder}
+              disabled={disabled}
+              color={color}
+            />
+          )}
           <ActionButton
             icon={(c) => <Share2 size={20} strokeWidth={2} color={c} />}
             label={t('batch.export')}

@@ -20,12 +20,14 @@ type RecordingDetailCardProps = {
   record: VoiceRecord;
   color: Colors;
   folderPlacement: RecordingDetailFolderPlacement;
+  hideFolderPlacement?: boolean;
 };
 
 export const RecordingDetailCard = ({
   record,
   color,
   folderPlacement,
+  hideFolderPlacement = false,
 }: RecordingDetailCardProps) => {
   const { t, i18n } = useTranslation();
   const normalizeLabel = (s: string): string =>
@@ -115,88 +117,90 @@ export const RecordingDetailCard = ({
         )}
       </View>
 
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 6,
-          marginTop: 0,
-        }}
-        accessibilityRole="text"
-        accessibilityLabel={
-          folderPlacement.kind === 'inbox'
-            ? t('folders.detailA11yInbox')
-            : folderPlacement.kind === 'missing'
-              ? t('folders.detailFolderRemoved')
-              : t('folders.detailA11yFolder', { name: folderPlacement.folder.name })
-        }
-      >
-        {folderPlacement.kind === 'inbox' ? (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-              paddingHorizontal: 8,
-              paddingVertical: 4,
-              borderRadius: 999,
-              backgroundColor: color.background.tertiary,
-            }}
-          >
-            <Inbox size={14} color={color.text.secondary} strokeWidth={2} />
-            <Text style={{ fontSize: 12, fontWeight: '600', color: color.text.secondary }}>
-              {t('folders.detailInbox')}
-            </Text>
-          </View>
-        ) : null}
-        {folderPlacement.kind === 'missing' ? (
-          <View
-            style={{
-              paddingHorizontal: 8,
-              paddingVertical: 4,
-              borderRadius: 999,
-              backgroundColor: color.background.tertiary,
-            }}
-          >
-            <Text style={{ fontSize: 12, fontWeight: '500', color: color.text.muted }}>
-              {t('folders.detailFolderRemoved')}
-            </Text>
-          </View>
-        ) : null}
-        {folderPlacement.kind === 'folder' ? (
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4,
-              maxWidth: '100%',
-              paddingHorizontal: 8,
-              paddingVertical: 4,
-              borderRadius: 999,
-              backgroundColor: withAlphaHex(folderPlacement.tintHex, 0.14),
-            }}
-          >
-            <FolderLucideIcon
-              iconId={folderPlacement.folder.icon}
-              size={14}
-              color={folderPlacement.tintHex}
-              strokeWidth={2}
-            />
-            <Text
+      {!hideFolderPlacement && (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: 6,
+            marginTop: 0,
+          }}
+          accessibilityRole="text"
+          accessibilityLabel={
+            folderPlacement.kind === 'inbox'
+              ? t('folders.detailA11yInbox')
+              : folderPlacement.kind === 'missing'
+                ? t('folders.detailFolderRemoved')
+                : t('folders.detailA11yFolder', { name: folderPlacement.folder.name })
+          }
+        >
+          {folderPlacement.kind === 'inbox' ? (
+            <View
               style={{
-                flexShrink: 1,
-                fontSize: 12,
-                fontWeight: '600',
-                color: color.text.primary,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                borderRadius: 999,
+                backgroundColor: color.background.tertiary,
               }}
-              numberOfLines={1}
             >
-              {folderPlacement.folder.name}
-            </Text>
-          </View>
-        ) : null}
-      </View>
+              <Inbox size={14} color={color.text.secondary} strokeWidth={2} />
+              <Text style={{ fontSize: 12, fontWeight: '600', color: color.text.secondary }}>
+                {t('folders.detailInbox')}
+              </Text>
+            </View>
+          ) : null}
+          {folderPlacement.kind === 'missing' ? (
+            <View
+              style={{
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                borderRadius: 999,
+                backgroundColor: color.background.tertiary,
+              }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '500', color: color.text.muted }}>
+                {t('folders.detailFolderRemoved')}
+              </Text>
+            </View>
+          ) : null}
+          {folderPlacement.kind === 'folder' ? (
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 4,
+                maxWidth: '100%',
+                paddingHorizontal: 8,
+                paddingVertical: 4,
+                borderRadius: 999,
+                backgroundColor: withAlphaHex(folderPlacement.tintHex, 0.14),
+              }}
+            >
+              <FolderLucideIcon
+                iconId={folderPlacement.folder.icon}
+                size={14}
+                color={folderPlacement.tintHex}
+                strokeWidth={2}
+              />
+              <Text
+                style={{
+                  flexShrink: 1,
+                  fontSize: 12,
+                  fontWeight: '600',
+                  color: color.text.primary,
+                }}
+                numberOfLines={1}
+              >
+                {folderPlacement.folder.name}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      )}
 
       {record.tags && record.tags.length > 0 && (
         <View className="flex-row flex-wrap gap-2">

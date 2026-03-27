@@ -29,6 +29,7 @@ import {
 } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 import { RecordCard, useRecordStore } from '@/entities/record';
+import { useSettingsStore } from '@/entities/settings';
 import {
   BatchActionBar,
   BatchCheckbox,
@@ -98,6 +99,8 @@ export const InboxScreen = () => {
     })),
   );
   const { isProActive } = useProEntitlement();
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const isPrivateMode = aiExecutionMode === 'private_experimental';
 
   const {
     modalVisible: folderModalVisible,
@@ -119,10 +122,12 @@ export const InboxScreen = () => {
     },
   });
 
+  const effectiveActiveFolderId = isPrivateMode ? null : activeFolderId;
+
   const folderFilteredRecords = useMemo(() => {
-    if (!activeFolderId) return records;
-    return records.filter((r) => r.folderId === activeFolderId);
-  }, [records, activeFolderId]);
+    if (!effectiveActiveFolderId) return records;
+    return records.filter((r) => r.folderId === effectiveActiveFolderId);
+  }, [records, effectiveActiveFolderId]);
 
   const folderColorById = useMemo(() => {
     const m = new Map<string, string>();
@@ -333,7 +338,7 @@ export const InboxScreen = () => {
 
       const isSelected = batchSelect.selectedIds.has(item.item.id);
       const folderStripeColor =
-        !activeFolderId && item.item.folderId
+        !effectiveActiveFolderId && !isPrivateMode && item.item.folderId
           ? resolveDisplayFolderColor(folderColorById.get(item.item.folderId), isProActive)
           : undefined;
 
@@ -403,7 +408,9 @@ export const InboxScreen = () => {
     [
       color,
       activeFolderId,
+      effectiveActiveFolderId,
       folderColorById,
+      isPrivateMode,
       isProActive,
       isArchivedView,
       dismissSwipeHint,
@@ -496,20 +503,22 @@ export const InboxScreen = () => {
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   />
                 )}
-                <Button
-                  iconOnly
-                  variant="icon"
-                  size="md"
-                  icon={<Folders size={20} color={color.text.primary} strokeWidth={2.2} />}
-                  color={color}
-                  onPress={() => {
-                    void runAutoOrganize();
-                  }}
-                  accessibilityLabel={t('folders.autoOrganizeButton')}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  loading={isAutoOrganizing}
-                  disabled={isAutoOrganizing}
-                />
+                {!isPrivateMode && (
+                  <Button
+                    iconOnly
+                    variant="icon"
+                    size="md"
+                    icon={<Folders size={20} color={color.text.primary} strokeWidth={2.2} />}
+                    color={color}
+                    onPress={() => {
+                      void runAutoOrganize();
+                    }}
+                    accessibilityLabel={t('folders.autoOrganizeButton')}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    loading={isAutoOrganizing}
+                    disabled={isAutoOrganizing}
+                  />
+                )}
                 <Button
                   iconOnly
                   variant="icon"
@@ -537,15 +546,17 @@ export const InboxScreen = () => {
           ) : undefined
         }
       />
-      <FolderChipBar
-        folders={folders}
-        activeFolderId={activeFolderId}
-        color={color}
-        onSelect={setActiveFolder}
-        onCreatePress={openCreateFolderModal}
-        onEditPress={openEditFolderModal}
-        scrollRef={folderChipScrollRef}
-      />
+      {!isPrivateMode && (
+        <FolderChipBar
+          folders={folders}
+          activeFolderId={effectiveActiveFolderId}
+          color={color}
+          onSelect={setActiveFolder}
+          onCreatePress={openCreateFolderModal}
+          onEditPress={openEditFolderModal}
+          scrollRef={folderChipScrollRef}
+        />
+      )}
       {!isLoaded ? (
         <InboxSkeleton color={color} />
       ) : records.length === 0 ? (
@@ -596,9 +607,9 @@ export const InboxScreen = () => {
               <EmptyState
                 title={t('inbox.emptyFilterTitle')}
                 description={t('inbox.emptyFilterDescription')}
-                hint={activeFolderId ? t('inbox.emptyFolderHint') : undefined}
+                hint={effectiveActiveFolderId ? t('inbox.emptyFolderHint') : undefined}
                 hintIcon={
-                  activeFolderId ? (
+                  effectiveActiveFolderId ? (
                     <Folder
                       size={20}
                       color={color.accent.primary}
@@ -637,23 +648,28 @@ export const InboxScreen = () => {
           onDelete={handleBatchDelete}
           onExport={handleBatchExport}
           onMoveToFolder={handleOpenBatchFolderPicker}
+          hideMoveToFolder={isPrivateMode}
           onCancel={exitBatchMode}
         />
       )}
-      <FolderPickerSheet
-        visible={folderPickerVisible}
-        title={t('folders.moveToFolderTitle')}
-        folders={folders}
-        onClose={handleCloseBatchFolderPicker}
-        onSelect={handleBatchFolderPicked}
-      />
-      <FolderFormModal
-        visible={folderModalVisible}
-        folder={editingFolder}
-        onSave={handleFolderSave}
-        onDelete={editingFolder ? () => handleFolderDelete(editingFolder.id) : undefined}
-        onClose={closeFolderModal}
-      />
+      {!isPrivateMode && (
+        <FolderPickerSheet
+          visible={folderPickerVisible}
+          title={t('folders.moveToFolderTitle')}
+          folders={folders}
+          onClose={handleCloseBatchFolderPicker}
+          onSelect={handleBatchFolderPicked}
+        />
+      )}
+      {!isPrivateMode && (
+        <FolderFormModal
+          visible={folderModalVisible}
+          folder={editingFolder}
+          onSave={handleFolderSave}
+          onDelete={editingFolder ? () => handleFolderDelete(editingFolder.id) : undefined}
+          onClose={closeFolderModal}
+        />
+      )}
       <AutoOrganizeProgressOverlay
         visible={autoOrganizeOverlayVisible}
         mode={autoOrganizeOverlayMode}

@@ -246,6 +246,7 @@ export const RecordingDetailScreen = () => {
   const scrollPadding = isTablet ? 24 : 16;
   const contentMaxWidth = useTabletContentMaxWidth();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
+  const isPrivateMode = aiExecutionMode === 'private_experimental';
 
   const onBack = useCallback(() => navigation.goBack(), [navigation]);
   const onTogglePin = useCallback(() => togglePin(liveRecord.id), [liveRecord.id, togglePin]);
@@ -292,6 +293,7 @@ export const RecordingDetailScreen = () => {
       <RecordingDetailHeader
         record={liveRecord}
         color={color}
+        isPrivateMode={isPrivateMode}
         onBack={onBack}
         onTogglePin={onTogglePin}
         onShare={handleShare}
@@ -303,14 +305,16 @@ export const RecordingDetailScreen = () => {
         onUnarchive={onUnarchive}
         onDelete={onDelete}
       />
-      <FolderPickerSheet
-        visible={folderPickerVisible}
-        title={t('folders.moveToFolderTitle')}
-        folders={folders}
-        currentFolderId={liveRecord.folderId ?? null}
-        onClose={onCloseFolderPicker}
-        onSelect={onDetailFolderPicked}
-      />
+      {!isPrivateMode && (
+        <FolderPickerSheet
+          visible={folderPickerVisible}
+          title={t('folders.moveToFolderTitle')}
+          folders={folders}
+          currentFolderId={liveRecord.folderId ?? null}
+          onClose={onCloseFolderPicker}
+          onSelect={onDetailFolderPicked}
+        />
+      )}
       <KeyboardAwareScrollView
         ref={scrollRef}
         style={{ flex: 1 }}
@@ -329,6 +333,7 @@ export const RecordingDetailScreen = () => {
             record={liveRecord}
             color={color}
             folderPlacement={folderPlacement}
+            hideFolderPlacement={isPrivateMode}
           />
 
           <View className="overflow-hidden rounded-2xl">
@@ -361,6 +366,7 @@ export const RecordingDetailScreen = () => {
                   currentPositionMs={currentPositionMs}
                   onTranscribe={handleRetranscribe}
                   onCancelTranscription={handleCancelTranscription}
+                  isPrivateMode={isPrivateMode}
                 />
               </View>
             )}
@@ -406,12 +412,14 @@ export const RecordingDetailScreen = () => {
 
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </View>
-        <AskAIModal
-          visible={showAskAIModal}
-          record={liveRecord}
-          color={color}
-          onDismiss={onDismissAskAIModal}
-        />
+        {!isPrivateMode && (
+          <AskAIModal
+            visible={showAskAIModal}
+            record={liveRecord}
+            color={color}
+            onDismiss={onDismissAskAIModal}
+          />
+        )}
       </KeyboardAwareScrollView>
     </View>
   );

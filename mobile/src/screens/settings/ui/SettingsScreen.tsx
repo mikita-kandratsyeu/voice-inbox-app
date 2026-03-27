@@ -94,23 +94,27 @@ export const SettingsScreen = () => {
             aiLimit={settings.proWeeklyLimit}
             onPress={settings.handlePlanCardPress}
           />
-          <AiUsageCard
-            usage={settings.aiUsage}
-            loading={settings.aiUsageLoading}
-            onClaimBonus={settings.adsAllowed ? settings.claim : undefined}
-            claimLoading={settings.claimLoading}
-            claimError={settings.claimError}
-          />
-          <SettingsAutomationSection
-            color={settings.color}
-            t={settings.t}
-            automationLocked={settings.automationLocked}
-            autoTranscribeOnSave={settings.autoTranscribeOnSave}
-            setAutoTranscribeOnSave={settings.setAutoTranscribeOnSave}
-            autoAiAfterTranscription={settings.autoAiAfterTranscription}
-            setAutoAiAfterTranscription={settings.setAutoAiAfterTranscription}
-            onLockedPress={settings.setAutomationSheet}
-          />
+          {!settings.isPrivateMode && (
+            <AiUsageCard
+              usage={settings.aiUsage}
+              loading={settings.aiUsageLoading}
+              onClaimBonus={settings.adsAllowed ? settings.claim : undefined}
+              claimLoading={settings.claimLoading}
+              claimError={settings.claimError}
+            />
+          )}
+          {!settings.isPrivateMode && (
+            <SettingsAutomationSection
+              color={settings.color}
+              t={settings.t}
+              automationLocked={settings.automationLocked}
+              autoTranscribeOnSave={settings.autoTranscribeOnSave}
+              setAutoTranscribeOnSave={settings.setAutoTranscribeOnSave}
+              autoAiAfterTranscription={settings.autoAiAfterTranscription}
+              setAutoAiAfterTranscription={settings.setAutoAiAfterTranscription}
+              onLockedPress={settings.setAutomationSheet}
+            />
+          )}
           <SettingsAiProcessingSection
             color={settings.color}
             t={settings.t}
@@ -137,6 +141,7 @@ export const SettingsScreen = () => {
             navigation={settings.navigation}
             appLanguage={settings.appLanguage}
             appTheme={settings.appTheme}
+            isPrivateMode={settings.isPrivateMode}
           />
           <SettingsPermissionsSection
             color={settings.color}
@@ -184,11 +189,13 @@ export const SettingsScreen = () => {
           onClose={() => settings.setPlanPaywallVisible(false)}
           onUpgradePress={settings.handleUpgradePress}
         />
-        <AutomationComingSoonSheet
-          visible={settings.automationSheet !== null}
-          feature={settings.automationSheet ?? 'autoTranscribe'}
-          onClose={() => settings.setAutomationSheet(null)}
-        />
+        {!settings.isPrivateMode && (
+          <AutomationComingSoonSheet
+            visible={settings.automationSheet !== null}
+            feature={settings.automationSheet ?? 'autoTranscribe'}
+            onClose={() => settings.setAutomationSheet(null)}
+          />
+        )}
       </View>
     </View>
   );
