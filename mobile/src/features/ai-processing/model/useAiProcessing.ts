@@ -7,8 +7,8 @@ import { mergeManualTasksWithAi } from '@/entities/record/model/mergeManualTasks
 import { useSettingsStore } from '@/entities/settings';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
-import { pollAiMessage, postAiMessage } from '@/shared/lib/ai-api';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
+import { AIOrchestrator } from '@/shared/lib/ai-core';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 
 export const useAiProcessing = () => {
@@ -32,14 +32,16 @@ export const useAiProcessing = () => {
     })),
   );
 
-  const { selectedAIModel, summaryStyle, taskStrictness, aiOutputLanguage } = useSettingsStore(
-    useShallow((s) => ({
-      selectedAIModel: s.selectedAIModel,
-      summaryStyle: s.summaryStyle,
-      taskStrictness: s.taskStrictness,
-      aiOutputLanguage: s.aiOutputLanguage,
-    })),
-  );
+  const { selectedAIModel, summaryStyle, taskStrictness, aiOutputLanguage, aiExecutionMode } =
+    useSettingsStore(
+      useShallow((s) => ({
+        selectedAIModel: s.selectedAIModel,
+        summaryStyle: s.summaryStyle,
+        taskStrictness: s.taskStrictness,
+        aiOutputLanguage: s.aiOutputLanguage,
+        aiExecutionMode: s.aiExecutionMode,
+      })),
+    );
 
   const inFlightRef = useRef<Set<string>>(new Set());
 
@@ -61,51 +63,34 @@ export const useAiProcessing = () => {
       void logAnalyticsEvent('ai_action_started', { action: 'summary_tasks' });
 
       try {
-        const postResult = await postAiMessage({
-          id: requestId,
-          transcript: record.transcript,
-          model: selectedAIModel,
-          options: {
+        const runResult = await AIOrchestrator.runSummaryTasks(
+          { id: requestId, transcript: record.transcript },
+          {
+            selectedAIModel,
             summaryStyle,
             taskStrictness,
-            outputLanguage: aiOutputLanguage,
+            aiOutputLanguage,
+            aiExecutionMode,
           },
-        });
+        );
 
-        if (!postResult.ok) {
-          const errorMsg =
-            'limitExceeded' in postResult && postResult.limitExceeded
-              ? getAiWeeklyLimitExceededMessage()
-              : postResult.error;
+        if (!runResult.ok) {
+          const errorMsg = runResult.limitExceeded
+            ? getAiWeeklyLimitExceededMessage()
+            : runResult.error;
           if (__DEV__)
-            console.warn('[AI] processRecord: postAiMessage failed', {
+            console.warn('[AI] processRecord: runSummaryTasks failed', {
               recordId: record.id,
               error: errorMsg,
-              limitExceeded: 'limitExceeded' in postResult && postResult.limitExceeded,
+              limitExceeded: runResult.limitExceeded,
+              provider: runResult.provider,
+              mode: runResult.mode,
             });
           setSummaryStatus(record.id, 'error');
           setTasksStatus(record.id, 'error');
           void logAnalyticsEvent('ai_action_failed', {
             action: 'summary_tasks',
-            reason: 'limitExceeded' in postResult && postResult.limitExceeded ? 'limit' : 'post',
-          });
-          return;
-        }
-
-        const pollResult = await pollAiMessage(requestId, postResult.data.syncToken);
-
-        if (!pollResult.ok) {
-          if (__DEV__)
-            console.warn('[AI] processRecord: pollAiMessage failed', {
-              recordId: record.id,
-              requestId,
-              error: pollResult.error,
-            });
-          setSummaryStatus(record.id, 'error');
-          setTasksStatus(record.id, 'error');
-          void logAnalyticsEvent('ai_action_failed', {
-            action: 'summary_tasks',
-            reason: 'poll',
+            reason: runResult.limitExceeded ? 'limit' : 'run',
           });
           return;
         }
@@ -118,7 +103,7 @@ export const useAiProcessing = () => {
           classification,
           keyPhrases,
           nextSteps,
-        } = pollResult.result;
+        } = runResult.result;
 
         const aiTaskItems: TaskItem[] = rawTasks.map((t, index) => ({
           id: `${record.id}-task-${index}`,
@@ -186,6 +171,7 @@ export const useAiProcessing = () => {
       summaryStyle,
       taskStrictness,
       aiOutputLanguage,
+      aiExecutionMode,
       setSummaryStatus,
       setTasksStatus,
       updateSummary,

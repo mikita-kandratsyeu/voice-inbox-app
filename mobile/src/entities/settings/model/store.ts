@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { parseAccentColorId } from '@/shared/config';
+import { isExperimentalPrivateAiEnabled } from '@/shared/config/buildEnv';
 import { storage } from '@/shared/lib/async-storage';
 
 import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
@@ -11,9 +12,11 @@ import {
   USER_FACING_AI_MODELS,
 } from './constants';
 import type {
+  AiExecutionMode,
   AiOutputLanguage,
   AppLanguage,
   AppTheme,
+  PrivateCapabilityTier,
   SettingsState,
   SummaryStyle,
   TaskStrictness,
@@ -39,6 +42,8 @@ const KEYS = {
   SUMMARY_STYLE: 'settings.summaryStyle',
   TASK_STRICTNESS: 'settings.taskStrictness',
   AI_OUTPUT_LANGUAGE: 'settings.aiOutputLanguage',
+  AI_EXECUTION_MODE: 'settings.aiExecutionMode',
+  PRIVATE_CAPABILITY_TIER: 'settings.privateCapabilityTier',
   AUTO_TRANSCRIBE_ON_SAVE: 'settings.autoTranscribeOnSave',
   AUTO_AI_AFTER_TRANSCRIPTION: 'settings.autoAiAfterTranscription',
 } as const;
@@ -124,6 +129,21 @@ const getStoredAiOutputLanguage = (): AiOutputLanguage => {
   return (val as AiOutputLanguage) ?? 'same';
 };
 
+const getStoredAiExecutionMode = (): AiExecutionMode => {
+  const val = storage.getString(KEYS.AI_EXECUTION_MODE);
+  if (!isExperimentalPrivateAiEnabled()) {
+    return 'smart_hybrid';
+  }
+
+  return val === 'private_experimental' ? 'private_experimental' : 'smart_hybrid';
+};
+
+const getStoredPrivateCapabilityTier = (): PrivateCapabilityTier => {
+  const val = storage.getString(KEYS.PRIVATE_CAPABILITY_TIER);
+  if (val === 'full' || val === 'limited') return val;
+  return 'unavailable';
+};
+
 const getStoredWhisperStatuses = (): Partial<Record<WhisperModelVariantId, WhisperModelStatus>> => {
   try {
     const raw = storage.getString(KEYS.WHISPER_STATUSES);
@@ -147,6 +167,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   summaryStyle: getStoredSummaryStyle(),
   taskStrictness: getStoredTaskStrictness(),
   aiOutputLanguage: getStoredAiOutputLanguage(),
+  aiExecutionMode: getStoredAiExecutionMode(),
+  privateCapabilityTier: getStoredPrivateCapabilityTier(),
   autoTranscribeOnSave: getStoredAutoTranscribeOnSave(),
   autoAiAfterTranscription: getStoredAutoAiAfterTranscription(),
   whisperModelStatuses: getStoredWhisperStatuses(),
@@ -212,6 +234,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAiOutputLanguage: (value: AiOutputLanguage) => {
     storage.set(KEYS.AI_OUTPUT_LANGUAGE, value);
     set({ aiOutputLanguage: value });
+  },
+
+  setAiExecutionMode: (value: AiExecutionMode) => {
+    const nextValue = isExperimentalPrivateAiEnabled() ? value : 'smart_hybrid';
+    storage.set(KEYS.AI_EXECUTION_MODE, nextValue);
+    set({ aiExecutionMode: nextValue });
+  },
+
+  setPrivateCapabilityTier: (value: PrivateCapabilityTier) => {
+    storage.set(KEYS.PRIVATE_CAPABILITY_TIER, value);
+    set({ privateCapabilityTier: value });
   },
 
   setAutoTranscribeOnSave: (value: boolean) => {

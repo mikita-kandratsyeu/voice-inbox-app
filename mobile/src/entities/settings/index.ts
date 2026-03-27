@@ -19,6 +19,7 @@ export {
 } from './model/constants';
 export { useSettingsStore } from './model/store';
 export type {
+  AiExecutionMode,
   AIModel,
   AIModelId,
   AiModelTierLabelKey,
@@ -27,6 +28,7 @@ export type {
   AppLanguage,
   AppTheme,
   DownloadBytes,
+  PrivateCapabilityTier,
   SettingsState,
   SummaryStyle,
   TaskStrictness,

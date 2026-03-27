@@ -17,6 +17,8 @@ export type TranscriptionLanguage = 'auto' | 'ru' | 'en' | 'de' | 'fr' | 'es' | 
 export type SummaryStyle = 'brief' | 'standard' | 'detailed';
 export type TaskStrictness = 'strict' | 'balanced' | 'soft';
 export type AiOutputLanguage = 'same' | 'ru' | 'en';
+export type AiExecutionMode = 'smart_hybrid' | 'private_experimental';
+export type PrivateCapabilityTier = 'full' | 'limited' | 'unavailable';
 
 export type WhisperModelId = 'whisper-tiny' | 'whisper-base' | 'whisper-small' | 'whisper-medium';
 export type WhisperModelWeightsFormat = 'q5_1' | 'full';
@@ -75,6 +77,8 @@ export type SettingsState = {
   summaryStyle: SummaryStyle;
   taskStrictness: TaskStrictness;
   aiOutputLanguage: AiOutputLanguage;
+  aiExecutionMode: AiExecutionMode;
+  privateCapabilityTier: PrivateCapabilityTier;
   autoTranscribeOnSave: boolean;
   autoAiAfterTranscription: boolean;
   whisperModelStatuses: Partial<Record<WhisperModelVariantId, WhisperModelStatus>>;
@@ -91,6 +95,8 @@ export type SettingsState = {
   setSummaryStyle: (value: SummaryStyle) => void;
   setTaskStrictness: (value: TaskStrictness) => void;
   setAiOutputLanguage: (value: AiOutputLanguage) => void;
+  setAiExecutionMode: (value: AiExecutionMode) => void;
+  setPrivateCapabilityTier: (value: PrivateCapabilityTier) => void;
   setAutoTranscribeOnSave: (value: boolean) => void;
   setAutoAiAfterTranscription: (value: boolean) => void;
   setWhisperModelStatus: (

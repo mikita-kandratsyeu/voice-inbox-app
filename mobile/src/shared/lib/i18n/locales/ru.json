@@ -599,6 +599,14 @@
   "aiSettings": {
     "title": "Настройки генерации",
     "description": "Настройте, как формируются сводки и задачи. Изменения применятся к следующей генерации.",
+    "executionMode": "Режим генерации",
+    "executionMode.smart_hybrid": "Smart (облако)",
+    "executionMode.private_experimental": "Private Offline (эксперимент)",
+    "privateCapabilityTier": {
+      "full": "Устройство готово к полному экспериментальному режиму Private.",
+      "limited": "Доступен ограниченный режим Private: возможны лимиты по длине и скорости.",
+      "unavailable": "Локальный LLM пока недоступен на этом устройстве. Можно использовать Smart режим."
+    },
     "summaryStyle": "Стиль сводки",
     "summaryStyle.brief": "Краткая (1–2 предложения)",
     "summaryStyle.standard": "Стандартная (2–4 предложения)",

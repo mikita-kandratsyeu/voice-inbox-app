@@ -599,6 +599,14 @@
   "aiSettings": {
     "title": "AI settings",
     "description": "Customize how AI processes your transcripts. Changes apply to the next processing.",
+    "executionMode": "Execution mode",
+    "executionMode.smart_hybrid": "Smart (cloud)",
+    "executionMode.private_experimental": "Private Offline (experimental)",
+    "privateCapabilityTier": {
+      "full": "Your device is ready for the full Private experimental mode.",
+      "limited": "Limited Private mode is available: length and speed limits may apply.",
+      "unavailable": "Local LLM is not available on this device yet. You can use Smart mode."
+    },
     "summaryStyle": "Summary style",
     "summaryStyle.brief": "Brief (1–2 sentences)",
     "summaryStyle.standard": "Standard (2–4 sentences)",
