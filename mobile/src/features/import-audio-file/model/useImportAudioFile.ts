@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
@@ -31,8 +31,12 @@ export function useImportAudioFile() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const addRecord = useRecordStore((s) => s.addRecord);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const { isProActive } = useProEntitlement();
-  const maxImportMs = getMaxRecordingMsForTier(isProActive);
+  const maxImportMs = useMemo(
+    () => getMaxRecordingMsForTier(isProActive, aiExecutionMode),
+    [isProActive, aiExecutionMode],
+  );
   const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(autoTranscribeOnSave, isProActive);
   const { startTranscription } = useTranscription();
   const [isImporting, setIsImporting] = useState(false);
