@@ -407,7 +407,6 @@ export const InboxScreen = () => {
     },
     [
       color,
-      activeFolderId,
       effectiveActiveFolderId,
       folderColorById,
       isPrivateMode,
@@ -456,6 +455,7 @@ export const InboxScreen = () => {
       <InboxHeader
         color={color}
         isLoaded={isLoaded}
+        isPrivateMode={isPrivateMode}
         subtitleText={
           batchSelect.isSelectMode
             ? t('batch.selectedCount', { count: batchSelect.selectedIds.size })

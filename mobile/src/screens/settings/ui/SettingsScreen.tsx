@@ -13,7 +13,7 @@ import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { ProLicenseKeyModal } from '@/features/pro-license';
 import { isCrashlyticsDebugEnabled, isTestflightInternalBuild } from '@/shared/config/buildEnv';
 import { useScrollToTopOnTabPress, useTabletContentMaxWidth } from '@/shared/lib';
-import { SCREEN_PADDING } from '@/shared/ui';
+import { PrivateModeBadge, SCREEN_PADDING } from '@/shared/ui';
 
 import { useSettingsScreen } from '../lib/useSettingsScreen';
 import { AiUsageCard } from './AiUsageCard';
@@ -56,9 +56,12 @@ export const SettingsScreen = () => {
           paddingBottom: 12,
         }}
       >
-        <Text className="text-2xl font-bold" style={{ color: settings.color.text.primary }}>
-          {settings.t('settings.title')}
-        </Text>
+        <View className="flex-row items-center gap-2">
+          <Text className="text-2xl font-bold" style={{ color: settings.color.text.primary }}>
+            {settings.t('settings.title')}
+          </Text>
+          {settings.isPrivateMode && <PrivateModeBadge color={settings.color} compact />}
+        </View>
       </View>
 
       <View

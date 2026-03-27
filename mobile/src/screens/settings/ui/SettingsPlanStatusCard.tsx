@@ -1,4 +1,4 @@
-import { Crown, Shield } from 'lucide-react-native';
+import { Crown } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -12,7 +12,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { useSettingsStore } from '@/entities/settings';
 import { type MonetizationMode } from '@/features/app-storefront';
 import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
@@ -35,8 +34,6 @@ export function SettingsPlanStatusCard({
 }: SettingsPlanStatusCardProps) {
   const { t, i18n } = useTranslation();
   const { isProActive, expiresAtMs } = useProEntitlement();
-  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
-  const isPrivateMode = aiExecutionMode === 'private_experimental';
   const loggedSoonRef = useRef(false);
   const borderPulse = useSharedValue(0);
 
@@ -89,9 +86,7 @@ export function SettingsPlanStatusCard({
     : t('settings.planStatus.freeTitle');
 
   let subtitle = t('settings.planStatus.freeValueSubtitle', { limit: aiLimit });
-  if (isPrivateMode) {
-    subtitle = t('settings.planStatus.privateModeSubtitle');
-  } else if (isProActive) {
+  if (isProActive) {
     subtitle =
       proExpiresText != null
         ? t('settings.planStatus.proActiveUntil', { date: proExpiresText })
@@ -103,9 +98,7 @@ export function SettingsPlanStatusCard({
   }
 
   let statusBadge: string | null = null;
-  if (isPrivateMode) {
-    statusBadge = t('settings.planStatus.privateBadge');
-  } else if (monetizationMode === 'coming_soon' && !isProActive) {
+  if (monetizationMode === 'coming_soon' && !isProActive) {
     statusBadge = t('settings.planStatus.soonBadge');
   } else if (monetizationMode === 'iap_public' && !isProActive) {
     statusBadge = t('settings.planStatus.availableBadge');
@@ -182,11 +175,7 @@ export function SettingsPlanStatusCard({
             className="mr-3 h-14 w-14 items-center justify-center rounded-2xl"
             style={{ backgroundColor: color.background.tertiary }}
           >
-            {isPrivateMode ? (
-              <Shield size={28} color={color.accent.primary} strokeWidth={1.75} />
-            ) : (
-              <Crown size={28} color={color.accent.primary} strokeWidth={1.75} />
-            )}
+            <Crown size={28} color={color.accent.primary} strokeWidth={1.75} />
           </View>
           <View className="min-w-0 flex-1">
             <View className="flex-row items-center">

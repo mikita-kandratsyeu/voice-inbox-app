@@ -21,6 +21,7 @@ type RecordingDetailCardProps = {
   color: Colors;
   folderPlacement: RecordingDetailFolderPlacement;
   hideFolderPlacement?: boolean;
+  surfaceBackgroundColor?: string;
 };
 
 export const RecordingDetailCard = ({
@@ -28,6 +29,7 @@ export const RecordingDetailCard = ({
   color,
   folderPlacement,
   hideFolderPlacement = false,
+  surfaceBackgroundColor,
 }: RecordingDetailCardProps) => {
   const { t, i18n } = useTranslation();
   const normalizeLabel = (s: string): string =>
@@ -74,10 +76,12 @@ export const RecordingDetailCard = ({
     ? baseLabel + t('recordingDetail.accessibility.tagsSuffix', { tags: tagsStr })
     : baseLabel;
 
+  const cardBg = surfaceBackgroundColor ?? color.background.card;
+
   return (
     <View
       className="gap-2 rounded-2xl p-4"
-      style={{ backgroundColor: color.background.card }}
+      style={{ backgroundColor: cardBg }}
       accessibilityRole="summary"
       accessibilityLabel={accessibilityLabel}
     >

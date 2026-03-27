@@ -288,8 +288,15 @@ export const RecordingDetailScreen = () => {
     [activeTab],
   );
 
+  const shellBackgroundColor = isPrivateMode
+    ? color.background.primary
+    : color.background.secondary;
+  const tabPanelBackgroundColor = isPrivateMode
+    ? color.background.secondary
+    : color.background.card;
+
   return (
-    <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
+    <View className="flex-1" style={{ backgroundColor: shellBackgroundColor }}>
       <RecordingDetailHeader
         record={liveRecord}
         color={color}
@@ -317,7 +324,7 @@ export const RecordingDetailScreen = () => {
       )}
       <KeyboardAwareScrollView
         ref={scrollRef}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: shellBackgroundColor }}
         contentContainerStyle={{
           padding: scrollPadding,
           gap: 12,
@@ -334,6 +341,7 @@ export const RecordingDetailScreen = () => {
             color={color}
             folderPlacement={folderPlacement}
             hideFolderPlacement={isPrivateMode}
+            surfaceBackgroundColor={tabPanelBackgroundColor}
           />
 
           <View className="overflow-hidden rounded-2xl">
@@ -342,6 +350,7 @@ export const RecordingDetailScreen = () => {
               color={color}
               audioPath={liveRecord.audioPath}
               onPositionChange={onPositionUpdate}
+              surfaceBackgroundColor={tabPanelBackgroundColor}
             />
           </View>
 
@@ -350,12 +359,13 @@ export const RecordingDetailScreen = () => {
               value={recordLanguage}
               color={color}
               onSelect={setRecordLanguage}
+              surfaceBackgroundColor={tabPanelBackgroundColor}
             />
           </View>
 
           <View
             className="overflow-hidden rounded-2xl"
-            style={{ backgroundColor: color.background.card }}
+            style={{ backgroundColor: tabPanelBackgroundColor }}
           >
             <RecordingDetailTabBar active={activeTab} onSelect={onSelectTab} color={color} />
             {mountedTabs.has('transcript') && (

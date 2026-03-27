@@ -126,7 +126,7 @@ export const TasksTab = ({
   onDeleteTask,
   onDismissError,
   showPrivateModeCta = false,
-  onSwitchToSmartMode,
+  onSwitchToSmartMode: _onSwitchToSmartMode,
 }: TasksTabProps) => {
   const theme = useAppTheme();
   const isDark = theme === 'dark';
@@ -136,6 +136,7 @@ export const TasksTab = ({
   const { isConnected } = useNetworkStatus();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
+
   const { addTaskToCalendar } = useAddToCalendar();
   const { addTaskToReminder } = useAddToReminder();
 

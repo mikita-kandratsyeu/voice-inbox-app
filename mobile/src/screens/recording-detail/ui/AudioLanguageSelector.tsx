@@ -14,16 +14,25 @@ type AudioLanguageSelectorProps = {
   value: TranscriptionLanguage;
   color: Colors;
   onSelect: (lang: TranscriptionLanguage) => void;
+  surfaceBackgroundColor?: string;
 };
 
-export const AudioLanguageSelector = ({ value, color, onSelect }: AudioLanguageSelectorProps) => {
+export const AudioLanguageSelector = ({
+  value,
+  color,
+  onSelect,
+  surfaceBackgroundColor,
+}: AudioLanguageSelectorProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
   const isDark = theme === 'dark';
   const label = t(`recordingDetail.language.${value}`);
 
   return (
-    <View className="gap-2 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
+    <View
+      className="gap-2 rounded-2xl p-4"
+      style={{ backgroundColor: surfaceBackgroundColor ?? color.background.card }}
+    >
       <View className="flex-row items-center gap-2">
         <Languages size={18} color={color.icon.muted} strokeWidth={2} />
         <Text className="text-sm font-medium" style={{ color: color.text.primary }}>

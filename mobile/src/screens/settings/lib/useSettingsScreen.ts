@@ -201,7 +201,7 @@ export function useSettingsScreen() {
 
   const userFacing = USER_FACING_AI_MODELS.find((m) => m.id === selectedAIModel);
   const localModel = LOCAL_AI_MODELS.find((m) => m.id === selectedLocalAiModel);
-  const aiModelName =
+  const aiModelBaseName =
     aiExecutionMode === 'private_experimental'
       ? (localModel?.name ?? selectedLocalAiModel)
       : (userFacing?.name ?? selectedAIModel);
@@ -394,7 +394,7 @@ export function useSettingsScreen() {
     autoAiAfterTranscription,
     setAutoAiAfterTranscription,
     setAutomationSheet,
-    aiModelName,
+    aiModelName: aiModelBaseName,
     privateAiModeValue,
     transcriptionValue,
     embeddingAvailable: isEmbeddingAvailable(),
