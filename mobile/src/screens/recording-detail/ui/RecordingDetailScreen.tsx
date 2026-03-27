@@ -95,12 +95,16 @@ export const RecordingDetailScreen = () => {
     selectedWhisperModel,
     selectedWhisperModelFormat,
     globalTranscriptionLanguage,
+    aiExecutionMode,
+    setAiExecutionMode,
   } = useSettingsStore(
     useShallow((s) => ({
       whisperModelStatuses: s.whisperModelStatuses,
       selectedWhisperModel: s.selectedWhisperModel,
       selectedWhisperModelFormat: s.selectedWhisperModelFormat,
       globalTranscriptionLanguage: s.transcriptionLanguage,
+      aiExecutionMode: s.aiExecutionMode,
+      setAiExecutionMode: s.setAiExecutionMode,
     })),
   );
 
@@ -266,6 +270,9 @@ export const RecordingDetailScreen = () => {
     setSummaryStatus(liveRecord.id, 'done');
     setTasksStatus(liveRecord.id, 'done');
   }, [liveRecord.id, setSummaryStatus, setTasksStatus]);
+  const handleSwitchToSmartMode = useCallback(() => {
+    setAiExecutionMode('smart_hybrid');
+  }, [setAiExecutionMode]);
 
   const onDismissAskAIModal = useCallback(() => setShowAskAIModal(false), []);
 
@@ -367,6 +374,8 @@ export const RecordingDetailScreen = () => {
                   color={color}
                   onGenerate={handleGenerateSummary}
                   onDismissError={handleDismissSummaryError}
+                  showPrivateModeCta={aiExecutionMode === 'private_experimental'}
+                  onSwitchToSmartMode={handleSwitchToSmartMode}
                 />
               </View>
             )}
@@ -384,6 +393,8 @@ export const RecordingDetailScreen = () => {
                   onAddManualTask={handleAddManualTask}
                   onDeleteTask={handleDeleteTask}
                   onDismissError={handleDismissSummaryError}
+                  showPrivateModeCta={aiExecutionMode === 'private_experimental'}
+                  onSwitchToSmartMode={handleSwitchToSmartMode}
                 />
               </View>
             )}

@@ -89,6 +89,27 @@ async function generateText(
   return extractText(parts);
 }
 
+function mapLocalError(err: unknown): string {
+  const message = err instanceof Error ? err.message : String(err);
+
+  if (message.includes('privateModeUnavailable')) {
+    return i18n.t('ai.privateModeUnavailable');
+  }
+
+  if (
+    message.includes('Invalid local summary response') ||
+    message.includes('Local summary is empty')
+  ) {
+    return i18n.t('ai.privateModeParseFailed');
+  }
+
+  if (message.includes('Local answer is empty')) {
+    return i18n.t('ai.privateModeEmptyAnswer');
+  }
+
+  return i18n.t('ai.privateModeGenericError');
+}
+
 export async function runLocalSummaryTasks(
   request: SummaryTaskRequest,
   ctx: AiExecutionContext,
@@ -158,7 +179,7 @@ export async function runLocalSummaryTasks(
       ok: false,
       provider: 'local',
       mode: ctx.aiExecutionMode,
-      error: err instanceof Error ? err.message : 'Local summary failed',
+      error: mapLocalError(err),
     };
   }
 }
@@ -203,7 +224,7 @@ export async function runLocalAsk(
       ok: false,
       provider: 'local',
       mode: ctx.aiExecutionMode,
-      error: err instanceof Error ? err.message : 'Local ask failed',
+      error: mapLocalError(err),
     };
   }
 }

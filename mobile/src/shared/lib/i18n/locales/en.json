@@ -116,7 +116,10 @@
   "ai": {
     "limitWeeklyExceeded": "You’ve used this week’s generation limit. It resets on the date shown in Settings — or watch a short ad there for a small bonus.",
     "privateModeUnavailable": "Private Offline mode is not available on this device yet.",
-    "privateModeLimitedTooLong": "This note is too long for Limited Private mode. Switch to Smart mode."
+    "privateModeLimitedTooLong": "This note is too long for Limited Private mode. Switch to Smart mode.",
+    "privateModeParseFailed": "The local model could not produce a valid response. Try again or switch to Smart mode.",
+    "privateModeEmptyAnswer": "The local model returned an empty answer. Try again or switch to Smart mode.",
+    "privateModeGenericError": "The local request failed. Try again or switch to Smart mode."
   },
   "search": {
     "a11yOpen": "Open search",
@@ -237,6 +240,8 @@
     "askProcessing": "Answering...",
     "askError": "Failed to get answer",
     "askErrorContinueHint": "Close to view summary and tasks.",
+    "switchToSmartMode": "Switch to Smart",
+    "privateModeErrorHint": "This error is related to Private Offline mode. You can switch to Smart and retry.",
     "askAnother": "Ask another question",
     "askCopy": "Copy answer",
     "askShare": "Share answer",

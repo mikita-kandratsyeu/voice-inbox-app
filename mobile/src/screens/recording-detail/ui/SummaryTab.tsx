@@ -22,6 +22,8 @@ type SummaryTabProps = {
   color: Colors;
   onGenerate: () => void;
   onDismissError?: () => void;
+  showPrivateModeCta?: boolean;
+  onSwitchToSmartMode?: () => void;
 };
 
 export const SummaryTab = ({
@@ -32,6 +34,8 @@ export const SummaryTab = ({
   color,
   onGenerate,
   onDismissError,
+  showPrivateModeCta = false,
+  onSwitchToSmartMode,
 }: SummaryTabProps) => {
   const { t } = useTranslation();
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
@@ -44,14 +48,25 @@ export const SummaryTab = ({
 
   if (status === 'error' && !summary) {
     return (
-      <TabEmptyState
-        icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
-        title={t('recordingDetail.summaryError')}
-        description=""
-        buttonLabel={t('recordingDetail.summaryRetry')}
-        buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
-        onPress={onGenerate}
-      />
+      <View className="gap-3 p-4">
+        <TabEmptyState
+          icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
+          title={t('recordingDetail.summaryError')}
+          description={showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : ''}
+          buttonLabel={t('recordingDetail.summaryRetry')}
+          buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
+          onPress={onGenerate}
+        />
+        {showPrivateModeCta && onSwitchToSmartMode ? (
+          <Button
+            variant="secondary"
+            size="lg"
+            label={t('recordingDetail.switchToSmartMode')}
+            color={color}
+            onPress={onSwitchToSmartMode}
+          />
+        ) : null}
+      </View>
     );
   }
 

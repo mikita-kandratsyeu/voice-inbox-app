@@ -34,6 +34,7 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
+import { useSettingsStore } from '@/entities/settings';
 import { type AskAIHistoryItem, useAskAI } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
 import { hapticSelection, useNetworkStatus } from '@/shared/lib';
@@ -90,8 +91,16 @@ type ErrorStateProps = {
   color: Colors;
   onRetry: () => void;
   onClose: () => void;
+  showPrivateModeCta?: boolean;
+  onSwitchToSmartMode?: () => void;
 };
-const ErrorState = ({ color, onRetry, onClose }: ErrorStateProps) => {
+const ErrorState = ({
+  color,
+  onRetry,
+  onClose,
+  showPrivateModeCta = false,
+  onSwitchToSmartMode,
+}: ErrorStateProps) => {
   const { t } = useTranslation();
   return (
     <View className="items-center gap-4 py-8">
@@ -100,8 +109,20 @@ const ErrorState = ({ color, onRetry, onClose }: ErrorStateProps) => {
         {t('recordingDetail.askError')}
       </Text>
       <Text className="text-center text-sm" style={{ color: color.text.secondary }}>
-        {t('recordingDetail.askErrorContinueHint')}
+        {showPrivateModeCta
+          ? t('recordingDetail.privateModeErrorHint')
+          : t('recordingDetail.askErrorContinueHint')}
       </Text>
+      {showPrivateModeCta && onSwitchToSmartMode ? (
+        <Button
+          variant="secondary"
+          size="lg"
+          label={t('recordingDetail.switchToSmartMode')}
+          color={color}
+          onPress={onSwitchToSmartMode}
+          containerStyle={{ width: '100%' }}
+        />
+      ) : null}
       <View className="flex-row gap-3">
         <Button
           variant="secondary"
@@ -403,6 +424,8 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
   const { askQuestion, reset, askAnother, isLoading, error, question, answer, history } =
     useAskAI();
   const { isConnected } = useNetworkStatus();
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const setAiExecutionMode = useSettingsStore((s) => s.setAiExecutionMode);
   const hasTranscript = Boolean(record.transcript);
 
   useEffect(() => {
@@ -495,6 +518,9 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
   const handleRetry = useCallback(() => {
     if (question) askQuestion(record, question);
   }, [question, record, askQuestion]);
+  const handleSwitchToSmartMode = useCallback(() => {
+    setAiExecutionMode('smart_hybrid');
+  }, [setAiExecutionMode]);
 
   const handleCopy = useCallback((text: string) => {
     Clipboard.setString(text);
@@ -517,6 +543,8 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
           color={color}
           onRetry={handleRetry}
           onClose={() => bottomSheetRef.current?.dismiss()}
+          showPrivateModeCta={aiExecutionMode === 'private_experimental'}
+          onSwitchToSmartMode={handleSwitchToSmartMode}
         />
       );
 
@@ -555,6 +583,8 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
     record,
     isConnected,
     handleRetry,
+    aiExecutionMode,
+    handleSwitchToSmartMode,
     handleSuggestedQuestion,
     handleCopy,
     handleShare,
