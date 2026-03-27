@@ -633,7 +633,7 @@
   },
   "privateAiMode": {
     "title": "AI mode",
-    "description": "Control the experimental mode where generation runs locally on device. This section is separated so the mode can be enabled or disabled easily."
+    "description": "Control the experimental mode where generation runs locally on device."
   },
   "aiModels": {
     "title": "Generation model",
