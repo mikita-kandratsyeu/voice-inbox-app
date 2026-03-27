@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import type { RecordingStatus } from '@/entities/record';
+import { useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
 import {
@@ -42,6 +43,8 @@ export const SummaryTab = ({
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
   const aiModelName = useAiModelName();
   const { isConnected } = useNetworkStatus();
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
 
   const errMessage = useMemo(() => {
     return errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '');
@@ -86,7 +89,7 @@ export const SummaryTab = ({
         buttonIcon={<FileText size={18} color="#fff" strokeWidth={2} />}
         hint={aiModelName}
         hintIcon={<AiTabHintIcon />}
-        disabled={isConnected === false}
+        disabled={disableByNetwork}
         onPress={onGenerate}
       />
     );
@@ -129,9 +132,9 @@ export const SummaryTab = ({
         label={t('recordingDetail.regenerateSummary')}
         color={color}
         onPress={onGenerate}
-        disabled={isConnected === false}
+        disabled={disableByNetwork}
         className="mt-1"
-        accessibilityState={{ disabled: isConnected === false }}
+        accessibilityState={{ disabled: disableByNetwork }}
       />
     </View>
   );

@@ -15,6 +15,7 @@ import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { KeyboardController } from 'react-native-keyboard-controller';
 
 import type { RecordingStatus, TaskItem } from '@/entities/record';
+import { useSettingsStore } from '@/entities/settings';
 import { useAddToCalendar } from '@/features/add-to-calendar';
 import { useAddToReminder } from '@/features/add-to-reminder';
 import type { Colors } from '@/shared/config';
@@ -133,6 +134,8 @@ export const TasksTab = ({
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
   const aiModelName = useAiModelName();
   const { isConnected } = useNetworkStatus();
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
   const { addTaskToCalendar } = useAddToCalendar();
   const { addTaskToReminder } = useAddToReminder();
 
@@ -199,7 +202,7 @@ export const TasksTab = ({
           buttonIcon={<ListChecks size={18} color="#fff" strokeWidth={2} />}
           hint={aiModelName}
           hintIcon={<AiTabHintIcon />}
-          disabled={isConnected === false}
+          disabled={disableByNetwork}
           onPress={onExtract}
         />
         <View className="px-6 pb-8">
@@ -353,7 +356,7 @@ export const TasksTab = ({
           label={t('recordingDetail.reextractTasks')}
           color={color}
           onPress={onExtract}
-          disabled={isConnected === false || !hasTranscript}
+          disabled={disableByNetwork || !hasTranscript}
           containerStyle={{ flex: 1, minWidth: 0 }}
         />
         <Button

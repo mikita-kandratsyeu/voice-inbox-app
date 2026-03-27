@@ -327,25 +327,24 @@ function buildFollowUpQuestions(
 type EmptyStateProps = {
   color: Colors;
   record: VoiceRecord;
-  isConnected: boolean | null;
+  showOfflineState: boolean;
   onSuggestedQuestion: (question: string) => void;
   disabled?: boolean;
 };
 const EmptyState = ({
   color,
   record,
-  isConnected,
+  showOfflineState,
   onSuggestedQuestion,
   disabled,
 }: EmptyStateProps) => {
   const { t } = useTranslation();
   const aiModelName = useAiModelName();
-  const hintIcon =
-    isConnected === false ? (
-      <WifiOff size={12} color={color.accent.delete} strokeWidth={1.8} />
-    ) : (
-      <Cloud size={12} color={color.text.secondary} strokeWidth={1.8} />
-    );
+  const hintIcon = showOfflineState ? (
+    <WifiOff size={12} color={color.accent.delete} strokeWidth={1.8} />
+  ) : (
+    <Cloud size={12} color={color.text.secondary} strokeWidth={1.8} />
+  );
 
   const suggestedQuestions = useMemo(() => buildSuggestedQuestions(t, record), [t, record]);
 
@@ -375,11 +374,11 @@ const EmptyState = ({
               hapticSelection();
               onSuggestedQuestion(questionText);
             }}
-            disabled={disabled || isConnected === false}
+            disabled={disabled || showOfflineState}
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel={questionText}
-            accessibilityState={{ disabled: Boolean(disabled || isConnected === false) }}
+            accessibilityState={{ disabled: Boolean(disabled || showOfflineState) }}
             className="rounded-xl px-4 py-3"
             style={{ backgroundColor: color.background.tertiary }}
           >
@@ -416,6 +415,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
   const { isConnected } = useNetworkStatus();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const setAiExecutionMode = useSettingsStore((s) => s.setAiExecutionMode);
+  const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
   const hasTranscript = Boolean(record.transcript);
 
   useEffect(() => {
@@ -487,11 +487,11 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
 
   const handleAsk = useCallback(() => {
     const q = questionInput.trim();
-    if (!q || !hasTranscript || isLoading || isConnected === false) return;
+    if (!q || !hasTranscript || isLoading || disableByNetwork) return;
     KeyboardController.dismiss();
     setQuestionInput('');
     askQuestion(record, q);
-  }, [questionInput, hasTranscript, isLoading, isConnected, record, askQuestion]);
+  }, [questionInput, hasTranscript, isLoading, disableByNetwork, record, askQuestion]);
 
   const handleInputFocus = useCallback(() => {
     bottomSheetRef.current?.snapToIndex(1);
@@ -499,10 +499,10 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
 
   const handleSuggestedQuestion = useCallback(
     (q: string) => {
-      if (!hasTranscript || isLoading || isConnected === false) return;
+      if (!hasTranscript || isLoading || disableByNetwork) return;
       askQuestion(record, q);
     },
-    [hasTranscript, isLoading, isConnected, record, askQuestion],
+    [hasTranscript, isLoading, disableByNetwork, record, askQuestion],
   );
 
   const handleRetry = useCallback(() => {
@@ -557,7 +557,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
       <EmptyState
         color={color}
         record={record}
-        isConnected={isConnected}
+        showOfflineState={disableByNetwork}
         onSuggestedQuestion={handleSuggestedQuestion}
         disabled={isLoading}
       />
@@ -571,7 +571,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
     history,
     color,
     record,
-    isConnected,
+    disableByNetwork,
     handleRetry,
     aiExecutionMode,
     handleSwitchToSmartMode,
@@ -594,12 +594,12 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
           color={color}
           containerStyle={{ backgroundColor: color.accent.primary }}
           onPress={handleAsk}
-          disabled={!questionInput.trim() || isLoading || isConnected === false}
+          disabled={!questionInput.trim() || isLoading || disableByNetwork}
           accessibilityLabel={t('recordingDetail.askSend')}
         />
       </View>
     ),
-    [color, handleAsk, questionInput, isLoading, isConnected, t],
+    [color, handleAsk, questionInput, isLoading, disableByNetwork, t],
   );
 
   const inputRow = useMemo(
@@ -629,7 +629,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
               value={questionInput}
               onChangeText={setQuestionInput}
               returnKeyType="send"
-              editable={isConnected !== false}
+              editable={!disableByNetwork}
               multiline
               numberOfLines={1}
               submitBehavior="blurAndSubmit"
@@ -652,7 +652,7 @@ export const AskAIModal = ({ visible, record, color, onDismiss }: AskAIModalProp
       questionInput,
       sendButton,
       t,
-      isConnected,
+      disableByNetwork,
       handleAsk,
       handleInputFocus,
       aiUsage,
