@@ -1,5 +1,10 @@
-import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
+import type {
+  LocalAiModelId,
+  WhisperModelId,
+  WhisperModelWeightsFormat,
+} from '@/entities/settings';
 import { NitroFS } from '@/shared/lib/fs';
+import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 import { formatFileSize, getWhisperModelPath } from '@/shared/lib/whisper';
 
 export const getModelFileSizeBytes = async (
@@ -25,4 +30,19 @@ export const getModelFileSizeFormatted = async (
 ): Promise<string> => {
   const bytes = await getModelFileSizeBytes(modelId, format);
   return formatFileSize(bytes);
+};
+
+export const getLocalLlmModelFileSizeBytes = async (modelId: LocalAiModelId): Promise<number> => {
+  try {
+    const path = getLocalLlmModelPath(modelId);
+    const exists = await NitroFS.exists(path);
+
+    if (!exists) return 0;
+
+    const stat = await NitroFS.stat(path);
+
+    return stat.size;
+  } catch {
+    return 0;
+  }
 };

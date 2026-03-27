@@ -1,6 +1,10 @@
 export { deleteLocalLlmModel } from './lib/deleteLocalLlmModel';
 export { deleteWhisperModel } from './lib/deleteWhisperModel';
-export { getModelFileSizeBytes, getModelFileSizeFormatted } from './lib/getModelFileSize';
+export {
+  getLocalLlmModelFileSizeBytes,
+  getModelFileSizeBytes,
+  getModelFileSizeFormatted,
+} from './lib/getModelFileSize';
 export type {
   LocalLlmDownloadMachineState,
   LocalLlmDownloadProgressHandler,

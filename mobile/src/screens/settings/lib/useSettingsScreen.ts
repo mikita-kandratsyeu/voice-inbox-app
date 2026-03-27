@@ -208,7 +208,7 @@ export function useSettingsScreen() {
     aiExecutionMode === 'private_experimental'
       ? localLlmDownloaded
         ? (localModel?.name ?? selectedLocalAiModel)
-        : `${localModel?.name ?? selectedLocalAiModel} (${t('aiModels.notDownloadedSuffix')})`
+        : t('settings.whisperModelNotSet')
       : (userFacing?.name ?? selectedAIModel);
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const whisperVariantId = getWhisperModelVariantId(

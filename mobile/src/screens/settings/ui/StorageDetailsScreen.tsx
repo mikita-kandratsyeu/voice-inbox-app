@@ -1,5 +1,15 @@
 import { useNavigation } from '@react-navigation/native';
-import { Bot, BrainCircuit, Clock, FileText, Mic, Mic2, Trash2, Type } from 'lucide-react-native';
+import {
+  Bot,
+  BrainCircuit,
+  Clock,
+  FileText,
+  Mic,
+  Mic2,
+  Sparkles,
+  Trash2,
+  Type,
+} from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -17,10 +27,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
-import { useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import { LOCAL_AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
-import { getModelFileSizeBytes } from '@/features/model-manager';
+import { getLocalLlmModelFileSizeBytes, getModelFileSizeBytes } from '@/features/model-manager';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import {
@@ -30,6 +40,7 @@ import {
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
+import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 import { formatFileSize, getWhisperModelPath } from '@/shared/lib/whisper';
 import { ScreenHeader, SettingsRow, SettingsSection, SkeletonPulse } from '@/shared/ui';
 
@@ -38,11 +49,18 @@ const StorageBar = ({
   transcriptKb,
   aiDataKb,
   cacheKb,
-  modelsBytes,
+  whisperModelsBytes,
+  localGenerationModelsBytes,
   totalMb,
   color,
-}: StorageStats & { modelsBytes: number; color: Colors }) => {
+}: StorageStats & {
+  whisperModelsBytes: number;
+  localGenerationModelsBytes: number;
+  totalMb: number;
+  color: Colors;
+}) => {
   const { t } = useTranslation();
+  const modelsBytes = whisperModelsBytes + localGenerationModelsBytes;
   const modelsMb = modelsBytes / (1024 * 1024);
   const divisor = totalMb > 0 ? totalMb : 1;
   const audioFrac = audioMb / divisor;
@@ -118,7 +136,7 @@ const StorageBar = ({
             {formatFileSize(aiDataKb * 1024)}
           </Text>
         </View>
-        {modelsBytes > 0 && (
+        {whisperModelsBytes > 0 && (
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center gap-2">
               <View
@@ -126,11 +144,27 @@ const StorageBar = ({
                 style={{ backgroundColor: color.accent.models }}
               />
               <Text className="text-[14px]" style={{ color: color.text.primary }}>
-                {t('storage.whisperModels')}
+                {t('storage.transcriptionModels')}
               </Text>
             </View>
             <Text className="text-[14px]" style={{ color: color.text.primary }}>
-              {formatFileSize(modelsBytes)}
+              {formatFileSize(whisperModelsBytes)}
+            </Text>
+          </View>
+        )}
+        {localGenerationModelsBytes > 0 && (
+          <View className="flex-row items-center justify-between">
+            <View className="flex-row items-center gap-2">
+              <View
+                className="h-3 w-3 rounded-full"
+                style={{ backgroundColor: color.accent.models }}
+              />
+              <Text className="text-[14px]" style={{ color: color.text.primary }}>
+                {t('storage.localGenerationModels')}
+              </Text>
+            </View>
+            <Text className="text-[14px]" style={{ color: color.text.primary }}>
+              {formatFileSize(localGenerationModelsBytes)}
             </Text>
           </View>
         )}
@@ -203,6 +237,12 @@ type DownloadedModelVariant = {
   bytes: number;
 };
 
+type DownloadedLocalLlmEntry = {
+  id: string;
+  name: string;
+  bytes: number;
+};
+
 export const StorageDetailsScreen = () => {
   const { t } = useTranslation();
   const color = useColors();
@@ -223,10 +263,11 @@ export const StorageDetailsScreen = () => {
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [deleteAllProgress, setDeleteAllProgress] = useState({ current: 0, total: 0 });
   const [downloadedVariants, setDownloadedVariants] = useState<DownloadedModelVariant[]>([]);
+  const [downloadedLocalLlm, setDownloadedLocalLlm] = useState<DownloadedLocalLlmEntry[]>([]);
 
   const loadModelSizes = useCallback(async () => {
     const formats: WhisperModelWeightsFormat[] = ['q5_1', 'full'];
-    const entries = await Promise.all(
+    const whisperEntries = await Promise.all(
       WHISPER_MODELS.flatMap((model) =>
         formats.map(async (format) => {
           const path = getWhisperModelPath(model.id, format);
@@ -238,27 +279,42 @@ export const StorageDetailsScreen = () => {
         }),
       ),
     );
-    setDownloadedVariants(entries.filter((x): x is DownloadedModelVariant => x != null));
+    const localEntries = await Promise.all(
+      LOCAL_AI_MODELS.map(async (m) => {
+        const path = getLocalLlmModelPath(m.id);
+        const exists = await NitroFS.exists(path);
+        if (!exists) return null;
+        const bytes = await getLocalLlmModelFileSizeBytes(m.id);
+        if (bytes <= 0) return null;
+        return { id: m.id, name: m.name, bytes } as DownloadedLocalLlmEntry;
+      }),
+    );
+    setDownloadedVariants(whisperEntries.filter((x): x is DownloadedModelVariant => x != null));
+    setDownloadedLocalLlm(localEntries.filter((x): x is DownloadedLocalLlmEntry => x != null));
   }, []);
 
-  const refreshStats = useCallback(async (isPull = false) => {
-    if (isPull) {
-      setIsRefreshing(true);
-    } else {
-      setIsLoading(true);
-    }
-    try {
-      const currentRecords = useRecordStore.getState().records;
-      const paths = currentRecords.map((r) => r.audioPath).filter((p): p is string => Boolean(p));
-      const s = await getStorageStats(paths, currentRecords);
-      setStats(s);
-    } catch (err) {
-      if (__DEV__) console.warn('[StorageDetails] Failed to load stats:', err);
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  }, []);
+  const refreshStats = useCallback(
+    async (isPull = false) => {
+      if (isPull) {
+        setIsRefreshing(true);
+      } else {
+        setIsLoading(true);
+      }
+      try {
+        const currentRecords = useRecordStore.getState().records;
+        const paths = currentRecords.map((r) => r.audioPath).filter((p): p is string => Boolean(p));
+        const s = await getStorageStats(paths, currentRecords);
+        setStats(s);
+        await loadModelSizes();
+      } catch (err) {
+        if (__DEV__) console.warn('[StorageDetails] Failed to load stats:', err);
+      } finally {
+        setIsLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [loadModelSizes],
+  );
 
   useEffect(() => {
     refreshStats();
@@ -274,8 +330,10 @@ export const StorageDetailsScreen = () => {
     (r) => (r.summary && r.summary.length > 0) || (r.tasks && r.tasks.length > 0),
   ).length;
 
-  const modelsBytes = downloadedVariants.reduce((sum, m) => sum + m.bytes, 0);
-  const totalMb = stats.totalMb + modelsBytes / (1024 * 1024);
+  const whisperModelsBytes = downloadedVariants.reduce((sum, m) => sum + m.bytes, 0);
+  const localGenerationModelsBytes = downloadedLocalLlm.reduce((sum, m) => sum + m.bytes, 0);
+  const totalMb = stats.totalMb + (whisperModelsBytes + localGenerationModelsBytes) / (1024 * 1024);
+  const hasOnDeviceModelRows = downloadedVariants.length > 0 || downloadedLocalLlm.length > 0;
 
   const handleClearCache = () => {
     Alert.alert(t('storage.clearCache'), t('storage.clearCacheConfirm'), [
@@ -375,7 +433,13 @@ export const StorageDetailsScreen = () => {
             {isLoading ? (
               <StorageBarSkeleton color={color} />
             ) : (
-              <StorageBar {...stats} modelsBytes={modelsBytes} totalMb={totalMb} color={color} />
+              <StorageBar
+                {...stats}
+                whisperModelsBytes={whisperModelsBytes}
+                localGenerationModelsBytes={localGenerationModelsBytes}
+                totalMb={totalMb}
+                color={color}
+              />
             )}
           </View>
           <SettingsSection title={t('storage.details')}>
@@ -400,26 +464,28 @@ export const StorageDetailsScreen = () => {
               value={formatFileSize(stats.aiDataKb * 1024)}
               leftIcon={<Bot size={20} color={color.accent.aiData} strokeWidth={1.8} />}
               showChevron={false}
-              isLast={downloadedVariants.length === 0}
+              isLast={!hasOnDeviceModelRows}
             />
-            {downloadedVariants.length > 0 && (
-              <>
-                {downloadedVariants.map((model, index) => {
-                  return (
-                    <SettingsRow
-                      key={`${model.id}:${model.format}`}
-                      label={getWhisperModelDisplayName(model.id, model.format)}
-                      value={formatFileSize(model.bytes)}
-                      leftIcon={
-                        <BrainCircuit size={20} color={color.accent.models} strokeWidth={1.8} />
-                      }
-                      showChevron={false}
-                      isLast={index === downloadedVariants.length - 1}
-                    />
-                  );
-                })}
-              </>
-            )}
+            {downloadedVariants.map((model, index) => (
+              <SettingsRow
+                key={`${model.id}:${model.format}`}
+                label={getWhisperModelDisplayName(model.id, model.format)}
+                value={formatFileSize(model.bytes)}
+                leftIcon={<BrainCircuit size={20} color={color.accent.models} strokeWidth={1.8} />}
+                showChevron={false}
+                isLast={index === downloadedVariants.length - 1 && downloadedLocalLlm.length === 0}
+              />
+            ))}
+            {downloadedLocalLlm.map((model, index) => (
+              <SettingsRow
+                key={model.id}
+                label={model.name}
+                value={formatFileSize(model.bytes)}
+                leftIcon={<Sparkles size={20} color={color.accent.models} strokeWidth={1.8} />}
+                showChevron={false}
+                isLast={index === downloadedLocalLlm.length - 1}
+              />
+            ))}
           </SettingsSection>
           <SettingsSection title={t('storage.statistics')}>
             <SettingsRow
