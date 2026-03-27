@@ -162,6 +162,8 @@
     "saveModalTitle": "Save recording",
     "duration": "Duration: {{time}}",
     "offlineHint": "Offline-transcription on device",
+    "blockedByTranscriptionTitle": "Wait for transcription to finish",
+    "blockedByTranscriptionMessage": "You can't start a new recording while transcription is running.",
     "startFailedTitle": "Recording failed",
     "startFailedMessage": "Could not start recording. Check microphone permissions and ensure no other apps are using the microphone.",
     "continueRecording": "Continue",

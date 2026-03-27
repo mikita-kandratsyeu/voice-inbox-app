@@ -162,6 +162,8 @@
     "saveModalTitle": "Сохранить запись",
     "duration": "Длительность: {{time}}",
     "offlineHint": "Оффлайн-транскрипция на устройстве",
+    "blockedByTranscriptionTitle": "Дождитесь завершения транскрипции",
+    "blockedByTranscriptionMessage": "Пока идёт транскрипция, новую запись начать нельзя.",
     "startFailedTitle": "Запись не запустилась",
     "startFailedMessage": "Не удалось начать запись. Проверьте доступ к микрофону и закройте другие приложения, использующие микрофон.",
     "continueRecording": "Продолжить",

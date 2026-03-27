@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Mic } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native';
+import { Alert, TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -13,6 +13,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import { hapticLight } from '@/shared/lib';
 
 import type { RootStackParamList } from '../types';
@@ -64,6 +65,14 @@ export const CenterRecordButton = ({
   });
 
   const handlePress = () => {
+    if (hasAnyActiveTranscriptionJob()) {
+      Alert.alert(
+        t('record.blockedByTranscriptionTitle'),
+        t('record.blockedByTranscriptionMessage'),
+      );
+      return;
+    }
+
     hapticLight();
     navigation.navigate('RecordModal');
   };
