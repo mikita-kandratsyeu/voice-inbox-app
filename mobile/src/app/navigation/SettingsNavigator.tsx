@@ -8,6 +8,7 @@ import {
   AppearanceScreen,
   AppLockSetupScreen,
   ImportRecordsScreen,
+  PrivateAiModeScreen,
   SettingsScreen,
   StorageDetailsScreen,
   SupportScreen,
@@ -29,6 +30,11 @@ export const SettingsNavigator = () => (
     <Stack.Screen
       name="AIModelPicker"
       component={AIModelPickerScreen}
+      options={{ animation: 'slide_from_right' }}
+    />
+    <Stack.Screen
+      name="PrivateAiMode"
+      component={PrivateAiModeScreen}
       options={{ animation: 'slide_from_right' }}
     />
     <Stack.Screen

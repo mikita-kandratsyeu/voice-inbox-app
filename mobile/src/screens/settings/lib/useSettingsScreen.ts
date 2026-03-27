@@ -51,6 +51,7 @@ export function useSettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
@@ -208,6 +209,7 @@ export function useSettingsScreen() {
     whisperStatus === 'not_downloaded'
       ? t('settings.whisperModelNotSet')
       : getWhisperLabel(selectedWhisperModel);
+  const privateAiModeValue = t(`aiSettings.executionMode.${aiExecutionMode}`);
 
   const handleExport = useCallback(async () => {
     try {
@@ -385,6 +387,7 @@ export function useSettingsScreen() {
     setAutoAiAfterTranscription,
     setAutomationSheet,
     aiModelName,
+    privateAiModeValue,
     transcriptionValue,
     embeddingAvailable: isEmbeddingAvailable(),
     isUpdatingEmbeddings,

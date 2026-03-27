@@ -116,7 +116,7 @@
   },
   "ai": {
     "limitWeeklyExceeded": "You’ve used this week’s generation limit. It resets on the date shown in Settings — or watch a short ad there for a small bonus.",
-    "privateModeUnavailable": "Private Offline mode is not available on this device yet.",
+    "privateModeUnavailable": "Private Offline AI is not available on this device yet.",
     "privateModeLimitedTooLong": "This note is too long for Limited Private mode. Switch to Smart mode.",
     "privateModeParseFailed": "The local model could not produce a valid response. Try again or switch to Smart mode.",
     "privateModeEmptyAnswer": "The local model returned an empty answer. Try again or switch to Smart mode.",
@@ -244,7 +244,7 @@
     "askError": "Failed to get answer",
     "askErrorContinueHint": "Close to view summary and tasks.",
     "switchToSmartMode": "Switch to Smart",
-    "privateModeErrorHint": "This error is related to Private Offline mode. You can switch to Smart and retry.",
+    "privateModeErrorHint": "This error is related to Private Offline AI. You can switch to Smart and retry.",
     "askAnother": "Ask another question",
     "askCopy": "Copy answer",
     "askShare": "Share answer",
@@ -340,6 +340,7 @@
     "importing": "Importing...",
     "automation": "Automation",
     "aiProcessing": "Generations",
+    "privateAiMode": "Private Offline AI",
     "aiModel": "Generation model",
     "aiSettings": "AI settings",
     "transcription": "Transcription",
@@ -611,7 +612,7 @@
     "description": "Customize how AI processes your transcripts. Changes apply to the next processing.",
     "executionMode": "Execution mode",
     "executionMode.smart_hybrid": "Smart",
-    "executionMode.private_experimental": "Private Offline (experimental)",
+    "executionMode.private_experimental": "Full Private",
     "privateCapabilityTier": {
       "full": "Your device is ready for the full Private experimental mode.",
       "limited": "Limited Private mode is available: length and speed limits may apply.",
@@ -629,6 +630,10 @@
     "outputLanguage.same": "Same as transcript",
     "outputLanguage.ru": "Always Russian",
     "outputLanguage.en": "Always English"
+  },
+  "privateAiMode": {
+    "title": "Private Offline AI",
+    "description": "Control the experimental mode where generation runs locally on device. This section is separated so the mode can be enabled or disabled easily."
   },
   "aiModels": {
     "title": "Generation model",

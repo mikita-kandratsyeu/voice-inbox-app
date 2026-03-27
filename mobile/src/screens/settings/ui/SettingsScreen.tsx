@@ -115,6 +115,7 @@ export const SettingsScreen = () => {
             color={settings.color}
             t={settings.t}
             navigation={settings.navigation}
+            privateAiModeValue={settings.privateAiModeValue}
             aiModelName={settings.aiModelName}
             transcriptionValue={settings.transcriptionValue}
             embeddingAvailable={settings.embeddingAvailable}

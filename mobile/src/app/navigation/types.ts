@@ -29,6 +29,7 @@ export type SettingsStackParamList = {
   Settings: undefined;
   Appearance: undefined;
   AIModelPicker: undefined;
+  PrivateAiMode: undefined;
   AiSettings: undefined;
   WhisperModelPicker: undefined;
   StorageDetails: undefined;

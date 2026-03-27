@@ -5,24 +5,17 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type {
-  AiExecutionMode,
-  AiOutputLanguage,
-  SummaryStyle,
-  TaskStrictness,
-} from '@/entities/settings';
+import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { isExperimentalPrivateAiEnabled } from '@/shared/config/buildEnv';
 import { useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
 const SUMMARY_STYLES: SummaryStyle[] = ['brief', 'standard', 'detailed'];
 const TASK_STRICTNESS_OPTIONS: TaskStrictness[] = ['strict', 'balanced', 'soft'];
 const OUTPUT_LANGUAGES: AiOutputLanguage[] = ['same', 'ru', 'en'];
-const AI_EXECUTION_MODES: AiExecutionMode[] = ['smart_hybrid', 'private_experimental'];
 
 type PickerRowProps<T extends string> = {
   options: T[];
@@ -100,16 +93,6 @@ export const AiSettingsScreen = () => {
   const setTaskStrictness = useSettingsStore((s) => s.setTaskStrictness);
   const aiOutputLanguage = useSettingsStore((s) => s.aiOutputLanguage);
   const setAiOutputLanguage = useSettingsStore((s) => s.setAiOutputLanguage);
-  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
-  const setAiExecutionMode = useSettingsStore((s) => s.setAiExecutionMode);
-  const privateCapabilityTier = useSettingsStore((s) => s.privateCapabilityTier);
-  const isPrivateAiExperimentEnabled = isExperimentalPrivateAiEnabled();
-  const handleExecutionModeSelect = (mode: AiExecutionMode) => {
-    if (mode === 'private_experimental' && privateCapabilityTier === 'unavailable') {
-      return;
-    }
-    setAiExecutionMode(mode);
-  };
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -133,23 +116,6 @@ export const AiSettingsScreen = () => {
           <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
             {t('aiSettings.description')}
           </Text>
-          {isPrivateAiExperimentEnabled && (
-            <SettingsSection title={t('aiSettings.executionMode')}>
-              <PickerSection
-                options={AI_EXECUTION_MODES}
-                selected={aiExecutionMode}
-                onSelect={handleExecutionModeSelect}
-                labelKey={(v) => t(`aiSettings.executionMode.${v}`)}
-                color={color}
-              />
-              <Text
-                className="mt-2 px-1 text-[12px] leading-5"
-                style={{ color: color.text.secondary }}
-              >
-                {t(`aiSettings.privateCapabilityTier.${privateCapabilityTier}`)}
-              </Text>
-            </SettingsSection>
-          )}
           <SettingsSection title={t('aiSettings.summaryStyle')}>
             <PickerSection
               options={SUMMARY_STYLES}
