@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { SettingsStackParamList } from '@/app/navigation/types';
+import { useSettingsStore } from '@/entities/settings';
 import { getStoreListingUrl, openStoreListing } from '@/features/app-review';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
@@ -31,6 +32,9 @@ export const AboutAppScreen = () => {
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const isTablet = useIsTablet();
+
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const isPrivateMode = aiExecutionMode === 'private_experimental';
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -95,12 +99,14 @@ export const AboutAppScreen = () => {
                 onPress={() => openInAppBrowser(getWebsiteUrl())}
               />
             )}
-            <SettingsRow
-              label={t('about.showOnboarding')}
-              leftIcon={<BookOpen size={18} color={color.icon.muted} strokeWidth={1.8} />}
-              onPress={() => setForceShowOnboarding(true)}
-              isLast
-            />
+            {!isPrivateMode && (
+              <SettingsRow
+                label={t('about.showOnboarding')}
+                leftIcon={<BookOpen size={18} color={color.icon.muted} strokeWidth={1.8} />}
+                onPress={() => setForceShowOnboarding(true)}
+                isLast
+              />
+            )}
           </SettingsSection>
           <View className="mb-6">
             <Text
