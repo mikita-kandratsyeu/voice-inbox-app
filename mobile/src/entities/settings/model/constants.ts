@@ -67,7 +67,7 @@ export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
   },
   {
     id: 'local/gemma-2-2b-it-q4_k_m',
-    name: 'Gemma 2 2B Instruct',
+    name: 'Gemma 2 2B',
     provider: 'Google',
     descriptionKey: 'aiModels.localGemma2Desc',
     speed: 'medium',
@@ -78,7 +78,7 @@ export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
   },
   {
     id: 'local/phi-3.5-mini-instruct-q4_k_m',
-    name: 'Phi-3.5 Mini Instruct',
+    name: 'Phi-3.5 Mini',
     provider: 'Microsoft',
     descriptionKey: 'aiModels.localPhi35MiniDesc',
     speed: 'medium',
