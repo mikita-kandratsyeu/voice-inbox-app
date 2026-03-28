@@ -102,6 +102,20 @@ function collectJsonObjectCandidates(cleaned: string): string[] {
 
 export function parseJsonObjectWithFallbacks(raw: string): Record<string, unknown> {
   const cleaned = stripMarkdownCodeFence(raw.trim());
+  const trimmed = cleaned.trim();
+
+  // If the model returns a JSON array, do not unwrap the first object — callers expect one object.
+  if (trimmed.startsWith('[')) {
+    try {
+      const top: unknown = JSON.parse(trimmed);
+      if (Array.isArray(top)) {
+        throw new LocalAiError('parse_failed', 'Invalid local summary response');
+      }
+    } catch (e) {
+      if (e instanceof LocalAiError) throw e;
+      // Invalid as a whole value; continue with brace-based extraction (e.g. truncated `[{...`).
+    }
+  }
 
   const candidates = collectJsonObjectCandidates(cleaned);
   let lastError: unknown;
