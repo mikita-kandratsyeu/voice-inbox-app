@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
-import { syncPrivateCapabilityTier } from '@/entities/settings';
+import { syncPrivateCapabilityTier, useSettingsStore } from '@/entities/settings';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
 import { initDB } from '@/shared/lib';
@@ -30,6 +30,7 @@ export function useAppBootstrap(
 
     Promise.all([initRuntimeConfig(), initDB()])
       .then(async () => {
+        useSettingsStore.getState().reconcileAiExecutionModeAfterRemoteConfig();
         syncPrivateCapabilityTier();
         await Promise.all([useRecordStore.getState().load(), useFolderStore.getState().load()]);
 

@@ -198,11 +198,6 @@ const getStoredAiOutputLanguage = (): AiOutputLanguage => {
 
 const getStoredAiExecutionMode = (): AiExecutionMode => {
   const val = storage.getString(KEYS.AI_EXECUTION_MODE);
-
-  if (!getExperimentalPrivateAiEnabled()) {
-    return 'smart_hybrid';
-  }
-
   return val === 'private_experimental' ? 'private_experimental' : 'smart_hybrid';
 };
 
@@ -373,6 +368,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
     storage.set(KEYS.AI_EXECUTION_MODE, nextValue);
     set({ aiExecutionMode: nextValue });
+  },
+
+  reconcileAiExecutionModeAfterRemoteConfig: () => {
+    if (!getExperimentalPrivateAiEnabled() && get().aiExecutionMode === 'private_experimental') {
+      get().setAiExecutionMode('smart_hybrid');
+    }
   },
 
   setPrivateCapabilityTier: (value: PrivateCapabilityTier) => {

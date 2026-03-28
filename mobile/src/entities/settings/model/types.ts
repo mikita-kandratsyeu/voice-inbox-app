@@ -102,6 +102,7 @@ export type SettingsState = {
   setTaskStrictness: (value: TaskStrictness) => void;
   setAiOutputLanguage: (value: AiOutputLanguage) => void;
   setAiExecutionMode: (value: AiExecutionMode) => void;
+  reconcileAiExecutionModeAfterRemoteConfig: () => void;
   setPrivateCapabilityTier: (value: PrivateCapabilityTier) => void;
   setAutoTranscribeOnSave: (value: boolean) => void;
   setAutoAiAfterTranscription: (value: boolean) => void;
