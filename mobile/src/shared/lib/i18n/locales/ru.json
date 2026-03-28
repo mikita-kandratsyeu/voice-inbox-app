@@ -117,7 +117,7 @@
   "ai": {
     "limitWeeklyExceeded": "Недельный лимит генераций исчерпан. Он обновится в дату из Настроек — там же можно получить небольшой бонус за короткую рекламу.",
     "privateModeUnavailable": "Private недоступен на этом устройстве.",
-    "privateModeModelNotDownloaded": "Скачайте выбранную GGUF-модель в настройках (модель ИИ), чтобы использовать Private Offline ИИ.",
+    "privateModeModelNotDownloaded": "Скачайте выбранную GGUF-модель в настройках (модель ИИ), чтобы использовать Private режим.",
     "privateModeLimitedTooLong": "В режиме Private заметка слишком длинная. Переключитесь на Smart режим.",
     "privateModeParseFailed": "Локальная модель не смогла корректно сформировать ответ. Попробуйте еще раз или перейдите в Smart режим.",
     "privateModeEmptyAnswer": "Локальная модель вернула пустой ответ. Попробуйте еще раз или перейдите в Smart режим.",
@@ -655,7 +655,7 @@
   "aiModels": {
     "title": "Модель генерации",
     "description": "Выберите скорость, точность или максимальное качество.",
-    "privateDescription": "В Private Offline режиме используются локальные on-device модели. Облачные модели в этом режиме отключены.",
+    "privateDescription": "В Private режиме используются локальные on-device модели. Облачные модели в этом режиме отключены.",
     "privateModeLabel": "Локально",
     "tierFast": "Быстро",
     "tierSmart": "Умнее",

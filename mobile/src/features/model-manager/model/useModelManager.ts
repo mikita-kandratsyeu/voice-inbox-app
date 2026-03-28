@@ -184,9 +184,6 @@ export const useModelManager = () => {
   );
 
   const syncLocalLlmDownloadedStatuses = useCallback(async (): Promise<void> => {
-    const prev = useSettingsStore.getState().localLlmModelStatuses;
-    const next: Partial<Record<LocalAiModelId, WhisperModelStatus>> = { ...prev };
-
     const checks = await Promise.all(
       LOCAL_AI_MODELS.map(async (m) => ({
         id: m.id,
@@ -194,7 +191,15 @@ export const useModelManager = () => {
       })),
     );
 
+    const current = useSettingsStore.getState().localLlmModelStatuses;
+    const next: Partial<Record<LocalAiModelId, WhisperModelStatus>> = { ...current };
+
     for (const item of checks) {
+      if (current[item.id] === 'downloading') {
+        next[item.id] = 'downloading';
+        continue;
+      }
+
       if (item.exists) {
         next[item.id] = 'downloaded';
       } else if (next[item.id] === 'downloaded') {
