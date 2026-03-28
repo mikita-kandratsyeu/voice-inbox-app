@@ -1,5 +1,5 @@
 import type { Colors } from '@/shared/config';
-import { isExperimentalPrivateAiEnabled } from '@/shared/config/buildEnv';
+import { getExperimentalPrivateAiEnabled } from '@/shared/config/runtimeConfig';
 
 type SlideDef = {
   id: string;
@@ -123,7 +123,7 @@ export type OnboardingSlideContent = {
 };
 
 function buildSlideDefs(): SlideDef[] {
-  if (isExperimentalPrivateAiEnabled()) {
+  if (getExperimentalPrivateAiEnabled()) {
     return [...ONBOARDING_SLIDES_HEAD, ONBOARDING_SLIDE_PRIVATE, ...ONBOARDING_SLIDES_TAIL];
   }
   return [...ONBOARDING_SLIDES_HEAD, ...ONBOARDING_SLIDES_TAIL];

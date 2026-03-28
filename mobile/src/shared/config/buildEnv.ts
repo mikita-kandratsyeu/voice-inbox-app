@@ -4,7 +4,6 @@ import {
   CRASHLYTICS_DEBUG,
   DATABASE_URL,
   DB_LOG,
-  EXPERIMENTAL_PRIVATE_AI_ENABLED,
   MOBILE_USER_AGENT,
   SUBSCRIPTIONS_PUBLICLY_AVAILABLE,
   TESTFLIGHT_INTERNAL_BUILD,
@@ -47,10 +46,6 @@ export function isTestflightInternalBuild(): boolean {
 
 export function isSubscriptionsPubliclyAvailable(): boolean {
   return isTruthyBuildEnvFlag(SUBSCRIPTIONS_PUBLICLY_AVAILABLE);
-}
-
-export function isExperimentalPrivateAiEnabled(): boolean {
-  return isTruthyBuildEnvFlag(EXPERIMENTAL_PRIVATE_AI_ENABLED);
 }
 
 export function getWebApiSecret(): string {

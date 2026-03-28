@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 import { parseAccentColorId } from '@/shared/config';
-import { isExperimentalPrivateAiEnabled } from '@/shared/config/buildEnv';
+import { getExperimentalPrivateAiEnabled } from '@/shared/config/runtimeConfig';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { storage } from '@/shared/lib/async-storage';
 
@@ -199,7 +199,7 @@ const getStoredAiOutputLanguage = (): AiOutputLanguage => {
 const getStoredAiExecutionMode = (): AiExecutionMode => {
   const val = storage.getString(KEYS.AI_EXECUTION_MODE);
 
-  if (!isExperimentalPrivateAiEnabled()) {
+  if (!getExperimentalPrivateAiEnabled()) {
     return 'smart_hybrid';
   }
 
@@ -319,7 +319,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAiExecutionMode: (value: AiExecutionMode) => {
     const currentState = get();
     const wasPrivate = currentState.aiExecutionMode === 'private_experimental';
-    const nextValue = isExperimentalPrivateAiEnabled() ? value : 'smart_hybrid';
+    const nextValue = getExperimentalPrivateAiEnabled() ? value : 'smart_hybrid';
 
     if (!wasPrivate && nextValue === 'private_experimental') {
       storage.set(KEYS.PRIVATE_PREVIOUS_THEME, currentState.appTheme);

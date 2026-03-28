@@ -5,7 +5,7 @@ import React from 'react';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { Colors } from '@/shared/config';
-import { isExperimentalPrivateAiEnabled } from '@/shared/config/buildEnv';
+import { getExperimentalPrivateAiEnabled } from '@/shared/config/runtimeConfig';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
 type Props = {
@@ -31,7 +31,7 @@ export const SettingsAiProcessingSection = ({
   isUpdatingEmbeddings,
   onUpdateEmbeddings,
 }: Props) => {
-  const showPrivateMode = isExperimentalPrivateAiEnabled();
+  const showPrivateMode = getExperimentalPrivateAiEnabled();
   const aiSettingsIsLast = !showPrivateMode && !embeddingAvailable;
 
   return (

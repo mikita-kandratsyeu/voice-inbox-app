@@ -1,4 +1,4 @@
-import { isExperimentalPrivateAiEnabled } from '@/shared/config/buildEnv';
+import { getExperimentalPrivateAiEnabled } from '@/shared/config/runtimeConfig';
 import { i18n } from '@/shared/lib';
 
 import { runCloudAsk, runCloudSummaryTasks } from './cloudProvider';
@@ -14,7 +14,7 @@ import type {
 function resolveMode(
   mode: AiExecutionContext['aiExecutionMode'],
 ): AiExecutionContext['aiExecutionMode'] {
-  if (!isExperimentalPrivateAiEnabled()) {
+  if (!getExperimentalPrivateAiEnabled()) {
     return 'smart_hybrid';
   }
 
