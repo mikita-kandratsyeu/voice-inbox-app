@@ -29,30 +29,14 @@ export const PrivateAiModeScreen = () => {
 
   const handleSelectMode = (mode: AiExecutionMode) => {
     if (mode === 'private_experimental' && aiExecutionMode !== 'private_experimental') {
-      Alert.alert(
-        t('privateAiMode.enableAlertTitle'),
-        [
-          t('privateAiMode.enableAlertBattery'),
-          '',
-          `• ${t('privateAiMode.enableAlertItemTranslate')}`,
-          `• ${t('privateAiMode.enableAlertItemAskAi')}`,
-          `• ${t('privateAiMode.enableAlertItemAutoOrganize')}`,
-          `• ${t('privateAiMode.enableAlertItemFolders')}`,
-          `• ${t('privateAiMode.enableAlertItemTheme')}`,
-          `• ${t('privateAiMode.enableAlertItemLimits')}`,
-          `• ${t('privateAiMode.enableAlertItemAutomation')}`,
-          '',
-          t('privateAiMode.enableAlertRestore'),
-        ].join('\n'),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          {
-            text: t('transcription.continue'),
-            style: 'default',
-            onPress: () => setAiExecutionMode(mode),
-          },
-        ],
-      );
+      Alert.alert(t('privateAiMode.enableAlertTitle'), t('privateAiMode.enableAlertMessage'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('transcription.continue'),
+          style: 'default',
+          onPress: () => setAiExecutionMode(mode),
+        },
+      ]);
       return;
     }
     setAiExecutionMode(mode);

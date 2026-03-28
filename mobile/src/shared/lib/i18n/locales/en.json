@@ -642,15 +642,7 @@
     "title": "Private vs Smart",
     "description": "Private mode runs AI only on this device — summaries and tasks stay on your phone and aren't sent to our servers. Smart mode uses the cloud for extra features and is usually faster.",
     "enableAlertTitle": "Turn on Private mode?",
-    "enableAlertBattery": "On-device models use the CPU and GPU heavily. Your phone may feel warm, and battery can drain faster during transcription and AI generation.",
-    "enableAlertItemTranslate": "Translate in a note isn't available—that needs Smart mode.",
-    "enableAlertItemAskAi": "Ask AI isn't available—that needs Smart mode.",
-    "enableAlertItemAutoOrganize": "Auto-organizing the inbox into folders isn’t available.",
-    "enableAlertItemFolders": "Folders and folder actions are hidden—this keeps the experience fully on-device.",
-    "enableAlertItemTheme": "Custom theme and accent aren't available: Private uses a fixed dark layout.",
-    "enableAlertItemLimits": "Cloud usage counters are hidden—they don't apply in Private.",
-    "enableAlertItemAutomation": "Automations are turned off and removed from settings.",
-    "enableAlertRestore": "You can switch back to Smart mode anytime—your previous settings and cloud features return."
+    "enableAlertMessage": "Maximum privacy.\n\nAll data, including transcripts, is processed only on this device.\n\nWhat to expect:\n• May run more slowly\n• Higher battery use\n• Some features aren't available\n\nYou can switch back to Smart mode anytime."
   },
   "aiModels": {
     "title": "Generation model",
