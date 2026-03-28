@@ -78,7 +78,7 @@ export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
   },
   {
     id: 'local/phi-3.5-mini-instruct-q4_k_m',
-    name: 'Phi-3.5 Mini',
+    name: 'Phi-3.5 Mini 4B',
     provider: 'Microsoft',
     descriptionKey: 'aiModels.localPhi35MiniDesc',
     speed: 'medium',
