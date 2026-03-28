@@ -6,9 +6,11 @@ Voice Inbox AI ("we", "our", or "the app") is an offline voice notes application
 
 ## 1. Data We Process
 
-Voice recordings, transcripts, summaries, tasks, and tags are stored locally on your device. We have no access to this data unless you use AI features that send data to our servers.
+Voice recordings, transcripts, summaries, tasks, and tags are stored locally on your device. We have no access to this content unless a feature you use sends it to our servers (for example **cloud AI**, push notifications, or in-app support).
 
-When using AI features (summaries, task extraction, Ask AI), the app sends transcript text to our web API over HTTPS. The transcript is forwarded to third-party AI providers via the OpenRouter platform to generate results. We do not store transcripts on our servers.
+**On-device AI (optional):** The app may offer an **experimental Private mode** that runs summaries, task extraction, and Ask AI **on your device** using a language model you download. In that mode, transcript text for those features is **not** sent to our servers for model inference. Downloading a model requires an internet connection and may retrieve weight files from a **public model host** (for example, Hugging Face). That host processes a normal file download and does not receive your note transcripts from us.
+
+**Cloud AI:** If you use AI in the Smart mode, or when on-device AI is unavailable and the app uses the cloud instead, the app sends transcript text to our web API over HTTPS. The transcript is forwarded to third-party AI providers via the OpenRouter platform. We do not store transcripts on our servers.
 
 The app does **not** use standalone analytics SDKs or user-behavior profiling tools for product analytics.
 
@@ -28,18 +30,19 @@ If you enable push notifications, we store your push token (FCM) and app languag
 
 **Subscriptions (App Store / Google Play):** If you purchase optional paid features through in-app purchases, **payment processing** and core subscription management are handled by **Apple** and/or **Google** under their terms. We may use a **third-party subscription status service** (for example, to verify purchases, renewals, and cancellations) so we can enable or extend paid entitlements on your device. That service processes data under its own privacy policy; we use it only to deliver what you purchased. We will update this Privacy Policy when offerings change materially.
 
-## 3. Third-Party AI Providers
+## 3. Third-Party AI and Model Distribution
 
-When you use AI features, your transcript is sent to third-party providers via [OpenRouter](https://openrouter.ai). All requests are routed exclusively through OpenRouter — we do not contact providers directly.
+**Cloud AI via OpenRouter:** When AI runs in the cloud, your transcript is sent to third-party model providers through [OpenRouter](https://openrouter.ai). We route those requests exclusively through OpenRouter — we do not call those providers’ APIs directly. Models we may use for your requests include:
 
-Current providers used via OpenRouter:
-- **OpenAI** — summary generation and task extraction
-- **Google** (Gemini) — summary generation and task extraction
-- **Meta** (Llama) — summary generation and task extraction
-- **DeepSeek** (DeepSeek) — summary generation and task extraction
-- **Mistral** (Mistral) — summary generation and task extraction
+- **Google** (Gemini family) — summaries, task extraction, Ask AI
+- **MiniMax** — summaries, task extraction, Ask AI
+- **DeepSeek** — summaries, task extraction, Ask AI (including as a fallback when another model fails)
 
-We apply **Zero Data Retention (ZDR)** to every request: routing goes only to endpoints where providers do not store your data or use it for model training. OpenRouter's ZDR policy is described [here](https://openrouter.ai/docs/guides/features/zdr).
+We may add or change models over time; the in-app model picker reflects what you can select for cloud mode.
+
+We apply **Zero Data Retention (ZDR)** to **cloud** requests where supported: routing prefers endpoints where providers do not retain your content for training. OpenRouter's ZDR policy is described [here](https://openrouter.ai/docs/guides/features/zdr).
+
+**On-device models:** Private mode downloads open-weight model files from third-party hosts (for example, Hugging Face). We do not receive your transcripts when you use on-device inference.
 
 ## 4. No Accounts or Login
 
@@ -58,7 +61,7 @@ You retain full control over your data. You have the right to:
 - **Access** — all your data is stored locally and available at any time.
 - **Delete** — you can delete individual recordings or all app data via settings or by uninstalling the app.
 - **Export** — data can be exported from the app at any time.
-- **Opt out of AI processing** — you may use the app with offline transcription only and never send data to our servers.
+- **Opt out of cloud AI processing** — you may use offline transcription only, use on-device private AI so transcripts are not sent to our servers for inference, or avoid AI features entirely.
 - **Object to processing** — if you have questions about data handling, contact us at the email below.
 - **Support data** — for information you submitted through in-app support, you may contact us using the address below to ask questions or request deletion where applicable law allows.
 
