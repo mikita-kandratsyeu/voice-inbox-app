@@ -619,7 +619,7 @@
     "description": "Customize how AI processes your transcripts. Changes apply to the next processing.",
     "executionMode": "Execution mode",
     "executionMode.smart_hybrid": "Smart",
-    "executionMode.private_experimental": "Full Private",
+    "executionMode.private_experimental": "Private",
     "privateCapabilityTier": {
       "full": "Your device is ready for the full Private experimental mode.",
       "limited": "Limited Private mode is available: length and speed limits may apply.",
