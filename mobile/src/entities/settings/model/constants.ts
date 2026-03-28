@@ -66,6 +66,17 @@ export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
       'https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf',
   },
   {
+    id: 'local/llama-3.2-1b-q4_k_m',
+    name: 'Llama 3.2 1B',
+    provider: 'Meta',
+    descriptionKey: 'aiModels.localLlama32_1bDesc',
+    speed: 'fast',
+    fileName: 'llama-3.2-1b.gguf',
+    sizeMb: 770,
+    downloadUrl:
+      'https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf',
+  },
+  {
     id: 'local/gemma-2-2b-it-q4_k_m',
     name: 'Gemma 2 2B',
     provider: 'Google',

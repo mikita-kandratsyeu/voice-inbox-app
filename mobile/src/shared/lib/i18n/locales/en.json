@@ -663,6 +663,7 @@
     "localPhi35MiniDesc": "Stronger reasoning and more accurate answers. Requires more storage and device resources.",
     "localQwen3Desc": "Good default on most devices.",
     "localGemma2Desc": "Strong instruction following. Slightly larger download.",
+    "localLlama32_1bDesc": "Smaller download—handy when storage is tight.",
     "notDownloadedSuffix": "not downloaded",
     "downloadLocalTitle": "Download model",
     "downloadLocalMessage": "Download about {{size}} MB over the network? The file is stored only on this device.",
