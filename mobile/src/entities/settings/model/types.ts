@@ -7,7 +7,10 @@ export type UserSelectableAIModelId =
   | 'google/gemini-2.5-flash-lite'
   | 'google/gemini-3.1-flash-lite-preview'
   | 'minimax/minimax-m2.7';
-export type LocalAiModelId = 'local/qwen3-1.7b-q4_k_m' | 'local/gemma-2-2b-it-q4_k_m';
+export type LocalAiModelId =
+  | 'local/llama-3.2-1b-instruct-q4_k_m'
+  | 'local/qwen3-1.7b-q4_k_m'
+  | 'local/gemma-2-2b-it-q4_k_m';
 
 export type AIModelId =
   | UserSelectableAIModelId
