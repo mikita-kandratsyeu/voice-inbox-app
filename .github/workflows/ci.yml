@@ -40,8 +40,8 @@ jobs:
       - name: Type Check
         run: yarn type:check
 
-      - name: Test
-        run: yarn test
+      - name: Unit tests (Jest)
+        run: yarn test --ci --forceExit
 
   web:
     name: CI (Web)
