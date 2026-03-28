@@ -167,7 +167,8 @@ export const TasksTab = ({
           phase={privateAiBatchPhase ?? 'loading_model'}
           color={color}
           onCancel={onCancelProcessing}
-          hintText={t('transcription.batteryHint')}
+          context="private_llm"
+          hintText={t('privateAi.batteryHint')}
           leadingIcon={<ListChecks size={22} color={color.accent.primary} strokeWidth={2} />}
         />
       );

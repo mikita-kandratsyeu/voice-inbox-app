@@ -7,6 +7,8 @@ import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-na
 import type { Colors } from '@/shared/config';
 import { Button } from '@/shared/ui';
 
+export type DetailTabProcessingContext = 'transcription' | 'private_llm';
+
 type DetailTabProcessingViewProps = {
   progress: number;
   progressLabel?: string;
@@ -15,6 +17,7 @@ type DetailTabProcessingViewProps = {
   onCancel: () => void;
   leadingIcon: React.ReactNode;
   hintText: string;
+  context?: DetailTabProcessingContext;
 };
 
 export const DetailTabProcessingView = ({
@@ -25,10 +28,20 @@ export const DetailTabProcessingView = ({
   onCancel,
   leadingIcon,
   hintText,
+  context = 'transcription',
 }: DetailTabProcessingViewProps) => {
   const { t } = useTranslation();
   const animatedWidth = useSharedValue(0);
   const clampedProgress = Math.min(100, Math.max(0, progress));
+
+  const statusTitleKey =
+    context === 'private_llm'
+      ? phase === 'loading_model'
+        ? 'privateAi.loadingModel'
+        : 'privateAi.processing'
+      : (`aiStatus.${phase}` as const);
+
+  const timeNs = context === 'private_llm' ? 'privateAi' : 'transcription';
 
   useEffect(() => {
     if (progress === 0) {
@@ -43,8 +56,8 @@ export const DetailTabProcessingView = ({
   const timeLabel = progressLabel
     ? progressLabel
     : secondsLeft < 60
-      ? t('transcription.secondsLeft', { count: secondsLeft })
-      : t('transcription.minutesLeft', { count: Math.ceil(secondsLeft / 60) });
+      ? t(`${timeNs}.secondsLeft`, { count: secondsLeft })
+      : t(`${timeNs}.minutesLeft`, { count: Math.ceil(secondsLeft / 60) });
 
   const trackStyle = useAnimatedStyle(() => ({
     width: `${animatedWidth.value}%`,
@@ -61,7 +74,7 @@ export const DetailTabProcessingView = ({
         </View>
         <View className="gap-0.5">
           <Text className="text-base font-bold" style={{ color: color.text.primary }}>
-            {t(`aiStatus.${phase}`)}
+            {t(statusTitleKey)}
           </Text>
           <Text className="text-[14px]" style={{ color: color.text.secondary }}>
             {timeLabel}
@@ -78,7 +91,7 @@ export const DetailTabProcessingView = ({
         style={{ backgroundColor: color.background.tertiary }}
         accessibilityRole="progressbar"
         accessibilityValue={{ min: 0, max: 100, now: clampedProgress }}
-        accessibilityLabel={t(`aiStatus.${phase}`)}
+        accessibilityLabel={t(statusTitleKey)}
       >
         <Animated.View
           className="h-1.5 rounded-sm"

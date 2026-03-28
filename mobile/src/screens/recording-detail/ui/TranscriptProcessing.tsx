@@ -30,6 +30,7 @@ export const TranscriptProcessing = ({
       phase={phase}
       color={color}
       onCancel={onCancel}
+      context="transcription"
       hintText={t('transcription.batteryHint')}
       leadingIcon={<Mic size={22} color={color.accent.primary} strokeWidth={2} />}
     />

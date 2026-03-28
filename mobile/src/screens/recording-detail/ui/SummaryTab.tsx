@@ -73,7 +73,8 @@ export const SummaryTab = ({
           phase={privateAiBatchPhase ?? 'loading_model'}
           color={color}
           onCancel={onCancelProcessing}
-          hintText={t('transcription.batteryHint')}
+          context="private_llm"
+          hintText={t('privateAi.batteryHint')}
           leadingIcon={<Sparkles size={22} color={color.accent.primary} strokeWidth={2} />}
         />
       );
