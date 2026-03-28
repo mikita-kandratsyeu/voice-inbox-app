@@ -30,8 +30,6 @@ import { type AskAIHistoryItem, useAskAI } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { hapticSelection, useNetworkStatus, useTabletContentMaxWidth } from '@/shared/lib';
-import { type AiUsage, getAiUsage } from '@/shared/lib/ai-api';
-import { useAiModelName } from '@/shared/lib/useAiModelName';
 import { Button, getInputFieldInputStyle, InputField, ScreenHeader } from '@/shared/ui';
 
 const SUGGESTED_QUESTION_KEYS = ['askSuggested1', 'askSuggested2', 'askSuggested3'] as const;
@@ -73,10 +71,9 @@ const LoadingState = ({ color }: LoadingStateProps) => {
 type ErrorStateProps = {
   color: Colors;
   onRetry: () => void;
-  onClose: () => void;
   showPrivateModeCta?: boolean;
 };
-const ErrorState = ({ color, onRetry, onClose, showPrivateModeCta = false }: ErrorStateProps) => {
+const ErrorState = ({ color, onRetry, showPrivateModeCta = false }: ErrorStateProps) => {
   const { t } = useTranslation();
   return (
     <View className="w-full items-center gap-4 px-1 py-4">
@@ -89,25 +86,15 @@ const ErrorState = ({ color, onRetry, onClose, showPrivateModeCta = false }: Err
           ? t('recordingDetail.privateModeErrorHint')
           : t('recordingDetail.askErrorContinueHint')}
       </Text>
-      <View className="flex-row gap-3">
-        <Button
-          variant="secondary"
-          size="lg"
-          label={t('recordingDetail.continueViewing')}
-          color={color}
-          onPress={onClose}
-          containerStyle={{ flex: 1, minWidth: 0 }}
-        />
-        <Button
-          variant="primary"
-          size="lg"
-          icon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
-          label={t('recordingDetail.summaryRetry')}
-          color={color}
-          onPress={onRetry}
-          containerStyle={{ flex: 1, minWidth: 0 }}
-        />
-      </View>
+      <Button
+        variant="primary"
+        size="lg"
+        icon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
+        label={t('recordingDetail.summaryRetry')}
+        color={color}
+        onPress={onRetry}
+        containerStyle={{ flex: 1, minWidth: 0 }}
+      />
     </View>
   );
 };
@@ -384,7 +371,6 @@ export const AskAIScreen = () => {
   const insets = useSafeAreaInsets();
   const color = useColors();
   const contentMaxWidth = useTabletContentMaxWidth();
-  const aiModelName = useAiModelName();
 
   const { record: routeRecord } = route.params;
   const hydrateRecordDetails = useRecordStore((s) => s.hydrateRecordDetails);
@@ -393,7 +379,6 @@ export const AskAIScreen = () => {
   );
 
   const [questionInput, setQuestionInput] = useState('');
-  const [aiUsage, setAiUsage] = useState<AiUsage | null>(null);
   const { askQuestion, askAnother, isLoading, error, question, answer, history } = useAskAI();
   const { isConnected } = useNetworkStatus();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
@@ -404,16 +389,6 @@ export const AskAIScreen = () => {
   useEffect(() => {
     void hydrateRecordDetails(routeRecord.id);
   }, [hydrateRecordDetails, routeRecord.id]);
-
-  useEffect(() => {
-    let cancelled = false;
-    getAiUsage().then((data) => {
-      if (!cancelled) setAiUsage(data ?? null);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -468,7 +443,6 @@ export const AskAIScreen = () => {
         <ErrorState
           color={color}
           onRetry={handleRetry}
-          onClose={handleBack}
           showPrivateModeCta={aiExecutionMode === 'private_experimental'}
         />
       );
@@ -513,7 +487,6 @@ export const AskAIScreen = () => {
     handleCopy,
     handleShare,
     askAnother,
-    handleBack,
   ]);
 
   const shouldShowInputRow = hasTranscript && !isLoading;
@@ -542,8 +515,10 @@ export const AskAIScreen = () => {
   );
 
   const inputFooter = useMemo(() => {
-    if (!shouldShowInputRow) return null;
-    const hasMeta = Boolean(aiUsage ?? aiModelName);
+    if (!shouldShowInputRow) {
+      return null;
+    }
+
     const hasInputText = questionInput.trim().length > 0;
 
     return (
@@ -553,7 +528,7 @@ export const AskAIScreen = () => {
           borderTopColor: color.border.default,
           backgroundColor: color.background.secondary,
           paddingHorizontal: 16,
-          paddingTop: 8,
+          paddingTop: 16,
           paddingBottom: insets.bottom + 8,
         }}
       >
@@ -588,28 +563,6 @@ export const AskAIScreen = () => {
             onSubmitEditing={handleAsk}
           />
         </InputField>
-        {hasMeta ? (
-          <View className="mt-2 w-full items-center gap-0.5">
-            {aiUsage ? (
-              <Text
-                className="w-full text-center text-[15px] font-medium leading-5"
-                style={{ color: color.text.secondary }}
-              >
-                {t('recordingDetail.askUsage', { used: aiUsage.used, limit: aiUsage.limit })}
-              </Text>
-            ) : null}
-            {aiModelName ? (
-              <Text
-                className="w-full text-center text-[14px] leading-5"
-                numberOfLines={1}
-                ellipsizeMode="tail"
-                style={{ color: color.text.secondary }}
-              >
-                {aiModelName}
-              </Text>
-            ) : null}
-          </View>
-        ) : null}
       </View>
     );
   }, [
@@ -619,8 +572,6 @@ export const AskAIScreen = () => {
     t,
     disableByNetwork,
     handleAsk,
-    aiUsage,
-    aiModelName,
     insets.bottom,
     sendButton,
   ]);
