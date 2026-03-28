@@ -15,6 +15,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "validate": "lint-staged && yarn type:check && yarn test",
+    "validate:push": "yarn type:check && yarn test --ci --forceExit",
     "fix:app-icon": "node scripts/fix-app-icon-alpha.mjs",
     "postinstall": "patch-package",
     "prepare": "husky",
