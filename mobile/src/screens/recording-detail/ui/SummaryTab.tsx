@@ -1,4 +1,4 @@
-import { AlertCircle, FileText, RefreshCw } from 'lucide-react-native';
+import { AlertCircle, FileText, RefreshCw, Sparkles } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -15,6 +15,8 @@ import {
   TabEmptyState,
 } from '@/shared/ui';
 
+import { DetailTabProcessingView } from './DetailTabProcessingView';
+
 type SummaryTabProps = {
   summary: string;
   keyPhrases?: string[];
@@ -28,6 +30,10 @@ type SummaryTabProps = {
   onSwitchToSmartMode?: () => void;
   showProcessingCancel?: boolean;
   onCancelProcessing?: () => void;
+  usePrivateProcessingPanel?: boolean;
+  privateAiBatchProgress?: number;
+  privateAiBatchPhase?: 'loading_model' | 'processing';
+  privateAiBatchProgressLabel?: string;
 };
 
 export const SummaryTab = ({
@@ -38,10 +44,14 @@ export const SummaryTab = ({
   onDismissError,
   onGenerate,
   onCancelProcessing,
+  privateAiBatchPhase,
+  privateAiBatchProgress,
+  privateAiBatchProgressLabel,
   showPrivateModeCta = false,
   showProcessingCancel = false,
   status,
   summary,
+  usePrivateProcessingPanel = false,
 }: SummaryTabProps) => {
   const { t } = useTranslation();
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
@@ -55,6 +65,20 @@ export const SummaryTab = ({
   }, [errorMessage, showPrivateModeCta, t]);
 
   if (status === 'processing') {
+    if (usePrivateProcessingPanel && onCancelProcessing) {
+      return (
+        <DetailTabProcessingView
+          progress={privateAiBatchProgress ?? 0}
+          progressLabel={privateAiBatchProgressLabel}
+          phase={privateAiBatchPhase ?? 'loading_model'}
+          color={color}
+          onCancel={onCancelProcessing}
+          hintText={t('transcription.batteryHint')}
+          leadingIcon={<Sparkles size={22} color={color.accent.primary} strokeWidth={2} />}
+        />
+      );
+    }
+
     return (
       <AiTabLoadingState
         message={t('recordingDetail.summaryProcessing')}

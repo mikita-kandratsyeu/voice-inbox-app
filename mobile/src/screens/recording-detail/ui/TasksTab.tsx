@@ -31,6 +31,8 @@ import {
   TabEmptyState,
 } from '@/shared/ui';
 
+import { DetailTabProcessingView } from './DetailTabProcessingView';
+
 type TasksTabProps = {
   tasks: TaskItem[];
   nextSteps?: string[];
@@ -48,6 +50,10 @@ type TasksTabProps = {
   onSwitchToSmartMode?: () => void;
   showProcessingCancel?: boolean;
   onCancelProcessing?: () => void;
+  usePrivateProcessingPanel?: boolean;
+  privateAiBatchProgress?: number;
+  privateAiBatchPhase?: 'loading_model' | 'processing';
+  privateAiBatchProgressLabel?: string;
 };
 
 const ManualTaskAddRow = ({
@@ -128,9 +134,13 @@ export const TasksTab = ({
   onDeleteTask,
   onDismissError,
   onCancelProcessing,
+  privateAiBatchPhase,
+  privateAiBatchProgress,
+  privateAiBatchProgressLabel,
   showPrivateModeCta = false,
   showProcessingCancel = false,
   onSwitchToSmartMode: _onSwitchToSmartMode,
+  usePrivateProcessingPanel = false,
 }: TasksTabProps) => {
   const theme = useAppTheme();
   const isDark = theme === 'dark';
@@ -149,6 +159,20 @@ export const TasksTab = ({
   };
 
   if (status === 'processing') {
+    if (usePrivateProcessingPanel && onCancelProcessing) {
+      return (
+        <DetailTabProcessingView
+          progress={privateAiBatchProgress ?? 0}
+          progressLabel={privateAiBatchProgressLabel}
+          phase={privateAiBatchPhase ?? 'loading_model'}
+          color={color}
+          onCancel={onCancelProcessing}
+          hintText={t('transcription.batteryHint')}
+          leadingIcon={<ListChecks size={22} color={color.accent.primary} strokeWidth={2} />}
+        />
+      );
+    }
+
     return (
       <AiTabLoadingState
         message={t('recordingDetail.tasksProcessing')}

@@ -49,6 +49,9 @@ export type VoiceRecord = {
   aiStatus?: RecordingStatus;
   transcriptProgress?: number;
   transcriptProgressLabel?: string;
+  privateAiBatchProgress?: number;
+  privateAiBatchPhase?: 'loading_model' | 'processing';
+  privateAiBatchProgressLabel?: string;
   isPinned?: boolean;
   tags?: string[];
   classification?: RecordClassification;

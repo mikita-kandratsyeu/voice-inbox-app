@@ -396,6 +396,10 @@ export const RecordingDetailScreen = () => {
                   onSwitchToSmartMode={handleSwitchToSmartMode}
                   showProcessingCancel={isPrivateMode}
                   onCancelProcessing={handleCancelAiGeneration}
+                  usePrivateProcessingPanel={isPrivateMode}
+                  privateAiBatchProgress={liveRecord.privateAiBatchProgress}
+                  privateAiBatchPhase={liveRecord.privateAiBatchPhase}
+                  privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
                 />
               </View>
             )}
@@ -418,6 +422,10 @@ export const RecordingDetailScreen = () => {
                   onSwitchToSmartMode={handleSwitchToSmartMode}
                   showProcessingCancel={isPrivateMode}
                   onCancelProcessing={handleCancelAiGeneration}
+                  usePrivateProcessingPanel={isPrivateMode}
+                  privateAiBatchProgress={liveRecord.privateAiBatchProgress}
+                  privateAiBatchPhase={liveRecord.privateAiBatchPhase}
+                  privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
                 />
               </View>
             )}

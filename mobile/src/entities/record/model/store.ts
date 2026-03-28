@@ -96,6 +96,15 @@ type RecordStore = {
   setTasksStatus: (id: string, status: RecordingStatus) => void;
   setSummaryError: (id: string, error?: string) => void;
   setTasksError: (id: string, error?: string) => void;
+  setPrivateAiBatchUi: (
+    id: string,
+    patch: {
+      privateAiBatchProgress?: number;
+      privateAiBatchPhase?: 'loading_model' | 'processing';
+      privateAiBatchProgressLabel?: string;
+    },
+  ) => void;
+  clearPrivateAiBatchUi: (id: string) => void;
   updateSummary: (id: string, summary: string) => Promise<void>;
   updateTasks: (id: string, tasks: TaskItem[]) => Promise<void>;
   updateTags: (id: string, tags: string[]) => Promise<void>;
@@ -278,6 +287,22 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   setTasksError: (id, tasksError) => {
     set((s) => ({
       records: updateRecord(s.records, id, { tasksError }),
+    }));
+  },
+
+  setPrivateAiBatchUi: (id, patch) => {
+    set((s) => ({
+      records: updateRecord(s.records, id, patch),
+    }));
+  },
+
+  clearPrivateAiBatchUi: (id) => {
+    set((s) => ({
+      records: updateRecord(s.records, id, {
+        privateAiBatchProgress: undefined,
+        privateAiBatchPhase: undefined,
+        privateAiBatchProgressLabel: undefined,
+      }),
     }));
   },
 
