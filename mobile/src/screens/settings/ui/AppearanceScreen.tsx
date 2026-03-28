@@ -5,12 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { AppLanguage, AppTheme } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { useProEntitlement } from '@/features/pro-license';
 import type { AccentColorId, Colors } from '@/shared/config';
 import { getAccentColorSwatches, useAppTheme, useColors } from '@/shared/config';
-import { useTabletContentMaxWidth } from '@/shared/lib';
+import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { applyAppLanguage } from '@/shared/lib/i18n';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
@@ -95,6 +96,7 @@ export const AppearanceScreen = () => {
   const contentMaxWidth = useTabletContentMaxWidth();
   const [accentProSheet, setAccentProSheet] = useState(false);
   const { isProActive } = useProEntitlement();
+  const isTablet = useIsTablet();
 
   const appLanguage = useSettingsStore((s) => s.appLanguage);
   const setAppLanguage = useSettingsStore((s) => s.setAppLanguage);
@@ -134,7 +136,7 @@ export const AppearanceScreen = () => {
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
           }}
           showsVerticalScrollIndicator={false}
         >

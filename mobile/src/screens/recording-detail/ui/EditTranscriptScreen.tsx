@@ -8,10 +8,12 @@ import { Text, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
 import { useEditTranscript } from '@/features/edit-transcript';
 import { useColors } from '@/shared/config';
+import { useIsTablet } from '@/shared/lib';
 import { Button, getInputFieldInputStyle, ScreenHeader } from '@/shared/ui';
 
 export const EditTranscriptScreen = () => {
@@ -20,6 +22,7 @@ export const EditTranscriptScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'EditTranscript'>>();
   const insets = useSafeAreaInsets();
   const color = useColors();
+  const isTablet = useIsTablet();
 
   const { record } = route.params;
   const records = useRecordStore((s) => s.records);
@@ -84,7 +87,7 @@ export const EditTranscriptScreen = () => {
         contentContainerStyle={{
           paddingHorizontal: 12,
           paddingTop: 16,
-          paddingBottom: insets.bottom + 24,
+          paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
         }}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator

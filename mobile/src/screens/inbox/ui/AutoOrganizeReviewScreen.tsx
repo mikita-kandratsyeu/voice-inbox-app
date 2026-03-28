@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { InboxStackParamList } from '@/app/navigation/types';
 import type { Folder } from '@/entities/folder';
 import { FolderFormModal, useFolderStore } from '@/entities/folder';
@@ -23,7 +24,7 @@ import {
 } from '@/features/auto-organize-review';
 import { useProEntitlement } from '@/features/pro-license';
 import { useColors } from '@/shared/config';
-import { DEFAULT_FOLDER_BRAND_HEX, useTabletContentMaxWidth } from '@/shared/lib';
+import { DEFAULT_FOLDER_BRAND_HEX, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { Button, ScreenHeader } from '@/shared/ui';
 
 type AutoOrganizeReviewRouteProp = RouteProp<InboxStackParamList, 'AutoOrganizeReview'>;
@@ -35,6 +36,7 @@ export const AutoOrganizeReviewScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<InboxStackParamList>>();
   const route = useRoute<AutoOrganizeReviewRouteProp>();
   const color = useColors();
+  const isTablet = useIsTablet();
 
   const result = route.params.result;
 
@@ -239,7 +241,7 @@ export const AutoOrganizeReviewScreen = () => {
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
             flexGrow: 1,
           }}
           showsVerticalScrollIndicator={false}

@@ -5,11 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { useAppLockStore } from '@/entities/app-lock';
 import { PIN_LENGTH_OPTIONS } from '@/entities/app-lock';
 import { PinInput } from '@/features/app-lock/ui/PinInput';
 import { useColors } from '@/shared/config';
-import { useTabletContentMaxWidth } from '@/shared/lib';
+import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 type SetupStep = 'confirm' | 'initial';
@@ -20,6 +21,8 @@ export const AppLockSetupScreen = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const contentMaxWidth = useTabletContentMaxWidth();
+  const isTablet = useIsTablet();
+
   const [step, setStep] = useState<SetupStep>('initial');
   const [initialPin, setInitialPin] = useState('');
   const [pin, setPin] = useState('');
@@ -248,7 +251,7 @@ export const AppLockSetupScreen = () => {
             style={{
               paddingHorizontal: 16,
               paddingTop: 12,
-              paddingBottom: insets.bottom + 24,
+              paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
             }}
           >
             <SettingsSection title={t('appLock.settings')}>

@@ -24,6 +24,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
@@ -37,6 +38,7 @@ import {
   clearCache,
   getStorageStats,
   type StorageStats,
+  useIsTablet,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
@@ -251,6 +253,8 @@ export const StorageDetailsScreen = () => {
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
+  const isTablet = useIsTablet();
+
   const records = useRecordStore((s) => s.records);
   const deleteRecord = useRecordStore((s) => s.deleteRecord);
   const folders = useFolderStore((s) => s.folders);
@@ -416,7 +420,7 @@ export const StorageDetailsScreen = () => {
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
           }}
           showsVerticalScrollIndicator={false}
           refreshControl={

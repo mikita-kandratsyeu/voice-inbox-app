@@ -4,9 +4,11 @@ import React from 'react';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { useRecordStore } from '@/entities/record';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
+import { useIsTablet } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 const StatCard = ({
@@ -38,6 +40,8 @@ export const AppStatsScreen = () => {
   const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const isTablet = useIsTablet();
+
   const records = useRecordStore((s) => s.records);
   const deleteRecord = useRecordStore((s) => s.deleteRecord);
 
@@ -80,7 +84,7 @@ export const AppStatsScreen = () => {
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: 12,
-          paddingBottom: insets.bottom + 24,
+          paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
         }}
         showsVerticalScrollIndicator={false}
       >

@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type {
   LocalAiModelCatalogEntry,
   LocalAiModelId,
@@ -20,7 +21,7 @@ import {
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { getLocalLlmModelFileSizeBytes, useModelManager } from '@/features/model-manager';
 import { useColors } from '@/shared/config';
-import { useTabletContentMaxWidth } from '@/shared/lib';
+import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader } from '@/shared/ui';
 
@@ -42,6 +43,7 @@ export const AIModelPickerScreen = () => {
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
+  const isTablet = useIsTablet();
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const setAIModel = useSettingsStore((s) => s.setAIModel);
@@ -176,7 +178,7 @@ export const AIModelPickerScreen = () => {
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
           }}
           showsVerticalScrollIndicator={false}
         >

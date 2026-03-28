@@ -14,13 +14,14 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { formatRelativeTime, useTabletContentMaxWidth } from '@/shared/lib';
+import { formatRelativeTime, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { Button, ScreenHeader, SectionHeader } from '@/shared/ui';
 
 type ImportRecordsRouteProp = RouteProp<SettingsStackParamList, 'ImportRecords'>;
@@ -177,6 +178,7 @@ export const ImportRecordsScreen = () => {
 
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
+  const isTablet = useIsTablet();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   return (
@@ -211,7 +213,7 @@ export const ImportRecordsScreen = () => {
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
             flexGrow: 1,
           }}
           showsVerticalScrollIndicator={false}
