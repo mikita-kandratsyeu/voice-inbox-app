@@ -3,7 +3,8 @@ import type { CompletionParams, ContextParams } from 'llama.rn';
 import type { LocalAiModelId } from '@/entities/settings';
 
 /**
- * json — summary / structured extraction; chat — free-form ask answers.
+ * json — summary + ask (оба пути ожидают JSON от модели).
+ * chat — более мягкие стопы/сэмплинг, если позже появится свободный текст без JSON.
  */
 export type LocalLlmCompletionIntent = 'json' | 'chat';
 

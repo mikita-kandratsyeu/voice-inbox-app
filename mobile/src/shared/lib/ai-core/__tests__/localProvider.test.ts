@@ -467,7 +467,7 @@ describe('runLocalSummaryTasks (integration)', () => {
     expect(mockedCompleteLocalChat).toHaveBeenCalledWith(
       DEFAULT_LOCAL_AI_MODEL_ID,
       expect.any(Array),
-      expect.objectContaining({ maxTokens: 1024, temperature: 0.2 }),
+      expect.objectContaining({ maxTokens: 1024, temperature: 0.2, intent: 'json' }),
     );
   });
 
@@ -559,7 +559,7 @@ describe('runLocalAsk (integration)', () => {
     expect(mockedCompleteLocalChat).toHaveBeenCalledWith(
       DEFAULT_LOCAL_AI_MODEL_ID,
       expect.any(Array),
-      expect.objectContaining({ maxTokens: 450, temperature: 0.25 }),
+      expect.objectContaining({ maxTokens: 450, temperature: 0.25, intent: 'json' }),
     );
   });
 
