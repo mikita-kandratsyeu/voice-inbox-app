@@ -270,7 +270,7 @@ export const useAiProcessing = () => {
     },
     [
       selectedAIModel,
-      selectedLocalAiModel,
+      effectiveLocalAiModelId,
       isLocalLlmModelDownloaded,
       summaryStyle,
       taskStrictness,

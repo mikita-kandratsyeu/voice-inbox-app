@@ -144,7 +144,7 @@ export const useAskAI = () => {
     },
     [
       selectedAIModel,
-      selectedLocalAiModel,
+      effectiveLocalAiModelId,
       isLocalLlmModelDownloaded,
       summaryStyle,
       taskStrictness,
