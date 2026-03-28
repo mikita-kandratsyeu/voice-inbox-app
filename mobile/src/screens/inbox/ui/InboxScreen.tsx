@@ -14,8 +14,10 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type {
   BottomTabParamList,
   InboxStackParamList,
@@ -50,6 +52,7 @@ import {
   keyboardAvoidingBehavior,
   keyboardVerticalOffset,
   resolveDisplayFolderColor,
+  useIsTablet,
   useScrollToTopOnTabPress,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
@@ -77,6 +80,8 @@ type InboxNavigationProp = CompositeNavigationProp<
 
 export const InboxScreen = () => {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
+  const isTablet = useIsTablet();
   const color = useColors();
   const { width: windowWidth } = useWindowDimensions();
   const contentMaxWidth = useTabletContentMaxWidth();
@@ -441,7 +446,7 @@ export const InboxScreen = () => {
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   const listContentStyle = {
-    paddingBottom: 80,
+    paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
     paddingTop: 0,
     backgroundColor: color.background.secondary,
   };

@@ -1,8 +1,8 @@
-import { Platform } from 'react-native';
 import RNBlobUtil from 'react-native-blob-util';
 import { unzip } from 'react-native-zip-archive';
 
 import type { WhisperModelId } from '@/entities/settings';
+import { IS_IOS } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
 import {
   getWhisperCoreMlDownloadUrl,
@@ -246,7 +246,7 @@ class WhisperModelDownloader {
     }
     if (this.cancelRequested) throw new Error('cancelled');
 
-    if (Platform.OS === 'ios') {
+    if (IS_IOS) {
       const zipPath = coreMlZipTempPath(modelsDir, modelId);
       const coreUrl = getWhisperCoreMlDownloadUrl(modelId);
       let latestZip = 0;

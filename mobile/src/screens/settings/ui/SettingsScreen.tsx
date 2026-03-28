@@ -1,18 +1,17 @@
 import React, { useRef } from 'react';
-import {
-  Platform,
-  RefreshControl,
-  ScrollView,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { RefreshControl, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { ProLicenseKeyModal } from '@/features/pro-license';
 import { isCrashlyticsDebugEnabled, isTestflightInternalBuild } from '@/shared/config/buildEnv';
-import { useScrollToTopOnTabPress, useTabletContentMaxWidth } from '@/shared/lib';
+import {
+  IS_ANDROID,
+  useIsTablet,
+  useScrollToTopOnTabPress,
+  useTabletContentMaxWidth,
+} from '@/shared/lib';
 import { PrivateModeBadge, SCREEN_PADDING } from '@/shared/ui';
 
 import { useSettingsScreen } from '../lib/useSettingsScreen';
@@ -36,6 +35,7 @@ export const SettingsScreen = () => {
   const settings = useSettingsScreen();
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const insets = useSafeAreaInsets();
+  const isTablet = useIsTablet();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
@@ -77,7 +77,7 @@ export const SettingsScreen = () => {
           contentContainerStyle={{
             paddingHorizontal: SCREEN_PADDING,
             paddingTop: 16,
-            paddingBottom: insets.bottom + 28,
+            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
           }}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -87,7 +87,7 @@ export const SettingsScreen = () => {
               tintColor={settings.color.status.processing.text}
               colors={[settings.color.status.processing.text]}
               progressBackgroundColor={settings.color.background.secondary}
-              progressViewOffset={Platform.OS === 'android' ? 12 : undefined}
+              progressViewOffset={IS_ANDROID ? 12 : undefined}
             />
           }
         >

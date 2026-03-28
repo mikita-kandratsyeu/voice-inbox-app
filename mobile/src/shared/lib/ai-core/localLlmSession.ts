@@ -1,11 +1,11 @@
 import type { RNLlamaOAICompatibleMessage } from 'llama.rn';
 import { initLlama, type LlamaContext } from 'llama.rn';
-import { Platform } from 'react-native';
 
 import type { LocalAiModelId } from '@/entities/settings';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 
+import { IS_IOS } from '../platform';
 import {
   getLocalLlmContextParams,
   type LocalLlmCompletionIntent,
@@ -23,7 +23,7 @@ const LOCAL_LLM_N_CTX = 16_384;
  * llama.rn maps this mainly to iOS Metal. Android GPU/Vulkan stacks are a frequent crash source;
  * CPU inference is slower but stable.
  */
-const LOCAL_LLM_N_GPU_LAYERS = Platform.OS === 'ios' ? 99 : 0;
+const LOCAL_LLM_N_GPU_LAYERS = IS_IOS ? 99 : 0;
 
 let context: LlamaContext | null = null;
 let loadedModelId: LocalAiModelId | null = null;
@@ -68,9 +68,7 @@ async function ensureContextLocked(modelId: LocalAiModelId): Promise<LlamaContex
       use_mmap: true,
       use_mlock: false,
       ...getLocalLlmContextParams(),
-      ...(Platform.OS === 'ios' && LOCAL_LLM_N_GPU_LAYERS > 0
-        ? { flash_attn_type: 'auto' as const }
-        : {}),
+      ...(IS_IOS && LOCAL_LLM_N_GPU_LAYERS > 0 ? { flash_attn_type: 'auto' as const } : {}),
     });
     context = ctx;
     loadedModelId = modelId;

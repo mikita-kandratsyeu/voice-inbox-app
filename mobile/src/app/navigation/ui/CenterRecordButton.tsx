@@ -93,7 +93,7 @@ export const CenterRecordButton = ({
   };
 
   return (
-    <View className="flex-1 items-center justify-center">
+    <View className="min-h-[48px] shrink-0 self-stretch items-center justify-center">
       <Animated.View
         style={[
           {
