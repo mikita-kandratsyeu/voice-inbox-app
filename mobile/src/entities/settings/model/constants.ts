@@ -87,17 +87,6 @@ export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
     downloadUrl:
       'https://huggingface.co/codegood/gemma-2b-it-Q4_K_M-GGUF/resolve/main/gemma-2b-it.Q4_K_M.gguf',
   },
-  {
-    id: 'local/phi-3.5-mini-instruct-q4_k_m',
-    name: 'Phi-3.5 Mini 4B',
-    provider: 'Microsoft',
-    descriptionKey: 'aiModels.localPhi35MiniDesc',
-    speed: 'slow',
-    fileName: 'Phi-3.5-mini-instruct.Q4_K_M.gguf',
-    sizeMb: 2283,
-    downloadUrl:
-      'https://huggingface.co/MaziyarPanahi/Phi-3.5-mini-instruct-GGUF/resolve/main/Phi-3.5-mini-instruct.Q4_K_M.gguf',
-  },
 ];
 
 export const DEFAULT_LOCAL_AI_MODEL_ID: LocalAiModelId = 'local/qwen3-1.7b-q4_k_m';

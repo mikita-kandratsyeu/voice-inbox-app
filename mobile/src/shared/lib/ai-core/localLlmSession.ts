@@ -19,9 +19,6 @@ const LOCAL_LLM_N_CTX = 16_384;
  */
 const LOCAL_LLM_N_GPU_LAYERS = Platform.OS === 'ios' ? 99 : 0;
 
-/** Phi-3.5 Jinja template needs `<|assistant|>` prefill; without this, llama.rn can build an invalid/empty prompt. */
-const PHI_35_MINI_MODEL_ID = 'local/phi-3.5-mini-instruct-q4_k_m' satisfies LocalAiModelId;
-
 let context: LlamaContext | null = null;
 let loadedModelId: LocalAiModelId | null = null;
 
@@ -81,7 +78,6 @@ async function runCompletionLocked(
 ): Promise<string> {
   const ctx = await ensureContextLocked(modelId);
   try {
-    const isPhi35Mini = modelId === PHI_35_MINI_MODEL_ID;
     const result = await ctx.completion({
       messages,
       n_predict: options.maxTokens,
@@ -89,7 +85,6 @@ async function runCompletionLocked(
       top_p: 0.9,
       enable_thinking: false,
       add_generation_prompt: true,
-      ...(isPhi35Mini ? { force_pure_content: true as const } : {}),
     });
     return (result.text ?? result.content ?? '').trim();
   } catch (e) {

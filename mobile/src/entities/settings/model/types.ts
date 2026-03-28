@@ -10,7 +10,6 @@ export type UserSelectableAIModelId =
 export type LocalAiModelId =
   | 'local/qwen3-1.7b-q4_k_m'
   | 'local/gemma-2-2b-it-q4_k_m'
-  | 'local/phi-3.5-mini-instruct-q4_k_m'
   | 'local/llama-3.2-1b-q4_k_m';
 
 export type AIModelId =
