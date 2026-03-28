@@ -55,17 +55,6 @@ export type LocalAiModelCatalogEntry = {
 
 export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
   {
-    id: 'local/llama-3.2-1b-instruct-q4_k_m',
-    name: 'Llama 3.2 1B Instruct',
-    provider: 'Meta',
-    descriptionKey: 'aiModels.localLlama32_1bDesc',
-    speed: 'fast',
-    fileName: 'Llama-3.2-1B-Instruct-Q4_K_M.gguf',
-    sizeMb: 770,
-    downloadUrl:
-      'https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf',
-  },
-  {
     id: 'local/qwen3-1.7b-q4_k_m',
     name: 'Qwen3 1.7B',
     provider: 'Qwen',
@@ -86,6 +75,17 @@ export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
     sizeMb: 1600,
     downloadUrl:
       'https://huggingface.co/codegood/gemma-2b-it-Q4_K_M-GGUF/resolve/main/gemma-2b-it.Q4_K_M.gguf',
+  },
+  {
+    id: 'local/phi-3.5-mini-instruct-q4_k_m',
+    name: 'Phi-3.5 Mini Instruct',
+    provider: 'Microsoft',
+    descriptionKey: 'aiModels.localPhi35MiniDesc',
+    speed: 'medium',
+    fileName: 'Phi-3.5-mini-instruct.Q4_K_M.gguf',
+    sizeMb: 2283,
+    downloadUrl:
+      'https://huggingface.co/MaziyarPanahi/Phi-3.5-mini-instruct-GGUF/resolve/main/Phi-3.5-mini-instruct.Q4_K_M.gguf',
   },
 ];
 

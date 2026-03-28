@@ -102,6 +102,10 @@ const getStoredLocalAiModel = (): LocalAiModelId | null => {
     return val as LocalAiModelId;
   }
 
+  if (val) {
+    storage.remove(KEYS.LOCAL_AI_MODEL);
+  }
+
   return null;
 };
 
@@ -127,6 +131,18 @@ const getStoredLocalLlmStatuses = (): Partial<Record<LocalAiModelId, WhisperMode
 
       storage.set(KEYS.LOCAL_LLM_STATUSES, JSON.stringify(parsed));
     }
+
+    let prunedUnknownIds = false;
+    for (const key of Object.keys(parsed)) {
+      if (!LOCAL_AI_MODEL_SET.has(key)) {
+        delete parsed[key];
+        prunedUnknownIds = true;
+      }
+    }
+    if (prunedUnknownIds) {
+      storage.set(KEYS.LOCAL_LLM_STATUSES, JSON.stringify(parsed));
+    }
+
     return parsed as Partial<Record<LocalAiModelId, WhisperModelStatus>>;
   } catch {
     return {};
