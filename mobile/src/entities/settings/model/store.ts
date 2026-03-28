@@ -7,7 +7,6 @@ import { storage } from '@/shared/lib/async-storage';
 
 import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
 import {
-  DEFAULT_LOCAL_AI_MODEL_ID,
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
   getWhisperModelVariantId,
@@ -91,7 +90,7 @@ const getStoredAIModel = (): UserSelectableAIModelId => {
 const LOCAL_AI_MODEL_SET = new Set<string>(LOCAL_AI_MODELS.map((m) => m.id));
 const GEMMA_LOCAL_AI_MODEL_ID: LocalAiModelId = 'local/gemma-2-2b-it-q4_k_m';
 
-const getStoredLocalAiModel = (): LocalAiModelId => {
+const getStoredLocalAiModel = (): LocalAiModelId | null => {
   const val = storage.getString(KEYS.LOCAL_AI_MODEL);
 
   if (val === LEGACY_APPLE_LOCAL_AI_MODEL) {
@@ -103,7 +102,7 @@ const getStoredLocalAiModel = (): LocalAiModelId => {
     return val as LocalAiModelId;
   }
 
-  return DEFAULT_LOCAL_AI_MODEL_ID;
+  return null;
 };
 
 const getStoredLocalLlmStatuses = (): Partial<Record<LocalAiModelId, WhisperModelStatus>> => {
@@ -269,6 +268,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setLocalAiModel: (id: LocalAiModelId) => {
     storage.set(KEYS.LOCAL_AI_MODEL, id);
     set({ selectedLocalAiModel: id });
+  },
+
+  clearLocalAiModelSelection: () => {
+    storage.remove(KEYS.LOCAL_AI_MODEL);
+    set({ selectedLocalAiModel: null });
   },
 
   setWhisperModel: (id: WhisperModelId) => {

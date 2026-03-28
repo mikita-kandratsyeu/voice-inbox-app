@@ -48,6 +48,7 @@ export const AIModelPickerScreen = () => {
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
   const setLocalAiModel = useSettingsStore((s) => s.setLocalAiModel);
+  const clearLocalAiModelSelection = useSettingsStore((s) => s.clearLocalAiModelSelection);
   const localLlmModelStatuses = useSettingsStore((s) => s.localLlmModelStatuses);
   const localLlmDownloadProgress = useSettingsStore((s) => s.localLlmDownloadProgress);
   const localLlmDownloadBytes = useSettingsStore((s) => s.localLlmDownloadBytes);
@@ -65,7 +66,16 @@ export const AIModelPickerScreen = () => {
   useFocusEffect(
     useCallback(() => {
       void syncLocalLlmDownloadedStatuses();
-    }, [syncLocalLlmDownloadedStatuses]),
+      return () => {
+        const { selectedLocalAiModel: storedId, localLlmModelStatuses } =
+          useSettingsStore.getState();
+        if (storedId == null) return;
+        const status = localLlmModelStatuses[storedId] ?? 'not_downloaded';
+        if (status !== 'downloaded') {
+          clearLocalAiModelSelection();
+        }
+      };
+    }, [clearLocalAiModelSelection, syncLocalLlmDownloadedStatuses]),
   );
 
   const hasActiveLocalLlmDownload = Object.values(localLlmModelStatuses).some(
@@ -195,7 +205,10 @@ export const AIModelPickerScreen = () => {
               if (isPrivateMode) {
                 const lm = model as LocalAiModelCatalogEntry;
                 const status = localLlmModelStatuses[lm.id] ?? 'not_downloaded';
-                const isSelected = lm.id === selectedLocalAiModel;
+                const isSelected =
+                  selectedLocalAiModel != null &&
+                  lm.id === selectedLocalAiModel &&
+                  status === 'downloaded';
                 const displaySize = realLocalSizes[lm.id] ?? formatApproxSizeMb(lm.sizeMb);
 
                 return (

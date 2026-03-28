@@ -71,7 +71,7 @@ export type SettingsState = {
   accentColorId: AccentColorId;
   appLanguage: AppLanguage;
   selectedAIModel: UserSelectableAIModelId;
-  selectedLocalAiModel: LocalAiModelId;
+  selectedLocalAiModel: LocalAiModelId | null;
   selectedWhisperModel: WhisperModelId;
   selectedWhisperModelFormat: WhisperModelWeightsFormat;
   whisperModelWeightsFormat: WhisperModelWeightsFormat;
@@ -95,6 +95,7 @@ export type SettingsState = {
   setAppLanguage: (value: AppLanguage) => void;
   setAIModel: (id: UserSelectableAIModelId) => void;
   setLocalAiModel: (id: LocalAiModelId) => void;
+  clearLocalAiModelSelection: () => void;
   setWhisperModel: (id: WhisperModelId) => void;
   setWhisperModelWeightsFormat: (value: WhisperModelWeightsFormat) => void;
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;

@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 
 import type { VoiceRecord } from '@/entities/record';
-import { useSettingsStore } from '@/entities/settings';
+import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
@@ -25,7 +25,9 @@ export const useAskAI = () => {
   const aiOutputLanguage = useSettingsStore((s) => s.aiOutputLanguage);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateCapabilityTier = useSettingsStore((s) => s.privateCapabilityTier);
+  const effectiveLocalAiModelId = selectedLocalAiModel ?? DEFAULT_LOCAL_AI_MODEL_ID;
   const isLocalLlmModelDownloaded =
+    selectedLocalAiModel != null &&
     (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
   const [state, setState] = useState<AskAIState>({
     isLoading: false,
@@ -69,7 +71,7 @@ export const useAskAI = () => {
           },
           {
             selectedAIModel,
-            selectedLocalAiModel,
+            selectedLocalAiModel: effectiveLocalAiModelId,
             isLocalLlmModelDownloaded,
             summaryStyle,
             taskStrictness,

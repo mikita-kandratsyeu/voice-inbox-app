@@ -201,13 +201,17 @@ export function useSettingsScreen() {
   }, [fetchAiUsage, fetchProWeeklyLimit, refreshProEntitlement]);
 
   const userFacing = USER_FACING_AI_MODELS.find((m) => m.id === selectedAIModel);
-  const localModel = LOCAL_AI_MODELS.find((m) => m.id === selectedLocalAiModel);
+  const localModel =
+    selectedLocalAiModel != null
+      ? LOCAL_AI_MODELS.find((m) => m.id === selectedLocalAiModel)
+      : undefined;
   const localLlmDownloaded =
+    selectedLocalAiModel != null &&
     (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
   const aiModelBaseName =
     aiExecutionMode === 'private_experimental'
       ? localLlmDownloaded
-        ? (localModel?.name ?? selectedLocalAiModel)
+        ? (localModel?.name ?? selectedLocalAiModel ?? '')
         : t('settings.whisperModelNotSet')
       : (userFacing?.name ?? selectedAIModel);
   const isPrivateMode = aiExecutionMode === 'private_experimental';

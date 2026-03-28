@@ -4,7 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { TaskItem, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { mergeManualTasksWithAi } from '@/entities/record/model/mergeManualTasksWithAi';
-import { useSettingsStore } from '@/entities/settings';
+import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
@@ -59,7 +59,9 @@ export const useAiProcessing = () => {
     })),
   );
 
+  const effectiveLocalAiModelId = selectedLocalAiModel ?? DEFAULT_LOCAL_AI_MODEL_ID;
   const isLocalLlmModelDownloaded =
+    selectedLocalAiModel != null &&
     (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
 
   const inFlightRef = useRef<Set<string>>(new Set());
@@ -128,7 +130,7 @@ export const useAiProcessing = () => {
           { id: requestId, transcript: record.transcript },
           {
             selectedAIModel,
-            selectedLocalAiModel,
+            selectedLocalAiModel: effectiveLocalAiModelId,
             isLocalLlmModelDownloaded,
             summaryStyle,
             taskStrictness,
