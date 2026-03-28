@@ -10,8 +10,11 @@ export class LocalAiError extends Error {
   readonly code: LocalAiErrorCode;
 
   constructor(code: LocalAiErrorCode, message?: string, options?: { cause?: unknown }) {
-    super(message ?? code, options?.cause !== undefined ? { cause: options.cause } : undefined);
+    super(message ?? code);
     this.code = code;
     this.name = 'LocalAiError';
+    if (options?.cause !== undefined) {
+      (this as Error & { cause?: unknown }).cause = options.cause;
+    }
   }
 }

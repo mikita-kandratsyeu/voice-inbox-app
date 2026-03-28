@@ -81,7 +81,7 @@ export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
     name: 'Phi-3.5 Mini 4B',
     provider: 'Microsoft',
     descriptionKey: 'aiModels.localPhi35MiniDesc',
-    speed: 'medium',
+    speed: 'slow',
     fileName: 'Phi-3.5-mini-instruct.Q4_K_M.gguf',
     sizeMb: 2283,
     downloadUrl:

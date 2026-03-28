@@ -1,16 +1,51 @@
 import type { RNLlamaOAICompatibleMessage } from 'llama.rn';
 import { initLlama, type LlamaContext } from 'llama.rn';
+import { Platform } from 'react-native';
 
 import type { LocalAiModelId } from '@/entities/settings';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 
-const LOCAL_LLM_N_CTX = 8192;
+/**
+ * Must fit: chat template + system prompt + transcript (see local-provider caps) + n_predict.
+ * 8192 was too small for full-tier transcripts and could crash native llama when the prompt
+ * exceeds the KV context.
+ */
+const LOCAL_LLM_N_CTX = 16_384;
+
+/**
+ * llama.rn maps this mainly to iOS Metal. Android GPU/Vulkan stacks are a frequent crash source;
+ * CPU inference is slower but stable.
+ */
+const LOCAL_LLM_N_GPU_LAYERS = Platform.OS === 'ios' ? 99 : 0;
+
+/** Phi-3.5 Jinja template needs `<|assistant|>` prefill; without this, llama.rn can build an invalid/empty prompt. */
+const PHI_35_MINI_MODEL_ID = 'local/phi-3.5-mini-instruct-q4_k_m' satisfies LocalAiModelId;
 
 let context: LlamaContext | null = null;
 let loadedModelId: LocalAiModelId | null = null;
 
-export async function ensureLocalLlmLoaded(modelId: LocalAiModelId): Promise<LlamaContext> {
+/** Single-flight queue: one LlamaContext cannot safely run concurrent native completions. */
+let llmSerialQueue: Promise<unknown> = Promise.resolve();
+
+function enqueueLlmTask<T>(task: () => Promise<T>): Promise<T> {
+  const next = llmSerialQueue.then(() => task());
+  llmSerialQueue = next.then(
+    () => undefined,
+    () => undefined,
+  );
+  return next;
+}
+
+async function releaseContextLocked(): Promise<void> {
+  if (context) {
+    await context.release().catch(() => {});
+    context = null;
+    loadedModelId = null;
+  }
+}
+
+async function ensureContextLocked(modelId: LocalAiModelId): Promise<LlamaContext> {
   const path = getLocalLlmModelPath(modelId);
   if (!(await NitroFS.exists(path))) {
     throw new Error('Local LLM model file missing');
@@ -20,23 +55,47 @@ export async function ensureLocalLlmLoaded(modelId: LocalAiModelId): Promise<Lla
     return context;
   }
 
-  if (context) {
-    await context.release().catch(() => {});
-    context = null;
-    loadedModelId = null;
+  await releaseContextLocked();
+
+  try {
+    const ctx = await initLlama({
+      model: path,
+      n_ctx: LOCAL_LLM_N_CTX,
+      n_gpu_layers: LOCAL_LLM_N_GPU_LAYERS,
+      use_mmap: true,
+      use_mlock: false,
+    });
+    context = ctx;
+    loadedModelId = modelId;
+    return ctx;
+  } catch (e) {
+    const hint = e instanceof Error ? e.message : String(e);
+    throw new Error(`Local LLM init failed: ${hint}`);
   }
+}
 
-  const ctx = await initLlama({
-    model: path,
-    n_ctx: LOCAL_LLM_N_CTX,
-    n_gpu_layers: 99,
-    use_mmap: true,
-    use_mlock: false,
-  });
-
-  context = ctx;
-  loadedModelId = modelId;
-  return ctx;
+async function runCompletionLocked(
+  modelId: LocalAiModelId,
+  messages: RNLlamaOAICompatibleMessage[],
+  options: { maxTokens: number; temperature?: number },
+): Promise<string> {
+  const ctx = await ensureContextLocked(modelId);
+  try {
+    const isPhi35Mini = modelId === PHI_35_MINI_MODEL_ID;
+    const result = await ctx.completion({
+      messages,
+      n_predict: options.maxTokens,
+      temperature: options.temperature ?? 0.2,
+      top_p: 0.9,
+      enable_thinking: false,
+      add_generation_prompt: true,
+      ...(isPhi35Mini ? { force_pure_content: true as const } : {}),
+    });
+    return (result.text ?? result.content ?? '').trim();
+  } catch (e) {
+    const hint = e instanceof Error ? e.message : String(e);
+    throw new Error(`Local LLM completion failed: ${hint}`);
+  }
 }
 
 export async function completeLocalChat(
@@ -44,22 +103,9 @@ export async function completeLocalChat(
   messages: RNLlamaOAICompatibleMessage[],
   options: { maxTokens: number; temperature?: number },
 ): Promise<string> {
-  const ctx = await ensureLocalLlmLoaded(modelId);
-  const result = await ctx.completion({
-    messages,
-    n_predict: options.maxTokens,
-    temperature: options.temperature ?? 0.2,
-    top_p: 0.9,
-    enable_thinking: false,
-  });
-
-  return (result.text ?? result.content ?? '').trim();
+  return enqueueLlmTask(() => runCompletionLocked(modelId, messages, options));
 }
 
 export async function releaseLocalLlmSession(): Promise<void> {
-  if (context) {
-    await context.release().catch(() => {});
-    context = null;
-    loadedModelId = null;
-  }
+  await enqueueLlmTask(() => releaseContextLocked());
 }
