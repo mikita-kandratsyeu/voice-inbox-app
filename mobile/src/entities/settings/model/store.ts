@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 
 import { parseAccentColorId } from '@/shared/config';
+import { getExperimentalPrivateAiEnabled } from '@/shared/config/runtimeConfig';
+import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { storage } from '@/shared/lib/async-storage';
 
 import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
@@ -8,12 +10,16 @@ import {
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
   getWhisperModelVariantId,
+  LOCAL_AI_MODELS,
   USER_FACING_AI_MODELS,
 } from './constants';
 import type {
+  AiExecutionMode,
   AiOutputLanguage,
   AppLanguage,
   AppTheme,
+  LocalAiModelId,
+  PrivateCapabilityTier,
   SettingsState,
   SummaryStyle,
   TaskStrictness,
@@ -26,11 +32,14 @@ import type {
   WhisperModelWeightsFormat,
 } from './types';
 
+const LEGACY_APPLE_LOCAL_AI_MODEL = 'apple/on-device-foundation' as const;
+
 const KEYS = {
   APP_THEME: 'settings.appTheme',
   ACCENT_COLOR_ID: 'settings.accentColorId',
   APP_LANGUAGE: 'settings.appLanguage',
   AI_MODEL: 'settings.aiModel',
+  LOCAL_AI_MODEL: 'settings.localAiModel',
   WHISPER_MODEL: 'settings.whisperModel',
   WHISPER_MODEL_WEIGHTS_FORMAT: 'settings.whisperModelWeightsFormat',
   WHISPER_SELECTED_MODEL_FORMAT: 'settings.whisperSelectedModelFormat',
@@ -39,8 +48,14 @@ const KEYS = {
   SUMMARY_STYLE: 'settings.summaryStyle',
   TASK_STRICTNESS: 'settings.taskStrictness',
   AI_OUTPUT_LANGUAGE: 'settings.aiOutputLanguage',
+  AI_EXECUTION_MODE: 'settings.aiExecutionMode',
+  PRIVATE_CAPABILITY_TIER: 'settings.privateCapabilityTier',
   AUTO_TRANSCRIBE_ON_SAVE: 'settings.autoTranscribeOnSave',
   AUTO_AI_AFTER_TRANSCRIPTION: 'settings.autoAiAfterTranscription',
+  PRIVATE_PREVIOUS_THEME: 'settings.private.previousTheme',
+  PRIVATE_PREVIOUS_AUTO_TRANSCRIBE: 'settings.private.previousAutoTranscribeOnSave',
+  PRIVATE_PREVIOUS_AUTO_AI: 'settings.private.previousAutoAiAfterTranscription',
+  LOCAL_LLM_STATUSES: 'settings.localLlmStatuses',
 } as const;
 
 const getStoredAppTheme = (): AppTheme => {
@@ -72,6 +87,68 @@ const getStoredAIModel = (): UserSelectableAIModelId => {
   return normalizeStoredAIModel(val);
 };
 
+const LOCAL_AI_MODEL_SET = new Set<string>(LOCAL_AI_MODELS.map((m) => m.id));
+const GEMMA_LOCAL_AI_MODEL_ID: LocalAiModelId = 'local/gemma-2-2b-it-q4_k_m';
+
+const getStoredLocalAiModel = (): LocalAiModelId | null => {
+  const val = storage.getString(KEYS.LOCAL_AI_MODEL);
+
+  if (val === LEGACY_APPLE_LOCAL_AI_MODEL) {
+    storage.set(KEYS.LOCAL_AI_MODEL, GEMMA_LOCAL_AI_MODEL_ID);
+    return GEMMA_LOCAL_AI_MODEL_ID;
+  }
+
+  if (val && LOCAL_AI_MODEL_SET.has(val)) {
+    return val as LocalAiModelId;
+  }
+
+  if (val) {
+    storage.remove(KEYS.LOCAL_AI_MODEL);
+  }
+
+  return null;
+};
+
+const getStoredLocalLlmStatuses = (): Partial<Record<LocalAiModelId, WhisperModelStatus>> => {
+  try {
+    const raw = storage.getString(KEYS.LOCAL_LLM_STATUSES);
+
+    if (!raw) return {};
+
+    const parsed = JSON.parse(raw) as Record<string, WhisperModelStatus>;
+
+    if (
+      Object.prototype.hasOwnProperty.call(parsed, LEGACY_APPLE_LOCAL_AI_MODEL) &&
+      parsed[LEGACY_APPLE_LOCAL_AI_MODEL] !== undefined
+    ) {
+      const legacyStatus = parsed[LEGACY_APPLE_LOCAL_AI_MODEL];
+
+      delete parsed[LEGACY_APPLE_LOCAL_AI_MODEL];
+
+      if (parsed[GEMMA_LOCAL_AI_MODEL_ID] === undefined) {
+        parsed[GEMMA_LOCAL_AI_MODEL_ID] = legacyStatus;
+      }
+
+      storage.set(KEYS.LOCAL_LLM_STATUSES, JSON.stringify(parsed));
+    }
+
+    let prunedUnknownIds = false;
+    for (const key of Object.keys(parsed)) {
+      if (!LOCAL_AI_MODEL_SET.has(key)) {
+        delete parsed[key];
+        prunedUnknownIds = true;
+      }
+    }
+    if (prunedUnknownIds) {
+      storage.set(KEYS.LOCAL_LLM_STATUSES, JSON.stringify(parsed));
+    }
+
+    return parsed as Partial<Record<LocalAiModelId, WhisperModelStatus>>;
+  } catch {
+    return {};
+  }
+};
+
 const getStoredWhisperModel = (): WhisperModelId => {
   const val = storage.getString(KEYS.WHISPER_MODEL);
 
@@ -80,7 +157,9 @@ const getStoredWhisperModel = (): WhisperModelId => {
 
 const getStoredWhisperModelWeightsFormat = (): WhisperModelWeightsFormat => {
   const val = storage.getString(KEYS.WHISPER_MODEL_WEIGHTS_FORMAT);
+
   if (val === 'full') return 'full';
+
   return DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT;
 };
 
@@ -90,43 +169,65 @@ const getInitialSelectedWhisperModel = (): WhisperModelId => {
 
 const getStoredSelectedWhisperModelFormat = (): WhisperModelWeightsFormat => {
   const val = storage.getString(KEYS.WHISPER_SELECTED_MODEL_FORMAT);
+
   if (val === 'full') return 'full';
+
   return DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT;
 };
 
 const getStoredTranscriptionLanguage = (): TranscriptionLanguage => {
   const val = storage.getString(KEYS.TRANSCRIPTION_LANGUAGE);
+
   return (val as TranscriptionLanguage) ?? 'auto';
 };
 
 const getStoredAutoTranscribeOnSave = (): boolean => {
   const val = storage.getString(KEYS.AUTO_TRANSCRIBE_ON_SAVE);
+
   return val === 'true';
 };
 
 const getStoredAutoAiAfterTranscription = (): boolean => {
   const val = storage.getString(KEYS.AUTO_AI_AFTER_TRANSCRIPTION);
+
   return val === 'true';
 };
 
 const getStoredSummaryStyle = (): SummaryStyle => {
   const val = storage.getString(KEYS.SUMMARY_STYLE);
+
   return (val as SummaryStyle) ?? 'standard';
 };
 
 const getStoredTaskStrictness = (): TaskStrictness => {
   const val = storage.getString(KEYS.TASK_STRICTNESS);
+
   return (val as TaskStrictness) ?? 'balanced';
 };
 
 const getStoredAiOutputLanguage = (): AiOutputLanguage => {
   const val = storage.getString(KEYS.AI_OUTPUT_LANGUAGE);
+
   return (val as AiOutputLanguage) ?? 'same';
+};
+
+const getStoredAiExecutionMode = (): AiExecutionMode => {
+  const val = storage.getString(KEYS.AI_EXECUTION_MODE);
+  return val === 'private_experimental' ? 'private_experimental' : 'smart_hybrid';
+};
+
+const getStoredPrivateCapabilityTier = (): PrivateCapabilityTier => {
+  const val = storage.getString(KEYS.PRIVATE_CAPABILITY_TIER);
+
+  if (val === 'full' || val === 'limited') return val;
+
+  return 'unavailable';
 };
 
 const getStoredWhisperStatuses = (): Partial<Record<WhisperModelVariantId, WhisperModelStatus>> => {
   try {
     const raw = storage.getString(KEYS.WHISPER_STATUSES);
+
     return raw
       ? (JSON.parse(raw) as Partial<Record<WhisperModelVariantId, WhisperModelStatus>>)
       : {};
@@ -140,6 +241,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   accentColorId: getStoredAccentColorId(),
   appLanguage: getStoredAppLanguage(),
   selectedAIModel: getStoredAIModel(),
+  selectedLocalAiModel: getStoredLocalAiModel(),
   selectedWhisperModel: getInitialSelectedWhisperModel(),
   selectedWhisperModelFormat: getStoredSelectedWhisperModelFormat(),
   whisperModelWeightsFormat: getStoredWhisperModelWeightsFormat(),
@@ -147,12 +249,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   summaryStyle: getStoredSummaryStyle(),
   taskStrictness: getStoredTaskStrictness(),
   aiOutputLanguage: getStoredAiOutputLanguage(),
+  aiExecutionMode: getStoredAiExecutionMode(),
+  privateCapabilityTier: getStoredPrivateCapabilityTier(),
   autoTranscribeOnSave: getStoredAutoTranscribeOnSave(),
   autoAiAfterTranscription: getStoredAutoAiAfterTranscription(),
   whisperModelStatuses: getStoredWhisperStatuses(),
   whisperDownloadProgress: {},
   whisperDownloadBytes: {},
   whisperDownloadPhase: {},
+  localLlmModelStatuses: getStoredLocalLlmStatuses(),
+  localLlmDownloadProgress: {},
+  localLlmDownloadBytes: {},
 
   setAppTheme: (value: AppTheme) => {
     storage.set(KEYS.APP_THEME, value);
@@ -172,6 +279,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAIModel: (id: UserSelectableAIModelId) => {
     storage.set(KEYS.AI_MODEL, id);
     set({ selectedAIModel: id });
+  },
+
+  setLocalAiModel: (id: LocalAiModelId) => {
+    storage.set(KEYS.LOCAL_AI_MODEL, id);
+    set({ selectedLocalAiModel: id });
+  },
+
+  clearLocalAiModelSelection: () => {
+    storage.remove(KEYS.LOCAL_AI_MODEL);
+    set({ selectedLocalAiModel: null });
   },
 
   setWhisperModel: (id: WhisperModelId) => {
@@ -212,6 +329,76 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAiOutputLanguage: (value: AiOutputLanguage) => {
     storage.set(KEYS.AI_OUTPUT_LANGUAGE, value);
     set({ aiOutputLanguage: value });
+  },
+
+  setAiExecutionMode: (value: AiExecutionMode) => {
+    const currentState = get();
+    const wasPrivate = currentState.aiExecutionMode === 'private_experimental';
+    const nextValue = getExperimentalPrivateAiEnabled() ? value : 'smart_hybrid';
+
+    if (!wasPrivate && nextValue === 'private_experimental') {
+      storage.set(KEYS.PRIVATE_PREVIOUS_THEME, currentState.appTheme);
+      storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE, String(currentState.autoTranscribeOnSave));
+      storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_AI, String(currentState.autoAiAfterTranscription));
+
+      // Private mode uses isolated defaults and disables cloud-like automations.
+      storage.set(KEYS.AUTO_TRANSCRIBE_ON_SAVE, 'false');
+      storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, 'false');
+      set({
+        aiExecutionMode: nextValue,
+        autoTranscribeOnSave: false,
+        autoAiAfterTranscription: false,
+      });
+      storage.set(KEYS.AI_EXECUTION_MODE, nextValue);
+      return;
+    }
+
+    if (wasPrivate && nextValue !== 'private_experimental') {
+      void releaseLocalLlmSession();
+      const prevTheme = storage.getString(KEYS.PRIVATE_PREVIOUS_THEME) as AppTheme | undefined;
+      const prevAutoTranscribe = storage.getString(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE);
+      const prevAutoAi = storage.getString(KEYS.PRIVATE_PREVIOUS_AUTO_AI);
+
+      const restoredTheme = prevTheme === 'light' || prevTheme === 'dark' || prevTheme === 'system';
+      const restoredAutoTranscribe =
+        prevAutoTranscribe == null
+          ? currentState.autoTranscribeOnSave
+          : prevAutoTranscribe === 'true';
+      const restoredAutoAi =
+        prevAutoAi == null ? currentState.autoAiAfterTranscription : prevAutoAi === 'true';
+
+      if (restoredTheme) {
+        storage.set(KEYS.APP_THEME, prevTheme);
+      }
+      storage.set(KEYS.AUTO_TRANSCRIBE_ON_SAVE, String(restoredAutoTranscribe));
+      storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, String(restoredAutoAi));
+      storage.remove(KEYS.PRIVATE_PREVIOUS_THEME);
+      storage.remove(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE);
+      storage.remove(KEYS.PRIVATE_PREVIOUS_AUTO_AI);
+
+      set({
+        aiExecutionMode: nextValue,
+        ...(restoredTheme ? { appTheme: prevTheme } : {}),
+        autoTranscribeOnSave: restoredAutoTranscribe,
+        autoAiAfterTranscription: restoredAutoAi,
+      });
+      storage.set(KEYS.AI_EXECUTION_MODE, nextValue);
+      return;
+    }
+
+    storage.set(KEYS.AI_EXECUTION_MODE, nextValue);
+    set({ aiExecutionMode: nextValue });
+  },
+
+  reconcileAiExecutionModeAfterRemoteConfig: () => {
+    if (!getExperimentalPrivateAiEnabled() && get().aiExecutionMode === 'private_experimental') {
+      get().setAiExecutionMode('smart_hybrid');
+    }
+  },
+
+  setPrivateCapabilityTier: (value: PrivateCapabilityTier) => {
+    storage.set(KEYS.PRIVATE_CAPABILITY_TIER, value);
+    set({ privateCapabilityTier: value });
   },
 
   setAutoTranscribeOnSave: (value: boolean) => {
@@ -302,6 +489,59 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       whisperDownloadProgress: updatedProgress,
       whisperDownloadBytes: updatedBytes,
       whisperDownloadPhase: updatedPhase,
+    });
+  },
+
+  setLocalLlmModelStatus: (id: LocalAiModelId, status: WhisperModelStatus) => {
+    const current = get().localLlmModelStatuses;
+    const updated = { ...current, [id]: status };
+    storage.set(KEYS.LOCAL_LLM_STATUSES, JSON.stringify(updated));
+    set({ localLlmModelStatuses: updated });
+  },
+
+  setLocalLlmModelStatuses: (statuses: Partial<Record<LocalAiModelId, WhisperModelStatus>>) => {
+    storage.set(KEYS.LOCAL_LLM_STATUSES, JSON.stringify(statuses));
+    set({ localLlmModelStatuses: statuses });
+  },
+
+  setLocalLlmDownloadProgress: (
+    id: LocalAiModelId,
+    progress: number,
+    bytesWritten?: number,
+    contentLength?: number,
+  ) => {
+    const currentProgress = get().localLlmDownloadProgress;
+    const currentBytes = get().localLlmDownloadBytes;
+    const updatedBytes =
+      bytesWritten !== undefined && contentLength !== undefined
+        ? { ...currentBytes, [id]: { written: bytesWritten, total: contentLength } }
+        : currentBytes;
+
+    set({
+      localLlmDownloadProgress: { ...currentProgress, [id]: progress },
+      localLlmDownloadBytes: updatedBytes,
+    });
+  },
+
+  removeLocalLlmModelStatus: (id: LocalAiModelId) => {
+    const currentStatuses = get().localLlmModelStatuses;
+    const currentProgress = get().localLlmDownloadProgress;
+    const currentBytes = get().localLlmDownloadBytes;
+
+    const updatedStatuses = { ...currentStatuses };
+    delete updatedStatuses[id];
+
+    const updatedProgress = { ...currentProgress };
+    delete updatedProgress[id];
+
+    const updatedBytes = { ...currentBytes };
+    delete updatedBytes[id];
+
+    storage.set(KEYS.LOCAL_LLM_STATUSES, JSON.stringify(updatedStatuses));
+    set({
+      localLlmModelStatuses: updatedStatuses,
+      localLlmDownloadProgress: updatedProgress,
+      localLlmDownloadBytes: updatedBytes,
     });
   },
 }));

@@ -7,6 +7,10 @@ export type UserSelectableAIModelId =
   | 'google/gemini-2.5-flash-lite'
   | 'google/gemini-3.1-flash-lite-preview'
   | 'minimax/minimax-m2.7';
+export type LocalAiModelId =
+  | 'local/qwen3-1.7b-q4_k_m'
+  | 'local/gemma-2-2b-it-q4_k_m'
+  | 'local/llama-3.2-1b-q4_k_m';
 
 export type AIModelId =
   | UserSelectableAIModelId
@@ -17,6 +21,8 @@ export type TranscriptionLanguage = 'auto' | 'ru' | 'en' | 'de' | 'fr' | 'es' | 
 export type SummaryStyle = 'brief' | 'standard' | 'detailed';
 export type TaskStrictness = 'strict' | 'balanced' | 'soft';
 export type AiOutputLanguage = 'same' | 'ru' | 'en';
+export type AiExecutionMode = 'smart_hybrid' | 'private_experimental';
+export type PrivateCapabilityTier = 'full' | 'limited' | 'unavailable';
 
 export type WhisperModelId = 'whisper-tiny' | 'whisper-base' | 'whisper-small' | 'whisper-medium';
 export type WhisperModelWeightsFormat = 'q5_1' | 'full';
@@ -68,6 +74,7 @@ export type SettingsState = {
   accentColorId: AccentColorId;
   appLanguage: AppLanguage;
   selectedAIModel: UserSelectableAIModelId;
+  selectedLocalAiModel: LocalAiModelId | null;
   selectedWhisperModel: WhisperModelId;
   selectedWhisperModelFormat: WhisperModelWeightsFormat;
   whisperModelWeightsFormat: WhisperModelWeightsFormat;
@@ -75,22 +82,32 @@ export type SettingsState = {
   summaryStyle: SummaryStyle;
   taskStrictness: TaskStrictness;
   aiOutputLanguage: AiOutputLanguage;
+  aiExecutionMode: AiExecutionMode;
+  privateCapabilityTier: PrivateCapabilityTier;
   autoTranscribeOnSave: boolean;
   autoAiAfterTranscription: boolean;
   whisperModelStatuses: Partial<Record<WhisperModelVariantId, WhisperModelStatus>>;
   whisperDownloadProgress: Partial<Record<WhisperModelVariantId, number>>;
   whisperDownloadBytes: Partial<Record<WhisperModelVariantId, DownloadBytes>>;
   whisperDownloadPhase: Partial<Record<WhisperModelVariantId, WhisperDownloadPhase>>;
+  localLlmModelStatuses: Partial<Record<LocalAiModelId, WhisperModelStatus>>;
+  localLlmDownloadProgress: Partial<Record<LocalAiModelId, number>>;
+  localLlmDownloadBytes: Partial<Record<LocalAiModelId, DownloadBytes>>;
   setAppTheme: (value: AppTheme) => void;
   setAccentColorId: (value: AccentColorId) => void;
   setAppLanguage: (value: AppLanguage) => void;
   setAIModel: (id: UserSelectableAIModelId) => void;
+  setLocalAiModel: (id: LocalAiModelId) => void;
+  clearLocalAiModelSelection: () => void;
   setWhisperModel: (id: WhisperModelId) => void;
   setWhisperModelWeightsFormat: (value: WhisperModelWeightsFormat) => void;
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;
   setSummaryStyle: (value: SummaryStyle) => void;
   setTaskStrictness: (value: TaskStrictness) => void;
   setAiOutputLanguage: (value: AiOutputLanguage) => void;
+  setAiExecutionMode: (value: AiExecutionMode) => void;
+  reconcileAiExecutionModeAfterRemoteConfig: () => void;
+  setPrivateCapabilityTier: (value: PrivateCapabilityTier) => void;
   setAutoTranscribeOnSave: (value: boolean) => void;
   setAutoAiAfterTranscription: (value: boolean) => void;
   setWhisperModelStatus: (
@@ -110,4 +127,13 @@ export type SettingsState = {
     phase?: WhisperDownloadPhase,
   ) => void;
   removeWhisperModelStatus: (id: WhisperModelId, format: WhisperModelWeightsFormat) => void;
+  setLocalLlmModelStatus: (id: LocalAiModelId, status: WhisperModelStatus) => void;
+  setLocalLlmModelStatuses: (statuses: Partial<Record<LocalAiModelId, WhisperModelStatus>>) => void;
+  setLocalLlmDownloadProgress: (
+    id: LocalAiModelId,
+    progress: number,
+    bytesWritten?: number,
+    contentLength?: number,
+  ) => void;
+  removeLocalLlmModelStatus: (id: LocalAiModelId) => void;
 };

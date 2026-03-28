@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppState, StatusBar, Text, View } from 'react-native';
+import { Alert, AppState, StatusBar, Text, View } from 'react-native';
 import KeepAwake from 'react-native-keep-awake';
 
 import type { RootStackParamList } from '@/app/navigation/types';
@@ -18,6 +18,7 @@ import {
 import { useProEntitlement } from '@/features/pro-license';
 import { useRecordingDeeplinkStore } from '@/features/recording-deeplink/model/store';
 import { useTranscription } from '@/features/transcription';
+import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import { useColors } from '@/shared/config';
 import { formatTime, persistRecordingToDocuments } from '@/shared/lib';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
@@ -39,9 +40,16 @@ export const RecordScreen = () => {
 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const addRecord = useRecordStore((s) => s.addRecord);
+  const activeTranscriptionRecord = useRecordStore((s) =>
+    s.records.find((r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing'),
+  );
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const { isProActive } = useProEntitlement();
-  const maxRecordingMs = useMemo(() => getMaxRecordingMsForTier(isProActive), [isProActive]);
+  const maxRecordingMs = useMemo(
+    () => getMaxRecordingMsForTier(isProActive, aiExecutionMode),
+    [isProActive, aiExecutionMode],
+  );
   const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(autoTranscribeOnSave, isProActive);
   const { startTranscription } = useTranscription();
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -149,9 +157,33 @@ export const RecordScreen = () => {
   useFocusEffect(
     useCallback(() => {
       if (state === 'idle') {
+        if (hasAnyActiveTranscriptionJob()) {
+          Alert.alert(
+            t('record.blockedByTranscriptionTitle'),
+            t('record.blockedByTranscriptionMessage'),
+            [
+              {
+                text: t('common.cancel'),
+                style: 'cancel',
+                onPress: () => navigation.goBack(),
+              },
+              {
+                text: t('common.open'),
+                onPress: () => {
+                  if (activeTranscriptionRecord) {
+                    navigation.replace('RecordingDetail', { record: activeTranscriptionRecord });
+                  } else {
+                    navigation.goBack();
+                  }
+                },
+              },
+            ],
+          );
+          return;
+        }
         startRecording();
       }
-    }, [state, startRecording]),
+    }, [state, startRecording, t, navigation, activeTranscriptionRecord]),
   );
 
   const handleClose = async () => {

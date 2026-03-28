@@ -5,7 +5,11 @@ import React from 'react';
 import { InboxFiltersResetProvider } from '@/features/inbox-filters';
 import { AllTasksScreen } from '@/screens/all-tasks';
 import { RecordScreen } from '@/screens/record';
-import { EditTranscriptScreen, RecordingDetailScreen } from '@/screens/recording-detail';
+import {
+  AskAIScreen,
+  EditTranscriptScreen,
+  RecordingDetailScreen,
+} from '@/screens/recording-detail';
 import { WhisperModelPickerScreen } from '@/screens/settings';
 
 import { BottomTabNavigator } from './BottomTabNavigator';
@@ -36,6 +40,15 @@ export const RootNavigator = () => (
       <Stack.Screen
         name="RecordingDetail"
         component={RecordingDetailScreen}
+        options={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="RecordingAskAI"
+        component={AskAIScreen}
         options={{
           headerShown: false,
           animation: 'slide_from_right',

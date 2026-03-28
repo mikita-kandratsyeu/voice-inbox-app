@@ -43,6 +43,7 @@ export const colors = {
       setup: { color: '#6366f1', bg: '#e0e7ff' },
       shield: { color: '#0ea5e9', bg: '#e0f2fe' },
       restore: { color: '#059669', bg: '#d1fae5' },
+      privateSlide: { color: '#0d9488', bg: '#ccfbf1', chipBorder: '#5eead4', chipText: '#115e59' },
       privacy: { border: '#c4b5fd', text: '#6d28d9' },
       ai: { border: '#fcd34d', text: '#b45309' },
     },
@@ -99,6 +100,12 @@ export const colors = {
       setup: { color: '#6366f1', bg: '#e0e7ff' },
       shield: { color: '#0ea5e9', bg: '#e0f2fe' },
       restore: { color: '#059669', bg: '#d1fae5' },
+      privateSlide: {
+        color: '#2dd4bf',
+        bg: '#134e4a',
+        chipBorder: '#0d9488',
+        chipText: '#ccfbf1',
+      },
       privacy: { border: '#c4b5fd', text: '#6d28d9' },
       ai: { border: '#fcd34d', text: '#b45309' },
     },
@@ -114,6 +121,69 @@ export const colors = {
     },
   },
 } as const;
+
+export const privateModeColors: Colors = {
+  background: {
+    primary: '#070b12',
+    secondary: '#0a1019',
+    tertiary: '#121a28',
+    card: '#0f1622',
+  },
+  text: {
+    primary: '#d9e7ff',
+    secondary: '#8ca1c2',
+    muted: '#6f82a0',
+  },
+  border: {
+    default: '#1a2740',
+  },
+  accent: {
+    primary: '#4da3ff',
+    pin: '#6bb6ff',
+    unpin: '#f0b45b',
+    delete: '#ff6b7a',
+    archive: '#7788a6',
+    success: '#3ad18b',
+    transcript: '#7f8cff',
+    cache: '#f0b45b',
+    aiData: '#45d6a2',
+    models: '#67c6ff',
+  },
+  icon: {
+    onAccent: '#ffffff',
+    muted: '#5f7394',
+  },
+  tab: {
+    inactive: '#5d7090',
+  },
+  onboarding: {
+    mic: { color: '#4da3ff', bg: '#11233d' },
+    lock: { color: '#8f9dff', bg: '#1b2248' },
+    sparkles: { color: '#f0b45b', bg: '#362711' },
+    zap: { color: '#3ad18b', bg: '#0f2e24' },
+    setup: { color: '#7f8cff', bg: '#1a2148' },
+    shield: { color: '#67c6ff', bg: '#102b3b' },
+    restore: { color: '#45d6a2', bg: '#123127' },
+    privateSlide: {
+      color: '#5eead4',
+      bg: '#0f2c2a',
+      chipBorder: '#2dd4bf',
+      chipText: '#ecfdfa',
+    },
+    privacy: { border: '#3b6aa1', text: '#8ebdff' },
+    ai: { border: '#7f8cff', text: '#b7beff' },
+  },
+  status: {
+    success: '#3ad18b',
+    processing: { bg: '#143053', text: '#6bb6ff' },
+    error: { bg: '#4a1d29', text: '#ff9aa5' },
+    muted: { bg: '#1a2740', text: '#8ca1c2' },
+  },
+  shadow: {
+    color: '#000000',
+    opacity: 0.45,
+  },
+};
 
 export type ColorScheme = keyof typeof colors;
 
@@ -143,6 +213,7 @@ export type Colors = {
     setup: { color: string; bg: string };
     shield: { color: string; bg: string };
     restore: { color: string; bg: string };
+    privateSlide: { color: string; bg: string; chipBorder: string; chipText: string };
     privacy: { border: string; text: string };
     ai: { border: string; text: string };
   };

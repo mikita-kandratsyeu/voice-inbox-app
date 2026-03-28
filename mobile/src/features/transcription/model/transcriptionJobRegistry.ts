@@ -25,3 +25,7 @@ export function invalidateTranscriptionJob(recordId: string): void {
 export function hasActiveTranscriptionJob(recordId: string): boolean {
   return activeJobGenByRecordId.has(recordId);
 }
+
+export function hasAnyActiveTranscriptionJob(): boolean {
+  return activeJobGenByRecordId.size > 0;
+}

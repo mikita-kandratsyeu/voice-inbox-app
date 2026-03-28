@@ -3,12 +3,12 @@ import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/
 import { Check, Crown } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FREE_MAX_RECORDING_MS, type MonetizationMode } from '@/features/app-storefront';
 import { useColors } from '@/shared/config';
-import { modalKeyboardBehavior } from '@/shared/lib/platform';
+import { IS_ANDROID, IS_IOS, modalKeyboardBehavior } from '@/shared/lib/platform';
 import { Button } from '@/shared/ui';
 
 type SettingsPlanPaywallSheetProps = {
@@ -36,7 +36,7 @@ function FeatureRow({ text, emphasized, mutedCheck }: FeatureRowProps) {
         className="h-5 w-5 shrink-0 items-center justify-center rounded-full"
         style={{
           backgroundColor: mutedCheck ? c.background.tertiary : '#7E5BFF22',
-          marginTop: Platform.OS === 'ios' ? 1 : 0,
+          marginTop: IS_IOS ? 1 : 0,
         }}
       >
         <Check size={13} color={mutedCheck ? c.text.muted : c.accent.primary} strokeWidth={2.4} />
@@ -47,7 +47,7 @@ function FeatureRow({ text, emphasized, mutedCheck }: FeatureRowProps) {
           color: c.text.primary,
           fontSize: 14,
           lineHeight,
-          ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
+          ...(IS_ANDROID ? { includeFontPadding: false } : {}),
         }}
       >
         {text}

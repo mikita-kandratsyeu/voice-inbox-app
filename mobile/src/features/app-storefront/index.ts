@@ -2,9 +2,11 @@ export {
   shouldApplyAutoAiAfterTranscription,
   shouldApplyAutoTranscribeOnSave,
 } from './lib/effectiveAutomation';
+export type { RecordingDurationExecutionMode } from './lib/recordingDurationLimits';
 export {
   FREE_MAX_RECORDING_MS,
   getMaxRecordingMsForTier,
+  PRIVATE_MAX_RECORDING_MS,
   PRO_MAX_RECORDING_MS,
   RECORDING_FINAL_WARNING_REMAINING_MS,
   RECORDING_SOFT_WARNING_REMAINING_MS,

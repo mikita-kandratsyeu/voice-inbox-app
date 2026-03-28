@@ -5,12 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { AppLanguage, AppTheme } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { useProEntitlement } from '@/features/pro-license';
 import type { AccentColorId, Colors } from '@/shared/config';
 import { getAccentColorSwatches, useAppTheme, useColors } from '@/shared/config';
-import { useTabletContentMaxWidth } from '@/shared/lib';
+import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { applyAppLanguage } from '@/shared/lib/i18n';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
@@ -95,6 +96,7 @@ export const AppearanceScreen = () => {
   const contentMaxWidth = useTabletContentMaxWidth();
   const [accentProSheet, setAccentProSheet] = useState(false);
   const { isProActive } = useProEntitlement();
+  const isTablet = useIsTablet();
 
   const appLanguage = useSettingsStore((s) => s.appLanguage);
   const setAppLanguage = useSettingsStore((s) => s.setAppLanguage);
@@ -102,7 +104,9 @@ export const AppearanceScreen = () => {
   const setAppTheme = useSettingsStore((s) => s.setAppTheme);
   const accentColorId = useSettingsStore((s) => s.accentColorId);
   const setAccentColorId = useSettingsStore((s) => s.setAccentColorId);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const accentSwatches = getAccentColorSwatches(scheme);
+  const isPrivateMode = aiExecutionMode === 'private_experimental';
 
   const handleLanguageSelect = (value: AppLanguage) => {
     setAppLanguage(value);
@@ -132,7 +136,7 @@ export const AppearanceScreen = () => {
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
           }}
           showsVerticalScrollIndicator={false}
         >
@@ -146,96 +150,103 @@ export const AppearanceScreen = () => {
             />
           </SettingsSection>
 
-          <SettingsSection title={t('appearance.theme')}>
-            <PickerSection
-              options={APP_THEMES}
-              selected={appTheme}
-              onSelect={setAppTheme}
-              labelKey={(v) => t(`appearance.themeOption.${v}`)}
-              color={color}
-            />
-          </SettingsSection>
+          {!isPrivateMode && (
+            <SettingsSection title={t('appearance.theme')}>
+              <PickerSection
+                options={APP_THEMES}
+                selected={appTheme}
+                onSelect={setAppTheme}
+                labelKey={(v) => t(`appearance.themeOption.${v}`)}
+                color={color}
+              />
+            </SettingsSection>
+          )}
 
-          <View className="mb-7">
-            <View className="mb-2.5 flex-row items-center justify-between px-1">
-              <Text
-                className="text-xs font-semibold uppercase tracking-widest"
-                style={{ color: color.text.secondary }}
-              >
-                {t('appearance.accentColor.title')}
-              </Text>
-              {!isProActive ? (
-                <View className="flex-row items-center gap-1">
-                  <Crown size={14} color={color.accent.primary} strokeWidth={2} />
-                  <Text className="text-xs font-semibold" style={{ color: color.accent.primary }}>
-                    {t('common.pro')}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-            <View
-              className="overflow-hidden rounded-2xl"
-              style={{ borderWidth: 1, borderColor: color.border.default }}
-            >
+          {!isPrivateMode && (
+            <View className="mb-7">
+              <View className="mb-2.5 flex-row items-center justify-between px-1">
+                <Text
+                  className="text-xs font-semibold uppercase tracking-widest"
+                  style={{ color: color.text.secondary }}
+                >
+                  {t('appearance.accentColor.title')}
+                </Text>
+                {!isProActive ? (
+                  <View className="flex-row items-center gap-1">
+                    <Crown size={14} color={color.accent.primary} strokeWidth={2} />
+                    <Text className="text-xs font-semibold" style={{ color: color.accent.primary }}>
+                      {t('common.pro')}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
               <View
-                className="flex-row flex-wrap px-4 py-4"
-                style={{
-                  backgroundColor: color.background.card,
-                  gap: 12,
-                }}
+                className="overflow-hidden rounded-2xl"
+                style={{ borderWidth: 1, borderColor: color.border.default }}
               >
-                {accentSwatches.map(({ id, previewHex }) => {
-                  const selected = accentColorId === id;
-                  const fillSize = selected ? ACCENT_SWATCH_FILL_SELECTED : ACCENT_SWATCH_FILL;
-                  return (
-                    <TouchableOpacity
-                      key={id}
-                      accessibilityRole="button"
-                      accessibilityLabel={t(`appearance.accentColor.option.${id}`)}
-                      accessibilityState={{ selected }}
-                      onPress={() => handleAccentSelect(id)}
-                      activeOpacity={0.75}
-                      style={{
-                        width: ACCENT_SWATCH_SIZE,
-                        height: ACCENT_SWATCH_SIZE,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <View
+                <View
+                  className="flex-row flex-wrap px-4 py-4"
+                  style={{
+                    backgroundColor: color.background.card,
+                    gap: 12,
+                  }}
+                >
+                  {accentSwatches.map(({ id, previewHex }) => {
+                    const selected = accentColorId === id;
+                    const fillSize = selected ? ACCENT_SWATCH_FILL_SELECTED : ACCENT_SWATCH_FILL;
+                    return (
+                      <TouchableOpacity
+                        key={id}
+                        accessibilityRole="button"
+                        accessibilityLabel={t(`appearance.accentColor.option.${id}`)}
+                        accessibilityState={{ selected }}
+                        onPress={() => handleAccentSelect(id)}
+                        activeOpacity={0.75}
                         style={{
                           width: ACCENT_SWATCH_SIZE,
                           height: ACCENT_SWATCH_SIZE,
-                          borderRadius: ACCENT_SWATCH_SIZE / 2,
                           alignItems: 'center',
                           justifyContent: 'center',
-                          borderWidth: selected ? ACCENT_SWATCH_RING : 0,
-                          borderColor: selected ? previewHex : 'transparent',
-                          padding: selected ? 0 : ACCENT_SWATCH_PAD_UNSELECTED,
                         }}
                       >
                         <View
                           style={{
-                            width: fillSize,
-                            height: fillSize,
-                            borderRadius: fillSize / 2,
-                            backgroundColor: previewHex,
-                            borderWidth: 1,
-                            borderColor: color.border.default,
+                            width: ACCENT_SWATCH_SIZE,
+                            height: ACCENT_SWATCH_SIZE,
+                            borderRadius: ACCENT_SWATCH_SIZE / 2,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderWidth: selected ? ACCENT_SWATCH_RING : 0,
+                            borderColor: selected ? previewHex : 'transparent',
+                            padding: selected ? 0 : ACCENT_SWATCH_PAD_UNSELECTED,
                           }}
-                        />
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
+                        >
+                          <View
+                            style={{
+                              width: fillSize,
+                              height: fillSize,
+                              borderRadius: fillSize / 2,
+                              backgroundColor: previewHex,
+                              borderWidth: 1,
+                              borderColor: color.border.default,
+                            }}
+                          />
+                        </View>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
               </View>
+              {!isProActive ? (
+                <Text
+                  className="mt-2 px-1 text-xs leading-5"
+                  style={{ color: color.text.secondary }}
+                >
+                  {t('appearance.accentColor.subtitle')}
+                </Text>
+              ) : null}
             </View>
-            {!isProActive ? (
-              <Text className="mt-2 px-1 text-xs leading-5" style={{ color: color.text.secondary }}>
-                {t('appearance.accentColor.subtitle')}
-              </Text>
-            ) : null}
-          </View>
+          )}
         </ScrollView>
       </View>
 

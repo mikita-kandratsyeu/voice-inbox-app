@@ -52,7 +52,7 @@ export const AnimatedTabButton = ({
         handlePressOut();
       }}
       activeOpacity={1}
-      className="my-0 flex-1 items-center justify-center py-0"
+      className="my-0 min-h-[48px] shrink-0 self-stretch items-center justify-center py-0"
     >
       <Animated.View className="items-center justify-center" style={animatedStyle}>
         {children}

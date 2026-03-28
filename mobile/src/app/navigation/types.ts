@@ -17,9 +17,12 @@ export type InboxStackParamList = {
 };
 
 export type RootStackParamList = {
-  Main: undefined | { screen: 'SettingsRoot'; params: { screen: 'WhisperModelPicker' } };
+  Main:
+    | undefined
+    | { screen: 'SettingsRoot'; params: { screen: 'WhisperModelPicker' | 'AIModelPicker' } };
   RecordModal: undefined;
   RecordingDetail: { record: VoiceRecord };
+  RecordingAskAI: { record: VoiceRecord };
   WhisperModelPickerRoot: undefined;
   EditTranscript: { record: VoiceRecord };
   AllTasks: undefined;
@@ -29,6 +32,7 @@ export type SettingsStackParamList = {
   Settings: undefined;
   Appearance: undefined;
   AIModelPicker: undefined;
+  PrivateAiMode: undefined;
   AiSettings: undefined;
   WhisperModelPicker: undefined;
   StorageDetails: undefined;

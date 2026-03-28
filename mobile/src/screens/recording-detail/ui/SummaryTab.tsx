@@ -1,9 +1,10 @@
-import { AlertCircle, FileText, RefreshCw } from 'lucide-react-native';
-import React from 'react';
+import { AlertCircle, FileText, RefreshCw, Sparkles } from 'lucide-react-native';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import type { RecordingStatus } from '@/entities/record';
+import { useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
 import {
@@ -14,44 +15,92 @@ import {
   TabEmptyState,
 } from '@/shared/ui';
 
+import { DetailTabProcessingView } from './DetailTabProcessingView';
+
 type SummaryTabProps = {
   summary: string;
   keyPhrases?: string[];
   status: RecordingStatus;
+  errorMessage?: string;
   hasTranscript?: boolean;
   color: Colors;
   onGenerate: () => void;
   onDismissError?: () => void;
+  showPrivateModeCta?: boolean;
+  onSwitchToSmartMode?: () => void;
+  showProcessingCancel?: boolean;
+  onCancelProcessing?: () => void;
+  usePrivateProcessingPanel?: boolean;
+  privateAiBatchProgress?: number;
+  privateAiBatchPhase?: 'loading_model' | 'processing';
+  privateAiBatchProgressLabel?: string;
 };
 
 export const SummaryTab = ({
-  summary,
-  keyPhrases = [],
-  status,
-  hasTranscript = true,
   color,
-  onGenerate,
+  errorMessage,
+  hasTranscript = true,
+  keyPhrases = [],
   onDismissError,
+  onGenerate,
+  onCancelProcessing,
+  privateAiBatchPhase,
+  privateAiBatchProgress,
+  privateAiBatchProgressLabel,
+  showPrivateModeCta = false,
+  showProcessingCancel = false,
+  status,
+  summary,
+  usePrivateProcessingPanel = false,
 }: SummaryTabProps) => {
   const { t } = useTranslation();
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
   const aiModelName = useAiModelName();
   const { isConnected } = useNetworkStatus();
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
+
+  const errMessage = useMemo(() => {
+    return errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '');
+  }, [errorMessage, showPrivateModeCta, t]);
 
   if (status === 'processing') {
-    return <AiTabLoadingState message={t('recordingDetail.summaryProcessing')} />;
+    if (usePrivateProcessingPanel && onCancelProcessing) {
+      return (
+        <DetailTabProcessingView
+          progress={privateAiBatchProgress ?? 0}
+          progressLabel={privateAiBatchProgressLabel}
+          phase={privateAiBatchPhase ?? 'loading_model'}
+          color={color}
+          onCancel={onCancelProcessing}
+          context="private_llm"
+          hintText={t('privateAi.batteryHint')}
+          leadingIcon={<Sparkles size={22} color={color.accent.primary} strokeWidth={2} />}
+        />
+      );
+    }
+
+    return (
+      <AiTabLoadingState
+        message={t('recordingDetail.summaryProcessing')}
+        showCancelButton={showProcessingCancel}
+        onCancel={onCancelProcessing}
+      />
+    );
   }
 
   if (status === 'error' && !summary) {
     return (
-      <TabEmptyState
-        icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
-        title={t('recordingDetail.summaryError')}
-        description=""
-        buttonLabel={t('recordingDetail.summaryRetry')}
-        buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
-        onPress={onGenerate}
-      />
+      <View className="gap-3 p-4">
+        <TabEmptyState
+          icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
+          title={t('recordingDetail.summaryError')}
+          description={errMessage}
+          buttonLabel={t('recordingDetail.summaryRetry')}
+          buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
+          onPress={onGenerate}
+        />
+      </View>
     );
   }
 
@@ -75,7 +124,7 @@ export const SummaryTab = ({
         buttonIcon={<FileText size={18} color="#fff" strokeWidth={2} />}
         hint={aiModelName}
         hintIcon={<AiTabHintIcon />}
-        disabled={isConnected === false}
+        disabled={disableByNetwork}
         onPress={onGenerate}
       />
     );
@@ -83,12 +132,7 @@ export const SummaryTab = ({
 
   return (
     <View className="gap-3.5 p-4">
-      {showBanner && (
-        <AiTabErrorBanner
-          message={t('recordingDetail.summaryErrorBanner')}
-          onDismiss={handleDismiss}
-        />
-      )}
+      {showBanner && <AiTabErrorBanner message={errMessage} onDismiss={handleDismiss} />}
       <Text className="text-sm leading-6" style={{ color: color.text.primary }}>
         {summary}
       </Text>
@@ -123,9 +167,9 @@ export const SummaryTab = ({
         label={t('recordingDetail.regenerateSummary')}
         color={color}
         onPress={onGenerate}
-        disabled={isConnected === false}
+        disabled={disableByNetwork}
         className="mt-1"
-        accessibilityState={{ disabled: isConnected === false }}
+        accessibilityState={{ disabled: disableByNetwork }}
       />
     </View>
   );

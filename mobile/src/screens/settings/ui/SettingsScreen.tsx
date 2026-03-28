@@ -1,19 +1,18 @@
 import React, { useRef } from 'react';
-import {
-  Platform,
-  RefreshControl,
-  ScrollView,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { RefreshControl, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { ProLicenseKeyModal } from '@/features/pro-license';
 import { isCrashlyticsDebugEnabled, isTestflightInternalBuild } from '@/shared/config/buildEnv';
-import { useScrollToTopOnTabPress, useTabletContentMaxWidth } from '@/shared/lib';
-import { SCREEN_PADDING } from '@/shared/ui';
+import {
+  IS_ANDROID,
+  useIsTablet,
+  useScrollToTopOnTabPress,
+  useTabletContentMaxWidth,
+} from '@/shared/lib';
+import { PrivateModeBadge, SCREEN_PADDING } from '@/shared/ui';
 
 import { useSettingsScreen } from '../lib/useSettingsScreen';
 import { AiUsageCard } from './AiUsageCard';
@@ -36,6 +35,7 @@ export const SettingsScreen = () => {
   const settings = useSettingsScreen();
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const insets = useSafeAreaInsets();
+  const isTablet = useIsTablet();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
@@ -56,9 +56,12 @@ export const SettingsScreen = () => {
           paddingBottom: 12,
         }}
       >
-        <Text className="text-2xl font-bold" style={{ color: settings.color.text.primary }}>
-          {settings.t('settings.title')}
-        </Text>
+        <View className="flex-row items-center gap-2">
+          <Text className="text-2xl font-bold" style={{ color: settings.color.text.primary }}>
+            {settings.t('settings.title')}
+          </Text>
+          {settings.isPrivateMode && <PrivateModeBadge color={settings.color} compact />}
+        </View>
       </View>
 
       <View
@@ -74,7 +77,7 @@ export const SettingsScreen = () => {
           contentContainerStyle={{
             paddingHorizontal: SCREEN_PADDING,
             paddingTop: 16,
-            paddingBottom: insets.bottom + 28,
+            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
           }}
           showsVerticalScrollIndicator={false}
           refreshControl={
@@ -84,7 +87,7 @@ export const SettingsScreen = () => {
               tintColor={settings.color.status.processing.text}
               colors={[settings.color.status.processing.text]}
               progressBackgroundColor={settings.color.background.secondary}
-              progressViewOffset={Platform.OS === 'android' ? 12 : undefined}
+              progressViewOffset={IS_ANDROID ? 12 : undefined}
             />
           }
         >
@@ -94,27 +97,32 @@ export const SettingsScreen = () => {
             aiLimit={settings.proWeeklyLimit}
             onPress={settings.handlePlanCardPress}
           />
-          <AiUsageCard
-            usage={settings.aiUsage}
-            loading={settings.aiUsageLoading}
-            onClaimBonus={settings.adsAllowed ? settings.claim : undefined}
-            claimLoading={settings.claimLoading}
-            claimError={settings.claimError}
-          />
-          <SettingsAutomationSection
-            color={settings.color}
-            t={settings.t}
-            automationLocked={settings.automationLocked}
-            autoTranscribeOnSave={settings.autoTranscribeOnSave}
-            setAutoTranscribeOnSave={settings.setAutoTranscribeOnSave}
-            autoAiAfterTranscription={settings.autoAiAfterTranscription}
-            setAutoAiAfterTranscription={settings.setAutoAiAfterTranscription}
-            onLockedPress={settings.setAutomationSheet}
-          />
+          {!settings.isPrivateMode && (
+            <AiUsageCard
+              usage={settings.aiUsage}
+              loading={settings.aiUsageLoading}
+              onClaimBonus={settings.adsAllowed ? settings.claim : undefined}
+              claimLoading={settings.claimLoading}
+              claimError={settings.claimError}
+            />
+          )}
+          {!settings.isPrivateMode && (
+            <SettingsAutomationSection
+              color={settings.color}
+              t={settings.t}
+              automationLocked={settings.automationLocked}
+              autoTranscribeOnSave={settings.autoTranscribeOnSave}
+              setAutoTranscribeOnSave={settings.setAutoTranscribeOnSave}
+              autoAiAfterTranscription={settings.autoAiAfterTranscription}
+              setAutoAiAfterTranscription={settings.setAutoAiAfterTranscription}
+              onLockedPress={settings.setAutomationSheet}
+            />
+          )}
           <SettingsAiProcessingSection
             color={settings.color}
             t={settings.t}
             navigation={settings.navigation}
+            privateAiModeValue={settings.privateAiModeValue}
             aiModelName={settings.aiModelName}
             transcriptionValue={settings.transcriptionValue}
             embeddingAvailable={settings.embeddingAvailable}
@@ -136,6 +144,7 @@ export const SettingsScreen = () => {
             navigation={settings.navigation}
             appLanguage={settings.appLanguage}
             appTheme={settings.appTheme}
+            isPrivateMode={settings.isPrivateMode}
           />
           <SettingsPermissionsSection
             color={settings.color}
@@ -183,11 +192,13 @@ export const SettingsScreen = () => {
           onClose={() => settings.setPlanPaywallVisible(false)}
           onUpgradePress={settings.handleUpgradePress}
         />
-        <AutomationComingSoonSheet
-          visible={settings.automationSheet !== null}
-          feature={settings.automationSheet ?? 'autoTranscribe'}
-          onClose={() => settings.setAutomationSheet(null)}
-        />
+        {!settings.isPrivateMode && (
+          <AutomationComingSoonSheet
+            visible={settings.automationSheet !== null}
+            feature={settings.automationSheet ?? 'autoTranscribe'}
+            onClose={() => settings.setAutomationSheet(null)}
+          />
+        )}
       </View>
     </View>
   );

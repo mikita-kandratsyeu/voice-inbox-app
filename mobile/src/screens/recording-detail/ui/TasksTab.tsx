@@ -15,6 +15,7 @@ import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { KeyboardController } from 'react-native-keyboard-controller';
 
 import type { RecordingStatus, TaskItem } from '@/entities/record';
+import { useSettingsStore } from '@/entities/settings';
 import { useAddToCalendar } from '@/features/add-to-calendar';
 import { useAddToReminder } from '@/features/add-to-reminder';
 import type { Colors } from '@/shared/config';
@@ -30,10 +31,13 @@ import {
   TabEmptyState,
 } from '@/shared/ui';
 
+import { DetailTabProcessingView } from './DetailTabProcessingView';
+
 type TasksTabProps = {
   tasks: TaskItem[];
   nextSteps?: string[];
   status: RecordingStatus;
+  errorMessage?: string;
   hasTranscript?: boolean;
   recordTitle: string;
   color: Colors;
@@ -42,6 +46,14 @@ type TasksTabProps = {
   onAddManualTask: (text: string) => void;
   onDeleteTask: (taskId: string) => void;
   onDismissError?: () => void;
+  showPrivateModeCta?: boolean;
+  onSwitchToSmartMode?: () => void;
+  showProcessingCancel?: boolean;
+  onCancelProcessing?: () => void;
+  usePrivateProcessingPanel?: boolean;
+  privateAiBatchProgress?: number;
+  privateAiBatchPhase?: 'loading_model' | 'processing';
+  privateAiBatchProgressLabel?: string;
 };
 
 const ManualTaskAddRow = ({
@@ -112,6 +124,7 @@ export const TasksTab = ({
   tasks,
   nextSteps = [],
   status,
+  errorMessage,
   hasTranscript = true,
   recordTitle,
   color,
@@ -120,6 +133,14 @@ export const TasksTab = ({
   onAddManualTask,
   onDeleteTask,
   onDismissError,
+  onCancelProcessing,
+  privateAiBatchPhase,
+  privateAiBatchProgress,
+  privateAiBatchProgressLabel,
+  showPrivateModeCta = false,
+  showProcessingCancel = false,
+  onSwitchToSmartMode: _onSwitchToSmartMode,
+  usePrivateProcessingPanel = false,
 }: TasksTabProps) => {
   const theme = useAppTheme();
   const isDark = theme === 'dark';
@@ -127,6 +148,9 @@ export const TasksTab = ({
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
   const aiModelName = useAiModelName();
   const { isConnected } = useNetworkStatus();
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
+
   const { addTaskToCalendar } = useAddToCalendar();
   const { addTaskToReminder } = useAddToReminder();
 
@@ -135,7 +159,28 @@ export const TasksTab = ({
   };
 
   if (status === 'processing') {
-    return <AiTabLoadingState message={t('recordingDetail.tasksProcessing')} />;
+    if (usePrivateProcessingPanel && onCancelProcessing) {
+      return (
+        <DetailTabProcessingView
+          progress={privateAiBatchProgress ?? 0}
+          progressLabel={privateAiBatchProgressLabel}
+          phase={privateAiBatchPhase ?? 'loading_model'}
+          color={color}
+          onCancel={onCancelProcessing}
+          context="private_llm"
+          hintText={t('privateAi.batteryHint')}
+          leadingIcon={<ListChecks size={22} color={color.accent.primary} strokeWidth={2} />}
+        />
+      );
+    }
+
+    return (
+      <AiTabLoadingState
+        message={t('recordingDetail.tasksProcessing')}
+        showCancelButton={showProcessingCancel}
+        onCancel={onCancelProcessing}
+      />
+    );
   }
 
   if (status === 'error' && tasks.length === 0) {
@@ -144,7 +189,9 @@ export const TasksTab = ({
         <TabEmptyState
           icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
           title={t('recordingDetail.tasksError')}
-          description=""
+          description={
+            errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '')
+          }
           buttonLabel={t('recordingDetail.tasksRetry')}
           buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
           onPress={onExtract}
@@ -191,7 +238,7 @@ export const TasksTab = ({
           buttonIcon={<ListChecks size={18} color="#fff" strokeWidth={2} />}
           hint={aiModelName}
           hintIcon={<AiTabHintIcon />}
-          disabled={isConnected === false}
+          disabled={disableByNetwork}
           onPress={onExtract}
         />
         <View className="px-6 pb-8">
@@ -345,7 +392,7 @@ export const TasksTab = ({
           label={t('recordingDetail.reextractTasks')}
           color={color}
           onPress={onExtract}
-          disabled={isConnected === false || !hasTranscript}
+          disabled={disableByNetwork || !hasTranscript}
           containerStyle={{ flex: 1, minWidth: 0 }}
         />
         <Button

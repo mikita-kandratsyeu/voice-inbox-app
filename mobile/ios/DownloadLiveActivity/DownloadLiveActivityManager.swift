@@ -8,16 +8,23 @@ final class DownloadLiveActivityManager {
 
     private var activity: Activity<DownloadAttributes>?
 
-  func start(modelId: String, title: String, label: String) throws {
+  func start(
+        modelId: String,
+        title: String,
+        label: String,
+        activityKindPrefix: String,
+        settingsDeeplinkPath: String
+    ) throws {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         guard activity == nil else { return }
 
-        let attributes = DownloadAttributes(id: "whisper-\(modelId)")
+        let attributes = DownloadAttributes(id: "\(activityKindPrefix)-\(modelId)")
         let state = DownloadAttributes.ContentState(
             modelId: modelId,
             progress: 0,
             title: title,
-            label: label
+            label: label,
+            settingsDeeplinkPath: settingsDeeplinkPath
         )
 
         let content = ActivityContent(state: state, staleDate: nil)
@@ -37,7 +44,8 @@ final class DownloadLiveActivityManager {
             modelId: currentState.modelId,
             progress: min(max(progress, 0), 1),
             title: title,
-            label: label
+            label: label,
+            settingsDeeplinkPath: currentState.settingsDeeplinkPath
         )
 
         let content = ActivityContent(state: state, staleDate: nil)

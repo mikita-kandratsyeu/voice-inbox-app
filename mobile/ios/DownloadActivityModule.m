@@ -6,6 +6,8 @@ RCT_EXTERN_METHOD(start:(NSString *)sessionId
                   modelId:(NSString *)modelId
                   title:(NSString *)title
                   label:(NSString *)label
+                  activityKindPrefix:(NSString *)activityKindPrefix
+                  settingsDeeplinkPath:(NSString *)settingsDeeplinkPath
                   resolver:(RCTPromiseResolveBlock)resolve
                   rejecter:(RCTPromiseRejectBlock)reject)
 

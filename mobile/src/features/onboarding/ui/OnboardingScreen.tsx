@@ -5,6 +5,7 @@ import {
   Mic,
   Settings,
   Shield,
+  Smartphone,
   Sparkles,
   UploadCloud,
   Zap,
@@ -69,6 +70,7 @@ const ICON_MAP = {
   Mic,
   Lock,
   Sparkles,
+  Smartphone,
   Zap,
   Settings,
   Shield,
@@ -766,6 +768,24 @@ const SlideItem = ({
             <Shield size={16} color={item.iconColor} strokeWidth={2} />
             <Text className="text-sm font-semibold" style={{ color: color.onboarding.ai.text }}>
               {t('onboarding.aiPrivacy')}
+            </Text>
+          </View>
+        )}
+
+        {item.extra === 'private-mode' && (
+          <View
+            className="flex-row items-center gap-2 rounded-full border px-4 py-2"
+            style={{
+              backgroundColor: item.iconBg,
+              borderColor: color.onboarding.privateSlide.chipBorder,
+            }}
+          >
+            <Smartphone size={16} color={item.iconColor} strokeWidth={2} />
+            <Text
+              className="text-sm font-semibold"
+              style={{ color: color.onboarding.privateSlide.chipText }}
+            >
+              {t('onboarding.privateModeBadge')}
             </Text>
           </View>
         )}

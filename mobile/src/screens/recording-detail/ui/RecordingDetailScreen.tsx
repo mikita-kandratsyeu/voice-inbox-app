@@ -25,7 +25,6 @@ import { NitroFS } from '@/shared/lib/fs';
 import { AudioPlayer, usePlaybackPosition } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
-import { AskAIModal } from './AskAIModal';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { RecordingDetailCard } from './RecordingDetailCard';
 import { RecordingDetailHeader } from './RecordingDetailHeader';
@@ -95,18 +94,21 @@ export const RecordingDetailScreen = () => {
     selectedWhisperModel,
     selectedWhisperModelFormat,
     globalTranscriptionLanguage,
+    aiExecutionMode,
+    setAiExecutionMode,
   } = useSettingsStore(
     useShallow((s) => ({
       whisperModelStatuses: s.whisperModelStatuses,
       selectedWhisperModel: s.selectedWhisperModel,
       selectedWhisperModelFormat: s.selectedWhisperModelFormat,
       globalTranscriptionLanguage: s.transcriptionLanguage,
+      aiExecutionMode: s.aiExecutionMode,
+      setAiExecutionMode: s.setAiExecutionMode,
     })),
   );
 
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
   const [mountedTabs, setMountedTabs] = useState<Set<Tab>>(new Set(['transcript']));
-  const [showAskAIModal, setShowAskAIModal] = useState(false);
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
   const { currentPositionMs, onPositionUpdate } = usePlaybackPosition();
   const [recordLanguage, setRecordLanguage] = useState<TranscriptionLanguage>(
@@ -136,7 +138,10 @@ export const RecordingDetailScreen = () => {
   }, [hydrateRecordDetails, recordId]);
 
   const { startTranscription, cancelTranscription } = useTranscription();
-  const { generateSummary, extractTasks } = useAiProcessing();
+  const { generateSummary, extractTasks, cancelAiGeneration } = useAiProcessing();
+  const handleCancelAiGeneration = useCallback(() => {
+    cancelAiGeneration(liveRecord.id);
+  }, [cancelAiGeneration, liveRecord.id]);
   const { shareRecord, shareAudio } = useShareRecord();
   const onDeleted = useCallback(() => navigation.goBack(), [navigation]);
   const { promptRename, promptDelete } = useRecordActions({ onDeleted });
@@ -242,10 +247,13 @@ export const RecordingDetailScreen = () => {
   const scrollPadding = isTablet ? 24 : 16;
   const contentMaxWidth = useTabletContentMaxWidth();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
+  const isPrivateMode = aiExecutionMode === 'private_experimental';
 
   const onBack = useCallback(() => navigation.goBack(), [navigation]);
   const onTogglePin = useCallback(() => togglePin(liveRecord.id), [liveRecord.id, togglePin]);
-  const onAskAI = useCallback(() => setShowAskAIModal(true), []);
+  const onAskAI = useCallback(() => {
+    navigation.navigate('RecordingAskAI', { record: liveRecord });
+  }, [navigation, liveRecord]);
   const onRename = useCallback(() => promptRename(liveRecord), [liveRecord, promptRename]);
   const onArchive = useCallback(() => archiveRecord(liveRecord.id), [liveRecord.id, archiveRecord]);
   const onUnarchive = useCallback(
@@ -266,8 +274,9 @@ export const RecordingDetailScreen = () => {
     setSummaryStatus(liveRecord.id, 'done');
     setTasksStatus(liveRecord.id, 'done');
   }, [liveRecord.id, setSummaryStatus, setTasksStatus]);
-
-  const onDismissAskAIModal = useCallback(() => setShowAskAIModal(false), []);
+  const handleSwitchToSmartMode = useCallback(() => {
+    setAiExecutionMode('smart_hybrid');
+  }, [setAiExecutionMode]);
 
   const onSelectTab = useCallback(
     (tab: Tab) => {
@@ -280,11 +289,19 @@ export const RecordingDetailScreen = () => {
     [activeTab],
   );
 
+  const shellBackgroundColor = isPrivateMode
+    ? color.background.primary
+    : color.background.secondary;
+  const tabPanelBackgroundColor = isPrivateMode
+    ? color.background.secondary
+    : color.background.card;
+
   return (
-    <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
+    <View className="flex-1" style={{ backgroundColor: shellBackgroundColor }}>
       <RecordingDetailHeader
         record={liveRecord}
         color={color}
+        isPrivateMode={isPrivateMode}
         onBack={onBack}
         onTogglePin={onTogglePin}
         onShare={handleShare}
@@ -296,17 +313,19 @@ export const RecordingDetailScreen = () => {
         onUnarchive={onUnarchive}
         onDelete={onDelete}
       />
-      <FolderPickerSheet
-        visible={folderPickerVisible}
-        title={t('folders.moveToFolderTitle')}
-        folders={folders}
-        currentFolderId={liveRecord.folderId ?? null}
-        onClose={onCloseFolderPicker}
-        onSelect={onDetailFolderPicked}
-      />
+      {!isPrivateMode && (
+        <FolderPickerSheet
+          visible={folderPickerVisible}
+          title={t('folders.moveToFolderTitle')}
+          folders={folders}
+          currentFolderId={liveRecord.folderId ?? null}
+          onClose={onCloseFolderPicker}
+          onSelect={onDetailFolderPicked}
+        />
+      )}
       <KeyboardAwareScrollView
         ref={scrollRef}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: shellBackgroundColor }}
         contentContainerStyle={{
           padding: scrollPadding,
           gap: 12,
@@ -322,6 +341,8 @@ export const RecordingDetailScreen = () => {
             record={liveRecord}
             color={color}
             folderPlacement={folderPlacement}
+            hideFolderPlacement={isPrivateMode}
+            surfaceBackgroundColor={tabPanelBackgroundColor}
           />
 
           <View className="overflow-hidden rounded-2xl">
@@ -330,6 +351,7 @@ export const RecordingDetailScreen = () => {
               color={color}
               audioPath={liveRecord.audioPath}
               onPositionChange={onPositionUpdate}
+              surfaceBackgroundColor={tabPanelBackgroundColor}
             />
           </View>
 
@@ -338,12 +360,13 @@ export const RecordingDetailScreen = () => {
               value={recordLanguage}
               color={color}
               onSelect={setRecordLanguage}
+              surfaceBackgroundColor={tabPanelBackgroundColor}
             />
           </View>
 
           <View
             className="overflow-hidden rounded-2xl"
-            style={{ backgroundColor: color.background.card }}
+            style={{ backgroundColor: tabPanelBackgroundColor }}
           >
             <RecordingDetailTabBar active={activeTab} onSelect={onSelectTab} color={color} />
             {mountedTabs.has('transcript') && (
@@ -354,6 +377,7 @@ export const RecordingDetailScreen = () => {
                   currentPositionMs={currentPositionMs}
                   onTranscribe={handleRetranscribe}
                   onCancelTranscription={handleCancelTranscription}
+                  isPrivateMode={isPrivateMode}
                 />
               </View>
             )}
@@ -363,10 +387,19 @@ export const RecordingDetailScreen = () => {
                   summary={liveRecord.summary ?? ''}
                   keyPhrases={liveRecord.keyPhrases}
                   status={liveRecord.summaryStatus ?? 'idle'}
+                  errorMessage={liveRecord.summaryError}
                   hasTranscript={Boolean(liveRecord.transcript)}
                   color={color}
                   onGenerate={handleGenerateSummary}
                   onDismissError={handleDismissSummaryError}
+                  showPrivateModeCta={aiExecutionMode === 'private_experimental'}
+                  onSwitchToSmartMode={handleSwitchToSmartMode}
+                  showProcessingCancel={isPrivateMode}
+                  onCancelProcessing={handleCancelAiGeneration}
+                  usePrivateProcessingPanel={isPrivateMode}
+                  privateAiBatchProgress={liveRecord.privateAiBatchProgress}
+                  privateAiBatchPhase={liveRecord.privateAiBatchPhase}
+                  privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
                 />
               </View>
             )}
@@ -376,6 +409,7 @@ export const RecordingDetailScreen = () => {
                   tasks={liveRecord.tasks ?? []}
                   nextSteps={liveRecord.nextSteps}
                   status={liveRecord.tasksStatus ?? 'idle'}
+                  errorMessage={liveRecord.tasksError}
                   hasTranscript={Boolean(liveRecord.transcript)}
                   recordTitle={liveRecord.title}
                   color={color}
@@ -384,6 +418,14 @@ export const RecordingDetailScreen = () => {
                   onAddManualTask={handleAddManualTask}
                   onDeleteTask={handleDeleteTask}
                   onDismissError={handleDismissSummaryError}
+                  showPrivateModeCta={aiExecutionMode === 'private_experimental'}
+                  onSwitchToSmartMode={handleSwitchToSmartMode}
+                  showProcessingCancel={isPrivateMode}
+                  onCancelProcessing={handleCancelAiGeneration}
+                  usePrivateProcessingPanel={isPrivateMode}
+                  privateAiBatchProgress={liveRecord.privateAiBatchProgress}
+                  privateAiBatchPhase={liveRecord.privateAiBatchPhase}
+                  privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
                 />
               </View>
             )}
@@ -393,12 +435,6 @@ export const RecordingDetailScreen = () => {
 
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </View>
-        <AskAIModal
-          visible={showAskAIModal}
-          record={liveRecord}
-          color={color}
-          onDismiss={onDismissAskAIModal}
-        />
       </KeyboardAwareScrollView>
     </View>
   );

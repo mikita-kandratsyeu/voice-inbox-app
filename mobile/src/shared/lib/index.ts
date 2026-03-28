@@ -56,6 +56,7 @@ export {
 export { isArray, isNumber, isRecord, isString, isStringArrayItem } from './type-guards';
 export { useAiModelName } from './useAiModelName';
 export { useAiTabBannerDismiss } from './useAiTabBannerDismiss';
+export { useIsSmallScreen } from './useIsSmallScreen';
 export { useIsTablet } from './useIsTablet';
 export { useScrollToTopOnTabPress } from './useScrollToTopOnTabPress';
 export { useTabletContentMaxWidth } from './useTabletContentMaxWidth';

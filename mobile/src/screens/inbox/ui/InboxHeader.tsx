@@ -3,10 +3,12 @@ import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Colors } from '@/shared/config';
+import { PrivateModeBadge } from '@/shared/ui';
 
 type InboxHeaderProps = {
   color: Colors;
   isLoaded: boolean;
+  isPrivateMode?: boolean;
   rightSlot?: React.ReactNode;
   subtitleText: string;
   title: string;
@@ -15,6 +17,7 @@ type InboxHeaderProps = {
 export const InboxHeader = ({
   color,
   isLoaded,
+  isPrivateMode = false,
   rightSlot,
   subtitleText,
   title,
@@ -34,9 +37,12 @@ export const InboxHeader = ({
     <View className="px-4 pb-3" style={headerStyle}>
       <View className="flex-row items-start justify-between gap-2">
         <View className="min-w-0 flex-1">
-          <Text className="text-2xl font-bold" style={titleStyle}>
-            {title}
-          </Text>
+          <View className="flex-row items-center gap-2">
+            <Text className="text-2xl font-bold" style={titleStyle}>
+              {title}
+            </Text>
+            {isPrivateMode && <PrivateModeBadge color={color} compact />}
+          </View>
           {isLoaded ? (
             <Text className="mt-1 text-sm" style={subtitleStyle}>
               {subtitleText}

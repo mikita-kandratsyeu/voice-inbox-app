@@ -37,8 +37,10 @@ export type VoiceRecord = {
   transcriptSegments?: TranscriptSegment[];
   summary?: string;
   summaryStatus?: RecordingStatus;
+  summaryError?: string;
   tasks?: TaskItem[];
   tasksStatus?: RecordingStatus;
+  tasksError?: string;
   duration: string;
   durationMs?: number;
   createdAt: string;
@@ -47,6 +49,9 @@ export type VoiceRecord = {
   aiStatus?: RecordingStatus;
   transcriptProgress?: number;
   transcriptProgressLabel?: string;
+  privateAiBatchProgress?: number;
+  privateAiBatchPhase?: 'loading_model' | 'processing';
+  privateAiBatchProgressLabel?: string;
   isPinned?: boolean;
   tags?: string[];
   classification?: RecordClassification;

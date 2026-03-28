@@ -1,5 +1,6 @@
 import {
   APP_STORE_URL,
+  EXPERIMENTAL_PRIVATE_AI_ENABLED,
   GOOGLE_PLAY_URL,
   WEB_API_URL,
   WEBSITE_URL,
@@ -21,7 +22,8 @@ type RemoteKey =
   | 'GOOGLE_PLAY_URL'
   | 'WEB_API_URL'
   | 'YANDEX_REWARDED_AD_UNIT_ID'
-  | 'YANDEX_BANNER_AD_UNIT_ID';
+  | 'YANDEX_BANNER_AD_UNIT_ID'
+  | 'EXPERIMENTAL_PRIVATE_AI_ENABLED';
 
 type RemoteConfigModule = ReturnType<typeof getRemoteConfig>;
 
@@ -32,7 +34,14 @@ export type RuntimeConfigSnapshot = {
   webApiUrl: string;
   yandexRewardedAdUnitId: string;
   yandexBannerAdUnitId: string;
+  experimentalPrivateAiEnabled: boolean;
 };
+
+function isTruthyEnvFlag(v: string | undefined): boolean {
+  const raw = (v ?? '').trim().toLowerCase();
+
+  return raw === '1' || raw === 'true' || raw === 'yes';
+}
 
 function buildEmbedded(): RuntimeConfigSnapshot {
   return {
@@ -42,6 +51,7 @@ function buildEmbedded(): RuntimeConfigSnapshot {
     webApiUrl: WEB_API_URL?.trim() ?? '',
     yandexRewardedAdUnitId: YANDEX_REWARDED_AD_UNIT_ID?.trim() ?? '',
     yandexBannerAdUnitId: YANDEX_BANNER_AD_UNIT_ID?.trim() ?? '',
+    experimentalPrivateAiEnabled: isTruthyEnvFlag(EXPERIMENTAL_PRIVATE_AI_ENABLED),
   };
 }
 
@@ -53,6 +63,7 @@ function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
     WEB_API_URL: s.webApiUrl,
     YANDEX_REWARDED_AD_UNIT_ID: s.yandexRewardedAdUnitId,
     YANDEX_BANNER_AD_UNIT_ID: s.yandexBannerAdUnitId,
+    EXPERIMENTAL_PRIVATE_AI_ENABLED: s.experimentalPrivateAiEnabled ? '1' : '0',
   };
 }
 
@@ -84,6 +95,24 @@ function readRemoteString(rc: RemoteConfigModule, key: RemoteKey, fallback: stri
   const v = getValue(rc, key).asString().trim();
 
   return v.length > 0 ? v : fallback;
+}
+
+function readRemoteBool(rc: RemoteConfigModule, key: RemoteKey, fallback: boolean): boolean {
+  const raw = getValue(rc, key).asString().trim().toLowerCase();
+
+  if (raw.length === 0) {
+    return fallback;
+  }
+
+  if (raw === '1' || raw === 'true' || raw === 'yes') {
+    return true;
+  }
+
+  if (raw === '0' || raw === 'false' || raw === 'no') {
+    return false;
+  }
+
+  return fallback;
 }
 
 const REMOTE_CONFIG_FETCH_TIMEOUT_MS = 15_000;
@@ -118,6 +147,11 @@ function mergeRemote(
       rc,
       'YANDEX_BANNER_AD_UNIT_ID',
       embedded.yandexBannerAdUnitId,
+    ),
+    experimentalPrivateAiEnabled: readRemoteBool(
+      rc,
+      'EXPERIMENTAL_PRIVATE_AI_ENABLED',
+      embedded.experimentalPrivateAiEnabled,
     ),
   };
 }
@@ -171,4 +205,8 @@ export function getYandexRewardedAdUnitId(): string {
 
 export function getYandexBannerAdUnitId(): string {
   return snapshot.yandexBannerAdUnitId;
+}
+
+export function getExperimentalPrivateAiEnabled(): boolean {
+  return snapshot.experimentalPrivateAiEnabled;
 }

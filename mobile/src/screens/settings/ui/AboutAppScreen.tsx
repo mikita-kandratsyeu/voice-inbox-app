@@ -7,13 +7,15 @@ import { Image, ScrollView, Text, useWindowDimensions, View } from 'react-native
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { SettingsStackParamList } from '@/app/navigation/types';
+import { useSettingsStore } from '@/entities/settings';
 import { getStoreListingUrl, openStoreListing } from '@/features/app-review';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useOnboardingStore } from '@/features/onboarding';
 import { getWebsiteUrl, useColors } from '@/shared/config';
-import { useTabletContentMaxWidth } from '@/shared/lib';
+import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 const VERSION_DISPLAY = DeviceInfoModule.version;
@@ -29,6 +31,10 @@ export const AboutAppScreen = () => {
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
+  const isTablet = useIsTablet();
+
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const isPrivateMode = aiExecutionMode === 'private_experimental';
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -45,7 +51,7 @@ export const AboutAppScreen = () => {
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 24,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
           }}
           showsVerticalScrollIndicator={false}
         >
@@ -93,12 +99,14 @@ export const AboutAppScreen = () => {
                 onPress={() => openInAppBrowser(getWebsiteUrl())}
               />
             )}
-            <SettingsRow
-              label={t('about.showOnboarding')}
-              leftIcon={<BookOpen size={18} color={color.icon.muted} strokeWidth={1.8} />}
-              onPress={() => setForceShowOnboarding(true)}
-              isLast
-            />
+            {!isPrivateMode && (
+              <SettingsRow
+                label={t('about.showOnboarding')}
+                leftIcon={<BookOpen size={18} color={color.icon.muted} strokeWidth={1.8} />}
+                onPress={() => setForceShowOnboarding(true)}
+                isLast
+              />
+            )}
           </SettingsSection>
           <View className="mb-6">
             <Text

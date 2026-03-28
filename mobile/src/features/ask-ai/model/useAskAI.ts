@@ -1,9 +1,9 @@
 import { useCallback, useRef, useState } from 'react';
 
 import type { VoiceRecord } from '@/entities/record';
-import { useSettingsStore } from '@/entities/settings';
-import { pollAskResult, postAskQuestion } from '@/shared/lib/ai-api';
+import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
+import { AIOrchestrator } from '@/shared/lib/ai-core';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 
 export type AskAIHistoryItem = { question: string; answer: string };
@@ -18,6 +18,17 @@ export type AskAIState = {
 
 export const useAskAI = () => {
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
+  const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
+  const localLlmModelStatuses = useSettingsStore((s) => s.localLlmModelStatuses);
+  const summaryStyle = useSettingsStore((s) => s.summaryStyle);
+  const taskStrictness = useSettingsStore((s) => s.taskStrictness);
+  const aiOutputLanguage = useSettingsStore((s) => s.aiOutputLanguage);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateCapabilityTier = useSettingsStore((s) => s.privateCapabilityTier);
+  const effectiveLocalAiModelId = selectedLocalAiModel ?? DEFAULT_LOCAL_AI_MODEL_ID;
+  const isLocalLlmModelDownloaded =
+    selectedLocalAiModel != null &&
+    (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
   const [state, setState] = useState<AskAIState>({
     isLoading: false,
     error: null,
@@ -43,27 +54,45 @@ export const useAskAI = () => {
         question: trimmedQuestion,
         answer: null,
       }));
-      void logAnalyticsEvent('ai_action_started', { action: 'ask' });
+      void logAnalyticsEvent('ai_action_started', {
+        action: 'ask',
+        mode: aiExecutionMode,
+        tier: privateCapabilityTier,
+      });
 
       try {
-        const postResult = await postAskQuestion({
-          id: requestId,
-          transcript: record.transcript,
-          question: trimmedQuestion,
-          model: selectedAIModel,
-          summary: record.summary ?? undefined,
-          tasks: record.tasks?.map((t) => ({ text: t.text })) ?? undefined,
-        });
+        const runResult = await AIOrchestrator.runAsk(
+          {
+            id: requestId,
+            transcript: record.transcript,
+            question: trimmedQuestion,
+            summary: record.summary ?? undefined,
+            tasks: record.tasks?.map((t) => ({ text: t.text })) ?? undefined,
+          },
+          {
+            selectedAIModel,
+            selectedLocalAiModel: effectiveLocalAiModelId,
+            isLocalLlmModelDownloaded,
+            summaryStyle,
+            taskStrictness,
+            aiOutputLanguage,
+            aiExecutionMode,
+            privateCapabilityTier,
+          },
+        );
 
-        if (!postResult.ok) {
-          const errorMsg =
-            'limitExceeded' in postResult && postResult.limitExceeded
-              ? getAiWeeklyLimitExceededMessage()
-              : postResult.error;
+        if (!runResult.ok) {
+          const errorMsg = runResult.limitExceeded
+            ? getAiWeeklyLimitExceededMessage()
+            : runResult.error;
           if (__DEV__)
-            console.warn('[AI] askQuestion: postAskQuestion failed', {
+            console.warn('[AI] askQuestion: runAsk failed', {
               recordId: record.id,
               error: errorMsg,
+              limitExceeded: runResult.limitExceeded,
+              provider: runResult.provider,
+              mode: runResult.mode,
+              tier: privateCapabilityTier,
             });
           setState((s) => ({
             ...s,
@@ -72,25 +101,11 @@ export const useAskAI = () => {
           }));
           void logAnalyticsEvent('ai_action_failed', {
             action: 'ask',
-            reason: 'limitExceeded' in postResult && postResult.limitExceeded ? 'limit' : 'post',
+            reason: runResult.limitExceeded ? 'limit' : 'run',
+            mode: runResult.mode,
+            provider: runResult.provider,
+            tier: privateCapabilityTier,
           });
-          return;
-        }
-
-        const pollResult = await pollAskResult(requestId, postResult.data.syncToken);
-
-        if (!pollResult.ok) {
-          if (__DEV__)
-            console.warn('[AI] askQuestion: pollAskResult failed', {
-              requestId,
-              error: pollResult.error,
-            });
-          setState((s) => ({
-            ...s,
-            isLoading: false,
-            error: pollResult.error,
-          }));
-          void logAnalyticsEvent('ai_action_failed', { action: 'ask', reason: 'poll' });
           return;
         }
 
@@ -98,9 +113,14 @@ export const useAskAI = () => {
           ...s,
           isLoading: false,
           error: null,
-          answer: pollResult.result.answer,
+          answer: runResult.result.answer,
         }));
-        void logAnalyticsEvent('ai_action_success', { action: 'ask' });
+        void logAnalyticsEvent('ai_action_success', {
+          action: 'ask',
+          mode: runResult.mode,
+          provider: runResult.provider,
+          tier: privateCapabilityTier,
+        });
       } catch (err: unknown) {
         if (__DEV__)
           console.warn('[AI] askQuestion: unexpected error', {
@@ -112,12 +132,26 @@ export const useAskAI = () => {
           isLoading: false,
           error: err instanceof Error ? err.message : 'Unknown error',
         }));
-        void logAnalyticsEvent('ai_action_failed', { action: 'ask', reason: 'exception' });
+        void logAnalyticsEvent('ai_action_failed', {
+          action: 'ask',
+          reason: 'exception',
+          mode: aiExecutionMode,
+          tier: privateCapabilityTier,
+        });
       } finally {
         inFlightRef.current = false;
       }
     },
-    [selectedAIModel],
+    [
+      selectedAIModel,
+      effectiveLocalAiModelId,
+      isLocalLlmModelDownloaded,
+      summaryStyle,
+      taskStrictness,
+      aiOutputLanguage,
+      aiExecutionMode,
+      privateCapabilityTier,
+    ],
   );
 
   const reset = useCallback(() => {

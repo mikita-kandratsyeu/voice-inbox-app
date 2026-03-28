@@ -6,9 +6,9 @@ These Terms of Service ("Terms") govern your use of the Voice Inbox AI mobile ap
 
 ## 1. Service Description
 
-Voice Inbox AI is an offline voice notes app that lets you record audio, transcribe it on-device using Whisper, and optionally use AI to generate summaries, extract tasks, and answer questions based on transcripts. The app may offer an optional **in-app support** form that sends your message and technical diagnostics to our servers so we can help you.
+Voice Inbox AI is an offline voice notes app that lets you record audio, transcribe it on-device using Whisper, and optionally use AI to generate summaries, extract tasks, and answer questions based on transcripts. The app may offer an optional **experimental on-device (private) AI mode** using a downloaded model, or **cloud AI** routed through our servers. The app may also offer an optional **in-app support** form that sends your message and technical diagnostics to our servers so we can help you.
 
-Transcription runs locally on your device. AI features require an internet connection and send transcript text to our servers, which forward it to third-party AI providers via the OpenRouter platform.
+Transcription runs locally on your device. **On-device AI** can run without sending transcript text to our servers for inference (an internet connection is still needed to download the model). **Cloud AI** requires an internet connection and sends transcript text to our servers, which forward it to third-party providers via the OpenRouter platform. Availability of each mode may depend on your device, OS, and app settings.
 
 ## 2. Acceptable Use
 
@@ -38,7 +38,7 @@ To the maximum extent permitted by law, we are not liable for any indirect, inci
 
 ## 7. Third-Party Services
 
-The app relies on third-party services (OpenRouter, OpenAI, Google, and others used via OpenRouter). Your use of those services is governed by their own terms and policies. We are not responsible for the actions or content of third parties.
+The app relies on third-party services. **Cloud AI** uses OpenRouter and underlying model providers (for example **Google / Gemini, MiniMax, and DeepSeek**). **On-device AI** may download model weights from public repositories (for example **Hugging Face**). Your use of those services is governed by their own terms and policies. We are not responsible for the actions or content of third parties.
 
 *As of the “Last updated” date above*, unless you have a paid entitlement that removes ads, **Yandex Mobile Ads** may be used to display a banner and optional rewarded ads. We may revise how advertising works with an updated policy (and any consent or controls required by law) if that changes.
 

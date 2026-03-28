@@ -19,6 +19,7 @@ type AudioPlayerProps = {
   color: Colors;
   audioPath?: string;
   onPositionChange?: (positionMs: number) => void;
+  surfaceBackgroundColor?: string;
 };
 
 const parseDuration = (d: string) => {
@@ -33,7 +34,13 @@ const parseDuration = (d: string) => {
 
 const player = AudioRecorderPlayer;
 
-export const AudioPlayer = ({ duration, color, audioPath, onPositionChange }: AudioPlayerProps) => {
+export const AudioPlayer = ({
+  duration,
+  color,
+  audioPath,
+  onPositionChange,
+  surfaceBackgroundColor,
+}: AudioPlayerProps) => {
   const { t } = useTranslation();
   const totalSeconds = parseDuration(duration);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -289,7 +296,7 @@ export const AudioPlayer = ({ duration, color, audioPath, onPositionChange }: Au
     <View
       className="gap-3 rounded-2xl"
       style={{
-        backgroundColor: color.background.card,
+        backgroundColor: surfaceBackgroundColor ?? color.background.card,
         padding: 16,
       }}
     >

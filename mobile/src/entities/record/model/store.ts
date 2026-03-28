@@ -94,6 +94,17 @@ type RecordStore = {
   ) => Promise<void>;
   setSummaryStatus: (id: string, status: RecordingStatus) => void;
   setTasksStatus: (id: string, status: RecordingStatus) => void;
+  setSummaryError: (id: string, error?: string) => void;
+  setTasksError: (id: string, error?: string) => void;
+  setPrivateAiBatchUi: (
+    id: string,
+    patch: {
+      privateAiBatchProgress?: number;
+      privateAiBatchPhase?: 'loading_model' | 'processing';
+      privateAiBatchProgressLabel?: string;
+    },
+  ) => void;
+  clearPrivateAiBatchUi: (id: string) => void;
   updateSummary: (id: string, summary: string) => Promise<void>;
   updateTasks: (id: string, tasks: TaskItem[]) => Promise<void>;
   updateTags: (id: string, tags: string[]) => Promise<void>;
@@ -267,17 +278,49 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     }));
   },
 
+  setSummaryError: (id, summaryError) => {
+    set((s) => ({
+      records: updateRecord(s.records, id, { summaryError }),
+    }));
+  },
+
+  setTasksError: (id, tasksError) => {
+    set((s) => ({
+      records: updateRecord(s.records, id, { tasksError }),
+    }));
+  },
+
+  setPrivateAiBatchUi: (id, patch) => {
+    set((s) => ({
+      records: updateRecord(s.records, id, patch),
+    }));
+  },
+
+  clearPrivateAiBatchUi: (id) => {
+    set((s) => ({
+      records: updateRecord(s.records, id, {
+        privateAiBatchProgress: undefined,
+        privateAiBatchPhase: undefined,
+        privateAiBatchProgressLabel: undefined,
+      }),
+    }));
+  },
+
   updateSummary: async (id, summary) => {
     await recordRepository.updateSummary(id, summary);
     set((s) => ({
-      records: updateRecord(s.records, id, { summary, summaryStatus: 'done' }),
+      records: updateRecord(s.records, id, {
+        summary,
+        summaryStatus: 'done',
+        summaryError: undefined,
+      }),
     }));
   },
 
   updateTasks: async (id, tasks) => {
     await recordRepository.updateTasks(id, tasks);
     set((s) => ({
-      records: updateRecord(s.records, id, { tasks, tasksStatus: 'done' }),
+      records: updateRecord(s.records, id, { tasks, tasksStatus: 'done', tasksError: undefined }),
     }));
   },
 

@@ -4,6 +4,7 @@ import { AppState, type AppStateStatus } from 'react-native';
 import { useRecordStore } from '@/entities/record';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { releaseWhisperContext } from '@/features/transcription';
+import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { ensurePushRegistered, notifyAppBackground, notifyAppForeground } from '@/shared/lib/push';
 
 const HEARTBEAT_INTERVAL_MS = 40_000;
@@ -58,9 +59,11 @@ export function useAppForegroundLifecycle(): void {
           lastForegroundAt = 0;
         }
         if (state === 'background') {
-          const isTranscribing = useRecordStore.getState().hasActiveAiJobs;
-          if (!isTranscribing) {
+          const hasHeavyWork = useRecordStore.getState().hasActiveAiJobs;
+
+          if (!hasHeavyWork) {
             releaseWhisperContext().catch(() => {});
+            releaseLocalLlmSession().catch(() => {});
           }
         }
       }
@@ -72,6 +75,7 @@ export function useAppForegroundLifecycle(): void {
       sub.remove();
       if (foregroundInterval) clearInterval(foregroundInterval);
       releaseWhisperContext().catch(() => {});
+      releaseLocalLlmSession().catch(() => {});
     };
   }, []);
 }

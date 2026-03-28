@@ -3,7 +3,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Mic } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { TouchableOpacity, View } from 'react-native';
+import { Alert, TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -13,6 +13,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { useRecordStore } from '@/entities/record';
+import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import { hapticLight } from '@/shared/lib';
 
 import type { RootStackParamList } from '../types';
@@ -34,6 +36,9 @@ export const CenterRecordButton = ({
   const scale = useSharedValue(1);
   const breath = useSharedValue(0);
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const activeTranscriptionRecord = useRecordStore((s) =>
+    s.records.find((r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing'),
+  );
 
   useEffect(() => {
     breath.value = withRepeat(
@@ -64,12 +69,31 @@ export const CenterRecordButton = ({
   });
 
   const handlePress = () => {
+    if (hasAnyActiveTranscriptionJob()) {
+      Alert.alert(
+        t('record.blockedByTranscriptionTitle'),
+        t('record.blockedByTranscriptionMessage'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('common.open'),
+            onPress: () => {
+              if (activeTranscriptionRecord) {
+                navigation.navigate('RecordingDetail', { record: activeTranscriptionRecord });
+              }
+            },
+          },
+        ],
+      );
+      return;
+    }
+
     hapticLight();
     navigation.navigate('RecordModal');
   };
 
   return (
-    <View className="flex-1 items-center justify-center">
+    <View className="min-h-[48px] shrink-0 self-stretch items-center justify-center">
       <Animated.View
         style={[
           {

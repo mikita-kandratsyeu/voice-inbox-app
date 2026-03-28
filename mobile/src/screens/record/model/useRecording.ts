@@ -126,21 +126,16 @@ export const useRecording = ({
       }
 
       const secs = Math.floor(ms / 1000);
-      const isBackground = IS_IOS && appStateRef.current === 'background';
-
       elapsedRef.current = secs;
       elapsedMsRef.current = ms;
 
-      if (!isBackground) {
-        setElapsed(secs);
-        setElapsedMs(ms);
-      } else {
-        const now = Date.now();
+      setElapsed(secs);
+      setElapsedMs(ms);
 
-        if (now - lastLiveActivityUpdateRef.current >= 1000) {
-          lastLiveActivityUpdateRef.current = now;
-          updateRecordingLiveActivity(secs).catch(() => {});
-        }
+      const now = Date.now();
+      if (IS_IOS && now - lastLiveActivityUpdateRef.current >= 1000) {
+        lastLiveActivityUpdateRef.current = now;
+        updateRecordingLiveActivity(secs).catch(() => {});
       }
 
       const hardCap = maxRecordingMsRef.current;

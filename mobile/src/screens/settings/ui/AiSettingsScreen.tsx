@@ -5,12 +5,13 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { useTabletContentMaxWidth } from '@/shared/lib';
+import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
 const SUMMARY_STYLES: SummaryStyle[] = ['brief', 'standard', 'detailed'];
@@ -86,6 +87,7 @@ export const AiSettingsScreen = () => {
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
+  const isTablet = useIsTablet();
 
   const summaryStyle = useSettingsStore((s) => s.summaryStyle);
   const setSummaryStyle = useSettingsStore((s) => s.setSummaryStyle);
@@ -109,7 +111,7 @@ export const AiSettingsScreen = () => {
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
           }}
           showsVerticalScrollIndicator={false}
         >

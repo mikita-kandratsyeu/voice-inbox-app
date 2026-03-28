@@ -1,5 +1,6 @@
 import type {
   AIModel,
+  LocalAiModelId,
   UserFacingAIModel,
   WhisperModel,
   WhisperModelId,
@@ -40,6 +41,58 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
 export const AI_MODELS: AIModel[] = USER_FACING_AI_MODELS.map(
   ({ tierLabelKey: _t, supportTierCode: _s, ...m }) => m,
 );
+
+export type LocalAiModelCatalogEntry = {
+  id: LocalAiModelId;
+  name: string;
+  provider: string;
+  descriptionKey: string;
+  speed: 'fast' | 'medium' | 'slow';
+  fileName: string;
+  sizeMb: number;
+  downloadUrl: string;
+};
+
+export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
+  {
+    id: 'local/qwen3-1.7b-q4_k_m',
+    name: 'Qwen3 1.7B',
+    provider: 'Qwen',
+    descriptionKey: 'aiModels.localQwen3Desc',
+    speed: 'fast',
+    fileName: 'Qwen3-1.7B-Q4_K_M.gguf',
+    sizeMb: 1200,
+    downloadUrl:
+      'https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf',
+  },
+  {
+    id: 'local/llama-3.2-1b-q4_k_m',
+    name: 'Llama 3.2 1B',
+    provider: 'Meta',
+    descriptionKey: 'aiModels.localLlama32_1bDesc',
+    speed: 'fast',
+    fileName: 'llama-3.2-1b.gguf',
+    sizeMb: 770,
+    downloadUrl:
+      'https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf',
+  },
+  {
+    id: 'local/gemma-2-2b-it-q4_k_m',
+    name: 'Gemma 2 2B',
+    provider: 'Google',
+    descriptionKey: 'aiModels.localGemma2Desc',
+    speed: 'medium',
+    fileName: 'gemma-2-2b-it-Q4_K_M.gguf',
+    sizeMb: 1600,
+    downloadUrl:
+      'https://huggingface.co/codegood/gemma-2b-it-Q4_K_M-GGUF/resolve/main/gemma-2b-it.Q4_K_M.gguf',
+  },
+];
+
+export const DEFAULT_LOCAL_AI_MODEL_ID: LocalAiModelId = 'local/qwen3-1.7b-q4_k_m';
+
+export const getLocalAiModelEntry = (id: LocalAiModelId): LocalAiModelCatalogEntry | undefined =>
+  LOCAL_AI_MODELS.find((m) => m.id === id);
 
 export const WHISPER_MODELS: WhisperModel[] = [
   {

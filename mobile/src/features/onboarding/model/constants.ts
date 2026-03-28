@@ -1,99 +1,148 @@
 import type { Colors } from '@/shared/config';
+import { getExperimentalPrivateAiEnabled } from '@/shared/config/runtimeConfig';
 
-const SLIDE_CONTENT = [
+type SlideDef = {
+  id: string;
+  titleKey: string;
+  descKey: string;
+  iconName: SlideIconName;
+  extra?: SlideExtra;
+};
+
+type SlideIconName =
+  | 'Mic'
+  | 'Lock'
+  | 'Sparkles'
+  | 'Smartphone'
+  | 'Zap'
+  | 'Settings'
+  | 'Shield'
+  | 'UploadCloud';
+
+type SlideExtra =
+  | 'dots'
+  | 'privacy'
+  | 'ai-features'
+  | 'private-mode'
+  | 'check'
+  | 'permissions'
+  | 'setup'
+  | 'setupWhisper'
+  | 'restore';
+
+const ONBOARDING_SLIDES_HEAD: SlideDef[] = [
   {
     id: 'record',
-    titleKey: 'onboarding.recordTitle' as const,
-    descKey: 'onboarding.recordDesc' as const,
-    iconName: 'Mic' as const,
-    extra: 'dots' as const,
+    titleKey: 'onboarding.recordTitle',
+    descKey: 'onboarding.recordDesc',
+    iconName: 'Mic',
+    extra: 'dots',
   },
   {
     id: 'transcribe',
-    titleKey: 'onboarding.transcribeTitle' as const,
-    descKey: 'onboarding.transcribeDesc' as const,
-    iconName: 'Lock' as const,
-    extra: 'privacy' as const,
+    titleKey: 'onboarding.transcribeTitle',
+    descKey: 'onboarding.transcribeDesc',
+    iconName: 'Lock',
+    extra: 'privacy',
   },
   {
     id: 'ai',
-    titleKey: 'onboarding.aiTitle' as const,
-    descKey: 'onboarding.aiDesc' as const,
-    iconName: 'Sparkles' as const,
-    extra: 'ai-features' as const,
-  },
-  {
-    id: 'ready',
-    titleKey: 'onboarding.readyTitle' as const,
-    descKey: 'onboarding.readyDesc' as const,
-    iconName: 'Zap' as const,
-    extra: 'check' as const,
-  },
-  {
-    id: 'permissions',
-    titleKey: 'permissions.onboardingTitle' as const,
-    descKey: 'permissions.onboardingDesc' as const,
-    iconName: 'Shield' as const,
-    extra: 'permissions' as const,
-  },
-  {
-    id: 'setup',
-    titleKey: 'onboarding.setupAiTitle' as const,
-    descKey: 'onboarding.setupAiDesc' as const,
-    iconName: 'Settings' as const,
-    extra: 'setup' as const,
-  },
-  {
-    id: 'setupWhisper',
-    titleKey: 'onboarding.setupWhisperTitle' as const,
-    descKey: 'onboarding.setupWhisperDesc' as const,
-    iconName: 'Settings' as const,
-    extra: 'setupWhisper' as const,
-  },
-  {
-    id: 'restore',
-    titleKey: 'onboarding.restoreTitle' as const,
-    descKey: 'onboarding.restoreDesc' as const,
-    iconName: 'UploadCloud' as const,
-    extra: 'restore' as const,
+    titleKey: 'onboarding.aiTitle',
+    descKey: 'onboarding.aiDesc',
+    iconName: 'Sparkles',
+    extra: 'ai-features',
   },
 ];
 
-const ICON_KEYS = {
+const ONBOARDING_SLIDE_PRIVATE: SlideDef = {
+  id: 'privateMode',
+  titleKey: 'onboarding.privateModeTitle',
+  descKey: 'onboarding.privateModeDesc',
+  iconName: 'Smartphone',
+  extra: 'private-mode',
+};
+
+const ONBOARDING_SLIDES_TAIL: SlideDef[] = [
+  {
+    id: 'ready',
+    titleKey: 'onboarding.readyTitle',
+    descKey: 'onboarding.readyDesc',
+    iconName: 'Zap',
+    extra: 'check',
+  },
+  {
+    id: 'permissions',
+    titleKey: 'permissions.onboardingTitle',
+    descKey: 'permissions.onboardingDesc',
+    iconName: 'Shield',
+    extra: 'permissions',
+  },
+  {
+    id: 'setup',
+    titleKey: 'onboarding.setupAiTitle',
+    descKey: 'onboarding.setupAiDesc',
+    iconName: 'Settings',
+    extra: 'setup',
+  },
+  {
+    id: 'setupWhisper',
+    titleKey: 'onboarding.setupWhisperTitle',
+    descKey: 'onboarding.setupWhisperDesc',
+    iconName: 'Settings',
+    extra: 'setupWhisper',
+  },
+  {
+    id: 'restore',
+    titleKey: 'onboarding.restoreTitle',
+    descKey: 'onboarding.restoreDesc',
+    iconName: 'UploadCloud',
+    extra: 'restore',
+  },
+];
+
+const ICON_KEYS: Record<SlideIconName, keyof Colors['onboarding']> = {
   Mic: 'mic',
   Lock: 'lock',
   Sparkles: 'sparkles',
+  Smartphone: 'privateSlide',
   Zap: 'zap',
   Settings: 'setup',
   Shield: 'shield',
   UploadCloud: 'restore',
-} as const;
+};
 
 export type OnboardingSlide = OnboardingSlideContent;
 export type OnboardingSlideContent = {
   id: string;
   titleKey: string;
   descKey: string;
-  iconName: 'Mic' | 'Lock' | 'Sparkles' | 'Zap' | 'Settings' | 'Shield' | 'UploadCloud';
+  iconName: SlideIconName;
   iconColor: string;
   iconBg: string;
-  extra?:
-    | 'dots'
-    | 'privacy'
-    | 'ai-features'
-    | 'check'
-    | 'permissions'
-    | 'setup'
-    | 'setupWhisper'
-    | 'restore';
+  extra?: SlideExtra;
 };
 
+function buildSlideDefs(): SlideDef[] {
+  if (getExperimentalPrivateAiEnabled()) {
+    return [...ONBOARDING_SLIDES_HEAD, ONBOARDING_SLIDE_PRIVATE, ...ONBOARDING_SLIDES_TAIL];
+  }
+  return [...ONBOARDING_SLIDES_HEAD, ...ONBOARDING_SLIDES_TAIL];
+}
+
 export const getOnboardingSlides = (colors: Colors): OnboardingSlideContent[] =>
-  SLIDE_CONTENT.map((slide) => {
-    const { color, bg } = colors.onboarding[ICON_KEYS[slide.iconName]];
+  buildSlideDefs().map((slide) => {
+    const key = ICON_KEYS[slide.iconName];
+    const tone = colors.onboarding[key];
+    if ('color' in tone && 'bg' in tone) {
+      return {
+        ...slide,
+        iconColor: tone.color,
+        iconBg: tone.bg,
+      };
+    }
     return {
       ...slide,
-      iconColor: color,
-      iconBg: bg,
+      iconColor: colors.accent.primary,
+      iconBg: colors.background.tertiary,
     };
   });

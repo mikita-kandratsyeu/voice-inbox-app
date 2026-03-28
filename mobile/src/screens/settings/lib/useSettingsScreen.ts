@@ -10,6 +10,8 @@ import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import {
   getWhisperModelVariantId,
+  LOCAL_AI_MODELS,
+  syncPrivateCapabilityTier,
   USER_FACING_AI_MODELS,
   useSettingsStore,
 } from '@/entities/settings';
@@ -50,6 +52,9 @@ export function useSettingsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
+  const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
+  const localLlmModelStatuses = useSettingsStore((s) => s.localLlmModelStatuses);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
@@ -169,11 +174,13 @@ export function useSettingsScreen() {
   }, []);
 
   useEffect(() => {
+    syncPrivateCapabilityTier();
     const timer = setTimeout(() => {
       refreshPermissions();
     }, 0);
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') {
+        syncPrivateCapabilityTier();
         refreshPermissions();
       }
     });
@@ -194,7 +201,20 @@ export function useSettingsScreen() {
   }, [fetchAiUsage, fetchProWeeklyLimit, refreshProEntitlement]);
 
   const userFacing = USER_FACING_AI_MODELS.find((m) => m.id === selectedAIModel);
-  const aiModelName = userFacing?.name ?? selectedAIModel;
+  const localModel =
+    selectedLocalAiModel != null
+      ? LOCAL_AI_MODELS.find((m) => m.id === selectedLocalAiModel)
+      : undefined;
+  const localLlmDownloaded =
+    selectedLocalAiModel != null &&
+    (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
+  const aiModelBaseName =
+    aiExecutionMode === 'private_experimental'
+      ? localLlmDownloaded
+        ? (localModel?.name ?? selectedLocalAiModel ?? '')
+        : t('settings.whisperModelNotSet')
+      : (userFacing?.name ?? selectedAIModel);
+  const isPrivateMode = aiExecutionMode === 'private_experimental';
   const whisperVariantId = getWhisperModelVariantId(
     selectedWhisperModel,
     selectedWhisperModelFormat,
@@ -205,6 +225,7 @@ export function useSettingsScreen() {
     whisperStatus === 'not_downloaded'
       ? t('settings.whisperModelNotSet')
       : getWhisperLabel(selectedWhisperModel);
+  const privateAiModeValue = t(`aiSettings.executionMode.${aiExecutionMode}`);
 
   const handleExport = useCallback(async () => {
     try {
@@ -375,13 +396,15 @@ export function useSettingsScreen() {
     claim,
     claimLoading,
     claimError,
+    isPrivateMode,
     automationLocked,
     autoTranscribeOnSave,
     setAutoTranscribeOnSave,
     autoAiAfterTranscription,
     setAutoAiAfterTranscription,
     setAutomationSheet,
-    aiModelName,
+    aiModelName: aiModelBaseName,
+    privateAiModeValue,
     transcriptionValue,
     embeddingAvailable: isEmbeddingAvailable(),
     isUpdatingEmbeddings,

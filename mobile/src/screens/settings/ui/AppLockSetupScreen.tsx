@@ -5,11 +5,12 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { useAppLockStore } from '@/entities/app-lock';
 import { PIN_LENGTH_OPTIONS } from '@/entities/app-lock';
 import { PinInput } from '@/features/app-lock/ui/PinInput';
 import { useColors } from '@/shared/config';
-import { useTabletContentMaxWidth } from '@/shared/lib';
+import { useIsSmallScreen, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 type SetupStep = 'confirm' | 'initial';
@@ -20,6 +21,9 @@ export const AppLockSetupScreen = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const contentMaxWidth = useTabletContentMaxWidth();
+  const isTablet = useIsTablet();
+  const { isSmallScreen } = useIsSmallScreen();
+
   const [step, setStep] = useState<SetupStep>('initial');
   const [initialPin, setInitialPin] = useState('');
   const [pin, setPin] = useState('');
@@ -145,13 +149,18 @@ export const AppLockSetupScreen = () => {
         {!isEnabled ? (
           <View
             className="flex-1 justify-center px-6"
-            style={{ paddingTop: 24, paddingBottom: insets.bottom + 24 }}
+            style={{
+              paddingTop: 24,
+              paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet) + 24,
+            }}
           >
-            <Text className="mb-6 text-center text-[16px]" style={{ color: color.text.secondary }}>
-              {t('appLock.setPinPrompt', { digits: pinLength })}
-            </Text>
-
             <View className="mb-6 min-h-[52px] justify-center">
+              <Text
+                className="mb-6 text-center text-[16px]"
+                style={{ color: color.text.secondary }}
+              >
+                {isSmallScreen ? '' : t('appLock.setPinPrompt')}
+              </Text>
               {biometryType && (
                 <View
                   className="flex-row items-center justify-between rounded-2xl px-4 py-3.5"
@@ -248,7 +257,7 @@ export const AppLockSetupScreen = () => {
             style={{
               paddingHorizontal: 16,
               paddingTop: 12,
-              paddingBottom: insets.bottom + 24,
+              paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
             }}
           >
             <SettingsSection title={t('appLock.settings')}>

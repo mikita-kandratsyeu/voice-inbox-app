@@ -9058,6 +9058,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"llama.rn@npm:^0.12.0-rc.2":
+  version: 0.12.0-rc.2
+  resolution: "llama.rn@npm:0.12.0-rc.2"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: 10c0/18e130e8872d777fb61d235a0f1037eed8dbf04fd29d723fe1de85904b095671e7384a7d9d3a4af10a2db839b23c53e1c29bd2f62437437ceeaafee8bc2d0e3b
+  languageName: node
+  linkType: hard
+
 "locate-path@npm:^3.0.0":
   version: 3.0.0
   resolution: "locate-path@npm:3.0.0"
@@ -13120,6 +13130,7 @@ __metadata:
     i18next: "npm:^25.8.17"
     jest: "npm:^29.6.3"
     lint-staged: "npm:^15.5.0"
+    llama.rn: "npm:^0.12.0-rc.2"
     lucide-react-native: "npm:^0.577.0"
     nativewind: "npm:^4.2.3"
     patch-package: "npm:^8.0.1"

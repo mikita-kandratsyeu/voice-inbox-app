@@ -24,6 +24,7 @@
     "biometrics": "Biometrics",
     "pro": "Pro",
     "goBack": "Back",
+    "open": "Open",
     "moreActions": "More actions"
   },
   "proLicense": {
@@ -114,7 +115,15 @@
     "openNote": "Open note"
   },
   "ai": {
-    "limitWeeklyExceeded": "You’ve used this week’s generation limit. It resets on the date shown in Settings — or watch a short ad there for a small bonus."
+    "limitWeeklyExceeded": "You’ve used this week’s generation limit. It resets on the date shown in Settings — or watch a short ad there for a small bonus.",
+    "privateModeUnavailable": "Private mode is not available on this device yet.",
+    "privateModeModelNotDownloaded": "Download the selected GGUF model in Settings before using Private mode.",
+    "privateModeLimitedTooLong": "This note is too long for Private mode. Switch to Smart mode.",
+    "privateModeParseFailed": "The local model could not produce a valid response. Try again or switch to Smart mode.",
+    "privateModeEmptyAnswer": "The local model returned an empty answer. Try again or switch to Smart mode.",
+    "privateModeUnsupportedLocale": "The local model does not support the current language or locale for this request. Try English in AI settings or switch to Smart mode.",
+    "privateModeTooLongForLocal": "This text is too long for the local model. Shorten the note or switch to Smart mode.",
+    "privateModeGenericError": "The local request failed. Try again or switch to Smart mode."
   },
   "search": {
     "a11yOpen": "Open search",
@@ -157,6 +166,8 @@
     "saveModalTitle": "Save recording",
     "duration": "Duration: {{time}}",
     "offlineHint": "Offline-transcription on device",
+    "blockedByTranscriptionTitle": "Wait for transcription to finish",
+    "blockedByTranscriptionMessage": "You can't start a new recording while transcription is running.",
     "startFailedTitle": "Recording failed",
     "startFailedMessage": "Could not start recording. Check microphone permissions and ensure no other apps are using the microphone.",
     "continueRecording": "Continue",
@@ -224,6 +235,8 @@
     "askPlaceholder": "Ask a question about this note...",
     "askEmptyTitle": "Ask about your note",
     "askEmptyDesc": "Get answers about the transcript using AI.",
+    "askSuggestedSection": "Quick prompts",
+    "askOfflineNetworkHint": "You're offline. Connect to use Ask AI in Smart mode.",
     "askSuggested1": "What is this note about?",
     "askSuggested2": "Summarize briefly",
     "askSuggested3": "What are the key takeaways?",
@@ -235,6 +248,7 @@
     "askProcessing": "Answering...",
     "askError": "Failed to get answer",
     "askErrorContinueHint": "Close to view summary and tasks.",
+    "privateModeErrorHint": "This error is related to Private mode. You can switch to Smart mode and retry.",
     "askAnother": "Ask another question",
     "askCopy": "Copy answer",
     "askShare": "Share answer",
@@ -330,6 +344,7 @@
     "importing": "Importing...",
     "automation": "Automation",
     "aiProcessing": "Generations",
+    "privateAiMode": "AI mode",
     "aiModel": "Generation model",
     "aiSettings": "AI settings",
     "transcription": "Transcription",
@@ -378,6 +393,7 @@
       "comparePlansCta": "Compare plans",
       "soonBadge": "Coming soon",
       "availableBadge": "Available",
+      "privateBadge": "Private",
       "proTitle": "Pro",
       "proValueSubtitle": "Higher generation limits, folder auto-organization, and no ads.",
       "proActiveUntil": "Active until {{date}}",
@@ -500,7 +516,7 @@
       "Iris": "Iris",
       "OpticID": "Optic ID"
     },
-    "setPinPrompt": "Set a {{digits}}-digit PIN to protect the app",
+    "setPinPrompt": "Set a PIN to protect the app",
     "confirmPin": "Confirm {{digits}}-digit PIN",
     "pinLengthTitle": "PIN length",
     "pinLengthOption": "{{digits}} digits"
@@ -532,6 +548,8 @@
     "loading": "Loading...",
     "used": "Used",
     "whisperModels": "Whisper models",
+    "transcriptionModels": "Transcription (Whisper)",
+    "localGenerationModels": "On-device AI (generation)",
     "cacheLabel": "Cache",
     "audioFilesValue": "{{count}} files · {{size}} MB",
     "mb": "MB",
@@ -599,6 +617,14 @@
   "aiSettings": {
     "title": "AI settings",
     "description": "Customize how AI processes your transcripts. Changes apply to the next processing.",
+    "executionMode": "Execution mode",
+    "executionMode.smart_hybrid": "Smart",
+    "executionMode.private_experimental": "Private",
+    "privateCapabilityTier": {
+      "full": "Your device is ready for the Private experimental mode.",
+      "limited": "Limited Private mode is available: length and speed limits may apply.",
+      "unavailable": "Local LLM is not available on this device yet. You can use Smart mode."
+    },
     "summaryStyle": "Summary style",
     "summaryStyle.brief": "Brief (1–2 sentences)",
     "summaryStyle.standard": "Standard (2–4 sentences)",
@@ -612,9 +638,17 @@
     "outputLanguage.ru": "Always Russian",
     "outputLanguage.en": "Always English"
   },
+  "privateAiMode": {
+    "title": "Private vs Smart",
+    "description": "Private mode runs AI only on this device — summaries and tasks stay on your phone and aren't sent to our servers. Smart mode uses the cloud for extra features and is usually faster.",
+    "enableAlertTitle": "Turn on Private mode?",
+    "enableAlertMessage": "Maximum privacy.\n\nAll data, including transcripts, is processed only on this device.\n\nWhat to expect:\n• May run more slowly\n• Higher battery use\n• Some features aren't available\n\nYou can switch back to Smart mode anytime."
+  },
   "aiModels": {
     "title": "Generation model",
     "description": "Pick a speed, accuracy, or best quality.",
+    "privateDescription": "Private mode uses local on-device models. Cloud models are disabled in this mode.",
+    "privateModeLabel": "On-device",
     "tierFast": "Fast",
     "tierSmart": "Smarter",
     "tierPremium": "Maximum",
@@ -626,6 +660,16 @@
     "metaLlamaDesc": "Open-source model with strong reasoning and instruction following",
     "deepSeekDesc": "Efficient model with strong reasoning.",
     "minimaxDesc": "Best quality for complex summaries and important notes.",
+    "localQwen3Desc": "Good default on most devices.",
+    "localGemma2Desc": "Strong instruction following. Slightly larger download.",
+    "localLlama32_1bDesc": "Smaller download—handy when storage is tight.",
+    "notDownloadedSuffix": "not downloaded",
+    "downloadLocalTitle": "Download model",
+    "downloadLocalMessage": "Download about {{size}} MB over the network? The file is stored only on this device.",
+    "deleteLocalTitle": "Remove model",
+    "deleteLocalMessage": "Delete {{name}} from this device? You can download it again later.",
+    "downloadingPercent": "{{percent}}% complete",
+    "localDownloadError": "Download failed. Check your connection and try again.",
     "mistralDesc": "Compact Mistral model. Balanced speed and quality for summaries and tasks.",
     "speed": {
       "fast": "Fast",
@@ -643,6 +687,9 @@
     "transcribeDesc": "Voice-to-text conversion happens locally on your device. No servers, full privacy.",
     "aiTitle": "Smart generation",
     "aiDesc": "Structure your recordings automatically when needed. Voice is processed locally, text is sent over an encrypted channel and never stored.",
+    "privateModeTitle": "Private mode",
+    "privateModeDesc": "In Settings you can switch to Private mode so summaries and tasks run only on this device — nothing goes to our servers.",
+    "privateModeBadge": "Can turn on later",
     "readyTitle": "Almost all set",
     "readyDesc": "Start recording your thoughts right now. Always at hand for your ideas.",
     "setupTitle": "Setup",
@@ -707,6 +754,8 @@
     "phaseAnalyzing": "Reading duration — large files can take a while.",
     "maxDurationTitle": "File too long",
     "maxDurationMessage": "Recording must be no longer than {{ max }} minutes.",
+    "durationUnknownTitle": "Could not read duration",
+    "durationUnknownMessage": "The app could not read this file's length, so the {{ max }}-minute limit cannot be verified. Try WAV, M4A, or MP3, or re-export the file.",
     "importError": "Could not add the audio file. Try another format (e.g. WAV, M4A, MP3).",
     "conversionError": "Could not convert the audio file. Try a different file or format."
   },
@@ -794,6 +843,13 @@
     "meeting": "Meeting",
     "idea": "Idea",
     "other": "Other"
+  },
+  "privateAi": {
+    "loadingModel": "Loading AI model…",
+    "processing": "AI is working on this note…",
+    "secondsLeft": "~{{ count }} sec left",
+    "minutesLeft": "~{{ count }} min left",
+    "batteryHint": "On-device AI runs only while the app is open. Battery usage may increase."
   },
   "transcription": {
     "progress": "Processed {{ current }} of {{ total }} segments...",

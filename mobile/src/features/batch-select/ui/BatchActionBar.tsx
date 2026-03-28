@@ -2,9 +2,11 @@ import { Archive, ArchiveRestore, FolderInput, Share2, Trash2, X } from 'lucide-
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { Colors } from '@/shared/config';
-import { hapticLight, hapticMedium } from '@/shared/lib';
+import { hapticLight, hapticMedium, useIsTablet } from '@/shared/lib';
 
 type BatchActionBarProps = {
   count: number;
@@ -15,6 +17,7 @@ type BatchActionBarProps = {
   onDelete: () => void;
   onExport: () => void;
   onMoveToFolder: () => void;
+  hideMoveToFolder?: boolean;
   onCancel: () => void;
 };
 
@@ -63,10 +66,13 @@ export const BatchActionBar = ({
   onDelete,
   onExport,
   onMoveToFolder,
+  hideMoveToFolder = false,
   onCancel,
 }: BatchActionBarProps) => {
   const { t } = useTranslation();
   const slideAnim = useRef(new Animated.Value(120)).current;
+  const insets = useSafeAreaInsets();
+  const isTablet = useIsTablet();
 
   useEffect(() => {
     Animated.spring(slideAnim, {
@@ -116,7 +122,7 @@ export const BatchActionBar = ({
         backgroundColor: color.background.primary,
         borderTopWidth: 1,
         borderTopColor: color.border.default,
-        paddingBottom: 20,
+        paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet) + 8,
         paddingTop: 20,
         paddingHorizontal: 20,
         shadowColor: '#000',
@@ -154,13 +160,15 @@ export const BatchActionBar = ({
           }}
           style={{ flexGrow: 0, maxWidth: '82%' }}
         >
-          <ActionButton
-            icon={(c) => <FolderInput size={20} strokeWidth={2} color={c} />}
-            label={t('batch.moveToFolder')}
-            onPress={handleMoveToFolder}
-            disabled={disabled}
-            color={color}
-          />
+          {!hideMoveToFolder && (
+            <ActionButton
+              icon={(c) => <FolderInput size={20} strokeWidth={2} color={c} />}
+              label={t('batch.moveToFolder')}
+              onPress={handleMoveToFolder}
+              disabled={disabled}
+              color={color}
+            />
+          )}
           <ActionButton
             icon={(c) => <Share2 size={20} strokeWidth={2} color={c} />}
             label={t('batch.export')}

@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
 import DocumentPicker from 'react-native-document-picker';
@@ -31,8 +31,12 @@ export function useImportAudioFile() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const addRecord = useRecordStore((s) => s.addRecord);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const { isProActive } = useProEntitlement();
-  const maxImportMs = getMaxRecordingMsForTier(isProActive);
+  const maxImportMs = useMemo(
+    () => getMaxRecordingMsForTier(isProActive, aiExecutionMode),
+    [isProActive, aiExecutionMode],
+  );
   const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(autoTranscribeOnSave, isProActive);
   const { startTranscription } = useTranscription();
   const [isImporting, setIsImporting] = useState(false);
@@ -126,17 +130,30 @@ export function useImportAudioFile() {
         }
       }
       if (durationMs == null || durationMs <= 0) {
-        durationMs = maxImportMs;
-        if (__DEV__) {
-          console.warn('[importAudioFile] Could not get duration, using max');
+        hapticError();
+        const maxMinutes = Math.round(maxImportMs / (60 * 1000));
+        Alert.alert(
+          t('importAudio.durationUnknownTitle'),
+          t('importAudio.durationUnknownMessage', { max: maxMinutes }),
+          [{ text: t('common.ok') }],
+        );
+        try {
+          await NitroFS.unlink(destPath);
+        } catch {
+          if (__DEV__) {
+            console.warn('[importAudioFile] Could not delete file after unknown duration');
+          }
         }
+        return;
       }
 
       if (durationMs > maxImportMs) {
         hapticError();
         Alert.alert(
           t('importAudio.maxDurationTitle'),
-          t('importAudio.maxDurationMessage', { max: maxImportMs / (60 * 1000) }),
+          t('importAudio.maxDurationMessage', {
+            max: Math.round(maxImportMs / (60 * 1000)),
+          }),
           [{ text: t('common.ok') }],
         );
         try {

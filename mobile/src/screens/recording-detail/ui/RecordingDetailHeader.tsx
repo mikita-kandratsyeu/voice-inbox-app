@@ -8,11 +8,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { VoiceRecord } from '@/entities/record';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { Button } from '@/shared/ui';
+import { Button, PrivateModeBadge } from '@/shared/ui';
 
 type RecordingDetailHeaderProps = {
   record: VoiceRecord;
   color: Colors;
+  isPrivateMode?: boolean;
   onBack: () => void;
   onTogglePin: () => void;
   onShare: () => void;
@@ -28,6 +29,7 @@ type RecordingDetailHeaderProps = {
 export const RecordingDetailHeader = ({
   record,
   color,
+  isPrivateMode = false,
   onBack,
   onTogglePin,
   onShare,
@@ -45,23 +47,29 @@ export const RecordingDetailHeader = ({
   const isDark = theme === 'dark';
   const iconBtnBg = { backgroundColor: color.background.tertiary };
   const pinActiveStyle = { backgroundColor: color.accent.primary + '1A' };
+  const headerBackgroundColor = isPrivateMode
+    ? color.background.primary
+    : color.background.secondary;
 
   return (
     <View
       className="flex-row items-center justify-between px-4 pb-3"
-      style={{ backgroundColor: color.background.secondary, paddingTop: insets.top + 12 }}
+      style={{ backgroundColor: headerBackgroundColor, paddingTop: insets.top + 12 }}
     >
-      <Button
-        iconOnly
-        variant="icon"
-        size="md"
-        icon={<ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />}
-        color={color}
-        onPress={onBack}
-        activeOpacity={0.7}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        accessibilityLabel={t('common.goBack')}
-      />
+      <View className="flex-row items-center gap-2">
+        <Button
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<ChevronLeft size={22} color={color.text.primary} strokeWidth={2.2} />}
+          color={color}
+          onPress={onBack}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel={t('common.goBack')}
+        />
+        {isPrivateMode && <PrivateModeBadge color={color} compact />}
+      </View>
       <View className="flex-row items-center gap-2">
         <Button
           iconOnly
@@ -93,17 +101,19 @@ export const RecordingDetailHeader = ({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityLabel={t('share.shareNote')}
         />
-        <Button
-          iconOnly
-          variant="icon"
-          size="md"
-          icon={<MessageSquare size={18} color={color.text.primary} strokeWidth={2.2} />}
-          color={color}
-          onPress={onAskAI}
-          activeOpacity={0.7}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel={t('recordingDetail.askButton')}
-        />
+        {!isPrivateMode && (
+          <Button
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={<MessageSquare size={18} color={color.text.primary} strokeWidth={2.2} />}
+            color={color}
+            onPress={onAskAI}
+            activeOpacity={0.7}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            accessibilityLabel={t('recordingDetail.askButton')}
+          />
+        )}
         <MenuView
           key={theme}
           title=""
@@ -125,13 +135,17 @@ export const RecordingDetailHeader = ({
               imageColor: color.text.primary,
               titleColor: color.text.primary,
             },
-            {
-              id: 'moveToFolder',
-              title: t('folders.moveToFolderMenu'),
-              image: 'folder',
-              imageColor: color.text.primary,
-              titleColor: color.text.primary,
-            },
+            ...(!isPrivateMode
+              ? [
+                  {
+                    id: 'moveToFolder' as const,
+                    title: t('folders.moveToFolderMenu'),
+                    image: 'folder' as const,
+                    imageColor: color.text.primary,
+                    titleColor: color.text.primary,
+                  },
+                ]
+              : []),
             ...(record.audioPath
               ? [
                   {
