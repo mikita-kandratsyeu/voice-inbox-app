@@ -6,11 +6,12 @@ import { ActivityIndicator, Text, useWindowDimensions, View } from 'react-native
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { SupportForm, useSupportForm } from '@/features/tech-support';
 import { useColors } from '@/shared/config';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
-import { useTabletContentMaxWidth } from '@/shared/lib';
+import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { Button, ScreenHeader } from '@/shared/ui';
 
 export const SupportScreen = () => {
@@ -18,6 +19,7 @@ export const SupportScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const color = useColors();
+  const isTablet = useIsTablet();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
@@ -60,7 +62,7 @@ export const SupportScreen = () => {
           contentContainerStyle={{
             paddingHorizontal: 16,
             paddingTop: 12,
-            paddingBottom: insets.bottom + 16,
+            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
           }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}

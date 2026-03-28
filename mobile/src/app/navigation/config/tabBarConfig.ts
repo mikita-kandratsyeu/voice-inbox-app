@@ -7,7 +7,7 @@ export const FLOAT_TAB_HORIZONTAL_INSET = 28;
 /** Fixed width of the floating pill on tablet (centered). */
 export const FLOAT_TAB_MAX_WIDTH_TABLET = 480;
 /** Gap between home indicator / screen bottom and the tab bar. */
-export const FLOAT_TAB_BOTTOM_GAP = 4;
+export const FLOAT_TAB_BOTTOM_GAP = 10;
 /** Inner vertical padding inside the pill (top / bottom). */
 export const FLOAT_TAB_INNER_PAD_VERTICAL = 11;
 export const FLOAT_TAB_BAR_HEIGHT_PHONE = 72;

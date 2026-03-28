@@ -516,7 +516,7 @@
       "Iris": "Радужная оболочка",
       "OpticID": "Optic ID"
     },
-    "setPinPrompt": "Установите {{digits}}-значный PIN-код для защиты приложения",
+    "setPinPrompt": "Установите PIN-код для защиты приложения",
     "confirmPin": "Подтвердите {{digits}}-значный PIN-код",
     "pinLengthTitle": "Длина PIN-кода",
     "pinLengthOption": "{{digits}}-значный"
