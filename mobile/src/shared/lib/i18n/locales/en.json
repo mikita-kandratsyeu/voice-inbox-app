@@ -846,7 +846,7 @@
   },
   "privateAi": {
     "loadingModel": "Loading on-device AI model…",
-    "processing": "On-device AI is working on this note…",
+    "processing": "AI is working on this note…",
     "secondsLeft": "~{{ count }} sec left",
     "minutesLeft": "~{{ count }} min left",
     "batteryHint": "On-device AI runs only while the app is open. Battery usage may increase."
