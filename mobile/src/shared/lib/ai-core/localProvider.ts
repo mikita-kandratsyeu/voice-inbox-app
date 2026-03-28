@@ -17,7 +17,7 @@ import {
   getLocalReferenceDateIsoLocal,
   prepareTranscriptForLocalLlm,
 } from './local-provider/localAiTranscript';
-import { completeLocalChat } from './localLlmSession';
+import { completeLocalChat, type LocalLlmCompletionIntent } from './localLlmSession';
 import type {
   AiExecutionContext,
   AskRequest,
@@ -51,7 +51,11 @@ export {
 async function generateWithLocalLlm(
   modelId: AiExecutionContext['selectedLocalAiModel'],
   messages: { role: 'system' | 'user'; content: string }[],
-  options?: { maxTokens?: number; temperature?: number },
+  options?: {
+    maxTokens?: number;
+    temperature?: number;
+    intent?: LocalLlmCompletionIntent;
+  },
 ): Promise<string> {
   return completeLocalChat(
     modelId,
@@ -59,6 +63,7 @@ async function generateWithLocalLlm(
     {
       maxTokens: options?.maxTokens ?? 512,
       temperature: options?.temperature ?? 0.2,
+      intent: options?.intent ?? 'chat',
     },
   );
 }
@@ -84,7 +89,11 @@ export async function runLocalSummaryTasks(
           { role: 'system', content: system },
           { role: 'user', content: userContent },
         ],
-        { maxTokens: LOCAL_GEN_SUMMARY.maxTokens, temperature: LOCAL_GEN_SUMMARY.temperature },
+        {
+          maxTokens: LOCAL_GEN_SUMMARY.maxTokens,
+          temperature: LOCAL_GEN_SUMMARY.temperature,
+          intent: 'json',
+        },
       );
 
     let raw = await runOnce(systemPrompt);
@@ -136,7 +145,11 @@ export async function runLocalAsk(
           { role: 'system', content: system },
           { role: 'user', content: userContent },
         ],
-        { maxTokens: LOCAL_GEN_ASK.maxTokens, temperature: LOCAL_GEN_ASK.temperature },
+        {
+          maxTokens: LOCAL_GEN_ASK.maxTokens,
+          temperature: LOCAL_GEN_ASK.temperature,
+          intent: 'json',
+        },
       );
 
     let raw = await runOnce(askSystemPrompt);
