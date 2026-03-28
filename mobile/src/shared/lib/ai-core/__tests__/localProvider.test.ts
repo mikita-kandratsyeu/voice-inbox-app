@@ -20,7 +20,7 @@ import {
   sanitizeTasks,
   truncateTranscriptSmart,
 } from '../localProvider';
-import type { AiExecutionContext, AskRequest, SummaryTaskRequest } from '../types';
+import type { AiExecutionContext, AskRequest } from '../types';
 
 jest.mock('../localLlmSession', () => ({
   completeLocalChat: jest.fn(),

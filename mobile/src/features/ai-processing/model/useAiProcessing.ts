@@ -342,7 +342,6 @@ export const useAiProcessing = () => {
       summaryStyle,
       taskStrictness,
       aiOutputLanguage,
-      aiExecutionMode,
       privateCapabilityTier,
       applyCancelledUiState,
       setPrivateAiBatchUi,

@@ -1,4 +1,4 @@
-import { Cloud, WifiOff } from 'lucide-react-native';
+import { WifiOff } from 'lucide-react-native';
 import React from 'react';
 
 import { useColors } from '@/shared/config';
