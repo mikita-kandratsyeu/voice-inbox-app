@@ -845,7 +845,7 @@
     "other": "Другое"
   },
   "privateAi": {
-    "loadingModel": "Загрузка локальной модели ИИ…",
+    "loadingModel": "Загрузка модели ИИ…",
     "processing": "ИИ обрабатывает заметку…",
     "secondsLeft": "~{{ count }} сек осталось",
     "minutesLeft": "~{{ count }} мин осталось",

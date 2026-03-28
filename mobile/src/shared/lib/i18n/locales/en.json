@@ -845,7 +845,7 @@
     "other": "Other"
   },
   "privateAi": {
-    "loadingModel": "Loading on-device AI model…",
+    "loadingModel": "Loading AI model…",
     "processing": "AI is working on this note…",
     "secondsLeft": "~{{ count }} sec left",
     "minutesLeft": "~{{ count }} min left",
