@@ -20,22 +20,28 @@ struct DownloadLiveActivityView: View {
 
     var body: some View {
         Link(destination: DownloadDeeplink.settingsUrl) {
-            HStack {
-                leftIcon
+            HStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(context.state.label)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(primaryTextColor)
+                        .lineLimit(1)
 
-                Spacer(minLength: 10)
-
-                centerContent
-
-                Spacer(minLength: 10)
+                    Text(context.state.title)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundStyle(secondaryTextColor)
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.leading, 8)
 
                 trailingProgress
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 16)
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: 28)
+                RoundedRectangle(cornerRadius: 30)
                     .fill(containerBackground)
                     .padding(.horizontal, -6)
             )
@@ -46,40 +52,12 @@ struct DownloadLiveActivityView: View {
 }
 
 private extension DownloadLiveActivityView {
-    var leftIcon: some View {
-        ZStack {
-            Circle()
-                .fill(leftIconBackground)
-                .frame(width: 56, height: 56)
-
-            Image(systemName: "arrow.down.circle.fill")
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(leftIconForeground)
-        }
-        .frame(width: 60)
-    }
-
-    var centerContent: some View {
-        VStack(spacing: 0) {
-            Text(context.state.label)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(primaryTextColor)
-                .lineLimit(1)
-
-            Text(context.state.title)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(secondaryTextColor)
-                .lineLimit(1)
-        }
-        .frame(maxWidth: .infinity, alignment: .center)
-    }
-
     var trailingProgress: some View {
         ZStack {
             Circle()
                 .fill(trailingButtonFill)
-                .background(.ultraThinMaterial, in: Circle())
-                .frame(width: 56, height: 56)
+                .background(.regularMaterial, in: Circle())
+                .frame(width: 64, height: 64)
 
             Text(progressPercentText)
                 .font(.system(size: 16, weight: .semibold, design: .rounded))
@@ -88,7 +66,7 @@ private extension DownloadLiveActivityView {
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
         }
-        .frame(width: 60)
+        .frame(width: 72)
     }
 }
 
@@ -117,14 +95,14 @@ private extension DownloadLiveActivityView {
 
     var trailingButtonFill: Color {
         colorScheme == .light
-            ? Color.black.opacity(0.07)
+            ? Color.black.opacity(0.06)
             : Color.white.opacity(0.18)
     }
 
     var trailingButtonForeground: Color {
         colorScheme == .light
-            ? Color.primary.opacity(0.92)
-            : Color.white.opacity(0.96)
+            ? Color.primary.opacity(0.9)
+            : Color.white.opacity(0.95)
     }
 
     var primaryTextColor: Color {
@@ -252,7 +230,7 @@ struct DownloadWidgetLiveActivity: Widget {
 //        Text("Preview host")
 //    }
 //}
-
+//
 //@available(iOS 17.2, *)
 //#Preview("Download Live Activity", as: .content, using: DownloadAttributes(id: "preview-download")) {
 //    DownloadWidgetLiveActivity()
@@ -265,7 +243,7 @@ struct DownloadWidgetLiveActivity: Widget {
 //        
 //    )
 //}
-
+//
 //@available(iOS 17.2, *)
 //#Preview("Download Island Expanded", as: .dynamicIsland(.expanded), using: DownloadAttributes(id: "preview-download-expanded")) {
 //    DownloadWidgetLiveActivity()
@@ -279,7 +257,7 @@ struct DownloadWidgetLiveActivity: Widget {
 //        
 //    )
 //}
-
+//
 //@available(iOS 17.2, *)
 //#Preview("Download Island Compact", as: .dynamicIsland(.compact), using: DownloadAttributes(id: "preview-download-compact")) {
 //    DownloadWidgetLiveActivity()
