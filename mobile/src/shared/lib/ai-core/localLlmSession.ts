@@ -5,7 +5,7 @@ import type { LocalAiModelId } from '@/entities/settings';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 
-const LOCAL_LLM_N_CTX = 4096;
+const LOCAL_LLM_N_CTX = 8192;
 
 let context: LlamaContext | null = null;
 let loadedModelId: LocalAiModelId | null = null;
