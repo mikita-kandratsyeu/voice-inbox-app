@@ -2,10 +2,16 @@ import { useCallback } from 'react';
 
 import { navigationRef } from '@/app/navigation/navigationRef';
 
+const DOWNLOAD_SETTINGS_DEEPLINKS: Record<string, 'WhisperModelPicker' | 'AIModelPicker'> = {
+  'voiceinbox://settings/whisper': 'WhisperModelPicker',
+  'voiceinbox://settings/ai-models': 'AIModelPicker',
+};
+
 export const useDownloadingDeeplink = () => {
   const handleDownloadingDeeplink = useCallback(async (url: URL) => {
     const href = url.toString().replace(/\/+$/, '');
-    if (href !== 'voiceinbox://settings/whisper') {
+    const settingsScreen = DOWNLOAD_SETTINGS_DEEPLINKS[href];
+    if (!settingsScreen) {
       return;
     }
 
@@ -15,7 +21,7 @@ export const useDownloadingDeeplink = () => {
       }
       navigationRef.navigate('Main', {
         screen: 'SettingsRoot',
-        params: { screen: 'WhisperModelPicker' },
+        params: { screen: settingsScreen },
       });
     } catch (e) {
       if (__DEV__) {

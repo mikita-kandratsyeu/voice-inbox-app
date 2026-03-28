@@ -3,7 +3,17 @@ import WidgetKit
 import SwiftUI
 
 private enum DownloadDeeplink {
-    static let settingsUrl = URL(string: "voiceinbox://settings/whisper")!
+    static func settingsURL(settingsPath: String?) -> URL {
+        let path: String
+        
+        if let settingsPath, !settingsPath.isEmpty {
+            path = settingsPath
+        } else {
+            path = "whisper"
+        }
+
+        return URL(string: "voiceinbox://settings/\(path)")!
+    }
 }
 
 struct DownloadLiveActivityView: View {
@@ -19,7 +29,7 @@ struct DownloadLiveActivityView: View {
     }
 
     var body: some View {
-        Link(destination: DownloadDeeplink.settingsUrl) {
+        Link(destination: DownloadDeeplink.settingsURL(settingsPath: context.state.settingsDeeplinkPath)) {
             HStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(context.state.label)
@@ -170,7 +180,7 @@ struct DownloadWidgetLiveActivity: Widget {
                 }
               
                 DynamicIslandExpandedRegion(.trailing) {
-                    Link(destination: DownloadDeeplink.settingsUrl) {
+                    Link(destination: DownloadDeeplink.settingsURL(settingsPath: context.state.settingsDeeplinkPath)) {
                         ZStack {
                             Circle()
                                 .fill(Color.primary.opacity(0.10))
@@ -186,7 +196,7 @@ struct DownloadWidgetLiveActivity: Widget {
                     .frame(width: 56, height: 56, alignment: .center)
                 }
             } compactLeading: {
-                Link(destination: DownloadDeeplink.settingsUrl) {
+                Link(destination: DownloadDeeplink.settingsURL(settingsPath: context.state.settingsDeeplinkPath)) {
                     ZStack {
                         Circle()
                             .fill(Color.accentColor.opacity(0.16))
@@ -207,7 +217,7 @@ struct DownloadWidgetLiveActivity: Widget {
                         transaction.animation = nil
                     }
             } minimal: {
-                Link(destination: DownloadDeeplink.settingsUrl) {
+                Link(destination: DownloadDeeplink.settingsURL(settingsPath: context.state.settingsDeeplinkPath)) {
                     ZStack {
                         Circle()
                             .fill(Color.accentColor.opacity(0.16))

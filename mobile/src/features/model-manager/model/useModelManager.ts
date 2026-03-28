@@ -25,8 +25,11 @@ import { getWhisperModelPath } from '@/shared/lib/whisper';
 import { deleteLocalLlmModel } from '../lib/deleteLocalLlmModel';
 import { deleteWhisperModel } from '../lib/deleteWhisperModel';
 import {
+  startLocalAiDownloadLiveActivity,
   startWhisperDownloadLiveActivity,
+  stopLocalAiDownloadLiveActivity,
   stopWhisperDownloadLiveActivity,
+  updateLocalAiDownloadLiveActivity,
   updateWhisperDownloadLiveActivity,
 } from '../lib/downloadLiveActivity';
 import { cancelWhisperModelDownload, whisperModelDownloader } from '../lib/whisper-download';
@@ -138,16 +141,20 @@ export const useModelManager = () => {
       setLocalLlmDownloadProgress(modelId, 0);
       const expectedBytes = entry.sizeMb * 1024 * 1024;
 
+      await startLocalAiDownloadLiveActivity(modelId, entry.name).catch(() => {});
+
       try {
         await localLlmModelDownloader.startDownload({
           modelId,
           expectedBytes,
           onProgress: (progress: number, bytesWritten: number, contentLength: number) => {
             setLocalLlmDownloadProgress(modelId, progress, bytesWritten, contentLength);
+            void updateLocalAiDownloadLiveActivity(progress / 100, entry.name).catch(() => {});
           },
         });
         setLocalLlmModelStatus(modelId, 'downloaded');
         setLocalLlmDownloadProgress(modelId, 100);
+        await stopLocalAiDownloadLiveActivity();
       } catch (err) {
         const isCancelled =
           err instanceof Error && (err.message.includes('cancel') || err.message.includes('abort'));
@@ -158,6 +165,7 @@ export const useModelManager = () => {
           setLocalLlmModelStatus(modelId, 'not_downloaded');
         }
         setLocalLlmDownloadProgress(modelId, 0);
+        await stopLocalAiDownloadLiveActivity();
       }
     },
     [setLocalLlmDownloadProgress, setLocalLlmModelStatus],
@@ -168,6 +176,7 @@ export const useModelManager = () => {
       await cancelLocalLlmModelDownload();
       setLocalLlmModelStatus(modelId, 'not_downloaded');
       setLocalLlmDownloadProgress(modelId, 0);
+      await stopLocalAiDownloadLiveActivity().catch(() => {});
     },
     [setLocalLlmDownloadProgress, setLocalLlmModelStatus],
   );
