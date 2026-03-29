@@ -440,6 +440,7 @@
       "purchaseErrorUnavailable": "Покупки не настроены в этой сборке.",
       "restorePurchases": "Восстановить покупки",
       "restoreSuccess": "Покупки восстановлены.",
+      "restoreNothingFound": "Активной подписки для этого аккаунта не найдено.",
       "restoreError": "Не удалось восстановить покупки.",
       "features": {
         "autoTranscription": "Авто-транскрипция",

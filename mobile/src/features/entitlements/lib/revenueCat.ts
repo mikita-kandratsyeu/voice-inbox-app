@@ -9,6 +9,7 @@ import Purchases, { PURCHASES_ERROR_CODE } from 'react-native-purchases';
 
 import {
   clearProEntitlementSync,
+  isProActiveFromStorageSync,
   setProExpiresAtMsSync,
 } from '@/features/pro-license/lib/proEntitlementStorage';
 import { syncProLicenseFromServer } from '@/features/pro-license/lib/syncProLicenseFromServer';
@@ -19,6 +20,7 @@ import {
   getRevenueCatEntitlementId,
   getRevenueCatPackageTypePreferred,
 } from '@/shared/config/runtimeConfig';
+import { isString } from '@/shared/lib';
 import {
   invalidateProLicenseStatusCache,
   syncProLicenseRevenueCatOnServer,
@@ -31,6 +33,7 @@ function trimEnv(v: string | undefined): string {
 
 function getEntitlementId(): string {
   const id = trimEnv(getRevenueCatEntitlementId());
+
   return id.length > 0 ? id : 'pro';
 }
 
@@ -46,6 +49,22 @@ export function getRevenueCatApiKeyForPlatform(): string | null {
 
 export function getRevenueCatIntegrationEnabled(): boolean {
   return isSubscriptionsPubliclyAvailable() && getRevenueCatApiKeyForPlatform() != null;
+}
+
+function isPurchasesError(e: unknown): e is { code: PURCHASES_ERROR_CODE; message: string } {
+  return (
+    typeof e === 'object' && e != null && 'code' in e && isString((e as { code: unknown }).code)
+  );
+}
+
+function logPurchasesFailure(context: string, e: unknown): void {
+  if (isPurchasesError(e)) {
+    console.warn(`[RevenueCat] ${context}`, e.code, e.message);
+    return;
+  }
+
+  const msg = e instanceof Error ? e.message : String(e);
+  console.warn(`[RevenueCat] ${context}`, msg);
 }
 
 let sessionConfigured = false;
@@ -96,9 +115,7 @@ export async function refreshProEntitlementFromRevenueCatOnly(): Promise<void> {
     applyCustomerInfoToProStorage(info);
     invalidateProLicenseStatusCache();
   } catch (e) {
-    if (__DEV__) {
-      console.warn('[RevenueCat] refreshProEntitlementFromRevenueCatOnly failed', e);
-    }
+    logPurchasesFailure('refreshProEntitlementFromRevenueCatOnly', e);
   }
 }
 
@@ -276,22 +293,15 @@ export async function initRevenueCatWhenReady(deviceId: string): Promise<void> {
     const info = await Purchases.getCustomerInfo();
     await onCustomerInfoUpdated(info, { forceRevenueCatServerSync: true });
   } catch (e) {
-    if (__DEV__) {
-      console.warn('[RevenueCat] init failed', e);
-    }
+    logPurchasesFailure('init', e);
   }
 }
 
 export type PurchaseProResult = { ok: true } | { ok: false; cancelled: boolean; message: string };
 
-function isPurchasesError(e: unknown): e is { code: PURCHASES_ERROR_CODE; message: string } {
-  return (
-    typeof e === 'object' &&
-    e != null &&
-    'code' in e &&
-    typeof (e as { code: unknown }).code === 'string'
-  );
-}
+export type RestoreProPurchasesResult =
+  | { ok: true; entitlementActive: boolean }
+  | { ok: false; message: string };
 
 export async function getProBillingPriceOptions(): Promise<IapBillingOptions> {
   if (!getRevenueCatIntegrationEnabled()) {
@@ -318,7 +328,8 @@ export async function getProBillingPriceOptions(): Promise<IapBillingOptions> {
     }
 
     return { monthly, annual, savePercentVsMonthly };
-  } catch {
+  } catch (e) {
+    logPurchasesFailure('getProBillingPriceOptions', e);
     return { monthly: null, annual: null, savePercentVsMonthly: null };
   }
 }
@@ -332,20 +343,23 @@ export async function purchaseProPackageForPeriod(
   try {
     const offerings = await Purchases.getOfferings();
     const pkg = packageForPeriod(offerings.current, period);
+
     if (!pkg) {
       return { ok: false, cancelled: false, message: 'no_package' };
     }
+
     const { customerInfo } = await Purchases.purchasePackage(pkg);
     await onCustomerInfoUpdated(customerInfo, { forceRevenueCatServerSync: true });
+
     return { ok: true };
   } catch (e) {
     if (isPurchasesError(e) && e.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
       return { ok: false, cancelled: true, message: 'cancelled' };
     }
+
     const msg = isPurchasesError(e) ? e.message : 'unknown';
-    if (__DEV__) {
-      console.warn('[RevenueCat] purchase failed', e);
-    }
+    logPurchasesFailure('purchaseProPackageForPeriod', e);
+
     return { ok: false, cancelled: false, message: msg };
   }
 }
@@ -354,40 +368,45 @@ export async function purchaseDefaultProPackage(): Promise<PurchaseProResult> {
   if (!getRevenueCatIntegrationEnabled()) {
     return { ok: false, cancelled: false, message: 'iap_unavailable' };
   }
+
   try {
     const offerings = await Purchases.getOfferings();
     const pkg = pickPackageFromOffering(offerings.current);
+
     if (!pkg) {
       return { ok: false, cancelled: false, message: 'no_package' };
     }
+
     const { customerInfo } = await Purchases.purchasePackage(pkg);
     await onCustomerInfoUpdated(customerInfo, { forceRevenueCatServerSync: true });
+
     return { ok: true };
   } catch (e) {
     if (isPurchasesError(e) && e.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
       return { ok: false, cancelled: true, message: 'cancelled' };
     }
+
     const msg = isPurchasesError(e) ? e.message : 'unknown';
-    if (__DEV__) {
-      console.warn('[RevenueCat] purchase failed', e);
-    }
+    logPurchasesFailure('purchaseDefaultProPackage', e);
+
     return { ok: false, cancelled: false, message: msg };
   }
 }
 
-export async function restoreProPurchases(): Promise<PurchaseProResult> {
+export async function restoreProPurchases(): Promise<RestoreProPurchasesResult> {
   if (!getRevenueCatIntegrationEnabled()) {
-    return { ok: false, cancelled: false, message: 'iap_unavailable' };
+    return { ok: false, message: 'iap_unavailable' };
   }
+
   try {
     const customerInfo = await Purchases.restorePurchases();
     await onCustomerInfoUpdated(customerInfo, { forceRevenueCatServerSync: true });
-    return { ok: true };
+
+    return { ok: true, entitlementActive: isProActiveFromStorageSync() };
   } catch (e) {
     const msg = isPurchasesError(e) ? e.message : 'unknown';
-    if (__DEV__) {
-      console.warn('[RevenueCat] restore failed', e);
-    }
-    return { ok: false, cancelled: false, message: msg };
+    logPurchasesFailure('restoreProPurchases', e);
+
+    return { ok: false, message: msg };
   }
 }

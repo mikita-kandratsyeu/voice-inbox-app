@@ -6,6 +6,7 @@ export type {
   IapBillingProductRow,
   IapIntroFreePeriod,
   PurchaseProResult,
+  RestoreProPurchasesResult,
 } from './lib/revenueCat';
 export {
   getProBillingPriceOptions,

@@ -440,6 +440,7 @@
       "purchaseErrorUnavailable": "Purchases are not configured in this build.",
       "restorePurchases": "Restore purchases",
       "restoreSuccess": "Your purchases were restored.",
+      "restoreNothingFound": "No active subscription was found for this account.",
       "restoreError": "Could not restore purchases.",
       "features": {
         "autoTranscription": "Auto-transcription",
