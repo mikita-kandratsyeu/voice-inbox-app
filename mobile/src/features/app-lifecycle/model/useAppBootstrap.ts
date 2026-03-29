@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { syncPrivateCapabilityTier, useSettingsStore } from '@/entities/settings';
+import { runAutoArchiveReadNotesIfEligible } from '@/features/auto-archive/model/runAutoArchiveReadNotesIfEligible';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
 import { initDB } from '@/shared/lib';
@@ -33,6 +34,18 @@ export function useAppBootstrap(
         useSettingsStore.getState().reconcileAiExecutionModeAfterRemoteConfig();
         syncPrivateCapabilityTier();
         await Promise.all([useRecordStore.getState().load(), useFolderStore.getState().load()]);
+
+        try {
+          const archived = await runAutoArchiveReadNotesIfEligible(undefined, {
+            skipCooldown: true,
+          });
+
+          if (!cancelled && archived > 0) {
+            await useRecordStore.getState().load();
+          }
+        } catch {
+          if (__DEV__) console.warn('[bootstrap] auto-archive failed');
+        }
 
         if (!cancelled) {
           onBootstrapReady?.();
