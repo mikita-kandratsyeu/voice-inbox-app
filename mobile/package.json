@@ -70,6 +70,7 @@
     "react-native-nitro-modules": "^0.35.1",
     "react-native-nitro-sound": "^0.2.12",
     "react-native-permissions": "^5.1.0",
+    "react-native-purchases": "^9.15.0",
     "react-native-quick-base64": "^2.2.2",
     "react-native-quick-crypto": "^1.0.17",
     "react-native-reanimated": "^4.2.2",
