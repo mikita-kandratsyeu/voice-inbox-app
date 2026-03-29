@@ -1,7 +1,25 @@
+import { isSubscriptionsPubliclyAvailable } from '@/shared/config/buildEnv';
+import { getRevenueCatApiKeyAndroid, getRevenueCatApiKeyIos } from '@/shared/config/runtimeConfig';
 import { fetchProLicenseStatus } from '@/shared/lib/ai-api/proLicenseApi';
+import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 
 import { clearProEntitlementSync, setProExpiresAtMsSync } from './proEntitlementStorage';
 import { PRO_LICENSE_MIN_ATTEMPT_MS, PRO_LICENSE_MIN_BACKGROUND_FETCH_MS } from './syncIntervals';
+
+function isRevenueCatIapConfigured(): boolean {
+  if (!isSubscriptionsPubliclyAvailable()) {
+    return false;
+  }
+  const ios = (getRevenueCatApiKeyIos() ?? '').trim();
+  const android = (getRevenueCatApiKeyAndroid() ?? '').trim();
+  if (IS_IOS && ios.length > 0) {
+    return true;
+  }
+  if (IS_ANDROID && android.length > 0) {
+    return true;
+  }
+  return false;
+}
 
 let lastSuccessfulFetchAt = 0;
 let lastAttemptAt = 0;
@@ -33,10 +51,10 @@ export function syncProLicenseFromServer(force: boolean): Promise<void> {
       const ms = new Date(status.expiresAt).getTime();
       if (Number.isFinite(ms) && ms > Date.now()) {
         setProExpiresAtMsSync(ms);
-      } else {
+      } else if (!isRevenueCatIapConfigured()) {
         clearProEntitlementSync();
       }
-    } else {
+    } else if (!isRevenueCatIapConfigured()) {
       clearProEntitlementSync();
     }
 
