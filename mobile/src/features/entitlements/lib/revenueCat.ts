@@ -98,9 +98,24 @@ export type IapBillingProductRow = {
 export type IapBillingOptions = {
   monthly: IapBillingProductRow | null;
   annual: IapBillingProductRow | null;
-  /** Compared to paying the monthly plan twelve times; null if not cheaper or data missing */
   savePercentVsMonthly: number | null;
 };
+
+function formatIapCurrencyAmount(amount: number, currencyCode: string): string | null {
+  const code = (currencyCode ?? '').trim().toUpperCase();
+  if (!code || !Number.isFinite(amount)) {
+    return null;
+  }
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency: code,
+      currencyDisplay: 'narrowSymbol',
+    }).format(amount);
+  } catch {
+    return null;
+  }
+}
 
 function introFreeFromIntro(
   intro: PurchasesIntroPrice | null | undefined,
@@ -121,18 +136,38 @@ function introFreeFromIntro(
 
 function billingRowFromProduct(
   product: PurchasesStoreProduct | undefined,
+  tier: 'monthly' | 'annual',
 ): IapBillingProductRow | null {
   if (!product) {
     return null;
   }
-  const ps = product.priceString?.trim();
-  if (!ps) {
+  const rawMain = product.priceString?.trim();
+  const formattedMain = formatIapCurrencyAmount(product.price, product.currencyCode);
+  const priceString = formattedMain ?? rawMain;
+  if (!priceString) {
     return null;
   }
-  const perMo = product.pricePerMonthString?.trim();
+
+  let pricePerMonthString: string | null = null;
+  if (tier === 'annual') {
+    const perMonthNum =
+      product.pricePerMonth != null &&
+      Number.isFinite(product.pricePerMonth) &&
+      product.pricePerMonth > 0
+        ? product.pricePerMonth
+        : Number.isFinite(product.price) && product.price > 0
+          ? product.price / 12
+          : null;
+    if (perMonthNum != null) {
+      const formatted = formatIapCurrencyAmount(perMonthNum, product.currencyCode);
+      const rawPer = product.pricePerMonthString?.trim();
+      pricePerMonthString = formatted ?? (rawPer && rawPer.length > 0 ? rawPer : null);
+    }
+  }
+
   return {
-    priceString: ps,
-    pricePerMonthString: perMo && perMo.length > 0 ? perMo : null,
+    priceString,
+    pricePerMonthString,
     introFree: introFreeFromIntro(product.introPrice),
   };
 }
@@ -238,8 +273,8 @@ export async function getProBillingPriceOptions(): Promise<IapBillingOptions> {
     if (!o) {
       return { monthly: null, annual: null, savePercentVsMonthly: null };
     }
-    const monthly = billingRowFromProduct(o.monthly?.product);
-    const annual = billingRowFromProduct(o.annual?.product);
+    const monthly = billingRowFromProduct(o.monthly?.product, 'monthly');
+    const annual = billingRowFromProduct(o.annual?.product, 'annual');
 
     let savePercentVsMonthly: number | null = null;
     const mp = o.monthly?.product?.price;
