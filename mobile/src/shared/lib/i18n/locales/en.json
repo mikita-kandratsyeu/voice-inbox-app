@@ -413,10 +413,10 @@
     },
     "planPaywall": {
       "title": "Let AI do the heavy lifting",
-      "subtitle": "Auto summaries and tasks right after transcription—no extra taps.",
+      "subtitle": "AI automation, more generations, no ads.",
       "freeTitle": "Free",
       "freeLimits": {
-        "manualAi": "AI runs manually only—you start summary and tasks in each note",
+        "manualAi": "AI runs manually only — you start summary and tasks in each note",
         "recording": "Recordings up to {{minutes}} minutes",
         "weeklyAi": "Up to {{limit}} AI requests per week"
       },
@@ -425,10 +425,9 @@
       "comingSoon": "Coming soon",
       "iapNotReady": "In-app purchase is not available in this build yet.",
       "features": {
+        "aiAutomationsAll": "All AI automations — auto-transcription, auto-summaries and tasks after transcription, and auto-archive for read notes",
         "aiLimit": "Up to {{limit}} AI requests per week",
         "recordingUpTo30Min": "Recordings up to 30 minutes",
-        "autoAi": "Auto-AI: summary and tasks right after transcription",
-        "autoTranscription": "Auto transcription for new notes",
         "noAds": "No ads"
       }
     },
