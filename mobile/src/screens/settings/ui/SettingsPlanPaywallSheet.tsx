@@ -193,9 +193,9 @@ function PlanPickTile({
             {title}
           </Text>
           <Text
-            className="mt-1 text-[13px] font-medium leading-[18px]"
+            className="mt-2 text-[16px] font-bold leading-[18px]"
             style={{
-              color: c.text.secondary,
+              color: c.text.primary,
               ...(IS_ANDROID ? { includeFontPadding: false } : {}),
             }}
             numberOfLines={2}
@@ -204,7 +204,7 @@ function PlanPickTile({
           </Text>
           {priceSubLine ? (
             <Text
-              className="mt-0.5 text-[11px] leading-[15px]"
+              className="mt-0.5 text-[12px] leading-[15px]"
               style={{
                 color: c.text.muted,
                 ...(IS_ANDROID ? { includeFontPadding: false } : {}),
