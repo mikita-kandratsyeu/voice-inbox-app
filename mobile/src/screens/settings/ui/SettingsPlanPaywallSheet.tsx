@@ -186,8 +186,8 @@ export function SettingsPlanPaywallSheet({
           </View>
           <View className="gap-y-2.5">
             <FeatureRow text={t('settings.planPaywall.features.autoTranscription')} emphasized />
-            <FeatureRow text={t('settings.planPaywall.features.autoSummaryAndTasks')} />
-            <FeatureRow text={t('settings.planPaywall.features.autoArchiveReadNotes')} />
+            <FeatureRow text={t('settings.planPaywall.features.autoSummaryAndTasks')} emphasized />
+            <FeatureRow text={t('settings.planPaywall.features.autoArchiveReadNotes')} emphasized />
             <FeatureRow text={t('settings.planPaywall.features.recordingUpTo30Min')} />
             <FeatureRow text={t('settings.planPaywall.features.aiLimit', { limit: proAiLimit })} />
             <FeatureRow text={t('settings.planPaywall.features.noAds')} />
