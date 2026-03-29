@@ -50,7 +50,7 @@ export function mapLocalError(err: unknown): string {
     return i18n.t('ai.privateModeEmptyAnswer');
   }
 
-  if (message.includes('Local summary too long for current model')) {
+  if (message.includes('Local prompt too long for current model context')) {
     return i18n.t('ai.privateModeTooLongForLocal');
   }
 

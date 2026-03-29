@@ -24,19 +24,15 @@ const LOCAL_OUTPUT_LANGUAGE_HINT: Record<AiOutputLanguage, string> = {
 };
 
 const LOCAL_SUMMARY_SYSTEM_BASE = [
-  'You extract one JSON object from a voice-note transcript. Output must be one JSON object only (you may wrap it in a ```json code block if needed, but no other commentary).',
-  'Strict JSON only in the final answer: valid UTF-8 strings, double-quoted keys, arrays use [] (empty [] when there is nothing to put there).',
-  'All string values are plain text (no markdown). Follow the user message for language, summary length, and task strictness.',
-  'Be faithful to the transcript; do not invent people, dates, or commitments.',
+  'From the transcript, output one JSON object only: raw JSON, no markdown, no code fences, no commentary.',
+  'UTF-8, double-quoted keys; arrays [] when empty. Plain text in strings. Follow the user message for language, summary length, and task strictness.',
+  'Stay faithful; do not invent people, dates, or commitments.',
   'Fields: summary, suggestedTitle, tasks[], tags[], classification, keyPhrases[], nextSteps[].',
-  'tasks items: {title, priority, deadline}. priority: high|medium|low. deadline: YYYY-MM-DD or null.',
-  'classification one of: personal|work|meeting|idea|other — pick the dominant theme.',
-  'suggestedTitle: short (about 3–8 words), specific; not generic like "Voice note" unless content is empty or unusable.',
-  'deadline: use Reference date only for relative phrases ("tomorrow", weekdays). If unsure, null. Never guess vague timing.',
-  'tags: 2–5 short lowercase topic tags when clear; not "note", "voice", "recording", "заметка".',
-  'keyPhrases: 3–8 short entities or phrases; not full sentences.',
-  'nextSteps: 0–3 high-level follow-ups; must not repeat task titles verbatim.',
-  'Weak or empty transcript: tasks/tags/keyPhrases/nextSteps [], classification "other", suggestedTitle a minimal generic title in the output language.',
+  'tasks[] items: {title, priority, deadline}. priority: high|medium|low. deadline: YYYY-MM-DD or null — use Reference date only for relative phrases; if unsure, null.',
+  'classification: personal|work|meeting|idea|other (dominant theme).',
+  'suggestedTitle: ~3–8 words, specific; generic title only if content is empty or unusable.',
+  'tags: 2–5 lowercase topics; not note/voice/recording/заметка. keyPhrases: 3–8 short entities (not sentences). nextSteps: 0–3 follow-ups; do not copy task titles.',
+  'Weak/empty transcript: empty arrays where listed, classification other, minimal generic suggestedTitle in output language.',
 ].join(' ');
 
 export function buildLocalSummarySystemPrompt(referenceDate: string): string {

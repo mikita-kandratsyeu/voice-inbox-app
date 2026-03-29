@@ -17,6 +17,7 @@ import {
   getLocalReferenceDateIsoLocal,
   prepareTranscriptForLocalLlm,
 } from './local-provider/localAiTranscript';
+import { localPromptFitsLlmContext } from './localLlmBudget';
 import { completeLocalChat, type LocalLlmCompletionIntent } from './localLlmSession';
 import type {
   AiExecutionContext,
@@ -57,11 +58,20 @@ async function generateWithLocalLlm(
     intent?: LocalLlmCompletionIntent;
   },
 ): Promise<string> {
+  const maxTokens = options?.maxTokens ?? 512;
+  const combined = messages.map((m) => m.content).join('\n\n');
+  if (!localPromptFitsLlmContext(combined, maxTokens)) {
+    throw new LocalAiError(
+      'transcript_too_long',
+      'Local prompt too long for current model context',
+    );
+  }
+
   return completeLocalChat(
     modelId,
     messages.map((m) => ({ role: m.role, content: m.content })),
     {
-      maxTokens: options?.maxTokens ?? 512,
+      maxTokens,
       temperature: options?.temperature ?? 0.2,
       intent: options?.intent ?? 'chat',
     },

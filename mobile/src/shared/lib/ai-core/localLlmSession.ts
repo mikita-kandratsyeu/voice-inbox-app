@@ -6,6 +6,7 @@ import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 
 import { IS_IOS } from '../platform';
+import { LOCAL_LLM_N_CTX } from './localLlmBudget';
 import {
   getLocalLlmContextParams,
   type LocalLlmCompletionIntent,
@@ -17,7 +18,6 @@ import {
  * 8192 was too small for full-tier transcripts and could crash native llama when the prompt
  * exceeds the KV context.
  */
-const LOCAL_LLM_N_CTX = 16_384;
 
 /**
  * llama.rn maps this mainly to iOS Metal. Android GPU/Vulkan stacks are a frequent crash source;
