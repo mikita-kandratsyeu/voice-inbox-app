@@ -40,22 +40,39 @@ function eventGrantsConfiguredEntitlement(event: RevenueCatWebhookEvent): boolea
   return purchaseLike.has(String(event.type ?? ''));
 }
 
+/**
+ * RevenueCat sends the dashboard "authorization" value as the full Authorization header body.
+ * It may be `Bearer <token>` or just `<token>` — accept both. Env should hold the same token
+ * (with or without a `Bearer ` prefix; we normalize).
+ */
 export function verifyRevenueCatWebhookAuthorization(
   authorizationHeader: string | null,
   secret: string,
 ): boolean {
-  const expected = `Bearer ${secret}`;
-  const got = authorizationHeader ?? '';
-  try {
-    const a = Buffer.from(got, 'utf8');
-    const b = Buffer.from(expected, 'utf8');
-    if (a.length !== b.length) {
-      return false;
-    }
-    return timingSafeEqual(a, b);
-  } catch {
+  const trimmed = secret.trim();
+  if (!trimmed) {
     return false;
   }
+  const token = trimmed.toLowerCase().startsWith('bearer ') ? trimmed.slice(7).trim() : trimmed;
+  if (!token) {
+    return false;
+  }
+
+  const got = (authorizationHeader ?? '').trim();
+  const variants = [`Bearer ${token}`, token];
+
+  for (const expected of variants) {
+    try {
+      const a = Buffer.from(got, 'utf8');
+      const b = Buffer.from(expected, 'utf8');
+      if (a.length === b.length && timingSafeEqual(a, b)) {
+        return true;
+      }
+    } catch {
+      /* try next */
+    }
+  }
+  return false;
 }
 
 export async function applyRevenueCatWebhookPayload(payload: unknown): Promise<void> {
