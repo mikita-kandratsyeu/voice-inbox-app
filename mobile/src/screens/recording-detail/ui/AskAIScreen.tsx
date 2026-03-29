@@ -580,28 +580,32 @@ export const AskAIScreen = () => {
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader title={t('recordingDetail.askEmptyTitle')} onBack={handleBack} />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
-        <View
-          style={{
-            flex: 1,
-            alignSelf: 'center',
-            width: '100%',
-            maxWidth: contentMaxWidth ?? '100%',
-          }}
-        >
-          <KeyboardAwareScrollView
-            style={{ flex: 1 }}
-            contentContainerStyle={{
-              paddingHorizontal: 16,
-              paddingTop: 12,
-              paddingBottom: 16,
-              ...(scrollContentCentered ? { flexGrow: 1, justifyContent: 'center' as const } : {}),
+        <View style={{ flex: 1 }}>
+          <View
+            style={{
+              flex: 1,
+              alignSelf: 'center',
+              width: '100%',
+              maxWidth: contentMaxWidth ?? '100%',
             }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={Boolean(answer)}
-            bottomOffset={24}
           >
-            {renderContent()}
-          </KeyboardAwareScrollView>
+            <KeyboardAwareScrollView
+              style={{ flex: 1 }}
+              contentContainerStyle={{
+                paddingHorizontal: 16,
+                paddingTop: 12,
+                paddingBottom: 16,
+                ...(scrollContentCentered
+                  ? { flexGrow: 1, justifyContent: 'center' as const }
+                  : {}),
+              }}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={Boolean(answer)}
+              bottomOffset={24}
+            >
+              {renderContent()}
+            </KeyboardAwareScrollView>
+          </View>
           {inputFooter}
         </View>
       </KeyboardAvoidingView>
