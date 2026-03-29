@@ -44,15 +44,19 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
 
     window = UIWindow(frame: UIScreen.main.bounds)
 
+    var mergedLaunchOptions = launchOptions ?? [:]
+    if let shortcutItem = mergedLaunchOptions[UIApplication.LaunchOptionsKey.shortcutItem] as? UIApplicationShortcutItem,
+       shortcutItem.type == startRecordingQuickActionType,
+       mergedLaunchOptions[UIApplication.LaunchOptionsKey.url] == nil,
+       let recordURL = URL(string: "voiceinbox://record/start") {
+      mergedLaunchOptions[UIApplication.LaunchOptionsKey.url] = recordURL
+    }
+
     factory.startReactNative(
       withModuleName: "VoiceInboxApp",
       in: window,
-      launchOptions: launchOptions
+      launchOptions: mergedLaunchOptions.isEmpty ? nil : mergedLaunchOptions
     )
-
-    if let shortcutItem = launchOptions?[UIApplication.LaunchOptionsKey.shortcutItem] as? UIApplicationShortcutItem {
-      _ = handleQuickAction(shortcutItem, application: application)
-    }
 
     return true
   }
