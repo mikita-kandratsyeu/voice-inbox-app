@@ -8,6 +8,7 @@
     "appStore": "App Store",
     "googlePlayLabel": "Доступно в",
     "googlePlay": "Google Play",
+    "downloadApp": "Скачать приложение",
     "stats": {
       "accuracy": { "value": "Уровня Whisper", "label": "Транскрипция" },
       "private": { "value": "100% офлайн", "label": "На устройстве" }

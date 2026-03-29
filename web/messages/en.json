@@ -8,6 +8,7 @@
     "appStore": "App Store",
     "googlePlayLabel": "Get it on",
     "googlePlay": "Google Play",
+    "downloadApp": "Download the app",
     "stats": {
       "accuracy": { "value": "Whisper-grade", "label": "Transcription" },
       "private": { "value": "100% offline", "label": "On device" }

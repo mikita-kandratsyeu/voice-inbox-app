@@ -1,5 +1,5 @@
+import { Download } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { StoreButtons } from '@/components/landing/StoreButtons';
 
 export function Hero(): React.ReactElement {
   const t = useTranslations('hero');
@@ -27,8 +27,14 @@ export function Hero(): React.ReactElement {
             {t('subtitle')}
           </p>
 
-          <div className="animate-fade-in-delay-2 mb-16 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <StoreButtons variant="hero" />
+          <div className="animate-fade-in-delay-2 mb-16 flex flex-col items-center justify-center">
+            <a
+              href="#download"
+              className="inline-flex min-h-[48px] items-center justify-center gap-2.5 rounded-xl bg-linear-to-r from-blue-500 to-blue-600 px-8 py-3 text-base font-semibold text-white shadow-[0_12px_40px_rgba(59,130,246,0.35)] transition-transform hover:scale-[1.02] focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#0a0a0a]"
+            >
+              <Download className="h-5 w-5 shrink-0" aria-hidden />
+              {t('downloadApp')}
+            </a>
           </div>
 
           <div className="animate-fade-in-delay-3 mx-auto grid max-w-2xl grid-cols-2 gap-8">
