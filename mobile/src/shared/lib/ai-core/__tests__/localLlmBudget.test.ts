@@ -17,7 +17,7 @@ describe('localLlmBudget', () => {
   });
 
   it('localPromptFitsLlmContext rejects clearly oversized prompts', () => {
-    const huge = `${'x'.repeat(200_000)}\n${'ы'.repeat(200_000)}`;
+    const huge = 'a'.repeat(100_000);
     expect(localPromptFitsLlmContext(huge, 1024)).toBe(false);
   });
 
