@@ -3,7 +3,7 @@ import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/
 import { Check, Crown } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FREE_MAX_RECORDING_MS, type MonetizationMode } from '@/features/app-storefront';
@@ -185,7 +185,9 @@ export function SettingsPlanPaywallSheet({
             </View>
           </View>
           <View className="gap-y-2.5">
-            <FeatureRow text={t('settings.planPaywall.features.aiAutomationsAll')} emphasized />
+            <FeatureRow text={t('settings.planPaywall.features.autoTranscription')} emphasized />
+            <FeatureRow text={t('settings.planPaywall.features.autoSummaryAndTasks')} />
+            <FeatureRow text={t('settings.planPaywall.features.autoArchiveReadNotes')} />
             <FeatureRow text={t('settings.planPaywall.features.recordingUpTo30Min')} />
             <FeatureRow text={t('settings.planPaywall.features.aiLimit', { limit: proAiLimit })} />
             <FeatureRow text={t('settings.planPaywall.features.noAds')} />
@@ -197,16 +199,12 @@ export function SettingsPlanPaywallSheet({
           size="lg"
           fullWidth
           label={upgradeLabel}
+          loading={isIapPublic && iapBusy}
           onPress={onUpgradePress}
           disabled={upgradeDisabled}
           color={c}
           activeOpacity={0.85}
         />
-        {isIapPublic && iapBusy ? (
-          <View className="mt-3 items-center">
-            <ActivityIndicator color={c.accent.primary} />
-          </View>
-        ) : null}
         {isIapPublic && onRestorePurchasesPress ? (
           <Pressable
             className="mt-4 items-center justify-center py-2"

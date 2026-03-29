@@ -398,10 +398,9 @@
       "freeTitle": "Бесплатный план",
       "freeValueSubtitle": "До {{limit}} генераций в неделю в Pro и без рекламы.",
       "freeValueSubtitleSoon": "Pro скоро: до {{limit}} генераций в неделю и без рекламы.",
-      "freeValueSubtitleAvailable": "До {{limit}} генераций в неделю в Pro. Уже доступно.",
+      "freeValueSubtitleAvailable": "До {{limit}} генераций в неделю в Pro.",
       "comparePlansCta": "Смотреть планы",
       "soonBadge": "Скоро",
-      "availableBadge": "Доступно",
       "privateBadge": "Private",
       "proTitle": "Pro",
       "proValueSubtitle": "Расширенный лимит генераций, автоорганизация папок, авто-архив прочитанных и без рекламы.",
@@ -432,7 +431,9 @@
       "restoreSuccess": "Покупки восстановлены.",
       "restoreError": "Не удалось восстановить покупки.",
       "features": {
-        "aiAutomationsAll": "Все автоматизации — автотранскрипция, авто-сводка и задачи, автоархив прочитанных заметок",
+        "autoTranscription": "Авто-транскрипция",
+        "autoSummaryAndTasks": "Авто-сводки и задачи",
+        "autoArchiveReadNotes": "Авто-архив прочитанных заметок",
         "aiLimit": "До {{limit}} генераций в неделю",
         "recordingUpTo30Min": "Запись до 30 минут",
         "noAds": "Без рекламы"

@@ -398,10 +398,9 @@
       "freeTitle": "Free plan",
       "freeValueSubtitle": "Up to {{limit}} generations per week in Pro and no ads.",
       "freeValueSubtitleSoon": "Pro is coming soon: up to {{limit}} generations per week and no ads.",
-      "freeValueSubtitleAvailable": "Up to {{limit}} generations per week in Pro. Available now.",
+      "freeValueSubtitleAvailable": "Up to {{limit}} generations per week in Pro.",
       "comparePlansCta": "Compare plans",
       "soonBadge": "Coming soon",
-      "availableBadge": "Available",
       "privateBadge": "Private",
       "proTitle": "Pro",
       "proValueSubtitle": "Higher generation limits, folder auto-organization, auto-archive for read notes, and no ads.",
@@ -432,7 +431,9 @@
       "restoreSuccess": "Your purchases were restored.",
       "restoreError": "Could not restore purchases.",
       "features": {
-        "aiAutomationsAll": "All automations — auto-transcription, auto-summaries and tasks, auto-archive for read notes",
+        "autoTranscription": "Auto-transcription",
+        "autoSummaryAndTasks": "Auto-summaries and tasks",
+        "autoArchiveReadNotes": "Auto-archive for read notes",
         "aiLimit": "Up to {{limit}} AI requests per week",
         "recordingUpTo30Min": "Recordings up to 30 minutes",
         "noAds": "No ads"

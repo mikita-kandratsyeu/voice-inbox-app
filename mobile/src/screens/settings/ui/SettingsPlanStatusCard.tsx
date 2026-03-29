@@ -98,10 +98,9 @@ export function SettingsPlanStatusCard({
   }
 
   let statusBadge: string | null = null;
+
   if (monetizationMode === 'coming_soon' && !isProActive) {
     statusBadge = t('settings.planStatus.soonBadge');
-  } else if (monetizationMode === 'iap_public' && !isProActive) {
-    statusBadge = t('settings.planStatus.availableBadge');
   }
 
   const accessibilityLabel = isProActive
