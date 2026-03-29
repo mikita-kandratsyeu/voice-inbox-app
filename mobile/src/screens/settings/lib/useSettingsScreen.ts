@@ -24,7 +24,11 @@ import {
 } from '@/features/app-storefront';
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
-import { purchaseDefaultProPackage, restoreProPurchases } from '@/features/entitlements';
+import {
+  getDefaultProPackagePriceString,
+  purchaseDefaultProPackage,
+  restoreProPurchases,
+} from '@/features/entitlements';
 import { useProEntitlement } from '@/features/pro-license';
 import { exportData, importData } from '@/features/sync-data';
 import { FREE_WEEKLY_LIMIT, useColors } from '@/shared/config';
@@ -88,6 +92,8 @@ export function useSettingsScreen() {
   const [internalUpgradeVisible, setInternalUpgradeVisible] = useState(false);
   const [isHardResetting, setIsHardResetting] = useState(false);
   const [iapPaywallBusy, setIapPaywallBusy] = useState(false);
+  const [iapProPriceLabel, setIapProPriceLabel] = useState<string | null>(null);
+  const [iapProPriceLoading, setIapProPriceLoading] = useState(false);
 
   const {
     refresh: refreshProEntitlement,
@@ -96,6 +102,24 @@ export function useSettingsScreen() {
   } = useProEntitlement();
   const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
   const monetizationMode = getMonetizationMode();
+
+  useEffect(() => {
+    if (!planPaywallVisible || monetizationMode !== 'iap_public') {
+      return;
+    }
+    let cancelled = false;
+    setIapProPriceLoading(true);
+    setIapProPriceLabel(null);
+    void getDefaultProPackagePriceString().then((label) => {
+      if (!cancelled) {
+        setIapProPriceLabel(label);
+        setIapProPriceLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [planPaywallVisible, monetizationMode]);
 
   useFocusEffect(
     useCallback(() => {
@@ -498,6 +522,8 @@ export function useSettingsScreen() {
     handleUpgradePress,
     handleRestorePurchasesPress,
     iapPaywallBusy,
+    iapProPriceLabel,
+    iapProPriceLoading,
     handleHardReset,
     isHardResetting,
   };

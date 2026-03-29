@@ -197,6 +197,8 @@ export const SettingsScreen = () => {
           onUpgradePress={settings.handleUpgradePress}
           onRestorePurchasesPress={settings.handleRestorePurchasesPress}
           iapBusy={settings.iapPaywallBusy}
+          iapProPriceLabel={settings.iapProPriceLabel}
+          iapProPriceLoading={settings.iapProPriceLoading}
         />
         {!settings.isPrivateMode && (
           <AutomationComingSoonSheet

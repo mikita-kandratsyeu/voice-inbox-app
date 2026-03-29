@@ -1,6 +1,7 @@
 export { getEntitlementBackend } from './lib/resolveEntitlementBackend';
 export type { PurchaseProResult } from './lib/revenueCat';
 export {
+  getDefaultProPackagePriceString,
   getRevenueCatIntegrationEnabled,
   initRevenueCatWhenReady,
   purchaseDefaultProPackage,

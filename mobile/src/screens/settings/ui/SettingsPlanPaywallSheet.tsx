@@ -3,7 +3,7 @@ import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/
 import { Check, Crown } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FREE_MAX_RECORDING_MS, type MonetizationMode } from '@/features/app-storefront';
@@ -20,6 +20,8 @@ type SettingsPlanPaywallSheetProps = {
   onUpgradePress?: () => void;
   onRestorePurchasesPress?: () => void;
   iapBusy?: boolean;
+  iapProPriceLabel?: string | null;
+  iapProPriceLoading?: boolean;
 };
 
 type FeatureRowProps = {
@@ -69,6 +71,8 @@ export function SettingsPlanPaywallSheet({
   onUpgradePress,
   onRestorePurchasesPress,
   iapBusy = false,
+  iapProPriceLabel = null,
+  iapProPriceLoading = false,
 }: SettingsPlanPaywallSheetProps) {
   const { t } = useTranslation();
   const c = useColors();
@@ -171,18 +175,31 @@ export function SettingsPlanPaywallSheet({
             backgroundColor: c.background.secondary,
           }}
         >
-          <View className="mb-3 flex-row items-center justify-between">
+          <View className="mb-3 flex-row items-center justify-between gap-2">
             <Text className="text-[15px] font-semibold" style={{ color: c.text.primary }}>
               {t('settings.planPaywall.proTitle')}
             </Text>
-            <View
-              className="rounded-full px-2.5 py-1"
-              style={{ backgroundColor: `${c.accent.primary}22` }}
-            >
-              <Text className="text-[11px] font-semibold" style={{ color: c.accent.primary }}>
-                PRO
+            {isIapPublic && iapProPriceLoading ? (
+              <ActivityIndicator color={c.accent.primary} />
+            ) : isIapPublic && iapProPriceLabel ? (
+              <Text
+                className="max-w-[58%] text-right text-[15px] font-semibold leading-5"
+                style={{ color: c.accent.primary }}
+                numberOfLines={2}
+                accessibilityLabel={iapProPriceLabel}
+              >
+                {iapProPriceLabel}
               </Text>
-            </View>
+            ) : (
+              <View
+                className="rounded-full px-2.5 py-1"
+                style={{ backgroundColor: `${c.accent.primary}22` }}
+              >
+                <Text className="text-[11px] font-semibold" style={{ color: c.accent.primary }}>
+                  PRO
+                </Text>
+              </View>
+            )}
           </View>
           <View className="gap-y-2.5">
             <FeatureRow text={t('settings.planPaywall.features.autoTranscription')} emphasized />

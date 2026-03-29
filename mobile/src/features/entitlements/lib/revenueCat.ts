@@ -141,6 +141,20 @@ function isPurchasesError(e: unknown): e is { code: PURCHASES_ERROR_CODE; messag
   );
 }
 
+export async function getDefaultProPackagePriceString(): Promise<string | null> {
+  if (!getRevenueCatIntegrationEnabled()) {
+    return null;
+  }
+  try {
+    const offerings = await Purchases.getOfferings();
+    const pkg = pickPackageFromOffering(offerings.current);
+    const raw = pkg?.product?.priceString?.trim();
+    return raw && raw.length > 0 ? raw : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function purchaseDefaultProPackage(): Promise<PurchaseProResult> {
   if (!getRevenueCatIntegrationEnabled()) {
     return { ok: false, cancelled: false, message: 'iap_unavailable' };
