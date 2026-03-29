@@ -452,13 +452,19 @@ export function useSettingsScreen() {
         const result = await restoreProPurchases();
         if (result.ok) {
           await refreshProEntitlement({ force: true });
-          if (isProActiveFromStorageSync()) {
+          if (result.entitlementActive || isProActiveFromStorageSync()) {
             setPlanPaywallVisible(false);
+            Alert.alert(t('common.done'), t('settings.planPaywall.restoreSuccess'));
+            return;
           }
-          Alert.alert(t('common.done'), t('settings.planPaywall.restoreSuccess'));
+          Alert.alert(t('common.done'), t('settings.planPaywall.restoreNothingFound'));
           return;
         }
-        Alert.alert(t('common.error'), t('settings.planPaywall.restoreError'));
+        const restoreErrBody =
+          result.message === 'iap_unavailable'
+            ? t('settings.planPaywall.purchaseErrorUnavailable')
+            : t('settings.planPaywall.restoreError');
+        Alert.alert(t('common.error'), restoreErrBody);
       } finally {
         setIapPaywallBusy(false);
       }
