@@ -413,20 +413,26 @@
       "a11yCurrentPlanHint": "This is information about your current plan"
     },
     "planPaywall": {
-      "title": "Let AI do the heavy lifting",
-      "subtitle": "AI automation, more generations, no ads.",
+      "title": "Let AI work for you",
+      "subtitle": "Automation, summaries, tasks, and note organization — without manual triggering.",
       "freeTitle": "Free",
       "freeLimits": {
-        "manualAi": "AI runs manually only — you start summary and tasks in each note",
+        "manualAi": "AI runs manually only",
         "recording": "Recordings up to {{minutes}} minutes",
         "weeklyAi": "Up to {{limit}} AI requests per week"
       },
       "proTitle": "Pro",
-      "upgrade": "Unlock Pro",
+      "upgrade": "Upgrade to Pro",
       "comingSoon": "Coming soon",
       "iapNotReady": "In-app purchase is not available in this build yet.",
+      "purchaseError": "Something went wrong. Please try again.",
+      "purchaseErrorNoPackage": "No subscription products are available yet. Check App Store / Play and RevenueCat.",
+      "purchaseErrorUnavailable": "Purchases are not configured in this build.",
+      "restorePurchases": "Restore purchases",
+      "restoreSuccess": "Your purchases were restored.",
+      "restoreError": "Could not restore purchases.",
       "features": {
-        "aiAutomationsAll": "All AI automations — auto-transcription, auto-summaries and tasks after transcription, and auto-archive for read notes",
+        "aiAutomationsAll": "All automations — auto-transcription, auto-summaries and tasks, auto-archive for read notes",
         "aiLimit": "Up to {{limit}} AI requests per week",
         "recordingUpTo30Min": "Recordings up to 30 minutes",
         "noAds": "No ads"

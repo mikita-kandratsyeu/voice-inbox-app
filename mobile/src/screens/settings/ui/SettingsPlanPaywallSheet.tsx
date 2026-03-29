@@ -3,7 +3,7 @@ import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/
 import { Check, Crown } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FREE_MAX_RECORDING_MS, type MonetizationMode } from '@/features/app-storefront';
@@ -18,6 +18,8 @@ type SettingsPlanPaywallSheetProps = {
   proAiLimit: number;
   onClose: () => void;
   onUpgradePress?: () => void;
+  onRestorePurchasesPress?: () => void;
+  iapBusy?: boolean;
 };
 
 type FeatureRowProps = {
@@ -65,6 +67,8 @@ export function SettingsPlanPaywallSheet({
   proAiLimit,
   onClose,
   onUpgradePress,
+  onRestorePurchasesPress,
+  iapBusy = false,
 }: SettingsPlanPaywallSheetProps) {
   const { t } = useTranslation();
   const c = useColors();
@@ -87,7 +91,8 @@ export function SettingsPlanPaywallSheet({
   );
 
   const isComingSoon = mode === 'coming_soon';
-  const upgradeDisabled = isComingSoon;
+  const isIapPublic = mode === 'iap_public';
+  const upgradeDisabled = isComingSoon || iapBusy;
   const upgradeLabel = isComingSoon
     ? t('settings.planPaywall.comingSoon')
     : t('settings.planPaywall.upgrade');
@@ -197,6 +202,24 @@ export function SettingsPlanPaywallSheet({
           color={c}
           activeOpacity={0.85}
         />
+        {isIapPublic && iapBusy ? (
+          <View className="mt-3 items-center">
+            <ActivityIndicator color={c.accent.primary} />
+          </View>
+        ) : null}
+        {isIapPublic && onRestorePurchasesPress ? (
+          <Pressable
+            className="mt-4 items-center justify-center py-2"
+            onPress={iapBusy ? undefined : onRestorePurchasesPress}
+            disabled={iapBusy}
+            accessibilityRole="button"
+            accessibilityLabel={t('settings.planPaywall.restorePurchases')}
+          >
+            <Text className="text-[15px] font-medium" style={{ color: c.accent.primary }}>
+              {t('settings.planPaywall.restorePurchases')}
+            </Text>
+          </Pressable>
+        ) : null}
       </BottomSheetView>
     </BottomSheetModal>
   );

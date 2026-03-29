@@ -24,6 +24,7 @@ import {
 } from '@/features/app-storefront';
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
+import { purchaseDefaultProPackage, restoreProPurchases } from '@/features/entitlements';
 import { useProEntitlement } from '@/features/pro-license';
 import { exportData, importData } from '@/features/sync-data';
 import { FREE_WEEKLY_LIMIT, useColors } from '@/shared/config';
@@ -86,6 +87,7 @@ export function useSettingsScreen() {
   const [planPaywallVisible, setPlanPaywallVisible] = useState(false);
   const [internalUpgradeVisible, setInternalUpgradeVisible] = useState(false);
   const [isHardResetting, setIsHardResetting] = useState(false);
+  const [iapPaywallBusy, setIapPaywallBusy] = useState(false);
 
   const {
     refresh: refreshProEntitlement,
@@ -365,9 +367,51 @@ export function useSettingsScreen() {
       return;
     }
     if (monetizationMode === 'iap_public') {
-      Alert.alert(t('settings.planPaywall.upgrade'), t('settings.planPaywall.iapNotReady'));
+      setIapPaywallBusy(true);
+      void (async () => {
+        try {
+          const result = await purchaseDefaultProPackage();
+          if (result.ok) {
+            setPlanPaywallVisible(false);
+            void refreshProEntitlement({ force: true });
+            return;
+          }
+          if (result.cancelled) {
+            return;
+          }
+          const body =
+            result.message === 'no_package'
+              ? t('settings.planPaywall.purchaseErrorNoPackage')
+              : result.message === 'iap_unavailable'
+                ? t('settings.planPaywall.purchaseErrorUnavailable')
+                : t('settings.planPaywall.purchaseError');
+          Alert.alert(t('common.error'), body);
+        } finally {
+          setIapPaywallBusy(false);
+        }
+      })();
     }
-  }, [monetizationMode, t]);
+  }, [monetizationMode, refreshProEntitlement, t]);
+
+  const handleRestorePurchasesPress = useCallback(() => {
+    if (monetizationMode !== 'iap_public') {
+      return;
+    }
+    setIapPaywallBusy(true);
+    void (async () => {
+      try {
+        const result = await restoreProPurchases();
+        if (result.ok) {
+          void refreshProEntitlement({ force: true });
+          Alert.alert(t('common.done'), t('settings.planPaywall.restoreSuccess'));
+          return;
+        }
+        Alert.alert(t('common.error'), t('settings.planPaywall.restoreError'));
+      } finally {
+        setIapPaywallBusy(false);
+      }
+    })();
+  }, [monetizationMode, refreshProEntitlement, t]);
 
   const handleHardReset = useCallback(() => {
     Alert.alert(
@@ -452,6 +496,8 @@ export function useSettingsScreen() {
     setPlanPaywallVisible,
     automationSheet,
     handleUpgradePress,
+    handleRestorePurchasesPress,
+    iapPaywallBusy,
     handleHardReset,
     isHardResetting,
   };

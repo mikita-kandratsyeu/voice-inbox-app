@@ -1,6 +1,9 @@
 export { getEntitlementBackend } from './lib/resolveEntitlementBackend';
+export type { PurchaseProResult } from './lib/revenueCat';
 export {
+  getRevenueCatIntegrationEnabled,
   initRevenueCatWhenReady,
-  REVENUECAT_INTEGRATION_ENABLED,
-} from './lib/revenueCatPlaceholder';
+  purchaseDefaultProPackage,
+  restoreProPurchases,
+} from './lib/revenueCat';
 export type { EntitlementBackendKind, EntitlementPortSnapshot } from './model/types';
