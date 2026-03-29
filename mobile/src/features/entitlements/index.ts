@@ -1,10 +1,18 @@
 export { getEntitlementBackend } from './lib/resolveEntitlementBackend';
-export type { PurchaseProResult } from './lib/revenueCat';
+export type {
+  IapBillingOptions,
+  IapBillingPeriod,
+  IapBillingProductRow,
+  IapIntroFreePeriod,
+  PurchaseProResult,
+} from './lib/revenueCat';
 export {
-  getDefaultProPackagePriceString,
+  getProBillingPriceOptions,
   getRevenueCatIntegrationEnabled,
   initRevenueCatWhenReady,
   purchaseDefaultProPackage,
+  purchaseProPackageForPeriod,
+  resolveDefaultIapBillingPeriod,
   restoreProPurchases,
 } from './lib/revenueCat';
 export type { EntitlementBackendKind, EntitlementPortSnapshot } from './model/types';

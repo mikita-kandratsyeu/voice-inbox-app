@@ -24,9 +24,11 @@ import {
 } from '@/features/app-storefront';
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
+import type { IapBillingOptions, IapBillingPeriod } from '@/features/entitlements';
 import {
-  getDefaultProPackagePriceString,
-  purchaseDefaultProPackage,
+  getProBillingPriceOptions,
+  purchaseProPackageForPeriod,
+  resolveDefaultIapBillingPeriod,
   restoreProPurchases,
 } from '@/features/entitlements';
 import { useProEntitlement } from '@/features/pro-license';
@@ -92,7 +94,12 @@ export function useSettingsScreen() {
   const [internalUpgradeVisible, setInternalUpgradeVisible] = useState(false);
   const [isHardResetting, setIsHardResetting] = useState(false);
   const [iapPaywallBusy, setIapPaywallBusy] = useState(false);
-  const [iapProPriceLabel, setIapProPriceLabel] = useState<string | null>(null);
+  const [iapBilling, setIapBilling] = useState<IapBillingOptions>({
+    monthly: null,
+    annual: null,
+    savePercentVsMonthly: null,
+  });
+  const [selectedIapPeriod, setSelectedIapPeriod] = useState<IapBillingPeriod>('annual');
   const [iapProPriceLoading, setIapProPriceLoading] = useState(false);
 
   const {
@@ -109,10 +116,11 @@ export function useSettingsScreen() {
     }
     let cancelled = false;
     setIapProPriceLoading(true);
-    setIapProPriceLabel(null);
-    void getDefaultProPackagePriceString().then((label) => {
+    setIapBilling({ monthly: null, annual: null, savePercentVsMonthly: null });
+    void getProBillingPriceOptions().then((opts) => {
       if (!cancelled) {
-        setIapProPriceLabel(label);
+        setIapBilling(opts);
+        setSelectedIapPeriod(resolveDefaultIapBillingPeriod(opts));
         setIapProPriceLoading(false);
       }
     });
@@ -394,7 +402,7 @@ export function useSettingsScreen() {
       setIapPaywallBusy(true);
       void (async () => {
         try {
-          const result = await purchaseDefaultProPackage();
+          const result = await purchaseProPackageForPeriod(selectedIapPeriod);
           if (result.ok) {
             setPlanPaywallVisible(false);
             void refreshProEntitlement({ force: true });
@@ -415,7 +423,11 @@ export function useSettingsScreen() {
         }
       })();
     }
-  }, [monetizationMode, refreshProEntitlement, t]);
+  }, [monetizationMode, refreshProEntitlement, selectedIapPeriod, t]);
+
+  const onIapBillingPeriodChange = useCallback((period: IapBillingPeriod) => {
+    setSelectedIapPeriod(period);
+  }, []);
 
   const handleRestorePurchasesPress = useCallback(() => {
     if (monetizationMode !== 'iap_public') {
@@ -522,7 +534,9 @@ export function useSettingsScreen() {
     handleUpgradePress,
     handleRestorePurchasesPress,
     iapPaywallBusy,
-    iapProPriceLabel,
+    iapBilling,
+    selectedIapPeriod,
+    onIapBillingPeriodChange,
     iapProPriceLoading,
     handleHardReset,
     isHardResetting,

@@ -2,6 +2,10 @@ import {
   APP_STORE_URL,
   EXPERIMENTAL_PRIVATE_AI_ENABLED,
   GOOGLE_PLAY_URL,
+  REVENUECAT_API_KEY_ANDROID,
+  REVENUECAT_API_KEY_IOS,
+  REVENUECAT_ENTITLEMENT_ID,
+  REVENUECAT_PACKAGE_TYPE_PREFERRED,
   WEB_API_URL,
   WEBSITE_URL,
   YANDEX_BANNER_AD_UNIT_ID,
@@ -23,7 +27,11 @@ type RemoteKey =
   | 'WEB_API_URL'
   | 'YANDEX_REWARDED_AD_UNIT_ID'
   | 'YANDEX_BANNER_AD_UNIT_ID'
-  | 'EXPERIMENTAL_PRIVATE_AI_ENABLED';
+  | 'EXPERIMENTAL_PRIVATE_AI_ENABLED'
+  | 'REVENUECAT_API_KEY_IOS'
+  | 'REVENUECAT_API_KEY_ANDROID'
+  | 'REVENUECAT_ENTITLEMENT_ID'
+  | 'REVENUECAT_PACKAGE_TYPE_PREFERRED';
 
 type RemoteConfigModule = ReturnType<typeof getRemoteConfig>;
 
@@ -35,6 +43,10 @@ export type RuntimeConfigSnapshot = {
   yandexRewardedAdUnitId: string;
   yandexBannerAdUnitId: string;
   experimentalPrivateAiEnabled: boolean;
+  revenueCatApiKeyIos: string;
+  revenueCatApiKeyAndroid: string;
+  revenueCatEntitlementId: string;
+  revenueCatPackageTypePreferred: string;
 };
 
 function isTruthyEnvFlag(v: string | undefined): boolean {
@@ -52,6 +64,10 @@ function buildEmbedded(): RuntimeConfigSnapshot {
     yandexRewardedAdUnitId: YANDEX_REWARDED_AD_UNIT_ID?.trim() ?? '',
     yandexBannerAdUnitId: YANDEX_BANNER_AD_UNIT_ID?.trim() ?? '',
     experimentalPrivateAiEnabled: isTruthyEnvFlag(EXPERIMENTAL_PRIVATE_AI_ENABLED),
+    revenueCatApiKeyIos: REVENUECAT_API_KEY_IOS?.trim() ?? '',
+    revenueCatApiKeyAndroid: REVENUECAT_API_KEY_ANDROID?.trim() ?? '',
+    revenueCatEntitlementId: REVENUECAT_ENTITLEMENT_ID?.trim() ?? '',
+    revenueCatPackageTypePreferred: REVENUECAT_PACKAGE_TYPE_PREFERRED?.trim() ?? '',
   };
 }
 
@@ -64,6 +80,10 @@ function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
     YANDEX_REWARDED_AD_UNIT_ID: s.yandexRewardedAdUnitId,
     YANDEX_BANNER_AD_UNIT_ID: s.yandexBannerAdUnitId,
     EXPERIMENTAL_PRIVATE_AI_ENABLED: s.experimentalPrivateAiEnabled ? '1' : '0',
+    REVENUECAT_API_KEY_IOS: s.revenueCatApiKeyIos,
+    REVENUECAT_API_KEY_ANDROID: s.revenueCatApiKeyAndroid,
+    REVENUECAT_ENTITLEMENT_ID: s.revenueCatEntitlementId,
+    REVENUECAT_PACKAGE_TYPE_PREFERRED: s.revenueCatPackageTypePreferred,
   };
 }
 
@@ -153,6 +173,26 @@ function mergeRemote(
       'EXPERIMENTAL_PRIVATE_AI_ENABLED',
       embedded.experimentalPrivateAiEnabled,
     ),
+    revenueCatApiKeyIos: readRemoteString(
+      rc,
+      'REVENUECAT_API_KEY_IOS',
+      embedded.revenueCatApiKeyIos,
+    ),
+    revenueCatApiKeyAndroid: readRemoteString(
+      rc,
+      'REVENUECAT_API_KEY_ANDROID',
+      embedded.revenueCatApiKeyAndroid,
+    ),
+    revenueCatEntitlementId: readRemoteString(
+      rc,
+      'REVENUECAT_ENTITLEMENT_ID',
+      embedded.revenueCatEntitlementId,
+    ),
+    revenueCatPackageTypePreferred: readRemoteString(
+      rc,
+      'REVENUECAT_PACKAGE_TYPE_PREFERRED',
+      embedded.revenueCatPackageTypePreferred,
+    ),
   };
 }
 
@@ -209,4 +249,20 @@ export function getYandexBannerAdUnitId(): string {
 
 export function getExperimentalPrivateAiEnabled(): boolean {
   return snapshot.experimentalPrivateAiEnabled;
+}
+
+export function getRevenueCatApiKeyIos(): string {
+  return snapshot.revenueCatApiKeyIos;
+}
+
+export function getRevenueCatApiKeyAndroid(): string {
+  return snapshot.revenueCatApiKeyAndroid;
+}
+
+export function getRevenueCatEntitlementId(): string {
+  return snapshot.revenueCatEntitlementId;
+}
+
+export function getRevenueCatPackageTypePreferred(): string {
+  return snapshot.revenueCatPackageTypePreferred;
 }

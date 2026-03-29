@@ -1,10 +1,10 @@
-import {
-  REVENUECAT_API_KEY_ANDROID,
-  REVENUECAT_API_KEY_IOS,
-  REVENUECAT_ENTITLEMENT_ID,
-  REVENUECAT_PACKAGE_TYPE_PREFERRED,
-} from '@env';
-import type { CustomerInfo, PurchasesOffering, PurchasesPackage } from 'react-native-purchases';
+import type {
+  CustomerInfo,
+  PurchasesIntroPrice,
+  PurchasesOffering,
+  PurchasesPackage,
+  PurchasesStoreProduct,
+} from 'react-native-purchases';
 import Purchases, { PURCHASES_ERROR_CODE } from 'react-native-purchases';
 
 import {
@@ -13,6 +13,12 @@ import {
 } from '@/features/pro-license/lib/proEntitlementStorage';
 import { syncProLicenseFromServer } from '@/features/pro-license/lib/syncProLicenseFromServer';
 import { isSubscriptionsPubliclyAvailable } from '@/shared/config/buildEnv';
+import {
+  getRevenueCatApiKeyAndroid,
+  getRevenueCatApiKeyIos,
+  getRevenueCatEntitlementId,
+  getRevenueCatPackageTypePreferred,
+} from '@/shared/config/runtimeConfig';
 import { invalidateProLicenseStatusCache } from '@/shared/lib/ai-api/proLicenseApi';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 
@@ -21,13 +27,13 @@ function trimEnv(v: string | undefined): string {
 }
 
 function getEntitlementId(): string {
-  const id = trimEnv(REVENUECAT_ENTITLEMENT_ID);
+  const id = trimEnv(getRevenueCatEntitlementId());
   return id.length > 0 ? id : 'pro';
 }
 
 export function getRevenueCatApiKeyForPlatform(): string | null {
-  const ios = trimEnv(REVENUECAT_API_KEY_IOS);
-  const android = trimEnv(REVENUECAT_API_KEY_ANDROID);
+  const ios = trimEnv(getRevenueCatApiKeyIos());
+  const android = trimEnv(getRevenueCatApiKeyAndroid());
 
   if (IS_IOS && ios.length > 0) return ios;
   if (IS_ANDROID && android.length > 0) return android;
@@ -66,9 +72,90 @@ async function onCustomerInfoUpdated(info: CustomerInfo): Promise<void> {
   await syncProLicenseFromServer(true);
 }
 
+export type IapBillingPeriod = 'annual' | 'monthly';
+
+function packageForPeriod(
+  offering: PurchasesOffering | null,
+  period: IapBillingPeriod,
+): PurchasesPackage | null {
+  if (!offering) return null;
+  if (period === 'annual') return offering.annual ?? null;
+  return offering.monthly ?? null;
+}
+
+export type IapIntroFreePeriod = {
+  unit: 'DAY' | 'WEEK' | 'MONTH' | 'YEAR';
+  count: number;
+};
+
+export type IapBillingProductRow = {
+  priceString: string;
+  /** Annual subscription: store-formatted equivalent per month */
+  pricePerMonthString: string | null;
+  introFree: IapIntroFreePeriod | null;
+};
+
+export type IapBillingOptions = {
+  monthly: IapBillingProductRow | null;
+  annual: IapBillingProductRow | null;
+  /** Compared to paying the monthly plan twelve times; null if not cheaper or data missing */
+  savePercentVsMonthly: number | null;
+};
+
+function introFreeFromIntro(
+  intro: PurchasesIntroPrice | null | undefined,
+): IapIntroFreePeriod | null {
+  if (!intro || intro.price > 0) {
+    return null;
+  }
+  const u = (intro.periodUnit ?? '').toUpperCase();
+  if (u !== 'DAY' && u !== 'WEEK' && u !== 'MONTH' && u !== 'YEAR') {
+    return null;
+  }
+  const count = intro.periodNumberOfUnits;
+  if (!Number.isFinite(count) || count <= 0) {
+    return null;
+  }
+  return { unit: u as IapIntroFreePeriod['unit'], count };
+}
+
+function billingRowFromProduct(
+  product: PurchasesStoreProduct | undefined,
+): IapBillingProductRow | null {
+  if (!product) {
+    return null;
+  }
+  const ps = product.priceString?.trim();
+  if (!ps) {
+    return null;
+  }
+  const perMo = product.pricePerMonthString?.trim();
+  return {
+    priceString: ps,
+    pricePerMonthString: perMo && perMo.length > 0 ? perMo : null,
+    introFree: introFreeFromIntro(product.introPrice),
+  };
+}
+
+export function resolveDefaultIapBillingPeriod(opts: IapBillingOptions): IapBillingPeriod {
+  const hasM = opts.monthly != null;
+  const hasA = opts.annual != null;
+  if (hasA && hasM) {
+    const pref = trimEnv(getRevenueCatPackageTypePreferred()).toUpperCase();
+
+    if (pref === 'MONTHLY') return 'monthly';
+
+    return 'annual';
+  }
+
+  if (hasA) return 'annual';
+
+  return 'monthly';
+}
+
 function pickPackageFromOffering(offering: PurchasesOffering | null): PurchasesPackage | null {
   if (!offering) return null;
-  const pref = trimEnv(REVENUECAT_PACKAGE_TYPE_PREFERRED).toUpperCase();
+  const pref = trimEnv(getRevenueCatPackageTypePreferred()).toUpperCase();
   const byPref: Record<string, PurchasesPackage | null> = {
     ANNUAL: offering.annual,
     MONTHLY: offering.monthly,
@@ -141,17 +228,60 @@ function isPurchasesError(e: unknown): e is { code: PURCHASES_ERROR_CODE; messag
   );
 }
 
-export async function getDefaultProPackagePriceString(): Promise<string | null> {
+export async function getProBillingPriceOptions(): Promise<IapBillingOptions> {
   if (!getRevenueCatIntegrationEnabled()) {
-    return null;
+    return { monthly: null, annual: null, savePercentVsMonthly: null };
   }
   try {
     const offerings = await Purchases.getOfferings();
-    const pkg = pickPackageFromOffering(offerings.current);
-    const raw = pkg?.product?.priceString?.trim();
-    return raw && raw.length > 0 ? raw : null;
+    const o = offerings.current;
+    if (!o) {
+      return { monthly: null, annual: null, savePercentVsMonthly: null };
+    }
+    const monthly = billingRowFromProduct(o.monthly?.product);
+    const annual = billingRowFromProduct(o.annual?.product);
+
+    let savePercentVsMonthly: number | null = null;
+    const mp = o.monthly?.product?.price;
+    const ap = o.annual?.product?.price;
+    if (monthly && annual && mp != null && ap != null && mp > 0 && ap > 0) {
+      const yearAtMonthlyRate = mp * 12;
+      if (ap < yearAtMonthlyRate) {
+        const pct = Math.round((1 - ap / yearAtMonthlyRate) * 100);
+        savePercentVsMonthly = pct >= 1 ? pct : null;
+      }
+    }
+
+    return { monthly, annual, savePercentVsMonthly };
   } catch {
-    return null;
+    return { monthly: null, annual: null, savePercentVsMonthly: null };
+  }
+}
+
+export async function purchaseProPackageForPeriod(
+  period: IapBillingPeriod,
+): Promise<PurchaseProResult> {
+  if (!getRevenueCatIntegrationEnabled()) {
+    return { ok: false, cancelled: false, message: 'iap_unavailable' };
+  }
+  try {
+    const offerings = await Purchases.getOfferings();
+    const pkg = packageForPeriod(offerings.current, period);
+    if (!pkg) {
+      return { ok: false, cancelled: false, message: 'no_package' };
+    }
+    const { customerInfo } = await Purchases.purchasePackage(pkg);
+    await onCustomerInfoUpdated(customerInfo);
+    return { ok: true };
+  } catch (e) {
+    if (isPurchasesError(e) && e.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
+      return { ok: false, cancelled: true, message: 'cancelled' };
+    }
+    const msg = isPurchasesError(e) ? e.message : 'unknown';
+    if (__DEV__) {
+      console.warn('[RevenueCat] purchase failed', e);
+    }
+    return { ok: false, cancelled: false, message: msg };
   }
 }
 
