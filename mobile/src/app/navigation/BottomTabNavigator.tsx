@@ -107,6 +107,8 @@ export const BottomTabNavigator = () => {
     lazy: true,
   };
 
+  const bottomTouchShieldHeight = FLOAT_TAB_BOTTOM_GAP + insets.bottom;
+
   return (
     <View className="flex-1">
       <ImportAudioProgressOverlay visible={isImporting} phase={importPhase} />
@@ -180,6 +182,18 @@ export const BottomTabNavigator = () => {
           }}
         />
       </Tab.Navigator>
+      <View
+        pointerEvents="box-only"
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          height: bottomTouchShieldHeight,
+        }}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      />
     </View>
   );
 };
