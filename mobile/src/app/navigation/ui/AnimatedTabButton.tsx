@@ -26,11 +26,11 @@ export const AnimatedTabButton = ({
   const scale = useSharedValue(1);
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.82, { damping: 12, stiffness: 400 });
+    scale.value = withSpring(0.9, { damping: 22, stiffness: 380 });
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 10, stiffness: 200 });
+    scale.value = withSpring(1, { damping: 20, stiffness: 280 });
   };
 
   const animatedStyle = useAnimatedStyle(() => ({
