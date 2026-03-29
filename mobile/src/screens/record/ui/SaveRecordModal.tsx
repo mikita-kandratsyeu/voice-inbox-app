@@ -15,6 +15,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { useColors } from '@/shared/config';
 import {
   formatTime,
+  hapticLight,
   hapticSuccess,
   iosHitSlopForVisualSize,
   IS_IOS,
@@ -118,6 +119,8 @@ export const SaveRecordModal = ({
 
   const handleDiscardPress = useCallback(() => {
     if (!onDiscard) return;
+
+    hapticLight();
     dismissReasonRef.current = 'discard';
     void Promise.resolve(onDiscard());
   }, [onDiscard]);
