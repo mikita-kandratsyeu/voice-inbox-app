@@ -2,7 +2,7 @@ import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw } from 'lucide-react-
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LayoutChangeEvent, Text, TouchableOpacity, View } from 'react-native';
-import AudioRecorderPlayer, { type PlayBackType } from 'react-native-audio-recorder-player';
+import AudioRecorderPlayer, { type PlayBackType } from 'react-native-nitro-sound';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';

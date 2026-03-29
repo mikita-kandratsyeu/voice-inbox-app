@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState, type AppStateStatus } from 'react-native';
-import type { AudioSet, RecordBackType } from 'react-native-audio-recorder-player';
+import type { AudioSet, RecordBackType } from 'react-native-nitro-sound';
 import AudioRecorderPlayer, {
   AudioEncoderAndroidType,
   AudioSourceAndroidType,
   OutputFormatAndroidType,
-} from 'react-native-audio-recorder-player';
+} from 'react-native-nitro-sound';
 
 import { useAppLockStore } from '@/entities/app-lock';
 import { NitroFS } from '@/shared/lib/fs';

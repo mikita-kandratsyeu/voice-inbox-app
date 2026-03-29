@@ -58,7 +58,7 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use Face ID to quickly unlock the app.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>The app needs microphone access to record voice notes.</string>
+	<string>The app needs microphone access for voice recording.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
 	<string>Adding tasks from notes to Reminders.</string>
 	<key>NSRemindersUsageDescription</key>

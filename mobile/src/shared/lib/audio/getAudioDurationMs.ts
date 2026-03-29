@@ -1,4 +1,4 @@
-import AudioRecorderPlayer, { type PlayBackType } from 'react-native-audio-recorder-player';
+import AudioRecorderPlayer, { type PlayBackType } from 'react-native-nitro-sound';
 
 import { isNumber } from '@/shared/lib/type-guards';
 
@@ -6,10 +6,6 @@ import { getAudioDuration } from './getAudioDuration';
 
 const player = AudioRecorderPlayer;
 
-/**
- * Returns duration in milliseconds. Tries WAV header first, then uses the audio player.
- * Returns null if duration could not be determined.
- */
 export const getAudioDurationMs = async (audioPath: string): Promise<number | null> => {
   const normalizedPath = audioPath.startsWith('file://') ? audioPath.slice(7) : audioPath;
   const lower = normalizedPath.toLowerCase();

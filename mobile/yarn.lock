@@ -3675,6 +3675,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-community/slider@npm:^5.0.1":
+  version: 5.1.2
+  resolution: "@react-native-community/slider@npm:5.1.2"
+  checksum: 10c0/e48f0ad72292ca30d63b84a6c0137bb3531516c22a8a3bd1981132f25e3195c19757da271d5b8b1d66d73882ccef02a0cf21c3a99f23144623345c4eaa67823c
+  languageName: node
+  linkType: hard
+
 "@react-native-firebase/analytics@npm:23.8.8":
   version: 23.8.8
   resolution: "@react-native-firebase/analytics@npm:23.8.8"
@@ -10825,17 +10832,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-audio-recorder-player@npm:^4.5.0":
-  version: 4.5.0
-  resolution: "react-native-audio-recorder-player@npm:4.5.0"
-  peerDependencies:
-    react: "*"
-    react-native: "*"
-    react-native-nitro-modules: "*"
-  checksum: 10c0/1be91b64017112099e240c5e8a33d6c6a51e70397ebdfa58d0a72ead0e507b0071d1dcbe0748f7f5ee4538c0a19948434de1f9560ee4eeb4c81a67df06007c73
-  languageName: node
-  linkType: hard
-
 "react-native-blob-util@npm:^0.22.2":
   version: 0.22.2
   resolution: "react-native-blob-util@npm:0.22.2"
@@ -11128,6 +11124,19 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 10c0/59043373ad9541b3dff7fe802ecbf262f24b65356b2e4814f216d4ef091e4cae40bf83605fc34f6c13781380e88af779c7e0a9cd3229f7b0b60f09183f42b75d
+  languageName: node
+  linkType: hard
+
+"react-native-nitro-sound@npm:^0.2.12":
+  version: 0.2.12
+  resolution: "react-native-nitro-sound@npm:0.2.12"
+  dependencies:
+    "@react-native-community/slider": "npm:^5.0.1"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: ">=0.35.0"
+  checksum: 10c0/3b1b1468e068725a2eb95d4959b207e23802ac86d7acb4c4dd173475bacdb4e8a8ee56e59a31f18ab32f89975e8cec3a97ca05e8f71d95632812e4ede9f5be93
   languageName: node
   linkType: hard
 
@@ -13141,7 +13150,6 @@ __metadata:
     react-i18next: "npm:^16.5.6"
     react-native: "npm:0.84.1"
     react-native-add-calendar-event: "npm:^5.0.0"
-    react-native-audio-recorder-player: "npm:^4.5.0"
     react-native-blob-util: "npm:^0.22.2"
     react-native-bootsplash: "npm:^7.1.0"
     react-native-calendar-events: "npm:^2.2.0"
@@ -13161,6 +13169,7 @@ __metadata:
     react-native-nitro-fetch: "npm:^0.1.7"
     react-native-nitro-fs: "npm:^0.8.2"
     react-native-nitro-modules: "npm:^0.35.1"
+    react-native-nitro-sound: "npm:^0.2.12"
     react-native-permissions: "npm:^5.1.0"
     react-native-quick-base64: "npm:^2.2.2"
     react-native-quick-crypto: "npm:^1.0.17"

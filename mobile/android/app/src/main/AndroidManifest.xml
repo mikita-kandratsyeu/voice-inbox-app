@@ -19,6 +19,7 @@
       android:usesCleartextTraffic="${usesCleartextTraffic}"
       android:supportsRtl="true"
       android:enableOnBackInvokedCallback="false"
+      android:localeConfig="@xml/locales_config"
       >
       <activity
         android:name=".MainActivity"

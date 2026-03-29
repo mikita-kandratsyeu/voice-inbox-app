@@ -1,10 +1,10 @@
-import { Linking, PermissionsAndroid } from 'react-native';
-import type { AudioSet } from 'react-native-audio-recorder-player';
+import { Alert, Linking, PermissionsAndroid } from 'react-native';
+import type { AudioSet } from 'react-native-nitro-sound';
 import AudioRecorderPlayer, {
   AudioEncoderAndroidType,
   AudioSourceAndroidType,
   OutputFormatAndroidType,
-} from 'react-native-audio-recorder-player';
+} from 'react-native-nitro-sound';
 
 import { IS_ANDROID } from '@/shared/lib/platform';
 
@@ -36,9 +36,6 @@ export async function checkMicPermission(): Promise<MicPermissionStatus> {
     return result ? 'granted' : 'not-determined';
   }
 
-  // iOS: check via react-native-permissions if available (does not trigger dialog)
-  // Note: check() can return 'denied' for "not determined" on first launch - we treat only
-  // 'blocked' as true denied (user chose "Don't Allow" and must use Settings).
   try {
     const { check, PERMISSIONS } = await import('react-native-permissions');
     const status = await check(PERMISSIONS.IOS.MICROPHONE);
@@ -66,22 +63,46 @@ const DEFAULT_MIC_OPTIONS: Required<RequestMicPermissionOptions> = {
   buttonNegative: 'Deny',
 };
 
+function confirmMicPrompt(opts: Required<RequestMicPermissionOptions>): Promise<boolean> {
+  return new Promise((resolve) => {
+    let settled = false;
+    const done = (proceed: boolean) => {
+      if (settled) return;
+      settled = true;
+      resolve(proceed);
+    };
+
+    Alert.alert(
+      opts.title,
+      opts.message,
+      [
+        { text: opts.buttonNegative, style: 'cancel', onPress: () => done(false) },
+        { text: opts.buttonPositive, onPress: () => done(true) },
+      ],
+      IS_ANDROID ? { cancelable: true, onDismiss: () => done(false) } : undefined,
+    );
+  });
+}
+
 export async function requestMicPermission(
   options?: RequestMicPermissionOptions,
 ): Promise<boolean> {
   const opts = { ...DEFAULT_MIC_OPTIONS, ...options };
 
   if (IS_ANDROID) {
-    const result = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO, {
-      title: opts.title ?? DEFAULT_MIC_OPTIONS.title,
-      message: opts.message ?? DEFAULT_MIC_OPTIONS.message,
-      buttonPositive: opts.buttonPositive ?? DEFAULT_MIC_OPTIONS.buttonPositive,
-      buttonNegative: opts.buttonNegative ?? DEFAULT_MIC_OPTIONS.buttonNegative,
-    });
-    return result === PermissionsAndroid.RESULTS.GRANTED;
+    const proceed = await confirmMicPrompt(opts);
+    if (!proceed) return false;
+    try {
+      const result = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
+      return result === PermissionsAndroid.RESULTS.GRANTED;
+    } catch {
+      return false;
+    }
   }
 
-  // iOS: use react-native-permissions for proper request (no startRecorder errors)
+  const proceed = await confirmMicPrompt(opts);
+  if (!proceed) return false;
+
   try {
     const { request, PERMISSIONS } = await import('react-native-permissions');
     const status = await request(PERMISSIONS.IOS.MICROPHONE);
@@ -93,7 +114,6 @@ export async function requestMicPermission(
     }
     return false;
   } catch {
-    // Fallback: try startRecorder for older setup or if permissions lib unavailable
     try {
       await iosRecorder.startRecorder(undefined, IOS_AUDIO_SET, false);
       await iosRecorder.stopRecorder();

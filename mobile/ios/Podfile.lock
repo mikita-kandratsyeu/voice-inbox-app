@@ -294,29 +294,6 @@ PODS:
     - nanopb/encode (= 3.30910.0)
   - nanopb/decode (3.30910.0)
   - nanopb/encode (3.30910.0)
-  - NitroAudioRecorderPlayer (4.5.0):
-    - hermes-engine
-    - NitroModules
-    - RCTRequired
-    - RCTTypeSafety
-    - React-callinvoker
-    - React-Core
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - NitroDeviceInfo (1.7.0):
     - NitroModules
   - NitroFetch (0.1.7):
@@ -391,6 +368,29 @@ PODS:
     - Yoga
   - NitroModules (0.35.1):
     - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-callinvoker
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - NitroSound (0.2.12):
+    - hermes-engine
+    - NitroModules
     - RCTRequired
     - RCTTypeSafety
     - React-callinvoker
@@ -2905,12 +2905,12 @@ DEPENDENCIES:
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - InappbrowserNitro (from `../node_modules/react-native-inappbrowser-nitro`)
   - llama-rn (from `../node_modules/llama.rn`)
-  - NitroAudioRecorderPlayer (from `../node_modules/react-native-audio-recorder-player`)
   - NitroDeviceInfo (from `../node_modules/react-native-nitro-device-info`)
   - NitroFetch (from `../node_modules/react-native-nitro-fetch`)
   - NitroFS (from `../node_modules/react-native-nitro-fs`)
   - NitroMmkv (from `../node_modules/react-native-mmkv`)
   - NitroModules (from `../node_modules/react-native-nitro-modules`)
+  - NitroSound (from `../node_modules/react-native-nitro-sound`)
   - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
   - QuickCrypto (from `../node_modules/react-native-quick-crypto`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -3081,8 +3081,6 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-inappbrowser-nitro"
   llama-rn:
     :path: "../node_modules/llama.rn"
-  NitroAudioRecorderPlayer:
-    :path: "../node_modules/react-native-audio-recorder-player"
   NitroDeviceInfo:
     :path: "../node_modules/react-native-nitro-device-info"
   NitroFetch:
@@ -3093,6 +3091,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-mmkv"
   NitroModules:
     :path: "../node_modules/react-native-nitro-modules"
+  NitroSound:
+    :path: "../node_modules/react-native-nitro-sound"
   op-sqlite:
     :path: "../node_modules/@op-engineering/op-sqlite"
   QuickCrypto:
@@ -3348,12 +3348,12 @@ SPEC CHECKSUMS:
   llama-rn: 008a9f239336bbcfb7472425d7b2c5b554264338
   MMKVCore: d078dce7d6586a888b2c2ef5343b6242678e3ee8
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
-  NitroAudioRecorderPlayer: 591eafbd1908d214a84b401a2233c5b181106363
   NitroDeviceInfo: 8c57fd4d884155052244f9b2470ae735ec5d92b3
   NitroFetch: 53b7f10027cbf4daee1beadf40b4b280c367cc56
   NitroFS: ac0caec3a38062ecfe5a6936b2e6e7839fc978eb
   NitroMmkv: 0f11ad6005a9c66c93c3c86ab1f225b7c609d6e5
   NitroModules: 3e1e1938d5f698874d716069411898b7da9f337f
+  NitroSound: ee6196cdbe94de95a534f5cebf1cc45c9906aab8
   op-sqlite: dff3a0a80c159513a4024f2b971bd1f9d26ae804
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
