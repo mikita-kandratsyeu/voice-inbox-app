@@ -568,8 +568,19 @@ export const InboxScreen = () => {
       {!isLoaded ? (
         <InboxSkeleton color={color} />
       ) : records.length === 0 ? (
-        <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-          <View style={{ flex: 1, justifyContent: 'center' }}>
+        <View
+          style={{
+            flex: 1,
+            backgroundColor: color.background.secondary,
+            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+            }}
+          >
             <EmptyState
               title={t('inbox.emptyTitle')}
               description={t('inbox.emptyDescription')}

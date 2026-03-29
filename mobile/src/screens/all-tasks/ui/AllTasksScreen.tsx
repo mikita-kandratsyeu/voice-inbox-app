@@ -6,6 +6,7 @@ import { SectionList, Switch, Text, useWindowDimensions, View } from 'react-nati
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
+import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
@@ -206,7 +207,12 @@ export const AllTasksScreen = () => {
       {empty ? (
         <View
           className="flex-1"
-          style={{ maxWidth: bannerMaxWidth, alignSelf: 'center', width: '100%' }}
+          style={{
+            maxWidth: bannerMaxWidth,
+            alignSelf: 'center',
+            width: '100%',
+            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
+          }}
         >
           <View className="flex-1 justify-center px-6">
             <EmptyState
