@@ -27,6 +27,7 @@ import { regenerateAllEmbeddings } from '@/features/embedding-generation';
 import type { IapBillingOptions, IapBillingPeriod } from '@/features/entitlements';
 import {
   getProBillingPriceOptions,
+  openStoreSubscriptionManagement,
   purchaseProPackageForPeriod,
   resolveDefaultIapBillingPeriod,
   restoreProPurchases,
@@ -389,9 +390,20 @@ export function useSettingsScreen() {
   }, [micStatus, t]);
 
   const handlePlanCardPress = useCallback(() => {
-    if (proEntitlementActive) return;
+    if (proEntitlementActive) {
+      if (monetizationMode !== 'iap_public') {
+        return;
+      }
+      void (async () => {
+        const ok = await openStoreSubscriptionManagement();
+        if (!ok) {
+          Alert.alert(t('common.error'), t('settings.subscriptionManagementOpenError'));
+        }
+      })();
+      return;
+    }
     setPlanPaywallVisible(true);
-  }, [proEntitlementActive]);
+  }, [monetizationMode, proEntitlementActive, t]);
 
   const handleUpgradePress = useCallback(() => {
     if (monetizationMode === 'internal_license') {

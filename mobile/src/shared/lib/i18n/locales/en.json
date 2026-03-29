@@ -409,8 +409,10 @@
       "a11yOpenPlans": "Open plan comparison",
       "a11yOpenPlansHint": "Opens a screen with Free and Pro plans",
       "a11yCurrentPlanPro": "Current plan Pro, active until {{date}}",
-      "a11yCurrentPlanHint": "This is information about your current plan"
+      "a11yCurrentPlanHint": "This is information about your current plan",
+      "a11yManageSubscriptionsHint": "Opens subscription management in the App Store or Google Play"
     },
+    "subscriptionManagementOpenError": "Could not open subscription settings. Try Subscriptions in the App Store or Google Play.",
     "planPaywall": {
       "title": "Let AI work for you",
       "subtitle": "Automation, summaries, tasks, and note organization — without manual triggering.",

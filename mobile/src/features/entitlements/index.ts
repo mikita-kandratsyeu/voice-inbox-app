@@ -1,3 +1,4 @@
+export { openStoreSubscriptionManagement } from './lib/openStoreSubscriptionManagement';
 export { getEntitlementBackend } from './lib/resolveEntitlementBackend';
 export type {
   IapBillingOptions,

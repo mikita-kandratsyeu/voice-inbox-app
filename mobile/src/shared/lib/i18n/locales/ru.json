@@ -409,8 +409,10 @@
       "a11yOpenPlans": "Открыть сравнение планов",
       "a11yOpenPlansHint": "Откроется экран с планами Free и Pro",
       "a11yCurrentPlanPro": "Текущий план Pro, активен до {{date}}",
-      "a11yCurrentPlanHint": "Это информация о текущем плане"
+      "a11yCurrentPlanHint": "Это информация о текущем плане",
+      "a11yManageSubscriptionsHint": "Откроется управление подписками в App Store или Google Play"
     },
+    "subscriptionManagementOpenError": "Не удалось открыть настройки подписки. Откройте раздел «Подписки» в App Store или Google Play.",
     "planPaywall": {
       "title": "Пусть ИИ работает за тебя",
       "subtitle": "Автоматизация, сводки, задачи и организация заметок — без ручного запуска.",

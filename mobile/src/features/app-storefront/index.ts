@@ -11,7 +11,7 @@ export {
   RECORDING_FINAL_WARNING_REMAINING_MS,
   RECORDING_SOFT_WARNING_REMAINING_MS,
 } from './lib/recordingDurationLimits';
-export { getStorefrontCountryCode } from './lib/storefront';
+export { getStorefrontCountryCode, presentIosManageSubscriptionsSheet } from './lib/storefront';
 export type { MonetizationMode } from './model/monetizationPublicConfig';
 export {
   getMonetizationMode,

@@ -109,7 +109,9 @@ export function SettingsPlanStatusCard({
       })
     : t('settings.planStatus.a11yOpenPlans');
   const accessibilityHint = isProActive
-    ? t('settings.planStatus.a11yCurrentPlanHint')
+    ? monetizationMode === 'iap_public'
+      ? t('settings.planStatus.a11yManageSubscriptionsHint')
+      : t('settings.planStatus.a11yCurrentPlanHint')
     : t('settings.planStatus.a11yOpenPlansHint');
   const cardBaseTint = isProActive ? '14' : '0f';
   const gradientStrength = isProActive
