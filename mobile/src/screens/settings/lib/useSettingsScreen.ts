@@ -32,6 +32,7 @@ import {
   restoreProPurchases,
 } from '@/features/entitlements';
 import { useProEntitlement } from '@/features/pro-license';
+import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import { exportData, importData } from '@/features/sync-data';
 import { FREE_WEEKLY_LIMIT, useColors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
@@ -438,7 +439,10 @@ export function useSettingsScreen() {
       try {
         const result = await restoreProPurchases();
         if (result.ok) {
-          void refreshProEntitlement({ force: true });
+          await refreshProEntitlement({ force: true });
+          if (isProActiveFromStorageSync()) {
+            setPlanPaywallVisible(false);
+          }
           Alert.alert(t('common.done'), t('settings.planPaywall.restoreSuccess'));
           return;
         }
