@@ -19,7 +19,10 @@ import {
   getRevenueCatEntitlementId,
   getRevenueCatPackageTypePreferred,
 } from '@/shared/config/runtimeConfig';
-import { invalidateProLicenseStatusCache } from '@/shared/lib/ai-api/proLicenseApi';
+import {
+  invalidateProLicenseStatusCache,
+  syncProLicenseRevenueCatOnServer,
+} from '@/shared/lib/ai-api/proLicenseApi';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 
 function trimEnv(v: string | undefined): string {
@@ -69,6 +72,9 @@ function applyCustomerInfoToProStorage(info: CustomerInfo): void {
 async function onCustomerInfoUpdated(info: CustomerInfo): Promise<void> {
   applyCustomerInfoToProStorage(info);
   invalidateProLicenseStatusCache();
+  if (getRevenueCatIntegrationEnabled()) {
+    await syncProLicenseRevenueCatOnServer();
+  }
   await syncProLicenseFromServer(true);
 }
 
