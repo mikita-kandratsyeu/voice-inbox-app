@@ -198,6 +198,8 @@ export const InboxScreen = () => {
     !batchSelect.isSelectMode &&
     (searchBarExplicitOpen || query.trim().length > 0);
 
+  const emptyStatePlacement: 'center' | 'top' = showInboxSearchBar ? 'top' : 'center';
+
   const handleSearchHeaderPress = useCallback(() => {
     const barVisible = searchBarExplicitOpen || query.trim().length > 0;
     if (barVisible && query.trim() === '') {
@@ -595,7 +597,18 @@ export const InboxScreen = () => {
           behavior={keyboardAvoidingBehavior}
           keyboardVerticalOffset={keyboardVerticalOffset}
         >
-          <View style={{ flex: 1, alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}>
+          <View
+            style={{
+              flex: 1,
+              alignSelf: 'center',
+              width: '100%',
+              maxWidth: contentMaxWidth,
+              paddingBottom:
+                filtered.length === 0
+                  ? getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet)
+                  : 0,
+            }}
+          >
             {showInboxSearchBar && (
               <SearchBar
                 query={query}
@@ -621,12 +634,17 @@ export const InboxScreen = () => {
               </View>
             )}
             {isSearching && filtered.length === 0 ? (
-              <EmptySearchState query={query} color={color} />
+              <EmptySearchState
+                query={query}
+                color={color}
+                verticalPlacement={emptyStatePlacement}
+              />
             ) : filtered.length === 0 ? (
               <EmptyState
                 title={t('inbox.emptyFilterTitle')}
                 description={t('inbox.emptyFilterDescription')}
                 hint={effectiveActiveFolderId ? t('inbox.emptyFolderHint') : undefined}
+                verticalPlacement={emptyStatePlacement}
                 hintIcon={
                   effectiveActiveFolderId ? (
                     <Folder

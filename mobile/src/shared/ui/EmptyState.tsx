@@ -9,13 +9,23 @@ type EmptyStateProps = {
   description?: string;
   hint?: string;
   hintIcon?: React.ReactNode;
+  verticalPlacement?: 'center' | 'top';
 };
 
-export const EmptyState = ({ title, description, hint, hintIcon }: EmptyStateProps) => {
+export const EmptyState = ({
+  title,
+  description,
+  hint,
+  hintIcon,
+  verticalPlacement = 'center',
+}: EmptyStateProps) => {
   const color = useColors();
 
   return (
-    <View className="flex-1 items-center justify-center px-8">
+    <View
+      className={`flex-1 items-center px-8 ${verticalPlacement === 'top' ? 'justify-start' : 'justify-center'}`}
+      style={verticalPlacement === 'top' ? { paddingTop: 48 } : undefined}
+    >
       <View
         className="mb-4 rounded-full p-5"
         style={{ backgroundColor: color.background.tertiary }}

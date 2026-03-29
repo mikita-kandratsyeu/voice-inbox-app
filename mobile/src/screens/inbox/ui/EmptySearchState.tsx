@@ -8,16 +8,27 @@ import type { Colors } from '@/shared/config';
 type EmptySearchStateProps = {
   query: string;
   color: Colors;
+  verticalPlacement?: 'center' | 'top';
 };
 
 const MIN_QUERY_LENGTH = 3;
 
-export const EmptySearchState = ({ query, color }: EmptySearchStateProps) => {
+export const EmptySearchState = ({
+  query,
+  color,
+  verticalPlacement = 'center',
+}: EmptySearchStateProps) => {
   const { t } = useTranslation();
   const isShortQuery = query.trim().length > 0 && query.trim().length < MIN_QUERY_LENGTH;
   return (
     <View
-      style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 }}
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: verticalPlacement === 'top' ? 'flex-start' : 'center',
+        paddingHorizontal: 32,
+        paddingTop: verticalPlacement === 'top' ? 48 : 0,
+      }}
     >
       <View
         className="mb-4 rounded-full p-5"
