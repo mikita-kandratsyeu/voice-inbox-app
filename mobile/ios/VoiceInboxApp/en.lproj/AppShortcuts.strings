@@ -2,6 +2,11 @@
 /* These keys must match the phrases defined in AppShortcuts.swift exactly,
    with ${applicationName} substituted for \(.applicationName) */
 
+/* Intent title, description, and Spotlight short title (LocalizedStringResource, table AppShortcuts) */
+"Start Voice Recording" = "Start Voice Recording";
+"Open Voice Inbox AI and start recording a new voice note." = "Open Voice Inbox AI and start recording a new voice note.";
+"Start Recording" = "Start Recording";
+
 "Start recording in ${applicationName}" = "Start recording in ${applicationName}";
 "New voice note in ${applicationName}" = "New voice note in ${applicationName}";
 "Record in ${applicationName}" = "Record in ${applicationName}";
