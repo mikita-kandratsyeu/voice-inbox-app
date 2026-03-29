@@ -12,6 +12,7 @@ export {
   initRevenueCatWhenReady,
   purchaseDefaultProPackage,
   purchaseProPackageForPeriod,
+  refreshProEntitlementFromRevenueCatOnly,
   resolveDefaultIapBillingPeriod,
   restoreProPurchases,
 } from './lib/revenueCat';

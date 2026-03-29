@@ -53,9 +53,17 @@ export function syncProLicenseFromServer(force: boolean): Promise<void> {
         setProExpiresAtMsSync(ms);
       } else if (!isRevenueCatIapConfigured()) {
         clearProEntitlementSync();
+      } else {
+        const { refreshProEntitlementFromRevenueCatOnly } =
+          await import('@/features/entitlements/lib/revenueCat');
+        await refreshProEntitlementFromRevenueCatOnly();
       }
     } else if (!isRevenueCatIapConfigured()) {
       clearProEntitlementSync();
+    } else {
+      const { refreshProEntitlementFromRevenueCatOnly } =
+        await import('@/features/entitlements/lib/revenueCat');
+      await refreshProEntitlementFromRevenueCatOnly();
     }
 
     lastSuccessfulFetchAt = Date.now();

@@ -72,6 +72,21 @@ async function onCustomerInfoUpdated(info: CustomerInfo): Promise<void> {
   await syncProLicenseFromServer(true);
 }
 
+export async function refreshProEntitlementFromRevenueCatOnly(): Promise<void> {
+  if (!getRevenueCatIntegrationEnabled()) {
+    return;
+  }
+  try {
+    const info = await Purchases.getCustomerInfo();
+    applyCustomerInfoToProStorage(info);
+    invalidateProLicenseStatusCache();
+  } catch (e) {
+    if (__DEV__) {
+      console.warn('[RevenueCat] refreshProEntitlementFromRevenueCatOnly failed', e);
+    }
+  }
+}
+
 export type IapBillingPeriod = 'annual' | 'monthly';
 
 function packageForPeriod(
