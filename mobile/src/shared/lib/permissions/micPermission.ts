@@ -1,4 +1,4 @@
-import { Alert, Linking, PermissionsAndroid } from 'react-native';
+import { Linking, PermissionsAndroid } from 'react-native';
 import type { AudioSet } from 'react-native-nitro-sound';
 import AudioRecorderPlayer, {
   AudioEncoderAndroidType,
@@ -56,42 +56,10 @@ export type RequestMicPermissionOptions = {
   buttonNegative?: string;
 };
 
-const DEFAULT_MIC_OPTIONS: Required<RequestMicPermissionOptions> = {
-  title: 'Microphone permission',
-  message: 'Voice Inbox needs microphone access for voice recording.',
-  buttonPositive: 'Allow',
-  buttonNegative: 'Deny',
-};
-
-function confirmMicPrompt(opts: Required<RequestMicPermissionOptions>): Promise<boolean> {
-  return new Promise((resolve) => {
-    let settled = false;
-    const done = (proceed: boolean) => {
-      if (settled) return;
-      settled = true;
-      resolve(proceed);
-    };
-
-    Alert.alert(
-      opts.title,
-      opts.message,
-      [
-        { text: opts.buttonNegative, style: 'cancel', onPress: () => done(false) },
-        { text: opts.buttonPositive, onPress: () => done(true) },
-      ],
-      IS_ANDROID ? { cancelable: true, onDismiss: () => done(false) } : undefined,
-    );
-  });
-}
-
 export async function requestMicPermission(
-  options?: RequestMicPermissionOptions,
+  _options?: RequestMicPermissionOptions,
 ): Promise<boolean> {
-  const opts = { ...DEFAULT_MIC_OPTIONS, ...options };
-
   if (IS_ANDROID) {
-    const proceed = await confirmMicPrompt(opts);
-    if (!proceed) return false;
     try {
       const result = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
       return result === PermissionsAndroid.RESULTS.GRANTED;
@@ -99,9 +67,6 @@ export async function requestMicPermission(
       return false;
     }
   }
-
-  const proceed = await confirmMicPrompt(opts);
-  if (!proceed) return false;
 
   try {
     const { request, PERMISSIONS } = await import('react-native-permissions');
