@@ -8,6 +8,7 @@ import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useAppLockStore } from '@/entities/app-lock';
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
+import type { AutoArchiveAfterDays } from '@/entities/settings';
 import {
   getWhisperModelVariantId,
   LOCAL_AI_MODELS,
@@ -62,6 +63,10 @@ export function useSettingsScreen() {
   const setAutoTranscribeOnSave = useSettingsStore((s) => s.setAutoTranscribeOnSave);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
   const setAutoAiAfterTranscription = useSettingsStore((s) => s.setAutoAiAfterTranscription);
+  const autoArchiveEnabled = useSettingsStore((s) => s.autoArchiveEnabled);
+  const setAutoArchiveEnabled = useSettingsStore((s) => s.setAutoArchiveEnabled);
+  const autoArchiveAfterDays = useSettingsStore((s) => s.autoArchiveAfterDays);
+  const setAutoArchiveAfterDays = useSettingsStore((s) => s.setAutoArchiveAfterDays);
   const appLanguage = useSettingsStore((s) => s.appLanguage);
   const appTheme = useSettingsStore((s) => s.appTheme);
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
@@ -319,6 +324,21 @@ export function useSettingsScreen() {
     setPushStatus(status);
   }, [pushStatus]);
 
+  const handleAutoArchiveDelayPress = useCallback(() => {
+    const options: AutoArchiveAfterDays[] = [7, 14, 30];
+    Alert.alert(
+      t('settings.autoArchiveDelayPickerTitle'),
+      t('settings.autoArchiveDelayPickerMessage'),
+      [
+        ...options.map((d) => ({
+          text: t('settings.autoArchiveDelayValue', { count: d }),
+          onPress: () => setAutoArchiveAfterDays(d),
+        })),
+        { text: t('common.cancel'), style: 'cancel' as const },
+      ],
+    );
+  }, [setAutoArchiveAfterDays, t]);
+
   const handleMicPermission = useCallback(async () => {
     if (micStatus === 'denied') {
       await openAppSettings();
@@ -402,6 +422,10 @@ export function useSettingsScreen() {
     setAutoTranscribeOnSave,
     autoAiAfterTranscription,
     setAutoAiAfterTranscription,
+    autoArchiveEnabled,
+    setAutoArchiveEnabled,
+    autoArchiveAfterDays,
+    handleAutoArchiveDelayPress,
     setAutomationSheet,
     aiModelName: aiModelBaseName,
     privateAiModeValue,

@@ -46,6 +46,7 @@ export type VoiceRecord = {
   createdAt: string;
   relativeTime?: string;
   status: RecordStatus;
+  readAt?: string | null;
   aiStatus?: RecordingStatus;
   transcriptProgress?: number;
   transcriptProgressLabel?: string;

@@ -23,6 +23,7 @@ export const recordsTable = sqliteTable(
     createdAt: text('createdAt').default(''),
     relativeTime: text('relativeTime').default(''),
     status: text('status').default('unread'),
+    readAt: text('readAt'),
     aiStatus: text('aiStatus').default('idle'),
     transcriptProgress: integer('transcriptProgress').default(0),
     isPinned: integer('isPinned').default(0),

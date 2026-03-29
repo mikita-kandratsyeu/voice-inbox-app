@@ -198,9 +198,9 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   },
 
   markAsRead: async (id) => {
-    await recordRepository.markAsRead(id);
+    const readAt = await recordRepository.markAsRead(id);
     set((s) => ({
-      records: updateRecord(s.records, id, { status: 'read' }),
+      records: updateRecord(s.records, id, { status: 'read', readAt }),
     }));
   },
 
@@ -213,7 +213,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
 
   unarchiveRecord: async (id) => {
     set((s) => ({
-      records: updateRecord(s.records, id, { status: 'unread' }),
+      records: updateRecord(s.records, id, { status: 'unread', readAt: null }),
     }));
     await recordRepository.unarchive(id);
   },

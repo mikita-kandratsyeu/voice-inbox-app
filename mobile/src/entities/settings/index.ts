@@ -33,6 +33,7 @@ export type {
   AiUserTierCode,
   AppLanguage,
   AppTheme,
+  AutoArchiveAfterDays,
   DownloadBytes,
   LocalAiModelId,
   PrivateCapabilityTier,

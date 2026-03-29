@@ -18,6 +18,7 @@ import type {
   AiOutputLanguage,
   AppLanguage,
   AppTheme,
+  AutoArchiveAfterDays,
   LocalAiModelId,
   PrivateCapabilityTier,
   SettingsState,
@@ -52,9 +53,12 @@ const KEYS = {
   PRIVATE_CAPABILITY_TIER: 'settings.privateCapabilityTier',
   AUTO_TRANSCRIBE_ON_SAVE: 'settings.autoTranscribeOnSave',
   AUTO_AI_AFTER_TRANSCRIPTION: 'settings.autoAiAfterTranscription',
+  AUTO_ARCHIVE_ENABLED: 'settings.autoArchiveEnabled',
+  AUTO_ARCHIVE_AFTER_DAYS: 'settings.autoArchiveAfterDays',
   PRIVATE_PREVIOUS_THEME: 'settings.private.previousTheme',
   PRIVATE_PREVIOUS_AUTO_TRANSCRIBE: 'settings.private.previousAutoTranscribeOnSave',
   PRIVATE_PREVIOUS_AUTO_AI: 'settings.private.previousAutoAiAfterTranscription',
+  PRIVATE_PREVIOUS_AUTO_ARCHIVE: 'settings.private.previousAutoArchiveEnabled',
   LOCAL_LLM_STATUSES: 'settings.localLlmStatuses',
 } as const;
 
@@ -193,6 +197,20 @@ const getStoredAutoAiAfterTranscription = (): boolean => {
   return val === 'true';
 };
 
+const parseAutoArchiveAfterDays = (raw: string | undefined): AutoArchiveAfterDays => {
+  const n = raw ? Number(raw) : NaN;
+  if (n === 7 || n === 14 || n === 30) return n;
+  return 14;
+};
+
+const getStoredAutoArchiveEnabled = (): boolean => {
+  return storage.getString(KEYS.AUTO_ARCHIVE_ENABLED) === 'true';
+};
+
+const getStoredAutoArchiveAfterDays = (): AutoArchiveAfterDays => {
+  return parseAutoArchiveAfterDays(storage.getString(KEYS.AUTO_ARCHIVE_AFTER_DAYS));
+};
+
 const getStoredSummaryStyle = (): SummaryStyle => {
   const val = storage.getString(KEYS.SUMMARY_STYLE);
 
@@ -253,6 +271,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   privateCapabilityTier: getStoredPrivateCapabilityTier(),
   autoTranscribeOnSave: getStoredAutoTranscribeOnSave(),
   autoAiAfterTranscription: getStoredAutoAiAfterTranscription(),
+  autoArchiveEnabled: getStoredAutoArchiveEnabled(),
+  autoArchiveAfterDays: getStoredAutoArchiveAfterDays(),
   whisperModelStatuses: getStoredWhisperStatuses(),
   whisperDownloadProgress: {},
   whisperDownloadBytes: {},
@@ -340,14 +360,17 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       storage.set(KEYS.PRIVATE_PREVIOUS_THEME, currentState.appTheme);
       storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE, String(currentState.autoTranscribeOnSave));
       storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_AI, String(currentState.autoAiAfterTranscription));
+      storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_ARCHIVE, String(currentState.autoArchiveEnabled));
 
       // Private mode uses isolated defaults and disables cloud-like automations.
       storage.set(KEYS.AUTO_TRANSCRIBE_ON_SAVE, 'false');
       storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, 'false');
+      storage.set(KEYS.AUTO_ARCHIVE_ENABLED, 'false');
       set({
         aiExecutionMode: nextValue,
         autoTranscribeOnSave: false,
         autoAiAfterTranscription: false,
+        autoArchiveEnabled: false,
       });
       storage.set(KEYS.AI_EXECUTION_MODE, nextValue);
       return;
@@ -358,6 +381,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       const prevTheme = storage.getString(KEYS.PRIVATE_PREVIOUS_THEME) as AppTheme | undefined;
       const prevAutoTranscribe = storage.getString(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE);
       const prevAutoAi = storage.getString(KEYS.PRIVATE_PREVIOUS_AUTO_AI);
+      const prevAutoArchive = storage.getString(KEYS.PRIVATE_PREVIOUS_AUTO_ARCHIVE);
 
       const restoredTheme = prevTheme === 'light' || prevTheme === 'dark' || prevTheme === 'system';
       const restoredAutoTranscribe =
@@ -366,21 +390,26 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
           : prevAutoTranscribe === 'true';
       const restoredAutoAi =
         prevAutoAi == null ? currentState.autoAiAfterTranscription : prevAutoAi === 'true';
+      const restoredAutoArchive =
+        prevAutoArchive == null ? currentState.autoArchiveEnabled : prevAutoArchive === 'true';
 
       if (restoredTheme) {
         storage.set(KEYS.APP_THEME, prevTheme);
       }
       storage.set(KEYS.AUTO_TRANSCRIBE_ON_SAVE, String(restoredAutoTranscribe));
       storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, String(restoredAutoAi));
+      storage.set(KEYS.AUTO_ARCHIVE_ENABLED, String(restoredAutoArchive));
       storage.remove(KEYS.PRIVATE_PREVIOUS_THEME);
       storage.remove(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE);
       storage.remove(KEYS.PRIVATE_PREVIOUS_AUTO_AI);
+      storage.remove(KEYS.PRIVATE_PREVIOUS_AUTO_ARCHIVE);
 
       set({
         aiExecutionMode: nextValue,
         ...(restoredTheme ? { appTheme: prevTheme } : {}),
         autoTranscribeOnSave: restoredAutoTranscribe,
         autoAiAfterTranscription: restoredAutoAi,
+        autoArchiveEnabled: restoredAutoArchive,
       });
       storage.set(KEYS.AI_EXECUTION_MODE, nextValue);
       return;
@@ -409,6 +438,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAutoAiAfterTranscription: (value: boolean) => {
     storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, String(value));
     set({ autoAiAfterTranscription: value });
+  },
+
+  setAutoArchiveEnabled: (value: boolean) => {
+    storage.set(KEYS.AUTO_ARCHIVE_ENABLED, String(value));
+    set({ autoArchiveEnabled: value });
+  },
+
+  setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => {
+    storage.set(KEYS.AUTO_ARCHIVE_AFTER_DAYS, String(value));
+    set({ autoArchiveAfterDays: value });
   },
 
   setWhisperModelStatus: (

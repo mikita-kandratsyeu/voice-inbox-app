@@ -32,6 +32,7 @@ import {
 import type { VoiceRecord } from '@/entities/record';
 import { RecordCard, useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { useAutoArchiveReadNotes } from '@/features/auto-archive';
 import {
   BatchActionBar,
   BatchCheckbox,
@@ -106,6 +107,8 @@ export const InboxScreen = () => {
   const { isProActive } = useProEntitlement();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const isPrivateMode = aiExecutionMode === 'private_experimental';
+
+  useAutoArchiveReadNotes();
 
   const {
     modalVisible: folderModalVisible,

@@ -115,6 +115,10 @@ export const SettingsScreen = () => {
               setAutoTranscribeOnSave={settings.setAutoTranscribeOnSave}
               autoAiAfterTranscription={settings.autoAiAfterTranscription}
               setAutoAiAfterTranscription={settings.setAutoAiAfterTranscription}
+              autoArchiveEnabled={settings.autoArchiveEnabled}
+              setAutoArchiveEnabled={settings.setAutoArchiveEnabled}
+              autoArchiveAfterDays={settings.autoArchiveAfterDays}
+              onAutoArchiveDelayPress={settings.handleAutoArchiveDelayPress}
               onLockedPress={settings.setAutomationSheet}
             />
           )}

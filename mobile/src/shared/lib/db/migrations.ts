@@ -52,22 +52,17 @@ ALTER TABLE \`records\` ADD \`folderId\` text;
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS \`idx_records_folderId\` ON \`records\` (\`folderId\`);`;
 
+const migration0007 = `ALTER TABLE \`records\` ADD \`readAt\` text;--> statement-breakpoint
+UPDATE \`records\` SET \`readAt\` = \`createdAt\` WHERE \`status\` = 'read' AND (\`readAt\` IS NULL OR \`readAt\` = '');`;
+
 export const migrationsConfig = {
   journal: {
-    entries: [
-      ...journal.entries.map((e) => ({
-        idx: e.idx,
-        when: e.when,
-        tag: e.tag,
-        breakpoints: e.breakpoints ?? true,
-      })),
-      {
-        idx: 6,
-        when: 1775000000000,
-        tag: '0006_folders',
-        breakpoints: true,
-      },
-    ],
+    entries: journal.entries.map((e) => ({
+      idx: e.idx,
+      when: e.when,
+      tag: e.tag,
+      breakpoints: e.breakpoints ?? true,
+    })),
   },
   migrations: {
     m0000: migration0000,
@@ -77,5 +72,6 @@ export const migrationsConfig = {
     m0004: migration0004,
     m0005: migration0005,
     m0006: migration0006,
+    m0007: migration0007,
   } as Record<string, string>,
 };

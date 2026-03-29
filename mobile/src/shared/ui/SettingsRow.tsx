@@ -6,6 +6,7 @@ import { useColors } from '@/shared/config';
 
 type SettingsRowProps = {
   label: string;
+  subtitle?: string;
   value?: string;
   onPress?: () => void;
   leftIcon?: React.ReactNode;
@@ -18,6 +19,7 @@ type SettingsRowProps = {
 
 export const SettingsRow = ({
   label,
+  subtitle,
   value,
   onPress,
   leftIcon,
@@ -46,15 +48,24 @@ export const SettingsRow = ({
     return '';
   };
 
+  const alignWithTitle = Boolean(subtitle);
+
   const content = (
     <View
-      className={`flex-row items-center px-4 py-3.5 ${getRadiusClass()}`}
-      style={[{ backgroundColor: color.background.card, minHeight: 52 }, borderStyle]}
+      className={`flex-row px-4 py-3.5 ${alignWithTitle ? 'items-start' : 'items-center'} ${getRadiusClass()}`}
+      style={[
+        { backgroundColor: color.background.card, minHeight: subtitle ? 68 : 52 },
+        borderStyle,
+      ]}
     >
       {leftIcon && (
-        <View className="mr-3 h-6 w-6 items-center justify-center self-center">{leftIcon}</View>
+        <View
+          className={`mr-3 h-6 w-6 items-center justify-center ${alignWithTitle ? 'mt-0.5' : ''}`}
+        >
+          {leftIcon}
+        </View>
       )}
-      <View className="flex-1 justify-center">
+      <View className={`flex-1 ${alignWithTitle ? '' : 'justify-center'}`}>
         <Text
           className="text-[16px]"
           style={{
@@ -64,8 +75,15 @@ export const SettingsRow = ({
         >
           {label}
         </Text>
+        {subtitle ? (
+          <Text className="mt-0.5 text-[13px] leading-[18px]" style={{ color: color.text.muted }}>
+            {subtitle}
+          </Text>
+        ) : null}
       </View>
-      {rightSlot && <View className="ml-2 self-center">{rightSlot}</View>}
+      {rightSlot && (
+        <View className={`ml-2 ${alignWithTitle ? 'mt-0.5' : 'self-center'}`}>{rightSlot}</View>
+      )}
       {!rightSlot && value && (
         <Text className="mr-2 text-[16px]" style={{ color: color.text.secondary }}>
           {value}
@@ -77,7 +95,9 @@ export const SettingsRow = ({
     </View>
   );
 
-  const a11yLabel = value ? `${label}, ${value}` : label;
+  const a11yLabel = [label, subtitle, !rightSlot && value ? value : undefined]
+    .filter(Boolean)
+    .join(', ');
 
   if (onPress) {
     return (

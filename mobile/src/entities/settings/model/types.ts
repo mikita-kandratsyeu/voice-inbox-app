@@ -30,6 +30,8 @@ export type WhisperModelVariantId = `${WhisperModelId}:${WhisperModelWeightsForm
 
 export type WhisperModelStatus = 'not_downloaded' | 'downloading' | 'downloaded' | 'error';
 
+export type AutoArchiveAfterDays = 7 | 14 | 30;
+
 export type AIModel = {
   id: AIModelId;
   name: string;
@@ -86,6 +88,8 @@ export type SettingsState = {
   privateCapabilityTier: PrivateCapabilityTier;
   autoTranscribeOnSave: boolean;
   autoAiAfterTranscription: boolean;
+  autoArchiveEnabled: boolean;
+  autoArchiveAfterDays: AutoArchiveAfterDays;
   whisperModelStatuses: Partial<Record<WhisperModelVariantId, WhisperModelStatus>>;
   whisperDownloadProgress: Partial<Record<WhisperModelVariantId, number>>;
   whisperDownloadBytes: Partial<Record<WhisperModelVariantId, DownloadBytes>>;
@@ -110,6 +114,8 @@ export type SettingsState = {
   setPrivateCapabilityTier: (value: PrivateCapabilityTier) => void;
   setAutoTranscribeOnSave: (value: boolean) => void;
   setAutoAiAfterTranscription: (value: boolean) => void;
+  setAutoArchiveEnabled: (value: boolean) => void;
+  setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => void;
   setWhisperModelStatus: (
     id: WhisperModelId,
     format: WhisperModelWeightsFormat,

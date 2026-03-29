@@ -11,7 +11,12 @@ import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { modalKeyboardBehavior } from '@/shared/lib/platform';
 import { Button } from '@/shared/ui';
 
-export type AutomationFeatureKind = 'autoTranscribe' | 'autoAi' | 'accentColor' | 'folderColor';
+export type AutomationFeatureKind =
+  | 'autoTranscribe'
+  | 'autoAi'
+  | 'autoArchive'
+  | 'accentColor'
+  | 'folderColor';
 
 type AutomationComingSoonSheetProps = {
   visible: boolean;
@@ -38,9 +43,11 @@ export function AutomationComingSoonSheet({
             ? 'auto_whisper'
             : feature === 'autoAi'
               ? 'auto_ai'
-              : feature === 'folderColor'
-                ? 'folder_color'
-                : 'accent_color',
+              : feature === 'autoArchive'
+                ? 'auto_archive'
+                : feature === 'folderColor'
+                  ? 'folder_color'
+                  : 'accent_color',
       });
       if (feature === 'autoTranscribe') {
         void logAnalyticsEvent('premium_feature_tapped_auto_whisper', {
@@ -48,6 +55,10 @@ export function AutomationComingSoonSheet({
         });
       } else if (feature === 'autoAi') {
         void logAnalyticsEvent('premium_feature_tapped_auto_ai', { surface: 'settings_sheet' });
+      } else if (feature === 'autoArchive') {
+        void logAnalyticsEvent('premium_feature_tapped_auto_archive', {
+          surface: 'settings_sheet',
+        });
       } else if (feature === 'folderColor') {
         void logAnalyticsEvent('premium_feature_tapped_folder_color', {
           surface: 'folder_form_sheet',
@@ -74,17 +85,21 @@ export function AutomationComingSoonSheet({
       ? t('settings.automationSoon.autoTranscribeTitle')
       : feature === 'autoAi'
         ? t('settings.automationSoon.autoAiTitle')
-        : feature === 'folderColor'
-          ? t('folders.colorProTitle')
-          : t('appearance.accentColor.proTitle');
+        : feature === 'autoArchive'
+          ? t('settings.automationSoon.autoArchiveTitle')
+          : feature === 'folderColor'
+            ? t('folders.colorProTitle')
+            : t('appearance.accentColor.proTitle');
   const body =
     feature === 'autoTranscribe'
       ? t('settings.automationSoon.autoTranscribeBody')
       : feature === 'autoAi'
         ? t('settings.automationSoon.autoAiBody')
-        : feature === 'folderColor'
-          ? t('folders.colorProBody')
-          : t('appearance.accentColor.proBody');
+        : feature === 'autoArchive'
+          ? t('settings.automationSoon.autoArchiveBody')
+          : feature === 'folderColor'
+            ? t('folders.colorProBody')
+            : t('appearance.accentColor.proBody');
 
   return (
     <BottomSheetModal

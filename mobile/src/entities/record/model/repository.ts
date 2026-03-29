@@ -1,4 +1,4 @@
-import { desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, lt, ne } from 'drizzle-orm';
 
 import {
   audioPathFromDbValue,
@@ -24,6 +24,18 @@ const logDb = (op: string, details?: Record<string, unknown>) => {
   }
 };
 
+function tasksJsonAllComplete(tasksJson: string | null | undefined): boolean {
+  try {
+    const parsed = JSON.parse(tasksJson ?? '[]') as unknown;
+    if (!Array.isArray(parsed)) return true;
+    return !parsed.some(
+      (item) => item && typeof item === 'object' && (item as TaskItem).isDone !== true,
+    );
+  } catch {
+    return false;
+  }
+}
+
 type RecordListQueryRow = {
   id: string;
   title: string;
@@ -35,6 +47,7 @@ type RecordListQueryRow = {
   createdAt: string | null;
   relativeTime: string | null;
   status: string | null;
+  readAt: string | null;
   aiStatus: string | null;
   transcriptProgress: number | null;
   isPinned: number | null;
@@ -68,6 +81,7 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     createdAt: row.createdAt ?? '',
     relativeTime: row.relativeTime ?? '',
     status: (row.status ?? 'unread') as VoiceRecord['status'],
+    readAt: row.readAt?.trim() ? row.readAt : null,
     aiStatus: (row.aiStatus ?? 'idle') as RecordingStatus,
     transcriptProgress: row.transcriptProgress ?? 0,
     isPinned: Boolean(row.isPinned),
@@ -103,6 +117,7 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
     createdAt: row.createdAt ?? '',
     relativeTime: row.relativeTime ?? '',
     status: (row.status ?? 'unread') as VoiceRecord['status'],
+    readAt: row.readAt?.trim() ? row.readAt : null,
     aiStatus: (row.aiStatus ?? 'idle') as RecordingStatus,
     transcriptProgress: row.transcriptProgress ?? 0,
     isPinned: Boolean(row.isPinned),
@@ -134,6 +149,7 @@ const recordListColumns = {
   createdAt: recordsTable.createdAt,
   relativeTime: recordsTable.relativeTime,
   status: recordsTable.status,
+  readAt: recordsTable.readAt,
   aiStatus: recordsTable.aiStatus,
   transcriptProgress: recordsTable.transcriptProgress,
   isPinned: recordsTable.isPinned,
@@ -229,6 +245,7 @@ export const recordRepository = {
         createdAt: record.createdAt,
         relativeTime: record.relativeTime ?? '',
         status: record.status,
+        readAt: record.readAt ?? null,
         aiStatus: record.aiStatus ?? 'idle',
         transcriptProgress: record.transcriptProgress ?? 0,
         isPinned: record.isPinned ? 1 : 0,
@@ -260,10 +277,12 @@ export const recordRepository = {
       .where(eq(recordsTable.id, id));
   },
 
-  markAsRead: async (id: string): Promise<void> => {
+  markAsRead: async (id: string): Promise<string> => {
     logDb('markAsRead', { id });
+    const readAt = new Date().toISOString();
     const db = getDB();
-    await db.update(recordsTable).set({ status: 'read' }).where(eq(recordsTable.id, id));
+    await db.update(recordsTable).set({ status: 'read', readAt }).where(eq(recordsTable.id, id));
+    return readAt;
   },
 
   archive: async (id: string): Promise<void> => {
@@ -278,7 +297,33 @@ export const recordRepository = {
   unarchive: async (id: string): Promise<void> => {
     logDb('unarchive', { id });
     const db = getDB();
-    await db.update(recordsTable).set({ status: 'unread' }).where(eq(recordsTable.id, id));
+    await db
+      .update(recordsTable)
+      .set({ status: 'unread', readAt: null })
+      .where(eq(recordsTable.id, id));
+  },
+
+  archiveReadRecordsOlderThan: async (isoThreshold: string): Promise<number> => {
+    logDb('archiveReadRecordsOlderThan', { isoThreshold });
+    const db = getDB();
+    const staleClause = and(
+      eq(recordsTable.status, 'read'),
+      eq(recordsTable.isPinned, 0),
+      isNotNull(recordsTable.readAt),
+      ne(recordsTable.readAt, ''),
+      lt(recordsTable.readAt, isoThreshold),
+    );
+    const rows = await db
+      .select({ id: recordsTable.id, tasks: recordsTable.tasks })
+      .from(recordsTable)
+      .where(staleClause);
+    const ids = rows.filter((r) => tasksJsonAllComplete(r.tasks)).map((r) => r.id);
+    if (ids.length === 0) return 0;
+    await db
+      .update(recordsTable)
+      .set({ status: 'archived', isPinned: 0 })
+      .where(inArray(recordsTable.id, ids));
+    return ids.length;
   },
 
   rename: async (id: string, title: string): Promise<void> => {

@@ -119,10 +119,15 @@ export const RecordingDetailScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      const { records, markAsRead } = useRecordStore.getState();
+      const r = records.find((x) => x.id === recordId);
+      if (r?.status === 'unread') {
+        void markAsRead(recordId);
+      }
       return () => {
         KeyboardController.dismiss({ animated: false });
       };
-    }, []),
+    }, [recordId]),
   );
 
   useEffect(() => {
