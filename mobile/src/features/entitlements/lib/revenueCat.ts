@@ -69,11 +69,20 @@ function applyCustomerInfoToProStorage(info: CustomerInfo): void {
   clearProEntitlementSync();
 }
 
-async function onCustomerInfoUpdated(info: CustomerInfo): Promise<void> {
+type CustomerInfoSyncOptions = {
+  forceRevenueCatServerSync?: boolean;
+};
+
+async function onCustomerInfoUpdated(
+  info: CustomerInfo,
+  options?: CustomerInfoSyncOptions,
+): Promise<void> {
   applyCustomerInfoToProStorage(info);
   invalidateProLicenseStatusCache();
   if (getRevenueCatIntegrationEnabled()) {
-    await syncProLicenseRevenueCatOnServer();
+    await syncProLicenseRevenueCatOnServer({
+      force: options?.forceRevenueCatServerSync === true,
+    });
   }
   await syncProLicenseFromServer(true);
 }
@@ -265,7 +274,7 @@ export async function initRevenueCatWhenReady(deviceId: string): Promise<void> {
     }
 
     const info = await Purchases.getCustomerInfo();
-    await onCustomerInfoUpdated(info);
+    await onCustomerInfoUpdated(info, { forceRevenueCatServerSync: true });
   } catch (e) {
     if (__DEV__) {
       console.warn('[RevenueCat] init failed', e);
@@ -327,7 +336,7 @@ export async function purchaseProPackageForPeriod(
       return { ok: false, cancelled: false, message: 'no_package' };
     }
     const { customerInfo } = await Purchases.purchasePackage(pkg);
-    await onCustomerInfoUpdated(customerInfo);
+    await onCustomerInfoUpdated(customerInfo, { forceRevenueCatServerSync: true });
     return { ok: true };
   } catch (e) {
     if (isPurchasesError(e) && e.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
@@ -352,7 +361,7 @@ export async function purchaseDefaultProPackage(): Promise<PurchaseProResult> {
       return { ok: false, cancelled: false, message: 'no_package' };
     }
     const { customerInfo } = await Purchases.purchasePackage(pkg);
-    await onCustomerInfoUpdated(customerInfo);
+    await onCustomerInfoUpdated(customerInfo, { forceRevenueCatServerSync: true });
     return { ok: true };
   } catch (e) {
     if (isPurchasesError(e) && e.code === PURCHASES_ERROR_CODE.PURCHASE_CANCELLED_ERROR) {
@@ -372,7 +381,7 @@ export async function restoreProPurchases(): Promise<PurchaseProResult> {
   }
   try {
     const customerInfo = await Purchases.restorePurchases();
-    await onCustomerInfoUpdated(customerInfo);
+    await onCustomerInfoUpdated(customerInfo, { forceRevenueCatServerSync: true });
     return { ok: true };
   } catch (e) {
     const msg = isPurchasesError(e) ? e.message : 'unknown';

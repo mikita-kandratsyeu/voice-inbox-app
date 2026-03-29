@@ -46,7 +46,27 @@ export function invalidateProLicenseStatusCache(): void {
   proLicenseStatusCache = null;
 }
 
-export async function syncProLicenseRevenueCatOnServer(): Promise<void> {
+const RC_SERVER_SYNC_MIN_INTERVAL_MS = 90_000;
+let lastRevenueCatServerSyncAt = 0;
+
+export type SyncProLicenseRevenueCatOnServerOptions = {
+  force?: boolean;
+};
+
+export async function syncProLicenseRevenueCatOnServer(
+  options?: SyncProLicenseRevenueCatOnServerOptions,
+): Promise<void> {
+  const now = Date.now();
+  if (!options?.force) {
+    if (
+      lastRevenueCatServerSyncAt > 0 &&
+      now - lastRevenueCatServerSyncAt < RC_SERVER_SYNC_MIN_INTERVAL_MS
+    ) {
+      return;
+    }
+  }
+  lastRevenueCatServerSyncAt = now;
+
   try {
     const response = await fetchWithAuth(`${getWebApiUrl()}/api/pro-license/sync-revenuecat`, {
       method: 'POST',
