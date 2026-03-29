@@ -137,7 +137,6 @@ export type IapIntroFreePeriod = {
 
 export type IapBillingProductRow = {
   priceString: string;
-  /** Annual subscription: store-formatted equivalent per month */
   pricePerMonthString: string | null;
   introFree: IapIntroFreePeriod | null;
 };
