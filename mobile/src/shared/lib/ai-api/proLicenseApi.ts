@@ -46,7 +46,7 @@ export function invalidateProLicenseStatusCache(): void {
   proLicenseStatusCache = null;
 }
 
-const RC_SERVER_SYNC_MIN_INTERVAL_MS = 90_000;
+const RC_SERVER_SYNC_MIN_INTERVAL_MS = 120_000;
 let lastRevenueCatServerSyncAt = 0;
 
 export type SyncProLicenseRevenueCatOnServerOptions = {
