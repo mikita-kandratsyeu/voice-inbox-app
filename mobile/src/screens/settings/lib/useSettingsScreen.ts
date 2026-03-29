@@ -24,7 +24,15 @@ import {
 } from '@/features/app-storefront';
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
+import type { IapBillingOptions, IapBillingPeriod } from '@/features/entitlements';
+import {
+  getProBillingPriceOptions,
+  purchaseProPackageForPeriod,
+  resolveDefaultIapBillingPeriod,
+  restoreProPurchases,
+} from '@/features/entitlements';
 import { useProEntitlement } from '@/features/pro-license';
+import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import { exportData, importData } from '@/features/sync-data';
 import { FREE_WEEKLY_LIMIT, useColors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
@@ -86,6 +94,14 @@ export function useSettingsScreen() {
   const [planPaywallVisible, setPlanPaywallVisible] = useState(false);
   const [internalUpgradeVisible, setInternalUpgradeVisible] = useState(false);
   const [isHardResetting, setIsHardResetting] = useState(false);
+  const [iapPaywallBusy, setIapPaywallBusy] = useState(false);
+  const [iapBilling, setIapBilling] = useState<IapBillingOptions>({
+    monthly: null,
+    annual: null,
+    savePercentVsMonthly: null,
+  });
+  const [selectedIapPeriod, setSelectedIapPeriod] = useState<IapBillingPeriod>('annual');
+  const [iapProPriceLoading, setIapProPriceLoading] = useState(false);
 
   const {
     refresh: refreshProEntitlement,
@@ -94,6 +110,25 @@ export function useSettingsScreen() {
   } = useProEntitlement();
   const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
   const monetizationMode = getMonetizationMode();
+
+  useEffect(() => {
+    if (!planPaywallVisible || monetizationMode !== 'iap_public') {
+      return;
+    }
+    let cancelled = false;
+    setIapProPriceLoading(true);
+    setIapBilling({ monthly: null, annual: null, savePercentVsMonthly: null });
+    void getProBillingPriceOptions().then((opts) => {
+      if (!cancelled) {
+        setIapBilling(opts);
+        setSelectedIapPeriod(resolveDefaultIapBillingPeriod(opts));
+        setIapProPriceLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [planPaywallVisible, monetizationMode]);
 
   useFocusEffect(
     useCallback(() => {
@@ -365,9 +400,58 @@ export function useSettingsScreen() {
       return;
     }
     if (monetizationMode === 'iap_public') {
-      Alert.alert(t('settings.planPaywall.upgrade'), t('settings.planPaywall.iapNotReady'));
+      setIapPaywallBusy(true);
+      void (async () => {
+        try {
+          const result = await purchaseProPackageForPeriod(selectedIapPeriod);
+          if (result.ok) {
+            setPlanPaywallVisible(false);
+            void refreshProEntitlement({ force: true });
+            return;
+          }
+          if (result.cancelled) {
+            return;
+          }
+          const body =
+            result.message === 'no_package'
+              ? t('settings.planPaywall.purchaseErrorNoPackage')
+              : result.message === 'iap_unavailable'
+                ? t('settings.planPaywall.purchaseErrorUnavailable')
+                : t('settings.planPaywall.purchaseError');
+          Alert.alert(t('common.error'), body);
+        } finally {
+          setIapPaywallBusy(false);
+        }
+      })();
     }
-  }, [monetizationMode, t]);
+  }, [monetizationMode, refreshProEntitlement, selectedIapPeriod, t]);
+
+  const onIapBillingPeriodChange = useCallback((period: IapBillingPeriod) => {
+    setSelectedIapPeriod(period);
+  }, []);
+
+  const handleRestorePurchasesPress = useCallback(() => {
+    if (monetizationMode !== 'iap_public') {
+      return;
+    }
+    setIapPaywallBusy(true);
+    void (async () => {
+      try {
+        const result = await restoreProPurchases();
+        if (result.ok) {
+          await refreshProEntitlement({ force: true });
+          if (isProActiveFromStorageSync()) {
+            setPlanPaywallVisible(false);
+          }
+          Alert.alert(t('common.done'), t('settings.planPaywall.restoreSuccess'));
+          return;
+        }
+        Alert.alert(t('common.error'), t('settings.planPaywall.restoreError'));
+      } finally {
+        setIapPaywallBusy(false);
+      }
+    })();
+  }, [monetizationMode, refreshProEntitlement, t]);
 
   const handleHardReset = useCallback(() => {
     Alert.alert(
@@ -452,6 +536,12 @@ export function useSettingsScreen() {
     setPlanPaywallVisible,
     automationSheet,
     handleUpgradePress,
+    handleRestorePurchasesPress,
+    iapPaywallBusy,
+    iapBilling,
+    selectedIapPeriod,
+    onIapBillingPeriodChange,
+    iapProPriceLoading,
     handleHardReset,
     isHardResetting,
   };

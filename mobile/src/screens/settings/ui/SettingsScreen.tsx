@@ -195,6 +195,12 @@ export const SettingsScreen = () => {
           proAiLimit={settings.proWeeklyLimit}
           onClose={() => settings.setPlanPaywallVisible(false)}
           onUpgradePress={settings.handleUpgradePress}
+          onRestorePurchasesPress={settings.handleRestorePurchasesPress}
+          iapBusy={settings.iapPaywallBusy}
+          iapBilling={settings.iapBilling}
+          selectedIapPeriod={settings.selectedIapPeriod}
+          onIapBillingPeriodChange={settings.onIapBillingPeriodChange}
+          iapProPriceLoading={settings.iapProPriceLoading}
         />
         {!settings.isPrivateMode && (
           <AutomationComingSoonSheet

@@ -435,6 +435,8 @@ PODS:
   - PromisesObjC (2.4.0)
   - PromisesSwift (2.4.0):
     - PromisesObjC (= 2.4.0)
+  - PurchasesHybridCommon (17.53.0):
+    - RevenueCat (= 5.66.0)
   - QuickCrypto (1.0.17):
     - hermes-engine
     - NitroModules
@@ -2331,6 +2333,7 @@ PODS:
     - React-utils (= 0.84.1)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.84.1)
+  - RevenueCat (5.66.0)
   - RNBootSplash (7.1.0):
     - hermes-engine
     - RCTRequired
@@ -2577,6 +2580,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNPurchases (9.15.0):
+    - PurchasesHybridCommon (= 17.53.0)
+    - React-Core
   - RNReactNativeHapticFeedback (2.3.3):
     - hermes-engine
     - RCTRequired
@@ -3005,6 +3011,7 @@ DEPENDENCIES:
   - RNKeychain (from `../node_modules/react-native-keychain`)
   - RNLocalize (from `../node_modules/react-native-localize`)
   - RNPermissions (from `../node_modules/react-native-permissions`)
+  - RNPurchases (from `../node_modules/react-native-purchases`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - "RNReminders (from `../node_modules/@wiicamp/react-native-reminders`)"
@@ -3062,6 +3069,8 @@ SPEC REPOS:
     - nanopb
     - PromisesObjC
     - PromisesSwift
+    - PurchasesHybridCommon
+    - RevenueCat
     - SSZipArchive
     - VGSL
     - VGSLFundamentals
@@ -3279,6 +3288,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-localize"
   RNPermissions:
     :path: "../node_modules/react-native-permissions"
+  RNPurchases:
+    :path: "../node_modules/react-native-purchases"
   RNReactNativeHapticFeedback:
     :path: "../node_modules/react-native-haptic-feedback"
   RNReanimated:
@@ -3357,6 +3368,7 @@ SPEC CHECKSUMS:
   op-sqlite: dff3a0a80c159513a4024f2b971bd1f9d26ae804
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
+  PurchasesHybridCommon: 53d966ac5c39df13c3c759289bb3ef3e2f9f1622
   QuickCrypto: 48b1cbc3709d002e16b7a8725c3722b1340c1e2e
   RCTDeprecation: 7489702d717ceea80e271eeacb3fbca39fa3c056
   RCTRequired: 1cceac389e77dc5826c681cb782d864b0ed623fc
@@ -3437,6 +3449,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 77b3a9c53a1e55bee263ba67fb42740baac0742c
   ReactCommon: 830aace2ab1372d6a923a7d95e629f1d8a21bfd4
   ReactNativeDependencies: 394e7e486c6fb55a3667f642472e683b64dbda97
+  RevenueCat: a3cf721ad8b1b56a930d748a40342aba16c09bbb
   RNBootSplash: ea769978452c54688c8757d68ef48214a605e59a
   RNCalendarEvents: 7e65eb4a94f53c1744d1e275f7fafcfaa619f7a3
   RNCClipboard: 26237d7fcfc6359e674655b02d03d6178d63d085
@@ -3449,6 +3462,7 @@ SPEC CHECKSUMS:
   RNKeychain: 275ef633df968a177479fcdb2b5cec152af268da
   RNLocalize: 9fd075df3aaccb1b8a7039e805d36d121794ce86
   RNPermissions: 7daee2477b6261589db3e390498da9ab1ddef769
+  RNPurchases: 41ca969b51935260a9b874d1358535286d496d3b
   RNReactNativeHapticFeedback: 34eb408be6bf056eef336c96a2967f2acaf2d5ab
   RNReanimated: a5b2652d09da59a4bda90408ade12134c8353980
   RNReminders: e7bdf59616634b7ae180b18f6bf86dba531b0007

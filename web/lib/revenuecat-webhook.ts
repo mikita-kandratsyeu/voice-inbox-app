@@ -40,11 +40,6 @@ function eventGrantsConfiguredEntitlement(event: RevenueCatWebhookEvent): boolea
   return purchaseLike.has(String(event.type ?? ''));
 }
 
-/**
- * RevenueCat sends the dashboard "authorization" value as the full Authorization header body.
- * It may be `Bearer <token>` or just `<token>` — accept both. Env should hold the same token
- * (with or without a `Bearer ` prefix; we normalize).
- */
 export function verifyRevenueCatWebhookAuthorization(
   authorizationHeader: string | null,
   secret: string,

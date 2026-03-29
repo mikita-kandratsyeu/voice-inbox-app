@@ -4068,6 +4068,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@revenuecat/purchases-js-hybrid-mappings@npm:17.53.0":
+  version: 17.53.0
+  resolution: "@revenuecat/purchases-js-hybrid-mappings@npm:17.53.0"
+  dependencies:
+    "@revenuecat/purchases-js": "npm:1.29.0"
+  checksum: 10c0/0b1dac7fa23a5ea3c76d559379a5e01c8e5914adf4ca3b9bf13d02be8d386c8de50593d568b11270f204398975f1d991ce085ad411abbcd08e53d11cbbe81d3b
+  languageName: node
+  linkType: hard
+
+"@revenuecat/purchases-js@npm:1.29.0":
+  version: 1.29.0
+  resolution: "@revenuecat/purchases-js@npm:1.29.0"
+  checksum: 10c0/d03e6eeefa942ccf8fec3901242b615995c3186d32484efe0464e657f98a5ce46d2342aa6261c5f00155fcf31d4f20bba0e99090b84d2a16340ea6f92f27aee5
+  languageName: node
+  linkType: hard
+
+"@revenuecat/purchases-typescript-internal@npm:17.53.0":
+  version: 17.53.0
+  resolution: "@revenuecat/purchases-typescript-internal@npm:17.53.0"
+  checksum: 10c0/f7f7a87d3dfc9b4e0620405e08121c60cc50f59aafa517b55207b510f6e56cdd38a46231548374a9e9fd7837602826541ec6a2f6acbadcf40376235375a889b1
+  languageName: node
+  linkType: hard
+
 "@shopify/flash-list@npm:^2.3.0":
   version: 2.3.0
   resolution: "@shopify/flash-list@npm:2.3.0"
@@ -11154,6 +11177,23 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-purchases@npm:^9.15.0":
+  version: 9.15.0
+  resolution: "react-native-purchases@npm:9.15.0"
+  dependencies:
+    "@revenuecat/purchases-js-hybrid-mappings": "npm:17.53.0"
+    "@revenuecat/purchases-typescript-internal": "npm:17.53.0"
+  peerDependencies:
+    react: ">= 16.6.3"
+    react-native: ">= 0.73.0"
+    react-native-web: "*"
+  peerDependenciesMeta:
+    react-native-web:
+      optional: true
+  checksum: 10c0/74b33a416d2a75ed6b3f5bd230f7657ae7bd365cc159ff9bb1c403ae654cb770c2d0b6d1b594e18df5934675864e9c506ee95d03a69ca23b09895274980a3b2d
+  languageName: node
+  linkType: hard
+
 "react-native-quick-base64@npm:^2.0.5, react-native-quick-base64@npm:^2.2.2":
   version: 2.2.2
   resolution: "react-native-quick-base64@npm:2.2.2"
@@ -13171,6 +13211,7 @@ __metadata:
     react-native-nitro-modules: "npm:^0.35.1"
     react-native-nitro-sound: "npm:^0.2.12"
     react-native-permissions: "npm:^5.1.0"
+    react-native-purchases: "npm:^9.15.0"
     react-native-quick-base64: "npm:^2.2.2"
     react-native-quick-crypto: "npm:^1.0.17"
     react-native-reanimated: "npm:^4.2.2"

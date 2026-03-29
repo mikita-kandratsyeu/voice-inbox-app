@@ -5,6 +5,7 @@ import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { syncPrivateCapabilityTier, useSettingsStore } from '@/entities/settings';
 import { runAutoArchiveReadNotesIfEligible } from '@/features/auto-archive/model/runAutoArchiveReadNotesIfEligible';
+import { initRevenueCatWhenReady } from '@/features/entitlements';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
 import { initDB } from '@/shared/lib';
@@ -55,6 +56,7 @@ export function useAppBootstrap(
           try {
             const deviceId = await getOrCreateDeviceId();
             await Promise.all([syncCrashlyticsUserId(deviceId), syncAnalyticsUserId(deviceId)]);
+            void initRevenueCatWhenReady(deviceId);
           } catch {
             if (__DEV__) console.warn('[bootstrap] failed to sync analytics/crashlytics user id');
           }
