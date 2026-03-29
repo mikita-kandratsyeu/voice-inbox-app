@@ -123,7 +123,8 @@
     "privateModeEmptyAnswer": "The local model returned an empty answer. Try again or switch to Smart mode.",
     "privateModeUnsupportedLocale": "The local model does not support the current language or locale for this request. Try English in AI settings or switch to Smart mode.",
     "privateModeTooLongForLocal": "This text is too long for the local model. Shorten the note or switch to Smart mode.",
-    "privateModeGenericError": "The local request failed. Try again or switch to Smart mode."
+    "privateModeGenericError": "The local request failed. Try again or switch to Smart mode.",
+    "smartModeNetworkError": "Could not connect to the server."
   },
   "search": {
     "a11yOpen": "Open search",

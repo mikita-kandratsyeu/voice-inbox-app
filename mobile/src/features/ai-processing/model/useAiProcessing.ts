@@ -11,6 +11,10 @@ import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMe
 import { AIOrchestrator } from '@/shared/lib/ai-core';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
+import {
+  toUserFacingFetchErrorFromUnknown,
+  toUserFacingFetchErrorMessage,
+} from '@/shared/lib/fetch/userFacingFetchError';
 
 export const useAiProcessing = () => {
   const {
@@ -209,7 +213,7 @@ export const useAiProcessing = () => {
         if (!runResult.ok) {
           const errorMsg = runResult.limitExceeded
             ? getAiWeeklyLimitExceededMessage()
-            : runResult.error;
+            : toUserFacingFetchErrorMessage(runResult.error ?? '');
           if (__DEV__)
             console.warn('[AI] processRecord: runSummaryTasks failed', {
               recordId: record.id,
@@ -317,7 +321,7 @@ export const useAiProcessing = () => {
           });
         setSummaryStatus(record.id, 'error');
         setTasksStatus(record.id, 'error');
-        const errorMsg = err instanceof Error ? err.message : String(err);
+        const errorMsg = toUserFacingFetchErrorFromUnknown(err);
         setSummaryError(record.id, errorMsg);
         setTasksError(record.id, errorMsg);
         void logAnalyticsEvent('ai_action_failed', {
