@@ -44,7 +44,7 @@ export async function getWeeklyLimitForDevice(deviceId: string): Promise<number>
 }
 
 const buildUsage = (used: number, resetAt: Date, limit: number): AiUsage => ({
-  used: Math.min(used, limit),
+  used,
   limit,
   remaining: Math.max(0, limit - used),
   resetAt: resetAt.toISOString(),
@@ -82,15 +82,14 @@ export const checkAndIncrement = async (deviceId: string): Promise<CheckResult> 
   }
 
   const resetAt = getResetAt();
-  const usage = buildUsage(count, resetAt, limit);
   const allowed = count <= limit;
 
   if (!allowed) {
     await redis.decr(key);
-    return { allowed: false, usage };
+    return { allowed: false, usage: buildUsage(count - 1, resetAt, limit) };
   }
 
-  return { allowed: true, usage };
+  return { allowed: true, usage: buildUsage(count, resetAt, limit) };
 };
 
 export const decrement = async (deviceId: string): Promise<void> => {
