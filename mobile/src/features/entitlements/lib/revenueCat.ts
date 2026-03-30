@@ -187,14 +187,17 @@ function billingRowFromProduct(
   if (!product) {
     return null;
   }
+
   const rawMain = product.priceString?.trim();
   const formattedMain = formatIapCurrencyAmount(product.price, product.currencyCode);
   const priceString = formattedMain ?? rawMain;
+
   if (!priceString) {
     return null;
   }
 
   let pricePerMonthString: string | null = null;
+
   if (tier === 'annual') {
     const perMonthNum =
       product.pricePerMonth != null &&
