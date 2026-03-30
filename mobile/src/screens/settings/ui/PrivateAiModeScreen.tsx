@@ -35,7 +35,7 @@ export const PrivateAiModeScreen = () => {
         { text: t('common.cancel'), style: 'cancel' },
         {
           text: t('transcription.continue'),
-          style: 'default',
+          style: 'destructive',
           onPress: () => setAiExecutionMode(mode),
         },
       ]);
