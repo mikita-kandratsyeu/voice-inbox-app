@@ -1,0 +1,214 @@
+{
+  "version": 3,
+  "exportedAt": "2026-03-30T12:00:00.000Z",
+  "folders": [
+    {
+      "id": "folder-demo-work",
+      "name": "Work",
+      "color": "#6366f1",
+      "icon": "briefcase",
+      "sortOrder": 0,
+      "createdAt": "2026-03-20T10:00:00.000Z"
+    },
+    {
+      "id": "folder-demo-home",
+      "name": "Personal",
+      "color": "#059669",
+      "icon": "home",
+      "sortOrder": 1,
+      "createdAt": "2026-03-21T11:00:00.000Z"
+    }
+  ],
+  "records": [
+    {
+      "id": "screenshot-demo-01",
+      "title": "Design review — voice capture flow",
+      "transcript": "Let us walk through the recording screen. Primary action should stay one tap. After stop, we auto-scroll the transcript into view and show a subtle success state.",
+      "transcriptSegments": [
+        {
+          "id": "seg-01-a",
+          "startTime": "0:00",
+          "startMs": 0,
+          "endMs": 4200,
+          "text": "Let us walk through the recording screen."
+        },
+        {
+          "id": "seg-01-b",
+          "startTime": "0:04",
+          "startMs": 4200,
+          "endMs": 9800,
+          "text": "Primary action should stay one tap."
+        }
+      ],
+      "summary": "UX focus: single-tap record, auto-scroll to transcript after stop, light success feedback.",
+      "summaryStatus": "done",
+      "tasks": [
+        {
+          "id": "task-01-1",
+          "text": "Prototype post-stop scroll behavior",
+          "isDone": false,
+          "deadline": "2026-04-02",
+          "priority": "high",
+          "source": "ai"
+        },
+        {
+          "id": "task-01-2",
+          "text": "Review with design",
+          "isDone": true,
+          "source": "manual"
+        }
+      ],
+      "tasksStatus": "done",
+      "duration": "1:38",
+      "durationMs": 98000,
+      "createdAt": "2026-03-30T10:00:00.000Z",
+      "relativeTime": "",
+      "status": "unread",
+      "readAt": null,
+      "aiStatus": "done",
+      "transcriptProgress": 1,
+      "isPinned": true,
+      "tags": ["design", "ux"],
+      "classification": "work",
+      "keyPhrases": ["recording", "transcript", "success state"],
+      "nextSteps": ["Ship scroll prototype", "Schedule design review"],
+      "folderId": "folder-demo-work"
+    },
+    {
+      "id": "screenshot-demo-02",
+      "title": "Groceries & weekend errands",
+      "transcript": "Milk, oat yogurt, coffee beans. Pick up dry cleaning on Saturday before noon. Plants need watering Sunday morning.",
+      "summary": "Shopping list plus two timed errands for the weekend.",
+      "summaryStatus": "done",
+      "tasks": [
+        {
+          "id": "task-02-1",
+          "text": "Dry cleaning — before 12:00 Saturday",
+          "isDone": false,
+          "priority": "medium",
+          "source": "manual"
+        },
+        {
+          "id": "task-02-2",
+          "text": "Water plants — Sunday AM",
+          "isDone": false,
+          "source": "ai"
+        }
+      ],
+      "tasksStatus": "done",
+      "duration": "0:52",
+      "durationMs": 52000,
+      "createdAt": "2026-03-29T06:00:00.000Z",
+      "relativeTime": "",
+      "status": "read",
+      "readAt": "2026-03-29T12:00:00.000Z",
+      "aiStatus": "done",
+      "transcriptProgress": 1,
+      "isPinned": false,
+      "classification": "personal",
+      "keyPhrases": ["groceries", "dry cleaning"],
+      "folderId": "folder-demo-home"
+    },
+    {
+      "id": "screenshot-demo-03",
+      "title": "Idea: smart folder suggestions",
+      "transcript": "When the model detects meeting language, suggest moving the note into Work automatically, but always let the user confirm.",
+      "summary": "Optional auto-folder suggestion based on transcript tone; confirm before move.",
+      "summaryStatus": "done",
+      "tasks": [],
+      "tasksStatus": "idle",
+      "duration": "0:41",
+      "durationMs": 41000,
+      "createdAt": "2026-03-28T08:00:00.000Z",
+      "relativeTime": "",
+      "status": "unread",
+      "readAt": null,
+      "aiStatus": "done",
+      "transcriptProgress": 1,
+      "isPinned": false,
+      "classification": "idea",
+      "keyPhrases": ["folders", "classification"],
+      "nextSteps": ["Spike confidence threshold"],
+      "folderId": null
+    },
+    {
+      "id": "screenshot-demo-04",
+      "title": "Team standup — API cutover",
+      "transcript": "Backend migration is on track for Tuesday. Mobile will feature-flag the new base URL. QA needs one regression pass on inbox sync.",
+      "summary": "Migration Tuesday; mobile behind flag; QA regression on sync.",
+      "summaryStatus": "done",
+      "tasks": [
+        {
+          "id": "task-04-1",
+          "text": "Flip feature flag after smoke tests",
+          "isDone": false,
+          "deadline": "2026-04-01",
+          "priority": "high",
+          "source": "manual"
+        }
+      ],
+      "tasksStatus": "done",
+      "duration": "2:07",
+      "durationMs": 127000,
+      "createdAt": "2026-03-27T09:00:00.000Z",
+      "relativeTime": "",
+      "status": "read",
+      "readAt": "2026-03-28T10:00:00.000Z",
+      "aiStatus": "done",
+      "transcriptProgress": 1,
+      "classification": "meeting",
+      "folderId": "folder-demo-work"
+    },
+    {
+      "id": "screenshot-demo-05",
+      "title": "Sprint retro — Feb",
+      "transcript": "Short retro notes from last sprint. Kept for history.",
+      "summary": "Archived retro snapshot.",
+      "summaryStatus": "done",
+      "tasks": [],
+      "tasksStatus": "done",
+      "duration": "0:33",
+      "durationMs": 33000,
+      "createdAt": "2026-03-16T14:00:00.000Z",
+      "relativeTime": "",
+      "status": "archived",
+      "readAt": "2026-03-17T08:00:00.000Z",
+      "aiStatus": "done",
+      "transcriptProgress": 1,
+      "classification": "work",
+      "folderId": "folder-demo-work"
+    },
+    {
+      "id": "screenshot-demo-06",
+      "title": "Podcast outline — episode 12",
+      "transcript": "Cold open hook, three main beats, sponsor read at minute twelve, outro with CTA to subscribe.",
+      "summary": "Structured outline with timing for mid-roll sponsor.",
+      "summaryStatus": "done",
+      "tasks": [
+        {
+          "id": "task-06-1",
+          "text": "Record cold open",
+          "isDone": false,
+          "source": "ai"
+        },
+        {
+          "id": "task-06-2",
+          "text": "Draft sponsor copy",
+          "isDone": true,
+          "source": "manual"
+        }
+      ],
+      "tasksStatus": "done",
+      "duration": "1:15",
+      "durationMs": 75000,
+      "createdAt": "2026-03-25T11:00:00.000Z",
+      "relativeTime": "",
+      "status": "unread",
+      "readAt": null,
+      "aiStatus": "done",
+      "transcriptProgress": 1,
+      "classification": "other",
+      "folderId": null
+    }
+  ]
+}

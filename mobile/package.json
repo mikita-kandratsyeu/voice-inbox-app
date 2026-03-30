@@ -17,6 +17,7 @@
     "validate": "lint-staged && yarn type:check && yarn test",
     "validate:push": "yarn type:check && yarn test --ci --forceExit",
     "fix:app-icon": "node scripts/fix-app-icon-alpha.mjs",
+    "build:screenshot-import-archive": "node scripts/build-screenshot-import-archive.mjs",
     "postinstall": "patch-package",
     "prepare": "husky",
     "start": "APP_ENV=development react-native start",
