@@ -1,5 +1,4 @@
 import type { Colors } from '@/shared/config';
-import { getExperimentalPrivateAiEnabled } from '@/shared/config/runtimeConfig';
 
 type SlideDef = {
   id: string;
@@ -122,15 +121,8 @@ export type OnboardingSlideContent = {
   extra?: SlideExtra;
 };
 
-function buildSlideDefs(): SlideDef[] {
-  if (getExperimentalPrivateAiEnabled()) {
-    return [...ONBOARDING_SLIDES_HEAD, ONBOARDING_SLIDE_PRIVATE, ...ONBOARDING_SLIDES_TAIL];
-  }
-  return [...ONBOARDING_SLIDES_HEAD, ...ONBOARDING_SLIDES_TAIL];
-}
-
 export const getOnboardingSlides = (colors: Colors): OnboardingSlideContent[] =>
-  buildSlideDefs().map((slide) => {
+  [...ONBOARDING_SLIDES_HEAD, ONBOARDING_SLIDE_PRIVATE, ...ONBOARDING_SLIDES_TAIL].map((slide) => {
     const key = ICON_KEYS[slide.iconName];
     const tone = colors.onboarding[key];
     if ('color' in tone && 'bg' in tone) {
