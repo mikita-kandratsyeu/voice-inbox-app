@@ -139,7 +139,9 @@ export function useSettingsScreen() {
 
   const fetchAiUsage = useCallback(async () => {
     const data = await getAiUsage();
+
     setAiUsage(data ?? null);
+
     return data;
   }, []);
 

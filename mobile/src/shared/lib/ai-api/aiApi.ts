@@ -147,6 +147,7 @@ export async function getAiUsage(): Promise<AiUsage | null> {
     }
 
     const data = (await response.json()) as Record<string, unknown>;
+
     return parseAiUsagePayload(data);
   } catch {
     return null;

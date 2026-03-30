@@ -149,6 +149,14 @@ export const AiUsageCard = ({
   const isExhausted = usage ? usage.remaining === 0 : false;
   const progressPercent =
     usage && usage.limit > 0 ? Math.min(100, (usage.used / usage.limit) * 100) : 0;
+  const isPastWarningThreshold = Boolean(
+    usage && usage.limit > 0 && !isExhausted && usage.used / usage.limit > 0.75,
+  );
+  const progressFillColor = isExhausted
+    ? color.accent.delete
+    : isPastWarningThreshold
+      ? color.accent.cache
+      : color.accent.primary;
 
   const usageText = usage ? `${usage.used} / ${usage.limit}` : '—';
   const statusText = getAiUsageStatusText(usage, isExhausted, t);
@@ -240,12 +248,11 @@ export const AiUsageCard = ({
                 className="h-full rounded-full"
                 style={{
                   width: `${progressPercent}%`,
-                  backgroundColor: isExhausted ? color.accent.delete : color.accent.primary,
+                  backgroundColor: progressFillColor,
                 }}
               />
             </View>
           </View>
-
           <Text
             className="text-xs leading-4"
             style={{
@@ -261,7 +268,6 @@ export const AiUsageCard = ({
               {t('settings.aiUsage.claimBonusUnavailableHint')}
             </Text>
           )}
-
           {onClaimBonus && canShowBonusButton && (
             <View className="mt-2">
               <Pressable
