@@ -101,19 +101,17 @@ export const RecordingDetailHeader = ({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityLabel={t('share.shareNote')}
         />
-        {!isPrivateMode && (
-          <Button
-            iconOnly
-            variant="icon"
-            size="md"
-            icon={<MessageSquare size={18} color={color.text.primary} strokeWidth={2.2} />}
-            color={color}
-            onPress={onAskAI}
-            activeOpacity={0.7}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityLabel={t('recordingDetail.askButton')}
-          />
-        )}
+        <Button
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<MessageSquare size={18} color={color.text.primary} strokeWidth={2.2} />}
+          color={color}
+          onPress={onAskAI}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel={t('recordingDetail.askButton')}
+        />
         <MenuView
           key={theme}
           title=""
