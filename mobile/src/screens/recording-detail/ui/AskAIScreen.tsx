@@ -29,7 +29,12 @@ import { useSettingsStore } from '@/entities/settings';
 import { type AskAIHistoryItem, useAskAI } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { hapticSelection, useNetworkStatus, useTabletContentMaxWidth } from '@/shared/lib';
+import {
+  hapticSelection,
+  useIsTablet,
+  useNetworkStatus,
+  useTabletContentMaxWidth,
+} from '@/shared/lib';
 import { Button, getInputFieldInputStyle, InputField, ScreenHeader } from '@/shared/ui';
 
 const SUGGESTED_QUESTION_KEYS = ['askSuggested1', 'askSuggested2', 'askSuggested3'] as const;
@@ -371,6 +376,7 @@ export const AskAIScreen = () => {
   const insets = useSafeAreaInsets();
   const color = useColors();
   const contentMaxWidth = useTabletContentMaxWidth();
+  const isTablet = useIsTablet();
 
   const { record: routeRecord } = route.params;
   const hydrateRecordDetails = useRecordStore((s) => s.hydrateRecordDetails);
@@ -527,7 +533,7 @@ export const AskAIScreen = () => {
           borderTopWidth: 1,
           borderTopColor: color.border.default,
           backgroundColor: color.background.secondary,
-          paddingHorizontal: 16,
+          paddingHorizontal: isTablet ? 80 : 16,
           paddingTop: 16,
           paddingBottom: insets.bottom + 8,
         }}
@@ -567,13 +573,14 @@ export const AskAIScreen = () => {
     );
   }, [
     shouldShowInputRow,
-    color,
     questionInput,
+    color,
+    insets.bottom,
+    sendButton,
+    isTablet,
     t,
     disableByNetwork,
     handleAsk,
-    insets.bottom,
-    sendButton,
   ]);
 
   return (
