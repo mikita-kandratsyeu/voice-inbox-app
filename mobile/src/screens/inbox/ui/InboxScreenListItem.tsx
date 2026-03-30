@@ -1,5 +1,6 @@
 import type { FlashListRef } from '@shopify/flash-list';
 import React, { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LayoutAnimation, Pressable, View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -49,11 +50,17 @@ function InboxScreenListItemInner({
   onStatusPress,
   onRecordLongPress,
 }: InboxScreenListItemProps) {
+  const { t } = useTranslation();
+
   if (item.type === 'header') {
     return <SectionHeader title={item.title} isFirst={item.isFirst} />;
   }
 
   const isSelected = batchSelect.selectedIds.has(item.item.id);
+  const recordA11yLabel =
+    item.item.status === 'unread'
+      ? `${item.item.title}, ${t('inbox.recordUnreadA11y')}`
+      : item.item.title;
   const folderStripeColor =
     !effectiveActiveFolderId && !isPrivateMode && item.item.folderId
       ? resolveDisplayFolderColor(folderColorById.get(item.item.folderId), isProActive)
@@ -65,7 +72,7 @@ function InboxScreenListItemInner({
       <Pressable
         onPress={toggle}
         accessibilityRole="checkbox"
-        accessibilityLabel={item.item.title}
+        accessibilityLabel={recordA11yLabel}
         accessibilityState={{ checked: isSelected }}
         style={{
           marginHorizontal: 16,

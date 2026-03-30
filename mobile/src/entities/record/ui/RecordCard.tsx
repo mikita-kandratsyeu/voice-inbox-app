@@ -68,6 +68,7 @@ export const RecordCard = React.memo(function RecordCard({
     translationProcessing ||
     translationError;
   const showFolderStripe = Boolean(folderAccentColor);
+  const isUnread = item.status === 'unread';
 
   const resolvedA11yHint =
     a11yHint === null
@@ -110,8 +111,26 @@ export const RecordCard = React.memo(function RecordCard({
             {item.isPinned ? (
               <Pin size={14} color={color.accent.pin} strokeWidth={2} style={pinIconStyle} />
             ) : null}
+            {isUnread ? (
+              <View
+                style={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: 5,
+                  marginRight: 8,
+                  backgroundColor: color.accent.delete,
+                  borderWidth: 2,
+                  borderColor: color.background.card,
+                }}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              />
+            ) : null}
             <Text
-              style={[textPrimaryStyle, { flex: 1, fontSize: 15, fontWeight: '600' }]}
+              style={[
+                textPrimaryStyle,
+                { flex: 1, fontSize: 15, fontWeight: isUnread ? '700' : '600' },
+              ]}
               numberOfLines={1}
             >
               {item.title}
@@ -210,7 +229,7 @@ export const RecordCard = React.memo(function RecordCard({
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={item.title}
+      accessibilityLabel={isUnread ? `${item.title}, ${t('inbox.recordUnreadA11y')}` : item.title}
       accessibilityHint={resolvedA11yHint}
       style={({ pressed }) => [
         ...baseContainerStyle,

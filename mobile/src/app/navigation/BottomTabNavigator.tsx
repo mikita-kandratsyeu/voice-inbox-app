@@ -137,6 +137,7 @@ export const BottomTabNavigator = () => {
             tabBarIcon: ({ color: c }) => (
               <TAB_ICONS.Inbox size={isTablet ? 28 : TAB_ICON_SIZE} color={c} strokeWidth={1.8} />
             ),
+            tabBarAccessibilityLabel: TAB_LABELS.Inbox,
           }}
         />
         <Tab.Screen
