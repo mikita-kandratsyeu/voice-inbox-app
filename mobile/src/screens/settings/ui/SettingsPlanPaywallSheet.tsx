@@ -71,8 +71,8 @@ function FeatureRow({ text, emphasized, mutedCheck }: FeatureRowProps) {
 const FREE_MAX_MINUTES = Math.round(FREE_MAX_RECORDING_MS / 60_000);
 
 const EMPTY_IAP_BILLING: IapBillingOptions = {
-  monthly: null,
   annual: null,
+  monthly: null,
   savePercentVsMonthly: null,
 };
 
@@ -82,12 +82,14 @@ function introCaptionForFreeTrial(intro: IapIntroFreePeriod | null, t: TFunction
   if (!intro) {
     return null;
   }
+
   const keyByUnit: Record<IapIntroFreePeriod['unit'], string> = {
     DAY: 'settings.planPaywall.trialDaysFree',
     WEEK: 'settings.planPaywall.trialWeeksFree',
     MONTH: 'settings.planPaywall.trialMonthsFree',
     YEAR: 'settings.planPaywall.trialYearsFree',
   };
+
   return t(keyByUnit[intro.unit], { count: intro.count });
 }
 
@@ -121,7 +123,7 @@ function PlanPickTile({
 
   return (
     <View className="min-w-0 flex-1" style={{ position: 'relative', alignSelf: 'stretch' }}>
-      {showBadge ? (
+      {showBadge && (
         <View
           className="items-center"
           style={{ position: 'absolute', left: 0, right: 0, top: -12, zIndex: 2 }}
@@ -151,7 +153,7 @@ function PlanPickTile({
             </Text>
           </View>
         </View>
-      ) : null}
+      )}
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ selected }}
@@ -202,7 +204,7 @@ function PlanPickTile({
           >
             {priceMainLine}
           </Text>
-          {priceSubLine ? (
+          {priceSubLine && (
             <Text
               className="mt-0.5 text-[12px] leading-[15px]"
               style={{
@@ -213,8 +215,8 @@ function PlanPickTile({
             >
               {priceSubLine}
             </Text>
-          ) : null}
-          {introText ? (
+          )}
+          {introText && (
             <Text
               className="mt-1 text-[11px] leading-[14px]"
               style={{
@@ -225,7 +227,7 @@ function PlanPickTile({
             >
               {introText}
             </Text>
-          ) : null}
+          )}
         </View>
       </Pressable>
     </View>
@@ -323,7 +325,6 @@ export function SettingsPlanPaywallSheet({
             </Text>
           </View>
         </View>
-
         <View
           className="mb-3 rounded-2xl border p-4"
           style={{ borderColor: c.border.default, backgroundColor: c.background.secondary }}
@@ -372,7 +373,7 @@ export function SettingsPlanPaywallSheet({
             <FeatureRow text={t('settings.planPaywall.features.aiLimit', { limit: proAiLimit })} />
             <FeatureRow text={t('settings.planPaywall.features.noAds')} />
           </View>
-          {isIapPublic && !iapProPriceLoading && iapDualBilling && onIapBillingPeriodChange ? (
+          {isIapPublic && !iapProPriceLoading && iapDualBilling && onIapBillingPeriodChange && (
             <View
               className="mt-4 flex-row gap-2"
               style={{
@@ -380,11 +381,11 @@ export function SettingsPlanPaywallSheet({
                 paddingTop: iapSavePercent != null && iapSavePercent > 0 ? 10 : 0,
               }}
             >
-              {iapMonthlyRow ? (
+              {iapMonthlyRow && (
                 <PlanPickTile
                   c={c}
                   t={t}
-                  title={t('settings.planPaywall.billingMonthly')}
+                  title={iapMonthlyRow.title ?? t('settings.planPaywall.billingMonthly')}
                   intro={iapMonthlyRow.introFree}
                   priceMainLine={`${iapMonthlyRow.priceString}${t('settings.planPaywall.billingSlashMonth')}`}
                   priceSubLine={null}
@@ -393,12 +394,12 @@ export function SettingsPlanPaywallSheet({
                   disabled={iapBusy}
                   saveBadgePercent={null}
                 />
-              ) : null}
-              {iapAnnualRow ? (
+              )}
+              {iapAnnualRow && (
                 <PlanPickTile
                   c={c}
                   t={t}
-                  title={t('settings.planPaywall.billingAnnual')}
+                  title={iapAnnualRow.title ?? t('settings.planPaywall.billingAnnual')}
                   intro={iapAnnualRow.introFree}
                   priceMainLine={
                     iapAnnualRow.pricePerMonthString
@@ -415,11 +416,10 @@ export function SettingsPlanPaywallSheet({
                   disabled={iapBusy}
                   saveBadgePercent={iapSavePercent}
                 />
-              ) : null}
+              )}
             </View>
-          ) : null}
+          )}
         </View>
-
         <Button
           variant="primary"
           size="lg"
@@ -431,7 +431,7 @@ export function SettingsPlanPaywallSheet({
           color={c}
           activeOpacity={0.85}
         />
-        {isIapPublic && onRestorePurchasesPress ? (
+        {isIapPublic && onRestorePurchasesPress && (
           <Pressable
             className="mt-4 items-center justify-center py-2"
             onPress={iapBusy ? undefined : onRestorePurchasesPress}
@@ -443,7 +443,7 @@ export function SettingsPlanPaywallSheet({
               {t('settings.planPaywall.restorePurchases')}
             </Text>
           </Pressable>
-        ) : null}
+        )}
       </BottomSheetView>
     </BottomSheetModal>
   );

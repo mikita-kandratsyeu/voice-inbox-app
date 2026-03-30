@@ -97,8 +97,8 @@ export function useSettingsScreen() {
   const [isHardResetting, setIsHardResetting] = useState(false);
   const [iapPaywallBusy, setIapPaywallBusy] = useState(false);
   const [iapBilling, setIapBilling] = useState<IapBillingOptions>({
-    monthly: null,
     annual: null,
+    monthly: null,
     savePercentVsMonthly: null,
   });
   const [selectedIapPeriod, setSelectedIapPeriod] = useState<IapBillingPeriod>('annual');
@@ -119,6 +119,7 @@ export function useSettingsScreen() {
     let cancelled = false;
     setIapProPriceLoading(true);
     setIapBilling({ monthly: null, annual: null, savePercentVsMonthly: null });
+
     void getProBillingPriceOptions().then((opts) => {
       if (!cancelled) {
         setIapBilling(opts);

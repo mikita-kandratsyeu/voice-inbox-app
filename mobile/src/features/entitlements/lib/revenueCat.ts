@@ -136,14 +136,15 @@ export type IapIntroFreePeriod = {
 };
 
 export type IapBillingProductRow = {
-  priceString: string;
-  pricePerMonthString: string | null;
   introFree: IapIntroFreePeriod | null;
+  pricePerMonthString: string | null;
+  priceString: string;
+  title: string | null;
 };
 
 export type IapBillingOptions = {
-  monthly: IapBillingProductRow | null;
   annual: IapBillingProductRow | null;
+  monthly: IapBillingProductRow | null;
   savePercentVsMonthly: number | null;
 };
 
@@ -215,9 +216,10 @@ function billingRowFromProduct(
   }
 
   return {
-    priceString,
-    pricePerMonthString,
     introFree: introFreeFromIntro(product.introPrice),
+    pricePerMonthString,
+    priceString,
+    title: product.title,
   };
 }
 
@@ -312,17 +314,22 @@ export async function getProBillingPriceOptions(): Promise<IapBillingOptions> {
   try {
     const offerings = await Purchases.getOfferings();
     const o = offerings.current;
+
     if (!o) {
       return { monthly: null, annual: null, savePercentVsMonthly: null };
     }
+
     const monthly = billingRowFromProduct(o.monthly?.product, 'monthly');
     const annual = billingRowFromProduct(o.annual?.product, 'annual');
 
     let savePercentVsMonthly: number | null = null;
+
     const mp = o.monthly?.product?.price;
     const ap = o.annual?.product?.price;
+
     if (monthly && annual && mp != null && ap != null && mp > 0 && ap > 0) {
       const yearAtMonthlyRate = mp * 12;
+
       if (ap < yearAtMonthlyRate) {
         const pct = Math.round((1 - ap / yearAtMonthlyRate) * 100);
         savePercentVsMonthly = pct >= 1 ? pct : null;
