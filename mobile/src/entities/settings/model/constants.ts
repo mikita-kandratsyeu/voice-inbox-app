@@ -72,9 +72,9 @@ export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
     descriptionKey: 'aiModels.localLlama32_1bDesc',
     speed: 'fast',
     fileName: 'llama-3.2-1b.gguf',
-    sizeMb: 770,
+    sizeMb: 808,
     downloadUrl:
-      'https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF/resolve/main/Llama-3.2-1B-Instruct-Q4_K_M.gguf',
+      'https://huggingface.co/QuantFactory/Vikhr-Llama-3.2-1B-Instruct-GGUF/resolve/main/Vikhr-Llama-3.2-1B-Instruct.Q4_K_M.gguf',
   },
   {
     id: 'local/gemma-2-2b-it-q4_k_m',
