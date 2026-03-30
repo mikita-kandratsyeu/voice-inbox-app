@@ -55,17 +55,6 @@ export type LocalAiModelCatalogEntry = {
 
 export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
   {
-    id: 'local/qwen3-1.7b-q4_k_m',
-    name: 'Qwen3 1.7B',
-    provider: 'Qwen',
-    descriptionKey: 'aiModels.localQwen3Desc',
-    speed: 'fast',
-    fileName: 'Qwen3-1.7B-Q4_K_M.gguf',
-    sizeMb: 1200,
-    downloadUrl:
-      'https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf',
-  },
-  {
     id: 'local/llama-3.2-1b-q4_k_m',
     name: 'Llama 3.2 1B',
     provider: 'Meta',
@@ -75,6 +64,17 @@ export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
     sizeMb: 808,
     downloadUrl:
       'https://huggingface.co/QuantFactory/Vikhr-Llama-3.2-1B-Instruct-GGUF/resolve/main/Vikhr-Llama-3.2-1B-Instruct.Q4_K_M.gguf',
+  },
+  {
+    id: 'local/qwen3-1.7b-q4_k_m',
+    name: 'Qwen3 1.7B',
+    provider: 'Qwen',
+    descriptionKey: 'aiModels.localQwen3Desc',
+    speed: 'fast',
+    fileName: 'Qwen3-1.7B-Q4_K_M.gguf',
+    sizeMb: 1200,
+    downloadUrl:
+      'https://huggingface.co/unsloth/Qwen3-1.7B-GGUF/resolve/main/Qwen3-1.7B-Q4_K_M.gguf',
   },
   {
     id: 'local/gemma-2-2b-it-q4_k_m',
@@ -89,7 +89,7 @@ export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
   },
 ];
 
-export const DEFAULT_LOCAL_AI_MODEL_ID: LocalAiModelId = 'local/qwen3-1.7b-q4_k_m';
+export const DEFAULT_LOCAL_AI_MODEL_ID: LocalAiModelId = 'local/llama-3.2-1b-q4_k_m';
 
 export const getLocalAiModelEntry = (id: LocalAiModelId): LocalAiModelCatalogEntry | undefined =>
   LOCAL_AI_MODELS.find((m) => m.id === id);
