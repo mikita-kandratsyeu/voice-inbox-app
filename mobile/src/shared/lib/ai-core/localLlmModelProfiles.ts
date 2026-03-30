@@ -2,10 +2,6 @@ import type { CompletionParams, ContextParams } from 'llama.rn';
 
 import type { LocalAiModelId } from '@/entities/settings';
 
-/**
- * json — summary + ask (оба пути ожидают JSON от модели).
- * chat — более мягкие стопы/сэмплинг, если позже появится свободный текст без JSON.
- */
 export type LocalLlmCompletionIntent = 'json' | 'chat';
 
 /** One slot: we never use parallel.completion; saves KV RAM vs default n_parallel=8. */
@@ -46,10 +42,11 @@ const PROFILES: Record<LocalAiModelId, CompletionProfile> = {
   'local/llama-3.2-1b-q4_k_m': {
     base: {
       enable_thinking: false,
-      top_p: 0.9,
+      top_p: 0.95,
       penalty_repeat: 1.05,
     },
     json: {
+      top_k: 50,
       penalty_repeat: 1.1,
       stop: ['<|eot_id|>', '<|end_of_text|>'],
     },
@@ -60,7 +57,6 @@ const PROFILES: Record<LocalAiModelId, CompletionProfile> = {
   'local/gemma-2-2b-it-q4_k_m': {
     base: {
       enable_thinking: false,
-      /** Gemma Jinja templates are happier with plain content parsing (llama.rn note). */
       force_pure_content: true,
       top_p: 0.88,
       penalty_repeat: 1.08,
