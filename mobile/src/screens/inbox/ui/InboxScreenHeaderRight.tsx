@@ -73,7 +73,7 @@ function InboxScreenHeaderRightInner({
         id: 'autoOrganize',
         title: t('inbox.menuAutoOrganize'),
         titleColor: color.text.primary,
-        image: 'folder',
+        image: 'folder.badge.plus',
         imageColor: color.text.primary,
         attributes: isAutoOrganizing ? { disabled: true } : undefined,
       });
@@ -82,7 +82,7 @@ function InboxScreenHeaderRightInner({
       id: 'selectNotes',
       title: t('inbox.menuSelectNotes'),
       titleColor: color.text.primary,
-      image: 'rectangle.stack',
+      image: 'checkmark.circle',
       imageColor: color.text.primary,
     });
     return items;
