@@ -155,7 +155,7 @@ export const BatchActionBar = ({
           contentContainerStyle={{
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 8,
+            gap: 12,
             paddingLeft: 8,
           }}
           style={{ flexGrow: 0, maxWidth: '82%' }}

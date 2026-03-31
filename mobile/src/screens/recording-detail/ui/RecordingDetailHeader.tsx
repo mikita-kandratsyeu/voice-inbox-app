@@ -1,5 +1,5 @@
 import { MenuView } from '@react-native-menu/menu';
-import { ChevronLeft, MessageSquare, MoreVertical, Pin, Share2 } from 'lucide-react-native';
+import { ChevronLeft, MessageSquare, MoreVertical, Pin } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -17,7 +17,6 @@ type RecordingDetailHeaderProps = {
   onBack: () => void;
   onTogglePin: () => void;
   onShare: () => void;
-  onShareAudio: () => void;
   onAskAI: () => void;
   onRename: () => void;
   onMoveToFolder: () => void;
@@ -33,7 +32,6 @@ export const RecordingDetailHeader = ({
   onBack,
   onTogglePin,
   onShare,
-  onShareAudio,
   onAskAI,
   onRename,
   onMoveToFolder,
@@ -94,17 +92,6 @@ export const RecordingDetailHeader = ({
           iconOnly
           variant="icon"
           size="md"
-          icon={<Share2 size={18} color={color.text.primary} strokeWidth={2.2} />}
-          color={color}
-          onPress={onShare}
-          activeOpacity={0.7}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          accessibilityLabel={t('share.shareNote')}
-        />
-        <Button
-          iconOnly
-          variant="icon"
-          size="md"
           icon={<MessageSquare size={18} color={color.text.primary} strokeWidth={2.2} />}
           color={color}
           onPress={onAskAI}
@@ -120,7 +107,7 @@ export const RecordingDetailHeader = ({
           onPressAction={({ nativeEvent }) => {
             if (nativeEvent.event === 'rename') onRename();
             if (nativeEvent.event === 'moveToFolder') onMoveToFolder();
-            if (nativeEvent.event === 'shareAudio') onShareAudio();
+            if (nativeEvent.event === 'share') onShare();
             if (nativeEvent.event === 'archive') onArchive();
             if (nativeEvent.event === 'unarchive') onUnarchive();
             if (nativeEvent.event === 'delete') onDelete();
@@ -144,17 +131,13 @@ export const RecordingDetailHeader = ({
                   },
                 ]
               : []),
-            ...(record.audioPath
-              ? [
-                  {
-                    id: 'shareAudio' as const,
-                    title: t('share.shareAudio'),
-                    image: 'square.and.arrow.up' as const,
-                    imageColor: color.text.primary,
-                    titleColor: color.text.primary,
-                  },
-                ]
-              : []),
+            {
+              id: 'share',
+              title: t('share.share'),
+              image: 'square.and.arrow.up',
+              imageColor: color.text.primary,
+              titleColor: color.text.primary,
+            },
             record.status === 'archived'
               ? {
                   id: 'unarchive' as const,

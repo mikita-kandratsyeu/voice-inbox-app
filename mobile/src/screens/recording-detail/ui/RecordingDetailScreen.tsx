@@ -30,6 +30,7 @@ import { RecordingDetailCard } from './RecordingDetailCard';
 import { RecordingDetailHeader } from './RecordingDetailHeader';
 import { RecordingDetailTabBar } from './RecordingDetailTabBar';
 import { RelatedNotesSection } from './RelatedNotesSection';
+import { ShareRecordSheet } from './ShareRecordSheet';
 import { SummaryTab } from './SummaryTab';
 import { TasksTab } from './TasksTab';
 import { TranscriptContent } from './TranscriptContent';
@@ -110,6 +111,7 @@ export const RecordingDetailScreen = () => {
   const [activeTab, setActiveTab] = useState<Tab>('transcript');
   const [mountedTabs, setMountedTabs] = useState<Set<Tab>>(new Set(['transcript']));
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
+  const [shareSheetVisible, setShareSheetVisible] = useState(false);
   const { currentPositionMs, onPositionUpdate } = usePlaybackPosition();
   const [recordLanguage, setRecordLanguage] = useState<TranscriptionLanguage>(
     globalTranscriptionLanguage,
@@ -248,6 +250,8 @@ export const RecordingDetailScreen = () => {
       Alert.alert(t('recordingDetail.shareFailed'), err.message);
     });
   }, [t, liveRecord, shareAudio]);
+  const onOpenShareMenu = useCallback(() => setShareSheetVisible(true), []);
+  const onCloseShareMenu = useCallback(() => setShareSheetVisible(false), []);
 
   const scrollPadding = isTablet ? 24 : 16;
   const contentMaxWidth = useTabletContentMaxWidth();
@@ -310,14 +314,20 @@ export const RecordingDetailScreen = () => {
         isPrivateMode={isPrivateMode}
         onBack={onBack}
         onTogglePin={onTogglePin}
-        onShare={handleShare}
-        onShareAudio={handleShareAudio}
+        onShare={onOpenShareMenu}
         onAskAI={onAskAI}
         onRename={onRename}
         onMoveToFolder={onMoveToFolderMenu}
         onArchive={onArchive}
         onUnarchive={onUnarchive}
         onDelete={onDelete}
+      />
+      <ShareRecordSheet
+        visible={shareSheetVisible}
+        hasAudio={hasAudio}
+        onClose={onCloseShareMenu}
+        onShareText={handleShare}
+        onShareAudio={handleShareAudio}
       />
       {!isPrivateMode && (
         <FolderPickerSheet

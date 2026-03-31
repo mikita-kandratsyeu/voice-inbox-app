@@ -324,6 +324,9 @@
     "deleteMessage": "Are you sure you want to delete \"{{title}}\"? This action cannot be undone."
   },
   "share": {
+    "share": "Share",
+    "shareAsTitle": "Share",
+    "shareAsText": "Share text",
     "shareNote": "Share note",
     "shareAudio": "Share audio",
     "dateLabel": "Date",
