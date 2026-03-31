@@ -444,7 +444,7 @@
       },
       "proTitle": "Pro",
       "billingMonthly": "Monthly",
-      "billingAnnual": "Yearly",
+      "billingAnnual": "Annual",
       "billingSlashMonth": "/month",
       "billingSlashYear": "/year",
       "savePercentDiscountPill": "{{percent}}% off",

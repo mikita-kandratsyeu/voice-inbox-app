@@ -443,8 +443,8 @@
         "weeklyAi": "До {{limit}} генераций в неделю"
       },
       "proTitle": "Pro",
-      "billingMonthly": "Месяц",
-      "billingAnnual": "Год",
+      "billingMonthly": "Ежемесячно",
+      "billingAnnual": "Ежегодно",
       "billingSlashMonth": "/мес",
       "billingSlashYear": "/год",
       "savePercentDiscountPill": "{{percent}}% скидка",

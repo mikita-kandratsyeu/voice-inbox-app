@@ -385,7 +385,7 @@ export function SettingsPlanPaywallSheet({
                 <PlanPickTile
                   c={c}
                   t={t}
-                  title={iapMonthlyRow.title ?? t('settings.planPaywall.billingMonthly')}
+                  title={t('settings.planPaywall.billingMonthly')}
                   intro={iapMonthlyRow.introFree}
                   priceMainLine={`${iapMonthlyRow.priceString}${t('settings.planPaywall.billingSlashMonth')}`}
                   priceSubLine={null}
@@ -399,7 +399,7 @@ export function SettingsPlanPaywallSheet({
                 <PlanPickTile
                   c={c}
                   t={t}
-                  title={iapAnnualRow.title ?? t('settings.planPaywall.billingAnnual')}
+                  title={t('settings.planPaywall.billingAnnual')}
                   intro={iapAnnualRow.introFree}
                   priceMainLine={
                     iapAnnualRow.pricePerMonthString
