@@ -2,7 +2,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Fingerprint, ScanFace } from 'lucide-react-native';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -10,7 +10,7 @@ import { useAppLockStore } from '@/entities/app-lock';
 import { PIN_LENGTH_OPTIONS } from '@/entities/app-lock';
 import { PinInput } from '@/features/app-lock/ui/PinInput';
 import { useColors } from '@/shared/config';
-import { useIsSmallScreen, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 type SetupStep = 'confirm' | 'initial';
@@ -22,7 +22,6 @@ export const AppLockSetupScreen = () => {
   const navigation = useNavigation();
   const contentMaxWidth = useTabletContentMaxWidth();
   const isTablet = useIsTablet();
-  const { isSmallScreen } = useIsSmallScreen();
 
   const [step, setStep] = useState<SetupStep>('initial');
   const [initialPin, setInitialPin] = useState('');
@@ -135,6 +134,10 @@ export const AppLockSetupScreen = () => {
     biometryType === 'FaceID' || biometryType === 'Face' || biometryType === 'OpticID';
   const BioIcon = isFaceBiometry ? ScanFace : Fingerprint;
 
+  const pinLengthLocked = step !== 'initial';
+
+  const scrollPaddingBottom = getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet);
+
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader title={t('appLock.title')} onBack={() => navigation.goBack()} />
@@ -146,120 +149,110 @@ export const AppLockSetupScreen = () => {
           maxWidth: contentMaxWidth,
         }}
       >
-        {!isEnabled ? (
-          <View
-            className="flex-1 justify-center px-6"
-            style={{
-              paddingTop: 24,
-              paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet) + 24,
-            }}
-          >
-            <View className="mb-6 min-h-[52px] justify-center">
+        <ScrollView
+          contentContainerStyle={{
+            paddingHorizontal: 16,
+            paddingTop: 12,
+            paddingBottom: scrollPaddingBottom,
+          }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {!isEnabled ? (
+            <>
               <Text
-                className="mb-6 text-center text-[16px]"
+                className="mb-6 text-[15px] leading-[22px]"
                 style={{ color: color.text.secondary }}
               >
-                {isSmallScreen ? '' : t('appLock.setPinPrompt')}
+                {step === 'confirm'
+                  ? t('appLock.confirmPin', { digits: pinLength })
+                  : t('appLock.setPinPrompt')}
               </Text>
-              {biometryType && (
+
+              <SettingsSection title={t('appLock.pinLengthTitle')}>
                 <View
-                  className="flex-row items-center justify-between rounded-2xl px-4 py-3.5"
+                  className="flex-row flex-wrap items-center justify-center gap-2 px-4 py-3.5"
                   style={{
                     backgroundColor: color.background.card,
-                    borderWidth: 1,
-                    borderColor: color.border.default,
+                    opacity: pinLengthLocked ? 0.5 : 1,
                   }}
                 >
-                  <View className="flex-row items-center gap-3">
-                    <BioIcon size={20} color={color.accent.success} strokeWidth={1.8} />
-                    <Text className="text-[16px]" style={{ color: color.text.primary }}>
-                      {bioLabel}
-                    </Text>
-                  </View>
-                  <Switch
-                    value={useBiometrics}
-                    onValueChange={(v) => setUseBiometrics(v)}
-                    accessibilityLabel={bioLabel}
-                    trackColor={{
-                      false: color.background.tertiary,
-                      true: color.accent.primary,
-                    }}
-                    thumbColor={color.icon.onAccent}
-                  />
-                </View>
-              )}
-            </View>
-            <View className="mb-6">
-              <Text
-                className="mb-2 text-center text-[14px]"
-                style={{ color: color.text.secondary }}
-              >
-                {t('appLock.pinLengthTitle')}
-              </Text>
-              <View className="flex-row items-center justify-center gap-2">
-                {PIN_LENGTH_OPTIONS.map((length) => {
-                  const selected = pinLength === length;
-                  return (
-                    <TouchableOpacity
-                      key={length}
-                      onPress={() => {
-                        if (step !== 'initial') return;
-                        setPin('');
-                        setInitialPin('');
-                        setPinLength(length);
-                      }}
-                      activeOpacity={0.8}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('appLock.pinLengthOption', { digits: length })}
-                      accessibilityState={{ selected }}
-                      className="rounded-full px-4 py-2"
-                      style={{
-                        backgroundColor: selected
-                          ? color.accent.primary
-                          : color.background.tertiary,
-                      }}
-                    >
-                      <Text
-                        className="text-[13px] font-medium"
+                  {PIN_LENGTH_OPTIONS.map((length) => {
+                    const selected = pinLength === length;
+                    return (
+                      <TouchableOpacity
+                        key={length}
+                        disabled={pinLengthLocked}
+                        onPress={() => {
+                          if (pinLengthLocked) return;
+                          setPin('');
+                          setInitialPin('');
+                          setPinLength(length);
+                        }}
+                        activeOpacity={0.8}
+                        accessibilityRole="button"
+                        accessibilityLabel={t('appLock.pinLengthOption', { digits: length })}
+                        accessibilityState={{ selected, disabled: pinLengthLocked }}
+                        className="rounded-full px-4 py-2"
                         style={{
-                          color: selected ? color.icon.onAccent : color.text.secondary,
+                          backgroundColor: selected
+                            ? color.accent.primary
+                            : color.background.tertiary,
                         }}
                       >
-                        {t('appLock.pinLengthOption', { digits: length })}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
+                        <Text
+                          className="text-[13px] font-medium"
+                          style={{
+                            color: selected ? color.icon.onAccent : color.text.secondary,
+                          }}
+                        >
+                          {t('appLock.pinLengthOption', { digits: length })}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </SettingsSection>
+
+              {biometryType ? (
+                <SettingsSection title={t('common.biometrics')}>
+                  <SettingsRow
+                    label={bioLabel}
+                    leftIcon={<BioIcon size={20} color={color.accent.success} strokeWidth={1.8} />}
+                    rightSlot={
+                      <Switch
+                        value={useBiometrics}
+                        onValueChange={(v) => setUseBiometrics(v)}
+                        accessibilityLabel={bioLabel}
+                        trackColor={{
+                          false: color.background.tertiary,
+                          true: color.accent.primary,
+                        }}
+                        thumbColor={color.icon.onAccent}
+                      />
+                    }
+                    showChevron={false}
+                    onPress={undefined}
+                    isFirst
+                    isLast
+                  />
+                </SettingsSection>
+              ) : null}
+
+              <View className="mt-2 items-center pb-2">
+                <PinInput
+                  pin={pin}
+                  pinLength={pinLength}
+                  color={color}
+                  onDigit={handleDigit}
+                  onBackspace={handleBackspace}
+                  error={error}
+                  success={success}
+                  onSuccessAnimationComplete={handleSuccessComplete}
+                />
               </View>
-            </View>
-
-            <PinInput
-              pin={pin}
-              pinLength={pinLength}
-              color={color}
-              onDigit={handleDigit}
-              onBackspace={handleBackspace}
-              error={error}
-              success={success}
-              onSuccessAnimationComplete={handleSuccessComplete}
-            />
-
-            <View className="mt-4 h-8 items-center justify-center">
-              {step === 'confirm' && (
-                <Text className="text-center text-sm" style={{ color: color.text.secondary }}>
-                  {t('appLock.confirmPin', { digits: pinLength })}
-                </Text>
-              )}
-            </View>
-          </View>
-        ) : (
-          <View
-            style={{
-              paddingHorizontal: 16,
-              paddingTop: 12,
-              paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
-            }}
-          >
+            </>
+          ) : (
             <SettingsSection title={t('appLock.settings')}>
               <SettingsRow
                 label={t('appLock.title')}
@@ -281,7 +274,7 @@ export const AppLockSetupScreen = () => {
                 isFirst
                 isLast={!biometryType}
               />
-              {biometryType && (
+              {biometryType ? (
                 <SettingsRow
                   label={bioLabel}
                   value={useBiometrics ? t('settings.on') : t('settings.off')}
@@ -302,10 +295,10 @@ export const AppLockSetupScreen = () => {
                   onPress={undefined}
                   isLast
                 />
-              )}
+              ) : null}
             </SettingsSection>
-          </View>
-        )}
+          )}
+        </ScrollView>
       </View>
     </View>
   );

@@ -601,7 +601,7 @@
     "used": "Used",
     "whisperModels": "Whisper models",
     "transcriptionModels": "Transcription (Whisper)",
-    "localGenerationModels": "On-device AI (generation)",
+    "localGenerationModels": "On-device AI (LLM)",
     "cacheLabel": "Cache",
     "audioFilesValue": "{{count}} files · {{size}} MB",
     "mb": "MB",

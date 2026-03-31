@@ -601,7 +601,7 @@
     "used": "Использовано",
     "whisperModels": "Whisper модели",
     "transcriptionModels": "Транскрипция (Whisper)",
-    "localGenerationModels": "Локальная ИИ (генерация)",
+    "localGenerationModels": "Локальный ИИ (LLM)",
     "cacheLabel": "Кэш",
     "audioFilesValue": "{{count}} файлов · {{size}} MB",
     "mb": "MB",
