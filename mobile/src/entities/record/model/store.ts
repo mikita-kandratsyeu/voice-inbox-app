@@ -116,6 +116,7 @@ type RecordStore = {
       nextSteps?: string[];
     },
   ) => Promise<void>;
+  promoteNextStepToTask: (id: string, tasks: TaskItem[], nextSteps: string[]) => Promise<void>;
   updateTranslation: (
     id: string,
     translatedTranscript: string | null,
@@ -341,6 +342,19 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
       if (data.nextSteps !== undefined) patch.nextSteps = data.nextSteps;
       return { records: updateRecord(s.records, id, patch) };
     });
+  },
+
+  promoteNextStepToTask: async (id, tasks, nextSteps) => {
+    await recordRepository.updateTasks(id, tasks);
+    await recordRepository.updateAiExtras(id, { nextSteps });
+    set((s) => ({
+      records: updateRecord(s.records, id, {
+        tasks,
+        nextSteps,
+        tasksStatus: 'done',
+        tasksError: undefined,
+      }),
+    }));
   },
 
   updateTranslation: async (id, translatedTranscript, translationLanguage) => {

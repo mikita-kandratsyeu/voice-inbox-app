@@ -278,6 +278,8 @@
     "continueViewing": "Продолжить",
     "keyPhrases": "Ключевые фразы",
     "nextSteps": "Что сделать дальше",
+    "nextStepAddA11y": "Добавить в задачи: {{text}}",
+    "nextStepAlreadyInTasks": "Этот пункт уже есть в списке задач.",
     "relatedNotes": "Похожие заметки",
     "accessibility": {
       "cardLabel": "Голосовая заметка {{title}}, записана {{date}}, длительность {{duration}}",

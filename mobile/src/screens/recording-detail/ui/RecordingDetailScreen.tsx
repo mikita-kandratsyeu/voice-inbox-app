@@ -3,7 +3,7 @@ import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, useWindowDimensions, View } from 'react-native';
+import { Alert, LayoutAnimation, useWindowDimensions, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
@@ -20,7 +20,12 @@ import { useRecordActions } from '@/features/record-actions';
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
 import { useColors } from '@/shared/config';
-import { resolveDisplayFolderColor, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import {
+  hapticSelection,
+  resolveDisplayFolderColor,
+  useIsTablet,
+  useTabletContentMaxWidth,
+} from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
 import { AudioPlayer, usePlaybackPosition } from '@/widgets/audio-player';
 
@@ -52,6 +57,7 @@ export const RecordingDetailScreen = () => {
     togglePin,
     toggleTask,
     updateTasks,
+    promoteNextStepToTask,
     setSummaryStatus,
     setTasksStatus,
     clearAudioPath,
@@ -65,6 +71,7 @@ export const RecordingDetailScreen = () => {
       togglePin: s.togglePin,
       toggleTask: s.toggleTask,
       updateTasks: s.updateTasks,
+      promoteNextStepToTask: s.promoteNextStepToTask,
       setSummaryStatus: s.setSummaryStatus,
       setTasksStatus: s.setTasksStatus,
       clearAudioPath: s.clearAudioPath,
@@ -179,6 +186,36 @@ export const RecordingDetailScreen = () => {
       updateTasks(liveRecord.id, next).catch(() => {});
     },
     [liveRecord.id, liveRecord.tasks, updateTasks],
+  );
+
+  const handlePromoteNextStepToTask = useCallback(
+    async (step: string, stepIndex: number) => {
+      const trimmed = step.trim();
+      if (!trimmed) return;
+
+      const prev = liveRecord.tasks ?? [];
+      if (prev.some((x) => x.text.trim().toLowerCase() === trimmed.toLowerCase())) {
+        Alert.alert(t('recordingDetail.nextSteps'), t('recordingDetail.nextStepAlreadyInTasks'));
+        return;
+      }
+
+      const steps = liveRecord.nextSteps ?? [];
+      if (stepIndex < 0 || stepIndex >= steps.length) return;
+      if (steps[stepIndex]?.trim() !== trimmed) return;
+
+      const id = `${liveRecord.id}-manual-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const nextTasks = [...prev, { id, text: trimmed, isDone: false, source: 'manual' as const }];
+      const nextStepsList = steps.filter((_, i) => i !== stepIndex);
+
+      hapticSelection();
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      try {
+        await promoteNextStepToTask(liveRecord.id, nextTasks, nextStepsList);
+      } catch {
+        // no-op
+      }
+    },
+    [liveRecord.id, liveRecord.tasks, liveRecord.nextSteps, t, promoteNextStepToTask],
   );
 
   const handleRetranscribe = useCallback(async () => {
@@ -441,6 +478,7 @@ export const RecordingDetailScreen = () => {
                   onToggle={handleToggleTask}
                   onExtract={handleExtractTasks}
                   onAddManualTask={handleAddManualTask}
+                  onPromoteNextStepToTask={handlePromoteNextStepToTask}
                   onDeleteTask={handleDeleteTask}
                   onDismissError={handleDismissSummaryError}
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}

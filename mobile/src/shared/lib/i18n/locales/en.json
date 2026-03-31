@@ -278,6 +278,8 @@
     "continueViewing": "Continue",
     "keyPhrases": "Key phrases",
     "nextSteps": "What to do next",
+    "nextStepAddA11y": "Add to tasks: {{text}}",
+    "nextStepAlreadyInTasks": "This suggestion is already in your task list.",
     "relatedNotes": "Similar notes",
     "accessibility": {
       "cardLabel": "Voice note {{title}}, recorded {{date}}, duration {{duration}}",

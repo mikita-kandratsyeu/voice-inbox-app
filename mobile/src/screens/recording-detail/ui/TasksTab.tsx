@@ -44,6 +44,7 @@ type TasksTabProps = {
   onToggle: (id: string) => void;
   onExtract: () => void;
   onAddManualTask: (text: string) => void;
+  onPromoteNextStepToTask: (step: string, stepIndex: number) => void;
   onDeleteTask: (taskId: string) => void;
   onDismissError?: () => void;
   showPrivateModeCta?: boolean;
@@ -131,6 +132,7 @@ export const TasksTab = ({
   onToggle,
   onExtract,
   onAddManualTask,
+  onPromoteNextStepToTask,
   onDeleteTask,
   onDismissError,
   onCancelProcessing,
@@ -367,9 +369,14 @@ export const TasksTab = ({
             {t('recordingDetail.nextSteps')}
           </Text>
           {nextSteps.map((step, idx) => (
-            <View
-              key={idx}
-              className="flex-row items-start gap-2"
+            <Pressable
+              key={`${idx}-${step}`}
+              onPress={() => {
+                void onPromoteNextStepToTask(step, idx);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t('recordingDetail.nextStepAddA11y', { text: step })}
+              className="flex-row items-center gap-2.5"
               style={{
                 paddingHorizontal: 12,
                 paddingVertical: 8,
@@ -377,10 +384,19 @@ export const TasksTab = ({
                 backgroundColor: color.background.tertiary,
               }}
             >
-              <Text className="text-sm flex-1" style={{ color: color.text.primary }}>
+              <Text
+                className="min-w-0 flex-1 text-sm leading-5"
+                style={{ color: color.text.primary }}
+              >
                 {step}
               </Text>
-            </View>
+              <Plus
+                size={17}
+                color={color.accent.primary}
+                strokeWidth={2}
+                style={{ flexShrink: 0, opacity: 0.9 }}
+              />
+            </Pressable>
           ))}
         </View>
       )}
