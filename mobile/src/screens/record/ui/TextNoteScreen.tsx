@@ -14,6 +14,7 @@ import { useColors } from '@/shared/config';
 import { Button, getInputFieldInputStyle, InputField, ScreenHeader } from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';
+import { getAutoTitle } from '../lib/getAutoTitle';
 
 export const TextNoteScreen = () => {
   const { t } = useTranslation();
@@ -28,11 +29,13 @@ export const TextNoteScreen = () => {
 
   const resolvedTitle = useMemo(() => {
     const trimmed = title.trim();
+
     if (trimmed.length > 0) {
       return trimmed;
     }
-    return t('textNote.defaultTitle');
-  }, [t, title]);
+
+    return getAutoTitle();
+  }, [title]);
 
   const handleBack = useCallback(() => {
     KeyboardController.dismiss({ animated: false });

@@ -1,10 +1,12 @@
+import { MenuView } from '@react-native-menu/menu';
 import type { TFunction } from 'i18next';
-import { Folders, GalleryHorizontalEnd, Keyboard, ListTodo, Search } from 'lucide-react-native';
-import React, { memo } from 'react';
+import { Keyboard, MoreVertical, Search } from 'lucide-react-native';
+import React, { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
 import type { BatchSelectState } from '@/features/batch-select';
 import type { Colors } from '@/shared/config';
+import { useAppTheme } from '@/shared/config';
 import { Button } from '@/shared/ui';
 
 type InboxScreenHeaderRightProps = {
@@ -46,6 +48,46 @@ function InboxScreenHeaderRightInner({
   onCreateTextNote,
   t,
 }: InboxScreenHeaderRightProps) {
+  const theme = useAppTheme();
+  const isDark = theme === 'dark';
+
+  const moreMenuActions = useMemo(() => {
+    const items: Array<{
+      id: string;
+      title: string;
+      titleColor: string;
+      image?: string;
+      imageColor?: string;
+      attributes?: { disabled?: boolean };
+    }> = [
+      {
+        id: 'allTasks',
+        title: t('allTasks.title'),
+        titleColor: color.text.primary,
+        image: 'checklist',
+        imageColor: color.text.primary,
+      },
+    ];
+    if (!isPrivateMode) {
+      items.push({
+        id: 'autoOrganize',
+        title: t('inbox.menuAutoOrganize'),
+        titleColor: color.text.primary,
+        image: 'folder',
+        imageColor: color.text.primary,
+        attributes: isAutoOrganizing ? { disabled: true } : undefined,
+      });
+    }
+    items.push({
+      id: 'selectNotes',
+      title: t('inbox.menuSelectNotes'),
+      titleColor: color.text.primary,
+      image: 'rectangle.stack',
+      imageColor: color.text.primary,
+    });
+    return items;
+  }, [color.text.primary, isAutoOrganizing, isPrivateMode, t]);
+
   if (!isLoaded) return null;
 
   if (batchSelect.isSelectMode) {
@@ -91,30 +133,6 @@ function InboxScreenHeaderRightInner({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         />
       )}
-      {!isPrivateMode && (
-        <Button
-          iconOnly
-          variant="icon"
-          size="md"
-          icon={<Folders size={20} color={color.text.primary} strokeWidth={2.2} />}
-          color={color}
-          onPress={onAutoOrganize}
-          accessibilityLabel={t('folders.autoOrganizeButton')}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          loading={isAutoOrganizing}
-          disabled={isAutoOrganizing}
-        />
-      )}
-      <Button
-        iconOnly
-        variant="icon"
-        size="md"
-        icon={<GalleryHorizontalEnd size={21} color={color.text.primary} strokeWidth={2.3} />}
-        color={color}
-        onPress={onEnterBatchMode}
-        accessibilityLabel={t('batch.a11yEnterSelectMode')}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      />
       <Button
         iconOnly
         variant="icon"
@@ -125,16 +143,30 @@ function InboxScreenHeaderRightInner({
         accessibilityLabel={t('textNote.openCreate')}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       />
-      <Button
-        iconOnly
-        variant="icon"
-        size="md"
-        icon={<ListTodo size={22} color={color.text.primary} strokeWidth={2.2} />}
-        color={color}
-        onPress={onOpenAllTasks}
-        accessibilityLabel={t('allTasks.a11yOpenAllTasks')}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      />
+      <MenuView
+        key={`inbox-more-${theme}`}
+        title=""
+        themeVariant={isDark ? 'dark' : 'light'}
+        shouldOpenOnLongPress={false}
+        actions={moreMenuActions}
+        onPressAction={({ nativeEvent }) => {
+          const id = nativeEvent.event;
+          if (id === 'allTasks') onOpenAllTasks();
+          if (id === 'autoOrganize' && !isAutoOrganizing && !isPrivateMode) onAutoOrganize();
+          if (id === 'selectNotes') onEnterBatchMode();
+        }}
+      >
+        <Button
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<MoreVertical size={20} color={color.text.primary} strokeWidth={2.2} />}
+          color={color}
+          onPress={() => {}}
+          accessibilityLabel={t('common.moreActions')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        />
+      </MenuView>
     </View>
   );
 }

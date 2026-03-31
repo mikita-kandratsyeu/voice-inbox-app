@@ -73,6 +73,8 @@
     "defaultTitle": "Text note"
   },
   "inbox": {
+    "menuSelectNotes": "Select notes",
+    "menuAutoOrganize": "Organize notes",
     "adLabel": "Ad",
     "title": "Inbox",
     "emptyTitle": "Start your first recording",

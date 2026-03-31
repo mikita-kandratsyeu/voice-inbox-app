@@ -73,6 +73,8 @@
     "defaultTitle": "Текстовая заметка"
   },
   "inbox": {
+    "menuSelectNotes": "Выбрать заметки",
+    "menuAutoOrganize": "Организовать заметки",
     "adLabel": "Реклама",
     "title": "Входящие",
     "emptyTitle": "Сделайте первую запись",
