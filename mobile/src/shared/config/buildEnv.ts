@@ -5,7 +5,6 @@ import {
   DATABASE_URL,
   DB_LOG,
   MOBILE_USER_AGENT,
-  SUBSCRIPTIONS_PUBLICLY_AVAILABLE,
   TESTFLIGHT_INTERNAL_BUILD,
   WEB_API_SECRET,
 } from '@env';
@@ -42,10 +41,6 @@ export function isCrashlyticsDebugEnabled(): boolean {
 
 export function isTestflightInternalBuild(): boolean {
   return isTruthyBuildEnvFlag(TESTFLIGHT_INTERNAL_BUILD);
-}
-
-export function isSubscriptionsPubliclyAvailable(): boolean {
-  return isTruthyBuildEnvFlag(SUBSCRIPTIONS_PUBLICLY_AVAILABLE);
 }
 
 export function getWebApiSecret(): string {

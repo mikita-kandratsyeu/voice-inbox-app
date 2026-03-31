@@ -1,5 +1,8 @@
-import { isSubscriptionsPubliclyAvailable } from '@/shared/config/buildEnv';
-import { getRevenueCatApiKeyAndroid, getRevenueCatApiKeyIos } from '@/shared/config/runtimeConfig';
+import {
+  getRevenueCatApiKeyAndroid,
+  getRevenueCatApiKeyIos,
+  getSubscriptionsPubliclyAvailable,
+} from '@/shared/config/runtimeConfig';
 import { fetchProLicenseStatus } from '@/shared/lib/ai-api/proLicenseApi';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 
@@ -7,7 +10,7 @@ import { clearProEntitlementSync, setProExpiresAtMsSync } from './proEntitlement
 import { PRO_LICENSE_MIN_ATTEMPT_MS, PRO_LICENSE_MIN_BACKGROUND_FETCH_MS } from './syncIntervals';
 
 function isRevenueCatIapConfigured(): boolean {
-  if (!isSubscriptionsPubliclyAvailable()) {
+  if (!getSubscriptionsPubliclyAvailable()) {
     return false;
   }
   const ios = (getRevenueCatApiKeyIos() ?? '').trim();

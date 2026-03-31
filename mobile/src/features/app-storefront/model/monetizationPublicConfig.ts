@@ -1,10 +1,10 @@
-import { isSubscriptionsPubliclyAvailable } from '@/shared/config/buildEnv';
 import { isTestflightInternalBuild } from '@/shared/config/buildEnv';
+import { getSubscriptionsPubliclyAvailable as getSubscriptionsPubliclyAvailableFromConfig } from '@/shared/config/runtimeConfig';
 
 export type MonetizationMode = 'iap_public' | 'internal_license' | 'coming_soon';
 
 export function getSubscriptionsPubliclyAvailable(): boolean {
-  return isSubscriptionsPubliclyAvailable();
+  return getSubscriptionsPubliclyAvailableFromConfig();
 }
 
 export function getPaymentsEnabled(): boolean {

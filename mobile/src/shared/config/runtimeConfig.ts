@@ -6,6 +6,7 @@ import {
   REVENUECAT_API_KEY_IOS,
   REVENUECAT_ENTITLEMENT_ID,
   REVENUECAT_PACKAGE_TYPE_PREFERRED,
+  SUBSCRIPTIONS_PUBLICLY_AVAILABLE,
   WEB_API_URL,
   WEBSITE_URL,
   YANDEX_BANNER_AD_UNIT_ID,
@@ -31,7 +32,8 @@ type RemoteKey =
   | 'REVENUECAT_API_KEY_IOS'
   | 'REVENUECAT_API_KEY_ANDROID'
   | 'REVENUECAT_ENTITLEMENT_ID'
-  | 'REVENUECAT_PACKAGE_TYPE_PREFERRED';
+  | 'REVENUECAT_PACKAGE_TYPE_PREFERRED'
+  | 'SUBSCRIPTIONS_PUBLICLY_AVAILABLE';
 
 type RemoteConfigModule = ReturnType<typeof getRemoteConfig>;
 
@@ -47,6 +49,7 @@ export type RuntimeConfigSnapshot = {
   revenueCatApiKeyAndroid: string;
   revenueCatEntitlementId: string;
   revenueCatPackageTypePreferred: string;
+  subscriptionsPubliclyAvailable: boolean;
 };
 
 function isTruthyEnvFlag(v: string | undefined): boolean {
@@ -68,6 +71,7 @@ function buildEmbedded(): RuntimeConfigSnapshot {
     revenueCatApiKeyAndroid: REVENUECAT_API_KEY_ANDROID?.trim() ?? '',
     revenueCatEntitlementId: REVENUECAT_ENTITLEMENT_ID?.trim() ?? '',
     revenueCatPackageTypePreferred: REVENUECAT_PACKAGE_TYPE_PREFERRED?.trim() ?? '',
+    subscriptionsPubliclyAvailable: isTruthyEnvFlag(SUBSCRIPTIONS_PUBLICLY_AVAILABLE),
   };
 }
 
@@ -84,6 +88,7 @@ function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
     REVENUECAT_API_KEY_ANDROID: s.revenueCatApiKeyAndroid,
     REVENUECAT_ENTITLEMENT_ID: s.revenueCatEntitlementId,
     REVENUECAT_PACKAGE_TYPE_PREFERRED: s.revenueCatPackageTypePreferred,
+    SUBSCRIPTIONS_PUBLICLY_AVAILABLE: s.subscriptionsPubliclyAvailable ? '1' : '0',
   };
 }
 
@@ -193,6 +198,11 @@ function mergeRemote(
       'REVENUECAT_PACKAGE_TYPE_PREFERRED',
       embedded.revenueCatPackageTypePreferred,
     ),
+    subscriptionsPubliclyAvailable: readRemoteBool(
+      rc,
+      'SUBSCRIPTIONS_PUBLICLY_AVAILABLE',
+      embedded.subscriptionsPubliclyAvailable,
+    ),
   };
 }
 
@@ -265,4 +275,8 @@ export function getRevenueCatEntitlementId(): string {
 
 export function getRevenueCatPackageTypePreferred(): string {
   return snapshot.revenueCatPackageTypePreferred;
+}
+
+export function getSubscriptionsPubliclyAvailable(): boolean {
+  return snapshot.subscriptionsPubliclyAvailable;
 }

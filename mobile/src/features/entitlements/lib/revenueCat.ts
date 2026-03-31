@@ -13,12 +13,12 @@ import {
   setProExpiresAtMsSync,
 } from '@/features/pro-license/lib/proEntitlementStorage';
 import { syncProLicenseFromServer } from '@/features/pro-license/lib/syncProLicenseFromServer';
-import { isSubscriptionsPubliclyAvailable } from '@/shared/config/buildEnv';
 import {
   getRevenueCatApiKeyAndroid,
   getRevenueCatApiKeyIos,
   getRevenueCatEntitlementId,
   getRevenueCatPackageTypePreferred,
+  getSubscriptionsPubliclyAvailable,
 } from '@/shared/config/runtimeConfig';
 import { isString } from '@/shared/lib';
 import {
@@ -48,7 +48,7 @@ export function getRevenueCatApiKeyForPlatform(): string | null {
 }
 
 export function getRevenueCatIntegrationEnabled(): boolean {
-  return isSubscriptionsPubliclyAvailable() && getRevenueCatApiKeyForPlatform() != null;
+  return getSubscriptionsPubliclyAvailable() && getRevenueCatApiKeyForPlatform() != null;
 }
 
 function isPurchasesError(e: unknown): e is { code: PURCHASES_ERROR_CODE; message: string } {
