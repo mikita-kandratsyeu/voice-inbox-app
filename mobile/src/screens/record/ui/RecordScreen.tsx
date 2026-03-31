@@ -19,6 +19,10 @@ import { useProEntitlement } from '@/features/pro-license';
 import { useRecordingDeeplinkStore } from '@/features/recording-deeplink/model/store';
 import { useTranscription } from '@/features/transcription';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
+import {
+  runAfterNavigationTransition,
+  tryShowYandexInterstitial,
+} from '@/features/yandex-interstitial';
 import { useColors } from '@/shared/config';
 import { formatTime, persistRecordingToDocuments } from '@/shared/lib';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
@@ -245,6 +249,10 @@ export const RecordScreen = () => {
   const handleSaveComplete = () => {
     setShowSaveModal(false);
     navigation.goBack();
+    const adsAllowed = !isProActive;
+    runAfterNavigationTransition(() => {
+      void tryShowYandexInterstitial({ adsAllowed, trigger: 'after_note_create' });
+    });
   };
 
   const handleSaveModalDiscard = async () => {

@@ -15,6 +15,10 @@ import { useAiProcessing } from '@/features/ai-processing';
 import { shouldApplyAutoAiAfterTranscription } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
+import {
+  runAfterNavigationTransition,
+  tryShowYandexInterstitial,
+} from '@/features/yandex-interstitial';
 import { useColors } from '@/shared/config';
 import { useNetworkStatus } from '@/shared/lib';
 import { Button, getInputFieldInputStyle, InputField } from '@/shared/ui';
@@ -103,6 +107,10 @@ export const TextNoteScreen = () => {
 
     KeyboardController.dismiss({ animated: false });
     navigation.goBack();
+    const adsAllowed = !isProActive;
+    runAfterNavigationTransition(() => {
+      void tryShowYandexInterstitial({ adsAllowed, trigger: 'after_note_create' });
+    });
   }, [
     addRecord,
     autoAiAfterTranscription,

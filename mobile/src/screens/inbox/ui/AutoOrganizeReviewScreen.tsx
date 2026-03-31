@@ -24,6 +24,10 @@ import {
   useAutoOrganizeReview,
 } from '@/features/auto-organize-review';
 import { useProEntitlement } from '@/features/pro-license';
+import {
+  runAfterNavigationTransition,
+  tryShowYandexInterstitial,
+} from '@/features/yandex-interstitial';
 import { useColors } from '@/shared/config';
 import { DEFAULT_FOLDER_BRAND_HEX, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { Button, ScreenHeader } from '@/shared/ui';
@@ -73,6 +77,16 @@ export const AutoOrganizeReviewScreen = () => {
     navigation.navigate('InboxHome');
   }, [navigation]);
 
+  const onAppliedAfterAutoOrganize = useCallback(() => {
+    goBackOrInboxHome();
+    runAfterNavigationTransition(() => {
+      void tryShowYandexInterstitial({
+        adsAllowed: !isProActive,
+        trigger: 'after_auto_organize',
+      });
+    });
+  }, [goBackOrInboxHome, isProActive]);
+
   useEffect(() => {
     if (picker.visible) {
       requestAnimationFrame(() => pickerRef.current?.present());
@@ -98,7 +112,7 @@ export const AutoOrganizeReviewScreen = () => {
     isProActive,
     createFolder,
     setRecordFolder,
-    onApplied: goBackOrInboxHome,
+    onApplied: onAppliedAfterAutoOrganize,
   });
 
   const openPicker = useCallback((recordId: string) => {

@@ -18,7 +18,9 @@ import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import { useAdsAllowed } from '@/features/app-storefront';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
+import { tryShowYandexInterstitial } from '@/features/yandex-interstitial';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { formatRelativeTime, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
@@ -107,6 +109,7 @@ export const ImportRecordsScreen = () => {
 
   const existingRecords = useRecordStore((s) => s.records);
   const addRecord = useRecordStore((s) => s.addRecord);
+  const { adsAllowed } = useAdsAllowed();
 
   const existingIds = useMemo(() => new Set(existingRecords.map((r) => r.id)), [existingRecords]);
 
@@ -167,6 +170,7 @@ export const ImportRecordsScreen = () => {
         setImportProgress({ current: i + 1, total: toImport.length });
       }
       navigation.goBack();
+      await tryShowYandexInterstitial({ adsAllowed, trigger: 'after_import' });
       Alert.alert(t('common.done'), t('importExport.importSuccess', { count: toImport.length }));
     } catch {
       Alert.alert(t('common.error'), t('importExport.importRecordError'));
@@ -174,7 +178,7 @@ export const ImportRecordsScreen = () => {
       setIsImporting(false);
       setImportProgress({ current: 0, total: 0 });
     }
-  }, [addRecord, importable, navigation, selectedCount, selectedIds, t]);
+  }, [addRecord, adsAllowed, importable, navigation, selectedCount, selectedIds, t]);
 
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();

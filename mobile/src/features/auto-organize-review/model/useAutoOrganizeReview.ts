@@ -33,7 +33,7 @@ type UseAutoOrganizeReviewParams = {
   isProActive: boolean;
   createFolder: (name: string, color: string, icon: string) => Promise<Folder>;
   setRecordFolder: (recordId: string, folderId: string | null) => Promise<void> | void;
-  onApplied: () => void;
+  onApplied: () => void | Promise<void>;
 };
 
 function buildInitialProposedFolders(
@@ -216,7 +216,7 @@ export function useAutoOrganizeReview({
         await setRecordFolder(a.recordId, folderId);
       }
 
-      onApplied();
+      await Promise.resolve(onApplied());
     } finally {
       setIsApplying(false);
     }

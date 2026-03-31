@@ -10,6 +10,7 @@ import {
   WEB_API_URL,
   WEBSITE_URL,
   YANDEX_BANNER_AD_UNIT_ID,
+  YANDEX_INTERSTITIAL_AD_UNIT_ID,
   YANDEX_REWARDED_AD_UNIT_ID,
 } from '@env';
 import { getApp } from '@react-native-firebase/app';
@@ -28,6 +29,7 @@ type RemoteKey =
   | 'WEB_API_URL'
   | 'YANDEX_REWARDED_AD_UNIT_ID'
   | 'YANDEX_BANNER_AD_UNIT_ID'
+  | 'YANDEX_INTERSTITIAL_AD_UNIT_ID'
   | 'EXPERIMENTAL_PRIVATE_AI_ENABLED'
   | 'REVENUECAT_API_KEY_IOS'
   | 'REVENUECAT_API_KEY_ANDROID'
@@ -44,6 +46,7 @@ export type RuntimeConfigSnapshot = {
   webApiUrl: string;
   yandexRewardedAdUnitId: string;
   yandexBannerAdUnitId: string;
+  yandexInterstitialAdUnitId: string;
   experimentalPrivateAiEnabled: boolean;
   revenueCatApiKeyIos: string;
   revenueCatApiKeyAndroid: string;
@@ -66,6 +69,7 @@ function buildEmbedded(): RuntimeConfigSnapshot {
     webApiUrl: WEB_API_URL?.trim() ?? '',
     yandexRewardedAdUnitId: YANDEX_REWARDED_AD_UNIT_ID?.trim() ?? '',
     yandexBannerAdUnitId: YANDEX_BANNER_AD_UNIT_ID?.trim() ?? '',
+    yandexInterstitialAdUnitId: YANDEX_INTERSTITIAL_AD_UNIT_ID?.trim() ?? '',
     experimentalPrivateAiEnabled: isTruthyEnvFlag(EXPERIMENTAL_PRIVATE_AI_ENABLED),
     revenueCatApiKeyIos: REVENUECAT_API_KEY_IOS?.trim() ?? '',
     revenueCatApiKeyAndroid: REVENUECAT_API_KEY_ANDROID?.trim() ?? '',
@@ -83,6 +87,7 @@ function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
     WEB_API_URL: s.webApiUrl,
     YANDEX_REWARDED_AD_UNIT_ID: s.yandexRewardedAdUnitId,
     YANDEX_BANNER_AD_UNIT_ID: s.yandexBannerAdUnitId,
+    YANDEX_INTERSTITIAL_AD_UNIT_ID: s.yandexInterstitialAdUnitId,
     EXPERIMENTAL_PRIVATE_AI_ENABLED: s.experimentalPrivateAiEnabled ? '1' : '0',
     REVENUECAT_API_KEY_IOS: s.revenueCatApiKeyIos,
     REVENUECAT_API_KEY_ANDROID: s.revenueCatApiKeyAndroid,
@@ -173,6 +178,11 @@ function mergeRemote(
       'YANDEX_BANNER_AD_UNIT_ID',
       embedded.yandexBannerAdUnitId,
     ),
+    yandexInterstitialAdUnitId: readRemoteString(
+      rc,
+      'YANDEX_INTERSTITIAL_AD_UNIT_ID',
+      embedded.yandexInterstitialAdUnitId,
+    ),
     experimentalPrivateAiEnabled: readRemoteBool(
       rc,
       'EXPERIMENTAL_PRIVATE_AI_ENABLED',
@@ -257,6 +267,10 @@ export function getYandexRewardedAdUnitId(): string {
 
 export function getYandexBannerAdUnitId(): string {
   return snapshot.yandexBannerAdUnitId;
+}
+
+export function getYandexInterstitialAdUnitId(): string {
+  return snapshot.yandexInterstitialAdUnitId;
 }
 
 export function getExperimentalPrivateAiEnabled(): boolean {
