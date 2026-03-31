@@ -137,7 +137,7 @@ export const AboutAppScreen = () => {
                 style={{ backgroundColor: color.background.tertiary }}
               >
                 <Text className="text-xs font-medium" style={{ color: color.text.secondary }}>
-                  {t('about.badgeOpenRouter')}
+                  {t('about.badgeAi')}
                 </Text>
               </View>
               <View
@@ -145,7 +145,7 @@ export const AboutAppScreen = () => {
                 style={{ backgroundColor: color.background.tertiary }}
               >
                 <Text className="text-xs font-medium" style={{ color: color.text.secondary }}>
-                  {t('about.badgeAi')}
+                  {t('about.badgeOpenRouter')}
                 </Text>
               </View>
               {__DEV__ && (

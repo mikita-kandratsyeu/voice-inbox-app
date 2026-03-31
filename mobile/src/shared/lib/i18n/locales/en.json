@@ -832,7 +832,7 @@
     "badgeReactNative": "React Native",
     "badgeWhisper": "Whisper",
     "badgeOpenRouter": "OpenRouter",
-    "badgeAi": "AI",
+    "badgeAi": "LLM",
     "copyright": "© {{ year }} Voice Inbox AI. All rights reserved."
   },
   "support": {
