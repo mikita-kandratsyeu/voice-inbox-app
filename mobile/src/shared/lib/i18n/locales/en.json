@@ -352,7 +352,7 @@
     "transcription": "Transcription",
     "whisperModelNotSet": "Not set",
     "autoTranscribeOnSave": "Transcribe automatically",
-    "autoTranscribeOnSaveHint": "Runs when you save or import a note.",
+    "autoTranscribeOnSaveHint": "Runs when you save or import audio.",
     "autoAiAfterTranscription": "Auto-summary after transcription",
     "autoAiAfterTranscriptionHint": "Summary and tasks right after transcription.",
     "autoArchiveReadNotes": "Auto-archive read notes",

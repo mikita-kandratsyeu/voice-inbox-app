@@ -352,7 +352,7 @@
     "transcription": "Транскрипция",
     "whisperModelNotSet": "Не задано",
     "autoTranscribeOnSave": "Транскрибировать автоматически",
-    "autoTranscribeOnSaveHint": "После сохранения или импорта записи.",
+    "autoTranscribeOnSaveHint": "После сохранения или импорта аудио.",
     "autoAiAfterTranscription": "Авто-сводка после транскрипции",
     "autoAiAfterTranscriptionHint": "Сводка и задачи сразу после расшифровки.",
     "autoArchiveReadNotes": "Авто-архив прочитанных",
