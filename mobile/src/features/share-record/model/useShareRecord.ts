@@ -2,10 +2,18 @@ import { Share } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import { formatShortDate, i18n } from '@/shared/lib';
-import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
+import { NitroFS } from '@/shared/lib/fs';
+
+import {
+  ensureShareExportDirectory,
+  getShareExportDirectoryPath,
+  pruneShareExportCache,
+} from '../lib/shareExportCache';
 
 const toFileUri = (path: string): string => (path.startsWith('file://') ? path : `file://${path}`);
 export const RECORD_TEXT_EXPORT_EXTENSION = 'txt';
+const sanitizeTitleForFileName = (title: string): string =>
+  title.replace(/[^a-zA-Z0-9\u0400-\u04FF\s]/g, '_');
 
 const SHARE_WRAP_WIDTH = 72;
 
@@ -143,9 +151,12 @@ export const buildShareText = (record: VoiceRecord): string => {
 
 export const useShareRecord = () => {
   const shareRecord = async (record: VoiceRecord) => {
+    void pruneShareExportCache().catch(() => {});
+    await ensureShareExportDirectory();
+
     const text = buildShareText(record);
-    const fileName = `${record.title.replace(/[^a-zA-Z0-9\u0400-\u04FF\s]/g, '_')}.${RECORD_TEXT_EXPORT_EXTENSION}`;
-    const filePath = `${getCachesDirectoryPath()}/${fileName}`;
+    const fileName = `${sanitizeTitleForFileName(record.title)}.${RECORD_TEXT_EXPORT_EXTENSION}`;
+    const filePath = `${getShareExportDirectoryPath()}/${fileName}`;
 
     try {
       await NitroFS.writeFile(filePath, text, 'utf8');
@@ -167,6 +178,9 @@ export const useShareRecord = () => {
   };
 
   const shareAudio = async (record: VoiceRecord) => {
+    void pruneShareExportCache().catch(() => {});
+    await ensureShareExportDirectory();
+
     const audioPath = record.audioPath;
     if (!audioPath?.trim()) {
       throw new Error(i18n.t('share.noAudio'));
@@ -179,8 +193,8 @@ export const useShareRecord = () => {
     }
 
     const ext = path.split('.').pop() ?? 'm4a';
-    const fileName = `${record.title.replace(/[^a-zA-Z0-9\u0400-\u04FF\s]/g, '_')}.${ext}`;
-    const destPath = `${getCachesDirectoryPath()}/${fileName}`;
+    const fileName = `${sanitizeTitleForFileName(record.title)}_${Date.now()}.${ext}`;
+    const destPath = `${getShareExportDirectoryPath()}/${fileName}`;
 
     await NitroFS.copyFile(path, destPath);
 
