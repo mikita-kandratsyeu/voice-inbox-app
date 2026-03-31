@@ -22,7 +22,6 @@ import { resolveDayjsLocale } from '@/shared/lib/date';
 type SettingsPlanStatusCardProps = {
   color: Colors;
   monetizationMode: MonetizationMode;
-  aiLimit: number;
   onPress?: () => void;
 };
 
@@ -31,7 +30,6 @@ const CARD_RADIUS = 16;
 export function SettingsPlanStatusCard({
   color,
   monetizationMode,
-  aiLimit,
   onPress,
 }: SettingsPlanStatusCardProps) {
   const { t, i18n } = useTranslation();
@@ -44,6 +42,7 @@ export function SettingsPlanStatusCard({
       borderPulse.value = 0;
       return;
     }
+
     borderPulse.value = withRepeat(
       withTiming(1, {
         duration: 3000,

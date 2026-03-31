@@ -94,7 +94,6 @@ export const SettingsScreen = () => {
           <SettingsPlanStatusCard
             color={settings.color}
             monetizationMode={settings.monetizationMode}
-            aiLimit={settings.proWeeklyLimit}
             onPress={settings.handlePlanCardPress}
           />
           {!settings.isPrivateMode && (

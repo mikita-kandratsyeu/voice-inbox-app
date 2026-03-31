@@ -158,4 +158,5 @@ writeFileSync(zipOut, zipStore(zipEntries));
 
 rmSync(buildRoot, { recursive: true, force: true });
 
+// eslint-disable-next-line no-console
 console.log('Wrote', zipOut);
