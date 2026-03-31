@@ -80,6 +80,7 @@ export function mergeLocalLlmCompletionParams(
   intent: LocalLlmCompletionIntent,
 ): Partial<CompletionParams> {
   const p = PROFILES[modelId];
+
   return {
     ...p.base,
     ...(intent === 'json' ? p.json : p.chat),
