@@ -218,11 +218,13 @@ export async function initRuntimeConfig(): Promise<void> {
 
   try {
     const rc = getRemoteConfig(getApp());
+
     await setDefaults(rc, toFirebaseDefaults(embedded));
     await setConfigSettings(rc, {
       minimumFetchIntervalMillis: 60 * 60 * 1000,
     });
     await fetchAndActivateWithTimeout(rc);
+
     const merged = mergeRemote(rc, embedded);
     snapshot =
       merged.webApiUrl.trim().length === 0 && embedded.webApiUrl.trim().length > 0
