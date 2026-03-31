@@ -402,9 +402,9 @@
     "permissionOpenSettings": "Open Settings",
     "planStatus": {
       "freeTitle": "Free plan",
-      "freeValueSubtitle": "Up to {{limit}} generations per week in Pro and no ads.",
-      "freeValueSubtitleSoon": "Pro is coming soon: up to {{limit}} generations per week and no ads.",
-      "freeValueSubtitleAvailable": "Up to {{limit}} generations per week in Pro.",
+      "freeValueSubtitle": "Pro runs everything automatically",
+      "freeValueSubtitleSoon": "Pro runs everything automatically",
+      "freeValueSubtitleAvailable": "Pro runs everything automatically",
       "comparePlansCta": "Compare plans",
       "soonBadge": "Coming soon",
       "privateBadge": "Private",

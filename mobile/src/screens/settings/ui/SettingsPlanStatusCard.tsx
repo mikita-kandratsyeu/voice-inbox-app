@@ -83,16 +83,17 @@ export function SettingsPlanStatusCard({
     ? t('settings.planStatus.proTitle')
     : t('settings.planStatus.freeTitle');
 
-  let subtitle = t('settings.planStatus.freeValueSubtitle', { limit: aiLimit });
+  let subtitle = t('settings.planStatus.freeValueSubtitle');
+
   if (isProActive) {
     subtitle =
       proExpiresText != null
         ? t('settings.planStatus.proActiveUntil', { date: proExpiresText })
         : t('settings.planStatus.proValueSubtitle');
   } else if (monetizationMode === 'coming_soon') {
-    subtitle = t('settings.planStatus.freeValueSubtitleSoon', { limit: aiLimit });
+    subtitle = t('settings.planStatus.freeValueSubtitleSoon');
   } else if (monetizationMode === 'iap_public') {
-    subtitle = t('settings.planStatus.freeValueSubtitleAvailable', { limit: aiLimit });
+    subtitle = t('settings.planStatus.freeValueSubtitleAvailable');
   }
 
   let statusBadge: string | null = null;

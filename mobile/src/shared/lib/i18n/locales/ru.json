@@ -402,9 +402,9 @@
     "permissionOpenSettings": "Открыть настройки",
     "planStatus": {
       "freeTitle": "Бесплатный план",
-      "freeValueSubtitle": "До {{limit}} генераций в неделю в Pro и без рекламы.",
-      "freeValueSubtitleSoon": "Pro скоро: до {{limit}} генераций в неделю и без рекламы.",
-      "freeValueSubtitleAvailable": "До {{limit}} генераций в неделю в Pro.",
+      "freeValueSubtitle": "В Pro — всё работает автоматически",
+      "freeValueSubtitleSoon": "В Pro — всё работает автоматически",
+      "freeValueSubtitleAvailable": "В Pro — всё работает автоматически",
       "comparePlansCta": "Смотреть планы",
       "soonBadge": "Скоро",
       "privateBadge": "Private",
