@@ -439,7 +439,10 @@ export function SettingsPlanPaywallSheet({
             accessibilityRole="button"
             accessibilityLabel={t('settings.planPaywall.restorePurchases')}
           >
-            <Text className="text-[15px] font-medium" style={{ color: c.accent.primary }}>
+            <Text
+              className="text-[15px] font-medium"
+              style={{ color: iapBusy ? c.text.muted : c.accent.primary }}
+            >
               {t('settings.planPaywall.restorePurchases')}
             </Text>
           </Pressable>
