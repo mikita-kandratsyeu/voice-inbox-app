@@ -84,9 +84,13 @@
     "emptyFilterDescription": "No records match the selected filter",
     "filters": {
       "all": "All",
+      "unread": "Unread",
       "withoutTranscript": "Without transcript",
       "withoutTranscriptShort": "No text",
       "withoutSummary": "Without summary",
+      "withoutTasks": "Without tasks",
+      "withTasks": "With tasks",
+      "processingError": "Processing error",
       "moreFilters": "Filters",
       "read": "Read",
       "archived": "Archived",

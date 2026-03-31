@@ -125,12 +125,16 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
   const [queryEmbedding, setQueryEmbedding] = useState<number[] | null>(null);
   const [isSemanticPending, setIsSemanticPending] = useState(false);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { filterStatus, setFilterStatus, sortOption, setSortOption, filterRecords } =
-    useInboxFilters();
+  const {
+    filterStatus,
+    setFilterStatus,
+    menuFilterStatus,
+    setMenuFilterStatus,
+    sortOption,
+    setSortOption,
+    filterRecords,
+  } = useInboxFilters();
 
-  // Cache search text by record id. Rebuilt only when `records` reference changes.
-  // Using Map<id> instead of WeakMap<record> because the store creates new record
-  // objects on every update, causing WeakMap to miss on every lookup.
   const searchTextById = useMemo(() => {
     const map = new Map<string, string>();
     for (const r of records) {
@@ -139,8 +143,6 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
     return map;
   }, [records]);
 
-  // Centroid depends only on record embeddings, not on the search query.
-  // Separating it avoids recomputing on every keystroke.
   const embeddingCentroid = useMemo(() => {
     const embeddings = records.filter((r) => r.embedding).map((r) => r.embedding as number[]);
     return embeddings.length > 0 ? computeCentroid(embeddings) : null;
@@ -310,15 +312,18 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
     setQuery('');
     setDebouncedQuery('');
     setFilterStatus('all');
+    setMenuFilterStatus(null);
     setSortOption('dateDesc');
-  }, [setFilterStatus, setSortOption]);
+  }, [setFilterStatus, setMenuFilterStatus, setSortOption]);
 
   const isActiveSearch = debouncedQuery.trim().length >= MIN_QUERY_LENGTH;
 
   const subtitleText = useMemo(() => {
-    const filterName = t(`inbox.filters.${filterStatus}`);
+    const filterName = menuFilterStatus
+      ? t(`inbox.filters.${menuFilterStatus}`)
+      : t(`inbox.filters.${filterStatus}`);
     return t('inbox.filterSummary', { filterName, count: baseFilteredCount });
-  }, [filterStatus, baseFilteredCount, t]);
+  }, [menuFilterStatus, filterStatus, baseFilteredCount, t]);
 
   return {
     query,
@@ -331,6 +336,8 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
     isSearching: isActiveSearch,
     filterStatus,
     setFilterStatus,
+    menuFilterStatus,
+    setMenuFilterStatus,
     sortOption,
     setSortOption,
     resetToDefault,

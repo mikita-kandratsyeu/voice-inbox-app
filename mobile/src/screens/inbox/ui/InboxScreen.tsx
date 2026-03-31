@@ -45,6 +45,8 @@ export const InboxScreen = () => {
     isSearching,
     filterStatus,
     setFilterStatus,
+    menuFilterStatus,
+    setMenuFilterStatus,
     sortOption,
     setSortOption,
     pagedFlattenedData,
@@ -154,8 +156,10 @@ export const InboxScreen = () => {
           onSearchCleared={() => setSearchBarExplicitOpen(false)}
           batchSelect={batchSelect}
           filterStatus={filterStatus}
+          menuFilterStatus={menuFilterStatus}
           sortOption={sortOption}
           onFilterChange={setFilterStatus}
+          onMenuFilterChange={setMenuFilterStatus}
           onSortChange={setSortOption}
           showSwipeHint={showSwipeHint}
           onDismissSwipeHint={dismissSwipeHint}
@@ -166,7 +170,7 @@ export const InboxScreen = () => {
           emptyFolderHint={effectiveActiveFolderId ? t('inbox.emptyFolderHint') : undefined}
           effectiveActiveFolderId={effectiveActiveFolderId}
           listRef={listRef}
-          filterStatusKey={filterStatus}
+          filterStatusKey={`${filterStatus}:${menuFilterStatus ?? 'none'}`}
           pagedFlattenedData={pagedFlattenedData}
           listContentStyle={listContentStyle}
           listStyle={listStyle}

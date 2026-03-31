@@ -6,7 +6,11 @@ import { KeyboardAvoidingView, View } from 'react-native';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { BatchSelectState } from '@/features/batch-select';
-import type { InboxFilterStatus, InboxSortOption } from '@/features/inbox-filters';
+import type {
+  InboxFilterStatus,
+  InboxMenuFilterStatus,
+  InboxSortOption,
+} from '@/features/inbox-filters';
 import { InboxFilterBar } from '@/features/inbox-filters';
 import { SearchBar } from '@/features/search-records';
 import type { Colors } from '@/shared/config';
@@ -28,8 +32,10 @@ type InboxScreenLoadedBodyProps = {
   onSearchCleared: () => void;
   batchSelect: BatchSelectState;
   filterStatus: InboxFilterStatus;
+  menuFilterStatus: InboxMenuFilterStatus | null;
   sortOption: InboxSortOption;
   onFilterChange: (s: InboxFilterStatus) => void;
+  onMenuFilterChange: (s: InboxMenuFilterStatus | null) => void;
   onSortChange: (o: InboxSortOption) => void;
   showSwipeHint: boolean;
   onDismissSwipeHint: () => void;
@@ -40,7 +46,7 @@ type InboxScreenLoadedBodyProps = {
   emptyFolderHint?: string;
   effectiveActiveFolderId: string | null;
   listRef: React.RefObject<FlashListRef<FlattenedItem> | null>;
-  filterStatusKey: InboxFilterStatus;
+  filterStatusKey: string;
   pagedFlattenedData: FlattenedItem[];
   listContentStyle: object;
   listStyle: object;
@@ -63,8 +69,10 @@ function InboxScreenLoadedBodyInner({
   onSearchCleared,
   batchSelect,
   filterStatus,
+  menuFilterStatus,
   sortOption,
   onFilterChange,
+  onMenuFilterChange,
   onSortChange,
   showSwipeHint,
   onDismissSwipeHint,
@@ -113,8 +121,10 @@ function InboxScreenLoadedBodyInner({
         {!batchSelect.isSelectMode && (
           <InboxFilterBar
             filterStatus={filterStatus}
+            menuFilterStatus={menuFilterStatus}
             sortOption={sortOption}
             onFilterChange={onFilterChange}
+            onMenuFilterChange={onMenuFilterChange}
             onSortChange={onSortChange}
             color={color}
           />

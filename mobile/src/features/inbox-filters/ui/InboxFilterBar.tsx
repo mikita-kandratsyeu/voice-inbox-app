@@ -6,6 +6,7 @@ import { TouchableOpacity, View } from 'react-native';
 
 import type {
   InboxFilterStatus,
+  InboxMenuFilterStatus,
   InboxSortOption,
   PrimaryFilterStatus,
 } from '@/features/inbox-filters';
@@ -16,18 +17,13 @@ import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 
 const PRIMARY_FILTERS: PrimaryFilterStatus[] = ['all', 'pinned', 'archived'];
 
-const CLASSIFICATION_FILTERS: InboxFilterStatus[] = [
-  'personal',
-  'work',
-  'meeting',
-  'idea',
-  'other',
-];
-
-const MENU_FILTERS: InboxFilterStatus[] = [
+const MENU_FILTERS: InboxMenuFilterStatus[] = [
+  'unread',
   'withoutTranscript',
   'withoutSummary',
-  ...CLASSIFICATION_FILTERS,
+  'withoutTasks',
+  'withTasks',
+  'processingError',
 ];
 
 const SORT_OPTIONS: InboxSortOption[] = [
@@ -46,23 +42,27 @@ const FILTER_ICONS: Record<PrimaryFilterStatus, typeof LayoutList> = {
 
 type InboxFilterBarProps = {
   filterStatus: InboxFilterStatus;
+  menuFilterStatus: InboxMenuFilterStatus | null;
   sortOption: InboxSortOption;
   onFilterChange: (status: InboxFilterStatus) => void;
+  onMenuFilterChange: (status: InboxMenuFilterStatus | null) => void;
   onSortChange: (option: InboxSortOption) => void;
   color: Colors;
 };
 
 export const InboxFilterBar = ({
   filterStatus,
+  menuFilterStatus,
   sortOption,
   onFilterChange,
+  onMenuFilterChange,
   onSortChange,
   color,
 }: InboxFilterBarProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
   const isDark = theme === 'dark';
-  const hasMenuFilterActive = MENU_FILTERS.includes(filterStatus);
+  const hasMenuFilterActive = menuFilterStatus != null;
 
   const buttonStyle = {
     minHeight: IOS_MIN_TOUCH_TARGET,
@@ -123,16 +123,16 @@ export const InboxFilterBar = ({
           themeVariant={isDark ? 'dark' : 'light'}
           onPressAction={({ nativeEvent }) => {
             hapticSelection();
-            const opt = nativeEvent.event as InboxFilterStatus;
+            const opt = nativeEvent.event as InboxMenuFilterStatus;
             if (MENU_FILTERS.includes(opt)) {
-              onFilterChange(opt);
+              onMenuFilterChange(menuFilterStatus === opt ? null : opt);
             }
           }}
           actions={MENU_FILTERS.map((opt) => ({
             id: opt,
             title: t(`inbox.filters.${opt}`),
             titleColor: color.text.primary,
-            state: filterStatus === opt ? 'on' : 'off',
+            state: menuFilterStatus === opt ? 'on' : 'off',
           }))}
         >
           <TouchableOpacity

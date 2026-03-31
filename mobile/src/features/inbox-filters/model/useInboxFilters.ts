@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 
 import type { VoiceRecord } from '@/entities/record';
 
-import type { InboxFilterStatus, InboxSortOption } from './types';
+import type { InboxFilterStatus, InboxMenuFilterStatus, InboxSortOption } from './types';
 
 const parseDurationMs = (record: VoiceRecord): number => {
   return record.durationMs ?? 0;
@@ -19,6 +19,7 @@ const sortFns: Record<InboxSortOption, (a: VoiceRecord, b: VoiceRecord) => numbe
 
 export const useInboxFilters = () => {
   const [filterStatus, setFilterStatus] = useState<InboxFilterStatus>('all');
+  const [menuFilterStatus, setMenuFilterStatus] = useState<InboxMenuFilterStatus | null>(null);
   const [sortOption, setSortOption] = useState<InboxSortOption>('dateDesc');
 
   const filterRecords = useCallback(
@@ -32,25 +33,37 @@ export const useInboxFilters = () => {
 
         if (filterStatus === 'pinned') {
           result = result.filter((r) => r.isPinned);
-        } else if (filterStatus === 'withoutTranscript') {
-          result = result.filter((r) => !r.transcript?.trim());
-        } else if (filterStatus === 'withoutSummary') {
-          result = result.filter((r) => !r.summary?.trim());
-        } else if (['personal', 'work', 'meeting', 'idea', 'other'].includes(filterStatus)) {
-          result = result.filter((r) => r.classification === filterStatus);
         } else if (filterStatus !== 'all') {
           result = result.filter((r) => r.status === filterStatus);
         }
       }
 
+      if (menuFilterStatus === 'withoutTranscript') {
+        result = result.filter((r) => !r.transcript?.trim());
+      } else if (menuFilterStatus === 'unread') {
+        result = result.filter((r) => r.status === 'unread');
+      } else if (menuFilterStatus === 'withoutSummary') {
+        result = result.filter((r) => !r.summary?.trim());
+      } else if (menuFilterStatus === 'withoutTasks') {
+        result = result.filter((r) => !r.tasks || r.tasks.length === 0);
+      } else if (menuFilterStatus === 'withTasks') {
+        result = result.filter((r) => Boolean(r.tasks && r.tasks.length > 0));
+      } else if (menuFilterStatus === 'processingError') {
+        result = result.filter(
+          (r) => r.aiStatus === 'error' || r.summaryStatus === 'error' || r.tasksStatus === 'error',
+        );
+      }
+
       return [...result].sort(sortFns[sortOption]);
     },
-    [filterStatus, sortOption],
+    [filterStatus, menuFilterStatus, sortOption],
   );
 
   return {
     filterStatus,
     setFilterStatus,
+    menuFilterStatus,
+    setMenuFilterStatus,
     sortOption,
     setSortOption,
     filterRecords,

@@ -84,9 +84,13 @@
     "emptyFilterDescription": "Нет записей по выбранному фильтру",
     "filters": {
       "all": "Все",
+      "unread": "Непрочитанные",
       "withoutTranscript": "Без транскрипта",
       "withoutTranscriptShort": "Без текста",
       "withoutSummary": "Без сводок",
+      "withoutTasks": "Без задач",
+      "withTasks": "С задачами",
+      "processingError": "Ошибка обработки",
       "moreFilters": "Фильтры",
       "read": "Прочитанные",
       "archived": "В архиве",

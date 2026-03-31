@@ -1,4 +1,9 @@
 export { InboxFiltersResetProvider, useInboxFiltersReset } from './model/InboxFiltersResetContext';
-export type { InboxFilterStatus, InboxSortOption, PrimaryFilterStatus } from './model/types';
+export type {
+  InboxFilterStatus,
+  InboxMenuFilterStatus,
+  InboxSortOption,
+  PrimaryFilterStatus,
+} from './model/types';
 export { useInboxFilters } from './model/useInboxFilters';
 export { InboxFilterBar } from './ui/InboxFilterBar';

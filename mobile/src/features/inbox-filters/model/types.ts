@@ -1,12 +1,14 @@
-import type { RecordClassification, RecordStatus } from '@/entities/record';
+import type { RecordStatus } from '@/entities/record';
 
-export type InboxFilterStatus =
-  | 'all'
-  | Exclude<RecordStatus, 'unread'>
-  | 'pinned'
+export type InboxFilterStatus = 'all' | Exclude<RecordStatus, 'unread'> | 'pinned';
+
+export type InboxMenuFilterStatus =
+  | 'unread'
   | 'withoutTranscript'
   | 'withoutSummary'
-  | RecordClassification;
+  | 'withoutTasks'
+  | 'withTasks'
+  | 'processingError';
 
 export type PrimaryFilterStatus = 'all' | 'pinned' | 'archived';
 
