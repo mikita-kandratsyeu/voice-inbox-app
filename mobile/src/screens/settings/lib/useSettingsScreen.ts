@@ -1,4 +1,5 @@
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -60,6 +61,7 @@ export function useSettingsScreen() {
   const { t } = useTranslation();
   const color = useColors();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const route = useRoute<RouteProp<SettingsStackParamList, 'Settings'>>();
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
@@ -407,6 +409,15 @@ export function useSettingsScreen() {
     }
     setPlanPaywallVisible(true);
   }, [monetizationMode, proEntitlementActive, t]);
+
+  useEffect(() => {
+    if (!route.params?.openPlanPaywall) {
+      return;
+    }
+
+    setPlanPaywallVisible(true);
+    navigation.setParams({ openPlanPaywall: false });
+  }, [navigation, route.params?.openPlanPaywall]);
 
   const handleUpgradePress = useCallback(() => {
     if (monetizationMode === 'internal_license') {

@@ -22,12 +22,14 @@ type AutomationComingSoonSheetProps = {
   visible: boolean;
   feature: AutomationFeatureKind;
   onClose: () => void;
+  onUpgradePress?: () => void;
 };
 
 export function AutomationComingSoonSheet({
   visible,
   feature,
   onClose,
+  onUpgradePress,
 }: AutomationComingSoonSheetProps) {
   const { t } = useTranslation();
   const c = useColors();
@@ -149,11 +151,11 @@ export function AutomationComingSoonSheet({
           variant="primary"
           size="lg"
           fullWidth
-          label={t('common.gotIt')}
-          onPress={() => ref.current?.dismiss()}
+          label={t('common.tryPro')}
+          onPress={onUpgradePress ?? (() => ref.current?.dismiss())}
           color={c}
           activeOpacity={0.85}
-          accessibilityLabel={t('common.gotIt')}
+          accessibilityLabel={t('common.tryPro')}
         />
       </BottomSheetView>
     </BottomSheetModal>

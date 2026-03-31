@@ -25,7 +25,8 @@
     "pro": "Pro",
     "goBack": "Назад",
     "open": "Открыть",
-    "moreActions": "Дополнительные действия"
+    "moreActions": "Дополнительные действия",
+    "tryPro": "Попробовать Pro"
   },
   "proLicense": {
     "modalTitle": "Активация Pro",

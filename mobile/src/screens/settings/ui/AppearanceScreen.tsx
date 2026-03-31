@@ -1,4 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check, Crown } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +7,7 @@ import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { AppLanguage, AppTheme } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { useProEntitlement } from '@/features/pro-license';
@@ -92,7 +94,7 @@ export const AppearanceScreen = () => {
   const color = useColors();
   const scheme = useAppTheme();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const contentMaxWidth = useTabletContentMaxWidth();
   const [accentProSheet, setAccentProSheet] = useState(false);
   const { isProActive } = useProEntitlement();
@@ -253,6 +255,10 @@ export const AppearanceScreen = () => {
       <AutomationComingSoonSheet
         visible={accentProSheet}
         feature="accentColor"
+        onUpgradePress={() => {
+          setAccentProSheet(false);
+          navigation.navigate('Settings', { openPlanPaywall: true });
+        }}
         onClose={() => setAccentProSheet(false)}
       />
     </View>

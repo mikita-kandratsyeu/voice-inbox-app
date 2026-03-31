@@ -25,7 +25,8 @@
     "pro": "Pro",
     "goBack": "Back",
     "open": "Open",
-    "moreActions": "More actions"
+    "moreActions": "More actions",
+    "tryPro": "Try Pro"
   },
   "proLicense": {
     "modalTitle": "Activate Pro",

@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { navigationRef } from '@/app/navigation/navigationRef';
 import { useSettingsStore } from '@/entities/settings/model/store';
 import { useProEntitlement } from '@/features/pro-license';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
@@ -87,6 +88,7 @@ export const FolderFormModal = ({
   const [selectedColor, setSelectedColor] = useState(globalAccentHex);
   const [selectedIcon, setSelectedIcon] = useState<FolderIconKey>(DEFAULT_FOLDER_ICON_KEY);
   const [folderProSheet, setFolderProSheet] = useState(false);
+  const [pendingPaywallOpen, setPendingPaywallOpen] = useState(false);
 
   useEffect(() => {
     setNameError(false);
@@ -111,6 +113,29 @@ export const FolderFormModal = ({
     ref.current?.dismiss();
     return undefined;
   }, [visible]);
+
+  useEffect(() => {
+    if (!pendingPaywallOpen || visible || folderProSheet) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      if (!navigationRef.isReady()) {
+        return;
+      }
+
+      navigationRef.navigate('Main', {
+        screen: 'SettingsRoot',
+        params: {
+          screen: 'Settings',
+          params: { openPlanPaywall: true },
+        },
+      });
+
+      setPendingPaywallOpen(false);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [folderProSheet, pendingPaywallOpen, visible]);
 
   useEffect(() => {
     if (!visible) return undefined;
@@ -467,6 +492,11 @@ export const FolderFormModal = ({
       <AutomationComingSoonSheet
         visible={folderProSheet}
         feature="folderColor"
+        onUpgradePress={() => {
+          ref.current?.dismiss();
+          setPendingPaywallOpen(true);
+          setFolderProSheet(false);
+        }}
         onClose={() => setFolderProSheet(false)}
       />
     </>

@@ -206,6 +206,10 @@ export const SettingsScreen = () => {
           <AutomationComingSoonSheet
             visible={settings.automationSheet !== null}
             feature={settings.automationSheet ?? 'autoTranscribe'}
+            onUpgradePress={() => {
+              settings.setAutomationSheet(null);
+              settings.setPlanPaywallVisible(true);
+            }}
             onClose={() => settings.setAutomationSheet(null)}
           />
         )}

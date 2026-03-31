@@ -1,9 +1,11 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 import type { VoiceRecord } from '@/entities/record';
 
 export type BottomTabParamList = {
   Inbox: undefined;
   Record: undefined;
-  SettingsRoot: undefined;
+  SettingsRoot: NavigatorScreenParams<SettingsStackParamList> | undefined;
 };
 
 export type InboxStackParamList = {
@@ -19,7 +21,7 @@ export type InboxStackParamList = {
 export type RootStackParamList = {
   Main:
     | undefined
-    | { screen: 'SettingsRoot'; params: { screen: 'WhisperModelPicker' | 'AIModelPicker' } };
+    | { screen: 'SettingsRoot'; params?: NavigatorScreenParams<SettingsStackParamList> };
   RecordModal: undefined;
   RecordingDetail: { record: VoiceRecord };
   RecordingAskAI: { record: VoiceRecord };
@@ -29,7 +31,7 @@ export type RootStackParamList = {
 };
 
 export type SettingsStackParamList = {
-  Settings: undefined;
+  Settings: { openPlanPaywall?: boolean } | undefined;
   Appearance: undefined;
   AIModelPicker: undefined;
   PrivateAiMode: undefined;
