@@ -18,9 +18,7 @@ type RecordCardProps = {
   onPress: () => void;
   onStatusPress: () => void;
   onLongPress?: () => void;
-  /** `null` disables the default long-press hint (e.g. batch selection mode). */
   a11yHint?: string | null;
-  /** When the parent row exposes accessibility (e.g. batch checkbox), hide this card from the tree. */
   hideAccessibilitySubtree?: boolean;
 };
 
@@ -49,6 +47,7 @@ export const RecordCard = React.memo(function RecordCard({
   const textSecondaryStyle = { color: color.text.secondary };
 
   const hasTags = item.tags && item.tags.length > 0;
+  const hasAudio = Boolean(item.audioPath?.trim());
   const tasks = item.tasks ?? [];
   const hasTasks = tasks.length > 0;
   const doneCount = tasks.filter((t) => t.isDone).length;
@@ -87,7 +86,7 @@ export const RecordCard = React.memo(function RecordCard({
 
   const cardBody = (
     <>
-      {showFolderStripe ? (
+      {showFolderStripe && (
         <View
           style={{
             width: 4,
@@ -97,7 +96,7 @@ export const RecordCard = React.memo(function RecordCard({
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
         />
-      ) : null}
+      )}
       <View style={{ flex: 1, padding: 16 }}>
         <View
           style={{
@@ -108,10 +107,10 @@ export const RecordCard = React.memo(function RecordCard({
           }}
         >
           <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', marginRight: 8 }}>
-            {item.isPinned ? (
+            {item.isPinned && (
               <Pin size={14} color={color.accent.pin} strokeWidth={2} style={pinIconStyle} />
-            ) : null}
-            {isUnread ? (
+            )}
+            {isUnread && (
               <View
                 style={{
                   width: 10,
@@ -125,7 +124,7 @@ export const RecordCard = React.memo(function RecordCard({
                 accessibilityElementsHidden
                 importantForAccessibility="no-hide-descendants"
               />
-            ) : null}
+            )}
             <Text
               style={[
                 textPrimaryStyle,
@@ -159,10 +158,14 @@ export const RecordCard = React.memo(function RecordCard({
           }}
         >
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Clock size={14} color={color.icon.muted} strokeWidth={2} />
-            <Text style={[textSecondaryStyle, { marginLeft: 4, fontSize: 12 }]}>
-              {item.duration}
-              {'  '}
+            {hasAudio && <Clock size={14} color={color.icon.muted} strokeWidth={2} />}
+            <Text style={[textSecondaryStyle, { marginLeft: hasAudio ? 4 : 0, fontSize: 12 }]}>
+              {hasAudio && (
+                <>
+                  <Text style={[textSecondaryStyle, { fontSize: 12 }]}>{item.duration}</Text>
+                  {'  '}
+                </>
+              )}
               {formatRelativeTime(item.createdAt, i18n.language)}
             </Text>
           </View>
