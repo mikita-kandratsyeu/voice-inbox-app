@@ -70,7 +70,10 @@
     "openCreate": "Создать текстовую заметку",
     "titlePlaceholder": "Название (необязательно)",
     "textPlaceholder": "Введите заметку...",
-    "defaultTitle": "Текстовая заметка"
+    "defaultTitle": "Текстовая заметка",
+    "discardTitle": "Закрыть без сохранения?",
+    "discardMessage": "Текст заметки будет потерян.",
+    "discardConfirm": "Закрыть"
   },
   "inbox": {
     "menuSelectNotes": "Выбрать заметки",

@@ -70,7 +70,10 @@
     "openCreate": "Create text note",
     "titlePlaceholder": "Title (optional)",
     "textPlaceholder": "Write your note...",
-    "defaultTitle": "Text note"
+    "defaultTitle": "Text note",
+    "discardTitle": "Close without saving?",
+    "discardMessage": "Your note text will be lost.",
+    "discardConfirm": "Close"
   },
   "inbox": {
     "menuSelectNotes": "Select notes",
