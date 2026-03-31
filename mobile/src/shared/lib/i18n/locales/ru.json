@@ -980,7 +980,7 @@
     "autoOrganizeFailedDescription": "Не удалось автоматически разложить заметки. Попробуйте еще раз.",
     "autoOrganizeDoneTitle": "Папки обновлены",
     "autoOrganizeDoneDescription": "ИИ создал папки и распределил заметки.",
-    "autoOrganizeReviewTitle": "ИИ разложит заметки",
+    "autoOrganizeReviewTitle": "Распределение заметок",
     "autoOrganizeReviewSubtitle": "Проверьте предложенные папки и распределение, затем подтвердите.",
     "autoOrganizeReviewFoldersSection": "Папки",
     "autoOrganizeReviewFolderNoteCount_0": "Пока нет заметок",

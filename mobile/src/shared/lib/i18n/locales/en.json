@@ -974,7 +974,7 @@
     "autoOrganizeFailedDescription": "Couldn't organize notes automatically. Please try again.",
     "autoOrganizeDoneTitle": "Folders updated",
     "autoOrganizeDoneDescription": "AI created folders and organized your notes.",
-    "autoOrganizeReviewTitle": "AI organize notes",
+    "autoOrganizeReviewTitle": "Organizing notes",
     "autoOrganizeReviewSubtitle": "Review suggested folders and assignments, then confirm.",
     "autoOrganizeReviewFoldersSection": "Folders",
     "autoOrganizeReviewFolderNoteCount": "{{count}} notes",
