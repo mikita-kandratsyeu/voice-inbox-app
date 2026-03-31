@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { and, desc, eq, inArray, isNotNull, lt, ne } from 'drizzle-orm';
 
 import {
@@ -279,7 +280,7 @@ export const recordRepository = {
 
   markAsRead: async (id: string): Promise<string> => {
     logDb('markAsRead', { id });
-    const readAt = new Date().toISOString();
+    const readAt = dayjs().toISOString();
     const db = getDB();
     await db.update(recordsTable).set({ status: 'read', readAt }).where(eq(recordsTable.id, id));
     return readAt;

@@ -1,4 +1,5 @@
 import NetInfo from '@react-native-community/netinfo';
+import dayjs from 'dayjs';
 import * as RNLocalize from 'react-native-localize';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
@@ -60,6 +61,6 @@ export async function collectSupportDiagnostics(): Promise<SupportDiagnosticsPay
     })),
     timeZone: RNLocalize.getTimeZone(),
     userAgent: isString(userAgent) ? userAgent : '',
-    collectedAt: new Date().toISOString(),
+    collectedAt: dayjs().toISOString(),
   };
 }

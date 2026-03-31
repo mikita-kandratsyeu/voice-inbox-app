@@ -5,6 +5,7 @@ import {
   BottomSheetTextInput,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
+import dayjs from 'dayjs';
 import { CheckCircle2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -36,11 +37,11 @@ type ProLicenseKeyModalProps = {
 };
 
 function formatExpiryDate(iso: string, locale: string): string {
-  const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) {
+  const d = dayjs(iso);
+  if (!d.isValid()) {
     return '';
   }
-  return d.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' });
+  return d.locale(locale).format('D MMMM YYYY');
 }
 
 type SuccessPanelProps = {
@@ -195,7 +196,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
     const result = await redeemProLicenseKey(trimmed);
     setBusy(false);
     if (result.ok) {
-      const ms = new Date(result.expiresAt).getTime();
+      const ms = dayjs(result.expiresAt).valueOf();
       if (Number.isFinite(ms)) {
         setProExpiresAtMsSync(ms);
       }

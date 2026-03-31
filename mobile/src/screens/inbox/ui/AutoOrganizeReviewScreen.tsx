@@ -3,6 +3,7 @@ import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@g
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import dayjs from 'dayjs';
 import { Check } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -198,7 +199,7 @@ export const AutoOrganizeReviewScreen = () => {
       icon: f.icon,
       color: isProActive ? f.color || DEFAULT_FOLDER_BRAND_HEX : DEFAULT_FOLDER_BRAND_HEX,
       sortOrder: 0,
-      createdAt: new Date().toISOString(),
+      createdAt: dayjs().toISOString(),
     };
   }, [editingFolderTarget, folders, isProActive, proposedFolders]);
 

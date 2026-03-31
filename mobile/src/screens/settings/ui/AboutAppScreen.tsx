@@ -1,5 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import dayjs from 'dayjs';
 import { BookOpen, Globe, Mail, Tag } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -170,7 +171,7 @@ export const AboutAppScreen = () => {
             />
           </SettingsSection>
           <Text className="text-center text-[14px]" style={{ color: color.text.secondary }}>
-            {t('about.copyright', { year: new Date().getFullYear() })}
+            {t('about.copyright', { year: dayjs().year() })}
           </Text>
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>

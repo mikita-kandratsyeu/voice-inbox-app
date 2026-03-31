@@ -1,5 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import dayjs from 'dayjs';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SectionList, Switch, Text, useWindowDimensions, View } from 'react-native';
@@ -17,14 +18,8 @@ import { EmptyState, ScreenHeader, SectionHeader } from '@/shared/ui';
 import type { TaskWithRecord } from '../types';
 import { AllTasksTaskRow } from './AllTasksTaskRow';
 
-const pad2 = (n: number) => String(n).padStart(2, '0');
-
-const dayKeyFromMs = (ms: number): string => {
-  const d = new Date(ms);
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-};
-
-const dayKeyFromIso = (iso: string): string => dayKeyFromMs(new Date(iso).getTime());
+const dayKeyFromMs = (ms: number): string => dayjs(ms).format('YYYY-MM-DD');
+const dayKeyFromIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD');
 
 type Section = { dayKey: string; title: string; data: TaskWithRecord[] };
 
@@ -53,7 +48,7 @@ export const AllTasksScreen = () => {
     const sorted = [...records]
       .filter((r) => r.status !== 'archived')
       .filter((r) => (r.tasks?.length ?? 0) > 0)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      .sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf());
 
     const rows: TaskWithRecord[] = [];
     for (const r of sorted) {
@@ -70,9 +65,7 @@ export const AllTasksScreen = () => {
     const filtered = openOnly ? rows.filter((row) => !row.task.isDone) : rows;
 
     const todayK = dayKeyFromMs(Date.now());
-    const y = new Date();
-    y.setDate(y.getDate() - 1);
-    const yesterdayK = dayKeyFromMs(y.getTime());
+    const yesterdayK = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
 
     const byDay = new Map<string, TaskWithRecord[]>();
     for (const row of filtered) {
@@ -85,14 +78,7 @@ export const AllTasksScreen = () => {
     const keys = [...byDay.keys()].sort((a, b) => b.localeCompare(a));
 
     const formatLong = (key: string): string => {
-      const [yy, mm, dd] = key.split('-').map(Number);
-      const date = new Date(yy, mm - 1, dd);
-      return date.toLocaleDateString(i18n.language, {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-      });
+      return dayjs(key).locale(i18n.language).format('dddd, D MMMM YYYY');
     };
 
     const sections: Section[] = keys.map((key) => {

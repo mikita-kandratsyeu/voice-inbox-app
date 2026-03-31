@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import DocumentPicker from 'react-native-document-picker';
 import { unzip } from 'react-native-zip-archive';
 
@@ -258,7 +259,7 @@ async function importFromZip(fileUri: string): Promise<ImportResult> {
               isNumber(folder.sortOrder) && Number.isFinite(folder.sortOrder)
                 ? folder.sortOrder
                 : 0,
-            createdAt: isString(folder.createdAt) ? folder.createdAt : new Date().toISOString(),
+            createdAt: isString(folder.createdAt) ? folder.createdAt : dayjs().toISOString(),
           } satisfies Folder;
         });
 
@@ -291,7 +292,7 @@ async function importFromZip(fileUri: string): Promise<ImportResult> {
           color: DEFAULT_FOLDER_BRAND_HEX,
           icon: DEFAULT_FOLDER_ICON_KEY,
           sortOrder: index,
-          createdAt: new Date().toISOString(),
+          createdAt: dayjs().toISOString(),
         };
 
         try {
@@ -424,7 +425,7 @@ export const importData = async (): Promise<ImportResult> => {
               isNumber(folder.sortOrder) && Number.isFinite(folder.sortOrder)
                 ? folder.sortOrder
                 : 0,
-            createdAt: isString(folder.createdAt) ? folder.createdAt : new Date().toISOString(),
+            createdAt: isString(folder.createdAt) ? folder.createdAt : dayjs().toISOString(),
           } satisfies Folder;
         });
 

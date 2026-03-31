@@ -19,7 +19,7 @@ function getPeriodForHour(hour: number): string {
 }
 
 export const getAutoTitle = (useDate = true): string => {
-  const hour = new Date().getHours();
+  const hour = dayjs().hour();
   const date = dayjs().format('MMM D');
 
   return `${getPeriodForHour(hour)} ${useDate ? `· ${date}` : ''}`;

@@ -1,3 +1,5 @@
+import dayjs from 'dayjs';
+
 import { recordRepository } from '@/entities/record/model/repository';
 import { useSettingsStore } from '@/entities/settings';
 import { isAutomationUiLockedForPublicStore } from '@/features/app-storefront';
@@ -39,7 +41,7 @@ export async function runAutoArchiveReadNotesIfEligible(
 
   lastRunAtMs = now;
 
-  const threshold = new Date(now - autoArchiveAfterDays * 86_400_000).toISOString();
+  const threshold = dayjs(now).subtract(autoArchiveAfterDays, 'day').toISOString();
   try {
     return await recordRepository.archiveReadRecordsOlderThan(threshold);
   } catch (err) {

@@ -41,6 +41,7 @@ export const createAsk = async (
   }
 
   const limitResult = await checkAndIncrement(deviceId);
+
   if (!limitResult.allowed) {
     await saveAskMessage(id, {
       id,

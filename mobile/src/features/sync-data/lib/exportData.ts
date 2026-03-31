@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { Share } from 'react-native';
 import { zip } from 'react-native-zip-archive';
 
@@ -100,7 +101,7 @@ export const exportData = async (records: VoiceRecord[], folders: Folder[]): Pro
 
     const payload: ExportPayload = {
       version: 3,
-      exportedAt: new Date().toISOString(),
+      exportedAt: dayjs().toISOString(),
       folders,
       records: recordsForPayload,
     };

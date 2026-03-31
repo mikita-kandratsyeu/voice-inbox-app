@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { create } from 'zustand';
 
 import { useRecordStore } from '@/entities/record';
@@ -42,7 +43,7 @@ export const useFolderStore = create<FolderStore>((set, get) => ({
       color,
       icon,
       sortOrder: get().folders.length,
-      createdAt: new Date().toISOString(),
+      createdAt: dayjs().toISOString(),
     };
     await folderRepository.insert(folder);
     set((s) => ({ folders: [...s.folders, folder] }));

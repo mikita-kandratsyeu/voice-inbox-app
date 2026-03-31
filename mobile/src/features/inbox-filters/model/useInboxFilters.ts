@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { useCallback, useState } from 'react';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -9,8 +10,8 @@ const parseDurationMs = (record: VoiceRecord): number => {
 };
 
 const sortFns: Record<InboxSortOption, (a: VoiceRecord, b: VoiceRecord) => number> = {
-  dateDesc: (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-  dateAsc: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+  dateDesc: (a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf(),
+  dateAsc: (a, b) => dayjs(a.createdAt).valueOf() - dayjs(b.createdAt).valueOf(),
   durationDesc: (a, b) => parseDurationMs(b) - parseDurationMs(a),
   durationAsc: (a, b) => parseDurationMs(a) - parseDurationMs(b),
   titleAsc: (a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }),

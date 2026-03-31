@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
@@ -232,7 +233,7 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
         })
         .sort((a, b) => {
           if (b.hybridScore !== a.hybridScore) return b.hybridScore - a.hybridScore;
-          return new Date(b.record.createdAt).getTime() - new Date(a.record.createdAt).getTime();
+          return dayjs(b.record.createdAt).valueOf() - dayjs(a.record.createdAt).valueOf();
         })
         .map(({ record }) => record);
     }
@@ -247,7 +248,7 @@ export const useSearchRecords = (records: VoiceRecord[]) => {
       }))
       .sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
-        return new Date(b.record.createdAt).getTime() - new Date(a.record.createdAt).getTime();
+        return dayjs(b.record.createdAt).valueOf() - dayjs(a.record.createdAt).valueOf();
       })
       .map(({ record }) => record);
   }, [

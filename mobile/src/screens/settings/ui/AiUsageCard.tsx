@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import type { TFunction } from 'i18next';
 import { PlayCircle, Sparkles } from 'lucide-react-native';
 import React from 'react';
@@ -10,14 +11,11 @@ import type { AiUsage } from '@/shared/lib/ai-api';
 import { SkeletonPulse } from '@/shared/ui';
 
 const formatResetDate = (isoString: string, locale: string): string => {
-  const date = new Date(isoString);
-  return date.toLocaleDateString(locale, {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const date = dayjs(isoString);
+
+  if (!date.isValid()) return '—';
+
+  return date.locale(locale).format('dddd, D MMMM HH:mm');
 };
 
 function getAiUsageStatusText(usage: AiUsage | null, isExhausted: boolean, t: TFunction): string {

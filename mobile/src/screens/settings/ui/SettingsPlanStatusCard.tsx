@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import { Crown } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -74,11 +75,7 @@ export function SettingsPlanStatusCard({
 
   const proExpiresText =
     isProActive && expiresAtMs != null
-      ? new Date(expiresAtMs).toLocaleString(i18n.language, {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        })
+      ? dayjs(expiresAtMs).locale(i18n.language).format('D MMMM YYYY')
       : null;
 
   const title = isProActive
