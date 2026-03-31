@@ -1,6 +1,6 @@
 import { MenuView } from '@react-native-menu/menu';
 import type { TFunction } from 'i18next';
-import { Keyboard, MoreVertical, Search } from 'lucide-react-native';
+import { MoreVertical, NotebookPen, Search } from 'lucide-react-native';
 import React, { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
@@ -137,7 +137,7 @@ function InboxScreenHeaderRightInner({
         iconOnly
         variant="icon"
         size="md"
-        icon={<Keyboard size={20} color={color.text.primary} strokeWidth={2.2} />}
+        icon={<NotebookPen size={20} color={color.text.primary} strokeWidth={2.2} />}
         color={color}
         onPress={onCreateTextNote}
         accessibilityLabel={t('textNote.openCreate')}
