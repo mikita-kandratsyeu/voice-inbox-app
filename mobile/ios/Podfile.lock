@@ -88,18 +88,18 @@ PODS:
     - AppMetricaLog (= 5.14.0)
   - AppMetricaSynchronization (5.14.0):
     - AppMetricaLogSwift (= 5.14.0)
-  - DivKit (32.41.0):
-    - DivKit_LayoutKit (= 32.41.0)
-    - DivKit_Serialization (= 32.41.0)
+  - DivKit (32.42.0):
+    - DivKit_LayoutKit (= 32.42.0)
+    - DivKit_Serialization (= 32.42.0)
     - VGSL (~> 7.19)
-  - DivKit_LayoutKit (32.41.0):
-    - DivKit_LayoutKitInterface (= 32.41.0)
+  - DivKit_LayoutKit (32.42.0):
+    - DivKit_LayoutKitInterface (= 32.42.0)
     - VGSL (~> 7.19)
-  - DivKit_LayoutKitInterface (32.41.0):
+  - DivKit_LayoutKitInterface (32.42.0):
     - VGSL (~> 7.19)
-  - DivKit_Serialization (32.41.0):
+  - DivKit_Serialization (32.42.0):
     - VGSL (~> 7.19)
-  - DivKitBinaryCompatibilityFacade (5.2.1):
+  - DivKitBinaryCompatibilityFacade (5.2.2):
     - DivKit (~> 32.14)
   - FBLazyVector (0.84.1)
   - Firebase/CoreOnly (12.10.0):
@@ -3332,11 +3332,11 @@ SPEC CHECKSUMS:
   AppMetricaProtobufUtils: 3696c3b28c3a6a5fd95b8e44953c662ad5648f7b
   AppMetricaStorageUtils: bb31d877359a6d1ad8ae5a6d89951edddf01af75
   AppMetricaSynchronization: 76f438564c57b4688d640b7befc5600e21bff875
-  DivKit: 474049acd68a2fa21e8f34af7f91bfc6d25b3f82
-  DivKit_LayoutKit: f1f71a6e3295517a61347cae4b532faee1760a76
-  DivKit_LayoutKitInterface: c6d67b10a502907a87a764dc69c1307bf3d0e131
-  DivKit_Serialization: 156987615cdf0bd3d1c69cfd20bda17a27716469
-  DivKitBinaryCompatibilityFacade: 38b84cea43f82129388706b4c25f71519d42a18d
+  DivKit: 25c54628c2890c68b24ec2765d53a05dcf579107
+  DivKit_LayoutKit: 9a3afefbe5a192ae838e8f943c7ea8f4f579a2ed
+  DivKit_LayoutKitInterface: fdec492550449ce0abce12ee26cf52f5183610ee
+  DivKit_Serialization: a5080f328e6d704fd540fff70447ad2c81e1ed2a
+  DivKitBinaryCompatibilityFacade: 77c240b799c62d65c826aeb9c8f0081e1ffe7b56
   FBLazyVector: baf9d0492aa305444465c798e972f87e6a60dc69
   Firebase: 99f203d3a114c6ba591f3b32263a9626e450af65
   FirebaseABTesting: fae111fe5476bd9e249968d0c85cd036385404ba
