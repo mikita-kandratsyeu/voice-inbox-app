@@ -10,7 +10,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import { useSettingsStore } from '@/entities/settings';
+import { useAiProcessing } from '@/features/ai-processing';
+import { shouldApplyAutoAiAfterTranscription } from '@/features/app-storefront';
+import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
+import { useProEntitlement } from '@/features/pro-license';
 import { useColors } from '@/shared/config';
+import { useNetworkStatus } from '@/shared/lib';
 import { Button, getInputFieldInputStyle, InputField } from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';
@@ -22,6 +28,10 @@ export const TextNoteScreen = () => {
   const insets = useSafeAreaInsets();
   const color = useColors();
   const addRecord = useRecordStore((s) => s.addRecord);
+  const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
+  const { isProActive } = useProEntitlement();
+  const { isConnected } = useNetworkStatus();
+  const { processRecord } = useAiProcessing();
   const [title, setTitle] = useState('');
   const [noteText, setNoteText] = useState('');
   const hasUnsavedChanges = title.trim().length > 0 || noteText.trim().length > 0;
@@ -59,7 +69,7 @@ export const TextNoteScreen = () => {
     ]);
   }, [hasUnsavedChanges, navigation, t]);
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     KeyboardController.dismiss({ animated: false });
     const transcript = noteText.trim();
     if (!transcript) {
@@ -84,10 +94,25 @@ export const TextNoteScreen = () => {
       audioPath: '',
     };
 
-    addRecord(record);
+    await addRecord(record);
+    generateAndSaveEmbeddingForRecord(record).catch(() => {});
+
+    if (shouldApplyAutoAiAfterTranscription(autoAiAfterTranscription, isProActive) && isConnected) {
+      void processRecord(record).catch(() => {});
+    }
+
     KeyboardController.dismiss({ animated: false });
     navigation.goBack();
-  }, [addRecord, navigation, noteText, resolvedTitle]);
+  }, [
+    addRecord,
+    autoAiAfterTranscription,
+    isConnected,
+    isProActive,
+    navigation,
+    noteText,
+    processRecord,
+    resolvedTitle,
+  ]);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.primary }}>
