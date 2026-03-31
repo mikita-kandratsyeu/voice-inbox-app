@@ -460,7 +460,7 @@
       "autoAiTitle": "Auto-generation after transcription",
       "autoAiBody": "Runs summaries and tasks right after transcription finishes. You can still trigger it manually from each note.",
       "autoArchiveTitle": "Auto-archive",
-      "autoArchiveBody": "Keeps your inbox tidy on autopilot – read notes move to the archive on the schedule you set. Pinned notes and notes with open tasks stay until you're done with them."
+      "autoArchiveBody": "Inbox stays tidy effortlessly: read notes auto-archive on schedule. Pinned notes and open tasks stay put until you're done."
     },
     "internalTech": {
       "title": "Internal build",
