@@ -23,6 +23,7 @@ export type RootStackParamList = {
     | undefined
     | { screen: 'SettingsRoot'; params?: NavigatorScreenParams<SettingsStackParamList> };
   RecordModal: undefined;
+  TextNoteModal: undefined;
   RecordingDetail: { record: VoiceRecord };
   RecordingAskAI: { record: VoiceRecord };
   WhisperModelPickerRoot: undefined;

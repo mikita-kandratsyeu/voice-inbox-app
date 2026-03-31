@@ -162,6 +162,10 @@ export function useInboxScreen() {
     }
   }, [searchBarExplicitOpen, query]);
 
+  const handleCreateTextNote = useCallback(() => {
+    navigation.navigate('TextNoteModal');
+  }, [navigation]);
+
   const enterBatchMode = useCallback(
     (initialId?: string, options?: { haptic?: boolean }) => {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -409,6 +413,7 @@ export function useInboxScreen() {
     allSelected,
     handleSelectAll,
     handleSearchHeaderPress,
+    handleCreateTextNote,
     searchBarExplicitOpen,
     showInboxSearchBar,
     emptyStatePlacement,

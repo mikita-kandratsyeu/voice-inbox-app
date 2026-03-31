@@ -65,6 +65,13 @@
     "record": "Record",
     "settings": "Settings"
   },
+  "textNote": {
+    "title": "Text note",
+    "openCreate": "Create text note",
+    "titlePlaceholder": "Title (optional)",
+    "textPlaceholder": "Write your note...",
+    "defaultTitle": "Text note"
+  },
   "inbox": {
     "adLabel": "Ad",
     "title": "Inbox",
@@ -194,6 +201,7 @@
   },
   "recordingDetail": {
     "transcript": "Transcript",
+    "text": "Text",
     "summary": "Summary",
     "tasks": "Tasks",
     "transcriptProcessErrorTitle": "Couldn't transcribe",
@@ -203,6 +211,7 @@
     "transcriptNotCreatedDesc": "Tap the button below to transcribe the recording on your device.",
     "transcribe": "Transcribe",
     "editTranscript": "Edit",
+    "editText": "Edit text",
     "editTranscriptTitle": "Edit",
     "retranscribe": "Retranscribe",
     "translateMenuHint": "Opens a menu to choose translation language",

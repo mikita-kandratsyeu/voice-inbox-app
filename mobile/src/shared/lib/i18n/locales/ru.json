@@ -65,6 +65,13 @@
     "record": "Запись",
     "settings": "Настройки"
   },
+  "textNote": {
+    "title": "Текстовая заметка",
+    "openCreate": "Создать текстовую заметку",
+    "titlePlaceholder": "Название (необязательно)",
+    "textPlaceholder": "Введите заметку...",
+    "defaultTitle": "Текстовая заметка"
+  },
   "inbox": {
     "adLabel": "Реклама",
     "title": "Входящие",
@@ -194,6 +201,7 @@
   },
   "recordingDetail": {
     "transcript": "Транскрипт",
+    "text": "Текст",
     "summary": "Сводка",
     "tasks": "Задачи",
     "transcriptProcessErrorTitle": "Не удалось транскрибировать",
@@ -203,6 +211,7 @@
     "transcriptNotCreatedDesc": "Нажмите кнопку ниже, чтобы транскрибировать запись на устройстве.",
     "transcribe": "Транскрибировать",
     "editTranscript": "Редактировать",
+    "editText": "Редактировать текст",
     "editTranscriptTitle": "Редактирование",
     "retranscribe": "Перетранскрибировать",
     "translateMenuHint": "Открывает меню выбора языка перевода",

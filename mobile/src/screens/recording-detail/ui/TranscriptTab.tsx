@@ -123,6 +123,12 @@ export const TranscriptTab = ({
     whisperStatus === 'not_downloaded'
       ? undefined
       : getWhisperModelDisplayName(selectedWhisperModel, selectedWhisperModelFormat);
+  const originalTextParagraphs = buildReadableParagraphs(
+    segments
+      .map((segment) => segment.text.trim())
+      .filter(Boolean)
+      .join('\n\n'),
+  );
 
   if (segments.length === 0) {
     return (
@@ -212,7 +218,7 @@ export const TranscriptTab = ({
             variant="secondary"
             size="md"
             icon={<Pencil size={15} color={color.text.primary} strokeWidth={2} />}
-            label={t('recordingDetail.editTranscript')}
+            label={hasAudio ? t('recordingDetail.editTranscript') : t('recordingDetail.editText')}
             color={color}
             onPress={onEditTranscript}
             disabled={isAiProcessing}
@@ -255,12 +261,37 @@ export const TranscriptTab = ({
             ))}
           </View>
         </View>
-      ) : (
+      ) : hasAudio ? (
         <TranscriptHighlight
           segments={segments}
           currentPositionMs={currentPositionMs}
           color={color}
         />
+      ) : (
+        <View className="px-4 pb-4">
+          <View
+            className="rounded-2xl p-4"
+            style={{
+              backgroundColor: color.background.secondary,
+              borderWidth: 1,
+              borderColor: color.border.default,
+            }}
+          >
+            {originalTextParagraphs.map((paragraph, idx) => (
+              <Text
+                key={`${idx}-${paragraph.slice(0, 18)}`}
+                className="text-[15px] leading-7"
+                style={{
+                  color: color.text.primary,
+                  marginBottom: idx === originalTextParagraphs.length - 1 ? 0 : 14,
+                }}
+                selectable
+              >
+                {paragraph}
+              </Text>
+            ))}
+          </View>
+        </View>
       )}
     </View>
   );

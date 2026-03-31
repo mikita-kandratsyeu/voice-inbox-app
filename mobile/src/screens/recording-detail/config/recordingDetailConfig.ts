@@ -3,7 +3,13 @@ import { i18n } from '@/shared/lib';
 
 export type Tab = 'transcript' | 'summary' | 'tasks';
 
-export const getTabLabel = (tab: Tab): string => i18n.t(`recordingDetail.${tab}`);
+export const getTabLabel = (tab: Tab, options?: { hasAudio?: boolean }): string => {
+  if (tab === 'transcript' && options?.hasAudio === false) {
+    return i18n.t('recordingDetail.text');
+  }
+
+  return i18n.t(`recordingDetail.${tab}`);
+};
 
 const AI_STATUS_COLORS: Record<RecordingStatus, { iconColor: string; bgColor: string }> = {
   idle: { iconColor: '#9ca3af', bgColor: '#f9fafb' },

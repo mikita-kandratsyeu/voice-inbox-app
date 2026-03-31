@@ -4,7 +4,7 @@ import React from 'react';
 
 import { InboxFiltersResetProvider } from '@/features/inbox-filters';
 import { AllTasksScreen } from '@/screens/all-tasks';
-import { RecordScreen } from '@/screens/record';
+import { RecordScreen, TextNoteScreen } from '@/screens/record';
 import {
   AskAIScreen,
   EditTranscriptScreen,
@@ -35,6 +35,16 @@ export const RootNavigator = () => (
           presentation: 'fullScreenModal',
           animation: 'slide_from_bottom',
           gestureEnabled: false,
+        }}
+      />
+      <Stack.Screen
+        name="TextNoteModal"
+        component={TextNoteScreen}
+        options={{
+          headerShown: false,
+          presentation: 'fullScreenModal',
+          animation: 'slide_from_bottom',
+          gestureEnabled: true,
         }}
       />
       <Stack.Screen

@@ -253,6 +253,7 @@ export const RecordingDetailScreen = () => {
   const contentMaxWidth = useTabletContentMaxWidth();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const isPrivateMode = aiExecutionMode === 'private_experimental';
+  const hasAudio = Boolean(liveRecord.audioPath?.trim());
 
   const onBack = useCallback(() => navigation.goBack(), [navigation]);
   const onTogglePin = useCallback(() => togglePin(liveRecord.id), [liveRecord.id, togglePin]);
@@ -350,30 +351,39 @@ export const RecordingDetailScreen = () => {
             surfaceBackgroundColor={tabPanelBackgroundColor}
           />
 
-          <View className="overflow-hidden rounded-2xl">
-            <AudioPlayer
-              duration={liveRecord.duration}
-              color={color}
-              audioPath={liveRecord.audioPath}
-              onPositionChange={onPositionUpdate}
-              surfaceBackgroundColor={tabPanelBackgroundColor}
-            />
-          </View>
+          {hasAudio && (
+            <View className="overflow-hidden rounded-2xl">
+              <AudioPlayer
+                duration={liveRecord.duration}
+                color={color}
+                audioPath={liveRecord.audioPath}
+                onPositionChange={onPositionUpdate}
+                surfaceBackgroundColor={tabPanelBackgroundColor}
+              />
+            </View>
+          )}
 
-          <View className="overflow-hidden rounded-2xl">
-            <AudioLanguageSelector
-              value={recordLanguage}
-              color={color}
-              onSelect={setRecordLanguage}
-              surfaceBackgroundColor={tabPanelBackgroundColor}
-            />
-          </View>
+          {hasAudio && (
+            <View className="overflow-hidden rounded-2xl">
+              <AudioLanguageSelector
+                value={recordLanguage}
+                color={color}
+                onSelect={setRecordLanguage}
+                surfaceBackgroundColor={tabPanelBackgroundColor}
+              />
+            </View>
+          )}
 
           <View
             className="overflow-hidden rounded-2xl"
             style={{ backgroundColor: tabPanelBackgroundColor }}
           >
-            <RecordingDetailTabBar active={activeTab} onSelect={onSelectTab} color={color} />
+            <RecordingDetailTabBar
+              active={activeTab}
+              onSelect={onSelectTab}
+              color={color}
+              hasAudio={hasAudio}
+            />
             {mountedTabs.has('transcript') && (
               <View style={activeTab !== 'transcript' ? { display: 'none' } : undefined}>
                 <TranscriptContent

@@ -56,6 +56,7 @@ export const InboxScreen = () => {
     allSelected,
     handleSelectAll,
     handleSearchHeaderPress,
+    handleCreateTextNote,
     searchBarExplicitOpen,
     showInboxSearchBar,
     emptyStatePlacement,
@@ -115,6 +116,7 @@ export const InboxScreen = () => {
             }}
             onEnterBatchMode={() => enterBatchMode(undefined, { haptic: false })}
             onOpenAllTasks={() => navigation.navigate('AllTasks')}
+            onCreateTextNote={handleCreateTextNote}
             t={t}
           />
         }

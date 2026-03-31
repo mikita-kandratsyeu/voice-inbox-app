@@ -13,18 +13,25 @@ type RecordingDetailTabBarProps = {
   active: Tab;
   onSelect: (tab: Tab) => void;
   color: Colors;
+  hasAudio?: boolean;
 };
 
-export const RecordingDetailTabBar = ({ active, onSelect, color }: RecordingDetailTabBarProps) => (
+export const RecordingDetailTabBar = ({
+  active,
+  onSelect,
+  color,
+  hasAudio = true,
+}: RecordingDetailTabBarProps) => (
   <View className="flex-row border-b" style={{ borderBottomColor: color.border.default }}>
     {TABS.map((tab) => {
       const isActive = tab === active;
+      const label = getTabLabel(tab, { hasAudio });
 
       return (
         <TouchableOpacity
           key={tab}
           accessibilityRole="button"
-          accessibilityLabel={getTabLabel(tab)}
+          accessibilityLabel={label}
           accessibilityState={{ selected: isActive }}
           className="relative flex-1 items-center justify-center py-3"
           style={{ minHeight: IOS_MIN_TOUCH_TARGET }}
@@ -35,7 +42,7 @@ export const RecordingDetailTabBar = ({ active, onSelect, color }: RecordingDeta
             className="text-sm font-medium"
             style={{ color: isActive ? color.accent.primary : color.text.secondary }}
           >
-            {getTabLabel(tab)}
+            {label}
           </Text>
           {isActive && (
             <View

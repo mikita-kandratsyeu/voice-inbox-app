@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { Folders, GalleryHorizontalEnd, ListTodo, Search } from 'lucide-react-native';
+import { Folders, GalleryHorizontalEnd, Keyboard, ListTodo, Search } from 'lucide-react-native';
 import React, { memo } from 'react';
 import { View } from 'react-native';
 
@@ -23,6 +23,7 @@ type InboxScreenHeaderRightProps = {
   onAutoOrganize: () => void;
   onEnterBatchMode: () => void;
   onOpenAllTasks: () => void;
+  onCreateTextNote: () => void;
   t: TFunction;
 };
 
@@ -42,6 +43,7 @@ function InboxScreenHeaderRightInner({
   onAutoOrganize,
   onEnterBatchMode,
   onOpenAllTasks,
+  onCreateTextNote,
   t,
 }: InboxScreenHeaderRightProps) {
   if (!isLoaded) return null;
@@ -111,6 +113,16 @@ function InboxScreenHeaderRightInner({
         color={color}
         onPress={onEnterBatchMode}
         accessibilityLabel={t('batch.a11yEnterSelectMode')}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      />
+      <Button
+        iconOnly
+        variant="icon"
+        size="md"
+        icon={<Keyboard size={20} color={color.text.primary} strokeWidth={2.2} />}
+        color={color}
+        onPress={onCreateTextNote}
+        accessibilityLabel={t('textNote.openCreate')}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       />
       <Button

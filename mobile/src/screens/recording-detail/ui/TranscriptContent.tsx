@@ -77,6 +77,20 @@ export const TranscriptContent = ({
   }
 
   const isAiProcessing = r.summaryStatus === 'processing' || r.tasksStatus === 'processing';
+  const transcriptSegments =
+    (r.transcriptSegments?.length ?? 0) > 0
+      ? (r.transcriptSegments ?? [])
+      : r.transcript.trim()
+        ? [
+            {
+              id: `${r.id}-text`,
+              startTime: '00:00',
+              startMs: 0,
+              endMs: r.durationMs ?? 0,
+              text: r.transcript.trim(),
+            },
+          ]
+        : [];
 
   const handleTranslate = async (targetLanguage: string) => {
     const result = await translate(targetLanguage);
@@ -99,7 +113,7 @@ export const TranscriptContent = ({
     <>
       <TranscriptTab
         recordId={r.id}
-        segments={r.transcriptSegments ?? []}
+        segments={transcriptSegments}
         translatedTranscript={r.translatedTranscript}
         translationLanguage={r.translationLanguage}
         currentPositionMs={currentPositionMs}

@@ -9,14 +9,20 @@ type UseEditTranscriptOptions = {
   onSaved?: () => void;
 };
 
+const buildSegmentsSyncKey = (recordId: string, segments: TranscriptSegment[]) =>
+  `${recordId}:${segments.map((s) => `${s.id}\u0001${s.text}\u0001${s.startTime}`).join('\u0002')}`;
+
 export const useEditTranscript = ({ recordId, segments, onSaved }: UseEditTranscriptOptions) => {
   const updateTranscript = useRecordStore((s) => s.updateTranscript);
   const [editedSegments, setEditedSegments] = useState<TranscriptSegment[]>(segments);
   const [isSaving, setIsSaving] = useState(false);
 
+  const segmentsSyncKey = buildSegmentsSyncKey(recordId, segments);
+
   useEffect(() => {
     setEditedSegments(segments);
-  }, [recordId, segments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `segments` matches this key when the effect runs
+  }, [segmentsSyncKey]);
 
   const updateSegmentText = useCallback((segmentId: string, text: string) => {
     setEditedSegments((prev) => prev.map((s) => (s.id === segmentId ? { ...s, text } : s)));

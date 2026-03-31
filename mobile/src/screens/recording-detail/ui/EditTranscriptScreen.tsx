@@ -2,7 +2,7 @@ import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check } from 'lucide-react-native';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
@@ -28,7 +28,24 @@ export const EditTranscriptScreen = () => {
   const records = useRecordStore((s) => s.records);
   const hydrateRecordDetails = useRecordStore((s) => s.hydrateRecordDetails);
   const liveRecord = records.find((r) => r.id === record.id) ?? record;
-  const segments = liveRecord.transcriptSegments ?? [];
+  const hasAudio = Boolean(liveRecord.audioPath?.trim());
+  const segments = useMemo(() => {
+    if ((liveRecord.transcriptSegments?.length ?? 0) > 0) {
+      return liveRecord.transcriptSegments ?? [];
+    }
+    if (liveRecord.transcript.trim()) {
+      return [
+        {
+          id: `${liveRecord.id}-text`,
+          startTime: '00:00',
+          startMs: 0,
+          endMs: liveRecord.durationMs ?? 0,
+          text: liveRecord.transcript.trim(),
+        },
+      ];
+    }
+    return [];
+  }, [liveRecord.id, liveRecord.transcript, liveRecord.transcriptSegments, liveRecord.durationMs]);
 
   useEffect(() => {
     if (!liveRecord.detailsHydrated) {
@@ -95,12 +112,14 @@ export const EditTranscriptScreen = () => {
       >
         {editedSegments.map((seg) => (
           <View key={seg.id} className="mb-4 flex-row gap-2">
-            <Text
-              className="mt-2 min-w-8 text-xs font-semibold"
-              style={{ color: color.accent.primary }}
-            >
-              {seg.startTime}
-            </Text>
+            {hasAudio && (
+              <Text
+                className="mt-2 min-w-8 text-xs font-semibold"
+                style={{ color: color.accent.primary }}
+              >
+                {seg.startTime}
+              </Text>
+            )}
             <TextInput
               className="flex-1 rounded-xl border-2 px-3 py-2.5 text-sm"
               style={[
@@ -113,7 +132,11 @@ export const EditTranscriptScreen = () => {
                 },
               ]}
               placeholderTextColor={color.text.secondary}
-              accessibilityLabel={`${t('recordingDetail.transcript')}, ${seg.startTime}`}
+              accessibilityLabel={
+                hasAudio
+                  ? `${t('recordingDetail.transcript')}, ${seg.startTime}`
+                  : t('recordingDetail.text')
+              }
               value={seg.text}
               onChangeText={(text) => updateSegmentText(seg.id, text)}
               multiline
