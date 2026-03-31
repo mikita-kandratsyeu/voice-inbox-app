@@ -17,6 +17,7 @@ import { type MonetizationMode } from '@/features/app-storefront';
 import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
+import { resolveDayjsLocale } from '@/shared/lib/date';
 
 type SettingsPlanStatusCardProps = {
   color: Colors;
@@ -75,7 +76,7 @@ export function SettingsPlanStatusCard({
 
   const proExpiresText =
     isProActive && expiresAtMs != null
-      ? dayjs(expiresAtMs).locale(i18n.language).format('D MMMM YYYY')
+      ? dayjs(expiresAtMs).locale(resolveDayjsLocale(i18n.language)).format('D MMMM YYYY')
       : null;
 
   const title = isProActive

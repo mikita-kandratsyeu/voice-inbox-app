@@ -25,6 +25,7 @@ import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { hapticError, hapticSuccess, modalKeyboardBehavior } from '@/shared/lib';
 import { redeemProLicenseKey } from '@/shared/lib/ai-api/proLicenseApi';
+import { resolveDayjsLocale } from '@/shared/lib/date';
 import { Button } from '@/shared/ui';
 
 import { setProExpiresAtMsSync } from '../lib/proEntitlementStorage';
@@ -41,7 +42,8 @@ function formatExpiryDate(iso: string, locale: string): string {
   if (!d.isValid()) {
     return '';
   }
-  return d.locale(locale).format('D MMMM YYYY');
+
+  return d.locale(resolveDayjsLocale(locale)).format('D MMMM YYYY');
 }
 
 type SuccessPanelProps = {

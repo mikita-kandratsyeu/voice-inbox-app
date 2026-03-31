@@ -1,7 +1,11 @@
+import 'dayjs/locale/ru';
+
+import dayjs from 'dayjs';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 import { storage } from '@/shared/lib/async-storage';
+import { resolveDayjsLocale } from '@/shared/lib/date';
 
 import { DEFAULT_LOCALE, LOCALE_MAP, SUPPORTED_LOCALES } from './config';
 import en from './locales/en.json';
@@ -43,6 +47,7 @@ function getEffectiveLocale(): string {
 
 export function applyAppLanguage(): void {
   const locale = getEffectiveLocale();
+  dayjs.locale(resolveDayjsLocale(locale));
   if (i18n.language !== locale) {
     i18n.changeLanguage(locale);
   }
@@ -58,6 +63,7 @@ export function initI18n(): void {
       escapeValue: false,
     },
   });
+  dayjs.locale(resolveDayjsLocale(DEFAULT_LOCALE));
 
   setImmediate(() => {
     try {

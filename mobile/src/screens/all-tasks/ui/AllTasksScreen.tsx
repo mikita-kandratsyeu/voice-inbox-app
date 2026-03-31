@@ -13,6 +13,7 @@ import { useRecordStore } from '@/entities/record';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import { resolveDayjsLocale } from '@/shared/lib/date';
 import { EmptyState, ScreenHeader, SectionHeader } from '@/shared/ui';
 
 import type { TaskWithRecord } from '../types';
@@ -78,7 +79,7 @@ export const AllTasksScreen = () => {
     const keys = [...byDay.keys()].sort((a, b) => b.localeCompare(a));
 
     const formatLong = (key: string): string => {
-      return dayjs(key).locale(i18n.language).format('dddd, D MMMM YYYY');
+      return dayjs(key).locale(resolveDayjsLocale(i18n.language)).format('dddd, D MMMM YYYY');
     };
 
     const sections: Section[] = keys.map((key) => {

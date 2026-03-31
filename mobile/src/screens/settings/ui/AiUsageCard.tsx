@@ -8,14 +8,16 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import type { AiUsage } from '@/shared/lib/ai-api';
+import { resolveDayjsLocale } from '@/shared/lib/date';
 import { SkeletonPulse } from '@/shared/ui';
 
 const formatResetDate = (isoString: string, locale: string): string => {
+  const dayjsLocale = resolveDayjsLocale(locale);
   const date = dayjs(isoString);
 
   if (!date.isValid()) return '—';
 
-  return date.locale(locale).format('dddd, D MMMM HH:mm');
+  return date.locale(dayjsLocale).format('dddd, D MMMM HH:mm');
 };
 
 function getAiUsageStatusText(usage: AiUsage | null, isExhausted: boolean, t: TFunction): string {
