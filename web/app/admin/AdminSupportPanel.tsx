@@ -47,6 +47,7 @@ type ReplyDraft = {
 
 type SupportItem = {
   id: string;
+  reference: string;
   deviceId: string;
   email: string | null;
   subject: string | null;
@@ -304,9 +305,7 @@ export function AdminSupportPanel() {
                 <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs text-zinc-400">
-                        {row.id.slice(0, 12)}…
-                      </span>
+                      <span className="font-mono text-xs text-zinc-400">{row.reference}</span>
                       <span
                         className={
                           row.status === 'open'

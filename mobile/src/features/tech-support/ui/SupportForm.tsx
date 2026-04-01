@@ -54,7 +54,7 @@ export function SupportForm({ color, ...form }: Props) {
   } else if (successId) {
     feedback = (
       <Text className="text-[14px] leading-5" style={{ color: color.accent.success }}>
-        {t('support.success', { id: successId.slice(0, 8) })}
+        {t('support.success', { id: successId })}
       </Text>
     );
   }

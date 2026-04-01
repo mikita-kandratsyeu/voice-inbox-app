@@ -14,9 +14,6 @@
     "db:backup": "tsx scripts/db-backup.ts",
     "db:restore": "tsx scripts/db-restore.ts"
   },
-  "prisma": {
-    "seed": "npx tsx prisma/seed.ts"
-  },
   "resolutions": {
     "effect": "3.20.0",
     "@tootallnate/once": "3.0.1",
@@ -26,7 +23,8 @@
   },
   "dependencies": {
     "@openrouter/sdk": "^0.9.11",
-    "@prisma/client": "^6.5.0",
+    "@prisma/adapter-pg": "7.6.0",
+    "@prisma/client": "7.6.0",
     "@upstash/redis": "^1.36.3",
     "@vercel/analytics": "^1.6.1",
     "bcryptjs": "^2.4.3",
@@ -36,6 +34,7 @@
     "next": "16.1.7",
     "next-intl": "^4.8.3",
     "next-themes": "^0.4.6",
+    "pg": "^8.16.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-markdown": "^10.1.0",
@@ -45,6 +44,7 @@
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^24",
+    "@types/pg": "^8.15.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^16.6.1",
@@ -53,7 +53,7 @@
     "eslint-config-prettier": "^10",
     "eslint-plugin-prettier": "^5",
     "prettier": "^3",
-    "prisma": "^6.5.0",
+    "prisma": "7.6.0",
     "tailwindcss": "^4",
     "tsx": "^4.19.3",
     "typescript": "^5"

@@ -9,7 +9,8 @@ import {
 } from '@/lib/api';
 import { HEADER_DEVICE_ID } from '@/config/constants';
 import { prisma } from '@/lib/prisma';
-import type { Prisma } from '@prisma/client';
+import { formatSupportReference } from '@/lib/support-reference';
+import type { Prisma } from '@/generated/prisma/client';
 import { NextResponse } from 'next/server';
 
 const MESSAGE_MIN = 10;
@@ -122,7 +123,12 @@ export async function POST(request: Request): Promise<NextResponse> {
         appLogs,
       },
     });
-    return NextResponse.json({ ok: true, id: row.id });
+
+    return NextResponse.json({
+      ok: true,
+      id: row.id,
+      reference: formatSupportReference(row.referenceNumber),
+    });
   } catch (e) {
     console.error('[support POST]', e);
     return apiError('Failed to save request', 503, { pathname: path });

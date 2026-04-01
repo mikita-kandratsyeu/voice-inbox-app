@@ -1,10 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model AdminUser {
@@ -69,17 +69,18 @@ model ReleasePost {
 }
 
 model SupportIssue {
-  id          String    @id @default(cuid())
-  deviceId    String
-  email       String?
-  subject     String?
-  message     String    @db.Text
-  diagnostics Json
-  appLogs     String?   @db.Text
-  status      String    @default("open")
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  closedAt    DateTime?
+  id              String    @id @default(cuid())
+  referenceNumber Int       @unique @default(autoincrement())
+  deviceId        String
+  email           String?
+  subject         String?
+  message         String    @db.Text
+  diagnostics     Json
+  appLogs         String?   @db.Text
+  status          String    @default("open")
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  closedAt        DateTime?
 
   @@index([deviceId])
   @@index([createdAt(sort: Desc)])

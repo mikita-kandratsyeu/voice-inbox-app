@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { getAdminSession } from '@/lib/admin-session';
 import { prisma } from '@/lib/prisma';
+import { formatSupportReference } from '@/lib/support-reference';
 
 function csvEscape(s: string): string {
   if (/[",\n\r]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
@@ -19,7 +20,7 @@ export async function GET(): Promise<NextResponse> {
   }
 
   const header =
-    'id,createdAt,updatedAt,closedAt,status,deviceId,email,subject,message,diagnosticsJson,appLogs\n';
+    'id,reference,createdAt,updatedAt,closedAt,status,deviceId,email,subject,message,diagnosticsJson,appLogs\n';
 
   const rows: string[] = [];
   const batch = 200;
@@ -38,6 +39,7 @@ export async function GET(): Promise<NextResponse> {
         rows.push(
           [
             csvEscape(r.id),
+            csvEscape(formatSupportReference(r.referenceNumber)),
             csvEscape(r.createdAt.toISOString()),
             csvEscape(r.updatedAt.toISOString()),
             csvEscape(r.closedAt?.toISOString() ?? ''),

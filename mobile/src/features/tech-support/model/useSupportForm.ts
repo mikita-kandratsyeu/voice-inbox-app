@@ -41,7 +41,7 @@ export function useSupportForm() {
       });
 
       if (result.ok) {
-        setSuccessId(result.id);
+        setSuccessId(result.reference);
         setMessage('');
         setAppLogs('');
         setSubject('');

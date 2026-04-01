@@ -1,9 +1,10 @@
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@/generated/prisma/client';
 import { NextResponse } from 'next/server';
 
 import { writeAdminAudit } from '@/lib/admin-audit';
 import { getAdminSession } from '@/lib/admin-session';
 import { prisma } from '@/lib/prisma';
+import { formatSupportReference, parseSupportReferenceQuery } from '@/lib/support-reference';
 
 const STATUSES = ['open', 'closed'] as const;
 type IssueStatus = (typeof STATUSES)[number];
@@ -27,9 +28,11 @@ export async function GET(request: Request): Promise<NextResponse> {
   const statusWhere =
     statusFilter !== 'all' && isIssueStatus(statusFilter) ? { status: statusFilter } : {};
 
+  const refNum = q ? parseSupportReferenceQuery(q) : null;
   const searchWhere: Prisma.SupportIssueWhereInput | undefined = q
     ? {
         OR: [
+          ...(refNum != null ? [{ referenceNumber: refNum }] : []),
           { deviceId: { contains: q, mode: 'insensitive' } },
           { email: { contains: q, mode: 'insensitive' } },
           { subject: { contains: q, mode: 'insensitive' } },
@@ -57,6 +60,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       ok: true,
       items: page.map((r) => ({
         id: r.id,
+        reference: formatSupportReference(r.referenceNumber),
         deviceId: r.deviceId,
         email: r.email,
         subject: r.subject,

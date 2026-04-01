@@ -13,7 +13,7 @@ export type SubmitSupportIssueInput = {
 };
 
 export type SubmitSupportIssueResult =
-  | { ok: true; id: string }
+  | { ok: true; id: string; reference: string }
   | { ok: false; error: string; status?: number };
 
 export async function submitSupportIssue(
@@ -41,7 +41,7 @@ export async function submitSupportIssue(
     });
 
     const text = await response.text();
-    let data: { ok?: boolean; id?: string; error?: string } = {};
+    let data: { ok?: boolean; id?: string; reference?: string; error?: string } = {};
     try {
       data = text ? (JSON.parse(text) as typeof data) : {};
     } catch {
@@ -61,7 +61,12 @@ export async function submitSupportIssue(
     }
 
     if (data.ok && isString(data.id)) {
-      return { ok: true, id: data.id };
+      const reference = isString(data.reference)
+        ? data.reference
+        : data.id.length >= 8
+          ? data.id.slice(0, 8)
+          : data.id;
+      return { ok: true, id: data.id, reference };
     }
 
     return { ok: false, error: 'Unexpected response', status: response.status };

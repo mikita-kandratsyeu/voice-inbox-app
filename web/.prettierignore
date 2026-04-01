@@ -3,6 +3,9 @@ node_modules
 .pnp
 .pnp.js
 
+# Prisma generated client
+generated
+
 # Build
 .next
 out

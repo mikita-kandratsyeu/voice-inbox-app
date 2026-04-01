@@ -1,5 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Prisma 7 generated client (created by `yarn db:generate` / build)
+/generated
+
 # dependencies
 /node_modules
 /.pnp
