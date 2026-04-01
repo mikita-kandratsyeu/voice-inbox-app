@@ -90,7 +90,11 @@ export async function runLocalSummaryTasks(
 
     const referenceDate = getLocalReferenceDateIsoLocal();
     const systemPrompt = buildLocalSummarySystemPrompt(referenceDate);
-    const userContent = buildLocalSummaryUserContent(candidateTranscript, ctx);
+    const userContent = buildLocalSummaryUserContent(
+      candidateTranscript,
+      ctx,
+      request.existingTaskTexts,
+    );
 
     const runOnce = (system: string) =>
       generateWithLocalLlm(

@@ -31,7 +31,7 @@ const LOCAL_SUMMARY_SYSTEM_BASE = [
   'tasks[] items: {title, priority, deadline}. priority: high|medium|low. deadline: YYYY-MM-DD or null — use Reference date only for relative phrases; if unsure, null.',
   'classification: personal|work|meeting|idea|other (dominant theme).',
   'suggestedTitle: ~3–8 words, specific; generic title only if content is empty or unusable.',
-  'tags: 2–5 lowercase topics; not note/voice/recording/заметка. keyPhrases: 3–8 short entities (not sentences). nextSteps: 0–3 follow-ups; do not copy task titles.',
+  'tags: 2–5 lowercase topics; not note/voice/recording/заметка. keyPhrases: 3–8 short entities (not sentences). nextSteps: 0–3 follow-ups; do not copy task titles or lines listed under existing saved tasks.',
   'Weak/empty transcript: empty arrays where listed, classification other, minimal generic suggestedTitle in output language.',
 ].join(' ');
 
@@ -42,15 +42,23 @@ export function buildLocalSummarySystemPrompt(referenceDate: string): string {
 export function buildLocalSummaryUserContent(
   transcriptText: string,
   ctx: AiExecutionContext,
+  existingTaskTitles?: string[],
 ): string {
-  return [
+  const head = [
     LOCAL_OUTPUT_LANGUAGE_HINT[ctx.aiOutputLanguage],
     LOCAL_SUMMARY_STYLE_HINT[ctx.summaryStyle],
     LOCAL_TASK_STRICTNESS_HINT[ctx.taskStrictness],
-    '',
-    'Transcript:',
-    transcriptText,
   ].join('\n');
+
+  const existingBlock = existingTaskTitles?.length
+    ? [
+        '',
+        'Existing saved tasks (do not duplicate or closely paraphrase in tasks[] or nextSteps):',
+        ...existingTaskTitles.map((t) => `- ${t.replace(/\s+/g, ' ').trim()}`),
+      ].join('\n')
+    : '';
+
+  return [head, existingBlock, '', 'Transcript:', transcriptText].join('\n');
 }
 
 export function buildLocalAskUserContent(request: AskRequest, transcript: string): string {

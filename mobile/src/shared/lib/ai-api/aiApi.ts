@@ -6,6 +6,7 @@ export type AiProcessingOptions = {
   summaryStyle?: 'brief' | 'standard' | 'detailed';
   taskStrictness?: 'strict' | 'balanced' | 'soft';
   outputLanguage?: 'same' | 'ru' | 'en';
+  existingTaskTexts?: string[];
 };
 
 type AiApiRequestBody = {

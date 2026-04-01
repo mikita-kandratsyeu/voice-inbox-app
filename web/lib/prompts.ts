@@ -249,13 +249,31 @@ export type AiProcessingOptions = {
   summaryStyle?: 'brief' | 'standard' | 'detailed';
   taskStrictness?: 'strict' | 'balanced' | 'soft';
   outputLanguage?: 'same' | 'ru' | 'en';
-  /**
-   * Optional ISO date (YYYY-MM-DD) used as the reference date
-   * for resolving natural-language deadlines like "tomorrow" or "next Monday".
-   * If omitted, the current date will be used.
-   */
   referenceDate?: string;
+  existingTaskTexts?: string[];
 };
+
+const EXISTING_TASK_LINE_MAX_CHARS = 400;
+const EXISTING_TASK_MAX_ITEMS = 50;
+
+export function sanitizeExistingTaskTextsForPrompt(raw: unknown): string[] | undefined {
+  if (!Array.isArray(raw)) return undefined;
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const item of raw) {
+    if (typeof item !== 'string') continue;
+    const t = item.replace(/\s+/g, ' ').trim();
+    if (!t) continue;
+    const clipped =
+      t.length > EXISTING_TASK_LINE_MAX_CHARS ? `${t.slice(0, EXISTING_TASK_LINE_MAX_CHARS)}…` : t;
+    const k = clipped.toLowerCase();
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(clipped);
+    if (out.length >= EXISTING_TASK_MAX_ITEMS) break;
+  }
+  return out.length > 0 ? out : undefined;
+}
 
 const SUMMARY_STYLE_INSTRUCTIONS: Record<
   NonNullable<AiProcessingOptions['summaryStyle']>,
@@ -321,6 +339,19 @@ export function buildAiProcessingPrompt(options?: AiProcessingOptions | null): s
   const taskInstruction = TASK_STRICTNESS_INSTRUCTIONS[taskStrictness];
   const languageInstruction = OUTPUT_LANGUAGE_INSTRUCTIONS[outputLanguage];
 
+  const existingTitles = options?.existingTaskTexts ?? [];
+  const existingTasksBlock =
+    existingTitles.length > 0
+      ? `## EXISTING SAVED TASK TITLES
+These lines are already on this note (manual entry or a previous extraction). Treat them as ground truth for what the user already tracks.
+- Do NOT add a tasks[] item that duplicates or closely paraphrases the same action as any line below.
+- Do NOT put the same or near-duplicate wording in nextSteps.
+
+${existingTitles.map((t) => `- ${t.replace(/\s+/g, ' ').trim()}`).join('\n')}
+
+`
+      : '';
+
   return `You are a structured data extractor for voice note transcripts.
 Return exactly one valid JSON object. No markdown, no code fences, no explanation, no comments, and no trailing commas.
 
@@ -337,7 +368,7 @@ ${languageInstruction}
 Today is ${today}.
 Use this date only to resolve explicit natural-language time references such as "tomorrow", "next Monday", or "on March 14".
 
-## Output Schema
+${existingTasksBlock}## Output Schema
 
 \`\`\`typescript
 ${OUTPUT_SCHEMA}
@@ -365,6 +396,7 @@ ${OUTPUT_SCHEMA}
 - Do NOT use generic titles like "Voice note" or "Recording" unless the transcript is too short, unclear, or empty.
 
 **tasks:** ${taskInstruction}
+- If an "EXISTING SAVED TASK TITLES" section appears above, skip any task that repeats those lines (same meaning counts as a repeat).
 - Include only actionable items.
 - If the note is purely reflective or informational, return an empty array.
 - Use short imperative-style titles when natural.
@@ -406,6 +438,7 @@ Choose the dominant category if multiple are present.
 **nextSteps:**
 - Return exactly 1–3 high-level follow-up actions if there is enough substance.
 - These should move the note forward, not merely repeat task titles word-for-word.
+- If "EXISTING SAVED TASK TITLES" appears above, do not restate those lines here.
 - Good: "Open calendar to find a slot for the team sync"
 - Bad: "Schedule team sync"
 - If there are no tasks but the note has a clear topic, suggest 1 useful clarifying or organizing step.
@@ -428,7 +461,7 @@ If the transcript is too short, noisy, unclear, contradictory, or effectively em
 - Are there any extra keys? If yes, remove them.
 - Are all text fields in the required language? If not, rewrite them.
 - Did you avoid guessing dates and facts? If not, correct them.
-- Are nextSteps high-level and not duplicates of tasks? If not, improve them.
+- Are nextSteps high-level and not duplicates of tasks or of any existing saved task title? If not, improve them.
 
 ## Examples
 

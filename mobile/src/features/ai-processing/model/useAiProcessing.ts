@@ -4,6 +4,13 @@ import { useShallow } from 'zustand/react/shallow';
 import type { TaskItem, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { mergeManualTasksWithAi } from '@/entities/record/model/mergeManualTasksWithAi';
+import {
+  buildNormalizedTextSet,
+  collectExistingTaskTextsForAiPrompt,
+  filterAiTaskItemsByNormalizedSet,
+  filterNextStepsByNormalizedTaskSet,
+  normalizedManualTaskTextSet,
+} from '@/entities/record/model/taskTextDedupe';
 import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
@@ -186,8 +193,11 @@ export const useAiProcessing = () => {
       });
 
       try {
+        const snapshot = useRecordStore.getState().records.find((r) => r.id === record.id);
+        const existingTaskTexts = collectExistingTaskTextsForAiPrompt(snapshot?.tasks);
+
         const runResult = await AIOrchestrator.runSummaryTasks(
-          { id: requestId, transcript: record.transcript },
+          { id: requestId, transcript: record.transcript, existingTaskTexts },
           {
             selectedAIModel,
             selectedLocalAiModel: effectiveLocalAiModelId,
@@ -264,7 +274,12 @@ export const useAiProcessing = () => {
         }));
 
         const latest = useRecordStore.getState().records.find((r) => r.id === record.id);
-        const mergedTasks = mergeManualTasksWithAi(latest?.tasks, aiTaskItems);
+        const manualNorm = normalizedManualTaskTextSet(latest?.tasks);
+        const aiTaskItemsFiltered = filterAiTaskItemsByNormalizedSet(aiTaskItems, manualNorm);
+        const mergedTasks = mergeManualTasksWithAi(latest?.tasks, aiTaskItemsFiltered);
+        const taskNormMerged = buildNormalizedTextSet(mergedTasks.map((x) => x.text));
+        const rawNextSteps = nextSteps ?? [];
+        const nextStepsForStore = filterNextStepsByNormalizedTaskSet(rawNextSteps, taskNormMerged);
 
         await updateSummary(record.id, summary);
         await updateTasks(record.id, mergedTasks);
@@ -284,12 +299,13 @@ export const useAiProcessing = () => {
         if (
           classification ||
           (keyPhrases && keyPhrases.length > 0) ||
-          (nextSteps && nextSteps.length > 0)
+          rawNextSteps.length > 0 ||
+          nextStepsForStore.length > 0
         ) {
           await updateAiExtras(record.id, {
             classification: classification ?? null,
             keyPhrases: keyPhrases ?? [],
-            nextSteps: nextSteps ?? [],
+            nextSteps: nextStepsForStore,
           });
         }
 

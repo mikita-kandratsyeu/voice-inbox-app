@@ -24,6 +24,7 @@ export type AiExecutionContext = {
 export type SummaryTaskRequest = {
   id: string;
   transcript: string;
+  existingTaskTexts?: string[];
 };
 
 export type AskRequest = {

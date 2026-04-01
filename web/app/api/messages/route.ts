@@ -9,17 +9,15 @@ import {
   validateDeviceId,
   validateRequiredStrings,
 } from '@/lib/api';
-import { buildAiProcessingPrompt } from '@/lib/prompts';
+import {
+  buildAiProcessingPrompt,
+  sanitizeExistingTaskTextsForPrompt,
+  type AiProcessingOptions,
+} from '@/lib/prompts';
 import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
 import { setAppForeground } from '@/lib/push-tokens';
 import { createMessage } from '@/services/message.service';
 import { NextResponse } from 'next/server';
-
-type AiProcessingOptions = {
-  summaryStyle?: 'brief' | 'standard' | 'detailed';
-  taskStrictness?: 'strict' | 'balanced' | 'soft';
-  outputLanguage?: 'same' | 'ru' | 'en';
-};
 
 type CreateMessageBody = {
   id?: unknown;
@@ -62,17 +60,30 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return apiError(validationError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
-  const { id, transcript, model, systemPrompt, options } = body as {
+  const {
+    id,
+    transcript,
+    model,
+    systemPrompt,
+    options: rawOptions,
+  } = body as {
     id: string;
     transcript: string;
     model: string;
     systemPrompt?: string;
-    options?: AiProcessingOptions;
+    options?: AiProcessingOptions & { existingTaskTexts?: unknown };
   };
 
   const modelError = validateAllowedModel(model);
   if (modelError) {
     return apiError(modelError, HttpStatus.BAD_REQUEST, { pathname: path });
+  }
+
+  let options: AiProcessingOptions | undefined;
+  if (rawOptions && typeof rawOptions === 'object') {
+    const { existingTaskTexts: rawExisting, ...rest } = rawOptions;
+    const existing = sanitizeExistingTaskTextsForPrompt(rawExisting);
+    options = { ...rest, ...(existing ? { existingTaskTexts: existing } : {}) };
   }
 
   const resolvedSystemPrompt =
