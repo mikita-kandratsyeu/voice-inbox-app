@@ -29,14 +29,14 @@
     "tryPro": "Попробовать Pro"
   },
   "proLicense": {
-    "modalTitle": "Активация Pro",
-    "modalSubtitle": "Введите лицензионный ключ. Pro привязан только к этому устройству.",
+    "modalTitle": "Активация",
+    "modalSubtitle": "Введите лицензионный ключ. Он будет привязан только к этому устройству.",
     "keyPlaceholder": "VI-XXXX-XXXX-XXXX",
     "activate": "Активировать",
-    "activatingTitle": "Активация Pro",
+    "activatingTitle": "Активация",
     "activatingSubtitle": "Подождите…",
     "successTitle": "Поздравляем!",
-    "successSubtitle": "Pro активирован: больше генераций и без рекламы.",
+    "successSubtitle": "Активировано: больше генераций и без рекламы.",
     "successUntil": "Действует до {{date}}",
     "successButton": "Отлично",
     "errors": {

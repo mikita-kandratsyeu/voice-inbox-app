@@ -29,14 +29,14 @@
     "tryPro": "Try Pro"
   },
   "proLicense": {
-    "modalTitle": "Activate Pro",
-    "modalSubtitle": "Enter the license key you received. Your Pro subscription is tied to this device only.",
+    "modalTitle": "Activate",
+    "modalSubtitle": "Enter the license key you received. It will only be linked to this device.",  
     "keyPlaceholder": "VI-XXXX-XXXX-XXXX",
     "activate": "Activate",
-    "activatingTitle": "Activating Pro",
+    "activatingTitle": "Activating",
     "activatingSubtitle": "Please wait…",
-    "successTitle": "You're Pro!",
-    "successSubtitle": "Higher generation limits and no ads — enjoy.",
+    "successTitle": "Congratulations!",
+    "successSubtitle": "Activated: more generations and no ads.",
     "successUntil": "Active until {{date}}",
     "successButton": "Awesome",
     "errors": {
