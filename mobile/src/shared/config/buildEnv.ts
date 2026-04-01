@@ -8,9 +8,42 @@ import {
   TESTFLIGHT_INTERNAL_BUILD,
   WEB_API_SECRET,
 } from '@env';
+import { DeviceInfoModule } from 'react-native-nitro-device-info';
+
+const DEFAULT_MOBILE_UA_PREFIX = 'VoiceInbox-Mobile';
 
 function trimBuildEnv(v: string | undefined): string {
   return (v ?? '').trim();
+}
+
+const SEMVER_TAIL_RE = /^\d+(\.\d+){0,3}$/;
+
+function mobileUserAgentPrefixFromEnv(raw: string): string {
+  const t = raw.trim();
+  if (!t) {
+    return DEFAULT_MOBILE_UA_PREFIX;
+  }
+
+  const parts = t.split('/');
+  if (parts.length >= 2) {
+    const last = parts[parts.length - 1] ?? '';
+
+    if (SEMVER_TAIL_RE.test(last)) {
+      const head = parts.slice(0, -1).join('/');
+
+      return head.length > 0 ? head : DEFAULT_MOBILE_UA_PREFIX;
+    }
+  }
+
+  return t;
+}
+
+function nativeAppVersionForUserAgent(): string {
+  try {
+    return String(DeviceInfoModule.version ?? '').trim();
+  } catch {
+    return '';
+  }
 }
 
 function isTruthyBuildEnvFlag(v: string | undefined): boolean {
@@ -48,5 +81,8 @@ export function getWebApiSecret(): string {
 }
 
 export function getMobileUserAgent(): string {
-  return trimBuildEnv(MOBILE_USER_AGENT);
+  const prefix = mobileUserAgentPrefixFromEnv(trimBuildEnv(MOBILE_USER_AGENT));
+  const ver = nativeAppVersionForUserAgent();
+
+  return ver ? `${prefix}/${ver}` : prefix;
 }
