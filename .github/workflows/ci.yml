@@ -74,4 +74,7 @@ jobs:
         run: yarn lint
 
       - name: Type Check
+        env:
+          # prisma.config.ts requires DATABASE_URL; prisma generate does not open a connection
+          DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
         run: yarn type:check
