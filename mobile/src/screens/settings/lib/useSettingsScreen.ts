@@ -420,10 +420,6 @@ export function useSettingsScreen() {
   }, [navigation, route.params?.openPlanPaywall]);
 
   const handleUpgradePress = useCallback(() => {
-    if (monetizationMode === 'internal_license') {
-      setPlanPaywallVisible(false);
-      return;
-    }
     if (monetizationMode === 'iap_public') {
       setIapPaywallBusy(true);
       void (async () => {
