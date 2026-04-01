@@ -30,7 +30,7 @@ export const AiTabLoadingState = ({
       <Text className="text-sm text-center" style={{ color: color.text.secondary }}>
         {message}
       </Text>
-      {showCancelButton && onCancel ? (
+      {showCancelButton && onCancel && (
         <Button
           variant="secondary"
           size="lg"
@@ -40,7 +40,7 @@ export const AiTabLoadingState = ({
           onPress={onCancel}
           className="mt-1"
         />
-      ) : null}
+      )}
     </View>
   );
 };

@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { Colors } from '@/shared/config';
 import { hapticLight, hapticMedium, useIsTablet } from '@/shared/lib';
+import { Button } from '@/shared/ui';
 
 type BatchActionBarProps = {
   count: number;
@@ -139,22 +140,15 @@ export const BatchActionBar = ({
       }}
     >
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <TouchableOpacity
+        <Button
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<X size={22} color={color.text.secondary} strokeWidth={2.2} />}
+          color={color}
           onPress={handleCancel}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          accessibilityRole="button"
           accessibilityLabel={t('common.cancel')}
-          style={{
-            width: 32,
-            height: 32,
-            borderRadius: 16,
-            backgroundColor: color.background.tertiary,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <X size={16} color={color.text.secondary} strokeWidth={2.5} />
-        </TouchableOpacity>
+        />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
