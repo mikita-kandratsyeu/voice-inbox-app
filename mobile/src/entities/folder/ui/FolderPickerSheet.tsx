@@ -145,14 +145,14 @@ export const FolderPickerSheet = ({
               accessibilityLabel={folder.name}
               accessibilityState={{ selected }}
               style={{
-                flexDirection: 'row',
                 alignItems: 'center',
-                paddingVertical: 12,
-                paddingHorizontal: 14,
-                borderRadius: 12,
-                marginBottom: 8,
                 backgroundColor: color.background.tertiary,
+                borderRadius: 12,
+                flexDirection: 'row',
                 gap: 10,
+                marginBottom: 8,
+                paddingHorizontal: 14,
+                paddingVertical: 12,
               }}
             >
               <FolderLucideIcon

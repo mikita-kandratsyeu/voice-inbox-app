@@ -1303,7 +1303,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/plugin-transform-typescript@npm:^7.25.2, @babel/plugin-transform-typescript@npm:^7.27.1":
+"@babel/plugin-transform-typescript@npm:^7.25.2, @babel/plugin-transform-typescript@npm:^7.27.1, @babel/plugin-transform-typescript@npm:^7.28.5":
   version: 7.28.6
   resolution: "@babel/plugin-transform-typescript@npm:7.28.6"
   dependencies:
@@ -1470,6 +1470,21 @@ __metadata:
   peerDependencies:
     "@babel/core": ^7.0.0-0
   checksum: 10c0/cba6ca793d915f8aff9fe2f13b0dfbf5fd3f2e9a17f17478ec9878e9af0d206dcfe93154b9fd353727f16c1dca7c7a3ceb4943f8d28b216235f106bc0fbbcaa3
+  languageName: node
+  linkType: hard
+
+"@babel/preset-typescript@npm:^7.17.12":
+  version: 7.28.5
+  resolution: "@babel/preset-typescript@npm:7.28.5"
+  dependencies:
+    "@babel/helper-plugin-utils": "npm:^7.27.1"
+    "@babel/helper-validator-option": "npm:^7.27.1"
+    "@babel/plugin-syntax-jsx": "npm:^7.27.1"
+    "@babel/plugin-transform-modules-commonjs": "npm:^7.27.1"
+    "@babel/plugin-transform-typescript": "npm:^7.28.5"
+  peerDependencies:
+    "@babel/core": ^7.0.0-0
+  checksum: 10c0/b3d55548854c105085dd80f638147aa8295bc186d70492289242d6c857cb03a6c61ec15186440ea10ed4a71cdde7d495f5eb3feda46273f36b0ac926e8409629
   languageName: node
   linkType: hard
 
@@ -10952,6 +10967,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-draggable-flatlist@npm:^4.0.3":
+  version: 4.0.3
+  resolution: "react-native-draggable-flatlist@npm:4.0.3"
+  dependencies:
+    "@babel/preset-typescript": "npm:^7.17.12"
+  peerDependencies:
+    react-native: ">=0.64.0"
+    react-native-gesture-handler: ">=2.0.0"
+    react-native-reanimated: ">=2.8.0"
+  checksum: 10c0/1b9bd3da36929dc21bbcd7eb63e37af52c87add06776c7f20215cb6a28499f4e03619e3751fc71e192d5b074fb1dc782a939186ca7ef281928b9c940f6239455
+  languageName: node
+  linkType: hard
+
 "react-native-fetch-api@npm:^3.0.0":
   version: 3.0.0
   resolution: "react-native-fetch-api@npm:3.0.0"
@@ -13195,6 +13223,7 @@ __metadata:
     react-native-calendar-events: "npm:^2.2.0"
     react-native-document-picker: "npm:^9.3.1"
     react-native-dotenv: "npm:^3.4.11"
+    react-native-draggable-flatlist: "npm:^4.0.3"
     react-native-gesture-handler: "npm:^2.30.0"
     react-native-haptic-feedback: "npm:^2.3.3"
     react-native-in-app-review: "npm:^4.4.2"

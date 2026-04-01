@@ -1,7 +1,12 @@
 import React from 'react';
 import { View } from 'react-native';
 
-import { FolderChipBar, FolderFormModal, FolderPickerSheet } from '@/entities/folder';
+import {
+  FolderChipBar,
+  FolderFormModal,
+  FolderPickerSheet,
+  FolderReorderSheet,
+} from '@/entities/folder';
 import { BatchActionBar } from '@/features/batch-select';
 import { AutoOrganizeProgressOverlay } from '@/features/manage-folders';
 
@@ -26,6 +31,10 @@ export const InboxScreen = () => {
     folders,
     effectiveActiveFolderId,
     setActiveFolder,
+    handleFoldersReorder,
+    folderReorderVisible,
+    openFolderReorderSheet,
+    closeFolderReorderSheet,
     isPrivateMode,
     subtitleText,
     folderModalVisible,
@@ -129,6 +138,7 @@ export const InboxScreen = () => {
           onSelect={setActiveFolder}
           onCreatePress={openCreateFolderModal}
           onEditPress={openEditFolderModal}
+          onReorderPress={openFolderReorderSheet}
           scrollRef={folderChipScrollRef}
         />
       )}
@@ -204,6 +214,14 @@ export const InboxScreen = () => {
           folders={folders}
           onClose={handleCloseBatchFolderPicker}
           onSelect={handleBatchFolderPicked}
+        />
+      )}
+      {!isPrivateMode && (
+        <FolderReorderSheet
+          visible={folderReorderVisible}
+          folders={folders}
+          onClose={closeFolderReorderSheet}
+          onReorder={handleFoldersReorder}
         />
       )}
       {!isPrivateMode && (

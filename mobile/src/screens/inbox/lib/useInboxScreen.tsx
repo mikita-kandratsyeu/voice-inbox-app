@@ -54,11 +54,12 @@ export function useInboxScreen() {
     })),
   );
 
-  const { folders, activeFolderId, setActiveFolder } = useFolderStore(
+  const { folders, activeFolderId, setActiveFolder, reorderFolders } = useFolderStore(
     useShallow((s) => ({
       folders: s.folders,
       activeFolderId: s.activeFolderId,
       setActiveFolder: s.setActiveFolder,
+      reorderFolders: s.reorderFolders,
     })),
   );
   const { isProActive } = useProEntitlement();
@@ -138,7 +139,7 @@ export function useInboxScreen() {
   const canLoadMoreInbox = totalFlattenedRecords > visibleRecordCount;
 
   const listRef = useRef<FlashListRef<FlattenedItem>>(null);
-  const folderChipScrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const folderChipScrollRef = useRef<ScrollView>(null);
   const inboxFiltersReset = useInboxFiltersReset();
   const [showSwipeHint, setShowSwipeHint] = useState(() => !getHasSeenSwipeHint());
 
@@ -194,6 +195,7 @@ export function useInboxScreen() {
     });
 
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
+  const [folderReorderVisible, setFolderReorderVisible] = useState(false);
 
   const handleOpenBatchFolderPicker = useCallback(() => {
     setFolderPickerVisible(true);
@@ -244,6 +246,16 @@ export function useInboxScreen() {
       setActiveFolder(null);
     });
   }, [inboxFiltersReset, resetToDefault, setActiveFolder]);
+
+  const handleFoldersReorder = useCallback(
+    (orderedIds: string[]) => {
+      void reorderFolders(orderedIds);
+    },
+    [reorderFolders],
+  );
+
+  const openFolderReorderSheet = useCallback(() => setFolderReorderVisible(true), []);
+  const closeFolderReorderSheet = useCallback(() => setFolderReorderVisible(false), []);
 
   useScrollToTopOnTabPress(listRef, () => {
     folderChipScrollRef.current?.scrollTo({ x: 0, y: 0, animated: true });
@@ -432,6 +444,10 @@ export function useInboxScreen() {
     folders,
     effectiveActiveFolderId,
     setActiveFolder,
+    handleFoldersReorder,
+    folderReorderVisible,
+    openFolderReorderSheet,
+    closeFolderReorderSheet,
     isPrivateMode,
     subtitleText,
     folderModalVisible,

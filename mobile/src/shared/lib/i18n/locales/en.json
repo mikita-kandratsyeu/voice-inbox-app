@@ -935,6 +935,10 @@
   },
   "folders": {
     "all": "All",
+    "reorderOpenA11y": "Change folder order",
+    "reorderSheetTitle": "Folder order",
+    "reorderSheetHint": "Long press a row, then drag. Order saves automatically.",
+    "reorderRowA11y": "Long press anywhere on the row, then drag to reorder.",
     "create": "New folder",
     "edit": "Edit folder",
     "delete": "Delete folder",

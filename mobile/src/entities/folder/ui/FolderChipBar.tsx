@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react-native';
+import { ArrowDownUp, Plus } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -23,7 +23,9 @@ type FolderChipBarProps = {
   onSelect: (id: string | null) => void;
   onCreatePress: () => void;
   onEditPress: (folder: Folder) => void;
-  scrollRef?: React.RefObject<React.ComponentRef<typeof ScrollView> | null>;
+  /** Shown when there are at least 2 folders — opens reorder bottom sheet. */
+  onReorderPress?: () => void;
+  scrollRef?: React.RefObject<ScrollView | null>;
 };
 
 type AllChipProps = {
@@ -139,11 +141,13 @@ export const FolderChipBar = ({
   onSelect,
   onCreatePress,
   onEditPress,
+  onReorderPress,
   scrollRef,
 }: FolderChipBarProps) => {
   const { t } = useTranslation();
   const { isProActive } = useProEntitlement();
   const surfaceDark = isDarkSurfaceColor(color);
+  const showReorder = Boolean(onReorderPress) && folders.length >= 2;
 
   const handleAllPress = useCallback(() => onSelect(null), [onSelect]);
 
@@ -179,6 +183,26 @@ export const FolderChipBar = ({
             onLongPress={() => onEditPress(folder)}
           />
         ))}
+        {showReorder ? (
+          <Pressable
+            onPress={onReorderPress}
+            accessibilityRole="button"
+            accessibilityLabel={t('folders.reorderOpenA11y')}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            style={({ pressed }) => ({
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              backgroundColor: color.background.tertiary,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 8,
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <ArrowDownUp size={16} color={color.text.secondary} strokeWidth={2.2} />
+          </Pressable>
+        ) : null}
         <Pressable
           onPress={onCreatePress}
           accessibilityRole="button"

@@ -3,3 +3,4 @@ export type { Folder } from './model/types';
 export { FolderChipBar } from './ui/FolderChipBar';
 export { FolderFormModal } from './ui/FolderFormModal';
 export { FolderPickerSheet } from './ui/FolderPickerSheet';
+export { FolderReorderSheet } from './ui/FolderReorderSheet';
