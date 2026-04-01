@@ -10,6 +10,7 @@ const I18N_KEY: Record<ProLicenseRedeemErrorCode, string> = {
   activation_failed: 'proLicense.errors.activationFailed',
   invalid_response: 'proLicense.errors.invalidResponse',
   network: 'proLicense.errors.network',
+  iap_active: 'proLicense.errors.activationFailed',
 };
 
 export function proLicenseMessageForRedeemError(

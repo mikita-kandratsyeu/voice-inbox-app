@@ -1,4 +1,8 @@
 export {
+  isRevenueCatStoreBillingConfigured,
+  isStoreProEntitlementActiveNow,
+} from './lib/isStoreProEntitlementActive';
+export {
   clearProEntitlementSync,
   getProExpiresAtMsSync,
   setProExpiresAtMsSync,

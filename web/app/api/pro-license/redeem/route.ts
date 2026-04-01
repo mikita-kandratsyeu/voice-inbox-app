@@ -11,6 +11,7 @@ import {
 } from '@/lib/api';
 import { getAiWeeklyLimits } from '@/lib/app-config';
 import { redeemProLicenseKey } from '@/lib/pro-license-redeem';
+import { isRevenueCatProEntitlementActiveForDevice } from '@/lib/revenuecat-rest-sync';
 import { NextResponse } from 'next/server';
 
 type Body = { key?: unknown };
@@ -35,6 +36,17 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const redeemRl = await checkProLicenseRedeemRateLimit(deviceIdTrimmed);
   if (redeemRl) return redeemRl;
+
+  const iapActive = await isRevenueCatProEntitlementActiveForDevice(deviceIdTrimmed);
+  if (iapActive === true) {
+    return NextResponse.json(
+      {
+        error: 'Store subscription is active; license keys cannot be applied for this device.',
+        code: 'iap_active',
+      },
+      { status: 403 },
+    );
+  }
 
   const body = await parseJsonBody<Body>(request);
   if (!body || typeof body.key !== 'string') {

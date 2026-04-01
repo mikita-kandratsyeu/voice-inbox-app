@@ -27,10 +27,6 @@ export function getShowProUpsellHints(): boolean {
   return !getSubscriptionsPubliclyAvailable();
 }
 
-export function getShowComingSoonInsteadOfPurchase(): boolean {
-  return getMonetizationMode() === 'coming_soon';
-}
-
 export function isAutomationUiLockedForPublicStore(isProActive: boolean): boolean {
   return !isProActive;
 }

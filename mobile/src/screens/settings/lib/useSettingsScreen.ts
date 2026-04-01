@@ -95,7 +95,6 @@ export function useSettingsScreen() {
   const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
   const [automationSheet, setAutomationSheet] = useState<AutomationFeatureKind | null>(null);
   const [planPaywallVisible, setPlanPaywallVisible] = useState(false);
-  const [internalUpgradeVisible, setInternalUpgradeVisible] = useState(false);
   const [isHardResetting, setIsHardResetting] = useState(false);
   const [iapPaywallBusy, setIapPaywallBusy] = useState(false);
   const [iapBilling, setIapBilling] = useState<IapBillingOptions>({
@@ -118,6 +117,7 @@ export function useSettingsScreen() {
     if (!planPaywallVisible || monetizationMode !== 'iap_public') {
       return;
     }
+
     let cancelled = false;
     setIapProPriceLoading(true);
     setIapBilling({ monthly: null, annual: null, savePercentVsMonthly: null });
@@ -422,7 +422,6 @@ export function useSettingsScreen() {
   const handleUpgradePress = useCallback(() => {
     if (monetizationMode === 'internal_license') {
       setPlanPaywallVisible(false);
-      setInternalUpgradeVisible(true);
       return;
     }
     if (monetizationMode === 'iap_public') {
@@ -562,8 +561,6 @@ export function useSettingsScreen() {
     handleNotificationsPress,
     isAppLockEnabled,
     handleRateApp,
-    internalUpgradeVisible,
-    setInternalUpgradeVisible,
     planPaywallVisible,
     setPlanPaywallVisible,
     automationSheet,

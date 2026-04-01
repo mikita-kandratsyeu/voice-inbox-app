@@ -28,6 +28,10 @@ import { redeemProLicenseKey } from '@/shared/lib/ai-api/proLicenseApi';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import { Button } from '@/shared/ui';
 
+import {
+  isRevenueCatStoreBillingConfigured,
+  isStoreProEntitlementActiveNow,
+} from '../lib/isStoreProEntitlementActive';
 import { setProExpiresAtMsSync } from '../lib/proEntitlementStorage';
 import { proLicenseMessageForRedeemError } from '../lib/redeemErrorMessage';
 
@@ -151,6 +155,8 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<'form' | 'success'>('form');
   const [successExpiresAt, setSuccessExpiresAt] = useState<string | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!visible) {
@@ -158,15 +164,27 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
       setKeyText('');
       setError(null);
       setSuccessExpiresAt(null);
-    }
-  }, [visible]);
-
-  useEffect(() => {
-    if (visible) {
-      bottomSheetRef.current?.present();
-    } else {
       bottomSheetRef.current?.dismiss();
+      return;
     }
+
+    let cancelled = false;
+
+    void (async () => {
+      if (isRevenueCatStoreBillingConfigured() && (await isStoreProEntitlementActiveNow())) {
+        if (!cancelled) {
+          onCloseRef.current();
+        }
+        return;
+      }
+      if (!cancelled) {
+        bottomSheetRef.current?.present();
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [visible]);
 
   const finishSuccess = useCallback(() => {
@@ -197,6 +215,10 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
     setError(null);
     const result = await redeemProLicenseKey(trimmed);
     setBusy(false);
+    if (!result.ok && result.code === 'iap_active') {
+      onCloseRef.current();
+      return;
+    }
     if (result.ok) {
       const ms = dayjs(result.expiresAt).valueOf();
       if (Number.isFinite(ms)) {

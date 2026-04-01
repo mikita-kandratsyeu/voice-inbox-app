@@ -2,9 +2,9 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import { BookOpen, Globe, Mail, Tag } from 'lucide-react-native';
-import React from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -15,7 +15,14 @@ import { getStoreListingUrl, openStoreListing } from '@/features/app-review';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useOnboardingStore } from '@/features/onboarding';
+import {
+  isRevenueCatStoreBillingConfigured,
+  isStoreProEntitlementActiveNow,
+  ProLicenseKeyModal,
+  useProEntitlement,
+} from '@/features/pro-license';
 import { getWebsiteUrl, useColors } from '@/shared/config';
+import { getProLicenseKeyActivationEnabled } from '@/shared/config/runtimeConfig';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
@@ -23,12 +30,18 @@ const VERSION_DISPLAY = DeviceInfoModule.version;
 
 const storeListingUrl = getStoreListingUrl();
 
+const LICENSE_KEY_EGG_TAPS = 8;
+const LICENSE_KEY_EGG_RESET_MS = 1400;
+
 export const AboutAppScreen = () => {
   const { t } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const { refresh: refreshProEntitlement } = useProEntitlement();
   const setForceShowOnboarding = useOnboardingStore((s) => s.setForceShow);
+  const [proLicenseModalVisible, setProLicenseModalVisible] = useState(false);
+  const eggTapRef = useRef({ count: 0, timer: null as ReturnType<typeof setTimeout> | null });
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
@@ -37,8 +50,51 @@ export const AboutAppScreen = () => {
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const isPrivateMode = aiExecutionMode === 'private_experimental';
 
+  const handleAppIconPress = useCallback(() => {
+    if (!getProLicenseKeyActivationEnabled()) {
+      return;
+    }
+
+    const st = eggTapRef.current;
+    if (st.timer != null) {
+      clearTimeout(st.timer);
+    }
+
+    st.count += 1;
+    st.timer = setTimeout(() => {
+      st.count = 0;
+      st.timer = null;
+    }, LICENSE_KEY_EGG_RESET_MS);
+
+    if (st.count < LICENSE_KEY_EGG_TAPS) {
+      return;
+    }
+
+    st.count = 0;
+
+    if (st.timer != null) {
+      clearTimeout(st.timer);
+      st.timer = null;
+    }
+
+    void (async () => {
+      if (isRevenueCatStoreBillingConfigured() && (await isStoreProEntitlementActiveNow())) {
+        return;
+      }
+
+      setProLicenseModalVisible(true);
+    })();
+  }, []);
+
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
+      <ProLicenseKeyModal
+        visible={proLicenseModalVisible}
+        onClose={() => setProLicenseModalVisible(false)}
+        onActivated={() => {
+          void refreshProEntitlement({ force: true });
+        }}
+      />
       <ScreenHeader title={t('about.title')} onBack={() => navigation.goBack()} />
       <View
         style={{
@@ -57,9 +113,10 @@ export const AboutAppScreen = () => {
           showsVerticalScrollIndicator={false}
         >
           <View className="mb-8 items-center">
-            <View
+            <Pressable
               accessibilityLabel={t('about.title')}
               accessibilityRole="image"
+              onPress={handleAppIconPress}
               className="mb-4 h-20 w-20 overflow-hidden rounded-[22px]"
             >
               <Image
@@ -67,7 +124,7 @@ export const AboutAppScreen = () => {
                 className="h-full w-full"
                 resizeMode="cover"
               />
-            </View>
+            </Pressable>
             <Text className="text-[24px] font-bold" style={{ color: color.text.primary }}>
               Voice Inbox AI
             </Text>

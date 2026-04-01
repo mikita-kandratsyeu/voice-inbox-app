@@ -171,7 +171,8 @@ export type ProLicenseRedeemErrorCode =
   | 'rate_limit'
   | 'activation_failed'
   | 'invalid_response'
-  | 'network';
+  | 'network'
+  | 'iap_active';
 
 export type RedeemProLicenseResult =
   | { ok: true; expiresAt: string }
@@ -182,7 +183,8 @@ function parseRedeemErrorCode(raw: unknown): ProLicenseRedeemErrorCode | undefin
     raw === 'invalid_key' ||
     raw === 'used_elsewhere' ||
     raw === 'server_error' ||
-    raw === 'rate_limit'
+    raw === 'rate_limit' ||
+    raw === 'iap_active'
   ) {
     return raw;
   }

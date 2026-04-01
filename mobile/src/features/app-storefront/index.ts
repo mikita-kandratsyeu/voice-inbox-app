@@ -16,7 +16,6 @@ export type { MonetizationMode } from './model/monetizationPublicConfig';
 export {
   getMonetizationMode,
   getPaymentsEnabled,
-  getShowComingSoonInsteadOfPurchase,
   getShowProUpsellHints,
   getSubscriptionsPubliclyAvailable,
   isAutomationUiLockedForPublicStore,

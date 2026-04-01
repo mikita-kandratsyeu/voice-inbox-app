@@ -2,6 +2,7 @@ import {
   APP_STORE_URL,
   EXPERIMENTAL_PRIVATE_AI_ENABLED,
   GOOGLE_PLAY_URL,
+  PRO_LICENSE_KEY_ACTIVATION_ENABLED,
   REVENUECAT_API_KEY_ANDROID,
   REVENUECAT_API_KEY_IOS,
   REVENUECAT_ENTITLEMENT_ID,
@@ -35,7 +36,8 @@ type RemoteKey =
   | 'REVENUECAT_API_KEY_ANDROID'
   | 'REVENUECAT_ENTITLEMENT_ID'
   | 'REVENUECAT_PACKAGE_TYPE_PREFERRED'
-  | 'SUBSCRIPTIONS_PUBLICLY_AVAILABLE';
+  | 'SUBSCRIPTIONS_PUBLICLY_AVAILABLE'
+  | 'PRO_LICENSE_KEY_ACTIVATION_ENABLED';
 
 type RemoteConfigModule = ReturnType<typeof getRemoteConfig>;
 
@@ -53,6 +55,7 @@ export type RuntimeConfigSnapshot = {
   revenueCatEntitlementId: string;
   revenueCatPackageTypePreferred: string;
   subscriptionsPubliclyAvailable: boolean;
+  proLicenseKeyActivationEnabled: boolean;
 };
 
 function isTruthyEnvFlag(v: string | undefined): boolean {
@@ -76,6 +79,7 @@ function buildEmbedded(): RuntimeConfigSnapshot {
     revenueCatEntitlementId: REVENUECAT_ENTITLEMENT_ID?.trim() ?? '',
     revenueCatPackageTypePreferred: REVENUECAT_PACKAGE_TYPE_PREFERRED?.trim() ?? '',
     subscriptionsPubliclyAvailable: isTruthyEnvFlag(SUBSCRIPTIONS_PUBLICLY_AVAILABLE),
+    proLicenseKeyActivationEnabled: isTruthyEnvFlag(PRO_LICENSE_KEY_ACTIVATION_ENABLED),
   };
 }
 
@@ -94,6 +98,7 @@ function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
     REVENUECAT_ENTITLEMENT_ID: s.revenueCatEntitlementId,
     REVENUECAT_PACKAGE_TYPE_PREFERRED: s.revenueCatPackageTypePreferred,
     SUBSCRIPTIONS_PUBLICLY_AVAILABLE: s.subscriptionsPubliclyAvailable ? '1' : '0',
+    PRO_LICENSE_KEY_ACTIVATION_ENABLED: s.proLicenseKeyActivationEnabled ? '1' : '0',
   };
 }
 
@@ -213,6 +218,11 @@ function mergeRemote(
       'SUBSCRIPTIONS_PUBLICLY_AVAILABLE',
       embedded.subscriptionsPubliclyAvailable,
     ),
+    proLicenseKeyActivationEnabled: readRemoteBool(
+      rc,
+      'PRO_LICENSE_KEY_ACTIVATION_ENABLED',
+      embedded.proLicenseKeyActivationEnabled,
+    ),
   };
 }
 
@@ -295,4 +305,8 @@ export function getRevenueCatPackageTypePreferred(): string {
 
 export function getSubscriptionsPubliclyAvailable(): boolean {
   return snapshot.subscriptionsPubliclyAvailable;
+}
+
+export function getProLicenseKeyActivationEnabled(): boolean {
+  return snapshot.proLicenseKeyActivationEnabled;
 }

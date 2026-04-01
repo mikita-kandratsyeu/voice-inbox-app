@@ -4,7 +4,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
-import { ProLicenseKeyModal } from '@/features/pro-license';
 import { isCrashlyticsDebugEnabled, isTestflightInternalBuild } from '@/shared/config/buildEnv';
 import {
   IS_ANDROID,
@@ -180,13 +179,6 @@ export const SettingsScreen = () => {
           <SettingsInternalTechInfo />
           <DeferredInboxBannerAd color={settings.color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
-        <ProLicenseKeyModal
-          visible={settings.internalUpgradeVisible}
-          onClose={() => settings.setInternalUpgradeVisible(false)}
-          onActivated={() => {
-            void settings.refreshProEntitlement({ force: true });
-          }}
-        />
         <SettingsPlanPaywallSheet
           visible={settings.planPaywallVisible}
           mode={settings.monetizationMode}
