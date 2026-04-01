@@ -60,7 +60,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       ok: true,
       items: page.map((r) => ({
         id: r.id,
-        reference: formatSupportReference(r.referenceNumber),
+        reference: formatSupportReference(r.referenceNumber, r.id),
         deviceId: r.deviceId,
         email: r.email,
         subject: r.subject,

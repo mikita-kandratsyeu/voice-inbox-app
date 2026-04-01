@@ -1,7 +1,18 @@
 export const SUPPORT_REFERENCE_PREFIX = 'VI';
 
-export function formatSupportReference(referenceNumber: number): string {
-  return `${SUPPORT_REFERENCE_PREFIX}-${referenceNumber}`;
+export function formatSupportReference(
+  referenceNumber: number | null | undefined,
+  fallbackRowId?: string,
+): string {
+  if (typeof referenceNumber === 'number' && Number.isFinite(referenceNumber)) {
+    return `${SUPPORT_REFERENCE_PREFIX}-${referenceNumber}`;
+  }
+
+  if (fallbackRowId?.length) {
+    return `${SUPPORT_REFERENCE_PREFIX}-${fallbackRowId.slice(0, 8)}`;
+  }
+
+  return `${SUPPORT_REFERENCE_PREFIX}-?`;
 }
 
 export function parseSupportReferenceQuery(q: string): number | null {

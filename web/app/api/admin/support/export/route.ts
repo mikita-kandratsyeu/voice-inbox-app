@@ -39,7 +39,7 @@ export async function GET(): Promise<NextResponse> {
         rows.push(
           [
             csvEscape(r.id),
-            csvEscape(formatSupportReference(r.referenceNumber)),
+            csvEscape(formatSupportReference(r.referenceNumber, r.id)),
             csvEscape(r.createdAt.toISOString()),
             csvEscape(r.updatedAt.toISOString()),
             csvEscape(r.closedAt?.toISOString() ?? ''),

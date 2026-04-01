@@ -122,12 +122,24 @@ export async function POST(request: Request): Promise<NextResponse> {
         diagnostics: diagnostics as Prisma.InputJsonValue,
         appLogs,
       },
+      select: { id: true, referenceNumber: true },
     });
+
+    let referenceNumber: number | null = row.referenceNumber ?? null;
+
+    if (referenceNumber == null) {
+      const again = await prisma.supportIssue.findUnique({
+        where: { id: row.id },
+        select: { referenceNumber: true },
+      });
+
+      referenceNumber = again?.referenceNumber ?? null;
+    }
 
     return NextResponse.json({
       ok: true,
       id: row.id,
-      reference: formatSupportReference(row.referenceNumber),
+      reference: formatSupportReference(referenceNumber, row.id),
     });
   } catch (e) {
     console.error('[support POST]', e);
