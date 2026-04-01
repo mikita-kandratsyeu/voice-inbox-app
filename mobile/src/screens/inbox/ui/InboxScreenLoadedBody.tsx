@@ -4,7 +4,10 @@ import { Folder } from 'lucide-react-native';
 import React, { memo } from 'react';
 import { KeyboardAvoidingView, View } from 'react-native';
 
-import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import {
+  getFloatingTabBarScrollPaddingBottom,
+  getInboxBatchModeScrollPaddingBottom,
+} from '@/app/navigation/config';
 import type { BatchSelectState } from '@/features/batch-select';
 import type {
   InboxFilterStatus,
@@ -105,7 +108,11 @@ function InboxScreenLoadedBodyInner({
           width: '100%',
           maxWidth: contentMaxWidth,
           paddingBottom:
-            filteredLength === 0 ? getFloatingTabBarScrollPaddingBottom(insetsBottom, isTablet) : 0,
+            filteredLength === 0
+              ? batchSelect.isSelectMode
+                ? getInboxBatchModeScrollPaddingBottom(insetsBottom)
+                : getFloatingTabBarScrollPaddingBottom(insetsBottom, isTablet)
+              : 0,
         }}
       >
         {showInboxSearchBar && (

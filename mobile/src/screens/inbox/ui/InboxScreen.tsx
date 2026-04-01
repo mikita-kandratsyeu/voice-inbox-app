@@ -194,6 +194,7 @@ export const InboxScreen = () => {
           onMoveToFolder={handleOpenBatchFolderPicker}
           hideMoveToFolder={isPrivateMode}
           onCancel={exitBatchMode}
+          dockToScreenBottom
         />
       )}
       {!isPrivateMode && (

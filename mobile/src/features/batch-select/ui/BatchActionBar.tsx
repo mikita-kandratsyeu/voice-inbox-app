@@ -19,6 +19,7 @@ type BatchActionBarProps = {
   onMoveToFolder: () => void;
   hideMoveToFolder?: boolean;
   onCancel: () => void;
+  dockToScreenBottom?: boolean;
 };
 
 type ActionButtonProps = {
@@ -68,6 +69,7 @@ export const BatchActionBar = ({
   onMoveToFolder,
   hideMoveToFolder = false,
   onCancel,
+  dockToScreenBottom = false,
 }: BatchActionBarProps) => {
   const { t } = useTranslation();
   const slideAnim = useRef(new Animated.Value(120)).current;
@@ -84,6 +86,10 @@ export const BatchActionBar = ({
   }, [slideAnim]);
 
   const disabled = count === 0;
+
+  const bottomPad = dockToScreenBottom
+    ? Math.max(insets.bottom, 8) + 8
+    : getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet) + 8;
 
   const handleCancel = () => {
     hapticLight();
@@ -122,7 +128,7 @@ export const BatchActionBar = ({
         backgroundColor: color.background.primary,
         borderTopWidth: 1,
         borderTopColor: color.border.default,
-        paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet) + 8,
+        paddingBottom: bottomPad,
         paddingTop: 20,
         paddingHorizontal: 20,
         shadowColor: '#000',

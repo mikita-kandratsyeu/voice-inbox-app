@@ -1,12 +1,18 @@
-import { useNavigation } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import { useIsFocused, useNavigation } from '@react-navigation/native';
 import type { FlashListRef } from '@shopify/flash-list';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LayoutAnimation, ScrollView, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
-import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import {
+  buildFloatingTabBarStyle,
+  getFloatingTabBarScrollPaddingBottom,
+  getInboxBatchModeScrollPaddingBottom,
+} from '@/app/navigation/config';
+import type { BottomTabParamList } from '@/app/navigation/types';
 import { useFolderStore } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
@@ -37,6 +43,7 @@ export function useInboxScreen() {
   const { width: windowWidth } = useWindowDimensions();
   const contentMaxWidth = useTabletContentMaxWidth();
   const navigation = useNavigation<InboxNavigationProp>();
+  const isInboxTabFocused = useIsFocused();
   const { records, isLoaded, archiveRecord, unarchiveRecord, togglePin } = useRecordStore(
     useShallow((s) => ({
       records: s.records,
@@ -357,11 +364,13 @@ export function useInboxScreen() {
 
   const listContentStyle = useMemo(
     () => ({
-      paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
+      paddingBottom: batchSelect.isSelectMode
+        ? getInboxBatchModeScrollPaddingBottom(insets.bottom)
+        : getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
       paddingTop: 0,
       backgroundColor: color.background.secondary,
     }),
-    [color.background.secondary, insets.bottom, isTablet],
+    [batchSelect.isSelectMode, color.background.secondary, insets.bottom, isTablet],
   );
   const listStyle = useMemo(
     () => ({ backgroundColor: color.background.secondary }),
@@ -370,6 +379,46 @@ export function useInboxScreen() {
 
   const allSelected =
     visibleRecordIds.length > 0 && batchSelect.selectedIds.size === visibleRecordIds.length;
+
+  useLayoutEffect(() => {
+    const tabNav = navigation.getParent<BottomTabNavigationProp<BottomTabParamList>>();
+    if (!tabNav) {
+      return;
+    }
+
+    const restoreTabBar = () => {
+      tabNav.setOptions({
+        tabBarStyle: buildFloatingTabBarStyle({
+          insets,
+          windowWidth,
+          isTablet,
+          tabBackgroundColor: color.background.primary,
+          shadowColor: color.shadow.color,
+          shadowOpacity: Math.min(0.22, color.shadow.opacity + 0.12),
+        }),
+      });
+    };
+
+    if (batchSelect.isSelectMode && isInboxTabFocused) {
+      tabNav.setOptions({
+        tabBarStyle: { display: 'none' },
+      });
+    } else {
+      restoreTabBar();
+    }
+
+    return restoreTabBar;
+  }, [
+    batchSelect.isSelectMode,
+    isInboxTabFocused,
+    navigation,
+    insets,
+    windowWidth,
+    isTablet,
+    color.background.primary,
+    color.shadow.color,
+    color.shadow.opacity,
+  ]);
 
   return {
     t,

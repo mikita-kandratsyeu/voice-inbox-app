@@ -9,6 +9,7 @@ function getEntitlementId(): string {
 
 function getSecretKey(): string | null {
   const k = process.env.REVENUECAT_SECRET_API_KEY?.trim();
+
   return k && k.length > 0 ? k : null;
 }
 
@@ -31,6 +32,7 @@ type FetchSubscriberResult =
 
 async function fetchRevenueCatSubscriberJson(deviceId: string): Promise<FetchSubscriberResult> {
   const secret = getSecretKey();
+
   if (!secret) {
     return { kind: 'no_secret' };
   }
