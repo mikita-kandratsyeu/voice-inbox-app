@@ -13,7 +13,8 @@ export const INBOX_RECORD_PAGE_SIZE = 48;
 
 export type FlattenedItem =
   | { type: 'header'; title: string; isFirst: boolean }
-  | { type: 'record'; item: VoiceRecord };
+  | { type: 'record'; item: VoiceRecord }
+  | { type: 'banner_card' };
 
 export type InboxNavigationProp = CompositeNavigationProp<
   BottomTabNavigationProp<BottomTabParamList, 'Inbox'>,

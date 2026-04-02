@@ -7,6 +7,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { RecordCard } from '@/entities/record';
 import type { BatchSelectState } from '@/features/batch-select';
 import { BatchCheckbox } from '@/features/batch-select';
+import { InboxBannerAd } from '@/features/inbox-banner';
 import type { Colors } from '@/shared/config';
 import { resolveDisplayFolderColor } from '@/shared/lib';
 import { SectionHeader, SwipeableCard } from '@/shared/ui';
@@ -16,6 +17,7 @@ import type { FlattenedItem } from '../lib/inboxScreenTypes';
 export type InboxScreenListItemProps = {
   item: FlattenedItem;
   color: Colors;
+  bannerMaxWidth: number;
   batchSelect: BatchSelectState;
   effectiveActiveFolderId: string | null;
   isPrivateMode: boolean;
@@ -35,6 +37,7 @@ export type InboxScreenListItemProps = {
 function InboxScreenListItemInner({
   item,
   color,
+  bannerMaxWidth,
   batchSelect,
   effectiveActiveFolderId,
   isPrivateMode,
@@ -54,6 +57,10 @@ function InboxScreenListItemInner({
 
   if (item.type === 'header') {
     return <SectionHeader title={item.title} isFirst={item.isFirst} />;
+  }
+
+  if (item.type === 'banner_card') {
+    return <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} variant="card" />;
   }
 
   const isSelected = batchSelect.selectedIds.has(item.item.id);

@@ -2,7 +2,12 @@ export type InboxFlattenedHeader = { type: 'header'; title: string; isFirst: boo
 
 export type InboxFlattenedRecord<T> = { type: 'record'; item: T };
 
-export type InboxFlattenedItem<T> = InboxFlattenedHeader | InboxFlattenedRecord<T>;
+export type InboxFlattenedBannerCard = { type: 'banner_card' };
+
+export type InboxFlattenedItem<T> =
+  | InboxFlattenedHeader
+  | InboxFlattenedRecord<T>
+  | InboxFlattenedBannerCard;
 
 export function trimFlattenedInboxItems<T>(
   items: InboxFlattenedItem<T>[],
@@ -19,6 +24,15 @@ export function trimFlattenedInboxItems<T>(
   for (const item of items) {
     if (item.type === 'header') {
       pendingHeader = item;
+      continue;
+    }
+
+    if (item.type === 'banner_card') {
+      if (pendingHeader) {
+        result.push(pendingHeader);
+        pendingHeader = null;
+      }
+      result.push(item);
       continue;
     }
 

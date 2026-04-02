@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, useWindowDimensions, View } from 'react-native';
 import { BannerView } from 'yandex-mobile-ads';
 
 import { useAdsAllowed } from '@/features/app-storefront';
@@ -10,11 +10,16 @@ import type { Colors } from '@/shared/config';
 import { getBannerAdUnitId } from '../lib/getBannerAdUnitId';
 import { useInboxBannerSize } from '../model/useInboxBannerSize';
 
+/** Horizontal margins (16+16) + inner card padding (12+12), aligned with inbox note cards. */
+const CARD_BANNER_WIDTH_INSET = 56;
+
 type InboxBannerAdProps = {
   color: Colors;
   contentMaxWidth: number;
   density?: 'default' | 'compact';
   surface?: 'default' | 'onAccentRecording';
+  /** `card` — как карточка заметки в списке инбокса; `strip` — полоска под контентом (по умолчанию). */
+  variant?: 'strip' | 'card';
 };
 
 export function InboxBannerAd({
@@ -22,10 +27,19 @@ export function InboxBannerAd({
   contentMaxWidth,
   density = 'default',
   surface = 'default',
+  variant = 'strip',
 }: InboxBannerAdProps) {
   const { t } = useTranslation();
+  const { width: windowWidth } = useWindowDimensions();
   const { adsAllowed } = useAdsAllowed();
-  const bannerSize = useInboxBannerSize(contentMaxWidth);
+  const sizeBasis = useMemo(() => {
+    if (variant === 'card') {
+      const listWidth = Math.min(windowWidth, contentMaxWidth);
+      return Math.max(320, Math.floor(listWidth - CARD_BANNER_WIDTH_INSET));
+    }
+    return contentMaxWidth;
+  }, [variant, windowWidth, contentMaxWidth]);
+  const bannerSize = useInboxBannerSize(sizeBasis);
   const [, setRetryAttempt] = useState(0);
   const [nextTryAt, setNextTryAt] = useState<number | null>(null);
   const [permanentlyDisabled, setPermanentlyDisabled] = useState(false);
@@ -81,6 +95,66 @@ export function InboxBannerAd({
   const compact = density === 'compact';
   const onAccent = surface === 'onAccentRecording';
 
+  const labelClassName =
+    variant === 'card'
+      ? 'mb-2 text-center text-[10px] uppercase tracking-wide'
+      : compact
+        ? 'mb-1.5 text-center text-[9px] uppercase tracking-wide'
+        : 'mb-2 text-center text-[10px] uppercase tracking-wide';
+
+  const labelColor =
+    variant === 'card' ? color.text.muted : onAccent ? 'rgba(255,255,255,0.52)' : color.text.muted;
+
+  const cardChrome =
+    variant === 'card'
+      ? {
+          shadowColor: color.shadow.color,
+          shadowOffset: { width: 0, height: 1 } as const,
+          shadowOpacity: color.shadow.opacity,
+          shadowRadius: 4,
+          elevation: 2,
+          backgroundColor: color.background.card,
+          borderRadius: 16,
+        }
+      : null;
+
+  const outer = (
+    <>
+      <Text className={labelClassName} style={{ color: labelColor }}>
+        {t('inbox.adLabel')}
+      </Text>
+      <View
+        className="items-center overflow-hidden rounded-xl"
+        style={{ alignSelf: 'center', opacity: compact && variant === 'strip' ? 0.97 : 1 }}
+      >
+        <BannerView
+          size={bannerSize}
+          adUnitId={getBannerAdUnitId()}
+          onAdFailedToLoad={onAdFailedToLoad}
+          style={{
+            width: bannerSize.width,
+            height: bannerSize.height,
+          }}
+        />
+      </View>
+    </>
+  );
+
+  if (variant === 'card' && cardChrome) {
+    return (
+      <View
+        className="mb-4"
+        style={{ marginHorizontal: 16 }}
+        accessibilityRole="none"
+        accessibilityLabel={t('inbox.adLabel')}
+      >
+        <View className="px-3 py-3" style={cardChrome}>
+          {outer}
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View
       className={
@@ -98,30 +172,7 @@ export function InboxBannerAd({
         opacity: onAccent ? 1 : compact ? 0.94 : 1,
       }}
     >
-      <Text
-        className={
-          compact
-            ? 'mb-1.5 text-center text-[9px] uppercase tracking-wide'
-            : 'mb-2 text-center text-[10px] uppercase tracking-wide'
-        }
-        style={{ color: onAccent ? 'rgba(255,255,255,0.52)' : color.text.muted }}
-      >
-        {t('inbox.adLabel')}
-      </Text>
-      <View
-        className="items-center overflow-hidden rounded-xl"
-        style={{ alignSelf: 'center', opacity: compact ? 0.97 : 1 }}
-      >
-        <BannerView
-          size={bannerSize}
-          adUnitId={getBannerAdUnitId()}
-          onAdFailedToLoad={onAdFailedToLoad}
-          style={{
-            width: bannerSize.width,
-            height: bannerSize.height,
-          }}
-        />
-      </View>
+      {outer}
     </View>
   );
 }

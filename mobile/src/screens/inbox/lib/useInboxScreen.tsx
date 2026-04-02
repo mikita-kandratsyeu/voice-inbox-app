@@ -17,10 +17,12 @@ import { useFolderStore } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { useAdsAllowed } from '@/features/app-storefront';
 import { useAutoArchiveReadNotes } from '@/features/auto-archive';
 import { useBatchRecordActions, useBatchSelect } from '@/features/batch-select';
 import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { useAutoOrganizeFolders, useManageFolders } from '@/features/manage-folders';
+import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useProEntitlement } from '@/features/pro-license';
 import { useSearchRecords } from '@/features/search-records';
 import { useColors } from '@/shared/config';
@@ -33,6 +35,7 @@ import {
   INBOX_RECORD_PAGE_SIZE,
   type InboxNavigationProp,
 } from './inboxScreenTypes';
+import { injectInboxListBannerCard } from './injectInboxListBannerCard';
 import { countFlattenedRecords, trimFlattenedInboxItems } from './trimFlattenedInboxItems';
 
 export function useInboxScreen() {
@@ -42,6 +45,7 @@ export function useInboxScreen() {
   const color = useColors();
   const { width: windowWidth } = useWindowDimensions();
   const contentMaxWidth = useTabletContentMaxWidth();
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const navigation = useNavigation<InboxNavigationProp>();
   const isInboxTabFocused = useIsFocused();
   const { records, isLoaded, archiveRecord, unarchiveRecord, togglePin } = useRecordStore(
@@ -63,6 +67,7 @@ export function useInboxScreen() {
     })),
   );
   const { isProActive } = useProEntitlement();
+  const { adsAllowed } = useAdsAllowed();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const isPrivateMode = aiExecutionMode === 'private_experimental';
 
@@ -131,13 +136,6 @@ export function useInboxScreen() {
     setVisibleRecordCount(INBOX_RECORD_PAGE_SIZE);
   }, [filterStatus, sortOption, debouncedQuery]);
 
-  const pagedFlattenedData = useMemo(
-    () => trimFlattenedInboxItems(flattenedData, visibleRecordCount),
-    [flattenedData, visibleRecordCount],
-  );
-
-  const canLoadMoreInbox = totalFlattenedRecords > visibleRecordCount;
-
   const listRef = useRef<FlashListRef<FlattenedItem>>(null);
   const folderChipScrollRef = useRef<ScrollView>(null);
   const inboxFiltersReset = useInboxFiltersReset();
@@ -149,6 +147,25 @@ export function useInboxScreen() {
   }, []);
 
   const batchSelect = useBatchSelect();
+
+  const shouldInjectListBanner =
+    adsAllowed &&
+    !isPrivateMode &&
+    !batchSelect.isSelectMode &&
+    !isSearching &&
+    getHasSeenOnboarding();
+
+  const flattenedDataWithOptionalBanner = useMemo(() => {
+    if (!shouldInjectListBanner) return flattenedData;
+    return injectInboxListBannerCard(flattenedData);
+  }, [flattenedData, shouldInjectListBanner]);
+
+  const pagedFlattenedData = useMemo(
+    () => trimFlattenedInboxItems(flattenedDataWithOptionalBanner, visibleRecordCount),
+    [flattenedDataWithOptionalBanner, visibleRecordCount],
+  );
+
+  const canLoadMoreInbox = totalFlattenedRecords > visibleRecordCount;
 
   const [searchBarExplicitOpen, setSearchBarExplicitOpen] = useState(false);
   const [searchFocusSignal, setSearchFocusSignal] = useState(0);
@@ -320,6 +337,7 @@ export function useInboxScreen() {
       <InboxScreenListItem
         item={item}
         color={color}
+        bannerMaxWidth={bannerMaxWidth}
         batchSelect={batchSelect}
         effectiveActiveFolderId={effectiveActiveFolderId}
         isPrivateMode={isPrivateMode}
@@ -338,6 +356,7 @@ export function useInboxScreen() {
     ),
     [
       color,
+      bannerMaxWidth,
       effectiveActiveFolderId,
       folderColorById,
       isPrivateMode,
@@ -360,6 +379,9 @@ export function useInboxScreen() {
     if (item.type === 'header') {
       return `header-${item.title}`;
     }
+    if (item.type === 'banner_card') {
+      return 'inbox-inline-banner';
+    }
     return item.item.id;
   }, []);
 
@@ -372,7 +394,6 @@ export function useInboxScreen() {
     () => ({ flex: 1, backgroundColor: color.background.primary }),
     [color.background.primary],
   );
-  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   const listContentStyle = useMemo(
     () => ({
