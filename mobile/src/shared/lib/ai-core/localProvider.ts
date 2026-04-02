@@ -20,7 +20,11 @@ import {
   prepareTranscriptForLocalLlm,
 } from './local-provider/localAiTranscript';
 import { localPromptFitsLlmContext } from './localLlmBudget';
-import { completeLocalChat, type LocalLlmCompletionIntent } from './localLlmSession';
+import {
+  completeLocalChat,
+  type LocalLlmCompletionIntent,
+  type LocalLlmSessionProgressEvent,
+} from './localLlmSession';
 import type {
   AiExecutionContext,
   AskRequest,
@@ -58,6 +62,7 @@ async function generateWithLocalLlm(
     maxTokens?: number;
     temperature?: number;
     intent?: LocalLlmCompletionIntent;
+    onLlmSessionProgress?: (event: LocalLlmSessionProgressEvent) => void;
   },
 ): Promise<string> {
   const maxTokens = options?.maxTokens ?? 512;
@@ -76,6 +81,7 @@ async function generateWithLocalLlm(
       maxTokens,
       temperature: options?.temperature ?? 0.2,
       intent: options?.intent ?? 'chat',
+      onLlmSessionProgress: options?.onLlmSessionProgress,
     },
   );
 }
@@ -98,6 +104,25 @@ export async function runLocalSummaryTasks(
       request.existingTaskTexts,
     );
 
+    const summaryMaxTokens = resolvePrivateSummaryMaxTokens(ctx.privateLocalLlmBudget);
+    let sessionTokens = 0;
+    const tokenBudgetForProgress = Math.max(1, summaryMaxTokens * 2);
+
+    const bridgeSessionProgress = (event: LocalLlmSessionProgressEvent) => {
+      const forward = request.onLocalGenerationProgress;
+      if (!forward) return;
+      if (event.kind === 'completion_tick') {
+        sessionTokens += 1;
+        forward({
+          kind: 'completion_token',
+          tokenIndex: sessionTokens,
+          nPredictBudget: tokenBudgetForProgress,
+        });
+      } else {
+        forward(event);
+      }
+    };
+
     const runOnce = (system: string) =>
       generateWithLocalLlm(
         ctx.selectedLocalAiModel,
@@ -106,9 +131,12 @@ export async function runLocalSummaryTasks(
           { role: 'user', content: userContent },
         ],
         {
-          maxTokens: resolvePrivateSummaryMaxTokens(ctx.privateLocalLlmBudget),
+          maxTokens: summaryMaxTokens,
           temperature: LOCAL_GEN_SUMMARY.temperature,
           intent: 'json',
+          onLlmSessionProgress: request.onLocalGenerationProgress
+            ? bridgeSessionProgress
+            : undefined,
         },
       );
 

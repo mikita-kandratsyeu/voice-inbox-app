@@ -11,6 +11,11 @@ import type { AiProcessingResult } from '@/shared/lib/ai-api';
 export type AiTaskIntent = 'summary_tasks' | 'ask';
 export type AiProviderKind = 'cloud' | 'local';
 
+export type AiLocalGenerationProgressEvent =
+  | { kind: 'prepare_model_start' }
+  | { kind: 'prepare_model_done' }
+  | { kind: 'completion_token'; tokenIndex: number; nPredictBudget: number };
+
 export type AiExecutionContext = {
   selectedAIModel: UserSelectableAIModelId;
   selectedLocalAiModel: LocalAiModelId;
@@ -27,6 +32,7 @@ export type SummaryTaskRequest = {
   id: string;
   transcript: string;
   existingTaskTexts?: string[];
+  onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;
 };
 
 export type AskRequest = {

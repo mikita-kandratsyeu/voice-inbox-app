@@ -698,7 +698,7 @@
   },
   "privateAiMode": {
     "title": "Private vs Smart",
-    "description": "Private mode runs AI only on this device — summaries and tasks stay on your phone and aren't sent to our servers. Smart mode uses the cloud for extra features and is usually faster.",
+    "description": "In Private mode, AI runs entirely on your device—summaries and tasks remain fully private and never leave for our servers. In Smart mode, cloud-powered features deliver faster performance and expanded capabilities.",
     "enableAlertTitle": "Turn on Private mode?",
     "enableAlertMessage": "Maximum privacy.\n\nAll data, including transcripts, is processed only on this device.\n\nWhat to expect:\n• May run more slowly\n• Higher battery use\n• Some features aren't available\n\nYou can switch back to Smart mode anytime."
   },

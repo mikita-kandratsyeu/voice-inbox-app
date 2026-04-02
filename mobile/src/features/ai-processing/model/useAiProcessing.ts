@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import type { TaskItem, VoiceRecord } from '@/entities/record';
@@ -17,6 +17,7 @@ import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
+import type { AiLocalGenerationProgressEvent } from '@/shared/lib/ai-core/types';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import {
   toUserFacingFetchErrorFromUnknown,
@@ -83,49 +84,9 @@ export const useAiProcessing = () => {
 
   const inFlightRef = useRef<Set<string>>(new Set());
   const cancelTokensRef = useRef<Map<string, { cancelled: boolean }>>(new Map());
-  const privateProgressIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const stopPrivateProgressSimulation = useCallback(() => {
-    if (privateProgressIntervalRef.current) {
-      clearInterval(privateProgressIntervalRef.current);
-      privateProgressIntervalRef.current = null;
-    }
-  }, []);
-
-  useEffect(
-    () => () => {
-      stopPrivateProgressSimulation();
-    },
-    [stopPrivateProgressSimulation],
-  );
-
-  const startPrivateProgressSimulation = useCallback(
-    (recordId: string) => {
-      stopPrivateProgressSimulation();
-      setPrivateAiBatchUi(recordId, {
-        privateAiBatchProgress: 0,
-        privateAiBatchPhase: 'loading_model',
-      });
-      const t0 = Date.now();
-      privateProgressIntervalRef.current = setInterval(() => {
-        const elapsed = Date.now() - t0;
-        const phase = elapsed < 1200 ? ('loading_model' as const) : ('processing' as const);
-        const rec = useRecordStore.getState().records.find((r) => r.id === recordId);
-        const prev = rec?.privateAiBatchProgress ?? 0;
-        const bump = 2 + Math.floor(Math.random() * 5);
-        const next = Math.min(92, prev + bump);
-        setPrivateAiBatchUi(recordId, {
-          privateAiBatchProgress: next,
-          privateAiBatchPhase: phase,
-        });
-      }, 400);
-    },
-    [setPrivateAiBatchUi, stopPrivateProgressSimulation],
-  );
 
   const applyCancelledUiState = useCallback(
     (recordId: string) => {
-      stopPrivateProgressSimulation();
       clearPrivateAiBatchUi(recordId);
       const latest = useRecordStore.getState().records.find((r) => r.id === recordId);
       const hadSummary = Boolean(latest?.summary?.trim());
@@ -136,14 +97,7 @@ export const useAiProcessing = () => {
       setSummaryError(recordId, undefined);
       setTasksError(recordId, undefined);
     },
-    [
-      clearPrivateAiBatchUi,
-      setSummaryError,
-      setSummaryStatus,
-      setTasksError,
-      setTasksStatus,
-      stopPrivateProgressSimulation,
-    ],
+    [clearPrivateAiBatchUi, setSummaryError, setSummaryStatus, setTasksError, setTasksStatus],
   );
 
   const cancelAiGeneration = useCallback(
@@ -180,7 +134,10 @@ export const useAiProcessing = () => {
       setTasksError(record.id, undefined);
 
       if (aiExecutionMode === 'private_experimental') {
-        startPrivateProgressSimulation(record.id);
+        setPrivateAiBatchUi(record.id, {
+          privateAiBatchProgress: 0,
+          privateAiBatchPhase: 'loading_model',
+        });
       }
 
       const cancelToken = { cancelled: false };
@@ -198,8 +155,44 @@ export const useAiProcessing = () => {
         const snapshot = useRecordStore.getState().records.find((r) => r.id === record.id);
         const existingTaskTexts = collectExistingTaskTextsForAiPrompt(snapshot?.tasks);
 
+        const onLocalGenerationProgress =
+          aiExecutionMode === 'private_experimental'
+            ? (event: AiLocalGenerationProgressEvent) => {
+                if (cancelToken.cancelled) return;
+                let pct = 0;
+                let phase: 'loading_model' | 'processing' = 'loading_model';
+                switch (event.kind) {
+                  case 'prepare_model_start':
+                    pct = 2;
+                    phase = 'loading_model';
+                    break;
+                  case 'prepare_model_done':
+                    pct = 12;
+                    phase = 'processing';
+                    break;
+                  case 'completion_token': {
+                    phase = 'processing';
+                    const genFrac = event.tokenIndex / event.nPredictBudget;
+                    pct = 12 + Math.min(82, Math.floor(genFrac * 82));
+                    break;
+                  }
+                  default:
+                    return;
+                }
+                setPrivateAiBatchUi(record.id, {
+                  privateAiBatchProgress: Math.min(98, pct),
+                  privateAiBatchPhase: phase,
+                });
+              }
+            : undefined;
+
         const runResult = await AIOrchestrator.runSummaryTasks(
-          { id: requestId, transcript: record.transcript, existingTaskTexts },
+          {
+            id: requestId,
+            transcript: record.transcript,
+            existingTaskTexts,
+            onLocalGenerationProgress,
+          },
           {
             selectedAIModel,
             selectedLocalAiModel: effectiveLocalAiModelId,
@@ -350,7 +343,6 @@ export const useAiProcessing = () => {
           tier: privateCapabilityTier,
         });
       } finally {
-        stopPrivateProgressSimulation();
         clearPrivateAiBatchUi(record.id);
         inFlightRef.current.delete(baseId);
         cancelTokensRef.current.delete(record.id);
@@ -369,8 +361,6 @@ export const useAiProcessing = () => {
       privateCapabilityTier,
       applyCancelledUiState,
       setPrivateAiBatchUi,
-      startPrivateProgressSimulation,
-      stopPrivateProgressSimulation,
       setSummaryStatus,
       setTasksStatus,
       setSummaryError,
