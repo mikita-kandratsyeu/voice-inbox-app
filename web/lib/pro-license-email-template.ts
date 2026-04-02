@@ -1,11 +1,5 @@
-import {
-  APP_STORE_URL,
-  BASE_URL_OR_FALLBACK,
-  GOOGLE_PLAY_URL,
-  SUPPORT_EMAIL,
-} from '@/config/constants';
+import { BASE_URL_OR_FALLBACK, SUPPORT_EMAIL } from '@/config/constants';
 
-/** Brand accent (links) — matches app green, Link-style bold green. */
 const ACCENT = '#10b981';
 
 export function resolveProLicenseEmailLogoUrl(): string {
@@ -26,11 +20,6 @@ export function formatProKeyEmailBlock(plainKey: string): string {
   return plainKey.trim();
 }
 
-function isHttpStoreUrl(url: string): boolean {
-  const u = url.trim();
-  return u.length > 0 && u !== '#' && /^https?:\/\//i.test(u);
-}
-
 function hr(): string {
   return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td style="height:1px;line-height:1px;font-size:1px;background-color:#eeeeee;">&nbsp;</td></tr></table>`;
 }
@@ -45,7 +34,7 @@ function buildLinkStyleFooterHtml(params: { support: string; site: string }): st
   const year = new Date().getFullYear();
 
   const linkStyle = `color:${ACCENT};font-weight:700;text-decoration:none;`;
-  const linkStyleHover = linkStyle; /* email clients ignore :hover */
+  const linkStyleHover = linkStyle;
 
   const supportPhrase =
     support && supportMailHref
@@ -53,23 +42,6 @@ function buildLinkStyleFooterHtml(params: { support: string; site: string }): st
       : `If you believe you are getting this email in error, you can safely ignore it.`;
 
   const learnPhrase = `<a href="${siteHref}" style="${linkStyleHover}">${siteHost}</a>`;
-
-  const storeBits: string[] = [];
-  if (isHttpStoreUrl(APP_STORE_URL)) {
-    storeBits.push(
-      `<a href="${escapeHtml(APP_STORE_URL.trim())}" style="${linkStyle}">App Store</a>`,
-    );
-  }
-  if (isHttpStoreUrl(GOOGLE_PLAY_URL)) {
-    storeBits.push(
-      `<a href="${escapeHtml(GOOGLE_PLAY_URL.trim())}" style="${linkStyle}">Google Play</a>`,
-    );
-  }
-  const storeLine =
-    storeBits.length > 0
-      ? `<p style="margin:16px 0 0 0;font-size:14px;line-height:1.55;color:#111111;">Get the app: ${storeBits.join(' · ')}.</p>`
-      : '';
-
   const legalLine = `© ${year} Voice Inbox AI. All rights reserved.`;
 
   return `${hr()}
@@ -80,7 +52,6 @@ function buildLinkStyleFooterHtml(params: { support: string; site: string }): st
         ${supportPhrase}<br>
         Discover more at ${learnPhrase}.
       </p>
-      ${storeLine}
       <p style="margin:14px 0 0 0;font-size:12px;line-height:1.5;color:#888888;">
         <a href="${privacyHref}" style="color:#888888;text-decoration:underline;">Privacy Policy</a>
         ·
@@ -123,15 +94,13 @@ export function buildProLicenseKeyEmail(params: {
     '',
     keyDisplay,
     '',
-    'This key can be used once on one device only. Never share this code with anyone.',
-    'Enter it in the app: Settings → About → tap the app icon 8 times.',
+    'This key activates Voice Inbox AI Pro on one device only. Never share this code with anyone.',
+    'To activate: Settings → About → Tap the app icon 8 times.',
     '',
     supportLine,
     site ? `Website: ${site}` : '',
     site ? `Privacy: ${site}/privacy · Terms: ${site}/terms` : '',
   ];
-  if (isHttpStoreUrl(APP_STORE_URL)) textLines.push(`App Store: ${APP_STORE_URL.trim()}`);
-  if (isHttpStoreUrl(GOOGLE_PLAY_URL)) textLines.push(`Google Play: ${GOOGLE_PLAY_URL.trim()}`);
   const text = textLines.filter(Boolean).join('\n');
 
   const keyHtml = escapeHtml(keyDisplay);
@@ -199,7 +168,7 @@ export function buildProLicenseKeyEmail(params: {
               <p style="margin:0;font-size:14px;line-height:1.55;color:#444444;">
                 This key activates Voice Inbox AI Pro <strong>on one device only</strong>. For security, never share it
               </p>
-              <p style="margin:12px 0 0 0;font-size:14px;line-height:1.55;color:#444444;"><strong>To activate:</strong><br>Settings → About → tap the app icon 8 times.</p>
+              <p style="margin:12px 0 0 0;font-size:14px;line-height:1.55;color:#444444;"><strong>To activate:</strong><br>Settings → About → Tap the app icon 8 times.</p>
             </td>
           </tr>
           <tr>
