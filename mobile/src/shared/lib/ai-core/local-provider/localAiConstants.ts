@@ -20,7 +20,7 @@ export const FIELD_LIMITS = {
 export const LOCAL_ASK_SUMMARY_MAX_CHARS = 2000;
 export const LOCAL_ASK_MAX_TASK_ITEMS = 25;
 
-export const LOCAL_GEN_SUMMARY = { maxTokens: 1024, temperature: 0.2 } as const;
+export const LOCAL_GEN_SUMMARY = { maxTokens: 1538, temperature: 0.2 } as const;
 export const LOCAL_GEN_ASK = { maxTokens: 450, temperature: 0.25 } as const;
 
 export const STRICT_JSON_TAIL =

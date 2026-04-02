@@ -4,9 +4,9 @@ import type { AiExecutionContext, AskRequest } from '../types';
 import { LOCAL_ASK_MAX_TASK_ITEMS, LOCAL_ASK_SUMMARY_MAX_CHARS } from './localAiConstants';
 
 const LOCAL_SUMMARY_STYLE_HINT: Record<SummaryStyle, string> = {
-  brief: 'Summary length: 1–2 short sentences. Prose only, no bullet lists.',
-  standard: 'Summary length: 2–4 sentences. Prose only, no bullet lists.',
-  detailed: 'Summary length: about 4–6 sentences. Prose only, no bullet lists.',
+  brief: 'Summary length: 2–3 short sentences. Prose only, no bullet lists.',
+  standard: 'Summary length: 3–5 sentences. Prose only, no bullet lists.',
+  detailed: 'Summary length: about 5–8 sentences. Prose only, no bullet lists.',
 };
 
 const LOCAL_TASK_STRICTNESS_HINT: Record<TaskStrictness, string> = {
