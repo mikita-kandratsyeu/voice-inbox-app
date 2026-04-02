@@ -2,7 +2,7 @@ export type InboxFlattenedHeader = { type: 'header'; title: string; isFirst: boo
 
 export type InboxFlattenedRecord<T> = { type: 'record'; item: T };
 
-export type InboxFlattenedBannerCard = { type: 'banner_card' };
+export type InboxFlattenedBannerCard = { type: 'banner_card'; slotIndex: number };
 
 export type InboxFlattenedItem<T> =
   | InboxFlattenedHeader

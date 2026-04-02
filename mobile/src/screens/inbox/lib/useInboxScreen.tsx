@@ -149,11 +149,7 @@ export function useInboxScreen() {
   const batchSelect = useBatchSelect();
 
   const shouldInjectListBanner =
-    adsAllowed &&
-    !isPrivateMode &&
-    !batchSelect.isSelectMode &&
-    !isSearching &&
-    getHasSeenOnboarding();
+    adsAllowed && !batchSelect.isSelectMode && !isSearching && getHasSeenOnboarding();
 
   const flattenedDataWithOptionalBanner = useMemo(() => {
     if (!shouldInjectListBanner) return flattenedData;
@@ -380,7 +376,7 @@ export function useInboxScreen() {
       return `header-${item.title}`;
     }
     if (item.type === 'banner_card') {
-      return 'inbox-inline-banner';
+      return `inbox-inline-banner-${item.slotIndex}`;
     }
     return item.item.id;
   }, []);
