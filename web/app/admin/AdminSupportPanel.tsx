@@ -5,10 +5,15 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   AdminEmptyState,
   AdminPanelHeading,
+  adminBtnPrimaryClass,
   adminBtnSecondaryClass,
   adminInputClass,
   adminSelectClass,
 } from './admin-ui';
+import {
+  isSupportProKeyRequestSubject,
+  SUPPORT_PRO_KEY_SUBJECT_MARKER,
+} from '@/lib/support-pro-key-request';
 
 const PUSH_MESSAGE_MAX = 3500;
 
@@ -57,6 +62,8 @@ type SupportItem = {
   status: string;
   createdAt: string;
   updatedAt: string;
+  proLicenseEmailSentAt: string | null;
+  proLicenseDurationMonths: number | null;
 };
 
 type ListResponse = {
@@ -81,6 +88,8 @@ export function AdminSupportPanel() {
   const [aiLoadingId, setAiLoadingId] = useState<string | null>(null);
   const [pushLoadingId, setPushLoadingId] = useState<string | null>(null);
   const [inlineSuccessId, setInlineSuccessId] = useState<string | null>(null);
+  const [supportProKeyMonths, setSupportProKeyMonths] = useState<Record<string, string>>({});
+  const [supportProKeySendingId, setSupportProKeySendingId] = useState<string | null>(null);
 
   const getDraft = useCallback(
     (id: string): ReplyDraft =>
@@ -118,7 +127,12 @@ export function AdminSupportPanel() {
           setError(data.error ?? 'Failed to load');
           return;
         }
-        setItems((prev) => (append ? [...prev, ...data.items!] : data.items!));
+        const mapped = data.items!.map((item) => ({
+          ...item,
+          proLicenseEmailSentAt: item.proLicenseEmailSentAt ?? null,
+          proLicenseDurationMonths: item.proLicenseDurationMonths ?? null,
+        }));
+        setItems((prev) => (append ? [...prev, ...mapped] : mapped));
         setNextCursor(data.nextCursor ?? null);
       } catch {
         setError('Request failed');
@@ -205,6 +219,52 @@ export function AdminSupportPanel() {
       setError('Push request failed');
     } finally {
       setPushLoadingId(null);
+    }
+  };
+
+  const handleSendProKeyEmail = async (row: SupportItem) => {
+    if (!row.email?.trim()) {
+      setError('This request has no email — the user must resubmit with an address.');
+      return;
+    }
+    const raw = supportProKeyMonths[row.id] ?? '12';
+    const months = parseInt(raw, 10);
+    if (![1, 3, 6, 12].includes(months)) {
+      setError('Invalid duration');
+      return;
+    }
+    setSupportProKeySendingId(row.id);
+    setError(null);
+    try {
+      const res = await fetch('/api/admin/support/send-pro-license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ issueId: row.id, durationMonths: months }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? 'Send failed');
+        return;
+      }
+      const now = new Date().toISOString();
+      setItems((prev) =>
+        prev.map((r) =>
+          r.id === row.id
+            ? {
+                ...r,
+                status: 'closed',
+                updatedAt: now,
+                proLicenseEmailSentAt: now,
+                proLicenseDurationMonths: months,
+              }
+            : r,
+        ),
+      );
+    } catch {
+      setError('Request failed');
+    } finally {
+      setSupportProKeySendingId(null);
     }
   };
 
@@ -315,6 +375,11 @@ export function AdminSupportPanel() {
                       >
                         {row.status}
                       </span>
+                      {isSupportProKeyRequestSubject(row.subject) && (
+                        <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-900 dark:bg-teal-950/60 dark:text-teal-200">
+                          Pro key ({SUPPORT_PRO_KEY_SUBJECT_MARKER})
+                        </span>
+                      )}
                     </div>
                     <p className="text-xs text-zinc-500">{formatDate(row.createdAt)}</p>
                     {row.subject && (
@@ -336,6 +401,52 @@ export function AdminSupportPanel() {
                         </span>
                       )}
                     </div>
+                    {isSupportProKeyRequestSubject(row.subject) && (
+                      <div className="mt-3 rounded-lg border border-teal-200 bg-teal-50/80 p-3 dark:border-teal-900/50 dark:bg-teal-950/25">
+                        {row.proLicenseEmailSentAt ? (
+                          <p className="text-xs font-medium text-teal-900 dark:text-teal-200">
+                            Pro key emailed ({row.proLicenseDurationMonths ?? '?'} mo) —{' '}
+                            {formatDate(row.proLicenseEmailSentAt)}. Ticket closed.
+                          </p>
+                        ) : !row.email ? (
+                          <p className="text-xs text-amber-800 dark:text-amber-200">
+                            No email on file. Ask the user to send support again with an email
+                            address.
+                          </p>
+                        ) : (
+                          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                            <p className="text-xs text-teal-900 dark:text-teal-200">
+                              Send a license key to {row.email} (HTML email via SMTP).
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <select
+                                value={supportProKeyMonths[row.id] ?? '12'}
+                                onChange={(e) =>
+                                  setSupportProKeyMonths((prev) => ({
+                                    ...prev,
+                                    [row.id]: e.target.value,
+                                  }))
+                                }
+                                className="rounded-lg border border-teal-200 bg-white px-2 py-1.5 text-sm dark:border-teal-800 dark:bg-zinc-900 dark:text-zinc-100"
+                              >
+                                <option value="1">1 mo</option>
+                                <option value="3">3 mo</option>
+                                <option value="6">6 mo</option>
+                                <option value="12">12 mo</option>
+                              </select>
+                              <button
+                                type="button"
+                                disabled={supportProKeySendingId === row.id}
+                                onClick={() => void handleSendProKeyEmail(row)}
+                                className={adminBtnPrimaryClass}
+                              >
+                                {supportProKeySendingId === row.id ? 'Sending…' : 'Email Pro key'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <div className="flex shrink-0 flex-col gap-2 sm:items-end">
                     <label className="sr-only" htmlFor={`status-${row.id}`}>

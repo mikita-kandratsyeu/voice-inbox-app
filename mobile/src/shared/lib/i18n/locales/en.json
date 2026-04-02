@@ -133,7 +133,7 @@
     "openNote": "Open note"
   },
   "ai": {
-    "limitWeeklyExceeded": "You’ve used this week’s generation limit. It resets on the date shown in Settings — or watch a short ad there for a small bonus.",
+    "limitWeeklyExceeded": "You’ve used this week’s generation limit. Try again next week.",
     "privateModeUnavailable": "Private mode is not available on this device yet.",
     "privateModeModelNotDownloaded": "Download the selected GGUF model in Settings before using Private mode.",
     "privateModeLimitedTooLong": "This note is too long for Private mode. Switch to Smart mode.",

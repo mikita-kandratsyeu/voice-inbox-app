@@ -26,6 +26,7 @@ export const HttpStatus = {
   NOT_FOUND: 404,
   CONFLICT: 409,
   TOO_MANY_REQUESTS: 429,
+  SERVICE_UNAVAILABLE: 503,
 } as const;
 
 const MOBILE_USER_AGENT_SUBSTRING = process.env.MOBILE_USER_AGENT?.trim() ?? '';

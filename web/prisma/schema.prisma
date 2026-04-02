@@ -69,18 +69,20 @@ model ReleasePost {
 }
 
 model SupportIssue {
-  id              String    @id @default(cuid())
-  referenceNumber Int       @unique @default(autoincrement())
-  deviceId        String
-  email           String?
-  subject         String?
-  message         String    @db.Text
-  diagnostics     Json
-  appLogs         String?   @db.Text
-  status          String    @default("open")
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  closedAt        DateTime?
+  id                       String    @id @default(cuid())
+  referenceNumber          Int       @unique @default(autoincrement())
+  deviceId                 String
+  email                    String?
+  subject                  String?
+  message                  String    @db.Text
+  diagnostics              Json
+  appLogs                  String?   @db.Text
+  status                   String    @default("open")
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+  closedAt                 DateTime?
+  proLicenseEmailSentAt    DateTime?
+  proLicenseDurationMonths Int?
 
   @@index([deviceId])
   @@index([createdAt(sort: Desc)])
@@ -93,6 +95,7 @@ model ProLicenseKey {
   durationMonths     Int
   createdAt          DateTime  @default(now())
   createdByAdminId   String
+  issuedToEmail      String?
   consumedAt         DateTime?
   consumedByDeviceId String?
 

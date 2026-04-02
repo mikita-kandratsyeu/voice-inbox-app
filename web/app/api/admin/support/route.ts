@@ -71,6 +71,8 @@ export async function GET(request: Request): Promise<NextResponse> {
         createdAt: r.createdAt.toISOString(),
         updatedAt: r.updatedAt.toISOString(),
         closedAt: r.closedAt?.toISOString() ?? null,
+        proLicenseEmailSentAt: r.proLicenseEmailSentAt?.toISOString() ?? null,
+        proLicenseDurationMonths: r.proLicenseDurationMonths ?? null,
       })),
       nextCursor,
     });

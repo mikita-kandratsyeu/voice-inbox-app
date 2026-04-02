@@ -6990,6 +6990,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"nodemailer@npm:^7.0.11":
+  version: 7.0.13
+  resolution: "nodemailer@npm:7.0.13"
+  checksum: 10c0/b26aa5b9fa4a033bbc1e1c16ef75ee2a9c8641fd290c00a8361d6a251b3c1b8bad545a23efa627f59cb266340a448891ea8aa49d8a9307c767b8505219d95079
+  languageName: node
+  linkType: hard
+
 "nopt@npm:^9.0.0":
   version: 9.0.0
   resolution: "nopt@npm:9.0.0"
@@ -9046,6 +9053,7 @@ __metadata:
     next: "npm:16.1.7"
     next-intl: "npm:^4.8.3"
     next-themes: "npm:^0.4.6"
+    nodemailer: "npm:^7.0.11"
     pg: "npm:^8.16.0"
     prettier: "npm:^3"
     prisma: "npm:7.6.0"

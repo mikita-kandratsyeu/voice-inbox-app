@@ -31,6 +31,7 @@ import { AdminOperationsPanel } from './AdminOperationsPanel';
 import { AdminReleasesPanel } from './AdminReleasesPanel';
 import { AdminSecurityPanel } from './AdminSecurityPanel';
 import { AdminSupportPanel } from './AdminSupportPanel';
+import { SUPPORT_PRO_KEY_SUBJECT_MARKER } from '@/lib/support-pro-key-request';
 
 type VercelDeploymentInfo = {
   uid: string;
@@ -134,9 +135,20 @@ type ProLicenseRow = {
   id: string;
   durationMonths: number;
   createdAt: string;
+  issuedToEmail?: string | null;
   consumed: boolean;
   consumedAt: string | null;
   devicePrefix: string | null;
+};
+
+type ProKeyRequestRow = {
+  id: string;
+  reference: string;
+  email: string;
+  subject: string | null;
+  messagePreview: string;
+  createdAt: string;
+  deviceId: string;
 };
 
 type AdminTab =
@@ -267,6 +279,13 @@ export function AdminDashboard() {
   const [proLicenseError, setProLicenseError] = useState<string | null>(null);
   const [proLicenseDeletingId, setProLicenseDeletingId] = useState<string | null>(null);
   const [proLicenseResettingId, setProLicenseResettingId] = useState<string | null>(null);
+
+  const [proKeyRequests, setProKeyRequests] = useState<ProKeyRequestRow[]>([]);
+  const [proKeyRequestsLoading, setProKeyRequestsLoading] = useState(false);
+  const [proKeyRequestsError, setProKeyRequestsError] = useState<string | null>(null);
+  const [proKeyRequestMonths, setProKeyRequestMonths] = useState<Record<string, string>>({});
+  const [proKeySendingId, setProKeySendingId] = useState<string | null>(null);
+  const [proKeySendMessage, setProKeySendMessage] = useState<string | null>(null);
 
   const [broadcastConfirm, setBroadcastConfirm] = useState(false);
   const [broadcastHistory, setBroadcastHistory] = useState<BroadcastHistoryItem[]>([]);
@@ -405,12 +424,44 @@ export function AdminDashboard() {
     }
   }, []);
 
+  const fetchProKeyRequests = useCallback(async () => {
+    setProKeyRequestsLoading(true);
+    setProKeyRequestsError(null);
+    try {
+      const res = await fetch('/api/admin/support/key-requests', { credentials: 'include' });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        items?: ProKeyRequestRow[];
+        error?: string;
+      };
+      if (!res.ok || !data.ok || !data.items) {
+        setProKeyRequestsError(data.error ?? 'Failed to load key requests');
+        setProKeyRequests([]);
+        return;
+      }
+      setProKeyRequests(data.items);
+      setProKeyRequestMonths((prev) => {
+        const next = { ...prev };
+        for (const r of data.items!) {
+          if (next[r.id] === undefined) next[r.id] = '12';
+        }
+        return next;
+      });
+    } catch {
+      setProKeyRequestsError('Request failed');
+      setProKeyRequests([]);
+    } finally {
+      setProKeyRequestsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (adminTab === 'config') {
       void fetchAppConfig();
       void fetchProLicenseList();
+      void fetchProKeyRequests();
     }
-  }, [adminTab, fetchAppConfig, fetchProLicenseList]);
+  }, [adminTab, fetchAppConfig, fetchProLicenseList, fetchProKeyRequests]);
 
   const handleGenerateProLicense = async () => {
     setProLicenseError(null);
@@ -498,6 +549,38 @@ export function AdminDashboard() {
       setProLicenseError('Request failed');
     } finally {
       setProLicenseResettingId(null);
+    }
+  };
+
+  const handleSendProKeyEmail = async (row: ProKeyRequestRow) => {
+    const raw = proKeyRequestMonths[row.id] ?? '12';
+    const months = parseInt(raw, 10);
+    if (![1, 3, 6, 12].includes(months)) {
+      setProKeyRequestsError('Invalid duration');
+      return;
+    }
+    setProKeySendMessage(null);
+    setProKeyRequestsError(null);
+    setProKeySendingId(row.id);
+    try {
+      const res = await fetch('/api/admin/support/send-pro-license', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ issueId: row.id, durationMonths: months }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setProKeyRequestsError(data.error ?? 'Send failed');
+        return;
+      }
+      setProKeySendMessage(`Key emailed to ${row.email} and ticket closed.`);
+      void fetchProKeyRequests();
+      void fetchProLicenseList();
+    } catch {
+      setProKeyRequestsError('Request failed');
+    } finally {
+      setProKeySendingId(null);
     }
   };
 
@@ -1126,8 +1209,105 @@ export function AdminDashboard() {
                 </p>
                 <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
                   One-time keys; plaintext is shown only once. Each key activates on a single
-                  device.
+                  device. The Email column is filled when a key is sent from a support request;
+                  manual Generate leaves it empty (—).
                 </p>
+
+                <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50/90 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/35">
+                  <h3 className="mb-1 text-sm font-semibold text-emerald-950 dark:text-emerald-100">
+                    Email Pro key from support
+                  </h3>
+                  <p className="mb-3 text-xs leading-relaxed text-emerald-900/95 dark:text-emerald-200/90">
+                    If the user opens Support in the app and sets the subject to include{' '}
+                    <code className="rounded bg-white/90 px-1 py-0.5 font-mono text-[11px] text-emerald-950 dark:bg-emerald-950/80 dark:text-emerald-100">
+                      {SUPPORT_PRO_KEY_SUBJECT_MARKER}
+                    </code>{' '}
+                    (any case) and leaves an email, the open request appears below. Pick 1 / 3 / 6 /
+                    12 months and send — Nodemailer delivers the HTML email and the ticket closes.
+                    Requires SMTP env vars (see <span className="font-mono">.env.example</span>).
+                  </p>
+                  {proKeySendMessage && (
+                    <p className="mb-3 text-sm font-medium text-emerald-800 dark:text-emerald-300">
+                      {proKeySendMessage}
+                    </p>
+                  )}
+                  {proKeyRequestsError && (
+                    <p className="mb-3 text-sm text-red-700 dark:text-red-400">
+                      {proKeyRequestsError}
+                    </p>
+                  )}
+                  {proKeyRequestsLoading ? (
+                    <p className="text-sm text-emerald-800/80 dark:text-emerald-300/80">
+                      Loading requests…
+                    </p>
+                  ) : proKeyRequests.length === 0 ? (
+                    <p className="text-sm text-emerald-800/80 dark:text-emerald-300/80">
+                      No pending Pro key requests.
+                    </p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {proKeyRequests.map((req) => (
+                        <li
+                          key={req.id}
+                          className="rounded-lg border border-emerald-200/80 bg-white/90 p-3 dark:border-emerald-800/50 dark:bg-zinc-900/60"
+                        >
+                          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                            <div className="min-w-0 text-xs text-zinc-600 dark:text-zinc-400">
+                              <p className="font-mono text-[11px] text-zinc-500">{req.reference}</p>
+                              <p>
+                                <span className="font-medium text-zinc-500">To</span>{' '}
+                                <span className="text-zinc-800 dark:text-zinc-200">
+                                  {req.email}
+                                </span>
+                              </p>
+                              {req.subject && (
+                                <p className="mt-0.5 font-medium text-zinc-800 dark:text-zinc-200">
+                                  {req.subject}
+                                </p>
+                              )}
+                              <p className="mt-1 whitespace-pre-wrap text-zinc-600 dark:text-zinc-400">
+                                {req.messagePreview}
+                              </p>
+                            </div>
+                            <div className="flex shrink-0 flex-wrap items-center gap-2">
+                              <select
+                                value={proKeyRequestMonths[req.id] ?? '12'}
+                                onChange={(e) =>
+                                  setProKeyRequestMonths((prev) => ({
+                                    ...prev,
+                                    [req.id]: e.target.value,
+                                  }))
+                                }
+                                className={adminSelectClass}
+                              >
+                                <option value="1">1 mo</option>
+                                <option value="3">3 mo</option>
+                                <option value="6">6 mo</option>
+                                <option value="12">12 mo</option>
+                              </select>
+                              <button
+                                type="button"
+                                disabled={proKeySendingId === req.id}
+                                onClick={() => void handleSendProKeyEmail(req)}
+                                className={adminBtnPrimaryClass}
+                              >
+                                {proKeySendingId === req.id ? 'Sending…' : 'Email key'}
+                              </button>
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void fetchProKeyRequests()}
+                    className={`mt-3 ${adminBtnSecondaryClass}`}
+                  >
+                    Refresh key requests
+                  </button>
+                </div>
+
                 <div className="mb-4 flex flex-wrap items-end gap-3">
                   <div>
                     <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
@@ -1182,6 +1362,7 @@ export function AdminDashboard() {
                         <tr className="border-b border-zinc-200 dark:border-zinc-600">
                           <th className="py-2 pr-4 font-medium">Created</th>
                           <th className="py-2 pr-4 font-medium">Months</th>
+                          <th className="py-2 pr-4 font-medium">Email</th>
                           <th className="py-2 pr-4 font-medium">Status</th>
                           <th className="py-2 pr-4 font-medium">Device</th>
                           <th className="py-2 font-medium"> </th>
@@ -1197,6 +1378,9 @@ export function AdminDashboard() {
                               {formatDate(new Date(row.createdAt).getTime())}
                             </td>
                             <td className="py-2 pr-4">{row.durationMonths}</td>
+                            <td className="max-w-[200px] truncate py-2 pr-4 text-zinc-700 dark:text-zinc-300">
+                              {row.issuedToEmail ?? '—'}
+                            </td>
                             <td className="py-2 pr-4">
                               {row.consumed ? (
                                 <span className="text-green-700 dark:text-green-400">Redeemed</span>

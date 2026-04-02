@@ -1,15 +1,9 @@
 import { writeAdminAudit } from '@/lib/admin-audit';
 import { getAdminSession } from '@/lib/admin-session';
 import { apiError, HttpStatus, parseJsonBody } from '@/lib/api';
-import {
-  generatePlainLicenseKey,
-  hashLicenseKey,
-  normalizeLicenseKeyInput,
-} from '@/lib/pro-license-crypto';
+import { createProLicenseKeyRecord, parseProLicenseDurationMonths } from '@/lib/pro-license-admin';
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
-
-const ALLOWED_MONTHS = new Set([1, 3, 6, 12]);
 
 type PostBody = { durationMonths?: unknown };
 
@@ -34,6 +28,7 @@ export async function GET(): Promise<NextResponse> {
         id: true,
         durationMonths: true,
         createdAt: true,
+        issuedToEmail: true,
         consumedAt: true,
         consumedByDeviceId: true,
       },
@@ -43,6 +38,7 @@ export async function GET(): Promise<NextResponse> {
       id: r.id,
       durationMonths: r.durationMonths,
       createdAt: r.createdAt.toISOString(),
+      issuedToEmail: r.issuedToEmail,
       consumed: r.consumedAt != null,
       consumedAt: r.consumedAt?.toISOString() ?? null,
       devicePrefix:
@@ -73,26 +69,17 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const body = await parseJsonBody<PostBody>(request);
-  const raw = body?.durationMonths;
-  const n =
-    typeof raw === 'number' ? raw : typeof raw === 'string' ? parseInt(raw.trim(), 10) : NaN;
-  if (!Number.isFinite(n) || !ALLOWED_MONTHS.has(n)) {
+  const n = parseProLicenseDurationMonths(body?.durationMonths);
+  if (n == null) {
     return apiError('durationMonths must be 1, 3, 6, or 12', HttpStatus.BAD_REQUEST, {
       pathname: path,
     });
   }
 
-  const plain = generatePlainLicenseKey();
-  const keyHash = hashLicenseKey(normalizeLicenseKeyInput(plain));
-
+  let plain: string;
   try {
-    await prisma.proLicenseKey.create({
-      data: {
-        keyHash,
-        durationMonths: n,
-        createdByAdminId: admin.adminId,
-      },
-    });
+    const created = await createProLicenseKeyRecord(admin.adminId, n);
+    plain = created.plainKey;
   } catch (e) {
     console.error('[admin/pro-licenses POST]', e);
     return NextResponse.json({ ok: false, error: 'Failed to create key' }, { status: 503 });
