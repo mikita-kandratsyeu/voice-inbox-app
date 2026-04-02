@@ -3,13 +3,14 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check, Crown } from 'lucide-react-native';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { AppLanguage, AppTheme } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import type { AccentColorId, Colors } from '@/shared/config';
 import { getAccentColorSwatches, useAppTheme, useColors } from '@/shared/config';
@@ -99,6 +100,9 @@ export const AppearanceScreen = () => {
   const [accentProSheet, setAccentProSheet] = useState(false);
   const { isProActive } = useProEntitlement();
   const isTablet = useIsTablet();
+  const { width: windowWidth } = useWindowDimensions();
+
+  const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
   const appLanguage = useSettingsStore((s) => s.appLanguage);
   const setAppLanguage = useSettingsStore((s) => s.setAppLanguage);
@@ -239,19 +243,19 @@ export const AppearanceScreen = () => {
                   })}
                 </View>
               </View>
-              {!isProActive ? (
+              {!isProActive && (
                 <Text
                   className="mt-2 px-1 text-xs leading-5"
                   style={{ color: color.text.secondary }}
                 >
                   {t('appearance.accentColor.subtitle')}
                 </Text>
-              ) : null}
+              )}
             </View>
           )}
+          <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
-
       <AutomationComingSoonSheet
         visible={accentProSheet}
         feature="accentColor"
