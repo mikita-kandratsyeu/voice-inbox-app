@@ -41,6 +41,7 @@ export type AskRequest = {
   question: string;
   summary?: string;
   tasks?: Array<{ text: string }>;
+  onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;
 };
 
 export type AiOrchestratorSuccess<T> = {

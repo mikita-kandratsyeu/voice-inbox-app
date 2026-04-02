@@ -14,7 +14,7 @@ type DetailTabProcessingViewProps = {
   progressLabel?: string;
   phase: 'loading_model' | 'processing';
   color: Colors;
-  onCancel: () => void;
+  onCancel?: () => void;
   leadingIcon: React.ReactNode;
   hintText: string;
   context?: DetailTabProcessingContext;
@@ -106,15 +106,17 @@ export const DetailTabProcessingView = ({
           100%
         </Text>
       </View>
-      <Button
-        variant="secondary"
-        size="lg"
-        icon={<X size={16} color={color.text.primary} strokeWidth={2.5} />}
-        label={t('recordingDetail.cancel')}
-        color={color}
-        onPress={onCancel}
-        className="mt-1"
-      />
+      {onCancel ? (
+        <Button
+          variant="secondary"
+          size="lg"
+          icon={<X size={16} color={color.text.primary} strokeWidth={2.5} />}
+          label={t('recordingDetail.cancel')}
+          color={color}
+          onPress={onCancel}
+          className="mt-1"
+        />
+      ) : null}
     </View>
   );
 };

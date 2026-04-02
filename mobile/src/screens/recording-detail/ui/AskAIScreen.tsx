@@ -9,6 +9,7 @@ import {
   MessageSquare,
   RefreshCw,
   Share2,
+  Sparkles,
   WifiOff,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -36,6 +37,8 @@ import {
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { Button, getInputFieldInputStyle, InputField, ScreenHeader } from '@/shared/ui';
+
+import { DetailTabProcessingView } from './DetailTabProcessingView';
 
 const SUGGESTED_QUESTION_KEYS = ['askSuggested1', 'askSuggested2', 'askSuggested3'] as const;
 
@@ -385,7 +388,17 @@ export const AskAIScreen = () => {
   );
 
   const [questionInput, setQuestionInput] = useState('');
-  const { askQuestion, askAnother, isLoading, error, question, answer, history } = useAskAI();
+  const {
+    askQuestion,
+    askAnother,
+    isLoading,
+    error,
+    question,
+    answer,
+    history,
+    privateAskProgress,
+    privateAskPhase,
+  } = useAskAI();
   const { isConnected } = useNetworkStatus();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
 
@@ -442,7 +455,21 @@ export const AskAIScreen = () => {
 
   const renderContent = useCallback(() => {
     if (!hasTranscript) return <NoTranscriptState color={color} />;
-    if (isLoading) return <LoadingState color={color} />;
+    if (isLoading) {
+      if (aiExecutionMode === 'private_experimental') {
+        return (
+          <DetailTabProcessingView
+            progress={privateAskProgress}
+            phase={privateAskPhase}
+            color={color}
+            hintText={t('privateAi.batteryHint')}
+            leadingIcon={<Sparkles size={22} color={color.accent.primary} strokeWidth={2} />}
+            context="private_llm"
+          />
+        );
+      }
+      return <LoadingState color={color} />;
+    }
 
     if (error && !answer)
       return (
@@ -484,11 +511,14 @@ export const AskAIScreen = () => {
     answer,
     question,
     history,
+    privateAskProgress,
+    privateAskPhase,
     color,
     liveRecord,
     disableByNetwork,
     handleRetry,
     aiExecutionMode,
+    t,
     handleSuggestedQuestion,
     handleCopy,
     handleShare,

@@ -182,6 +182,25 @@ export async function runLocalAsk(
     const askSystemPrompt = buildLocalAskSystemPrompt();
     const userContent = buildLocalAskUserContent(request, transcript);
 
+    const askMaxTokens = resolvePrivateAskMaxTokens(ctx.privateLocalLlmBudget);
+    let sessionTokens = 0;
+    const tokenBudgetForProgress = Math.max(1, askMaxTokens * 2);
+
+    const bridgeSessionProgress = (event: LocalLlmSessionProgressEvent) => {
+      const forward = request.onLocalGenerationProgress;
+      if (!forward) return;
+      if (event.kind === 'completion_tick') {
+        sessionTokens += 1;
+        forward({
+          kind: 'completion_token',
+          tokenIndex: sessionTokens,
+          nPredictBudget: tokenBudgetForProgress,
+        });
+      } else {
+        forward(event);
+      }
+    };
+
     const runOnce = (system: string) =>
       generateWithLocalLlm(
         ctx.selectedLocalAiModel,
@@ -190,9 +209,12 @@ export async function runLocalAsk(
           { role: 'user', content: userContent },
         ],
         {
-          maxTokens: resolvePrivateAskMaxTokens(ctx.privateLocalLlmBudget),
+          maxTokens: askMaxTokens,
           temperature: LOCAL_GEN_ASK.temperature,
           intent: 'json',
+          onLlmSessionProgress: request.onLocalGenerationProgress
+            ? bridgeSessionProgress
+            : undefined,
         },
       );
 
