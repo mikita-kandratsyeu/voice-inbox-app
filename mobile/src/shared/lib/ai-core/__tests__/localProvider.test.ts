@@ -414,6 +414,14 @@ describe('parseLocalAskResponse', () => {
     expect(parseLocalAskResponse('{"answer":"ok",}')).toBe('ok');
   });
 
+  it('recovers answer when JSON is truncated before closing quote', () => {
+    expect(parseLocalAskResponse('{"answer":"answer truncated')).toBe('answer truncated');
+  });
+
+  it('recovers answer with escapes when truncated', () => {
+    expect(parseLocalAskResponse('{"answer":"line one\\nline two')).toBe('line one\nline two');
+  });
+
   it('allows plain text when plausible', () => {
     expect(parseLocalAskResponse('This is a normal reply.')).toBe('This is a normal reply.');
   });

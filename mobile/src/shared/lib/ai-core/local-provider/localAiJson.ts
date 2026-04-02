@@ -202,6 +202,42 @@ function tryParseAskJsonAnswer(raw: string): string | null {
   return null;
 }
 
+function tryExtractAnswerFromTruncatedAskJson(raw: string): string | null {
+  const t = stripMarkdownCodeFence(raw.trim());
+  const keyMatch = /"answer"\s*:\s*"/i.exec(t);
+  if (!keyMatch) return null;
+
+  let i = keyMatch.index + keyMatch[0].length;
+  let out = '';
+
+  while (i < t.length) {
+    const c = t[i];
+    if (c === '\\') {
+      if (i + 1 >= t.length) break;
+      const n = t[i + 1];
+      if (n === 'n') out += '\n';
+      else if (n === 'r') out += '\r';
+      else if (n === 't') out += '\t';
+      else out += n;
+      i += 2;
+      continue;
+    }
+    if (c === '"') {
+      const rest = t.slice(i + 1).trimStart();
+      if (rest === '' || rest.startsWith('}') || rest.startsWith(',')) {
+        return out.trim() || null;
+      }
+      out += c;
+      i += 1;
+      continue;
+    }
+    out += c;
+    i += 1;
+  }
+
+  return out.trim() || null;
+}
+
 /**
  * Structured JSON answer when present; plain text only when clearly usable.
  */
@@ -209,6 +245,9 @@ export function parseLocalAskResponse(raw: string): string | null {
   const jsonAnswer = tryParseAskJsonAnswer(raw);
 
   if (jsonAnswer !== null) return jsonAnswer;
+
+  const truncated = tryExtractAnswerFromTruncatedAskJson(raw);
+  if (truncated !== null && truncated.length > 0) return truncated;
 
   const trimmed = stripMarkdownCodeFence(raw.trim());
   if (isPlausiblePlainAnswer(trimmed)) {

@@ -68,6 +68,11 @@ export const useAskAI = () => {
         tier: privateCapabilityTier,
       });
 
+      const privateAskProgress = {
+        lastDisplayedPct: -1,
+        tokenEvents: 0,
+        retryContinuationFloor: null as number | null,
+      };
       const onLocalGenerationProgress =
         aiExecutionMode === 'private_experimental'
           ? (event: AiLocalGenerationProgressEvent) => {
@@ -75,25 +80,47 @@ export const useAskAI = () => {
               let phase: 'loading_model' | 'processing' = 'loading_model';
               switch (event.kind) {
                 case 'prepare_model_start':
-                  pct = 2;
-                  phase = 'loading_model';
+                  if (privateAskProgress.tokenEvents > 0) {
+                    privateAskProgress.retryContinuationFloor = privateAskProgress.lastDisplayedPct;
+                  }
+                  if (privateAskProgress.retryContinuationFloor != null) {
+                    pct = privateAskProgress.retryContinuationFloor;
+                    phase = 'processing';
+                  } else {
+                    pct = 2;
+                    phase = 'loading_model';
+                  }
                   break;
                 case 'prepare_model_done':
-                  pct = 12;
                   phase = 'processing';
+                  if (privateAskProgress.retryContinuationFloor != null) {
+                    pct = Math.max(12, privateAskProgress.retryContinuationFloor);
+                  } else {
+                    pct = 12;
+                  }
                   break;
                 case 'completion_token': {
                   phase = 'processing';
+                  privateAskProgress.tokenEvents += 1;
                   const genFrac = event.tokenIndex / event.nPredictBudget;
-                  pct = 12 + Math.min(82, Math.floor(genFrac * 82));
+                  if (privateAskProgress.retryContinuationFloor != null) {
+                    const span = 98 - privateAskProgress.retryContinuationFloor;
+                    pct =
+                      privateAskProgress.retryContinuationFloor +
+                      Math.min(span, Math.floor(genFrac * span));
+                  } else {
+                    pct = 12 + Math.min(82, Math.floor(genFrac * 82));
+                  }
                   break;
                 }
                 default:
                   return;
               }
+              const nextPct = Math.min(98, pct);
+              privateAskProgress.lastDisplayedPct = nextPct;
               setState((s) => ({
                 ...s,
-                privateAskProgress: Math.min(98, pct),
+                privateAskProgress: nextPct,
                 privateAskPhase: phase,
               }));
             }

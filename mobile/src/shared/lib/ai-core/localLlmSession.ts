@@ -88,6 +88,11 @@ async function runCompletionLocked(
   const intent = options.intent ?? 'chat';
   const profile = mergeLocalLlmCompletionParams(modelId, intent);
   try {
+    const tokenCb = options.onLlmSessionProgress
+      ? (_data: TokenData) => {
+          options.onLlmSessionProgress?.({ kind: 'completion_tick' });
+        }
+      : undefined;
     const result = await ctx.completion(
       {
         messages,
@@ -96,9 +101,7 @@ async function runCompletionLocked(
         temperature: options.temperature ?? 0.2,
         add_generation_prompt: true,
       },
-      (_data: TokenData) => {
-        options.onLlmSessionProgress?.({ kind: 'completion_tick' });
-      },
+      tokenCb,
     );
     return (result.text ?? result.content ?? '').trim();
   } catch (e) {

@@ -155,6 +155,11 @@ export const useAiProcessing = () => {
         const snapshot = useRecordStore.getState().records.find((r) => r.id === record.id);
         const existingTaskTexts = collectExistingTaskTextsForAiPrompt(snapshot?.tasks);
 
+        const privateBatchProgress = {
+          lastDisplayedPct: -1,
+          tokenEvents: 0,
+          retryContinuationFloor: null as number | null,
+        };
         const onLocalGenerationProgress =
           aiExecutionMode === 'private_experimental'
             ? (event: AiLocalGenerationProgressEvent) => {
@@ -163,24 +168,47 @@ export const useAiProcessing = () => {
                 let phase: 'loading_model' | 'processing' = 'loading_model';
                 switch (event.kind) {
                   case 'prepare_model_start':
-                    pct = 2;
-                    phase = 'loading_model';
+                    if (privateBatchProgress.tokenEvents > 0) {
+                      privateBatchProgress.retryContinuationFloor =
+                        privateBatchProgress.lastDisplayedPct;
+                    }
+                    if (privateBatchProgress.retryContinuationFloor != null) {
+                      pct = privateBatchProgress.retryContinuationFloor;
+                      phase = 'processing';
+                    } else {
+                      pct = 2;
+                      phase = 'loading_model';
+                    }
                     break;
                   case 'prepare_model_done':
-                    pct = 12;
                     phase = 'processing';
+                    if (privateBatchProgress.retryContinuationFloor != null) {
+                      pct = Math.max(12, privateBatchProgress.retryContinuationFloor);
+                    } else {
+                      pct = 12;
+                    }
                     break;
                   case 'completion_token': {
                     phase = 'processing';
+                    privateBatchProgress.tokenEvents += 1;
                     const genFrac = event.tokenIndex / event.nPredictBudget;
-                    pct = 12 + Math.min(82, Math.floor(genFrac * 82));
+                    if (privateBatchProgress.retryContinuationFloor != null) {
+                      const span = 98 - privateBatchProgress.retryContinuationFloor;
+                      pct =
+                        privateBatchProgress.retryContinuationFloor +
+                        Math.min(span, Math.floor(genFrac * span));
+                    } else {
+                      pct = 12 + Math.min(82, Math.floor(genFrac * 82));
+                    }
                     break;
                   }
                   default:
                     return;
                 }
+                const nextPct = Math.min(98, pct);
+                privateBatchProgress.lastDisplayedPct = nextPct;
                 setPrivateAiBatchUi(record.id, {
-                  privateAiBatchProgress: Math.min(98, pct),
+                  privateAiBatchProgress: nextPct,
                   privateAiBatchPhase: phase,
                 });
               }

@@ -201,8 +201,9 @@ export async function runLocalAsk(
       }
     };
 
-    const runOnce = (system: string) =>
-      generateWithLocalLlm(
+    const runOnce = (system: string) => {
+      sessionTokens = 0;
+      return generateWithLocalLlm(
         ctx.selectedLocalAiModel,
         [
           { role: 'system', content: system },
@@ -217,6 +218,7 @@ export async function runLocalAsk(
             : undefined,
         },
       );
+    };
 
     let raw = await runOnce(askSystemPrompt);
     let answer = parseLocalAskResponse(raw);
