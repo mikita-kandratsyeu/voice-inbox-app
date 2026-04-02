@@ -19,9 +19,6 @@ const onest = Onest({
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL_OR_FALLBACK),
-  icons: {
-    icon: '/favicon.ico',
-  },
   verification: {
     google: 'DkzhOPpo8WzVKEi9yjlUvpHh1dZhnLzknYyJ486BIaU',
   },
