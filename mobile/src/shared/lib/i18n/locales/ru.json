@@ -690,7 +690,11 @@
     "outputLanguage": "Язык вывода",
     "outputLanguage.same": "Как в транскрипте",
     "outputLanguage.ru": "Всегда русский",
-    "outputLanguage.en": "Всегда английский"
+    "outputLanguage.en": "Всегда английский",
+    "privateLocalGeneration": "Локальная инференция",
+    "privateLocalGeneration.efficient": "Быстрее",
+    "privateLocalGeneration.balanced": "Сбалансировано",
+    "privateLocalGeneration.expanded": "Подробнее"
   },
   "privateAiMode": {
     "title": "Режимы Private и Smart",

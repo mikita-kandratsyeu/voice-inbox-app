@@ -22,6 +22,7 @@ export type SummaryStyle = 'brief' | 'standard' | 'detailed';
 export type TaskStrictness = 'strict' | 'balanced' | 'soft';
 export type AiOutputLanguage = 'same' | 'ru' | 'en';
 export type AiExecutionMode = 'smart_hybrid' | 'private_experimental';
+export type PrivateLocalLlmBudget = 'efficient' | 'balanced' | 'expanded';
 export type PrivateCapabilityTier = 'full' | 'limited' | 'unavailable';
 
 export type WhisperModelId = 'whisper-tiny' | 'whisper-base' | 'whisper-small' | 'whisper-medium';
@@ -85,6 +86,7 @@ export type SettingsState = {
   taskStrictness: TaskStrictness;
   aiOutputLanguage: AiOutputLanguage;
   aiExecutionMode: AiExecutionMode;
+  privateLocalLlmBudget: PrivateLocalLlmBudget;
   privateCapabilityTier: PrivateCapabilityTier;
   autoTranscribeOnSave: boolean;
   autoAiAfterTranscription: boolean;
@@ -110,6 +112,7 @@ export type SettingsState = {
   setTaskStrictness: (value: TaskStrictness) => void;
   setAiOutputLanguage: (value: AiOutputLanguage) => void;
   setAiExecutionMode: (value: AiExecutionMode) => void;
+  setPrivateLocalLlmBudget: (value: PrivateLocalLlmBudget) => void;
   reconcileAiExecutionModeAfterRemoteConfig: () => void;
   setPrivateCapabilityTier: (value: PrivateCapabilityTier) => void;
   setAutoTranscribeOnSave: (value: boolean) => void;

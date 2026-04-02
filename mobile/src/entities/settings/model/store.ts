@@ -21,6 +21,7 @@ import type {
   AutoArchiveAfterDays,
   LocalAiModelId,
   PrivateCapabilityTier,
+  PrivateLocalLlmBudget,
   SettingsState,
   SummaryStyle,
   TaskStrictness,
@@ -50,6 +51,7 @@ const KEYS = {
   TASK_STRICTNESS: 'settings.taskStrictness',
   AI_OUTPUT_LANGUAGE: 'settings.aiOutputLanguage',
   AI_EXECUTION_MODE: 'settings.aiExecutionMode',
+  PRIVATE_LOCAL_LLM_BUDGET: 'settings.privateLocalLlmBudget',
   PRIVATE_CAPABILITY_TIER: 'settings.privateCapabilityTier',
   AUTO_TRANSCRIBE_ON_SAVE: 'settings.autoTranscribeOnSave',
   AUTO_AI_AFTER_TRANSCRIPTION: 'settings.autoAiAfterTranscription',
@@ -234,6 +236,16 @@ const getStoredAiExecutionMode = (): AiExecutionMode => {
   return val === 'private_experimental' ? 'private_experimental' : 'smart_hybrid';
 };
 
+const PRIVATE_LLM_BUDGET_SET = new Set<string>(['efficient', 'balanced', 'expanded']);
+
+const getStoredPrivateLocalLlmBudget = (): PrivateLocalLlmBudget => {
+  const val = storage.getString(KEYS.PRIVATE_LOCAL_LLM_BUDGET);
+  if (val && PRIVATE_LLM_BUDGET_SET.has(val)) {
+    return val as PrivateLocalLlmBudget;
+  }
+  return 'balanced';
+};
+
 const getStoredPrivateCapabilityTier = (): PrivateCapabilityTier => {
   const val = storage.getString(KEYS.PRIVATE_CAPABILITY_TIER);
 
@@ -268,6 +280,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   taskStrictness: getStoredTaskStrictness(),
   aiOutputLanguage: getStoredAiOutputLanguage(),
   aiExecutionMode: getStoredAiExecutionMode(),
+  privateLocalLlmBudget: getStoredPrivateLocalLlmBudget(),
   privateCapabilityTier: getStoredPrivateCapabilityTier(),
   autoTranscribeOnSave: getStoredAutoTranscribeOnSave(),
   autoAiAfterTranscription: getStoredAutoAiAfterTranscription(),
@@ -349,6 +362,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAiOutputLanguage: (value: AiOutputLanguage) => {
     storage.set(KEYS.AI_OUTPUT_LANGUAGE, value);
     set({ aiOutputLanguage: value });
+  },
+
+  setPrivateLocalLlmBudget: (value: PrivateLocalLlmBudget) => {
+    storage.set(KEYS.PRIVATE_LOCAL_LLM_BUDGET, value);
+    set({ privateLocalLlmBudget: value });
   },
 
   setAiExecutionMode: (value: AiExecutionMode) => {

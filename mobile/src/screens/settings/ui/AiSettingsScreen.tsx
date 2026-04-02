@@ -6,7 +6,12 @@ import { ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'r
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
-import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
+import type {
+  AiOutputLanguage,
+  PrivateLocalLlmBudget,
+  SummaryStyle,
+  TaskStrictness,
+} from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import type { Colors } from '@/shared/config';
@@ -17,6 +22,7 @@ import { ScreenHeader, SettingsSection } from '@/shared/ui';
 const SUMMARY_STYLES: SummaryStyle[] = ['brief', 'standard', 'detailed'];
 const TASK_STRICTNESS_OPTIONS: TaskStrictness[] = ['strict', 'balanced', 'soft'];
 const OUTPUT_LANGUAGES: AiOutputLanguage[] = ['same', 'ru', 'en'];
+const PRIVATE_LOCAL_LLM_BUDGETS: PrivateLocalLlmBudget[] = ['efficient', 'balanced', 'expanded'];
 
 type PickerRowProps<T extends string> = {
   options: T[];
@@ -95,6 +101,10 @@ export const AiSettingsScreen = () => {
   const setTaskStrictness = useSettingsStore((s) => s.setTaskStrictness);
   const aiOutputLanguage = useSettingsStore((s) => s.aiOutputLanguage);
   const setAiOutputLanguage = useSettingsStore((s) => s.setAiOutputLanguage);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateLocalLlmBudget = useSettingsStore((s) => s.privateLocalLlmBudget);
+  const setPrivateLocalLlmBudget = useSettingsStore((s) => s.setPrivateLocalLlmBudget);
+  const isPrivateMode = aiExecutionMode === 'private_experimental';
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -118,6 +128,19 @@ export const AiSettingsScreen = () => {
           <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
             {t('aiSettings.description')}
           </Text>
+          {isPrivateMode && (
+            <>
+              <SettingsSection title={t('aiSettings.privateLocalGeneration')}>
+                <PickerSection
+                  options={PRIVATE_LOCAL_LLM_BUDGETS}
+                  selected={privateLocalLlmBudget}
+                  onSelect={setPrivateLocalLlmBudget}
+                  labelKey={(v) => t(`aiSettings.privateLocalGeneration.${v}`)}
+                  color={color}
+                />
+              </SettingsSection>
+            </>
+          )}
           <SettingsSection title={t('aiSettings.summaryStyle')}>
             <PickerSection
               options={SUMMARY_STYLES}

@@ -24,6 +24,7 @@ export const useAskAI = () => {
   const taskStrictness = useSettingsStore((s) => s.taskStrictness);
   const aiOutputLanguage = useSettingsStore((s) => s.aiOutputLanguage);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateLocalLlmBudget = useSettingsStore((s) => s.privateLocalLlmBudget);
   const privateCapabilityTier = useSettingsStore((s) => s.privateCapabilityTier);
   const effectiveLocalAiModelId = selectedLocalAiModel ?? DEFAULT_LOCAL_AI_MODEL_ID;
   const isLocalLlmModelDownloaded =
@@ -77,6 +78,7 @@ export const useAskAI = () => {
             taskStrictness,
             aiOutputLanguage,
             aiExecutionMode,
+            privateLocalLlmBudget,
             privateCapabilityTier,
           },
         );
@@ -150,6 +152,7 @@ export const useAskAI = () => {
       taskStrictness,
       aiOutputLanguage,
       aiExecutionMode,
+      privateLocalLlmBudget,
       privateCapabilityTier,
     ],
   );

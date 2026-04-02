@@ -1,6 +1,7 @@
 import {
   LOCAL_GEN_ASK,
   LOCAL_GEN_SUMMARY,
+  resolvePrivateSummaryMaxTokens,
   STRICT_JSON_TAIL,
 } from './local-provider/localAiConstants';
 import { LocalAiError } from './local-provider/localAiErrors';
@@ -104,7 +105,7 @@ export async function runLocalSummaryTasks(
           { role: 'user', content: userContent },
         ],
         {
-          maxTokens: LOCAL_GEN_SUMMARY.maxTokens,
+          maxTokens: resolvePrivateSummaryMaxTokens(ctx.privateLocalLlmBudget),
           temperature: LOCAL_GEN_SUMMARY.temperature,
           intent: 'json',
         },

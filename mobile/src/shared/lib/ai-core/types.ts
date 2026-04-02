@@ -1,6 +1,7 @@
 import type {
   AiOutputLanguage,
   LocalAiModelId,
+  PrivateLocalLlmBudget,
   SummaryStyle,
   TaskStrictness,
   UserSelectableAIModelId,
@@ -18,6 +19,7 @@ export type AiExecutionContext = {
   taskStrictness: TaskStrictness;
   aiOutputLanguage: AiOutputLanguage;
   aiExecutionMode: 'smart_hybrid' | 'private_experimental';
+  privateLocalLlmBudget: PrivateLocalLlmBudget;
   privateCapabilityTier: 'full' | 'limited' | 'unavailable';
 };
 

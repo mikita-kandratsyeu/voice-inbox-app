@@ -37,6 +37,7 @@ export type {
   DownloadBytes,
   LocalAiModelId,
   PrivateCapabilityTier,
+  PrivateLocalLlmBudget,
   SettingsState,
   SummaryStyle,
   TaskStrictness,

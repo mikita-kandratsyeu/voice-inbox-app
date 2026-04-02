@@ -60,6 +60,7 @@ export const useAiProcessing = () => {
     taskStrictness,
     aiOutputLanguage,
     aiExecutionMode,
+    privateLocalLlmBudget,
     privateCapabilityTier,
   } = useSettingsStore(
     useShallow((s) => ({
@@ -70,6 +71,7 @@ export const useAiProcessing = () => {
       taskStrictness: s.taskStrictness,
       aiOutputLanguage: s.aiOutputLanguage,
       aiExecutionMode: s.aiExecutionMode,
+      privateLocalLlmBudget: s.privateLocalLlmBudget,
       privateCapabilityTier: s.privateCapabilityTier,
     })),
   );
@@ -206,6 +208,7 @@ export const useAiProcessing = () => {
             taskStrictness,
             aiOutputLanguage,
             aiExecutionMode,
+            privateLocalLlmBudget,
             privateCapabilityTier,
           },
         );
@@ -362,6 +365,7 @@ export const useAiProcessing = () => {
       summaryStyle,
       taskStrictness,
       aiOutputLanguage,
+      privateLocalLlmBudget,
       privateCapabilityTier,
       applyCancelledUiState,
       setPrivateAiBatchUi,

@@ -43,6 +43,7 @@ function createCtx(overrides: Partial<AiExecutionContext> = {}): AiExecutionCont
     taskStrictness: 'balanced',
     aiOutputLanguage: 'same',
     aiExecutionMode: 'private_experimental',
+    privateLocalLlmBudget: 'balanced',
     privateCapabilityTier: 'full',
     ...overrides,
   };
@@ -468,6 +469,29 @@ describe('runLocalSummaryTasks (integration)', () => {
       DEFAULT_LOCAL_AI_MODEL_ID,
       expect.any(Array),
       expect.objectContaining({ maxTokens: 1538, temperature: 0.2, intent: 'json' }),
+    );
+  });
+
+  it('uses larger maxTokens when private local budget is expanded', async () => {
+    mockedCompleteLocalChat.mockResolvedValue(
+      JSON.stringify({
+        summary: 'x',
+        tasks: [],
+        tags: [],
+        keyPhrases: [],
+        nextSteps: [],
+      }),
+    );
+
+    await runLocalSummaryTasks(
+      { id: '1', transcript: 'note' },
+      createCtx({ privateLocalLlmBudget: 'expanded' }),
+    );
+
+    expect(mockedCompleteLocalChat).toHaveBeenCalledWith(
+      DEFAULT_LOCAL_AI_MODEL_ID,
+      expect.any(Array),
+      expect.objectContaining({ maxTokens: 2048, temperature: 0.2, intent: 'json' }),
     );
   });
 

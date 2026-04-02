@@ -690,7 +690,11 @@
     "outputLanguage": "Output language",
     "outputLanguage.same": "Same as transcript",
     "outputLanguage.ru": "Always Russian",
-    "outputLanguage.en": "Always English"
+    "outputLanguage.en": "Always English",
+    "privateLocalGeneration": "On-device inference",
+    "privateLocalGeneration.efficient": "Faster",
+    "privateLocalGeneration.balanced": "Balanced",
+    "privateLocalGeneration.expanded": "More detail"
   },
   "privateAiMode": {
     "title": "Private vs Smart",
