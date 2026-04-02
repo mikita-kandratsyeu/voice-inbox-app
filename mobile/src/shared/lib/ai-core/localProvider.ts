@@ -1,6 +1,7 @@
 import {
   LOCAL_GEN_ASK,
   LOCAL_GEN_SUMMARY,
+  resolvePrivateAskMaxTokens,
   resolvePrivateSummaryMaxTokens,
   STRICT_JSON_TAIL,
 } from './local-provider/localAiConstants';
@@ -161,7 +162,7 @@ export async function runLocalAsk(
           { role: 'user', content: userContent },
         ],
         {
-          maxTokens: LOCAL_GEN_ASK.maxTokens,
+          maxTokens: resolvePrivateAskMaxTokens(ctx.privateLocalLlmBudget),
           temperature: LOCAL_GEN_ASK.temperature,
           intent: 'json',
         },

@@ -642,4 +642,16 @@ describe('runLocalAsk (integration)', () => {
     expect(userMsg.content).toContain('- two');
     expect(userMsg.content.match(/^- /gm)?.length).toBe(2);
   });
+
+  it('uses larger ask maxTokens when private local budget is expanded', async () => {
+    mockedCompleteLocalChat.mockResolvedValue(JSON.stringify({ answer: 'ok' }));
+
+    await runLocalAsk(askRequest, createCtx({ privateLocalLlmBudget: 'expanded' }));
+
+    expect(mockedCompleteLocalChat).toHaveBeenCalledWith(
+      DEFAULT_LOCAL_AI_MODEL_ID,
+      expect.any(Array),
+      expect.objectContaining({ maxTokens: 600, temperature: 0.25, intent: 'json' }),
+    );
+  });
 });
