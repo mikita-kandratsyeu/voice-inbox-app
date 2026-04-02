@@ -104,6 +104,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   const { subject, text, html } = buildProLicenseKeyEmail({
     plainKey,
     durationMonths,
+    recipientEmail: to,
   });
 
   try {
