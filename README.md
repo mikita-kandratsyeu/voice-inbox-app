@@ -6,7 +6,6 @@ It lets you quickly capture ideas, meetings, and daily thoughts as audio, then t
 
 The project is designed as a solo‑friendly, production‑ready codebase: clean architecture, modular features, and a clear separation between offline storage, background jobs, and cloud processing.
 
----
 
 ## Features
 
@@ -35,7 +34,6 @@ The project is designed as a solo‑friendly, production‑ready codebase: clean
   - NativeWind (Tailwind for React Native)
   - Clean folder structure and typed repositories
 
----
 
 ## Tech stack
 
@@ -47,7 +45,6 @@ The project is designed as a solo‑friendly, production‑ready codebase: clean
 - **Data:** In‑memory(prepared for SQLite)
 - **Theming:** Custom light/dark theme with context + NativeWind `dark` mode
 
----
 
 ## Privacy & terms (web)
 
