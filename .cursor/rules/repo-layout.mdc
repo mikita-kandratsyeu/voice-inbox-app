@@ -1,0 +1,30 @@
+---
+description: Single Git repo with web and mobile apps (no workspace tooling)
+alwaysApply: true
+---
+
+# Voice Inbox — repository layout
+
+One **Git repository** with two **standalone** apps in `web/` and `mobile/`. There is **no** root `package.json`, **no** Yarn/npm workspaces, and **no** Turborepo/Nx-style orchestration — each app is its own Yarn 4 project (`packageManager` in that app’s `package.json`). **Node:** >= 24.
+
+| App | Path | Role |
+|-----|------|------|
+| Web | `web/` | Next.js, Prisma, public site / API |
+| Mobile | `mobile/` | React Native (CLI), Drizzle, offline-first app |
+
+Install dependencies and run scripts **from the app directory** (`cd web` or `cd mobile`), not from the repo root.
+
+## Commands (from each app directory)
+
+- **Web:** `yarn dev`, `yarn build`, `yarn lint`, `yarn type:check`, `yarn db:generate` / `db:push`
+- **Mobile:** `yarn start`, `yarn ios`, `yarn lint`, `yarn type:check`, `yarn test`
+
+Do not mix layers: **web** uses Prisma and Postgres; **mobile** uses Drizzle and local storage (op-sqlite, etc.). When changing shared business logic, keep both apps in mind, but do not copy database schemas blindly.
+
+## Scope of changes
+
+Change only what the task requires. Web legal copy lives in Markdown under `web/content/` (see root `README.md`).
+
+## Cursor indexing
+
+Use a root `.cursorignore` so `node_modules`, build outputs, and `.env` are not pulled into context. Template: `.cursor/cursorignore.template` → copy to `.cursorignore` at the repository root.
