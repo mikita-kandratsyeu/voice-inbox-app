@@ -29,24 +29,24 @@
     "tryPro": "Try Pro"
   },
   "proLicense": {
-    "modalTitle": "Activate",
-    "modalSubtitle": "Enter the license key you received. It will only be linked to this device.",  
+    "modalTitle": "Promo code",
+    "modalSubtitle": "Enter your promo code below to enable additional features in the app. Codes may come from our team or a special offer.",
     "keyPlaceholder": "VI-XXXX-XXXX-XXXX",
-    "activate": "Activate",
-    "activatingTitle": "Activating",
-    "activatingSubtitle": "Please wait…",
-    "successTitle": "Congratulations!",
-    "successSubtitle": "Activated: more generations and no ads.",
-    "successUntil": "Active until {{date}}",
-    "successButton": "Awesome",
+    "activate": "Apply",
+    "activatingTitle": "Almost there",
+    "activatingSubtitle": "We’re applying your promo code…",
+    "successTitle": "You’re all set",
+    "successSubtitle": "More AI and an ad-free experience.",
+    "successUntil": "Included through {{date}}",
+    "successButton": "Great",
     "errors": {
-      "invalidKey": "Invalid license key",
-      "usedElsewhere": "This key is already activated on another device",
-      "serverError": "Could not activate license. Try again later.",
-      "rateLimit": "Too many activation attempts. Try again later.",
-      "activationFailed": "Activation failed",
-      "invalidResponse": "Invalid server response",
-      "network": "Network error. Check your connection."
+      "invalidKey": "That promo code doesn’t look right. Double-check and try again.",
+      "usedElsewhere": "This promo code was already used. If you changed phones, reach out to support.",
+      "serverError": "Something went wrong. Please try again in a moment.",
+      "rateLimit": "Too many attempts right now. Please try again later.",
+      "activationFailed": "We couldn’t apply this promo code. Try again or contact support.",
+      "invalidResponse": "Something went wrong. Please try again.",
+      "network": "Check your connection and try again."
     }
   },
   "appReview": {

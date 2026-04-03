@@ -74,16 +74,17 @@ export function SupportForm({ color, ...form }: Props) {
         {t('support.emailLabel')}
       </Text>
       <TextInput
+        autoCapitalize="none"
+        autoComplete="email"
+        autoCorrect={false}
         className="mb-3 rounded-xl border-2 px-3 py-2.5 text-[16px]"
-        style={inputBase}
+        editable={!loading}
+        keyboardType="email-address"
+        onChangeText={setEmail}
         placeholder={t('support.emailPlaceholder')}
         placeholderTextColor={color.text.secondary}
+        style={inputBase}
         value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-        autoCorrect={false}
-        editable={!loading}
       />
       <Text className="mb-1.5 text-[13px] font-medium" style={{ color: color.text.secondary }}>
         {t('support.subjectLabel')}

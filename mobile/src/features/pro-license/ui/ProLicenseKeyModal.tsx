@@ -33,6 +33,11 @@ import {
   isStoreProEntitlementActiveNow,
 } from '../lib/isStoreProEntitlementActive';
 import { setProExpiresAtMsSync } from '../lib/proEntitlementStorage';
+import {
+  formatProOfferCodeDisplay,
+  isCompleteProOfferCode,
+  parseProOfferCodeInput,
+} from '../lib/proOfferCodeFormat';
 import { proLicenseMessageForRedeemError } from '../lib/redeemErrorMessage';
 
 type ProLicenseKeyModalProps = {
@@ -150,7 +155,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
   const color = useColors();
   const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
-  const [keyText, setKeyText] = useState('');
+  const [offerCodeCompact, setOfferCodeCompact] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<'form' | 'success'>('form');
@@ -161,7 +166,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
   useEffect(() => {
     if (!visible) {
       setPhase('form');
-      setKeyText('');
+      setOfferCodeCompact('');
       setError(null);
       setSuccessExpiresAt(null);
       bottomSheetRef.current?.dismiss();
@@ -207,13 +212,13 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
   }, [busy, phase, finishSuccess, onClose]);
 
   const handleSubmit = useCallback(async () => {
-    const trimmed = keyText.trim();
-    if (!trimmed || busy) {
+    if (!isCompleteProOfferCode(offerCodeCompact) || busy) {
       return;
     }
+    const payload = formatProOfferCodeDisplay(offerCodeCompact);
     setBusy(true);
     setError(null);
-    const result = await redeemProLicenseKey(trimmed);
+    const result = await redeemProLicenseKey(payload);
     setBusy(false);
     if (!result.ok && result.code === 'iap_active') {
       onCloseRef.current();
@@ -224,7 +229,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
       if (Number.isFinite(ms)) {
         setProExpiresAtMsSync(ms);
       }
-      setKeyText('');
+      setOfferCodeCompact('');
       onActivated();
       hapticSuccess();
       setSuccessExpiresAt(result.expiresAt);
@@ -233,7 +238,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
     }
     hapticError();
     setError(proLicenseMessageForRedeemError(t, result));
-  }, [keyText, busy, onActivated, t]);
+  }, [offerCodeCompact, busy, onActivated, t]);
 
   const showActivatingOverlay = busy && phase !== 'success';
 
@@ -307,11 +312,12 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
               {t('proLicense.modalSubtitle')}
             </Text>
             <BottomSheetTextInput
-              value={keyText}
-              onChangeText={setKeyText}
+              value={formatProOfferCodeDisplay(offerCodeCompact)}
+              onChangeText={(text) => setOfferCodeCompact(parseProOfferCodeInput(text))}
               autoCapitalize="characters"
               autoCorrect={false}
               editable={!busy}
+              maxLength={17}
               placeholder={t('proLicense.keyPlaceholder')}
               placeholderTextColor={color.text.muted}
               className="mt-4 rounded-xl border px-3 py-3 font-mono text-base"
@@ -319,6 +325,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
                 borderColor: color.border.default,
                 color: color.text.primary,
                 backgroundColor: color.background.secondary,
+                letterSpacing: 0.5,
               }}
             />
             {error != null && error.length > 0 && (
@@ -339,7 +346,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
                 label={t('proLicense.activate')}
                 color={color}
                 onPress={() => void handleSubmit()}
-                disabled={!keyText.trim() || busy}
+                disabled={!isCompleteProOfferCode(offerCodeCompact) || busy}
               />
             </View>
           </>
