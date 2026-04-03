@@ -73,7 +73,7 @@ export const AIModelPickerScreen = () => {
           useSettingsStore.getState();
         if (storedId == null) return;
         const status = localLlmModelStatuses[storedId] ?? 'not_downloaded';
-        if (status !== 'downloaded') {
+        if (status !== 'downloaded' && status !== 'downloading') {
           clearLocalAiModelSelection();
         }
       };

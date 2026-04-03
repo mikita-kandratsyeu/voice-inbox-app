@@ -268,7 +268,7 @@ export function useSettingsScreen() {
   const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
 
   const transcriptionValue =
-    whisperStatus === 'not_downloaded'
+    whisperStatus === 'not_downloaded' || whisperStatus === 'downloading'
       ? t('settings.whisperModelNotSet')
       : getWhisperLabel(selectedWhisperModel);
   const privateAiModeValue = t(`aiSettings.executionMode.${aiExecutionMode}`);

@@ -165,7 +165,7 @@ function PlanPickTile({
           alignSelf: 'stretch',
           minHeight: 92,
           justifyContent: 'flex-start',
-          borderWidth: selected ? 2 : 1,
+          borderWidth: 2,
           borderColor: selected ? c.accent.primary : c.border.default,
           backgroundColor: selected ? `${c.accent.primary}14` : c.background.primary,
         }}
