@@ -281,6 +281,7 @@ const styles = StyleSheet.create({
     height: DELETE_CIRCLE,
     justifyContent: 'center',
     width: DELETE_CIRCLE,
+    marginLeft: 14,
   },
   iconCircle: {
     alignItems: 'center',
