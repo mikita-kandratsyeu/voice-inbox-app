@@ -42,12 +42,16 @@ export const AI_MODELS: AIModel[] = USER_FACING_AI_MODELS.map(
   ({ tierLabelKey: _t, supportTierCode: _s, ...m }) => m,
 );
 
+/** Rough RAM / process pressure hint for on-device GGUF (not exact MB). */
+export type LocalAiDeviceLoad = 'light' | 'moderate' | 'heavy';
+
 export type LocalAiModelCatalogEntry = {
   id: LocalAiModelId;
   name: string;
   provider: string;
   descriptionKey: string;
   speed: 'fast' | 'medium' | 'slow';
+  deviceLoad: LocalAiDeviceLoad;
   fileName: string;
   sizeMb: number;
   downloadUrl: string;
@@ -60,6 +64,7 @@ export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
     provider: 'Meta',
     descriptionKey: 'aiModels.localLlama32_1bDesc',
     speed: 'fast',
+    deviceLoad: 'light',
     fileName: 'llama-3.2-1b.gguf',
     sizeMb: 808,
     downloadUrl:
@@ -71,6 +76,7 @@ export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
     provider: 'Qwen',
     descriptionKey: 'aiModels.localQwen3Desc',
     speed: 'fast',
+    deviceLoad: 'moderate',
     fileName: 'Qwen3-1.7B-Q4_K_M.gguf',
     sizeMb: 1200,
     downloadUrl:
@@ -82,6 +88,7 @@ export const LOCAL_AI_MODELS: LocalAiModelCatalogEntry[] = [
     provider: 'Google',
     descriptionKey: 'aiModels.localGemma2Desc',
     speed: 'medium',
+    deviceLoad: 'heavy',
     fileName: 'gemma-2-2b-it-Q4_K_M.gguf',
     sizeMb: 1600,
     downloadUrl:

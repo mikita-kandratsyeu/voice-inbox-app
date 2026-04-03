@@ -1,8 +1,9 @@
-/**
- * Single source for KV context size (must match init in localLlmSession).
- * Used to fail fast with a user-facing error instead of native overflow.
- */
-export const LOCAL_LLM_N_CTX = 16_384;
+import type { LocalAiModelId } from '@/entities/settings';
+
+import { DEFAULT_LOCAL_LLM_N_CTX, getLocalLlmNCtx } from './localLlmModelProfiles';
+
+/** @deprecated Use getLocalLlmNCtx(modelId) — context may differ per model. */
+export const LOCAL_LLM_N_CTX = DEFAULT_LOCAL_LLM_N_CTX;
 
 /** Chat template, special tokens, and safety margin vs tokenizer mismatch. */
 export const LOCAL_LLM_PROMPT_OVERHEAD_TOKENS = 1024;
@@ -20,9 +21,14 @@ export function estimateLocalLlmPromptTokens(text: string): number {
   return Math.ceil(text.length / charsPerToken);
 }
 
-export function localPromptFitsLlmContext(promptText: string, maxNewTokens: number): boolean {
+export function localPromptFitsLlmContext(
+  promptText: string,
+  maxNewTokens: number,
+  modelId: LocalAiModelId,
+): boolean {
+  const nCtx = getLocalLlmNCtx(modelId);
   return (
     estimateLocalLlmPromptTokens(promptText) + maxNewTokens + LOCAL_LLM_PROMPT_OVERHEAD_TOKENS <=
-    LOCAL_LLM_N_CTX
+    nCtx
   );
 }

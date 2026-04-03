@@ -4,6 +4,9 @@ import type { LocalAiModelId } from '@/entities/settings';
 
 export type LocalLlmCompletionIntent = 'json' | 'chat';
 
+/** Default KV context; per-model `nCtx` may override for RAM vs length tradeoffs. */
+export const DEFAULT_LOCAL_LLM_N_CTX = 16_384;
+
 /** One slot: we never use parallel.completion; saves KV RAM vs default n_parallel=8. */
 const SHARED_CONTEXT: Partial<ContextParams> = {
   n_parallel: 1,
@@ -12,16 +15,19 @@ const SHARED_CONTEXT: Partial<ContextParams> = {
   n_ubatch: 256,
 };
 
-type CompletionProfile = {
-  /** Always merged first */
+type LocalLlmModelProfile = {
+  /** KV context for initLlama; omit to use DEFAULT_LOCAL_LLM_N_CTX. */
+  nCtx?: number;
+  /** When set, overrides default for summary / structured JSON tasks. */
+  summaryTemperature?: number;
+  /** When set, overrides default for ask-AI JSON tasks. */
+  askTemperature?: number;
   base: Partial<CompletionParams>;
-  /** Extra params when intent is json */
   json?: Partial<CompletionParams>;
-  /** Extra params when intent is chat */
   chat?: Partial<CompletionParams>;
 };
 
-const PROFILES: Record<LocalAiModelId, CompletionProfile> = {
+const PROFILES: Record<LocalAiModelId, LocalLlmModelProfile> = {
   'local/qwen3-1.7b-q4_k_m': {
     base: {
       enable_thinking: false,
@@ -32,11 +38,11 @@ const PROFILES: Record<LocalAiModelId, CompletionProfile> = {
     json: {
       top_k: 48,
       penalty_repeat: 1.12,
-      stop: ['<|im_end|>'],
+      stop: ['<|redacted_im_end|>'],
     },
     chat: {
       top_k: 64,
-      stop: ['<|im_end|>'],
+      stop: ['<|redacted_im_end|>'],
     },
   },
   'local/llama-3.2-1b-q4_k_m': {
@@ -55,6 +61,8 @@ const PROFILES: Record<LocalAiModelId, CompletionProfile> = {
     },
   },
   'local/gemma-2-2b-it-q4_k_m': {
+    summaryTemperature: 0.18,
+    askTemperature: 0.22,
     base: {
       enable_thinking: false,
       force_pure_content: true,
@@ -70,6 +78,20 @@ const PROFILES: Record<LocalAiModelId, CompletionProfile> = {
     },
   },
 };
+
+export function getLocalLlmNCtx(modelId: LocalAiModelId): number {
+  return PROFILES[modelId].nCtx ?? DEFAULT_LOCAL_LLM_N_CTX;
+}
+
+export function getLocalLlmSummaryTemperature(modelId: LocalAiModelId, fallback: number): number {
+  const v = PROFILES[modelId].summaryTemperature;
+  return v ?? fallback;
+}
+
+export function getLocalLlmAskTemperature(modelId: LocalAiModelId, fallback: number): number {
+  const v = PROFILES[modelId].askTemperature;
+  return v ?? fallback;
+}
 
 export function getLocalLlmContextParams(): Partial<ContextParams> {
   return { ...SHARED_CONTEXT };

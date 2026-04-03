@@ -131,13 +131,26 @@ export const AiSettingsScreen = () => {
           {isPrivateMode && (
             <>
               <SettingsSection title={t('aiSettings.privateLocalGeneration')}>
-                <PickerSection
-                  options={PRIVATE_LOCAL_LLM_BUDGETS}
-                  selected={privateLocalLlmBudget}
-                  onSelect={setPrivateLocalLlmBudget}
-                  labelKey={(v) => t(`aiSettings.privateLocalGeneration.${v}`)}
-                  color={color}
-                />
+                <>
+                  <Text
+                    className="px-4 pb-2 pt-3 text-[13px] leading-5"
+                    style={{
+                      color: color.text.muted,
+                      backgroundColor: color.background.card,
+                      borderBottomWidth: 1,
+                      borderBottomColor: color.border.default,
+                    }}
+                  >
+                    {t('aiSettings.privateLocalGenerationHint')}
+                  </Text>
+                  <PickerSection
+                    options={PRIVATE_LOCAL_LLM_BUDGETS}
+                    selected={privateLocalLlmBudget}
+                    onSelect={setPrivateLocalLlmBudget}
+                    labelKey={(v) => t(`aiSettings.privateLocalGeneration.${v}`)}
+                    color={color}
+                  />
+                </>
               </SettingsSection>
             </>
           )}

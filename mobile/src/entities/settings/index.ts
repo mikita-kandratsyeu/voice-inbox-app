@@ -10,7 +10,7 @@ export { syncPrivateCapabilityTier } from './lib/syncPrivateCapabilityTier';
 export { TRANSCRIPTION_LANGUAGES, TRANSLATE_LANGUAGES } from './lib/transcriptionLanguages';
 export { useRecommendedWhisperModelId } from './lib/useRecommendedWhisperModelId';
 export { useWhisperModelCompatibility } from './lib/useWhisperModelCompatibility';
-export type { LocalAiModelCatalogEntry } from './model/constants';
+export type { LocalAiDeviceLoad, LocalAiModelCatalogEntry } from './model/constants';
 export {
   AI_MODELS,
   DEFAULT_LOCAL_AI_MODEL_ID,

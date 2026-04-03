@@ -1,11 +1,18 @@
 import type { LocalAiModelId } from '@/entities/settings';
 import { DEFAULT_LOCAL_AI_MODEL_ID } from '@/entities/settings/model/constants';
 
-import { getLocalLlmContextParams, mergeLocalLlmCompletionParams } from '../localLlmModelProfiles';
+import {
+  DEFAULT_LOCAL_LLM_N_CTX,
+  getLocalLlmAskTemperature,
+  getLocalLlmContextParams,
+  getLocalLlmNCtx,
+  getLocalLlmSummaryTemperature,
+  mergeLocalLlmCompletionParams,
+} from '../localLlmModelProfiles';
 
 const ALL_LOCAL_IDS: LocalAiModelId[] = [
   DEFAULT_LOCAL_AI_MODEL_ID,
-  'local/llama-3.2-1b-q4_k_m',
+  'local/qwen3-1.7b-q4_k_m',
   'local/gemma-2-2b-it-q4_k_m',
 ];
 
@@ -37,5 +44,15 @@ describe('localLlmModelProfiles', () => {
   it('disables Qwen reasoning channel for structured output', () => {
     const p = mergeLocalLlmCompletionParams('local/qwen3-1.7b-q4_k_m', 'json');
     expect(p.reasoning_format).toBe('none');
+  });
+
+  it('getLocalLlmNCtx defaults to DEFAULT_LOCAL_LLM_N_CTX', () => {
+    expect(getLocalLlmNCtx('local/llama-3.2-1b-q4_k_m')).toBe(DEFAULT_LOCAL_LLM_N_CTX);
+  });
+
+  it('applies Gemma-specific generation temperatures when set', () => {
+    expect(getLocalLlmSummaryTemperature('local/gemma-2-2b-it-q4_k_m', 0.2)).toBe(0.18);
+    expect(getLocalLlmAskTemperature('local/gemma-2-2b-it-q4_k_m', 0.25)).toBe(0.22);
+    expect(getLocalLlmSummaryTemperature('local/llama-3.2-1b-q4_k_m', 0.2)).toBe(0.2);
   });
 });

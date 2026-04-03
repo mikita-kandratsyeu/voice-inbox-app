@@ -694,7 +694,8 @@
     "privateLocalGeneration": "On-device inference",
     "privateLocalGeneration.efficient": "Faster",
     "privateLocalGeneration.balanced": "Balanced",
-    "privateLocalGeneration.expanded": "More detail"
+    "privateLocalGeneration.expanded": "More detail",
+    "privateLocalGenerationHint": "Controls how long local answers can be."
   },
   "privateAiMode": {
     "title": "Private vs Smart",
@@ -706,6 +707,9 @@
     "title": "Generation model",
     "description": "Pick a speed, accuracy, or best quality.",
     "privateDescription": "Private mode uses local on-device models. Cloud models are disabled in this mode.",
+    "privateBudgetHint": "Output length and generation time are set in AI settings under \"On-device inference\".",
+    "localDownloadBlockedTitle": "Download in progress",
+    "localDownloadBlockedBody": "Wait for the current model to finish downloading, or cancel it, then try again.",
     "privateModeLabel": "On-device",
     "tierFast": "Fast",
     "tierSmart": "Smarter",
@@ -718,9 +722,9 @@
     "metaLlamaDesc": "Open-source model with strong reasoning and instruction following",
     "deepSeekDesc": "Efficient model with strong reasoning.",
     "minimaxDesc": "Best quality for complex summaries and important notes.",
-    "localQwen3Desc": "Balanced default on most devices.",
+    "localQwen3Desc": "Balanced quality on most devices.",
     "localGemma2Desc": "Strong instruction following. Slightly larger download.",
-    "localLlama32_1bDesc": "Smaller download—handy when storage is tight.",
+    "localLlama32_1bDesc": "Smallest download—recommended when storage or memory is tight.",
     "notDownloadedSuffix": "not downloaded",
     "downloadLocalTitle": "Download model",
     "downloadLocalMessage": "Download about {{size}} MB over the network? The file is stored only on this device.",
@@ -733,6 +737,11 @@
       "fast": "Fast",
       "medium": "Medium",
       "slow": "Slow"
+    },
+    "deviceLoad": {
+      "light": "Easier on device memory",
+      "moderate": "Moderate memory use",
+      "heavy": "Higher memory use"
     }
   },
   "onboarding": {

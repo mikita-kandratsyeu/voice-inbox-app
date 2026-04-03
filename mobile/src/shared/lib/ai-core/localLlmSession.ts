@@ -6,9 +6,9 @@ import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 
 import { IS_IOS } from '../platform';
-import { LOCAL_LLM_N_CTX } from './localLlmBudget';
 import {
   getLocalLlmContextParams,
+  getLocalLlmNCtx,
   type LocalLlmCompletionIntent,
   mergeLocalLlmCompletionParams,
 } from './localLlmModelProfiles';
@@ -56,7 +56,7 @@ async function ensureContextLocked(modelId: LocalAiModelId): Promise<LlamaContex
   try {
     const ctx = await initLlama({
       model: path,
-      n_ctx: LOCAL_LLM_N_CTX,
+      n_ctx: getLocalLlmNCtx(modelId),
       n_gpu_layers: LOCAL_LLM_N_GPU_LAYERS,
       use_mmap: true,
       use_mlock: false,

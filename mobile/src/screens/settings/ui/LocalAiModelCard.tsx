@@ -111,7 +111,7 @@ export const LocalAiModelCard = ({
             {t(model.descriptionKey as 'aiModels.localQwen3Desc')}
           </Text>
 
-          <View className="flex-row items-center gap-3">
+          <View className="flex-row flex-wrap items-center gap-x-3 gap-y-1">
             <View className="flex-row items-center gap-1">
               <View
                 className="h-2 w-2 rounded-full"
@@ -121,6 +121,9 @@ export const LocalAiModelCard = ({
                 {t(`aiModels.speed.${model.speed}`, { defaultValue: model.speed })}
               </Text>
             </View>
+            <Text className="text-[14px]" style={{ color: color.text.muted }}>
+              {t(`aiModels.deviceLoad.${model.deviceLoad}`)}
+            </Text>
           </View>
 
           {isDownloading ? (

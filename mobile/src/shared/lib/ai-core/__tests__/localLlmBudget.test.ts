@@ -1,3 +1,5 @@
+import { DEFAULT_LOCAL_AI_MODEL_ID } from '@/entities/settings/model/constants';
+
 import {
   estimateLocalLlmPromptTokens,
   LOCAL_LLM_N_CTX,
@@ -18,12 +20,16 @@ describe('localLlmBudget', () => {
 
   it('localPromptFitsLlmContext rejects clearly oversized prompts', () => {
     const huge = 'a'.repeat(100_000);
-    expect(localPromptFitsLlmContext(huge, 1024)).toBe(false);
+    expect(localPromptFitsLlmContext(huge, 1024, DEFAULT_LOCAL_AI_MODEL_ID)).toBe(false);
   });
 
   it('localPromptFitsLlmContext toggles at Latin length boundary for ask maxTokens', () => {
     const maxLatinChars = (LOCAL_LLM_N_CTX - 450 - LOCAL_LLM_PROMPT_OVERHEAD_TOKENS) * 3;
-    expect(localPromptFitsLlmContext('e'.repeat(maxLatinChars), 450)).toBe(true);
-    expect(localPromptFitsLlmContext('e'.repeat(maxLatinChars + 1), 450)).toBe(false);
+    expect(
+      localPromptFitsLlmContext('e'.repeat(maxLatinChars), 450, DEFAULT_LOCAL_AI_MODEL_ID),
+    ).toBe(true);
+    expect(
+      localPromptFitsLlmContext('e'.repeat(maxLatinChars + 1), 450, DEFAULT_LOCAL_AI_MODEL_ID),
+    ).toBe(false);
   });
 });

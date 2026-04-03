@@ -152,7 +152,13 @@ export const AIModelPickerScreen = () => {
     const status = localLlmModelStatuses[id] ?? 'not_downloaded';
     if (status === 'downloading') return;
     if (status !== 'downloaded') {
-      if (hasActiveLocalLlmDownload) return;
+      if (hasActiveLocalLlmDownload) {
+        Alert.alert(
+          t('aiModels.localDownloadBlockedTitle'),
+          t('aiModels.localDownloadBlockedBody'),
+        );
+        return;
+      }
       handleDownloadLocal(id, lm.sizeMb);
       return;
     }
@@ -182,12 +188,20 @@ export const AIModelPickerScreen = () => {
           }}
           showsVerticalScrollIndicator={false}
         >
-          <Text
-            className={`text-[14px] leading-5 ${isPrivateMode ? 'mb-2' : 'mb-4'}`}
-            style={{ color: color.text.secondary }}
-          >
-            {isPrivateMode ? t('aiModels.privateDescription') : t('aiModels.description')}
-          </Text>
+          {isPrivateMode ? (
+            <View className="mb-3">
+              <Text className="text-[14px] leading-5" style={{ color: color.text.secondary }}>
+                {t('aiModels.privateDescription')}
+              </Text>
+              <Text className="mt-1.5 text-[13px] leading-5" style={{ color: color.text.muted }}>
+                {t('aiModels.privateBudgetHint')}
+              </Text>
+            </View>
+          ) : (
+            <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
+              {t('aiModels.description')}
+            </Text>
+          )}
           <View className="overflow-hidden rounded-2xl">
             {models.map((model, index) => {
               const isFirst = index === 0;

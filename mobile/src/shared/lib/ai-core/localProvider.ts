@@ -20,6 +20,7 @@ import {
   prepareTranscriptForLocalLlm,
 } from './local-provider/localAiTranscript';
 import { localPromptFitsLlmContext } from './localLlmBudget';
+import { getLocalLlmAskTemperature, getLocalLlmSummaryTemperature } from './localLlmModelProfiles';
 import {
   completeLocalChat,
   type LocalLlmCompletionIntent,
@@ -67,7 +68,7 @@ async function generateWithLocalLlm(
 ): Promise<string> {
   const maxTokens = options?.maxTokens ?? 512;
   const combined = messages.map((m) => m.content).join('\n\n');
-  if (!localPromptFitsLlmContext(combined, maxTokens)) {
+  if (!localPromptFitsLlmContext(combined, maxTokens, modelId)) {
     throw new LocalAiError(
       'transcript_too_long',
       'Local prompt too long for current model context',
@@ -132,7 +133,10 @@ export async function runLocalSummaryTasks(
         ],
         {
           maxTokens: summaryMaxTokens,
-          temperature: LOCAL_GEN_SUMMARY.temperature,
+          temperature: getLocalLlmSummaryTemperature(
+            ctx.selectedLocalAiModel,
+            LOCAL_GEN_SUMMARY.temperature,
+          ),
           intent: 'json',
           onLlmSessionProgress: request.onLocalGenerationProgress
             ? bridgeSessionProgress
@@ -211,7 +215,10 @@ export async function runLocalAsk(
         ],
         {
           maxTokens: askMaxTokens,
-          temperature: LOCAL_GEN_ASK.temperature,
+          temperature: getLocalLlmAskTemperature(
+            ctx.selectedLocalAiModel,
+            LOCAL_GEN_ASK.temperature,
+          ),
           intent: 'json',
           onLlmSessionProgress: request.onLocalGenerationProgress
             ? bridgeSessionProgress
