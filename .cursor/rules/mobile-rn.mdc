@@ -1,0 +1,16 @@
+---
+description: React Native app — Navigation, NativeWind, Drizzle
+globs: mobile/**/*
+alwaysApply: false
+---
+
+# Mobile (`mobile/`)
+
+- **Stack:** React Native 0.84, React 19, TypeScript, **React Navigation** (stack + tabs), **NativeWind** v4, **Drizzle ORM**, **Zustand**, Firebase (Analytics, Messaging, Crashlytics, etc.).
+- **Database:** Drizzle (`yarn db:generate` runs `drizzle-kit generate`). Do not use Prisma inside `mobile/`.
+- **Styles:** NativeWind / Tailwind-like utilities; respect `dark` mode as in existing screens.
+- **Animations:** `react-native-reanimated` + `react-native-worklets` — follow worklet rules (not everything can run on the UI thread).
+- **Native modules:** when adding dependencies, verify iOS/Android setup (Pods, permissions); `patch-package` runs on `postinstall` — keep patches under `patches/`.
+- **Checks:** from `mobile/`: `yarn lint`, `yarn type:check`, `yarn test`.
+
+Do not use DOM/Web APIs (`window`, `document`, Next-style CSS modules). Icons: `lucide-react-native`, not `lucide-react`.

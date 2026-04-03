@@ -1,0 +1,16 @@
+---
+description: Next.js web app — Prisma, i18n, Tailwind
+globs: web/**/*
+alwaysApply: false
+---
+
+# Web (`web/`)
+
+- **Stack:** Next.js 16, React 19, TypeScript, Tailwind CSS v4, **next-intl**, Prisma 7 + Postgres (`@prisma/adapter-pg`).
+- **Database schema:** `web/prisma/schema.prisma`. After schema changes, run `yarn db:generate` (or rely on `yarn build` / `type:check`, which already run generate).
+- **Generated client:** `web/generated` (gitignored) — do not edit by hand.
+- **Styles:** Tailwind v4 + PostCSS; follow existing component patterns.
+- **i18n:** follow existing next-intl patterns; legal pages — content in `web/content/`.
+- **Checks:** from `web/`: `yarn lint`, `yarn type:check`.
+
+Do not add mobile-app dependencies to `web/` unless there is a clear need.

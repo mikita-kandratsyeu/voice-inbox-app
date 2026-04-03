@@ -1,0 +1,28 @@
+---
+description: Monorepo layout, package manager, and cross-package boundaries
+alwaysApply: true
+---
+
+# Voice Inbox — monorepo
+
+Two independent packages with **separate** dependencies and scripts. **Package manager:** Yarn 4 (`packageManager` in `package.json`). **Node:** >= 24.
+
+| Package | Path | Role |
+|---------|------|------|
+| Web | `web/` | Next.js, Prisma, public site / API |
+| Mobile | `mobile/` | React Native (CLI), Drizzle, offline-first app |
+
+## Commands (run from each package directory)
+
+- **Web:** `yarn dev`, `yarn build`, `yarn lint`, `yarn type:check`, `yarn db:generate` / `db:push`
+- **Mobile:** `yarn start`, `yarn ios`, `yarn lint`, `yarn type:check`, `yarn test`
+
+Do not mix layers: **web** uses Prisma and Postgres; **mobile** uses Drizzle and local storage (op-sqlite, etc.). When changing shared business logic, keep both worlds in mind, but do not copy database schemas blindly.
+
+## Scope of changes
+
+Change only what the task requires. Web legal copy lives in Markdown under `web/content/` (see root `README.md`).
+
+## Cursor indexing
+
+Use a root `.cursorignore` so `node_modules`, build outputs, and `.env` are not pulled into context. Template: `.cursor/cursorignore.template` → copy to `.cursorignore` at the repository root.
