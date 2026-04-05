@@ -8,7 +8,28 @@ type AskApiRequestBody = {
   model: string;
   summary?: string;
   tasks?: { text: string }[];
+  priorTurns?: { question: string; answer: string }[];
 };
+
+const ASK_API_PRIOR_TURNS_MAX = 20;
+const ASK_API_PRIOR_QUESTION_MAX_CHARS = 6000;
+const ASK_API_PRIOR_ANSWER_MAX_CHARS = 16_000;
+
+function sanitizePriorTurnsForAskApi(
+  turns: { question: string; answer: string }[],
+): { question: string; answer: string }[] {
+  const out: { question: string; answer: string }[] = [];
+  for (const t of turns.slice(-ASK_API_PRIOR_TURNS_MAX)) {
+    const q = t.question.replace(/\s+/g, ' ').trim();
+    const a = t.answer.replace(/\s+/g, ' ').trim();
+    if (!q || !a) continue;
+    out.push({
+      question: q.slice(0, ASK_API_PRIOR_QUESTION_MAX_CHARS),
+      answer: a.slice(0, ASK_API_PRIOR_ANSWER_MAX_CHARS),
+    });
+  }
+  return out;
+}
 
 type AskApiSuccessResponse = {
   id: string;
@@ -46,12 +67,23 @@ type AskResponse =
 export async function postAskQuestion(body: AskApiRequestBody): Promise<AskApiResult> {
   const url = `${getWebApiUrl()}/api/ask`;
 
+  const priorSanitized = body.priorTurns?.length
+    ? sanitizePriorTurnsForAskApi(body.priorTurns)
+    : undefined;
+  const payload: AskApiRequestBody = {
+    ...body,
+    ...(priorSanitized?.length ? { priorTurns: priorSanitized } : {}),
+  };
+  if (payload.priorTurns?.length === 0) {
+    delete payload.priorTurns;
+  }
+
   let response: Response;
   try {
     response = await fetchWithAuth(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify(payload),
     });
   } catch (err) {
     const errorMsg = err instanceof Error ? err.message : 'Network error';

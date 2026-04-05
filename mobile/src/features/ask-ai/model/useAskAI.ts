@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 import type { VoiceRecord } from '@/entities/record';
 import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
+import type { AskPriorTurn } from '@/shared/lib/ai-core';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
 import type { AiLocalGenerationProgressEvent } from '@/shared/lib/ai-core/types';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
@@ -46,22 +47,33 @@ export const useAskAI = () => {
   const inFlightRef = useRef(false);
 
   const askQuestion = useCallback(
-    async (record: VoiceRecord, question: string): Promise<void> => {
+    async (
+      record: VoiceRecord,
+      question: string,
+      priorTurns: AskPriorTurn[] = [],
+    ): Promise<void> => {
       if (!record.transcript || !question.trim()) return;
       if (inFlightRef.current) return;
 
       const requestId = `${record.id}-ask-${Date.now()}`;
       const trimmedQuestion = question.trim();
       inFlightRef.current = true;
-      setState((s) => ({
-        ...s,
-        isLoading: true,
-        error: null,
-        question: trimmedQuestion,
-        answer: null,
-        privateAskProgress: aiExecutionMode === 'private_experimental' ? 0 : s.privateAskProgress,
-        privateAskPhase: 'loading_model',
-      }));
+      setState((s) => {
+        const nextHistory =
+          s.question && s.answer
+            ? [...s.history, { question: s.question, answer: s.answer }]
+            : s.history;
+        return {
+          ...s,
+          history: nextHistory,
+          isLoading: true,
+          error: null,
+          question: trimmedQuestion,
+          answer: null,
+          privateAskProgress: aiExecutionMode === 'private_experimental' ? 0 : s.privateAskProgress,
+          privateAskPhase: 'loading_model',
+        };
+      });
       void logAnalyticsEvent('ai_action_started', {
         action: 'ask',
         mode: aiExecutionMode,
@@ -132,6 +144,7 @@ export const useAskAI = () => {
             id: requestId,
             transcript: record.transcript,
             question: trimmedQuestion,
+            ...(priorTurns.length > 0 ? { priorTurns } : {}),
             summary: record.summary ?? undefined,
             tasks: record.tasks?.map((t) => ({ text: t.text })) ?? undefined,
             onLocalGenerationProgress,

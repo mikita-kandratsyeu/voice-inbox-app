@@ -1,7 +1,13 @@
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 
-import type { AiExecutionContext, AskRequest } from '../types';
-import { LOCAL_ASK_MAX_TASK_ITEMS, LOCAL_ASK_SUMMARY_MAX_CHARS } from './localAiConstants';
+import type { AiExecutionContext, AskPriorTurn, AskRequest } from '../types';
+import {
+  LOCAL_ASK_MAX_TASK_ITEMS,
+  LOCAL_ASK_PRIOR_ANSWER_MAX_CHARS,
+  LOCAL_ASK_PRIOR_QUESTION_MAX_CHARS,
+  LOCAL_ASK_PRIOR_TURNS_MAX,
+  LOCAL_ASK_SUMMARY_MAX_CHARS,
+} from './localAiConstants';
 
 const LOCAL_SUMMARY_STYLE_HINT: Record<SummaryStyle, string> = {
   brief: 'Summary length: 2–3 short sentences. Prose only, no bullet lists.',
@@ -61,8 +67,24 @@ export function buildLocalSummaryUserContent(
   return [head, existingBlock, '', 'Transcript:', transcriptText].join('\n');
 }
 
+export function sanitizeAskPriorTurnsForLocal(turns: AskPriorTurn[] | undefined): AskPriorTurn[] {
+  if (!turns?.length) return [];
+  const out: AskPriorTurn[] = [];
+  const slice = turns.slice(-LOCAL_ASK_PRIOR_TURNS_MAX);
+  for (const t of slice) {
+    const q = t.question.replace(/\s+/g, ' ').trim();
+    const a = t.answer.replace(/\s+/g, ' ').trim();
+    if (!q || !a) continue;
+    out.push({
+      question: q.slice(0, LOCAL_ASK_PRIOR_QUESTION_MAX_CHARS),
+      answer: a.slice(0, LOCAL_ASK_PRIOR_ANSWER_MAX_CHARS),
+    });
+  }
+  return out;
+}
+
 export function buildLocalAskUserContent(request: AskRequest, transcript: string): string {
-  const blocks: string[] = [`Question:\n${request.question.trim()}`, `Transcript:\n${transcript}`];
+  const blocks: string[] = [`Transcript:\n${transcript}`];
   const summary = request.summary?.trim();
 
   if (summary) {
@@ -76,13 +98,22 @@ export function buildLocalAskUserContent(request: AskRequest, transcript: string
     blocks.push(`Tasks:\n${lines.join('\n')}`);
   }
 
+  const priorTurns = sanitizeAskPriorTurnsForLocal(request.priorTurns);
+  if (priorTurns.length > 0) {
+    const lines = priorTurns.map((t, i) => `Turn ${i + 1}\nQ: ${t.question}\nA: ${t.answer}`);
+    blocks.push(`Prior conversation (same recording):\n${lines.join('\n\n')}`);
+  }
+
+  blocks.push(`Question:\n${request.question.trim()}`);
+
   return blocks.join('\n\n');
 }
 
 export function buildLocalAskSystemPrompt(): string {
   return [
-    'Use ONLY the provided blocks (Question, Transcript, and optional Summary/Tasks).',
-    'Answer concisely in the SAME language as the Question.',
+    'Use ONLY the provided blocks (Transcript; optional Summary, Tasks, Prior conversation; and the current Question).',
+    'Prior conversation is earlier Q&A about the same transcript; use it for follow-ups and continuity.',
+    'Answer concisely in the SAME language as the current Question.',
     'If the context does not support an answer, say so in one short sentence. Do not invent facts.',
     'No markdown. Return exactly one JSON object: {"answer":"your plain text here"}. No other keys.',
     'The answer value must be plain text only (no nested JSON, no code fences).',

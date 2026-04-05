@@ -12,7 +12,7 @@ import {
   Sparkles,
   WifiOff,
 } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Share, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import {
@@ -314,7 +314,7 @@ const EmptyState = ({
 
   return (
     <View className="gap-3 pb-1 pt-1">
-      <View className="flex-row gap-3">
+      <View className="flex-row items-center gap-3">
         <View
           className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
           style={{ backgroundColor: color.background.tertiary }}
@@ -405,6 +405,27 @@ export const AskAIScreen = () => {
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
   const hasTranscript = Boolean(liveRecord.transcript);
 
+  const priorTurnsForAsk = useMemo((): AskAIHistoryItem[] => {
+    const currentPair = question && answer ? [{ question, answer } satisfies AskAIHistoryItem] : [];
+    return [...history, ...currentPair];
+  }, [history, question, answer]);
+
+  const answerScrollRef = useRef<React.ElementRef<typeof KeyboardAwareScrollView>>(null);
+
+  useEffect(() => {
+    if (!answer || isLoading) return;
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        answerScrollRef.current?.scrollToEnd({ animated: true });
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
+  }, [answer, history.length, isLoading]);
+
   useEffect(() => {
     void hydrateRecordDetails(routeRecord.id);
   }, [hydrateRecordDetails, routeRecord.id]);
@@ -427,20 +448,28 @@ export const AskAIScreen = () => {
     if (!q || !hasTranscript || isLoading || disableByNetwork) return;
     KeyboardController.dismiss();
     setQuestionInput('');
-    askQuestion(liveRecord, q);
-  }, [questionInput, hasTranscript, isLoading, disableByNetwork, liveRecord, askQuestion]);
+    askQuestion(liveRecord, q, priorTurnsForAsk);
+  }, [
+    questionInput,
+    hasTranscript,
+    isLoading,
+    disableByNetwork,
+    liveRecord,
+    askQuestion,
+    priorTurnsForAsk,
+  ]);
 
   const handleSuggestedQuestion = useCallback(
     (q: string) => {
       if (!hasTranscript || isLoading || disableByNetwork) return;
-      askQuestion(liveRecord, q);
+      askQuestion(liveRecord, q, priorTurnsForAsk);
     },
-    [hasTranscript, isLoading, disableByNetwork, liveRecord, askQuestion],
+    [hasTranscript, isLoading, disableByNetwork, liveRecord, askQuestion, priorTurnsForAsk],
   );
 
   const handleRetry = useCallback(() => {
-    if (question) askQuestion(liveRecord, question);
-  }, [question, liveRecord, askQuestion]);
+    if (question) askQuestion(liveRecord, question, priorTurnsForAsk);
+  }, [question, liveRecord, askQuestion, priorTurnsForAsk]);
 
   const handleCopy = useCallback((text: string) => {
     Clipboard.setString(text);
@@ -627,6 +656,7 @@ export const AskAIScreen = () => {
             }}
           >
             <KeyboardAwareScrollView
+              ref={answerScrollRef}
               style={{ flex: 1 }}
               contentContainerStyle={{
                 paddingHorizontal: 16,

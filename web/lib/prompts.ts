@@ -57,6 +57,7 @@ export const ASK_QUESTION_SYSTEM_PROMPT = `Answer the user's question using ONLY
 - transcript
 - summary (if present)
 - tasks (if present)
+- prior questions and answers (if present): earlier turns about the same recording; use them for follow-ups and continuity
 
 Rules:
 - Be concise and directly answer the question.

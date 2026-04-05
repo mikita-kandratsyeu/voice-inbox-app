@@ -90,6 +90,7 @@ export async function runCloudAsk(
     model: ctx.selectedAIModel,
     summary: request.summary,
     tasks: request.tasks,
+    ...(request.priorTurns?.length ? { priorTurns: request.priorTurns } : {}),
   });
 
   if (!postResult.ok) {

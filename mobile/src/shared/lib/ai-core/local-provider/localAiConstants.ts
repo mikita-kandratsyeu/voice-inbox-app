@@ -42,6 +42,10 @@ export const FIELD_LIMITS = {
 export const LOCAL_ASK_SUMMARY_MAX_CHARS = 2000;
 export const LOCAL_ASK_MAX_TASK_ITEMS = 25;
 
+export const LOCAL_ASK_PRIOR_TURNS_MAX = 8;
+export const LOCAL_ASK_PRIOR_QUESTION_MAX_CHARS = 1200;
+export const LOCAL_ASK_PRIOR_ANSWER_MAX_CHARS = 2500;
+
 export const LOCAL_GEN_SUMMARY = {
   maxTokens: PRIVATE_LOCAL_LLM_BUDGET_SUMMARY_MAX_TOKENS.balanced,
   temperature: 0.2,

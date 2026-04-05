@@ -21,7 +21,29 @@ type CreateAskBody = {
   model?: unknown;
   summary?: unknown;
   tasks?: unknown;
+  priorTurns?: unknown;
 };
+
+const ASK_PRIOR_TURNS_MAX = 20;
+const ASK_PRIOR_QUESTION_MAX_CHARS = 6000;
+const ASK_PRIOR_ANSWER_MAX_CHARS = 16_000;
+
+function parsePriorTurns(raw: unknown): { question: string; answer: string }[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+  const out: { question: string; answer: string }[] = [];
+  for (const item of raw.slice(-ASK_PRIOR_TURNS_MAX)) {
+    if (!item || typeof item !== 'object') continue;
+    const o = item as Record<string, unknown>;
+    const q = typeof o.question === 'string' ? o.question.replace(/\s+/g, ' ').trim() : '';
+    const a = typeof o.answer === 'string' ? o.answer.replace(/\s+/g, ' ').trim() : '';
+    if (!q || !a) continue;
+    out.push({
+      question: q.slice(0, ASK_PRIOR_QUESTION_MAX_CHARS),
+      answer: a.slice(0, ASK_PRIOR_ANSWER_MAX_CHARS),
+    });
+  }
+  return out.length ? out : undefined;
+}
 
 export const POST = async (request: Request): Promise<NextResponse> => {
   const path = new URL(request.url).pathname;
@@ -57,13 +79,22 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return apiError(validationError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
-  const { id, transcript, question, model, summary, tasks } = body as {
+  const {
+    id,
+    transcript,
+    question,
+    model,
+    summary,
+    tasks,
+    priorTurns: rawPrior,
+  } = body as {
     id: string;
     transcript: string;
     question: string;
     model: string;
     summary?: string;
     tasks?: { text: string }[];
+    priorTurns?: unknown;
   };
 
   const modelError = validateAllowedModel(model);
@@ -81,6 +112,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       ? tasks
       : undefined;
 
+  const priorTurnsList = parsePriorTurns(rawPrior);
+
   await setAppForeground(deviceIdTrimmed);
 
   const result = await createAsk(
@@ -91,6 +124,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     deviceIdTrimmed,
     summaryStr,
     tasksList,
+    priorTurnsList,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {

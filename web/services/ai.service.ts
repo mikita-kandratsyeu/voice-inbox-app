@@ -163,12 +163,38 @@ export async function processTranscript(
   );
 }
 
+const ASK_PRIOR_TURNS_MAX = 20;
+const ASK_PRIOR_QUESTION_MAX_CHARS = 6000;
+const ASK_PRIOR_ANSWER_MAX_CHARS = 16_000;
+
+function normalizePriorTurnsForAsk(
+  turns: { question: string; answer: string }[] | undefined,
+): { question: string; answer: string }[] | undefined {
+  if (!turns?.length) return undefined;
+  const out: { question: string; answer: string }[] = [];
+  for (const t of turns.slice(-ASK_PRIOR_TURNS_MAX)) {
+    const q = t.question.replace(/\s+/g, ' ').trim();
+    const a = t.answer.replace(/\s+/g, ' ').trim();
+    if (!q || !a) continue;
+    out.push({
+      question: q.slice(0, ASK_PRIOR_QUESTION_MAX_CHARS),
+      answer: a.slice(0, ASK_PRIOR_ANSWER_MAX_CHARS),
+    });
+  }
+  return out.length ? out : undefined;
+}
+
+function formatPriorTurnsForAskPrompt(turns: { question: string; answer: string }[]): string {
+  return turns.map((t, i) => `Turn ${i + 1}\nQ: ${t.question}\nA: ${t.answer}`).join('\n\n---\n\n');
+}
+
 export async function processAskQuestion(
   transcript: string,
   question: string,
   model: string,
   summary?: string,
   tasks?: { text: string }[],
+  priorTurns?: { question: string; answer: string }[],
 ): Promise<{ answer: string }> {
   const parts: string[] = ['Transcript:\n\n', transcript];
   if (summary && summary.trim()) {
@@ -177,6 +203,13 @@ export async function processAskQuestion(
   if (tasks && tasks.length > 0) {
     const taskLines = tasks.map((t) => `- ${t.text}`).join('\n');
     parts.push('\n\nTasks:\n\n', taskLines);
+  }
+  const normalizedPrior = normalizePriorTurnsForAsk(priorTurns);
+  if (normalizedPrior?.length) {
+    parts.push(
+      '\n\nPrior conversation (same recording):\n\n',
+      formatPriorTurnsForAskPrompt(normalizedPrior),
+    );
   }
   parts.push('\n\nQuestion: ', question);
   const userContent = parts.join('');

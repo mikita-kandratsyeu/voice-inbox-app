@@ -647,11 +647,39 @@ describe('runLocalAsk (integration)', () => {
     const userMsg = (
       mockedCompleteLocalChat.mock.calls[0][1] as { role: string; content: string }[]
     ).find((m) => m.role === 'user')!;
+    expect(userMsg.content).toContain('Transcript:\n  tr');
     expect(userMsg.content).toContain('Question:\nq?');
+    expect(userMsg.content.indexOf('Transcript:')).toBeLessThan(
+      userMsg.content.indexOf('Question:'),
+    );
     expect(userMsg.content).toContain('Summary:\nsum');
     expect(userMsg.content).toContain('- one');
     expect(userMsg.content).toContain('- two');
     expect(userMsg.content.match(/^- /gm)?.length).toBe(2);
+  });
+
+  it('includes prior turns before the current question', async () => {
+    mockedCompleteLocalChat.mockResolvedValue(JSON.stringify({ answer: 'ok' }));
+
+    await runLocalAsk(
+      {
+        id: 'x',
+        transcript: 'Meeting notes.',
+        question: 'What next?',
+        priorTurns: [{ question: 'Main topic?', answer: 'Budget.' }],
+      },
+      createCtx(),
+    );
+
+    const userMsg = (
+      mockedCompleteLocalChat.mock.calls[0][1] as { role: string; content: string }[]
+    ).find((m) => m.role === 'user')!;
+    expect(userMsg.content).toContain('Prior conversation');
+    expect(userMsg.content).toContain('Q: Main topic?');
+    expect(userMsg.content).toContain('A: Budget.');
+    expect(userMsg.content.indexOf('What next?')).toBeGreaterThan(
+      userMsg.content.indexOf('A: Budget.'),
+    );
   });
 
   it('uses larger ask maxTokens when private local budget is expanded', async () => {

@@ -35,10 +35,13 @@ export type SummaryTaskRequest = {
   onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;
 };
 
+export type AskPriorTurn = { question: string; answer: string };
+
 export type AskRequest = {
   id: string;
   transcript: string;
   question: string;
+  priorTurns?: AskPriorTurn[];
   summary?: string;
   tasks?: Array<{ text: string }>;
   onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;
