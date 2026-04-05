@@ -2,10 +2,10 @@ import { DEFAULT_LOCAL_AI_MODEL_ID } from '@/entities/settings/model/constants';
 
 import {
   estimateLocalLlmPromptTokens,
-  LOCAL_LLM_N_CTX,
   LOCAL_LLM_PROMPT_OVERHEAD_TOKENS,
   localPromptFitsLlmContext,
 } from '../localLlmBudget';
+import { getLocalLlmNCtx } from '../localLlmModelProfiles';
 
 describe('localLlmBudget', () => {
   it('estimateLocalLlmPromptTokens is sublinear for mostly Latin text', () => {
@@ -24,7 +24,8 @@ describe('localLlmBudget', () => {
   });
 
   it('localPromptFitsLlmContext toggles at Latin length boundary for ask maxTokens', () => {
-    const maxLatinChars = (LOCAL_LLM_N_CTX - 450 - LOCAL_LLM_PROMPT_OVERHEAD_TOKENS) * 3;
+    const nCtx = getLocalLlmNCtx(DEFAULT_LOCAL_AI_MODEL_ID);
+    const maxLatinChars = (nCtx - 450 - LOCAL_LLM_PROMPT_OVERHEAD_TOKENS) * 3;
     expect(
       localPromptFitsLlmContext('e'.repeat(maxLatinChars), 450, DEFAULT_LOCAL_AI_MODEL_ID),
     ).toBe(true);

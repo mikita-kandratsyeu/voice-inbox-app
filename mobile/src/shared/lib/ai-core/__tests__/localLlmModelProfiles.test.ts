@@ -46,8 +46,12 @@ describe('localLlmModelProfiles', () => {
     expect(p.reasoning_format).toBe('none');
   });
 
-  it('getLocalLlmNCtx defaults to DEFAULT_LOCAL_LLM_N_CTX', () => {
-    expect(getLocalLlmNCtx('local/llama-3.2-1b-q4_k_m')).toBe(DEFAULT_LOCAL_LLM_N_CTX);
+  it('getLocalLlmNCtx defaults to DEFAULT_LOCAL_LLM_N_CTX when profile omits nCtx', () => {
+    expect(getLocalLlmNCtx('local/qwen3-1.7b-q4_k_m')).toBe(DEFAULT_LOCAL_LLM_N_CTX);
+  });
+
+  it('getLocalLlmNCtx uses profile nCtx when set', () => {
+    expect(getLocalLlmNCtx('local/llama-3.2-1b-q4_k_m')).toBe(8192);
   });
 
   it('applies Gemma-specific generation temperatures when set', () => {

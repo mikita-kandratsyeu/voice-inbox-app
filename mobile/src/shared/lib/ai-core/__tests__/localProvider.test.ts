@@ -513,9 +513,12 @@ describe('runLocalSummaryTasks (integration)', () => {
     expect(res.ok).toBe(true);
     if (res.ok) expect(res.result.summary).toBe('second try');
     expect(mockedCompleteLocalChat).toHaveBeenCalledTimes(2);
-    const secondSystem = (mockedCompleteLocalChat.mock.calls[1][1] as { content: string }[])[0]
-      .content;
-    expect(secondSystem).toContain('Return JSON only');
+    const secondMessages = mockedCompleteLocalChat.mock.calls[1][1] as {
+      role: string;
+      content: string;
+    }[];
+    const secondUser = secondMessages.find((m) => m.role === 'user')?.content ?? '';
+    expect(secondUser).toContain('Return JSON only');
   });
 
   it('returns parse error key when both attempts fail', async () => {
