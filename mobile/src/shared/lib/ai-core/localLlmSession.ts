@@ -60,6 +60,8 @@ async function ensureContextLocked(modelId: LocalAiModelId): Promise<LlamaContex
       n_gpu_layers: LOCAL_LLM_N_GPU_LAYERS,
       use_mmap: true,
       use_mlock: false,
+      cache_type_k: 'q8_0',
+      cache_type_v: 'q8_0',
       ...getLocalLlmContextParams(),
       ...(IS_IOS && LOCAL_LLM_N_GPU_LAYERS > 0 ? { flash_attn_type: 'auto' as const } : {}),
     });

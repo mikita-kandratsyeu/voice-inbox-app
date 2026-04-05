@@ -46,6 +46,7 @@ const PROFILES: Record<LocalAiModelId, LocalLlmModelProfile> = {
     },
   },
   'local/llama-3.2-1b-q4_k_m': {
+    nCtx: 8192,
     base: {
       enable_thinking: false,
       top_p: 0.95,
@@ -61,6 +62,7 @@ const PROFILES: Record<LocalAiModelId, LocalLlmModelProfile> = {
     },
   },
   'local/gemma-2-2b-it-q4_k_m': {
+    nCtx: 12288,
     summaryTemperature: 0.18,
     askTemperature: 0.22,
     base: {

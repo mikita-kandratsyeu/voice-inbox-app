@@ -21,7 +21,7 @@ function resolveMode(
   return mode;
 }
 
-function guardPrivateMode(request: { transcript: string }, ctx: AiExecutionContext) {
+function guardPrivateMode(_request: { transcript: string }, ctx: AiExecutionContext) {
   if (ctx.aiExecutionMode !== 'private_experimental') return null;
 
   if (!ctx.isLocalLlmModelDownloaded) {
@@ -33,17 +33,10 @@ function guardPrivateMode(request: { transcript: string }, ctx: AiExecutionConte
     };
   }
 
-  if (
-    (ctx.privateCapabilityTier === 'limited' || ctx.privateCapabilityTier === 'unavailable') &&
-    request.transcript.length > 5000
-  ) {
-    return {
-      ok: false as const,
-      provider: 'cloud' as const,
-      mode: ctx.aiExecutionMode,
-      error: i18n.t('ai.privateModeLimitedTooLong'),
-    };
-  }
+  // Transcript length is not checked here: prepareTranscriptForLocalLlm trims it
+  // to the tier-appropriate char limit before inference, and localPromptFitsLlmContext
+  // catches genuine context overflows. A pre-trim character check would reject
+  // transcripts that would have fit fine after truncation.
 
   return null;
 }

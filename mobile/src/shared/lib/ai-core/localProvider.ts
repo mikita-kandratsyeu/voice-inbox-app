@@ -87,6 +87,37 @@ async function generateWithLocalLlm(
   );
 }
 
+/**
+ * Returns a session-progress bridge that translates raw llama.rn tick events into
+ * typed `AiLocalGenerationProgressEvent` values forwarded to the caller's callback.
+ * Also exposes `reset()` so the token counter can be cleared between retries.
+ */
+function makeBridgeProgress(
+  onProgress: SummaryTaskRequest['onLocalGenerationProgress'],
+  nPredictBudget: number,
+): { bridge: (event: LocalLlmSessionProgressEvent) => void; reset: () => void } {
+  let sessionTokens = 0;
+
+  return {
+    reset() {
+      sessionTokens = 0;
+    },
+    bridge(event: LocalLlmSessionProgressEvent) {
+      if (!onProgress) return;
+      if (event.kind === 'completion_tick') {
+        sessionTokens += 1;
+        onProgress({
+          kind: 'completion_token',
+          tokenIndex: sessionTokens,
+          nPredictBudget,
+        });
+      } else {
+        onProgress(event);
+      }
+    },
+  };
+}
+
 export async function runLocalSummaryTasks(
   request: SummaryTaskRequest,
   ctx: AiExecutionContext,
@@ -106,30 +137,18 @@ export async function runLocalSummaryTasks(
     );
 
     const summaryMaxTokens = resolvePrivateSummaryMaxTokens(ctx.privateLocalLlmBudget);
-    let sessionTokens = 0;
-    const tokenBudgetForProgress = Math.max(1, summaryMaxTokens * 2);
+    const progressBridge = makeBridgeProgress(
+      request.onLocalGenerationProgress,
+      Math.max(1, summaryMaxTokens * 2),
+    );
 
-    const bridgeSessionProgress = (event: LocalLlmSessionProgressEvent) => {
-      const forward = request.onLocalGenerationProgress;
-      if (!forward) return;
-      if (event.kind === 'completion_tick') {
-        sessionTokens += 1;
-        forward({
-          kind: 'completion_token',
-          tokenIndex: sessionTokens,
-          nPredictBudget: tokenBudgetForProgress,
-        });
-      } else {
-        forward(event);
-      }
-    };
-
-    const runOnce = (system: string) =>
-      generateWithLocalLlm(
+    const runOnce = (user: string) => {
+      progressBridge.reset();
+      return generateWithLocalLlm(
         ctx.selectedLocalAiModel,
         [
-          { role: 'system', content: system },
-          { role: 'user', content: userContent },
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: user },
         ],
         {
           maxTokens: summaryMaxTokens,
@@ -139,16 +158,19 @@ export async function runLocalSummaryTasks(
           ),
           intent: 'json',
           onLlmSessionProgress: request.onLocalGenerationProgress
-            ? bridgeSessionProgress
+            ? progressBridge.bridge
             : undefined,
         },
       );
+    };
 
-    let raw = await runOnce(systemPrompt);
+    let raw = await runOnce(userContent);
     let outcome = tryBuildSummaryFromModelRaw(raw);
 
     if (!outcome.ok) {
-      raw = await runOnce(`${systemPrompt} ${STRICT_JSON_TAIL}`);
+      // On retry append the strictness reminder to the user message — SLMs respond
+      // better to formatting constraints in the user turn than repeated system text.
+      raw = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
       outcome = tryBuildSummaryFromModelRaw(raw);
     }
 
@@ -187,31 +209,18 @@ export async function runLocalAsk(
     const userContent = buildLocalAskUserContent(request, transcript);
 
     const askMaxTokens = resolvePrivateAskMaxTokens(ctx.privateLocalLlmBudget);
-    let sessionTokens = 0;
-    const tokenBudgetForProgress = Math.max(1, askMaxTokens * 2);
+    const progressBridge = makeBridgeProgress(
+      request.onLocalGenerationProgress,
+      Math.max(1, askMaxTokens * 2),
+    );
 
-    const bridgeSessionProgress = (event: LocalLlmSessionProgressEvent) => {
-      const forward = request.onLocalGenerationProgress;
-      if (!forward) return;
-      if (event.kind === 'completion_tick') {
-        sessionTokens += 1;
-        forward({
-          kind: 'completion_token',
-          tokenIndex: sessionTokens,
-          nPredictBudget: tokenBudgetForProgress,
-        });
-      } else {
-        forward(event);
-      }
-    };
-
-    const runOnce = (system: string) => {
-      sessionTokens = 0;
+    const runOnce = (user: string) => {
+      progressBridge.reset();
       return generateWithLocalLlm(
         ctx.selectedLocalAiModel,
         [
-          { role: 'system', content: system },
-          { role: 'user', content: userContent },
+          { role: 'system', content: askSystemPrompt },
+          { role: 'user', content: user },
         ],
         {
           maxTokens: askMaxTokens,
@@ -221,17 +230,17 @@ export async function runLocalAsk(
           ),
           intent: 'json',
           onLlmSessionProgress: request.onLocalGenerationProgress
-            ? bridgeSessionProgress
+            ? progressBridge.bridge
             : undefined,
         },
       );
     };
 
-    let raw = await runOnce(askSystemPrompt);
+    let raw = await runOnce(userContent);
     let answer = parseLocalAskResponse(raw);
 
     if (answer === null) {
-      raw = await runOnce(`${askSystemPrompt} ${STRICT_JSON_TAIL}`);
+      raw = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
       answer = parseLocalAskResponse(raw);
     }
 
