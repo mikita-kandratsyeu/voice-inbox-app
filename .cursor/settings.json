@@ -1,0 +1,13 @@
+{
+  "plugins": {
+    "context7-plugin": {
+      "enabled": true
+    },
+    "vercel": {
+      "enabled": true
+    },
+    "neon-postgres": {
+      "enabled": true
+    }
+  }
+}
