@@ -16,21 +16,32 @@ import { ensurePushRegistered, type PushNotificationData } from '@/shared/lib/pu
 
 type OnInitialPushData = (data: PushNotificationData) => void;
 
+export type BootstrapCriticalError = 'db_init_failed';
+
 type UseAppBootstrapOptions = {
   onBootstrapReady?: () => void;
+  onCriticalError?: (kind: BootstrapCriticalError) => void;
 };
 
 export function useAppBootstrap(
   onInitialPushData: OnInitialPushData,
   options?: UseAppBootstrapOptions,
 ): void {
-  const { onBootstrapReady } = options ?? {};
+  const { onBootstrapReady, onCriticalError } = options ?? {};
 
   useEffect(() => {
     let cancelled = false;
     let deferredInitTimer: ReturnType<typeof setTimeout> | null = null;
 
-    Promise.all([initRuntimeConfig(), initDB()])
+    const notifyReady = () => {
+      if (!cancelled) onBootstrapReady?.();
+    };
+
+    initRuntimeConfig()
+      .catch(() => {
+        if (__DEV__) console.warn('[bootstrap] failed to initialize remote config');
+      })
+      .then(() => initDB())
       .then(async () => {
         useSettingsStore.getState().reconcileAiExecutionModeAfterRemoteConfig();
         syncPrivateCapabilityTier();
@@ -48,9 +59,7 @@ export function useAppBootstrap(
           if (__DEV__) console.warn('[bootstrap] auto-archive failed');
         }
 
-        if (!cancelled) {
-          onBootstrapReady?.();
-        }
+        notifyReady();
 
         void (async () => {
           try {
@@ -79,16 +88,19 @@ export function useAppBootstrap(
           })();
         }, 0);
       })
-      .catch(() => {
-        if (!cancelled) {
-          onBootstrapReady?.();
-        }
+      .catch((err) => {
+        if (__DEV__) console.warn('[bootstrap] critical failure', err);
+        // Always unblock the splash so the app does not freeze.
+        notifyReady();
+        // Notify caller so it can surface a user-facing error.
+        if (!cancelled) onCriticalError?.('db_init_failed');
       });
+
     return () => {
       cancelled = true;
       if (deferredInitTimer) {
         clearTimeout(deferredInitTimer);
       }
     };
-  }, [onBootstrapReady, onInitialPushData]);
+  }, [onBootstrapReady, onCriticalError, onInitialPushData]);
 }

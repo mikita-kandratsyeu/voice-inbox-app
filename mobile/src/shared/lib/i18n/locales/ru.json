@@ -1025,5 +1025,10 @@
     "autoOrganizeReviewFolderRemoved": "Папка недоступна",
     "autoOrganizeReviewUnknownFolder": "Папка",
     "autoOrganizeReviewUnnamedFolder": "Без названия"
+  },
+  "bootstrap": {
+    "dbErrorTitle": "Не удалось загрузить данные",
+    "dbErrorMessage": "Ваши данные скорее всего в порядке. Перезапустите приложение.",
+    "dbErrorRestart": "ОК"
   }
 }

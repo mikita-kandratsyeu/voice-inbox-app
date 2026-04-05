@@ -41,7 +41,9 @@ export function validateAllowedModel(model: string): string | null {
 }
 
 export async function requireMobileUserAgent(): Promise<NextResponse | null> {
-  if (!MOBILE_USER_AGENT_SUBSTRING) return null;
+  if (!MOBILE_USER_AGENT_SUBSTRING) {
+    return apiError('Forbidden', HttpStatus.FORBIDDEN);
+  }
   const headersList = await headers();
   const ua = headersList.get('user-agent') ?? '';
   if (!ua.includes(MOBILE_USER_AGENT_SUBSTRING)) {

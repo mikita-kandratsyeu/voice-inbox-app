@@ -34,8 +34,9 @@ export type AskMessageResult =
   | { ok: true; result: { answer: string } }
   | { ok: false; error: string };
 
-const POLL_INTERVAL_MS = 4000;
 const POLL_TIMEOUT_MS = 120_000;
+const POLL_BACKOFF_INITIAL_MS = 2_000;
+const POLL_BACKOFF_CAP_MS = 8_000;
 
 type AskResponse =
   | { id: string; status: 'processing' }
@@ -84,9 +85,11 @@ export async function pollAskResult(id: string, syncToken?: string): Promise<Ask
 
   const url = `${getWebApiUrl()}/api/ask/${id}`;
   const deadline = Date.now() + POLL_TIMEOUT_MS;
+  let intervalMs = POLL_BACKOFF_INITIAL_MS;
 
   while (Date.now() < deadline) {
-    await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+    await new Promise<void>((resolve) => setTimeout(resolve, intervalMs));
+    intervalMs = Math.min(intervalMs * 2, POLL_BACKOFF_CAP_MS);
 
     let response: Response;
     try {

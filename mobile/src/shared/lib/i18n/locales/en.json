@@ -1015,5 +1015,10 @@
     "autoOrganizeReviewFolderRemoved": "Folder unavailable",
     "autoOrganizeReviewUnknownFolder": "Folder",
     "autoOrganizeReviewUnnamedFolder": "Untitled"
+  },
+  "bootstrap": {
+    "dbErrorTitle": "Could not load data",
+    "dbErrorMessage": "Your data is likely intact. Please restart the app.",
+    "dbErrorRestart": "OK"
   }
 }

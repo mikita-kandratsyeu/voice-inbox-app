@@ -3,7 +3,7 @@ import '../../global.css';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { NavigationContainer } from '@react-navigation/native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { StatusBar } from 'react-native';
+import { Alert, StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useSettingsStore } from '@/entities/settings';
 import {
   AnimatedBootSplash,
+  type BootstrapCriticalError,
   useAndroidLayoutAnimation,
   useAppBootstrap,
   useAppForegroundLifecycle,
@@ -23,7 +24,7 @@ import { OnboardingGate } from '@/features/onboarding';
 import { useProEntitlement, useResetAccentWhenNotPro } from '@/features/pro-license';
 import { TranscriptionKeepAwake, TranscriptionResumePrompt } from '@/features/transcription';
 import { DEFAULT_ACCENT_COLOR_ID, getColors, useAppTheme } from '@/shared/config';
-import { NetworkStatusProvider } from '@/shared/lib';
+import { i18n, NetworkStatusProvider } from '@/shared/lib';
 import { logAnalyticsScreenView } from '@/shared/lib/analytics';
 import {
   type PushNotificationData,
@@ -62,12 +63,18 @@ const App = () => {
     setBootSplashVisible(false);
   }, []);
 
+  const onCriticalError = useCallback((_kind: BootstrapCriticalError) => {
+    Alert.alert(i18n.t('bootstrap.dbErrorTitle'), i18n.t('bootstrap.dbErrorMessage'), [
+      { text: i18n.t('bootstrap.dbErrorRestart') },
+    ]);
+  }, []);
+
   useInitDeepLinking();
   usePushNotifications({ onNotification: onPushData });
   usePushNotificationOpenedApp(onPushData);
   useAndroidLayoutAnimation();
   useYandexMobileAdsInit();
-  useAppBootstrap(onPushData, { onBootstrapReady });
+  useAppBootstrap(onPushData, { onBootstrapReady, onCriticalError });
   useAppForegroundLifecycle();
   useResetAccentWhenNotPro();
 
