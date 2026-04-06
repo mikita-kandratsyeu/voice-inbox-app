@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
+import { VERIFIED_METRICS_URL } from '@/config/constants';
 import { Link } from '@/lib/i18n';
 
 export function Footer(): React.ReactElement {
@@ -31,6 +32,16 @@ export function Footer(): React.ReactElement {
             >
               {t('releases')}
             </Link>
+            {VERIFIED_METRICS_URL ? (
+              <a
+                href={VERIFIED_METRICS_URL}
+                className="font-medium text-black/70 transition-opacity hover:opacity-100 dark:text-white/70"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {t('verifiedMetrics')}
+              </a>
+            ) : null}
             <Link
               href="/privacy"
               className="font-medium text-black/70 transition-opacity hover:opacity-100 dark:text-white/70"

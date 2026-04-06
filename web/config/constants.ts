@@ -4,6 +4,7 @@ export const BASE_URL_OR_FALLBACK = BASE_URL || 'http://localhost:3000';
 export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? '';
 export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL ?? '#';
 export const GOOGLE_PLAY_URL = process.env.NEXT_PUBLIC_GOOGLE_PLAY_URL ?? '#';
+export const VERIFIED_METRICS_URL = process.env.NEXT_PUBLIC_VERIFIED_METRICS_URL?.trim() ?? '';
 
 // HTTP headers
 export const HEADER_SYNC_TOKEN = 'x-upstash-sync-token';
