@@ -9,7 +9,7 @@ import dayjs from 'dayjs';
 import { CheckCircle2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -23,9 +23,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { hapticError, hapticSuccess, IS_IOS, modalKeyboardBehavior } from '@/shared/lib';
+import { hapticError, hapticSuccess, IS_IOS } from '@/shared/lib';
 import { redeemProLicenseKey } from '@/shared/lib/ai-api/proLicenseApi';
 import { resolveDayjsLocale } from '@/shared/lib/date';
+import { modalKeyboardBehavior } from '@/shared/lib/platform';
 import { Button } from '@/shared/ui';
 
 import {
@@ -183,7 +184,9 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
         return;
       }
       if (!cancelled) {
-        bottomSheetRef.current?.present();
+        requestAnimationFrame(() => {
+          bottomSheetRef.current?.present();
+        });
       }
     })();
 
@@ -195,21 +198,6 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
   const finishSuccess = useCallback(() => {
     onClose();
   }, [onClose]);
-
-  const handleSheetDismiss = useCallback(() => {
-    onClose();
-  }, [onClose]);
-
-  const handleClose = useCallback(() => {
-    if (busy) {
-      return;
-    }
-    if (phase === 'success') {
-      finishSuccess();
-      return;
-    }
-    onClose();
-  }, [busy, phase, finishSuccess, onClose]);
 
   const handleSubmit = useCallback(async () => {
     if (!isCompleteProOfferCode(offerCodeCompact) || busy) {
@@ -261,7 +249,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
       keyboardBlurBehavior="restore"
       enableBlurKeyboardOnGesture
       backdropComponent={renderBackdrop}
-      onDismiss={handleSheetDismiss}
+      onDismiss={onClose}
       backgroundStyle={{
         backgroundColor: color.background.primary,
         borderTopWidth: 1,
@@ -276,24 +264,18 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
     >
       <BottomSheetView
         style={{
-          paddingHorizontal: 24,
-          paddingTop: 8,
-          paddingBottom: Math.max(insets.bottom, 24),
+          paddingHorizontal: 20,
+          paddingTop: 4,
+          paddingBottom: Math.max(insets.bottom, 20),
         }}
       >
         {showActivatingOverlay ? (
-          <View className="items-center py-4">
+          <View style={styles.activatingWrap}>
             <ActivityIndicator size="large" color={color.accent.primary} />
-            <Text
-              className="mt-5 text-center text-[16px] font-semibold leading-6"
-              style={{ color: color.text.primary }}
-            >
+            <Text style={[styles.activatingTitle, { color: color.text.primary }]}>
               {t('proLicense.activatingTitle')}
             </Text>
-            <Text
-              className="mt-2 text-center text-[14px] leading-5"
-              style={{ color: color.text.secondary }}
-            >
+            <Text style={[styles.subtitle, { color: color.text.secondary, marginBottom: 0 }]}>
               {t('proLicense.activatingSubtitle')}
             </Text>
           </View>
@@ -305,10 +287,12 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
           />
         ) : (
           <>
-            <Text className="text-lg font-semibold" style={{ color: color.text.primary }}>
-              {t('proLicense.modalTitle')}
-            </Text>
-            <Text className="mt-2 text-sm leading-5" style={{ color: color.text.secondary }}>
+            <View style={styles.headerRow}>
+              <Text style={[styles.title, { color: color.text.primary }]}>
+                {t('proLicense.modalTitle')}
+              </Text>
+            </View>
+            <Text style={[styles.subtitle, { color: color.text.secondary }]}>
               {t('proLicense.modalSubtitle')}
             </Text>
             <BottomSheetTextInput
@@ -320,23 +304,25 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
               maxLength={17}
               placeholder={t('proLicense.keyPlaceholder')}
               placeholderTextColor={color.text.muted}
-              className="mt-4 rounded-xl border px-3 font-mono"
-              style={{
-                borderColor: color.border.default,
-                color: color.text.primary,
-                backgroundColor: color.background.secondary,
-                letterSpacing: 0.5,
-                fontSize: 16,
-                lineHeight: 20,
-                ...(IS_IOS ? { paddingTop: 11, paddingBottom: 11 } : { paddingVertical: 12 }),
-              }}
+              style={[
+                styles.codeInput,
+                {
+                  borderColor: color.border.default,
+                  color: color.text.primary,
+                  backgroundColor: color.background.secondary,
+                  fontFamily: Platform.select({
+                    ios: 'Menlo',
+                    android: 'monospace',
+                    default: 'monospace',
+                  }),
+                  ...(IS_IOS ? { paddingTop: 11, paddingBottom: 11 } : { paddingVertical: 12 }),
+                },
+              ]}
             />
             {error != null && error.length > 0 && (
-              <Text className="mt-2 text-sm" style={{ color: color.accent.delete }}>
-                {error}
-              </Text>
+              <Text style={[styles.errorText, { color: color.accent.delete }]}>{error}</Text>
             )}
-            <View className="mt-5 flex-col w-full gap-3">
+            <View style={styles.footer}>
               <Button
                 variant="primary"
                 size="lg"
@@ -345,14 +331,6 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
                 onPress={() => void handleSubmit()}
                 disabled={!isCompleteProOfferCode(offerCodeCompact) || busy}
               />
-              <Button
-                variant="secondary"
-                size="lg"
-                label={t('common.cancel')}
-                color={color}
-                onPress={handleClose}
-                disabled={busy}
-              />
             </View>
           </>
         )}
@@ -360,3 +338,64 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
     </BottomSheetModal>
   );
 }
+
+const styles = StyleSheet.create({
+  headerRow: {
+    marginBottom: 12,
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingHorizontal: 56,
+  },
+  headerTrailing: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  },
+  headerTrailingLabel: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  subtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 8,
+  },
+  codeInput: {
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    fontSize: 16,
+    lineHeight: 22,
+    letterSpacing: 0.5,
+  },
+  errorText: {
+    marginTop: 8,
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    paddingHorizontal: 8,
+  },
+  footer: {
+    marginTop: 16,
+    width: '100%',
+  },
+  activatingWrap: {
+    alignItems: 'center',
+    paddingVertical: 16,
+  },
+  activatingTitle: {
+    marginTop: 20,
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingHorizontal: 24,
+  },
+});
