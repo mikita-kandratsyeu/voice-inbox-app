@@ -43,7 +43,7 @@ const SPACING_UIKIT = 15;
 const SPACING_MATERIAL = 12;
 const DEFAULT_MAX_TAB_ITEM_WIDTH = 125;
 
-const useNativeDriver = Platform.OS !== 'web';
+const useNativeDriver = !IS_WEB;
 
 type Options = {
   state: TabNavigationState<ParamListBase>;

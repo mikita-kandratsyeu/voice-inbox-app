@@ -333,20 +333,22 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
                 {error}
               </Text>
             )}
-            <View className="mt-5 flex-row flex-wrap items-center justify-end gap-3">
-              <Button
-                variant="ghost"
-                label={t('common.cancel')}
-                color={color}
-                onPress={handleClose}
-                disabled={busy}
-              />
+            <View className="mt-5 flex-col w-full gap-3">
               <Button
                 variant="primary"
+                size="lg"
                 label={t('proLicense.activate')}
                 color={color}
                 onPress={() => void handleSubmit()}
                 disabled={!isCompleteProOfferCode(offerCodeCompact) || busy}
+              />
+              <Button
+                variant="secondary"
+                size="lg"
+                label={t('common.cancel')}
+                color={color}
+                onPress={handleClose}
+                disabled={busy}
               />
             </View>
           </>

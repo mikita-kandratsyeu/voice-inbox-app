@@ -176,18 +176,20 @@ export function TaskReextractHintSheet({
             max: TASK_EXTRACTION_HINT_MAX_CHARS,
           })}
         </Text>
-        <View className="mt-5 flex-row flex-wrap items-center justify-end gap-3">
-          <Button
-            variant="ghost"
-            label={t('common.cancel')}
-            color={color}
-            onPress={() => bottomSheetRef.current?.dismiss()}
-          />
+        <View className="mt-5 flex-col w-full gap-3">
           <Button
             variant="primary"
+            size="lg"
             label={t('recordingDetail.reextractTasks')}
             color={color}
             onPress={handleConfirm}
+          />
+          <Button
+            variant="secondary"
+            size="lg"
+            label={t('common.cancel')}
+            color={color}
+            onPress={() => bottomSheetRef.current?.dismiss()}
           />
         </View>
       </BottomSheetView>
