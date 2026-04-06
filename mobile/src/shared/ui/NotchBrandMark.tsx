@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -7,6 +7,7 @@ import { i18n } from '@/shared/lib';
 import { IS_IOS } from '@/shared/lib/platform';
 
 import { useColors } from '../config';
+import { PrivateModeBadge } from './PrivateModeBadge';
 
 const IOS_NOTCH_OR_ISLAND_MIN_TOP_INSET = 44;
 
@@ -28,11 +29,7 @@ export function NotchBrandMark() {
       accessible={false}
       importantForAccessibility="no-hide-descendants"
     >
-      <View style={[styles.labelContainer, { backgroundColor: color.accent.primary }]}>
-        <Text style={[styles.label, { color: color.icon.onAccent }]} numberOfLines={1}>
-          {i18n.t('common.notchBrandMark')}
-        </Text>
-      </View>
+      <PrivateModeBadge color={color} compact text={i18n.t('common.notchBrandMark')} />
     </View>
   );
 }
@@ -47,20 +44,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     zIndex: 999,
     elevation: 999,
-  },
-  labelContainer: {
-    borderRadius: 56,
-    height: 28,
-    width: 112,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    letterSpacing: 0.2,
   },
 });

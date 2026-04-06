@@ -1,4 +1,4 @@
-import { Shield } from 'lucide-react-native';
+import { Mic, Shield } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -8,10 +8,18 @@ import type { Colors } from '@/shared/config';
 type PrivateModeBadgeProps = {
   color: Colors;
   compact?: boolean;
+  text?: string;
 };
 
-export const PrivateModeBadge = ({ color, compact = false }: PrivateModeBadgeProps) => {
+export const PrivateModeBadge = ({ color, compact = false, text }: PrivateModeBadgeProps) => {
   const { t } = useTranslation();
+
+  const iconProps = {
+    size: compact ? 11 : 12,
+    color: color.accent.primary,
+    strokeWidth: compact ? 2.2 : 2,
+  };
+
   return (
     <View
       className="flex-row items-center rounded-full"
@@ -24,16 +32,13 @@ export const PrivateModeBadge = ({ color, compact = false }: PrivateModeBadgePro
         borderColor: `${color.accent.primary}66`,
       }}
     >
-      <Shield
-        size={compact ? 11 : 12}
-        color={color.accent.primary}
-        strokeWidth={compact ? 2.2 : 2}
-      />
+      {text && <Mic {...iconProps} />}
+      {!text && <Shield {...iconProps} />}
       <Text
         className={compact ? 'text-[11px] font-semibold' : 'text-xs font-semibold'}
         style={{ color: color.accent.primary }}
       >
-        {t('settings.planStatus.privateBadge')}
+        {text ?? t('settings.planStatus.privateBadge')}
       </Text>
     </View>
   );
