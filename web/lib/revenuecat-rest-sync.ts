@@ -102,6 +102,15 @@ export async function isRevenueCatProEntitlementActiveForDevice(
   return expiresAt.getTime() > now;
 }
 
+/** License keys write DeviceProEntitlement directly; RC often has no subscriber for that app user id. */
+async function hasConsumedProLicenseOnDevice(deviceId: string): Promise<boolean> {
+  const row = await prisma.proLicenseKey.findFirst({
+    where: { consumedByDeviceId: deviceId },
+    select: { id: true },
+  });
+  return row != null;
+}
+
 export async function syncDeviceProEntitlementFromRevenueCatRest(
   deviceId: string,
 ): Promise<{ ok: true; updated: boolean } | { ok: false; reason: string }> {
@@ -121,6 +130,9 @@ export async function syncDeviceProEntitlementFromRevenueCatRest(
   }
 
   if (fetched.kind === 'not_found') {
+    if (await hasConsumedProLicenseOnDevice(deviceId)) {
+      return { ok: true, updated: false };
+    }
     try {
       await prisma.deviceProEntitlement.delete({ where: { deviceId } });
     } catch {
@@ -132,6 +144,9 @@ export async function syncDeviceProEntitlementFromRevenueCatRest(
   const body = fetched.body;
   const ent = body.subscriber?.entitlements?.[entitlementId];
   if (!ent) {
+    if (await hasConsumedProLicenseOnDevice(deviceId)) {
+      return { ok: true, updated: false };
+    }
     try {
       await prisma.deviceProEntitlement.delete({ where: { deviceId } });
     } catch {
@@ -158,6 +173,9 @@ export async function syncDeviceProEntitlementFromRevenueCatRest(
   }
 
   if (expiresAt.getTime() <= now) {
+    if (await hasConsumedProLicenseOnDevice(deviceId)) {
+      return { ok: true, updated: false };
+    }
     try {
       await prisma.deviceProEntitlement.delete({ where: { deviceId } });
     } catch {
