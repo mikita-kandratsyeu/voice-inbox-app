@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { hapticError, hapticSuccess, modalKeyboardBehavior } from '@/shared/lib';
+import { hapticError, hapticSuccess, IS_IOS, modalKeyboardBehavior } from '@/shared/lib';
 import { redeemProLicenseKey } from '@/shared/lib/ai-api/proLicenseApi';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import { Button } from '@/shared/ui';
@@ -320,12 +320,15 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
               maxLength={17}
               placeholder={t('proLicense.keyPlaceholder')}
               placeholderTextColor={color.text.muted}
-              className="mt-4 rounded-xl border px-3 py-3 font-mono text-base"
+              className="mt-4 rounded-xl border px-3 font-mono"
               style={{
                 borderColor: color.border.default,
                 color: color.text.primary,
                 backgroundColor: color.background.secondary,
                 letterSpacing: 0.5,
+                fontSize: 16,
+                lineHeight: 20,
+                ...(IS_IOS ? { paddingTop: 11, paddingBottom: 11 } : { paddingVertical: 12 }),
               }}
             />
             {error != null && error.length > 0 && (

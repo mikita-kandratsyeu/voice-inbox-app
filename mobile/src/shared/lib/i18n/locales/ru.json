@@ -26,7 +26,8 @@
     "goBack": "Назад",
     "open": "Открыть",
     "moreActions": "Дополнительные действия",
-    "tryPro": "Попробовать Pro"
+    "tryPro": "Попробовать Pro",
+    "notchBrandMark": "Voice Inbox AI"
   },
   "proLicense": {
     "modalTitle": "Промокод",

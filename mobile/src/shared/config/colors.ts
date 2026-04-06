@@ -231,6 +231,7 @@ export function getColors(
   accentColorId: AccentColorId = DEFAULT_ACCENT_COLOR_ID,
 ): Colors {
   const base = colors[scheme] as Colors;
+
   return mergeColorsWithAccent(base, scheme, accentColorId);
 }
 

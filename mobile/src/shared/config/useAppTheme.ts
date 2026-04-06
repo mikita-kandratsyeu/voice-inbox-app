@@ -19,6 +19,7 @@ export function useAppTheme(): ColorScheme {
   if (appTheme === 'system') {
     return systemScheme === 'dark' ? 'dark' : 'light';
   }
+
   return appTheme;
 }
 

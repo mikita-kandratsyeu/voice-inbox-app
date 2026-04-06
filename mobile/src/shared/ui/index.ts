@@ -7,6 +7,7 @@ export { EmptyState } from './EmptyState';
 export type { InputFieldProps } from './InputField';
 export { getInputFieldInputStyle, InputField } from './InputField';
 export { SCREEN_PADDING, SECTION_STACK_GAP } from './layoutSpacing';
+export { NotchBrandMark } from './NotchBrandMark';
 export { PrivateModeBadge } from './PrivateModeBadge';
 export { ScreenHeader } from './ScreenHeader';
 export { SectionHeader } from './SectionHeader';

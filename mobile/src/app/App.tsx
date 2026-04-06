@@ -2,13 +2,12 @@ import '../../global.css';
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { NavigationContainer } from '@react-navigation/native';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { Alert, StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { useSettingsStore } from '@/entities/settings';
 import {
   AnimatedBootSplash,
   type BootstrapCriticalError,
@@ -21,9 +20,9 @@ import {
 import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
 import { AppRatingPromptRoot } from '@/features/app-review';
 import { OnboardingGate } from '@/features/onboarding';
-import { useProEntitlement, useResetAccentWhenNotPro } from '@/features/pro-license';
+import { useResetAccentWhenNotPro } from '@/features/pro-license';
 import { TranscriptionKeepAwake, TranscriptionResumePrompt } from '@/features/transcription';
-import { DEFAULT_ACCENT_COLOR_ID, getColors, useAppTheme } from '@/shared/config';
+import { useAppTheme, useColors } from '@/shared/config';
 import { i18n, NetworkStatusProvider } from '@/shared/lib';
 import { logAnalyticsScreenView } from '@/shared/lib/analytics';
 import {
@@ -31,7 +30,7 @@ import {
   PushNotificationSheet,
   usePushNotifications,
 } from '@/shared/lib/push';
-import { WarmupBottomSheet } from '@/shared/ui';
+import { NotchBrandMark, WarmupBottomSheet } from '@/shared/ui';
 
 import { flushPendingRecordModalNavigation, useInitDeepLinking } from './deep-linking';
 import { handlePushNotification } from './model/pushNavigationHandler';
@@ -40,11 +39,8 @@ import { RootNavigator } from './navigation/RootNavigator';
 
 const App = () => {
   const theme = useAppTheme();
-  const { isProActive } = useProEntitlement();
-  const accentColorId = useSettingsStore((s) => s.accentColorId);
+  const color = useColors();
 
-  const resolvedAccent = isProActive ? accentColorId : DEFAULT_ACCENT_COLOR_ID;
-  const color = useMemo(() => getColors(theme, resolvedAccent), [theme, resolvedAccent]);
   const isDark = theme === 'dark';
 
   const [bootSplashVisible, setBootSplashVisible] = useState(true);
@@ -114,6 +110,7 @@ const App = () => {
                   </AppLockGate>
                 </OnboardingGate>
               </NavigationContainer>
+              <NotchBrandMark />
               <WarmupBottomSheet />
               <PushNotificationSheet />
               <AppRatingPromptRoot />
