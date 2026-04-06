@@ -4,6 +4,8 @@ import { View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 
+import { IS_ANDROID, IS_IOS } from '../lib';
+
 export type InputFieldProps = {
   color: Colors;
   hasValue?: boolean;
@@ -21,16 +23,19 @@ const CONTAINER_BASE = {
   gap: 8,
 };
 
+const IOS_SINGLE_LINE_LINE_HEIGHT = 22;
+
 export const getInputFieldInputStyle = (color: Colors, multiline?: boolean) => ({
   flex: 1,
   minWidth: 0,
   fontSize: 16,
+  ...(IS_IOS && !multiline ? { lineHeight: IOS_SINGLE_LINE_LINE_HEIGHT } : {}),
   color: color.text.primary,
   paddingVertical: multiline ? 8 : 0,
   paddingRight: 0,
   margin: 0,
   textAlignVertical: (multiline ? 'top' : 'center') as 'top' | 'center',
-  includeFontPadding: false,
+  ...(IS_ANDROID && !multiline ? {} : { includeFontPadding: false }),
 });
 
 export const InputField = ({
