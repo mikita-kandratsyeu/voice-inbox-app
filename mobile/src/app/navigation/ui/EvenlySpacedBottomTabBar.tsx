@@ -22,7 +22,6 @@ import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   type LayoutChangeEvent,
-  Platform,
   type StyleProp,
   StyleSheet,
   View,
