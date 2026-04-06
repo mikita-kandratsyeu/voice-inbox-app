@@ -293,6 +293,12 @@ export function AdminDashboard() {
   const [proKeySendingId, setProKeySendingId] = useState<string | null>(null);
   const [proKeySendMessage, setProKeySendMessage] = useState<string | null>(null);
 
+  const [proDirectEmail, setProDirectEmail] = useState('');
+  const [proDirectDuration, setProDirectDuration] = useState<string>('m:12');
+  const [proDirectSending, setProDirectSending] = useState(false);
+  const [proDirectError, setProDirectError] = useState<string | null>(null);
+  const [proDirectSuccess, setProDirectSuccess] = useState<string | null>(null);
+
   const [broadcastConfirm, setBroadcastConfirm] = useState(false);
   const [broadcastHistory, setBroadcastHistory] = useState<BroadcastHistoryItem[]>([]);
   const [broadcastHistoryLoading, setBroadcastHistoryLoading] = useState(false);
@@ -591,6 +597,41 @@ export function AdminDashboard() {
       setProKeyRequestsError('Request failed');
     } finally {
       setProKeySendingId(null);
+    }
+  };
+
+  const handleSendProLicenseToArbitraryEmail = async () => {
+    const email = proDirectEmail.trim();
+    if (!email) {
+      setProDirectError('Enter an email address');
+      return;
+    }
+    const bodyPayload = proLicenseDurationSelectToRequestBody(proDirectDuration);
+    if (!bodyPayload) {
+      setProDirectError('Invalid duration');
+      return;
+    }
+    setProDirectError(null);
+    setProDirectSuccess(null);
+    setProDirectSending(true);
+    try {
+      const res = await fetch('/api/admin/pro-licenses/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email, ...bodyPayload }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setProDirectError(data.error ?? 'Send failed');
+        return;
+      }
+      setProDirectSuccess(`License key emailed to ${email}.`);
+      void fetchProLicenseList();
+    } catch {
+      setProDirectError('Request failed');
+    } finally {
+      setProDirectSending(false);
     }
   };
 
@@ -1322,6 +1363,66 @@ export function AdminDashboard() {
                   >
                     Refresh key requests
                   </button>
+                </div>
+
+                <div className="mb-6 rounded-lg border border-sky-200 bg-sky-50/90 p-4 dark:border-sky-900/60 dark:bg-sky-950/30">
+                  <h3 className="mb-1 text-sm font-semibold text-sky-950 dark:text-sky-100">
+                    Email Pro key to any address
+                  </h3>
+                  <p className="mb-3 text-xs leading-relaxed text-sky-900/90 dark:text-sky-200/85">
+                    Same HTML email as support flow: creates a new key, records the recipient in the
+                    keys list, and does not require a ticket. Use for testers, refunds, or manual
+                    fulfillment.
+                  </p>
+                  {proDirectSuccess && (
+                    <p className="mb-3 text-sm font-medium text-sky-900 dark:text-sky-200">
+                      {proDirectSuccess}
+                    </p>
+                  )}
+                  {proDirectError && (
+                    <p className="mb-3 text-sm text-red-700 dark:text-red-400">{proDirectError}</p>
+                  )}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+                    <div className="min-w-0 flex-1 sm:max-w-md">
+                      <label className="mb-1 block text-sm font-medium text-sky-900/90 dark:text-sky-200/90">
+                        Recipient email
+                      </label>
+                      <input
+                        type="email"
+                        autoComplete="email"
+                        value={proDirectEmail}
+                        onChange={(e) => setProDirectEmail(e.target.value)}
+                        placeholder="name@example.com"
+                        className={`${adminInputClass} w-full`}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-sky-900/90 dark:text-sky-200/90">
+                        Duration
+                      </label>
+                      <select
+                        value={proDirectDuration}
+                        onChange={(e) => setProDirectDuration(e.target.value)}
+                        className={adminSelectClass}
+                      >
+                        <option value="d:1">1 day</option>
+                        <option value="d:7">7 days</option>
+                        <option value="d:14">14 days</option>
+                        <option value="m:1">1 mo</option>
+                        <option value="m:3">3 mo</option>
+                        <option value="m:6">6 mo</option>
+                        <option value="m:12">12 mo</option>
+                      </select>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={proDirectSending}
+                      onClick={() => void handleSendProLicenseToArbitraryEmail()}
+                      className={adminBtnPrimaryClass}
+                    >
+                      {proDirectSending ? 'Sending…' : 'Email key'}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="mb-4 flex flex-wrap items-end gap-3">
