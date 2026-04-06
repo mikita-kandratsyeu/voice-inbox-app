@@ -28,16 +28,15 @@ type FolderReorderSheetProps = {
   onReorder: (orderedIds: string[]) => void;
 };
 
-const LIST_MAX_HEIGHT = 360;
-
-const ICON_CIRCLE = 40;
-const DELETE_CIRCLE = 22;
-
 function ReorderDragHandle({ lineColor }: { lineColor: string }) {
   return (
-    <View style={styles.dragHandleWrap}>
+    <View className="items-center gap-1 justify-center px-2.5 py-1.5">
       {[0, 1, 2].map((i) => (
-        <View key={i} style={[styles.dragHandleLine, { backgroundColor: lineColor }]} />
+        <View
+          key={i}
+          className="h-0.5 w-[18px] rounded-[1px]"
+          style={{ backgroundColor: lineColor }}
+        />
       ))}
     </View>
   );
@@ -106,42 +105,34 @@ export const FolderReorderSheet = ({
       return (
         <ScaleDecorator activeScale={1.01}>
           <View
-            style={[
-              styles.row,
-              {
-                backgroundColor: color.background.primary,
-                borderBottomColor: color.border.default,
-                opacity: isDragging ? 0.92 : 1,
-              },
-            ]}
+            className="min-h-[52px] flex-row items-center gap-2.5 border-b py-2 pr-1"
+            style={{
+              backgroundColor: color.background.primary,
+              borderBottomColor: color.border.default,
+              borderBottomWidth: StyleSheet.hairlineWidth,
+              opacity: isDragging ? 0.92 : 1,
+            }}
           >
             <TouchableOpacity
               onPress={() => confirmDeleteFolder(folder)}
               accessibilityRole="button"
               accessibilityLabel={t('folders.reorderDeleteA11y', { name: folder.name })}
               hitSlop={{ top: 8, bottom: 8, left: 4, right: 8 }}
-              style={[
-                styles.deleteBtn,
-                {
-                  backgroundColor: color.accent.delete,
-                },
-              ]}
+              className="ml-3.5 h-[22px] w-[22px] items-center justify-center rounded-[11px]"
+              style={{ backgroundColor: color.accent.delete }}
             >
               <Minus size={16} color={color.icon.onAccent} strokeWidth={2.5} />
             </TouchableOpacity>
             <View
-              style={[
-                styles.iconCircle,
-                {
-                  backgroundColor: color.background.tertiary,
-                },
-              ]}
+              className="h-10 w-10 items-center justify-center rounded-full"
+              style={{ backgroundColor: color.background.tertiary }}
               pointerEvents="none"
             >
               <FolderLucideIcon iconId={folder.icon} size={22} color={folderHex} strokeWidth={2} />
             </View>
             <Text
-              style={[styles.rowTitle, { color: color.text.primary }]}
+              className="flex-1 text-[17px] font-normal"
+              style={{ color: color.text.primary }}
               numberOfLines={1}
               pointerEvents="none"
             >
@@ -198,22 +189,11 @@ export const FolderReorderSheet = ({
         backgroundColor: color.icon.muted,
       }}
     >
-      <BottomSheetView
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 4,
-          paddingBottom: Math.max(insets.bottom, 20),
-        }}
-      >
-        <View style={{ marginBottom: 12, justifyContent: 'center' }}>
+      <BottomSheetView className="px-5 pt-1" style={{ paddingBottom: Math.max(insets.bottom, 20) }}>
+        <View className="mb-3 justify-center">
           <Text
-            style={{
-              fontSize: 17,
-              fontWeight: '600',
-              color: color.text.primary,
-              textAlign: 'center',
-              paddingHorizontal: 56,
-            }}
+            className="px-14 text-center text-[17px] font-semibold"
+            style={{ color: color.text.primary }}
           >
             {t('folders.reorderSheetTitle')}
           </Text>
@@ -222,32 +202,20 @@ export const FolderReorderSheet = ({
             accessibilityRole="button"
             accessibilityLabel={t('common.done')}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            style={{
-              position: 'absolute',
-              right: 0,
-              top: 0,
-              bottom: 0,
-              justifyContent: 'center',
-            }}
+            className="absolute bottom-0 right-0 top-0 justify-center"
           >
-            <Text style={{ fontSize: 17, fontWeight: '600', color: color.accent.primary }}>
+            <Text className="text-[17px] font-semibold" style={{ color: color.accent.primary }}>
               {t('common.done')}
             </Text>
           </TouchableOpacity>
         </View>
         <Text
-          style={{
-            fontSize: 13,
-            lineHeight: 18,
-            color: color.text.secondary,
-            textAlign: 'center',
-            marginBottom: 12,
-            paddingHorizontal: 8,
-          }}
+          className="mb-3 px-2 text-center text-[13px] leading-[18px]"
+          style={{ color: color.text.secondary }}
         >
           {t('folders.reorderSheetHint')}
         </Text>
-        <View style={{ height: LIST_MAX_HEIGHT }}>
+        <View className="h-[360px]">
           <DraggableFlatList
             data={folders}
             keyExtractor={(item) => item.id}
@@ -264,47 +232,3 @@ export const FolderReorderSheet = ({
     </BottomSheetModal>
   );
 };
-
-const styles = StyleSheet.create({
-  row: {
-    alignItems: 'center',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    gap: 10,
-    minHeight: 52,
-    paddingVertical: 8,
-    paddingRight: 4,
-  },
-  deleteBtn: {
-    alignItems: 'center',
-    borderRadius: DELETE_CIRCLE / 2,
-    height: DELETE_CIRCLE,
-    justifyContent: 'center',
-    width: DELETE_CIRCLE,
-    marginLeft: 14,
-  },
-  iconCircle: {
-    alignItems: 'center',
-    borderRadius: ICON_CIRCLE / 2,
-    height: ICON_CIRCLE,
-    justifyContent: 'center',
-    width: ICON_CIRCLE,
-  },
-  rowTitle: {
-    flex: 1,
-    fontSize: 17,
-    fontWeight: '400',
-  },
-  dragHandleWrap: {
-    alignItems: 'center',
-    gap: 4,
-    justifyContent: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-  },
-  dragHandleLine: {
-    borderRadius: 1,
-    height: 2,
-    width: 18,
-  },
-});

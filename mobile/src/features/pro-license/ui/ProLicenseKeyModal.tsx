@@ -9,7 +9,7 @@ import dayjs from 'dayjs';
 import { CheckCircle2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Platform, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -199,6 +199,17 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
     onClose();
   }, [onClose]);
 
+  const handleClose = useCallback(() => {
+    if (busy) {
+      return;
+    }
+    if (phase === 'success') {
+      finishSuccess();
+      return;
+    }
+    onClose();
+  }, [busy, phase, finishSuccess, onClose]);
+
   const handleSubmit = useCallback(async () => {
     if (!isCompleteProOfferCode(offerCodeCompact) || busy) {
       return;
@@ -239,6 +250,12 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
 
   const canDismissByGesture = !busy;
 
+  const codeFontFamily = Platform.select({
+    ios: 'Menlo',
+    android: 'monospace',
+    default: 'monospace',
+  });
+
   return (
     <BottomSheetModal
       ref={bottomSheetRef}
@@ -262,20 +279,20 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
         backgroundColor: color.icon.muted,
       }}
     >
-      <BottomSheetView
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 4,
-          paddingBottom: Math.max(insets.bottom, 20),
-        }}
-      >
+      <BottomSheetView className="px-5 pt-1" style={{ paddingBottom: Math.max(insets.bottom, 20) }}>
         {showActivatingOverlay ? (
-          <View style={styles.activatingWrap}>
+          <View className="items-center py-4">
             <ActivityIndicator size="large" color={color.accent.primary} />
-            <Text style={[styles.activatingTitle, { color: color.text.primary }]}>
+            <Text
+              className="mt-5 px-6 text-center text-[17px] font-semibold"
+              style={{ color: color.text.primary }}
+            >
               {t('proLicense.activatingTitle')}
             </Text>
-            <Text style={[styles.subtitle, { color: color.text.secondary, marginBottom: 0 }]}>
+            <Text
+              className="px-2 text-center text-[13px] leading-[18px]"
+              style={{ color: color.text.secondary }}
+            >
               {t('proLicense.activatingSubtitle')}
             </Text>
           </View>
@@ -287,12 +304,30 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
           />
         ) : (
           <>
-            <View style={styles.headerRow}>
-              <Text style={[styles.title, { color: color.text.primary }]}>
+            <View className="mb-3 justify-center">
+              <Text
+                className="px-14 text-center text-[17px] font-semibold"
+                style={{ color: color.text.primary }}
+              >
                 {t('proLicense.modalTitle')}
               </Text>
+              <TouchableOpacity
+                onPress={handleClose}
+                disabled={busy}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.cancel')}
+                hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                className="absolute bottom-0 right-0 top-0 justify-center"
+              >
+                <Text className="text-[17px] font-semibold" style={{ color: color.accent.primary }}>
+                  {t('common.cancel')}
+                </Text>
+              </TouchableOpacity>
             </View>
-            <Text style={[styles.subtitle, { color: color.text.secondary }]}>
+            <Text
+              className="mb-3 px-2 text-center text-[13px] leading-[18px]"
+              style={{ color: color.text.secondary }}
+            >
               {t('proLicense.modalSubtitle')}
             </Text>
             <BottomSheetTextInput
@@ -304,25 +339,25 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
               maxLength={17}
               placeholder={t('proLicense.keyPlaceholder')}
               placeholderTextColor={color.text.muted}
-              style={[
-                styles.codeInput,
-                {
-                  borderColor: color.border.default,
-                  color: color.text.primary,
-                  backgroundColor: color.background.secondary,
-                  fontFamily: Platform.select({
-                    ios: 'Menlo',
-                    android: 'monospace',
-                    default: 'monospace',
-                  }),
-                  ...(IS_IOS ? { paddingTop: 11, paddingBottom: 11 } : { paddingVertical: 12 }),
-                },
-              ]}
+              className="rounded-xl border px-3 text-[16px] leading-[22px]"
+              style={{
+                borderColor: color.border.default,
+                color: color.text.primary,
+                backgroundColor: color.background.secondary,
+                fontFamily: codeFontFamily,
+                letterSpacing: 0.5,
+                ...(IS_IOS ? { paddingTop: 11, paddingBottom: 11 } : { paddingVertical: 12 }),
+              }}
             />
             {error != null && error.length > 0 && (
-              <Text style={[styles.errorText, { color: color.accent.delete }]}>{error}</Text>
+              <Text
+                className="mt-2 px-2 text-center text-[13px] leading-[18px]"
+                style={{ color: color.accent.delete }}
+              >
+                {error}
+              </Text>
             )}
-            <View style={styles.footer}>
+            <View className="mt-4 w-full">
               <Button
                 variant="primary"
                 size="lg"
@@ -338,64 +373,3 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
     </BottomSheetModal>
   );
 }
-
-const styles = StyleSheet.create({
-  headerRow: {
-    marginBottom: 12,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: '600',
-    textAlign: 'center',
-    paddingHorizontal: 56,
-  },
-  headerTrailing: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-  },
-  headerTrailingLabel: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  subtitle: {
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-    marginBottom: 12,
-    paddingHorizontal: 8,
-  },
-  codeInput: {
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    fontSize: 16,
-    lineHeight: 22,
-    letterSpacing: 0.5,
-  },
-  errorText: {
-    marginTop: 8,
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-    paddingHorizontal: 8,
-  },
-  footer: {
-    marginTop: 16,
-    width: '100%',
-  },
-  activatingWrap: {
-    alignItems: 'center',
-    paddingVertical: 16,
-  },
-  activatingTitle: {
-    marginTop: 20,
-    fontSize: 17,
-    fontWeight: '600',
-    textAlign: 'center',
-    paddingHorizontal: 24,
-  },
-});

@@ -7,7 +7,7 @@ import {
 } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/shared/config';
@@ -105,52 +105,38 @@ export function TaskReextractHintSheet({
         backgroundColor: color.icon.muted,
       }}
     >
-      <BottomSheetView
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 4,
-          paddingBottom: Math.max(insets.bottom, 20),
-        }}
-      >
-        <View style={styles.headerRow}>
+      <BottomSheetView className="px-5 pt-1" style={{ paddingBottom: Math.max(insets.bottom, 20) }}>
+        <View className="mb-3 justify-center">
           <Text
-            style={[
-              styles.title,
-              {
-                color: color.text.primary,
-              },
-            ]}
+            className="px-14 text-center text-[17px] font-semibold"
+            style={{ color: color.text.primary }}
           >
             {t('recordingDetail.tasksReextractSheetTitle')}
           </Text>
         </View>
         <Text
-          style={[
-            styles.subtitle,
-            {
-              color: color.text.secondary,
-            },
-          ]}
+          className="mb-3 px-2 text-center text-[13px] leading-[18px]"
+          style={{ color: color.text.secondary }}
         >
           {t('recordingDetail.tasksReextractSheetSubtitle')}
         </Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.presetsScroll}
-          contentContainerStyle={styles.presetsContent}
-        >
-          {presets.map((p) => (
-            <Pressable
-              key={p.label}
-              onPress={() => appendPreset(p.hint)}
-              accessibilityRole="button"
-              accessibilityLabel={p.label}
-              style={[styles.presetChip, { backgroundColor: color.background.tertiary }]}
-            >
-              <Text style={[styles.presetLabel, { color: color.text.primary }]}>{p.label}</Text>
-            </Pressable>
-          ))}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-3">
+          <View className="flex-row flex-nowrap gap-2 px-1 py-0.5">
+            {presets.map((p) => (
+              <Pressable
+                key={p.label}
+                onPress={() => appendPreset(p.hint)}
+                accessibilityRole="button"
+                accessibilityLabel={p.label}
+                className="rounded-full px-3 py-2"
+                style={{ backgroundColor: color.background.tertiary }}
+              >
+                <Text className="text-[13px]" style={{ color: color.text.primary }}>
+                  {p.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
         </ScrollView>
         <BottomSheetTextInput
           value={hintText}
@@ -162,22 +148,20 @@ export function TaskReextractHintSheet({
           placeholder={t('recordingDetail.tasksReextractHintPlaceholder')}
           placeholderTextColor={color.text.muted}
           accessibilityLabel={t('recordingDetail.tasksReextractHintA11y')}
-          style={[
-            styles.hintInput,
-            {
-              borderColor: color.border.default,
-              color: color.text.primary,
-              backgroundColor: color.background.secondary,
-            },
-          ]}
+          className="min-h-[100px] rounded-xl border px-3 py-3 text-[16px] leading-[22px]"
+          style={{
+            borderColor: color.border.default,
+            color: color.text.primary,
+            backgroundColor: color.background.secondary,
+          }}
         />
-        <Text style={[styles.charCount, { color: color.text.secondary }]}>
+        <Text className="mt-1.5 text-center text-[12px]" style={{ color: color.text.secondary }}>
           {t('recordingDetail.tasksReextractCharCount', {
             current: hintText.length,
             max: TASK_EXTRACTION_HINT_MAX_CHARS,
           })}
         </Text>
-        <View style={styles.footer}>
+        <View className="mt-4 w-full">
           <Button
             variant="primary"
             size="lg"
@@ -190,70 +174,3 @@ export function TaskReextractHintSheet({
     </BottomSheetModal>
   );
 }
-
-const styles = StyleSheet.create({
-  headerRow: {
-    marginBottom: 12,
-    justifyContent: 'center',
-  },
-  title: {
-    fontSize: 17,
-    fontWeight: '600',
-    textAlign: 'center',
-    paddingHorizontal: 56,
-  },
-  headerTrailing: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
-  },
-  headerTrailingLabel: {
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  subtitle: {
-    fontSize: 13,
-    lineHeight: 18,
-    textAlign: 'center',
-    marginBottom: 12,
-    paddingHorizontal: 8,
-  },
-  presetsScroll: {
-    marginBottom: 12,
-  },
-  presetsContent: {
-    flexDirection: 'row',
-    flexWrap: 'nowrap',
-    gap: 8,
-    paddingVertical: 2,
-    paddingHorizontal: 4,
-  },
-  presetChip: {
-    borderRadius: 999,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  presetLabel: {
-    fontSize: 13,
-  },
-  hintInput: {
-    minHeight: 100,
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    fontSize: 16,
-    lineHeight: 22,
-  },
-  charCount: {
-    marginTop: 6,
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  footer: {
-    marginTop: 16,
-    width: '100%',
-  },
-});
