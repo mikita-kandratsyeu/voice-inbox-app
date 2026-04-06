@@ -65,9 +65,31 @@ function buildLinkStyleFooterHtml(params: { support: string; site: string }): st
 </table>`;
 }
 
+export type ProLicenseEmailDuration =
+  | { kind: 'months'; months: number }
+  | { kind: 'days'; days: number };
+
+function durationPhrasePlain(d: ProLicenseEmailDuration): string {
+  if (d.kind === 'days') {
+    return `${d.days} day${d.days === 1 ? '' : 's'}`;
+  }
+  return `${d.months} month${d.months === 1 ? '' : 's'}`;
+}
+
+function durationPhraseHtml(d: ProLicenseEmailDuration): string {
+  if (d.kind === 'days') {
+    return `${d.days}&nbsp;day${d.days === 1 ? '' : 's'}`;
+  }
+  return `${d.months}&nbsp;month${d.months === 1 ? '' : 's'}`;
+}
+
+function subjectDurationSegment(d: ProLicenseEmailDuration): string {
+  return d.kind === 'days' ? `${d.days} d` : `${d.months} mo`;
+}
+
 export function buildProLicenseKeyEmail(params: {
   plainKey: string;
-  durationMonths: number;
+  duration: ProLicenseEmailDuration;
   recipientEmail?: string | null;
 }): {
   subject: string;
@@ -75,7 +97,7 @@ export function buildProLicenseKeyEmail(params: {
   html: string;
 } {
   const keyDisplay = formatProKeyEmailBlock(params.plainKey);
-  const months = params.durationMonths;
+  const dur = params.duration;
   const support = SUPPORT_EMAIL.trim();
   const site = BASE_URL_OR_FALLBACK.replace(/\/$/, '');
   const recipient = params.recipientEmail?.trim() ?? null;
@@ -83,11 +105,12 @@ export function buildProLicenseKeyEmail(params: {
     ? `If you did not request this key, contact us at ${support}.`
     : `If you did not request this key, please ignore this message.`;
 
-  const subject = `Your Voice Inbox AI Pro license (${months} mo)`;
+  const subject = `Your Voice Inbox AI Pro license (${subjectDurationSegment(dur)})`;
 
+  const phrase = durationPhrasePlain(dur);
   const introPlain = recipient
-    ? `One-Time Activation Key for ${recipient} (${months} month${months === 1 ? '' : 's'}) is:`
-    : `One-Time Activation Key (${months} month${months === 1 ? '' : 's'}) is:`;
+    ? `One-Time Activation Key for ${recipient} (${phrase}) is:`
+    : `One-Time Activation Key (${phrase}) is:`;
 
   const textLines = [
     introPlain,
@@ -108,7 +131,7 @@ export function buildProLicenseKeyEmail(params: {
 
   const introHtml = recipient
     ? `One-Time Activation Key for <strong style="color:#111111;">${escapeHtml(recipient)}</strong> is:`
-    : `One-Time Activation Key (${months}&nbsp;month${months === 1 ? '' : 's'}) is:`;
+    : `One-Time Activation Key (${durationPhraseHtml(dur)}) is:`;
 
   const footerHtml = buildLinkStyleFooterHtml({ support, site });
 

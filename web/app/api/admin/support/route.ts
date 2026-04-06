@@ -73,6 +73,7 @@ export async function GET(request: Request): Promise<NextResponse> {
         closedAt: r.closedAt?.toISOString() ?? null,
         proLicenseEmailSentAt: r.proLicenseEmailSentAt?.toISOString() ?? null,
         proLicenseDurationMonths: r.proLicenseDurationMonths ?? null,
+        proLicenseDurationDays: r.proLicenseDurationDays ?? null,
       })),
       nextCursor,
     });

@@ -12,6 +12,12 @@ function subtractCalendarMonthsUtc(base: Date, months: number): Date {
   return d;
 }
 
+function subtractUtcDays(base: Date, days: number): Date {
+  const d = new Date(base.getTime());
+  d.setUTCDate(d.getUTCDate() - days);
+  return d;
+}
+
 export type ResetConsumedProLicenseResult =
   | { ok: true; keyId: string; previousDeviceId: string | null }
   | { ok: false; error: string; status: number };
@@ -39,7 +45,7 @@ export async function resetConsumedProLicenseKey(
       }
 
       const deviceId = keyRow.consumedByDeviceId;
-      const durationMonths = keyRow.durationMonths;
+      const durationDays = keyRow.durationDays;
 
       if (deviceId) {
         const ent = await tx.deviceProEntitlement.findUnique({
@@ -47,7 +53,10 @@ export async function resetConsumedProLicenseKey(
         });
         if (ent) {
           const now = new Date();
-          const adjusted = subtractCalendarMonthsUtc(ent.expiresAt, durationMonths);
+          const adjusted =
+            durationDays != null
+              ? subtractUtcDays(ent.expiresAt, durationDays)
+              : subtractCalendarMonthsUtc(ent.expiresAt, keyRow.durationMonths);
           if (adjusted.getTime() <= now.getTime()) {
             await tx.deviceProEntitlement.delete({ where: { deviceId } });
           } else {

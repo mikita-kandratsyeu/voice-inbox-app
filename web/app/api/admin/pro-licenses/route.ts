@@ -1,11 +1,14 @@
 import { writeAdminAudit } from '@/lib/admin-audit';
 import { getAdminSession } from '@/lib/admin-session';
 import { apiError, HttpStatus, parseJsonBody } from '@/lib/api';
-import { createProLicenseKeyRecord, parseProLicenseDurationMonths } from '@/lib/pro-license-admin';
+import {
+  createProLicenseKeyRecord,
+  parseProLicenseDurationFromBody,
+} from '@/lib/pro-license-admin';
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 
-type PostBody = { durationMonths?: unknown };
+type PostBody = { durationMonths?: unknown; durationDays?: unknown };
 
 export async function GET(): Promise<NextResponse> {
   const admin = await getAdminSession();
@@ -27,6 +30,7 @@ export async function GET(): Promise<NextResponse> {
       select: {
         id: true,
         durationMonths: true,
+        durationDays: true,
         createdAt: true,
         issuedToEmail: true,
         consumedAt: true,
@@ -37,6 +41,7 @@ export async function GET(): Promise<NextResponse> {
     const items = rows.map((r) => ({
       id: r.id,
       durationMonths: r.durationMonths,
+      durationDays: r.durationDays,
       createdAt: r.createdAt.toISOString(),
       issuedToEmail: r.issuedToEmail,
       consumed: r.consumedAt != null,
@@ -69,16 +74,18 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const body = await parseJsonBody<PostBody>(request);
-  const n = parseProLicenseDurationMonths(body?.durationMonths);
-  if (n == null) {
-    return apiError('durationMonths must be 1, 3, 6, or 12', HttpStatus.BAD_REQUEST, {
-      pathname: path,
-    });
+  const spec = parseProLicenseDurationFromBody(body ?? {});
+  if (spec == null) {
+    return apiError(
+      'Provide exactly one of durationMonths (1, 3, 6, 12) or durationDays (1, 7, 14)',
+      HttpStatus.BAD_REQUEST,
+      { pathname: path },
+    );
   }
 
   let plain: string;
   try {
-    const created = await createProLicenseKeyRecord(admin.adminId, n);
+    const created = await createProLicenseKeyRecord(admin.adminId, spec);
     plain = created.plainKey;
   } catch (e) {
     console.error('[admin/pro-licenses POST]', e);
@@ -86,13 +93,15 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   await writeAdminAudit(admin, 'pro_license.generate', {
-    durationMonths: n,
+    durationMonths: spec.kind === 'months' ? spec.months : 0,
+    durationDays: spec.kind === 'days' ? spec.days : null,
   });
 
   return NextResponse.json({
     ok: true,
     plainKey: plain,
-    durationMonths: n,
+    durationMonths: spec.kind === 'months' ? spec.months : 0,
+    durationDays: spec.kind === 'days' ? spec.days : null,
     hint: 'Copy now — the plaintext key is not stored and cannot be shown again.',
   });
 }

@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { hashLicenseKey, normalizeLicenseKeyInput } from './pro-license-crypto';
 
 const ALLOWED_MONTHS = new Set([1, 3, 6, 12]);
+const ALLOWED_DAYS = new Set([1, 7, 14]);
 
 function addCalendarMonthsUtc(base: Date, months: number): Date {
   const d = new Date(base.getTime());
@@ -13,6 +14,12 @@ function addCalendarMonthsUtc(base: Date, months: number): Date {
   if (d.getUTCDate() < day) {
     d.setUTCDate(0);
   }
+  return d;
+}
+
+function addUtcDays(base: Date, days: number): Date {
+  const d = new Date(base.getTime());
+  d.setUTCDate(d.getUTCDate() + days);
   return d;
 }
 
@@ -65,7 +72,13 @@ export async function redeemProLicenseKey(
         return { type: 'used_elsewhere' as const };
       }
 
-      if (!ALLOWED_MONTHS.has(keyRow.durationMonths)) {
+      const dayGrant = keyRow.durationDays;
+      const useDays = dayGrant != null;
+      if (useDays) {
+        if (!ALLOWED_DAYS.has(dayGrant)) {
+          return { type: 'bad_key' as const };
+        }
+      } else if (!ALLOWED_MONTHS.has(keyRow.durationMonths)) {
         return { type: 'bad_key' as const };
       }
 
@@ -76,7 +89,9 @@ export async function redeemProLicenseKey(
 
       const base =
         existing && existing.expiresAt.getTime() > now.getTime() ? existing.expiresAt : now;
-      const newExpires = addCalendarMonthsUtc(base, keyRow.durationMonths);
+      const newExpires = useDays
+        ? addUtcDays(base, dayGrant)
+        : addCalendarMonthsUtc(base, keyRow.durationMonths);
 
       await tx.proLicenseKey.update({
         where: { id: keyRow.id },

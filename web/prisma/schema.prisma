@@ -83,6 +83,7 @@ model SupportIssue {
   closedAt                 DateTime?
   proLicenseEmailSentAt    DateTime?
   proLicenseDurationMonths Int?
+  proLicenseDurationDays   Int?
 
   @@index([deviceId])
   @@index([createdAt(sort: Desc)])
@@ -93,6 +94,7 @@ model ProLicenseKey {
   id                 String    @id @default(cuid())
   keyHash            String    @unique
   durationMonths     Int
+  durationDays       Int?
   createdAt          DateTime  @default(now())
   createdByAdminId   String
   issuedToEmail      String?

@@ -11,6 +11,10 @@ import {
   adminSelectClass,
 } from './admin-ui';
 import {
+  formatSupportProKeySentLabel,
+  proLicenseDurationSelectToRequestBody,
+} from '@/lib/pro-license-duration-form';
+import {
   isSupportProKeyRequestSubject,
   SUPPORT_PRO_KEY_SUBJECT_MARKER,
 } from '@/lib/support-pro-key-request';
@@ -64,6 +68,7 @@ type SupportItem = {
   updatedAt: string;
   proLicenseEmailSentAt: string | null;
   proLicenseDurationMonths: number | null;
+  proLicenseDurationDays: number | null;
 };
 
 type ListResponse = {
@@ -88,7 +93,7 @@ export function AdminSupportPanel() {
   const [aiLoadingId, setAiLoadingId] = useState<string | null>(null);
   const [pushLoadingId, setPushLoadingId] = useState<string | null>(null);
   const [inlineSuccessId, setInlineSuccessId] = useState<string | null>(null);
-  const [supportProKeyMonths, setSupportProKeyMonths] = useState<Record<string, string>>({});
+  const [supportProKeyDuration, setSupportProKeyDuration] = useState<Record<string, string>>({});
   const [supportProKeySendingId, setSupportProKeySendingId] = useState<string | null>(null);
 
   const getDraft = useCallback(
@@ -131,6 +136,7 @@ export function AdminSupportPanel() {
           ...item,
           proLicenseEmailSentAt: item.proLicenseEmailSentAt ?? null,
           proLicenseDurationMonths: item.proLicenseDurationMonths ?? null,
+          proLicenseDurationDays: item.proLicenseDurationDays ?? null,
         }));
         setItems((prev) => (append ? [...prev, ...mapped] : mapped));
         setNextCursor(data.nextCursor ?? null);
@@ -227,9 +233,9 @@ export function AdminSupportPanel() {
       setError('This request has no email — the user must resubmit with an address.');
       return;
     }
-    const raw = supportProKeyMonths[row.id] ?? '12';
-    const months = parseInt(raw, 10);
-    if (![1, 3, 6, 12].includes(months)) {
+    const raw = supportProKeyDuration[row.id] ?? 'm:12';
+    const bodyPayload = proLicenseDurationSelectToRequestBody(raw);
+    if (!bodyPayload) {
       setError('Invalid duration');
       return;
     }
@@ -240,7 +246,7 @@ export function AdminSupportPanel() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ issueId: row.id, durationMonths: months }),
+        body: JSON.stringify({ issueId: row.id, ...bodyPayload }),
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) {
@@ -256,7 +262,10 @@ export function AdminSupportPanel() {
                 status: 'closed',
                 updatedAt: now,
                 proLicenseEmailSentAt: now,
-                proLicenseDurationMonths: months,
+                proLicenseDurationMonths:
+                  'durationMonths' in bodyPayload ? bodyPayload.durationMonths : null,
+                proLicenseDurationDays:
+                  'durationDays' in bodyPayload ? bodyPayload.durationDays : null,
               }
             : r,
         ),
@@ -405,8 +414,12 @@ export function AdminSupportPanel() {
                       <div className="mt-3 rounded-lg border border-teal-200 bg-teal-50/80 p-3 dark:border-teal-900/50 dark:bg-teal-950/25">
                         {row.proLicenseEmailSentAt ? (
                           <p className="text-xs font-medium text-teal-900 dark:text-teal-200">
-                            Pro key emailed ({row.proLicenseDurationMonths ?? '?'} mo) —{' '}
-                            {formatDate(row.proLicenseEmailSentAt)}. Ticket closed.
+                            Pro key emailed (
+                            {formatSupportProKeySentLabel(
+                              row.proLicenseDurationMonths,
+                              row.proLicenseDurationDays,
+                            )}
+                            ) — {formatDate(row.proLicenseEmailSentAt)}. Ticket closed.
                           </p>
                         ) : !row.email ? (
                           <p className="text-xs text-amber-800 dark:text-amber-200">
@@ -420,19 +433,22 @@ export function AdminSupportPanel() {
                             </p>
                             <div className="flex flex-wrap items-center gap-2">
                               <select
-                                value={supportProKeyMonths[row.id] ?? '12'}
+                                value={supportProKeyDuration[row.id] ?? 'm:12'}
                                 onChange={(e) =>
-                                  setSupportProKeyMonths((prev) => ({
+                                  setSupportProKeyDuration((prev) => ({
                                     ...prev,
                                     [row.id]: e.target.value,
                                   }))
                                 }
                                 className="rounded-lg border border-teal-200 bg-white px-2 py-1.5 text-sm dark:border-teal-800 dark:bg-zinc-900 dark:text-zinc-100"
                               >
-                                <option value="1">1 mo</option>
-                                <option value="3">3 mo</option>
-                                <option value="6">6 mo</option>
-                                <option value="12">12 mo</option>
+                                <option value="d:1">1 day</option>
+                                <option value="d:7">7 days</option>
+                                <option value="d:14">14 days</option>
+                                <option value="m:1">1 mo</option>
+                                <option value="m:3">3 mo</option>
+                                <option value="m:6">6 mo</option>
+                                <option value="m:12">12 mo</option>
                               </select>
                               <button
                                 type="button"

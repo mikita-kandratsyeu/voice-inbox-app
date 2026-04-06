@@ -32,6 +32,10 @@ import { AdminOperationsPanel } from './AdminOperationsPanel';
 import { AdminReleasesPanel } from './AdminReleasesPanel';
 import { AdminSecurityPanel } from './AdminSecurityPanel';
 import { AdminSupportPanel } from './AdminSupportPanel';
+import {
+  formatProLicenseRowDuration,
+  proLicenseDurationSelectToRequestBody,
+} from '@/lib/pro-license-duration-form';
 import { SUPPORT_PRO_KEY_SUBJECT_MARKER } from '@/lib/support-pro-key-request';
 
 type VercelDeploymentInfo = {
@@ -135,6 +139,7 @@ type BroadcastHistoryItem = {
 type ProLicenseRow = {
   id: string;
   durationMonths: number;
+  durationDays: number | null;
   createdAt: string;
   issuedToEmail?: string | null;
   consumed: boolean;
@@ -272,7 +277,7 @@ export function AdminDashboard() {
   const [appConfigMessage, setAppConfigMessage] = useState<string | null>(null);
   const [appConfigError, setAppConfigError] = useState<string | null>(null);
 
-  const [proLicenseMonths, setProLicenseMonths] = useState<string>('12');
+  const [proLicenseDuration, setProLicenseDuration] = useState<string>('m:12');
   const [proLicenseGenerating, setProLicenseGenerating] = useState(false);
   const [proLicensePlainKey, setProLicensePlainKey] = useState<string | null>(null);
   const [proLicenseList, setProLicenseList] = useState<ProLicenseRow[]>([]);
@@ -284,7 +289,7 @@ export function AdminDashboard() {
   const [proKeyRequests, setProKeyRequests] = useState<ProKeyRequestRow[]>([]);
   const [proKeyRequestsLoading, setProKeyRequestsLoading] = useState(false);
   const [proKeyRequestsError, setProKeyRequestsError] = useState<string | null>(null);
-  const [proKeyRequestMonths, setProKeyRequestMonths] = useState<Record<string, string>>({});
+  const [proKeyRequestDuration, setProKeyRequestDuration] = useState<Record<string, string>>({});
   const [proKeySendingId, setProKeySendingId] = useState<string | null>(null);
   const [proKeySendMessage, setProKeySendMessage] = useState<string | null>(null);
 
@@ -469,12 +474,16 @@ export function AdminDashboard() {
     setProLicensePlainKey(null);
     setProLicenseGenerating(true);
     try {
-      const months = parseInt(proLicenseMonths, 10);
+      const bodyPayload = proLicenseDurationSelectToRequestBody(proLicenseDuration);
+      if (!bodyPayload) {
+        setProLicenseError('Invalid duration');
+        return;
+      }
       const res = await fetch('/api/admin/pro-licenses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ durationMonths: months }),
+        body: JSON.stringify(bodyPayload),
       });
       const data = (await res.json()) as {
         ok?: boolean;
@@ -554,9 +563,9 @@ export function AdminDashboard() {
   };
 
   const handleSendProKeyEmail = async (row: ProKeyRequestRow) => {
-    const raw = proKeyRequestMonths[row.id] ?? '12';
-    const months = parseInt(raw, 10);
-    if (![1, 3, 6, 12].includes(months)) {
+    const raw = proKeyRequestDuration[row.id] ?? 'm:12';
+    const bodyPayload = proLicenseDurationSelectToRequestBody(raw);
+    if (!bodyPayload) {
       setProKeyRequestsError('Invalid duration');
       return;
     }
@@ -568,7 +577,7 @@ export function AdminDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ issueId: row.id, durationMonths: months }),
+        body: JSON.stringify({ issueId: row.id, ...bodyPayload }),
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
       if (!res.ok || !data.ok) {
@@ -1225,9 +1234,10 @@ export function AdminDashboard() {
                     <code className="rounded bg-white/90 px-1 py-0.5 font-mono text-[11px] text-emerald-950 dark:bg-emerald-950/80 dark:text-emerald-100">
                       {SUPPORT_PRO_KEY_SUBJECT_MARKER}
                     </code>{' '}
-                    (any case) and leaves an email, the open request appears below. Pick 1 / 3 / 6 /
-                    12 months and send — Nodemailer delivers the HTML email and the ticket closes.
-                    Requires SMTP env vars (see <span className="font-mono">.env.example</span>).
+                    (any case) and leaves an email, the open request appears below. Pick duration (1
+                    / 7 / 14 days or 1 / 3 / 6 / 12 months) and send — Nodemailer delivers the HTML
+                    email and the ticket closes. Requires SMTP env vars (see{' '}
+                    <span className="font-mono">.env.example</span>).
                   </p>
                   {proKeySendMessage && (
                     <p className="mb-3 text-sm font-medium text-emerald-800 dark:text-emerald-300">
@@ -1274,19 +1284,22 @@ export function AdminDashboard() {
                             </div>
                             <div className="flex shrink-0 flex-wrap items-center gap-2">
                               <select
-                                value={proKeyRequestMonths[req.id] ?? '12'}
+                                value={proKeyRequestDuration[req.id] ?? 'm:12'}
                                 onChange={(e) =>
-                                  setProKeyRequestMonths((prev) => ({
+                                  setProKeyRequestDuration((prev) => ({
                                     ...prev,
                                     [req.id]: e.target.value,
                                   }))
                                 }
                                 className={adminSelectClass}
                               >
-                                <option value="1">1 mo</option>
-                                <option value="3">3 mo</option>
-                                <option value="6">6 mo</option>
-                                <option value="12">12 mo</option>
+                                <option value="d:1">1 day</option>
+                                <option value="d:7">7 days</option>
+                                <option value="d:14">14 days</option>
+                                <option value="m:1">1 mo</option>
+                                <option value="m:3">3 mo</option>
+                                <option value="m:6">6 mo</option>
+                                <option value="m:12">12 mo</option>
                               </select>
                               <button
                                 type="button"
@@ -1314,17 +1327,20 @@ export function AdminDashboard() {
                 <div className="mb-4 flex flex-wrap items-end gap-3">
                   <div>
                     <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                      Duration (months)
+                      Duration
                     </label>
                     <select
-                      value={proLicenseMonths}
-                      onChange={(e) => setProLicenseMonths(e.target.value)}
+                      value={proLicenseDuration}
+                      onChange={(e) => setProLicenseDuration(e.target.value)}
                       className={adminSelectClass}
                     >
-                      <option value="1">1</option>
-                      <option value="3">3</option>
-                      <option value="6">6</option>
-                      <option value="12">12</option>
+                      <option value="d:1">1 day</option>
+                      <option value="d:7">7 days</option>
+                      <option value="d:14">14 days</option>
+                      <option value="m:1">1 mo</option>
+                      <option value="m:3">3 mo</option>
+                      <option value="m:6">6 mo</option>
+                      <option value="m:12">12 mo</option>
                     </select>
                   </div>
                   <button
@@ -1364,7 +1380,7 @@ export function AdminDashboard() {
                       <thead>
                         <tr className="border-b border-zinc-200 dark:border-zinc-600">
                           <th className="py-2 pr-4 font-medium">Created</th>
-                          <th className="py-2 pr-4 font-medium">Months</th>
+                          <th className="py-2 pr-4 font-medium">Duration</th>
                           <th className="py-2 pr-4 font-medium">Email</th>
                           <th className="py-2 pr-4 font-medium">Status</th>
                           <th className="py-2 pr-4 font-medium">Device</th>
@@ -1380,7 +1396,9 @@ export function AdminDashboard() {
                             <td className="py-2 pr-4 text-zinc-600 dark:text-zinc-400">
                               {formatDate(new Date(row.createdAt).getTime())}
                             </td>
-                            <td className="py-2 pr-4">{row.durationMonths}</td>
+                            <td className="py-2 pr-4">
+                              {formatProLicenseRowDuration(row.durationMonths, row.durationDays)}
+                            </td>
                             <td className="max-w-[200px] truncate py-2 pr-4 text-zinc-700 dark:text-zinc-300">
                               {row.issuedToEmail ?? '—'}
                             </td>

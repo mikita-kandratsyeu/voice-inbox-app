@@ -5,14 +5,17 @@ import { getAdminSession } from '@/lib/admin-session';
 import { apiError, HttpStatus, parseJsonBody } from '@/lib/api';
 import { sendTransactionalMail, isSmtpConfigured } from '@/lib/mailer';
 import { buildProLicenseKeyEmail } from '@/lib/pro-license-email-template';
-import { createProLicenseKeyRecord, parseProLicenseDurationMonths } from '@/lib/pro-license-admin';
+import {
+  createProLicenseKeyRecord,
+  parseProLicenseDurationFromBody,
+} from '@/lib/pro-license-admin';
 import { prisma } from '@/lib/prisma';
 import {
   isSupportProKeyRequestSubject,
   SUPPORT_PRO_KEY_SUBJECT_MARKER,
 } from '@/lib/support-pro-key-request';
 
-type Body = { issueId?: unknown; durationMonths?: unknown };
+type Body = { issueId?: unknown; durationMonths?: unknown; durationDays?: unknown };
 
 export async function POST(request: Request): Promise<NextResponse> {
   const path = new URL(request.url).pathname;
@@ -40,11 +43,13 @@ export async function POST(request: Request): Promise<NextResponse> {
     return apiError('issueId is required', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
-  const durationMonths = parseProLicenseDurationMonths(body?.durationMonths);
-  if (durationMonths == null) {
-    return apiError('durationMonths must be 1, 3, 6, or 12', HttpStatus.BAD_REQUEST, {
-      pathname: path,
-    });
+  const spec = parseProLicenseDurationFromBody(body ?? {});
+  if (spec == null) {
+    return apiError(
+      'Provide exactly one of durationMonths (1, 3, 6, 12) or durationDays (1, 7, 14)',
+      HttpStatus.BAD_REQUEST,
+      { pathname: path },
+    );
   }
 
   const issue = await prisma.supportIssue.findUnique({
@@ -89,7 +94,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   let keyId: string;
 
   try {
-    const created = await createProLicenseKeyRecord(admin.adminId, durationMonths, {
+    const created = await createProLicenseKeyRecord(admin.adminId, spec, {
       issuedToEmail: to,
     });
     plainKey = created.plainKey;
@@ -103,7 +108,10 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const { subject, text, html } = buildProLicenseKeyEmail({
     plainKey,
-    durationMonths,
+    duration:
+      spec.kind === 'days'
+        ? { kind: 'days', days: spec.days }
+        : { kind: 'months', months: spec.months },
     recipientEmail: to,
   });
 
@@ -127,7 +135,8 @@ export async function POST(request: Request): Promise<NextResponse> {
       where: { id: issueId },
       data: {
         proLicenseEmailSentAt: now,
-        proLicenseDurationMonths: durationMonths,
+        proLicenseDurationMonths: spec.kind === 'months' ? spec.months : null,
+        proLicenseDurationDays: spec.kind === 'days' ? spec.days : null,
         status: 'closed',
         closedAt: now,
       },
@@ -145,7 +154,8 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   await writeAdminAudit(admin, 'support.pro_license_email', {
     issueId,
-    durationMonths,
+    durationMonths: spec.kind === 'months' ? spec.months : null,
+    durationDays: spec.kind === 'days' ? spec.days : null,
     to,
   });
 
