@@ -958,8 +958,8 @@
   "folders": {
     "all": "All",
     "reorderOpenA11y": "Change folder order",
-    "reorderSheetTitle": "Folder order",
-    "reorderSheetHint": "Drag the handle on the right to reorder. Tap − to remove a folder. Order saves when you finish dragging.",
+    "reorderSheetTitle": "Customize folder order",
+    "reorderSheetHint": "Drag the folder by the handle on the right. Tap '−' to remove a folder. When you finish dragging, the order saves on its own.",
     "reorderRowA11y": "Hold the handle on the right and drag to reorder.",
     "reorderDeleteA11y": "Delete folder {{name}}",
     "create": "New folder",
