@@ -7,16 +7,15 @@ import {
 } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { Colors } from '@/shared/config';
-import { modalKeyboardBehavior } from '@/shared/lib';
+import { useColors } from '@/shared/config';
 import { TASK_EXTRACTION_HINT_MAX_CHARS } from '@/shared/lib/ai-core/local-provider/localAiConstants';
+import { modalKeyboardBehavior } from '@/shared/lib/platform';
 import { Button } from '@/shared/ui';
 
 type TaskReextractHintSheetProps = {
-  color: Colors;
   onClose: () => void;
   onConfirm: (hint: string | undefined) => void;
   visible: boolean;
@@ -26,28 +25,24 @@ export function TaskReextractHintSheet({
   visible,
   onClose,
   onConfirm,
-  color,
 }: TaskReextractHintSheetProps) {
   const { t } = useTranslation();
+  const color = useColors();
   const insets = useSafeAreaInsets();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [hintText, setHintText] = useState('');
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
 
   useEffect(() => {
-    if (!visible) {
-      bottomSheetRef.current?.dismiss();
-      return;
+    if (visible) {
+      setHintText('');
+      const frame = requestAnimationFrame(() => {
+        bottomSheetRef.current?.present();
+      });
+      return () => cancelAnimationFrame(frame);
     }
-
-    setHintText('');
-    bottomSheetRef.current?.present();
+    bottomSheetRef.current?.dismiss();
+    return undefined;
   }, [visible]);
-
-  const handleSheetDismiss = useCallback(() => {
-    onCloseRef.current();
-  }, []);
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
@@ -97,7 +92,7 @@ export function TaskReextractHintSheet({
       keyboardBlurBehavior="restore"
       enableBlurKeyboardOnGesture
       backdropComponent={renderBackdrop}
-      onDismiss={handleSheetDismiss}
+      onDismiss={onClose}
       backgroundStyle={{
         backgroundColor: color.background.primary,
         borderTopWidth: 1,
@@ -112,27 +107,38 @@ export function TaskReextractHintSheet({
     >
       <BottomSheetView
         style={{
-          paddingHorizontal: 24,
-          paddingTop: 8,
-          paddingBottom: Math.max(insets.bottom, 24),
+          paddingHorizontal: 20,
+          paddingTop: 4,
+          paddingBottom: Math.max(insets.bottom, 20),
         }}
       >
-        <Text className="text-lg font-semibold" style={{ color: color.text.primary }}>
-          {t('recordingDetail.tasksReextractSheetTitle')}
-        </Text>
-        <Text className="mt-2 text-sm leading-5" style={{ color: color.text.secondary }}>
+        <View style={styles.headerRow}>
+          <Text
+            style={[
+              styles.title,
+              {
+                color: color.text.primary,
+              },
+            ]}
+          >
+            {t('recordingDetail.tasksReextractSheetTitle')}
+          </Text>
+        </View>
+        <Text
+          style={[
+            styles.subtitle,
+            {
+              color: color.text.secondary,
+            },
+          ]}
+        >
           {t('recordingDetail.tasksReextractSheetSubtitle')}
         </Text>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={{ marginTop: 12 }}
-          contentContainerStyle={{
-            flexDirection: 'row',
-            flexWrap: 'nowrap',
-            gap: 8,
-            paddingVertical: 2,
-          }}
+          style={styles.presetsScroll}
+          contentContainerStyle={styles.presetsContent}
         >
           {presets.map((p) => (
             <Pressable
@@ -140,16 +146,9 @@ export function TaskReextractHintSheet({
               onPress={() => appendPreset(p.hint)}
               accessibilityRole="button"
               accessibilityLabel={p.label}
-              style={{
-                borderRadius: 999,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                backgroundColor: color.background.tertiary,
-              }}
+              style={[styles.presetChip, { backgroundColor: color.background.tertiary }]}
             >
-              <Text className="text-sm" style={{ color: color.text.primary }}>
-                {p.label}
-              </Text>
+              <Text style={[styles.presetLabel, { color: color.text.primary }]}>{p.label}</Text>
             </Pressable>
           ))}
         </ScrollView>
@@ -163,20 +162,22 @@ export function TaskReextractHintSheet({
           placeholder={t('recordingDetail.tasksReextractHintPlaceholder')}
           placeholderTextColor={color.text.muted}
           accessibilityLabel={t('recordingDetail.tasksReextractHintA11y')}
-          className="mt-3 min-h-[100px] rounded-xl border px-3 py-3 text-base leading-5"
-          style={{
-            borderColor: color.border.default,
-            color: color.text.primary,
-            backgroundColor: color.background.secondary,
-          }}
+          style={[
+            styles.hintInput,
+            {
+              borderColor: color.border.default,
+              color: color.text.primary,
+              backgroundColor: color.background.secondary,
+            },
+          ]}
         />
-        <Text className="mt-1.5 text-xs" style={{ color: color.text.secondary }}>
+        <Text style={[styles.charCount, { color: color.text.secondary }]}>
           {t('recordingDetail.tasksReextractCharCount', {
             current: hintText.length,
             max: TASK_EXTRACTION_HINT_MAX_CHARS,
           })}
         </Text>
-        <View className="mt-5 flex-col w-full gap-3">
+        <View style={styles.footer}>
           <Button
             variant="primary"
             size="lg"
@@ -184,15 +185,75 @@ export function TaskReextractHintSheet({
             color={color}
             onPress={handleConfirm}
           />
-          <Button
-            variant="secondary"
-            size="lg"
-            label={t('common.cancel')}
-            color={color}
-            onPress={() => bottomSheetRef.current?.dismiss()}
-          />
         </View>
       </BottomSheetView>
     </BottomSheetModal>
   );
 }
+
+const styles = StyleSheet.create({
+  headerRow: {
+    marginBottom: 12,
+    justifyContent: 'center',
+  },
+  title: {
+    fontSize: 17,
+    fontWeight: '600',
+    textAlign: 'center',
+    paddingHorizontal: 56,
+  },
+  headerTrailing: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+  },
+  headerTrailingLabel: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  subtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginBottom: 12,
+    paddingHorizontal: 8,
+  },
+  presetsScroll: {
+    marginBottom: 12,
+  },
+  presetsContent: {
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    gap: 8,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+  },
+  presetChip: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  presetLabel: {
+    fontSize: 13,
+  },
+  hintInput: {
+    minHeight: 100,
+    borderRadius: 12,
+    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    fontSize: 16,
+    lineHeight: 22,
+  },
+  charCount: {
+    marginTop: 6,
+    fontSize: 12,
+    textAlign: 'center',
+  },
+  footer: {
+    marginTop: 16,
+    width: '100%',
+  },
+});

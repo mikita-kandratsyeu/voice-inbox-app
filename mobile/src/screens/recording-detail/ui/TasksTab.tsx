@@ -163,14 +163,13 @@ export const TasksTab = ({
     () => (
       <TaskReextractHintSheet
         visible={reextractSheetOpen}
-        color={color}
         onClose={() => setReextractSheetOpen(false)}
         onConfirm={(hint) => {
           onExtract(hint ? { taskExtractionHint: hint } : undefined);
         }}
       />
     ),
-    [reextractSheetOpen, color, onExtract],
+    [reextractSheetOpen, onExtract],
   );
 
   const showPermissionAlert = (_: string) => {
