@@ -454,6 +454,7 @@ export const TasksTab = ({
             color={color}
             onPress={async () => {
               let added = 0;
+
               for (const task of tasks) {
                 const ok = await addTaskToReminder(
                   task,
@@ -461,10 +462,17 @@ export const TasksTab = ({
                   undefined,
                   showPermissionAlert,
                 );
-                if (!ok) break;
-                added++;
+
+                if (!ok) {
+                  break;
+                }
+
+                added += 1;
               }
-              if (added > 0) Alert.alert(t('tasks.addedToReminders'));
+
+              if (added > 0) {
+                Alert.alert(t('tasks.addedToReminders'));
+              }
             }}
             containerStyle={{ flex: 1, minWidth: 0 }}
           />
