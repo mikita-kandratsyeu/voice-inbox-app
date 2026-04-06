@@ -18,7 +18,7 @@ export {
   isEmbeddingAvailable,
   prepareEmbeddingModel,
 } from './embeddings';
-export { fetch } from './fetch';
+export { fetch, nitroFetch } from './fetch';
 export {
   DEFAULT_FOLDER_BRAND_HEX,
   folderChipActiveForeground,

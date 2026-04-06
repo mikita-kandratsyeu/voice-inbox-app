@@ -5,8 +5,10 @@ import type { WhisperModelId } from '@/entities/settings';
 import { IS_IOS } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
 import {
-  getWhisperCoreMlDownloadUrl,
-  getWhisperModelDownloadUrl,
+  resolveWhisperCoreMlDownload,
+  resolveWhisperWeightsDownload,
+} from '@/shared/lib/model-manifest';
+import {
   getWhisperModelPath,
   getWhisperModelsDir,
   removeWhisperCoreMlEncoder,
@@ -174,7 +176,10 @@ class WhisperModelDownloader {
   private async runDownloadPipeline(options: StartWhisperModelDownloadOptions): Promise<void> {
     const { modelId, expectedBytes, onProgress } = options;
     const format = options.format ?? 'q5_1';
-    const weightsUrl = getWhisperModelDownloadUrl(modelId, format);
+    const weightsResolved = await resolveWhisperWeightsDownload(modelId, format);
+    const weightsUrl = weightsResolved.url;
+    const weightsExpectedBytes =
+      weightsResolved.expectedBytes !== undefined ? weightsResolved.expectedBytes : expectedBytes;
     const weightsPath = getWhisperModelPath(modelId, format);
     const modelsDir = getWhisperModelsDir();
 
@@ -185,7 +190,12 @@ class WhisperModelDownloader {
     this.lastLoggedProgressBucket = -1;
 
     if (__DEV__) {
-      console.warn('[whisper-download] start', { modelId, format, expectedBytes, sessionId });
+      console.warn('[whisper-download] start', {
+        modelId,
+        format,
+        expectedBytes: weightsExpectedBytes,
+        sessionId,
+      });
     }
 
     this.setSnapshot({
@@ -209,7 +219,7 @@ class WhisperModelDownloader {
     let weightsRes: BlobResponse;
     try {
       weightsRes = await this.startBlobDownload(weightsUrl, weightsPath, (received, totalRaw) => {
-        const total = totalRaw > 0 ? totalRaw : expectedBytes;
+        const total = totalRaw > 0 ? totalRaw : weightsExpectedBytes;
         latestWeights = Math.max(latestWeights, received);
         const pct = total > 0 ? Math.min(1, latestWeights / total) : 0;
         const progress = Math.round(pct * BIN_PROGRESS_WEIGHT * 100);
@@ -248,7 +258,9 @@ class WhisperModelDownloader {
 
     if (IS_IOS) {
       const zipPath = coreMlZipTempPath(modelsDir, modelId);
-      const coreUrl = getWhisperCoreMlDownloadUrl(modelId);
+      const coreResolved = await resolveWhisperCoreMlDownload(modelId);
+      const coreUrl = coreResolved.url;
+      const coreExpectedBytes = coreResolved.expectedBytes;
       let latestZip = 0;
       let zipTotal = 1;
       let lastZipEmitTs = 0;
@@ -262,7 +274,12 @@ class WhisperModelDownloader {
         let zipRes: BlobResponse;
         try {
           zipRes = await this.startBlobDownload(coreUrl, zipPath, (received, totalRaw) => {
-            zipTotal = totalRaw > 0 ? totalRaw : Math.max(zipTotal, 1);
+            zipTotal =
+              totalRaw > 0
+                ? totalRaw
+                : coreExpectedBytes !== undefined
+                  ? coreExpectedBytes
+                  : Math.max(zipTotal, 1);
             latestZip = Math.max(latestZip, received);
             const zipPct = Math.min(1, latestZip / zipTotal);
             const combined = Math.round(
@@ -303,7 +320,7 @@ class WhisperModelDownloader {
     }
 
     if (this.cancelRequested) throw new Error('cancelled');
-    onProgress(100, expectedBytes, expectedBytes, 'weights');
+    onProgress(100, weightsExpectedBytes, weightsExpectedBytes, 'weights');
     if (__DEV__) console.warn('[whisper-download] completed', { modelId, format, sessionId });
     this.setSnapshot({ machineState: 'completed', phase: null, jobId: null });
     this.resetSnapshot();

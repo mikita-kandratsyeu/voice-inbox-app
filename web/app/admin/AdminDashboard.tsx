@@ -27,6 +27,7 @@ import {
   adminSelectClass,
 } from './admin-ui';
 import { AdminBudgetPanel } from './AdminBudgetPanel';
+import { AdminModelManifestPanel } from './AdminModelManifestPanel';
 import { AdminOperationsPanel } from './AdminOperationsPanel';
 import { AdminReleasesPanel } from './AdminReleasesPanel';
 import { AdminSecurityPanel } from './AdminSecurityPanel';
@@ -174,7 +175,7 @@ const ADMIN_TAB_META: Record<
   config: {
     label: 'App configuration',
     short: 'Config',
-    description: 'AI limits, Pro keys, and environment-backed variables',
+    description: 'AI limits, mobile model manifest, Pro keys, and environment-backed variables',
     icon: Settings,
   },
   support: {
@@ -1201,6 +1202,8 @@ export function AdminDashboard() {
                   </form>
                 )}
               </section>
+
+              <AdminModelManifestPanel />
 
               <section className={`mb-8 ${adminCardSurfaceClass} p-5`}>
                 <h2 className="mb-1 text-lg font-medium">Pro license keys</h2>

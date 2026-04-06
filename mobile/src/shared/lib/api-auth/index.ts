@@ -1,7 +1,7 @@
 import { getWebApiSecret } from '@/shared/config/buildEnv';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
-import { fetch } from '@/shared/lib/fetch';
+import { nitroFetch } from '@/shared/lib/fetch';
 
 import { isNumber, isString } from '../type-guards';
 
@@ -32,7 +32,7 @@ async function fetchToken(): Promise<{ token: string; deviceId: string }> {
     throw new Error('WEB_API_SECRET is not configured');
   }
 
-  const response = await fetch(getTokenUrl(), {
+  const response = await nitroFetch(getTokenUrl(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -109,13 +109,13 @@ export async function fetchWithAuth(
   const auth = await getAuthHeaders();
   const headers = mergeHeaders(fetchOptions.headers, auth);
 
-  let response = await fetch(url, { ...fetchOptions, headers });
+  let response = await nitroFetch(url, { ...fetchOptions, headers });
 
   if (response.status === 401 && !skipRetry) {
     clearApiToken();
     const auth2 = await getAuthHeaders();
     const retryHeaders = mergeHeaders(fetchOptions.headers, auth2);
-    response = await fetch(url, { ...fetchOptions, headers: retryHeaders });
+    response = await nitroFetch(url, { ...fetchOptions, headers: retryHeaders });
   }
 
   return response;

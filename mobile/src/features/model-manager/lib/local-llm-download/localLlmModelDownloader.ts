@@ -3,6 +3,7 @@ import RNBlobUtil from 'react-native-blob-util';
 import { getLocalAiModelEntry } from '@/entities/settings/model/constants';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath, getLocalLlmModelsDir } from '@/shared/lib/local-llm';
+import { resolveLocalLlmWeightsDownload } from '@/shared/lib/model-manifest';
 
 import type {
   LocalLlmDownloadSnapshot,
@@ -96,14 +97,22 @@ class LocalLlmModelDownloader {
       throw new Error('Unknown local LLM model');
     }
 
-    const weightsUrl = entry.downloadUrl;
+    const resolved = await resolveLocalLlmWeightsDownload(modelId);
+    const weightsUrl = (resolved.url || entry.downloadUrl).trim();
+
+    if (!weightsUrl) {
+      throw new Error('No download URL for model');
+    }
+
+    const llmExpectedBytes =
+      resolved.expectedBytes !== undefined ? resolved.expectedBytes : expectedBytes;
     const weightsPath = getLocalLlmModelPath(modelId);
     const modelsDir = getLocalLlmModelsDir();
 
     this.cancelRequested = false;
 
     if (__DEV__) {
-      console.warn('[local-llm-download] start', { modelId, sessionId: expectedBytes });
+      console.warn('[local-llm-download] start', { modelId, expectedBytes: llmExpectedBytes });
     }
 
     this.setSnapshot({
@@ -126,7 +135,7 @@ class LocalLlmModelDownloader {
     let weightsRes: BlobResponse;
     try {
       weightsRes = await this.startBlobDownload(weightsUrl, weightsPath, (received, totalRaw) => {
-        const total = totalRaw > 0 ? totalRaw : expectedBytes;
+        const total = totalRaw > 0 ? totalRaw : llmExpectedBytes;
         latest = Math.max(latest, received);
         const pct = total > 0 ? Math.min(1, latest / total) : 0;
         const progress = Math.round(pct * 100);
@@ -153,7 +162,7 @@ class LocalLlmModelDownloader {
     }
     if (this.cancelRequested) throw new Error('cancelled');
 
-    onProgress(100, expectedBytes, expectedBytes);
+    onProgress(100, llmExpectedBytes, llmExpectedBytes);
     if (__DEV__) console.warn('[local-llm-download] completed', { modelId });
     this.setSnapshot({ machineState: 'completed', jobId: null });
     this.resetSnapshot();

@@ -12,6 +12,7 @@ import { initDB } from '@/shared/lib';
 import { syncAnalyticsUserId } from '@/shared/lib/analytics';
 import { syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
+import { prefetchModelManifest } from '@/shared/lib/model-manifest';
 import { ensurePushRegistered, type PushNotificationData } from '@/shared/lib/push';
 
 type OnInitialPushData = (data: PushNotificationData) => void;
@@ -34,14 +35,19 @@ export function useAppBootstrap(
     let deferredInitTimer: ReturnType<typeof setTimeout> | null = null;
 
     const notifyReady = () => {
-      if (!cancelled) onBootstrapReady?.();
+      if (!cancelled) {
+        onBootstrapReady?.();
+      }
     };
 
     initRuntimeConfig()
       .catch(() => {
         if (__DEV__) console.warn('[bootstrap] failed to initialize remote config');
       })
-      .then(() => initDB())
+      .then(() => {
+        prefetchModelManifest();
+        return initDB();
+      })
       .then(async () => {
         useSettingsStore.getState().reconcileAiExecutionModeAfterRemoteConfig();
         syncPrivateCapabilityTier();
@@ -89,11 +95,15 @@ export function useAppBootstrap(
         }, 0);
       })
       .catch((err) => {
-        if (__DEV__) console.warn('[bootstrap] critical failure', err);
-        // Always unblock the splash so the app does not freeze.
+        if (__DEV__) {
+          console.warn('[bootstrap] critical failure', err);
+        }
+
         notifyReady();
-        // Notify caller so it can surface a user-facing error.
-        if (!cancelled) onCriticalError?.('db_init_failed');
+
+        if (!cancelled) {
+          onCriticalError?.('db_init_failed');
+        }
       });
 
     return () => {
