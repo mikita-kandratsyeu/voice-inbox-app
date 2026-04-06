@@ -10,8 +10,8 @@
     "googlePlay": "Google Play",
     "downloadApp": "Download the app",
     "stats": {
-      "accuracy": { "value": "Whisper-grade", "label": "Transcription" },
-      "private": { "value": "100% offline", "label": "On device" }
+      "accuracy": { "value": "Whisper-grade", "label": "Recognition quality" },
+      "private": { "value": "Yours", "label": "Voice & transcripts stay on device" }
     }
   },
   "features": {
@@ -44,7 +44,7 @@
   "benefits": {
     "title": "Why users love Voice Inbox AI",
     "item0": "Offline transcription",
-    "item2": "Maximum privacy",
+    "item2": "Notes stay on your device",
     "item3": "Multi-language support",
     "item4": "Smart AI insights"
   },
@@ -74,7 +74,7 @@
   },
   "metadata": {
     "title": "Voice Inbox AI — AI-Powered Voice Notes",
-    "description": "Record, transcribe, and structure your ideas with AI. Offline transcription, optional AI processing, complete privacy. Available on iOS and Android.",
+    "description": "Record, transcribe, and structure your ideas with AI. Offline transcription on your device. Optional cloud or on-device AI when you choose it. Your notes stay local. Available on iOS.",
     "privacyTitle": "Privacy Policy — Voice Inbox AI",
     "privacyDescription": "How Voice Inbox AI handles your data: local storage, optional AI processing, and our commitment to privacy.",
     "termsTitle": "Terms of Service — Voice Inbox AI",
