@@ -195,7 +195,6 @@ export const TextNoteScreen = () => {
             placeholderTextColor={color.text.secondary}
             style={getInputFieldInputStyle(color)}
             returnKeyType="next"
-            blurOnSubmit={false}
             onSubmitEditing={() => noteInputRef.current?.focus()}
             accessibilityLabel={t('textNote.titlePlaceholder')}
           />
