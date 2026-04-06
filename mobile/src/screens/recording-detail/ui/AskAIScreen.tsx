@@ -398,7 +398,7 @@ export const AskAIScreen = () => {
     history,
     privateAskProgress,
     privateAskPhase,
-  } = useAskAI();
+  } = useAskAI(liveRecord.id, liveRecord.transcript ?? '');
   const { isConnected } = useNetworkStatus();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
 

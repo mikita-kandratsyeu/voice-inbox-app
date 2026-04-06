@@ -6,6 +6,7 @@ import {
   audioPathToDbValue,
   getDB,
   getRecordingsRelativePath,
+  recordAskAiTable,
   recordsTable,
 } from '@/shared/lib';
 
@@ -266,6 +267,7 @@ export const recordRepository = {
   remove: async (id: string): Promise<void> => {
     logDb('remove', { id });
     const db = getDB();
+    await db.delete(recordAskAiTable).where(eq(recordAskAiTable.recordId, id));
     await db.delete(recordsTable).where(eq(recordsTable.id, id));
   },
 

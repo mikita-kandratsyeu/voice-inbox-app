@@ -44,7 +44,14 @@ export const recordsTable = sqliteTable(
   ],
 );
 
+export const recordAskAiTable = sqliteTable('record_ask_ai', {
+  recordId: text('recordId').primaryKey(),
+  payload: text('payload').notNull(),
+  updatedAt: text('updatedAt').notNull(),
+});
+
 export type RecordRow = typeof recordsTable.$inferSelect;
 export type RecordInsert = typeof recordsTable.$inferInsert;
 export type FolderRow = typeof foldersTable.$inferSelect;
 export type FolderInsert = typeof foldersTable.$inferInsert;
+export type RecordAskAiRow = typeof recordAskAiTable.$inferSelect;

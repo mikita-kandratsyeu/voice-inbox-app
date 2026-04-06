@@ -1,4 +1,6 @@
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import type { RouteProp } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 
@@ -22,6 +24,11 @@ const RecordScreenWithProvider = () => (
     <RecordScreen />
   </BottomSheetModalProvider>
 );
+
+const AskAIScreenKeyed = () => {
+  const route = useRoute<RouteProp<RootStackParamList, 'RecordingAskAI'>>();
+  return <AskAIScreen key={route.params.record.id} />;
+};
 
 export const RootNavigator = () => (
   <InboxFiltersResetProvider>
@@ -58,7 +65,7 @@ export const RootNavigator = () => (
       />
       <Stack.Screen
         name="RecordingAskAI"
-        component={AskAIScreen}
+        component={AskAIScreenKeyed}
         options={{
           headerShown: false,
           animation: 'slide_from_right',

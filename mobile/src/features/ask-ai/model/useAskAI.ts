@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { VoiceRecord } from '@/entities/record';
 import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
@@ -7,6 +7,13 @@ import type { AskPriorTurn } from '@/shared/lib/ai-core';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
 import type { AiLocalGenerationProgressEvent } from '@/shared/lib/ai-core/types';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
+
+import {
+  askAiTranscriptFingerprint,
+  clearAskAiSession,
+  loadAskAiSession,
+  saveAskAiSession,
+} from './askAiSessionDb';
 
 export type AskAIHistoryItem = { question: string; answer: string };
 
@@ -20,7 +27,17 @@ export type AskAIState = {
   privateAskPhase: 'loading_model' | 'processing';
 };
 
-export const useAskAI = () => {
+const INITIAL_ASK_AI_STATE: AskAIState = {
+  isLoading: false,
+  error: null,
+  question: null,
+  answer: null,
+  history: [],
+  privateAskProgress: 0,
+  privateAskPhase: 'loading_model',
+};
+
+export const useAskAI = (recordId: string, transcript: string) => {
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
   const localLlmModelStatuses = useSettingsStore((s) => s.localLlmModelStatuses);
@@ -34,17 +51,73 @@ export const useAskAI = () => {
   const isLocalLlmModelDownloaded =
     selectedLocalAiModel != null &&
     (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
-  const [state, setState] = useState<AskAIState>({
-    isLoading: false,
-    error: null,
-    question: null,
-    answer: null,
-    history: [],
-    privateAskProgress: 0,
-    privateAskPhase: 'loading_model',
-  });
+  const [state, setState] = useState<AskAIState>(INITIAL_ASK_AI_STATE);
 
   const inFlightRef = useRef(false);
+  const transcriptFpInvalidateRef = useRef<string | null>(null);
+  const loadEpochRef = useRef(0);
+
+  useEffect(() => {
+    if (!transcript.trim()) return;
+
+    const fp = askAiTranscriptFingerprint(transcript);
+
+    if (transcriptFpInvalidateRef.current === null) {
+      transcriptFpInvalidateRef.current = fp;
+      return;
+    }
+
+    if (transcriptFpInvalidateRef.current === fp) return;
+
+    transcriptFpInvalidateRef.current = fp;
+    loadEpochRef.current += 1;
+    setState(INITIAL_ASK_AI_STATE);
+    void clearAskAiSession(recordId);
+  }, [recordId, transcript]);
+
+  useEffect(() => {
+    const epochAtStart = loadEpochRef.current;
+    let cancelled = false;
+    void (async () => {
+      const restored = await loadAskAiSession(recordId, transcript);
+      if (cancelled || epochAtStart !== loadEpochRef.current) return;
+      if (!restored) return;
+      setState((s) => ({
+        ...s,
+        history: restored.history,
+        question: restored.question,
+        answer: restored.answer,
+        error: restored.error,
+        isLoading: false,
+        privateAskProgress: 0,
+        privateAskPhase: 'loading_model',
+      }));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [recordId, transcript]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      void saveAskAiSession(recordId, transcript, {
+        history: state.history,
+        question: state.question,
+        answer: state.answer,
+        error: state.error,
+        isLoading: state.isLoading,
+      });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [
+    recordId,
+    transcript,
+    state.history,
+    state.question,
+    state.answer,
+    state.error,
+    state.isLoading,
+  ]);
 
   const askQuestion = useCallback(
     async (
@@ -243,16 +316,9 @@ export const useAskAI = () => {
   );
 
   const reset = useCallback(() => {
-    setState({
-      isLoading: false,
-      error: null,
-      question: null,
-      answer: null,
-      history: [],
-      privateAskProgress: 0,
-      privateAskPhase: 'loading_model',
-    });
-  }, []);
+    setState(INITIAL_ASK_AI_STATE);
+    void clearAskAiSession(recordId);
+  }, [recordId]);
 
   const askAnother = useCallback(() => {
     setState((s) => {

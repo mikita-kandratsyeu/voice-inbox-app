@@ -55,6 +55,12 @@ CREATE INDEX IF NOT EXISTS \`idx_records_folderId\` ON \`records\` (\`folderId\`
 const migration0007 = `ALTER TABLE \`records\` ADD \`readAt\` text;--> statement-breakpoint
 UPDATE \`records\` SET \`readAt\` = \`createdAt\` WHERE \`status\` = 'read' AND (\`readAt\` IS NULL OR \`readAt\` = '');`;
 
+const migration0008 = `CREATE TABLE IF NOT EXISTS \`record_ask_ai\` (
+	\`recordId\` text PRIMARY KEY NOT NULL,
+	\`payload\` text NOT NULL,
+	\`updatedAt\` text NOT NULL
+);`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -73,5 +79,6 @@ export const migrationsConfig = {
     m0005: migration0005,
     m0006: migration0006,
     m0007: migration0007,
+    m0008: migration0008,
   } as Record<string, string>,
 };
