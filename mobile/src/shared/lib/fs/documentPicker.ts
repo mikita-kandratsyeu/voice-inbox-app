@@ -1,3 +1,5 @@
+import { isString } from '@/shared/lib/type-guards';
+
 import { NitroFS } from './appFs';
 
 type DocumentPickerLikeFile = {
@@ -59,7 +61,7 @@ export async function getReadableDocumentPickerFsPath(
   if (!file) return null;
 
   const rawUris = [file.fileCopyUri, file.fileUri, file.uri].filter(
-    (v): v is string => typeof v === 'string' && v.trim().length > 0,
+    (v): v is string => isString(v) && v.trim().length > 0,
   );
 
   if (rawUris.length === 0) return null;

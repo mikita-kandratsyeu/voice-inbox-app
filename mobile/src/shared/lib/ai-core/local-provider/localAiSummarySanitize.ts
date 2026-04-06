@@ -1,4 +1,5 @@
 import type { AiProcessingResult, AiTask, RecordClassification } from '@/shared/lib/ai-api/aiApi';
+import { isRecord, isString } from '@/shared/lib/type-guards';
 
 import { FIELD_LIMITS } from './localAiConstants';
 import { LocalAiError } from './localAiErrors';
@@ -15,7 +16,7 @@ const CLASSIFICATION_VALUES: readonly RecordClassification[] = [
 
 export function normalizeDeadline(value: unknown): string | null {
   if (value === null || value === undefined) return null;
-  if (typeof value !== 'string') return null;
+  if (!isString(value)) return null;
 
   const t = value.trim();
 
@@ -36,7 +37,7 @@ export function normalizeDeadline(value: unknown): string | null {
 }
 
 export function normalizeClassification(value: unknown): RecordClassification | undefined {
-  if (typeof value !== 'string') return undefined;
+  if (!isString(value)) return undefined;
 
   const x = value.trim().toLowerCase();
 
@@ -63,7 +64,7 @@ export function sanitizeStringArray(
   const out: string[] = [];
 
   for (const item of value) {
-    if (typeof item !== 'string') continue;
+    if (!isString(item)) continue;
     const trimmed = item.trim();
     if (!trimmed) continue;
     const stored = opts.lowercase ? trimmed.toLowerCase() : trimmed;
@@ -84,11 +85,11 @@ export function sanitizeTasks(value: unknown): AiTask[] {
 
   for (const item of value) {
     if (out.length >= FIELD_LIMITS.tasks) break;
-    if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
-    const v = item as { title?: unknown; priority?: unknown; deadline?: unknown };
-    const title = typeof v.title === 'string' ? v.title.trim() : '';
+    if (!isRecord(item)) continue;
+    const v = item;
+    const title = isString(v.title) ? v.title.trim() : '';
     if (!title) continue;
-    const priority = typeof v.priority === 'string' ? normalizePriority(v.priority) : 'medium';
+    const priority = isString(v.priority) ? normalizePriority(v.priority) : 'medium';
     const deadline = normalizeDeadline(v.deadline);
     out.push({ title, priority, deadline });
   }
@@ -108,13 +109,13 @@ function clampSuggestedTitle(raw: string | undefined): string | undefined {
 }
 
 export function sanitizeSummaryPayload(parsed: Record<string, unknown>): AiProcessingResult {
-  const summaryRaw = typeof parsed.summary === 'string' ? parsed.summary.trim() : '';
+  const summaryRaw = isString(parsed.summary) ? parsed.summary.trim() : '';
   if (!summaryRaw) {
     throw new LocalAiError('empty_summary', 'Local summary is empty');
   }
 
   const suggestedTitle = clampSuggestedTitle(
-    typeof parsed.suggestedTitle === 'string' ? parsed.suggestedTitle : undefined,
+    isString(parsed.suggestedTitle) ? parsed.suggestedTitle : undefined,
   );
 
   const classification = normalizeClassification(parsed.classification);

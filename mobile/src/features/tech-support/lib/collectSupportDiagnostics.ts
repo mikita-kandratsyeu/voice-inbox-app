@@ -8,10 +8,10 @@ import { getMobileUserAgent } from '@/shared/config/buildEnv';
 import { collectCrashlyticsDiagnostics } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
-import { isNumber, isString } from '@/shared/lib/type-guards';
+import { isBoolean, isNumber, isString } from '@/shared/lib/type-guards';
 
 function safeNum(n: unknown): number | null {
-  return typeof n === 'number' && Number.isFinite(n) ? n : null;
+  return isNumber(n) && Number.isFinite(n) ? n : null;
 }
 
 export type SupportDiagnosticsPayload = Record<string, unknown>;
@@ -48,10 +48,10 @@ export async function collectSupportDiagnostics(): Promise<SupportDiagnosticsPay
     model: d.model ?? '',
     aiSettings: aiSettings,
     deviceYearClass: safeNum(d.deviceYearClass),
-    isLowRamDevice: typeof d.isLowRamDevice === 'boolean' ? d.isLowRamDevice : null,
+    isLowRamDevice: isBoolean(d.isLowRamDevice) ? d.isLowRamDevice : null,
     totalMemoryBytes: safeNum(d.totalMemory),
     freeDiskBytes,
-    isTablet: typeof d.isTablet === 'boolean' ? d.isTablet : null,
+    isTablet: isBoolean(d.isTablet) ? d.isTablet : null,
     networkType: net.type,
     isConnected: net.isConnected,
     locales: locales.map((l) => ({

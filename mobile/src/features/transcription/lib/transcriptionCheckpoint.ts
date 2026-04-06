@@ -1,6 +1,7 @@
 import type { TranscriptSegment } from '@/entities/record';
 import type { WhisperModelId } from '@/entities/settings';
 import { getDocumentDirectoryPath, NitroFS } from '@/shared/lib/fs';
+import { isNumber, isString } from '@/shared/lib/type-guards';
 
 const CHECKPOINTS_DIR = `${getDocumentDirectoryPath()}/transcription-checkpoints`;
 const CHECKPOINT_SCHEMA_VERSION = 1;
@@ -61,15 +62,15 @@ export const getTranscriptionCheckpoint = async (
 
     if (
       parsed.schemaVersion !== CHECKPOINT_SCHEMA_VERSION ||
-      typeof parsed.recordId !== 'string' ||
-      typeof parsed.audioPath !== 'string' ||
-      typeof parsed.modelId !== 'string' ||
-      typeof parsed.language !== 'string' ||
-      typeof parsed.totalChunks !== 'number' ||
-      typeof parsed.lastCompletedChunkIndex !== 'number' ||
-      typeof parsed.fullText !== 'string' ||
+      !isString(parsed.recordId) ||
+      !isString(parsed.audioPath) ||
+      !isString(parsed.modelId) ||
+      !isString(parsed.language) ||
+      !isNumber(parsed.totalChunks) ||
+      !isNumber(parsed.lastCompletedChunkIndex) ||
+      !isString(parsed.fullText) ||
       !Array.isArray(parsed.segments) ||
-      typeof parsed.updatedAt !== 'number'
+      !isNumber(parsed.updatedAt)
     ) {
       return null;
     }
@@ -133,15 +134,15 @@ export const listTranscriptionCheckpoints = async (): Promise<TranscriptionCheck
       .filter(
         (x) =>
           x.schemaVersion === CHECKPOINT_SCHEMA_VERSION &&
-          typeof x.recordId === 'string' &&
-          typeof x.audioPath === 'string' &&
-          typeof x.modelId === 'string' &&
-          typeof x.language === 'string' &&
-          typeof x.totalChunks === 'number' &&
-          typeof x.lastCompletedChunkIndex === 'number' &&
-          typeof x.fullText === 'string' &&
+          isString(x.recordId) &&
+          isString(x.audioPath) &&
+          isString(x.modelId) &&
+          isString(x.language) &&
+          isNumber(x.totalChunks) &&
+          isNumber(x.lastCompletedChunkIndex) &&
+          isString(x.fullText) &&
           Array.isArray(x.segments) &&
-          typeof x.updatedAt === 'number',
+          isNumber(x.updatedAt),
       )
       .map((x) => ({
         schemaVersion: x.schemaVersion as number,

@@ -17,3 +17,7 @@ export function isArray(value: unknown): value is unknown[] {
 export function isStringArrayItem(x: unknown): x is string {
   return typeof x === 'string';
 }
+
+export function isBoolean(value: unknown): value is boolean {
+  return typeof value === 'boolean';
+}

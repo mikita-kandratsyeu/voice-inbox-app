@@ -1,3 +1,5 @@
+import { isRecord, isString } from '@/shared/lib/type-guards';
+
 import { LocalAiError } from './localAiErrors';
 
 export function repairCommonJsonIssues(blob: string): string {
@@ -125,8 +127,8 @@ export function parseJsonObjectWithFallbacks(raw: string): Record<string, unknow
     for (const attempt of attempts) {
       try {
         const parsed: unknown = JSON.parse(attempt);
-        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-          return parsed as Record<string, unknown>;
+        if (isRecord(parsed)) {
+          return parsed;
         }
       } catch (e) {
         lastError = e;
@@ -190,7 +192,7 @@ function tryParseAskJsonAnswer(raw: string): string | null {
   for (const attempt of attempts) {
     try {
       const parsed = JSON.parse(attempt) as { answer?: unknown };
-      if (typeof parsed.answer === 'string') {
+      if (isString(parsed.answer)) {
         const a = parsed.answer.trim();
         if (a.length > 0) return a;
       }

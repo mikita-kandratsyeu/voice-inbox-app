@@ -30,7 +30,7 @@ import {
   PushNotificationSheet,
   usePushNotifications,
 } from '@/shared/lib/push';
-import { NotchBrandMark, WarmupBottomSheet } from '@/shared/ui';
+import { WarmupBottomSheet } from '@/shared/ui';
 
 import { flushPendingRecordModalNavigation, useInitDeepLinking } from './deep-linking';
 import { handlePushNotification } from './model/pushNavigationHandler';
@@ -110,7 +110,6 @@ const App = () => {
                   </AppLockGate>
                 </OnboardingGate>
               </NavigationContainer>
-              <NotchBrandMark />
               <WarmupBottomSheet />
               <PushNotificationSheet />
               <AppRatingPromptRoot />

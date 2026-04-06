@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { eq } from 'drizzle-orm';
 
-import { getDB, isString, recordAskAiTable } from '@/shared/lib';
+import { getDB, isRecord, isString, recordAskAiTable } from '@/shared/lib';
 
 type AskTurn = { question: string; answer: string };
 
@@ -31,11 +31,11 @@ type PersistedPayloadV1 = {
 };
 
 function isHistoryItem(x: unknown): x is AskTurn {
-  if (!x || typeof x !== 'object') {
+  if (!isRecord(x)) {
     return false;
   }
 
-  const o = x as Record<string, unknown>;
+  const o = x;
 
   return isString(o.question) && isString(o.answer);
 }
@@ -68,11 +68,11 @@ function parsePayload(raw: string): PersistedPayloadV1 | null {
     return null;
   }
 
-  if (!root || typeof root !== 'object') {
+  if (!isRecord(root)) {
     return null;
   }
 
-  const o = root as Record<string, unknown>;
+  const o = root;
 
   if (o.v !== PERSIST_VERSION) {
     return null;

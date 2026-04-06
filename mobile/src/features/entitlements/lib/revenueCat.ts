@@ -20,7 +20,7 @@ import {
   getRevenueCatPackageTypePreferred,
   getSubscriptionsPubliclyAvailable,
 } from '@/shared/config/runtimeConfig';
-import { isString } from '@/shared/lib';
+import { isRecord, isString } from '@/shared/lib';
 import {
   invalidateProLicenseStatusCache,
   syncProLicenseRevenueCatOnServer,
@@ -52,9 +52,7 @@ export function getRevenueCatIntegrationEnabled(): boolean {
 }
 
 function isPurchasesError(e: unknown): e is { code: PURCHASES_ERROR_CODE; message: string } {
-  return (
-    typeof e === 'object' && e != null && 'code' in e && isString((e as { code: unknown }).code)
-  );
+  return isRecord(e) && 'code' in e && isString((e as { code: unknown }).code);
 }
 
 function logPurchasesFailure(context: string, e: unknown): void {

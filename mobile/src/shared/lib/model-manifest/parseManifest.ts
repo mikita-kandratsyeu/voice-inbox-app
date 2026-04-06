@@ -1,3 +1,5 @@
+import { isBoolean, isNumber, isRecord, isString } from '@/shared/lib/type-guards';
+
 import type {
   MobileModelArtifact,
   MobileModelArtifactKind,
@@ -26,20 +28,23 @@ export type ParseManifestResult =
   | { ok: false; error: string };
 
 export function parseMobileModelManifestJson(raw: unknown): ParseManifestResult {
-  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+  if (!isRecord(raw)) {
     return { ok: false, error: 'Root must be a JSON object' };
   }
-  const root = raw as Record<string, unknown>;
+
+  const root = raw;
   const manifestVersion = root.manifestVersion;
   const revision = root.revision;
   const artifactsRaw = root.artifacts;
 
-  if (typeof manifestVersion !== 'number' || !Number.isInteger(manifestVersion) || manifestVersion < 1) {
+  if (!isNumber(manifestVersion) || !Number.isInteger(manifestVersion) || manifestVersion < 1) {
     return { ok: false, error: 'manifestVersion must be an integer >= 1' };
   }
-  if (typeof revision !== 'string' || revision.trim().length < 1 || revision.length > 128) {
+
+  if (!isString(revision) || revision.trim().length < 1 || revision.length > 128) {
     return { ok: false, error: 'revision must be a non-empty string (max 128 chars)' };
   }
+
   if (!Array.isArray(artifactsRaw)) {
     return { ok: false, error: 'artifacts must be an array' };
   }
@@ -49,16 +54,18 @@ export function parseMobileModelManifestJson(raw: unknown): ParseManifestResult 
 
   for (let i = 0; i < artifactsRaw.length; i++) {
     const item = artifactsRaw[i];
-    if (item === null || typeof item !== 'object' || Array.isArray(item)) {
+
+    if (!isRecord(item)) {
       return { ok: false, error: `artifacts[${i}] must be an object` };
     }
-    const a = item as Record<string, unknown>;
+
+    const a = item;
     const id = a.id;
     const kind = a.kind;
     const url = a.url;
     const active = a.active;
 
-    if (typeof id !== 'string' || id.trim().length < 1 || id.length > 256) {
+    if (!isString(id) || id.trim().length < 1 || id.length > 256) {
       return { ok: false, error: `artifacts[${i}].id must be a non-empty string` };
     }
     if (seenIds.has(id)) {
@@ -66,13 +73,15 @@ export function parseMobileModelManifestJson(raw: unknown): ParseManifestResult 
     }
     seenIds.add(id);
 
-    if (typeof kind !== 'string' || !ARTIFACT_KINDS.has(kind as MobileModelArtifactKind)) {
+    if (!isString(kind) || !ARTIFACT_KINDS.has(kind as MobileModelArtifactKind)) {
       return { ok: false, error: `artifacts[${i}].kind is invalid` };
     }
-    if (typeof url !== 'string' || !isHttpsUrl(url)) {
+
+    if (!isString(url) || !isHttpsUrl(url)) {
       return { ok: false, error: `artifacts[${i}].url must be an https URL` };
     }
-    if (typeof active !== 'boolean') {
+
+    if (!isBoolean(active)) {
       return { ok: false, error: `artifacts[${i}].active must be a boolean` };
     }
 
@@ -83,16 +92,18 @@ export function parseMobileModelManifestJson(raw: unknown): ParseManifestResult 
       active,
     };
 
-    if (typeof a.version === 'string' && a.version.length > 0) next.version = a.version;
-    if (typeof a.bytes === 'number' && Number.isInteger(a.bytes) && a.bytes >= 0) {
+    if (isString(a.version) && a.version.length > 0) next.version = a.version;
+    if (isNumber(a.bytes) && Number.isInteger(a.bytes) && a.bytes >= 0) {
       next.bytes = a.bytes;
     }
     if (a.sha256 === null) next.sha256 = null;
-    else if (typeof a.sha256 === 'string' && /^[a-f0-9]{64}$/i.test(a.sha256)) {
+    else if (isString(a.sha256) && /^[a-f0-9]{64}$/i.test(a.sha256)) {
       next.sha256 = a.sha256;
     }
-    if (typeof a.minAppVersion === 'string') next.minAppVersion = a.minAppVersion;
-    if (typeof a.platform === 'string' && PLATFORMS.has(a.platform as MobileModelArtifactPlatform)) {
+
+    if (isString(a.minAppVersion)) next.minAppVersion = a.minAppVersion;
+
+    if (isString(a.platform) && PLATFORMS.has(a.platform as MobileModelArtifactPlatform)) {
       next.platform = a.platform as MobileModelArtifactPlatform;
     }
 

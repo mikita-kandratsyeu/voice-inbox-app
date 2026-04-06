@@ -6,6 +6,7 @@ import {
   audioPathToDbValue,
   getDB,
   getRecordingsRelativePath,
+  isRecord,
   recordAskAiTable,
   recordsTable,
 } from '@/shared/lib';
@@ -30,9 +31,7 @@ function tasksJsonAllComplete(tasksJson: string | null | undefined): boolean {
   try {
     const parsed = JSON.parse(tasksJson ?? '[]') as unknown;
     if (!Array.isArray(parsed)) return true;
-    return !parsed.some(
-      (item) => item && typeof item === 'object' && (item as TaskItem).isDone !== true,
-    );
+    return !parsed.some((item) => isRecord(item) && (item as TaskItem).isDone !== true);
   } catch {
     return false;
   }

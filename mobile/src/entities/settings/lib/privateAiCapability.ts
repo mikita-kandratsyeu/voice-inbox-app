@@ -1,5 +1,7 @@
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
+import { isBoolean, isNumber, isString } from '@/shared/lib/type-guards';
+
 import type { PrivateCapabilityTier } from '../model/types';
 
 const MB = 1024 * 1024;
@@ -22,7 +24,7 @@ export type PrivateAiCapabilityResult = {
 };
 
 function toMb(value: unknown): number | null {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return null;
+  if (!isNumber(value) || !Number.isFinite(value) || value <= 0) return null;
   return value / MB;
 }
 
@@ -30,9 +32,8 @@ export function resolvePrivateAiCapabilityTier(): PrivateAiCapabilityResult {
   try {
     const totalRamMb = toMb(DeviceInfoModule.totalMemory);
     const freeDiskMb = toMb(DeviceInfoModule.getFreeDiskStorage());
-    const model = typeof DeviceInfoModule.model === 'string' ? DeviceInfoModule.model : null;
-    const isTablet =
-      typeof DeviceInfoModule.isTablet === 'boolean' ? DeviceInfoModule.isTablet : null;
+    const model = isString(DeviceInfoModule.model) ? DeviceInfoModule.model : null;
+    const isTablet = isBoolean(DeviceInfoModule.isTablet) ? DeviceInfoModule.isTablet : null;
 
     if (totalRamMb == null || freeDiskMb == null) {
       return {
