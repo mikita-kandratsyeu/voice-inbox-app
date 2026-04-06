@@ -81,7 +81,7 @@ export function TaskEditSheet({ visible, initialText, onClose, onSave }: TaskEdi
       }}
     >
       <BottomSheetView className="px-5 pt-1" style={{ paddingBottom: Math.max(insets.bottom, 20) }}>
-        <View className="mb-3 justify-center">
+        <View className="mb-6 justify-center">
           <Text
             className="px-14 text-center text-[17px] font-semibold"
             style={{ color: color.text.primary }}

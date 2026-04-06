@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow';
 import type { TaskItem, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { mergeManualTasksWithAi } from '@/entities/record/model/mergeManualTasksWithAi';
+import { mergeSimilarExtractedTasks } from '@/entities/record/model/mergeSimilarExtractedTasks';
 import {
   buildNormalizedTextSet,
   collectExistingTaskTextsForAiPrompt,
@@ -311,7 +312,8 @@ export const useAiProcessing = () => {
         const latest = useRecordStore.getState().records.find((r) => r.id === record.id);
         const manualNorm = normalizedManualTaskTextSet(latest?.tasks);
         const aiTaskItemsFiltered = filterAiTaskItemsByNormalizedSet(aiTaskItems, manualNorm);
-        const mergedTasks = mergeManualTasksWithAi(latest?.tasks, aiTaskItemsFiltered);
+        const aiTasksDeduped = mergeSimilarExtractedTasks(aiTaskItemsFiltered);
+        const mergedTasks = mergeManualTasksWithAi(latest?.tasks, aiTasksDeduped);
         const taskNormMerged = buildNormalizedTextSet(mergedTasks.map((x) => x.text));
         const rawNextSteps = nextSteps ?? [];
         const nextStepsForStore = filterNextStepsByNormalizedTaskSet(rawNextSteps, taskNormMerged);

@@ -58,8 +58,16 @@ export function TaskReextractHintSheet({
         hint: t('recordingDetail.tasksReextractPresetSplitHint'),
       },
       {
+        label: t('recordingDetail.tasksReextractPresetBreakLargeLabel'),
+        hint: t('recordingDetail.tasksReextractPresetBreakLargeHint'),
+      },
+      {
         label: t('recordingDetail.tasksReextractPresetMergeLabel'),
         hint: t('recordingDetail.tasksReextractPresetMergeHint'),
+      },
+      {
+        label: t('recordingDetail.tasksReextractPresetShortenLabel'),
+        hint: t('recordingDetail.tasksReextractPresetShortenHint'),
       },
     ],
     [t],
