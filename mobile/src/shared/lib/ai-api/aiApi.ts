@@ -7,6 +7,7 @@ export type AiProcessingOptions = {
   taskStrictness?: 'strict' | 'balanced' | 'soft';
   outputLanguage?: 'same' | 'ru' | 'en';
   existingTaskTexts?: string[];
+  taskExtractionHint?: string;
 };
 
 type AiApiRequestBody = {

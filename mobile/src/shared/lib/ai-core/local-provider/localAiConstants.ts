@@ -39,6 +39,8 @@ export const FIELD_LIMITS = {
   suggestedTitleMaxChars: 100,
 } as const;
 
+export const TASK_EXTRACTION_HINT_MAX_CHARS = 500;
+
 export const LOCAL_ASK_SUMMARY_MAX_CHARS = 2000;
 export const LOCAL_ASK_MAX_TASK_ITEMS = 25;
 

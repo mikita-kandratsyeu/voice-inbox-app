@@ -12,6 +12,7 @@ import {
 import {
   buildAiProcessingPrompt,
   sanitizeExistingTaskTextsForPrompt,
+  sanitizeTaskExtractionHint,
   type AiProcessingOptions,
 } from '@/lib/prompts';
 import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
@@ -71,7 +72,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     transcript: string;
     model: string;
     systemPrompt?: string;
-    options?: AiProcessingOptions & { existingTaskTexts?: unknown };
+    options?: AiProcessingOptions & { existingTaskTexts?: unknown; taskExtractionHint?: unknown };
   };
 
   const modelError = validateAllowedModel(model);
@@ -81,9 +82,14 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   let options: AiProcessingOptions | undefined;
   if (rawOptions && typeof rawOptions === 'object') {
-    const { existingTaskTexts: rawExisting, ...rest } = rawOptions;
+    const { existingTaskTexts: rawExisting, taskExtractionHint: rawHint, ...rest } = rawOptions;
     const existing = sanitizeExistingTaskTextsForPrompt(rawExisting);
-    options = { ...rest, ...(existing ? { existingTaskTexts: existing } : {}) };
+    const hint = sanitizeTaskExtractionHint(rawHint);
+    options = {
+      ...rest,
+      ...(existing ? { existingTaskTexts: existing } : {}),
+      ...(hint ? { taskExtractionHint: hint } : {}),
+    };
   }
 
   const resolvedSystemPrompt =

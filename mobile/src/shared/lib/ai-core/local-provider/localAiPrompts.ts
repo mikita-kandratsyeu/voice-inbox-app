@@ -7,6 +7,7 @@ import {
   LOCAL_ASK_PRIOR_QUESTION_MAX_CHARS,
   LOCAL_ASK_PRIOR_TURNS_MAX,
   LOCAL_ASK_SUMMARY_MAX_CHARS,
+  TASK_EXTRACTION_HINT_MAX_CHARS,
 } from './localAiConstants';
 
 const LOCAL_SUMMARY_STYLE_HINT: Record<SummaryStyle, string> = {
@@ -49,6 +50,7 @@ export function buildLocalSummaryUserContent(
   transcriptText: string,
   ctx: AiExecutionContext,
   existingTaskTitles?: string[],
+  taskExtractionHint?: string,
 ): string {
   const head = [
     LOCAL_OUTPUT_LANGUAGE_HINT[ctx.aiOutputLanguage],
@@ -64,7 +66,21 @@ export function buildLocalSummaryUserContent(
       ].join('\n')
     : '';
 
-  return [head, existingBlock, '', 'Transcript:', transcriptText].join('\n');
+  const rawHint = (taskExtractionHint ?? '').split('\0').join('').trim();
+  const clippedHint =
+    rawHint.length > TASK_EXTRACTION_HINT_MAX_CHARS
+      ? rawHint.slice(0, TASK_EXTRACTION_HINT_MAX_CHARS)
+      : rawHint;
+  const hintBlock =
+    clippedHint.length > 0
+      ? [
+          '',
+          'User request for this extraction run (apply mainly to tasks[] and nextSteps; keep summary faithful to the transcript):',
+          clippedHint,
+        ].join('\n')
+      : '';
+
+  return [head, existingBlock, hintBlock, '', 'Transcript:', transcriptText].join('\n');
 }
 
 export function sanitizeAskPriorTurnsForLocal(turns: AskPriorTurn[] | undefined): AskPriorTurn[] {

@@ -16,6 +16,7 @@ import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generati
 import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
+import { TASK_EXTRACTION_HINT_MAX_CHARS } from '@/shared/lib/ai-core/local-provider/localAiConstants';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import type { AiLocalGenerationProgressEvent } from '@/shared/lib/ai-core/types';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
@@ -23,6 +24,14 @@ import {
   toUserFacingFetchErrorFromUnknown,
   toUserFacingFetchErrorMessage,
 } from '@/shared/lib/fetch/userFacingFetchError';
+
+function normalizeTaskExtractionHint(raw?: string): string | undefined {
+  const t = (raw ?? '').split('\0').join('').trim();
+
+  if (!t) return undefined;
+
+  return t.length > TASK_EXTRACTION_HINT_MAX_CHARS ? t.slice(0, TASK_EXTRACTION_HINT_MAX_CHARS) : t;
+}
 
 export const useAiProcessing = () => {
   const {
@@ -116,7 +125,7 @@ export const useAiProcessing = () => {
   );
 
   const processRecord = useCallback(
-    async (record: VoiceRecord): Promise<void> => {
+    async (record: VoiceRecord, aiRunOptions?: { taskExtractionHint?: string }): Promise<void> => {
       const baseId = `${record.id}-ai`;
       const hasTranscript = Boolean(record.transcript?.trim());
 
@@ -154,6 +163,7 @@ export const useAiProcessing = () => {
       try {
         const snapshot = useRecordStore.getState().records.find((r) => r.id === record.id);
         const existingTaskTexts = collectExistingTaskTextsForAiPrompt(snapshot?.tasks);
+        const taskExtractionHint = normalizeTaskExtractionHint(aiRunOptions?.taskExtractionHint);
 
         const privateBatchProgress = {
           lastDisplayedPct: -1,
@@ -219,6 +229,7 @@ export const useAiProcessing = () => {
             id: requestId,
             transcript: record.transcript,
             existingTaskTexts,
+            ...(taskExtractionHint ? { taskExtractionHint } : {}),
             onLocalGenerationProgress,
           },
           {
@@ -407,7 +418,8 @@ export const useAiProcessing = () => {
   );
 
   const extractTasks = useCallback(
-    (record: VoiceRecord): Promise<void> => processRecord(record),
+    (record: VoiceRecord, options?: { taskExtractionHint?: string }): Promise<void> =>
+      processRecord(record, options),
     [processRecord],
   );
 

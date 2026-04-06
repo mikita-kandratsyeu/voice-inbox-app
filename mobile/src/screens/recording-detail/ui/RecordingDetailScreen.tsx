@@ -272,9 +272,12 @@ export const RecordingDetailScreen = () => {
     generateSummary(liveRecord).catch(() => {});
   }, [liveRecord, generateSummary]);
 
-  const handleExtractTasks = useCallback(() => {
-    extractTasks(liveRecord).catch(() => {});
-  }, [liveRecord, extractTasks]);
+  const handleExtractTasks = useCallback(
+    (options?: { taskExtractionHint?: string }) => {
+      extractTasks(liveRecord, options).catch(() => {});
+    },
+    [liveRecord, extractTasks],
+  );
 
   const handleShare = useCallback(() => {
     shareRecord(liveRecord).catch((err: Error) => {

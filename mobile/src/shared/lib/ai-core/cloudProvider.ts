@@ -54,6 +54,9 @@ export async function runCloudSummaryTasks(
       ...(request.existingTaskTexts?.length
         ? { existingTaskTexts: request.existingTaskTexts }
         : {}),
+      ...(request.taskExtractionHint?.trim()
+        ? { taskExtractionHint: request.taskExtractionHint.trim() }
+        : {}),
     },
   });
 

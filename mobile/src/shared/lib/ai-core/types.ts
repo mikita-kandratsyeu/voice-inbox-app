@@ -32,6 +32,7 @@ export type SummaryTaskRequest = {
   id: string;
   transcript: string;
   existingTaskTexts?: string[];
+  taskExtractionHint?: string;
   onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;
 };
 

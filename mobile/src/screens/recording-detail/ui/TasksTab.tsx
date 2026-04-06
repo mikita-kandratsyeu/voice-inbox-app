@@ -9,7 +9,7 @@ import {
   Plus,
   RefreshCw,
 } from 'lucide-react-native';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { KeyboardController } from 'react-native-keyboard-controller';
@@ -32,6 +32,7 @@ import {
 } from '@/shared/ui';
 
 import { DetailTabProcessingView } from './DetailTabProcessingView';
+import { TaskReextractHintSheet } from './TaskReextractHintSheet';
 
 type TasksTabProps = {
   tasks: TaskItem[];
@@ -42,7 +43,7 @@ type TasksTabProps = {
   recordTitle: string;
   color: Colors;
   onToggle: (id: string) => void;
-  onExtract: () => void;
+  onExtract: (options?: { taskExtractionHint?: string }) => void;
   onAddManualTask: (text: string) => void;
   onPromoteNextStepToTask: (step: string, stepIndex: number) => void;
   onDeleteTask: (taskId: string) => void;
@@ -156,6 +157,22 @@ export const TasksTab = ({
   const { addTaskToCalendar } = useAddToCalendar();
   const { addTaskToReminder } = useAddToReminder();
 
+  const [reextractSheetOpen, setReextractSheetOpen] = useState(false);
+
+  const reextractSheet = useMemo(
+    () => (
+      <TaskReextractHintSheet
+        visible={reextractSheetOpen}
+        color={color}
+        onClose={() => setReextractSheetOpen(false)}
+        onConfirm={(hint) => {
+          onExtract(hint ? { taskExtractionHint: hint } : undefined);
+        }}
+      />
+    ),
+    [reextractSheetOpen, color, onExtract],
+  );
+
   const showPermissionAlert = (_: string) => {
     Alert.alert(t('common.error'), t('tasks.permissionDenied'));
   };
@@ -163,272 +180,298 @@ export const TasksTab = ({
   if (status === 'processing') {
     if (usePrivateProcessingPanel && onCancelProcessing) {
       return (
-        <DetailTabProcessingView
-          progress={privateAiBatchProgress ?? 0}
-          progressLabel={privateAiBatchProgressLabel}
-          phase={privateAiBatchPhase ?? 'loading_model'}
-          color={color}
-          onCancel={onCancelProcessing}
-          context="private_llm"
-          hintText={t('privateAi.batteryHint')}
-          leadingIcon={<ListChecks size={22} color={color.accent.primary} strokeWidth={2} />}
-        />
+        <>
+          <DetailTabProcessingView
+            progress={privateAiBatchProgress ?? 0}
+            progressLabel={privateAiBatchProgressLabel}
+            phase={privateAiBatchPhase ?? 'loading_model'}
+            color={color}
+            onCancel={onCancelProcessing}
+            context="private_llm"
+            hintText={t('privateAi.batteryHint')}
+            leadingIcon={<ListChecks size={22} color={color.accent.primary} strokeWidth={2} />}
+          />
+          {reextractSheet}
+        </>
       );
     }
 
     return (
-      <AiTabLoadingState
-        message={t('recordingDetail.tasksProcessing')}
-        showCancelButton={showProcessingCancel}
-        onCancel={onCancelProcessing}
-      />
+      <>
+        <AiTabLoadingState
+          message={t('recordingDetail.tasksProcessing')}
+          showCancelButton={showProcessingCancel}
+          onCancel={onCancelProcessing}
+        />
+        {reextractSheet}
+      </>
     );
   }
 
   if (status === 'error' && tasks.length === 0) {
     return (
-      <View>
-        <TabEmptyState
-          icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
-          title={t('recordingDetail.tasksError')}
-          description={
-            errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '')
-          }
-          buttonLabel={t('recordingDetail.tasksRetry')}
-          buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
-          onPress={onExtract}
-        />
-        <View className="px-6 pb-8">
-          <ManualTaskAddRow
-            color={color}
-            onAdd={onAddManualTask}
-            hint={t('recordingDetail.tasksManualHint')}
+      <>
+        <View>
+          <TabEmptyState
+            icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
+            title={t('recordingDetail.tasksError')}
+            description={
+              errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '')
+            }
+            buttonLabel={t('recordingDetail.tasksRetry')}
+            buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
+            onPress={() => setReextractSheetOpen(true)}
           />
+          <View className="px-6 pb-8">
+            <ManualTaskAddRow
+              color={color}
+              onAdd={onAddManualTask}
+              hint={t('recordingDetail.tasksManualHint')}
+            />
+          </View>
         </View>
-      </View>
+        {reextractSheet}
+      </>
     );
   }
 
   if (!hasTranscript && tasks.length === 0) {
     return (
-      <View>
-        <TabEmptyState
-          icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
-          title={t('recordingDetail.noTranscriptForAi')}
-          description={t('recordingDetail.noTranscriptForAiDesc')}
-          hideButton
-        />
-        <View className="px-6 pb-8">
-          <ManualTaskAddRow
-            color={color}
-            onAdd={onAddManualTask}
-            hint={t('recordingDetail.tasksManualWithoutTranscriptHint')}
+      <>
+        <View>
+          <TabEmptyState
+            icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
+            title={t('recordingDetail.noTranscriptForAi')}
+            description={t('recordingDetail.noTranscriptForAiDesc')}
+            hideButton
           />
+          <View className="px-6 pb-8">
+            <ManualTaskAddRow
+              color={color}
+              onAdd={onAddManualTask}
+              hint={t('recordingDetail.tasksManualWithoutTranscriptHint')}
+            />
+          </View>
         </View>
-      </View>
+        {reextractSheet}
+      </>
     );
   }
 
   if (tasks.length === 0) {
     return (
-      <View>
-        <TabEmptyState
-          icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
-          title={t('recordingDetail.tasksNotExtracted')}
-          description={t('recordingDetail.tasksNotExtractedDesc')}
-          buttonLabel={t('recordingDetail.extractTasks')}
-          buttonIcon={<ListChecks size={18} color="#fff" strokeWidth={2} />}
-          hint={aiModelName}
-          hintIcon={<AiTabHintIcon />}
-          disabled={disableByNetwork}
-          onPress={onExtract}
-        />
-        <View className="px-6 pb-8">
-          <ManualTaskAddRow
-            color={color}
-            onAdd={onAddManualTask}
-            hint={t('recordingDetail.tasksManualHint')}
+      <>
+        <View>
+          <TabEmptyState
+            icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
+            title={t('recordingDetail.tasksNotExtracted')}
+            description={t('recordingDetail.tasksNotExtractedDesc')}
+            buttonLabel={t('recordingDetail.extractTasks')}
+            buttonIcon={<ListChecks size={18} color="#fff" strokeWidth={2} />}
+            hint={aiModelName}
+            hintIcon={<AiTabHintIcon />}
+            disabled={disableByNetwork}
+            onPress={() => onExtract(undefined)}
           />
+          <View className="px-6 pb-8">
+            <ManualTaskAddRow
+              color={color}
+              onAdd={onAddManualTask}
+              hint={t('recordingDetail.tasksManualHint')}
+            />
+          </View>
         </View>
-      </View>
+        {reextractSheet}
+      </>
     );
   }
 
   return (
-    <View className="gap-3.5 p-4">
-      {showBanner && (
-        <AiTabErrorBanner
-          message={t('recordingDetail.tasksErrorBanner')}
-          onDismiss={handleDismiss}
-        />
-      )}
-      {tasks.map((task) => {
-        const menuActions = [
-          {
-            id: 'addToCalendar',
-            title: t('tasks.addToCalendar'),
-            image: 'calendar',
-            imageColor: color.text.primary,
-            titleColor: color.text.primary,
-          },
-          {
-            id: 'addToReminder',
-            title: t('tasks.addToReminder'),
-            image: 'bell',
-            imageColor: color.text.primary,
-            titleColor: color.text.primary,
-          },
-          {
-            id: 'deleteTask',
-            title: t('tasks.deleteTask'),
-            image: 'trash',
-            imageColor: color.accent.delete,
-            titleColor: color.accent.delete,
-            attributes: { destructive: true },
-          },
-        ];
+    <>
+      <View className="gap-3.5 p-4">
+        {showBanner && (
+          <AiTabErrorBanner
+            message={t('recordingDetail.tasksErrorBanner')}
+            onDismiss={handleDismiss}
+          />
+        )}
+        {tasks.map((task) => {
+          const menuActions = [
+            {
+              id: 'addToCalendar',
+              title: t('tasks.addToCalendar'),
+              image: 'calendar',
+              imageColor: color.text.primary,
+              titleColor: color.text.primary,
+            },
+            {
+              id: 'addToReminder',
+              title: t('tasks.addToReminder'),
+              image: 'bell',
+              imageColor: color.text.primary,
+              titleColor: color.text.primary,
+            },
+            {
+              id: 'deleteTask',
+              title: t('tasks.deleteTask'),
+              image: 'trash',
+              imageColor: color.accent.delete,
+              titleColor: color.accent.delete,
+              attributes: { destructive: true },
+            },
+          ];
 
-        return (
-          <View key={task.id} className="flex-row items-center gap-2 py-1">
-            <Pressable
-              className="min-w-0 flex-1 flex-row items-center gap-4 py-0.5"
-              onPress={() => onToggle(task.id)}
-              style={{ minWidth: 0 }}
-              accessibilityRole="checkbox"
-              accessibilityLabel={task.text}
-              accessibilityState={{ checked: task.isDone }}
-            >
-              {task.isDone ? (
-                <CheckCircle2 size={20} color={color.accent.success} strokeWidth={2} />
-              ) : (
-                <Circle size={20} color={color.icon.muted} strokeWidth={2} />
-              )}
-              <Text
-                className="min-w-0 flex-1 text-sm leading-5"
-                style={{
-                  color: task.isDone ? color.text.secondary : color.text.primary,
-                  textDecorationLine: task.isDone ? 'line-through' : undefined,
-                }}
+          return (
+            <View key={task.id} className="flex-row items-center gap-2 py-1">
+              <Pressable
+                className="min-w-0 flex-1 flex-row items-center gap-4 py-0.5"
+                onPress={() => onToggle(task.id)}
+                style={{ minWidth: 0 }}
+                accessibilityRole="checkbox"
+                accessibilityLabel={task.text}
+                accessibilityState={{ checked: task.isDone }}
               >
-                {task.text}
-              </Text>
-            </Pressable>
-            <View style={{ flexShrink: 0 }}>
-              <MenuView
-                key={`task-menu-${task.id}-${theme}`}
-                title=""
-                themeVariant={isDark ? 'dark' : 'light'}
-                shouldOpenOnLongPress={false}
-                onPressAction={async ({ nativeEvent }) => {
-                  if (nativeEvent.event === 'addToCalendar') {
-                    await addTaskToCalendar(
-                      task,
-                      recordTitle,
-                      () => Alert.alert(t('tasks.addedToCalendar')),
-                      showPermissionAlert,
-                    );
-                  }
-                  if (nativeEvent.event === 'addToReminder') {
-                    await addTaskToReminder(
-                      task,
-                      recordTitle,
-                      () => Alert.alert(t('tasks.addedToReminders')),
-                      showPermissionAlert,
-                    );
-                  }
-                  if (nativeEvent.event === 'deleteTask') {
-                    Alert.alert(t('tasks.deleteTask'), t('tasks.deleteTaskConfirm'), [
-                      { text: t('common.cancel'), style: 'cancel' },
-                      {
-                        text: t('tasks.deleteTask'),
-                        style: 'destructive',
-                        onPress: () => onDeleteTask(task.id),
-                      },
-                    ]);
-                  }
-                }}
-                actions={menuActions}
-              >
-                <Pressable
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  style={{ padding: 4 }}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('tasks.taskMenu')}
+                {task.isDone ? (
+                  <CheckCircle2 size={20} color={color.accent.success} strokeWidth={2} />
+                ) : (
+                  <Circle size={20} color={color.icon.muted} strokeWidth={2} />
+                )}
+                <Text
+                  className="min-w-0 flex-1 text-sm leading-5"
+                  style={{
+                    color: task.isDone ? color.text.secondary : color.text.primary,
+                    textDecorationLine: task.isDone ? 'line-through' : undefined,
+                  }}
                 >
-                  <MoreHorizontal size={18} color={color.icon.muted} strokeWidth={2} />
-                </Pressable>
-              </MenuView>
+                  {task.text}
+                </Text>
+              </Pressable>
+              <View style={{ flexShrink: 0 }}>
+                <MenuView
+                  key={`task-menu-${task.id}-${theme}`}
+                  title=""
+                  themeVariant={isDark ? 'dark' : 'light'}
+                  shouldOpenOnLongPress={false}
+                  onPressAction={async ({ nativeEvent }) => {
+                    if (nativeEvent.event === 'addToCalendar') {
+                      await addTaskToCalendar(
+                        task,
+                        recordTitle,
+                        () => Alert.alert(t('tasks.addedToCalendar')),
+                        showPermissionAlert,
+                      );
+                    }
+                    if (nativeEvent.event === 'addToReminder') {
+                      await addTaskToReminder(
+                        task,
+                        recordTitle,
+                        () => Alert.alert(t('tasks.addedToReminders')),
+                        showPermissionAlert,
+                      );
+                    }
+                    if (nativeEvent.event === 'deleteTask') {
+                      Alert.alert(t('tasks.deleteTask'), t('tasks.deleteTaskConfirm'), [
+                        { text: t('common.cancel'), style: 'cancel' },
+                        {
+                          text: t('tasks.deleteTask'),
+                          style: 'destructive',
+                          onPress: () => onDeleteTask(task.id),
+                        },
+                      ]);
+                    }
+                  }}
+                  actions={menuActions}
+                >
+                  <Pressable
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={{ padding: 4 }}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('tasks.taskMenu')}
+                  >
+                    <MoreHorizontal size={18} color={color.icon.muted} strokeWidth={2} />
+                  </Pressable>
+                </MenuView>
+              </View>
             </View>
-          </View>
-        );
-      })}
-      <ManualTaskAddRow color={color} onAdd={onAddManualTask} />
-      {nextSteps.length > 0 && (
-        <View className="mt-4 gap-2">
-          <Text className="text-xs font-semibold uppercase" style={{ color: color.text.secondary }}>
-            {t('recordingDetail.nextSteps')}
-          </Text>
-          {nextSteps.map((step, idx) => (
-            <Pressable
-              key={`${idx}-${step}`}
-              onPress={() => {
-                void onPromoteNextStepToTask(step, idx);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t('recordingDetail.nextStepAddA11y', { text: step })}
-              className="flex-row items-center gap-2.5"
-              style={{
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                borderRadius: 8,
-                backgroundColor: color.background.tertiary,
-              }}
+          );
+        })}
+        <ManualTaskAddRow color={color} onAdd={onAddManualTask} />
+        {nextSteps.length > 0 && (
+          <View className="mt-4 gap-2">
+            <Text
+              className="text-xs font-semibold uppercase"
+              style={{ color: color.text.secondary }}
             >
-              <Text
-                className="min-w-0 flex-1 text-sm leading-5"
-                style={{ color: color.text.primary }}
+              {t('recordingDetail.nextSteps')}
+            </Text>
+            {nextSteps.map((step, idx) => (
+              <Pressable
+                key={`${idx}-${step}`}
+                onPress={() => {
+                  void onPromoteNextStepToTask(step, idx);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={t('recordingDetail.nextStepAddA11y', { text: step })}
+                className="flex-row items-center gap-2.5"
+                style={{
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                  backgroundColor: color.background.tertiary,
+                }}
               >
-                {step}
-              </Text>
-              <Plus
-                size={17}
-                color={color.accent.primary}
-                strokeWidth={2}
-                style={{ flexShrink: 0, opacity: 0.9 }}
-              />
-            </Pressable>
-          ))}
+                <Text
+                  className="min-w-0 flex-1 text-sm leading-5"
+                  style={{ color: color.text.primary }}
+                >
+                  {step}
+                </Text>
+                <Plus
+                  size={17}
+                  color={color.accent.primary}
+                  strokeWidth={2}
+                  style={{ flexShrink: 0, opacity: 0.9 }}
+                />
+              </Pressable>
+            ))}
+          </View>
+        )}
+        <View className="mt-4 flex-row items-center gap-3">
+          <Button
+            variant="ghost"
+            size="md"
+            icon={<RefreshCw size={16} color={color.text.secondary} strokeWidth={2} />}
+            label={t('recordingDetail.reextractTasks')}
+            color={color}
+            onPress={() => setReextractSheetOpen(true)}
+            disabled={disableByNetwork || !hasTranscript}
+            containerStyle={{ flex: 1, minWidth: 0 }}
+          />
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Bell size={16} color={color.icon.onAccent} strokeWidth={2} />}
+            label={t('tasks.addAllShort')}
+            color={color}
+            onPress={async () => {
+              let added = 0;
+              for (const task of tasks) {
+                const ok = await addTaskToReminder(
+                  task,
+                  recordTitle,
+                  undefined,
+                  showPermissionAlert,
+                );
+                if (!ok) break;
+                added++;
+              }
+              if (added > 0) Alert.alert(t('tasks.addedToReminders'));
+            }}
+            containerStyle={{ flex: 1, minWidth: 0 }}
+          />
         </View>
-      )}
-      <View className="mt-4 flex-row items-center gap-3">
-        <Button
-          variant="ghost"
-          size="md"
-          icon={<RefreshCw size={16} color={color.text.secondary} strokeWidth={2} />}
-          label={t('recordingDetail.reextractTasks')}
-          color={color}
-          onPress={onExtract}
-          disabled={disableByNetwork || !hasTranscript}
-          containerStyle={{ flex: 1, minWidth: 0 }}
-        />
-        <Button
-          variant="primary"
-          size="md"
-          icon={<Bell size={16} color={color.icon.onAccent} strokeWidth={2} />}
-          label={t('tasks.addAllShort')}
-          color={color}
-          onPress={async () => {
-            let added = 0;
-            for (const task of tasks) {
-              const ok = await addTaskToReminder(task, recordTitle, undefined, showPermissionAlert);
-              if (!ok) break;
-              added++;
-            }
-            if (added > 0) Alert.alert(t('tasks.addedToReminders'));
-          }}
-          containerStyle={{ flex: 1, minWidth: 0 }}
-        />
       </View>
-    </View>
+      {reextractSheet}
+    </>
   );
 };
