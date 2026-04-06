@@ -446,10 +446,10 @@ export function AdminDashboard() {
         return;
       }
       setProKeyRequests(data.items);
-      setProKeyRequestMonths((prev) => {
+      setProKeyRequestDuration((prev) => {
         const next = { ...prev };
         for (const r of data.items!) {
-          if (next[r.id] === undefined) next[r.id] = '12';
+          if (next[r.id] === undefined) next[r.id] = 'm:12';
         }
         return next;
       });
