@@ -23,7 +23,7 @@ const CONTAINER_BASE = {
   gap: 8,
 };
 
-const IOS_SINGLE_LINE_LINE_HEIGHT = 22;
+const IOS_SINGLE_LINE_LINE_HEIGHT = 20;
 
 export const getInputFieldInputStyle = (color: Colors, multiline?: boolean) => ({
   flex: 1,
