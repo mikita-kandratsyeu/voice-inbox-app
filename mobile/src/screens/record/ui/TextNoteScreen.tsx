@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check, X } from 'lucide-react-native';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Text, TextInput, View } from 'react-native';
 import { KeyboardAwareScrollView, KeyboardController } from 'react-native-keyboard-controller';
@@ -36,11 +36,14 @@ export const TextNoteScreen = () => {
   const { isProActive } = useProEntitlement();
   const { isConnected } = useNetworkStatus();
   const { processRecord } = useAiProcessing();
+  const noteInputRef = useRef<TextInput>(null);
+  const saveInFlightRef = useRef(false);
   const [title, setTitle] = useState('');
   const [noteText, setNoteText] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const hasUnsavedChanges = title.trim().length > 0 || noteText.trim().length > 0;
 
-  const canSave = noteText.trim().length > 0;
+  const canSave = noteText.trim().length > 0 && !isSaving;
 
   const resolvedTitle = useMemo(() => {
     const trimmed = title.trim();
@@ -74,11 +77,17 @@ export const TextNoteScreen = () => {
   }, [hasUnsavedChanges, navigation, t]);
 
   const handleSave = useCallback(async () => {
-    KeyboardController.dismiss({ animated: false });
+    if (saveInFlightRef.current) {
+      return;
+    }
     const transcript = noteText.trim();
     if (!transcript) {
       return;
     }
+
+    saveInFlightRef.current = true;
+    setIsSaving(true);
+    KeyboardController.dismiss({ animated: false });
 
     const record: VoiceRecord = {
       id: generateRecordId(),
@@ -98,14 +107,20 @@ export const TextNoteScreen = () => {
       audioPath: '',
     };
 
-    await addRecord(record);
+    try {
+      await addRecord(record);
+    } catch {
+      saveInFlightRef.current = false;
+      setIsSaving(false);
+      return;
+    }
+
     generateAndSaveEmbeddingForRecord(record).catch(() => {});
 
     if (shouldApplyAutoAiAfterTranscription(autoAiAfterTranscription, isProActive) && isConnected) {
       void processRecord(record).catch(() => {});
     }
 
-    KeyboardController.dismiss({ animated: false });
     navigation.goBack();
     const adsAllowed = !isProActive;
     runAfterNavigationTransition(() => {
@@ -140,13 +155,14 @@ export const TextNoteScreen = () => {
           icon={<X size={22} color={color.text.primary} strokeWidth={2.2} />}
           color={color}
           onPress={handleBack}
+          disabled={isSaving}
           accessibilityLabel={t('common.close')}
         />
         <Text
           className="flex-1 px-2 text-center text-[18px] font-semibold"
           style={{ color: color.text.primary }}
         >
-          {t('textNote.title')}
+          {getAutoTitle(false)}
         </Text>
         <Button
           iconOnly
@@ -179,20 +195,23 @@ export const TextNoteScreen = () => {
             placeholderTextColor={color.text.secondary}
             style={getInputFieldInputStyle(color)}
             returnKeyType="next"
+            blurOnSubmit={false}
+            onSubmitEditing={() => noteInputRef.current?.focus()}
             accessibilityLabel={t('textNote.titlePlaceholder')}
           />
         </InputField>
         <InputField
           color={color}
           hasValue={noteText.trim().length > 0}
-          containerStyle={{ minHeight: 220 }}
+          containerStyle={{ minHeight: 220, alignItems: 'flex-start' }}
         >
           <TextInput
+            ref={noteInputRef}
             value={noteText}
             onChangeText={setNoteText}
             placeholder={t('textNote.textPlaceholder')}
             placeholderTextColor={color.text.secondary}
-            style={[getInputFieldInputStyle(color, true), { minHeight: 180 }]}
+            style={[getInputFieldInputStyle(color, true), { minHeight: 180, alignSelf: 'stretch' }]}
             multiline
             textAlignVertical="top"
             accessibilityLabel={t('textNote.textPlaceholder')}
