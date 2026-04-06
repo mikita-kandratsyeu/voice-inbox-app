@@ -32,6 +32,7 @@ import {
 } from '@/shared/ui';
 
 import { DetailTabProcessingView } from './DetailTabProcessingView';
+import { TaskEditSheet } from './TaskEditSheet';
 import { TaskReextractHintSheet } from './TaskReextractHintSheet';
 
 type TasksTabProps = {
@@ -47,6 +48,7 @@ type TasksTabProps = {
   onAddManualTask: (text: string) => void;
   onPromoteNextStepToTask: (step: string, stepIndex: number) => void;
   onDeleteTask: (taskId: string) => void;
+  onEditTask: (taskId: string, text: string) => boolean;
   onDismissError?: () => void;
   showPrivateModeCta?: boolean;
   onSwitchToSmartMode?: () => void;
@@ -135,6 +137,7 @@ export const TasksTab = ({
   onAddManualTask,
   onPromoteNextStepToTask,
   onDeleteTask,
+  onEditTask,
   onDismissError,
   onCancelProcessing,
   privateAiBatchPhase,
@@ -158,6 +161,7 @@ export const TasksTab = ({
   const { addTaskToReminder } = useAddToReminder();
 
   const [reextractSheetOpen, setReextractSheetOpen] = useState(false);
+  const [editTaskTarget, setEditTaskTarget] = useState<{ id: string; text: string } | null>(null);
 
   const reextractSheet = useMemo(
     () => (
@@ -170,6 +174,21 @@ export const TasksTab = ({
       />
     ),
     [reextractSheetOpen, onExtract],
+  );
+
+  const editTaskSheet = useMemo(
+    () => (
+      <TaskEditSheet
+        visible={editTaskTarget !== null}
+        initialText={editTaskTarget?.text ?? ''}
+        onClose={() => setEditTaskTarget(null)}
+        onSave={(text) => {
+          if (!editTaskTarget) return false;
+          return onEditTask(editTaskTarget.id, text);
+        }}
+      />
+    ),
+    [editTaskTarget, onEditTask],
   );
 
   const showPermissionAlert = (_: string) => {
@@ -191,6 +210,7 @@ export const TasksTab = ({
             leadingIcon={<ListChecks size={22} color={color.accent.primary} strokeWidth={2} />}
           />
           {reextractSheet}
+          {editTaskSheet}
         </>
       );
     }
@@ -203,6 +223,7 @@ export const TasksTab = ({
           onCancel={onCancelProcessing}
         />
         {reextractSheet}
+        {editTaskSheet}
       </>
     );
   }
@@ -230,6 +251,7 @@ export const TasksTab = ({
           </View>
         </View>
         {reextractSheet}
+        {editTaskSheet}
       </>
     );
   }
@@ -253,6 +275,7 @@ export const TasksTab = ({
           </View>
         </View>
         {reextractSheet}
+        {editTaskSheet}
       </>
     );
   }
@@ -281,6 +304,7 @@ export const TasksTab = ({
           </View>
         </View>
         {reextractSheet}
+        {editTaskSheet}
       </>
     );
   }
@@ -307,6 +331,13 @@ export const TasksTab = ({
               id: 'addToReminder',
               title: t('tasks.addToReminder'),
               image: 'bell',
+              imageColor: color.text.primary,
+              titleColor: color.text.primary,
+            },
+            {
+              id: 'editTask',
+              title: t('tasks.editTask'),
+              image: 'pencil',
               imageColor: color.text.primary,
               titleColor: color.text.primary,
             },
@@ -352,6 +383,9 @@ export const TasksTab = ({
                   themeVariant={isDark ? 'dark' : 'light'}
                   shouldOpenOnLongPress={false}
                   onPressAction={async ({ nativeEvent }) => {
+                    if (nativeEvent.event === 'editTask') {
+                      setEditTaskTarget({ id: task.id, text: task.text });
+                    }
                     if (nativeEvent.event === 'addToCalendar') {
                       await addTaskToCalendar(
                         task,
@@ -479,6 +513,7 @@ export const TasksTab = ({
         </View>
       </View>
       {reextractSheet}
+      {editTaskSheet}
     </>
   );
 };

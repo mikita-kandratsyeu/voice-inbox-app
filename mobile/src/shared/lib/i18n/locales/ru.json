@@ -912,7 +912,9 @@
     "addedToReminders": "Добавлено в Напоминания",
     "permissionDenied": "Доступ запрещён. Включите в Настройках.",
     "deleteTask": "Удалить",
-    "deleteTaskConfirm": "Удалить эту задачу из заметки?"
+    "deleteTaskConfirm": "Удалить эту задачу из заметки?",
+    "editTask": "Изменить",
+    "editTaskSheetTitle": "Редактировать задачу"
   },
   "classification": {
     "personal": "Личное",

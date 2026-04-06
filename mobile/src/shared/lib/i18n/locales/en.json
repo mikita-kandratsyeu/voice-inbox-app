@@ -912,7 +912,9 @@
     "addedToReminders": "Added to Reminders",
     "permissionDenied": "Permission denied. Enable access in Settings.",
     "deleteTask": "Delete",
-    "deleteTaskConfirm": "Remove this task from the note?"
+    "deleteTaskConfirm": "Remove this task from the note?",
+    "editTask": "Edit",
+    "editTaskSheetTitle": "Edit task"
   },
   "classification": {
     "personal": "Personal",

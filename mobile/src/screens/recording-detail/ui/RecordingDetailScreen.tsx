@@ -188,6 +188,30 @@ export const RecordingDetailScreen = () => {
     [liveRecord.id, liveRecord.tasks, updateTasks],
   );
 
+  const handleEditTask = useCallback(
+    (taskId: string, newText: string): boolean => {
+      const trimmed = newText.trim();
+
+      if (!trimmed) return false;
+
+      const prev = liveRecord.tasks ?? [];
+      const duplicate = prev.some(
+        (x) => x.id !== taskId && x.text.trim().toLowerCase() === trimmed.toLowerCase(),
+      );
+
+      if (duplicate) {
+        Alert.alert(t('recordingDetail.nextSteps'), t('recordingDetail.nextStepAlreadyInTasks'));
+        return false;
+      }
+
+      const next = prev.map((x) => (x.id === taskId ? { ...x, text: trimmed } : x));
+      updateTasks(liveRecord.id, next).catch(() => {});
+
+      return true;
+    },
+    [liveRecord.id, liveRecord.tasks, t, updateTasks],
+  );
+
   const handlePromoteNextStepToTask = useCallback(
     async (step: string, stepIndex: number) => {
       const trimmed = step.trim();
@@ -483,6 +507,7 @@ export const RecordingDetailScreen = () => {
                   onAddManualTask={handleAddManualTask}
                   onPromoteNextStepToTask={handlePromoteNextStepToTask}
                   onDeleteTask={handleDeleteTask}
+                  onEditTask={handleEditTask}
                   onDismissError={handleDismissSummaryError}
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onSwitchToSmartMode={handleSwitchToSmartMode}
