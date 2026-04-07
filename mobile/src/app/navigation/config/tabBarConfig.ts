@@ -36,10 +36,21 @@ export function getFloatingTabBarScrollPaddingBottom(
   return barH + FLOAT_TAB_BOTTOM_GAP + safeAreaBottom + EXTRA_SCROLL_BUFFER;
 }
 
-const BATCH_ACTION_BAR_VERTICAL_FOOTPRINT = 96;
+export const BATCH_ACTION_BAR_PADDING_TOP = 16;
+export const BATCH_ACTION_BAR_ROW_HEIGHT = 54;
+export const BATCH_ACTION_BAR_HOME_GAP = 8;
+
+export function getBatchActionBarHeight(safeAreaBottom: number): number {
+  return (
+    BATCH_ACTION_BAR_PADDING_TOP +
+    BATCH_ACTION_BAR_ROW_HEIGHT +
+    Math.max(safeAreaBottom, 8) +
+    BATCH_ACTION_BAR_HOME_GAP
+  );
+}
 
 export function getInboxBatchModeScrollPaddingBottom(safeAreaBottom: number): number {
-  return BATCH_ACTION_BAR_VERTICAL_FOOTPRINT + safeAreaBottom + EXTRA_SCROLL_BUFFER;
+  return getBatchActionBarHeight(safeAreaBottom) + EXTRA_SCROLL_BUFFER;
 }
 
 export type BuildFloatingTabBarStyleParams = {

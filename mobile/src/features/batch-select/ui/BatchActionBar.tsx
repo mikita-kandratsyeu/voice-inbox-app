@@ -1,13 +1,22 @@
 import { Archive, ArchiveRestore, FolderInput, Share2, Trash2, X } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Animated, ScrollView, Text, TouchableOpacity, View } from 'react-native';
+import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import {
+  BATCH_ACTION_BAR_HOME_GAP,
+  BATCH_ACTION_BAR_PADDING_TOP,
+  BATCH_ACTION_BAR_ROW_HEIGHT,
+  FLOAT_TAB_IOS_SHADOW_OFFSET_Y,
+  FLOAT_TAB_IOS_SHADOW_RADIUS,
+  floatingTabBarShadowOpacity,
+  getBatchActionBarHeight,
+  getFloatingTabBarScrollPaddingBottom,
+} from '@/app/navigation/config';
 import type { Colors } from '@/shared/config';
-import { hapticLight, hapticMedium, useIsTablet } from '@/shared/lib';
-import { Button } from '@/shared/ui';
+import { hapticLight, hapticMedium, useIsTablet, withAlphaHex } from '@/shared/lib';
+import { Button, FrostedChromeBackground } from '@/shared/ui';
 
 type BatchActionBarProps = {
   count: number;
@@ -73,23 +82,25 @@ export const BatchActionBar = ({
   dockToScreenBottom = false,
 }: BatchActionBarProps) => {
   const { t } = useTranslation();
-  const slideAnim = useRef(new Animated.Value(120)).current;
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
+  const slideDistance = dockToScreenBottom ? getBatchActionBarHeight(insets.bottom) : 120;
+  const slideAnim = useRef(new Animated.Value(slideDistance)).current;
 
   useEffect(() => {
+    slideAnim.setValue(slideDistance);
     Animated.spring(slideAnim, {
       toValue: 0,
       useNativeDriver: true,
       tension: 65,
       friction: 11,
     }).start();
-  }, [slideAnim]);
+  }, [slideAnim, slideDistance]);
 
   const disabled = count === 0;
 
   const bottomPad = dockToScreenBottom
-    ? Math.max(insets.bottom, 8) + 8
+    ? Math.max(insets.bottom, 8) + BATCH_ACTION_BAR_HOME_GAP
     : getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet) + 8;
 
   const handleCancel = () => {
@@ -126,82 +137,114 @@ export const BatchActionBar = ({
     <Animated.View
       style={{
         transform: [{ translateY: slideAnim }],
-        backgroundColor: color.background.primary,
-        borderTopWidth: 1,
-        borderTopColor: color.border.default,
-        paddingBottom: bottomPad,
-        paddingTop: 20,
-        paddingHorizontal: 20,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -2 },
-        shadowOpacity: 0.06,
-        shadowRadius: 8,
+        ...(dockToScreenBottom
+          ? {
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 40,
+            }
+          : { position: 'relative' }),
+        backgroundColor: 'transparent',
+        overflow: 'visible',
+        shadowColor: color.shadow.color,
+        shadowOffset: { width: 0, height: -FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
+        shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
+        shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
         elevation: 8,
       }}
     >
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Button
-          iconOnly
-          variant="icon"
-          size="md"
-          icon={<X size={22} color={color.text.secondary} strokeWidth={2.2} />}
-          color={color}
-          onPress={handleCancel}
-          accessibilityLabel={t('common.cancel')}
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{
+      <FrostedChromeBackground />
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: 0,
+          height: StyleSheet.hairlineWidth,
+          backgroundColor: withAlphaHex(color.border.default, 0.45),
+        }}
+      />
+      <View
+        style={{
+          paddingBottom: bottomPad,
+          paddingTop: BATCH_ACTION_BAR_PADDING_TOP,
+          paddingHorizontal: 20,
+        }}
+      >
+        <View
+          style={{
             flexDirection: 'row',
             alignItems: 'center',
-            gap: 12,
-            paddingLeft: 8,
+            justifyContent: 'space-between',
+            minHeight: BATCH_ACTION_BAR_ROW_HEIGHT,
           }}
-          style={{ flexGrow: 0, maxWidth: '82%' }}
         >
-          {!hideMoveToFolder && (
-            <ActionButton
-              icon={(c) => <FolderInput size={20} strokeWidth={2} color={c} />}
-              label={t('batch.moveToFolder')}
-              onPress={handleMoveToFolder}
-              disabled={disabled}
-              color={color}
-            />
-          )}
-          <ActionButton
-            icon={(c) => <Share2 size={20} strokeWidth={2} color={c} />}
-            label={t('batch.export')}
-            onPress={handleExport}
-            disabled={disabled}
+          <Button
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={<X size={22} color={color.text.secondary} strokeWidth={2.2} />}
             color={color}
+            onPress={handleCancel}
+            accessibilityLabel={t('common.cancel')}
           />
-          {showUnarchive ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              paddingLeft: 8,
+            }}
+            style={{ flexGrow: 0, maxWidth: '82%' }}
+          >
+            {!hideMoveToFolder && (
+              <ActionButton
+                icon={(c) => <FolderInput size={20} strokeWidth={2} color={c} />}
+                label={t('batch.moveToFolder')}
+                onPress={handleMoveToFolder}
+                disabled={disabled}
+                color={color}
+              />
+            )}
             <ActionButton
-              icon={(c) => <ArchiveRestore size={20} strokeWidth={2} color={c} />}
-              label={t('batch.unarchive')}
-              onPress={handleUnarchive}
+              icon={(c) => <Share2 size={20} strokeWidth={2} color={c} />}
+              label={t('batch.export')}
+              onPress={handleExport}
               disabled={disabled}
               color={color}
             />
-          ) : (
+            {showUnarchive ? (
+              <ActionButton
+                icon={(c) => <ArchiveRestore size={20} strokeWidth={2} color={c} />}
+                label={t('batch.unarchive')}
+                onPress={handleUnarchive}
+                disabled={disabled}
+                color={color}
+              />
+            ) : (
+              <ActionButton
+                icon={(c) => <Archive size={20} strokeWidth={2} color={c} />}
+                label={t('batch.archive')}
+                onPress={handleArchive}
+                disabled={disabled}
+                color={color}
+              />
+            )}
             <ActionButton
-              icon={(c) => <Archive size={20} strokeWidth={2} color={c} />}
-              label={t('batch.archive')}
-              onPress={handleArchive}
+              icon={(c) => <Trash2 size={20} strokeWidth={2} color={c} />}
+              label={t('batch.delete')}
+              onPress={handleDelete}
               disabled={disabled}
+              destructive
               color={color}
             />
-          )}
-          <ActionButton
-            icon={(c) => <Trash2 size={20} strokeWidth={2} color={c} />}
-            label={t('batch.delete')}
-            onPress={handleDelete}
-            disabled={disabled}
-            destructive
-            color={color}
-          />
-        </ScrollView>
+          </ScrollView>
+        </View>
       </View>
     </Animated.View>
   );
