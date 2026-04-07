@@ -5,6 +5,7 @@ module.exports = function (api) {
   return {
     presets: ['module:@react-native/babel-preset', 'nativewind/babel'],
     plugins: [
+      '@babel/plugin-transform-export-namespace-from',
       [
         'module:react-native-dotenv',
         {
