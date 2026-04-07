@@ -17,11 +17,11 @@ const ALL_LOCAL_IDS: LocalAiModelId[] = [
 ];
 
 describe('localLlmModelProfiles', () => {
-  it('uses single parallel slot and bounded batches (memory)', () => {
+  it('uses single parallel slot and GPU-optimised batches', () => {
     expect(getLocalLlmContextParams()).toMatchObject({
       n_parallel: 1,
-      n_batch: 512,
-      n_ubatch: 256,
+      n_batch: 1024,
+      n_ubatch: 512,
     });
   });
 
@@ -46,12 +46,20 @@ describe('localLlmModelProfiles', () => {
     expect(p.reasoning_format).toBe('none');
   });
 
-  it('getLocalLlmNCtx defaults to DEFAULT_LOCAL_LLM_N_CTX when profile omits nCtx', () => {
-    expect(getLocalLlmNCtx('local/qwen3-1.7b-q4_k_m')).toBe(DEFAULT_LOCAL_LLM_N_CTX);
+  it.each(ALL_LOCAL_IDS)('applies min_p tail-trim for json intent on %s', (id) => {
+    const p = mergeLocalLlmCompletionParams(id, 'json');
+    expect(typeof p.min_p).toBe('number');
+    expect(p.min_p).toBeGreaterThan(0);
   });
 
-  it('getLocalLlmNCtx uses profile nCtx when set', () => {
+  it('DEFAULT_LOCAL_LLM_N_CTX is 8 192 (fits all task budgets, halves KV RAM vs 16 K)', () => {
+    expect(DEFAULT_LOCAL_LLM_N_CTX).toBe(8_192);
+  });
+
+  it('getLocalLlmNCtx returns explicit nCtx for all models', () => {
+    expect(getLocalLlmNCtx('local/qwen3-1.7b-q4_k_m')).toBe(8_192);
     expect(getLocalLlmNCtx('local/llama-3.2-1b-q4_k_m')).toBe(8192);
+    expect(getLocalLlmNCtx('local/gemma-2-2b-it-q4_k_m')).toBe(12288);
   });
 
   it('applies Gemma-specific generation temperatures when set', () => {

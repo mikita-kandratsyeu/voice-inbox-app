@@ -4,15 +4,24 @@ import type { LocalAiModelId } from '@/entities/settings';
 
 export type LocalLlmCompletionIntent = 'json' | 'chat';
 
-/** Default KV context; per-model `nCtx` may override for RAM vs length tradeoffs. */
-export const DEFAULT_LOCAL_LLM_N_CTX = 16_384;
+/**
+ * Default KV context when a model profile does not set nCtx.
+ * Kept at 8 192 — sufficient for all task budgets (max prompt ~14 K chars ≈ 4 700 tokens
+ * + 2 048 output + 1 024 overhead = ~7 772), while halving KV RAM vs 16 K.
+ */
+export const DEFAULT_LOCAL_LLM_N_CTX = 8_192;
 
-/** One slot: we never use parallel.completion; saves KV RAM vs default n_parallel=8. */
+/**
+ * Shared initLlama context params.
+ * n_batch/n_ubatch are raised vs the old 512/256: on iOS the GPU pipeline can
+ * saturate larger batches during the prefill phase without RAM pressure because
+ * Metal manages buffer reuse. On Android (CPU-only) llama.rn caps n_batch at the
+ * smaller value anyway, so this is safe cross-platform.
+ */
 const SHARED_CONTEXT: Partial<ContextParams> = {
   n_parallel: 1,
-  /** Smaller batches = lower peak RAM during long prefills on phone SoCs. */
-  n_batch: 512,
-  n_ubatch: 256,
+  n_batch: 1024,
+  n_ubatch: 512,
 };
 
 type LocalLlmModelProfile = {
@@ -29,19 +38,26 @@ type LocalLlmModelProfile = {
 
 const PROFILES: Record<LocalAiModelId, LocalLlmModelProfile> = {
   'local/qwen3-1.7b-q4_k_m': {
+    // 8 K is enough: max task input ~14 K chars ≈ 4 700 tokens + 2 048 output + overhead.
+    // Halves KV RAM vs 16 K (~210 MB → ~105 MB on device).
+    nCtx: 8_192,
     base: {
       enable_thinking: false,
       reasoning_format: 'none',
+      // min_p trims the low-probability tail more aggressively than top_p alone —
+      // important for structured output where stray tokens break JSON.
+      min_p: 0.05,
       top_p: 0.88,
       penalty_repeat: 1.08,
     },
     json: {
-      top_k: 48,
+      top_k: 40,
+      min_p: 0.06,
       penalty_repeat: 1.12,
       stop: ['<|redacted_im_end|>'],
     },
     chat: {
-      top_k: 64,
+      top_k: 60,
       stop: ['<|redacted_im_end|>'],
     },
   },
@@ -49,33 +65,42 @@ const PROFILES: Record<LocalAiModelId, LocalLlmModelProfile> = {
     nCtx: 8192,
     base: {
       enable_thinking: false,
-      top_p: 0.95,
+      min_p: 0.05,
+      top_p: 0.92,
       penalty_repeat: 1.05,
     },
     json: {
-      top_k: 50,
+      top_k: 40,
+      min_p: 0.06,
       penalty_repeat: 1.1,
       stop: ['<|eot_id|>', '<|end_of_text|>'],
     },
     chat: {
+      top_k: 50,
       stop: ['<|eot_id|>', '<|end_of_text|>'],
     },
   },
   'local/gemma-2-2b-it-q4_k_m': {
+    // Gemma 2 uses local sliding window attention up to 4 096 and global at 8 192;
+    // 12 K covers both windows with headroom for long transcripts.
     nCtx: 12288,
     summaryTemperature: 0.18,
     askTemperature: 0.22,
     base: {
       enable_thinking: false,
       force_pure_content: true,
+      min_p: 0.05,
       top_p: 0.88,
       penalty_repeat: 1.08,
     },
     json: {
+      top_k: 40,
+      min_p: 0.06,
       penalty_repeat: 1.12,
       stop: ['<end_of_turn>'],
     },
     chat: {
+      top_k: 55,
       stop: ['<end_of_turn>'],
     },
   },
