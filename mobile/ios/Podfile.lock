@@ -1778,7 +1778,7 @@ PODS:
     - ReactNativeDependencies
   - react-native-add-calendar-event (5.0.0):
     - React-Core
-  - react-native-blob-util (0.22.2):
+  - react-native-blob-util (0.24.7):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3430,7 +3430,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: b41ecef79c3b1e95a3e77f17712f2fcc9ad13d57
   React-microtasksnativemodule: a146f4dd455ae81ec6860a1d2a20e76fdeabb76c
   react-native-add-calendar-event: b9802a8be8ad4beb0dcb3efb28969c077558fb29
-  react-native-blob-util: 22d614bf365cafcc5f02f8a91d48588ace9b73ea
+  react-native-blob-util: efe7ff4253f3ab637186cb3448191aeb02f33495
   react-native-blur: 385205a18cbc5ef43aeff7c0386fca04fcdd6fbf
   react-native-document-picker: f295326ef8abb37b9b538a20221ed17e2929a7d5
   react-native-in-app-review: bb863fb300f2c716479c4285201df746cf5e20a2

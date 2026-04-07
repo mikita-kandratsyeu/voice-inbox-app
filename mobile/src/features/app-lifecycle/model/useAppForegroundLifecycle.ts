@@ -2,6 +2,8 @@ import { useEffect } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { useRecordStore } from '@/entities/record';
+import { localLlmModelDownloader } from '@/features/model-manager/lib/local-llm-download';
+import { whisperModelDownloader } from '@/features/model-manager/lib/whisper-download';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { releaseWhisperContext } from '@/features/transcription';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
@@ -10,6 +12,18 @@ import { ensurePushRegistered, notifyAppBackground, notifyAppForeground } from '
 const HEARTBEAT_INTERVAL_MS = 40_000;
 const HEARTBEAT_THROTTLE_MS = 35_000;
 const FOREGROUND_ON_ACTIVE_THROTTLE_MS = 15_000;
+
+const isModelDownloading = (): boolean => {
+  const whisperState = whisperModelDownloader.getSnapshot().machineState;
+  const llmState = localLlmModelDownloader.getSnapshot().machineState;
+
+  return (
+    whisperState === 'downloading' ||
+    whisperState === 'pending' ||
+    llmState === 'downloading' ||
+    llmState === 'pending'
+  );
+};
 
 export function useAppForegroundLifecycle(): void {
   useEffect(() => {
@@ -59,7 +73,7 @@ export function useAppForegroundLifecycle(): void {
           lastForegroundAt = 0;
         }
         if (state === 'background') {
-          const hasHeavyWork = useRecordStore.getState().hasActiveAiJobs;
+          const hasHeavyWork = useRecordStore.getState().hasActiveAiJobs || isModelDownloading();
 
           if (!hasHeavyWork) {
             releaseWhisperContext().catch(() => {});

@@ -152,7 +152,11 @@ class WhisperModelDownloader {
     toFile: string,
     onProgressRaw: (received: number, total: number) => void,
   ): Promise<BlobResponse> {
-    const task = RNBlobUtil.config({ path: toFile, fileCache: true }).fetch('GET', url) as BlobTask;
+    const task = RNBlobUtil.config({
+      path: toFile,
+      fileCache: true,
+      IOSBackgroundTask: true,
+    }).fetch('GET', url) as BlobTask;
     const jobId = this.taskCounter++;
 
     task.progress({ interval: 250 }, (received, total) => {
