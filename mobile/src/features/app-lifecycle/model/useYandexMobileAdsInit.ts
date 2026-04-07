@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
+import { isIOS } from 'react-native-draggable-flatlist/lib/typescript/constants';
+import { PERMISSIONS, request } from 'react-native-permissions';
 import { MobileAds } from 'yandex-mobile-ads';
 
 import { useProEntitlement } from '@/features/pro-license';
@@ -7,11 +9,31 @@ import { useProEntitlement } from '@/features/pro-license';
 let initialized = false;
 let initializePromise: Promise<void> | null = null;
 
+async function requestIosAppTrackingIfNeeded(): Promise<void> {
+  if (!isIOS) {
+    return;
+  }
+
+  try {
+    await request(PERMISSIONS.IOS.APP_TRACKING_TRANSPARENCY);
+  } catch {
+    if (__DEV__) {
+      console.warn('[ads:init] request(PERMISSIONS.IOS.APP_TRACKING_TRANSPARENCY) failed');
+    }
+  }
+}
+
 async function ensureMobileAdsInitialized(): Promise<void> {
-  if (initialized) return;
-  if (initializePromise) return initializePromise;
+  if (initialized) {
+    return;
+  }
+
+  if (initializePromise) {
+    return initializePromise;
+  }
 
   initializePromise = Promise.resolve()
+    .then(() => requestIosAppTrackingIfNeeded())
     .then(() => MobileAds.initialize())
     .then(() => {
       initialized = true;

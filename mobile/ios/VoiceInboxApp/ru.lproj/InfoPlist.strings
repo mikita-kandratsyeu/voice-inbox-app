@@ -1,2 +1,3 @@
 "NSMicrophoneUsageDescription" = "Приложению нужен доступ к микрофону для записи голоса.";
+"NSUserTrackingUsageDescription" = "Это поможет показывать более релевантную рекламу.";
 "Start recording" = "Начать запись";
