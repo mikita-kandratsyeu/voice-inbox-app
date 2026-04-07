@@ -1,7 +1,8 @@
 import { FIREBASE_APP_CHECK_DEBUG_TOKEN } from '@env';
 import { getApp } from '@react-native-firebase/app';
 import { initializeAppCheck } from '@react-native-firebase/app-check';
-import appCheckModule from '@react-native-firebase/app-check';
+// @ts-ignore
+import ReactNativeFirebaseAppCheckProvider from '@react-native-firebase/app-check/dist/module/ReactNativeFirebaseAppCheckProvider';
 import { getInitialNotification, getMessaging } from '@react-native-firebase/messaging';
 import { useEffect } from 'react';
 
@@ -50,7 +51,7 @@ export function useAppBootstrap(
         ? FIREBASE_APP_CHECK_DEBUG_TOKEN
         : undefined;
 
-    const rnfbProvider = appCheckModule().newReactNativeFirebaseAppCheckProvider();
+    const rnfbProvider = new ReactNativeFirebaseAppCheckProvider();
     rnfbProvider.configure({
       android: {
         provider: __DEV__ ? 'debug' : 'playIntegrity',
