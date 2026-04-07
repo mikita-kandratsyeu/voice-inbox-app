@@ -589,7 +589,13 @@
     "setPinPrompt": "Установите PIN-код для защиты приложения",
     "confirmPin": "Подтвердите {{digits}}-значный PIN-код",
     "pinLengthTitle": "Длина PIN-кода",
-    "pinLengthOption": "{{digits}}-значный"
+    "pinLengthOption": "{{digits}}-значный",
+    "migration": {
+      "title": "Обновление безопасности",
+      "enterCurrent": "Введите текущий PIN-код для продолжения",
+      "enterNew": "Установите новый PIN-код",
+      "confirmNew": "Подтвердите новый PIN-код"
+    }
   },
   "storage": {
     "title": "Офлайн хранилище",

@@ -589,7 +589,13 @@
     "setPinPrompt": "Set a PIN to protect the app",
     "confirmPin": "Confirm {{digits}}-digit PIN",
     "pinLengthTitle": "PIN length",
-    "pinLengthOption": "{{digits}} digits"
+    "pinLengthOption": "{{digits}} digits",
+    "migration": {
+      "title": "Security update",
+      "enterCurrent": "Enter your current PIN to continue",
+      "enterNew": "Set a new PIN",
+      "confirmNew": "Confirm your new PIN"
+    }
   },
   "storage": {
     "title": "Offline storage",

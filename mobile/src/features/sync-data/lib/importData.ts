@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import DocumentPicker from 'react-native-document-picker';
 import { unzip } from 'react-native-zip-archive';
+import { z } from 'zod';
 
 import type { Folder } from '@/entities/folder';
 import { useFolderStore } from '@/entities/folder';
@@ -21,26 +22,77 @@ import { getCachesDirectoryPath, getReadableDocumentPickerFsPath, NitroFS } from
 
 const METADATA_FILENAME = 'metadata.json';
 
-type ExportPayloadV1 = {
-  version: 1;
-  exportedAt: string;
-  records: Omit<VoiceRecord, 'audioPath'>[];
-};
+const MAX_STRING_LENGTH = 100_000;
+const MAX_ARRAY_LENGTH = 10_000;
+const MAX_RECORDS_COUNT = 50_000;
+const MAX_FOLDERS_COUNT = 1_000;
 
-type ExportPayloadV2 = {
-  version: 2;
-  exportedAt: string;
-  records: (Omit<VoiceRecord, 'audioPath'> & { audioPath?: string })[];
-};
+const safeString = z.string().max(MAX_STRING_LENGTH);
+const safeOptionalString = safeString.optional().nullable();
 
-type ExportPayloadV3 = {
-  version: 3;
-  exportedAt: string;
-  folders: Folder[];
-  records: (Omit<VoiceRecord, 'audioPath'> & { audioPath?: string })[];
-};
+const RecordClassificationSchema = z.enum(['personal', 'work', 'meeting', 'idea', 'other']);
 
-type ExportPayload = ExportPayloadV1 | ExportPayloadV2 | ExportPayloadV3;
+const VoiceRecordSchema = z
+  .object({
+    id: safeString,
+    createdAt: safeString,
+    updatedAt: safeOptionalString,
+    title: safeOptionalString,
+    transcript: safeOptionalString,
+    translatedTranscript: safeOptionalString,
+    translationLanguage: safeOptionalString,
+    summary: safeOptionalString,
+    classification: RecordClassificationSchema.optional().nullable(),
+    keyPhrases: z.array(safeString).max(MAX_ARRAY_LENGTH).optional().nullable(),
+    nextSteps: z.array(safeString).max(MAX_ARRAY_LENGTH).optional().nullable(),
+    folderId: safeOptionalString,
+    audioPath: safeOptionalString,
+    duration: z.number().finite().optional().nullable(),
+    isRead: z.boolean().optional().nullable(),
+    isPinned: z.boolean().optional().nullable(),
+    language: safeOptionalString,
+    audioSize: z.number().finite().nonnegative().optional().nullable(),
+  })
+  .passthrough();
+
+const FolderSchema = z
+  .object({
+    id: safeString,
+    name: safeString,
+    color: safeOptionalString,
+    icon: safeOptionalString,
+    sortOrder: z.number().finite().optional().nullable(),
+    createdAt: safeOptionalString,
+  })
+  .passthrough();
+
+const BasePayloadSchema = z.object({
+  exportedAt: safeString,
+});
+
+const ExportPayloadV1Schema = BasePayloadSchema.extend({
+  version: z.literal(1),
+  records: z.array(VoiceRecordSchema).max(MAX_RECORDS_COUNT),
+});
+
+const ExportPayloadV2Schema = BasePayloadSchema.extend({
+  version: z.literal(2),
+  records: z.array(VoiceRecordSchema).max(MAX_RECORDS_COUNT),
+});
+
+const ExportPayloadV3Schema = BasePayloadSchema.extend({
+  version: z.literal(3),
+  folders: z.array(FolderSchema).max(MAX_FOLDERS_COUNT).optional(),
+  records: z.array(VoiceRecordSchema).max(MAX_RECORDS_COUNT),
+});
+
+const ExportPayloadSchema = z.discriminatedUnion('version', [
+  ExportPayloadV1Schema,
+  ExportPayloadV2Schema,
+  ExportPayloadV3Schema,
+]);
+
+type ExportPayload = z.infer<typeof ExportPayloadSchema>;
 
 type ImportResult =
   | { success: true; records: VoiceRecord[]; exportedAt: string }
@@ -54,7 +106,12 @@ const VALID_CLASSIFICATIONS: RecordClassification[] = [
   'other',
 ];
 
-function normalizeRecord(raw: unknown): VoiceRecord {
+function parseExportPayload(raw: unknown): ExportPayload | null {
+  const result = ExportPayloadSchema.safeParse(raw);
+  return result.success ? result.data : null;
+}
+
+function normalizeRecord(raw: z.infer<typeof VoiceRecordSchema>): VoiceRecord {
   const base = raw as Partial<VoiceRecord>;
 
   const classification: VoiceRecord['classification'] =
@@ -234,34 +291,23 @@ async function importFromZip(fileUri: string): Promise<ImportResult> {
 
     const raw = await readUtf8WithAllFallbacks(metadataPath);
 
-    const payload = JSON.parse(raw) as ExportPayload;
+    const payload = parseExportPayload(JSON.parse(raw));
 
-    if (
-      (payload.version !== 1 && payload.version !== 2 && payload.version !== 3) ||
-      !isArray(payload.records)
-    ) {
+    if (!payload) {
       return { success: false, error: i18n.t('importExport.invalidFormat') };
     }
 
-    if (payload.version === 3 && isArray(payload.folders)) {
+    if (payload.version === 3 && Array.isArray(payload.folders)) {
       const foldersToRestore = payload.folders
-        .filter(
-          (f) => f && isString((f as Partial<Folder>).id) && isString((f as Partial<Folder>).name),
-        )
-        .map((f) => {
-          const folder = f as Partial<Folder>;
-          return {
-            id: folder.id as string,
-            name: folder.name as string,
-            color: (folder.color as string | undefined) ?? DEFAULT_FOLDER_BRAND_HEX,
-            icon: (folder.icon as string | undefined) ?? DEFAULT_FOLDER_ICON_KEY,
-            sortOrder:
-              isNumber(folder.sortOrder) && Number.isFinite(folder.sortOrder)
-                ? folder.sortOrder
-                : 0,
-            createdAt: isString(folder.createdAt) ? folder.createdAt : dayjs().toISOString(),
-          } satisfies Folder;
-        });
+        .filter((f) => isString(f.id) && isString(f.name))
+        .map((f) => ({
+          id: f.id,
+          name: f.name,
+          color: isString(f.color) ? f.color : DEFAULT_FOLDER_BRAND_HEX,
+          icon: isString(f.icon) ? f.icon : DEFAULT_FOLDER_ICON_KEY,
+          sortOrder: isNumber(f.sortOrder) && Number.isFinite(f.sortOrder) ? f.sortOrder : 0,
+          createdAt: isString(f.createdAt) ? f.createdAt : dayjs().toISOString(),
+        })) satisfies Folder[];
 
       for (const folder of foldersToRestore) {
         await folderRepository.insert(folder);
@@ -280,7 +326,7 @@ async function importFromZip(fileUri: string): Promise<ImportResult> {
       const legacyFolderIds = Array.from(
         new Set(
           payload.records
-            .map((r) => (r as { folderId?: unknown }).folderId)
+            .map((r) => r.folderId)
             .filter((v): v is string => isString(v) && v.trim().length > 0),
         ),
       );
@@ -400,34 +446,23 @@ export const importData = async (): Promise<ImportResult> => {
     }
 
     const raw = await readTextWithFileSchemeFallback(fsPath, 'utf8');
-    const payload = JSON.parse(raw) as ExportPayload;
+    const payload = parseExportPayload(JSON.parse(raw));
 
-    if (
-      (payload.version !== 1 && payload.version !== 2 && payload.version !== 3) ||
-      !isArray(payload.records)
-    ) {
+    if (!payload) {
       return { success: false, error: i18n.t('importExport.invalidFormat') };
     }
 
-    if (payload.version === 3 && isArray(payload.folders)) {
+    if (payload.version === 3 && Array.isArray(payload.folders)) {
       const foldersToRestore = payload.folders
-        .filter(
-          (f) => f && isString((f as Partial<Folder>).id) && isString((f as Partial<Folder>).name),
-        )
-        .map((f) => {
-          const folder = f as Partial<Folder>;
-          return {
-            id: folder.id as string,
-            name: folder.name as string,
-            color: (folder.color as string | undefined) ?? DEFAULT_FOLDER_BRAND_HEX,
-            icon: (folder.icon as string | undefined) ?? DEFAULT_FOLDER_ICON_KEY,
-            sortOrder:
-              isNumber(folder.sortOrder) && Number.isFinite(folder.sortOrder)
-                ? folder.sortOrder
-                : 0,
-            createdAt: isString(folder.createdAt) ? folder.createdAt : dayjs().toISOString(),
-          } satisfies Folder;
-        });
+        .filter((f) => isString(f.id) && isString(f.name))
+        .map((f) => ({
+          id: f.id,
+          name: f.name,
+          color: isString(f.color) ? f.color : DEFAULT_FOLDER_BRAND_HEX,
+          icon: isString(f.icon) ? f.icon : DEFAULT_FOLDER_ICON_KEY,
+          sortOrder: isNumber(f.sortOrder) && Number.isFinite(f.sortOrder) ? f.sortOrder : 0,
+          createdAt: isString(f.createdAt) ? f.createdAt : dayjs().toISOString(),
+        })) satisfies Folder[];
 
       for (const folder of foldersToRestore) {
         await folderRepository.insert(folder);

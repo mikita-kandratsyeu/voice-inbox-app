@@ -3,6 +3,7 @@ import * as Keychain from 'react-native-keychain';
 import { i18n } from '@/shared/lib/i18n';
 
 import { hashPin, needsPinHashMigration, verifyPinHash } from './hashPin';
+import { setPinHashNeedsReset } from './pinHashMigrationStorage';
 
 const SERVICE_PIN = 'voice-inbox-app-lock-pin';
 const SERVICE_BIOMETRIC = 'voice-inbox-app-lock-biometric';
@@ -37,6 +38,22 @@ export const verifyPinInKeychain = async (pin: string): Promise<boolean> => {
 
 export const hasPinInKeychain = async (): Promise<boolean> =>
   Keychain.hasGenericPassword({ service: SERVICE_PIN });
+
+export const checkAndFlagLegacyPinHash = async (): Promise<boolean> => {
+  try {
+    const creds = await Keychain.getGenericPassword({ service: SERVICE_PIN });
+
+    if (!creds) {
+      return false;
+    }
+
+    const needsMigration = needsPinHashMigration(creds.password);
+    setPinHashNeedsReset(needsMigration);
+    return needsMigration;
+  } catch {
+    return false;
+  }
+};
 
 export const removePinFromKeychain = async (): Promise<void> => {
   await Keychain.resetGenericPassword({ service: SERVICE_PIN });

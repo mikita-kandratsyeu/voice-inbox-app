@@ -1,9 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useSyncExternalStore } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
-import { useAppLockStore } from '@/entities/app-lock';
+import { getPinHashNeedsReset, useAppLockStore } from '@/entities/app-lock';
+import { storage } from '@/shared/lib/async-storage';
 
 import { LockScreen } from './LockScreen';
+import { PinHashMigrationScreen } from './PinHashMigrationScreen';
+
+const PIN_MIGRATION_KEY = 'app-lock.pin-hash-needs-reset';
+
+function subscribeMigrationFlag(cb: () => void) {
+  const sub = storage.addOnValueChangedListener((key) => {
+    if (key === PIN_MIGRATION_KEY) cb();
+  });
+  return () => sub.remove();
+}
 
 type AppLockGateProps = {
   children: React.ReactNode;
@@ -11,6 +22,11 @@ type AppLockGateProps = {
 
 export const AppLockGate = ({ children }: AppLockGateProps) => {
   const { isEnabled, isLocked, lock } = useAppLockStore();
+  const pinHashNeedsReset = useSyncExternalStore(
+    subscribeMigrationFlag,
+    getPinHashNeedsReset,
+    getPinHashNeedsReset,
+  );
 
   useEffect(() => {
     const handleAppStateChange = (state: AppStateStatus) => {
@@ -23,6 +39,10 @@ export const AppLockGate = ({ children }: AppLockGateProps) => {
 
     return () => sub.remove();
   }, [isEnabled, lock]);
+
+  if (isEnabled && pinHashNeedsReset) {
+    return <PinHashMigrationScreen />;
+  }
 
   if (isEnabled && isLocked) {
     return <LockScreen />;

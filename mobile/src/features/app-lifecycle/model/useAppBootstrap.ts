@@ -1,6 +1,7 @@
 import { getInitialNotification, getMessaging } from '@react-native-firebase/messaging';
 import { useEffect } from 'react';
 
+import { checkAndFlagLegacyPinHash } from '@/entities/app-lock';
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { syncPrivateCapabilityTier, useSettingsStore } from '@/entities/settings';
@@ -76,6 +77,8 @@ export function useAppBootstrap(
             if (__DEV__) console.warn('[bootstrap] failed to sync analytics/crashlytics user id');
           }
         })();
+
+        void checkAndFlagLegacyPinHash();
 
         deferredInitTimer = setTimeout(() => {
           void (async () => {
