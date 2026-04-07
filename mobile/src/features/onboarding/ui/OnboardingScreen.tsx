@@ -16,7 +16,6 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
-  InteractionManager,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -57,12 +56,7 @@ import {
   requestPushPermission,
 } from '@/shared/lib/push';
 
-import {
-  getHasSeenOnboarding,
-  getTermsAgreedAt,
-  setHasSeenOnboarding,
-  setTermsAgreedAt,
-} from '../lib/onboardingStorage';
+import { getHasSeenOnboarding, getTermsAgreedAt, setTermsAgreedAt } from '../lib/onboardingStorage';
 import { getOnboardingSlides, type OnboardingSlideContent } from '../model/constants';
 import { OnboardingSetupStep } from './OnboardingSetupStep';
 
@@ -887,14 +881,11 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
     finishingRef.current = true;
     setIsFinishingOnboarding(true);
     setTermsAgreedAt();
-    setHasSeenOnboarding();
     void logAnalyticsEvent('onboarding_completed');
 
-    InteractionManager.runAfterInteractions(() => {
-      requestAnimationFrame(() => {
-        onComplete();
-      });
-    });
+    setTimeout(() => {
+      onComplete();
+    }, 0);
   }, [onComplete]);
 
   const handleNext = () => {

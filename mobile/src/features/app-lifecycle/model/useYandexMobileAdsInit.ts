@@ -1,16 +1,17 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
-import { isIOS } from 'react-native-draggable-flatlist/lib/typescript/constants';
 import { PERMISSIONS, request } from 'react-native-permissions';
 import { MobileAds } from 'yandex-mobile-ads';
 
+import { useOnboardingStore } from '@/features/onboarding/model/store';
 import { useProEntitlement } from '@/features/pro-license';
+import { IS_IOS } from '@/shared/lib';
 
 let initialized = false;
 let initializePromise: Promise<void> | null = null;
 
 async function requestIosAppTrackingIfNeeded(): Promise<void> {
-  if (!isIOS) {
+  if (!IS_IOS) {
     return;
   }
 
@@ -48,9 +49,11 @@ async function ensureMobileAdsInitialized(): Promise<void> {
 
 export function useYandexMobileAdsInit(): void {
   const { isProActive } = useProEntitlement();
+  const hasSeenOnboarding = useOnboardingStore((s) => s.hasSeenOnboarding);
+  const forceShowOnboarding = useOnboardingStore((s) => s.forceShow);
 
   useEffect(() => {
-    if (isProActive) {
+    if (isProActive || !hasSeenOnboarding || forceShowOnboarding) {
       return;
     }
 
@@ -82,5 +85,5 @@ export function useYandexMobileAdsInit(): void {
       clearTimeout(deferredInitTimer);
       appStateSub.remove();
     };
-  }, [isProActive]);
+  }, [isProActive, hasSeenOnboarding, forceShowOnboarding]);
 }

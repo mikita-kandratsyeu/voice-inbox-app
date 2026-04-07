@@ -104,7 +104,7 @@
 			<key>UIApplicationShortcutItemType</key>
 			<string>$(PRODUCT_BUNDLE_IDENTIFIER).quickAction.startRecording</string>
 			<key>UIApplicationShortcutItemTitle</key>
-			<string>Start recording</string>
+			<string>QUICK_ACTION_START_RECORDING_TITLE</string>
 			<key>UIApplicationShortcutItemIconSymbolName</key>
 			<string>mic.fill</string>
 		</dict>

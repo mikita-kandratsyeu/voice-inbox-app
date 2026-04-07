@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 
 import { IS_IOS } from '@/shared/lib';
 import { ensurePushRegistered } from '@/shared/lib/push';
 
-import { getHasSeenOnboarding } from '../lib/onboardingStorage';
 import { useOnboardingStore } from '../model/store';
 import { OnboardingScreen } from './OnboardingScreen';
 
@@ -12,12 +11,13 @@ type OnboardingGateProps = {
 };
 
 export const OnboardingGate = ({ children }: OnboardingGateProps) => {
-  const [hasSeen, setHasSeen] = useState(getHasSeenOnboarding);
+  const hasSeenOnboarding = useOnboardingStore((s) => s.hasSeenOnboarding);
   const forceShow = useOnboardingStore((s) => s.forceShow);
   const setForceShow = useOnboardingStore((s) => s.setForceShow);
+  const markOnboardingComplete = useOnboardingStore((s) => s.markOnboardingComplete);
 
   const handleComplete = () => {
-    setHasSeen(true);
+    markOnboardingComplete();
     setForceShow(false);
     if (IS_IOS) {
       setTimeout(() => {
@@ -26,7 +26,7 @@ export const OnboardingGate = ({ children }: OnboardingGateProps) => {
     }
   };
 
-  if (!hasSeen || forceShow) {
+  if (!hasSeenOnboarding || forceShow) {
     return <OnboardingScreen onComplete={handleComplete} />;
   }
 
