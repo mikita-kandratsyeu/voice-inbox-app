@@ -1,3 +1,4 @@
+import FirebaseAppCheck
 import FirebaseCore
 import FirebaseMessaging
 import React
@@ -29,6 +30,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    let appCheckProvider = AppCheckDebugProviderFactory()
+    #if DEBUG
+    AppCheck.setAppCheckProviderFactory(appCheckProvider)
+    #else
+    AppCheck.setAppCheckProviderFactory(DeviceCheckProviderFactory())
+    #endif
+
     FirebaseApp.configure()
 
     let center = UNUserNotificationCenter.current()

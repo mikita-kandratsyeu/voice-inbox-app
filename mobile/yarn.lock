@@ -3643,6 +3643,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@react-native-firebase/app-check@npm:24.0.0":
+  version: 24.0.0
+  resolution: "@react-native-firebase/app-check@npm:24.0.0"
+  peerDependencies:
+    "@react-native-firebase/app": 24.0.0
+    expo: ">=47.0.0"
+  peerDependenciesMeta:
+    expo:
+      optional: true
+  checksum: 10c0/58ad9d3fcc98975ff322731768da81c09ab1d4f293a9890f45e47ab4e2882920eb41c73c42a442816725acff963bf135f28dd27b8518cd48ff04398d978ee677
+  languageName: node
+  linkType: hard
+
 "@react-native-firebase/app@npm:^24.0.0":
   version: 24.0.0
   resolution: "@react-native-firebase/app@npm:24.0.0"
@@ -13065,6 +13078,7 @@ __metadata:
     "@react-native-community/netinfo": "npm:^12.0.1"
     "@react-native-firebase/analytics": "npm:24.0.0"
     "@react-native-firebase/app": "npm:^24.0.0"
+    "@react-native-firebase/app-check": "npm:24.0.0"
     "@react-native-firebase/crashlytics": "npm:24.0.0"
     "@react-native-firebase/messaging": "npm:^24.0.0"
     "@react-native-firebase/remote-config": "npm:24.0.0"

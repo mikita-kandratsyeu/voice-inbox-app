@@ -1,3 +1,5 @@
+import { getApp } from '@react-native-firebase/app';
+import { initializeAppCheck } from '@react-native-firebase/app-check';
 import { getInitialNotification, getMessaging } from '@react-native-firebase/messaging';
 import { useEffect } from 'react';
 
@@ -40,6 +42,14 @@ export function useAppBootstrap(
         onBootstrapReady?.();
       }
     };
+
+    initializeAppCheck(getApp(), {
+      provider: {
+        android: { provider: __DEV__ ? 'debug' : 'playIntegrity' },
+        apple: { provider: __DEV__ ? 'debug' : 'appAttestWithDeviceCheckFallback' },
+      } as unknown as NonNullable<Parameters<typeof initializeAppCheck>[1]>['provider'],
+      isTokenAutoRefreshEnabled: true,
+    });
 
     initRuntimeConfig()
       .catch(() => {
