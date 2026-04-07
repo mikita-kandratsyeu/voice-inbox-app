@@ -8,6 +8,8 @@ export type RevenueCatWebhookEvent = {
   type?: string;
   app_user_id?: string;
   expiration_at_ms?: number | null;
+  grace_period_expiration_at_ms?: number | null;
+  cancel_reason?: string | null;
   entitlement_ids?: string[];
   entitlement_id?: string | null;
 };
@@ -38,6 +40,30 @@ function eventGrantsConfiguredEntitlement(event: RevenueCatWebhookEvent): boolea
     'PRODUCT_CHANGE',
   ]);
   return purchaseLike.has(String(event.type ?? ''));
+}
+
+function finiteMs(n: unknown): number | null {
+  return typeof n === 'number' && Number.isFinite(n) ? n : null;
+}
+
+function webhookAccessEndMs(event: RevenueCatWebhookEvent): number | null {
+  const exp = finiteMs(event.expiration_at_ms);
+  const grace = finiteMs(event.grace_period_expiration_at_ms);
+  const parts = [exp, grace].filter((v): v is number => v != null);
+
+  if (parts.length === 0) {
+    return null;
+  }
+
+  return Math.max(...parts);
+}
+
+function shouldApplyWebhookToConfiguredEntitlement(event: RevenueCatWebhookEvent): boolean {
+  if (eventGrantsConfiguredEntitlement(event)) {
+    return true;
+  }
+
+  return String(event.type ?? '') === 'BILLING_ISSUE';
 }
 
 export function verifyRevenueCatWebhookAuthorization(
@@ -97,20 +123,24 @@ export async function applyRevenueCatWebhookPayload(payload: unknown): Promise<v
     return;
   }
 
-  const expMs = event.expiration_at_ms;
   const now = Date.now();
+  const accessEndMs = webhookAccessEndMs(event);
 
-  if (typeof expMs === 'number' && Number.isFinite(expMs)) {
-    if (expMs > now) {
-      if (!eventGrantsConfiguredEntitlement(event)) {
+  if (accessEndMs != null) {
+    if (accessEndMs > now) {
+      if (!shouldApplyWebhookToConfiguredEntitlement(event)) {
         return;
       }
-      const expiresAt = new Date(expMs);
+      const expiresAt = new Date(accessEndMs);
       await prisma.deviceProEntitlement.upsert({
         where: { deviceId },
         create: { deviceId, expiresAt },
         update: { expiresAt },
       });
+      return;
+    }
+
+    if (type === 'CANCELLATION' && String(event.cancel_reason ?? '') === 'BILLING_ERROR') {
       return;
     }
     try {
@@ -121,6 +151,7 @@ export async function applyRevenueCatWebhookPayload(payload: unknown): Promise<v
     return;
   }
 
+  const expMs = event.expiration_at_ms;
   if (expMs === null && eventGrantsConfiguredEntitlement(event)) {
     await prisma.deviceProEntitlement.upsert({
       where: { deviceId },

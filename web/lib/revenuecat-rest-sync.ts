@@ -13,16 +13,36 @@ function getSecretKey(): string | null {
   return k && k.length > 0 ? k : null;
 }
 
+type RcEntitlementPayload = {
+  expires_date?: string | null;
+  grace_period_expires_date?: string | null;
+};
+
 type RcSubscriberResponse = {
   subscriber?: {
-    entitlements?: Record<
-      string,
-      {
-        expires_date?: string | null;
-      }
-    >;
+    entitlements?: Record<string, RcEntitlementPayload>;
   };
 };
+
+function parseRcIsoDateMs(raw: string | null | undefined): number | null {
+  if (raw == null || raw === '') {
+    return null;
+  }
+  const ms = new Date(raw).getTime();
+  return Number.isFinite(ms) ? ms : null;
+}
+
+function entitlementAccessEndMs(ent: RcEntitlementPayload): number | null {
+  const expMs = parseRcIsoDateMs(ent.expires_date);
+  const graceMs = parseRcIsoDateMs(ent.grace_period_expires_date);
+  const candidates = [expMs, graceMs].filter((n): n is number => n != null);
+
+  if (candidates.length === 0) {
+    return null;
+  }
+
+  return Math.max(...candidates);
+}
 
 type FetchSubscriberResult =
   | { kind: 'ok'; body: RcSubscriberResponse }
@@ -87,19 +107,16 @@ export async function isRevenueCatProEntitlementActiveForDevice(
     return false;
   }
 
-  const expiresRaw = ent.expires_date;
-  const now = Date.now();
-
-  if (expiresRaw == null || expiresRaw === '') {
+  if (ent.expires_date == null || ent.expires_date === '') {
     return true;
   }
 
-  const expiresAt = new Date(expiresRaw);
-  if (!Number.isFinite(expiresAt.getTime())) {
+  const endMs = entitlementAccessEndMs(ent);
+  if (endMs == null) {
     return null;
   }
 
-  return expiresAt.getTime() > now;
+  return endMs > Date.now();
 }
 
 /** License keys write DeviceProEntitlement directly; RC often has no subscriber for that app user id. */
@@ -155,10 +172,7 @@ export async function syncDeviceProEntitlementFromRevenueCatRest(
     return { ok: true, updated: true };
   }
 
-  const expiresRaw = ent.expires_date;
-  const now = Date.now();
-
-  if (expiresRaw == null || expiresRaw === '') {
+  if (ent.expires_date == null || ent.expires_date === '') {
     await prisma.deviceProEntitlement.upsert({
       where: { deviceId },
       create: { deviceId, expiresAt: LIFETIME_FAR },
@@ -167,12 +181,15 @@ export async function syncDeviceProEntitlementFromRevenueCatRest(
     return { ok: true, updated: true };
   }
 
-  const expiresAt = new Date(expiresRaw);
-  if (!Number.isFinite(expiresAt.getTime())) {
+  const endMs = entitlementAccessEndMs(ent);
+  if (endMs == null) {
     return { ok: false, reason: 'invalid_expires_date' };
   }
 
-  if (expiresAt.getTime() <= now) {
+  const expiresAt = new Date(endMs);
+  const now = Date.now();
+
+  if (endMs <= now) {
     if (await hasConsumedProLicenseOnDevice(deviceId)) {
       return { ok: true, updated: false };
     }

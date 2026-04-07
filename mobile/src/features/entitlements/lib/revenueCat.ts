@@ -74,15 +74,20 @@ function applyCustomerInfoToProStorage(info: CustomerInfo): void {
   const ent = info.entitlements.active[entitlementId];
   if (ent?.isActive) {
     const ms = ent.expirationDateMillis;
+
     if (ms != null && Number.isFinite(ms) && ms > Date.now()) {
       setProExpiresAtMsSync(ms);
       return;
     }
+
     if (ent.expirationDate == null) {
       setProExpiresAtMsSync(new Date('2100-01-01T00:00:00.000Z').getTime());
       return;
     }
+
+    return;
   }
+
   clearProEntitlementSync();
 }
 
