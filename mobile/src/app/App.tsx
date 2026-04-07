@@ -17,7 +17,7 @@ import {
   usePushNotificationOpenedApp,
   useYandexMobileAdsInit,
 } from '@/features/app-lifecycle';
-import { AppLockGate } from '@/features/app-lock/ui/AppLockGate';
+import { AppLockGate, AppSwitcherPrivacyOverlay } from '@/features/app-lock';
 import { AppRatingPromptRoot } from '@/features/app-review';
 import { OnboardingGate } from '@/features/onboarding';
 import { useResetAccentWhenNotPro } from '@/features/pro-license';
@@ -114,6 +114,7 @@ const App = () => {
               <PushNotificationSheet />
               <AppRatingPromptRoot />
             </BottomSheetModalProvider>
+            <AppSwitcherPrivacyOverlay />
           </NetworkStatusProvider>
         </SafeAreaProvider>
       </KeyboardProvider>
