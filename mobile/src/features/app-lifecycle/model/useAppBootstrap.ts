@@ -1,5 +1,7 @@
+import { FIREBASE_APP_CHECK_DEBUG_TOKEN } from '@env';
 import { getApp } from '@react-native-firebase/app';
 import { initializeAppCheck } from '@react-native-firebase/app-check';
+import appCheckModule from '@react-native-firebase/app-check';
 import { getInitialNotification, getMessaging } from '@react-native-firebase/messaging';
 import { useEffect } from 'react';
 
@@ -11,7 +13,7 @@ import { runAutoArchiveReadNotesIfEligible } from '@/features/auto-archive/model
 import { initRevenueCatWhenReady } from '@/features/entitlements';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
-import { initDB } from '@/shared/lib';
+import { initDB, isString } from '@/shared/lib';
 import { syncAnalyticsUserId } from '@/shared/lib/analytics';
 import { syncCrashlyticsUserId } from '@/shared/lib/crashlytics';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
@@ -43,12 +45,30 @@ export function useAppBootstrap(
       }
     };
 
-    initializeAppCheck(getApp(), {
-      provider: {
-        android: { provider: __DEV__ ? 'debug' : 'playIntegrity' },
-        apple: { provider: __DEV__ ? 'debug' : 'appAttestWithDeviceCheckFallback' },
-      } as unknown as NonNullable<Parameters<typeof initializeAppCheck>[1]>['provider'],
+    const appCheckDebugToken =
+      isString(FIREBASE_APP_CHECK_DEBUG_TOKEN) && FIREBASE_APP_CHECK_DEBUG_TOKEN.length > 0
+        ? FIREBASE_APP_CHECK_DEBUG_TOKEN
+        : undefined;
+
+    const rnfbProvider = appCheckModule().newReactNativeFirebaseAppCheckProvider();
+    rnfbProvider.configure({
+      android: {
+        provider: __DEV__ ? 'debug' : 'playIntegrity',
+        ...(appCheckDebugToken != null ? { debugToken: appCheckDebugToken } : {}),
+      },
+      apple: {
+        provider: __DEV__ ? 'debug' : 'appAttestWithDeviceCheckFallback',
+        ...(appCheckDebugToken != null ? { debugToken: appCheckDebugToken } : {}),
+      },
+    });
+
+    void initializeAppCheck(getApp(), {
+      provider: rnfbProvider,
       isTokenAutoRefreshEnabled: true,
+    }).catch((err) => {
+      if (__DEV__) {
+        console.warn('[bootstrap] App Check init failed', err);
+      }
     });
 
     initRuntimeConfig()
