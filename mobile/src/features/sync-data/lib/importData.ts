@@ -53,7 +53,7 @@ const VoiceRecordSchema = z.looseObject({
   isRead: z.boolean().optional().nullable(),
   isPinned: z.boolean().optional().nullable(),
   language: safeOptionalString,
-  audioSize: z.number().nonnegative().optional().nullable(),
+  audioSize: z.nullish(z.number().min(0)),
 });
 
 const FolderSchema = z.looseObject({
@@ -61,7 +61,7 @@ const FolderSchema = z.looseObject({
   name: safeString,
   color: safeOptionalString,
   icon: safeOptionalString,
-  sortOrder: z.number().optional().nullable(),
+  sortOrder: z.nullish(z.number()),
   createdAt: safeOptionalString,
 });
 
