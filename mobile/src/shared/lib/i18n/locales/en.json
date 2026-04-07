@@ -85,7 +85,7 @@
     "emptyDescription": "Voice notes you record or import will show up here.",
     "emptyImportHint": "Long-press the record button to import an audio file",
     "emptyFolderHint": "Open a note and choose Move to folder to place it here",
-    "swipeHint": "Swipe left to archive, right to pin. Long press a card to select notes, then tap Folder to move them.",
+    "swipeHint": "Swipe left to archive, right to pin.",
     "recordUnreadA11y": "Unread",
     "recordCardLongPressHint": "Long press to select multiple notes",
     "filterSummary": "{{filterName}}: {{count}}",
