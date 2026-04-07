@@ -32,39 +32,38 @@ const safeOptionalString = safeString.optional().nullable();
 
 const RecordClassificationSchema = z.enum(['personal', 'work', 'meeting', 'idea', 'other']);
 
-const VoiceRecordSchema = z
-  .object({
-    id: safeString,
-    createdAt: safeString,
-    updatedAt: safeOptionalString,
-    title: safeOptionalString,
-    transcript: safeOptionalString,
-    translatedTranscript: safeOptionalString,
-    translationLanguage: safeOptionalString,
-    summary: safeOptionalString,
-    classification: RecordClassificationSchema.optional().nullable(),
-    keyPhrases: z.array(safeString).max(MAX_ARRAY_LENGTH).optional().nullable(),
-    nextSteps: z.array(safeString).max(MAX_ARRAY_LENGTH).optional().nullable(),
-    folderId: safeOptionalString,
-    audioPath: safeOptionalString,
-    duration: z.number().finite().optional().nullable(),
-    isRead: z.boolean().optional().nullable(),
-    isPinned: z.boolean().optional().nullable(),
-    language: safeOptionalString,
-    audioSize: z.number().finite().nonnegative().optional().nullable(),
-  })
-  .passthrough();
+const VoiceRecordSchema = z.looseObject({
+  id: safeString,
+  createdAt: safeString,
+  updatedAt: safeOptionalString,
+  title: safeOptionalString,
+  transcript: safeOptionalString,
+  translatedTranscript: safeOptionalString,
+  translationLanguage: safeOptionalString,
+  summary: safeOptionalString,
+  classification: RecordClassificationSchema.optional().nullable(),
+  keyPhrases: z.array(safeString).max(MAX_ARRAY_LENGTH).optional().nullable(),
+  nextSteps: z.array(safeString).max(MAX_ARRAY_LENGTH).optional().nullable(),
+  folderId: safeOptionalString,
+  audioPath: safeOptionalString,
+  duration: z
+    .union([z.string().max(MAX_STRING_LENGTH), z.number()])
+    .optional()
+    .nullable(),
+  isRead: z.boolean().optional().nullable(),
+  isPinned: z.boolean().optional().nullable(),
+  language: safeOptionalString,
+  audioSize: z.number().nonnegative().optional().nullable(),
+});
 
-const FolderSchema = z
-  .object({
-    id: safeString,
-    name: safeString,
-    color: safeOptionalString,
-    icon: safeOptionalString,
-    sortOrder: z.number().finite().optional().nullable(),
-    createdAt: safeOptionalString,
-  })
-  .passthrough();
+const FolderSchema = z.looseObject({
+  id: safeString,
+  name: safeString,
+  color: safeOptionalString,
+  icon: safeOptionalString,
+  sortOrder: z.number().optional().nullable(),
+  createdAt: safeOptionalString,
+});
 
 const BasePayloadSchema = z.object({
   exportedAt: safeString,
@@ -111,6 +110,26 @@ function parseExportPayload(raw: unknown): ExportPayload | null {
   return result.success ? result.data : null;
 }
 
+function normalizeDurationField(value: unknown): string {
+  if (value === null || value === undefined) {
+    return '0:00';
+  }
+
+  if (isString(value)) {
+    return value;
+  }
+
+  if (isNumber(value) && Number.isFinite(value)) {
+    const totalSec = Math.max(0, Math.floor(value));
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  }
+
+  return '0:00';
+}
+
 function normalizeRecord(raw: z.infer<typeof VoiceRecordSchema>): VoiceRecord {
   const base = raw as Partial<VoiceRecord>;
 
@@ -130,6 +149,7 @@ function normalizeRecord(raw: z.infer<typeof VoiceRecordSchema>): VoiceRecord {
 
   return {
     ...base,
+    duration: normalizeDurationField(base.duration),
     classification: classification ?? base.classification,
     keyPhrases: keyPhrases.length > 0 ? keyPhrases : (base.keyPhrases ?? []),
     nextSteps: nextSteps.length > 0 ? nextSteps : (base.nextSteps ?? []),
