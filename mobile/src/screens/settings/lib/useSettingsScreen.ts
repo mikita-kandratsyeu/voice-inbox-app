@@ -33,7 +33,7 @@ import {
   resolveDefaultIapBillingPeriod,
   restoreProPurchases,
 } from '@/features/entitlements';
-import { useProEntitlement } from '@/features/pro-license';
+import { isStoreProEntitlementActiveNow, useProEntitlement } from '@/features/pro-license';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import { exportData, importData } from '@/features/sync-data';
 import { FREE_WEEKLY_LIMIT, useColors } from '@/shared/config';
@@ -112,6 +112,28 @@ export function useSettingsScreen() {
   } = useProEntitlement();
   const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
   const monetizationMode = getMonetizationMode();
+
+  const [planCardStoreProActive, setPlanCardStoreProActive] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!proEntitlementActive || monetizationMode !== 'iap_public') {
+      setPlanCardStoreProActive(null);
+      return;
+    }
+
+    let cancelled = false;
+    setPlanCardStoreProActive(null);
+
+    void isStoreProEntitlementActiveNow().then((active) => {
+      if (!cancelled) {
+        setPlanCardStoreProActive(active);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [proEntitlementActive, monetizationMode, expiresAtMs]);
 
   useEffect(() => {
     if (!planPaywallVisible || monetizationMode !== 'iap_public') {
@@ -399,8 +421,15 @@ export function useSettingsScreen() {
       if (monetizationMode !== 'iap_public') {
         return;
       }
+
       void (async () => {
+        const storeEntitlementActive = await isStoreProEntitlementActiveNow();
+        if (!storeEntitlementActive) {
+          return;
+        }
+
         const ok = await openStoreSubscriptionManagement();
+
         if (!ok) {
           Alert.alert(t('common.error'), t('settings.subscriptionManagementOpenError'));
         }
@@ -514,6 +543,7 @@ export function useSettingsScreen() {
     color,
     navigation,
     monetizationMode,
+    planCardStoreProActive,
     proWeeklyLimit,
     freeWeeklyLimit,
     proEntitlementActive,

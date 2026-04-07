@@ -93,7 +93,18 @@ export const SettingsScreen = () => {
           <SettingsPlanStatusCard
             color={settings.color}
             monetizationMode={settings.monetizationMode}
-            onPress={settings.handlePlanCardPress}
+            storeProEntitlementActive={
+              settings.proEntitlementActive && settings.monetizationMode === 'iap_public'
+                ? (settings.planCardStoreProActive ?? undefined)
+                : undefined
+            }
+            onPress={
+              settings.proEntitlementActive &&
+              settings.monetizationMode === 'iap_public' &&
+              settings.planCardStoreProActive === false
+                ? undefined
+                : settings.handlePlanCardPress
+            }
           />
           {!settings.isPrivateMode && (
             <AiUsageCard

@@ -22,6 +22,7 @@ import { resolveDayjsLocale } from '@/shared/lib/date';
 type SettingsPlanStatusCardProps = {
   color: Colors;
   monetizationMode: MonetizationMode;
+  storeProEntitlementActive?: boolean;
   onPress?: () => void;
 };
 
@@ -30,6 +31,7 @@ const CARD_RADIUS = 16;
 export function SettingsPlanStatusCard({
   color,
   monetizationMode,
+  storeProEntitlementActive,
   onPress,
 }: SettingsPlanStatusCardProps) {
   const { t, i18n } = useTranslation();
@@ -107,7 +109,7 @@ export function SettingsPlanStatusCard({
       })
     : t('settings.planStatus.a11yOpenPlans');
   const accessibilityHint = isProActive
-    ? monetizationMode === 'iap_public'
+    ? monetizationMode === 'iap_public' && storeProEntitlementActive
       ? t('settings.planStatus.a11yManageSubscriptionsHint')
       : t('settings.planStatus.a11yCurrentPlanHint')
     : t('settings.planStatus.a11yOpenPlansHint');
