@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import type { TFunction } from 'i18next';
-import { PlayCircle, Sparkles } from 'lucide-react-native';
+import { Gauge, PlayCircle } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -183,7 +183,7 @@ export const AiUsageCard = ({
           className="mr-3 h-14 w-14 items-center justify-center rounded-2xl"
           style={{ backgroundColor: color.background.tertiary }}
         >
-          <Sparkles size={22} color={color.accent.primary} strokeWidth={1.8} />
+          <Gauge size={22} color={color.accent.primary} strokeWidth={1.8} />
         </View>
         <View className="min-w-0 flex-1">
           <Text className="text-base font-semibold" style={{ color: color.text.primary }}>
