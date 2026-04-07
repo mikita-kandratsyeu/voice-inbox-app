@@ -175,7 +175,7 @@ export const OnboardingSetupStep = ({
           const isDownloading = status === 'downloading';
           const isDownloaded = status === 'downloaded';
           const compat = compatibility?.[model.id];
-          const isLast = index === WHISPER_MODELS.length - 1;
+          const isLast = index === WHISPER_MODELS.length - 2;
           const isSelected = model.id === selectedWhisperModel;
           const displaySize = formatFileSize(getWhisperModelSizeMb(model.id, 'q5_1') * 1024 * 1024);
 
