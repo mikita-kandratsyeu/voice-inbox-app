@@ -125,6 +125,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     summaryStr,
     tasksList,
     priorTurnsList,
+    request.headers.get('user-agent'),
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {

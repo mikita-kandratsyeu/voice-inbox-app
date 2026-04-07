@@ -78,6 +78,7 @@ export const createAutoOrganizeRequest = async (
   id: string,
   notesPayload: string,
   deviceId: string,
+  clientUserAgent?: string | null,
 ): Promise<CreateAutoOrganizeResult> => {
   const created = await saveMessageIfNotExists(id, {
     id,
@@ -120,7 +121,11 @@ export const createAutoOrganizeRequest = async (
 
   after(async () => {
     try {
-      const result = await processAutoOrganizeFolders(notesPayload, SYSTEM_MICRO_TASK_MODEL);
+      const result = await processAutoOrganizeFolders(
+        notesPayload,
+        SYSTEM_MICRO_TASK_MODEL,
+        clientUserAgent,
+      );
       await saveAutoOrganizeMessage(id, {
         id,
         status: 'done',

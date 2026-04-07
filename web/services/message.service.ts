@@ -24,6 +24,7 @@ export const createMessage = async (
   model: string,
   systemPrompt: string,
   deviceId: string,
+  clientUserAgent?: string | null,
 ): Promise<CreateMessageResult> => {
   const created = await saveMessageIfNotExists(id, { id, status: 'processing' });
   if (!created) {
@@ -46,7 +47,7 @@ export const createMessage = async (
 
   after(async () => {
     try {
-      const result = await processTranscript(transcript, model, systemPrompt);
+      const result = await processTranscript(transcript, model, systemPrompt, clientUserAgent);
       await saveMessage(id, {
         id,
         status: 'done',

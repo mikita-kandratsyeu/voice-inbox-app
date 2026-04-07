@@ -127,7 +127,12 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     notes: sanitizedNotes,
   });
 
-  const result = await createAutoOrganizeRequest(String(body.id), payload, deviceIdTrimmed);
+  const result = await createAutoOrganizeRequest(
+    String(body.id),
+    payload,
+    deviceIdTrimmed,
+    request.headers.get('user-agent'),
+  );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
     const error =

@@ -1,4 +1,4 @@
-import { openRouterClient } from '@/lib/openrouter';
+import { createOpenRouterClient } from '@/lib/openrouter';
 import {
   isRetryableOpenRouterTransportError,
   withSequentialModelFallback,
@@ -20,8 +20,10 @@ async function callOpenRouter(
   transcript: string,
   model: string,
   systemPrompt: string,
+  clientUserAgent?: string | null,
 ): Promise<AiResult> {
-  const response = await openRouterClient.chat.send({
+  const client = createOpenRouterClient(clientUserAgent);
+  const response = await client.chat.send({
     chatGenerationParams: {
       model,
       messages: [
@@ -153,12 +155,13 @@ export async function processTranscript(
   transcript: string,
   model: string,
   systemPrompt: string,
+  clientUserAgent?: string | null,
 ): Promise<AiResult> {
   const models = [model, ...USER_AI_MODEL_FALLBACK_CHAIN];
 
   return withSequentialModelFallback(
     models,
-    (m) => callOpenRouter(transcript, m, systemPrompt),
+    (m) => callOpenRouter(transcript, m, systemPrompt, clientUserAgent),
     isRetryableOpenRouterTransportError,
   );
 }
@@ -195,6 +198,7 @@ export async function processAskQuestion(
   summary?: string,
   tasks?: { text: string }[],
   priorTurns?: { question: string; answer: string }[],
+  clientUserAgent?: string | null,
 ): Promise<{ answer: string }> {
   const parts: string[] = ['Transcript:\n\n', transcript];
   if (summary && summary.trim()) {
@@ -219,7 +223,8 @@ export async function processAskQuestion(
     m: string,
     sysPrompt: string,
   ): Promise<{ answer: string }> => {
-    const response = await openRouterClient.chat.send({
+    const client = createOpenRouterClient(clientUserAgent);
+    const response = await client.chat.send({
       chatGenerationParams: {
         model: m,
         messages: [
@@ -497,6 +502,7 @@ function compactAutoOrganizeInput(notesJsonPayload: string): string {
 export async function processAutoOrganizeFolders(
   notesJsonPayload: string,
   model: string,
+  clientUserAgent?: string | null,
 ): Promise<AutoOrganizeResult> {
   const compactPayload = compactAutoOrganizeInput(notesJsonPayload);
   let expectedIds = extractExpectedNoteIdsFromCompactPayload(compactPayload);
@@ -505,7 +511,8 @@ export async function processAutoOrganizeFolders(
   }
 
   const sendOrganize = async (m: string, userContent: string): Promise<AutoOrganizeResult> => {
-    const response = await openRouterClient.chat.send({
+    const client = createOpenRouterClient(clientUserAgent);
+    const response = await client.chat.send({
       chatGenerationParams: {
         model: m,
         messages: [

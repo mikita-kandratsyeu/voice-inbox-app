@@ -59,7 +59,12 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return apiError('Invalid targetLanguage', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
-  const result = await translateTranscript(transcript, targetLanguage, deviceIdTrimmed);
+  const result = await translateTranscript(
+    transcript,
+    targetLanguage,
+    deviceIdTrimmed,
+    request.headers.get('user-agent'),
+  );
 
   if (!result.ok && 'limitExceeded' in result && result.limitExceeded) {
     return NextResponse.json(

@@ -6,7 +6,7 @@ import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
 import { buildTranslatePrompt } from '@/lib/prompts';
 import { sendLimitExceededPush } from '@/lib/push-tokens';
 import { SYSTEM_MICRO_TASK_MODEL, SYSTEM_TASK_MODEL_FALLBACK_CHAIN } from '@/config/constants';
-import { openRouterClient } from '@/lib/openrouter';
+import { createOpenRouterClient } from '@/lib/openrouter';
 
 type TranslateResult =
   | { ok: true; translatedText: string }
@@ -17,10 +17,12 @@ async function callTranslate(
   transcript: string,
   targetLang: string,
   model: string,
+  clientUserAgent?: string | null,
 ): Promise<string> {
   const systemPrompt = buildTranslatePrompt(targetLang);
+  const client = createOpenRouterClient(clientUserAgent);
 
-  const response = await openRouterClient.chat.send({
+  const response = await client.chat.send({
     chatGenerationParams: {
       model,
       messages: [
@@ -45,6 +47,7 @@ export async function translateTranscript(
   transcript: string,
   targetLanguage: string,
   deviceId: string,
+  clientUserAgent?: string | null,
 ): Promise<TranslateResult> {
   const limitResult = await checkAndIncrement(deviceId);
   if (!limitResult.allowed) {
@@ -56,7 +59,7 @@ export async function translateTranscript(
     const models = [SYSTEM_MICRO_TASK_MODEL, ...SYSTEM_TASK_MODEL_FALLBACK_CHAIN];
     const translatedText = await withSequentialModelFallback(
       models,
-      (m) => callTranslate(transcript, targetLanguage, m),
+      (m) => callTranslate(transcript, targetLanguage, m, clientUserAgent),
       (err) =>
         isRetryableOpenRouterTransportError(err) ||
         (err instanceof Error && err.message.includes('Invalid translation')),

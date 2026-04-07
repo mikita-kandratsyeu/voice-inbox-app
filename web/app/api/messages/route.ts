@@ -103,7 +103,14 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   await setAppForeground(deviceIdTrimmed);
 
-  const result = await createMessage(id, transcript, model, resolvedSystemPrompt, deviceIdTrimmed);
+  const result = await createMessage(
+    id,
+    transcript,
+    model,
+    resolvedSystemPrompt,
+    deviceIdTrimmed,
+    request.headers.get('user-agent'),
+  );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
     return NextResponse.json(

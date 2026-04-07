@@ -31,6 +31,7 @@ export const createAsk = async (
   summary?: string,
   tasks?: { text: string }[],
   priorTurns?: { question: string; answer: string }[],
+  clientUserAgent?: string | null,
 ): Promise<CreateAskResult> => {
   const created = await saveMessageIfNotExists(id, {
     id,
@@ -65,6 +66,7 @@ export const createAsk = async (
         summary,
         tasks,
         priorTurns,
+        clientUserAgent,
       );
       await saveAskMessage(id, {
         id,

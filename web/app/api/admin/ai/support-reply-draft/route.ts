@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { ALLOWED_AI_MODELS, FALLBACK_MODEL } from '@/config/constants';
 import { getAdminSession } from '@/lib/admin-session';
 import { apiError, HttpStatus, parseJsonBody } from '@/lib/api';
-import { openRouterClient } from '@/lib/openrouter';
+import { createOpenRouterClient } from '@/lib/openrouter';
 import { SUPPORT_REPLY_DRAFT_SYSTEM_PROMPT } from '@/lib/prompts';
 import {
   ServiceUnavailableResponseError,
@@ -41,8 +41,13 @@ function buildUserPayload(body: Body): string {
   return parts.join('\n');
 }
 
-async function callDraft(model: string, userContent: string): Promise<string> {
-  const response = await openRouterClient.chat.send({
+async function callDraft(
+  model: string,
+  userContent: string,
+  clientUserAgent?: string | null,
+): Promise<string> {
+  const client = createOpenRouterClient(clientUserAgent);
+  const response = await client.chat.send({
     chatGenerationParams: {
       model,
       messages: [
@@ -104,7 +109,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   try {
-    const markdown = await callDraft(PRIMARY_MODEL, userContent);
+    const markdown = await callDraft(PRIMARY_MODEL, userContent, request.headers.get('user-agent'));
     if (!markdown) {
       return apiError('Empty draft', HttpStatus.BAD_REQUEST, { pathname: path });
     }
@@ -114,7 +119,11 @@ export async function POST(request: Request): Promise<NextResponse> {
       err instanceof TooManyRequestsResponseError || err instanceof ServiceUnavailableResponseError;
     if (isRetryable) {
       try {
-        const markdown = await callDraft(FALLBACK_MODEL, userContent);
+        const markdown = await callDraft(
+          FALLBACK_MODEL,
+          userContent,
+          request.headers.get('user-agent'),
+        );
         if (!markdown) {
           return apiError('Empty draft', HttpStatus.BAD_REQUEST, { pathname: path });
         }
