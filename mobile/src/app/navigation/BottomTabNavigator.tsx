@@ -14,6 +14,7 @@ import { useIsTablet } from '@/shared/lib';
 import {
   buildFloatingTabBarStyle,
   FLOAT_TAB_BOTTOM_GAP,
+  floatingTabBarShadowOpacity,
   TAB_ICON_SIZE,
   TAB_ICONS,
   TAB_LABELS,
@@ -21,7 +22,13 @@ import {
 import { InboxNavigator } from './InboxNavigator';
 import { SettingsNavigator } from './SettingsNavigator';
 import type { BottomTabParamList } from './types';
-import { AnimatedTabButton, CenterRecordButton, EmptyScreen, EvenlySpacedBottomTabBar } from './ui';
+import {
+  AnimatedTabButton,
+  CenterRecordButton,
+  EmptyScreen,
+  EvenlySpacedBottomTabBar,
+  FloatingTabBarBackground,
+} from './ui';
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
@@ -33,7 +40,6 @@ export const BottomTabNavigator = () => {
   const { importAudioFile, isImporting, importPhase } = useImportAudioFile();
 
   const color = useColors();
-  const tabBg = color.background.primary;
   const tabActive = color.accent.primary;
   const tabInactive = color.tab.inactive;
 
@@ -41,13 +47,13 @@ export const BottomTabNavigator = () => {
     headerShown: false,
     tabBarActiveTintColor: tabActive,
     tabBarInactiveTintColor: tabInactive,
+    tabBarBackground: () => <FloatingTabBarBackground />,
     tabBarStyle: buildFloatingTabBarStyle({
       insets,
       windowWidth,
       isTablet,
-      tabBackgroundColor: tabBg,
       shadowColor: color.shadow.color,
-      shadowOpacity: Math.min(0.22, color.shadow.opacity + 0.12),
+      shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
     }),
     tabBarLabelStyle: {
       fontSize: isTablet ? 14 : 12,

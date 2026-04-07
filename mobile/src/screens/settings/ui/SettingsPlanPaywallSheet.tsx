@@ -1,5 +1,5 @@
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import type { TFunction } from 'i18next';
 import { Check, Crown } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef } from 'react';
@@ -15,6 +15,7 @@ import type {
 } from '@/features/entitlements';
 import { useColors } from '@/shared/config';
 import { IS_ANDROID, IS_IOS, modalKeyboardBehavior } from '@/shared/lib/platform';
+import { useIsSmallScreen } from '@/shared/lib/useIsSmallScreen';
 import { Button } from '@/shared/ui';
 
 type SettingsPlanPaywallSheetProps = {
@@ -104,6 +105,7 @@ type PlanPickTileProps = {
   onPress: () => void;
   disabled: boolean;
   saveBadgePercent: number | null;
+  stackVertical?: boolean;
 };
 
 function PlanPickTile({
@@ -117,12 +119,16 @@ function PlanPickTile({
   onPress,
   disabled,
   saveBadgePercent,
+  stackVertical = false,
 }: PlanPickTileProps) {
   const introText = introCaptionForFreeTrial(intro, t);
   const showBadge = saveBadgePercent != null && saveBadgePercent > 0;
 
   return (
-    <View className="min-w-0 flex-1" style={{ position: 'relative', alignSelf: 'stretch' }}>
+    <View
+      className={stackVertical ? 'w-full' : 'min-w-0 flex-1'}
+      style={{ position: 'relative', alignSelf: 'stretch' }}
+    >
       {showBadge && (
         <View
           className="items-center"
@@ -161,8 +167,9 @@ function PlanPickTile({
         onPress={onPress}
         className="rounded-2xl px-3 pb-3 pt-3.5"
         style={{
-          flex: 1,
-          alignSelf: 'stretch',
+          ...(stackVertical
+            ? { width: '100%', alignSelf: 'stretch' as const }
+            : { flex: 1, alignSelf: 'stretch' as const }),
           minHeight: 92,
           justifyContent: 'flex-start',
           borderWidth: 2,
@@ -191,6 +198,8 @@ function PlanPickTile({
               ...(IS_ANDROID ? { includeFontPadding: false } : {}),
             }}
             numberOfLines={1}
+            adjustsFontSizeToFit={!stackVertical}
+            minimumFontScale={!stackVertical ? 0.82 : undefined}
           >
             {title}
           </Text>
@@ -251,6 +260,7 @@ export function SettingsPlanPaywallSheet({
   const { t } = useTranslation();
   const c = useColors();
   const insets = useSafeAreaInsets();
+  const { isSmallScreen } = useIsSmallScreen();
   const ref = useRef<BottomSheetModal>(null);
 
   useEffect(() => {
@@ -302,8 +312,10 @@ export function SettingsPlanPaywallSheet({
         backgroundColor: c.icon.muted,
       }}
     >
-      <BottomSheetView
-        style={{
+      <BottomSheetScrollView
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
           paddingHorizontal: 20,
           paddingTop: 8,
           paddingBottom: Math.max(insets.bottom, 22),
@@ -375,7 +387,7 @@ export function SettingsPlanPaywallSheet({
           </View>
           {isIapPublic && !iapProPriceLoading && iapDualBilling && onIapBillingPeriodChange && (
             <View
-              className="mt-4 flex-row gap-2"
+              className={`mt-4 gap-2 ${isSmallScreen ? 'flex-col' : 'flex-row'}`}
               style={{
                 alignItems: 'stretch',
                 paddingTop: iapSavePercent != null && iapSavePercent > 0 ? 10 : 0,
@@ -393,6 +405,7 @@ export function SettingsPlanPaywallSheet({
                   onPress={() => onIapBillingPeriodChange('monthly')}
                   disabled={iapBusy}
                   saveBadgePercent={null}
+                  stackVertical={isSmallScreen}
                 />
               )}
               {iapAnnualRow && (
@@ -415,6 +428,7 @@ export function SettingsPlanPaywallSheet({
                   onPress={() => onIapBillingPeriodChange('annual')}
                   disabled={iapBusy}
                   saveBadgePercent={iapSavePercent}
+                  stackVertical={isSmallScreen}
                 />
               )}
             </View>
@@ -447,7 +461,7 @@ export function SettingsPlanPaywallSheet({
             </Text>
           </Pressable>
         )}
-      </BottomSheetView>
+      </BottomSheetScrollView>
     </BottomSheetModal>
   );
 }

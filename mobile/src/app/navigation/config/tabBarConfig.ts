@@ -9,10 +9,21 @@ export const FLOAT_TAB_HORIZONTAL_INSET = 28;
 export const FLOAT_TAB_MAX_WIDTH_TABLET = 480;
 /** Gap between home indicator / screen bottom and the tab bar. */
 export const FLOAT_TAB_BOTTOM_GAP = 10;
+/** Tab bar pill fill: 1 = opaque; lower = slight glass effect over the screen behind. */
+export const FLOAT_TAB_BAR_BACKGROUND_OPACITY = 0.88;
 /** Inner vertical padding inside the pill (top / bottom). */
 export const FLOAT_TAB_INNER_PAD_VERTICAL = 11;
 export const FLOAT_TAB_BAR_HEIGHT_PHONE = 72;
 export const FLOAT_TAB_BAR_HEIGHT_TABLET = 90;
+
+/** iOS: soft lift so the pill reads above the list without a heavy gray halo (esp. with blur). */
+export const FLOAT_TAB_IOS_SHADOW_OFFSET_Y = 5;
+export const FLOAT_TAB_IOS_SHADOW_RADIUS = 12;
+
+/** Caps shadow strength from theme token — keep tab bar shadow lighter than cards. */
+export function floatingTabBarShadowOpacity(themeShadowOpacity: number): number {
+  return Math.min(0.11, themeShadowOpacity + 0.04);
+}
 
 const EXTRA_SCROLL_BUFFER = 12;
 
@@ -35,7 +46,6 @@ export type BuildFloatingTabBarStyleParams = {
   insets: { bottom: number; left: number; right: number };
   windowWidth: number;
   isTablet: boolean;
-  tabBackgroundColor: string;
   shadowColor: string;
   shadowOpacity: number;
 };
@@ -68,19 +78,19 @@ export function buildFloatingTabBarStyle(p: BuildFloatingTabBarStyleParams): Vie
     height: tabBarHeight,
     paddingTop: FLOAT_TAB_INNER_PAD_VERTICAL,
     paddingBottom: FLOAT_TAB_INNER_PAD_VERTICAL,
-    backgroundColor: p.tabBackgroundColor,
+    backgroundColor: 'transparent',
     borderTopWidth: 0,
     borderWidth: 0,
     borderRadius: tabBarHeight / 2,
     ...Platform.select({
       ios: {
         shadowColor: p.shadowColor,
-        shadowOffset: { width: 0, height: 8 },
+        shadowOffset: { width: 0, height: FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
         shadowOpacity: p.shadowOpacity,
-        shadowRadius: 20,
+        shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
       },
       android: {
-        elevation: 14,
+        elevation: 8,
       },
       default: {},
     }),

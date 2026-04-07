@@ -9,6 +9,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import {
   buildFloatingTabBarStyle,
+  floatingTabBarShadowOpacity,
   getFloatingTabBarScrollPaddingBottom,
   getInboxBatchModeScrollPaddingBottom,
 } from '@/app/navigation/config';
@@ -421,9 +422,8 @@ export function useInboxScreen() {
           insets,
           windowWidth,
           isTablet,
-          tabBackgroundColor: color.background.primary,
           shadowColor: color.shadow.color,
-          shadowOpacity: Math.min(0.22, color.shadow.opacity + 0.12),
+          shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
         }),
       });
     };
@@ -444,7 +444,6 @@ export function useInboxScreen() {
     insets,
     windowWidth,
     isTablet,
-    color.background.primary,
     color.shadow.color,
     color.shadow.opacity,
   ]);

@@ -1799,6 +1799,27 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-blur (4.4.1):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - react-native-document-picker (9.3.1):
     - hermes-engine
     - RCTRequired
@@ -2957,6 +2978,7 @@ DEPENDENCIES:
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - react-native-add-calendar-event (from `../node_modules/react-native-add-calendar-event`)
   - react-native-blob-util (from `../node_modules/react-native-blob-util`)
+  - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
   - react-native-document-picker (from `../node_modules/react-native-document-picker`)
   - react-native-in-app-review (from `../node_modules/react-native-in-app-review`)
   - react-native-keep-awake (from `../node_modules/react-native-keep-awake`)
@@ -3180,6 +3202,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-add-calendar-event"
   react-native-blob-util:
     :path: "../node_modules/react-native-blob-util"
+  react-native-blur:
+    :path: "../node_modules/@react-native-community/blur"
   react-native-document-picker:
     :path: "../node_modules/react-native-document-picker"
   react-native-in-app-review:
@@ -3407,6 +3431,7 @@ SPEC CHECKSUMS:
   React-microtasksnativemodule: a146f4dd455ae81ec6860a1d2a20e76fdeabb76c
   react-native-add-calendar-event: b9802a8be8ad4beb0dcb3efb28969c077558fb29
   react-native-blob-util: 22d614bf365cafcc5f02f8a91d48588ace9b73ea
+  react-native-blur: 385205a18cbc5ef43aeff7c0386fca04fcdd6fbf
   react-native-document-picker: f295326ef8abb37b9b538a20221ed17e2929a7d5
   react-native-in-app-review: bb863fb300f2c716479c4285201df746cf5e20a2
   react-native-keep-awake: afad8a51dfef9fe9655a6344771be32c8596d774
