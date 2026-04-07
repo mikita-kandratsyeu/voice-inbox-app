@@ -20,3 +20,35 @@ export async function isProDevice(deviceId: string): Promise<boolean> {
   const expires = await getProExpiresAtUtc(deviceId);
   return expires != null && expires.getTime() > Date.now();
 }
+
+export async function deviceHasActivatedLicenseKey(deviceId: string): Promise<boolean> {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return false;
+  }
+
+  try {
+    const row = await prisma.proLicenseKey.findFirst({
+      where: { consumedByDeviceId: deviceId },
+      select: { id: true },
+    });
+
+    return row != null;
+  } catch {
+    return false;
+  }
+}
+
+export type ProActivationKind = 'license' | 'store';
+
+export async function getProActivationKind(deviceId: string): Promise<ProActivationKind | null> {
+  const active = await isProDevice(deviceId);
+  if (!active) {
+    return null;
+  }
+
+  if (await deviceHasActivatedLicenseKey(deviceId)) {
+    return 'license';
+  }
+
+  return 'store';
+}

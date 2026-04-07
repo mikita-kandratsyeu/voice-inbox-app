@@ -98,13 +98,7 @@ export const SettingsScreen = () => {
                 ? (settings.planCardStoreProActive ?? undefined)
                 : undefined
             }
-            onPress={
-              settings.proEntitlementActive &&
-              settings.monetizationMode === 'iap_public' &&
-              settings.planCardStoreProActive === false
-                ? undefined
-                : settings.handlePlanCardPress
-            }
+            onPress={settings.handlePlanCardPress}
           />
           {!settings.isPrivateMode && (
             <AiUsageCard

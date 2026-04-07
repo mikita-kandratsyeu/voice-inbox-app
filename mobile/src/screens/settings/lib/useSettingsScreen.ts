@@ -33,12 +33,14 @@ import {
   resolveDefaultIapBillingPeriod,
   restoreProPurchases,
 } from '@/features/entitlements';
+import { openInAppBrowser } from '@/features/in-app-browser';
 import { isStoreProEntitlementActiveNow, useProEntitlement } from '@/features/pro-license';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import { exportData, importData } from '@/features/sync-data';
-import { FREE_WEEKLY_LIMIT, useColors } from '@/shared/config';
+import { FREE_WEEKLY_LIMIT, useAppTheme, useColors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
 import { getAiUsage, getAiWeeklyLimits } from '@/shared/lib/ai-api';
+import { fetchProAccountPortalUrl } from '@/shared/lib/ai-api/proLicenseApi';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { isEmbeddingAvailable } from '@/shared/lib/embeddings';
 import {
@@ -58,7 +60,7 @@ import type { AutomationFeatureKind } from '../ui/AutomationComingSoonSheet';
 import { performHardReset } from './hardReset';
 
 export function useSettingsScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const color = useColors();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const route = useRoute<RouteProp<SettingsStackParamList, 'Settings'>>();
@@ -80,6 +82,7 @@ export function useSettingsScreen() {
   const setAutoArchiveAfterDays = useSettingsStore((s) => s.setAutoArchiveAfterDays);
   const appLanguage = useSettingsStore((s) => s.appLanguage);
   const appTheme = useSettingsStore((s) => s.appTheme);
+  const resolvedColorScheme = useAppTheme();
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
   const recordsCount = useRecordStore((s) => s.records.length);
 
@@ -418,26 +421,36 @@ export function useSettingsScreen() {
 
   const handlePlanCardPress = useCallback(() => {
     if (proEntitlementActive) {
-      if (monetizationMode !== 'iap_public') {
-        return;
-      }
-
       void (async () => {
-        const storeEntitlementActive = await isStoreProEntitlementActiveNow();
-        if (!storeEntitlementActive) {
+        if (monetizationMode === 'iap_public') {
+          const storeEntitlementActive = await isStoreProEntitlementActiveNow();
+
+          if (storeEntitlementActive) {
+            const ok = await openStoreSubscriptionManagement();
+
+            if (!ok) {
+              Alert.alert(t('common.error'), t('settings.subscriptionManagementOpenError'));
+            }
+
+            return;
+          }
+        }
+
+        const locale = i18n.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
+        const portalUrl = await fetchProAccountPortalUrl(locale);
+
+        if (portalUrl) {
+          await openInAppBrowser(portalUrl, resolvedColorScheme);
+
           return;
         }
 
-        const ok = await openStoreSubscriptionManagement();
-
-        if (!ok) {
-          Alert.alert(t('common.error'), t('settings.subscriptionManagementOpenError'));
-        }
+        Alert.alert(t('common.error'), t('settings.planStatus.proDetailsPortalError'));
       })();
       return;
     }
     setPlanPaywallVisible(true);
-  }, [monetizationMode, proEntitlementActive, t]);
+  }, [i18n.language, monetizationMode, proEntitlementActive, resolvedColorScheme, t]);
 
   useEffect(() => {
     if (!route.params?.openPlanPaywall) {

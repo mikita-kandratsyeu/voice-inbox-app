@@ -84,7 +84,29 @@
     "error400Title": "Некорректный запрос — Voice Inbox AI",
     "error400Description": "Запрос не удалось обработать. Проверьте ссылку или вернитесь на главную.",
     "error500Title": "Ошибка сервера — Voice Inbox AI",
-    "error500Description": "Не удалось загрузить страницу. Попробуйте ещё раз чуть позже."
+    "error500Description": "Не удалось загрузить страницу. Попробуйте ещё раз чуть позже.",
+    "accountProTitle": "Ваш план Pro — Voice Inbox AI",
+    "accountProDescription": "Сведения об активации Pro в Voice Inbox AI."
+  },
+  "accountPro": {
+    "planLabel": "Текущий план",
+    "title": "Voice Inbox AI Pro",
+    "activationType": "Активация",
+    "typeLicense": "Лицензионный ключ Pro",
+    "typeStore": "App Store / Google Play",
+    "status": "Статус",
+    "statusActive": "Активен",
+    "renewsOrExpires": "Действует до",
+    "validThrough": "Доступ",
+    "lifetimeValue": "Без фиксированной даты окончания (лицензия)",
+    "footerNote": "Чтобы изменить или продлить подписку из магазина, используйте управление подписками на устройстве. По вопросам лицензии напишите в поддержку из приложения.",
+    "missingTokenTitle": "Ссылка неполная",
+    "missingTokenBody": "Откройте эту страницу из приложения Voice Inbox AI (Настройки → Ваш план).",
+    "invalidTokenTitle": "Ссылка устарела или недействительна",
+    "invalidTokenBody": "Запросите новую страницу в приложении. Ссылки действуют недолго.",
+    "notActiveTitle": "Pro не активен",
+    "notActiveBody": "Эта активация больше не действует. Продлить или оформить доступ можно в приложении.",
+    "backHome": "← На главную"
   },
   "httpErrors": {
     "backHome": "← На главную",

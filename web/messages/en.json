@@ -84,7 +84,29 @@
     "error400Title": "Bad request — Voice Inbox AI",
     "error400Description": "The request could not be processed. Check the link or return to the home page.",
     "error500Title": "Server error — Voice Inbox AI",
-    "error500Description": "We could not load this page. Please try again in a moment."
+    "error500Description": "We could not load this page. Please try again in a moment.",
+    "accountProTitle": "Your Pro plan — Voice Inbox AI",
+    "accountProDescription": "Details of your Pro activation in Voice Inbox AI."
+  },
+  "accountPro": {
+    "planLabel": "Current plan",
+    "title": "Voice Inbox AI Pro",
+    "activationType": "Activation",
+    "typeLicense": "Pro license key",
+    "typeStore": "App Store / Google Play",
+    "status": "Status",
+    "statusActive": "Active",
+    "renewsOrExpires": "Valid through",
+    "validThrough": "Access",
+    "lifetimeValue": "No fixed end date (license)",
+    "footerNote": "To change or renew a store subscription, use subscription management on your device. For license questions, contact support from the app.",
+    "missingTokenTitle": "Link incomplete",
+    "missingTokenBody": "Open this page from the Voice Inbox AI app (Settings → Your plan) to view your details.",
+    "invalidTokenTitle": "Link expired or invalid",
+    "invalidTokenBody": "Request a new page from the app. Links stay valid for a short time only.",
+    "notActiveTitle": "Pro is not active",
+    "notActiveBody": "This activation is no longer active. You can renew or upgrade from the app.",
+    "backHome": "← Back to home"
   },
   "httpErrors": {
     "backHome": "← Back to home",

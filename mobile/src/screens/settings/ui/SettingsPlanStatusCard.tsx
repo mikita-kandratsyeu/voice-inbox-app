@@ -108,10 +108,13 @@ export function SettingsPlanStatusCard({
         date: proExpiresText ?? t('settings.planStatus.a11yUnknownDate'),
       })
     : t('settings.planStatus.a11yOpenPlans');
+  const opensStoreSubscriptionManagement =
+    isProActive && monetizationMode === 'iap_public' && storeProEntitlementActive === true;
+
   const accessibilityHint = isProActive
-    ? monetizationMode === 'iap_public' && storeProEntitlementActive
+    ? opensStoreSubscriptionManagement
       ? t('settings.planStatus.a11yManageSubscriptionsHint')
-      : t('settings.planStatus.a11yCurrentPlanHint')
+      : t('settings.planStatus.a11yProDetailsWebHint')
     : t('settings.planStatus.a11yOpenPlansHint');
   const cardBaseTint = isProActive ? '14' : '0f';
   const gradientStrength = isProActive

@@ -7,6 +7,8 @@ import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
+export type ProLicensePortalLocale = 'en' | 'ru';
+
 export type ProLicenseStatus = {
   active: boolean;
   expiresAt: string | null;
@@ -222,5 +224,27 @@ export async function redeemProLicenseKey(key: string): Promise<RedeemProLicense
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Network error';
     return { ok: false, error: message, code: 'network' };
+  }
+}
+
+export async function fetchProAccountPortalUrl(
+  locale: ProLicensePortalLocale,
+): Promise<string | null> {
+  try {
+    const response = await fetchWithAuth(`${getWebApiUrl()}/api/pro-license/portal-url`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ locale }),
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const raw = (await response.json()) as { url?: unknown };
+
+    return isString(raw.url) && raw.url.trim() ? raw.url.trim() : null;
+  } catch {
+    return null;
   }
 }
