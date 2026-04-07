@@ -132,7 +132,7 @@ function PlanPickTile({
       {showBadge && (
         <View
           className="items-center"
-          style={{ position: 'absolute', left: 0, right: 0, top: -12, zIndex: 2 }}
+          style={{ position: 'absolute', left: 0, right: 0, top: -8, zIndex: 2 }}
           pointerEvents="none"
         >
           <View
@@ -192,7 +192,7 @@ function PlanPickTile({
         ) : null}
         <View className="min-w-0 pr-7">
           <Text
-            className="text-[15px] font-bold leading-5"
+            className="min-w-0 flex-1 text-[15px] font-bold leading-5"
             style={{
               color: c.text.primary,
               ...(IS_ANDROID ? { includeFontPadding: false } : {}),
