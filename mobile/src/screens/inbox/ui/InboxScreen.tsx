@@ -92,6 +92,7 @@ export const InboxScreen = () => {
     keyExtractor,
     getItemType,
     onListEndReached,
+    showTabScrollResetSkeleton,
   } = inbox;
 
   return (
@@ -190,6 +191,7 @@ export const InboxScreen = () => {
           renderListItem={renderItem}
           keyExtractor={keyExtractor}
           getItemType={getItemType}
+          showTabScrollResetSkeleton={showTabScrollResetSkeleton}
         />
       )}
       {batchSelect.isSelectMode && (

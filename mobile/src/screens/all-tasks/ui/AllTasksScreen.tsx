@@ -36,8 +36,8 @@ import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorag
 import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
 import { useColors } from '@/shared/config';
 import {
+  flashListJumpToTop,
   hapticSelection,
-  scheduleAfterUiSettles,
   useIsTablet,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
@@ -100,9 +100,7 @@ export const AllTasksScreen = () => {
       setActiveFolder(id);
       if (id === null) {
         folderChipScrollRef.current?.scrollTo({ x: 0, y: 0, animated: false });
-        scheduleAfterUiSettles(() => {
-          listRef.current?.scrollToOffset({ offset: 0, animated: false });
-        });
+        flashListJumpToTop(listRef.current ?? undefined);
       }
     },
     [setActiveFolder],

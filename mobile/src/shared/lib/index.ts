@@ -19,6 +19,7 @@ export {
   prepareEmbeddingModel,
 } from './embeddings';
 export { fetch, nitroFetch } from './fetch';
+export { flashListJumpToTop } from './flashListJumpToTop';
 export {
   DEFAULT_FOLDER_BRAND_HEX,
   folderChipActiveForeground,
@@ -53,7 +54,6 @@ export {
   RECORDINGS_DIR,
   resolveAudioPath,
 } from './recordings';
-export { scheduleAfterUiSettles } from './scheduleAfterUiSettles';
 export { isArray, isNumber, isRecord, isString, isStringArrayItem } from './type-guards';
 export { useAiModelName } from './useAiModelName';
 export { useAiTabBannerDismiss } from './useAiTabBannerDismiss';

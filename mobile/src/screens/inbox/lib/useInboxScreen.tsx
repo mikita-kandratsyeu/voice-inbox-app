@@ -28,7 +28,7 @@ import { useProEntitlement } from '@/features/pro-license';
 import { useSearchRecords } from '@/features/search-records';
 import { useColors } from '@/shared/config';
 import {
-  scheduleAfterUiSettles,
+  flashListJumpToTop,
   useIsTablet,
   useScrollToTopOnTabPress,
   useTabletContentMaxWidth,
@@ -268,15 +268,23 @@ export function useInboxScreen() {
   const openFolderReorderSheet = useCallback(() => setFolderReorderVisible(true), []);
   const closeFolderReorderSheet = useCallback(() => setFolderReorderVisible(false), []);
 
+  const tabScrollSkeletonDepthRef = useRef(0);
+  const [showTabScrollResetSkeleton, setShowTabScrollResetSkeleton] = useState(false);
+  const onTabScrollJumpVisualStart = useCallback(() => {
+    tabScrollSkeletonDepthRef.current += 1;
+    setShowTabScrollResetSkeleton(true);
+  }, []);
+  const onTabScrollJumpVisualEnd = useCallback(() => {
+    tabScrollSkeletonDepthRef.current = Math.max(0, tabScrollSkeletonDepthRef.current - 1);
+    setShowTabScrollResetSkeleton(tabScrollSkeletonDepthRef.current > 0);
+  }, []);
+
   const handleFolderSelect = useCallback(
     (id: string | null) => {
       setActiveFolder(id);
       if (id === null) {
         folderChipScrollRef.current?.scrollTo({ x: 0, y: 0, animated: false });
-
-        scheduleAfterUiSettles(() => {
-          listRef.current?.scrollToOffset({ offset: 0, animated: false });
-        });
+        flashListJumpToTop(listRef.current ?? undefined);
       }
     },
     [setActiveFolder],
@@ -290,15 +298,18 @@ export function useInboxScreen() {
     });
   }, [inboxFiltersReset, resetToDefault, handleFolderSelect]);
 
-  useScrollToTopOnTabPress(listRef, () => {
-    folderChipScrollRef.current?.scrollTo({ x: 0, y: 0, animated: false });
-    if (batchSelect.isSelectMode) exitBatchMode();
-  });
+  useScrollToTopOnTabPress(
+    listRef,
+    () => {
+      folderChipScrollRef.current?.scrollTo({ x: 0, y: 0, animated: false });
+      if (batchSelect.isSelectMode) exitBatchMode();
+    },
+    onTabScrollJumpVisualStart,
+    onTabScrollJumpVisualEnd,
+  );
 
   useEffect(() => {
-    scheduleAfterUiSettles(() => {
-      listRef.current?.scrollToOffset({ offset: 0, animated: false });
-    });
+    flashListJumpToTop(listRef.current ?? undefined);
   }, [filterStatus]);
 
   useEffect(() => {
@@ -542,5 +553,6 @@ export function useInboxScreen() {
     keyExtractor,
     getItemType,
     onListEndReached,
+    showTabScrollResetSkeleton,
   };
 }

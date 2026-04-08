@@ -7,7 +7,7 @@ import {
 } from '@react-navigation/native';
 import { useEffect } from 'react';
 
-import { scheduleAfterUiSettles } from './scheduleAfterUiSettles';
+import { flashListJumpToTop } from './flashListJumpToTop';
 
 type ScrollToTopRef = {
   scrollTo?: (options: { x?: number; y?: number; animated?: boolean }) => void;
@@ -17,6 +17,8 @@ type ScrollToTopRef = {
 export const useScrollToTopOnTabPress = (
   ref: React.RefObject<ScrollToTopRef | null>,
   onTabPress?: () => void,
+  onJumpVisualStart?: () => void,
+  onJumpVisualEnd?: () => void,
 ) => {
   const navigation = useNavigation();
 
@@ -37,14 +39,17 @@ export const useScrollToTopOnTabPress = (
     }
 
     const unsubscribe = parentNavigation.addListener('tabPress', () => {
+      onJumpVisualStart?.();
       onTabPress?.();
-
-      scheduleAfterUiSettles(() => {
-        ref.current?.scrollTo?.({ x: 0, y: 0, animated: false });
-        ref.current?.scrollToOffset?.({ offset: 0, animated: false });
+      ref.current?.scrollTo?.({ x: 0, y: 0, animated: false });
+      requestAnimationFrame(() => {
+        flashListJumpToTop(ref.current ?? undefined);
+        requestAnimationFrame(() => {
+          onJumpVisualEnd?.();
+        });
       });
     });
 
     return unsubscribe;
-  }, [navigation, onTabPress, ref]);
+  }, [navigation, onJumpVisualEnd, onJumpVisualStart, onTabPress, ref]);
 };
