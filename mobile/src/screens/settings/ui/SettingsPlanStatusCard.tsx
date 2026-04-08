@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { Crown } from 'lucide-react-native';
+import { ChevronRight, Crown } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -212,6 +212,9 @@ export function SettingsPlanStatusCard({
               </Text>
             )}
           </View>
+          {onPress != null && (
+            <ChevronRight size={18} color={color.icon.muted} strokeWidth={2} className="ml-2" />
+          )}
         </View>
       </Animated.View>
     </Pressable>
