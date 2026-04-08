@@ -28,17 +28,22 @@ export const formatRelativeTime = (isoDate: string, locale = 'en'): string => {
   return formatShortDate(isoDate, locale);
 };
 
+const SHORT_DATE_SHOW_YEAR_SAME_YEAR_AFTER_DAYS = 90;
+
 export const formatShortDate = (isoDate: string, locale = 'en'): string => {
   const dayjsLocale = resolveDayjsLocale(locale);
   const date = dayjs(isoDate).locale(dayjsLocale);
+  const now = dayjs();
 
   if (!date.isValid()) {
     return isoDate;
   }
 
-  const isCurrentYear = date.year() === dayjs().year();
+  const isCurrentYear = date.year() === now.year();
+  const ageDays = now.diff(date, 'day');
+  const showYear = !isCurrentYear || ageDays >= SHORT_DATE_SHOW_YEAR_SAME_YEAR_AFTER_DAYS;
 
-  return isCurrentYear ? date.format('D MMM') : date.format('D MMM YYYY');
+  return showYear ? date.format('D MMM YYYY') : date.format('D MMM');
 };
 
 export const formatTime = (seconds: number): string => {

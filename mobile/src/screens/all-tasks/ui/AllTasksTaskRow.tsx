@@ -1,34 +1,31 @@
-import { CheckCircle2, ChevronRight, Circle, PanelRightOpen } from 'lucide-react-native';
-import React, { memo, useCallback } from 'react';
+import { MenuView } from '@react-native-menu/menu';
+import { CheckCircle2, Circle, FileText, MoreHorizontal } from 'lucide-react-native';
+import React, { memo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
-import type { PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-  Extrapolation,
-  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
 
-import type { Colors } from '@/shared/config';
+import { type Colors, useAppTheme } from '@/shared/config';
 import { hapticLight } from '@/shared/lib';
 
 import type { TaskWithRecord } from '../types';
 
-const SWIPE_MAX = 96;
-const SWIPE_OPEN_THRESHOLD = 52;
 const CARD_RADIUS = 16;
 
 type AllTasksTaskRowProps = {
   item: TaskWithRecord;
   color: Colors;
   openNoteLabel: string;
-  onToggle: (recordId: string, taskId: string) => void;
+  onToggle: (recordId: string, taskId: string, currentlyDone: boolean) => void;
   onOpenNote: (recordId: string) => void;
+  onEditTask: (recordId: string, taskId: string, text: string) => void;
+  onDeleteTask: (recordId: string, taskId: string) => void;
 };
 
 export const AllTasksTaskRow = memo(function AllTasksTaskRow({
@@ -37,49 +34,18 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
   openNoteLabel,
   onToggle,
   onOpenNote,
+  onEditTask,
+  onDeleteTask,
 }: AllTasksTaskRowProps) {
+  const theme = useAppTheme();
+  const isDark = theme === 'dark';
+  const { t } = useTranslation();
+
   const { task, recordId, recordTitle } = item;
-  const translateX = useSharedValue(0);
   const pressScale = useSharedValue(1);
-
-  const openNoteFromSwipe = useCallback(() => {
-    hapticLight();
-    onOpenNote(recordId);
-  }, [onOpenNote, recordId]);
-
-  const pan = Gesture.Pan()
-    .activeOffsetX([-12, 12])
-    .failOffsetY([-14, 14])
-    .onUpdate((e: PanGestureHandlerEventPayload) => {
-      const x = e.translationX;
-      if (x > 0) {
-        translateX.value = 0;
-      } else {
-        translateX.value = Math.max(x, -SWIPE_MAX);
-      }
-    })
-    .onEnd(() => {
-      if (translateX.value < -SWIPE_OPEN_THRESHOLD) {
-        scheduleOnRN(openNoteFromSwipe);
-      }
-      translateX.value = withSpring(0, { damping: 18, stiffness: 260, mass: 0.85 });
-    });
-
-  const slideStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
-  }));
 
   const pressAnimStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pressScale.value }],
-  }));
-
-  const underlayStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(
-      translateX.value,
-      [0, -SWIPE_OPEN_THRESHOLD, -SWIPE_MAX],
-      [0, 0.55, 1],
-      Extrapolation.CLAMP,
-    ),
   }));
 
   const handleToggle = () => {
@@ -88,7 +54,7 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
       withTiming(0.97, { duration: 55 }),
       withSpring(1, { damping: 16, stiffness: 280 }),
     );
-    onToggle(recordId, task.id);
+    onToggle(recordId, task.id, task.isDone);
   };
 
   const cardShadowStyle = {
@@ -98,6 +64,31 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
     shadowRadius: 4,
     elevation: 2,
   };
+
+  const menuActions = [
+    {
+      id: 'openNote',
+      title: openNoteLabel,
+      image: 'doc.text',
+      imageColor: color.text.primary,
+      titleColor: color.text.primary,
+    },
+    {
+      id: 'editTask',
+      title: t('tasks.editTask'),
+      image: 'pencil',
+      imageColor: color.text.primary,
+      titleColor: color.text.primary,
+    },
+    {
+      id: 'deleteTask',
+      title: t('tasks.deleteTask'),
+      image: 'trash',
+      imageColor: color.accent.delete,
+      titleColor: color.accent.delete,
+      attributes: { destructive: true },
+    },
+  ];
 
   return (
     <View
@@ -109,78 +100,85 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
     >
       <View style={{ overflow: 'hidden', borderRadius: CARD_RADIUS }}>
         <Animated.View
-          pointerEvents="none"
-          className="absolute inset-0 flex-row items-center justify-end px-4"
           style={[
-            {
-              backgroundColor: color.background.tertiary,
-              borderRadius: CARD_RADIUS,
-            },
-            underlayStyle,
+            pressAnimStyle,
+            { backgroundColor: color.background.card, borderRadius: CARD_RADIUS },
           ]}
+          className="flex-row items-stretch py-1"
         >
-          <PanelRightOpen size={26} color={color.accent.primary} strokeWidth={2} />
-        </Animated.View>
-
-        <GestureDetector gesture={pan}>
-          <Animated.View style={slideStyle}>
-            <View
-              className="flex-row items-stretch px-3 py-2.5"
-              style={{ backgroundColor: color.background.card, borderRadius: CARD_RADIUS }}
-            >
-              <Animated.View
-                className="min-w-0 flex-1 flex-row items-center gap-3 py-1"
-                style={[pressAnimStyle, { minWidth: 0 }]}
-              >
-                <Pressable
-                  className="min-w-0 flex-1 flex-row items-center gap-3"
-                  onPress={handleToggle}
-                  style={{ minWidth: 0 }}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: task.isDone }}
-                  accessibilityLabel={task.text}
-                >
-                  {task.isDone ? (
-                    <CheckCircle2 size={22} color={color.accent.success} strokeWidth={2} />
-                  ) : (
-                    <Circle size={22} color={color.icon.muted} strokeWidth={2} />
-                  )}
-                  <View className="min-w-0 flex-1">
-                    <Text
-                      className="text-[15px] leading-5"
-                      style={{
-                        color: task.isDone ? color.text.secondary : color.text.primary,
-                        textDecorationLine: task.isDone ? 'line-through' : undefined,
-                      }}
-                      numberOfLines={3}
-                    >
-                      {task.text}
-                    </Text>
-                    <Text
-                      className="mt-0.5 text-xs"
-                      style={{ color: color.text.secondary }}
-                      numberOfLines={1}
-                    >
-                      {recordTitle}
-                    </Text>
-                  </View>
-                </Pressable>
-              </Animated.View>
-              <Pressable
-                className="justify-center pl-1"
-                hitSlop={{ top: 12, bottom: 12, left: 8, right: 4 }}
-                onPress={() => {
-                  hapticLight();
-                  onOpenNote(recordId);
-                }}
-                accessibilityRole="button"
-                accessibilityLabel={openNoteLabel}
-              >
-                <ChevronRight size={18} color={color.icon.muted} strokeWidth={2} />
-              </Pressable>
+          <Pressable
+            className="flex-1 flex-row items-stretch"
+            onPress={handleToggle}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: task.isDone }}
+            accessibilityLabel={`Mark task as ${task.isDone ? 'undone' : 'done'}`}
+          >
+            <View className="pl-4 pr-3 py-3.5 items-center justify-center pointer-events-none">
+              {task.isDone ? (
+                <CheckCircle2 size={24} color={color.accent.success} strokeWidth={2} />
+              ) : (
+                <Circle size={24} color={color.icon.muted} strokeWidth={2} />
+              )}
             </View>
-          </Animated.View>
-        </GestureDetector>
+
+            <View className="min-w-0 flex-1 flex-col py-3 pr-1 pointer-events-none">
+              <Text
+                className="text-[15px] leading-5 mb-2.5"
+                style={{
+                  color: task.isDone ? color.text.secondary : color.text.primary,
+                  textDecorationLine: task.isDone ? 'line-through' : undefined,
+                }}
+                numberOfLines={3}
+              >
+                {task.text}
+              </Text>
+              <View
+                className="max-w-full flex-row items-center self-start rounded-md px-2 py-1"
+                style={{ backgroundColor: color.background.secondary }}
+              >
+                <FileText
+                  size={12}
+                  color={color.icon.muted}
+                  strokeWidth={2}
+                  style={{ flexShrink: 0 }}
+                />
+                <Text
+                  className="ml-1.5 min-w-0 shrink text-xs font-medium"
+                  style={{ color: color.text.secondary }}
+                  numberOfLines={1}
+                >
+                  {recordTitle}
+                </Text>
+              </View>
+            </View>
+          </Pressable>
+          <View className="justify-center px-1 pr-1.5" style={{ zIndex: 10 }}>
+            <MenuView
+              key={`task-menu-${task.id}-${theme}`}
+              themeVariant={isDark ? 'dark' : 'light'}
+              shouldOpenOnLongPress={false}
+              onPressAction={({ nativeEvent }) => {
+                if (nativeEvent.event === 'openNote') {
+                  onOpenNote(recordId);
+                } else if (nativeEvent.event === 'editTask') {
+                  onEditTask(recordId, task.id, task.text);
+                } else if (nativeEvent.event === 'deleteTask') {
+                  onDeleteTask(recordId, task.id);
+                }
+              }}
+              actions={menuActions}
+            >
+              <Pressable
+                hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+                style={{ padding: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel={t('tasks.taskMenu')}
+              >
+                <MoreHorizontal size={20} color={color.icon.muted} strokeWidth={2} />
+              </Pressable>
+            </MenuView>
+          </View>
+        </Animated.View>
       </View>
     </View>
   );

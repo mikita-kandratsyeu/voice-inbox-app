@@ -1,21 +1,30 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { FlashList } from '@shopify/flash-list';
 import dayjs from 'dayjs';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SectionList, Switch, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, Switch, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useRecordStore } from '@/entities/record';
-import { DeferredInboxBannerAd } from '@/features/inbox-banner';
+import { useAdsAllowed } from '@/features/app-storefront';
+import { DeferredInboxBannerAd, InboxBannerAd } from '@/features/inbox-banner';
+import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
+import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import { EmptyState, ScreenHeader, SectionHeader } from '@/shared/ui';
 
+import {
+  type AllTasksFlattenedItem,
+  type AllTasksListItem,
+  injectAllTasksListBannerCard,
+} from '../lib/injectAllTasksListBannerCard';
 import type { TaskWithRecord } from '../types';
 import { AllTasksTaskRow } from './AllTasksTaskRow';
 
@@ -32,16 +41,25 @@ export const AllTasksScreen = () => {
   const isTablet = useIsTablet();
   const { width: windowWidth } = useWindowDimensions();
   const [openOnly, setOpenOnly] = useState(true);
+  const [recentlyCompleted, setRecentlyCompleted] = useState<Set<string>>(new Set());
+  const timeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
+  const [editTaskTarget, setEditTaskTarget] = useState<{
+    recordId: string;
+    taskId: string;
+    text: string;
+  } | null>(null);
 
-  const { records, toggleTask } = useRecordStore(
+  const { records, toggleTask, updateTasks } = useRecordStore(
     useShallow((s) => ({
       records: s.records,
       toggleTask: s.toggleTask,
+      updateTasks: s.updateTasks,
     })),
   );
 
   const contentMaxWidth = useTabletContentMaxWidth();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
+  const { adsAllowed } = useAdsAllowed();
   const filterPadH = isTablet ? 24 : 16;
   const filterPadV = isTablet ? 14 : 10;
 
@@ -63,7 +81,9 @@ export const AllTasksScreen = () => {
       }
     }
 
-    const filtered = openOnly ? rows.filter((row) => !row.task.isDone) : rows;
+    const filtered = openOnly
+      ? rows.filter((row) => !row.task.isDone || recentlyCompleted.has(row.task.id))
+      : rows;
 
     const todayK = dayKeyFromMs(Date.now());
     const yesterdayK = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
@@ -95,7 +115,31 @@ export const AllTasksScreen = () => {
     });
 
     return sections;
-  }, [records, openOnly, i18n.language, t]);
+  }, [records, openOnly, i18n.language, t, recentlyCompleted]);
+
+  const flattenedList = useMemo((): AllTasksFlattenedItem[] => {
+    const out: AllTasksFlattenedItem[] = [];
+    for (let i = 0; i < sectionList.length; i++) {
+      const s = sectionList[i];
+      out.push({
+        type: 'section',
+        dayKey: s.dayKey,
+        title: s.title,
+        isFirst: i === 0,
+      });
+      for (const row of s.data) {
+        out.push({ type: 'task', row });
+      }
+    }
+    return out;
+  }, [sectionList]);
+
+  const shouldInjectListBanner = adsAllowed && getHasSeenOnboarding();
+
+  const listData = useMemo((): AllTasksListItem[] => {
+    if (!shouldInjectListBanner) return flattenedList;
+    return injectAllTasksListBannerCard(flattenedList);
+  }, [flattenedList, shouldInjectListBanner]);
 
   const openNote = useCallback(
     (recordId: string) => {
@@ -106,45 +150,140 @@ export const AllTasksScreen = () => {
   );
 
   const onToggle = useCallback(
-    (recordId: string, taskId: string) => {
+    (recordId: string, taskId: string, currentlyDone: boolean) => {
       toggleTask(recordId, taskId).catch(() => {});
+
+      if (!currentlyDone && openOnly) {
+        setRecentlyCompleted((prev) => {
+          const next = new Set(prev);
+          next.add(taskId);
+          return next;
+        });
+
+        timeoutsRef.current[taskId] = setTimeout(() => {
+          setRecentlyCompleted((prev) => {
+            const next = new Set(prev);
+            next.delete(taskId);
+            return next;
+          });
+          delete timeoutsRef.current[taskId];
+        }, 500);
+      } else if (currentlyDone && openOnly) {
+        if (timeoutsRef.current[taskId]) {
+          clearTimeout(timeoutsRef.current[taskId]);
+          delete timeoutsRef.current[taskId];
+
+          setRecentlyCompleted((prev) => {
+            const next = new Set(prev);
+            next.delete(taskId);
+            return next;
+          });
+        }
+      }
     },
-    [toggleTask],
+    [toggleTask, openOnly],
   );
 
-  const renderSectionHeader = useCallback(
-    ({ section }: { section: Section }) => {
-      const isFirst = sectionList[0]?.dayKey === section.dayKey;
-      return <SectionHeader title={section.title} isFirst={isFirst} />;
+  const onEditTask = useCallback(
+    (recordId: string, taskId: string, newText: string): boolean => {
+      const trimmed = newText.trim();
+      if (!trimmed) return false;
+
+      const record = records.find((r) => r.id === recordId);
+      if (!record) return false;
+
+      const prev = record.tasks ?? [];
+      const duplicate = prev.some(
+        (x) => x.id !== taskId && x.text.trim().toLowerCase() === trimmed.toLowerCase(),
+      );
+
+      if (duplicate) {
+        Alert.alert(t('recordingDetail.nextSteps'), t('recordingDetail.nextStepAlreadyInTasks'));
+        return false;
+      }
+
+      const next = prev.map((x) => (x.id === taskId ? { ...x, text: trimmed } : x));
+      updateTasks(recordId, next).catch(() => {});
+
+      return true;
     },
-    [sectionList],
+    [records, t, updateTasks],
   );
 
-  const renderItem = useCallback(
-    ({ item }: { item: TaskWithRecord }) => (
-      <AllTasksTaskRow
-        item={item}
-        color={color}
-        openNoteLabel={t('allTasks.openNote')}
-        onToggle={onToggle}
-        onOpenNote={openNote}
+  const onDeleteTask = useCallback(
+    (recordId: string, taskId: string) => {
+      const record = records.find((r) => r.id === recordId);
+      if (!record) return;
+
+      const prev = record.tasks ?? [];
+      const next = prev.filter((x) => x.id !== taskId);
+      updateTasks(recordId, next).catch(() => {});
+    },
+    [records, updateTasks],
+  );
+
+  const editTaskSheet = useMemo(
+    () => (
+      <TaskEditSheet
+        visible={editTaskTarget !== null}
+        initialText={editTaskTarget?.text ?? ''}
+        onClose={() => setEditTaskTarget(null)}
+        onSave={(text) => {
+          if (!editTaskTarget) return false;
+          return onEditTask(editTaskTarget.recordId, editTaskTarget.taskId, text);
+        }}
       />
     ),
-    [color, onToggle, openNote, t],
+    [editTaskTarget, onEditTask],
   );
 
-  const keyExtractor = useCallback(
-    (item: TaskWithRecord) => `${item.recordId}-${item.task.id}`,
-    [],
+  const renderListItem = useCallback(
+    ({ item }: { item: AllTasksListItem }) => {
+      if (item.type === 'section') {
+        return <SectionHeader title={item.title} isFirst={item.isFirst} />;
+      }
+      if (item.type === 'banner_card') {
+        return <InboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} variant="card" />;
+      }
+      return (
+        <AllTasksTaskRow
+          item={item.row}
+          color={color}
+          openNoteLabel={t('allTasks.openNote')}
+          onToggle={onToggle}
+          onOpenNote={openNote}
+          onEditTask={(recordId, taskId, text) => {
+            setEditTaskTarget({ recordId, taskId, text });
+          }}
+          onDeleteTask={(recordId, taskId) => {
+            Alert.alert(t('tasks.deleteTask'), t('tasks.deleteTaskConfirm'), [
+              { text: t('common.cancel'), style: 'cancel' },
+              {
+                text: t('tasks.deleteTask'),
+                style: 'destructive',
+                onPress: () => onDeleteTask(recordId, taskId),
+              },
+            ]);
+          }}
+        />
+      );
+    },
+    [bannerMaxWidth, color, onToggle, openNote, t, onDeleteTask],
   );
+
+  const keyExtractor = useCallback((item: AllTasksListItem) => {
+    if (item.type === 'section') {
+      return `section-${item.dayKey}`;
+    }
+    if (item.type === 'banner_card') {
+      return `all-tasks-inline-banner-${item.slotIndex}`;
+    }
+    return `${item.row.recordId}-${item.row.task.id}`;
+  }, []);
+
+  const getItemType = useCallback((item: AllTasksListItem) => item.type, []);
 
   const empty = sectionList.length === 0 || sectionList.every((s) => s.data.length === 0);
-
-  const listFooter = (
-    <View style={{ paddingBottom: insets.bottom }}>
-      <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
-    </View>
-  );
 
   return (
     <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
@@ -210,17 +349,15 @@ export const AllTasksScreen = () => {
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
         </View>
       ) : (
-        <SectionList<TaskWithRecord, Section>
-          sections={sectionList}
+        <FlashList<AllTasksListItem>
+          data={listData}
+          renderItem={renderListItem}
           keyExtractor={keyExtractor}
-          renderItem={renderItem}
-          renderSectionHeader={renderSectionHeader}
-          ListFooterComponent={listFooter}
+          getItemType={getItemType}
           contentContainerStyle={{
-            paddingBottom: 24,
+            paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
             paddingTop: 8,
           }}
-          stickySectionHeadersEnabled={false}
           style={{
             flex: 1,
             backgroundColor: color.background.secondary,
@@ -231,6 +368,7 @@ export const AllTasksScreen = () => {
           showsVerticalScrollIndicator={false}
         />
       )}
+      {editTaskSheet}
     </View>
   );
 };
