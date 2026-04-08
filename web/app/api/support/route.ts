@@ -10,6 +10,12 @@ import {
 import { HEADER_DEVICE_ID } from '@/config/constants';
 import { prisma } from '@/lib/prisma';
 import { formatSupportReference } from '@/lib/support-reference';
+import { isSupportProKeyRequestSubject } from '@/lib/support-pro-key-request';
+import { sendSupportProLicenseEmailForIssue } from '@/lib/support-pro-license-send';
+import {
+  extractAndRedactViProAutoKeyLine,
+  verifyAdminForViProAutoKey,
+} from '@/lib/support-vi-pro-auto-key';
 import type { Prisma } from '@/generated/prisma/client';
 import { NextResponse } from 'next/server';
 
@@ -112,18 +118,35 @@ export async function POST(request: Request): Promise<NextResponse> {
     return apiError('diagnostics payload is too large', HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
+  const { storedMessage, attempt } = extractAndRedactViProAutoKeyLine(message);
+
   try {
     const row = await prisma.supportIssue.create({
       data: {
         deviceId: deviceIdTrimmed,
         email,
         subject,
-        message,
+        message: storedMessage,
         diagnostics: diagnostics as Prisma.InputJsonValue,
         appLogs,
       },
       select: { id: true, referenceNumber: true },
     });
+
+    if (attempt && email && subject && isSupportProKeyRequestSubject(subject)) {
+      const adminUser = await verifyAdminForViProAutoKey(attempt.login, attempt.password);
+      if (adminUser) {
+        const autoResult = await sendSupportProLicenseEmailForIssue(
+          row.id,
+          attempt.spec,
+          { adminId: adminUser.adminId, login: adminUser.login },
+          'support.pro_license_email_auto',
+        );
+        if (!autoResult.ok) {
+          console.error('[support POST] VI-PRO auto license email', autoResult.error);
+        }
+      }
+    }
 
     let referenceNumber: number | null = row.referenceNumber ?? null;
 

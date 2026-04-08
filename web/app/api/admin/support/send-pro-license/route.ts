@@ -1,19 +1,10 @@
 import { NextResponse } from 'next/server';
 
-import { writeAdminAudit } from '@/lib/admin-audit';
 import { getAdminSession } from '@/lib/admin-session';
 import { apiError, HttpStatus, parseJsonBody } from '@/lib/api';
-import { sendTransactionalMail, isSmtpConfigured } from '@/lib/mailer';
-import { buildProLicenseKeyEmail } from '@/lib/pro-license-email-template';
-import {
-  createProLicenseKeyRecord,
-  parseProLicenseDurationFromBody,
-} from '@/lib/pro-license-admin';
-import { prisma } from '@/lib/prisma';
-import {
-  isSupportProKeyRequestSubject,
-  SUPPORT_PRO_KEY_SUBJECT_MARKER,
-} from '@/lib/support-pro-key-request';
+import { isSmtpConfigured } from '@/lib/mailer';
+import { parseProLicenseDurationFromBody } from '@/lib/pro-license-admin';
+import { sendSupportProLicenseEmailForIssue } from '@/lib/support-pro-license-send';
 
 type Body = { issueId?: unknown; durationMonths?: unknown; durationDays?: unknown };
 
@@ -52,112 +43,15 @@ export async function POST(request: Request): Promise<NextResponse> {
     );
   }
 
-  const issue = await prisma.supportIssue.findUnique({
-    where: { id: issueId },
-    select: {
-      id: true,
-      email: true,
-      subject: true,
-      proLicenseEmailSentAt: true,
-      status: true,
-    },
-  });
-
-  if (!issue) {
-    return apiError('Support issue not found', HttpStatus.NOT_FOUND, { pathname: path });
-  }
-
-  if (!issue.email?.trim()) {
-    return apiError(
-      'This request has no email address — ask the user to resubmit with email',
-      HttpStatus.BAD_REQUEST,
-      { pathname: path },
-    );
-  }
-
-  if (!isSupportProKeyRequestSubject(issue.subject)) {
-    return apiError(
-      `Subject does not contain the Pro key marker (${SUPPORT_PRO_KEY_SUBJECT_MARKER})`,
-      HttpStatus.BAD_REQUEST,
-      { pathname: path },
-    );
-  }
-
-  if (issue.proLicenseEmailSentAt != null) {
-    return apiError('A Pro key was already emailed for this request', HttpStatus.CONFLICT, {
-      pathname: path,
-    });
-  }
-
-  const to = issue.email.trim();
-  let plainKey: string;
-  let keyId: string;
-
-  try {
-    const created = await createProLicenseKeyRecord(admin.adminId, spec, {
-      issuedToEmail: to,
-    });
-    plainKey = created.plainKey;
-    keyId = created.keyId;
-  } catch (e) {
-    console.error('[send-pro-license] create key', e);
-    return apiError('Failed to create license key', HttpStatus.SERVICE_UNAVAILABLE, {
-      pathname: path,
-    });
-  }
-
-  const { subject, text, html } = buildProLicenseKeyEmail({
-    plainKey,
-    duration:
-      spec.kind === 'days'
-        ? { kind: 'days', days: spec.days }
-        : { kind: 'months', months: spec.months },
-    recipientEmail: to,
-  });
-
-  try {
-    await sendTransactionalMail({ to, subject, text, html });
-  } catch (e) {
-    console.error('[send-pro-license] mail', e);
-    try {
-      await prisma.proLicenseKey.delete({ where: { id: keyId } });
-    } catch (delErr) {
-      console.error('[send-pro-license] rollback key', delErr);
-    }
-    return apiError('Failed to send email (check SMTP settings)', HttpStatus.SERVICE_UNAVAILABLE, {
-      pathname: path,
-    });
-  }
-
-  const now = new Date();
-  try {
-    await prisma.supportIssue.update({
-      where: { id: issueId },
-      data: {
-        proLicenseEmailSentAt: now,
-        proLicenseDurationMonths: spec.kind === 'months' ? spec.months : null,
-        proLicenseDurationDays: spec.kind === 'days' ? spec.days : null,
-        status: 'closed',
-        closedAt: now,
-      },
-    });
-  } catch (e) {
-    console.error('[send-pro-license] update issue', e);
-    return apiError(
-      'Email was sent but failed to update the ticket',
-      HttpStatus.SERVICE_UNAVAILABLE,
-      {
-        pathname: path,
-      },
-    );
-  }
-
-  await writeAdminAudit(admin, 'support.pro_license_email', {
+  const result = await sendSupportProLicenseEmailForIssue(
     issueId,
-    durationMonths: spec.kind === 'months' ? spec.months : null,
-    durationDays: spec.kind === 'days' ? spec.days : null,
-    to,
-  });
+    spec,
+    admin,
+    'support.pro_license_email',
+  );
+  if (!result.ok) {
+    return apiError(result.error, result.status, { pathname: path });
+  }
 
   return NextResponse.json({ ok: true });
 }
