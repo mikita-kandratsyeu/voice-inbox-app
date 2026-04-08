@@ -3,6 +3,7 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import type { FlashListRef } from '@shopify/flash-list';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { LayoutAnimation, ScrollView, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
@@ -43,6 +44,8 @@ import {
 } from './inboxScreenTypes';
 import { injectInboxListBannerCard } from './injectInboxListBannerCard';
 import { countFlattenedRecords, trimFlattenedInboxItems } from './trimFlattenedInboxItems';
+
+const INBOX_LIST_SCROLL_TOP_EPSILON = 8;
 
 export function useInboxScreen() {
   const { t } = useTranslation();
@@ -144,6 +147,7 @@ export function useInboxScreen() {
 
   const listRef = useRef<FlashListRef<FlattenedItem>>(null);
   const folderChipScrollRef = useRef<ScrollView>(null);
+  const listScrollOffsetYRef = useRef(0);
   const inboxFiltersReset = useInboxFiltersReset();
   const [showSwipeHint, setShowSwipeHint] = useState(() => !getHasSeenSwipeHint());
 
@@ -268,12 +272,61 @@ export function useInboxScreen() {
   const openFolderReorderSheet = useCallback(() => setFolderReorderVisible(true), []);
   const closeFolderReorderSheet = useCallback(() => setFolderReorderVisible(false), []);
 
-  const tabScrollSkeletonDepthRef = useRef(0);
-  const onTabScrollJumpVisualStart = useCallback(() => {
-    tabScrollSkeletonDepthRef.current += 1;
+  const inboxScrollResetSkeletonDepthRef = useRef(0);
+  const [showInboxScrollResetSkeleton, setShowInboxScrollResetSkeleton] = useState(false);
+
+  const scheduleInboxScrollResetSkeletonEnd = useCallback(() => {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        inboxScrollResetSkeletonDepthRef.current = Math.max(
+          0,
+          inboxScrollResetSkeletonDepthRef.current - 1,
+        );
+        setShowInboxScrollResetSkeleton(inboxScrollResetSkeletonDepthRef.current > 0);
+      });
+    });
   }, []);
+
+  const beginInboxScrollResetSkeletonIfScrolled = useCallback(() => {
+    const listVisible = filtered.length > 0;
+    const notAtTop = listScrollOffsetYRef.current > INBOX_LIST_SCROLL_TOP_EPSILON;
+    if (!listVisible || !notAtTop) {
+      return false;
+    }
+    inboxScrollResetSkeletonDepthRef.current += 1;
+    setShowInboxScrollResetSkeleton(true);
+    return true;
+  }, [filtered.length]);
+
+  const tabScrollSkeletonSkipEndStackRef = useRef<boolean[]>([]);
+  const onTabScrollJumpVisualStart = useCallback(() => {
+    const showed = beginInboxScrollResetSkeletonIfScrolled();
+    tabScrollSkeletonSkipEndStackRef.current.push(!showed);
+  }, [beginInboxScrollResetSkeletonIfScrolled]);
   const onTabScrollJumpVisualEnd = useCallback(() => {
-    tabScrollSkeletonDepthRef.current = Math.max(0, tabScrollSkeletonDepthRef.current - 1);
+    const skipEnd = tabScrollSkeletonSkipEndStackRef.current.pop() ?? true;
+    if (skipEnd) {
+      return;
+    }
+    inboxScrollResetSkeletonDepthRef.current = Math.max(
+      0,
+      inboxScrollResetSkeletonDepthRef.current - 1,
+    );
+    setShowInboxScrollResetSkeleton(inboxScrollResetSkeletonDepthRef.current > 0);
+  }, []);
+
+  useEffect(() => {
+    if (filtered.length === 0) {
+      listScrollOffsetYRef.current = 0;
+    }
+  }, [filtered.length]);
+
+  useEffect(() => {
+    listScrollOffsetYRef.current = 0;
+  }, [filterStatus, menuFilterStatus]);
+
+  const handleInboxListScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    listScrollOffsetYRef.current = e.nativeEvent.contentOffset.y;
   }, []);
 
   const handleFolderSelect = useCallback(
@@ -281,10 +334,14 @@ export function useInboxScreen() {
       setActiveFolder(id);
       if (id === null) {
         folderChipScrollRef.current?.scrollTo({ x: 0, y: 0, animated: false });
+        const showedSkeleton = beginInboxScrollResetSkeletonIfScrolled();
         flashListJumpToTop(listRef.current ?? undefined);
+        if (showedSkeleton) {
+          scheduleInboxScrollResetSkeletonEnd();
+        }
       }
     },
-    [setActiveFolder],
+    [setActiveFolder, beginInboxScrollResetSkeletonIfScrolled, scheduleInboxScrollResetSkeletonEnd],
   );
 
   useEffect(() => {
@@ -550,5 +607,7 @@ export function useInboxScreen() {
     keyExtractor,
     getItemType,
     onListEndReached,
+    showInboxScrollResetSkeleton,
+    onInboxListScroll: handleInboxListScroll,
   };
 }

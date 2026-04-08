@@ -2,7 +2,7 @@ import type { FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import { Folder } from 'lucide-react-native';
 import React, { memo, useCallback, useMemo, useState } from 'react';
-import type { LayoutChangeEvent } from 'react-native';
+import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { KeyboardAvoidingView, View } from 'react-native';
 
 import {
@@ -23,6 +23,7 @@ import { EmptyState, SwipeHintBanner } from '@/shared/ui';
 
 import type { FlattenedItem } from '../lib/inboxScreenTypes';
 import { EmptySearchState } from './EmptySearchState';
+import { InboxSkeleton } from './InboxSkeleton';
 
 type InboxScreenLoadedBodyProps = {
   color: Colors;
@@ -59,6 +60,8 @@ type InboxScreenLoadedBodyProps = {
   renderListItem: (props: { item: FlattenedItem }) => React.ReactElement;
   keyExtractor: (item: FlattenedItem) => string;
   getItemType: (item: FlattenedItem) => FlattenedItem['type'];
+  onInboxListScroll?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  showInboxScrollResetSkeleton: boolean;
 };
 
 function InboxScreenLoadedBodyInner({
@@ -96,6 +99,8 @@ function InboxScreenLoadedBodyInner({
   renderListItem,
   keyExtractor,
   getItemType,
+  onInboxListScroll,
+  showInboxScrollResetSkeleton,
 }: InboxScreenLoadedBodyProps) {
   const [filterBarHeight, setFilterBarHeight] = useState(INBOX_FILTER_BAR_FALLBACK_HEIGHT);
 
@@ -223,6 +228,8 @@ function InboxScreenLoadedBodyInner({
                 getItemType={getItemType}
                 onEndReached={onEndReached}
                 onEndReachedThreshold={0.35}
+                onScroll={onInboxListScroll}
+                scrollEventThrottle={16}
                 contentContainerStyle={mergedListContentStyle}
                 style={[listStyle, { flex: 1 }]}
                 showsVerticalScrollIndicator={false}
@@ -230,6 +237,23 @@ function InboxScreenLoadedBodyInner({
                 ListHeaderComponent={swipeListHeader}
                 maintainVisibleContentPosition={{ disabled: true }}
               />
+              {showInboxScrollResetSkeleton && (
+                <View
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 0,
+                    paddingTop: filterScrollTopPad,
+                    backgroundColor: color.background.secondary,
+                    zIndex: 12,
+                  }}
+                >
+                  <InboxSkeleton color={color} />
+                </View>
+              )}
             </View>
           )}
         </View>
