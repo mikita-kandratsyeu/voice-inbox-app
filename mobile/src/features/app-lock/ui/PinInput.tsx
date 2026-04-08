@@ -14,15 +14,17 @@ import type { Colors } from '@/shared/config';
 import { hapticError, hapticSelection, hapticSuccess } from '@/shared/lib';
 
 type PinInputProps = {
+  bottomLeftSlot?: React.ReactNode;
+  color: Colors;
+  disabled?: boolean;
+  error?: boolean;
+  isLockScreen?: boolean;
+  onBackspace: () => void;
+  onDigit: (digit: string) => void;
+  onSuccessAnimationComplete?: () => void;
   pin: string;
   pinLength?: number;
-  color: Colors;
-  onDigit: (digit: string) => void;
-  onBackspace: () => void;
-  error?: boolean;
   success?: boolean;
-  onSuccessAnimationComplete?: () => void;
-  bottomLeftSlot?: React.ReactNode;
 };
 
 const ROWS: (string | 'back' | '')[][] = [
@@ -32,7 +34,7 @@ const ROWS: (string | 'back' | '')[][] = [
   ['', '0', 'back'],
 ];
 
-const SUCCESS_ANIM_DURATION = 100;
+const SUCCESS_ANIM_DURATION = 220;
 
 const getDotColor = (filled: boolean, error: boolean, success: boolean, color: Colors): string => {
   if (success) {
@@ -119,18 +121,21 @@ const AnimatedDot = ({
 };
 
 export const PinInput = ({
+  bottomLeftSlot,
+  color,
+  disabled = false,
+  error = false,
+  isLockScreen = false,
+  onBackspace,
+  onDigit,
+  onSuccessAnimationComplete,
   pin,
   pinLength = DEFAULT_PIN_LENGTH,
-  color,
-  onDigit,
-  onBackspace,
-  error = false,
   success = false,
-  onSuccessAnimationComplete,
-  bottomLeftSlot,
 }: PinInputProps) => {
   const { t } = useTranslation();
   const dots = Array.from({ length: pinLength }, (_, i) => i < pin.length || success);
+  const keypadLocked = success || disabled;
 
   useEffect(() => {
     if (success) {
@@ -155,13 +160,16 @@ export const PinInput = ({
         ))}
       </View>
 
-      <View className="gap-y-5" pointerEvents={success ? 'none' : 'auto'}>
+      <View className="gap-y-5" pointerEvents={keypadLocked ? 'none' : 'auto'}>
         {ROWS.map((row, rowIndex) => (
           <View key={rowIndex} className="flex-row justify-center gap-x-10">
             {row.map((key) => {
               if (key === '') {
                 return (
-                  <View key="spacer" className="h-16 w-16 items-center justify-center">
+                  <View
+                    key="spacer"
+                    className={`h-16 w-16 items-center justify-center ${isLockScreen ? 'h-20 w-20' : ''}`}
+                  >
                     {bottomLeftSlot}
                   </View>
                 );
@@ -170,15 +178,20 @@ export const PinInput = ({
                 return (
                   <TouchableOpacity
                     key="back"
-                    className="h-16 w-16 items-center justify-center rounded-full"
-                    style={{ backgroundColor: color.background.tertiary }}
+                    className={`h-16 w-16 items-center justify-center rounded-full ${isLockScreen ? 'h-20 w-20' : ''}`}
+                    style={{
+                      backgroundColor: color.background.tertiary,
+                      opacity: keypadLocked ? 0.45 : 1,
+                    }}
                     onPress={() => {
                       hapticSelection();
                       onBackspace();
                     }}
                     activeOpacity={0.7}
+                    disabled={keypadLocked}
                     accessibilityRole="button"
                     accessibilityLabel={t('appLock.backspace')}
+                    accessibilityState={{ disabled: keypadLocked }}
                   >
                     <Delete size={28} color={color.text.primary} strokeWidth={2} />
                   </TouchableOpacity>
@@ -188,15 +201,20 @@ export const PinInput = ({
               return (
                 <TouchableOpacity
                   key={key}
-                  className="h-16 w-16 items-center justify-center rounded-full"
-                  style={{ backgroundColor: color.background.tertiary }}
+                  className={`h-16 w-16 items-center justify-center rounded-full ${isLockScreen ? 'h-20 w-20' : ''}`}
+                  style={{
+                    backgroundColor: color.background.tertiary,
+                    opacity: keypadLocked ? 0.45 : 1,
+                  }}
                   onPress={() => {
                     hapticSelection();
                     onDigit(key);
                   }}
                   activeOpacity={0.7}
+                  disabled={keypadLocked}
                   accessibilityRole="button"
                   accessibilityLabel={key}
+                  accessibilityState={{ disabled: keypadLocked }}
                 >
                   <Text className="text-3xl font-semibold" style={{ color: color.text.primary }}>
                     {key}

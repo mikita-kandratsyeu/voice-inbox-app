@@ -568,7 +568,12 @@
   "appLock": {
     "title": "App lock",
     "settings": "Settings",
-    "enterPin": "Enter {{digits}}-digit PIN to unlock",
+    "lockScreenTitle": "App locked",
+    "incorrectPin": "Incorrect PIN",
+    "a11y": {
+      "screenLabel": "Enter PIN to unlock the app"
+    },
+    "enterPin": "Enter your {{digits}}-digit PIN",
     "unlockError": "Failed to unlock. Try entering your PIN.",
     "tryAgainIn": "Try again in {{seconds}} sec",
     "backspace": "Backspace",

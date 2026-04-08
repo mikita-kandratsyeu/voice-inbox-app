@@ -1,11 +1,14 @@
 import type { TFunction } from 'i18next';
-import { Fingerprint, ScanFace } from 'lucide-react-native';
+import { Fingerprint, Lock, ScanFace } from 'lucide-react-native';
 import React, { useCallback, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { type BiometryType, useAppLockStore } from '@/entities/app-lock';
+import { useColors } from '@/shared/config';
+
+import { PinInput } from './PinInput';
 
 function biometricUnlockA11yLabel(t: TFunction, type: BiometryType | null) {
   if (!type) {
@@ -28,9 +31,6 @@ function biometricUnlockA11yLabel(t: TFunction, type: BiometryType | null) {
       return t('common.biometrics');
   }
 }
-import { useColors } from '@/shared/config';
-
-import { PinInput } from './PinInput';
 
 const BIOMETRIC_PROMPT_DEBOUNCE_MS = 1500;
 const LOCKOUT_STEPS_MS = [5000, 15000, 60000] as const;
@@ -42,6 +42,7 @@ export const LockScreen = () => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [isVerifying, setIsVerifying] = useState(false);
   const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
   const [lockoutNow, setLockoutNow] = useState(Date.now());
   const failedAttemptsRef = useRef(0);
@@ -127,6 +128,10 @@ export const LockScreen = () => {
     }
   }, [isLockedOut, lockoutUntil]);
 
+  const handleUnlockAfterSuccess = useCallback(() => {
+    unlock();
+  }, [unlock]);
+
   const handleDigit = useCallback(
     async (digit: string) => {
       if (isLockedOut || pin.length >= pinLength) {
@@ -137,15 +142,19 @@ export const LockScreen = () => {
       setPin(next);
 
       if (next.length === pinLength) {
-        const ok = await verifyPin(next);
+        setIsVerifying(true);
+        let ok = false;
+        try {
+          ok = await verifyPin(next);
+        } finally {
+          setIsVerifying(false);
+        }
 
         if (ok) {
           setError(false);
-          setSuccess(false);
-          setPin('');
+          setSuccess(true);
           failedAttemptsRef.current = 0;
           setLockoutUntil(null);
-          unlock();
         } else {
           failedAttemptsRef.current += 1;
           setError(true);
@@ -157,7 +166,7 @@ export const LockScreen = () => {
         }
       }
     },
-    [isLockedOut, pin, pinLength, verifyPin, unlock],
+    [isLockedOut, pin, pinLength, verifyPin],
   );
 
   const handleBackspace = useCallback(() => {
@@ -178,6 +187,8 @@ export const LockScreen = () => {
     biometryType === 'FaceID' || biometryType === 'Face' || biometryType === 'OpticID';
   const BioIcon = isFaceBiometry ? ScanFace : Fingerprint;
 
+  const keypadDisabled = isVerifying || isLockedOut;
+
   return (
     <View
       className="flex-1 items-center justify-center px-8"
@@ -186,41 +197,85 @@ export const LockScreen = () => {
         paddingTop: insets.top,
         paddingBottom: insets.bottom,
       }}
+      accessibilityLabel={t('appLock.a11y.screenLabel')}
     >
-      <Text className="mb-8 text-center text-[16px]" style={{ color: color.text.secondary }}>
+      <View
+        className="mb-5 h-[72px] w-[72px] items-center justify-center rounded-2xl"
+        style={{ backgroundColor: color.background.tertiary }}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <Lock size={34} color={color.text.secondary} strokeWidth={1.75} />
+      </View>
+
+      <Text
+        className="mb-2 text-center text-[22px] font-semibold tracking-tight"
+        style={{ color: color.text.primary }}
+        accessibilityRole="header"
+      >
+        {t('appLock.lockScreenTitle')}
+      </Text>
+      <Text
+        className="mb-6 max-w-[280px] text-center text-[15px] leading-[22px]"
+        style={{ color: color.text.secondary }}
+      >
         {t('appLock.enterPin', { digits: pinLength })}
       </Text>
-      {isLockedOut && (
-        <Text className="mb-4 text-center text-[14px]" style={{ color: color.accent.delete }}>
-          {t('appLock.tryAgainIn', { seconds: remainingLockoutSeconds })}
-        </Text>
-      )}
+
+      <View
+        className="mb-3 w-full max-w-[320px] items-center justify-center self-center px-2"
+        style={{ minHeight: 18 }}
+      >
+        {isLockedOut ? (
+          <Text
+            className="text-center text-[14px] font-medium"
+            style={{ color: color.accent.delete }}
+            accessibilityLiveRegion="polite"
+          >
+            {t('appLock.tryAgainIn', { seconds: remainingLockoutSeconds })}
+          </Text>
+        ) : error ? (
+          <Text
+            className="text-center text-[14px] font-medium"
+            style={{ color: color.accent.delete }}
+            accessibilityLiveRegion="polite"
+          >
+            {t('appLock.incorrectPin')}
+          </Text>
+        ) : null}
+      </View>
 
       <PinInput
-        pin={pin}
-        pinLength={pinLength}
-        color={color}
-        onDigit={handleDigit}
-        onBackspace={handleBackspace}
-        error={error}
-        success={success}
         bottomLeftSlot={
           useBiometrics &&
           biometryType && (
             <TouchableOpacity
-              className="h-16 w-16 items-center justify-center rounded-full"
-              style={{ backgroundColor: color.background.tertiary }}
+              className="h-20 w-20 items-center justify-center rounded-full"
+              style={{
+                backgroundColor: color.background.tertiary,
+                opacity: keypadDisabled ? 0.45 : 1,
+              }}
               onPress={handleBiometricPress}
               activeOpacity={0.7}
-              disabled={isLockedOut}
+              disabled={keypadDisabled}
               accessibilityRole="button"
               accessibilityLabel={biometricUnlockA11yLabel(t, biometryType)}
-              accessibilityState={{ disabled: isLockedOut }}
+              accessibilityState={{ disabled: keypadDisabled }}
             >
               <BioIcon size={28} color={color.accent.success} strokeWidth={1.8} />
             </TouchableOpacity>
           )
         }
+        color={color}
+        error={error}
+        isLockScreen
+        onBackspace={handleBackspace}
+        onDigit={handleDigit}
+        onSuccessAnimationComplete={handleUnlockAfterSuccess}
+        pin={pin}
+        pinLength={pinLength}
+        success={success}
+        disabled={keypadDisabled}
       />
     </View>
   );
