@@ -400,21 +400,21 @@ export const AllTasksScreen = () => {
           style={{
             alignSelf: 'center',
             width: '100%',
-            maxWidth: contentMaxWidth,
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
             paddingHorizontal: filterPadH,
             paddingVertical: filterPadV,
-            gap: isTablet ? 20 : 12,
+            gap: isTablet ? 14 : 12,
           }}
         >
           <Text
-            className="flex-1"
             style={{
               color: color.text.primary,
               fontSize: isTablet ? 16 : 14,
               fontWeight: isTablet ? '500' : '400',
+              flex: isTablet ? 0 : 1,
+              flexShrink: 1,
             }}
             numberOfLines={1}
           >
