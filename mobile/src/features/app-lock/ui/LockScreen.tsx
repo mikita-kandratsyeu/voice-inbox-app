@@ -1,11 +1,17 @@
 import type { TFunction } from 'i18next';
 import { Fingerprint, Lock, ScanFace } from 'lucide-react-native';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { type BiometryType, useAppLockStore } from '@/entities/app-lock';
+import {
+  type BiometryType,
+  clearPinLockoutState,
+  getPinLockoutState,
+  recordPinLockoutFailure,
+  useAppLockStore,
+} from '@/entities/app-lock';
 import { useColors } from '@/shared/config';
 
 import { PinInput } from './PinInput';
@@ -33,7 +39,6 @@ function biometricUnlockA11yLabel(t: TFunction, type: BiometryType | null) {
 }
 
 const BIOMETRIC_PROMPT_DEBOUNCE_MS = 1500;
-const LOCKOUT_STEPS_MS = [5000, 15000, 60000] as const;
 
 export const LockScreen = () => {
   const { t } = useTranslation();
@@ -43,9 +48,9 @@ export const LockScreen = () => {
   const [error, setError] = useState(false);
   const [success, setSuccess] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+  const [pinLockout, setPinLockout] = useState({ failedAttempts: 0, lockoutUntil: 0 });
+  const [pinLockoutSynced, setPinLockoutSynced] = useState(false);
   const [lockoutNow, setLockoutNow] = useState(Date.now());
-  const failedAttemptsRef = useRef(0);
   const isBiometricPromptOpenRef = useRef(false);
   const lastBiometricPromptAtRef = useRef(0);
   const autoBiometricTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -61,6 +66,13 @@ export const LockScreen = () => {
     biometryType,
     checkBiometryAvailable,
   } = useAppLockStore();
+
+  useEffect(() => {
+    void getPinLockoutState().then((s) => {
+      setPinLockout(s);
+      setPinLockoutSynced(true);
+    });
+  }, []);
 
   const runBiometricUnlock = useCallback(async () => {
     const now = Date.now();
@@ -80,10 +92,14 @@ export const LockScreen = () => {
     }
   }, [unlockWithBiometrics]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     void checkBiometryAvailable();
 
-    if (!useBiometrics) {
+    if (!useBiometrics || !pinLockoutSynced) {
+      return;
+    }
+
+    if (pinLockout.lockoutUntil > Date.now()) {
       return;
     }
 
@@ -92,8 +108,10 @@ export const LockScreen = () => {
         return;
       }
 
-      void runBiometricUnlock().then((ok) => {
+      void runBiometricUnlock().then(async (ok) => {
         if (ok) {
+          await clearPinLockoutState();
+          setPinLockout({ failedAttempts: 0, lockoutUntil: 0 });
           unlock();
         }
       });
@@ -105,28 +123,30 @@ export const LockScreen = () => {
         autoBiometricTimerRef.current = null;
       }
     };
-  }, [checkBiometryAvailable, runBiometricUnlock, unlock, useBiometrics]);
+  }, [
+    checkBiometryAvailable,
+    pinLockout.lockoutUntil,
+    pinLockoutSynced,
+    runBiometricUnlock,
+    unlock,
+    useBiometrics,
+  ]);
 
-  const isLockedOut = lockoutUntil != null && lockoutUntil > lockoutNow;
+  const isLockedOut = pinLockout.lockoutUntil > lockoutNow;
   const remainingLockoutSeconds = isLockedOut
-    ? Math.max(1, Math.ceil((lockoutUntil - lockoutNow) / 1000))
+    ? Math.max(1, Math.ceil((pinLockout.lockoutUntil - lockoutNow) / 1000))
     : 0;
 
   React.useEffect(() => {
     if (!isLockedOut) {
       return;
     }
+
     const timer = setInterval(() => {
       setLockoutNow(Date.now());
     }, 250);
     return () => clearInterval(timer);
   }, [isLockedOut]);
-
-  React.useEffect(() => {
-    if (!isLockedOut && lockoutUntil != null) {
-      setLockoutUntil(null);
-    }
-  }, [isLockedOut, lockoutUntil]);
 
   const handleUnlockAfterSuccess = useCallback(() => {
     unlock();
@@ -152,16 +172,14 @@ export const LockScreen = () => {
 
         if (ok) {
           setError(false);
+          await clearPinLockoutState();
+          setPinLockout({ failedAttempts: 0, lockoutUntil: 0 });
           setSuccess(true);
-          failedAttemptsRef.current = 0;
-          setLockoutUntil(null);
         } else {
-          failedAttemptsRef.current += 1;
           setError(true);
           setPin('');
-          const lockoutMs =
-            LOCKOUT_STEPS_MS[Math.min(failedAttemptsRef.current - 1, LOCKOUT_STEPS_MS.length - 1)];
-          setLockoutUntil(Date.now() + lockoutMs);
+          const next = await recordPinLockoutFailure();
+          setPinLockout(next);
           setTimeout(() => setError(false), 500);
         }
       }
@@ -177,6 +195,8 @@ export const LockScreen = () => {
     const ok = await runBiometricUnlock();
 
     if (ok) {
+      await clearPinLockoutState();
+      setPinLockout({ failedAttempts: 0, lockoutUntil: 0 });
       unlock();
     } else {
       Alert.alert(t('common.error'), t('appLock.unlockError'));
@@ -187,7 +207,7 @@ export const LockScreen = () => {
     biometryType === 'FaceID' || biometryType === 'Face' || biometryType === 'OpticID';
   const BioIcon = isFaceBiometry ? ScanFace : Fingerprint;
 
-  const keypadDisabled = isVerifying || isLockedOut;
+  const keypadDisabled = isVerifying || isLockedOut || !pinLockoutSynced;
 
   return (
     <View
