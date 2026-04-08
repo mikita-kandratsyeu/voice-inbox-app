@@ -53,6 +53,7 @@ export {
   RECORDINGS_DIR,
   resolveAudioPath,
 } from './recordings';
+export { scheduleAfterUiSettles } from './scheduleAfterUiSettles';
 export { isArray, isNumber, isRecord, isString, isStringArrayItem } from './type-guards';
 export { useAiModelName } from './useAiModelName';
 export { useAiTabBannerDismiss } from './useAiTabBannerDismiss';

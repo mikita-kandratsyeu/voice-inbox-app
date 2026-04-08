@@ -131,7 +131,10 @@
     "emptyDescription": "Tasks from your notes show up here, grouped by day.",
     "emptyFiltered": "No open tasks",
     "a11yOpenAllTasks": "All tasks from notes",
-    "openNote": "Open note"
+    "openNote": "Open note",
+    "noteFilterLabel": "Note",
+    "noteUnavailable": "Note not found",
+    "clearNoteFilterA11y": "Show tasks from all notes"
   },
   "ai": {
     "limitWeeklyExceeded": "You’ve used this week’s generation limit. Try again next week.",
@@ -210,6 +213,7 @@
     "text": "Text",
     "summary": "Summary",
     "tasks": "Tasks",
+    "allTasksForNote": "All tasks from this note",
     "transcriptProcessErrorTitle": "Couldn't transcribe",
     "transcriptProcessErrorDesc":
       "Something went wrong processing the audio. Make sure the recording isn't damaged and try again.",

@@ -23,6 +23,7 @@ type RecordingDetailHeaderProps = {
   onArchive: () => void;
   onUnarchive: () => void;
   onDelete: () => void;
+  onOpenAllTasksForNote?: () => void;
 };
 
 export const RecordingDetailHeader = ({
@@ -38,6 +39,7 @@ export const RecordingDetailHeader = ({
   onArchive,
   onUnarchive,
   onDelete,
+  onOpenAllTasksForNote,
 }: RecordingDetailHeaderProps) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
@@ -111,6 +113,7 @@ export const RecordingDetailHeader = ({
             if (nativeEvent.event === 'archive') onArchive();
             if (nativeEvent.event === 'unarchive') onUnarchive();
             if (nativeEvent.event === 'delete') onDelete();
+            if (nativeEvent.event === 'allTasksForNote') onOpenAllTasksForNote?.();
           }}
           actions={[
             {
@@ -120,6 +123,17 @@ export const RecordingDetailHeader = ({
               imageColor: color.text.primary,
               titleColor: color.text.primary,
             },
+            ...(onOpenAllTasksForNote
+              ? [
+                  {
+                    id: 'allTasksForNote' as const,
+                    title: t('recordingDetail.allTasksForNote'),
+                    image: 'checklist' as const,
+                    imageColor: color.text.primary,
+                    titleColor: color.text.primary,
+                  },
+                ]
+              : []),
             ...(!isPrivateMode
               ? [
                   {

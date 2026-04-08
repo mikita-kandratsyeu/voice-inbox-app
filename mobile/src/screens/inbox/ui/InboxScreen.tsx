@@ -30,7 +30,7 @@ export const InboxScreen = () => {
     isLoaded,
     folders,
     effectiveActiveFolderId,
-    setActiveFolder,
+    handleFolderSelect,
     handleFoldersReorder,
     folderReorderVisible,
     openFolderReorderSheet,
@@ -135,7 +135,7 @@ export const InboxScreen = () => {
           folders={folders}
           activeFolderId={effectiveActiveFolderId}
           color={color}
-          onSelect={setActiveFolder}
+          onSelect={handleFolderSelect}
           onCreatePress={openCreateFolderModal}
           onEditPress={openEditFolderModal}
           onReorderPress={openFolderReorderSheet}

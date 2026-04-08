@@ -1,22 +1,46 @@
-import { useNavigation } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import dayjs from 'dayjs';
+import { X } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Switch, Text, useWindowDimensions, View } from 'react-native';
+import {
+  Alert,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { RootStackParamList } from '@/app/navigation/types';
+import {
+  FolderChipBar,
+  FolderFormModal,
+  FolderReorderSheet,
+  useFolderStore,
+} from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
+import { useSettingsStore } from '@/entities/settings';
 import { useAdsAllowed } from '@/features/app-storefront';
 import { DeferredInboxBannerAd, InboxBannerAd } from '@/features/inbox-banner';
+import { useManageFolders } from '@/features/manage-folders';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { TaskEditSheet } from '@/screens/recording-detail/ui/TaskEditSheet';
 import { useColors } from '@/shared/config';
-import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import {
+  hapticSelection,
+  scheduleAfterUiSettles,
+  useIsTablet,
+  useTabletContentMaxWidth,
+} from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import { EmptyState, ScreenHeader, SectionHeader } from '@/shared/ui';
 
@@ -36,6 +60,7 @@ type Section = { dayKey: string; title: string; data: TaskWithRecord[] };
 export const AllTasksScreen = () => {
   const { t, i18n } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const route = useRoute<RouteProp<RootStackParamList, 'AllTasks'>>();
   const color = useColors();
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
@@ -49,12 +74,74 @@ export const AllTasksScreen = () => {
     text: string;
   } | null>(null);
 
+  const listRef = useRef<FlashListRef<AllTasksListItem>>(null);
+  const folderChipScrollRef = useRef<ScrollView>(null);
+
   const { records, toggleTask, updateTasks } = useRecordStore(
     useShallow((s) => ({
       records: s.records,
       toggleTask: s.toggleTask,
       updateTasks: s.updateTasks,
     })),
+  );
+
+  const recordFilterId = route.params?.recordId;
+
+  const { activeFolderId, setActiveFolder, reorderFolders } = useFolderStore(
+    useShallow((s) => ({
+      activeFolderId: s.activeFolderId,
+      setActiveFolder: s.setActiveFolder,
+      reorderFolders: s.reorderFolders,
+    })),
+  );
+
+  const handleFolderSelect = useCallback(
+    (id: string | null) => {
+      setActiveFolder(id);
+      if (id === null) {
+        folderChipScrollRef.current?.scrollTo({ x: 0, y: 0, animated: false });
+        scheduleAfterUiSettles(() => {
+          listRef.current?.scrollToOffset({ offset: 0, animated: false });
+        });
+      }
+    },
+    [setActiveFolder],
+  );
+
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const isPrivateMode = aiExecutionMode === 'private_experimental';
+  const effectiveActiveFolderId = isPrivateMode ? null : activeFolderId;
+
+  const {
+    folders,
+    modalVisible: folderModalVisible,
+    editingFolder,
+    openCreateModal: openCreateFolderModal,
+    openEditModal: openEditFolderModal,
+    closeModal: closeFolderModal,
+    handleSave: handleFolderSave,
+    handleDelete: handleFolderDelete,
+  } = useManageFolders();
+
+  const [folderReorderVisible, setFolderReorderVisible] = useState(false);
+
+  const handleFoldersReorder = useCallback(
+    (orderedIds: string[]) => {
+      void reorderFolders(orderedIds);
+    },
+    [reorderFolders],
+  );
+
+  const openFolderReorderSheet = useCallback(() => setFolderReorderVisible(true), []);
+  const closeFolderReorderSheet = useCallback(() => setFolderReorderVisible(false), []);
+
+  const clearNoteFilter = useCallback(() => {
+    navigation.setParams({ recordId: undefined });
+  }, [navigation]);
+
+  const noteFilterRecord = useMemo(
+    () => (recordFilterId ? records.find((r) => r.id === recordFilterId) : undefined),
+    [recordFilterId, records],
   );
 
   const contentMaxWidth = useTabletContentMaxWidth();
@@ -64,10 +151,18 @@ export const AllTasksScreen = () => {
   const filterPadV = isTablet ? 14 : 10;
 
   const sectionList = useMemo(() => {
-    const sorted = [...records]
+    let pool = [...records]
       .filter((r) => r.status !== 'archived')
-      .filter((r) => (r.tasks?.length ?? 0) > 0)
-      .sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf());
+      .filter((r) => (r.tasks?.length ?? 0) > 0);
+
+    if (effectiveActiveFolderId) {
+      pool = pool.filter((r) => r.folderId === effectiveActiveFolderId);
+    }
+    if (recordFilterId) {
+      pool = pool.filter((r) => r.id === recordFilterId);
+    }
+
+    const sorted = pool.sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf());
 
     const rows: TaskWithRecord[] = [];
     for (const r of sorted) {
@@ -115,7 +210,15 @@ export const AllTasksScreen = () => {
     });
 
     return sections;
-  }, [records, openOnly, i18n.language, t, recentlyCompleted]);
+  }, [
+    records,
+    openOnly,
+    i18n.language,
+    t,
+    recentlyCompleted,
+    effectiveActiveFolderId,
+    recordFilterId,
+  ]);
 
   const flattenedList = useMemo((): AllTasksFlattenedItem[] => {
     const out: AllTasksFlattenedItem[] = [];
@@ -321,7 +424,10 @@ export const AllTasksScreen = () => {
           </Text>
           <Switch
             value={openOnly}
-            onValueChange={setOpenOnly}
+            onValueChange={(v) => {
+              hapticSelection();
+              setOpenOnly(v);
+            }}
             accessibilityLabel={t('allTasks.openOnly')}
             trackColor={{ false: color.background.tertiary, true: color.accent.primary }}
             thumbColor={color.icon.onAccent}
@@ -329,6 +435,77 @@ export const AllTasksScreen = () => {
           />
         </View>
       </View>
+
+      {!isPrivateMode && (
+        <FolderChipBar
+          folders={folders}
+          activeFolderId={effectiveActiveFolderId}
+          color={color}
+          onSelect={handleFolderSelect}
+          onCreatePress={openCreateFolderModal}
+          onEditPress={openEditFolderModal}
+          onReorderPress={openFolderReorderSheet}
+          scrollRef={folderChipScrollRef}
+        />
+      )}
+
+      {recordFilterId ? (
+        <View
+          style={{
+            backgroundColor: color.background.primary,
+            borderBottomWidth: 1,
+            borderBottomColor: color.border.default,
+          }}
+        >
+          <View
+            style={{
+              alignSelf: 'center',
+              width: '100%',
+              maxWidth: contentMaxWidth,
+              flexDirection: 'row',
+              alignItems: 'center',
+              paddingHorizontal: filterPadH,
+              paddingVertical: 10,
+              gap: 10,
+            }}
+          >
+            <View
+              className="min-w-0 flex-1 flex-row items-center rounded-xl px-3 py-2"
+              style={{ backgroundColor: color.background.tertiary }}
+            >
+              <Text
+                style={{
+                  color: color.text.secondary,
+                  fontSize: 12,
+                  fontWeight: '600',
+                  marginRight: 6,
+                }}
+              >
+                {t('allTasks.noteFilterLabel')}
+              </Text>
+              <Text
+                className="min-w-0 flex-1 shrink"
+                style={{ color: color.text.primary, fontSize: 14, fontWeight: '500' }}
+                numberOfLines={1}
+              >
+                {noteFilterRecord?.title ?? t('allTasks.noteUnavailable')}
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => {
+                hapticSelection();
+                clearNoteFilter();
+              }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              accessibilityRole="button"
+              accessibilityLabel={t('allTasks.clearNoteFilterA11y')}
+              style={{ padding: 8 }}
+            >
+              <X size={20} color={color.text.secondary} strokeWidth={2.2} />
+            </Pressable>
+          </View>
+        </View>
+      ) : null}
 
       {empty ? (
         <View
@@ -350,6 +527,7 @@ export const AllTasksScreen = () => {
         </View>
       ) : (
         <FlashList<AllTasksListItem>
+          ref={listRef}
           data={listData}
           renderItem={renderListItem}
           keyExtractor={keyExtractor}
@@ -366,6 +544,24 @@ export const AllTasksScreen = () => {
             maxWidth: contentMaxWidth,
           }}
           showsVerticalScrollIndicator={false}
+          maintainVisibleContentPosition={{ disabled: true }}
+        />
+      )}
+      {!isPrivateMode && (
+        <FolderReorderSheet
+          visible={folderReorderVisible}
+          folders={folders}
+          onClose={closeFolderReorderSheet}
+          onReorder={handleFoldersReorder}
+        />
+      )}
+      {!isPrivateMode && (
+        <FolderFormModal
+          visible={folderModalVisible}
+          folder={editingFolder}
+          onSave={handleFolderSave}
+          onDelete={editingFolder ? () => handleFolderDelete(editingFolder.id) : undefined}
+          onClose={closeFolderModal}
         />
       )}
       {editTaskSheet}

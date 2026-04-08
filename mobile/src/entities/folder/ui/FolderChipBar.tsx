@@ -8,6 +8,7 @@ import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
 import {
   folderChipActiveForeground,
+  hapticSelection,
   isDarkSurfaceColor,
   resolveDisplayFolderColor,
   withAlphaHex,
@@ -149,7 +150,10 @@ export const FolderChipBar = ({
   const surfaceDark = isDarkSurfaceColor(color);
   const showReorder = Boolean(onReorderPress) && folders.length >= 2;
 
-  const handleAllPress = useCallback(() => onSelect(null), [onSelect]);
+  const handleAllPress = useCallback(() => {
+    hapticSelection();
+    onSelect(null);
+  }, [onSelect]);
 
   return (
     <View
@@ -179,7 +183,10 @@ export const FolderChipBar = ({
             color={color}
             surfaceDark={surfaceDark}
             isProActive={isProActive}
-            onPress={() => onSelect(folder.id)}
+            onPress={() => {
+              hapticSelection();
+              onSelect(folder.id);
+            }}
             onLongPress={() => onEditPress(folder)}
           />
         ))}

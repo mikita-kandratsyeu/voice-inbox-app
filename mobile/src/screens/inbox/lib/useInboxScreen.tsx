@@ -27,7 +27,12 @@ import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorag
 import { useProEntitlement } from '@/features/pro-license';
 import { useSearchRecords } from '@/features/search-records';
 import { useColors } from '@/shared/config';
-import { useIsTablet, useScrollToTopOnTabPress, useTabletContentMaxWidth } from '@/shared/lib';
+import {
+  scheduleAfterUiSettles,
+  useIsTablet,
+  useScrollToTopOnTabPress,
+  useTabletContentMaxWidth,
+} from '@/shared/lib';
 import { getHasSeenSwipeHint, setHasSeenSwipeHint } from '@/shared/lib/hintsStorage';
 
 import { InboxScreenListItem } from '../ui/InboxScreenListItem';
@@ -253,14 +258,6 @@ export function useInboxScreen() {
     }
   }, [batchSelect, visibleRecordIds]);
 
-  useEffect(() => {
-    if (!inboxFiltersReset) return;
-    return inboxFiltersReset.registerReset(() => {
-      resetToDefault();
-      setActiveFolder(null);
-    });
-  }, [inboxFiltersReset, resetToDefault, setActiveFolder]);
-
   const handleFoldersReorder = useCallback(
     (orderedIds: string[]) => {
       void reorderFolders(orderedIds);
@@ -271,13 +268,37 @@ export function useInboxScreen() {
   const openFolderReorderSheet = useCallback(() => setFolderReorderVisible(true), []);
   const closeFolderReorderSheet = useCallback(() => setFolderReorderVisible(false), []);
 
+  const handleFolderSelect = useCallback(
+    (id: string | null) => {
+      setActiveFolder(id);
+      if (id === null) {
+        folderChipScrollRef.current?.scrollTo({ x: 0, y: 0, animated: false });
+
+        scheduleAfterUiSettles(() => {
+          listRef.current?.scrollToOffset({ offset: 0, animated: false });
+        });
+      }
+    },
+    [setActiveFolder],
+  );
+
+  useEffect(() => {
+    if (!inboxFiltersReset) return;
+    return inboxFiltersReset.registerReset(() => {
+      resetToDefault();
+      handleFolderSelect(null);
+    });
+  }, [inboxFiltersReset, resetToDefault, handleFolderSelect]);
+
   useScrollToTopOnTabPress(listRef, () => {
-    folderChipScrollRef.current?.scrollTo({ x: 0, y: 0, animated: true });
+    folderChipScrollRef.current?.scrollTo({ x: 0, y: 0, animated: false });
     if (batchSelect.isSelectMode) exitBatchMode();
   });
 
   useEffect(() => {
-    listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    scheduleAfterUiSettles(() => {
+      listRef.current?.scrollToOffset({ offset: 0, animated: false });
+    });
   }, [filterStatus]);
 
   useEffect(() => {
@@ -459,7 +480,7 @@ export function useInboxScreen() {
     isLoaded,
     folders,
     effectiveActiveFolderId,
-    setActiveFolder,
+    handleFolderSelect,
     handleFoldersReorder,
     folderReorderVisible,
     openFolderReorderSheet,

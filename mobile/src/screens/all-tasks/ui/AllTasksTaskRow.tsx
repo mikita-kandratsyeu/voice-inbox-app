@@ -12,7 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { type Colors, useAppTheme } from '@/shared/config';
-import { hapticLight } from '@/shared/lib';
+import { hapticLight, hapticSuccess } from '@/shared/lib';
 
 import type { TaskWithRecord } from '../types';
 
@@ -49,7 +49,11 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
   }));
 
   const handleToggle = () => {
-    hapticLight();
+    if (task.isDone) {
+      hapticLight();
+    } else {
+      hapticSuccess();
+    }
     pressScale.value = withSequence(
       withTiming(0.97, { duration: 55 }),
       withSpring(1, { damping: 16, stiffness: 280 }),

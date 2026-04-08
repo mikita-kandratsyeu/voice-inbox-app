@@ -385,6 +385,11 @@ export const RecordingDetailScreen = () => {
         onArchive={onArchive}
         onUnarchive={onUnarchive}
         onDelete={onDelete}
+        onOpenAllTasksForNote={
+          (liveRecord.tasks?.length ?? 0) > 0
+            ? () => navigation.navigate('AllTasks', { recordId: liveRecord.id })
+            : undefined
+        }
       />
       <ShareRecordSheet
         visible={shareSheetVisible}

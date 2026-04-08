@@ -7,6 +7,8 @@ import {
 } from '@react-navigation/native';
 import { useEffect } from 'react';
 
+import { scheduleAfterUiSettles } from './scheduleAfterUiSettles';
+
 type ScrollToTopRef = {
   scrollTo?: (options: { x?: number; y?: number; animated?: boolean }) => void;
   scrollToOffset?: (options: { offset: number; animated?: boolean }) => void;
@@ -35,9 +37,12 @@ export const useScrollToTopOnTabPress = (
     }
 
     const unsubscribe = parentNavigation.addListener('tabPress', () => {
-      ref.current?.scrollTo?.({ x: 0, y: 0, animated: true });
-      ref.current?.scrollToOffset?.({ offset: 0, animated: true });
       onTabPress?.();
+
+      scheduleAfterUiSettles(() => {
+        ref.current?.scrollTo?.({ x: 0, y: 0, animated: false });
+        ref.current?.scrollToOffset?.({ offset: 0, animated: false });
+      });
     });
 
     return unsubscribe;
