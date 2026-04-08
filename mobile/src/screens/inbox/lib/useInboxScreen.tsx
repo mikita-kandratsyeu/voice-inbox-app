@@ -269,14 +269,11 @@ export function useInboxScreen() {
   const closeFolderReorderSheet = useCallback(() => setFolderReorderVisible(false), []);
 
   const tabScrollSkeletonDepthRef = useRef(0);
-  const [showTabScrollResetSkeleton, setShowTabScrollResetSkeleton] = useState(false);
   const onTabScrollJumpVisualStart = useCallback(() => {
     tabScrollSkeletonDepthRef.current += 1;
-    setShowTabScrollResetSkeleton(true);
   }, []);
   const onTabScrollJumpVisualEnd = useCallback(() => {
     tabScrollSkeletonDepthRef.current = Math.max(0, tabScrollSkeletonDepthRef.current - 1);
-    setShowTabScrollResetSkeleton(tabScrollSkeletonDepthRef.current > 0);
   }, []);
 
   const handleFolderSelect = useCallback(
@@ -553,6 +550,5 @@ export function useInboxScreen() {
     keyExtractor,
     getItemType,
     onListEndReached,
-    showTabScrollResetSkeleton,
   };
 }

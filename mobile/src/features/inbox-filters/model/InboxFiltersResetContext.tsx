@@ -17,6 +17,7 @@ export const InboxFiltersResetProvider = ({ children }: { children: React.ReactN
       pendingResetRef.current = false;
       reset();
     }
+
     return () => {
       resetRef.current = null;
     };

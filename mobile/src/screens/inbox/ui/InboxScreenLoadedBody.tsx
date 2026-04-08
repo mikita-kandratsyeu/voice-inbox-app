@@ -23,7 +23,6 @@ import { EmptyState, SwipeHintBanner } from '@/shared/ui';
 
 import type { FlattenedItem } from '../lib/inboxScreenTypes';
 import { EmptySearchState } from './EmptySearchState';
-import { InboxSkeleton } from './InboxSkeleton';
 
 type InboxScreenLoadedBodyProps = {
   color: Colors;
@@ -60,7 +59,6 @@ type InboxScreenLoadedBodyProps = {
   renderListItem: (props: { item: FlattenedItem }) => React.ReactElement;
   keyExtractor: (item: FlattenedItem) => string;
   getItemType: (item: FlattenedItem) => FlattenedItem['type'];
-  showTabScrollResetSkeleton: boolean;
 };
 
 function InboxScreenLoadedBodyInner({
@@ -98,7 +96,6 @@ function InboxScreenLoadedBodyInner({
   renderListItem,
   keyExtractor,
   getItemType,
-  showTabScrollResetSkeleton,
 }: InboxScreenLoadedBodyProps) {
   const [filterBarHeight, setFilterBarHeight] = useState(INBOX_FILTER_BAR_FALLBACK_HEIGHT);
 
@@ -233,23 +230,6 @@ function InboxScreenLoadedBodyInner({
                 ListHeaderComponent={swipeListHeader}
                 maintainVisibleContentPosition={{ disabled: true }}
               />
-              {showTabScrollResetSkeleton && (
-                <View
-                  pointerEvents="none"
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    right: 0,
-                    top: 0,
-                    bottom: 0,
-                    paddingTop: filterScrollTopPad,
-                    backgroundColor: color.background.secondary,
-                    zIndex: 12,
-                  }}
-                >
-                  <InboxSkeleton color={color} />
-                </View>
-              )}
             </View>
           )}
         </View>
