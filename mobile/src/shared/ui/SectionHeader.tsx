@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Text, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
@@ -8,10 +8,7 @@ type SectionHeaderProps = {
   isFirst?: boolean;
 };
 
-export const SectionHeader = React.memo(function SectionHeader({
-  title,
-  isFirst,
-}: SectionHeaderProps) {
+export const SectionHeader = memo(function SectionHeader({ title, isFirst }: SectionHeaderProps) {
   const color = useColors();
   const headerBgStyle = { backgroundColor: color.background.secondary };
   const headerTextStyle = { color: color.text.secondary };

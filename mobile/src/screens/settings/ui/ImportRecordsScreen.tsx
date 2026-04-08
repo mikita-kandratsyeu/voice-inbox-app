@@ -1,6 +1,6 @@
 import { type RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { Check } from 'lucide-react-native';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -37,7 +37,7 @@ type ImportRecordRowProps = {
   language: string;
 };
 
-const ImportRecordRow = React.memo(function ImportRecordRow({
+const ImportRecordRow = memo(function ImportRecordRow({
   item,
   isSelected,
   onToggle,

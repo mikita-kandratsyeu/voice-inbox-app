@@ -1,5 +1,5 @@
 import { CheckCircle2, ChevronRight, Circle, PanelRightOpen } from 'lucide-react-native';
-import React, { useCallback } from 'react';
+import React, { memo, useCallback } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import type { PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -31,7 +31,7 @@ type AllTasksTaskRowProps = {
   onOpenNote: (recordId: string) => void;
 };
 
-export const AllTasksTaskRow = React.memo(function AllTasksTaskRow({
+export const AllTasksTaskRow = memo(function AllTasksTaskRow({
   item,
   color,
   openNoteLabel,

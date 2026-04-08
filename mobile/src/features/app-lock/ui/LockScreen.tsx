@@ -137,7 +137,7 @@ export const LockScreen = () => {
     ? Math.max(1, Math.ceil((pinLockout.lockoutUntil - lockoutNow) / 1000))
     : 0;
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!isLockedOut) {
       return;
     }

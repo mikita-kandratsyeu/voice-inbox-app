@@ -1,5 +1,5 @@
 import { CheckCircle2, Clock, ListChecks, Pin } from 'lucide-react-native';
-import React from 'react';
+import React, { memo, useContext } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { Pressable } from 'react-native-gesture-handler';
@@ -22,7 +22,7 @@ type RecordCardProps = {
   hideAccessibilitySubtree?: boolean;
 };
 
-export const RecordCard = React.memo(function RecordCard({
+export const RecordCard = memo(function RecordCard({
   item,
   color,
   folderAccentColor,
@@ -33,7 +33,7 @@ export const RecordCard = React.memo(function RecordCard({
   hideAccessibilitySubtree = false,
 }: RecordCardProps) {
   const { i18n, t } = useTranslation();
-  const { isSwiping } = React.useContext(SwipeableCardContext);
+  const { isSwiping } = useContext(SwipeableCardContext);
   const cardStyle = {
     shadowColor: color.shadow.color,
     shadowOffset: { width: 0, height: 1 },

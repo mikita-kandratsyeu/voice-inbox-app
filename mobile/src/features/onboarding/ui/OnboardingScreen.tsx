@@ -10,7 +10,7 @@ import {
   UploadCloud,
   Zap,
 } from 'lucide-react-native';
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -250,7 +250,7 @@ const AnimatedSlideIcon = ({
   const scale = useSharedValue(1);
   const IconComponent = ICON_MAP[iconName];
 
-  React.useEffect(() => {
+  useEffect(() => {
     scale.value = withRepeat(
       withSequence(withTiming(1.08, { duration: 1200 }), withTiming(1, { duration: 1200 })),
       -1,
@@ -385,7 +385,7 @@ const PermissionsSlide = ({
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
   const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     checkMicPermission().then(setMicStatus);
     if (IS_IOS) {
       checkPushPermission().then(setPushStatus);
@@ -809,7 +809,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const existingRecords = useRecordStore((s) => s.records);
   const addRecord = useRecordStore((s) => s.addRecord);
 
-  React.useEffect(() => {
+  useEffect(() => {
     screenWidth.value = windowWidth;
   }, [windowWidth, screenWidth]);
 

@@ -1,5 +1,5 @@
 import { Archive, ArchiveRestore, Pin, PinOff } from 'lucide-react-native';
-import React from 'react';
+import React, { memo, useState } from 'react';
 import type { PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -33,7 +33,7 @@ type SwipeableCardProps = {
   onPin: () => void;
 };
 
-export const SwipeableCard = React.memo(function SwipeableCard({
+export const SwipeableCard = memo(function SwipeableCard({
   children,
   isPinned = false,
   leftAction,
@@ -43,7 +43,7 @@ export const SwipeableCard = React.memo(function SwipeableCard({
   const color = useColors();
   const translateX = useSharedValue(0);
   const action = useSharedValue<SwipeAction>('none');
-  const [isSwiping, setIsSwiping] = React.useState(false);
+  const [isSwiping, setIsSwiping] = useState(false);
 
   const collapseOpacity = useSharedValue(1);
 
