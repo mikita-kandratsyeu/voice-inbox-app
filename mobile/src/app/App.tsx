@@ -22,7 +22,12 @@ import { AppRatingPromptRoot } from '@/features/app-review';
 import { OnboardingGate } from '@/features/onboarding';
 import { useResetAccentWhenNotPro } from '@/features/pro-license';
 import { TranscriptionKeepAwake, TranscriptionResumePrompt } from '@/features/transcription';
-import { useAppTheme, useColors } from '@/shared/config';
+import {
+  BootSplashVisibleProvider,
+  useAppTheme,
+  useBootSplashVisible,
+  useColors,
+} from '@/shared/config';
 import { i18n, NetworkStatusProvider } from '@/shared/lib';
 import { logAnalyticsScreenView } from '@/shared/lib/analytics';
 import {
@@ -38,12 +43,26 @@ import { navigationRef } from './navigation/navigationRef';
 import { RootNavigator } from './navigation/RootNavigator';
 
 const App = () => {
+  const [bootSplashVisible, setBootSplashVisible] = useState(true);
+
+  return (
+    <BootSplashVisibleProvider value={bootSplashVisible}>
+      <AppShell setBootSplashVisible={setBootSplashVisible} />
+    </BootSplashVisibleProvider>
+  );
+};
+
+type AppShellProps = {
+  setBootSplashVisible: (visible: boolean) => void;
+};
+
+const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
   const theme = useAppTheme();
   const color = useColors();
+  const bootSplashVisible = useBootSplashVisible();
 
   const isDark = theme === 'dark';
 
-  const [bootSplashVisible, setBootSplashVisible] = useState(true);
   const [bootstrapReady, setBootstrapReady] = useState(false);
   const routeNameRef = useRef<string | undefined>(undefined);
 
@@ -57,7 +76,7 @@ const App = () => {
 
   const onBootSplashAnimationEnd = useCallback(() => {
     setBootSplashVisible(false);
-  }, []);
+  }, [setBootSplashVisible]);
 
   const onCriticalError = useCallback((_kind: BootstrapCriticalError) => {
     Alert.alert(i18n.t('bootstrap.dbErrorTitle'), i18n.t('bootstrap.dbErrorMessage'), [
@@ -72,7 +91,7 @@ const App = () => {
   useYandexMobileAdsInit();
   useAppBootstrap(onPushData, { onBootstrapReady, onCriticalError });
   useAppForegroundLifecycle();
-  useResetAccentWhenNotPro();
+  useResetAccentWhenNotPro({ enabled: !bootSplashVisible });
 
   const rootStyle = { flex: 1 };
   const safeAreaStyle = { backgroundColor: color.background.primary };

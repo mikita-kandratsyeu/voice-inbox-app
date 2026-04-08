@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 import { AdRequestConfiguration, RewardedAdLoader } from 'yandex-mobile-ads';
 
 import { useProEntitlement } from '@/features/pro-license';
+import { useBootSplashVisible } from '@/shared/config';
 import { getYandexRewardedAdUnitId } from '@/shared/config/runtimeConfig';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { claimAiBonus } from '@/shared/lib/ai-api';
@@ -125,6 +126,7 @@ function logRewardedAdDebug(phase: 'loadAd' | 'showAd', err: unknown): void {
 
 export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
   const { isProActive } = useProEntitlement();
+  const bootSplashVisible = useBootSplashVisible();
   const [loading, setLoading] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(readPersistedCooldownUntil);
   const [error, setError] = useState<string | null>(null);
@@ -282,6 +284,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
   }, [cooldownUntil]);
 
   useEffect(() => {
+    if (bootSplashVisible) return;
     if (isProActive) return;
     if (cooldownUntil != null) return;
     if (loading) return;
@@ -294,7 +297,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
       void preloadAd();
     }, 800);
     return () => clearTimeout(id);
-  }, [cooldownUntil, error, isProActive, loading, preloadAd]);
+  }, [bootSplashVisible, cooldownUntil, error, isProActive, loading, preloadAd]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {

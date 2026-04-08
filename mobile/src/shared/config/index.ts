@@ -1,3 +1,4 @@
+export { BootSplashVisibleProvider, useBootSplashVisible } from './bootSplashThemeContext';
 export type { AccentColorId, Colors, ColorScheme } from './colors';
 export {
   ACCENT_COLOR_IDS,

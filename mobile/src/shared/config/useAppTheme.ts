@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 import { useSettingsStore } from '@/entities/settings';
 import { useProEntitlement } from '@/features/pro-license';
 
+import { useBootSplashVisible } from './bootSplashThemeContext';
 import type { Colors, ColorScheme } from './colors';
 import { DEFAULT_ACCENT_COLOR_ID, getColors, privateModeColors } from './colors';
 
@@ -28,8 +29,9 @@ export function useColors(): Colors {
   const accentColorId = useSettingsStore((s) => s.accentColorId);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const { isProActive } = useProEntitlement();
+  const bootSplashVisible = useBootSplashVisible();
 
-  const resolvedAccent = isProActive ? accentColorId : DEFAULT_ACCENT_COLOR_ID;
+  const resolvedAccent = bootSplashVisible || isProActive ? accentColorId : DEFAULT_ACCENT_COLOR_ID;
 
   return useMemo(
     () =>
