@@ -21,7 +21,9 @@
     "postinstall": "patch-package",
     "prepare": "husky",
     "start": "APP_ENV=development react-native start",
-    "test": "jest"
+    "test": "jest",
+    "analyze:bundle": "node scripts/analyze-bundle.mjs",
+    "analyze:bundle:android": "node scripts/analyze-bundle.mjs android"
   },
   "dependencies": {
     "@gorhom/bottom-sheet": "^5.2.8",
@@ -128,6 +130,7 @@
     "react-native-dotenv": "^3.4.11",
     "react-test-renderer": "19.2.3",
     "sharp": "^0.33.5",
+    "source-map-explorer": "^2.5.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.3"
   },

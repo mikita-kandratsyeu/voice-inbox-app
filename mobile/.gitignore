@@ -66,6 +66,9 @@ yarn-error.log
 # testing
 /coverage
 
+# Local JS bundle analysis (yarn analyze:bundle)
+/reports/
+
 # Env
 .env
 .env.local
