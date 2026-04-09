@@ -144,7 +144,6 @@ type AnswerContentProps = {
   answer: string;
   onCopy: (text: string) => void;
   onShare: (text: string, title: string) => void;
-  onAskAnother: () => void;
   onFollowUpQuestion: (question: string) => void;
 };
 const AnswerContent = ({
@@ -155,7 +154,6 @@ const AnswerContent = ({
   answer,
   onCopy,
   onShare,
-  onAskAnother,
   onFollowUpQuestion,
 }: AnswerContentProps) => {
   const { t } = useTranslation();
@@ -225,13 +223,6 @@ const AnswerContent = ({
           </Text>
         </TouchableOpacity>
       </View>
-      <Button
-        variant="secondary"
-        size="lg"
-        label={t('recordingDetail.askAnother')}
-        color={color}
-        onPress={onAskAnother}
-      />
       <View className="gap-2">
         <Text className="text-sm font-semibold" style={{ color: color.text.secondary }}>
           {t('recordingDetail.nextSteps')}
@@ -390,7 +381,6 @@ export const AskAIScreen = () => {
   const [questionInput, setQuestionInput] = useState('');
   const {
     askQuestion,
-    askAnother,
     isLoading,
     error,
     question,
@@ -519,7 +509,6 @@ export const AskAIScreen = () => {
           answer={answer}
           onCopy={handleCopy}
           onShare={handleShare}
-          onAskAnother={askAnother}
           onFollowUpQuestion={handleSuggestedQuestion}
         />
       );
@@ -551,7 +540,6 @@ export const AskAIScreen = () => {
     handleSuggestedQuestion,
     handleCopy,
     handleShare,
-    askAnother,
   ]);
 
   const shouldShowInputRow = hasTranscript && !isLoading;
