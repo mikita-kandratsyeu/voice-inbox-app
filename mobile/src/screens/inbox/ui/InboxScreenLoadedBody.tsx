@@ -4,10 +4,13 @@ import { Folder, Search, X } from 'lucide-react-native';
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { TextInput, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 
 import {
+  FLOAT_TAB_IOS_SHADOW_OFFSET_Y,
+  FLOAT_TAB_IOS_SHADOW_RADIUS,
+  floatingTabBarShadowOpacity,
   getFloatingTabBarScrollPaddingBottom,
   getInboxBatchModeScrollPaddingBottom,
 } from '@/app/navigation/config';
@@ -19,9 +22,15 @@ import type {
 } from '@/features/inbox-filters';
 import { INBOX_FILTER_BAR_FALLBACK_HEIGHT, InboxFilterBar } from '@/features/inbox-filters';
 import type { Colors } from '@/shared/config';
-import { IS_IOS } from '@/shared/lib';
+import { IS_IOS, withAlphaHex } from '@/shared/lib';
 import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
-import { Button, EmptyState, getInputFieldInputStyle, SwipeHintBanner } from '@/shared/ui';
+import {
+  Button,
+  EmptyState,
+  FrostedChromeBackground,
+  getInputFieldInputStyle,
+  SwipeHintBanner,
+} from '@/shared/ui';
 
 import type { FlattenedItem } from '../lib/inboxScreenTypes';
 import { EmptySearchState } from './EmptySearchState';
@@ -66,7 +75,16 @@ function StickySearchBar({
   };
 
   return (
-    <View>
+    <View
+      style={{
+        backgroundColor: 'transparent',
+        shadowColor: color.shadow.color,
+        shadowOffset: { width: 0, height: -FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
+        shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
+        shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
+        elevation: 8,
+      }}
+    >
       <View
         pointerEvents="none"
         style={{
@@ -75,14 +93,25 @@ function StickySearchBar({
           right: 0,
           top: 0,
           bottom: -insetsBottom,
-          backgroundColor: color.background.primary,
+          overflow: 'hidden',
+        }}
+      >
+        <FrostedChromeBackground />
+      </View>
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: 0,
+          height: StyleSheet.hairlineWidth,
+          backgroundColor: withAlphaHex(color.border.default, 0.45),
         }}
       />
       <View
         style={{
-          backgroundColor: color.background.primary,
-          borderTopWidth: 1,
-          borderTopColor: color.border.default,
+          backgroundColor: 'transparent',
           paddingHorizontal: 16,
           paddingTop: 14,
           paddingBottom: 14,
