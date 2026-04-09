@@ -33,7 +33,7 @@ import {
   isRevenueCatStoreBillingConfigured,
   isStoreProEntitlementActiveNow,
 } from '../lib/isStoreProEntitlementActive';
-import { setProExpiresAtMsSync } from '../lib/proEntitlementStorage';
+import { setProServerExpiresAtMsSync } from '../lib/proEntitlementStorage';
 import {
   formatProOfferCodeDisplay,
   isCompleteProOfferCode,
@@ -226,7 +226,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
     if (result.ok) {
       const ms = dayjs(result.expiresAt).valueOf();
       if (Number.isFinite(ms)) {
-        setProExpiresAtMsSync(ms);
+        setProServerExpiresAtMsSync(ms);
       }
       setOfferCodeCompact('');
       onActivated();

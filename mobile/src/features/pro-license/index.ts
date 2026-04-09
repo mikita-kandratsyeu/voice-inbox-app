@@ -5,7 +5,7 @@ export {
 export {
   clearProEntitlementSync,
   getProExpiresAtMsSync,
-  setProExpiresAtMsSync,
+  setProServerExpiresAtMsSync,
 } from './lib/proEntitlementStorage';
 export { syncProLicenseFromServer } from './lib/syncProLicenseFromServer';
 export type { ProEntitlementRefreshOptions } from './model/useProEntitlement';

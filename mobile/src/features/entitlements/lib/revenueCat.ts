@@ -8,9 +8,9 @@ import type {
 import Purchases, { PURCHASES_ERROR_CODE } from 'react-native-purchases';
 
 import {
-  clearProEntitlementSync,
+  clearProRcEntitlementSync,
   isProActiveFromStorageSync,
-  setProExpiresAtMsSync,
+  setProRcExpiresAtMsSync,
 } from '@/features/pro-license/lib/proEntitlementStorage';
 import { syncProLicenseFromServer } from '@/features/pro-license/lib/syncProLicenseFromServer';
 import {
@@ -76,19 +76,19 @@ function applyCustomerInfoToProStorage(info: CustomerInfo): void {
     const ms = ent.expirationDateMillis;
 
     if (ms != null && Number.isFinite(ms) && ms > Date.now()) {
-      setProExpiresAtMsSync(ms);
+      setProRcExpiresAtMsSync(ms);
       return;
     }
 
     if (ent.expirationDate == null) {
-      setProExpiresAtMsSync(new Date('2100-01-01T00:00:00.000Z').getTime());
+      setProRcExpiresAtMsSync(new Date('2100-01-01T00:00:00.000Z').getTime());
       return;
     }
 
     return;
   }
 
-  clearProEntitlementSync();
+  clearProRcEntitlementSync();
 }
 
 type CustomerInfoSyncOptions = {

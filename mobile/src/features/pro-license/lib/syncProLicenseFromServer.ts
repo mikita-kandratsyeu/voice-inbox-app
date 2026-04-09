@@ -6,7 +6,11 @@ import {
 import { fetchProLicenseStatus } from '@/shared/lib/ai-api/proLicenseApi';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 
-import { clearProEntitlementSync, setProExpiresAtMsSync } from './proEntitlementStorage';
+import {
+  clearProEntitlementSync,
+  clearProServerEntitlementSync,
+  setProServerExpiresAtMsSync,
+} from './proEntitlementStorage';
 import { PRO_LICENSE_MIN_ATTEMPT_MS, PRO_LICENSE_MIN_BACKGROUND_FETCH_MS } from './syncIntervals';
 
 function isRevenueCatIapConfigured(): boolean {
@@ -53,10 +57,11 @@ export function syncProLicenseFromServer(force: boolean): Promise<void> {
     if (status.active && status.expiresAt) {
       const ms = new Date(status.expiresAt).getTime();
       if (Number.isFinite(ms) && ms > Date.now()) {
-        setProExpiresAtMsSync(ms);
+        setProServerExpiresAtMsSync(ms);
       } else if (!isRevenueCatIapConfigured()) {
         clearProEntitlementSync();
       } else {
+        clearProServerEntitlementSync();
         const { refreshProEntitlementFromRevenueCatOnly } =
           await import('@/features/entitlements/lib/revenueCat');
         await refreshProEntitlementFromRevenueCatOnly();
@@ -64,6 +69,7 @@ export function syncProLicenseFromServer(force: boolean): Promise<void> {
     } else if (!isRevenueCatIapConfigured()) {
       clearProEntitlementSync();
     } else {
+      clearProServerEntitlementSync();
       const { refreshProEntitlementFromRevenueCatOnly } =
         await import('@/features/entitlements/lib/revenueCat');
       await refreshProEntitlementFromRevenueCatOnly();

@@ -3,13 +3,16 @@ import { AppState } from 'react-native';
 
 import { storage } from '@/shared/lib/async-storage';
 
-import { getProExpiresAtMsSync, PRO_ENTITLEMENT_STORAGE_KEY } from '../lib/proEntitlementStorage';
+import {
+  getProExpiresAtMsSync,
+  proEntitlementStorageKeyAffectsEntitlement,
+} from '../lib/proEntitlementStorage';
 import { PRO_LICENSE_MIN_FOREGROUND_REFRESH_MS } from '../lib/syncIntervals';
 import { syncProLicenseFromServer } from '../lib/syncProLicenseFromServer';
 
 function subscribeStorage(callback: () => void): () => void {
   const sub = storage.addOnValueChangedListener((key) => {
-    if (key === PRO_ENTITLEMENT_STORAGE_KEY) {
+    if (proEntitlementStorageKeyAffectsEntitlement(key)) {
       callback();
     }
   });
