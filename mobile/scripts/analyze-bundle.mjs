@@ -17,7 +17,6 @@
  *   reports/bundle-<platform>.html   — open in a browser
  *   reports/bundle-top.txt           — paste into chat / @-mention in Cursor
  */
-
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -153,8 +152,7 @@ function fileSize(fileVal) {
 }
 
 const platform = parsePlatform();
-const minify =
-  process.env.ANALYZE_MINIFY === '1' || process.env.ANALYZE_MINIFY === 'true';
+const minify = process.env.ANALYZE_MINIFY === '1' || process.env.ANALYZE_MINIFY === 'true';
 fs.mkdirSync(reportsDir, { recursive: true });
 
 const bundleFile = `main.${platform}.jsbundle`;
@@ -165,10 +163,13 @@ const topPath = path.join(reportsDir, 'bundle-top.txt');
 
 const npx = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 
+// eslint-disable-next-line no-console
 console.log(`[analyze-bundle] platform=${platform}`);
+// eslint-disable-next-line no-console
 console.log(
   `[analyze-bundle] minify=${minify} (set ANALYZE_MINIFY=1 for prod-like minify; may break source-map-explorer)`,
 );
+// eslint-disable-next-line no-console
 console.log(`[analyze-bundle] writing bundle + map → reports/${bundleFile}(.map)`);
 
 run(npx, [
@@ -197,8 +198,9 @@ const lines = [
   `Generated: ${new Date().toISOString()}`,
   '',
 ];
-
+// eslint-disable-next-line no-console
 console.log('[analyze-bundle] generating HTML treemap…');
+
 htmlGenerated = runAllowFail(npx, ['source-map-explorer', ...smeArgsBase, '--html', htmlPath]);
 
 if (htmlGenerated) {
@@ -210,7 +212,9 @@ if (htmlGenerated) {
   lines.push('');
 }
 
+// eslint-disable-next-line no-console
 console.log('[analyze-bundle] collecting JSON for top modules…');
+
 const jsonRaw = runCaptureAllowFail(npx, ['source-map-explorer', ...smeArgsBase, '--json']);
 
 if (jsonRaw.trim()) {
@@ -259,10 +263,14 @@ if (jsonRaw.trim()) {
 
 fs.writeFileSync(topPath, `${lines.join('\n')}\n`, 'utf8');
 
+// eslint-disable-next-line no-console
 console.log('');
+// eslint-disable-next-line no-console
 console.log(`[analyze-bundle] done → ${path.relative(mobileRoot, topPath)}`);
 if (htmlGenerated) {
+  // eslint-disable-next-line no-console
   console.log(`[analyze-bundle] done → ${path.relative(mobileRoot, htmlPath)}`);
 } else {
+  // eslint-disable-next-line no-console
   console.log('[analyze-bundle] treemap was not generated (see warnings above).');
 }
