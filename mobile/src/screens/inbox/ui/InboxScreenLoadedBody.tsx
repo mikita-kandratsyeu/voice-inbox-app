@@ -1,9 +1,11 @@
 import type { FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
-import { Folder } from 'lucide-react-native';
-import React, { memo, useCallback, useMemo, useState } from 'react';
+import { Folder, Search, X } from 'lucide-react-native';
+import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { KeyboardAvoidingView, View } from 'react-native';
+import { TextInput, TouchableOpacity, View } from 'react-native';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
 
 import {
   getFloatingTabBarScrollPaddingBottom,
@@ -16,14 +18,148 @@ import type {
   InboxSortOption,
 } from '@/features/inbox-filters';
 import { INBOX_FILTER_BAR_FALLBACK_HEIGHT, InboxFilterBar } from '@/features/inbox-filters';
-import { SearchBar } from '@/features/search-records';
 import type { Colors } from '@/shared/config';
-import { keyboardAvoidingBehavior, keyboardVerticalOffset } from '@/shared/lib';
-import { EmptyState, SwipeHintBanner } from '@/shared/ui';
+import { IS_IOS } from '@/shared/lib';
+import { iosHitSlopForVisualSize } from '@/shared/lib/iosTouchTarget';
+import { Button, EmptyState, getInputFieldInputStyle, SwipeHintBanner } from '@/shared/ui';
 
 import type { FlattenedItem } from '../lib/inboxScreenTypes';
 import { EmptySearchState } from './EmptySearchState';
 import { InboxSkeleton } from './InboxSkeleton';
+
+type StickySearchBarProps = {
+  query: string;
+  onChangeQuery: (text: string) => void;
+  color: Colors;
+  focusSignal: number;
+  insetsBottom: number;
+  onClose: () => void;
+  onFocus: () => void;
+  onBlur: () => void;
+  focused: boolean;
+};
+
+function StickySearchBar({
+  query,
+  onChangeQuery,
+  color,
+  focusSignal,
+  insetsBottom,
+  onClose,
+  onFocus,
+  onBlur,
+  focused,
+}: StickySearchBarProps) {
+  const { t } = useTranslation();
+  const inputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    if (focusSignal <= 0) return;
+    const id = requestAnimationFrame(() => inputRef.current?.focus());
+
+    return () => cancelAnimationFrame(id);
+  }, [focusSignal]);
+
+  const handleClear = () => {
+    onChangeQuery('');
+    inputRef.current?.focus();
+  };
+
+  return (
+    <View>
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          top: 0,
+          bottom: -insetsBottom,
+          backgroundColor: color.background.primary,
+        }}
+      />
+      <View
+        style={{
+          backgroundColor: color.background.primary,
+          borderTopWidth: 1,
+          borderTopColor: color.border.default,
+          paddingHorizontal: 16,
+          paddingTop: 14,
+          paddingBottom: 14,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            backgroundColor: color.background.tertiary,
+            borderRadius: 12,
+            paddingHorizontal: 12,
+            paddingVertical: IS_IOS ? 10 : 8,
+            borderWidth: 1,
+            borderColor: focused ? color.accent.primary : color.border.default,
+          }}
+        >
+          <Search
+            size={16}
+            color={focused || query ? color.accent.primary : color.icon.muted}
+            strokeWidth={2}
+          />
+          <TextInput
+            ref={inputRef}
+            style={[getInputFieldInputStyle(color), { flex: 1 }]}
+            placeholder={t('search.placeholder')}
+            placeholderTextColor={color.text.secondary}
+            value={query}
+            onChangeText={onChangeQuery}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            returnKeyType="search"
+            clearButtonMode="never"
+            autoCapitalize="none"
+          />
+          {query.length > 0 && (
+            <TouchableOpacity
+              onPress={handleClear}
+              hitSlop={iosHitSlopForVisualSize(16, 16)}
+              activeOpacity={0.7}
+            >
+              <View
+                style={{
+                  width: 16,
+                  height: 16,
+                  borderRadius: 8,
+                  backgroundColor: color.icon.muted,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <X size={10} color={color.background.primary} strokeWidth={2.5} />
+              </View>
+            </TouchableOpacity>
+          )}
+        </View>
+        <Button
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<X size={22} color={color.text.secondary} strokeWidth={2.2} />}
+          color={color}
+          onPress={() => {
+            onChangeQuery('');
+            onClose();
+          }}
+          accessibilityLabel={t('search.a11yHide')}
+        />
+      </View>
+    </View>
+  );
+}
 
 type InboxScreenLoadedBodyProps = {
   color: Colors;
@@ -103,6 +239,11 @@ function InboxScreenLoadedBodyInner({
   showInboxScrollResetSkeleton,
 }: InboxScreenLoadedBodyProps) {
   const [filterBarHeight, setFilterBarHeight] = useState(INBOX_FILTER_BAR_FALLBACK_HEIGHT);
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  useEffect(() => {
+    if (!showInboxSearchBar) setSearchFocused(false);
+  }, [showInboxSearchBar]);
 
   const handleFilterBarLayout = useCallback((e: LayoutChangeEvent) => {
     setFilterBarHeight(e.nativeEvent.layout.height);
@@ -130,12 +271,10 @@ function InboxScreenLoadedBodyInner({
     );
   }, [batchSelect.isSelectMode, onDismissSwipeHint, showInboxSearchBar, showSwipeHint]);
 
+  const stickyClosedOffset = insetsBottom;
+
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: color.background.secondary }}
-      behavior={keyboardAvoidingBehavior}
-      keyboardVerticalOffset={keyboardVerticalOffset}
-    >
+    <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <View
         style={{
           flex: 1,
@@ -150,16 +289,6 @@ function InboxScreenLoadedBodyInner({
               : 0,
         }}
       >
-        {showInboxSearchBar && (
-          <SearchBar
-            query={query}
-            onChangeQuery={onChangeQuery}
-            color={color}
-            variant="compact"
-            focusSignal={searchFocusSignal}
-            onCleared={onSearchCleared}
-          />
-        )}
         <View style={{ flex: 1, position: 'relative' }}>
           {!batchSelect.isSelectMode && (
             <View
@@ -233,6 +362,7 @@ function InboxScreenLoadedBodyInner({
                 contentContainerStyle={mergedListContentStyle}
                 style={[listStyle, { flex: 1 }]}
                 showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
                 extraData={batchSelect.selectedIds}
                 ListHeaderComponent={swipeListHeader}
                 maintainVisibleContentPosition={{ disabled: true }}
@@ -258,7 +388,25 @@ function InboxScreenLoadedBodyInner({
           )}
         </View>
       </View>
-    </KeyboardAvoidingView>
+      {showInboxSearchBar && (
+        <KeyboardStickyView
+          offset={{ closed: -stickyClosedOffset, opened: 0 }}
+          style={{ position: 'absolute', left: 0, right: 0, bottom: 0 }}
+        >
+          <StickySearchBar
+            query={query}
+            onChangeQuery={onChangeQuery}
+            color={color}
+            focusSignal={searchFocusSignal}
+            insetsBottom={insetsBottom}
+            onClose={onSearchCleared}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            focused={searchFocused}
+          />
+        </KeyboardStickyView>
+      )}
+    </View>
   );
 }
 

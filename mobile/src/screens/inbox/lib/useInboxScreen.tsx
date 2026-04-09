@@ -514,7 +514,7 @@ export function useInboxScreen() {
       });
     };
 
-    if (batchSelect.isSelectMode && isInboxTabFocused) {
+    if ((batchSelect.isSelectMode || showInboxSearchBar) && isInboxTabFocused) {
       tabNav.setOptions({
         tabBarStyle: { display: 'none' },
       });
@@ -525,6 +525,7 @@ export function useInboxScreen() {
     return restoreTabBar;
   }, [
     batchSelect.isSelectMode,
+    showInboxSearchBar,
     isInboxTabFocused,
     navigation,
     insets,
