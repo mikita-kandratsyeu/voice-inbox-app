@@ -107,31 +107,103 @@ const ErrorState = ({ color, onRetry, showPrivateModeCta = false }: ErrorStatePr
   );
 };
 
-type AnswerBlockProps = {
+function formatAskTurnForClipboard(question: string, answer: string): string {
+  const q = question.trim();
+
+  if (!q) return answer;
+
+  return `${q}\n\n${answer}`;
+}
+
+function formatAskTurnForShare(question: string, answer: string, recordTitle: string): string {
+  return `${formatAskTurnForClipboard(question, answer)}\n\n— ${recordTitle}`;
+}
+
+type AnswerTurnBlockProps = {
   color: Colors;
   question: string;
   answer: string;
-  showLabel?: boolean;
+  recordTitle: string;
+  showDivider: boolean;
+  onCopy: (text: string) => void;
+  onShare: (text: string, title: string) => void;
 };
-const AnswerBlock = ({ color, question, answer, showLabel = true }: AnswerBlockProps) => {
+const AnswerTurnBlock = ({
+  color,
+  question,
+  answer,
+  recordTitle,
+  showDivider,
+  onCopy,
+  onShare,
+}: AnswerTurnBlockProps) => {
   const { t } = useTranslation();
+  const clipboardText = formatAskTurnForClipboard(question, answer);
+  const shareText = formatAskTurnForShare(question, answer, recordTitle);
+
   return (
-    <View className="gap-2 pb-4">
-      {question && (
+    <View
+      className="gap-2 pb-4"
+      style={
+        showDivider
+          ? {
+              marginBottom: 16,
+              paddingBottom: 16,
+              borderBottomWidth: 1,
+              borderBottomColor: color.border.default,
+            }
+          : undefined
+      }
+    >
+      {question.trim() ? (
         <View className="gap-1">
-          {showLabel && (
-            <Text className="text-sm font-semibold" style={{ color: color.text.secondary }}>
-              {t('recordingDetail.ask')}
-            </Text>
-          )}
+          <Text className="text-sm font-semibold" style={{ color: color.text.secondary }}>
+            {t('recordingDetail.ask')}
+          </Text>
           <Text className="text-base leading-6" style={{ color: color.text.primary }}>
             {question}
           </Text>
         </View>
-      )}
+      ) : null}
       <Text className="text-base leading-7" style={{ color: color.text.primary }}>
         {answer}
       </Text>
+      <View className="mt-1 flex-row flex-wrap gap-2">
+        <TouchableOpacity
+          onPress={() => {
+            hapticSelection();
+            onCopy(clipboardText);
+          }}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={t('recordingDetail.askCopyThisTurn')}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          className="flex-row items-center gap-2 rounded-xl px-3 py-2"
+          style={{ backgroundColor: color.background.tertiary }}
+        >
+          <Copy size={17} color={color.text.primary} strokeWidth={2} />
+          <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
+            {t('recordingDetail.askCopy')}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            hapticSelection();
+            onShare(shareText, recordTitle);
+          }}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={t('recordingDetail.askShareThisTurn')}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+          className="flex-row items-center gap-2 rounded-xl px-3 py-2"
+          style={{ backgroundColor: color.background.tertiary }}
+        >
+          <Share2 size={17} color={color.text.primary} strokeWidth={2} />
+          <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
+            {t('recordingDetail.askShare')}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -157,8 +229,12 @@ const AnswerContent = ({
   onFollowUpQuestion,
 }: AnswerContentProps) => {
   const { t } = useTranslation();
-  const shareText = `${answer}\n\n— ${record.title}`;
   const followUpQuestions = useMemo(() => buildFollowUpQuestions(t, record), [t, record]);
+
+  const turns = useMemo(
+    () => [...history, { question, answer } satisfies AskAIHistoryItem],
+    [history, question, answer],
+  );
 
   return (
     <View className="gap-4 pb-4">
@@ -174,55 +250,18 @@ const AnswerContent = ({
           {t('recordingDetail.askEmptyTitle')} • {record.title}
         </Text>
       </View>
-      {history.map((item, index) => (
-        <AnswerBlock
-          key={`${index}-${item.question.slice(0, 20)}`}
+      {turns.map((item, index) => (
+        <AnswerTurnBlock
+          key={`${index}-${item.question.slice(0, 24)}`}
           color={color}
           question={item.question}
           answer={item.answer}
-          showLabel={true}
+          recordTitle={record.title}
+          showDivider={index < turns.length - 1}
+          onCopy={onCopy}
+          onShare={onShare}
         />
       ))}
-      <AnswerBlock
-        color={color}
-        question={question}
-        answer={answer}
-        showLabel={history.length > 0}
-      />
-      <View className="flex-row flex-wrap gap-2">
-        <TouchableOpacity
-          onPress={() => {
-            hapticSelection();
-            onCopy(answer);
-          }}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={t('recordingDetail.askCopy')}
-          className="flex-row items-center gap-2 rounded-xl px-4 py-2.5"
-          style={{ backgroundColor: color.background.tertiary }}
-        >
-          <Copy size={18} color={color.text.primary} strokeWidth={2} />
-          <Text className="text-base font-medium" style={{ color: color.text.primary }}>
-            {t('recordingDetail.askCopy')}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          onPress={() => {
-            hapticSelection();
-            onShare(shareText, record.title);
-          }}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={t('recordingDetail.askShare')}
-          className="flex-row items-center gap-2 rounded-xl px-4 py-2.5"
-          style={{ backgroundColor: color.background.tertiary }}
-        >
-          <Share2 size={18} color={color.text.primary} strokeWidth={2} />
-          <Text className="text-base font-medium" style={{ color: color.text.primary }}>
-            {t('recordingDetail.askShare')}
-          </Text>
-        </TouchableOpacity>
-      </View>
       <View className="gap-2">
         <Text className="text-sm font-semibold" style={{ color: color.text.secondary }}>
           {t('recordingDetail.nextSteps')}

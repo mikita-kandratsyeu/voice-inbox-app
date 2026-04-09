@@ -12,7 +12,7 @@ import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 const SKIP_SECONDS = 5;
 const SKIP_HOLD_START_MS = 400;
 const SKIP_REPEAT_MS = 220;
-const PLAYBACK_SPEEDS = [1, 1.25, 1.5, 2, 2.25] as const;
+const PLAYBACK_SPEEDS = [1, 1.25, 1.5, 2] as const;
 
 type AudioPlayerProps = {
   duration: string;
