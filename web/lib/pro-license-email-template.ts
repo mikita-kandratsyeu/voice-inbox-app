@@ -105,7 +105,7 @@ export function buildProLicenseKeyEmail(params: {
     ? `If you did not request this key, contact us at ${support}.`
     : `If you did not request this key, please ignore this message.`;
 
-  const subject = `Your Voice Inbox AI Pro license (${subjectDurationSegment(dur)})`;
+  const subject = `Your Pro license (${subjectDurationSegment(dur)})`;
 
   const phrase = durationPhrasePlain(dur);
   const introPlain = recipient
@@ -117,7 +117,7 @@ export function buildProLicenseKeyEmail(params: {
     '',
     keyDisplay,
     '',
-    'This key activates Voice Inbox AI Pro on one device only. Never share this code with anyone.',
+    'This key activates Pro on one device only. Never share this code with anyone.',
     'To activate: Settings → About → Tap the app icon 8 times.',
     '',
     supportLine,
@@ -189,7 +189,7 @@ export function buildProLicenseKeyEmail(params: {
           <tr>
             <td style="padding:8px 40px 32px 40px;">
               <p style="margin:0;font-size:14px;line-height:1.55;color:#444444;">
-                This key activates Voice Inbox AI Pro <strong>on one device only</strong>. For security, never share it
+                This key activates Pro <strong>on one device only</strong>. For security, never share it
               </p>
               <p style="margin:12px 0 0 0;font-size:14px;line-height:1.55;color:#444444;"><strong>To activate:</strong><br>Settings → About → Tap the app icon 8 times.</p>
             </td>
