@@ -9,29 +9,7 @@ type UseRecordActionsOptions = {
 };
 
 export const useRecordActions = ({ onDeleted }: UseRecordActionsOptions = {}) => {
-  const { deleteRecord, renameRecord } = useRecordStore();
-
-  const promptRename = (record: VoiceRecord) => {
-    Alert.prompt(
-      i18n.t('recordActions.renameTitle'),
-      i18n.t('recordActions.renamePrompt'),
-      [
-        { text: i18n.t('common.cancel'), style: 'cancel' },
-        {
-          text: i18n.t('common.save'),
-          onPress: async (newTitle?: string) => {
-            const trimmed = newTitle?.trim();
-
-            if (trimmed && trimmed !== record.title) {
-              await renameRecord(record.id, trimmed);
-            }
-          },
-        },
-      ],
-      'plain-text',
-      record.title,
-    );
-  };
+  const { deleteRecord } = useRecordStore();
 
   const promptDelete = (record: VoiceRecord) => {
     Alert.alert(
@@ -51,5 +29,5 @@ export const useRecordActions = ({ onDeleted }: UseRecordActionsOptions = {}) =>
     );
   };
 
-  return { promptRename, promptDelete };
+  return { promptDelete };
 };

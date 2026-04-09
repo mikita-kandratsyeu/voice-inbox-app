@@ -37,6 +37,7 @@ import { RecordingDetailTabBar } from './RecordingDetailTabBar';
 import { RelatedNotesSection } from './RelatedNotesSection';
 import { ShareRecordSheet } from './ShareRecordSheet';
 import { SummaryTab } from './SummaryTab';
+import { TaskEditSheet } from './TaskEditSheet';
 import { TasksTab } from './TasksTab';
 import { TranscriptContent } from './TranscriptContent';
 
@@ -65,6 +66,7 @@ export const RecordingDetailScreen = () => {
     unarchiveRecord,
     hydrateRecordDetails,
     setRecordFolder,
+    renameRecord,
   } = useRecordStore(
     useShallow((s) => ({
       liveRecord: s.records.find((r) => r.id === recordId) ?? routeRecord,
@@ -79,6 +81,7 @@ export const RecordingDetailScreen = () => {
       unarchiveRecord: s.unarchiveRecord,
       hydrateRecordDetails: s.hydrateRecordDetails,
       setRecordFolder: s.setRecordFolder,
+      renameRecord: s.renameRecord,
     })),
   );
 
@@ -119,6 +122,7 @@ export const RecordingDetailScreen = () => {
   const [mountedTabs, setMountedTabs] = useState<Set<Tab>>(new Set(['transcript']));
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
   const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
   const { currentPositionMs, onPositionUpdate } = usePlaybackPosition();
   const [recordLanguage, setRecordLanguage] = useState<TranscriptionLanguage>(
     globalTranscriptionLanguage,
@@ -158,7 +162,7 @@ export const RecordingDetailScreen = () => {
   }, [cancelAiGeneration, liveRecord.id]);
   const { shareRecord, shareAudio } = useShareRecord();
   const onDeleted = useCallback(() => navigation.goBack(), [navigation]);
-  const { promptRename, promptDelete } = useRecordActions({ onDeleted });
+  const { promptDelete } = useRecordActions({ onDeleted });
 
   const handleToggleTask = useCallback(
     (taskId: string) => {
@@ -328,7 +332,32 @@ export const RecordingDetailScreen = () => {
   const onAskAI = useCallback(() => {
     navigation.navigate('RecordingAskAI', { record: liveRecord });
   }, [navigation, liveRecord]);
-  const onRename = useCallback(() => promptRename(liveRecord), [liveRecord, promptRename]);
+  const onRename = useCallback(
+    () => setRenameTarget({ id: liveRecord.id, title: liveRecord.title }),
+    [liveRecord.id, liveRecord.title],
+  );
+
+  const renameRecordSheet = useMemo(
+    () => (
+      <TaskEditSheet
+        visible={renameTarget !== null}
+        initialText={renameTarget?.title ?? ''}
+        sheetTitleKey="recordActions.renameTitle"
+        placeholderKey="recordActions.renamePrompt"
+        onClose={() => setRenameTarget(null)}
+        onSave={(text) => {
+          const trimmed = text.trim();
+          if (!renameTarget) return false;
+          if (trimmed === renameTarget.title) return true;
+
+          void renameRecord(renameTarget.id, trimmed);
+
+          return true;
+        }}
+      />
+    ),
+    [renameRecord, renameTarget],
+  );
   const onArchive = useCallback(() => archiveRecord(liveRecord.id), [liveRecord.id, archiveRecord]);
   const onUnarchive = useCallback(
     () => unarchiveRecord(liveRecord.id),
@@ -398,6 +427,7 @@ export const RecordingDetailScreen = () => {
         onShareText={handleShare}
         onShareAudio={handleShareAudio}
       />
+      {renameRecordSheet}
       {!isPrivateMode && (
         <FolderPickerSheet
           visible={folderPickerVisible}

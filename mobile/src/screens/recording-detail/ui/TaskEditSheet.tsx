@@ -21,9 +21,18 @@ type TaskEditSheetProps = {
   initialText: string;
   onClose: () => void;
   onSave: (text: string) => boolean;
+  sheetTitleKey?: string;
+  placeholderKey?: string;
 };
 
-export function TaskEditSheet({ visible, initialText, onClose, onSave }: TaskEditSheetProps) {
+export function TaskEditSheet({
+  visible,
+  initialText,
+  onClose,
+  onSave,
+  sheetTitleKey = 'tasks.editTaskSheetTitle',
+  placeholderKey = 'recordingDetail.addTaskPlaceholder',
+}: TaskEditSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
@@ -86,7 +95,7 @@ export function TaskEditSheet({ visible, initialText, onClose, onSave }: TaskEdi
             className="px-14 text-center text-[17px] font-semibold"
             style={{ color: color.text.primary }}
           >
-            {t('tasks.editTaskSheetTitle')}
+            {t(sheetTitleKey)}
           </Text>
         </View>
         <BottomSheetTextInput
@@ -94,9 +103,9 @@ export function TaskEditSheet({ visible, initialText, onClose, onSave }: TaskEdi
           onChangeText={(text) => setDraft(text.split('\0').join('').slice(0, TASK_TEXT_MAX_CHARS))}
           multiline
           textAlignVertical="top"
-          placeholder={t('recordingDetail.addTaskPlaceholder')}
+          placeholder={t(placeholderKey)}
           placeholderTextColor={color.text.muted}
-          accessibilityLabel={t('tasks.editTaskSheetTitle')}
+          accessibilityLabel={t(sheetTitleKey)}
           className="min-h-[88px] rounded-xl border px-3 py-3 text-[16px] leading-[22px]"
           style={{
             borderColor: color.border.default,
