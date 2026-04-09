@@ -55,6 +55,20 @@ function run(cmd, args, options = {}) {
   }
 }
 
+function runAllowFail(cmd, args, options = {}) {
+  const r = spawnSync(cmd, args, {
+    cwd: mobileRoot,
+    stdio: 'inherit',
+    env: { ...process.env, APP_ENV: 'production', ...options.env },
+    ...options,
+  });
+  if (r.error) {
+    console.warn('[analyze-bundle]', r.error.message);
+    return false;
+  }
+  return r.status === 0;
+}
+
 function runCaptureAllowFail(cmd, args) {
   const r = spawnSync(cmd, args, {
     cwd: mobileRoot,
@@ -72,6 +86,49 @@ function runCaptureAllowFail(cmd, args) {
     return '';
   }
   return r.stdout ?? '';
+}
+
+function toResolvedSourcePath(sourcePath) {
+  if (!sourcePath || typeof sourcePath !== 'string') return null;
+  if (path.isAbsolute(sourcePath)) return sourcePath;
+  return path.resolve(mobileRoot, sourcePath);
+}
+
+function buildTopFromSourceMap(mapPathValue) {
+  try {
+    const raw = fs.readFileSync(mapPathValue, 'utf8');
+    const parsed = JSON.parse(raw);
+    const sources = Array.isArray(parsed?.sources) ? parsed.sources : [];
+    const sourcesContent = Array.isArray(parsed?.sourcesContent) ? parsed.sourcesContent : [];
+    const out = [];
+
+    for (let i = 0; i < sources.length; i += 1) {
+      const p = sources[i];
+      if (typeof p !== 'string' || p.length === 0) continue;
+      const inline = sourcesContent[i];
+      let bytes = 0;
+
+      if (typeof inline === 'string') {
+        bytes = Buffer.byteLength(inline, 'utf8');
+      } else {
+        const resolved = toResolvedSourcePath(p);
+        if (resolved && fs.existsSync(resolved)) {
+          bytes = fs.statSync(resolved).size;
+        }
+      }
+
+      if (bytes > 0) out.push([p, bytes]);
+    }
+
+    out.sort((a, b) => b[1] - a[1]);
+    return out;
+  } catch (e) {
+    console.warn(
+      '[analyze-bundle] could not build source-map fallback:',
+      e instanceof Error ? e.message : String(e),
+    );
+    return [];
+  }
 }
 
 /** @param {unknown} data */
@@ -131,22 +188,30 @@ run(npx, [
   mapPath,
 ]);
 
-const smeArgsBase = [bundlePath, mapPath, '--no-border-check'];
+const smeArgsBase = [bundlePath, mapPath];
 
-console.log('[analyze-bundle] generating HTML treemap…');
-run(npx, ['source-map-explorer', ...smeArgsBase, '--html', htmlPath]);
-
-console.log('[analyze-bundle] collecting JSON for top modules…');
-const jsonRaw = runCaptureAllowFail(npx, ['source-map-explorer', ...smeArgsBase, '--json']);
-
+let htmlGenerated = false;
 const lines = [
   'Voice Inbox mobile — bundle top modules (source-map-explorer, uncompressed mapped sizes)',
   `Platform: ${platform}`,
   `Generated: ${new Date().toISOString()}`,
   '',
-  `Open treemap: mobile/reports/bundle-${platform}.html`,
-  '',
 ];
+
+console.log('[analyze-bundle] generating HTML treemap…');
+htmlGenerated = runAllowFail(npx, ['source-map-explorer', ...smeArgsBase, '--html', htmlPath]);
+
+if (htmlGenerated) {
+  lines.push(`Open treemap: mobile/reports/bundle-${platform}.html`);
+  lines.push('');
+} else {
+  lines.push('Treemap: source-map-explorer failed for this Metro sourcemap.');
+  lines.push('Falling back to sourcemap source-size heuristic below.');
+  lines.push('');
+}
+
+console.log('[analyze-bundle] collecting JSON for top modules…');
+const jsonRaw = runCaptureAllowFail(npx, ['source-map-explorer', ...smeArgsBase, '--json']);
 
 if (jsonRaw.trim()) {
   try {
@@ -178,11 +243,26 @@ if (jsonRaw.trim()) {
     lines.push('Use the HTML report for details.');
   }
 } else {
-  lines.push('No JSON from source-map-explorer; use the HTML report for details.');
+  const fallback = buildTopFromSourceMap(mapPath);
+  if (fallback.length > 0) {
+    const total = fallback.reduce((s, [, n]) => s + n, 0);
+    lines.push(`Fallback total source bytes (sources/sourcesContent): ${formatBytes(total)}`);
+    lines.push('');
+    lines.push('Top source files (heuristic, not mapped bundle attribution):');
+    fallback.slice(0, 80).forEach(([p, size], i) => {
+      lines.push(`${String(i + 1).padStart(3)}. ${formatBytes(size).padStart(12)}  ${p}`);
+    });
+  } else {
+    lines.push('No JSON from source-map-explorer and fallback from sourcemap also failed.');
+  }
 }
 
 fs.writeFileSync(topPath, `${lines.join('\n')}\n`, 'utf8');
 
 console.log('');
 console.log(`[analyze-bundle] done → ${path.relative(mobileRoot, topPath)}`);
-console.log(`[analyze-bundle] done → ${path.relative(mobileRoot, htmlPath)}`);
+if (htmlGenerated) {
+  console.log(`[analyze-bundle] done → ${path.relative(mobileRoot, htmlPath)}`);
+} else {
+  console.log('[analyze-bundle] treemap was not generated (see warnings above).');
+}
