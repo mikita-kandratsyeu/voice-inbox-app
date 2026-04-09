@@ -50,7 +50,11 @@ export const useInboxFilters = () => {
         result = result.filter((r) => Boolean(r.tasks && r.tasks.length > 0));
       } else if (menuFilterStatus === 'processingError') {
         result = result.filter(
-          (r) => r.aiStatus === 'error' || r.summaryStatus === 'error' || r.tasksStatus === 'error',
+          (r) =>
+            r.aiStatus === 'error' ||
+            r.summaryStatus === 'error' ||
+            r.tasksStatus === 'error' ||
+            r.askAiStatus === 'error',
         );
       }
 
