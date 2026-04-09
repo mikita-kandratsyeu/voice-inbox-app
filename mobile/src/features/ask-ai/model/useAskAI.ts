@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import type { VoiceRecord } from '@/entities/record';
+import { useRecordStore, type VoiceRecord } from '@/entities/record';
 import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
 import type { AskPriorTurn } from '@/shared/lib/ai-core';
@@ -37,7 +37,13 @@ const INITIAL_ASK_AI_STATE: AskAIState = {
   privateAskPhase: 'loading_model',
 };
 
-export const useAskAI = (recordId: string, transcript: string) => {
+const askInFlightRecordIds = new Set<string>();
+
+export const useAskAI = (
+  recordId: string,
+  transcript: string,
+  recordForResume?: VoiceRecord | null,
+) => {
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
   const localLlmModelStatuses = useSettingsStore((s) => s.localLlmModelStatuses);
@@ -56,6 +62,12 @@ export const useAskAI = (recordId: string, transcript: string) => {
   const inFlightRef = useRef(false);
   const transcriptFpInvalidateRef = useRef<string | null>(null);
   const loadEpochRef = useRef(0);
+  const recordForResumeRef = useRef<VoiceRecord | null>(null);
+  recordForResumeRef.current = recordForResume ?? null;
+
+  const askQuestionRef = useRef<
+    (record: VoiceRecord, question: string, priorTurns?: AskPriorTurn[]) => Promise<void>
+  >(() => Promise.resolve());
 
   useEffect(() => {
     if (!transcript.trim()) return;
@@ -73,51 +85,43 @@ export const useAskAI = (recordId: string, transcript: string) => {
     loadEpochRef.current += 1;
     setState(INITIAL_ASK_AI_STATE);
     void clearAskAiSession(recordId);
+    useRecordStore.getState().setAskAiStatus(recordId, undefined);
   }, [recordId, transcript]);
 
-  useEffect(() => {
-    const epochAtStart = loadEpochRef.current;
-    let cancelled = false;
-    void (async () => {
-      const restored = await loadAskAiSession(recordId, transcript);
-      if (cancelled || epochAtStart !== loadEpochRef.current) return;
-      if (!restored) return;
-      setState((s) => ({
-        ...s,
-        history: restored.history,
-        question: restored.question,
-        answer: restored.answer,
-        error: restored.error,
-        isLoading: false,
-        privateAskProgress: 0,
-        privateAskPhase: 'loading_model',
-      }));
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [recordId, transcript]);
+  const syncAskSessionFromDb = useCallback(async () => {
+    const trimmed = transcript.trim();
+    if (!trimmed) return;
 
-  useEffect(() => {
-    const t = setTimeout(() => {
-      void saveAskAiSession(recordId, transcript, {
-        history: state.history,
-        question: state.question,
-        answer: state.answer,
-        error: state.error,
-        isLoading: state.isLoading,
-      });
-    }, 400);
-    return () => clearTimeout(t);
-  }, [
-    recordId,
-    transcript,
-    state.history,
-    state.question,
-    state.answer,
-    state.error,
-    state.isLoading,
-  ]);
+    const restored = await loadAskAiSession(recordId, transcript);
+    if (!restored) return;
+
+    setState((s) => {
+      if (
+        s.isLoading &&
+        restored.question &&
+        s.question === restored.question &&
+        !restored.pendingAsk &&
+        (Boolean(restored.answer?.trim()) || restored.error)
+      ) {
+        queueMicrotask(() => {
+          const { setAskAiStatus } = useRecordStore.getState();
+          if (restored.error?.trim()) setAskAiStatus(recordId, 'error');
+          else setAskAiStatus(recordId, undefined);
+        });
+        return {
+          ...s,
+          history: restored.history,
+          question: restored.question,
+          answer: restored.answer,
+          error: restored.error,
+          isLoading: false,
+          privateAskProgress: 0,
+          privateAskPhase: 'loading_model',
+        };
+      }
+      return s;
+    });
+  }, [recordId, transcript]);
 
   const askQuestion = useCallback(
     async (
@@ -127,16 +131,19 @@ export const useAskAI = (recordId: string, transcript: string) => {
     ): Promise<void> => {
       if (!record.transcript || !question.trim()) return;
       if (inFlightRef.current) return;
+      if (askInFlightRecordIds.has(record.id)) return;
 
       const requestId = `${record.id}-ask-${Date.now()}`;
       const trimmedQuestion = question.trim();
       inFlightRef.current = true;
+      askInFlightRecordIds.add(record.id);
+
       setState((s) => {
         const nextHistory =
           s.question && s.answer
             ? [...s.history, { question: s.question, answer: s.answer }]
             : s.history;
-        return {
+        const next: AskAIState = {
           ...s,
           history: nextHistory,
           isLoading: true,
@@ -146,6 +153,17 @@ export const useAskAI = (recordId: string, transcript: string) => {
           privateAskProgress: aiExecutionMode === 'private_experimental' ? 0 : s.privateAskProgress,
           privateAskPhase: 'loading_model',
         };
+        queueMicrotask(() => {
+          void saveAskAiSession(record.id, record.transcript!, {
+            history: next.history,
+            question: next.question,
+            answer: next.answer,
+            error: next.error,
+            isLoading: true,
+          });
+          useRecordStore.getState().setAskAiStatus(record.id, 'processing');
+        });
+        return next;
       });
       void logAnalyticsEvent('ai_action_started', {
         action: 'ask',
@@ -211,6 +229,34 @@ export const useAskAI = (recordId: string, transcript: string) => {
             }
           : undefined;
 
+      const persistOutcome = (
+        patch: Partial<Pick<AskAIState, 'answer' | 'error' | 'isLoading'>>,
+      ) => {
+        setState((s) => {
+          const next: AskAIState = {
+            ...s,
+            isLoading: patch.isLoading ?? s.isLoading,
+            error: patch.error !== undefined ? patch.error : s.error,
+            answer: patch.answer !== undefined ? patch.answer : s.answer,
+            privateAskProgress: 0,
+            privateAskPhase: 'loading_model',
+          };
+          queueMicrotask(() => {
+            void saveAskAiSession(record.id, record.transcript!, {
+              history: next.history,
+              question: next.question,
+              answer: next.answer,
+              error: next.error,
+              isLoading: next.isLoading,
+            });
+            const { setAskAiStatus } = useRecordStore.getState();
+            if (next.error?.trim()) setAskAiStatus(record.id, 'error');
+            else setAskAiStatus(record.id, undefined);
+          });
+          return next;
+        });
+      };
+
       try {
         const runResult = await AIOrchestrator.runAsk(
           {
@@ -248,13 +294,7 @@ export const useAskAI = (recordId: string, transcript: string) => {
               mode: runResult.mode,
               tier: privateCapabilityTier,
             });
-          setState((s) => ({
-            ...s,
-            isLoading: false,
-            error: errorMsg,
-            privateAskProgress: 0,
-            privateAskPhase: 'loading_model',
-          }));
+          persistOutcome({ isLoading: false, error: errorMsg, answer: null });
           void logAnalyticsEvent('ai_action_failed', {
             action: 'ask',
             reason: runResult.limitExceeded ? 'limit' : 'run',
@@ -265,14 +305,11 @@ export const useAskAI = (recordId: string, transcript: string) => {
           return;
         }
 
-        setState((s) => ({
-          ...s,
+        persistOutcome({
           isLoading: false,
           error: null,
           answer: runResult.result.answer,
-          privateAskProgress: 0,
-          privateAskPhase: 'loading_model',
-        }));
+        });
         void logAnalyticsEvent('ai_action_success', {
           action: 'ask',
           mode: runResult.mode,
@@ -285,13 +322,11 @@ export const useAskAI = (recordId: string, transcript: string) => {
             recordId: record.id,
             error: err instanceof Error ? err.message : String(err),
           });
-        setState((s) => ({
-          ...s,
+        persistOutcome({
           isLoading: false,
           error: err instanceof Error ? err.message : 'Unknown error',
-          privateAskProgress: 0,
-          privateAskPhase: 'loading_model',
-        }));
+          answer: null,
+        });
         void logAnalyticsEvent('ai_action_failed', {
           action: 'ask',
           reason: 'exception',
@@ -300,6 +335,7 @@ export const useAskAI = (recordId: string, transcript: string) => {
         });
       } finally {
         inFlightRef.current = false;
+        askInFlightRecordIds.delete(record.id);
       }
     },
     [
@@ -315,9 +351,99 @@ export const useAskAI = (recordId: string, transcript: string) => {
     ],
   );
 
+  askQuestionRef.current = askQuestion;
+
+  useEffect(() => {
+    const epochAtStart = loadEpochRef.current;
+    let cancelled = false;
+    void (async () => {
+      const restored = await loadAskAiSession(recordId, transcript);
+      if (cancelled || epochAtStart !== loadEpochRef.current) return;
+      if (!restored) {
+        queueMicrotask(() => {
+          if (cancelled || epochAtStart !== loadEpochRef.current) return;
+          useRecordStore.getState().setAskAiStatus(recordId, undefined);
+        });
+        return;
+      }
+
+      const isPending = restored.pendingAsk === true;
+      setState((s) => ({
+        ...s,
+        history: restored.history,
+        question: restored.question,
+        answer: restored.answer,
+        error: restored.error,
+        isLoading: isPending,
+        privateAskProgress: 0,
+        privateAskPhase: 'loading_model',
+      }));
+
+      queueMicrotask(() => {
+        if (cancelled || epochAtStart !== loadEpochRef.current) return;
+
+        const { setAskAiStatus } = useRecordStore.getState();
+
+        if (isPending) setAskAiStatus(recordId, 'processing');
+        else if (restored.error?.trim() && !restored.answer?.trim() && restored.question?.trim()) {
+          setAskAiStatus(recordId, 'error');
+        } else {
+          setAskAiStatus(recordId, undefined);
+        }
+      });
+
+      if (!isPending || !restored.question?.trim()) return;
+
+      const rec = recordForResumeRef.current;
+      if (!rec?.transcript?.trim()) return;
+
+      queueMicrotask(() => {
+        if (cancelled || epochAtStart !== loadEpochRef.current) return;
+        if (askInFlightRecordIds.has(recordId)) {
+          void syncAskSessionFromDb();
+          return;
+        }
+        void askQuestionRef.current(rec, restored.question!, restored.history);
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [recordId, transcript, syncAskSessionFromDb]);
+
+  useEffect(() => {
+    if (!state.isLoading) return;
+    const id = setInterval(() => {
+      void syncAskSessionFromDb();
+    }, 900);
+    return () => clearInterval(id);
+  }, [state.isLoading, syncAskSessionFromDb]);
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      void saveAskAiSession(recordId, transcript, {
+        history: state.history,
+        question: state.question,
+        answer: state.answer,
+        error: state.error,
+        isLoading: state.isLoading,
+      });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [
+    recordId,
+    transcript,
+    state.history,
+    state.question,
+    state.answer,
+    state.error,
+    state.isLoading,
+  ]);
+
   const reset = useCallback(() => {
     setState(INITIAL_ASK_AI_STATE);
     void clearAskAiSession(recordId);
+    useRecordStore.getState().setAskAiStatus(recordId, undefined);
   }, [recordId]);
 
   const askAnother = useCallback(() => {
@@ -335,5 +461,5 @@ export const useAskAI = (recordId: string, transcript: string) => {
     });
   }, []);
 
-  return { askQuestion, reset, askAnother, ...state };
+  return { askQuestion, reset, askAnother, syncAskSessionFromDb, ...state };
 };

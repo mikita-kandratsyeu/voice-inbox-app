@@ -38,6 +38,7 @@ export type VoiceRecord = {
   summary?: string;
   summaryStatus?: RecordingStatus;
   summaryError?: string;
+  askAiStatus?: RecordingStatus;
   tasks?: TaskItem[];
   tasksStatus?: RecordingStatus;
   tasksError?: string;

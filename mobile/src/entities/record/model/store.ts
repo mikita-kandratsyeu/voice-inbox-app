@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 import { folderRepository } from '@/entities/folder/model/repository';
+import { loadAskAiInboxStatusesByRecordId } from '@/features/ask-ai/model/askAiSessionDb';
 import { NitroFS } from '@/shared/lib/fs';
 
 import { recordRepository } from './repository';
@@ -54,7 +55,7 @@ const isActiveAiStatus = (status?: RecordingStatus): boolean =>
   status === 'loading_model' || status === 'processing';
 
 const computeHasActiveAiJobs = (records: Array<VoiceRecord | RecordListItem>): boolean =>
-  records.some((r) => isActiveAiStatus(r.aiStatus));
+  records.some((r) => isActiveAiStatus(r.aiStatus) || r.askAiStatus === 'processing');
 
 const updateRecord = (
   records: RecordListItem[],
@@ -123,6 +124,7 @@ type RecordStore = {
     translationLanguage: string | null,
   ) => Promise<void>;
   setTranslationStatus: (id: string, status: RecordingStatus) => void;
+  setAskAiStatus: (id: string, status: RecordingStatus | undefined) => void;
   toggleTask: (id: string, taskId: string) => Promise<void>;
   clearAudioPath: (id: string) => Promise<void>;
   setEmbedding: (id: string, embedding: number[] | null) => void;
@@ -138,7 +140,18 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   load: async () => {
     if (__DEV__) console.warn('[recordStore] load: refetching records from DB');
     const all = await recordRepository.getAllList();
-    set({ records: all, hasActiveAiJobs: computeHasActiveAiJobs(all), isLoaded: true });
+    const transcriptById = new Map(all.map((r) => [r.id, r.transcript]));
+    const askAiById = await loadAskAiInboxStatusesByRecordId(transcriptById);
+    const merged = all.map((r) => {
+      const st = askAiById.get(r.id);
+      if (!st) return r;
+      return { ...r, askAiStatus: st };
+    });
+    set({
+      records: merged,
+      hasActiveAiJobs: computeHasActiveAiJobs(merged),
+      isLoaded: true,
+    });
   },
 
   hydrateRecordDetails: async (id) => {
@@ -372,6 +385,14 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     set((s) => ({
       records: updateRecord(s.records, id, { translationStatus }),
     }));
+  },
+
+  setAskAiStatus: (id, status) => {
+    set((s) => {
+      const askAiStatus = status === 'processing' || status === 'error' ? status : undefined;
+      const next = updateRecord(s.records, id, { askAiStatus });
+      return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
+    });
   },
 
   toggleTask: async (id, taskId) => {

@@ -327,6 +327,7 @@
     "loading_model": "Loading model…",
     "processing": "Transcribing...",
     "aiProcessing": "Generating summary...",
+    "askProcessing": "Asking AI…",
     "done": "Transcript ready",
     "error": "Transcription error",
     "noTranscript": "No transcript"

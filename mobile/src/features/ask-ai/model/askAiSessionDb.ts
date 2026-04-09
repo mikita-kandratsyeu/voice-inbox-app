@@ -28,6 +28,7 @@ type PersistedPayloadV1 = {
   question: string | null;
   answer: string | null;
   error: string | null;
+  pendingAsk?: boolean;
 };
 
 function isHistoryItem(x: unknown): x is AskTurn {
@@ -95,6 +96,8 @@ function parsePayload(raw: string): PersistedPayloadV1 | null {
     return null;
   }
 
+  const pendingAsk = o.pendingAsk === true;
+
   return {
     v: PERSIST_VERSION,
     transcriptFp: o.transcriptFp,
@@ -102,6 +105,7 @@ function parsePayload(raw: string): PersistedPayloadV1 | null {
     question,
     answer,
     error,
+    pendingAsk,
   };
 }
 
@@ -110,6 +114,7 @@ export type RestoredAskAiSession = {
   question: string | null;
   answer: string | null;
   error: string | null;
+  pendingAsk: boolean;
 };
 
 export async function loadAskAiSession(
@@ -136,7 +141,51 @@ export async function loadAskAiSession(
     question: parsed.question,
     answer: parsed.answer,
     error: parsed.error,
+    pendingAsk: parsed.pendingAsk ?? false,
   };
+}
+
+export async function loadAskAiInboxStatusesByRecordId(
+  transcriptByRecordId: Map<string, string>,
+): Promise<Map<string, 'processing' | 'error'>> {
+  const out = new Map<string, 'processing' | 'error'>();
+  if (transcriptByRecordId.size === 0) return out;
+
+  const db = getDB();
+  const rows = await db.select().from(recordAskAiTable);
+  const fpByTranscript = new Map<string, string>();
+  const fpFor = (transcript: string) => {
+    let fp = fpByTranscript.get(transcript);
+    if (!fp) {
+      fp = askAiTranscriptFingerprint(transcript);
+      fpByTranscript.set(transcript, fp);
+    }
+
+    return fp;
+  };
+
+  for (const row of rows) {
+    const transcript = transcriptByRecordId.get(row.recordId);
+    if (!transcript?.trim()) continue;
+
+    const parsed = parsePayload(row.payload);
+    if (!parsed || parsed.transcriptFp !== fpFor(transcript)) continue;
+
+    if (parsed.pendingAsk) {
+      out.set(row.recordId, 'processing');
+      continue;
+    }
+
+    if (
+      parsed.question?.trim() &&
+      (parsed.error?.trim() ?? '') !== '' &&
+      !(parsed.answer && parsed.answer.trim())
+    ) {
+      out.set(row.recordId, 'error');
+    }
+  }
+
+  return out;
 }
 
 function capHistory(items: AskTurn[]): AskTurn[] {
@@ -144,21 +193,39 @@ function capHistory(items: AskTurn[]): AskTurn[] {
   return items.slice(-MAX_HISTORY_ITEMS);
 }
 
+export type AskAiSessionPersistInput = {
+  history: AskTurn[];
+  question: string | null;
+  answer: string | null;
+  error: string | null;
+  isLoading: boolean;
+};
+
+function computePendingAsk(snapshot: AskAiSessionPersistInput): boolean {
+  return (
+    snapshot.isLoading &&
+    Boolean(snapshot.question?.trim()) &&
+    !(snapshot.answer && snapshot.answer.trim()) &&
+    !snapshot.error
+  );
+}
+
 export async function saveAskAiSession(
   recordId: string,
   transcript: string,
-  snapshot: RestoredAskAiSession & { isLoading: boolean },
+  snapshot: AskAiSessionPersistInput,
 ): Promise<void> {
-  if (snapshot.isLoading) return;
-
   const trimmed = transcript.trim();
   if (!trimmed) return;
+
+  const pendingAsk = computePendingAsk(snapshot);
 
   const hasContent =
     snapshot.history.length > 0 ||
     (snapshot.question && snapshot.question.trim()) ||
     (snapshot.answer && snapshot.answer.trim()) ||
-    (snapshot.error && snapshot.error.trim());
+    (snapshot.error && snapshot.error.trim()) ||
+    pendingAsk;
 
   const db = getDB();
 
@@ -174,6 +241,7 @@ export async function saveAskAiSession(
     question: snapshot.question,
     answer: snapshot.answer,
     error: snapshot.error,
+    ...(pendingAsk ? { pendingAsk: true } : {}),
   };
 
   const updatedAt = dayjs().toISOString();

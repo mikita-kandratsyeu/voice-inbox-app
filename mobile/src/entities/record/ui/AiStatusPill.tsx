@@ -22,6 +22,7 @@ type AiStatusPillProps = {
   summaryStatus?: RecordingStatus;
   tasksStatus?: RecordingStatus;
   translationStatus?: RecordingStatus;
+  askAiStatus?: RecordingStatus;
   onPress: () => void;
 };
 
@@ -34,6 +35,7 @@ export const AiStatusPill = ({
   summaryStatus,
   tasksStatus,
   translationStatus,
+  askAiStatus,
   onPress,
 }: AiStatusPillProps) => {
   const { t } = useTranslation();
@@ -43,9 +45,13 @@ export const AiStatusPill = ({
   const aiProcessing =
     isAiProcessing(summaryStatus) ||
     isAiProcessing(tasksStatus) ||
-    isAiProcessing(translationStatus);
+    isAiProcessing(translationStatus) ||
+    isAiProcessing(askAiStatus);
   const aiError =
-    isAiError(summaryStatus) || isAiError(tasksStatus) || isAiError(translationStatus);
+    isAiError(summaryStatus) ||
+    isAiError(tasksStatus) ||
+    isAiError(translationStatus) ||
+    isAiError(askAiStatus);
 
   const isTranscriptionInProgress = aiStatus === 'loading_model' || aiStatus === 'processing';
 
@@ -93,9 +99,15 @@ export const AiStatusPill = ({
     const aiLabel =
       translationStatus === 'processing' &&
       summaryStatus !== 'processing' &&
-      tasksStatus !== 'processing'
+      tasksStatus !== 'processing' &&
+      askAiStatus !== 'processing'
         ? t('recordingDetail.translating')
-        : t('aiStatus.aiProcessing');
+        : askAiStatus === 'processing' &&
+            summaryStatus !== 'processing' &&
+            tasksStatus !== 'processing' &&
+            translationStatus !== 'processing'
+          ? t('aiStatus.askProcessing')
+          : t('aiStatus.aiProcessing');
     return (
       <TouchableOpacity
         accessibilityRole="button"
@@ -118,9 +130,17 @@ export const AiStatusPill = ({
 
   if (aiStatus === 'error' || aiError) {
     const errLabel =
-      translationStatus === 'error' && summaryStatus !== 'error' && tasksStatus !== 'error'
+      translationStatus === 'error' &&
+      summaryStatus !== 'error' &&
+      tasksStatus !== 'error' &&
+      askAiStatus !== 'error'
         ? t('recordingDetail.translateError')
-        : t('common.error');
+        : askAiStatus === 'error' &&
+            summaryStatus !== 'error' &&
+            tasksStatus !== 'error' &&
+            translationStatus !== 'error'
+          ? t('recordingDetail.askError')
+          : t('common.error');
     return (
       <TouchableOpacity
         accessibilityRole="button"

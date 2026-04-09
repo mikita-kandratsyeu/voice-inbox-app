@@ -398,7 +398,9 @@ export function useInboxScreen() {
         item.tasksStatus === 'processing' ||
         item.tasksStatus === 'error' ||
         item.translationStatus === 'processing' ||
-        item.translationStatus === 'error'
+        item.translationStatus === 'error' ||
+        item.askAiStatus === 'processing' ||
+        item.askAiStatus === 'error'
       ) {
         navigation.navigate('RecordingDetail', { record: item });
       }

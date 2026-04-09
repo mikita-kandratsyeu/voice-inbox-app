@@ -381,6 +381,7 @@ export const AskAIScreen = () => {
   const [questionInput, setQuestionInput] = useState('');
   const {
     askQuestion,
+    syncAskSessionFromDb,
     isLoading,
     error,
     question,
@@ -388,7 +389,7 @@ export const AskAIScreen = () => {
     history,
     privateAskProgress,
     privateAskPhase,
-  } = useAskAI(liveRecord.id, liveRecord.transcript ?? '');
+  } = useAskAI(liveRecord.id, liveRecord.transcript ?? '', liveRecord);
   const { isConnected } = useNetworkStatus();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
 
@@ -422,10 +423,11 @@ export const AskAIScreen = () => {
 
   useFocusEffect(
     useCallback(() => {
+      void syncAskSessionFromDb();
       return () => {
         KeyboardController.dismiss({ animated: false });
       };
-    }, []),
+    }, [syncAskSessionFromDb]),
   );
 
   const handleBack = useCallback(() => {

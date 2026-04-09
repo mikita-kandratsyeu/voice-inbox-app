@@ -52,10 +52,14 @@ export const RecordCard = memo(function RecordCard({
   const hasTasks = tasks.length > 0;
   const doneCount = tasks.filter((t) => t.isDone).length;
   const allTasksDone = hasTasks && doneCount === tasks.length;
-  const aiProcessing = item.summaryStatus === 'processing' || item.tasksStatus === 'processing';
+  const aiProcessing =
+    item.summaryStatus === 'processing' ||
+    item.tasksStatus === 'processing' ||
+    item.askAiStatus === 'processing';
   const translationProcessing = item.translationStatus === 'processing';
   const translationError = item.translationStatus === 'error';
-  const aiError = item.summaryStatus === 'error' || item.tasksStatus === 'error';
+  const aiError =
+    item.summaryStatus === 'error' || item.tasksStatus === 'error' || item.askAiStatus === 'error';
   const hasTranscriptPreview = Boolean(item.transcript?.trim());
   const showStatusPill =
     item.aiStatus === 'loading_model' ||
@@ -143,6 +147,7 @@ export const RecordCard = memo(function RecordCard({
               summaryStatus={item.summaryStatus}
               tasksStatus={item.tasksStatus}
               translationStatus={item.translationStatus}
+              askAiStatus={item.askAiStatus}
               onPress={onStatusPress}
             />
           )}
