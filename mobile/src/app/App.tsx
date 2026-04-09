@@ -10,6 +10,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import {
   AnimatedBootSplash,
+  AppProcessingKeepAwake,
   type BootstrapCriticalError,
   useAndroidLayoutAnimation,
   useAppBootstrap,
@@ -21,7 +22,7 @@ import { AppLockGate, AppSwitcherPrivacyOverlay } from '@/features/app-lock';
 import { AppRatingPromptRoot } from '@/features/app-review';
 import { OnboardingGate } from '@/features/onboarding';
 import { useResetAccentWhenNotPro } from '@/features/pro-license';
-import { TranscriptionKeepAwake, TranscriptionResumePrompt } from '@/features/transcription';
+import { TranscriptionResumePrompt } from '@/features/transcription';
 import {
   BootSplashVisibleProvider,
   useAppTheme,
@@ -123,7 +124,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
               >
                 <OnboardingGate>
                   <AppLockGate>
-                    <TranscriptionKeepAwake />
+                    <AppProcessingKeepAwake />
                     <TranscriptionResumePrompt />
                     <RootNavigator />
                   </AppLockGate>
