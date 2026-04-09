@@ -69,6 +69,9 @@ const updateRecord = (
   return next;
 };
 
+let recordListLoadInFlight: Promise<void> | null = null;
+const recordDetailsHydrateById = new Map<string, Promise<void>>();
+
 type RecordStore = {
   records: RecordListItem[];
   hasActiveAiJobs: boolean;
@@ -138,34 +141,62 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   isLoaded: false,
 
   load: async () => {
-    if (__DEV__) console.warn('[recordStore] load: refetching records from DB');
-    const all = await recordRepository.getAllList();
-    const transcriptById = new Map(all.map((r) => [r.id, r.transcript]));
-    const askAiById = await loadAskAiInboxStatusesByRecordId(transcriptById);
-    const merged = all.map((r) => {
-      const st = askAiById.get(r.id);
-      if (!st) return r;
-      return { ...r, askAiStatus: st };
-    });
-    set({
-      records: merged,
-      hasActiveAiJobs: computeHasActiveAiJobs(merged),
-      isLoaded: true,
-    });
+    if (recordListLoadInFlight) {
+      return recordListLoadInFlight;
+    }
+    recordListLoadInFlight = (async () => {
+      try {
+        if (__DEV__) console.warn('[recordStore] load: refetching records from DB');
+
+        const all = await recordRepository.getAllList();
+        const transcriptById = new Map(all.map((r) => [r.id, r.transcript]));
+        const askAiById = await loadAskAiInboxStatusesByRecordId(transcriptById);
+        const merged = all.map((r) => {
+          const st = askAiById.get(r.id);
+          if (!st) return r;
+          return { ...r, askAiStatus: st };
+        });
+
+        set({
+          records: merged,
+          hasActiveAiJobs: computeHasActiveAiJobs(merged),
+          isLoaded: true,
+        });
+      } finally {
+        recordListLoadInFlight = null;
+      }
+    })();
+    return recordListLoadInFlight;
   },
 
   hydrateRecordDetails: async (id) => {
     const existing = get().records.find((r) => r.id === id);
+
     if (!existing || existing.detailsHydrated) return;
 
-    const heavy = await recordRepository.getHeavyFields(id);
-    set((s) => ({
-      records: updateRecord(s.records, id, {
-        transcriptSegments: heavy.transcriptSegments,
-        embedding: heavy.embedding,
-        detailsHydrated: true,
-      }),
-    }));
+    const inFlight = recordDetailsHydrateById.get(id);
+
+    if (inFlight) {
+      return inFlight;
+    }
+
+    const promise = (async () => {
+      try {
+        const heavy = await recordRepository.getHeavyFields(id);
+        set((s) => ({
+          records: updateRecord(s.records, id, {
+            transcriptSegments: heavy.transcriptSegments,
+            embedding: heavy.embedding,
+            detailsHydrated: true,
+          }),
+        }));
+      } finally {
+        recordDetailsHydrateById.delete(id);
+      }
+    })();
+
+    recordDetailsHydrateById.set(id, promise);
+    return promise;
   },
 
   addRecord: async (record) => {

@@ -56,16 +56,27 @@ export const useInitDeepLinking = () => {
   );
 
   useEffect(() => {
-    Linking.getInitialURL().then((url) => {
-      if (url) {
-        routeDeepLink(url);
-      }
-    });
+    let cancelled = false;
 
-    const sub = Linking.addEventListener('url', ({ url }) => {
+    void Linking.getInitialURL().then((url) => {
+      if (cancelled || !url) {
+        return;
+      }
+
       routeDeepLink(url);
     });
 
-    return () => sub.remove();
+    const sub = Linking.addEventListener('url', ({ url }) => {
+      if (cancelled) {
+        return;
+      }
+
+      routeDeepLink(url);
+    });
+
+    return () => {
+      cancelled = true;
+      sub.remove();
+    };
   }, [routeDeepLink]);
 };

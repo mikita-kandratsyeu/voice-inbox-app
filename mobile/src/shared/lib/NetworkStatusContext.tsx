@@ -14,7 +14,10 @@ export const NetworkStatusProvider = ({ children }: { children: React.ReactNode 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    NetInfo.fetch().then((state) => {
+    let cancelled = false;
+
+    void NetInfo.fetch().then((state) => {
+      if (cancelled) return;
       setIsConnected(Boolean(state.isConnected && state.isInternetReachable));
     });
 
@@ -25,13 +28,21 @@ export const NetworkStatusProvider = ({ children }: { children: React.ReactNode 
         clearTimeout(timerRef.current);
       }
 
-      timerRef.current = setTimeout(() => setIsConnected(connected), connected ? DELAY_MS : 0);
+      timerRef.current = setTimeout(
+        () => {
+          if (cancelled) return;
+          setIsConnected(connected);
+        },
+        connected ? DELAY_MS : 0,
+      );
     });
 
     return () => {
+      cancelled = true;
       unsubscribe();
       if (timerRef.current) {
         clearTimeout(timerRef.current);
+        timerRef.current = null;
       }
     };
   }, []);

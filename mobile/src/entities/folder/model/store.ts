@@ -6,6 +6,8 @@ import { useRecordStore } from '@/entities/record';
 import { folderRepository } from './repository';
 import type { Folder } from './types';
 
+let folderListLoadInFlight: Promise<void> | null = null;
+
 type FolderStore = {
   folders: Folder[];
   activeFolderId: string | null;
@@ -28,8 +30,20 @@ export const useFolderStore = create<FolderStore>((set, get) => ({
   isLoaded: false,
 
   load: async () => {
-    const folders = await folderRepository.getAll();
-    set({ folders, isLoaded: true });
+    if (folderListLoadInFlight) {
+      return folderListLoadInFlight;
+    }
+
+    folderListLoadInFlight = (async () => {
+      try {
+        const folders = await folderRepository.getAll();
+        set({ folders, isLoaded: true });
+      } finally {
+        folderListLoadInFlight = null;
+      }
+    })();
+
+    return folderListLoadInFlight;
   },
 
   setActiveFolder: (id) => {
