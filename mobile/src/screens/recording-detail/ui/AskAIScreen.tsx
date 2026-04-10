@@ -422,6 +422,7 @@ export const AskAIScreen = () => {
     askQuestion,
     syncAskSessionFromDb,
     isLoading,
+    isRestoringSession,
     error,
     question,
     answer,
@@ -515,6 +516,7 @@ export const AskAIScreen = () => {
 
   const renderContent = useCallback(() => {
     if (!hasTranscript) return <NoTranscriptState color={color} />;
+    if (isRestoringSession) return <LoadingState color={color} />;
     if (isLoading) {
       if (aiExecutionMode === 'private_experimental') {
         return (
@@ -565,6 +567,7 @@ export const AskAIScreen = () => {
     );
   }, [
     hasTranscript,
+    isRestoringSession,
     isLoading,
     error,
     answer,
@@ -583,10 +586,15 @@ export const AskAIScreen = () => {
     handleShare,
   ]);
 
-  const shouldShowInputRow = hasTranscript && !isLoading;
+  const shouldShowInputRow = hasTranscript && !isRestoringSession && !isLoading;
   const scrollContentCentered =
-    !hasTranscript || isLoading || Boolean(error && !answer && hasTranscript);
-  const canSend = Boolean(questionInput.trim()) && hasTranscript && !isLoading && !disableByNetwork;
+    !hasTranscript || isRestoringSession || isLoading || Boolean(error && !answer && hasTranscript);
+  const canSend =
+    Boolean(questionInput.trim()) &&
+    hasTranscript &&
+    !isRestoringSession &&
+    !isLoading &&
+    !disableByNetwork;
 
   const sendButton = useMemo(
     () => (

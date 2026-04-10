@@ -19,6 +19,7 @@ export type AskAIHistoryItem = { question: string; answer: string };
 
 export type AskAIState = {
   isLoading: boolean;
+  isRestoringSession: boolean;
   error: string | null;
   question: string | null;
   answer: string | null;
@@ -29,6 +30,7 @@ export type AskAIState = {
 
 const INITIAL_ASK_AI_STATE: AskAIState = {
   isLoading: false,
+  isRestoringSession: false,
   error: null,
   question: null,
   answer: null,
@@ -57,7 +59,10 @@ export const useAskAI = (
   const isLocalLlmModelDownloaded =
     selectedLocalAiModel != null &&
     (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
-  const [state, setState] = useState<AskAIState>(INITIAL_ASK_AI_STATE);
+  const [state, setState] = useState<AskAIState>(() => ({
+    ...INITIAL_ASK_AI_STATE,
+    isRestoringSession: Boolean(transcript.trim()),
+  }));
 
   const inFlightRef = useRef(false);
   const transcriptFpInvalidateRef = useRef<string | null>(null);
@@ -83,7 +88,10 @@ export const useAskAI = (
 
     transcriptFpInvalidateRef.current = fp;
     loadEpochRef.current += 1;
-    setState(INITIAL_ASK_AI_STATE);
+    setState({
+      ...INITIAL_ASK_AI_STATE,
+      isRestoringSession: Boolean(transcript.trim()),
+    });
     void clearAskAiSession(recordId);
     useRecordStore.getState().setAskAiStatus(recordId, undefined);
   }, [recordId, transcript]);
@@ -357,9 +365,22 @@ export const useAskAI = (
     const epochAtStart = loadEpochRef.current;
     let cancelled = false;
     void (async () => {
+      const trimmedTranscript = transcript.trim();
+      if (!trimmedTranscript) {
+        setState((s) => ({
+          ...s,
+          isRestoringSession: false,
+        }));
+        return;
+      }
+
       const restored = await loadAskAiSession(recordId, transcript);
       if (cancelled || epochAtStart !== loadEpochRef.current) return;
       if (!restored) {
+        setState((s) => ({
+          ...s,
+          isRestoringSession: false,
+        }));
         queueMicrotask(() => {
           if (cancelled || epochAtStart !== loadEpochRef.current) return;
           useRecordStore.getState().setAskAiStatus(recordId, undefined);
@@ -375,6 +396,7 @@ export const useAskAI = (
         answer: restored.answer,
         error: restored.error,
         isLoading: isPending,
+        isRestoringSession: false,
         privateAskProgress: 0,
         privateAskPhase: 'loading_model',
       }));
@@ -441,7 +463,10 @@ export const useAskAI = (
   ]);
 
   const reset = useCallback(() => {
-    setState(INITIAL_ASK_AI_STATE);
+    setState({
+      ...INITIAL_ASK_AI_STATE,
+      isRestoringSession: false,
+    });
     void clearAskAiSession(recordId);
     useRecordStore.getState().setAskAiStatus(recordId, undefined);
   }, [recordId]);
