@@ -4,10 +4,10 @@ import { AppState } from 'react-native';
 import { useRecordStore } from '@/entities/record';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 
-import { markSoftPromptPresented } from '../lib/appReviewStorage';
-import { SOFT_PROMPT_DELAY_MS } from '../lib/constants';
+import { markReviewPromptPresented } from '../lib/appReviewStorage';
+import { REVIEW_PROMPT_DELAY_MS } from '../lib/constants';
 import { requestNativeInAppReview } from '../lib/requestNativeInAppReview';
-import { evaluateSoftPromptEligibility } from './evaluateSoftPromptEligibility';
+import { evaluateReviewPromptEligibility } from './evaluateReviewPromptEligibility';
 
 export function useAppReviewRecordListener(): void {
   const prevCountRef = useRef<number | null>(null);
@@ -37,7 +37,7 @@ export function useAppReviewRecordListener(): void {
         return;
       }
 
-      if (!evaluateSoftPromptEligibility({ recordDelta: delta, recordCount: next })) {
+      if (!evaluateReviewPromptEligibility({ recordDelta: delta, recordCount: next })) {
         return;
       }
 
@@ -52,9 +52,9 @@ export function useAppReviewRecordListener(): void {
           return;
         }
 
-        markSoftPromptPresented();
+        markReviewPromptPresented();
         void requestNativeInAppReview();
-      }, SOFT_PROMPT_DELAY_MS);
+      }, REVIEW_PROMPT_DELAY_MS);
     });
 
     return () => {
