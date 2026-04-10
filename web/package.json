@@ -1,6 +1,9 @@
 {
-  "name": "web",
-  "version": "0.4.1",
+  "name": "voice-inbox-web",
+  "version": "0.4.4",
+  "license": "UNLICENSED",
+  "author": "Mikita Kandratsyeu <nickondr.production@gmail.com>",
+  "description": "Voice Inbox AI Web API",
   "private": true,
   "scripts": {
     "dev": "next dev",

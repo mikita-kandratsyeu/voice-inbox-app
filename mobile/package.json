@@ -1,9 +1,9 @@
 {
   "name": "voice-inbox-app",
-  "version": "0.4.1",
-  "author": "Mikita Kandratsyeu <nickondr.production@gmail.com>",
-  "description": "Voice Inbox AI",
+  "version": "0.4.4",
   "license": "UNLICENSED",
+  "author": "Mikita Kandratsyeu <nickondr.production@gmail.com>",
+  "description": "Voice Inbox AI Mobile",
   "private": true,
   "scripts": {
     "ios": "APP_ENV=development react-native run-ios",

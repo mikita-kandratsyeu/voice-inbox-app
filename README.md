@@ -49,3 +49,10 @@ The project is designed as a solo‑friendly, production‑ready codebase: clean
 ## Privacy & terms (web)
 
 Legal pages are built from Markdown in **`web/content/`** (`privacy.*.md`, `terms.*.md`). They describe **current** behavior (e.g. Yandex ads when not on a paid ad-free tier, Firebase Crashlytics in release builds) and are tied to the “Last updated” date — revise when product or law changes. Code: `mobile/src/features/app-storefront/model/useAdsAllowed.ts`, `mobile/src/shared/lib/crashlytics.ts`.
+
+## License
+
+This project is **proprietary** and distributed under **UNLICENSED / all rights reserved** terms.
+
+- See the root `LICENSE` file for the full terms.
+- Third-party dependencies keep their own licenses.
