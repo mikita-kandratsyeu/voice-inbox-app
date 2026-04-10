@@ -8,7 +8,7 @@ import {
   Copy,
   MessageSquare,
   RefreshCw,
-  Share2,
+  ShareIcon,
   Sparkles,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -276,7 +276,7 @@ const AnswerTurnBlock = ({
           className="flex-row items-center gap-2 rounded-xl px-3 py-2"
           style={{ backgroundColor: color.background.tertiary }}
         >
-          <Share2 size={17} color={color.text.primary} strokeWidth={2} />
+          <ShareIcon size={17} color={color.text.primary} strokeWidth={2} />
           <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
             {t('recordingDetail.askShare')}
           </Text>
