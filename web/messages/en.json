@@ -99,7 +99,7 @@
     "renewsOrExpires": "Valid through",
     "validThrough": "Access",
     "lifetimeValue": "No fixed end date (license)",
-    "footerNote": "To change or renew a store subscription, use subscription management on your device. For license questions, contact support from the app.",
+    "footerNote": "For license questions, contact support from the app.",
     "missingTokenTitle": "Link incomplete",
     "missingTokenBody": "Open this page from the Voice Inbox AI app (Settings → Your plan) to view your details.",
     "invalidTokenTitle": "Link expired or invalid",
