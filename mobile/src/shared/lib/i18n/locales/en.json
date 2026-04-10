@@ -30,8 +30,8 @@
     "notchBrandMark": "Voice Inbox AI"
   },
   "proLicense": {
-    "modalTitle": "Promo code",
-    "modalSubtitle": "Enter your promo code below to enable additional features in the app. Codes may come from our team or a special offer.",
+    "modalTitle": "Special offer",
+    "modalSubtitle": "Enter the code below to enable additional features in the app. Codes may come from our team or a special offer.",
     "keyPlaceholder": "VI-XXXX-XXXX-XXXX",
     "activate": "Apply",
     "activatingTitle": "Almost there",
@@ -273,7 +273,7 @@
     "ask": "Ask",
     "askPlaceholder": "Ask a question about this note...",
     "askEmptyTitle": "Ask about your note",
-    "askEmptyDesc": "Get answers about the transcript using AI.",
+    "askEmptyDesc": "Get answers about the note using AI.",
     "askSuggestedSection": "Quick prompts",
     "askOfflineNetworkHint": "You're offline. Connect to use Ask AI in Smart mode.",
     "askSuggested1": "What is this note about?",
