@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, FolderInput, Share2, Trash2, X } from 'lucide-react-native';
+import { Archive, ArchiveRestore, FolderInput, Share, Trash2, X } from 'lucide-react-native';
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Animated, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -211,13 +211,6 @@ export const BatchActionBar = ({
                 color={color}
               />
             )}
-            <ActionButton
-              icon={(c) => <Share2 size={20} strokeWidth={2} color={c} />}
-              label={t('batch.export')}
-              onPress={handleExport}
-              disabled={disabled}
-              color={color}
-            />
             {showUnarchive ? (
               <ActionButton
                 icon={(c) => <ArchiveRestore size={20} strokeWidth={2} color={c} />}
@@ -235,6 +228,13 @@ export const BatchActionBar = ({
                 color={color}
               />
             )}
+            <ActionButton
+              icon={(c) => <Share size={20} strokeWidth={2} color={c} />}
+              label={t('batch.export')}
+              onPress={handleExport}
+              disabled={disabled}
+              color={color}
+            />
             <ActionButton
               icon={(c) => <Trash2 size={20} strokeWidth={2} color={c} />}
               label={t('batch.delete')}

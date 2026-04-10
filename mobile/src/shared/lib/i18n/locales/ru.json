@@ -213,7 +213,7 @@
     "text": "Текст",
     "summary": "Сводка",
     "tasks": "Задачи",
-    "allTasksForNote": "Все задачи этой заметки",
+    "allTasksForNote": "Все задачи",
     "transcriptProcessErrorTitle": "Не удалось транскрибировать",
     "transcriptProcessErrorDesc":
       "Произошла ошибка при обработке аудио. Проверьте, что запись не повреждена, и попробуйте снова.",
@@ -978,7 +978,7 @@
     "unarchive": "Из архива",
     "delete": "Удалить",
     "export": "Экспорт",
-    "moveToFolder": "Папка",
+    "moveToFolder": "В папку",
     "deleteTitle_one": "Удалить {{count}} запись?",
     "deleteTitle_two": "Удалить {{count}} записи?",
     "deleteTitle_few": "Удалить {{count}} записи?",

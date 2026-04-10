@@ -116,13 +116,6 @@ export const RecordingDetailHeader = ({
             if (nativeEvent.event === 'allTasksForNote') onOpenAllTasksForNote?.();
           }}
           actions={[
-            {
-              id: 'rename',
-              title: t('recordActions.rename'),
-              image: 'pencil',
-              imageColor: color.text.primary,
-              titleColor: color.text.primary,
-            },
             ...(onOpenAllTasksForNote
               ? [
                   {
@@ -134,6 +127,13 @@ export const RecordingDetailHeader = ({
                   },
                 ]
               : []),
+            {
+              id: 'rename',
+              title: t('recordActions.rename'),
+              image: 'pencil',
+              imageColor: color.text.primary,
+              titleColor: color.text.primary,
+            },
             ...(!isPrivateMode
               ? [
                   {

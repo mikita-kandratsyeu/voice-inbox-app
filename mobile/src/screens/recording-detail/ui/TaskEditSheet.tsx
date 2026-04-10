@@ -14,7 +14,7 @@ import { useColors } from '@/shared/config';
 import { modalKeyboardBehavior } from '@/shared/lib/platform';
 import { Button } from '@/shared/ui';
 
-const TASK_TEXT_MAX_CHARS = 4000;
+const TASK_TEXT_MAX_CHARS = 500;
 
 type TaskEditSheetProps = {
   visible: boolean;
@@ -113,6 +113,12 @@ export function TaskEditSheet({
             backgroundColor: color.background.secondary,
           }}
         />
+        <Text className="mt-1.5 text-center text-[12px]" style={{ color: color.text.secondary }}>
+          {t('recordingDetail.tasksReextractCharCount', {
+            current: draft.length,
+            max: TASK_TEXT_MAX_CHARS,
+          })}
+        </Text>
         <View className="mt-4 w-full">
           <Button
             variant="primary"

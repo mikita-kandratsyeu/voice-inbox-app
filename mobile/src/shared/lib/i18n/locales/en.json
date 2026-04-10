@@ -213,7 +213,7 @@
     "text": "Text",
     "summary": "Summary",
     "tasks": "Tasks",
-    "allTasksForNote": "All tasks from this note",
+    "allTasksForNote": "All tasks",
     "transcriptProcessErrorTitle": "Couldn't transcribe",
     "transcriptProcessErrorDesc":
       "Something went wrong processing the audio. Make sure the recording isn't damaged and try again.",
@@ -975,7 +975,7 @@
     "unarchive": "Unarchive",
     "delete": "Delete",
     "export": "Export",
-    "moveToFolder": "Folder",
+    "moveToFolder": "To folder",
     "deleteTitle_one": "Delete {{count}} note?",
     "deleteTitle_other": "Delete {{count}} notes?",
     "deleteConfirm_one": "This note will be permanently deleted.",
