@@ -14,7 +14,15 @@ import {
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Share, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Animated,
+  Share,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {
   KeyboardAvoidingView,
   KeyboardAwareScrollView,
@@ -78,8 +86,32 @@ const LoadingState = ({ color }: LoadingStateProps) => {
 
 type SessionRestoringSkeletonProps = { color: Colors };
 const SessionRestoringSkeleton = ({ color }: SessionRestoringSkeletonProps) => {
+  const pulse = useRef(new Animated.Value(0.55)).current;
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, {
+          toValue: 0.72,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0.55,
+          duration: 900,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    animation.start();
+
+    return () => {
+      animation.stop();
+    };
+  }, [pulse]);
+
   return (
-    <View className="gap-4 pb-4 pt-1">
+    <Animated.View className="gap-4 pb-4 pt-1" style={{ opacity: pulse }}>
       <View
         className="rounded-xl px-3 py-2"
         style={{
@@ -90,7 +122,7 @@ const SessionRestoringSkeleton = ({ color }: SessionRestoringSkeletonProps) => {
       >
         <View
           className="h-4 rounded-md"
-          style={{ width: '62%', backgroundColor: color.border.default, opacity: 0.55 }}
+          style={{ width: '62%', backgroundColor: color.border.default }}
         />
       </View>
 
@@ -98,15 +130,15 @@ const SessionRestoringSkeleton = ({ color }: SessionRestoringSkeletonProps) => {
         <View key={idx} className="gap-2 pb-4">
           <View
             className="h-4 rounded-md"
-            style={{ width: '28%', backgroundColor: color.border.default, opacity: 0.55 }}
+            style={{ width: '28%', backgroundColor: color.border.default }}
           />
           <View
             className="h-4 rounded-md"
-            style={{ width: '92%', backgroundColor: color.border.default, opacity: 0.55 }}
+            style={{ width: '92%', backgroundColor: color.border.default }}
           />
           <View
             className="h-4 rounded-md"
-            style={{ width: '84%', backgroundColor: color.border.default, opacity: 0.5 }}
+            style={{ width: '84%', backgroundColor: color.border.default }}
           />
           {idx === 0 ? (
             <View
@@ -119,7 +151,7 @@ const SessionRestoringSkeleton = ({ color }: SessionRestoringSkeletonProps) => {
           ) : null}
         </View>
       ))}
-    </View>
+    </Animated.View>
   );
 };
 
