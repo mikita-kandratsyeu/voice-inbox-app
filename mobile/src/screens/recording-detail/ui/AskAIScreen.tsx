@@ -76,6 +76,53 @@ const LoadingState = ({ color }: LoadingStateProps) => {
   );
 };
 
+type SessionRestoringSkeletonProps = { color: Colors };
+const SessionRestoringSkeleton = ({ color }: SessionRestoringSkeletonProps) => {
+  return (
+    <View className="gap-4 pb-4 pt-1">
+      <View
+        className="rounded-xl px-3 py-2"
+        style={{
+          backgroundColor: color.background.tertiary,
+          borderWidth: 1,
+          borderColor: color.border.default,
+        }}
+      >
+        <View
+          className="h-4 rounded-md"
+          style={{ width: '62%', backgroundColor: color.border.default, opacity: 0.55 }}
+        />
+      </View>
+
+      {[0, 1].map((idx) => (
+        <View key={idx} className="gap-2 pb-4">
+          <View
+            className="h-4 rounded-md"
+            style={{ width: '28%', backgroundColor: color.border.default, opacity: 0.55 }}
+          />
+          <View
+            className="h-4 rounded-md"
+            style={{ width: '92%', backgroundColor: color.border.default, opacity: 0.55 }}
+          />
+          <View
+            className="h-4 rounded-md"
+            style={{ width: '84%', backgroundColor: color.border.default, opacity: 0.5 }}
+          />
+          {idx === 0 ? (
+            <View
+              className="mt-3"
+              style={{
+                borderBottomWidth: 1,
+                borderBottomColor: color.border.default,
+              }}
+            />
+          ) : null}
+        </View>
+      ))}
+    </View>
+  );
+};
+
 type ErrorStateProps = {
   color: Colors;
   onRetry: () => void;
@@ -516,7 +563,7 @@ export const AskAIScreen = () => {
 
   const renderContent = useCallback(() => {
     if (!hasTranscript) return <NoTranscriptState color={color} />;
-    if (isRestoringSession) return <LoadingState color={color} />;
+    if (isRestoringSession) return <SessionRestoringSkeleton color={color} />;
     if (isLoading) {
       if (aiExecutionMode === 'private_experimental') {
         return (
@@ -588,7 +635,7 @@ export const AskAIScreen = () => {
 
   const shouldShowInputRow = hasTranscript && !isRestoringSession && !isLoading;
   const scrollContentCentered =
-    !hasTranscript || isRestoringSession || isLoading || Boolean(error && !answer && hasTranscript);
+    !hasTranscript || isLoading || Boolean(error && !answer && hasTranscript);
   const canSend =
     Boolean(questionInput.trim()) &&
     hasTranscript &&
