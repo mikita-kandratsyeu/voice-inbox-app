@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { AppState } from 'react-native';
 
 import { useRecordStore } from '@/entities/record';
@@ -6,21 +6,12 @@ import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorag
 
 import { markSoftPromptPresented } from '../lib/appReviewStorage';
 import { SOFT_PROMPT_DELAY_MS } from '../lib/constants';
+import { requestNativeInAppReview } from '../lib/requestNativeInAppReview';
 import { evaluateSoftPromptEligibility } from './evaluateSoftPromptEligibility';
 
-export type AppReviewPromptController = {
-  softPromptVisible: boolean;
-  dismissSoftPrompt: () => void;
-};
-
-export function useAppReviewRecordListener(): AppReviewPromptController {
-  const [softPromptVisible, setSoftPromptVisible] = useState(false);
+export function useAppReviewRecordListener(): void {
   const prevCountRef = useRef<number | null>(null);
   const delayTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const dismissSoftPrompt = useCallback(() => {
-    setSoftPromptVisible(false);
-  }, []);
 
   useEffect(() => {
     const { records, isLoaded } = useRecordStore.getState();
@@ -62,7 +53,7 @@ export function useAppReviewRecordListener(): AppReviewPromptController {
         }
 
         markSoftPromptPresented();
-        setSoftPromptVisible(true);
+        void requestNativeInAppReview();
       }, SOFT_PROMPT_DELAY_MS);
     });
 
@@ -73,6 +64,4 @@ export function useAppReviewRecordListener(): AppReviewPromptController {
       }
     };
   }, []);
-
-  return { softPromptVisible, dismissSoftPrompt };
 }
