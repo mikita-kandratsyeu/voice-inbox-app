@@ -1,6 +1,6 @@
 ---
 description: React Native app — Navigation, NativeWind, Drizzle
-globs: mobile/**/*
+globs: mobile/{src,scripts,android,ios,__mocks__,patches}/**,mobile/*.{json,md}
 alwaysApply: false
 ---
 

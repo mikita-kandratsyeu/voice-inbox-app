@@ -27,4 +27,4 @@ Change only what the task requires. Web legal copy lives in Markdown under `web/
 
 ## Cursor indexing
 
-Use a root `.cursorignore` so `node_modules`, build outputs, and `.env` are not pulled into context. Template: `.cursor/cursorignore.template` → copy to `.cursorignore` at the repository root.
+Use a root `.cursorignore` so `node_modules`, build outputs, and `.env` are not pulled into context. Keep it up to date when adding new generated directories.

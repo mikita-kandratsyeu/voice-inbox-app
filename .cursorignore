@@ -27,5 +27,8 @@ mobile/coverage/
 **/*.p8
 
 web/backups/
+mobile/android/.cxx/
+mobile/.bundle/
+web/.cache/
 
 .DS_Store

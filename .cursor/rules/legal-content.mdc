@@ -1,0 +1,20 @@
+---
+description: Legal copy consistency for privacy/terms markdown
+globs: web/content/{privacy,terms}.{en,ru}.md
+alwaysApply: false
+---
+
+# Legal content (`web/content/`)
+
+When editing legal pages (`privacy.*.md`, `terms.*.md`), keep statements aligned with real product behavior.
+
+- Update **English and Russian** versions in the same change whenever possible.
+- Keep legal claims consistent with implementation in:
+  - `mobile/src/shared/lib/analytics.ts`
+  - `mobile/src/shared/lib/crashlytics.ts`
+  - `mobile/src/features/app-storefront/` and `mobile/src/features/yandex-interstitial/`
+  - `mobile/src/features/entitlements/` and `web/app/api/pro-license/**`
+  - `web/services/ai.service.ts`, `web/services/translate.service.ts`, `web/services/ask.service.ts`
+  - `web/config/constants.ts` (TTL/rate-limit values)
+- If behavior changes materially, update the **Last updated** date in legal docs.
+- Avoid promising stricter guarantees than the code currently enforces.

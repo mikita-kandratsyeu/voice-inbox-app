@@ -1,6 +1,6 @@
 ---
 description: Next.js web app — Prisma, i18n, Tailwind
-globs: web/**/*
+globs: web/{app,lib,services,config,prisma,messages,scripts,content,types,components}/**,web/*.{json,md}
 alwaysApply: false
 ---
 
