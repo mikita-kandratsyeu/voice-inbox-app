@@ -10,7 +10,6 @@ import {
   RefreshCw,
   Share2,
   Sparkles,
-  WifiOff,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -434,21 +433,6 @@ const EmptyState = ({
           {t('recordingDetail.askEmptyDesc')}
         </Text>
       </View>
-      {showOfflineState ? (
-        <View
-          className="flex-row items-center gap-2 rounded-lg px-3 py-2.5"
-          style={{
-            backgroundColor: color.background.tertiary,
-            borderWidth: 1,
-            borderColor: color.border.default,
-          }}
-        >
-          <WifiOff size={18} color={color.accent.delete} strokeWidth={1.8} />
-          <Text className="flex-1 text-[15px] leading-6" style={{ color: color.text.secondary }}>
-            {t('recordingDetail.askOfflineNetworkHint')}
-          </Text>
-        </View>
-      ) : null}
       <Text className="text-xs font-semibold" style={{ color: color.text.secondary }}>
         {t('recordingDetail.askSuggestedSection')}
       </Text>

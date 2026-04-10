@@ -3,16 +3,7 @@ import { storage } from '@/shared/lib/async-storage';
 const KEYS = {
   SOFT_PROMPT_COUNT: 'appReview.softPromptCount',
   LAST_SOFT_PROMPT_AT: 'appReview.lastSoftPromptAt',
-  NEVER_ASK: 'appReview.neverAsk',
 } as const;
-
-export function getNeverAskAppReview(): boolean {
-  return storage.getBoolean(KEYS.NEVER_ASK) ?? false;
-}
-
-export function setNeverAskAppReview(): void {
-  storage.set(KEYS.NEVER_ASK, true);
-}
 
 export function getSoftPromptCount(): number {
   return storage.getNumber(KEYS.SOFT_PROMPT_COUNT) ?? 0;

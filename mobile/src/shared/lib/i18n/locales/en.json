@@ -50,14 +50,6 @@
       "network": "Check your connection and try again."
     }
   },
-  "appReview": {
-    "title": "Enjoying Voice Inbox AI?",
-    "message": "Your rating helps others discover the app. It only takes a moment.",
-    "rate": "Rate",
-    "later": "Maybe later",
-    "never": "Don’t ask again",
-    "a11yDismissBackdrop": "Dismiss"
-  },
   "splash": {
     "tagline": "Smart voice notes"
   },
@@ -275,7 +267,6 @@
     "askEmptyTitle": "Ask about your note",
     "askEmptyDesc": "Get answers about the note using AI.",
     "askSuggestedSection": "Quick prompts",
-    "askOfflineNetworkHint": "You're offline. Connect to use Ask AI in Smart mode.",
     "askSuggested1": "What is this note about?",
     "askSuggested2": "Summarize briefly",
     "askSuggested3": "What are the key takeaways?",

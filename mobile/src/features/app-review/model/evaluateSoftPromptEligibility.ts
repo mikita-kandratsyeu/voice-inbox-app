@@ -1,6 +1,5 @@
 import {
   getLastSoftPromptAt,
-  getNeverAskAppReview,
   getSoftPromptCount,
 } from '../lib/appReviewStorage';
 import {
@@ -20,10 +19,6 @@ export function evaluateSoftPromptEligibility(input: EligibilityInput): boolean 
   }
 
   if (input.recordCount < MIN_NOTES_FOR_SOFT_PROMPT) {
-    return false;
-  }
-
-  if (getNeverAskAppReview()) {
     return false;
   }
 
