@@ -9248,14 +9248,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lucide-react-native@npm:^0.577.0":
-  version: 0.577.0
-  resolution: "lucide-react-native@npm:0.577.0"
+"lucide-react-native@npm:^1.8.0":
+  version: 1.8.0
+  resolution: "lucide-react-native@npm:1.8.0"
   peerDependencies:
     react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
     react-native: "*"
     react-native-svg: ^12.0.0 || ^13.0.0 || ^14.0.0 || ^15.0.0
-  checksum: 10c0/05a932be4995a8d779e2282d1970de7d4d4da452b66c6cd13fe475c23226f0259b3bf6d7a09651666cddf83699e2a9e5d0e5cb51df59e85200d5bce92f96e578
+  checksum: 10c0/3a04b9c2d8bf91c23a4c5ff64be4b27dbbc82df093e1a9c363d9ea7936e417a780a1226c84365ff2da32b90a9ecf73aaa1d7631421c66ba79299ffec6631f996
   languageName: node
   linkType: hard
 
@@ -13279,7 +13279,7 @@ __metadata:
     jest: "npm:^29.6.3"
     lint-staged: "npm:^15.5.0"
     llama.rn: "npm:^0.12.0-rc.5"
-    lucide-react-native: "npm:^0.577.0"
+    lucide-react-native: "npm:^1.8.0"
     nativewind: "npm:^4.2.3"
     patch-package: "npm:^8.0.1"
     postinstall-postinstall: "npm:^2.1.0"
