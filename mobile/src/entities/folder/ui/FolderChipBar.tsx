@@ -190,7 +190,7 @@ export const FolderChipBar = ({
             onLongPress={() => onEditPress(folder)}
           />
         ))}
-        {showReorder ? (
+        {showReorder && (
           <Pressable
             onPress={onReorderPress}
             accessibilityRole="button"
@@ -209,7 +209,7 @@ export const FolderChipBar = ({
           >
             <ArrowDownUp size={16} color={color.text.secondary} strokeWidth={2.2} />
           </Pressable>
-        ) : null}
+        )}
         <Pressable
           onPress={onCreatePress}
           accessibilityRole="button"
