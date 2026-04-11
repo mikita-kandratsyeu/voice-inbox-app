@@ -349,6 +349,8 @@ export const useAiProcessing = () => {
           });
         }
 
+        inFlightRef.current.delete(baseId);
+
         await generateAndSaveEmbeddingForRecord({
           ...record,
           summary,
