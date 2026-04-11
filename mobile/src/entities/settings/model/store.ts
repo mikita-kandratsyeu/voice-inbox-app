@@ -201,7 +201,7 @@ const getStoredAutoAiAfterTranscription = (): boolean => {
 
 const parseAutoArchiveAfterDays = (raw: string | undefined): AutoArchiveAfterDays => {
   const n = raw ? Number(raw) : NaN;
-  if (n === 7 || n === 14 || n === 30) return n;
+  if (n === 1 || n === 7 || n === 14 || n === 30) return n;
   return 14;
 };
 

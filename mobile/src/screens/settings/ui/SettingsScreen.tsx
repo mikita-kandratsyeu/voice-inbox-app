@@ -15,6 +15,7 @@ import { PrivateModeBadge, SCREEN_PADDING } from '@/shared/ui';
 
 import { useSettingsScreen } from '../lib/useSettingsScreen';
 import { AiUsageCard } from './AiUsageCard';
+import { AutoArchiveDelaySheet } from './AutoArchiveDelaySheet';
 import { AutomationComingSoonSheet } from './AutomationComingSoonSheet';
 import {
   SettingsAiProcessingSection,
@@ -199,15 +200,23 @@ export const SettingsScreen = () => {
           iapProPriceLoading={settings.iapProPriceLoading}
         />
         {!settings.isPrivateMode && (
-          <AutomationComingSoonSheet
-            visible={settings.automationSheet !== null}
-            feature={settings.automationSheet ?? 'autoTranscribe'}
-            onUpgradePress={() => {
-              settings.setAutomationSheet(null);
-              settings.setPlanPaywallVisible(true);
-            }}
-            onClose={() => settings.setAutomationSheet(null)}
-          />
+          <>
+            <AutomationComingSoonSheet
+              visible={settings.automationSheet !== null}
+              feature={settings.automationSheet ?? 'autoTranscribe'}
+              onUpgradePress={() => {
+                settings.setAutomationSheet(null);
+                settings.setPlanPaywallVisible(true);
+              }}
+              onClose={() => settings.setAutomationSheet(null)}
+            />
+            <AutoArchiveDelaySheet
+              visible={settings.autoArchiveDelaySheetVisible}
+              selectedDays={settings.autoArchiveAfterDays}
+              onSelect={settings.handleAutoArchiveDelaySelect}
+              onClose={settings.handleAutoArchiveDelaySheetClose}
+            />
+          </>
         )}
       </View>
     </View>

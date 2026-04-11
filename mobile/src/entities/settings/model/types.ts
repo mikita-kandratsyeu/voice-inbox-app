@@ -31,7 +31,7 @@ export type WhisperModelVariantId = `${WhisperModelId}:${WhisperModelWeightsForm
 
 export type WhisperModelStatus = 'not_downloaded' | 'downloading' | 'downloaded' | 'error';
 
-export type AutoArchiveAfterDays = 7 | 14 | 30;
+export type AutoArchiveAfterDays = 1 | 7 | 14 | 30;
 
 export type AIModel = {
   id: AIModelId;

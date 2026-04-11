@@ -97,6 +97,7 @@ export function useSettingsScreen() {
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
   const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
   const [automationSheet, setAutomationSheet] = useState<AutomationFeatureKind | null>(null);
+  const [autoArchiveDelaySheetVisible, setAutoArchiveDelaySheetVisible] = useState(false);
   const [planPaywallVisible, setPlanPaywallVisible] = useState(false);
   const [isHardResetting, setIsHardResetting] = useState(false);
   const [iapPaywallBusy, setIapPaywallBusy] = useState(false);
@@ -391,19 +392,20 @@ export function useSettingsScreen() {
   }, [pushStatus]);
 
   const handleAutoArchiveDelayPress = useCallback(() => {
-    const options: AutoArchiveAfterDays[] = [7, 14, 30];
-    Alert.alert(
-      t('settings.autoArchiveDelayPickerTitle'),
-      t('settings.autoArchiveDelayPickerMessage'),
-      [
-        ...options.map((d) => ({
-          text: t('settings.autoArchiveDelayValue', { count: d }),
-          onPress: () => setAutoArchiveAfterDays(d),
-        })),
-        { text: t('common.cancel'), style: 'cancel' as const },
-      ],
-    );
-  }, [setAutoArchiveAfterDays, t]);
+    setAutoArchiveDelaySheetVisible(true);
+  }, []);
+
+  const handleAutoArchiveDelaySheetClose = useCallback(() => {
+    setAutoArchiveDelaySheetVisible(false);
+  }, []);
+
+  const handleAutoArchiveDelaySelect = useCallback(
+    (days: AutoArchiveAfterDays) => {
+      setAutoArchiveAfterDays(days);
+      setAutoArchiveDelaySheetVisible(false);
+    },
+    [setAutoArchiveAfterDays],
+  );
 
   const handleMicPermission = useCallback(async () => {
     if (micStatus === 'denied') {
@@ -580,6 +582,9 @@ export function useSettingsScreen() {
     setAutoArchiveEnabled,
     autoArchiveAfterDays,
     handleAutoArchiveDelayPress,
+    autoArchiveDelaySheetVisible,
+    handleAutoArchiveDelaySheetClose,
+    handleAutoArchiveDelaySelect,
     setAutomationSheet,
     aiModelName: aiModelBaseName,
     privateAiModeValue,
