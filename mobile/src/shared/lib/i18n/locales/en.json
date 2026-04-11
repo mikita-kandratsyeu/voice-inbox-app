@@ -740,6 +740,7 @@
     "autoName": "Auto",
     "autoDescription": "The app chooses the best cloud model per task.",
     "autoRecommendedLabel": "Auto",
+    "manualSectionTitle": "Fine-tune",
     "tierAuto": "Auto",
     "tierFast": "Fast",
     "tierSmart": "Smarter",

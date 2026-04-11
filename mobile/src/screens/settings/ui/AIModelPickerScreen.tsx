@@ -193,6 +193,9 @@ export const AIModelPickerScreen = () => {
     })),
   ];
   const models = isPrivateMode ? LOCAL_AI_MODELS : cloudOptions;
+  const autoOption = cloudOptions[0];
+  const manualCloudOptions = cloudOptions.slice(1);
+  const shouldShowCloudSpeed = new Set(cloudOptions.map((option) => option.speed)).size > 1;
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -227,23 +230,9 @@ export const AIModelPickerScreen = () => {
               {t('aiModels.description')}
             </Text>
           )}
-          <View className="overflow-hidden rounded-2xl">
-            {models.map((model, index) => {
-              const isFirst = index === 0;
-              const isLast = index === models.length - 1;
-              const borderStyle = !isLast
-                ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
-                : {};
-              const radiusClass =
-                isFirst && isLast
-                  ? 'rounded-2xl'
-                  : isFirst
-                    ? 'rounded-t-2xl'
-                    : isLast
-                      ? 'rounded-b-2xl'
-                      : '';
-
-              if (isPrivateMode) {
+          {isPrivateMode ? (
+            <View className="overflow-hidden rounded-2xl">
+              {models.map((model, index) => {
                 const lm = model as LocalAiModelCatalogEntry;
                 const status = localLlmModelStatuses[lm.id] ?? 'not_downloaded';
                 const isSelected =
@@ -271,30 +260,19 @@ export const AIModelPickerScreen = () => {
                     downloadBytes={localLlmDownloadBytes[lm.id]}
                   />
                 );
-              }
-
-              const cloudOption = cloudOptions[index];
-              const isAuto = cloudOption.id === 'auto';
-              const isSelected = isAuto
-                ? aiModelRoutingMode === 'auto'
-                : aiModelRoutingMode === 'manual' && cloudOption.id === selectedAIModel;
-              const speed = cloudOption.speed;
-              const tierLabel = cloudOption.tierLabel;
-
-              return (
+              })}
+            </View>
+          ) : (
+            <>
+              <View className="overflow-hidden rounded-2xl">
                 <TouchableOpacity
-                  key={model.id}
-                  onPress={() =>
-                    isAuto
-                      ? handleSelectAuto()
-                      : handleSelectManual(cloudOption.id as UserSelectableAIModelId)
-                  }
+                  onPress={handleSelectAuto}
                   activeOpacity={0.7}
                   accessibilityRole="button"
-                  accessibilityLabel={cloudOption.name}
-                  accessibilityState={{ selected: isSelected }}
-                  className={`px-4 py-4 ${radiusClass}`}
-                  style={[{ backgroundColor: color.background.card }, borderStyle]}
+                  accessibilityLabel={autoOption.name}
+                  accessibilityState={{ selected: aiModelRoutingMode === 'auto' }}
+                  className="rounded-2xl px-4 py-4"
+                  style={{ backgroundColor: color.background.card }}
                 >
                   <View className="flex-row items-center justify-between">
                     <View className="mr-3 flex-1">
@@ -303,49 +281,41 @@ export const AIModelPickerScreen = () => {
                           className="text-[16px] font-semibold"
                           style={{ color: color.text.primary }}
                         >
-                          {tierLabel}
+                          {autoOption.tierLabel}
                         </Text>
-                        {cloudOption.isRecommended && (
-                          <View
-                            className="rounded-full px-2 py-0.5"
-                            style={{ backgroundColor: color.status.processing.bg }}
-                          >
-                            <Text
-                              className="text-[12px] font-medium"
-                              style={{ color: color.status.processing.text }}
-                            >
-                              {t('whisper.recommended')}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                      {!isAuto && (
-                        <Text
-                          className="mb-1 text-[13px] leading-5"
-                          style={{ color: color.text.muted }}
+                        <View
+                          className="rounded-full px-2 py-0.5"
+                          style={{ backgroundColor: color.status.processing.bg }}
                         >
-                          {cloudOption.name}
-                        </Text>
-                      )}
+                          <Text
+                            className="text-[12px] font-medium"
+                            style={{ color: color.status.processing.text }}
+                          >
+                            {t('whisper.recommended')}
+                          </Text>
+                        </View>
+                      </View>
                       <Text
                         className="mb-1.5 text-[14px] leading-5"
                         style={{ color: color.text.secondary }}
                       >
-                        {cloudOption.description}
+                        {autoOption.description}
                       </Text>
-                      <View className="flex-row items-center gap-3">
+                      {shouldShowCloudSpeed ? (
                         <View className="flex-row items-center gap-1">
                           <View
                             className="h-2 w-2 rounded-full"
-                            style={{ backgroundColor: getSpeedColor(speed, color) }}
+                            style={{ backgroundColor: getSpeedColor(autoOption.speed, color) }}
                           />
                           <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-                            {t(`aiModels.speed.${speed}`, { defaultValue: speed })}
+                            {t(`aiModels.speed.${autoOption.speed}`, {
+                              defaultValue: autoOption.speed,
+                            })}
                           </Text>
                         </View>
-                      </View>
+                      ) : null}
                     </View>
-                    {isSelected ? (
+                    {aiModelRoutingMode === 'auto' ? (
                       <View
                         className="h-8 w-8 items-center justify-center rounded-full"
                         style={{ backgroundColor: color.accent.primary }}
@@ -360,9 +330,84 @@ export const AIModelPickerScreen = () => {
                     )}
                   </View>
                 </TouchableOpacity>
-              );
-            })}
-          </View>
+              </View>
+
+              <Text
+                className="mb-2 mt-4 px-1 text-xs font-semibold uppercase tracking-widest"
+                style={{ color: color.text.secondary }}
+              >
+                {t('aiModels.manualSectionTitle')}
+              </Text>
+              <View className="overflow-hidden rounded-2xl">
+                {manualCloudOptions.map((cloudOption, index) => {
+                  const isFirst = index === 0;
+                  const isLast = index === manualCloudOptions.length - 1;
+                  const borderStyle = !isLast
+                    ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
+                    : {};
+                  const radiusClass =
+                    isFirst && isLast
+                      ? 'rounded-2xl'
+                      : isFirst
+                        ? 'rounded-t-2xl'
+                        : isLast
+                          ? 'rounded-b-2xl'
+                          : '';
+                  const isSelected =
+                    aiModelRoutingMode === 'manual' && cloudOption.id === selectedAIModel;
+
+                  return (
+                    <TouchableOpacity
+                      key={cloudOption.id}
+                      onPress={() => handleSelectManual(cloudOption.id as UserSelectableAIModelId)}
+                      activeOpacity={0.7}
+                      accessibilityRole="button"
+                      accessibilityLabel={cloudOption.name}
+                      accessibilityState={{ selected: isSelected }}
+                      className={`px-4 py-4 ${radiusClass}`}
+                      style={[{ backgroundColor: color.background.card }, borderStyle]}
+                    >
+                      <View className="flex-row items-center justify-between">
+                        <View className="mr-3 flex-1">
+                          <Text
+                            className="mb-1 text-[16px] font-semibold"
+                            style={{ color: color.text.primary }}
+                          >
+                            {cloudOption.tierLabel}
+                          </Text>
+                          <Text
+                            className="mb-1 text-[13px] leading-5"
+                            style={{ color: color.text.muted }}
+                          >
+                            {cloudOption.name}
+                          </Text>
+                          <Text
+                            className="text-[14px] leading-5"
+                            style={{ color: color.text.secondary }}
+                          >
+                            {cloudOption.description}
+                          </Text>
+                        </View>
+                        {isSelected ? (
+                          <View
+                            className="h-8 w-8 items-center justify-center rounded-full"
+                            style={{ backgroundColor: color.accent.primary }}
+                          >
+                            <Check size={16} color={color.icon.onAccent} strokeWidth={2.5} />
+                          </View>
+                        ) : (
+                          <View
+                            className="h-8 w-8 rounded-full"
+                            style={{ borderWidth: 2, borderColor: color.border.default }}
+                          />
+                        )}
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </>
+          )}
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>

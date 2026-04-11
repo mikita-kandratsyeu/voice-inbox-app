@@ -742,6 +742,7 @@
     "autoName": "Авто",
     "autoDescription": "Приложение выбирает лучшую облачную модель под задачу.",
     "autoRecommendedLabel": "Авто",
+    "manualSectionTitle": "Точная настройка",
     "tierAuto": "Авто",
     "tierFast": "Быстро",
     "tierSmart": "Умнее",
