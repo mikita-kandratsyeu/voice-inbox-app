@@ -1,9 +1,23 @@
+/** Apple App Store numeric id from an App Store / iTunes URL (e.g. …/app/name/id6745410910). */
+export function extractAppleAppStoreId(storeUrl: string): string | undefined {
+  const trimmed = storeUrl.trim();
+  if (!trimmed || trimmed === '#') return undefined;
+  const m = trimmed.match(/\/id(\d+)/i);
+  return m?.[1];
+}
+
 // App config (from env)
 export const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? '';
 export const BASE_URL_OR_FALLBACK = BASE_URL || 'http://localhost:3000';
 export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? '';
 export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL ?? '#';
 export const GOOGLE_PLAY_URL = process.env.NEXT_PUBLIC_GOOGLE_PLAY_URL ?? '#';
+
+/** For Smart App Banner (`apple-itunes-app`). Override via env if the store URL has no `/id…` segment. */
+export const APP_STORE_APP_ID: string | undefined =
+  process.env.NEXT_PUBLIC_APP_STORE_APP_ID?.trim() ||
+  extractAppleAppStoreId(process.env.NEXT_PUBLIC_APP_STORE_URL ?? '') ||
+  undefined;
 export const VERIFIED_METRICS_URL = process.env.NEXT_PUBLIC_VERIFIED_METRICS_URL?.trim() ?? '';
 
 // HTTP headers

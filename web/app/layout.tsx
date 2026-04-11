@@ -8,7 +8,7 @@ import { Analytics } from '@vercel/analytics/next';
 import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import { YandexMetrika } from '@/components/analytics/YandexMetrika';
 
-import { BASE_URL_OR_FALLBACK } from '@/config/constants';
+import { APP_STORE_APP_ID, BASE_URL_OR_FALLBACK } from '@/config/constants';
 
 import './globals.css';
 
@@ -22,6 +22,9 @@ export const metadata: Metadata = {
   verification: {
     google: 'DkzhOPpo8WzVKEi9yjlUvpHh1dZhnLzknYyJ486BIaU',
   },
+  ...(APP_STORE_APP_ID
+    ? { other: { 'apple-itunes-app': `app-id=${APP_STORE_APP_ID}` } }
+    : {}),
 };
 
 export default async function RootLayout({
