@@ -22,9 +22,7 @@ export const metadata: Metadata = {
   verification: {
     google: 'DkzhOPpo8WzVKEi9yjlUvpHh1dZhnLzknYyJ486BIaU',
   },
-  ...(APP_STORE_APP_ID
-    ? { other: { 'apple-itunes-app': `app-id=${APP_STORE_APP_ID}` } }
-    : {}),
+  ...(APP_STORE_APP_ID ? { other: { 'apple-itunes-app': `app-id=${APP_STORE_APP_ID}` } } : {}),
 };
 
 export default async function RootLayout({
