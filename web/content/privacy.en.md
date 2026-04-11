@@ -79,4 +79,4 @@ We may update this Privacy Policy from time to time. The "Last updated" date at 
 
 ## 10. Contact
 
-Privacy inquiries: **mkandratsyeu@gmail.com**
+Privacy inquiries: **hello@voice-inbox.online**

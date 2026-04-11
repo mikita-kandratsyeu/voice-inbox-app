@@ -60,4 +60,4 @@ These Terms are governed by the laws of the jurisdiction where the developer is 
 
 ## 12. Contact
 
-Questions about these Terms: **mkandratsyeu@gmail.com**
+Questions about these Terms: **hello@voice-inbox.online**
