@@ -46,6 +46,7 @@ function createCtx(overrides: Partial<AiExecutionContext> = {}): AiExecutionCont
     privateLocalLlmBudget: 'balanced',
     privateCapabilityTier: 'full',
     ...overrides,
+    aiModelRoutingMode: overrides.aiModelRoutingMode ?? 'manual',
   };
 }
 
