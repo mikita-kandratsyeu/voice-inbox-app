@@ -10,6 +10,7 @@ import {
   validateRequiredStrings,
 } from '@/lib/api';
 import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
+import { resolveAutoAiModel, type AiModelMode } from '@/lib/ai-model-router';
 import { setAppForeground } from '@/lib/push-tokens';
 import { createAsk } from '@/services/ask.service';
 import { NextResponse } from 'next/server';
@@ -19,6 +20,8 @@ type CreateAskBody = {
   transcript?: unknown;
   question?: unknown;
   model?: unknown;
+  modelMode?: unknown;
+  routingContext?: unknown;
   summary?: unknown;
   tasks?: unknown;
   priorTurns?: unknown;
@@ -84,6 +87,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     transcript,
     question,
     model,
+    modelMode: rawModelMode,
+    routingContext: rawRoutingContext,
     summary,
     tasks,
     priorTurns: rawPrior,
@@ -92,12 +97,28 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     transcript: string;
     question: string;
     model: string;
+    modelMode?: AiModelMode;
+    routingContext?: { taskType?: unknown; transcriptChars?: unknown };
     summary?: string;
     tasks?: { text: string }[];
     priorTurns?: unknown;
   };
 
-  const modelError = validateAllowedModel(model);
+  const modelMode: AiModelMode = rawModelMode === 'auto' ? 'auto' : 'manual';
+  const routingTaskType = rawRoutingContext?.taskType === 'summary_tasks' ? 'summary_tasks' : 'ask';
+  const routingTranscriptChars =
+    typeof rawRoutingContext?.transcriptChars === 'number'
+      ? rawRoutingContext.transcriptChars
+      : transcript.length;
+  const resolvedModel =
+    modelMode === 'auto'
+      ? resolveAutoAiModel({
+          taskType: routingTaskType,
+          transcriptChars: routingTranscriptChars,
+        })
+      : model;
+
+  const modelError = validateAllowedModel(resolvedModel);
   if (modelError) {
     return apiError(modelError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
@@ -120,7 +141,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     id,
     transcript,
     question,
-    model,
+    resolvedModel,
     deviceIdTrimmed,
     summaryStr,
     tasksList,

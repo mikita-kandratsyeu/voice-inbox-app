@@ -4,6 +4,7 @@ import { i18n } from './i18n';
 
 export function useAiModelName(): string {
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const aiModelRoutingMode = useSettingsStore((s) => s.aiModelRoutingMode);
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
 
@@ -13,6 +14,10 @@ export function useAiModelName(): string {
     }
     const localModel = LOCAL_AI_MODELS.find((m) => m.id === selectedLocalAiModel);
     return localModel?.name ?? selectedLocalAiModel;
+  }
+
+  if (aiModelRoutingMode === 'auto') {
+    return i18n.t('aiModels.autoRecommendedLabel');
   }
 
   const userFacing = USER_FACING_AI_MODELS.find((m) => m.id === selectedAIModel);

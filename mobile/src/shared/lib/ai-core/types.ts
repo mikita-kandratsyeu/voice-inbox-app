@@ -18,6 +18,7 @@ export type AiLocalGenerationProgressEvent =
 
 export type AiExecutionContext = {
   selectedAIModel: UserSelectableAIModelId;
+  aiModelRoutingMode: 'manual' | 'auto';
   selectedLocalAiModel: LocalAiModelId;
   isLocalLlmModelDownloaded: boolean;
   summaryStyle: SummaryStyle;

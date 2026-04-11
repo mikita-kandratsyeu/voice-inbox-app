@@ -6,6 +6,11 @@ type AskApiRequestBody = {
   transcript: string;
   question: string;
   model: string;
+  modelMode?: 'manual' | 'auto';
+  routingContext?: {
+    taskType?: 'summary_tasks' | 'ask';
+    transcriptChars?: number;
+  };
   summary?: string;
   tasks?: { text: string }[];
   priorTurns?: { question: string; answer: string }[];

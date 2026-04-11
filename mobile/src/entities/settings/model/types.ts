@@ -47,6 +47,7 @@ export type AiModelTierLabelKey =
   | 'aiModels.tierPremium';
 
 export type AiUserTierCode = 'fast' | 'smarter' | 'premium_experimental';
+export type AiModelRoutingMode = 'manual' | 'auto';
 
 export type UserFacingAIModel = Omit<AIModel, 'id'> & {
   id: UserSelectableAIModelId;
@@ -77,6 +78,7 @@ export type SettingsState = {
   accentColorId: AccentColorId;
   appLanguage: AppLanguage;
   selectedAIModel: UserSelectableAIModelId;
+  aiModelRoutingMode: AiModelRoutingMode;
   selectedLocalAiModel: LocalAiModelId | null;
   selectedWhisperModel: WhisperModelId;
   selectedWhisperModelFormat: WhisperModelWeightsFormat;
@@ -103,6 +105,7 @@ export type SettingsState = {
   setAccentColorId: (value: AccentColorId) => void;
   setAppLanguage: (value: AppLanguage) => void;
   setAIModel: (id: UserSelectableAIModelId) => void;
+  setAiModelRoutingMode: (mode: AiModelRoutingMode) => void;
   setLocalAiModel: (id: LocalAiModelId) => void;
   clearLocalAiModelSelection: () => void;
   setWhisperModel: (id: WhisperModelId) => void;

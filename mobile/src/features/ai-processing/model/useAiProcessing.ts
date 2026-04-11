@@ -65,6 +65,7 @@ export const useAiProcessing = () => {
 
   const {
     selectedAIModel,
+    aiModelRoutingMode,
     selectedLocalAiModel,
     localLlmModelStatuses,
     summaryStyle,
@@ -76,6 +77,7 @@ export const useAiProcessing = () => {
   } = useSettingsStore(
     useShallow((s) => ({
       selectedAIModel: s.selectedAIModel,
+      aiModelRoutingMode: s.aiModelRoutingMode,
       selectedLocalAiModel: s.selectedLocalAiModel,
       localLlmModelStatuses: s.localLlmModelStatuses,
       summaryStyle: s.summaryStyle,
@@ -235,6 +237,7 @@ export const useAiProcessing = () => {
           },
           {
             selectedAIModel,
+            aiModelRoutingMode,
             selectedLocalAiModel: effectiveLocalAiModelId,
             isLocalLlmModelDownloaded,
             summaryStyle,
@@ -393,6 +396,7 @@ export const useAiProcessing = () => {
       aiExecutionMode,
       clearPrivateAiBatchUi,
       selectedAIModel,
+      aiModelRoutingMode,
       effectiveLocalAiModelId,
       isLocalLlmModelDownloaded,
       summaryStyle,

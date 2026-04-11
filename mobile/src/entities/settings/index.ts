@@ -28,6 +28,7 @@ export type {
   AiExecutionMode,
   AIModel,
   AIModelId,
+  AiModelRoutingMode,
   AiModelTierLabelKey,
   AiOutputLanguage,
   AiUserTierCode,

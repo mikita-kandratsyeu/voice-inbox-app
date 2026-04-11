@@ -102,6 +102,7 @@ export async function performHardReset(): Promise<void> {
     accentColorId: DEFAULT_ACCENT_COLOR_ID,
     appLanguage: 'system',
     selectedAIModel: RECOMMENDED_AI_MODEL_ID,
+    aiModelRoutingMode: 'auto',
     selectedWhisperModel: DEFAULT_SELECTED_WHISPER_MODEL_ID,
     selectedWhisperModelFormat: DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
     whisperModelWeightsFormat: DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,

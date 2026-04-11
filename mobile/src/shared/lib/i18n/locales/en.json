@@ -450,7 +450,7 @@
       "a11yCurrentPlanHint": "This is information about your current plan",
       "a11yManageSubscriptionsHint": "Opens subscription management in the App Store or Google Play",
       "a11yProDetailsWebHint": "Opens your Pro plan details in the browser",
-      "proDetailsPortalError": "Could not open plan details. Check your connection or try again later."
+      "proDetailsPortalError": "Could not check plan details. Check your connection or try again later."
     },
     "subscriptionManagementOpenError": "Could not open subscription settings. Try Subscriptions in the App Store or Google Play.",
     "planPaywall": {
@@ -737,6 +737,10 @@
     "localDownloadBlockedTitle": "Download in progress",
     "localDownloadBlockedBody": "Wait for the current model to finish downloading, or cancel it, then try again.",
     "privateModeLabel": "On-device",
+    "autoName": "Auto",
+    "autoDescription": "The app chooses the best cloud model per task.",
+    "autoRecommendedLabel": "Auto",
+    "tierAuto": "Auto",
     "tierFast": "Fast",
     "tierSmart": "Smarter",
     "tierPremium": "Maximum",

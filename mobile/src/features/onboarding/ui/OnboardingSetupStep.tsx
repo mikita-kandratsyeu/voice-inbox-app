@@ -3,16 +3,15 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
+import type { UserSelectableAIModelId, WhisperModelId } from '@/entities/settings';
 import {
   getWhisperModelSizeMb,
   getWhisperModelVariantId,
-  RECOMMENDED_AI_MODEL_ID,
   USER_FACING_AI_MODELS,
   useRecommendedWhisperModelId,
   useSettingsStore,
   useWhisperModelCompatibility,
   WHISPER_MODELS,
-  type WhisperModelId,
 } from '@/entities/settings';
 import { useModelManager } from '@/features/model-manager';
 import type { Colors } from '@/shared/config';
@@ -32,8 +31,10 @@ export const OnboardingSetupStep = ({
 }: OnboardingSetupStepProps) => {
   const { t } = useTranslation();
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
+  const aiModelRoutingMode = useSettingsStore((s) => s.aiModelRoutingMode);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const setAIModel = useSettingsStore((s) => s.setAIModel);
+  const setAiModelRoutingMode = useSettingsStore((s) => s.setAiModelRoutingMode);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
 
@@ -71,6 +72,19 @@ export const OnboardingSetupStep = ({
   };
 
   if (mode === 'ai') {
+    const aiOptions = [
+      {
+        id: 'auto',
+        name: t('aiModels.autoRecommendedLabel'),
+        isRecommended: true,
+      },
+      ...USER_FACING_AI_MODELS.map((model) => ({
+        id: model.id,
+        name: model.name,
+        isRecommended: false,
+      })),
+    ];
+
     return (
       <ScrollView
         className="flex-1"
@@ -85,15 +99,23 @@ export const OnboardingSetupStep = ({
             borderColor: color.border.default,
           }}
         >
-          {USER_FACING_AI_MODELS.map((model, index) => {
-            const isLast = index === USER_FACING_AI_MODELS.length - 1;
-            const isSelected = model.id === selectedAIModel;
+          {aiOptions.map((model, index) => {
+            const isLast = index === aiOptions.length - 1;
+            const isAuto = model.id === 'auto';
+            const isSelected = isAuto
+              ? aiModelRoutingMode === 'auto'
+              : aiModelRoutingMode === 'manual' && model.id === selectedAIModel;
             return (
               <TouchableOpacity
                 key={model.id}
                 onPress={() => {
                   hapticSelection();
-                  setAIModel(model.id);
+                  if (isAuto) {
+                    setAiModelRoutingMode('auto');
+                    return;
+                  }
+                  setAiModelRoutingMode('manual');
+                  setAIModel(model.id as UserSelectableAIModelId);
                 }}
                 activeOpacity={0.7}
                 accessibilityRole="button"
@@ -109,7 +131,7 @@ export const OnboardingSetupStep = ({
                   <Text className="text-[15px] font-medium" style={{ color: color.text.primary }}>
                     {model.name}
                   </Text>
-                  {model.id === RECOMMENDED_AI_MODEL_ID && (
+                  {model.isRecommended && (
                     <View
                       className="rounded-full px-2 py-0.5"
                       style={{ backgroundColor: color.status.processing.bg }}

@@ -16,6 +16,7 @@ import {
   type AiProcessingOptions,
 } from '@/lib/prompts';
 import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
+import { resolveAutoAiModel, type AiModelMode } from '@/lib/ai-model-router';
 import { setAppForeground } from '@/lib/push-tokens';
 import { createMessage } from '@/services/message.service';
 import { NextResponse } from 'next/server';
@@ -24,6 +25,8 @@ type CreateMessageBody = {
   id?: unknown;
   transcript?: unknown;
   model?: unknown;
+  modelMode?: unknown;
+  routingContext?: unknown;
   systemPrompt?: unknown;
   options?: AiProcessingOptions;
 };
@@ -65,17 +68,35 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     id,
     transcript,
     model,
+    modelMode: rawModelMode,
+    routingContext: rawRoutingContext,
     systemPrompt,
     options: rawOptions,
   } = body as {
     id: string;
     transcript: string;
     model: string;
+    modelMode?: AiModelMode;
+    routingContext?: { taskType?: unknown; transcriptChars?: unknown };
     systemPrompt?: string;
     options?: AiProcessingOptions & { existingTaskTexts?: unknown; taskExtractionHint?: unknown };
   };
 
-  const modelError = validateAllowedModel(model);
+  const modelMode: AiModelMode = rawModelMode === 'auto' ? 'auto' : 'manual';
+  const routingTaskType = rawRoutingContext?.taskType === 'ask' ? 'ask' : 'summary_tasks';
+  const routingTranscriptChars =
+    typeof rawRoutingContext?.transcriptChars === 'number'
+      ? rawRoutingContext.transcriptChars
+      : transcript.length;
+  const resolvedModel =
+    modelMode === 'auto'
+      ? resolveAutoAiModel({
+          taskType: routingTaskType,
+          transcriptChars: routingTranscriptChars,
+        })
+      : model;
+
+  const modelError = validateAllowedModel(resolvedModel);
   if (modelError) {
     return apiError(modelError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
@@ -106,7 +127,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const result = await createMessage(
     id,
     transcript,
-    model,
+    resolvedModel,
     resolvedSystemPrompt,
     deviceIdTrimmed,
     request.headers.get('user-agent'),

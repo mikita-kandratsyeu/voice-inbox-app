@@ -452,7 +452,7 @@
       "a11yCurrentPlanHint": "Это информация о текущем плане",
       "a11yManageSubscriptionsHint": "Откроется управление подписками в App Store или Google Play",
       "a11yProDetailsWebHint": "Откроются сведения о плане Pro в браузере",
-      "proDetailsPortalError": "Не удалось открыть сведения о плане. Проверьте соединение или попробуйте ещё раз."
+      "proDetailsPortalError": "Не удалось проверить сведения о плане. Проверьте соединение или попробуйте ещё раз."
     },
     "subscriptionManagementOpenError": "Не удалось открыть настройки подписки. Откройте раздел «Подписки» в App Store или Google Play.",
     "planPaywall": {
@@ -739,6 +739,10 @@
     "localDownloadBlockedTitle": "Идёт загрузка",
     "localDownloadBlockedBody": "Дождитесь окончания загрузки текущей модели или отмените её, затем попробуйте снова.",
     "privateModeLabel": "Локально",
+    "autoName": "Авто",
+    "autoDescription": "Приложение выбирает лучшую облачную модель под задачу.",
+    "autoRecommendedLabel": "Авто",
+    "tierAuto": "Авто",
     "tierFast": "Быстро",
     "tierSmart": "Умнее",
     "tierPremium": "Максимум",

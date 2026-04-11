@@ -47,6 +47,11 @@ export async function runCloudSummaryTasks(
     id: request.id,
     transcript: request.transcript,
     model: ctx.selectedAIModel,
+    modelMode: ctx.aiModelRoutingMode,
+    routingContext: {
+      taskType: 'summary_tasks',
+      transcriptChars: request.transcript.length,
+    },
     options: {
       summaryStyle: ctx.summaryStyle,
       taskStrictness: ctx.taskStrictness,
@@ -91,6 +96,11 @@ export async function runCloudAsk(
     transcript: request.transcript,
     question: request.question,
     model: ctx.selectedAIModel,
+    modelMode: ctx.aiModelRoutingMode,
+    routingContext: {
+      taskType: 'ask',
+      transcriptChars: request.transcript.length,
+    },
     summary: request.summary,
     tasks: request.tasks,
     ...(request.priorTurns?.length ? { priorTurns: request.priorTurns } : {}),

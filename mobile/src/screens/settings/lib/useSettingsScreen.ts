@@ -66,6 +66,7 @@ export function useSettingsScreen() {
   const route = useRoute<RouteProp<SettingsStackParamList, 'Settings'>>();
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
+  const aiModelRoutingMode = useSettingsStore((s) => s.aiModelRoutingMode);
   const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
   const localLlmModelStatuses = useSettingsStore((s) => s.localLlmModelStatuses);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
@@ -285,7 +286,9 @@ export function useSettingsScreen() {
       ? localLlmDownloaded
         ? (localModel?.name ?? selectedLocalAiModel ?? '')
         : t('settings.whisperModelNotSet')
-      : (userFacing?.name ?? selectedAIModel);
+      : aiModelRoutingMode === 'auto'
+        ? t('aiModels.autoRecommendedLabel')
+        : (userFacing?.name ?? selectedAIModel);
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const whisperVariantId = getWhisperModelVariantId(
     selectedWhisperModel,

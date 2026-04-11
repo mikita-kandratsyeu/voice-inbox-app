@@ -14,7 +14,6 @@ import type {
 import {
   DEFAULT_LOCAL_AI_MODEL_ID,
   LOCAL_AI_MODELS,
-  RECOMMENDED_AI_MODEL_ID,
   USER_FACING_AI_MODELS,
   useSettingsStore,
 } from '@/entities/settings';
@@ -46,7 +45,9 @@ export const AIModelPickerScreen = () => {
   const isTablet = useIsTablet();
 
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
+  const aiModelRoutingMode = useSettingsStore((s) => s.aiModelRoutingMode);
   const setAIModel = useSettingsStore((s) => s.setAIModel);
+  const setAiModelRoutingMode = useSettingsStore((s) => s.setAiModelRoutingMode);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
   const setLocalAiModel = useSettingsStore((s) => s.setLocalAiModel);
@@ -112,8 +113,14 @@ export const AIModelPickerScreen = () => {
     void refreshRealLocalSizes();
   }, [refreshRealLocalSizes]);
 
-  const handleSelect = (id: UserSelectableAIModelId) => {
+  const handleSelectManual = (id: UserSelectableAIModelId) => {
+    setAiModelRoutingMode('manual');
     setAIModel(id);
+    navigation.goBack();
+  };
+
+  const handleSelectAuto = () => {
+    setAiModelRoutingMode('auto');
     navigation.goBack();
   };
 
@@ -167,7 +174,25 @@ export const AIModelPickerScreen = () => {
   };
 
   const isPrivateMode = aiExecutionMode === 'private_experimental';
-  const models = isPrivateMode ? LOCAL_AI_MODELS : USER_FACING_AI_MODELS;
+  const cloudOptions = [
+    {
+      id: 'auto',
+      tierLabel: t('aiModels.tierAuto'),
+      name: t('aiModels.autoName'),
+      description: t('aiModels.autoDescription'),
+      speed: 'fast' as const,
+      isRecommended: true,
+    },
+    ...USER_FACING_AI_MODELS.map((model) => ({
+      id: model.id,
+      tierLabel: t(model.tierLabelKey),
+      name: model.name,
+      description: t(model.descriptionKey as 'aiModels.geminiDesc'),
+      speed: model.speed,
+      isRecommended: false,
+    })),
+  ];
+  const models = isPrivateMode ? LOCAL_AI_MODELS : cloudOptions;
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -248,19 +273,25 @@ export const AIModelPickerScreen = () => {
                 );
               }
 
-              const isSelected = model.id === selectedAIModel;
-              const speed = model.speed;
-              const tierLabel = t(
-                (model as { tierLabelKey: string }).tierLabelKey as 'aiModels.tierFast',
-              );
+              const cloudOption = cloudOptions[index];
+              const isAuto = cloudOption.id === 'auto';
+              const isSelected = isAuto
+                ? aiModelRoutingMode === 'auto'
+                : aiModelRoutingMode === 'manual' && cloudOption.id === selectedAIModel;
+              const speed = cloudOption.speed;
+              const tierLabel = cloudOption.tierLabel;
 
               return (
                 <TouchableOpacity
                   key={model.id}
-                  onPress={() => handleSelect(model.id as UserSelectableAIModelId)}
+                  onPress={() =>
+                    isAuto
+                      ? handleSelectAuto()
+                      : handleSelectManual(cloudOption.id as UserSelectableAIModelId)
+                  }
                   activeOpacity={0.7}
                   accessibilityRole="button"
-                  accessibilityLabel={model.name}
+                  accessibilityLabel={cloudOption.name}
                   accessibilityState={{ selected: isSelected }}
                   className={`px-4 py-4 ${radiusClass}`}
                   style={[{ backgroundColor: color.background.card }, borderStyle]}
@@ -274,7 +305,7 @@ export const AIModelPickerScreen = () => {
                         >
                           {tierLabel}
                         </Text>
-                        {model.id === RECOMMENDED_AI_MODEL_ID ? (
+                        {cloudOption.isRecommended && (
                           <View
                             className="rounded-full px-2 py-0.5"
                             style={{ backgroundColor: color.status.processing.bg }}
@@ -286,19 +317,21 @@ export const AIModelPickerScreen = () => {
                               {t('whisper.recommended')}
                             </Text>
                           </View>
-                        ) : null}
+                        )}
                       </View>
-                      <Text
-                        className="mb-1 text-[13px] leading-5"
-                        style={{ color: color.text.muted }}
-                      >
-                        {model.name}
-                      </Text>
+                      {!isAuto && (
+                        <Text
+                          className="mb-1 text-[13px] leading-5"
+                          style={{ color: color.text.muted }}
+                        >
+                          {cloudOption.name}
+                        </Text>
+                      )}
                       <Text
                         className="mb-1.5 text-[14px] leading-5"
                         style={{ color: color.text.secondary }}
                       >
-                        {t(model.descriptionKey as 'aiModels.geminiDesc')}
+                        {cloudOption.description}
                       </Text>
                       <View className="flex-row items-center gap-3">
                         <View className="flex-row items-center gap-1">

@@ -14,6 +14,11 @@ type AiApiRequestBody = {
   id: string;
   transcript: string;
   model: string;
+  modelMode?: 'manual' | 'auto';
+  routingContext?: {
+    taskType?: 'summary_tasks' | 'ask';
+    transcriptChars?: number;
+  };
   systemPrompt?: string;
   options?: AiProcessingOptions;
 };

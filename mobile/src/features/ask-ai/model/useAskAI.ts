@@ -47,6 +47,7 @@ export const useAskAI = (
   recordForResume?: VoiceRecord | null,
 ) => {
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
+  const aiModelRoutingMode = useSettingsStore((s) => s.aiModelRoutingMode);
   const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
   const localLlmModelStatuses = useSettingsStore((s) => s.localLlmModelStatuses);
   const summaryStyle = useSettingsStore((s) => s.summaryStyle);
@@ -278,6 +279,7 @@ export const useAskAI = (
           },
           {
             selectedAIModel,
+            aiModelRoutingMode,
             selectedLocalAiModel: effectiveLocalAiModelId,
             isLocalLlmModelDownloaded,
             summaryStyle,
@@ -348,6 +350,7 @@ export const useAskAI = (
     },
     [
       selectedAIModel,
+      aiModelRoutingMode,
       effectiveLocalAiModelId,
       isLocalLlmModelDownloaded,
       summaryStyle,

@@ -15,6 +15,7 @@ import {
 } from './constants';
 import type {
   AiExecutionMode,
+  AiModelRoutingMode,
   AiOutputLanguage,
   AppLanguage,
   AppTheme,
@@ -41,6 +42,7 @@ const KEYS = {
   ACCENT_COLOR_ID: 'settings.accentColorId',
   APP_LANGUAGE: 'settings.appLanguage',
   AI_MODEL: 'settings.aiModel',
+  AI_MODEL_ROUTING_MODE: 'settings.aiModelRoutingMode',
   LOCAL_AI_MODEL: 'settings.localAiModel',
   WHISPER_MODEL: 'settings.whisperModel',
   WHISPER_MODEL_WEIGHTS_FORMAT: 'settings.whisperModelWeightsFormat',
@@ -91,6 +93,16 @@ const normalizeStoredAIModel = (raw: string | undefined): UserSelectableAIModelI
 const getStoredAIModel = (): UserSelectableAIModelId => {
   const val = storage.getString(KEYS.AI_MODEL);
   return normalizeStoredAIModel(val);
+};
+
+const getStoredAiModelRoutingMode = (): AiModelRoutingMode => {
+  const val = storage.getString(KEYS.AI_MODEL_ROUTING_MODE);
+  if (val === 'auto' || val === 'manual') {
+    return val;
+  }
+
+  const hasStoredExplicitAiModel = storage.contains(KEYS.AI_MODEL);
+  return hasStoredExplicitAiModel ? 'manual' : 'auto';
 };
 
 const LOCAL_AI_MODEL_SET = new Set<string>(LOCAL_AI_MODELS.map((m) => m.id));
@@ -271,6 +283,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   accentColorId: getStoredAccentColorId(),
   appLanguage: getStoredAppLanguage(),
   selectedAIModel: getStoredAIModel(),
+  aiModelRoutingMode: getStoredAiModelRoutingMode(),
   selectedLocalAiModel: getStoredLocalAiModel(),
   selectedWhisperModel: getInitialSelectedWhisperModel(),
   selectedWhisperModelFormat: getStoredSelectedWhisperModelFormat(),
@@ -312,6 +325,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAIModel: (id: UserSelectableAIModelId) => {
     storage.set(KEYS.AI_MODEL, id);
     set({ selectedAIModel: id });
+  },
+
+  setAiModelRoutingMode: (mode: AiModelRoutingMode) => {
+    storage.set(KEYS.AI_MODEL_ROUTING_MODE, mode);
+    set({ aiModelRoutingMode: mode });
   },
 
   setLocalAiModel: (id: LocalAiModelId) => {
