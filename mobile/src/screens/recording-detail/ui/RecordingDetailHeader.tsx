@@ -50,6 +50,7 @@ export const RecordingDetailHeader = ({
   const headerBackgroundColor = isPrivateMode
     ? color.background.primary
     : color.background.secondary;
+  const isArchived = record.status === 'archived';
 
   return (
     <View
@@ -116,7 +117,7 @@ export const RecordingDetailHeader = ({
             if (nativeEvent.event === 'allTasksForNote') onOpenAllTasksForNote?.();
           }}
           actions={[
-            ...(onOpenAllTasksForNote
+            ...(onOpenAllTasksForNote && !isArchived
               ? [
                   {
                     id: 'allTasksForNote' as const,
@@ -152,7 +153,7 @@ export const RecordingDetailHeader = ({
               imageColor: color.text.primary,
               titleColor: color.text.primary,
             },
-            record.status === 'archived'
+            isArchived
               ? {
                   id: 'unarchive' as const,
                   title: t('recordActions.unarchive'),
