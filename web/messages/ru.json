@@ -61,7 +61,8 @@
   },
   "header": {
     "appName": "Voice Inbox AI",
-    "releases": "Блог"
+    "releases": "Блог",
+    "installApp": "Скачать приложение"
   },
   "releases": {
     "pageTitle": "Блог",

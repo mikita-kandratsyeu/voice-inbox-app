@@ -61,7 +61,8 @@
   },
   "header": {
     "appName": "Voice Inbox AI",
-    "releases": "Blog"
+    "releases": "Blog",
+    "installApp": "Get the App"
   },
   "releases": {
     "pageTitle": "Blog",
