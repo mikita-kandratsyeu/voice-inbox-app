@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { BASE_URL_OR_FALLBACK } from '@/config/constants';
 import { Benefits } from '@/components/landing/Benefits';
 import { CTASection } from '@/components/landing/CTASection';
+import { FAQSection } from '@/components/landing/FAQSection';
 import { Features } from '@/components/landing/Features';
 import { Footer } from '@/components/landing/Footer';
 import { Header } from '@/components/landing/Header';
@@ -47,13 +48,18 @@ export default async function LandingPage({ params }: Props) {
   setRequestLocale(locale);
 
   return (
-    <div className="flex min-h-screen flex-col transition-colors duration-300">
+    <div className="relative flex min-h-screen flex-col overflow-x-clip bg-[#f8fafc] text-black transition-colors duration-300 dark:bg-[#07080b] dark:text-white">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_10%_0%,rgba(148,163,184,0.2),transparent_55%),radial-gradient(circle_at_90%_12%,rgba(59,130,246,0.12),transparent_45%)] dark:bg-[radial-gradient(circle_at_10%_0%,rgba(59,130,246,0.2),transparent_55%),radial-gradient(circle_at_90%_12%,rgba(99,102,241,0.2),transparent_45%)]"
+        aria-hidden
+      />
       <Header />
       <main className="flex-1">
         <Hero />
         <Features />
         <HowItWorks />
         <Benefits />
+        <FAQSection />
         <CTASection />
       </main>
       <Footer />

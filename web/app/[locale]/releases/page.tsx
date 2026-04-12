@@ -39,44 +39,47 @@ export default async function ReleasesIndexPage({ params }: Props) {
   const posts = await listPublishedReleases(locale);
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="relative flex min-h-screen flex-col overflow-x-clip bg-[#f8fafc] text-black dark:bg-[#07080b] dark:text-white">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-120 bg-[radial-gradient(circle_at_10%_0%,rgba(148,163,184,0.2),transparent_55%),radial-gradient(circle_at_90%_12%,rgba(59,130,246,0.12),transparent_45%)] dark:bg-[radial-gradient(circle_at_10%_0%,rgba(59,130,246,0.2),transparent_55%),radial-gradient(circle_at_90%_12%,rgba(99,102,241,0.2),transparent_45%)]"
+        aria-hidden
+      />
       <Header />
-      <main className="relative flex-1">
-        <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden>
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(59,130,246,0.2)_0%,transparent_50%),radial-gradient(circle_at_80%_80%,rgba(37,99,235,0.15)_0%,transparent_50%)]" />
-        </div>
-        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-black tracking-tight text-black dark:text-white sm:text-4xl">
+      <main className="flex-1">
+        <div className="mx-auto max-w-3xl px-4 py-16 sm:px-6 sm:py-20 lg:px-8">
+          <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-white sm:text-4xl">
             {t('pageTitle')}
           </h1>
-          <p className="mt-2 text-lg text-black/70 dark:text-white/70">{t('pageSubtitle')}</p>
+          <p className="mt-2 text-base text-black/65 sm:text-lg dark:text-white/65">{t('pageSubtitle')}</p>
 
           {posts.length === 0 ? (
-            <p className="mt-12 text-center text-black/60 dark:text-white/60">{t('empty')}</p>
+            <p className="mt-12 rounded-2xl border border-black/10 bg-white/80 p-8 text-center text-black/60 dark:border-white/12 dark:bg-white/5 dark:text-white/60">
+              {t('empty')}
+            </p>
           ) : (
-            <ul className="mt-12 space-y-4">
+            <ul className="mt-10 space-y-3 sm:space-y-4">
               {posts.map((p) => (
                 <li key={p.slug}>
                   <Link
                     href={`/releases/${p.slug}`}
-                    className="block rounded-2xl border border-black/8 bg-white/80 p-6 shadow-sm transition-colors hover:border-blue-500/30 hover:bg-white dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                    className="group block rounded-2xl border border-black/10 bg-white/85 p-5 shadow-[0_8px_26px_rgba(15,23,42,0.06)] transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-500/30 hover:shadow-[0_12px_34px_rgba(15,23,42,0.1)] dark:border-white/12 dark:bg-white/5 dark:hover:bg-white/7 sm:p-6"
                   >
-                    <div className="flex flex-wrap items-baseline justify-between gap-2">
-                      <span className="text-xl font-bold text-black dark:text-white">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <span className="text-xl font-semibold tracking-tight text-black dark:text-white">
                         {p.title}
                       </span>
                       {p.version && (
-                        <span className="rounded-full bg-black/5 px-2.5 py-0.5 text-sm font-medium text-black/70 dark:bg-white/10 dark:text-white/80">
+                        <span className="rounded-full border border-black/8 bg-black/3 px-2.5 py-0.5 text-xs font-medium text-black/70 dark:border-white/12 dark:bg-white/10 dark:text-white/80">
                           {t('version')} {p.version}
                         </span>
                       )}
                     </div>
                     {p.summary && (
-                      <p className="mt-2 line-clamp-2 text-sm text-black/70 dark:text-white/70">
+                      <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-black/70 dark:text-white/70">
                         {p.summary}
                       </p>
                     )}
-                    <p className="mt-3 text-sm font-medium text-blue-600 dark:text-blue-400">
+                    <p className="mt-3 text-sm font-medium text-blue-600 transition-colors group-hover:text-blue-500 dark:text-blue-400">
                       {t('readMore')} →
                     </p>
                     {(p.publishedAt ?? p.createdAt) && (
@@ -95,7 +98,7 @@ export default async function ReleasesIndexPage({ params }: Props) {
 
           <Link
             href="/"
-            className="mt-12 inline-block font-medium text-blue-500 underline hover:opacity-90 hover:underline-offset-4"
+            className="mt-10 inline-flex rounded-lg px-1 text-sm font-medium text-blue-600 transition-colors hover:text-blue-500 dark:text-blue-400"
           >
             {t('backHome')}
           </Link>

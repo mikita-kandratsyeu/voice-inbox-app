@@ -9,34 +9,35 @@ export function HowItWorks(): React.ReactElement {
   const t = useTranslations();
 
   return (
-    <section className="px-4 py-24 sm:px-6 md:px-8 lg:px-8">
+    <section className="px-4 py-16 sm:px-6 sm:py-20 md:px-8 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <AnimateOnScroll>
-          <div className="mb-16 text-center">
-            <h2 className="mb-4 text-4xl font-black text-black dark:text-white sm:text-5xl md:text-5xl">
+          <div className="mb-10 text-center sm:mb-12">
+            <h2 className="mb-3 text-3xl font-semibold tracking-tight text-black sm:text-4xl dark:text-white">
               {t('howItWorks.title')}
             </h2>
-            <p className="text-lg text-black/60 dark:text-white/60">{t('howItWorks.subtitle')}</p>
+            <p className="text-base text-black/60 sm:text-lg dark:text-white/60">{t('howItWorks.subtitle')}</p>
           </div>
         </AnimateOnScroll>
 
-        <div className="flex flex-col items-center justify-center gap-12 md:flex-row">
+        <div className="grid gap-4 md:grid-cols-3 md:gap-5">
           {STEPS.map(({ id }, index) => (
-            <AnimateOnScroll key={id} delay={index * 100}>
-              <div className="flex items-center">
-                <div className="text-center">
-                  <div className="mx-auto mb-6 flex h-28 w-28 items-center justify-center rounded-3xl bg-linear-to-br from-blue-500 to-blue-600 shadow-2xl transition-transform duration-200 hover:scale-105">
-                    <span className="text-4xl font-black text-white">{index + 1}</span>
-                  </div>
-                  <h3 className="mb-2 text-2xl font-bold text-black dark:text-white">
-                    {t(`howItWorks.${id}.title`)}
-                  </h3>
-                  <p className="text-black/70 dark:text-white/70">
-                    {t(`howItWorks.${id}.description`)}
-                  </p>
+            <AnimateOnScroll key={id} delay={index * 100} className="h-full">
+              <div className="relative h-full rounded-3xl border border-black/10 bg-white/80 p-6 shadow-[0_8px_30px_rgba(15,23,42,0.06)] dark:border-white/12 dark:bg-white/5 dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)]">
+                <div className="mb-4 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-linear-to-br from-blue-500 to-indigo-500 text-lg font-semibold text-white shadow-[0_8px_20px_rgba(59,130,246,0.35)]">
+                  {index + 1}
                 </div>
+                <h3 className="mb-2 text-xl font-semibold tracking-tight text-black dark:text-white">
+                  {t(`howItWorks.${id}.title`)}
+                </h3>
+                <p className="text-sm leading-relaxed text-black/70 sm:text-base dark:text-white/70">
+                  {t(`howItWorks.${id}.description`)}
+                </p>
                 {index < STEPS.length - 1 && (
-                  <ArrowRight className="mx-6 hidden h-10 w-10 opacity-30 md:block" aria-hidden />
+                  <ArrowRight
+                    className="absolute right-4 top-4 hidden h-5 w-5 text-black/25 dark:text-white/25 md:block"
+                    aria-hidden
+                  />
                 )}
               </div>
             </AnimateOnScroll>

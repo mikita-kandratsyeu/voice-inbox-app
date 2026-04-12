@@ -16,16 +16,15 @@ export function Header(): React.ReactElement {
           aria-label={t('appName')}
         >
           <Image
-            src="/app-icon-header.svg"
+            src="/app-icon.svg"
             alt="App Icon"
-            width={36}
-            height={36}
-            className="h-9 w-9 shrink-0 rounded-xl shadow-lg"
+            width={40}
+            height={40}
+            className="h-10 w-10 shrink-0 rounded-xl shadow-[0_10px_24px_rgba(59,130,246,0.3)]"
             priority
-            unoptimized
             aria-hidden
           />
-          <span className="min-w-0 truncate text-base font-bold text-black dark:text-white">
+          <span className="min-w-0 truncate text-lg font-semibold tracking-tight text-black dark:text-white">
             {t('appName')}
           </span>
         </Link>

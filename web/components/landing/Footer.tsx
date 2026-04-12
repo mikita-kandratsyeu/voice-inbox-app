@@ -7,9 +7,9 @@ export function Footer(): React.ReactElement {
   const t = useTranslations('footer');
 
   return (
-    <footer className="mt-24 border-t border-black/8 dark:border-white/8">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-col items-center justify-between gap-8 md:flex-row">
+    <footer className="mt-16 border-t border-black/8 dark:border-white/8">
+      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
+        <div className="mb-6 flex flex-col items-center justify-between gap-6 md:flex-row">
           <Link
             href="/"
             className="flex items-center gap-3 transition-opacity hover:opacity-90"
@@ -20,22 +20,22 @@ export function Footer(): React.ReactElement {
               alt="App Icon"
               width={40}
               height={40}
-              className="h-10 w-10 rounded-xl shadow-lg"
+              className="h-10 w-10 rounded-xl shadow-[0_10px_24px_rgba(59,130,246,0.3)]"
               aria-hidden
             />
-            <span className="text-xl font-bold text-black dark:text-white">Voice Inbox AI</span>
+            <span className="text-lg font-semibold tracking-tight text-black dark:text-white">Voice Inbox AI</span>
           </Link>
-          <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
+          <div className="flex flex-wrap justify-center gap-5 text-sm sm:gap-7">
             <Link
               href="/releases"
-              className="font-medium text-black/70 transition-opacity hover:opacity-100 dark:text-white/70"
+              className="font-medium text-black/65 transition-colors hover:text-black dark:text-white/65 dark:hover:text-white"
             >
               {t('releases')}
             </Link>
             {VERIFIED_METRICS_URL ? (
               <a
                 href={VERIFIED_METRICS_URL}
-                className="font-medium text-black/70 transition-opacity hover:opacity-100 dark:text-white/70"
+                className="font-medium text-black/65 transition-colors hover:text-black dark:text-white/65 dark:hover:text-white"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -44,19 +44,19 @@ export function Footer(): React.ReactElement {
             ) : null}
             <Link
               href="/privacy"
-              className="font-medium text-black/70 transition-opacity hover:opacity-100 dark:text-white/70"
+              className="font-medium text-black/65 transition-colors hover:text-black dark:text-white/65 dark:hover:text-white"
             >
               {t('privacyPolicy')}
             </Link>
             <Link
               href="/terms"
-              className="font-medium text-black/70 transition-opacity hover:opacity-100 dark:text-white/70"
+              className="font-medium text-black/65 transition-colors hover:text-black dark:text-white/65 dark:hover:text-white"
             >
               {t('termsOfService')}
             </Link>
           </div>
         </div>
-        <p className="text-center text-sm text-black/50 dark:text-white/50">
+        <p className="text-center text-xs text-black/50 sm:text-sm dark:text-white/50">
           {t('copyright', { year: new Date().getFullYear() })}
         </p>
       </div>

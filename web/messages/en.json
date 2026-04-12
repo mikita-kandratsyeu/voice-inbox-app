@@ -9,6 +9,7 @@
     "googlePlayLabel": "Get it on",
     "googlePlay": "Google Play",
     "downloadApp": "Download the app",
+    "privateByDefault": "Private by default",
     "stats": {
       "accuracy": { "value": "Whisper-grade", "label": "Recognition quality" },
       "private": { "value": "Yours", "label": "Voice & transcripts stay on device" }
@@ -51,6 +52,26 @@
   "cta": {
     "title": "Start capturing ideas today",
     "subtitle": "Be among the first to try Voice Inbox AI"
+  },
+  "faq": {
+    "title": "Questions people ask before installing",
+    "subtitle": "Fast answers for privacy, workflow, and pricing.",
+    "offline": {
+      "question": "Does it work offline?",
+      "answer": "Yes. Recording and transcription run on-device, so you can capture ideas even with no connection."
+    },
+    "privacy": {
+      "question": "Where is my data stored?",
+      "answer": "By default your voice notes and transcripts stay on your device. You control if and when AI cloud features are used."
+    },
+    "languages": {
+      "question": "Which languages are supported?",
+      "answer": "Voice Inbox AI supports multi-language speech recognition and keeps improving model quality over time."
+    },
+    "pricing": {
+      "question": "Do I need a subscription to start?",
+      "answer": "No. You can install and start using core voice capture immediately, then upgrade only if advanced AI workflows are needed."
+    }
   },
   "footer": {
     "privacyPolicy": "Privacy Policy",

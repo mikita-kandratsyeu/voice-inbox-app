@@ -26,6 +26,20 @@ body {
   animation: gradient-pulse 8s ease-in-out infinite;
 }
 
+@keyframes bg-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+.animate-bg-drift {
+  animation: bg-drift 11s ease-in-out infinite;
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
