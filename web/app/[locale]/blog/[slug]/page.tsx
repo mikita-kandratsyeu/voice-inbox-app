@@ -9,6 +9,7 @@ import { Header } from '@/components/landing/Header';
 import { MarketingPageShell } from '@/components/landing/MarketingPageShell';
 import { Link } from '@/lib/i18n';
 import { routing } from '@/lib/i18n';
+import { estimateReadingTimeMinutes } from '@/lib/reading-time';
 import { getPublishedRelease, listPublishedSlugsForLocale } from '@/lib/releases';
 
 type Props = {
@@ -65,6 +66,8 @@ export default async function BlogPostPage({ params }: Props) {
   }
 
   const date = post.publishedAt ?? post.createdAt;
+  const textForReadingTime = [post.summary, post.body].filter(Boolean).join('\n\n');
+  const readingMinutes = estimateReadingTimeMinutes(textForReadingTime, locale);
 
   return (
     <MarketingPageShell>
@@ -86,7 +89,7 @@ export default async function BlogPostPage({ params }: Props) {
                 {post.title}
               </h1>
 
-              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-black/50 dark:text-white/50">
+              <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-sm text-black/50 dark:text-white/50">
                 {date ? (
                   <time dateTime={date.toISOString()}>
                     {date.toLocaleDateString(locale === 'ru' ? 'ru-RU' : 'en-US', {
@@ -96,15 +99,21 @@ export default async function BlogPostPage({ params }: Props) {
                     })}
                   </time>
                 ) : null}
-                {date && post.version ? (
-                  <span className="hidden text-black/30 sm:inline dark:text-white/30" aria-hidden>
+                {date ? (
+                  <span className="text-black/30 dark:text-white/30" aria-hidden>
                     ·
                   </span>
                 ) : null}
+                <span>{t('readingTime', { minutes: readingMinutes })}</span>
                 {post.version ? (
-                  <span className="rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:border-blue-400/25 dark:bg-blue-500/14 dark:text-blue-300">
-                    {t('version')} {post.version}
-                  </span>
+                  <>
+                    <span className="text-black/30 dark:text-white/30" aria-hidden>
+                      ·
+                    </span>
+                    <span className="rounded-full border border-blue-500/20 bg-blue-500/10 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:border-blue-400/25 dark:bg-blue-500/14 dark:text-blue-300">
+                      {t('version')} {post.version}
+                    </span>
+                  </>
                 ) : null}
               </div>
 
@@ -115,11 +124,7 @@ export default async function BlogPostPage({ params }: Props) {
               ) : null}
 
               <div className="mt-8 border-t border-black/8 pt-8 dark:border-white/10">
-                <MarkdownContent
-                  content={post.body}
-                  variant="blog"
-                  className="mx-auto max-w-2xl"
-                />
+                <MarkdownContent content={post.body} variant="blog" className="mx-auto max-w-2xl" />
               </div>
 
               <div className="mt-12 flex flex-wrap gap-3 border-t border-black/8 pt-8 sm:gap-4 dark:border-white/10">

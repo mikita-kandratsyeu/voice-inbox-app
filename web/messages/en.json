@@ -134,6 +134,7 @@
     "readMore": "Read more",
     "backToList": "All posts",
     "backHome": "Back to home",
+    "readingTime": "~{minutes} min read",
     "version": "Version"
   },
   "metadata": {

@@ -134,6 +134,7 @@
     "readMore": "Подробнее",
     "backToList": "Все записи",
     "backHome": "На главную",
+    "readingTime": "~{minutes} мин чтения",
     "version": "Версия"
   },
   "metadata": {
