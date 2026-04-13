@@ -1,6 +1,6 @@
 {
   "hero": {
-    "eyebrow": "Beta",
+    "eyebrow": "Testing",
     "headline": "Turn your thoughts into structured notes — instantly",
     "subtitle": "Record anything. Get instant transcription, summaries, and action items powered by AI.",
     "watchDemo": "Watch Demo",
@@ -13,8 +13,10 @@
     "bullet3": "No typing, no manual work",
     "appStoreLabel": "Download on the",
     "appStore": "App Store",
-    "googlePlayLabel": "Get it on",
+    "googlePlayLabel": "Android",
     "googlePlay": "Google Play",
+    "waitlist": "Waitlist",
+    "googlePlayWaitlistAria": "Join Android waitlist",
     "downloadApp": "Download App"
   },
   "features": {

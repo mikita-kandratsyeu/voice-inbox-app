@@ -12,7 +12,7 @@ export function CTASection(): React.ReactElement {
     >
       <div className="mx-auto max-w-5xl">
         <AnimateOnScroll>
-          <div className="relative overflow-hidden rounded-[2.2rem] border border-black/10 bg-linear-to-br from-slate-950 via-slate-900 to-blue-950 p-8 text-center shadow-[0_26px_80px_rgba(15,23,42,0.38)] transition-transform duration-300 hover:-translate-y-0.5 sm:p-12 dark:border-white/10">
+          <div className="relative overflow-hidden rounded-[2.2rem] border border-black/10 bg-linear-to-br from-slate-950 via-slate-900 to-blue-950 p-8 text-center shadow-[0_26px_80px_rgba(15,23,42,0.38)] sm:p-12 dark:border-white/10">
             <div
               className="absolute right-0 top-0 h-64 w-64 rounded-full bg-blue-400/20 blur-3xl"
               aria-hidden

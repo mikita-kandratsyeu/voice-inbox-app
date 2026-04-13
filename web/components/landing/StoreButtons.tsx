@@ -2,8 +2,8 @@
 
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { useLocale, useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
-import { useTranslations } from 'next-intl';
 
 import { APP_STORE_URL, GOOGLE_PLAY_URL } from '@/config/constants';
 
@@ -13,11 +13,12 @@ interface StoreButtonsProps {
   variant?: Variant;
 }
 
-const badgeWidth = 180;
-const badgeHeight = 54;
+const STORE_BADGE_W = 180;
+const STORE_BADGE_H = 54;
 
 export function StoreButtons({ variant = 'hero' }: StoreButtonsProps): React.ReactElement {
   const t = useTranslations('hero');
+  const locale = useLocale();
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -25,43 +26,50 @@ export function StoreButtons({ variant = 'hero' }: StoreButtonsProps): React.Rea
     queueMicrotask(() => setMounted(true));
   }, []);
 
-  const theme = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
+  const lang = locale === 'ru' ? 'ru' : 'en';
+  const themeKey = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
+  const appStoreBadgeSrc = `/app-store-${lang}-${themeKey}.png`;
+  const googlePlayBadgeSrc = `/gp-${lang}-${themeKey}.png`;
 
-  const linkClasses =
-    variant === 'hero'
-      ? 'inline-flex min-h-[48px] items-center justify-center rounded-lg transition-transform hover:scale-[1.02] focus:outline-none'
-      : 'inline-flex min-h-[48px] items-center justify-center rounded-lg transition-transform hover:scale-[1.02] focus:outline-none';
+  const storeLinkClasses =
+    variant === 'cta'
+      ? 'inline-flex shrink-0 rounded-xl transition-all duration-250 hover:-translate-y-0.5 hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40'
+      : 'inline-flex shrink-0 rounded-xl transition-all duration-250 hover:-translate-y-0.5 hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 dark:focus-visible:ring-white/30';
 
   return (
-    <div className="flex flex-col items-center justify-center gap-2 sm:flex-row">
+    <div className="flex flex-col items-center justify-center gap-1 sm:flex-row">
       <a
         href={APP_STORE_URL}
-        className={linkClasses}
-        aria-label={t('appStore')}
+        className={storeLinkClasses}
+        aria-label={`${t('appStoreLabel')} ${t('appStore')}`}
         target="_blank"
         rel="noopener noreferrer"
       >
         <Image
-          src={`/app-store-badge-${theme}.svg`}
-          alt={t('appStore')}
-          width={badgeWidth}
-          height={badgeHeight}
+          src={appStoreBadgeSrc}
+          alt=""
+          width={STORE_BADGE_W}
+          height={STORE_BADGE_H}
           className="h-[54px] w-[180px] object-contain"
+          priority={variant === 'hero'}
+          aria-hidden
         />
       </a>
       <a
         href={GOOGLE_PLAY_URL}
-        className={linkClasses}
-        aria-label={t('googlePlay')}
+        className={storeLinkClasses}
+        aria-label={`${t('appStoreLabel')} ${t('appStore')}`}
         target="_blank"
         rel="noopener noreferrer"
       >
         <Image
-          src={`/google-play-badge-${theme}.svg`}
-          alt={t('googlePlay')}
-          width={badgeWidth}
-          height={badgeHeight}
+          src={googlePlayBadgeSrc}
+          alt=""
+          width={STORE_BADGE_W}
+          height={STORE_BADGE_H}
           className="h-[54px] w-[180px] object-contain"
+          priority={variant === 'hero'}
+          aria-hidden
         />
       </a>
     </div>

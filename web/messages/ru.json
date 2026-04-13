@@ -1,6 +1,6 @@
 {
   "hero": {
-    "eyebrow": "Beta",
+    "eyebrow": "Тестирование",
     "headline": "Превращайте мысли в структурированные заметки — мгновенно",
     "subtitle": "Записывайте что угодно. Мгновенно получайте транскрипцию, сводки и задачи с помощью ИИ.",
     "watchDemo": "Смотреть демо",
@@ -11,10 +11,12 @@
     "bullet1": "ИИ, который понимает ваши мысли",
     "bullet2": "Опциональный режим Private - полностью на устройстве",
     "bullet3": "Без набора текста и ручной рутины",
-    "appStoreLabel": "Загрузить в",
+    "appStoreLabel": "Скачать в",
     "appStore": "App Store",
-    "googlePlayLabel": "Доступно в",
+    "googlePlayLabel": "Android",
     "googlePlay": "Google Play",
+    "waitlist": "Лист ожидания",
+    "googlePlayWaitlistAria": "Вступить в лист ожидания Android",
     "downloadApp": "Скачать приложение"
   },
   "features": {
