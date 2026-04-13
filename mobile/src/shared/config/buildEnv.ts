@@ -10,6 +10,8 @@ import {
 } from '@env';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
+import { getPlatformNativeName } from '../lib/platform';
+
 const DEFAULT_MOBILE_UA_PREFIX = 'VoiceInbox-Mobile';
 
 function trimBuildEnv(v: string | undefined): string {
@@ -83,6 +85,7 @@ export function getWebApiSecret(): string {
 export function getMobileUserAgent(): string {
   const prefix = mobileUserAgentPrefixFromEnv(trimBuildEnv(MOBILE_USER_AGENT));
   const ver = nativeAppVersionForUserAgent();
+  const platform = getPlatformNativeName();
 
-  return ver ? `${prefix}/${ver}` : prefix;
+  return ver ? `${prefix}/${platform}:${ver}` : prefix;
 }

@@ -17,3 +17,7 @@ export function getIosVersion(): number {
 
   return Number.isNaN(v) ? 0 : v;
 }
+
+export function getPlatformNativeName(): string {
+  return Platform.OS;
+}
