@@ -3,7 +3,7 @@
     "eyebrow": "Testing",
     "headline": "Turn your thoughts into structured notes — instantly",
     "subtitle": "Record anything. Get instant transcription, summaries, and action items powered by AI.",
-    "watchDemo": "Watch Demo",
+    "howItWorks": "How it works",
     "recordingNow": "Recording now",
     "liveTranscript": "Live transcript",
     "summaryTitle": "AI Summary",
@@ -135,7 +135,7 @@
     "version": "Version"
   },
   "metadata": {
-    "title": "Voice Inbox AI — AI-Powered Voice Notes",
+    "title": "Voice Inbox AI | AI-Powered Voice Notes",
     "description": "Record, transcribe, and structure your ideas with AI. Offline transcription on your device. Optional cloud or on-device AI when you choose it. Your notes stay local. Available on iOS.",
     "privacyTitle": "Privacy Policy — Voice Inbox AI",
     "privacyDescription": "How Voice Inbox AI handles your data: local storage, optional AI processing, and our commitment to privacy.",

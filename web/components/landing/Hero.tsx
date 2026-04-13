@@ -1,4 +1,4 @@
-import { CheckCircle2, Play, Sparkles } from 'lucide-react';
+import { CheckCircle2, Sparkles, Workflow } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
@@ -48,8 +48,8 @@ export function Hero(): React.ReactElement {
               href="#how-it-works"
               className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-black/12 bg-white/88 px-6 py-3 text-base font-medium text-black transition-all duration-250 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)] dark:border-white/15 dark:bg-white/7 dark:text-white dark:hover:bg-white/10 dark:hover:shadow-[0_16px_30px_rgba(0,0,0,0.28)]"
             >
-              <Play className="h-4 w-4" aria-hidden />
-              {t('watchDemo')}
+              <Workflow className="h-4 w-4 shrink-0" aria-hidden strokeWidth={2.25} />
+              {t('howItWorks')}
             </a>
           </div>
         </div>
