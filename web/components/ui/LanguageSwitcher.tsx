@@ -37,7 +37,9 @@ export function LanguageSwitcher(): React.ReactElement {
     if (newLocale === locale) return;
     setIsOpen(false);
     startTransition(() => {
-      router.replace(pathname, { locale: newLocale });
+      const query = typeof window !== 'undefined' ? window.location.search : '';
+      const href = query ? `${pathname}${query}` : pathname;
+      router.replace(href, { locale: newLocale });
     });
   };
 

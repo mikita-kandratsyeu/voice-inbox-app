@@ -51,7 +51,8 @@ export function StoreButtons({ variant = 'hero' }: StoreButtonsProps): React.Rea
           width={STORE_BADGE_W}
           height={STORE_BADGE_H}
           className="h-[54px] w-[180px] object-contain"
-          priority={variant === 'hero'}
+          priority
+          loading="eager"
           aria-hidden
         />
       </a>
@@ -68,7 +69,8 @@ export function StoreButtons({ variant = 'hero' }: StoreButtonsProps): React.Rea
           width={STORE_BADGE_W}
           height={STORE_BADGE_H}
           className="h-[54px] w-[180px] object-contain"
-          priority={variant === 'hero'}
+          priority
+          loading="eager"
           aria-hidden
         />
       </a>
