@@ -18,7 +18,9 @@ interface LanguageSwitcherProps {
   variant?: LanguageSwitcherVariant;
 }
 
-export function LanguageSwitcher({ variant = 'default' }: LanguageSwitcherProps): React.ReactElement {
+export function LanguageSwitcher({
+  variant = 'default',
+}: LanguageSwitcherProps): React.ReactElement {
   const params = useParams();
   const localeParam = params?.locale as string | undefined;
   const locale = routing.locales.includes(localeParam as 'en' | 'ru')
@@ -58,7 +60,10 @@ export function LanguageSwitcher({ variant = 'default' }: LanguageSwitcherProps)
     'h-11 min-h-[44px] gap-1 rounded-xl border border-black/8 bg-black/[0.04] px-2.5 text-sm font-medium leading-none text-black shadow-[0_1px_0_rgba(255,255,255,0.6)_inset] transition-[color,background-color,box-shadow] hover:bg-black/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/12 dark:border-white/10 dark:bg-white/[0.06] dark:text-white dark:shadow-none dark:hover:bg-white/[0.1] dark:focus-visible:ring-white/20 sm:gap-1.5 sm:px-3.5 sm:text-sm';
 
   return (
-    <div ref={containerRef} className={variant === 'grouped' ? 'relative flex min-h-0 items-stretch' : 'relative'}>
+    <div
+      ref={containerRef}
+      className={variant === 'grouped' ? 'relative flex min-h-0 items-stretch' : 'relative'}
+    >
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}

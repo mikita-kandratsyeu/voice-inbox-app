@@ -52,10 +52,14 @@ const blogComponents: Components = {
     </h1>
   ),
   h2: ({ children }) => (
-    <h2 className="mb-3 mt-10 text-xl font-semibold tracking-tight text-black dark:text-white">{children}</h2>
+    <h2 className="mb-3 mt-10 text-xl font-semibold tracking-tight text-black dark:text-white">
+      {children}
+    </h2>
   ),
   h3: ({ children }) => (
-    <h3 className="mb-2 mt-8 text-lg font-semibold tracking-tight text-black dark:text-white">{children}</h3>
+    <h3 className="mb-2 mt-8 text-lg font-semibold tracking-tight text-black dark:text-white">
+      {children}
+    </h3>
   ),
   p: ({ children }) => (
     <p className="mb-4 text-base leading-relaxed text-black/70 dark:text-white/70">{children}</p>
@@ -75,7 +79,9 @@ const blogComponents: Components = {
     <ul className="mb-4 ml-6 list-disc space-y-2 text-black/70 dark:text-white/70">{children}</ul>
   ),
   ol: ({ children }) => (
-    <ol className="mb-4 ml-6 list-decimal space-y-2 text-black/70 dark:text-white/70">{children}</ol>
+    <ol className="mb-4 ml-6 list-decimal space-y-2 text-black/70 dark:text-white/70">
+      {children}
+    </ol>
   ),
   li: ({ children }) => <li className="text-base leading-relaxed">{children}</li>,
   blockquote: ({ children }) => (
@@ -95,7 +101,11 @@ const blogComponents: Components = {
   ),
 };
 
-export function MarkdownContent({ content, className = '', variant = 'default' }: MarkdownContentProps) {
+export function MarkdownContent({
+  content,
+  className = '',
+  variant = 'default',
+}: MarkdownContentProps) {
   const components = variant === 'blog' ? blogComponents : defaultComponents;
 
   return (

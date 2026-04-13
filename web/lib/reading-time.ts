@@ -43,10 +43,7 @@ function countWords(text: string): number {
  * Estimated reading time in minutes (at least 1).
  * WPM tuned slightly by locale (Cyrillic lines often scan similarly to Latin at comparable word counts).
  */
-export function estimateReadingTimeMinutes(
-  markdown: string,
-  locale: string,
-): number {
+export function estimateReadingTimeMinutes(markdown: string, locale: string): number {
   const plain = markdownToPlainishText(markdown);
   const words = countWords(plain);
   const wpm = locale === 'ru' ? 190 : 220;

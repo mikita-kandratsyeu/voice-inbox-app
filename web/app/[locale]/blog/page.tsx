@@ -123,7 +123,10 @@ export default async function BlogIndexPage({ params }: Props) {
                         ) : null}
                         <p className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-blue-600 transition-colors group-hover:gap-2 dark:text-blue-400">
                           {t('readMore')}
-                          <span aria-hidden className="transition-transform group-hover:translate-x-0.5">
+                          <span
+                            aria-hidden
+                            className="transition-transform group-hover:translate-x-0.5"
+                          >
                             →
                           </span>
                         </p>
