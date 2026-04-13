@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { useTheme } from 'next-themes';
 
 import { APP_STORE_URL, GOOGLE_PLAY_URL } from '@/config/constants';
@@ -18,7 +18,6 @@ const STORE_BADGE_H = 54;
 
 export function StoreButtons({ variant = 'hero' }: StoreButtonsProps): React.ReactElement {
   const t = useTranslations('hero');
-  const locale = useLocale();
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -26,18 +25,18 @@ export function StoreButtons({ variant = 'hero' }: StoreButtonsProps): React.Rea
     queueMicrotask(() => setMounted(true));
   }, []);
 
-  const lang = locale === 'ru' ? 'ru' : 'en';
+  const lang = 'en';
   const themeKey = mounted && resolvedTheme === 'dark' ? 'dark' : 'light';
-  const appStoreBadgeSrc = `/app-store-${lang}-${themeKey}.png`;
-  const googlePlayBadgeSrc = `/gp-${lang}-${themeKey}.png`;
+  const appStoreBadgeSrc = `/app-stores/app-store-${lang}-${themeKey}.svg`;
+  const googlePlayBadgeSrc = `/app-stores/gp-store-${lang}-${themeKey}.svg`;
 
   const storeLinkClasses =
     variant === 'cta'
-      ? 'inline-flex shrink-0 rounded-xl transition-all duration-250 hover:-translate-y-0.5 hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40'
-      : 'inline-flex shrink-0 rounded-xl transition-all duration-250 hover:-translate-y-0.5 hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 dark:focus-visible:ring-white/30';
+      ? 'inline-flex shrink-0 rounded-xl hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40'
+      : 'inline-flex shrink-0 rounded-xl hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 dark:focus-visible:ring-white/30';
 
   return (
-    <div className="flex flex-col items-center justify-center gap-y-2.5 sm:flex-row">
+    <div className="flex flex-col items-center justify-center gap-2.5 sm:flex-row">
       <a
         href={APP_STORE_URL}
         className={storeLinkClasses}

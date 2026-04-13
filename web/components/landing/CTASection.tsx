@@ -25,7 +25,7 @@ export function CTASection(): React.ReactElement {
               <h2 className="mb-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                 {t('title')}
               </h2>
-              <p className="mx-auto mb-8 max-w-2xl text-base text-white/85 sm:text-lg">
+              <p className="mx-auto mb-6 max-w-2xl text-base text-white/85 sm:text-lg">
                 {t('subtitle')}
               </p>
               <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
