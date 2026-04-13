@@ -9,6 +9,14 @@ const webRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ['192.168.1.67', 'http://192.168.1.67:3000'],
+  async redirects() {
+    return [
+      { source: '/releases', destination: '/blog', permanent: true },
+      { source: '/releases/:slug', destination: '/blog/:slug', permanent: true },
+      { source: '/ru/releases', destination: '/ru/blog', permanent: true },
+      { source: '/ru/releases/:slug', destination: '/ru/blog/:slug', permanent: true },
+    ];
+  },
   serverExternalPackages: ['@prisma/client', 'pg', '@prisma/adapter-pg'],
   images: {
     remotePatterns: [

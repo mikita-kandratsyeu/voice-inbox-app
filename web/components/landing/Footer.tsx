@@ -29,7 +29,7 @@ export function Footer(): React.ReactElement {
           </Link>
           <div className="flex flex-wrap justify-center gap-5 text-sm sm:gap-7">
             <Link
-              href="/releases"
+              href="/blog"
               className="font-medium text-black/65 transition-colors hover:text-black dark:text-white/65 dark:hover:text-white"
             >
               {t('releases')}

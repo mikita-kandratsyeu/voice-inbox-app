@@ -353,7 +353,7 @@ export function AdminReleasesPanel() {
                 onChange={(e) => setForm((f) => ({ ...f, published: e.target.checked }))}
                 className="rounded border-zinc-300"
               />
-              Published (visible on /releases)
+              Published (visible on /blog)
             </label>
             <div>
               <label className="mb-1 block text-xs font-medium text-zinc-500">

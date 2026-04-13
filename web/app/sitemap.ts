@@ -10,7 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '', priority: 1 },
     { path: '/privacy', priority: 0.8 },
     { path: '/terms', priority: 0.8 },
-    { path: '/releases', priority: 0.75 },
+    { path: '/blog', priority: 0.75 },
   ];
 
   const locales = [{ prefix: '' }, { prefix: '/ru' }];
@@ -33,7 +33,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   for (const { locale, slug } of releasePaths) {
     const prefix = locale === 'en' ? '' : `/${locale}`;
     entries.push({
-      url: `${baseUrl}${prefix}/releases/${slug}`,
+      url: `${baseUrl}${prefix}/blog/${slug}`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.72,
