@@ -148,10 +148,40 @@ body {
   animation: card-float 4.5s ease-in-out infinite;
 }
 
+@keyframes ambient-drift-slow {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(0, -18px, 0) scale(1.04);
+  }
+}
+
+.animate-ambient-drift-slow {
+  animation: ambient-drift-slow 14s ease-in-out infinite;
+}
+
+@keyframes ambient-drift-x {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(10px, -10px, 0);
+  }
+}
+
+.animate-ambient-drift-x {
+  animation: ambient-drift-x 17s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-rec-dot,
   .animate-wave-bar,
-  .animate-card-float {
+  .animate-card-float,
+  .animate-ambient-drift-slow,
+  .animate-ambient-drift-x {
     animation: none !important;
   }
 }

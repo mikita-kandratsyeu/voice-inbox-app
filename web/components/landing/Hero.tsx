@@ -55,10 +55,10 @@ export function Hero(): React.ReactElement {
         </div>
         <div className="animate-fade-in-delay-2 relative mx-auto w-full max-w-[350px] lg:justify-self-center">
           <div
-            className="pointer-events-none absolute inset-x-10 bottom-2 h-12 rounded-full bg-black/15 blur-2xl dark:bg-black/45"
+            className="pointer-events-none absolute inset-x-10 bottom-2 hidden h-12 rounded-full bg-black/45 blur-2xl dark:block"
             aria-hidden
           />
-          <div className="relative animate-card-float">
+          <div className="relative animate-card-float transition-transform duration-300 lg:hover:scale-[1.015]">
             <Image
               src="/hero-note-screen.png"
               alt="Voice Inbox AI note screen"
@@ -66,7 +66,7 @@ export function Hero(): React.ReactElement {
               height={831}
               sizes="(max-width: 1024px) 86vw, 350px"
               priority
-              className="h-auto w-full object-contain drop-shadow-[0_28px_38px_rgba(15,23,42,0.16)] dark:drop-shadow-[0_32px_48px_rgba(0,0,0,0.52)]"
+              className="h-auto w-full object-contain drop-shadow-[0_18px_24px_rgba(15,23,42,0.08)] dark:drop-shadow-[0_32px_48px_rgba(0,0,0,0.52)]"
             />
           </div>
         </div>
