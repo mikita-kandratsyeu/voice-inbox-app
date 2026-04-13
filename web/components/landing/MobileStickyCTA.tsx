@@ -21,7 +21,9 @@ export function MobileStickyCTA(): React.ReactElement {
   return (
     <div
       className={`fixed inset-x-0 bottom-0 z-50 px-4 pb-3 pt-2 transition-all duration-200 sm:hidden ${
-        isVisible ? 'pointer-events-auto translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'
+        isVisible
+          ? 'pointer-events-auto translate-y-0 opacity-100'
+          : 'pointer-events-none translate-y-4 opacity-0'
       }`}
       style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 0.75rem)' }}
       aria-hidden={!isVisible}

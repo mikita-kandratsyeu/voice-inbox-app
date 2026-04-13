@@ -20,7 +20,9 @@ export function UseCasesSection(): React.ReactElement {
             <h2 className="mb-3 text-3xl font-semibold tracking-tight text-black sm:text-4xl dark:text-white">
               {t('title')}
             </h2>
-            <p className="mx-auto max-w-2xl text-base text-black/62 dark:text-white/62">{t('subtitle')}</p>
+            <p className="mx-auto max-w-2xl text-base text-black/62 dark:text-white/62">
+              {t('subtitle')}
+            </p>
           </div>
         </AnimateOnScroll>
 

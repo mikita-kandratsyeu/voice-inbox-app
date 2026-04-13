@@ -50,7 +50,9 @@ export default async function ReleasesIndexPage({ params }: Props) {
           <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-white sm:text-4xl">
             {t('pageTitle')}
           </h1>
-          <p className="mt-2 text-base text-black/65 sm:text-lg dark:text-white/65">{t('pageSubtitle')}</p>
+          <p className="mt-2 text-base text-black/65 sm:text-lg dark:text-white/65">
+            {t('pageSubtitle')}
+          </p>
 
           {posts.length === 0 ? (
             <p className="mt-12 rounded-2xl border border-black/10 bg-white/80 p-8 text-center text-black/60 dark:border-white/12 dark:bg-white/5 dark:text-white/60">

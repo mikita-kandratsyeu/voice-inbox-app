@@ -23,7 +23,9 @@ export function Footer(): React.ReactElement {
               className="h-10 w-10 rounded-xl shadow-[0_10px_24px_rgba(59,130,246,0.3)]"
               aria-hidden
             />
-            <span className="text-lg font-semibold tracking-tight text-black dark:text-white">Voice Inbox AI</span>
+            <span className="text-lg font-semibold tracking-tight text-black dark:text-white">
+              Voice Inbox AI
+            </span>
           </Link>
           <div className="flex flex-wrap justify-center gap-5 text-sm sm:gap-7">
             <Link

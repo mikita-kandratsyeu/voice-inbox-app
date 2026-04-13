@@ -27,8 +27,12 @@ export function PrivateModeSection(): React.ReactElement {
               aria-hidden
             />
             <div className="relative">
-              <h2 className="mb-3 max-w-2xl text-3xl font-semibold tracking-tight text-white sm:text-4xl">{t('title')}</h2>
-              <p className="mb-7 max-w-2xl text-sm leading-relaxed text-white/74 sm:text-base">{t('subtitle')}</p>
+              <h2 className="mb-3 max-w-2xl text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                {t('title')}
+              </h2>
+              <p className="mb-7 max-w-2xl text-sm leading-relaxed text-white/74 sm:text-base">
+                {t('subtitle')}
+              </p>
               <div className="grid gap-3 sm:grid-cols-2">
                 {ITEMS.map(({ key, icon: Icon }) => (
                   <div

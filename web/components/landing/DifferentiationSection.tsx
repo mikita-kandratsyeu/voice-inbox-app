@@ -28,8 +28,14 @@ export function DifferentiationSection(): React.ReactElement {
               </p>
               <ul className="space-y-3">
                 {OTHERS.map((key) => (
-                  <li key={key} className="flex items-start gap-2.5 text-sm text-black/75 sm:text-base dark:text-white/72">
-                    <XCircle className="mt-0.5 h-4.5 w-4.5 shrink-0 text-black/35 dark:text-white/35" aria-hidden />
+                  <li
+                    key={key}
+                    className="flex items-start gap-2.5 text-sm text-black/75 sm:text-base dark:text-white/72"
+                  >
+                    <XCircle
+                      className="mt-0.5 h-4.5 w-4.5 shrink-0 text-black/35 dark:text-white/35"
+                      aria-hidden
+                    />
                     {t(key)}
                   </li>
                 ))}
@@ -44,8 +50,14 @@ export function DifferentiationSection(): React.ReactElement {
               </p>
               <ul className="space-y-3">
                 {OURS.map((key) => (
-                  <li key={key} className="flex items-start gap-2.5 text-sm font-medium text-black sm:text-base dark:text-white">
-                    <CheckCircle2 className="mt-0.5 h-4.5 w-4.5 shrink-0 text-blue-600 dark:text-blue-300" aria-hidden />
+                  <li
+                    key={key}
+                    className="flex items-start gap-2.5 text-sm font-medium text-black sm:text-base dark:text-white"
+                  >
+                    <CheckCircle2
+                      className="mt-0.5 h-4.5 w-4.5 shrink-0 text-blue-600 dark:text-blue-300"
+                      aria-hidden
+                    />
                     {t(key)}
                   </li>
                 ))}

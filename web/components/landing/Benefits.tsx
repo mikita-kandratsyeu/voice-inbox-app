@@ -25,7 +25,9 @@ export function Benefits(): React.ReactElement {
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-linear-to-br from-blue-500 to-blue-600">
                     <Check className="h-4 w-4 text-white" strokeWidth={2.7} aria-hidden />
                   </div>
-                  <span className="text-sm font-medium text-black sm:text-base dark:text-white">{t(key)}</span>
+                  <span className="text-sm font-medium text-black sm:text-base dark:text-white">
+                    {t(key)}
+                  </span>
                 </div>
               ))}
             </div>
