@@ -7,6 +7,7 @@ import {
 } from '@/lib/pro-license-admin';
 import {
   buildEntitlementMapForRows,
+  countProLicenseKeys,
   enrichProLicenseRows,
   fetchActiveProDeviceIds,
   fetchProLicenseGlobalStats,
@@ -34,20 +35,42 @@ export async function GET(request: Request): Promise<NextResponse> {
   try {
     const now = new Date();
     const { searchParams } = new URL(request.url);
-    const { status, devicePro } = parseProLicenseListQuery(searchParams);
+    const {
+      status,
+      devicePro,
+      page: requestedPage,
+      pageSize,
+    } = parseProLicenseListQuery(searchParams);
 
     const activeDeviceIds = await fetchActiveProDeviceIds(now);
     const where = proLicenseAdminWhere(status, devicePro, activeDeviceIds);
 
-    const [rows, stats] = await Promise.all([
-      queryProLicenseRows({ where, take: 120 }),
+    const [filteredTotal, stats] = await Promise.all([
+      countProLicenseKeys(where),
       fetchProLicenseGlobalStats(now),
     ]);
+
+    const totalPages = filteredTotal === 0 ? 1 : Math.ceil(filteredTotal / pageSize);
+    const page = Math.min(requestedPage, totalPages);
+    const skip = (page - 1) * pageSize;
+
+    const rows = await queryProLicenseRows({ where, take: pageSize, skip });
 
     const entitlementByDevice = await buildEntitlementMapForRows(rows);
     const items = enrichProLicenseRows(rows, now, entitlementByDevice);
 
-    return NextResponse.json({ ok: true, items, stats, filters: { status, devicePro } });
+    return NextResponse.json({
+      ok: true,
+      items,
+      stats,
+      filters: { status, devicePro },
+      pagination: {
+        page,
+        pageSize,
+        totalFiltered: filteredTotal,
+        totalPages,
+      },
+    });
   } catch (e) {
     console.error('[admin/pro-licenses GET]', e);
     return NextResponse.json({ ok: false, error: 'Database error' }, { status: 503 });

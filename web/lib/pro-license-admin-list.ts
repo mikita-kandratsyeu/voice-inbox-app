@@ -6,6 +6,17 @@ import { computeNominalGrantEndUtc } from '@/lib/pro-license-expiry-math';
 export type ProLicenseStatusFilter = 'all' | 'unused' | 'redeemed';
 export type ProLicenseDeviceProFilter = 'any' | 'active' | 'inactive';
 
+const PRO_LICENSE_LIST_PAGE_MIN = 1;
+const PRO_LICENSE_LIST_PAGE_SIZE_MIN = 10;
+const PRO_LICENSE_LIST_PAGE_SIZE_MAX = 120;
+const PRO_LICENSE_LIST_PAGE_SIZE_DEFAULT = 50;
+
+function clampInt(n: number, min: number, max: number, fallback: number): number {
+  if (!Number.isFinite(n) || Number.isNaN(n)) return fallback;
+  const t = Math.trunc(n);
+  return Math.min(max, Math.max(min, t));
+}
+
 const rowSelect = {
   id: true,
   durationMonths: true,
@@ -35,6 +46,8 @@ export type ProLicenseAdminItem = {
 export function parseProLicenseListQuery(searchParams: URLSearchParams): {
   status: ProLicenseStatusFilter;
   devicePro: ProLicenseDeviceProFilter;
+  page: number;
+  pageSize: number;
 } {
   const s = searchParams.get('status') ?? 'all';
   const d = searchParams.get('devicePro') ?? 'any';
@@ -44,7 +57,14 @@ export function parseProLicenseListQuery(searchParams: URLSearchParams): {
   const devicePro: ProLicenseDeviceProFilter = ['active', 'inactive', 'any'].includes(d)
     ? (d as ProLicenseDeviceProFilter)
     : 'any';
-  return { status, devicePro };
+  const page = clampInt(Number(searchParams.get('page')), PRO_LICENSE_LIST_PAGE_MIN, 1_000_000, 1);
+  const pageSize = clampInt(
+    Number(searchParams.get('pageSize')),
+    PRO_LICENSE_LIST_PAGE_SIZE_MIN,
+    PRO_LICENSE_LIST_PAGE_SIZE_MAX,
+    PRO_LICENSE_LIST_PAGE_SIZE_DEFAULT,
+  );
+  return { status, devicePro, page, pageSize };
 }
 
 /** Prisma filter for list / export (stats are always global, not filtered). */
@@ -97,6 +117,10 @@ export function proLicenseAdminWhere(
   };
 }
 
+export async function countProLicenseKeys(where: Prisma.ProLicenseKeyWhereInput): Promise<number> {
+  return prisma.proLicenseKey.count({ where });
+}
+
 export async function fetchActiveProDeviceIds(now: Date): Promise<string[]> {
   const rows = await prisma.deviceProEntitlement.findMany({
     where: { expiresAt: { gt: now } },
@@ -139,10 +163,12 @@ export async function fetchProLicenseGlobalStats(now: Date): Promise<{
 export async function queryProLicenseRows(params: {
   where: Prisma.ProLicenseKeyWhereInput;
   take: number;
+  skip?: number;
 }): Promise<ProLicenseKeyRow[]> {
   return prisma.proLicenseKey.findMany({
     where: params.where,
     orderBy: { createdAt: 'desc' },
+    skip: params.skip ?? 0,
     take: params.take,
     select: rowSelect,
   });

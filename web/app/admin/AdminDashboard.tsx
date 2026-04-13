@@ -145,6 +145,13 @@ type ProLicenseStats = {
   devicesWithActivePro: number;
 };
 
+type ProLicensePagination = {
+  page: number;
+  pageSize: number;
+  totalFiltered: number;
+  totalPages: number;
+};
+
 type ProLicenseRow = {
   id: string;
   durationMonths: number;
@@ -300,6 +307,11 @@ export function AdminDashboard() {
   const [proLicenseDeviceProFilter, setProLicenseDeviceProFilter] = useState<
     'any' | 'active' | 'inactive'
   >('any');
+  const [proLicensePage, setProLicensePage] = useState(1);
+  const [proLicensePageSize, setProLicensePageSize] = useState(50);
+  const [proLicensePagination, setProLicensePagination] = useState<ProLicensePagination | null>(
+    null,
+  );
   const [proLicenseListLoading, setProLicenseListLoading] = useState(false);
   const [proLicenseError, setProLicenseError] = useState<string | null>(null);
   const [proLicenseDeletingId, setProLicenseDeletingId] = useState<string | null>(null);
@@ -442,30 +454,41 @@ export function AdminDashboard() {
       const q = new URLSearchParams({
         status: proLicenseStatusFilter,
         devicePro: proLicenseDeviceProFilter,
+        page: String(proLicensePage),
+        pageSize: String(proLicensePageSize),
       });
       const res = await fetch(`/api/admin/pro-licenses?${q}`, { credentials: 'include' });
       const data = (await res.json()) as {
         ok?: boolean;
         items?: ProLicenseRow[];
         stats?: ProLicenseStats;
+        pagination?: ProLicensePagination;
         error?: string;
       };
       if (!res.ok || !data.ok) {
         setProLicenseError(data.error ?? 'Failed to load keys');
         setProLicenseList([]);
         setProLicenseStats(null);
+        setProLicensePagination(null);
         return;
       }
       setProLicenseList(Array.isArray(data.items) ? data.items : []);
       setProLicenseStats(data.stats ?? null);
+      if (data.pagination) {
+        setProLicensePagination(data.pagination);
+        setProLicensePage(data.pagination.page);
+      } else {
+        setProLicensePagination(null);
+      }
     } catch {
       setProLicenseError('Request failed');
       setProLicenseList([]);
       setProLicenseStats(null);
+      setProLicensePagination(null);
     } finally {
       setProLicenseListLoading(false);
     }
-  }, [proLicenseDeviceProFilter, proLicenseStatusFilter]);
+  }, [proLicenseDeviceProFilter, proLicensePage, proLicensePageSize, proLicenseStatusFilter]);
 
   const fetchProKeyRequests = useCallback(async () => {
     setProKeyRequestsLoading(true);
@@ -1511,6 +1534,7 @@ export function AdminDashboard() {
                       onChange={(e) => {
                         const v = e.target.value as 'all' | 'unused' | 'redeemed';
                         setProLicenseStatusFilter(v);
+                        setProLicensePage(1);
                       }}
                       className={adminSelectClass}
                     >
@@ -1528,6 +1552,7 @@ export function AdminDashboard() {
                       onChange={(e) => {
                         const v = e.target.value as 'any' | 'active' | 'inactive';
                         setProLicenseDeviceProFilter(v);
+                        setProLicensePage(1);
                       }}
                       className={adminSelectClass}
                     >
@@ -1599,6 +1624,70 @@ export function AdminDashboard() {
                   <p className="text-sm text-zinc-500">Loading keys…</p>
                 ) : (
                   <div className="overflow-x-auto">
+                    {proLicensePagination && (
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-600 dark:text-zinc-400">
+                        <p className="tabular-nums">
+                          {proLicensePagination.totalFiltered === 0
+                            ? '0 keys'
+                            : (() => {
+                                const from =
+                                  (proLicensePagination.page - 1) * proLicensePagination.pageSize +
+                                  1;
+                                const to = Math.min(
+                                  proLicensePagination.page * proLicensePagination.pageSize,
+                                  proLicensePagination.totalFiltered,
+                                );
+                                return `${from}–${to} of ${proLicensePagination.totalFiltered}`;
+                              })()}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <label className="flex items-center gap-2">
+                            <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                              Per page
+                            </span>
+                            <select
+                              value={proLicensePageSize}
+                              onChange={(e) => {
+                                setProLicensePageSize(Number(e.target.value));
+                                setProLicensePage(1);
+                              }}
+                              className={adminSelectClass}
+                            >
+                              <option value={25}>25</option>
+                              <option value={50}>50</option>
+                              <option value={100}>100</option>
+                              <option value={120}>120</option>
+                            </select>
+                          </label>
+                          <button
+                            type="button"
+                            disabled={proLicenseListLoading || proLicensePagination.page <= 1}
+                            onClick={() => setProLicensePage((p) => Math.max(1, p - 1))}
+                            className={adminBtnSecondaryClass}
+                          >
+                            Previous
+                          </button>
+                          <span className="tabular-nums text-zinc-500 dark:text-zinc-400">
+                            Page {proLicensePagination.page} of {proLicensePagination.totalPages}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={
+                              proLicenseListLoading ||
+                              proLicensePagination.page >= proLicensePagination.totalPages
+                            }
+                            onClick={() =>
+                              setProLicensePage((p) =>
+                                Math.min(proLicensePagination.totalPages, p + 1),
+                              )
+                            }
+                            className={adminBtnSecondaryClass}
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <table className="min-w-full text-left text-sm">
                       <thead>
                         <tr className="border-b border-zinc-200 dark:border-zinc-600">
@@ -1697,15 +1786,17 @@ export function AdminDashboard() {
                       </tbody>
                     </table>
                     <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-                      Table shows up to 120 most recently created keys that match the list filters.
-                      CSV export includes up to 10,000 rows with the same filters. Totals above are
-                      for all keys in the database.
+                      Table is paginated (newest first) within the current list filters. CSV export
+                      includes up to 10,000 rows with the same filters. Totals above are for all
+                      keys in the database.
                     </p>
-                    {proLicenseList.length === 0 && (
+                    {proLicenseList.length === 0 && proLicensePagination != null && (
                       <p className="mt-2 text-sm text-zinc-500">
-                        {proLicenseStatusFilter !== 'all' || proLicenseDeviceProFilter !== 'any'
-                          ? 'No keys match these filters.'
-                          : 'No keys yet.'}
+                        {proLicensePagination.totalFiltered === 0
+                          ? proLicenseStatusFilter !== 'all' || proLicenseDeviceProFilter !== 'any'
+                            ? 'No keys match these filters.'
+                            : 'No keys yet.'
+                          : 'No keys on this page.'}
                       </p>
                     )}
                   </div>
