@@ -128,10 +128,12 @@
   "releases": {
     "pageTitle": "Блог",
     "pageSubtitle": "Что нового в Voice Inbox AI",
-    "empty": "Пока нет опубликованных релизов.",
+    "sectionEyebrow": "Обновления",
+    "allPosts": "Все записи",
+    "empty": "Пока нет записей. Загляните позже.",
     "readMore": "Подробнее",
-    "backToList": "← Все релизы",
-    "backHome": "← На главную",
+    "backToList": "Все записи",
+    "backHome": "На главную",
     "version": "Версия"
   },
   "metadata": {

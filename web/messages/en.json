@@ -128,10 +128,12 @@
   "releases": {
     "pageTitle": "Blog",
     "pageSubtitle": "What's new in Voice Inbox AI",
-    "empty": "No releases published yet.",
+    "sectionEyebrow": "Product updates",
+    "allPosts": "All posts",
+    "empty": "No posts yet. Check back soon.",
     "readMore": "Read more",
-    "backToList": "← All releases",
-    "backHome": "← Back to home",
+    "backToList": "All posts",
+    "backHome": "Back to home",
     "version": "Version"
   },
   "metadata": {
