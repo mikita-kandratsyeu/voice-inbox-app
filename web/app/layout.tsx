@@ -33,7 +33,12 @@ export default async function RootLayout({
   const messages = await getMessages();
 
   return (
-    <html lang="en" suppressHydrationWarning className={onest.variable}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={onest.variable}
+      data-scroll-behavior="smooth"
+    >
       <body
         className={`${onest.className} min-h-screen bg-white text-black antialiased dark:bg-[#0a0a0a] dark:text-white`}
       >
