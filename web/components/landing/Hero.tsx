@@ -40,13 +40,13 @@ export function Hero(): React.ReactElement {
           <div className="animate-fade-in-delay-3 flex flex-col gap-3 sm:flex-row">
             <a
               href="#download"
-              className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-black px-6 py-3 text-base font-semibold text-white shadow-[0_12px_30px_rgba(15,23,42,0.28)] transition-transform duration-200 hover:-translate-y-0.5 dark:bg-white dark:text-black"
+              className="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-black px-6 py-3 text-base font-semibold text-white shadow-[0_12px_30px_rgba(15,23,42,0.28)] ring-1 ring-black/8 transition-all duration-250 hover:-translate-y-0.5 hover:shadow-[0_16px_34px_rgba(15,23,42,0.32)] dark:bg-white dark:text-black dark:ring-white/15"
             >
               {t('downloadApp')}
             </a>
             <a
               href="#how-it-works"
-              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-black/12 bg-white/85 px-6 py-3 text-base font-medium text-black transition-colors hover:bg-white dark:border-white/15 dark:bg-white/7 dark:text-white dark:hover:bg-white/10"
+              className="inline-flex min-h-[48px] items-center justify-center gap-2 rounded-xl border border-black/12 bg-white/88 px-6 py-3 text-base font-medium text-black transition-all duration-250 hover:-translate-y-0.5 hover:bg-white hover:shadow-[0_12px_26px_rgba(15,23,42,0.08)] dark:border-white/15 dark:bg-white/7 dark:text-white dark:hover:bg-white/10 dark:hover:shadow-[0_16px_30px_rgba(0,0,0,0.28)]"
             >
               <Play className="h-4 w-4" aria-hidden />
               {t('watchDemo')}
