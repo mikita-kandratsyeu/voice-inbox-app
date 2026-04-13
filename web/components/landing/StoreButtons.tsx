@@ -37,7 +37,7 @@ export function StoreButtons({ variant = 'hero' }: StoreButtonsProps): React.Rea
       : 'inline-flex shrink-0 rounded-xl transition-all duration-250 hover:-translate-y-0.5 hover:opacity-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 dark:focus-visible:ring-white/30';
 
   return (
-    <div className="flex flex-col items-center justify-center gap-1 sm:flex-row">
+    <div className="flex flex-col items-center justify-center gap-y-2.5 sm:flex-row">
       <a
         href={APP_STORE_URL}
         className={storeLinkClasses}
