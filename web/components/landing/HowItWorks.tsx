@@ -9,14 +9,14 @@ export function HowItWorks(): React.ReactElement {
   const t = useTranslations();
 
   return (
-    <section className="px-4 py-16 sm:px-6 sm:py-20 md:px-8 lg:px-8">
+    <section className="scroll-mt-24 px-4 py-14 sm:scroll-mt-28 sm:px-6 sm:py-18 md:px-8 lg:px-8" id="how-it-works">
       <div className="mx-auto max-w-7xl">
         <AnimateOnScroll>
           <div className="mb-10 text-center sm:mb-12">
             <h2 className="mb-3 text-3xl font-semibold tracking-tight text-black sm:text-4xl dark:text-white">
               {t('howItWorks.title')}
             </h2>
-            <p className="text-base text-black/60 sm:text-lg dark:text-white/60">{t('howItWorks.subtitle')}</p>
+            <p className="text-base text-black/62 sm:text-lg dark:text-white/62">{t('howItWorks.subtitle')}</p>
           </div>
         </AnimateOnScroll>
 
@@ -30,7 +30,7 @@ export function HowItWorks(): React.ReactElement {
                 <h3 className="mb-2 text-xl font-semibold tracking-tight text-black dark:text-white">
                   {t(`howItWorks.${id}.title`)}
                 </h3>
-                <p className="text-sm leading-relaxed text-black/70 sm:text-base dark:text-white/70">
+                <p className="text-sm leading-relaxed text-black/72 sm:text-base dark:text-white/72">
                   {t(`howItWorks.${id}.description`)}
                 </p>
                 {index < STEPS.length - 1 && (

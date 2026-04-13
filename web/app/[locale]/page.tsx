@@ -2,14 +2,16 @@ import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
 import { BASE_URL_OR_FALLBACK } from '@/config/constants';
-import { Benefits } from '@/components/landing/Benefits';
 import { CTASection } from '@/components/landing/CTASection';
+import { DifferentiationSection } from '@/components/landing/DifferentiationSection';
 import { FAQSection } from '@/components/landing/FAQSection';
 import { Features } from '@/components/landing/Features';
 import { Footer } from '@/components/landing/Footer';
 import { Header } from '@/components/landing/Header';
 import { Hero } from '@/components/landing/Hero';
 import { HowItWorks } from '@/components/landing/HowItWorks';
+import { PrivateModeSection } from '@/components/landing/PrivateModeSection';
+import { UseCasesSection } from '@/components/landing/UseCasesSection';
 
 type Props = {
   params: Promise<{ locale: string }>;
@@ -56,9 +58,11 @@ export default async function LandingPage({ params }: Props) {
       <Header />
       <main className="flex-1">
         <Hero />
-        <Features />
+        <DifferentiationSection />
+        <PrivateModeSection />
         <HowItWorks />
-        <Benefits />
+        <Features />
+        <UseCasesSection />
         <FAQSection />
         <CTASection />
       </main>

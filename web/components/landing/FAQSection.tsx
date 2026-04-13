@@ -3,7 +3,7 @@ import { useTranslations } from 'next-intl';
 
 import { AnimateOnScroll } from '@/components/ui/AnimateOnScroll';
 
-const FAQ_ITEMS = ['offline', 'privacy', 'languages', 'pricing'] as const;
+const FAQ_ITEMS = ['offline', 'privacy', 'privateMode', 'languages', 'pricing'] as const;
 
 export function FAQSection(): React.ReactElement {
   const t = useTranslations('faq');

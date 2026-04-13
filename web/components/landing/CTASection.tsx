@@ -19,8 +19,11 @@ export function CTASection(): React.ReactElement {
               aria-hidden
             />
             <div className="relative z-10">
+              <div className="mb-4 inline-flex items-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-medium tracking-wide text-white/90">
+                App Store & Google Play
+              </div>
               <h2 className="mb-3 text-3xl font-semibold tracking-tight text-white sm:text-4xl">{t('title')}</h2>
-              <p className="mx-auto mb-8 max-w-2xl text-base text-white/80 sm:text-lg">{t('subtitle')}</p>
+              <p className="mx-auto mb-8 max-w-2xl text-base text-white/85 sm:text-lg">{t('subtitle')}</p>
               <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <StoreButtons variant="cta" />
               </div>

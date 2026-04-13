@@ -28,9 +28,10 @@ export function MobileStickyCTA(): React.ReactElement {
     >
       <a
         href="#download"
-        className="mx-auto flex h-12 w-full max-w-md items-center justify-center rounded-xl bg-black text-base font-semibold text-white shadow-[0_16px_36px_rgba(10,10,10,0.35)] dark:bg-white dark:text-black"
+        className="mx-auto flex min-h-[52px] w-full max-w-md flex-col items-center justify-center rounded-2xl bg-black px-4 py-2 text-white shadow-[0_16px_36px_rgba(10,10,10,0.35)] dark:bg-white dark:text-black"
       >
-        {t('installApp')}
+        <span className="text-base font-semibold">{t('installApp')}</span>
+        <span className="text-[0.7rem] opacity-80">{t('tryFree')}</span>
       </a>
     </div>
   );

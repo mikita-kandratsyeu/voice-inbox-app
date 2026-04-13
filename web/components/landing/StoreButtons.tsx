@@ -29,8 +29,8 @@ export function StoreButtons({ variant = 'hero' }: StoreButtonsProps): React.Rea
 
   const linkClasses =
     variant === 'hero'
-      ? 'inline-block transition-transform hover:scale-105 focus:outline-none rounded-lg'
-      : 'inline-block transition-transform hover:scale-105 focus:outline-none rounded-lg';
+      ? 'inline-flex min-h-[48px] items-center justify-center rounded-lg transition-transform hover:scale-[1.02] focus:outline-none'
+      : 'inline-flex min-h-[48px] items-center justify-center rounded-lg transition-transform hover:scale-[1.02] focus:outline-none';
 
   return (
     <div className="flex flex-col items-center justify-center gap-2 sm:flex-row">
