@@ -8,8 +8,8 @@ export function Header(): React.ReactElement {
   const t = useTranslations('header');
 
   return (
-    <header className="sticky top-0 z-50 border-b border-black/8 bg-white/72 shadow-[0_1px_0_rgba(255,255,255,0.8)] backdrop-blur-xl dark:border-white/8 dark:bg-black/68 dark:shadow-none">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2.5 sm:gap-3 sm:px-6 sm:py-3 lg:px-8">
+    <header className="sticky top-3 z-50 px-3 sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 rounded-2xl border border-black/10 bg-white/70 px-3 py-2.5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:gap-3 sm:px-5 sm:py-3 dark:border-white/12 dark:bg-black/60 dark:shadow-[0_14px_36px_rgba(0,0,0,0.35)]">
         <Link
           href="/"
           className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 transition-opacity hover:opacity-90"
