@@ -468,7 +468,7 @@
       "billingSlashMonth": "/mo",
       "billingSlashYear": "/yr",
       "billingEquivalentPerMonth": "≈ {{price}} average per month · one charge per year",
-      "termsLink": "Terms of Use (EULA)",
+      "termsLink": "Terms of Use",
       "privacyLink": "Privacy Policy",
       "savePercentDiscountPill": "{{percent}}% off",
       "trialDaysFree": "{{count}} days free",

@@ -470,7 +470,7 @@
       "billingSlashMonth": "/мес",
       "billingSlashYear": "/год",
       "billingEquivalentPerMonth": "≈ {{price}} в среднем за месяц · один платёж в год",
-      "termsLink": "Условия использования (EULA)",
+      "termsLink": "Условия использования",
       "privacyLink": "Политика конфиденциальности",
       "savePercentDiscountPill": "{{percent}}% скидка",
       "trialDaysFree": "{{count}} дн. бесплатно",
