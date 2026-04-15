@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { BASE_URL_OR_FALLBACK } from '@/config/constants';
+import { APP_STORE_APP_ID, BASE_URL_OR_FALLBACK } from '@/config/constants';
 import { CTASection } from '@/components/landing/CTASection';
 import { DifferentiationSection } from '@/components/landing/DifferentiationSection';
 import { FAQSection } from '@/components/landing/FAQSection';
@@ -28,6 +28,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: t('title'),
     description: t('description'),
+    ...(APP_STORE_APP_ID
+      ? { other: { 'apple-itunes-app': `app-id=${APP_STORE_APP_ID}` } }
+      : {}),
     robots: { index: true, follow: true },
     openGraph: {
       title: t('title'),
