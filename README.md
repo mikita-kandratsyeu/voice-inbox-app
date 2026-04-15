@@ -50,6 +50,10 @@ The project is designed as a solo‑friendly, production‑ready codebase: clean
 
 Legal pages are built from Markdown in **`web/content/`** (`privacy.*.md`, `terms.*.md`). They describe **current** behavior (e.g. Yandex ads when not on a paid ad-free tier, Firebase Crashlytics in release builds) and are tied to the “Last updated” date — revise when product or law changes. Code: `mobile/src/features/app-storefront/model/useAdsAllowed.ts`, `mobile/src/shared/lib/crashlytics.ts`.
 
+## Release versioning
+
+From the **repository root**, run `node scripts/release.mjs` to bump **semver** and **integer build** together in `mobile/package.json`, `web/package.json`, the iOS Xcode project (`MARKETING_VERSION` / `CURRENT_PROJECT_VERSION`), and `mobile/android/app/build.gradle` (`versionName` / `versionCode`). The script can create a commit and git tag `v<semver>`. Use `node scripts/release.mjs --help` for flags (`--dry-run`, `--no-git`, `--yes` with `RELEASE_VERSION` / `RELEASE_BUILD`, `--allow-dirty`).
+
 ## License
 
 This project is **proprietary** and distributed under **UNLICENSED / all rights reserved** terms.

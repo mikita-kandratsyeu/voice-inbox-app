@@ -28,9 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: t('title'),
     description: t('description'),
-    ...(APP_STORE_APP_ID
-      ? { other: { 'apple-itunes-app': `app-id=${APP_STORE_APP_ID}` } }
-      : {}),
+    ...(APP_STORE_APP_ID ? { other: { 'apple-itunes-app': `app-id=${APP_STORE_APP_ID}` } } : {}),
     robots: { index: true, follow: true },
     openGraph: {
       title: t('title'),
