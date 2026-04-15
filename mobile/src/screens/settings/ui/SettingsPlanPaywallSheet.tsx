@@ -129,7 +129,7 @@ function SubscriptionPlanOptionCard({
       className="w-full rounded-2xl px-4 pb-3 pt-3"
       style={{
         alignSelf: 'stretch',
-        borderWidth: selected ? 2 : 1,
+        borderWidth: 1,
         borderColor: selected ? c.accent.primary : c.border.default,
         backgroundColor: selected ? `${c.accent.primary}12` : c.background.primary,
       }}
@@ -185,7 +185,7 @@ function SubscriptionPlanOptionCard({
         </View>
 
         <Text
-          className={`mt-2 text-[16px] ${selected ? 'font-semibold' : 'font-medium'} leading-[22px]`}
+          className="mt-2 text-[16px] font-semibold leading-[22px]"
           style={{
             color: c.text.primary,
             ...(IS_ANDROID ? { includeFontPadding: false } : {}),
