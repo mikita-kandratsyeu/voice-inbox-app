@@ -185,7 +185,7 @@ function SubscriptionPlanOptionCard({
         </View>
 
         <Text
-          className="mt-2 text-[16px] font-bold leading-[22px]"
+          className={`mt-2 text-[16px] ${selected ? 'font-semibold' : 'font-medium'} leading-[22px]`}
           style={{
             color: c.text.primary,
             ...(IS_ANDROID ? { includeFontPadding: false } : {}),
