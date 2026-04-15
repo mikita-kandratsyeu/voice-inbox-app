@@ -1,3 +1,4 @@
+import { i18n } from '@/shared/lib';
 import {
   type AiApiResult,
   type AskApiResult,
@@ -6,6 +7,7 @@ import {
   postAiMessage,
   postAskQuestion,
 } from '@/shared/lib/ai-api';
+import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
 import type {
   AiExecutionContext,
@@ -43,6 +45,16 @@ export async function runCloudSummaryTasks(
   request: SummaryTaskRequest,
   ctx: AiExecutionContext,
 ): Promise<SummaryTaskResult> {
+  const consentOk = await ensureCloudAiThirdPartyConsent();
+  if (!consentOk) {
+    return {
+      ok: false,
+      provider: 'cloud',
+      mode: ctx.aiExecutionMode,
+      error: i18n.t('cloudAiConsent.declinedHint'),
+    };
+  }
+
   const postResult = await postAiMessage({
     id: request.id,
     transcript: request.transcript,
@@ -91,6 +103,16 @@ export async function runCloudAsk(
   request: AskRequest,
   ctx: AiExecutionContext,
 ): Promise<AskTaskResult> {
+  const consentOk = await ensureCloudAiThirdPartyConsent();
+  if (!consentOk) {
+    return {
+      ok: false,
+      provider: 'cloud',
+      mode: ctx.aiExecutionMode,
+      error: i18n.t('cloudAiConsent.declinedHint'),
+    };
+  }
+
   const postResult = await postAskQuestion({
     id: request.id,
     transcript: request.transcript,

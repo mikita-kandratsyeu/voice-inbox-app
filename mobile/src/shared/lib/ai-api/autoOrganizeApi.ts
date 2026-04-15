@@ -1,5 +1,7 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
+import { i18n } from '@/shared/lib';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
 type NoteForOrganize = {
   id: string;
@@ -55,6 +57,11 @@ const POLL_INTERVAL_MS = 4000;
 const POLL_TIMEOUT_MS = 120000;
 
 export async function postAutoOrganizeFolders(body: RequestBody): Promise<AutoOrganizeApiResult> {
+  const consentOk = await ensureCloudAiThirdPartyConsent();
+  if (!consentOk) {
+    return { ok: false, error: i18n.t('cloudAiConsent.declinedHint') };
+  }
+
   const url = `${getWebApiUrl()}/api/folders/auto-organize`;
   let response: Response;
   try {
