@@ -151,7 +151,20 @@
     "error500Title": "Server error — Voice Inbox AI",
     "error500Description": "We could not load this page. Please try again in a moment.",
     "accountProTitle": "Your Pro plan — Voice Inbox AI",
-    "accountProDescription": "Details of your Pro activation in Voice Inbox AI."
+    "accountProDescription": "Details of your Pro activation in Voice Inbox AI.",
+    "supportTitle": "Support — Voice Inbox AI",
+    "supportDescription": "How to get help with Voice Inbox AI: contact options, privacy, and terms."
+  },
+  "supportPage": {
+    "heading": "Support",
+    "body": "Use this page to ask questions about Voice Inbox AI, subscriptions, privacy, or technical issues. The fastest way to reach us is by email. You can also send a message from the app (Settings → contact support), which attaches helpful diagnostics.",
+    "emailLabel": "Email support:",
+    "emailMissing": "Support email is not configured on this deployment. Use the in-app support form in Voice Inbox AI (Settings).",
+    "bulletApp": "For billing or subscription questions, check your receipt in the App Store or Google Play, or write to us with your purchase details.",
+    "bulletPrivacy": "For data and privacy questions, read our Privacy Policy (linked below) or email us with specifics.",
+    "linkPrivacy": "Privacy Policy",
+    "linkTerms": "Terms of Service",
+    "backHome": "← Back to home"
   },
   "accountPro": {
     "planLabel": "Current plan",

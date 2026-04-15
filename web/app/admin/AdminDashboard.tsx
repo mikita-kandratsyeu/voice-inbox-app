@@ -136,6 +136,22 @@ type BroadcastHistoryItem = {
   deviceId: string | null;
 };
 
+type ProLicenseStats = {
+  totalKeys: number;
+  unusedKeys: number;
+  redeemedKeys: number;
+  redeemedLast7Days: number;
+  redeemedLast30Days: number;
+  devicesWithActivePro: number;
+};
+
+type ProLicensePagination = {
+  page: number;
+  pageSize: number;
+  totalFiltered: number;
+  totalPages: number;
+};
+
 type ProLicenseRow = {
   id: string;
   durationMonths: number;
@@ -144,6 +160,9 @@ type ProLicenseRow = {
   issuedToEmail?: string | null;
   consumed: boolean;
   consumedAt: string | null;
+  nominalGrantEndsAt?: string | null;
+  deviceProExpiresAt?: string | null;
+  deviceProActive?: boolean;
   devicePrefix: string | null;
 };
 
@@ -281,6 +300,18 @@ export function AdminDashboard() {
   const [proLicenseGenerating, setProLicenseGenerating] = useState(false);
   const [proLicensePlainKey, setProLicensePlainKey] = useState<string | null>(null);
   const [proLicenseList, setProLicenseList] = useState<ProLicenseRow[]>([]);
+  const [proLicenseStats, setProLicenseStats] = useState<ProLicenseStats | null>(null);
+  const [proLicenseStatusFilter, setProLicenseStatusFilter] = useState<
+    'all' | 'unused' | 'redeemed'
+  >('all');
+  const [proLicenseDeviceProFilter, setProLicenseDeviceProFilter] = useState<
+    'any' | 'active' | 'inactive'
+  >('any');
+  const [proLicensePage, setProLicensePage] = useState(1);
+  const [proLicensePageSize, setProLicensePageSize] = useState(50);
+  const [proLicensePagination, setProLicensePagination] = useState<ProLicensePagination | null>(
+    null,
+  );
   const [proLicenseListLoading, setProLicenseListLoading] = useState(false);
   const [proLicenseError, setProLicenseError] = useState<string | null>(null);
   const [proLicenseDeletingId, setProLicenseDeletingId] = useState<string | null>(null);
@@ -420,21 +451,44 @@ export function AdminDashboard() {
     setProLicenseListLoading(true);
     setProLicenseError(null);
     try {
-      const res = await fetch('/api/admin/pro-licenses', { credentials: 'include' });
-      const data = (await res.json()) as { ok?: boolean; items?: ProLicenseRow[]; error?: string };
+      const q = new URLSearchParams({
+        status: proLicenseStatusFilter,
+        devicePro: proLicenseDeviceProFilter,
+        page: String(proLicensePage),
+        pageSize: String(proLicensePageSize),
+      });
+      const res = await fetch(`/api/admin/pro-licenses?${q}`, { credentials: 'include' });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        items?: ProLicenseRow[];
+        stats?: ProLicenseStats;
+        pagination?: ProLicensePagination;
+        error?: string;
+      };
       if (!res.ok || !data.ok) {
         setProLicenseError(data.error ?? 'Failed to load keys');
         setProLicenseList([]);
+        setProLicenseStats(null);
+        setProLicensePagination(null);
         return;
       }
       setProLicenseList(Array.isArray(data.items) ? data.items : []);
+      setProLicenseStats(data.stats ?? null);
+      if (data.pagination) {
+        setProLicensePagination(data.pagination);
+        setProLicensePage(data.pagination.page);
+      } else {
+        setProLicensePagination(null);
+      }
     } catch {
       setProLicenseError('Request failed');
       setProLicenseList([]);
+      setProLicenseStats(null);
+      setProLicensePagination(null);
     } finally {
       setProLicenseListLoading(false);
     }
-  }, []);
+  }, [proLicenseDeviceProFilter, proLicensePage, proLicensePageSize, proLicenseStatusFilter]);
 
   const fetchProKeyRequests = useCallback(async () => {
     setProKeyRequestsLoading(true);
@@ -470,10 +524,15 @@ export function AdminDashboard() {
   useEffect(() => {
     if (adminTab === 'config') {
       void fetchAppConfig();
-      void fetchProLicenseList();
       void fetchProKeyRequests();
     }
-  }, [adminTab, fetchAppConfig, fetchProLicenseList, fetchProKeyRequests]);
+  }, [adminTab, fetchAppConfig, fetchProKeyRequests]);
+
+  useEffect(() => {
+    if (adminTab === 'config') {
+      void fetchProLicenseList();
+    }
+  }, [adminTab, fetchProLicenseList]);
 
   const handleGenerateProLicense = async () => {
     setProLicenseError(null);
@@ -1266,6 +1325,46 @@ export function AdminDashboard() {
                   manual Generate leaves it empty (—).
                 </p>
 
+                {proLicenseStats && (
+                  <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
+                    {(
+                      [
+                        ['Total keys', proLicenseStats.totalKeys],
+                        ['Unused', proLicenseStats.unusedKeys],
+                        ['Redeemed', proLicenseStats.redeemedKeys],
+                        ['Redeemed (7d)', proLicenseStats.redeemedLast7Days],
+                        ['Redeemed (30d)', proLicenseStats.redeemedLast30Days],
+                        ['Devices w/ active Pro', proLicenseStats.devicesWithActivePro],
+                      ] as const
+                    ).map(([label, value]) => (
+                      <div
+                        key={label}
+                        className="rounded-lg border border-zinc-200 bg-white/90 px-3 py-2 dark:border-zinc-600 dark:bg-zinc-900/50"
+                      >
+                        <p className="text-[11px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                          {label}
+                        </p>
+                        <p className="text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
+                          {value}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <p className="mb-4 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+                  <span className="font-medium text-zinc-600 dark:text-zinc-300">Nominal end</span>{' '}
+                  is the period from this key only from its activation time (no stacking).{' '}
+                  <span className="font-medium text-zinc-600 dark:text-zinc-300">
+                    Device Pro until
+                  </span>{' '}
+                  comes from{' '}
+                  <code className="rounded bg-zinc-100 px-1 font-mono text-[10px] dark:bg-zinc-800">
+                    DeviceProEntitlement
+                  </code>{' '}
+                  for that device — it reflects stacking, later keys, IAP, RevenueCat sync, and
+                  resets.
+                </p>
+
                 <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50/90 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/35">
                   <h3 className="mb-1 text-sm font-semibold text-emerald-950 dark:text-emerald-100">
                     Email Pro key from support
@@ -1428,6 +1527,54 @@ export function AdminDashboard() {
                 <div className="mb-4 flex flex-wrap items-end gap-3">
                   <div>
                     <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                      List: status
+                    </label>
+                    <select
+                      value={proLicenseStatusFilter}
+                      onChange={(e) => {
+                        const v = e.target.value as 'all' | 'unused' | 'redeemed';
+                        setProLicenseStatusFilter(v);
+                        setProLicensePage(1);
+                      }}
+                      className={adminSelectClass}
+                    >
+                      <option value="all">All</option>
+                      <option value="unused">Unused</option>
+                      <option value="redeemed">Redeemed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                      List: device Pro
+                    </label>
+                    <select
+                      value={proLicenseDeviceProFilter}
+                      onChange={(e) => {
+                        const v = e.target.value as 'any' | 'active' | 'inactive';
+                        setProLicenseDeviceProFilter(v);
+                        setProLicensePage(1);
+                      }}
+                      className={adminSelectClass}
+                    >
+                      <option value="any">Any</option>
+                      <option value="active">Active on device</option>
+                      <option value="inactive">Not active / ended</option>
+                    </select>
+                  </div>
+                  <a
+                    href={`/api/admin/pro-licenses/export?status=${encodeURIComponent(proLicenseStatusFilter)}&devicePro=${encodeURIComponent(proLicenseDeviceProFilter)}`}
+                    className={adminBtnSecondaryClass}
+                    download
+                  >
+                    Download CSV
+                  </a>
+                </div>
+                <p className="mb-4 text-xs text-zinc-500 dark:text-zinc-400">
+                  Filters apply to the table and CSV only. Summary counts above stay global.
+                </p>
+                <div className="mb-4 flex flex-wrap items-end gap-3">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
                       Duration
                     </label>
                     <select
@@ -1477,12 +1624,79 @@ export function AdminDashboard() {
                   <p className="text-sm text-zinc-500">Loading keys…</p>
                 ) : (
                   <div className="overflow-x-auto">
+                    {proLicensePagination && (
+                      <div className="mb-3 flex flex-wrap items-center justify-between gap-3 text-sm text-zinc-600 dark:text-zinc-400">
+                        <p className="tabular-nums">
+                          {proLicensePagination.totalFiltered === 0
+                            ? '0 keys'
+                            : (() => {
+                                const from =
+                                  (proLicensePagination.page - 1) * proLicensePagination.pageSize +
+                                  1;
+                                const to = Math.min(
+                                  proLicensePagination.page * proLicensePagination.pageSize,
+                                  proLicensePagination.totalFiltered,
+                                );
+                                return `${from}–${to} of ${proLicensePagination.totalFiltered}`;
+                              })()}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <label className="flex items-center gap-2">
+                            <span className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                              Per page
+                            </span>
+                            <select
+                              value={proLicensePageSize}
+                              onChange={(e) => {
+                                setProLicensePageSize(Number(e.target.value));
+                                setProLicensePage(1);
+                              }}
+                              className={adminSelectClass}
+                            >
+                              <option value={25}>25</option>
+                              <option value={50}>50</option>
+                              <option value={100}>100</option>
+                              <option value={120}>120</option>
+                            </select>
+                          </label>
+                          <button
+                            type="button"
+                            disabled={proLicenseListLoading || proLicensePagination.page <= 1}
+                            onClick={() => setProLicensePage((p) => Math.max(1, p - 1))}
+                            className={adminBtnSecondaryClass}
+                          >
+                            Previous
+                          </button>
+                          <span className="tabular-nums text-zinc-500 dark:text-zinc-400">
+                            Page {proLicensePagination.page} of {proLicensePagination.totalPages}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={
+                              proLicenseListLoading ||
+                              proLicensePagination.page >= proLicensePagination.totalPages
+                            }
+                            onClick={() =>
+                              setProLicensePage((p) =>
+                                Math.min(proLicensePagination.totalPages, p + 1),
+                              )
+                            }
+                            className={adminBtnSecondaryClass}
+                          >
+                            Next
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <table className="min-w-full text-left text-sm">
                       <thead>
                         <tr className="border-b border-zinc-200 dark:border-zinc-600">
                           <th className="py-2 pr-4 font-medium">Created</th>
                           <th className="py-2 pr-4 font-medium">Duration</th>
                           <th className="py-2 pr-4 font-medium">Email</th>
+                          <th className="py-2 pr-4 font-medium">Activated</th>
+                          <th className="py-2 pr-4 font-medium">Nominal end</th>
+                          <th className="py-2 pr-4 font-medium">Device Pro until</th>
                           <th className="py-2 pr-4 font-medium">Status</th>
                           <th className="py-2 pr-4 font-medium">Device</th>
                           <th className="py-2 font-medium"> </th>
@@ -1503,11 +1717,41 @@ export function AdminDashboard() {
                             <td className="max-w-[200px] truncate py-2 pr-4 text-zinc-700 dark:text-zinc-300">
                               {row.issuedToEmail ?? '—'}
                             </td>
+                            <td className="whitespace-nowrap py-2 pr-4 text-zinc-600 dark:text-zinc-400">
+                              {row.consumedAt
+                                ? formatDate(new Date(row.consumedAt).getTime())
+                                : '—'}
+                            </td>
+                            <td className="whitespace-nowrap py-2 pr-4 text-zinc-600 dark:text-zinc-400">
+                              {row.nominalGrantEndsAt
+                                ? formatDate(new Date(row.nominalGrantEndsAt).getTime())
+                                : '—'}
+                            </td>
+                            <td className="whitespace-nowrap py-2 pr-4 text-zinc-600 dark:text-zinc-400">
+                              {row.deviceProExpiresAt
+                                ? formatDate(new Date(row.deviceProExpiresAt).getTime())
+                                : '—'}
+                            </td>
                             <td className="py-2 pr-4">
-                              {row.consumed ? (
-                                <span className="text-green-700 dark:text-green-400">Redeemed</span>
-                              ) : (
+                              {!row.consumed ? (
                                 <span className="text-zinc-500">Unused</span>
+                              ) : (
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="text-green-700 dark:text-green-400">
+                                    Redeemed
+                                  </span>
+                                  {row.deviceProActive ? (
+                                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400">
+                                      Pro active
+                                    </span>
+                                  ) : row.deviceProExpiresAt ? (
+                                    <span className="text-[11px] text-zinc-500">Pro ended</span>
+                                  ) : (
+                                    <span className="text-[11px] text-amber-600 dark:text-amber-400">
+                                      No device row
+                                    </span>
+                                  )}
+                                </div>
                               )}
                             </td>
                             <td className="py-2 pr-4 font-mono text-xs text-zinc-600 dark:text-zinc-400">
@@ -1541,8 +1785,19 @@ export function AdminDashboard() {
                         ))}
                       </tbody>
                     </table>
-                    {proLicenseList.length === 0 && (
-                      <p className="mt-2 text-sm text-zinc-500">No keys yet.</p>
+                    <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      Table is paginated (newest first) within the current list filters. CSV export
+                      includes up to 10,000 rows with the same filters. Totals above are for all
+                      keys in the database.
+                    </p>
+                    {proLicenseList.length === 0 && proLicensePagination != null && (
+                      <p className="mt-2 text-sm text-zinc-500">
+                        {proLicensePagination.totalFiltered === 0
+                          ? proLicenseStatusFilter !== 'all' || proLicenseDeviceProFilter !== 'any'
+                            ? 'No keys match these filters.'
+                            : 'No keys yet.'
+                          : 'No keys on this page.'}
+                      </p>
                     )}
                   </div>
                 )}

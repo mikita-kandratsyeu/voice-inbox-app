@@ -58,7 +58,7 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>Use Face ID to quickly unlock the app.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>The app needs microphone access for voice recording.</string>
+	<string>Voice Inbox AI uses the microphone to record voice notes—for example when you tap record to capture a meeting reminder or a quick idea. Audio is saved as a note on your device so you can transcribe and organize it.</string>
 	<key>NSRemindersFullAccessUsageDescription</key>
 	<string>Adding tasks from notes to Reminders.</string>
 	<key>NSRemindersUsageDescription</key>

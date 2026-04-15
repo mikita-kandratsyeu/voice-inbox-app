@@ -94,6 +94,7 @@ export type SettingsState = {
   autoAiAfterTranscription: boolean;
   autoArchiveEnabled: boolean;
   autoArchiveAfterDays: AutoArchiveAfterDays;
+  cloudAiThirdPartyConsentAccepted: boolean;
   whisperModelStatuses: Partial<Record<WhisperModelVariantId, WhisperModelStatus>>;
   whisperDownloadProgress: Partial<Record<WhisperModelVariantId, number>>;
   whisperDownloadBytes: Partial<Record<WhisperModelVariantId, DownloadBytes>>;
@@ -122,6 +123,7 @@ export type SettingsState = {
   setAutoAiAfterTranscription: (value: boolean) => void;
   setAutoArchiveEnabled: (value: boolean) => void;
   setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => void;
+  setCloudAiThirdPartyConsentAccepted: (value: boolean) => void;
   setWhisperModelStatus: (
     id: WhisperModelId,
     format: WhisperModelWeightsFormat,

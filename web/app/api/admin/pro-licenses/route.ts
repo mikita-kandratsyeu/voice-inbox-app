@@ -5,12 +5,21 @@ import {
   createProLicenseKeyRecord,
   parseProLicenseDurationFromBody,
 } from '@/lib/pro-license-admin';
-import { prisma } from '@/lib/prisma';
+import {
+  buildEntitlementMapForRows,
+  countProLicenseKeys,
+  enrichProLicenseRows,
+  fetchActiveProDeviceIds,
+  fetchProLicenseGlobalStats,
+  parseProLicenseListQuery,
+  proLicenseAdminWhere,
+  queryProLicenseRows,
+} from '@/lib/pro-license-admin-list';
 import { NextResponse } from 'next/server';
 
 type PostBody = { durationMonths?: unknown; durationDays?: unknown };
 
-export async function GET(): Promise<NextResponse> {
+export async function GET(request: Request): Promise<NextResponse> {
   const admin = await getAdminSession();
   if (!admin) {
     return apiError('Unauthorized', HttpStatus.UNAUTHORIZED);
@@ -24,35 +33,44 @@ export async function GET(): Promise<NextResponse> {
   }
 
   try {
-    const rows = await prisma.proLicenseKey.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 80,
-      select: {
-        id: true,
-        durationMonths: true,
-        durationDays: true,
-        createdAt: true,
-        issuedToEmail: true,
-        consumedAt: true,
-        consumedByDeviceId: true,
+    const now = new Date();
+    const { searchParams } = new URL(request.url);
+    const {
+      status,
+      devicePro,
+      page: requestedPage,
+      pageSize,
+    } = parseProLicenseListQuery(searchParams);
+
+    const activeDeviceIds = await fetchActiveProDeviceIds(now);
+    const where = proLicenseAdminWhere(status, devicePro, activeDeviceIds);
+
+    const [filteredTotal, stats] = await Promise.all([
+      countProLicenseKeys(where),
+      fetchProLicenseGlobalStats(now),
+    ]);
+
+    const totalPages = filteredTotal === 0 ? 1 : Math.ceil(filteredTotal / pageSize);
+    const page = Math.min(requestedPage, totalPages);
+    const skip = (page - 1) * pageSize;
+
+    const rows = await queryProLicenseRows({ where, take: pageSize, skip });
+
+    const entitlementByDevice = await buildEntitlementMapForRows(rows);
+    const items = enrichProLicenseRows(rows, now, entitlementByDevice);
+
+    return NextResponse.json({
+      ok: true,
+      items,
+      stats,
+      filters: { status, devicePro },
+      pagination: {
+        page,
+        pageSize,
+        totalFiltered: filteredTotal,
+        totalPages,
       },
     });
-
-    const items = rows.map((r) => ({
-      id: r.id,
-      durationMonths: r.durationMonths,
-      durationDays: r.durationDays,
-      createdAt: r.createdAt.toISOString(),
-      issuedToEmail: r.issuedToEmail,
-      consumed: r.consumedAt != null,
-      consumedAt: r.consumedAt?.toISOString() ?? null,
-      devicePrefix:
-        r.consumedByDeviceId && r.consumedByDeviceId.length > 8
-          ? `${r.consumedByDeviceId.slice(0, 6)}…`
-          : r.consumedByDeviceId,
-    }));
-
-    return NextResponse.json({ ok: true, items });
   } catch (e) {
     console.error('[admin/pro-licenses GET]', e);
     return NextResponse.json({ ok: false, error: 'Database error' }, { status: 503 });

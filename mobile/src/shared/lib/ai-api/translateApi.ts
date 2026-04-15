@@ -1,5 +1,7 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
+import { i18n } from '@/shared/lib';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
 export type TranslateResult =
   | { ok: true; translatedText: string }
@@ -10,6 +12,11 @@ export async function postTranslate(
   transcript: string,
   targetLanguage: string,
 ): Promise<TranslateResult> {
+  const consentOk = await ensureCloudAiThirdPartyConsent();
+  if (!consentOk) {
+    return { ok: false, error: i18n.t('cloudAiConsent.declinedHint') };
+  }
+
   const url = `${getWebApiUrl()}/api/translate`;
 
   let response: Response;

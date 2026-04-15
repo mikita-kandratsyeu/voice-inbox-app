@@ -1,27 +1,12 @@
 import type { Prisma } from '@/generated/prisma/client';
 
+import { addCalendarMonthsUtc, addUtcDays } from '@/lib/pro-license-expiry-math';
 import { prisma } from '@/lib/prisma';
 
 import { hashLicenseKey, normalizeLicenseKeyInput } from './pro-license-crypto';
 
 const ALLOWED_MONTHS = new Set([1, 3, 6, 12]);
 const ALLOWED_DAYS = new Set([1, 7, 14]);
-
-function addCalendarMonthsUtc(base: Date, months: number): Date {
-  const d = new Date(base.getTime());
-  const day = d.getUTCDate();
-  d.setUTCMonth(d.getUTCMonth() + months);
-  if (d.getUTCDate() < day) {
-    d.setUTCDate(0);
-  }
-  return d;
-}
-
-function addUtcDays(base: Date, days: number): Date {
-  const d = new Date(base.getTime());
-  d.setUTCDate(d.getUTCDate() + days);
-  return d;
-}
 
 export type RedeemOk = {
   ok: true;

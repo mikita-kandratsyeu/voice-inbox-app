@@ -31,6 +31,7 @@ import {
 } from '@/shared/config';
 import { i18n, NetworkStatusProvider } from '@/shared/lib';
 import { logAnalyticsScreenView } from '@/shared/lib/analytics';
+import { CloudAiThirdPartyConsentModal } from '@/shared/lib/cloud-ai-consent';
 import {
   type PushNotificationData,
   PushNotificationSheet,
@@ -131,6 +132,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
                 </OnboardingGate>
               </NavigationContainer>
               <WarmupBottomSheet />
+              <CloudAiThirdPartyConsentModal />
               <PushNotificationSheet />
               <AppRatingPromptRoot />
             </BottomSheetModalProvider>

@@ -59,6 +59,7 @@ const KEYS = {
   AUTO_AI_AFTER_TRANSCRIPTION: 'settings.autoAiAfterTranscription',
   AUTO_ARCHIVE_ENABLED: 'settings.autoArchiveEnabled',
   AUTO_ARCHIVE_AFTER_DAYS: 'settings.autoArchiveAfterDays',
+  CLOUD_AI_THIRD_PARTY_CONSENT: 'settings.cloudAiThirdPartyConsentAccepted',
   PRIVATE_PREVIOUS_THEME: 'settings.private.previousTheme',
   PRIVATE_PREVIOUS_AUTO_TRANSCRIBE: 'settings.private.previousAutoTranscribeOnSave',
   PRIVATE_PREVIOUS_AUTO_AI: 'settings.private.previousAutoAiAfterTranscription',
@@ -258,6 +259,10 @@ const getStoredPrivateLocalLlmBudget = (): PrivateLocalLlmBudget => {
   return 'balanced';
 };
 
+const getStoredCloudAiThirdPartyConsentAccepted = (): boolean => {
+  return storage.getString(KEYS.CLOUD_AI_THIRD_PARTY_CONSENT) === 'true';
+};
+
 const getStoredPrivateCapabilityTier = (): PrivateCapabilityTier => {
   const val = storage.getString(KEYS.PRIVATE_CAPABILITY_TIER);
 
@@ -299,6 +304,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   autoAiAfterTranscription: getStoredAutoAiAfterTranscription(),
   autoArchiveEnabled: getStoredAutoArchiveEnabled(),
   autoArchiveAfterDays: getStoredAutoArchiveAfterDays(),
+  cloudAiThirdPartyConsentAccepted: getStoredCloudAiThirdPartyConsentAccepted(),
   whisperModelStatuses: getStoredWhisperStatuses(),
   whisperDownloadProgress: {},
   whisperDownloadBytes: {},
@@ -484,6 +490,15 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => {
     storage.set(KEYS.AUTO_ARCHIVE_AFTER_DAYS, String(value));
     set({ autoArchiveAfterDays: value });
+  },
+
+  setCloudAiThirdPartyConsentAccepted: (value: boolean) => {
+    if (value) {
+      storage.set(KEYS.CLOUD_AI_THIRD_PARTY_CONSENT, 'true');
+    } else {
+      storage.remove(KEYS.CLOUD_AI_THIRD_PARTY_CONSENT);
+    }
+    set({ cloudAiThirdPartyConsentAccepted: value });
   },
 
   setWhisperModelStatus: (
