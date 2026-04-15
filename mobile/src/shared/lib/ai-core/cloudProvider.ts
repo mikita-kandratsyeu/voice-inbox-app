@@ -46,6 +46,7 @@ export async function runCloudSummaryTasks(
   ctx: AiExecutionContext,
 ): Promise<SummaryTaskResult> {
   const consentOk = await ensureCloudAiThirdPartyConsent();
+
   if (!consentOk) {
     return {
       ok: false,
@@ -104,6 +105,7 @@ export async function runCloudAsk(
   ctx: AiExecutionContext,
 ): Promise<AskTaskResult> {
   const consentOk = await ensureCloudAiThirdPartyConsent();
+
   if (!consentOk) {
     return {
       ok: false,

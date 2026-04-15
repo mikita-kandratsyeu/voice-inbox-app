@@ -467,7 +467,7 @@
       "billingAnnual": "Annually",
       "billingSlashMonth": "/mo",
       "billingSlashYear": "/yr",
-      "billingEquivalentPerMonth": "≈ {{price}} average per month · one charge per year",
+      "billingEquivalentPerMonth": "≈ {{price}} average per month.",
       "termsLink": "Terms of Use",
       "privacyLink": "Privacy Policy",
       "savePercentDiscountPill": "{{percent}}% off",

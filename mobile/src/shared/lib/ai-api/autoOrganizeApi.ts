@@ -58,6 +58,7 @@ const POLL_TIMEOUT_MS = 120000;
 
 export async function postAutoOrganizeFolders(body: RequestBody): Promise<AutoOrganizeApiResult> {
   const consentOk = await ensureCloudAiThirdPartyConsent();
+
   if (!consentOk) {
     return { ok: false, error: i18n.t('cloudAiConsent.declinedHint') };
   }

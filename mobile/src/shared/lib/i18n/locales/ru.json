@@ -469,7 +469,7 @@
       "billingAnnual": "Ежегодно",
       "billingSlashMonth": "/мес",
       "billingSlashYear": "/год",
-      "billingEquivalentPerMonth": "≈ {{price}} в среднем за месяц · один платёж в год",
+      "billingEquivalentPerMonth": "≈ {{price}} в среднем за месяц.",
       "termsLink": "Условия использования",
       "privacyLink": "Политика конфиденциальности",
       "savePercentDiscountPill": "{{percent}}% скидка",
