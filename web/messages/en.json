@@ -115,6 +115,7 @@
   "footer": {
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
+    "support": "Support",
     "releases": "Blog",
     "verifiedMetrics": "Verified Metrics",
     "copyright": "© {year} Voice Inbox AI. All rights reserved."

@@ -45,6 +45,12 @@ export function Footer(): React.ReactElement {
               </a>
             ) : null}
             <Link
+              href="/support"
+              className="font-medium text-black/65 transition-colors hover:text-black dark:text-white/65 dark:hover:text-white"
+            >
+              {t('support')}
+            </Link>
+            <Link
               href="/privacy"
               className="font-medium text-black/65 transition-colors hover:text-black dark:text-white/65 dark:hover:text-white"
             >
