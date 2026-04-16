@@ -33,6 +33,8 @@ export function Header(): React.ReactElement {
         <div className="flex shrink-0 items-center gap-2 sm:gap-2.5">
           <a
             href={APP_STORE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="hidden h-11 min-h-[44px] items-center rounded-xl bg-black px-4 text-sm font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.14)_inset,0_6px_20px_rgba(15,23,42,0.18)] transition-[transform,box-shadow,opacity] hover:-translate-y-px hover:opacity-95 hover:shadow-[0_1px_0_rgba(255,255,255,0.14)_inset,0_8px_24px_rgba(15,23,42,0.22)] dark:bg-white dark:text-black dark:shadow-[0_1px_0_rgba(255,255,255,0.5)_inset,0_6px_22px_rgba(0,0,0,0.35)] dark:hover:shadow-[0_1px_0_rgba(255,255,255,0.5)_inset,0_8px_28px_rgba(0,0,0,0.4)] sm:inline-flex"
           >
             {t('installApp')}
