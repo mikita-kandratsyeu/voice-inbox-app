@@ -22,6 +22,8 @@ You must not misuse the support channel (for example, by sending unlawful, haras
 
 The app may offer a **free tier** of AI usage with weekly limits. **Optional paid upgrades** (for example, higher limits or disabling advertising where the app shows ads) are offered only through **in-app purchases** in the **Apple App Store** or **Google Play**, where the platform is the **merchant of record** for the payment. Your purchase is governed by the platform’s terms and refund rules. We may use a **third-party subscription status service** to verify purchases and keep paid entitlements in sync. Nothing in these Terms overrides mandatory consumer rights in your country.
 
+If you install or obtain the app through the **Apple App Store**, Apple’s standard end-user licence agreement for licensed applications (the **Apple Standard EULA**) may apply in addition to these Terms where Apple requires it: [Apple Standard EULA](https://www.apple.com/legal/internet-services/itunes/dev/stdeula/).
+
 ## 4. Intellectual Property
 
 All content you create (voice recordings, transcripts, notes) belongs to you. You grant us a limited, non-transferable license to process that content solely to provide the app's features.
