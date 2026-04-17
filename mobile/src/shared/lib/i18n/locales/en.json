@@ -881,7 +881,7 @@
     "notificationsDesc": "We’ll let you know when the AI has finished processing",
     "granted": "Granted",
     "denied": "Denied",
-    "notDetermined": "Tap to allow",
+    "notDetermined": "Continue",
     "grantAll": "Grant permissions",
     "openSettings": "Open Settings"
   },

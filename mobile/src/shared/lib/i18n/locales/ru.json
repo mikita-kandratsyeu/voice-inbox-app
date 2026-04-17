@@ -883,7 +883,7 @@
     "notificationsDesc": "Сообщим, когда генерация будет готова",
     "granted": "Разрешено",
     "denied": "Отказано",
-    "notDetermined": "Разрешить",
+    "notDetermined": "Продолжить",
     "grantAll": "Разрешить доступ",
     "openSettings": "Открыть настройки"
   },

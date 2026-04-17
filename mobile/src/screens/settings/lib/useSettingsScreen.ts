@@ -502,6 +502,7 @@ export function useSettingsScreen() {
     if (monetizationMode !== 'iap_public') {
       return;
     }
+
     setIapPaywallBusy(true);
     void (async () => {
       try {
