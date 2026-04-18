@@ -862,7 +862,7 @@
   },
   "cloudAiConsent": {
     "title": "Cloud AI and your notes",
-    "body": "To generate summaries, tasks, answers, translations, and folder suggestions in Smart mode, the app sends the relevant text from your notes (for example transcripts, titles, summaries, tasks, and your questions in Ask AI) to Voice Inbox servers over HTTPS. Our servers forward those requests to third-party AI providers through OpenRouter (including Google Gemini, MiniMax, and DeepSeek, depending on routing and availability).\n\nAudio files are not uploaded for these features; only the text you choose to process is sent. You can use Private mode with an on-device model so that summaries and Ask AI run locally instead (other features may still use the network).\n\nDo you allow sending this note content to our servers for cloud AI processing?",
+    "body": "To generate summaries, tasks, answers, translations, and folder suggestions in Smart mode, the app sends the relevant text from your notes (for example transcripts, titles, summaries, tasks, and your questions in Ask AI) to Voice Inbox servers over HTTPS. Our servers forward those requests to third-party AI providers through OpenRouter (including Google Gemini, MiniMax, and DeepSeek, depending on routing and availability).\n\nAudio files are not uploaded for these features. Only the text you choose to process is sent. You can use Private mode with an on-device model so that summaries and Ask AI run locally instead (other features may still use the network).\n\nDo you allow sending this note content to our servers for cloud AI processing?",
     "privacyLink": "Privacy Policy",
     "agree": "Allow",
     "notNow": "Not now",

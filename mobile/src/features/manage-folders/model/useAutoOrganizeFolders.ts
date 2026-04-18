@@ -10,6 +10,7 @@ import {
   getAiWeeklyLimitExceededMessage,
   getAutoOrganizeWeeklyLimitExceededMessage,
 } from '@/shared/lib/ai-api/limitUserMessage';
+import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
 type AutoOrganizeResult = {
   folders: Array<{ name: string; icon: string; color: string }>;
@@ -138,6 +139,12 @@ export function useAutoOrganizeFolders(
       return;
     }
 
+    const consentOk = await ensureCloudAiThirdPartyConsent();
+
+    if (!consentOk) {
+      return;
+    }
+
     setIsRunning(true);
     try {
       const requestId = `auto-organize-${Date.now()}`;
@@ -178,7 +185,7 @@ export function useAutoOrganizeFolders(
     } finally {
       setIsRunning(false);
     }
-  }, [eligibleNotes, folders, isConnected, isRunning, i18n.language, t, options]);
+  }, [eligibleNotes, folders, isConnected, isRunning, i18n.language, options, t]);
 
   const overlayMode: 'loading' | 'success' = isRunning ? 'loading' : 'success';
 
