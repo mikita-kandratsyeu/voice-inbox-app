@@ -16,7 +16,11 @@ import {
   type AiProcessingOptions,
 } from '@/lib/prompts';
 import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
-import { resolveAutoAiModel, type AiModelMode } from '@/lib/ai-model-router';
+import {
+  estimateSummaryTasksRoutingChars,
+  resolveAutoAiModel,
+  type AiModelMode,
+} from '@/lib/ai-model-router';
 import { setAppForeground } from '@/lib/push-tokens';
 import { createMessage } from '@/services/message.service';
 import { NextResponse } from 'next/server';
@@ -82,25 +86,6 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     options?: AiProcessingOptions & { existingTaskTexts?: unknown; taskExtractionHint?: unknown };
   };
 
-  const modelMode: AiModelMode = rawModelMode === 'auto' ? 'auto' : 'manual';
-  const routingTaskType = rawRoutingContext?.taskType === 'ask' ? 'ask' : 'summary_tasks';
-  const routingTranscriptChars =
-    typeof rawRoutingContext?.transcriptChars === 'number'
-      ? rawRoutingContext.transcriptChars
-      : transcript.length;
-  const resolvedModel =
-    modelMode === 'auto'
-      ? resolveAutoAiModel({
-          taskType: routingTaskType,
-          transcriptChars: routingTranscriptChars,
-        })
-      : model;
-
-  const modelError = validateAllowedModel(resolvedModel);
-  if (modelError) {
-    return apiError(modelError, HttpStatus.BAD_REQUEST, { pathname: path });
-  }
-
   let options: AiProcessingOptions | undefined;
   if (rawOptions && typeof rawOptions === 'object') {
     const { existingTaskTexts: rawExisting, taskExtractionHint: rawHint, ...rest } = rawOptions;
@@ -111,6 +96,26 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       ...(existing ? { existingTaskTexts: existing } : {}),
       ...(hint ? { taskExtractionHint: hint } : {}),
     };
+  }
+
+  const modelMode: AiModelMode = rawModelMode === 'auto' ? 'auto' : 'manual';
+  const routingTaskType = rawRoutingContext?.taskType === 'ask' ? 'ask' : 'summary_tasks';
+  const routingChars =
+    routingTaskType === 'ask'
+      ? transcript.length
+      : estimateSummaryTasksRoutingChars(transcript, options);
+  const resolvedModel =
+    modelMode === 'auto'
+      ? resolveAutoAiModel({
+          taskType: routingTaskType,
+          routingChars,
+          ...(routingTaskType === 'ask' ? { askRoutingBasis: 'transcript_only' as const } : {}),
+        })
+      : model;
+
+  const modelError = validateAllowedModel(resolvedModel);
+  if (modelError) {
+    return apiError(modelError, HttpStatus.BAD_REQUEST, { pathname: path });
   }
 
   const resolvedSystemPrompt =

@@ -2,35 +2,81 @@ import {
   AI_MODEL_GEMINI_2_5_FLASH_LITE,
   AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW,
 } from '@/config/constants';
+import {
+  ASK_QUESTION_SYSTEM_PROMPT,
+  buildAiProcessingPromptAppendBlocks,
+  type AiProcessingOptions,
+} from '@/lib/prompts';
 
 export type AiModelMode = 'manual' | 'auto';
 export type AiTaskType = 'summary_tasks' | 'ask';
 
+export type AskRoutingBasis = 'full_ask_estimate' | 'transcript_only';
+
 export type AiModelRoutingContext = {
   taskType: AiTaskType;
-  transcriptChars: number;
+  routingChars: number;
+  askRoutingBasis?: AskRoutingBasis;
 };
 
-const ASK_LONG_TRANSCRIPT_CHARS = 9_000;
-const SUMMARY_LONG_TRANSCRIPT_CHARS = 14_000;
+const DEFAULT_ASK_LONG_TRANSCRIPT_ANCHOR_CHARS = 9_000;
+const DEFAULT_SUMMARY_LONG_ROUTING_CHARS = 14_000;
+const ASK_ROUTING_WRAPPER_FUZZ_CHARS = 80;
 
-function normalizeTranscriptChars(raw: number | undefined): number {
+function readRoutingThreshold(envKey: string, fallback: number): number {
+  const raw = process.env[envKey];
+  if (typeof raw !== 'string' || !raw.trim()) return fallback;
+  const n = Number.parseInt(raw.trim(), 10);
+  if (!Number.isFinite(n) || n <= 0) return fallback;
+  return n;
+}
+
+function askLongRoutingCharsFullEstimate(): number {
+  const anchor = readRoutingThreshold(
+    'AI_ROUTE_ASK_LONG_CHARS',
+    DEFAULT_ASK_LONG_TRANSCRIPT_ANCHOR_CHARS,
+  );
+  return anchor + ASK_QUESTION_SYSTEM_PROMPT.length + ASK_ROUTING_WRAPPER_FUZZ_CHARS;
+}
+
+function askLongRoutingCharsTranscriptOnly(): number {
+  return readRoutingThreshold('AI_ROUTE_ASK_LONG_CHARS', DEFAULT_ASK_LONG_TRANSCRIPT_ANCHOR_CHARS);
+}
+
+function summaryLongRoutingChars(): number {
+  return readRoutingThreshold('AI_ROUTE_SUMMARY_LONG_CHARS', DEFAULT_SUMMARY_LONG_ROUTING_CHARS);
+}
+
+function normalizeRoutingChars(raw: number | undefined): number {
   if (typeof raw !== 'number' || !Number.isFinite(raw) || raw <= 0) {
     return 0;
   }
   return Math.floor(raw);
 }
 
+export function estimateSummaryTasksRoutingChars(
+  transcript: string,
+  options?: AiProcessingOptions | null,
+): number {
+  const { existingTasksBlock, userHintBlock } = buildAiProcessingPromptAppendBlocks(options);
+  return transcript.length + existingTasksBlock.length + userHintBlock.length;
+}
+
 export function resolveAutoAiModel(context: AiModelRoutingContext): string {
-  const transcriptChars = normalizeTranscriptChars(context.transcriptChars);
+  const routingChars = normalizeRoutingChars(context.routingChars);
 
   if (context.taskType === 'ask') {
-    return transcriptChars >= ASK_LONG_TRANSCRIPT_CHARS
+    const threshold =
+      context.askRoutingBasis === 'transcript_only'
+        ? askLongRoutingCharsTranscriptOnly()
+        : askLongRoutingCharsFullEstimate();
+
+    return routingChars >= threshold
       ? AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW
       : AI_MODEL_GEMINI_2_5_FLASH_LITE;
   }
 
-  return transcriptChars >= SUMMARY_LONG_TRANSCRIPT_CHARS
+  return routingChars >= summaryLongRoutingChars()
     ? AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW
     : AI_MODEL_GEMINI_2_5_FLASH_LITE;
 }

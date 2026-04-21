@@ -340,16 +340,10 @@ function getTodayIso(referenceDate?: string): string {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function buildAiProcessingPrompt(options?: AiProcessingOptions | null): string {
-  const summaryStyle = options?.summaryStyle ?? 'standard';
-  const taskStrictness = options?.taskStrictness ?? 'balanced';
-  const outputLanguage = options?.outputLanguage ?? 'same';
-  const today = getTodayIso(options?.referenceDate);
-
-  const summaryInstruction = SUMMARY_STYLE_INSTRUCTIONS[summaryStyle];
-  const taskInstruction = TASK_STRICTNESS_INSTRUCTIONS[taskStrictness];
-  const languageInstruction = OUTPUT_LANGUAGE_INSTRUCTIONS[outputLanguage];
-
+export function buildAiProcessingPromptAppendBlocks(options?: AiProcessingOptions | null): {
+  existingTasksBlock: string;
+  userHintBlock: string;
+} {
   const existingTitles = options?.existingTaskTexts ?? [];
   const existingTasksBlock =
     existingTitles.length > 0
@@ -373,6 +367,21 @@ ${userHintRaw}
 
 `
       : '';
+
+  return { existingTasksBlock, userHintBlock };
+}
+
+export function buildAiProcessingPrompt(options?: AiProcessingOptions | null): string {
+  const summaryStyle = options?.summaryStyle ?? 'standard';
+  const taskStrictness = options?.taskStrictness ?? 'balanced';
+  const outputLanguage = options?.outputLanguage ?? 'same';
+  const today = getTodayIso(options?.referenceDate);
+
+  const summaryInstruction = SUMMARY_STYLE_INSTRUCTIONS[summaryStyle];
+  const taskInstruction = TASK_STRICTNESS_INSTRUCTIONS[taskStrictness];
+  const languageInstruction = OUTPUT_LANGUAGE_INSTRUCTIONS[outputLanguage];
+
+  const { existingTasksBlock, userHintBlock } = buildAiProcessingPromptAppendBlocks(options);
 
   return `You are a structured data extractor for voice note transcripts.
 Return exactly one valid JSON object. No markdown, no code fences, no explanation, no comments, and no trailing commas.
