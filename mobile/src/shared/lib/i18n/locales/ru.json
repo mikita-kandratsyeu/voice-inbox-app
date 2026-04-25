@@ -532,7 +532,17 @@
       "cpuUsage": "Загрузка CPU (оценка, JS)",
       "memoryUsage": "Использование памяти",
       "empty": "—",
-      "copied": "Скопировано в буфер"
+      "copied": "Скопировано в буфер",
+      "webApiOverrideTitle": "Переопределение хоста Web API",
+      "webApiOverrideHint": "Направить приложение на staging или локальный сервер. При применении сбрасывается кэш токена API. Очистите поле и нажмите «Применить», чтобы снова использовать Remote Config / встроенный WEB_API_URL.",
+      "webApiOverridePlaceholder": "https://ваш-api.example.com",
+      "webApiOverrideApply": "Применить",
+      "webApiOverrideClear": "Сбросить",
+      "webApiOverrideActiveNote": "Активно ручное переопределение хоста (см. значение выше).",
+      "webApiOverrideAppliedTitle": "Хост обновлён",
+      "webApiOverrideClearedTitle": "Используется хост по умолчанию",
+      "webApiOverrideInvalidTitle": "Некорректный URL",
+      "webApiOverrideInvalidBody": "Укажите полный URL с http или https (например https://example.com)."
     }
   },
   "appearance": {

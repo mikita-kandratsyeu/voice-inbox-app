@@ -530,7 +530,17 @@
       "cpuUsage": "CPU load (estimated, JS)",
       "memoryUsage": "Memory usage",
       "empty": "—",
-      "copied": "Copied to clipboard"
+      "copied": "Copied to clipboard",
+      "webApiOverrideTitle": "Web API host override",
+      "webApiOverrideHint": "Point the app at a staging or local server. Clears the cached API token when applied. Leave empty and tap Apply to use Remote Config / embedded WEB_API_URL.",
+      "webApiOverridePlaceholder": "https://your-api.example.com",
+      "webApiOverrideApply": "Apply",
+      "webApiOverrideClear": "Reset to default",
+      "webApiOverrideActiveNote": "Manual host override is active (see value above).",
+      "webApiOverrideAppliedTitle": "Host updated",
+      "webApiOverrideClearedTitle": "Using default host",
+      "webApiOverrideInvalidTitle": "Invalid URL",
+      "webApiOverrideInvalidBody": "Enter a full http or https URL (for example https://example.com)."
     }
   },
   "appearance": {
