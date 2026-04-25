@@ -64,11 +64,11 @@ export const SYSTEM_MICRO_TASK_MODEL = 'google/gemini-2.5-flash-lite';
 
 export const AI_MODEL_GEMINI_2_5_FLASH_LITE = 'google/gemini-2.5-flash-lite';
 export const AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW = 'google/gemini-3.1-flash-lite-preview';
-export const AI_MODEL_DEEPSEEK_V3_2 = 'deepseek/deepseek-v3.2';
+export const AI_MODEL_DEEPSEEK_V4_FLASH = 'deepseek/deepseek-v4-flash';
 
 export const SYSTEM_TASK_MODEL_FALLBACK_CHAIN: readonly string[] = [
   AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW,
-  AI_MODEL_DEEPSEEK_V3_2,
+  AI_MODEL_DEEPSEEK_V4_FLASH,
 ];
 
 /**
@@ -76,7 +76,7 @@ export const SYSTEM_TASK_MODEL_FALLBACK_CHAIN: readonly string[] = [
  */
 export const USER_AI_MODEL_FALLBACK_CHAIN: readonly string[] = [
   AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW,
-  AI_MODEL_DEEPSEEK_V3_2,
+  AI_MODEL_DEEPSEEK_V4_FLASH,
 ];
 
 /** First step after primary failure (admin drafts, legacy single-fallback call sites). */
@@ -87,7 +87,7 @@ export const ALLOWED_AI_MODELS: string[] = [
   AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW,
   'minimax/minimax-m2.7',
   'google/gemini-2.5-flash-lite',
-  AI_MODEL_DEEPSEEK_V3_2,
+  AI_MODEL_DEEPSEEK_V4_FLASH,
 ];
 
 // Push notifications (iOS APNs)

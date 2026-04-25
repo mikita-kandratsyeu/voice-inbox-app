@@ -14,7 +14,7 @@ export type LocalAiModelId =
 
 export type AIModelId =
   | UserSelectableAIModelId
-  | 'deepseek/deepseek-v3.2'
+  | 'deepseek/deepseek-v4-flash'
   | 'google/gemini-2.5-flash-lite';
 
 export type TranscriptionLanguage = 'auto' | 'ru' | 'en' | 'de' | 'fr' | 'es' | 'zh' | 'ja';
