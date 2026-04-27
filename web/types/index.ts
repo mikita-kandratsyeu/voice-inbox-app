@@ -17,10 +17,11 @@ export type AiResult = {
 };
 
 export type Message =
-  | { id: string; status: 'processing' }
+  | { id: string; status: 'processing'; model?: string }
   | {
       id: string;
       status: 'done';
+      model?: string;
       summary: string;
       suggestedTitle: string;
       tasks: AiResult['tasks'];
@@ -29,12 +30,12 @@ export type Message =
       keyPhrases?: string[];
       nextSteps?: string[];
     }
-  | { id: string; status: 'error'; error: string };
+  | { id: string; status: 'error'; error: string; model?: string };
 
 export type AskMessage =
-  | { id: string; status: 'processing' }
-  | { id: string; status: 'done'; answer: string }
-  | { id: string; status: 'error'; error: string };
+  | { id: string; status: 'processing'; model?: string }
+  | { id: string; status: 'done'; model?: string; answer: string }
+  | { id: string; status: 'error'; error: string; model?: string };
 
 export type AutoOrganizeResult = {
   folders: Array<{

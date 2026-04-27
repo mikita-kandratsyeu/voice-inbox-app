@@ -158,6 +158,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const response = NextResponse.json({
     id,
     status: 'processing',
+    model: resolvedModel,
     ...(result.syncToken && { syncToken: result.syncToken }),
   });
 

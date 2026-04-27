@@ -26,6 +26,7 @@ type AiApiRequestBody = {
 type AiApiSuccessResponse = {
   id: string;
   status: 'processing';
+  model?: string;
   syncToken?: string;
 };
 
@@ -59,6 +60,7 @@ export type AiProcessingResult = {
   classification?: RecordClassification;
   keyPhrases?: string[];
   nextSteps?: string[];
+  model?: string;
 };
 
 export type AiMessageResult =
@@ -70,10 +72,11 @@ const POLL_BACKOFF_INITIAL_MS = 2_000;
 const POLL_BACKOFF_CAP_MS = 8_000;
 
 type MessageResponse =
-  | { id: string; status: 'processing' }
+  | { id: string; status: 'processing'; model?: string }
   | {
       id: string;
       status: 'done';
+      model?: string;
       summary: string;
       suggestedTitle?: string;
       tasks: AiTask[];
@@ -82,7 +85,7 @@ type MessageResponse =
       keyPhrases?: string[];
       nextSteps?: string[];
     }
-  | { id: string; status: 'error'; error: string };
+  | { id: string; status: 'error'; error: string; model?: string };
 
 export async function postAiMessage(body: AiApiRequestBody): Promise<AiApiResult> {
   const url = `${getWebApiUrl()}/api/messages`;
@@ -242,17 +245,22 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
     const msg = (await response.json()) as MessageResponse;
 
     if (msg.status === 'done') {
+      const suggested =
+        'suggestedTitle' in msg &&
+        isString((msg as { suggestedTitle?: string }).suggestedTitle) &&
+        (msg as { suggestedTitle: string }).suggestedTitle.trim()
+          ? { suggestedTitle: (msg as { suggestedTitle: string }).suggestedTitle.trim() }
+          : {};
+      const modelField = isString(msg.model) && msg.model.trim() ? { model: msg.model.trim() } : {};
+
       return {
         ok: true,
         result: {
           summary: msg.summary,
           tasks: msg.tasks,
           tags: msg.tags ?? [],
-          ...('suggestedTitle' in msg &&
-          isString((msg as { suggestedTitle?: string }).suggestedTitle) &&
-          (msg as { suggestedTitle: string }).suggestedTitle.trim()
-            ? { suggestedTitle: (msg as { suggestedTitle: string }).suggestedTitle.trim() }
-            : {}),
+          ...suggested,
+          ...modelField,
           ...(msg.classification && { classification: msg.classification }),
           ...(msg.keyPhrases && { keyPhrases: msg.keyPhrases }),
           ...(msg.nextSteps && { nextSteps: msg.nextSteps }),
