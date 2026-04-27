@@ -16,3 +16,20 @@
 "Start voice memo in ${applicationName}" = "Start voice memo in ${applicationName}";
 "Capture note in ${applicationName}" = "Capture note in ${applicationName}";
 "Quick note in ${applicationName}" = "Quick note in ${applicationName}";
+
+"New Text Note" = "New Text Note";
+"Open Voice Inbox AI and create a new text note." = "Open Voice Inbox AI and create a new text note.";
+"Text Note" = "Text Note";
+
+"New text note in ${applicationName}" = "New text note in ${applicationName}";
+"Create text note in ${applicationName}" = "Create text note in ${applicationName}";
+"Add text note in ${applicationName}" = "Add text note in ${applicationName}";
+"Text note in ${applicationName}" = "Text note in ${applicationName}";
+
+"All Tasks" = "All Tasks";
+"Open Voice Inbox AI and view tasks from your notes." = "Open Voice Inbox AI and view tasks from your notes.";
+
+"All tasks in ${applicationName}" = "All tasks in ${applicationName}";
+"Open tasks in ${applicationName}" = "Open tasks in ${applicationName}";
+"Show tasks in ${applicationName}" = "Show tasks in ${applicationName}";
+"My tasks in ${applicationName}" = "My tasks in ${applicationName}";

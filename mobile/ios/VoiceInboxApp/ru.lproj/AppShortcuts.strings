@@ -16,3 +16,20 @@
 "Start voice memo in ${applicationName}" = "Начать голосовую заметку в ${applicationName}";
 "Capture note in ${applicationName}" = "Записать заметку в ${applicationName}";
 "Quick note in ${applicationName}" = "Быстрая заметка в ${applicationName}";
+
+"New Text Note" = "Новая текстовая заметка";
+"Open Voice Inbox AI and create a new text note." = "Откройте Voice Inbox AI и создайте новую текстовую заметку.";
+"Text Note" = "Текстовая заметка";
+
+"New text note in ${applicationName}" = "Новая текстовая заметка в ${applicationName}";
+"Create text note in ${applicationName}" = "Создать текстовую заметку в ${applicationName}";
+"Add text note in ${applicationName}" = "Добавить текстовую заметку в ${applicationName}";
+"Text note in ${applicationName}" = "Текстовая заметка в ${applicationName}";
+
+"All Tasks" = "Все задачи";
+"Open Voice Inbox AI and view tasks from your notes." = "Откройте Voice Inbox AI и просмотрите задачи из заметок.";
+
+"All tasks in ${applicationName}" = "Все задачи в ${applicationName}";
+"Open tasks in ${applicationName}" = "Открыть задачи в ${applicationName}";
+"Show tasks in ${applicationName}" = "Показать задачи в ${applicationName}";
+"My tasks in ${applicationName}" = "Мои задачи в ${applicationName}";
