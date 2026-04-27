@@ -38,10 +38,13 @@ export const AboutAppScreen = () => {
   const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
-  const { refresh: refreshProEntitlement } = useProEntitlement();
+  const { isProActive, refresh: refreshProEntitlement } = useProEntitlement();
+
   const setForceShowOnboarding = useOnboardingStore((s) => s.setForceShow);
   const [proLicenseModalVisible, setProLicenseModalVisible] = useState(false);
+
   const eggTapRef = useRef({ count: 0, timer: null as ReturnType<typeof setTimeout> | null });
+
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
@@ -51,11 +54,12 @@ export const AboutAppScreen = () => {
   const isPrivateMode = aiExecutionMode === 'private_experimental';
 
   const handleAppIconPress = useCallback(() => {
-    if (!getProLicenseKeyActivationEnabled()) {
+    if (!getProLicenseKeyActivationEnabled() || isProActive) {
       return;
     }
 
     const st = eggTapRef.current;
+
     if (st.timer != null) {
       clearTimeout(st.timer);
     }
@@ -78,7 +82,10 @@ export const AboutAppScreen = () => {
     }
 
     void (async () => {
-      if (isRevenueCatStoreBillingConfigured() && (await isStoreProEntitlementActiveNow())) {
+      const isStoreProEntitlementActive = await isStoreProEntitlementActiveNow();
+      const isRevenueCatStoreBilling = isRevenueCatStoreBillingConfigured();
+
+      if (isRevenueCatStoreBilling && isStoreProEntitlementActive) {
         return;
       }
 
