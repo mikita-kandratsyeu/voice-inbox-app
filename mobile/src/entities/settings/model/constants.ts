@@ -36,6 +36,15 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     tierLabelKey: 'aiModels.tierPremium',
     supportTierCode: 'premium_experimental',
   },
+  {
+    id: 'deepseek/deepseek-v4-flash',
+    name: 'DeepSeek V4 Flash',
+    provider: 'DeepSeek',
+    descriptionKey: 'aiModels.deepSeekDesc',
+    speed: 'fast',
+    tierLabelKey: 'aiModels.tierDeepSeek',
+    supportTierCode: 'fast',
+  },
 ];
 
 export const AI_MODELS: AIModel[] = USER_FACING_AI_MODELS.map(

@@ -760,6 +760,7 @@
     "tierFast": "Fast",
     "tierSmart": "Smarter",
     "tierPremium": "Maximum",
+    "tierDeepSeek": "DeepSeek",
     "trinityDesc": "Powerful model with multimodal input support",
     "geminiDesc": "Fast and efficient model for everyday tasks",
     "geminiDesc3_1": "Better with long recordings and more accurate task extraction.",

@@ -6,16 +6,14 @@ export type AppLanguage = 'system' | 'en' | 'ru';
 export type UserSelectableAIModelId =
   | 'google/gemini-2.5-flash-lite'
   | 'google/gemini-3.1-flash-lite-preview'
-  | 'minimax/minimax-m2.7';
+  | 'minimax/minimax-m2.7'
+  | 'deepseek/deepseek-v4-flash';
 export type LocalAiModelId =
   | 'local/qwen3-1.7b-q4_k_m'
   | 'local/gemma-2-2b-it-q4_k_m'
   | 'local/llama-3.2-1b-q4_k_m';
 
-export type AIModelId =
-  | UserSelectableAIModelId
-  | 'deepseek/deepseek-v4-flash'
-  | 'google/gemini-2.5-flash-lite';
+export type AIModelId = UserSelectableAIModelId;
 
 export type TranscriptionLanguage = 'auto' | 'ru' | 'en' | 'de' | 'fr' | 'es' | 'zh' | 'ja';
 export type SummaryStyle = 'brief' | 'standard' | 'detailed';
@@ -44,7 +42,8 @@ export type AIModel = {
 export type AiModelTierLabelKey =
   | 'aiModels.tierFast'
   | 'aiModels.tierSmart'
-  | 'aiModels.tierPremium';
+  | 'aiModels.tierPremium'
+  | 'aiModels.tierDeepSeek';
 
 export type AiUserTierCode = 'fast' | 'smarter' | 'premium_experimental';
 export type AiModelRoutingMode = 'manual' | 'auto';
