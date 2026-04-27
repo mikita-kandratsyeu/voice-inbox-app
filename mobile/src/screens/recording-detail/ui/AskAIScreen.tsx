@@ -24,9 +24,9 @@ import {
   View,
 } from 'react-native';
 import {
-  KeyboardAvoidingView,
   KeyboardAwareScrollView,
   KeyboardController,
+  KeyboardStickyView,
 } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
@@ -700,80 +700,82 @@ export const AskAIScreen = () => {
     const hasInputText = questionInput.trim().length > 0;
 
     return (
-      <View
-        style={{
-          backgroundColor: 'transparent',
-          shadowColor: color.shadow.color,
-          shadowOffset: { width: 0, height: -FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
-          shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
-          shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
-          elevation: 8,
-        }}
-      >
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: 0,
-            bottom: -insets.bottom,
-            overflow: 'hidden',
-          }}
-        >
-          <FrostedChromeBackground />
-        </View>
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            left: 0,
-            right: 0,
-            top: 0,
-            height: StyleSheet.hairlineWidth,
-            backgroundColor: withAlphaHex(color.border.default, 0.45),
-          }}
-        />
+      <KeyboardStickyView offset={{ closed: 0, opened: 0 }} style={{ alignSelf: 'stretch' }}>
         <View
           style={{
             backgroundColor: 'transparent',
-            paddingHorizontal: isTablet ? 80 : 16,
-            paddingTop: 16,
-            paddingBottom: insets.bottom,
+            shadowColor: color.shadow.color,
+            shadowOffset: { width: 0, height: -FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
+            shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
+            shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
+            elevation: 8,
           }}
         >
-          <InputField
-            color={color}
-            hasValue={hasInputText}
-            rightElement={sendButton}
-            containerStyle={{
-              minHeight: 52,
-              alignItems: hasInputText ? 'flex-start' : 'center',
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: 0,
+              bottom: -insets.bottom,
+              overflow: 'hidden',
             }}
           >
-            <TextInput
-              style={[
-                getInputFieldInputStyle(color, hasInputText),
-                {
-                  fontSize: 17,
-                  minHeight: hasInputText ? 26 : 22,
-                  maxHeight: 100,
-                },
-              ]}
-              placeholder={t('recordingDetail.askPlaceholder')}
-              placeholderTextColor={color.text.secondary}
-              accessibilityLabel={t('recordingDetail.askPlaceholder')}
-              value={questionInput}
-              onChangeText={setQuestionInput}
-              returnKeyType="send"
-              editable={!disableByNetwork}
-              multiline
-              numberOfLines={1}
-              onSubmitEditing={handleAsk}
-            />
-          </InputField>
+            <FrostedChromeBackground />
+          </View>
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              top: 0,
+              height: StyleSheet.hairlineWidth,
+              backgroundColor: withAlphaHex(color.border.default, 0.45),
+            }}
+          />
+          <View
+            style={{
+              backgroundColor: 'transparent',
+              paddingHorizontal: isTablet ? 80 : 16,
+              paddingTop: 16,
+              paddingBottom: insets.bottom,
+            }}
+          >
+            <InputField
+              color={color}
+              hasValue={hasInputText}
+              rightElement={sendButton}
+              containerStyle={{
+                minHeight: 52,
+                alignItems: hasInputText ? 'flex-start' : 'center',
+              }}
+            >
+              <TextInput
+                style={[
+                  getInputFieldInputStyle(color, hasInputText),
+                  {
+                    fontSize: 17,
+                    minHeight: hasInputText ? 26 : 22,
+                    maxHeight: 100,
+                  },
+                ]}
+                placeholder={t('recordingDetail.askPlaceholder')}
+                placeholderTextColor={color.text.secondary}
+                accessibilityLabel={t('recordingDetail.askPlaceholder')}
+                value={questionInput}
+                onChangeText={setQuestionInput}
+                returnKeyType="send"
+                editable={!disableByNetwork}
+                multiline
+                numberOfLines={1}
+                onSubmitEditing={handleAsk}
+              />
+            </InputField>
+          </View>
         </View>
-      </View>
+      </KeyboardStickyView>
     );
   }, [
     shouldShowInputRow,
@@ -790,37 +792,36 @@ export const AskAIScreen = () => {
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader title={t('recordingDetail.askEmptyTitle')} onBack={handleBack} />
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior="padding">
-        <View style={{ flex: 1 }}>
-          <View
-            style={{
-              flex: 1,
-              alignSelf: 'center',
-              width: '100%',
-              maxWidth: contentMaxWidth ?? '100%',
+      <View style={{ flex: 1 }}>
+        <View
+          style={{
+            flex: 1,
+            alignSelf: 'center',
+            width: '100%',
+            maxWidth: contentMaxWidth ?? '100%',
+          }}
+        >
+          <KeyboardAwareScrollView
+            ref={answerScrollRef}
+            // The composer sits outside the scroll; avoid stacking KAV + keyboard insets here
+            // (otherwise the list gets a huge extra bottom pad and you can "over-scroll").
+            enabled={false}
+            style={{ flex: 1 }}
+            contentContainerStyle={{
+              paddingHorizontal: 16,
+              paddingTop: 12,
+              paddingBottom: 16,
+              ...(scrollContentCentered ? { flexGrow: 1, justifyContent: 'center' as const } : {}),
             }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={Boolean(answer)}
+            bottomOffset={0}
           >
-            <KeyboardAwareScrollView
-              ref={answerScrollRef}
-              style={{ flex: 1 }}
-              contentContainerStyle={{
-                paddingHorizontal: 16,
-                paddingTop: 12,
-                paddingBottom: 16,
-                ...(scrollContentCentered
-                  ? { flexGrow: 1, justifyContent: 'center' as const }
-                  : {}),
-              }}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={Boolean(answer)}
-              bottomOffset={24}
-            >
-              {renderContent()}
-            </KeyboardAwareScrollView>
-          </View>
-          {inputFooter}
+            {renderContent()}
+          </KeyboardAwareScrollView>
         </View>
-      </KeyboardAvoidingView>
+        {inputFooter}
+      </View>
     </View>
   );
 };
