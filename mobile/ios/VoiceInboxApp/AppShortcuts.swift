@@ -94,8 +94,7 @@ struct OpenAllTasksIntent: AppIntent, InstanceDisplayRepresentable {
 @available(iOS 16.0, *)
 struct VoiceInboxAppShortcuts: AppShortcutsProvider {
   static var appShortcuts: [AppShortcut] {
-    [
-      AppShortcut(
+    AppShortcut(
         intent: StartRecordingIntent(),
         phrases: [
           // English
@@ -121,8 +120,9 @@ struct VoiceInboxAppShortcuts: AppShortcutsProvider {
         ],
         shortTitle: LocalizedStringResource("Start Recording", table: "AppShortcuts"),
         systemImageName: "mic.fill"
-      ),
-      AppShortcut(
+    )
+
+    AppShortcut(
         intent: NewTextNoteIntent(),
         phrases: [
           "New text note in \(.applicationName)",
@@ -136,8 +136,9 @@ struct VoiceInboxAppShortcuts: AppShortcutsProvider {
         ],
         shortTitle: LocalizedStringResource("Text Note", table: "AppShortcuts"),
         systemImageName: "square.and.pencil"
-      ),
-      AppShortcut(
+    )
+
+    AppShortcut(
         intent: OpenAllTasksIntent(),
         phrases: [
           "All tasks in \(.applicationName)",
@@ -151,7 +152,6 @@ struct VoiceInboxAppShortcuts: AppShortcutsProvider {
         ],
         shortTitle: LocalizedStringResource("All Tasks", table: "AppShortcuts"),
         systemImageName: "checklist"
-      ),
-    ]
+    )
   }
 }
