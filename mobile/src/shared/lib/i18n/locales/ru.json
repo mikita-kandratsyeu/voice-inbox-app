@@ -37,7 +37,7 @@
     "activatingTitle": "Почти готово",
     "activatingSubtitle": "Применяем промокод…",
     "successTitle": "Готово",
-    "successSubtitle": "Больше AI и без рекламы.",
+    "successSubtitle": "Больше ИИ и без рекламы.",
     "successUntil": "Доступно до {{date}}",
     "successButton": "Отлично",
     "errors": {
@@ -469,7 +469,7 @@
       "billingAnnual": "Ежегодно",
       "billingSlashMonth": "/мес",
       "billingSlashYear": "/год",
-      "billingEquivalentPerMonth": "≈ {{price}} в среднем за месяц.",
+      "billingEquivalentPerMonth": "≈ {{price}}",
       "termsLink": "Условия использования",
       "privacyLink": "Политика конфиденциальности",
       "savePercentDiscountPill": "{{percent}}% скидка",
@@ -488,6 +488,7 @@
       "restoreNothingFound": "Активной подписки для этого аккаунта не найдено.",
       "restoreError": "Не удалось восстановить покупки.",
       "features": {
+        "autoAutomation": "Автоматизация",
         "autoTranscription": "Авто-транскрипция",
         "autoSummaryAndTasks": "Авто-сводки и задачи",
         "autoArchiveReadNotes": "Авто-архив прочитанных заметок",

@@ -467,7 +467,7 @@
       "billingAnnual": "Annually",
       "billingSlashMonth": "/mo",
       "billingSlashYear": "/yr",
-      "billingEquivalentPerMonth": "≈ {{price}} average per month.",
+      "billingEquivalentPerMonth": "≈ {{price}}",
       "termsLink": "Terms of Use",
       "privacyLink": "Privacy Policy",
       "savePercentDiscountPill": "{{percent}}% off",
@@ -486,6 +486,7 @@
       "restoreNothingFound": "No active subscription was found for this account.",
       "restoreError": "Could not restore purchases.",
       "features": {
+        "autoAutomation": "Automation",
         "autoTranscription": "Auto-transcription",
         "autoSummaryAndTasks": "Auto-summaries and tasks",
         "autoArchiveReadNotes": "Auto-archive for read notes",

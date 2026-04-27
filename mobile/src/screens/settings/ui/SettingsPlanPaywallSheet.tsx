@@ -72,10 +72,31 @@ const FREE_MAX_MINUTES = Math.round(FREE_MAX_RECORDING_MS / 60_000);
 const EMPTY_IAP_BILLING: IapBillingOptions = {
   annual: null,
   monthly: null,
+  annualComparedToMonthlyYearPriceString: null,
   savePercentVsMonthly: null,
 };
 
 type ThemeColors = ReturnType<typeof useColors>;
+
+function IapPlanOptionsSkeleton({ c }: { c: ThemeColors }) {
+  const cardStyle = {
+    height: 102,
+    borderRadius: 16,
+    backgroundColor: c.background.tertiary,
+    opacity: IS_IOS ? 0.65 : 0.55,
+  };
+
+  return (
+    <View
+      className="mt-4 gap-3"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <View style={cardStyle} />
+      <View style={cardStyle} />
+    </View>
+  );
+}
 
 function introCaptionForFreeTrial(intro: IapIntroFreePeriod | null, t: TFunction): string | null {
   if (!intro) {
@@ -98,6 +119,7 @@ type SubscriptionPlanOptionCardProps = {
   title: string;
   intro: IapIntroFreePeriod | null;
   billedHeadline: string;
+  billedHeadlineCompareAt: string | null;
   subordinateLine: string | null;
   selected: boolean;
   onPress: () => void;
@@ -111,6 +133,7 @@ function SubscriptionPlanOptionCard({
   title,
   intro,
   billedHeadline,
+  billedHeadlineCompareAt,
   subordinateLine,
   selected,
   onPress,
@@ -184,16 +207,42 @@ function SubscriptionPlanOptionCard({
           ) : null}
         </View>
 
-        <Text
-          className="mt-2 text-[16px] font-semibold leading-[22px]"
-          style={{
-            color: c.text.primary,
-            ...(IS_ANDROID ? { includeFontPadding: false } : {}),
-          }}
-          numberOfLines={2}
-        >
-          {billedHeadline}
-        </Text>
+        {billedHeadlineCompareAt ? (
+          <View className="mt-2 flex-row flex-wrap items-baseline gap-x-2 gap-y-1">
+            <Text
+              className="text-[16px] font-semibold leading-[22px]"
+              style={{
+                color: c.text.muted,
+                textDecorationLine: 'line-through',
+                ...(IS_ANDROID ? { includeFontPadding: false } : {}),
+              }}
+              numberOfLines={2}
+            >
+              {billedHeadlineCompareAt}
+            </Text>
+            <Text
+              className="text-[16px] font-semibold leading-[22px]"
+              style={{
+                color: c.text.primary,
+                ...(IS_ANDROID ? { includeFontPadding: false } : {}),
+              }}
+              numberOfLines={2}
+            >
+              {billedHeadline}
+            </Text>
+          </View>
+        ) : (
+          <Text
+            className="mt-2 text-[16px] font-semibold leading-[22px]"
+            style={{
+              color: c.text.primary,
+              ...(IS_ANDROID ? { includeFontPadding: false } : {}),
+            }}
+            numberOfLines={2}
+          >
+            {billedHeadline}
+          </Text>
+        )}
         {subordinateLine ? (
           <Text
             className="mt-1 text-[12px] leading-[16px]"
@@ -247,8 +296,16 @@ export function SettingsPlanPaywallSheet({
   const iapMonthlyRow = iapBilling.monthly;
   const iapAnnualRow = iapBilling.annual;
   const iapSavePercent = iapBilling.savePercentVsMonthly;
+  const iapAnnualCompareAtYear =
+    iapBilling.annualComparedToMonthlyYearPriceString != null &&
+    iapBilling.annualComparedToMonthlyYearPriceString.length > 0
+      ? `${iapBilling.annualComparedToMonthlyYearPriceString}${t('settings.planPaywall.billingSlashYear')}`
+      : null;
   const iapDualBilling = Boolean(iapMonthlyRow && iapAnnualRow);
-  const upgradeDisabled = isComingSoon || iapBusy;
+  const upgradeDisabled =
+    isComingSoon ||
+    iapBusy ||
+    (isIapPublic && Boolean(onIapBillingPeriodChange) && iapProPriceLoading);
   const upgradeLabel = isComingSoon
     ? t('settings.planPaywall.comingSoon')
     : t('settings.planPaywall.upgrade');
@@ -310,7 +367,7 @@ export function SettingsPlanPaywallSheet({
           contentContainerStyle={{
             paddingHorizontal: 20,
             paddingTop: 16,
-            paddingBottom: Math.max(insets.bottom, 22),
+            paddingBottom: 20,
           }}
         >
           <View className="mb-4 flex-row items-center">
@@ -348,7 +405,6 @@ export function SettingsPlanPaywallSheet({
               />
             </View>
           </View>
-
           <View
             className="mb-5 rounded-2xl border-2 p-5"
             style={{
@@ -370,22 +426,17 @@ export function SettingsPlanPaywallSheet({
               </View>
             </View>
             <View className="gap-y-2.5">
-              <FeatureRow text={t('settings.planPaywall.features.autoTranscription')} emphasized />
-              <FeatureRow
-                text={t('settings.planPaywall.features.autoSummaryAndTasks')}
-                emphasized
-              />
-              <FeatureRow
-                text={t('settings.planPaywall.features.autoArchiveReadNotes')}
-                emphasized
-              />
+              <FeatureRow text={t('settings.planPaywall.features.autoAutomation')} emphasized />
               <FeatureRow text={t('settings.planPaywall.features.recordingUpTo30Min')} />
               <FeatureRow
                 text={t('settings.planPaywall.features.aiLimit', { limit: proAiLimit })}
               />
               <FeatureRow text={t('settings.planPaywall.features.noAds')} />
             </View>
-            {isIapPublic && !iapProPriceLoading && iapDualBilling && onIapBillingPeriodChange && (
+            {isIapPublic && onIapBillingPeriodChange && iapProPriceLoading ? (
+              <IapPlanOptionsSkeleton c={c} />
+            ) : null}
+            {isIapPublic && !iapProPriceLoading && iapDualBilling && onIapBillingPeriodChange ? (
               <View className="mt-4 gap-3">
                 {iapMonthlyRow && (
                   <SubscriptionPlanOptionCard
@@ -394,6 +445,7 @@ export function SettingsPlanPaywallSheet({
                     title={t('settings.planPaywall.billingMonthly')}
                     intro={iapMonthlyRow.introFree}
                     billedHeadline={`${iapMonthlyRow.priceString}${t('settings.planPaywall.billingSlashMonth')}`}
+                    billedHeadlineCompareAt={null}
                     subordinateLine={null}
                     selected={selectedIapPeriod === 'monthly'}
                     onPress={() => onIapBillingPeriodChange('monthly')}
@@ -408,6 +460,7 @@ export function SettingsPlanPaywallSheet({
                     title={t('settings.planPaywall.billingAnnual')}
                     intro={iapAnnualRow.introFree}
                     billedHeadline={`${iapAnnualRow.priceString}${t('settings.planPaywall.billingSlashYear')}`}
+                    billedHeadlineCompareAt={iapDualBilling ? iapAnnualCompareAtYear : null}
                     subordinateLine={
                       iapAnnualRow.pricePerMonthString
                         ? t('settings.planPaywall.billingEquivalentPerMonth', {
@@ -422,21 +475,30 @@ export function SettingsPlanPaywallSheet({
                   />
                 )}
               </View>
-            )}
+            ) : null}
           </View>
+        </ScrollView>
+        <View
+          style={{
+            paddingHorizontal: 20,
+            paddingTop: 8,
+            paddingBottom: Math.max(insets.bottom, 22),
+            backgroundColor: c.background.primary,
+          }}
+        >
           <Button
             variant="primary"
             size="lg"
             fullWidth
             label={upgradeLabel}
-            loading={isIapPublic && iapBusy}
+            loading={isIapPublic && (iapBusy || iapProPriceLoading)}
             onPress={onUpgradePress}
             disabled={upgradeDisabled}
             color={c}
             activeOpacity={0.85}
           />
           {isIapPublic && getWebsiteUrl().trim().length > 0 && (
-            <View className="mt-4 items-center gap-y-2 px-2">
+            <View className="mt-4 items-center gap-y-1.5 gap-x-3 px-2 flex-row justify-center">
               <Pressable
                 accessibilityRole="link"
                 className="py-1"
@@ -446,7 +508,7 @@ export function SettingsPlanPaywallSheet({
                 disabled={iapBusy}
               >
                 <Text
-                  className="text-center text-[13px] font-medium underline"
+                  className="text-center text-[12px] font-medium underline"
                   style={{ color: iapBusy ? c.text.muted : c.accent.primary }}
                 >
                   {t('settings.planPaywall.termsLink')}
@@ -461,7 +523,7 @@ export function SettingsPlanPaywallSheet({
                 disabled={iapBusy}
               >
                 <Text
-                  className="text-center text-[13px] font-medium underline"
+                  className="text-center text-[12px] font-medium underline"
                   style={{ color: iapBusy ? c.text.muted : c.accent.primary }}
                 >
                   {t('settings.planPaywall.privacyLink')}
@@ -469,7 +531,7 @@ export function SettingsPlanPaywallSheet({
               </Pressable>
             </View>
           )}
-        </ScrollView>
+        </View>
       </View>
     </Modal>
   );
