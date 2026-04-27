@@ -4,6 +4,7 @@ export { AiTabLoadingState } from './AiTabLoadingState';
 export type { ButtonProps, ButtonSize, ButtonVariant } from './Button';
 export { Button } from './Button';
 export { EmptyState } from './EmptyState';
+export { FrostedBottomChrome } from './FrostedBottomChrome';
 export type { FrostedChromeBackgroundProps } from './FrostedChromeBackground';
 export { FrostedChromeBackground } from './FrostedChromeBackground';
 export type { InputFieldProps } from './InputField';
