@@ -17,6 +17,7 @@ import {
   ActivityIndicator,
   Animated,
   Share,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -30,6 +31,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
+import {
+  FLOAT_TAB_IOS_SHADOW_OFFSET_Y,
+  FLOAT_TAB_IOS_SHADOW_RADIUS,
+  floatingTabBarShadowOpacity,
+} from '@/app/navigation/config';
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
@@ -42,8 +48,15 @@ import {
   useIsTablet,
   useNetworkStatus,
   useTabletContentMaxWidth,
+  withAlphaHex,
 } from '@/shared/lib';
-import { Button, getInputFieldInputStyle, InputField, ScreenHeader } from '@/shared/ui';
+import {
+  Button,
+  FrostedChromeBackground,
+  getInputFieldInputStyle,
+  InputField,
+  ScreenHeader,
+} from '@/shared/ui';
 
 import { DetailTabProcessingView } from './DetailTabProcessingView';
 
@@ -689,45 +702,77 @@ export const AskAIScreen = () => {
     return (
       <View
         style={{
-          borderTopWidth: 1,
-          borderTopColor: color.border.default,
-          backgroundColor: color.background.secondary,
-          paddingHorizontal: isTablet ? 80 : 16,
-          paddingTop: 16,
-          paddingBottom: insets.bottom + 8,
+          backgroundColor: 'transparent',
+          shadowColor: color.shadow.color,
+          shadowOffset: { width: 0, height: -FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
+          shadowOpacity: floatingTabBarShadowOpacity(color.shadow.opacity),
+          shadowRadius: FLOAT_TAB_IOS_SHADOW_RADIUS,
+          elevation: 8,
         }}
       >
-        <InputField
-          color={color}
-          hasValue={hasInputText}
-          rightElement={sendButton}
-          containerStyle={{
-            minHeight: 52,
-            alignItems: hasInputText ? 'flex-start' : 'center',
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: -insets.bottom,
+            overflow: 'hidden',
           }}
         >
-          <TextInput
-            style={[
-              getInputFieldInputStyle(color, hasInputText),
-              {
-                fontSize: 17,
-                minHeight: hasInputText ? 26 : 22,
-                maxHeight: 100,
-              },
-            ]}
-            placeholder={t('recordingDetail.askPlaceholder')}
-            placeholderTextColor={color.text.secondary}
-            accessibilityLabel={t('recordingDetail.askPlaceholder')}
-            value={questionInput}
-            onChangeText={setQuestionInput}
-            returnKeyType="send"
-            editable={!disableByNetwork}
-            multiline
-            numberOfLines={1}
-            blurOnSubmit
-            onSubmitEditing={handleAsk}
-          />
-        </InputField>
+          <FrostedChromeBackground />
+        </View>
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            height: StyleSheet.hairlineWidth,
+            backgroundColor: withAlphaHex(color.border.default, 0.45),
+          }}
+        />
+        <View
+          style={{
+            backgroundColor: 'transparent',
+            paddingHorizontal: isTablet ? 80 : 16,
+            paddingTop: 16,
+            paddingBottom: insets.bottom,
+          }}
+        >
+          <InputField
+            color={color}
+            hasValue={hasInputText}
+            rightElement={sendButton}
+            containerStyle={{
+              minHeight: 52,
+              alignItems: hasInputText ? 'flex-start' : 'center',
+            }}
+          >
+            <TextInput
+              style={[
+                getInputFieldInputStyle(color, hasInputText),
+                {
+                  fontSize: 17,
+                  minHeight: hasInputText ? 26 : 22,
+                  maxHeight: 100,
+                },
+              ]}
+              placeholder={t('recordingDetail.askPlaceholder')}
+              placeholderTextColor={color.text.secondary}
+              accessibilityLabel={t('recordingDetail.askPlaceholder')}
+              value={questionInput}
+              onChangeText={setQuestionInput}
+              returnKeyType="send"
+              editable={!disableByNetwork}
+              multiline
+              numberOfLines={1}
+              onSubmitEditing={handleAsk}
+            />
+          </InputField>
+        </View>
       </View>
     );
   }, [
