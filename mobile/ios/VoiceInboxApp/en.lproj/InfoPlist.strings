@@ -1,3 +1,5 @@
 "NSMicrophoneUsageDescription" = "Voice Inbox AI uses the microphone to record voice notes—for example when you tap record to capture a meeting reminder or a quick idea. Audio is saved as a note on your device so you can transcribe and organize it.";
 "NSUserTrackingUsageDescription" = "This allows us to show you more relevant ads.";
 "QUICK_ACTION_START_RECORDING_TITLE" = "Start recording";
+"QUICK_ACTION_NEW_TEXT_NOTE_TITLE" = "Text note";
+"QUICK_ACTION_ALL_TASKS_TITLE" = "All tasks";
