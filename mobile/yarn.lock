@@ -9098,15 +9098,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"llama.rn@npm:^0.12.0-rc.8":
-  version: 0.12.0-rc.8
-  resolution: "llama.rn@npm:0.12.0-rc.8"
+"llama.rn@npm:^0.12.0-rc.9":
+  version: 0.12.0-rc.9
+  resolution: "llama.rn@npm:0.12.0-rc.9"
   peerDependencies:
     react: "*"
     react-native: "*"
   bin:
     llama-rn-download-artifacts: install/download-native-artifacts.js
-  checksum: 10c0/a379afa99ab61b4e643fda0013e8ef379e24a67848a72d8d285c448e28957611c943811551b488f81296d78409168f2066b84c94d30fb1de399fb180b284d4ce
+  checksum: 10c0/6d8b1c8a8672fa400ab242c01fce00d769b31564e00eafab536bdd489b050eb60a9a0696c1dd0c566458afa028cd8f28d6d25bdcf4caccc3248dfd0af81d77b6
   languageName: node
   linkType: hard
 
@@ -13280,7 +13280,7 @@ __metadata:
     i18next: "npm:^26.0.3"
     jest: "npm:^29.6.3"
     lint-staged: "npm:^15.5.0"
-    llama.rn: "npm:^0.12.0-rc.8"
+    llama.rn: "npm:^0.12.0-rc.9"
     lucide-react-native: "npm:^1.8.0"
     nativewind: "npm:^4.2.3"
     patch-package: "npm:^8.0.1"
