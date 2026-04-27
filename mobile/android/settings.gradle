@@ -1,6 +1,34 @@
 pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
 plugins { id("com.facebook.react.settings") }
-extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+
+// Android Studio/Gradle often does not see nvm's PATH, so `npx` is missing. Use `node` + cli path.
+// Optional: NODE_BINARY, or `node.executable=...` in local.properties.
+def autolinkCommand = { ->
+  def node = System.getenv("NODE_BINARY")
+  if (node == null || node.isEmpty()) {
+    def local = new File(rootDir, "local.properties")
+    if (local.exists()) {
+      def p = new Properties()
+      local.withInputStream { p.load(it) }
+      def n = p.getProperty("node.executable")
+      if (n != null && !n.isEmpty()) node = n
+    }
+  }
+  if (node == null || node.isEmpty()) {
+    if (new File("/opt/homebrew/bin/node").exists()) node = "/opt/homebrew/bin/node"
+    else if (new File("/usr/local/bin/node").exists()) node = "/usr/local/bin/node"
+    else node = "node"
+  }
+  def cli = new File(rootDir, "../node_modules/@react-native-community/cli/build/bin.js").canonicalFile
+  if (!cli.exists()) {
+    throw new org.gradle.api.GradleException("Autolinking: missing ${cli}. From repo root, run: cd mobile && yarn install")
+  }
+  return [node, cli.absolutePath, "config"]
+}.call()
+
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+  ex.autolinkLibrariesFromCommand(autolinkCommand)
+}
 rootProject.name = 'VoiceInboxApp'
 include ':app'
 includeBuild('../node_modules/@react-native/gradle-plugin')

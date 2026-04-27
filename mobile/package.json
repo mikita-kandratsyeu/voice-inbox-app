@@ -19,7 +19,7 @@
     "ios:release": "APP_ENV=production react-native run-ios --mode Release --device --no-packager",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "postinstall": "patch-package",
+    "postinstall": "patch-package && node ./scripts/ensure-netinfo-android-gradle.mjs",
     "prepare": "husky",
     "start": "APP_ENV=development react-native start",
     "test": "jest",
