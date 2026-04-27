@@ -66,7 +66,6 @@ ${MARKER} // Prefer ext REACT_NATIVE_NODE_MODULES_DIR from root android/build.gr
 }`;
 
 if (!t.includes(oldBlock)) {
-  // eslint-disable-next-line no-console -- postinstall log
   console.warn(
     '[ensure-netinfo-android-gradle] Expected block not found; skip (netinfo version changed?)',
   );
@@ -75,4 +74,6 @@ if (!t.includes(oldBlock)) {
 
 fs.writeFileSync(gradlePath, t.replace(oldBlock, newBlock, 1), 'utf8');
 // eslint-disable-next-line no-console -- postinstall log
-console.log('[ensure-netinfo-android-gradle] Patched @react-native-community/netinfo/android/build.gradle');
+console.log(
+  '[ensure-netinfo-android-gradle] Patched @react-native-community/netinfo/android/build.gradle',
+);

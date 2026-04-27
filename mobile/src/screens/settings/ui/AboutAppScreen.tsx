@@ -91,7 +91,7 @@ export const AboutAppScreen = () => {
 
       setProLicenseModalVisible(true);
     })();
-  }, []);
+  }, [isProActive]);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>

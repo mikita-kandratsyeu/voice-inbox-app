@@ -27,6 +27,7 @@ const eslintConfig = [
       'coverage/**',
       '.metro-health-check*',
       '*.lock',
+      'scripts/**',
     ],
   },
   js.configs.recommended,
