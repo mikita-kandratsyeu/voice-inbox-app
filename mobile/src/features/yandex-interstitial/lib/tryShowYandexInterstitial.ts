@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { AdRequestConfiguration, InterstitialAdLoader } from 'yandex-mobile-ads';
+import { InterstitialAdLoader } from 'yandex-mobile-ads';
 
 import { getYandexInterstitialAdUnitId } from '@/shared/config/runtimeConfig';
 import { storage } from '@/shared/lib/async-storage';
@@ -107,11 +107,9 @@ export async function tryShowYandexInterstitial(params: {
 
   try {
     const loader = await InterstitialAdLoader.create();
-    const ad = await loader.loadAd(
-      new AdRequestConfiguration({
-        adUnitId: getAdUnitId(),
-      }),
-    );
+    const ad = await loader.loadAd({
+      adUnitId: getAdUnitId(),
+    });
 
     await new Promise<void>((resolve) => {
       let settled = false;
