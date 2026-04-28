@@ -463,7 +463,7 @@
       "freeLimits": {
         "manualAi": "ИИ только вручную",
         "recording": "Запись до {{minutes}} минут",
-        "weeklyAi": "До {{limit}} генераций в неделю"
+        "weeklyAi": "До {{limit}} генераций в неделю",
       },
       "proTitle": "Pro",
       "billingMonthly": "Ежемесячно",
@@ -494,7 +494,8 @@
         "autoSummaryAndTasks": "Авто-сводки и задачи",
         "autoArchiveReadNotes": "Авто-архив прочитанных заметок",
         "aiLimit": "До {{limit}} генераций в неделю",
-        "recordingUpTo30Min": "Запись до 30 минут",
+        "recordingUpToOneHour": "Запись до 1 часа",
+        "accentCustomization": "Палитра акцента — кнопки, выделения и индикаторы под тебя",
         "noAds": "Без рекламы"
       }
     },

@@ -461,7 +461,7 @@
       "freeLimits": {
         "manualAi": "AI runs manually only",
         "recording": "Recordings up to {{minutes}} minutes",
-        "weeklyAi": "Up to {{limit}} AI requests per week"
+        "weeklyAi": "Up to {{limit}} AI requests per week",
       },
       "proTitle": "Pro",
       "billingMonthly": "Monthly",
@@ -492,7 +492,8 @@
         "autoSummaryAndTasks": "Auto-summaries and tasks",
         "autoArchiveReadNotes": "Auto-archive for read notes",
         "aiLimit": "Up to {{limit}} AI requests per week",
-        "recordingUpTo30Min": "Recordings up to 30 minutes",
+        "recordingUpToOneHour": "Recordings up to 1 hour",
+        "accentCustomization": "Accent colors — personalize buttons, highlights & progress",
         "noAds": "No ads"
       }
     },

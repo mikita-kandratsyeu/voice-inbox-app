@@ -427,10 +427,16 @@ export function SettingsPlanPaywallSheet({
             </View>
             <View className="gap-y-2.5">
               <FeatureRow text={t('settings.planPaywall.features.autoAutomation')} emphasized />
-              <FeatureRow text={t('settings.planPaywall.features.recordingUpTo30Min')} />
+              <FeatureRow
+                text={t('settings.planPaywall.features.recordingUpToOneHour')}
+                emphasized
+              />
               <FeatureRow
                 text={t('settings.planPaywall.features.aiLimit', { limit: proAiLimit })}
+                emphasized
               />
+              <FeatureRow text={t('settings.planPaywall.features.accentCustomization')} />
+
               <FeatureRow text={t('settings.planPaywall.features.noAds')} />
             </View>
             {isIapPublic && onIapBillingPeriodChange && iapProPriceLoading ? (
