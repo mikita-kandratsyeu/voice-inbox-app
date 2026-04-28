@@ -15,14 +15,35 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
 
-  private var startRecordingQuickActionType: String {
-    let bid = Bundle.main.bundleIdentifier ?? ""
-    return "\(bid).quickAction.startRecording"
+  private enum HomeScreenQuickAction: CaseIterable {
+    case startRecording
+    case newTextNote
+    case allTasks
+
+    var type: String {
+      let bid = Bundle.main.bundleIdentifier ?? ""
+      switch self {
+      case .startRecording: return "\(bid).quickAction.startRecording"
+      case .newTextNote: return "\(bid).quickAction.newTextNote"
+      case .allTasks: return "\(bid).quickAction.allTasks"
+      }
+    }
+
+    var url: URL? {
+      switch self {
+      case .startRecording: return URL(string: "voiceinbox://record/start")
+      case .newTextNote: return URL(string: "voiceinbox://note/text")
+      case .allTasks: return URL(string: "voiceinbox://tasks")
+      }
+    }
+
+    static func url(forShortcutType shortcutType: String) -> URL? {
+      allCases.first { $0.type == shortcutType }?.url
+    }
   }
 
   private func handleQuickAction(_ shortcutItem: UIApplicationShortcutItem, application: UIApplication) -> Bool {
-    guard shortcutItem.type == startRecordingQuickActionType,
-          let url = URL(string: "voiceinbox://record/start") else { return false }
+    guard let url = HomeScreenQuickAction.url(forShortcutType: shortcutItem.type) else { return false }
     return RCTLinkingManager.application(application, open: url, options: [:])
   }
 
@@ -54,10 +75,9 @@ class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterD
 
     var mergedLaunchOptions = launchOptions ?? [:]
     if let shortcutItem = mergedLaunchOptions[UIApplication.LaunchOptionsKey.shortcutItem] as? UIApplicationShortcutItem,
-       shortcutItem.type == startRecordingQuickActionType,
        mergedLaunchOptions[UIApplication.LaunchOptionsKey.url] == nil,
-       let recordURL = URL(string: "voiceinbox://record/start") {
-      mergedLaunchOptions[UIApplication.LaunchOptionsKey.url] = recordURL
+       let fromShortcut = HomeScreenQuickAction.url(forShortcutType: shortcutItem.type) {
+      mergedLaunchOptions[UIApplication.LaunchOptionsKey.url] = fromShortcut
     }
 
     factory.startReactNative(

@@ -9098,15 +9098,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"llama.rn@npm:^0.12.0-rc.8":
-  version: 0.12.0-rc.8
-  resolution: "llama.rn@npm:0.12.0-rc.8"
+"llama.rn@npm:^0.12.0-rc.9":
+  version: 0.12.0-rc.9
+  resolution: "llama.rn@npm:0.12.0-rc.9"
   peerDependencies:
     react: "*"
     react-native: "*"
   bin:
     llama-rn-download-artifacts: install/download-native-artifacts.js
-  checksum: 10c0/a379afa99ab61b4e643fda0013e8ef379e24a67848a72d8d285c448e28957611c943811551b488f81296d78409168f2066b84c94d30fb1de399fb180b284d4ce
+  checksum: 10c0/6d8b1c8a8672fa400ab242c01fce00d769b31564e00eafab536bdd489b050eb60a9a0696c1dd0c566458afa028cd8f28d6d25bdcf4caccc3248dfd0af81d77b6
   languageName: node
   linkType: hard
 
@@ -13280,7 +13280,7 @@ __metadata:
     i18next: "npm:^26.0.3"
     jest: "npm:^29.6.3"
     lint-staged: "npm:^15.5.0"
-    llama.rn: "npm:^0.12.0-rc.8"
+    llama.rn: "npm:^0.12.0-rc.9"
     lucide-react-native: "npm:^1.8.0"
     nativewind: "npm:^4.2.3"
     patch-package: "npm:^8.0.1"
@@ -13328,7 +13328,7 @@ __metadata:
     tailwindcss: "npm:^3.4.17"
     typescript: "npm:^5.8.3"
     whisper.rn: "npm:0.5.5"
-    yandex-mobile-ads: "npm:^7.18.0"
+    yandex-mobile-ads: "npm:^8.0.0"
     zod: "npm:^4.3.6"
     zustand: "npm:^5.0.12"
   languageName: unknown
@@ -13682,13 +13682,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yandex-mobile-ads@npm:^7.18.0":
-  version: 7.18.0
-  resolution: "yandex-mobile-ads@npm:7.18.0"
+"yandex-mobile-ads@npm:^8.0.0":
+  version: 8.0.0
+  resolution: "yandex-mobile-ads@npm:8.0.0"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10c0/84d929d9e9404944e3c3b8942f109da411a9f1a4038b5047dab8606b8db82bec37c693014faf5c3ceb53fc1875fe2e2e1479d7d10d174c6a9fce47604504944b
+  checksum: 10c0/6ba6f50b63bc81aea0bf8822e1a83120a6f5b78c636090082b68695a080477bdace33dd4f7cfcb7d3b9dfdd5654182b81c7c139fe852daa6b8a91ebdf8dd3e43
   languageName: node
   linkType: hard
 

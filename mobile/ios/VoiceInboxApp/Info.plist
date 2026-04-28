@@ -108,6 +108,22 @@
 			<key>UIApplicationShortcutItemIconSymbolName</key>
 			<string>mic.fill</string>
 		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER).quickAction.newTextNote</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>QUICK_ACTION_NEW_TEXT_NOTE_TITLE</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>square.and.pencil</string>
+		</dict>
+		<dict>
+			<key>UIApplicationShortcutItemType</key>
+			<string>$(PRODUCT_BUNDLE_IDENTIFIER).quickAction.allTasks</string>
+			<key>UIApplicationShortcutItemTitle</key>
+			<string>QUICK_ACTION_ALL_TASKS_TITLE</string>
+			<key>UIApplicationShortcutItemIconSymbolName</key>
+			<string>checklist</string>
+		</dict>
 	</array>
 	<key>SKAdNetworkItems</key>
 	<array>

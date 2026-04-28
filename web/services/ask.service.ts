@@ -36,6 +36,7 @@ export const createAsk = async (
   const created = await saveMessageIfNotExists(id, {
     id,
     status: 'processing',
+    model,
   } as unknown as Message);
 
   if (!created) {
@@ -49,6 +50,7 @@ export const createAsk = async (
       id,
       status: 'error',
       error: 'Weekly AI limit reached',
+      model,
     });
     await sendLimitExceededPush(deviceId);
 
@@ -71,6 +73,7 @@ export const createAsk = async (
       await saveAskMessage(id, {
         id,
         status: 'done',
+        model,
         answer: result.answer,
       });
 
@@ -112,6 +115,7 @@ export const createAsk = async (
         id,
         status: 'error',
         error: err instanceof Error ? err.message : 'Unknown error',
+        model,
       });
     }
   });
@@ -123,17 +127,36 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
   const raw = await getMessage(id, syncToken);
   if (!raw) return null;
 
-  const msg = raw as { id?: string; status?: string; answer?: string; error?: string };
+  const msg = raw as {
+    id?: string;
+    status?: string;
+    model?: string;
+    answer?: string;
+    error?: string;
+  };
   if (!msg?.id || !msg?.status) return null;
 
+  const modelField =
+    typeof msg.model === 'string' && msg.model.trim() ? msg.model.trim() : undefined;
+
   if (msg.status === 'processing') {
-    return { id: msg.id, status: 'processing' };
+    return { id: msg.id, status: 'processing', ...(modelField ? { model: modelField } : {}) };
   }
   if (msg.status === 'done' && typeof msg.answer === 'string') {
-    return { id: msg.id, status: 'done', answer: msg.answer };
+    return {
+      id: msg.id,
+      status: 'done',
+      answer: msg.answer,
+      ...(modelField ? { model: modelField } : {}),
+    };
   }
   if (msg.status === 'error' && typeof msg.error === 'string') {
-    return { id: msg.id, status: 'error', error: msg.error };
+    return {
+      id: msg.id,
+      status: 'error',
+      error: msg.error,
+      ...(modelField ? { model: modelField } : {}),
+    };
   }
 
   return null;

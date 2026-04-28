@@ -26,7 +26,7 @@ export const createMessage = async (
   deviceId: string,
   clientUserAgent?: string | null,
 ): Promise<CreateMessageResult> => {
-  const created = await saveMessageIfNotExists(id, { id, status: 'processing' });
+  const created = await saveMessageIfNotExists(id, { id, status: 'processing', model });
   if (!created) {
     return { created: false };
   }
@@ -37,6 +37,7 @@ export const createMessage = async (
       id,
       status: 'error',
       error: 'Weekly AI limit reached',
+      model,
     });
     await sendLimitExceededPush(deviceId);
 
@@ -51,6 +52,7 @@ export const createMessage = async (
       await saveMessage(id, {
         id,
         status: 'done',
+        model,
         summary: result.summary,
         suggestedTitle: result.suggestedTitle,
         tasks: result.tasks,
@@ -103,6 +105,7 @@ export const createMessage = async (
         id,
         status: 'error',
         error: err instanceof Error ? err.message : 'Unknown error',
+        model,
       });
     }
   });

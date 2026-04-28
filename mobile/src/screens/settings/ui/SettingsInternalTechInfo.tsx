@@ -1,8 +1,8 @@
 import Clipboard from '@react-native-clipboard/clipboard';
 import NetInfo from '@react-native-community/netinfo';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
 import { getWebsiteUrl, useColors } from '@/shared/config';
@@ -14,6 +14,13 @@ import {
   isTestflightInternalBuild,
 } from '@/shared/config/buildEnv';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
+import {
+  applyTestflightWebApiUrlOverride,
+  getStoredTestflightWebApiUrlOverride,
+  readTestflightWebApiUrlOverride,
+  subscribeTestflightWebApiUrlOverride,
+} from '@/shared/config/testflightWebApiOverride';
+import { clearApiToken } from '@/shared/lib/api-auth';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
@@ -119,6 +126,17 @@ const TechRow = ({ label, value, copyText, onCopy, color, valueColor, isLast }: 
 export const SettingsInternalTechInfo = () => {
   const { t } = useTranslation();
   const color = useColors();
+  const storedWebApiOverride = useSyncExternalStore(
+    subscribeTestflightWebApiUrlOverride,
+    getStoredTestflightWebApiUrlOverride,
+    getStoredTestflightWebApiUrlOverride,
+  );
+  const [webApiOverrideDraft, setWebApiOverrideDraft] = useState(storedWebApiOverride);
+
+  useEffect(() => {
+    setWebApiOverrideDraft(storedWebApiOverride);
+  }, [storedWebApiOverride]);
+
   const [memoryDisplay, setMemoryDisplay] = useState<string>('—');
   const [cpuDisplay, setCpuDisplay] = useState<string>('—');
   const [memoryMb, setMemoryMb] = useState<number | null>(null);
@@ -136,6 +154,26 @@ export const SettingsInternalTechInfo = () => {
     },
     [t],
   );
+
+  const onApplyWebApiOverride = useCallback(() => {
+    const result = applyTestflightWebApiUrlOverride(webApiOverrideDraft);
+    if (result === 'forbidden') {
+      return;
+    }
+    if (result === 'invalid') {
+      Alert.alert(
+        t('settings.internalTech.webApiOverrideInvalidTitle'),
+        t('settings.internalTech.webApiOverrideInvalidBody'),
+      );
+      return;
+    }
+    clearApiToken();
+    if (result === 'cleared') {
+      Alert.alert(t('settings.internalTech.webApiOverrideClearedTitle'));
+    } else {
+      Alert.alert(t('settings.internalTech.webApiOverrideAppliedTitle'));
+    }
+  }, [t, webApiOverrideDraft]);
 
   useEffect(() => {
     if (!(__DEV__ || isTestflightInternalBuild())) {
@@ -251,6 +289,7 @@ export const SettingsInternalTechInfo = () => {
   }
 
   const webApiUrl = getWebApiUrl().trim();
+  const webApiOverrideActive = readTestflightWebApiUrlOverride() != null;
   const websiteUrl = getWebsiteUrl().trim();
   const userAgent = getMobileUserAgent().trim();
   const dbRaw = getDatabaseUrl().trim();
@@ -300,13 +339,71 @@ export const SettingsInternalTechInfo = () => {
       <Text className="mb-2 text-xs" style={{ color: color.text.secondary }}>
         {t('settings.internalTech.hint')}
       </Text>
+      <View className="mb-3 border-b pb-3" style={{ borderBottomColor: color.border.default }}>
+        <Text className="text-[11px] font-semibold uppercase" style={{ color: color.text.muted }}>
+          {t('settings.internalTech.webApiOverrideTitle')}
+        </Text>
+        <Text className="mt-1 text-xs leading-5" style={{ color: color.text.secondary }}>
+          {t('settings.internalTech.webApiOverrideHint')}
+        </Text>
+        <TextInput
+          value={webApiOverrideDraft}
+          onChangeText={setWebApiOverrideDraft}
+          placeholder={t('settings.internalTech.webApiOverridePlaceholder')}
+          placeholderTextColor={color.text.muted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+          className="mt-2 rounded-lg border px-3 py-2 font-mono text-[13px]"
+          style={{
+            borderColor: color.border.default,
+            color: color.text.primary,
+            backgroundColor: color.background.secondary,
+          }}
+        />
+        <View className="mt-2 flex-row flex-wrap gap-2">
+          <Pressable
+            accessibilityRole="button"
+            onPress={onApplyWebApiOverride}
+            className="rounded-lg px-3 py-2"
+            style={{ backgroundColor: color.accent.aiData }}
+          >
+            <Text className="text-sm font-semibold text-white">
+              {t('settings.internalTech.webApiOverrideApply')}
+            </Text>
+          </Pressable>
+          {storedWebApiOverride.length > 0 ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => {
+                setWebApiOverrideDraft('');
+                applyTestflightWebApiUrlOverride('');
+                clearApiToken();
+                Alert.alert(t('settings.internalTech.webApiOverrideClearedTitle'));
+              }}
+              className="rounded-lg border px-3 py-2"
+              style={{ borderColor: color.border.default }}
+            >
+              <Text className="text-sm font-semibold" style={{ color: color.text.primary }}>
+                {t('settings.internalTech.webApiOverrideClear')}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
       <TechRow
         label={t('settings.internalTech.webApiUrl')}
         value={webApiUrl || empty}
         copyText={webApiUrl}
         onCopy={onCopy}
         color={color}
+        valueColor={webApiOverrideActive ? color.accent.aiData : undefined}
       />
+      {webApiOverrideActive ? (
+        <Text className="mb-2 text-xs" style={{ color: color.text.secondary }}>
+          {t('settings.internalTech.webApiOverrideActiveNote')}
+        </Text>
+      ) : null}
       <TechRow
         label={t('settings.internalTech.websiteUrl')}
         value={websiteUrl || empty}

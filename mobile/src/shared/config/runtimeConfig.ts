@@ -23,6 +23,8 @@ import {
   setDefaults,
 } from '@react-native-firebase/remote-config';
 
+import { readTestflightWebApiUrlOverride } from './testflightWebApiOverride';
+
 type RemoteKey =
   | 'WEBSITE_URL'
   | 'APP_STORE_URL'
@@ -268,6 +270,12 @@ export function getGooglePlayUrl(): string {
 }
 
 export function getWebApiUrl(): string {
+  const override = readTestflightWebApiUrlOverride();
+
+  if (override) {
+    return override;
+  }
+
   return snapshot.webApiUrl;
 }
 

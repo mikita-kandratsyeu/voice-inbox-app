@@ -68,4 +68,4 @@ export type AiOrchestratorFailure = {
 export type AiOrchestratorResult<T> = AiOrchestratorSuccess<T> | AiOrchestratorFailure;
 
 export type SummaryTaskResult = AiOrchestratorResult<AiProcessingResult>;
-export type AskTaskResult = AiOrchestratorResult<{ answer: string }>;
+export type AskTaskResult = AiOrchestratorResult<{ answer: string; model?: string }>;

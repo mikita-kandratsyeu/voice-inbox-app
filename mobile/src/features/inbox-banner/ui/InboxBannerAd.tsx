@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import type { NativeSyntheticEvent } from 'react-native';
 import { Text, useWindowDimensions, View } from 'react-native';
 import { BannerView } from 'yandex-mobile-ads';
 
@@ -10,7 +11,6 @@ import type { Colors } from '@/shared/config';
 import { getBannerAdUnitId } from '../lib/getBannerAdUnitId';
 import { useInboxBannerSize } from '../model/useInboxBannerSize';
 
-/** Horizontal margins (16+16) + inner card padding (12+12), aligned with inbox note cards. */
 const CARD_BANNER_WIDTH_INSET = 56;
 
 type InboxBannerAdProps = {
@@ -18,7 +18,6 @@ type InboxBannerAdProps = {
   contentMaxWidth: number;
   density?: 'default' | 'compact';
   surface?: 'default' | 'onAccentRecording';
-  /** `card` — как карточка заметки в списке инбокса; `strip` — полоска под контентом (по умолчанию). */
   variant?: 'strip' | 'card';
 };
 
@@ -46,22 +45,25 @@ export function InboxBannerAd({
 
   const isRetrySuppressed = nextTryAt != null && nextTryAt > Date.now();
 
-  const onAdFailedToLoad = useCallback(() => {
-    setRetryAttempt((attempt) => {
-      const nextAttempt = attempt + 1;
+  const handleBannerFailedToLoad = useCallback(
+    (_event: NativeSyntheticEvent<{ description: string; code?: string; adUnitId?: string }>) => {
+      setRetryAttempt((attempt) => {
+        const nextAttempt = attempt + 1;
 
-      if (nextAttempt > 6) {
-        setPermanentlyDisabled(true);
-        setNextTryAt(null);
+        if (nextAttempt > 6) {
+          setPermanentlyDisabled(true);
+          setNextTryAt(null);
 
-        return attempt;
-      }
+          return attempt;
+        }
 
-      const delayMs = Math.min(15_000, 1_000 * 2 ** nextAttempt);
-      setNextTryAt(Date.now() + delayMs);
-      return nextAttempt;
-    });
-  }, []);
+        const delayMs = Math.min(15_000, 1_000 * 2 ** nextAttempt);
+        setNextTryAt(Date.now() + delayMs);
+        return nextAttempt;
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
     if (nextTryAt == null) return;
@@ -129,8 +131,8 @@ export function InboxBannerAd({
       >
         <BannerView
           size={bannerSize}
-          adUnitId={getBannerAdUnitId()}
-          onAdFailedToLoad={onAdFailedToLoad}
+          adRequest={{ adUnitId: getBannerAdUnitId() }}
+          onAdFailedToLoad={handleBannerFailedToLoad}
           style={{
             width: bannerSize.width,
             height: bannerSize.height,

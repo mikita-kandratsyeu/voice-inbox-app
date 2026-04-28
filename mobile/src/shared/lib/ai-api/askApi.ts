@@ -1,6 +1,8 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 
+import { isString } from '../type-guards';
+
 type AskApiRequestBody = {
   id: string;
   transcript: string;
@@ -39,6 +41,7 @@ function sanitizePriorTurnsForAskApi(
 type AskApiSuccessResponse = {
   id: string;
   status: 'processing';
+  model?: string;
   syncToken?: string;
 };
 
@@ -57,7 +60,7 @@ export type AskApiResult =
   | { ok: false; limitExceeded?: false; error: string };
 
 export type AskMessageResult =
-  | { ok: true; result: { answer: string } }
+  | { ok: true; result: { answer: string; model?: string } }
   | { ok: false; error: string };
 
 const POLL_TIMEOUT_MS = 120_000;
@@ -65,9 +68,9 @@ const POLL_BACKOFF_INITIAL_MS = 2_000;
 const POLL_BACKOFF_CAP_MS = 8_000;
 
 type AskResponse =
-  | { id: string; status: 'processing' }
-  | { id: string; status: 'done'; answer: string }
-  | { id: string; status: 'error'; error: string };
+  | { id: string; status: 'processing'; model?: string }
+  | { id: string; status: 'done'; answer: string; model?: string }
+  | { id: string; status: 'error'; error: string; model?: string };
 
 export async function postAskQuestion(body: AskApiRequestBody): Promise<AskApiResult> {
   const url = `${getWebApiUrl()}/api/ask`;
@@ -146,7 +149,13 @@ export async function pollAskResult(id: string, syncToken?: string): Promise<Ask
     const msg = (await response.json()) as AskResponse;
 
     if (msg.status === 'done') {
-      return { ok: true, result: { answer: msg.answer } };
+      return {
+        ok: true,
+        result: {
+          answer: msg.answer,
+          ...(isString(msg.model) && msg.model.trim() ? { model: msg.model.trim() } : {}),
+        },
+      };
     }
 
     if (msg.status === 'error') {

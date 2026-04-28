@@ -281,6 +281,7 @@
     "privateModeErrorHint": "This error is related to Private mode. You can switch to Smart mode and retry.",
     "askAnother": "Ask another question",
     "askCopy": "Copy",
+    "askCopied": "Copied to clipboard",
     "askShare": "Share",
     "askCopyThisTurn": "Copy question and answer",
     "askShareThisTurn": "Share question and answer",
@@ -460,14 +461,14 @@
       "freeLimits": {
         "manualAi": "AI runs manually only",
         "recording": "Recordings up to {{minutes}} minutes",
-        "weeklyAi": "Up to {{limit}} AI requests per week"
+        "weeklyAi": "Up to {{limit}} AI requests per week",
       },
       "proTitle": "Pro",
       "billingMonthly": "Monthly",
       "billingAnnual": "Annually",
       "billingSlashMonth": "/mo",
       "billingSlashYear": "/yr",
-      "billingEquivalentPerMonth": "≈ {{price}} average per month.",
+      "billingEquivalentPerMonth": "≈ {{price}}",
       "termsLink": "Terms of Use",
       "privacyLink": "Privacy Policy",
       "savePercentDiscountPill": "{{percent}}% off",
@@ -486,11 +487,13 @@
       "restoreNothingFound": "No active subscription was found for this account.",
       "restoreError": "Could not restore purchases.",
       "features": {
+        "autoAutomation": "Automation",
         "autoTranscription": "Auto-transcription",
         "autoSummaryAndTasks": "Auto-summaries and tasks",
         "autoArchiveReadNotes": "Auto-archive for read notes",
         "aiLimit": "Up to {{limit}} AI requests per week",
-        "recordingUpTo30Min": "Recordings up to 30 minutes",
+        "recordingUpToOneHour": "Recordings up to 1 hour",
+        "accentCustomization": "Accent colors — personalize buttons, highlights & progress",
         "noAds": "No ads"
       }
     },
@@ -530,7 +533,17 @@
       "cpuUsage": "CPU load (estimated, JS)",
       "memoryUsage": "Memory usage",
       "empty": "—",
-      "copied": "Copied to clipboard"
+      "copied": "Copied to clipboard",
+      "webApiOverrideTitle": "Web API host override",
+      "webApiOverrideHint": "Point the app at a staging or local server. Clears the cached API token when applied. Leave empty and tap Apply to use Remote Config / embedded WEB_API_URL.",
+      "webApiOverridePlaceholder": "https://your-api.example.com",
+      "webApiOverrideApply": "Apply",
+      "webApiOverrideClear": "Reset to default",
+      "webApiOverrideActiveNote": "Manual host override is active (see value above).",
+      "webApiOverrideAppliedTitle": "Host updated",
+      "webApiOverrideClearedTitle": "Using default host",
+      "webApiOverrideInvalidTitle": "Invalid URL",
+      "webApiOverrideInvalidBody": "Enter a full http or https URL (for example https://example.com)."
     }
   },
   "appearance": {
@@ -748,6 +761,7 @@
     "tierFast": "Fast",
     "tierSmart": "Smarter",
     "tierPremium": "Maximum",
+    "tierDeepSeek": "Alternative",
     "trinityDesc": "Powerful model with multimodal input support",
     "geminiDesc": "Fast and efficient model for everyday tasks",
     "geminiDesc3_1": "Better with long recordings and more accurate task extraction.",

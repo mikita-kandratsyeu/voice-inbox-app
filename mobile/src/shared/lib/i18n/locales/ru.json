@@ -37,7 +37,7 @@
     "activatingTitle": "Почти готово",
     "activatingSubtitle": "Применяем промокод…",
     "successTitle": "Готово",
-    "successSubtitle": "Больше AI и без рекламы.",
+    "successSubtitle": "Больше ИИ и без рекламы.",
     "successUntil": "Доступно до {{date}}",
     "successButton": "Отлично",
     "errors": {
@@ -281,6 +281,7 @@
     "privateModeErrorHint": "Ошибка связана с Private режимом. Можно временно перейти в Smart режим и повторить.",
     "askAnother": "Задать другой вопрос",
     "askCopy": "Копировать",
+    "askCopied": "Скопировано в буфер",
     "askShare": "Поделиться",
     "askCopyThisTurn": "Скопировать вопрос и ответ",
     "askShareThisTurn": "Поделиться вопросом и ответом",
@@ -462,14 +463,14 @@
       "freeLimits": {
         "manualAi": "ИИ только вручную",
         "recording": "Запись до {{minutes}} минут",
-        "weeklyAi": "До {{limit}} генераций в неделю"
+        "weeklyAi": "До {{limit}} генераций в неделю",
       },
       "proTitle": "Pro",
       "billingMonthly": "Ежемесячно",
       "billingAnnual": "Ежегодно",
       "billingSlashMonth": "/мес",
       "billingSlashYear": "/год",
-      "billingEquivalentPerMonth": "≈ {{price}} в среднем за месяц.",
+      "billingEquivalentPerMonth": "≈ {{price}}",
       "termsLink": "Условия использования",
       "privacyLink": "Политика конфиденциальности",
       "savePercentDiscountPill": "{{percent}}% скидка",
@@ -488,11 +489,13 @@
       "restoreNothingFound": "Активной подписки для этого аккаунта не найдено.",
       "restoreError": "Не удалось восстановить покупки.",
       "features": {
+        "autoAutomation": "Автоматизация",
         "autoTranscription": "Авто-транскрипция",
         "autoSummaryAndTasks": "Авто-сводки и задачи",
         "autoArchiveReadNotes": "Авто-архив прочитанных заметок",
         "aiLimit": "До {{limit}} генераций в неделю",
-        "recordingUpTo30Min": "Запись до 30 минут",
+        "recordingUpToOneHour": "Запись до 1 часа",
+        "accentCustomization": "Палитра акцента — кнопки, выделения и индикаторы под тебя",
         "noAds": "Без рекламы"
       }
     },
@@ -532,7 +535,17 @@
       "cpuUsage": "Загрузка CPU (оценка, JS)",
       "memoryUsage": "Использование памяти",
       "empty": "—",
-      "copied": "Скопировано в буфер"
+      "copied": "Скопировано в буфер",
+      "webApiOverrideTitle": "Переопределение хоста Web API",
+      "webApiOverrideHint": "Направить приложение на staging или локальный сервер. При применении сбрасывается кэш токена API. Очистите поле и нажмите «Применить», чтобы снова использовать Remote Config / встроенный WEB_API_URL.",
+      "webApiOverridePlaceholder": "https://ваш-api.example.com",
+      "webApiOverrideApply": "Применить",
+      "webApiOverrideClear": "Сбросить",
+      "webApiOverrideActiveNote": "Активно ручное переопределение хоста (см. значение выше).",
+      "webApiOverrideAppliedTitle": "Хост обновлён",
+      "webApiOverrideClearedTitle": "Используется хост по умолчанию",
+      "webApiOverrideInvalidTitle": "Некорректный URL",
+      "webApiOverrideInvalidBody": "Укажите полный URL с http или https (например https://example.com)."
     }
   },
   "appearance": {
@@ -750,6 +763,7 @@
     "tierFast": "Быстро",
     "tierSmart": "Умнее",
     "tierPremium": "Максимум",
+    "tierDeepSeek": "Альтернатива",
     "trinityDesc": "Мощная модель с поддержкой мультимодального ввода",
     "geminiDesc": "Быстрая и эффективная модель для повседневных задач",
     "geminiDesc3_1": "Лучше понимает длинные записи и точнее извлекает задачи.",

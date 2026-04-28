@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import { AdRequestConfiguration, RewardedAdLoader } from 'yandex-mobile-ads';
+import { RewardedAdLoader } from 'yandex-mobile-ads';
 
 import { useProEntitlement } from '@/features/pro-license';
 import { useBootSplashVisible } from '@/shared/config';
@@ -198,10 +198,9 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
     const promise = (async (): Promise<RewardedAdInstance | null> => {
       try {
         const loader = await RewardedAdLoader.create();
-        const config = new AdRequestConfiguration({
+        const ad = await loader.loadAd({
           adUnitId: getAdUnitId(),
         });
-        const ad = await loader.loadAd(config);
 
         if (isProActiveRef.current) return null;
 
@@ -258,10 +257,9 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
       }
 
       const loader = await RewardedAdLoader.create();
-      const config = new AdRequestConfiguration({
+      ad = await loader.loadAd({
         adUnitId: getAdUnitId(),
       });
-      ad = await loader.loadAd(config);
       setupAdHandlers(ad);
       await ad.show();
     } catch (err) {

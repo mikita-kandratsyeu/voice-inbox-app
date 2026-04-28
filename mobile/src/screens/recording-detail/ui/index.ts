@@ -1,5 +1,5 @@
 export { AiStatusBadge } from './AiStatusBadge';
-export { AskAIScreen } from './AskAIScreen';
+export { AskAIScreen } from './ask-ai/AskAIScreen';
 export { RecordDetailTag } from './RecordDetailTag';
 export { RecordingDetailCard } from './RecordingDetailCard';
 export { RecordingDetailHeader } from './RecordingDetailHeader';

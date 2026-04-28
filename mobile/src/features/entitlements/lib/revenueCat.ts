@@ -148,6 +148,7 @@ export type IapBillingProductRow = {
 export type IapBillingOptions = {
   annual: IapBillingProductRow | null;
   monthly: IapBillingProductRow | null;
+  annualComparedToMonthlyYearPriceString: string | null;
   savePercentVsMonthly: number | null;
 };
 
@@ -312,37 +313,58 @@ export type RestoreProPurchasesResult =
 
 export async function getProBillingPriceOptions(): Promise<IapBillingOptions> {
   if (!getRevenueCatIntegrationEnabled()) {
-    return { monthly: null, annual: null, savePercentVsMonthly: null };
+    return {
+      monthly: null,
+      annual: null,
+      annualComparedToMonthlyYearPriceString: null,
+      savePercentVsMonthly: null,
+    };
   }
   try {
     const offerings = await Purchases.getOfferings();
     const o = offerings.current;
 
     if (!o) {
-      return { monthly: null, annual: null, savePercentVsMonthly: null };
+      return {
+        monthly: null,
+        annual: null,
+        annualComparedToMonthlyYearPriceString: null,
+        savePercentVsMonthly: null,
+      };
     }
 
     const monthly = billingRowFromProduct(o.monthly?.product, 'monthly');
     const annual = billingRowFromProduct(o.annual?.product, 'annual');
 
     let savePercentVsMonthly: number | null = null;
+    let annualComparedToMonthlyYearPriceString: string | null = null;
 
     const mp = o.monthly?.product?.price;
     const ap = o.annual?.product?.price;
+    const monthlyCurrency = o.monthly?.product?.currencyCode;
 
-    if (monthly && annual && mp != null && ap != null && mp > 0 && ap > 0) {
+    if (monthly && annual && mp != null && ap != null && monthlyCurrency && mp > 0 && ap > 0) {
       const yearAtMonthlyRate = mp * 12;
 
       if (ap < yearAtMonthlyRate) {
+        annualComparedToMonthlyYearPriceString = formatIapCurrencyAmount(
+          yearAtMonthlyRate,
+          monthlyCurrency,
+        );
         const pct = Math.round((1 - ap / yearAtMonthlyRate) * 100);
         savePercentVsMonthly = pct >= 1 ? pct : null;
       }
     }
 
-    return { monthly, annual, savePercentVsMonthly };
+    return { monthly, annual, annualComparedToMonthlyYearPriceString, savePercentVsMonthly };
   } catch (e) {
     logPurchasesFailure('getProBillingPriceOptions', e);
-    return { monthly: null, annual: null, savePercentVsMonthly: null };
+    return {
+      monthly: null,
+      annual: null,
+      annualComparedToMonthlyYearPriceString: null,
+      savePercentVsMonthly: null,
+    };
   }
 }
 

@@ -15,4 +15,30 @@
         <categories android:name="android.shortcut.conversation" />
     </shortcut>
 
+    <shortcut
+        android:shortcutId="new_text_note"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_new_text_note_short"
+        android:shortcutLongLabel="@string/shortcut_new_text_note_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="voiceinbox://note/text"
+            android:targetPackage="com.voiceinputapp"
+            android:targetClass="com.voiceinputapp.MainActivity" />
+    </shortcut>
+
+    <shortcut
+        android:shortcutId="all_tasks"
+        android:enabled="true"
+        android:icon="@mipmap/ic_launcher"
+        android:shortcutShortLabel="@string/shortcut_all_tasks_short"
+        android:shortcutLongLabel="@string/shortcut_all_tasks_long">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:data="voiceinbox://tasks"
+            android:targetPackage="com.voiceinputapp"
+            android:targetClass="com.voiceinputapp.MainActivity" />
+    </shortcut>
+
 </shortcuts>

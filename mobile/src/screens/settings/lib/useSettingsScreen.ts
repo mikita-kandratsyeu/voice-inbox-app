@@ -1,7 +1,7 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState } from 'react-native';
 
@@ -59,6 +59,13 @@ import { getWhisperLabel } from '@/shared/lib/whisper';
 import type { AutomationFeatureKind } from '../ui/AutomationComingSoonSheet';
 import { performHardReset } from './hardReset';
 
+const RESET_IAP_BILLING: IapBillingOptions = {
+  annual: null,
+  monthly: null,
+  annualComparedToMonthlyYearPriceString: null,
+  savePercentVsMonthly: null,
+};
+
 export function useSettingsScreen() {
   const { t, i18n } = useTranslation();
   const color = useColors();
@@ -99,14 +106,10 @@ export function useSettingsScreen() {
   const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
   const [automationSheet, setAutomationSheet] = useState<AutomationFeatureKind | null>(null);
   const [autoArchiveDelaySheetVisible, setAutoArchiveDelaySheetVisible] = useState(false);
-  const [planPaywallVisible, setPlanPaywallVisible] = useState(false);
+  const [planPaywallVisible, setPlanPaywallVisibleState] = useState(false);
   const [isHardResetting, setIsHardResetting] = useState(false);
   const [iapPaywallBusy, setIapPaywallBusy] = useState(false);
-  const [iapBilling, setIapBilling] = useState<IapBillingOptions>({
-    annual: null,
-    monthly: null,
-    savePercentVsMonthly: null,
-  });
+  const [iapBilling, setIapBilling] = useState<IapBillingOptions>(RESET_IAP_BILLING);
   const [selectedIapPeriod, setSelectedIapPeriod] = useState<IapBillingPeriod>('annual');
   const [iapProPriceLoading, setIapProPriceLoading] = useState(false);
 
@@ -117,6 +120,14 @@ export function useSettingsScreen() {
   } = useProEntitlement();
   const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
   const monetizationMode = getMonetizationMode();
+
+  const setPlanPaywallVisible = useCallback((visible: boolean) => {
+    if (visible && getMonetizationMode() === 'iap_public') {
+      setIapProPriceLoading(true);
+      setIapBilling(RESET_IAP_BILLING);
+    }
+    setPlanPaywallVisibleState(visible);
+  }, []);
 
   const [planCardStoreProActive, setPlanCardStoreProActive] = useState<boolean | null>(null);
 
@@ -140,21 +151,19 @@ export function useSettingsScreen() {
     };
   }, [proEntitlementActive, monetizationMode, expiresAtMs]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!planPaywallVisible || monetizationMode !== 'iap_public') {
       return;
     }
 
     let cancelled = false;
-    setIapProPriceLoading(true);
-    setIapBilling({ monthly: null, annual: null, savePercentVsMonthly: null });
 
     void getProBillingPriceOptions().then((opts) => {
       if (!cancelled) {
         setIapBilling(opts);
         setSelectedIapPeriod(resolveDefaultIapBillingPeriod(opts));
-        setIapProPriceLoading(false);
       }
+      setIapProPriceLoading(false);
     });
     return () => {
       cancelled = true;
@@ -455,7 +464,14 @@ export function useSettingsScreen() {
       return;
     }
     setPlanPaywallVisible(true);
-  }, [i18n.language, monetizationMode, proEntitlementActive, resolvedColorScheme, t]);
+  }, [
+    i18n.language,
+    monetizationMode,
+    proEntitlementActive,
+    resolvedColorScheme,
+    setPlanPaywallVisible,
+    t,
+  ]);
 
   useEffect(() => {
     if (!route.params?.openPlanPaywall) {
@@ -464,7 +480,7 @@ export function useSettingsScreen() {
 
     setPlanPaywallVisible(true);
     navigation.setParams({ openPlanPaywall: false });
-  }, [navigation, route.params?.openPlanPaywall]);
+  }, [navigation, route.params?.openPlanPaywall, setPlanPaywallVisible]);
 
   const handleUpgradePress = useCallback(() => {
     if (monetizationMode === 'iap_public') {
@@ -492,7 +508,7 @@ export function useSettingsScreen() {
         }
       })();
     }
-  }, [monetizationMode, refreshProEntitlement, selectedIapPeriod, t]);
+  }, [monetizationMode, refreshProEntitlement, selectedIapPeriod, setPlanPaywallVisible, t]);
 
   const onIapBillingPeriodChange = useCallback((period: IapBillingPeriod) => {
     setSelectedIapPeriod(period);
@@ -526,7 +542,7 @@ export function useSettingsScreen() {
         setIapPaywallBusy(false);
       }
     })();
-  }, [monetizationMode, refreshProEntitlement, t]);
+  }, [monetizationMode, refreshProEntitlement, setPlanPaywallVisible, t]);
 
   const handleHardReset = useCallback(() => {
     Alert.alert(
