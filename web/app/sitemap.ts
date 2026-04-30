@@ -11,6 +11,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '/privacy', priority: 0.8 },
     { path: '/terms', priority: 0.8 },
     { path: '/blog', priority: 0.75 },
+    { path: '/viewer', priority: 0.65 },
   ];
 
   const locales = [{ prefix: '' }, { prefix: '/ru' }];

@@ -9,6 +9,7 @@ const webRoot = path.dirname(fileURLToPath(import.meta.url));
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ['192.168.1.67', 'http://192.168.1.67:3000'],
+  transpilePackages: ['@zip.js/zip.js'],
   async redirects() {
     return [
       { source: '/releases', destination: '/blog', permanent: true },

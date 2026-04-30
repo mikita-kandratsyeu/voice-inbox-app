@@ -2,7 +2,7 @@
 # Manual changes might be lost - proceed with caution!
 
 __metadata:
-  version: 8
+  version: 9
   cacheKey: 10c0
 
 "@alloc/quick-lru@npm:^5.2.0":
@@ -2686,6 +2686,13 @@ __metadata:
     vue-router:
       optional: true
   checksum: 10c0/c788c03d0f072f6f2be52d3f6f4f0680d2343f0d8765a759a044204223b14a6e14b285d0c5d5d05c0b66d4419746c5b245656ebdc48398328d85d96f1ede982b
+  languageName: node
+  linkType: hard
+
+"@zip.js/zip.js@npm:^2.7.62":
+  version: 2.8.26
+  resolution: "@zip.js/zip.js@npm:2.8.26"
+  checksum: 10c0/246e446309f55c3cc7beecf5d69e53aebb149707804afccb0bbaf07b31efe129292b4cc5f4f974092a583be5cbf79277b2864e9f6902ce8bb6d0cbd244844ebe
   languageName: node
   linkType: hard
 
@@ -9079,6 +9086,7 @@ __metadata:
     "@types/react-dom": "npm:^19"
     "@upstash/redis": "npm:^1.37.0"
     "@vercel/analytics": "npm:^2.0.1"
+    "@zip.js/zip.js": "npm:^2.7.62"
     bcryptjs: "npm:^3.0.3"
     dotenv: "npm:^17.3.1"
     eslint: "npm:^9"
@@ -9102,6 +9110,7 @@ __metadata:
     tailwindcss: "npm:^4"
     tsx: "npm:^4.21.0"
     typescript: "npm:^5"
+    zod: "npm:^3.24.0"
   languageName: unknown
   linkType: soft
 
@@ -9346,6 +9355,13 @@ __metadata:
   peerDependencies:
     zod: ^3.25.0 || ^4.0.0
   checksum: 10c0/0ccfec48c46de1be440b719cd02044d4abb89ed0e14c13e637cd55bf29102f67ccdba373f25def0fc7130e5f15025be4d557a7edcc95d5a3811599aade689e1b
+  languageName: node
+  linkType: hard
+
+"zod@npm:^3.24.0":
+  version: 3.25.76
+  resolution: "zod@npm:3.25.76"
+  checksum: 10c0/5718ec35e3c40b600316c5b4c5e4976f7fee68151bc8f8d90ec18a469be9571f072e1bbaace10f1e85cf8892ea12d90821b200e980ab46916a6166a4260a983c
   languageName: node
   linkType: hard
 

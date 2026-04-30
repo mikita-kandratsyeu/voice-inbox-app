@@ -116,6 +116,7 @@
     "privacyPolicy": "Privacy Policy",
     "termsOfService": "Terms of Service",
     "support": "Support",
+    "backupViewer": "Backup viewer",
     "releases": "Blog",
     "verifiedMetrics": "Verified Metrics",
     "copyright": "© {year} Voice Inbox AI. All rights reserved."
@@ -154,7 +155,9 @@
     "accountProTitle": "Your Pro plan — Voice Inbox AI",
     "accountProDescription": "Details of your Pro activation in Voice Inbox AI.",
     "supportTitle": "Support — Voice Inbox AI",
-    "supportDescription": "How to get help with Voice Inbox AI: contact options, privacy, and terms."
+    "supportDescription": "How to get help with Voice Inbox AI: contact options, privacy, and terms.",
+    "viewerTitle": "Backup viewer — Voice Inbox AI",
+    "viewerDescription": "Open an exported backup ZIP from the Voice Inbox AI app in your browser. Nothing is uploaded to our servers."
   },
   "supportPage": {
     "heading": "Support",
@@ -166,6 +169,45 @@
     "linkPrivacy": "Privacy Policy",
     "linkTerms": "Terms of Service",
     "backHome": "← Back to home"
+  },
+  "viewerPage": {
+    "heading": "Backup viewer",
+    "intro": "Export a backup from the mobile app (Settings → Import / Export), then drop the ZIP file here. Your notes stay in this browser tab — we never upload the archive to our servers.",
+    "dropTitle": "Drop your backup ZIP here",
+    "dropHint": "Or tap to choose a file. Maximum size about {maxMb} MB.",
+    "chooseFile": "Choose ZIP file",
+    "replaceBackup": "Load another",
+    "replaceBackupAria": "Choose a different backup ZIP file",
+    "dropReplaceHint": "Drop another ZIP here to replace this backup.",
+    "privacyNoteCompact": "Still only in your browser — close the tab to clear from memory.",
+    "fileInputAria": "Choose backup ZIP archive",
+    "privacyNote": "All unpacking and reading happens locally in your browser. Close the tab or reload to clear the data from memory.",
+    "exportedLabel": "Exported:",
+    "recordCount": "{count, plural, one {# note} other {# notes}}",
+    "unfoldered": "No folder",
+    "unknownFolder": "Folder",
+    "untitled": "Untitled",
+    "backToList": "Back to list",
+    "tabTranscript": "Transcript",
+    "tabSummary": "Summary",
+    "tabTasks": "Tasks",
+    "tabTranslation": "Translation",
+    "emptyTranscript": "No transcript in this backup.",
+    "emptySummary": "No summary in this backup.",
+    "emptyTasks": "No tasks in this backup.",
+    "emptyTranslation": "No translation in this backup.",
+    "audioMissing": "Audio file was not found inside this archive.",
+    "selectPrompt": "Select a note from the list.",
+    "errors": {
+      "too_large": "This file is too large for the browser viewer. Try a smaller export or open the archive on your computer with more RAM.",
+      "not_zip": "Please choose a valid ZIP file exported from Voice Inbox AI.",
+      "unzip_failed": "Could not read this ZIP file. It may be corrupted or not a Voice Inbox AI backup.",
+      "no_metadata": "This ZIP does not contain metadata.json. Use a backup exported from the Voice Inbox AI app.",
+      "invalid_json": "metadata.json is damaged or not valid JSON.",
+      "invalid_schema": "This backup format is not recognized. Export again from the latest version of the app.",
+      "unsupported_version": "This export version is not supported in the web viewer yet. Re-export from the app (backup format v3).",
+      "unknown": "Something went wrong while reading the backup."
+    }
   },
   "accountPro": {
     "planLabel": "Current plan",

@@ -34,6 +34,12 @@ export function Footer(): React.ReactElement {
             >
               {t('releases')}
             </Link>
+            <Link
+              href="/viewer"
+              className="font-medium text-black/65 transition-colors hover:text-black dark:text-white/65 dark:hover:text-white"
+            >
+              {t('backupViewer')}
+            </Link>
             {VERIFIED_METRICS_URL ? (
               <a
                 href={VERIFIED_METRICS_URL}
