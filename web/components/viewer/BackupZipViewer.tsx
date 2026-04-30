@@ -178,6 +178,18 @@ export function BackupZipViewer(): React.ReactElement {
     return sections;
   }, [filteredSortedRecords, sortedFolders, folderNameById, t]);
 
+  const desktopSidebarWidthStyle = useMemo(() => {
+    if (isNarrow) return undefined;
+    if (sidebarCollapsed) {
+      return { width: '4rem', minWidth: '4rem', maxWidth: '4rem' } as const;
+    }
+    return {
+      width: `${sidebarWidthPct}%`,
+      minWidth: 220,
+      maxWidth: 520,
+    } as const;
+  }, [isNarrow, sidebarCollapsed, sidebarWidthPct]);
+
   const flatSelectableIds = useMemo(
     () => groupedSections.flatMap((s) => s.items.map((i) => i.id)),
     [groupedSections],
@@ -510,127 +522,135 @@ export function BackupZipViewer(): React.ReactElement {
           </div>
 
           <div ref={layoutRef} className="flex min-h-[min(520px,70vh)] flex-col md:flex-row">
-            {!isNarrow && sidebarCollapsed ? (
-              <div className="hidden w-12 shrink-0 flex-col items-center border-b border-black/8 bg-slate-50/90 py-3 dark:border-white/10 dark:bg-slate-950/50 md:flex md:border-b-0 md:border-r">
-                <button
-                  type="button"
-                  onClick={toggleSidebarCollapsed}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-black/10 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-white/12 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
-                  aria-label={t('expandList')}
-                >
-                  <PanelRightOpen className="h-5 w-5" aria-hidden />
-                </button>
-              </div>
-            ) : null}
-
-            {(!isNarrow && !sidebarCollapsed) || isNarrow ? (
-              <aside
-                style={
-                  !isNarrow && !sidebarCollapsed
-                    ? {
-                        width: `${sidebarWidthPct}%`,
-                        minWidth: 220,
-                        maxWidth: 520,
-                      }
-                    : undefined
-                }
+            <aside
+              style={desktopSidebarWidthStyle}
+              className={[
+                'max-h-[55vh] shrink-0 overflow-hidden border-black/8 md:flex md:max-h-none md:min-h-0 md:flex-col md:border-r dark:border-white/10',
+                'md:transition-[width,min-width,max-width] md:duration-300 md:ease-out motion-reduce:md:transition-none',
+                !isNarrow && sidebarCollapsed ? 'md:bg-slate-50/90 md:dark:bg-slate-950/50' : '',
+                isNarrow && selectedId ? 'hidden md:flex' : 'flex',
+                isNarrow ? 'w-full flex-col' : '',
+              ].join(' ')}
+            >
+              <div
                 className={[
-                  'max-h-[55vh] shrink-0 overflow-hidden border-black/8 md:flex md:max-h-none md:min-h-0 md:flex-col md:border-r dark:border-white/10',
-                  isNarrow && selectedId ? 'hidden md:flex' : 'flex',
-                  isNarrow ? 'w-full flex-col' : '',
+                  'shrink-0 border-b border-black/8 px-3 py-2.5 dark:border-white/10',
+                  !isNarrow && sidebarCollapsed
+                    ? 'flex flex-col items-center bg-transparent pb-4 pt-4 md:pb-4 md:pt-4'
+                    : 'bg-white/95 dark:bg-slate-950/80',
                 ].join(' ')}
               >
-                <div className="shrink-0 border-b border-black/8 bg-white/95 px-3 py-2.5 dark:border-white/10 dark:bg-slate-950/80">
-                  <div className="flex gap-2">
-                    <div className="relative min-w-0 flex-1">
-                      <Search
-                        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-                        aria-hidden
-                      />
-                      <input
-                        ref={searchInputRef}
-                        type="search"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder={t('searchPlaceholder')}
-                        className="w-full rounded-xl border border-black/10 bg-white py-2.5 pl-9 pr-9 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/12 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-400"
-                        aria-label={t('searchPlaceholder')}
-                      />
-                      {searchQuery ? (
+                {!isNarrow && sidebarCollapsed ? (
+                  <button
+                    type="button"
+                    onClick={toggleSidebarCollapsed}
+                    className="flex h-11 w-11 items-center justify-center rounded-xl border border-black/10 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-white/12 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
+                    aria-label={t('expandList')}
+                  >
+                    <PanelRightOpen className="h-5 w-5" aria-hidden />
+                  </button>
+                ) : (
+                  <>
+                    <div className="flex gap-2">
+                      <div className="relative min-w-0 flex-1">
+                        <Search
+                          className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                          aria-hidden
+                        />
+                        <input
+                          ref={searchInputRef}
+                          type="text"
+                          inputMode="search"
+                          enterKeyHint="search"
+                          autoCapitalize="none"
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder={t('searchPlaceholder')}
+                          className="w-full rounded-xl border border-black/10 bg-white py-2.5 pl-9 pr-9 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/12 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-400"
+                          aria-label={t('searchPlaceholder')}
+                        />
+                        {searchQuery ? (
+                          <button
+                            type="button"
+                            onClick={() => setSearchQuery('')}
+                            className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 hover:bg-black/[0.06] hover:text-slate-800 dark:hover:bg-white/10 dark:hover:text-white"
+                            aria-label={t('searchClear')}
+                          >
+                            <X className="h-4 w-4" aria-hidden />
+                          </button>
+                        ) : null}
+                      </div>
+                      {!isNarrow ? (
                         <button
                           type="button"
-                          onClick={() => setSearchQuery('')}
-                          className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 hover:bg-black/[0.06] hover:text-slate-800 dark:hover:bg-white/10 dark:hover:text-white"
-                          aria-label={t('searchClear')}
+                          onClick={toggleSidebarCollapsed}
+                          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-white text-slate-700 shadow-sm transition-transform duration-200 ease-out hover:bg-slate-50 active:scale-95 dark:border-white/12 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15 motion-reduce:transition-none motion-reduce:active:scale-100"
+                          aria-label={t('collapseList')}
                         >
-                          <X className="h-4 w-4" aria-hidden />
+                          <PanelLeftClose className="h-5 w-5" aria-hidden />
                         </button>
                       ) : null}
                     </div>
                     {!isNarrow ? (
-                      <button
-                        type="button"
-                        onClick={toggleSidebarCollapsed}
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-white/12 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
-                        aria-label={t('collapseList')}
-                      >
-                        <PanelLeftClose className="h-5 w-5" aria-hidden />
-                      </button>
+                      <p className="mt-2 hidden text-[11px] leading-snug text-slate-400 md:block dark:text-slate-500">
+                        {t('keyboardHint')}
+                      </p>
                     ) : null}
+                  </>
+                )}
+              </div>
+              <div
+                className={[
+                  'min-h-0 flex-1 overflow-y-auto',
+                  !isNarrow && sidebarCollapsed ? 'hidden' : '',
+                ].join(' ')}
+                aria-hidden={!isNarrow && sidebarCollapsed}
+              >
+                {groupedSections.length === 0 ? (
+                  <div className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                    {t('noSearchResults')}
                   </div>
-                  {!isNarrow ? (
-                    <p className="mt-2 hidden text-[11px] leading-snug text-slate-400 md:block dark:text-slate-500">
-                      {t('keyboardHint')}
-                    </p>
-                  ) : null}
-                </div>
-                <div className="min-h-0 flex-1 overflow-y-auto">
-                  {groupedSections.length === 0 ? (
-                    <div className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
-                      {t('noSearchResults')}
-                    </div>
-                  ) : (
-                    groupedSections.map((section) => (
-                      <div
-                        key={section.folderId ?? 'root'}
-                        className="border-b border-black/6 last:border-0 dark:border-white/8"
-                      >
-                        <div className="sticky top-0 z-10 flex items-center gap-2 bg-slate-100/95 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur-sm dark:bg-slate-900/90 dark:text-slate-400">
-                          <Folder className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                          {section.label}
-                        </div>
-                        <ul className="py-1">
-                          {section.items.map((r) => (
-                            <li key={r.id}>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setSelectedId(r.id);
-                                  setTab('transcript');
-                                }}
-                                className={[
-                                  'flex w-full flex-col gap-0.5 px-4 py-3 text-left text-sm transition-colors',
-                                  r.id === selectedId
-                                    ? 'bg-blue-500/12 text-slate-900 dark:bg-blue-500/20 dark:text-white'
-                                    : 'text-slate-700 hover:bg-black/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]',
-                                ].join(' ')}
-                              >
-                                <span className="line-clamp-2 font-medium leading-snug">
-                                  {r.title || t('untitled')}
-                                </span>
-                                <span className="text-xs text-slate-500 dark:text-slate-400">
-                                  {r.duration} · {formatExportedAt(r.createdAt)}
-                                </span>
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
+                ) : (
+                  groupedSections.map((section) => (
+                    <div
+                      key={section.folderId ?? 'root'}
+                      className="border-b border-black/6 last:border-0 dark:border-white/8"
+                    >
+                      <div className="sticky top-0 z-10 flex items-center gap-2 bg-slate-100/95 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur-sm dark:bg-slate-900/90 dark:text-slate-400">
+                        <Folder className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        {section.label}
                       </div>
-                    ))
-                  )}
-                </div>
-              </aside>
-            ) : null}
+                      <ul className="py-1">
+                        {section.items.map((r) => (
+                          <li key={r.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedId(r.id);
+                                setTab('transcript');
+                              }}
+                              className={[
+                                'flex w-full flex-col gap-0.5 px-4 py-3 text-left text-sm transition-colors',
+                                r.id === selectedId
+                                  ? 'bg-blue-500/12 text-slate-900 dark:bg-blue-500/20 dark:text-white'
+                                  : 'text-slate-700 hover:bg-black/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]',
+                              ].join(' ')}
+                            >
+                              <span className="line-clamp-2 font-medium leading-snug">
+                                {r.title || t('untitled')}
+                              </span>
+                              <span className="text-xs text-slate-500 dark:text-slate-400">
+                                {r.duration} · {formatExportedAt(r.createdAt)}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))
+                )}
+              </div>
+            </aside>
 
             {!isNarrow && !sidebarCollapsed ? (
               <button
@@ -638,7 +658,7 @@ export function BackupZipViewer(): React.ReactElement {
                 aria-hidden
                 tabIndex={-1}
                 onMouseDown={beginResize}
-                className="hidden w-1.5 shrink-0 cursor-col-resize border-x border-transparent bg-black/[0.06] hover:bg-blue-500/30 md:block dark:bg-white/10 dark:hover:bg-blue-400/35"
+                className="hidden w-1.5 shrink-0 cursor-col-resize border-x border-transparent bg-black/[0.06] transition-opacity duration-200 ease-out hover:bg-blue-500/30 motion-reduce:transition-none md:block dark:bg-white/10 dark:hover:bg-blue-400/35"
               />
             ) : null}
 
