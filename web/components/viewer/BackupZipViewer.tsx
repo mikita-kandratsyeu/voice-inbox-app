@@ -3,6 +3,7 @@
 import {
   Archive,
   ChevronLeft,
+  ChevronRight,
   FileAudio,
   Folder,
   Loader2,
@@ -75,6 +76,10 @@ function recordMatchesQuery(r: ParsedRecord, q: string): boolean {
 
 type TabId = 'transcript' | 'summary' | 'tasks' | 'translation';
 
+function viewerSectionKey(folderId: string | null): string {
+  return folderId === null ? '__unfoldered__' : folderId;
+}
+
 export function BackupZipViewer(): React.ReactElement {
   const t = useTranslations('viewerPage');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -93,6 +98,7 @@ export function BackupZipViewer(): React.ReactElement {
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidthPct, setSidebarWidthPct] = useState(viewerSidebarWidthBounds.default);
+  const [collapsedSectionKeys, setCollapsedSectionKeys] = useState<Set<string>>(() => new Set());
 
   useLayoutEffect(() => {
     setSidebarCollapsed(readSidebarCollapsed());
@@ -222,6 +228,7 @@ export function BackupZipViewer(): React.ReactElement {
     try {
       const parsed = await parseBackupZip(file);
       setBackup(parsed);
+      setCollapsedSectionKeys(new Set());
       setLoadedFileName(file.name);
       const first = [...parsed.records].sort(sortRecords)[0];
       setSelectedId(first?.id ?? null);
@@ -357,6 +364,15 @@ export function BackupZipViewer(): React.ReactElement {
       return next;
     });
   };
+
+  const toggleViewerSectionCollapsed = useCallback((sectionKey: string) => {
+    setCollapsedSectionKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(sectionKey)) next.delete(sectionKey);
+      else next.add(sectionKey);
+      return next;
+    });
+  }, []);
 
   const errorTextMap = useMemo(
     () => ({
@@ -611,43 +627,71 @@ export function BackupZipViewer(): React.ReactElement {
                     {t('noSearchResults')}
                   </div>
                 ) : (
-                  groupedSections.map((section) => (
-                    <div
-                      key={section.folderId ?? 'root'}
-                      className="border-b border-black/6 last:border-0 dark:border-white/8"
-                    >
-                      <div className="sticky top-0 z-10 flex items-center gap-2 bg-slate-100/95 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur-sm dark:bg-slate-900/90 dark:text-slate-400">
-                        <Folder className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                        {section.label}
+                  groupedSections.map((section) => {
+                    const sectionKey = viewerSectionKey(section.folderId);
+                    const sectionCollapsed = collapsedSectionKeys.has(sectionKey);
+                    return (
+                      <div
+                        key={sectionKey}
+                        className="border-b border-black/6 last:border-0 dark:border-white/8"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => toggleViewerSectionCollapsed(sectionKey)}
+                          className="sticky top-0 z-10 flex w-full items-center gap-2 bg-slate-100/95 px-4 py-2.5 text-left text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur-sm transition-colors hover:bg-slate-200/80 dark:bg-slate-900/90 dark:text-slate-400 dark:hover:bg-slate-800/90"
+                          aria-expanded={!sectionCollapsed}
+                          aria-controls={`viewer-folder-${sectionKey}`}
+                          id={`viewer-folder-h-${sectionKey}`}
+                          aria-label={
+                            sectionCollapsed
+                              ? t('expandFolderAria', { name: section.label })
+                              : t('collapseFolderAria', { name: section.label })
+                          }
+                        >
+                          <ChevronRight
+                            className={[
+                              'h-3.5 w-3.5 shrink-0 text-slate-400 transition-transform duration-200 dark:text-slate-500',
+                              sectionCollapsed ? '' : 'rotate-90',
+                            ].join(' ')}
+                            aria-hidden
+                          />
+                          <Folder className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          <span className="min-w-0 flex-1 truncate">{section.label}</span>
+                          <span className="shrink-0 tabular-nums text-[10px] font-semibold normal-case text-slate-400 dark:text-slate-500">
+                            {section.items.length}
+                          </span>
+                        </button>
+                        <div id={`viewer-folder-${sectionKey}`} hidden={sectionCollapsed}>
+                          <ul className="py-1" role="list" aria-labelledby={`viewer-folder-h-${sectionKey}`}>
+                            {section.items.map((r) => (
+                              <li key={r.id}>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedId(r.id);
+                                    setTab('transcript');
+                                  }}
+                                  className={[
+                                    'flex w-full flex-col gap-0.5 px-4 py-3 text-left text-sm transition-colors',
+                                    r.id === selectedId
+                                      ? 'bg-blue-500/12 text-slate-900 dark:bg-blue-500/20 dark:text-white'
+                                      : 'text-slate-700 hover:bg-black/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]',
+                                  ].join(' ')}
+                                >
+                                  <span className="line-clamp-2 font-medium leading-snug">
+                                    {r.title || t('untitled')}
+                                  </span>
+                                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                                    {r.duration} · {formatExportedAt(r.createdAt)}
+                                  </span>
+                                </button>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
                       </div>
-                      <ul className="py-1">
-                        {section.items.map((r) => (
-                          <li key={r.id}>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setSelectedId(r.id);
-                                setTab('transcript');
-                              }}
-                              className={[
-                                'flex w-full flex-col gap-0.5 px-4 py-3 text-left text-sm transition-colors',
-                                r.id === selectedId
-                                  ? 'bg-blue-500/12 text-slate-900 dark:bg-blue-500/20 dark:text-white'
-                                  : 'text-slate-700 hover:bg-black/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]',
-                              ].join(' ')}
-                            >
-                              <span className="line-clamp-2 font-medium leading-snug">
-                                {r.title || t('untitled')}
-                              </span>
-                              <span className="text-xs text-slate-500 dark:text-slate-400">
-                                {r.duration} · {formatExportedAt(r.createdAt)}
-                              </span>
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </aside>

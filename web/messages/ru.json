@@ -198,6 +198,8 @@
     "recordCount": "{count, plural, one {# заметка} few {# заметки} many {# заметок} other {# заметок}}",
     "unfoldered": "Без папки",
     "unknownFolder": "Папка",
+    "collapseFolderAria": "Свернуть папку «{name}»",
+    "expandFolderAria": "Развернуть папку «{name}»",
     "untitled": "Без названия",
     "backToList": "К списку",
     "tabTranscript": "Транскрипт",

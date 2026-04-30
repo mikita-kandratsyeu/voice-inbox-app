@@ -197,6 +197,8 @@
     "recordCount": "{count, plural, one {# note} other {# notes}}",
     "unfoldered": "No folder",
     "unknownFolder": "Folder",
+    "collapseFolderAria": "Collapse folder “{name}”",
+    "expandFolderAria": "Expand folder “{name}”",
     "untitled": "Untitled",
     "backToList": "Back to list",
     "tabTranscript": "Transcript",
