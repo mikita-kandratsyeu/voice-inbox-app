@@ -37,9 +37,16 @@ export type ParsedRecord = {
 };
 
 export type ParsedBackup = {
+  /** Backup JSON `version` (currently only v3 is supported in the viewer). */
+  backupFormatVersion: 3;
   exportedAt: string;
   folders: ParsedFolder[];
   records: ParsedRecord[];
+  /** Present when some folders or records were skipped as invalid but the rest loaded. */
+  parseWarnings?: {
+    droppedFolderCount: number;
+    droppedRecordCount: number;
+  };
   /** Directory prefix inside the zip (e.g. `export-123/`) so `audio/…` resolves correctly */
   zipRootPrefix: string;
   /** Read one file from the archive by normalized path (streaming; does not load the whole zip). */

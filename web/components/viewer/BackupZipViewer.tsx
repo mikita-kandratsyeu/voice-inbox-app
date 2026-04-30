@@ -2,8 +2,12 @@
 
 import {
   Archive,
+  AlertCircle,
+  Check,
   ChevronLeft,
   ChevronRight,
+  Copy,
+  Download,
   FileAudio,
   Folder,
   Loader2,
@@ -15,6 +19,8 @@ import {
   X,
 } from 'lucide-react';
 import { useTranslations } from 'next-intl';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
@@ -25,6 +31,12 @@ import {
   type ParsedBackup,
   type ParsedRecord,
 } from '@/lib/backup-export';
+import {
+  buildNoteDownloadBasename,
+  copyTextToClipboard,
+  looksLikeMarkdown,
+  triggerTextFileDownload,
+} from '@/lib/viewer-note-helpers';
 import {
   readSidebarCollapsed,
   readSidebarWidthPct,
@@ -74,7 +86,82 @@ function recordMatchesQuery(r: ParsedRecord, q: string): boolean {
   return hay.includes(s);
 }
 
+const NOTE_BAR_BTN =
+  'inline-flex min-h-[36px] shrink-0 items-center justify-center gap-1.5 rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-45 dark:border-white/12 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15';
+
+const NOTE_COPY_BTN = `${NOTE_BAR_BTN} relative min-w-[10.5rem] overflow-hidden transition-[border-color,box-shadow] duration-200`;
+
 type TabId = 'transcript' | 'summary' | 'tasks' | 'translation';
+
+type CopyFeedbackField = 'transcript' | 'summary' | 'translation';
+
+type CopyFeedbackState = { field: CopyFeedbackField; result: 'ok' | 'err' };
+
+function CopyNoteTextButton(props: {
+  field: CopyFeedbackField;
+  copyFeedback: CopyFeedbackState | null;
+  disabled: boolean;
+  label: string;
+  copiedLabel: string;
+  failedLabel: string;
+  onCopy: () => void;
+}): React.ReactElement {
+  const active = props.copyFeedback?.field === props.field;
+  const ok = active && props.copyFeedback?.result === 'ok';
+  const err = active && props.copyFeedback?.result === 'err';
+  return (
+    <button
+      type="button"
+      className={[
+        NOTE_COPY_BTN,
+        ok
+          ? 'border-emerald-400/55 shadow-[0_0_0_1px_rgba(16,185,129,0.18)] dark:border-emerald-500/40'
+          : '',
+        err
+          ? 'border-red-400/55 shadow-[0_0_0_1px_rgba(248,113,113,0.2)] dark:border-red-500/35'
+          : '',
+      ].join(' ')}
+      disabled={props.disabled}
+      onClick={props.onCopy}
+      aria-live="polite"
+    >
+      <span
+        className={[
+          'flex items-center justify-center gap-1.5 transition-opacity duration-200 ease-out',
+          ok || err ? 'pointer-events-none opacity-0' : 'opacity-100',
+        ].join(' ')}
+      >
+        <Copy className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        {props.label}
+      </span>
+      <span
+        className={[
+          'absolute inset-0 flex items-center justify-center gap-1.5 transition-opacity duration-200 ease-out',
+          ok ? 'opacity-100' : 'pointer-events-none opacity-0',
+        ].join(' ')}
+        aria-hidden={!ok}
+      >
+        <Check
+          className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400"
+          aria-hidden
+        />
+        <span className="font-medium text-emerald-800 dark:text-emerald-200">
+          {props.copiedLabel}
+        </span>
+      </span>
+      <span
+        className={[
+          'absolute inset-0 flex items-center justify-center gap-1.5 transition-opacity duration-200 ease-out',
+          err ? 'opacity-100' : 'pointer-events-none opacity-0',
+        ].join(' ')}
+        aria-hidden={!err}
+      >
+        <AlertCircle className="h-3.5 w-3.5 shrink-0 text-red-600 dark:text-red-400" aria-hidden />
+        <span className="font-medium text-red-800 dark:text-red-200">{props.failedLabel}</span>
+      </span>
+    </button>
+  );
+}
 
 function viewerSectionKey(folderId: string | null): string {
   return folderId === null ? '__unfoldered__' : folderId;
@@ -93,6 +180,8 @@ export function BackupZipViewer(): React.ReactElement {
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [tab, setTab] = useState<TabId>('transcript');
+  const [copyFeedback, setCopyFeedback] = useState<CopyFeedbackState | null>(null);
+  const copyToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loadedFileName, setLoadedFileName] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -215,6 +304,33 @@ export function BackupZipViewer(): React.ReactElement {
   const selected = useMemo(
     () => filteredSortedRecords.find((r) => r.id === selectedId) ?? null,
     [filteredSortedRecords, selectedId],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (copyToastTimerRef.current) clearTimeout(copyToastTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    setCopyFeedback(null);
+  }, [selected?.id]);
+
+  const flashCopyResult = useCallback((field: CopyFeedbackField, ok: boolean) => {
+    if (copyToastTimerRef.current) clearTimeout(copyToastTimerRef.current);
+    setCopyFeedback({ field, result: ok ? 'ok' : 'err' });
+    copyToastTimerRef.current = setTimeout(() => {
+      setCopyFeedback(null);
+      copyToastTimerRef.current = null;
+    }, 2200);
+  }, []);
+
+  const handleCopyText = useCallback(
+    async (text: string, field: CopyFeedbackField) => {
+      const ok = await copyTextToClipboard(text);
+      flashCopyResult(field, ok);
+    },
+    [flashCopyResult],
   );
 
   const processFile = useCallback(async (file: File) => {
@@ -528,13 +644,49 @@ export function BackupZipViewer(): React.ReactElement {
 
       {backup ? (
         <div className="overflow-hidden rounded-3xl border border-black/10 bg-white/90 shadow-[0_10px_40px_rgba(15,23,42,0.08)] dark:border-white/12 dark:bg-white/[0.06] dark:shadow-[0_14px_48px_rgba(0,0,0,0.35)]">
-          <div className="border-b border-black/8 px-4 py-3 text-xs text-slate-500 dark:border-white/10 dark:text-slate-400 sm:px-6">
-            {t('exportedLabel')}{' '}
-            <span className="font-medium text-slate-800 dark:text-slate-200">
-              {formatExportedAt(backup.exportedAt)}
-            </span>
-            <span className="mx-2 text-slate-300 dark:text-slate-600">·</span>
-            {t('recordCount', { count: backup.records.length })}
+          <div className="space-y-2 border-b border-black/8 px-4 py-3 dark:border-white/10 sm:px-6">
+            <div className="flex flex-col gap-2 text-xs text-slate-500 dark:text-slate-400 md:flex-row md:flex-wrap md:items-baseline md:justify-between md:gap-x-4 md:gap-y-1">
+              <div>
+                <span className="text-slate-500 dark:text-slate-400">{t('exportedLabel')} </span>
+                <span className="font-medium text-slate-800 dark:text-slate-200">
+                  {formatExportedAt(backup.exportedAt)}
+                </span>
+                <span className="mx-2 text-slate-300 dark:text-slate-600">·</span>
+                {t('recordCount', { count: backup.records.length })}
+              </div>
+              <div className="flex min-w-0 flex-col gap-1 sm:flex-row sm:flex-wrap sm:gap-x-4">
+                <span className="shrink-0">
+                  {t('backupInfoFormat', { version: backup.backupFormatVersion })}
+                </span>
+                {loadedFileName ? (
+                  <span className="min-w-0 break-all">
+                    <span className="text-slate-500 dark:text-slate-400">
+                      {t('backupInfoFile')}:{' '}
+                    </span>
+                    <span className="font-medium text-slate-700 dark:text-slate-300">
+                      {loadedFileName}
+                    </span>
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            {backup.parseWarnings ? (
+              <div
+                role="status"
+                className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-950 dark:border-amber-400/25 dark:bg-amber-400/10 dark:text-amber-50"
+              >
+                {backup.parseWarnings.droppedRecordCount > 0 ? (
+                  <p>
+                    {t('skippedInvalidNotes', { count: backup.parseWarnings.droppedRecordCount })}
+                  </p>
+                ) : null}
+                {backup.parseWarnings.droppedFolderCount > 0 ? (
+                  <p className={backup.parseWarnings.droppedRecordCount > 0 ? 'mt-1' : ''}>
+                    {t('skippedInvalidFolders', { count: backup.parseWarnings.droppedFolderCount })}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <div ref={layoutRef} className="flex min-h-[min(520px,70vh)] flex-col md:flex-row">
@@ -799,20 +951,146 @@ export function BackupZipViewer(): React.ReactElement {
                   </div>
 
                   <div className="flex-1 overflow-y-auto px-4 py-5 sm:px-6">
-                    {tab === 'transcript' ? (
-                      <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-800 dark:text-slate-100">
-                        {selected.transcript || t('emptyTranscript')}
-                      </pre>
-                    ) : null}
-                    {tab === 'summary' ? (
-                      <div className="prose prose-slate max-w-none text-sm dark:prose-invert">
-                        {selected.summary ? (
-                          <p className="whitespace-pre-wrap leading-relaxed">{selected.summary}</p>
-                        ) : (
-                          <p className="text-slate-500 dark:text-slate-400">{t('emptySummary')}</p>
-                        )}
-                      </div>
-                    ) : null}
+                    {tab === 'transcript'
+                      ? (() => {
+                          const body = selected.transcript || '';
+                          const has = body.length > 0;
+                          const md = looksLikeMarkdown(body);
+                          return (
+                            <>
+                              <div className="mb-4 flex flex-wrap items-center gap-2">
+                                <CopyNoteTextButton
+                                  field="transcript"
+                                  copyFeedback={copyFeedback}
+                                  disabled={!has}
+                                  label={t('copyTranscript')}
+                                  copiedLabel={t('copied')}
+                                  failedLabel={t('copyFailed')}
+                                  onCopy={() => void handleCopyText(body, 'transcript')}
+                                />
+                                <button
+                                  type="button"
+                                  className={NOTE_BAR_BTN}
+                                  disabled={!has}
+                                  onClick={() =>
+                                    triggerTextFileDownload(
+                                      body,
+                                      `${buildNoteDownloadBasename(selected.title, selected.id)}-transcript.txt`,
+                                      'text/plain;charset=utf-8',
+                                    )
+                                  }
+                                >
+                                  <Download className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                  {t('downloadTxt')}
+                                </button>
+                                <button
+                                  type="button"
+                                  className={NOTE_BAR_BTN}
+                                  disabled={!has}
+                                  onClick={() =>
+                                    triggerTextFileDownload(
+                                      body,
+                                      `${buildNoteDownloadBasename(selected.title, selected.id)}-transcript.md`,
+                                      'text/markdown;charset=utf-8',
+                                    )
+                                  }
+                                >
+                                  <Download className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                  {t('downloadMd')}
+                                </button>
+                              </div>
+                              {has ? (
+                                md ? (
+                                  <div className="prose prose-slate prose-sm max-w-none dark:prose-invert">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                      {body}
+                                    </ReactMarkdown>
+                                  </div>
+                                ) : (
+                                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-800 dark:text-slate-100">
+                                    {body}
+                                  </pre>
+                                )
+                              ) : (
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                  {t('emptyTranscript')}
+                                </p>
+                              )}
+                            </>
+                          );
+                        })()
+                      : null}
+                    {tab === 'summary'
+                      ? (() => {
+                          const body = selected.summary ?? '';
+                          const has = body.length > 0;
+                          const md = looksLikeMarkdown(body);
+                          return (
+                            <>
+                              <div className="mb-4 flex flex-wrap items-center gap-2">
+                                <CopyNoteTextButton
+                                  field="summary"
+                                  copyFeedback={copyFeedback}
+                                  disabled={!has}
+                                  label={t('copySummary')}
+                                  copiedLabel={t('copied')}
+                                  failedLabel={t('copyFailed')}
+                                  onCopy={() => void handleCopyText(body, 'summary')}
+                                />
+                                <button
+                                  type="button"
+                                  className={NOTE_BAR_BTN}
+                                  disabled={!has}
+                                  onClick={() =>
+                                    triggerTextFileDownload(
+                                      body,
+                                      `${buildNoteDownloadBasename(selected.title, selected.id)}-summary.txt`,
+                                      'text/plain;charset=utf-8',
+                                    )
+                                  }
+                                >
+                                  <Download className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                  {t('downloadTxt')}
+                                </button>
+                                <button
+                                  type="button"
+                                  className={NOTE_BAR_BTN}
+                                  disabled={!has}
+                                  onClick={() =>
+                                    triggerTextFileDownload(
+                                      body,
+                                      `${buildNoteDownloadBasename(selected.title, selected.id)}-summary.md`,
+                                      'text/markdown;charset=utf-8',
+                                    )
+                                  }
+                                >
+                                  <Download className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                  {t('downloadMd')}
+                                </button>
+                              </div>
+                              {has ? (
+                                md ? (
+                                  <div className="prose prose-slate prose-sm max-w-none dark:prose-invert">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                      {body}
+                                    </ReactMarkdown>
+                                  </div>
+                                ) : (
+                                  <div className="prose prose-slate prose-sm max-w-none dark:prose-invert">
+                                    <p className="whitespace-pre-wrap leading-relaxed text-slate-800 dark:text-slate-100">
+                                      {body}
+                                    </p>
+                                  </div>
+                                )
+                              ) : (
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                  {t('emptySummary')}
+                                </p>
+                              )}
+                            </>
+                          );
+                        })()
+                      : null}
                     {tab === 'tasks' ? (
                       selected.tasks.length > 0 ? (
                         <ul className="space-y-2">
@@ -848,11 +1126,75 @@ export function BackupZipViewer(): React.ReactElement {
                         <p className="text-slate-500 dark:text-slate-400">{t('emptyTasks')}</p>
                       )
                     ) : null}
-                    {tab === 'translation' ? (
-                      <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-800 dark:text-slate-100">
-                        {selected.translatedTranscript || t('emptyTranslation')}
-                      </pre>
-                    ) : null}
+                    {tab === 'translation'
+                      ? (() => {
+                          const body = selected.translatedTranscript ?? '';
+                          const has = body.length > 0;
+                          const md = looksLikeMarkdown(body);
+                          return (
+                            <>
+                              <div className="mb-4 flex flex-wrap items-center gap-2">
+                                <CopyNoteTextButton
+                                  field="translation"
+                                  copyFeedback={copyFeedback}
+                                  disabled={!has}
+                                  label={t('copyTranslation')}
+                                  copiedLabel={t('copied')}
+                                  failedLabel={t('copyFailed')}
+                                  onCopy={() => void handleCopyText(body, 'translation')}
+                                />
+                                <button
+                                  type="button"
+                                  className={NOTE_BAR_BTN}
+                                  disabled={!has}
+                                  onClick={() =>
+                                    triggerTextFileDownload(
+                                      body,
+                                      `${buildNoteDownloadBasename(selected.title, selected.id)}-translation.txt`,
+                                      'text/plain;charset=utf-8',
+                                    )
+                                  }
+                                >
+                                  <Download className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                  {t('downloadTxt')}
+                                </button>
+                                <button
+                                  type="button"
+                                  className={NOTE_BAR_BTN}
+                                  disabled={!has}
+                                  onClick={() =>
+                                    triggerTextFileDownload(
+                                      body,
+                                      `${buildNoteDownloadBasename(selected.title, selected.id)}-translation.md`,
+                                      'text/markdown;charset=utf-8',
+                                    )
+                                  }
+                                >
+                                  <Download className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                  {t('downloadMd')}
+                                </button>
+                              </div>
+                              {has ? (
+                                md ? (
+                                  <div className="prose prose-slate prose-sm max-w-none dark:prose-invert">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                      {body}
+                                    </ReactMarkdown>
+                                  </div>
+                                ) : (
+                                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-800 dark:text-slate-100">
+                                    {body}
+                                  </pre>
+                                )
+                              ) : (
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                  {t('emptyTranslation')}
+                                </p>
+                              )}
+                            </>
+                          );
+                        })()
+                      : null}
                   </div>
                 </>
               ) : (

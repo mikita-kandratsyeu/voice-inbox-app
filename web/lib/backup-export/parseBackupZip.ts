@@ -1,7 +1,11 @@
 import { BlobReader, TextWriter, Uint8ArrayWriter, ZipReader } from '@zip.js/zip.js';
 
 import { MAX_BACKUP_ZIP_BYTES } from './constants';
-import { ExportPayloadV3Schema } from './schema';
+import {
+  EXPORT_MAX_RECORD_TEXT_CHARS,
+  ExportPayloadV3EnvelopeSchema,
+  VoiceRecordSchema,
+} from './schema';
 import type { ParsedBackup, ParsedFolder, ParsedRecord, ParsedTask } from './types';
 
 export class BackupZipParseError extends Error {
@@ -212,7 +216,7 @@ export async function parseBackupZip(file: File): Promise<ParsedBackup> {
     );
   }
 
-  const payloadResult = ExportPayloadV3Schema.safeParse(parsedJson);
+  const payloadResult = ExportPayloadV3EnvelopeSchema.safeParse(parsedJson);
   if (!payloadResult.success) {
     await zipReader.close().catch(() => {});
     throw new BackupZipParseError('Backup metadata failed validation.', 'invalid_schema');
@@ -221,13 +225,64 @@ export async function parseBackupZip(file: File): Promise<ParsedBackup> {
   const payload = payloadResult.data;
   const zipRootPrefix = zipRootPrefixFromMetadataPath(metaNorm);
 
-  const folders: ParsedFolder[] = (payload.folders ?? [])
-    .map((f) => toParsedFolder(f as Record<string, unknown>))
-    .filter((f) => f.id.length > 0);
+  let droppedFolderCount = 0;
+  const folders: ParsedFolder[] = [];
+  for (const f of payload.folders ?? []) {
+    if (f == null || typeof f !== 'object') {
+      droppedFolderCount++;
+      continue;
+    }
+    const row = f as Record<string, unknown>;
+    const parsed = toParsedFolder(row);
+    if (parsed.id.length > 0) {
+      folders.push(parsed);
+    } else {
+      droppedFolderCount++;
+    }
+  }
 
-  const records: ParsedRecord[] = payload.records
-    .map((r) => toParsedRecord(r as Record<string, unknown>))
-    .filter((r) => r.id.length > 0);
+  let droppedRecordCount = 0;
+  const records: ParsedRecord[] = [];
+  for (const raw of payload.records) {
+    if (raw == null || typeof raw !== 'object') {
+      droppedRecordCount++;
+      continue;
+    }
+    const obj = stripEmbedding(raw as Record<string, unknown>);
+    const validated = VoiceRecordSchema.safeParse(obj);
+    if (validated.success) {
+      const rec = toParsedRecord(validated.data as Record<string, unknown>);
+      if (rec.id.length > 0) records.push(rec);
+      else droppedRecordCount++;
+      continue;
+    }
+    const id = obj.id != null ? String(obj.id).trim() : '';
+    if (!id) {
+      droppedRecordCount++;
+      continue;
+    }
+    const tr = obj.transcript;
+    if (typeof tr === 'string' && tr.length > EXPORT_MAX_RECORD_TEXT_CHARS) {
+      droppedRecordCount++;
+      continue;
+    }
+    const sm = obj.summary;
+    if (typeof sm === 'string' && sm.length > EXPORT_MAX_RECORD_TEXT_CHARS) {
+      droppedRecordCount++;
+      continue;
+    }
+    const tt = obj.translatedTranscript;
+    if (typeof tt === 'string' && tt.length > EXPORT_MAX_RECORD_TEXT_CHARS) {
+      droppedRecordCount++;
+      continue;
+    }
+    records.push(toParsedRecord(obj));
+  }
+
+  const parseWarnings =
+    droppedFolderCount > 0 || droppedRecordCount > 0
+      ? { droppedFolderCount, droppedRecordCount }
+      : undefined;
 
   let closed = false;
   const dispose = async (): Promise<void> => {
@@ -248,9 +303,11 @@ export async function parseBackupZip(file: File): Promise<ParsedBackup> {
   };
 
   return {
+    backupFormatVersion: 3,
     exportedAt: payload.exportedAt,
     folders,
     records,
+    parseWarnings,
     zipRootPrefix,
     readFile,
     dispose,

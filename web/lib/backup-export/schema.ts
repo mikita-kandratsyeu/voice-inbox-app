@@ -1,7 +1,9 @@
 import { z } from 'zod';
 
 const MAX_SHORT = 100_000;
-const MAX_LONG = 10_000_000;
+/** Max characters for transcript / summary / translation in strict validation. */
+export const EXPORT_MAX_RECORD_TEXT_CHARS = 10_000_000;
+const MAX_LONG = EXPORT_MAX_RECORD_TEXT_CHARS;
 
 const str = z.string().max(MAX_SHORT);
 const longStr = z.string().max(MAX_LONG);
@@ -17,7 +19,7 @@ const TaskItemSchema = z
   })
   .passthrough();
 
-const FolderSchema = z
+export const FolderSchema = z
   .object({
     id: str,
     name: str,
@@ -28,7 +30,7 @@ const FolderSchema = z
   })
   .passthrough();
 
-const VoiceRecordSchema = z
+export const VoiceRecordSchema = z
   .object({
     id: str,
     createdAt: str,
@@ -56,6 +58,14 @@ export const ExportPayloadV3Schema = z.object({
   exportedAt: str,
   folders: z.array(FolderSchema).max(10_000).optional(),
   records: z.array(VoiceRecordSchema).max(50_000),
+});
+
+/** Validates JSON shell; rows are checked individually in `parseBackupZip` so one bad record does not fail the whole backup. */
+export const ExportPayloadV3EnvelopeSchema = z.object({
+  version: z.literal(3),
+  exportedAt: str,
+  folders: z.array(z.unknown()).max(10_000).optional(),
+  records: z.array(z.unknown()).max(50_000),
 });
 
 export type ExportPayloadV3 = z.infer<typeof ExportPayloadV3Schema>;
