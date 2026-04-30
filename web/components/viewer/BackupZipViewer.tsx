@@ -662,7 +662,11 @@ export function BackupZipViewer(): React.ReactElement {
                           </span>
                         </button>
                         <div id={`viewer-folder-${sectionKey}`} hidden={sectionCollapsed}>
-                          <ul className="py-1" role="list" aria-labelledby={`viewer-folder-h-${sectionKey}`}>
+                          <ul
+                            className="py-1"
+                            role="list"
+                            aria-labelledby={`viewer-folder-h-${sectionKey}`}
+                          >
                             {section.items.map((r) => (
                               <li key={r.id}>
                                 <button
