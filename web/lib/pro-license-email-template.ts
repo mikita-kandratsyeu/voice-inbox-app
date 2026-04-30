@@ -82,7 +82,7 @@ function buildFooterHtml(params: {
         &nbsp;
         <a href="${termsHref}" style="color:#9ca3af;text-decoration:underline;">Terms</a>
       </p>
-      <p style="margin:10px 0 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">© ${year} Voice Inbox AI</p>
+      <p style="margin:10px 0 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">© ${year} Voice Inbox AI. All rights reserved.</p>
     </td>
   </tr>
 </table>`;
