@@ -10,8 +10,8 @@
         <intent
             android:action="android.intent.action.VIEW"
             android:data="voiceinbox://record/start"
-            android:targetPackage="com.voiceinputapp"
-            android:targetClass="com.voiceinputapp.MainActivity" />
+            android:targetPackage="com.voiceinboxai"
+            android:targetClass="com.voiceinboxai.MainActivity" />
         <categories android:name="android.shortcut.conversation" />
     </shortcut>
 
@@ -24,8 +24,8 @@
         <intent
             android:action="android.intent.action.VIEW"
             android:data="voiceinbox://note/text"
-            android:targetPackage="com.voiceinputapp"
-            android:targetClass="com.voiceinputapp.MainActivity" />
+            android:targetPackage="com.voiceinboxai"
+            android:targetClass="com.voiceinboxai.MainActivity" />
     </shortcut>
 
     <shortcut
@@ -37,8 +37,8 @@
         <intent
             android:action="android.intent.action.VIEW"
             android:data="voiceinbox://tasks"
-            android:targetPackage="com.voiceinputapp"
-            android:targetClass="com.voiceinputapp.MainActivity" />
+            android:targetPackage="com.voiceinboxai"
+            android:targetClass="com.voiceinboxai.MainActivity" />
     </shortcut>
 
 </shortcuts>

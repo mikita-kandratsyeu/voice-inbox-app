@@ -6,4 +6,9 @@
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
     </style>
 
+    <!-- react-native-bootsplash: used by RNBootSplash.init (library parent merges Theme.BootSplash). -->
+    <style name="BootTheme" parent="Theme.BootSplash">
+        <item name="postBootSplashTheme">@style/AppTheme</item>
+    </style>
+
 </resources>

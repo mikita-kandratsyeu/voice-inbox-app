@@ -1,0 +1,82 @@
+///
+/// JHybridNitroFSSpec.hpp
+/// Vendored for react-native-nitro-modules 0.35+ (JNI shape matches nitrogen + JHybridObject).
+/// Upstream react-native-nitro-fs@0.8.2 ships pre-0.35 C++; applied via patch-nitro-fs-android-nitro035.mjs.
+///
+
+#pragma once
+
+#include <NitroModules/JHybridObject.hpp>
+#include <fbjni/fbjni.h>
+#include "HybridNitroFSSpec.hpp"
+
+
+
+
+namespace margelo::nitro::nitrofs {
+
+  using namespace facebook;
+
+  class JHybridNitroFSSpec: public virtual HybridNitroFSSpec, public virtual JHybridObject {
+  public:
+    struct JavaPart: public jni::JavaClass<JavaPart, JHybridObject::JavaPart> {
+      static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/nitrofs/HybridNitroFSSpec;";
+      std::shared_ptr<JHybridNitroFSSpec> getJHybridNitroFSSpec();
+    };
+    struct CxxPart: public jni::HybridClass<CxxPart, JHybridObject::CxxPart> {
+      static auto constexpr kJavaDescriptor = "Lcom/margelo/nitro/nitrofs/HybridNitroFSSpec$CxxPart;";
+      static jni::local_ref<jhybriddata> initHybrid(jni::alias_ref<jhybridobject> jThis);
+      static void registerNatives();
+      using HybridBase::HybridBase;
+    protected:
+      std::shared_ptr<JHybridObject> createHybridObject(const jni::local_ref<JHybridObject::JavaPart>& javaPart) override;
+    };
+
+  public:
+    explicit JHybridNitroFSSpec(const jni::local_ref<JHybridNitroFSSpec::JavaPart>& javaPart):
+      HybridObject(HybridNitroFSSpec::TAG),
+      JHybridObject(javaPart),
+      _javaPart(jni::make_global(javaPart)) {}
+    ~JHybridNitroFSSpec() override {
+      jni::ThreadScope::WithClassLoader([&] { _javaPart.reset(); });
+    }
+
+  public:
+    inline const jni::global_ref<JHybridNitroFSSpec::JavaPart>& getJavaPart() const noexcept {
+      return _javaPart;
+    }
+
+  public:
+    // Properties
+    std::string getBUNDLE_DIR() override;
+    std::string getDOCUMENT_DIR() override;
+    std::string getCACHE_DIR() override;
+    std::string getDOWNLOAD_DIR() override;
+    std::string getDCIM_DIR() override;
+    std::string getPICTURES_DIR() override;
+    std::string getMOVIES_DIR() override;
+    std::string getMUSIC_DIR() override;
+
+  public:
+    // Methods
+    std::shared_ptr<Promise<bool>> exists(const std::string& path) override;
+    std::shared_ptr<Promise<void>> writeFile(const std::string& path, const std::string& data, NitroFileEncoding encoding) override;
+    std::shared_ptr<Promise<std::string>> readFile(const std::string& path, NitroFileEncoding encoding) override;
+    std::shared_ptr<Promise<void>> copyFile(const std::string& srcPath, const std::string& destPath) override;
+    std::shared_ptr<Promise<void>> copy(const std::string& srcPath, const std::string& destPath) override;
+    std::shared_ptr<Promise<bool>> unlink(const std::string& path) override;
+    std::shared_ptr<Promise<bool>> mkdir(const std::string& path) override;
+    std::shared_ptr<Promise<NitroFileStat>> stat(const std::string& path) override;
+    std::shared_ptr<Promise<std::vector<NitroFile>>> readdir(const std::string& path) override;
+    std::shared_ptr<Promise<void>> rename(const std::string& oldPath, const std::string& newPath) override;
+    std::string dirname(const std::string& path) override;
+    std::string basename(const std::string& path) override;
+    std::string extname(const std::string& path) override;
+    std::shared_ptr<Promise<void>> uploadFile(const NitroFile& file, const NitroUploadOptions& uploadOptions, const std::optional<std::function<void(double /* uploadedBytes */, double /* totalBytes */)>>& onProgress) override;
+    std::shared_ptr<Promise<NitroFile>> downloadFile(const std::string& serverUrl, const std::string& destinationPath, const std::optional<std::function<void(double /* downloadedBytes */, double /* totalBytes */)>>& onProgress) override;
+
+  private:
+    jni::global_ref<JHybridNitroFSSpec::JavaPart> _javaPart;
+  };
+
+} // namespace margelo::nitro::nitrofs

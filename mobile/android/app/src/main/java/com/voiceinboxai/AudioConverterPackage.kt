@@ -1,4 +1,4 @@
-package com.voiceinputapp
+package com.voiceinboxai
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule

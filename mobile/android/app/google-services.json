@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "828265085007",
+    "project_id": "voice-inbox-ai",
+    "storage_bucket": "voice-inbox-ai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:828265085007:android:ae0376d7a23b6f67ced23a",
+        "android_client_info": {
+          "package_name": "com.voiceinboxai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCKZND2XEmfXK-l9uPNA88Z22ZHwBMVJ6E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

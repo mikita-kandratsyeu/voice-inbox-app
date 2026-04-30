@@ -1,4 +1,4 @@
-package com.voiceinputapp
+package com.voiceinboxai
 
 import android.media.MediaCodec
 import android.media.MediaExtractor

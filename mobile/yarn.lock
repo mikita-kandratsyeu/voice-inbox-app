@@ -11050,14 +11050,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-inappbrowser-nitro@npm:^2.1.2":
-  version: 2.1.2
-  resolution: "react-native-inappbrowser-nitro@npm:2.1.2"
+"react-native-inappbrowser-nitro@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "react-native-inappbrowser-nitro@npm:3.0.1"
   peerDependencies:
     react: "*"
     react-native: "*"
     react-native-nitro-modules: "*"
-  checksum: 10c0/b336ee3d02fefb8bc046d741d9686dee7d08c4844f97ff6dce5df1cff4570197dc489e5a81afe2df2efb4a2dc203e9756fab710c95e711f805c262ce3f77ee6c
+  checksum: 10c0/6b97568686bc4e52d6feb70fea44195698fd3937331de2f06d79a27fe7a4abb48967f1d203f398cf3a908cd9d4e920f7365573affabe8e2026aa72f20e492b20
   languageName: node
   linkType: hard
 
@@ -11182,13 +11182,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-nitro-modules@npm:^0.35.2":
-  version: 0.35.3
-  resolution: "react-native-nitro-modules@npm:0.35.3"
+"react-native-nitro-modules@npm:0.35.6":
+  version: 0.35.6
+  resolution: "react-native-nitro-modules@npm:0.35.6"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10c0/85faaa8fc10bb8a1a3d731045fca92fccfac8d884a1a3dc1dc9dfe6ef30231db2e7d9ed9fd66546ae1038918ad0ab371f8fd47d3cea8e480dc016c13d83eaafc
+  checksum: 10c0/57ec2a2d2e57da923c5c8c81d28f323691be0373d528b81a1a6e1da0e6675f29faa443cc16babd0abd4cd5e08e51ff273ed04a139f368236662212f15cc3a678
   languageName: node
   linkType: hard
 
@@ -13300,7 +13300,7 @@ __metadata:
     react-native-gesture-handler: "npm:^2.30.1"
     react-native-haptic-feedback: "npm:^3.0.0"
     react-native-in-app-review: "npm:^4.4.2"
-    react-native-inappbrowser-nitro: "npm:^2.1.2"
+    react-native-inappbrowser-nitro: "npm:^3.0.1"
     react-native-keep-awake: "npm:^4.0.0"
     react-native-keyboard-controller: "npm:^1.21.4"
     react-native-keychain: "npm:^10.0.0"
@@ -13310,7 +13310,7 @@ __metadata:
     react-native-nitro-device-info: "npm:^1.7.0"
     react-native-nitro-fetch: "npm:^0.2.1"
     react-native-nitro-fs: "npm:^0.8.2"
-    react-native-nitro-modules: "npm:^0.35.2"
+    react-native-nitro-modules: "npm:0.35.6"
     react-native-nitro-sound: "npm:^0.2.12"
     react-native-permissions: "npm:^5.5.1"
     react-native-purchases: "npm:^9.15.0"

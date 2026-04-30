@@ -1,4 +1,4 @@
-package com.voiceinputapp
+package com.voiceinboxai
 
 import android.view.WindowManager
 import com.facebook.react.bridge.ReactApplicationContext
@@ -12,7 +12,7 @@ class SecureWindowModule(reactContext: ReactApplicationContext) :
 
   @ReactMethod
   fun setSecure(secure: Boolean) {
-    val activity = currentActivity ?: return
+    val activity = reactApplicationContext.currentActivity ?: return
     activity.runOnUiThread {
       if (secure) {
         activity.window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)

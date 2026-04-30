@@ -27,3 +27,50 @@ ext.REACT_NATIVE_NODE_MODULES_DIR = new File(
 ).canonicalFile.absolutePath
 
 apply plugin: "com.facebook.react.rootproject"
+
+// react-native-nitro-fs: ensure Nitro 0.35 Kotlin (Promise<T>) is applied even if postinstall was skipped.
+def mobileRootDir = rootDir.parentFile
+def patchNitroFsScript = new File(mobileRootDir, "scripts/patch-nitro-fs-android-nitro035.mjs")
+
+def resolveNodeBinaryForPatch = {
+    def node = System.getenv("NODE_BINARY")
+    if (node == null || node.isEmpty()) {
+        def local = new File(rootDir, "local.properties")
+        if (local.exists()) {
+            def p = new Properties()
+            local.withInputStream { p.load(it) }
+            def n = p.getProperty("node.executable")
+            if (n != null && !n.isEmpty()) node = n
+        }
+    }
+    if (node == null || node.isEmpty()) {
+        if (new File("/opt/homebrew/bin/node").exists()) node = "/opt/homebrew/bin/node"
+        else if (new File("/usr/local/bin/node").exists()) node = "/usr/local/bin/node"
+        else node = "node"
+    }
+    return node
+}.call()
+
+tasks.register("patchNitroFsAndroidNitro035", Exec) {
+    group = "voice-inbox"
+    description = "Patch react-native-nitro-fs Kotlin for Nitro 0.35 (Promise<T>)"
+    workingDir = mobileRootDir
+    commandLine(resolveNodeBinaryForPatch, patchNitroFsScript.absolutePath)
+    onlyIf { patchNitroFsScript.exists() }
+}
+
+// Wire after the task graph exists (avoid afterEvaluate on already-evaluated autolink projects).
+gradle.projectsEvaluated {
+    def patch = rootProject.tasks.named("patchNitroFsAndroidNitro035")
+    rootProject.subprojects { Project sub ->
+        if (sub.name != "react-native-nitro-fs") {
+            return
+        }
+        sub.tasks.matching { it.name.startsWith("compile") && it.name.endsWith("Kotlin") }.configureEach {
+            it.dependsOn(patch)
+        }
+        sub.tasks.matching { it.name.startsWith("buildCMake") }.configureEach {
+            it.dependsOn(patch)
+        }
+    }
+}
