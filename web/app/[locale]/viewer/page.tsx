@@ -43,13 +43,21 @@ export default async function ViewerPage({ params }: Props) {
       <Header />
       <main className="flex-1">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-          <div className="mb-8 text-center sm:mb-10">
+          <div className="mb-6 text-center sm:mb-8">
             <h1 className="text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
               {t('heading')}
             </h1>
-            <p className="mx-auto mt-3 max-w-2xl text-base leading-relaxed text-slate-600 dark:text-slate-300">
-              {t('intro')}
+            <p className="mx-auto mt-2 max-w-2xl text-sm leading-relaxed text-slate-600 sm:text-base dark:text-slate-300">
+              {t('introShort')}
             </p>
+            <details className="mx-auto mt-3 max-w-2xl text-left">
+              <summary className="cursor-pointer list-none text-center text-sm font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 [&::-webkit-details-marker]:hidden">
+                <span className="underline-offset-2 hover:underline">{t('introMore')}</span>
+              </summary>
+              <p className="mt-3 text-center text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                {t('introDetail')}
+              </p>
+            </details>
           </div>
           <BackupZipViewer />
         </div>

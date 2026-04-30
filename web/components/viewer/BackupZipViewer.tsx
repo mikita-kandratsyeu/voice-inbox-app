@@ -1,8 +1,20 @@
 'use client';
 
-import { Archive, ChevronLeft, FileAudio, Folder, Loader2, Upload } from 'lucide-react';
+import {
+  Archive,
+  ChevronLeft,
+  FileAudio,
+  Folder,
+  Loader2,
+  PanelLeftClose,
+  PanelRightOpen,
+  Search,
+  Shield,
+  Upload,
+  X,
+} from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import {
   BackupZipParseError,
@@ -12,6 +24,13 @@ import {
   type ParsedBackup,
   type ParsedRecord,
 } from '@/lib/backup-export';
+import {
+  readSidebarCollapsed,
+  readSidebarWidthPct,
+  viewerSidebarWidthBounds,
+  writeSidebarCollapsed,
+  writeSidebarWidthPct,
+} from '@/lib/viewer-preferences';
 
 function guessAudioMime(path: string): string {
   const lower = path.toLowerCase();
@@ -39,11 +58,29 @@ function formatExportedAt(iso: string): string {
   }).format(d);
 }
 
+function recordMatchesQuery(r: ParsedRecord, q: string): boolean {
+  const s = q.trim().toLowerCase();
+  if (!s) return true;
+  const hay = [
+    r.title,
+    r.transcript,
+    r.summary ?? '',
+    ...(r.tags ?? []),
+    ...(r.tasks?.map((task) => task.text) ?? []),
+  ]
+    .join('\n')
+    .toLowerCase();
+  return hay.includes(s);
+}
+
 type TabId = 'transcript' | 'summary' | 'tasks' | 'translation';
 
 export function BackupZipViewer(): React.ReactElement {
   const t = useTranslations('viewerPage');
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const layoutRef = useRef<HTMLDivElement>(null);
+
   const [isNarrow, setNarrow] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -53,6 +90,14 @@ export function BackupZipViewer(): React.ReactElement {
   const [tab, setTab] = useState<TabId>('transcript');
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loadedFileName, setLoadedFileName] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarWidthPct, setSidebarWidthPct] = useState(viewerSidebarWidthBounds.default);
+
+  useLayoutEffect(() => {
+    setSidebarCollapsed(readSidebarCollapsed());
+    setSidebarWidthPct(readSidebarWidthPct());
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
@@ -72,6 +117,10 @@ export function BackupZipViewer(): React.ReactElement {
     if (!backup) return [];
     return [...backup.records].sort(sortRecords);
   }, [backup]);
+
+  const filteredSortedRecords = useMemo(() => {
+    return sortedRecords.filter((r) => recordMatchesQuery(r, searchQuery));
+  }, [sortedRecords, searchQuery]);
 
   const folderNameById = useMemo(() => {
     const m = new Map<string, string>();
@@ -96,7 +145,7 @@ export function BackupZipViewer(): React.ReactElement {
     const sections: { folderId: string | null; label: string; items: ParsedRecord[] }[] = [];
     const byFolder = new Map<string | null, ParsedRecord[]>();
 
-    for (const r of sortedRecords) {
+    for (const r of filteredSortedRecords) {
       const fid = r.folderId ?? null;
       if (!byFolder.has(fid)) byFolder.set(fid, []);
       byFolder.get(fid)!.push(r);
@@ -127,11 +176,27 @@ export function BackupZipViewer(): React.ReactElement {
     }
 
     return sections;
-  }, [sortedRecords, sortedFolders, folderNameById, t]);
+  }, [filteredSortedRecords, sortedFolders, folderNameById, t]);
+
+  const flatSelectableIds = useMemo(
+    () => groupedSections.flatMap((s) => s.items.map((i) => i.id)),
+    [groupedSections],
+  );
+
+  useEffect(() => {
+    if (!backup) return;
+    if (filteredSortedRecords.length === 0) {
+      setSelectedId(null);
+      return;
+    }
+    if (selectedId && !filteredSortedRecords.some((r) => r.id === selectedId)) {
+      setSelectedId(filteredSortedRecords[0]?.id ?? null);
+    }
+  }, [backup, filteredSortedRecords, selectedId]);
 
   const selected = useMemo(
-    () => sortedRecords.find((r) => r.id === selectedId) ?? null,
-    [sortedRecords, selectedId],
+    () => filteredSortedRecords.find((r) => r.id === selectedId) ?? null,
+    [filteredSortedRecords, selectedId],
   );
 
   const processFile = useCallback(async (file: File) => {
@@ -139,6 +204,7 @@ export function BackupZipViewer(): React.ReactElement {
     setLoading(true);
     setAudioUrl(null);
     setLoadedFileName(null);
+    setSearchQuery('');
     setBackup(null);
     setSelectedId(null);
     try {
@@ -214,6 +280,72 @@ export function BackupZipViewer(): React.ReactElement {
     };
   }, [backup, selected?.audioPath, selected?.id]);
 
+  useEffect(() => {
+    if (!backup || flatSelectableIds.length === 0) return;
+
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (!el) return;
+      const tag = el.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable) {
+        return;
+      }
+
+      if (e.key === 'ArrowDown' || e.key === 'j' || e.key === 'J') {
+        const i = flatSelectableIds.indexOf(selectedId ?? '');
+        const next = i < 0 ? 0 : Math.min(flatSelectableIds.length - 1, i + 1);
+        if (flatSelectableIds[next] && flatSelectableIds[next] !== selectedId) {
+          e.preventDefault();
+          setSelectedId(flatSelectableIds[next]!);
+          setTab('transcript');
+        }
+      } else if (e.key === 'ArrowUp' || e.key === 'k' || e.key === 'K') {
+        const i = flatSelectableIds.indexOf(selectedId ?? '');
+        if (i <= 0) return;
+        e.preventDefault();
+        setSelectedId(flatSelectableIds[i - 1]!);
+        setTab('transcript');
+      }
+    };
+
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [backup, flatSelectableIds, selectedId]);
+
+  const beginResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const startX = e.clientX;
+    const startPct = sidebarWidthPct;
+    const onMove = (ev: MouseEvent) => {
+      const lay = layoutRef.current;
+      if (!lay) return;
+      const w = lay.getBoundingClientRect().width;
+      if (w < 1) return;
+      const dx = ev.clientX - startX;
+      const next = Math.round(startPct + (dx / w) * 100);
+      const { min, max } = viewerSidebarWidthBounds;
+      setSidebarWidthPct(Math.min(max, Math.max(min, next)));
+    };
+    const onUp = () => {
+      setSidebarWidthPct((pct) => {
+        writeSidebarWidthPct(pct);
+        return pct;
+      });
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  };
+
+  const toggleSidebarCollapsed = () => {
+    setSidebarCollapsed((c) => {
+      const next = !c;
+      writeSidebarCollapsed(next);
+      return next;
+    });
+  };
+
   const errorTextMap = useMemo(
     () => ({
       too_large: t('errors.too_large'),
@@ -247,8 +379,13 @@ export function BackupZipViewer(): React.ReactElement {
     onDrop: onDrop,
   };
 
+  const tryAnotherFile = () => {
+    setErrorCode(null);
+    inputRef.current?.click();
+  };
+
   return (
-    <div className={backup ? 'space-y-4' : 'space-y-6'}>
+    <div className={backup ? 'space-y-4' : 'space-y-5'}>
       <input
         ref={inputRef}
         type="file"
@@ -259,51 +396,44 @@ export function BackupZipViewer(): React.ReactElement {
       />
 
       {!backup ? (
-        <>
-          <div
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
+        <div
+          {...dropHandlers}
+          className={[
+            'rounded-3xl border-2 border-dashed px-4 py-10 transition-colors sm:px-8 sm:py-12',
+            dragOver
+              ? 'border-blue-500 bg-blue-500/10 dark:border-blue-400 dark:bg-blue-500/15'
+              : 'border-black/15 bg-white/60 dark:border-white/14 dark:bg-white/[0.05]',
+          ].join(' ')}
+        >
+          <div className="mx-auto flex max-w-lg flex-col items-center gap-5 text-center">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={(e) => {
+                e.stopPropagation();
                 inputRef.current?.click();
-              }
-            }}
-            {...dropHandlers}
-            onClick={() => inputRef.current?.click()}
-            className={[
-              'group relative cursor-pointer rounded-3xl border-2 border-dashed px-6 py-14 text-center transition-colors',
-              dragOver
-                ? 'border-blue-500 bg-blue-500/10 dark:border-blue-400 dark:bg-blue-500/15'
-                : 'border-black/15 bg-white/50 hover:border-blue-400/60 hover:bg-white/80 dark:border-white/15 dark:bg-white/[0.04] dark:hover:border-blue-400/40 dark:hover:bg-white/[0.07]',
-            ].join(' ')}
-          >
-            <div className="mx-auto flex max-w-md flex-col items-center gap-4">
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-linear-to-br from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25">
-                {loading ? (
-                  <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
-                ) : (
-                  <Upload className="h-8 w-8" aria-hidden />
-                )}
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-slate-900 dark:text-white">
-                  {t('dropTitle')}
-                </p>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                  {t('dropHint', { maxMb })}
-                </p>
-              </div>
-              <span className="rounded-xl bg-black/[0.06] px-4 py-2 text-sm font-medium text-slate-800 dark:bg-white/10 dark:text-slate-100">
-                {t('chooseFile')}
-              </span>
+              }}
+              className="inline-flex min-h-[52px] min-w-[min(100%,280px)] items-center justify-center gap-2 rounded-2xl bg-linear-to-br from-blue-600 to-indigo-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-blue-600/25 transition-[transform,box-shadow] hover:shadow-xl hover:shadow-blue-600/30 disabled:opacity-60"
+            >
+              {loading ? (
+                <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
+              ) : (
+                <Upload className="h-6 w-6 shrink-0" aria-hidden />
+              )}
+              {t('chooseArchivePrimary')}
+            </button>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {t('dragZipHint', { maxMb })}
+            </p>
+            <div className="flex max-w-md items-start justify-center gap-2 text-left text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+              <Shield
+                className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+                aria-hidden
+              />
+              <span>{t('privacyInline')}</span>
             </div>
           </div>
-
-          <div className="rounded-2xl border border-blue-500/20 bg-blue-500/[0.06] px-4 py-3 text-sm leading-relaxed text-slate-700 dark:border-blue-400/25 dark:bg-blue-500/10 dark:text-slate-200">
-            {t('privacyNote')}
-          </div>
-        </>
+        </div>
       ) : (
         <div
           {...dropHandlers}
@@ -342,7 +472,11 @@ export function BackupZipViewer(): React.ReactElement {
               {t('replaceBackup')}
             </button>
           </div>
-          <p className="mt-3 border-t border-black/6 pt-3 text-xs leading-relaxed text-slate-500 dark:border-white/10 dark:text-slate-400">
+          <p className="mt-3 flex items-start gap-2 border-t border-black/6 pt-3 text-xs leading-relaxed text-slate-500 dark:border-white/10 dark:text-slate-400">
+            <Shield
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600/90 dark:text-emerald-400/90"
+              aria-hidden
+            />
             {t('privacyNoteCompact')}
           </p>
         </div>
@@ -351,9 +485,16 @@ export function BackupZipViewer(): React.ReactElement {
       {errorMessage ? (
         <div
           role="alert"
-          className="rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-900 dark:text-red-100"
+          className="rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-4 text-sm text-red-900 dark:text-red-100"
         >
-          {errorMessage}
+          <p className="leading-relaxed">{errorMessage}</p>
+          <button
+            type="button"
+            onClick={tryAnotherFile}
+            className="mt-3 inline-flex min-h-[44px] items-center justify-center rounded-xl bg-red-950/10 px-4 py-2 text-sm font-semibold text-red-950 hover:bg-red-950/15 dark:bg-white/10 dark:text-white dark:hover:bg-white/15"
+          >
+            {t('tryOtherFile')}
+          </button>
         </div>
       ) : null}
 
@@ -368,54 +509,139 @@ export function BackupZipViewer(): React.ReactElement {
             {t('recordCount', { count: backup.records.length })}
           </div>
 
-          <div className="flex min-h-[min(520px,70vh)] flex-col md:flex-row">
-            {/* Sidebar list */}
-            <aside
-              className={[
-                'max-h-[55vh] shrink-0 overflow-y-auto border-black/8 md:max-h-none md:w-[min(100%,380px)] md:border-r dark:border-white/10',
-                isNarrow && selectedId ? 'hidden md:block' : 'block',
-              ].join(' ')}
-            >
-              {groupedSections.map((section) => (
-                <div
-                  key={section.folderId ?? 'root'}
-                  className="border-b border-black/6 last:border-0 dark:border-white/8"
+          <div ref={layoutRef} className="flex min-h-[min(520px,70vh)] flex-col md:flex-row">
+            {!isNarrow && sidebarCollapsed ? (
+              <div className="hidden w-12 shrink-0 flex-col items-center border-b border-black/8 bg-slate-50/90 py-3 dark:border-white/10 dark:bg-slate-950/50 md:flex md:border-b-0 md:border-r">
+                <button
+                  type="button"
+                  onClick={toggleSidebarCollapsed}
+                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-black/10 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-white/12 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
+                  aria-label={t('expandList')}
                 >
-                  <div className="sticky top-0 z-10 flex items-center gap-2 bg-slate-100/95 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur-sm dark:bg-slate-900/90 dark:text-slate-400">
-                    <Folder className="h-3.5 w-3.5 shrink-0" aria-hidden />
-                    {section.label}
-                  </div>
-                  <ul className="py-1">
-                    {section.items.map((r) => (
-                      <li key={r.id}>
+                  <PanelRightOpen className="h-5 w-5" aria-hidden />
+                </button>
+              </div>
+            ) : null}
+
+            {(!isNarrow && !sidebarCollapsed) || isNarrow ? (
+              <aside
+                style={
+                  !isNarrow && !sidebarCollapsed
+                    ? {
+                        width: `${sidebarWidthPct}%`,
+                        minWidth: 220,
+                        maxWidth: 520,
+                      }
+                    : undefined
+                }
+                className={[
+                  'max-h-[55vh] shrink-0 overflow-hidden border-black/8 md:flex md:max-h-none md:min-h-0 md:flex-col md:border-r dark:border-white/10',
+                  isNarrow && selectedId ? 'hidden md:flex' : 'flex',
+                  isNarrow ? 'w-full flex-col' : '',
+                ].join(' ')}
+              >
+                <div className="shrink-0 border-b border-black/8 bg-white/95 px-3 py-2.5 dark:border-white/10 dark:bg-slate-950/80">
+                  <div className="flex gap-2">
+                    <div className="relative min-w-0 flex-1">
+                      <Search
+                        className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
+                        aria-hidden
+                      />
+                      <input
+                        ref={searchInputRef}
+                        type="search"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder={t('searchPlaceholder')}
+                        className="w-full rounded-xl border border-black/10 bg-white py-2.5 pl-9 pr-9 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-white/12 dark:bg-white/5 dark:text-white dark:placeholder:text-slate-500 dark:focus:border-blue-400"
+                        aria-label={t('searchPlaceholder')}
+                      />
+                      {searchQuery ? (
                         <button
                           type="button"
-                          onClick={() => {
-                            setSelectedId(r.id);
-                            setTab('transcript');
-                          }}
-                          className={[
-                            'flex w-full flex-col gap-0.5 px-4 py-3 text-left text-sm transition-colors',
-                            r.id === selectedId
-                              ? 'bg-blue-500/12 text-slate-900 dark:bg-blue-500/20 dark:text-white'
-                              : 'text-slate-700 hover:bg-black/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]',
-                          ].join(' ')}
+                          onClick={() => setSearchQuery('')}
+                          className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 hover:bg-black/[0.06] hover:text-slate-800 dark:hover:bg-white/10 dark:hover:text-white"
+                          aria-label={t('searchClear')}
                         >
-                          <span className="line-clamp-2 font-medium leading-snug">
-                            {r.title || t('untitled')}
-                          </span>
-                          <span className="text-xs text-slate-500 dark:text-slate-400">
-                            {r.duration} · {formatExportedAt(r.createdAt)}
-                          </span>
+                          <X className="h-4 w-4" aria-hidden />
                         </button>
-                      </li>
-                    ))}
-                  </ul>
+                      ) : null}
+                    </div>
+                    {!isNarrow ? (
+                      <button
+                        type="button"
+                        onClick={toggleSidebarCollapsed}
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-black/10 bg-white text-slate-700 shadow-sm hover:bg-slate-50 dark:border-white/12 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15"
+                        aria-label={t('collapseList')}
+                      >
+                        <PanelLeftClose className="h-5 w-5" aria-hidden />
+                      </button>
+                    ) : null}
+                  </div>
+                  {!isNarrow ? (
+                    <p className="mt-2 hidden text-[11px] leading-snug text-slate-400 md:block dark:text-slate-500">
+                      {t('keyboardHint')}
+                    </p>
+                  ) : null}
                 </div>
-              ))}
-            </aside>
+                <div className="min-h-0 flex-1 overflow-y-auto">
+                  {groupedSections.length === 0 ? (
+                    <div className="px-4 py-10 text-center text-sm text-slate-500 dark:text-slate-400">
+                      {t('noSearchResults')}
+                    </div>
+                  ) : (
+                    groupedSections.map((section) => (
+                      <div
+                        key={section.folderId ?? 'root'}
+                        className="border-b border-black/6 last:border-0 dark:border-white/8"
+                      >
+                        <div className="sticky top-0 z-10 flex items-center gap-2 bg-slate-100/95 px-4 py-2.5 text-xs font-semibold uppercase tracking-wide text-slate-500 backdrop-blur-sm dark:bg-slate-900/90 dark:text-slate-400">
+                          <Folder className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          {section.label}
+                        </div>
+                        <ul className="py-1">
+                          {section.items.map((r) => (
+                            <li key={r.id}>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedId(r.id);
+                                  setTab('transcript');
+                                }}
+                                className={[
+                                  'flex w-full flex-col gap-0.5 px-4 py-3 text-left text-sm transition-colors',
+                                  r.id === selectedId
+                                    ? 'bg-blue-500/12 text-slate-900 dark:bg-blue-500/20 dark:text-white'
+                                    : 'text-slate-700 hover:bg-black/[0.04] dark:text-slate-200 dark:hover:bg-white/[0.06]',
+                                ].join(' ')}
+                              >
+                                <span className="line-clamp-2 font-medium leading-snug">
+                                  {r.title || t('untitled')}
+                                </span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">
+                                  {r.duration} · {formatExportedAt(r.createdAt)}
+                                </span>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </aside>
+            ) : null}
 
-            {/* Detail */}
+            {!isNarrow && !sidebarCollapsed ? (
+              <button
+                type="button"
+                aria-hidden
+                tabIndex={-1}
+                onMouseDown={beginResize}
+                className="hidden w-1.5 shrink-0 cursor-col-resize border-x border-transparent bg-black/[0.06] hover:bg-blue-500/30 md:block dark:bg-white/10 dark:hover:bg-blue-400/35"
+              />
+            ) : null}
+
             <div
               className={[
                 'flex min-h-[min(480px,65vh)] min-w-0 flex-1 flex-col',
@@ -564,7 +790,9 @@ export function BackupZipViewer(): React.ReactElement {
               ) : (
                 <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-16 text-center text-slate-500 dark:text-slate-400">
                   <Archive className="h-10 w-10 opacity-40" aria-hidden />
-                  <p className="text-sm">{t('selectPrompt')}</p>
+                  <p className="text-sm">
+                    {searchQuery.trim() ? t('noSearchResults') : t('selectPrompt')}
+                  </p>
                 </div>
               )}
             </div>
