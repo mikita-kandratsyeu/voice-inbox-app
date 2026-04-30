@@ -196,7 +196,7 @@ export function BackupZipViewer(): React.ReactElement {
         setAudioUrl(null);
         return;
       }
-      const blob = new Blob([bytes], { type: guessAudioMime(selected.audioPath!) });
+      const blob = new Blob([new Uint8Array(bytes)], { type: guessAudioMime(selected.audioPath!) });
       const url = URL.createObjectURL(blob);
       if (cancelled) {
         URL.revokeObjectURL(url);

@@ -62,6 +62,16 @@ function stripEmbedding<T extends Record<string, unknown>>(row: T): T {
   return next;
 }
 
+function parseTaskPriority(value: unknown): ParsedTask['priority'] {
+  if (value === 'high' || value === 'medium' || value === 'low') return value;
+  return undefined;
+}
+
+function parseTaskSource(value: unknown): ParsedTask['source'] {
+  if (value === 'manual' || value === 'ai') return value;
+  return undefined;
+}
+
 function toParsedRecord(raw: Record<string, unknown>): ParsedRecord {
   const r = stripEmbedding(raw);
   const tasksRaw = Array.isArray(r.tasks) ? r.tasks : [];
@@ -72,11 +82,8 @@ function toParsedRecord(raw: Record<string, unknown>): ParsedRecord {
       text: String(t.text ?? ''),
       isDone: Boolean(t.isDone),
       deadline: t.deadline != null ? String(t.deadline) : undefined,
-      priority:
-        t.priority === 'high' || t.priority === 'medium' || t.priority === 'low'
-          ? t.priority
-          : undefined,
-      source: t.source === 'manual' || t.source === 'ai' ? t.source : undefined,
+      priority: parseTaskPriority(t.priority),
+      source: parseTaskSource(t.source),
     }))
     .filter((t) => t.id.length > 0);
 
@@ -138,8 +145,8 @@ export async function parseBackupZip(file: File): Promise<ParsedBackup> {
     throw new BackupZipParseError('This file does not look like a ZIP archive.', 'not_zip');
   }
 
-  const zipReader = new ZipReader(new BlobReader(file));
-  let entries: Awaited<ReturnType<ZipReader['getEntries']>>;
+  const zipReader = new ZipReader<Blob>(new BlobReader(file));
+  let entries: Awaited<ReturnType<ZipReader<Blob>['getEntries']>>;
   try {
     entries = await zipReader.getEntries();
   } catch {
@@ -164,6 +171,11 @@ export async function parseBackupZip(file: File): Promise<ParsedBackup> {
   }
 
   if (!metaEntry) {
+    await zipReader.close().catch(() => {});
+    throw new BackupZipParseError('No metadata.json found inside the archive.', 'no_metadata');
+  }
+
+  if (metaEntry.directory) {
     await zipReader.close().catch(() => {});
     throw new BackupZipParseError('No metadata.json found inside the archive.', 'no_metadata');
   }
