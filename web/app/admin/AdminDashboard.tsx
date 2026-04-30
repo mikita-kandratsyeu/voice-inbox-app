@@ -1352,8 +1352,9 @@ export function AdminDashboard() {
                   </div>
                 )}
                 <p className="mb-4 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                  <span className="font-medium text-zinc-600 dark:text-zinc-300">Nominal end</span>{' '}
-                  is the period from this key only from its activation time (no stacking).{' '}
+                  <span className="font-medium text-zinc-600 dark:text-zinc-300">Key grant ends</span>{' '}
+                  is this key&apos;s window only (activation + duration; it does not move when the
+                  device is extended).{' '}
                   <span className="font-medium text-zinc-600 dark:text-zinc-300">
                     Device Pro until
                   </span>{' '}
@@ -1361,8 +1362,9 @@ export function AdminDashboard() {
                   <code className="rounded bg-zinc-100 px-1 font-mono text-[10px] dark:bg-zinc-800">
                     DeviceProEntitlement
                   </code>{' '}
-                  for that device — it reflects stacking, later keys, IAP, RevenueCat sync, and
-                  resets.
+                  for that device — stacking, later keys on the same device, IAP, RevenueCat sync,
+                  and resets. In Status, <span className="font-medium text-zinc-600 dark:text-zinc-300">Device in Pro</span>{' '}
+                  follows that entitlement, not whether this row&apos;s key grant is still open.
                 </p>
 
                 <div className="mb-6 rounded-lg border border-emerald-200 bg-emerald-50/90 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/35">
@@ -1695,15 +1697,43 @@ export function AdminDashboard() {
                           <th className="py-2 pr-4 font-medium">Duration</th>
                           <th className="py-2 pr-4 font-medium">Email</th>
                           <th className="py-2 pr-4 font-medium">Activated</th>
-                          <th className="py-2 pr-4 font-medium">Nominal end</th>
-                          <th className="py-2 pr-4 font-medium">Device Pro until</th>
-                          <th className="py-2 pr-4 font-medium">Status</th>
+                          <th
+                            className="py-2 pr-4 font-medium"
+                            title="This key only: activation time + printed duration. Unchanged when another key extends the same device."
+                          >
+                            Key grant ends
+                          </th>
+                          <th
+                            className="py-2 pr-4 font-medium"
+                            title="Current DeviceProEntitlement.expiresAt for this device (one row per device)."
+                          >
+                            Device Pro until
+                          </th>
+                          <th
+                            className="py-2 pr-4 font-medium"
+                            title="Redeemed flags the key record; Device in Pro reflects entitlement on the bound device."
+                          >
+                            Status
+                          </th>
                           <th className="py-2 pr-4 font-medium">Device</th>
                           <th className="py-2 font-medium"> </th>
                         </tr>
                       </thead>
                       <tbody>
-                        {proLicenseList.map((row) => (
+                        {proLicenseList.map((row) => {
+                          const nominalMs = row.nominalGrantEndsAt
+                            ? new Date(row.nominalGrantEndsAt).getTime()
+                            : null;
+                          const keyGrantEnded =
+                            nominalMs !== null &&
+                            !Number.isNaN(nominalMs) &&
+                            nominalMs <= Date.now();
+                          const deviceExtendedPastKeyGrant =
+                            row.consumed &&
+                            keyGrantEnded &&
+                            row.deviceProActive === true;
+
+                          return (
                           <tr
                             key={row.id}
                             className="border-b border-zinc-100 dark:border-zinc-700/80"
@@ -1742,15 +1772,26 @@ export function AdminDashboard() {
                                   </span>
                                   {row.deviceProActive ? (
                                     <span className="text-[11px] text-emerald-600 dark:text-emerald-400">
-                                      Pro active
+                                      Device in Pro
                                     </span>
                                   ) : row.deviceProExpiresAt ? (
-                                    <span className="text-[11px] text-zinc-500">Pro ended</span>
+                                    <span className="text-[11px] text-zinc-500">
+                                      Device not in Pro
+                                    </span>
                                   ) : (
                                     <span className="text-[11px] text-amber-600 dark:text-amber-400">
                                       No device row
                                     </span>
                                   )}
+                                  {deviceExtendedPastKeyGrant ? (
+                                    <span
+                                      className="max-w-56 text-[10px] leading-snug text-amber-800 dark:text-amber-200/95"
+                                      title="This key's own grant window is past, but DeviceProEntitlement for this device is still in the future (e.g. another key on the same device, IAP, or sync)."
+                                    >
+                                      This key&apos;s grant ended — device Pro from renewal /
+                                      other source
+                                    </span>
+                                  ) : null}
                                 </div>
                               )}
                             </td>
@@ -1782,7 +1823,8 @@ export function AdminDashboard() {
                               </div>
                             </td>
                           </tr>
-                        ))}
+                          );
+                        })}
                       </tbody>
                     </table>
                     <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
