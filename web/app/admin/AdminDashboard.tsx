@@ -1352,7 +1352,9 @@ export function AdminDashboard() {
                   </div>
                 )}
                 <p className="mb-4 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
-                  <span className="font-medium text-zinc-600 dark:text-zinc-300">Key grant ends</span>{' '}
+                  <span className="font-medium text-zinc-600 dark:text-zinc-300">
+                    Key grant ends
+                  </span>{' '}
                   is this key&apos;s window only (activation + duration; it does not move when the
                   device is extended).{' '}
                   <span className="font-medium text-zinc-600 dark:text-zinc-300">
@@ -1363,7 +1365,10 @@ export function AdminDashboard() {
                     DeviceProEntitlement
                   </code>{' '}
                   for that device — stacking, later keys on the same device, IAP, RevenueCat sync,
-                  and resets. In Status, <span className="font-medium text-zinc-600 dark:text-zinc-300">Device in Pro</span>{' '}
+                  and resets. In Status,{' '}
+                  <span className="font-medium text-zinc-600 dark:text-zinc-300">
+                    Device in Pro
+                  </span>{' '}
                   follows that entitlement, not whether this row&apos;s key grant is still open.
                 </p>
 
@@ -1729,100 +1734,98 @@ export function AdminDashboard() {
                             !Number.isNaN(nominalMs) &&
                             nominalMs <= Date.now();
                           const deviceExtendedPastKeyGrant =
-                            row.consumed &&
-                            keyGrantEnded &&
-                            row.deviceProActive === true;
+                            row.consumed && keyGrantEnded && row.deviceProActive === true;
 
                           return (
-                          <tr
-                            key={row.id}
-                            className="border-b border-zinc-100 dark:border-zinc-700/80"
-                          >
-                            <td className="py-2 pr-4 text-zinc-600 dark:text-zinc-400">
-                              {formatDate(new Date(row.createdAt).getTime())}
-                            </td>
-                            <td className="py-2 pr-4">
-                              {formatProLicenseRowDuration(row.durationMonths, row.durationDays)}
-                            </td>
-                            <td className="max-w-[200px] truncate py-2 pr-4 text-zinc-700 dark:text-zinc-300">
-                              {row.issuedToEmail ?? '—'}
-                            </td>
-                            <td className="whitespace-nowrap py-2 pr-4 text-zinc-600 dark:text-zinc-400">
-                              {row.consumedAt
-                                ? formatDate(new Date(row.consumedAt).getTime())
-                                : '—'}
-                            </td>
-                            <td className="whitespace-nowrap py-2 pr-4 text-zinc-600 dark:text-zinc-400">
-                              {row.nominalGrantEndsAt
-                                ? formatDate(new Date(row.nominalGrantEndsAt).getTime())
-                                : '—'}
-                            </td>
-                            <td className="whitespace-nowrap py-2 pr-4 text-zinc-600 dark:text-zinc-400">
-                              {row.deviceProExpiresAt
-                                ? formatDate(new Date(row.deviceProExpiresAt).getTime())
-                                : '—'}
-                            </td>
-                            <td className="py-2 pr-4">
-                              {!row.consumed ? (
-                                <span className="text-zinc-500">Unused</span>
-                              ) : (
-                                <div className="flex flex-col gap-0.5">
-                                  <span className="text-green-700 dark:text-green-400">
-                                    Redeemed
-                                  </span>
-                                  {row.deviceProActive ? (
-                                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400">
-                                      Device in Pro
+                            <tr
+                              key={row.id}
+                              className="border-b border-zinc-100 dark:border-zinc-700/80"
+                            >
+                              <td className="py-2 pr-4 text-zinc-600 dark:text-zinc-400">
+                                {formatDate(new Date(row.createdAt).getTime())}
+                              </td>
+                              <td className="py-2 pr-4">
+                                {formatProLicenseRowDuration(row.durationMonths, row.durationDays)}
+                              </td>
+                              <td className="max-w-[200px] truncate py-2 pr-4 text-zinc-700 dark:text-zinc-300">
+                                {row.issuedToEmail ?? '—'}
+                              </td>
+                              <td className="whitespace-nowrap py-2 pr-4 text-zinc-600 dark:text-zinc-400">
+                                {row.consumedAt
+                                  ? formatDate(new Date(row.consumedAt).getTime())
+                                  : '—'}
+                              </td>
+                              <td className="whitespace-nowrap py-2 pr-4 text-zinc-600 dark:text-zinc-400">
+                                {row.nominalGrantEndsAt
+                                  ? formatDate(new Date(row.nominalGrantEndsAt).getTime())
+                                  : '—'}
+                              </td>
+                              <td className="whitespace-nowrap py-2 pr-4 text-zinc-600 dark:text-zinc-400">
+                                {row.deviceProExpiresAt
+                                  ? formatDate(new Date(row.deviceProExpiresAt).getTime())
+                                  : '—'}
+                              </td>
+                              <td className="py-2 pr-4">
+                                {!row.consumed ? (
+                                  <span className="text-zinc-500">Unused</span>
+                                ) : (
+                                  <div className="flex flex-col gap-0.5">
+                                    <span className="text-green-700 dark:text-green-400">
+                                      Redeemed
                                     </span>
-                                  ) : row.deviceProExpiresAt ? (
-                                    <span className="text-[11px] text-zinc-500">
-                                      Device not in Pro
-                                    </span>
-                                  ) : (
-                                    <span className="text-[11px] text-amber-600 dark:text-amber-400">
-                                      No device row
-                                    </span>
-                                  )}
-                                  {deviceExtendedPastKeyGrant ? (
-                                    <span
-                                      className="max-w-56 text-[10px] leading-snug text-amber-800 dark:text-amber-200/95"
-                                      title="This key's own grant window is past, but DeviceProEntitlement for this device is still in the future (e.g. another key on the same device, IAP, or sync)."
+                                    {row.deviceProActive ? (
+                                      <span className="text-[11px] text-emerald-600 dark:text-emerald-400">
+                                        Device in Pro
+                                      </span>
+                                    ) : row.deviceProExpiresAt ? (
+                                      <span className="text-[11px] text-zinc-500">
+                                        Device not in Pro
+                                      </span>
+                                    ) : (
+                                      <span className="text-[11px] text-amber-600 dark:text-amber-400">
+                                        No device row
+                                      </span>
+                                    )}
+                                    {deviceExtendedPastKeyGrant ? (
+                                      <span
+                                        className="max-w-56 text-[10px] leading-snug text-amber-800 dark:text-amber-200/95"
+                                        title="This key's own grant window is past, but DeviceProEntitlement for this device is still in the future (e.g. another key on the same device, IAP, or sync)."
+                                      >
+                                        This key&apos;s grant ended — device Pro from renewal /
+                                        other source
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="py-2 pr-4 font-mono text-xs text-zinc-600 dark:text-zinc-400">
+                                {row.devicePrefix ?? '—'}
+                              </td>
+                              <td className="py-2 text-right">
+                                <div className="flex flex-wrap justify-end gap-2">
+                                  {!row.consumed && (
+                                    <button
+                                      type="button"
+                                      disabled={proLicenseDeletingId === row.id}
+                                      onClick={() => void handleDeleteProLicense(row)}
+                                      className="rounded border border-red-200 bg-white px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:bg-zinc-800 dark:text-red-400 dark:hover:bg-red-950/40"
                                     >
-                                      This key&apos;s grant ended — device Pro from renewal /
-                                      other source
-                                    </span>
-                                  ) : null}
+                                      {proLicenseDeletingId === row.id ? 'Deleting…' : 'Delete'}
+                                    </button>
+                                  )}
+                                  {row.consumed && (
+                                    <button
+                                      type="button"
+                                      disabled={proLicenseResettingId === row.id}
+                                      onClick={() => void handleResetProLicense(row)}
+                                      className="rounded border border-amber-200 bg-white px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-900 dark:bg-zinc-800 dark:text-amber-200 dark:hover:bg-amber-950/40"
+                                    >
+                                      {proLicenseResettingId === row.id ? 'Resetting…' : 'Reset'}
+                                    </button>
+                                  )}
                                 </div>
-                              )}
-                            </td>
-                            <td className="py-2 pr-4 font-mono text-xs text-zinc-600 dark:text-zinc-400">
-                              {row.devicePrefix ?? '—'}
-                            </td>
-                            <td className="py-2 text-right">
-                              <div className="flex flex-wrap justify-end gap-2">
-                                {!row.consumed && (
-                                  <button
-                                    type="button"
-                                    disabled={proLicenseDeletingId === row.id}
-                                    onClick={() => void handleDeleteProLicense(row)}
-                                    className="rounded border border-red-200 bg-white px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:bg-zinc-800 dark:text-red-400 dark:hover:bg-red-950/40"
-                                  >
-                                    {proLicenseDeletingId === row.id ? 'Deleting…' : 'Delete'}
-                                  </button>
-                                )}
-                                {row.consumed && (
-                                  <button
-                                    type="button"
-                                    disabled={proLicenseResettingId === row.id}
-                                    onClick={() => void handleResetProLicense(row)}
-                                    className="rounded border border-amber-200 bg-white px-2 py-1 text-xs font-medium text-amber-900 hover:bg-amber-50 disabled:opacity-50 dark:border-amber-900 dark:bg-zinc-800 dark:text-amber-200 dark:hover:bg-amber-950/40"
-                                  >
-                                    {proLicenseResettingId === row.id ? 'Resetting…' : 'Reset'}
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
+                              </td>
+                            </tr>
                           );
                         })}
                       </tbody>
