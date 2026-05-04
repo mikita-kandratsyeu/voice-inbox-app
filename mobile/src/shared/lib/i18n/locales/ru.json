@@ -832,7 +832,11 @@
     "restoreImportAllConfirm": "Найдено {{ count }} записей. Импортировать все?",
     "restoreSuccess": "Импортировано {{ count }} записей",
     "restoreNoRecords": "В файле нет записей.",
-    "restoreAllAlreadyInApp": "Все записи из файла уже есть в приложении."
+    "restoreAllAlreadyInApp": "Все записи из файла уже есть в приложении.",
+    "termsGateTitle": "Условия и конфиденциальность",
+    "termsGateBody": "Чтобы продолжить, подтвердите, что вы прочитали и согласны с пользовательским соглашением и политикой конфиденциальности.",
+    "termsGateAgree": "Прочитал и согласен",
+    "termsGateNotNow": "Не сейчас"
   },
   "importExport": {
     "importTitle": "Импорт данных",

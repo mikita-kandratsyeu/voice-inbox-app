@@ -830,7 +830,11 @@
     "restoreImportAllConfirm": "Found {{ count }} records. Import all?",
     "restoreSuccess": "Imported {{ count }} records",
     "restoreNoRecords": "No records in the file.",
-    "restoreAllAlreadyInApp": "All records from the file are already in the app."
+    "restoreAllAlreadyInApp": "All records from the file are already in the app.",
+    "termsGateTitle": "Terms and Privacy",
+    "termsGateBody": "To continue, confirm that you have read and agree to the Terms of Service and Privacy Policy.",
+    "termsGateAgree": "I have read and agree",
+    "termsGateNotNow": "Not now"
   },
   "importExport": {
     "importTitle": "Import data",

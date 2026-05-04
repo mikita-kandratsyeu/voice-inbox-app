@@ -16,6 +16,8 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Modal,
+  Pressable,
   ScrollView,
   Text,
   TouchableOpacity,
@@ -41,8 +43,8 @@ import { openInAppBrowser } from '@/features/in-app-browser';
 import { useModelManager } from '@/features/model-manager';
 import { importData } from '@/features/sync-data';
 import type { Colors } from '@/shared/config';
-import { getWebsiteUrl, useColors } from '@/shared/config';
-import { hapticSelection, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
+import { getWebsiteUrl, useAppTheme, useColors } from '@/shared/config';
+import { hapticSelection, IS_ANDROID, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import {
   checkMicPermission,
@@ -55,6 +57,7 @@ import {
   type PushPermissionStatus,
   requestPushPermission,
 } from '@/shared/lib/push';
+import { Button } from '@/shared/ui';
 
 import { getHasSeenOnboarding, getTermsAgreedAt, setTermsAgreedAt } from '../lib/onboardingStorage';
 import { getOnboardingSlides, type OnboardingSlideContent } from '../model/constants';
@@ -73,6 +76,119 @@ const ICON_MAP = {
 
 type OnboardingScreenProps = {
   onComplete: () => void;
+};
+
+const OnboardingTermsGateModal = ({
+  visible,
+  onAgree,
+  onNotNow,
+}: {
+  visible: boolean;
+  onAgree: () => void;
+  onNotNow: () => void;
+}) => {
+  const { t } = useTranslation();
+  const c = useColors();
+  const insets = useSafeAreaInsets();
+  const browserScheme = useAppTheme();
+  const baseUrl = getWebsiteUrl().trim();
+
+  return (
+    <Modal visible={visible} animationType="fade" transparent onRequestClose={onNotNow}>
+      <View
+        className="flex-1 justify-end px-4"
+        style={{
+          paddingTop: insets.top + 12,
+          paddingBottom: Math.max(insets.bottom, 16),
+          backgroundColor: 'rgba(0,0,0,0.45)',
+        }}
+      >
+        <View
+          className="max-h-[88%] overflow-hidden rounded-2xl"
+          style={{
+            backgroundColor: c.background.primary,
+            borderWidth: 1,
+            borderColor: c.border.default,
+          }}
+        >
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12 }}
+          >
+            <Text
+              className="text-[20px] font-bold leading-7"
+              style={{
+                color: c.text.primary,
+                ...(IS_ANDROID ? { includeFontPadding: false } : {}),
+              }}
+            >
+              {t('onboarding.termsGateTitle')}
+            </Text>
+            <Text
+              className="mt-3 text-[15px] leading-[22px]"
+              style={{
+                color: c.text.secondary,
+                ...(IS_ANDROID ? { includeFontPadding: false } : {}),
+              }}
+            >
+              {t('onboarding.termsGateBody')}
+            </Text>
+            {baseUrl.length > 0 && (
+              <View className="mt-4 flex-row flex-wrap gap-x-1 gap-y-1">
+                <Pressable
+                  accessibilityRole="link"
+                  onPress={() => void openInAppBrowser(`${baseUrl}/terms`, browserScheme)}
+                >
+                  <Text
+                    className="text-[15px] font-semibold underline"
+                    style={{ color: c.accent.primary }}
+                  >
+                    {t('onboarding.agreeToTermsLink')}
+                  </Text>
+                </Pressable>
+                <Text className="text-[15px]" style={{ color: c.text.secondary }}>
+                  {t('onboarding.agreeToTermsAnd')}
+                </Text>
+                <Pressable
+                  accessibilityRole="link"
+                  onPress={() => void openInAppBrowser(`${baseUrl}/privacy`, browserScheme)}
+                >
+                  <Text
+                    className="text-[15px] font-semibold underline"
+                    style={{ color: c.accent.primary }}
+                  >
+                    {t('onboarding.agreeToTermsLink2')}
+                  </Text>
+                </Pressable>
+              </View>
+            )}
+          </ScrollView>
+          <View className="gap-3 px-5 pb-5 pt-2">
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              label={t('onboarding.termsGateAgree')}
+              onPress={() => {
+                hapticSelection();
+                onAgree();
+              }}
+              color={c}
+            />
+            <Button
+              variant="secondary"
+              size="lg"
+              fullWidth
+              label={t('onboarding.termsGateNotNow')}
+              onPress={onNotNow}
+              color={c}
+            />
+          </View>
+        </View>
+      </View>
+    </Modal>
+  );
 };
 
 const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<OnboardingSlideContent>);
@@ -432,12 +548,15 @@ const PermissionsSlide = ({
       style={[{ width: windowWidth, paddingHorizontal: 24, paddingTop: 48 }, animatedStyle]}
       className="flex-1"
     >
-      <View
-        style={{
-          flex: 1,
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          flexGrow: 1,
+          paddingBottom: 24,
           alignSelf: 'center',
           width: '100%',
-          maxWidth: contentMaxWidth,
+          maxWidth: contentMaxWidth ?? '100%',
         }}
       >
         <View className="mb-8 items-center">
@@ -461,7 +580,7 @@ const PermissionsSlide = ({
           </Text>
         </View>
 
-        <ScrollView contentContainerStyle={{ gap: 12 }}>
+        <View style={{ gap: 12 }}>
           <PermissionRow
             icon={<Mic size={22} color={color.onboarding.shield.color} strokeWidth={2} />}
             label={t('permissions.micLabel')}
@@ -480,7 +599,7 @@ const PermissionsSlide = ({
             color={color}
             t={t}
           />
-        </ScrollView>
+        </View>
         <View className="mt-6 flex-row items-center gap-3">
           <TouchableOpacity
             activeOpacity={0.7}
@@ -521,7 +640,7 @@ const PermissionsSlide = ({
             </Text>
           </Text>
         </View>
-      </View>
+      </ScrollView>
     </Animated.View>
   );
 };
@@ -799,10 +918,14 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const hasSeenOnboarding = useMemo(() => getHasSeenOnboarding(), []);
   const [agreedToTerms, setAgreedToTerms] = useState(() => getTermsAgreedAt() != null);
+  const [termsGateVisible, setTermsGateVisible] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [isFinishingOnboarding, setIsFinishingOnboarding] = useState(false);
   const finishingRef = useRef(false);
   const flatListRef = useRef<FlatList<OnboardingSlideContent>>(null);
+  const pendingAfterTermsRef = useRef<(() => void) | null>(null);
+  const agreedToTermsRef = useRef(agreedToTerms);
+  agreedToTermsRef.current = agreedToTerms;
   const scrollX = useSharedValue(0);
   const screenWidth = useSharedValue(windowWidth);
 
@@ -876,7 +999,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
     },
   });
 
-  const handleComplete = useCallback(() => {
+  const finishOnboardingCore = useCallback(() => {
     if (finishingRef.current) return;
     finishingRef.current = true;
     setIsFinishingOnboarding(true);
@@ -888,17 +1011,32 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
     }, 0);
   }, [onComplete]);
 
-  const handleNext = () => {
-    const lastIndex = slides.length - 1;
-
-    if (currentIndex < lastIndex) {
-      flatListRef.current?.scrollToOffset({
-        offset: (currentIndex + 1) * windowWidth,
-        animated: true,
-      });
+  const queueAfterTermsAccepted = useCallback((continuation: () => void) => {
+    if (agreedToTermsRef.current) {
+      continuation();
       return;
     }
+    pendingAfterTermsRef.current = continuation;
+    setTermsGateVisible(true);
+  }, []);
 
+  const handleTermsModalDismiss = useCallback(() => {
+    pendingAfterTermsRef.current = null;
+    setTermsGateVisible(false);
+  }, []);
+
+  const handleTermsModalAgree = useCallback(() => {
+    setAgreedToTerms(true);
+    agreedToTermsRef.current = true;
+    setTermsGateVisible(false);
+    const run = pendingAfterTermsRef.current;
+    pendingAfterTermsRef.current = null;
+    if (run) {
+      queueMicrotask(run);
+    }
+  }, []);
+
+  const runLastSlideWhisperFlow = useCallback(() => {
     const selectedVariantId = getWhisperModelVariantId(selectedWhisperModel, 'q5_1');
     const whisperStatus = whisperModelStatuses[selectedVariantId] ?? 'not_downloaded';
     const anyWhisperDownloading = Object.values(whisperModelStatuses).some(
@@ -910,21 +1048,39 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
       whisperStatus === 'downloading' ||
       anyWhisperDownloading
     ) {
-      handleComplete();
+      finishOnboardingCore();
       return;
     }
 
     Alert.alert(t('onboarding.downloadBeforeStart'), t('onboarding.downloadBeforeStartHint'), [
-      { text: t('common.skip'), style: 'cancel', onPress: handleComplete },
+      { text: t('common.skip'), style: 'cancel', onPress: finishOnboardingCore },
       {
         text: t('common.download'),
         onPress: () => {
           void startDownload(selectedWhisperModel, { format: 'q5_1' }).catch(() => {});
-          setTimeout(handleComplete, 120);
+          setTimeout(finishOnboardingCore, 120);
         },
       },
     ]);
-  };
+  }, [selectedWhisperModel, whisperModelStatuses, t, startDownload, finishOnboardingCore]);
+
+  const requestFinishOnboardingFromSkip = useCallback(() => {
+    queueAfterTermsAccepted(() => finishOnboardingCore());
+  }, [queueAfterTermsAccepted, finishOnboardingCore]);
+
+  const handleNext = useCallback(() => {
+    const lastIndex = slides.length - 1;
+
+    if (currentIndex < lastIndex) {
+      flatListRef.current?.scrollToOffset({
+        offset: (currentIndex + 1) * windowWidth,
+        animated: true,
+      });
+      return;
+    }
+
+    queueAfterTermsAccepted(runLastSlideWhisperFlow);
+  }, [currentIndex, slides.length, windowWidth, queueAfterTermsAccepted, runLastSlideWhisperFlow]);
 
   const handleDotPress = (index: number) => {
     flatListRef.current?.scrollToOffset({
@@ -977,13 +1133,18 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         paddingTop: insets.top,
       }}
     >
+      <OnboardingTermsGateModal
+        visible={termsGateVisible}
+        onAgree={handleTermsModalAgree}
+        onNotNow={handleTermsModalDismiss}
+      />
       <View className="flex-row justify-end px-5 py-3" style={{ minHeight: 48 }}>
         <View
           style={{ opacity: showSkipButton ? 1 : 0 }}
           pointerEvents={showSkipButton ? 'auto' : 'none'}
         >
           <TouchableOpacity
-            onPress={handleComplete}
+            onPress={requestFinishOnboardingFromSkip}
             hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             disabled={isFinishingOnboarding}
             accessibilityRole="button"
@@ -1046,9 +1207,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           screenWidth={screenWidth}
           slideColors={slideColors}
           iconOnAccent={color.icon.onAccent}
-          disabled={
-            isFinishingOnboarding || ((isOnPermissionsSlide || isLastSlide) && !agreedToTerms)
-          }
+          disabled={isFinishingOnboarding || (isOnPermissionsSlide && !agreedToTerms)}
           loading={isFinishingOnboarding}
         />
       </View>
