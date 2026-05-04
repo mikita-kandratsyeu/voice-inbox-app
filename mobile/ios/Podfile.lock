@@ -256,7 +256,7 @@ PODS:
   - hermes-engine (250829098.0.9):
     - hermes-engine/Pre-built (= 250829098.0.9)
   - hermes-engine/Pre-built (250829098.0.9)
-  - InappbrowserNitro (2.1.2):
+  - InappbrowserNitro (3.0.1):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -310,7 +310,7 @@ PODS:
   - nanopb/encode (3.30910.0)
   - NitroDeviceInfo (1.7.0):
     - NitroModules
-  - NitroFetch (0.2.1):
+  - NitroFetch (1.1.2):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -325,6 +325,7 @@ PODS:
     - React-jsi
     - React-NativeModulesApple
     - React-RCTFabric
+    - React-RCTNetwork
     - React-renderercss
     - React-rendererdebug
     - React-utils
@@ -380,7 +381,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - NitroModules (0.35.3):
+  - NitroModules (0.35.6):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -402,7 +403,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - NitroSound (0.2.12):
+  - NitroSound (0.2.14):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -3425,16 +3426,16 @@ SPEC CHECKSUMS:
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   hermes-engine: 0437e9839a87c1d737989c1116dd08492d271607
-  InappbrowserNitro: c6ede24dc5a9d2340441578ac7f48e409aafce64
+  InappbrowserNitro: e4e4ba49eb5e0cb1b6ed7ffe0224bfcaf5bd8d28
   llama-rn: 82e83912906edc522b73ea92a5ac572ecb02c3fb
   MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   NitroDeviceInfo: 8c57fd4d884155052244f9b2470ae735ec5d92b3
-  NitroFetch: 30575b87fa076bc7ca57b9212636a81e25c7560e
+  NitroFetch: ffc478f42d9fd4207e19be7d8c82985caef787cf
   NitroFS: ac0caec3a38062ecfe5a6936b2e6e7839fc978eb
   NitroMmkv: 21968ae5bd91f4569b8a69b2e75357845dac2ca1
-  NitroModules: 634ea9d78f9646d2e4b1f1648200940aa18ea649
-  NitroSound: ee6196cdbe94de95a534f5cebf1cc45c9906aab8
+  NitroModules: a750ad09c011cdb4a8a8e6660088f3232ef3544d
+  NitroSound: a21d97f76f053b2e14d8c5de00402dcf54de3dae
   op-sqlite: 99bc230f1bfeda983df3977ebb683b8ef25b5ba2
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851

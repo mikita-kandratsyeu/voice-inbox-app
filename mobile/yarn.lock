@@ -3625,10 +3625,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-native-community/slider@npm:^5.0.1":
-  version: 5.1.2
-  resolution: "@react-native-community/slider@npm:5.1.2"
-  checksum: 10c0/e48f0ad72292ca30d63b84a6c0137bb3531516c22a8a3bd1981132f25e3195c19757da271d5b8b1d66d73882ccef02a0cf21c3a99f23144623345c4eaa67823c
+"@react-native-community/slider@npm:^5.2.0":
+  version: 5.2.0
+  resolution: "@react-native-community/slider@npm:5.2.0"
+  checksum: 10c0/58ec6a47b5aafefd98a61c79aeae05f1ab8371782eb497d9af665bf2f62a1c372da8fed6dead30e1d6c9e01bfb12bfdbafcde7890736f4f5d55502dabf2e01ad
   languageName: node
   linkType: hard
 
@@ -11050,14 +11050,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-inappbrowser-nitro@npm:^2.1.2":
-  version: 2.1.2
-  resolution: "react-native-inappbrowser-nitro@npm:2.1.2"
+"react-native-inappbrowser-nitro@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "react-native-inappbrowser-nitro@npm:3.0.1"
   peerDependencies:
     react: "*"
     react-native: "*"
     react-native-nitro-modules: "*"
-  checksum: 10c0/b336ee3d02fefb8bc046d741d9686dee7d08c4844f97ff6dce5df1cff4570197dc489e5a81afe2df2efb4a2dc203e9756fab710c95e711f805c262ce3f77ee6c
+  checksum: 10c0/6b97568686bc4e52d6feb70fea44195698fd3937331de2f06d79a27fe7a4abb48967f1d203f398cf3a908cd9d4e920f7365573affabe8e2026aa72f20e492b20
   languageName: node
   linkType: hard
 
@@ -11152,20 +11152,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-nitro-fetch@npm:^0.2.1":
-  version: 0.2.1
-  resolution: "react-native-nitro-fetch@npm:0.2.1"
+"react-native-nitro-fetch@npm:^1.1.2":
+  version: 1.1.2
+  resolution: "react-native-nitro-fetch@npm:1.1.2"
   dependencies:
     web-streams-polyfill: "npm:^4.2.0"
   peerDependencies:
     react: "*"
     react-native: "*"
     react-native-nitro-modules: ^0.35.2
-    react-native-worklets-core: ^1.6.0
+    react-native-worklets: ^0.8.0
   peerDependenciesMeta:
-    react-native-worklets-core:
+    react-native-worklets:
       optional: true
-  checksum: 10c0/f4b0c58b3ec51774a0684aa60f4859fa5e16a3c02cbe52dc598df7c175226f88430822301c8f00c505cf6ff8fce4387ea111649f6477905503976f1e7d455154
+  checksum: 10c0/d1e71ccb2bf3652e8c656fb14882f86c9f3c392dd46a7ffbb4caed57c232c525db074a4fa6e96a915c7415bae2f88ee0399e61f346d48a537b47e6afa550e862
   languageName: node
   linkType: hard
 
@@ -11182,26 +11182,26 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-native-nitro-modules@npm:^0.35.2":
-  version: 0.35.3
-  resolution: "react-native-nitro-modules@npm:0.35.3"
+"react-native-nitro-modules@npm:^0.35.6":
+  version: 0.35.6
+  resolution: "react-native-nitro-modules@npm:0.35.6"
   peerDependencies:
     react: "*"
     react-native: "*"
-  checksum: 10c0/85faaa8fc10bb8a1a3d731045fca92fccfac8d884a1a3dc1dc9dfe6ef30231db2e7d9ed9fd66546ae1038918ad0ab371f8fd47d3cea8e480dc016c13d83eaafc
+  checksum: 10c0/57ec2a2d2e57da923c5c8c81d28f323691be0373d528b81a1a6e1da0e6675f29faa443cc16babd0abd4cd5e08e51ff273ed04a139f368236662212f15cc3a678
   languageName: node
   linkType: hard
 
-"react-native-nitro-sound@npm:^0.2.12":
-  version: 0.2.12
-  resolution: "react-native-nitro-sound@npm:0.2.12"
+"react-native-nitro-sound@npm:^0.2.14":
+  version: 0.2.14
+  resolution: "react-native-nitro-sound@npm:0.2.14"
   dependencies:
-    "@react-native-community/slider": "npm:^5.0.1"
+    "@react-native-community/slider": "npm:^5.2.0"
   peerDependencies:
     react: "*"
     react-native: "*"
-    react-native-nitro-modules: ">=0.35.0"
-  checksum: 10c0/3b1b1468e068725a2eb95d4959b207e23802ac86d7acb4c4dd173475bacdb4e8a8ee56e59a31f18ab32f89975e8cec3a97ca05e8f71d95632812e4ede9f5be93
+    react-native-nitro-modules: ">=0.35.4"
+  checksum: 10c0/78dacc8d424e6952d015fb323a367a2ba05aa8092a063560dad1c5f0007c167789796f0ec3eeb03b64c7558440dccc3231aa74e80f48a6383236b36784af3aeb
   languageName: node
   linkType: hard
 
@@ -13300,7 +13300,7 @@ __metadata:
     react-native-gesture-handler: "npm:^2.30.1"
     react-native-haptic-feedback: "npm:^3.0.0"
     react-native-in-app-review: "npm:^4.4.2"
-    react-native-inappbrowser-nitro: "npm:^2.1.2"
+    react-native-inappbrowser-nitro: "npm:^3.0.1"
     react-native-keep-awake: "npm:^4.0.0"
     react-native-keyboard-controller: "npm:^1.21.4"
     react-native-keychain: "npm:^10.0.0"
@@ -13308,10 +13308,10 @@ __metadata:
     react-native-markdown-display: "npm:^7.0.2"
     react-native-mmkv: "npm:^4.3.0"
     react-native-nitro-device-info: "npm:^1.7.0"
-    react-native-nitro-fetch: "npm:^0.2.1"
+    react-native-nitro-fetch: "npm:^1.1.2"
     react-native-nitro-fs: "npm:^0.8.2"
-    react-native-nitro-modules: "npm:^0.35.2"
-    react-native-nitro-sound: "npm:^0.2.12"
+    react-native-nitro-modules: "npm:^0.35.6"
+    react-native-nitro-sound: "npm:^0.2.14"
     react-native-permissions: "npm:^5.5.1"
     react-native-purchases: "npm:^9.15.0"
     react-native-quick-base64: "npm:^2.2.2"
