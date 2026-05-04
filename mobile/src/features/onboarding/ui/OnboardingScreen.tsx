@@ -135,7 +135,7 @@ const OnboardingTermsGateModal = ({
               {t('onboarding.termsGateBody')}
             </Text>
             {baseUrl.length > 0 && (
-              <View className="mt-4 flex-row flex-wrap gap-x-1 gap-y-1">
+              <View className="mt-4 gap-2">
                 <Pressable
                   accessibilityRole="link"
                   onPress={() => void openInAppBrowser(`${baseUrl}/terms`, browserScheme)}
@@ -147,9 +147,6 @@ const OnboardingTermsGateModal = ({
                     {t('onboarding.agreeToTermsLink')}
                   </Text>
                 </Pressable>
-                <Text className="text-[15px]" style={{ color: c.text.secondary }}>
-                  {t('onboarding.agreeToTermsAnd')}
-                </Text>
                 <Pressable
                   accessibilityRole="link"
                   onPress={() => void openInAppBrowser(`${baseUrl}/privacy`, browserScheme)}
