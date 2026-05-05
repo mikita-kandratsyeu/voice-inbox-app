@@ -51,7 +51,6 @@ const IOS_ROUTE_CHANGE_SUPPRESS_MS = 2800;
 type SanitizeResult = { ms: number; routeChanged: boolean };
 
 type UseRecordingOptions = {
-  /** Defaults to free tier max when omitted (e.g. deeplink-only stop helper). */
   maxRecordingMs?: number;
   onLimitReached?: () => void;
   onRecordingStoppedByAppLock?: (path: string, elapsed: number, elapsedMs: number) => void;
