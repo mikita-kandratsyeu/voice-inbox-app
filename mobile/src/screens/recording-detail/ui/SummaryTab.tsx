@@ -1,4 +1,11 @@
-import { AlertCircle, FileText, RefreshCw, Sparkles } from 'lucide-react-native';
+import {
+  AlertCircle,
+  FileText,
+  RefreshCw,
+  Share2,
+  Sparkles,
+  UsersRound,
+} from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -25,6 +32,8 @@ type SummaryTabProps = {
   hasTranscript?: boolean;
   color: Colors;
   onGenerate: () => void;
+  isMeeting?: boolean;
+  onShareMeetingBrief?: () => void;
   onDismissError?: () => void;
   showPrivateModeCta?: boolean;
   onSwitchToSmartMode?: () => void;
@@ -41,8 +50,10 @@ export const SummaryTab = ({
   errorMessage,
   hasTranscript = true,
   keyPhrases = [],
+  isMeeting = false,
   onDismissError,
   onGenerate,
+  onShareMeetingBrief,
   onCancelProcessing,
   privateAiBatchPhase,
   privateAiBatchProgress,
@@ -133,6 +144,30 @@ export const SummaryTab = ({
   return (
     <View className="gap-3.5 p-4">
       {showBanner && <AiTabErrorBanner message={errMessage} onDismiss={handleDismiss} />}
+      {isMeeting && (
+        <View
+          className="flex-row gap-3 rounded-xl border p-3"
+          style={{
+            borderColor: color.border.default,
+            backgroundColor: color.background.tertiary,
+          }}
+        >
+          <UsersRound
+            size={20}
+            color={color.accent.primary}
+            strokeWidth={2}
+            style={{ marginTop: 2 }}
+          />
+          <View className="min-w-0 flex-1 gap-1">
+            <Text className="text-[15px] font-semibold" style={{ color: color.text.primary }}>
+              {t('recordingDetail.meetingSummaryTitle')}
+            </Text>
+            <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
+              {t('recordingDetail.meetingSummaryDescription')}
+            </Text>
+          </View>
+        </View>
+      )}
       <Text className="text-sm leading-6" style={{ color: color.text.primary }}>
         {summary}
       </Text>
@@ -171,6 +206,16 @@ export const SummaryTab = ({
         className="mt-1"
         accessibilityState={{ disabled: disableByNetwork }}
       />
+      {isMeeting && onShareMeetingBrief && (
+        <Button
+          variant="primary"
+          size="lg"
+          icon={<Share2 size={15} color="#fff" strokeWidth={2} />}
+          label={t('recordingDetail.shareMeetingBrief')}
+          color={color}
+          onPress={onShareMeetingBrief}
+        />
+      )}
     </View>
   );
 };

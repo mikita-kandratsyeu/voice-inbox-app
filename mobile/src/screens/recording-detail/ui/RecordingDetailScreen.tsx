@@ -22,7 +22,9 @@ import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
 import { useColors } from '@/shared/config';
 import {
+  hapticError,
   hapticSelection,
+  hapticSuccess,
   resolveDisplayFolderColor,
   useIsTablet,
   useTabletContentMaxWidth,
@@ -123,6 +125,7 @@ export const RecordingDetailScreen = () => {
   const [mountedTabs, setMountedTabs] = useState<Set<Tab>>(new Set(['transcript']));
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
   const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
   const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
   const { currentPositionMs, onPositionUpdate } = usePlaybackPosition();
   const [recordLanguage, setRecordLanguage] = useState<TranscriptionLanguage>(
@@ -161,7 +164,7 @@ export const RecordingDetailScreen = () => {
   const handleCancelAiGeneration = useCallback(() => {
     cancelAiGeneration(liveRecord.id);
   }, [cancelAiGeneration, liveRecord.id]);
-  const { shareRecord, shareAudio } = useShareRecord();
+  const { shareRecord, shareAudio, emailRecord } = useShareRecord();
   const onDeleted = useCallback(() => navigation.goBack(), [navigation]);
   const { promptDelete } = useRecordActions({ onDeleted });
 
@@ -322,6 +325,28 @@ export const RecordingDetailScreen = () => {
       Alert.alert(t('recordingDetail.shareFailed'), err.message);
     });
   }, [t, liveRecord, shareAudio]);
+  const handleEmailRecord = useCallback(
+    (email: string, template: ShareBriefTemplate) => {
+      setEmailSending(true);
+      emailRecord(liveRecord, email, template)
+        .then(() => {
+          hapticSuccess();
+          setShareSheetVisible(false);
+          Alert.alert(t('share.emailSentTitle'), t('share.emailSentMessage', { email }));
+        })
+        .catch((err: Error) => {
+          hapticError();
+          Alert.alert(t('share.emailFailedTitle'), err.message);
+        })
+        .finally(() => {
+          setEmailSending(false);
+        });
+    },
+    [emailRecord, liveRecord, t],
+  );
+  const handleShareMeetingBrief = useCallback(() => {
+    handleShare('meetingBrief');
+  }, [handleShare]);
   const onOpenShareMenu = useCallback(() => setShareSheetVisible(true), []);
   const onCloseShareMenu = useCallback(() => setShareSheetVisible(false), []);
 
@@ -427,8 +452,11 @@ export const RecordingDetailScreen = () => {
       <ShareRecordSheet
         visible={shareSheetVisible}
         hasAudio={hasAudio}
+        isMeeting={liveRecord.classification === 'meeting'}
+        isSendingEmail={emailSending}
         onClose={onCloseShareMenu}
         onShareText={handleShare}
+        onEmailRecord={handleEmailRecord}
         onShareAudio={handleShareAudio}
       />
       {renameRecordSheet}
@@ -519,6 +547,8 @@ export const RecordingDetailScreen = () => {
                   hasTranscript={Boolean(liveRecord.transcript)}
                   color={color}
                   onGenerate={handleGenerateSummary}
+                  isMeeting={liveRecord.classification === 'meeting'}
+                  onShareMeetingBrief={handleShareMeetingBrief}
                   onDismissError={handleDismissSummaryError}
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onSwitchToSmartMode={handleSwitchToSmartMode}

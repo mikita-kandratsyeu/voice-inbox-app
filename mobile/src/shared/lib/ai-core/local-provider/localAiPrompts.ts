@@ -30,6 +30,14 @@ const LOCAL_OUTPUT_LANGUAGE_HINT: Record<AiOutputLanguage, string> = {
   en: 'Language: write ALL of those text fields in English, even if the transcript is not English.',
 };
 
+const LOCAL_MEETING_PRESET_HINT = [
+  'Preset: meeting.',
+  'Treat the transcript as a meeting, call, interview, or sync recap.',
+  'classification must be meeting unless the transcript is effectively empty.',
+  'Summary should read like a structured meeting recap in prose: purpose, main topics, decisions, blockers, and follow-up context when supported.',
+  'tasks[] should contain concrete owner/action items only when supported; nextSteps should contain high-level follow-ups that do not duplicate tasks.',
+].join(' ');
+
 const LOCAL_SUMMARY_SYSTEM_BASE = [
   'From the transcript, output one JSON object only: raw JSON, no markdown, no code fences, no commentary.',
   'UTF-8, double-quoted keys; arrays [] when empty. Plain text in strings. Follow the user message for language, summary length, and task strictness.',
@@ -51,12 +59,16 @@ export function buildLocalSummaryUserContent(
   ctx: AiExecutionContext,
   existingTaskTitles?: string[],
   taskExtractionHint?: string,
+  processingPreset?: 'meeting',
 ): string {
   const head = [
     LOCAL_OUTPUT_LANGUAGE_HINT[ctx.aiOutputLanguage],
     LOCAL_SUMMARY_STYLE_HINT[ctx.summaryStyle],
     LOCAL_TASK_STRICTNESS_HINT[ctx.taskStrictness],
-  ].join('\n');
+    processingPreset === 'meeting' ? LOCAL_MEETING_PRESET_HINT : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
 
   const existingBlock = existingTaskTitles?.length
     ? [

@@ -6,6 +6,7 @@ import {
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import dayjs from 'dayjs';
+import { UsersRound } from 'lucide-react-native';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, Text, View } from 'react-native';
@@ -61,6 +62,7 @@ export const SaveRecordModal = ({
   const c = useColors();
   const insets = useSafeAreaInsets();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const [isMeetingMode, setIsMeetingMode] = useState(false);
 
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const dismissReasonRef = useRef<DismissReason>('none');
@@ -85,6 +87,7 @@ export const SaveRecordModal = ({
     if (visible) {
       dismissReasonRef.current = 'none';
       autoTitleRef.current = getAutoTitle();
+      setIsMeetingMode(false);
       bottomSheetRef.current?.present();
     } else {
       bottomSheetRef.current?.dismiss();
@@ -142,6 +145,7 @@ export const SaveRecordModal = ({
       transcriptProgress: 0,
       isPinned: false,
       tags: [],
+      classification: isMeetingMode ? 'meeting' : undefined,
       audioPath: audioPath?.startsWith('file://') ? audioPath.slice(7) : (audioPath ?? undefined),
     };
 
@@ -150,7 +154,12 @@ export const SaveRecordModal = ({
     dismissReasonRef.current = 'save';
     bottomSheetRef.current?.dismiss();
     onSaveComplete?.();
-  }, [title, elapsed, elapsedMs, audioPath, onSave, onSaveComplete]);
+  }, [title, elapsed, elapsedMs, audioPath, isMeetingMode, onSave, onSaveComplete]);
+
+  const handleToggleMeetingMode = useCallback(() => {
+    hapticLight();
+    setIsMeetingMode((value) => !value);
+  }, []);
 
   const autoTitle = autoTitleRef.current || getAutoTitle();
 
@@ -200,6 +209,47 @@ export const SaveRecordModal = ({
         <Text className="-mt-1 text-[13px]" style={{ color: c.text.secondary }}>
           {t('record.duration', { time: formatTime(elapsed) })}
         </Text>
+        <Pressable
+          accessibilityRole="switch"
+          accessibilityState={{ checked: isMeetingMode }}
+          accessibilityLabel={t('record.meetingMode')}
+          onPress={handleToggleMeetingMode}
+          className="flex-row items-center gap-3 rounded-xl border px-3.5 py-3"
+          style={{
+            borderColor: isMeetingMode ? c.accent.primary : c.border.default,
+            backgroundColor: c.background.tertiary,
+          }}
+        >
+          <View
+            className="h-9 w-9 items-center justify-center rounded-full"
+            style={{
+              backgroundColor: isMeetingMode ? c.accent.primary : c.background.secondary,
+            }}
+          >
+            <UsersRound
+              size={18}
+              color={isMeetingMode ? '#fff' : c.text.secondary}
+              strokeWidth={2}
+            />
+          </View>
+          <View className="min-w-0 flex-1">
+            <Text className="text-[15px] font-semibold" style={{ color: c.text.primary }}>
+              {t('record.meetingMode')}
+            </Text>
+            <Text className="mt-0.5 text-[13px] leading-5" style={{ color: c.text.secondary }}>
+              {t('record.meetingModeHint')}
+            </Text>
+          </View>
+          <View
+            className="h-6 w-11 justify-center rounded-full px-0.5"
+            style={{ backgroundColor: isMeetingMode ? c.accent.primary : c.border.default }}
+          >
+            <View
+              className="h-5 w-5 rounded-full bg-white"
+              style={{ alignSelf: isMeetingMode ? 'flex-end' : 'flex-start' }}
+            />
+          </View>
+        </Pressable>
         {contextHint && (
           <Text className="text-[13px] leading-5" style={{ color: c.text.muted }}>
             {contextHint}

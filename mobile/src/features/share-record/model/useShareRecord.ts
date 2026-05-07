@@ -4,6 +4,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { formatShortDate, i18n } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
 
+import { sendRecordEmail } from '../api/sendRecordEmail';
 import {
   ensureShareExportDirectory,
   getShareExportDirectoryPath,
@@ -301,5 +302,27 @@ export const useShareRecord = () => {
     }
   };
 
-  return { shareRecord, shareAudio };
+  const emailRecord = async (
+    record: VoiceRecord,
+    to: string,
+    template: ShareBriefTemplate = 'noteBrief',
+  ) => {
+    const markdown = buildShareText(record, template);
+    const subject =
+      template === 'meetingBrief'
+        ? i18n.t('share.emailMeetingSubject', { title: record.title })
+        : i18n.t('share.emailNoteSubject', { title: record.title });
+    const result = await sendRecordEmail({
+      to,
+      subject,
+      title: record.title,
+      markdown,
+    });
+
+    if (!result.ok) {
+      throw new Error(result.error);
+    }
+  };
+
+  return { shareRecord, shareAudio, emailRecord };
 };
