@@ -325,7 +325,7 @@ export function SettingsPlanPaywallSheet({
             backgroundColor: c.background.primary,
             borderBottomWidth: 1,
             borderBottomColor: c.border.default,
-            paddingTop: insets.top + 12,
+            paddingTop: insets.top + 4,
           }}
         >
           <Button
@@ -488,7 +488,7 @@ export function SettingsPlanPaywallSheet({
           style={{
             paddingHorizontal: 20,
             paddingTop: 8,
-            paddingBottom: Math.max(insets.bottom, 22),
+            paddingBottom: insets.bottom + 2,
             backgroundColor: c.background.primary,
           }}
         >
@@ -504,7 +504,7 @@ export function SettingsPlanPaywallSheet({
             activeOpacity={0.85}
           />
           {isIapPublic && getWebsiteUrl().trim().length > 0 && (
-            <View className="mt-4 items-center gap-y-1.5 gap-x-3 px-2 flex-row justify-center">
+            <View className="mt-1.5 items-center gap-y-1.5 gap-x-3 px-2 flex-row justify-center">
               <Pressable
                 accessibilityRole="link"
                 className="py-1"

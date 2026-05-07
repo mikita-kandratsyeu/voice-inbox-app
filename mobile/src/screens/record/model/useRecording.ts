@@ -20,13 +20,23 @@ type AudioRecorderPlayerInstance = {
   pauseRecorder: () => Promise<string>;
   resumeRecorder: () => Promise<string>;
 };
-import { FREE_MAX_RECORDING_MS } from '@/features/app-storefront';
+import {
+  FREE_MAX_RECORDING_MS,
+  RECORDING_FINAL_WARNING_REMAINING_MS,
+  RECORDING_SOFT_WARNING_REMAINING_MS,
+} from '@/features/app-storefront';
 import {
   endRecordingLiveActivity,
   startRecordingLiveActivity,
   updateRecordingLiveActivity,
 } from '@/features/live-activity-recording';
-import { ensureRecordingsDir, hapticLight, IS_IOS, RECORDINGS_DIR } from '@/shared/lib';
+import {
+  ensureRecordingsDir,
+  hapticLight,
+  hapticMedium,
+  IS_IOS,
+  RECORDINGS_DIR,
+} from '@/shared/lib';
 import { checkMicPermission, requestMicPermission } from '@/shared/lib/permissions';
 
 import type { RecordingState } from '../config';
@@ -41,7 +51,6 @@ const IOS_ROUTE_CHANGE_SUPPRESS_MS = 2800;
 type SanitizeResult = { ms: number; routeChanged: boolean };
 
 type UseRecordingOptions = {
-  /** Defaults to free tier max when omitted (e.g. deeplink-only stop helper). */
   maxRecordingMs?: number;
   onLimitReached?: () => void;
   onRecordingStoppedByAppLock?: (path: string, elapsed: number, elapsedMs: number) => void;
@@ -64,6 +73,8 @@ export const useRecording = ({
   const elapsedMsRef = useRef(0);
   const lastValidMsRef = useRef(0);
   const limitReachedRef = useRef(false);
+  const softLimitWarningFiredRef = useRef(false);
+  const finalLimitWarningFiredRef = useRef(false);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
   const lastLiveActivityUpdateRef = useRef(0);
   const routeChangeSuppressedUntilRef = useRef(0);
@@ -139,6 +150,20 @@ export const useRecording = ({
       }
 
       const hardCap = maxRecordingMsRef.current;
+      const remainingMs = hardCap - ms;
+
+      if (remainingMs <= RECORDING_FINAL_WARNING_REMAINING_MS) {
+        if (!finalLimitWarningFiredRef.current) {
+          finalLimitWarningFiredRef.current = true;
+          hapticMedium();
+        }
+      } else if (remainingMs <= RECORDING_SOFT_WARNING_REMAINING_MS) {
+        if (!softLimitWarningFiredRef.current) {
+          softLimitWarningFiredRef.current = true;
+          hapticLight();
+        }
+      }
+
       if (ms >= hardCap && !limitReachedRef.current) {
         limitReachedRef.current = true;
         endRecordingLiveActivity().catch(() => {});
@@ -182,6 +207,8 @@ export const useRecording = ({
 
     try {
       limitReachedRef.current = false;
+      softLimitWarningFiredRef.current = false;
+      finalLimitWarningFiredRef.current = false;
       lastValidMsRef.current = 0;
       audioRecorderPlayer.setSubscriptionDuration(SUBSCRIPTION_DURATION_MS / 1000);
 
@@ -280,6 +307,8 @@ export const useRecording = ({
 
     audioPathRef.current = null;
     limitReachedRef.current = false;
+    softLimitWarningFiredRef.current = false;
+    finalLimitWarningFiredRef.current = false;
     lastValidMsRef.current = 0;
     elapsedRef.current = 0;
     elapsedMsRef.current = 0;

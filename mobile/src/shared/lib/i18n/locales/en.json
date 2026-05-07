@@ -816,8 +816,8 @@
     "setupScrollHint": "Scroll down for Whisper models",
     "setupAiModel": "Generation model",
     "setupWhisper": "Whisper (transcription)",
-    "termsCheckboxA11y": "I have read and agree to the Terms of Service and Privacy Policy",
-    "agreeToTermsPrefix": "I have read and agree to the ",
+    "termsCheckboxA11y": "Confirm I have read the documents and agree to the Terms of Service and Privacy Policy",
+    "agreeToTermsPrefix": "I have read the documents and agree to: ",
     "agreeToTermsLink": "Terms of Service",
     "agreeToTermsAnd": " and ",
     "agreeToTermsLink2": "Privacy Policy",
@@ -830,7 +830,11 @@
     "restoreImportAllConfirm": "Found {{ count }} records. Import all?",
     "restoreSuccess": "Imported {{ count }} records",
     "restoreNoRecords": "No records in the file.",
-    "restoreAllAlreadyInApp": "All records from the file are already in the app."
+    "restoreAllAlreadyInApp": "All records from the file are already in the app.",
+    "termsGateTitle": "Terms and Privacy",
+    "termsGateBody": "To continue, confirm that you have read the documents below and agree to their terms.",
+    "termsGateAgree": "I have read and agree",
+    "termsGateNotNow": "Not now"
   },
   "importExport": {
     "importTitle": "Import data",
