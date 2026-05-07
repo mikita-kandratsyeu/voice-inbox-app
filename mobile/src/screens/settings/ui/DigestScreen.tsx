@@ -105,6 +105,42 @@ function SectionCard({
   );
 }
 
+function DigestAiLoadingState() {
+  const { t } = useTranslation();
+  const color = useColors();
+
+  return (
+    <View
+      className="mb-4 rounded-2xl px-4 py-3"
+      style={{
+        borderWidth: 1,
+        borderColor: color.border.default,
+        backgroundColor: color.background.tertiary,
+      }}
+    >
+      <View className="flex-row items-center gap-3">
+        <View
+          className="h-9 w-9 items-center justify-center rounded-full"
+          style={{ backgroundColor: color.background.card }}
+        >
+          <ActivityIndicator size="small" color={color.accent.primary} />
+        </View>
+        <View className="flex-1">
+          <Text
+            className="text-[15px] font-semibold leading-5"
+            style={{ color: color.text.primary }}
+          >
+            {t('settings.digest.aiGenerating')}
+          </Text>
+          <Text className="mt-1 text-[13px] leading-[18px]" style={{ color: color.text.secondary }}>
+            {t('settings.digest.aiGeneratingDescription')}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 function BulletList({ items, emptyText }: { items: string[]; emptyText: string }) {
   const color = useColors();
   if (items.length === 0) {
@@ -286,22 +322,36 @@ export const DigestScreen = () => {
     () => ({
       body: {
         color: color.text.primary,
-        fontSize: 15,
-        lineHeight: 23,
+        fontSize: 14,
+        lineHeight: 22,
         marginBottom: 0,
+      },
+      text: {
+        color: color.text.primary,
+        fontSize: 14,
+        lineHeight: 22,
+      },
+      paragraph: {
+        color: color.text.primary,
+        fontSize: 14,
+        lineHeight: 22,
+        marginTop: 0,
+        marginBottom: 6,
       },
       heading1: {
         color: color.text.primary,
-        fontSize: 17,
-        fontWeight: '700' as const,
+        fontSize: 16,
+        lineHeight: 22,
+        fontWeight: '600' as const,
         marginTop: 0,
         marginBottom: 6,
       },
       heading2: {
         color: color.text.primary,
-        fontSize: 16,
+        fontSize: 15,
+        lineHeight: 21,
         fontWeight: '600' as const,
-        marginTop: 8,
+        marginTop: 6,
         marginBottom: 4,
       },
       strong: {
@@ -317,10 +367,30 @@ export const DigestScreen = () => {
         marginBottom: 0,
       },
       list_item: {
-        color: color.text.secondary,
+        color: color.text.primary,
         fontSize: 14,
         lineHeight: 22,
         marginBottom: 2,
+      },
+      bullet_list_icon: {
+        color: color.accent.primary,
+        fontSize: 14,
+        lineHeight: 22,
+      },
+      bullet_list_content: {
+        color: color.text.primary,
+        fontSize: 14,
+        lineHeight: 22,
+      },
+      ordered_list_icon: {
+        color: color.accent.primary,
+        fontSize: 14,
+        lineHeight: 22,
+      },
+      ordered_list_content: {
+        color: color.text.primary,
+        fontSize: 14,
+        lineHeight: 22,
       },
     }),
     [color],
@@ -395,17 +465,12 @@ export const DigestScreen = () => {
             <Text className="mb-3 text-[13px] leading-[18px]" style={{ color: color.text.muted }}>
               {aiGeneratedText}
             </Text>
-            {aiLoading ? (
-              <View className="items-center py-6">
-                <ActivityIndicator color={color.accent.primary} />
-                <Text className="mt-3 text-[14px]" style={{ color: color.text.secondary }}>
-                  {t('settings.digest.aiGenerating')}
-                </Text>
-              </View>
-            ) : aiResult ? (
+            {aiResult ? (
               <View className="mb-4">
                 <Markdown style={markdownStyles}>{aiResult.markdown}</Markdown>
               </View>
+            ) : aiLoading ? (
+              <DigestAiLoadingState />
             ) : (
               <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
                 {digest.recordCount === 0
@@ -413,15 +478,18 @@ export const DigestScreen = () => {
                   : t('settings.digest.aiDescription')}
               </Text>
             )}
-            <Button
-              label={aiResult ? t('settings.digest.regenerateAi') : t('settings.digest.generateAi')}
-              icon={<Sparkles size={17} color={color.icon.onAccent} strokeWidth={2} />}
-              color={color}
-              loading={aiLoading}
-              disabled={digest.recordCount === 0}
-              onPress={handleGenerate}
-              fullWidth
-            />
+            {aiLoading && aiResult ? <DigestAiLoadingState /> : null}
+            {!aiLoading ? (
+              <Button
+                label={
+                  aiResult ? t('settings.digest.regenerateAi') : t('settings.digest.generateAi')
+                }
+                color={color}
+                disabled={digest.recordCount === 0}
+                onPress={handleGenerate}
+                fullWidth
+              />
+            ) : null}
           </SectionCard>
 
           <SectionCard
