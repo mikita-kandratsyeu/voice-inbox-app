@@ -21,6 +21,7 @@ index 0f2a1a1..816ac32 100644
   do {
   try eventStore.save(reminder, commit: true);
   resolve(toDictionary(reminder: reminder));
+ } catch {
 diff --git a/node_modules/@wiicamp/react-native-reminders/lib/typescript/src/index.d.ts b/node_modules/@wiicamp/react-native-reminders/lib/typescript/src/index.d.ts
 index 7e56a17..4d955fd 100644
 --- a/node_modules/@wiicamp/react-native-reminders/lib/typescript/src/index.d.ts
@@ -32,3 +33,4 @@ index 7e56a17..4d955fd 100644
 +    priority?: Number;
  };
  declare type RemindersType = {
+     /**
