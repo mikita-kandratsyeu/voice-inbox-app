@@ -366,7 +366,7 @@
     "emailSentTitle": "Email sent",
     "emailSentMessage": "The note was sent to {{email}}.",
     "emailFailedTitle": "Could not send email",
-    "emailNoteSubject": "Voice Inbox note: {{title}}",
+    "emailNoteSubject": "Voice Inbox AI note: {{title}}",
     "emailMeetingSubject": "Voice Inbox meeting brief: {{title}}",
     "shareNote": "Share note",
     "shareAudio": "Share audio",

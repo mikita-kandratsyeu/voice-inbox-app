@@ -366,7 +366,7 @@
     "emailSentTitle": "Письмо отправлено",
     "emailSentMessage": "Заметка отправлена на {{email}}.",
     "emailFailedTitle": "Не удалось отправить email",
-    "emailNoteSubject": "Заметка Voice Inbox: {{title}}",
+    "emailNoteSubject": "Заметка Voice Inbox AI: {{title}}",
     "emailMeetingSubject": "Итоги встречи Voice Inbox: {{title}}",
     "shareNote": "Поделиться заметкой",
     "shareAudio": "Поделиться аудио",
