@@ -344,9 +344,6 @@ export const RecordingDetailScreen = () => {
     },
     [emailRecord, liveRecord, t],
   );
-  const handleShareMeetingBrief = useCallback(() => {
-    handleShare('meetingBrief');
-  }, [handleShare]);
   const onOpenShareMenu = useCallback(() => setShareSheetVisible(true), []);
   const onCloseShareMenu = useCallback(() => setShareSheetVisible(false), []);
 
@@ -548,7 +545,7 @@ export const RecordingDetailScreen = () => {
                   color={color}
                   onGenerate={handleGenerateSummary}
                   isMeeting={liveRecord.classification === 'meeting'}
-                  onShareMeetingBrief={handleShareMeetingBrief}
+                  onShareMeetingBrief={onOpenShareMenu}
                   onDismissError={handleDismissSummaryError}
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onSwitchToSmartMode={handleSwitchToSmartMode}

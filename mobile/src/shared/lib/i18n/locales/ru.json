@@ -242,7 +242,7 @@
     "generateSummary": "Создать сводку",
     "regenerateSummary": "Пересоздать",
     "meetingSummaryTitle": "Итоги встречи",
-    "meetingSummaryDescription": "Эта заметка использует preset встречи. Повторная генерация фокусируется на решениях, задачах и следующих шагах.",
+    "meetingSummaryDescription": "Эта заметка использует пресет встречи. Повторная генерация фокусируется на решениях, задачах и следующих шагах.",
     "shareMeetingBrief": "Поделиться итогами встречи",
     "summaryProcessing": "Создание сводки...",
     "summaryError": "Не удалось создать сводку",
