@@ -7,6 +7,11 @@ import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
 
 const FALLBACK_REMINDER_DELAY_MS = 60 * 60 * 1000;
 const DEFAULT_REMINDER_HOUR = 9;
+const REMINDER_PRIORITY: Record<NonNullable<TaskItem['priority']>, number> = {
+  high: 1,
+  medium: 5,
+  low: 9,
+};
 
 const parseDeadlineTime = (
   deadlineTime: TaskItem['deadlineTime'],
@@ -65,13 +70,16 @@ export function useAddToReminder() {
       }
 
       const timestamp = getReminderTimestamp(task.deadline, task.deadlineTime);
+      const priority = task.priority ? REMINDER_PRIORITY[task.priority] : undefined;
 
       try {
-        await Reminders.addReminder({
+        const reminderConfig = {
           title: task.text,
           note: recordTitle,
           timestamp,
-        });
+          priority,
+        };
+        await Reminders.addReminder(reminderConfig);
         onSuccess?.();
         return true;
       } catch (err) {

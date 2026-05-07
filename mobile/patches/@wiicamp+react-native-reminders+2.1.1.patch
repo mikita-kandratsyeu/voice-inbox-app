@@ -1,0 +1,34 @@
+diff --git a/node_modules/@wiicamp/react-native-reminders/ios/Reminders.swift b/node_modules/@wiicamp/react-native-reminders/ios/Reminders.swift
+index 0f2a1a1..816ac32 100644
+--- a/node_modules/@wiicamp/react-native-reminders/ios/Reminders.swift
++++ b/node_modules/@wiicamp/react-native-reminders/ios/Reminders.swift
+@@ -45,14 +45,17 @@ class Reminders: NSObject {
+  @objc
+  func addReminder(_ config: NSDictionary, resolve: RCTPromiseResolveBlock, reject: RCTPromiseRejectBlock) -> Void {
+  let reminder = EKReminder(eventStore: eventStore);
+- reminder.priority = 2;
++ let priority = config["priority"] as? NSNumber;
++ reminder.priority = priority?.intValue ?? 0;
+  reminder.notes = config["note"] as? String;
+  reminder.title = config["title"] as? String;
+  reminder.calendar = eventStore.defaultCalendarForNewReminders();
+  var timestamp = config["timestamp"] as? Double;
+  timestamp! /= 1000;
+- reminder.addAlarm(EKAlarm(absoluteDate: Date(timeIntervalSince1970: timestamp!)));
++ let reminderDate = Date(timeIntervalSince1970: timestamp!);
++ reminder.dueDateComponents = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: reminderDate);
++ reminder.addAlarm(EKAlarm(absoluteDate: reminderDate));
+  do {
+  try eventStore.save(reminder, commit: true);
+  resolve(toDictionary(reminder: reminder));
+diff --git a/node_modules/@wiicamp/react-native-reminders/lib/typescript/src/index.d.ts b/node_modules/@wiicamp/react-native-reminders/lib/typescript/src/index.d.ts
+index 7e56a17..4d955fd 100644
+--- a/node_modules/@wiicamp/react-native-reminders/lib/typescript/src/index.d.ts
++++ b/node_modules/@wiicamp/react-native-reminders/lib/typescript/src/index.d.ts
+@@ -9,6 +9,7 @@ declare type ReminderConfig = {
+     title: String;
+     note: String;
+     timestamp: Number;
++    priority?: Number;
+ };
+ declare type RemindersType = {
