@@ -216,8 +216,7 @@
     "tasks": "Tasks",
     "allTasksForNote": "All tasks",
     "transcriptProcessErrorTitle": "Couldn't transcribe",
-    "transcriptProcessErrorDesc":
-      "Something went wrong processing the audio. Make sure the recording isn't damaged and try again.",
+    "transcriptProcessErrorDesc": "Something went wrong processing the audio. Make sure the recording isn't damaged and try again.",
     "transcriptNotCreated": "Transcript not created",
     "transcriptNotCreatedDesc": "Tap the button below to transcribe the recording on your device.",
     "transcribe": "Transcribe",
@@ -443,6 +442,10 @@
           "title": "Translate",
           "subtitle": "Cloud translation uses the generation limit when an online model is selected."
         },
+        "digest": {
+          "title": "Daily/Weekly Digest",
+          "subtitle": "Local digest is free. Manual AI digest uses one cloud generation."
+        },
         "autoOrganize": {
           "title": "Auto-organize",
           "subtitle": "Folder suggestions and automatic organization use cloud AI credits."
@@ -453,6 +456,47 @@
         "batchAsk": "Ask one focused question instead of several follow-ups when possible.",
         "privateMode": "Use local/private AI for eligible workflows when you want to avoid cloud usage."
       }
+    },
+    "digest": {
+      "title": "Daily/Weekly Digest",
+      "settingsSubtitle": "Local recap with optional AI generation.",
+      "subtitle": "Built from saved summaries, tasks, key phrases, and next steps.",
+      "period": {
+        "day": "Today",
+        "week": "Last 7 days"
+      },
+      "durationMinutes_one": "{{count}} min",
+      "durationMinutes_other": "{{count}} min",
+      "durationHours_one": "{{count}} h",
+      "durationHours_other": "{{count}} h",
+      "durationHoursMinutes": "{{hours}} h {{minutes}} min",
+      "metrics": {
+        "records": "Notes",
+        "recordsHelper": "Recorded in period",
+        "duration": "Audio",
+        "durationHelper": "Total duration",
+        "openTasks": "Open",
+        "openTasksHelper": "Tasks to follow up",
+        "overdue": "Overdue",
+        "overdueHelper": "Past deadlines"
+      },
+      "aiTitle": "AI digest",
+      "aiDescription": "Generate a concise narrative digest from this local recap. This uses one cloud AI credit.",
+      "aiManualHint": "Not generated yet. Local metrics above are free.",
+      "aiGeneratedAt": "Generated {{date}}. Regenerate if notes or tasks changed.",
+      "aiGenerating": "Generating digest...",
+      "generateAi": "Generate AI digest",
+      "regenerateAi": "Regenerate AI digest",
+      "aiLimitError": "Weekly AI limit reached. Try again after reset or upgrade your plan.",
+      "emptyAi": "No notes in this period yet.",
+      "topicsTitle": "Top topics",
+      "emptyTopics": "No key phrases yet. Generate summaries for notes to improve the digest.",
+      "nextStepsTitle": "Next steps",
+      "emptyNextSteps": "No next steps found for this period.",
+      "openTasksTitle": "Open tasks",
+      "emptyOpenTasks": "No open tasks in this period.",
+      "overdueTitle": "Overdue tasks",
+      "emptyOverdue": "No overdue tasks."
     },
     "sync": "Sync",
     "backupRestore": "Backup & restore",

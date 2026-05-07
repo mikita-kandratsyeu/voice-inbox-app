@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import {
+  CalendarDays,
   Cloud,
   FolderTree,
   Languages,
@@ -189,6 +190,13 @@ export const AiUsageDashboardScreen = () => {
         label: t('settings.aiUsageDashboard.features.translate.title'),
         value: t('settings.aiUsageDashboard.cloudBadge'),
         subtitle: t('settings.aiUsageDashboard.features.translate.subtitle'),
+      },
+      {
+        key: 'digest',
+        icon: <CalendarDays size={20} color={color.accent.primary} strokeWidth={1.8} />,
+        label: t('settings.aiUsageDashboard.features.digest.title'),
+        value: t('settings.aiUsageDashboard.hybridBadge'),
+        subtitle: t('settings.aiUsageDashboard.features.digest.subtitle'),
       },
       {
         key: 'autoOrganize',

@@ -124,6 +124,7 @@ export const SettingsScreen = () => {
               setAutoArchiveEnabled={settings.setAutoArchiveEnabled}
               autoArchiveAfterDays={settings.autoArchiveAfterDays}
               onAutoArchiveDelayPress={settings.handleAutoArchiveDelayPress}
+              onOpenDigest={() => settings.navigation.navigate('Digest')}
               onLockedPress={settings.setAutomationSheet}
             />
           )}

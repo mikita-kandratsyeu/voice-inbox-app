@@ -1,0 +1,228 @@
+import dayjs from 'dayjs';
+
+import type { RecordListItem, TaskItem } from '@/entities/record';
+import type { DigestAiResult } from '@/shared/lib/ai-api';
+import { storage } from '@/shared/lib/async-storage/mmkv';
+
+export type DigestPeriod = 'day' | 'week';
+
+export type DigestTask = TaskItem & {
+  recordId: string;
+  recordTitle: string;
+};
+
+export type DeterministicDigest = {
+  period: DigestPeriod;
+  fromIso: string;
+  toIso: string;
+  records: RecordListItem[];
+  recordCount: number;
+  totalDurationMs: number;
+  summaries: string[];
+  topKeyPhrases: Array<{ phrase: string; count: number }>;
+  openTasks: DigestTask[];
+  overdueTasks: DigestTask[];
+  nextSteps: string[];
+  classificationCounts: Array<{ label: string; count: number }>;
+};
+
+type CachedDigest = {
+  key: string;
+  createdAt: string;
+  result: DigestAiResult;
+};
+
+const CACHE_PREFIX = 'digest.ai.';
+const MAX_AI_NOTES = 30;
+const MAX_TEXT_CHARS = 900;
+
+export function getDigestRange(period: DigestPeriod, now = dayjs()) {
+  if (period === 'day') {
+    return {
+      from: now.startOf('day'),
+      to: now.endOf('day'),
+    };
+  }
+
+  return {
+    from: now.subtract(6, 'day').startOf('day'),
+    to: now.endOf('day'),
+  };
+}
+
+function normalizeKey(value: string): string {
+  return value.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function truncate(value: string | undefined, maxChars: number): string | undefined {
+  const trimmed = value?.trim();
+  if (!trimmed) return undefined;
+  return trimmed.length <= maxChars ? trimmed : `${trimmed.slice(0, maxChars)}...`;
+}
+
+function flattenTasks(records: RecordListItem[]): DigestTask[] {
+  return records.flatMap((record) =>
+    (record.tasks ?? []).map((task) => ({
+      ...task,
+      recordId: record.id,
+      recordTitle: record.title,
+    })),
+  );
+}
+
+export function buildDeterministicDigest(
+  period: DigestPeriod,
+  records: RecordListItem[],
+): DeterministicDigest {
+  const { from, to } = getDigestRange(period);
+  const inRange = records
+    .filter((record) => {
+      const created = dayjs(record.createdAt);
+      return (
+        created.isValid() &&
+        created.isAfter(from.subtract(1, 'millisecond')) &&
+        created.isBefore(to.add(1, 'millisecond'))
+      );
+    })
+    .sort((a, b) => dayjs(b.createdAt).valueOf() - dayjs(a.createdAt).valueOf());
+
+  const phraseCounts = new Map<string, { phrase: string; count: number }>();
+  const classificationCounts = new Map<string, number>();
+
+  for (const record of inRange) {
+    if (record.classification) {
+      classificationCounts.set(
+        record.classification,
+        (classificationCounts.get(record.classification) ?? 0) + 1,
+      );
+    }
+
+    for (const phrase of record.keyPhrases ?? []) {
+      const key = normalizeKey(phrase);
+      if (!key) continue;
+      const existing = phraseCounts.get(key);
+      phraseCounts.set(key, {
+        phrase: existing?.phrase ?? phrase.trim(),
+        count: (existing?.count ?? 0) + 1,
+      });
+    }
+  }
+
+  const tasks = flattenTasks(inRange);
+  const today = dayjs().startOf('day');
+  const openTasks = tasks.filter((task) => !task.isDone);
+  const overdueTasks = openTasks.filter((task) => {
+    if (!task.deadline) return false;
+    const deadline = dayjs(task.deadline);
+    return deadline.isValid() && deadline.isBefore(today);
+  });
+
+  const seenNextSteps = new Set<string>();
+  const nextSteps = inRange
+    .flatMap((record) => record.nextSteps ?? [])
+    .map((step) => step.trim())
+    .filter((step) => {
+      const key = normalizeKey(step);
+      if (!key || seenNextSteps.has(key)) return false;
+      seenNextSteps.add(key);
+      return true;
+    })
+    .slice(0, 12);
+
+  return {
+    period,
+    fromIso: from.toISOString(),
+    toIso: to.toISOString(),
+    records: inRange,
+    recordCount: inRange.length,
+    totalDurationMs: inRange.reduce((sum, record) => sum + (record.durationMs ?? 0), 0),
+    summaries: inRange
+      .map((record) => record.summary?.trim())
+      .filter((summary): summary is string => Boolean(summary))
+      .slice(0, 12),
+    topKeyPhrases: [...phraseCounts.values()]
+      .sort((a, b) => b.count - a.count || a.phrase.localeCompare(b.phrase))
+      .slice(0, 10),
+    openTasks: openTasks.slice(0, 20),
+    overdueTasks: overdueTasks.slice(0, 10),
+    nextSteps,
+    classificationCounts: [...classificationCounts.entries()]
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label)),
+  };
+}
+
+export function buildDigestAiPayload(digest: DeterministicDigest, language: 'en' | 'ru'): string {
+  return JSON.stringify({
+    language,
+    period: digest.period,
+    from: digest.fromIso,
+    to: digest.toIso,
+    counts: {
+      records: digest.recordCount,
+      openTasks: digest.openTasks.length,
+      overdueTasks: digest.overdueTasks.length,
+    },
+    topKeyPhrases: digest.topKeyPhrases,
+    classificationCounts: digest.classificationCounts,
+    openTasks: digest.openTasks.slice(0, 12).map((task) => ({
+      text: task.text,
+      priority: task.priority,
+      deadline: task.deadline,
+      recordTitle: task.recordTitle,
+    })),
+    overdueTasks: digest.overdueTasks.map((task) => ({
+      text: task.text,
+      deadline: task.deadline,
+      recordTitle: task.recordTitle,
+    })),
+    nextSteps: digest.nextSteps,
+    notes: digest.records.slice(0, MAX_AI_NOTES).map((record) => ({
+      id: record.id,
+      title: truncate(record.title, 160),
+      createdAt: record.createdAt,
+      classification: record.classification,
+      summary: truncate(record.summary, MAX_TEXT_CHARS),
+      keyPhrases: record.keyPhrases?.slice(0, 8),
+      nextSteps: record.nextSteps?.slice(0, 5),
+      tasks: record.tasks?.slice(0, 8).map((task) => ({
+        text: task.text,
+        isDone: task.isDone,
+        priority: task.priority,
+        deadline: task.deadline,
+      })),
+    })),
+  });
+}
+
+export function getDigestCacheKey(digest: DeterministicDigest): string {
+  const newestRecord = digest.records[0]?.createdAt ?? 'empty';
+  const taskFingerprint = digest.openTasks
+    .map((task) => `${task.recordId}:${task.id}:${task.isDone ? '1' : '0'}:${task.deadline ?? ''}`)
+    .join('|');
+  return `${digest.period}:${digest.fromIso}:${digest.toIso}:${digest.recordCount}:${newestRecord}:${taskFingerprint}`;
+}
+
+export function loadCachedDigest(key: string): CachedDigest | null {
+  try {
+    const raw = storage.getString(`${CACHE_PREFIX}${key}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as CachedDigest;
+    if (parsed?.key === key && parsed.result?.markdown) {
+      return parsed;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export function saveCachedDigest(key: string, result: DigestAiResult): CachedDigest {
+  const cached = {
+    key,
+    createdAt: new Date().toISOString(),
+    result,
+  };
+  storage.set(`${CACHE_PREFIX}${key}`, JSON.stringify(cached));
+  return cached;
+}
