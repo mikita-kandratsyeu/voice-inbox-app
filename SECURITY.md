@@ -22,7 +22,7 @@ Exact version numbers are defined per app in each app’s `package.json`. When i
 ### How to report
 
 1. **Preferred (GitHub):** Use [GitHub Security Advisories](https://docs.github.com/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability) to **privately report** a vulnerability for this repository, if that feature is enabled for the repo.
-2. **Email:** If private reporting is not available, email **Mikita Kandratsyeu** at [nickondr.production@gmail.com](mailto:nickondr.production@gmail.com) with a subject line such as `[Security] Voice Inbox AI`.
+2. **Email:** If private reporting is not available, email **Support** at [hello@voice-inbox.online](mailto:hello@voice-inbox.online) with a subject line such as `[Security] Voice Inbox AI`.
 
 Include as much as you can:
 
