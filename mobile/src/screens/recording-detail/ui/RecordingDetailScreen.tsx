@@ -345,7 +345,7 @@ export const RecordingDetailScreen = () => {
         sheetTitleKey="recordActions.renameTitle"
         placeholderKey="recordActions.renamePrompt"
         onClose={() => setRenameTarget(null)}
-        onSave={(text) => {
+        onSave={({ text }) => {
           const trimmed = text.trim();
           if (!renameTarget) return false;
           if (trimmed === renameTarget.title) return true;

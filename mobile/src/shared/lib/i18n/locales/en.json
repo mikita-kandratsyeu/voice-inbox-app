@@ -120,13 +120,20 @@
     "today": "Today",
     "yesterday": "Yesterday",
     "emptyTitle": "No tasks yet",
-    "emptyDescription": "Tasks from your notes show up here, grouped by day.",
+    "emptyDescription": "Tasks from your notes show up here, grouped by due date.",
     "emptyFiltered": "No open tasks",
     "a11yOpenAllTasks": "All tasks from notes",
     "openNote": "Open note",
     "noteFilterLabel": "Note",
     "noteUnavailable": "Note not found",
-    "clearNoteFilterA11y": "Show tasks from all notes"
+    "clearNoteFilterA11y": "Show tasks from all notes",
+    "sections": {
+      "overdue": "Overdue",
+      "today": "Today",
+      "upcoming": "Upcoming",
+      "noDate": "No date",
+      "done": "Done"
+    }
   },
   "ai": {
     "limitWeeklyExceeded": "You’ve used this week’s generation limit. Try again next week.",
@@ -461,7 +468,7 @@
       "freeLimits": {
         "manualAi": "AI runs manually only",
         "recording": "Recordings up to {{minutes}} minutes",
-        "weeklyAi": "Up to {{limit}} AI requests per week",
+        "weeklyAi": "Up to {{limit}} AI requests per week"
       },
       "proTitle": "Pro",
       "billingMonthly": "Monthly",
@@ -964,7 +971,29 @@
     "deleteTask": "Delete",
     "deleteTaskConfirm": "Remove this task from the note?",
     "editTask": "Edit",
-    "editTaskSheetTitle": "Edit task"
+    "editTaskSheetTitle": "Edit task",
+    "deadlineLabel": "Deadline",
+    "deadlinePlaceholder": "YYYY-MM-DD",
+    "noDeadline": "No deadline",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "deadlineInvalid": "Use date format YYYY-MM-DD.",
+    "deadlinePastInvalid": "Choose today or a future date.",
+    "priorityLabel": "Priority",
+    "priority": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
+    },
+    "weekdays": {
+      "mon": "Mon",
+      "tue": "Tue",
+      "wed": "Wed",
+      "thu": "Thu",
+      "fri": "Fri",
+      "sat": "Sat",
+      "sun": "Sun"
+    }
   },
   "classification": {
     "personal": "Personal",

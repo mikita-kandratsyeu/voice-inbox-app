@@ -2414,6 +2414,27 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNDateTimePicker (9.1.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNFBAnalytics (24.0.0):
     - FirebaseAnalytics/Core (= 12.10.0)
     - FirebaseAnalytics/IdentitySupport (= 12.10.0)
@@ -3062,6 +3083,7 @@ DEPENDENCIES:
   - RNBootSplash (from `../node_modules/react-native-bootsplash`)
   - RNCalendarEvents (from `../node_modules/react-native-calendar-events`)
   - "RNCClipboard (from `../node_modules/@react-native-clipboard/clipboard`)"
+  - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - "RNFBAnalytics (from `../node_modules/@react-native-firebase/analytics`)"
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBAppCheck (from `../node_modules/@react-native-firebase/app-check`)"
@@ -3336,6 +3358,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-calendar-events"
   RNCClipboard:
     :path: "../node_modules/@react-native-clipboard/clipboard"
+  RNDateTimePicker:
+    :path: "../node_modules/@react-native-community/datetimepicker"
   RNFBAnalytics:
     :path: "../node_modules/@react-native-firebase/analytics"
   RNFBApp:
@@ -3525,6 +3549,7 @@ SPEC CHECKSUMS:
   RNBootSplash: a4ac7d40cc5d7e2b63bbf28e0ad269681efecabb
   RNCalendarEvents: 7e65eb4a94f53c1744d1e275f7fafcfaa619f7a3
   RNCClipboard: 26237d7fcfc6359e674655b02d03d6178d63d085
+  RNDateTimePicker: 0e47a3a4b2c71c1625ff31d69c929e314c995fc1
   RNFBAnalytics: f05e18f9ed262a66d00780f029c54ee75f63615f
   RNFBApp: 0b6a22fb66b5eb9309d58a09fe732c4862d77927
   RNFBAppCheck: 31ea1a4314c8606a9042e8084aa012fcdf823f14

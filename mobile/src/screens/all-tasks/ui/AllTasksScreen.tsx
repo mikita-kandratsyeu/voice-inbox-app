@@ -27,8 +27,10 @@ import {
   FolderReorderSheet,
   useFolderStore,
 } from '@/entities/folder';
-import { useRecordStore } from '@/entities/record';
+import { type TaskItem, useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { useAddToCalendar } from '@/features/add-to-calendar';
+import { useAddToReminder } from '@/features/add-to-reminder';
 import { useAdsAllowed } from '@/features/app-storefront';
 import { DeferredInboxBannerAd, InboxBannerAd } from '@/features/inbox-banner';
 import { useManageFolders } from '@/features/manage-folders';
@@ -41,7 +43,7 @@ import {
   useIsTablet,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
-import { resolveDayjsLocale } from '@/shared/lib/date';
+import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
 import { EmptyState, ScreenHeader, SectionHeader } from '@/shared/ui';
 
 import {
@@ -49,16 +51,56 @@ import {
   type AllTasksListItem,
   injectAllTasksListBannerCard,
 } from '../lib/injectAllTasksListBannerCard';
-import type { TaskWithRecord } from '../types';
+import type { TaskDeadlineBucket, TaskWithRecord } from '../types';
 import { AllTasksTaskRow } from './AllTasksTaskRow';
 
-const dayKeyFromMs = (ms: number): string => dayjs(ms).format('YYYY-MM-DD');
-const dayKeyFromIso = (iso: string): string => dayjs(iso).format('YYYY-MM-DD');
+const TASK_DEADLINE_BUCKETS: TaskDeadlineBucket[] = [
+  'overdue',
+  'today',
+  'upcoming',
+  'noDate',
+  'done',
+];
 
-type Section = { dayKey: string; title: string; data: TaskWithRecord[] };
+const PRIORITY_RANK: Record<NonNullable<TaskItem['priority']>, number> = {
+  high: 0,
+  medium: 1,
+  low: 2,
+};
+
+type Section = { id: TaskDeadlineBucket; title: string; data: TaskWithRecord[] };
+
+const getDeadlineBucket = (task: TaskItem): TaskDeadlineBucket => {
+  if (task.isDone) return 'done';
+  const deadline = parseTaskDeadline(task.deadline);
+  if (!deadline) return 'noDate';
+  const day = dayjs(deadline);
+  if (day.isBefore(dayjs(), 'day')) return 'overdue';
+  if (day.isSame(dayjs(), 'day')) return 'today';
+  return 'upcoming';
+};
+
+const sortTaskRows = (a: TaskWithRecord, b: TaskWithRecord): number => {
+  const deadlineA = parseTaskDeadline(a.task.deadline)?.getTime() ?? Number.POSITIVE_INFINITY;
+  const deadlineB = parseTaskDeadline(b.task.deadline)?.getTime() ?? Number.POSITIVE_INFINITY;
+  if (deadlineA !== deadlineB) return deadlineA - deadlineB;
+
+  const priorityA = a.task.priority ? PRIORITY_RANK[a.task.priority] : PRIORITY_RANK.medium;
+  const priorityB = b.task.priority ? PRIORITY_RANK[b.task.priority] : PRIORITY_RANK.medium;
+  if (priorityA !== priorityB) return priorityA - priorityB;
+
+  return dayjs(b.recordCreatedAt).valueOf() - dayjs(a.recordCreatedAt).valueOf();
+};
+
+const isValidDeadlineInput = (value: string): boolean => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  return dayjs(value).isValid() && dayjs(value).format('YYYY-MM-DD') === value;
+};
+
+const isPastDeadlineInput = (value: string): boolean => dayjs(value).isBefore(dayjs(), 'day');
 
 export const AllTasksScreen = () => {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'AllTasks'>>();
   const color = useColors();
@@ -72,6 +114,8 @@ export const AllTasksScreen = () => {
     recordId: string;
     taskId: string;
     text: string;
+    deadline?: string | null;
+    priority?: TaskItem['priority'];
   } | null>(null);
 
   const listRef = useRef<FlashListRef<AllTasksListItem>>(null);
@@ -86,6 +130,8 @@ export const AllTasksScreen = () => {
   );
 
   const recordFilterId = route.params?.recordId;
+  const { addTaskToCalendar } = useAddToCalendar();
+  const { addTaskToReminder } = useAddToReminder();
 
   const { activeFolderId, setActiveFolder, reorderFolders } = useFolderStore(
     useShallow((s) => ({
@@ -178,45 +224,22 @@ export const AllTasksScreen = () => {
       ? rows.filter((row) => !row.task.isDone || recentlyCompleted.has(row.task.id))
       : rows;
 
-    const todayK = dayKeyFromMs(Date.now());
-    const yesterdayK = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
-
-    const byDay = new Map<string, TaskWithRecord[]>();
+    const byBucket = new Map<TaskDeadlineBucket, TaskWithRecord[]>();
     for (const row of filtered) {
-      const key = dayKeyFromIso(row.recordCreatedAt);
-      const list = byDay.get(key) ?? [];
+      const key = getDeadlineBucket(row.task);
+      const list = byBucket.get(key) ?? [];
       list.push(row);
-      byDay.set(key, list);
+      byBucket.set(key, list);
     }
 
-    const keys = [...byDay.keys()].sort((a, b) => b.localeCompare(a));
-
-    const formatLong = (key: string): string => {
-      return dayjs(key).locale(resolveDayjsLocale(i18n.language)).format('dddd, D MMMM YYYY');
-    };
-
-    const sections: Section[] = keys.map((key) => {
-      let title = formatLong(key);
-      if (key === todayK) title = t('allTasks.today');
-      else if (key === yesterdayK) title = t('allTasks.yesterday');
-
-      return {
-        dayKey: key,
-        title,
-        data: byDay.get(key) ?? [],
-      };
-    });
+    const sections: Section[] = TASK_DEADLINE_BUCKETS.map((key) => ({
+      id: key,
+      title: t(`allTasks.sections.${key}`),
+      data: [...(byBucket.get(key) ?? [])].sort(sortTaskRows),
+    })).filter((section) => section.data.length > 0);
 
     return sections;
-  }, [
-    records,
-    openOnly,
-    i18n.language,
-    t,
-    recentlyCompleted,
-    effectiveActiveFolderId,
-    recordFilterId,
-  ]);
+  }, [records, openOnly, t, recentlyCompleted, effectiveActiveFolderId, recordFilterId]);
 
   const flattenedList = useMemo((): AllTasksFlattenedItem[] => {
     const out: AllTasksFlattenedItem[] = [];
@@ -224,7 +247,7 @@ export const AllTasksScreen = () => {
       const s = sectionList[i];
       out.push({
         type: 'section',
-        dayKey: s.dayKey,
+        dayKey: s.id,
         title: s.title,
         isFirst: i === 0,
       });
@@ -286,7 +309,16 @@ export const AllTasksScreen = () => {
   );
 
   const onEditTask = useCallback(
-    (recordId: string, taskId: string, newText: string): boolean => {
+    (
+      recordId: string,
+      taskId: string,
+      nextValue: {
+        text: string;
+        deadline?: string | null;
+        priority?: TaskItem['priority'];
+      },
+    ): boolean => {
+      const newText = nextValue.text;
       const trimmed = newText.trim();
       if (!trimmed) return false;
 
@@ -303,7 +335,26 @@ export const AllTasksScreen = () => {
         return false;
       }
 
-      const next = prev.map((x) => (x.id === taskId ? { ...x, text: trimmed } : x));
+      const nextDeadline = nextValue.deadline?.trim() ?? '';
+      if (nextDeadline.length > 0 && !isValidDeadlineInput(nextDeadline)) {
+        Alert.alert(t('common.error'), t('tasks.deadlineInvalid'));
+        return false;
+      }
+      if (nextDeadline.length > 0 && isPastDeadlineInput(nextDeadline)) {
+        Alert.alert(t('common.error'), t('tasks.deadlinePastInvalid'));
+        return false;
+      }
+
+      const next = prev.map((x) =>
+        x.id === taskId
+          ? {
+              ...x,
+              text: trimmed,
+              deadline: nextDeadline.length > 0 ? nextDeadline : null,
+              priority: nextValue.priority ?? x.priority ?? 'medium',
+            }
+          : x,
+      );
       updateTasks(recordId, next).catch(() => {});
 
       return true;
@@ -323,15 +374,49 @@ export const AllTasksScreen = () => {
     [records, updateTasks],
   );
 
+  const showPermissionAlert = useCallback(
+    (_: string) => {
+      Alert.alert(t('common.error'), t('tasks.permissionDenied'));
+    },
+    [t],
+  );
+
+  const onAddTaskToReminder = useCallback(
+    (item: TaskWithRecord) => {
+      void addTaskToReminder(
+        item.task,
+        item.recordTitle,
+        () => Alert.alert(t('tasks.addedToReminders')),
+        showPermissionAlert,
+      );
+    },
+    [addTaskToReminder, showPermissionAlert, t],
+  );
+
+  const onAddTaskToCalendar = useCallback(
+    (item: TaskWithRecord) => {
+      void addTaskToCalendar(
+        item.task,
+        item.recordTitle,
+        () => Alert.alert(t('tasks.addedToCalendar')),
+        showPermissionAlert,
+      );
+    },
+    [addTaskToCalendar, showPermissionAlert, t],
+  );
+
   const editTaskSheet = useMemo(
     () => (
       <TaskEditSheet
         visible={editTaskTarget !== null}
         initialText={editTaskTarget?.text ?? ''}
+        initialDeadline={editTaskTarget?.deadline}
+        initialPriority={editTaskTarget?.priority}
+        showMetadataFields
         onClose={() => setEditTaskTarget(null)}
-        onSave={(text) => {
+        onSave={(value) => {
           if (!editTaskTarget) return false;
-          return onEditTask(editTaskTarget.recordId, editTaskTarget.taskId, text);
+          return onEditTask(editTaskTarget.recordId, editTaskTarget.taskId, value);
         }}
       />
     ),
@@ -354,8 +439,16 @@ export const AllTasksScreen = () => {
           onToggle={onToggle}
           onOpenNote={openNote}
           onEditTask={(recordId, taskId, text) => {
-            setEditTaskTarget({ recordId, taskId, text });
+            setEditTaskTarget({
+              recordId,
+              taskId,
+              text,
+              deadline: item.row.task.deadline,
+              priority: item.row.task.priority,
+            });
           }}
+          onAddToReminder={onAddTaskToReminder}
+          onAddToCalendar={onAddTaskToCalendar}
           onDeleteTask={(recordId, taskId) => {
             Alert.alert(t('tasks.deleteTask'), t('tasks.deleteTaskConfirm'), [
               { text: t('common.cancel'), style: 'cancel' },
@@ -369,7 +462,16 @@ export const AllTasksScreen = () => {
         />
       );
     },
-    [bannerMaxWidth, color, onToggle, openNote, t, onDeleteTask],
+    [
+      bannerMaxWidth,
+      color,
+      onToggle,
+      openNote,
+      onAddTaskToReminder,
+      onAddTaskToCalendar,
+      t,
+      onDeleteTask,
+    ],
   );
 
   const keyExtractor = useCallback((item: AllTasksListItem) => {

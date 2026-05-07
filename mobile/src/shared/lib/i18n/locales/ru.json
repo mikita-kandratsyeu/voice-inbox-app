@@ -120,13 +120,20 @@
     "today": "Сегодня",
     "yesterday": "Вчера",
     "emptyTitle": "Пока нет задач",
-    "emptyDescription": "Задачи из заметок появятся здесь, сгруппированные по дням.",
+    "emptyDescription": "Задачи из заметок появятся здесь, сгруппированные по срокам.",
     "emptyFiltered": "Нет открытых задач",
     "a11yOpenAllTasks": "Все задачи из заметок",
     "openNote": "Перейти к заметке",
     "noteFilterLabel": "Заметка",
     "noteUnavailable": "Заметка не найдена",
-    "clearNoteFilterA11y": "Показать задачи из всех заметок"
+    "clearNoteFilterA11y": "Показать задачи из всех заметок",
+    "sections": {
+      "overdue": "Просрочено",
+      "today": "Сегодня",
+      "upcoming": "Будущие",
+      "noDate": "Без срока",
+      "done": "Готово"
+    }
   },
   "ai": {
     "limitWeeklyExceeded": "Недельный лимит генераций исчерпан. Попробуйте на следующей неделе.",
@@ -463,7 +470,7 @@
       "freeLimits": {
         "manualAi": "ИИ только вручную",
         "recording": "Запись до {{minutes}} минут",
-        "weeklyAi": "До {{limit}} генераций в неделю",
+        "weeklyAi": "До {{limit}} генераций в неделю"
       },
       "proTitle": "Pro",
       "billingMonthly": "Ежемесячно",
@@ -966,7 +973,29 @@
     "deleteTask": "Удалить",
     "deleteTaskConfirm": "Удалить эту задачу из заметки?",
     "editTask": "Изменить",
-    "editTaskSheetTitle": "Редактировать задачу"
+    "editTaskSheetTitle": "Редактировать задачу",
+    "deadlineLabel": "Срок",
+    "deadlinePlaceholder": "ГГГГ-ММ-ДД",
+    "noDeadline": "Без срока",
+    "previousMonth": "Предыдущий месяц",
+    "nextMonth": "Следующий месяц",
+    "deadlineInvalid": "Используйте формат даты ГГГГ-ММ-ДД.",
+    "deadlinePastInvalid": "Выберите сегодня или будущую дату.",
+    "priorityLabel": "Приоритет",
+    "priority": {
+      "low": "Низкий",
+      "medium": "Средний",
+      "high": "Высокий"
+    },
+    "weekdays": {
+      "mon": "ПН",
+      "tue": "ВТ",
+      "wed": "СР",
+      "thu": "ЧТ",
+      "fri": "ПТ",
+      "sat": "СБ",
+      "sun": "ВС"
+    }
   },
   "classification": {
     "personal": "Личное",
