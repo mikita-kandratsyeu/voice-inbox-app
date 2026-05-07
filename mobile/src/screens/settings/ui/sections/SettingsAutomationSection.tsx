@@ -45,6 +45,13 @@ export const SettingsAutomationSection = ({
   return (
     <SettingsSection title={t('settings.automation')}>
       <SettingsRow
+        label={t('settings.digest.title')}
+        subtitle={t('settings.digest.settingsSubtitle')}
+        leftIcon={<CalendarDays size={20} color={color.accent.primary} strokeWidth={1.8} />}
+        onPress={onOpenDigest}
+        isFirst
+      />
+      <SettingsRow
         label={t('settings.autoTranscribeOnSave')}
         subtitle={t('settings.autoTranscribeOnSaveHint')}
         leftIcon={<Zap size={20} color={color.accent.primary} strokeWidth={1.8} />}
@@ -68,7 +75,6 @@ export const SettingsAutomationSection = ({
         }
         showChevron={false}
         onPress={automationLocked ? () => onLockedPress('autoTranscribe') : undefined}
-        isFirst
       />
       <SettingsRow
         label={t('settings.autoAiAfterTranscription')}
@@ -126,15 +132,9 @@ export const SettingsAutomationSection = ({
           value={t('settings.autoArchiveDelayValue', { count: autoArchiveAfterDays })}
           onPress={onAutoArchiveDelayPress}
           showChevron
+          isLast
         />
       ) : null}
-      <SettingsRow
-        label={t('settings.digest.title')}
-        subtitle={t('settings.digest.settingsSubtitle')}
-        leftIcon={<CalendarDays size={20} color={color.accent.primary} strokeWidth={1.8} />}
-        onPress={onOpenDigest}
-        isLast
-      />
     </SettingsSection>
   );
 };

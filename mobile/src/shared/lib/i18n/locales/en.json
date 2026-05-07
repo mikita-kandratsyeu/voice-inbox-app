@@ -406,7 +406,7 @@
       "title": "AI usage",
       "localBadge": "Local",
       "cloudBadge": "Cloud",
-      "hybridBadge": "Cloud/Local",
+      "hybridBadge": "Hybrid",
       "proBenefitTitle": "Pro keeps AI automatic",
       "proBenefitSubtitle": "Your Pro plan includes a higher weekly cloud AI limit for summaries, answers, translations, and organization.",
       "freePlanTitle": "Free weekly limit",
@@ -443,7 +443,7 @@
           "subtitle": "Cloud translation uses the generation limit when an online model is selected."
         },
         "digest": {
-          "title": "Daily/Weekly Digest",
+          "title": "AI digest",
           "subtitle": "Available in Smart mode and uses one cloud generation."
         },
         "autoOrganize": {
@@ -458,7 +458,7 @@
       }
     },
     "digest": {
-      "title": "Daily/Weekly Digest",
+      "title": "AI digest",
       "settingsSubtitle": "Local recap with optional AI generation.",
       "subtitle": "Built from saved summaries, tasks, key phrases, and next steps.",
       "smartModeOnlyTitle": "Digest is available in Smart mode",

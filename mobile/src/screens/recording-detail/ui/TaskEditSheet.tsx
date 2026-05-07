@@ -15,11 +15,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { TaskItem } from '@/entities/record';
 import { useColors } from '@/shared/config';
+import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import { modalKeyboardBehavior } from '@/shared/lib/platform';
 import { Button } from '@/shared/ui';
 
 const TASK_TEXT_MAX_CHARS = 500;
+const TABLET_SHEET_CONTENT_MAX_WIDTH = 720;
 const SECTION_LABEL_STYLE = {
   fontSize: 12,
   fontWeight: '600' as const,
@@ -99,6 +101,12 @@ const buildCalendarDays = (monthDate: Date, selectedDate: Date | null): Calendar
   });
 };
 
+const buildCalendarWeeks = (days: CalendarDay[]): CalendarDay[][] => {
+  return Array.from({ length: Math.ceil(days.length / 7) }, (_, weekIndex) =>
+    days.slice(weekIndex * 7, weekIndex * 7 + 7),
+  );
+};
+
 const formatCalendarMonthTitle = (date: Date, language: string): string => {
   const formatted = dayjs(date).locale(resolveDayjsLocale(language)).format('MMMM YYYY');
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
@@ -142,6 +150,8 @@ export function TaskEditSheet({
   const { t, i18n } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
+  const isTablet = useIsTablet();
+  const tabletContentMaxWidth = useTabletContentMaxWidth();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [draft, setDraft] = useState('');
   const [deadlineDraft, setDeadlineDraft] = useState('');
@@ -164,6 +174,7 @@ export function TaskEditSheet({
     () => buildCalendarDays(calendarMonth, selectedDeadlineDate),
     [calendarMonth, selectedDeadlineDate],
   );
+  const calendarWeeks = useMemo(() => buildCalendarWeeks(calendarDays), [calendarDays]);
   const calendarMonthTitle = useMemo(
     () => formatCalendarMonthTitle(calendarMonth, i18n.language),
     [calendarMonth, i18n.language],
@@ -179,6 +190,12 @@ export function TaskEditSheet({
   const canGoToPreviousMonth = dayjs(calendarMonth)
     .startOf('month')
     .isAfter(dayjs().startOf('month'));
+  const sheetContentMaxWidth = isTablet
+    ? Math.min(
+        tabletContentMaxWidth ?? TABLET_SHEET_CONTENT_MAX_WIDTH,
+        TABLET_SHEET_CONTENT_MAX_WIDTH,
+      )
+    : undefined;
 
   useEffect(() => {
     if (visible) {
@@ -246,8 +263,11 @@ export function TaskEditSheet({
         showsVerticalScrollIndicator={false}
         automaticallyAdjustKeyboardInsets={false}
         contentContainerStyle={{
-          paddingHorizontal: 20,
+          alignSelf: 'center',
+          maxWidth: sheetContentMaxWidth,
+          paddingHorizontal: isTablet ? 24 : 20,
           paddingBottom: Math.max(insets.bottom, 24),
+          width: '100%',
         }}
       >
         <Text
@@ -339,7 +359,9 @@ export function TaskEditSheet({
                 <View
                   className="mt-3 rounded-2xl px-2 py-4"
                   style={{
+                    alignSelf: 'center',
                     backgroundColor: color.background.tertiary,
+                    width: '100%',
                   }}
                 >
                   <View
@@ -396,43 +418,52 @@ export function TaskEditSheet({
                       </Text>
                     ))}
                   </View>
-                  <View className="flex-row flex-wrap">
-                    {calendarDays.map((day) => (
-                      <View key={day.key} style={{ width: `${100 / 7}%`, padding: 3 }}>
-                        <Pressable
-                          onPress={() => {
-                            if (day.isPast) return;
-                            setDeadlineDraft(formatTaskDeadline(day.date));
-                            setCalendarMonth(day.date);
-                            setDatePickerOpen(false);
-                          }}
-                          disabled={day.isPast}
-                          accessibilityRole="button"
-                          accessibilityState={{ disabled: day.isPast, selected: day.isSelected }}
-                          accessibilityLabel={day.key}
-                          className="aspect-square items-center justify-center rounded-full"
-                          style={{
-                            backgroundColor: day.isSelected ? color.accent.primary : 'transparent',
-                          }}
-                        >
-                          <Text
-                            className="text-[17px] font-medium"
-                            style={{
-                              color: day.isSelected
-                                ? color.icon.onAccent
-                                : day.isCurrentMonth && !day.isPast
-                                  ? color.text.primary
-                                  : color.text.muted,
-                              opacity: day.isPast
-                                ? 0.3
-                                : day.isCurrentMonth || day.isSelected
-                                  ? 1
-                                  : 0.45,
-                            }}
-                          >
-                            {day.dayOfMonth}
-                          </Text>
-                        </Pressable>
+                  <View>
+                    {calendarWeeks.map((week, weekIndex) => (
+                      <View key={week[0]?.key ?? weekIndex} className="flex-row">
+                        {week.map((day) => (
+                          <View key={day.key} className="flex-1 p-[3px]">
+                            <Pressable
+                              onPress={() => {
+                                if (day.isPast) return;
+                                setDeadlineDraft(formatTaskDeadline(day.date));
+                                setCalendarMonth(day.date);
+                                setDatePickerOpen(false);
+                              }}
+                              disabled={day.isPast}
+                              accessibilityRole="button"
+                              accessibilityState={{
+                                disabled: day.isPast,
+                                selected: day.isSelected,
+                              }}
+                              accessibilityLabel={day.key}
+                              className="aspect-square items-center justify-center rounded-full"
+                              style={{
+                                backgroundColor: day.isSelected
+                                  ? color.accent.primary
+                                  : 'transparent',
+                              }}
+                            >
+                              <Text
+                                className="text-[17px] font-medium"
+                                style={{
+                                  color: day.isSelected
+                                    ? color.icon.onAccent
+                                    : day.isCurrentMonth && !day.isPast
+                                      ? color.text.primary
+                                      : color.text.muted,
+                                  opacity: day.isPast
+                                    ? 0.3
+                                    : day.isCurrentMonth || day.isSelected
+                                      ? 1
+                                      : 0.45,
+                                }}
+                              >
+                                {day.dayOfMonth}
+                              </Text>
+                            </Pressable>
+                          </View>
+                        ))}
                       </View>
                     ))}
                   </View>
