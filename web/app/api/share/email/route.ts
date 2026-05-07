@@ -107,7 +107,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     <main style="max-width:720px;margin:0 auto;background:#ffffff;border-radius:16px;padding:24px;border:1px solid #e5e7eb;">
       <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;">${escapedTitle}</h1>
       <pre style="white-space:pre-wrap;word-break:break-word;font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono',monospace;margin:0;">${escapedMarkdown}</pre>
-      <p style="margin:24px 0 0;color:#6b7280;font-size:12px;">Sent from Voice Inbox AI.</p>
     </main>
   </body>
 </html>`,

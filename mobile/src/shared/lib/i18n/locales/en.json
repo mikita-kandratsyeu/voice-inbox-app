@@ -400,7 +400,59 @@
       "claimBonusCooldown": "Available again soon",
       "claimBonusSuccess": "+{{count}} bonus generations",
       "claimBonusUnavailableHint": "The ad bonus unlocks after you start using your weekly generation limit.",
-      "claimBonusNoUsage": "Use some generations first — the bonus refunds part of what you’ve already spent."
+      "claimBonusNoUsage": "Use some generations first — the bonus refunds part of what you’ve already spent.",
+      "openDashboard": "Open usage dashboard"
+    },
+    "aiUsageDashboard": {
+      "title": "AI usage",
+      "localBadge": "Local",
+      "cloudBadge": "Cloud",
+      "hybridBadge": "Cloud/Local",
+      "proBenefitTitle": "Pro keeps AI automatic",
+      "proBenefitSubtitle": "Your Pro plan includes a higher weekly cloud AI limit for summaries, answers, translations, and organization.",
+      "freePlanTitle": "Free weekly limit",
+      "freePlanSubtitle": "Upgrade to Pro for a higher weekly limit and smoother automatic processing.",
+      "currentWeekOnly": "This dashboard uses the current weekly counter. Feature-level history will require a backend usage history model.",
+      "featureBreakdownTitle": "What uses credits",
+      "savingTitle": "How to save credits",
+      "metrics": {
+        "used": "Used",
+        "remaining": "Remaining",
+        "limit": "Limit",
+        "reset": "Reset",
+        "weekly": "Weekly",
+        "usedHelper": "{{percent}}% of this week",
+        "remainingHelper": "Available before reset",
+        "proLimitHelper": "Pro weekly credits",
+        "freeLimitHelper": "Free weekly credits"
+      },
+      "features": {
+        "transcription": {
+          "title": "Transcription",
+          "subtitle": "Runs on device with downloaded Whisper models and does not spend cloud AI credits."
+        },
+        "summary": {
+          "title": "Summaries and tasks",
+          "subtitle": "Uses cloud AI in online mode, or local generation when private local AI is enabled."
+        },
+        "ask": {
+          "title": "Ask AI",
+          "subtitle": "Uses cloud AI in Smart mode, or local generation when private local AI is enabled."
+        },
+        "translate": {
+          "title": "Translate",
+          "subtitle": "Cloud translation uses the generation limit when an online model is selected."
+        },
+        "autoOrganize": {
+          "title": "Auto-organize",
+          "subtitle": "Folder suggestions and automatic organization use cloud AI credits."
+        }
+      },
+      "savingTips": {
+        "localTranscription": "Transcribe first and generate only for notes that need a summary or tasks.",
+        "batchAsk": "Ask one focused question instead of several follow-ups when possible.",
+        "privateMode": "Use local/private AI for eligible workflows when you want to avoid cloud usage."
+      }
     },
     "sync": "Sync",
     "backupRestore": "Backup & restore",

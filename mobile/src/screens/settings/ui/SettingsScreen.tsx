@@ -106,6 +106,7 @@ export const SettingsScreen = () => {
               usage={settings.aiUsage}
               loading={settings.aiUsageLoading}
               onClaimBonus={settings.adsAllowed ? settings.claim : undefined}
+              onOpenDetails={() => settings.navigation.navigate('AiUsageDashboard')}
               claimLoading={settings.claimLoading}
               claimError={settings.claimError}
             />
