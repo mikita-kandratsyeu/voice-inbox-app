@@ -11,7 +11,8 @@ import {
 } from '../lib/shareExportCache';
 
 const toFileUri = (path: string): string => (path.startsWith('file://') ? path : `file://${path}`);
-export const RECORD_TEXT_EXPORT_EXTENSION = 'txt';
+export type ShareBriefTemplate = 'noteBrief' | 'meetingBrief';
+export const RECORD_TEXT_EXPORT_EXTENSION = 'md';
 const sanitizeTitleForFileName = (title: string): string =>
   title.replace(/[^a-zA-Z0-9\u0400-\u04FF\s]/g, '_');
 
@@ -103,59 +104,144 @@ function formatTranscriptForShare(record: VoiceRecord): string {
   return formatPlainTranscriptForShare(record.transcript ?? '');
 }
 
-export const buildShareText = (record: VoiceRecord): string => {
+const pushMeta = (lines: string[], record: VoiceRecord): void => {
   const locale = i18n.language ?? 'en';
-  const lines: string[] = [];
-
-  lines.push(`# ${record.title}`);
-  lines.push('');
-
   const dateLabel = i18n.t('share.dateLabel');
   const durationLabel = i18n.t('share.durationLabel');
   const dateValue = record.createdAt ? formatShortDate(record.createdAt, locale) : record.createdAt;
+
   lines.push(`${dateLabel}: ${dateValue}`);
   lines.push(`${durationLabel}: ${record.duration}`);
+};
 
+const pushTags = (lines: string[], record: VoiceRecord): void => {
   if (record.tags && record.tags.length > 0) {
     lines.push('');
     lines.push(`## ${i18n.t('share.tagsLabel')}`);
     lines.push(record.tags.map((tag) => `#${tag}`).join(' '));
   }
+};
 
+const pushSummary = (lines: string[], record: VoiceRecord): void => {
+  if (record.summary) {
+    lines.push('');
+    lines.push(`## ${i18n.t('recordingDetail.summary')}`);
+    lines.push(formatPlainTranscriptForShare(record.summary));
+  }
+};
+
+const pushKeyPhrases = (lines: string[], record: VoiceRecord): void => {
+  if (record.keyPhrases && record.keyPhrases.length > 0) {
+    lines.push('');
+    lines.push(`## ${i18n.t('recordingDetail.keyPhrases')}`);
+    record.keyPhrases.forEach((phrase) => {
+      lines.push(`- ${phrase}`);
+    });
+  }
+};
+
+const formatTaskForShare = (task: NonNullable<VoiceRecord['tasks']>[number]): string => {
+  const meta: string[] = [];
+  if (task.deadline) {
+    meta.push(`${i18n.t('tasks.deadlineLabel')}: ${task.deadline}`);
+  }
+  if (task.priority) {
+    meta.push(`${i18n.t('tasks.priorityLabel')}: ${i18n.t(`tasks.priority.${task.priority}`)}`);
+  }
+
+  const suffix = meta.length > 0 ? ` (${meta.join(', ')})` : '';
+  return `- [${task.isDone ? 'x' : ' '}] ${task.text}${suffix}`;
+};
+
+const pushTasks = (lines: string[], record: VoiceRecord): void => {
+  if (record.tasks && record.tasks.length > 0) {
+    lines.push('');
+    lines.push(`## ${i18n.t('recordingDetail.tasks')}`);
+    record.tasks.forEach((t) => {
+      lines.push(formatTaskForShare(t));
+    });
+  }
+};
+
+const pushNextSteps = (lines: string[], record: VoiceRecord): void => {
+  if (record.nextSteps && record.nextSteps.length > 0) {
+    lines.push('');
+    lines.push(`## ${i18n.t('recordingDetail.nextSteps')}`);
+    record.nextSteps.forEach((step) => {
+      lines.push(`- ${step}`);
+    });
+  }
+};
+
+const pushTranscript = (lines: string[], record: VoiceRecord): void => {
   const transcriptBody = formatTranscriptForShare(record);
   if (transcriptBody) {
     lines.push('');
     lines.push(`## ${i18n.t('recordingDetail.transcript')}`);
     lines.push(transcriptBody);
   }
+};
 
-  if (record.summary) {
-    lines.push('');
-    lines.push(`## ${i18n.t('recordingDetail.summary')}`);
-    lines.push(formatPlainTranscriptForShare(record.summary));
-  }
-
-  if (record.tasks && record.tasks.length > 0) {
-    lines.push('');
-    lines.push(`## ${i18n.t('recordingDetail.tasks')}`);
-    record.tasks.forEach((t) => {
-      lines.push(`- [${t.isDone ? 'x' : ' '}] ${t.text}`);
-    });
-  }
-
+const pushFooter = (lines: string[]): void => {
   lines.push('');
   lines.push(i18n.t('share.exportedFrom'));
+};
+
+const buildNoteBrief = (record: VoiceRecord): string => {
+  const lines: string[] = [];
+
+  lines.push(`# ${record.title}`);
+  lines.push('');
+  pushMeta(lines, record);
+  pushTags(lines, record);
+  pushSummary(lines, record);
+  pushKeyPhrases(lines, record);
+  pushNextSteps(lines, record);
+  pushTasks(lines, record);
+  pushTranscript(lines, record);
+  pushFooter(lines);
 
   return lines.join('\n');
 };
 
+const buildMeetingBrief = (record: VoiceRecord): string => {
+  const lines: string[] = [];
+
+  lines.push(`# ${record.title}`);
+  lines.push('');
+  lines.push(`_${i18n.t('share.meetingBriefSubtitle')}_`);
+  lines.push('');
+  pushMeta(lines, record);
+  pushTags(lines, record);
+  pushSummary(lines, record);
+  pushKeyPhrases(lines, record);
+  pushNextSteps(lines, record);
+  pushTasks(lines, record);
+  pushTranscript(lines, record);
+  pushFooter(lines);
+
+  return lines.join('\n');
+};
+
+export const buildShareText = (
+  record: VoiceRecord,
+  template: ShareBriefTemplate = 'noteBrief',
+): string => {
+  if (template === 'meetingBrief') {
+    return buildMeetingBrief(record);
+  }
+
+  return buildNoteBrief(record);
+};
+
 export const useShareRecord = () => {
-  const shareRecord = async (record: VoiceRecord) => {
+  const shareRecord = async (record: VoiceRecord, template: ShareBriefTemplate = 'noteBrief') => {
     void pruneShareExportCache().catch(() => {});
     await ensureShareExportDirectory();
 
-    const text = buildShareText(record);
-    const fileName = `${sanitizeTitleForFileName(record.title)}.${RECORD_TEXT_EXPORT_EXTENSION}`;
+    const text = buildShareText(record, template);
+    const templateSuffix = template === 'meetingBrief' ? '-meeting-brief' : '-note-brief';
+    const fileName = `${sanitizeTitleForFileName(record.title)}${templateSuffix}.${RECORD_TEXT_EXPORT_EXTENSION}`;
     const filePath = `${getShareExportDirectoryPath()}/${fileName}`;
 
     try {

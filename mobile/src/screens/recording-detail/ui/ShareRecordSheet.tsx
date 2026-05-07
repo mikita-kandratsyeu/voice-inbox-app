@@ -1,11 +1,12 @@
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { FileText, Music } from 'lucide-react-native';
-import React, { useCallback, useEffect, useRef } from 'react';
+import { FileText, ListChecks, Music } from 'lucide-react-native';
+import React, { type ReactNode, useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import type { ShareBriefTemplate } from '@/features/share-record';
 import { useColors } from '@/shared/config';
 import { modalKeyboardBehavior } from '@/shared/lib/platform';
 
@@ -13,7 +14,7 @@ type ShareRecordSheetProps = {
   visible: boolean;
   hasAudio: boolean;
   onClose: () => void;
-  onShareText: () => void;
+  onShareText: (template: ShareBriefTemplate) => void;
   onShareAudio: () => void;
 };
 
@@ -47,15 +48,62 @@ export const ShareRecordSheet = ({
     [],
   );
 
-  const handleShareText = useCallback(() => {
+  const handleShareNoteBrief = useCallback(() => {
     onClose();
-    onShareText();
+    onShareText('noteBrief');
+  }, [onClose, onShareText]);
+
+  const handleShareMeetingBrief = useCallback(() => {
+    onClose();
+    onShareText('meetingBrief');
   }, [onClose, onShareText]);
 
   const handleShareAudio = useCallback(() => {
     onClose();
     onShareAudio();
   }, [onClose, onShareAudio]);
+
+  const renderOption = ({
+    icon,
+    title,
+    description,
+    onPress,
+    disabled = false,
+    accessibilityLabel,
+  }: {
+    icon: ReactNode;
+    title: string;
+    description?: string;
+    onPress: () => void;
+    disabled?: boolean;
+    accessibilityLabel: string;
+  }) => (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      disabled={disabled}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 14,
+        paddingHorizontal: 14,
+        borderRadius: 12,
+        backgroundColor: color.background.tertiary,
+        gap: 10,
+        opacity: disabled ? 0.45 : 1,
+      }}
+    >
+      {icon}
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>{title}</Text>
+        {description ? (
+          <Text style={{ fontSize: 13, color: color.text.muted, marginTop: 2 }}>{description}</Text>
+        ) : null}
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <BottomSheetModal
@@ -99,56 +147,30 @@ export const ShareRecordSheet = ({
           {t('share.shareAsTitle')}
         </Text>
 
-        <TouchableOpacity
-          onPress={handleShareText}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={t('share.shareNote')}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: 14,
-            paddingHorizontal: 14,
-            borderRadius: 12,
-            backgroundColor: color.background.tertiary,
-            gap: 10,
-          }}
-        >
-          <FileText size={20} color={color.text.primary} strokeWidth={2.1} />
-          <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>
-            {t('share.shareAsText')}
-          </Text>
-        </TouchableOpacity>
+        {renderOption({
+          icon: <FileText size={20} color={color.text.primary} strokeWidth={2.1} />,
+          title: t('share.noteBrief'),
+          description: t('share.noteBriefDescription'),
+          accessibilityLabel: t('share.noteBrief'),
+          onPress: handleShareNoteBrief,
+        })}
 
-        <TouchableOpacity
-          onPress={handleShareAudio}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={t('share.shareAudio')}
-          disabled={!hasAudio}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: 14,
-            paddingHorizontal: 14,
-            borderRadius: 12,
-            backgroundColor: color.background.tertiary,
-            gap: 10,
-            opacity: hasAudio ? 1 : 0.45,
-          }}
-        >
-          <Music size={20} color={color.text.primary} strokeWidth={2.1} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>
-              {t('share.shareAudio')}
-            </Text>
-            {!hasAudio && (
-              <Text style={{ fontSize: 13, color: color.text.muted, marginTop: 2 }}>
-                {t('share.noAudio')}
-              </Text>
-            )}
-          </View>
-        </TouchableOpacity>
+        {renderOption({
+          icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
+          title: t('share.meetingBrief'),
+          description: t('share.meetingBriefDescription'),
+          accessibilityLabel: t('share.meetingBrief'),
+          onPress: handleShareMeetingBrief,
+        })}
+
+        {renderOption({
+          icon: <Music size={20} color={color.text.primary} strokeWidth={2.1} />,
+          title: t('share.shareAudio'),
+          description: hasAudio ? undefined : t('share.noAudio'),
+          accessibilityLabel: t('share.shareAudio'),
+          disabled: !hasAudio,
+          onPress: handleShareAudio,
+        })}
       </BottomSheetView>
     </BottomSheetModal>
   );

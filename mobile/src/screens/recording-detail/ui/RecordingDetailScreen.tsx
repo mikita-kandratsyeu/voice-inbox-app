@@ -17,6 +17,7 @@ import { useAiProcessing } from '@/features/ai-processing';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import { useRecordActions } from '@/features/record-actions';
+import type { ShareBriefTemplate } from '@/features/share-record';
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
 import { useColors } from '@/shared/config';
@@ -307,11 +308,14 @@ export const RecordingDetailScreen = () => {
     [liveRecord, extractTasks],
   );
 
-  const handleShare = useCallback(() => {
-    shareRecord(liveRecord).catch((err: Error) => {
-      Alert.alert(t('recordingDetail.shareFailed'), err.message);
-    });
-  }, [t, liveRecord, shareRecord]);
+  const handleShare = useCallback(
+    (template: ShareBriefTemplate) => {
+      shareRecord(liveRecord, template).catch((err: Error) => {
+        Alert.alert(t('recordingDetail.shareFailed'), err.message);
+      });
+    },
+    [t, liveRecord, shareRecord],
+  );
 
   const handleShareAudio = useCallback(() => {
     shareAudio(liveRecord).catch((err: Error) => {
