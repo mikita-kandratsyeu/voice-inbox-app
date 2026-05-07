@@ -58,6 +58,12 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
   const { task, recordId, recordTitle } = item;
   const pressScale = useSharedValue(1);
   const parsedDeadline = parseTaskDeadline(task.deadline);
+  const deadlineText =
+    parsedDeadline !== null
+      ? `${dayjs(parsedDeadline).locale(resolveDayjsLocale(i18n.language)).format('D MMM')}${
+          task.deadlineTime ? `, ${task.deadlineTime}` : ''
+        }`
+      : null;
   const isOverdue =
     parsedDeadline !== null && !task.isDone && dayjs(parsedDeadline).isBefore(dayjs(), 'day');
   const priorityColor =
@@ -192,9 +198,7 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
                       }}
                       numberOfLines={1}
                     >
-                      {dayjs(parsedDeadline)
-                        .locale(resolveDayjsLocale(i18n.language))
-                        .format('D MMM')}
+                      {deadlineText}
                     </Text>
                   </View>
                 )}

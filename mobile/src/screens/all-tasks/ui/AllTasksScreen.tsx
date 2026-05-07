@@ -80,9 +80,25 @@ const getDeadlineBucket = (task: TaskItem): TaskDeadlineBucket => {
   return 'upcoming';
 };
 
+const getTaskDeadlineSortTime = (task: TaskItem): number => {
+  const deadline = parseTaskDeadline(task.deadline);
+  if (!deadline) return Number.POSITIVE_INFINITY;
+
+  const match = /^(\d{2}):(\d{2})$/.exec(task.deadlineTime ?? '');
+  if (!match) return deadline.getTime();
+
+  return new Date(
+    deadline.getFullYear(),
+    deadline.getMonth(),
+    deadline.getDate(),
+    Number(match[1]),
+    Number(match[2]),
+  ).getTime();
+};
+
 const sortTaskRows = (a: TaskWithRecord, b: TaskWithRecord): number => {
-  const deadlineA = parseTaskDeadline(a.task.deadline)?.getTime() ?? Number.POSITIVE_INFINITY;
-  const deadlineB = parseTaskDeadline(b.task.deadline)?.getTime() ?? Number.POSITIVE_INFINITY;
+  const deadlineA = getTaskDeadlineSortTime(a.task);
+  const deadlineB = getTaskDeadlineSortTime(b.task);
   if (deadlineA !== deadlineB) return deadlineA - deadlineB;
 
   const priorityA = a.task.priority ? PRIORITY_RANK[a.task.priority] : PRIORITY_RANK.medium;
@@ -98,6 +114,25 @@ const isValidDeadlineInput = (value: string): boolean => {
 };
 
 const isPastDeadlineInput = (value: string): boolean => dayjs(value).isBefore(dayjs(), 'day');
+
+const isValidDeadlineTimeInput = (value: string): boolean =>
+  /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+
+const isPastDeadlineDateTimeInput = (deadline: string, deadlineTime: string): boolean => {
+  const dateMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(deadline);
+  const timeMatch = /^(\d{2}):(\d{2})$/.exec(deadlineTime);
+  if (!dateMatch || !timeMatch) return false;
+
+  const value = new Date(
+    Number(dateMatch[1]),
+    Number(dateMatch[2]) - 1,
+    Number(dateMatch[3]),
+    Number(timeMatch[1]),
+    Number(timeMatch[2]),
+  );
+
+  return value.getTime() <= Date.now();
+};
 
 export const AllTasksScreen = () => {
   const { t } = useTranslation();
@@ -115,6 +150,7 @@ export const AllTasksScreen = () => {
     taskId: string;
     text: string;
     deadline?: string | null;
+    deadlineTime?: string | null;
     priority?: TaskItem['priority'];
   } | null>(null);
 
@@ -315,6 +351,7 @@ export const AllTasksScreen = () => {
       nextValue: {
         text: string;
         deadline?: string | null;
+        deadlineTime?: string | null;
         priority?: TaskItem['priority'];
       },
     ): boolean => {
@@ -336,12 +373,25 @@ export const AllTasksScreen = () => {
       }
 
       const nextDeadline = nextValue.deadline?.trim() ?? '';
+      const nextDeadlineTime = nextValue.deadlineTime?.trim() ?? '';
       if (nextDeadline.length > 0 && !isValidDeadlineInput(nextDeadline)) {
+        Alert.alert(t('common.error'), t('tasks.deadlineInvalid'));
+        return false;
+      }
+      if (nextDeadlineTime.length > 0 && !isValidDeadlineTimeInput(nextDeadlineTime)) {
         Alert.alert(t('common.error'), t('tasks.deadlineInvalid'));
         return false;
       }
       if (nextDeadline.length > 0 && isPastDeadlineInput(nextDeadline)) {
         Alert.alert(t('common.error'), t('tasks.deadlinePastInvalid'));
+        return false;
+      }
+      if (
+        nextDeadline.length > 0 &&
+        nextDeadlineTime.length > 0 &&
+        isPastDeadlineDateTimeInput(nextDeadline, nextDeadlineTime)
+      ) {
+        Alert.alert(t('common.error'), t('tasks.deadlineTimePastInvalid'));
         return false;
       }
 
@@ -351,6 +401,8 @@ export const AllTasksScreen = () => {
               ...x,
               text: trimmed,
               deadline: nextDeadline.length > 0 ? nextDeadline : null,
+              deadlineTime:
+                nextDeadline.length > 0 && nextDeadlineTime.length > 0 ? nextDeadlineTime : null,
               priority: nextValue.priority ?? x.priority ?? 'medium',
             }
           : x,
@@ -411,6 +463,7 @@ export const AllTasksScreen = () => {
         visible={editTaskTarget !== null}
         initialText={editTaskTarget?.text ?? ''}
         initialDeadline={editTaskTarget?.deadline}
+        initialDeadlineTime={editTaskTarget?.deadlineTime}
         initialPriority={editTaskTarget?.priority}
         showMetadataFields
         onClose={() => setEditTaskTarget(null)}
@@ -444,6 +497,7 @@ export const AllTasksScreen = () => {
               taskId,
               text,
               deadline: item.row.task.deadline,
+              deadlineTime: item.row.task.deadlineTime,
               priority: item.row.task.priority,
             });
           }}

@@ -1094,10 +1094,13 @@
     "deadlineLabel": "Deadline",
     "deadlinePlaceholder": "YYYY-MM-DD",
     "noDeadline": "No deadline",
+    "deadlineTimeLabel": "Time",
+    "noDeadlineTime": "No time",
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
     "deadlineInvalid": "Use date format YYYY-MM-DD.",
     "deadlinePastInvalid": "Choose today or a future date.",
+    "deadlineTimePastInvalid": "Choose a future time.",
     "priorityLabel": "Priority",
     "priority": {
       "low": "Low",

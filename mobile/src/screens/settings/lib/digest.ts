@@ -169,11 +169,13 @@ export function buildDigestAiPayload(digest: DeterministicDigest, language: 'en'
       text: task.text,
       priority: task.priority,
       deadline: task.deadline,
+      deadlineTime: task.deadlineTime,
       recordTitle: task.recordTitle,
     })),
     overdueTasks: digest.overdueTasks.map((task) => ({
       text: task.text,
       deadline: task.deadline,
+      deadlineTime: task.deadlineTime,
       recordTitle: task.recordTitle,
     })),
     nextSteps: digest.nextSteps,
@@ -190,6 +192,7 @@ export function buildDigestAiPayload(digest: DeterministicDigest, language: 'en'
         isDone: task.isDone,
         priority: task.priority,
         deadline: task.deadline,
+        deadlineTime: task.deadlineTime,
       })),
     })),
   });
@@ -198,7 +201,12 @@ export function buildDigestAiPayload(digest: DeterministicDigest, language: 'en'
 export function getDigestCacheKey(digest: DeterministicDigest): string {
   const newestRecord = digest.records[0]?.createdAt ?? 'empty';
   const taskFingerprint = digest.openTasks
-    .map((task) => `${task.recordId}:${task.id}:${task.isDone ? '1' : '0'}:${task.deadline ?? ''}`)
+    .map(
+      (task) =>
+        `${task.recordId}:${task.id}:${task.isDone ? '1' : '0'}:${task.deadline ?? ''}:${
+          task.deadlineTime ?? ''
+        }`,
+    )
     .join('|');
   return `${digest.period}:${digest.fromIso}:${digest.toIso}:${digest.recordCount}:${newestRecord}:${taskFingerprint}`;
 }

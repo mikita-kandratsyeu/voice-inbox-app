@@ -314,11 +314,13 @@ export const DigestScreen = () => {
     item.count > 1 ? `${item.phrase} x${item.count}` : item.phrase,
   );
   const openTaskItems = digest.openTasks.slice(0, 8).map((task) => {
-    const deadline = task.deadline ? ` - ${dayjs(task.deadline).format('D MMM')}` : '';
+    const time = task.deadlineTime ? ` ${task.deadlineTime}` : '';
+    const deadline = task.deadline ? ` - ${dayjs(task.deadline).format('D MMM')}${time}` : '';
     return `${task.text}${deadline}`;
   });
   const overdueTaskItems = digest.overdueTasks.map((task) => {
-    const deadline = task.deadline ? ` - ${dayjs(task.deadline).format('D MMM')}` : '';
+    const time = task.deadlineTime ? ` ${task.deadlineTime}` : '';
+    const deadline = task.deadline ? ` - ${dayjs(task.deadline).format('D MMM')}${time}` : '';
     return `${task.text}${deadline}`;
   });
   const aiGeneratedText = aiCreatedAt

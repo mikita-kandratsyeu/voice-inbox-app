@@ -26,6 +26,7 @@ export type TaskItem = {
   text: string;
   isDone: boolean;
   deadline?: string | null;
+  deadlineTime?: string | null;
   priority?: 'high' | 'medium' | 'low';
   source?: TaskSource;
 };

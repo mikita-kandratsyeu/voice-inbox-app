@@ -1100,10 +1100,13 @@
     "deadlineLabel": "Срок",
     "deadlinePlaceholder": "ГГГГ-ММ-ДД",
     "noDeadline": "Без срока",
+    "deadlineTimeLabel": "Время",
+    "noDeadlineTime": "Без времени",
     "previousMonth": "Предыдущий месяц",
     "nextMonth": "Следующий месяц",
     "deadlineInvalid": "Используйте формат даты ГГГГ-ММ-ДД.",
     "deadlinePastInvalid": "Выберите сегодня или будущую дату.",
+    "deadlineTimePastInvalid": "Выберите будущее время.",
     "priorityLabel": "Приоритет",
     "priority": {
       "low": "Низкий",

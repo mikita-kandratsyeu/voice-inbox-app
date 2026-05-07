@@ -1,11 +1,4 @@
-import {
-  AlertCircle,
-  FileText,
-  RefreshCw,
-  Share2,
-  Sparkles,
-  UsersRound,
-} from 'lucide-react-native';
+import { AlertCircle, FileText, RefreshCw, Share, Sparkles, UsersRound } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -210,7 +203,7 @@ export const SummaryTab = ({
         <Button
           variant="primary"
           size="lg"
-          icon={<Share2 size={15} color="#fff" strokeWidth={2} />}
+          icon={<Share size={15} color="#fff" strokeWidth={2} />}
           label={t('recordingDetail.shareMeetingBrief')}
           color={color}
           onPress={onShareMeetingBrief}

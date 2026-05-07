@@ -144,7 +144,8 @@ const pushKeyPhrases = (lines: string[], record: VoiceRecord): void => {
 const formatTaskForShare = (task: NonNullable<VoiceRecord['tasks']>[number]): string => {
   const meta: string[] = [];
   if (task.deadline) {
-    meta.push(`${i18n.t('tasks.deadlineLabel')}: ${task.deadline}`);
+    const deadline = task.deadlineTime ? `${task.deadline} ${task.deadlineTime}` : task.deadline;
+    meta.push(`${i18n.t('tasks.deadlineLabel')}: ${deadline}`);
   }
   if (task.priority) {
     meta.push(`${i18n.t('tasks.priorityLabel')}: ${i18n.t(`tasks.priority.${task.priority}`)}`);
