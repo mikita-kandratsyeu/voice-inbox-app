@@ -88,11 +88,18 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   let options: AiProcessingOptions | undefined;
   if (rawOptions && typeof rawOptions === 'object') {
-    const { existingTaskTexts: rawExisting, taskExtractionHint: rawHint, ...rest } = rawOptions;
+    const {
+      existingTaskTexts: rawExisting,
+      taskExtractionHint: rawHint,
+      processingPreset: rawProcessingPreset,
+      ...rest
+    } = rawOptions;
     const existing = sanitizeExistingTaskTextsForPrompt(rawExisting);
     const hint = sanitizeTaskExtractionHint(rawHint);
+    const processingPreset = rawProcessingPreset === 'meeting' ? 'meeting' : undefined;
     options = {
       ...rest,
+      ...(processingPreset ? { processingPreset } : {}),
       ...(existing ? { existingTaskTexts: existing } : {}),
       ...(hint ? { taskExtractionHint: hint } : {}),
     };

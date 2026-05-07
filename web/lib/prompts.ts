@@ -250,6 +250,7 @@ export type AiProcessingOptions = {
   summaryStyle?: 'brief' | 'standard' | 'detailed';
   taskStrictness?: 'strict' | 'balanced' | 'soft';
   outputLanguage?: 'same' | 'ru' | 'en';
+  processingPreset?: 'meeting';
   referenceDate?: string;
   existingTaskTexts?: string[];
   taskExtractionHint?: string;
@@ -315,6 +316,19 @@ const OUTPUT_LANGUAGE_INSTRUCTIONS: Record<
   en: 'Write ALL text fields (summary, suggestedTitle, task titles, tags, keyPhrases, nextSteps) in English, regardless of the transcript language.',
 };
 
+const PROCESSING_PRESET_INSTRUCTIONS: Record<
+  NonNullable<AiProcessingOptions['processingPreset']>,
+  string
+> = {
+  meeting: [
+    'Treat this transcript as a meeting, call, interview, or sync recap.',
+    'Use classification "meeting" unless the transcript is effectively empty or clearly unrelated.',
+    'The summary should read like a structured meeting recap in plain prose: purpose, main topics, decisions, blockers, and follow-up context when supported.',
+    'For tasks[], extract concrete action items only when supported by the transcript.',
+    'For nextSteps[], include high-level follow-ups that move the meeting forward and do not duplicate task titles.',
+  ].join('\n'),
+};
+
 const OUTPUT_SCHEMA = `
 type Output = {
   summary: string;
@@ -375,11 +389,15 @@ export function buildAiProcessingPrompt(options?: AiProcessingOptions | null): s
   const summaryStyle = options?.summaryStyle ?? 'standard';
   const taskStrictness = options?.taskStrictness ?? 'balanced';
   const outputLanguage = options?.outputLanguage ?? 'same';
+  const processingPreset = options?.processingPreset;
   const today = getTodayIso(options?.referenceDate);
 
   const summaryInstruction = SUMMARY_STYLE_INSTRUCTIONS[summaryStyle];
   const taskInstruction = TASK_STRICTNESS_INSTRUCTIONS[taskStrictness];
   const languageInstruction = OUTPUT_LANGUAGE_INSTRUCTIONS[outputLanguage];
+  const presetInstruction = processingPreset
+    ? PROCESSING_PRESET_INSTRUCTIONS[processingPreset]
+    : null;
 
   const { existingTasksBlock, userHintBlock } = buildAiProcessingPromptAppendBlocks(options);
 
@@ -404,6 +422,8 @@ ${existingTasksBlock}${userHintBlock}## Output Schema
 \`\`\`typescript
 ${OUTPUT_SCHEMA}
 \`\`\`
+
+${presetInstruction ? `## Processing Preset\n${presetInstruction}\n` : ''}
 
 ## Global Rules
 - Output must pass JSON.parse() without preprocessing.
