@@ -217,6 +217,107 @@ export async function processAskQuestion(
   );
 }
 
+const DIGEST_SYSTEM_PROMPT = `You write a daily or weekly digest for Voice Inbox AI from already-extracted note metadata.
+
+Return exactly one valid JSON object.
+No code fences, explanations, comments, or text outside JSON.
+
+Output schema:
+{
+  "markdown": string,
+  "highlights": string[],
+  "risks": string[],
+  "nextActions": string[]
+}
+
+Rules:
+- Use only the provided notes, tasks, key phrases, next steps, and counts.
+- Do not invent meetings, decisions, people, dates, or deadlines.
+- Match the requested language exactly: "en" -> English, "ru" -> Russian.
+- Keep the digest concise and useful.
+- markdown may use headings and bullet lists.
+- highlights: 3-6 most important themes or outcomes.
+- risks: 0-4 overdue, blocked, urgent, or repeated issues if supported.
+- nextActions: 1-6 practical follow-up actions grounded in tasks or nextSteps.
+- If there is little data, say that briefly and avoid filler.`;
+
+function parseDigestResult(responseContent: string): {
+  markdown: string;
+  highlights: string[];
+  risks: string[];
+  nextActions: string[];
+} {
+  const trimmed = responseContent.trim();
+  const parsed = JSON.parse(trimmed) as unknown;
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Invalid AI response: expected object');
+  }
+
+  const obj = parsed as Record<string, unknown>;
+  if (typeof obj.markdown !== 'string' || !obj.markdown.trim()) {
+    throw new Error('Invalid AI response: missing markdown');
+  }
+
+  const readStringArray = (key: string): string[] =>
+    Array.isArray(obj[key])
+      ? obj[key]
+          .filter((item: unknown) => typeof item === 'string')
+          .map((item: string) => item.trim())
+          .filter(Boolean)
+      : [];
+
+  return {
+    markdown: obj.markdown.trim(),
+    highlights: readStringArray('highlights'),
+    risks: readStringArray('risks'),
+    nextActions: readStringArray('nextActions'),
+  };
+}
+
+export async function processDigest(
+  digestPayload: string,
+  model: string,
+  clientUserAgent?: string | null,
+): Promise<{
+  markdown: string;
+  highlights: string[];
+  risks: string[];
+  nextActions: string[];
+}> {
+  const callDigest = async (m: string) => {
+    const client = createOpenRouterClient(clientUserAgent);
+    const response = await client.chat.send({
+      chatGenerationParams: {
+        model: m,
+        messages: [
+          { role: 'system', content: DIGEST_SYSTEM_PROMPT },
+          { role: 'user', content: digestPayload },
+        ],
+        provider: { zdr: true },
+        responseFormat: { type: 'json_object' },
+        temperature: 0.25,
+        stream: false,
+      },
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (typeof content !== 'string') {
+      throw new Error('Invalid AI response: missing content');
+    }
+
+    return parseDigestResult(content);
+  };
+
+  const models = [model, ...USER_AI_MODEL_FALLBACK_CHAIN];
+  return withSequentialModelFallback(
+    models,
+    callDigest,
+    (err) =>
+      isRetryableOpenRouterTransportError(err) ||
+      (err instanceof Error && err.message.startsWith('Invalid AI response')),
+  );
+}
+
 const ALLOWED_FOLDER_ICONS = new Set([
   'briefcase',
   'home',
