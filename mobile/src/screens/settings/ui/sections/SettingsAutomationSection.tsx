@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { Archive, Sparkles, Zap } from 'lucide-react-native';
+import { Archive, CalendarDays, Sparkles, Zap } from 'lucide-react-native';
 import React from 'react';
 import { Switch, View } from 'react-native';
 
@@ -21,6 +21,7 @@ type Props = {
   setAutoArchiveEnabled: (v: boolean) => void;
   autoArchiveAfterDays: AutoArchiveAfterDays;
   onAutoArchiveDelayPress: () => void;
+  onOpenDigest: () => void;
   onLockedPress: (kind: AutomationFeatureKind) => void;
 };
 
@@ -36,6 +37,7 @@ export const SettingsAutomationSection = ({
   setAutoArchiveEnabled,
   autoArchiveAfterDays,
   onAutoArchiveDelayPress,
+  onOpenDigest,
   onLockedPress,
 }: Props) => {
   const showArchiveDelayRow = !automationLocked && autoArchiveEnabled;
@@ -117,7 +119,6 @@ export const SettingsAutomationSection = ({
         }
         showChevron={false}
         onPress={automationLocked ? () => onLockedPress('autoArchive') : undefined}
-        isLast={!showArchiveDelayRow}
       />
       {showArchiveDelayRow ? (
         <SettingsRow
@@ -125,9 +126,15 @@ export const SettingsAutomationSection = ({
           value={t('settings.autoArchiveDelayValue', { count: autoArchiveAfterDays })}
           onPress={onAutoArchiveDelayPress}
           showChevron
-          isLast
         />
       ) : null}
+      <SettingsRow
+        label={t('settings.digest.title')}
+        subtitle={t('settings.digest.settingsSubtitle')}
+        leftIcon={<CalendarDays size={20} color={color.accent.primary} strokeWidth={1.8} />}
+        onPress={onOpenDigest}
+        isLast
+      />
     </SettingsSection>
   );
 };

@@ -1,33 +1,50 @@
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { FileText, Music } from 'lucide-react-native';
-import React, { useCallback, useEffect, useRef } from 'react';
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetTextInput,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
+import { FileText, ListChecks, Mail, Music } from 'lucide-react-native';
+import React, { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import type { ShareBriefTemplate } from '@/features/share-record';
 import { useColors } from '@/shared/config';
 import { modalKeyboardBehavior } from '@/shared/lib/platform';
 
 type ShareRecordSheetProps = {
   visible: boolean;
   hasAudio: boolean;
+  isMeeting?: boolean;
+  isSendingEmail?: boolean;
   onClose: () => void;
-  onShareText: () => void;
+  onShareText: (template: ShareBriefTemplate) => void;
+  onEmailRecord: (email: string, template: ShareBriefTemplate) => void;
   onShareAudio: () => void;
 };
 
 export const ShareRecordSheet = ({
   visible,
   hasAudio,
+  isMeeting = false,
+  isSendingEmail = false,
   onClose,
   onShareText,
+  onEmailRecord,
   onShareAudio,
 }: ShareRecordSheetProps) => {
   const { t } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
   const ref = useRef<BottomSheetModal>(null);
+  const [emailVisible, setEmailVisible] = useState(false);
+  const [email, setEmail] = useState('');
+  const trimmedEmail = email.trim();
+  const emailTemplate: ShareBriefTemplate = isMeeting ? 'meetingBrief' : 'noteBrief';
+  const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
 
   useEffect(() => {
     if (visible) {
@@ -37,6 +54,8 @@ export const ShareRecordSheet = ({
       return () => cancelAnimationFrame(frame);
     }
     ref.current?.dismiss();
+    setEmailVisible(false);
+    setEmail('');
     return undefined;
   }, [visible]);
 
@@ -47,15 +66,76 @@ export const ShareRecordSheet = ({
     [],
   );
 
-  const handleShareText = useCallback(() => {
+  const handleShareNoteBrief = useCallback(() => {
     onClose();
-    onShareText();
+    onShareText('noteBrief');
+  }, [onClose, onShareText]);
+
+  const handleShareMeetingBrief = useCallback(() => {
+    onClose();
+    onShareText('meetingBrief');
   }, [onClose, onShareText]);
 
   const handleShareAudio = useCallback(() => {
     onClose();
     onShareAudio();
   }, [onClose, onShareAudio]);
+
+  const handleOpenEmail = useCallback(() => {
+    setEmailVisible(true);
+  }, []);
+
+  const handleCancelEmail = useCallback(() => {
+    setEmailVisible(false);
+    setEmail('');
+  }, []);
+
+  const handleSendEmail = useCallback(() => {
+    if (!emailValid || isSendingEmail) return;
+    onEmailRecord(trimmedEmail, emailTemplate);
+  }, [emailTemplate, emailValid, isSendingEmail, onEmailRecord, trimmedEmail]);
+
+  const renderOption = ({
+    icon,
+    title,
+    description,
+    onPress,
+    disabled = false,
+    accessibilityLabel,
+  }: {
+    icon: ReactNode;
+    title: string;
+    description?: string;
+    onPress: () => void;
+    disabled?: boolean;
+    accessibilityLabel: string;
+  }) => (
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      disabled={disabled}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 14,
+        paddingHorizontal: 14,
+        borderRadius: 12,
+        backgroundColor: color.background.tertiary,
+        gap: 10,
+        opacity: disabled ? 0.45 : 1,
+      }}
+    >
+      {icon}
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>{title}</Text>
+        {description ? (
+          <Text style={{ fontSize: 13, color: color.text.muted, marginTop: 2 }}>{description}</Text>
+        ) : null}
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <BottomSheetModal
@@ -99,56 +179,98 @@ export const ShareRecordSheet = ({
           {t('share.shareAsTitle')}
         </Text>
 
-        <TouchableOpacity
-          onPress={handleShareText}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={t('share.shareNote')}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: 14,
-            paddingHorizontal: 14,
-            borderRadius: 12,
-            backgroundColor: color.background.tertiary,
-            gap: 10,
-          }}
-        >
-          <FileText size={20} color={color.text.primary} strokeWidth={2.1} />
-          <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>
-            {t('share.shareAsText')}
-          </Text>
-        </TouchableOpacity>
+        {renderOption({
+          icon: <FileText size={20} color={color.text.primary} strokeWidth={2.1} />,
+          title: t('share.noteBrief'),
+          description: t('share.noteBriefDescription'),
+          accessibilityLabel: t('share.noteBrief'),
+          onPress: handleShareNoteBrief,
+        })}
 
-        <TouchableOpacity
-          onPress={handleShareAudio}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={t('share.shareAudio')}
-          disabled={!hasAudio}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: 14,
-            paddingHorizontal: 14,
-            borderRadius: 12,
-            backgroundColor: color.background.tertiary,
-            gap: 10,
-            opacity: hasAudio ? 1 : 0.45,
-          }}
-        >
-          <Music size={20} color={color.text.primary} strokeWidth={2.1} />
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>
-              {t('share.shareAudio')}
-            </Text>
-            {!hasAudio && (
-              <Text style={{ fontSize: 13, color: color.text.muted, marginTop: 2 }}>
-                {t('share.noAudio')}
-              </Text>
-            )}
+        {renderOption({
+          icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
+          title: t('share.meetingBrief'),
+          description: t('share.meetingBriefDescription'),
+          accessibilityLabel: t('share.meetingBrief'),
+          onPress: handleShareMeetingBrief,
+        })}
+
+        {renderOption({
+          icon: <Mail size={20} color={color.text.primary} strokeWidth={2.1} />,
+          title: t('share.emailNote'),
+          description: t(
+            isMeeting ? 'share.emailMeetingDescription' : 'share.emailNoteDescription',
+          ),
+          accessibilityLabel: t('share.emailNote'),
+          onPress: handleOpenEmail,
+        })}
+
+        {emailVisible && (
+          <View
+            className="gap-3 rounded-xl border p-3"
+            style={{
+              borderColor: color.border.default,
+              backgroundColor: color.background.tertiary,
+            }}
+          >
+            <BottomSheetTextInput
+              className="rounded-xl border px-3.5 py-3 text-[16px]"
+              style={{
+                borderColor: color.border.default,
+                color: color.text.primary,
+                backgroundColor: color.background.primary,
+              }}
+              value={email}
+              onChangeText={setEmail}
+              placeholder={t('share.emailPlaceholder')}
+              placeholderTextColor={color.text.muted}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="email"
+              accessibilityLabel={t('share.emailPlaceholder')}
+            />
+            <View className="flex-row gap-2">
+              <TouchableOpacity
+                onPress={handleCancelEmail}
+                activeOpacity={0.75}
+                disabled={isSendingEmail}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.cancel')}
+                className="min-w-0 flex-1 items-center rounded-xl px-3 py-3"
+                style={{ backgroundColor: color.background.secondary }}
+              >
+                <Text className="font-semibold" style={{ color: color.text.primary }}>
+                  {t('common.cancel')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleSendEmail}
+                activeOpacity={0.75}
+                disabled={!emailValid || isSendingEmail}
+                accessibilityRole="button"
+                accessibilityLabel={t('share.sendEmail')}
+                className="min-w-0 flex-1 flex-row items-center justify-center gap-2 rounded-xl px-3 py-3"
+                style={{
+                  backgroundColor: color.accent.primary,
+                  opacity: emailValid && !isSendingEmail ? 1 : 0.5,
+                }}
+              >
+                {isSendingEmail && <ActivityIndicator size="small" color="#fff" />}
+                <Text className="font-semibold text-white">{t('share.sendEmail')}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </TouchableOpacity>
+        )}
+
+        {renderOption({
+          icon: <Music size={20} color={color.text.primary} strokeWidth={2.1} />,
+          title: t('share.shareAudio'),
+          description: hasAudio ? undefined : t('share.noAudio'),
+          accessibilityLabel: t('share.shareAudio'),
+          disabled: !hasAudio,
+          onPress: handleShareAudio,
+        })}
       </BottomSheetView>
     </BottomSheetModal>
   );

@@ -6,3 +6,5 @@ export type TaskWithRecord = {
   recordCreatedAt: string;
   task: TaskItem;
 };
+
+export type TaskDeadlineBucket = 'overdue' | 'today' | 'upcoming' | 'noDate' | 'done';

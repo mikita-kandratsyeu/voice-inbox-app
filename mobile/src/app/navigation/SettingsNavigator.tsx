@@ -5,8 +5,10 @@ import {
   AboutAppScreen,
   AIModelPickerScreen,
   AiSettingsScreen,
+  AiUsageDashboardScreen,
   AppearanceScreen,
   AppLockSetupScreen,
+  DigestScreen,
   ImportRecordsScreen,
   PrivateAiModeScreen,
   SettingsScreen,
@@ -40,6 +42,16 @@ export const SettingsNavigator = () => (
     <Stack.Screen
       name="AiSettings"
       component={AiSettingsScreen}
+      options={{ animation: 'slide_from_right' }}
+    />
+    <Stack.Screen
+      name="AiUsageDashboard"
+      component={AiUsageDashboardScreen}
+      options={{ animation: 'slide_from_right' }}
+    />
+    <Stack.Screen
+      name="Digest"
+      component={DigestScreen}
       options={{ animation: 'slide_from_right' }}
     />
     <Stack.Screen

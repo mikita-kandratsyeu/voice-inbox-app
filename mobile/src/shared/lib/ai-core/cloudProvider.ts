@@ -69,6 +69,7 @@ export async function runCloudSummaryTasks(
       summaryStyle: ctx.summaryStyle,
       taskStrictness: ctx.taskStrictness,
       outputLanguage: ctx.aiOutputLanguage,
+      ...(request.processingPreset ? { processingPreset: request.processingPreset } : {}),
       ...(request.existingTaskTexts?.length
         ? { existingTaskTexts: request.existingTaskTexts }
         : {}),

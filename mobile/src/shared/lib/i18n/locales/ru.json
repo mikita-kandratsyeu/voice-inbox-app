@@ -120,13 +120,20 @@
     "today": "Сегодня",
     "yesterday": "Вчера",
     "emptyTitle": "Пока нет задач",
-    "emptyDescription": "Задачи из заметок появятся здесь, сгруппированные по дням.",
+    "emptyDescription": "Задачи из заметок появятся здесь, сгруппированные по срокам.",
     "emptyFiltered": "Нет открытых задач",
     "a11yOpenAllTasks": "Все задачи из заметок",
     "openNote": "Перейти к заметке",
     "noteFilterLabel": "Заметка",
     "noteUnavailable": "Заметка не найдена",
-    "clearNoteFilterA11y": "Показать задачи из всех заметок"
+    "clearNoteFilterA11y": "Показать задачи из всех заметок",
+    "sections": {
+      "overdue": "Просрочено",
+      "today": "Сегодня",
+      "upcoming": "Будущие",
+      "noDate": "Без срока",
+      "done": "Готово"
+    }
   },
   "ai": {
     "limitWeeklyExceeded": "Недельный лимит генераций исчерпан. Попробуйте на следующей неделе.",
@@ -180,6 +187,8 @@
     "noAppLockHint": "При сворачивании приложения запись продолжится в фоне.",
     "saveModalTitle": "Сохранить запись",
     "duration": "Длительность: {{time}}",
+    "meetingMode": "Режим встречи",
+    "meetingModeHint": "Использовать режим встречи для сводки, задач и экспорта итогов.",
     "offlineHint": "Оффлайн-транскрипция на устройстве",
     "blockedByTranscriptionTitle": "Дождитесь завершения транскрипции",
     "blockedByTranscriptionMessage": "Пока идёт транскрипция, новую запись начать нельзя.",
@@ -207,8 +216,7 @@
     "tasks": "Задачи",
     "allTasksForNote": "Все задачи",
     "transcriptProcessErrorTitle": "Не удалось транскрибировать",
-    "transcriptProcessErrorDesc":
-      "Произошла ошибка при обработке аудио. Проверьте, что запись не повреждена, и попробуйте снова.",
+    "transcriptProcessErrorDesc": "Произошла ошибка при обработке аудио. Проверьте, что запись не повреждена, и попробуйте снова.",
     "transcriptNotCreated": "Транскрипт не создан",
     "transcriptNotCreatedDesc": "Нажмите кнопку ниже, чтобы транскрибировать запись на устройстве.",
     "transcribe": "Транскрибировать",
@@ -232,6 +240,9 @@
     "summaryNotCreatedDesc": "Нажмите кнопку ниже, чтобы\nсгенерировать краткую сводку.",
     "generateSummary": "Создать сводку",
     "regenerateSummary": "Пересоздать",
+    "meetingSummaryTitle": "Итоги встречи",
+    "meetingSummaryDescription": "Эта заметка использует пресет встречи. Повторная генерация фокусируется на решениях, задачах и следующих шагах.",
+    "shareMeetingBrief": "Поделиться итогами встречи",
     "summaryProcessing": "Создание сводки...",
     "summaryError": "Не удалось создать сводку",
     "summaryErrorBanner": "Ошибка при обновлении. Ниже — ранее созданная сводка.",
@@ -342,6 +353,21 @@
     "share": "Поделиться",
     "shareAsTitle": "Поделиться",
     "shareAsText": "Поделиться текстом",
+    "noteBrief": "Краткая заметка",
+    "noteBriefDescription": "Markdown со сводкой, задачами, тегами и транскриптом",
+    "meetingBrief": "Итоги встречи",
+    "meetingBriefSubtitle": "Структурированные итоги встречи",
+    "meetingBriefDescription": "Markdown-итоги со следующими шагами и задачами",
+    "emailNote": "Отправить на email",
+    "emailNoteDescription": "Отправить заметку как Markdown-brief",
+    "emailMeetingDescription": "Отправить итоги встречи как Markdown",
+    "emailPlaceholder": "Email получателя",
+    "sendEmail": "Отправить",
+    "emailSentTitle": "Письмо отправлено",
+    "emailSentMessage": "Заметка отправлена на {{email}}.",
+    "emailFailedTitle": "Не удалось отправить email",
+    "emailNoteSubject": "Заметка Voice Inbox AI: {{title}}",
+    "emailMeetingSubject": "Итоги встречи Voice Inbox: {{title}}",
     "shareNote": "Поделиться заметкой",
     "shareAudio": "Поделиться аудио",
     "dateLabel": "Дата",
@@ -373,7 +399,111 @@
       "claimBonusCooldown": "Скоро снова будет доступно",
       "claimBonusSuccess": "+{{count}} бонусных генераций",
       "claimBonusUnavailableHint": "Бонус за рекламу доступен после того, как вы начнёте тратить недельный лимит генераций.",
-      "claimBonusNoUsage": "Сначала используйте часть генераций — бонус возвращает часть уже потраченного лимита."
+      "claimBonusNoUsage": "Сначала используйте часть генераций — бонус возвращает часть уже потраченного лимита.",
+      "openDashboard": "Открыть использование лимита"
+    },
+    "aiUsageDashboard": {
+      "title": "Использование лимита",
+      "localBadge": "Локально",
+      "cloudBadge": "Облако",
+      "hybridBadge": "Облако/Локально",
+      "proBenefitTitle": "В Pro ИИ работает автоматически",
+      "proBenefitSubtitle": "В Pro доступен повышенный недельный лимит генераций для сводок, ответов, переводов и организации.",
+      "freePlanTitle": "Бесплатный недельный лимит",
+      "freePlanSubtitle": "Перейдите на Pro, чтобы получить повышенный недельный лимит и более плавную автоматическую обработку.",
+      "currentWeekOnly": "Здесь используется текущий недельный счётчик. История по функциям потребует отдельного учёта на сервере.",
+      "featureBreakdownTitle": "Что тратит лимит",
+      "savingTitle": "Как экономить лимит",
+      "metrics": {
+        "used": "Использовано",
+        "remaining": "Осталось",
+        "limit": "Лимит",
+        "reset": "Сброс",
+        "weekly": "Неделя",
+        "usedHelper": "{{percent}}% этой недели",
+        "remainingHelper": "Доступно до сброса",
+        "proLimitHelper": "Лимит Pro на неделю",
+        "freeLimitHelper": "Бесплатный лимит на неделю"
+      },
+      "features": {
+        "transcription": {
+          "title": "Транскрипция",
+          "subtitle": "Работает на устройстве с загруженными Whisper-моделями и не тратит лимит генераций."
+        },
+        "summary": {
+          "title": "Сводки и задачи",
+          "subtitle": "В Smart режиме использует облачный ИИ, а в локальном режиме — локальную генерацию."
+        },
+        "ask": {
+          "title": "Вопрос к ИИ",
+          "subtitle": "В Smart режиме использует облачный ИИ, а в локальном режиме — локальную генерацию."
+        },
+        "translate": {
+          "title": "Перевод",
+          "subtitle": "Перевод через облачный ИИ тратит лимит генераций, когда выбран Smart режим."
+        },
+        "digest": {
+          "title": "Дайджест дня/недели",
+          "subtitle": "Доступен в Smart режиме и тратит одну облачную генерацию."
+        },
+        "autoOrganize": {
+          "title": "Автоорганизация",
+          "subtitle": "Подбор папок и автоматическая организация используют лимит генераций."
+        }
+      },
+      "savingTips": {
+        "localTranscription": "Сначала делайте транскрипцию, а генерацию запускайте только для заметок, где нужны сводка или задачи.",
+        "batchAsk": "По возможности задавайте один точный вопрос вместо нескольких уточнений.",
+        "privateMode": "Используйте локальный ИИ для подходящих сценариев, когда хотите не тратить облачный лимит."
+      }
+    },
+    "digest": {
+      "title": "Дайджест дня/недели",
+      "settingsSubtitle": "Локальная сводка с опциональной ИИ-генерацией.",
+      "subtitle": "Собирается из сохранённых сводок, задач, ключевых фраз и следующих шагов.",
+      "smartModeOnlyTitle": "Дайджест доступен в Smart режиме",
+      "smartModeOnlyDesc": "Переключите режим ИИ на Smart, чтобы открыть дайджест дня или недели и сгенерировать ИИ-сводку.",
+      "period": {
+        "day": "Сегодня",
+        "week": "7 дней"
+      },
+      "durationMinutes_one": "{{count}} мин",
+      "durationMinutes_few": "{{count}} мин",
+      "durationMinutes_many": "{{count}} мин",
+      "durationMinutes_other": "{{count}} мин",
+      "durationHours_one": "{{count}} ч",
+      "durationHours_few": "{{count}} ч",
+      "durationHours_many": "{{count}} ч",
+      "durationHours_other": "{{count}} ч",
+      "durationHoursMinutes": "{{hours}} ч {{minutes}} мин",
+      "metrics": {
+        "records": "Заметки",
+        "recordsHelper": "За период",
+        "duration": "Аудио",
+        "durationHelper": "Общая длительность",
+        "openTasks": "Открыто",
+        "openTasksHelper": "Задачи в работе",
+        "overdue": "Просрочено",
+        "overdueHelper": "Прошедшие дедлайны"
+      },
+      "aiTitle": "ИИ-дайджест",
+      "aiDescription": "Сгенерируйте короткую связную сводку из локального дайджеста. Это тратит одну облачную генерацию.",
+      "aiManualHint": "Пока не сгенерировано. Локальные метрики выше бесплатны.",
+      "aiGeneratedAt": "Сгенерировано {{date}}. Обновите, если заметки или задачи изменились.",
+      "aiGenerating": "Генерируем дайджест...",
+      "aiGeneratingDescription": "Собираем заметки, задачи и темы в короткую сводку.",
+      "generateAi": "Сгенерировать дайджест",
+      "regenerateAi": "Обновить дайджест",
+      "aiLimitError": "Недельный лимит ИИ исчерпан. Попробуйте после сброса или обновите план.",
+      "emptyAi": "За этот период пока нет заметок.",
+      "topicsTitle": "Главные темы",
+      "emptyTopics": "Ключевых фраз пока нет. Сгенерируйте сводки для заметок, чтобы улучшить дайджест.",
+      "nextStepsTitle": "Следующие шаги",
+      "emptyNextSteps": "За этот период нет следующих шагов.",
+      "openTasksTitle": "Открытые задачи",
+      "emptyOpenTasks": "За этот период нет открытых задач.",
+      "overdueTitle": "Просроченные задачи",
+      "emptyOverdue": "Просроченных задач нет."
     },
     "sync": "Синхронизация",
     "backupRestore": "Резервная копия и восстановление",
@@ -463,7 +593,7 @@
       "freeLimits": {
         "manualAi": "ИИ только вручную",
         "recording": "Запись до {{minutes}} минут",
-        "weeklyAi": "До {{limit}} генераций в неделю",
+        "weeklyAi": "До {{limit}} генераций в неделю"
       },
       "proTitle": "Pro",
       "billingMonthly": "Ежемесячно",
@@ -966,7 +1096,29 @@
     "deleteTask": "Удалить",
     "deleteTaskConfirm": "Удалить эту задачу из заметки?",
     "editTask": "Изменить",
-    "editTaskSheetTitle": "Редактировать задачу"
+    "editTaskSheetTitle": "Редактировать задачу",
+    "deadlineLabel": "Срок",
+    "deadlinePlaceholder": "ГГГГ-ММ-ДД",
+    "noDeadline": "Без срока",
+    "previousMonth": "Предыдущий месяц",
+    "nextMonth": "Следующий месяц",
+    "deadlineInvalid": "Используйте формат даты ГГГГ-ММ-ДД.",
+    "deadlinePastInvalid": "Выберите сегодня или будущую дату.",
+    "priorityLabel": "Приоритет",
+    "priority": {
+      "low": "Низкий",
+      "medium": "Средний",
+      "high": "Высокий"
+    },
+    "weekdays": {
+      "mon": "ПН",
+      "tue": "ВТ",
+      "wed": "СР",
+      "thu": "ЧТ",
+      "fri": "ПТ",
+      "sat": "СБ",
+      "sun": "ВС"
+    }
   },
   "classification": {
     "personal": "Личное",

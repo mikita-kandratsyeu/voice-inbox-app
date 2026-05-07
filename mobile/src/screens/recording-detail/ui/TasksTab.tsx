@@ -182,7 +182,7 @@ export const TasksTab = ({
         visible={editTaskTarget !== null}
         initialText={editTaskTarget?.text ?? ''}
         onClose={() => setEditTaskTarget(null)}
-        onSave={(text) => {
+        onSave={({ text }) => {
           if (!editTaskTarget) return false;
           return onEditTask(editTaskTarget.id, text);
         }}

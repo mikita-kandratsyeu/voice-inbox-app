@@ -1,8 +1,10 @@
 export { AboutAppScreen } from './ui/AboutAppScreen';
 export { AIModelPickerScreen } from './ui/AIModelPickerScreen';
 export { AiSettingsScreen } from './ui/AiSettingsScreen';
+export { AiUsageDashboardScreen } from './ui/AiUsageDashboardScreen';
 export { AppearanceScreen } from './ui/AppearanceScreen';
 export { AppLockSetupScreen } from './ui/AppLockSetupScreen';
+export { DigestScreen } from './ui/DigestScreen';
 export { ImportRecordsScreen } from './ui/ImportRecordsScreen';
 export { PrivateAiModeScreen } from './ui/PrivateAiModeScreen';
 export { SettingsScreen } from './ui/SettingsScreen';

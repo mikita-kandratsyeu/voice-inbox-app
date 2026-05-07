@@ -17,11 +17,14 @@ import { useAiProcessing } from '@/features/ai-processing';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import { useRecordActions } from '@/features/record-actions';
+import type { ShareBriefTemplate } from '@/features/share-record';
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
 import { useColors } from '@/shared/config';
 import {
+  hapticError,
   hapticSelection,
+  hapticSuccess,
   resolveDisplayFolderColor,
   useIsTablet,
   useTabletContentMaxWidth,
@@ -122,6 +125,7 @@ export const RecordingDetailScreen = () => {
   const [mountedTabs, setMountedTabs] = useState<Set<Tab>>(new Set(['transcript']));
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
   const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
   const [renameTarget, setRenameTarget] = useState<{ id: string; title: string } | null>(null);
   const { currentPositionMs, onPositionUpdate } = usePlaybackPosition();
   const [recordLanguage, setRecordLanguage] = useState<TranscriptionLanguage>(
@@ -160,7 +164,7 @@ export const RecordingDetailScreen = () => {
   const handleCancelAiGeneration = useCallback(() => {
     cancelAiGeneration(liveRecord.id);
   }, [cancelAiGeneration, liveRecord.id]);
-  const { shareRecord, shareAudio } = useShareRecord();
+  const { shareRecord, shareAudio, emailRecord } = useShareRecord();
   const onDeleted = useCallback(() => navigation.goBack(), [navigation]);
   const { promptDelete } = useRecordActions({ onDeleted });
 
@@ -307,17 +311,39 @@ export const RecordingDetailScreen = () => {
     [liveRecord, extractTasks],
   );
 
-  const handleShare = useCallback(() => {
-    shareRecord(liveRecord).catch((err: Error) => {
-      Alert.alert(t('recordingDetail.shareFailed'), err.message);
-    });
-  }, [t, liveRecord, shareRecord]);
+  const handleShare = useCallback(
+    (template: ShareBriefTemplate) => {
+      shareRecord(liveRecord, template).catch((err: Error) => {
+        Alert.alert(t('recordingDetail.shareFailed'), err.message);
+      });
+    },
+    [t, liveRecord, shareRecord],
+  );
 
   const handleShareAudio = useCallback(() => {
     shareAudio(liveRecord).catch((err: Error) => {
       Alert.alert(t('recordingDetail.shareFailed'), err.message);
     });
   }, [t, liveRecord, shareAudio]);
+  const handleEmailRecord = useCallback(
+    (email: string, template: ShareBriefTemplate) => {
+      setEmailSending(true);
+      emailRecord(liveRecord, email, template)
+        .then(() => {
+          hapticSuccess();
+          setShareSheetVisible(false);
+          Alert.alert(t('share.emailSentTitle'), t('share.emailSentMessage', { email }));
+        })
+        .catch((err: Error) => {
+          hapticError();
+          Alert.alert(t('share.emailFailedTitle'), err.message);
+        })
+        .finally(() => {
+          setEmailSending(false);
+        });
+    },
+    [emailRecord, liveRecord, t],
+  );
   const onOpenShareMenu = useCallback(() => setShareSheetVisible(true), []);
   const onCloseShareMenu = useCallback(() => setShareSheetVisible(false), []);
 
@@ -345,7 +371,7 @@ export const RecordingDetailScreen = () => {
         sheetTitleKey="recordActions.renameTitle"
         placeholderKey="recordActions.renamePrompt"
         onClose={() => setRenameTarget(null)}
-        onSave={(text) => {
+        onSave={({ text }) => {
           const trimmed = text.trim();
           if (!renameTarget) return false;
           if (trimmed === renameTarget.title) return true;
@@ -423,8 +449,11 @@ export const RecordingDetailScreen = () => {
       <ShareRecordSheet
         visible={shareSheetVisible}
         hasAudio={hasAudio}
+        isMeeting={liveRecord.classification === 'meeting'}
+        isSendingEmail={emailSending}
         onClose={onCloseShareMenu}
         onShareText={handleShare}
+        onEmailRecord={handleEmailRecord}
         onShareAudio={handleShareAudio}
       />
       {renameRecordSheet}
@@ -515,6 +544,8 @@ export const RecordingDetailScreen = () => {
                   hasTranscript={Boolean(liveRecord.transcript)}
                   color={color}
                   onGenerate={handleGenerateSummary}
+                  isMeeting={liveRecord.classification === 'meeting'}
+                  onShareMeetingBrief={onOpenShareMenu}
                   onDismissError={handleDismissSummaryError}
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onSwitchToSmartMode={handleSwitchToSmartMode}

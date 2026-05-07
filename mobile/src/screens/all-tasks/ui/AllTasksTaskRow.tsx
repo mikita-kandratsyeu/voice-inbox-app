@@ -1,5 +1,13 @@
 import { MenuView } from '@react-native-menu/menu';
-import { CheckCircle2, Circle, FileText, MoreHorizontal } from 'lucide-react-native';
+import dayjs from 'dayjs';
+import {
+  CalendarDays,
+  CheckCircle2,
+  Circle,
+  FileText,
+  Flag,
+  MoreHorizontal,
+} from 'lucide-react-native';
 import React, { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
@@ -13,6 +21,8 @@ import Animated, {
 
 import { type Colors, useAppTheme } from '@/shared/config';
 import { hapticLight, hapticSuccess } from '@/shared/lib';
+import { resolveDayjsLocale } from '@/shared/lib/date';
+import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
 
 import type { TaskWithRecord } from '../types';
 
@@ -25,6 +35,8 @@ type AllTasksTaskRowProps = {
   onToggle: (recordId: string, taskId: string, currentlyDone: boolean) => void;
   onOpenNote: (recordId: string) => void;
   onEditTask: (recordId: string, taskId: string, text: string) => void;
+  onAddToCalendar: (item: TaskWithRecord) => void;
+  onAddToReminder: (item: TaskWithRecord) => void;
   onDeleteTask: (recordId: string, taskId: string) => void;
 };
 
@@ -35,14 +47,25 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
   onToggle,
   onOpenNote,
   onEditTask,
+  onAddToCalendar,
+  onAddToReminder,
   onDeleteTask,
 }: AllTasksTaskRowProps) {
   const theme = useAppTheme();
   const isDark = theme === 'dark';
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const { task, recordId, recordTitle } = item;
   const pressScale = useSharedValue(1);
+  const parsedDeadline = parseTaskDeadline(task.deadline);
+  const isOverdue =
+    parsedDeadline !== null && !task.isDone && dayjs(parsedDeadline).isBefore(dayjs(), 'day');
+  const priorityColor =
+    task.priority === 'high'
+      ? color.accent.delete
+      : task.priority === 'medium'
+        ? color.accent.cache
+        : color.text.secondary;
 
   const pressAnimStyle = useAnimatedStyle(() => ({
     transform: [{ scale: pressScale.value }],
@@ -81,6 +104,20 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
       id: 'editTask',
       title: t('tasks.editTask'),
       image: 'pencil',
+      imageColor: color.text.primary,
+      titleColor: color.text.primary,
+    },
+    {
+      id: 'addToReminder',
+      title: t('tasks.addToReminder'),
+      image: 'bell',
+      imageColor: color.text.primary,
+      titleColor: color.text.primary,
+    },
+    {
+      id: 'addToCalendar',
+      title: t('tasks.addToCalendar'),
+      image: 'calendar',
       imageColor: color.text.primary,
       titleColor: color.text.primary,
     },
@@ -136,6 +173,52 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
               >
                 {task.text}
               </Text>
+              <View className="mb-2 flex-row flex-wrap items-center gap-1.5">
+                {parsedDeadline !== null && (
+                  <View
+                    className="flex-row items-center rounded-md px-2 py-1"
+                    style={{ backgroundColor: color.background.secondary }}
+                  >
+                    <CalendarDays
+                      size={12}
+                      color={isOverdue ? color.accent.delete : color.icon.muted}
+                      strokeWidth={2}
+                      style={{ flexShrink: 0 }}
+                    />
+                    <Text
+                      className="ml-1.5 text-xs font-medium"
+                      style={{
+                        color: isOverdue ? color.accent.delete : color.text.secondary,
+                      }}
+                      numberOfLines={1}
+                    >
+                      {dayjs(parsedDeadline)
+                        .locale(resolveDayjsLocale(i18n.language))
+                        .format('D MMM')}
+                    </Text>
+                  </View>
+                )}
+                {task.priority && (
+                  <View
+                    className="flex-row items-center rounded-md px-2 py-1"
+                    style={{ backgroundColor: color.background.secondary }}
+                  >
+                    <Flag
+                      size={12}
+                      color={priorityColor}
+                      strokeWidth={2}
+                      style={{ flexShrink: 0 }}
+                    />
+                    <Text
+                      className="ml-1.5 text-xs font-medium"
+                      style={{ color: priorityColor }}
+                      numberOfLines={1}
+                    >
+                      {t(`tasks.priority.${task.priority}`)}
+                    </Text>
+                  </View>
+                )}
+              </View>
               <View
                 className="max-w-full flex-row items-center self-start rounded-md px-2 py-1"
                 style={{ backgroundColor: color.background.secondary }}
@@ -166,6 +249,10 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
                   onOpenNote(recordId);
                 } else if (nativeEvent.event === 'editTask') {
                   onEditTask(recordId, task.id, task.text);
+                } else if (nativeEvent.event === 'addToReminder') {
+                  onAddToReminder(item);
+                } else if (nativeEvent.event === 'addToCalendar') {
+                  onAddToCalendar(item);
                 } else if (nativeEvent.event === 'deleteTask') {
                   onDeleteTask(recordId, task.id);
                 }

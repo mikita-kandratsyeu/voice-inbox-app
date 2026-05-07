@@ -106,6 +106,7 @@ export const SettingsScreen = () => {
               usage={settings.aiUsage}
               loading={settings.aiUsageLoading}
               onClaimBonus={settings.adsAllowed ? settings.claim : undefined}
+              onOpenDetails={() => settings.navigation.navigate('AiUsageDashboard')}
               claimLoading={settings.claimLoading}
               claimError={settings.claimError}
             />
@@ -123,6 +124,7 @@ export const SettingsScreen = () => {
               setAutoArchiveEnabled={settings.setAutoArchiveEnabled}
               autoArchiveAfterDays={settings.autoArchiveAfterDays}
               onAutoArchiveDelayPress={settings.handleAutoArchiveDelayPress}
+              onOpenDigest={() => settings.navigation.navigate('Digest')}
               onLockedPress={settings.setAutomationSheet}
             />
           )}

@@ -32,6 +32,7 @@ export type AiExecutionContext = {
 export type SummaryTaskRequest = {
   id: string;
   transcript: string;
+  processingPreset?: 'meeting';
   existingTaskTexts?: string[];
   taskExtractionHint?: string;
   onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;

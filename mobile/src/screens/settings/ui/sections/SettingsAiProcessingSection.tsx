@@ -32,7 +32,7 @@ export const SettingsAiProcessingSection = ({
   onUpdateEmbeddings,
 }: Props) => {
   const showPrivateMode = getExperimentalPrivateAiEnabled();
-  const aiSettingsIsLast = !showPrivateMode && !embeddingAvailable;
+  const aiSettingsIsLast = !embeddingAvailable;
 
   return (
     <SettingsSection title={t('settings.aiProcessing')}>

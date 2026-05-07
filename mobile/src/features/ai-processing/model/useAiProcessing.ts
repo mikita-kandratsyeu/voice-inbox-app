@@ -167,6 +167,7 @@ export const useAiProcessing = () => {
         const snapshot = useRecordStore.getState().records.find((r) => r.id === record.id);
         const existingTaskTexts = collectExistingTaskTextsForAiPrompt(snapshot?.tasks);
         const taskExtractionHint = normalizeTaskExtractionHint(aiRunOptions?.taskExtractionHint);
+        const isMeetingPreset = (snapshot?.classification ?? record.classification) === 'meeting';
 
         const privateBatchProgress = {
           lastDisplayedPct: -1,
@@ -231,6 +232,7 @@ export const useAiProcessing = () => {
           {
             id: requestId,
             transcript: record.transcript,
+            ...(isMeetingPreset ? { processingPreset: 'meeting' as const } : {}),
             existingTaskTexts,
             ...(taskExtractionHint ? { taskExtractionHint } : {}),
             onLocalGenerationProgress,
@@ -336,14 +338,16 @@ export const useAiProcessing = () => {
         if (tags.length > 0) {
           await updateTags(record.id, tags);
         }
+        const resolvedClassification = isMeetingPreset ? 'meeting' : classification;
+
         if (
-          classification ||
+          resolvedClassification ||
           (keyPhrases && keyPhrases.length > 0) ||
           rawNextSteps.length > 0 ||
           nextStepsForStore.length > 0
         ) {
           await updateAiExtras(record.id, {
-            classification: classification ?? null,
+            classification: resolvedClassification ?? null,
             keyPhrases: keyPhrases ?? [],
             nextSteps: nextStepsForStore,
           });

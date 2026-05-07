@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import type { TFunction } from 'i18next';
-import { Gauge, PlayCircle } from 'lucide-react-native';
+import { ChevronRight, Gauge, PlayCircle } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -103,6 +103,7 @@ type AiUsageCardProps = {
   usage: AiUsage | null;
   loading: boolean;
   onClaimBonus?: () => void;
+  onOpenDetails?: () => void;
   claimLoading?: boolean;
   claimError?: string | null;
 };
@@ -135,6 +136,7 @@ export const AiUsageCard = ({
   usage,
   loading,
   onClaimBonus,
+  onOpenDetails,
   claimLoading = false,
   claimError = null,
 }: AiUsageCardProps) => {
@@ -168,9 +170,14 @@ export const AiUsageCard = ({
         limit: usage.limit,
       })
     : t('settings.aiUsage.title');
+  const CardContainer = onOpenDetails ? Pressable : View;
 
   return (
-    <View
+    <CardContainer
+      onPress={onOpenDetails}
+      disabled={onOpenDetails == null}
+      accessibilityRole={onOpenDetails ? 'button' : undefined}
+      accessibilityLabel={onOpenDetails ? t('settings.aiUsage.openDashboard') : undefined}
       className="mb-8 overflow-hidden rounded-2xl p-5"
       style={{
         borderWidth: 1,
@@ -193,6 +200,9 @@ export const AiUsageCard = ({
             {t('settings.aiUsage.subtitle')}
           </Text>
         </View>
+        {onOpenDetails && (
+          <ChevronRight size={18} color={color.icon.muted} strokeWidth={2} className="ml-2" />
+        )}
       </View>
 
       {loading ? (
@@ -307,7 +317,7 @@ export const AiUsageCard = ({
           )}
         </>
       )}
-    </View>
+    </CardContainer>
   );
 };
 
