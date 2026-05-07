@@ -444,7 +444,7 @@
         },
         "digest": {
           "title": "Daily/Weekly Digest",
-          "subtitle": "Local digest is free. Manual AI digest uses one cloud generation."
+          "subtitle": "Available in Smart mode and uses one cloud generation."
         },
         "autoOrganize": {
           "title": "Auto-organize",
@@ -461,6 +461,8 @@
       "title": "Daily/Weekly Digest",
       "settingsSubtitle": "Local recap with optional AI generation.",
       "subtitle": "Built from saved summaries, tasks, key phrases, and next steps.",
+      "smartModeOnlyTitle": "Digest is available in Smart mode",
+      "smartModeOnlyDesc": "Switch AI mode to Smart to view the daily or weekly digest and generate an AI recap.",
       "period": {
         "day": "Today",
         "week": "Last 7 days"

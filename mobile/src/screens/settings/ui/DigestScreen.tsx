@@ -218,10 +218,12 @@ export const DigestScreen = () => {
   const loadRecords = useRecordStore((s) => s.load);
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const aiModelRoutingMode = useSettingsStore((s) => s.aiModelRoutingMode);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const isTablet = useIsTablet();
+  const isSmartMode = aiExecutionMode === 'smart_hybrid';
 
   const [period, setPeriod] = useState<DigestPeriod>('day');
   const [refreshing, setRefreshing] = useState(false);
@@ -230,10 +232,10 @@ export const DigestScreen = () => {
   const [aiLoading, setAiLoading] = useState(false);
 
   useEffect(() => {
-    if (!isLoaded) {
+    if (isSmartMode && !isLoaded) {
       void loadRecords();
     }
-  }, [isLoaded, loadRecords]);
+  }, [isLoaded, isSmartMode, loadRecords]);
 
   const digest = useMemo(() => buildDeterministicDigest(period, records), [period, records]);
   const digestCacheKey = useMemo(() => getDigestCacheKey(digest), [digest]);
@@ -265,15 +267,21 @@ export const DigestScreen = () => {
   };
 
   const onRefresh = useCallback(async () => {
+    if (!isSmartMode) return;
+
     setRefreshing(true);
     try {
       await loadRecords();
     } finally {
       setRefreshing(false);
     }
-  }, [loadRecords]);
+  }, [isSmartMode, loadRecords]);
 
   const handleGenerate = useCallback(async () => {
+    if (!isSmartMode) {
+      Alert.alert(t('settings.digest.smartModeOnlyTitle'), t('settings.digest.smartModeOnlyDesc'));
+      return;
+    }
     if (digest.recordCount === 0) return;
 
     const consentOk = await ensureCloudAiThirdPartyConsent();
@@ -300,7 +308,7 @@ export const DigestScreen = () => {
     } finally {
       setAiLoading(false);
     }
-  }, [aiModelRoutingMode, digest, digestCacheKey, i18n.language, selectedAIModel, t]);
+  }, [aiModelRoutingMode, digest, digestCacheKey, i18n.language, isSmartMode, selectedAIModel, t]);
 
   const topPhraseItems = digest.topKeyPhrases.map((item) =>
     item.count > 1 ? `${item.phrase} x${item.count}` : item.phrase,
@@ -395,6 +403,55 @@ export const DigestScreen = () => {
     }),
     [color],
   );
+
+  if (!isSmartMode) {
+    return (
+      <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
+        <ScreenHeader title={t('settings.digest.title')} onBack={() => navigation.goBack()} />
+        <View
+          className="flex-1 items-center justify-center px-6"
+          style={{ alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}
+        >
+          <View
+            className="w-full items-center rounded-3xl p-6"
+            style={{
+              borderWidth: 1,
+              borderColor: color.border.default,
+              backgroundColor: color.background.card,
+            }}
+          >
+            <View
+              className="mb-4 h-14 w-14 items-center justify-center rounded-full"
+              style={{ backgroundColor: color.background.tertiary }}
+            >
+              <Sparkles size={24} color={color.accent.primary} strokeWidth={1.9} />
+            </View>
+            <Text
+              className="text-center text-[20px] font-semibold leading-7"
+              style={{ color: color.text.primary }}
+            >
+              {t('settings.digest.smartModeOnlyTitle')}
+            </Text>
+            <Text
+              className="mt-2 text-center text-[14px] leading-5"
+              style={{ color: color.text.secondary }}
+            >
+              {t('settings.digest.smartModeOnlyDesc')}
+            </Text>
+            <View className="mt-6 w-full">
+              <Button
+                label={t('common.goBack')}
+                color={color}
+                variant="secondary"
+                onPress={() => navigation.goBack()}
+                fullWidth
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>

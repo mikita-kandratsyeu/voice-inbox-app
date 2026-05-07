@@ -195,7 +195,7 @@ export const AiUsageDashboardScreen = () => {
         key: 'digest',
         icon: <CalendarDays size={20} color={color.accent.primary} strokeWidth={1.8} />,
         label: t('settings.aiUsageDashboard.features.digest.title'),
-        value: t('settings.aiUsageDashboard.hybridBadge'),
+        value: t('settings.aiUsageDashboard.cloudBadge'),
         subtitle: t('settings.aiUsageDashboard.features.digest.subtitle'),
       },
       {
