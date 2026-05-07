@@ -75,7 +75,9 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const to = normalizeEmail(body.to);
   if (!to) {
-    return apiError('Valid recipient email is required', HttpStatus.BAD_REQUEST, { pathname: path });
+    return apiError('Valid recipient email is required', HttpStatus.BAD_REQUEST, {
+      pathname: path,
+    });
   }
 
   const title = normalizeBoundedString(body.title, TITLE_MAX);
@@ -89,7 +91,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const subject =
-    normalizeBoundedString(body.subject, SUBJECT_MAX) ?? `Voice Inbox note: ${title}`.slice(0, SUBJECT_MAX);
+    normalizeBoundedString(body.subject, SUBJECT_MAX) ??
+    `Voice Inbox note: ${title}`.slice(0, SUBJECT_MAX);
   const escapedTitle = escapeHtml(title);
   const escapedMarkdown = escapeHtml(markdown);
 
