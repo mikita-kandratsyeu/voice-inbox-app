@@ -1,5 +1,4 @@
 import { useNavigation } from '@react-navigation/native';
-import dayjs from 'dayjs';
 import {
   CalendarDays,
   Cloud,
@@ -29,7 +28,7 @@ import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { getAiUsage } from '@/shared/lib/ai-api';
-import { resolveDayjsLocale } from '@/shared/lib/date';
+import { formatLocalizedLongDateWithTime } from '@/shared/lib/taskDeadlineTimeDisplay';
 import {
   SCREEN_PADDING,
   ScreenHeader,
@@ -37,15 +36,6 @@ import {
   SettingsSection,
   SkeletonPulse,
 } from '@/shared/ui';
-
-const formatResetDate = (isoString: string, locale: string): string => {
-  const dayjsLocale = resolveDayjsLocale(locale);
-  const date = dayjs(isoString);
-
-  if (!date.isValid()) return '—';
-
-  return date.locale(dayjsLocale).format('dddd, D MMMM HH:mm');
-};
 
 type UsageMetricCardProps = {
   label: string;
@@ -156,7 +146,7 @@ export const AiUsageDashboardScreen = () => {
 
   const progressPercent =
     usage && usage.limit > 0 ? Math.min(100, Math.round((usage.used / usage.limit) * 100)) : 0;
-  const resetDateText = usage ? formatResetDate(usage.resetAt, i18n.language) : '—';
+  const resetDateText = usage ? formatLocalizedLongDateWithTime(usage.resetAt, i18n.language) : '—';
   const remainingText = usage ? String(usage.remaining) : '—';
   const usedText = usage ? String(usage.used) : '—';
   const limitText = usage ? String(usage.limit) : '—';

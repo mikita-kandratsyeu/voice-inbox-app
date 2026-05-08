@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import type { TFunction } from 'i18next';
 import { ChevronRight, Gauge, PlayCircle } from 'lucide-react-native';
 import React from 'react';
@@ -8,17 +7,8 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import type { AiUsage } from '@/shared/lib/ai-api';
-import { resolveDayjsLocale } from '@/shared/lib/date';
+import { formatLocalizedLongDateWithTime } from '@/shared/lib/taskDeadlineTimeDisplay';
 import { SkeletonPulse } from '@/shared/ui';
-
-const formatResetDate = (isoString: string, locale: string): string => {
-  const dayjsLocale = resolveDayjsLocale(locale);
-  const date = dayjs(isoString);
-
-  if (!date.isValid()) return '—';
-
-  return date.locale(dayjsLocale).format('dddd, D MMMM HH:mm');
-};
 
 function getAiUsageStatusText(usage: AiUsage | null, isExhausted: boolean, t: TFunction): string {
   if (!usage) {
@@ -162,7 +152,7 @@ export const AiUsageCard = ({
 
   const usageText = usage ? `${usage.used} / ${usage.limit}` : '—';
   const statusText = getAiUsageStatusText(usage, isExhausted, t);
-  const resetDateText = usage ? formatResetDate(usage.resetAt, i18n.language) : '—';
+  const resetDateText = usage ? formatLocalizedLongDateWithTime(usage.resetAt, i18n.language) : '—';
 
   const progressA11y = usage
     ? t('settings.aiUsage.a11yProgress', {

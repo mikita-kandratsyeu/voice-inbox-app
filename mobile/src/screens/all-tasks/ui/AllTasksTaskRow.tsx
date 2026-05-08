@@ -23,6 +23,7 @@ import { type Colors, useAppTheme } from '@/shared/config';
 import { hapticLight, hapticSuccess } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
+import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeDisplay';
 
 import type { TaskWithRecord } from '../types';
 
@@ -61,7 +62,7 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
   const deadlineText =
     parsedDeadline !== null
       ? `${dayjs(parsedDeadline).locale(resolveDayjsLocale(i18n.language)).format('D MMM')}${
-          task.deadlineTime ? `, ${task.deadlineTime}` : ''
+          task.deadlineTime ? `, ${formatTaskDeadlineTimeForDisplay(task.deadlineTime)}` : ''
         }`
       : null;
   const isOverdue =

@@ -11,13 +11,16 @@ import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react-native'
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { uses24HourClock } from 'react-native-localize';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { TaskItem } from '@/entities/record';
 import { useAppTheme, useColors } from '@/shared/config';
 import { IS_IOS, modalKeyboardBehavior, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
+import {
+  formatTaskDeadlineTimeForDisplay,
+  parseTaskDeadlineTime,
+} from '@/shared/lib/taskDeadlineTimeDisplay';
 import { Button } from '@/shared/ui';
 
 const TASK_TEXT_MAX_CHARS = 500;
@@ -84,39 +87,11 @@ const parseTaskDeadlineDraft = (value: string): Date | null => {
   return date;
 };
 
-const parseTaskDeadlineTimeDraft = (value: string): { hours: number; minutes: number } | null => {
-  const match = /^(\d{2}):(\d{2})$/.exec(value);
-  if (!match) return null;
-
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
-
-  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return null;
-
-  return { hours, minutes };
-};
-
 const formatTaskDeadlineTime = (date: Date): string => {
   return `${date.getHours().toString().padStart(2, '0')}:${date
     .getMinutes()
     .toString()
     .padStart(2, '0')}`;
-};
-
-/** Stored value stays HH:mm; label follows system 12/24h preference. */
-const formatStoredDeadlineTimeForDisplay = (hhmm: string): string => {
-  const parsed = parseTaskDeadlineTimeDraft(hhmm);
-
-  if (!parsed) return hhmm;
-
-  const date = new Date();
-  date.setHours(parsed.hours, parsed.minutes, 0, 0);
-
-  return date.toLocaleTimeString(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: !uses24HourClock(),
-  });
 };
 
 const getNextSelectableTime = (): Date => {
@@ -136,7 +111,7 @@ const isSameLocalDate = (a: Date, b: Date): boolean => {
 
 const combineDeadlineDateAndTime = (deadline: string, deadlineTime: string): Date | null => {
   const date = parseTaskDeadlineDraft(deadline);
-  const time = parseTaskDeadlineTimeDraft(deadlineTime);
+  const time = parseTaskDeadlineTime(deadlineTime);
   if (!date || !time) return null;
 
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), time.hours, time.minutes);
@@ -148,7 +123,7 @@ const isPastDeadlineDateTime = (deadline: string, deadlineTime: string): boolean
 };
 
 const getTimePickerValue = (value: string, deadline: string): Date => {
-  const parsed = parseTaskDeadlineTimeDraft(value);
+  const parsed = parseTaskDeadlineTime(value);
   const date = new Date();
   date.setHours(parsed?.hours ?? 9, parsed?.minutes ?? 0, 0, 0);
 
@@ -277,7 +252,7 @@ export function TaskEditSheet({
 
     if (!trimmed) return '';
 
-    return formatStoredDeadlineTimeForDisplay(trimmed);
+    return formatTaskDeadlineTimeForDisplay(trimmed);
   }, [deadlineTimeDraft]);
   const priorityColors = useMemo(
     () => ({

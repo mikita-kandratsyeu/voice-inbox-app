@@ -56,6 +56,12 @@ export {
   RECORDINGS_DIR,
   resolveAudioPath,
 } from './recordings';
+export {
+  formatLocalizedLongDateWithTime,
+  formatLocalTimeOfDay,
+  formatTaskDeadlineTimeForDisplay,
+  parseTaskDeadlineTime,
+} from './taskDeadlineTimeDisplay';
 export { isArray, isNumber, isRecord, isString, isStringArrayItem } from './type-guards';
 export { useAiModelName } from './useAiModelName';
 export { useAiTabBannerDismiss } from './useAiTabBannerDismiss';

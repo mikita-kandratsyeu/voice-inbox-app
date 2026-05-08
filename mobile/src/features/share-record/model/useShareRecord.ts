@@ -3,6 +3,7 @@ import { Share } from 'react-native';
 import type { VoiceRecord } from '@/entities/record';
 import { formatShortDate, i18n } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
+import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeDisplay';
 
 import { sendRecordEmail } from '../api/sendRecordEmail';
 import {
@@ -144,7 +145,11 @@ const pushKeyPhrases = (lines: string[], record: VoiceRecord): void => {
 const formatTaskForShare = (task: NonNullable<VoiceRecord['tasks']>[number]): string => {
   const meta: string[] = [];
   if (task.deadline) {
-    const deadline = task.deadlineTime ? `${task.deadline} ${task.deadlineTime}` : task.deadline;
+    const timeLabel =
+      task.deadlineTime != null && String(task.deadlineTime).trim() !== ''
+        ? formatTaskDeadlineTimeForDisplay(task.deadlineTime)
+        : '';
+    const deadline = timeLabel.length > 0 ? `${task.deadline} ${timeLabel}` : task.deadline;
     meta.push(`${i18n.t('tasks.deadlineLabel')}: ${deadline}`);
   }
   if (task.priority) {

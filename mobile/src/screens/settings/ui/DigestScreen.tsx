@@ -26,6 +26,10 @@ import type { DigestAiResult } from '@/shared/lib/ai-api';
 import { generateDigest } from '@/shared/lib/ai-api';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 import { resolveDayjsLocale } from '@/shared/lib/date';
+import {
+  formatLocalTimeOfDay,
+  formatTaskDeadlineTimeForDisplay,
+} from '@/shared/lib/taskDeadlineTimeDisplay';
 import { Button, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
 
 import {
@@ -314,18 +318,18 @@ export const DigestScreen = () => {
     item.count > 1 ? `${item.phrase} x${item.count}` : item.phrase,
   );
   const openTaskItems = digest.openTasks.slice(0, 8).map((task) => {
-    const time = task.deadlineTime ? ` ${task.deadlineTime}` : '';
+    const time = task.deadlineTime ? ` ${formatTaskDeadlineTimeForDisplay(task.deadlineTime)}` : '';
     const deadline = task.deadline ? ` - ${dayjs(task.deadline).format('D MMM')}${time}` : '';
     return `${task.text}${deadline}`;
   });
   const overdueTaskItems = digest.overdueTasks.map((task) => {
-    const time = task.deadlineTime ? ` ${task.deadlineTime}` : '';
+    const time = task.deadlineTime ? ` ${formatTaskDeadlineTimeForDisplay(task.deadlineTime)}` : '';
     const deadline = task.deadline ? ` - ${dayjs(task.deadline).format('D MMM')}${time}` : '';
     return `${task.text}${deadline}`;
   });
   const aiGeneratedText = aiCreatedAt
     ? t('settings.digest.aiGeneratedAt', {
-        date: dayjs(aiCreatedAt).locale(dayjsLocale).format('D MMM HH:mm'),
+        date: `${dayjs(aiCreatedAt).locale(dayjsLocale).format('D MMM')} ${formatLocalTimeOfDay(dayjs(aiCreatedAt).toDate())}`,
       })
     : t('settings.digest.aiManualHint');
   const markdownStyles = useMemo(
