@@ -1,3 +1,4 @@
+import { ApiErrorCode } from '@/lib/api-error-codes';
 import { apiError, HttpStatus, requireAppAuth } from '@/lib/api';
 import { getMessageById } from '@/services/message.service';
 import { NextResponse } from 'next/server';
@@ -19,7 +20,7 @@ function getSyncToken(request: Request): string | undefined {
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function GET(request: Request, { params }: RouteContext): Promise<NextResponse> {
-  const path = new URL(request.url).pathname;
+  const pathname = new URL(request.url).pathname;
   const authError = await requireAppAuth();
   if (authError) return authError;
 
@@ -29,7 +30,10 @@ export async function GET(request: Request, { params }: RouteContext): Promise<N
   const message = await getMessageById(id, syncToken);
 
   if (!message) {
-    return apiError('Not found', HttpStatus.NOT_FOUND, { pathname: path });
+    return apiError('Not found', HttpStatus.NOT_FOUND, {
+      pathname,
+      code: ApiErrorCode.NotFound,
+    });
   }
 
   return NextResponse.json(message);

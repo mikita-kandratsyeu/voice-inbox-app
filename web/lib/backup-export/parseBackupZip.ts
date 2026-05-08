@@ -86,6 +86,7 @@ function toParsedRecord(raw: Record<string, unknown>): ParsedRecord {
       text: String(t.text ?? ''),
       isDone: Boolean(t.isDone),
       deadline: t.deadline != null ? String(t.deadline) : undefined,
+      deadlineTime: t.deadlineTime != null ? String(t.deadlineTime) : undefined,
       priority: parseTaskPriority(t.priority),
       source: parseTaskSource(t.source),
     }))

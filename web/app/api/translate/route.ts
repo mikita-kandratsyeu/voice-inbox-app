@@ -1,17 +1,16 @@
+import { NextResponse } from 'next/server';
+
+import { ApiErrorCode } from '@/lib/api-error-codes';
 import {
   apiError,
-  checkDeviceRateLimit,
   HttpStatus,
   parseJsonBody,
-  requireAppAuth,
-  requireMobileUserAgent,
-  validateDeviceId,
   validateRequiredStrings,
+  weeklyAiLimitExceededResponse,
 } from '@/lib/api';
-import { HEADER_DEVICE_ID } from '@/config/constants';
+import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { isValidTranslateLanguage } from '@/lib/prompts';
 import { translateTranscript } from '@/services/translate.service';
-import { NextResponse } from 'next/server';
 
 type TranslateBody = {
   transcript?: unknown;
@@ -19,27 +18,19 @@ type TranslateBody = {
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
-  const path = new URL(request.url).pathname;
-  const authError = await requireAppAuth();
-  if (authError) return authError;
-
-  const uaError = await requireMobileUserAgent();
-  if (uaError) return uaError;
-
-  const deviceId = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceId);
-  if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
+  const guard = await assertMobileAiRouteContext(request);
+  if (!guard.ok) {
+    return guard.response;
   }
-  const deviceIdTrimmed = deviceId!.trim();
+  const { deviceId: deviceIdTrimmed, pathname, request: req } = guard.ctx;
 
-  const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed);
-  if (rateLimitError) return rateLimitError;
-
-  const body = await parseJsonBody<TranslateBody>(request);
+  const body = await parseJsonBody<TranslateBody>(req);
 
   if (!body) {
-    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });
+    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, {
+      pathname,
+      code: ApiErrorCode.InvalidJson,
+    });
   }
 
   const validationError = validateRequiredStrings([
@@ -47,7 +38,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     { value: body.targetLanguage, name: 'targetLanguage' },
   ]);
   if (validationError) {
-    return apiError(validationError, HttpStatus.BAD_REQUEST, { pathname: path });
+    return apiError(validationError, HttpStatus.BAD_REQUEST, {
+      pathname,
+      code: ApiErrorCode.ValidationError,
+    });
   }
 
   const { transcript, targetLanguage } = body as {
@@ -56,36 +50,27 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   };
 
   if (!isValidTranslateLanguage(targetLanguage)) {
-    return apiError('Invalid targetLanguage', HttpStatus.BAD_REQUEST, { pathname: path });
+    return apiError('Invalid targetLanguage', HttpStatus.BAD_REQUEST, {
+      pathname,
+      code: ApiErrorCode.InvalidTargetLanguage,
+    });
   }
 
   const result = await translateTranscript(
     transcript,
     targetLanguage,
     deviceIdTrimmed,
-    request.headers.get('user-agent'),
+    req.headers.get('user-agent'),
   );
 
   if (!result.ok && 'limitExceeded' in result && result.limitExceeded) {
-    return NextResponse.json(
-      {
-        error: 'Weekly AI limit reached',
-        usage: result.usage,
-      },
-      {
-        status: 429,
-        headers: {
-          'Retry-After': String(
-            Math.ceil((new Date(result.usage.resetAt).getTime() - Date.now()) / 1000),
-          ),
-        },
-      },
-    );
+    return weeklyAiLimitExceededResponse(result.usage);
   }
 
   if (!result.ok) {
     return apiError('error' in result ? result.error : 'Translation failed', 500, {
-      pathname: path,
+      pathname,
+      code: ApiErrorCode.TranslationFailed,
     });
   }
 

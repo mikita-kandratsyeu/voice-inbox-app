@@ -1,15 +1,14 @@
+import { ApiErrorCode } from '@/lib/api-error-codes';
 import {
   apiError,
-  checkDeviceRateLimit,
   HttpStatus,
   parseJsonBody,
-  requireAppAuth,
-  requireMobileUserAgent,
   validateAllowedModel,
-  validateDeviceId,
   validateRequiredStrings,
+  weeklyAiLimitExceededResponse,
 } from '@/lib/api';
-import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
+import { HEADER_SYNC_TOKEN } from '@/config/constants';
+import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { estimateAskRoutingChars, parseAskPriorTurns } from '@/lib/ask-user-message';
 import {
   estimateSummaryTasksRoutingChars,
@@ -33,27 +32,19 @@ type CreateAskBody = {
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
-  const path = new URL(request.url).pathname;
-  const authError = await requireAppAuth();
-  if (authError) return authError;
-
-  const uaError = await requireMobileUserAgent();
-  if (uaError) return uaError;
-
-  const deviceId = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceId);
-  if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
+  const guard = await assertMobileAiRouteContext(request);
+  if (!guard.ok) {
+    return guard.response;
   }
-  const deviceIdTrimmed = deviceId!.trim();
+  const { deviceId: deviceIdTrimmed, pathname, request: req } = guard.ctx;
 
-  const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed);
-  if (rateLimitError) return rateLimitError;
-
-  const body = await parseJsonBody<CreateAskBody>(request);
+  const body = await parseJsonBody<CreateAskBody>(req);
 
   if (!body) {
-    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });
+    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, {
+      pathname,
+      code: ApiErrorCode.InvalidJson,
+    });
   }
 
   const validationError = validateRequiredStrings([
@@ -63,7 +54,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     { value: body.model, name: 'model' },
   ]);
   if (validationError) {
-    return apiError(validationError, HttpStatus.BAD_REQUEST, { pathname: path });
+    return apiError(validationError, HttpStatus.BAD_REQUEST, {
+      pathname,
+      code: ApiErrorCode.ValidationError,
+    });
   }
 
   const {
@@ -117,7 +111,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const modelError = validateAllowedModel(resolvedModel);
   if (modelError) {
-    return apiError(modelError, HttpStatus.BAD_REQUEST, { pathname: path });
+    return apiError(modelError, HttpStatus.BAD_REQUEST, {
+      pathname,
+      code: ApiErrorCode.InvalidModel,
+    });
   }
 
   await setAppForeground(deviceIdTrimmed);
@@ -131,28 +128,18 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     summaryStr,
     tasksList,
     priorTurnsList,
-    request.headers.get('user-agent'),
+    req.headers.get('user-agent'),
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
-    return NextResponse.json(
-      {
-        error: 'Weekly AI limit reached',
-        usage: result.usage,
-      },
-      {
-        status: 429,
-        headers: {
-          'Retry-After': String(
-            Math.ceil((new Date(result.usage.resetAt).getTime() - Date.now()) / 1000),
-          ),
-        },
-      },
-    );
+    return weeklyAiLimitExceededResponse(result.usage);
   }
 
   if (!result.created) {
-    return apiError('Ask with this id already exists', HttpStatus.CONFLICT, { pathname: path });
+    return apiError('Ask with this id already exists', HttpStatus.CONFLICT, {
+      pathname,
+      code: ApiErrorCode.DuplicateId,
+    });
   }
 
   const response = NextResponse.json({

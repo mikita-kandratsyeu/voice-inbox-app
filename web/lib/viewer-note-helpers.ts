@@ -47,6 +47,32 @@ export function triggerTextFileDownload(content: string, filename: string, mime:
   URL.revokeObjectURL(url);
 }
 
+/** Deadline line for backup viewer task rows (locale-aware date + optional time). */
+export function formatViewerTaskDeadlineMeta(
+  deadline: string | null | undefined,
+  deadlineTime: string | null | undefined,
+  locale: string,
+): { label: string; overdue: boolean } | null {
+  const raw = deadline?.trim();
+  if (!raw) return null;
+  const ms = Date.parse(raw);
+  const timePart = deadlineTime?.trim();
+  if (!Number.isFinite(ms)) {
+    return { label: timePart ? `${raw}, ${timePart}` : raw, overdue: false };
+  }
+  const d = new Date(ms);
+  const labelBase = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(d);
+  const label = timePart ? `${labelBase}, ${timePart}` : labelBase;
+
+  const startToday = new Date();
+  startToday.setHours(0, 0, 0, 0);
+  const startTask = new Date(d);
+  startTask.setHours(0, 0, 0, 0);
+  const overdue = startTask < startToday;
+
+  return { label, overdue };
+}
+
 export function buildNoteDownloadBasename(title: string, id: string): string {
   const base =
     (title.trim() || 'note')

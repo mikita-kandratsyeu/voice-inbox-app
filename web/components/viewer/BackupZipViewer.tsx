@@ -3,12 +3,14 @@
 import {
   Archive,
   AlertCircle,
+  Calendar,
   Check,
   ChevronLeft,
   ChevronRight,
   Copy,
   Download,
   FileAudio,
+  Flag,
   Folder,
   Loader2,
   PanelLeftClose,
@@ -18,7 +20,7 @@ import {
   Upload,
   X,
 } from 'lucide-react';
-import { useTranslations } from 'next-intl';
+import { useLocale, useTranslations } from 'next-intl';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -34,6 +36,7 @@ import {
 import {
   buildNoteDownloadBasename,
   copyTextToClipboard,
+  formatViewerTaskDeadlineMeta,
   looksLikeMarkdown,
   triggerTextFileDownload,
 } from '@/lib/viewer-note-helpers';
@@ -79,7 +82,8 @@ function recordMatchesQuery(r: ParsedRecord, q: string): boolean {
     r.transcript,
     r.summary ?? '',
     ...(r.tags ?? []),
-    ...(r.tasks?.map((task) => task.text) ?? []),
+    ...(r.tasks?.flatMap((task) => [task.text, task.deadline ?? '', task.deadlineTime ?? '']) ??
+      []),
   ]
     .join('\n')
     .toLowerCase();
@@ -169,6 +173,7 @@ function viewerSectionKey(folderId: string | null): string {
 
 export function BackupZipViewer(): React.ReactElement {
   const t = useTranslations('viewerPage');
+  const locale = useLocale();
   const inputRef = useRef<HTMLInputElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const layoutRef = useRef<HTMLDivElement>(null);
@@ -1094,33 +1099,105 @@ export function BackupZipViewer(): React.ReactElement {
                     {tab === 'tasks' ? (
                       selected.tasks.length > 0 ? (
                         <ul className="space-y-2">
-                          {selected.tasks.map((task) => (
-                            <li
-                              key={task.id}
-                              className="flex gap-3 rounded-xl border border-black/8 bg-black/[0.02] px-3 py-2.5 dark:border-white/10 dark:bg-white/[0.04]"
-                            >
-                              <span
-                                className={[
-                                  'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs',
-                                  task.isDone
-                                    ? 'border-blue-500 bg-blue-500 text-white'
-                                    : 'border-slate-300 dark:border-slate-600',
-                                ].join(' ')}
-                                aria-hidden
+                          {selected.tasks.map((task) => {
+                            const deadlineMeta = formatViewerTaskDeadlineMeta(
+                              task.deadline,
+                              task.deadlineTime,
+                              locale,
+                            );
+                            const showDeadline = deadlineMeta !== null;
+                            const deadlineOverdue = Boolean(deadlineMeta?.overdue) && !task.isDone;
+                            const priority = task.priority;
+                            const priorityClass =
+                              priority === 'high'
+                                ? 'text-red-700 dark:text-red-300'
+                                : priority === 'medium'
+                                  ? 'text-amber-800 dark:text-amber-200'
+                                  : 'text-slate-600 dark:text-slate-300';
+                            const priorityLabel =
+                              priority === 'high'
+                                ? t('taskPriorityHigh')
+                                : priority === 'medium'
+                                  ? t('taskPriorityMedium')
+                                  : priority === 'low'
+                                    ? t('taskPriorityLow')
+                                    : null;
+
+                            return (
+                              <li
+                                key={task.id}
+                                className="flex gap-3 rounded-xl border border-black/8 bg-black/[0.02] px-3 py-2.5 dark:border-white/10 dark:bg-white/[0.04]"
                               >
-                                {task.isDone ? '✓' : ''}
-                              </span>
-                              <span
-                                className={
-                                  task.isDone
-                                    ? 'text-slate-500 line-through dark:text-slate-400'
-                                    : 'text-slate-800 dark:text-slate-100'
-                                }
-                              >
-                                {task.text}
-                              </span>
-                            </li>
-                          ))}
+                                <span
+                                  className={[
+                                    'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs',
+                                    task.isDone
+                                      ? 'border-blue-500 bg-blue-500 text-white'
+                                      : 'border-slate-300 dark:border-slate-600',
+                                  ].join(' ')}
+                                  aria-hidden
+                                >
+                                  {task.isDone ? '✓' : ''}
+                                </span>
+                                <div className="min-w-0 flex-1 space-y-2">
+                                  <p
+                                    className={
+                                      task.isDone
+                                        ? 'text-slate-500 line-through dark:text-slate-400'
+                                        : 'text-slate-800 dark:text-slate-100'
+                                    }
+                                  >
+                                    {task.text}
+                                  </p>
+                                  {(showDeadline || priorityLabel) && (
+                                    <div className="flex flex-wrap gap-2">
+                                      {showDeadline && deadlineMeta ? (
+                                        <span
+                                          className={[
+                                            'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium',
+                                            deadlineOverdue
+                                              ? 'border-red-300/80 bg-red-50 text-red-800 dark:border-red-500/35 dark:bg-red-950/40 dark:text-red-200'
+                                              : 'border-black/10 bg-white/80 text-slate-600 dark:border-white/12 dark:bg-white/10 dark:text-slate-300',
+                                          ].join(' ')}
+                                        >
+                                          <Calendar
+                                            className={[
+                                              'h-3.5 w-3.5 shrink-0',
+                                              deadlineOverdue
+                                                ? 'text-red-600 dark:text-red-400'
+                                                : 'text-slate-400 dark:text-slate-500',
+                                            ].join(' ')}
+                                            aria-hidden
+                                          />
+                                          {deadlineMeta.label}
+                                        </span>
+                                      ) : null}
+                                      {priorityLabel ? (
+                                        <span
+                                          className={[
+                                            'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-medium',
+                                            priority === 'high'
+                                              ? 'border-red-200/90 bg-red-50/90 dark:border-red-500/30 dark:bg-red-950/35'
+                                              : priority === 'medium'
+                                                ? 'border-amber-200/90 bg-amber-50/90 dark:border-amber-500/25 dark:bg-amber-950/30'
+                                                : 'border-black/10 bg-white/80 dark:border-white/12 dark:bg-white/10',
+                                          ].join(' ')}
+                                        >
+                                          <Flag
+                                            className={['h-3.5 w-3.5 shrink-0', priorityClass].join(
+                                              ' ',
+                                            )}
+                                            aria-hidden
+                                          />
+                                          <span className={priorityClass}>{priorityLabel}</span>
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                  )}
+                                </div>
+                              </li>
+                            );
+                          })}
                         </ul>
                       ) : (
                         <p className="text-slate-500 dark:text-slate-400">{t('emptyTasks')}</p>

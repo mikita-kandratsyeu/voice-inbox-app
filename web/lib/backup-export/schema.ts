@@ -14,6 +14,7 @@ const TaskItemSchema = z
     text: longStr,
     isDone: z.boolean().optional(),
     deadline: str.nullish(),
+    deadlineTime: str.nullish(),
     priority: z.enum(['high', 'medium', 'low']).nullish(),
     source: z.enum(['manual', 'ai']).nullish(),
   })

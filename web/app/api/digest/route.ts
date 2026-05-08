@@ -1,17 +1,15 @@
 import { NextResponse } from 'next/server';
 
-import { HEADER_DEVICE_ID } from '@/config/constants';
+import { ApiErrorCode } from '@/lib/api-error-codes';
 import {
   apiError,
-  checkDeviceRateLimit,
   HttpStatus,
   parseJsonBody,
-  requireAppAuth,
-  requireMobileUserAgent,
   validateAllowedModel,
-  validateDeviceId,
   validateRequiredStrings,
+  weeklyAiLimitExceededResponse,
 } from '@/lib/api';
+import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
 import { resolveAutoAiModel, type AiModelMode } from '@/lib/ai-model-router';
 import { setAppForeground } from '@/lib/push-tokens';
@@ -24,26 +22,18 @@ type DigestRequestBody = {
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
-  const path = new URL(request.url).pathname;
-  const authError = await requireAppAuth();
-  if (authError) return authError;
-
-  const uaError = await requireMobileUserAgent();
-  if (uaError) return uaError;
-
-  const deviceId = request.headers.get(HEADER_DEVICE_ID);
-  const deviceIdError = validateDeviceId(deviceId);
-  if (deviceIdError) {
-    return apiError(deviceIdError, HttpStatus.BAD_REQUEST, { pathname: path });
+  const guard = await assertMobileAiRouteContext(request);
+  if (!guard.ok) {
+    return guard.response;
   }
-  const deviceIdTrimmed = deviceId!.trim();
+  const { deviceId: deviceIdTrimmed, pathname, request: req } = guard.ctx;
 
-  const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed);
-  if (rateLimitError) return rateLimitError;
-
-  const body = await parseJsonBody<DigestRequestBody>(request);
+  const body = await parseJsonBody<DigestRequestBody>(req);
   if (!body) {
-    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });
+    return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, {
+      pathname,
+      code: ApiErrorCode.InvalidJson,
+    });
   }
 
   const validationError = validateRequiredStrings([
@@ -51,12 +41,18 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     { value: body.model, name: 'model' },
   ]);
   if (validationError) {
-    return apiError(validationError, HttpStatus.BAD_REQUEST, { pathname: path });
+    return apiError(validationError, HttpStatus.BAD_REQUEST, {
+      pathname,
+      code: ApiErrorCode.ValidationError,
+    });
   }
 
   const payload = String(body.payload);
   if (payload.length > 30_000) {
-    return apiError('payload is too large', HttpStatus.BAD_REQUEST, { pathname: path });
+    return apiError('payload is too large', HttpStatus.BAD_REQUEST, {
+      pathname,
+      code: ApiErrorCode.PayloadTooLarge,
+    });
   }
 
   const modelMode: AiModelMode = body.modelMode === 'auto' ? 'auto' : 'manual';
@@ -68,36 +64,27 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const modelError = validateAllowedModel(resolvedModel);
   if (modelError) {
-    return apiError(modelError, HttpStatus.BAD_REQUEST, { pathname: path });
+    return apiError(modelError, HttpStatus.BAD_REQUEST, {
+      pathname,
+      code: ApiErrorCode.InvalidModel,
+    });
   }
 
   const limitResult = await checkAndIncrement(deviceIdTrimmed);
   if (!limitResult.allowed) {
-    return NextResponse.json(
-      {
-        error: 'Weekly AI limit reached',
-        usage: limitResult.usage,
-      },
-      {
-        status: 429,
-        headers: {
-          'Retry-After': String(
-            Math.ceil((new Date(limitResult.usage.resetAt).getTime() - Date.now()) / 1000),
-          ),
-        },
-      },
-    );
+    return weeklyAiLimitExceededResponse(limitResult.usage);
   }
 
   await setAppForeground(deviceIdTrimmed);
 
   try {
-    const result = await processDigest(payload, resolvedModel, request.headers.get('user-agent'));
+    const result = await processDigest(payload, resolvedModel, req.headers.get('user-agent'));
     return NextResponse.json({ ...result, model: resolvedModel });
   } catch (err) {
     await decrement(deviceIdTrimmed);
     return apiError(err instanceof Error ? err.message : 'Digest generation failed', 503, {
-      pathname: path,
+      pathname,
+      code: ApiErrorCode.ServiceUnavailable,
     });
   }
 };
