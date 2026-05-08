@@ -1,10 +1,17 @@
 import nodemailer from 'nodemailer';
 
+export type MailAttachment = {
+  filename: string;
+  content: Buffer;
+  contentType?: string;
+};
+
 export type MailSendPayload = {
   to: string;
   subject: string;
   text: string;
   html: string;
+  attachments?: MailAttachment[];
 };
 
 export function isSmtpConfigured(): boolean {
@@ -36,5 +43,6 @@ export async function sendTransactionalMail(payload: MailSendPayload): Promise<v
     subject: payload.subject,
     text: payload.text,
     html: payload.html,
+    ...(payload.attachments?.length ? { attachments: payload.attachments } : {}),
   });
 }

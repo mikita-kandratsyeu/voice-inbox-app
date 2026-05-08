@@ -15,6 +15,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const TITLE_MAX = 200;
 const SUBJECT_MAX = 220;
 const MARKDOWN_MAX = 80_000;
+const ZIP_ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024;
+const BODY_TEXT_MAX = 8000;
 
 type ShareEmailBody = {
   to?: unknown;
@@ -46,6 +48,12 @@ function normalizeBoundedString(raw: unknown, max: number): string | null {
   return value;
 }
 
+function safeZipFileName(raw: string): string {
+  const stripped = raw.replace(/[/\\]/g, '').replace(/[^a-zA-Z0-9._\u0400-\u04FF-]/g, '_');
+  const base = stripped.slice(0, 120).trim() || 'voice-inbox-export';
+  return base.toLowerCase().endsWith('.zip') ? base : `${base}.zip`;
+}
+
 export async function POST(request: Request): Promise<NextResponse> {
   const path = new URL(request.url).pathname;
 
@@ -66,6 +74,109 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   if (!isSmtpConfigured()) {
     return apiError('Email is not configured', HttpStatus.SERVICE_UNAVAILABLE, { pathname: path });
+  }
+
+  const contentType = request.headers.get('content-type') ?? '';
+
+  if (contentType.includes('multipart/form-data')) {
+    let formData: FormData;
+    try {
+      formData = await request.formData();
+    } catch {
+      return apiError('Invalid multipart body', HttpStatus.BAD_REQUEST, { pathname: path });
+    }
+
+    const to = normalizeEmail(formData.get('to'));
+    if (!to) {
+      return apiError('Valid recipient email is required', HttpStatus.BAD_REQUEST, {
+        pathname: path,
+      });
+    }
+
+    const title = normalizeBoundedString(formData.get('title'), TITLE_MAX);
+    if (!title) {
+      return apiError('title is required', HttpStatus.BAD_REQUEST, { pathname: path });
+    }
+
+    const subject =
+      normalizeBoundedString(formData.get('subject'), SUBJECT_MAX) ??
+      `Voice Inbox AI: ${title}`.slice(0, SUBJECT_MAX);
+
+    const bodyTextRaw = formData.get('bodyText');
+    const bodyText =
+      typeof bodyTextRaw === 'string' && bodyTextRaw.trim().length > 0
+        ? bodyTextRaw.trim().slice(0, BODY_TEXT_MAX)
+        : 'Your Voice Inbox export is attached.';
+
+    const file = formData.get('file');
+    if (!(file instanceof File)) {
+      return apiError('ZIP attachment is required', HttpStatus.BAD_REQUEST, { pathname: path });
+    }
+
+    const mime = (file.type ?? '').toLowerCase();
+    const nameLower = file.name.toLowerCase();
+    const looksZip =
+      mime.includes('zip') || mime.includes('octet-stream') || nameLower.endsWith('.zip');
+    if (!looksZip) {
+      return apiError('Attachment must be a ZIP file', HttpStatus.BAD_REQUEST, { pathname: path });
+    }
+
+    if (file.size > ZIP_ATTACHMENT_MAX_BYTES) {
+      return apiError(
+        `ZIP attachment too large (max ${ZIP_ATTACHMENT_MAX_BYTES} bytes)`,
+        HttpStatus.PAYLOAD_TOO_LARGE,
+        { pathname: path },
+      );
+    }
+
+    if (file.size === 0) {
+      return apiError('Empty ZIP attachment', HttpStatus.BAD_REQUEST, { pathname: path });
+    }
+
+    let buffer: Buffer;
+    try {
+      buffer = Buffer.from(await file.arrayBuffer());
+    } catch {
+      return apiError('Could not read attachment', HttpStatus.BAD_REQUEST, { pathname: path });
+    }
+
+    const zipNameRaw = formData.get('zipFileName');
+    const attachmentFilename =
+      typeof zipNameRaw === 'string' && zipNameRaw.trim()
+        ? safeZipFileName(zipNameRaw.trim())
+        : 'voice-inbox-export.zip';
+
+    const escapedTitle = escapeHtml(title);
+    const escapedBody = escapeHtml(bodyText);
+
+    try {
+      await sendTransactionalMail({
+        to,
+        subject,
+        text: bodyText,
+        html: `<!doctype html>
+<html>
+  <body style="margin:0;padding:24px;background:#f6f7fb;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    <main style="max-width:720px;margin:0 auto;background:#ffffff;border-radius:16px;padding:24px;border:1px solid #e5e7eb;">
+      <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;">${escapedTitle}</h1>
+      <p style="margin:0;font-size:15px;line-height:1.55;color:#374151;">${escapedBody}</p>
+    </main>
+  </body>
+</html>`,
+        attachments: [
+          {
+            filename: attachmentFilename,
+            content: buffer,
+            contentType: 'application/zip',
+          },
+        ],
+      });
+    } catch (e) {
+      console.error('[share/email POST multipart]', e);
+      return apiError('Failed to send email', HttpStatus.SERVICE_UNAVAILABLE, { pathname: path });
+    }
+
+    return NextResponse.json({ ok: true });
   }
 
   const body = await parseJsonBody<ShareEmailBody>(request);

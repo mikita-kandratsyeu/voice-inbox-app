@@ -25,6 +25,7 @@ export const HttpStatus = {
   FORBIDDEN: 403,
   NOT_FOUND: 404,
   CONFLICT: 409,
+  PAYLOAD_TOO_LARGE: 413,
   TOO_MANY_REQUESTS: 429,
   SERVICE_UNAVAILABLE: 503,
 } as const;
