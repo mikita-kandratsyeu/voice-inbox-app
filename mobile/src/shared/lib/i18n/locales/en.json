@@ -1096,6 +1096,7 @@
     "editTask": "Edit",
     "editTaskSheetTitle": "Edit task",
     "deadlineLabel": "Deadline",
+    "deadlineDateLabel": "Date",
     "deadlinePlaceholder": "YYYY-MM-DD",
     "noDeadline": "No deadline",
     "deadlineTimeLabel": "Time",
@@ -1105,6 +1106,7 @@
     "deadlineInvalid": "Use date format YYYY-MM-DD.",
     "deadlinePastInvalid": "Choose today or a future date.",
     "deadlineTimePastInvalid": "Choose a future time.",
+    "clearDeadline": "Clear deadline",
     "priorityLabel": "Priority",
     "priority": {
       "low": "Low",

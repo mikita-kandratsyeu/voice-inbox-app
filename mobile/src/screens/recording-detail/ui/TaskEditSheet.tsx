@@ -7,10 +7,10 @@ import {
 } from '@gorhom/bottom-sheet';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
-import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react-native';
+import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { TaskItem } from '@/entities/record';
@@ -21,6 +21,7 @@ import { modalKeyboardBehavior } from '@/shared/lib/platform';
 import { Button } from '@/shared/ui';
 
 const TASK_TEXT_MAX_CHARS = 500;
+const DEADLINE_ROW_MIN_HEIGHT = 48;
 const TABLET_SHEET_CONTENT_MAX_WIDTH = 720;
 const SECTION_LABEL_STYLE = {
   fontSize: 12,
@@ -319,7 +320,8 @@ export function TaskEditSheet({
     <BottomSheetModal
       ref={bottomSheetRef}
       enableDynamicSizing
-      enablePanDownToClose
+      enablePanDownToClose={!timePickerOpen}
+      enableContentPanningGesture={!timePickerOpen}
       enableOverDrag={false}
       keyboardBehavior={modalKeyboardBehavior}
       keyboardBlurBehavior="restore"
@@ -395,52 +397,143 @@ export function TaskEditSheet({
               >
                 {t('tasks.deadlineLabel')}
               </Text>
-              <View className="flex-row gap-2.5">
-                <Pressable
-                  onPress={() => {
-                    setDatePickerOpen((prev) => !prev);
-                    setTimePickerOpen(false);
-                  }}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('tasks.deadlineLabel')}
-                  className="min-w-0 flex-1 rounded-xl px-3.5 py-3.5"
+              <View>
+                <View
                   style={{
+                    borderRadius: 12,
+                    borderWidth: StyleSheet.hairlineWidth,
+                    borderColor: color.border.default,
                     backgroundColor: color.background.tertiary,
+                    overflow: 'hidden',
                   }}
                 >
-                  <Text
-                    className="text-[16px]"
-                    style={{ color: deadlineDraft ? color.text.primary : color.text.muted }}
-                    numberOfLines={1}
+                  <Pressable
+                    onPress={() => {
+                      setDatePickerOpen((prev) => !prev);
+                      setTimePickerOpen(false);
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t('tasks.deadlineDateLabel')}, ${deadlineDisplay ?? t('tasks.noDeadline')}`}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      minHeight: DEADLINE_ROW_MIN_HEIGHT,
+                      paddingHorizontal: 14,
+                      paddingVertical: 14,
+                    }}
                   >
-                    {deadlineDisplay ?? t('tasks.noDeadline')}
-                  </Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    if (!deadlineDraft) return;
-                    setTimePickerOpen((prev) => !prev);
-                    setDatePickerOpen(false);
-                  }}
-                  disabled={!deadlineDraft}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('tasks.deadlineTimeLabel')}
-                  accessibilityState={{ disabled: !deadlineDraft }}
-                  className="rounded-xl px-3.5 py-3.5"
-                  style={{
-                    backgroundColor: color.background.tertiary,
-                    minWidth: 104,
-                    opacity: deadlineDraft ? 1 : 0.55,
-                  }}
-                >
-                  <Text
-                    className="text-center text-[16px]"
-                    style={{ color: deadlineTimeDraft ? color.text.primary : color.text.muted }}
-                    numberOfLines={1}
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <Calendar
+                        size={20}
+                        color={deadlineDraft.length > 0 ? color.accent.primary : color.icon.muted}
+                        strokeWidth={2}
+                      />
+                      <Text
+                        style={{ fontSize: 15, fontWeight: '500', color: color.text.secondary }}
+                      >
+                        {t('tasks.deadlineDateLabel')}
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        flex: 1,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        gap: 6,
+                        minWidth: 0,
+                      }}
+                    >
+                      <Text
+                        className="text-[16px]"
+                        style={{
+                          flexShrink: 1,
+                          textAlign: 'right',
+                          color: deadlineDraft ? color.text.primary : color.text.muted,
+                        }}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {deadlineDisplay ?? t('tasks.noDeadline')}
+                      </Text>
+                      <ChevronRight size={18} color={color.icon.muted} strokeWidth={2.25} />
+                    </View>
+                  </Pressable>
+                  <View
+                    style={{
+                      marginLeft: 14,
+                      height: StyleSheet.hairlineWidth,
+                      backgroundColor: color.border.default,
+                    }}
+                  />
+                  <Pressable
+                    onPress={() => {
+                      if (!deadlineDraft) return;
+                      setTimePickerOpen((prev) => !prev);
+                      setDatePickerOpen(false);
+                    }}
+                    disabled={!deadlineDraft}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${t('tasks.deadlineTimeLabel')}, ${deadlineTimeDraft || t('tasks.noDeadlineTime')}`}
+                    accessibilityState={{ disabled: !deadlineDraft }}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: 12,
+                      minHeight: DEADLINE_ROW_MIN_HEIGHT,
+                      paddingHorizontal: 14,
+                      paddingVertical: 14,
+                      opacity: deadlineDraft ? 1 : 0.5,
+                    }}
                   >
-                    {deadlineTimeDraft || t('tasks.noDeadlineTime')}
-                  </Text>
-                </Pressable>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      <Clock
+                        size={20}
+                        color={
+                          deadlineTimeDraft.length > 0 && deadlineDraft
+                            ? color.accent.primary
+                            : color.icon.muted
+                        }
+                        strokeWidth={2}
+                      />
+                      <Text
+                        style={{ fontSize: 15, fontWeight: '500', color: color.text.secondary }}
+                      >
+                        {t('tasks.deadlineTimeLabel')}
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        flex: 1,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'flex-end',
+                        gap: 6,
+                        minWidth: 0,
+                      }}
+                    >
+                      <Text
+                        className="text-[16px]"
+                        style={{
+                          flexShrink: 1,
+                          textAlign: 'right',
+                          color:
+                            deadlineTimeDraft && deadlineDraft
+                              ? color.text.primary
+                              : color.text.muted,
+                          fontVariant: ['tabular-nums'],
+                        }}
+                        numberOfLines={1}
+                      >
+                        {deadlineTimeDraft || t('tasks.noDeadlineTime')}
+                      </Text>
+                      <ChevronRight size={18} color={color.icon.muted} strokeWidth={2.25} />
+                    </View>
+                  </Pressable>
+                </View>
                 {deadlineDraft.length > 0 && (
                   <Pressable
                     onPress={() => {
@@ -450,13 +543,22 @@ export function TaskEditSheet({
                       setTimePickerOpen(false);
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={t('common.clear')}
-                    className="items-center justify-center rounded-xl px-3.5 py-3.5"
+                    accessibilityLabel={t('tasks.clearDeadline')}
                     style={{
-                      backgroundColor: color.background.tertiary,
+                      marginTop: 10,
+                      paddingVertical: 10,
+                      alignSelf: 'center',
                     }}
                   >
-                    <Trash2 size={20} color={color.accent.delete} strokeWidth={2} />
+                    <Text
+                      style={{
+                        fontSize: 15,
+                        fontWeight: '600',
+                        color: color.accent.delete,
+                      }}
+                    >
+                      {t('tasks.clearDeadline')}
+                    </Text>
                   </Pressable>
                 )}
               </View>

@@ -1102,6 +1102,7 @@
     "editTask": "Изменить",
     "editTaskSheetTitle": "Редактировать задачу",
     "deadlineLabel": "Срок",
+    "deadlineDateLabel": "Дата",
     "deadlinePlaceholder": "ГГГГ-ММ-ДД",
     "noDeadline": "Без срока",
     "deadlineTimeLabel": "Время",
@@ -1111,6 +1112,7 @@
     "deadlineInvalid": "Используйте формат даты ГГГГ-ММ-ДД.",
     "deadlinePastInvalid": "Выберите сегодня или будущую дату.",
     "deadlineTimePastInvalid": "Выберите будущее время.",
+    "clearDeadline": "Сбросить срок",
     "priorityLabel": "Приоритет",
     "priority": {
       "low": "Низкий",
