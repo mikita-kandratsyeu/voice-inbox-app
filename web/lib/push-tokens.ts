@@ -43,19 +43,49 @@ type StoredPushData = {
   token: string;
   locale?: string | null;
   platform?: PushPlatform | null;
+  deviceModel?: string | null;
 };
+
+async function parseStoredPushData(deviceId: string): Promise<StoredPushData | null> {
+  const key = getPushTokenKey(deviceId);
+  const value = await redis.get(key);
+  if (value == null) return null;
+
+  if (typeof value === 'object' && value !== null && 'token' in value) {
+    return value as StoredPushData;
+  }
+  if (typeof value === 'string') {
+    if (value.startsWith('{')) {
+      try {
+        return JSON.parse(value) as StoredPushData;
+      } catch {
+        return { token: value };
+      }
+    }
+    return { token: value };
+  }
+  return null;
+}
 
 export async function savePushToken(
   deviceId: string,
   deviceToken: string,
   locale?: string | null,
   platform?: PushPlatform | null,
+  /** If `undefined`, previous `deviceModel` in Redis is kept (when re-registering token). */
+  deviceModelUpdate?: string | null,
 ): Promise<void> {
   const key = getPushTokenKey(deviceId);
+  const existing = await parseStoredPushData(deviceId);
+
+  const deviceModel =
+    deviceModelUpdate !== undefined ? deviceModelUpdate : (existing?.deviceModel ?? null);
+
   const data: StoredPushData = {
     token: deviceToken,
     locale: locale ?? null,
     platform: platform ?? null,
+    deviceModel: deviceModel ?? null,
   };
   await redis.set(key, JSON.stringify(data), { ex: PUSH_TOKEN_TTL_SECONDS });
 
@@ -65,6 +95,7 @@ export async function savePushToken(
       key,
       locale: data.locale,
       platform: data.platform,
+      deviceModel: data.deviceModel,
     });
   }
 }
@@ -124,9 +155,12 @@ export async function getAllDeviceIdsWithPushTokens(): Promise<string[]> {
   return keys.map((key) => key.slice(PUSH_TOKEN_KEY_PREFIX.length));
 }
 
-export async function getPushTokenWithLocale(
-  deviceId: string,
-): Promise<{ token: string; locale: string | null; platform: PushPlatform | null } | null> {
+export async function getPushTokenWithLocale(deviceId: string): Promise<{
+  token: string;
+  locale: string | null;
+  platform: PushPlatform | null;
+  deviceModel: string | null;
+} | null> {
   const key = getPushTokenKey(deviceId);
   const value = await redis.get(key);
 
@@ -150,10 +184,10 @@ export async function getPushTokenWithLocale(
       try {
         data = JSON.parse(value) as StoredPushData;
       } catch {
-        return { token: value, locale: null, platform: null };
+        return { token: value, locale: null, platform: null, deviceModel: null };
       }
     } else {
-      return { token: value, locale: null, platform: null };
+      return { token: value, locale: null, platform: null, deviceModel: null };
     }
   }
 
@@ -162,6 +196,7 @@ export async function getPushTokenWithLocale(
         token: data.token,
         locale: data.locale ?? null,
         platform: data.platform ?? null,
+        deviceModel: data.deviceModel ?? null,
       }
     : null;
 }

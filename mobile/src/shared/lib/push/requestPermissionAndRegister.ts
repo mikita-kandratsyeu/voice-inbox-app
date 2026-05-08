@@ -8,6 +8,7 @@ import {
 
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { getDeviceModelLabel } from '@/shared/lib/device-model-for-api';
 import { i18n } from '@/shared/lib/i18n';
 import { IS_IOS, PLATFORM_OS } from '@/shared/lib/platform';
 
@@ -86,6 +87,7 @@ export async function registerForPushToken(): Promise<string | null> {
 
 export async function sendTokenToBackend(token: string): Promise<boolean> {
   const url = getPushRegisterUrl();
+  const deviceModel = getDeviceModelLabel();
 
   try {
     const response = await fetchWithAuth(url, {
@@ -95,6 +97,7 @@ export async function sendTokenToBackend(token: string): Promise<boolean> {
         deviceToken: token,
         locale: (i18n.language ?? 'en').slice(0, 2),
         platform: PLATFORM_OS,
+        ...(deviceModel ? { deviceModel } : {}),
       }),
     });
 

@@ -1,3 +1,4 @@
+import { HEADER_DEVICE_ID } from '@/config/constants';
 import {
   apiError,
   checkDeviceRateLimit,
@@ -8,14 +9,15 @@ import {
   validateDeviceId,
   validateRequiredStrings,
 } from '@/lib/api';
+import { sanitizeDeviceModel } from '@/lib/device-model';
 import { savePushToken } from '@/lib/push-tokens';
-import { HEADER_DEVICE_ID } from '@/config/constants';
 import { NextResponse } from 'next/server';
 
 type RegisterBody = {
   deviceToken?: unknown;
   locale?: unknown;
   platform?: unknown;
+  deviceModel?: unknown;
 };
 
 const VALID_PLATFORMS = ['ios', 'android'] as const;
@@ -66,7 +68,12 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       ? (body.platform as 'ios' | 'android')
       : null;
 
-  await savePushToken(deviceIdTrimmed, deviceToken, locale, platform);
+  const hasDeviceModelKey = typeof body === 'object' && body !== null && 'deviceModel' in body;
+  const deviceModelUpdate = hasDeviceModelKey
+    ? sanitizeDeviceModel(typeof body.deviceModel === 'string' ? body.deviceModel : null)
+    : undefined;
+
+  await savePushToken(deviceIdTrimmed, deviceToken, locale, platform, deviceModelUpdate);
 
   return NextResponse.json({ ok: true });
 };

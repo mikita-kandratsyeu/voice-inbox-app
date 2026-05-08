@@ -56,6 +56,8 @@ export const AI_BONUS_COOLDOWN_SECONDS = 900; // 15 min
 // Redis / KV
 export const MESSAGE_TTL_SECONDS = 3600;
 export const MESSAGE_KEY_PREFIX = 'msg:';
+/** Max length for optional device model string stored in push_token JSON. */
+export const DEVICE_MODEL_MAX_CHARS = 128;
 export const GET_RETRY_ATTEMPTS = 3;
 export const GET_RETRY_DELAY_MS = 100;
 
