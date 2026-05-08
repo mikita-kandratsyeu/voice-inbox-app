@@ -140,7 +140,7 @@ export const FolderReorderSheet = ({
             </Text>
             <Pressable
               onLongPress={drag}
-              delayLongPress={350}
+              delayLongPress={200}
               accessibilityRole="button"
               accessibilityLabel={folder.name}
               accessibilityHint={t('folders.reorderRowA11y')}
