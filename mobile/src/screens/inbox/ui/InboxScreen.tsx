@@ -7,7 +7,7 @@ import {
   FolderPickerSheet,
   FolderReorderSheet,
 } from '@/entities/folder';
-import { BatchActionBar } from '@/features/batch-select';
+import { BatchActionBar, BatchExportSheet } from '@/features/batch-select';
 import { AutoOrganizeProgressOverlay } from '@/features/manage-folders';
 
 import { useInboxScreen } from '../lib/useInboxScreen';
@@ -75,6 +75,11 @@ export const InboxScreen = () => {
     handleOpenBatchFolderPicker,
     handleCloseBatchFolderPicker,
     handleBatchFolderPicked,
+    batchExportSheetVisible,
+    handleCloseBatchExportSheet,
+    handleBatchExportTemplate,
+    batchEmailSending,
+    handleBatchEmail,
     isArchivedView,
     handleBatchArchive,
     handleBatchUnarchive,
@@ -220,6 +225,14 @@ export const InboxScreen = () => {
           onSelect={handleBatchFolderPicked}
         />
       )}
+      <BatchExportSheet
+        visible={batchExportSheetVisible}
+        count={batchSelect.selectedIds.size}
+        isSendingEmail={batchEmailSending}
+        onClose={handleCloseBatchExportSheet}
+        onExportText={handleBatchExportTemplate}
+        onEmailBatch={handleBatchEmail}
+      />
       {!isPrivateMode && (
         <FolderReorderSheet
           visible={folderReorderVisible}

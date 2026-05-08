@@ -4,7 +4,7 @@ import type { FlashListRef } from '@shopify/flash-list';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
-import { LayoutAnimation, ScrollView, useWindowDimensions } from 'react-native';
+import { Alert, LayoutAnimation, ScrollView, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -21,15 +21,22 @@ import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { useAdsAllowed } from '@/features/app-storefront';
 import { useAutoArchiveReadNotes } from '@/features/auto-archive';
-import { useBatchRecordActions, useBatchSelect } from '@/features/batch-select';
+import {
+  type BatchExportPackaging,
+  useBatchRecordActions,
+  useBatchSelect,
+} from '@/features/batch-select';
 import { useInboxFiltersReset } from '@/features/inbox-filters';
 import { useAutoOrganizeFolders, useManageFolders } from '@/features/manage-folders';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useProEntitlement } from '@/features/pro-license';
 import { useSearchRecords } from '@/features/search-records';
+import type { ShareBriefTemplate } from '@/features/share-record';
 import { useColors } from '@/shared/config';
 import {
   flashListJumpToTop,
+  hapticError,
+  hapticSuccess,
   useIsTablet,
   useScrollToTopOnTabPress,
   useTabletContentMaxWidth,
@@ -212,13 +219,21 @@ export function useInboxScreen() {
 
   const visibleRecordIds = useMemo(() => filtered.map((r) => r.id), [filtered]);
 
-  const { batchArchive, batchUnarchive, batchDelete, batchExport, batchMoveToFolder } =
-    useBatchRecordActions({
-      onComplete: exitBatchMode,
-    });
+  const {
+    batchArchive,
+    batchUnarchive,
+    batchDelete,
+    batchExport,
+    batchEmailExport,
+    batchMoveToFolder,
+  } = useBatchRecordActions({
+    onComplete: exitBatchMode,
+  });
 
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
   const [folderReorderVisible, setFolderReorderVisible] = useState(false);
+  const [batchExportSheetVisible, setBatchExportSheetVisible] = useState(false);
+  const [batchEmailSending, setBatchEmailSending] = useState(false);
 
   const handleOpenBatchFolderPicker = useCallback(() => {
     setFolderPickerVisible(true);
@@ -250,9 +265,42 @@ export function useInboxScreen() {
   }, [batchDelete, batchSelect.selectedIds]);
 
   const handleBatchExport = useCallback(() => {
-    const selectedRecords = filtered.filter((r) => batchSelect.selectedIds.has(r.id));
-    void batchExport(selectedRecords);
-  }, [batchExport, filtered, batchSelect.selectedIds]);
+    setBatchExportSheetVisible(true);
+  }, []);
+
+  const handleCloseBatchExportSheet = useCallback(() => {
+    setBatchExportSheetVisible(false);
+  }, []);
+
+  const handleBatchExportTemplate = useCallback(
+    (template: ShareBriefTemplate, packaging: BatchExportPackaging) => {
+      const selectedRecords = filtered.filter((r) => batchSelect.selectedIds.has(r.id));
+      void batchExport(selectedRecords, template, packaging);
+    },
+    [batchExport, filtered, batchSelect.selectedIds],
+  );
+
+  const handleBatchEmail = useCallback(
+    async (email: string, template: ShareBriefTemplate, packaging: BatchExportPackaging) => {
+      const selectedRecords = filtered.filter((r) => batchSelect.selectedIds.has(r.id));
+      setBatchEmailSending(true);
+      try {
+        await batchEmailExport(selectedRecords, template, email, packaging);
+        hapticSuccess();
+        handleCloseBatchExportSheet();
+        Alert.alert(t('share.emailSentTitle'), t('share.emailBatchSentMessage', { email }));
+      } catch (err) {
+        hapticError();
+        Alert.alert(
+          t('share.emailFailedTitle'),
+          err instanceof Error ? err.message : t('batch.exportFailed'),
+        );
+      } finally {
+        setBatchEmailSending(false);
+      }
+    },
+    [batchEmailExport, filtered, batchSelect.selectedIds, handleCloseBatchExportSheet, t],
+  );
 
   const handleSelectAll = useCallback(() => {
     if (batchSelect.selectedIds.size === visibleRecordIds.length) {
@@ -593,6 +641,11 @@ export function useInboxScreen() {
     handleOpenBatchFolderPicker,
     handleCloseBatchFolderPicker,
     handleBatchFolderPicked,
+    batchExportSheetVisible,
+    handleCloseBatchExportSheet,
+    handleBatchExportTemplate,
+    batchEmailSending,
+    handleBatchEmail,
     isArchivedView,
     handleBatchArchive,
     handleBatchUnarchive,
