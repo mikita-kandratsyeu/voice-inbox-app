@@ -10,14 +10,14 @@ import dayjs from 'dayjs';
 import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { uses24HourClock } from 'react-native-localize';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { TaskItem } from '@/entities/record';
 import { useAppTheme, useColors } from '@/shared/config';
-import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import { IS_IOS, modalKeyboardBehavior, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
-import { modalKeyboardBehavior } from '@/shared/lib/platform';
 import { Button } from '@/shared/ui';
 
 const TASK_TEXT_MAX_CHARS = 500;
@@ -101,6 +101,22 @@ const formatTaskDeadlineTime = (date: Date): string => {
     .getMinutes()
     .toString()
     .padStart(2, '0')}`;
+};
+
+/** Stored value stays HH:mm; label follows system 12/24h preference. */
+const formatStoredDeadlineTimeForDisplay = (hhmm: string): string => {
+  const parsed = parseTaskDeadlineTimeDraft(hhmm);
+
+  if (!parsed) return hhmm;
+
+  const date = new Date();
+  date.setHours(parsed.hours, parsed.minutes, 0, 0);
+
+  return date.toLocaleTimeString(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: !uses24HourClock(),
+  });
 };
 
 const getNextSelectableTime = (): Date => {
@@ -256,6 +272,13 @@ export function TaskEditSheet({
     () => formatCalendarMonthTitle(calendarMonth, i18n.language),
     [calendarMonth, i18n.language],
   );
+  const deadlineTimeLabelText = useMemo(() => {
+    const trimmed = deadlineTimeDraft.trim();
+
+    if (!trimmed) return '';
+
+    return formatStoredDeadlineTimeForDisplay(trimmed);
+  }, [deadlineTimeDraft]);
   const priorityColors = useMemo(
     () => ({
       low: color.text.secondary,
@@ -476,7 +499,7 @@ export function TaskEditSheet({
                     }}
                     disabled={!deadlineDraft}
                     accessibilityRole="button"
-                    accessibilityLabel={`${t('tasks.deadlineTimeLabel')}, ${deadlineTimeDraft || t('tasks.noDeadlineTime')}`}
+                    accessibilityLabel={`${t('tasks.deadlineTimeLabel')}, ${deadlineTimeLabelText || t('tasks.noDeadlineTime')}`}
                     accessibilityState={{ disabled: !deadlineDraft }}
                     style={{
                       flexDirection: 'row',
@@ -528,7 +551,7 @@ export function TaskEditSheet({
                         }}
                         numberOfLines={1}
                       >
-                        {deadlineTimeDraft || t('tasks.noDeadlineTime')}
+                        {deadlineTimeLabelText || t('tasks.noDeadlineTime')}
                       </Text>
                       <ChevronRight size={18} color={color.icon.muted} strokeWidth={2.25} />
                     </View>
@@ -562,7 +585,7 @@ export function TaskEditSheet({
                   </Pressable>
                 )}
               </View>
-              {datePickerOpen && Platform.OS === 'ios' && (
+              {datePickerOpen && IS_IOS && (
                 <View
                   className="mt-3 rounded-2xl px-2 py-4"
                   style={{
@@ -676,7 +699,7 @@ export function TaskEditSheet({
                   </View>
                 </View>
               )}
-              {datePickerOpen && Platform.OS !== 'ios' && (
+              {datePickerOpen && !IS_IOS && (
                 <DateTimePicker
                   value={datePickerValue}
                   mode="date"
@@ -701,14 +724,14 @@ export function TaskEditSheet({
                   <DateTimePicker
                     value={timePickerValue}
                     mode="time"
-                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                    display={IS_IOS ? 'spinner' : 'default'}
                     accentColor={color.accent.primary}
                     minimumDate={timePickerMinimumDate}
                     textColor={color.text.primary}
                     themeVariant={theme}
-                    style={Platform.OS === 'ios' ? { alignSelf: 'center', width: 320 } : undefined}
+                    style={IS_IOS ? { alignSelf: 'center', width: 320 } : undefined}
                     onValueChange={(_, selectedDate) => {
-                      if (Platform.OS !== 'ios') {
+                      if (!IS_IOS) {
                         setTimePickerOpen(false);
                       }
                       if (selectedDate) {

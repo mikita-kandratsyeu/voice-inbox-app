@@ -5,7 +5,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ArrowRight } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, ScrollView, Share, ToastAndroid, View } from 'react-native';
+import { ScrollView, Share, ToastAndroid, View } from 'react-native';
 import { KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
@@ -17,6 +17,7 @@ import { type AskAIHistoryItem, useAskAI } from '@/features/ask-ai';
 import { useColors } from '@/shared/config';
 import {
   hapticSuccess,
+  IS_ANDROID,
   useIsTablet,
   useNetworkStatus,
   useTabletContentMaxWidth,
@@ -132,7 +133,7 @@ export const AskAIScreen = () => {
       void Clipboard.setString(text);
       hapticSuccess();
       const msg = t('recordingDetail.askCopied');
-      if (Platform.OS === 'android') {
+      if (IS_ANDROID) {
         ToastAndroid.show(msg, ToastAndroid.SHORT);
       }
     },

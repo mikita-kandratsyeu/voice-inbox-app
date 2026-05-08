@@ -1,7 +1,7 @@
 import { Inbox, Settings } from 'lucide-react-native';
-import { Platform, type ViewStyle } from 'react-native';
+import { type ViewStyle } from 'react-native';
 
-import { i18n } from '@/shared/lib';
+import { i18n, selectPlatform } from '@/shared/lib';
 
 /** Horizontal inset from screen edges (floating pill). */
 export const FLOAT_TAB_HORIZONTAL_INSET = 28;
@@ -93,7 +93,7 @@ export function buildFloatingTabBarStyle(p: BuildFloatingTabBarStyleParams): Vie
     borderTopWidth: 0,
     borderWidth: 0,
     borderRadius: tabBarHeight / 2,
-    ...Platform.select({
+    ...selectPlatform({
       ios: {
         shadowColor: p.shadowColor,
         shadowOffset: { width: 0, height: FLOAT_TAB_IOS_SHADOW_OFFSET_Y },

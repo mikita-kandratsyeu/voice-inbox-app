@@ -38,12 +38,14 @@ export { NetworkStatusProvider, useNetworkStatus } from './NetworkStatusContext'
 export { parseTaskDeadline } from './parseTaskDeadline';
 export {
   getIosVersion,
+  getPlatformVersionString,
   IS_ANDROID,
   IS_IOS,
   keyboardAvoidingBehavior,
   keyboardVerticalOffset,
   modalKeyboardBehavior,
   PLATFORM_OS,
+  selectPlatform,
 } from './platform';
 export {
   audioPathFromDbValue,

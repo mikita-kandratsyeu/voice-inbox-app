@@ -1,7 +1,7 @@
-import { Platform } from 'react-native';
 import { DeviceInfoModule } from 'react-native-nitro-device-info';
 
 import { getDeviceModelLabel } from '@/shared/lib/device-model-for-api';
+import { getPlatformVersionString } from '@/shared/lib/platform';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
 export type PushRegistrationMetadata = {
@@ -29,7 +29,7 @@ export function getPushRegistrationMetadata(): PushRegistrationMetadata {
     osVersion = [systemName, systemVersion].filter(Boolean).join(' ');
 
     if (!osVersion) {
-      osVersion = String(Platform.Version ?? '').trim();
+      osVersion = getPlatformVersionString();
     }
   } catch {
     if (__DEV__) {

@@ -9,7 +9,7 @@ import dayjs from 'dayjs';
 import { CheckCircle2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Platform, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -23,10 +23,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { hapticError, hapticSuccess, IS_IOS } from '@/shared/lib';
+import {
+  hapticError,
+  hapticSuccess,
+  IS_IOS,
+  modalKeyboardBehavior,
+  selectPlatform,
+} from '@/shared/lib';
 import { redeemProLicenseKey } from '@/shared/lib/ai-api/proLicenseApi';
 import { resolveDayjsLocale } from '@/shared/lib/date';
-import { modalKeyboardBehavior } from '@/shared/lib/platform';
 import { Button } from '@/shared/ui';
 
 import {
@@ -250,7 +255,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
 
   const canDismissByGesture = !busy;
 
-  const codeFontFamily = Platform.select({
+  const codeFontFamily = selectPlatform({
     ios: 'Menlo',
     android: 'monospace',
     default: 'monospace',

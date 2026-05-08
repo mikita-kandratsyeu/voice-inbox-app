@@ -2,13 +2,7 @@ import { MenuView } from '@react-native-menu/menu';
 import { Archive, ArrowDownUp, Filter, LayoutList, Pin } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  type LayoutChangeEvent,
-  Platform,
-  TouchableOpacity,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import { type LayoutChangeEvent, TouchableOpacity, View, type ViewStyle } from 'react-native';
 
 import {
   FLOAT_TAB_IOS_SHADOW_OFFSET_Y,
@@ -23,7 +17,7 @@ import type {
 } from '@/features/inbox-filters';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
+import { hapticSelection, selectPlatform } from '@/shared/lib';
 import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 import { FrostedChromeBackground } from '@/shared/ui';
 
@@ -51,7 +45,7 @@ function FrostedFilterSurface({
         {
           borderRadius: FILTER_CHROME_RADIUS,
           backgroundColor: 'transparent',
-          ...Platform.select({
+          ...selectPlatform({
             ios: {
               shadowColor: color.shadow.color,
               shadowOffset: { width: 0, height: FLOAT_TAB_IOS_SHADOW_OFFSET_Y },
