@@ -58,6 +58,10 @@ export const MESSAGE_TTL_SECONDS = 3600;
 export const MESSAGE_KEY_PREFIX = 'msg:';
 /** Max length for optional device model string stored in push_token JSON. */
 export const DEVICE_MODEL_MAX_CHARS = 128;
+/** Push registration metadata (app / OS strings). */
+export const PUSH_TOKEN_APP_VERSION_MAX_CHARS = 32;
+export const PUSH_TOKEN_BUILD_NUMBER_MAX_CHARS = 32;
+export const PUSH_TOKEN_OS_VERSION_MAX_CHARS = 64;
 export const GET_RETRY_ATTEMPTS = 3;
 export const GET_RETRY_DELAY_MS = 100;
 

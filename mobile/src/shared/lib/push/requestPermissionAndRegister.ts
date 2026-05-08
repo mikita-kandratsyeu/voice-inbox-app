@@ -8,9 +8,9 @@ import {
 
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
-import { getDeviceModelLabel } from '@/shared/lib/device-model-for-api';
 import { i18n } from '@/shared/lib/i18n';
 import { IS_IOS, PLATFORM_OS } from '@/shared/lib/platform';
+import { getPushRegistrationMetadata } from '@/shared/lib/push-register-metadata';
 
 function getPushRegisterUrl(): string {
   return `${getWebApiUrl().replace(/\/$/, '')}/api/push/register`;
@@ -87,7 +87,7 @@ export async function registerForPushToken(): Promise<string | null> {
 
 export async function sendTokenToBackend(token: string): Promise<boolean> {
   const url = getPushRegisterUrl();
-  const deviceModel = getDeviceModelLabel();
+  const meta = getPushRegistrationMetadata();
 
   try {
     const response = await fetchWithAuth(url, {
@@ -97,7 +97,10 @@ export async function sendTokenToBackend(token: string): Promise<boolean> {
         deviceToken: token,
         locale: (i18n.language ?? 'en').slice(0, 2),
         platform: PLATFORM_OS,
-        ...(deviceModel ? { deviceModel } : {}),
+        ...(meta.deviceModel ? { deviceModel: meta.deviceModel } : {}),
+        ...(meta.appVersion ? { appVersion: meta.appVersion } : {}),
+        ...(meta.buildNumber ? { buildNumber: meta.buildNumber } : {}),
+        ...(meta.osVersion ? { osVersion: meta.osVersion } : {}),
       }),
     });
 

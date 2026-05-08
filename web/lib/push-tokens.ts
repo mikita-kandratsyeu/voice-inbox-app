@@ -44,6 +44,16 @@ type StoredPushData = {
   locale?: string | null;
   platform?: PushPlatform | null;
   deviceModel?: string | null;
+  appVersion?: string | null;
+  buildNumber?: string | null;
+  osVersion?: string | null;
+};
+
+export type PushTokenMetadataPatch = {
+  deviceModel?: string | null;
+  appVersion?: string | null;
+  buildNumber?: string | null;
+  osVersion?: string | null;
 };
 
 async function parseStoredPushData(deviceId: string): Promise<StoredPushData | null> {
@@ -72,20 +82,36 @@ export async function savePushToken(
   deviceToken: string,
   locale?: string | null,
   platform?: PushPlatform | null,
-  /** If `undefined`, previous `deviceModel` in Redis is kept (when re-registering token). */
-  deviceModelUpdate?: string | null,
+  metaPatch?: PushTokenMetadataPatch,
 ): Promise<void> {
   const key = getPushTokenKey(deviceId);
   const existing = await parseStoredPushData(deviceId);
 
   const deviceModel =
-    deviceModelUpdate !== undefined ? deviceModelUpdate : (existing?.deviceModel ?? null);
+    metaPatch && 'deviceModel' in metaPatch
+      ? (metaPatch.deviceModel ?? null)
+      : (existing?.deviceModel ?? null);
+  const appVersion =
+    metaPatch && 'appVersion' in metaPatch
+      ? (metaPatch.appVersion ?? null)
+      : (existing?.appVersion ?? null);
+  const buildNumber =
+    metaPatch && 'buildNumber' in metaPatch
+      ? (metaPatch.buildNumber ?? null)
+      : (existing?.buildNumber ?? null);
+  const osVersion =
+    metaPatch && 'osVersion' in metaPatch
+      ? (metaPatch.osVersion ?? null)
+      : (existing?.osVersion ?? null);
 
   const data: StoredPushData = {
     token: deviceToken,
     locale: locale ?? null,
     platform: platform ?? null,
     deviceModel: deviceModel ?? null,
+    appVersion: appVersion ?? null,
+    buildNumber: buildNumber ?? null,
+    osVersion: osVersion ?? null,
   };
   await redis.set(key, JSON.stringify(data), { ex: PUSH_TOKEN_TTL_SECONDS });
 
@@ -96,6 +122,9 @@ export async function savePushToken(
       locale: data.locale,
       platform: data.platform,
       deviceModel: data.deviceModel,
+      appVersion: data.appVersion,
+      buildNumber: data.buildNumber,
+      osVersion: data.osVersion,
     });
   }
 }
@@ -160,6 +189,9 @@ export async function getPushTokenWithLocale(deviceId: string): Promise<{
   locale: string | null;
   platform: PushPlatform | null;
   deviceModel: string | null;
+  appVersion: string | null;
+  buildNumber: string | null;
+  osVersion: string | null;
 } | null> {
   const key = getPushTokenKey(deviceId);
   const value = await redis.get(key);
@@ -184,10 +216,26 @@ export async function getPushTokenWithLocale(deviceId: string): Promise<{
       try {
         data = JSON.parse(value) as StoredPushData;
       } catch {
-        return { token: value, locale: null, platform: null, deviceModel: null };
+        return {
+          token: value,
+          locale: null,
+          platform: null,
+          deviceModel: null,
+          appVersion: null,
+          buildNumber: null,
+          osVersion: null,
+        };
       }
     } else {
-      return { token: value, locale: null, platform: null, deviceModel: null };
+      return {
+        token: value,
+        locale: null,
+        platform: null,
+        deviceModel: null,
+        appVersion: null,
+        buildNumber: null,
+        osVersion: null,
+      };
     }
   }
 
@@ -197,6 +245,9 @@ export async function getPushTokenWithLocale(deviceId: string): Promise<{
         locale: data.locale ?? null,
         platform: data.platform ?? null,
         deviceModel: data.deviceModel ?? null,
+        appVersion: data.appVersion ?? null,
+        buildNumber: data.buildNumber ?? null,
+        osVersion: data.osVersion ?? null,
       }
     : null;
 }

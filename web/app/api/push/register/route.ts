@@ -10,7 +10,12 @@ import {
   validateRequiredStrings,
 } from '@/lib/api';
 import { sanitizeDeviceModel } from '@/lib/device-model';
-import { savePushToken } from '@/lib/push-tokens';
+import {
+  sanitizeAppVersion,
+  sanitizeBuildNumber,
+  sanitizeOsVersion,
+} from '@/lib/push-token-fields';
+import { savePushToken, type PushTokenMetadataPatch } from '@/lib/push-tokens';
 import { NextResponse } from 'next/server';
 
 type RegisterBody = {
@@ -18,6 +23,9 @@ type RegisterBody = {
   locale?: unknown;
   platform?: unknown;
   deviceModel?: unknown;
+  appVersion?: unknown;
+  buildNumber?: unknown;
+  osVersion?: unknown;
 };
 
 const VALID_PLATFORMS = ['ios', 'android'] as const;
@@ -68,12 +76,29 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       ? (body.platform as 'ios' | 'android')
       : null;
 
-  const hasDeviceModelKey = typeof body === 'object' && body !== null && 'deviceModel' in body;
-  const deviceModelUpdate = hasDeviceModelKey
-    ? sanitizeDeviceModel(typeof body.deviceModel === 'string' ? body.deviceModel : null)
-    : undefined;
+  const metaPatch: PushTokenMetadataPatch = {};
+  if (typeof body === 'object' && body !== null && 'deviceModel' in body) {
+    metaPatch.deviceModel = sanitizeDeviceModel(
+      typeof body.deviceModel === 'string' ? body.deviceModel : null,
+    );
+  }
+  if (typeof body === 'object' && body !== null && 'appVersion' in body) {
+    metaPatch.appVersion = sanitizeAppVersion(body.appVersion);
+  }
+  if (typeof body === 'object' && body !== null && 'buildNumber' in body) {
+    metaPatch.buildNumber = sanitizeBuildNumber(body.buildNumber);
+  }
+  if (typeof body === 'object' && body !== null && 'osVersion' in body) {
+    metaPatch.osVersion = sanitizeOsVersion(body.osVersion);
+  }
 
-  await savePushToken(deviceIdTrimmed, deviceToken, locale, platform, deviceModelUpdate);
+  await savePushToken(
+    deviceIdTrimmed,
+    deviceToken,
+    locale,
+    platform,
+    Object.keys(metaPatch).length > 0 ? metaPatch : undefined,
+  );
 
   return NextResponse.json({ ok: true });
 };
