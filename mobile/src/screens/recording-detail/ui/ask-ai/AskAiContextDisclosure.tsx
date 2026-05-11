@@ -1,6 +1,6 @@
 import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import { ChevronRight, Info } from 'lucide-react-native';
+import { ChevronRight, Cloud, Shield } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -100,7 +100,7 @@ export const AskAiContextDisclosure = ({
       activeOpacity={0.75}
       accessibilityRole="button"
       accessibilityLabel={`${a11yMeta}. ${t('recordingDetail.askContextLearnMoreA11y')}`}
-      className="flex-row items-center gap-3"
+      className="flex-row items-start gap-2"
       style={{
         paddingHorizontal: 12,
         paddingVertical: 10,
@@ -110,7 +110,6 @@ export const AskAiContextDisclosure = ({
         borderColor: color.border.default,
       }}
     >
-      <Info size={18} color={color.icon.muted} strokeWidth={2} />
       <View className="min-w-0 flex-1" style={{ gap: 8 }}>
         <Text
           className="text-[14px] font-medium leading-5"
@@ -120,19 +119,26 @@ export const AskAiContextDisclosure = ({
           {sourcesLine}
         </Text>
         <View
-          className="self-start rounded-lg px-2.5 py-1.5"
+          className="self-start flex-row items-center"
           style={{
-            backgroundColor: color.background.secondary,
-            borderWidth: 1,
-            borderColor: color.border.default,
+            gap: 4,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+            borderRadius: 8,
+            backgroundColor: color.background.tertiary,
           }}
         >
-          <Text className="text-xs font-semibold leading-4" style={{ color: color.text.primary }}>
-            {processingLine}
-          </Text>
+          {isPrivate ? (
+            <Shield size={14} color={color.text.secondary} strokeWidth={2} />
+          ) : (
+            <Cloud size={14} color={color.text.secondary} strokeWidth={2} />
+          )}
+          <Text style={{ fontSize: 12, color: color.text.secondary }}>{processingLine}</Text>
         </View>
       </View>
-      <ChevronRight size={18} color={color.icon.muted} strokeWidth={2} />
+      <View style={{ alignSelf: 'center' }}>
+        <ChevronRight size={18} color={color.icon.muted} strokeWidth={2} />
+      </View>
     </TouchableOpacity>
   );
 

@@ -321,6 +321,7 @@ export const StorageBreakdownRow = ({
   expandChevronAccessibilityLabel?: string;
 }) => {
   const a11y = `${label}, ${percentLabel}, ${valueLabel}`;
+  const expandable = Boolean(hasExpandableDetails && onExpandPress);
 
   return (
     <View
@@ -340,8 +341,9 @@ export const StorageBreakdownRow = ({
           accessibilityState={{ selected }}
           accessibilityLabel={a11y}
           onPress={onSelectPress}
-          className="min-w-0 flex-1 flex-row items-center py-3.5 pl-4"
+          className="flex-row items-center py-3.5 pl-4"
           style={{ minHeight: 52 }}
+          hitSlop={expandable ? { top: 8, bottom: 8, right: 4 } : undefined}
         >
           <View
             style={{
@@ -358,6 +360,15 @@ export const StorageBreakdownRow = ({
               <Check color={color.icon.onAccent} size={ROW_CHECK_SIZE} strokeWidth={2.8} />
             ) : null}
           </View>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={expandable ? { expanded: detailsExpanded } : { selected }}
+          accessibilityLabel={expandable ? (expandChevronAccessibilityLabel ?? a11y) : a11y}
+          onPress={expandable ? onExpandPress : onSelectPress}
+          className="min-w-0 flex-1 flex-row items-center py-3.5 pr-4"
+          style={{ minHeight: 52 }}
+        >
           <View
             className="min-w-0 flex-1 flex-shrink flex-row items-center pr-2"
             style={{ columnGap: 6 }}
@@ -396,31 +407,24 @@ export const StorageBreakdownRow = ({
               fontVariant: ['tabular-nums'],
               flexShrink: 0,
               textAlign: 'right',
-              paddingRight: hasExpandableDetails ? 4 : 16,
+              paddingRight: expandable ? 8 : 0,
             }}
             numberOfLines={1}
           >
             {valueLabel}
           </Text>
-        </Pressable>
-        {hasExpandableDetails && onExpandPress ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={expandChevronAccessibilityLabel ?? label}
-            accessibilityState={{ expanded: detailsExpanded }}
-            hitSlop={10}
-            onPress={onExpandPress}
-            className="justify-center py-3.5 pr-3 pl-1"
-            style={{ minHeight: 52 }}
-          >
+          {expandable ? (
             <ChevronDown
               size={20}
               color={color.icon.muted}
               strokeWidth={2}
-              style={{ transform: [{ rotate: detailsExpanded ? '180deg' : '0deg' }] }}
+              style={{
+                marginLeft: 2,
+                transform: [{ rotate: detailsExpanded ? '180deg' : '0deg' }],
+              }}
             />
-          </Pressable>
-        ) : null}
+          ) : null}
+        </Pressable>
       </View>
     </View>
   );

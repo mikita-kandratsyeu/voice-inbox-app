@@ -20,6 +20,7 @@ import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
+import { recordRepository } from '@/entities/record/model/repository';
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
 import { LOCAL_AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
 import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
@@ -36,6 +37,7 @@ import {
 } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
+import { IS_ANDROID } from '@/shared/lib/platform';
 import { formatFileSize, getWhisperModelPath } from '@/shared/lib/whisper';
 import {
   SCREEN_PADDING,
@@ -295,7 +297,8 @@ export const StorageDetailsScreen = () => {
         text: t('common.delete'),
         style: 'destructive',
         onPress: async () => {
-          const totalToDelete = records.length + folders.length;
+          const trashedRecords = await recordRepository.getTrashedList();
+          const totalToDelete = records.length + trashedRecords.length + folders.length;
           setIsDeletingAll(true);
           setDeleteAllProgress({ current: 0, total: totalToDelete });
           try {
@@ -303,6 +306,12 @@ export const StorageDetailsScreen = () => {
             for (let i = 0; i < records.length; i += 1) {
               const r = records[i];
               await purgeRecordPermanently(r.id);
+              deleted += 1;
+              setDeleteAllProgress({ current: deleted, total: totalToDelete });
+            }
+            for (let i = 0; i < trashedRecords.length; i += 1) {
+              const tr = trashedRecords[i];
+              await purgeRecordPermanently(tr.id);
               deleted += 1;
               setDeleteAllProgress({ current: deleted, total: totalToDelete });
             }
@@ -677,6 +686,15 @@ export const StorageDetailsScreen = () => {
                 </View>
                 <Pressable
                   accessibilityRole="button"
+                  accessibilityLabel={
+                    isClearing
+                      ? t('storage.loading')
+                      : `${t('storage.clearCache')}, ${
+                          hasClearableCache
+                            ? formatFileSize(stats.cacheKb * 1024)
+                            : `0 ${t('storage.mb')}`
+                        }`
+                  }
                   accessibilityState={{ disabled: !hasClearableCache || isClearing }}
                   onPress={hasClearableCache && !isClearing ? handleClearCache : undefined}
                   disabled={!hasClearableCache || isClearing}
@@ -689,20 +707,40 @@ export const StorageDetailsScreen = () => {
                     opacity: isClearing ? 0.55 : 1,
                   }}
                 >
-                  <Text
-                    className="text-[16px] font-semibold"
-                    style={{
-                      color: hasClearableCache ? color.icon.onAccent : color.text.muted,
-                    }}
-                  >
-                    {isClearing
-                      ? t('storage.loading')
-                      : t('storage.clearCacheCta', {
-                          size: hasClearableCache
-                            ? formatFileSize(stats.cacheKb * 1024)
-                            : `0 ${t('storage.mb')}`,
-                        })}
-                  </Text>
+                  {isClearing ? (
+                    <Text
+                      className="text-[16px] font-semibold"
+                      style={{
+                        color: hasClearableCache ? color.icon.onAccent : color.text.muted,
+                      }}
+                    >
+                      {t('storage.loading')}
+                    </Text>
+                  ) : (
+                    <Text
+                      className="text-center text-[16px] font-semibold leading-6"
+                      style={{
+                        color: hasClearableCache ? color.icon.onAccent : color.text.muted,
+                        ...(IS_ANDROID ? { includeFontPadding: false } : null),
+                      }}
+                    >
+                      {t('storage.clearCache')}
+                      <Text
+                        className="text-[14px] font-medium leading-6"
+                        style={{
+                          color: hasClearableCache ? color.icon.onAccent : color.text.muted,
+                          opacity: hasClearableCache ? 0.82 : 1,
+                          fontVariant: ['tabular-nums'],
+                          ...(IS_ANDROID ? { includeFontPadding: false } : null),
+                        }}
+                      >
+                        {' '}
+                        {hasClearableCache
+                          ? formatFileSize(stats.cacheKb * 1024)
+                          : `0 ${t('storage.mb')}`}
+                      </Text>
+                    </Text>
+                  )}
                 </Pressable>
               </>
             )}
