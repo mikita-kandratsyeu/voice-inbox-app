@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Bot, BrainCircuit, Clock, FileText, Mic, Sparkles, Trash2 } from 'lucide-react-native';
+import { BrainCircuit, Sparkles, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -709,36 +709,8 @@ export const StorageDetailsScreen = () => {
               </>
             )}
           </View>
-          <SettingsSection title={t('storage.statistics')}>
-            <SettingsRow
-              label={t('storage.totalRecords')}
-              value={String(records.length)}
-              leftIcon={<Mic size={20} color={color.accent.primary} strokeWidth={1.8} />}
-              showChevron={false}
-              isFirst
-            />
-            <SettingsRow
-              label={t('storage.withAudio')}
-              value={String(audioCount)}
-              leftIcon={<Clock size={20} color={color.accent.success} strokeWidth={1.8} />}
-              showChevron={false}
-            />
-            <SettingsRow
-              label={t('storage.transcripts')}
-              value={String(withTranscript)}
-              leftIcon={<FileText size={20} color={color.accent.transcript} strokeWidth={1.8} />}
-              showChevron={false}
-            />
-            <SettingsRow
-              label={t('storage.aiProcessed')}
-              value={String(processedByAI)}
-              leftIcon={<Bot size={20} color={color.accent.aiData} strokeWidth={1.8} />}
-              showChevron={false}
-              isLast
-            />
-          </SettingsSection>
 
-          <SettingsSection title={t('storage.management')}>
+          <SettingsSection title={t('storage.dangerZone')}>
             <SettingsRow
               label={t('storage.deleteAllData')}
               leftIcon={<Trash2 size={20} color={color.accent.delete} strokeWidth={1.8} />}
