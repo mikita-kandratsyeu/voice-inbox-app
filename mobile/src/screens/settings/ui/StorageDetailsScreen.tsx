@@ -14,6 +14,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native';
+import Animated, { Easing, FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -52,6 +53,7 @@ import {
 
 import {
   ROW_BULLET_SIZE,
+  ROW_TRAIL_SLOT_W,
   StorageBreakdownRow,
   type StorageRingSegmentId,
   StorageUsageRing,
@@ -72,6 +74,11 @@ const EMPTY_TRASH_STORAGE = {
   aiPayloadBytes: 0,
   recordsWithAudio: 0,
 };
+
+/** Hide breakdown ring/list rows below this size (noise vs empty). */
+const STORAGE_BREAKDOWN_MIN_BYTES = 1024;
+
+const STORAGE_BREAKDOWN_ENTER = FadeIn.duration(220).easing(Easing.out(Easing.cubic));
 
 type DownloadedModelVariant = {
   id: WhisperModelId;
@@ -234,6 +241,17 @@ export const StorageDetailsScreen = () => {
       ],
     };
   }, [stats, modelsBytesTotal, color]);
+
+  const ringSegmentsVisible = useMemo(
+    () => ringSegments.filter((s) => s.bytes >= STORAGE_BREAKDOWN_MIN_BYTES),
+    [ringSegments],
+  );
+
+  useEffect(() => {
+    const visible = new Set(ringSegmentsVisible.map((s) => s.id));
+    setSelectedSegmentIds((prev) => prev.filter((id) => visible.has(id)));
+    setExpandedBreakdownId((cur) => (cur && visible.has(cur) ? cur : null));
+  }, [ringSegmentsVisible]);
 
   const segmentLabels = useMemo(
     (): Record<StorageRingSegmentId, string> => ({
@@ -507,7 +525,7 @@ export const StorageDetailsScreen = () => {
             ) : (
               <>
                 <StorageUsageRing
-                  segments={ringSegments}
+                  segments={ringSegmentsVisible}
                   totalBytes={totalBytesForRing}
                   selectedIds={selectedSegmentIds}
                   onClearSelection={clearRingSelection}
@@ -516,282 +534,285 @@ export const StorageDetailsScreen = () => {
                   tapHint={t('storage.tapRingHint')}
                   color={color}
                 />
-                <View
-                  className="mt-4 overflow-hidden rounded-2xl border"
-                  style={{
-                    width: '100%',
-                    borderColor: color.border.default,
-                    backgroundColor: color.background.secondary,
-                  }}
-                >
-                  {ringSegments.map((seg, index) => {
-                    const pct =
-                      totalBytesForRing > 0
-                        ? ((seg.bytes / totalBytesForRing) * 100).toFixed(1)
-                        : '0.0';
-                    const hasExp = segmentHasExpandableDetails(seg.id);
-                    const expanded = expandedBreakdownId === seg.id;
-                    const isLastSeg = index === ringSegments.length - 1;
-                    const mainShowBottomBorder = (hasExp && expanded) || !isLastSeg;
+                {ringSegmentsVisible.length > 0 ? (
+                  <View
+                    className="mt-4 overflow-hidden rounded-2xl border"
+                    style={{
+                      width: '100%',
+                      borderColor: color.border.default,
+                      backgroundColor: color.background.secondary,
+                    }}
+                  >
+                    {ringSegmentsVisible.map((seg, index) => {
+                      const pct =
+                        totalBytesForRing > 0
+                          ? ((seg.bytes / totalBytesForRing) * 100).toFixed(1)
+                          : '0.0';
+                      const hasExp = segmentHasExpandableDetails(seg.id);
+                      const expanded = expandedBreakdownId === seg.id;
+                      const isLastSeg = index === ringSegmentsVisible.length - 1;
+                      const mainShowBottomBorder = (hasExp && expanded) || !isLastSeg;
 
-                    return (
-                      <React.Fragment key={seg.id}>
-                        <StorageBreakdownRow
-                          segment={seg}
-                          label={segmentLabels[seg.id]}
-                          valueLabel={formatFileSize(seg.bytes)}
-                          percentLabel={`${pct}%`}
-                          selected={selectedSegmentIds.includes(seg.id)}
-                          onSelectPress={() => toggleSegment(seg.id)}
-                          color={color}
-                          showBottomBorder={mainShowBottomBorder}
-                          hasExpandableDetails={hasExp}
-                          detailsExpanded={expanded}
-                          onExpandPress={hasExp ? () => toggleBreakdownExpand(seg.id) : undefined}
-                          expandChevronAccessibilityLabel={t('storage.breakdownA11y', {
-                            category: segmentLabels[seg.id],
-                          })}
-                        />
-                        {expanded && hasExp ? (
-                          <View
-                            style={{
-                              paddingLeft: 16 + ROW_BULLET_SIZE + 12,
-                              paddingRight: 16,
-                              paddingTop: 10,
-                              paddingBottom: 12,
-                              backgroundColor: color.background.secondary,
-                              borderBottomWidth: !isLastSeg ? 1 : 0,
-                              borderBottomColor: color.border.default,
-                            }}
-                          >
-                            {seg.id === 'audio' ? (
-                              <>
-                                <Text
-                                  style={{
-                                    color: color.text.secondary,
-                                    fontSize: 15,
-                                    lineHeight: 20,
-                                  }}
-                                >
-                                  {t('storage.audioFilesValue', {
-                                    count: totalRecordingsWithAudio,
-                                    size: stats.audioMb.toFixed(1),
+                      return (
+                        <React.Fragment key={seg.id}>
+                          <StorageBreakdownRow
+                            segment={seg}
+                            label={segmentLabels[seg.id]}
+                            valueLabel={formatFileSize(seg.bytes)}
+                            percentLabel={`${pct}%`}
+                            selected={selectedSegmentIds.includes(seg.id)}
+                            onSelectPress={() => toggleSegment(seg.id)}
+                            color={color}
+                            showBottomBorder={mainShowBottomBorder}
+                            hasExpandableDetails={hasExp}
+                            detailsExpanded={expanded}
+                            onExpandPress={hasExp ? () => toggleBreakdownExpand(seg.id) : undefined}
+                            expandChevronAccessibilityLabel={t('storage.breakdownA11y', {
+                              category: segmentLabels[seg.id],
+                            })}
+                          />
+                          {expanded && hasExp ? (
+                            <Animated.View
+                              entering={STORAGE_BREAKDOWN_ENTER}
+                              style={{
+                                paddingLeft: 16 + ROW_BULLET_SIZE + 12,
+                                paddingRight: 8 + ROW_TRAIL_SLOT_W,
+                                paddingTop: 10,
+                                paddingBottom: 12,
+                                backgroundColor: color.background.secondary,
+                                borderBottomWidth: !isLastSeg ? 1 : 0,
+                                borderBottomColor: color.border.default,
+                              }}
+                            >
+                              {seg.id === 'audio' ? (
+                                <>
+                                  <Text
+                                    style={{
+                                      color: color.text.secondary,
+                                      fontSize: 15,
+                                      lineHeight: 20,
+                                    }}
+                                  >
+                                    {t('storage.audioFilesValue', {
+                                      count: totalRecordingsWithAudio,
+                                      size: stats.audioMb.toFixed(1),
+                                    })}
+                                  </Text>
+                                  {trashStorage.audioBytes > 0 ? (
+                                    <Text
+                                      style={{
+                                        marginTop: 8,
+                                        color: color.text.muted,
+                                        fontSize: 14,
+                                        lineHeight: 19,
+                                      }}
+                                    >
+                                      {t('storage.trashAudioDetail', {
+                                        size: formatFileSize(trashStorage.audioBytes),
+                                        count: trashStorage.recordsWithAudio,
+                                      })}
+                                    </Text>
+                                  ) : null}
+                                </>
+                              ) : null}
+                              {seg.id === 'transcript' ? (
+                                <View>
+                                  <Text
+                                    style={{
+                                      color: color.text.secondary,
+                                      fontSize: 15,
+                                      lineHeight: 20,
+                                    }}
+                                  >
+                                    {formatFileSize(stats.transcriptKb * 1024)}
+                                  </Text>
+                                  {withTranscript > 0 ? (
+                                    <Text
+                                      style={{
+                                        marginTop: 6,
+                                        color: color.text.muted,
+                                        fontSize: 14,
+                                        lineHeight: 19,
+                                      }}
+                                    >
+                                      {t('storage.transcripts')}: {withTranscript}
+                                    </Text>
+                                  ) : null}
+                                  {trashStorage.recordCount > 0 ? (
+                                    <Text
+                                      style={{
+                                        marginTop: 8,
+                                        color: color.text.muted,
+                                        fontSize: 14,
+                                        lineHeight: 19,
+                                      }}
+                                    >
+                                      {t('storage.trashTranscriptDetail', {
+                                        count: trashStorage.recordCount,
+                                        size: formatFileSize(trashStorage.transcriptPayloadBytes),
+                                      })}
+                                    </Text>
+                                  ) : null}
+                                </View>
+                              ) : null}
+                              {seg.id === 'ai' ? (
+                                <View>
+                                  <Text
+                                    style={{
+                                      color: color.text.secondary,
+                                      fontSize: 15,
+                                      lineHeight: 20,
+                                    }}
+                                  >
+                                    {formatFileSize(stats.aiDataKb * 1024)}
+                                  </Text>
+                                  {processedByAI > 0 ? (
+                                    <Text
+                                      style={{
+                                        marginTop: 6,
+                                        color: color.text.muted,
+                                        fontSize: 14,
+                                        lineHeight: 19,
+                                      }}
+                                    >
+                                      {t('storage.aiProcessed')}: {processedByAI}
+                                    </Text>
+                                  ) : null}
+                                  {trashStorage.aiPayloadBytes > 0 ? (
+                                    <Text
+                                      style={{
+                                        marginTop: 8,
+                                        color: color.text.muted,
+                                        fontSize: 14,
+                                        lineHeight: 19,
+                                      }}
+                                    >
+                                      {t('storage.trashAiSliceDetail', {
+                                        size: formatFileSize(trashStorage.aiPayloadBytes),
+                                      })}
+                                    </Text>
+                                  ) : null}
+                                </View>
+                              ) : null}
+                              {seg.id === 'models' ? (
+                                <View>
+                                  {downloadedVariants.map((model, idx) => {
+                                    const isFirst = idx === 0;
+                                    return (
+                                      <View
+                                        key={`${model.id}:${model.format}`}
+                                        style={{
+                                          flexDirection: 'row',
+                                          alignItems: 'center',
+                                          paddingTop: isFirst ? 0 : 10,
+                                          marginTop: isFirst ? 0 : 10,
+                                          borderTopWidth: isFirst ? 0 : 1,
+                                          borderTopColor: color.border.default,
+                                        }}
+                                      >
+                                        <View
+                                          style={{
+                                            width: 18,
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginRight: 10,
+                                          }}
+                                        >
+                                          <BrainCircuit
+                                            size={18}
+                                            color={color.accent.models}
+                                            strokeWidth={1.8}
+                                          />
+                                        </View>
+                                        <Text
+                                          style={{
+                                            flex: 1,
+                                            minWidth: 0,
+                                            fontSize: 15,
+                                            lineHeight: 20,
+                                            color: color.text.primary,
+                                          }}
+                                          numberOfLines={2}
+                                        >
+                                          {getWhisperModelDisplayName(model.id, model.format)}
+                                        </Text>
+                                        <Text
+                                          style={{
+                                            marginLeft: 8,
+                                            fontSize: 15,
+                                            lineHeight: 20,
+                                            color: color.text.muted,
+                                            fontVariant: ['tabular-nums'],
+                                          }}
+                                        >
+                                          {formatFileSize(model.bytes)}
+                                        </Text>
+                                      </View>
+                                    );
                                   })}
-                                </Text>
-                                {trashStorage.audioBytes > 0 ? (
-                                  <Text
-                                    style={{
-                                      marginTop: 8,
-                                      color: color.text.muted,
-                                      fontSize: 14,
-                                      lineHeight: 19,
-                                    }}
-                                  >
-                                    {t('storage.trashAudioDetail', {
-                                      size: formatFileSize(trashStorage.audioBytes),
-                                      count: trashStorage.recordsWithAudio,
-                                    })}
-                                  </Text>
-                                ) : null}
-                              </>
-                            ) : null}
-                            {seg.id === 'transcript' ? (
-                              <View>
-                                <Text
-                                  style={{
-                                    color: color.text.secondary,
-                                    fontSize: 15,
-                                    lineHeight: 20,
-                                  }}
-                                >
-                                  {formatFileSize(stats.transcriptKb * 1024)}
-                                </Text>
-                                {withTranscript > 0 ? (
-                                  <Text
-                                    style={{
-                                      marginTop: 6,
-                                      color: color.text.muted,
-                                      fontSize: 14,
-                                      lineHeight: 19,
-                                    }}
-                                  >
-                                    {t('storage.transcripts')}: {withTranscript}
-                                  </Text>
-                                ) : null}
-                                {trashStorage.recordCount > 0 ? (
-                                  <Text
-                                    style={{
-                                      marginTop: 8,
-                                      color: color.text.muted,
-                                      fontSize: 14,
-                                      lineHeight: 19,
-                                    }}
-                                  >
-                                    {t('storage.trashTranscriptDetail', {
-                                      count: trashStorage.recordCount,
-                                      size: formatFileSize(trashStorage.transcriptPayloadBytes),
-                                    })}
-                                  </Text>
-                                ) : null}
-                              </View>
-                            ) : null}
-                            {seg.id === 'ai' ? (
-                              <View>
-                                <Text
-                                  style={{
-                                    color: color.text.secondary,
-                                    fontSize: 15,
-                                    lineHeight: 20,
-                                  }}
-                                >
-                                  {formatFileSize(stats.aiDataKb * 1024)}
-                                </Text>
-                                {processedByAI > 0 ? (
-                                  <Text
-                                    style={{
-                                      marginTop: 6,
-                                      color: color.text.muted,
-                                      fontSize: 14,
-                                      lineHeight: 19,
-                                    }}
-                                  >
-                                    {t('storage.aiProcessed')}: {processedByAI}
-                                  </Text>
-                                ) : null}
-                                {trashStorage.aiPayloadBytes > 0 ? (
-                                  <Text
-                                    style={{
-                                      marginTop: 8,
-                                      color: color.text.muted,
-                                      fontSize: 14,
-                                      lineHeight: 19,
-                                    }}
-                                  >
-                                    {t('storage.trashAiSliceDetail', {
-                                      size: formatFileSize(trashStorage.aiPayloadBytes),
-                                    })}
-                                  </Text>
-                                ) : null}
-                              </View>
-                            ) : null}
-                            {seg.id === 'models' ? (
-                              <View>
-                                {downloadedVariants.map((model, idx) => {
-                                  const isFirst = idx === 0;
-                                  return (
-                                    <View
-                                      key={`${model.id}:${model.format}`}
-                                      style={{
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        paddingTop: isFirst ? 0 : 10,
-                                        marginTop: isFirst ? 0 : 10,
-                                        borderTopWidth: isFirst ? 0 : 1,
-                                        borderTopColor: color.border.default,
-                                      }}
-                                    >
+                                  {downloadedLocalLlm.map((model, idx) => {
+                                    const isFirst = idx === 0 && downloadedVariants.length === 0;
+                                    return (
                                       <View
+                                        key={model.id}
                                         style={{
-                                          width: 18,
+                                          flexDirection: 'row',
                                           alignItems: 'center',
-                                          justifyContent: 'center',
-                                          marginRight: 10,
+                                          paddingTop: isFirst ? 0 : 10,
+                                          marginTop: isFirst ? 0 : 10,
+                                          borderTopWidth: isFirst ? 0 : 1,
+                                          borderTopColor: color.border.default,
                                         }}
                                       >
-                                        <BrainCircuit
-                                          size={18}
-                                          color={color.accent.models}
-                                          strokeWidth={1.8}
-                                        />
+                                        <View
+                                          style={{
+                                            width: 18,
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            marginRight: 10,
+                                          }}
+                                        >
+                                          <Sparkles
+                                            size={18}
+                                            color={color.accent.models}
+                                            strokeWidth={1.8}
+                                          />
+                                        </View>
+                                        <Text
+                                          style={{
+                                            flex: 1,
+                                            minWidth: 0,
+                                            fontSize: 15,
+                                            lineHeight: 20,
+                                            color: color.text.primary,
+                                          }}
+                                          numberOfLines={2}
+                                        >
+                                          {model.name}
+                                        </Text>
+                                        <Text
+                                          style={{
+                                            marginLeft: 8,
+                                            fontSize: 15,
+                                            lineHeight: 20,
+                                            color: color.text.muted,
+                                            fontVariant: ['tabular-nums'],
+                                          }}
+                                        >
+                                          {formatFileSize(model.bytes)}
+                                        </Text>
                                       </View>
-                                      <Text
-                                        style={{
-                                          flex: 1,
-                                          minWidth: 0,
-                                          fontSize: 15,
-                                          lineHeight: 20,
-                                          color: color.text.primary,
-                                        }}
-                                        numberOfLines={2}
-                                      >
-                                        {getWhisperModelDisplayName(model.id, model.format)}
-                                      </Text>
-                                      <Text
-                                        style={{
-                                          marginLeft: 8,
-                                          fontSize: 15,
-                                          lineHeight: 20,
-                                          color: color.text.muted,
-                                          fontVariant: ['tabular-nums'],
-                                        }}
-                                      >
-                                        {formatFileSize(model.bytes)}
-                                      </Text>
-                                    </View>
-                                  );
-                                })}
-                                {downloadedLocalLlm.map((model, idx) => {
-                                  const isFirst = idx === 0 && downloadedVariants.length === 0;
-                                  return (
-                                    <View
-                                      key={model.id}
-                                      style={{
-                                        flexDirection: 'row',
-                                        alignItems: 'center',
-                                        paddingTop: isFirst ? 0 : 10,
-                                        marginTop: isFirst ? 0 : 10,
-                                        borderTopWidth: isFirst ? 0 : 1,
-                                        borderTopColor: color.border.default,
-                                      }}
-                                    >
-                                      <View
-                                        style={{
-                                          width: 18,
-                                          alignItems: 'center',
-                                          justifyContent: 'center',
-                                          marginRight: 10,
-                                        }}
-                                      >
-                                        <Sparkles
-                                          size={18}
-                                          color={color.accent.models}
-                                          strokeWidth={1.8}
-                                        />
-                                      </View>
-                                      <Text
-                                        style={{
-                                          flex: 1,
-                                          minWidth: 0,
-                                          fontSize: 15,
-                                          lineHeight: 20,
-                                          color: color.text.primary,
-                                        }}
-                                        numberOfLines={2}
-                                      >
-                                        {model.name}
-                                      </Text>
-                                      <Text
-                                        style={{
-                                          marginLeft: 8,
-                                          fontSize: 15,
-                                          lineHeight: 20,
-                                          color: color.text.muted,
-                                          fontVariant: ['tabular-nums'],
-                                        }}
-                                      >
-                                        {formatFileSize(model.bytes)}
-                                      </Text>
-                                    </View>
-                                  );
-                                })}
-                              </View>
-                            ) : null}
-                          </View>
-                        ) : null}
-                      </React.Fragment>
-                    );
-                  })}
-                </View>
+                                    );
+                                  })}
+                                </View>
+                              ) : null}
+                            </Animated.View>
+                          ) : null}
+                        </React.Fragment>
+                      );
+                    })}
+                  </View>
+                ) : null}
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={

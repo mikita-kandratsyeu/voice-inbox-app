@@ -6,6 +6,7 @@ import Animated, {
   FadeIn,
   type SharedValue,
   useAnimatedProps,
+  useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
@@ -43,6 +44,10 @@ type Props = {
 const R = 94;
 const STROKE = 26;
 const CIRC = 2 * Math.PI * R;
+/** Visible gap along the ring between segments (same units as `CIRC`). */
+const SEGMENT_GAP = 5;
+/** Do not spend more than this fraction of the ring on gaps (many tiny slices). */
+const MAX_GAP_FRACTION = 0.09;
 const SIZE = 268;
 const CX = SIZE / 2;
 const CY = SIZE / 2;
@@ -50,6 +55,67 @@ const CY = SIZE / 2;
 const RING_OUTER_DIAM = 2 * R + STROKE;
 /** Inner radius of the donut hole (stroke inner edge). */
 const RING_INNER_R = R - STROKE / 2;
+
+function RingCenterPercentChips({
+  segments,
+  totalBytes,
+  color,
+}: {
+  segments: StorageRingSegment[];
+  totalBytes: number;
+  color: Colors;
+}) {
+  const items = useMemo(() => {
+    const positive = segments.filter((s) => s.bytes > 0);
+    const denom = totalBytes > 0 ? totalBytes : 1;
+    return positive.map((s) => ({
+      id: s.id,
+      pct: ((s.bytes / denom) * 100).toFixed(1),
+      dot: s.color,
+    }));
+  }, [segments, totalBytes]);
+
+  if (items.length === 0) return null;
+
+  return (
+    <View
+      style={{
+        marginTop: 5,
+        maxWidth: RING_INNER_R * 2.05,
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        alignItems: 'center',
+        rowGap: 5,
+        columnGap: 10,
+      }}
+    >
+      {items.map((it) => (
+        <View key={it.id} style={{ flexDirection: 'row', alignItems: 'center', columnGap: 5 }}>
+          <View
+            style={{
+              width: 6,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: it.dot,
+            }}
+          />
+          <Text
+            style={{
+              fontSize: 11,
+              lineHeight: 14,
+              color: color.text.muted,
+              fontWeight: '500',
+              fontVariant: ['tabular-nums'],
+            }}
+          >
+            {it.pct}%
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
 
 export const StorageUsageRing = ({
   segments,
@@ -69,7 +135,7 @@ export const StorageUsageRing = ({
     progress.value = withTiming(1, { duration: 1100, easing: Easing.out(Easing.cubic) });
   }, [progress, segments, totalBytes]);
 
-  const { arcs, totalPositive } = useMemo(() => {
+  const { arcs, cumulativeBefore, totalPositive } = useMemo(() => {
     const raw = segments.map((s) => ({ id: s.id, bytes: Math.max(0, s.bytes), color: s.color }));
     const sumBytes = raw.reduce((a, s) => a + s.bytes, 0);
     const denom = sumBytes > 0 ? sumBytes : 1;
@@ -79,7 +145,7 @@ export const StorageUsageRing = ({
       color: s.color,
       len: (s.bytes / denom) * CIRC,
     }));
-    const minVisual = 0.018;
+    const minVisual = 0.022;
     const positive = fracsList.filter((x) => x.f > 0);
     const adjusted = fracsList.map((row) => {
       if (row.f <= 0) return { ...row, drawF: 0, len: 0 };
@@ -95,18 +161,38 @@ export const StorageUsageRing = ({
       color: s.color,
       len: (s.drawF / norm) * CIRC,
     }));
-    return { arcs: arcsList, totalPositive: sumBytes > 0 };
-  }, [segments]);
 
-  const cumulativeBefore = useMemo(() => {
-    const out: number[] = [];
-    let acc = 0;
-    for (let i = 0; i < arcs.length; i += 1) {
-      out.push(acc);
-      acc += arcs[i].len;
+    const nVisible = arcsList.filter((a) => a.len > 0).length;
+    if (nVisible === 0) {
+      return {
+        arcs: arcsList,
+        cumulativeBefore: arcsList.map(() => 0),
+        totalPositive: sumBytes > 0,
+      };
     }
-    return out;
-  }, [arcs]);
+
+    const rawGapsTotal = nVisible > 1 ? nVisible * SEGMENT_GAP : 0;
+    const gapsTotal = Math.min(rawGapsTotal, CIRC * MAX_GAP_FRACTION);
+    const gapUnit = nVisible > 1 ? gapsTotal / nVisible : 0;
+    const available = CIRC - gapsTotal;
+    const scale = available / CIRC;
+
+    const arcsScaled = arcsList.map((a) => ({
+      ...a,
+      len: a.len > 0 ? a.len * scale : 0,
+    }));
+
+    const cumulative: number[] = [];
+    let acc = 0;
+    for (let i = 0; i < arcsScaled.length; i += 1) {
+      cumulative.push(acc);
+      if (arcsScaled[i].len > 0) {
+        acc += arcsScaled[i].len + gapUnit;
+      }
+    }
+
+    return { arcs: arcsScaled, cumulativeBefore: cumulative, totalPositive: sumBytes > 0 };
+  }, [segments]);
 
   const selectedCount = selectedIds.length;
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
@@ -224,6 +310,9 @@ export const StorageUsageRing = ({
             >
               {!totalPositive && selectedCount === 0 ? '—' : centerValue}
             </Text>
+            {selectedCount === 0 && totalPositive ? (
+              <RingCenterPercentChips segments={segments} totalBytes={totalBytes} color={color} />
+            ) : null}
           </View>
         </View>
       </Pressable>
@@ -281,9 +370,44 @@ function RingArc({
       stroke={strokeColor}
       strokeWidth={STROKE}
       fill="none"
-      strokeLinecap="round"
+      strokeLinecap="butt"
       animatedProps={animatedProps}
     />
+  );
+}
+
+const CHEVRON_ROT_MS = 200;
+
+/** Trailing column on breakdown rows (chevron or empty slot). Match expanded panel `paddingRight`. */
+export const ROW_TRAIL_SLOT_W = 32;
+
+function ExpandChevron({ expanded, iconColor }: { expanded: boolean; iconColor: string }) {
+  const rotationDeg = useSharedValue(expanded ? 180 : 0);
+
+  useEffect(() => {
+    rotationDeg.value = withTiming(expanded ? 180 : 0, {
+      duration: CHEVRON_ROT_MS,
+      easing: Easing.out(Easing.cubic),
+    });
+  }, [expanded, rotationDeg]);
+
+  const spinStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${rotationDeg.value}deg` }],
+  }));
+
+  return (
+    <View
+      style={{
+        width: ROW_TRAIL_SLOT_W,
+        height: ROW_TRAIL_SLOT_W,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      <Animated.View style={spinStyle}>
+        <ChevronDown size={20} color={iconColor} strokeWidth={2} />
+      </Animated.View>
+    </View>
   );
 }
 
@@ -297,6 +421,7 @@ export const StorageBreakdownRow = ({
   segment,
   label,
   valueLabel,
+  /** Shown only in accessibility (percents live in the ring center). */
   percentLabel,
   selected,
   onSelectPress,
@@ -366,16 +491,12 @@ export const StorageBreakdownRow = ({
           accessibilityState={expandable ? { expanded: detailsExpanded } : { selected }}
           accessibilityLabel={expandable ? (expandChevronAccessibilityLabel ?? a11y) : a11y}
           onPress={expandable ? onExpandPress : onSelectPress}
-          className="min-w-0 flex-1 flex-row items-center py-3.5 pr-4"
+          className="min-w-0 flex-1 flex-row items-center py-3.5 pr-2"
           style={{ minHeight: 52 }}
         >
-          <View
-            className="min-w-0 flex-1 flex-shrink flex-row items-center pr-2"
-            style={{ columnGap: 6 }}
-          >
+          <View className="min-w-0 flex-1 flex-shrink pr-2" style={{ minWidth: 0 }}>
             <Text
               style={{
-                flexShrink: 1,
                 fontSize: 16,
                 lineHeight: 21,
                 color: color.text.primary,
@@ -386,44 +507,41 @@ export const StorageBreakdownRow = ({
             >
               {label}
             </Text>
+          </View>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              flexShrink: 0,
+            }}
+          >
             <Text
               style={{
-                flexShrink: 0,
                 fontSize: 16,
                 lineHeight: 21,
                 color: color.text.muted,
                 fontVariant: ['tabular-nums'],
+                flexShrink: 0,
+                textAlign: 'right',
               }}
               numberOfLines={1}
             >
-              {percentLabel}
+              {valueLabel}
             </Text>
-          </View>
-          <Text
-            style={{
-              fontSize: 16,
-              lineHeight: 21,
-              color: color.text.muted,
-              fontVariant: ['tabular-nums'],
-              flexShrink: 0,
-              textAlign: 'right',
-              paddingRight: expandable ? 8 : 0,
-            }}
-            numberOfLines={1}
-          >
-            {valueLabel}
-          </Text>
-          {expandable ? (
-            <ChevronDown
-              size={20}
-              color={color.icon.muted}
-              strokeWidth={2}
+            <View
               style={{
-                marginLeft: 2,
-                transform: [{ rotate: detailsExpanded ? '180deg' : '0deg' }],
+                width: ROW_TRAIL_SLOT_W,
+                minWidth: ROW_TRAIL_SLOT_W,
+                flexShrink: 0,
+                alignItems: 'center',
+                justifyContent: 'center',
               }}
-            />
-          ) : null}
+            >
+              {expandable ? (
+                <ExpandChevron expanded={detailsExpanded} iconColor={color.icon.muted} />
+              ) : null}
+            </View>
+          </View>
         </Pressable>
       </View>
     </View>
