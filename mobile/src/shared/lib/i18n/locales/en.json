@@ -796,7 +796,7 @@
     "audioFilesValue": "{{count}} files · {{size}} MB",
     "mb": "MB",
     "gb": "GB",
-    "tapRingHint": "Tap rows or the ring to select categories. Tap the center to clear the selection.",
+    "tapRingHint": "Tap a row to filter by category. Tap the ring to clear the filter.",
     "totalUsed": "Total used",
     "selectedSegmentsTitle": "Selected: {{count}}",
     "clearCacheCta": "Clear cache · {{size}}",

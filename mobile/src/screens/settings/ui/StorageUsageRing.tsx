@@ -1,6 +1,6 @@
 import { Check, ChevronDown } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { LayoutChangeEvent, Pressable, Text, View } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { Pressable, Text, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -28,8 +28,7 @@ type Props = {
   segments: StorageRingSegment[];
   totalBytes: number;
   selectedIds: StorageRingSegmentId[];
-  onToggleSegment: (id: StorageRingSegmentId) => void;
-  /** Tap donut hole / outside ring */
+  /** Tap the ring (anywhere on the chart) clears row selection */
   onClearSelection: () => void;
   /** Center title (e.g. total used or selection summary) */
   centerTitle: string;
@@ -52,27 +51,10 @@ const RING_OUTER_DIAM = 2 * R + STROKE;
 /** Inner radius of the donut hole (stroke inner edge). */
 const RING_INNER_R = R - STROKE / 2;
 
-const INNER_HIT = RING_INNER_R - 6;
-const OUTER_HIT = R + STROKE / 2 + 10;
-
-function angleToSegmentId(
-  angle01: number,
-  fracs: { id: StorageRingSegmentId; f: number }[],
-): StorageRingSegmentId | null {
-  let acc = 0;
-  for (const { id, f } of fracs) {
-    if (f <= 0) continue;
-    acc += f;
-    if (angle01 < acc) return id;
-  }
-  return fracs.filter((x) => x.f > 0).at(-1)?.id ?? null;
-}
-
 export const StorageUsageRing = ({
   segments,
   totalBytes,
   selectedIds,
-  onToggleSegment,
   onClearSelection,
   centerTitle,
   centerValue,
@@ -80,7 +62,6 @@ export const StorageUsageRing = ({
   color,
   isLoading,
 }: Props) => {
-  const layout = React.useRef({ width: SIZE, height: SIZE });
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -88,7 +69,7 @@ export const StorageUsageRing = ({
     progress.value = withTiming(1, { duration: 1100, easing: Easing.out(Easing.cubic) });
   }, [progress, segments, totalBytes]);
 
-  const { fracs, arcs, totalPositive } = useMemo(() => {
+  const { arcs, totalPositive } = useMemo(() => {
     const raw = segments.map((s) => ({ id: s.id, bytes: Math.max(0, s.bytes), color: s.color }));
     const sumBytes = raw.reduce((a, s) => a + s.bytes, 0);
     const denom = sumBytes > 0 ? sumBytes : 1;
@@ -114,8 +95,7 @@ export const StorageUsageRing = ({
       color: s.color,
       len: (s.drawF / norm) * CIRC,
     }));
-    const fracsForHit = raw.map((s) => ({ id: s.id, f: s.bytes / denom }));
-    return { fracs: fracsForHit, arcs: arcsList, totalPositive: sumBytes > 0 };
+    return { arcs: arcsList, totalPositive: sumBytes > 0 };
   }, [segments]);
 
   const cumulativeBefore = useMemo(() => {
@@ -127,29 +107,6 @@ export const StorageUsageRing = ({
     }
     return out;
   }, [arcs]);
-
-  const handleRingPress = useCallback(
-    (x: number, y: number) => {
-      const { width, height } = layout.current;
-      const cx = width / 2;
-      const cy = height / 2;
-      const dx = x - cx;
-      const dy = y - cy;
-      const dist = Math.hypot(dx, dy);
-      if (dist < INNER_HIT || dist > OUTER_HIT) {
-        onClearSelection();
-        return;
-      }
-      let theta = Math.atan2(dy, dx) + Math.PI / 2;
-      if (theta < 0) theta += Math.PI * 2;
-      if (theta > Math.PI * 2) theta -= Math.PI * 2;
-      const angle01 = theta / (Math.PI * 2);
-      const id = angleToSegmentId(angle01, fracs);
-      if (id == null) return;
-      onToggleSegment(id);
-    },
-    [fracs, onClearSelection, onToggleSegment],
-  );
 
   const selectedCount = selectedIds.length;
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
@@ -191,18 +148,9 @@ export const StorageUsageRing = ({
   return (
     <Animated.View entering={FadeIn.duration(320)} style={{ width: '100%', alignItems: 'center' }}>
       <Pressable
-        accessibilityRole="imagebutton"
+        accessibilityRole="button"
         accessibilityLabel={tapHint}
-        onPress={(e) => {
-          const { locationX, locationY } = e.nativeEvent;
-          handleRingPress(locationX, locationY);
-        }}
-        onLayout={(e: LayoutChangeEvent) => {
-          layout.current = {
-            width: e.nativeEvent.layout.width,
-            height: e.nativeEvent.layout.height,
-          };
-        }}
+        onPress={onClearSelection}
         style={{ width: '100%', alignItems: 'center' }}
       >
         <View style={{ width: SIZE, height: SIZE, alignItems: 'center', justifyContent: 'center' }}>

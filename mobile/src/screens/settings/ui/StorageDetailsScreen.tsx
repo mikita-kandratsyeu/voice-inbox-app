@@ -365,7 +365,6 @@ export const StorageDetailsScreen = () => {
                   segments={[]}
                   totalBytes={0}
                   selectedIds={[]}
-                  onToggleSegment={() => {}}
                   onClearSelection={() => {}}
                   centerTitle=""
                   centerValue=""
@@ -440,7 +439,6 @@ export const StorageDetailsScreen = () => {
                   segments={ringSegments}
                   totalBytes={totalBytesForRing}
                   selectedIds={selectedSegmentIds}
-                  onToggleSegment={toggleSegment}
                   onClearSelection={clearRingSelection}
                   centerTitle={ringCenterTitle}
                   centerValue={ringCenterValue}
