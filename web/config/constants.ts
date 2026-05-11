@@ -12,6 +12,14 @@ export const BASE_URL_OR_FALLBACK = BASE_URL || 'http://localhost:3000';
 export const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL ?? '';
 export const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL ?? '#';
 export const GOOGLE_PLAY_URL = process.env.NEXT_PUBLIC_GOOGLE_PLAY_URL ?? '#';
+/** Shown on the landing page when `GOOGLE_PLAY_URL` is not a published store link. */
+export const ANDROID_WAITLIST_URL = process.env.NEXT_PUBLIC_ANDROID_WAITLIST_URL?.trim() ?? '';
+
+/** Public store or signup URLs from env (http/https only). */
+export function isPublicHttpUrl(value: string | undefined | null): boolean {
+  const t = (value ?? '').trim();
+  return t.startsWith('https://') || t.startsWith('http://');
+}
 
 /** For Smart App Banner (`apple-itunes-app`). Override via env if the store URL has no `/id…` segment. */
 export const APP_STORE_APP_ID: string | undefined =

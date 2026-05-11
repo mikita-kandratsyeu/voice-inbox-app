@@ -15,8 +15,6 @@
     "appStore": "App Store",
     "googlePlayLabel": "Android",
     "googlePlay": "Google Play",
-    "waitlist": "Лист ожидания",
-    "googlePlayWaitlistAria": "Вступить в лист ожидания Android",
     "downloadApp": "Скачать приложение"
   },
   "features": {
@@ -86,7 +84,10 @@
   "cta": {
     "title": "Начните сохранять идеи сегодня",
     "subtitle": "Попробуйте бесплатно - без аккаунта",
-    "primary": "Скачать приложение"
+    "primary": "Скачать приложение",
+    "androidWaitlistAria": "Лист ожидания Android",
+    "androidSoonLabel": "Скоро",
+    "androidWaitlistLink": "Лист ожидания для Android"
   },
   "faq": {
     "title": "Что важно знать перед установкой",
