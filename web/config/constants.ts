@@ -79,6 +79,19 @@ export const SYSTEM_MICRO_TASK_MODEL = 'google/gemini-2.5-flash-lite';
 
 export const AI_MODEL_GEMINI_2_5_FLASH_LITE = 'google/gemini-2.5-flash-lite';
 export const AI_MODEL_GEMINI_3_1_FLASH_LITE = 'google/gemini-3.1-flash-lite';
+/** OpenRouter preview id — accepted from clients but always mapped to {@link AI_MODEL_GEMINI_3_1_FLASH_LITE} server-side. */
+export const AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW = 'google/gemini-3.1-flash-lite-preview';
+
+/** Map legacy / preview OpenRouter ids to the model id we actually call. */
+export function normalizeIncomingAiModel(model: string): string {
+  const t = model.trim();
+
+  if (t === AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW) {
+    return AI_MODEL_GEMINI_3_1_FLASH_LITE;
+  }
+
+  return t;
+}
 export const AI_MODEL_DEEPSEEK_V4_FLASH = 'deepseek/deepseek-v4-flash';
 
 export const SYSTEM_TASK_MODEL_FALLBACK_CHAIN: readonly string[] = [
