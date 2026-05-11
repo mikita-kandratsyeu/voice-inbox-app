@@ -20,6 +20,7 @@ import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { TrashedRecordListItem } from '@/entities/record/model/repository';
 import { recordRepository } from '@/entities/record/model/repository';
 import { useRecordStore } from '@/entities/record/model/store';
+import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useColors } from '@/shared/config';
 import {
   formatFileSize,
@@ -127,6 +128,16 @@ export const TrashScreen = () => {
   );
 
   const maxW = contentMaxWidth ?? windowWidth;
+  const bannerMaxWidth = maxW;
+
+  const renderListFooter = useCallback(
+    () => (
+      <View style={{ marginTop: 8 }}>
+        <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
+      </View>
+    ),
+    [bannerMaxWidth, color],
+  );
 
   const renderListHeader = useCallback(
     () => (
@@ -177,6 +188,7 @@ export const TrashScreen = () => {
             flexGrow: 1,
           }}
           ListHeaderComponent={renderListHeader}
+          ListFooterComponent={renderListFooter}
           ListEmptyComponent={
             loading ? (
               <View className="items-center py-16">
