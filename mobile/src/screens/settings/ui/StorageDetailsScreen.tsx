@@ -32,6 +32,7 @@ import {
   clearCache,
   computeAiDataBytes,
   computeTranscriptPayloadBytes,
+  formatStorageSharePercent,
   getStorageStats,
   hapticSelection,
   type StorageStats,
@@ -544,10 +545,11 @@ export const StorageDetailsScreen = () => {
                     }}
                   >
                     {ringSegmentsVisible.map((seg, index) => {
-                      const pct =
-                        totalBytesForRing > 0
-                          ? ((seg.bytes / totalBytesForRing) * 100).toFixed(1)
-                          : '0.0';
+                      const pct = formatStorageSharePercent(
+                        seg.bytes,
+                        totalBytesForRing,
+                        t('storage.sharePercentAtMost1'),
+                      );
                       const hasExp = segmentHasExpandableDetails(seg.id);
                       const expanded = expandedBreakdownId === seg.id;
                       const isLastSeg = index === ringSegmentsVisible.length - 1;
@@ -559,7 +561,7 @@ export const StorageDetailsScreen = () => {
                             segment={seg}
                             label={segmentLabels[seg.id]}
                             valueLabel={formatFileSize(seg.bytes)}
-                            percentLabel={`${pct}%`}
+                            percentLabel={pct}
                             selected={selectedSegmentIds.includes(seg.id)}
                             onSelectPress={() => toggleSegment(seg.id)}
                             color={color}

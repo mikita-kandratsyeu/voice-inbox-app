@@ -819,6 +819,7 @@
     "mb": "MB",
     "gb": "GB",
     "tapRingHint": "Use the dots to focus one category on the ring. Tap a row for more detail when it's available. Tap the ring to reset the filter.",
+    "sharePercentAtMost1": "≤1%",
     "totalUsed": "Total used",
     "selectedSegmentsTitle": "Selected: {{count}}",
     "onDeviceModels": "On-device models",

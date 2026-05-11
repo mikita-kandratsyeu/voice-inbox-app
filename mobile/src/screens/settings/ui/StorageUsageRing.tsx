@@ -1,5 +1,6 @@
 import { Check, ChevronDown } from 'lucide-react-native';
 import React, { useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
   Easing,
@@ -13,7 +14,7 @@ import Animated, {
 import Svg, { Circle, G } from 'react-native-svg';
 
 import type { Colors } from '@/shared/config';
-import { withAlphaHex } from '@/shared/lib';
+import { formatStorageSharePercent, withAlphaHex } from '@/shared/lib';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -56,63 +57,71 @@ const RING_OUTER_DIAM = 2 * R + STROKE;
 /** Inner radius of the donut hole (stroke inner edge). */
 const RING_INNER_R = R - STROKE / 2;
 
-function RingCenterPercentChips({
+function RingCenterPercentChip({
   segments,
   totalBytes,
   color,
+  selectedId,
 }: {
   segments: StorageRingSegment[];
   totalBytes: number;
   color: Colors;
+  selectedId: StorageRingSegmentId;
 }) {
-  const items = useMemo(() => {
-    const positive = segments.filter((s) => s.bytes > 0);
-    const denom = totalBytes > 0 ? totalBytes : 1;
-    return positive.map((s) => ({
-      id: s.id,
-      pct: ((s.bytes / denom) * 100).toFixed(1),
-      dot: s.color,
-    }));
-  }, [segments, totalBytes]);
+  const { t } = useTranslation();
+  const atMostOne = t('storage.sharePercentAtMost1');
+  const row = useMemo(() => {
+    const seg = segments.find((s) => s.id === selectedId);
+    if (!seg || seg.bytes <= 0 || totalBytes <= 0) return null;
+    const label = formatStorageSharePercent(seg.bytes, totalBytes, atMostOne);
+    return { dot: seg.color, label };
+  }, [segments, selectedId, totalBytes, atMostOne]);
 
-  if (items.length === 0) return null;
+  if (!row) return null;
 
   return (
     <View
       style={{
-        marginTop: 5,
-        maxWidth: RING_INNER_R * 2.05,
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
+        marginTop: 4,
+        width: '100%',
+        maxWidth: RING_INNER_R * 1.72,
+        alignSelf: 'center',
         alignItems: 'center',
-        rowGap: 5,
-        columnGap: 10,
       }}
     >
-      {items.map((it) => (
-        <View key={it.id} style={{ flexDirection: 'row', alignItems: 'center', columnGap: 5 }}>
-          <View
-            style={{
-              width: 6,
-              height: 6,
-              borderRadius: 3,
-              backgroundColor: it.dot,
-            }}
-          />
-          <Text
-            style={{
-              fontSize: 11,
-              lineHeight: 14,
-              color: color.text.muted,
-              fontWeight: '500',
-              fontVariant: ['tabular-nums'],
-            }}
-          >
-            {it.pct}%
-          </Text>
-        </View>
-      ))}
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          columnGap: 5,
+          maxWidth: '100%',
+          justifyContent: 'center',
+        }}
+      >
+        <View
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: 3,
+            backgroundColor: row.dot,
+            flexShrink: 0,
+          }}
+        />
+        <Text
+          style={{
+            fontSize: 11,
+            lineHeight: 14,
+            color: color.text.muted,
+            fontWeight: '500',
+            fontVariant: ['tabular-nums'],
+            flexShrink: 1,
+            textAlign: 'center',
+          }}
+          numberOfLines={1}
+        >
+          {row.label}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -310,8 +319,13 @@ export const StorageUsageRing = ({
             >
               {!totalPositive && selectedCount === 0 ? '—' : centerValue}
             </Text>
-            {selectedCount === 0 && totalPositive ? (
-              <RingCenterPercentChips segments={segments} totalBytes={totalBytes} color={color} />
+            {selectedCount === 1 && totalPositive ? (
+              <RingCenterPercentChip
+                segments={segments}
+                totalBytes={totalBytes}
+                color={color}
+                selectedId={selectedIds[0]!}
+              />
             ) : null}
           </View>
         </View>
@@ -421,7 +435,7 @@ export const StorageBreakdownRow = ({
   segment,
   label,
   valueLabel,
-  /** Shown only in accessibility (percents live in the ring center). */
+  /** Shown only in accessibility (ring center shows % when exactly one row is selected). */
   percentLabel,
   selected,
   onSelectPress,
