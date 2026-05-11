@@ -18,6 +18,8 @@ type RequestBody = {
   appLanguage?: string;
   existingFolders?: Array<{ name: string; icon?: string; color?: string }>;
   notes: NoteForOrganize[];
+  /** Server clamps to 300–3600; omit for API default (1 hour). */
+  messageTtlSeconds?: number;
 };
 
 type PostResponse = { id: string; status: 'processing'; syncToken?: string };

@@ -86,6 +86,15 @@ export function useAppBootstrap(
         await Promise.all([useRecordStore.getState().load(), useFolderStore.getState().load()]);
 
         try {
+          const purged = await useRecordStore.getState().purgeExpiredTrashRecords();
+          if (!cancelled && purged > 0) {
+            await useRecordStore.getState().load();
+          }
+        } catch {
+          if (__DEV__) console.warn('[bootstrap] trash purge failed');
+        }
+
+        try {
           const archived = await runAutoArchiveReadNotesIfEligible(undefined, {
             skipCooldown: true,
           });

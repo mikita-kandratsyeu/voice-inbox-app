@@ -1,7 +1,14 @@
 export type { AiApiResult, AiMessageResult, AiProcessingResult, AiTask } from './ai-api';
 export { pollAiMessage, postAiMessage } from './ai-api';
-export type { StorageStats } from './async-storage';
-export { clearCache, getStorageStats, storage } from './async-storage';
+export type { RecordForStats, StorageStats } from './async-storage';
+export {
+  clearCache,
+  computeAiDataBytes,
+  computeTranscriptPayloadBytes,
+  getStorageStats,
+  storage,
+  sumAudioFileSizesBytes,
+} from './async-storage';
 export type { AudioChunk } from './audio';
 export { splitAudioIntoChunks } from './audio';
 export { formatRelativeTime, formatShortDate } from './date';
@@ -30,6 +37,7 @@ export {
   resolveFolderColorForCurrentScheme,
   withAlphaHex,
 } from './folderColor';
+export { formatStorageSharePercent } from './format-storage-share-percent';
 export { hapticError, hapticLight, hapticMedium, hapticSelection, hapticSuccess } from './haptics';
 export type { SupportedLocale } from './i18n';
 export { applyAppLanguage, i18n, initI18n } from './i18n';

@@ -56,6 +56,7 @@ export const useAskAI = (
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateLocalLlmBudget = useSettingsStore((s) => s.privateLocalLlmBudget);
   const privateCapabilityTier = useSettingsStore((s) => s.privateCapabilityTier);
+  const cloudAiKvTtlSeconds = useSettingsStore((s) => s.cloudAiKvTtlSeconds);
   const effectiveLocalAiModelId = selectedLocalAiModel ?? DEFAULT_LOCAL_AI_MODEL_ID;
   const isLocalLlmModelDownloaded =
     selectedLocalAiModel != null &&
@@ -288,6 +289,7 @@ export const useAskAI = (
             aiExecutionMode,
             privateLocalLlmBudget,
             privateCapabilityTier,
+            cloudMessageTtlSeconds: cloudAiKvTtlSeconds,
           },
         );
 
@@ -359,6 +361,7 @@ export const useAskAI = (
       aiExecutionMode,
       privateLocalLlmBudget,
       privateCapabilityTier,
+      cloudAiKvTtlSeconds,
     ],
   );
 

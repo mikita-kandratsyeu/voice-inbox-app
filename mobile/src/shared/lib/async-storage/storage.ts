@@ -10,7 +10,7 @@ export type StorageStats = {
   totalMb: number;
 };
 
-type RecordForStats = {
+export type RecordForStats = {
   transcript?: string;
   transcriptSegments?: unknown;
   summary?: string;
@@ -92,6 +92,18 @@ const getFileSize = async (path: string): Promise<number> => {
   }
 };
 
+/** Sum of file sizes for unique non-empty paths (e.g. trashed records’ audio). */
+export const sumAudioFileSizesBytes = async (
+  paths: Array<string | undefined | null>,
+): Promise<number> => {
+  const unique = new Set(paths.filter((p): p is string => Boolean(p)));
+  let total = 0;
+  for (const p of unique) {
+    total += await getFileSize(p);
+  }
+  return total;
+};
+
 const getCacheSizeBytes = async (audioPaths: string[]): Promise<number> => {
   const excludeSet = new Set(audioPaths.filter(Boolean));
   const dir = getCachesDirectoryPath();
@@ -128,15 +140,25 @@ export const clearCache = async (audioPaths: string[]): Promise<number> => {
   return totalDeleted;
 };
 
-const getAiDataBytes = (records: RecordForStats[]): number =>
-  records.reduce((sum, r) => {
-    const transcript = new TextEncoder().encode(r.transcript ?? '').length;
-    const segments = new TextEncoder().encode(JSON.stringify(r.transcriptSegments ?? [])).length;
-    const summary = new TextEncoder().encode(r.summary ?? '').length;
-    const tasks = new TextEncoder().encode(JSON.stringify(r.tasks ?? [])).length;
+const transcriptPayloadBytes = (r: RecordForStats): number => {
+  const transcript = new TextEncoder().encode(r.transcript ?? '').length;
+  const segments = new TextEncoder().encode(JSON.stringify(r.transcriptSegments ?? [])).length;
+  return transcript + segments;
+};
 
-    return sum + transcript + segments + summary + tasks;
-  }, 0);
+const generationsPayloadBytes = (r: RecordForStats): number => {
+  const summary = new TextEncoder().encode(r.summary ?? '').length;
+  const tasks = new TextEncoder().encode(JSON.stringify(r.tasks ?? [])).length;
+  return summary + tasks;
+};
+
+/** Same byte model as the “Generations” ring slice (transcript + segments + summary + tasks). */
+export const computeAiDataBytes = (records: RecordForStats[]): number =>
+  records.reduce((sum, r) => sum + transcriptPayloadBytes(r) + generationsPayloadBytes(r), 0);
+
+/** Transcript + segment JSON only (for “in trash” under Transcripts). */
+export const computeTranscriptPayloadBytes = (records: RecordForStats[]): number =>
+  records.reduce((sum, r) => sum + transcriptPayloadBytes(r), 0);
 
 export const getStorageStats = async (
   audioPaths: string[],
@@ -149,7 +171,7 @@ export const getStorageStats = async (
   }
 
   const transcriptBytes = await getFileSize(DB_PATH);
-  const aiDataBytes = getAiDataBytes(records);
+  const aiDataBytes = computeAiDataBytes(records);
   const cacheBytes = await getCacheSizeBytes(audioPaths);
 
   const totalBytes = audioBytes + transcriptBytes + cacheBytes;

@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { and, desc, eq, inArray, isNotNull, lt, ne } from 'drizzle-orm';
+import { and, desc, eq, inArray, isNotNull, isNull, lt, lte, ne } from 'drizzle-orm';
 
 import {
   audioPathFromDbValue,
@@ -10,7 +10,9 @@ import {
   recordAskAiTable,
   recordsTable,
 } from '@/shared/lib';
+import type { RecordForStats } from '@/shared/lib/async-storage/storage';
 
+import { TRASH_RETENTION_DAYS } from './trashConfig';
 import type {
   RecordClassification,
   RecordHeavyFields,
@@ -164,6 +166,23 @@ const recordListColumns = {
   folderId: recordsTable.folderId,
 } as const;
 
+const activeRecordsClause = isNull(recordsTable.deletedAt);
+
+export type TrashedRecordListItem = RecordListItem & { purgeAt: string };
+
+/** Trashed rows for storage stats (includes audio path for disk size). */
+export type TrashedStoragePayload = RecordForStats & { audioPath?: string };
+
+const parseJsonField = <T>(raw: string | null | undefined, fallback: T): T => {
+  try {
+    const v = JSON.parse(raw ?? 'null') as unknown;
+    if (v === null || v === undefined) return fallback;
+    return v as T;
+  } catch {
+    return fallback;
+  }
+};
+
 export const recordRepository = {
   getAllList: async (): Promise<RecordListItem[]> => {
     logDb('getAllList');
@@ -171,6 +190,7 @@ export const recordRepository = {
     const rows = await db
       .select(recordListColumns)
       .from(recordsTable)
+      .where(activeRecordsClause)
       .orderBy(desc(recordsTable.isPinned), desc(recordsTable.createdAt));
     logDb('getAllList', { count: rows.length });
 
@@ -192,6 +212,7 @@ export const recordRepository = {
     const rows = await db
       .select()
       .from(recordsTable)
+      .where(activeRecordsClause)
       .orderBy(desc(recordsTable.isPinned), desc(recordsTable.createdAt));
     logDb('getAll', { count: rows.length });
 
@@ -216,7 +237,7 @@ export const recordRepository = {
         embedding: recordsTable.embedding,
       })
       .from(recordsTable)
-      .where(eq(recordsTable.id, id))
+      .where(and(eq(recordsTable.id, id), activeRecordsClause))
       .limit(1);
     const row = rows[0];
     if (!row) {
@@ -259,6 +280,8 @@ export const recordRepository = {
         audioPath: audioPathToDbValue(record.audioPath),
         embedding: record.embedding ? JSON.stringify(record.embedding) : null,
         folderId: record.folderId ?? null,
+        deletedAt: null,
+        purgeAt: null,
       })
       .onConflictDoNothing();
   },
@@ -309,6 +332,7 @@ export const recordRepository = {
     logDb('archiveReadRecordsOlderThan', { isoThreshold });
     const db = getDB();
     const staleClause = and(
+      activeRecordsClause,
       eq(recordsTable.status, 'read'),
       eq(recordsTable.isPinned, 0),
       isNotNull(recordsTable.readAt),
@@ -443,5 +467,90 @@ export const recordRepository = {
       .update(recordsTable)
       .set({ embedding: embedding ? JSON.stringify(embedding) : null })
       .where(eq(recordsTable.id, id));
+  },
+
+  peekAudioPathById: async (id: string): Promise<string | undefined> => {
+    logDb('peekAudioPathById', { id });
+    const db = getDB();
+    const rows = await db
+      .select({ audioPath: recordsTable.audioPath })
+      .from(recordsTable)
+      .where(eq(recordsTable.id, id))
+      .limit(1);
+    const row = rows[0];
+    if (!row) return undefined;
+    return audioPathFromDbValue(row.audioPath);
+  },
+
+  moveToTrash: async (id: string): Promise<void> => {
+    logDb('moveToTrash', { id });
+    const now = dayjs().toISOString();
+    const purgeAt = dayjs().add(TRASH_RETENTION_DAYS, 'day').toISOString();
+    const db = getDB();
+    await db
+      .update(recordsTable)
+      .set({ deletedAt: now, purgeAt })
+      .where(and(eq(recordsTable.id, id), isNull(recordsTable.deletedAt)));
+  },
+
+  restoreFromTrash: async (id: string): Promise<void> => {
+    logDb('restoreFromTrash', { id });
+    const db = getDB();
+    await db
+      .update(recordsTable)
+      .set({ deletedAt: null, purgeAt: null })
+      .where(eq(recordsTable.id, id));
+  },
+
+  getTrashedList: async (): Promise<TrashedRecordListItem[]> => {
+    logDb('getTrashedList');
+    const db = getDB();
+    const rows = await db
+      .select({ ...recordListColumns, purgeAt: recordsTable.purgeAt })
+      .from(recordsTable)
+      .where(isNotNull(recordsTable.deletedAt))
+      .orderBy(desc(recordsTable.deletedAt));
+    return rows.map((row) => {
+      const { purgeAt, ...rest } = row;
+      return {
+        ...toRecordListItem(rest as unknown as RecordListQueryRow),
+        purgeAt: purgeAt ?? '',
+      };
+    });
+  },
+
+  getTrashedStoragePayloads: async (): Promise<TrashedStoragePayload[]> => {
+    logDb('getTrashedStoragePayloads');
+    const db = getDB();
+    const rows = await db
+      .select({
+        transcript: recordsTable.transcript,
+        transcriptSegments: recordsTable.transcriptSegments,
+        summary: recordsTable.summary,
+        tasks: recordsTable.tasks,
+        audioPath: recordsTable.audioPath,
+      })
+      .from(recordsTable)
+      .where(isNotNull(recordsTable.deletedAt));
+
+    return rows.map(
+      (row): TrashedStoragePayload => ({
+        transcript: row.transcript ?? '',
+        transcriptSegments: parseJsonField(row.transcriptSegments, []),
+        summary: row.summary ?? '',
+        tasks: parseJsonField(row.tasks, []),
+        audioPath: audioPathFromDbValue(row.audioPath),
+      }),
+    );
+  },
+
+  listIdsReadyForPermanentPurge: async (): Promise<string[]> => {
+    const db = getDB();
+    const now = dayjs().toISOString();
+    const rows = await db
+      .select({ id: recordsTable.id })
+      .from(recordsTable)
+      .where(and(isNotNull(recordsTable.purgeAt), lte(recordsTable.purgeAt, now)));
+    return rows.map((r) => r.id);
   },
 };

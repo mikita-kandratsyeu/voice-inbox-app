@@ -14,6 +14,7 @@ import {
   SettingsScreen,
   StorageDetailsScreen,
   SupportScreen,
+  TrashScreen,
   WhisperModelPickerScreen,
 } from '@/screens/settings';
 
@@ -62,6 +63,11 @@ export const SettingsNavigator = () => (
     <Stack.Screen
       name="StorageDetails"
       component={StorageDetailsScreen}
+      options={{ animation: 'slide_from_right' }}
+    />
+    <Stack.Screen
+      name="Trash"
+      component={TrashScreen}
       options={{ animation: 'slide_from_right' }}
     />
     <Stack.Screen

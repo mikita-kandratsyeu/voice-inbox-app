@@ -10,4 +10,5 @@ export { PrivateAiModeScreen } from './ui/PrivateAiModeScreen';
 export { SettingsScreen } from './ui/SettingsScreen';
 export { StorageDetailsScreen } from './ui/StorageDetailsScreen';
 export { SupportScreen } from './ui/SupportScreen';
+export { TrashScreen } from './ui/TrashScreen';
 export { WhisperModelPickerScreen } from './ui/WhisperModelPickerScreen';

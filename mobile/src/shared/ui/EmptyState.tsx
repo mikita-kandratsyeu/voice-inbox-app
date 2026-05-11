@@ -9,6 +9,7 @@ type EmptyStateProps = {
   description?: string;
   hint?: string;
   hintIcon?: React.ReactNode;
+  icon?: React.ReactNode;
   verticalPlacement?: 'center' | 'top';
 };
 
@@ -17,6 +18,7 @@ export const EmptyState = ({
   description,
   hint,
   hintIcon,
+  icon,
   verticalPlacement = 'center',
 }: EmptyStateProps) => {
   const color = useColors();
@@ -30,7 +32,7 @@ export const EmptyState = ({
         className="mb-4 rounded-full p-5"
         style={{ backgroundColor: color.background.tertiary }}
       >
-        <Inbox size={40} color={color.icon.muted} strokeWidth={1.5} />
+        {icon ?? <Inbox size={40} color={color.icon.muted} strokeWidth={1.5} />}
       </View>
       {Boolean(title) && (
         <Text

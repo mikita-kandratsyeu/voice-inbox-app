@@ -87,8 +87,8 @@ android {
         applicationId "com.voiceinputapp"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 151
-        versionName "1.0.3"
+        versionCode 160
+        versionName "1.0.4"
     }
     signingConfigs {
         debug {

@@ -27,6 +27,8 @@ export type AiExecutionContext = {
   aiExecutionMode: 'smart_hybrid' | 'private_experimental';
   privateLocalLlmBudget: PrivateLocalLlmBudget;
   privateCapabilityTier: 'full' | 'limited' | 'unavailable';
+  /** TTL (seconds) for cloud AI job payloads in API KV; used only in Smart (cloud) mode. */
+  cloudMessageTtlSeconds: number;
 };
 
 export type SummaryTaskRequest = {

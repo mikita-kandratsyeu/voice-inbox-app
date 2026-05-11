@@ -5,7 +5,7 @@ export type AppLanguage = 'system' | 'en' | 'ru';
 
 export type UserSelectableAIModelId =
   | 'google/gemini-2.5-flash-lite'
-  | 'google/gemini-3.1-flash-lite-preview'
+  | 'google/gemini-3.1-flash-lite'
   | 'minimax/minimax-m2.7'
   | 'deepseek/deepseek-v4-flash';
 export type LocalAiModelId =
@@ -94,6 +94,7 @@ export type SettingsState = {
   autoArchiveEnabled: boolean;
   autoArchiveAfterDays: AutoArchiveAfterDays;
   cloudAiThirdPartyConsentAccepted: boolean;
+  cloudAiKvTtlSeconds: number;
   whisperModelStatuses: Partial<Record<WhisperModelVariantId, WhisperModelStatus>>;
   whisperDownloadProgress: Partial<Record<WhisperModelVariantId, number>>;
   whisperDownloadBytes: Partial<Record<WhisperModelVariantId, DownloadBytes>>;
@@ -123,6 +124,7 @@ export type SettingsState = {
   setAutoArchiveEnabled: (value: boolean) => void;
   setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => void;
   setCloudAiThirdPartyConsentAccepted: (value: boolean) => void;
+  setCloudAiKvTtlSeconds: (value: number) => void;
   setWhisperModelStatus: (
     id: WhisperModelId,
     format: WhisperModelWeightsFormat,

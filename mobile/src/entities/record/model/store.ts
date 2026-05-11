@@ -79,7 +79,14 @@ type RecordStore = {
   load: () => Promise<void>;
   hydrateRecordDetails: (id: string) => Promise<void>;
   addRecord: (record: VoiceRecord) => Promise<void>;
-  deleteRecord: (id: string) => Promise<void>;
+  /** Soft-delete: record leaves inbox; audio stays on disk until purge. */
+  moveRecordToTrash: (id: string) => Promise<void>;
+  /** Restore a trashed record (from Trash screen). */
+  restoreRecordFromTrash: (id: string) => Promise<void>;
+  /** Permanently delete (unlink audio + DB). Used for trash expiry, Trash screen, wipe flows. */
+  purgeRecordPermanently: (id: string) => Promise<void>;
+  /** Permanently delete records whose trash retention has expired. */
+  purgeExpiredTrashRecords: () => Promise<number>;
   togglePin: (id: string) => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
   archiveRecord: (id: string) => Promise<void>;
@@ -213,13 +220,28 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     });
   },
 
-  deleteRecord: async (id) => {
-    const record = get().records.find((r) => r.id === id);
-    if (record?.audioPath) {
+  moveRecordToTrash: async (id) => {
+    await recordRepository.moveToTrash(id);
+    set((s) => {
+      const next = s.records.filter((r) => r.id !== id);
+      return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
+    });
+  },
+
+  restoreRecordFromTrash: async (id) => {
+    await recordRepository.restoreFromTrash(id);
+    await get().load();
+  },
+
+  purgeRecordPermanently: async (id) => {
+    const audioPath =
+      get().records.find((r) => r.id === id)?.audioPath ??
+      (await recordRepository.peekAudioPathById(id));
+    if (audioPath) {
       try {
-        const exists = await NitroFS.exists(record.audioPath);
+        const exists = await NitroFS.exists(audioPath);
         if (exists) {
-          await NitroFS.unlink(record.audioPath);
+          await NitroFS.unlink(audioPath);
         }
       } catch (err) {
         if (__DEV__) console.warn('[store] Failed to delete audio file:', err);
@@ -230,6 +252,15 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
       const next = s.records.filter((r) => r.id !== id);
       return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
     });
+  },
+
+  purgeExpiredTrashRecords: async () => {
+    const ids = await recordRepository.listIdsReadyForPermanentPurge();
+    if (ids.length === 0) return 0;
+    for (const id of ids) {
+      await get().purgeRecordPermanently(id);
+    }
+    return ids.length;
   },
 
   togglePin: async (id) => {

@@ -41,6 +41,7 @@ export type SettingsStackParamList = {
   Digest: undefined;
   WhisperModelPicker: undefined;
   StorageDetails: undefined;
+  Trash: undefined;
   AboutApp: undefined;
   Support: undefined;
   AppLockSetup: undefined;

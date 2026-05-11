@@ -119,13 +119,16 @@ export const AskAIScreen = () => {
   const handleSuggestedQuestion = useCallback(
     (q: string) => {
       if (!hasTranscript || isLoading || disableByNetwork) return;
+      KeyboardController.dismiss();
       askQuestion(liveRecord, q, priorTurnsForAsk);
     },
     [hasTranscript, isLoading, disableByNetwork, liveRecord, askQuestion, priorTurnsForAsk],
   );
 
   const handleRetry = useCallback(() => {
-    if (question) askQuestion(liveRecord, question, priorTurnsForAsk);
+    if (!question) return;
+    KeyboardController.dismiss();
+    askQuestion(liveRecord, question, priorTurnsForAsk);
   }, [question, liveRecord, askQuestion, priorTurnsForAsk]);
 
   const handleCopy = useCallback(
@@ -148,8 +151,11 @@ export const AskAIScreen = () => {
   }, []);
 
   const shouldShowInputRow = hasTranscript && !isRestoringSession && !isLoading;
-  const scrollContentCentered =
+  /** Fill scroll height when loading so the loader can be centered below the disclosure. */
+  const scrollContentFlexGrow =
     !hasTranscript || isLoading || Boolean(error && !answer && hasTranscript);
+  /** Center whole content only when not loading (loading centers the spinner inside LoadingState). */
+  const scrollContentCentered = !hasTranscript || Boolean(error && !answer && hasTranscript);
   const canSend =
     Boolean(questionInput.trim()) &&
     hasTranscript &&
@@ -179,7 +185,11 @@ export const AskAIScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title={t('recordingDetail.askEmptyTitle')} onBack={handleBack} />
+      <ScreenHeader
+        title={t('recordingDetail.askEmptyTitle')}
+        onBack={handleBack}
+        dismissKeyboardOnPress
+      />
       <View style={{ flex: 1 }}>
         <View
           style={{
@@ -193,12 +203,14 @@ export const AskAIScreen = () => {
             ref={answerScrollRef}
             style={{ flex: 1 }}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
             showsVerticalScrollIndicator={Boolean(answer)}
             contentContainerStyle={{
               paddingHorizontal: 16,
               paddingTop: 12,
               paddingBottom: 16,
-              ...(scrollContentCentered ? { flexGrow: 1, justifyContent: 'center' as const } : {}),
+              ...(scrollContentFlexGrow ? { flexGrow: 1 } : {}),
+              ...(scrollContentCentered ? { justifyContent: 'center' as const } : {}),
             }}
           >
             <AskMainContent
