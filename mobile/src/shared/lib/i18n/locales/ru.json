@@ -759,7 +759,7 @@
     "statistics": "Статистика",
     "management": "Управление",
     "audioRecords": "Аудиозаписи",
-    "transcriptsAndData": "Транскрипты и данные",
+    "transcriptsAndData": "Транскрипты",
     "aiProcessing": "Генерации",
     "totalRecords": "Всего записей",
     "withAudio": "С аудио",
@@ -785,7 +785,12 @@
     "cacheLabel": "Кэш",
     "audioFilesValue": "{{count}} файлов · {{size}} MB",
     "mb": "MB",
-    "gb": "GB"
+    "gb": "GB",
+    "tapRingHint": "Нажмите на строки или кольцо, чтобы выбрать категории. Центр кольца сбрасывает выбор.",
+    "totalUsed": "Всего занято",
+    "selectedSegmentsTitle": "Выбрано: {{count}}",
+    "clearCacheCta": "Очистить кэш · {{size}}",
+    "onDeviceModels": "Модели на устройстве"
   },
   "whisper": {
     "modelTitle": "Модель транскрипции",

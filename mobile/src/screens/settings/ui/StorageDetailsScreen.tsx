@@ -1,4 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import {
   Bot,
   BrainCircuit,
@@ -10,12 +11,13 @@ import {
   Trash2,
   Type,
 } from 'lucide-react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
   Modal,
+  Pressable,
   RefreshControl,
   ScrollView,
   Text,
@@ -25,6 +27,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
@@ -32,11 +35,11 @@ import { LOCAL_AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/se
 import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { getLocalLlmModelFileSizeBytes, getModelFileSizeBytes } from '@/features/model-manager';
-import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import {
   clearCache,
   getStorageStats,
+  hapticSelection,
   type StorageStats,
   useIsTablet,
   useTabletContentMaxWidth,
@@ -44,185 +47,20 @@ import {
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 import { formatFileSize, getWhisperModelPath } from '@/shared/lib/whisper';
-import { ScreenHeader, SettingsRow, SettingsSection, SkeletonPulse } from '@/shared/ui';
+import {
+  SCREEN_PADDING,
+  ScreenHeader,
+  SettingsRow,
+  SettingsSection,
+  SkeletonPulse,
+} from '@/shared/ui';
 
-const StorageBar = ({
-  audioMb,
-  transcriptKb,
-  aiDataKb,
-  cacheKb,
-  whisperModelsBytes,
-  localGenerationModelsBytes,
-  totalMb,
-  color,
-}: StorageStats & {
-  whisperModelsBytes: number;
-  localGenerationModelsBytes: number;
-  totalMb: number;
-  color: Colors;
-}) => {
-  const { t } = useTranslation();
-  const modelsBytes = whisperModelsBytes + localGenerationModelsBytes;
-  const modelsMb = modelsBytes / (1024 * 1024);
-  const divisor = totalMb > 0 ? totalMb : 1;
-  const audioFrac = audioMb / divisor;
-  const transcriptFrac = transcriptKb / 1024 / divisor;
-  const aiDataFrac = aiDataKb / 1024 / divisor;
-  const cacheFrac = cacheKb / 1024 / divisor;
-  const modelsFrac = modelsMb / divisor;
-
-  return (
-    <View>
-      <View className="mb-3 flex-row items-center justify-between">
-        <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
-          {t('storage.used')}
-        </Text>
-        <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
-          {totalMb >= 1000
-            ? `${(totalMb / 1000).toFixed(1)} ${t('storage.gb')}`
-            : `${totalMb.toFixed(1)} ${t('storage.mb')}`}
-        </Text>
-      </View>
-      <View
-        className="mb-4 h-3 overflow-hidden rounded-full flex-row"
-        style={{ backgroundColor: color.background.tertiary }}
-      >
-        <View style={{ flex: audioFrac, backgroundColor: color.accent.primary }} />
-        <View style={{ flex: transcriptFrac, backgroundColor: color.accent.transcript }} />
-        <View style={{ flex: aiDataFrac, backgroundColor: color.accent.aiData }} />
-        <View style={{ flex: cacheFrac, backgroundColor: color.accent.cache }} />
-        {modelsFrac > 0 && (
-          <View style={{ flex: modelsFrac, backgroundColor: color.accent.models }} />
-        )}
-      </View>
-      <View className="gap-2">
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2">
-            <View
-              className="h-3 w-3 rounded-full"
-              style={{ backgroundColor: color.accent.primary }}
-            />
-            <Text className="text-[14px]" style={{ color: color.text.primary }}>
-              {t('storage.audioRecords')}
-            </Text>
-          </View>
-          <Text className="text-[14px]" style={{ color: color.text.primary }}>
-            {`${audioMb.toFixed(1)} ${t('storage.mb')}`}
-          </Text>
-        </View>
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2">
-            <View
-              className="h-3 w-3 rounded-full"
-              style={{ backgroundColor: color.accent.transcript }}
-            />
-            <Text className="text-[14px]" style={{ color: color.text.primary }}>
-              {t('storage.transcriptsAndData')}
-            </Text>
-          </View>
-          <Text className="text-[14px]" style={{ color: color.text.primary }}>
-            {formatFileSize(transcriptKb * 1024)}
-          </Text>
-        </View>
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2">
-            <View
-              className="h-3 w-3 rounded-full"
-              style={{ backgroundColor: color.accent.aiData }}
-            />
-            <Text className="text-[14px]" style={{ color: color.text.primary }}>
-              {t('storage.aiProcessing')}
-            </Text>
-          </View>
-          <Text className="text-[14px]" style={{ color: color.text.primary }}>
-            {formatFileSize(aiDataKb * 1024)}
-          </Text>
-        </View>
-        {whisperModelsBytes > 0 && (
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center gap-2">
-              <View
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: color.accent.models }}
-              />
-              <Text className="text-[14px]" style={{ color: color.text.primary }}>
-                {t('storage.transcriptionModels')}
-              </Text>
-            </View>
-            <Text className="text-[14px]" style={{ color: color.text.primary }}>
-              {formatFileSize(whisperModelsBytes)}
-            </Text>
-          </View>
-        )}
-        {localGenerationModelsBytes > 0 && (
-          <View className="flex-row items-center justify-between">
-            <View className="flex-row items-center gap-2">
-              <View
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: color.accent.models }}
-              />
-              <Text className="text-[14px]" style={{ color: color.text.primary }}>
-                {t('storage.localGenerationModels')}
-              </Text>
-            </View>
-            <Text className="text-[14px]" style={{ color: color.text.primary }}>
-              {formatFileSize(localGenerationModelsBytes)}
-            </Text>
-          </View>
-        )}
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center gap-2">
-            <View
-              className="h-3 w-3 rounded-full"
-              style={{ backgroundColor: color.accent.cache }}
-            />
-            <Text className="text-[14px]" style={{ color: color.text.primary }}>
-              {t('storage.cacheLabel')}
-            </Text>
-          </View>
-          <Text className="text-[14px]" style={{ color: color.text.primary }}>
-            {formatFileSize(cacheKb * 1024)}
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
-};
-
-function StorageBarSkeleton({ color }: { color: Colors }) {
-  return (
-    <SkeletonPulse>
-      <View className="mb-3 flex-row items-center justify-between">
-        <View className="h-4 w-12 rounded" style={{ backgroundColor: color.background.tertiary }} />
-        <View className="h-4 w-16 rounded" style={{ backgroundColor: color.background.tertiary }} />
-      </View>
-      <View
-        className="mb-4 h-3 overflow-hidden rounded-full"
-        style={{ backgroundColor: color.background.tertiary }}
-      />
-      <View className="gap-2">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <View key={i} className="flex-row items-center justify-between">
-            <View className="flex-row items-center gap-2">
-              <View
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: color.background.tertiary }}
-              />
-              <View
-                className="h-3.5 w-24 rounded"
-                style={{ backgroundColor: color.background.tertiary }}
-              />
-            </View>
-            <View
-              className="h-3.5 w-12 rounded"
-              style={{ backgroundColor: color.background.tertiary }}
-            />
-          </View>
-        ))}
-      </View>
-    </SkeletonPulse>
-  );
-}
+import {
+  ROW_BULLET_SIZE,
+  StorageBreakdownRow,
+  type StorageRingSegmentId,
+  StorageUsageRing,
+} from './StorageUsageRing';
 
 const DEFAULT_STATS: StorageStats = {
   audioMb: 0,
@@ -249,7 +87,7 @@ export const StorageDetailsScreen = () => {
   const { t } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
@@ -268,6 +106,7 @@ export const StorageDetailsScreen = () => {
   const [deleteAllProgress, setDeleteAllProgress] = useState({ current: 0, total: 0 });
   const [downloadedVariants, setDownloadedVariants] = useState<DownloadedModelVariant[]>([]);
   const [downloadedLocalLlm, setDownloadedLocalLlm] = useState<DownloadedLocalLlmEntry[]>([]);
+  const [selectedSegmentIds, setSelectedSegmentIds] = useState<StorageRingSegmentId[]>([]);
 
   const loadModelSizes = useCallback(async () => {
     const formats: WhisperModelWeightsFormat[] = ['q5_1', 'full'];
@@ -336,8 +175,73 @@ export const StorageDetailsScreen = () => {
 
   const whisperModelsBytes = downloadedVariants.reduce((sum, m) => sum + m.bytes, 0);
   const localGenerationModelsBytes = downloadedLocalLlm.reduce((sum, m) => sum + m.bytes, 0);
-  const totalMb = stats.totalMb + (whisperModelsBytes + localGenerationModelsBytes) / (1024 * 1024);
+  const modelsBytesTotal = whisperModelsBytes + localGenerationModelsBytes;
   const hasOnDeviceModelRows = downloadedVariants.length > 0 || downloadedLocalLlm.length > 0;
+  const hasClearableCache = stats.cacheKb > 0;
+
+  const { ringSegments, totalBytesForRing } = useMemo(() => {
+    const audioBytes = stats.audioMb * 1024 * 1024;
+    const transcriptBytes = stats.transcriptKb * 1024;
+    const aiBytes = stats.aiDataKb * 1024;
+    const cacheBytes = stats.cacheKb * 1024;
+    const total = audioBytes + transcriptBytes + aiBytes + cacheBytes + modelsBytesTotal;
+    return {
+      totalBytesForRing: total,
+      ringSegments: [
+        { id: 'audio' as const, color: color.accent.primary, bytes: audioBytes },
+        { id: 'transcript' as const, color: color.accent.transcript, bytes: transcriptBytes },
+        { id: 'ai' as const, color: color.accent.aiData, bytes: aiBytes },
+        { id: 'cache' as const, color: color.accent.cache, bytes: cacheBytes },
+        { id: 'models' as const, color: color.accent.models, bytes: modelsBytesTotal },
+      ],
+    };
+  }, [stats, modelsBytesTotal, color]);
+
+  const segmentLabels = useMemo(
+    (): Record<StorageRingSegmentId, string> => ({
+      audio: t('storage.audioRecords'),
+      transcript: t('storage.transcriptsAndData'),
+      ai: t('storage.aiProcessing'),
+      cache: t('storage.cacheLabel'),
+      models: t('storage.onDeviceModels'),
+    }),
+    [t],
+  );
+
+  const toggleSegment = useCallback((id: StorageRingSegmentId) => {
+    hapticSelection();
+    setSelectedSegmentIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }, []);
+
+  const clearRingSelection = useCallback(() => {
+    hapticSelection();
+    setSelectedSegmentIds([]);
+  }, []);
+
+  const { ringCenterTitle, ringCenterValue } = useMemo(() => {
+    const ids = selectedSegmentIds;
+    if (ids.length === 0) {
+      return {
+        ringCenterTitle: t('storage.totalUsed'),
+        ringCenterValue: formatFileSize(totalBytesForRing),
+      };
+    }
+    if (ids.length === 1) {
+      const id = ids[0]!;
+      const bytes = ringSegments.find((s) => s.id === id)?.bytes ?? 0;
+      return {
+        ringCenterTitle: segmentLabels[id],
+        ringCenterValue: formatFileSize(bytes),
+      };
+    }
+    const sum = ringSegments.filter((s) => ids.includes(s.id)).reduce((acc, s) => acc + s.bytes, 0);
+    return {
+      ringCenterTitle: t('storage.selectedSegmentsTitle', { count: ids.length }),
+      ringCenterValue: formatFileSize(sum),
+    };
+  }, [selectedSegmentIds, ringSegments, segmentLabels, t, totalBytesForRing]);
 
   const handleClearCache = () => {
     Alert.alert(t('storage.clearCache'), t('storage.clearCacheConfirm'), [
@@ -418,8 +322,8 @@ export const StorageDetailsScreen = () => {
       >
         <ScrollView
           contentContainerStyle={{
-            paddingHorizontal: 16,
-            paddingTop: 12,
+            paddingHorizontal: SCREEN_PADDING,
+            paddingTop: 16,
             paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
           }}
           showsVerticalScrollIndicator={false}
@@ -433,17 +337,158 @@ export const StorageDetailsScreen = () => {
             />
           }
         >
-          <View className="mb-6 rounded-2xl p-4" style={{ backgroundColor: color.background.card }}>
+          <View
+            className="mb-7 rounded-2xl px-4 pt-4 pb-4"
+            style={{
+              backgroundColor: color.background.card,
+            }}
+          >
             {isLoading ? (
-              <StorageBarSkeleton color={color} />
+              <SkeletonPulse>
+                <StorageUsageRing
+                  segments={[]}
+                  totalBytes={0}
+                  selectedIds={[]}
+                  onToggleSegment={() => {}}
+                  onClearSelection={() => {}}
+                  centerTitle=""
+                  centerValue=""
+                  tapHint=""
+                  color={color}
+                  isLoading
+                />
+                <View
+                  className="mt-4 overflow-hidden rounded-2xl border"
+                  style={{
+                    width: '100%',
+                    borderColor: color.border.default,
+                    backgroundColor: color.background.secondary,
+                  }}
+                >
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <View
+                      key={i}
+                      className="flex-row items-center px-4 py-3.5"
+                      style={{
+                        minHeight: 52,
+                        borderBottomWidth: i < 5 ? 1 : 0,
+                        borderBottomColor: color.border.default,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: ROW_BULLET_SIZE,
+                          height: ROW_BULLET_SIZE,
+                          borderRadius: ROW_BULLET_SIZE / 2,
+                          marginRight: 12,
+                          backgroundColor: color.background.tertiary,
+                        }}
+                      />
+                      <View
+                        className="min-w-0 flex-1 flex-shrink flex-row items-center pr-2"
+                        style={{ columnGap: 10 }}
+                      >
+                        <View
+                          className="rounded"
+                          style={{
+                            height: 16,
+                            width: 120,
+                            maxWidth: '55%',
+                            backgroundColor: color.background.tertiary,
+                          }}
+                        />
+                        <View
+                          className="rounded"
+                          style={{
+                            height: 16,
+                            width: 48,
+                            backgroundColor: color.background.tertiary,
+                          }}
+                        />
+                      </View>
+                      <View
+                        className="rounded"
+                        style={{
+                          width: 64,
+                          height: 16,
+                          backgroundColor: color.background.tertiary,
+                        }}
+                      />
+                    </View>
+                  ))}
+                </View>
+              </SkeletonPulse>
             ) : (
-              <StorageBar
-                {...stats}
-                whisperModelsBytes={whisperModelsBytes}
-                localGenerationModelsBytes={localGenerationModelsBytes}
-                totalMb={totalMb}
-                color={color}
-              />
+              <>
+                <StorageUsageRing
+                  segments={ringSegments}
+                  totalBytes={totalBytesForRing}
+                  selectedIds={selectedSegmentIds}
+                  onToggleSegment={toggleSegment}
+                  onClearSelection={clearRingSelection}
+                  centerTitle={ringCenterTitle}
+                  centerValue={ringCenterValue}
+                  tapHint={t('storage.tapRingHint')}
+                  color={color}
+                />
+                <View
+                  className="mt-4 overflow-hidden rounded-2xl border"
+                  style={{
+                    width: '100%',
+                    borderColor: color.border.default,
+                    backgroundColor: color.background.secondary,
+                  }}
+                >
+                  {ringSegments.map((seg, index) => {
+                    const pct =
+                      totalBytesForRing > 0
+                        ? ((seg.bytes / totalBytesForRing) * 100).toFixed(1)
+                        : '0.0';
+                    return (
+                      <StorageBreakdownRow
+                        key={seg.id}
+                        segment={seg}
+                        label={segmentLabels[seg.id]}
+                        valueLabel={formatFileSize(seg.bytes)}
+                        percentLabel={`${pct}%`}
+                        selected={selectedSegmentIds.includes(seg.id)}
+                        onPress={() => toggleSegment(seg.id)}
+                        color={color}
+                        isLast={index === ringSegments.length - 1}
+                      />
+                    );
+                  })}
+                </View>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityState={{ disabled: !hasClearableCache || isClearing }}
+                  onPress={hasClearableCache && !isClearing ? handleClearCache : undefined}
+                  disabled={!hasClearableCache || isClearing}
+                  className="mt-4 items-center justify-center rounded-2xl py-4"
+                  style={{
+                    minHeight: 52,
+                    backgroundColor: hasClearableCache
+                      ? color.accent.primary
+                      : color.background.tertiary,
+                    opacity: isClearing ? 0.55 : 1,
+                  }}
+                >
+                  <Text
+                    className="text-[16px] font-semibold"
+                    style={{
+                      color: hasClearableCache ? color.icon.onAccent : color.text.muted,
+                    }}
+                  >
+                    {isClearing
+                      ? t('storage.loading')
+                      : t('storage.clearCacheCta', {
+                          size: hasClearableCache
+                            ? formatFileSize(stats.cacheKb * 1024)
+                            : `0 ${t('storage.mb')}`,
+                        })}
+                  </Text>
+                </Pressable>
+              </>
             )}
           </View>
           <SettingsSection title={t('storage.details')}>
@@ -522,17 +567,11 @@ export const StorageDetailsScreen = () => {
 
           <SettingsSection title={t('storage.management')}>
             <SettingsRow
-              label={t('storage.clearCache')}
-              value={isClearing ? t('storage.loading') : formatFileSize(stats.cacheKb * 1024)}
-              leftIcon={<Trash2 size={20} color={color.accent.cache} strokeWidth={1.8} />}
-              onPress={isClearing || stats.cacheKb * 1024 === 0 ? undefined : handleClearCache}
-              isFirst
-            />
-            <SettingsRow
               label={t('storage.deleteAllData')}
               leftIcon={<Trash2 size={20} color={color.accent.delete} strokeWidth={1.8} />}
               onPress={isDeletingAll ? undefined : handleDeleteAll}
               dangerous
+              isFirst
               isLast
             />
           </SettingsSection>
