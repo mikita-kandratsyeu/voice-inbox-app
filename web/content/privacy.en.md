@@ -20,7 +20,7 @@ Voice recordings, transcripts, summaries, tasks, and tags are stored locally on 
 
 ## 2. Our Web API
 
-Our API temporarily stores only the AI result (summary, tasks, tags) in a key-value store that expires after 1 hour. After one hour, this data is automatically deleted. We never store transcripts permanently.
+Our API temporarily stores AI outputs (for example summaries, tasks, tags, and Ask AI answers) in a short-lived key-value cache. Entries expire automatically after a time-to-live you choose in the app’s Smart mode AI settings (between **5 minutes** and **1 hour**; **1 hour** is the default). That preference is stored only on your device and sent with each request; we do not keep a separate server-side profile of it. Each time the server updates a job’s status, the expiry is refreshed from that moment. We never store transcripts permanently.
 
 Access to the API is authenticated using short-lived tokens that are bound to your device ID. We do not store these tokens on our servers; they are validated and then discarded. We use the device identifier to limit the number of free AI requests per week per device. This identifier is used solely for rate limiting and authentication and is not linked to your identity.
 
@@ -52,7 +52,7 @@ Voice Inbox AI does not require an account or login. There is no user registrati
 
 **On your device:** recordings, transcripts, and AI-generated content are stored until you delete them or uninstall the app.
 
-**On our servers:** AI results are stored for up to 1 hour, then automatically deleted. Per-device rate limit counters are stored for up to 8 days, then reset. Push tokens are stored for up to 30 days and refreshed on every app launch with notifications enabled. **Support requests** (including optional contact details and diagnostics you send through the support form) are stored in our database as described in section 2. **Subscription and billing records** needed to verify in-app purchases (for example, device identifier and entitlement expiry) are stored as long as needed to provide paid features and prevent abuse.
+**On our servers:** Temporary AI job results in our key-value cache are retained until they expire (up to one hour by default; the app may request as little as five minutes, as described in section 2). Per-device rate limit counters are stored for up to 8 days, then reset. Push tokens are stored for up to 30 days and refreshed on every app launch with notifications enabled. **Support requests** (including optional contact details and diagnostics you send through the support form) are stored in our database as described in section 2. **Subscription and billing records** needed to verify in-app purchases (for example, device identifier and entitlement expiry) are stored as long as needed to provide paid features and prevent abuse.
 
 ## 6. Your Rights
 

@@ -21,6 +21,7 @@ import {
   type AiModelMode,
 } from '@/lib/ai-model-router';
 import { setAppForeground } from '@/lib/push-tokens';
+import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
 import { createMessage } from '@/services/message.service';
 import { NextResponse } from 'next/server';
 
@@ -32,6 +33,7 @@ type CreateMessageBody = {
   routingContext?: unknown;
   systemPrompt?: unknown;
   options?: AiProcessingOptions;
+  messageTtlSeconds?: unknown;
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
@@ -70,6 +72,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     routingContext: rawRoutingContext,
     systemPrompt,
     options: rawOptions,
+    messageTtlSeconds: rawMessageTtl,
   } = body as {
     id: string;
     transcript: string;
@@ -78,7 +81,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     routingContext?: { taskType?: unknown; transcriptChars?: unknown };
     systemPrompt?: string;
     options?: AiProcessingOptions & { existingTaskTexts?: unknown; taskExtractionHint?: unknown };
+    messageTtlSeconds?: unknown;
   };
+
+  const messageTtlSeconds = clampMessageTtlSeconds(rawMessageTtl);
 
   let options: AiProcessingOptions | undefined;
   if (rawOptions && typeof rawOptions === 'object') {
@@ -141,6 +147,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     resolvedSystemPrompt,
     deviceIdTrimmed,
     req.headers.get('user-agent'),
+    messageTtlSeconds,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {

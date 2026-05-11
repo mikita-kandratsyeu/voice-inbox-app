@@ -62,15 +62,23 @@ export function getMessageKey(id: string): string {
   return `${MESSAGE_KEY_PREFIX}${id}`;
 }
 
-export async function saveMessage(id: string, data: Message): Promise<void> {
+export async function saveMessage(
+  id: string,
+  data: Message,
+  ttlSeconds: number = MESSAGE_TTL_SECONDS,
+): Promise<void> {
   await kv.set(getMessageKey(id), JSON.stringify(data), {
-    ex: MESSAGE_TTL_SECONDS,
+    ex: ttlSeconds,
   });
 }
 
-export async function saveMessageIfNotExists(id: string, data: Message): Promise<boolean> {
+export async function saveMessageIfNotExists(
+  id: string,
+  data: Message,
+  ttlSeconds: number = MESSAGE_TTL_SECONDS,
+): Promise<boolean> {
   return kv.setIfNotExists(getMessageKey(id), JSON.stringify(data), {
-    ex: MESSAGE_TTL_SECONDS,
+    ex: ttlSeconds,
   });
 }
 
