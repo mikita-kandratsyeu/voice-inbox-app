@@ -5,6 +5,7 @@ import { DEFAULT_PIN_LENGTH } from '@/entities/app-lock/model/constants';
 import { useAppLockStore } from '@/entities/app-lock/model/store';
 import { useFolderStore } from '@/entities/folder/model/store';
 import { useRecordStore } from '@/entities/record/model/store';
+import { CLOUD_AI_KV_TTL_DEFAULT_SECONDS } from '@/entities/settings/lib/cloudAiKvTtl';
 import { RECOMMENDED_AI_MODEL_ID } from '@/entities/settings/lib/recommendAiModel';
 import {
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
@@ -110,6 +111,7 @@ export async function performHardReset(): Promise<void> {
     summaryStyle: 'standard',
     taskStrictness: 'balanced',
     aiOutputLanguage: 'same',
+    cloudAiKvTtlSeconds: CLOUD_AI_KV_TTL_DEFAULT_SECONDS,
     autoTranscribeOnSave: false,
     autoAiAfterTranscription: false,
     whisperModelStatuses: {},

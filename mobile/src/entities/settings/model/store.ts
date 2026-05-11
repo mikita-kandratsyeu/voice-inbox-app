@@ -5,6 +5,7 @@ import { getExperimentalPrivateAiEnabled } from '@/shared/config/runtimeConfig';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { storage } from '@/shared/lib/async-storage';
 
+import { CLOUD_AI_KV_TTL_DEFAULT_SECONDS, snapCloudAiKvTtlToChoice } from '../lib/cloudAiKvTtl';
 import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
 import {
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
@@ -60,6 +61,7 @@ const KEYS = {
   AUTO_ARCHIVE_ENABLED: 'settings.autoArchiveEnabled',
   AUTO_ARCHIVE_AFTER_DAYS: 'settings.autoArchiveAfterDays',
   CLOUD_AI_THIRD_PARTY_CONSENT: 'settings.cloudAiThirdPartyConsentAccepted',
+  CLOUD_AI_KV_TTL_SECONDS: 'settings.cloudAiKvTtlSeconds',
   PRIVATE_PREVIOUS_THEME: 'settings.private.previousTheme',
   PRIVATE_PREVIOUS_AUTO_TRANSCRIBE: 'settings.private.previousAutoTranscribeOnSave',
   PRIVATE_PREVIOUS_AUTO_AI: 'settings.private.previousAutoAiAfterTranscription',
@@ -263,6 +265,14 @@ const getStoredCloudAiThirdPartyConsentAccepted = (): boolean => {
   return storage.getString(KEYS.CLOUD_AI_THIRD_PARTY_CONSENT) === 'true';
 };
 
+const getStoredCloudAiKvTtlSeconds = (): number => {
+  const raw = storage.getString(KEYS.CLOUD_AI_KV_TTL_SECONDS);
+  if (!raw) return CLOUD_AI_KV_TTL_DEFAULT_SECONDS;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed)) return CLOUD_AI_KV_TTL_DEFAULT_SECONDS;
+  return snapCloudAiKvTtlToChoice(parsed);
+};
+
 const getStoredPrivateCapabilityTier = (): PrivateCapabilityTier => {
   const val = storage.getString(KEYS.PRIVATE_CAPABILITY_TIER);
 
@@ -305,6 +315,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   autoArchiveEnabled: getStoredAutoArchiveEnabled(),
   autoArchiveAfterDays: getStoredAutoArchiveAfterDays(),
   cloudAiThirdPartyConsentAccepted: getStoredCloudAiThirdPartyConsentAccepted(),
+  cloudAiKvTtlSeconds: getStoredCloudAiKvTtlSeconds(),
   whisperModelStatuses: getStoredWhisperStatuses(),
   whisperDownloadProgress: {},
   whisperDownloadBytes: {},
@@ -499,6 +510,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       storage.remove(KEYS.CLOUD_AI_THIRD_PARTY_CONSENT);
     }
     set({ cloudAiThirdPartyConsentAccepted: value });
+  },
+
+  setCloudAiKvTtlSeconds: (value: number) => {
+    const next = snapCloudAiKvTtlToChoice(value);
+    storage.set(KEYS.CLOUD_AI_KV_TTL_SECONDS, String(next));
+    set({ cloudAiKvTtlSeconds: next });
   },
 
   setWhisperModelStatus: (

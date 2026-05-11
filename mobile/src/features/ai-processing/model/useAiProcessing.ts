@@ -74,6 +74,7 @@ export const useAiProcessing = () => {
     aiExecutionMode,
     privateLocalLlmBudget,
     privateCapabilityTier,
+    cloudAiKvTtlSeconds,
   } = useSettingsStore(
     useShallow((s) => ({
       selectedAIModel: s.selectedAIModel,
@@ -86,6 +87,7 @@ export const useAiProcessing = () => {
       aiExecutionMode: s.aiExecutionMode,
       privateLocalLlmBudget: s.privateLocalLlmBudget,
       privateCapabilityTier: s.privateCapabilityTier,
+      cloudAiKvTtlSeconds: s.cloudAiKvTtlSeconds,
     })),
   );
 
@@ -248,6 +250,7 @@ export const useAiProcessing = () => {
             aiExecutionMode,
             privateLocalLlmBudget,
             privateCapabilityTier,
+            cloudMessageTtlSeconds: cloudAiKvTtlSeconds,
           },
         );
 
@@ -410,6 +413,7 @@ export const useAiProcessing = () => {
       aiOutputLanguage,
       privateLocalLlmBudget,
       privateCapabilityTier,
+      cloudAiKvTtlSeconds,
       applyCancelledUiState,
       setPrivateAiBatchUi,
       setSummaryStatus,

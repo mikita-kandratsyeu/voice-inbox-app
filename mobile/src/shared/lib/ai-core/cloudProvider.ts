@@ -65,6 +65,7 @@ export async function runCloudSummaryTasks(
       taskType: 'summary_tasks',
       transcriptChars: request.transcript.length,
     },
+    messageTtlSeconds: ctx.cloudMessageTtlSeconds,
     options: {
       summaryStyle: ctx.summaryStyle,
       taskStrictness: ctx.taskStrictness,
@@ -126,6 +127,7 @@ export async function runCloudAsk(
       taskType: 'ask',
       transcriptChars: request.transcript.length,
     },
+    messageTtlSeconds: ctx.cloudMessageTtlSeconds,
     summary: request.summary,
     tasks: request.tasks,
     ...(request.priorTurns?.length ? { priorTurns: request.priorTurns } : {}),

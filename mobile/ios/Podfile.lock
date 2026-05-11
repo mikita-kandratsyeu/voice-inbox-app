@@ -279,7 +279,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - llama-rn (0.12.0-rc.9):
+  - llama-rn (0.12.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2013,6 +2013,49 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-slider (5.2.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - react-native-slider/common (= 5.2.0)
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
+  - react-native-slider/common (5.2.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - React-NativeModulesApple (0.84.1):
     - hermes-engine
     - React-callinvoker
@@ -3046,6 +3089,7 @@ DEPENDENCIES:
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-quick-base64 (from `../node_modules/react-native-quick-base64`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-networking (from `../node_modules/react-native/ReactCommon/react/networking`)
   - React-oscompat (from `../node_modules/react-native/ReactCommon/oscompat`)
@@ -3284,6 +3328,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-quick-base64"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-slider:
+    :path: "../node_modules/@react-native-community/slider"
   React-NativeModulesApple:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
   React-networking:
@@ -3451,7 +3497,7 @@ SPEC CHECKSUMS:
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   hermes-engine: 0437e9839a87c1d737989c1116dd08492d271607
   InappbrowserNitro: e4e4ba49eb5e0cb1b6ed7ffe0224bfcaf5bd8d28
-  llama-rn: 82e83912906edc522b73ea92a5ac572ecb02c3fb
+  llama-rn: e8937bdda6f62e373622dc3ab9c0456de2331175
   MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   NitroDeviceInfo: 8c57fd4d884155052244f9b2470ae735ec5d92b3
@@ -3511,6 +3557,7 @@ SPEC CHECKSUMS:
   react-native-netinfo: c9fa0172bba6414449ea5b67fc92f2c99c20cb1d
   react-native-quick-base64: d87272898345e0fc3c3afb8e5dff335d51214f3e
   react-native-safe-area-context: 77b4164a2f78aba35dc07956dc448bea7f4bec7f
+  react-native-slider: 04f5b66cb796c23d256c1a842fa801fe1768e2cd
   React-NativeModulesApple: 7dcb21dde521e4f5795447db38d0e5ed43cb8aac
   React-networking: 35e4b01a70356a5feccf1c4edb7aeb5c63e5cb3a
   React-oscompat: d25dec7213a964cdfae442e1967a680954ed0df1

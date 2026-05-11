@@ -16,6 +16,8 @@ type AskApiRequestBody = {
   summary?: string;
   tasks?: { text: string }[];
   priorTurns?: { question: string; answer: string }[];
+  /** Server clamps to 300–3600; omit for API default (1 hour). */
+  messageTtlSeconds?: number;
 };
 
 const ASK_API_PRIOR_TURNS_MAX = 20;

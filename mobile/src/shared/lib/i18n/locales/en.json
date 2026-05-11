@@ -914,7 +914,22 @@
     "privateLocalGeneration.efficient": "Faster",
     "privateLocalGeneration.balanced": "Balanced",
     "privateLocalGeneration.expanded": "More detail",
-    "privateLocalGenerationHint": "Controls how long local answers can be."
+    "privateLocalGenerationHint": "Controls how long local answers can be.",
+    "smartModeCloudRetention": {
+      "title": "Cloud copy time",
+      "description": "5 minutes to 1 hour — how long we may keep a cloud copy of the AI result.",
+      "sliderA11yLabel": "Retention time for cloud AI copies",
+      "tick300": "5m",
+      "tick600": "10m",
+      "tick900": "15m",
+      "tick1800": "30m",
+      "tick3600": "1h",
+      "m300": "5 minutes",
+      "m600": "10 minutes",
+      "m900": "15 minutes",
+      "m1800": "30 minutes",
+      "m3600": "1 hour"
+    }
   },
   "privateAiMode": {
     "title": "Private vs Smart",

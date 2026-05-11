@@ -4,6 +4,7 @@ import { Alert } from 'react-native';
 
 import { useFolderStore } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
+import { useSettingsStore } from '@/entities/settings';
 import { isString, useNetworkStatus } from '@/shared/lib';
 import { pollAutoOrganizeFolders, postAutoOrganizeFolders } from '@/shared/lib/ai-api';
 import {
@@ -77,6 +78,7 @@ export function useAutoOrganizeFolders(
   const { t, i18n } = useTranslation();
   const { isConnected } = useNetworkStatus();
   const folders = useFolderStore((s) => s.folders);
+  const cloudAiKvTtlSeconds = useSettingsStore((s) => s.cloudAiKvTtlSeconds);
   const [isRunning, setIsRunning] = useState(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -157,6 +159,7 @@ export function useAutoOrganizeFolders(
           color: f.color,
         })),
         notes: eligibleNotes,
+        messageTtlSeconds: cloudAiKvTtlSeconds,
       });
       if (!postResult.ok) {
         const msg =
@@ -185,7 +188,16 @@ export function useAutoOrganizeFolders(
     } finally {
       setIsRunning(false);
     }
-  }, [eligibleNotes, folders, isConnected, isRunning, i18n.language, options, t]);
+  }, [
+    eligibleNotes,
+    folders,
+    isConnected,
+    isRunning,
+    i18n.language,
+    options,
+    t,
+    cloudAiKvTtlSeconds,
+  ]);
 
   const overlayMode: 'loading' | 'success' = isRunning ? 'loading' : 'success';
 

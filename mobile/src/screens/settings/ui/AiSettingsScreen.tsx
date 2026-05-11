@@ -13,26 +13,29 @@ import type {
   TaskStrictness,
 } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
+import { type CloudAiKvTtlSeconds } from '@/entities/settings/lib/cloudAiKvTtl';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { ScreenHeader, SettingsSection } from '@/shared/ui';
 
+import { CloudAiKvTtlSlider } from './CloudAiKvTtlSlider';
+
 const SUMMARY_STYLES: SummaryStyle[] = ['brief', 'standard', 'detailed'];
 const TASK_STRICTNESS_OPTIONS: TaskStrictness[] = ['strict', 'balanced', 'soft'];
 const OUTPUT_LANGUAGES: AiOutputLanguage[] = ['same', 'ru', 'en'];
 const PRIVATE_LOCAL_LLM_BUDGETS: PrivateLocalLlmBudget[] = ['efficient', 'balanced', 'expanded'];
 
-type PickerRowProps<T extends string> = {
-  options: T[];
+type PickerRowProps<T extends string | number> = {
+  options: readonly T[];
   selected: T;
   onSelect: (value: T) => void;
   labelKey: (value: T) => string;
   color: Colors;
 };
 
-function PickerSection<T extends string>({
+function PickerSection<T extends string | number>({
   options,
   selected,
   onSelect,
@@ -47,9 +50,10 @@ function PickerSection<T extends string>({
       {options.map((opt, index) => {
         const isSelected = opt === selected;
         const isLast = index === options.length - 1;
+        const rowKey = typeof opt === 'number' ? `n-${opt}` : opt;
         return (
           <TouchableOpacity
-            key={opt}
+            key={rowKey}
             onPress={() => onSelect(opt)}
             activeOpacity={0.7}
             accessibilityRole="button"
@@ -104,7 +108,12 @@ export const AiSettingsScreen = () => {
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateLocalLlmBudget = useSettingsStore((s) => s.privateLocalLlmBudget);
   const setPrivateLocalLlmBudget = useSettingsStore((s) => s.setPrivateLocalLlmBudget);
+  const cloudAiKvTtlSeconds = useSettingsStore((s) => s.cloudAiKvTtlSeconds);
+  const setCloudAiKvTtlSeconds = useSettingsStore((s) => s.setCloudAiKvTtlSeconds);
   const isPrivateMode = aiExecutionMode === 'private_experimental';
+
+  const cloudRetentionLabel = (sec: CloudAiKvTtlSeconds) =>
+    t(`aiSettings.smartModeCloudRetention.m${sec}`);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -157,6 +166,21 @@ export const AiSettingsScreen = () => {
                 </View>
               </View>
             </>
+          )}
+          {!isPrivateMode && (
+            <SettingsSection variant="plain" title={t('aiSettings.smartModeCloudRetention.title')}>
+              <Text className="mb-3 px-1 text-[13px] leading-5" style={{ color: color.text.muted }}>
+                {t('aiSettings.smartModeCloudRetention.description')}
+              </Text>
+              <CloudAiKvTtlSlider
+                valueSeconds={cloudAiKvTtlSeconds}
+                onChangeSeconds={setCloudAiKvTtlSeconds}
+                fullLabel={cloudRetentionLabel}
+                tickLabel={(sec) => t(`aiSettings.smartModeCloudRetention.tick${sec}`)}
+                sliderAccessibilityLabel={t('aiSettings.smartModeCloudRetention.sliderA11yLabel')}
+                color={color}
+              />
+            </SettingsSection>
           )}
           <SettingsSection title={t('aiSettings.summaryStyle')}>
             <PickerSection

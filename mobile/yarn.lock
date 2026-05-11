@@ -9117,15 +9117,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"llama.rn@npm:^0.12.0-rc.9":
-  version: 0.12.0-rc.9
-  resolution: "llama.rn@npm:0.12.0-rc.9"
+"llama.rn@npm:^0.12.0":
+  version: 0.12.0
+  resolution: "llama.rn@npm:0.12.0"
   peerDependencies:
     react: "*"
     react-native: "*"
   bin:
     llama-rn-download-artifacts: install/download-native-artifacts.js
-  checksum: 10c0/6d8b1c8a8672fa400ab242c01fce00d769b31564e00eafab536bdd489b050eb60a9a0696c1dd0c566458afa028cd8f28d6d25bdcf4caccc3248dfd0af81d77b6
+  checksum: 10c0/0b8b231c77682725ec78b2a481b2b4e35fba0fddf7b2bc72798d1f18239f8b44d3da13104d6e4477df64c99ac0481750c6c11721e53d6161d5f39feec4719a51
   languageName: node
   linkType: hard
 
@@ -13260,6 +13260,7 @@ __metadata:
     "@react-native-community/cli-platform-ios": "npm:20.1.3"
     "@react-native-community/datetimepicker": "npm:^9.1.0"
     "@react-native-community/netinfo": "npm:^12.0.1"
+    "@react-native-community/slider": "npm:^5.2.0"
     "@react-native-firebase/analytics": "npm:24.0.0"
     "@react-native-firebase/app": "npm:^24.0.0"
     "@react-native-firebase/app-check": "npm:24.0.0"
@@ -13300,7 +13301,7 @@ __metadata:
     i18next: "npm:^26.0.3"
     jest: "npm:^29.6.3"
     lint-staged: "npm:^15.5.0"
-    llama.rn: "npm:^0.12.0-rc.9"
+    llama.rn: "npm:^0.12.0"
     lucide-react-native: "npm:^1.8.0"
     nativewind: "npm:^4.2.3"
     patch-package: "npm:^8.0.1"

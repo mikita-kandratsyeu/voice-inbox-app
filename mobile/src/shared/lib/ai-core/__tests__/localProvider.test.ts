@@ -45,6 +45,7 @@ function createCtx(overrides: Partial<AiExecutionContext> = {}): AiExecutionCont
     aiExecutionMode: 'private_experimental',
     privateLocalLlmBudget: 'balanced',
     privateCapabilityTier: 'full',
+    cloudMessageTtlSeconds: 3600,
     ...overrides,
     aiModelRoutingMode: overrides.aiModelRoutingMode ?? 'manual',
   };

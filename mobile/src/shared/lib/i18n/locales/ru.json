@@ -924,7 +924,22 @@
     "privateLocalGeneration.efficient": "Быстрее",
     "privateLocalGeneration.balanced": "Сбалансировано",
     "privateLocalGeneration.expanded": "Подробнее",
-    "privateLocalGenerationHint": "Задаёт, насколько длинными могут быть локальные ответы."
+    "privateLocalGenerationHint": "Задаёт, насколько длинными могут быть локальные ответы.",
+    "smartModeCloudRetention": {
+      "title": "Время в облаке",
+      "description": "От 5 минут до часа — как долго мы храним у себя копию ответа ИИ.",
+      "sliderA11yLabel": "Время хранения облачной копии ответа ИИ",
+      "tick300": "5м",
+      "tick600": "10м",
+      "tick900": "15м",
+      "tick1800": "30м",
+      "tick3600": "1ч",
+      "m300": "5 минут",
+      "m600": "10 минут",
+      "m900": "15 минут",
+      "m1800": "30 минут",
+      "m3600": "1 час"
+    }
   },
   "privateAiMode": {
     "title": "Режимы Private и Smart",

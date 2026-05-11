@@ -22,6 +22,8 @@ type AiApiRequestBody = {
   };
   systemPrompt?: string;
   options?: AiProcessingOptions;
+  /** Server clamps to 300–3600; omit for API default (1 hour). */
+  messageTtlSeconds?: number;
 };
 
 type AiApiSuccessResponse = {
