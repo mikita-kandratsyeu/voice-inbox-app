@@ -753,7 +753,7 @@
     "statistics": "Statistics",
     "management": "Management",
     "audioRecords": "Audio records",
-    "transcriptsAndData": "Transcripts",
+    "transcriptsAndData": "Transcripts and data",
     "aiProcessing": "Generations",
     "totalRecords": "Total records",
     "withAudio": "With audio",
@@ -779,12 +779,7 @@
     "cacheLabel": "Cache",
     "audioFilesValue": "{{count}} files · {{size}} MB",
     "mb": "MB",
-    "gb": "GB",
-    "tapRingHint": "Tap rows or the ring to select categories. Tap the center to clear the selection.",
-    "totalUsed": "Total used",
-    "selectedSegmentsTitle": "Selected: {{count}}",
-    "clearCacheCta": "Clear cache · {{size}}",
-    "onDeviceModels": "On-device models"
+    "gb": "GB"
   },
   "whisper": {
     "modelTitle": "Transcription model",
