@@ -13,6 +13,7 @@ import {
   useAppLockStore,
 } from '@/entities/app-lock';
 import { useColors } from '@/shared/config';
+import { hapticSelection } from '@/shared/lib';
 
 import { PinInput } from './PinInput';
 
@@ -192,6 +193,7 @@ export const LockScreen = () => {
   }, []);
 
   const handleBiometricPress = useCallback(async () => {
+    hapticSelection();
     const ok = await runBiometricUnlock();
 
     if (ok) {
