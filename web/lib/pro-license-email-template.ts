@@ -7,6 +7,8 @@ import {
 
 const MUTED = '#6b7280';
 const BORDER = '#e5e7eb';
+const FOOTER_LINK = '#1d4ed8';
+const FOOTER_LEGAL = '#6b7280';
 
 export function resolveProLicenseEmailLogoUrl(): string {
   const base = BASE_URL_OR_FALLBACK.replace(/\/$/, '');
@@ -52,37 +54,65 @@ function buildFooterHtml(params: {
   const year = new Date().getFullYear();
   const { appStore: appBadgeSrc, googlePlay: gpBadgeSrc } = resolveStoreBadgeUrls();
 
-  const storeRow =
-    appStoreHref !== '#' || googlePlayHref !== '#'
-      ? `<table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto;">
-  <tr>
-    <td style="padding:4px 6px 4px 0;vertical-align:middle;">
+  const hasAppStore = appStoreHref !== '#';
+  const hasGooglePlay = googlePlayHref !== '#';
+  const storeCells: string[] = [];
+  if (hasAppStore) {
+    const padRight = hasGooglePlay ? '6px' : '0';
+    storeCells.push(`<td style="padding:2px ${padRight} 2px 0;vertical-align:middle;">
       <a href="${escapeHtml(appStoreHref)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
         <img src="${escapeHtml(appBadgeSrc)}" width="150" height="50" alt="Download on the App Store" style="display:block;width:150px;height:50px;border:0;" />
       </a>
-    </td>
-    <td style="padding:4px 0 4px 6px;vertical-align:middle;">
+    </td>`);
+  }
+  if (hasGooglePlay) {
+    const padLeft = hasAppStore ? '6px' : '0';
+    storeCells.push(`<td style="padding:2px 0 2px ${padLeft};vertical-align:middle;">
       <a href="${escapeHtml(googlePlayHref)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
         <img src="${escapeHtml(gpBadgeSrc)}" width="150" height="50" alt="Get it on Google Play" style="display:block;width:150px;height:50px;border:0;" />
       </a>
-    </td>
+    </td>`);
+  }
+  const storeRow =
+    storeCells.length > 0
+      ? `<table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto;">
+  <tr>
+    ${storeCells.join('\n    ')}
   </tr>
 </table>`
       : '';
 
+  const hasStores = storeCells.length > 0;
+  const linkStyle = `color:${FOOTER_LINK};text-decoration:underline;font-size:13px;line-height:1.5;font-weight:600;`;
+
+  const storeBlock = hasStores
+    ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+  <tr>
+    <td style="padding:0 0 12px 0;text-align:center;">
+      <p style="margin:0 0 6px 0;font-size:11px;line-height:1.35;color:${MUTED};font-weight:600;">Get the app</p>
+      ${storeRow}
+    </td>
+  </tr>
+</table>`
+    : '';
+
+  const legalNav = `<table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto;">
+  <tr>
+    <td style="padding:4px 6px;"><a href="${supportHref}" style="${linkStyle}">Support</a></td>
+    <td style="padding:4px 0;font-size:13px;line-height:1;color:#d1d5db;vertical-align:middle;" aria-hidden="true">·</td>
+    <td style="padding:4px 6px;"><a href="${privacyHref}" style="${linkStyle}">Privacy Policy</a></td>
+    <td style="padding:4px 0;font-size:13px;line-height:1;color:#d1d5db;vertical-align:middle;" aria-hidden="true">·</td>
+    <td style="padding:4px 6px;"><a href="${termsHref}" style="${linkStyle}">Terms of Service</a></td>
+  </tr>
+</table>`;
+
   return `
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
   <tr>
-    <td style="padding:8px 28px 18px 28px;text-align:center;">
-      ${storeRow}
-      <p style="margin:10px 0 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">
-        <a href="${supportHref}" style="color:#9ca3af;text-decoration:underline;">Support</a>
-        &nbsp;
-        <a href="${privacyHref}" style="color:#9ca3af;text-decoration:underline;">Privacy</a>
-        &nbsp;
-        <a href="${termsHref}" style="color:#9ca3af;text-decoration:underline;">Terms</a>
-      </p>
-      <p style="margin:10px 0 0 0;font-size:12px;line-height:1.5;color:#9ca3af;">© ${year} Voice Inbox AI. All rights reserved.</p>
+    <td style="padding:14px 28px 18px 28px;text-align:center;border-top:1px solid ${BORDER};background-color:#f9fafb;">
+      ${storeBlock}
+      ${legalNav}
+      <p style="margin:10px 0 0 0;padding:0 8px;font-size:11px;line-height:1.5;color:${FOOTER_LEGAL};">© ${year} Voice Inbox AI. All rights reserved.</p>
     </td>
   </tr>
 </table>`;
@@ -146,7 +176,7 @@ export function buildProLicenseKeyEmail(params: {
     site ? `Website: ${site}` : '',
     appStoreHref !== '#' ? `App Store: ${appStoreHref}` : '',
     googlePlayHref !== '#' ? `Google Play: ${googlePlayHref}` : '',
-    site ? `Privacy: ${site}/privacy · Terms: ${site}/terms` : '',
+    site ? `Privacy Policy: ${site}/privacy · Terms of Service: ${site}/terms` : '',
   ];
   const text = textLines.filter(Boolean).join('\n');
 
@@ -218,7 +248,7 @@ export function buildProLicenseKeyEmail(params: {
             </td>
           </tr>
           <tr>
-            <td style="padding:6px 28px 20px 28px;">
+            <td style="padding:6px 28px 12px 28px;">
               <p style="margin:0;font-size:13px;line-height:1.5;color:#4b5563;">
                 One device only. Do not share this code.
               </p>
