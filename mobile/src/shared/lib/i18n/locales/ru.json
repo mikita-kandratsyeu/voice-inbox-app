@@ -774,6 +774,7 @@
   "storage": {
     "title": "Офлайн хранилище",
     "details": "Детализация",
+    "breakdownA11y": "{{category}}, детализация",
     "statistics": "Статистика",
     "management": "Управление",
     "audioRecords": "Аудиозаписи",

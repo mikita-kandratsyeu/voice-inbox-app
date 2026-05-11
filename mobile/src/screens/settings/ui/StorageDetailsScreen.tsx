@@ -1,16 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import {
-  Bot,
-  BrainCircuit,
-  Clock,
-  FileText,
-  Mic,
-  Mic2,
-  Sparkles,
-  Trash2,
-  Type,
-} from 'lucide-react-native';
+import { Bot, BrainCircuit, Clock, FileText, Mic, Sparkles, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -107,6 +97,7 @@ export const StorageDetailsScreen = () => {
   const [downloadedVariants, setDownloadedVariants] = useState<DownloadedModelVariant[]>([]);
   const [downloadedLocalLlm, setDownloadedLocalLlm] = useState<DownloadedLocalLlmEntry[]>([]);
   const [selectedSegmentIds, setSelectedSegmentIds] = useState<StorageRingSegmentId[]>([]);
+  const [expandedBreakdownId, setExpandedBreakdownId] = useState<StorageRingSegmentId | null>(null);
 
   const loadModelSizes = useCallback(async () => {
     const formats: WhisperModelWeightsFormat[] = ['q5_1', 'full'];
@@ -191,8 +182,8 @@ export const StorageDetailsScreen = () => {
         { id: 'audio' as const, color: color.accent.primary, bytes: audioBytes },
         { id: 'transcript' as const, color: color.accent.transcript, bytes: transcriptBytes },
         { id: 'ai' as const, color: color.accent.aiData, bytes: aiBytes },
-        { id: 'cache' as const, color: color.accent.cache, bytes: cacheBytes },
         { id: 'models' as const, color: color.accent.models, bytes: modelsBytesTotal },
+        { id: 'cache' as const, color: color.accent.cache, bytes: cacheBytes },
       ],
     };
   }, [stats, modelsBytesTotal, color]);
@@ -219,6 +210,31 @@ export const StorageDetailsScreen = () => {
     hapticSelection();
     setSelectedSegmentIds([]);
   }, []);
+
+  const toggleBreakdownExpand = useCallback((id: StorageRingSegmentId) => {
+    hapticSelection();
+    setExpandedBreakdownId((cur) => (cur === id ? null : id));
+  }, []);
+
+  const segmentHasExpandableDetails = useCallback(
+    (id: StorageRingSegmentId) => {
+      switch (id) {
+        case 'cache':
+          return false;
+        case 'models':
+          return hasOnDeviceModelRows;
+        case 'audio':
+          return stats.audioMb > 0 || audioCount > 0;
+        case 'transcript':
+          return stats.transcriptKb > 0;
+        case 'ai':
+          return stats.aiDataKb > 0;
+        default:
+          return false;
+      }
+    },
+    [stats.audioMb, stats.transcriptKb, stats.aiDataKb, audioCount, hasOnDeviceModelRows],
+  );
 
   const { ringCenterTitle, ringCenterValue } = useMemo(() => {
     const ids = selectedSegmentIds;
@@ -444,18 +460,220 @@ export const StorageDetailsScreen = () => {
                       totalBytesForRing > 0
                         ? ((seg.bytes / totalBytesForRing) * 100).toFixed(1)
                         : '0.0';
+                    const hasExp = segmentHasExpandableDetails(seg.id);
+                    const expanded = expandedBreakdownId === seg.id;
+                    const isLastSeg = index === ringSegments.length - 1;
+                    const mainShowBottomBorder = (hasExp && expanded) || !isLastSeg;
+
                     return (
-                      <StorageBreakdownRow
-                        key={seg.id}
-                        segment={seg}
-                        label={segmentLabels[seg.id]}
-                        valueLabel={formatFileSize(seg.bytes)}
-                        percentLabel={`${pct}%`}
-                        selected={selectedSegmentIds.includes(seg.id)}
-                        onPress={() => toggleSegment(seg.id)}
-                        color={color}
-                        isLast={index === ringSegments.length - 1}
-                      />
+                      <React.Fragment key={seg.id}>
+                        <StorageBreakdownRow
+                          segment={seg}
+                          label={segmentLabels[seg.id]}
+                          valueLabel={formatFileSize(seg.bytes)}
+                          percentLabel={`${pct}%`}
+                          selected={selectedSegmentIds.includes(seg.id)}
+                          onSelectPress={() => toggleSegment(seg.id)}
+                          color={color}
+                          showBottomBorder={mainShowBottomBorder}
+                          hasExpandableDetails={hasExp}
+                          detailsExpanded={expanded}
+                          onExpandPress={hasExp ? () => toggleBreakdownExpand(seg.id) : undefined}
+                          expandChevronAccessibilityLabel={t('storage.breakdownA11y', {
+                            category: segmentLabels[seg.id],
+                          })}
+                        />
+                        {expanded && hasExp ? (
+                          <View
+                            style={{
+                              paddingLeft: 16 + ROW_BULLET_SIZE + 12,
+                              paddingRight: 16,
+                              paddingTop: 10,
+                              paddingBottom: 12,
+                              backgroundColor: color.background.secondary,
+                              borderBottomWidth: !isLastSeg ? 1 : 0,
+                              borderBottomColor: color.border.default,
+                            }}
+                          >
+                            {seg.id === 'audio' ? (
+                              <Text
+                                style={{
+                                  color: color.text.secondary,
+                                  fontSize: 15,
+                                  lineHeight: 20,
+                                }}
+                              >
+                                {t('storage.audioFilesValue', {
+                                  count: audioCount,
+                                  size: stats.audioMb.toFixed(1),
+                                })}
+                              </Text>
+                            ) : null}
+                            {seg.id === 'transcript' ? (
+                              <View>
+                                <Text
+                                  style={{
+                                    color: color.text.secondary,
+                                    fontSize: 15,
+                                    lineHeight: 20,
+                                  }}
+                                >
+                                  {formatFileSize(stats.transcriptKb * 1024)}
+                                </Text>
+                                {withTranscript > 0 ? (
+                                  <Text
+                                    style={{
+                                      marginTop: 6,
+                                      color: color.text.muted,
+                                      fontSize: 14,
+                                      lineHeight: 19,
+                                    }}
+                                  >
+                                    {t('storage.transcripts')}: {withTranscript}
+                                  </Text>
+                                ) : null}
+                              </View>
+                            ) : null}
+                            {seg.id === 'ai' ? (
+                              <View>
+                                <Text
+                                  style={{
+                                    color: color.text.secondary,
+                                    fontSize: 15,
+                                    lineHeight: 20,
+                                  }}
+                                >
+                                  {formatFileSize(stats.aiDataKb * 1024)}
+                                </Text>
+                                {processedByAI > 0 ? (
+                                  <Text
+                                    style={{
+                                      marginTop: 6,
+                                      color: color.text.muted,
+                                      fontSize: 14,
+                                      lineHeight: 19,
+                                    }}
+                                  >
+                                    {t('storage.aiProcessed')}: {processedByAI}
+                                  </Text>
+                                ) : null}
+                              </View>
+                            ) : null}
+                            {seg.id === 'models' ? (
+                              <View>
+                                {downloadedVariants.map((model, idx) => {
+                                  const isFirst = idx === 0;
+                                  return (
+                                    <View
+                                      key={`${model.id}:${model.format}`}
+                                      style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        paddingTop: isFirst ? 0 : 10,
+                                        marginTop: isFirst ? 0 : 10,
+                                        borderTopWidth: isFirst ? 0 : 1,
+                                        borderTopColor: color.border.default,
+                                      }}
+                                    >
+                                      <View
+                                        style={{
+                                          width: 18,
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          marginRight: 10,
+                                        }}
+                                      >
+                                        <BrainCircuit
+                                          size={18}
+                                          color={color.accent.models}
+                                          strokeWidth={1.8}
+                                        />
+                                      </View>
+                                      <Text
+                                        style={{
+                                          flex: 1,
+                                          minWidth: 0,
+                                          fontSize: 15,
+                                          lineHeight: 20,
+                                          color: color.text.primary,
+                                        }}
+                                        numberOfLines={2}
+                                      >
+                                        {getWhisperModelDisplayName(model.id, model.format)}
+                                      </Text>
+                                      <Text
+                                        style={{
+                                          marginLeft: 8,
+                                          fontSize: 15,
+                                          lineHeight: 20,
+                                          color: color.text.muted,
+                                          fontVariant: ['tabular-nums'],
+                                        }}
+                                      >
+                                        {formatFileSize(model.bytes)}
+                                      </Text>
+                                    </View>
+                                  );
+                                })}
+                                {downloadedLocalLlm.map((model, idx) => {
+                                  const isFirst = idx === 0 && downloadedVariants.length === 0;
+                                  return (
+                                    <View
+                                      key={model.id}
+                                      style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'center',
+                                        paddingTop: isFirst ? 0 : 10,
+                                        marginTop: isFirst ? 0 : 10,
+                                        borderTopWidth: isFirst ? 0 : 1,
+                                        borderTopColor: color.border.default,
+                                      }}
+                                    >
+                                      <View
+                                        style={{
+                                          width: 18,
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          marginRight: 10,
+                                        }}
+                                      >
+                                        <Sparkles
+                                          size={18}
+                                          color={color.accent.models}
+                                          strokeWidth={1.8}
+                                        />
+                                      </View>
+                                      <Text
+                                        style={{
+                                          flex: 1,
+                                          minWidth: 0,
+                                          fontSize: 15,
+                                          lineHeight: 20,
+                                          color: color.text.primary,
+                                        }}
+                                        numberOfLines={2}
+                                      >
+                                        {model.name}
+                                      </Text>
+                                      <Text
+                                        style={{
+                                          marginLeft: 8,
+                                          fontSize: 15,
+                                          lineHeight: 20,
+                                          color: color.text.muted,
+                                          fontVariant: ['tabular-nums'],
+                                        }}
+                                      >
+                                        {formatFileSize(model.bytes)}
+                                      </Text>
+                                    </View>
+                                  );
+                                })}
+                              </View>
+                            ) : null}
+                          </View>
+                        ) : null}
+                      </React.Fragment>
                     );
                   })}
                 </View>
@@ -491,51 +709,6 @@ export const StorageDetailsScreen = () => {
               </>
             )}
           </View>
-          <SettingsSection title={t('storage.details')}>
-            <SettingsRow
-              label={t('storage.audioRecords')}
-              value={t('storage.audioFilesValue', {
-                count: audioCount,
-                size: stats.audioMb.toFixed(1),
-              })}
-              leftIcon={<Mic2 size={20} color={color.accent.primary} strokeWidth={1.8} />}
-              showChevron={false}
-              isFirst
-            />
-            <SettingsRow
-              label={t('storage.transcriptsAndData')}
-              value={formatFileSize(stats.transcriptKb * 1024)}
-              leftIcon={<Type size={20} color={color.accent.transcript} strokeWidth={1.8} />}
-              showChevron={false}
-            />
-            <SettingsRow
-              label={t('storage.aiProcessing')}
-              value={formatFileSize(stats.aiDataKb * 1024)}
-              leftIcon={<Bot size={20} color={color.accent.aiData} strokeWidth={1.8} />}
-              showChevron={false}
-              isLast={!hasOnDeviceModelRows}
-            />
-            {downloadedVariants.map((model, index) => (
-              <SettingsRow
-                key={`${model.id}:${model.format}`}
-                label={getWhisperModelDisplayName(model.id, model.format)}
-                value={formatFileSize(model.bytes)}
-                leftIcon={<BrainCircuit size={20} color={color.accent.models} strokeWidth={1.8} />}
-                showChevron={false}
-                isLast={index === downloadedVariants.length - 1 && downloadedLocalLlm.length === 0}
-              />
-            ))}
-            {downloadedLocalLlm.map((model, index) => (
-              <SettingsRow
-                key={model.id}
-                label={model.name}
-                value={formatFileSize(model.bytes)}
-                leftIcon={<Sparkles size={20} color={color.accent.models} strokeWidth={1.8} />}
-                showChevron={false}
-                isLast={index === downloadedLocalLlm.length - 1}
-              />
-            ))}
-          </SettingsSection>
           <SettingsSection title={t('storage.statistics')}>
             <SettingsRow
               label={t('storage.totalRecords')}

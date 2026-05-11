@@ -1,6 +1,6 @@
-import { Check } from 'lucide-react-native';
+import { Check, ChevronDown } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { LayoutChangeEvent, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { LayoutChangeEvent, Pressable, Text, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -351,101 +351,129 @@ export const StorageBreakdownRow = ({
   valueLabel,
   percentLabel,
   selected,
-  onPress,
+  onSelectPress,
   color,
-  isLast,
+  showBottomBorder = true,
+  hasExpandableDetails = false,
+  detailsExpanded = false,
+  onExpandPress,
+  expandChevronAccessibilityLabel,
 }: {
   segment: StorageRingSegment;
   label: string;
   valueLabel: string;
   percentLabel: string;
   selected: boolean;
-  onPress: () => void;
+  onSelectPress: () => void;
   color: Colors;
-  isLast?: boolean;
+  showBottomBorder?: boolean;
+  hasExpandableDetails?: boolean;
+  detailsExpanded?: boolean;
+  onExpandPress?: () => void;
+  expandChevronAccessibilityLabel?: string;
 }) => {
   const a11y = `${label}, ${percentLabel}, ${valueLabel}`;
 
   return (
-    <TouchableOpacity
-      activeOpacity={0.7}
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      accessibilityLabel={a11y}
-      onPress={onPress}
+    <View
+      style={[
+        {
+          backgroundColor: selected
+            ? withAlphaHex(segment.color, ROW_SELECTED_TINT_ALPHA)
+            : 'transparent',
+          borderBottomWidth: showBottomBorder ? 1 : 0,
+          borderBottomColor: color.border.default,
+        },
+      ]}
     >
-      <View
-        className="flex-row items-center px-4 py-3.5"
-        style={[
-          {
-            minHeight: 52,
-            backgroundColor: selected
-              ? withAlphaHex(segment.color, ROW_SELECTED_TINT_ALPHA)
-              : 'transparent',
-            borderBottomWidth: isLast ? 0 : 1,
-            borderBottomColor: color.border.default,
-          },
-        ]}
-      >
-        <View
-          style={{
-            width: ROW_BULLET_SIZE,
-            height: ROW_BULLET_SIZE,
-            borderRadius: ROW_BULLET_SIZE / 2,
-            marginRight: 12,
-            backgroundColor: segment.color,
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
+      <View className="flex-row items-center">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ selected }}
+          accessibilityLabel={a11y}
+          onPress={onSelectPress}
+          className="min-w-0 flex-1 flex-row items-center py-3.5 pl-4"
+          style={{ minHeight: 52 }}
         >
-          {selected ? (
-            <Check color={color.icon.onAccent} size={ROW_CHECK_SIZE} strokeWidth={2.8} />
-          ) : null}
-        </View>
-        <View
-          className="min-w-0 flex-1 flex-shrink flex-row items-center pr-2"
-          style={{ columnGap: 6 }}
-        >
-          <Text
+          <View
             style={{
-              flexShrink: 1,
-              fontSize: 16,
-              lineHeight: 21,
-              color: color.text.primary,
-              fontWeight: '500',
+              width: ROW_BULLET_SIZE,
+              height: ROW_BULLET_SIZE,
+              borderRadius: ROW_BULLET_SIZE / 2,
+              marginRight: 12,
+              backgroundColor: segment.color,
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
-            numberOfLines={1}
-            ellipsizeMode="tail"
           >
-            {label}
-          </Text>
+            {selected ? (
+              <Check color={color.icon.onAccent} size={ROW_CHECK_SIZE} strokeWidth={2.8} />
+            ) : null}
+          </View>
+          <View
+            className="min-w-0 flex-1 flex-shrink flex-row items-center pr-2"
+            style={{ columnGap: 6 }}
+          >
+            <Text
+              style={{
+                flexShrink: 1,
+                fontSize: 16,
+                lineHeight: 21,
+                color: color.text.primary,
+                fontWeight: '500',
+              }}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {label}
+            </Text>
+            <Text
+              style={{
+                flexShrink: 0,
+                fontSize: 16,
+                lineHeight: 21,
+                color: color.text.muted,
+                fontVariant: ['tabular-nums'],
+              }}
+              numberOfLines={1}
+            >
+              {percentLabel}
+            </Text>
+          </View>
           <Text
             style={{
-              flexShrink: 0,
               fontSize: 16,
               lineHeight: 21,
               color: color.text.muted,
               fontVariant: ['tabular-nums'],
+              flexShrink: 0,
+              textAlign: 'right',
+              paddingRight: hasExpandableDetails ? 4 : 16,
             }}
             numberOfLines={1}
           >
-            {percentLabel}
+            {valueLabel}
           </Text>
-        </View>
-        <Text
-          style={{
-            fontSize: 16,
-            lineHeight: 21,
-            color: color.text.muted,
-            fontVariant: ['tabular-nums'],
-            flexShrink: 0,
-            textAlign: 'right',
-          }}
-          numberOfLines={1}
-        >
-          {valueLabel}
-        </Text>
+        </Pressable>
+        {hasExpandableDetails && onExpandPress ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={expandChevronAccessibilityLabel ?? label}
+            accessibilityState={{ expanded: detailsExpanded }}
+            hitSlop={10}
+            onPress={onExpandPress}
+            className="justify-center py-3.5 pr-3 pl-1"
+            style={{ minHeight: 52 }}
+          >
+            <ChevronDown
+              size={20}
+              color={color.icon.muted}
+              strokeWidth={2}
+              style={{ transform: [{ rotate: detailsExpanded ? '180deg' : '0deg' }] }}
+            />
+          </Pressable>
+        ) : null}
       </View>
-    </TouchableOpacity>
+    </View>
   );
 };

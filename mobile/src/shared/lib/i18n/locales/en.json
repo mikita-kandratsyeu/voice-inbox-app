@@ -768,6 +768,7 @@
   "storage": {
     "title": "Offline storage",
     "details": "Details",
+    "breakdownA11y": "{{category}}, details",
     "statistics": "Statistics",
     "management": "Management",
     "audioRecords": "Audio records",
