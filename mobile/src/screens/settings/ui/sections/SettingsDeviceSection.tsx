@@ -1,6 +1,6 @@
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { TFunction } from 'i18next';
-import { Fingerprint, HardDrive } from 'lucide-react-native';
+import { Fingerprint, HardDrive, Trash2 } from 'lucide-react-native';
 import React from 'react';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
@@ -27,6 +27,11 @@ export const SettingsDeviceSection = ({ color, t, navigation, isAppLockEnabled }
       label={t('settings.offlineStorage')}
       leftIcon={<HardDrive size={20} color={color.accent.success} strokeWidth={1.8} />}
       onPress={() => navigation.navigate('StorageDetails')}
+    />
+    <SettingsRow
+      label={t('trash.title')}
+      leftIcon={<Trash2 size={20} color={color.accent.delete} strokeWidth={1.8} />}
+      onPress={() => navigation.navigate('Trash')}
       isLast
     />
   </SettingsSection>

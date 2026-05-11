@@ -43,7 +43,7 @@ export const AppStatsScreen = () => {
   const isTablet = useIsTablet();
 
   const records = useRecordStore((s) => s.records);
-  const deleteRecord = useRecordStore((s) => s.deleteRecord);
+  const purgeRecordPermanently = useRecordStore((s) => s.purgeRecordPermanently);
 
   const totalRecords = records.length;
   const withAudio = records.filter((r) => r.audioPath).length;
@@ -68,7 +68,7 @@ export const AppStatsScreen = () => {
           style: 'destructive',
           onPress: async () => {
             for (const r of records) {
-              await deleteRecord(r.id);
+              await purgeRecordPermanently(r.id);
             }
           },
         },

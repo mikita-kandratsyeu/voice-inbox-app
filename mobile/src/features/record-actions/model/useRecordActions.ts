@@ -9,19 +9,19 @@ type UseRecordActionsOptions = {
 };
 
 export const useRecordActions = ({ onDeleted }: UseRecordActionsOptions = {}) => {
-  const { deleteRecord } = useRecordStore();
+  const moveRecordToTrash = useRecordStore((s) => s.moveRecordToTrash);
 
   const promptDelete = (record: VoiceRecord) => {
     Alert.alert(
-      i18n.t('recordActions.deleteTitle'),
-      i18n.t('recordActions.deleteMessage', { title: record.title }),
+      i18n.t('recordActions.moveToTrashTitle'),
+      i18n.t('recordActions.moveToTrashMessage', { title: record.title }),
       [
         { text: i18n.t('common.cancel'), style: 'cancel' },
         {
-          text: i18n.t('common.delete'),
+          text: i18n.t('recordActions.moveToTrashConfirm'),
           style: 'destructive',
           onPress: async () => {
-            await deleteRecord(record.id);
+            await moveRecordToTrash(record.id);
             onDeleted?.();
           },
         },

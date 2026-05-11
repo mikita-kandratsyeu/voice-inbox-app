@@ -61,6 +61,10 @@ const migration0008 = `CREATE TABLE IF NOT EXISTS \`record_ask_ai\` (
 	\`updatedAt\` text NOT NULL
 );`;
 
+const migration0009 = `ALTER TABLE \`records\` ADD \`deletedAt\` text;--> statement-breakpoint
+ALTER TABLE \`records\` ADD \`purgeAt\` text;--> statement-breakpoint
+CREATE INDEX \`idx_records_purgeAt\` ON \`records\` (\`purgeAt\`);`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -80,5 +84,6 @@ export const migrationsConfig = {
     m0006: migration0006,
     m0007: migration0007,
     m0008: migration0008,
+    m0009: migration0009,
   } as Record<string, string>,
 };

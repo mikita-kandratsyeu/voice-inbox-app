@@ -73,7 +73,7 @@ export const useBatchRecordActions = ({ onComplete }: UseBatchRecordActionsParam
   const { t } = useTranslation();
   const archiveRecord = useRecordStore((s) => s.archiveRecord);
   const unarchiveRecord = useRecordStore((s) => s.unarchiveRecord);
-  const deleteRecord = useRecordStore((s) => s.deleteRecord);
+  const moveRecordToTrash = useRecordStore((s) => s.moveRecordToTrash);
   const setRecordFolder = useRecordStore((s) => s.setRecordFolder);
 
   const batchArchive = useCallback(
@@ -102,10 +102,10 @@ export const useBatchRecordActions = ({ onComplete }: UseBatchRecordActionsParam
         [
           { text: t('common.cancel'), style: 'cancel' },
           {
-            text: t('common.delete'),
+            text: t('recordActions.moveToTrashConfirm'),
             style: 'destructive',
             onPress: async () => {
-              await Promise.all(ids.map((id) => deleteRecord(id)));
+              await Promise.all(ids.map((id) => moveRecordToTrash(id)));
               hapticSuccess();
               onComplete();
             },
@@ -113,7 +113,7 @@ export const useBatchRecordActions = ({ onComplete }: UseBatchRecordActionsParam
         ],
       );
     },
-    [t, deleteRecord, onComplete],
+    [t, moveRecordToTrash, onComplete],
   );
 
   const batchExport = useCallback(

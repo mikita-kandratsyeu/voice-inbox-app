@@ -94,7 +94,7 @@ export const StorageDetailsScreen = () => {
   const isTablet = useIsTablet();
 
   const records = useRecordStore((s) => s.records);
-  const deleteRecord = useRecordStore((s) => s.deleteRecord);
+  const purgeRecordPermanently = useRecordStore((s) => s.purgeRecordPermanently);
   const folders = useFolderStore((s) => s.folders);
   const deleteFolder = useFolderStore((s) => s.deleteFolder);
   const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
@@ -286,7 +286,7 @@ export const StorageDetailsScreen = () => {
             let deleted = 0;
             for (let i = 0; i < records.length; i += 1) {
               const r = records[i];
-              await deleteRecord(r.id);
+              await purgeRecordPermanently(r.id);
               deleted += 1;
               setDeleteAllProgress({ current: deleted, total: totalToDelete });
             }

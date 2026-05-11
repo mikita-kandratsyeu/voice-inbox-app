@@ -36,11 +36,14 @@ export const recordsTable = sqliteTable(
     audioPath: text('audioPath'),
     embedding: text('embedding'),
     folderId: text('folderId'),
+    deletedAt: text('deletedAt'),
+    purgeAt: text('purgeAt'),
   },
   (t) => [
     index('idx_records_isPinned').on(t.isPinned),
     index('idx_records_createdAt').on(t.createdAt),
     index('idx_records_folderId').on(t.folderId),
+    index('idx_records_purgeAt').on(t.purgeAt),
   ],
 );
 
