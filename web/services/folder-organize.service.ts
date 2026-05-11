@@ -6,7 +6,7 @@ import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@
 import { redis } from '@/lib/redis';
 import { processAutoOrganizeFolders } from '@/services/ai.service';
 import type { AutoOrganizeMessage, AutoOrganizeResult, Message } from '@/types';
-import { SYSTEM_MICRO_TASK_MODEL, WEEK_TTL_SECONDS } from '@/config/constants';
+import { MESSAGE_TTL_SECONDS, SYSTEM_MICRO_TASK_MODEL, WEEK_TTL_SECONDS } from '@/config/constants';
 
 const AUTO_ORGANIZE_FREE_WEEKLY_LIMIT = 2;
 const AUTO_ORGANIZE_WEEKLY_KEY_PREFIX = 'ai_auto_organize_weekly:';
@@ -20,10 +20,6 @@ type CreateAutoOrganizeResult =
       usage: import('@/lib/ai-rate-limit').AiUsage;
     }
   | { created: false };
-
-function saveAutoOrganizeMessage(id: string, data: AutoOrganizeMessage): Promise<void> {
-  return saveMessage(id, data as unknown as Message);
-}
 
 function getAutoOrganizeWeekKey(deviceId: string): string {
   const now = new Date();
@@ -79,11 +75,20 @@ export const createAutoOrganizeRequest = async (
   notesPayload: string,
   deviceId: string,
   clientUserAgent?: string | null,
+  messageTtlSeconds: number = MESSAGE_TTL_SECONDS,
 ): Promise<CreateAutoOrganizeResult> => {
-  const created = await saveMessageIfNotExists(id, {
+  const ttl = messageTtlSeconds;
+  const saveAutoOrganizeMessage = (msgId: string, data: AutoOrganizeMessage) =>
+    saveMessage(msgId, data as unknown as Message, ttl);
+
+  const created = await saveMessageIfNotExists(
     id,
-    status: 'processing',
-  } as unknown as Message);
+    {
+      id,
+      status: 'processing',
+    } as unknown as Message,
+    ttl,
+  );
   if (!created) return { created: false };
 
   const generationLimitResult = await checkAndIncrement(deviceId);

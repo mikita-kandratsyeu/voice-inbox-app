@@ -9,6 +9,7 @@ import {
   validateDeviceId,
   validateRequiredStrings,
 } from '@/lib/api';
+import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
 import { createAutoOrganizeRequest } from '@/services/folder-organize.service';
 import { NextResponse } from 'next/server';
 
@@ -27,6 +28,7 @@ type RequestBody = {
   appLanguage?: unknown;
   existingFolders?: unknown;
   notes?: unknown;
+  messageTtlSeconds?: unknown;
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
@@ -127,11 +129,14 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     notes: sanitizedNotes,
   });
 
+  const messageTtlSeconds = clampMessageTtlSeconds(body.messageTtlSeconds);
+
   const result = await createAutoOrganizeRequest(
     String(body.id),
     payload,
     deviceIdTrimmed,
     request.headers.get('user-agent'),
+    messageTtlSeconds,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {

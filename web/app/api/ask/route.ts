@@ -16,6 +16,7 @@ import {
   type AiModelMode,
 } from '@/lib/ai-model-router';
 import { setAppForeground } from '@/lib/push-tokens';
+import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
 import { createAsk } from '@/services/ask.service';
 import { NextResponse } from 'next/server';
 
@@ -29,6 +30,7 @@ type CreateAskBody = {
   summary?: unknown;
   tasks?: unknown;
   priorTurns?: unknown;
+  messageTtlSeconds?: unknown;
 };
 
 export const POST = async (request: Request): Promise<NextResponse> => {
@@ -70,6 +72,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     summary,
     tasks,
     priorTurns: rawPrior,
+    messageTtlSeconds: rawMessageTtl,
   } = body as {
     id: string;
     transcript: string;
@@ -80,7 +83,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     summary?: string;
     tasks?: { text: string }[];
     priorTurns?: unknown;
+    messageTtlSeconds?: unknown;
   };
+
+  const messageTtlSeconds = clampMessageTtlSeconds(rawMessageTtl);
 
   const modelMode: AiModelMode = rawModelMode === 'auto' ? 'auto' : 'manual';
   const routingTaskType = rawRoutingContext?.taskType === 'summary_tasks' ? 'summary_tasks' : 'ask';
@@ -129,6 +135,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     tasksList,
     priorTurnsList,
     req.headers.get('user-agent'),
+    messageTtlSeconds,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {

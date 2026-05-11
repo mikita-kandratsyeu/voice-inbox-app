@@ -7,7 +7,7 @@ import {
   registerAiCompletion,
   sendLimitExceededPush,
 } from '@/lib/push-tokens';
-import { PUSH_DEBOUNCE_MS } from '@/config/constants';
+import { MESSAGE_TTL_SECONDS, PUSH_DEBOUNCE_MS } from '@/config/constants';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import { processAskQuestion } from '@/services/ai.service';
@@ -17,10 +17,6 @@ type CreateAskResult =
   | { created: true; syncToken?: string }
   | { created: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
   | { created: false };
-
-function saveAskMessage(id: string, data: AskMessage): Promise<void> {
-  return saveMessage(id, data as unknown as Message);
-}
 
 export const createAsk = async (
   id: string,
@@ -32,12 +28,22 @@ export const createAsk = async (
   tasks?: { text: string }[],
   priorTurns?: { question: string; answer: string }[],
   clientUserAgent?: string | null,
+  messageTtlSeconds: number = MESSAGE_TTL_SECONDS,
 ): Promise<CreateAskResult> => {
-  const created = await saveMessageIfNotExists(id, {
+  const ttl = messageTtlSeconds;
+
+  const saveAskMessage = (msgId: string, data: AskMessage) =>
+    saveMessage(msgId, data as unknown as Message, ttl);
+
+  const created = await saveMessageIfNotExists(
     id,
-    status: 'processing',
-    model,
-  } as unknown as Message);
+    {
+      id,
+      status: 'processing',
+      model,
+    } as unknown as Message,
+    ttl,
+  );
 
   if (!created) {
     return { created: false };

@@ -7,7 +7,7 @@ import {
   registerAiCompletion,
   sendLimitExceededPush,
 } from '@/lib/push-tokens';
-import { PUSH_DEBOUNCE_MS } from '@/config/constants';
+import { PUSH_DEBOUNCE_MS, MESSAGE_TTL_SECONDS } from '@/config/constants';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import { processTranscript } from '@/services/ai.service';
@@ -25,20 +25,26 @@ export const createMessage = async (
   systemPrompt: string,
   deviceId: string,
   clientUserAgent?: string | null,
+  messageTtlSeconds: number = MESSAGE_TTL_SECONDS,
 ): Promise<CreateMessageResult> => {
-  const created = await saveMessageIfNotExists(id, { id, status: 'processing', model });
+  const ttl = messageTtlSeconds;
+  const created = await saveMessageIfNotExists(id, { id, status: 'processing', model }, ttl);
   if (!created) {
     return { created: false };
   }
 
   const limitResult = await checkAndIncrement(deviceId);
   if (!limitResult.allowed) {
-    await saveMessage(id, {
+    await saveMessage(
       id,
-      status: 'error',
-      error: 'Weekly AI limit reached',
-      model,
-    });
+      {
+        id,
+        status: 'error',
+        error: 'Weekly AI limit reached',
+        model,
+      },
+      ttl,
+    );
     await sendLimitExceededPush(deviceId);
 
     return { created: false, limitExceeded: true, usage: limitResult.usage };
@@ -49,21 +55,25 @@ export const createMessage = async (
   after(async () => {
     try {
       const result = await processTranscript(transcript, model, systemPrompt, clientUserAgent);
-      await saveMessage(id, {
+      await saveMessage(
         id,
-        status: 'done',
-        model,
-        summary: result.summary,
-        suggestedTitle: result.suggestedTitle,
-        tasks: result.tasks,
-        tags: result.tags,
-        ...(result.classification && { classification: result.classification }),
-        ...(result.keyPhrases &&
-          result.keyPhrases.length > 0 && {
-            keyPhrases: result.keyPhrases,
-          }),
-        ...(result.nextSteps && result.nextSteps.length > 0 && { nextSteps: result.nextSteps }),
-      });
+        {
+          id,
+          status: 'done',
+          model,
+          summary: result.summary,
+          suggestedTitle: result.suggestedTitle,
+          tasks: result.tasks,
+          tags: result.tags,
+          ...(result.classification && { classification: result.classification }),
+          ...(result.keyPhrases &&
+            result.keyPhrases.length > 0 && {
+              keyPhrases: result.keyPhrases,
+            }),
+          ...(result.nextSteps && result.nextSteps.length > 0 && { nextSteps: result.nextSteps }),
+        },
+        ttl,
+      );
 
       // Register completion. Only the first caller (leader) waits and sends the push.
       const isLeader = await registerAiCompletion(deviceId);
@@ -101,12 +111,16 @@ export const createMessage = async (
       }
     } catch (err) {
       await decrement(deviceId);
-      await saveMessage(id, {
+      await saveMessage(
         id,
-        status: 'error',
-        error: err instanceof Error ? err.message : 'Unknown error',
-        model,
-      });
+        {
+          id,
+          status: 'error',
+          error: err instanceof Error ? err.message : 'Unknown error',
+          model,
+        },
+        ttl,
+      );
     }
   });
 
