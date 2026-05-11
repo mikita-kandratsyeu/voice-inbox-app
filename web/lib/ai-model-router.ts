@@ -1,7 +1,4 @@
-import {
-  AI_MODEL_GEMINI_2_5_FLASH_LITE,
-  AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW,
-} from '@/config/constants';
+import { AI_MODEL_GEMINI_2_5_FLASH_LITE, AI_MODEL_GEMINI_3_1_FLASH_LITE } from '@/config/constants';
 import {
   ASK_QUESTION_SYSTEM_PROMPT,
   buildAiProcessingPromptAppendBlocks,
@@ -72,11 +69,11 @@ export function resolveAutoAiModel(context: AiModelRoutingContext): string {
         : askLongRoutingCharsFullEstimate();
 
     return routingChars >= threshold
-      ? AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW
+      ? AI_MODEL_GEMINI_3_1_FLASH_LITE
       : AI_MODEL_GEMINI_2_5_FLASH_LITE;
   }
 
   return routingChars >= summaryLongRoutingChars()
-    ? AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW
+    ? AI_MODEL_GEMINI_3_1_FLASH_LITE
     : AI_MODEL_GEMINI_2_5_FLASH_LITE;
 }
