@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import {
   ALLOWED_AI_MODELS,
   HEADER_DEVICE_ID,
+  normalizeIncomingAiModel,
   PRO_LICENSE_REDEEM_KEY_PREFIX,
   PRO_LICENSE_REDEEM_MAX_ATTEMPTS,
   PRO_LICENSE_REDEEM_WINDOW_SECONDS,
@@ -34,13 +35,19 @@ export const HttpStatus = {
 
 const MOBILE_USER_AGENT_SUBSTRING = process.env.MOBILE_USER_AGENT?.trim() ?? '';
 
-export function validateAllowedModel(model: string): string | null {
+export type ParseAllowedAiModelResult = { ok: true; model: string } | { ok: false; error: string };
+
+/** Trims, maps preview Gemini lite → stable id, then checks {@link ALLOWED_AI_MODELS}. */
+export function parseAllowedAiModel(model: string): ParseAllowedAiModelResult {
   const trimmed = typeof model === 'string' ? model.trim() : '';
-  if (!trimmed) return 'model is required';
-  if (!ALLOWED_AI_MODELS.includes(trimmed)) {
-    return `model must be one of: ${ALLOWED_AI_MODELS.join(', ')}`;
+  if (!trimmed) {
+    return { ok: false, error: 'model is required' };
   }
-  return null;
+  const canonical = normalizeIncomingAiModel(trimmed);
+  if (!ALLOWED_AI_MODELS.includes(canonical)) {
+    return { ok: false, error: `model must be one of: ${ALLOWED_AI_MODELS.join(', ')}` };
+  }
+  return { ok: true, model: canonical };
 }
 
 export async function requireMobileUserAgent(): Promise<NextResponse | null> {

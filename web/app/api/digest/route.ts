@@ -5,7 +5,7 @@ import {
   apiError,
   HttpStatus,
   parseJsonBody,
-  validateAllowedModel,
+  parseAllowedAiModel,
   validateRequiredStrings,
   weeklyAiLimitExceededResponse,
 } from '@/lib/api';
@@ -57,18 +57,19 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const modelMode: AiModelMode = body.modelMode === 'auto' ? 'auto' : 'manual';
   const requestedModel = String(body.model);
-  const resolvedModel =
+  let resolvedModel =
     modelMode === 'auto'
       ? resolveAutoAiModel({ taskType: 'summary_tasks', routingChars: payload.length })
       : requestedModel;
 
-  const modelError = validateAllowedModel(resolvedModel);
-  if (modelError) {
-    return apiError(modelError, HttpStatus.BAD_REQUEST, {
+  const modelParsed = parseAllowedAiModel(resolvedModel);
+  if (!modelParsed.ok) {
+    return apiError(modelParsed.error, HttpStatus.BAD_REQUEST, {
       pathname,
       code: ApiErrorCode.InvalidModel,
     });
   }
+  resolvedModel = modelParsed.model;
 
   const limitResult = await checkAndIncrement(deviceIdTrimmed);
   if (!limitResult.allowed) {

@@ -3,7 +3,7 @@ import {
   apiError,
   HttpStatus,
   parseJsonBody,
-  validateAllowedModel,
+  parseAllowedAiModel,
   validateRequiredStrings,
   weeklyAiLimitExceededResponse,
 } from '@/lib/api';
@@ -111,7 +111,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     routingTaskType === 'ask'
       ? transcript.length
       : estimateSummaryTasksRoutingChars(transcript, options);
-  const resolvedModel =
+  let resolvedModel =
     modelMode === 'auto'
       ? resolveAutoAiModel({
           taskType: routingTaskType,
@@ -120,13 +120,14 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         })
       : model;
 
-  const modelError = validateAllowedModel(resolvedModel);
-  if (modelError) {
-    return apiError(modelError, HttpStatus.BAD_REQUEST, {
+  const modelParsed = parseAllowedAiModel(resolvedModel);
+  if (!modelParsed.ok) {
+    return apiError(modelParsed.error, HttpStatus.BAD_REQUEST, {
       pathname,
       code: ApiErrorCode.InvalidModel,
     });
   }
+  resolvedModel = modelParsed.model;
 
   const resolvedSystemPrompt =
     options != null ? buildAiProcessingPrompt(options) : (systemPrompt ?? '');
