@@ -19,7 +19,7 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     supportTierCode: 'fast',
   },
   {
-    id: 'google/gemini-3.1-flash-lite-preview',
+    id: 'google/gemini-3.1-flash-lite',
     name: 'Gemini 3.1 Flash Lite',
     provider: 'Google',
     descriptionKey: 'aiModels.geminiDesc3_1',
