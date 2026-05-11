@@ -10,6 +10,7 @@ import {
   recordAskAiTable,
   recordsTable,
 } from '@/shared/lib';
+import type { RecordForStats } from '@/shared/lib/async-storage/storage';
 
 import { TRASH_RETENTION_DAYS } from './trashConfig';
 import type {
@@ -168,6 +169,19 @@ const recordListColumns = {
 const activeRecordsClause = isNull(recordsTable.deletedAt);
 
 export type TrashedRecordListItem = RecordListItem & { purgeAt: string };
+
+/** Trashed rows for storage stats (includes audio path for disk size). */
+export type TrashedStoragePayload = RecordForStats & { audioPath?: string };
+
+const parseJsonField = <T>(raw: string | null | undefined, fallback: T): T => {
+  try {
+    const v = JSON.parse(raw ?? 'null') as unknown;
+    if (v === null || v === undefined) return fallback;
+    return v as T;
+  } catch {
+    return fallback;
+  }
+};
 
 export const recordRepository = {
   getAllList: async (): Promise<RecordListItem[]> => {
@@ -503,6 +517,31 @@ export const recordRepository = {
         purgeAt: purgeAt ?? '',
       };
     });
+  },
+
+  getTrashedStoragePayloads: async (): Promise<TrashedStoragePayload[]> => {
+    logDb('getTrashedStoragePayloads');
+    const db = getDB();
+    const rows = await db
+      .select({
+        transcript: recordsTable.transcript,
+        transcriptSegments: recordsTable.transcriptSegments,
+        summary: recordsTable.summary,
+        tasks: recordsTable.tasks,
+        audioPath: recordsTable.audioPath,
+      })
+      .from(recordsTable)
+      .where(isNotNull(recordsTable.deletedAt));
+
+    return rows.map(
+      (row): TrashedStoragePayload => ({
+        transcript: row.transcript ?? '',
+        transcriptSegments: parseJsonField(row.transcriptSegments, []),
+        summary: row.summary ?? '',
+        tasks: parseJsonField(row.tasks, []),
+        audioPath: audioPathFromDbValue(row.audioPath),
+      }),
+    );
   },
 
   listIdsReadyForPermanentPurge: async (): Promise<string[]> => {

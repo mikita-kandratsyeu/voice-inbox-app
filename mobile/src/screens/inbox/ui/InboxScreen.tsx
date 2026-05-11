@@ -9,6 +9,7 @@ import {
 } from '@/entities/folder';
 import { BatchActionBar, BatchExportSheet } from '@/features/batch-select';
 import { AutoOrganizeProgressOverlay } from '@/features/manage-folders';
+import { BlockingProgressModal } from '@/shared/ui';
 
 import { useInboxScreen } from '../lib/useInboxScreen';
 import { InboxHeader } from './InboxHeader';
@@ -99,6 +100,7 @@ export const InboxScreen = () => {
     onListEndReached,
     showInboxScrollResetSkeleton,
     onInboxListScroll,
+    batchProgressModal,
   } = inbox;
 
   return (
@@ -253,6 +255,13 @@ export const InboxScreen = () => {
       <AutoOrganizeProgressOverlay
         visible={autoOrganizeOverlayVisible}
         mode={autoOrganizeOverlayMode}
+      />
+      <BlockingProgressModal
+        visible={batchProgressModal != null}
+        title={batchProgressModal?.title ?? ''}
+        description={batchProgressModal?.description ?? ''}
+        total={batchProgressModal?.total ?? 0}
+        progressLabel={batchProgressModal?.progressLabel}
       />
     </View>
   );

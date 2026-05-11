@@ -1,4 +1,5 @@
 export type { BatchExportPackaging } from './model/batchExportPackaging';
+export type { BatchProgressKind } from './model/useBatchRecordActions';
 export { useBatchRecordActions } from './model/useBatchRecordActions';
 export type { BatchSelectState } from './model/useBatchSelect';
 export { useBatchSelect } from './model/useBatchSelect';

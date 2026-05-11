@@ -380,7 +380,14 @@
     "restoreConfirm": "Восстановить",
     "deleteForeverTitle": "Удалить навсегда?",
     "deleteForeverMessage": "«{{title}}» и аудио будут удалены безвозвратно.",
-    "deleteForeverConfirm": "Удалить"
+    "deleteForeverConfirm": "Удалить",
+    "emptyTrashAction": "Очистить",
+    "emptyTrashTitle": "Очистить корзину?",
+    "emptyTrashMessage": "Заметки в корзине ({{count}}) будут удалены безвозвратно.",
+    "emptyTrashConfirm": "Удалить всё",
+    "emptyTrashLoadingTitle": "Очищаем корзину",
+    "emptyTrashLoadingDescription": "Удаляем записи из корзины и связанные файлы. Пожалуйста, подождите.",
+    "emptyTrashError": "Не удалось очистить корзину"
   },
   "share": {
     "share": "Поделиться",
@@ -814,13 +821,22 @@
     "transcriptionModels": "Транскрипция (Whisper)",
     "localGenerationModels": "Локальный ИИ (LLM)",
     "cacheLabel": "Кэш",
-    "audioFilesValue": "{{count}} файлов · {{size}} MB",
+    "audioFilesValue": "{{count}} файлов, {{size}} MB",
     "mb": "MB",
     "gb": "GB",
     "tapRingHint": "Точки помогают сфокусировать категорию на кольце. Строка открывает подробности там, где они есть. Нажмите кольцо, чтобы сбросить фильтр.",
     "totalUsed": "Всего занято",
     "selectedSegmentsTitle": "Выбрано: {{count}}",
-    "onDeviceModels": "Модели на устройстве"
+    "onDeviceModels": "Модели на устройстве",
+    "trashAudioDetail_one": "В корзине {{size}} аудио ({{count}} заметка с записью)",
+    "trashAudioDetail_few": "В корзине {{size}} аудио ({{count}} заметки с записью)",
+    "trashAudioDetail_many": "В корзине {{size}} аудио ({{count}} заметок с записью)",
+    "trashAudioDetail_other": "В корзине {{size}} аудио ({{count}} заметок с записью)",
+    "trashTranscriptDetail_one": "Пока заметка в корзине, её текст остаётся на устройстве, примерно {{size}}.",
+    "trashTranscriptDetail_few": "{{count}} заметки в корзине, их тексты всё ещё на устройстве, примерно {{size}}.",
+    "trashTranscriptDetail_many": "{{count}} заметок в корзине, их тексты всё ещё на устройстве, примерно {{size}}.",
+    "trashTranscriptDetail_other": "{{count}} заметок в корзине, их тексты всё ещё на устройстве, примерно {{size}}.",
+    "trashAiSliceDetail": "Сюда уже входит текст из корзины, около {{size}} (сводки, задачи и транскрипты по удалённым заметкам)."
   },
   "whisper": {
     "modelTitle": "Модель транскрипции",
@@ -1228,7 +1244,16 @@
     "emailTooLargeBody": "Суммарный текст превышает лимит письма (80 000 символов). Выберите меньше заметок или поделитесь файлом.",
     "emailZipBodyPlain": "Экспорт Voice Inbox AI во вложении — архив ZIP (по одному Markdown на заметку).",
     "emailZipTooLarge": "Архив слишком большой для вложения (до 10 МБ). Экспортируйте через «Поделиться» или выберите меньше заметок.",
-    "emailZipLimitReminder": "Вложение ZIP — до 10 МБ. Если архив больше, используйте экспорт через «Поделиться»."
+    "emailZipLimitReminder": "Вложение ZIP — до 10 МБ. Если архив больше, используйте экспорт через «Поделиться».",
+    "progressArchivingTitle": "Архивируем заметки",
+    "progressArchivingDescription": "Обновляем библиотеку. Это может занять немного времени.",
+    "progressUnarchivingTitle": "Восстанавливаем заметки",
+    "progressUnarchivingDescription": "Возвращаем заметки во входящие. Это может занять немного времени.",
+    "progressDeletingTitle": "Перемещаем в корзину",
+    "progressDeletingDescription": "Отправляем заметки в корзину. Это может занять немного времени.",
+    "progressMovingTitle": "Перемещаем заметки",
+    "progressMovingDescription": "Обновляем папки. Это может занять немного времени.",
+    "progressCounter": "{{current}} из {{total}}"
   },
   "folders": {
     "all": "Все",

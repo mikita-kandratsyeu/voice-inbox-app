@@ -2,16 +2,7 @@ import { type RouteProp, useNavigation, useRoute } from '@react-navigation/nativ
 import { Check } from 'lucide-react-native';
 import React, { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Alert,
-  Modal,
-  ScrollView,
-  Text,
-  TouchableOpacity,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -24,7 +15,7 @@ import { tryShowYandexInterstitial } from '@/features/yandex-interstitial';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { formatRelativeTime, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
-import { Button, ScreenHeader, SectionHeader } from '@/shared/ui';
+import { BlockingProgressModal, Button, ScreenHeader, SectionHeader } from '@/shared/ui';
 
 type ImportRecordsRouteProp = RouteProp<SettingsStackParamList, 'ImportRecords'>;
 
@@ -409,44 +400,20 @@ export const ImportRecordsScreen = () => {
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
         </ScrollView>
       </View>
-      <Modal visible={isImporting} transparent animationType="fade" statusBarTranslucent>
-        <View
-          className="flex-1 items-center justify-center px-6"
-          style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
-        >
-          <View
-            className="w-full max-w-sm rounded-2xl px-6 py-8"
-            style={{ backgroundColor: color.background.card }}
-          >
-            <View className="items-center justify-center">
-              <ActivityIndicator size="large" color={color.accent.primary} />
-            </View>
-            <Text
-              className="mt-5 text-center text-[16px] font-semibold leading-6"
-              style={{ color: color.text.primary }}
-            >
-              {t('importExport.importingTitle')}
-            </Text>
-            <Text
-              className="mt-2 text-center text-[14px] leading-5"
-              style={{ color: color.text.secondary }}
-            >
-              {t('importExport.importingDescription')}
-            </Text>
-            {importProgress.total > 0 ? (
-              <Text
-                className="mt-3 text-center text-[13px] font-medium leading-5"
-                style={{ color: color.accent.primary }}
-              >
-                {t('importExport.importingProgressCounter', {
-                  current: importProgress.current,
-                  total: importProgress.total,
-                })}
-              </Text>
-            ) : null}
-          </View>
-        </View>
-      </Modal>
+      <BlockingProgressModal
+        visible={isImporting}
+        title={t('importExport.importingTitle')}
+        description={t('importExport.importingDescription')}
+        total={importProgress.total}
+        progressLabel={
+          importProgress.total > 0
+            ? t('importExport.importingProgressCounter', {
+                current: importProgress.current,
+                total: importProgress.total,
+              })
+            : undefined
+        }
+      />
     </View>
   );
 };

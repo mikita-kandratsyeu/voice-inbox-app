@@ -65,11 +65,25 @@ function isUserCancelledShare(err: unknown): boolean {
   return err instanceof Error && err.message === 'User did not share';
 }
 
+/** Progress overlay kind for sequential batch inbox actions. */
+export type BatchProgressKind = 'archive' | 'unarchive' | 'delete' | 'moveToFolder';
+
 type UseBatchRecordActionsParams = {
   onComplete: () => void;
+  /** Called once at the start of a batch with the total number of items. */
+  onBatchStart?: (kind: BatchProgressKind, total: number) => void;
+  /** Called after each item finishes (current is 1-based count completed). */
+  onProgress?: (current: number, total: number) => void;
+  /** Called when the batch finishes or aborts (always pair with onBatchStart). */
+  onBatchFinally?: () => void;
 };
 
-export const useBatchRecordActions = ({ onComplete }: UseBatchRecordActionsParams) => {
+export const useBatchRecordActions = ({
+  onComplete,
+  onBatchStart,
+  onProgress,
+  onBatchFinally,
+}: UseBatchRecordActionsParams) => {
   const { t } = useTranslation();
   const archiveRecord = useRecordStore((s) => s.archiveRecord);
   const unarchiveRecord = useRecordStore((s) => s.unarchiveRecord);
@@ -78,42 +92,72 @@ export const useBatchRecordActions = ({ onComplete }: UseBatchRecordActionsParam
 
   const batchArchive = useCallback(
     async (ids: string[]) => {
-      await Promise.all(ids.map((id) => archiveRecord(id)));
-      hapticSuccess();
-      onComplete();
+      const total = ids.length;
+      if (total === 0) return;
+      onBatchStart?.('archive', total);
+      try {
+        for (let i = 0; i < ids.length; i += 1) {
+          await archiveRecord(ids[i]);
+          onProgress?.(i + 1, total);
+        }
+        hapticSuccess();
+        onComplete();
+      } finally {
+        onBatchFinally?.();
+      }
     },
-    [archiveRecord, onComplete],
+    [archiveRecord, onBatchFinally, onBatchStart, onComplete, onProgress],
   );
 
   const batchUnarchive = useCallback(
     async (ids: string[]) => {
-      await Promise.all(ids.map((id) => unarchiveRecord(id)));
-      hapticSuccess();
-      onComplete();
+      const total = ids.length;
+      if (total === 0) return;
+      onBatchStart?.('unarchive', total);
+      try {
+        for (let i = 0; i < ids.length; i += 1) {
+          await unarchiveRecord(ids[i]);
+          onProgress?.(i + 1, total);
+        }
+        hapticSuccess();
+        onComplete();
+      } finally {
+        onBatchFinally?.();
+      }
     },
-    [unarchiveRecord, onComplete],
+    [onBatchFinally, onBatchStart, onComplete, onProgress, unarchiveRecord],
   );
 
   const batchDelete = useCallback(
     (ids: string[]) => {
+      const total = ids.length;
+      if (total === 0) return;
       Alert.alert(
-        t('batch.deleteTitle', { count: ids.length }),
-        t('batch.deleteConfirm', { count: ids.length }),
+        t('batch.deleteTitle', { count: total }),
+        t('batch.deleteConfirm', { count: total }),
         [
           { text: t('common.cancel'), style: 'cancel' },
           {
             text: t('recordActions.moveToTrashConfirm'),
             style: 'destructive',
             onPress: async () => {
-              await Promise.all(ids.map((id) => moveRecordToTrash(id)));
-              hapticSuccess();
-              onComplete();
+              onBatchStart?.('delete', total);
+              try {
+                for (let i = 0; i < ids.length; i += 1) {
+                  await moveRecordToTrash(ids[i]);
+                  onProgress?.(i + 1, total);
+                }
+                hapticSuccess();
+                onComplete();
+              } finally {
+                onBatchFinally?.();
+              }
             },
           },
         ],
       );
     },
-    [t, moveRecordToTrash, onComplete],
+    [t, moveRecordToTrash, onBatchFinally, onBatchStart, onComplete, onProgress],
   );
 
   const batchExport = useCallback(
@@ -255,12 +299,21 @@ export const useBatchRecordActions = ({ onComplete }: UseBatchRecordActionsParam
 
   const batchMoveToFolder = useCallback(
     async (ids: string[], folderId: string | null) => {
-      if (ids.length === 0) return;
-      await Promise.all(ids.map((id) => setRecordFolder(id, folderId)));
-      hapticSuccess();
-      onComplete();
+      const total = ids.length;
+      if (total === 0) return;
+      onBatchStart?.('moveToFolder', total);
+      try {
+        for (let i = 0; i < ids.length; i += 1) {
+          await setRecordFolder(ids[i], folderId);
+          onProgress?.(i + 1, total);
+        }
+        hapticSuccess();
+        onComplete();
+      } finally {
+        onBatchFinally?.();
+      }
     },
-    [setRecordFolder, onComplete],
+    [onBatchFinally, onBatchStart, onComplete, onProgress, setRecordFolder],
   );
 
   return {

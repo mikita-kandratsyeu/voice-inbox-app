@@ -380,7 +380,14 @@
     "restoreConfirm": "Restore",
     "deleteForeverTitle": "Delete forever?",
     "deleteForeverMessage": "“{{title}}” and its audio will be removed permanently. This cannot be undone.",
-    "deleteForeverConfirm": "Delete"
+    "deleteForeverConfirm": "Delete",
+    "emptyTrashAction": "Empty trash",
+    "emptyTrashTitle": "Empty trash?",
+    "emptyTrashMessage": "All {{count}} notes will be permanently deleted. This cannot be undone.",
+    "emptyTrashConfirm": "Delete all",
+    "emptyTrashLoadingTitle": "Emptying trash",
+    "emptyTrashLoadingDescription": "Removing trashed notes and their files. Please wait.",
+    "emptyTrashError": "Could not empty trash"
   },
   "share": {
     "share": "Share",
@@ -808,13 +815,18 @@
     "transcriptionModels": "Transcription (Whisper)",
     "localGenerationModels": "On-device AI (LLM)",
     "cacheLabel": "Cache",
-    "audioFilesValue": "{{count}} files · {{size}} MB",
+    "audioFilesValue": "{{count}} files, {{size}} MB",
     "mb": "MB",
     "gb": "GB",
     "tapRingHint": "Use the dots to focus one category on the ring. Tap a row for more detail when it's available. Tap the ring to reset the filter.",
     "totalUsed": "Total used",
     "selectedSegmentsTitle": "Selected: {{count}}",
-    "onDeviceModels": "On-device models"
+    "onDeviceModels": "On-device models",
+    "trashAudioDetail_one": "Trash: {{size}} from {{count}} note with saved audio",
+    "trashAudioDetail_other": "Trash: {{size}} from {{count}} notes with saved audio",
+    "trashTranscriptDetail_one": "This trashed note still keeps its transcript on your device until you delete it for good. About {{size}}.",
+    "trashTranscriptDetail_other": "These {{count}} trashed notes still keep their transcripts on your device until you delete them for good. About {{size}}.",
+    "trashAiSliceDetail": "Already in this total: about {{size}} from deleted notes in trash (summaries, tasks, transcripts)."
   },
   "whisper": {
     "modelTitle": "Transcription model",
@@ -1213,7 +1225,16 @@
     "emailTooLargeBody": "Combined text exceeds the email limit (80k characters). Select fewer notes or share as a file instead.",
     "emailZipBodyPlain": "Your Voice Inbox AI export is attached as a ZIP archive (one Markdown file per note).",
     "emailZipTooLarge": "The ZIP is too large to attach (max 10 MB). Export via Share or select fewer notes.",
-    "emailZipLimitReminder": "ZIP attachments are limited to 10 MB. Use Share if the archive is larger."
+    "emailZipLimitReminder": "ZIP attachments are limited to 10 MB. Use Share if the archive is larger.",
+    "progressArchivingTitle": "Archiving notes",
+    "progressArchivingDescription": "Updating your library. This may take a moment.",
+    "progressUnarchivingTitle": "Restoring notes",
+    "progressUnarchivingDescription": "Moving notes back to your inbox. This may take a moment.",
+    "progressDeletingTitle": "Moving to trash",
+    "progressDeletingDescription": "Sending notes to Trash. This may take a moment.",
+    "progressMovingTitle": "Moving notes",
+    "progressMovingDescription": "Updating folders. This may take a moment.",
+    "progressCounter": "{{current}} of {{total}}"
   },
   "folders": {
     "all": "All",

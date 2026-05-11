@@ -23,6 +23,7 @@ import { useAdsAllowed } from '@/features/app-storefront';
 import { useAutoArchiveReadNotes } from '@/features/auto-archive';
 import {
   type BatchExportPackaging,
+  type BatchProgressKind,
   useBatchRecordActions,
   useBatchSelect,
 } from '@/features/batch-select';
@@ -165,6 +166,24 @@ export function useInboxScreen() {
 
   const batchSelect = useBatchSelect();
 
+  const [batchProgress, setBatchProgress] = useState<{
+    kind: BatchProgressKind;
+    current: number;
+    total: number;
+  } | null>(null);
+
+  const onBatchStart = useCallback((kind: BatchProgressKind, total: number) => {
+    setBatchProgress({ kind, current: 0, total });
+  }, []);
+
+  const onBatchStep = useCallback((current: number, total: number) => {
+    setBatchProgress((prev) => (prev ? { ...prev, current, total } : null));
+  }, []);
+
+  const clearBatchProgress = useCallback(() => {
+    setBatchProgress(null);
+  }, []);
+
   const shouldInjectListBanner =
     adsAllowed && !batchSelect.isSelectMode && !isSearching && getHasSeenOnboarding();
 
@@ -228,6 +247,9 @@ export function useInboxScreen() {
     batchMoveToFolder,
   } = useBatchRecordActions({
     onComplete: exitBatchMode,
+    onBatchStart,
+    onProgress: onBatchStep,
+    onBatchFinally: clearBatchProgress,
   });
 
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
@@ -523,6 +545,36 @@ export function useInboxScreen() {
     setVisibleRecordCount((c) => c + INBOX_RECORD_PAGE_SIZE);
   }, [canLoadMoreInbox]);
 
+  const batchProgressModal = useMemo(() => {
+    if (!batchProgress) return null;
+    const { kind, current, total } = batchProgress;
+    const keys: Record<BatchProgressKind, { titleKey: string; descriptionKey: string }> = {
+      archive: {
+        titleKey: 'batch.progressArchivingTitle',
+        descriptionKey: 'batch.progressArchivingDescription',
+      },
+      unarchive: {
+        titleKey: 'batch.progressUnarchivingTitle',
+        descriptionKey: 'batch.progressUnarchivingDescription',
+      },
+      delete: {
+        titleKey: 'batch.progressDeletingTitle',
+        descriptionKey: 'batch.progressDeletingDescription',
+      },
+      moveToFolder: {
+        titleKey: 'batch.progressMovingTitle',
+        descriptionKey: 'batch.progressMovingDescription',
+      },
+    };
+    const k = keys[kind];
+    return {
+      title: t(k.titleKey),
+      description: t(k.descriptionKey),
+      total,
+      progressLabel: t('batch.progressCounter', { current, total }),
+    };
+  }, [batchProgress, t]);
+
   const screenStyle = useMemo(
     () => ({ flex: 1, backgroundColor: color.background.primary }),
     [color.background.primary],
@@ -665,5 +717,6 @@ export function useInboxScreen() {
     onListEndReached,
     showInboxScrollResetSkeleton,
     onInboxListScroll: handleInboxListScroll,
+    batchProgressModal,
   };
 }

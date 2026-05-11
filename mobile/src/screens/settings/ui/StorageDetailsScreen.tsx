@@ -29,9 +29,12 @@ import { getLocalLlmModelFileSizeBytes, getModelFileSizeBytes } from '@/features
 import { useColors } from '@/shared/config';
 import {
   clearCache,
+  computeAiDataBytes,
+  computeTranscriptPayloadBytes,
   getStorageStats,
   hapticSelection,
   type StorageStats,
+  sumAudioFileSizesBytes,
   useIsTablet,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
@@ -60,6 +63,14 @@ const DEFAULT_STATS: StorageStats = {
   aiDataKb: 0,
   cacheKb: 0,
   totalMb: 0,
+};
+
+const EMPTY_TRASH_STORAGE = {
+  recordCount: 0,
+  audioBytes: 0,
+  transcriptPayloadBytes: 0,
+  aiPayloadBytes: 0,
+  recordsWithAudio: 0,
 };
 
 type DownloadedModelVariant = {
@@ -91,6 +102,7 @@ export const StorageDetailsScreen = () => {
   const deleteFolder = useFolderStore((s) => s.deleteFolder);
   const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
   const [stats, setStats] = useState<StorageStats>(DEFAULT_STATS);
+  const [trashStorage, setTrashStorage] = useState(EMPTY_TRASH_STORAGE);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
@@ -137,13 +149,45 @@ export const StorageDetailsScreen = () => {
         setIsLoading(true);
       }
       try {
-        const currentRecords = useRecordStore.getState().records;
-        const paths = currentRecords.map((r) => r.audioPath).filter((p): p is string => Boolean(p));
-        const s = await getStorageStats(paths, currentRecords);
+        const activeRecords = useRecordStore.getState().records;
+        const trashedPayloads = await recordRepository.getTrashedStoragePayloads();
+
+        const audioPathSet = new Set<string>();
+        for (const r of activeRecords) {
+          if (r.audioPath) audioPathSet.add(r.audioPath);
+        }
+        for (const t of trashedPayloads) {
+          if (t.audioPath) audioPathSet.add(t.audioPath);
+        }
+        const paths = [...audioPathSet];
+
+        const recordsForStats = [
+          ...activeRecords.map((r) => ({
+            transcript: r.transcript,
+            transcriptSegments: r.transcriptSegments,
+            summary: r.summary,
+            tasks: r.tasks,
+          })),
+          ...trashedPayloads.map(({ audioPath: _audioPath, ...rest }) => rest),
+        ];
+
+        const s = await getStorageStats(paths, recordsForStats);
         setStats(s);
         await loadModelSizes();
+
+        const trashAudioBytes = await sumAudioFileSizesBytes(
+          trashedPayloads.map((t) => t.audioPath),
+        );
+        setTrashStorage({
+          recordCount: trashedPayloads.length,
+          audioBytes: trashAudioBytes,
+          transcriptPayloadBytes: computeTranscriptPayloadBytes(trashedPayloads),
+          aiPayloadBytes: computeAiDataBytes(trashedPayloads),
+          recordsWithAudio: trashedPayloads.filter((t) => Boolean(t.audioPath)).length,
+        });
       } catch (err) {
         if (__DEV__) console.warn('[StorageDetails] Failed to load stats:', err);
+        setTrashStorage(EMPTY_TRASH_STORAGE);
       } finally {
         setIsLoading(false);
         setIsRefreshing(false);
@@ -160,7 +204,8 @@ export const StorageDetailsScreen = () => {
     loadModelSizes();
   }, [whisperModelWeightsFormat, loadModelSizes]);
 
-  const audioCount = records.filter((r) => r.audioPath).length;
+  const activeAudioCount = records.filter((r) => r.audioPath).length;
+  const totalRecordingsWithAudio = activeAudioCount + trashStorage.recordsWithAudio;
   const withTranscript = records.filter((r) => r.transcript && r.transcript.length > 0).length;
   const processedByAI = records.filter(
     (r) => (r.summary && r.summary.length > 0) || (r.tasks && r.tasks.length > 0),
@@ -226,16 +271,25 @@ export const StorageDetailsScreen = () => {
         case 'models':
           return hasOnDeviceModelRows;
         case 'audio':
-          return stats.audioMb > 0 || audioCount > 0;
+          return stats.audioMb > 0 || activeAudioCount > 0 || trashStorage.audioBytes > 0;
         case 'transcript':
-          return stats.transcriptKb > 0;
+          return stats.transcriptKb > 0 || trashStorage.recordCount > 0;
         case 'ai':
-          return stats.aiDataKb > 0;
+          return stats.aiDataKb > 0 || trashStorage.aiPayloadBytes > 0;
         default:
           return false;
       }
     },
-    [stats.audioMb, stats.transcriptKb, stats.aiDataKb, audioCount, hasOnDeviceModelRows],
+    [
+      stats.audioMb,
+      stats.transcriptKb,
+      stats.aiDataKb,
+      activeAudioCount,
+      trashStorage.audioBytes,
+      trashStorage.recordCount,
+      trashStorage.aiPayloadBytes,
+      hasOnDeviceModelRows,
+    ],
   );
 
   const { ringCenterTitle, ringCenterValue } = useMemo(() => {
@@ -269,7 +323,15 @@ export const StorageDetailsScreen = () => {
         onPress: async () => {
           setIsClearing(true);
           try {
-            const paths = records.map((r) => r.audioPath).filter((p): p is string => Boolean(p));
+            const activePaths = records
+              .map((r) => r.audioPath)
+              .filter((p): p is string => Boolean(p));
+            const trashed = await recordRepository.getTrashedStoragePayloads();
+            const pathSet = new Set<string>(activePaths);
+            for (const t of trashed) {
+              if (t.audioPath) pathSet.add(t.audioPath);
+            }
+            const paths = [...pathSet];
             const freed = await clearCache(paths);
             await refreshStats();
             const freedKb = Math.round(freed / 1024);
@@ -503,18 +565,35 @@ export const StorageDetailsScreen = () => {
                             }}
                           >
                             {seg.id === 'audio' ? (
-                              <Text
-                                style={{
-                                  color: color.text.secondary,
-                                  fontSize: 15,
-                                  lineHeight: 20,
-                                }}
-                              >
-                                {t('storage.audioFilesValue', {
-                                  count: audioCount,
-                                  size: stats.audioMb.toFixed(1),
-                                })}
-                              </Text>
+                              <>
+                                <Text
+                                  style={{
+                                    color: color.text.secondary,
+                                    fontSize: 15,
+                                    lineHeight: 20,
+                                  }}
+                                >
+                                  {t('storage.audioFilesValue', {
+                                    count: totalRecordingsWithAudio,
+                                    size: stats.audioMb.toFixed(1),
+                                  })}
+                                </Text>
+                                {trashStorage.audioBytes > 0 ? (
+                                  <Text
+                                    style={{
+                                      marginTop: 8,
+                                      color: color.text.muted,
+                                      fontSize: 14,
+                                      lineHeight: 19,
+                                    }}
+                                  >
+                                    {t('storage.trashAudioDetail', {
+                                      size: formatFileSize(trashStorage.audioBytes),
+                                      count: trashStorage.recordsWithAudio,
+                                    })}
+                                  </Text>
+                                ) : null}
+                              </>
                             ) : null}
                             {seg.id === 'transcript' ? (
                               <View>
@@ -537,6 +616,21 @@ export const StorageDetailsScreen = () => {
                                     }}
                                   >
                                     {t('storage.transcripts')}: {withTranscript}
+                                  </Text>
+                                ) : null}
+                                {trashStorage.recordCount > 0 ? (
+                                  <Text
+                                    style={{
+                                      marginTop: 8,
+                                      color: color.text.muted,
+                                      fontSize: 14,
+                                      lineHeight: 19,
+                                    }}
+                                  >
+                                    {t('storage.trashTranscriptDetail', {
+                                      count: trashStorage.recordCount,
+                                      size: formatFileSize(trashStorage.transcriptPayloadBytes),
+                                    })}
                                   </Text>
                                 ) : null}
                               </View>
@@ -562,6 +656,20 @@ export const StorageDetailsScreen = () => {
                                     }}
                                   >
                                     {t('storage.aiProcessed')}: {processedByAI}
+                                  </Text>
+                                ) : null}
+                                {trashStorage.aiPayloadBytes > 0 ? (
+                                  <Text
+                                    style={{
+                                      marginTop: 8,
+                                      color: color.text.muted,
+                                      fontSize: 14,
+                                      lineHeight: 19,
+                                    }}
+                                  >
+                                    {t('storage.trashAiSliceDetail', {
+                                      size: formatFileSize(trashStorage.aiPayloadBytes),
+                                    })}
                                   </Text>
                                 ) : null}
                               </View>

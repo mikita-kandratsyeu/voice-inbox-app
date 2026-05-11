@@ -31,7 +31,13 @@ import {
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
-import { EmptyState, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
+import {
+  BlockingProgressModal,
+  Button,
+  EmptyState,
+  SCREEN_PADDING,
+  ScreenHeader,
+} from '@/shared/ui';
 
 const TRASH_RESTORE_BTN_H = 48;
 
@@ -57,6 +63,8 @@ export const TrashScreen = () => {
   const [items, setItems] = useState<TrashedRecordListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [trashAudioBytes, setTrashAudioBytes] = useState(0);
+  const [isEmptyingTrash, setIsEmptyingTrash] = useState(false);
+  const [emptyTrashProgress, setEmptyTrashProgress] = useState({ current: 0, total: 0 });
 
   const loadTrash = useCallback(async () => {
     setLoading(true);
@@ -127,6 +135,42 @@ export const TrashScreen = () => {
     [loadTrash, purgeRecordPermanently, t],
   );
 
+  const onEmptyTrash = useCallback(() => {
+    const count = items.length;
+    if (count === 0) return;
+    Alert.alert(t('trash.emptyTrashTitle'), t('trash.emptyTrashMessage', { count }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('trash.emptyTrashConfirm'),
+        style: 'destructive',
+        onPress: () => {
+          void (async () => {
+            hapticSelection();
+            const list = await recordRepository.getTrashedList();
+            if (list.length === 0) {
+              await loadTrash();
+              return;
+            }
+            setIsEmptyingTrash(true);
+            setEmptyTrashProgress({ current: 0, total: list.length });
+            try {
+              for (let i = 0; i < list.length; i += 1) {
+                await purgeRecordPermanently(list[i]!.id);
+                setEmptyTrashProgress({ current: i + 1, total: list.length });
+              }
+              await loadTrash();
+            } catch {
+              Alert.alert(t('common.error'), t('trash.emptyTrashError'));
+            } finally {
+              setIsEmptyingTrash(false);
+              setEmptyTrashProgress({ current: 0, total: 0 });
+            }
+          })();
+        },
+      },
+    ]);
+  }, [items.length, loadTrash, purgeRecordPermanently, t]);
+
   const maxW = contentMaxWidth ?? windowWidth;
   const bannerMaxWidth = maxW;
 
@@ -169,7 +213,23 @@ export const TrashScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title={t('trash.title')} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('trash.title')}
+        onBack={() => navigation.goBack()}
+        rightSlot={
+          !loading && items.length > 0 && !isEmptyingTrash ? (
+            <Button
+              iconOnly
+              variant="icon"
+              size="md"
+              accessibilityLabel={t('trash.emptyTrashAction')}
+              icon={<Trash2 size={22} color={color.accent.delete} strokeWidth={2} />}
+              color={color}
+              onPress={onEmptyTrash}
+            />
+          ) : null
+        }
+      />
       <View
         style={{
           flex: 1,
@@ -284,6 +344,20 @@ export const TrashScreen = () => {
           }}
         />
       </View>
+      <BlockingProgressModal
+        visible={isEmptyingTrash}
+        title={t('trash.emptyTrashLoadingTitle')}
+        description={t('trash.emptyTrashLoadingDescription')}
+        total={emptyTrashProgress.total}
+        progressLabel={
+          emptyTrashProgress.total > 0
+            ? t('storage.deleteAllProgressCounter', {
+                current: emptyTrashProgress.current,
+                total: emptyTrashProgress.total,
+              })
+            : undefined
+        }
+      />
     </View>
   );
 };
