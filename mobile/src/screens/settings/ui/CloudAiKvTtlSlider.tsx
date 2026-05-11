@@ -7,7 +7,7 @@ import {
   type CloudAiKvTtlSeconds,
 } from '@/entities/settings/lib/cloudAiKvTtl';
 import type { Colors } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
+import { hapticLight } from '@/shared/lib';
 
 const SLIDER_MAX_INDEX = CLOUD_AI_KV_TTL_CHOICES.length - 1;
 const NOTCH_ACTIVE_H = 12;
@@ -143,7 +143,7 @@ export function CloudAiKvTtlSlider({
             const clamped = Math.max(0, Math.min(SLIDER_MAX_INDEX, i));
             if (clamped !== lastHapticIndexRef.current) {
               lastHapticIndexRef.current = clamped;
-              hapticSelection();
+              hapticLight();
             }
             const next = CLOUD_AI_KV_TTL_CHOICES[clamped];
             if (next !== undefined) onChangeSeconds(next);
