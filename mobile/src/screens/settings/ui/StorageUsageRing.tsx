@@ -394,6 +394,10 @@ const CHEVRON_ROT_MS = 200;
 
 /** Trailing column on breakdown rows (chevron or empty slot). Match expanded panel `paddingRight`. */
 export const ROW_TRAIL_SLOT_W = 32;
+/** Fixed width for size labels so short values (e.g. cache “1 MB”) align with longer ones. */
+const BREAKDOWN_VALUE_COL_W = 104;
+/** Right padding for the last breakdown row when it has no chevron (visual balance with chevron rows). */
+export const STORAGE_BREAKDOWN_LAST_VALUE_PAD_END = 10;
 
 function ExpandChevron({ expanded, iconColor }: { expanded: boolean; iconColor: string }) {
   const rotationDeg = useSharedValue(expanded ? 180 : 0);
@@ -445,6 +449,8 @@ export const StorageBreakdownRow = ({
   detailsExpanded = false,
   onExpandPress,
   expandChevronAccessibilityLabel,
+  /** Extra inset for the value when this row has no chevron (e.g. last “cache” row). */
+  valueExtraRightPadding = 0,
 }: {
   segment: StorageRingSegment;
   label: string;
@@ -458,6 +464,7 @@ export const StorageBreakdownRow = ({
   detailsExpanded?: boolean;
   onExpandPress?: () => void;
   expandChevronAccessibilityLabel?: string;
+  valueExtraRightPadding?: number;
 }) => {
   const a11y = `${label}, ${percentLabel}, ${valueLabel}`;
   const expandable = Boolean(hasExpandableDetails && onExpandPress);
@@ -522,40 +529,68 @@ export const StorageBreakdownRow = ({
               {label}
             </Text>
           </View>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 16,
-                lineHeight: 21,
-                color: color.text.muted,
-                fontVariant: ['tabular-nums'],
-                flexShrink: 0,
-                textAlign: 'right',
-              }}
-              numberOfLines={1}
-            >
-              {valueLabel}
-            </Text>
+          {expandable ? (
             <View
               style={{
-                width: ROW_TRAIL_SLOT_W,
-                minWidth: ROW_TRAIL_SLOT_W,
-                flexShrink: 0,
+                flexDirection: 'row',
                 alignItems: 'center',
-                justifyContent: 'center',
+                flexShrink: 0,
+                width: BREAKDOWN_VALUE_COL_W + ROW_TRAIL_SLOT_W,
+                justifyContent: 'flex-end',
               }}
             >
-              {expandable ? (
+              <Text
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  fontSize: 16,
+                  lineHeight: 21,
+                  color: color.text.muted,
+                  fontVariant: ['tabular-nums'],
+                  textAlign: 'right',
+                }}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {valueLabel}
+              </Text>
+              <View
+                style={{
+                  width: ROW_TRAIL_SLOT_W,
+                  minWidth: ROW_TRAIL_SLOT_W,
+                  flexShrink: 0,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <ExpandChevron expanded={detailsExpanded} iconColor={color.icon.muted} />
-              ) : null}
+              </View>
             </View>
-          </View>
+          ) : (
+            <View
+              style={{
+                flexShrink: 0,
+                width: BREAKDOWN_VALUE_COL_W + ROW_TRAIL_SLOT_W,
+                justifyContent: 'center',
+                paddingRight: valueExtraRightPadding,
+              }}
+            >
+              <Text
+                style={{
+                  width: '100%',
+                  fontSize: 16,
+                  lineHeight: 21,
+                  color: color.text.muted,
+                  fontVariant: ['tabular-nums'],
+                  textAlign: 'right',
+                }}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {valueLabel}
+              </Text>
+            </View>
+          )}
         </Pressable>
       </View>
     </View>

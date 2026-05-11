@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { BrainCircuit, Sparkles, Trash2 } from 'lucide-react-native';
+import { Bot, BrainCircuit, FileText, Mic, Sparkles, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -55,6 +55,7 @@ import {
 import {
   ROW_BULLET_SIZE,
   ROW_TRAIL_SLOT_W,
+  STORAGE_BREAKDOWN_LAST_VALUE_PAD_END,
   StorageBreakdownRow,
   type StorageRingSegmentId,
   StorageUsageRing,
@@ -572,6 +573,9 @@ export const StorageDetailsScreen = () => {
                             expandChevronAccessibilityLabel={t('storage.breakdownA11y', {
                               category: segmentLabels[seg.id],
                             })}
+                            valueExtraRightPadding={
+                              isLastSeg && !hasExp ? STORAGE_BREAKDOWN_LAST_VALUE_PAD_END : 0
+                            }
                           />
                           {expanded && hasExp ? (
                             <Animated.View
@@ -587,112 +591,273 @@ export const StorageDetailsScreen = () => {
                               }}
                             >
                               {seg.id === 'audio' ? (
-                                <>
-                                  <Text
-                                    style={{
-                                      color: color.text.secondary,
-                                      fontSize: 15,
-                                      lineHeight: 20,
-                                    }}
-                                  >
-                                    {t('storage.audioFilesValue', {
-                                      count: totalRecordingsWithAudio,
-                                      size: stats.audioMb.toFixed(1),
-                                    })}
-                                  </Text>
-                                  {trashStorage.audioBytes > 0 ? (
-                                    <Text
+                                <View>
+                                  <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                                    <View
                                       style={{
-                                        marginTop: 8,
-                                        color: color.text.muted,
-                                        fontSize: 14,
-                                        lineHeight: 19,
+                                        width: 18,
+                                        alignItems: 'center',
+                                        paddingTop: 2,
+                                        marginRight: 10,
                                       }}
                                     >
-                                      {t('storage.trashAudioDetail', {
-                                        size: formatFileSize(trashStorage.audioBytes),
-                                        count: trashStorage.recordsWithAudio,
+                                      <Mic
+                                        size={18}
+                                        color={color.accent.primary}
+                                        strokeWidth={1.8}
+                                      />
+                                    </View>
+                                    <Text
+                                      style={{
+                                        flex: 1,
+                                        color: color.text.secondary,
+                                        fontSize: 15,
+                                        lineHeight: 20,
+                                      }}
+                                    >
+                                      {t('storage.audioFilesValue', {
+                                        count: totalRecordingsWithAudio,
+                                        size: stats.audioMb.toFixed(1),
                                       })}
                                     </Text>
+                                  </View>
+                                  {trashStorage.audioBytes > 0 ? (
+                                    <View
+                                      style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'flex-start',
+                                        marginTop: 10,
+                                      }}
+                                    >
+                                      <View
+                                        style={{
+                                          width: 18,
+                                          alignItems: 'center',
+                                          paddingTop: 1,
+                                          marginRight: 10,
+                                        }}
+                                      >
+                                        <Trash2
+                                          size={16}
+                                          color={color.text.muted}
+                                          strokeWidth={2}
+                                        />
+                                      </View>
+                                      <Text
+                                        style={{
+                                          flex: 1,
+                                          color: color.text.muted,
+                                          fontSize: 14,
+                                          lineHeight: 19,
+                                        }}
+                                      >
+                                        {t('storage.trashAudioDetail', {
+                                          size: formatFileSize(trashStorage.audioBytes),
+                                          count: trashStorage.recordsWithAudio,
+                                        })}
+                                      </Text>
+                                    </View>
                                   ) : null}
-                                </>
+                                </View>
                               ) : null}
                               {seg.id === 'transcript' ? (
                                 <View>
-                                  <Text
-                                    style={{
-                                      color: color.text.secondary,
-                                      fontSize: 15,
-                                      lineHeight: 20,
-                                    }}
-                                  >
-                                    {formatFileSize(stats.transcriptKb * 1024)}
-                                  </Text>
-                                  {withTranscript > 0 ? (
-                                    <Text
+                                  <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                                    <View
                                       style={{
-                                        marginTop: 6,
-                                        color: color.text.muted,
-                                        fontSize: 14,
-                                        lineHeight: 19,
+                                        width: 18,
+                                        alignItems: 'center',
+                                        paddingTop: 2,
+                                        marginRight: 10,
                                       }}
                                     >
-                                      {t('storage.transcripts')}: {withTranscript}
+                                      <FileText
+                                        size={18}
+                                        color={color.accent.transcript}
+                                        strokeWidth={1.8}
+                                      />
+                                    </View>
+                                    <Text
+                                      style={{
+                                        flex: 1,
+                                        color: color.text.secondary,
+                                        fontSize: 15,
+                                        lineHeight: 20,
+                                      }}
+                                    >
+                                      {formatFileSize(stats.transcriptKb * 1024)}
                                     </Text>
+                                  </View>
+                                  {withTranscript > 0 ? (
+                                    <View
+                                      style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'flex-start',
+                                        marginTop: 8,
+                                      }}
+                                    >
+                                      <View
+                                        style={{
+                                          width: 18,
+                                          alignItems: 'center',
+                                          paddingTop: 1,
+                                          marginRight: 10,
+                                        }}
+                                      >
+                                        <FileText
+                                          size={16}
+                                          color={color.text.muted}
+                                          strokeWidth={2}
+                                        />
+                                      </View>
+                                      <Text
+                                        style={{
+                                          flex: 1,
+                                          color: color.text.muted,
+                                          fontSize: 14,
+                                          lineHeight: 19,
+                                        }}
+                                      >
+                                        {t('storage.transcripts')}: {withTranscript}
+                                      </Text>
+                                    </View>
                                   ) : null}
                                   {trashStorage.recordCount > 0 ? (
-                                    <Text
+                                    <View
                                       style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'flex-start',
                                         marginTop: 8,
-                                        color: color.text.muted,
-                                        fontSize: 14,
-                                        lineHeight: 19,
                                       }}
                                     >
-                                      {t('storage.trashTranscriptDetail', {
-                                        count: trashStorage.recordCount,
-                                        size: formatFileSize(trashStorage.transcriptPayloadBytes),
-                                      })}
-                                    </Text>
+                                      <View
+                                        style={{
+                                          width: 18,
+                                          alignItems: 'center',
+                                          paddingTop: 1,
+                                          marginRight: 10,
+                                        }}
+                                      >
+                                        <Trash2
+                                          size={16}
+                                          color={color.text.muted}
+                                          strokeWidth={2}
+                                        />
+                                      </View>
+                                      <Text
+                                        style={{
+                                          flex: 1,
+                                          color: color.text.muted,
+                                          fontSize: 14,
+                                          lineHeight: 19,
+                                        }}
+                                      >
+                                        {t('storage.trashTranscriptDetail', {
+                                          count: trashStorage.recordCount,
+                                          size: formatFileSize(trashStorage.transcriptPayloadBytes),
+                                        })}
+                                      </Text>
+                                    </View>
                                   ) : null}
                                 </View>
                               ) : null}
                               {seg.id === 'ai' ? (
                                 <View>
-                                  <Text
-                                    style={{
-                                      color: color.text.secondary,
-                                      fontSize: 15,
-                                      lineHeight: 20,
-                                    }}
-                                  >
-                                    {formatFileSize(stats.aiDataKb * 1024)}
-                                  </Text>
-                                  {processedByAI > 0 ? (
-                                    <Text
+                                  <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                                    <View
                                       style={{
-                                        marginTop: 6,
-                                        color: color.text.muted,
-                                        fontSize: 14,
-                                        lineHeight: 19,
+                                        width: 18,
+                                        alignItems: 'center',
+                                        paddingTop: 2,
+                                        marginRight: 10,
                                       }}
                                     >
-                                      {t('storage.aiProcessed')}: {processedByAI}
+                                      <Bot
+                                        size={18}
+                                        color={color.accent.aiData}
+                                        strokeWidth={1.8}
+                                      />
+                                    </View>
+                                    <Text
+                                      style={{
+                                        flex: 1,
+                                        color: color.text.secondary,
+                                        fontSize: 15,
+                                        lineHeight: 20,
+                                      }}
+                                    >
+                                      {formatFileSize(stats.aiDataKb * 1024)}
                                     </Text>
+                                  </View>
+                                  {processedByAI > 0 ? (
+                                    <View
+                                      style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'flex-start',
+                                        marginTop: 8,
+                                      }}
+                                    >
+                                      <View
+                                        style={{
+                                          width: 18,
+                                          alignItems: 'center',
+                                          paddingTop: 1,
+                                          marginRight: 10,
+                                        }}
+                                      >
+                                        <Sparkles
+                                          size={16}
+                                          color={color.text.muted}
+                                          strokeWidth={2}
+                                        />
+                                      </View>
+                                      <Text
+                                        style={{
+                                          flex: 1,
+                                          color: color.text.muted,
+                                          fontSize: 14,
+                                          lineHeight: 19,
+                                        }}
+                                      >
+                                        {t('storage.aiProcessed')}: {processedByAI}
+                                      </Text>
+                                    </View>
                                   ) : null}
                                   {trashStorage.aiPayloadBytes > 0 ? (
-                                    <Text
+                                    <View
                                       style={{
+                                        flexDirection: 'row',
+                                        alignItems: 'flex-start',
                                         marginTop: 8,
-                                        color: color.text.muted,
-                                        fontSize: 14,
-                                        lineHeight: 19,
                                       }}
                                     >
-                                      {t('storage.trashAiSliceDetail', {
-                                        size: formatFileSize(trashStorage.aiPayloadBytes),
-                                      })}
-                                    </Text>
+                                      <View
+                                        style={{
+                                          width: 18,
+                                          alignItems: 'center',
+                                          paddingTop: 1,
+                                          marginRight: 10,
+                                        }}
+                                      >
+                                        <Trash2
+                                          size={16}
+                                          color={color.text.muted}
+                                          strokeWidth={2}
+                                        />
+                                      </View>
+                                      <Text
+                                        style={{
+                                          flex: 1,
+                                          color: color.text.muted,
+                                          fontSize: 14,
+                                          lineHeight: 19,
+                                        }}
+                                      >
+                                        {t('storage.trashAiSliceDetail', {
+                                          size: formatFileSize(trashStorage.aiPayloadBytes),
+                                        })}
+                                      </Text>
+                                    </View>
                                   ) : null}
                                 </View>
                               ) : null}
