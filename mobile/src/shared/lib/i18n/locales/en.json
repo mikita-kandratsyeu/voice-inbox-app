@@ -822,7 +822,7 @@
     "sharePercentAtMost1": "≤1%",
     "totalUsed": "Total used",
     "selectedSegmentsTitle": "Selected: {{count}}",
-    "onDeviceModels": "On-device models",
+    "onDeviceModels": "LLM models",
     "trashAudioDetail_one": "Trash: {{size}} from {{count}} note with saved audio",
     "trashAudioDetail_other": "Trash: {{size}} from {{count}} notes with saved audio",
     "trashTranscriptDetail_one": "This trashed note still keeps its transcript on your device until you delete it for good. About {{size}}.",

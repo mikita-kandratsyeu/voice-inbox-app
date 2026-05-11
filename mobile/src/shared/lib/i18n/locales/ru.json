@@ -828,7 +828,7 @@
     "sharePercentAtMost1": "≤1%",
     "totalUsed": "Всего занято",
     "selectedSegmentsTitle": "Выбрано: {{count}}",
-    "onDeviceModels": "Модели на устройстве",
+    "onDeviceModels": "LLM Модели",
     "trashAudioDetail_one": "В корзине {{size}} аудио ({{count}} заметка с записью)",
     "trashAudioDetail_few": "В корзине {{size}} аудио ({{count}} заметки с записью)",
     "trashAudioDetail_many": "В корзине {{size}} аудио ({{count}} заметок с записью)",
