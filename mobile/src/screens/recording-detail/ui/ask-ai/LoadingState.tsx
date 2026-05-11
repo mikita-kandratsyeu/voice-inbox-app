@@ -17,13 +17,7 @@ type LoadingStateProps = {
 export const LoadingState = ({ color, record, priorDepth, aiExecutionMode }: LoadingStateProps) => {
   const { t } = useTranslation();
   return (
-    <View className="w-full gap-3 py-4">
-      <View className="w-full items-center gap-3">
-        <ActivityIndicator color={color.accent.primary} size="large" />
-        <Text className="text-[15px] leading-6" style={{ color: color.text.secondary }}>
-          {t('recordingDetail.askProcessing')}
-        </Text>
-      </View>
+    <View className="w-full flex-1 gap-3 py-4">
       <AskAiContextDisclosure
         color={color}
         record={record}
@@ -31,6 +25,12 @@ export const LoadingState = ({ color, record, priorDepth, aiExecutionMode }: Loa
         aiExecutionMode={aiExecutionMode}
         containerClassName=""
       />
+      <View className="min-h-0 w-full flex-1 items-center justify-center gap-3">
+        <ActivityIndicator color={color.accent.primary} size="large" />
+        <Text className="text-[15px] leading-6" style={{ color: color.text.secondary }}>
+          {t('recordingDetail.askProcessing')}
+        </Text>
+      </View>
     </View>
   );
 };

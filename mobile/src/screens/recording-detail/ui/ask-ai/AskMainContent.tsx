@@ -10,6 +10,7 @@ import type { Colors } from '@/shared/config';
 
 import { DetailTabProcessingView } from '../DetailTabProcessingView';
 import { AnswerContent } from './AnswerContent';
+import { AskAiContextDisclosure } from './AskAiContextDisclosure';
 import { EmptyState } from './EmptyState';
 import { ErrorState } from './ErrorState';
 import { LoadingState } from './LoadingState';
@@ -63,15 +64,24 @@ export const AskMainContent = ({
   if (isLoading) {
     if (aiExecutionMode === 'private_experimental') {
       return (
-        <View className="w-full gap-3">
-          <DetailTabProcessingView
-            progress={privateAskProgress}
-            phase={privateAskPhase}
+        <View className="w-full flex-1 gap-3 py-4">
+          <AskAiContextDisclosure
             color={color}
-            hintText={t('privateAi.batteryHint')}
-            leadingIcon={<Sparkles size={22} color={color.accent.primary} strokeWidth={2} />}
-            context="private_llm"
+            record={liveRecord}
+            priorDepth={history.length}
+            aiExecutionMode={aiExecutionMode}
+            containerClassName=""
           />
+          <View className="min-h-0 w-full flex-1 justify-center">
+            <DetailTabProcessingView
+              progress={privateAskProgress}
+              phase={privateAskPhase}
+              color={color}
+              hintText={t('privateAi.batteryHint')}
+              leadingIcon={<Sparkles size={22} color={color.accent.primary} strokeWidth={2} />}
+              context="private_llm"
+            />
+          </View>
         </View>
       );
     }
@@ -89,9 +99,6 @@ export const AskMainContent = ({
     return (
       <ErrorState
         color={color}
-        record={liveRecord}
-        priorDepth={history.length}
-        aiExecutionMode={aiExecutionMode}
         onRetry={onRetry}
         showPrivateModeCta={aiExecutionMode === 'private_experimental'}
       />

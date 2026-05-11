@@ -151,8 +151,11 @@ export const AskAIScreen = () => {
   }, []);
 
   const shouldShowInputRow = hasTranscript && !isRestoringSession && !isLoading;
-  const scrollContentCentered =
+  /** Fill scroll height when loading so the loader can be centered below the disclosure. */
+  const scrollContentFlexGrow =
     !hasTranscript || isLoading || Boolean(error && !answer && hasTranscript);
+  /** Center whole content only when not loading (loading centers the spinner inside LoadingState). */
+  const scrollContentCentered = !hasTranscript || Boolean(error && !answer && hasTranscript);
   const canSend =
     Boolean(questionInput.trim()) &&
     hasTranscript &&
@@ -206,7 +209,8 @@ export const AskAIScreen = () => {
               paddingHorizontal: 16,
               paddingTop: 12,
               paddingBottom: 16,
-              ...(scrollContentCentered ? { flexGrow: 1, justifyContent: 'center' as const } : {}),
+              ...(scrollContentFlexGrow ? { flexGrow: 1 } : {}),
+              ...(scrollContentCentered ? { justifyContent: 'center' as const } : {}),
             }}
           >
             <AskMainContent
