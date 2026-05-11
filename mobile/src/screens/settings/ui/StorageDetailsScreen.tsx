@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Bot, BrainCircuit, FileText, Mic, Sparkles, Trash2 } from 'lucide-react-native';
+import { BrainCircuit, FileText, Mic, Sparkles, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -662,38 +662,12 @@ export const StorageDetailsScreen = () => {
                               ) : null}
                               {seg.id === 'transcript' ? (
                                 <View>
-                                  <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                                    <View
-                                      style={{
-                                        width: 18,
-                                        alignItems: 'center',
-                                        paddingTop: 2,
-                                        marginRight: 10,
-                                      }}
-                                    >
-                                      <FileText
-                                        size={18}
-                                        color={color.accent.transcript}
-                                        strokeWidth={1.8}
-                                      />
-                                    </View>
-                                    <Text
-                                      style={{
-                                        flex: 1,
-                                        color: color.text.secondary,
-                                        fontSize: 15,
-                                        lineHeight: 20,
-                                      }}
-                                    >
-                                      {formatFileSize(stats.transcriptKb * 1024)}
-                                    </Text>
-                                  </View>
                                   {withTranscript > 0 ? (
                                     <View
                                       style={{
                                         flexDirection: 'row',
                                         alignItems: 'flex-start',
-                                        marginTop: 8,
+                                        marginTop: 0,
                                       }}
                                     >
                                       <View
@@ -763,38 +737,12 @@ export const StorageDetailsScreen = () => {
                               ) : null}
                               {seg.id === 'ai' ? (
                                 <View>
-                                  <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                                    <View
-                                      style={{
-                                        width: 18,
-                                        alignItems: 'center',
-                                        paddingTop: 2,
-                                        marginRight: 10,
-                                      }}
-                                    >
-                                      <Bot
-                                        size={18}
-                                        color={color.accent.aiData}
-                                        strokeWidth={1.8}
-                                      />
-                                    </View>
-                                    <Text
-                                      style={{
-                                        flex: 1,
-                                        color: color.text.secondary,
-                                        fontSize: 15,
-                                        lineHeight: 20,
-                                      }}
-                                    >
-                                      {formatFileSize(stats.aiDataKb * 1024)}
-                                    </Text>
-                                  </View>
                                   {processedByAI > 0 ? (
                                     <View
                                       style={{
                                         flexDirection: 'row',
                                         alignItems: 'flex-start',
-                                        marginTop: 8,
+                                        marginTop: 0,
                                       }}
                                     >
                                       <View
