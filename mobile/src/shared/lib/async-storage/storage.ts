@@ -92,6 +92,18 @@ const getFileSize = async (path: string): Promise<number> => {
   }
 };
 
+/** Sum of file sizes for unique non-empty paths (e.g. trashed records’ audio). */
+export const sumAudioFileSizesBytes = async (
+  paths: Array<string | undefined | null>,
+): Promise<number> => {
+  const unique = new Set(paths.filter((p): p is string => Boolean(p)));
+  let total = 0;
+  for (const p of unique) {
+    total += await getFileSize(p);
+  }
+  return total;
+};
+
 const getCacheSizeBytes = async (audioPaths: string[]): Promise<number> => {
   const excludeSet = new Set(audioPaths.filter(Boolean));
   const dir = getCachesDirectoryPath();

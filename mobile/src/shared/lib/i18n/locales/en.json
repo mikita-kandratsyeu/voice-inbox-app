@@ -355,6 +355,7 @@
   "trash": {
     "title": "Trash",
     "intro": "Notes stay here for 30 days, then are removed permanently. Audio stays on your device until then.",
+    "audioInTrash": "Trash audio on device: {{size}}",
     "empty": "Trash is empty",
     "purgeOn": "Removes on {{date}}",
     "restore": "Restore",

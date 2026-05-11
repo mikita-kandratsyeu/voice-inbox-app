@@ -1,7 +1,7 @@
 export type { AiApiResult, AiMessageResult, AiProcessingResult, AiTask } from './ai-api';
 export { pollAiMessage, postAiMessage } from './ai-api';
 export type { StorageStats } from './async-storage';
-export { clearCache, getStorageStats, storage } from './async-storage';
+export { clearCache, getStorageStats, storage, sumAudioFileSizesBytes } from './async-storage';
 export type { AudioChunk } from './audio';
 export { splitAudioIntoChunks } from './audio';
 export { formatRelativeTime, formatShortDate } from './date';

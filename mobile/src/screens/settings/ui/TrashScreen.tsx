@@ -1,6 +1,7 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
+import { Trash2 } from 'lucide-react-native';
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -20,10 +21,16 @@ import type { TrashedRecordListItem } from '@/entities/record/model/repository';
 import { recordRepository } from '@/entities/record/model/repository';
 import { useRecordStore } from '@/entities/record/model/store';
 import { useColors } from '@/shared/config';
-import { hapticSelection, IS_ANDROID } from '@/shared/lib';
-import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import {
+  formatFileSize,
+  hapticSelection,
+  IS_ANDROID,
+  sumAudioFileSizesBytes,
+  useIsTablet,
+  useTabletContentMaxWidth,
+} from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
-import { SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
+import { EmptyState, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
 
 const TRASH_RESTORE_BTN_H = 48;
 
@@ -48,11 +55,14 @@ export const TrashScreen = () => {
 
   const [items, setItems] = useState<TrashedRecordListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [trashAudioBytes, setTrashAudioBytes] = useState(0);
 
   const loadTrash = useCallback(async () => {
     setLoading(true);
     try {
       const list = await recordRepository.getTrashedList();
+      const bytes = await sumAudioFileSizesBytes(list.map((i) => i.audioPath));
+      setTrashAudioBytes(bytes);
       setItems(list);
     } finally {
       setLoading(false);
@@ -118,6 +128,34 @@ export const TrashScreen = () => {
 
   const maxW = contentMaxWidth ?? windowWidth;
 
+  const renderListHeader = useCallback(
+    () => (
+      <View className="mb-4">
+        <Text className="text-[14px] leading-5" style={{ color: color.text.secondary }}>
+          {t('trash.intro')}
+        </Text>
+        {!loading ? (
+          <View style={{ marginTop: 12, gap: 4 }}>
+            <Text className="text-[14px] leading-5" style={{ color: color.text.muted }}>
+              {t('trash.audioInTrash', { size: formatFileSize(trashAudioBytes) })}
+            </Text>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('storage.title')}
+              onPress={() => navigation.navigate('StorageDetails')}
+              style={{ alignSelf: 'flex-start', paddingVertical: 4 }}
+            >
+              <Text className="text-[15px] font-semibold" style={{ color: color.accent.primary }}>
+                {t('storage.title')}
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
+      </View>
+    ),
+    [color, loading, navigation, t, trashAudioBytes],
+  );
+
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader title={t('trash.title')} onBack={() => navigation.goBack()} />
@@ -138,21 +176,18 @@ export const TrashScreen = () => {
             paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
             flexGrow: 1,
           }}
-          ListHeaderComponent={
-            <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-              {t('trash.intro')}
-            </Text>
-          }
+          ListHeaderComponent={renderListHeader}
           ListEmptyComponent={
             loading ? (
               <View className="items-center py-16">
                 <ActivityIndicator color={color.accent.primary} />
               </View>
             ) : (
-              <View className="flex-1 items-center justify-center py-16">
-                <Text className="text-center text-[16px]" style={{ color: color.text.muted }}>
-                  {t('trash.empty')}
-                </Text>
+              <View className="min-h-[320px] flex-1 justify-center py-8">
+                <EmptyState
+                  title={t('trash.empty')}
+                  icon={<Trash2 size={40} color={color.icon.muted} strokeWidth={1.5} />}
+                />
               </View>
             )
           }
