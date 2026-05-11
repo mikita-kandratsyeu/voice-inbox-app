@@ -1,17 +1,20 @@
-import { MessageSquare } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
+import type { AiExecutionMode } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
+import { AskAiContextDisclosure } from './AskAiContextDisclosure';
 import { buildSuggestedQuestions } from './askAiSuggestions';
 
 type EmptyStateProps = {
   color: Colors;
   record: VoiceRecord;
+  priorDepth: number;
+  aiExecutionMode: AiExecutionMode;
   showOfflineState: boolean;
   onSuggestedQuestion: (question: string) => void;
   disabled?: boolean;
@@ -19,6 +22,8 @@ type EmptyStateProps = {
 export const EmptyState = ({
   color,
   record,
+  priorDepth,
+  aiExecutionMode,
   showOfflineState,
   onSuggestedQuestion,
   disabled,
@@ -28,17 +33,13 @@ export const EmptyState = ({
 
   return (
     <View className="gap-3 pb-1 pt-1">
-      <View className="flex-row items-center gap-3">
-        <View
-          className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
-          style={{ backgroundColor: color.background.tertiary }}
-        >
-          <MessageSquare size={22} color={color.icon.muted} strokeWidth={1.8} />
-        </View>
-        <Text className="flex-1 text-[15px] leading-6" style={{ color: color.text.secondary }}>
-          {t('recordingDetail.askEmptyDesc')}
-        </Text>
-      </View>
+      <AskAiContextDisclosure
+        color={color}
+        record={record}
+        priorDepth={priorDepth}
+        aiExecutionMode={aiExecutionMode}
+        containerClassName=""
+      />
       <Text className="text-xs font-semibold" style={{ color: color.text.secondary }}>
         {t('recordingDetail.askSuggestedSection')}
       </Text>

@@ -1,6 +1,7 @@
 import type { TFunction } from 'i18next';
 import { Sparkles } from 'lucide-react-native';
 import React from 'react';
+import { View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import type { AiExecutionMode } from '@/entities/settings';
@@ -62,23 +63,35 @@ export const AskMainContent = ({
   if (isLoading) {
     if (aiExecutionMode === 'private_experimental') {
       return (
-        <DetailTabProcessingView
-          progress={privateAskProgress}
-          phase={privateAskPhase}
-          color={color}
-          hintText={t('privateAi.batteryHint')}
-          leadingIcon={<Sparkles size={22} color={color.accent.primary} strokeWidth={2} />}
-          context="private_llm"
-        />
+        <View className="w-full gap-3">
+          <DetailTabProcessingView
+            progress={privateAskProgress}
+            phase={privateAskPhase}
+            color={color}
+            hintText={t('privateAi.batteryHint')}
+            leadingIcon={<Sparkles size={22} color={color.accent.primary} strokeWidth={2} />}
+            context="private_llm"
+          />
+        </View>
       );
     }
-    return <LoadingState color={color} />;
+    return (
+      <LoadingState
+        color={color}
+        record={liveRecord}
+        priorDepth={history.length}
+        aiExecutionMode={aiExecutionMode}
+      />
+    );
   }
 
   if (error && !answer) {
     return (
       <ErrorState
         color={color}
+        record={liveRecord}
+        priorDepth={history.length}
+        aiExecutionMode={aiExecutionMode}
         onRetry={onRetry}
         showPrivateModeCta={aiExecutionMode === 'private_experimental'}
       />
@@ -93,6 +106,7 @@ export const AskMainContent = ({
         history={history}
         question={question ?? ''}
         answer={answer}
+        aiExecutionMode={aiExecutionMode}
         onCopy={onCopy}
         onShare={onShare}
         onFollowUpQuestion={onFollowUp}
@@ -104,6 +118,8 @@ export const AskMainContent = ({
     <EmptyState
       color={color}
       record={liveRecord}
+      priorDepth={history.length}
+      aiExecutionMode={aiExecutionMode}
       showOfflineState={disableByNetwork}
       onSuggestedQuestion={onFollowUp}
       disabled={isLoading}

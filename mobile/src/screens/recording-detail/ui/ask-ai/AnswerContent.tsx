@@ -4,10 +4,13 @@ import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
+import type { AiExecutionMode } from '@/entities/settings';
 import { type AskAIHistoryItem } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
+import { AskAiAnswerMarkdown } from './AskAiAnswerMarkdown';
+import { AskAiContextDisclosure } from './AskAiContextDisclosure';
 import { formatAskTurnForClipboard, formatAskTurnForShare } from './askAiFormat';
 import { buildFollowUpQuestions } from './askAiSuggestions';
 
@@ -58,9 +61,7 @@ const AnswerTurnBlock = ({
           </Text>
         </View>
       ) : null}
-      <Text className="text-base leading-7" style={{ color: color.text.primary }}>
-        {answer}
-      </Text>
+      <AskAiAnswerMarkdown color={color}>{answer}</AskAiAnswerMarkdown>
       <View className="mt-1 flex-row flex-wrap gap-2">
         <TouchableOpacity
           onPress={() => {
@@ -107,6 +108,7 @@ type AnswerContentProps = {
   history: AskAIHistoryItem[];
   question: string;
   answer: string;
+  aiExecutionMode: AiExecutionMode;
   onCopy: (text: string) => void;
   onShare: (text: string, title: string) => void;
   onFollowUpQuestion: (question: string) => void;
@@ -118,6 +120,7 @@ export const AnswerContent = ({
   history,
   question,
   answer,
+  aiExecutionMode,
   onCopy,
   onShare,
   onFollowUpQuestion,
@@ -132,17 +135,15 @@ export const AnswerContent = ({
 
   return (
     <View className="gap-4 pb-4">
-      <View
-        className="rounded-xl px-3 py-2"
-        style={{
-          backgroundColor: color.background.tertiary,
-          borderWidth: 1,
-          borderColor: color.border.default,
-        }}
-      >
-        <Text className="text-sm leading-5" style={{ color: color.text.secondary }}>
-          {t('recordingDetail.askEmptyTitle')} • {record.title}
-        </Text>
+      <View className="gap-3">
+        <AskAiContextDisclosure
+          color={color}
+          record={record}
+          priorDepth={history.length + (question.trim() && answer.trim() ? 1 : 0)}
+          aiExecutionMode={aiExecutionMode}
+          headline={record.title}
+          containerClassName=""
+        />
       </View>
       {turns.map((item, index) => (
         <AnswerTurnBlock

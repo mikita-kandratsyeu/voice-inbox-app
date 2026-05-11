@@ -275,8 +275,23 @@
     "noTranscriptForAiDesc": "Transcribe the recording first to use generation features.",
     "ask": "Ask",
     "askPlaceholder": "Ask a question about this note...",
-    "askEmptyTitle": "Ask about your note",
-    "askEmptyDesc": "Get answers about the note using AI.",
+    "askEmptyTitle": "Questions about this note",
+    "askContextSourceTranscript": "Transcript",
+    "askContextSourceSummary": "Summary",
+    "askContextSourceTasks": "Tasks",
+    "askContextSourceChat": "This chat",
+    "askContextProcessingPrivate": "On-device AI",
+    "askContextProcessingCloud": "Cloud via Voice Inbox AI",
+    "askContextLearnMoreA11y": "Details on what is sent",
+    "askContextSheetTitle": "What goes into each answer",
+    "askContextSheetIntro": "Each request can include:",
+    "askContextBulletTranscript": "The note transcript.",
+    "askContextBulletSummary": "The note summary, if it exists.",
+    "askContextBulletTasks": "Saved task titles from this note, if any.",
+    "askContextBulletPrior": "Earlier questions and answers from this screen, when you ask a follow-up.",
+    "askContextBulletQuestion": "The question you send now.",
+    "askContextFooterPrivate": "In Private mode, this text is processed on your device by the downloaded model. Other app features may still use the network.",
+    "askContextFooterCloud": "In Smart mode, this text is sent to Voice Inbox AI over HTTPS and forwarded to a cloud AI provider. Audio files are not uploaded.",
     "askSuggestedSection": "Quick prompts",
     "askSuggested1": "What is this note about?",
     "askSuggested2": "Summarize briefly",
@@ -286,7 +301,7 @@
     "askSuggestedTaskAbout": "Tell me more about: {{task}}",
     "askSuggestedTags": "What do the tags mean?",
     "askButton": "Ask",
-    "askProcessing": "Answering...",
+    "askProcessing": "Answering…",
     "askError": "Failed to get answer",
     "askErrorContinueHint": "Close to view summary and tasks.",
     "privateModeErrorHint": "This error is related to Private mode. You can switch to Smart mode and retry.",
@@ -332,7 +347,7 @@
     "loading_model": "Loading model…",
     "processing": "Transcribing...",
     "aiProcessing": "Generating summary...",
-    "askProcessing": "Asking AI…",
+    "askProcessing": "Answering…",
     "done": "Transcript ready",
     "error": "Transcription error",
     "noTranscript": "No transcript"
@@ -457,8 +472,8 @@
           "subtitle": "Uses cloud AI in online mode, or local generation when private local AI is enabled."
         },
         "ask": {
-          "title": "Ask AI",
-          "subtitle": "Uses cloud AI in Smart mode, or local generation when private local AI is enabled."
+          "title": "Questions about notes",
+          "subtitle": "Uses cloud AI in Smart mode, or on-device generation when Private local AI is enabled."
         },
         "translate": {
           "title": "Translate",
@@ -1031,7 +1046,7 @@
   },
   "cloudAiConsent": {
     "title": "Cloud AI and your notes",
-    "body": "To generate summaries, tasks, answers, translations, and folder suggestions in Smart mode, the app sends the relevant text from your notes (for example transcripts, titles, summaries, tasks, and your questions in Ask AI) to Voice Inbox servers over HTTPS. Our servers forward those requests to third-party AI providers through OpenRouter (including Google Gemini, MiniMax, and DeepSeek, depending on routing and availability).\n\nAudio files are not uploaded for these features. Only the text you choose to process is sent. You can use Private mode with an on-device model so that summaries and Ask AI run locally instead (other features may still use the network).\n\nDo you allow sending this note content to our servers for cloud AI processing?",
+    "body": "To generate summaries, tasks, answers, translations, and folder suggestions in Smart mode, the app sends the relevant text from your notes (for example transcripts, titles, summaries, tasks, and your questions about a note) to Voice Inbox AI servers over HTTPS. Our servers forward those requests to third-party AI providers through OpenRouter (including Google Gemini, MiniMax, and DeepSeek, depending on routing and availability).\n\nAudio files are not uploaded for these features. Only the text you choose to process is sent. You can use Private mode with an on-device model so that summaries and note Q&A run locally instead (other features may still use the network).\n\nDo you allow sending this note content to our servers for cloud AI processing?",
     "privacyLink": "Privacy Policy",
     "agree": "Allow",
     "notNow": "Not now",
