@@ -1,14 +1,18 @@
 # Terms of Service
 
-**Last updated: April 2026**
+**Last updated: May 2026**
 
-These Terms of Service ("Terms") govern your use of the Voice Inbox AI mobile application and related web services. By using the app, you agree to these Terms.
+These Terms of Service ("Terms") govern your use of the Voice Inbox AI mobile application, related web services, and optional interactions with our website (such as joining the Android waitlist). By using the app or submitting information through our website forms covered by these Terms, you agree to these Terms and to our **Privacy Policy**.
 
 ## 1. Service Description
 
 Voice Inbox AI is an offline voice notes app that lets you record audio, transcribe it on-device using Whisper, and optionally use AI to generate summaries, extract tasks, and answer questions based on transcripts. The app may offer an optional **experimental on-device (private) AI mode** using a downloaded model, or **cloud AI** routed through our servers. The app may also offer an optional **in-app support** form that sends your message and technical diagnostics to our servers so we can help you.
 
 Transcription runs locally on your device. **On-device AI** can run without sending transcript text to our servers for inference (an internet connection is still needed to download the model). **Cloud AI** requires an internet connection and sends transcript text to our servers, which forward it to third-party providers via the OpenRouter platform. Availability of each mode may depend on your device, OS, and app settings.
+
+### Android waitlist (website)
+
+If you use our website to join the **Android release waitlist**, you agree that we may process the information you submit as described in our **Privacy Policy**, including contacting you about Android beta or early access and sending occasional Voice Inbox AI product updates by email. You agree to provide **accurate** information and not to abuse the signup process (for example by submitting spam, impersonation, or fraudulent entries). Where required by law, emails include instructions to unsubscribe from non-essential updates.
 
 ## 2. Acceptable Use
 

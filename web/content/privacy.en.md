@@ -1,8 +1,8 @@
 # Privacy Policy
 
-**Last updated: April 2026**
+**Last updated: May 2026**
 
-Voice Inbox AI ("we", "our", or "the app") is an offline voice notes application. This Privacy Policy explains how we handle your data when you use the mobile app, the optional web API for AI processing, and optional in-app support requests.
+Voice Inbox AI ("we", "our", or "the app") is an offline voice notes application. This Privacy Policy explains how we handle your data when you use the mobile app, the optional web API for AI processing, optional in-app support requests, and optional sign-ups on our website (such as the Android waitlist).
 
 ## 1. Data We Process
 
@@ -17,6 +17,12 @@ Voice recordings, transcripts, summaries, tasks, and tags are stored locally on 
 **Crash reporting (Firebase Crashlytics):** In **release** builds, the app may send crash and stability diagnostics to [Google Firebase Crashlytics](https://firebase.google.com/products/crashlytics) so we can find and fix defects. In development/debug builds, crash collection is disabled by default and can be enabled only through explicit debug configuration. We may set an anonymous app-specific device identifier in Crashlytics (the same value used for API access and rate limiting — see “Our Web API” below) so we can relate a support request to crash logs when you contact us. Crashlytics is operated under Google’s terms and policies.
 
 **Advertising (Yandex Mobile Ads):** *As of the “Last updated” date above*, unless you have an active subscription or purchase that removes advertising, the app may use **Yandex Mobile Ads** — a banner on the note detail screen, optional full-screen (interstitial) ads after certain completed actions (such as saving a note, importing records, or applying suggested folder changes), and an optional rewarded ad that can grant bonus AI quota. We limit how often interstitials can appear. Where required by law, we will provide consent or controls as applicable. The ad SDK operates under Yandex’s policies; we use it only to serve ads, not for cross-app tracking or analytics on our behalf.
+
+**Website — Android waitlist (optional):** If you join the Android release waitlist through our website (for example via an embedded or linked form operated by a third-party form provider), you may provide your **name**, **email address**, and optionally your **Android phone model** and responses to short questions (such as whether you currently use an iOS device). For details about our privacy practices and how we protect your data in this context, this section and our contact details below apply alongside the rest of this Policy.
+
+We use waitlist information only to **operate the waitlist**, **invite you to Android beta or early access** when available, and send **occasional email updates** about Voice Inbox AI (product news relevant to the Android release and the app). We **do not** sell your personal data or share it with third parties for unrelated marketing. The form provider processes submissions under its own terms; we access responses only to deliver the purposes above.
+
+You may **contact us** at **hello@voice-inbox.online** to ask questions about this processing or to **request removal from the waitlist** where applicable law allows. Marketing-style emails include an unsubscribe link where required.
 
 ## 2. Our Web API
 
@@ -46,13 +52,15 @@ We apply **Zero Data Retention (ZDR)** to **cloud** requests where supported: ro
 
 ## 4. No Accounts or Login
 
-Voice Inbox AI does not require an account or login. There is no user registration. We do not ask for your name or a password. If you **voluntarily** include an email address in an in-app support request, we process it only to communicate with you about that request (see “In-app support” above).
+Voice Inbox AI does not require an account or login inside the app. There is no in-app user registration, and we do not ask for your name or a password in the app. If you **voluntarily** include an email address in an in-app support request, we process it only to communicate with you about that request (see “In-app support” above).
+
+**Website waitlist:** Separately, if you **choose** to join our Android waitlist on the website, you may voluntarily provide your name, email, and other fields described under “Website — Android waitlist” in section 1. That is optional and independent of using the mobile app.
 
 ## 5. Data Storage
 
 **On your device:** recordings, transcripts, and AI-generated content are stored until you delete them or uninstall the app.
 
-**On our servers:** Temporary AI job results in our key-value cache are retained until they expire (up to one hour by default; the app may request as little as five minutes, as described in section 2). Per-device rate limit counters are stored for up to 8 days, then reset. Push tokens are stored for up to 30 days and refreshed on every app launch with notifications enabled. **Support requests** (including optional contact details and diagnostics you send through the support form) are stored in our database as described in section 2. **Subscription and billing records** needed to verify in-app purchases (for example, device identifier and entitlement expiry) are stored as long as needed to provide paid features and prevent abuse.
+**On our servers:** Temporary AI job results in our key-value cache are retained until they expire (up to one hour by default; the app may request as little as five minutes, as described in section 2). Per-device rate limit counters are stored for up to 8 days, then reset. Push tokens are stored for up to 30 days and refreshed on every app launch with notifications enabled. **Support requests** (including optional contact details and diagnostics you send through the support form) are stored in our database as described in section 2. **Subscription and billing records** needed to verify in-app purchases (for example, device identifier and entitlement expiry) are stored as long as needed to provide paid features and prevent abuse. **Android waitlist** submissions are retained as long as needed to run the waitlist and send related emails, unless you ask us to delete your entry or applicable law requires otherwise.
 
 ## 6. Your Rights
 
@@ -64,6 +72,7 @@ You retain full control over your data. You have the right to:
 - **Opt out of cloud AI processing** — you may use offline transcription only, use on-device private AI so transcripts are not sent to our servers for inference, or avoid AI features entirely.
 - **Object to processing** — if you have questions about data handling, contact us at the email below.
 - **Support data** — for information you submitted through in-app support, you may contact us using the address below to ask questions or request deletion where applicable law allows.
+- **Waitlist data** — for information you submitted through the website Android waitlist, contact us using the address below to ask questions or request removal or deletion where applicable law allows.
 
 ## 7. Security
 

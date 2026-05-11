@@ -15,8 +15,6 @@
     "appStore": "App Store",
     "googlePlayLabel": "Android",
     "googlePlay": "Google Play",
-    "waitlist": "Waitlist",
-    "googlePlayWaitlistAria": "Join Android waitlist",
     "downloadApp": "Download App"
   },
   "features": {
@@ -86,7 +84,10 @@
   "cta": {
     "title": "Start capturing ideas today",
     "subtitle": "Try for free - no account needed",
-    "primary": "Download App"
+    "primary": "Download App",
+    "androidWaitlistAria": "Join Android waitlist",
+    "androidSoonLabel": "Coming soon",
+    "androidWaitlistLink": "Join Android waitlist"
   },
   "faq": {
     "title": "Questions people ask before installing",
