@@ -1,7 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
-import type { TaskItem, VoiceRecord } from '@/entities/record';
+import type { RecordClassification, TaskItem, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { mergeManualTasksWithAi } from '@/entities/record/model/mergeManualTasksWithAi';
 import { mergeSimilarExtractedTasks } from '@/entities/record/model/mergeSimilarExtractedTasks';
@@ -14,6 +14,7 @@ import {
 } from '@/entities/record/model/taskTextDedupe';
 import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
+import { useProEntitlement } from '@/features/pro-license';
 import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
@@ -98,6 +99,7 @@ export const useAiProcessing = () => {
 
   const inFlightRef = useRef<Set<string>>(new Set());
   const cancelTokensRef = useRef<Map<string, { cancelled: boolean }>>(new Map());
+  const { isProActive } = useProEntitlement();
 
   const applyCancelledUiState = useCallback(
     (recordId: string) => {
@@ -169,7 +171,8 @@ export const useAiProcessing = () => {
         const snapshot = useRecordStore.getState().records.find((r) => r.id === record.id);
         const existingTaskTexts = collectExistingTaskTextsForAiPrompt(snapshot?.tasks);
         const taskExtractionHint = normalizeTaskExtractionHint(aiRunOptions?.taskExtractionHint);
-        const isMeetingPreset = (snapshot?.classification ?? record.classification) === 'meeting';
+        const recordIsMeeting = (snapshot?.classification ?? record.classification) === 'meeting';
+        const isMeetingPreset = isProActive && recordIsMeeting;
 
         const privateBatchProgress = {
           lastDisplayedPct: -1,
@@ -341,13 +344,20 @@ export const useAiProcessing = () => {
         if (tags.length > 0) {
           await updateTags(record.id, tags);
         }
-        const resolvedClassification = isMeetingPreset ? 'meeting' : classification;
+        let resolvedClassification: RecordClassification | undefined =
+          isProActive && recordIsMeeting ? 'meeting' : classification;
+        if (!isProActive && resolvedClassification === 'meeting') {
+          resolvedClassification = undefined;
+        }
+
+        const classificationClearedForNonPro = !isProActive && classification === 'meeting';
 
         if (
           resolvedClassification ||
           (keyPhrases && keyPhrases.length > 0) ||
           rawNextSteps.length > 0 ||
-          nextStepsForStore.length > 0
+          nextStepsForStore.length > 0 ||
+          classificationClearedForNonPro
         ) {
           await updateAiExtras(record.id, {
             classification: resolvedClassification ?? null,
@@ -425,6 +435,7 @@ export const useAiProcessing = () => {
       updateTags,
       updateAiExtras,
       renameRecord,
+      isProActive,
     ],
   );
 

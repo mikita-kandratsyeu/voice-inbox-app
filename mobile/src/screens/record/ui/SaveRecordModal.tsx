@@ -13,6 +13,7 @@ import { Keyboard, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RecordingMark, VoiceRecord } from '@/entities/record';
+import { useProEntitlement } from '@/features/pro-license';
 import { useColors } from '@/shared/config';
 import {
   formatTime,
@@ -64,6 +65,7 @@ export const SaveRecordModal = ({
 }: SaveRecordModalProps) => {
   const { t } = useTranslation();
   const c = useColors();
+  const { isProActive } = useProEntitlement();
   const insets = useSafeAreaInsets();
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [isMeetingMode, setIsMeetingMode] = useState(false);
@@ -221,47 +223,49 @@ export const SaveRecordModal = ({
             {t('record.saveModalMarksHint', { count: recordingMarks.length })}
           </Text>
         )}
-        <Pressable
-          accessibilityRole="switch"
-          accessibilityState={{ checked: isMeetingMode }}
-          accessibilityLabel={t('record.meetingMode')}
-          onPress={handleToggleMeetingMode}
-          className="flex-row items-center gap-3 rounded-xl border px-3.5 py-3"
-          style={{
-            borderColor: isMeetingMode ? c.accent.primary : c.border.default,
-            backgroundColor: c.background.tertiary,
-          }}
-        >
-          <View
-            className="h-9 w-9 items-center justify-center rounded-full"
+        {isProActive ? (
+          <Pressable
+            accessibilityRole="switch"
+            accessibilityState={{ checked: isMeetingMode }}
+            accessibilityLabel={t('record.meetingMode')}
+            onPress={handleToggleMeetingMode}
+            className="flex-row items-center gap-3 rounded-xl border px-3.5 py-3"
             style={{
-              backgroundColor: isMeetingMode ? c.accent.primary : c.background.secondary,
+              borderColor: isMeetingMode ? c.accent.primary : c.border.default,
+              backgroundColor: c.background.tertiary,
             }}
           >
-            <UsersRound
-              size={18}
-              color={isMeetingMode ? '#fff' : c.text.secondary}
-              strokeWidth={2}
-            />
-          </View>
-          <View className="min-w-0 flex-1">
-            <Text className="text-[15px] font-semibold" style={{ color: c.text.primary }}>
-              {t('record.meetingMode')}
-            </Text>
-            <Text className="mt-0.5 text-[13px] leading-5" style={{ color: c.text.secondary }}>
-              {t('record.meetingModeHint')}
-            </Text>
-          </View>
-          <View
-            className="h-6 w-11 justify-center rounded-full px-0.5"
-            style={{ backgroundColor: isMeetingMode ? c.accent.primary : c.border.default }}
-          >
             <View
-              className="h-5 w-5 rounded-full bg-white"
-              style={{ alignSelf: isMeetingMode ? 'flex-end' : 'flex-start' }}
-            />
-          </View>
-        </Pressable>
+              className="h-9 w-9 items-center justify-center rounded-full"
+              style={{
+                backgroundColor: isMeetingMode ? c.accent.primary : c.background.secondary,
+              }}
+            >
+              <UsersRound
+                size={18}
+                color={isMeetingMode ? '#fff' : c.text.secondary}
+                strokeWidth={2}
+              />
+            </View>
+            <View className="min-w-0 flex-1">
+              <Text className="text-[15px] font-semibold" style={{ color: c.text.primary }}>
+                {t('record.meetingMode')}
+              </Text>
+              <Text className="mt-0.5 text-[13px] leading-5" style={{ color: c.text.secondary }}>
+                {t('record.meetingModeHint')}
+              </Text>
+            </View>
+            <View
+              className="h-6 w-11 justify-center rounded-full px-0.5"
+              style={{ backgroundColor: isMeetingMode ? c.accent.primary : c.border.default }}
+            >
+              <View
+                className="h-5 w-5 rounded-full bg-white"
+                style={{ alignSelf: isMeetingMode ? 'flex-end' : 'flex-start' }}
+              />
+            </View>
+          </Pressable>
+        ) : null}
         {contextHint && (
           <Text className="text-[13px] leading-5" style={{ color: c.text.muted }}>
             {contextHint}

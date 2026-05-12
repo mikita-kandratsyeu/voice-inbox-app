@@ -357,6 +357,10 @@ export const RecordingDetailScreen = () => {
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const hasAudio = Boolean(liveRecord.audioPath?.trim());
   const hasRecordingMarks = (liveRecord.recordingMarks?.length ?? 0) > 0;
+  const meetingPresetUiActive = useMemo(
+    () => isProActive && liveRecord.classification === 'meeting',
+    [isProActive, liveRecord.classification],
+  );
 
   const onBack = useCallback(() => navigation.goBack(), [navigation]);
   const onTogglePin = useCallback(() => togglePin(liveRecord.id), [liveRecord.id, togglePin]);
@@ -465,7 +469,7 @@ export const RecordingDetailScreen = () => {
       <ShareRecordSheet
         visible={shareSheetVisible}
         hasAudio={hasAudio}
-        isMeeting={liveRecord.classification === 'meeting'}
+        isMeeting={meetingPresetUiActive}
         isSendingEmail={emailSending}
         onClose={onCloseShareMenu}
         onShareText={handleShare}
@@ -572,7 +576,7 @@ export const RecordingDetailScreen = () => {
                   hasTranscript={Boolean(liveRecord.transcript)}
                   color={color}
                   onGenerate={handleGenerateSummary}
-                  isMeeting={liveRecord.classification === 'meeting'}
+                  isMeeting={meetingPresetUiActive}
                   onShareMeetingBrief={onOpenShareMenu}
                   onDismissError={handleDismissSummaryError}
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}

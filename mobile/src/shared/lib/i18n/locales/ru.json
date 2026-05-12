@@ -690,7 +690,7 @@
         "aiLimit": "До {{limit}} генераций в неделю",
         "recordingUpToOneHour": "Запись до 1 часа",
         "accentCustomization": "Палитра акцента — кнопки, выделения и индикаторы",
-        "pinnedMoments": "Отметки моментов при записи",
+        "meetingModeAndPinnedMoments": "Режим встречи и отметки моментов при записи",
         "noAds": "Без рекламы"
       }
     },
