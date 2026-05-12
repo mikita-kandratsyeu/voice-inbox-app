@@ -48,24 +48,16 @@ export const SettingsRow = ({
     return '';
   };
 
-  const alignWithTitle = Boolean(subtitle);
-
   const content = (
     <View
-      className={`flex-row px-4 py-3.5 ${alignWithTitle ? 'items-start' : 'items-center'} ${getRadiusClass()}`}
+      className={`flex-row items-center px-4 py-3.5 ${getRadiusClass()}`}
       style={[
         { backgroundColor: color.background.card, minHeight: subtitle ? 68 : 52 },
         borderStyle,
       ]}
     >
-      {leftIcon && (
-        <View
-          className={`mr-3 h-6 w-6 items-center justify-center ${alignWithTitle ? 'mt-0.5' : ''}`}
-        >
-          {leftIcon}
-        </View>
-      )}
-      <View className={`flex-1 ${alignWithTitle ? '' : 'justify-center'}`}>
+      {leftIcon && <View className="mr-3 h-6 w-6 items-center justify-center">{leftIcon}</View>}
+      <View className="flex-1">
         <Text
           className="text-[16px]"
           style={{
@@ -81,9 +73,7 @@ export const SettingsRow = ({
           </Text>
         ) : null}
       </View>
-      {rightSlot && (
-        <View className={`ml-2 ${alignWithTitle ? 'mt-0.5' : 'self-center'}`}>{rightSlot}</View>
-      )}
+      {rightSlot && <View className="ml-2">{rightSlot}</View>}
       {!rightSlot && value && (
         <Text className="mr-2 text-[16px]" style={{ color: color.text.secondary }}>
           {value}
