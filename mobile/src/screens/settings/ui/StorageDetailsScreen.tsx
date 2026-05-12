@@ -130,7 +130,6 @@ export const StorageDetailsScreen = () => {
 
   const records = useRecordStore((s) => s.records);
   const purgeRecordPermanently = useRecordStore((s) => s.purgeRecordPermanently);
-  const folders = useFolderStore((s) => s.folders);
   const deleteFolder = useFolderStore((s) => s.deleteFolder);
   const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
   const [stats, setStats] = useState<StorageStats>(DEFAULT_STATS);
