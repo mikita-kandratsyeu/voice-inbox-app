@@ -26,6 +26,8 @@ type RecordingMarksSectionProps = {
   surfaceBackgroundColor?: string;
   onSeekMs: (ms: number) => void;
   onUpdateMarks: (next: RecordingMark[]) => void;
+  /** When false, marks are view-only (seek still works); edit/delete hidden. */
+  canEditMarks?: boolean;
 };
 
 export const RecordingMarksSection = ({
@@ -34,6 +36,7 @@ export const RecordingMarksSection = ({
   surfaceBackgroundColor,
   onSeekMs,
   onUpdateMarks,
+  canEditMarks = true,
 }: RecordingMarksSectionProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
@@ -163,7 +166,11 @@ export const RecordingMarksSection = ({
                       hapticSelection();
                       onSeekMs(mark.offsetMs);
                     }}
-                    className="min-w-0 flex-1 flex-row items-center gap-3"
+                    className={
+                      canEditMarks
+                        ? 'min-w-0 flex-1 flex-row items-center gap-3'
+                        : 'min-w-0 flex-1 flex-row items-center gap-3 pr-1'
+                    }
                   >
                     <View
                       className="min-w-[56px] justify-center rounded-md px-1.5"
@@ -196,57 +203,59 @@ export const RecordingMarksSection = ({
                       {title}
                     </Text>
                   </Pressable>
-                  <View style={{ flexShrink: 0 }}>
-                    <MenuView
-                      key={`mark-menu-${mark.id}-${theme}`}
-                      title=""
-                      themeVariant={isDark ? 'dark' : 'light'}
-                      shouldOpenOnLongPress={false}
-                      onPressAction={({ nativeEvent }) => {
-                        hapticSelection();
-                        if (nativeEvent.event === 'editMark') {
-                          setEditMark(mark);
-                        }
-                        if (nativeEvent.event === 'deleteMark') {
-                          confirmDeleteMark(mark);
-                        }
-                      }}
-                      actions={[
-                        {
-                          id: 'editMark',
-                          title: t('recordingDetail.markEdit'),
-                          image: 'pencil',
-                          imageColor: color.text.primary,
-                          titleColor: color.text.primary,
-                        },
-                        {
-                          id: 'deleteMark',
-                          title: t('common.delete'),
-                          image: 'trash',
-                          imageColor: color.accent.delete,
-                          titleColor: color.accent.delete,
-                          attributes: { destructive: true },
-                        },
-                      ]}
-                    >
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel={t('recordingDetail.markMoreA11y')}
-                        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-                        style={({ pressed }) => ({
-                          height: 44,
-                          width: 44,
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          borderRadius: 999,
-                          backgroundColor: color.background.tertiary,
-                          opacity: pressed ? 0.6 : 1,
-                        })}
+                  {canEditMarks ? (
+                    <View style={{ flexShrink: 0 }}>
+                      <MenuView
+                        key={`mark-menu-${mark.id}-${theme}`}
+                        title=""
+                        themeVariant={isDark ? 'dark' : 'light'}
+                        shouldOpenOnLongPress={false}
+                        onPressAction={({ nativeEvent }) => {
+                          hapticSelection();
+                          if (nativeEvent.event === 'editMark') {
+                            setEditMark(mark);
+                          }
+                          if (nativeEvent.event === 'deleteMark') {
+                            confirmDeleteMark(mark);
+                          }
+                        }}
+                        actions={[
+                          {
+                            id: 'editMark',
+                            title: t('recordingDetail.markEdit'),
+                            image: 'pencil',
+                            imageColor: color.text.primary,
+                            titleColor: color.text.primary,
+                          },
+                          {
+                            id: 'deleteMark',
+                            title: t('common.delete'),
+                            image: 'trash',
+                            imageColor: color.accent.delete,
+                            titleColor: color.accent.delete,
+                            attributes: { destructive: true },
+                          },
+                        ]}
                       >
-                        <MoreHorizontal size={20} color={color.text.primary} strokeWidth={2.5} />
-                      </Pressable>
-                    </MenuView>
-                  </View>
+                        <Pressable
+                          accessibilityRole="button"
+                          accessibilityLabel={t('recordingDetail.markMoreA11y')}
+                          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+                          style={({ pressed }) => ({
+                            height: 44,
+                            width: 44,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: 999,
+                            backgroundColor: color.background.tertiary,
+                            opacity: pressed ? 0.6 : 1,
+                          })}
+                        >
+                          <MoreHorizontal size={20} color={color.text.primary} strokeWidth={2.5} />
+                        </Pressable>
+                      </MenuView>
+                    </View>
+                  ) : null}
                 </View>
               );
             })}

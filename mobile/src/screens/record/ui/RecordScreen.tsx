@@ -317,6 +317,7 @@ export const RecordScreen = () => {
         onPauseResume={handlePauseResume}
         onAddMark={handleAddMarkPress}
         onDonePress={handleDonePress}
+        showPinMomentButton={isProActive}
       />
       <AddRecordingMarkSheet
         visible={markSheetVisible}

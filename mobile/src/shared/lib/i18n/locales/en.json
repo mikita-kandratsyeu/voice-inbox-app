@@ -684,6 +684,7 @@
         "aiLimit": "Up to {{limit}} AI requests per week",
         "recordingUpToOneHour": "Recordings up to 1 hour",
         "accentCustomization": "Accent colors — personalize buttons, highlights & progress",
+        "pinnedMoments": "Pinned moments while recording",
         "noAds": "No ads"
       }
     },

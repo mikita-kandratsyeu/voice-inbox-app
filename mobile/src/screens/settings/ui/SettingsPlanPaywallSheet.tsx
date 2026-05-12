@@ -503,6 +503,7 @@ export function SettingsPlanPaywallSheet({
                 text={t('settings.planPaywall.features.recordingUpToOneHour')}
                 emphasized
               />
+              <FeatureRow text={t('settings.planPaywall.features.pinnedMoments')} emphasized />
               <FeatureRow
                 text={t('settings.planPaywall.features.aiLimit', { limit: proAiLimit })}
                 emphasized

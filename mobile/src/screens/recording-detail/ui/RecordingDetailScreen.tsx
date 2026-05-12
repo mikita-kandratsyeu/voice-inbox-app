@@ -525,6 +525,7 @@ export const RecordingDetailScreen = () => {
               surfaceBackgroundColor={tabPanelBackgroundColor}
               onSeekMs={handleSeekToMarkMs}
               onUpdateMarks={handleUpdateRecordingMarks}
+              canEditMarks={isProActive}
             />
           )}
 

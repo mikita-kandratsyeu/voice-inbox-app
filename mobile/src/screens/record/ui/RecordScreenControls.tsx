@@ -15,6 +15,8 @@ type RecordScreenControlsProps = {
   onPauseResume: () => void;
   onAddMark: () => void;
   onDonePress: () => void;
+  /** Pin moment while recording is a Pro feature — hidden when false. */
+  showPinMomentButton?: boolean;
 };
 
 export const RecordScreenControls = ({
@@ -22,6 +24,7 @@ export const RecordScreenControls = ({
   onPauseResume,
   onAddMark,
   onDonePress,
+  showPinMomentButton = true,
 }: RecordScreenControlsProps) => {
   const { t } = useTranslation();
   const c = useColors();
@@ -55,23 +58,25 @@ export const RecordScreenControls = ({
           <Pause size={24} color={c.icon.onAccent} strokeWidth={2} />
         )}
       </TouchableOpacity>
-      <TouchableOpacity
-        accessibilityRole="button"
-        onPress={() => {
-          hapticMedium();
-          onAddMark();
-        }}
-        className="h-16 w-16 items-center justify-center rounded-full"
-        style={{
-          backgroundColor: PAUSE_BTN_BG,
-          opacity: isIdle ? 0.35 : 1,
-        }}
-        activeOpacity={0.75}
-        disabled={isIdle}
-        accessibilityLabel={t('record.markRecording')}
-      >
-        <Bookmark size={22} color={c.icon.onAccent} strokeWidth={2} fill="none" />
-      </TouchableOpacity>
+      {showPinMomentButton ? (
+        <TouchableOpacity
+          accessibilityRole="button"
+          onPress={() => {
+            hapticMedium();
+            onAddMark();
+          }}
+          className="h-16 w-16 items-center justify-center rounded-full"
+          style={{
+            backgroundColor: PAUSE_BTN_BG,
+            opacity: isIdle ? 0.35 : 1,
+          }}
+          activeOpacity={0.75}
+          disabled={isIdle}
+          accessibilityLabel={t('record.markRecording')}
+        >
+          <Bookmark size={22} color={c.icon.onAccent} strokeWidth={2} fill="none" />
+        </TouchableOpacity>
+      ) : null}
       <TouchableOpacity
         accessibilityRole="button"
         onPress={() => {
