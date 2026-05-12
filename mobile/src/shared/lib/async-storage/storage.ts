@@ -1,6 +1,4 @@
-import { IOS_DOCUMENT_PATH } from '@op-engineering/op-sqlite';
-
-import { getCachesDirectoryPath, getDocumentDirectoryPath, NitroFS } from '@/shared/lib/fs';
+import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
 export type StorageStats = {
   audioMb: number;
@@ -16,9 +14,6 @@ export type RecordForStats = {
   summary?: string;
   tasks?: unknown;
 };
-
-const DB_NAME = 'voice-inbox.db';
-const DB_PATH = `${IOS_DOCUMENT_PATH ?? getDocumentDirectoryPath()}/${DB_NAME}`;
 
 const getDirectorySizeBytes = async (path: string, excludePaths?: Set<string>): Promise<number> => {
   let total = 0;
@@ -170,7 +165,8 @@ export const getStorageStats = async (
     if (p) audioBytes += await getFileSize(p);
   }
 
-  const transcriptBytes = await getFileSize(DB_PATH);
+  /** Transcript text + segments only — not the SQLite file (empty DB still has page overhead). */
+  const transcriptBytes = computeTranscriptPayloadBytes(records);
   const aiDataBytes = computeAiDataBytes(records);
   const cacheBytes = await getCacheSizeBytes(audioPaths);
 

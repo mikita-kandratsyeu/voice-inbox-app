@@ -1,6 +1,6 @@
 {
   "name": "voice-inbox-web",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "license": "UNLICENSED",
   "author": "Mikita Kandratsyeu <nickondr.production@gmail.com>",
   "description": "Voice Inbox AI Web API",
@@ -27,7 +27,7 @@
   "dependencies": {
     "@openrouter/sdk": "^0.10.2",
     "@prisma/adapter-pg": "7.6.0",
-    "@prisma/client": "^7.7.0",
+    "@prisma/client": "^7.8.0",
     "@upstash/redis": "^1.37.0",
     "@vercel/analytics": "^2.0.1",
     "@zip.js/zip.js": "^2.7.62",
@@ -60,7 +60,7 @@
     "eslint-config-prettier": "^10",
     "eslint-plugin-prettier": "^5",
     "prettier": "^3",
-    "prisma": "^7.7.0",
+    "prisma": "^7.8.0",
     "tailwindcss": "^4",
     "tsx": "^4.21.0",
     "typescript": "^5"
