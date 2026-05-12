@@ -26,6 +26,8 @@ type BatchActionBarProps = {
   onUnarchive: () => void;
   onDelete: () => void;
   onExport: () => void;
+  /** Batch export / extended share — Pro only; when false the export control is hidden. */
+  showExport?: boolean;
   onMoveToFolder: () => void;
   hideMoveToFolder?: boolean;
   onCancel: () => void;
@@ -76,6 +78,7 @@ export const BatchActionBar = ({
   onUnarchive,
   onDelete,
   onExport,
+  showExport = true,
   onMoveToFolder,
   hideMoveToFolder = false,
   onCancel,
@@ -228,13 +231,15 @@ export const BatchActionBar = ({
                 color={color}
               />
             )}
-            <ActionButton
-              icon={(c) => <Share size={20} strokeWidth={2} color={c} />}
-              label={t('batch.export')}
-              onPress={handleExport}
-              disabled={disabled}
-              color={color}
-            />
+            {showExport ? (
+              <ActionButton
+                icon={(c) => <Share size={20} strokeWidth={2} color={c} />}
+                label={t('batch.export')}
+                onPress={handleExport}
+                disabled={disabled}
+                color={color}
+              />
+            ) : null}
             <ActionButton
               icon={(c) => <Trash2 size={20} strokeWidth={2} color={c} />}
               label={t('batch.delete')}

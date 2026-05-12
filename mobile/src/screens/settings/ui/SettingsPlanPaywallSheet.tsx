@@ -46,7 +46,7 @@ type FeatureRowProps = {
 
 function FeatureRow({ text, emphasized, mutedCheck }: FeatureRowProps) {
   const c = useColors();
-  const lineHeight = 20;
+  const lineHeight = 19;
 
   return (
     <View className="flex-row items-start">
@@ -54,17 +54,17 @@ function FeatureRow({ text, emphasized, mutedCheck }: FeatureRowProps) {
         className="h-5 w-5 shrink-0 items-center justify-center rounded-full"
         style={{
           backgroundColor: mutedCheck ? c.background.tertiary : '#7E5BFF22',
-          marginTop: IS_IOS ? 1 : 0,
+          marginTop: IS_IOS ? 0.5 : 0,
         }}
       >
-        <Check size={13} color={mutedCheck ? c.text.muted : c.accent.primary} strokeWidth={2.4} />
+        <Check size={12} color={mutedCheck ? c.text.muted : c.accent.primary} strokeWidth={2.4} />
       </View>
       <Text
-        className={`flex-1 text-[14px] ${emphasized ? 'font-semibold' : ''}`}
+        className={`flex-1 text-[13px] ${emphasized ? 'font-semibold' : ''}`}
         style={{
           marginLeft: 6,
           color: c.text.primary,
-          fontSize: 14,
+          fontSize: 13,
           lineHeight,
           ...(IS_ANDROID ? { includeFontPadding: false } : {}),
         }}
@@ -88,7 +88,7 @@ type ThemeColors = ReturnType<typeof useColors>;
 
 function IapPlanOptionsSkeleton({ c }: { c: ThemeColors }) {
   const cardStyle = {
-    height: 102,
+    height: 90,
     borderRadius: 16,
     backgroundColor: c.background.tertiary,
     opacity: IS_IOS ? 0.65 : 0.55,
@@ -96,7 +96,7 @@ function IapPlanOptionsSkeleton({ c }: { c: ThemeColors }) {
 
   return (
     <View
-      className="mt-4 gap-3"
+      className="mt-3 gap-2.5"
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
     >
@@ -157,7 +157,7 @@ function SubscriptionPlanOptionCard({
       accessibilityState={{ selected }}
       disabled={disabled}
       onPress={onPress}
-      className="w-full rounded-2xl px-4 pb-3 pt-3"
+      className="w-full rounded-2xl px-4 pb-2.5 pt-2.5"
       style={{
         alignSelf: 'stretch',
         borderWidth: 1,
@@ -170,8 +170,8 @@ function SubscriptionPlanOptionCard({
           className="h-6 w-6 items-center justify-center rounded-full"
           style={{
             position: 'absolute',
-            top: 12,
-            right: 12,
+            top: 10,
+            right: 10,
             zIndex: 2,
             backgroundColor: c.accent.primary,
           }}
@@ -216,9 +216,9 @@ function SubscriptionPlanOptionCard({
         </View>
 
         {billedHeadlineCompareAt ? (
-          <View className="mt-2 flex-row flex-wrap items-baseline gap-x-2 gap-y-1">
+          <View className="mt-1.5 flex-row flex-wrap items-baseline gap-x-2 gap-y-1">
             <Text
-              className="text-[16px] font-semibold leading-[22px]"
+              className="text-[15px] font-semibold leading-[21px]"
               style={{
                 color: c.text.muted,
                 textDecorationLine: 'line-through',
@@ -229,7 +229,7 @@ function SubscriptionPlanOptionCard({
               {billedHeadlineCompareAt}
             </Text>
             <Text
-              className="text-[16px] font-semibold leading-[22px]"
+              className="text-[15px] font-semibold leading-[21px]"
               style={{
                 color: c.text.primary,
                 ...(IS_ANDROID ? { includeFontPadding: false } : {}),
@@ -241,7 +241,7 @@ function SubscriptionPlanOptionCard({
           </View>
         ) : (
           <Text
-            className="mt-2 text-[16px] font-semibold leading-[22px]"
+            className="mt-1.5 text-[15px] font-semibold leading-[21px]"
             style={{
               color: c.text.primary,
               ...(IS_ANDROID ? { includeFontPadding: false } : {}),
@@ -253,7 +253,7 @@ function SubscriptionPlanOptionCard({
         )}
         {subordinateLine ? (
           <Text
-            className="mt-1 text-[12px] leading-[16px]"
+            className="mt-0.5 text-[12px] leading-[15px]"
             style={{
               color: c.text.muted,
               ...(IS_ANDROID ? { includeFontPadding: false } : {}),
@@ -265,7 +265,7 @@ function SubscriptionPlanOptionCard({
         ) : null}
         {introText ? (
           <Text
-            className="mt-1.5 text-[11px] leading-[14px]"
+            className="mt-1 text-[11px] leading-[14px]"
             style={{
               color: c.text.secondary,
               ...(IS_ANDROID ? { includeFontPadding: false } : {}),
@@ -347,12 +347,12 @@ export function SettingsPlanPaywallSheet({
     >
       <View style={{ flex: 1, backgroundColor: c.background.primary }}>
         <View
-          className="flex-row items-center justify-between gap-2 px-4 pb-3"
+          className="flex-row items-center justify-between gap-2 px-4 pb-2"
           style={{
             backgroundColor: c.background.primary,
             borderBottomWidth: 1,
             borderBottomColor: c.border.default,
-            paddingTop: insets.top + 4,
+            paddingTop: insets.top + 2,
           }}
         >
           <Button
@@ -393,28 +393,31 @@ export function SettingsPlanPaywallSheet({
           style={{ flex: 1 }}
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingTop: 16,
-            paddingBottom: 20,
+            paddingTop: 12,
+            paddingBottom: 14,
           }}
         >
-          <View className="mb-4 flex-row items-center">
+          <View className="mb-3 flex-row items-center">
             <View
-              className="mr-3 h-11 w-11 items-center justify-center rounded-xl"
+              className="mr-2.5 h-10 w-10 items-center justify-center rounded-xl"
               style={{ backgroundColor: c.background.tertiary }}
             >
-              <Crown size={22} color={c.accent.primary} strokeWidth={1.8} />
+              <Crown size={20} color={c.accent.primary} strokeWidth={1.8} />
             </View>
             <View className="min-w-0 flex-1">
-              <Text className="text-[21px] font-bold leading-7" style={{ color: c.text.primary }}>
+              <Text className="text-[20px] font-bold leading-6" style={{ color: c.text.primary }}>
                 {t('settings.planPaywall.title')}
               </Text>
-              <Text className="mt-1 text-[13px] leading-[18px]" style={{ color: c.text.secondary }}>
+              <Text
+                className="mt-0.5 text-[13px] leading-[17px]"
+                style={{ color: c.text.secondary }}
+              >
                 {t('settings.planPaywall.subtitle')}
               </Text>
             </View>
           </View>
           <View
-            className="mb-3 rounded-2xl border"
+            className="mb-2.5 rounded-2xl border"
             style={{ borderColor: c.border.default, backgroundColor: c.background.secondary }}
           >
             <Pressable
@@ -425,7 +428,7 @@ export function SettingsPlanPaywallSheet({
                 hapticSelection();
                 setFreeLimitsExpanded((v) => !v);
               }}
-              className="flex-row items-center justify-between gap-3 px-4 py-3.5"
+              className="flex-row items-center justify-between gap-3 px-4 py-3"
               style={{ minHeight: 44 }}
             >
               <Text
@@ -452,7 +455,7 @@ export function SettingsPlanPaywallSheet({
             </Pressable>
             {freeLimitsExpanded ? (
               <View
-                className="gap-y-2.5 border-t px-4 pb-4 pt-3"
+                className="gap-y-2 border-t px-4 pb-3 pt-2.5"
                 style={{ borderTopColor: c.border.default }}
               >
                 <FeatureRow mutedCheck text={t('settings.planPaywall.freeLimits.manualAi')} />
@@ -470,13 +473,13 @@ export function SettingsPlanPaywallSheet({
             ) : null}
           </View>
           <View
-            className="mb-5 rounded-2xl border-2 p-5"
+            className="mb-4 rounded-2xl border-2 p-4"
             style={{
               borderColor: `${c.accent.primary}99`,
               backgroundColor: c.background.secondary,
             }}
           >
-            <View className="gap-y-2.5">
+            <View className="gap-y-2">
               <View
                 className="flex-row items-start gap-2"
                 accessibilityRole="header"
@@ -511,15 +514,15 @@ export function SettingsPlanPaywallSheet({
                 text={t('settings.planPaywall.features.aiLimit', { limit: proAiLimit })}
                 emphasized
               />
+              <FeatureRow text={t('settings.planPaywall.features.extendedShareAndBatchExport')} />
               <FeatureRow text={t('settings.planPaywall.features.accentCustomization')} />
-
               <FeatureRow text={t('settings.planPaywall.features.noAds')} />
             </View>
             {isIapPublic && onIapBillingPeriodChange && iapProPriceLoading ? (
               <IapPlanOptionsSkeleton c={c} />
             ) : null}
             {isIapPublic && !iapProPriceLoading && iapDualBilling && onIapBillingPeriodChange ? (
-              <View className="mt-4 gap-3">
+              <View className="mt-3 gap-2.5">
                 {iapAnnualRow && (
                   <SubscriptionPlanOptionCard
                     c={c}
@@ -563,7 +566,7 @@ export function SettingsPlanPaywallSheet({
         <View
           style={{
             paddingHorizontal: 20,
-            paddingTop: 8,
+            paddingTop: 6,
             paddingBottom: insets.bottom + 2,
             backgroundColor: c.background.primary,
           }}
@@ -580,7 +583,7 @@ export function SettingsPlanPaywallSheet({
             activeOpacity={0.85}
           />
           {isIapPublic && getWebsiteUrl().trim().length > 0 && (
-            <View className="mt-1.5 items-center gap-y-1.5 gap-x-3 px-2 flex-row justify-center">
+            <View className="mt-1 items-center gap-y-1 gap-x-3 px-2 flex-row justify-center">
               <Pressable
                 accessibilityRole="link"
                 className="py-1"

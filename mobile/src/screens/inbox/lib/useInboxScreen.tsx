@@ -718,5 +718,6 @@ export function useInboxScreen() {
     showInboxScrollResetSkeleton,
     onInboxListScroll: handleInboxListScroll,
     batchProgressModal,
+    isProActive,
   };
 }

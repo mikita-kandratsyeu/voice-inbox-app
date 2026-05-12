@@ -348,7 +348,13 @@ export const RecordingDetailScreen = () => {
     },
     [emailRecord, liveRecord, t],
   );
-  const onOpenShareMenu = useCallback(() => setShareSheetVisible(true), []);
+  const onOpenShareMenu = useCallback(() => {
+    if (isProActive) {
+      setShareSheetVisible(true);
+      return;
+    }
+    handleShare('noteBrief');
+  }, [isProActive, handleShare]);
   const onCloseShareMenu = useCallback(() => setShareSheetVisible(false), []);
 
   const scrollPadding = isTablet ? 24 : 16;
