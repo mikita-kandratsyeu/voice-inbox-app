@@ -1262,7 +1262,7 @@
     "exportAsTitle_one": "Export {{count}} note",
     "exportAsTitle_other": "Export {{count}} notes",
     "exportPackagingLabel": "Share as",
-    "exportPackagingSingle": "Markdown file",
+    "exportPackagingSingle": "Markdown",
     "exportPackagingZip": "ZIP archive",
     "exportPackagingHintSingle": "All notes are merged into one file, separated by horizontal line.",
     "exportPackagingHintZip": "Each note is a separate Markdown file inside the archive.",

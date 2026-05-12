@@ -1278,7 +1278,7 @@
     "exportAsTitle_many": "Экспортировать {{count}} записей",
     "exportAsTitle_other": "Экспортировать {{count}}",
     "exportPackagingLabel": "Формат",
-    "exportPackagingSingle": "Один Markdown-файл",
+    "exportPackagingSingle": "Markdown",
     "exportPackagingZip": "Архив ZIP",
     "exportPackagingHintSingle": "Все заметки объединяются в один файл, разделитель — горизонтальная линия.",
     "exportPackagingHintZip": "Каждая заметка — отдельный Markdown-файл внутри архива.",
