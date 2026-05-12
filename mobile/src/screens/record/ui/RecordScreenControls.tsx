@@ -1,4 +1,4 @@
-import { Check, Pause, Play } from 'lucide-react-native';
+import { Bookmark, Check, Pause, Play } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TouchableOpacity, View } from 'react-native';
@@ -13,12 +13,14 @@ import { PAUSE_BTN_BG } from '../config';
 type RecordScreenControlsProps = {
   state: RecordingState;
   onPauseResume: () => void;
+  onAddMark: () => void;
   onDonePress: () => void;
 };
 
 export const RecordScreenControls = ({
   state,
   onPauseResume,
+  onAddMark,
   onDonePress,
 }: RecordScreenControlsProps) => {
   const { t } = useTranslation();
@@ -31,10 +33,7 @@ export const RecordScreenControls = ({
   const isPaused = state === 'paused';
 
   return (
-    <View
-      className="flex-row items-center justify-center gap-10 pt-4"
-      style={controlsPaddingBottom}
-    >
+    <View className="flex-row items-center justify-center gap-6 pt-4" style={controlsPaddingBottom}>
       <TouchableOpacity
         accessibilityRole="button"
         onPress={() => {
@@ -55,6 +54,23 @@ export const RecordScreenControls = ({
         ) : (
           <Pause size={24} color={c.icon.onAccent} strokeWidth={2} />
         )}
+      </TouchableOpacity>
+      <TouchableOpacity
+        accessibilityRole="button"
+        onPress={() => {
+          hapticSelection();
+          onAddMark();
+        }}
+        className="h-16 w-16 items-center justify-center rounded-full"
+        style={{
+          backgroundColor: PAUSE_BTN_BG,
+          opacity: isIdle ? 0.35 : 1,
+        }}
+        activeOpacity={0.75}
+        disabled={isIdle}
+        accessibilityLabel={t('record.markRecording')}
+      >
+        <Bookmark size={22} color={c.icon.onAccent} strokeWidth={2} fill="none" />
       </TouchableOpacity>
       <TouchableOpacity
         accessibilityRole="button"

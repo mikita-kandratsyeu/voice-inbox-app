@@ -28,6 +28,7 @@ export const recordsTable = sqliteTable(
     transcriptProgress: integer('transcriptProgress').default(0),
     isPinned: integer('isPinned').default(0),
     tags: text('tags').default('[]'),
+    recordingMarks: text('recordingMarks').default('[]'),
     classification: text('classification'),
     keyPhrases: text('keyPhrases').default('[]'),
     nextSteps: text('nextSteps').default('[]'),

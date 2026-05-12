@@ -7,7 +7,7 @@ import type { Folder } from '@/entities/folder';
 import { useFolderStore } from '@/entities/folder';
 import { DEFAULT_FOLDER_ICON_KEY } from '@/entities/folder/lib/folderLucideIcons';
 import { folderRepository } from '@/entities/folder/model/repository';
-import type { RecordClassification, VoiceRecord } from '@/entities/record';
+import type { RecordClassification, RecordingMark, VoiceRecord } from '@/entities/record';
 import {
   DEFAULT_FOLDER_BRAND_HEX,
   ensureRecordingsDir,
@@ -54,7 +54,40 @@ const VoiceRecordSchema = z.looseObject({
   isPinned: z.boolean().optional().nullable(),
   language: safeOptionalString,
   audioSize: z.nullish(z.number().min(0)),
+  recordingMarks: z
+    .array(
+      z.object({
+        id: safeString,
+        offsetMs: z.number().finite(),
+        label: safeString.optional(),
+      }),
+    )
+    .max(500)
+    .optional()
+    .nullable(),
 });
+
+function normalizeRecordingMarks(raw: unknown): RecordingMark[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return undefined;
+  }
+  const out: RecordingMark[] = [];
+  for (let i = 0; i < raw.length; i++) {
+    const m = raw[i];
+    if (!m || typeof m !== 'object') continue;
+    const obj = m as Record<string, unknown>;
+    const id = typeof obj.id === 'string' ? obj.id : '';
+    const offsetMsRaw = obj.offsetMs;
+    const offsetMs =
+      typeof offsetMsRaw === 'number' && Number.isFinite(offsetMsRaw)
+        ? Math.max(0, Math.round(offsetMsRaw))
+        : 0;
+    const label = typeof obj.label === 'string' ? obj.label.slice(0, 280) : '';
+    if (!id) continue;
+    out.push({ id, offsetMs, label });
+  }
+  return out.length > 0 ? out : undefined;
+}
 
 const FolderSchema = z.looseObject({
   id: safeString,
@@ -157,6 +190,7 @@ function normalizeRecord(raw: z.infer<typeof VoiceRecordSchema>): VoiceRecord {
       ? base.translatedTranscript
       : undefined,
     translationLanguage: isString(base.translationLanguage) ? base.translationLanguage : undefined,
+    recordingMarks: normalizeRecordingMarks(base.recordingMarks),
   } as VoiceRecord;
 }
 

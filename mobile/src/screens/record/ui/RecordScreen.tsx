@@ -8,7 +8,7 @@ import KeepAwake from 'react-native-keep-awake';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useAppLockStore } from '@/entities/app-lock';
-import type { VoiceRecord } from '@/entities/record';
+import type { RecordingMark, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import {
@@ -29,8 +29,10 @@ import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { Waveform } from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';
+import { generateRecordingMarkId } from '../lib/generateRecordingMarkId';
 import { getAutoTitle } from '../lib/getAutoTitle';
 import { useRecording } from '../model/useRecording';
+import { AddRecordingMarkSheet } from './AddRecordingMarkSheet';
 import { RecordDurationLimit } from './RecordDurationLimit';
 import { RecordLimitBar } from './RecordLimitBar';
 import { RecordScreenControls } from './RecordScreenControls';
@@ -65,6 +67,9 @@ export const RecordScreen = () => {
   const pauseResumeRequestTick = useRecordingDeeplinkStore((s) => s.pauseResumeRequestTick);
   const handledPauseResumeTickRef = useRef(0);
   const [title, setTitle] = useState('');
+  const [recordingMarks, setRecordingMarks] = useState<RecordingMark[]>([]);
+  const [markSheetVisible, setMarkSheetVisible] = useState(false);
+  const [markSnapshotOffsetMs, setMarkSnapshotOffsetMs] = useState(0);
   const [appState, setAppState] = useState(AppState.currentState);
 
   useEffect(() => {
@@ -116,6 +121,7 @@ export const RecordScreen = () => {
           transcriptProgress: 0,
           isPinned: false,
           tags: [],
+          recordingMarks: [],
           audioPath,
         };
 
@@ -219,6 +225,27 @@ export const RecordScreen = () => {
     setShowSaveModal(true);
   };
 
+  const handleAddMarkPress = () => {
+    setMarkSnapshotOffsetMs(Math.round(elapsedMs));
+    setMarkSheetVisible(true);
+  };
+
+  const handleMarkSheetClose = () => {
+    setMarkSheetVisible(false);
+  };
+
+  const handleMarkLabelSave = (label: string) => {
+    setRecordingMarks((prev) => [
+      ...prev,
+      {
+        id: generateRecordingMarkId(),
+        offsetMs: markSnapshotOffsetMs,
+        label,
+      },
+    ]);
+    setMarkSheetVisible(false);
+  };
+
   const handleSaveCancel = () => {
     setShowSaveModal(false);
     if (saveModalReason === 'user') {
@@ -288,7 +315,14 @@ export const RecordScreen = () => {
       <RecordScreenControls
         state={state}
         onPauseResume={handlePauseResume}
+        onAddMark={handleAddMarkPress}
         onDonePress={handleDonePress}
+      />
+      <AddRecordingMarkSheet
+        visible={markSheetVisible}
+        snapshotOffsetMs={markSnapshotOffsetMs}
+        onClose={handleMarkSheetClose}
+        onSave={handleMarkLabelSave}
       />
       <SaveRecordModal
         visible={showSaveModal}
@@ -296,6 +330,7 @@ export const RecordScreen = () => {
         elapsed={elapsed}
         elapsedMs={elapsedMs}
         audioPath={audioPathRef.current}
+        recordingMarks={recordingMarks}
         onTitleChange={setTitle}
         onCancel={handleSaveCancel}
         onSave={handleSaveConfirm}

@@ -1,5 +1,12 @@
 import { ChevronLeft, ChevronRight, Pause, Play, RotateCcw } from 'lucide-react-native';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { LayoutChangeEvent, Text, TouchableOpacity, View } from 'react-native';
 import AudioRecorderPlayer, { type PlayBackType } from 'react-native-nitro-sound';
@@ -22,6 +29,10 @@ type AudioPlayerProps = {
   surfaceBackgroundColor?: string;
 };
 
+export type AudioPlayerRef = {
+  seekToMs: (ms: number) => Promise<void>;
+};
+
 const parseDuration = (d: string) => {
   const parts = d.split(':');
 
@@ -34,13 +45,10 @@ const parseDuration = (d: string) => {
 
 const player = AudioRecorderPlayer;
 
-export const AudioPlayer = ({
-  duration,
-  color,
-  audioPath,
-  onPositionChange,
-  surfaceBackgroundColor,
-}: AudioPlayerProps) => {
+export const AudioPlayer = forwardRef<AudioPlayerRef, AudioPlayerProps>(function AudioPlayer(
+  { duration, color, audioPath, onPositionChange, surfaceBackgroundColor },
+  ref,
+) {
   const { t } = useTranslation();
   const totalSeconds = parseDuration(duration);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -135,6 +143,28 @@ export const AudioPlayer = ({
       }
     },
     [audioPath, totalSeconds, playbackSpeed, seekTo, progressValue],
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      seekToMs: async (rawMs: number) => {
+        if (!audioPath || totalSeconds <= 0) return;
+        const ms = Math.max(0, Math.min(totalMs, rawMs));
+        const secs = Math.floor(ms / 1000);
+        elapsedRef.current = secs;
+        lastDisplayedSecsRef.current = secs;
+        setElapsed(secs);
+        progressValue.value = totalSeconds > 0 ? secs / totalSeconds : 0;
+        onPositionChangeRef.current?.(ms);
+        if (!isPlayerLoadedRef.current) {
+          await startPlayback(secs);
+        } else {
+          await seekTo(ms);
+        }
+      },
+    }),
+    [audioPath, totalMs, totalSeconds, seekTo, startPlayback, progressValue],
   );
 
   const handlePlayPause = async () => {
@@ -436,4 +466,6 @@ export const AudioPlayer = ({
       </View>
     </View>
   );
-};
+});
+
+AudioPlayer.displayName = 'AudioPlayer';

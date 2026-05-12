@@ -6,7 +6,9 @@ import {
   audioPathToDbValue,
   getDB,
   getRecordingsRelativePath,
+  isNumber,
   isRecord,
+  isString,
   recordAskAiTable,
   recordsTable,
 } from '@/shared/lib';
@@ -16,12 +18,42 @@ import { TRASH_RETENTION_DAYS } from './trashConfig';
 import type {
   RecordClassification,
   RecordHeavyFields,
+  RecordingMark,
   RecordingStatus,
   RecordListItem,
   TaskItem,
   TranscriptSegment,
   VoiceRecord,
 } from './types';
+
+const RECORDING_MARK_LABEL_MAX = 280;
+
+function parseRecordingMarks(raw: string | null | undefined): RecordingMark[] {
+  try {
+    const v = JSON.parse(raw ?? '[]') as unknown;
+    if (!Array.isArray(v)) return [];
+    const out: RecordingMark[] = [];
+    for (let i = 0; i < v.length; i++) {
+      const item = v[i];
+      if (!isRecord(item)) continue;
+      const offsetMsRaw = item.offsetMs;
+      const offsetMs =
+        isNumber(offsetMsRaw) && Number.isFinite(offsetMsRaw)
+          ? Math.max(0, Math.round(offsetMsRaw))
+          : 0;
+      let id = isString(item.id) ? item.id : '';
+      if (!id) id = `rm_legacy_${offsetMs}_${i}`;
+      let label = isString(item.label) ? item.label : '';
+      if (label.length > RECORDING_MARK_LABEL_MAX) {
+        label = label.slice(0, RECORDING_MARK_LABEL_MAX);
+      }
+      out.push({ id, offsetMs, label });
+    }
+    return out.slice(0, 400);
+  } catch {
+    return [];
+  }
+}
 
 const logDb = (op: string, details?: Record<string, unknown>) => {
   if (__DEV__) {
@@ -62,6 +94,7 @@ type RecordListQueryRow = {
   translationLanguage: string | null;
   audioPath: string | null;
   folderId: string | null;
+  recordingMarks: string | null;
 };
 
 type RecordRowRaw = RecordListQueryRow & {
@@ -89,6 +122,7 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     transcriptProgress: row.transcriptProgress ?? 0,
     isPinned: Boolean(row.isPinned),
     tags: JSON.parse(row.tags ?? '[]') as string[],
+    recordingMarks: parseRecordingMarks(row.recordingMarks),
     classification: (row.classification as VoiceRecord['classification']) ?? undefined,
     keyPhrases: JSON.parse(row.keyPhrases ?? '[]') as string[],
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
@@ -125,6 +159,7 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
     transcriptProgress: row.transcriptProgress ?? 0,
     isPinned: Boolean(row.isPinned),
     tags: JSON.parse(row.tags ?? '[]') as string[],
+    recordingMarks: parseRecordingMarks(row.recordingMarks),
     classification: (row.classification as VoiceRecord['classification']) ?? undefined,
     keyPhrases: JSON.parse(row.keyPhrases ?? '[]') as string[],
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
@@ -157,6 +192,7 @@ const recordListColumns = {
   transcriptProgress: recordsTable.transcriptProgress,
   isPinned: recordsTable.isPinned,
   tags: recordsTable.tags,
+  recordingMarks: recordsTable.recordingMarks,
   classification: recordsTable.classification,
   keyPhrases: recordsTable.keyPhrases,
   nextSteps: recordsTable.nextSteps,
@@ -272,6 +308,7 @@ export const recordRepository = {
         transcriptProgress: record.transcriptProgress ?? 0,
         isPinned: record.isPinned ? 1 : 0,
         tags: JSON.stringify(record.tags ?? []),
+        recordingMarks: JSON.stringify(record.recordingMarks ?? []),
         classification: record.classification ?? null,
         keyPhrases: JSON.stringify(record.keyPhrases ?? []),
         nextSteps: JSON.stringify(record.nextSteps ?? []),
@@ -397,6 +434,20 @@ export const recordRepository = {
     await db
       .update(recordsTable)
       .set({ tags: JSON.stringify(tags) })
+      .where(eq(recordsTable.id, id));
+  },
+
+  updateRecordingMarks: async (id: string, marks: RecordingMark[]): Promise<void> => {
+    logDb('updateRecordingMarks', { id, count: marks.length });
+    const sanitized = marks.slice(0, 400).map((m, i) => ({
+      id: isString(m.id) && m.id.trim() ? m.id : `rm_${Date.now()}_${i}`,
+      offsetMs: Math.max(0, Math.round(Number(m.offsetMs) || 0)),
+      label: isString(m.label) ? m.label.slice(0, RECORDING_MARK_LABEL_MAX) : '',
+    }));
+    const db = getDB();
+    await db
+      .update(recordsTable)
+      .set({ recordingMarks: JSON.stringify(sanitized) })
       .where(eq(recordsTable.id, id));
   },
 

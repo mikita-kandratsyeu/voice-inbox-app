@@ -7,6 +7,7 @@ import { NitroFS } from '@/shared/lib/fs';
 import { recordRepository } from './repository';
 import type {
   RecordClassification,
+  RecordingMark,
   RecordingStatus,
   RecordListItem,
   TaskItem,
@@ -119,6 +120,7 @@ type RecordStore = {
   updateSummary: (id: string, summary: string) => Promise<void>;
   updateTasks: (id: string, tasks: TaskItem[]) => Promise<void>;
   updateTags: (id: string, tags: string[]) => Promise<void>;
+  updateRecordingMarks: (id: string, marks: RecordingMark[]) => Promise<void>;
   updateAiExtras: (
     id: string,
     data: {
@@ -404,6 +406,13 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     await recordRepository.updateTags(id, tags);
     set((s) => ({
       records: updateRecord(s.records, id, { tags }),
+    }));
+  },
+
+  updateRecordingMarks: async (id, marks) => {
+    await recordRepository.updateRecordingMarks(id, marks);
+    set((s) => ({
+      records: updateRecord(s.records, id, { recordingMarks: marks }),
     }));
   },
 

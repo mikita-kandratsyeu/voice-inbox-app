@@ -93,6 +93,7 @@ export function DeleteStorageDataSheet({
     categoryBytes.whisper,
     categoryBytes.localLlm,
     categoryBytes.cache,
+    categoryBytes,
   ]);
 
   const renderBackdrop = useCallback(

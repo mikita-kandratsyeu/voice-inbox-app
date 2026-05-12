@@ -1,7 +1,7 @@
 import { Share } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
-import { formatShortDate, i18n } from '@/shared/lib';
+import { formatShortDate, formatTime, i18n } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
 import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeDisplay';
 
@@ -124,6 +124,25 @@ const pushTags = (lines: string[], record: VoiceRecord): void => {
   }
 };
 
+const pushRecordingMarks = (lines: string[], record: VoiceRecord): void => {
+  const marks = record.recordingMarks ?? [];
+  if (marks.length === 0) {
+    return;
+  }
+  const sorted = [...marks].sort((a, b) => a.offsetMs - b.offsetMs);
+  lines.push('');
+  lines.push(`## ${i18n.t('recordingDetail.marksSectionTitle')}`);
+  sorted.forEach((m) => {
+    const timeStr = formatTime(Math.floor(m.offsetMs / 1000));
+    const label = m.label.trim();
+    const text = (label.length > 0 ? label : i18n.t('recordingDetail.markUntitled'))
+      .replace(/\r?\n/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    lines.push(`- **${timeStr}** — ${text}`);
+  });
+};
+
 const pushSummary = (lines: string[], record: VoiceRecord): void => {
   if (record.summary) {
     lines.push('');
@@ -201,6 +220,7 @@ const buildNoteBrief = (record: VoiceRecord): string => {
   lines.push('');
   pushMeta(lines, record);
   pushTags(lines, record);
+  pushRecordingMarks(lines, record);
   pushSummary(lines, record);
   pushKeyPhrases(lines, record);
   pushNextSteps(lines, record);
@@ -220,6 +240,7 @@ const buildMeetingBrief = (record: VoiceRecord): string => {
   lines.push('');
   pushMeta(lines, record);
   pushTags(lines, record);
+  pushRecordingMarks(lines, record);
   pushSummary(lines, record);
   pushKeyPhrases(lines, record);
   pushNextSteps(lines, record);

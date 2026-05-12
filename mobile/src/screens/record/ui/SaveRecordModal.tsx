@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import type { VoiceRecord } from '@/entities/record';
+import type { RecordingMark, VoiceRecord } from '@/entities/record';
 import { useColors } from '@/shared/config';
 import {
   formatTime,
@@ -27,12 +27,15 @@ import { Button } from '@/shared/ui';
 import { generateRecordId } from '../lib/generateRecordId';
 import { getAutoTitle } from '../lib/getAutoTitle';
 
+const SAVE_SHEET_KEYBOARD_BOTTOM_PADDING = 24;
+
 type SaveRecordModalProps = {
   visible: boolean;
   title: string;
   elapsed: number;
   elapsedMs: number;
   audioPath: string | null;
+  recordingMarks: RecordingMark[];
   onTitleChange: (text: string) => void;
   onCancel: () => void;
   onSave: (record: VoiceRecord) => Promise<void> | void;
@@ -50,6 +53,7 @@ export const SaveRecordModal = ({
   elapsed,
   elapsedMs,
   audioPath,
+  recordingMarks,
   onTitleChange,
   onCancel,
   onSave,
@@ -145,6 +149,7 @@ export const SaveRecordModal = ({
       transcriptProgress: 0,
       isPinned: false,
       tags: [],
+      recordingMarks: recordingMarks.length > 0 ? recordingMarks : undefined,
       classification: isMeetingMode ? 'meeting' : undefined,
       audioPath: audioPath?.startsWith('file://') ? audioPath.slice(7) : (audioPath ?? undefined),
     };
@@ -154,7 +159,7 @@ export const SaveRecordModal = ({
     dismissReasonRef.current = 'save';
     bottomSheetRef.current?.dismiss();
     onSaveComplete?.();
-  }, [title, elapsed, elapsedMs, audioPath, isMeetingMode, onSave, onSaveComplete]);
+  }, [title, elapsed, elapsedMs, audioPath, recordingMarks, isMeetingMode, onSave, onSaveComplete]);
 
   const handleToggleMeetingMode = useCallback(() => {
     hapticLight();
@@ -181,7 +186,9 @@ export const SaveRecordModal = ({
         style={{
           paddingHorizontal: 24,
           paddingTop: 4,
-          paddingBottom: keyboardVisible ? 8 : Math.max(insets.bottom, 24),
+          paddingBottom: keyboardVisible
+            ? SAVE_SHEET_KEYBOARD_BOTTOM_PADDING
+            : Math.max(insets.bottom, 24),
           gap: 12,
         }}
       >
@@ -209,6 +216,11 @@ export const SaveRecordModal = ({
         <Text className="-mt-1 text-[13px]" style={{ color: c.text.secondary }}>
           {t('record.duration', { time: formatTime(elapsed) })}
         </Text>
+        {recordingMarks.length > 0 && (
+          <Text className="-mt-2 text-[13px]" style={{ color: c.text.muted }}>
+            {t('record.saveModalMarksHint', { count: recordingMarks.length })}
+          </Text>
+        )}
         <Pressable
           accessibilityRole="switch"
           accessibilityState={{ checked: isMeetingMode }}

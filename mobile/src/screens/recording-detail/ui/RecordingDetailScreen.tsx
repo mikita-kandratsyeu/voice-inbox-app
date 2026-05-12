@@ -10,7 +10,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import { FolderPickerSheet, useFolderStore } from '@/entities/folder';
-import { useRecordStore } from '@/entities/record';
+import { type RecordingMark, useRecordStore } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
 import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
@@ -30,13 +30,14 @@ import {
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
-import { AudioPlayer, usePlaybackPosition } from '@/widgets/audio-player';
+import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { RecordingDetailCard } from './RecordingDetailCard';
 import { RecordingDetailHeader } from './RecordingDetailHeader';
 import { RecordingDetailTabBar } from './RecordingDetailTabBar';
+import { RecordingMarksSection } from './RecordingMarksSection';
 import { RelatedNotesSection } from './RelatedNotesSection';
 import { ShareRecordSheet } from './ShareRecordSheet';
 import { SummaryTab } from './SummaryTab';
@@ -70,6 +71,7 @@ export const RecordingDetailScreen = () => {
     hydrateRecordDetails,
     setRecordFolder,
     renameRecord,
+    updateRecordingMarks,
   } = useRecordStore(
     useShallow((s) => ({
       liveRecord: s.records.find((r) => r.id === recordId) ?? routeRecord,
@@ -85,6 +87,7 @@ export const RecordingDetailScreen = () => {
       hydrateRecordDetails: s.hydrateRecordDetails,
       setRecordFolder: s.setRecordFolder,
       renameRecord: s.renameRecord,
+      updateRecordingMarks: s.updateRecordingMarks,
     })),
   );
 
@@ -133,6 +136,7 @@ export const RecordingDetailScreen = () => {
   );
 
   const scrollRef = useRef<React.ElementRef<typeof KeyboardAwareScrollView>>(null);
+  const audioPlayerRef = useRef<AudioPlayerRef>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -352,6 +356,7 @@ export const RecordingDetailScreen = () => {
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const hasAudio = Boolean(liveRecord.audioPath?.trim());
+  const hasRecordingMarks = (liveRecord.recordingMarks?.length ?? 0) > 0;
 
   const onBack = useCallback(() => navigation.goBack(), [navigation]);
   const onTogglePin = useCallback(() => togglePin(liveRecord.id), [liveRecord.id, togglePin]);
@@ -406,6 +411,17 @@ export const RecordingDetailScreen = () => {
   const handleSwitchToSmartMode = useCallback(() => {
     setAiExecutionMode('smart_hybrid');
   }, [setAiExecutionMode]);
+
+  const handleUpdateRecordingMarks = useCallback(
+    (next: RecordingMark[]) => {
+      void updateRecordingMarks(liveRecord.id, next);
+    },
+    [liveRecord.id, updateRecordingMarks],
+  );
+
+  const handleSeekToMarkMs = useCallback((ms: number) => {
+    void audioPlayerRef.current?.seekToMs(ms);
+  }, []);
 
   const onSelectTab = useCallback(
     (tab: Tab) => {
@@ -492,6 +508,7 @@ export const RecordingDetailScreen = () => {
           {hasAudio && (
             <View className="overflow-hidden rounded-2xl">
               <AudioPlayer
+                ref={audioPlayerRef}
                 duration={liveRecord.duration}
                 color={color}
                 audioPath={liveRecord.audioPath}
@@ -499,6 +516,16 @@ export const RecordingDetailScreen = () => {
                 surfaceBackgroundColor={tabPanelBackgroundColor}
               />
             </View>
+          )}
+
+          {hasAudio && hasRecordingMarks && (
+            <RecordingMarksSection
+              marks={liveRecord.recordingMarks ?? []}
+              color={color}
+              surfaceBackgroundColor={tabPanelBackgroundColor}
+              onSeekMs={handleSeekToMarkMs}
+              onUpdateMarks={handleUpdateRecordingMarks}
+            />
           )}
 
           {hasAudio && (

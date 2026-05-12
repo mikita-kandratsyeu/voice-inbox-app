@@ -71,6 +71,13 @@
       "when": 1775300000000,
       "tag": "0009_record_trash",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "6",
+      "when": 1775400000000,
+      "tag": "0010_recording_marks",
+      "breakpoints": true
     }
   ]
 }

@@ -3,6 +3,7 @@ export { useRecordStore } from './model/store';
 export type {
   RecordClassification,
   RecordHeavyFields,
+  RecordingMark,
   RecordingStatus,
   RecordListItem,
   RecordStatus,

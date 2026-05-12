@@ -31,6 +31,14 @@ export type TaskItem = {
   source?: TaskSource;
 };
 
+/** Time-based bookmark created while recording (offset in the final audio). */
+export type RecordingMark = {
+  id: string;
+  offsetMs: number;
+  /** User-visible caption; empty string means unnamed mark. */
+  label: string;
+};
+
 export type VoiceRecord = {
   id: string;
   title: string;
@@ -57,6 +65,7 @@ export type VoiceRecord = {
   privateAiBatchProgressLabel?: string;
   isPinned?: boolean;
   tags?: string[];
+  recordingMarks?: RecordingMark[];
   classification?: RecordClassification;
   keyPhrases?: string[];
   nextSteps?: string[];
