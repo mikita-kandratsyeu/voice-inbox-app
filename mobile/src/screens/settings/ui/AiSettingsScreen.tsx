@@ -168,19 +168,30 @@ export const AiSettingsScreen = () => {
             </>
           )}
           {!isPrivateMode && (
-            <SettingsSection variant="plain" title={t('aiSettings.smartModeCloudRetention.title')}>
-              <Text className="mb-3 px-1 text-[13px] leading-5" style={{ color: color.text.muted }}>
+            <View className="mb-7">
+              <Text
+                className="mb-2.5 px-1 text-xs font-semibold uppercase tracking-widest"
+                style={{ color: color.text.secondary }}
+              >
+                {t('aiSettings.smartModeCloudRetention.title')}
+              </Text>
+              <Text className="mb-2 px-1 text-[13px] leading-5" style={{ color: color.text.muted }}>
                 {t('aiSettings.smartModeCloudRetention.description')}
               </Text>
-              <CloudAiKvTtlSlider
-                valueSeconds={cloudAiKvTtlSeconds}
-                onChangeSeconds={setCloudAiKvTtlSeconds}
-                fullLabel={cloudRetentionLabel}
-                tickLabel={(sec) => t(`aiSettings.smartModeCloudRetention.tick${sec}`)}
-                sliderAccessibilityLabel={t('aiSettings.smartModeCloudRetention.sliderA11yLabel')}
-                color={color}
-              />
-            </SettingsSection>
+              <View
+                className="overflow-hidden rounded-2xl"
+                style={{ borderWidth: 1, borderColor: color.border.default }}
+              >
+                <CloudAiKvTtlSlider
+                  valueSeconds={cloudAiKvTtlSeconds}
+                  onChangeSeconds={setCloudAiKvTtlSeconds}
+                  fullLabel={cloudRetentionLabel}
+                  tickLabel={(sec) => t(`aiSettings.smartModeCloudRetention.tick${sec}`)}
+                  sliderAccessibilityLabel={t('aiSettings.smartModeCloudRetention.sliderA11yLabel')}
+                  color={color}
+                />
+              </View>
+            </View>
           )}
           <SettingsSection title={t('aiSettings.summaryStyle')}>
             <PickerSection

@@ -1,5 +1,5 @@
 import { MenuView } from '@react-native-menu/menu';
-import { ChevronDown, MoreHorizontal } from 'lucide-react-native';
+import { Bookmark, ChevronDown, MoreHorizontal } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, LayoutAnimation, Platform, Pressable, Text, View } from 'react-native';
@@ -115,12 +115,15 @@ export const RecordingMarksSection = ({
           }}
           className="flex-row items-center justify-between gap-3 pb-0.5 active:opacity-80"
         >
-          <Text
-            className="min-w-0 flex-1 text-[12px] font-semibold uppercase tracking-wide"
-            style={{ color: color.text.muted }}
-          >
-            {t('recordingDetail.marksSectionTitle')}
-          </Text>
+          <View className="min-w-0 flex-1 flex-row items-center gap-2" accessible={false}>
+            <Bookmark size={18} color={color.icon.muted} strokeWidth={2} />
+            <Text
+              className="min-w-0 flex-1 text-sm font-medium"
+              style={{ color: color.text.primary }}
+            >
+              {t('recordingDetail.marksSectionTitle')}
+            </Text>
+          </View>
           <Animated.View
             style={[
               chevronAnimatedStyle,
@@ -133,7 +136,7 @@ export const RecordingMarksSection = ({
               },
             ]}
           >
-            <ChevronDown size={16} color={color.text.secondary} strokeWidth={2.25} />
+            <ChevronDown size={16} color={color.text.secondary} strokeWidth={2} />
           </Animated.View>
         </Pressable>
         {marksExpanded ? (

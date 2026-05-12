@@ -931,7 +931,7 @@
     "executionMode.smart_hybrid": "Smart",
     "executionMode.private_experimental": "Private",
     "privateCapabilityTier": {
-      "full": "Your device is ready for the Private experimental mode.",
+      "full": "Your device is ready for Private mode.",
       "limited": "Limited Private mode is available: length and speed limits may apply.",
       "unavailable": "Local LLM is not available on this device yet. You can use Smart mode."
     },

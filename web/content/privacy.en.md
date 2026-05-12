@@ -8,7 +8,7 @@ Voice Inbox AI ("we", "our", or "the app") is an offline voice notes application
 
 Voice recordings, transcripts, summaries, tasks, and tags are stored locally on your device. We have no access to this content unless a feature you use sends it to our servers (for example **cloud AI**, push notifications, or in-app support).
 
-**On-device AI (optional):** The app may offer an **experimental Private mode** that runs summaries, task extraction, and Ask AI **on your device** using a language model you download. In that mode, transcript text for those features is **not** sent to our servers for model inference. Downloading a model requires an internet connection and may retrieve weight files from a **public model host** (for example, Hugging Face). That host processes a normal file download and does not receive your note transcripts from us.
+**On-device AI (optional):** The app may offer **Private mode** that runs summaries, task extraction, and Ask AI **on your device** using a language model you download. In that mode, transcript text for those features is **not** sent to our servers for model inference. Downloading a model requires an internet connection and may retrieve weight files from a **public model host** (for example, Hugging Face). That host processes a normal file download and does not receive your note transcripts from us.
 
 **Cloud AI:** If you use AI in the Smart mode, or when on-device AI is unavailable and the app uses the cloud instead, the app sends transcript text to our web API over HTTPS. The transcript is forwarded to third-party AI providers via the OpenRouter platform. We do not store transcripts on our servers.
 

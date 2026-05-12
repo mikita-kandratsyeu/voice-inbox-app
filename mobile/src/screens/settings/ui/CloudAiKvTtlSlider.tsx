@@ -87,23 +87,10 @@ export function CloudAiKvTtlSlider({
 
   const cardStyle = useMemo(
     () => ({
-      borderRadius: 16,
-      borderWidth: StyleSheet.hairlineWidth * 2,
-      borderColor: color.border.default,
       backgroundColor: color.background.card,
-      paddingHorizontal: 14,
+      paddingHorizontal: 16,
       paddingTop: 14,
       paddingBottom: 12,
-      ...Platform.select({
-        ios: {
-          shadowColor: color.shadow.color,
-          shadowOffset: { width: 0, height: 3 },
-          shadowOpacity: color.shadow.opacity * 0.22,
-          shadowRadius: 10,
-        },
-        android: { elevation: 2 },
-        default: {},
-      }),
     }),
     [color],
   );
@@ -112,139 +99,137 @@ export function CloudAiKvTtlSlider({
   const dotCenterY = TICK_ROW_H / 2;
 
   return (
-    <View className="pb-3 pt-1">
-      <View style={cardStyle}>
-        <View className="mb-3 items-center">
-          <View
-            className="max-w-full px-4 py-2"
-            style={{
-              borderRadius: 999,
-              backgroundColor: withAlphaHex(color.accent.primary, 0.14),
-              borderWidth: 1,
-              borderColor: withAlphaHex(color.accent.primary, 0.28),
-            }}
+    <View style={cardStyle}>
+      <View className="mb-3 items-center">
+        <View
+          className="max-w-full px-4 py-2"
+          style={{
+            borderRadius: 999,
+            backgroundColor: withAlphaHex(color.accent.primary, 0.14),
+            borderWidth: 1,
+            borderColor: withAlphaHex(color.accent.primary, 0.28),
+          }}
+        >
+          <Text
+            className="text-center text-[15px] font-semibold"
+            style={{ color: color.accent.primary }}
+            accessibilityRole="text"
+            numberOfLines={2}
+            adjustsFontSizeToFit
+            minimumFontScale={0.85}
           >
-            <Text
-              className="text-center text-[15px] font-semibold"
-              style={{ color: color.accent.primary }}
-              accessibilityRole="text"
-              numberOfLines={2}
-              adjustsFontSizeToFit
-              minimumFontScale={0.85}
-            >
-              {fullLabel(selected)}
-            </Text>
-          </View>
+            {fullLabel(selected)}
+          </Text>
+        </View>
+      </View>
+
+      <View onLayout={onTrackLayout}>
+        <View style={{ height: TICK_ROW_H, position: 'relative', marginBottom: 2 }}>
+          {trackWidth > 0 &&
+            CLOUD_AI_KV_TTL_CHOICES.map((s, i) => {
+              const active = i === index;
+              const cx = thumbCenterX(trackWidth, i);
+              const d = active ? DOT_ACTIVE : DOT_INACTIVE;
+              return (
+                <View
+                  key={s}
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    left: cx - d / 2,
+                    top: dotCenterY - d / 2,
+                    width: d,
+                    height: d,
+                    borderRadius: d / 2,
+                    backgroundColor: active
+                      ? color.accent.primary
+                      : withAlphaHex(color.text.primary, 0.14),
+                    borderWidth: active ? 0 : StyleSheet.hairlineWidth,
+                    borderColor: withAlphaHex(color.text.primary, 0.22),
+                    ...(active && Platform.OS === 'ios'
+                      ? {
+                          shadowColor: color.accent.primary,
+                          shadowOffset: { width: 0, height: 0 },
+                          shadowOpacity: 0.45,
+                          shadowRadius: 5,
+                        }
+                      : {}),
+                  }}
+                />
+              );
+            })}
         </View>
 
-        <View onLayout={onTrackLayout}>
-          <View style={{ height: TICK_ROW_H, position: 'relative', marginBottom: 2 }}>
-            {trackWidth > 0 &&
-              CLOUD_AI_KV_TTL_CHOICES.map((s, i) => {
-                const active = i === index;
-                const cx = thumbCenterX(trackWidth, i);
-                const d = active ? DOT_ACTIVE : DOT_INACTIVE;
-                return (
-                  <View
-                    key={s}
-                    pointerEvents="none"
-                    style={{
-                      position: 'absolute',
-                      left: cx - d / 2,
-                      top: dotCenterY - d / 2,
-                      width: d,
-                      height: d,
-                      borderRadius: d / 2,
-                      backgroundColor: active
-                        ? color.accent.primary
-                        : withAlphaHex(color.text.primary, 0.14),
-                      borderWidth: active ? 0 : StyleSheet.hairlineWidth,
-                      borderColor: withAlphaHex(color.text.primary, 0.22),
-                      ...(active && Platform.OS === 'ios'
-                        ? {
-                            shadowColor: color.accent.primary,
-                            shadowOffset: { width: 0, height: 0 },
-                            shadowOpacity: 0.45,
-                            shadowRadius: 5,
-                          }
-                        : {}),
-                    }}
-                  />
-                );
-              })}
-          </View>
-
-          <View style={{ height: SLIDER_ROW_H, position: 'relative', justifyContent: 'center' }}>
-            {trackWidth > 0 && span > 0 && (
-              <View
-                pointerEvents="none"
-                style={{
-                  position: 'absolute',
-                  left: inset,
-                  width: span,
-                  height: RAIL_H,
-                  top: railTop,
-                  borderRadius: RAIL_H / 2,
-                  backgroundColor: color.background.tertiary,
-                }}
-              />
-            )}
-            <Slider
-              accessibilityLabel={sliderAccessibilityLabel}
-              accessibilityRole="adjustable"
-              minimumValue={0}
-              maximumValue={SLIDER_MAX_INDEX}
-              step={1}
-              value={index}
-              onValueChange={(raw) => {
-                const i = Math.round(raw);
-                const clamped = Math.max(0, Math.min(SLIDER_MAX_INDEX, i));
-                if (clamped !== lastHapticIndexRef.current) {
-                  lastHapticIndexRef.current = clamped;
-                  hapticLight();
-                }
-                const next = CLOUD_AI_KV_TTL_CHOICES[clamped];
-                if (next !== undefined) onChangeSeconds(next);
+        <View style={{ height: SLIDER_ROW_H, position: 'relative', justifyContent: 'center' }}>
+          {trackWidth > 0 && span > 0 && (
+            <View
+              pointerEvents="none"
+              style={{
+                position: 'absolute',
+                left: inset,
+                width: span,
+                height: RAIL_H,
+                top: railTop,
+                borderRadius: RAIL_H / 2,
+                backgroundColor: color.background.tertiary,
               }}
-              minimumTrackTintColor={color.accent.primary}
-              maximumTrackTintColor={color.background.tertiary}
-              thumbTintColor={color.icon.onAccent}
-              style={{ width: '100%', height: SLIDER_ROW_H }}
             />
-          </View>
+          )}
+          <Slider
+            accessibilityLabel={sliderAccessibilityLabel}
+            accessibilityRole="adjustable"
+            minimumValue={0}
+            maximumValue={SLIDER_MAX_INDEX}
+            step={1}
+            value={index}
+            onValueChange={(raw) => {
+              const i = Math.round(raw);
+              const clamped = Math.max(0, Math.min(SLIDER_MAX_INDEX, i));
+              if (clamped !== lastHapticIndexRef.current) {
+                lastHapticIndexRef.current = clamped;
+                hapticLight();
+              }
+              const next = CLOUD_AI_KV_TTL_CHOICES[clamped];
+              if (next !== undefined) onChangeSeconds(next);
+            }}
+            minimumTrackTintColor={color.accent.primary}
+            maximumTrackTintColor={color.background.tertiary}
+            thumbTintColor={color.icon.onAccent}
+            style={{ width: '100%', height: SLIDER_ROW_H }}
+          />
+        </View>
 
-          <View style={{ height: 24, position: 'relative', marginTop: 4 }}>
-            {trackWidth > 0 &&
-              CLOUD_AI_KV_TTL_CHOICES.map((s, i) => {
-                const active = i === index;
-                const cx = thumbCenterX(trackWidth, i);
-                return (
-                  <View
-                    key={s}
-                    pointerEvents="none"
+        <View style={{ height: 24, position: 'relative', marginTop: 4 }}>
+          {trackWidth > 0 &&
+            CLOUD_AI_KV_TTL_CHOICES.map((s, i) => {
+              const active = i === index;
+              const cx = thumbCenterX(trackWidth, i);
+              return (
+                <View
+                  key={s}
+                  pointerEvents="none"
+                  style={{
+                    position: 'absolute',
+                    left: cx - labelWidth / 2,
+                    top: 0,
+                    width: labelWidth,
+                  }}
+                >
+                  <Text
+                    className={`text-[11px] leading-3 ${active ? 'font-semibold' : 'font-normal'}`}
                     style={{
-                      position: 'absolute',
-                      left: cx - labelWidth / 2,
-                      top: 0,
-                      width: labelWidth,
+                      color: active ? color.accent.primary : color.text.muted,
+                      textAlign: 'center',
                     }}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.7}
                   >
-                    <Text
-                      className={`text-[11px] leading-3 ${active ? 'font-semibold' : 'font-normal'}`}
-                      style={{
-                        color: active ? color.accent.primary : color.text.muted,
-                        textAlign: 'center',
-                      }}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.7}
-                    >
-                      {tickLabel(s)}
-                    </Text>
-                  </View>
-                );
-              })}
-          </View>
+                    {tickLabel(s)}
+                  </Text>
+                </View>
+              );
+            })}
         </View>
       </View>
     </View>
