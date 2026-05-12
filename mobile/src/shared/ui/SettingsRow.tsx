@@ -56,8 +56,10 @@ export const SettingsRow = ({
         borderStyle,
       ]}
     >
-      {leftIcon && <View className="mr-3 h-6 w-6 items-center justify-center">{leftIcon}</View>}
-      <View className="flex-1">
+      {leftIcon && (
+        <View className="mr-3 h-6 w-6 shrink-0 items-center justify-center">{leftIcon}</View>
+      )}
+      <View className="min-w-0 flex-1">
         <Text
           className="text-[16px]"
           style={{
@@ -73,11 +75,13 @@ export const SettingsRow = ({
           </Text>
         ) : null}
       </View>
-      {rightSlot && <View className="ml-2">{rightSlot}</View>}
+      {rightSlot && <View className="ml-2 shrink-0">{rightSlot}</View>}
       {!rightSlot && value && (
-        <Text className="mr-2 text-[16px]" style={{ color: color.text.secondary }}>
-          {value}
-        </Text>
+        <View className="ml-2 mr-2 shrink-0 self-center">
+          <Text className="text-right text-[16px]" style={{ color: color.text.secondary }}>
+            {value}
+          </Text>
+        </View>
       )}
       {showChevron && onPress && (
         <ChevronRight size={18} color={color.icon.muted} strokeWidth={2} />
