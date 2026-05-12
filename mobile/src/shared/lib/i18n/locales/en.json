@@ -647,6 +647,7 @@
       "title": "Let AI work for you",
       "subtitle": "Automation, summaries, tasks, and note organization — without manual triggering.",
       "freeTitle": "Free",
+      "freeLimitsDisclosureTitle": "What's included in Free",
       "freeLimits": {
         "manualAi": "AI runs manually only",
         "recording": "Recordings up to {{minutes}} minutes",

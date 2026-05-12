@@ -1,8 +1,14 @@
 import type { TFunction } from 'i18next';
-import { Check, Crown, X } from 'lucide-react-native';
-import React from 'react';
+import { Check, ChevronDown, Crown, X } from 'lucide-react-native';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { FREE_MAX_RECORDING_MS, type MonetizationMode } from '@/features/app-storefront';
@@ -13,6 +19,7 @@ import type {
 } from '@/features/entitlements';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { getWebsiteUrl, useAppTheme, useColors } from '@/shared/config';
+import { hapticSelection } from '@/shared/lib';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 import { Button } from '@/shared/ui';
 
@@ -42,7 +49,7 @@ function FeatureRow({ text, emphasized, mutedCheck }: FeatureRowProps) {
   const lineHeight = 20;
 
   return (
-    <View className="flex-row items-start gap-2.5">
+    <View className="flex-row items-start">
       <View
         className="h-5 w-5 shrink-0 items-center justify-center rounded-full"
         style={{
@@ -55,6 +62,7 @@ function FeatureRow({ text, emphasized, mutedCheck }: FeatureRowProps) {
       <Text
         className={`flex-1 text-[14px] ${emphasized ? 'font-semibold' : ''}`}
         style={{
+          marginLeft: 6,
           color: c.text.primary,
           fontSize: 14,
           lineHeight,
@@ -290,6 +298,25 @@ export function SettingsPlanPaywallSheet({
   const c = useColors();
   const browserColorScheme = useAppTheme();
   const insets = useSafeAreaInsets();
+  const [freeLimitsExpanded, setFreeLimitsExpanded] = useState(false);
+  const freeLimitsChevronRotation = useSharedValue(0);
+
+  useEffect(() => {
+    if (!visible) {
+      setFreeLimitsExpanded(false);
+    }
+  }, [visible]);
+
+  useEffect(() => {
+    freeLimitsChevronRotation.value = withTiming(freeLimitsExpanded ? 180 : 0, {
+      duration: 120,
+      easing: freeLimitsExpanded ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+    });
+  }, [freeLimitsChevronRotation, freeLimitsExpanded]);
+
+  const freeLimitsChevronStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${freeLimitsChevronRotation.value}deg` }],
+  }));
 
   const isComingSoon = mode === 'coming_soon';
   const isIapPublic = mode === 'iap_public';
@@ -387,23 +414,60 @@ export function SettingsPlanPaywallSheet({
             </View>
           </View>
           <View
-            className="mb-3 rounded-2xl border p-4"
+            className="mb-3 rounded-2xl border"
             style={{ borderColor: c.border.default, backgroundColor: c.background.secondary }}
           >
-            <Text className="text-sm font-semibold" style={{ color: c.text.primary }}>
-              {t('settings.planPaywall.freeTitle')}
-            </Text>
-            <View className="mt-3 gap-y-2.5">
-              <FeatureRow mutedCheck text={t('settings.planPaywall.freeLimits.manualAi')} />
-              <FeatureRow
-                mutedCheck
-                text={t('settings.planPaywall.freeLimits.recording', { minutes: FREE_MAX_MINUTES })}
-              />
-              <FeatureRow
-                mutedCheck
-                text={t('settings.planPaywall.freeLimits.weeklyAi', { limit: freeAiLimit })}
-              />
-            </View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: freeLimitsExpanded }}
+              accessibilityLabel={t('settings.planPaywall.freeLimitsDisclosureTitle')}
+              onPress={() => {
+                hapticSelection();
+                setFreeLimitsExpanded((v) => !v);
+              }}
+              className="flex-row items-center justify-between gap-3 px-4 py-3.5"
+              style={{ minHeight: 44 }}
+            >
+              <Text
+                className="min-w-0 flex-1 text-sm font-semibold"
+                style={{ color: c.text.primary }}
+                numberOfLines={2}
+              >
+                {t('settings.planPaywall.freeLimitsDisclosureTitle')}
+              </Text>
+              <Animated.View
+                style={[
+                  freeLimitsChevronStyle,
+                  {
+                    width: 32,
+                    height: 32,
+                    flexShrink: 0,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  },
+                ]}
+              >
+                <ChevronDown size={20} color={c.text.secondary} strokeWidth={2.2} />
+              </Animated.View>
+            </Pressable>
+            {freeLimitsExpanded ? (
+              <View
+                className="gap-y-2.5 border-t px-4 pb-4 pt-3"
+                style={{ borderTopColor: c.border.default }}
+              >
+                <FeatureRow mutedCheck text={t('settings.planPaywall.freeLimits.manualAi')} />
+                <FeatureRow
+                  mutedCheck
+                  text={t('settings.planPaywall.freeLimits.recording', {
+                    minutes: FREE_MAX_MINUTES,
+                  })}
+                />
+                <FeatureRow
+                  mutedCheck
+                  text={t('settings.planPaywall.freeLimits.weeklyAi', { limit: freeAiLimit })}
+                />
+              </View>
+            ) : null}
           </View>
           <View
             className="mb-5 rounded-2xl border-2 p-5"
@@ -412,21 +476,29 @@ export function SettingsPlanPaywallSheet({
               backgroundColor: c.background.secondary,
             }}
           >
-            <View className="mb-3 flex-row items-center justify-between gap-2">
-              <Text className="text-[15px] font-semibold" style={{ color: c.text.primary }}>
-                {t('settings.planPaywall.proTitle')}
-              </Text>
-              <View
-                className="rounded-full px-2.5 py-1"
-                style={{ backgroundColor: `${c.accent.primary}22` }}
-              >
-                <Text className="text-[11px] font-semibold" style={{ color: c.accent.primary }}>
-                  {t('settings.planPaywall.proTitle').toUpperCase()}
-                </Text>
-              </View>
-            </View>
             <View className="gap-y-2.5">
-              <FeatureRow text={t('settings.planPaywall.features.autoAutomation')} emphasized />
+              <View
+                className="flex-row items-start gap-2"
+                accessibilityRole="header"
+                accessibilityLabel={t('settings.planPaywall.proTitle')}
+              >
+                <View className="min-w-0 flex-1">
+                  <FeatureRow text={t('settings.planPaywall.features.autoAutomation')} emphasized />
+                </View>
+                <View
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  className="shrink-0 rounded-full px-2.5 py-1"
+                  style={{
+                    backgroundColor: `${c.accent.primary}22`,
+                    marginTop: IS_IOS ? 1 : 2,
+                  }}
+                >
+                  <Text className="text-[11px] font-semibold" style={{ color: c.accent.primary }}>
+                    {t('settings.planPaywall.proTitle').toUpperCase()}
+                  </Text>
+                </View>
+              </View>
               <FeatureRow
                 text={t('settings.planPaywall.features.recordingUpToOneHour')}
                 emphasized
