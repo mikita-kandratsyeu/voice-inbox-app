@@ -689,7 +689,7 @@
         "autoArchiveReadNotes": "Авто-архив прочитанных заметок",
         "aiLimit": "До {{limit}} генераций в неделю",
         "recordingUpToOneHour": "Запись до 1 часа",
-        "accentCustomization": "Палитра акцента — кнопки, выделения и индикаторы под тебя",
+        "accentCustomization": "Палитра акцента — кнопки, выделения и индикаторы",
         "pinnedMoments": "Отметки моментов при записи",
         "noAds": "Без рекламы"
       }
