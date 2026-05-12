@@ -2,7 +2,7 @@ import { MenuView } from '@react-native-menu/menu';
 import { ChevronDown, MoreHorizontal } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, LayoutAnimation, Pressable, Text, View } from 'react-native';
+import { Alert, LayoutAnimation, Platform, Pressable, Text, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -45,14 +45,10 @@ export const RecordingMarksSection = ({
   const sorted = useMemo(() => [...marks].sort((a, b) => a.offsetMs - b.offsetMs), [marks]);
 
   useEffect(() => {
-    if (marksExpanded) {
-      chevronRotation.value = withTiming(0, {
-        duration: 240,
-        easing: Easing.out(Easing.cubic),
-      });
-    } else {
-      chevronRotation.value = -90;
-    }
+    chevronRotation.value = withTiming(marksExpanded ? 0 : -90, {
+      duration: 120,
+      easing: marksExpanded ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+    });
   }, [chevronRotation, marksExpanded]);
 
   const chevronAnimatedStyle = useAnimatedStyle(() => ({
@@ -96,7 +92,7 @@ export const RecordingMarksSection = ({
     <>
       <View
         accessible={false}
-        className="gap-2 rounded-2xl p-4"
+        className="gap-2.5 rounded-2xl p-4"
         style={{ backgroundColor: cardBg }}
       >
         <Pressable
@@ -143,7 +139,7 @@ export const RecordingMarksSection = ({
         {marksExpanded ? (
           <Animated.View
             entering={FadeIn.duration(200).easing(Easing.out(Easing.cubic))}
-            className="gap-2"
+            className="gap-2.5"
           >
             {sorted.map((mark) => {
               const timeStr = formatTime(Math.floor(mark.offsetMs / 1000));
@@ -151,7 +147,7 @@ export const RecordingMarksSection = ({
               return (
                 <View
                   key={mark.id}
-                  className="flex-row items-center gap-2 rounded-xl px-3 py-2.5"
+                  className="flex-row items-center gap-2.5 rounded-2xl px-3 py-3.5"
                   style={{ backgroundColor: color.background.tertiary }}
                 >
                   <Pressable
@@ -167,20 +163,32 @@ export const RecordingMarksSection = ({
                     className="min-w-0 flex-1 flex-row items-center gap-3"
                   >
                     <View
-                      className="rounded-lg px-2 py-1"
-                      style={{ backgroundColor: color.background.secondary }}
+                      className="min-w-[56px] justify-center rounded-md px-1.5"
+                      style={{
+                        backgroundColor: color.accent.primary,
+                        minHeight: 26,
+                        alignItems: 'center',
+                      }}
                     >
                       <Text
-                        className="text-[13px] font-semibold tabular-nums"
-                        style={{ color: color.text.secondary }}
+                        className="text-center text-[12px] font-semibold tabular-nums"
+                        style={[
+                          { color: color.icon.onAccent, lineHeight: 16 },
+                          Platform.OS === 'android'
+                            ? {
+                                textAlignVertical: 'center',
+                                includeFontPadding: false,
+                              }
+                            : null,
+                        ]}
                       >
                         {timeStr}
                       </Text>
                     </View>
                     <Text
-                      className="flex-1 text-[15px] font-medium leading-5"
+                      className="flex-1 text-[15px] font-medium leading-6"
                       style={{ color: color.text.primary }}
-                      numberOfLines={3}
+                      numberOfLines={2}
                     >
                       {title}
                     </Text>
@@ -221,17 +229,18 @@ export const RecordingMarksSection = ({
                       <Pressable
                         accessibilityRole="button"
                         accessibilityLabel={t('recordingDetail.markMoreA11y')}
-                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        style={{
-                          height: 40,
-                          width: 40,
+                        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+                        style={({ pressed }) => ({
+                          height: 44,
+                          width: 44,
                           alignItems: 'center',
                           justifyContent: 'center',
                           borderRadius: 999,
-                          backgroundColor: color.background.secondary,
-                        }}
+                          backgroundColor: color.background.tertiary,
+                          opacity: pressed ? 0.6 : 1,
+                        })}
                       >
-                        <MoreHorizontal size={20} color={color.text.secondary} strokeWidth={2} />
+                        <MoreHorizontal size={20} color={color.text.primary} strokeWidth={2.5} />
                       </Pressable>
                     </MenuView>
                   </View>
