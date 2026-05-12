@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
+  InteractionManager,
   Modal,
   Pressable,
   RefreshControl,
@@ -23,10 +24,26 @@ import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { recordRepository } from '@/entities/record/model/repository';
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
-import { LOCAL_AI_MODELS, useSettingsStore, WHISPER_MODELS } from '@/entities/settings';
+import {
+  getRecommendedWhisperModelId,
+  LOCAL_AI_MODELS,
+  useSettingsStore,
+  WHISPER_MODELS,
+} from '@/entities/settings';
 import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
-import { getLocalLlmModelFileSizeBytes, getModelFileSizeBytes } from '@/features/model-manager';
+import {
+  cancelLocalLlmModelDownload,
+  cancelWhisperModelDownload,
+  deleteLocalLlmModel,
+  deleteWhisperModel,
+  getLocalLlmModelFileSizeBytes,
+  getModelFileSizeBytes,
+} from '@/features/model-manager';
+import {
+  stopLocalAiDownloadLiveActivity,
+  stopWhisperDownloadLiveActivity,
+} from '@/features/model-manager/lib/downloadLiveActivity';
 import { useColors } from '@/shared/config';
 import {
   clearCache,
@@ -40,6 +57,7 @@ import {
   useIsTablet,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
+import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
 import { IS_ANDROID } from '@/shared/lib/platform';
@@ -52,6 +70,11 @@ import {
   SkeletonPulse,
 } from '@/shared/ui';
 
+import {
+  type DeleteStorageCategoryBytes,
+  DeleteStorageDataSheet,
+  type DeleteStorageSelection,
+} from './DeleteStorageDataSheet';
 import {
   ROW_BULLET_SIZE,
   ROW_TRAIL_SLOT_W,
@@ -117,6 +140,7 @@ export const StorageDetailsScreen = () => {
   const [isClearing, setIsClearing] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [deleteAllProgress, setDeleteAllProgress] = useState({ current: 0, total: 0 });
+  const [deleteStorageSheetVisible, setDeleteStorageSheetVisible] = useState(false);
   const [downloadedVariants, setDownloadedVariants] = useState<DownloadedModelVariant[]>([]);
   const [downloadedLocalLlm, setDownloadedLocalLlm] = useState<DownloadedLocalLlmEntry[]>([]);
   const [selectedSegmentIds, setSelectedSegmentIds] = useState<StorageRingSegmentId[]>([]);
@@ -225,6 +249,23 @@ export const StorageDetailsScreen = () => {
   const modelsBytesTotal = whisperModelsBytes + localGenerationModelsBytes;
   const hasOnDeviceModelRows = downloadedVariants.length > 0 || downloadedLocalLlm.length > 0;
   const hasClearableCache = stats.cacheKb > 0;
+
+  const deleteCategoryBytes = useMemo<DeleteStorageCategoryBytes>(
+    () => ({
+      library: stats.audioMb * 1024 * 1024 + stats.transcriptKb * 1024 + stats.aiDataKb * 1024,
+      whisper: whisperModelsBytes,
+      localLlm: localGenerationModelsBytes,
+      cache: stats.cacheKb * 1024,
+    }),
+    [
+      stats.audioMb,
+      stats.transcriptKb,
+      stats.aiDataKb,
+      stats.cacheKb,
+      whisperModelsBytes,
+      localGenerationModelsBytes,
+    ],
+  );
 
   const { ringSegments, totalBytesForRing } = useMemo(() => {
     const audioBytes = stats.audioMb * 1024 * 1024;
@@ -372,49 +413,130 @@ export const StorageDetailsScreen = () => {
     ]);
   };
 
-  const handleDeleteAll = () => {
-    Alert.alert(t('storage.deleteAllData'), t('storage.deleteAllConfirm'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.delete'),
-        style: 'destructive',
-        onPress: async () => {
-          const trashedRecords = await recordRepository.getTrashedList();
-          const totalToDelete = records.length + trashedRecords.length + folders.length;
-          setIsDeletingAll(true);
-          setDeleteAllProgress({ current: 0, total: totalToDelete });
-          try {
-            let deleted = 0;
-            for (let i = 0; i < records.length; i += 1) {
-              const r = records[i];
-              await purgeRecordPermanently(r.id);
-              deleted += 1;
-              setDeleteAllProgress({ current: deleted, total: totalToDelete });
+  const runSelectiveDelete = useCallback(
+    async (sel: DeleteStorageSelection) => {
+      const activePaths = useRecordStore
+        .getState()
+        .records.map((r) => r.audioPath)
+        .filter((p): p is string => Boolean(p));
+      const trashedPayloads = await recordRepository.getTrashedStoragePayloads();
+      const pathSet = new Set<string>(activePaths);
+      for (const t of trashedPayloads) {
+        if (t.audioPath) pathSet.add(t.audioPath);
+      }
+      const paths = [...pathSet];
+
+      const showBlockingModal = Boolean(sel.library || sel.whisper || sel.localLlm);
+      if (showBlockingModal) {
+        setIsDeletingAll(true);
+      }
+
+      try {
+        if (sel.cache) {
+          await clearCache(paths);
+        }
+
+        if (sel.whisper) {
+          await Promise.all(
+            WHISPER_MODELS.map((m) => cancelWhisperModelDownload(m.id).catch(() => {})),
+          );
+          await stopWhisperDownloadLiveActivity().catch(() => {});
+
+          const formats: WhisperModelWeightsFormat[] = ['q5_1', 'full'];
+          for (const model of WHISPER_MODELS) {
+            for (const fmt of formats) {
+              await deleteWhisperModel(model.id, fmt);
+              useSettingsStore.getState().removeWhisperModelStatus(model.id, fmt);
             }
-            for (let i = 0; i < trashedRecords.length; i += 1) {
-              const tr = trashedRecords[i];
-              await purgeRecordPermanently(tr.id);
-              deleted += 1;
-              setDeleteAllProgress({ current: deleted, total: totalToDelete });
-            }
-            for (let i = 0; i < folders.length; i += 1) {
-              const f = folders[i];
-              await deleteFolder(f.id);
-              deleted += 1;
-              setDeleteAllProgress({ current: deleted, total: totalToDelete });
-            }
-            await refreshStats();
-            navigation.goBack();
-          } catch {
-            Alert.alert(t('common.error'), t('storage.deleteAllError'));
-          } finally {
-            setIsDeletingAll(false);
-            setDeleteAllProgress({ current: 0, total: 0 });
           }
-        },
-      },
-    ]);
-  };
+
+          const fmt = useSettingsStore.getState().whisperModelWeightsFormat;
+          useSettingsStore.getState().setWhisperModel(getRecommendedWhisperModelId(fmt));
+        }
+
+        if (sel.localLlm) {
+          await cancelLocalLlmModelDownload().catch(() => {});
+          await stopLocalAiDownloadLiveActivity().catch(() => {});
+
+          for (const m of LOCAL_AI_MODELS) {
+            const p = getLocalLlmModelPath(m.id);
+            if (await NitroFS.exists(p)) {
+              await deleteLocalLlmModel(m.id);
+              useSettingsStore.getState().removeLocalLlmModelStatus(m.id);
+            }
+          }
+
+          await releaseLocalLlmSession().catch(() => {});
+          useSettingsStore.getState().clearLocalAiModelSelection();
+        }
+
+        if (sel.library) {
+          const activeRecords = [...useRecordStore.getState().records];
+          const trashedRecords = await recordRepository.getTrashedList();
+          const activeFolders = [...useFolderStore.getState().folders];
+          const totalToDelete = activeRecords.length + trashedRecords.length + activeFolders.length;
+          setDeleteAllProgress({ current: 0, total: totalToDelete });
+          let deleted = 0;
+          for (let i = 0; i < activeRecords.length; i += 1) {
+            await purgeRecordPermanently(activeRecords[i]!.id);
+            deleted += 1;
+            setDeleteAllProgress({ current: deleted, total: totalToDelete });
+          }
+          for (let i = 0; i < trashedRecords.length; i += 1) {
+            await purgeRecordPermanently(trashedRecords[i]!.id);
+            deleted += 1;
+            setDeleteAllProgress({ current: deleted, total: totalToDelete });
+          }
+          for (let i = 0; i < activeFolders.length; i += 1) {
+            await deleteFolder(activeFolders[i]!.id);
+            deleted += 1;
+            setDeleteAllProgress({ current: deleted, total: totalToDelete });
+          }
+        }
+
+        await refreshStats();
+
+        if (sel.library) {
+          navigation.goBack();
+        }
+      } catch (err) {
+        if (__DEV__) console.warn('[StorageDetails] Selective delete failed:', err);
+        Alert.alert(t('common.error'), t('storage.deleteAllError'));
+      } finally {
+        setIsDeletingAll(false);
+        setDeleteAllProgress({ current: 0, total: 0 });
+      }
+    },
+    [deleteFolder, navigation, purgeRecordPermanently, refreshStats, t],
+  );
+
+  const handleOpenDeleteStorageSheet = useCallback(() => {
+    if (isDeletingAll) return;
+    setDeleteStorageSheetVisible(true);
+  }, [isDeletingAll]);
+
+  const handleDeleteStorageConfirm = useCallback(
+    (selection: DeleteStorageSelection) => {
+      setDeleteStorageSheetVisible(false);
+      InteractionManager.runAfterInteractions(() => {
+        Alert.alert(
+          t('storage.deleteExecuteConfirmTitle'),
+          t('storage.deleteExecuteConfirmMessage'),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('common.delete'),
+              style: 'destructive',
+              onPress: () => {
+                void runSelectiveDelete(selection);
+              },
+            },
+          ],
+        );
+      });
+    },
+    [runSelectiveDelete, t],
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -994,7 +1116,7 @@ export const StorageDetailsScreen = () => {
             <SettingsRow
               label={t('storage.deleteAllData')}
               leftIcon={<Trash2 size={20} color={color.accent.delete} strokeWidth={1.8} />}
-              onPress={isDeletingAll ? undefined : handleDeleteAll}
+              onPress={isDeletingAll ? undefined : handleOpenDeleteStorageSheet}
               dangerous
               isFirst
               isLast
@@ -1003,6 +1125,12 @@ export const StorageDetailsScreen = () => {
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
+      <DeleteStorageDataSheet
+        visible={deleteStorageSheetVisible}
+        onClose={() => setDeleteStorageSheetVisible(false)}
+        categoryBytes={deleteCategoryBytes}
+        onConfirm={handleDeleteStorageConfirm}
+      />
       <Modal visible={isDeletingAll} transparent animationType="fade" statusBarTranslucent>
         <View
           className="flex-1 items-center justify-center px-6"
@@ -1019,13 +1147,13 @@ export const StorageDetailsScreen = () => {
               className="mt-5 text-center text-[16px] font-semibold leading-6"
               style={{ color: color.text.primary }}
             >
-              {t('storage.deleteAllLoadingTitle')}
+              {t('storage.removingSelectedTitle')}
             </Text>
             <Text
               className="mt-2 text-center text-[14px] leading-5"
               style={{ color: color.text.secondary }}
             >
-              {t('storage.deleteAllLoadingDescription')}
+              {t('storage.removingSelectedDescription')}
             </Text>
             {deleteAllProgress.total > 0 && (
               <Text

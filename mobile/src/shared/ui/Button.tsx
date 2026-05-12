@@ -18,6 +18,8 @@ type VariantStyle = { bg: ViewStyle; textColor?: string; textClassName?: string 
 
 export type ButtonProps = TouchableOpacityProps & {
   label?: string;
+  /** Rendered after `label` with smaller, subtler styling (e.g. dynamic size). */
+  labelSuffix?: string;
   icon?: React.ReactNode;
   loading?: boolean;
   variant?: ButtonVariant;
@@ -79,6 +81,7 @@ const DANGER_BG = { backgroundColor: 'transparent' };
 
 export const Button = ({
   label,
+  labelSuffix,
   icon,
   loading = false,
   variant = 'primary',
@@ -128,7 +131,9 @@ export const Button = ({
 
   const textStyle = textColor ? { color: textColor } : undefined;
 
-  const accessibilityLabel = accessibilityLabelProp ?? (!isIconOnly && label ? label : undefined);
+  const accessibilityLabel =
+    accessibilityLabelProp ??
+    (!isIconOnly && label ? (labelSuffix ? `${label} ${labelSuffix}` : label) : undefined);
   const accessibilityState = {
     ...accessibilityStateProp,
     disabled: Boolean(disabled || loading || accessibilityStateProp?.disabled),
@@ -153,13 +158,45 @@ export const Button = ({
       {icon}
       {!isIconOnly && label && (
         <View className="items-center justify-center">
-          <Text
-            className={textClassName}
-            style={[textStyle, { opacity: loading ? 0 : 1 }]}
-            numberOfLines={1}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'baseline',
+              justifyContent: 'center',
+              maxWidth: '100%',
+              opacity: loading ? 0 : 1,
+            }}
           >
-            {label}
-          </Text>
+            <Text
+              className={textClassName}
+              style={[textStyle, { flexShrink: 1 }]}
+              numberOfLines={1}
+            >
+              {label}
+            </Text>
+            {labelSuffix ? (
+              <Text
+                className={[
+                  'text-[14px] font-medium leading-6',
+                  variantKey === 'danger' ? variantTextClass : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                style={[
+                  textStyle,
+                  {
+                    fontVariant: ['tabular-nums'],
+                    opacity:
+                      variantKey === 'primary' ? 0.88 : variantKey === 'danger' ? 0.92 : 0.82,
+                  },
+                ]}
+                numberOfLines={1}
+              >
+                {' '}
+                {labelSuffix}
+              </Text>
+            ) : null}
+          </View>
           {loading && (
             <View
               pointerEvents="none"
