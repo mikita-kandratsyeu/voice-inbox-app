@@ -689,7 +689,8 @@
         "autoArchiveReadNotes": "Авто-архив прочитанных заметок",
         "aiLimit": "До {{limit}} генераций в неделю",
         "recordingUpToOneHour": "Запись до 1 часа",
-        "accentCustomization": "Палитра акцента — кнопки, выделения и индикаторы",
+        "accentCustomization": "Цвет акцента — кнопки и индикаторы",
+        "folderColors": "Персональные цвета папок",
         "meetingModeAndPinnedMoments": "Режим встречи и отметки моментов при записи",
         "extendedShareAndBatchExport": "Расширенный экспорт заметок — сводки, почта и аудио",
         "noAds": "Без рекламы"

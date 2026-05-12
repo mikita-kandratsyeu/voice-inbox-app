@@ -507,15 +507,16 @@ export function SettingsPlanPaywallSheet({
                 emphasized
               />
               <FeatureRow
-                text={t('settings.planPaywall.features.meetingModeAndPinnedMoments')}
+                text={t('settings.planPaywall.features.aiLimit', { limit: proAiLimit })}
                 emphasized
               />
               <FeatureRow
-                text={t('settings.planPaywall.features.aiLimit', { limit: proAiLimit })}
+                text={t('settings.planPaywall.features.meetingModeAndPinnedMoments')}
                 emphasized
               />
               <FeatureRow text={t('settings.planPaywall.features.extendedShareAndBatchExport')} />
               <FeatureRow text={t('settings.planPaywall.features.accentCustomization')} />
+              <FeatureRow text={t('settings.planPaywall.features.folderColors')} />
               <FeatureRow text={t('settings.planPaywall.features.noAds')} />
             </View>
             {isIapPublic && onIapBillingPeriodChange && iapProPriceLoading ? (
