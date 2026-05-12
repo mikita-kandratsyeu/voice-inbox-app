@@ -194,21 +194,11 @@ export const TrashScreen = () => {
             <Text className="text-[14px] leading-5" style={{ color: color.text.muted }}>
               {t('trash.audioInTrash', { size: formatFileSize(trashAudioBytes) })}
             </Text>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('storage.title')}
-              onPress={() => navigation.navigate('StorageDetails')}
-              style={{ alignSelf: 'flex-start', paddingVertical: 4 }}
-            >
-              <Text className="text-[15px] font-semibold" style={{ color: color.accent.primary }}>
-                {t('storage.title')}
-              </Text>
-            </Pressable>
           </View>
         ) : null}
       </View>
     ),
-    [color, loading, navigation, t, trashAudioBytes],
+    [color, loading, t, trashAudioBytes],
   );
 
   return (
