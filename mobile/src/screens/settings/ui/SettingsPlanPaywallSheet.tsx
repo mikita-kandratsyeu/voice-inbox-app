@@ -174,7 +174,7 @@ function SubscriptionPlanOptionCard({
       <View className="min-w-0 pr-10">
         <View className="min-w-0 flex-row flex-wrap items-center gap-2">
           <Text
-            className="text-[16px] font-bold leading-5"
+            className="text-[15px] font-medium leading-5"
             style={{
               color: c.text.primary,
               ...(IS_ANDROID ? { includeFontPadding: false } : {}),
@@ -444,21 +444,6 @@ export function SettingsPlanPaywallSheet({
             ) : null}
             {isIapPublic && !iapProPriceLoading && iapDualBilling && onIapBillingPeriodChange ? (
               <View className="mt-4 gap-3">
-                {iapMonthlyRow && (
-                  <SubscriptionPlanOptionCard
-                    c={c}
-                    t={t}
-                    title={t('settings.planPaywall.billingMonthly')}
-                    intro={iapMonthlyRow.introFree}
-                    billedHeadline={`${iapMonthlyRow.priceString}${t('settings.planPaywall.billingSlashMonth')}`}
-                    billedHeadlineCompareAt={null}
-                    subordinateLine={null}
-                    selected={selectedIapPeriod === 'monthly'}
-                    onPress={() => onIapBillingPeriodChange('monthly')}
-                    disabled={iapBusy}
-                    saveBadgePercent={null}
-                  />
-                )}
                 {iapAnnualRow && (
                   <SubscriptionPlanOptionCard
                     c={c}
@@ -478,6 +463,21 @@ export function SettingsPlanPaywallSheet({
                     onPress={() => onIapBillingPeriodChange('annual')}
                     disabled={iapBusy}
                     saveBadgePercent={iapSavePercent}
+                  />
+                )}
+                {iapMonthlyRow && (
+                  <SubscriptionPlanOptionCard
+                    c={c}
+                    t={t}
+                    title={t('settings.planPaywall.billingMonthly')}
+                    intro={iapMonthlyRow.introFree}
+                    billedHeadline={`${iapMonthlyRow.priceString}${t('settings.planPaywall.billingSlashMonth')}`}
+                    billedHeadlineCompareAt={null}
+                    subordinateLine={null}
+                    selected={selectedIapPeriod === 'monthly'}
+                    onPress={() => onIapBillingPeriodChange('monthly')}
+                    disabled={iapBusy}
+                    saveBadgePercent={null}
                   />
                 )}
               </View>
