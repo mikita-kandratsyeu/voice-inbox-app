@@ -5,15 +5,26 @@ import {
   SUPPORT_EMAIL,
 } from '@/config/constants';
 
-const MUTED = '#6b7280';
-const BORDER = '#e5e7eb';
-const FOOTER_LINK = '#1d4ed8';
-const FOOTER_LEGAL = '#6b7280';
+const MUTED = '#64748b';
+const BORDER_SOFT = '#e2e8f0';
+const FOOTER_LINK = '#2563eb';
+const FOOTER_LEGAL = '#64748b';
+const PAGE_BG = '#e8edf5';
+const TEXT_DARK = '#0f172a';
+const PRIMARY = '#1d4ed8';
+const KEY_PANEL_BG = '#f0f9ff';
+const KEY_PANEL_BORDER = '#7dd3fc';
 
 export function resolveProLicenseEmailLogoUrl(): string {
   const base = BASE_URL_OR_FALLBACK.replace(/\/$/, '');
 
   return `${base}/icon.svg`;
+}
+
+function resolveProLicenseEmailPublicAsset(path: string): string {
+  const base = BASE_URL_OR_FALLBACK.replace(/\/$/, '');
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return `${base}${p}`;
 }
 
 function resolveStoreBadgeUrls(): { appStore: string; googlePlay: string } {
@@ -37,8 +48,18 @@ export function formatProKeyEmailBlock(plainKey: string): string {
   return plainKey.trim();
 }
 
-function hr(): string {
-  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td style="height:1px;line-height:1px;font-size:1px;background-color:${BORDER};">&nbsp;</td></tr></table>`;
+function buildFooterDividerHtml(): string {
+  return `<table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+  <tr>
+    <td style="padding:0 28px 12px 28px;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+        <tr>
+          <td style="border-top:1px solid #bae6fd;font-size:1px;line-height:1px;">&nbsp;</td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>`;
 }
 
 function buildFooterHtml(params: {
@@ -59,7 +80,7 @@ function buildFooterHtml(params: {
   const storeCells: string[] = [];
   if (hasAppStore) {
     const padRight = hasGooglePlay ? '6px' : '0';
-    storeCells.push(`<td style="padding:2px ${padRight} 2px 0;vertical-align:middle;">
+    storeCells.push(`<td style="padding:0 ${padRight} 0 0;vertical-align:middle;">
       <a href="${escapeHtml(appStoreHref)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
         <img src="${escapeHtml(appBadgeSrc)}" width="150" height="50" alt="Download on the App Store" style="display:block;width:150px;height:50px;border:0;" />
       </a>
@@ -67,7 +88,7 @@ function buildFooterHtml(params: {
   }
   if (hasGooglePlay) {
     const padLeft = hasAppStore ? '6px' : '0';
-    storeCells.push(`<td style="padding:2px 0 2px ${padLeft};vertical-align:middle;">
+    storeCells.push(`<td style="padding:0 0 0 ${padLeft};vertical-align:middle;">
       <a href="${escapeHtml(googlePlayHref)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none;">
         <img src="${escapeHtml(gpBadgeSrc)}" width="150" height="50" alt="Get it on Google Play" style="display:block;width:150px;height:50px;border:0;" />
       </a>
@@ -88,8 +109,8 @@ function buildFooterHtml(params: {
   const storeBlock = hasStores
     ? `<table role="presentation" width="100%" cellspacing="0" cellpadding="0">
   <tr>
-    <td style="padding:0 0 12px 0;text-align:center;">
-      <p style="margin:0 0 6px 0;font-size:11px;line-height:1.35;color:${MUTED};font-weight:600;">Get the app</p>
+    <td style="padding:0 0 28px 0;text-align:center;">
+      <p style="margin:0 0 6px 0;font-size:13px;line-height:1.35;color:${TEXT_DARK};font-weight:700;">Get the app</p>
       ${storeRow}
     </td>
   </tr>
@@ -98,21 +119,21 @@ function buildFooterHtml(params: {
 
   const legalNav = `<table role="presentation" cellspacing="0" cellpadding="0" align="center" style="margin:0 auto;">
   <tr>
-    <td style="padding:4px 6px;"><a href="${supportHref}" style="${linkStyle}">Support</a></td>
-    <td style="padding:4px 0;font-size:13px;line-height:1;color:#d1d5db;vertical-align:middle;" aria-hidden="true">·</td>
-    <td style="padding:4px 6px;"><a href="${privacyHref}" style="${linkStyle}">Privacy Policy</a></td>
-    <td style="padding:4px 0;font-size:13px;line-height:1;color:#d1d5db;vertical-align:middle;" aria-hidden="true">·</td>
-    <td style="padding:4px 6px;"><a href="${termsHref}" style="${linkStyle}">Terms of Service</a></td>
+    <td style="padding:2px 6px;"><a href="${privacyHref}" style="${linkStyle}">Privacy Policy</a></td>
+    <td style="padding:2px 6px;"><a href="${termsHref}" style="${linkStyle}">Terms of Service</a></td>
   </tr>
 </table>`;
+
+  const divider = buildFooterDividerHtml();
 
   return `
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
   <tr>
-    <td style="padding:14px 28px 18px 28px;text-align:center;border-top:1px solid ${BORDER};background-color:#f9fafb;">
+    <td style="padding:12px 28px 18px 28px;text-align:center;background-color:#ffffff;border-radius:0 0 16px 16px;">
       ${storeBlock}
+      ${hasStores ? divider : ''}
       ${legalNav}
-      <p style="margin:10px 0 0 0;padding:0 8px;font-size:11px;line-height:1.5;color:${FOOTER_LEGAL};">© ${year} Voice Inbox AI. All rights reserved.</p>
+      <p style="margin:6px 0 0 0;padding:0 8px;font-size:11px;line-height:1.45;color:${FOOTER_LEGAL};">© ${year} Voice Inbox AI. All rights reserved.</p>
     </td>
   </tr>
 </table>`;
@@ -182,9 +203,13 @@ export function buildProLicenseKeyEmail(params: {
 
   const keyHtml = escapeHtml(keyDisplay);
   const logoUrl = escapeHtml(resolveProLicenseEmailLogoUrl());
+  const shieldIconUrl = escapeHtml(
+    resolveProLicenseEmailPublicAsset('/email/pro-license-shield.svg'),
+  );
+  const infoIconUrl = escapeHtml(resolveProLicenseEmailPublicAsset('/email/pro-license-info.svg'));
 
-  const introHtml = recipient
-    ? `Pro license (${durationPhraseHtml(dur)}) for <strong style="color:#111827;">${escapeHtml(recipient)}</strong>`
+  const headlineHtml = recipient
+    ? `Pro license (${durationPhraseHtml(dur)}) for <strong style="color:${TEXT_DARK};">${escapeHtml(recipient)}</strong>`
     : `Pro license (${durationPhraseHtml(dur)})`;
 
   const footerHtml = buildFooterHtml({
@@ -201,59 +226,87 @@ export function buildProLicenseKeyEmail(params: {
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>${escapeHtml(subject)}</title>
 </head>
-<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f3f4f6;padding:28px 14px;">
+<body style="margin:0;padding:0;background-color:${PAGE_BG};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:${PAGE_BG};padding:32px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:520px;background-color:#ffffff;border-radius:10px;border:1px solid ${BORDER};">
+        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;border-radius:16px;overflow:hidden;box-shadow:0 12px 48px rgba(15,23,42,0.08);background-color:#ffffff;">
           <tr>
-            <td style="padding:22px 28px 16px 28px;">
-              <table role="presentation" cellspacing="0" cellpadding="0" width="100%">
-                <tr>
-                  <td style="vertical-align:middle;width:44px;">
-                    <img
-                      src="${logoUrl}"
-                      width="36"
-                      height="36"
-                      alt=""
-                      style="display:block;width:36px;height:36px;border-radius:8px;"
-                    />
-                  </td>
-                  <td style="vertical-align:middle;padding-left:10px;">
-                    <span style="font-size:17px;font-weight:700;color:#111827;letter-spacing:-0.02em;">Voice Inbox AI</span>
-                    <span style="display:block;margin-top:2px;font-size:12px;color:${MUTED};">Pro license</span>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:0 28px;">${hr()}</td>
-          </tr>
-          <tr>
-            <td style="padding:18px 28px 6px 28px;">
-              <p style="margin:0;font-size:15px;line-height:1.45;color:#111827;">${introHtml}</p>
-              <p style="margin:6px 0 0 0;font-size:13px;color:${MUTED};">One-time activation key</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding:12px 28px 6px 28px;">
+            <td style="padding:0;background:linear-gradient(180deg,#dbeafe 0%,#eff6ff 38%,#f8fafc 72%,#ffffff 100%);border-radius:16px 16px 0 0;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tr>
-                  <td style="background-color:#ecfdf5;border:1px solid #a7f3d0;border-radius:8px;padding:16px 14px;text-align:center;">
-                    <span style="font-size:20px;font-weight:700;letter-spacing:0.08em;color:#111827;font-family:ui-monospace,Menlo,Consolas,'Courier New',monospace;">${keyHtml}</span>
+                  <td style="padding:24px 28px 8px 28px;">
+                    <table role="presentation" cellspacing="0" cellpadding="0">
+                      <tr>
+                        <td style="vertical-align:middle;width:48px;">
+                          <img
+                            src="${logoUrl}"
+                            width="40"
+                            height="40"
+                            alt=""
+                            style="display:block;width:40px;height:40px;border-radius:10px;box-shadow:0 2px 8px rgba(37,99,235,0.2);"
+                          />
+                        </td>
+                        <td style="vertical-align:middle;padding-left:12px;">
+                          <span style="font-size:18px;font-weight:800;color:${TEXT_DARK};letter-spacing:-0.03em;line-height:1.2;">Voice Inbox AI</span>
+                          <span style="display:block;margin-top:4px;font-size:13px;font-weight:600;color:${PRIMARY};letter-spacing:0.01em;">Pro license</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:14px 28px 22px 28px;">
+                    <p style="margin:0;font-size:16px;line-height:1.45;font-weight:700;color:${TEXT_DARK};">${headlineHtml}</p>
+                    <p style="margin:8px 0 0 0;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:${MUTED};">One-time activation key</p>
                   </td>
                 </tr>
               </table>
             </td>
           </tr>
           <tr>
-            <td style="padding:6px 28px 12px 28px;">
-              <p style="margin:0;font-size:13px;line-height:1.5;color:#4b5563;">
-                One device only. Do not share this code.
-              </p>
-              <p style="margin:8px 0 0 0;font-size:13px;line-height:1.5;color:#4b5563;">
-                <strong style="color:#111827;">Activate:</strong> Settings → About → Tap the app icon 8 times.
+            <td style="padding:12px 28px 8px 28px;background-color:#ffffff;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="background-color:${KEY_PANEL_BG};border:1px solid ${KEY_PANEL_BORDER};border-radius:12px;padding:20px 16px;text-align:center;">
+                    <span style="font-size:22px;font-weight:800;letter-spacing:0.1em;color:${TEXT_DARK};font-family:ui-monospace,Menlo,Consolas,'Courier New',monospace;">${keyHtml}</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:8px 28px 10px 28px;background-color:#ffffff;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid ${BORDER_SOFT};border-radius:16px;background-color:#ffffff;">
+                <tr>
+                  <td style="padding:16px 0 16px 14px;vertical-align:middle;width:54px;">
+                    <img src="${shieldIconUrl}" width="40" height="40" alt="" style="display:block;width:40px;height:40px;" />
+                  </td>
+                  <td style="padding:16px 14px 16px 4px;font-size:14px;line-height:1.55;color:#334155;vertical-align:middle;">
+                    One device only. Do not share this code.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0 28px 20px 28px;background-color:#ffffff;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border:1px solid ${BORDER_SOFT};border-radius:16px;background-color:#ffffff;">
+                <tr>
+                  <td style="padding:16px 0 16px 14px;vertical-align:middle;width:54px;">
+                    <img src="${infoIconUrl}" width="40" height="40" alt="" style="display:block;width:40px;height:40px;" />
+                  </td>
+                  <td style="padding:16px 14px 16px 4px;font-size:14px;line-height:1.55;color:#334155;vertical-align:middle;">
+                    <strong style="color:${TEXT_DARK};">Activate:</strong> Settings → About → Tap the app icon 8 times.
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:0;background-color:#ffffff;">
+              <p style="margin:0;padding:0 28px 18px 28px;font-size:12px;line-height:1.55;color:${MUTED};text-align:center;">
+                ${escapeHtml(supportLine)}
               </p>
             </td>
           </tr>
