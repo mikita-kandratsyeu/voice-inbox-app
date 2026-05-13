@@ -78,6 +78,11 @@ export function isTestflightInternalBuild(): boolean {
   return isTruthyBuildEnvFlag(TESTFLIGHT_INTERNAL_BUILD);
 }
 
+/** Dev or internal TestFlight — same gate as Settings → Debug entry. */
+export function isInternalDebugBuild(): boolean {
+  return __DEV__ || isTestflightInternalBuild();
+}
+
 export function getWebApiSecret(): string {
   return trimBuildEnv(WEB_API_SECRET);
 }

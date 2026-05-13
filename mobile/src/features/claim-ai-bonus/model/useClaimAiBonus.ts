@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 import { RewardedAdLoader } from 'yandex-mobile-ads';
 
@@ -8,6 +8,10 @@ import { getYandexRewardedAdUnitId } from '@/shared/config/runtimeConfig';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { claimAiBonus } from '@/shared/lib/ai-api';
 import { storage } from '@/shared/lib/async-storage';
+import {
+  getInternalDebugDisableAdsSnapshot,
+  subscribeInternalDebugDisableAds,
+} from '@/shared/lib/internal-debug/internalDebugFlags';
 import { isRecord, isString } from '@/shared/lib/type-guards';
 
 const DEMO_AD_UNIT_ID = 'demo-rewarded-yandex';
@@ -127,6 +131,11 @@ function logRewardedAdDebug(phase: 'loadAd' | 'showAd', err: unknown): void {
 export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
   const { isProActive } = useProEntitlement();
   const bootSplashVisible = useBootSplashVisible();
+  const debugDisableAds = useSyncExternalStore(
+    subscribeInternalDebugDisableAds,
+    getInternalDebugDisableAdsSnapshot,
+    getInternalDebugDisableAdsSnapshot,
+  );
   const [loading, setLoading] = useState(false);
   const [cooldownUntil, setCooldownUntil] = useState<number | null>(readPersistedCooldownUntil);
   const [error, setError] = useState<string | null>(null);
@@ -138,6 +147,11 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
   useEffect(() => {
     isProActiveRef.current = isProActive;
   }, [isProActive]);
+
+  const debugDisableAdsRef = useRef(debugDisableAds);
+  useEffect(() => {
+    debugDisableAdsRef.current = debugDisableAds;
+  }, [debugDisableAds]);
 
   const onSuccessRef = useRef(onSuccess);
   useEffect(() => {
@@ -191,7 +205,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
   );
 
   const preloadAd = useCallback(async (): Promise<RewardedAdInstance | null> => {
-    if (isProActiveRef.current) return null;
+    if (isProActiveRef.current || debugDisableAdsRef.current) return null;
     if (preloadedAdRef.current) return preloadedAdRef.current;
     if (preloadPromiseRef.current) return preloadPromiseRef.current;
 
@@ -202,7 +216,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
           adUnitId: getAdUnitId(),
         });
 
-        if (isProActiveRef.current) return null;
+        if (isProActiveRef.current || debugDisableAdsRef.current) return null;
 
         setupAdHandlers(ad);
         preloadedAdRef.current = ad;
@@ -222,18 +236,18 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
   }, [setupAdHandlers]);
 
   useEffect(() => {
-    if (isProActive) {
+    if (isProActive || debugDisableAds) {
       preloadedAdRef.current = null;
       preloadPromiseRef.current = null;
     }
-  }, [isProActive]);
+  }, [isProActive, debugDisableAds]);
 
   const claim = useCallback(async () => {
     if (loading) {
       return;
     }
 
-    if (isProActive) {
+    if (isProActive || debugDisableAds) {
       return;
     }
 
@@ -267,7 +281,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
       setError(normalizeAdError(err));
       setLoading(false);
     }
-  }, [loading, isProActive, cooldownUntil, setupAdHandlers]);
+  }, [loading, isProActive, debugDisableAds, cooldownUntil, setupAdHandlers]);
 
   const clearError = useCallback(() => setError(null), []);
 
@@ -283,7 +297,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
 
   useEffect(() => {
     if (bootSplashVisible) return;
-    if (isProActive) return;
+    if (isProActive || debugDisableAds) return;
     if (cooldownUntil != null) return;
     if (loading) return;
     if (preloadedAdRef.current) return;
@@ -295,7 +309,7 @@ export function useClaimAiBonus(onSuccess?: (usage: AiUsage) => void) {
       void preloadAd();
     }, 800);
     return () => clearTimeout(id);
-  }, [bootSplashVisible, cooldownUntil, error, isProActive, loading, preloadAd]);
+  }, [bootSplashVisible, cooldownUntil, debugDisableAds, error, isProActive, loading, preloadAd]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (next) => {

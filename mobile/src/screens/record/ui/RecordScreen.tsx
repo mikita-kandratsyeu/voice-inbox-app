@@ -12,6 +12,7 @@ import type { RecordingMark, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import {
+  computeAdsAllowedForInterstitial,
   getMaxRecordingMsForTier,
   shouldApplyAutoTranscribeOnSave,
 } from '@/features/app-storefront';
@@ -276,7 +277,7 @@ export const RecordScreen = () => {
   const handleSaveComplete = () => {
     setShowSaveModal(false);
     navigation.goBack();
-    const adsAllowed = !isProActive;
+    const adsAllowed = computeAdsAllowedForInterstitial(isProActive);
     runAfterNavigationTransition(() => {
       void tryShowYandexInterstitial({ adsAllowed, trigger: 'after_note_create' });
     });

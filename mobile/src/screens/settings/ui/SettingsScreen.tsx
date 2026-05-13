@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
-import { isTestflightInternalBuild } from '@/shared/config/buildEnv';
+import { isInternalDebugBuild } from '@/shared/config/buildEnv';
 import {
   IS_ANDROID,
   useIsTablet,
@@ -40,7 +40,7 @@ export const SettingsScreen = () => {
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   useScrollToTopOnTabPress(scrollRef);
 
-  const showDebugEntry = __DEV__ || isTestflightInternalBuild();
+  const showDebugEntry = isInternalDebugBuild();
 
   return (
     <View style={{ flex: 1, backgroundColor: settings.color.background.secondary }}>

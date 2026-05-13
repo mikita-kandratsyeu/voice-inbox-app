@@ -20,4 +20,4 @@ export {
   getSubscriptionsPubliclyAvailable,
   isAutomationUiLockedForPublicStore,
 } from './model/monetizationPublicConfig';
-export { useAdsAllowed } from './model/useAdsAllowed';
+export { computeAdsAllowedForInterstitial, useAdsAllowed } from './model/useAdsAllowed';

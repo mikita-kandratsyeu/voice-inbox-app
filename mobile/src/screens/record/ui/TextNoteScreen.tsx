@@ -12,7 +12,10 @@ import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
-import { shouldApplyAutoAiAfterTranscription } from '@/features/app-storefront';
+import {
+  computeAdsAllowedForInterstitial,
+  shouldApplyAutoAiAfterTranscription,
+} from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import {
@@ -122,7 +125,7 @@ export const TextNoteScreen = () => {
     }
 
     navigation.goBack();
-    const adsAllowed = !isProActive;
+    const adsAllowed = computeAdsAllowedForInterstitial(isProActive);
     runAfterNavigationTransition(() => {
       void tryShowYandexInterstitial({ adsAllowed, trigger: 'after_note_create' });
     });

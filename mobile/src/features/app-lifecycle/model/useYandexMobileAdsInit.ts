@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 import { PERMISSIONS, request } from 'react-native-permissions';
 import { MobileAds } from 'yandex-mobile-ads';
@@ -6,6 +6,10 @@ import { MobileAds } from 'yandex-mobile-ads';
 import { useOnboardingStore } from '@/features/onboarding/model/store';
 import { useProEntitlement } from '@/features/pro-license';
 import { IS_IOS } from '@/shared/lib';
+import {
+  getInternalDebugDisableAdsSnapshot,
+  subscribeInternalDebugDisableAds,
+} from '@/shared/lib/internal-debug/internalDebugFlags';
 
 let initialized = false;
 let initializePromise: Promise<void> | null = null;
@@ -51,9 +55,14 @@ export function useYandexMobileAdsInit(): void {
   const { isProActive } = useProEntitlement();
   const hasSeenOnboarding = useOnboardingStore((s) => s.hasSeenOnboarding);
   const forceShowOnboarding = useOnboardingStore((s) => s.forceShow);
+  const debugDisableAds = useSyncExternalStore(
+    subscribeInternalDebugDisableAds,
+    getInternalDebugDisableAdsSnapshot,
+    getInternalDebugDisableAdsSnapshot,
+  );
 
   useEffect(() => {
-    if (isProActive || !hasSeenOnboarding || forceShowOnboarding) {
+    if (isProActive || debugDisableAds || !hasSeenOnboarding || forceShowOnboarding) {
       return;
     }
 
@@ -85,5 +94,5 @@ export function useYandexMobileAdsInit(): void {
       clearTimeout(deferredInitTimer);
       appStateSub.remove();
     };
-  }, [isProActive, hasSeenOnboarding, forceShowOnboarding]);
+  }, [isProActive, debugDisableAds, hasSeenOnboarding, forceShowOnboarding]);
 }

@@ -13,6 +13,7 @@ import { SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
 import { SettingsDebugSection } from '../../settings/ui/sections/SettingsDebugSection';
 import { SettingsInternalTechInfo } from '../../settings/ui/SettingsInternalTechInfo';
 import { useDebugScreen } from '../lib/useDebugScreen';
+import { DebugInternalOverridesSection } from './DebugInternalOverridesSection';
 
 export const DebugScreen = () => {
   const { t } = useTranslation();
@@ -33,6 +34,7 @@ export const DebugScreen = () => {
           paddingBottom: insets.bottom + 32,
         }}
       >
+        <DebugInternalOverridesSection color={color} />
         <SettingsDebugSection
           color={color}
           onHardReset={handleHardReset}

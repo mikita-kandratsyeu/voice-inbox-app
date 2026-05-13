@@ -756,7 +756,12 @@
     "debugScreen": {
       "title": "Debug",
       "entryRow": "Developer tools & diagnostics",
-      "localDevNotice": "Full internal diagnostics (API host override, device ID, network stats) are available on TestFlight internal builds. For local development use Metro logs and your usual debugging tools."
+      "localDevNotice": "Full internal diagnostics (API host override, device ID, network stats) are available on TestFlight internal builds. For local development use Metro logs and your usual debugging tools.",
+      "internalOverridesSection": "Internal overrides",
+      "disableAds": "Disable ads",
+      "disableAdsSubtitle": "Banners, interstitials, rewarded preload (dev / internal TestFlight only).",
+      "forcePro": "Treat as Pro",
+      "forceProSubtitle": "Local Pro entitlement for limits and paywalls (dev / internal TestFlight only)."
     }
   },
   "appearance": {

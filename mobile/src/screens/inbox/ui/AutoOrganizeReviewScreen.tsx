@@ -15,6 +15,7 @@ import type { InboxStackParamList } from '@/app/navigation/types';
 import type { Folder } from '@/entities/folder';
 import { FolderFormModal, useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
+import { computeAdsAllowedForInterstitial } from '@/features/app-storefront';
 import {
   type AssignmentDraft,
   AutoOrganizeDestinationPickerContent,
@@ -81,7 +82,7 @@ export const AutoOrganizeReviewScreen = () => {
     goBackOrInboxHome();
     runAfterNavigationTransition(() => {
       void tryShowYandexInterstitial({
-        adsAllowed: !isProActive,
+        adsAllowed: computeAdsAllowedForInterstitial(isProActive),
         trigger: 'after_auto_organize',
       });
     });
