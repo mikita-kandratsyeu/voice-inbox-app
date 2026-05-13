@@ -9,6 +9,7 @@ import {
 } from '@/lib/api';
 import { HEADER_DEVICE_ID } from '@/config/constants';
 import { isSmtpConfigured, sendTransactionalMail } from '@/lib/mailer';
+import { renderShareNoteMarkdownEmailInnerHtml } from '@/lib/shareNoteMarkdownEmailHtml';
 import { NextResponse } from 'next/server';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -205,7 +206,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     normalizeBoundedString(body.subject, SUBJECT_MAX) ??
     `Voice Inbox AI note: ${title}`.slice(0, SUBJECT_MAX);
   const escapedTitle = escapeHtml(title);
-  const escapedMarkdown = escapeHtml(markdown);
+  const noteBodyHtml = renderShareNoteMarkdownEmailInnerHtml(markdown);
 
   try {
     await sendTransactionalMail({
@@ -217,7 +218,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   <body style="margin:0;padding:24px;background:#f6f7fb;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
     <main style="max-width:720px;margin:0 auto;background:#ffffff;border-radius:16px;padding:24px;border:1px solid #e5e7eb;">
       <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;">${escapedTitle}</h1>
-      <pre style="white-space:pre-wrap;word-break:break-word;font:14px/1.6 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono',monospace;margin:0;">${escapedMarkdown}</pre>
+      ${noteBodyHtml}
     </main>
   </body>
 </html>`,
