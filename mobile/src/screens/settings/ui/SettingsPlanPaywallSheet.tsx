@@ -44,9 +44,14 @@ type FeatureRowProps = {
   mutedCheck?: boolean;
 };
 
+/** Wrapped lines use this height; ~`fontSize` + list `gap` so multi-line matches row spacing. */
+const PLAN_PAYWALL_FEATURE_LINE_HEIGHT = 21;
+const PLAN_PAYWALL_FEATURE_LIST_GAP = 8;
+
 function FeatureRow({ text, emphasized, mutedCheck }: FeatureRowProps) {
   const c = useColors();
-  const lineHeight = 19;
+  const lineHeight = PLAN_PAYWALL_FEATURE_LINE_HEIGHT;
+  const iconOffset = (lineHeight - 20) / 2;
 
   return (
     <View className="flex-row items-start">
@@ -54,7 +59,7 @@ function FeatureRow({ text, emphasized, mutedCheck }: FeatureRowProps) {
         className="h-5 w-5 shrink-0 items-center justify-center rounded-full"
         style={{
           backgroundColor: mutedCheck ? c.background.tertiary : '#7E5BFF22',
-          marginTop: IS_IOS ? 0.5 : 0,
+          marginTop: iconOffset,
         }}
       >
         <Check size={12} color={mutedCheck ? c.text.muted : c.accent.primary} strokeWidth={2.4} />
@@ -455,8 +460,8 @@ export function SettingsPlanPaywallSheet({
             </Pressable>
             {freeLimitsExpanded ? (
               <View
-                className="gap-y-2 border-t px-4 pb-3 pt-2.5"
-                style={{ borderTopColor: c.border.default }}
+                className="border-t px-4 pb-3 pt-2.5"
+                style={{ borderTopColor: c.border.default, gap: PLAN_PAYWALL_FEATURE_LIST_GAP }}
               >
                 <FeatureRow mutedCheck text={t('settings.planPaywall.freeLimits.manualAi')} />
                 <FeatureRow
@@ -479,7 +484,7 @@ export function SettingsPlanPaywallSheet({
               backgroundColor: c.background.secondary,
             }}
           >
-            <View className="gap-y-2">
+            <View style={{ gap: PLAN_PAYWALL_FEATURE_LIST_GAP }}>
               <View
                 className="flex-row items-start gap-2"
                 accessibilityRole="header"
@@ -494,7 +499,7 @@ export function SettingsPlanPaywallSheet({
                   className="shrink-0 rounded-full px-2.5 py-1"
                   style={{
                     backgroundColor: `${c.accent.primary}22`,
-                    marginTop: IS_IOS ? 1 : 2,
+                    marginTop: (PLAN_PAYWALL_FEATURE_LINE_HEIGHT - 20) / 2,
                   }}
                 >
                   <Text className="text-[11px] font-semibold" style={{ color: c.accent.primary }}>
@@ -584,7 +589,7 @@ export function SettingsPlanPaywallSheet({
             activeOpacity={0.85}
           />
           {isIapPublic && getWebsiteUrl().trim().length > 0 && (
-            <View className="mt-1 items-center gap-y-1 gap-x-3 px-2 flex-row justify-center">
+            <View className="mt-2.5 items-center gap-y-1 gap-x-3 px-2 flex-row justify-center">
               <Pressable
                 accessibilityRole="link"
                 className="py-1"

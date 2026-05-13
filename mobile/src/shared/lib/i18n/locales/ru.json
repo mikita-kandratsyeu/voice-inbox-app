@@ -707,8 +707,8 @@
         "recordingUpToOneHour": "Запись до 1 часа",
         "accentCustomization": "Цвет акцента — кнопки и индикаторы",
         "folderColors": "Персональные цвета папок",
-        "meetingModeAndPinnedMoments": "Режим встречи и отметки моментов при записи",
-        "extendedShareAndBatchExport": "Расширенный экспорт заметок — сводки, почта и аудио",
+        "meetingModeAndPinnedMoments": "Режим встречи и отметки моментов",
+        "extendedShareAndBatchExport": "Расширенный экспорт заметок — сводки, email и аудио",
         "noAds": "Без рекламы"
       }
     },
