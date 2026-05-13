@@ -1,7 +1,7 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ArrowRight, Check, Sparkles } from 'lucide-react-native';
+import { ArrowRight, Check, Rocket } from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -143,7 +143,7 @@ export const InAppEventDetailScreen = () => {
                 style={{ backgroundColor: color.background.tertiary }}
                 accessibilityElementsHidden
               >
-                <Sparkles size={28} color={color.accent.primary} strokeWidth={1.75} />
+                <Rocket size={28} color={color.accent.primary} strokeWidth={1.75} />
               </View>
               <View className="min-w-0 flex-1">
                 <Text
