@@ -26,6 +26,7 @@ export const createMessage = async (
   deviceId: string,
   clientUserAgent?: string | null,
   messageTtlSeconds: number = MESSAGE_TTL_SECONDS,
+  pseudoDiarizationEligible: boolean = false,
 ): Promise<CreateMessageResult> => {
   const ttl = messageTtlSeconds;
   const created = await saveMessageIfNotExists(id, { id, status: 'processing', model }, ttl);
@@ -54,7 +55,13 @@ export const createMessage = async (
 
   after(async () => {
     try {
-      const result = await processTranscript(transcript, model, systemPrompt, clientUserAgent);
+      const result = await processTranscript(
+        transcript,
+        model,
+        systemPrompt,
+        clientUserAgent,
+        pseudoDiarizationEligible,
+      );
       await saveMessage(
         id,
         {
@@ -71,6 +78,9 @@ export const createMessage = async (
               keyPhrases: result.keyPhrases,
             }),
           ...(result.nextSteps && result.nextSteps.length > 0 && { nextSteps: result.nextSteps }),
+          ...(result.meetingDialogueMarkdown?.trim() && {
+            meetingDialogueMarkdown: result.meetingDialogueMarkdown.trim(),
+          }),
         },
         ttl,
       );

@@ -1,7 +1,7 @@
 import type { RecordingStatus } from '@/entities/record';
 import { i18n } from '@/shared/lib';
 
-export type Tab = 'transcript' | 'summary' | 'tasks';
+export type Tab = 'transcript' | 'summary' | 'dialogue' | 'tasks';
 
 export const getTabLabel = (tab: Tab, options?: { hasAudio?: boolean }): string => {
   if (tab === 'transcript' && options?.hasAudio === false) {

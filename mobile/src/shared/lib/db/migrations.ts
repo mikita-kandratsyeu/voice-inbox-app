@@ -67,6 +67,8 @@ CREATE INDEX \`idx_records_purgeAt\` ON \`records\` (\`purgeAt\`);`;
 
 const migration0010 = `ALTER TABLE \`records\` ADD \`recordingMarks\` text DEFAULT '[]';`;
 
+const migration0011 = `ALTER TABLE \`records\` ADD \`meetingDialogue\` text;`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -88,5 +90,6 @@ export const migrationsConfig = {
     m0008: migration0008,
     m0009: migration0009,
     m0010: migration0010,
+    m0011: migration0011,
   } as Record<string, string>,
 };

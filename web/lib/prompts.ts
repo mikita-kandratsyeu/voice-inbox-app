@@ -329,8 +329,17 @@ const PROCESSING_PRESET_INSTRUCTIONS: Record<
   ].join('\n'),
 };
 
-const OUTPUT_SCHEMA = `
-type Output = {
+const TASK_TYPE_SNIPPET = `
+type Task = {
+  title: string;
+  priority: "high" | "medium" | "low";
+  deadline: string | null;
+};
+`.trim();
+
+function buildOutputSchemaSection(pseudoDiarizationEligible: boolean): string {
+  const outputType = pseudoDiarizationEligible
+    ? `type Output = {
   summary: string;
   suggestedTitle: string;
   tasks: Task[];
@@ -338,13 +347,28 @@ type Output = {
   classification: "personal" | "work" | "meeting" | "idea" | "other";
   keyPhrases: string[];
   nextSteps: string[];
-};
+  meetingDialogueMarkdown: string;
+};`
+    : `type Output = {
+  summary: string;
+  suggestedTitle: string;
+  tasks: Task[];
+  tags: string[];
+  classification: "personal" | "work" | "meeting" | "idea" | "other";
+  keyPhrases: string[];
+  nextSteps: string[];
+};`;
 
-type Task = {
-  title: string;
-  priority: "high" | "medium" | "low";
-  deadline: string | null;
-};
+  return `${outputType.trim()}\n\n${TASK_TYPE_SNIPPET.trim()}`;
+}
+
+const PSEUDO_DIARIZATION_SECTION = `## Pseudo-diarization (meetingDialogueMarkdown)
+- meetingDialogueMarkdown is plain text (line breaks allowed). Do not use markdown tables or code fences.
+- Split the transcript into estimated speaker turns for easier reading only. This is NOT verified speaker diarization from audio.
+- Use neutral labels such as "Speaker 1:", "Speaker 2:", or "Участник 1:" unless a name or role is clearly stated in the transcript.
+- Do not invent people, roles, or lines that are not grounded in the transcript.
+- Do not repeat task titles or copy long passages verbatim from tasks[] or nextSteps[].
+- If the transcript is too short, single-speaker, or unclear, set meetingDialogueMarkdown to an empty string.
 `.trim();
 
 function getTodayIso(referenceDate?: string): string {
@@ -385,7 +409,11 @@ ${userHintRaw}
   return { existingTasksBlock, userHintBlock };
 }
 
-export function buildAiProcessingPrompt(options?: AiProcessingOptions | null): string {
+export function buildAiProcessingPrompt(
+  options?: AiProcessingOptions | null,
+  meta?: { pseudoDiarizationEligible?: boolean },
+): string {
+  const pseudoDiarizationEligible = Boolean(meta?.pseudoDiarizationEligible);
   const summaryStyle = options?.summaryStyle ?? 'standard';
   const taskStrictness = options?.taskStrictness ?? 'balanced';
   const outputLanguage = options?.outputLanguage ?? 'same';
@@ -401,6 +429,21 @@ export function buildAiProcessingPrompt(options?: AiProcessingOptions | null): s
 
   const { existingTasksBlock, userHintBlock } = buildAiProcessingPromptAppendBlocks(options);
 
+  const outputSchemaBlock = buildOutputSchemaSection(pseudoDiarizationEligible);
+
+  const pseudoBlock = pseudoDiarizationEligible ? `\n${PSEUDO_DIARIZATION_SECTION}\n` : '';
+
+  const meetingDialogueFieldRules = pseudoDiarizationEligible
+    ? `
+**meetingDialogueMarkdown:**
+- Plain text only; newline-separated lines; optional blank line between turns.
+- Same language as summary unless the transcript clearly mixes languages (then follow the transcript).
+- Prefer compact lines; avoid repeating the full summary.
+- Use "" (empty string) when not applicable.
+
+`
+    : '';
+
   return `You are a structured data extractor for voice note transcripts.
 Return exactly one valid JSON object. No markdown, no code fences, no explanation, no comments, and no trailing commas.
 
@@ -411,7 +454,11 @@ Return exactly one valid JSON object. No markdown, no code fences, no explanatio
 4. When uncertain, prefer conservative extraction over guessing.
 
 ## LANGUAGE RULE (highest priority)
-${languageInstruction}
+${languageInstruction}${
+    pseudoDiarizationEligible
+      ? '\n\nAlso apply the language rule to **meetingDialogueMarkdown** (same language as summary unless the transcript clearly mixes languages).'
+      : ''
+  }
 
 ## REFERENCE DATE
 Today is ${today}.
@@ -420,15 +467,18 @@ Use this date only to resolve explicit natural-language time references such as 
 ${existingTasksBlock}${userHintBlock}## Output Schema
 
 \`\`\`typescript
-${OUTPUT_SCHEMA}
+${outputSchemaBlock}
 \`\`\`
 
-${presetInstruction ? `## Processing Preset\n${presetInstruction}\n` : ''}
-
+${presetInstruction ? `## Processing Preset\n${presetInstruction}\n` : ''}${pseudoBlock}
 ## Global Rules
 - Output must pass JSON.parse() without preprocessing.
 - Never add fields outside the schema.
-- Every string value must be plain text, not markdown.
+- Every string value must be plain text, not markdown${
+    pseudoDiarizationEligible
+      ? ', except meetingDialogueMarkdown may use simple line breaks and colon-prefixed speaker labels as described above'
+      : ''
+  }.
 - Keep wording concise and natural.
 - Do not invent names, organizations, dates, or commitments that are not supported by the transcript.
 
@@ -494,7 +544,7 @@ Choose the dominant category if multiple are present.
 - Bad: "Schedule team sync"
 - If there are no tasks but the note has a clear topic, suggest 1 useful clarifying or organizing step.
 - If the transcript is too short, unclear, or empty, return [].
-
+${meetingDialogueFieldRules}
 ## Handling weak or messy transcripts
 If the transcript is too short, noisy, unclear, contradictory, or effectively empty:
 - be conservative
@@ -505,12 +555,16 @@ If the transcript is too short, noisy, unclear, contradictory, or effectively em
   - keyPhrases: []
   - nextSteps: []
   - classification: "other"
-  - suggestedTitle: use a localized equivalent of "Voice note"
+  - suggestedTitle: use a localized equivalent of "Voice note"${pseudoDiarizationEligible ? '\n  - meetingDialogueMarkdown: ""' : ''}
 
 ## Quality checks before answering
 - Is the JSON valid?
 - Are there any extra keys? If yes, remove them.
-- Are all text fields in the required language? If not, rewrite them.
+- Are all text fields in the required language? If not, rewrite them.${
+    pseudoDiarizationEligible
+      ? '\n- Is meetingDialogueMarkdown grounded in the transcript and using neutral speaker labels when names are unknown? If not, fix or use "".'
+      : ''
+  }
 - Did you avoid guessing dates and facts? If not, correct them.
 - Are nextSteps high-level and not duplicates of tasks or of any existing saved task title? If not, improve them.
 

@@ -38,6 +38,12 @@ const LOCAL_MEETING_PRESET_HINT = [
   'tasks[] should contain concrete owner/action items only when supported; nextSteps should contain high-level follow-ups that do not duplicate tasks.',
 ].join(' ');
 
+const LOCAL_MEETING_PSEUDO_HINT = [
+  'meetingDialogueMarkdown: plain text with line breaks; neutral speaker labels (Speaker 1:, Участник 2:) unless names/roles are stated in the transcript.',
+  'This is NOT verified audio diarization. Do not invent turns. Use empty string if single-speaker, too short, or unclear.',
+  'Apply the same language rule as summary to meetingDialogueMarkdown unless the transcript clearly mixes languages.',
+].join(' ');
+
 const LOCAL_SUMMARY_SYSTEM_BASE = [
   'From the transcript, output one JSON object only: raw JSON, no markdown, no code fences, no commentary.',
   'UTF-8, double-quoted keys; arrays [] when empty. Plain text in strings. Follow the user message for language, summary length, and task strictness.',
@@ -50,8 +56,15 @@ const LOCAL_SUMMARY_SYSTEM_BASE = [
   'Weak/empty transcript: empty arrays where listed, classification other, minimal generic suggestedTitle in output language.',
 ].join(' ');
 
-export function buildLocalSummarySystemPrompt(referenceDate: string): string {
-  return `${LOCAL_SUMMARY_SYSTEM_BASE} Reference date (for deadlines only): ${referenceDate}.`;
+export function buildLocalSummarySystemPrompt(
+  referenceDate: string,
+  opts?: { includePseudoDiarization?: boolean },
+): string {
+  const pseudo = Boolean(opts?.includePseudoDiarization);
+  const extra = pseudo
+    ? ` meetingDialogueMarkdown must be a string (same JSON object). ${LOCAL_MEETING_PSEUDO_HINT}`
+    : '';
+  return `${LOCAL_SUMMARY_SYSTEM_BASE}${extra} Reference date (for deadlines only): ${referenceDate}.`;
 }
 
 export function buildLocalSummaryUserContent(
@@ -63,6 +76,9 @@ export function buildLocalSummaryUserContent(
 ): string {
   const head = [
     LOCAL_OUTPUT_LANGUAGE_HINT[ctx.aiOutputLanguage],
+    processingPreset === 'meeting'
+      ? 'Also include meetingDialogueMarkdown in the JSON (see system rules).'
+      : '',
     LOCAL_SUMMARY_STYLE_HINT[ctx.summaryStyle],
     LOCAL_TASK_STRICTNESS_HINT[ctx.taskStrictness],
     processingPreset === 'meeting' ? LOCAL_MEETING_PRESET_HINT : '',

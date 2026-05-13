@@ -32,6 +32,7 @@ export const recordsTable = sqliteTable(
     classification: text('classification'),
     keyPhrases: text('keyPhrases').default('[]'),
     nextSteps: text('nextSteps').default('[]'),
+    meetingDialogue: text('meetingDialogue'),
     translatedTranscript: text('translatedTranscript'),
     translationLanguage: text('translationLanguage'),
     audioPath: text('audioPath'),

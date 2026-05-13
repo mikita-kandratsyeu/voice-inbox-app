@@ -69,6 +69,7 @@ export type VoiceRecord = {
   classification?: RecordClassification;
   keyPhrases?: string[];
   nextSteps?: string[];
+  meetingDialogue?: string;
   translatedTranscript?: string;
   translationLanguage?: string;
   translationStatus?: RecordingStatus;

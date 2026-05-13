@@ -127,6 +127,7 @@ type RecordStore = {
       classification?: RecordClassification | null;
       keyPhrases?: string[];
       nextSteps?: string[];
+      meetingDialogue?: string | null;
     },
   ) => Promise<void>;
   promoteNextStepToTask: (id: string, tasks: TaskItem[], nextSteps: string[]) => Promise<void>;
@@ -424,6 +425,11 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
         patch.classification = data.classification ?? undefined;
       if (data.keyPhrases !== undefined) patch.keyPhrases = data.keyPhrases;
       if (data.nextSteps !== undefined) patch.nextSteps = data.nextSteps;
+      if (data.meetingDialogue !== undefined) {
+        patch.meetingDialogue = data.meetingDialogue?.trim()
+          ? data.meetingDialogue.trim()
+          : undefined;
+      }
       return { records: updateRecord(s.records, id, patch) };
     });
   },

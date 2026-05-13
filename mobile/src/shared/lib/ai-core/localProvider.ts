@@ -129,7 +129,10 @@ export async function runLocalSummaryTasks(
     );
 
     const referenceDate = getLocalReferenceDateIsoLocal();
-    const systemPrompt = buildLocalSummarySystemPrompt(referenceDate);
+    const includePseudo = request.processingPreset === 'meeting';
+    const systemPrompt = buildLocalSummarySystemPrompt(referenceDate, {
+      includePseudoDiarization: includePseudo,
+    });
     const userContent = buildLocalSummaryUserContent(
       candidateTranscript,
       ctx,
@@ -166,14 +169,16 @@ export async function runLocalSummaryTasks(
       );
     };
 
+    const parseOpts = { includePseudoDiarization: includePseudo };
+
     let raw = await runOnce(userContent);
-    let outcome = tryBuildSummaryFromModelRaw(raw);
+    let outcome = tryBuildSummaryFromModelRaw(raw, parseOpts);
 
     if (!outcome.ok) {
       // On retry append the strictness reminder to the user message — SLMs respond
       // better to formatting constraints in the user turn than repeated system text.
       raw = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
-      outcome = tryBuildSummaryFromModelRaw(raw);
+      outcome = tryBuildSummaryFromModelRaw(raw, parseOpts);
     }
 
     if (!outcome.ok) {

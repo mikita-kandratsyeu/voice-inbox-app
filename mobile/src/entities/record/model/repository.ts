@@ -90,6 +90,7 @@ type RecordListQueryRow = {
   classification: string | null;
   keyPhrases: string | null;
   nextSteps: string | null;
+  meetingDialogue: string | null;
   translatedTranscript: string | null;
   translationLanguage: string | null;
   audioPath: string | null;
@@ -126,6 +127,7 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     classification: (row.classification as VoiceRecord['classification']) ?? undefined,
     keyPhrases: JSON.parse(row.keyPhrases ?? '[]') as string[],
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
+    meetingDialogue: row.meetingDialogue?.trim() ? row.meetingDialogue.trim() : undefined,
     translatedTranscript: row.translatedTranscript ?? undefined,
     translationLanguage: row.translationLanguage ?? undefined,
     translationStatus: row.translatedTranscript
@@ -163,6 +165,7 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
     classification: (row.classification as VoiceRecord['classification']) ?? undefined,
     keyPhrases: JSON.parse(row.keyPhrases ?? '[]') as string[],
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
+    meetingDialogue: row.meetingDialogue?.trim() ? row.meetingDialogue.trim() : undefined,
     translatedTranscript: row.translatedTranscript ?? undefined,
     translationLanguage: row.translationLanguage ?? undefined,
     translationStatus: row.translatedTranscript
@@ -196,6 +199,7 @@ const recordListColumns = {
   classification: recordsTable.classification,
   keyPhrases: recordsTable.keyPhrases,
   nextSteps: recordsTable.nextSteps,
+  meetingDialogue: recordsTable.meetingDialogue,
   translatedTranscript: recordsTable.translatedTranscript,
   translationLanguage: recordsTable.translationLanguage,
   audioPath: recordsTable.audioPath,
@@ -321,6 +325,7 @@ export const recordRepository = {
         classification: record.classification ?? null,
         keyPhrases: JSON.stringify(record.keyPhrases ?? []),
         nextSteps: JSON.stringify(record.nextSteps ?? []),
+        meetingDialogue: record.meetingDialogue?.trim() ? record.meetingDialogue.trim() : null,
         translatedTranscript: record.translatedTranscript ?? null,
         translationLanguage: record.translationLanguage ?? null,
         audioPath: audioPathToDbValue(record.audioPath),
@@ -466,6 +471,7 @@ export const recordRepository = {
       classification?: RecordClassification | null;
       keyPhrases?: string[];
       nextSteps?: string[];
+      meetingDialogue?: string | null;
     },
   ): Promise<void> => {
     logDb('updateAiExtras', { id });
@@ -479,6 +485,9 @@ export const recordRepository = {
     }
     if (data.nextSteps !== undefined) {
       updates.nextSteps = JSON.stringify(data.nextSteps);
+    }
+    if (data.meetingDialogue !== undefined) {
+      updates.meetingDialogue = data.meetingDialogue?.trim() ? data.meetingDialogue.trim() : null;
     }
     if (Object.keys(updates).length > 0) {
       await db.update(recordsTable).set(updates).where(eq(recordsTable.id, id));

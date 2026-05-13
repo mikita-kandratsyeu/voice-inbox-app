@@ -108,7 +108,10 @@ function clampSuggestedTitle(raw: string | undefined): string | undefined {
   return t.slice(0, FIELD_LIMITS.suggestedTitleMaxChars).trimEnd();
 }
 
-export function sanitizeSummaryPayload(parsed: Record<string, unknown>): AiProcessingResult {
+export function sanitizeSummaryPayload(
+  parsed: Record<string, unknown>,
+  opts?: { includePseudoDiarization?: boolean },
+): AiProcessingResult {
   const summaryRaw = isString(parsed.summary) ? parsed.summary.trim() : '';
   if (!summaryRaw) {
     throw new LocalAiError('empty_summary', 'Local summary is empty');
@@ -120,7 +123,7 @@ export function sanitizeSummaryPayload(parsed: Record<string, unknown>): AiProce
 
   const classification = normalizeClassification(parsed.classification);
 
-  return {
+  const result: AiProcessingResult = {
     summary: summaryRaw,
     ...(suggestedTitle ? { suggestedTitle } : {}),
     tasks: sanitizeTasks(parsed.tasks),
@@ -139,4 +142,19 @@ export function sanitizeSummaryPayload(parsed: Record<string, unknown>): AiProce
       dedupeCaseInsensitive: true,
     }),
   };
+
+  if (opts?.includePseudoDiarization) {
+    const rawMd = parsed.meetingDialogueMarkdown;
+    if (isString(rawMd)) {
+      const t = rawMd.trim();
+      if (t) {
+        result.meetingDialogueMarkdown =
+          t.length > FIELD_LIMITS.meetingDialogueMaxChars
+            ? t.slice(0, FIELD_LIMITS.meetingDialogueMaxChars)
+            : t;
+      }
+    }
+  }
+
+  return result;
 }

@@ -14,6 +14,8 @@ export type AiResult = {
   classification?: RecordClassification;
   keyPhrases?: string[];
   nextSteps?: string[];
+  /** Pro + meeting pseudo-diarization; plain text, optional. */
+  meetingDialogueMarkdown?: string;
 };
 
 export type Message =
@@ -29,6 +31,7 @@ export type Message =
       classification?: RecordClassification;
       keyPhrases?: string[];
       nextSteps?: string[];
+      meetingDialogueMarkdown?: string;
     }
   | { id: string; status: 'error'; error: string; model?: string };
 

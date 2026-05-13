@@ -22,6 +22,7 @@ import {
 } from '@/lib/ai-model-router';
 import { setAppForeground } from '@/lib/push-tokens';
 import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
+import { isProDevice } from '@/lib/pro-entitlement';
 import { createMessage } from '@/services/message.service';
 import { NextResponse } from 'next/server';
 
@@ -129,8 +130,13 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   }
   resolvedModel = modelParsed.model;
 
+  const pseudoDiarizationEligible =
+    options?.processingPreset === 'meeting' && (await isProDevice(deviceIdTrimmed));
+
   const resolvedSystemPrompt =
-    options != null ? buildAiProcessingPrompt(options) : (systemPrompt ?? '');
+    options != null
+      ? buildAiProcessingPrompt(options, { pseudoDiarizationEligible })
+      : (systemPrompt ?? '');
 
   if (!resolvedSystemPrompt.trim()) {
     return apiError('systemPrompt or options is required', HttpStatus.BAD_REQUEST, {
@@ -149,6 +155,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     deviceIdTrimmed,
     req.headers.get('user-agent'),
     messageTtlSeconds,
+    pseudoDiarizationEligible,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {

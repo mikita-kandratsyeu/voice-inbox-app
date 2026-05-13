@@ -37,6 +37,7 @@ export const FIELD_LIMITS = {
   keyPhrases: 8,
   nextSteps: 3,
   suggestedTitleMaxChars: 100,
+  meetingDialogueMaxChars: 12_000,
 } as const;
 
 export const TASK_EXTRACTION_HINT_MAX_CHARS = 500;

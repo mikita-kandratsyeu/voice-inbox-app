@@ -8,11 +8,14 @@ export type SummaryBuildOutcome =
   | { ok: true; result: AiProcessingResult }
   | { ok: false; reason: 'parse_failed' | 'empty_summary' };
 
-export function tryBuildSummaryFromModelRaw(raw: string): SummaryBuildOutcome {
+export function tryBuildSummaryFromModelRaw(
+  raw: string,
+  opts?: { includePseudoDiarization?: boolean },
+): SummaryBuildOutcome {
   try {
     const record = parseJsonObjectWithFallbacks(raw);
     try {
-      return { ok: true, result: sanitizeSummaryPayload(record) };
+      return { ok: true, result: sanitizeSummaryPayload(record, opts) };
     } catch (e) {
       if (e instanceof LocalAiError && e.code === 'empty_summary') {
         return { ok: false, reason: 'empty_summary' };

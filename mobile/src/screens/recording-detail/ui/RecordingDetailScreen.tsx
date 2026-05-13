@@ -34,6 +34,7 @@ import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets
 
 import type { Tab } from '../config';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
+import { MeetingDialogueTab } from './MeetingDialogueTab';
 import { RecordingDetailCard } from './RecordingDetailCard';
 import { RecordingDetailHeader } from './RecordingDetailHeader';
 import { RecordingDetailTabBar } from './RecordingDetailTabBar';
@@ -368,6 +369,20 @@ export const RecordingDetailScreen = () => {
     [isProActive, liveRecord.classification],
   );
 
+  const detailTabs = useMemo<Tab[]>(() => {
+    const row: Tab[] = ['transcript', 'summary'];
+    if (meetingPresetUiActive) row.push('dialogue');
+    row.push('tasks');
+    return row;
+  }, [meetingPresetUiActive]);
+
+  useEffect(() => {
+    if (!meetingPresetUiActive && activeTab === 'dialogue') {
+      setActiveTab('summary');
+      setMountedTabs((prev) => new Set([...prev, 'summary']));
+    }
+  }, [meetingPresetUiActive, activeTab]);
+
   const onBack = useCallback(() => navigation.goBack(), [navigation]);
   const onTogglePin = useCallback(() => togglePin(liveRecord.id), [liveRecord.id, togglePin]);
   const onAskAI = useCallback(() => {
@@ -559,6 +574,7 @@ export const RecordingDetailScreen = () => {
               onSelect={onSelectTab}
               color={color}
               hasAudio={hasAudio}
+              tabs={detailTabs}
             />
             {mountedTabs.has('transcript') && (
               <View style={activeTab !== 'transcript' ? { display: 'none' } : undefined}>
@@ -587,6 +603,26 @@ export const RecordingDetailScreen = () => {
                   onDismissError={handleDismissSummaryError}
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onSwitchToSmartMode={handleSwitchToSmartMode}
+                  showProcessingCancel={isPrivateMode}
+                  onCancelProcessing={handleCancelAiGeneration}
+                  usePrivateProcessingPanel={isPrivateMode}
+                  privateAiBatchProgress={liveRecord.privateAiBatchProgress}
+                  privateAiBatchPhase={liveRecord.privateAiBatchPhase}
+                  privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
+                />
+              </View>
+            )}
+            {mountedTabs.has('dialogue') && meetingPresetUiActive && (
+              <View style={activeTab !== 'dialogue' ? { display: 'none' } : undefined}>
+                <MeetingDialogueTab
+                  meetingDialogue={liveRecord.meetingDialogue}
+                  hasTranscript={Boolean(liveRecord.transcript)}
+                  color={color}
+                  onGenerate={handleGenerateSummary}
+                  status={liveRecord.summaryStatus ?? 'idle'}
+                  errorMessage={liveRecord.summaryError}
+                  onDismissError={handleDismissSummaryError}
+                  showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   showProcessingCancel={isPrivateMode}
                   onCancelProcessing={handleCancelAiGeneration}
                   usePrivateProcessingPanel={isPrivateMode}

@@ -309,6 +309,7 @@ export const useAiProcessing = () => {
           classification,
           keyPhrases,
           nextSteps,
+          meetingDialogueMarkdown,
         } = runResult.result;
 
         const aiTaskItems: TaskItem[] = rawTasks.map((t, index) => ({
@@ -328,6 +329,12 @@ export const useAiProcessing = () => {
         const taskNormMerged = buildNormalizedTextSet(mergedTasks.map((x) => x.text));
         const rawNextSteps = nextSteps ?? [];
         const nextStepsForStore = filterNextStepsByNormalizedTaskSet(rawNextSteps, taskNormMerged);
+
+        const prevHadMeetingDialogue = Boolean(latest?.meetingDialogue?.trim());
+        const meetingDialogueForStore =
+          isMeetingPreset && meetingDialogueMarkdown?.trim()
+            ? meetingDialogueMarkdown.trim()
+            : null;
 
         await updateSummary(record.id, summary);
         await updateTasks(record.id, mergedTasks);
@@ -357,12 +364,15 @@ export const useAiProcessing = () => {
           (keyPhrases && keyPhrases.length > 0) ||
           rawNextSteps.length > 0 ||
           nextStepsForStore.length > 0 ||
-          classificationClearedForNonPro
+          classificationClearedForNonPro ||
+          isMeetingPreset ||
+          prevHadMeetingDialogue
         ) {
           await updateAiExtras(record.id, {
             classification: resolvedClassification ?? null,
             keyPhrases: keyPhrases ?? [],
             nextSteps: nextStepsForStore,
+            meetingDialogue: isMeetingPreset ? meetingDialogueForStore : null,
           });
         }
 

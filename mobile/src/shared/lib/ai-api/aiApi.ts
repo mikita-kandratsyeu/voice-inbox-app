@@ -63,6 +63,7 @@ export type AiProcessingResult = {
   classification?: RecordClassification;
   keyPhrases?: string[];
   nextSteps?: string[];
+  meetingDialogueMarkdown?: string;
   model?: string;
 };
 
@@ -87,6 +88,7 @@ type MessageResponse =
       classification?: RecordClassification;
       keyPhrases?: string[];
       nextSteps?: string[];
+      meetingDialogueMarkdown?: string;
     }
   | { id: string; status: 'error'; error: string; model?: string };
 
@@ -255,6 +257,9 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
           ? { suggestedTitle: (msg as { suggestedTitle: string }).suggestedTitle.trim() }
           : {};
       const modelField = isString(msg.model) && msg.model.trim() ? { model: msg.model.trim() } : {};
+      const mdRaw = (msg as { meetingDialogueMarkdown?: unknown }).meetingDialogueMarkdown;
+      const meetingMd =
+        isString(mdRaw) && mdRaw.trim() ? { meetingDialogueMarkdown: mdRaw.trim() } : {};
 
       return {
         ok: true,
@@ -267,6 +272,7 @@ export async function pollAiMessage(id: string, syncToken?: string): Promise<AiM
           ...(msg.classification && { classification: msg.classification }),
           ...(msg.keyPhrases && { keyPhrases: msg.keyPhrases }),
           ...(msg.nextSteps && { nextSteps: msg.nextSteps }),
+          ...meetingMd,
         },
       };
     }

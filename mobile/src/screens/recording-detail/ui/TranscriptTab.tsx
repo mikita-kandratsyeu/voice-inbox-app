@@ -2,7 +2,7 @@ import { MenuView } from '@react-native-menu/menu';
 import { Eye, Languages, Mic, Pencil, RefreshCw, Undo2 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 
 import type { TranscriptSegment } from '@/entities/record';
 import {
@@ -148,94 +148,102 @@ export const TranscriptTab = ({
 
   return (
     <View>
-      <View className="pt-3">
-        <View className="flex-row flex-wrap gap-2 px-4 pb-4">
-          {hasTranslation && !isPrivateMode && (
-            <Button
-              variant="secondary"
-              size="md"
-              icon={
-                showTranslation ? (
-                  <Undo2 size={15} color={color.text.primary} strokeWidth={2} />
-                ) : (
-                  <Eye size={15} color={color.text.primary} strokeWidth={2} />
-                )
-              }
-              label={
-                showTranslation
-                  ? t('recordingDetail.showOriginal')
-                  : t('recordingDetail.showTranslation', {
-                      lang: translationLanguage
-                        ? t(
-                            `recordingDetail.language.${translationLanguage}` as 'recordingDetail.language.ru',
-                          )
-                        : '',
-                    })
-              }
-              color={color}
-              onPress={() => setViewMode(showTranslation ? 'original' : 'translated')}
-            />
-          )}
-          {onTranslate && segments.length > 0 && !isPrivateMode && (
-            <MenuView
-              key={theme}
-              themeVariant={isDark ? 'dark' : 'light'}
-              onPressAction={async ({ nativeEvent }) => {
-                const lang = nativeEvent.event;
-                if ((TRANSLATE_LANGUAGES as readonly string[]).includes(lang)) {
-                  const ok = await onTranslate(lang);
-
-                  if (ok) {
-                    setViewMode('translated');
-                  }
-                }
-              }}
-              actions={TRANSLATE_LANGUAGES.map((lang) => ({
-                id: lang,
-                title: t(`recordingDetail.language.${lang}`),
-                titleColor: color.text.primary,
-              }))}
-            >
-              <View>
-                <Button
-                  variant="secondary"
-                  size="md"
-                  icon={<Languages size={15} color={color.text.primary} strokeWidth={2} />}
-                  label={
-                    isTranslating
-                      ? t('recordingDetail.translating')
-                      : t('recordingDetail.translate')
-                  }
-                  color={color}
-                  onPress={() => {}}
-                  disabled={isAiProcessing || isTranslating}
-                  accessibilityHint={t('recordingDetail.translateMenuHint')}
-                />
-              </View>
-            </MenuView>
-          )}
+      <ScrollView
+        horizontal
+        nestedScrollEnabled
+        showsHorizontalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 8,
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+        }}
+      >
+        {hasTranslation && !isPrivateMode && (
           <Button
             variant="secondary"
-            size="md"
-            icon={<Pencil size={15} color={color.text.primary} strokeWidth={2} />}
-            label={hasAudio ? t('recordingDetail.editTranscript') : t('recordingDetail.editText')}
+            size="lg"
+            icon={
+              showTranslation ? (
+                <Undo2 size={15} color={color.text.primary} strokeWidth={2} />
+              ) : (
+                <Eye size={15} color={color.text.primary} strokeWidth={2} />
+              )
+            }
+            label={
+              showTranslation
+                ? t('recordingDetail.showOriginal')
+                : t('recordingDetail.showTranslation', {
+                    lang: translationLanguage
+                      ? t(
+                          `recordingDetail.language.${translationLanguage}` as 'recordingDetail.language.ru',
+                        )
+                      : '',
+                  })
+            }
             color={color}
-            onPress={onEditTranscript}
+            onPress={() => setViewMode(showTranslation ? 'original' : 'translated')}
+          />
+        )}
+        {onTranslate && segments.length > 0 && !isPrivateMode && (
+          <MenuView
+            key={theme}
+            themeVariant={isDark ? 'dark' : 'light'}
+            onPressAction={async ({ nativeEvent }) => {
+              const lang = nativeEvent.event;
+              if ((TRANSLATE_LANGUAGES as readonly string[]).includes(lang)) {
+                const ok = await onTranslate(lang);
+
+                if (ok) {
+                  setViewMode('translated');
+                }
+              }
+            }}
+            actions={TRANSLATE_LANGUAGES.map((lang) => ({
+              id: lang,
+              title: t(`recordingDetail.language.${lang}`),
+              titleColor: color.text.primary,
+            }))}
+          >
+            <View>
+              <Button
+                variant="secondary"
+                size="lg"
+                icon={<Languages size={15} color={color.text.primary} strokeWidth={2} />}
+                label={
+                  isTranslating ? t('recordingDetail.translating') : t('recordingDetail.translate')
+                }
+                color={color}
+                onPress={() => {}}
+                disabled={isAiProcessing || isTranslating}
+                accessibilityHint={t('recordingDetail.translateMenuHint')}
+              />
+            </View>
+          </MenuView>
+        )}
+        <Button
+          variant="secondary"
+          size="lg"
+          icon={<Pencil size={15} color={color.text.primary} strokeWidth={2} />}
+          label={hasAudio ? t('recordingDetail.editTranscript') : t('recordingDetail.editText')}
+          color={color}
+          onPress={onEditTranscript}
+          disabled={isAiProcessing}
+        />
+        {hasAudio && (
+          <Button
+            variant="secondary"
+            size="lg"
+            icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
+            label={t('recordingDetail.retranscribe')}
+            color={color}
+            onPress={onTranscribe}
             disabled={isAiProcessing}
           />
-          {hasAudio && (
-            <Button
-              variant="secondary"
-              size="md"
-              icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
-              label={t('recordingDetail.retranscribe')}
-              color={color}
-              onPress={onTranscribe}
-              disabled={isAiProcessing}
-            />
-          )}
-        </View>
-      </View>
+        )}
+      </ScrollView>
       {showTranslation ? (
         <View className="px-4 pb-4">
           <View

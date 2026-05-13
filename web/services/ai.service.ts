@@ -17,11 +17,14 @@ import type { AiResult, AutoOrganizeResult, RecordClassification } from '@/types
 
 import { SYSTEM_TASK_MODEL_FALLBACK_CHAIN, USER_AI_MODEL_FALLBACK_CHAIN } from '@/config/constants';
 
+const MEETING_DIALOGUE_MARKDOWN_MAX_CHARS = 12_000;
+
 async function callOpenRouter(
   transcript: string,
   model: string,
   systemPrompt: string,
   clientUserAgent?: string | null,
+  pseudoDiarizationEligible: boolean = false,
 ): Promise<AiResult> {
   const client = createOpenRouterClient(clientUserAgent);
   const response = await client.chat.send({
@@ -112,6 +115,20 @@ async function callOpenRouter(
       ? String(parsed.suggestedTitle).trim()
       : '';
 
+  let meetingDialogueMarkdown: string | undefined;
+  if (pseudoDiarizationEligible) {
+    const rawMd =
+      'meetingDialogueMarkdown' in parsed && typeof parsed.meetingDialogueMarkdown === 'string'
+        ? String(parsed.meetingDialogueMarkdown).trim()
+        : '';
+    if (rawMd) {
+      meetingDialogueMarkdown =
+        rawMd.length > MEETING_DIALOGUE_MARKDOWN_MAX_CHARS
+          ? rawMd.slice(0, MEETING_DIALOGUE_MARKDOWN_MAX_CHARS)
+          : rawMd;
+    }
+  }
+
   return {
     summary: String(parsed.summary),
     suggestedTitle: suggestedTitle || String(parsed.summary).slice(0, 50).trim() || 'Voice note',
@@ -120,6 +137,7 @@ async function callOpenRouter(
     ...(classification && { classification }),
     ...(keyPhrases.length > 0 && { keyPhrases }),
     ...(nextSteps.length > 0 && { nextSteps }),
+    ...(meetingDialogueMarkdown && { meetingDialogueMarkdown }),
   };
 }
 
@@ -157,12 +175,13 @@ export async function processTranscript(
   model: string,
   systemPrompt: string,
   clientUserAgent?: string | null,
+  pseudoDiarizationEligible: boolean = false,
 ): Promise<AiResult> {
   const models = [model, ...USER_AI_MODEL_FALLBACK_CHAIN];
 
   return withSequentialModelFallback(
     models,
-    (m) => callOpenRouter(transcript, m, systemPrompt, clientUserAgent),
+    (m) => callOpenRouter(transcript, m, systemPrompt, clientUserAgent, pseudoDiarizationEligible),
     isRetryableOpenRouterTransportError,
   );
 }

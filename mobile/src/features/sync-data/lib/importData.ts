@@ -49,6 +49,7 @@ const VoiceRecordSchema = z.looseObject({
   classification: RecordClassificationSchema.optional().nullable(),
   keyPhrases: z.array(safeString).max(MAX_ARRAY_LENGTH).optional().nullable(),
   nextSteps: z.array(safeString).max(MAX_ARRAY_LENGTH).optional().nullable(),
+  meetingDialogue: safeOptionalString,
   folderId: safeOptionalString,
   audioPath: safeOptionalString,
   duration: z
@@ -168,6 +169,17 @@ function normalizeDurationField(value: unknown): string {
   return '0:00';
 }
 
+const MAX_MEETING_DIALOGUE_IMPORT_CHARS = 12_000;
+
+function normalizeMeetingDialogueImport(raw: unknown): string | undefined {
+  if (!isString(raw)) return undefined;
+  const t = raw.trim();
+  if (!t) return undefined;
+  return t.length > MAX_MEETING_DIALOGUE_IMPORT_CHARS
+    ? t.slice(0, MAX_MEETING_DIALOGUE_IMPORT_CHARS)
+    : t;
+}
+
 function normalizeRecord(raw: z.infer<typeof VoiceRecordSchema>): VoiceRecord {
   const base = raw as Partial<VoiceRecord>;
 
@@ -191,6 +203,7 @@ function normalizeRecord(raw: z.infer<typeof VoiceRecordSchema>): VoiceRecord {
     classification: classification ?? base.classification,
     keyPhrases: keyPhrases.length > 0 ? keyPhrases : (base.keyPhrases ?? []),
     nextSteps: nextSteps.length > 0 ? nextSteps : (base.nextSteps ?? []),
+    meetingDialogue: normalizeMeetingDialogueImport(base.meetingDialogue),
     translatedTranscript: isString(base.translatedTranscript)
       ? base.translatedTranscript
       : undefined,
