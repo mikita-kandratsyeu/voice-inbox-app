@@ -13,6 +13,76 @@ type TranslateResult =
   | { ok: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
   | { ok: false; error: string };
 
+/** Keeps each model call within a predictable duration/output size; full transcript is reassembled. */
+const TRANSLATE_CHUNK_MAX_CHARS = 2000;
+
+function splitLargeParagraph(paragraph: string, maxChars: number): string[] {
+  const p = paragraph.trim();
+  if (p.length <= maxChars) {
+    return [p];
+  }
+
+  const parts: string[] = [];
+  let rest = p;
+
+  while (rest.length > maxChars) {
+    const window = rest.slice(0, maxChars);
+    let cut = window.lastIndexOf(' ');
+    if (cut < Math.floor(maxChars * 0.45)) {
+      cut = maxChars;
+    }
+    const piece = rest.slice(0, cut).trimEnd();
+    if (!piece) {
+      parts.push(rest.slice(0, maxChars));
+      rest = rest.slice(maxChars).trimStart();
+      continue;
+    }
+    parts.push(piece);
+    rest = rest.slice(cut).trimStart();
+  }
+
+  if (rest) {
+    parts.push(rest);
+  }
+
+  return parts;
+}
+
+/**
+ * Splits on paragraph breaks first, then word-bounded slices so each chunk fits `TRANSLATE_CHUNK_MAX_CHARS`.
+ * `separators[i]` is inserted after translated chunk `i` (last is always "").
+ */
+function splitTranscriptForChunkedTranslation(full: string): {
+  chunks: string[];
+  separators: string[];
+} {
+  const normalized = full.replace(/\r\n/g, '\n');
+  const paragraphs = normalized
+    .split(/\n\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+
+  if (paragraphs.length === 0) {
+    const t = normalized.trim();
+    return { chunks: [t || full], separators: [''] };
+  }
+
+  const chunks: string[] = [];
+  const separators: string[] = [];
+
+  for (let pi = 0; pi < paragraphs.length; pi++) {
+    const subs = splitLargeParagraph(paragraphs[pi], TRANSLATE_CHUNK_MAX_CHARS);
+    for (let si = 0; si < subs.length; si++) {
+      chunks.push(subs[si]);
+      const lastInPara = si === subs.length - 1;
+      const sep = !lastInPara ? ' ' : pi < paragraphs.length - 1 ? '\n\n' : '';
+      separators.push(sep);
+    }
+  }
+
+  return { chunks, separators };
+}
+
 async function callTranslate(
   transcript: string,
   targetLang: string,
@@ -57,13 +127,27 @@ export async function translateTranscript(
 
   try {
     const models = [SYSTEM_MICRO_TASK_MODEL, ...SYSTEM_TASK_MODEL_FALLBACK_CHAIN];
-    const translatedText = await withSequentialModelFallback(
-      models,
-      (m) => callTranslate(transcript, targetLanguage, m, clientUserAgent),
-      (err) =>
-        isRetryableOpenRouterTransportError(err) ||
-        (err instanceof Error && err.message.includes('Invalid translation')),
-    );
+    const shouldTryNext = (err: unknown) =>
+      isRetryableOpenRouterTransportError(err) ||
+      (err instanceof Error && err.message.includes('Invalid translation'));
+
+    const { chunks, separators } = splitTranscriptForChunkedTranslation(transcript);
+
+    const translatedParts: string[] = [];
+    for (let i = 0; i < chunks.length; i++) {
+      const piece = await withSequentialModelFallback(
+        models,
+        (m) => callTranslate(chunks[i], targetLanguage, m, clientUserAgent),
+        shouldTryNext,
+      );
+      translatedParts.push(piece);
+    }
+
+    const translatedText = translatedParts
+      .map((t, i) => `${t}${separators[i] ?? ''}`)
+      .join('')
+      .trim();
+
     return { ok: true, translatedText };
   } catch (err) {
     await decrement(deviceId);
