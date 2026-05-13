@@ -234,7 +234,10 @@ export const AiUsageDashboardScreen = () => {
           {loading ? (
             <UsageMetricsSkeleton color={color} />
           ) : usage == null ? (
-            <View className="mb-7 overflow-hidden rounded-2xl" style={{ borderWidth: 1, borderColor: color.border.default }}>
+            <View
+              className="mb-7 overflow-hidden rounded-2xl"
+              style={{ borderWidth: 1, borderColor: color.border.default }}
+            >
               <SettingsRow
                 label={t('settings.aiUsage.loadFailed')}
                 subtitle={t('settings.aiUsage.loadFailedHint')}
