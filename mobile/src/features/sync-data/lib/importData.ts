@@ -1,5 +1,5 @@
+import { types } from '@react-native-documents/picker';
 import dayjs from 'dayjs';
-import DocumentPicker from 'react-native-document-picker';
 import { unzip } from 'react-native-zip-archive';
 import { z } from 'zod';
 
@@ -18,7 +18,12 @@ import {
   isStringArrayItem,
   RECORDINGS_DIR,
 } from '@/shared/lib';
-import { getCachesDirectoryPath, getReadableDocumentPickerFsPath, NitroFS } from '@/shared/lib/fs';
+import {
+  getCachesDirectoryPath,
+  getReadableDocumentPickerFsPath,
+  NitroFS,
+  pickSingleFileToCachesDirectory,
+} from '@/shared/lib/fs';
 
 const METADATA_FILENAME = 'metadata.json';
 
@@ -466,16 +471,25 @@ export const importData = async (): Promise<ImportResult> => {
   let pickedFsPath: string | null = null;
 
   try {
-    const [file] = await DocumentPicker.pick({
-      type: [DocumentPicker.types.allFiles],
-      copyTo: 'cachesDirectory',
+    const picked = await pickSingleFileToCachesDirectory({
+      type: [types.allFiles],
     });
 
-    const fileLike = file as {
-      uri?: string;
-      fileUri?: string;
-      fileCopyUri?: string;
-      name?: string;
+    if (picked.kind === 'canceled') {
+      return { success: false, error: 'cancelled' };
+    }
+    if (picked.kind === 'failed') {
+      if (__DEV__) {
+        console.warn('[importData] pick/copy failed', picked.message);
+      }
+      return { success: false, error: i18n.t('importExport.fileNotSelected') };
+    }
+
+    const fileLike = {
+      uri: picked.localUri,
+      fileUri: picked.localUri,
+      fileCopyUri: picked.localUri,
+      name: picked.name ?? undefined,
     };
     const fsPath = await getReadableDocumentPickerFsPath(fileLike);
     pickedFsPath = fsPath;
@@ -541,7 +555,7 @@ export const importData = async (): Promise<ImportResult> => {
   } catch (err: unknown) {
     const code = (err as { code?: string })?.code;
 
-    if (code === 'DOCUMENT_PICKER_CANCELED' || code === 'E_DOCUMENT_PICKER_CANCELED') {
+    if (code === 'OPERATION_CANCELED') {
       return { success: false, error: 'cancelled' };
     }
 

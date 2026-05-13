@@ -1,3 +1,6 @@
+import type { DocumentPickerOptions } from '@react-native-documents/picker';
+import { errorCodes, isErrorWithCode, keepLocalCopy, pick } from '@react-native-documents/picker';
+
 import { isString } from '@/shared/lib/type-guards';
 
 import { NitroFS } from './appFs';
@@ -29,7 +32,7 @@ export function getDocumentPickerFsPath(
 ): string | null {
   if (!file) return null;
 
-  // fileCopyUri is the canonical local path provided by react-native-document-picker when copyTo is used.
+  // Prefer fileCopyUri: local path after @react-native-documents/picker keepLocalCopy().
   const rawUri = file.fileCopyUri ?? file.fileUri ?? file.uri;
   if (!rawUri) return null;
 
@@ -74,4 +77,51 @@ export async function getReadableDocumentPickerFsPath(
   });
 
   return findReadableFsPath(normalizedCandidates);
+}
+
+export type PickToCachesResult =
+  | { kind: 'picked'; localUri: string; name: string | null }
+  | { kind: 'canceled' }
+  | { kind: 'failed'; message: string };
+
+export async function pickSingleFileToCachesDirectory(
+  pickOptions?: DocumentPickerOptions,
+): Promise<PickToCachesResult> {
+  try {
+    const [file] = await pick(pickOptions);
+    if (file.error) {
+      return { kind: 'failed', message: file.error };
+    }
+
+    const fileName = file.name && file.name.trim().length > 0 ? file.name.trim() : 'file';
+
+    const toCopy: {
+      uri: string;
+      fileName: string;
+      convertVirtualFileToType?: string;
+    } = {
+      uri: file.uri,
+      fileName,
+    };
+
+    if (file.isVirtual && file.convertibleToMimeTypes?.length) {
+      toCopy.convertVirtualFileToType = file.convertibleToMimeTypes[0].mimeType;
+    }
+
+    const [copyResult] = await keepLocalCopy({
+      destination: 'cachesDirectory',
+      files: [toCopy],
+    });
+
+    if (copyResult.status !== 'success') {
+      return { kind: 'failed', message: copyResult.copyError };
+    }
+
+    return { kind: 'picked', localUri: copyResult.localUri, name: file.name };
+  } catch (e: unknown) {
+    if (isErrorWithCode(e) && e.code === errorCodes.OPERATION_CANCELED) {
+      return { kind: 'canceled' };
+    }
+    throw e;
+  }
 }

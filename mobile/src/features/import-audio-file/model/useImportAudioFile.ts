@@ -1,10 +1,10 @@
+import { types } from '@react-native-documents/picker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
-import DocumentPicker from 'react-native-document-picker';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
@@ -21,7 +21,11 @@ import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
 import { hapticError, hapticMedium, hapticSuccess } from '@/shared/lib';
 import { convertToWav, getAudioDurationMs } from '@/shared/lib/audio';
 import { formatTime } from '@/shared/lib/date';
-import { getReadableDocumentPickerFsPath, NitroFS } from '@/shared/lib/fs';
+import {
+  getReadableDocumentPickerFsPath,
+  NitroFS,
+  pickSingleFileToCachesDirectory,
+} from '@/shared/lib/fs';
 import { ensureRecordingsDir, RECORDINGS_DIR } from '@/shared/lib/recordings';
 
 import type { ImportAudioPhase } from './types';
@@ -48,9 +52,9 @@ export function useImportAudioFile() {
     hapticMedium();
 
     try {
-      const [file] = await DocumentPicker.pick({
+      const picked = await pickSingleFileToCachesDirectory({
         type: [
-          DocumentPicker.types.audio,
+          types.audio,
           'audio/mpeg',
           'audio/mp3',
           'public.mp3',
@@ -59,19 +63,28 @@ export function useImportAudioFile() {
           'audio/wav',
           'audio/x-wav',
         ],
-        copyTo: 'cachesDirectory',
       });
 
-      const sourcePath = await getReadableDocumentPickerFsPath(
-        file as { uri?: string; fileUri?: string; fileCopyUri?: string },
-      );
+      if (picked.kind === 'canceled') return;
+      if (picked.kind === 'failed') {
+        if (__DEV__) {
+          console.warn('[importAudioFile] pick/copy failed', picked.message);
+        }
+        return;
+      }
+
+      const fileRef = {
+        uri: picked.localUri,
+        fileUri: picked.localUri,
+        fileCopyUri: picked.localUri,
+      };
+      const sourcePath = await getReadableDocumentPickerFsPath(fileRef);
       if (!sourcePath) {
         if (__DEV__) {
-          const pickerFile = file as { uri?: string; fileUri?: string; fileCopyUri?: string };
           console.warn('[importAudioFile] picker path is not readable', {
-            uri: pickerFile.uri,
-            fileUri: pickerFile.fileUri,
-            fileCopyUri: pickerFile.fileCopyUri,
+            uri: fileRef.uri,
+            fileUri: fileRef.fileUri,
+            fileCopyUri: fileRef.fileCopyUri,
           });
         }
         return;
@@ -84,7 +97,7 @@ export function useImportAudioFile() {
 
       await ensureRecordingsDir();
       const recordId = generateRecordId();
-      const ext = file.name?.match(/\.[a-zA-Z0-9]+$/)?.[0] ?? '.m4a';
+      const ext = picked.name?.match(/\.[a-zA-Z0-9]+$/)?.[0] ?? '.m4a';
       let destPath = `${RECORDINGS_DIR}/${recordId}${ext}`;
 
       try {
@@ -195,7 +208,7 @@ export function useImportAudioFile() {
       navigation.navigate('RecordingDetail', { record });
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code;
-      if (code === 'DOCUMENT_PICKER_CANCELED' || code === 'E_DOCUMENT_PICKER_CANCELED') {
+      if (code === 'OPERATION_CANCELED') {
         return;
       }
       if (__DEV__) {

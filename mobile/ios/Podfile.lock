@@ -1835,7 +1835,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-document-picker (9.3.1):
+  - react-native-document-picker (12.0.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3081,7 +3081,7 @@ DEPENDENCIES:
   - react-native-add-calendar-event (from `../node_modules/react-native-add-calendar-event`)
   - react-native-blob-util (from `../node_modules/react-native-blob-util`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
-  - react-native-document-picker (from `../node_modules/react-native-document-picker`)
+  - "react-native-document-picker (from `../node_modules/@react-native-documents/picker`)"
   - react-native-in-app-review (from `../node_modules/react-native-in-app-review`)
   - react-native-keep-awake (from `../node_modules/react-native-keep-awake`)
   - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
@@ -3313,7 +3313,7 @@ EXTERNAL SOURCES:
   react-native-blur:
     :path: "../node_modules/@react-native-community/blur"
   react-native-document-picker:
-    :path: "../node_modules/react-native-document-picker"
+    :path: "../node_modules/@react-native-documents/picker"
   react-native-in-app-review:
     :path: "../node_modules/react-native-in-app-review"
   react-native-keep-awake:
@@ -3549,7 +3549,7 @@ SPEC CHECKSUMS:
   react-native-add-calendar-event: b9802a8be8ad4beb0dcb3efb28969c077558fb29
   react-native-blob-util: efe7ff4253f3ab637186cb3448191aeb02f33495
   react-native-blur: 385205a18cbc5ef43aeff7c0386fca04fcdd6fbf
-  react-native-document-picker: f295326ef8abb37b9b538a20221ed17e2929a7d5
+  react-native-document-picker: 6010251edf0563f11efcc3d7a87d668193674418
   react-native-in-app-review: bb863fb300f2c716479c4285201df746cf5e20a2
   react-native-keep-awake: afad8a51dfef9fe9655a6344771be32c8596d774
   react-native-keyboard-controller: 278a92111e8289cac132cedde45e2d319a2d3efe
