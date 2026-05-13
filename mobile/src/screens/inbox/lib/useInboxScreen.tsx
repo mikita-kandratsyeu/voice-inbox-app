@@ -242,6 +242,7 @@ export function useInboxScreen() {
     batchArchive,
     batchUnarchive,
     batchDelete,
+    batchDeleteForever,
     batchExport,
     batchEmailExport,
     batchMoveToFolder,
@@ -285,6 +286,10 @@ export function useInboxScreen() {
   const handleBatchDelete = useCallback(() => {
     batchDelete([...batchSelect.selectedIds]);
   }, [batchDelete, batchSelect.selectedIds]);
+
+  const handleBatchDeleteLongPress = useCallback(() => {
+    batchDeleteForever([...batchSelect.selectedIds]);
+  }, [batchDeleteForever, batchSelect.selectedIds]);
 
   const handleBatchExport = useCallback(() => {
     setBatchExportSheetVisible(true);
@@ -561,6 +566,10 @@ export function useInboxScreen() {
         titleKey: 'batch.progressDeletingTitle',
         descriptionKey: 'batch.progressDeletingDescription',
       },
+      purgeForever: {
+        titleKey: 'batch.progressPurgeForeverTitle',
+        descriptionKey: 'batch.progressPurgeForeverDescription',
+      },
       moveToFolder: {
         titleKey: 'batch.progressMovingTitle',
         descriptionKey: 'batch.progressMovingDescription',
@@ -702,6 +711,7 @@ export function useInboxScreen() {
     handleBatchArchive,
     handleBatchUnarchive,
     handleBatchDelete,
+    handleBatchDeleteLongPress,
     handleBatchExport,
     showSwipeHint,
     dismissSwipeHint,

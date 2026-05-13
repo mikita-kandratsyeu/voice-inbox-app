@@ -66,7 +66,12 @@ function isUserCancelledShare(err: unknown): boolean {
 }
 
 /** Progress overlay kind for sequential batch inbox actions. */
-export type BatchProgressKind = 'archive' | 'unarchive' | 'delete' | 'moveToFolder';
+export type BatchProgressKind =
+  | 'archive'
+  | 'unarchive'
+  | 'delete'
+  | 'moveToFolder'
+  | 'purgeForever';
 
 type UseBatchRecordActionsParams = {
   onComplete: () => void;
@@ -88,6 +93,7 @@ export const useBatchRecordActions = ({
   const archiveRecord = useRecordStore((s) => s.archiveRecord);
   const unarchiveRecord = useRecordStore((s) => s.unarchiveRecord);
   const moveRecordToTrash = useRecordStore((s) => s.moveRecordToTrash);
+  const purgeRecordPermanently = useRecordStore((s) => s.purgeRecordPermanently);
   const setRecordFolder = useRecordStore((s) => s.setRecordFolder);
 
   const batchArchive = useCallback(
@@ -158,6 +164,38 @@ export const useBatchRecordActions = ({
       );
     },
     [t, moveRecordToTrash, onBatchFinally, onBatchStart, onComplete, onProgress],
+  );
+
+  const batchDeleteForever = useCallback(
+    (ids: string[]) => {
+      const total = ids.length;
+      if (total === 0) return;
+      Alert.alert(
+        t('batch.deleteForeverTitle', { count: total }),
+        t('batch.deleteForeverConfirm', { count: total }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('batch.deleteForeverConfirmAction'),
+            style: 'destructive',
+            onPress: async () => {
+              onBatchStart?.('purgeForever', total);
+              try {
+                for (let i = 0; i < ids.length; i += 1) {
+                  await purgeRecordPermanently(ids[i]!);
+                  onProgress?.(i + 1, total);
+                }
+                hapticSuccess();
+                onComplete();
+              } finally {
+                onBatchFinally?.();
+              }
+            },
+          },
+        ],
+      );
+    },
+    [t, purgeRecordPermanently, onBatchFinally, onBatchStart, onComplete, onProgress],
   );
 
   const batchExport = useCallback(
@@ -320,6 +358,7 @@ export const useBatchRecordActions = ({
     batchArchive,
     batchUnarchive,
     batchDelete,
+    batchDeleteForever,
     batchExport,
     batchEmailExport,
     batchMoveToFolder,

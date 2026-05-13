@@ -25,6 +25,8 @@ type BatchActionBarProps = {
   onArchive: () => void;
   onUnarchive: () => void;
   onDelete: () => void;
+  /** Long-press on trash: permanent delete (skip Trash). */
+  onDeleteLongPress?: () => void;
   onExport: () => void;
   /** Batch export / extended share — Pro only; when false the export control is hidden. */
   showExport?: boolean;
@@ -38,6 +40,8 @@ type ActionButtonProps = {
   icon: (iconColor: string) => React.ReactNode;
   label: string;
   onPress: () => void;
+  onLongPress?: () => void;
+  accessibilityHint?: string;
   disabled?: boolean;
   destructive?: boolean;
   color: Colors;
@@ -47,6 +51,8 @@ const ActionButton = ({
   icon,
   label,
   onPress,
+  onLongPress,
+  accessibilityHint,
   disabled = false,
   destructive = false,
   color,
@@ -57,9 +63,12 @@ const ActionButton = ({
   return (
     <TouchableOpacity
       onPress={onPress}
+      onLongPress={onLongPress}
+      delayLongPress={450}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={label}
+      accessibilityHint={accessibilityHint}
       accessibilityState={{ disabled }}
       hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
       style={{ alignItems: 'center', gap: 4, minWidth: 52, opacity: disabled ? 0.4 : 1 }}
@@ -77,6 +86,7 @@ export const BatchActionBar = ({
   onArchive,
   onUnarchive,
   onDelete,
+  onDeleteLongPress,
   onExport,
   showExport = true,
   onMoveToFolder,
@@ -124,6 +134,12 @@ export const BatchActionBar = ({
   const handleDelete = () => {
     hapticMedium();
     onDelete();
+  };
+
+  const handleDeleteLongPress = () => {
+    if (!onDeleteLongPress || disabled) return;
+    hapticMedium();
+    onDeleteLongPress();
   };
 
   const handleExport = () => {
@@ -244,6 +260,8 @@ export const BatchActionBar = ({
               icon={(c) => <Trash2 size={20} strokeWidth={2} color={c} />}
               label={t('batch.delete')}
               onPress={handleDelete}
+              onLongPress={onDeleteLongPress ? handleDeleteLongPress : undefined}
+              accessibilityHint={onDeleteLongPress ? t('batch.deleteLongPressHint') : undefined}
               disabled={disabled}
               destructive
               color={color}

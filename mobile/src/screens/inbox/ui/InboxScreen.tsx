@@ -85,6 +85,7 @@ export const InboxScreen = () => {
     handleBatchArchive,
     handleBatchUnarchive,
     handleBatchDelete,
+    handleBatchDeleteLongPress,
     handleBatchExport,
     isProActive,
     showSwipeHint,
@@ -212,6 +213,7 @@ export const InboxScreen = () => {
           onArchive={handleBatchArchive}
           onUnarchive={handleBatchUnarchive}
           onDelete={handleBatchDelete}
+          onDeleteLongPress={handleBatchDeleteLongPress}
           onExport={handleBatchExport}
           showExport={isProActive}
           onMoveToFolder={handleOpenBatchFolderPicker}

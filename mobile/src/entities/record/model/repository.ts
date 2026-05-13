@@ -242,6 +242,15 @@ export const recordRepository = {
     return rows.map(toRecordListItem);
   },
 
+  /** All record row ids (active + trash). Used so import does not treat trashed rows as “new”. */
+  listAllRecordIds: async (): Promise<string[]> => {
+    logDb('listAllRecordIds');
+    const db = getDB();
+    const rows = await db.select({ id: recordsTable.id }).from(recordsTable);
+    logDb('listAllRecordIds', { count: rows.length });
+    return rows.map((r) => r.id);
+  },
+
   getAll: async (): Promise<VoiceRecord[]> => {
     logDb('getAll');
     const db = getDB();
