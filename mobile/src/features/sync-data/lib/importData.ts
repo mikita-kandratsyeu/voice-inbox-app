@@ -283,6 +283,11 @@ async function copyAudioFromExtractToApp(
   const destPath = `${RECORDINGS_DIR}/${recordId}${ext}`;
 
   try {
+    const destExists = await NitroFS.exists(destPath);
+    if (destExists) {
+      await NitroFS.unlink(destPath);
+    }
+
     await NitroFS.copyFile(normalized, destPath);
 
     return destPath;

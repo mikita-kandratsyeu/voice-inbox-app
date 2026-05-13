@@ -23,7 +23,12 @@ import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { tryShowYandexInterstitial } from '@/features/yandex-interstitial';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { formatRelativeTime, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import {
+  formatRelativeTime,
+  resolveAudioPath,
+  useIsTablet,
+  useTabletContentMaxWidth,
+} from '@/shared/lib';
 import { BlockingProgressModal, Button, ScreenHeader } from '@/shared/ui';
 
 type ImportRecordsRouteProp = RouteProp<SettingsStackParamList, 'ImportRecords'>;
@@ -237,7 +242,17 @@ export const ImportRecordsScreen = () => {
       for (let i = 0; i < toProcess.length; i += 1) {
         const record = toProcess[i]!;
         if (trashIdsForReplace.has(record.id)) {
-          await purgeRecordPermanently(record.id);
+          const incomingAudio = record.audioPath?.trim();
+          const trashedAudio = await recordRepository.peekAudioPathById(record.id);
+          let sameAudioPath = false;
+          if (incomingAudio && trashedAudio) {
+            sameAudioPath = resolveAudioPath(incomingAudio) === resolveAudioPath(trashedAudio);
+          }
+          if (sameAudioPath) {
+            await recordRepository.remove(record.id);
+          } else {
+            await purgeRecordPermanently(record.id);
+          }
         }
         await addRecord(record);
         setImportProgress({ current: i + 1, total: toProcess.length });
