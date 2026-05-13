@@ -2,7 +2,6 @@ import type { Components } from 'react-markdown';
 import ReactMarkdown from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
-import { renderToStaticMarkup } from 'react-dom/server';
 
 const bodyFont = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 const monoFont =
@@ -254,8 +253,12 @@ const emailMarkdownComponents: Components = {
 /**
  * Renders user note markdown to an HTML fragment for transactional email.
  * Sanitizes parsed HTML; styles are applied via components for client compatibility.
+ *
+ * Uses a dynamic import of `react-dom/server` so Turbopack can bundle Route Handlers
+ * that call this helper (static `react-dom/server` imports are rejected in that graph).
  */
-export function renderShareNoteMarkdownEmailInnerHtml(markdown: string): string {
+export async function renderShareNoteMarkdownEmailInnerHtml(markdown: string): Promise<string> {
+  const { renderToStaticMarkup } = await import('react-dom/server');
   return renderToStaticMarkup(
     <div style={{ fontFamily: bodyFont, marginTop: '4px' }}>
       <ReactMarkdown

@@ -206,7 +206,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     normalizeBoundedString(body.subject, SUBJECT_MAX) ??
     `Voice Inbox AI note: ${title}`.slice(0, SUBJECT_MAX);
   const escapedTitle = escapeHtml(title);
-  const noteBodyHtml = renderShareNoteMarkdownEmailInnerHtml(markdown);
+  const noteBodyHtml = await renderShareNoteMarkdownEmailInnerHtml(markdown);
 
   try {
     await sendTransactionalMail({
