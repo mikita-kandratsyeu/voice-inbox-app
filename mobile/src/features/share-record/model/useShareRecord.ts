@@ -13,7 +13,7 @@ import {
 } from '../lib/shareExportCache';
 
 const toFileUri = (path: string): string => (path.startsWith('file://') ? path : `file://${path}`);
-export type ShareBriefTemplate = 'noteBrief' | 'meetingBrief';
+export type ShareBriefTemplate = 'noteBrief' | 'meetingBrief' | 'meetingSpeakerTurns';
 export const RECORD_TEXT_EXPORT_EXTENSION = 'md';
 const sanitizeTitleForFileName = (title: string): string =>
   title.replace(/[^a-zA-Z0-9\u0400-\u04FF\s]/g, '_');
@@ -208,6 +208,17 @@ const pushTranscript = (lines: string[], record: VoiceRecord): void => {
   }
 };
 
+const pushMeetingDialogue = (lines: string[], record: VoiceRecord): void => {
+  const body = record.meetingDialogue?.trim();
+  if (!body) {
+    return;
+  }
+  lines.push('');
+  lines.push(`## ${i18n.t('recordingDetail.meetingDialogueTitle')}`);
+  lines.push('');
+  lines.push(body);
+};
+
 const pushFooter = (lines: string[]): void => {
   lines.push('');
   lines.push(i18n.t('share.exportedFrom'));
@@ -243,9 +254,33 @@ const buildMeetingBrief = (record: VoiceRecord): string => {
   pushRecordingMarks(lines, record);
   pushSummary(lines, record);
   pushKeyPhrases(lines, record);
+  pushMeetingDialogue(lines, record);
   pushNextSteps(lines, record);
   pushTasks(lines, record);
   pushTranscript(lines, record);
+  pushFooter(lines);
+
+  return lines.join('\n');
+};
+
+const buildMeetingSpeakerTurnsOnly = (record: VoiceRecord): string => {
+  const lines: string[] = [];
+
+  lines.push(`# ${record.title}`);
+  lines.push('');
+  pushMeta(lines, record);
+  pushTags(lines, record);
+  lines.push('');
+  lines.push(`## ${i18n.t('recordingDetail.meetingDialogueTitle')}`);
+  lines.push('');
+  const body = record.meetingDialogue?.trim();
+  if (body) {
+    lines.push(body);
+  } else {
+    lines.push(`_${i18n.t('share.speakerTurnsEmpty')}_`);
+  }
+  lines.push('');
+  lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
   pushFooter(lines);
 
   return lines.join('\n');
@@ -258,6 +293,9 @@ export const buildShareText = (
   if (template === 'meetingBrief') {
     return buildMeetingBrief(record);
   }
+  if (template === 'meetingSpeakerTurns') {
+    return buildMeetingSpeakerTurnsOnly(record);
+  }
 
   return buildNoteBrief(record);
 };
@@ -268,7 +306,12 @@ export const useShareRecord = () => {
     await ensureShareExportDirectory();
 
     const text = buildShareText(record, template);
-    const templateSuffix = template === 'meetingBrief' ? '-meeting-brief' : '-note-brief';
+    const templateSuffix =
+      template === 'meetingBrief'
+        ? '-meeting-brief'
+        : template === 'meetingSpeakerTurns'
+          ? '-speaker-turns'
+          : '-note-brief';
     const fileName = `${sanitizeTitleForFileName(record.title)}${templateSuffix}.${RECORD_TEXT_EXPORT_EXTENSION}`;
     const filePath = `${getShareExportDirectoryPath()}/${fileName}`;
 
@@ -338,7 +381,9 @@ export const useShareRecord = () => {
     const subject =
       template === 'meetingBrief'
         ? i18n.t('share.emailMeetingSubject', { title: record.title })
-        : i18n.t('share.emailNoteSubject', { title: record.title });
+        : template === 'meetingSpeakerTurns'
+          ? i18n.t('share.emailSpeakerTurnsSubject', { title: record.title })
+          : i18n.t('share.emailNoteSubject', { title: record.title });
     const result = await sendRecordEmail({
       to,
       subject,

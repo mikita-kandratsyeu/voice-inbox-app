@@ -29,6 +29,7 @@ import {
   useIsTablet,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
+import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 import { NitroFS } from '@/shared/lib/fs';
 import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets/audio-player';
 
@@ -318,16 +319,16 @@ export const RecordingDetailScreen = () => {
 
   const handleShare = useCallback(
     (template: ShareBriefTemplate) => {
-      shareRecord(liveRecord, template).catch((err: Error) => {
-        Alert.alert(t('recordingDetail.shareFailed'), err.message);
+      shareRecord(liveRecord, template).catch((err: unknown) => {
+        Alert.alert(t('recordingDetail.shareFailed'), toUserFacingFetchErrorFromUnknown(err));
       });
     },
     [t, liveRecord, shareRecord],
   );
 
   const handleShareAudio = useCallback(() => {
-    shareAudio(liveRecord).catch((err: Error) => {
-      Alert.alert(t('recordingDetail.shareFailed'), err.message);
+    shareAudio(liveRecord).catch((err: unknown) => {
+      Alert.alert(t('recordingDetail.shareFailed'), toUserFacingFetchErrorFromUnknown(err));
     });
   }, [t, liveRecord, shareAudio]);
   const handleEmailRecord = useCallback(
@@ -339,9 +340,9 @@ export const RecordingDetailScreen = () => {
           setShareSheetVisible(false);
           Alert.alert(t('share.emailSentTitle'), t('share.emailSentMessage', { email }));
         })
-        .catch((err: Error) => {
+        .catch((err: unknown) => {
           hapticError();
-          Alert.alert(t('share.emailFailedTitle'), err.message);
+          Alert.alert(t('share.emailFailedTitle'), toUserFacingFetchErrorFromUnknown(err));
         })
         .finally(() => {
           setEmailSending(false);
@@ -491,6 +492,7 @@ export const RecordingDetailScreen = () => {
         visible={shareSheetVisible}
         hasAudio={hasAudio}
         isMeeting={meetingPresetUiActive}
+        showSpeakerTurnsExport={meetingPresetUiActive}
         isSendingEmail={emailSending}
         onClose={onCloseShareMenu}
         onShareText={handleShare}

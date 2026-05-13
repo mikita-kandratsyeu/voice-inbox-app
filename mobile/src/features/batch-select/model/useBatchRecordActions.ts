@@ -273,7 +273,9 @@ export const useBatchRecordActions = ({
       const subject =
         template === 'meetingBrief'
           ? t('share.emailBatchMeetingSubject', { count: records.length })
-          : t('share.emailBatchNoteSubject', { count: records.length });
+          : template === 'meetingSpeakerTurns'
+            ? t('share.emailBatchSpeakerTurnsSubject', { count: records.length })
+            : t('share.emailBatchNoteSubject', { count: records.length });
       const title = t('share.emailBatchDocumentTitle', { count: records.length });
 
       if (packaging === 'zip') {

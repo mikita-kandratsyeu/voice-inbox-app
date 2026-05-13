@@ -42,6 +42,7 @@ import {
   useScrollToTopOnTabPress,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
+import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 import { getHasSeenSwipeHint, setHasSeenSwipeHint } from '@/shared/lib/hintsStorage';
 
 import { InboxScreenListItem } from '../ui/InboxScreenListItem';
@@ -320,7 +321,7 @@ export function useInboxScreen() {
         hapticError();
         Alert.alert(
           t('share.emailFailedTitle'),
-          err instanceof Error ? err.message : t('batch.exportFailed'),
+          err instanceof Error ? toUserFacingFetchErrorFromUnknown(err) : t('batch.exportFailed'),
         );
       } finally {
         setBatchEmailSending(false);

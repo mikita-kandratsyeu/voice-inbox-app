@@ -5,7 +5,7 @@ import {
   BottomSheetTextInput,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
-import { FileText, ListChecks, Mail, Music } from 'lucide-react-native';
+import { FileText, ListChecks, Mail, Music, UsersRound } from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
@@ -19,6 +19,7 @@ type ShareRecordSheetProps = {
   visible: boolean;
   hasAudio: boolean;
   isMeeting?: boolean;
+  showSpeakerTurnsExport?: boolean;
   isSendingEmail?: boolean;
   onClose: () => void;
   onShareText: (template: ShareBriefTemplate) => void;
@@ -30,6 +31,7 @@ export const ShareRecordSheet = ({
   visible,
   hasAudio,
   isMeeting = false,
+  showSpeakerTurnsExport = false,
   isSendingEmail = false,
   onClose,
   onShareText,
@@ -42,12 +44,13 @@ export const ShareRecordSheet = ({
   const ref = useRef<BottomSheetModal>(null);
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
+  const [emailSendTemplate, setEmailSendTemplate] = useState<ShareBriefTemplate>('meetingBrief');
   const trimmedEmail = email.trim();
-  const emailTemplate: ShareBriefTemplate = isMeeting ? 'meetingBrief' : 'noteBrief';
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
 
   useEffect(() => {
     if (visible) {
+      setEmailSendTemplate('meetingBrief');
       const frame = requestAnimationFrame(() => {
         ref.current?.present();
       });
@@ -76,6 +79,11 @@ export const ShareRecordSheet = ({
     onShareText('meetingBrief');
   }, [onClose, onShareText]);
 
+  const handleShareSpeakerTurns = useCallback(() => {
+    onClose();
+    onShareText('meetingSpeakerTurns');
+  }, [onClose, onShareText]);
+
   const handleShareAudio = useCallback(() => {
     onClose();
     onShareAudio();
@@ -92,8 +100,8 @@ export const ShareRecordSheet = ({
 
   const handleSendEmail = useCallback(() => {
     if (!emailValid || isSendingEmail) return;
-    onEmailRecord(trimmedEmail, emailTemplate);
-  }, [emailTemplate, emailValid, isSendingEmail, onEmailRecord, trimmedEmail]);
+    onEmailRecord(trimmedEmail, emailSendTemplate);
+  }, [emailSendTemplate, emailValid, isSendingEmail, onEmailRecord, trimmedEmail]);
 
   const renderOption = ({
     icon,
@@ -195,6 +203,16 @@ export const ShareRecordSheet = ({
           onPress: handleShareMeetingBrief,
         })}
 
+        {showSpeakerTurnsExport
+          ? renderOption({
+              icon: <UsersRound size={20} color={color.text.primary} strokeWidth={2.1} />,
+              title: t('share.speakerTurnsBrief'),
+              description: t('share.speakerTurnsBriefDescription'),
+              accessibilityLabel: t('share.speakerTurnsBrief'),
+              onPress: handleShareSpeakerTurns,
+            })
+          : null}
+
         {renderOption({
           icon: <Mail size={20} color={color.text.primary} strokeWidth={2.1} />,
           title: t('share.emailNote'),
@@ -213,6 +231,61 @@ export const ShareRecordSheet = ({
               backgroundColor: color.background.tertiary,
             }}
           >
+            <Text style={{ fontSize: 13, color: color.text.muted }}>
+              {t('batch.emailBodyFormatHint')}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'stretch' }}>
+              {(
+                [
+                  { tpl: 'meetingBrief' as const, label: t('share.meetingBrief') },
+                  { tpl: 'meetingSpeakerTurns' as const, label: t('share.speakerTurnsBrief') },
+                ] as const
+              ).map(({ tpl, label }) => {
+                const selected = emailSendTemplate === tpl;
+                return (
+                  <TouchableOpacity
+                    key={tpl}
+                    onPress={() => setEmailSendTemplate(tpl)}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={label}
+                    style={{
+                      flex: 1,
+                      flexBasis: 0,
+                      minWidth: 0,
+                      minHeight: 44,
+                      alignSelf: 'stretch',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      paddingVertical: 6,
+                      paddingHorizontal: 8,
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      borderColor: selected ? color.accent.primary : color.border.default,
+                      backgroundColor: selected
+                        ? color.background.secondary
+                        : color.background.primary,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        width: '100%',
+                        fontSize: 13,
+                        fontWeight: '600',
+                        lineHeight: 17,
+                        textAlign: 'center',
+                        color: selected ? color.accent.primary : color.text.primary,
+                      }}
+                      numberOfLines={2}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.85}
+                    >
+                      {label}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
             <BottomSheetTextInput
               className="rounded-xl border px-3.5 py-3 text-[16px]"
               style={{

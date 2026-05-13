@@ -23,7 +23,12 @@ export async function buildBatchMarkdownZip(
 ): Promise<BuildBatchMarkdownZipResult> {
   const cache = getCachesDirectoryPath();
   const timestamp = Date.now();
-  const templateSuffix = template === 'meetingBrief' ? '-meeting-brief' : '-note-brief';
+  const templateSuffix =
+    template === 'meetingBrief'
+      ? '-meeting-brief'
+      : template === 'meetingSpeakerTurns'
+        ? '-speaker-turns'
+        : '-note-brief';
   const exportDir = `${cache}/voice-inbox-batch-md-${timestamp}`;
   const zipFileName = `voice-inbox-batch-${timestamp}.zip`;
   const zipPath = `${cache}/${zipFileName}`;

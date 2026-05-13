@@ -1,5 +1,6 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 import { isString } from '@/shared/lib/type-guards';
 
 /** Keep in sync with `web/app/api/share/email/route.ts` ZIP_ATTACHMENT_MAX_BYTES */
@@ -54,7 +55,7 @@ export async function sendRecordEmail(input: SendRecordEmailInput): Promise<Send
 
     return data.ok ? { ok: true } : { ok: false, error: 'Unexpected response' };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Network error' };
+    return { ok: false, error: toUserFacingFetchErrorFromUnknown(e) };
   }
 }
 
@@ -124,6 +125,6 @@ export async function sendShareEmailZipAttachment(
 
     return data.ok ? { ok: true } : { ok: false, error: 'Unexpected response' };
   } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : 'Network error' };
+    return { ok: false, error: toUserFacingFetchErrorFromUnknown(e) };
   }
 }
