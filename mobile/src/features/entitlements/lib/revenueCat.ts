@@ -25,6 +25,7 @@ import {
   invalidateProLicenseStatusCache,
   syncProLicenseRevenueCatOnServer,
 } from '@/shared/lib/ai-api/proLicenseApi';
+import { i18n } from '@/shared/lib/i18n';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 
 function trimEnv(v: string | undefined): string {
@@ -152,13 +153,21 @@ export type IapBillingOptions = {
   savePercentVsMonthly: number | null;
 };
 
+function intlLocaleForIapPrices(): string {
+  const raw = (i18n.language ?? 'en').toLowerCase();
+
+  if (raw.startsWith('ru')) return 'ru-RU';
+
+  return 'en-US';
+}
+
 function formatIapCurrencyAmount(amount: number, currencyCode: string): string | null {
   const code = (currencyCode ?? '').trim().toUpperCase();
   if (!code || !Number.isFinite(amount)) {
     return null;
   }
   try {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(intlLocaleForIapPrices(), {
       style: 'currency',
       currency: code,
       currencyDisplay: 'narrowSymbol',

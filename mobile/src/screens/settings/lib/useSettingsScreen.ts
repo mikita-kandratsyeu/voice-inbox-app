@@ -167,7 +167,7 @@ export function useSettingsScreen() {
     return () => {
       cancelled = true;
     };
-  }, [planPaywallVisible, monetizationMode]);
+  }, [planPaywallVisible, monetizationMode, i18n.language]);
 
   useFocusEffect(
     useCallback(() => {
