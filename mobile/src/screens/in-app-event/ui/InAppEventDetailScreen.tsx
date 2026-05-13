@@ -88,7 +88,7 @@ export const InAppEventDetailScreen = () => {
           style={{ flex: 1, backgroundColor: color.background.secondary }}
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingTop: insets.top + 16,
+            paddingTop: insets.top + 40,
             paddingBottom: 28,
           }}
           showsVerticalScrollIndicator={false}
