@@ -6,6 +6,7 @@ import React from 'react';
 
 import { InboxFiltersResetProvider } from '@/features/inbox-filters';
 import { AllTasksScreen } from '@/screens/all-tasks';
+import { DebugScreen } from '@/screens/debug';
 import { RecordScreen, TextNoteScreen } from '@/screens/record';
 import {
   AskAIScreen,
@@ -13,9 +14,12 @@ import {
   RecordingDetailScreen,
 } from '@/screens/recording-detail';
 import { WhisperModelPickerScreen } from '@/screens/settings';
+import { isTestflightInternalBuild } from '@/shared/config/buildEnv';
 
 import { BottomTabNavigator } from './BottomTabNavigator';
 import type { RootStackParamList } from './types';
+
+const showDebugNavigation = __DEV__ || isTestflightInternalBuild();
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -99,6 +103,17 @@ export const RootNavigator = () => (
           gestureEnabled: true,
         }}
       />
+      {showDebugNavigation ? (
+        <Stack.Screen
+          name="Debug"
+          component={DebugScreen}
+          options={{
+            headerShown: false,
+            animation: 'slide_from_right',
+            gestureEnabled: true,
+          }}
+        />
+      ) : null}
     </Stack.Navigator>
   </InboxFiltersResetProvider>
 );

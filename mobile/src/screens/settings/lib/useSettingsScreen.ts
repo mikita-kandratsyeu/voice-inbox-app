@@ -5,6 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState } from 'react-native';
 
+import { navigationRef } from '@/app/navigation/navigationRef';
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useAppLockStore } from '@/entities/app-lock';
 import { useFolderStore } from '@/entities/folder';
@@ -57,7 +58,6 @@ import {
 import { getWhisperLabel } from '@/shared/lib/whisper';
 
 import type { AutomationFeatureKind } from '../ui/AutomationComingSoonSheet';
-import { performHardReset } from './hardReset';
 
 const RESET_IAP_BILLING: IapBillingOptions = {
   annual: null,
@@ -107,7 +107,6 @@ export function useSettingsScreen() {
   const [automationSheet, setAutomationSheet] = useState<AutomationFeatureKind | null>(null);
   const [autoArchiveDelaySheetVisible, setAutoArchiveDelaySheetVisible] = useState(false);
   const [planPaywallVisible, setPlanPaywallVisibleState] = useState(false);
-  const [isHardResetting, setIsHardResetting] = useState(false);
   const [iapPaywallBusy, setIapPaywallBusy] = useState(false);
   const [iapBilling, setIapBilling] = useState<IapBillingOptions>(RESET_IAP_BILLING);
   const [selectedIapPeriod, setSelectedIapPeriod] = useState<IapBillingPeriod>('annual');
@@ -544,34 +543,12 @@ export function useSettingsScreen() {
     })();
   }, [monetizationMode, refreshProEntitlement, setPlanPaywallVisible, t]);
 
-  const handleHardReset = useCallback(() => {
-    Alert.alert(
-      'Hard reset',
-      'This will delete ALL local app data including recordings, settings, database, and keychain secrets. Continue?',
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: 'Hard reset',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsHardResetting(true);
-              await performHardReset();
-              Alert.alert(t('common.done'), 'Hard reset complete. Please fully restart the app.');
-            } catch (err) {
-              if (__DEV__) {
-                console.warn('[settings] hard reset failed', err);
-              }
-
-              Alert.alert(t('common.error'), 'Hard reset failed');
-            } finally {
-              setIsHardResetting(false);
-            }
-          },
-        },
-      ],
-    );
-  }, [t]);
+  const openDebugScreen = useCallback(() => {
+    if (!navigationRef.isReady()) {
+      return;
+    }
+    navigationRef.navigate('Debug');
+  }, []);
 
   return {
     t,
@@ -635,7 +612,6 @@ export function useSettingsScreen() {
     selectedIapPeriod,
     onIapBillingPeriodChange,
     iapProPriceLoading,
-    handleHardReset,
-    isHardResetting,
+    openDebugScreen,
   };
 }

@@ -742,7 +742,7 @@
       "empty": "—",
       "copied": "Скопировано в буфер",
       "webApiOverrideTitle": "Переопределение хоста Web API",
-      "webApiOverrideHint": "Направить приложение на staging или локальный сервер. При применении сбрасывается кэш токена API. Очистите поле и нажмите «Применить», чтобы снова использовать Remote Config / встроенный WEB_API_URL.",
+      "webApiOverrideHint": "Укажите staging или локальный сервер и при необходимости WEB_API_SECRET ниже, если он отличается от сборки. При применении сбрасывается кэш токена API. Очистите хост и нажмите «Применить», чтобы снова использовать Remote Config / встроенный WEB_API_URL.",
       "webApiOverridePlaceholder": "https://ваш-api.example.com",
       "webApiOverrideApply": "Применить",
       "webApiOverrideClear": "Сбросить",
@@ -750,7 +750,16 @@
       "webApiOverrideAppliedTitle": "Хост обновлён",
       "webApiOverrideClearedTitle": "Используется хост по умолчанию",
       "webApiOverrideInvalidTitle": "Некорректный URL",
-      "webApiOverrideInvalidBody": "Укажите полный URL с http или https (например https://example.com)."
+      "webApiOverrideInvalidBody": "Укажите полный URL с http или https (например https://example.com).",
+      "webApiSecretOverrideTitle": "Переопределение WEB_API_SECRET",
+      "webApiSecretOverrideHint": "Секрет приложения в заголовке x-app-secret для /api/token. Оставьте пустым и нажмите «Применить», чтобы использовать встроенный WEB_API_SECRET из сборки.",
+      "webApiSecretOverridePlaceholder": "Вставьте секрет",
+      "webApiSecretOverrideActiveNote": "Активно ручное переопределение секрета (см. статус ниже)."
+    },
+    "debugScreen": {
+      "title": "Отладка",
+      "entryRow": "Инструменты разработчика и диагностика",
+      "localDevNotice": "Полная внутренняя диагностика (переопределение хоста API, ID устройства, сеть и т.д.) доступна во внутренних сборках TestFlight. В локальной разработке (__DEV__) используйте логи Metro и привычные инструменты отладки."
     }
   },
   "appearance": {

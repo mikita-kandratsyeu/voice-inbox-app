@@ -736,7 +736,7 @@
       "empty": "—",
       "copied": "Copied to clipboard",
       "webApiOverrideTitle": "Web API host override",
-      "webApiOverrideHint": "Point the app at a staging or local server. Clears the cached API token when applied. Leave empty and tap Apply to use Remote Config / embedded WEB_API_URL.",
+      "webApiOverrideHint": "Point the app at a staging or local server and set WEB_API_SECRET below if it differs from the build. Clears the cached API token when applied. Leave the host empty and tap Apply to use Remote Config / embedded WEB_API_URL.",
       "webApiOverridePlaceholder": "https://your-api.example.com",
       "webApiOverrideApply": "Apply",
       "webApiOverrideClear": "Reset to default",
@@ -744,7 +744,16 @@
       "webApiOverrideAppliedTitle": "Host updated",
       "webApiOverrideClearedTitle": "Using default host",
       "webApiOverrideInvalidTitle": "Invalid URL",
-      "webApiOverrideInvalidBody": "Enter a full http or https URL (for example https://example.com)."
+      "webApiOverrideInvalidBody": "Enter a full http or https URL (for example https://example.com).",
+      "webApiSecretOverrideTitle": "WEB_API_SECRET override",
+      "webApiSecretOverrideHint": "App secret sent as x-app-secret for /api/token. Leave empty and tap Apply to use the embedded WEB_API_SECRET from the build.",
+      "webApiSecretOverridePlaceholder": "Paste app secret",
+      "webApiSecretOverrideActiveNote": "Manual secret override is active (see status below)."
+    },
+    "debugScreen": {
+      "title": "Debug",
+      "entryRow": "Developer tools & diagnostics",
+      "localDevNotice": "Full internal diagnostics (API host override, device ID, network stats) are available on TestFlight internal builds. For local development use Metro logs and your usual debugging tools."
     }
   },
   "appearance": {

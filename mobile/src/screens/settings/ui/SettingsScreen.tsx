@@ -1,17 +1,18 @@
+import { Bug } from 'lucide-react-native';
 import React, { useRef } from 'react';
 import { RefreshControl, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
-import { isCrashlyticsDebugEnabled, isTestflightInternalBuild } from '@/shared/config/buildEnv';
+import { isTestflightInternalBuild } from '@/shared/config/buildEnv';
 import {
   IS_ANDROID,
   useIsTablet,
   useScrollToTopOnTabPress,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
-import { PrivateModeBadge, SCREEN_PADDING } from '@/shared/ui';
+import { PrivateModeBadge, SCREEN_PADDING, SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { useSettingsScreen } from '../lib/useSettingsScreen';
 import { AiUsageCard } from './AiUsageCard';
@@ -22,12 +23,10 @@ import {
   SettingsAppearanceSection,
   SettingsAutomationSection,
   SettingsBackupSection,
-  SettingsDebugSection,
   SettingsDeviceSection,
   SettingsPermissionsSection,
   SettingsPrivacySection,
 } from './sections';
-import { SettingsInternalTechInfo } from './SettingsInternalTechInfo';
 import { SettingsPlanPaywallSheet } from './SettingsPlanPaywallSheet';
 import { SettingsPlanStatusCard } from './SettingsPlanStatusCard';
 
@@ -41,8 +40,7 @@ export const SettingsScreen = () => {
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   useScrollToTopOnTabPress(scrollRef);
 
-  const showDebugSection = __DEV__ || isTestflightInternalBuild();
-  const showCrashlyticsButton = __DEV__ && isCrashlyticsDebugEnabled();
+  const showDebugEntry = __DEV__ || isTestflightInternalBuild();
 
   return (
     <View style={{ flex: 1, backgroundColor: settings.color.background.secondary }}>
@@ -176,15 +174,17 @@ export const SettingsScreen = () => {
             navigation={settings.navigation}
             onRateApp={settings.handleRateApp}
           />
-          {showDebugSection && (
-            <SettingsDebugSection
-              color={settings.color}
-              onHardReset={settings.handleHardReset}
-              isHardResetting={settings.isHardResetting}
-              showCrashlyticsButton={showCrashlyticsButton}
-            />
+          {showDebugEntry && (
+            <SettingsSection title={settings.t('settings.debugScreen.title')}>
+              <SettingsRow
+                label={settings.t('settings.debugScreen.entryRow')}
+                leftIcon={<Bug size={20} color={settings.color.icon.muted} strokeWidth={1.8} />}
+                onPress={settings.openDebugScreen}
+                isFirst
+                isLast
+              />
+            </SettingsSection>
           )}
-          <SettingsInternalTechInfo />
           <DeferredInboxBannerAd color={settings.color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
         <SettingsPlanPaywallSheet

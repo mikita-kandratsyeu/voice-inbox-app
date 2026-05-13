@@ -1,5 +1,5 @@
-import { getWebApiSecret } from '@/shared/config/buildEnv';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
+import { resolveWebApiSecretForRequest } from '@/shared/config/testflightWebApiOverride';
 import { getOrCreateDeviceId } from '@/shared/lib/device-id';
 import { nitroFetch } from '@/shared/lib/fetch';
 
@@ -26,7 +26,7 @@ export function clearApiToken(): void {
 
 async function fetchToken(): Promise<{ token: string; deviceId: string }> {
   const deviceId = await getOrCreateDeviceId();
-  const secret = getWebApiSecret();
+  const secret = resolveWebApiSecretForRequest();
 
   if (!secret) {
     throw new Error('WEB_API_SECRET is not configured');

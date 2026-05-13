@@ -10,14 +10,17 @@ import {
   getAppEnv,
   getDatabaseUrl,
   getMobileUserAgent,
-  getWebApiSecret,
   isTestflightInternalBuild,
 } from '@/shared/config/buildEnv';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import {
+  applyTestflightWebApiSecretOverride,
   applyTestflightWebApiUrlOverride,
+  getStoredTestflightWebApiSecretOverride,
   getStoredTestflightWebApiUrlOverride,
+  readTestflightWebApiSecretOverride,
   readTestflightWebApiUrlOverride,
+  resolveWebApiSecretForRequest,
   subscribeTestflightWebApiUrlOverride,
 } from '@/shared/config/testflightWebApiOverride';
 import { clearApiToken } from '@/shared/lib/api-auth';
@@ -131,11 +134,21 @@ export const SettingsInternalTechInfo = () => {
     getStoredTestflightWebApiUrlOverride,
     getStoredTestflightWebApiUrlOverride,
   );
+  const storedSecretOverride = useSyncExternalStore(
+    subscribeTestflightWebApiUrlOverride,
+    getStoredTestflightWebApiSecretOverride,
+    getStoredTestflightWebApiSecretOverride,
+  );
   const [webApiOverrideDraft, setWebApiOverrideDraft] = useState(storedWebApiOverride);
+  const [secretOverrideDraft, setSecretOverrideDraft] = useState(storedSecretOverride);
 
   useEffect(() => {
     setWebApiOverrideDraft(storedWebApiOverride);
   }, [storedWebApiOverride]);
+
+  useEffect(() => {
+    setSecretOverrideDraft(storedSecretOverride);
+  }, [storedSecretOverride]);
 
   const [memoryDisplay, setMemoryDisplay] = useState<string>('—');
   const [cpuDisplay, setCpuDisplay] = useState<string>('—');
@@ -156,24 +169,31 @@ export const SettingsInternalTechInfo = () => {
   );
 
   const onApplyWebApiOverride = useCallback(() => {
-    const result = applyTestflightWebApiUrlOverride(webApiOverrideDraft);
-    if (result === 'forbidden') {
+    const urlResult = applyTestflightWebApiUrlOverride(webApiOverrideDraft);
+    if (urlResult === 'forbidden') {
       return;
     }
-    if (result === 'invalid') {
+    if (urlResult === 'invalid') {
       Alert.alert(
         t('settings.internalTech.webApiOverrideInvalidTitle'),
         t('settings.internalTech.webApiOverrideInvalidBody'),
       );
       return;
     }
+
+    const secretResult = applyTestflightWebApiSecretOverride(secretOverrideDraft);
+    if (secretResult === 'forbidden') {
+      return;
+    }
+
     clearApiToken();
-    if (result === 'cleared') {
+
+    if (urlResult === 'cleared' && secretResult === 'cleared') {
       Alert.alert(t('settings.internalTech.webApiOverrideClearedTitle'));
     } else {
       Alert.alert(t('settings.internalTech.webApiOverrideAppliedTitle'));
     }
-  }, [t, webApiOverrideDraft]);
+  }, [t, webApiOverrideDraft, secretOverrideDraft]);
 
   useEffect(() => {
     if (!(__DEV__ || isTestflightInternalBuild())) {
@@ -290,12 +310,13 @@ export const SettingsInternalTechInfo = () => {
 
   const webApiUrl = getWebApiUrl().trim();
   const webApiOverrideActive = readTestflightWebApiUrlOverride() != null;
+  const secretOverrideActive = readTestflightWebApiSecretOverride() != null;
   const websiteUrl = getWebsiteUrl().trim();
   const userAgent = getMobileUserAgent().trim();
   const dbRaw = getDatabaseUrl().trim();
   const dbDisplay = dbRaw ? redactCredentialsInUrl(dbRaw) : '';
   const appEnv = getAppEnv().trim();
-  const secretOk = getWebApiSecret().trim().length > 0;
+  const secretOk = resolveWebApiSecretForRequest().trim().length > 0;
   const secretLabel = secretOk
     ? t('settings.internalTech.secretConfigured')
     : t('settings.internalTech.secretNotSet');
@@ -361,6 +382,33 @@ export const SettingsInternalTechInfo = () => {
             backgroundColor: color.background.secondary,
           }}
         />
+        <Text
+          className="mt-4 text-[11px] font-semibold uppercase"
+          style={{ color: color.text.muted }}
+        >
+          {t('settings.internalTech.webApiSecretOverrideTitle')}
+        </Text>
+        <Text className="mt-1 text-xs leading-5" style={{ color: color.text.secondary }}>
+          {t('settings.internalTech.webApiSecretOverrideHint')}
+        </Text>
+        <TextInput
+          value={secretOverrideDraft}
+          onChangeText={setSecretOverrideDraft}
+          placeholder={t('settings.internalTech.webApiSecretOverridePlaceholder')}
+          placeholderTextColor={color.text.muted}
+          autoCapitalize="none"
+          autoCorrect={false}
+          autoComplete="off"
+          textContentType="none"
+          importantForAutofill="no"
+          secureTextEntry
+          className="mt-2 rounded-lg border px-3 py-2 font-mono text-[13px]"
+          style={{
+            borderColor: color.border.default,
+            color: color.text.primary,
+            backgroundColor: color.background.secondary,
+          }}
+        />
         <View className="mt-2 flex-row flex-wrap gap-2">
           <Pressable
             accessibilityRole="button"
@@ -372,12 +420,14 @@ export const SettingsInternalTechInfo = () => {
               {t('settings.internalTech.webApiOverrideApply')}
             </Text>
           </Pressable>
-          {storedWebApiOverride.length > 0 ? (
+          {storedWebApiOverride.length > 0 || storedSecretOverride.length > 0 ? (
             <Pressable
               accessibilityRole="button"
               onPress={() => {
                 setWebApiOverrideDraft('');
+                setSecretOverrideDraft('');
                 applyTestflightWebApiUrlOverride('');
+                applyTestflightWebApiSecretOverride('');
                 clearApiToken();
                 Alert.alert(t('settings.internalTech.webApiOverrideClearedTitle'));
               }}
@@ -438,12 +488,19 @@ export const SettingsInternalTechInfo = () => {
         </Text>
         <Text
           className="mt-1 font-mono text-[13px] leading-5"
-          style={{ color: color.text.primary }}
+          style={{
+            color: secretOverrideActive ? color.accent.aiData : color.text.primary,
+          }}
           selectable
         >
           {secretLabel}
         </Text>
       </View>
+      {secretOverrideActive ? (
+        <Text className="mb-2 text-xs" style={{ color: color.text.secondary }}>
+          {t('settings.internalTech.webApiSecretOverrideActiveNote')}
+        </Text>
+      ) : null}
       <TechRow
         label={t('settings.internalTech.appVersion')}
         value={versionDisplay}

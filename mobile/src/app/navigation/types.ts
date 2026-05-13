@@ -29,6 +29,7 @@ export type RootStackParamList = {
   WhisperModelPickerRoot: undefined;
   EditTranscript: { record: VoiceRecord };
   AllTasks: { recordId?: string } | undefined;
+  Debug: undefined;
 };
 
 export type SettingsStackParamList = {
