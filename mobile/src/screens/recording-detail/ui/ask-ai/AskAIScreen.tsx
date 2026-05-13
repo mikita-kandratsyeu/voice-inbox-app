@@ -2,10 +2,10 @@ import Clipboard from '@react-native-clipboard/clipboard';
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ArrowRight } from 'lucide-react-native';
+import { ArrowRight, Trash2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Share, ToastAndroid, View } from 'react-native';
+import { Alert, ScrollView, Share, ToastAndroid, View } from 'react-native';
 import { KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
@@ -45,6 +45,7 @@ export const AskAIScreen = () => {
   const [questionInput, setQuestionInput] = useState('');
   const {
     askQuestion,
+    reset,
     syncAskSessionFromDb,
     isLoading,
     isRestoringSession,
@@ -150,6 +151,48 @@ export const AskAIScreen = () => {
     });
   }, []);
 
+  const canClearAskHistory =
+    hasTranscript &&
+    !isRestoringSession &&
+    !isLoading &&
+    (history.length > 0 || Boolean(answer) || Boolean(question && error));
+
+  const handleClearAskHistory = useCallback(() => {
+    Alert.alert(
+      t('recordingDetail.askClearHistoryTitle'),
+      t('recordingDetail.askClearHistoryMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('recordingDetail.askClearHistoryConfirm'),
+          style: 'destructive',
+          onPress: () => {
+            KeyboardController.dismiss({ animated: false });
+            reset();
+          },
+        },
+      ],
+    );
+  }, [t, reset]);
+
+  const clearHistoryHeaderButton = useMemo(
+    () =>
+      canClearAskHistory ? (
+        <Button
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<Trash2 size={18} color={color.text.primary} strokeWidth={2.2} />}
+          color={color}
+          onPress={handleClearAskHistory}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel={t('recordingDetail.askClearHistoryA11y')}
+        />
+      ) : null,
+    [canClearAskHistory, color, handleClearAskHistory, t],
+  );
+
   const shouldShowInputRow = hasTranscript && !isRestoringSession && !isLoading;
   /** Fill scroll height when loading so the loader can be centered below the disclosure. */
   const scrollContentFlexGrow =
@@ -188,6 +231,7 @@ export const AskAIScreen = () => {
       <ScreenHeader
         title={t('recordingDetail.askEmptyTitle')}
         onBack={handleBack}
+        rightSlot={clearHistoryHeaderButton}
         dismissKeyboardOnPress
       />
       <View style={{ flex: 1 }}>
