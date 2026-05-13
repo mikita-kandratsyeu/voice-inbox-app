@@ -3,6 +3,7 @@ import { Linking } from 'react-native';
 
 import { navigationRef } from '@/app/navigation/navigationRef';
 import { useDownloadingDeeplink } from '@/features/downloading-deeplink';
+import { tryParseInAppEventDeepLink } from '@/features/in-app-event';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useRecordingDeeplink } from '@/features/recording-deeplink/model/useRecordingDeeplink';
 
@@ -13,6 +14,7 @@ const ALL_TASKS_URL = 'voiceinbox://tasks';
 const pendingRecordModalOpenRef = { current: false };
 const pendingTextNoteModalOpenRef = { current: false };
 const pendingAllTasksOpenRef = { current: false };
+const pendingInAppEventIdRef = { current: null as string | null };
 
 export const flushPendingRecordModalNavigation = () => {
   if (!navigationRef.isReady()) {
@@ -32,6 +34,12 @@ export const flushPendingRecordModalNavigation = () => {
   if (pendingAllTasksOpenRef.current) {
     pendingAllTasksOpenRef.current = false;
     navigationRef.navigate('AllTasks');
+  }
+
+  if (pendingInAppEventIdRef.current) {
+    const eventId = pendingInAppEventIdRef.current;
+    pendingInAppEventIdRef.current = null;
+    navigationRef.navigate('InAppEventDetail', { eventId });
   }
 };
 
@@ -87,12 +95,29 @@ export const useInitDeepLinking = () => {
     return true;
   }, []);
 
+  const handleInAppEventDeepLink = useCallback((rawUrl: string) => {
+    const eventId = tryParseInAppEventDeepLink(rawUrl);
+    if (!eventId) return false;
+
+    if (!getHasSeenOnboarding()) {
+      return true;
+    }
+
+    if (navigationRef.isReady()) {
+      navigationRef.navigate('InAppEventDetail', { eventId });
+    } else {
+      pendingInAppEventIdRef.current = eventId;
+    }
+    return true;
+  }, []);
+
   const routeDeepLink = useCallback(
     (rawUrl: string) => {
       try {
         if (handleStartRecording(rawUrl)) return;
         if (handleTextNoteDeepLink(rawUrl)) return;
         if (handleAllTasksDeepLink(rawUrl)) return;
+        if (handleInAppEventDeepLink(rawUrl)) return;
 
         const url = new URL(rawUrl);
 
@@ -105,6 +130,7 @@ export const useInitDeepLinking = () => {
     [
       handleAllTasksDeepLink,
       handleDownloadingDeeplink,
+      handleInAppEventDeepLink,
       handleRecordingDeeplink,
       handleStartRecording,
       handleTextNoteDeepLink,

@@ -20,6 +20,8 @@ export type ButtonProps = TouchableOpacityProps & {
   label?: string;
   /** Rendered after `label` with smaller, subtler styling (e.g. dynamic size). */
   labelSuffix?: string;
+  /** Rendered after the label row (e.g. arrow); hidden while `loading`. */
+  trailingIcon?: React.ReactNode;
   icon?: React.ReactNode;
   loading?: boolean;
   variant?: ButtonVariant;
@@ -82,6 +84,7 @@ const DANGER_BG = { backgroundColor: 'transparent' };
 export const Button = ({
   label,
   labelSuffix,
+  trailingIcon,
   icon,
   loading = false,
   variant = 'primary',
@@ -157,64 +160,71 @@ export const Button = ({
     >
       {icon}
       {!isIconOnly && label && (
-        <View className="items-center justify-center">
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'baseline',
-              justifyContent: 'center',
-              maxWidth: '100%',
-              opacity: loading ? 0 : 1,
-            }}
-          >
-            <Text
-              className={textClassName}
-              style={[textStyle, { flexShrink: 1 }]}
-              numberOfLines={1}
+        <View className="flex-row items-center justify-center gap-2">
+          <View className="items-center justify-center">
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'baseline',
+                justifyContent: 'center',
+                maxWidth: '100%',
+                opacity: loading ? 0 : 1,
+              }}
             >
-              {label}
-            </Text>
-            {labelSuffix ? (
               <Text
-                className={[
-                  'text-[14px] font-medium leading-6',
-                  variantKey === 'danger' ? variantTextClass : '',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                style={[
-                  textStyle,
-                  {
-                    fontVariant: ['tabular-nums'],
-                    opacity:
-                      variantKey === 'primary' ? 0.88 : variantKey === 'danger' ? 0.92 : 0.82,
-                  },
-                ]}
+                className={textClassName}
+                style={[textStyle, { flexShrink: 1 }]}
                 numberOfLines={1}
               >
-                {' '}
-                {labelSuffix}
+                {label}
               </Text>
-            ) : null}
-          </View>
-          {loading && (
-            <View
-              pointerEvents="none"
-              style={[
-                StyleSheet.absoluteFillObject,
-                { alignItems: 'center', justifyContent: 'center' },
-              ]}
-            >
-              <ActivityIndicator
-                size="small"
-                color={
-                  variantKey === 'primary'
-                    ? colorScheme.icon.onAccent
-                    : (textColor ?? colorScheme.text.primary)
-                }
-              />
+              {labelSuffix ? (
+                <Text
+                  className={[
+                    'text-[14px] font-medium leading-6',
+                    variantKey === 'danger' ? variantTextClass : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  style={[
+                    textStyle,
+                    {
+                      fontVariant: ['tabular-nums'],
+                      opacity:
+                        variantKey === 'primary' ? 0.88 : variantKey === 'danger' ? 0.92 : 0.82,
+                    },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {' '}
+                  {labelSuffix}
+                </Text>
+              ) : null}
             </View>
-          )}
+            {loading && (
+              <View
+                pointerEvents="none"
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  { alignItems: 'center', justifyContent: 'center' },
+                ]}
+              >
+                <ActivityIndicator
+                  size="small"
+                  color={
+                    variantKey === 'primary'
+                      ? colorScheme.icon.onAccent
+                      : (textColor ?? colorScheme.text.primary)
+                  }
+                />
+              </View>
+            )}
+          </View>
+          {!loading && trailingIcon ? (
+            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              {trailingIcon}
+            </View>
+          ) : null}
         </View>
       )}
       {!isIconOnly && !label && loading && (

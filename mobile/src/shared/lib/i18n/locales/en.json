@@ -1418,6 +1418,25 @@
     "autoOrganizeReviewUnknownFolder": "Folder",
     "autoOrganizeReviewUnnamedFolder": "Untitled"
   },
+  "inAppEvent": {
+    "highlightsTitle": "Highlights",
+    "primaryCta": "Continue",
+    "update110": {
+      "title": "Voice Inbox AI gets better",
+      "subtitle": "New features and thoughtful improvements",
+      "bullets": [
+        "Meeting Mode for focused capture during conversations",
+        "Pin important moments so they stay easy to find",
+        "More export options for your notes and transcripts",
+        "Clearer storage controls for models and local data",
+        "Polish and fixes throughout the app"
+      ]
+    },
+    "unknown": {
+      "title": "What’s new",
+      "subtitle": "This update highlight isn’t available in your build yet. Update the app from the App Store for the latest improvements."
+    }
+  },
   "bootstrap": {
     "dbErrorTitle": "Could not load data",
     "dbErrorMessage": "Your data is likely intact. Please restart the app.",

@@ -7,6 +7,7 @@ import React from 'react';
 import { InboxFiltersResetProvider } from '@/features/inbox-filters';
 import { AllTasksScreen } from '@/screens/all-tasks';
 import { DebugScreen } from '@/screens/debug';
+import { InAppEventDetailScreen } from '@/screens/in-app-event';
 import { RecordScreen, TextNoteScreen } from '@/screens/record';
 import {
   AskAIScreen,
@@ -101,6 +102,16 @@ export const RootNavigator = () => (
           headerShown: false,
           animation: 'slide_from_right',
           gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="InAppEventDetail"
+        component={InAppEventDetailScreen}
+        options={{
+          headerShown: false,
+          presentation: 'fullScreenModal',
+          animation: 'slide_from_bottom',
+          gestureEnabled: false,
         }}
       />
       {showDebugNavigation ? (
