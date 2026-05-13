@@ -453,6 +453,8 @@
       "resetAt": "Сброс: {{date}}",
       "loading": "Загрузка...",
       "unavailable": "—",
+      "loadFailed": "Нет сети",
+      "loadFailedHint": "Потяните экран вниз, когда интернет снова будет доступен.",
       "claimBonus": "Посмотреть рекламу и получить {{count}} генераций",
       "claimBonusTitle": "Бонус за просмотр",
       "claimBonusSubtitle": "Восстановим {{count}} генерации в недельном лимите",

@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { ChevronRight, Gauge, PlayCircle } from 'lucide-react-native';
+import { ChevronRight, Gauge, PlayCircle, WifiOff } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -8,11 +8,11 @@ import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import type { AiUsage } from '@/shared/lib/ai-api';
 import { formatLocalizedLongDateWithTime } from '@/shared/lib/taskDeadlineTimeDisplay';
-import { SkeletonPulse } from '@/shared/ui';
+import { SettingsRow, SkeletonPulse } from '@/shared/ui';
 
 function getAiUsageStatusText(usage: AiUsage | null, isExhausted: boolean, t: TFunction): string {
   if (!usage) {
-    return t('settings.aiUsage.unavailable');
+    return '';
   }
   if (isExhausted) {
     return t('settings.aiUsage.exhausted');
@@ -159,7 +159,7 @@ export const AiUsageCard = ({
         used: usage.used,
         limit: usage.limit,
       })
-    : t('settings.aiUsage.title');
+    : t('settings.aiUsage.loadFailed');
   const CardContainer = onOpenDetails ? Pressable : View;
 
   return (
@@ -167,7 +167,13 @@ export const AiUsageCard = ({
       onPress={onOpenDetails}
       disabled={onOpenDetails == null}
       accessibilityRole={onOpenDetails ? 'button' : undefined}
-      accessibilityLabel={onOpenDetails ? t('settings.aiUsage.openDashboard') : undefined}
+      accessibilityLabel={
+        onOpenDetails
+          ? usage == null
+            ? `${t('settings.aiUsage.openDashboard')}. ${t('settings.aiUsage.loadFailed')}`
+            : t('settings.aiUsage.openDashboard')
+          : undefined
+      }
       className="mb-8 overflow-hidden rounded-2xl p-5"
       style={{
         borderWidth: 1,
@@ -197,15 +203,26 @@ export const AiUsageCard = ({
 
       {loading ? (
         <AiUsageSkeleton color={color} />
+      ) : usage == null ? (
+        <>
+          <View
+            className="mb-2.5 overflow-hidden rounded-2xl"
+            style={{ borderWidth: 1, borderColor: color.border.default }}
+          >
+            <SettingsRow
+              label={t('settings.aiUsage.loadFailed')}
+              subtitle={t('settings.aiUsage.loadFailedHint')}
+              leftIcon={<WifiOff size={20} color={color.text.secondary} strokeWidth={1.8} />}
+              showChevron={false}
+              isFirst
+              isLast
+            />
+          </View>
+        </>
       ) : (
         <>
           <View className="mb-2">
             <View className="mb-2 flex-row flex-wrap items-center justify-between gap-x-2 gap-y-1">
-              {usage == null && (
-                <Text className="text-sm font-medium" style={{ color: color.text.secondary }}>
-                  {statusText}
-                </Text>
-              )}
               {usage != null && !isExhausted && (
                 <Text
                   className="text-[15px] font-semibold"

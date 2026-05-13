@@ -7,6 +7,7 @@ import {
   MessageCircleQuestion,
   Mic,
   Sparkles,
+  WifiOff,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -232,6 +233,17 @@ export const AiUsageDashboardScreen = () => {
         >
           {loading ? (
             <UsageMetricsSkeleton color={color} />
+          ) : usage == null ? (
+            <View className="mb-7 overflow-hidden rounded-2xl" style={{ borderWidth: 1, borderColor: color.border.default }}>
+              <SettingsRow
+                label={t('settings.aiUsage.loadFailed')}
+                subtitle={t('settings.aiUsage.loadFailedHint')}
+                leftIcon={<WifiOff size={20} color={color.text.secondary} strokeWidth={1.8} />}
+                showChevron={false}
+                isFirst
+                isLast
+              />
+            </View>
           ) : (
             <View className="mb-7 flex-row flex-wrap gap-3">
               <UsageMetricCard

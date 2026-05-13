@@ -453,6 +453,8 @@
       "resetAt": "Resets: {{date}}",
       "loading": "Loading...",
       "unavailable": "—",
+      "loadFailed": "No connection",
+      "loadFailedHint": "Pull down to refresh when you’re back online.",
       "claimBonus": "Watch ad for {{count}} bonus generations",
       "claimBonusTitle": "Bonus for watching",
       "claimBonusSubtitle": "Restore {{count}} generations in your weekly limit",
