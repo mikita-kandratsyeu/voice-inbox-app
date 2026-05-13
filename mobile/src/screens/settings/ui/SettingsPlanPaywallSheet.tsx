@@ -160,7 +160,7 @@ function SubscriptionPlanOptionCard({
       className="w-full rounded-2xl px-4 pb-2.5 pt-2.5"
       style={{
         alignSelf: 'stretch',
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: selected ? c.accent.primary : c.border.default,
         backgroundColor: selected ? `${c.accent.primary}12` : c.background.primary,
       }}
