@@ -250,6 +250,7 @@
     "showTranslation": "Show translation ({{lang}})",
     "translateLimitReached": "Translation limit reached. Try again next week.",
     "translateError": "Failed to translate. Check your connection and try again.",
+    "translateErrorShort": "Failed to translate",
     "cancel": "Cancel",
     "modelNotDownloaded": "Model not downloaded",
     "modelNotDownloadedHint": "Download the Whisper model in Settings to transcribe.",

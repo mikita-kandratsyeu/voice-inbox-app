@@ -4,6 +4,7 @@ function looksLikeIosNetworkErrorDump(message: string): boolean {
   return (
     message.includes('NSURLErrorDomain') ||
     message.includes('kCFErrorDomainCFNetwork') ||
+    message.includes('kCFErrorDomain-CFNetwork') ||
     message.includes('NSErrorFailingURLStringKey') ||
     message.includes('NSErrorFailingURLKey') ||
     message.includes('_NSURLErrorNWPathKey')

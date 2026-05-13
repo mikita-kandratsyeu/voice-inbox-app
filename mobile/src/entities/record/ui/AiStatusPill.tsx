@@ -134,7 +134,7 @@ export const AiStatusPill = ({
       summaryStatus !== 'error' &&
       tasksStatus !== 'error' &&
       askAiStatus !== 'error'
-        ? t('recordingDetail.translateError')
+        ? t('recordingDetail.translateErrorShort')
         : askAiStatus === 'error' &&
             summaryStatus !== 'error' &&
             tasksStatus !== 'error' &&

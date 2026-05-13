@@ -250,6 +250,7 @@
     "showTranslation": "Показать перевод ({{lang}})",
     "translateLimitReached": "Лимит переводов исчерпан. Попробуйте на следующей неделе.",
     "translateError": "Не удалось перевести. Проверьте подключение и попробуйте снова.",
+    "translateErrorShort": "Не удалось перевести",
     "cancel": "Отменить",
     "modelNotDownloaded": "Модель не скачана",
     "modelNotDownloadedHint": "Для транскрипции необходимо скачать модель Whisper в настройках.",

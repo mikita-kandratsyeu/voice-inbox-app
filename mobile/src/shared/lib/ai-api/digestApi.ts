@@ -1,5 +1,6 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
 import type { AiUsage } from './aiApi';
@@ -81,6 +82,6 @@ export async function generateDigest(body: DigestApiBody): Promise<DigestApiResu
       },
     };
   } catch (err) {
-    return { ok: false, error: err instanceof Error ? err.message : 'Network error' };
+    return { ok: false, error: toUserFacingFetchErrorFromUnknown(err) };
   }
 }
