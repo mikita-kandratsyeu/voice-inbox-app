@@ -182,7 +182,7 @@ export const AskAIScreen = () => {
           iconOnly
           variant="icon"
           size="md"
-          icon={<Trash2 size={18} color={color.text.primary} strokeWidth={2.2} />}
+          icon={<Trash2 size={18} color={color.accent.delete} strokeWidth={2.2} />}
           color={color}
           onPress={handleClearAskHistory}
           activeOpacity={0.7}

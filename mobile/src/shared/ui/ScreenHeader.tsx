@@ -1,7 +1,7 @@
 import { ChevronLeft } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, Text, View } from 'react-native';
 import { KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -33,10 +33,11 @@ export const ScreenHeader = ({
     KeyboardController.dismiss();
   }, []);
 
-  const titleClass = `flex-1 text-[18px] font-semibold ${titleAlign === 'center' ? 'text-center' : 'text-left'}`;
+  const titleClass = `w-full text-[18px] font-semibold leading-[22px] ${titleAlign === 'center' ? 'text-center' : 'text-left'}`;
   const titleStyle = [
     { color: color.text.primary },
     titleAlign === 'left' ? { paddingLeft: onBack ? 8 : 0 } : null,
+    Platform.OS === 'android' ? { includeFontPadding: false } : null,
   ];
 
   return (
@@ -64,23 +65,25 @@ export const ScreenHeader = ({
           />
         ) : null}
       </View>
-      {dismissKeyboardOnPress ? (
-        <Pressable
-          accessibilityLabel={title}
-          accessibilityRole="header"
-          onPress={handleTitlePress}
-          className="min-w-0 flex-1"
-          hitSlop={{ top: 8, bottom: 8 }}
-        >
+      <View className="min-w-0 flex-1 justify-center" style={{ minHeight: 44 }}>
+        {dismissKeyboardOnPress ? (
+          <Pressable
+            accessibilityLabel={title}
+            accessibilityRole="header"
+            onPress={handleTitlePress}
+            className="w-full min-w-0"
+            hitSlop={{ top: 8, bottom: 8 }}
+          >
+            <Text className={titleClass} style={titleStyle}>
+              {title}
+            </Text>
+          </Pressable>
+        ) : (
           <Text className={titleClass} style={titleStyle}>
             {title}
           </Text>
-        </Pressable>
-      ) : (
-        <Text className={titleClass} style={titleStyle}>
-          {title}
-        </Text>
-      )}
+        )}
+      </View>
       <View className="min-w-[44px] items-end">{rightSlot ?? null}</View>
     </View>
   );

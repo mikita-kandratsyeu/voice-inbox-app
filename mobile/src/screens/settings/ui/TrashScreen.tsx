@@ -213,7 +213,7 @@ export const TrashScreen = () => {
               variant="icon"
               size="md"
               accessibilityLabel={t('trash.emptyTrashAction')}
-              icon={<Trash2 size={22} color={color.accent.delete} strokeWidth={2} />}
+              icon={<Trash2 size={18} color={color.accent.delete} strokeWidth={2.2} />}
               color={color}
               onPress={onEmptyTrash}
             />
