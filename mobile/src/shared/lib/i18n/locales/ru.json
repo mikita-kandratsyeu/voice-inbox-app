@@ -327,7 +327,6 @@
     "privateModeErrorHint": "Ошибка связана с Private режимом. Можно временно перейти в Smart режим и повторить.",
     "askAnother": "Задать другой вопрос",
     "askCopy": "Копировать",
-    "askCopySuccess": "Готово",
     "askCopied": "Скопировано в буфер",
     "askShare": "Поделиться",
     "askCopyThisTurn": "Скопировать вопрос и ответ",

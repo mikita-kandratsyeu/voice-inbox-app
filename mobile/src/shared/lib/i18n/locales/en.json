@@ -327,7 +327,6 @@
     "privateModeErrorHint": "This error is related to Private mode. You can switch to Smart mode and retry.",
     "askAnother": "Ask another question",
     "askCopy": "Copy",
-    "askCopySuccess": "Copied",
     "askCopied": "Copied to clipboard",
     "askShare": "Share",
     "askCopyThisTurn": "Copy question and answer",

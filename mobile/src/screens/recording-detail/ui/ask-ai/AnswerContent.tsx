@@ -1,14 +1,13 @@
-import { Check, Copy, ShareIcon } from 'lucide-react-native';
+import { Copy, ShareIcon } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   Easing,
-  interpolate,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
   withSequence,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -29,53 +28,29 @@ type AskCopyTurnButtonProps = {
   onCopy: (text: string) => void;
 };
 
-const COPY_ICON_CROSSFADE_MS = 200;
-const COPY_SUCCESS_HOLD_MS = 500;
+const COPY_PRESS_IN_MS = 70;
+const COPY_SPRING_DAMPING = 14;
+const COPY_SPRING_STIFFNESS = 280;
 
 /** Same min height as Share chip so the row stays visually aligned. */
 const ASK_ACTION_CHIP_MIN_HEIGHT = 40;
 
 const AskCopyTurnButton = ({ color, clipboardText, onCopy }: AskCopyTurnButtonProps) => {
   const { t } = useTranslation();
-  const progress = useSharedValue(0);
-  const copyLabel = t('recordingDetail.askCopy');
-  const successLabel = t('recordingDetail.askCopySuccess');
-  const ghostLabelForWidth = copyLabel.length >= successLabel.length ? copyLabel : successLabel;
+  const scale = useSharedValue(1);
 
-  const copyIconStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 1], [1, 0]),
-    transform: [{ scale: interpolate(progress.value, [0, 1], [1, 0.82]) }],
-  }));
-
-  const checkIconStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 1], [0, 1]),
-    transform: [{ scale: interpolate(progress.value, [0, 1], [0.55, 1]) }],
-  }));
-
-  const copyLabelStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 1], [1, 0]),
-    transform: [{ translateY: interpolate(progress.value, [0, 1], [0, 3]) }],
-  }));
-
-  const checkLabelStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 1], [0, 1]),
-    transform: [{ translateY: interpolate(progress.value, [0, 1], [4, 0]) }],
+  const chipAnimStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
   }));
 
   const handlePress = () => {
     onCopy(clipboardText);
-    progress.value = withSequence(
-      withTiming(1, {
-        duration: COPY_ICON_CROSSFADE_MS,
-        easing: Easing.out(Easing.cubic),
+    scale.value = withSequence(
+      withTiming(0.94, {
+        duration: COPY_PRESS_IN_MS,
+        easing: Easing.out(Easing.quad),
       }),
-      withDelay(
-        COPY_SUCCESS_HOLD_MS,
-        withTiming(0, {
-          duration: COPY_ICON_CROSSFADE_MS,
-          easing: Easing.in(Easing.cubic),
-        }),
-      ),
+      withSpring(1, { damping: COPY_SPRING_DAMPING, stiffness: COPY_SPRING_STIFFNESS }),
     );
   };
 
@@ -86,64 +61,21 @@ const AskCopyTurnButton = ({ color, clipboardText, onCopy }: AskCopyTurnButtonPr
       accessibilityRole="button"
       accessibilityLabel={t('recordingDetail.askCopyThisTurn')}
       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-      className="flex-row items-center gap-2 rounded-xl px-3 py-2"
+      className="rounded-xl px-3 py-2"
       style={{ backgroundColor: color.background.tertiary, minHeight: ASK_ACTION_CHIP_MIN_HEIGHT }}
     >
-      <View className="h-[17] w-[17] shrink-0 items-center justify-center">
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFillObject,
-            { alignItems: 'center', justifyContent: 'center' },
-            copyIconStyle,
-          ]}
-        >
+      <Animated.View className="flex-row items-center gap-2" style={chipAnimStyle}>
+        <View className="h-[17] w-[17] shrink-0 items-center justify-center">
           <Copy size={17} color={color.text.primary} strokeWidth={2} />
-        </Animated.View>
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFillObject,
-            { alignItems: 'center', justifyContent: 'center' },
-            checkIconStyle,
-          ]}
-        >
-          <Check size={17} color={color.accent.success} strokeWidth={2.6} />
-        </Animated.View>
-      </View>
-      <View className="relative shrink justify-center">
+        </View>
         <Text
           className="text-sm font-medium"
-          style={{ opacity: 0 }}
+          style={{ color: color.text.primary }}
           numberOfLines={1}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
         >
-          {ghostLabelForWidth}
+          {t('recordingDetail.askCopy')}
         </Text>
-        <Animated.View
-          style={[StyleSheet.absoluteFillObject, { justifyContent: 'center' }, copyLabelStyle]}
-        >
-          <Text
-            className="text-sm font-medium"
-            style={{ color: color.text.primary }}
-            numberOfLines={1}
-          >
-            {copyLabel}
-          </Text>
-        </Animated.View>
-        <Animated.View
-          style={[StyleSheet.absoluteFillObject, { justifyContent: 'center' }, checkLabelStyle]}
-        >
-          <Text
-            className="text-sm font-medium"
-            style={{ color: color.accent.success }}
-            numberOfLines={1}
-          >
-            {successLabel}
-          </Text>
-        </Animated.View>
-      </View>
+      </Animated.View>
     </TouchableOpacity>
   );
 };
