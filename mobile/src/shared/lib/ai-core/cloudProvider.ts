@@ -8,6 +8,7 @@ import {
   postAskQuestion,
 } from '@/shared/lib/ai-api';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
+import { isNonNegativeFiniteNumber } from '@/shared/lib/type-guards';
 
 import type {
   AiExecutionContext,
@@ -78,6 +79,15 @@ export async function runCloudSummaryTasks(
         ? { taskExtractionHint: request.taskExtractionHint.trim() }
         : {}),
     },
+    ...(request.transcriptSegments?.length
+      ? {
+          transcriptSegments: request.transcriptSegments.map((s) => ({
+            ...(isNonNegativeFiniteNumber(s.startMs) ? { startMs: s.startMs } : {}),
+            ...(isNonNegativeFiniteNumber(s.endMs) ? { endMs: s.endMs } : {}),
+            text: s.text,
+          })),
+        }
+      : {}),
   });
 
   if (!postResult.ok) {

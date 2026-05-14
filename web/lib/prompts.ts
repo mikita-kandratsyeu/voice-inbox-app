@@ -316,6 +316,16 @@ const OUTPUT_LANGUAGE_INSTRUCTIONS: Record<
   en: 'Write ALL text fields (summary, suggestedTitle, task titles, tags, keyPhrases, nextSteps) in English, regardless of the transcript language.',
 };
 
+/** Standalone meeting-dialogue pass: must name meetingDialogueMarkdown explicitly (main OUTPUT_LANGUAGE_* lists other fields only). */
+const MEETING_DIALOGUE_OUTPUT_LANGUAGE_INSTRUCTIONS: Record<
+  NonNullable<AiProcessingOptions['outputLanguage']>,
+  string
+> = {
+  same: 'Write meetingDialogueMarkdown in the SAME language as the transcript: both neutral speaker labels (unless a name/role is clearly stated) and the text after each colon. Keep proper names and technical tokens from the transcript when they are normally left as-is.',
+  ru: 'Write meetingDialogueMarkdown entirely in Russian: neutral labels when needed (e.g. Участник 1:) and all spoken content after each colon. If the transcript is not Russian, translate into natural faithful Russian.',
+  en: 'Write meetingDialogueMarkdown entirely in English: neutral labels when needed (e.g. Speaker 1:) and all spoken content after each colon. If the transcript is not English, translate into natural faithful English.',
+};
+
 const PROCESSING_PRESET_INSTRUCTIONS: Record<
   NonNullable<AiProcessingOptions['processingPreset']>,
   string
@@ -370,6 +380,52 @@ const PSEUDO_DIARIZATION_SECTION = `## Pseudo-diarization (meetingDialogueMarkdo
 - Do not repeat task titles or copy long passages verbatim from tasks[] or nextSteps[].
 - If the transcript is too short, single-speaker, or unclear, set meetingDialogueMarkdown to an empty string.
 `.trim();
+
+/**
+ * Second-phase prompt: JSON with only `meetingDialogueMarkdown` (Pro + meeting preset).
+ * Keeps output-token budget separate from the main summary/tasks extraction call.
+ */
+export function buildMeetingDialogueStandalonePrompt(options?: AiProcessingOptions | null): string {
+  const outputLanguage = options?.outputLanguage ?? 'same';
+  const languageInstruction = MEETING_DIALOGUE_OUTPUT_LANGUAGE_INSTRUCTIONS[outputLanguage];
+
+  return `You are a layout assistant for voice note transcripts. Your only job is pseudo-diarization: split the transcript into estimated speaker turns for easier reading.
+Return exactly one valid JSON object. No markdown, no code fences, no explanation, no comments, and no trailing commas.
+
+## Output schema
+
+\`\`\`typescript
+type Output = {
+  meetingDialogueMarkdown: string;
+};
+\`\`\`
+
+## LANGUAGE RULE (user setting — applies to this field only)
+${languageInstruction}
+This overrides using the transcript language for turn bodies when the user chose Russian or English output.
+
+The user message may include titled sections: optional note context from an earlier extraction pass on the same recording, optional user notes, optional timestamped transcript lines, and a verbatim full transcript. Treat note context as non-authoritative hints only; every spoken line must still be grounded in the transcript.
+
+${PSEUDO_DIARIZATION_SECTION}
+
+## Field rules for meetingDialogueMarkdown
+- Plain text only; newline-separated lines; optional blank line between turns.
+- Prefer compact lines; stay faithful to the transcript; do not invent speakers or lines.
+- Obey the LANGUAGE RULE above for the language of labels and spoken text in every line.
+
+## Global rules
+- Output must pass JSON.parse() without preprocessing.
+- Never add keys outside the schema. The object must contain only "meetingDialogueMarkdown".
+
+## Weak or messy transcripts
+If the transcript is too short, single-speaker, or unclear, return { "meetingDialogueMarkdown": "" }.
+
+## Quality check before answering
+- Is the JSON valid with only meetingDialogueMarkdown?
+- Does every turn follow the LANGUAGE RULE (including en/ru when the transcript is another language)?
+- Is the content grounded in the transcript with neutral speaker labels when names are unknown? If not, fix or use "".
+`.trim();
+}
 
 function getTodayIso(referenceDate?: string): string {
   if (referenceDate && /^\d{4}-\d{2}-\d{2}$/.test(referenceDate)) {

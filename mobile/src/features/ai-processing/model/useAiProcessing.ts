@@ -26,6 +26,7 @@ import {
   toUserFacingFetchErrorFromUnknown,
   toUserFacingFetchErrorMessage,
 } from '@/shared/lib/fetch/userFacingFetchError';
+import { isNonNegativeFiniteNumber } from '@/shared/lib/type-guards';
 
 function normalizeTaskExtractionHint(raw?: string): string | undefined {
   const t = (raw ?? '').split('\0').join('').trim();
@@ -175,6 +176,15 @@ export const useAiProcessing = () => {
         const includeMeetingSpeakerBreakdown =
           isProActive && recordIsMeeting && aiExecutionMode !== 'private_experimental';
 
+        const transcriptSegmentsForCloud =
+          includeMeetingSpeakerBreakdown && (snapshot?.transcriptSegments?.length ?? 0) > 0
+            ? snapshot!.transcriptSegments!.map((s) => ({
+                ...(isNonNegativeFiniteNumber(s.startMs) ? { startMs: s.startMs } : {}),
+                ...(isNonNegativeFiniteNumber(s.endMs) ? { endMs: s.endMs } : {}),
+                text: s.text,
+              }))
+            : undefined;
+
         const privateBatchProgress = {
           lastDisplayedPct: -1,
           tokenEvents: 0,
@@ -241,6 +251,9 @@ export const useAiProcessing = () => {
             ...(includeMeetingSpeakerBreakdown ? { processingPreset: 'meeting' as const } : {}),
             existingTaskTexts,
             ...(taskExtractionHint ? { taskExtractionHint } : {}),
+            ...(transcriptSegmentsForCloud?.length
+              ? { transcriptSegments: transcriptSegmentsForCloud }
+              : {}),
             onLocalGenerationProgress,
           },
           {

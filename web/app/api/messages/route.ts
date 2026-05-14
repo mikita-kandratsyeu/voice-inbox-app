@@ -7,28 +7,31 @@ import {
   validateRequiredStrings,
   weeklyAiLimitExceededResponse,
 } from '@/lib/api';
-import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
-import {
-  buildAiProcessingPrompt,
-  sanitizeExistingTaskTextsForPrompt,
-  sanitizeTaskExtractionHint,
-  type AiProcessingOptions,
-} from '@/lib/prompts';
 import { HEADER_SYNC_TOKEN } from '@/config/constants';
+import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import {
   estimateSummaryTasksRoutingChars,
   resolveAutoAiModel,
   type AiModelMode,
 } from '@/lib/ai-model-router';
+import { sanitizeTranscriptSegmentsForMeetingPrompt } from '@/lib/meeting-dialogue-user-prompt';
+import {
+  buildAiProcessingPrompt,
+  buildMeetingDialogueStandalonePrompt,
+  sanitizeExistingTaskTextsForPrompt,
+  sanitizeTaskExtractionHint,
+  type AiProcessingOptions,
+} from '@/lib/prompts';
 import { setAppForeground } from '@/lib/push-tokens';
 import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
 import { isProDevice } from '@/lib/pro-entitlement';
-import { createMessage } from '@/services/message.service';
+import { createMessage, type MeetingDialogueAuxPayload } from '@/services/message.service';
 import { NextResponse } from 'next/server';
 
 type CreateMessageBody = {
   id?: unknown;
   transcript?: unknown;
+  transcriptSegments?: unknown;
   model?: unknown;
   modelMode?: unknown;
   routingContext?: unknown;
@@ -73,10 +76,12 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     routingContext: rawRoutingContext,
     systemPrompt,
     options: rawOptions,
+    transcriptSegments: rawTranscriptSegments,
     messageTtlSeconds: rawMessageTtl,
   } = body as {
     id: string;
     transcript: string;
+    transcriptSegments?: unknown;
     model: string;
     modelMode?: AiModelMode;
     routingContext?: { taskType?: unknown; transcriptChars?: unknown };
@@ -135,8 +140,13 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const resolvedSystemPrompt =
     options != null
-      ? buildAiProcessingPrompt(options, { pseudoDiarizationEligible })
+      ? buildAiProcessingPrompt(options, { pseudoDiarizationEligible: false })
       : (systemPrompt ?? '');
+
+  const meetingDialogueSystemPrompt =
+    options != null && pseudoDiarizationEligible
+      ? buildMeetingDialogueStandalonePrompt(options)
+      : undefined;
 
   if (!resolvedSystemPrompt.trim()) {
     return apiError('systemPrompt or options is required', HttpStatus.BAD_REQUEST, {
@@ -144,6 +154,15 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       code: ApiErrorCode.MissingSystemPrompt,
     });
   }
+
+  const meetingDialogueSegments = sanitizeTranscriptSegmentsForMeetingPrompt(rawTranscriptSegments);
+
+  const meetingDialogueAux: MeetingDialogueAuxPayload | undefined = pseudoDiarizationEligible
+    ? {
+        ...(meetingDialogueSegments ? { transcriptSegments: meetingDialogueSegments } : {}),
+        ...(options?.taskExtractionHint ? { taskExtractionHint: options.taskExtractionHint } : {}),
+      }
+    : undefined;
 
   await setAppForeground(deviceIdTrimmed);
 
@@ -156,6 +175,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     req.headers.get('user-agent'),
     messageTtlSeconds,
     pseudoDiarizationEligible,
+    meetingDialogueSystemPrompt,
+    meetingDialogueAux,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {

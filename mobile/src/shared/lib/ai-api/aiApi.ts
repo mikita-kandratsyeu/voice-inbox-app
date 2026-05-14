@@ -14,6 +14,7 @@ export type AiProcessingOptions = {
 type AiApiRequestBody = {
   id: string;
   transcript: string;
+  transcriptSegments?: Array<{ startMs?: number; endMs?: number; text: string }>;
   model: string;
   modelMode?: 'manual' | 'auto';
   routingContext?: {

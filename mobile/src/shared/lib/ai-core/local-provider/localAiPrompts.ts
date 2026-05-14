@@ -25,9 +25,9 @@ const LOCAL_TASK_STRICTNESS_HINT: Record<TaskStrictness, string> = {
 };
 
 const LOCAL_OUTPUT_LANGUAGE_HINT: Record<AiOutputLanguage, string> = {
-  same: 'Language: write summary, suggestedTitle, every task title, tags, keyPhrases, and nextSteps in the SAME language as the transcript.',
-  ru: 'Language: write ALL of those text fields in Russian, even if the transcript is not Russian.',
-  en: 'Language: write ALL of those text fields in English, even if the transcript is not English.',
+  same: 'Language: write summary, suggestedTitle, every task title, tags, keyPhrases, nextSteps, and meetingDialogueMarkdown (if present) in the SAME language as the transcript.',
+  ru: 'Language: write ALL of those text fields (including meetingDialogueMarkdown when present) in Russian, even if the transcript is not Russian.',
+  en: 'Language: write ALL of those text fields (including meetingDialogueMarkdown when present) in English, even if the transcript is not English.',
 };
 
 const LOCAL_MEETING_PRESET_HINT = [
@@ -38,11 +38,16 @@ const LOCAL_MEETING_PRESET_HINT = [
   'tasks[] should contain concrete owner/action items only when supported; nextSteps should contain high-level follow-ups that do not duplicate tasks.',
 ].join(' ');
 
-const LOCAL_MEETING_PSEUDO_HINT = [
-  'meetingDialogueMarkdown: plain text with line breaks; neutral speaker labels (Speaker 1:, Участник 2:) unless names/roles are stated in the transcript.',
+const LOCAL_MEETING_PSEUDO_BASE = [
+  'meetingDialogueMarkdown: plain text with line breaks; neutral speaker labels unless names/roles are stated in the transcript.',
   'This is NOT verified audio diarization. Do not invent turns. Use empty string if single-speaker, too short, or unclear.',
-  'Apply the same language rule as summary to meetingDialogueMarkdown unless the transcript clearly mixes languages.',
 ].join(' ');
+
+const LOCAL_MEETING_DIALOGUE_OUTPUT_LANGUAGE_HINT: Record<AiOutputLanguage, string> = {
+  same: 'meetingDialogueMarkdown language: same as the transcript for labels and each line after the colon; keep proper names and technical tokens when normally left as-is.',
+  ru: 'meetingDialogueMarkdown language: write every line in Russian (labels and spoken content). If the transcript is not Russian, translate faithfully into natural Russian.',
+  en: 'meetingDialogueMarkdown language: write every line in English (labels and spoken content). If the transcript is not English, translate faithfully into natural English.',
+};
 
 const LOCAL_SUMMARY_SYSTEM_BASE = [
   'From the transcript, output one JSON object only: raw JSON, no markdown, no code fences, no commentary.',
@@ -58,11 +63,12 @@ const LOCAL_SUMMARY_SYSTEM_BASE = [
 
 export function buildLocalSummarySystemPrompt(
   referenceDate: string,
-  opts?: { includePseudoDiarization?: boolean },
+  opts?: { includePseudoDiarization?: boolean; aiOutputLanguage?: AiOutputLanguage },
 ): string {
   const pseudo = Boolean(opts?.includePseudoDiarization);
+  const lang = opts?.aiOutputLanguage ?? 'same';
   const extra = pseudo
-    ? ` meetingDialogueMarkdown must be a string (same JSON object). ${LOCAL_MEETING_PSEUDO_HINT}`
+    ? ` meetingDialogueMarkdown must be a string (same JSON object). ${LOCAL_MEETING_PSEUDO_BASE} ${LOCAL_MEETING_DIALOGUE_OUTPUT_LANGUAGE_HINT[lang]}`
     : '';
   return `${LOCAL_SUMMARY_SYSTEM_BASE}${extra} Reference date (for deadlines only): ${referenceDate}.`;
 }

@@ -31,9 +31,18 @@ export type AiExecutionContext = {
   cloudMessageTtlSeconds: number;
 };
 
+/** Slim segment row for cloud AI (no tokens / ids). */
+export type SummaryTaskTranscriptSegment = {
+  startMs?: number;
+  endMs?: number;
+  text: string;
+};
+
 export type SummaryTaskRequest = {
   id: string;
   transcript: string;
+  /** Sent to cloud for meeting pseudo-diarization pass (timed lines). */
+  transcriptSegments?: SummaryTaskTranscriptSegment[];
   processingPreset?: 'meeting';
   existingTaskTexts?: string[];
   taskExtractionHint?: string;

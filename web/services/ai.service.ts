@@ -24,7 +24,6 @@ async function callOpenRouter(
   model: string,
   systemPrompt: string,
   clientUserAgent?: string | null,
-  pseudoDiarizationEligible: boolean = false,
 ): Promise<AiResult> {
   const client = createOpenRouterClient(clientUserAgent);
   const response = await client.chat.send({
@@ -115,20 +114,6 @@ async function callOpenRouter(
       ? String(parsed.suggestedTitle).trim()
       : '';
 
-  let meetingDialogueMarkdown: string | undefined;
-  if (pseudoDiarizationEligible) {
-    const rawMd =
-      'meetingDialogueMarkdown' in parsed && typeof parsed.meetingDialogueMarkdown === 'string'
-        ? String(parsed.meetingDialogueMarkdown).trim()
-        : '';
-    if (rawMd) {
-      meetingDialogueMarkdown =
-        rawMd.length > MEETING_DIALOGUE_MARKDOWN_MAX_CHARS
-          ? rawMd.slice(0, MEETING_DIALOGUE_MARKDOWN_MAX_CHARS)
-          : rawMd;
-    }
-  }
-
   return {
     summary: String(parsed.summary),
     suggestedTitle: suggestedTitle || String(parsed.summary).slice(0, 50).trim() || 'Voice note',
@@ -137,7 +122,6 @@ async function callOpenRouter(
     ...(classification && { classification }),
     ...(keyPhrases.length > 0 && { keyPhrases }),
     ...(nextSteps.length > 0 && { nextSteps }),
-    ...(meetingDialogueMarkdown && { meetingDialogueMarkdown }),
   };
 }
 
@@ -175,13 +159,74 @@ export async function processTranscript(
   model: string,
   systemPrompt: string,
   clientUserAgent?: string | null,
-  pseudoDiarizationEligible: boolean = false,
 ): Promise<AiResult> {
   const models = [model, ...USER_AI_MODEL_FALLBACK_CHAIN];
 
   return withSequentialModelFallback(
     models,
-    (m) => callOpenRouter(transcript, m, systemPrompt, clientUserAgent, pseudoDiarizationEligible),
+    (m) => callOpenRouter(transcript, m, systemPrompt, clientUserAgent),
+    isRetryableOpenRouterTransportError,
+  );
+}
+
+function parseMeetingDialogueOpenRouterContent(
+  content: string,
+): Pick<AiResult, 'meetingDialogueMarkdown'> {
+  const parsed = JSON.parse(content.trim()) as unknown;
+  if (!parsed || typeof parsed !== 'object') {
+    throw new Error('Invalid AI response: meeting dialogue expected object');
+  }
+  const rawMd =
+    'meetingDialogueMarkdown' in parsed &&
+    typeof (parsed as { meetingDialogueMarkdown?: unknown }).meetingDialogueMarkdown === 'string'
+      ? String((parsed as { meetingDialogueMarkdown: string }).meetingDialogueMarkdown).trim()
+      : '';
+  if (!rawMd) {
+    return {};
+  }
+  const meetingDialogueMarkdown =
+    rawMd.length > MEETING_DIALOGUE_MARKDOWN_MAX_CHARS
+      ? rawMd.slice(0, MEETING_DIALOGUE_MARKDOWN_MAX_CHARS)
+      : rawMd;
+  return { meetingDialogueMarkdown };
+}
+
+/**
+ * Second OpenRouter pass: only pseudo-diarization JSON. Same weekly limit slot as the main transcript run.
+ */
+export async function processMeetingDialogueMarkdown(
+  userContent: string,
+  model: string,
+  systemPrompt: string,
+  clientUserAgent?: string | null,
+): Promise<Pick<AiResult, 'meetingDialogueMarkdown'>> {
+  const models = [model, ...USER_AI_MODEL_FALLBACK_CHAIN];
+
+  return withSequentialModelFallback(
+    models,
+    async (m) => {
+      const client = createOpenRouterClient(clientUserAgent);
+      const response = await client.chat.send({
+        chatGenerationParams: {
+          model: m,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userContent },
+          ],
+          provider: { zdr: true },
+          responseFormat: { type: 'json_object' },
+          temperature: 0.3,
+          stream: false,
+        },
+      });
+
+      const responseContent = response.choices[0]?.message?.content;
+      if (typeof responseContent !== 'string') {
+        throw new Error('Invalid AI response: missing content');
+      }
+
+      return parseMeetingDialogueOpenRouterContent(responseContent);
+    },
     isRetryableOpenRouterTransportError,
   );
 }

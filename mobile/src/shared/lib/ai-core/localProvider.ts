@@ -132,6 +132,7 @@ export async function runLocalSummaryTasks(
     const includePseudo = request.processingPreset === 'meeting';
     const systemPrompt = buildLocalSummarySystemPrompt(referenceDate, {
       includePseudoDiarization: includePseudo,
+      aiOutputLanguage: ctx.aiOutputLanguage,
     });
     const userContent = buildLocalSummaryUserContent(
       candidateTranscript,

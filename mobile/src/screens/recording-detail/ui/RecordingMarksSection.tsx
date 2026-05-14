@@ -251,7 +251,7 @@ export const RecordingMarksSection = ({
                             opacity: pressed ? 0.6 : 1,
                           })}
                         >
-                          <MoreHorizontal size={20} color={color.text.primary} strokeWidth={2.5} />
+                          <MoreHorizontal size={18} color={color.text.primary} strokeWidth={2.2} />
                         </Pressable>
                       </MenuView>
                     </View>

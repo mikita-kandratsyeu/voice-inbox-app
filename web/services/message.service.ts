@@ -9,9 +9,18 @@ import {
 } from '@/lib/push-tokens';
 import { PUSH_DEBOUNCE_MS, MESSAGE_TTL_SECONDS } from '@/config/constants';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
+import {
+  buildMeetingDialogueUserContent,
+  type MeetingDialogueTranscriptSegment,
+} from '@/lib/meeting-dialogue-user-prompt';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
-import { processTranscript } from '@/services/ai.service';
+import { processMeetingDialogueMarkdown, processTranscript } from '@/services/ai.service';
 import type { Message } from '@/types';
+
+export type MeetingDialogueAuxPayload = {
+  transcriptSegments?: MeetingDialogueTranscriptSegment[];
+  taskExtractionHint?: string;
+};
 
 type CreateMessageResult =
   | { created: true; syncToken?: string }
@@ -27,6 +36,8 @@ export const createMessage = async (
   clientUserAgent?: string | null,
   messageTtlSeconds: number = MESSAGE_TTL_SECONDS,
   pseudoDiarizationEligible: boolean = false,
+  meetingDialogueSystemPrompt?: string,
+  meetingDialogueAux?: MeetingDialogueAuxPayload,
 ): Promise<CreateMessageResult> => {
   const ttl = messageTtlSeconds;
   const created = await saveMessageIfNotExists(id, { id, status: 'processing', model }, ttl);
@@ -55,13 +66,36 @@ export const createMessage = async (
 
   after(async () => {
     try {
-      const result = await processTranscript(
-        transcript,
-        model,
-        systemPrompt,
-        clientUserAgent,
-        pseudoDiarizationEligible,
-      );
+      const mainResult = await processTranscript(transcript, model, systemPrompt, clientUserAgent);
+
+      let result = mainResult;
+      if (pseudoDiarizationEligible && meetingDialogueSystemPrompt?.trim()) {
+        try {
+          const mdUserContent = buildMeetingDialogueUserContent({
+            plainTranscript: transcript,
+            segments: meetingDialogueAux?.transcriptSegments,
+            phase1: {
+              suggestedTitle: mainResult.suggestedTitle,
+              keyPhrases: mainResult.keyPhrases,
+              summary: mainResult.summary,
+            },
+            taskExtractionHint: meetingDialogueAux?.taskExtractionHint,
+          });
+          const mdPart = await processMeetingDialogueMarkdown(
+            mdUserContent,
+            model,
+            meetingDialogueSystemPrompt.trim(),
+            clientUserAgent,
+          );
+          result = { ...mainResult, ...mdPart };
+        } catch (mdErr) {
+          console.warn('[AI] meeting dialogue phase failed; returning main extraction only', {
+            messageId: id,
+            error: mdErr instanceof Error ? mdErr.message : String(mdErr),
+          });
+        }
+      }
+
       await saveMessage(
         id,
         {
