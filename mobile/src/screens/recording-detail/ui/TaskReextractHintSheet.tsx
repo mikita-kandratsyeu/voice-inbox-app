@@ -155,6 +155,9 @@ export function TaskReextractHintSheet({
           textAlignVertical="top"
           placeholder={t('recordingDetail.tasksReextractHintPlaceholder')}
           placeholderTextColor={color.text.muted}
+          returnKeyType="done"
+          blurOnSubmit
+          onSubmitEditing={handleConfirm}
           accessibilityLabel={t('recordingDetail.tasksReextractHintA11y')}
           className="min-h-[100px] rounded-xl border px-3 py-3 text-[16px] leading-[22px]"
           style={{

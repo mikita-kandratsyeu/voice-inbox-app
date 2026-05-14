@@ -151,6 +151,7 @@ export const AddRecordingMarkSheet = ({
           autoFocus
           returnKeyType="done"
           blurOnSubmit
+          onSubmitEditing={handleSave}
           accessibilityLabel={t('record.markLabelPlaceholder')}
         />
         <View className="mt-1 flex-row gap-3">

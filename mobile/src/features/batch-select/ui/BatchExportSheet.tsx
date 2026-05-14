@@ -397,6 +397,9 @@ export const BatchExportSheet = ({
               autoCapitalize="none"
               autoCorrect={false}
               autoComplete="email"
+              returnKeyType="send"
+              blurOnSubmit
+              onSubmitEditing={handleSendEmail}
               accessibilityLabel={t('share.emailPlaceholder')}
             />
             <View className="flex-row gap-2">

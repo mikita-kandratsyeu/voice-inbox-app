@@ -353,6 +353,9 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
                 letterSpacing: 0.5,
                 ...(IS_IOS ? { paddingTop: 11, paddingBottom: 11 } : { paddingVertical: 12 }),
               }}
+              returnKeyType="done"
+              blurOnSubmit
+              onSubmitEditing={() => void handleSubmit()}
             />
             {error != null && error.length > 0 && (
               <Text

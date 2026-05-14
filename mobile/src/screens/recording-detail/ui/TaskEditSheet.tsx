@@ -369,6 +369,9 @@ export function TaskEditSheet({
           textAlignVertical="top"
           placeholder={t(placeholderKey)}
           placeholderTextColor={color.text.muted}
+          returnKeyType="done"
+          blurOnSubmit
+          onSubmitEditing={handleSave}
           accessibilityLabel={t(sheetTitleKey)}
           className="min-h-[104px] rounded-xl px-3.5 py-3 text-[16px] leading-[22px]"
           style={{
