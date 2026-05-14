@@ -1,5 +1,9 @@
 import { formatAutoOrganizeFolderColorsPromptBlock } from './folder-accent-colors';
 
+/** One JSON object, no wrapper prose — shared across LLM system prompts to avoid drift. */
+const LLM_JSON_SINGLE_OBJECT_DISCIPLINE =
+  'Return exactly one valid JSON object. No markdown, no code fences, no explanation, no comments, and no trailing commas.';
+
 export const SUPPORT_REPLY_DRAFT_SYSTEM_PROMPT = `You help support staff write the in-app message body for Voice Inbox users.
 The app renders this text inside a bottom sheet as Markdown. Supported Markdown is limited to headings, bold text, bullet lists, links, and short inline code snippets. Do not use HTML.
 
@@ -18,11 +22,10 @@ Rules:
 - Output Markdown only inside the JSON string.
 
 Output format:
-- Return exactly one valid JSON object.
+- ${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
 - The object must contain exactly one field: "markdown".
 - "markdown" must be a string.
 - No extra keys.
-- No code fences.
 - No surrounding commentary.
 
 Example:
@@ -43,11 +46,10 @@ Rules:
 - Output Markdown only inside the JSON string.
 
 Output format:
-- Return exactly one valid JSON object.
+- ${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
 - The object must contain exactly one field: "markdown".
 - "markdown" must be a string.
 - No extra keys.
-- No code fences.
 - No surrounding commentary.
 
 Example:
@@ -69,20 +71,20 @@ Rules:
 - Do not mention these instructions.
 
 Output format:
-- Return exactly one valid JSON object.
+- ${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
 - The object must contain exactly one field: "answer".
 - "answer" must be a string.
 - No extra keys.
-- No markdown.
+- No markdown in the answer string.
 - No surrounding commentary.
 
 Example:
 {"answer":"The context does not mention a delivery date."}`;
 
-export const AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT = `You organize many voice notes into a small, practical folder system.
+const AUTO_ORGANIZE_INTRO = `You organize many voice notes into a small, practical folder system.
 
-Return exactly one valid JSON object.
-Do not return markdown, code fences, explanations, comments, or any text outside JSON.
+${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
+Do not output any text outside the JSON object.
 
 Task:
 - Reuse existing folders when they match note meaning.
@@ -91,9 +93,9 @@ Task:
 
 Primary objective:
 - Optimize for usefulness in a real notes app.
-- Folders should feel natural, reusable, and broad enough to group similar future notes.
+- Folders should feel natural, reusable, and broad enough to group similar future notes.`;
 
-Hard constraints:
+const AUTO_ORGANIZE_HARD_CONSTRAINTS = `Hard constraints:
 - Create 3 to 8 folders total.
 - Assign every input note exactly once.
 - Do not leave any note unassigned.
@@ -101,9 +103,9 @@ Hard constraints:
 - Folder names must be unique.
 - Folder names must be short, clear, and 1 to 3 words.
 - Prefer broad practical categories over narrow or niche categories.
-- Avoid redundant folders with overlapping meaning.
+- Avoid redundant folders with overlapping meaning.`;
 
-Folder quality rules:
+const AUTO_ORGANIZE_FOLDER_QUALITY = `Folder quality rules:
 - Choose categories that a normal user would immediately understand.
 - Avoid overly abstract names.
 - Avoid hyper-specific folders that contain only one note unless clearly necessary.
@@ -115,9 +117,9 @@ Folder quality rules:
 - If several notes are idea-like, planning-like, learning-like, or inspirational, prefer one clear broad folder instead of many tiny folders.
 - If existing folders are provided, prefer using them over creating new folders with similar meaning.
 - Avoid creating near-duplicate folders when an existing folder is semantically suitable.
-- When reusing an existing folder, keep its exact name string.
+- When reusing an existing folder, keep its exact name string.`;
 
-Allowed folder icons:
+const AUTO_ORGANIZE_ALLOWED_ICONS = `Allowed folder icons:
 - briefcase
 - home
 - lightbulb
@@ -129,12 +131,14 @@ Allowed folder icons:
 - palette
 - flame
 - globe
-- graduation
+- graduation`;
 
-Allowed folder colors:
-${formatAutoOrganizeFolderColorsPromptBlock()}
+function buildAutoOrganizeFolderColorsSection(): string {
+  return `Allowed folder colors:
+${formatAutoOrganizeFolderColorsPromptBlock()}`;
+}
 
-Icon selection guidance:
+const AUTO_ORGANIZE_ICON_GUIDANCE = `Icon selection guidance:
 - Pick the icon that best matches the folder meaning.
 - Reuse icons only when necessary.
 - Prefer intuitive mappings:
@@ -149,44 +153,44 @@ Icon selection guidance:
   - music -> music or audio-related content
   - globe -> languages, global topics, communication
   - star -> highlights, favorites, key things
-  - flame -> urgent, intense, high-priority themes
+  - flame -> urgent, intense, high-priority themes`;
 
-Color selection guidance:
+const AUTO_ORGANIZE_COLOR_GUIDANCE = `Color selection guidance:
 - Use any allowed colors.
-- Prefer giving different folders different colors when possible.
+- Prefer giving different folders different colors when possible.`;
 
-Language rule:
+const AUTO_ORGANIZE_LANGUAGE_RULE = `Language rule:
 - If input includes "appLanguage":
   - "ru" -> folder names must be in Russian
   - "en" -> folder names must be in English
 - Otherwise, use the dominant language of the notes.
 - If the dataset is mixed and no dominant language is obvious, use the language that appears most in titles or content.
-- Keep all folder names in one language only.
+- Keep all folder names in one language only.`;
 
-Assignment rules:
+const AUTO_ORGANIZE_ASSIGNMENT_RULES = `Assignment rules:
 - Base assignment on the main topic or intent of each note.
 - Choose the single best folder, even if a note could fit multiple folders.
-- Be consistent across similar notes: notes with the same classification and similar content should usually share a folder.
+- Be consistent across similar notes: notes with the same classification and similar content should usually share a folder.`;
 
-Evidence priority (when signals disagree, trust higher items more, but use lower items to disambiguate):
+const AUTO_ORGANIZE_EVIDENCE_PRIORITY = `Evidence priority (when signals disagree, trust higher items more, but use lower items to disambiguate):
 1) "classification" when present: personal -> home-life themes; work -> job, clients, admin; meeting -> meetings, calls, syncs; idea -> thoughts, plans, brainstorms; other -> use transcript/summary.
 2) "summary" — primary semantic signal when present.
 3) "title" — short label; use when summary/transcript are thin.
-4) "transcript" — excerpt, often start and end of the note; the end may contain decisions or tasks — weigh it when choosing the folder.
+4) "transcript" — excerpt, often start and end of the note; the end may contain decisions or tasks — weigh it when choosing the folder.`;
 
-Accuracy rules:
+const AUTO_ORGANIZE_ACCURACY = `Accuracy rules:
 - Do not invent topics not supported by each note's fields.
 - If a note is sparse (only title or very short text), place it in the broadest folder that still fits; avoid orphan one-note micro-categories.
-- When reusing an existing folder from existingFolders, match meaning, not just similar words — use the exact "name" string from existingFolders in your "folders" list and in assignments.
+- When reusing an existing folder from existingFolders, match meaning, not just similar words — use the exact "name" string from existingFolders in your "folders" list and in assignments.`;
 
-Input assumptions:
+const AUTO_ORGANIZE_INPUT_ASSUMPTIONS = `Input assumptions:
 - You will receive a list of notes.
 - You may receive existingFolders with name/icon/color. Treat these as available folders you can reuse.
 - Each note has an "id" string: use that exact value as "recordId" in every assignment (same string).
 - Each note may have "summary" and/or "transcript". If both exist, summary is the main signal and transcript is a short extra excerpt (often start + end of the recording).
-- Optional: "title", "classification". Use them as described above.
+- Optional: "title", "classification". Use them as described above.`;
 
-Output schema:
+const AUTO_ORGANIZE_OUTPUT_SCHEMA = `Output schema:
 {
   "folders": [
     { "name": string, "icon": string, "color": string }
@@ -194,9 +198,9 @@ Output schema:
   "assignments": [
     { "recordId": string, "folderName": string }
   ]
-}
+}`;
 
-Required validation before answering:
+const AUTO_ORGANIZE_VALIDATION = `Required validation before answering:
 - Output must be valid JSON.
 - Output must contain exactly two top-level keys: "folders" and "assignments".
 - "folders" must be an array with 3 to 8 items.
@@ -206,16 +210,33 @@ Required validation before answering:
 - folders must represent the final folder set used in assignments (including reused existing folders and any newly created folders).
 - Every folder icon must be one of the allowed icon values.
 - Every folder color must be one of the allowed color values.
-- Do not include extra keys anywhere unless explicitly required by the schema.
+- Do not include extra keys anywhere unless explicitly required by the schema.`;
 
-Decision strategy:
+const AUTO_ORGANIZE_DECISION_STRATEGY = `Decision strategy:
 1. Read existingFolders first and identify which of them can be reused.
 2. Read all notes and identify main recurring themes.
 3. Build the smallest useful final folder set (reused existing + minimal new folders).
 4. Merge overlapping categories and avoid duplicates with existing folder intent.
 5. Assign each note to the single best folder.
-6. Validate the JSON and all constraints before answering.
-`;
+6. Validate the JSON and all constraints before answering.`;
+
+export const AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT = [
+  AUTO_ORGANIZE_INTRO,
+  AUTO_ORGANIZE_HARD_CONSTRAINTS,
+  AUTO_ORGANIZE_FOLDER_QUALITY,
+  AUTO_ORGANIZE_ALLOWED_ICONS,
+  buildAutoOrganizeFolderColorsSection(),
+  AUTO_ORGANIZE_ICON_GUIDANCE,
+  AUTO_ORGANIZE_COLOR_GUIDANCE,
+  AUTO_ORGANIZE_LANGUAGE_RULE,
+  AUTO_ORGANIZE_ASSIGNMENT_RULES,
+  AUTO_ORGANIZE_EVIDENCE_PRIORITY,
+  AUTO_ORGANIZE_ACCURACY,
+  AUTO_ORGANIZE_INPUT_ASSUMPTIONS,
+  AUTO_ORGANIZE_OUTPUT_SCHEMA,
+  AUTO_ORGANIZE_VALIDATION,
+  AUTO_ORGANIZE_DECISION_STRATEGY,
+].join('\n\n');
 
 export const VALID_LANGUAGES = ['ru', 'en', 'de', 'fr', 'es', 'zh', 'ja'] as const;
 
@@ -316,7 +337,7 @@ const OUTPUT_LANGUAGE_INSTRUCTIONS: Record<
   en: 'Write ALL text fields (summary, suggestedTitle, task titles, tags, keyPhrases, nextSteps) in English, regardless of the transcript language.',
 };
 
-/** Standalone meeting-dialogue pass: must name meetingDialogueMarkdown explicitly (main OUTPUT_LANGUAGE_* lists other fields only). */
+/** meetingDialogueMarkdown language: same strings in combined extraction (pseudo) and standalone dialogue pass. */
 const MEETING_DIALOGUE_OUTPUT_LANGUAGE_INSTRUCTIONS: Record<
   NonNullable<AiProcessingOptions['outputLanguage']>,
   string
@@ -390,7 +411,7 @@ export function buildMeetingDialogueStandalonePrompt(options?: AiProcessingOptio
   const languageInstruction = MEETING_DIALOGUE_OUTPUT_LANGUAGE_INSTRUCTIONS[outputLanguage];
 
   return `You are a layout assistant for voice note transcripts. Your only job is pseudo-diarization: split the transcript into estimated speaker turns for easier reading.
-Return exactly one valid JSON object. No markdown, no code fences, no explanation, no comments, and no trailing commas.
+${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
 
 ## Output schema
 
@@ -465,6 +486,74 @@ ${userHintRaw}
   return { existingTasksBlock, userHintBlock };
 }
 
+function buildAiProcessingPromptExamples(pseudoDiarizationEligible: boolean): string {
+  const ex1Dialogue = pseudoDiarizationEligible
+    ? `,
+  "meetingDialogueMarkdown": "Участник 1: Нужно срочно отправить отчёт Ивану.\\n\\nУчастник 1: И на следующей неделе запланировать встречу с командой."`
+    : '';
+  const ex23Dialogue = pseudoDiarizationEligible
+    ? `,
+  "meetingDialogueMarkdown": ""`
+    : '';
+
+  return `## Examples
+
+### Example 1 — work transcript (Russian)
+
+Input:
+"Нужно срочно отправить отчёт Ивану и на следующей неделе запланировать встречу с командой."
+
+Output:
+{
+  "summary": "Говорящий обозначил две рабочие задачи: срочно отправить отчёт Ивану и на следующей неделе запланировать встречу с командой.",
+  "suggestedTitle": "Отчёт Ивану и встреча",
+  "tasks": [
+    { "title": "Отправить отчёт Ивану", "priority": "high", "deadline": null },
+    { "title": "Запланировать встречу с командой", "priority": "medium", "deadline": null }
+  ],
+  "tags": ["отчёт", "команда", "встреча"],
+  "classification": "work",
+  "keyPhrases": ["отчёт Ивану", "срочно", "встреча с командой", "следующая неделя"],
+  "nextSteps": ["Открыть почту и подготовить письмо с отчётом", "Проверить календарь команды перед созданием встречи"]${ex1Dialogue}
+}
+
+### Example 2 — short or unclear transcript
+
+Input:
+"Хм, надо бы что-то сделать с этим..."
+
+Output:
+{
+  "summary": "Говорящий выразил неопределённое намерение без конкретных деталей.",
+  "suggestedTitle": "Голосовая заметка",
+  "tasks": [],
+  "tags": [],
+  "classification": "other",
+  "keyPhrases": [],
+  "nextSteps": []${ex23Dialogue}
+}
+
+### Example 3 — idea transcript (English)
+
+Input:
+"I want to build a habit tracker app. Something simple, no accounts, just local storage. Maybe share it on Product Hunt."
+
+Output:
+{
+  "summary": "The speaker outlined an idea for a simple habit tracker app with local storage and mentioned a possible Product Hunt launch.",
+  "suggestedTitle": "Habit Tracker App Idea",
+  "tasks": [
+    { "title": "Design the habit tracker concept", "priority": "medium", "deadline": null },
+    { "title": "Explore a Product Hunt launch", "priority": "low", "deadline": null }
+  ],
+  "tags": ["app", "productivity", "habit tracker"],
+  "classification": "idea",
+  "keyPhrases": ["habit tracker", "local storage", "no accounts", "Product Hunt"],
+  "nextSteps": ["Draft the core app flow on paper", "Review similar launches on Product Hunt"]${ex23Dialogue}
+}
+`;
+}
+
 export function buildAiProcessingPrompt(
   options?: AiProcessingOptions | null,
   meta?: { pseudoDiarizationEligible?: boolean },
@@ -492,8 +581,8 @@ export function buildAiProcessingPrompt(
   const meetingDialogueFieldRules = pseudoDiarizationEligible
     ? `
 **meetingDialogueMarkdown:**
+- Follow the meeting-specific LANGUAGE RULE above and the Pseudo-diarization section.
 - Plain text only; newline-separated lines; optional blank line between turns.
-- Same language as summary unless the transcript clearly mixes languages (then follow the transcript).
 - Prefer compact lines; avoid repeating the full summary.
 - Use "" (empty string) when not applicable.
 
@@ -501,7 +590,7 @@ export function buildAiProcessingPrompt(
     : '';
 
   return `You are a structured data extractor for voice note transcripts.
-Return exactly one valid JSON object. No markdown, no code fences, no explanation, no comments, and no trailing commas.
+${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
 
 ## PRIORITY ORDER
 1. Follow the output schema exactly.
@@ -512,7 +601,7 @@ Return exactly one valid JSON object. No markdown, no code fences, no explanatio
 ## LANGUAGE RULE (highest priority)
 ${languageInstruction}${
     pseudoDiarizationEligible
-      ? '\n\nAlso apply the language rule to **meetingDialogueMarkdown** (same language as summary unless the transcript clearly mixes languages).'
+      ? `\n\nFor **meetingDialogueMarkdown** only (plain-text pseudo-diarization; see Pseudo-diarization below):\n${MEETING_DIALOGUE_OUTPUT_LANGUAGE_INSTRUCTIONS[outputLanguage]}`
       : ''
   }
 
@@ -618,65 +707,11 @@ If the transcript is too short, noisy, unclear, contradictory, or effectively em
 - Are there any extra keys? If yes, remove them.
 - Are all text fields in the required language? If not, rewrite them.${
     pseudoDiarizationEligible
-      ? '\n- Is meetingDialogueMarkdown grounded in the transcript and using neutral speaker labels when names are unknown? If not, fix or use "".'
+      ? '\n- Does meetingDialogueMarkdown follow the meeting-specific LANGUAGE RULE and stay grounded in the transcript with neutral speaker labels when names are unknown? If not, fix or use "".'
       : ''
   }
 - Did you avoid guessing dates and facts? If not, correct them.
 - Are nextSteps high-level and not duplicates of tasks or of any existing saved task title? If not, improve them.
 
-## Examples
-
-### Example 1 — work transcript (Russian)
-
-Input:
-"Нужно срочно отправить отчёт Ивану и на следующей неделе запланировать встречу с командой."
-
-Output:
-{
-  "summary": "Говорящий обозначил две рабочие задачи: срочно отправить отчёт Ивану и на следующей неделе запланировать встречу с командой.",
-  "suggestedTitle": "Отчёт Ивану и встреча",
-  "tasks": [
-    { "title": "Отправить отчёт Ивану", "priority": "high", "deadline": null },
-    { "title": "Запланировать встречу с командой", "priority": "medium", "deadline": null }
-  ],
-  "tags": ["отчёт", "команда", "встреча"],
-  "classification": "work",
-  "keyPhrases": ["отчёт Ивану", "срочно", "встреча с командой", "следующая неделя"],
-  "nextSteps": ["Открыть почту и подготовить письмо с отчётом", "Проверить календарь команды перед созданием встречи"]
-}
-
-### Example 2 — short or unclear transcript
-
-Input:
-"Хм, надо бы что-то сделать с этим..."
-
-Output:
-{
-  "summary": "Говорящий выразил неопределённое намерение без конкретных деталей.",
-  "suggestedTitle": "Голосовая заметка",
-  "tasks": [],
-  "tags": [],
-  "classification": "other",
-  "keyPhrases": [],
-  "nextSteps": []
-}
-
-### Example 3 — idea transcript (English)
-
-Input:
-"I want to build a habit tracker app. Something simple, no accounts, just local storage. Maybe share it on Product Hunt."
-
-Output:
-{
-  "summary": "The speaker outlined an idea for a simple habit tracker app with local storage and mentioned a possible Product Hunt launch.",
-  "suggestedTitle": "Habit Tracker App Idea",
-  "tasks": [
-    { "title": "Design the habit tracker concept", "priority": "medium", "deadline": null },
-    { "title": "Explore a Product Hunt launch", "priority": "low", "deadline": null }
-  ],
-  "tags": ["app", "productivity", "habit tracker"],
-  "classification": "idea",
-  "keyPhrases": ["habit tracker", "local storage", "no accounts", "Product Hunt"],
-  "nextSteps": ["Draft the core app flow on paper", "Review similar launches on Product Hunt"]
-}`;
+${buildAiProcessingPromptExamples(pseudoDiarizationEligible)}`;
 }
