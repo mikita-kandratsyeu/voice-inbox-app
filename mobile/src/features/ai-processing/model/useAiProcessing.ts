@@ -172,7 +172,8 @@ export const useAiProcessing = () => {
         const existingTaskTexts = collectExistingTaskTextsForAiPrompt(snapshot?.tasks);
         const taskExtractionHint = normalizeTaskExtractionHint(aiRunOptions?.taskExtractionHint);
         const recordIsMeeting = (snapshot?.classification ?? record.classification) === 'meeting';
-        const isMeetingPreset = isProActive && recordIsMeeting;
+        const includeMeetingSpeakerBreakdown =
+          isProActive && recordIsMeeting && aiExecutionMode !== 'private_experimental';
 
         const privateBatchProgress = {
           lastDisplayedPct: -1,
@@ -237,7 +238,7 @@ export const useAiProcessing = () => {
           {
             id: requestId,
             transcript: record.transcript,
-            ...(isMeetingPreset ? { processingPreset: 'meeting' as const } : {}),
+            ...(includeMeetingSpeakerBreakdown ? { processingPreset: 'meeting' as const } : {}),
             existingTaskTexts,
             ...(taskExtractionHint ? { taskExtractionHint } : {}),
             onLocalGenerationProgress,
@@ -332,7 +333,7 @@ export const useAiProcessing = () => {
 
         const prevHadMeetingDialogue = Boolean(latest?.meetingDialogue?.trim());
         const meetingDialogueForStore =
-          isMeetingPreset && meetingDialogueMarkdown?.trim()
+          includeMeetingSpeakerBreakdown && meetingDialogueMarkdown?.trim()
             ? meetingDialogueMarkdown.trim()
             : null;
 
@@ -365,14 +366,14 @@ export const useAiProcessing = () => {
           rawNextSteps.length > 0 ||
           nextStepsForStore.length > 0 ||
           classificationClearedForNonPro ||
-          isMeetingPreset ||
+          includeMeetingSpeakerBreakdown ||
           prevHadMeetingDialogue
         ) {
           await updateAiExtras(record.id, {
             classification: resolvedClassification ?? null,
             keyPhrases: keyPhrases ?? [],
             nextSteps: nextStepsForStore,
-            meetingDialogue: isMeetingPreset ? meetingDialogueForStore : null,
+            meetingDialogue: includeMeetingSpeakerBreakdown ? meetingDialogueForStore : null,
           });
         }
 

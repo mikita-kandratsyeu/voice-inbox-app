@@ -366,8 +366,11 @@ export const RecordingDetailScreen = () => {
   const hasAudio = Boolean(liveRecord.audioPath?.trim());
   const hasRecordingMarks = (liveRecord.recordingMarks?.length ?? 0) > 0;
   const meetingPresetUiActive = useMemo(
-    () => isProActive && liveRecord.classification === 'meeting',
-    [isProActive, liveRecord.classification],
+    () =>
+      isProActive &&
+      liveRecord.classification === 'meeting' &&
+      aiExecutionMode !== 'private_experimental',
+    [isProActive, liveRecord.classification, aiExecutionMode],
   );
 
   const detailTabs = useMemo<Tab[]>(() => {
