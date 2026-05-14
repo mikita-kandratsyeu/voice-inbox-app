@@ -1,7 +1,7 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ArrowRight, Download, HardDrive, Pin, Rocket, Video, Wrench } from 'lucide-react-native';
+import { Download, HardDrive, Pin, Rocket, Video, Wrench } from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -11,7 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useAppTheme, useColors } from '@/shared/config';
 import { hapticSelection, useTabletContentMaxWidth } from '@/shared/lib';
-import { Button } from '@/shared/ui';
+import { Button, PlanPaywallProChip } from '@/shared/ui';
 
 const KNOWN_EVENT_ID_UPDATE_1_1_0 = 'update_1-1-0';
 
@@ -21,7 +21,7 @@ const enterHero = FadeInDown.duration(280).delay(48).easing(easeOut);
 const enterHighlights = FadeInDown.duration(300).delay(140).easing(easeOut);
 const enterFooter = FadeIn.duration(260).delay(220).easing(easeOut);
 
-type UpdateFeature = { title: string; description: string; isNew?: boolean };
+type UpdateFeature = { title: string; description: string; isPro?: boolean };
 
 type ScreenCopy =
   | {
@@ -309,28 +309,7 @@ export const InAppEventDetailScreen = () => {
                         >
                           {feature.title}
                         </Text>
-                        {feature.isNew ? (
-                          <View
-                            style={{
-                              backgroundColor: `${color.accent.transcript}33`,
-                              paddingHorizontal: 8,
-                              paddingVertical: 3,
-                              borderRadius: 5,
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                            }}
-                          >
-                            <Text
-                              className="text-[10px] font-bold uppercase"
-                              style={[
-                                { color: color.accent.transcript, letterSpacing: 0 },
-                                titleStyle,
-                              ]}
-                            >
-                              {t('inAppEvent.newBadge')}
-                            </Text>
-                          </View>
-                        ) : null}
+                        {feature.isPro ? <PlanPaywallProChip /> : null}
                       </View>
                       <Text
                         className="mt-0.5 text-[13px] leading-[18px]"
@@ -361,7 +340,6 @@ export const InAppEventDetailScreen = () => {
             size="lg"
             fullWidth
             label={t('inAppEvent.primaryCta')}
-            trailingIcon={<ArrowRight size={20} color={color.icon.onAccent} strokeWidth={2.4} />}
             onPress={handleClose}
           />
         </Animated.View>

@@ -21,7 +21,7 @@ import { openInAppBrowser } from '@/features/in-app-browser';
 import { getWebsiteUrl, useAppTheme, useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
-import { Button } from '@/shared/ui';
+import { Button, PLAN_PAYWALL_FEATURE_LINE_HEIGHT, PlanPaywallProChip } from '@/shared/ui';
 
 type SettingsPlanPaywallSheetProps = {
   visible: boolean;
@@ -44,8 +44,6 @@ type FeatureRowProps = {
   mutedCheck?: boolean;
 };
 
-/** Wrapped lines use this height; ~`fontSize` + list `gap` so multi-line matches row spacing. */
-const PLAN_PAYWALL_FEATURE_LINE_HEIGHT = 21;
 const PLAN_PAYWALL_FEATURE_LIST_GAP = 8;
 
 function FeatureRow({ text, emphasized, mutedCheck }: FeatureRowProps) {
@@ -493,19 +491,7 @@ export function SettingsPlanPaywallSheet({
                 <View className="min-w-0 flex-1">
                   <FeatureRow text={t('settings.planPaywall.features.autoAutomation')} emphasized />
                 </View>
-                <View
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
-                  className="shrink-0 rounded-full px-2.5 py-1"
-                  style={{
-                    backgroundColor: `${c.accent.primary}22`,
-                    marginTop: (PLAN_PAYWALL_FEATURE_LINE_HEIGHT - 20) / 2,
-                  }}
-                >
-                  <Text className="text-[11px] font-semibold" style={{ color: c.accent.primary }}>
-                    {t('settings.planPaywall.proTitle').toUpperCase()}
-                  </Text>
-                </View>
+                <PlanPaywallProChip />
               </View>
               <FeatureRow
                 text={t('settings.planPaywall.features.recordingUpToOneHour')}

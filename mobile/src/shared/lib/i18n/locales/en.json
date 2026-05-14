@@ -1419,7 +1419,6 @@
     "autoOrganizeReviewUnnamedFolder": "Untitled"
   },
   "inAppEvent": {
-    "newBadge": "New",
     "whatsNewBadge": "What's new",
     "primaryCta": "Continue",
     "update110": {
@@ -1430,16 +1429,17 @@
         {
           "title": "Meeting Mode",
           "description": "Record, transcribe, and get AI summaries from your meetings automatically.",
-          "isNew": true
+          "isPro": true
         },
         {
           "title": "Pinned moments",
           "description": "Pin important moments so they stay easy to find in long recordings.",
-          "isNew": true
+          "isPro": true
         },
         {
-          "title": "Advanced export",
-          "description": "More export options for your notes and transcripts when you need them elsewhere."
+          "title": "Extended export",
+          "description": "More export options for your notes and transcripts when you need them elsewhere.",
+          "isPro": true
         },
         {
           "title": "Storage controls",
