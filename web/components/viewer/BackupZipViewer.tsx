@@ -3,6 +3,7 @@
 import {
   Archive,
   AlertCircle,
+  Bookmark,
   Calendar,
   Check,
   ChevronLeft,
@@ -13,6 +14,7 @@ import {
   Flag,
   Folder,
   Loader2,
+  MessagesSquare,
   PanelLeftClose,
   PanelRightOpen,
   Search,
@@ -77,11 +79,16 @@ function formatExportedAt(iso: string): string {
 function recordMatchesQuery(r: ParsedRecord, q: string): boolean {
   const s = q.trim().toLowerCase();
   if (!s) return true;
+  const markLabels = (r.recordingMarks ?? []).map((m) => m.label);
   const hay = [
     r.title,
     r.transcript,
     r.summary ?? '',
+    r.meetingDialogue ?? '',
     ...(r.tags ?? []),
+    ...(r.keyPhrases ?? []),
+    ...(r.nextSteps ?? []),
+    ...markLabels,
     ...(r.tasks?.flatMap((task) => [task.text, task.deadline ?? '', task.deadlineTime ?? '']) ??
       []),
   ]
@@ -90,14 +97,56 @@ function recordMatchesQuery(r: ParsedRecord, q: string): boolean {
   return hay.includes(s);
 }
 
+/** Format offset from recording start for bookmark display. */
+function formatRecordingMarkTime(offsetMs: number): string {
+  const totalSec = Math.floor(Math.max(0, offsetMs) / 1000);
+  const h = Math.floor(totalSec / 3600);
+  const m = Math.floor((totalSec % 3600) / 60);
+  const sec = totalSec % 60;
+  if (h > 0) {
+    return `${h}:${m.toString().padStart(2, '0')}:${sec.toString().padStart(2, '0')}`;
+  }
+  return `${m}:${sec.toString().padStart(2, '0')}`;
+}
+
+const VIEWER_CLASSIFICATION_LABEL: Record<
+  'personal' | 'work' | 'meeting' | 'idea' | 'other',
+  | 'classificationPersonal'
+  | 'classificationWork'
+  | 'classificationMeeting'
+  | 'classificationIdea'
+  | 'classificationOther'
+> = {
+  personal: 'classificationPersonal',
+  work: 'classificationWork',
+  meeting: 'classificationMeeting',
+  idea: 'classificationIdea',
+  other: 'classificationOther',
+};
+
+function viewerClassificationLabelKey(
+  c: string | null | undefined,
+):
+  | 'classificationPersonal'
+  | 'classificationWork'
+  | 'classificationMeeting'
+  | 'classificationIdea'
+  | 'classificationOther'
+  | null {
+  if (c === 'personal' || c === 'work' || c === 'meeting' || c === 'idea' || c === 'other') {
+    return VIEWER_CLASSIFICATION_LABEL[c];
+  }
+  return null;
+}
+
 const NOTE_BAR_BTN =
   'inline-flex min-h-[36px] shrink-0 items-center justify-center gap-1.5 rounded-lg border border-black/10 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:pointer-events-none disabled:opacity-45 dark:border-white/12 dark:bg-white/10 dark:text-slate-200 dark:hover:bg-white/15';
 
 const NOTE_COPY_BTN = `${NOTE_BAR_BTN} relative min-w-[10.5rem] overflow-hidden transition-[border-color,box-shadow] duration-200`;
 
-type TabId = 'transcript' | 'summary' | 'tasks' | 'translation';
+type TabId = 'transcript' | 'summary' | 'tasks' | 'translation' | 'speakers' | 'marks';
 
-type CopyFeedbackField = 'transcript' | 'summary' | 'translation';
+type CopyFeedbackField = 'transcript' | 'summary' | 'translation' | 'speakers' | 'marks';
 
 type CopyFeedbackState = { field: CopyFeedbackField; result: 'ok' | 'err' };
 
@@ -320,6 +369,17 @@ export function BackupZipViewer(): React.ReactElement {
   useEffect(() => {
     setCopyFeedback(null);
   }, [selected?.id]);
+
+  useEffect(() => {
+    if (!selected) return;
+    if (tab === 'speakers' && !selected.meetingDialogue?.trim()) {
+      setTab('transcript');
+      return;
+    }
+    if (tab === 'marks' && !(selected.recordingMarks && selected.recordingMarks.length > 0)) {
+      setTab('transcript');
+    }
+  }, [selected, tab]);
 
   const flashCopyResult = useCallback((field: CopyFeedbackField, ok: boolean) => {
     if (copyToastTimerRef.current) clearTimeout(copyToastTimerRef.current);
@@ -905,6 +965,16 @@ export function BackupZipViewer(): React.ReactElement {
                           ))}
                         </div>
                       ) : null}
+                      {(() => {
+                        const classKey = viewerClassificationLabelKey(selected.classification);
+                        return classKey ? (
+                          <p className="mt-2">
+                            <span className="inline-flex items-center rounded-full border border-black/10 bg-white/90 px-2.5 py-0.5 text-xs font-medium text-slate-600 dark:border-white/12 dark:bg-white/10 dark:text-slate-300">
+                              {t(classKey)}
+                            </span>
+                          </p>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
 
@@ -930,25 +1000,34 @@ export function BackupZipViewer(): React.ReactElement {
                     <div className="flex gap-1 overflow-x-auto py-2">
                       {(
                         [
-                          ['transcript', t('tabTranscript')],
-                          ['summary', t('tabSummary')],
-                          ['tasks', t('tabTasks')],
-                          ...(selected.translatedTranscript
-                            ? ([['translation', t('tabTranslation')]] as const)
+                          ['transcript', t('tabTranscript'), null] as const,
+                          ['summary', t('tabSummary'), null] as const,
+                          ['tasks', t('tabTasks'), null] as const,
+                          ...(selected.translatedTranscript?.trim()
+                            ? ([['translation', t('tabTranslation'), null]] as const)
+                            : []),
+                          ...(selected.meetingDialogue?.trim()
+                            ? ([['speakers', t('tabSpeakerTurns'), MessagesSquare]] as const)
+                            : []),
+                          ...(selected.recordingMarks && selected.recordingMarks.length > 0
+                            ? ([['marks', t('tabRecordingMarks'), Bookmark]] as const)
                             : []),
                         ] as const
-                      ).map(([id, label]) => (
+                      ).map(([id, label, Icon]) => (
                         <button
                           key={id}
                           type="button"
                           onClick={() => setTab(id as TabId)}
                           className={[
-                            'shrink-0 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors',
+                            'inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-sm font-medium transition-colors',
                             tab === id
                               ? 'bg-blue-600 text-white shadow-sm dark:bg-blue-500'
                               : 'text-slate-600 hover:bg-black/[0.05] dark:text-slate-300 dark:hover:bg-white/[0.08]',
                           ].join(' ')}
                         >
+                          {Icon ? (
+                            <Icon className="h-3.5 w-3.5 shrink-0 opacity-90" aria-hidden />
+                          ) : null}
                           {label}
                         </button>
                       ))}
@@ -1092,6 +1171,35 @@ export function BackupZipViewer(): React.ReactElement {
                                   {t('emptySummary')}
                                 </p>
                               )}
+                              {selected.keyPhrases.length > 0 ? (
+                                <div className="mt-8 border-t border-black/8 pt-6 dark:border-white/10">
+                                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                    {t('keyPhrasesHeading')}
+                                  </h3>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {selected.keyPhrases.map((phrase) => (
+                                      <span
+                                        key={phrase}
+                                        className="rounded-full bg-indigo-500/10 px-2.5 py-0.5 text-xs font-medium text-indigo-900 dark:bg-indigo-400/15 dark:text-indigo-100"
+                                      >
+                                        {phrase}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              ) : null}
+                              {selected.nextSteps.length > 0 ? (
+                                <div className="mt-8 border-t border-black/8 pt-6 dark:border-white/10">
+                                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                    {t('nextStepsHeading')}
+                                  </h3>
+                                  <ul className="list-inside list-disc space-y-1.5 text-sm leading-relaxed text-slate-800 dark:text-slate-100">
+                                    {selected.nextSteps.map((step, idx) => (
+                                      <li key={`${idx}-${step.slice(0, 32)}`}>{step}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              ) : null}
                             </>
                           );
                         })()
@@ -1266,6 +1374,153 @@ export function BackupZipViewer(): React.ReactElement {
                               ) : (
                                 <p className="text-sm text-slate-500 dark:text-slate-400">
                                   {t('emptyTranslation')}
+                                </p>
+                              )}
+                            </>
+                          );
+                        })()
+                      : null}
+                    {tab === 'speakers'
+                      ? (() => {
+                          const body = selected.meetingDialogue?.trim() ?? '';
+                          const has = body.length > 0;
+                          const md = looksLikeMarkdown(body);
+                          return (
+                            <>
+                              <p className="mb-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                {t('speakerTurnsIntro')}
+                              </p>
+                              <div className="mb-4 flex flex-wrap items-center gap-2">
+                                <CopyNoteTextButton
+                                  field="speakers"
+                                  copyFeedback={copyFeedback}
+                                  disabled={!has}
+                                  label={t('copySpeakerTurns')}
+                                  copiedLabel={t('copied')}
+                                  failedLabel={t('copyFailed')}
+                                  onCopy={() => void handleCopyText(body, 'speakers')}
+                                />
+                                <button
+                                  type="button"
+                                  className={NOTE_BAR_BTN}
+                                  disabled={!has}
+                                  onClick={() =>
+                                    triggerTextFileDownload(
+                                      body,
+                                      `${buildNoteDownloadBasename(selected.title, selected.id)}-speaker-turns.txt`,
+                                      'text/plain;charset=utf-8',
+                                    )
+                                  }
+                                >
+                                  <Download className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                  {t('downloadTxt')}
+                                </button>
+                                <button
+                                  type="button"
+                                  className={NOTE_BAR_BTN}
+                                  disabled={!has}
+                                  onClick={() =>
+                                    triggerTextFileDownload(
+                                      body,
+                                      `${buildNoteDownloadBasename(selected.title, selected.id)}-speaker-turns.md`,
+                                      'text/markdown;charset=utf-8',
+                                    )
+                                  }
+                                >
+                                  <Download className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                  {t('downloadMd')}
+                                </button>
+                              </div>
+                              {has ? (
+                                md ? (
+                                  <div className="prose prose-slate prose-sm max-w-none dark:prose-invert">
+                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                      {body}
+                                    </ReactMarkdown>
+                                  </div>
+                                ) : (
+                                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-slate-800 dark:text-slate-100">
+                                    {body}
+                                  </pre>
+                                )
+                              ) : (
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                  {t('emptySpeakerTurns')}
+                                </p>
+                              )}
+                            </>
+                          );
+                        })()
+                      : null}
+                    {tab === 'marks'
+                      ? (() => {
+                          const marks = [...(selected.recordingMarks ?? [])].sort(
+                            (a, b) => a.offsetMs - b.offsetMs,
+                          );
+                          const has = marks.length > 0;
+                          const marksPlain = marks
+                            .map((m) => {
+                              const time = formatRecordingMarkTime(m.offsetMs);
+                              const label = m.label.trim() ? m.label : t('markUnnamed');
+                              return `${time}\t${label}`;
+                            })
+                            .join('\n');
+                          return (
+                            <>
+                              <p className="mb-4 text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                                {t('recordingMarksIntro')}
+                              </p>
+                              <div className="mb-4 flex flex-wrap items-center gap-2">
+                                <CopyNoteTextButton
+                                  field="marks"
+                                  copyFeedback={copyFeedback}
+                                  disabled={!has}
+                                  label={t('copyRecordingMarks')}
+                                  copiedLabel={t('copied')}
+                                  failedLabel={t('copyFailed')}
+                                  onCopy={() => void handleCopyText(marksPlain, 'marks')}
+                                />
+                                <button
+                                  type="button"
+                                  className={NOTE_BAR_BTN}
+                                  disabled={!has}
+                                  onClick={() =>
+                                    triggerTextFileDownload(
+                                      marksPlain,
+                                      `${buildNoteDownloadBasename(selected.title, selected.id)}-marks.txt`,
+                                      'text/plain;charset=utf-8',
+                                    )
+                                  }
+                                >
+                                  <Download className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                                  {t('downloadTxt')}
+                                </button>
+                              </div>
+                              {has ? (
+                                <ul className="space-y-2">
+                                  {marks.map((m) => (
+                                    <li
+                                      key={m.id}
+                                      className="flex gap-3 rounded-xl border border-black/8 bg-black/[0.02] px-3 py-2.5 dark:border-white/10 dark:bg-white/[0.04]"
+                                    >
+                                      <span className="shrink-0 font-mono text-xs font-semibold tabular-nums text-slate-500 dark:text-slate-400">
+                                        {formatRecordingMarkTime(m.offsetMs)}
+                                      </span>
+                                      <span className="min-w-0 flex-1 text-sm leading-relaxed text-slate-800 dark:text-slate-100">
+                                        {m.label.trim() ? (
+                                          m.label
+                                        ) : (
+                                          <span className="italic text-slate-500 dark:text-slate-400">
+                                            {t('markUnnamed')}
+                                          </span>
+                                        )}
+                                      </span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-sm text-slate-500 dark:text-slate-400">
+                                  {t('emptyRecordingMarks')}
                                 </p>
                               )}
                             </>

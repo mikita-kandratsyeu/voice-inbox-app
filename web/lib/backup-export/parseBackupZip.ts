@@ -76,6 +76,39 @@ function parseTaskSource(value: unknown): ParsedTask['source'] {
   return undefined;
 }
 
+function parseRecordingMarksField(raw: unknown): ParsedRecord['recordingMarks'] {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+  const out: NonNullable<ParsedRecord['recordingMarks']> = [];
+  for (const item of raw) {
+    if (item === null || typeof item !== 'object') continue;
+    const o = item as Record<string, unknown>;
+    const id = typeof o.id === 'string' ? o.id.trim() : '';
+    const om = o.offsetMs;
+    const offsetMs =
+      typeof om === 'number' && Number.isFinite(om) ? Math.max(0, Math.round(om)) : null;
+    if (!id || offsetMs === null) continue;
+    const label = typeof o.label === 'string' ? o.label.slice(0, 300) : '';
+    out.push({ id, offsetMs, label });
+    if (out.length >= 500) break;
+  }
+  return out.length > 0 ? out : undefined;
+}
+
+function parseMeetingDialogueField(raw: unknown): string | undefined {
+  if (typeof raw !== 'string') return undefined;
+  const t = raw.trim();
+  if (!t) return undefined;
+  if (t.length > EXPORT_MAX_RECORD_TEXT_CHARS) {
+    return t.slice(0, EXPORT_MAX_RECORD_TEXT_CHARS);
+  }
+  return t;
+}
+
+function parseDurationMsField(raw: unknown): number | undefined {
+  if (typeof raw !== 'number' || !Number.isFinite(raw)) return undefined;
+  return Math.max(0, Math.round(raw));
+}
+
 function toParsedRecord(raw: Record<string, unknown>): ParsedRecord {
   const r = stripEmbedding(raw);
   const tasksRaw = Array.isArray(r.tasks) ? r.tasks : [];
@@ -122,6 +155,9 @@ function toParsedRecord(raw: Record<string, unknown>): ParsedRecord {
     tasks,
     isPinned: typeof r.isPinned === 'boolean' ? r.isPinned : undefined,
     status: r.status != null ? String(r.status) : undefined,
+    meetingDialogue: parseMeetingDialogueField(r.meetingDialogue),
+    recordingMarks: parseRecordingMarksField(r.recordingMarks),
+    durationMs: parseDurationMsField(r.durationMs),
   };
 }
 

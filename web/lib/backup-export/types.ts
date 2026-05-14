@@ -17,6 +17,13 @@ export type ParsedTask = {
   source?: 'manual' | 'ai';
 };
 
+/** Bookmark created while recording (offset in the final audio). */
+export type ParsedRecordingMark = {
+  id: string;
+  offsetMs: number;
+  label: string;
+};
+
 export type ParsedRecord = {
   id: string;
   createdAt: string;
@@ -28,6 +35,10 @@ export type ParsedRecord = {
   classification?: string | null;
   keyPhrases: string[];
   nextSteps: string[];
+  /** Pseudo-diarization / speaker turns (markdown). */
+  meetingDialogue?: string;
+  recordingMarks?: ParsedRecordingMark[];
+  durationMs?: number;
   folderId: string | null;
   audioPath?: string;
   duration: string;

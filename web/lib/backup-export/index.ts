@@ -7,4 +7,10 @@ export {
   VoiceRecordSchema,
 } from './schema';
 export type { ExportPayloadV3 } from './schema';
-export type { ParsedBackup, ParsedFolder, ParsedRecord, ParsedTask } from './types';
+export type {
+  ParsedBackup,
+  ParsedFolder,
+  ParsedRecord,
+  ParsedRecordingMark,
+  ParsedTask,
+} from './types';

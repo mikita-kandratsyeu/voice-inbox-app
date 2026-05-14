@@ -31,6 +31,14 @@ export const FolderSchema = z
   })
   .passthrough();
 
+const RecordingMarkSchema = z
+  .object({
+    id: str.max(200),
+    offsetMs: z.number().finite(),
+    label: str.max(300).optional(),
+  })
+  .passthrough();
+
 export const VoiceRecordSchema = z
   .object({
     id: str,
@@ -44,6 +52,9 @@ export const VoiceRecordSchema = z
     classification: z.enum(['personal', 'work', 'meeting', 'idea', 'other']).nullish(),
     keyPhrases: z.array(str).nullish(),
     nextSteps: z.array(str).nullish(),
+    meetingDialogue: longStr.nullish(),
+    recordingMarks: z.array(RecordingMarkSchema).max(500).nullish(),
+    durationMs: z.number().finite().nullish(),
     folderId: str.nullish(),
     audioPath: str.nullish(),
     duration: z.union([str, z.number()]).nullish(),
