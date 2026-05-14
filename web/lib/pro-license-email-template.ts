@@ -69,7 +69,6 @@ function buildFooterHtml(params: {
   googlePlayHref: string;
 }): string {
   const { site, appStoreHref, googlePlayHref } = params;
-  const supportHref = escapeHtml(`${site}/support`);
   const privacyHref = escapeHtml(`${site}/privacy`);
   const termsHref = escapeHtml(`${site}/terms`);
   const year = new Date().getFullYear();
