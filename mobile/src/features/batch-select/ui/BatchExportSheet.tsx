@@ -2,76 +2,26 @@ import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
+  BottomSheetScrollView,
   BottomSheetTextInput,
   BottomSheetView,
 } from '@gorhom/bottom-sheet';
 import { FileText, ListChecks, Mail, UsersRound } from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ShareBriefTemplate } from '@/features/share-record';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { modalKeyboardBehavior } from '@/shared/lib/platform';
+import { IS_IOS, modalKeyboardBehavior } from '@/shared/lib/platform';
+import { Button } from '@/shared/ui';
 
 import type { BatchExportPackaging } from '../model/batchExportPackaging';
 
-function EmailBodyFormatChip({
-  template,
-  label,
-  selectedTemplate,
-  onSelect,
-  color,
-}: {
-  template: ShareBriefTemplate;
-  label: string;
-  selectedTemplate: ShareBriefTemplate;
-  onSelect: (t: ShareBriefTemplate) => void;
-  color: Colors;
-}) {
-  const selected = selectedTemplate === template;
-  return (
-    <TouchableOpacity
-      onPress={() => onSelect(template)}
-      accessibilityRole="button"
-      accessibilityState={{ selected }}
-      accessibilityLabel={label}
-      style={{
-        flex: 1,
-        flexBasis: 0,
-        minWidth: 0,
-        minHeight: 44,
-        alignSelf: 'stretch',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingVertical: 6,
-        paddingHorizontal: 8,
-        borderRadius: 10,
-        borderWidth: 1,
-        borderColor: selected ? color.accent.primary : color.border.default,
-        backgroundColor: selected ? color.background.secondary : color.background.primary,
-      }}
-    >
-      <Text
-        style={{
-          width: '100%',
-          fontSize: 13,
-          fontWeight: '600',
-          lineHeight: 17,
-          textAlign: 'center',
-          color: selected ? color.accent.primary : color.text.primary,
-        }}
-        numberOfLines={2}
-        adjustsFontSizeToFit
-        minimumFontScale={0.85}
-      >
-        {label}
-      </Text>
-    </TouchableOpacity>
-  );
-}
+/** Matches `SaveRecordModal` when the keyboard is open. */
+const SAVE_SHEET_KEYBOARD_BOTTOM_PADDING = 24;
 
 function ExportPackagingChip({
   packaging,
@@ -88,32 +38,25 @@ function ExportPackagingChip({
 }) {
   const selected = selectedPackaging === packaging;
   return (
-    <TouchableOpacity
-      onPress={() => onSelect(packaging)}
+    <Pressable
       accessibilityRole="button"
       accessibilityState={{ selected }}
       accessibilityLabel={label}
+      onPress={() => onSelect(packaging)}
+      className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
       style={{
-        flex: 1,
-        alignItems: 'center',
-        paddingVertical: 10,
-        paddingHorizontal: 12,
-        borderRadius: 10,
-        borderWidth: 1,
         borderColor: selected ? color.accent.primary : color.border.default,
-        backgroundColor: selected ? color.background.secondary : color.background.primary,
+        backgroundColor: color.background.tertiary,
       }}
     >
       <Text
-        style={{
-          fontSize: 14,
-          fontWeight: '600',
-          color: selected ? color.accent.primary : color.text.primary,
-        }}
+        className="text-center text-[15px] font-semibold leading-5"
+        style={{ color: selected ? color.accent.primary : color.text.primary }}
+        numberOfLines={2}
       >
         {label}
       </Text>
-    </TouchableOpacity>
+    </Pressable>
   );
 }
 
@@ -153,9 +96,11 @@ export const BatchExportSheet = ({
   const [email, setEmail] = useState('');
   const [emailBodyTemplate, setEmailBodyTemplate] = useState<ShareBriefTemplate>('meetingBrief');
   const [exportPackaging, setExportPackaging] = useState<BatchExportPackaging>('single');
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   const trimmedEmail = email.trim();
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
+
   useEffect(() => {
     if (visible) {
       setEmailBodyTemplate((prev) =>
@@ -172,8 +117,24 @@ export const BatchExportSheet = ({
     setEmail('');
     setEmailBodyTemplate('meetingBrief');
     setExportPackaging('single');
+    setKeyboardVisible(false);
     return undefined;
   }, [visible]);
+
+  useEffect(() => {
+    if (!emailVisible) {
+      setKeyboardVisible(false);
+      return undefined;
+    }
+    const showEvent = IS_IOS ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = IS_IOS ? 'keyboardWillHide' : 'keyboardDidHide';
+    const show = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
+    const hide = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, [emailVisible]);
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
@@ -202,6 +163,8 @@ export const BatchExportSheet = ({
   }, []);
 
   const handleCancelEmail = useCallback(() => {
+    Keyboard.dismiss();
+    setKeyboardVisible(false);
     setEmailVisible(false);
     setEmail('');
   }, []);
@@ -258,7 +221,8 @@ export const BatchExportSheet = ({
       enablePanDownToClose
       enableOverDrag={false}
       keyboardBehavior={modalKeyboardBehavior}
-      keyboardBlurBehavior="restore"
+      keyboardBlurBehavior="none"
+      enableBlurKeyboardOnGesture
       backdropComponent={renderBackdrop}
       onDismiss={onClose}
       backgroundStyle={{
@@ -273,168 +237,236 @@ export const BatchExportSheet = ({
         backgroundColor: color.icon.muted,
       }}
     >
-      <BottomSheetView
-        style={{
-          paddingHorizontal: 20,
-          paddingTop: 4,
-          paddingBottom: Math.max(insets.bottom, 20),
-          gap: 10,
-        }}
-      >
-        <Text
-          style={{
-            fontSize: 17,
-            fontWeight: '600',
-            color: color.text.primary,
-            textAlign: 'center',
-            marginBottom: 8,
+      {emailVisible ? (
+        <BottomSheetScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: 24,
+            paddingTop: 4,
+            paddingBottom: keyboardVisible
+              ? SAVE_SHEET_KEYBOARD_BOTTOM_PADDING
+              : Math.max(insets.bottom, 24),
+            gap: 12,
           }}
         >
-          {t('batch.exportAsTitle', { count })}
-        </Text>
-
-        <Text style={{ fontSize: 13, color: color.text.muted, lineHeight: 18 }}>
-          {t('batch.sheetLimitsHint')}
-        </Text>
-
-        <Text style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }}>
-          {t('batch.exportPackagingLabel')}
-        </Text>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <ExportPackagingChip
-            packaging="single"
-            selectedPackaging={exportPackaging}
-            label={t('batch.exportPackagingSingle')}
-            onSelect={setExportPackaging}
-            color={color}
-          />
-          <ExportPackagingChip
-            packaging="zip"
-            selectedPackaging={exportPackaging}
-            label={t('batch.exportPackagingZip')}
-            onSelect={setExportPackaging}
-            color={color}
-          />
-        </View>
-        <Text style={{ fontSize: 12, color: color.text.muted, lineHeight: 17 }}>
-          {exportPackaging === 'zip'
-            ? t('batch.exportPackagingHintZip')
-            : t('batch.exportPackagingHintSingle')}
-        </Text>
-
-        {renderOption({
-          icon: <FileText size={20} color={color.text.primary} strokeWidth={2.1} />,
-          title: t('share.noteBrief'),
-          description: t('share.noteBriefDescription'),
-          accessibilityLabel: t('share.noteBrief'),
-          onPress: handleExportNoteBrief,
-        })}
-
-        {renderOption({
-          icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
-          title: t('share.meetingBrief'),
-          description: t('share.meetingBriefDescription'),
-          accessibilityLabel: t('share.meetingBrief'),
-          onPress: handleExportMeetingBrief,
-        })}
-
-        {renderOption({
-          icon: <UsersRound size={20} color={color.text.primary} strokeWidth={2.1} />,
-          title: t('share.speakerTurnsBrief'),
-          description: t('share.speakerTurnsBriefDescription'),
-          accessibilityLabel: t('share.speakerTurnsBrief'),
-          onPress: handleExportSpeakerTurns,
-        })}
-
-        {renderOption({
-          icon: <Mail size={20} color={color.text.primary} strokeWidth={2.1} />,
-          title: t('share.emailNote'),
-          description: t('batch.emailBatchDescription'),
-          accessibilityLabel: t('share.emailNote'),
-          onPress: handleOpenEmail,
-        })}
-
-        {emailVisible && (
-          <View
-            className="gap-3 rounded-xl border p-3"
+          <Text
             style={{
-              borderColor: color.border.default,
-              backgroundColor: color.background.tertiary,
+              fontSize: 17,
+              fontWeight: '600',
+              color: color.text.primary,
+              textAlign: 'center',
+              marginBottom: 8,
             }}
           >
-            <Text style={{ fontSize: 13, color: color.text.muted }}>
-              {t('batch.emailBodyFormatHint')}
-            </Text>
-            <Text style={{ fontSize: 12, color: color.text.muted, lineHeight: 17 }}>
-              {exportPackaging === 'zip'
-                ? t('batch.emailZipLimitReminder')
-                : t('batch.emailLimitReminder')}
-            </Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignItems: 'stretch' }}>
-              {BATCH_EMAIL_FORMAT_TEMPLATES.map((tpl) => (
-                <EmailBodyFormatChip
-                  key={tpl}
-                  template={tpl}
-                  label={emailTemplateChipLabel(tpl, t)}
-                  selectedTemplate={emailBodyTemplate}
-                  onSelect={setEmailBodyTemplate}
-                  color={color}
-                />
-              ))}
-            </View>
-            <BottomSheetTextInput
-              className="rounded-xl border px-3.5 py-3 text-[16px]"
-              style={{
-                borderColor: color.border.default,
-                color: color.text.primary,
-                backgroundColor: color.background.primary,
-              }}
-              value={email}
-              onChangeText={setEmail}
-              placeholder={t('share.emailPlaceholder')}
-              placeholderTextColor={color.text.muted}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoCorrect={false}
-              autoComplete="email"
-              returnKeyType="send"
-              blurOnSubmit
-              onSubmitEditing={handleSendEmail}
-              accessibilityLabel={t('share.emailPlaceholder')}
+            {t('share.emailNote')}
+          </Text>
+          <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
+            {t('batch.emailBatchDescription')}
+          </Text>
+
+          <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+            {t('batch.exportPackagingLabel')}
+          </Text>
+          <View className="flex-row gap-3">
+            <ExportPackagingChip
+              packaging="single"
+              selectedPackaging={exportPackaging}
+              label={t('batch.exportPackagingSingle')}
+              onSelect={setExportPackaging}
+              color={color}
             />
-            <View className="flex-row gap-2">
-              <TouchableOpacity
-                onPress={handleCancelEmail}
-                activeOpacity={0.75}
-                disabled={isSendingEmail}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.cancel')}
-                className="min-w-0 flex-1 items-center rounded-xl px-3 py-3"
-                style={{ backgroundColor: color.background.secondary }}
-              >
-                <Text className="font-semibold" style={{ color: color.text.primary }}>
-                  {t('common.cancel')}
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleSendEmail}
-                activeOpacity={0.75}
-                disabled={!emailValid || isSendingEmail}
-                accessibilityRole="button"
-                accessibilityLabel={t('share.sendEmail')}
-                className="min-w-0 flex-1 flex-row items-center justify-center gap-2 rounded-xl px-3 py-3"
-                style={{
-                  backgroundColor: color.accent.primary,
-                  opacity: emailValid && !isSendingEmail ? 1 : 0.5,
-                }}
-              >
-                {isSendingEmail && <ActivityIndicator size="small" color="#fff" />}
-                <Text className="font-semibold text-white">{t('share.sendEmail')}</Text>
-              </TouchableOpacity>
-            </View>
+            <ExportPackagingChip
+              packaging="zip"
+              selectedPackaging={exportPackaging}
+              label={t('batch.exportPackagingZip')}
+              onSelect={setExportPackaging}
+              color={color}
+            />
           </View>
-        )}
-      </BottomSheetView>
+          <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
+            {exportPackaging === 'zip'
+              ? t('batch.exportPackagingHintZip')
+              : t('batch.exportPackagingHintSingle')}
+          </Text>
+
+          <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+            {t('batch.emailBodyFormatHint')}
+          </Text>
+          <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
+            {exportPackaging === 'zip'
+              ? t('batch.emailZipLimitReminder')
+              : t('batch.emailLimitReminder')}
+          </Text>
+
+          <View className="flex-row gap-3">
+            {BATCH_EMAIL_FORMAT_TEMPLATES.map((tpl) => {
+              const label = emailTemplateChipLabel(tpl, t);
+              const selected = emailBodyTemplate === tpl;
+              return (
+                <Pressable
+                  key={tpl}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={label}
+                  onPress={() => setEmailBodyTemplate(tpl)}
+                  className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
+                  style={{
+                    borderColor: selected ? color.accent.primary : color.border.default,
+                    backgroundColor: color.background.tertiary,
+                  }}
+                >
+                  <Text
+                    className="text-center text-[15px] font-semibold leading-5"
+                    style={{ color: selected ? color.accent.primary : color.text.primary }}
+                    numberOfLines={2}
+                  >
+                    {label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <BottomSheetTextInput
+            className="rounded-xl border-2 px-4 py-3 text-[16px]"
+            style={{
+              borderColor: color.accent.primary,
+              color: color.text.primary,
+              backgroundColor: color.background.tertiary,
+            }}
+            value={email}
+            onChangeText={setEmail}
+            placeholder={t('share.emailPlaceholder')}
+            placeholderTextColor={color.text.muted}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+            autoComplete="email"
+            autoFocus
+            returnKeyType="send"
+            blurOnSubmit
+            onSubmitEditing={handleSendEmail}
+            accessibilityLabel={t('share.emailPlaceholder')}
+          />
+
+          <View className="mt-1 flex-row gap-3">
+            <Button
+              variant="secondary"
+              label={t('common.goBack')}
+              onPress={handleCancelEmail}
+              onPressIn={handleCancelEmail}
+              activeOpacity={0.8}
+              className="min-w-0 flex-1"
+              color={color}
+              disabled={isSendingEmail}
+              containerStyle={{
+                backgroundColor: color.background.tertiary,
+                borderRadius: 12,
+              }}
+              accessibilityLabel={t('common.goBack')}
+            />
+            <Button
+              variant="primary"
+              label={t('share.sendEmail')}
+              onPress={handleSendEmail}
+              activeOpacity={0.85}
+              className="min-w-0 flex-1"
+              color={color}
+              disabled={!emailValid}
+              loading={isSendingEmail}
+              containerStyle={{
+                backgroundColor: color.accent.primary,
+                borderRadius: 12,
+              }}
+              accessibilityLabel={t('share.sendEmail')}
+            />
+          </View>
+        </BottomSheetScrollView>
+      ) : (
+        <BottomSheetView
+          style={{
+            paddingHorizontal: 20,
+            paddingTop: 4,
+            paddingBottom: Math.max(insets.bottom, 20),
+            gap: 10,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 17,
+              fontWeight: '600',
+              color: color.text.primary,
+              textAlign: 'center',
+              marginBottom: 8,
+            }}
+          >
+            {t('batch.exportAsTitle', { count })}
+          </Text>
+
+          <Text style={{ fontSize: 13, color: color.text.muted, lineHeight: 18 }}>
+            {t('batch.sheetLimitsHint')}
+          </Text>
+
+          <Text style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }}>
+            {t('batch.exportPackagingLabel')}
+          </Text>
+          <View className="flex-row gap-3">
+            <ExportPackagingChip
+              packaging="single"
+              selectedPackaging={exportPackaging}
+              label={t('batch.exportPackagingSingle')}
+              onSelect={setExportPackaging}
+              color={color}
+            />
+            <ExportPackagingChip
+              packaging="zip"
+              selectedPackaging={exportPackaging}
+              label={t('batch.exportPackagingZip')}
+              onSelect={setExportPackaging}
+              color={color}
+            />
+          </View>
+          <Text style={{ fontSize: 12, color: color.text.muted, lineHeight: 17 }}>
+            {exportPackaging === 'zip'
+              ? t('batch.exportPackagingHintZip')
+              : t('batch.exportPackagingHintSingle')}
+          </Text>
+
+          {renderOption({
+            icon: <FileText size={20} color={color.text.primary} strokeWidth={2.1} />,
+            title: t('share.noteBrief'),
+            description: t('share.noteBriefDescription'),
+            accessibilityLabel: t('share.noteBrief'),
+            onPress: handleExportNoteBrief,
+          })}
+
+          {renderOption({
+            icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
+            title: t('share.meetingBrief'),
+            description: t('share.meetingBriefDescription'),
+            accessibilityLabel: t('share.meetingBrief'),
+            onPress: handleExportMeetingBrief,
+          })}
+
+          {renderOption({
+            icon: <UsersRound size={20} color={color.text.primary} strokeWidth={2.1} />,
+            title: t('share.speakerTurnsBrief'),
+            description: t('share.speakerTurnsBriefDescription'),
+            accessibilityLabel: t('share.speakerTurnsBrief'),
+            onPress: handleExportSpeakerTurns,
+          })}
+
+          {renderOption({
+            icon: <Mail size={20} color={color.text.primary} strokeWidth={2.1} />,
+            title: t('share.emailNote'),
+            description: t('batch.emailBatchDescription'),
+            accessibilityLabel: t('share.emailNote'),
+            onPress: handleOpenEmail,
+          })}
+        </BottomSheetView>
+      )}
     </BottomSheetModal>
   );
 };
