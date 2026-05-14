@@ -1,4 +1,8 @@
-import { HEADER_DEVICE_ID, HEADER_SYNC_TOKEN } from '@/config/constants';
+import {
+  AI_ROUTE_MAX_DURATION_SECONDS,
+  HEADER_DEVICE_ID,
+  HEADER_SYNC_TOKEN,
+} from '@/config/constants';
 import {
   apiError,
   checkDeviceRateLimit,
@@ -12,6 +16,8 @@ import {
 import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
 import { createAutoOrganizeRequest } from '@/services/folder-organize.service';
 import { NextResponse } from 'next/server';
+
+export const maxDuration = AI_ROUTE_MAX_DURATION_SECONDS;
 
 type NotePayload = {
   id: string;

@@ -7,7 +7,7 @@ import {
   validateRequiredStrings,
   weeklyAiLimitExceededResponse,
 } from '@/lib/api';
-import { HEADER_SYNC_TOKEN } from '@/config/constants';
+import { AI_ROUTE_MAX_DURATION_SECONDS, HEADER_SYNC_TOKEN } from '@/config/constants';
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { estimateAskRoutingChars, parseAskPriorTurns } from '@/lib/ask-user-message';
 import {
@@ -19,6 +19,8 @@ import { setAppForeground } from '@/lib/push-tokens';
 import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
 import { createAsk } from '@/services/ask.service';
 import { NextResponse } from 'next/server';
+
+export const maxDuration = AI_ROUTE_MAX_DURATION_SECONDS;
 
 type CreateAskBody = {
   id?: unknown;

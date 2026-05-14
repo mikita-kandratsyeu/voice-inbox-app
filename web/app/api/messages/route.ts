@@ -7,7 +7,7 @@ import {
   validateRequiredStrings,
   weeklyAiLimitExceededResponse,
 } from '@/lib/api';
-import { HEADER_SYNC_TOKEN } from '@/config/constants';
+import { AI_ROUTE_MAX_DURATION_SECONDS, HEADER_SYNC_TOKEN } from '@/config/constants';
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import {
   estimateSummaryTasksRoutingChars,
@@ -27,6 +27,8 @@ import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
 import { isProDevice } from '@/lib/pro-entitlement';
 import { createMessage, type MeetingDialogueAuxPayload } from '@/services/message.service';
 import { NextResponse } from 'next/server';
+
+export const maxDuration = AI_ROUTE_MAX_DURATION_SECONDS;
 
 type CreateMessageBody = {
   id?: unknown;
