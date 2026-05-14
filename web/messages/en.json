@@ -254,8 +254,7 @@
     "invalidTokenTitle": "Link expired or invalid",
     "invalidTokenBody": "Request a new page from the app. Links stay valid for a short time only.",
     "notActiveTitle": "Pro is not active",
-    "notActiveBody": "This activation is no longer active. You can renew or upgrade from the app.",
-    "backHome": "← Back to home"
+    "notActiveBody": "This activation is no longer active. You can renew or upgrade from the app."
   },
   "httpErrors": {
     "backHome": "← Back to home",
