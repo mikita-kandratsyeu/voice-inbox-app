@@ -194,27 +194,10 @@ export const InAppEventDetailScreen = () => {
             </View>
 
             {copy.kind === 'update110' ? (
-              <View className="mb-8 w-full flex-row items-center gap-4 self-stretch">
-                <View
-                  className="h-[68px] w-[68px] shrink-0 overflow-hidden rounded-[22px]"
-                  style={{
-                    borderWidth: 1,
-                    borderColor: `${color.accent.primary}45`,
-                    backgroundColor: color.background.card,
-                    ...cardShadowStyle,
-                  }}
-                >
-                  <Image
-                    source={require('@/shared/assets/app-icon.png')}
-                    className="h-full w-full"
-                    resizeMode="cover"
-                    accessibilityRole="image"
-                    accessibilityLabel={copy.appName}
-                  />
-                </View>
+              <View className="mb-5 w-full self-stretch">
                 <View className="min-w-0 flex-1 justify-center py-0.5">
                   <Text
-                    className="text-left text-[19px] font-bold leading-6 tracking-tight"
+                    className="text-left text-[26px] font-bold tracking-tight"
                     style={[{ color: color.text.primary }, titleStyle]}
                     accessibilityRole="header"
                   >
@@ -280,7 +263,7 @@ export const InAppEventDetailScreen = () => {
                 return (
                   <View
                     key={`${feature.title}-${index}`}
-                    className="flex-row items-center gap-3 px-3 py-2.5"
+                    className="flex-row items-center gap-2.5 px-4 py-4"
                     style={{
                       borderRadius: 14,
                       borderWidth: 1,
@@ -312,7 +295,7 @@ export const InAppEventDetailScreen = () => {
                         {feature.isPro ? <PlanPaywallProChip /> : null}
                       </View>
                       <Text
-                        className="mt-0.5 text-[13px] leading-[18px]"
+                        className="mt-1 text-[13px] leading-[18px]"
                         style={[{ color: color.text.secondary }, titleStyle]}
                       >
                         {feature.description}
@@ -331,7 +314,7 @@ export const InAppEventDetailScreen = () => {
             backgroundColor: 'transparent',
             paddingHorizontal: 20,
             paddingTop: 8,
-            paddingBottom: insets.bottom + 24,
+            paddingBottom: insets.bottom + 18,
           }}
         >
           <Button
