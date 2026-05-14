@@ -267,7 +267,7 @@
     "meetingDialogueTabCalloutTitle": "How we split the conversation",
     "meetingDialogueDisclaimer": "These lines make long meetings easier to skim. Speaker labels come from AI. Use them as a rough guide.",
     "meetingDialogueTabEmptyTitle": "No layout yet",
-    "meetingDialogueTabEmptyDesc": "Generate a summary for this meeting. On Pro we also try to separate who said what. Tap Regenerate anytime to refresh.",
+    "meetingDialogueTabEmptyDesc": "Generate a summary for this meeting. AI will try to separate who said what. Tap Regenerate anytime to refresh.",
     "meetingDialoguePreamble": "Unlabeled section",
     "meetingDialogueProcessing": "Preparing speaker turns...",
     "shareMeetingBrief": "Share meeting brief",
@@ -1419,17 +1419,35 @@
     "autoOrganizeReviewUnnamedFolder": "Untitled"
   },
   "inAppEvent": {
-    "highlightsTitle": "Highlights",
+    "whatsNewBadge": "What's new",
     "primaryCta": "Continue",
     "update110": {
-      "title": "Voice Inbox AI gets better",
-      "subtitle": "New features and thoughtful improvements",
-      "bullets": [
-        "Meeting Mode for focused capture during conversations",
-        "Pin important moments so they stay easy to find",
-        "More export options for your notes and transcripts",
-        "Clearer storage controls for models and local data",
-        "Polish and fixes throughout the app"
+      "appName": "Voice Inbox AI",
+      "version": "1.1.0",
+      "tagline": "Smarter meetings. Better insights. More control.",
+      "features": [
+        {
+          "title": "Meeting Mode",
+          "description": "Record, transcribe, and get AI summaries from your meetings automatically.",
+          "isNew": true
+        },
+        {
+          "title": "Pinned moments",
+          "description": "Pin important moments so they stay easy to find in long recordings.",
+          "isNew": true
+        },
+        {
+          "title": "Advanced export",
+          "description": "More export options for your notes and transcripts when you need them elsewhere."
+        },
+        {
+          "title": "Storage controls",
+          "description": "Clearer controls for models and on-device data so you always know what uses space."
+        },
+        {
+          "title": "Polish & stability",
+          "description": "Fixes and refinements across the app for a smoother everyday experience."
+        }
       ]
     },
     "unknown": {
