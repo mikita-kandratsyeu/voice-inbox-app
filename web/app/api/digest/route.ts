@@ -10,6 +10,7 @@ import {
   weeklyAiLimitExceededResponse,
 } from '@/lib/api';
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
+import { logAiRequest } from '@/lib/ai-operation';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
 import { resolveAutoAiModel, type AiModelMode } from '@/lib/ai-model-router';
 import { setAppForeground } from '@/lib/push-tokens';
@@ -28,7 +29,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!guard.ok) {
     return guard.response;
   }
-  const { deviceId: deviceIdTrimmed, pathname, request: req } = guard.ctx;
+  const { deviceId: deviceIdTrimmed, pathname, request: req, aiOperation } = guard.ctx;
 
   const body = await parseJsonBody<DigestRequestBody>(req);
   if (!body) {
@@ -79,6 +80,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   }
 
   await setAppForeground(deviceIdTrimmed);
+
+  logAiRequest(aiOperation, { path: pathname });
 
   try {
     const result = await processDigest(payload, resolvedModel, req.headers.get('user-agent'));

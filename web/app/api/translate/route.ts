@@ -9,6 +9,7 @@ import {
   weeklyAiLimitExceededResponse,
 } from '@/lib/api';
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
+import { logAiRequest } from '@/lib/ai-operation';
 import { isValidTranslateLanguage } from '@/lib/prompts';
 import { translateTranscript } from '@/services/translate.service';
 
@@ -24,7 +25,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!guard.ok) {
     return guard.response;
   }
-  const { deviceId: deviceIdTrimmed, pathname, request: req } = guard.ctx;
+  const { deviceId: deviceIdTrimmed, pathname, request: req, aiOperation } = guard.ctx;
 
   const body = await parseJsonBody<TranslateBody>(req);
 
@@ -57,6 +58,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       code: ApiErrorCode.InvalidTargetLanguage,
     });
   }
+
+  logAiRequest(aiOperation, { path: pathname });
 
   const result = await translateTranscript(
     transcript,

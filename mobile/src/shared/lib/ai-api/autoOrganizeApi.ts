@@ -3,6 +3,8 @@ import { i18n } from '@/shared/lib';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
+import { headersForAiOperation } from './aiOperation';
+
 type NoteForOrganize = {
   id: string;
   title?: string;
@@ -70,7 +72,10 @@ export async function postAutoOrganizeFolders(body: RequestBody): Promise<AutoOr
   try {
     response = await fetchWithAuth(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...headersForAiOperation('folder_auto_organize'),
+      },
       body: JSON.stringify(body),
     });
   } catch (err) {

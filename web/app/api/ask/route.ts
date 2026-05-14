@@ -9,6 +9,7 @@ import {
 } from '@/lib/api';
 import { HEADER_SYNC_TOKEN } from '@/config/constants';
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
+import { logAiRequest } from '@/lib/ai-operation';
 import { estimateAskRoutingChars, parseAskPriorTurns } from '@/lib/ask-user-message';
 import {
   estimateSummaryTasksRoutingChars,
@@ -40,7 +41,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   if (!guard.ok) {
     return guard.response;
   }
-  const { deviceId: deviceIdTrimmed, pathname, request: req } = guard.ctx;
+  const { deviceId: deviceIdTrimmed, pathname, request: req, aiOperation } = guard.ctx;
 
   const body = await parseJsonBody<CreateAskBody>(req);
 
@@ -127,6 +128,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   resolvedModel = modelParsed.model;
 
   await setAppForeground(deviceIdTrimmed);
+
+  logAiRequest(aiOperation, { path: pathname, messageId: id });
 
   const result = await createAsk(
     id,

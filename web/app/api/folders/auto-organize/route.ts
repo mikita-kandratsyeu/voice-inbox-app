@@ -9,6 +9,8 @@ import {
   validateDeviceId,
   validateRequiredStrings,
 } from '@/lib/api';
+import { logAiRequest, resolveAiOperation } from '@/lib/ai-operation';
+import { ApiErrorCode } from '@/lib/api-error-codes';
 import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
 import { createAutoOrganizeRequest } from '@/services/folder-organize.service';
 import { NextResponse } from 'next/server';
@@ -50,6 +52,15 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const rateLimitError = await checkDeviceRateLimit(deviceIdTrimmed);
   if (rateLimitError) return rateLimitError;
+
+  const opResolved = resolveAiOperation(request, path);
+  if (!opResolved.ok) {
+    return apiError(opResolved.error, HttpStatus.BAD_REQUEST, {
+      pathname: path,
+      code: ApiErrorCode.ValidationError,
+    });
+  }
+  const aiOperation = opResolved.operation;
 
   const body = await parseJsonBody<RequestBody>(request);
   if (!body) return apiError('Invalid JSON body', HttpStatus.BAD_REQUEST, { pathname: path });
@@ -132,6 +143,8 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   });
 
   const messageTtlSeconds = clampMessageTtlSeconds(body.messageTtlSeconds);
+
+  logAiRequest(aiOperation, { path, requestId: String(body.id) });
 
   const result = await createAutoOrganizeRequest(
     String(body.id),

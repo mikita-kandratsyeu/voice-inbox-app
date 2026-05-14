@@ -4,6 +4,7 @@ import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacing
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
 import type { AiUsage } from './aiApi';
+import { headersForAiOperation } from './aiOperation';
 
 type DigestApiBody = {
   payload: string;
@@ -39,7 +40,10 @@ export async function generateDigest(body: DigestApiBody): Promise<DigestApiResu
   try {
     const response = await fetchWithAuth(`${getWebApiUrl()}/api/digest`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...headersForAiOperation('digest'),
+      },
       body: JSON.stringify(body),
     });
 

@@ -2,6 +2,7 @@ import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 
 import { isString } from '../type-guards';
+import { headersForAiOperation } from './aiOperation';
 
 type AskApiRequestBody = {
   id: string;
@@ -92,7 +93,10 @@ export async function postAskQuestion(body: AskApiRequestBody): Promise<AskApiRe
   try {
     response = await fetchWithAuth(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...headersForAiOperation('transcript_ask'),
+      },
       body: JSON.stringify(payload),
     });
   } catch (err) {

@@ -10,6 +10,8 @@ import {
   validateDeviceId,
 } from '@/lib/api';
 import { ApiErrorCode } from '@/lib/api-error-codes';
+import { resolveAiOperation } from '@/lib/ai-operation';
+import type { AiOperation } from '@/lib/ai-operation';
 
 /**
  * Shared guard chain for authenticated mobile AI HTTP routes:
@@ -21,6 +23,8 @@ export type MobileAiRouteContext = {
   readonly deviceId: string;
   readonly pathname: string;
   readonly request: Request;
+  /** Logical AI job (from `HEADER_AI_OPERATION` or route default). */
+  readonly aiOperation: AiOperation;
 };
 
 export async function assertMobileAiRouteContext(
@@ -55,12 +59,24 @@ export async function assertMobileAiRouteContext(
     return { ok: false, response: rateLimitError };
   }
 
+  const opResolved = resolveAiOperation(request, pathname);
+  if (!opResolved.ok) {
+    return {
+      ok: false,
+      response: apiError(opResolved.error, HttpStatus.BAD_REQUEST, {
+        pathname,
+        code: ApiErrorCode.ValidationError,
+      }),
+    };
+  }
+
   return {
     ok: true,
     ctx: {
       deviceId: deviceId!.trim(),
       pathname,
       request,
+      aiOperation: opResolved.operation,
     },
   };
 }

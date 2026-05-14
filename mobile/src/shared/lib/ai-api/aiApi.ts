@@ -2,6 +2,8 @@ import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
+import { headersForAiOperation } from './aiOperation';
+
 export type AiProcessingOptions = {
   summaryStyle?: 'brief' | 'standard' | 'detailed';
   taskStrictness?: 'strict' | 'balanced' | 'soft';
@@ -100,7 +102,10 @@ export async function postAiMessage(body: AiApiRequestBody): Promise<AiApiResult
   try {
     response = await fetchWithAuth(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...headersForAiOperation('transcript_summarize'),
+      },
       body: JSON.stringify(body),
     });
   } catch (err) {

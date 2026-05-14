@@ -31,6 +31,8 @@ export const VERIFIED_METRICS_URL = process.env.NEXT_PUBLIC_VERIFIED_METRICS_URL
 // HTTP headers
 export const HEADER_SYNC_TOKEN = 'x-upstash-sync-token';
 export const HEADER_DEVICE_ID = 'x-device-id';
+/** Mobile AI routes: which logical AI job this request is (see `web/lib/ai-operation.ts`). */
+export const HEADER_AI_OPERATION = 'x-voice-inbox-ai-operation';
 
 // Rate limiting (proxy)
 export const RATE_LIMIT_WINDOW_SECONDS = 60;

@@ -3,6 +3,8 @@ import { i18n } from '@/shared/lib';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
+import { headersForAiOperation } from './aiOperation';
+
 export type TranslateResult =
   | { ok: true; translatedText: string }
   | { ok: false; limitExceeded: true; usage: { used: number; limit: number; resetAt: string } }
@@ -23,7 +25,10 @@ export async function postTranslate(
   try {
     response = await fetchWithAuth(url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...headersForAiOperation('translate'),
+      },
       body: JSON.stringify({ transcript, targetLanguage }),
     });
   } catch (err) {
