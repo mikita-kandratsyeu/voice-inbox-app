@@ -175,11 +175,13 @@ export const InAppEventDetailScreen = () => {
         >
           <Animated.View entering={enterHero} className="items-center">
             <View
-              className="mb-8 flex-row items-center gap-1.5 rounded-full px-3 py-1.5"
+              className="mb-8 flex-row items-center justify-center gap-1.5 rounded-full"
               style={{
                 backgroundColor: `${color.accent.transcript}24`,
                 borderWidth: 1,
                 borderColor: `${color.accent.transcript}40`,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
               }}
             >
               <Rocket size={13} color={color.accent.transcript} strokeWidth={2.2} />
@@ -309,12 +311,21 @@ export const InAppEventDetailScreen = () => {
                         </Text>
                         {feature.isNew ? (
                           <View
-                            className="rounded px-1.5 py-0.5"
-                            style={{ backgroundColor: `${color.accent.transcript}33` }}
+                            style={{
+                              backgroundColor: `${color.accent.transcript}33`,
+                              paddingHorizontal: 8,
+                              paddingVertical: 3,
+                              borderRadius: 5,
+                              justifyContent: 'center',
+                              alignItems: 'center',
+                            }}
                           >
                             <Text
-                              className="text-[10px] font-bold uppercase tracking-wide"
-                              style={[{ color: color.accent.transcript }, titleStyle]}
+                              className="text-[10px] font-bold uppercase"
+                              style={[
+                                { color: color.accent.transcript, letterSpacing: 0 },
+                                titleStyle,
+                              ]}
                             >
                               {t('inAppEvent.newBadge')}
                             </Text>

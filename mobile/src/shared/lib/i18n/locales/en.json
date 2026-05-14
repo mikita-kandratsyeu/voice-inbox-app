@@ -1419,6 +1419,7 @@
     "autoOrganizeReviewUnnamedFolder": "Untitled"
   },
   "inAppEvent": {
+    "newBadge": "New",
     "whatsNewBadge": "What's new",
     "primaryCta": "Continue",
     "update110": {
