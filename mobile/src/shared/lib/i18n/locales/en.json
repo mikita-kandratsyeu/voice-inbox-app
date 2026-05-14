@@ -66,7 +66,22 @@
     "defaultTitle": "Text note",
     "discardTitle": "Close without saving?",
     "discardMessage": "Your note text will be lost.",
-    "discardConfirm": "Close"
+    "discardConfirm": "Close",
+    "templatesTitle": "Templates & tips",
+    "templatesHint1": "Tap a chip to insert a starter outline—at the end if you already wrote something, or as the whole note if the field is empty.",
+    "templatesHint2": "Treat it as a draft: edit headings and lines however you like.",
+    "templateChip": {
+      "dayPlan": "Day plan",
+      "gratitude": "Gratitude",
+      "tasks": "Tasks",
+      "idea": "Idea"
+    },
+    "templateBody": {
+      "dayPlan": "Day plan\nTop priority today:\n\n\nMeetings & calls:\n\n\nPersonal:\n\n\nEvening recap:\n\n",
+      "gratitude": "Gratitude\nWhat I'm thankful for today:\n\n\nWhat helped me:\n\n",
+      "tasks": "Tasks\nUrgent & important:\n\n\nToday:\n\n\nNext:\n\n",
+      "idea": "Idea\nThe gist:\n\n\nWhy it matters:\n\n\nNext step:\n\n"
+    }
   },
   "inbox": {
     "menuSelectNotes": "Select",
