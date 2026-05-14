@@ -1,6 +1,7 @@
 import { Share } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
+import { normalizeMeetingDialogueMarkdownParagraphs } from '@/screens/recording-detail/lib/parseMeetingDialogue';
 import { formatShortDate, formatTime, i18n } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
 import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeDisplay';
@@ -216,7 +217,7 @@ const pushMeetingDialogue = (lines: string[], record: VoiceRecord): void => {
   lines.push('');
   lines.push(`## ${i18n.t('recordingDetail.meetingDialogueTitle')}`);
   lines.push('');
-  lines.push(body);
+  lines.push(normalizeMeetingDialogueMarkdownParagraphs(body));
 };
 
 const pushFooter = (lines: string[]): void => {
@@ -275,7 +276,7 @@ const buildMeetingSpeakerTurnsOnly = (record: VoiceRecord): string => {
   lines.push('');
   const body = record.meetingDialogue?.trim();
   if (body) {
-    lines.push(body);
+    lines.push(normalizeMeetingDialogueMarkdownParagraphs(body));
   } else {
     lines.push(`_${i18n.t('share.speakerTurnsEmpty')}_`);
   }

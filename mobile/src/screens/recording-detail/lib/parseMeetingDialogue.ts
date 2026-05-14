@@ -8,8 +8,24 @@ export type MeetingUtterance = {
   colorSlot: number;
 };
 
-const SPEAKER_LINE_RE =
-  /^\s*((?:Speaker|Участник|Спикер|Participant|Interviewer|Interviewee|Host|Guest|Модератор|Интервьюер|Ведущий)(?:\s+\d+|\s*\d+)?)\s*:\s*(.*)$/i;
+const SPEAKER_LABEL_HEAD =
+  '(?:Speaker|Участник|Спикер|Participant|Interviewer|Interviewee|Host|Guest|Модератор|Интервьюер|Ведущий)(?:\\s+\\d+|\\s*\\d+)?';
+
+const SPEAKER_LINE_RE = new RegExp(`^\\s*(${SPEAKER_LABEL_HEAD})\\s*:\\s*(.*)$`, 'i');
+
+/** Same as web `normalizeInlineSpeakerLabelsToParagraphBreaks` — keeps share/email readable. */
+const INLINE_SPEAKER_PARAGRAPH_BREAK = new RegExp(
+  `([^\\n\\r\\s])\\s*(${SPEAKER_LABEL_HEAD}\\s*:)`,
+  'gi',
+);
+
+export function normalizeMeetingDialogueMarkdownParagraphs(raw: string): string {
+  const t = raw.trim();
+  if (!t || !t.includes(':')) {
+    return raw;
+  }
+  return t.replace(INLINE_SPEAKER_PARAGRAPH_BREAK, '$1\n\n$2');
+}
 
 /**
  * Split pseudo-diarization text into turns. Lines without a speaker prefix attach
