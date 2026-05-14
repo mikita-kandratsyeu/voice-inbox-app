@@ -217,6 +217,8 @@ const pushMeetingDialogue = (lines: string[], record: VoiceRecord): void => {
   lines.push('');
   lines.push(`## ${i18n.t('recordingDetail.meetingDialogueTitle')}`);
   lines.push('');
+  lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
+  lines.push('');
   lines.push(normalizeMeetingDialogueMarkdownParagraphs(body));
 };
 
@@ -274,6 +276,8 @@ const buildMeetingSpeakerTurnsOnly = (record: VoiceRecord): string => {
   lines.push('');
   lines.push(`## ${i18n.t('recordingDetail.meetingDialogueTitle')}`);
   lines.push('');
+  lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
+  lines.push('');
   const body = record.meetingDialogue?.trim();
   if (body) {
     lines.push(normalizeMeetingDialogueMarkdownParagraphs(body));
@@ -281,7 +285,6 @@ const buildMeetingSpeakerTurnsOnly = (record: VoiceRecord): string => {
     lines.push(`_${i18n.t('share.speakerTurnsEmpty')}_`);
   }
   lines.push('');
-  lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
   pushFooter(lines);
 
   return lines.join('\n');
