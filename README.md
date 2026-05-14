@@ -4,7 +4,7 @@ Voice Inbox AI is an **offline-first voice notes** application built with React 
 
 It lets you quickly capture ideas, meetings, and daily thoughts as audio, then turn them into **transcripts, concise summaries, and actionable tasks**.
 
-The repository is a **single Git repo** with two standalone apps: **`mobile/`** (React Native) and **`web/`** (Next.js). There is no root `package.json` or Yarn workspaces — install and run scripts **from each app directory**. See [`.cursor/rules/repo-layout.mdc`](.cursor/rules/repo-layout.mdc) for commands and conventions.
+The repository is a **single Git repo** with standalone apps: **`mobile/`** (React Native), **`web/`** (Next.js), and optionally **`telegram-bot/`** (Node admin bot reading the same Postgres `AppConfig` as web). There is no root `package.json` or Yarn workspaces — install and run scripts **from each app directory**. See [`.cursor/rules/repo-layout.mdc`](.cursor/rules/repo-layout.mdc) for commands and conventions.
 
 The codebase is structured for a small team: clear layers (entities / features / screens), typed data access, and separation between local storage, on-device jobs, and optional cloud AI.
 
@@ -35,7 +35,7 @@ The codebase is structured for a small team: clear layers (entities / features /
 | i18n | `i18next` + `react-i18next` |
 | Validation / types | `zod` |
 
-**Web (`web/`)** — Next.js, Prisma, Postgres; legal and marketing content in `web/content/`. Mobile does **not** share a database with web; each app owns its storage layer.
+**Web (`web/`)** — Next.js, Prisma, Postgres; legal and marketing content in `web/content/`. The mobile app does **not** use the web database for note data (Drizzle + SQLite on device). An optional **`telegram-bot/`** process may read the same Postgres **`AppConfig`** row as web for the Telegram admin whitelist only.
 
 
 ## Privacy & terms (web)

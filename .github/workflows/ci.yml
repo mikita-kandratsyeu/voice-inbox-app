@@ -78,3 +78,33 @@ jobs:
           # prisma.config.ts requires DATABASE_URL; prisma generate does not open a connection
           DATABASE_URL: postgresql://ci:ci@127.0.0.1:5432/ci?schema=public
         run: yarn type:check
+
+  telegram-bot:
+    name: CI (Telegram bot)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: telegram-bot
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set Node.js 24.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Checking node_modules cache
+        uses: actions/cache@v4
+        with:
+          path: telegram-bot/node_modules
+          key: ${{ runner.os }}-telegram-bot-modules-${{ hashFiles('telegram-bot/yarn.lock', 'telegram-bot/.yarnrc.yml') }}
+
+      - name: Install packages
+        run: yarn install --immutable
+
+      - name: Type Check
+        run: yarn type:check

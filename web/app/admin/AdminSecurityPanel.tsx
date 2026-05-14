@@ -47,6 +47,14 @@ export function AdminSecurityPanel() {
   const [createErr, setCreateErr] = useState<string | null>(null);
   const [createSaving, setCreateSaving] = useState(false);
 
+  const [tgIdsText, setTgIdsText] = useState('');
+  const [tgWhitelistLoading, setTgWhitelistLoading] = useState(true);
+  const [tgWhitelistEditable, setTgWhitelistEditable] = useState(false);
+  const [tgWhitelistHint, setTgWhitelistHint] = useState<string | null>(null);
+  const [tgWhitelistMsg, setTgWhitelistMsg] = useState<string | null>(null);
+  const [tgWhitelistErr, setTgWhitelistErr] = useState<string | null>(null);
+  const [tgWhitelistSaving, setTgWhitelistSaving] = useState(false);
+
   const loadPolicy = useCallback(async () => {
     setPolicyLoading(true);
     try {
@@ -73,10 +81,73 @@ export function AdminSecurityPanel() {
     }
   }, []);
 
+  const loadTelegramWhitelist = useCallback(async () => {
+    setTgWhitelistLoading(true);
+    setTgWhitelistErr(null);
+    try {
+      const res = await fetch('/api/admin/telegram-whitelist', { credentials: 'include' });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        editable?: boolean;
+        hint?: string;
+        ids?: string[];
+        error?: string;
+      };
+      if (!res.ok || !data.ok) {
+        setTgWhitelistErr(data.error ?? 'Failed to load Telegram whitelist');
+        setTgIdsText('');
+        setTgWhitelistEditable(false);
+        setTgWhitelistHint(null);
+        return;
+      }
+      setTgWhitelistEditable(!!data.editable);
+      setTgWhitelistHint(data.hint ?? null);
+      setTgIdsText(Array.isArray(data.ids) ? data.ids.join('\n') : '');
+    } catch {
+      setTgWhitelistErr('Request failed');
+      setTgIdsText('');
+    } finally {
+      setTgWhitelistLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     void loadPolicy();
     void loadUsers();
-  }, [loadPolicy, loadUsers]);
+    void loadTelegramWhitelist();
+  }, [loadPolicy, loadUsers, loadTelegramWhitelist]);
+
+  const handleTelegramWhitelistSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTgWhitelistMsg(null);
+    setTgWhitelistErr(null);
+    setTgWhitelistSaving(true);
+    const lines = tgIdsText
+      .split(/[\n,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    try {
+      const res = await fetch('/api/admin/telegram-whitelist', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ ids: lines }),
+      });
+      const data = (await res.json()) as { ok?: boolean; ids?: string[]; error?: string };
+      if (!res.ok || !data.ok) {
+        setTgWhitelistErr(data.error ?? 'Save failed');
+        return;
+      }
+      setTgWhitelistMsg('Saved.');
+      if (Array.isArray(data.ids)) {
+        setTgIdsText(data.ids.join('\n'));
+      }
+    } catch {
+      setTgWhitelistErr('Request failed');
+    } finally {
+      setTgWhitelistSaving(false);
+    }
+  };
 
   const handlePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,6 +258,63 @@ export function AdminSecurityPanel() {
           </dl>
         ) : (
           <p className="text-sm text-red-600 dark:text-red-400">{policy?.error ?? 'Error'}</p>
+        )}
+      </AdminCard>
+
+      <AdminCard
+        title="Telegram admin bot"
+        description={
+          <>
+            Numeric Telegram user ids allowed to use the separate admin bot (one per line or
+            comma-separated). Find yours via @userinfobot. Empty list means no Telegram admins. The
+            bot reads this list from the same database; deploy it from{' '}
+            <code className="text-xs">telegram-bot/</code>.
+          </>
+        }
+        headerRight={
+          <button
+            type="button"
+            onClick={() => void loadTelegramWhitelist()}
+            className={adminBtnSecondaryClass}
+          >
+            Refresh
+          </button>
+        }
+      >
+        {tgWhitelistLoading ? (
+          <p className="text-sm text-zinc-500">Loading…</p>
+        ) : (
+          <form onSubmit={handleTelegramWhitelistSave} className="max-w-xl space-y-3">
+            {tgWhitelistHint && (
+              <p className="text-sm text-amber-700 dark:text-amber-300">{tgWhitelistHint}</p>
+            )}
+            <div>
+              <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
+                Telegram user ids
+              </label>
+              <textarea
+                value={tgIdsText}
+                onChange={(e) => setTgIdsText(e.target.value)}
+                rows={6}
+                disabled={!tgWhitelistEditable}
+                placeholder="123456789"
+                className={`${adminInputClass} min-h-32 font-mono text-sm`}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={!tgWhitelistEditable || tgWhitelistSaving}
+              className={adminBtnPrimaryClass}
+            >
+              {tgWhitelistSaving ? 'Saving…' : 'Save whitelist'}
+            </button>
+            {tgWhitelistMsg && (
+              <p className="text-sm text-green-600 dark:text-green-400">{tgWhitelistMsg}</p>
+            )}
+            {tgWhitelistErr && (
+              <p className="text-sm text-red-600 dark:text-red-400">{tgWhitelistErr}</p>
+            )}
+          </form>
         )}
       </AdminCard>
 

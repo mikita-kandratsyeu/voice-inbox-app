@@ -1,0 +1,24 @@
+{
+  "name": "voice-inbox-telegram-bot",
+  "version": "0.1.0",
+  "license": "UNLICENSED",
+  "private": true,
+  "type": "module",
+  "packageManager": "yarn@4.14.1",
+  "scripts": {
+    "dev": "node --import tsx src/index.ts",
+    "start": "NODE_ENV=production node --import tsx src/index.ts",
+    "type:check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "grammy": "^1.38.4",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "@types/pg": "^8.15.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}

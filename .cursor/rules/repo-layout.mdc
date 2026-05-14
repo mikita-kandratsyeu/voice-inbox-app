@@ -5,19 +5,21 @@ alwaysApply: true
 
 # Voice Inbox — repository layout
 
-One **Git repository** with two **standalone** apps in `web/` and `mobile/`. There is **no** root `package.json`, **no** Yarn/npm workspaces, and **no** Turborepo/Nx-style orchestration — each app is its own Yarn 4 project (`packageManager` in that app’s `package.json`). **Node:** >= 24.
+One **Git repository** with **standalone** apps in `web/`, `mobile/`, and optionally `telegram-bot/`. There is **no** root `package.json`, **no** Yarn/npm workspaces, and **no** Turborepo/Nx-style orchestration — each app is its own Yarn 4 project (`packageManager` in that app’s `package.json`). **Node:** >= 24.
 
 | App | Path | Role |
 |-----|------|------|
 | Web | `web/` | Next.js, Prisma, public site / API |
 | Mobile | `mobile/` | React Native (CLI), Drizzle, offline-first app |
+| Telegram bot | `telegram-bot/` | Optional admin bot (Grammy); reads `AppConfig` from the same Postgres as web |
 
-Install dependencies and run scripts **from the app directory** (`cd web` or `cd mobile`), not from the repo root.
+Install dependencies and run scripts **from the app directory** (`cd web`, `cd mobile`, or `cd telegram-bot`), not from the repo root.
 
 ## Commands (from each app directory)
 
 - **Web:** `yarn dev`, `yarn build`, `yarn lint`, `yarn type:check`, `yarn db:generate` / `db:push`
 - **Mobile:** `yarn start`, `yarn ios`, `yarn lint`, `yarn type:check`, `yarn test`
+- **Telegram bot:** `yarn dev`, `yarn start`, `yarn type:check`
 
 Do not mix layers: **web** uses Prisma and Postgres; **mobile** uses Drizzle and local storage (op-sqlite, etc.). When changing shared business logic, keep both apps in mind, but do not copy database schemas blindly.
 
