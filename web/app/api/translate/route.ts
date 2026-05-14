@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { AI_ROUTE_MAX_DURATION_SECONDS } from '@/config/constants';
 import { ApiErrorCode } from '@/lib/api-error-codes';
 import {
   apiError,
@@ -13,7 +12,7 @@ import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { isValidTranslateLanguage } from '@/lib/prompts';
 import { translateTranscript } from '@/services/translate.service';
 
-export const maxDuration = AI_ROUTE_MAX_DURATION_SECONDS;
+export const maxDuration = 120;
 
 type TranslateBody = {
   transcript?: unknown;

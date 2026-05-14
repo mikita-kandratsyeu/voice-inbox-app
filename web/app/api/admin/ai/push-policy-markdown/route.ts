@@ -1,10 +1,6 @@
 import { NextResponse } from 'next/server';
 
-import {
-  ALLOWED_AI_MODELS,
-  AI_ROUTE_MAX_DURATION_SECONDS,
-  FALLBACK_MODEL,
-} from '@/config/constants';
+import { ALLOWED_AI_MODELS, FALLBACK_MODEL } from '@/config/constants';
 import { getAdminSession } from '@/lib/admin-session';
 import { apiError, HttpStatus, parseJsonBody } from '@/lib/api';
 import { createOpenRouterClient } from '@/lib/openrouter';
@@ -15,7 +11,7 @@ import {
   TooManyRequestsResponseError,
 } from '@openrouter/sdk/models/errors';
 
-export const maxDuration = AI_ROUTE_MAX_DURATION_SECONDS;
+export const maxDuration = 120;
 
 type Body = {
   locale?: unknown;

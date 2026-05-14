@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 
-import { AI_ROUTE_MAX_DURATION_SECONDS } from '@/config/constants';
 import { ApiErrorCode } from '@/lib/api-error-codes';
 import {
   apiError,
@@ -16,7 +15,7 @@ import { resolveAutoAiModel, type AiModelMode } from '@/lib/ai-model-router';
 import { setAppForeground } from '@/lib/push-tokens';
 import { processDigest } from '@/services/ai.service';
 
-export const maxDuration = AI_ROUTE_MAX_DURATION_SECONDS;
+export const maxDuration = 120;
 
 type DigestRequestBody = {
   payload?: unknown;

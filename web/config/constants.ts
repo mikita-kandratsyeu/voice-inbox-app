@@ -61,13 +61,6 @@ export const AI_BONUS_AMOUNT = 5;
 export const AI_BONUS_COOLDOWN_KEY_PREFIX = 'ai_bonus_cooldown:';
 export const AI_BONUS_COOLDOWN_SECONDS = 900; // 15 min
 
-/**
- * Next.js / Vercel `maxDuration` (seconds) for routes that invoke OpenRouter, including work
- * scheduled with `after()` in the same serverless invocation. Align with mobile poll budget
- * (`POLL_TIMEOUT_MS` in `mobile/src/shared/lib/ai-api/`).
- */
-export const AI_ROUTE_MAX_DURATION_SECONDS = 120;
-
 // Redis / KV — AI job payload keys (`msg:*`). Clients may request a shorter TTL (see MESSAGE_TTL_MIN_SECONDS).
 export const MESSAGE_TTL_MIN_SECONDS = 300; // 5 minutes
 export const MESSAGE_TTL_SECONDS = 3600; // default / max selectable (1 hour)
