@@ -11,7 +11,9 @@ import {
   TooManyRequestsResponseError,
 } from '@openrouter/sdk/models/errors';
 
-export const maxDuration = 120;
+export const runtime = 'nodejs';
+
+export const maxDuration = 300;
 
 type Body = {
   locale?: unknown;
