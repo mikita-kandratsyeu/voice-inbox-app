@@ -1,4 +1,5 @@
 import { HEADER_DEVICE_ID } from '@/config/constants';
+import { ApiErrorCode } from '@/lib/api-error-codes';
 import {
   apiError,
   checkDeviceRateLimit,
@@ -39,12 +40,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const iapActive = await isRevenueCatProEntitlementActiveForDevice(deviceIdTrimmed);
   if (iapActive === true) {
-    return NextResponse.json(
-      {
-        error: 'Store subscription is active; license keys cannot be applied for this device.',
-        code: 'iap_active',
-      },
-      { status: 403 },
+    return apiError(
+      'Store subscription is active; license keys cannot be applied for this device.',
+      HttpStatus.FORBIDDEN,
+      { pathname: path, code: ApiErrorCode.IapActive },
     );
   }
 
@@ -57,7 +56,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const result = await redeemProLicenseKey(body.key, deviceIdTrimmed, proWeeklyLimit);
 
   if (!result.ok) {
-    return NextResponse.json({ error: result.error, code: result.code }, { status: result.status });
+    return apiError(result.error, result.status, { pathname: path, code: result.code });
   }
 
   return NextResponse.json({

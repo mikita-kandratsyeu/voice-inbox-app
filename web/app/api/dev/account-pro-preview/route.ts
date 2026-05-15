@@ -1,4 +1,8 @@
+import { ApiErrorCode } from '@/lib/api-error-codes';
+import { apiError, HttpStatus } from '@/lib/api';
 import { NextResponse, type NextRequest } from 'next/server';
+
+const PATH = '/api/dev/account-pro-preview';
 
 /**
  * Legacy URL from when this preview returned HTML via `react-dom/server`.
@@ -7,7 +11,10 @@ import { NextResponse, type NextRequest } from 'next/server';
  */
 export function GET(req: NextRequest): NextResponse {
   if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return apiError('Not found', HttpStatus.NOT_FOUND, {
+      pathname: PATH,
+      code: ApiErrorCode.NotFound,
+    });
   }
 
   const u = new URL(req.url);

@@ -1,9 +1,12 @@
-import { NextResponse, type NextRequest } from 'next/server';
-
+import { ApiErrorCode } from '@/lib/api-error-codes';
+import { apiError, HttpStatus } from '@/lib/api';
 import {
   buildProLicenseKeyEmail,
   type ProLicenseEmailDuration,
 } from '@/lib/pro-license-email-template';
+import { NextResponse, type NextRequest } from 'next/server';
+
+const PATH = '/api/dev/pro-license-email-preview';
 
 function parseDuration(req: NextRequest): ProLicenseEmailDuration {
   const monthsRaw = req.nextUrl.searchParams.get('months');
@@ -25,9 +28,11 @@ function parseDuration(req: NextRequest): ProLicenseEmailDuration {
  * Example: http://localhost:3000/api/dev/pro-license-email-preview?months=12&email=demo@example.com
  */
 export function GET(req: NextRequest): NextResponse {
-  console.log('NODE_ENV', process.env.NODE_ENV);
   if (process.env.NODE_ENV === 'production') {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return apiError('Not found', HttpStatus.NOT_FOUND, {
+      pathname: PATH,
+      code: ApiErrorCode.NotFound,
+    });
   }
 
   const email = req.nextUrl.searchParams.get('email')?.trim() || 'you@example.com';

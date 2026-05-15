@@ -1,3 +1,5 @@
+import { HEADER_DEVICE_ID } from '@/config/constants';
+import { ApiErrorCode } from '@/lib/api-error-codes';
 import {
   apiError,
   checkDeviceRateLimit,
@@ -6,7 +8,6 @@ import {
   requireMobileUserAgent,
   validateDeviceId,
 } from '@/lib/api';
-import { HEADER_DEVICE_ID } from '@/config/constants';
 import { getBonusConfig } from '@/lib/app-config';
 import { addBonus, getUsage } from '@/lib/ai-rate-limit';
 import { redis } from '@/lib/redis';
@@ -32,20 +33,22 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const usageBefore = await getUsage(deviceIdTrimmed);
   if (usageBefore.used <= 0) {
-    return NextResponse.json({ error: 'bonus_no_usage' }, { status: HttpStatus.BAD_REQUEST });
+    return apiError('bonus_no_usage', HttpStatus.BAD_REQUEST, {
+      pathname: path,
+      code: ApiErrorCode.BonusNoUsage,
+    });
   }
 
   const bonus = await getBonusConfig();
   const cooldownKey = `${bonus.cooldownKeyPrefix}${deviceIdTrimmed}`;
   const inCooldown = await redis.get(cooldownKey);
   if (inCooldown) {
-    return NextResponse.json(
-      { error: 'Bonus claim is on cooldown' },
-      {
-        status: HttpStatus.TOO_MANY_REQUESTS,
-        headers: { 'Retry-After': String(bonus.cooldownSeconds) },
-      },
-    );
+    const res = apiError('Bonus claim is on cooldown', HttpStatus.TOO_MANY_REQUESTS, {
+      pathname: path,
+      code: ApiErrorCode.BonusCooldown,
+    });
+    res.headers.set('Retry-After', String(bonus.cooldownSeconds));
+    return res;
   }
 
   await addBonus(deviceIdTrimmed, bonus.amount);
