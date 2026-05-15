@@ -13,7 +13,9 @@ import { logAiRequest } from '@/lib/ai-operation';
 import { isValidTranslateLanguage } from '@/lib/prompts';
 import { translateTranscript } from '@/services/translate.service';
 
-export const maxDuration = 120;
+export const runtime = 'nodejs';
+
+export const maxDuration = 300;
 
 type TranslateBody = {
   transcript?: unknown;

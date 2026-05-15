@@ -29,7 +29,9 @@ import { isProDevice } from '@/lib/pro-entitlement';
 import { createMessage, type MeetingDialogueAuxPayload } from '@/services/message.service';
 import { NextResponse } from 'next/server';
 
-export const maxDuration = 120;
+export const runtime = 'nodejs';
+
+export const maxDuration = 300;
 
 type CreateMessageBody = {
   id?: unknown;

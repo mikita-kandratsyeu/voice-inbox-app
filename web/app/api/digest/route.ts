@@ -16,7 +16,9 @@ import { resolveAutoAiModel, type AiModelMode } from '@/lib/ai-model-router';
 import { setAppForeground } from '@/lib/push-tokens';
 import { processDigest } from '@/services/ai.service';
 
-export const maxDuration = 120;
+export const runtime = 'nodejs';
+
+export const maxDuration = 300;
 
 type DigestRequestBody = {
   payload?: unknown;

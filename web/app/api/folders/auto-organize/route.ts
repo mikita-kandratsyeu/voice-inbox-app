@@ -15,7 +15,9 @@ import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
 import { createAutoOrganizeRequest } from '@/services/folder-organize.service';
 import { NextResponse } from 'next/server';
 
-export const maxDuration = 120;
+export const runtime = 'nodejs';
+
+export const maxDuration = 300;
 
 type NotePayload = {
   id: string;

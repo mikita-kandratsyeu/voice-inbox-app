@@ -21,7 +21,9 @@ import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
 import { createAsk } from '@/services/ask.service';
 import { NextResponse } from 'next/server';
 
-export const maxDuration = 120;
+export const runtime = 'nodejs';
+
+export const maxDuration = 300;
 
 type CreateAskBody = {
   id?: unknown;
