@@ -63,6 +63,8 @@ function ExportPackagingChip({
 type BatchExportSheetProps = {
   visible: boolean;
   count: number;
+  /** At least one selected Pro meeting (non-private) has non-empty `meetingDialogue`. */
+  showSpeakerTurnsExport?: boolean;
   isSendingEmail?: boolean;
   onClose: () => void;
   onExportText: (template: ShareBriefTemplate, packaging: BatchExportPackaging) => void;
@@ -73,8 +75,6 @@ type BatchExportSheetProps = {
   ) => void;
 };
 
-const BATCH_EMAIL_FORMAT_TEMPLATES: ShareBriefTemplate[] = ['meetingBrief', 'meetingSpeakerTurns'];
-
 function emailTemplateChipLabel(tpl: ShareBriefTemplate, t: (key: string) => string): string {
   if (tpl === 'meetingBrief') return t('share.meetingBrief');
   return t('share.speakerTurnsBrief');
@@ -83,6 +83,7 @@ function emailTemplateChipLabel(tpl: ShareBriefTemplate, t: (key: string) => str
 export const BatchExportSheet = ({
   visible,
   count,
+  showSpeakerTurnsExport = false,
   isSendingEmail = false,
   onClose,
   onExportText,
@@ -101,11 +102,15 @@ export const BatchExportSheet = ({
   const trimmedEmail = email.trim();
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
 
+  const emailFormatTemplates = useMemo((): ShareBriefTemplate[] => {
+    if (showSpeakerTurnsExport) {
+      return ['meetingBrief', 'meetingSpeakerTurns'];
+    }
+    return ['meetingBrief'];
+  }, [showSpeakerTurnsExport]);
+
   useEffect(() => {
     if (visible) {
-      setEmailBodyTemplate((prev) =>
-        BATCH_EMAIL_FORMAT_TEMPLATES.includes(prev) ? prev : 'meetingBrief',
-      );
       const frame = requestAnimationFrame(() => {
         ref.current?.present();
       });
@@ -120,6 +125,17 @@ export const BatchExportSheet = ({
     setKeyboardVisible(false);
     return undefined;
   }, [visible]);
+
+  useEffect(() => {
+    if (!visible) return;
+    setEmailBodyTemplate((prev) => (emailFormatTemplates.includes(prev) ? prev : 'meetingBrief'));
+  }, [emailFormatTemplates, visible]);
+
+  useEffect(() => {
+    if (!showSpeakerTurnsExport && emailBodyTemplate === 'meetingSpeakerTurns') {
+      setEmailBodyTemplate('meetingBrief');
+    }
+  }, [emailBodyTemplate, showSpeakerTurnsExport]);
 
   useEffect(() => {
     if (!emailVisible) {
@@ -243,7 +259,7 @@ export const BatchExportSheet = ({
           keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingHorizontal: 24,
+            paddingHorizontal: 20,
             paddingTop: 4,
             paddingBottom: keyboardVisible
               ? SAVE_SHEET_KEYBOARD_BOTTOM_PADDING
@@ -291,43 +307,53 @@ export const BatchExportSheet = ({
               : t('batch.exportPackagingHintSingle')}
           </Text>
 
-          <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
-            {t('batch.emailBodyFormatHint')}
-          </Text>
-          <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
-            {exportPackaging === 'zip'
-              ? t('batch.emailZipLimitReminder')
-              : t('batch.emailLimitReminder')}
-          </Text>
+          {emailFormatTemplates.length > 1 ? (
+            <>
+              <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+                {t('batch.emailBodyFormatHint')}
+              </Text>
+              <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
+                {exportPackaging === 'zip'
+                  ? t('batch.emailZipLimitReminder')
+                  : t('batch.emailLimitReminder')}
+              </Text>
 
-          <View className="flex-row gap-3">
-            {BATCH_EMAIL_FORMAT_TEMPLATES.map((tpl) => {
-              const label = emailTemplateChipLabel(tpl, t);
-              const selected = emailBodyTemplate === tpl;
-              return (
-                <Pressable
-                  key={tpl}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={label}
-                  onPress={() => setEmailBodyTemplate(tpl)}
-                  className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
-                  style={{
-                    borderColor: selected ? color.accent.primary : color.border.default,
-                    backgroundColor: color.background.tertiary,
-                  }}
-                >
-                  <Text
-                    className="text-center text-[15px] font-semibold leading-5"
-                    style={{ color: selected ? color.accent.primary : color.text.primary }}
-                    numberOfLines={2}
-                  >
-                    {label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+              <View className="flex-row gap-3">
+                {emailFormatTemplates.map((tpl) => {
+                  const label = emailTemplateChipLabel(tpl, t);
+                  const selected = emailBodyTemplate === tpl;
+                  return (
+                    <Pressable
+                      key={tpl}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={label}
+                      onPress={() => setEmailBodyTemplate(tpl)}
+                      className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
+                      style={{
+                        borderColor: selected ? color.accent.primary : color.border.default,
+                        backgroundColor: color.background.tertiary,
+                      }}
+                    >
+                      <Text
+                        className="text-center text-[15px] font-semibold leading-5"
+                        style={{ color: selected ? color.accent.primary : color.text.primary }}
+                        numberOfLines={2}
+                      >
+                        {label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </>
+          ) : (
+            <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
+              {exportPackaging === 'zip'
+                ? t('batch.emailZipLimitReminder')
+                : t('batch.emailLimitReminder')}
+            </Text>
+          )}
 
           <BottomSheetTextInput
             className="rounded-xl border-2 px-4 py-3 text-[16px]"
@@ -450,13 +476,15 @@ export const BatchExportSheet = ({
             onPress: handleExportMeetingBrief,
           })}
 
-          {renderOption({
-            icon: <UsersRound size={20} color={color.text.primary} strokeWidth={2.1} />,
-            title: t('share.speakerTurnsBrief'),
-            description: t('share.speakerTurnsBriefDescription'),
-            accessibilityLabel: t('share.speakerTurnsBrief'),
-            onPress: handleExportSpeakerTurns,
-          })}
+          {showSpeakerTurnsExport
+            ? renderOption({
+                icon: <UsersRound size={20} color={color.text.primary} strokeWidth={2.1} />,
+                title: t('share.speakerTurnsBrief'),
+                description: t('share.speakerTurnsBriefDescription'),
+                accessibilityLabel: t('share.speakerTurnsBrief'),
+                onPress: handleExportSpeakerTurns,
+              })
+            : null}
 
           {renderOption({
             icon: <Mail size={20} color={color.text.primary} strokeWidth={2.1} />,

@@ -449,7 +449,7 @@
     "speakerTurnsBriefDescription": "Markdown только с разбивкой ИИ по спикерам — заголовок, дата, теги и пояснение",
     "speakerTurnsEmpty": "Пока нет разбивки по спикерам.",
     "emailNote": "Отправить на почту",
-    "emailNoteDescription": "Отправить заметку как Markdown-brief",
+    "emailNoteDescription": "Отправить заметку как Markdown",
     "emailMeetingDescription": "Отправить итоги встречи как Markdown",
     "emailPlaceholder": "Email получателя",
     "sendEmail": "Отправить",

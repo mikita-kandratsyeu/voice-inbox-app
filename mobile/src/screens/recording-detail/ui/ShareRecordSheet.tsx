@@ -70,6 +70,12 @@ export const ShareRecordSheet = ({
   }, [visible]);
 
   useEffect(() => {
+    if (!showSpeakerTurnsExport && emailSendTemplate === 'meetingSpeakerTurns') {
+      setEmailSendTemplate('meetingBrief');
+    }
+  }, [emailSendTemplate, showSpeakerTurnsExport]);
+
+  useEffect(() => {
     if (!emailVisible) {
       setKeyboardVisible(false);
       return undefined;
@@ -169,14 +175,15 @@ export const ShareRecordSheet = ({
     </TouchableOpacity>
   );
 
-  const emailFormatTemplates = useMemo(
-    () =>
-      [
-        { tpl: 'meetingBrief' as const, label: t('share.meetingBrief') },
-        { tpl: 'meetingSpeakerTurns' as const, label: t('share.speakerTurnsBrief') },
-      ] as const,
-    [t],
-  );
+  const emailFormatTemplates = useMemo((): { tpl: ShareBriefTemplate; label: string }[] => {
+    const row: { tpl: ShareBriefTemplate; label: string }[] = [
+      { tpl: 'meetingBrief', label: t('share.meetingBrief') },
+    ];
+    if (showSpeakerTurnsExport) {
+      row.push({ tpl: 'meetingSpeakerTurns', label: t('share.speakerTurnsBrief') });
+    }
+    return row;
+  }, [showSpeakerTurnsExport, t]);
 
   return (
     <BottomSheetModal
@@ -207,7 +214,7 @@ export const ShareRecordSheet = ({
           keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
-            paddingHorizontal: 24,
+            paddingHorizontal: 20,
             paddingTop: 4,
             paddingBottom: keyboardVisible
               ? SAVE_SHEET_KEYBOARD_BOTTOM_PADDING
@@ -230,36 +237,40 @@ export const ShareRecordSheet = ({
             {t(isMeeting ? 'share.emailMeetingDescription' : 'share.emailNoteDescription')}
           </Text>
 
-          <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
-            {t('batch.emailBodyFormatHint')}
-          </Text>
-          <View className="flex-row gap-3">
-            {emailFormatTemplates.map(({ tpl, label }) => {
-              const selected = emailSendTemplate === tpl;
-              return (
-                <Pressable
-                  key={tpl}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={label}
-                  onPress={() => setEmailSendTemplate(tpl)}
-                  className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
-                  style={{
-                    borderColor: selected ? color.accent.primary : color.border.default,
-                    backgroundColor: color.background.tertiary,
-                  }}
-                >
-                  <Text
-                    className="text-center text-[15px] font-semibold leading-5"
-                    style={{ color: selected ? color.accent.primary : color.text.primary }}
-                    numberOfLines={2}
-                  >
-                    {label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          {emailFormatTemplates.length > 1 ? (
+            <>
+              <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+                {t('batch.emailBodyFormatHint')}
+              </Text>
+              <View className="flex-row gap-3">
+                {emailFormatTemplates.map(({ tpl, label }) => {
+                  const selected = emailSendTemplate === tpl;
+                  return (
+                    <Pressable
+                      key={tpl}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={label}
+                      onPress={() => setEmailSendTemplate(tpl)}
+                      className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
+                      style={{
+                        borderColor: selected ? color.accent.primary : color.border.default,
+                        backgroundColor: color.background.tertiary,
+                      }}
+                    >
+                      <Text
+                        className="text-center text-[15px] font-semibold leading-5"
+                        style={{ color: selected ? color.accent.primary : color.text.primary }}
+                        numberOfLines={2}
+                      >
+                        {label}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </>
+          ) : null}
 
           <BottomSheetTextInput
             className="rounded-xl border-2 px-4 py-3 text-[16px]"
