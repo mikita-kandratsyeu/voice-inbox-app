@@ -14,16 +14,19 @@ The project is designed as a solo‑friendly, production‑ready codebase: clean
   - Full‑screen recording UI with waveform, timer, and pause/resume
   - Offline by default — recordings are stored locally first
 
-- 🧠 **AI‑ready structure**
-  - Tabs for _Transcript_, _Summary_, and _Tasks_
-  - Data model prepared for cloud STT + LLM summarization
+- 🧠 **AI structure**
+  - Tabs for _Transcript_, _Summary_, _Tasks_, and (when relevant) meeting-style dialogue
+  - **Private** mode: on-device LLM (`llama.rn`) for summaries/tasks and related flows where enabled
+  - **Smart** mode: cloud AI via the app backend (HTTPS); consent and data-handling copy live in-app
+  - Optional **Apple embedding** APIs on iOS for vector features (see Search)
 
-- 📁 **Inbox for all recordings**
-  - Pinned section for important notes
-  - Tags, quick metadata (duration, time, short preview)
+- 📁 **Inbox & organization**
+  - Pinned section, folders, tags, archive/trash with retention
+  - Text notes alongside voice captures where supported
 
 - 🔍 **Search**
-  - Simple search over titles and previews (prepared for semantic search later)
+  - Lexical search over title, summary, transcript, tags, and task text
+  - When notes have stored embeddings (generated alongside supported AI / embedding flows and device capabilities), **hybrid ranking** blends lexical relevance and semantic similarity for longer queries
 
 - 🌗 **Light & Dark theme**
   - System / Light / Dark modes
@@ -31,17 +34,17 @@ The project is designed as a solo‑friendly, production‑ready codebase: clean
 
 - 🧱 **Modern React Native stack**
   - React Native CLI + TypeScript
-  - React Navigation (stack + bottom tabs)
+  - React Navigation (native stack + bottom tabs)
   - NativeWind (Tailwind for React Native)
-  - Clean folder structure and typed repositories
+  - Feature-oriented layout under `src/` (`entities/`, `features/`, `screens/`, `shared/`)
 
 ### Advertising (Yandex Mobile Ads)
 
 Optional **banner** (note detail) and **rewarded** ad (bonus AI quota in Settings) use `yandex-mobile-ads`. The SDK is initialized and ads may show for users **without** an active Pro / ad-free entitlement. Env: `.env.example` (`YANDEX_*_AD_UNIT_ID`).
 
-### Firebase (FCM, Crashlytics)
+### Firebase (FCM, Crashlytics, Analytics, Remote Config, App Check)
 
-Push uses `@react-native-firebase/messaging`; crash reports use `@react-native-firebase/crashlytics`. **iOS:** `GoogleService-Info.plist` in the Xcode project (already present). **Android:** add `android/app/google-services.json` from the Firebase console (same project as iOS). Without it, the Android build fails after applying the Google Services / Crashlytics Gradle plugins. Enable **Crashlytics** for the Firebase app in the console. Release builds send crashes. Debug builds disable collection unless you set **`CRASHLYTICS_DEBUG=1`** in `.env` and keep **`mobile/firebase.json`** (`crashlytics_debug_enabled`). Then restart Metro with a clean cache and rebuild the native app. Support tickets include a `crashlytics` object in diagnostics (collection flag + previous-session crash).
+Push uses `@react-native-firebase/messaging`; crash reports use `@react-native-firebase/crashlytics`. Analytics, Remote Config, and App Check are also wired for the builds that ship with `GoogleService-Info.plist` / `google-services.json`. **iOS:** `GoogleService-Info.plist` in the Xcode project (already present). **Android:** add `android/app/google-services.json` from the Firebase console (same project as iOS). Without it, the Android build fails after applying the Google Services / Crashlytics Gradle plugins. Enable **Crashlytics** for the Firebase app in the console. Release builds send crashes. Debug builds disable collection unless you set **`CRASHLYTICS_DEBUG=1`** in `.env` and keep **`mobile/firebase.json`** (`crashlytics_debug_enabled`). Then restart Metro with a clean cache and rebuild the native app. Support tickets include a `crashlytics` object in diagnostics (collection flag + previous-session crash).
 
 **Testing Crashlytics on iOS** (same flow as [Firebase: test your implementation](https://firebase.google.com/docs/crashlytics/ios/test-implementation)):
 
@@ -63,6 +66,14 @@ Push uses `@react-native-firebase/messaging`; crash reports use `@react-native-f
 - **Language:** TypeScript
 - **Navigation:** React Navigation (native stack + bottom tabs)
 - **Styling:** NativeWind (Tailwind CSS‑like utilities)
-- **State:** React hooks (no global state manager yet)
-- **Data:** In‑memory(prepared for SQLite)
-- **Theming:** Custom light/dark theme with context + NativeWind `dark` mode
+- **Client state:** React hooks plus **Zustand** stores for domains such as records, settings, folders, onboarding, and app lock
+- **Persistence:** **`@op-engineering/op-sqlite`** (SQLite) with **Drizzle ORM** (`src/shared/lib/db/`) — schema in `schema.ts`, SQL migrations in `migrations.ts`, generated SQL under `drizzle/` (`yarn db:generate` from this app directory)
+- **Key-value / prefs:** `react-native-mmkv` and small helpers where appropriate
+- **Monetization:** RevenueCat (`react-native-purchases`) for subscriptions; optional Yandex ads for non‑Pro users (see above)
+- **Theming:** Custom light/dark palette with context + NativeWind `dark` mode
+
+### Scripts (from `mobile/`)
+
+- `yarn start` / `yarn ios` / `yarn android` — dev
+- `yarn type:check`, `yarn lint`, `yarn test` — quality gates (`yarn validate` runs staged lint + types + tests)
+- `yarn db:generate` — refresh Drizzle SQL after editing `schema.ts` (review generated migrations before shipping)
