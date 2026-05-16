@@ -1,13 +1,5 @@
-import { Loader } from 'lucide-react-native';
-import React, { useEffect } from 'react';
-import Animated, {
-  cancelAnimation,
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import React from 'react';
+import { ActivityIndicator, View } from 'react-native';
 
 type WhisperModelSpinnerProps = {
   color: string;
@@ -15,20 +7,10 @@ type WhisperModelSpinnerProps = {
 };
 
 export const WhisperModelSpinner = ({ color, size = 18 }: WhisperModelSpinnerProps) => {
-  const rotation = useSharedValue(0);
-
-  useEffect(() => {
-    rotation.value = withRepeat(withTiming(1, { duration: 900, easing: Easing.linear }), -1);
-    return () => cancelAnimation(rotation);
-  }, [rotation]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value * 360}deg` }],
-  }));
-
+  const scale = size / 20;
   return (
-    <Animated.View style={animatedStyle}>
-      <Loader size={size} color={color} strokeWidth={2} />
-    </Animated.View>
+    <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+      <ActivityIndicator size="small" color={color} style={{ transform: [{ scale }] }} />
+    </View>
   );
 };
