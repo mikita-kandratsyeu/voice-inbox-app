@@ -1,4 +1,4 @@
-import { Check, Download, RotateCcw, Smartphone } from 'lucide-react-native';
+import { Check, Download, RotateCcw, Smartphone, Zap } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -38,6 +38,8 @@ type WhisperModelCardProps = {
   downloadPercent?: number;
   downloadBytes?: DownloadBytes;
   downloadPhase?: WhisperDownloadPhase;
+  /** iOS: Core ML encoder present on disk for this model (matches runtime init). */
+  coreMlEncoderActive: boolean;
 };
 
 export const WhisperModelCard = ({
@@ -56,6 +58,7 @@ export const WhisperModelCard = ({
   downloadPercent = 0,
   downloadBytes,
   downloadPhase,
+  coreMlEncoderActive,
 }: WhisperModelCardProps) => {
   const { t } = useTranslation();
   const isDownloaded = status === 'downloaded';
@@ -84,7 +87,13 @@ export const WhisperModelCard = ({
           ? t('whisper.a11yRowSelected')
           : t('whisper.a11yRowDownloaded')
         : t('whisper.a11yRowNotDownloaded');
-  const cardA11yLabel = `${t('whisper.a11yModelPrefix', { name: model.name })}, ${rowStatusA11y}`;
+  const cardA11yLabel = [
+    t('whisper.a11yModelPrefix', { name: model.name }),
+    coreMlEncoderActive ? t('whisper.coreMlAcceleratedA11y') : null,
+    rowStatusA11y,
+  ]
+    .filter(Boolean)
+    .join(', ');
 
   return (
     <TouchableOpacity
@@ -103,9 +112,22 @@ export const WhisperModelCard = ({
       <View className="flex-row items-center justify-between">
         <View className="mr-3 flex-1">
           <View className="mb-1 flex-row flex-wrap items-center gap-2">
-            <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
-              {getWhisperLabel(model.id)}
-            </Text>
+            <View className="flex-row items-center gap-1">
+              <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
+                {getWhisperLabel(model.id)}
+              </Text>
+              {coreMlEncoderActive ? (
+                <View className="justify-center" accessibilityElementsHidden={true}>
+                  <Zap
+                    size={14}
+                    color={color.accent.primary}
+                    fill={color.accent.primary}
+                    stroke={color.accent.primary}
+                    strokeWidth={1.5}
+                  />
+                </View>
+              ) : null}
+            </View>
             <View
               className="rounded-full px-2 py-0.5"
               style={{ backgroundColor: color.background.tertiary }}

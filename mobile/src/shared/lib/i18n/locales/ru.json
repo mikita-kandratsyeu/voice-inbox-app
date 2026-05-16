@@ -965,6 +965,7 @@
     "downloadProgressPercent": "{{percent}}%",
     "downloadPhaseWeights": "Загружаются веса модели…",
     "downloadPhaseCoreMl": "Загружается Core ML encoder (Neural Engine).",
+    "coreMlAcceleratedA11y": "Энкодер Core ML на устройстве",
     "downloadError": "Ошибка загрузки — нажмите для повтора",
     "weightsFormatTitle": "Качество распознавания",
     "weightsFormatQ5": "Compact",
