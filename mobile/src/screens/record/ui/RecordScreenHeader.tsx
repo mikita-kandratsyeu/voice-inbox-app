@@ -17,10 +17,11 @@ type RecordScreenHeaderProps = {
 export const RecordScreenHeader = ({ state, onClose }: RecordScreenHeaderProps) => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
-  const topStyle = { paddingTop: Math.max(insets.top, 16) };
+  /** Same vertical rhythm as `RecordingDetailHeader` / `TextNoteScreen` (insets + 12). */
+  const topStyle = { paddingTop: insets.top + 12 };
 
   return (
-    <View className="flex-row items-center justify-between px-5 pb-2" style={topStyle}>
+    <View className="flex-row items-center justify-between px-4 pb-3" style={topStyle}>
       <Button
         iconOnly
         size="md"
