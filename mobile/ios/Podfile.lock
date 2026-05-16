@@ -2974,7 +2974,7 @@ PODS:
     - VGSLUI (= 7.21.0)
   - VGSLUI (7.21.0):
     - VGSLFundamentals (= 7.21.0)
-  - whisper-rn (0.6.0):
+  - whisper-rn (0.5.5):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3620,7 +3620,7 @@ SPEC CHECKSUMS:
   VGSLFundamentals: 3a081684c1a5df5800bf88aca8a9bdff2c10cfd9
   VGSLNetworking: 0ea8a335bc4f4eba3f6123ffe441cf1c08f267f2
   VGSLUI: 249a16cccdb75f1a5a1733894d013bca76e27c5e
-  whisper-rn: 2e0c586294fbc0c00e5ad4bbdbb8394c2fc902d0
+  whisper-rn: 68f8cd0312d217aebb44b86dfd7c583fb81b3bc1
   yandex-mobile-ads: 428117f1bb31b92c65a28dc33ca9f294a69b70b0
   YandexMobileAds: 110d2a8906b7e09ff46d6d72a0abcfe7e087253a
   Yoga: 9e495ad6f457c4ff504a8328981496b5cf41dd7f
