@@ -138,7 +138,7 @@ export const AddRecordingMarkSheet = ({
           ref={labelInputRef}
           className="rounded-xl border-2 px-4 py-3 text-[16px]"
           style={{
-            borderColor: c.border.default,
+            borderColor: c.accent.primary,
             color: c.text.primary,
             backgroundColor: c.background.tertiary,
           }}

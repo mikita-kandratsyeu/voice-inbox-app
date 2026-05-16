@@ -1,15 +1,7 @@
-import { AlertCircle, Loader, MicOff } from 'lucide-react-native';
-import React, { useEffect } from 'react';
+import { AlertCircle, MicOff } from 'lucide-react-native';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
-import Animated, {
-  cancelAnimation,
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
 
@@ -19,6 +11,7 @@ type AiStatusPillProps = {
   aiStatus: RecordingStatus;
   transcriptProgress?: number;
   transcriptProgressLabel?: string;
+  transcriptProgressSegments?: { current: number; total: number };
   summaryStatus?: RecordingStatus;
   tasksStatus?: RecordingStatus;
   translationStatus?: RecordingStatus;
@@ -32,6 +25,7 @@ const isAiError = (s?: RecordingStatus) => s === 'error';
 export const AiStatusPill = ({
   aiStatus,
   transcriptProgressLabel,
+  transcriptProgressSegments,
   summaryStatus,
   tasksStatus,
   translationStatus,
@@ -40,7 +34,6 @@ export const AiStatusPill = ({
 }: AiStatusPillProps) => {
   const { t } = useTranslation();
   const color = useColors();
-  const rotation = useSharedValue(0);
 
   const aiProcessing =
     isAiProcessing(summaryStatus) ||
@@ -55,16 +48,13 @@ export const AiStatusPill = ({
 
   const isTranscriptionInProgress = aiStatus === 'loading_model' || aiStatus === 'processing';
 
-  useEffect(() => {
-    const isProcessing = isTranscriptionInProgress || aiProcessing;
-    if (!isProcessing) return;
-    rotation.value = withRepeat(withTiming(1, { duration: 1000, easing: Easing.linear }), -1);
-    return () => cancelAnimation(rotation);
-  }, [aiStatus, aiProcessing, isTranscriptionInProgress, rotation]);
-
-  const spinStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value * 360}deg` }],
-  }));
+  const processingSpinner = (
+    <ActivityIndicator
+      size="small"
+      color={color.status.processing.text}
+      style={{ transform: [{ scale: 0.7 }] }}
+    />
+  );
 
   if (aiStatus === 'done' && !aiProcessing && !aiError) {
     return null;
@@ -74,7 +64,12 @@ export const AiStatusPill = ({
     const label =
       aiStatus === 'loading_model'
         ? t('aiStatus.loading_model')
-        : (transcriptProgressLabel ?? t('aiStatus.processing'));
+        : transcriptProgressSegments
+          ? t('transcription.progressInbox', {
+              current: transcriptProgressSegments.current,
+              total: transcriptProgressSegments.total,
+            })
+          : (transcriptProgressLabel ?? t('aiStatus.processing'));
     return (
       <TouchableOpacity
         accessibilityRole="button"
@@ -85,9 +80,7 @@ export const AiStatusPill = ({
         onPress={onPress}
         activeOpacity={0.75}
       >
-        <Animated.View style={spinStyle}>
-          <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
-        </Animated.View>
+        {processingSpinner}
         <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
           {label}
         </Text>
@@ -118,9 +111,7 @@ export const AiStatusPill = ({
         onPress={onPress}
         activeOpacity={0.75}
       >
-        <Animated.View style={spinStyle}>
-          <Loader size={11} color={color.status.processing.text} strokeWidth={2.5} />
-        </Animated.View>
+        {processingSpinner}
         <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
           {aiLabel}
         </Text>

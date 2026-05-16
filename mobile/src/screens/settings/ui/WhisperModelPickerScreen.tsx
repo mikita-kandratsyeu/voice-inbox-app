@@ -20,7 +20,8 @@ import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { getModelFileSizeBytes, useModelManager } from '@/features/model-manager';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
-import { formatFileSize } from '@/shared/lib/whisper';
+import { IS_IOS } from '@/shared/lib/platform';
+import { formatFileSize, isWhisperCoreMlEncoderInstalled } from '@/shared/lib/whisper';
 import { ScreenHeader } from '@/shared/ui';
 
 import { WhisperDefaultLanguageSection } from './WhisperDefaultLanguageSection';
@@ -52,7 +53,11 @@ export const WhisperModelPickerScreen = () => {
   const { startDownload, cancelDownload, removeModel } = useModelManager();
 
   const [realSizes, setRealSizes] = useState<Partial<Record<WhisperModelVariantId, string>>>({});
+  const [coreMlEncoderActive, setCoreMlEncoderActive] = useState<
+    Partial<Record<WhisperModelId, boolean>>
+  >({});
   const refreshRequestIdRef = useRef(0);
+  const coreMlRequestIdRef = useRef(0);
   const hasActiveWhisperDownload = Object.values(whisperModelStatuses).some(
     (status) => status === 'downloading',
   );
@@ -84,9 +89,39 @@ export const WhisperModelPickerScreen = () => {
     });
   }, [whisperModelStatuses, whisperModelWeightsFormat]);
 
+  const refreshCoreMlEncoderPresence = useCallback(async () => {
+    if (!IS_IOS) {
+      setCoreMlEncoderActive({});
+      return;
+    }
+
+    const requestId = ++coreMlRequestIdRef.current;
+    const entries = await Promise.all(
+      WHISPER_MODELS.map(async (m) => {
+        const variantId = getWhisperModelVariantId(m.id, whisperModelWeightsFormat);
+        const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
+        if (status !== 'downloaded') {
+          return [m.id, false] as const;
+        }
+        const installed = await isWhisperCoreMlEncoderInstalled(m.id);
+        return [m.id, installed] as const;
+      }),
+    );
+
+    if (requestId !== coreMlRequestIdRef.current) {
+      return;
+    }
+
+    setCoreMlEncoderActive(Object.fromEntries(entries) as Record<WhisperModelId, boolean>);
+  }, [whisperModelStatuses, whisperModelWeightsFormat]);
+
   useEffect(() => {
     refreshRealSizes();
   }, [refreshRealSizes]);
+
+  useEffect(() => {
+    void refreshCoreMlEncoderPresence();
+  }, [refreshCoreMlEncoderPresence]);
 
   const handleDownload = (id: WhisperModelId, sizeMb: number) => {
     Alert.alert(t('whisper.downloadModel'), t('whisper.downloadConfirm', { size: sizeMb }), [
@@ -115,6 +150,7 @@ export const WhisperModelPickerScreen = () => {
           onPress: async () => {
             await removeModel(id);
             await refreshRealSizes();
+            await refreshCoreMlEncoderPresence();
           },
         },
       ],
@@ -262,6 +298,7 @@ export const WhisperModelPickerScreen = () => {
                   downloadPercent={whisperDownloadProgress[variantId]}
                   downloadBytes={whisperDownloadBytes[variantId]}
                   downloadPhase={whisperDownloadPhase[variantId]}
+                  coreMlEncoderActive={coreMlEncoderActive[model.id] === true}
                 />
               );
             })}

@@ -20,6 +20,7 @@ import {
 } from '@/features/app-lifecycle';
 import { AppLockGate, AppSwitcherPrivacyOverlay } from '@/features/app-lock';
 import { AppRatingPromptRoot } from '@/features/app-review';
+import { flushPendingSharedAudioImport } from '@/features/import-audio-file/lib/sharedAudioImportRegistry';
 import { OnboardingGate } from '@/features/onboarding';
 import { useResetAccentWhenNotPro } from '@/features/pro-license';
 import { TranscriptionResumePrompt } from '@/features/transcription';
@@ -113,6 +114,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
                 onReady={() => {
                   routeNameRef.current = navigationRef.getCurrentRoute()?.name;
                   flushPendingRecordModalNavigation();
+                  flushPendingSharedAudioImport();
                 }}
                 onStateChange={() => {
                   const previous = routeNameRef.current;

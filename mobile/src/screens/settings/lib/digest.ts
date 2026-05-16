@@ -4,7 +4,7 @@ import type { RecordListItem, TaskItem } from '@/entities/record';
 import type { DigestAiResult } from '@/shared/lib/ai-api';
 import { storage } from '@/shared/lib/async-storage/mmkv';
 
-export type DigestPeriod = 'day' | 'week';
+export type DigestPeriod = 'day' | 'week' | 'month';
 
 export type DigestTask = TaskItem & {
   recordId: string;
@@ -33,7 +33,9 @@ type CachedDigest = {
 };
 
 const CACHE_PREFIX = 'digest.ai.';
-const MAX_AI_NOTES = 30;
+/** Notes included in cloud digest payload (longer window needs a bit more coverage). */
+const MAX_AI_NOTES_IN_PAYLOAD = 30;
+const MAX_AI_NOTES_IN_PAYLOAD_MONTH = 40;
 const MAX_TEXT_CHARS = 900;
 
 export function getDigestRange(period: DigestPeriod, now = dayjs()) {
@@ -44,8 +46,15 @@ export function getDigestRange(period: DigestPeriod, now = dayjs()) {
     };
   }
 
+  if (period === 'week') {
+    return {
+      from: now.subtract(6, 'day').startOf('day'),
+      to: now.endOf('day'),
+    };
+  }
+
   return {
-    from: now.subtract(6, 'day').startOf('day'),
+    from: now.subtract(29, 'day').startOf('day'),
     to: now.endOf('day'),
   };
 }
@@ -179,22 +188,24 @@ export function buildDigestAiPayload(digest: DeterministicDigest, language: 'en'
       recordTitle: task.recordTitle,
     })),
     nextSteps: digest.nextSteps,
-    notes: digest.records.slice(0, MAX_AI_NOTES).map((record) => ({
-      id: record.id,
-      title: truncate(record.title, 160),
-      createdAt: record.createdAt,
-      classification: record.classification,
-      summary: truncate(record.summary, MAX_TEXT_CHARS),
-      keyPhrases: record.keyPhrases?.slice(0, 8),
-      nextSteps: record.nextSteps?.slice(0, 5),
-      tasks: record.tasks?.slice(0, 8).map((task) => ({
-        text: task.text,
-        isDone: task.isDone,
-        priority: task.priority,
-        deadline: task.deadline,
-        deadlineTime: task.deadlineTime,
+    notes: digest.records
+      .slice(0, digest.period === 'month' ? MAX_AI_NOTES_IN_PAYLOAD_MONTH : MAX_AI_NOTES_IN_PAYLOAD)
+      .map((record) => ({
+        id: record.id,
+        title: truncate(record.title, 160),
+        createdAt: record.createdAt,
+        classification: record.classification,
+        summary: truncate(record.summary, MAX_TEXT_CHARS),
+        keyPhrases: record.keyPhrases?.slice(0, 8),
+        nextSteps: record.nextSteps?.slice(0, 5),
+        tasks: record.tasks?.slice(0, 8).map((task) => ({
+          text: task.text,
+          isDone: task.isDone,
+          priority: task.priority,
+          deadline: task.deadline,
+          deadlineTime: task.deadlineTime,
+        })),
       })),
-    })),
   });
 }
 

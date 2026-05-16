@@ -281,7 +281,7 @@ export async function processAskQuestion(
   );
 }
 
-const DIGEST_SYSTEM_PROMPT = `You write a daily or weekly digest for Voice Inbox AI from already-extracted note metadata.
+const DIGEST_SYSTEM_PROMPT = `You write a daily, weekly, or rolling 30-day digest for Voice Inbox AI from already-extracted note metadata.
 
 Return exactly one valid JSON object.
 No code fences, explanations, comments, or text outside JSON.

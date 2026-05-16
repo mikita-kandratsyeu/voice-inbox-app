@@ -60,6 +60,8 @@ export type VoiceRecord = {
   aiStatus?: RecordingStatus;
   transcriptProgress?: number;
   transcriptProgressLabel?: string;
+  /** Chunk counts while transcribing; inbox UI uses this for a shorter label than `transcriptProgressLabel`. */
+  transcriptProgressSegments?: { current: number; total: number };
   privateAiBatchProgress?: number;
   privateAiBatchPhase?: 'loading_model' | 'processing';
   privateAiBatchProgressLabel?: string;

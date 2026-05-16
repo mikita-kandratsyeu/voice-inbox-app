@@ -3,9 +3,12 @@ import { Linking } from 'react-native';
 
 import { navigationRef } from '@/app/navigation/navigationRef';
 import { useDownloadingDeeplink } from '@/features/downloading-deeplink';
+import { isAudioImportDeepLinkUrl } from '@/features/import-audio-file/lib/isAudioDeepLink';
+import { dispatchSharedAudioImport } from '@/features/import-audio-file/lib/sharedAudioImportRegistry';
 import { tryParseInAppEventDeepLink } from '@/features/in-app-event';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useRecordingDeeplink } from '@/features/recording-deeplink/model/useRecordingDeeplink';
+import { IS_ANDROID } from '@/shared/lib';
 
 const START_RECORDING_URL = 'voiceinbox://record/start';
 const TEXT_NOTE_URL = 'voiceinbox://note/text';
@@ -114,6 +117,18 @@ export const useInitDeepLinking = () => {
   const routeDeepLink = useCallback(
     (rawUrl: string) => {
       try {
+        if (isAudioImportDeepLinkUrl(rawUrl)) {
+          if (!getHasSeenOnboarding()) {
+            return;
+          }
+          // Android content:// is copied in MainActivity; JS picks it up via SharedAudioImport.
+          if (IS_ANDROID && rawUrl.trim().toLowerCase().startsWith('content:')) {
+            return;
+          }
+          dispatchSharedAudioImport(rawUrl);
+          return;
+        }
+
         if (handleStartRecording(rawUrl)) return;
         if (handleTextNoteDeepLink(rawUrl)) return;
         if (handleAllTasksDeepLink(rawUrl)) return;

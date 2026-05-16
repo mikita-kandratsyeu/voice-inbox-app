@@ -1,6 +1,7 @@
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
 import { NitroFS } from '@/shared/lib/fs';
 import {
+  getWhisperCoreMlZipTempPath,
   getWhisperModelPath,
   getWhisperModelsDir,
   removeWhisperCoreMlEncoder,
@@ -17,11 +18,16 @@ export const deleteWhisperModel = async (
     await NitroFS.unlink(modelPath);
   }
 
-  const coreMlZipTemp = `${getWhisperModelsDir()}/.${modelId}.coreml-encoder.zip`;
+  const coreMlZipTemp = getWhisperCoreMlZipTempPath(modelId);
   const isCoreMlZipTempExists = await NitroFS.exists(coreMlZipTemp);
 
   if (isCoreMlZipTempExists) {
     await NitroFS.unlink(coreMlZipTemp);
+  }
+
+  const legacyCoreMlZip = `${getWhisperModelsDir()}/.${modelId}.coreml-encoder.zip`;
+  if (await NitroFS.exists(legacyCoreMlZip)) {
+    await NitroFS.unlink(legacyCoreMlZip);
   }
 
   await removeWhisperCoreMlEncoder(modelId).catch(() => {});

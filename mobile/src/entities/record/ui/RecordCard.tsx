@@ -144,6 +144,7 @@ export const RecordCard = memo(function RecordCard({
               aiStatus={item.aiStatus ?? 'done'}
               transcriptProgress={item.transcriptProgress}
               transcriptProgressLabel={item.transcriptProgressLabel}
+              transcriptProgressSegments={item.transcriptProgressSegments}
               summaryStatus={item.summaryStatus}
               tasksStatus={item.tasksStatus}
               translationStatus={item.translationStatus}

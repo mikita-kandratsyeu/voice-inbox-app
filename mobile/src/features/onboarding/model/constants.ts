@@ -16,7 +16,8 @@ type SlideIconName =
   | 'Zap'
   | 'Settings'
   | 'Shield'
-  | 'UploadCloud';
+  | 'UploadCloud'
+  | 'Video';
 
 type SlideExtra =
   | 'dots'
@@ -27,7 +28,8 @@ type SlideExtra =
   | 'permissions'
   | 'setup'
   | 'setupWhisper'
-  | 'restore';
+  | 'restore'
+  | 'meeting-import';
 
 const ONBOARDING_SLIDES_HEAD: SlideDef[] = [
   {
@@ -36,6 +38,13 @@ const ONBOARDING_SLIDES_HEAD: SlideDef[] = [
     descKey: 'onboarding.recordDesc',
     iconName: 'Mic',
     extra: 'dots',
+  },
+  {
+    id: 'meetingImport',
+    titleKey: 'onboarding.meetingImportTitle',
+    descKey: 'onboarding.meetingImportDesc',
+    iconName: 'Video',
+    extra: 'meeting-import',
   },
   {
     id: 'transcribe',
@@ -108,6 +117,7 @@ const ICON_KEYS: Record<SlideIconName, keyof Colors['onboarding']> = {
   Settings: 'setup',
   Shield: 'shield',
   UploadCloud: 'restore',
+  Video: 'setup',
 };
 
 export type OnboardingSlide = OnboardingSlideContent;

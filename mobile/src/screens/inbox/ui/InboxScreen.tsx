@@ -81,6 +81,7 @@ export const InboxScreen = () => {
     handleBatchExportTemplate,
     batchEmailSending,
     handleBatchEmail,
+    batchSpeakerTurnsExportAvailable,
     isArchivedView,
     handleBatchArchive,
     handleBatchUnarchive,
@@ -234,6 +235,7 @@ export const InboxScreen = () => {
       <BatchExportSheet
         visible={batchExportSheetVisible}
         count={batchSelect.selectedIds.size}
+        showSpeakerTurnsExport={batchSpeakerTurnsExportAvailable}
         isSendingEmail={batchEmailSending}
         onClose={handleCloseBatchExportSheet}
         onExportText={handleBatchExportTemplate}

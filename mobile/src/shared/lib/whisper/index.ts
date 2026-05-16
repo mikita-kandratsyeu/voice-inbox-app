@@ -1,9 +1,11 @@
 export { formatFileSize } from './formatFileSize';
+export { isWhisperCoreMlEncoderInstalled } from './isWhisperCoreMlEncoderInstalled';
 export { removeWhisperCoreMlEncoder } from './removeWhisperCoreMlEncoder';
 export {
   getWhisperCoreMlDownloadUrl,
   getWhisperCoreMlEncoderDirName,
   getWhisperCoreMlEncoderPath,
+  getWhisperCoreMlZipTempPath,
   getWhisperLabel,
   getWhisperModelDownloadUrl,
   getWhisperModelFileName,

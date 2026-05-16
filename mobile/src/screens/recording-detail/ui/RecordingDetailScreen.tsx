@@ -372,6 +372,10 @@ export const RecordingDetailScreen = () => {
       aiExecutionMode !== 'private_experimental',
     [isProActive, liveRecord.classification, aiExecutionMode],
   );
+  const showSpeakerTurnsExport = useMemo(
+    () => meetingPresetUiActive && Boolean(liveRecord.meetingDialogue?.trim()),
+    [meetingPresetUiActive, liveRecord.meetingDialogue],
+  );
 
   const detailTabs = useMemo<Tab[]>(() => {
     const row: Tab[] = ['transcript', 'summary'];
@@ -495,7 +499,7 @@ export const RecordingDetailScreen = () => {
         visible={shareSheetVisible}
         hasAudio={hasAudio}
         isMeeting={meetingPresetUiActive}
-        showSpeakerTurnsExport={meetingPresetUiActive}
+        showSpeakerTurnsExport={showSpeakerTurnsExport}
         isSendingEmail={emailSending}
         onClose={onCloseShareMenu}
         onShareText={handleShare}

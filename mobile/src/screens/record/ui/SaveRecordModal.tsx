@@ -229,9 +229,9 @@ export const SaveRecordModal = ({
             accessibilityState={{ checked: isMeetingMode }}
             accessibilityLabel={t('record.meetingMode')}
             onPress={handleToggleMeetingMode}
-            className="flex-row items-center gap-3 rounded-xl border px-3.5 py-3"
+            className="flex-row items-center gap-3 rounded-xl border-2 px-3.5 py-3"
             style={{
-              borderColor: isMeetingMode ? c.accent.primary : c.border.default,
+              borderColor: isMeetingMode ? c.accent.primary : 'transparent',
               backgroundColor: c.background.tertiary,
             }}
           >
