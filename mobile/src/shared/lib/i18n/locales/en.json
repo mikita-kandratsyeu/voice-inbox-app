@@ -565,10 +565,11 @@
       "settingsSubtitle": "Local recap with optional AI generation.",
       "subtitle": "Built from saved summaries, tasks, key phrases, and next steps.",
       "smartModeOnlyTitle": "Digest is available in Smart mode",
-      "smartModeOnlyDesc": "Switch AI mode to Smart to view the daily or weekly digest and generate an AI recap.",
+      "smartModeOnlyDesc": "Switch AI mode to Smart to view the daily, weekly, or 30-day digest and generate an AI recap.",
       "period": {
         "day": "Today",
-        "week": "Last 7 days"
+        "week": "Last 7 days",
+        "month": "30 days"
       },
       "durationMinutes_one": "{{count}} min",
       "durationMinutes_other": "{{count}} min",

@@ -180,7 +180,7 @@ function PeriodTabs({
 }) {
   const { t } = useTranslation();
   const color = useColors();
-  const items: DigestPeriod[] = ['day', 'week'];
+  const items: DigestPeriod[] = ['day', 'week', 'month'];
 
   return (
     <View
