@@ -58,6 +58,19 @@ Push uses `@react-native-firebase/messaging`; crash reports use `@react-native-f
 
 `whisper.rn` downloads **GGML** weights from Hugging Face. On **iOS**, after each `.bin` download the app also fetches the matching **`ggml-*-encoder.mlmodelc.zip`**, unzips it next to the `.bin`, and calls `initWhisper` with **`useCoreMLIos: true`** so the encoder can run on the Neural Engine when available (falls back to CPU if the bundle is missing or fails). **Android** only uses the `.bin` file. Models downloaded before this behavior was added have no Core ML bundle — **delete the model in Settings and download again** to pick up the encoder. The onboarding / model picker **“Recommended”** badge uses RAM and `isLowRamDevice` (Android) to suggest tiny → base → small → medium; nothing is auto-downloaded.
 
+### Import & export
+
+- **Full backup (ZIP)** — Settings can build an archive (`metadata.json` at version **3**, `audio/` copies, folders + records) and hand it to the system share sheet (`exportData` in `src/features/sync-data/`). Restoring opens the same format via the document picker / onboarding import path (`importData`), with an **Import records** screen to review and merge incoming notes when needed.
+- **Import audio** — Pick supported audio via the system document picker (and compatible “Open in” flows) to create a new note; the pipeline copies, may convert to WAV, **reads duration** to enforce import limits, saves the record, then optionally kicks off transcription (`src/features/import-audio-file/`; progress: copying → converting → analyzing).
+- **Per-note share** — Markdown (`.md`) briefs (note / meeting / speaker-turns templates), plain share, and optional email helpers live under `src/features/share-record/` (cached export files are pruned automatically).
+- **Batch export** — Multi-select in the inbox: Markdown as separate files or a **ZIP**, plus optional batch email (`src/features/batch-select/`).
+
+### Recording & system integrations
+
+- **Deep links** — Custom scheme URLs such as `voiceinbox://record/start`, `voiceinbox://note/text`, `voiceinbox://tasks`, and `voiceinbox://stop-recording` are handled in JS (`src/app/deep-linking/`, `src/features/recording-deeplink/`) and opened from native entry points.
+- **iOS (16+)** — `AppShortcuts` (`ios/VoiceInboxApp/AppShortcuts.swift`) exposes App Intents that jump straight into record, new text note, or all tasks. **Widgets / Live Activities** under `ios/RecordingWidget/` and `ios/DownloadWidgetExtension/` surface recording controls and Whisper model download progress; buttons resolve to the same `voiceinbox://` URLs.
+- **Android** — Static launcher shortcuts in `android/app/src/main/res/xml/shortcuts.xml` mirror the record / text note / tasks deep links.
+
 ---
 
 ## Tech stack
