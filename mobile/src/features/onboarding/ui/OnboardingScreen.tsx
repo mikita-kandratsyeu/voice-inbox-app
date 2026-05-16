@@ -854,7 +854,7 @@ const SlideItem = ({
 
         {item.extra === 'meeting-import' && (
           <View className="w-full gap-2.5" style={{ maxWidth: contentMaxWidth }}>
-            {([1, 2, 3] as const).map((n) => (
+            {([1, 2] as const).map((n) => (
               <View key={n} className="flex-row items-start gap-3">
                 <View
                   style={{
