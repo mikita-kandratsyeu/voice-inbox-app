@@ -1332,6 +1332,7 @@
   },
   "transcription": {
     "progress": "Обработано {{ current }} из {{ total }} фрагментов...",
+    "progressInbox": "{{ current }} из {{ total }} фрагментов...",
     "secondsLeft": "~{{ count }} сек осталось",
     "minutesLeft": "~{{ count }} мин осталось",
     "loadingModel": "Загрузка модели в память…",

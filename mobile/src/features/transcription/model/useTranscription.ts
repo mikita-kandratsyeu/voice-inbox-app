@@ -37,7 +37,13 @@ const devLog = (event: string, payload?: Record<string, unknown>) => {
 const createThrottledProgress = (
   recordId: string,
   jobGen: number,
-  updateAiStatus: (id: string, status: 'processing', progress?: number, label?: string) => void,
+  updateAiStatus: (
+    id: string,
+    status: 'processing',
+    progress?: number,
+    label?: string,
+    segments?: { current: number; total: number } | null,
+  ) => void,
 ) => {
   let lastCall = 0;
 
@@ -55,7 +61,7 @@ const createThrottledProgress = (
       const percent = Math.round((current / total) * 100);
       const label = i18n.t('transcription.progress', { current, total });
       devLog('progress', { recordId, jobGen, current, total, percent });
-      updateAiStatus(recordId, 'processing', percent, label);
+      updateAiStatus(recordId, 'processing', percent, label, { current, total });
     }
   };
 };
@@ -130,7 +136,7 @@ export const useTranscription = () => {
       const jobGen = beginTranscriptionJob(record.id);
       devLog('job started', { recordId: record.id, jobGen });
 
-      updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'));
+      updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'), null);
       currentRecordIdRef.current = record.id;
 
       const language = languageOverride ?? transcriptionLanguage;
@@ -146,7 +152,7 @@ export const useTranscription = () => {
           return;
         }
 
-        updateAiStatus(record.id, 'processing', 0);
+        updateAiStatus(record.id, 'processing', 0, undefined, null);
 
         const throttledProgress = createThrottledProgress(record.id, jobGen, updateAiStatus);
         const normalizedAudioPath = audioPath.startsWith('file://')

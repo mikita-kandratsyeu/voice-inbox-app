@@ -11,6 +11,7 @@ type AiStatusPillProps = {
   aiStatus: RecordingStatus;
   transcriptProgress?: number;
   transcriptProgressLabel?: string;
+  transcriptProgressSegments?: { current: number; total: number };
   summaryStatus?: RecordingStatus;
   tasksStatus?: RecordingStatus;
   translationStatus?: RecordingStatus;
@@ -24,6 +25,7 @@ const isAiError = (s?: RecordingStatus) => s === 'error';
 export const AiStatusPill = ({
   aiStatus,
   transcriptProgressLabel,
+  transcriptProgressSegments,
   summaryStatus,
   tasksStatus,
   translationStatus,
@@ -62,7 +64,12 @@ export const AiStatusPill = ({
     const label =
       aiStatus === 'loading_model'
         ? t('aiStatus.loading_model')
-        : (transcriptProgressLabel ?? t('aiStatus.processing'));
+        : transcriptProgressSegments
+          ? t('transcription.progressInbox', {
+              current: transcriptProgressSegments.current,
+              total: transcriptProgressSegments.total,
+            })
+          : (transcriptProgressLabel ?? t('aiStatus.processing'));
     return (
       <TouchableOpacity
         accessibilityRole="button"

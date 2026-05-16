@@ -97,6 +97,7 @@ type RecordStore = {
     aiStatus: RecordingStatus,
     progress?: number,
     progressLabel?: string,
+    transcriptionSegments?: { current: number; total: number } | null,
   ) => void;
   renameRecord: (id: string, title: string) => Promise<void>;
   updateTranscript: (
@@ -297,16 +298,24 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     await recordRepository.unarchive(id);
   },
 
-  updateAiStatus: (id, aiStatus, progress, progressLabel) => {
+  updateAiStatus: (id, aiStatus, progress, progressLabel, transcriptionSegments) => {
     set((s) => {
       const existing = s.records.find((r) => r.id === id);
       if (!existing) return s;
       const patch: Partial<RecordListItem> = { aiStatus };
       if (progress !== undefined) patch.transcriptProgress = progress;
-      if (progressLabel !== undefined) {
-        patch.transcriptProgressLabel = progressLabel;
-      } else if (aiStatus === 'idle' || aiStatus === 'done' || aiStatus === 'error') {
+      const terminal = aiStatus === 'idle' || aiStatus === 'done' || aiStatus === 'error';
+      if (terminal) {
         patch.transcriptProgressLabel = undefined;
+        patch.transcriptProgressSegments = undefined;
+      } else {
+        if (progressLabel !== undefined) {
+          patch.transcriptProgressLabel = progressLabel;
+        }
+        if (transcriptionSegments !== undefined) {
+          patch.transcriptProgressSegments =
+            transcriptionSegments === null ? undefined : transcriptionSegments;
+        }
       }
       const next = updateRecord(s.records, id, patch);
       return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
