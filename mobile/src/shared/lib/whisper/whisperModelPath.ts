@@ -71,6 +71,10 @@ export const getWhisperCoreMlEncoderDirName = (modelId: WhisperModelId): string 
 export const getWhisperCoreMlEncoderPath = (modelId: WhisperModelId): string =>
   `${whisperModelsDir()}/${getWhisperCoreMlEncoderDirName(modelId)}`;
 
+/** Temp path for downloaded Core ML zip (no leading `.` — some iOS unzip stacks fail on hidden names). */
+export const getWhisperCoreMlZipTempPath = (modelId: WhisperModelId): string =>
+  `${whisperModelsDir()}/vi-coreml-encoder-${modelId}.tmp.zip`;
+
 export const getWhisperCoreMlDownloadUrl = (modelId: WhisperModelId): string =>
   `https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${WHISPER_COREML_ENCODER_ZIP[modelId]}`;
 

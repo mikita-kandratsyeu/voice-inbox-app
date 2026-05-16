@@ -9,6 +9,7 @@ import {
   resolveWhisperWeightsDownload,
 } from '@/shared/lib/model-manifest';
 import {
+  getWhisperCoreMlZipTempPath,
   getWhisperModelPath,
   getWhisperModelsDir,
   removeWhisperCoreMlEncoder,
@@ -22,6 +23,17 @@ import type {
 const BIN_PROGRESS_WEIGHT = 0.88;
 const COREML_PROGRESS_WEIGHT = 0.12;
 
+/** Paths passed to native unzip must not use `file://` or URL-encoded segments (iOS). */
+const pathForNativeUnzip = (input: string): string => {
+  const noScheme = input.replace(/^file:\/\//, '');
+  if (!/%[0-9A-Fa-f]{2}/.test(noScheme)) return noScheme;
+  try {
+    return decodeURIComponent(noScheme);
+  } catch {
+    return noScheme;
+  }
+};
+
 type BlobTask = {
   cancel: () => Promise<unknown> | unknown;
   progress: (
@@ -34,10 +46,104 @@ type BlobTask = {
 
 type BlobResponse = {
   info: () => { status: number };
+  /** When `fileCache` is used, data may live at this path instead of the requested `path`. */
+  path?: () => string;
 };
 
-const coreMlZipTempPath = (modelsDir: string, modelId: WhisperModelId): string =>
-  `${modelsDir}/.${modelId}.coreml-encoder.zip`;
+const blobResponseStoragePath = (res: BlobResponse, requestedPath: string): string => {
+  if (typeof res.path !== 'function') return requestedPath;
+  try {
+    const p = res.path();
+    return typeof p === 'string' && p.length > 0 ? p : requestedPath;
+  } catch {
+    return requestedPath;
+  }
+};
+
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+async function coreMlZipVisible(normalizedPath: string): Promise<boolean> {
+  if (await NitroFS.exists(normalizedPath)) return true;
+  try {
+    return Boolean(await RNBlobUtil.fs.exists(normalizedPath));
+  } catch {
+    return false;
+  }
+}
+
+async function resolveCoreMlZipPathForUnzip(
+  zipRes: BlobResponse,
+  requestedZipPath: string,
+): Promise<string> {
+  const fromResp = blobResponseStoragePath(zipRes, requestedZipPath);
+  const candidates = Array.from(
+    new Set([pathForNativeUnzip(fromResp), pathForNativeUnzip(requestedZipPath)]),
+  );
+
+  const deadline = Date.now() + 6000;
+  while (Date.now() < deadline) {
+    for (const c of candidates) {
+      if (await coreMlZipVisible(c)) {
+        return c;
+      }
+    }
+    await sleep(40);
+  }
+
+  let pathFromRes = '';
+  try {
+    pathFromRes = typeof zipRes.path === 'function' ? String(zipRes.path()) : '';
+  } catch {
+    pathFromRes = '';
+  }
+
+  throw new Error(
+    `Core ML zip not found after download (tried ${candidates.join(' | ')}); path()=${pathFromRes}`,
+  );
+}
+
+async function coreMlZipFileSizeByLayer(normalizedPath: string): Promise<{
+  nitro: number;
+  blob: number;
+}> {
+  let nitro = 0;
+  if (await NitroFS.exists(normalizedPath)) {
+    try {
+      nitro = (await NitroFS.stat(normalizedPath)).size;
+    } catch {
+      nitro = 0;
+    }
+  }
+  let blob = 0;
+  try {
+    if (await RNBlobUtil.fs.exists(normalizedPath)) {
+      const st = await RNBlobUtil.fs.stat(normalizedPath);
+      blob = typeof st.size === 'number' ? st.size : Number(st.size);
+    }
+  } catch {
+    blob = 0;
+  }
+  return { nitro, blob };
+}
+
+/** RNBlobUtil may finish before NitroFS stat reflects size; also Nitro can report 0 for RN-written files. */
+async function waitForCoreMlZipMinSize(
+  normalizedPath: string,
+  minBytes: number,
+  deadlineMs: number,
+): Promise<number> {
+  const deadline = Date.now() + deadlineMs;
+  let last = 0;
+  while (Date.now() < deadline) {
+    const { nitro, blob } = await coreMlZipFileSizeByLayer(normalizedPath);
+    last = Math.max(nitro, blob);
+    if (last >= minBytes) {
+      return last;
+    }
+    await sleep(50);
+  }
+  return last;
+}
 
 const emptySnapshot = (): WhisperDownloadSnapshot => ({
   machineState: 'idle',
@@ -105,8 +211,10 @@ class WhisperModelDownloader {
     if (await NitroFS.exists(qPath)) await NitroFS.unlink(qPath);
     if (fullPath !== qPath && (await NitroFS.exists(fullPath))) await NitroFS.unlink(fullPath);
 
-    const zipPath = coreMlZipTempPath(getWhisperModelsDir(), modelId);
+    const zipPath = getWhisperCoreMlZipTempPath(modelId);
     if (await NitroFS.exists(zipPath)) await NitroFS.unlink(zipPath);
+    const legacyZip = `${getWhisperModelsDir()}/.${modelId}.coreml-encoder.zip`;
+    if (await NitroFS.exists(legacyZip)) await NitroFS.unlink(legacyZip);
   }
 
   private async awaitActiveDownloadSettledWithTimeout(timeoutMs: number): Promise<void> {
@@ -151,10 +259,11 @@ class WhisperModelDownloader {
     url: string,
     toFile: string,
     onProgressRaw: (received: number, total: number) => void,
+    options?: { fileCache?: boolean },
   ): Promise<BlobResponse> {
     const task = RNBlobUtil.config({
       path: toFile,
-      fileCache: true,
+      fileCache: options?.fileCache ?? true,
       IOSBackgroundTask: true,
     }).fetch('GET', url) as BlobTask;
     const jobId = this.taskCounter++;
@@ -261,7 +370,7 @@ class WhisperModelDownloader {
     if (this.cancelRequested) throw new Error('cancelled');
 
     if (IS_IOS) {
-      const zipPath = coreMlZipTempPath(modelsDir, modelId);
+      const zipPath = getWhisperCoreMlZipTempPath(modelId);
       const coreResolved = await resolveWhisperCoreMlDownload(modelId);
       const coreUrl = coreResolved.url;
       const coreExpectedBytes = coreResolved.expectedBytes;
@@ -271,46 +380,70 @@ class WhisperModelDownloader {
       let lastZipProgress = -1;
 
       try {
+        await NitroFS.unlink(`${modelsDir}/.${modelId}.coreml-encoder.zip`).catch(() => {});
         await NitroFS.unlink(zipPath).catch(() => {});
         await removeWhisperCoreMlEncoder(modelId).catch(() => {});
         this.setSnapshot({ phase: 'coreml' });
 
         let zipRes: BlobResponse;
         try {
-          zipRes = await this.startBlobDownload(coreUrl, zipPath, (received, totalRaw) => {
-            zipTotal =
-              totalRaw > 0
-                ? totalRaw
-                : coreExpectedBytes !== undefined
-                  ? coreExpectedBytes
-                  : Math.max(zipTotal, 1);
-            latestZip = Math.max(latestZip, received);
-            const zipPct = Math.min(1, latestZip / zipTotal);
-            const combined = Math.round(
-              (BIN_PROGRESS_WEIGHT + zipPct * COREML_PROGRESS_WEIGHT) * 100,
-            );
-            const now = Date.now();
-            const shouldEmit = combined !== lastZipProgress && now - lastZipEmitTs >= 180;
-            if (shouldEmit || combined >= 100) {
-              lastZipEmitTs = now;
-              lastZipProgress = combined;
-              onProgress(combined, latestZip, zipTotal, 'coreml');
-            }
-          });
+          zipRes = await this.startBlobDownload(
+            coreUrl,
+            zipPath,
+            (received, totalRaw) => {
+              zipTotal =
+                totalRaw > 0
+                  ? totalRaw
+                  : coreExpectedBytes !== undefined
+                    ? coreExpectedBytes
+                    : Math.max(zipTotal, 1);
+              latestZip = Math.max(latestZip, received);
+              const zipPct = Math.min(1, latestZip / zipTotal);
+              const combined = Math.round(
+                (BIN_PROGRESS_WEIGHT + zipPct * COREML_PROGRESS_WEIGHT) * 100,
+              );
+              const now = Date.now();
+              const shouldEmit = combined !== lastZipProgress && now - lastZipEmitTs >= 180;
+              if (shouldEmit || combined >= 100) {
+                lastZipEmitTs = now;
+                lastZipProgress = combined;
+                onProgress(combined, latestZip, zipTotal, 'coreml');
+              }
+            },
+            { fileCache: false },
+          );
         } catch {
           if (this.cancelRequested) throw new Error('cancelled');
           throw new Error('Core ML encoder download failed');
         }
+
+        const storedZipAbsPath = blobResponseStoragePath(zipRes, zipPath);
 
         this.activeTask = null;
         this.activeDownloadSettlement = null;
         this.setSnapshot({ jobId: null });
 
         if (zipRes.info().status === 200) {
-          await unzip(zipPath, modelsDir);
-          await NitroFS.unlink(zipPath).catch(() => {});
+          const zipForUnzip = await resolveCoreMlZipPathForUnzip(zipRes, zipPath);
+          const zipSize = await waitForCoreMlZipMinSize(zipForUnzip, 2048, 15000);
+          if (zipSize < 2048) {
+            const layers = await coreMlZipFileSizeByLayer(zipForUnzip);
+            throw new Error(
+              `Core ML zip too small (${zipSize} bytes; nitro=${layers.nitro} blob=${layers.blob}; progress=${latestZip}/${zipTotal}); response may be HTML or truncated`,
+            );
+          }
+          await unzip(zipForUnzip, pathForNativeUnzip(modelsDir));
+          await NitroFS.unlink(zipForUnzip).catch(() => {});
+          await RNBlobUtil.fs.unlink(zipForUnzip).catch(() => {});
+          if (zipForUnzip !== pathForNativeUnzip(zipPath)) {
+            await NitroFS.unlink(pathForNativeUnzip(zipPath)).catch(() => {});
+            await RNBlobUtil.fs.unlink(pathForNativeUnzip(zipPath)).catch(() => {});
+          }
         } else {
-          await NitroFS.unlink(zipPath).catch(() => {});
+          await NitroFS.unlink(pathForNativeUnzip(storedZipAbsPath)).catch(() => {});
+          await NitroFS.unlink(pathForNativeUnzip(zipPath)).catch(() => {});
+          await RNBlobUtil.fs.unlink(pathForNativeUnzip(storedZipAbsPath)).catch(() => {});
+          await RNBlobUtil.fs.unlink(pathForNativeUnzip(zipPath)).catch(() => {});
           if (__DEV__) {
             console.warn(
               `[whisper-download] Core ML encoder failed (${zipRes.info().status}), using CPU`,
@@ -318,7 +451,8 @@ class WhisperModelDownloader {
           }
         }
       } catch (e) {
-        await NitroFS.unlink(zipPath).catch(() => {});
+        await NitroFS.unlink(pathForNativeUnzip(zipPath)).catch(() => {});
+        await RNBlobUtil.fs.unlink(pathForNativeUnzip(zipPath)).catch(() => {});
         if (__DEV__) console.warn('[whisper-download] coreml setup failed, using CPU', e);
       }
     }
