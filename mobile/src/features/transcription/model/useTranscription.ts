@@ -8,7 +8,8 @@ import { useAiProcessing } from '@/features/ai-processing';
 import { shouldApplyAutoAiAfterTranscription } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
-import { i18n, useNetworkStatus } from '@/shared/lib';
+import { ensureRecordingsDir, i18n, RECORDINGS_DIR, useNetworkStatus } from '@/shared/lib';
+import { convertToWav } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
 import { getWhisperModelPath } from '@/shared/lib/whisper';
 
@@ -134,6 +135,7 @@ export const useTranscription = () => {
 
       const language = languageOverride ?? transcriptionLanguage;
       let usedContext = false;
+      let transcodeWavPath: string | null = null;
 
       try {
         const context = await getWhisperContext(selectedWhisperModel, selectedWhisperModelFormat);
@@ -150,6 +152,27 @@ export const useTranscription = () => {
         const normalizedAudioPath = audioPath.startsWith('file://')
           ? audioPath.slice(7)
           : audioPath;
+
+        let transcribeInputPath = audioPath;
+        if (!normalizedAudioPath.toLowerCase().endsWith('.wav')) {
+          await ensureRecordingsDir();
+          const wavOut = `${RECORDINGS_DIR}/${record.id}.wav`;
+          const converted = await convertToWav(normalizedAudioPath, wavOut);
+          if (!converted) {
+            devLog('convert to wav failed (whisper input)', { recordId: record.id });
+            currentRecordIdRef.current = null;
+            updateAiStatus(record.id, 'error');
+            return;
+          }
+          transcodeWavPath = converted.startsWith('file://') ? converted.slice(7) : converted;
+          transcribeInputPath = transcodeWavPath;
+        }
+
+        if (!isActiveTranscriptionJob(record.id, jobGen)) {
+          devLog('aborted after wav prep (stale job)', { recordId: record.id, jobGen });
+          return;
+        }
+
         const checkpoint = await getTranscriptionCheckpoint(record.id);
         const canResumeFromCheckpoint =
           checkpoint &&
@@ -172,7 +195,7 @@ export const useTranscription = () => {
         }) => {
           const { stop, promise } = transcribeAudio({
             context,
-            audioPath,
+            audioPath: transcribeInputPath,
             durationMs: record.durationMs ?? 0,
             language,
             onProgress: throttledProgress,
@@ -316,6 +339,9 @@ export const useTranscription = () => {
           updateAiStatus(record.id, 'error');
         }
       } finally {
+        if (transcodeWavPath) {
+          void NitroFS.unlink(transcodeWavPath).catch(() => {});
+        }
         endTranscriptionJobIfCurrent(record.id, jobGen);
         if (usedContext) {
           scheduleIdleRelease();
