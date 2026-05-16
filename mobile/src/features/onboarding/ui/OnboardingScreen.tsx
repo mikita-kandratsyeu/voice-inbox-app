@@ -8,6 +8,7 @@ import {
   Smartphone,
   Sparkles,
   UploadCloud,
+  Video,
   Zap,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -17,6 +18,7 @@ import {
   Alert,
   FlatList,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -72,6 +74,7 @@ const ICON_MAP = {
   Settings,
   Shield,
   UploadCloud,
+  Video,
 } as const;
 
 type OnboardingScreenProps = {
@@ -848,6 +851,51 @@ const SlideItem = ({
         >
           {t(item.descKey)}
         </Text>
+
+        {item.extra === 'meeting-import' && (
+          <View className="w-full gap-2.5" style={{ maxWidth: contentMaxWidth }}>
+            {([1, 2, 3] as const).map((n) => (
+              <View key={n} className="flex-row items-start gap-3">
+                <View
+                  style={{
+                    width: 22,
+                    height: 22,
+                    borderRadius: 11,
+                    marginTop: Platform.OS === 'ios' ? 1 : 0,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: item.iconBg,
+                  }}
+                >
+                  <Text
+                    className="font-bold"
+                    style={{
+                      color: item.iconColor,
+                      fontSize: 12,
+                      lineHeight: 14,
+                      textAlign: 'center',
+                      ...(IS_ANDROID
+                        ? { includeFontPadding: false, textAlignVertical: 'center' }
+                        : {}),
+                    }}
+                  >
+                    {n}
+                  </Text>
+                </View>
+                <Text
+                  className="flex-1 text-left text-[15px]"
+                  style={{
+                    color: color.text.secondary,
+                    lineHeight: 22,
+                    ...(IS_ANDROID ? { includeFontPadding: false } : {}),
+                  }}
+                >
+                  {t(`onboarding.meetingImportStep${n}`)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
 
         {item.extra === 'privacy' && (
           <View

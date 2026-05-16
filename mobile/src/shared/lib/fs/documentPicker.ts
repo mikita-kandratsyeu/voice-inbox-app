@@ -125,3 +125,22 @@ export async function pickSingleFileToCachesDirectory(
     throw e;
   }
 }
+
+/** Copy a file:// or content:// URI into the app caches directory (Share sheet / Open in). */
+export async function copyExternalUriToCachesForImport(
+  uri: string,
+  fileName: string,
+): Promise<PickToCachesResult> {
+  const safeName = fileName.trim().length > 0 ? fileName.trim() : 'shared-audio.m4a';
+
+  const [copyResult] = await keepLocalCopy({
+    destination: 'cachesDirectory',
+    files: [{ uri, fileName: safeName }],
+  });
+
+  if (copyResult.status !== 'success') {
+    return { kind: 'failed', message: copyResult.copyError };
+  }
+
+  return { kind: 'picked', localUri: copyResult.localUri, name: safeName };
+}

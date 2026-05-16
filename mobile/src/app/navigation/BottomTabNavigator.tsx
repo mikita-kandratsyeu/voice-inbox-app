@@ -2,14 +2,17 @@ import {
   type BottomTabBarButtonProps,
   createBottomTabNavigator,
 } from '@react-navigation/bottom-tabs';
-import React from 'react';
-import { Text, useWindowDimensions, View } from 'react-native';
+import React, { useCallback, useEffect } from 'react';
+import { AppState, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ImportAudioProgressOverlay, useImportAudioFile } from '@/features/import-audio-file';
+import { consumeAndroidPendingSharedAudioPath } from '@/features/import-audio-file/lib/androidSharedAudioImport';
+import { registerSharedAudioImportHandler } from '@/features/import-audio-file/lib/sharedAudioImportRegistry';
 import { useInboxFiltersReset } from '@/features/inbox-filters';
+import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useColors } from '@/shared/config';
-import { useIsTablet } from '@/shared/lib';
+import { IS_ANDROID, useIsTablet } from '@/shared/lib';
 
 import {
   buildFloatingTabBarStyle,
@@ -37,7 +40,45 @@ export const BottomTabNavigator = () => {
   const { width: windowWidth } = useWindowDimensions();
   const isTablet = useIsTablet();
   const inboxFiltersReset = useInboxFiltersReset();
-  const { importAudioFile, isImporting, importPhase } = useImportAudioFile();
+  const { importAudioFile, importAudioFromExternalUri, isImporting, importPhase } =
+    useImportAudioFile();
+
+  const openSharedUri = useCallback(
+    async (uri: string) => {
+      if (!getHasSeenOnboarding()) return;
+      await importAudioFromExternalUri(uri, null);
+    },
+    [importAudioFromExternalUri],
+  );
+
+  useEffect(() => {
+    registerSharedAudioImportHandler((uri) => {
+      void openSharedUri(uri);
+    });
+    return () => registerSharedAudioImportHandler(null);
+  }, [openSharedUri]);
+
+  const tryConsumeAndroidPending = useCallback(async () => {
+    if (!IS_ANDROID || !getHasSeenOnboarding() || isImporting) return;
+    const path = await consumeAndroidPendingSharedAudioPath();
+    if (!path) return;
+    const uri = path.startsWith('content:') || path.startsWith('file:') ? path : `file://${path}`;
+    await importAudioFromExternalUri(uri, null);
+  }, [importAudioFromExternalUri, isImporting]);
+
+  useEffect(() => {
+    void tryConsumeAndroidPending();
+  }, [tryConsumeAndroidPending]);
+
+  useEffect(() => {
+    if (!IS_ANDROID) return;
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        void tryConsumeAndroidPending();
+      }
+    });
+    return () => sub.remove();
+  }, [tryConsumeAndroidPending]);
 
   const color = useColors();
   const tabActive = color.accent.primary;
