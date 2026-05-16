@@ -380,6 +380,7 @@ export const StorageDetailsScreen = () => {
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('storage.clear'),
+        style: 'destructive',
         onPress: async () => {
           setIsClearing(true);
           try {

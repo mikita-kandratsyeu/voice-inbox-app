@@ -1,6 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import { Bot, Clock, FileText, Mic } from 'lucide-react-native';
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -37,6 +38,7 @@ const StatCard = ({
 );
 
 export const AppStatsScreen = () => {
+  const { t } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
@@ -51,34 +53,34 @@ export const AppStatsScreen = () => {
   const withTranscript = records.filter((r) => r.transcript && r.transcript.length > 0).length;
 
   const handleClearCache = () => {
-    Alert.alert('Очистить кэш', 'Временные файлы будут удалены. Продолжить?', [
-      { text: 'Отмена', style: 'cancel' },
-      { text: 'Очистить', onPress: () => Alert.alert('Готово', 'Кэш очищен') },
+    Alert.alert(t('storage.clearCache'), t('storage.clearCacheConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('storage.clear'),
+        style: 'destructive',
+        onPress: () => Alert.alert(t('common.done'), t('appStats.cacheCleared')),
+      },
     ]);
   };
 
   const handleDeleteAll = () => {
-    Alert.alert(
-      'Удалить все данные',
-      'Все записи, транскрипты и аудио будут удалены безвозвратно. Это действие нельзя отменить.',
-      [
-        { text: 'Отмена', style: 'cancel' },
-        {
-          text: 'Удалить всё',
-          style: 'destructive',
-          onPress: async () => {
-            for (const r of records) {
-              await purgeRecordPermanently(r.id);
-            }
-          },
+    Alert.alert(t('storage.deleteAllData'), t('storage.deleteAllConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('appStats.deleteAllAction'),
+        style: 'destructive',
+        onPress: async () => {
+          for (const r of records) {
+            await purgeRecordPermanently(r.id);
+          }
         },
-      ],
-    );
+      },
+    ]);
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title="Статистика" onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('appStats.title')} onBack={() => navigation.goBack()} />
 
       <ScrollView
         contentContainerStyle={{
@@ -91,13 +93,13 @@ export const AppStatsScreen = () => {
         <View className="mb-6 flex-row gap-3">
           <StatCard
             icon={<Mic size={22} color={color.accent.primary} strokeWidth={1.8} />}
-            label="Всего записей"
+            label={t('appStats.totalRecords')}
             value={String(totalRecords)}
             color={color}
           />
           <StatCard
             icon={<Clock size={22} color={color.accent.success} strokeWidth={1.8} />}
-            label="С аудио"
+            label={t('appStats.withAudio')}
             value={String(withAudio)}
             color={color}
           />
@@ -105,22 +107,22 @@ export const AppStatsScreen = () => {
         <View className="mb-6 flex-row gap-3">
           <StatCard
             icon={<FileText size={22} color={color.accent.transcript} strokeWidth={1.8} />}
-            label="Транскриптов"
+            label={t('appStats.transcripts')}
             value={String(withTranscript)}
             color={color}
           />
           <StatCard
             icon={<Bot size={22} color={color.accent.cache} strokeWidth={1.8} />}
-            label="Обработано ИИ"
+            label={t('appStats.processedByAi')}
             value={String(processedByAI)}
             color={color}
           />
         </View>
 
-        <SettingsSection title="Управление данными">
-          <SettingsRow label="Очистить кэш" onPress={handleClearCache} isFirst />
+        <SettingsSection title={t('appStats.dataManagement')}>
+          <SettingsRow label={t('storage.clearCache')} onPress={handleClearCache} isFirst />
           <SettingsRow
-            label="Удалить все данные приложения"
+            label={t('appStats.deleteAllRow')}
             onPress={handleDeleteAll}
             dangerous
             isLast

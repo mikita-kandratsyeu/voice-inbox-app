@@ -828,6 +828,17 @@
       }
     }
   },
+  "appStats": {
+    "title": "Statistics",
+    "totalRecords": "Total recordings",
+    "withAudio": "With audio",
+    "transcripts": "Transcripts",
+    "processedByAi": "Processed by AI",
+    "dataManagement": "Data management",
+    "deleteAllRow": "Delete all app data",
+    "deleteAllAction": "Delete everything",
+    "cacheCleared": "Cache cleared."
+  },
   "appLock": {
     "title": "App lock",
     "settings": "Settings",

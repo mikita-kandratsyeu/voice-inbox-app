@@ -841,6 +841,17 @@
       }
     }
   },
+  "appStats": {
+    "title": "Статистика",
+    "totalRecords": "Всего записей",
+    "withAudio": "С аудио",
+    "transcripts": "Транскриптов",
+    "processedByAi": "Обработано ИИ",
+    "dataManagement": "Управление данными",
+    "deleteAllRow": "Удалить все данные приложения",
+    "deleteAllAction": "Удалить всё",
+    "cacheCleared": "Кэш очищен."
+  },
   "appLock": {
     "title": "Блокировка приложения",
     "settings": "Настройки",
