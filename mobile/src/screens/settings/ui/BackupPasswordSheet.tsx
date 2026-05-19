@@ -2,11 +2,11 @@ import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 import { BACKUP_PASSWORD_MIN_LENGTH, validateBackupPassword } from '@/features/sync-data';
 import { useColors } from '@/shared/config';
-import { IS_IOS } from '@/shared/lib';
+import { IS_IOS, withAlphaHex } from '@/shared/lib';
 import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 export type BackupPasswordSheetMode = 'export' | 'import';
@@ -21,13 +21,10 @@ type Props = {
 
 const textInputPadding = IS_IOS ? { paddingTop: 11, paddingBottom: 11 } : { paddingVertical: 12 };
 
-/** Balances the cancel control so the title stays centered (RU «Отмена» / EN «Cancel»). */
-const SHEET_HEADER_SIDE_WIDTH = 80;
-
 export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSubmit }: Props) {
   const { t } = useTranslation();
   const c = useColors();
-  const contentPadding = useBottomSheetContentPadding(24);
+  const contentPadding = useBottomSheetContentPadding(20);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -91,62 +88,60 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
       enablePanDownToClose={!busy}
       backdropComponent={renderBackdrop}
     >
-      <BottomSheetView className="px-5 pt-1" style={contentPadding}>
-        <View className="mb-3 min-h-[44px] flex-row items-center">
-          <View style={{ width: SHEET_HEADER_SIDE_WIDTH }} />
-          <Text
-            className="flex-1 text-center text-[17px] font-semibold leading-[22px]"
-            style={{ color: c.text.primary }}
-            numberOfLines={2}
-          >
-            {title}
-          </Text>
-          <TouchableOpacity
-            onPress={handleClose}
-            disabled={busy}
-            accessibilityRole="button"
-            accessibilityLabel={t('common.cancel')}
-            hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
-            style={{ width: SHEET_HEADER_SIDE_WIDTH, alignItems: 'flex-end' }}
-          >
-            <Text className="text-[17px] font-semibold" style={{ color: c.accent.primary }}>
-              {t('common.cancel')}
-            </Text>
-          </TouchableOpacity>
-        </View>
-
+      <BottomSheetView
+        style={{
+          paddingHorizontal: 20,
+          paddingTop: 8,
+          ...contentPadding,
+        }}
+      >
         <Text
-          className="mb-3 px-2 text-center text-[13px] leading-[18px]"
-          style={{ color: c.text.secondary }}
+          style={{
+            fontSize: 17,
+            fontWeight: '600',
+            color: c.text.primary,
+            textAlign: 'center',
+            paddingTop: 4,
+            marginBottom: 6,
+          }}
+        >
+          {title}
+        </Text>
+        <Text
+          style={{
+            fontSize: 14,
+            lineHeight: 20,
+            color: c.text.secondary,
+            textAlign: 'center',
+            marginBottom: 16,
+            paddingHorizontal: 4,
+          }}
         >
           {subtitle}
         </Text>
 
         {isExport ? (
           <View
-            className="mb-3 rounded-xl border px-3 py-2.5"
+            className="mb-4 rounded-2xl border px-3.5 py-3"
             style={{
-              borderColor: `${c.accent.delete}40`,
-              backgroundColor: `${c.accent.delete}12`,
+              backgroundColor: c.status.error.bg,
+              borderColor: withAlphaHex(c.status.error.text, 0.22),
             }}
           >
             <Text
-              className="text-center text-[13px] leading-[18px]"
-              style={{ color: c.text.primary }}
+              style={{
+                fontSize: 14,
+                lineHeight: 20,
+                color: c.status.error.text,
+                textAlign: 'center',
+              }}
             >
               {t('settings.backupEncryption.noticeWarning')}
             </Text>
           </View>
         ) : null}
 
-        <Text
-          style={{
-            fontSize: 13,
-            fontWeight: '600',
-            color: c.text.secondary,
-            marginBottom: 6,
-          }}
-        >
+        <Text className="mb-1.5 text-[13px] font-semibold" style={{ color: c.text.secondary }}>
           {t('settings.backupEncryption.passwordLabel')}
         </Text>
         <BottomSheetTextInput
@@ -177,13 +172,8 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
         {isExport ? (
           <>
             <Text
-              style={{
-                fontSize: 13,
-                fontWeight: '600',
-                color: c.text.secondary,
-                marginTop: 12,
-                marginBottom: 6,
-              }}
+              className="mb-1.5 mt-3 text-[13px] font-semibold"
+              style={{ color: c.text.secondary }}
             >
               {t('settings.backupEncryption.confirmLabel')}
             </Text>
@@ -216,7 +206,7 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
 
         {errorMessage ? (
           <Text
-            className="mt-2 px-2 text-center text-[13px] leading-[18px]"
+            className="mt-2 px-1 text-center text-[14px] leading-5"
             style={{ color: c.accent.delete }}
           >
             {errorMessage}
@@ -235,6 +225,19 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
             loading={busy}
             activeOpacity={0.85}
             accessibilityLabel={primaryLabel}
+          />
+        </View>
+
+        <View style={{ marginTop: 10 }}>
+          <Button
+            label={t('common.cancel')}
+            color={c}
+            variant="secondary"
+            size="lg"
+            fullWidth
+            onPress={handleClose}
+            disabled={busy}
+            activeOpacity={0.85}
           />
         </View>
       </BottomSheetView>

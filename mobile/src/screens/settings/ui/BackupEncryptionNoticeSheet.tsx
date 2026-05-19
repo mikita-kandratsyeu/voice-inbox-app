@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
+import { withAlphaHex } from '@/shared/lib';
 import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 type Props = {
@@ -45,11 +46,11 @@ export function BackupEncryptionNoticeSheet({ visible, onClose, onAcknowledge }:
         <View
           className="mb-6 rounded-2xl border px-3.5 py-3"
           style={{
-            borderColor: `${c.accent.delete}40`,
-            backgroundColor: `${c.accent.delete}12`,
+            backgroundColor: c.status.error.bg,
+            borderColor: withAlphaHex(c.status.error.text, 0.22),
           }}
         >
-          <Text className="text-center text-sm leading-5" style={{ color: c.text.primary }}>
+          <Text className="text-center text-sm leading-5" style={{ color: c.status.error.text }}>
             {t('settings.backupEncryption.noticeWarning')}
           </Text>
         </View>

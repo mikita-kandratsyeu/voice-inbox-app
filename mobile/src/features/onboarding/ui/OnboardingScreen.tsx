@@ -797,15 +797,15 @@ const SlideItem = ({
             }
             accessibilityState={{ disabled: isRestoring }}
             style={{
+              alignSelf: 'stretch',
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 8,
               paddingVertical: 14,
-              paddingHorizontal: 24,
+              paddingHorizontal: 20,
               borderRadius: 12,
               backgroundColor: item.iconBg,
-              minWidth: 200,
             }}
           >
             {isRestoring ? (
@@ -813,7 +813,11 @@ const SlideItem = ({
             ) : (
               <UploadCloud size={22} color={item.iconColor} strokeWidth={2} />
             )}
-            <Text className="text-base font-semibold" style={{ color: item.iconColor }}>
+            <Text
+              className="shrink text-center text-base font-semibold"
+              style={{ color: item.iconColor }}
+              numberOfLines={2}
+            >
               {isRestoring ? t('importExport.importing') : t('onboarding.restoreButton')}
             </Text>
           </TouchableOpacity>

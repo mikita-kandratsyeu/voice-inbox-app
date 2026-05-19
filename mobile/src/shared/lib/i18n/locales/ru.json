@@ -1165,7 +1165,7 @@
     "goToSlide": "Перейти к слайду {{ index }}",
     "restoreTitle": "Восстановите данные",
     "restoreDesc": "Можно восстановить записи сейчас или позже в настройках.",
-    "restoreButton": "Восстановить из резервной копии",
+    "restoreButton": "Импорт резервной копии",
     "restoreImportAllConfirm": "Найдено {{ count }} записей. Импортировать все?",
     "restoreSuccess": "Импортировано {{ count }} записей",
     "restoreNoRecords": "В файле нет записей.",
