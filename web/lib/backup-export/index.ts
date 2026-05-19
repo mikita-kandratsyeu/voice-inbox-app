@@ -1,8 +1,11 @@
 export { MAX_BACKUP_ZIP_BYTES, METADATA_JSON } from './constants';
 export {
   BackupZipParseError,
+  detectBackupZipEncryption,
   getAudioBytesFromBackup,
+  isBackupFilenamePasswordProtected,
   parseBackupZip,
+  type BackupZipParseProgress,
   type ParseBackupZipOptions,
 } from './parseBackupZip';
 export {

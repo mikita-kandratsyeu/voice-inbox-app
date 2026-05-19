@@ -243,7 +243,12 @@
     "copyFailed": "Не удалось скопировать",
     "audioMissing": "Аудиофайл не найден внутри архива.",
     "selectPrompt": "Выберите заметку в списке.",
+    "loadingVerifyingPassword": "Проверяем пароль…",
+    "loadingReadingArchive": "Читаем архив…",
+    "loadingCheckingMetadata": "Проверяем metadata…",
+    "loadingDone": "Готово",
     "passwordPrompt": {
+      "protectedBadge": "Защищено паролем",
       "title": "Резервная копия с паролем",
       "subtitle": "Введите пароль, который задали при экспорте этой резервной копии в приложении.",
       "warning": "Мы не можем восстановить пароль. Если вы его не помните, резервную копию не открыть.",

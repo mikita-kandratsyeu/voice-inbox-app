@@ -242,7 +242,12 @@
     "copyFailed": "Copy failed",
     "audioMissing": "Audio file was not found inside this archive.",
     "selectPrompt": "Select a note from the list.",
+    "loadingVerifyingPassword": "Checking password…",
+    "loadingReadingArchive": "Reading archive…",
+    "loadingCheckingMetadata": "Checking metadata…",
+    "loadingDone": "Done",
     "passwordPrompt": {
+      "protectedBadge": "Password protected",
       "title": "Password-protected backup",
       "subtitle": "Enter the password you set when exporting this backup from the app.",
       "warning": "We can’t recover this password. If you don’t remember it, the backup can’t be opened.",

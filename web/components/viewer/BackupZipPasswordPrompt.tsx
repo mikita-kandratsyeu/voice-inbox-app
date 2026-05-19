@@ -1,7 +1,11 @@
 'use client';
 
-import { Loader2, Lock } from 'lucide-react';
+import { Loader2, Lock, Shield } from 'lucide-react';
 import type { useTranslations } from 'next-intl';
+
+import type { BackupZipParseProgress } from '@/lib/backup-export';
+
+import { BackupZipLoadProgress } from './BackupZipLoadProgress';
 
 type Translator = ReturnType<typeof useTranslations<'viewerPage'>>;
 
@@ -10,6 +14,7 @@ type Props = {
   backupPassword: string;
   passwordFieldError: string | null;
   loading: boolean;
+  loadProgress: BackupZipParseProgress | null;
   onPasswordChange: (value: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onTryAnotherFile: () => void;
@@ -21,6 +26,7 @@ export function BackupZipPasswordPrompt({
   backupPassword,
   passwordFieldError,
   loading,
+  loadProgress,
   onPasswordChange,
   onSubmit,
   onTryAnotherFile,
@@ -35,6 +41,10 @@ export function BackupZipPasswordPrompt({
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/15 text-blue-600 dark:bg-blue-400/15 dark:text-blue-300">
           <Lock className="h-6 w-6" aria-hidden />
         </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/35 bg-amber-500/12 px-3 py-1 text-xs font-semibold text-amber-950 dark:border-amber-400/30 dark:bg-amber-400/12 dark:text-amber-100">
+          <Shield className="h-3.5 w-3.5 shrink-0" aria-hidden />
+          {t('passwordPrompt.protectedBadge')}
+        </span>
         <div className="space-y-1">
           <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
             {t('passwordPrompt.title')}
@@ -69,6 +79,9 @@ export function BackupZipPasswordPrompt({
           <p role="alert" className="w-full text-left text-sm text-red-700 dark:text-red-300">
             {passwordFieldError}
           </p>
+        ) : null}
+        {loading && loadProgress ? (
+          <BackupZipLoadProgress stage={loadProgress} verifyingPassword={true} t={t} />
         ) : null}
         <button
           type="submit"

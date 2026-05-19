@@ -176,9 +176,39 @@ function toParsedFolder(raw: Record<string, unknown>): ParsedFolder {
   };
 }
 
+export type BackupZipParseProgress =
+  | 'verifying_password'
+  | 'reading_archive'
+  | 'checking_metadata'
+  | 'done';
+
 export type ParseBackupZipOptions = {
   password?: string;
+  onProgress?: (stage: BackupZipParseProgress) => void;
 };
+
+/** Matches `voice-inbox-backup-locked-{timestamp}.zip` from mobile export. */
+export function isBackupFilenamePasswordProtected(fileName: string): boolean {
+  const lower = fileName.toLowerCase();
+  return lower.includes('backup-locked') || lower.includes('-locked-');
+}
+
+/** Probe ZIP entry flags without a password (fast path before full parse). */
+export async function detectBackupZipEncryption(file: File): Promise<boolean> {
+  if (file.size > MAX_BACKUP_ZIP_BYTES) return false;
+  const head = await readZipHeader(file);
+  if (!looksLikeZip(head)) return false;
+
+  const zipReader = new ZipReader<Blob>(new BlobReader(file));
+  try {
+    const entries = await zipReader.getEntries();
+    return entries.some((entry) => entry.encrypted === true);
+  } catch {
+    return false;
+  } finally {
+    await zipReader.close().catch(() => {});
+  }
+}
 
 function isEncryptedZipError(err: unknown): boolean {
   if (err == null || typeof err !== 'object') return false;
@@ -200,6 +230,8 @@ export async function parseBackupZip(
   file: File,
   options?: ParseBackupZipOptions,
 ): Promise<ParsedBackup> {
+  const report = (stage: BackupZipParseProgress) => options?.onProgress?.(stage);
+
   if (file.size > MAX_BACKUP_ZIP_BYTES) {
     throw new BackupZipParseError('Backup file is too large for the browser viewer.', 'too_large');
   }
@@ -210,11 +242,16 @@ export async function parseBackupZip(
   }
 
   const trimmedPassword = options?.password?.trim();
+  if (trimmedPassword) {
+    report('verifying_password');
+  }
+
   const zipReader = new ZipReader<Blob>(
     new BlobReader(file),
     trimmedPassword ? { password: trimmedPassword } : undefined,
   );
   let entries: Awaited<ReturnType<ZipReader<Blob>['getEntries']>>;
+  report('reading_archive');
   try {
     entries = await zipReader.getEntries();
   } catch {
@@ -247,6 +284,8 @@ export async function parseBackupZip(
     await zipReader.close().catch(() => {});
     throw new BackupZipParseError('No metadata.json found inside the archive.', 'no_metadata');
   }
+
+  report('checking_metadata');
 
   let jsonText: string;
   try {
@@ -371,6 +410,8 @@ export async function parseBackupZip(
       return null;
     }
   };
+
+  report('done');
 
   return {
     backupFormatVersion: 3,
