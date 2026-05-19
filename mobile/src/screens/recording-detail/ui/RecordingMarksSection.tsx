@@ -11,14 +11,25 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import type { RecordingMark } from '@/entities/record';
+import {
+  getRecordingMarkKindAccentColors,
+  getRecordingMarkKindUi,
+  type RecordingMark,
+} from '@/entities/record';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { formatTime, hapticSelection } from '@/shared/lib';
+import {
+  folderChipActiveForeground,
+  formatTime,
+  hapticSelection,
+  isDarkSurfaceColor,
+} from '@/shared/lib';
 
 import { TaskEditSheet } from './TaskEditSheet';
 
 const MARK_LABEL_MAX = 280;
+/** Fixed width for icon + time chip (fits up to 60:00). */
+const MARK_TIME_BADGE_WIDTH = 72;
 
 type RecordingMarksSectionProps = {
   marks: RecordingMark[];
@@ -41,6 +52,7 @@ export const RecordingMarksSection = ({
   const { t } = useTranslation();
   const theme = useAppTheme();
   const isDark = theme === 'dark';
+  const surfaceDark = isDarkSurfaceColor(color);
   const [editMark, setEditMark] = useState<RecordingMark | null>(null);
   const [marksExpanded, setMarksExpanded] = useState(true);
   const chevronRotation = useSharedValue(0);
@@ -149,7 +161,14 @@ export const RecordingMarksSection = ({
           >
             {sorted.map((mark) => {
               const timeStr = formatTime(Math.floor(mark.offsetMs / 1000));
-              const title = mark.label.trim() || t('recordingDetail.markUntitled');
+              const { Icon: MarkIcon, untitledKey } = getRecordingMarkKindUi(mark.kind);
+              const { accent: markAccent } = getRecordingMarkKindAccentColors(
+                mark.kind,
+                theme,
+                surfaceDark,
+              );
+              const markBadgeFg = folderChipActiveForeground(color, markAccent);
+              const title = mark.label.trim() || t(untitledKey);
               return (
                 <View
                   key={mark.id}
@@ -173,17 +192,18 @@ export const RecordingMarksSection = ({
                     }
                   >
                     <View
-                      className="min-w-[56px] justify-center rounded-md px-1.5"
+                      className="flex-row items-center justify-center gap-1.5 rounded-md py-1.5"
                       style={{
-                        backgroundColor: color.accent.primary,
-                        minHeight: 26,
-                        alignItems: 'center',
+                        backgroundColor: markAccent,
+                        width: MARK_TIME_BADGE_WIDTH,
+                        flexShrink: 0,
                       }}
                     >
+                      <MarkIcon size={14} color={markBadgeFg} strokeWidth={2} />
                       <Text
-                        className="text-center text-[12px] font-semibold tabular-nums"
+                        className="text-[12px] font-semibold tabular-nums"
                         style={[
-                          { color: color.icon.onAccent, lineHeight: 16 },
+                          { color: markBadgeFg, lineHeight: 16, minWidth: 32, textAlign: 'center' },
                           Platform.OS === 'android'
                             ? {
                                 textAlignVertical: 'center',

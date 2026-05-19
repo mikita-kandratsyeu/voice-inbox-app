@@ -2,11 +2,26 @@ import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { InteractionManager, Keyboard, Text, View } from 'react-native';
+import { InteractionManager, Keyboard, Pressable, Text, View } from 'react-native';
 import { TextInput } from 'react-native-gesture-handler';
 
-import { useColors } from '@/shared/config';
-import { formatTime, hapticLight, hapticSuccess, IS_IOS } from '@/shared/lib';
+import {
+  DEFAULT_RECORDING_MARK_KIND,
+  getRecordingMarkKindAccentColors,
+  getRecordingMarkKindUi,
+  RECORDING_MARK_PICKER_KINDS,
+  type RecordingMarkKind,
+} from '@/entities/record';
+import { useAppTheme, useColors } from '@/shared/config';
+import {
+  folderChipActiveForeground,
+  formatTime,
+  hapticLight,
+  hapticSelection,
+  hapticSuccess,
+  IS_IOS,
+  isDarkSurfaceColor,
+} from '@/shared/lib';
 import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 const MARK_LABEL_MAX_CHARS = 280;
@@ -18,8 +33,7 @@ type AddRecordingMarkSheetProps = {
   /** Timestamp in the recording when the user opened the sheet (frozen). */
   snapshotOffsetMs: number;
   onClose: () => void;
-  /** Called with trimmed label (may be empty). */
-  onSave: (label: string) => void;
+  onSave: (kind: RecordingMarkKind, label: string) => void;
 };
 
 export const AddRecordingMarkSheet = ({
@@ -30,7 +44,10 @@ export const AddRecordingMarkSheet = ({
 }: AddRecordingMarkSheetProps) => {
   const { t } = useTranslation();
   const c = useColors();
+  const theme = useAppTheme();
+  const surfaceDark = isDarkSurfaceColor(c);
   const contentPadding = useBottomSheetContentPadding(24);
+  const [selectedKind, setSelectedKind] = useState<RecordingMarkKind>(DEFAULT_RECORDING_MARK_KIND);
   const [label, setLabel] = useState('');
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
@@ -40,6 +57,7 @@ export const AddRecordingMarkSheet = ({
   useEffect(() => {
     if (!visible) return;
     savedRef.current = false;
+    setSelectedKind(DEFAULT_RECORDING_MARK_KIND);
     setLabel('');
     const task = InteractionManager.runAfterInteractions(() => {
       requestAnimationFrame(() => {
@@ -76,9 +94,9 @@ export const AddRecordingMarkSheet = ({
   const handleSave = useCallback(() => {
     savedRef.current = true;
     hapticSuccess();
-    onSave(label.trim().slice(0, MARK_LABEL_MAX_CHARS));
+    onSave(selectedKind, label.trim().slice(0, MARK_LABEL_MAX_CHARS));
     bottomSheetRef.current?.dismiss();
-  }, [label, onSave]);
+  }, [label, onSave, selectedKind]);
 
   const timeSec = Math.max(0, Math.floor(snapshotOffsetMs / 1000));
 
@@ -106,6 +124,49 @@ export const AddRecordingMarkSheet = ({
         <Text className="text-[14px] leading-5" style={{ color: c.text.secondary }}>
           {t('record.markAtTime', { time: formatTime(timeSec) })}
         </Text>
+
+        <View className="gap-2">
+          <Text className="text-[13px] font-medium" style={{ color: c.text.secondary }}>
+            {t('record.markKindPicker')}
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            {RECORDING_MARK_PICKER_KINDS.map((kind) => {
+              const { Icon, recordA11yKey } = getRecordingMarkKindUi(kind);
+              const { accent, backgroundUnselected, borderUnselected } =
+                getRecordingMarkKindAccentColors(kind, theme, surfaceDark);
+              const selected = selectedKind === kind;
+              const selectedFg = folderChipActiveForeground(c, accent);
+              return (
+                <Pressable
+                  key={kind}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={t(recordA11yKey)}
+                  onPress={() => {
+                    hapticSelection();
+                    setSelectedKind(kind);
+                  }}
+                  className="min-w-[47%] flex-1 flex-row items-center gap-2.5 rounded-xl px-3 py-3"
+                  style={{
+                    borderWidth: 1,
+                    borderColor: selected ? accent : borderUnselected,
+                    backgroundColor: selected ? accent : backgroundUnselected,
+                  }}
+                >
+                  <Icon size={18} color={selected ? selectedFg : accent} strokeWidth={2} />
+                  <Text
+                    className="flex-1 text-[14px] font-semibold leading-5"
+                    style={{ color: selected ? selectedFg : c.text.primary }}
+                    numberOfLines={2}
+                  >
+                    {t(recordA11yKey)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+
         <BottomSheetTextInput
           ref={labelInputRef}
           className="rounded-xl border-2 px-4 py-3 text-[16px]"
@@ -120,7 +181,6 @@ export const AddRecordingMarkSheet = ({
           onChangeText={(text) => setLabel(text.slice(0, MARK_LABEL_MAX_CHARS))}
           multiline
           maxLength={MARK_LABEL_MAX_CHARS}
-          autoFocus
           returnKeyType="done"
           blurOnSubmit
           onSubmitEditing={handleSave}

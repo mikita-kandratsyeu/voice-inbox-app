@@ -1,8 +1,11 @@
-import type { RecordingMark } from '@/entities/record';
+import { normalizeRecordingMarkKind } from '@/entities/record/model/normalizeRecordingMark';
+import type { RecordingMark, RecordingMarkKind } from '@/entities/record/model/types';
+import { isString } from '@/shared/lib/type-guards';
 
 export type RecordingMarkForPrompt = {
   offsetMs: number;
   label: string;
+  kind: RecordingMarkKind;
 };
 
 export const RECORDING_MARKS_PROMPT_MAX_ITEMS = 40;
@@ -23,12 +26,16 @@ export function sanitizeRecordingMarksForPrompt(
   const out: RecordingMarkForPrompt[] = [];
   for (const mark of marks) {
     if (!mark || !Number.isFinite(mark.offsetMs) || mark.offsetMs < 0) continue;
-    const rawLabel = typeof mark.label === 'string' ? mark.label : '';
+    const rawLabel = isString(mark.label) ? mark.label : '';
     const label = rawLabel
       .replace(/\s+/g, ' ')
       .trim()
       .slice(0, RECORDING_MARKS_PROMPT_LABEL_MAX_CHARS);
-    out.push({ offsetMs: Math.floor(mark.offsetMs), label });
+    out.push({
+      offsetMs: Math.floor(mark.offsetMs),
+      label,
+      kind: normalizeRecordingMarkKind(mark.kind),
+    });
     if (out.length >= RECORDING_MARKS_PROMPT_MAX_ITEMS) break;
   }
 
@@ -38,23 +45,30 @@ export function sanitizeRecordingMarksForPrompt(
   return out;
 }
 
+const KIND_RULES = [
+  '- [important]: must be reflected in summary when transcript near the timestamp supports it; do not drop when trimming.',
+  '- [task]: prioritize tasks[] from content within ~30s before/after; do not duplicate existing saved tasks.',
+  '- [quote]: preserve exact wording in summary (dedicated sentence or short quote block); do not paraphrase the pinned phrase.',
+  '- [moment]: general pin — give moderate weight in summary and nextSteps when supported.',
+].join('\n');
+
 export function buildRecordingMarksPromptBlock(marks: RecordingMarkForPrompt[]): string {
   if (marks.length === 0) return '';
 
   const lines = marks.map((m) => {
     const time = formatRecordingMarkOffset(m.offsetMs);
+    const kind = normalizeRecordingMarkKind(m.kind);
     if (m.label.length > 0) {
-      return `- [${time}] "${m.label.replace(/"/g, "'")}"`;
+      return `- [${kind}] [${time}] "${m.label.replace(/"/g, "'")}"`;
     }
-    return `- [${time}] (no label)`;
+    return `- [${kind}] [${time}] (no label)`;
   });
 
   return [
     '## RECORDING PINS (user-placed during capture)',
-    'The user pinned these moments while recording. Treat pin labels as intentional signals about what matters.',
-    '- Reflect pin themes in summary when supported by transcript content near each timestamp.',
-    '- Give extra weight to actionable content within ~30 seconds before or after each pin when extracting tasks[] and nextSteps[].',
-    '- Do not invent tasks or facts solely from a pin label if the transcript does not support them.',
+    'Each pin has a type: important | task | quote | moment. Trust types and labels as user intent.',
+    KIND_RULES,
+    '- Do not invent tasks or facts solely from a pin if the transcript does not support them.',
     '',
     ...lines,
     '',

@@ -8,7 +8,7 @@ import KeepAwake from 'react-native-keep-awake';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useAppLockStore } from '@/entities/app-lock';
-import type { RecordingMark, VoiceRecord } from '@/entities/record';
+import type { RecordingMark, RecordingMarkKind, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import {
@@ -163,6 +163,9 @@ export const RecordScreen = () => {
     }
   }, [pauseResumeRequestTick, state, pauseRecording, resumeRecording]);
 
+  const elapsedMsRef = useRef(elapsedMs);
+  elapsedMsRef.current = elapsedMs;
+
   const isAppLockEnabled = useAppLockStore((s) => s.isEnabled);
 
   useFocusEffect(
@@ -226,24 +229,32 @@ export const RecordScreen = () => {
     setShowSaveModal(true);
   };
 
-  const handleAddMarkPress = () => {
-    setMarkSnapshotOffsetMs(Math.round(elapsedMs));
+  const appendRecordingMark = useCallback(
+    (kind: RecordingMarkKind, label: string, offsetMs?: number) => {
+      setRecordingMarks((prev) => [
+        ...prev,
+        {
+          id: generateRecordingMarkId(),
+          offsetMs: Math.round(offsetMs ?? elapsedMsRef.current),
+          kind,
+          label,
+        },
+      ]);
+    },
+    [],
+  );
+
+  const handleAddMarkPress = useCallback(() => {
+    setMarkSnapshotOffsetMs(Math.round(elapsedMsRef.current));
     setMarkSheetVisible(true);
-  };
+  }, []);
 
   const handleMarkSheetClose = () => {
     setMarkSheetVisible(false);
   };
 
-  const handleMarkLabelSave = (label: string) => {
-    setRecordingMarks((prev) => [
-      ...prev,
-      {
-        id: generateRecordingMarkId(),
-        offsetMs: markSnapshotOffsetMs,
-        label,
-      },
-    ]);
+  const handleMarkSave = (kind: RecordingMarkKind, label: string) => {
+    appendRecordingMark(kind, label, markSnapshotOffsetMs);
     setMarkSheetVisible(false);
   };
 
@@ -324,7 +335,7 @@ export const RecordScreen = () => {
         visible={markSheetVisible}
         snapshotOffsetMs={markSnapshotOffsetMs}
         onClose={handleMarkSheetClose}
-        onSave={handleMarkLabelSave}
+        onSave={handleMarkSave}
       />
       <SaveRecordModal
         visible={showSaveModal}

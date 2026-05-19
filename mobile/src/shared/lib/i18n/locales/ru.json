@@ -193,6 +193,13 @@
     "finish": "Завершить запись",
     "markRecording": "Отметить момент",
     "markSheetTitle": "Отметить момент",
+    "markKindPicker": "Тип",
+    "markKind": {
+      "important": "Важное",
+      "task": "Задача",
+      "quote": "Цитата",
+      "moment": "Момент"
+    },
     "markAtTime": "Поставим отметку на {{time}} в этой записи",
     "markLabelPlaceholder": "Что здесь важно — одной фразой",
     "markSave": "Готово",
@@ -237,7 +244,12 @@
     "dialogue": "Спикеры",
     "tasks": "Задачи",
     "marksSectionTitle": "Важные моменты",
-    "markUntitled": "Момент без подписи",
+    "markUntitled": {
+      "important": "Важный момент",
+      "task": "Задача для извлечения",
+      "quote": "Цитата",
+      "moment": "Момент без подписи"
+    },
     "markOptionsTitle": "Эта отметка",
     "markEdit": "Изменить текст",
     "markDeleteTitle": "Убрать отметку?",

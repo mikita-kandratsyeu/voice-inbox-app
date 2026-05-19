@@ -1,3 +1,5 @@
+import { isString } from '@/shared/lib/type-guards';
+
 export type RecordStatus = 'unread' | 'read' | 'archived';
 
 export type RecordClassification = 'personal' | 'work' | 'meeting' | 'idea' | 'other';
@@ -31,10 +33,19 @@ export type TaskItem = {
   source?: TaskSource;
 };
 
+export const RECORDING_MARK_KINDS = ['moment', 'important', 'task', 'quote'] as const;
+
+export type RecordingMarkKind = (typeof RECORDING_MARK_KINDS)[number];
+
+export function isRecordingMarkKind(value: unknown): value is RecordingMarkKind {
+  return isString(value) && (RECORDING_MARK_KINDS as readonly string[]).includes(value);
+}
+
 /** Time-based bookmark created while recording (offset in the final audio). */
 export type RecordingMark = {
   id: string;
   offsetMs: number;
+  kind: RecordingMarkKind;
   /** User-visible caption; empty string means unnamed mark. */
   label: string;
 };

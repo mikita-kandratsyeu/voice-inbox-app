@@ -271,6 +271,7 @@ Return ONLY the translated text.`;
 export type AiRecordingMarkOption = {
   offsetMs: number;
   label: string;
+  kind: import('@/lib/recording-marks-prompt').RecordingMarkKind;
 };
 
 export type AiProcessingOptions = {

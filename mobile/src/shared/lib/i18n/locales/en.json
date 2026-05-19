@@ -193,6 +193,13 @@
     "finish": "Finish recording",
     "markRecording": "Pin this moment",
     "markSheetTitle": "Pin a moment",
+    "markKindPicker": "Type",
+    "markKind": {
+      "important": "Important",
+      "task": "Task",
+      "quote": "Quote",
+      "moment": "Moment"
+    },
     "markAtTime": "We’ll place it at {{time}} in this recording",
     "markLabelPlaceholder": "What happened here — one line is enough",
     "markSave": "Save",
@@ -237,7 +244,12 @@
     "dialogue": "Speakers",
     "tasks": "Tasks",
     "marksSectionTitle": "Pinned moments",
-    "markUntitled": "Pinned moment",
+    "markUntitled": {
+      "important": "Important moment",
+      "task": "Task to extract",
+      "quote": "Quote",
+      "moment": "Pinned moment"
+    },
     "markOptionsTitle": "This pin",
     "markEdit": "Edit note",
     "markDeleteTitle": "Remove this pin?",

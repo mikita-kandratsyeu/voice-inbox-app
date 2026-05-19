@@ -8,6 +8,7 @@ import { useFolderStore } from '@/entities/folder';
 import { DEFAULT_FOLDER_ICON_KEY } from '@/entities/folder/lib/folderLucideIcons';
 import { folderRepository } from '@/entities/folder/model/repository';
 import type { RecordClassification, RecordingMark, VoiceRecord } from '@/entities/record';
+import { sanitizeRecordingMark } from '@/entities/record';
 import {
   DEFAULT_FOLDER_BRAND_HEX,
   ensureRecordingsDir,
@@ -65,6 +66,7 @@ const VoiceRecordSchema = z.looseObject({
       z.object({
         id: safeString,
         offsetMs: z.number().finite(),
+        kind: z.enum(['moment', 'important', 'task', 'quote']).optional(),
         label: safeString.optional(),
       }),
     )
@@ -79,18 +81,8 @@ function normalizeRecordingMarks(raw: unknown): RecordingMark[] | undefined {
   }
   const out: RecordingMark[] = [];
   for (let i = 0; i < raw.length; i++) {
-    const m = raw[i];
-    if (!m || typeof m !== 'object') continue;
-    const obj = m as Record<string, unknown>;
-    const id = typeof obj.id === 'string' ? obj.id : '';
-    const offsetMsRaw = obj.offsetMs;
-    const offsetMs =
-      typeof offsetMsRaw === 'number' && Number.isFinite(offsetMsRaw)
-        ? Math.max(0, Math.round(offsetMsRaw))
-        : 0;
-    const label = typeof obj.label === 'string' ? obj.label.slice(0, 280) : '';
-    if (!id) continue;
-    out.push({ id, offsetMs, label });
+    const mark = sanitizeRecordingMark(raw[i], i);
+    if (mark) out.push(mark);
   }
   return out.length > 0 ? out : undefined;
 }
