@@ -78,6 +78,7 @@ export async function runCloudSummaryTasks(
       ...(request.taskExtractionHint?.trim()
         ? { taskExtractionHint: request.taskExtractionHint.trim() }
         : {}),
+      ...(request.recordingMarks?.length ? { recordingMarks: request.recordingMarks } : {}),
     },
     ...(request.transcriptSegments?.length
       ? {
@@ -141,6 +142,7 @@ export async function runCloudAsk(
     summary: request.summary,
     tasks: request.tasks,
     ...(request.priorTurns?.length ? { priorTurns: request.priorTurns } : {}),
+    ...(request.recordingMarks?.length ? { recordingMarks: request.recordingMarks } : {}),
   });
 
   if (!postResult.ok) {

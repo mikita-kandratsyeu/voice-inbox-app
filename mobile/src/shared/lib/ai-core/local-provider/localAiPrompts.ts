@@ -1,5 +1,9 @@
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 
+import {
+  buildRecordingMarksPromptBlock,
+  type RecordingMarkForPrompt,
+} from '../recordingMarksForPrompt';
 import type { AiExecutionContext, AskPriorTurn, AskRequest } from '../types';
 import {
   LOCAL_ASK_MAX_TASK_ITEMS,
@@ -79,6 +83,7 @@ export function buildLocalSummaryUserContent(
   existingTaskTitles?: string[],
   taskExtractionHint?: string,
   processingPreset?: 'meeting',
+  recordingMarks?: RecordingMarkForPrompt[],
 ): string {
   const head = [
     LOCAL_OUTPUT_LANGUAGE_HINT[ctx.aiOutputLanguage],
@@ -114,7 +119,12 @@ export function buildLocalSummaryUserContent(
         ].join('\n')
       : '';
 
-  return [head, existingBlock, hintBlock, '', 'Transcript:', transcriptText].join('\n');
+  const marksBlock =
+    recordingMarks && recordingMarks.length > 0
+      ? ['', buildRecordingMarksPromptBlock(recordingMarks)].join('\n')
+      : '';
+
+  return [head, existingBlock, hintBlock, marksBlock, '', 'Transcript:', transcriptText].join('\n');
 }
 
 export function sanitizeAskPriorTurnsForLocal(turns: AskPriorTurn[] | undefined): AskPriorTurn[] {
@@ -148,6 +158,10 @@ export function buildLocalAskUserContent(request: AskRequest, transcript: string
     blocks.push(`Tasks:\n${lines.join('\n')}`);
   }
 
+  if (request.recordingMarks?.length) {
+    blocks.push(buildRecordingMarksPromptBlock(request.recordingMarks));
+  }
+
   const priorTurns = sanitizeAskPriorTurnsForLocal(request.priorTurns);
   if (priorTurns.length > 0) {
     const lines = priorTurns.map((t, i) => `Turn ${i + 1}\nQ: ${t.question}\nA: ${t.answer}`);
@@ -161,7 +175,7 @@ export function buildLocalAskUserContent(request: AskRequest, transcript: string
 
 export function buildLocalAskSystemPrompt(): string {
   return [
-    'Use ONLY the provided blocks (Transcript; optional Summary, Tasks, Prior conversation; and the current Question).',
+    'Use ONLY the provided blocks (Transcript; optional Summary, Tasks, Recording pins, Prior conversation; and the current Question).',
     'Prior conversation is earlier Q&A about the same transcript; use it for follow-ups and continuity.',
     'Answer concisely in the SAME language as the current Question.',
     'If the context does not support an answer, say so in one short sentence. Do not invent facts.',

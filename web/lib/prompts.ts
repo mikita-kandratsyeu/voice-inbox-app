@@ -1,4 +1,5 @@
 import { formatAutoOrganizeFolderColorsPromptBlock } from './folder-accent-colors';
+import { buildRecordingMarksPromptBlock } from './recording-marks-prompt';
 
 /** One JSON object, no wrapper prose — shared across LLM system prompts to avoid drift. */
 const LLM_JSON_SINGLE_OBJECT_DISCIPLINE =
@@ -267,6 +268,11 @@ Do not add explanations, notes, quotes, or markdown fences.
 Return ONLY the translated text.`;
 }
 
+export type AiRecordingMarkOption = {
+  offsetMs: number;
+  label: string;
+};
+
 export type AiProcessingOptions = {
   summaryStyle?: 'brief' | 'standard' | 'detailed';
   taskStrictness?: 'strict' | 'balanced' | 'soft';
@@ -275,6 +281,7 @@ export type AiProcessingOptions = {
   referenceDate?: string;
   existingTaskTexts?: string[];
   taskExtractionHint?: string;
+  recordingMarks?: AiRecordingMarkOption[];
 };
 
 const TASK_EXTRACTION_HINT_MAX_CHARS = 500;
@@ -458,6 +465,7 @@ function getTodayIso(referenceDate?: string): string {
 export function buildAiProcessingPromptAppendBlocks(options?: AiProcessingOptions | null): {
   existingTasksBlock: string;
   userHintBlock: string;
+  recordingMarksBlock: string;
 } {
   const existingTitles = options?.existingTaskTexts ?? [];
   const existingTasksBlock =
@@ -483,7 +491,11 @@ ${userHintRaw}
 `
       : '';
 
-  return { existingTasksBlock, userHintBlock };
+  const recordingMarks = options?.recordingMarks ?? [];
+  const recordingMarksBlock =
+    recordingMarks.length > 0 ? `${buildRecordingMarksPromptBlock(recordingMarks)}\n` : '';
+
+  return { existingTasksBlock, userHintBlock, recordingMarksBlock };
 }
 
 function buildAiProcessingPromptExamples(pseudoDiarizationEligible: boolean): string {
@@ -572,7 +584,8 @@ export function buildAiProcessingPrompt(
     ? PROCESSING_PRESET_INSTRUCTIONS[processingPreset]
     : null;
 
-  const { existingTasksBlock, userHintBlock } = buildAiProcessingPromptAppendBlocks(options);
+  const { existingTasksBlock, userHintBlock, recordingMarksBlock } =
+    buildAiProcessingPromptAppendBlocks(options);
 
   const outputSchemaBlock = buildOutputSchemaSection(pseudoDiarizationEligible);
 
@@ -609,7 +622,7 @@ ${languageInstruction}${
 Today is ${today}.
 Use this date only to resolve explicit natural-language time references such as "tomorrow", "next Monday", or "on March 14".
 
-${existingTasksBlock}${userHintBlock}## Output Schema
+${existingTasksBlock}${userHintBlock}${recordingMarksBlock}## Output Schema
 
 \`\`\`typescript
 ${outputSchemaBlock}

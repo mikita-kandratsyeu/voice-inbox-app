@@ -10,6 +10,7 @@ import {
 import { MESSAGE_TTL_SECONDS, PUSH_DEBOUNCE_MS } from '@/config/constants';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
+import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
 import { processAskQuestion } from '@/services/ai.service';
 import type { AskMessage, Message } from '@/types';
 
@@ -29,6 +30,7 @@ export const createAsk = async (
   priorTurns?: { question: string; answer: string }[],
   clientUserAgent?: string | null,
   messageTtlSeconds: number = MESSAGE_TTL_SECONDS,
+  recordingMarks?: RecordingMarkForPrompt[],
 ): Promise<CreateAskResult> => {
   const ttl = messageTtlSeconds;
 
@@ -75,6 +77,7 @@ export const createAsk = async (
         tasks,
         priorTurns,
         clientUserAgent,
+        recordingMarks,
       );
       await saveAskMessage(id, {
         id,

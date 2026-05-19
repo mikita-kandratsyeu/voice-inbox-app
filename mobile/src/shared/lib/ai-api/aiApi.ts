@@ -4,6 +4,11 @@ import { isNumber, isString } from '@/shared/lib/type-guards';
 
 import { headersForAiOperation } from './aiOperation';
 
+export type AiRecordingMarkOption = {
+  offsetMs: number;
+  label: string;
+};
+
 export type AiProcessingOptions = {
   summaryStyle?: 'brief' | 'standard' | 'detailed';
   taskStrictness?: 'strict' | 'balanced' | 'soft';
@@ -11,6 +16,7 @@ export type AiProcessingOptions = {
   processingPreset?: 'meeting';
   existingTaskTexts?: string[];
   taskExtractionHint?: string;
+  recordingMarks?: AiRecordingMarkOption[];
 };
 
 type AiApiRequestBody = {

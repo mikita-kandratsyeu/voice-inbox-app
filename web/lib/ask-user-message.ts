@@ -1,4 +1,8 @@
 import { ASK_QUESTION_SYSTEM_PROMPT } from '@/lib/prompts';
+import {
+  buildRecordingMarksPromptBlock,
+  type RecordingMarkForPrompt,
+} from '@/lib/recording-marks-prompt';
 
 const ASK_PRIOR_TURNS_MAX = 20;
 const ASK_PRIOR_QUESTION_MAX_CHARS = 6000;
@@ -50,6 +54,7 @@ export function buildAskUserMessageContent(
   summary?: string,
   tasks?: { text: string }[],
   priorTurns?: { question: string; answer: string }[],
+  recordingMarks?: RecordingMarkForPrompt[],
 ): string {
   const parts: string[] = ['Transcript:\n\n', transcript];
   if (summary && summary.trim()) {
@@ -58,6 +63,9 @@ export function buildAskUserMessageContent(
   if (tasks && tasks.length > 0) {
     const taskLines = tasks.map((t) => `- ${t.text}`).join('\n');
     parts.push('\n\nTasks:\n\n', taskLines);
+  }
+  if (recordingMarks && recordingMarks.length > 0) {
+    parts.push('\n\n', buildRecordingMarksPromptBlock(recordingMarks));
   }
   const normalizedPrior = normalizePriorTurnsForAsk(priorTurns);
   if (normalizedPrior?.length) {
@@ -76,9 +84,11 @@ export function estimateAskRoutingChars(
   summary?: string,
   tasks?: { text: string }[],
   priorTurns?: { question: string; answer: string }[],
+  recordingMarks?: RecordingMarkForPrompt[],
 ): number {
   return (
     ASK_QUESTION_SYSTEM_PROMPT.length +
-    buildAskUserMessageContent(transcript, question, summary, tasks, priorTurns).length
+    buildAskUserMessageContent(transcript, question, summary, tasks, priorTurns, recordingMarks)
+      .length
   );
 }

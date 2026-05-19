@@ -55,8 +55,14 @@ export function estimateSummaryTasksRoutingChars(
   transcript: string,
   options?: AiProcessingOptions | null,
 ): number {
-  const { existingTasksBlock, userHintBlock } = buildAiProcessingPromptAppendBlocks(options);
-  return transcript.length + existingTasksBlock.length + userHintBlock.length;
+  const { existingTasksBlock, userHintBlock, recordingMarksBlock } =
+    buildAiProcessingPromptAppendBlocks(options);
+  return (
+    transcript.length +
+    existingTasksBlock.length +
+    userHintBlock.length +
+    recordingMarksBlock.length
+  );
 }
 
 export function resolveAutoAiModel(context: AiModelRoutingContext): string {

@@ -5,6 +5,7 @@ import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
 import type { AskPriorTurn } from '@/shared/lib/ai-core';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
+import { sanitizeRecordingMarksForPrompt } from '@/shared/lib/ai-core/recordingMarksForPrompt';
 import type { AiLocalGenerationProgressEvent } from '@/shared/lib/ai-core/types';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 
@@ -268,6 +269,8 @@ export const useAskAI = (
       };
 
       try {
+        const recordingMarks = sanitizeRecordingMarksForPrompt(record.recordingMarks);
+
         const runResult = await AIOrchestrator.runAsk(
           {
             id: requestId,
@@ -276,6 +279,7 @@ export const useAskAI = (
             ...(priorTurns.length > 0 ? { priorTurns } : {}),
             summary: record.summary ?? undefined,
             tasks: record.tasks?.map((t) => ({ text: t.text })) ?? undefined,
+            ...(recordingMarks?.length ? { recordingMarks } : {}),
             onLocalGenerationProgress,
           },
           {
