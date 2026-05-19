@@ -200,6 +200,14 @@
       "quote": "Quote",
       "moment": "Moment"
     },
+    "markKindDescription": {
+      "important": "Key moment",
+      "task": "Something to do",
+      "quote": "Worth remembering",
+      "moment": "Notable beat"
+    },
+    "markHoldForLabel": "Hold a type to add a short label",
+    "markLabelStepTitle": "Label this pin",
     "markAtTime": "We’ll place it at {{time}} in this recording",
     "markLabelPlaceholder": "What happened here — one line is enough",
     "markSave": "Save",

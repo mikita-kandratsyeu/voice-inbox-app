@@ -17,6 +17,12 @@ export type RecordingMarkKindUiConfig = {
     | 'record.markKind.task'
     | 'record.markKind.quote'
     | 'record.markKind.moment';
+  /** i18n key under `record.markKindDescription.*` */
+  descriptionKey:
+    | 'record.markKindDescription.important'
+    | 'record.markKindDescription.task'
+    | 'record.markKindDescription.quote'
+    | 'record.markKindDescription.moment';
   /** i18n key under `recordingDetail.markUntitled.*` */
   untitledKey:
     | 'recordingDetail.markUntitled.important'
@@ -31,6 +37,7 @@ export const RECORDING_MARK_KIND_UI: Record<RecordingMarkKind, RecordingMarkKind
     Icon: Bookmark,
     accentColorId: 'default',
     recordA11yKey: 'record.markKind.moment',
+    descriptionKey: 'record.markKindDescription.moment',
     untitledKey: 'recordingDetail.markUntitled.moment',
     sharePrefix: '📌',
   },
@@ -38,6 +45,7 @@ export const RECORDING_MARK_KIND_UI: Record<RecordingMarkKind, RecordingMarkKind
     Icon: Star,
     accentColorId: 'amber',
     recordA11yKey: 'record.markKind.important',
+    descriptionKey: 'record.markKindDescription.important',
     untitledKey: 'recordingDetail.markUntitled.important',
     sharePrefix: '⭐',
   },
@@ -45,6 +53,7 @@ export const RECORDING_MARK_KIND_UI: Record<RecordingMarkKind, RecordingMarkKind
     Icon: ListChecks,
     accentColorId: 'emerald',
     recordA11yKey: 'record.markKind.task',
+    descriptionKey: 'record.markKindDescription.task',
     untitledKey: 'recordingDetail.markUntitled.task',
     sharePrefix: '☑️',
   },
@@ -52,6 +61,7 @@ export const RECORDING_MARK_KIND_UI: Record<RecordingMarkKind, RecordingMarkKind
     Icon: Quote,
     accentColorId: 'violet',
     recordA11yKey: 'record.markKind.quote',
+    descriptionKey: 'record.markKindDescription.quote',
     untitledKey: 'recordingDetail.markUntitled.quote',
     sharePrefix: '❝',
   },

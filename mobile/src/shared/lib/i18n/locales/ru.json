@@ -200,6 +200,14 @@
       "quote": "Цитата",
       "moment": "Момент"
     },
+    "markKindDescription": {
+      "important": "Ключевой момент",
+      "task": "Нужно сделать",
+      "quote": "Запомнить мысль",
+      "moment": "Важный момент"
+    },
+    "markHoldForLabel": "Удерживайте тип, чтобы добавить подпись",
+    "markLabelStepTitle": "Подпись к отметке",
     "markAtTime": "Поставим отметку на {{time}} в этой записи",
     "markLabelPlaceholder": "Что здесь важно — одной фразой",
     "markSave": "Готово",

@@ -1,6 +1,7 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import type { RefObject } from 'react';
 import { useCallback, useEffect, useRef } from 'react';
+import { Keyboard } from 'react-native';
 
 /**
  * gorhom v5 default `stackBehavior` (`switch`) breaks when many modals mount and
@@ -28,6 +29,7 @@ export function useBottomSheetModalVisibility(
   const dismissedFromModalRef = useRef(false);
 
   const handleDismiss = useCallback(() => {
+    Keyboard.dismiss();
     dismissedFromModalRef.current = true;
     onClose();
   }, [onClose]);
@@ -46,6 +48,7 @@ export function useBottomSheetModalVisibility(
     }
 
     if (wasVisibleRef.current) {
+      Keyboard.dismiss();
       if (!dismissedFromModalRef.current) {
         ref.current?.dismiss();
       }
