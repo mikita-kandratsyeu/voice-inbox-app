@@ -4,7 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { hapticSelection, isDarkSurfaceColor, withAlphaHex } from '@/shared/lib';
+import { isDarkSurfaceColor, withAlphaHex } from '@/shared/lib';
 
 import {
   getRecordingMarkKindAccentColors,
@@ -40,18 +40,8 @@ export function RecordingMarkKindCard({
       accessibilityRole="button"
       accessibilityLabel={`${title}. ${description}`}
       accessibilityHint={onLongPress ? t('record.markHoldForLabel') : undefined}
-      onPress={() => {
-        hapticSelection();
-        onPress(kind);
-      }}
-      onLongPress={
-        onLongPress
-          ? () => {
-              hapticSelection();
-              onLongPress(kind);
-            }
-          : undefined
-      }
+      onPress={() => onPress(kind)}
+      onLongPress={onLongPress ? () => onLongPress(kind) : undefined}
       delayLongPress={420}
       className="flex-1 items-center justify-center gap-2.5 rounded-2xl px-2 py-4"
       style={({ pressed }) => ({

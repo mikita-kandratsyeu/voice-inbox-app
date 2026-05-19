@@ -139,7 +139,6 @@ export const AddRecordingMarkSheet = ({
   );
 
   const handleLabelBack = useCallback(() => {
-    hapticLight();
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setStep('pick');
     setLabel('');

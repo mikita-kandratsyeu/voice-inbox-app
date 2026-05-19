@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next';
-import { Download, Lock, UploadCloud } from 'lucide-react-native';
+import { Download, LockKeyhole, UploadCloud } from 'lucide-react-native';
 import React from 'react';
-import { Switch, View } from 'react-native';
+import { Switch } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
@@ -33,7 +33,7 @@ export const SettingsBackupSection = ({
     <SettingsRow
       label={t('settings.backupEncryption.toggleLabel')}
       subtitle={t('settings.backupEncryption.toggleHint')}
-      leftIcon={<Lock size={20} color={color.accent.primary} strokeWidth={1.8} />}
+      leftIcon={<LockKeyhole size={20} color={color.accent.primary} strokeWidth={1.8} />}
       rightSlot={
         <Switch
           value={encryptBackup}

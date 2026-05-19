@@ -6,9 +6,7 @@ import {
   audioPathToDbValue,
   getDB,
   getRecordingsRelativePath,
-  isNumber,
   isRecord,
-  isString,
   recordAskAiTable,
   recordsTable,
 } from '@/shared/lib';
