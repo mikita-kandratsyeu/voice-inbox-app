@@ -242,10 +242,20 @@
     "copyFailed": "Copy failed",
     "audioMissing": "Audio file was not found inside this archive.",
     "selectPrompt": "Select a note from the list.",
+    "passwordPrompt": {
+      "title": "Password-protected backup",
+      "subtitle": "Enter the password you set when exporting this archive from the app.",
+      "warning": "We can’t recover this password for you. If you don’t remember it, the backup can’t be opened.",
+      "label": "Backup password",
+      "placeholder": "Your password",
+      "submit": "Unlock backup",
+      "required": "Enter the backup password."
+    },
     "errors": {
       "too_large": "This file is too large for the browser viewer. Try a smaller export or open the archive on your computer with more RAM.",
       "not_zip": "Please choose a valid ZIP file exported from Voice Inbox AI.",
       "unzip_failed": "Could not read this ZIP file. It may be corrupted or not a Voice Inbox AI backup.",
+      "wrong_password": "Wrong password. Use the one from export and try again.",
       "no_metadata": "This ZIP does not contain metadata.json. Use a backup exported from the Voice Inbox AI app.",
       "invalid_json": "metadata.json is damaged or not valid JSON.",
       "invalid_schema": "This backup format is not recognized. Export again from the latest version of the app.",

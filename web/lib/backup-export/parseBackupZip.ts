@@ -8,17 +8,21 @@ import {
 } from './schema';
 import type { ParsedBackup, ParsedFolder, ParsedRecord, ParsedTask } from './types';
 
+export type BackupZipParseErrorCode =
+  | 'too_large'
+  | 'not_zip'
+  | 'unzip_failed'
+  | 'no_metadata'
+  | 'invalid_json'
+  | 'invalid_schema'
+  | 'unsupported_version'
+  | 'password_required'
+  | 'wrong_password';
+
 export class BackupZipParseError extends Error {
   constructor(
     message: string,
-    public readonly code:
-      | 'too_large'
-      | 'not_zip'
-      | 'unzip_failed'
-      | 'no_metadata'
-      | 'invalid_json'
-      | 'invalid_schema'
-      | 'unsupported_version',
+    public readonly code: BackupZipParseErrorCode,
   ) {
     super(message);
     this.name = 'BackupZipParseError';
@@ -172,11 +176,30 @@ function toParsedFolder(raw: Record<string, unknown>): ParsedFolder {
   };
 }
 
+export type ParseBackupZipOptions = {
+  password?: string;
+};
+
+function isEncryptedZipError(err: unknown): boolean {
+  if (err == null || typeof err !== 'object') return false;
+  const code = 'code' in err ? String((err as { code?: unknown }).code) : '';
+  const message = err instanceof Error ? err.message : String(err);
+  return (
+    code === 'Encrypted' ||
+    code === 'Invalid password' ||
+    /password/i.test(message) ||
+    /encrypt/i.test(message)
+  );
+}
+
 /**
  * Reads a Voice Inbox mobile backup `.zip` in the browser without loading
  * all uncompressed files at once (metadata only up front; audio on demand).
  */
-export async function parseBackupZip(file: File): Promise<ParsedBackup> {
+export async function parseBackupZip(
+  file: File,
+  options?: ParseBackupZipOptions,
+): Promise<ParsedBackup> {
   if (file.size > MAX_BACKUP_ZIP_BYTES) {
     throw new BackupZipParseError('Backup file is too large for the browser viewer.', 'too_large');
   }
@@ -186,7 +209,11 @@ export async function parseBackupZip(file: File): Promise<ParsedBackup> {
     throw new BackupZipParseError('This file does not look like a ZIP archive.', 'not_zip');
   }
 
-  const zipReader = new ZipReader<Blob>(new BlobReader(file));
+  const trimmedPassword = options?.password?.trim();
+  const zipReader = new ZipReader<Blob>(
+    new BlobReader(file),
+    trimmedPassword ? { password: trimmedPassword } : undefined,
+  );
   let entries: Awaited<ReturnType<ZipReader<Blob>['getEntries']>>;
   try {
     entries = await zipReader.getEntries();
@@ -224,8 +251,14 @@ export async function parseBackupZip(file: File): Promise<ParsedBackup> {
   let jsonText: string;
   try {
     jsonText = await metaEntry.getData(new TextWriter());
-  } catch {
+  } catch (err) {
     await zipReader.close().catch(() => {});
+    if (!trimmedPassword && isEncryptedZipError(err)) {
+      throw new BackupZipParseError('This backup is password-protected.', 'password_required');
+    }
+    if (trimmedPassword && isEncryptedZipError(err)) {
+      throw new BackupZipParseError('Incorrect backup password.', 'wrong_password');
+    }
     throw new BackupZipParseError('Could not read metadata.json from the archive.', 'unzip_failed');
   }
 

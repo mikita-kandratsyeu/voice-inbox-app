@@ -43,11 +43,17 @@ import { useRecordStore } from '@/entities/record';
 import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { useModelManager } from '@/features/model-manager';
-import { importData } from '@/features/sync-data';
+import {
+  IMPORT_ERROR_WRONG_BACKUP_PASSWORD,
+  importData,
+  type ImportResult,
+} from '@/features/sync-data';
+import { BackupPasswordSheet } from '@/screens/settings/ui/BackupPasswordSheet';
 import type { Colors } from '@/shared/config';
 import { getWebsiteUrl, useAppTheme, useColors } from '@/shared/config';
 import { hapticSelection, IS_ANDROID, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
+import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 import {
   checkMicPermission,
   type MicPermissionStatus,
@@ -965,6 +971,8 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const [agreedToTerms, setAgreedToTerms] = useState(() => getTermsAgreedAt() != null);
   const [termsGateVisible, setTermsGateVisible] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
+  const [restorePasswordSheetVisible, setRestorePasswordSheetVisible] = useState(false);
+  const [pendingRestoreZipPath, setPendingRestoreZipPath] = useState<string | null>(null);
   const [isFinishingOnboarding, setIsFinishingOnboarding] = useState(false);
   const finishingRef = useRef(false);
   const flatListRef = useRef<FlatList<OnboardingSlideContent>>(null);
@@ -985,17 +993,48 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const { startDownload } = useModelManager();
 
-  const handleRestore = useCallback(async () => {
-    setIsRestoring(true);
-    let showedConfirm = false;
+  const releasePendingRestoreZip = useCallback(async (zipPath: string | null) => {
+    if (!zipPath) return;
+    const cache = getCachesDirectoryPath();
+    if (!zipPath.startsWith(cache)) return;
     try {
-      const result = await importData();
-      if (!result.success) {
-        if (result.error !== 'cancelled') {
-          Alert.alert(t('common.error'), result.error);
-        }
-        return;
+      const exists = await NitroFS.exists(zipPath);
+      if (exists) {
+        await NitroFS.unlink(zipPath);
       }
+    } catch {
+      if (__DEV__) {
+        console.warn('[onboarding] releasePendingRestoreZip failed', zipPath);
+      }
+    }
+  }, []);
+
+  const finishRestoreFromResult = useCallback(
+    async (result: ImportResult) => {
+      if (!result.success) {
+        if ('needsPassword' in result) {
+          setPendingRestoreZipPath(result.zipFsPath);
+          setRestorePasswordSheetVisible(true);
+          return false;
+        }
+        if (result.error === 'cancelled') {
+          void releasePendingRestoreZip(pendingRestoreZipPath);
+          setPendingRestoreZipPath(null);
+          return false;
+        }
+        if (result.error === IMPORT_ERROR_WRONG_BACKUP_PASSWORD) {
+          Alert.alert(t('common.error'), t('importExport.wrongBackupPassword'));
+          return false;
+        }
+        Alert.alert(t('common.error'), result.error);
+        void releasePendingRestoreZip(pendingRestoreZipPath);
+        setPendingRestoreZipPath(null);
+        return false;
+      }
+
+      void releasePendingRestoreZip(pendingRestoreZipPath);
+      setPendingRestoreZipPath(null);
+
       const existingIds = new Set(existingRecords.map((r) => r.id));
       const toImport = result.records.filter((r) => !existingIds.has(r.id));
       if (toImport.length === 0) {
@@ -1005,8 +1044,25 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
             ? t('onboarding.restoreAllAlreadyInApp')
             : t('onboarding.restoreNoRecords'),
         );
+        return false;
+      }
+
+      return { toImport, totalInFile: result.records.length };
+    },
+    [existingRecords, pendingRestoreZipPath, releasePendingRestoreZip, t],
+  );
+
+  const handleRestore = useCallback(async () => {
+    setIsRestoring(true);
+    let showedConfirm = false;
+    setPendingRestoreZipPath(null);
+    try {
+      const result = await importData();
+      const prepared = await finishRestoreFromResult(result);
+      if (!prepared) {
         return;
       }
+      const { toImport } = prepared;
       showedConfirm = true;
       Alert.alert(t('onboarding.restoreImportAllConfirm', { count: toImport.length }), '', [
         { text: t('common.cancel'), style: 'cancel', onPress: () => setIsRestoring(false) },
@@ -1036,7 +1092,58 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
     } finally {
       if (!showedConfirm) setIsRestoring(false);
     }
-  }, [addRecord, existingRecords, t]);
+  }, [addRecord, finishRestoreFromResult, t]);
+
+  const handleRestorePasswordSubmit = useCallback(
+    async (password: string) => {
+      const zipPath = pendingRestoreZipPath;
+      if (!zipPath) {
+        setRestorePasswordSheetVisible(false);
+        return;
+      }
+      setIsRestoring(true);
+      let showedConfirm = false;
+      try {
+        const result = await importData({ zipFsPath: zipPath, password });
+        const prepared = await finishRestoreFromResult(result);
+        if (!prepared) {
+          return;
+        }
+        const { toImport } = prepared;
+        if (result.success) {
+          setRestorePasswordSheetVisible(false);
+        }
+        showedConfirm = true;
+        Alert.alert(t('onboarding.restoreImportAllConfirm', { count: toImport.length }), '', [
+          { text: t('common.cancel'), style: 'cancel', onPress: () => setIsRestoring(false) },
+          {
+            text: t('importExport.import'),
+            onPress: async () => {
+              try {
+                for (const record of toImport) {
+                  await addRecord(record);
+                }
+                Alert.alert(
+                  t('common.done'),
+                  t('onboarding.restoreSuccess', { count: toImport.length }),
+                );
+              } finally {
+                setIsRestoring(false);
+              }
+            },
+          },
+        ]);
+      } catch (err) {
+        if (__DEV__) {
+          console.warn('[onboarding] restore with password failed', err);
+        }
+        Alert.alert(t('common.error'), t('importExport.importError'));
+      } finally {
+        if (!showedConfirm) setIsRestoring(false);
+      }
+    },
+    [addRecord, finishRestoreFromResult, pendingRestoreZipPath, t],
+  );
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -1256,6 +1363,17 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           loading={isFinishingOnboarding}
         />
       </View>
+      <BackupPasswordSheet
+        visible={restorePasswordSheetVisible}
+        mode="import"
+        busy={isRestoring}
+        onClose={() => {
+          setRestorePasswordSheetVisible(false);
+          void releasePendingRestoreZip(pendingRestoreZipPath);
+          setPendingRestoreZipPath(null);
+        }}
+        onSubmit={(password) => void handleRestorePasswordSubmit(password)}
+      />
     </View>
   );
 };
