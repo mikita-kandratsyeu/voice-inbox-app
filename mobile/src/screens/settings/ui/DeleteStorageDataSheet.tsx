@@ -1,16 +1,13 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { BatchCheckbox } from '@/features/batch-select';
 import { useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
-import { modalKeyboardBehavior } from '@/shared/lib/platform';
 import { formatFileSize } from '@/shared/lib/whisper';
-import { Button } from '@/shared/ui';
+import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 export type DeleteStorageCategoryId = 'library' | 'whisper' | 'localLlm' | 'cache';
 
@@ -73,16 +70,10 @@ export function DeleteStorageDataSheet({
 }: DeleteStorageDataSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const insets = useSafeAreaInsets();
-  const ref = useRef<BottomSheetModal>(null);
+  const contentPadding = useBottomSheetContentPadding(20);
   const [selection, setSelection] = useState<DeleteStorageSelection>(() =>
     defaultSelection(categoryBytes),
   );
-
-  useEffect(() => {
-    if (visible) ref.current?.present();
-    else ref.current?.dismiss();
-  }, [visible]);
 
   useEffect(() => {
     if (!visible) return;
@@ -95,13 +86,6 @@ export function DeleteStorageDataSheet({
     categoryBytes.cache,
     categoryBytes,
   ]);
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.45} />
-    ),
-    [],
-  );
 
   const selectedBytes = useMemo(
     () => CATEGORY_ORDER.reduce((sum, id) => (selection[id] ? sum + categoryBytes[id] : sum), 0),
@@ -127,33 +111,12 @@ export function DeleteStorageDataSheet({
   }, [canSubmit, onConfirm, selection]);
 
   return (
-    <BottomSheetModal
-      ref={ref}
-      enableDynamicSizing
-      enablePanDownToClose
-      enableOverDrag={false}
-      keyboardBehavior={modalKeyboardBehavior}
-      keyboardBlurBehavior="restore"
-      enableBlurKeyboardOnGesture
-      backdropComponent={renderBackdrop}
-      onDismiss={onClose}
-      backgroundStyle={{
-        backgroundColor: color.background.primary,
-        borderTopWidth: 1,
-        borderTopColor: color.border.default,
-      }}
-      handleIndicatorStyle={{
-        width: 36,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: color.icon.muted,
-      }}
-    >
+    <AppBottomSheetModal visible={visible} onClose={onClose}>
       <BottomSheetView
         style={{
           paddingHorizontal: 20,
           paddingTop: 8,
-          paddingBottom: Math.max(insets.bottom, 20),
+          ...contentPadding,
         }}
       >
         <Text
@@ -268,10 +231,10 @@ export function DeleteStorageDataSheet({
             variant="secondary"
             size="lg"
             fullWidth
-            onPress={() => ref.current?.dismiss()}
+            onPress={onClose}
           />
         </View>
       </BottomSheetView>
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 }

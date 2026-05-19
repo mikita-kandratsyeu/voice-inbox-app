@@ -1,22 +1,14 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetScrollView,
-  BottomSheetTextInput,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import { FileText, ListChecks, Mail, UsersRound } from 'lucide-react-native';
-import React, { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { ShareBriefTemplate } from '@/features/share-record';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { IS_IOS, modalKeyboardBehavior } from '@/shared/lib/platform';
-import { Button } from '@/shared/ui';
+import { IS_IOS } from '@/shared/lib/platform';
+import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 import type { BatchExportPackaging } from '../model/batchExportPackaging';
 
@@ -91,8 +83,8 @@ export const BatchExportSheet = ({
 }: BatchExportSheetProps) => {
   const { t } = useTranslation();
   const color = useColors();
-  const insets = useSafeAreaInsets();
-  const ref = useRef<BottomSheetModal>(null);
+  const contentPadding = useBottomSheetContentPadding(24);
+  const listContentPadding = useBottomSheetContentPadding(20);
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [emailBodyTemplate, setEmailBodyTemplate] = useState<ShareBriefTemplate>('meetingBrief');
@@ -110,20 +102,12 @@ export const BatchExportSheet = ({
   }, [showSpeakerTurnsExport]);
 
   useEffect(() => {
-    if (visible) {
-      const frame = requestAnimationFrame(() => {
-        ref.current?.present();
-      });
-      return () => cancelAnimationFrame(frame);
-    }
-
-    ref.current?.dismiss();
+    if (visible) return;
     setEmailVisible(false);
     setEmail('');
     setEmailBodyTemplate('meetingBrief');
     setExportPackaging('single');
     setKeyboardVisible(false);
-    return undefined;
   }, [visible]);
 
   useEffect(() => {
@@ -151,13 +135,6 @@ export const BatchExportSheet = ({
       hide.remove();
     };
   }, [emailVisible]);
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.45} />
-    ),
-    [],
-  );
 
   const handleExportNoteBrief = useCallback(() => {
     onClose();
@@ -231,28 +208,7 @@ export const BatchExportSheet = ({
   );
 
   return (
-    <BottomSheetModal
-      ref={ref}
-      enableDynamicSizing
-      enablePanDownToClose
-      enableOverDrag={false}
-      keyboardBehavior={modalKeyboardBehavior}
-      keyboardBlurBehavior="none"
-      enableBlurKeyboardOnGesture
-      backdropComponent={renderBackdrop}
-      onDismiss={onClose}
-      backgroundStyle={{
-        backgroundColor: color.background.primary,
-        borderTopWidth: 1,
-        borderTopColor: color.border.default,
-      }}
-      handleIndicatorStyle={{
-        width: 36,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: color.icon.muted,
-      }}
-    >
+    <AppBottomSheetModal visible={visible} onClose={onClose} keyboardBlurBehavior="none">
       {emailVisible ? (
         <BottomSheetScrollView
           keyboardShouldPersistTaps="handled"
@@ -261,9 +217,9 @@ export const BatchExportSheet = ({
           contentContainerStyle={{
             paddingHorizontal: 20,
             paddingTop: 4,
-            paddingBottom: keyboardVisible
-              ? SAVE_SHEET_KEYBOARD_BOTTOM_PADDING
-              : Math.max(insets.bottom, 24),
+            ...(keyboardVisible
+              ? { paddingBottom: SAVE_SHEET_KEYBOARD_BOTTOM_PADDING }
+              : contentPadding),
             gap: 12,
           }}
         >
@@ -415,8 +371,8 @@ export const BatchExportSheet = ({
           style={{
             paddingHorizontal: 20,
             paddingTop: 4,
-            paddingBottom: Math.max(insets.bottom, 20),
             gap: 10,
+            ...listContentPadding,
           }}
         >
           <Text
@@ -495,6 +451,6 @@ export const BatchExportSheet = ({
           })}
         </BottomSheetView>
       )}
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 };

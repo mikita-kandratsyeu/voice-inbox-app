@@ -3,6 +3,18 @@ export { AiTabHintIcon } from './AiTabHintIcon';
 export { AiTabLoadingState } from './AiTabLoadingState';
 export type { BlockingProgressModalProps } from './BlockingProgressModal';
 export { BlockingProgressModal } from './BlockingProgressModal';
+export {
+  APP_BOTTOM_SHEET_HANDLE,
+  type AppBottomSheetBackdropPreset,
+  type AppBottomSheetChromeOptions,
+  AppBottomSheetModal,
+  type AppBottomSheetModalProps,
+  getAppBottomSheetBackgroundStyle,
+  getAppBottomSheetHandleStyle,
+  useAppBottomSheetBackdrop,
+  useAppBottomSheetChrome,
+  useBottomSheetContentPadding,
+} from './bottom-sheet';
 export type { ButtonProps, ButtonSize, ButtonVariant } from './Button';
 export { Button } from './Button';
 export { EmptyState } from './EmptyState';

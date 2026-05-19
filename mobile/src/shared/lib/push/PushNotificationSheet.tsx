@@ -1,13 +1,11 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Dimensions, ScrollView, Text } from 'react-native';
 import Markdown from 'react-native-markdown-display';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/shared/config';
-import { Button } from '@/shared/ui';
+import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 import { usePushSheet } from './usePushSheet';
 
@@ -16,27 +14,11 @@ const MAX_CONTENT_HEIGHT = Dimensions.get('window').height * 0.4;
 export const PushNotificationSheet = () => {
   const { t } = useTranslation();
   const color = useColors();
-  const insets = useSafeAreaInsets();
+  const contentPadding = useBottomSheetContentPadding(24);
   const { visible, message, type, hide } = usePushSheet();
 
   const title =
     type === 'limit_exceeded' ? t('push.limitExceededTitle') : t('push.policyUpdateTitle');
-  const sheetRef = useRef<BottomSheetModal>(null);
-
-  useEffect(() => {
-    if (visible) {
-      sheetRef.current?.present();
-    } else {
-      sheetRef.current?.dismiss();
-    }
-  }, [visible]);
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="none" opacity={0.6} />
-    ),
-    [],
-  );
 
   const markdownStyles = useMemo(
     () => ({
@@ -96,25 +78,14 @@ export const PushNotificationSheet = () => {
   );
 
   return (
-    <BottomSheetModal
-      ref={sheetRef}
-      enableDynamicSizing
+    <AppBottomSheetModal
+      visible={visible}
+      onClose={hide}
+      surface="card"
+      backdrop="blocking"
       enablePanDownToClose={false}
-      backdropComponent={renderBackdrop}
-      backgroundStyle={{
-        backgroundColor: color.background.card,
-        borderTopWidth: 1,
-        borderTopColor: color.border.default,
-      }}
-      handleIndicatorStyle={{
-        width: 36,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: color.icon.muted,
-      }}
-      onDismiss={hide}
     >
-      <BottomSheetView style={{ paddingHorizontal: 20 }}>
+      <BottomSheetView style={{ paddingHorizontal: 20, ...contentPadding }}>
         <Text
           style={{
             color: color.text.primary,
@@ -145,12 +116,9 @@ export const PushNotificationSheet = () => {
           fullWidth
           color={color}
           onPress={hide}
-          containerStyle={{
-            marginTop: 16,
-            marginBottom: Math.max(insets.bottom, 24),
-          }}
+          containerStyle={{ marginTop: 16 }}
         />
       </BottomSheetView>
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 };

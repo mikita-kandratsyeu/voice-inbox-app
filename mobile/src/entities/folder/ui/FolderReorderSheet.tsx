@@ -1,7 +1,6 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Minus } from 'lucide-react-native';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DraggableFlatList, {
@@ -10,12 +9,11 @@ import DraggableFlatList, {
 } from 'react-native-draggable-flatlist';
 import { Pressable } from 'react-native-gesture-handler';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useProEntitlement } from '@/features/pro-license';
 import { useColors } from '@/shared/config';
 import { resolveDisplayFolderColor } from '@/shared/lib';
-import { modalKeyboardBehavior } from '@/shared/lib/platform';
+import { AppBottomSheetModal, useBottomSheetContentPadding } from '@/shared/ui';
 
 import { FolderLucideIcon } from '../lib/folderLucideIcons';
 import { useFolderStore } from '../model/store';
@@ -50,10 +48,9 @@ export const FolderReorderSheet = ({
 }: FolderReorderSheetProps) => {
   const { t } = useTranslation();
   const color = useColors();
-  const insets = useSafeAreaInsets();
+  const contentPadding = useBottomSheetContentPadding(20);
   const { isProActive } = useProEntitlement();
   const deleteFolder = useFolderStore((s) => s.deleteFolder);
-  const ref = useRef<BottomSheetModal>(null);
 
   const confirmDeleteFolder = useCallback(
     (folder: Folder) => {
@@ -69,24 +66,6 @@ export const FolderReorderSheet = ({
       ]);
     },
     [deleteFolder, t],
-  );
-
-  useEffect(() => {
-    if (visible) {
-      const frame = requestAnimationFrame(() => {
-        ref.current?.present();
-      });
-      return () => cancelAnimationFrame(frame);
-    }
-    ref.current?.dismiss();
-    return undefined;
-  }, [visible]);
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.45} />
-    ),
-    [],
   );
 
   const handleDragEnd = useCallback(
@@ -167,29 +146,13 @@ export const FolderReorderSheet = ({
   );
 
   return (
-    <BottomSheetModal
-      ref={ref}
+    <AppBottomSheetModal
+      visible={visible}
+      onClose={onClose}
       snapPoints={['52%']}
-      enablePanDownToClose
       enableContentPanningGesture={false}
-      enableOverDrag={false}
-      keyboardBehavior={modalKeyboardBehavior}
-      keyboardBlurBehavior="restore"
-      backdropComponent={renderBackdrop}
-      onDismiss={onClose}
-      backgroundStyle={{
-        backgroundColor: color.background.primary,
-        borderTopWidth: 1,
-        borderTopColor: color.border.default,
-      }}
-      handleIndicatorStyle={{
-        width: 36,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: color.icon.muted,
-      }}
     >
-      <BottomSheetView className="px-5 pt-1" style={{ paddingBottom: Math.max(insets.bottom, 20) }}>
+      <BottomSheetView className="px-5 pt-1" style={contentPadding}>
         <View className="mb-3 justify-center">
           <Text
             className="px-14 text-center text-[17px] font-semibold"
@@ -229,6 +192,6 @@ export const FolderReorderSheet = ({
           />
         </View>
       </BottomSheetView>
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 };

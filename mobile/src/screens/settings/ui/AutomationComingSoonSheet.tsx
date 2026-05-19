@@ -1,22 +1,20 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Crown } from 'lucide-react-native';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/shared/config';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
-import { modalKeyboardBehavior } from '@/shared/lib/platform';
-import { Button } from '@/shared/ui';
+import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 export type AutomationFeatureKind =
   | 'autoTranscribe'
   | 'autoAi'
   | 'autoArchive'
   | 'accentColor'
-  | 'folderColor';
+  | 'folderColor'
+  | 'batchExport';
 
 type AutomationComingSoonSheetProps = {
   visible: boolean;
@@ -33,54 +31,48 @@ export function AutomationComingSoonSheet({
 }: AutomationComingSoonSheetProps) {
   const { t } = useTranslation();
   const c = useColors();
-  const insets = useSafeAreaInsets();
-  const ref = useRef<BottomSheetModal>(null);
+  const contentPadding = useBottomSheetContentPadding(24);
 
   useEffect(() => {
-    if (visible) {
-      ref.current?.present();
-      void logAnalyticsEvent('premium_hint_opened', {
-        feature:
-          feature === 'autoTranscribe'
-            ? 'auto_whisper'
-            : feature === 'autoAi'
-              ? 'auto_ai'
-              : feature === 'autoArchive'
-                ? 'auto_archive'
+    if (!visible) return;
+    void logAnalyticsEvent('premium_hint_opened', {
+      feature:
+        feature === 'autoTranscribe'
+          ? 'auto_whisper'
+          : feature === 'autoAi'
+            ? 'auto_ai'
+            : feature === 'autoArchive'
+              ? 'auto_archive'
+              : feature === 'batchExport'
+                ? 'batch_export'
                 : feature === 'folderColor'
                   ? 'folder_color'
                   : 'accent_color',
+    });
+    if (feature === 'autoTranscribe') {
+      void logAnalyticsEvent('premium_feature_tapped_auto_whisper', {
+        surface: 'settings_sheet',
       });
-      if (feature === 'autoTranscribe') {
-        void logAnalyticsEvent('premium_feature_tapped_auto_whisper', {
-          surface: 'settings_sheet',
-        });
-      } else if (feature === 'autoAi') {
-        void logAnalyticsEvent('premium_feature_tapped_auto_ai', { surface: 'settings_sheet' });
-      } else if (feature === 'autoArchive') {
-        void logAnalyticsEvent('premium_feature_tapped_auto_archive', {
-          surface: 'settings_sheet',
-        });
-      } else if (feature === 'folderColor') {
-        void logAnalyticsEvent('premium_feature_tapped_folder_color', {
-          surface: 'folder_form_sheet',
-        });
-      } else {
-        void logAnalyticsEvent('premium_feature_tapped_accent_color', {
-          surface: 'appearance_sheet',
-        });
-      }
+    } else if (feature === 'autoAi') {
+      void logAnalyticsEvent('premium_feature_tapped_auto_ai', { surface: 'settings_sheet' });
+    } else if (feature === 'autoArchive') {
+      void logAnalyticsEvent('premium_feature_tapped_auto_archive', {
+        surface: 'settings_sheet',
+      });
+    } else if (feature === 'batchExport') {
+      void logAnalyticsEvent('premium_feature_tapped_batch_export', {
+        surface: 'inbox_batch_bar',
+      });
+    } else if (feature === 'folderColor') {
+      void logAnalyticsEvent('premium_feature_tapped_folder_color', {
+        surface: 'folder_form_sheet',
+      });
     } else {
-      ref.current?.dismiss();
+      void logAnalyticsEvent('premium_feature_tapped_accent_color', {
+        surface: 'appearance_sheet',
+      });
     }
   }, [visible, feature]);
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.45} />
-    ),
-    [],
-  );
 
   const title =
     feature === 'autoTranscribe'
@@ -89,9 +81,11 @@ export function AutomationComingSoonSheet({
         ? t('settings.automationSoon.autoAiTitle')
         : feature === 'autoArchive'
           ? t('settings.automationSoon.autoArchiveTitle')
-          : feature === 'folderColor'
-            ? t('folders.colorProTitle')
-            : t('appearance.accentColor.proTitle');
+          : feature === 'batchExport'
+            ? t('batch.exportProTitle')
+            : feature === 'folderColor'
+              ? t('folders.colorProTitle')
+              : t('appearance.accentColor.proTitle');
   const body =
     feature === 'autoTranscribe'
       ? t('settings.automationSoon.autoTranscribeBody')
@@ -99,38 +93,19 @@ export function AutomationComingSoonSheet({
         ? t('settings.automationSoon.autoAiBody')
         : feature === 'autoArchive'
           ? t('settings.automationSoon.autoArchiveBody')
-          : feature === 'folderColor'
-            ? t('folders.colorProBody')
-            : t('appearance.accentColor.proBody');
+          : feature === 'batchExport'
+            ? t('batch.exportProBody')
+            : feature === 'folderColor'
+              ? t('folders.colorProBody')
+              : t('appearance.accentColor.proBody');
 
   return (
-    <BottomSheetModal
-      ref={ref}
-      enableDynamicSizing
-      enablePanDownToClose
-      enableOverDrag={false}
-      keyboardBehavior={modalKeyboardBehavior}
-      keyboardBlurBehavior="restore"
-      enableBlurKeyboardOnGesture
-      backdropComponent={renderBackdrop}
-      onDismiss={onClose}
-      backgroundStyle={{
-        backgroundColor: c.background.primary,
-        borderTopWidth: 1,
-        borderTopColor: c.border.default,
-      }}
-      handleIndicatorStyle={{
-        width: 36,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: c.icon.muted,
-      }}
-    >
+    <AppBottomSheetModal visible={visible} onClose={onClose}>
       <BottomSheetView
         style={{
           paddingHorizontal: 24,
           paddingTop: 8,
-          paddingBottom: Math.max(insets.bottom, 24),
+          ...contentPadding,
         }}
       >
         <View className="mb-1 items-center">
@@ -152,12 +127,12 @@ export function AutomationComingSoonSheet({
           size="lg"
           fullWidth
           label={t('common.tryPro')}
-          onPress={onUpgradePress ?? (() => ref.current?.dismiss())}
+          onPress={onUpgradePress ?? onClose}
           color={c}
           activeOpacity={0.85}
           accessibilityLabel={t('common.tryPro')}
         />
       </BottomSheetView>
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 }

@@ -1,11 +1,10 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
 import { Check } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,7 +30,12 @@ import {
 } from '@/features/yandex-interstitial';
 import { useColors } from '@/shared/config';
 import { DEFAULT_FOLDER_BRAND_HEX, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
-import { Button, ScreenHeader } from '@/shared/ui';
+import {
+  AppBottomSheetModal,
+  Button,
+  ScreenHeader,
+  useBottomSheetContentPadding,
+} from '@/shared/ui';
 
 type AutoOrganizeReviewRouteProp = RouteProp<InboxStackParamList, 'AutoOrganizeReview'>;
 type EditingFolderTarget = { kind: 'existing'; id: string } | { kind: 'proposed'; tempId: string };
@@ -39,6 +43,7 @@ type EditingFolderTarget = { kind: 'existing'; id: string } | { kind: 'proposed'
 export const AutoOrganizeReviewScreen = () => {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
+  const pickerContentPadding = useBottomSheetContentPadding(24);
   const navigation = useNavigation<NativeStackNavigationProp<InboxStackParamList>>();
   const route = useRoute<AutoOrganizeReviewRouteProp>();
   const color = useColors();
@@ -67,8 +72,6 @@ export const AutoOrganizeReviewScreen = () => {
     recordId: null,
   });
 
-  const pickerRef = useRef<BottomSheetModal>(null);
-
   const goBackOrInboxHome = useCallback(() => {
     if (navigation.canGoBack()) {
       navigation.goBack();
@@ -87,14 +90,6 @@ export const AutoOrganizeReviewScreen = () => {
       });
     });
   }, [goBackOrInboxHome, isProActive]);
-
-  useEffect(() => {
-    if (picker.visible) {
-      requestAnimationFrame(() => pickerRef.current?.present());
-    } else {
-      pickerRef.current?.dismiss();
-    }
-  }, [picker.visible]);
 
   const {
     assignments,
@@ -190,13 +185,6 @@ export const AutoOrganizeReviewScreen = () => {
       return false;
     },
     [selectedDestinationForPicker],
-  );
-
-  const renderPickerBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.45} />
-    ),
-    [],
   );
 
   const editingFolder = useMemo((): Folder | null => {
@@ -300,31 +288,13 @@ export const AutoOrganizeReviewScreen = () => {
           />
         </ScrollView>
       </View>
-      <BottomSheetModal
-        ref={pickerRef}
-        enableDynamicSizing
-        enablePanDownToClose
-        enableOverDrag={false}
-        backdropComponent={renderPickerBackdrop}
-        onDismiss={closePicker}
-        backgroundStyle={{
-          backgroundColor: color.background.primary,
-          borderTopWidth: 1,
-          borderTopColor: color.border.default,
-        }}
-        handleIndicatorStyle={{
-          width: 36,
-          height: 5,
-          borderRadius: 2.5,
-          backgroundColor: color.icon.muted,
-        }}
-      >
+      <AppBottomSheetModal visible={picker.visible} onClose={closePicker}>
         <BottomSheetScrollView
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={{
             paddingHorizontal: 16,
-            paddingBottom: Math.max(insets.bottom, 24),
+            ...pickerContentPadding,
           }}
         >
           <AutoOrganizeDestinationPickerContent
@@ -340,7 +310,7 @@ export const AutoOrganizeReviewScreen = () => {
             cancelLabel={t('common.cancel')}
           />
         </BottomSheetScrollView>
-      </BottomSheetModal>
+      </AppBottomSheetModal>
       <FolderFormModal
         visible={Boolean(editingFolderTarget)}
         folder={editingFolder}

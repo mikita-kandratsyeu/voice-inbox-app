@@ -1,16 +1,10 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetTextInput,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import type { BottomSheetBackdropProps, BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import dayjs from 'dayjs';
 import { UsersRound } from 'lucide-react-native';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RecordingMark, VoiceRecord } from '@/entities/record';
 import { useProEntitlement } from '@/features/pro-license';
@@ -21,9 +15,8 @@ import {
   hapticSuccess,
   iosHitSlopForVisualSize,
   IS_IOS,
-  modalKeyboardBehavior,
 } from '@/shared/lib';
-import { Button } from '@/shared/ui';
+import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';
 import { getAutoTitle } from '../lib/getAutoTitle';
@@ -66,7 +59,7 @@ export const SaveRecordModal = ({
   const { t } = useTranslation();
   const c = useColors();
   const { isProActive } = useProEntitlement();
-  const insets = useSafeAreaInsets();
+  const contentPadding = useBottomSheetContentPadding(24);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [isMeetingMode, setIsMeetingMode] = useState(false);
 
@@ -90,14 +83,10 @@ export const SaveRecordModal = ({
   }, [visible]);
 
   useEffect(() => {
-    if (visible) {
-      dismissReasonRef.current = 'none';
-      autoTitleRef.current = getAutoTitle();
-      setIsMeetingMode(false);
-      bottomSheetRef.current?.present();
-    } else {
-      bottomSheetRef.current?.dismiss();
-    }
+    if (!visible) return;
+    dismissReasonRef.current = 'none';
+    autoTitleRef.current = getAutoTitle();
+    setIsMeetingMode(false);
   }, [visible]);
 
   useEffect(() => {
@@ -171,26 +160,22 @@ export const SaveRecordModal = ({
   const autoTitle = autoTitleRef.current || getAutoTitle();
 
   return (
-    <BottomSheetModal
+    <AppBottomSheetModal
       ref={bottomSheetRef}
-      enableDynamicSizing
+      visible={visible}
+      onClose={handleDismiss}
+      surface="card"
       enablePanDownToClose={false}
-      enableOverDrag={false}
-      keyboardBehavior={modalKeyboardBehavior}
-      keyboardBlurBehavior="restore"
-      enableBlurKeyboardOnGesture
       backdropComponent={renderBackdrop}
-      onDismiss={handleDismiss}
-      backgroundStyle={{ backgroundColor: c.background.card }}
       handleIndicatorStyle={{ backgroundColor: c.text.muted }}
     >
       <BottomSheetView
         style={{
           paddingHorizontal: 24,
           paddingTop: 4,
-          paddingBottom: keyboardVisible
-            ? SAVE_SHEET_KEYBOARD_BOTTOM_PADDING
-            : Math.max(insets.bottom, 24),
+          ...(keyboardVisible
+            ? { paddingBottom: SAVE_SHEET_KEYBOARD_BOTTOM_PADDING }
+            : contentPadding),
           gap: 12,
         }}
       >
@@ -318,6 +303,6 @@ export const SaveRecordModal = ({
           </Pressable>
         )}
       </BottomSheetView>
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 };

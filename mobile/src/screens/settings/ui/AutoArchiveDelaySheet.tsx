@@ -1,15 +1,12 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { Check } from 'lucide-react-native';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { AutoArchiveAfterDays } from '@/entities/settings';
 import { useColors } from '@/shared/config';
-import { modalKeyboardBehavior } from '@/shared/lib/platform';
-import { Button } from '@/shared/ui';
+import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 const DELAY_OPTIONS: AutoArchiveAfterDays[] = [1, 7, 14, 30];
 
@@ -28,52 +25,15 @@ export function AutoArchiveDelaySheet({
 }: AutoArchiveDelaySheetProps) {
   const { t } = useTranslation();
   const c = useColors();
-  const insets = useSafeAreaInsets();
-  const ref = useRef<BottomSheetModal>(null);
-
-  useEffect(() => {
-    if (visible) {
-      ref.current?.present();
-    } else {
-      ref.current?.dismiss();
-    }
-  }, [visible]);
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.45} />
-    ),
-    [],
-  );
+  const contentPadding = useBottomSheetContentPadding(24);
 
   return (
-    <BottomSheetModal
-      ref={ref}
-      enableDynamicSizing
-      enablePanDownToClose
-      enableOverDrag={false}
-      keyboardBehavior={modalKeyboardBehavior}
-      keyboardBlurBehavior="restore"
-      enableBlurKeyboardOnGesture
-      backdropComponent={renderBackdrop}
-      onDismiss={onClose}
-      backgroundStyle={{
-        backgroundColor: c.background.primary,
-        borderTopWidth: 1,
-        borderTopColor: c.border.default,
-      }}
-      handleIndicatorStyle={{
-        width: 36,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: c.icon.muted,
-      }}
-    >
+    <AppBottomSheetModal visible={visible} onClose={onClose}>
       <BottomSheetView
         style={{
           paddingHorizontal: 24,
           paddingTop: 8,
-          paddingBottom: Math.max(insets.bottom, 24),
+          ...contentPadding,
         }}
       >
         <Text
@@ -136,14 +96,9 @@ export function AutoArchiveDelaySheet({
           })}
         </View>
         <View style={{ marginTop: 12 }}>
-          <Button
-            label={t('common.cancel')}
-            color={c}
-            variant="secondary"
-            onPress={() => ref.current?.dismiss()}
-          />
+          <Button label={t('common.cancel')} color={c} variant="secondary" onPress={onClose} />
         </View>
       </BottomSheetView>
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 }

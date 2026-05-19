@@ -265,6 +265,7 @@ export function useInboxScreen() {
   const [folderPickerVisible, setFolderPickerVisible] = useState(false);
   const [folderReorderVisible, setFolderReorderVisible] = useState(false);
   const [batchExportSheetVisible, setBatchExportSheetVisible] = useState(false);
+  const [batchExportProSheetVisible, setBatchExportProSheetVisible] = useState(false);
   const [batchEmailSending, setBatchEmailSending] = useState(false);
 
   const handleOpenBatchFolderPicker = useCallback(() => {
@@ -301,12 +302,28 @@ export function useInboxScreen() {
   }, [batchDeleteForever, batchSelect.selectedIds]);
 
   const handleBatchExport = useCallback(() => {
-    setBatchExportSheetVisible(true);
-  }, []);
+    if (isProActive) {
+      setBatchExportSheetVisible(true);
+      return;
+    }
+    setBatchExportProSheetVisible(true);
+  }, [isProActive]);
 
   const handleCloseBatchExportSheet = useCallback(() => {
     setBatchExportSheetVisible(false);
   }, []);
+
+  const handleCloseBatchExportProSheet = useCallback(() => {
+    setBatchExportProSheetVisible(false);
+  }, []);
+
+  const handleBatchExportProUpgrade = useCallback(() => {
+    setBatchExportProSheetVisible(false);
+    navigation.navigate('SettingsRoot', {
+      screen: 'Settings',
+      params: { openPlanPaywall: true },
+    });
+  }, [navigation]);
 
   const handleBatchExportTemplate = useCallback(
     (template: ShareBriefTemplate, packaging: BatchExportPackaging) => {
@@ -712,7 +729,10 @@ export function useInboxScreen() {
     handleCloseBatchFolderPicker,
     handleBatchFolderPicked,
     batchExportSheetVisible,
+    batchExportProSheetVisible,
     handleCloseBatchExportSheet,
+    handleCloseBatchExportProSheet,
+    handleBatchExportProUpgrade,
     handleBatchExportTemplate,
     batchEmailSending,
     handleBatchEmail,

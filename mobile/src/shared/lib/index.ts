@@ -11,6 +11,10 @@ export {
 } from './async-storage';
 export type { AudioChunk } from './audio';
 export { splitAudioIntoChunks } from './audio';
+export {
+  bottomSheetModalStackBehavior,
+  useBottomSheetModalVisibility,
+} from './bottom-sheet/useBottomSheetModalVisibility';
 export { formatRelativeTime, formatShortDate } from './date';
 export { formatDurationMmSs, formatTime, formatTimeWithMs } from './date';
 export type { Database } from './db/client';

@@ -1,27 +1,21 @@
-import {
-  BottomSheetBackdrop,
-  type BottomSheetBackdropProps,
-  BottomSheetModal,
-  BottomSheetScrollView,
-  BottomSheetTextInput,
-} from '@gorhom/bottom-sheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
 import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { TaskItem } from '@/entities/record';
 import { useAppTheme, useColors } from '@/shared/config';
-import { IS_IOS, modalKeyboardBehavior, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import { IS_IOS, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import {
   formatTaskDeadlineTimeForDisplay,
   parseTaskDeadlineTime,
 } from '@/shared/lib/taskDeadlineTimeDisplay';
-import { Button } from '@/shared/ui';
+import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 const TASK_TEXT_MAX_CHARS = 500;
 const DEADLINE_ROW_MIN_HEIGHT = 48;
@@ -205,7 +199,7 @@ export function TaskEditSheet({
   const { t, i18n } = useTranslation();
   const color = useColors();
   const theme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const contentPadding = useBottomSheetContentPadding(24);
   const isTablet = useIsTablet();
   const tabletContentMaxWidth = useTabletContentMaxWidth();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
@@ -273,29 +267,15 @@ export function TaskEditSheet({
     : undefined;
 
   useEffect(() => {
-    if (visible) {
-      setDraft(initialText);
-      setDeadlineDraft(initialDeadline ?? '');
-      setDeadlineTimeDraft(initialDeadlineTime ?? '');
-      setPriorityDraft(initialPriority ?? 'medium');
-      setDatePickerOpen(false);
-      setTimePickerOpen(false);
-      setCalendarMonth(parseTaskDeadlineDraft(initialDeadline ?? '') ?? new Date());
-      const frame = requestAnimationFrame(() => {
-        bottomSheetRef.current?.present();
-      });
-      return () => cancelAnimationFrame(frame);
-    }
-    bottomSheetRef.current?.dismiss();
-    return undefined;
+    if (!visible) return;
+    setDraft(initialText);
+    setDeadlineDraft(initialDeadline ?? '');
+    setDeadlineTimeDraft(initialDeadlineTime ?? '');
+    setPriorityDraft(initialPriority ?? 'medium');
+    setDatePickerOpen(false);
+    setTimePickerOpen(false);
+    setCalendarMonth(parseTaskDeadlineDraft(initialDeadline ?? '') ?? new Date());
   }, [visible, initialText, initialDeadline, initialDeadlineTime, initialPriority]);
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.45} />
-    ),
-    [],
-  );
 
   const handleSave = useCallback(() => {
     const trimmed = draft.split('\0').join('').trim();
@@ -315,28 +295,12 @@ export function TaskEditSheet({
   }, [deadlineDraft, deadlineTimeDraft, draft, onSave, priorityDraft]);
 
   return (
-    <BottomSheetModal
+    <AppBottomSheetModal
       ref={bottomSheetRef}
-      enableDynamicSizing
+      visible={visible}
+      onClose={onClose}
       enablePanDownToClose={!timePickerOpen}
       enableContentPanningGesture={!timePickerOpen}
-      enableOverDrag={false}
-      keyboardBehavior={modalKeyboardBehavior}
-      keyboardBlurBehavior="restore"
-      enableBlurKeyboardOnGesture
-      backdropComponent={renderBackdrop}
-      onDismiss={onClose}
-      backgroundStyle={{
-        backgroundColor: color.background.primary,
-        borderTopWidth: 1,
-        borderTopColor: color.border.default,
-      }}
-      handleIndicatorStyle={{
-        width: 36,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: color.icon.muted,
-      }}
     >
       <BottomSheetScrollView
         keyboardShouldPersistTaps="handled"
@@ -346,8 +310,8 @@ export function TaskEditSheet({
           alignSelf: 'center',
           maxWidth: sheetContentMaxWidth,
           paddingHorizontal: isTablet ? 24 : 20,
-          paddingBottom: Math.max(insets.bottom, 24),
           width: '100%',
+          ...contentPadding,
         }}
       >
         <Text
@@ -781,6 +745,6 @@ export function TaskEditSheet({
           />
         </View>
       </BottomSheetScrollView>
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 }

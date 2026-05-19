@@ -1,13 +1,11 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Check } from 'lucide-react-native';
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/shared/config';
-import { modalKeyboardBehavior } from '@/shared/lib/platform';
+import { AppBottomSheetModal, useBottomSheetContentPadding } from '@/shared/ui';
 
 import { FolderLucideIcon } from '../lib/folderLucideIcons';
 import type { Folder } from '../model/types';
@@ -32,26 +30,7 @@ export const FolderPickerSheet = ({
   const showChecks = currentFolderId !== undefined;
   const { t } = useTranslation();
   const color = useColors();
-  const insets = useSafeAreaInsets();
-  const ref = useRef<BottomSheetModal>(null);
-
-  useEffect(() => {
-    if (visible) {
-      const frame = requestAnimationFrame(() => {
-        ref.current?.present();
-      });
-      return () => cancelAnimationFrame(frame);
-    }
-    ref.current?.dismiss();
-    return undefined;
-  }, [visible]);
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.45} />
-    ),
-    [],
-  );
+  const contentPadding = useBottomSheetContentPadding(20);
 
   const pickInbox = useCallback(() => {
     onSelect(null);
@@ -67,33 +46,13 @@ export const FolderPickerSheet = ({
   );
 
   return (
-    <BottomSheetModal
-      ref={ref}
-      enableDynamicSizing
-      enablePanDownToClose
-      enableOverDrag={false}
-      keyboardBehavior={modalKeyboardBehavior}
-      keyboardBlurBehavior="restore"
-      backdropComponent={renderBackdrop}
-      onDismiss={onClose}
-      backgroundStyle={{
-        backgroundColor: color.background.primary,
-        borderTopWidth: 1,
-        borderTopColor: color.border.default,
-      }}
-      handleIndicatorStyle={{
-        width: 36,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: color.icon.muted,
-      }}
-    >
+    <AppBottomSheetModal visible={visible} onClose={onClose}>
       <BottomSheetScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingHorizontal: 20,
-          paddingBottom: Math.max(insets.bottom, 20),
+          ...contentPadding,
         }}
       >
         <Text
@@ -172,6 +131,6 @@ export const FolderPickerSheet = ({
           );
         })}
       </BottomSheetScrollView>
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 };

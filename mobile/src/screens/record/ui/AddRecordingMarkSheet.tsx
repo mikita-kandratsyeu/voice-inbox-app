@@ -1,25 +1,13 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetTextInput,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { InteractionManager, Keyboard, Text, View } from 'react-native';
 import { TextInput } from 'react-native-gesture-handler';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/shared/config';
-import {
-  formatTime,
-  hapticLight,
-  hapticSuccess,
-  IS_IOS,
-  modalKeyboardBehavior,
-} from '@/shared/lib';
-import { Button } from '@/shared/ui';
+import { formatTime, hapticLight, hapticSuccess, IS_IOS } from '@/shared/lib';
+import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 const MARK_LABEL_MAX_CHARS = 280;
 /** Extra space above the system keyboard so action buttons are not flush against it. */
@@ -42,34 +30,23 @@ export const AddRecordingMarkSheet = ({
 }: AddRecordingMarkSheetProps) => {
   const { t } = useTranslation();
   const c = useColors();
-  const insets = useSafeAreaInsets();
+  const contentPadding = useBottomSheetContentPadding(24);
   const [label, setLabel] = useState('');
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const labelInputRef = useRef<TextInput>(null);
   const savedRef = useRef(false);
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.35} />
-    ),
-    [],
-  );
-
   useEffect(() => {
-    if (visible) {
-      savedRef.current = false;
-      setLabel('');
-      bottomSheetRef.current?.present();
-      const task = InteractionManager.runAfterInteractions(() => {
-        requestAnimationFrame(() => {
-          labelInputRef.current?.focus();
-        });
+    if (!visible) return;
+    savedRef.current = false;
+    setLabel('');
+    const task = InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(() => {
+        labelInputRef.current?.focus();
       });
-      return () => task.cancel();
-    }
-    bottomSheetRef.current?.dismiss();
-    return undefined;
+    });
+    return () => task.cancel();
   }, [visible]);
 
   useEffect(() => {
@@ -106,25 +83,20 @@ export const AddRecordingMarkSheet = ({
   const timeSec = Math.max(0, Math.floor(snapshotOffsetMs / 1000));
 
   return (
-    <BottomSheetModal
+    <AppBottomSheetModal
       ref={bottomSheetRef}
-      enableDynamicSizing
-      enablePanDownToClose
-      keyboardBehavior={modalKeyboardBehavior}
-      keyboardBlurBehavior="restore"
-      enableBlurKeyboardOnGesture
-      backdropComponent={renderBackdrop}
-      onDismiss={handleDismiss}
-      backgroundStyle={{ backgroundColor: c.background.card }}
-      handleIndicatorStyle={{ backgroundColor: c.text.muted }}
+      visible={visible}
+      onClose={handleDismiss}
+      surface="card"
+      backdrop="subtle"
     >
       <BottomSheetView
         style={{
           paddingHorizontal: 24,
           paddingTop: 4,
-          paddingBottom: keyboardVisible
-            ? MARK_SHEET_KEYBOARD_BOTTOM_PADDING
-            : Math.max(insets.bottom, 24),
+          ...(keyboardVisible
+            ? { paddingBottom: MARK_SHEET_KEYBOARD_BOTTOM_PADDING }
+            : contentPadding),
           gap: 12,
         }}
       >
@@ -183,6 +155,6 @@ export const AddRecordingMarkSheet = ({
           />
         </View>
       </BottomSheetView>
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 };

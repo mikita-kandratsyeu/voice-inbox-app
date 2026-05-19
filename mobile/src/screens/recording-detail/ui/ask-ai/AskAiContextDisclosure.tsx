@@ -5,13 +5,11 @@ import React, { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { KeyboardController } from 'react-native-keyboard-controller';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { VoiceRecord } from '@/entities/record';
 import type { AiExecutionMode } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
-import { modalKeyboardBehavior } from '@/shared/lib';
-import { Button } from '@/shared/ui';
+import { Button, useAppBottomSheetChrome, useBottomSheetContentPadding } from '@/shared/ui';
 
 type AskAiContextDisclosureProps = {
   color: Colors;
@@ -33,7 +31,8 @@ export const AskAiContextDisclosure = ({
   headline,
 }: AskAiContextDisclosureProps) => {
   const { t } = useTranslation();
-  const insets = useSafeAreaInsets();
+  const contentPadding = useBottomSheetContentPadding(20);
+  const sheetChrome = useAppBottomSheetChrome({ surface: 'card' });
   const sheetRef = useRef<BottomSheetModal>(null);
 
   const hasSummary = Boolean(record.summary?.trim());
@@ -143,32 +142,12 @@ export const AskAiContextDisclosure = ({
   );
 
   const sheet = (
-    <BottomSheetModal
-      ref={sheetRef}
-      enableDynamicSizing
-      enablePanDownToClose
-      enableOverDrag={false}
-      keyboardBehavior={modalKeyboardBehavior}
-      keyboardBlurBehavior="restore"
-      enableBlurKeyboardOnGesture
-      backdropComponent={renderBackdrop}
-      backgroundStyle={{
-        backgroundColor: color.background.card,
-        borderTopWidth: 1,
-        borderTopColor: color.border.default,
-      }}
-      handleIndicatorStyle={{
-        width: 36,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: color.icon.muted,
-      }}
-    >
+    <BottomSheetModal ref={sheetRef} {...sheetChrome} backdropComponent={renderBackdrop}>
       <BottomSheetView
         style={{
           paddingHorizontal: 20,
           paddingTop: 12,
-          paddingBottom: Math.max(insets.bottom, 20),
+          ...contentPadding,
         }}
       >
         <Text

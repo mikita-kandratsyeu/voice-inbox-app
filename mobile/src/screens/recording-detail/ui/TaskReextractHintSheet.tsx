@@ -1,19 +1,12 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetTextInput,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/shared/config';
 import { TASK_EXTRACTION_HINT_MAX_CHARS } from '@/shared/lib/ai-core/local-provider/localAiConstants';
-import { modalKeyboardBehavior } from '@/shared/lib/platform';
-import { Button } from '@/shared/ui';
+import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 type TaskReextractHintSheetProps = {
   onClose: () => void;
@@ -28,28 +21,13 @@ export function TaskReextractHintSheet({
 }: TaskReextractHintSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const insets = useSafeAreaInsets();
+  const contentPadding = useBottomSheetContentPadding(20);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [hintText, setHintText] = useState('');
 
   useEffect(() => {
-    if (visible) {
-      setHintText('');
-      const frame = requestAnimationFrame(() => {
-        bottomSheetRef.current?.present();
-      });
-      return () => cancelAnimationFrame(frame);
-    }
-    bottomSheetRef.current?.dismiss();
-    return undefined;
+    if (visible) setHintText('');
   }, [visible]);
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.45} />
-    ),
-    [],
-  );
 
   const presets = useMemo(
     () => [
@@ -91,29 +69,8 @@ export function TaskReextractHintSheet({
   }, [hintText, onConfirm]);
 
   return (
-    <BottomSheetModal
-      ref={bottomSheetRef}
-      enableDynamicSizing
-      enablePanDownToClose
-      enableOverDrag={false}
-      keyboardBehavior={modalKeyboardBehavior}
-      keyboardBlurBehavior="restore"
-      enableBlurKeyboardOnGesture
-      backdropComponent={renderBackdrop}
-      onDismiss={onClose}
-      backgroundStyle={{
-        backgroundColor: color.background.primary,
-        borderTopWidth: 1,
-        borderTopColor: color.border.default,
-      }}
-      handleIndicatorStyle={{
-        width: 36,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: color.icon.muted,
-      }}
-    >
-      <BottomSheetView className="px-5 pt-1" style={{ paddingBottom: Math.max(insets.bottom, 20) }}>
+    <AppBottomSheetModal ref={bottomSheetRef} visible={visible} onClose={onClose}>
+      <BottomSheetView className="px-5 pt-1" style={contentPadding}>
         <View className="mb-3 justify-center">
           <Text
             className="px-14 text-center text-[17px] font-semibold"
@@ -182,6 +139,6 @@ export function TaskReextractHintSheet({
           />
         </View>
       </BottomSheetView>
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 }
