@@ -4,7 +4,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { hapticSelection, isDarkSurfaceColor } from '@/shared/lib';
+import { hapticSelection, isDarkSurfaceColor, withAlphaHex } from '@/shared/lib';
 
 import {
   getRecordingMarkKindAccentColors,
@@ -17,7 +17,6 @@ type RecordingMarkKindCardProps = {
   color: Colors;
   onPress: (kind: RecordingMarkKind) => void;
   onLongPress?: (kind: RecordingMarkKind) => void;
-  highlighted?: boolean;
 };
 
 export function RecordingMarkKindCard({
@@ -25,25 +24,20 @@ export function RecordingMarkKindCard({
   color: c,
   onPress,
   onLongPress,
-  highlighted = false,
 }: RecordingMarkKindCardProps) {
   const { t } = useTranslation();
   const theme = useAppTheme();
   const surfaceDark = isDarkSurfaceColor(c);
   const { Icon, recordA11yKey, descriptionKey } = getRecordingMarkKindUi(kind);
-  const { accent, backgroundUnselected, borderUnselected } = getRecordingMarkKindAccentColors(
-    kind,
-    theme,
-    surfaceDark,
-  );
+  const { accent } = getRecordingMarkKindAccentColors(kind, theme, surfaceDark);
 
   const title = t(recordA11yKey);
   const description = t(descriptionKey);
+  const iconBackground = withAlphaHex(accent, surfaceDark ? 0.2 : 0.14);
 
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ selected: highlighted }}
       accessibilityLabel={`${title}. ${description}`}
       accessibilityHint={onLongPress ? t('record.markHoldForLabel') : undefined}
       onPress={() => {
@@ -59,23 +53,32 @@ export function RecordingMarkKindCard({
           : undefined
       }
       delayLongPress={420}
-      className="min-h-[88px] flex-1 flex-row items-center gap-3 rounded-2xl px-3.5 py-3.5"
+      className="flex-1 items-center justify-center gap-2.5 rounded-2xl px-2 py-4"
       style={({ pressed }) => ({
-        borderWidth: highlighted ? 2 : 1,
-        borderColor: highlighted ? accent : borderUnselected,
-        backgroundColor: backgroundUnselected,
-        opacity: pressed ? 0.88 : 1,
+        backgroundColor: c.background.tertiary,
+        opacity: pressed ? 0.82 : 1,
         transform: [{ scale: pressed ? 0.98 : 1 }],
       })}
     >
-      <View className="w-9 items-center justify-center">
+      <View
+        className="h-11 w-11 items-center justify-center rounded-full"
+        style={{ backgroundColor: iconBackground }}
+      >
         <Icon size={22} color={accent} strokeWidth={2} />
       </View>
-      <View className="min-w-0 flex-1 gap-0.5">
-        <Text className="text-[16px] font-semibold leading-5" style={{ color: c.text.primary }}>
+      <View className="w-full items-center gap-0.5 px-1">
+        <Text
+          className="text-center text-[15px] font-semibold leading-5"
+          style={{ color: c.text.primary }}
+          numberOfLines={1}
+        >
           {title}
         </Text>
-        <Text className="text-[13px] leading-[18px]" style={{ color: c.text.secondary }}>
+        <Text
+          className="text-center text-[12px] leading-4"
+          style={{ color: c.text.muted }}
+          numberOfLines={2}
+        >
           {description}
         </Text>
       </View>

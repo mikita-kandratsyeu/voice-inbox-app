@@ -7,6 +7,7 @@ import {
   Keyboard,
   LayoutAnimation,
   Platform,
+  Pressable,
   Text,
   UIManager,
   View,
@@ -15,13 +16,22 @@ import { TextInput } from 'react-native-gesture-handler';
 
 import {
   DEFAULT_RECORDING_MARK_KIND,
+  getRecordingMarkKindAccentColors,
   getRecordingMarkKindUi,
   RECORDING_MARK_PICKER_KINDS,
   type RecordingMarkKind,
   RecordingMarkKindCard,
 } from '@/entities/record';
-import { useColors } from '@/shared/config';
-import { formatTime, hapticLight, hapticSuccess, IS_IOS } from '@/shared/lib';
+import { useAppTheme, useColors } from '@/shared/config';
+import {
+  folderChipActiveForeground,
+  formatTime,
+  hapticLight,
+  hapticSelection,
+  hapticSuccess,
+  IS_IOS,
+  isDarkSurfaceColor,
+} from '@/shared/lib';
 import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 const MARK_LABEL_MAX_CHARS = 280;
@@ -49,6 +59,8 @@ export const AddRecordingMarkSheet = ({
 }: AddRecordingMarkSheetProps) => {
   const { t } = useTranslation();
   const c = useColors();
+  const theme = useAppTheme();
+  const surfaceDark = isDarkSurfaceColor(c);
   const contentPadding = useBottomSheetContentPadding(24);
   const [step, setStep] = useState<SheetStep>('pick');
   const [pendingKind, setPendingKind] = useState<RecordingMarkKind>(DEFAULT_RECORDING_MARK_KIND);
@@ -139,7 +151,6 @@ export const AddRecordingMarkSheet = ({
   }, [label, pendingKind, saveAndDismiss]);
 
   const timeSec = Math.max(0, Math.floor(snapshotOffsetMs / 1000));
-  const pendingKindTitle = t(getRecordingMarkKindUi(pendingKind).recordA11yKey);
 
   const bottomPadding =
     step === 'label' && keyboardVisible
@@ -156,25 +167,25 @@ export const AddRecordingMarkSheet = ({
     >
       <BottomSheetView
         style={{
-          paddingHorizontal: 24,
+          paddingHorizontal: 20,
           paddingTop: 4,
           ...bottomPadding,
-          gap: step === 'pick' ? 16 : 12,
+          gap: step === 'pick' ? 20 : 16,
         }}
       >
         {step === 'pick' ? (
           <>
-            <View className="gap-1.5">
-              <Text className="text-[22px] font-bold leading-7" style={{ color: c.text.primary }}>
+            <View className="gap-1">
+              <Text className="text-xl font-semibold leading-7" style={{ color: c.text.primary }}>
                 {t('record.markSheetTitle')}
               </Text>
-              <Text className="text-[15px] leading-[22px]" style={{ color: c.text.secondary }}>
+              <Text className="text-[15px] leading-[21px]" style={{ color: c.text.secondary }}>
                 {t('record.markAtTime', { time: formatTime(timeSec) })}
               </Text>
             </View>
 
-            <View className="gap-3">
-              <View className="flex-row gap-3">
+            <View className="gap-2.5">
+              <View className="flex-row gap-2.5">
                 {RECORDING_MARK_PICKER_KINDS.slice(0, 2).map((kind) => (
                   <RecordingMarkKindCard
                     key={kind}
@@ -185,7 +196,7 @@ export const AddRecordingMarkSheet = ({
                   />
                 ))}
               </View>
-              <View className="flex-row gap-3">
+              <View className="flex-row gap-2.5">
                 {RECORDING_MARK_PICKER_KINDS.slice(2).map((kind) => (
                   <RecordingMarkKindCard
                     key={kind}
@@ -198,30 +209,66 @@ export const AddRecordingMarkSheet = ({
               </View>
             </View>
 
-            <Text
-              className="text-center text-[13px] leading-[18px]"
-              style={{ color: c.text.muted }}
-              accessibilityRole="text"
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('record.markAddLabelLink')}
+              onPress={() => goToLabelStep(DEFAULT_RECORDING_MARK_KIND)}
+              className="self-center py-1"
+              hitSlop={8}
             >
-              {t('record.markHoldForLabel')}
-            </Text>
+              <Text className="text-[15px] font-medium" style={{ color: c.accent.primary }}>
+                {t('record.markAddLabelLink')}
+              </Text>
+            </Pressable>
           </>
         ) : (
           <>
             <View className="gap-1">
-              <Text className="text-lg font-bold" style={{ color: c.text.primary }}>
+              <Text className="text-xl font-semibold" style={{ color: c.text.primary }}>
                 {t('record.markLabelStepTitle')}
               </Text>
-              <Text className="text-[14px] leading-5" style={{ color: c.text.secondary }}>
-                {pendingKindTitle} · {t('record.markAtTime', { time: formatTime(timeSec) })}
+              <Text className="text-[15px] leading-[21px]" style={{ color: c.text.secondary }}>
+                {t('record.markAtTime', { time: formatTime(timeSec) })}
               </Text>
+            </View>
+
+            <View className="flex-row gap-2">
+              {RECORDING_MARK_PICKER_KINDS.map((kind) => {
+                const { recordA11yKey } = getRecordingMarkKindUi(kind);
+                const { accent } = getRecordingMarkKindAccentColors(kind, theme, surfaceDark);
+                const selected = pendingKind === kind;
+                const selectedFg = folderChipActiveForeground(c, accent);
+                return (
+                  <Pressable
+                    key={kind}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={t(recordA11yKey)}
+                    onPress={() => {
+                      hapticSelection();
+                      setPendingKind(kind);
+                    }}
+                    className="min-h-[36px] flex-1 items-center justify-center rounded-xl px-2 py-2"
+                    style={{
+                      backgroundColor: selected ? accent : c.background.tertiary,
+                    }}
+                  >
+                    <Text
+                      className="text-center text-[13px] font-semibold"
+                      style={{ color: selected ? selectedFg : c.text.primary }}
+                      numberOfLines={1}
+                    >
+                      {t(recordA11yKey)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
 
             <BottomSheetTextInput
               ref={labelInputRef}
-              className="min-h-[96px] rounded-2xl border px-4 py-3.5 text-[16px]"
+              className="min-h-[88px] rounded-2xl px-4 py-3.5 text-[16px]"
               style={{
-                borderColor: c.border.default,
                 color: c.text.primary,
                 backgroundColor: c.background.tertiary,
                 textAlignVertical: 'top',
@@ -238,7 +285,7 @@ export const AddRecordingMarkSheet = ({
               accessibilityLabel={t('record.markLabelPlaceholder')}
             />
 
-            <View className="mt-1 flex-row gap-3">
+            <View className="flex-row gap-2.5">
               <Button
                 variant="secondary"
                 label={t('common.goBack')}
@@ -248,7 +295,7 @@ export const AddRecordingMarkSheet = ({
                 color={c}
                 containerStyle={{
                   backgroundColor: c.background.tertiary,
-                  borderRadius: 12,
+                  borderRadius: 14,
                 }}
                 accessibilityLabel={t('common.goBack')}
               />
@@ -261,7 +308,7 @@ export const AddRecordingMarkSheet = ({
                 color={c}
                 containerStyle={{
                   backgroundColor: c.accent.primary,
-                  borderRadius: 12,
+                  borderRadius: 14,
                 }}
                 accessibilityLabel={t('record.markSave')}
               />

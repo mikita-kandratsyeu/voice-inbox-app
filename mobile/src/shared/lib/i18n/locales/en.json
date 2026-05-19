@@ -206,7 +206,8 @@
       "quote": "Worth remembering",
       "moment": "Notable beat"
     },
-    "markHoldForLabel": "Hold a type to add a short label",
+    "markHoldForLabel": "Hold to add a short label",
+    "markAddLabelLink": "Add a label",
     "markLabelStepTitle": "Label this pin",
     "markAtTime": "We’ll place it at {{time}} in this recording",
     "markLabelPlaceholder": "What happened here — one line is enough",
