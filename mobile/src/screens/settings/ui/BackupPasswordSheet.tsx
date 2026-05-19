@@ -21,6 +21,9 @@ type Props = {
 
 const textInputPadding = IS_IOS ? { paddingTop: 11, paddingBottom: 11 } : { paddingVertical: 12 };
 
+/** Balances the cancel control so the title stays centered (RU «Отмена» / EN «Cancel»). */
+const SHEET_HEADER_SIDE_WIDTH = 80;
+
 export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSubmit }: Props) {
   const { t } = useTranslation();
   const c = useColors();
@@ -89,10 +92,12 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
       backdropComponent={renderBackdrop}
     >
       <BottomSheetView className="px-5 pt-1" style={contentPadding}>
-        <View className="mb-3 justify-center">
+        <View className="mb-3 min-h-[44px] flex-row items-center">
+          <View style={{ width: SHEET_HEADER_SIDE_WIDTH }} />
           <Text
-            className="px-14 text-center text-[17px] font-semibold"
+            className="flex-1 text-center text-[17px] font-semibold leading-[22px]"
             style={{ color: c.text.primary }}
+            numberOfLines={2}
           >
             {title}
           </Text>
@@ -101,8 +106,8 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
             disabled={busy}
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-            className="absolute bottom-0 right-0 top-0 justify-center"
+            hitSlop={{ top: 12, bottom: 12, left: 8, right: 8 }}
+            style={{ width: SHEET_HEADER_SIDE_WIDTH, alignItems: 'flex-end' }}
           >
             <Text className="text-[17px] font-semibold" style={{ color: c.accent.primary }}>
               {t('common.cancel')}
