@@ -61,6 +61,7 @@ export function AdminReleasesPanel() {
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const [saveErr, setSaveErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [generatingDraft, setGeneratingDraft] = useState(false);
 
   const fetchList = useCallback(async () => {
     setListLoading(true);
@@ -106,6 +107,56 @@ export function AdminReleasesPanel() {
     setSaveMsg(null);
     setSaveErr(null);
     setForm({ ...emptyForm });
+  };
+
+  const handleGenerateDraft = async () => {
+    setGeneratingDraft(true);
+    setSaveErr(null);
+    setSaveMsg(null);
+    try {
+      const res = await fetch('/api/admin/releases/generate-draft', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ locale: form.locale }),
+      });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        draft?: {
+          locale: string;
+          slug: string;
+          title: string;
+          version: string;
+          summary: string;
+          body: string;
+          commitCount: number;
+        };
+        error?: string;
+      };
+      if (!res.ok || !data.ok || !data.draft) {
+        setSaveErr(data.error ?? 'Generate failed');
+        return;
+      }
+      const d = data.draft;
+      setEditingId(null);
+      setForm({
+        locale: d.locale === 'ru' ? 'ru' : 'en',
+        slug: d.slug,
+        title: d.title,
+        version: d.version,
+        summary: d.summary,
+        body: d.body,
+        published: false,
+        publishedAtLocal: '',
+      });
+      setSaveMsg(
+        `Draft loaded (${d.commitCount} commit${d.commitCount === 1 ? '' : 's'} from git). Review and save.`,
+      );
+    } catch {
+      setSaveErr('Generate request failed');
+    } finally {
+      setGeneratingDraft(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -217,6 +268,14 @@ export function AdminReleasesPanel() {
               className={adminBtnSecondaryClass}
             >
               Refresh list
+            </button>
+            <button
+              type="button"
+              disabled={generatingDraft}
+              onClick={() => void handleGenerateDraft()}
+              className={adminBtnSecondaryClass}
+            >
+              {generatingDraft ? 'Generating…' : 'Generate from git'}
             </button>
             <button type="button" onClick={newRelease} className={adminBtnPrimaryClass}>
               New release

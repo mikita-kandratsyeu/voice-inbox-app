@@ -2,8 +2,16 @@ import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 import { AnimateOnScroll } from '@/components/ui/AnimateOnScroll';
+import { Link } from '@/lib/i18n';
 
-const FAQ_ITEMS = ['offline', 'privacy', 'privateMode', 'languages', 'pricing'] as const;
+const FAQ_ITEMS = [
+  'offline',
+  'privacy',
+  'privateMode',
+  'languages',
+  'pricing',
+  'backupViewer',
+] as const;
 
 export function FAQSection(): React.ReactElement {
   const t = useTranslations('faq');
@@ -37,7 +45,18 @@ export function FAQSection(): React.ReactElement {
                 </summary>
                 <div className="px-5 pb-5 sm:px-6 sm:pb-6">
                   <p className="text-sm leading-relaxed text-black/70 sm:text-base dark:text-white/70">
-                    {t(`${key}.answer`)}
+                    {key === 'backupViewer'
+                      ? t.rich(`${key}.answer`, {
+                          link: (chunks) => (
+                            <Link
+                              href="/viewer"
+                              className="font-medium text-blue-600 underline underline-offset-2 hover:text-blue-500 dark:text-blue-400"
+                            >
+                              {chunks}
+                            </Link>
+                          ),
+                        })
+                      : t(`${key}.answer`)}
                   </p>
                 </div>
               </details>

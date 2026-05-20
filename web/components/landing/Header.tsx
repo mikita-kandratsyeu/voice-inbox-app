@@ -5,27 +5,29 @@ import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { APP_STORE_URL } from '@/config/constants';
 
+const utilitiesShellClass =
+  'flex h-11 shrink-0 items-center gap-0.5 rounded-2xl border border-black/8 bg-black/[0.03] p-1 dark:border-white/10 dark:bg-white/[0.06]';
+
 export function Header(): React.ReactElement {
   const t = useTranslations('header');
 
   return (
     <header className="sticky top-3 z-50 px-3 sm:px-6 lg:px-8">
-      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-2 rounded-2xl border border-black/10 bg-white/70 px-3 py-2.5 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:gap-3 sm:px-5 sm:py-3 dark:border-white/12 dark:bg-black/60 dark:shadow-[0_14px_36px_rgba(0,0,0,0.35)]">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 rounded-2xl border border-black/10 bg-white/75 px-3 py-2 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:gap-4 sm:px-4 sm:py-2.5 dark:border-white/12 dark:bg-black/55 dark:shadow-[0_14px_36px_rgba(0,0,0,0.35)]">
         <Link
           href="/"
-          className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 transition-opacity hover:opacity-90"
+          className="flex min-w-0 items-center gap-2.5 transition-opacity hover:opacity-90"
           aria-label={t('appName')}
         >
           <Image
             src="/app-icon.svg"
-            alt="App Icon"
+            alt=""
             width={40}
             height={40}
-            className="h-10 w-10 shrink-0 rounded-xl shadow-[0_10px_24px_rgba(59,130,246,0.3)]"
+            className="h-9 w-9 shrink-0 rounded-xl shadow-[0_8px_20px_rgba(59,130,246,0.28)] sm:h-10 sm:w-10"
             priority
-            aria-hidden
           />
-          <span className="min-w-0 truncate text-lg font-semibold tracking-tight text-black dark:text-white">
+          <span className="hidden truncate text-base font-semibold tracking-tight text-black sm:inline dark:text-white">
             {t('appName')}
           </span>
         </Link>
@@ -35,26 +37,14 @@ export function Header(): React.ReactElement {
             href={APP_STORE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="hidden h-11 min-h-[44px] items-center rounded-xl bg-black px-4 text-sm font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.14)_inset,0_6px_20px_rgba(15,23,42,0.18)] transition-[transform,box-shadow,opacity] hover:-translate-y-px hover:opacity-95 hover:shadow-[0_1px_0_rgba(255,255,255,0.14)_inset,0_8px_24px_rgba(15,23,42,0.22)] dark:bg-white dark:text-black dark:shadow-[0_1px_0_rgba(255,255,255,0.5)_inset,0_6px_22px_rgba(0,0,0,0.35)] dark:hover:shadow-[0_1px_0_rgba(255,255,255,0.5)_inset,0_8px_28px_rgba(0,0,0,0.4)] sm:inline-flex"
+            className="inline-flex h-11 min-h-[44px] max-w-[9.5rem] items-center justify-center truncate rounded-xl bg-black px-3.5 text-sm font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_18px_rgba(15,23,42,0.2)] transition-[transform,box-shadow] hover:-translate-y-px hover:shadow-[0_8px_22px_rgba(15,23,42,0.24)] sm:max-w-none sm:px-4 dark:bg-white dark:text-black"
           >
-            {t('installApp')}
+            <span className="truncate">{t('installApp')}</span>
           </a>
-          <div className="flex h-11 items-stretch rounded-2xl border border-black/8 bg-black/[0.035] p-1 shadow-[0_1px_0_rgba(255,255,255,0.45)_inset] dark:border-white/10 dark:bg-white/5 dark:shadow-none">
-            <Link
-              href="/blog"
-              className="hidden items-center rounded-lg px-3.5 text-sm font-medium text-black/78 transition-colors hover:bg-black/[0.07] dark:text-white/82 dark:hover:bg-white/8 sm:inline-flex"
-            >
-              {t('releases')}
-            </Link>
-            <span
-              className="hidden w-px shrink-0 self-stretch bg-black/10 my-1.5 dark:bg-white/12 sm:block"
-              aria-hidden
-            />
+
+          <div className={utilitiesShellClass} role="group" aria-label={t('preferencesAria')}>
             <LanguageSwitcher variant="grouped" />
-            <span
-              className="w-px shrink-0 self-stretch bg-black/10 my-1.5 dark:bg-white/12"
-              aria-hidden
-            />
+            <span className="mx-0.5 h-6 w-px shrink-0 bg-black/10 dark:bg-white/12" aria-hidden />
             <ThemeToggle variant="grouped" />
           </div>
         </div>

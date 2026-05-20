@@ -92,7 +92,9 @@ export function AdminSupportPanel() {
   const [replyDrafts, setReplyDrafts] = useState<Record<string, ReplyDraft>>({});
   const [aiLoadingId, setAiLoadingId] = useState<string | null>(null);
   const [pushLoadingId, setPushLoadingId] = useState<string | null>(null);
+  const [emailLoadingId, setEmailLoadingId] = useState<string | null>(null);
   const [inlineSuccessId, setInlineSuccessId] = useState<string | null>(null);
+  const [inlineEmailSuccessId, setInlineEmailSuccessId] = useState<string | null>(null);
   const [supportProKeyDuration, setSupportProKeyDuration] = useState<Record<string, string>>({});
   const [supportProKeySendingId, setSupportProKeySendingId] = useState<string | null>(null);
 
@@ -181,6 +183,56 @@ export function AdminSupportPanel() {
       setError('AI draft request failed');
     } finally {
       setAiLoadingId(null);
+    }
+  };
+
+  const handleSendReplyEmail = async (row: SupportItem) => {
+    const d = getDraft(row.id);
+    const message = d.markdown.trim();
+    if (!message) {
+      setError('Add reply text (Markdown) before sending email.');
+      return;
+    }
+    if (!row.email?.trim()) {
+      setError('This request has no email — use push or ask the user to resubmit with an address.');
+      return;
+    }
+    if (message.length > PUSH_MESSAGE_MAX) {
+      setError(`Message is too long for email (max ${PUSH_MESSAGE_MAX} characters).`);
+      return;
+    }
+    setEmailLoadingId(row.id);
+    setError(null);
+    setInlineEmailSuccessId(null);
+    try {
+      const localeForApi =
+        d.locale === 'auto' ? (guessLocaleFromDiagnostics(row.diagnostics) ?? 'auto') : d.locale;
+      const res = await fetch('/api/admin/support/send-reply-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          issueId: row.id,
+          markdown: message,
+          locale: localeForApi,
+        }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setError(data.error ?? 'Email failed');
+        return;
+      }
+      setInlineEmailSuccessId(row.id);
+      setItems((prev) =>
+        prev.map((r) =>
+          r.id === row.id ? { ...r, status: 'closed', updatedAt: new Date().toISOString() } : r,
+        ),
+      );
+      window.setTimeout(() => setInlineEmailSuccessId(null), 5000);
+    } catch {
+      setError('Email request failed');
+    } finally {
+      setEmailLoadingId(null);
     }
   };
 
@@ -494,17 +546,17 @@ export function AdminSupportPanel() {
                       onClick={() => setReplyOpenId((cur) => (cur === row.id ? null : row.id))}
                       className="text-sm font-medium text-violet-600 hover:underline dark:text-violet-400"
                     >
-                      {replyOpenId === row.id ? 'Hide push reply' : 'Notify user (push)'}
+                      {replyOpenId === row.id ? 'Hide reply' : 'Reply to user'}
                     </button>
                   </div>
                 </div>
                 {replyOpenId === row.id && (
                   <div className="space-y-3 border-t border-violet-100 bg-violet-50/50 p-4 dark:border-violet-900/40 dark:bg-violet-950/20">
                     <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                      Sends a <span className="font-mono">policy_update</span> push: the system
-                      notification uses support-specific title/body (by language below); the in-app
-                      sheet shows the Markdown below. Optional notes are only for AI draft
-                      generation.
+                      <strong>Push</strong> — <span className="font-mono">policy_update</span>{' '}
+                      notification + in-app Markdown sheet. <strong>Email</strong> — sends the
+                      Markdown below to {row.email ?? 'the user’s address'} (requires SMTP).
+                      Optional notes are only for AI draft generation.
                     </p>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="sm:col-span-2">
@@ -564,7 +616,7 @@ export function AdminSupportPanel() {
                           className="mb-1 block text-xs font-medium text-zinc-600 dark:text-zinc-400"
                           htmlFor={`md-${row.id}`}
                         >
-                          In-app message (Markdown, max {PUSH_MESSAGE_MAX})
+                          Reply message (Markdown, max {PUSH_MESSAGE_MAX})
                         </label>
                         <textarea
                           id={`md-${row.id}`}
@@ -584,14 +636,29 @@ export function AdminSupportPanel() {
                         Push sent to this device.
                       </p>
                     )}
-                    <button
-                      type="button"
-                      disabled={pushLoadingId === row.id}
-                      onClick={() => void handleSendPush(row)}
-                      className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-violet-700 disabled:opacity-50 dark:bg-violet-700 dark:hover:bg-violet-600"
-                    >
-                      {pushLoadingId === row.id ? 'Sending…' : 'Send push'}
-                    </button>
+                    {inlineEmailSuccessId === row.id && (
+                      <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                        Email sent to {row.email}.
+                      </p>
+                    )}
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        disabled={pushLoadingId === row.id}
+                        onClick={() => void handleSendPush(row)}
+                        className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-violet-700 disabled:opacity-50 dark:bg-violet-700 dark:hover:bg-violet-600"
+                      >
+                        {pushLoadingId === row.id ? 'Sending…' : 'Send push'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={emailLoadingId === row.id || !row.email?.trim()}
+                        onClick={() => void handleSendReplyEmail(row)}
+                        className="rounded-lg border border-violet-300 bg-white px-4 py-2 text-sm font-medium text-violet-900 shadow-sm hover:bg-violet-50 disabled:opacity-50 dark:border-violet-700 dark:bg-violet-950/80 dark:text-violet-100 dark:hover:bg-violet-900/60"
+                      >
+                        {emailLoadingId === row.id ? 'Sending…' : 'Send email'}
+                      </button>
+                    </div>
                   </div>
                 )}
                 {isOpen && (

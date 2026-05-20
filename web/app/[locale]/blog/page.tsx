@@ -71,6 +71,14 @@ export default async function BlogIndexPage({ params }: Props) {
               <p className="mx-auto max-w-2xl text-pretty text-base text-black/60 sm:text-lg dark:text-white/60">
                 {t('pageSubtitle')}
               </p>
+              <p className="mt-4">
+                <a
+                  href={`${locale === 'en' ? '' : `/${locale}`}/blog/feed.xml`}
+                  className="text-sm font-medium text-blue-600 underline underline-offset-2 hover:text-blue-500 dark:text-blue-400"
+                >
+                  {t('rssFeed')}
+                </a>
+              </p>
             </div>
 
             {posts.length === 0 ? (

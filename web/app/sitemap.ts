@@ -10,6 +10,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { path: '', priority: 1 },
     { path: '/privacy', priority: 0.8 },
     { path: '/terms', priority: 0.8 },
+    { path: '/support', priority: 0.72 },
     { path: '/blog', priority: 0.75 },
     { path: '/viewer', priority: 0.65 },
   ];

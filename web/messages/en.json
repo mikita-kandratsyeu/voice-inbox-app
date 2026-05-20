@@ -111,6 +111,10 @@
     "pricing": {
       "question": "Do I need a subscription to start?",
       "answer": "No. You can install and start using core voice capture immediately, then upgrade only if advanced AI workflows are needed."
+    },
+    "backupViewer": {
+      "question": "Can I open my backup on a computer?",
+      "answer": "Yes. Export a ZIP from Settings → Import / Export in the app, then open it in our <link>browser backup viewer</link>. Nothing is uploaded to our servers."
     }
   },
   "footer": {
@@ -125,6 +129,9 @@
   "header": {
     "appName": "Voice Inbox AI",
     "releases": "Blog",
+    "support": "Support",
+    "navAria": "Site",
+    "preferencesAria": "Language and theme",
     "installApp": "Download App",
     "tryFree": "Try for free - no account needed"
   },
@@ -133,6 +140,7 @@
     "pageSubtitle": "What's new in Voice Inbox AI",
     "sectionEyebrow": "Product updates",
     "allPosts": "All posts",
+    "rssFeed": "RSS feed",
     "empty": "No posts yet. Check back soon.",
     "readMore": "Read more",
     "backToList": "All posts",
@@ -176,6 +184,11 @@
     "introShort": "Open a backup ZIP from the Voice Inbox AI app — everything stays in your browser.",
     "introMore": "How it works",
     "introDetail": "Export a backup from the app (Settings → Import / Export), then choose or drop the ZIP here. Your notes are never uploaded to our servers.",
+    "howToExportTitle": "How to export a backup from the app",
+    "howToExportStep1": "Open Voice Inbox AI → Settings → Import / Export.",
+    "howToExportStep2": "Tap Export backup and save the ZIP file (optionally set a password).",
+    "howToExportStep3": "Return here and choose or drop that ZIP to browse your notes in the browser.",
+    "loadingViewer": "Loading viewer…",
     "chooseArchivePrimary": "Choose backup ZIP",
     "dragZipHint": "Or drag and drop a file (max about {maxMb} MB).",
     "privacyInline": "Nothing is uploaded to our servers — processing stays in this tab.",

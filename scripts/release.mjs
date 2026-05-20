@@ -43,6 +43,7 @@ function parseArgs(argv) {
     noGit: false,
     yes: false,
     allowDirty: false,
+    blogDraft: false,
     help: false,
   };
   for (const a of argv) {
@@ -50,6 +51,7 @@ function parseArgs(argv) {
     else if (a === '--no-git') out.noGit = true;
     else if (a === '--yes' || a === '-y') out.yes = true;
     else if (a === '--allow-dirty') out.allowDirty = true;
+    else if (a === '--blog-draft') out.blogDraft = true;
     else if (a === '-h' || a === '--help') out.help = true;
   }
   return out;
@@ -62,7 +64,8 @@ Options:
   --dry-run       Show current versions only (no prompts). With --yes + env, preview a bump.
   --no-git        Bump files only (no commit / tag)
   --yes           Non-interactive (set RELEASE_VERSION and RELEASE_BUILD)
-  --allow-dirty   Allow other uncommitted changes; only version files are committed
+    --allow-dirty   Allow other uncommitted changes; only version files are committed
+  --blog-draft    After bump, print en/ru blog post drafts (git log → markdown)
   -h, --help      Show help
 
 Environment (with --yes):
@@ -290,6 +293,19 @@ async function main() {
   } catch {
     git(`git tag -a v${semver} -m ${JSON.stringify(`Release v${semver} (build ${buildNum})`)}`);
     console.log(`\nCreated tag v${semver}. Push with: git push && git push origin v${semver}`);
+  }
+
+  if (args.blogDraft) {
+    const { generateReleasePostDraftMjs, printDraftInstructions } = await import(
+      './release-post-draft.mjs'
+    );
+    for (const loc of ['en', 'ru']) {
+      const draft = await generateReleasePostDraftMjs(loc, {
+        version: semver,
+        sinceTag: `v${semver}`,
+      });
+      printDraftInstructions(draft);
+    }
   }
 }
 

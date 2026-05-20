@@ -738,6 +738,16 @@ export function BackupZipViewer(): React.ReactElement {
               />
               <span>{t('privacyInline')}</span>
             </div>
+            <details className="w-full max-w-md rounded-2xl border border-black/10 bg-white/70 px-4 py-3 text-left text-sm dark:border-white/12 dark:bg-white/[0.04]">
+              <summary className="cursor-pointer list-none font-medium text-slate-800 dark:text-slate-200 [&::-webkit-details-marker]:hidden">
+                {t('howToExportTitle')}
+              </summary>
+              <ol className="mt-3 list-decimal space-y-2 pl-5 text-slate-600 dark:text-slate-400">
+                <li>{t('howToExportStep1')}</li>
+                <li>{t('howToExportStep2')}</li>
+                <li>{t('howToExportStep3')}</li>
+              </ol>
+            </details>
           </div>
         </div>
       ) : null}

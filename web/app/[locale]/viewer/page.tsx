@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 
-import { BackupZipViewer } from '@/components/viewer';
+import { BackupZipViewerShell } from '@/components/viewer';
 import { Footer } from '@/components/landing/Footer';
 import { Header } from '@/components/landing/Header';
 import { BASE_URL_OR_FALLBACK } from '@/config/constants';
@@ -59,7 +59,7 @@ export default async function ViewerPage({ params }: Props) {
               </p>
             </details>
           </div>
-          <BackupZipViewer />
+          <BackupZipViewerShell />
         </div>
       </main>
       <Footer />
