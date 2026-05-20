@@ -3,9 +3,15 @@ import type {
   WhisperModelId,
   WhisperModelWeightsFormat,
 } from '@/entities/settings';
+import { getWhisperEstimatedDownloadSizeMb } from '@/entities/settings/model/constants';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
-import { formatFileSize, getWhisperModelPath } from '@/shared/lib/whisper';
+import { IS_IOS } from '@/shared/lib/platform';
+import {
+  formatFileSize,
+  getWhisperModelPath,
+  isWhisperCoreMlEncoderInstalled,
+} from '@/shared/lib/whisper';
 
 export const getModelFileSizeBytes = async (
   modelId: WhisperModelId,
@@ -31,6 +37,29 @@ export const getModelFileSizeFormatted = async (
   const bytes = await getModelFileSizeBytes(modelId, format);
   return formatFileSize(bytes);
 };
+
+export { getWhisperVariantStorageBytes } from './getWhisperVariantStorageBytes';
+
+/** Display / estimate size for picker (weights + Core ML when applicable). */
+export async function getWhisperVariantDisplaySizeBytes(
+  modelId: WhisperModelId,
+  format: WhisperModelWeightsFormat,
+  options: { downloaded: boolean },
+): Promise<number> {
+  if (options.downloaded) {
+    const { getWhisperVariantStorageBytes } = await import('./getWhisperVariantStorageBytes');
+    return getWhisperVariantStorageBytes(modelId, format);
+  }
+
+  const coreMlInstalled = IS_IOS ? await isWhisperCoreMlEncoderInstalled(modelId) : false;
+  return (
+    getWhisperEstimatedDownloadSizeMb(modelId, format, {
+      coreMlAlreadyInstalled: coreMlInstalled,
+    }) *
+    1024 *
+    1024
+  );
+}
 
 export const getLocalLlmModelFileSizeBytes = async (modelId: LocalAiModelId): Promise<number> => {
   try {

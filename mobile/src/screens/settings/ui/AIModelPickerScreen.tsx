@@ -13,6 +13,7 @@ import type {
 } from '@/entities/settings';
 import {
   DEFAULT_LOCAL_AI_MODEL_ID,
+  formatModelContextTokens,
   LOCAL_AI_MODELS,
   USER_FACING_AI_MODELS,
   useSettingsStore,
@@ -26,6 +27,24 @@ import { ScreenHeader } from '@/shared/ui';
 
 import { getSpeedColor } from '../lib';
 import { LocalAiModelCard } from './LocalAiModelCard';
+import { type ModelMetaChip, ModelMetaChips } from './ModelMetaChips';
+
+function cloudModelMetaChips(
+  model: (typeof USER_FACING_AI_MODELS)[number],
+  t: (key: string, options?: Record<string, unknown>) => string,
+): ModelMetaChip[] {
+  return [
+    {
+      key: 'context',
+      label: t('aiModels.contextChip', { size: formatModelContextTokens(model.contextTokens) }),
+    },
+    { key: 'provider', label: model.provider },
+    {
+      key: 'speed',
+      label: t(`aiModels.speed.${model.speed}`, { defaultValue: model.speed }),
+    },
+  ];
+}
 
 function formatApproxSizeMb(sizeMb: number): string {
   if (sizeMb >= 1000) {
@@ -190,6 +209,7 @@ export const AIModelPickerScreen = () => {
       description: t(model.descriptionKey as 'aiModels.geminiDesc'),
       speed: model.speed,
       isRecommended: false,
+      metaChips: cloudModelMetaChips(model, t),
     })),
   ];
   const models = isPrivateMode ? LOCAL_AI_MODELS : cloudOptions;
@@ -378,11 +398,14 @@ export const AIModelPickerScreen = () => {
                             {cloudOption.name}
                           </Text>
                           <Text
-                            className="text-[14px] leading-5"
+                            className="mb-2 text-[14px] leading-5"
                             style={{ color: color.text.secondary }}
                           >
                             {cloudOption.description}
                           </Text>
+                          {'metaChips' in cloudOption && cloudOption.metaChips ? (
+                            <ModelMetaChips color={color} chips={cloudOption.metaChips} />
+                          ) : null}
                         </View>
                         {isSelected ? (
                           <View

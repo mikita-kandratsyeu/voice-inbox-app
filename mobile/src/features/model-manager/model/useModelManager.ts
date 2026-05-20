@@ -3,7 +3,6 @@ import { useCallback } from 'react';
 import {
   getLocalAiModelEntry,
   getRecommendedWhisperModelId,
-  getWhisperModelSizeMb,
   getWhisperModelVariantId,
   LOCAL_AI_MODELS,
   type LocalAiModelId,
@@ -20,7 +19,7 @@ import {
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { NitroFS } from '@/shared/lib/fs';
 import { getLocalLlmModelPath } from '@/shared/lib/local-llm';
-import { getWhisperModelPath } from '@/shared/lib/whisper';
+import { getWhisperEstimatedDownloadBytes, getWhisperModelPath } from '@/shared/lib/whisper';
 
 import { deleteLocalLlmModel } from '../lib/deleteLocalLlmModel';
 import { deleteWhisperModel } from '../lib/deleteWhisperModel';
@@ -58,7 +57,7 @@ export const useModelManager = () => {
       setWhisperModelStatus(modelId, format, 'downloading');
       setDownloadProgress(modelId, format, 0);
       const expectedBytes =
-        options?.expectedBytes ?? getWhisperModelSizeMb(modelId, format) * 1024 * 1024;
+        options?.expectedBytes ?? (await getWhisperEstimatedDownloadBytes(modelId, format));
 
       await startWhisperDownloadLiveActivity(modelId).catch(() => {});
 

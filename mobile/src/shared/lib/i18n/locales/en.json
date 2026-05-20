@@ -998,6 +998,7 @@
     "downloadProgressPercent": "{{percent}}%",
     "downloadPhaseWeights": "Downloading model weights…",
     "downloadPhaseCoreMl": "Downloading Core ML encoder (Neural Engine).",
+    "coreMlChip": "Core ML",
     "coreMlAcceleratedA11y": "Core ML encoder on device",
     "downloadError": "Download error — tap to retry",
     "weightsFormatTitle": "Recognition quality",
@@ -1128,7 +1129,9 @@
       "light": "Easier on device memory",
       "moderate": "Moderate memory use",
       "heavy": "Higher memory use"
-    }
+    },
+    "contextChip": "{{size}}",
+    "autoRoutingChip": "Smart routing"
   },
   "onboarding": {
     "downloadBeforeStart": "Download the Whisper model for transcription?",

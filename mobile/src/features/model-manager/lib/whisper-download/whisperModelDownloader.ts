@@ -2,6 +2,7 @@ import RNBlobUtil from 'react-native-blob-util';
 import { unzip } from 'react-native-zip-archive';
 
 import type { WhisperModelId } from '@/entities/settings';
+import { getWhisperCoreMlSizeMb } from '@/entities/settings/model/constants';
 import { IS_IOS } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
 import {
@@ -12,6 +13,7 @@ import {
   getWhisperCoreMlZipTempPath,
   getWhisperModelPath,
   getWhisperModelsDir,
+  isWhisperCoreMlEncoderInstalled,
   removeWhisperCoreMlEncoder,
 } from '@/shared/lib/whisper';
 
@@ -19,9 +21,6 @@ import type {
   StartWhisperModelDownloadOptions,
   WhisperDownloadSnapshot,
 } from './whisperDownloadTypes';
-
-const BIN_PROGRESS_WEIGHT = 0.88;
-const COREML_PROGRESS_WEIGHT = 0.12;
 
 /** Paths passed to native unzip must not use `file://` or URL-encoded segments (iOS). */
 const pathForNativeUnzip = (input: string): string => {
@@ -324,6 +323,13 @@ class WhisperModelDownloader {
       await NitroFS.mkdir(modelsDir);
     }
 
+    const coreMlNeeded = IS_IOS && !(await isWhisperCoreMlEncoderInstalled(modelId));
+    const coreResolvedForPlan = coreMlNeeded ? await resolveWhisperCoreMlDownload(modelId) : null;
+    const coreMlPlanBytes = coreMlNeeded
+      ? (coreResolvedForPlan?.expectedBytes ?? getWhisperCoreMlSizeMb(modelId) * 1024 * 1024)
+      : 0;
+    const totalDownloadBytes = Math.max(1, weightsExpectedBytes + coreMlPlanBytes);
+
     this.setSnapshot({ machineState: 'downloading', phase: 'weights' });
     let latestWeights = 0;
     let lastWeightsEmitTs = 0;
@@ -332,16 +338,15 @@ class WhisperModelDownloader {
     let weightsRes: BlobResponse;
     try {
       weightsRes = await this.startBlobDownload(weightsUrl, weightsPath, (received, totalRaw) => {
-        const total = totalRaw > 0 ? totalRaw : weightsExpectedBytes;
+        const weightsTotal = totalRaw > 0 ? totalRaw : weightsExpectedBytes;
         latestWeights = Math.max(latestWeights, received);
-        const pct = total > 0 ? Math.min(1, latestWeights / total) : 0;
-        const progress = Math.round(pct * BIN_PROGRESS_WEIGHT * 100);
+        const progress = Math.min(100, Math.round((latestWeights / totalDownloadBytes) * 100));
         const now = Date.now();
         const shouldEmit = progress !== lastWeightsProgress && now - lastWeightsEmitTs >= 180;
         if (shouldEmit || progress === 100 || progress === 0) {
           lastWeightsEmitTs = now;
           lastWeightsProgress = progress;
-          onProgress(progress, latestWeights, total, 'weights');
+          onProgress(progress, latestWeights, totalDownloadBytes, 'weights');
         }
         if (__DEV__) {
           const bucket = Math.floor(progress / 10);
@@ -350,7 +355,7 @@ class WhisperModelDownloader {
             console.warn('[whisper-download] weights progress', {
               progress,
               written: latestWeights,
-              total,
+              totalDownloadBytes,
             });
           }
         }
@@ -369,13 +374,12 @@ class WhisperModelDownloader {
     }
     if (this.cancelRequested) throw new Error('cancelled');
 
-    if (IS_IOS) {
+    if (coreMlNeeded && coreResolvedForPlan) {
       const zipPath = getWhisperCoreMlZipTempPath(modelId);
-      const coreResolved = await resolveWhisperCoreMlDownload(modelId);
-      const coreUrl = coreResolved.url;
-      const coreExpectedBytes = coreResolved.expectedBytes;
+      const coreUrl = coreResolvedForPlan.url;
+      const coreExpectedBytes = coreResolvedForPlan.expectedBytes;
       let latestZip = 0;
-      let zipTotal = 1;
+      let zipTotal = coreMlPlanBytes;
       let lastZipEmitTs = 0;
       let lastZipProgress = -1;
 
@@ -398,16 +402,14 @@ class WhisperModelDownloader {
                     ? coreExpectedBytes
                     : Math.max(zipTotal, 1);
               latestZip = Math.max(latestZip, received);
-              const zipPct = Math.min(1, latestZip / zipTotal);
-              const combined = Math.round(
-                (BIN_PROGRESS_WEIGHT + zipPct * COREML_PROGRESS_WEIGHT) * 100,
-              );
+              const written = weightsExpectedBytes + latestZip;
+              const progress = Math.min(100, Math.round((written / totalDownloadBytes) * 100));
               const now = Date.now();
-              const shouldEmit = combined !== lastZipProgress && now - lastZipEmitTs >= 180;
-              if (shouldEmit || combined >= 100) {
+              const shouldEmit = progress !== lastZipProgress && now - lastZipEmitTs >= 180;
+              if (shouldEmit || progress >= 100) {
                 lastZipEmitTs = now;
-                lastZipProgress = combined;
-                onProgress(combined, latestZip, zipTotal, 'coreml');
+                lastZipProgress = progress;
+                onProgress(progress, written, totalDownloadBytes, 'coreml');
               }
             },
             { fileCache: false },
@@ -455,10 +457,12 @@ class WhisperModelDownloader {
         await RNBlobUtil.fs.unlink(pathForNativeUnzip(zipPath)).catch(() => {});
         if (__DEV__) console.warn('[whisper-download] coreml setup failed, using CPU', e);
       }
+    } else if (__DEV__ && IS_IOS) {
+      console.warn('[whisper-download] Core ML encoder already installed, skipping', { modelId });
     }
 
     if (this.cancelRequested) throw new Error('cancelled');
-    onProgress(100, weightsExpectedBytes, weightsExpectedBytes, 'weights');
+    onProgress(100, totalDownloadBytes, totalDownloadBytes, 'weights');
     if (__DEV__) console.warn('[whisper-download] completed', { modelId, format, sessionId });
     this.setSnapshot({ machineState: 'completed', phase: null, jobId: null });
     this.resetSnapshot();

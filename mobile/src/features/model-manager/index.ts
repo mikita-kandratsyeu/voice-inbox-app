@@ -4,7 +4,12 @@ export {
   getLocalLlmModelFileSizeBytes,
   getModelFileSizeBytes,
   getModelFileSizeFormatted,
+  getWhisperVariantDisplaySizeBytes,
 } from './lib/getModelFileSize';
+export {
+  applySharedCoreMlToWhisperVariantBytes,
+  getWhisperVariantStorageBytes,
+} from './lib/getWhisperVariantStorageBytes';
 export type {
   LocalLlmDownloadMachineState,
   LocalLlmDownloadProgressHandler,

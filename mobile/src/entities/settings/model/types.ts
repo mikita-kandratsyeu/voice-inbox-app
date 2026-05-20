@@ -52,6 +52,8 @@ export type UserFacingAIModel = Omit<AIModel, 'id'> & {
   id: UserSelectableAIModelId;
   tierLabelKey: AiModelTierLabelKey;
   supportTierCode: AiUserTierCode;
+  /** Model context window for picker chips (tokens). */
+  contextTokens: number;
 };
 
 export type WhisperModel = {

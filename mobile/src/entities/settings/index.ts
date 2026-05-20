@@ -1,4 +1,5 @@
 export { canDeviceRunWhisperModel } from './lib/canDeviceRunWhisperModel';
+export { formatModelContextTokens } from './lib/formatModelContextTokens';
 export {
   type AiSettingsDiagnostics,
   getAiSettingsDiagnostics,
@@ -17,6 +18,8 @@ export {
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
   getLocalAiModelEntry,
+  getWhisperCoreMlSizeMb,
+  getWhisperEstimatedDownloadSizeMb,
   getWhisperModelSizeMb,
   getWhisperModelVariantId,
   LOCAL_AI_MODELS,

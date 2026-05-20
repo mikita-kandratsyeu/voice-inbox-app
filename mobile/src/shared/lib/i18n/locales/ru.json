@@ -1015,6 +1015,7 @@
     "downloadProgressPercent": "{{percent}}%",
     "downloadPhaseWeights": "Загружаются веса модели…",
     "downloadPhaseCoreMl": "Загружается Core ML encoder (Neural Engine).",
+    "coreMlChip": "Core ML",
     "coreMlAcceleratedA11y": "Энкодер Core ML на устройстве",
     "downloadError": "Ошибка загрузки — нажмите для повтора",
     "weightsFormatTitle": "Качество распознавания",
@@ -1145,7 +1146,9 @@
       "light": "Меньше нагрузка на память",
       "moderate": "Умеренная нагрузка на память",
       "heavy": "Выше нагрузка на память"
-    }
+    },
+    "contextChip": "{{size}}",
+    "autoRoutingChip": "Умный подбор"
   },
   "onboarding": {
     "downloadBeforeStart": "Скачать модель Whisper для транскрипции?",

@@ -33,6 +33,7 @@ import {
 import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import {
+  applySharedCoreMlToWhisperVariantBytes,
   cancelLocalLlmModelDownload,
   cancelWhisperModelDownload,
   deleteLocalLlmModel,
@@ -147,7 +148,7 @@ export const StorageDetailsScreen = () => {
 
   const loadModelSizes = useCallback(async () => {
     const formats: WhisperModelWeightsFormat[] = ['q5_1', 'full'];
-    const whisperEntries = await Promise.all(
+    const whisperEntriesRaw = await Promise.all(
       WHISPER_MODELS.flatMap((model) =>
         formats.map(async (format) => {
           const path = getWhisperModelPath(model.id, format);
@@ -159,6 +160,9 @@ export const StorageDetailsScreen = () => {
         }),
       ),
     );
+    const whisperEntries = await applySharedCoreMlToWhisperVariantBytes(
+      whisperEntriesRaw.filter((x): x is DownloadedModelVariant => x != null),
+    );
     const localEntries = await Promise.all(
       LOCAL_AI_MODELS.map(async (m) => {
         const path = getLocalLlmModelPath(m.id);
@@ -169,7 +173,7 @@ export const StorageDetailsScreen = () => {
         return { id: m.id, name: m.name, bytes } as DownloadedLocalLlmEntry;
       }),
     );
-    setDownloadedVariants(whisperEntries.filter((x): x is DownloadedModelVariant => x != null));
+    setDownloadedVariants(whisperEntries);
     setDownloadedLocalLlm(localEntries.filter((x): x is DownloadedLocalLlmEntry => x != null));
   }, []);
 

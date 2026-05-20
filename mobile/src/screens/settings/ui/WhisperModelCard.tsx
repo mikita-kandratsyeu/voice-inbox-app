@@ -1,4 +1,4 @@
-import { Check, Download, RotateCcw, Smartphone, Zap } from 'lucide-react-native';
+import { Check, Download, RotateCcw, Smartphone } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -13,8 +13,9 @@ import type {
 import type { Colors } from '@/shared/config';
 import { formatFileSize, getWhisperLabel } from '@/shared/lib/whisper';
 
-import { getAccuracyLabel, getSpeedLabel } from '../config';
-import { getCardRadiusClass, getSpeedColor } from '../lib';
+import { getSpeedLabel } from '../config';
+import { getCardRadiusClass } from '../lib';
+import { type ModelMetaChip, ModelMetaChips } from './ModelMetaChips';
 import { WhisperModelSpinner } from './WhisperModelSpinner';
 
 type CompatibilityInfo = {
@@ -66,6 +67,11 @@ export const WhisperModelCard = ({
   const isError = status === 'error';
   const isLast = index === total - 1;
   const isRecommended = model.id === recommendedModelId;
+  const metaChips: ModelMetaChip[] = [
+    { key: 'size', label: displaySize },
+    ...(coreMlEncoderActive ? [{ key: 'coreml', label: t('whisper.coreMlChip') }] : []),
+    { key: 'speed', label: getSpeedLabel(model.speed) },
+  ];
   const pct = Math.min(100, Math.max(0, Math.round(downloadPercent)));
   const showByteProgress =
     downloadBytes !== undefined &&
@@ -90,6 +96,7 @@ export const WhisperModelCard = ({
   const cardA11yLabel = [
     t('whisper.a11yModelPrefix', { name: model.name }),
     coreMlEncoderActive ? t('whisper.coreMlAcceleratedA11y') : null,
+    isRecommended ? t('whisper.recommended') : null,
     rowStatusA11y,
   ]
     .filter(Boolean)
@@ -112,31 +119,10 @@ export const WhisperModelCard = ({
       <View className="flex-row items-center justify-between">
         <View className="mr-3 flex-1">
           <View className="mb-1 flex-row flex-wrap items-center gap-2">
-            <View className="flex-row items-center gap-1">
-              <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
-                {getWhisperLabel(model.id)}
-              </Text>
-              {coreMlEncoderActive ? (
-                <View className="justify-center" accessibilityElementsHidden={true}>
-                  <Zap
-                    size={14}
-                    color={color.accent.primary}
-                    fill={color.accent.primary}
-                    stroke={color.accent.primary}
-                    strokeWidth={1.5}
-                  />
-                </View>
-              ) : null}
-            </View>
-            <View
-              className="rounded-full px-2 py-0.5"
-              style={{ backgroundColor: color.background.tertiary }}
-            >
-              <Text className="text-[12px]" style={{ color: color.text.secondary }}>
-                {displaySize}
-              </Text>
-            </View>
-            {isRecommended && (
+            <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
+              {getWhisperLabel(model.id)}
+            </Text>
+            {isRecommended ? (
               <View
                 className="rounded-full px-2 py-0.5"
                 style={{ backgroundColor: color.status.processing.bg }}
@@ -148,28 +134,15 @@ export const WhisperModelCard = ({
                   {t('whisper.recommended')}
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
 
-          <Text className="mb-1.5 text-[14px] leading-5" style={{ color: color.text.secondary }}>
+          <Text className="mb-2 text-[14px] leading-5" style={{ color: color.text.secondary }}>
             {t(
               `whisper.models.${model.id.replace('whisper-', '').replace('-', '_')}Desc` as 'whisper.models.tinyDesc',
             )}
           </Text>
-          <View className="flex-row items-center gap-3">
-            <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-              {t('whisper.qualityLabel')}: {getAccuracyLabel(model.accuracy)}
-            </Text>
-            <View className="flex-row items-center gap-1">
-              <View
-                className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: getSpeedColor(model.speed, color) }}
-              />
-              <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-                {getSpeedLabel(model.speed)}
-              </Text>
-            </View>
-          </View>
+          <ModelMetaChips color={color} chips={metaChips} className="mb-1.5" />
           {compatibility && (
             <View className="mt-1.5 flex-row items-center gap-2">
               <Smartphone
