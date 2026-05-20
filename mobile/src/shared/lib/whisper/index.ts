@@ -1,4 +1,5 @@
 export { formatFileSize } from './formatFileSize';
+export { hasOtherInstalledWhisperWeights } from './hasOtherInstalledWhisperWeights';
 export { isWhisperCoreMlEncoderInstalled } from './isWhisperCoreMlEncoderInstalled';
 export { removeWhisperCoreMlEncoder } from './removeWhisperCoreMlEncoder';
 export {
