@@ -110,6 +110,7 @@ export const WhisperModelPickerScreen = () => {
     }
 
     setCoreMlEncoderActive(Object.fromEntries(entries) as Record<WhisperModelId, boolean>);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [whisperModelStatuses, whisperModelWeightsFormat]);
 
   useEffect(() => {

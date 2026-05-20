@@ -337,8 +337,7 @@ class WhisperModelDownloader {
 
     let weightsRes: BlobResponse;
     try {
-      weightsRes = await this.startBlobDownload(weightsUrl, weightsPath, (received, totalRaw) => {
-        const weightsTotal = totalRaw > 0 ? totalRaw : weightsExpectedBytes;
+      weightsRes = await this.startBlobDownload(weightsUrl, weightsPath, (received) => {
         latestWeights = Math.max(latestWeights, received);
         const progress = Math.min(100, Math.round((latestWeights / totalDownloadBytes) * 100));
         const now = Date.now();
