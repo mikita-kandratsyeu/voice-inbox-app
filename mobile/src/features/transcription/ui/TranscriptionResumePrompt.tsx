@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert, AppState } from 'react-native';
 
 import { useRecordStore } from '@/entities/record';
+import type { TranscriptionLanguage } from '@/entities/settings';
 
 import { listTranscriptionCheckpoints } from '../lib/transcriptionCheckpoint';
 import { useTranscription } from '../model/useTranscription';
@@ -44,7 +45,8 @@ export const TranscriptionResumePrompt = () => {
         {
           text: t('transcription.continue'),
           onPress: () => {
-            startTranscription(record, checkpoint.language).finally(() => {
+            startTranscription(record, checkpoint.language as TranscriptionLanguage).finally(
+              () => {
               promptInFlightRef.current = false;
             });
           },

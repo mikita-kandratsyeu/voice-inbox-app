@@ -17,6 +17,9 @@ export type LocalAiModelId =
 export type AIModelId = UserSelectableAIModelId;
 
 export type TranscriptionLanguage = 'auto' | 'ru' | 'en' | 'de' | 'fr' | 'es' | 'zh' | 'ja';
+
+/** iOS Pro: Apple on-device Speech vs local Whisper (default). */
+export type TranscriptionEngine = 'whisper' | 'apple_speech';
 export type SummaryStyle = 'brief' | 'standard' | 'detailed';
 export type TaskStrictness = 'strict' | 'balanced' | 'soft';
 export type AiOutputLanguage = 'same' | 'ru' | 'en';
@@ -87,6 +90,7 @@ export type SettingsState = {
   selectedWhisperModelFormat: WhisperModelWeightsFormat;
   whisperModelWeightsFormat: WhisperModelWeightsFormat;
   transcriptionLanguage: TranscriptionLanguage;
+  transcriptionEngine: TranscriptionEngine;
   summaryStyle: SummaryStyle;
   taskStrictness: TaskStrictness;
   aiOutputLanguage: AiOutputLanguage;
@@ -116,6 +120,7 @@ export type SettingsState = {
   setWhisperModel: (id: WhisperModelId) => void;
   setWhisperModelWeightsFormat: (value: WhisperModelWeightsFormat) => void;
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => void;
+  setTranscriptionEngine: (engine: TranscriptionEngine) => void;
   setSummaryStyle: (value: SummaryStyle) => void;
   setTaskStrictness: (value: TaskStrictness) => void;
   setAiOutputLanguage: (value: AiOutputLanguage) => void;

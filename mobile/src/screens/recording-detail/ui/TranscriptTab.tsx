@@ -11,6 +11,8 @@ import {
   useSettingsStore,
 } from '@/entities/settings';
 import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
+import { shouldUseAppleSpeechTranscription } from '@/features/app-storefront';
+import { useProEntitlement } from '@/features/pro-license';
 import { TranscriptHighlight } from '@/features/transcript-highlight';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
@@ -107,8 +109,10 @@ export const TranscriptTab = ({
     setViewMode('original');
   }, [recordId]);
 
+  const { isProActive } = useProEntitlement();
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
+  const transcriptionEngine = useSettingsStore((s) => s.transcriptionEngine);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const whisperVariantId = getWhisperModelVariantId(
     selectedWhisperModel,
@@ -119,8 +123,10 @@ export const TranscriptTab = ({
   const hasTranslation = Boolean(translatedTranscript?.trim());
   const showTranslation = hasTranslation && viewMode === 'translated';
   const translatedParagraphs = buildReadableParagraphs(translatedTranscript ?? '');
-  const hint =
-    whisperStatus === 'not_downloaded'
+  const useAppleSpeech = shouldUseAppleSpeechTranscription(transcriptionEngine, isProActive);
+  const hint = useAppleSpeech
+    ? t('settings.transcriptionEngineAppleShort')
+    : whisperStatus === 'not_downloaded'
       ? undefined
       : getWhisperModelDisplayName(selectedWhisperModel, selectedWhisperModelFormat);
   const originalTextParagraphs = buildReadableParagraphs(

@@ -46,6 +46,7 @@ export type {
   SettingsState,
   SummaryStyle,
   TaskStrictness,
+  TranscriptionEngine,
   TranscriptionLanguage,
   UserFacingAIModel,
   UserSelectableAIModelId,

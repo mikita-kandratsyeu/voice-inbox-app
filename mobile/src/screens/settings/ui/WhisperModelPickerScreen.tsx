@@ -17,13 +17,16 @@ import {
   type WhisperModelVariantId,
 } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
+import { reconcileTranscriptionEngine } from '@/features/app-storefront';
 import { getWhisperVariantDisplaySizeBytes, useModelManager } from '@/features/model-manager';
+import { useProEntitlement } from '@/features/pro-license';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { IS_IOS } from '@/shared/lib/platform';
 import { formatFileSize, isWhisperCoreMlEncoderInstalled } from '@/shared/lib/whisper';
 import { ScreenHeader } from '@/shared/ui';
 
+import { TranscriptionEngineSection } from './TranscriptionEngineSection';
 import { WhisperDefaultLanguageSection } from './WhisperDefaultLanguageSection';
 import { WhisperModelCard } from './WhisperModelCard';
 
@@ -47,6 +50,9 @@ export const WhisperModelPickerScreen = () => {
   const whisperModelWeightsFormat = useSettingsStore((s) => s.whisperModelWeightsFormat);
   const setWhisperModel = useSettingsStore((s) => s.setWhisperModel);
   const setWhisperModelWeightsFormat = useSettingsStore((s) => s.setWhisperModelWeightsFormat);
+  const transcriptionEngine = useSettingsStore((s) => s.transcriptionEngine);
+  const setTranscriptionEngine = useSettingsStore((s) => s.setTranscriptionEngine);
+  const { isProActive } = useProEntitlement();
 
   const compatibility = useWhisperModelCompatibility();
   const recommendedModelId = useRecommendedWhisperModelId();
@@ -194,6 +200,20 @@ export const WhisperModelPickerScreen = () => {
           <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
             {t('whisper.modelDescription')}
           </Text>
+          <TranscriptionEngineSection
+            color={color}
+            t={t}
+            transcriptionEngine={reconcileTranscriptionEngine(transcriptionEngine, isProActive)}
+            isProActive={isProActive}
+            onEngineChange={setTranscriptionEngine}
+            onProRequired={() => {
+              Alert.alert(
+                t('settings.transcriptionEngineProTitle'),
+                t('settings.transcriptionEngineProBody'),
+                [{ text: t('common.ok') }],
+              );
+            }}
+          />
           <WhisperDefaultLanguageSection color={color} />
           <View
             className="mb-6 gap-2 rounded-2xl p-4"

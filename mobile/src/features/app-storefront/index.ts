@@ -2,6 +2,10 @@ export {
   shouldApplyAutoAiAfterTranscription,
   shouldApplyAutoTranscribeOnSave,
 } from './lib/effectiveAutomation';
+export {
+  reconcileTranscriptionEngine,
+  shouldUseAppleSpeechTranscription,
+} from './lib/transcriptionEngine';
 export type { RecordingDurationExecutionMode } from './lib/recordingDurationLimits';
 export {
   FREE_MAX_RECORDING_MS,

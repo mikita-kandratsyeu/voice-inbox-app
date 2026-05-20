@@ -22,6 +22,8 @@ import { openAppReviewFromSettings } from '@/features/app-review';
 import {
   getMonetizationMode,
   isAutomationUiLockedForPublicStore,
+  reconcileTranscriptionEngine,
+  shouldUseAppleSpeechTranscription,
   useAdsAllowed,
 } from '@/features/app-storefront';
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
@@ -93,6 +95,8 @@ export function useSettingsScreen() {
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
+  const transcriptionEngine = useSettingsStore((s) => s.transcriptionEngine);
+  const setTranscriptionEngine = useSettingsStore((s) => s.setTranscriptionEngine);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
   const setAutoTranscribeOnSave = useSettingsStore((s) => s.setAutoTranscribeOnSave);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
@@ -263,9 +267,23 @@ export function useSettingsScreen() {
 
     if (!shouldRefresh) return;
 
+    const reconciled = reconcileTranscriptionEngine(
+      useSettingsStore.getState().transcriptionEngine,
+      proEntitlementActive,
+    );
+    if (reconciled !== useSettingsStore.getState().transcriptionEngine) {
+      setTranscriptionEngine(reconciled);
+    }
+
     void fetchAiUsage();
     void fetchProWeeklyLimit({ force: true });
-  }, [proEntitlementActive, expiresAtMs, fetchAiUsage, fetchProWeeklyLimit]);
+  }, [
+    proEntitlementActive,
+    expiresAtMs,
+    fetchAiUsage,
+    fetchProWeeklyLimit,
+    setTranscriptionEngine,
+  ]);
 
   const refreshPermissions = useCallback(async () => {
     const mic = await checkMicPermission();
@@ -326,8 +344,17 @@ export function useSettingsScreen() {
   );
   const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
 
-  const transcriptionValue =
-    whisperStatus === 'not_downloaded' || whisperStatus === 'downloading'
+  const effectiveTranscriptionEngine = reconcileTranscriptionEngine(
+    transcriptionEngine,
+    proEntitlementActive,
+  );
+
+  const transcriptionValue = shouldUseAppleSpeechTranscription(
+    effectiveTranscriptionEngine,
+    proEntitlementActive,
+  )
+    ? t('settings.transcriptionEngineAppleShort')
+    : whisperStatus === 'not_downloaded' || whisperStatus === 'downloading'
       ? t('settings.whisperModelNotSet')
       : getWhisperLabel(selectedWhisperModel);
   const privateAiModeValue = t(`aiSettings.executionMode.${aiExecutionMode}`);

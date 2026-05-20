@@ -108,6 +108,7 @@ export async function performHardReset(): Promise<void> {
     selectedWhisperModelFormat: DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
     whisperModelWeightsFormat: DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
     transcriptionLanguage: 'auto',
+    transcriptionEngine: 'whisper',
     summaryStyle: 'standard',
     taskStrictness: 'balanced',
     aiOutputLanguage: 'same',

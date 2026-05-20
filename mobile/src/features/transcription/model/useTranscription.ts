@@ -3,11 +3,23 @@ import { AppState } from 'react-native';
 
 import type { TranscriptSegment, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
+import {
+  getWhisperModelVariantId,
+  type TranscriptionLanguage,
+  useSettingsStore,
+} from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
-import { shouldApplyAutoAiAfterTranscription } from '@/features/app-storefront';
+import {
+  shouldApplyAutoAiAfterTranscription,
+  shouldUseAppleSpeechTranscription,
+} from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
+import {
+  AppleSpeechError,
+  cancelAppleSpeechTranscription,
+  transcribeWithAppleSpeech,
+} from '@/shared/lib/apple-speech';
 import { ensureRecordingsDir, i18n, RECORDINGS_DIR, useNetworkStatus } from '@/shared/lib';
 import { convertToWav } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
@@ -85,6 +97,7 @@ export const useTranscription = () => {
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
   const setWhisperModelStatus = useSettingsStore((s) => s.setWhisperModelStatus);
   const transcriptionLanguage = useSettingsStore((s) => s.transcriptionLanguage);
+  const transcriptionEngine = useSettingsStore((s) => s.transcriptionEngine);
   const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
   const { isProActive } = useProEntitlement();
   const { isConnected } = useNetworkStatus();
@@ -95,7 +108,7 @@ export const useTranscription = () => {
   const backgroundCancelledRef = useRef<Set<string>>(new Set());
 
   const startTranscription = useCallback(
-    async (record: VoiceRecord, languageOverride?: string): Promise<void> => {
+    async (record: VoiceRecord, languageOverride?: TranscriptionLanguage): Promise<void> => {
       if (AppState.currentState !== 'active') {
         return;
       }
@@ -104,6 +117,117 @@ export const useTranscription = () => {
         return;
       }
       const audioPath = record.audioPath;
+
+      const useAppleSpeech = shouldUseAppleSpeechTranscription(transcriptionEngine, isProActive);
+
+      if (currentRecordIdRef.current === record.id && stopRef.current) {
+        devLog('stopping previous run for same record', { recordId: record.id });
+        const prevStop = stopRef.current;
+        stopRef.current = null;
+        prevStop().catch(() => {});
+      }
+
+      const jobGen = beginTranscriptionJob(record.id);
+      devLog('job started', { recordId: record.id, jobGen, engine: useAppleSpeech ? 'apple' : 'whisper' });
+      currentRecordIdRef.current = record.id;
+
+      const language = languageOverride ?? transcriptionLanguage;
+
+      if (useAppleSpeech) {
+        updateAiStatus(
+          record.id,
+          'processing',
+          0,
+          i18n.t('transcription.appleSpeechProcessing'),
+          null,
+        );
+
+        stopRef.current = async () => {
+          await cancelAppleSpeechTranscription();
+        };
+
+        try {
+          const normalizedAudioPath = audioPath.startsWith('file://')
+            ? audioPath.slice(7)
+            : audioPath;
+
+          const { segments, fullText, skipped } = await transcribeWithAppleSpeech({
+            audioPath: normalizedAudioPath,
+            durationMs: record.durationMs ?? 0,
+            language,
+            onProgress: (percent) => {
+              if (!isActiveTranscriptionJob(record.id, jobGen)) return;
+              updateAiStatus(
+                record.id,
+                'processing',
+                percent,
+                i18n.t('transcription.appleSpeechProcessing'),
+                null,
+              );
+            },
+            isCancelled: () => !isActiveTranscriptionJob(record.id, jobGen),
+          });
+
+          if (!isActiveTranscriptionJob(record.id, jobGen)) {
+            devLog('apple completion ignored (stale job)', { recordId: record.id, jobGen });
+            return;
+          }
+
+          stopRef.current = null;
+          currentRecordIdRef.current = null;
+
+          if (skipped) {
+            await removeTranscriptionCheckpoint(record.id).catch(() => {});
+            updateAiStatus(record.id, 'idle');
+            return;
+          }
+
+          await updateTranscript(record.id, fullText, segments);
+          const recordWithTranscript = {
+            ...record,
+            transcript: fullText,
+            transcriptSegments: segments,
+          };
+          generateAndSaveEmbeddingForRecord(recordWithTranscript).catch(() => {});
+
+          if (
+            shouldApplyAutoAiAfterTranscription(autoAiAfterTranscription, isProActive) &&
+            isConnected
+          ) {
+            processRecord(recordWithTranscript).catch(() => {});
+          }
+
+          devLog('apple job completed', { recordId: record.id, jobGen });
+        } catch (err) {
+          if (!isActiveTranscriptionJob(record.id, jobGen)) {
+            return;
+          }
+          stopRef.current = null;
+          currentRecordIdRef.current = null;
+
+          const isCancelled =
+            err instanceof AppleSpeechError
+              ? err.code === 'CANCELLED'
+              : err instanceof Error &&
+                (err.message.toLowerCase().includes('cancel') ||
+                  err.message.toLowerCase().includes('abort'));
+
+          if (isCancelled) {
+            if (!backgroundCancelledRef.current.has(record.id)) {
+              await removeTranscriptionCheckpoint(record.id).catch(() => {});
+            } else {
+              backgroundCancelledRef.current.delete(record.id);
+            }
+            updateAiStatus(record.id, 'idle');
+          } else {
+            if (__DEV__) console.warn('[transcription] Apple Speech failed:', err);
+            updateAiStatus(record.id, 'error');
+          }
+        } finally {
+          endTranscriptionJobIfCurrent(record.id, jobGen);
+        }
+        return;
+      }
 
       const variantId = getWhisperModelVariantId(selectedWhisperModel, selectedWhisperModelFormat);
       const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
@@ -126,20 +250,8 @@ export const useTranscription = () => {
         return;
       }
 
-      if (currentRecordIdRef.current === record.id && stopRef.current) {
-        devLog('stopping previous run for same record', { recordId: record.id });
-        const prevStop = stopRef.current;
-        stopRef.current = null;
-        prevStop().catch(() => {});
-      }
-
-      const jobGen = beginTranscriptionJob(record.id);
-      devLog('job started', { recordId: record.id, jobGen });
-
       updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'), null);
-      currentRecordIdRef.current = record.id;
 
-      const language = languageOverride ?? transcriptionLanguage;
       let usedContext = false;
       let transcodeWavPath: string | null = null;
 
@@ -359,6 +471,7 @@ export const useTranscription = () => {
       selectedWhisperModelFormat,
       whisperModelStatuses,
       transcriptionLanguage,
+      transcriptionEngine,
       autoAiAfterTranscription,
       isProActive,
       isConnected,

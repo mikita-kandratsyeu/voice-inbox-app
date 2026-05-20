@@ -13,6 +13,8 @@ import { FolderPickerSheet, useFolderStore } from '@/entities/folder';
 import { type RecordingMark, useRecordStore } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
 import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
+import { canStartTranscription } from '@/features/transcription/lib/canStartTranscription';
+import { shouldUseAppleSpeechTranscription } from '@/features/app-storefront';
 import { useAiProcessing } from '@/features/ai-processing';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
@@ -257,13 +259,25 @@ export const RecordingDetailScreen = () => {
   );
 
   const handleRetranscribe = useCallback(async () => {
-    const variantId = getWhisperModelVariantId(selectedWhisperModel, selectedWhisperModelFormat);
-    const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
+    const transcriptionEngine = useSettingsStore.getState().transcriptionEngine;
 
-    if (modelStatus !== 'downloaded') {
+    if (
+      !canStartTranscription({
+        transcriptionEngine,
+        isProActive,
+        selectedWhisperModel,
+        selectedWhisperModelFormat,
+        whisperModelStatuses,
+      })
+    ) {
+      const useApple = shouldUseAppleSpeechTranscription(transcriptionEngine, isProActive);
       Alert.alert(
-        t('recordingDetail.modelNotDownloaded'),
-        t('recordingDetail.modelNotDownloadedHint'),
+        useApple
+          ? t('recordingDetail.appleSpeechUnavailableTitle')
+          : t('recordingDetail.modelNotDownloaded'),
+        useApple
+          ? t('recordingDetail.appleSpeechUnavailableHint')
+          : t('recordingDetail.modelNotDownloadedHint'),
         [
           { text: t('common.ok') },
           {
@@ -295,6 +309,7 @@ export const RecordingDetailScreen = () => {
     whisperModelStatuses,
     selectedWhisperModel,
     selectedWhisperModelFormat,
+    isProActive,
     navigation,
     liveRecord,
     recordLanguage,

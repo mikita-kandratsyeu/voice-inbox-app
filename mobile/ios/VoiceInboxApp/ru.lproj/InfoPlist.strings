@@ -1,4 +1,5 @@
 "NSMicrophoneUsageDescription" = "Voice Inbox AI использует микрофон для записи голосовых заметок — например когда вы нажимаете «Запись», чтобы сохранить напоминание о встрече или быструю мысль. Аудио сохраняется в заметке на устройстве, чтобы вы могли расшифровать и разобрать её.";
+"NSSpeechRecognitionUsageDescription" = "Voice Inbox AI может транскрибировать записи через on-device распознавание речи Apple, если вы включите эту опцию Pro в настройках.";
 "NSUserTrackingUsageDescription" = "Это поможет показывать более релевантную рекламу.";
 "QUICK_ACTION_START_RECORDING_TITLE" = "Начать запись";
 "QUICK_ACTION_NEW_TEXT_NOTE_TITLE" = "Текстовая заметка";

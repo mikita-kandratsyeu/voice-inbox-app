@@ -27,6 +27,7 @@ import type {
   SettingsState,
   SummaryStyle,
   TaskStrictness,
+  TranscriptionEngine,
   TranscriptionLanguage,
   UserSelectableAIModelId,
   WhisperDownloadPhase,
@@ -50,6 +51,7 @@ const KEYS = {
   WHISPER_SELECTED_MODEL_FORMAT: 'settings.whisperSelectedModelFormat',
   WHISPER_STATUSES: 'settings.whisperStatuses',
   TRANSCRIPTION_LANGUAGE: 'settings.transcriptionLanguage',
+  TRANSCRIPTION_ENGINE: 'settings.transcriptionEngine',
   SUMMARY_STYLE: 'settings.summaryStyle',
   TASK_STRICTNESS: 'settings.taskStrictness',
   AI_OUTPUT_LANGUAGE: 'settings.aiOutputLanguage',
@@ -202,6 +204,11 @@ const getStoredTranscriptionLanguage = (): TranscriptionLanguage => {
   return (val as TranscriptionLanguage) ?? 'auto';
 };
 
+const getStoredTranscriptionEngine = (): TranscriptionEngine => {
+  const val = storage.getString(KEYS.TRANSCRIPTION_ENGINE);
+  return val === 'apple_speech' ? 'apple_speech' : 'whisper';
+};
+
 const getStoredAutoTranscribeOnSave = (): boolean => {
   const val = storage.getString(KEYS.AUTO_TRANSCRIBE_ON_SAVE);
 
@@ -304,6 +311,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   selectedWhisperModelFormat: getStoredSelectedWhisperModelFormat(),
   whisperModelWeightsFormat: getStoredWhisperModelWeightsFormat(),
   transcriptionLanguage: getStoredTranscriptionLanguage(),
+  transcriptionEngine: getStoredTranscriptionEngine(),
   summaryStyle: getStoredSummaryStyle(),
   taskStrictness: getStoredTaskStrictness(),
   aiOutputLanguage: getStoredAiOutputLanguage(),
@@ -382,6 +390,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setTranscriptionLanguage: (lang: TranscriptionLanguage) => {
     storage.set(KEYS.TRANSCRIPTION_LANGUAGE, lang);
     set({ transcriptionLanguage: lang });
+  },
+
+  setTranscriptionEngine: (engine: TranscriptionEngine) => {
+    storage.set(KEYS.TRANSCRIPTION_ENGINE, engine);
+    set({ transcriptionEngine: engine });
   },
 
   setSummaryStyle: (value: SummaryStyle) => {
