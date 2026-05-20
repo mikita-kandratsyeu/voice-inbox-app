@@ -32,26 +32,47 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     contextTokens: 1_048_576,
   },
   {
-    id: 'minimax/minimax-m2.7',
-    name: 'MiniMax M2.7',
-    provider: 'MiniMax',
-    descriptionKey: 'aiModels.minimaxDesc',
-    speed: 'fast',
-    tierLabelKey: 'aiModels.tierPremium',
-    supportTierCode: 'premium_experimental',
-    contextTokens: 1_048_576,
-  },
-  {
     id: 'deepseek/deepseek-v4-flash',
     name: 'DeepSeek V4 Flash',
     provider: 'DeepSeek',
     descriptionKey: 'aiModels.deepSeekDesc',
-    speed: 'fast',
+    speed: 'medium',
     tierLabelKey: 'aiModels.tierDeepSeek',
     supportTierCode: 'fast',
     contextTokens: 1_048_576,
   },
+  {
+    id: 'xiaomi/mimo-v2-flash',
+    name: 'MiMo V2 Flash',
+    provider: 'Xiaomi',
+    descriptionKey: 'aiModels.mimoDesc',
+    speed: 'medium',
+    tierLabelKey: 'aiModels.tierMiMo',
+    supportTierCode: 'fast',
+    contextTokens: 262_144,
+  },
+  {
+    id: 'minimax/minimax-m2.7',
+    name: 'MiniMax M2.7',
+    provider: 'MiniMax',
+    descriptionKey: 'aiModels.minimaxDesc',
+    speed: 'slow',
+    tierLabelKey: 'aiModels.tierPremium',
+    supportTierCode: 'premium_experimental',
+    contextTokens: 1_048_576,
+  },
 ];
+
+const AI_MODEL_SPEED_RANK: Record<UserFacingAIModel['speed'], number> = {
+  fast: 0,
+  medium: 1,
+  slow: 2,
+};
+
+/** Manual picker / onboarding list: fastest models first. */
+export const USER_FACING_AI_MODELS_BY_SPEED = [...USER_FACING_AI_MODELS].sort(
+  (a, b) => AI_MODEL_SPEED_RANK[a.speed] - AI_MODEL_SPEED_RANK[b.speed],
+);
 
 export const AI_MODELS: AIModel[] = USER_FACING_AI_MODELS.map(
   ({ tierLabelKey: _t, supportTierCode: _s, ...m }) => m,

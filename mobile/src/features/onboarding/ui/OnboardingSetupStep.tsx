@@ -7,7 +7,7 @@ import type { UserSelectableAIModelId, WhisperModelId } from '@/entities/setting
 import {
   getWhisperEstimatedDownloadSizeMb,
   getWhisperModelVariantId,
-  USER_FACING_AI_MODELS,
+  USER_FACING_AI_MODELS_BY_SPEED,
   useRecommendedWhisperModelId,
   useSettingsStore,
   useWhisperModelCompatibility,
@@ -78,7 +78,7 @@ export const OnboardingSetupStep = ({
         name: t('aiModels.autoRecommendedLabel'),
         isRecommended: true,
       },
-      ...USER_FACING_AI_MODELS.map((model) => ({
+      ...USER_FACING_AI_MODELS_BY_SPEED.map((model) => ({
         id: model.id,
         name: model.name,
         isRecommended: false,

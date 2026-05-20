@@ -1028,11 +1028,11 @@
       "small": "Small",
       "medium": "Medium",
       "large_v3": "Large v3",
-      "tinyDesc": "Minimal memory requirements, basic quality",
-      "baseDesc": "Good balance between speed and quality",
-      "smallDesc": "Improved quality for most languages",
-      "mediumDesc": "High transcription quality",
-      "large_v3Desc": "Maximum quality, 99 languages support"
+      "tinyDesc": "Minimal memory requirements, basic quality.",
+      "baseDesc": "Good balance between speed and quality.",
+      "smallDesc": "Improved quality for most languages.",
+      "mediumDesc": "High transcription quality.",
+      "large_v3Desc": "Maximum quality, 99 languages support."
     }
   },
   "aiSettings": {
@@ -1100,7 +1100,8 @@
     "tierFast": "Fast",
     "tierSmart": "Smarter",
     "tierPremium": "Maximum",
-    "tierDeepSeek": "Alternative",
+    "tierDeepSeek": "Structure",
+    "tierMiMo": "Long recordings",
     "trinityDesc": "Powerful model with multimodal input support",
     "geminiDesc": "Fast and efficient model for everyday tasks",
     "geminiDesc3_1": "Better understands longer recordings and extracts tasks more accurately.",
@@ -1108,6 +1109,7 @@
     "openaiDesc": "Balanced speed and quality for summaries and task extraction.",
     "metaLlamaDesc": "Open-source model with strong reasoning and instruction following",
     "deepSeekDesc": "An efficient model for reasoning, structure, and detailed answers.",
+    "mimoDesc": "A fast model for long recordings, summaries, and Q&A.",
     "minimaxDesc": "Best quality for complex summaries, important notes, and deep analysis.",
     "localQwen3Desc": "Balanced quality on most devices.",
     "localGemma2Desc": "Strong instruction following. Slightly larger download.",

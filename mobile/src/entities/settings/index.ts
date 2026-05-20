@@ -24,6 +24,7 @@ export {
   getWhisperModelVariantId,
   LOCAL_AI_MODELS,
   USER_FACING_AI_MODELS,
+  USER_FACING_AI_MODELS_BY_SPEED,
   WHISPER_MODELS,
 } from './model/constants';
 export { useSettingsStore } from './model/store';

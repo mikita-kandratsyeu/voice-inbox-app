@@ -95,6 +95,7 @@ export function normalizeIncomingAiModel(model: string): string {
   return t;
 }
 export const AI_MODEL_DEEPSEEK_V4_FLASH = 'deepseek/deepseek-v4-flash';
+export const AI_MODEL_MIMO_V2_FLASH = 'xiaomi/mimo-v2-flash';
 
 export const SYSTEM_TASK_MODEL_FALLBACK_CHAIN: readonly string[] = [
   AI_MODEL_GEMINI_3_1_FLASH_LITE,
@@ -118,6 +119,7 @@ export const ALLOWED_AI_MODELS: string[] = [
   'minimax/minimax-m2.7',
   'google/gemini-2.5-flash-lite',
   AI_MODEL_DEEPSEEK_V4_FLASH,
+  AI_MODEL_MIMO_V2_FLASH,
 ];
 
 // Push notifications (iOS APNs)

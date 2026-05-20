@@ -16,6 +16,7 @@ import {
   formatModelContextTokens,
   LOCAL_AI_MODELS,
   USER_FACING_AI_MODELS,
+  USER_FACING_AI_MODELS_BY_SPEED,
   useSettingsStore,
 } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
@@ -25,7 +26,6 @@ import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader } from '@/shared/ui';
 
-import { getSpeedColor } from '../lib';
 import { LocalAiModelCard } from './LocalAiModelCard';
 import { type ModelMetaChip, ModelMetaChips } from './ModelMetaChips';
 
@@ -199,10 +199,9 @@ export const AIModelPickerScreen = () => {
       tierLabel: t('aiModels.tierAuto'),
       name: t('aiModels.autoName'),
       description: t('aiModels.autoDescription'),
-      speed: 'fast' as const,
       isRecommended: true,
     },
-    ...USER_FACING_AI_MODELS.map((model) => ({
+    ...USER_FACING_AI_MODELS_BY_SPEED.map((model) => ({
       id: model.id,
       tierLabel: t(model.tierLabelKey),
       name: model.name,
@@ -215,7 +214,6 @@ export const AIModelPickerScreen = () => {
   const models = isPrivateMode ? LOCAL_AI_MODELS : cloudOptions;
   const autoOption = cloudOptions[0];
   const manualCloudOptions = cloudOptions.slice(1);
-  const shouldShowCloudSpeed = new Set(cloudOptions.map((option) => option.speed)).size > 1;
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -312,24 +310,11 @@ export const AIModelPickerScreen = () => {
                         </View>
                       </View>
                       <Text
-                        className="mb-1.5 text-[14px] leading-5"
+                        className="text-[14px] leading-5"
                         style={{ color: color.text.secondary }}
                       >
                         {autoOption.description}
                       </Text>
-                      {shouldShowCloudSpeed ? (
-                        <View className="flex-row items-center gap-1">
-                          <View
-                            className="h-2 w-2 rounded-full"
-                            style={{ backgroundColor: getSpeedColor(autoOption.speed, color) }}
-                          />
-                          <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-                            {t(`aiModels.speed.${autoOption.speed}`, {
-                              defaultValue: autoOption.speed,
-                            })}
-                          </Text>
-                        </View>
-                      ) : null}
                     </View>
                     {aiModelRoutingMode === 'auto' ? (
                       <View
