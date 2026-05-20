@@ -1,11 +1,13 @@
 import dayjs from 'dayjs';
 import { Share } from 'react-native';
-import { zip } from 'react-native-zip-archive';
+import { type EncryptionMethods, zip, zipWithPassword } from 'react-native-zip-archive';
 
 import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 import { i18n } from '@/shared/lib';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
+
+import { BACKUP_ZIP_ENCRYPTION } from './backupZip';
 
 const METADATA_FILENAME = 'metadata.json';
 const AUDIO_DIR_NAME = 'audio';
@@ -61,12 +63,25 @@ function getAudioExtension(audioPath: string): string {
   return match?.[0] ?? '.m4a';
 }
 
-export const exportData = async (records: VoiceRecord[], folders: Folder[]): Promise<void> => {
+export type ExportDataOptions = {
+  password?: string;
+};
+
+export const exportData = async (
+  records: VoiceRecord[],
+  folders: Folder[],
+  options?: ExportDataOptions,
+): Promise<void> => {
   const timestamp = Date.now();
+  const password = options?.password?.trim();
+  const isPasswordProtected = Boolean(password);
   const cache = getCachesDirectoryPath();
   const exportDir = `${cache}/voice-inbox-export-${timestamp}`;
   const audioDir = `${exportDir}/${AUDIO_DIR_NAME}`;
-  const zipPath = `${cache}/voice-inbox-backup-${timestamp}.zip`;
+  const zipBasename = isPasswordProtected
+    ? `voice-inbox-backup-locked-${timestamp}`
+    : `voice-inbox-backup-${timestamp}`;
+  const zipPath = `${cache}/${zipBasename}.zip`;
 
   try {
     await NitroFS.mkdir(exportDir);
@@ -109,7 +124,16 @@ export const exportData = async (records: VoiceRecord[], folders: Folder[]): Pro
     const json = JSON.stringify(payload, null, 2);
     await NitroFS.writeFile(`${exportDir}/${METADATA_FILENAME}`, json, 'utf8');
 
-    await zip(exportDir, zipPath);
+    if (password) {
+      await zipWithPassword(
+        exportDir,
+        zipPath,
+        password,
+        BACKUP_ZIP_ENCRYPTION as EncryptionMethods,
+      );
+    } else {
+      await zip(exportDir, zipPath);
+    }
 
     await Share.share({
       url: `file://${zipPath}`,

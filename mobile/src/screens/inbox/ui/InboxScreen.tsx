@@ -9,6 +9,7 @@ import {
 } from '@/entities/folder';
 import { BatchActionBar, BatchExportSheet } from '@/features/batch-select';
 import { AutoOrganizeProgressOverlay } from '@/features/manage-folders';
+import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { BlockingProgressModal } from '@/shared/ui';
 
 import { useInboxScreen } from '../lib/useInboxScreen';
@@ -77,7 +78,10 @@ export const InboxScreen = () => {
     handleCloseBatchFolderPicker,
     handleBatchFolderPicked,
     batchExportSheetVisible,
+    batchExportProSheetVisible,
     handleCloseBatchExportSheet,
+    handleCloseBatchExportProSheet,
+    handleBatchExportProUpgrade,
     handleBatchExportTemplate,
     batchEmailSending,
     handleBatchEmail,
@@ -88,7 +92,6 @@ export const InboxScreen = () => {
     handleBatchDelete,
     handleBatchDeleteLongPress,
     handleBatchExport,
-    isProActive,
     showSwipeHint,
     dismissSwipeHint,
     listRef,
@@ -216,7 +219,6 @@ export const InboxScreen = () => {
           onDelete={handleBatchDelete}
           onDeleteLongPress={handleBatchDeleteLongPress}
           onExport={handleBatchExport}
-          showExport={isProActive}
           onMoveToFolder={handleOpenBatchFolderPicker}
           hideMoveToFolder={isPrivateMode}
           onCancel={exitBatchMode}
@@ -240,6 +242,12 @@ export const InboxScreen = () => {
         onClose={handleCloseBatchExportSheet}
         onExportText={handleBatchExportTemplate}
         onEmailBatch={handleBatchEmail}
+      />
+      <AutomationComingSoonSheet
+        visible={batchExportProSheetVisible}
+        feature="batchExport"
+        onClose={handleCloseBatchExportProSheet}
+        onUpgradePress={handleBatchExportProUpgrade}
       />
       {!isPrivateMode && (
         <FolderReorderSheet

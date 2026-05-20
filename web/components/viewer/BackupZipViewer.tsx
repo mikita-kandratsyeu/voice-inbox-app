@@ -29,12 +29,17 @@ import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useSta
 
 import {
   BackupZipParseError,
+  detectBackupZipEncryption,
   getAudioBytesFromBackup,
+  isBackupFilenamePasswordProtected,
   MAX_BACKUP_ZIP_BYTES,
   parseBackupZip,
+  type BackupZipParseProgress,
   type ParsedBackup,
   type ParsedRecord,
 } from '@/lib/backup-export';
+import { BackupZipLoadProgress } from './BackupZipLoadProgress';
+import { BackupZipPasswordPrompt } from './BackupZipPasswordPrompt';
 import {
   buildNoteDownloadBasename,
   copyTextToClipboard,
@@ -230,6 +235,7 @@ export function BackupZipViewer(): React.ReactElement {
   const [isNarrow, setNarrow] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadProgress, setLoadProgress] = useState<BackupZipParseProgress | null>(null);
   const [backup, setBackup] = useState<ParsedBackup | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -238,6 +244,9 @@ export function BackupZipViewer(): React.ReactElement {
   const copyToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [loadedFileName, setLoadedFileName] = useState<string | null>(null);
+  const [passwordPromptFile, setPasswordPromptFile] = useState<File | null>(null);
+  const [backupPassword, setBackupPassword] = useState('');
+  const [passwordFieldError, setPasswordFieldError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sidebarWidthPct, setSidebarWidthPct] = useState(viewerSidebarWidthBounds.default);
@@ -398,32 +407,84 @@ export function BackupZipViewer(): React.ReactElement {
     [flashCopyResult],
   );
 
-  const processFile = useCallback(async (file: File) => {
+  const showPasswordPromptForFile = useCallback((file: File) => {
+    setPasswordPromptFile(file);
+    setLoadedFileName(file.name);
+    setBackupPassword('');
+    setPasswordFieldError(null);
     setErrorCode(null);
-    setLoading(true);
-    setAudioUrl(null);
-    setLoadedFileName(null);
-    setSearchQuery('');
     setBackup(null);
     setSelectedId(null);
-    try {
-      const parsed = await parseBackupZip(file);
-      setBackup(parsed);
-      setCollapsedSectionKeys(new Set());
-      setLoadedFileName(file.name);
-      const first = [...parsed.records].sort(sortRecords)[0];
-      setSelectedId(first?.id ?? null);
-      setTab('transcript');
-    } catch (e) {
-      if (e instanceof BackupZipParseError) {
-        setErrorCode(e.code);
-      } else {
-        setErrorCode('unknown');
-      }
-    } finally {
-      setLoading(false);
-    }
+    setAudioUrl(null);
+    setSearchQuery('');
   }, []);
+
+  const processFile = useCallback(
+    async (file: File, password?: string) => {
+      setErrorCode(null);
+      setPasswordFieldError(null);
+      setAudioUrl(null);
+      setSearchQuery('');
+      setBackup(null);
+      setSelectedId(null);
+
+      const trimmedPassword = password?.trim();
+      if (!trimmedPassword) {
+        if (isBackupFilenamePasswordProtected(file.name)) {
+          showPasswordPromptForFile(file);
+          return;
+        }
+        setLoading(true);
+        setLoadProgress('reading_archive');
+        try {
+          if (await detectBackupZipEncryption(file)) {
+            showPasswordPromptForFile(file);
+            return;
+          }
+        } finally {
+          setLoading(false);
+          setLoadProgress(null);
+        }
+      }
+
+      setLoading(true);
+      setLoadProgress(trimmedPassword ? 'verifying_password' : 'reading_archive');
+      try {
+        const parsed = await parseBackupZip(file, {
+          password: trimmedPassword,
+          onProgress: (stage) => setLoadProgress(stage),
+        });
+        setPasswordPromptFile(null);
+        setBackupPassword('');
+        setBackup(parsed);
+        setCollapsedSectionKeys(new Set());
+        setLoadedFileName(file.name);
+        const first = [...parsed.records].sort(sortRecords)[0];
+        setSelectedId(first?.id ?? null);
+        setTab('transcript');
+      } catch (e) {
+        if (e instanceof BackupZipParseError) {
+          if (e.code === 'password_required' || e.code === 'wrong_password') {
+            showPasswordPromptForFile(file);
+            if (e.code === 'wrong_password') {
+              setPasswordFieldError(t('errors.wrong_password'));
+            }
+            return;
+          }
+          setPasswordPromptFile(null);
+          setBackupPassword('');
+          setErrorCode(e.code);
+        } else {
+          setPasswordPromptFile(null);
+          setErrorCode('unknown');
+        }
+      } finally {
+        setLoading(false);
+        setLoadProgress(null);
+      }
+    },
+    [showPasswordPromptForFile, t],
+  );
 
   const onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
@@ -590,7 +651,23 @@ export function BackupZipViewer(): React.ReactElement {
 
   const tryAnotherFile = () => {
     setErrorCode(null);
+    setPasswordPromptFile(null);
+    setBackupPassword('');
+    setPasswordFieldError(null);
+    setLoadedFileName(null);
+    setLoadProgress(null);
     inputRef.current?.click();
+  };
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!passwordPromptFile) return;
+    const trimmed = backupPassword.trim();
+    if (!trimmed) {
+      setPasswordFieldError(t('passwordPrompt.required'));
+      return;
+    }
+    void processFile(passwordPromptFile, trimmed);
   };
 
   return (
@@ -604,7 +681,24 @@ export function BackupZipViewer(): React.ReactElement {
         onChange={onInputChange}
       />
 
-      {!backup ? (
+      {!backup && passwordPromptFile ? (
+        <BackupZipPasswordPrompt
+          loadedFileName={loadedFileName}
+          backupPassword={backupPassword}
+          passwordFieldError={passwordFieldError}
+          loading={loading}
+          loadProgress={loadProgress}
+          onPasswordChange={(value) => {
+            setBackupPassword(value);
+            if (passwordFieldError) setPasswordFieldError(null);
+          }}
+          onSubmit={handlePasswordSubmit}
+          onTryAnotherFile={tryAnotherFile}
+          t={t}
+        />
+      ) : null}
+
+      {!backup && !passwordPromptFile ? (
         <div
           {...dropHandlers}
           className={[
@@ -634,6 +728,9 @@ export function BackupZipViewer(): React.ReactElement {
             <p className="text-sm text-slate-600 dark:text-slate-400">
               {t('dragZipHint', { maxMb })}
             </p>
+            {loading && loadProgress ? (
+              <BackupZipLoadProgress stage={loadProgress} verifyingPassword={false} t={t} />
+            ) : null}
             <div className="flex max-w-md items-start justify-center gap-2 text-left text-xs leading-relaxed text-slate-500 dark:text-slate-400">
               <Shield
                 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
@@ -643,7 +740,9 @@ export function BackupZipViewer(): React.ReactElement {
             </div>
           </div>
         </div>
-      ) : (
+      ) : null}
+
+      {backup ? (
         <div
           {...dropHandlers}
           className={[
@@ -689,9 +788,9 @@ export function BackupZipViewer(): React.ReactElement {
             {t('privacyNoteCompact')}
           </p>
         </div>
-      )}
+      ) : null}
 
-      {errorMessage ? (
+      {errorMessage && !passwordPromptFile ? (
         <div
           role="alert"
           className="rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-4 text-sm text-red-900 dark:text-red-100"

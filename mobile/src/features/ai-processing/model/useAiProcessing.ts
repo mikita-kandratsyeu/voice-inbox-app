@@ -20,6 +20,7 @@ import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMe
 import { AIOrchestrator } from '@/shared/lib/ai-core';
 import { TASK_EXTRACTION_HINT_MAX_CHARS } from '@/shared/lib/ai-core/local-provider/localAiConstants';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
+import { sanitizeRecordingMarksForPrompt } from '@/shared/lib/ai-core/recordingMarksForPrompt';
 import type { AiLocalGenerationProgressEvent } from '@/shared/lib/ai-core/types';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import {
@@ -172,6 +173,9 @@ export const useAiProcessing = () => {
         const snapshot = useRecordStore.getState().records.find((r) => r.id === record.id);
         const existingTaskTexts = collectExistingTaskTextsForAiPrompt(snapshot?.tasks);
         const taskExtractionHint = normalizeTaskExtractionHint(aiRunOptions?.taskExtractionHint);
+        const recordingMarks = sanitizeRecordingMarksForPrompt(
+          snapshot?.recordingMarks ?? record.recordingMarks,
+        );
         const recordIsMeeting = (snapshot?.classification ?? record.classification) === 'meeting';
         const includeMeetingSpeakerBreakdown =
           isProActive && recordIsMeeting && aiExecutionMode !== 'private_experimental';
@@ -254,6 +258,7 @@ export const useAiProcessing = () => {
             ...(transcriptSegmentsForCloud?.length
               ? { transcriptSegments: transcriptSegmentsForCloud }
               : {}),
+            ...(recordingMarks?.length ? { recordingMarks } : {}),
             onLocalGenerationProgress,
           },
           {

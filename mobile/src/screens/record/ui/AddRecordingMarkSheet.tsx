@@ -1,37 +1,54 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetTextInput,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { InteractionManager, Keyboard, Text, View } from 'react-native';
-import { TextInput } from 'react-native-gesture-handler';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-import { useColors } from '@/shared/config';
 import {
+  InteractionManager,
+  Keyboard,
+  LayoutAnimation,
+  Platform,
+  Pressable,
+  Text,
+  UIManager,
+  View,
+} from 'react-native';
+import { TextInput } from 'react-native-gesture-handler';
+
+import {
+  DEFAULT_RECORDING_MARK_KIND,
+  getRecordingMarkKindAccentColors,
+  getRecordingMarkKindUi,
+  RECORDING_MARK_PICKER_KINDS,
+  type RecordingMarkKind,
+  RecordingMarkKindCard,
+} from '@/entities/record';
+import { useAppTheme, useColors } from '@/shared/config';
+import {
+  folderChipActiveForeground,
   formatTime,
   hapticLight,
+  hapticSelection,
   hapticSuccess,
   IS_IOS,
-  modalKeyboardBehavior,
+  isDarkSurfaceColor,
 } from '@/shared/lib';
-import { Button } from '@/shared/ui';
+import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 const MARK_LABEL_MAX_CHARS = 280;
-/** Extra space above the system keyboard so action buttons are not flush against it. */
 const MARK_SHEET_KEYBOARD_BOTTOM_PADDING = 24;
+
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+type SheetStep = 'pick' | 'label';
 
 type AddRecordingMarkSheetProps = {
   visible: boolean;
   /** Timestamp in the recording when the user opened the sheet (frozen). */
   snapshotOffsetMs: number;
   onClose: () => void;
-  /** Called with trimmed label (may be empty). */
-  onSave: (label: string) => void;
+  onSave: (kind: RecordingMarkKind, label: string) => void;
 };
 
 export const AddRecordingMarkSheet = ({
@@ -42,35 +59,34 @@ export const AddRecordingMarkSheet = ({
 }: AddRecordingMarkSheetProps) => {
   const { t } = useTranslation();
   const c = useColors();
-  const insets = useSafeAreaInsets();
+  const theme = useAppTheme();
+  const surfaceDark = isDarkSurfaceColor(c);
+  const contentPadding = useBottomSheetContentPadding(24);
+  const [step, setStep] = useState<SheetStep>('pick');
+  const [pendingKind, setPendingKind] = useState<RecordingMarkKind>(DEFAULT_RECORDING_MARK_KIND);
   const [label, setLabel] = useState('');
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const labelInputRef = useRef<TextInput>(null);
   const savedRef = useRef(false);
 
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.35} />
-    ),
-    [],
-  );
+  useEffect(() => {
+    if (!visible) return;
+    savedRef.current = false;
+    setStep('pick');
+    setPendingKind(DEFAULT_RECORDING_MARK_KIND);
+    setLabel('');
+  }, [visible]);
 
   useEffect(() => {
-    if (visible) {
-      savedRef.current = false;
-      setLabel('');
-      bottomSheetRef.current?.present();
-      const task = InteractionManager.runAfterInteractions(() => {
-        requestAnimationFrame(() => {
-          labelInputRef.current?.focus();
-        });
+    if (!visible || step !== 'label') return;
+    const task = InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(() => {
+        labelInputRef.current?.focus();
       });
-      return () => task.cancel();
-    }
-    bottomSheetRef.current?.dismiss();
-    return undefined;
-  }, [visible]);
+    });
+    return () => task.cancel();
+  }, [visible, step]);
 
   useEffect(() => {
     const showEvent = IS_IOS ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -90,99 +106,215 @@ export const AddRecordingMarkSheet = ({
     savedRef.current = false;
   }, [onClose]);
 
-  const handleCancel = useCallback(() => {
-    hapticLight();
-    bottomSheetRef.current?.dismiss();
-    onClose();
-  }, [onClose]);
+  const saveAndDismiss = useCallback(
+    (kind: RecordingMarkKind, labelText: string) => {
+      savedRef.current = true;
+      hapticSuccess();
+      onSave(kind, labelText.trim().slice(0, MARK_LABEL_MAX_CHARS));
+      bottomSheetRef.current?.dismiss();
+    },
+    [onSave],
+  );
 
-  const handleSave = useCallback(() => {
-    savedRef.current = true;
-    hapticSuccess();
-    onSave(label.trim().slice(0, MARK_LABEL_MAX_CHARS));
-    bottomSheetRef.current?.dismiss();
-  }, [label, onSave]);
+  const goToLabelStep = useCallback((kind: RecordingMarkKind) => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setPendingKind(kind);
+    setLabel('');
+    setStep('label');
+  }, []);
+
+  const handleKindPress = useCallback(
+    (kind: RecordingMarkKind) => {
+      saveAndDismiss(kind, '');
+    },
+    [saveAndDismiss],
+  );
+
+  const handleKindLongPress = useCallback(
+    (kind: RecordingMarkKind) => {
+      hapticLight();
+      goToLabelStep(kind);
+    },
+    [goToLabelStep],
+  );
+
+  const handleLabelBack = useCallback(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setStep('pick');
+    setLabel('');
+    Keyboard.dismiss();
+  }, []);
+
+  const handleLabelSave = useCallback(() => {
+    saveAndDismiss(pendingKind, label);
+  }, [label, pendingKind, saveAndDismiss]);
 
   const timeSec = Math.max(0, Math.floor(snapshotOffsetMs / 1000));
 
+  const bottomPadding =
+    step === 'label' && keyboardVisible
+      ? { paddingBottom: MARK_SHEET_KEYBOARD_BOTTOM_PADDING }
+      : contentPadding;
+
   return (
-    <BottomSheetModal
+    <AppBottomSheetModal
       ref={bottomSheetRef}
-      enableDynamicSizing
-      enablePanDownToClose
-      keyboardBehavior={modalKeyboardBehavior}
-      keyboardBlurBehavior="restore"
-      enableBlurKeyboardOnGesture
-      backdropComponent={renderBackdrop}
-      onDismiss={handleDismiss}
-      backgroundStyle={{ backgroundColor: c.background.card }}
-      handleIndicatorStyle={{ backgroundColor: c.text.muted }}
+      visible={visible}
+      onClose={handleDismiss}
+      surface="card"
+      backdrop="subtle"
     >
       <BottomSheetView
         style={{
-          paddingHorizontal: 24,
+          paddingHorizontal: 20,
           paddingTop: 4,
-          paddingBottom: keyboardVisible
-            ? MARK_SHEET_KEYBOARD_BOTTOM_PADDING
-            : Math.max(insets.bottom, 24),
-          gap: 12,
+          ...bottomPadding,
+          gap: step === 'pick' ? 20 : 16,
         }}
       >
-        <Text className="text-lg font-bold" style={{ color: c.text.primary }}>
-          {t('record.markSheetTitle')}
-        </Text>
-        <Text className="text-[14px] leading-5" style={{ color: c.text.secondary }}>
-          {t('record.markAtTime', { time: formatTime(timeSec) })}
-        </Text>
-        <BottomSheetTextInput
-          ref={labelInputRef}
-          className="rounded-xl border-2 px-4 py-3 text-[16px]"
-          style={{
-            borderColor: c.accent.primary,
-            color: c.text.primary,
-            backgroundColor: c.background.tertiary,
-          }}
-          placeholder={t('record.markLabelPlaceholder')}
-          placeholderTextColor={c.text.muted}
-          value={label}
-          onChangeText={(text) => setLabel(text.slice(0, MARK_LABEL_MAX_CHARS))}
-          multiline
-          maxLength={MARK_LABEL_MAX_CHARS}
-          autoFocus
-          returnKeyType="done"
-          blurOnSubmit
-          onSubmitEditing={handleSave}
-          accessibilityLabel={t('record.markLabelPlaceholder')}
-        />
-        <View className="mt-1 flex-row gap-3">
-          <Button
-            variant="secondary"
-            label={t('common.cancel')}
-            onPress={handleCancel}
-            activeOpacity={0.8}
-            className="min-w-0 flex-1"
-            color={c}
-            containerStyle={{
-              backgroundColor: c.background.tertiary,
-              borderRadius: 12,
-            }}
-            accessibilityLabel={t('common.cancel')}
-          />
-          <Button
-            variant="primary"
-            label={t('record.markSave')}
-            onPress={handleSave}
-            activeOpacity={0.85}
-            className="min-w-0 flex-1"
-            color={c}
-            containerStyle={{
-              backgroundColor: c.accent.primary,
-              borderRadius: 12,
-            }}
-            accessibilityLabel={t('record.markSave')}
-          />
-        </View>
+        {step === 'pick' ? (
+          <>
+            <View className="gap-1">
+              <Text className="text-xl font-semibold leading-7" style={{ color: c.text.primary }}>
+                {t('record.markSheetTitle')}
+              </Text>
+              <Text className="text-[15px] leading-[21px]" style={{ color: c.text.secondary }}>
+                {t('record.markAtTime', { time: formatTime(timeSec) })}
+              </Text>
+            </View>
+
+            <View className="gap-2.5">
+              <View className="flex-row gap-2.5">
+                {RECORDING_MARK_PICKER_KINDS.slice(0, 2).map((kind) => (
+                  <RecordingMarkKindCard
+                    key={kind}
+                    kind={kind}
+                    color={c}
+                    onPress={handleKindPress}
+                    onLongPress={handleKindLongPress}
+                  />
+                ))}
+              </View>
+              <View className="flex-row gap-2.5">
+                {RECORDING_MARK_PICKER_KINDS.slice(2).map((kind) => (
+                  <RecordingMarkKindCard
+                    key={kind}
+                    kind={kind}
+                    color={c}
+                    onPress={handleKindPress}
+                    onLongPress={handleKindLongPress}
+                  />
+                ))}
+              </View>
+            </View>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('record.markAddLabelLink')}
+              onPress={() => goToLabelStep(DEFAULT_RECORDING_MARK_KIND)}
+              className="self-center py-1"
+              hitSlop={8}
+            >
+              <Text className="text-[15px] font-medium" style={{ color: c.accent.primary }}>
+                {t('record.markAddLabelLink')}
+              </Text>
+            </Pressable>
+          </>
+        ) : (
+          <>
+            <View className="gap-1">
+              <Text className="text-xl font-semibold" style={{ color: c.text.primary }}>
+                {t('record.markLabelStepTitle')}
+              </Text>
+              <Text className="text-[15px] leading-[21px]" style={{ color: c.text.secondary }}>
+                {t('record.markAtTime', { time: formatTime(timeSec) })}
+              </Text>
+            </View>
+
+            <View className="flex-row gap-2">
+              {RECORDING_MARK_PICKER_KINDS.map((kind) => {
+                const { recordA11yKey } = getRecordingMarkKindUi(kind);
+                const { accent } = getRecordingMarkKindAccentColors(kind, theme, surfaceDark);
+                const selected = pendingKind === kind;
+                const selectedFg = folderChipActiveForeground(c, accent);
+                return (
+                  <Pressable
+                    key={kind}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={t(recordA11yKey)}
+                    onPress={() => {
+                      hapticSelection();
+                      setPendingKind(kind);
+                    }}
+                    className="min-h-[36px] flex-1 items-center justify-center rounded-xl px-2 py-2"
+                    style={{
+                      backgroundColor: selected ? accent : c.background.tertiary,
+                    }}
+                  >
+                    <Text
+                      className="text-center text-[13px] font-semibold"
+                      style={{ color: selected ? selectedFg : c.text.primary }}
+                      numberOfLines={1}
+                    >
+                      {t(recordA11yKey)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <BottomSheetTextInput
+              ref={labelInputRef}
+              className="min-h-[88px] rounded-2xl px-4 py-3.5 text-[16px]"
+              style={{
+                color: c.text.primary,
+                backgroundColor: c.background.tertiary,
+                textAlignVertical: 'top',
+              }}
+              placeholder={t('record.markLabelPlaceholder')}
+              placeholderTextColor={c.text.muted}
+              value={label}
+              onChangeText={(text) => setLabel(text.slice(0, MARK_LABEL_MAX_CHARS))}
+              multiline
+              maxLength={MARK_LABEL_MAX_CHARS}
+              returnKeyType="done"
+              blurOnSubmit
+              onSubmitEditing={handleLabelSave}
+              accessibilityLabel={t('record.markLabelPlaceholder')}
+            />
+
+            <View className="flex-row gap-2.5">
+              <Button
+                variant="secondary"
+                label={t('common.goBack')}
+                onPress={handleLabelBack}
+                activeOpacity={0.8}
+                className="min-w-0 flex-1"
+                color={c}
+                containerStyle={{
+                  backgroundColor: c.background.tertiary,
+                  borderRadius: 14,
+                }}
+                accessibilityLabel={t('common.goBack')}
+              />
+              <Button
+                variant="primary"
+                label={t('record.markSave')}
+                onPress={handleLabelSave}
+                activeOpacity={0.85}
+                className="min-w-0 flex-1"
+                color={c}
+                containerStyle={{
+                  backgroundColor: c.accent.primary,
+                  borderRadius: 14,
+                }}
+                accessibilityLabel={t('record.markSave')}
+              />
+            </View>
+          </>
+        )}
       </BottomSheetView>
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 };

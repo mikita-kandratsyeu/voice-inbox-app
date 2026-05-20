@@ -140,6 +140,7 @@ export async function runLocalSummaryTasks(
       request.existingTaskTexts,
       request.taskExtractionHint,
       request.processingPreset,
+      request.recordingMarks,
     );
 
     const summaryMaxTokens = resolvePrivateSummaryMaxTokens(ctx.privateLocalLlmBudget);

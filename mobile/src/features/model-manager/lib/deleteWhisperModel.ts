@@ -4,6 +4,7 @@ import {
   getWhisperCoreMlZipTempPath,
   getWhisperModelPath,
   getWhisperModelsDir,
+  hasOtherInstalledWhisperWeights,
   removeWhisperCoreMlEncoder,
 } from '@/shared/lib/whisper';
 
@@ -16,6 +17,11 @@ export const deleteWhisperModel = async (
 
   if (isExists) {
     await NitroFS.unlink(modelPath);
+  }
+
+  const keepCoreMl = await hasOtherInstalledWhisperWeights(modelId, format);
+  if (keepCoreMl) {
+    return;
   }
 
   const coreMlZipTemp = getWhisperCoreMlZipTempPath(modelId);

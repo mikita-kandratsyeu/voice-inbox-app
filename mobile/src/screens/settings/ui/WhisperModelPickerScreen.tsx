@@ -7,7 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import {
-  getWhisperModelSizeMb,
+  getWhisperEstimatedDownloadSizeMb,
   getWhisperModelVariantId,
   useRecommendedWhisperModelId,
   useSettingsStore,
@@ -17,7 +17,7 @@ import {
   type WhisperModelVariantId,
 } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
-import { getModelFileSizeBytes, useModelManager } from '@/features/model-manager';
+import { getWhisperVariantDisplaySizeBytes, useModelManager } from '@/features/model-manager';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { IS_IOS } from '@/shared/lib/platform';
@@ -68,8 +68,10 @@ export const WhisperModelPickerScreen = () => {
       WHISPER_MODELS.map(async (m) => {
         const variantId = getWhisperModelVariantId(m.id, whisperModelWeightsFormat);
         const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
-        if (status !== 'downloaded') return [variantId, null] as const;
-        const bytes = await getModelFileSizeBytes(m.id, whisperModelWeightsFormat);
+        const downloaded = status === 'downloaded';
+        const bytes = await getWhisperVariantDisplaySizeBytes(m.id, whisperModelWeightsFormat, {
+          downloaded,
+        });
         if (bytes <= 0) return [variantId, null] as const;
         return [variantId, formatFileSize(bytes)] as const;
       }),
@@ -98,11 +100,6 @@ export const WhisperModelPickerScreen = () => {
     const requestId = ++coreMlRequestIdRef.current;
     const entries = await Promise.all(
       WHISPER_MODELS.map(async (m) => {
-        const variantId = getWhisperModelVariantId(m.id, whisperModelWeightsFormat);
-        const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
-        if (status !== 'downloaded') {
-          return [m.id, false] as const;
-        }
         const installed = await isWhisperCoreMlEncoderInstalled(m.id);
         return [m.id, installed] as const;
       }),
@@ -113,6 +110,7 @@ export const WhisperModelPickerScreen = () => {
     }
 
     setCoreMlEncoderActive(Object.fromEntries(entries) as Record<WhisperModelId, boolean>);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [whisperModelStatuses, whisperModelWeightsFormat]);
 
   useEffect(() => {
@@ -123,7 +121,11 @@ export const WhisperModelPickerScreen = () => {
     void refreshCoreMlEncoderPresence();
   }, [refreshCoreMlEncoderPresence]);
 
-  const handleDownload = (id: WhisperModelId, sizeMb: number) => {
+  const handleDownload = async (id: WhisperModelId) => {
+    const coreMlInstalled = IS_IOS ? coreMlEncoderActive[id] === true : false;
+    const sizeMb = getWhisperEstimatedDownloadSizeMb(id, whisperModelWeightsFormat, {
+      coreMlAlreadyInstalled: coreMlInstalled,
+    });
     Alert.alert(t('whisper.downloadModel'), t('whisper.downloadConfirm', { size: sizeMb }), [
       { text: t('common.cancel'), style: 'cancel' },
       {
@@ -163,7 +165,7 @@ export const WhisperModelPickerScreen = () => {
     if (status === 'downloading') return;
     if (status !== 'downloaded') {
       const model = WHISPER_MODELS.find((m) => m.id === id);
-      if (model) handleDownload(id, getWhisperModelSizeMb(model.id, whisperModelWeightsFormat));
+      if (model) void handleDownload(id);
       return;
     }
     setWhisperModel(id);
@@ -264,14 +266,15 @@ export const WhisperModelPickerScreen = () => {
             {WHISPER_MODELS.map((model, index) => {
               const variantId = getWhisperModelVariantId(model.id, whisperModelWeightsFormat);
               const status = whisperModelStatuses[variantId] ?? 'not_downloaded';
-              const fallbackSize = formatFileSize(
-                getWhisperModelSizeMb(model.id, whisperModelWeightsFormat) * 1024 * 1024,
-              );
-              const downloadedSize = realSizes[variantId];
               const displaySize =
-                status === 'downloaded' && downloadedSize !== undefined
-                  ? downloadedSize
-                  : fallbackSize;
+                realSizes[variantId] ??
+                formatFileSize(
+                  getWhisperEstimatedDownloadSizeMb(model.id, whisperModelWeightsFormat, {
+                    coreMlAlreadyInstalled: coreMlEncoderActive[model.id] === true,
+                  }) *
+                    1024 *
+                    1024,
+                );
 
               if (whisperModelWeightsFormat === 'q5_1' && model.id === 'whisper-medium') {
                 return null;

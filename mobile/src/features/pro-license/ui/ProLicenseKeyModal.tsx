@@ -1,10 +1,5 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetTextInput,
-  BottomSheetView,
-} from '@gorhom/bottom-sheet';
+import type { BottomSheetBackdropProps, BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import dayjs from 'dayjs';
 import { CheckCircle2 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -19,20 +14,13 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import {
-  hapticError,
-  hapticSuccess,
-  IS_IOS,
-  modalKeyboardBehavior,
-  selectPlatform,
-} from '@/shared/lib';
+import { hapticError, hapticSuccess, IS_IOS, selectPlatform } from '@/shared/lib';
 import { redeemProLicenseKey } from '@/shared/lib/ai-api/proLicenseApi';
 import { resolveDayjsLocale } from '@/shared/lib/date';
-import { Button } from '@/shared/ui';
+import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 import {
   isRevenueCatStoreBillingConfigured,
@@ -159,7 +147,7 @@ function ProActivationSuccessPanel({ color, expiresAtIso, onDismiss }: SuccessPa
 export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicenseKeyModalProps) {
   const { t } = useTranslation();
   const color = useColors();
-  const insets = useSafeAreaInsets();
+  const contentPadding = useBottomSheetContentPadding(20);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [offerCodeCompact, setOfferCodeCompact] = useState('');
   const [busy, setBusy] = useState(false);
@@ -169,13 +157,33 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
+  const resetForm = useCallback(() => {
+    setPhase('form');
+    setOfferCodeCompact('');
+    setError(null);
+    setSuccessExpiresAt(null);
+  }, []);
+
+  const finishSuccess = useCallback(() => {
+    resetForm();
+    onClose();
+  }, [onClose, resetForm]);
+
+  const handleClose = useCallback(() => {
+    if (busy) {
+      return;
+    }
+    if (phase === 'success') {
+      finishSuccess();
+      return;
+    }
+    resetForm();
+    onClose();
+  }, [busy, phase, finishSuccess, onClose, resetForm]);
+
   useEffect(() => {
     if (!visible) {
-      setPhase('form');
-      setOfferCodeCompact('');
-      setError(null);
-      setSuccessExpiresAt(null);
-      bottomSheetRef.current?.dismiss();
+      resetForm();
       return;
     }
 
@@ -198,22 +206,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
     return () => {
       cancelled = true;
     };
-  }, [visible]);
-
-  const finishSuccess = useCallback(() => {
-    onClose();
-  }, [onClose]);
-
-  const handleClose = useCallback(() => {
-    if (busy) {
-      return;
-    }
-    if (phase === 'success') {
-      finishSuccess();
-      return;
-    }
-    onClose();
-  }, [busy, phase, finishSuccess, onClose]);
+  }, [visible, resetForm]);
 
   const handleSubmit = useCallback(async () => {
     if (!isCompleteProOfferCode(offerCodeCompact) || busy) {
@@ -262,29 +255,15 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
   });
 
   return (
-    <BottomSheetModal
+    <AppBottomSheetModal
       ref={bottomSheetRef}
-      enableDynamicSizing
+      visible={visible}
+      onClose={handleClose}
+      presentOnVisible={false}
       enablePanDownToClose={canDismissByGesture}
-      enableOverDrag={false}
-      keyboardBehavior={modalKeyboardBehavior}
-      keyboardBlurBehavior="restore"
-      enableBlurKeyboardOnGesture
       backdropComponent={renderBackdrop}
-      onDismiss={onClose}
-      backgroundStyle={{
-        backgroundColor: color.background.primary,
-        borderTopWidth: 1,
-        borderTopColor: color.border.default,
-      }}
-      handleIndicatorStyle={{
-        width: 36,
-        height: 5,
-        borderRadius: 2.5,
-        backgroundColor: color.icon.muted,
-      }}
     >
-      <BottomSheetView className="px-5 pt-1" style={{ paddingBottom: Math.max(insets.bottom, 20) }}>
+      <BottomSheetView className="px-5 pt-1" style={contentPadding}>
         {showActivatingOverlay ? (
           <View className="items-center py-4">
             <ActivityIndicator size="large" color={color.accent.primary} />
@@ -378,6 +357,6 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
           </>
         )}
       </BottomSheetView>
-    </BottomSheetModal>
+    </AppBottomSheetModal>
   );
 }

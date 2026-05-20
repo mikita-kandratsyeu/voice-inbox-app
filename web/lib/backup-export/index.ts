@@ -1,5 +1,13 @@
 export { MAX_BACKUP_ZIP_BYTES, METADATA_JSON } from './constants';
-export { BackupZipParseError, getAudioBytesFromBackup, parseBackupZip } from './parseBackupZip';
+export {
+  BackupZipParseError,
+  detectBackupZipEncryption,
+  getAudioBytesFromBackup,
+  isBackupFilenamePasswordProtected,
+  parseBackupZip,
+  type BackupZipParseProgress,
+  type ParseBackupZipOptions,
+} from './parseBackupZip';
 export {
   EXPORT_MAX_RECORD_TEXT_CHARS,
   ExportPayloadV3EnvelopeSchema,

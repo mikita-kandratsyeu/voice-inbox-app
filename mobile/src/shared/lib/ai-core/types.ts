@@ -8,6 +8,8 @@ import type {
 } from '@/entities/settings';
 import type { AiProcessingResult } from '@/shared/lib/ai-api';
 
+import type { RecordingMarkForPrompt } from './recordingMarksForPrompt';
+
 export type AiTaskIntent = 'summary_tasks' | 'ask';
 export type AiProviderKind = 'cloud' | 'local';
 
@@ -46,6 +48,8 @@ export type SummaryTaskRequest = {
   processingPreset?: 'meeting';
   existingTaskTexts?: string[];
   taskExtractionHint?: string;
+  /** User-placed recording pins (offset + optional label). */
+  recordingMarks?: RecordingMarkForPrompt[];
   onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;
 };
 
@@ -58,6 +62,7 @@ export type AskRequest = {
   priorTurns?: AskPriorTurn[];
   summary?: string;
   tasks?: Array<{ text: string }>;
+  recordingMarks?: RecordingMarkForPrompt[];
   onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;
 };
 

@@ -1,6 +1,6 @@
 import { Share } from 'react-native';
 
-import type { VoiceRecord } from '@/entities/record';
+import { getRecordingMarkKindUi, type VoiceRecord } from '@/entities/record';
 import { normalizeMeetingDialogueMarkdownParagraphs } from '@/screens/recording-detail/lib/parseMeetingDialogue';
 import { formatShortDate, formatTime, i18n } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
@@ -136,11 +136,12 @@ const pushRecordingMarks = (lines: string[], record: VoiceRecord): void => {
   sorted.forEach((m) => {
     const timeStr = formatTime(Math.floor(m.offsetMs / 1000));
     const label = m.label.trim();
-    const text = (label.length > 0 ? label : i18n.t('recordingDetail.markUntitled'))
+    const { sharePrefix, untitledKey } = getRecordingMarkKindUi(m.kind);
+    const text = (label.length > 0 ? label : i18n.t(untitledKey))
       .replace(/\r?\n/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
-    lines.push(`- **${timeStr}** — ${text}`);
+    lines.push(`- ${sharePrefix} **${timeStr}** — ${text}`);
   });
 };
 

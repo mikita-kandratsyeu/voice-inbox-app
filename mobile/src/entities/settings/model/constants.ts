@@ -1,3 +1,5 @@
+import { IS_IOS } from '@/shared/lib/platform';
+
 import type {
   AIModel,
   LocalAiModelId,
@@ -17,6 +19,7 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     speed: 'fast',
     tierLabelKey: 'aiModels.tierFast',
     supportTierCode: 'fast',
+    contextTokens: 1_048_576,
   },
   {
     id: 'google/gemini-3.1-flash-lite',
@@ -26,26 +29,50 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     speed: 'fast',
     tierLabelKey: 'aiModels.tierSmart',
     supportTierCode: 'smarter',
-  },
-  {
-    id: 'minimax/minimax-m2.7',
-    name: 'MiniMax M2.7',
-    provider: 'MiniMax',
-    descriptionKey: 'aiModels.minimaxDesc',
-    speed: 'fast',
-    tierLabelKey: 'aiModels.tierPremium',
-    supportTierCode: 'premium_experimental',
+    contextTokens: 1_048_576,
   },
   {
     id: 'deepseek/deepseek-v4-flash',
     name: 'DeepSeek V4 Flash',
     provider: 'DeepSeek',
     descriptionKey: 'aiModels.deepSeekDesc',
-    speed: 'fast',
+    speed: 'medium',
     tierLabelKey: 'aiModels.tierDeepSeek',
     supportTierCode: 'fast',
+    contextTokens: 1_048_576,
+  },
+  {
+    id: 'xiaomi/mimo-v2-flash',
+    name: 'MiMo V2 Flash',
+    provider: 'Xiaomi',
+    descriptionKey: 'aiModels.mimoDesc',
+    speed: 'medium',
+    tierLabelKey: 'aiModels.tierMiMo',
+    supportTierCode: 'fast',
+    contextTokens: 268_288,
+  },
+  {
+    id: 'minimax/minimax-m2.7',
+    name: 'MiniMax M2.7',
+    provider: 'MiniMax',
+    descriptionKey: 'aiModels.minimaxDesc',
+    speed: 'slow',
+    tierLabelKey: 'aiModels.tierPremium',
+    supportTierCode: 'premium_experimental',
+    contextTokens: 209_920,
   },
 ];
+
+const AI_MODEL_SPEED_RANK: Record<UserFacingAIModel['speed'], number> = {
+  fast: 0,
+  medium: 1,
+  slow: 2,
+};
+
+/** Manual picker / onboarding list: fastest models first. */
+export const USER_FACING_AI_MODELS_BY_SPEED = [...USER_FACING_AI_MODELS].sort(
+  (a, b) => AI_MODEL_SPEED_RANK[a.speed] - AI_MODEL_SPEED_RANK[b.speed],
+);
 
 export const AI_MODELS: AIModel[] = USER_FACING_AI_MODELS.map(
   ({ tierLabelKey: _t, supportTierCode: _s, ...m }) => m,
@@ -156,7 +183,10 @@ export const WHISPER_MODELS: WhisperModel[] = [
 export const DEFAULT_SELECTED_WHISPER_MODEL_ID: WhisperModelId = 'whisper-base';
 export const DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT: WhisperModelWeightsFormat = 'q5_1';
 
-const WHISPER_MODEL_SIZES_MB: Record<WhisperModelWeightsFormat, Record<WhisperModelId, number>> = {
+const WHISPER_MODEL_WEIGHTS_SIZES_MB: Record<
+  WhisperModelWeightsFormat,
+  Record<WhisperModelId, number>
+> = {
   q5_1: {
     'whisper-tiny': 31,
     'whisper-base': 57,
@@ -171,10 +201,35 @@ const WHISPER_MODEL_SIZES_MB: Record<WhisperModelWeightsFormat, Record<WhisperMo
   },
 };
 
+/** iOS Core ML encoder zip sizes (Hugging Face `*-encoder.mlmodelc.zip`, rounded up). */
+const WHISPER_COREML_ENCODER_SIZES_MB: Record<WhisperModelId, number> = {
+  'whisper-tiny': 15,
+  'whisper-base': 37,
+  'whisper-small': 156,
+  'whisper-medium': 542,
+};
+
+/** Weights-only size (ggml `.bin`). */
 export const getWhisperModelSizeMb = (
   modelId: WhisperModelId,
   format: WhisperModelWeightsFormat,
-): number => WHISPER_MODEL_SIZES_MB[format][modelId];
+): number => WHISPER_MODEL_WEIGHTS_SIZES_MB[format][modelId];
+
+export const getWhisperCoreMlSizeMb = (modelId: WhisperModelId): number =>
+  WHISPER_COREML_ENCODER_SIZES_MB[modelId];
+
+/** Estimated download size: weights + Core ML on iOS when encoder is not on disk yet. */
+export const getWhisperEstimatedDownloadSizeMb = (
+  modelId: WhisperModelId,
+  format: WhisperModelWeightsFormat,
+  options?: { coreMlAlreadyInstalled?: boolean },
+): number => {
+  const weightsMb = getWhisperModelSizeMb(modelId, format);
+  if (!IS_IOS || options?.coreMlAlreadyInstalled) {
+    return weightsMb;
+  }
+  return weightsMb + getWhisperCoreMlSizeMb(modelId);
+};
 
 export const getWhisperModelVariantId = (
   modelId: WhisperModelId,

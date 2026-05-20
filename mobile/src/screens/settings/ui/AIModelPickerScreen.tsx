@@ -13,8 +13,10 @@ import type {
 } from '@/entities/settings';
 import {
   DEFAULT_LOCAL_AI_MODEL_ID,
+  formatModelContextTokens,
   LOCAL_AI_MODELS,
   USER_FACING_AI_MODELS,
+  USER_FACING_AI_MODELS_BY_SPEED,
   useSettingsStore,
 } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
@@ -24,8 +26,41 @@ import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader } from '@/shared/ui';
 
-import { getSpeedColor } from '../lib';
 import { LocalAiModelCard } from './LocalAiModelCard';
+import { type ModelMetaChip, ModelMetaChips } from './ModelMetaChips';
+
+const AUTO_ROUTING_CONTEXT_TOKENS = 1_048_576;
+
+function autoModelMetaChips(
+  t: (key: string, options?: Record<string, unknown>) => string,
+): ModelMetaChip[] {
+  return [
+    {
+      key: 'context',
+      label: t('aiModels.contextChip', {
+        size: formatModelContextTokens(AUTO_ROUTING_CONTEXT_TOKENS),
+      }),
+    },
+    { key: 'routing', label: t('aiModels.autoRoutingChip') },
+  ];
+}
+
+function cloudModelMetaChips(
+  model: (typeof USER_FACING_AI_MODELS)[number],
+  t: (key: string, options?: Record<string, unknown>) => string,
+): ModelMetaChip[] {
+  return [
+    {
+      key: 'context',
+      label: t('aiModels.contextChip', { size: formatModelContextTokens(model.contextTokens) }),
+    },
+    { key: 'provider', label: model.provider },
+    {
+      key: 'speed',
+      label: t(`aiModels.speed.${model.speed}`, { defaultValue: model.speed }),
+    },
+  ];
+}
 
 function formatApproxSizeMb(sizeMb: number): string {
   if (sizeMb >= 1000) {
@@ -180,22 +215,22 @@ export const AIModelPickerScreen = () => {
       tierLabel: t('aiModels.tierAuto'),
       name: t('aiModels.autoName'),
       description: t('aiModels.autoDescription'),
-      speed: 'fast' as const,
       isRecommended: true,
+      metaChips: autoModelMetaChips(t),
     },
-    ...USER_FACING_AI_MODELS.map((model) => ({
+    ...USER_FACING_AI_MODELS_BY_SPEED.map((model) => ({
       id: model.id,
       tierLabel: t(model.tierLabelKey),
       name: model.name,
       description: t(model.descriptionKey as 'aiModels.geminiDesc'),
       speed: model.speed,
       isRecommended: false,
+      metaChips: cloudModelMetaChips(model, t),
     })),
   ];
   const models = isPrivateMode ? LOCAL_AI_MODELS : cloudOptions;
   const autoOption = cloudOptions[0];
   const manualCloudOptions = cloudOptions.slice(1);
-  const shouldShowCloudSpeed = new Set(cloudOptions.map((option) => option.speed)).size > 1;
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -225,11 +260,7 @@ export const AIModelPickerScreen = () => {
                 {t('aiModels.privateBudgetHint')}
               </Text>
             </View>
-          ) : (
-            <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-              {t('aiModels.description')}
-            </Text>
-          )}
+          ) : null}
           {isPrivateMode ? (
             <View className="overflow-hidden rounded-2xl">
               {models.map((model, index) => {
@@ -296,23 +327,13 @@ export const AIModelPickerScreen = () => {
                         </View>
                       </View>
                       <Text
-                        className="mb-1.5 text-[14px] leading-5"
+                        className="mb-2 text-[14px] leading-5"
                         style={{ color: color.text.secondary }}
                       >
                         {autoOption.description}
                       </Text>
-                      {shouldShowCloudSpeed ? (
-                        <View className="flex-row items-center gap-1">
-                          <View
-                            className="h-2 w-2 rounded-full"
-                            style={{ backgroundColor: getSpeedColor(autoOption.speed, color) }}
-                          />
-                          <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-                            {t(`aiModels.speed.${autoOption.speed}`, {
-                              defaultValue: autoOption.speed,
-                            })}
-                          </Text>
-                        </View>
+                      {'metaChips' in autoOption && autoOption.metaChips ? (
+                        <ModelMetaChips color={color} chips={autoOption.metaChips} />
                       ) : null}
                     </View>
                     {aiModelRoutingMode === 'auto' ? (
@@ -382,11 +403,14 @@ export const AIModelPickerScreen = () => {
                             {cloudOption.name}
                           </Text>
                           <Text
-                            className="text-[14px] leading-5"
+                            className="mb-2 text-[14px] leading-5"
                             style={{ color: color.text.secondary }}
                           >
                             {cloudOption.description}
                           </Text>
+                          {'metaChips' in cloudOption && cloudOption.metaChips ? (
+                            <ModelMetaChips color={color} chips={cloudOption.metaChips} />
+                          ) : null}
                         </View>
                         {isSelected ? (
                           <View

@@ -1,6 +1,6 @@
 import { types } from '@react-native-documents/picker';
 import dayjs from 'dayjs';
-import { unzip } from 'react-native-zip-archive';
+import { isPasswordProtected, unzip, unzipWithPassword } from 'react-native-zip-archive';
 import { z } from 'zod';
 
 import type { Folder } from '@/entities/folder';
@@ -8,6 +8,7 @@ import { useFolderStore } from '@/entities/folder';
 import { DEFAULT_FOLDER_ICON_KEY } from '@/entities/folder/lib/folderLucideIcons';
 import { folderRepository } from '@/entities/folder/model/repository';
 import type { RecordClassification, RecordingMark, VoiceRecord } from '@/entities/record';
+import { sanitizeRecordingMark } from '@/entities/record';
 import {
   DEFAULT_FOLDER_BRAND_HEX,
   ensureRecordingsDir,
@@ -65,6 +66,7 @@ const VoiceRecordSchema = z.looseObject({
       z.object({
         id: safeString,
         offsetMs: z.number().finite(),
+        kind: z.enum(['moment', 'important', 'task', 'quote']).optional(),
         label: safeString.optional(),
       }),
     )
@@ -79,18 +81,8 @@ function normalizeRecordingMarks(raw: unknown): RecordingMark[] | undefined {
   }
   const out: RecordingMark[] = [];
   for (let i = 0; i < raw.length; i++) {
-    const m = raw[i];
-    if (!m || typeof m !== 'object') continue;
-    const obj = m as Record<string, unknown>;
-    const id = typeof obj.id === 'string' ? obj.id : '';
-    const offsetMsRaw = obj.offsetMs;
-    const offsetMs =
-      typeof offsetMsRaw === 'number' && Number.isFinite(offsetMsRaw)
-        ? Math.max(0, Math.round(offsetMsRaw))
-        : 0;
-    const label = typeof obj.label === 'string' ? obj.label.slice(0, 280) : '';
-    if (!id) continue;
-    out.push({ id, offsetMs, label });
+    const mark = sanitizeRecordingMark(raw[i], i);
+    if (mark) out.push(mark);
   }
   return out.length > 0 ? out : undefined;
 }
@@ -132,9 +124,19 @@ const ExportPayloadSchema = z.discriminatedUnion('version', [
 
 type ExportPayload = z.infer<typeof ExportPayloadSchema>;
 
-type ImportResult =
+/** Machine-readable import error for UI branching (not shown to users). */
+export const IMPORT_ERROR_WRONG_BACKUP_PASSWORD = '__wrong_backup_password__' as const;
+
+export type ImportDataOptions = {
+  password?: string;
+  /** Retry import after user enters password (file already in app cache). */
+  zipFsPath?: string;
+};
+
+export type ImportResult =
   | { success: true; records: VoiceRecord[]; exportedAt: string }
-  | { success: false; error: string };
+  | { success: false; error: 'cancelled' | string }
+  | { success: false; needsPassword: true; zipFsPath: string };
 
 const VALID_CLASSIFICATIONS: RecordClassification[] = [
   'personal',
@@ -347,14 +349,64 @@ async function readUtf8WithAllFallbacks(path: string): Promise<string> {
   }
 }
 
-async function importFromZip(fileUri: string): Promise<ImportResult> {
+async function extractZipArchive(
+  zipPath: string,
+  extractDir: string,
+  password?: string,
+): Promise<'ok' | 'needs_password' | 'wrong_password' | 'failed'> {
+  let protectedZip = false;
+  try {
+    protectedZip = await isPasswordProtected(zipPath);
+  } catch {
+    protectedZip = false;
+  }
+
+  if (protectedZip) {
+    const trimmed = password?.trim();
+    if (!trimmed) {
+      return 'needs_password';
+    }
+    try {
+      await unzipWithPassword(zipPath, extractDir, trimmed);
+      return 'ok';
+    } catch {
+      return 'wrong_password';
+    }
+  }
+
+  try {
+    await unzip(zipPath, extractDir);
+    return 'ok';
+  } catch {
+    const trimmed = password?.trim();
+    if (trimmed) {
+      try {
+        await unzipWithPassword(zipPath, extractDir, trimmed);
+        return 'ok';
+      } catch {
+        return 'wrong_password';
+      }
+    }
+    return 'failed';
+  }
+}
+
+async function importFromZip(fileUri: string, password?: string): Promise<ImportResult> {
   const timestamp = Date.now();
   const extractDir = `${getCachesDirectoryPath()}/import-extract-${timestamp}`;
   const zipPath = toFsPath(fileUri);
 
-  try {
-    await unzip(zipPath, extractDir);
-  } catch {
+  const extractResult = await extractZipArchive(zipPath, extractDir, password);
+  if (extractResult === 'needs_password') {
+    await removeDirRecursive(extractDir).catch(() => {});
+    return { success: false, needsPassword: true, zipFsPath: zipPath };
+  }
+  if (extractResult === 'wrong_password') {
+    await removeDirRecursive(extractDir).catch(() => {});
+    return { success: false, error: IMPORT_ERROR_WRONG_BACKUP_PASSWORD };
+  }
+  if (extractResult === 'failed') {
+    await removeDirRecursive(extractDir).catch(() => {});
     return { success: false, error: i18n.t('importExport.invalidFormat') };
   }
 
@@ -485,50 +537,69 @@ async function removeDirRecursive(path: string): Promise<void> {
   await NitroFS.unlink(path);
 }
 
-export const importData = async (): Promise<ImportResult> => {
-  let pickedFsPath: string | null = null;
+export const importData = async (options?: ImportDataOptions): Promise<ImportResult> => {
+  let pickedFsPath: string | null = options?.zipFsPath ?? null;
+  let keepPickedFileInCache = false;
 
   try {
-    const picked = await pickSingleFileToCachesDirectory({
-      type: [types.allFiles],
-    });
+    let fsPath = pickedFsPath;
+    let uri: string | undefined;
+    let fileName = '';
 
-    if (picked.kind === 'canceled') {
-      return { success: false, error: 'cancelled' };
-    }
-    if (picked.kind === 'failed') {
-      if (__DEV__) {
-        console.warn('[importData] pick/copy failed', picked.message);
+    if (!fsPath) {
+      const picked = await pickSingleFileToCachesDirectory({
+        type: [types.allFiles],
+      });
+
+      if (picked.kind === 'canceled') {
+        return { success: false, error: 'cancelled' };
       }
+      if (picked.kind === 'failed') {
+        if (__DEV__) {
+          console.warn('[importData] pick/copy failed', picked.message);
+        }
+        return { success: false, error: i18n.t('importExport.fileNotSelected') };
+      }
+
+      const fileLike = {
+        uri: picked.localUri,
+        fileUri: picked.localUri,
+        fileCopyUri: picked.localUri,
+        name: picked.name ?? undefined,
+      };
+      fsPath = await getReadableDocumentPickerFsPath(fileLike);
+      pickedFsPath = fsPath;
+      uri = fileLike.fileCopyUri ?? fileLike.fileUri ?? fileLike.uri;
+      fileName = fileLike.name ?? '';
+
+      if (!uri || !fsPath) {
+        if (__DEV__) {
+          console.warn('[importData] picker path is not readable', {
+            uri: fileLike.uri,
+            fileUri: fileLike.fileUri,
+            fileCopyUri: fileLike.fileCopyUri,
+          });
+        }
+        return { success: false, error: i18n.t('importExport.fileNotSelected') };
+      }
+    }
+
+    if (!fsPath) {
       return { success: false, error: i18n.t('importExport.fileNotSelected') };
     }
 
-    const fileLike = {
-      uri: picked.localUri,
-      fileUri: picked.localUri,
-      fileCopyUri: picked.localUri,
-      name: picked.name ?? undefined,
-    };
-    const fsPath = await getReadableDocumentPickerFsPath(fileLike);
-    pickedFsPath = fsPath;
-    const uri = fileLike.fileCopyUri ?? fileLike.fileUri ?? fileLike.uri;
-
-    if (!uri || !fsPath) {
-      if (__DEV__) {
-        console.warn('[importData] picker path is not readable', {
-          uri: fileLike.uri,
-          fileUri: fileLike.fileUri,
-          fileCopyUri: fileLike.fileCopyUri,
-        });
-      }
-      return { success: false, error: i18n.t('importExport.fileNotSelected') };
-    }
-
-    const fileName = fileLike.name ?? '';
-    const isZip = await shouldTreatAsZipArchive(uri, fileName);
+    const isZip = options?.zipFsPath
+      ? true
+      : uri != null && uri.length > 0
+        ? await shouldTreatAsZipArchive(uri, fileName)
+        : await fileHasZipLocalHeader(fsPath);
 
     if (isZip) {
-      return await importFromZip(fsPath);
+      const zipResult = await importFromZip(fsPath, options?.password);
+      if (!zipResult.success && 'needsPassword' in zipResult && zipResult.needsPassword) {
+        keepPickedFileInCache = true;
+      }
+      return zipResult;
     }
 
     const raw = await readTextWithFileSchemeFallback(fsPath, 'utf8');
@@ -579,7 +650,11 @@ export const importData = async (): Promise<ImportResult> => {
 
     return { success: false, error: i18n.t('importExport.readError') };
   } finally {
-    if (pickedFsPath && isPathInsideDir(pickedFsPath, getCachesDirectoryPath())) {
+    if (
+      pickedFsPath &&
+      !keepPickedFileInCache &&
+      isPathInsideDir(pickedFsPath, getCachesDirectoryPath())
+    ) {
       await unlinkIfExists(pickedFsPath);
     }
   }

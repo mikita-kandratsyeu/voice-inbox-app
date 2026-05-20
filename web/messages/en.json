@@ -158,7 +158,7 @@
     "supportTitle": "Support — Voice Inbox AI",
     "supportDescription": "How to get help with Voice Inbox AI: contact options, privacy, and terms.",
     "viewerTitle": "Backup viewer — Voice Inbox AI",
-    "viewerDescription": "Open an exported backup ZIP from the Voice Inbox AI app in your browser. Nothing is uploaded to our servers."
+    "viewerDescription": "Open a backup ZIP exported from the Voice Inbox AI app in your browser. Nothing is uploaded to our servers."
   },
   "supportPage": {
     "heading": "Support",
@@ -175,7 +175,7 @@
     "heading": "Backup viewer",
     "introShort": "Open a backup ZIP from the Voice Inbox AI app — everything stays in your browser.",
     "introMore": "How it works",
-    "introDetail": "Export a backup from the mobile app (Settings → Import / Export), then choose or drop the ZIP here. Your notes are never uploaded to our servers.",
+    "introDetail": "Export a backup from the app (Settings → Import / Export), then choose or drop the ZIP here. Your notes are never uploaded to our servers.",
     "chooseArchivePrimary": "Choose backup ZIP",
     "dragZipHint": "Or drag and drop a file (max about {maxMb} MB).",
     "privacyInline": "Nothing is uploaded to our servers — processing stays in this tab.",
@@ -242,10 +242,25 @@
     "copyFailed": "Copy failed",
     "audioMissing": "Audio file was not found inside this archive.",
     "selectPrompt": "Select a note from the list.",
+    "loadingVerifyingPassword": "Checking password…",
+    "loadingReadingArchive": "Reading archive…",
+    "loadingCheckingMetadata": "Checking metadata…",
+    "loadingDone": "Done",
+    "passwordPrompt": {
+      "protectedBadge": "Password protected",
+      "title": "Password-protected backup",
+      "subtitle": "Enter the password you set when exporting this backup from the app.",
+      "warning": "We can’t recover this password. If you don’t remember it, the backup can’t be opened.",
+      "label": "Backup password",
+      "placeholder": "Your password",
+      "submit": "Open backup",
+      "required": "Enter the backup password."
+    },
     "errors": {
       "too_large": "This file is too large for the browser viewer. Try a smaller export or open the archive on your computer with more RAM.",
       "not_zip": "Please choose a valid ZIP file exported from Voice Inbox AI.",
       "unzip_failed": "Could not read this ZIP file. It may be corrupted or not a Voice Inbox AI backup.",
+      "wrong_password": "Wrong password. Use the one from backup export and try again.",
       "no_metadata": "This ZIP does not contain metadata.json. Use a backup exported from the Voice Inbox AI app.",
       "invalid_json": "metadata.json is damaged or not valid JSON.",
       "invalid_schema": "This backup format is not recognized. Export again from the latest version of the app.",

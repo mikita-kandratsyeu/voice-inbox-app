@@ -7,7 +7,8 @@ export type UserSelectableAIModelId =
   | 'google/gemini-2.5-flash-lite'
   | 'google/gemini-3.1-flash-lite'
   | 'minimax/minimax-m2.7'
-  | 'deepseek/deepseek-v4-flash';
+  | 'deepseek/deepseek-v4-flash'
+  | 'xiaomi/mimo-v2-flash';
 export type LocalAiModelId =
   | 'local/qwen3-1.7b-q4_k_m'
   | 'local/gemma-2-2b-it-q4_k_m'
@@ -43,7 +44,8 @@ export type AiModelTierLabelKey =
   | 'aiModels.tierFast'
   | 'aiModels.tierSmart'
   | 'aiModels.tierPremium'
-  | 'aiModels.tierDeepSeek';
+  | 'aiModels.tierDeepSeek'
+  | 'aiModels.tierMiMo';
 
 export type AiUserTierCode = 'fast' | 'smarter' | 'premium_experimental';
 export type AiModelRoutingMode = 'manual' | 'auto';
@@ -52,6 +54,8 @@ export type UserFacingAIModel = Omit<AIModel, 'id'> & {
   id: UserSelectableAIModelId;
   tierLabelKey: AiModelTierLabelKey;
   supportTierCode: AiUserTierCode;
+  /** Model context window for picker chips (tokens). */
+  contextTokens: number;
 };
 
 export type WhisperModel = {

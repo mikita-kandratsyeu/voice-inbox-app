@@ -5,9 +5,9 @@ import { ActivityIndicator, Alert, ScrollView, Text, TouchableOpacity, View } fr
 
 import type { UserSelectableAIModelId, WhisperModelId } from '@/entities/settings';
 import {
-  getWhisperModelSizeMb,
+  getWhisperEstimatedDownloadSizeMb,
   getWhisperModelVariantId,
-  USER_FACING_AI_MODELS,
+  USER_FACING_AI_MODELS_BY_SPEED,
   useRecommendedWhisperModelId,
   useSettingsStore,
   useWhisperModelCompatibility,
@@ -53,7 +53,7 @@ export const OnboardingSetupStep = ({
     if (status === 'downloading') return;
     if (status === 'downloaded') return;
 
-    const sizeMb = getWhisperModelSizeMb(id, 'q5_1');
+    const sizeMb = getWhisperEstimatedDownloadSizeMb(id, 'q5_1');
     const isSmallModel = sizeMb <= 150;
 
     const doDownload = () => {
@@ -78,7 +78,7 @@ export const OnboardingSetupStep = ({
         name: t('aiModels.autoRecommendedLabel'),
         isRecommended: true,
       },
-      ...USER_FACING_AI_MODELS.map((model) => ({
+      ...USER_FACING_AI_MODELS_BY_SPEED.map((model) => ({
         id: model.id,
         name: model.name,
         isRecommended: false,
@@ -199,7 +199,9 @@ export const OnboardingSetupStep = ({
           const compat = compatibility?.[model.id];
           const isLast = index === WHISPER_MODELS.length - 2;
           const isSelected = model.id === selectedWhisperModel;
-          const displaySize = formatFileSize(getWhisperModelSizeMb(model.id, 'q5_1') * 1024 * 1024);
+          const displaySize = formatFileSize(
+            getWhisperEstimatedDownloadSizeMb(model.id, 'q5_1') * 1024 * 1024,
+          );
 
           if (model.id === 'whisper-medium') {
             return null;

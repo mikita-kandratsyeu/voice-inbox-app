@@ -12,6 +12,7 @@ import {
 } from '@/lib/auto-organize-input-limits';
 import { normalizeAutoOrganizeFolderColor } from '@/lib/folder-accent-colors';
 import { buildAskUserMessageContent } from '@/lib/ask-user-message';
+import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
 import { ASK_QUESTION_SYSTEM_PROMPT, AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT } from '@/lib/prompts';
 import type { AiResult, AutoOrganizeResult, RecordClassification } from '@/types';
 
@@ -239,8 +240,16 @@ export async function processAskQuestion(
   tasks?: { text: string }[],
   priorTurns?: { question: string; answer: string }[],
   clientUserAgent?: string | null,
+  recordingMarks?: RecordingMarkForPrompt[],
 ): Promise<{ answer: string }> {
-  const userContent = buildAskUserMessageContent(transcript, question, summary, tasks, priorTurns);
+  const userContent = buildAskUserMessageContent(
+    transcript,
+    question,
+    summary,
+    tasks,
+    priorTurns,
+    recordingMarks,
+  );
 
   const callAsk = async (
     content: string,

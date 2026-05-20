@@ -11,6 +11,7 @@ import { HEADER_SYNC_TOKEN } from '@/config/constants';
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { logAiRequest } from '@/lib/ai-operation';
 import { estimateAskRoutingChars, parseAskPriorTurns } from '@/lib/ask-user-message';
+import { sanitizeRecordingMarksForPrompt } from '@/lib/recording-marks-prompt';
 import {
   estimateSummaryTasksRoutingChars,
   resolveAutoAiModel,
@@ -35,6 +36,7 @@ type CreateAskBody = {
   summary?: unknown;
   tasks?: unknown;
   priorTurns?: unknown;
+  recordingMarks?: unknown;
   messageTtlSeconds?: unknown;
 };
 
@@ -77,6 +79,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     summary,
     tasks,
     priorTurns: rawPrior,
+    recordingMarks: rawRecordingMarks,
     messageTtlSeconds: rawMessageTtl,
   } = body as {
     id: string;
@@ -88,6 +91,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     summary?: string;
     tasks?: { text: string }[];
     priorTurns?: unknown;
+    recordingMarks?: unknown;
     messageTtlSeconds?: unknown;
   };
 
@@ -107,11 +111,19 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       : undefined;
 
   const priorTurnsList = parseAskPriorTurns(rawPrior);
+  const recordingMarksList = sanitizeRecordingMarksForPrompt(rawRecordingMarks);
 
   const routingChars =
     routingTaskType === 'summary_tasks'
       ? estimateSummaryTasksRoutingChars(transcript, undefined)
-      : estimateAskRoutingChars(transcript, question, summaryStr, tasksList, priorTurnsList);
+      : estimateAskRoutingChars(
+          transcript,
+          question,
+          summaryStr,
+          tasksList,
+          priorTurnsList,
+          recordingMarksList,
+        );
   let resolvedModel =
     modelMode === 'auto'
       ? resolveAutoAiModel({
@@ -144,6 +156,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     priorTurnsList,
     req.headers.get('user-agent'),
     messageTtlSeconds,
+    recordingMarksList,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {

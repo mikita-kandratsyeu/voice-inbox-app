@@ -23,6 +23,7 @@ import {
   sanitizeTaskExtractionHint,
   type AiProcessingOptions,
 } from '@/lib/prompts';
+import { sanitizeRecordingMarksForPrompt } from '@/lib/recording-marks-prompt';
 import { setAppForeground } from '@/lib/push-tokens';
 import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
 import { isProDevice } from '@/lib/pro-entitlement';
@@ -91,7 +92,11 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     modelMode?: AiModelMode;
     routingContext?: { taskType?: unknown; transcriptChars?: unknown };
     systemPrompt?: string;
-    options?: AiProcessingOptions & { existingTaskTexts?: unknown; taskExtractionHint?: unknown };
+    options?: AiProcessingOptions & {
+      existingTaskTexts?: unknown;
+      taskExtractionHint?: unknown;
+      recordingMarks?: unknown;
+    };
     messageTtlSeconds?: unknown;
   };
 
@@ -102,17 +107,20 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     const {
       existingTaskTexts: rawExisting,
       taskExtractionHint: rawHint,
+      recordingMarks: rawRecordingMarks,
       processingPreset: rawProcessingPreset,
       ...rest
     } = rawOptions;
     const existing = sanitizeExistingTaskTextsForPrompt(rawExisting);
     const hint = sanitizeTaskExtractionHint(rawHint);
+    const recordingMarks = sanitizeRecordingMarksForPrompt(rawRecordingMarks);
     const processingPreset = rawProcessingPreset === 'meeting' ? 'meeting' : undefined;
     options = {
       ...rest,
       ...(processingPreset ? { processingPreset } : {}),
       ...(existing ? { existingTaskTexts: existing } : {}),
       ...(hint ? { taskExtractionHint: hint } : {}),
+      ...(recordingMarks ? { recordingMarks } : {}),
     };
   }
 

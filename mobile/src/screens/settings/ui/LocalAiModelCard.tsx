@@ -9,10 +9,13 @@ import type {
   LocalAiModelId,
   WhisperModelStatus,
 } from '@/entities/settings';
+import { formatModelContextTokens } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
+import { getLocalLlmNCtx } from '@/shared/lib/ai-core/localLlmModelProfiles';
 import { formatFileSize } from '@/shared/lib/whisper';
 
-import { getCardRadiusClass, getSpeedColor } from '../lib';
+import { getCardRadiusClass } from '../lib';
+import { type ModelMetaChip, ModelMetaChips } from './ModelMetaChips';
 import { WhisperModelSpinner } from './WhisperModelSpinner';
 
 type LocalAiModelCardProps = {
@@ -53,6 +56,19 @@ export const LocalAiModelCard = ({
   const isError = status === 'error';
   const isLast = index === total - 1;
   const isRecommended = model.id === recommendedModelId;
+  const metaChips: ModelMetaChip[] = [
+    {
+      key: 'context',
+      label: t('aiModels.contextChip', {
+        size: formatModelContextTokens(getLocalLlmNCtx(model.id)),
+      }),
+    },
+    { key: 'size', label: displaySize },
+    {
+      key: 'speed',
+      label: t(`aiModels.speed.${model.speed}`, { defaultValue: model.speed }),
+    },
+  ];
   const pct = Math.min(100, Math.max(0, Math.round(downloadPercent)));
   const showByteProgress =
     downloadBytes !== undefined &&
@@ -85,15 +101,7 @@ export const LocalAiModelCard = ({
             <Text className="text-[16px] font-semibold" style={{ color: color.text.primary }}>
               {model.name}
             </Text>
-            <View
-              className="rounded-full px-2 py-0.5"
-              style={{ backgroundColor: color.background.tertiary }}
-            >
-              <Text className="text-[12px]" style={{ color: color.text.secondary }}>
-                {displaySize}
-              </Text>
-            </View>
-            {isRecommended && (
+            {isRecommended ? (
               <View
                 className="rounded-full px-2 py-0.5"
                 style={{ backgroundColor: color.status.processing.bg }}
@@ -105,26 +113,12 @@ export const LocalAiModelCard = ({
                   {t('whisper.recommended')}
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
-          <Text className="mb-1.5 text-[14px] leading-5" style={{ color: color.text.secondary }}>
+          <Text className="mb-2 text-[14px] leading-5" style={{ color: color.text.secondary }}>
             {t(model.descriptionKey as 'aiModels.localQwen3Desc')}
           </Text>
-
-          <View className="flex-row flex-wrap items-center gap-x-3 gap-y-1">
-            <View className="flex-row items-center gap-1">
-              <View
-                className="h-2 w-2 rounded-full"
-                style={{ backgroundColor: getSpeedColor(model.speed, color) }}
-              />
-              <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-                {t(`aiModels.speed.${model.speed}`, { defaultValue: model.speed })}
-              </Text>
-            </View>
-            <Text className="text-[14px]" style={{ color: color.text.muted }}>
-              {t(`aiModels.deviceLoad.${model.deviceLoad}`)}
-            </Text>
-          </View>
+          <ModelMetaChips color={color} chips={metaChips} className="mb-1.5" />
 
           {isDownloading ? (
             <View className="mt-2 gap-2">

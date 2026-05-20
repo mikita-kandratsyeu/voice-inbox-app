@@ -279,7 +279,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - llama-rn (0.12.0):
+  - llama-rn (0.12.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -334,7 +334,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - NitroFS (0.8.2):
+  - NitroFS (0.9.0):
     - hermes-engine
     - NitroModules
     - RCTRequired
@@ -426,7 +426,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - op-sqlite (15.2.11):
+  - op-sqlite (16.0.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -447,14 +447,16 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - OpenSSL-Universal (3.6.0000)
   - PromisesObjC (2.4.0)
   - PromisesSwift (2.4.0):
     - PromisesObjC (= 2.4.0)
-  - PurchasesHybridCommon (17.53.0):
-    - RevenueCat (= 5.66.0)
-  - QuickCrypto (1.0.19):
+  - PurchasesHybridCommon (18.6.0):
+    - RevenueCat (= 5.72.0)
+  - QuickCrypto (1.1.4):
     - hermes-engine
     - NitroModules
+    - OpenSSL-Universal (~> 3.6)
     - RCTRequired
     - RCTTypeSafety
     - React-callinvoker
@@ -1945,8 +1947,27 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-quick-base64 (2.2.2):
+  - react-native-quick-base64 (3.0.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - react-native-safe-area-context (5.7.0):
     - hermes-engine
     - RCTRequired
@@ -2412,7 +2433,7 @@ PODS:
     - React-utils (= 0.84.1)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.84.1)
-  - RevenueCat (5.66.0)
+  - RevenueCat (5.72.0)
   - RNBootSplash (7.2.0):
     - hermes-engine
     - RCTRequired
@@ -2703,8 +2724,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNPurchases (9.15.0):
-    - PurchasesHybridCommon (= 17.53.0)
+  - RNPurchases (10.1.1):
+    - PurchasesHybridCommon (= 18.6.0)
     - React-Core
   - RNReactNativeHapticFeedback (3.0.0):
     - hermes-engine
@@ -2956,13 +2977,28 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNZipArchive (7.0.2):
+  - RNZipArchive (8.0.1):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
     - React-Core
-    - RNZipArchive/Core (= 7.0.2)
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
     - SSZipArchive (~> 2.5.5)
-  - RNZipArchive/Core (7.0.2):
-    - React-Core
-    - SSZipArchive (~> 2.5.5)
+    - Yoga
   - SSZipArchive (2.5.5)
   - VGSL (7.21.0):
     - VGSLFundamentals (= 7.21.0)
@@ -3197,6 +3233,7 @@ SPEC REPOS:
     - GoogleUtilities
     - MMKVCore
     - nanopb
+    - OpenSSL-Universal
     - PromisesObjC
     - PromisesSwift
     - PurchasesHybridCommon
@@ -3497,20 +3534,21 @@ SPEC CHECKSUMS:
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   hermes-engine: 0437e9839a87c1d737989c1116dd08492d271607
   InappbrowserNitro: e4e4ba49eb5e0cb1b6ed7ffe0224bfcaf5bd8d28
-  llama-rn: e8937bdda6f62e373622dc3ab9c0456de2331175
+  llama-rn: 1ac0a6063df0057d6ad39c56300c6f3f97bc947e
   MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   NitroDeviceInfo: 8c57fd4d884155052244f9b2470ae735ec5d92b3
   NitroFetch: ffc478f42d9fd4207e19be7d8c82985caef787cf
-  NitroFS: ac0caec3a38062ecfe5a6936b2e6e7839fc978eb
+  NitroFS: 671a78596568ba42758ff3ca8cbd8c2fa3b43486
   NitroMmkv: 21968ae5bd91f4569b8a69b2e75357845dac2ca1
   NitroModules: a750ad09c011cdb4a8a8e6660088f3232ef3544d
   NitroSound: a21d97f76f053b2e14d8c5de00402dcf54de3dae
-  op-sqlite: 99bc230f1bfeda983df3977ebb683b8ef25b5ba2
+  op-sqlite: 801d96eacc60c4275cca4bbfeaa82c1ae26a3a04
+  OpenSSL-Universal: 9110d21982bb7e8b22a962b6db56a8aa805afde7
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
-  PurchasesHybridCommon: 53d966ac5c39df13c3c759289bb3ef3e2f9f1622
-  QuickCrypto: 13a473441a9cbc108fc08f46ab57cfc1f702e088
+  PurchasesHybridCommon: 89a3ddba365c20457a4712bc3d6377b0ea3c9b4f
+  QuickCrypto: 972ac5e58c445eed182b7ab2e5c1c10602f09701
   RCTDeprecation: 7489702d717ceea80e271eeacb3fbca39fa3c056
   RCTRequired: 1cceac389e77dc5826c681cb782d864b0ed623fc
   RCTSwiftUI: afc0a0a635860da1040a0b894bfd529da06d7810
@@ -3555,7 +3593,7 @@ SPEC CHECKSUMS:
   react-native-keyboard-controller: 278a92111e8289cac132cedde45e2d319a2d3efe
   react-native-menu: 2f87618b07c3ce5eeb0ef17d3ffee52e2575673b
   react-native-netinfo: c9fa0172bba6414449ea5b67fc92f2c99c20cb1d
-  react-native-quick-base64: d87272898345e0fc3c3afb8e5dff335d51214f3e
+  react-native-quick-base64: d141c938c88e6c2e6199d5f7c515fe8dc0c0120d
   react-native-safe-area-context: 77b4164a2f78aba35dc07956dc448bea7f4bec7f
   react-native-slider: 04f5b66cb796c23d256c1a842fa801fe1768e2cd
   React-NativeModulesApple: 7dcb21dde521e4f5795447db38d0e5ed43cb8aac
@@ -3592,7 +3630,7 @@ SPEC CHECKSUMS:
   ReactCodegen: 77b3a9c53a1e55bee263ba67fb42740baac0742c
   ReactCommon: 830aace2ab1372d6a923a7d95e629f1d8a21bfd4
   ReactNativeDependencies: 394e7e486c6fb55a3667f642472e683b64dbda97
-  RevenueCat: a3cf721ad8b1b56a930d748a40342aba16c09bbb
+  RevenueCat: 136390ad99039cdd692156af5e479293ae83b2a9
   RNBootSplash: a4ac7d40cc5d7e2b63bbf28e0ad269681efecabb
   RNCalendarEvents: 7e65eb4a94f53c1744d1e275f7fafcfaa619f7a3
   RNCClipboard: 26237d7fcfc6359e674655b02d03d6178d63d085
@@ -3607,14 +3645,14 @@ SPEC CHECKSUMS:
   RNKeychain: 275ef633df968a177479fcdb2b5cec152af268da
   RNLocalize: 9fd075df3aaccb1b8a7039e805d36d121794ce86
   RNPermissions: 63a688f0b715732e2e7cdb7b465f596833853158
-  RNPurchases: 41ca969b51935260a9b874d1358535286d496d3b
+  RNPurchases: b5b781d0c2b67472f203e0aae59907a519d4369b
   RNReactNativeHapticFeedback: 50fb580f22705e3407d44d208fd113aab5f324bc
   RNReanimated: 066bfc8c201f51f2176ff3d0a82ffb2f357a132d
   RNReminders: e7bdf59616634b7ae180b18f6bf86dba531b0007
   RNScreens: 4f8237da8f9f7aaac0f375bb61efe6011f5cd13b
   RNSVG: 9fcdedc0159978b3a7bb25b3e1da4b0b4dd1b137
   RNWorklets: c3a8a2118a0ba6bf46b285eb1c8ce568d8402e57
-  RNZipArchive: 421f5f056eddfe72f56ac4400608d202d2c53674
+  RNZipArchive: 071aee69059e0347cb7519c5354aa436b8a23e73
   SSZipArchive: c69881e8ac5521f0e622291387add5f60f30f3c4
   VGSL: 0573c2b82b05aadcba4836398ce3778d271bfd13
   VGSLFundamentals: 3a081684c1a5df5800bf88aca8a9bdff2c10cfd9

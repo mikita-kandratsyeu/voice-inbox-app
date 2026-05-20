@@ -6,14 +6,13 @@ import {
   audioPathToDbValue,
   getDB,
   getRecordingsRelativePath,
-  isNumber,
   isRecord,
-  isString,
   recordAskAiTable,
   recordsTable,
 } from '@/shared/lib';
 import type { RecordForStats } from '@/shared/lib/async-storage/storage';
 
+import { sanitizeRecordingMark } from './normalizeRecordingMark';
 import { TRASH_RETENTION_DAYS } from './trashConfig';
 import type {
   RecordClassification,
@@ -26,28 +25,14 @@ import type {
   VoiceRecord,
 } from './types';
 
-const RECORDING_MARK_LABEL_MAX = 280;
-
 function parseRecordingMarks(raw: string | null | undefined): RecordingMark[] {
   try {
     const v = JSON.parse(raw ?? '[]') as unknown;
     if (!Array.isArray(v)) return [];
     const out: RecordingMark[] = [];
     for (let i = 0; i < v.length; i++) {
-      const item = v[i];
-      if (!isRecord(item)) continue;
-      const offsetMsRaw = item.offsetMs;
-      const offsetMs =
-        isNumber(offsetMsRaw) && Number.isFinite(offsetMsRaw)
-          ? Math.max(0, Math.round(offsetMsRaw))
-          : 0;
-      let id = isString(item.id) ? item.id : '';
-      if (!id) id = `rm_legacy_${offsetMs}_${i}`;
-      let label = isString(item.label) ? item.label : '';
-      if (label.length > RECORDING_MARK_LABEL_MAX) {
-        label = label.slice(0, RECORDING_MARK_LABEL_MAX);
-      }
-      out.push({ id, offsetMs, label });
+      const mark = sanitizeRecordingMark(v[i], i);
+      if (mark) out.push(mark);
     }
     return out.slice(0, 400);
   } catch {
@@ -453,11 +438,12 @@ export const recordRepository = {
 
   updateRecordingMarks: async (id: string, marks: RecordingMark[]): Promise<void> => {
     logDb('updateRecordingMarks', { id, count: marks.length });
-    const sanitized = marks.slice(0, 400).map((m, i) => ({
-      id: isString(m.id) && m.id.trim() ? m.id : `rm_${Date.now()}_${i}`,
-      offsetMs: Math.max(0, Math.round(Number(m.offsetMs) || 0)),
-      label: isString(m.label) ? m.label.slice(0, RECORDING_MARK_LABEL_MAX) : '',
-    }));
+    const sanitized = marks.slice(0, 400).map((m, i) => {
+      const base = sanitizeRecordingMark(m, i, `rm_${Date.now()}_${i}`);
+      return (
+        base ?? { id: `rm_${Date.now()}_${i}`, offsetMs: 0, kind: 'moment' as const, label: '' }
+      );
+    });
     const db = getDB();
     await db
       .update(recordsTable)

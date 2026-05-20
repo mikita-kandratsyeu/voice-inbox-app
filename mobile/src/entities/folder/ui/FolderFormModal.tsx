@@ -1,15 +1,9 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import {
-  BottomSheetBackdrop,
-  BottomSheetModal,
-  BottomSheetScrollView,
-  BottomSheetTextInput,
-} from '@gorhom/bottom-sheet';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Crown } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { navigationRef } from '@/app/navigation/navigationRef';
 import { useSettingsStore } from '@/entities/settings/model/store';
@@ -27,8 +21,7 @@ import {
   hapticError,
   resolveFolderColorForCurrentScheme,
 } from '@/shared/lib';
-import { modalKeyboardBehavior } from '@/shared/lib/platform';
-import { Button } from '@/shared/ui';
+import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 import {
   DEFAULT_FOLDER_ICON_KEY,
@@ -75,7 +68,7 @@ export const FolderFormModal = ({
   const { t } = useTranslation();
   const color = useColors();
   const scheme = useAppTheme();
-  const insets = useSafeAreaInsets();
+  const contentPadding = useBottomSheetContentPadding(24);
   const { width } = useWindowDimensions();
   const ref = useRef<BottomSheetModal>(null);
   const { isProActive } = useProEntitlement();
@@ -102,17 +95,6 @@ export const FolderFormModal = ({
       setSelectedIcon(DEFAULT_FOLDER_ICON_KEY);
     }
   }, [folder, visible, globalAccentHex, scheme]);
-
-  useEffect(() => {
-    if (visible) {
-      const frame = requestAnimationFrame(() => {
-        ref.current?.present();
-      });
-      return () => cancelAnimationFrame(frame);
-    }
-    ref.current?.dismiss();
-    return undefined;
-  }, [visible]);
 
   useEffect(() => {
     if (!pendingPaywallOpen || visible || folderProSheet) {
@@ -146,13 +128,6 @@ export const FolderFormModal = ({
     });
     return () => sub.remove();
   }, [visible]);
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="close" opacity={0.45} />
-    ),
-    [],
-  );
 
   const handleSave = () => {
     const trimmed = name.trim();
@@ -221,35 +196,14 @@ export const FolderFormModal = ({
 
   return (
     <>
-      <BottomSheetModal
-        ref={ref}
-        enableDynamicSizing
-        enablePanDownToClose
-        enableOverDrag={false}
-        keyboardBehavior={modalKeyboardBehavior}
-        keyboardBlurBehavior="restore"
-        enableBlurKeyboardOnGesture
-        backdropComponent={renderBackdrop}
-        onDismiss={onClose}
-        backgroundStyle={{
-          backgroundColor: color.background.primary,
-          borderTopWidth: 1,
-          borderTopColor: color.border.default,
-        }}
-        handleIndicatorStyle={{
-          width: 36,
-          height: 5,
-          borderRadius: 2.5,
-          backgroundColor: color.icon.muted,
-        }}
-      >
+      <AppBottomSheetModal ref={ref} visible={visible} onClose={onClose}>
         <BottomSheetScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
           automaticallyAdjustKeyboardInsets={false}
           contentContainerStyle={{
             paddingHorizontal: H_PAD,
-            paddingBottom: Math.max(insets.bottom, 24),
+            ...contentPadding,
           }}
         >
           <Text
@@ -488,7 +442,7 @@ export const FolderFormModal = ({
             </View>
           )}
         </BottomSheetScrollView>
-      </BottomSheetModal>
+      </AppBottomSheetModal>
       <AutomationComingSoonSheet
         visible={folderProSheet}
         feature="folderColor"
