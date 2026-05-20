@@ -49,7 +49,7 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     speed: 'medium',
     tierLabelKey: 'aiModels.tierMiMo',
     supportTierCode: 'fast',
-    contextTokens: 262_144,
+    contextTokens: 268_288,
   },
   {
     id: 'minimax/minimax-m2.7',
@@ -59,7 +59,7 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     speed: 'slow',
     tierLabelKey: 'aiModels.tierPremium',
     supportTierCode: 'premium_experimental',
-    contextTokens: 1_048_576,
+    contextTokens: 209_920,
   },
 ];
 
