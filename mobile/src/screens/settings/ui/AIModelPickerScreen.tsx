@@ -225,11 +225,7 @@ export const AIModelPickerScreen = () => {
                 {t('aiModels.privateBudgetHint')}
               </Text>
             </View>
-          ) : (
-            <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-              {t('aiModels.description')}
-            </Text>
-          )}
+          ) : null}
           {isPrivateMode ? (
             <View className="overflow-hidden rounded-2xl">
               {models.map((model, index) => {

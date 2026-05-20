@@ -1086,7 +1086,6 @@
   },
   "aiModels": {
     "title": "Generation model",
-    "description": "Pick a speed, accuracy, or best quality.",
     "privateDescription": "Private mode uses local on-device models. Cloud models are disabled in this mode.",
     "privateBudgetHint": "Output length and generation time are set in AI settings under \"On-device inference\".",
     "localDownloadBlockedTitle": "Download in progress",
