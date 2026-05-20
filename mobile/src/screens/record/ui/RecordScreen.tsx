@@ -70,6 +70,7 @@ export const RecordScreen = () => {
   const [title, setTitle] = useState('');
   const [recordingMarks, setRecordingMarks] = useState<RecordingMark[]>([]);
   const [markSheetVisible, setMarkSheetVisible] = useState(false);
+  const [markSheetOpenId, setMarkSheetOpenId] = useState(0);
   const [markSnapshotOffsetMs, setMarkSnapshotOffsetMs] = useState(0);
   const [appState, setAppState] = useState(AppState.currentState);
 
@@ -92,11 +93,13 @@ export const RecordScreen = () => {
     maxRecordingMs,
     onLimitReached: () => {
       void logAnalyticsEvent('recording_limit_hit');
+      setMarkSheetVisible(false);
       setTitle('');
       setSaveModalReason('limit');
       setShowSaveModal(true);
     },
     onAudioRouteChange: () => {
+      setMarkSheetVisible(false);
       setTitle('');
       setSaveModalReason('routeChange');
       setShowSaveModal(true);
@@ -142,6 +145,7 @@ export const RecordScreen = () => {
 
   useEffect(() => {
     if (requestShowSaveModal && (state === 'recording' || state === 'paused')) {
+      setMarkSheetVisible(false);
       setTitle('');
       setSaveModalReason('deeplink');
       setShowSaveModal(true);
@@ -206,6 +210,7 @@ export const RecordScreen = () => {
     }
     if (state === 'recording' || state === 'paused') {
       await pauseRecording();
+      setMarkSheetVisible(false);
       setTitle('');
       setSaveModalReason('user');
       setShowSaveModal(true);
@@ -224,6 +229,7 @@ export const RecordScreen = () => {
 
   const handleDonePress = async () => {
     await pauseRecording();
+    setMarkSheetVisible(false);
     setTitle('');
     setSaveModalReason('user');
     setShowSaveModal(true);
@@ -245,9 +251,24 @@ export const RecordScreen = () => {
   );
 
   const handleAddMarkPress = useCallback(() => {
-    setMarkSnapshotOffsetMs(Math.round(elapsedMsRef.current));
+    if (showSaveModal) return;
+
+    const offsetMs = Math.round(elapsedMsRef.current);
+
+    if (markSheetVisible) {
+      setMarkSheetVisible(false);
+      setMarkSheetOpenId((id) => id + 1);
+      requestAnimationFrame(() => {
+        setMarkSnapshotOffsetMs(offsetMs);
+        setMarkSheetVisible(true);
+      });
+      return;
+    }
+
+    setMarkSnapshotOffsetMs(offsetMs);
+    setMarkSheetOpenId((id) => id + 1);
     setMarkSheetVisible(true);
-  }, []);
+  }, [showSaveModal, markSheetVisible]);
 
   const handleMarkSheetClose = () => {
     setMarkSheetVisible(false);
@@ -331,27 +352,32 @@ export const RecordScreen = () => {
         onDonePress={handleDonePress}
         showPinMomentButton={isProActive}
       />
-      <AddRecordingMarkSheet
-        visible={markSheetVisible}
-        snapshotOffsetMs={markSnapshotOffsetMs}
-        onClose={handleMarkSheetClose}
-        onSave={handleMarkSave}
-      />
-      <SaveRecordModal
-        visible={showSaveModal}
-        title={title}
-        elapsed={elapsed}
-        elapsedMs={elapsedMs}
-        audioPath={audioPathRef.current}
-        recordingMarks={recordingMarks}
-        onTitleChange={setTitle}
-        onCancel={handleSaveCancel}
-        onSave={handleSaveConfirm}
-        onSaveComplete={handleSaveComplete}
-        onDiscard={handleSaveModalDiscard}
-        allowResume={saveModalReason === 'user'}
-        contextHint={saveModalReason === 'limit' ? t('record.saveAfterLimitHint') : null}
-      />
+      {markSheetVisible ? (
+        <AddRecordingMarkSheet
+          key={`mark-sheet-${markSheetOpenId}`}
+          visible
+          snapshotOffsetMs={markSnapshotOffsetMs}
+          onClose={handleMarkSheetClose}
+          onSave={handleMarkSave}
+        />
+      ) : null}
+      {showSaveModal ? (
+        <SaveRecordModal
+          visible
+          title={title}
+          elapsed={elapsed}
+          elapsedMs={elapsedMs}
+          audioPath={audioPathRef.current}
+          recordingMarks={recordingMarks}
+          onTitleChange={setTitle}
+          onCancel={handleSaveCancel}
+          onSave={handleSaveConfirm}
+          onSaveComplete={handleSaveComplete}
+          onDiscard={handleSaveModalDiscard}
+          allowResume={saveModalReason === 'user'}
+          contextHint={saveModalReason === 'limit' ? t('record.saveAfterLimitHint') : null}
+        />
+      ) : null}
     </View>
   );
 };
