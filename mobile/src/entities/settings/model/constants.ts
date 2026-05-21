@@ -42,16 +42,6 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     contextTokens: 1_048_576,
   },
   {
-    id: 'stepfun/step-3.5-flash',
-    name: 'Step 3.5 Flash',
-    provider: 'StepFun',
-    descriptionKey: 'aiModels.stepFlashDesc',
-    speed: 'medium',
-    tierLabelKey: 'aiModels.tierStepFlash',
-    supportTierCode: 'fast',
-    contextTokens: 262_144,
-  },
-  {
     id: 'xiaomi/mimo-v2-flash',
     name: 'MiMo V2 Flash',
     provider: 'Xiaomi',

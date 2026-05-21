@@ -2,7 +2,9 @@ import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
+import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from './abort';
 import { headersForAiOperation } from './aiOperation';
+import { pollGetLoop } from './pollGetLoop';
 
 export type AiRecordingMarkOption = {
   offsetMs: number;
@@ -80,10 +82,6 @@ export type AiMessageResult =
   | { ok: true; result: AiProcessingResult }
   | { ok: false; error: string };
 
-const POLL_TIMEOUT_MS = 120_000;
-const POLL_BACKOFF_INITIAL_MS = 2_000;
-const POLL_BACKOFF_CAP_MS = 8_000;
-
 type MessageResponse =
   | { id: string; status: 'processing'; model?: string }
   | {
@@ -101,8 +99,15 @@ type MessageResponse =
     }
   | { id: string; status: 'error'; error: string; model?: string };
 
-export async function postAiMessage(body: AiApiRequestBody): Promise<AiApiResult> {
+export async function postAiMessage(
+  body: AiApiRequestBody,
+  options?: AiFetchOptions,
+): Promise<AiApiResult> {
   const url = `${getWebApiUrl()}/api/messages`;
+
+  if (options?.signal?.aborted) {
+    return aiRequestCancelledFailure();
+  }
 
   let response: Response;
   try {
@@ -113,8 +118,12 @@ export async function postAiMessage(body: AiApiRequestBody): Promise<AiApiResult
         ...headersForAiOperation('transcript_summarize'),
       },
       body: JSON.stringify(body),
+      signal: options?.signal,
     });
   } catch (err) {
+    if (options?.signal?.aborted || isAbortLikeError(err)) {
+      return aiRequestCancelledFailure();
+    }
     const errorMsg = err instanceof Error ? err.message : 'Network error';
     if (__DEV__) console.warn('[AI] postAiMessage: fetch failed', { error: errorMsg, url });
     return { ok: false, error: errorMsg };
@@ -230,71 +239,64 @@ export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
   }
 }
 
-export async function pollAiMessage(id: string, syncToken?: string): Promise<AiMessageResult> {
+export async function pollAiMessage(
+  id: string,
+  syncToken?: string,
+  options?: AiFetchOptions,
+): Promise<AiMessageResult> {
   const headers: Record<string, string> = {};
   if (syncToken) {
     headers['x-upstash-sync-token'] = syncToken;
   }
 
   const url = `${getWebApiUrl()}/api/messages/${id}`;
-  const deadline = Date.now() + POLL_TIMEOUT_MS;
-  let intervalMs = POLL_BACKOFF_INITIAL_MS;
 
-  while (Date.now() < deadline) {
-    await new Promise<void>((resolve) => setTimeout(resolve, intervalMs));
-    intervalMs = Math.min(intervalMs * 2, POLL_BACKOFF_CAP_MS);
+  const result = await pollGetLoop<AiProcessingResult>(
+    url,
+    (json) => {
+      const msg = json as MessageResponse;
+      if (msg.status === 'done') {
+        const suggested =
+          'suggestedTitle' in msg &&
+          isString((msg as { suggestedTitle?: string }).suggestedTitle) &&
+          (msg as { suggestedTitle: string }).suggestedTitle.trim()
+            ? { suggestedTitle: (msg as { suggestedTitle: string }).suggestedTitle.trim() }
+            : {};
+        const modelField =
+          isString(msg.model) && msg.model.trim() ? { model: msg.model.trim() } : {};
+        const mdRaw = (msg as { meetingDialogueMarkdown?: unknown }).meetingDialogueMarkdown;
+        const meetingMd =
+          isString(mdRaw) && mdRaw.trim() ? { meetingDialogueMarkdown: mdRaw.trim() } : {};
 
-    let response: Response;
-    try {
-      response = await fetchWithAuth(url, { headers });
-    } catch (err) {
-      if (__DEV__) console.warn('[AI] pollAiMessage: fetch failed', { id, error: String(err) });
-      continue;
-    }
+        return {
+          ok: true,
+          result: {
+            summary: msg.summary,
+            tasks: msg.tasks,
+            tags: msg.tags ?? [],
+            ...suggested,
+            ...modelField,
+            ...(msg.classification && { classification: msg.classification }),
+            ...(msg.keyPhrases && { keyPhrases: msg.keyPhrases }),
+            ...(msg.nextSteps && { nextSteps: msg.nextSteps }),
+            ...meetingMd,
+          },
+        };
+      }
 
-    if (!response.ok) {
-      const text = await response.text();
-      if (__DEV__)
-        console.warn('[AI] pollAiMessage: HTTP error', { id, status: response.status, body: text });
-      continue;
-    }
+      if (msg.status === 'error') {
+        if (__DEV__) console.warn('[AI] pollAiMessage: server error', { id, error: msg.error });
+        return { ok: false, error: msg.error };
+      }
 
-    const msg = (await response.json()) as MessageResponse;
+      return 'processing';
+    },
+    { ...options, headers },
+  );
 
-    if (msg.status === 'done') {
-      const suggested =
-        'suggestedTitle' in msg &&
-        isString((msg as { suggestedTitle?: string }).suggestedTitle) &&
-        (msg as { suggestedTitle: string }).suggestedTitle.trim()
-          ? { suggestedTitle: (msg as { suggestedTitle: string }).suggestedTitle.trim() }
-          : {};
-      const modelField = isString(msg.model) && msg.model.trim() ? { model: msg.model.trim() } : {};
-      const mdRaw = (msg as { meetingDialogueMarkdown?: unknown }).meetingDialogueMarkdown;
-      const meetingMd =
-        isString(mdRaw) && mdRaw.trim() ? { meetingDialogueMarkdown: mdRaw.trim() } : {};
-
-      return {
-        ok: true,
-        result: {
-          summary: msg.summary,
-          tasks: msg.tasks,
-          tags: msg.tags ?? [],
-          ...suggested,
-          ...modelField,
-          ...(msg.classification && { classification: msg.classification }),
-          ...(msg.keyPhrases && { keyPhrases: msg.keyPhrases }),
-          ...(msg.nextSteps && { nextSteps: msg.nextSteps }),
-          ...meetingMd,
-        },
-      };
-    }
-
-    if (msg.status === 'error') {
-      if (__DEV__) console.warn('[AI] pollAiMessage: server error', { id, error: msg.error });
-      return { ok: false, error: msg.error };
-    }
+  if (!result.ok && result.error === 'Timeout waiting for AI result' && __DEV__) {
+    console.warn('[AI] pollAiMessage: timeout', { id });
   }
 
-  if (__DEV__) console.warn('[AI] pollAiMessage: timeout', { id });
-  return { ok: false, error: 'Timeout waiting for AI result' };
+  return result;
 }

@@ -44,7 +44,6 @@ If you enable push notifications, we store your push token (FCM) and app languag
 - **DeepSeek** — summaries, task extraction, Ask AI (including as a fallback when another model fails)
 - **MiniMax** — summaries, task extraction, Ask AI
 - **Xiaomi** (MiMo) — summaries, task extraction, Ask AI
-- **StepFun** — summaries, task extraction, Ask AI
 - **NVIDIA** (Nemotron) — summaries, task extraction, Ask AI
 
 We may add or change models over time; the in-app model picker reflects what you can select for cloud mode. If you choose **Auto** in cloud AI settings, our servers select a model based on request characteristics (such as transcript length); otherwise we use the model you pick.

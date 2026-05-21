@@ -1,11 +1,10 @@
-import { X } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
-import { Button } from '@/shared/ui';
+import { AiProcessingCancelButton } from '@/shared/ui';
 
 export type DetailTabProcessingContext = 'transcription' | 'private_llm';
 
@@ -107,15 +106,7 @@ export const DetailTabProcessingView = ({
         </Text>
       </View>
       {onCancel ? (
-        <Button
-          variant="secondary"
-          size="lg"
-          icon={<X size={16} color={color.text.primary} strokeWidth={2.5} />}
-          label={t('recordingDetail.cancel')}
-          color={color}
-          onPress={onCancel}
-          className="mt-1"
-        />
+        <AiProcessingCancelButton color={color} onPress={onCancel} className="mt-1" />
       ) : null}
     </View>
   );

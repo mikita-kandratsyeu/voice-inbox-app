@@ -45,6 +45,7 @@ export const AskAIScreen = () => {
   const [questionInput, setQuestionInput] = useState('');
   const {
     askQuestion,
+    cancelAsk,
     reset,
     syncAskSessionFromDb,
     isLoading,
@@ -276,6 +277,7 @@ export const AskAIScreen = () => {
               onCopy={handleCopy}
               onShare={handleShare}
               onFollowUp={handleSuggestedQuestion}
+              onCancelAsk={cancelAsk}
             />
           </ScrollView>
         </View>

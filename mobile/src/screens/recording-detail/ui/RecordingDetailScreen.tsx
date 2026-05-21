@@ -612,7 +612,6 @@ export const RecordingDetailScreen = () => {
                   onDismissError={handleDismissSummaryError}
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onSwitchToSmartMode={handleSwitchToSmartMode}
-                  showProcessingCancel={isPrivateMode}
                   onCancelProcessing={handleCancelAiGeneration}
                   usePrivateProcessingPanel={isPrivateMode}
                   privateAiBatchProgress={liveRecord.privateAiBatchProgress}
@@ -632,7 +631,6 @@ export const RecordingDetailScreen = () => {
                   errorMessage={liveRecord.summaryError}
                   onDismissError={handleDismissSummaryError}
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
-                  showProcessingCancel={isPrivateMode}
                   onCancelProcessing={handleCancelAiGeneration}
                   usePrivateProcessingPanel={isPrivateMode}
                   privateAiBatchProgress={liveRecord.privateAiBatchProgress}
@@ -660,7 +658,6 @@ export const RecordingDetailScreen = () => {
                   onDismissError={handleDismissSummaryError}
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onSwitchToSmartMode={handleSwitchToSmartMode}
-                  showProcessingCancel={isPrivateMode}
                   onCancelProcessing={handleCancelAiGeneration}
                   usePrivateProcessingPanel={isPrivateMode}
                   privateAiBatchProgress={liveRecord.privateAiBatchProgress}

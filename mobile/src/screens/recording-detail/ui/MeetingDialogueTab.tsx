@@ -27,7 +27,6 @@ type MeetingDialogueTabProps = {
   errorMessage?: string;
   onDismissError?: () => void;
   showPrivateModeCta?: boolean;
-  showProcessingCancel?: boolean;
   onCancelProcessing?: () => void;
   usePrivateProcessingPanel?: boolean;
   privateAiBatchProgress?: number;
@@ -47,7 +46,6 @@ export const MeetingDialogueTab = ({
   privateAiBatchProgress,
   privateAiBatchProgressLabel,
   showPrivateModeCta = false,
-  showProcessingCancel = false,
   status,
   usePrivateProcessingPanel = false,
 }: MeetingDialogueTabProps) => {
@@ -83,7 +81,6 @@ export const MeetingDialogueTab = ({
     return (
       <AiTabLoadingState
         message={t('recordingDetail.meetingDialogueProcessing')}
-        showCancelButton={showProcessingCancel}
         onCancel={onCancelProcessing}
       />
     );

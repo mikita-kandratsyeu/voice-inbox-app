@@ -30,7 +30,6 @@ type SummaryTabProps = {
   onDismissError?: () => void;
   showPrivateModeCta?: boolean;
   onSwitchToSmartMode?: () => void;
-  showProcessingCancel?: boolean;
   onCancelProcessing?: () => void;
   usePrivateProcessingPanel?: boolean;
   privateAiBatchProgress?: number;
@@ -52,7 +51,6 @@ export const SummaryTab = ({
   privateAiBatchProgress,
   privateAiBatchProgressLabel,
   showPrivateModeCta = false,
-  showProcessingCancel = false,
   status,
   summary,
   usePrivateProcessingPanel = false,
@@ -87,7 +85,6 @@ export const SummaryTab = ({
     return (
       <AiTabLoadingState
         message={t('recordingDetail.summaryProcessing')}
-        showCancelButton={showProcessingCancel}
         onCancel={onCancelProcessing}
       />
     );

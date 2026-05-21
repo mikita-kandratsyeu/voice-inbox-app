@@ -16,6 +16,11 @@ import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
+import {
+  type AiAbortHandle,
+  createAiAbortHandle,
+  isAiRequestCancelled,
+} from '@/shared/lib/ai-api/abort';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
 import { TASK_EXTRACTION_HINT_MAX_CHARS } from '@/shared/lib/ai-core/local-provider/localAiConstants';
@@ -100,7 +105,7 @@ export const useAiProcessing = () => {
     (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
 
   const inFlightRef = useRef<Set<string>>(new Set());
-  const cancelTokensRef = useRef<Map<string, { cancelled: boolean }>>(new Map());
+  const abortHandlesRef = useRef<Map<string, AiAbortHandle>>(new Map());
   const { isProActive } = useProEntitlement();
 
   const applyCancelledUiState = useCallback(
@@ -120,10 +125,10 @@ export const useAiProcessing = () => {
 
   const cancelAiGeneration = useCallback(
     (recordId: string) => {
-      const token = cancelTokensRef.current.get(recordId);
-      if (!token) return;
+      const handle = abortHandlesRef.current.get(recordId);
+      if (!handle) return;
 
-      token.cancelled = true;
+      handle.abort();
       applyCancelledUiState(recordId);
 
       if (useSettingsStore.getState().aiExecutionMode === 'private_experimental') {
@@ -158,8 +163,8 @@ export const useAiProcessing = () => {
         });
       }
 
-      const cancelToken = { cancelled: false };
-      cancelTokensRef.current.set(record.id, cancelToken);
+      const abortHandle = createAiAbortHandle();
+      abortHandlesRef.current.set(record.id, abortHandle);
 
       const requestId = `${baseId}-${Date.now()}`;
       inFlightRef.current.add(baseId);
@@ -197,7 +202,7 @@ export const useAiProcessing = () => {
         const onLocalGenerationProgress =
           aiExecutionMode === 'private_experimental'
             ? (event: AiLocalGenerationProgressEvent) => {
-                if (cancelToken.cancelled) return;
+                if (abortHandle.cancelled) return;
                 let pct = 0;
                 let phase: 'loading_model' | 'processing' = 'loading_model';
                 switch (event.kind) {
@@ -260,6 +265,7 @@ export const useAiProcessing = () => {
               : {}),
             ...(recordingMarks?.length ? { recordingMarks } : {}),
             onLocalGenerationProgress,
+            abortSignal: abortHandle.signal,
           },
           {
             selectedAIModel,
@@ -276,7 +282,7 @@ export const useAiProcessing = () => {
           },
         );
 
-        if (cancelToken.cancelled) {
+        if (abortHandle.cancelled) {
           applyCancelledUiState(record.id);
           void logAnalyticsEvent('ai_action_cancelled', {
             action: 'summary_tasks',
@@ -287,6 +293,15 @@ export const useAiProcessing = () => {
         }
 
         if (!runResult.ok) {
+          if (isAiRequestCancelled(runResult.error)) {
+            applyCancelledUiState(record.id);
+            void logAnalyticsEvent('ai_action_cancelled', {
+              action: 'summary_tasks',
+              mode: aiExecutionMode,
+              tier: privateCapabilityTier,
+            });
+            return;
+          }
           const errorMsg = runResult.limitExceeded
             ? getAiWeeklyLimitExceededMessage()
             : toUserFacingFetchErrorMessage(runResult.error ?? '');
@@ -409,7 +424,7 @@ export const useAiProcessing = () => {
           tier: privateCapabilityTier,
         });
       } catch (err) {
-        if (cancelToken.cancelled) {
+        if (abortHandle.cancelled) {
           applyCancelledUiState(record.id);
           void logAnalyticsEvent('ai_action_cancelled', {
             action: 'summary_tasks',
@@ -437,7 +452,7 @@ export const useAiProcessing = () => {
       } finally {
         clearPrivateAiBatchUi(record.id);
         inFlightRef.current.delete(baseId);
-        cancelTokensRef.current.delete(record.id);
+        abortHandlesRef.current.delete(record.id);
       }
     },
     [

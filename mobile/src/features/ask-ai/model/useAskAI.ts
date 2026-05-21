@@ -2,9 +2,15 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useRecordStore, type VoiceRecord } from '@/entities/record';
 import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
+import {
+  type AiAbortHandle,
+  createAiAbortHandle,
+  isAiRequestCancelled,
+} from '@/shared/lib/ai-api/abort';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
 import type { AskPriorTurn } from '@/shared/lib/ai-core';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
+import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { sanitizeRecordingMarksForPrompt } from '@/shared/lib/ai-core/recordingMarksForPrompt';
 import type { AiLocalGenerationProgressEvent } from '@/shared/lib/ai-core/types';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
@@ -68,6 +74,7 @@ export const useAskAI = (
   }));
 
   const inFlightRef = useRef(false);
+  const abortHandlesRef = useRef<Map<string, AiAbortHandle>>(new Map());
   const transcriptFpInvalidateRef = useRef<string | null>(null);
   const loadEpochRef = useRef(0);
   const recordForResumeRef = useRef<VoiceRecord | null>(null);
@@ -146,6 +153,8 @@ export const useAskAI = (
 
       const requestId = `${record.id}-ask-${Date.now()}`;
       const trimmedQuestion = question.trim();
+      const abortHandle = createAiAbortHandle();
+      abortHandlesRef.current.set(record.id, abortHandle);
       inFlightRef.current = true;
       askInFlightRecordIds.add(record.id);
 
@@ -281,6 +290,7 @@ export const useAskAI = (
             tasks: record.tasks?.map((t) => ({ text: t.text })) ?? undefined,
             ...(recordingMarks?.length ? { recordingMarks } : {}),
             onLocalGenerationProgress,
+            abortSignal: abortHandle.signal,
           },
           {
             selectedAIModel,
@@ -297,7 +307,26 @@ export const useAskAI = (
           },
         );
 
+        if (abortHandle.cancelled) {
+          persistOutcome({ isLoading: false, error: null, answer: null });
+          void logAnalyticsEvent('ai_action_cancelled', {
+            action: 'ask',
+            mode: aiExecutionMode,
+            tier: privateCapabilityTier,
+          });
+          return;
+        }
+
         if (!runResult.ok) {
+          if (isAiRequestCancelled(runResult.error)) {
+            persistOutcome({ isLoading: false, error: null, answer: null });
+            void logAnalyticsEvent('ai_action_cancelled', {
+              action: 'ask',
+              mode: aiExecutionMode,
+              tier: privateCapabilityTier,
+            });
+            return;
+          }
           const errorMsg = runResult.limitExceeded
             ? getAiWeeklyLimitExceededMessage()
             : runResult.error;
@@ -333,6 +362,15 @@ export const useAskAI = (
           tier: privateCapabilityTier,
         });
       } catch (err: unknown) {
+        if (abortHandle.cancelled) {
+          persistOutcome({ isLoading: false, error: null, answer: null });
+          void logAnalyticsEvent('ai_action_cancelled', {
+            action: 'ask',
+            mode: aiExecutionMode,
+            tier: privateCapabilityTier,
+          });
+          return;
+        }
         if (__DEV__)
           console.warn('[AI] askQuestion: unexpected error', {
             recordId: record.id,
@@ -350,6 +388,7 @@ export const useAskAI = (
           tier: privateCapabilityTier,
         });
       } finally {
+        abortHandlesRef.current.delete(record.id);
         inFlightRef.current = false;
         askInFlightRecordIds.delete(record.id);
       }
@@ -370,6 +409,42 @@ export const useAskAI = (
   );
 
   askQuestionRef.current = askQuestion;
+
+  const cancelAsk = useCallback(() => {
+    abortHandlesRef.current.get(recordId)?.abort();
+
+    inFlightRef.current = false;
+    askInFlightRecordIds.delete(recordId);
+
+    setState((s) => {
+      if (!s.isLoading) return s;
+
+      const next: AskAIState = {
+        ...s,
+        isLoading: false,
+        privateAskProgress: 0,
+        privateAskPhase: 'loading_model',
+      };
+      queueMicrotask(() => {
+        const rec = useRecordStore.getState().records.find((r) => r.id === recordId);
+        if (rec?.transcript?.trim()) {
+          void saveAskAiSession(recordId, rec.transcript, {
+            history: next.history,
+            question: next.question,
+            answer: next.answer,
+            error: next.error,
+            isLoading: false,
+          });
+        }
+        useRecordStore.getState().setAskAiStatus(recordId, undefined);
+      });
+      return next;
+    });
+
+    if (useSettingsStore.getState().aiExecutionMode === 'private_experimental') {
+      void releaseLocalLlmSession();
+    }
+  }, [recordId]);
 
   useEffect(() => {
     const epochAtStart = loadEpochRef.current;
@@ -496,5 +571,5 @@ export const useAskAI = (
     });
   }, []);
 
-  return { askQuestion, reset, askAnother, syncAskSessionFromDb, ...state };
+  return { askQuestion, cancelAsk, reset, askAnother, syncAskSessionFromDb, ...state };
 };

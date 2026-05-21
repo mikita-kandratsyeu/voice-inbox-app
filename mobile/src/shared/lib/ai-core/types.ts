@@ -51,6 +51,8 @@ export type SummaryTaskRequest = {
   /** User-placed recording pins (offset + optional label). */
   recordingMarks?: RecordingMarkForPrompt[];
   onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;
+  /** Aborts cloud POST/poll when the user cancels (Smart mode). */
+  abortSignal?: AbortSignal;
 };
 
 export type AskPriorTurn = { question: string; answer: string };
@@ -64,6 +66,7 @@ export type AskRequest = {
   tasks?: Array<{ text: string }>;
   recordingMarks?: RecordingMarkForPrompt[];
   onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;
+  abortSignal?: AbortSignal;
 };
 
 export type AiOrchestratorSuccess<T> = {

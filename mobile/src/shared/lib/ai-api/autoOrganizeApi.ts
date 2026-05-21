@@ -4,6 +4,7 @@ import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
 import { headersForAiOperation } from './aiOperation';
+import { AI_POLL_TIMEOUT_MS } from './constants';
 
 type NoteForOrganize = {
   id: string;
@@ -58,7 +59,6 @@ export type AutoOrganizePollResult =
   | { ok: false; error: string };
 
 const POLL_INTERVAL_MS = 4000;
-const POLL_TIMEOUT_MS = 120000;
 
 export async function postAutoOrganizeFolders(body: RequestBody): Promise<AutoOrganizeApiResult> {
   const consentOk = await ensureCloudAiThirdPartyConsent();
@@ -103,7 +103,7 @@ export async function pollAutoOrganizeFolders(
   if (syncToken) headers['x-upstash-sync-token'] = syncToken;
 
   const url = `${getWebApiUrl()}/api/folders/auto-organize/${id}`;
-  const deadline = Date.now() + POLL_TIMEOUT_MS;
+  const deadline = Date.now() + AI_POLL_TIMEOUT_MS;
 
   while (Date.now() < deadline) {
     await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));

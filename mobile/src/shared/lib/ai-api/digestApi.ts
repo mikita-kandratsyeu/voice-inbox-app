@@ -3,6 +3,7 @@ import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
+import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from './abort';
 import type { AiUsage } from './aiApi';
 import { headersForAiOperation } from './aiOperation';
 
@@ -36,7 +37,14 @@ function parseUsage(raw: Record<string, unknown>): AiUsage {
   };
 }
 
-export async function generateDigest(body: DigestApiBody): Promise<DigestApiResult> {
+export async function generateDigest(
+  body: DigestApiBody,
+  options?: AiFetchOptions,
+): Promise<DigestApiResult> {
+  if (options?.signal?.aborted) {
+    return aiRequestCancelledFailure();
+  }
+
   try {
     const response = await fetchWithAuth(`${getWebApiUrl()}/api/digest`, {
       method: 'POST',
@@ -45,6 +53,7 @@ export async function generateDigest(body: DigestApiBody): Promise<DigestApiResu
         ...headersForAiOperation('digest'),
       },
       body: JSON.stringify(body),
+      signal: options?.signal,
     });
 
     if (response.status === 429) {
@@ -86,6 +95,9 @@ export async function generateDigest(body: DigestApiBody): Promise<DigestApiResu
       },
     };
   } catch (err) {
+    if (options?.signal?.aborted || isAbortLikeError(err)) {
+      return aiRequestCancelledFailure();
+    }
     return { ok: false, error: toUserFacingFetchErrorFromUnknown(err) };
   }
 }

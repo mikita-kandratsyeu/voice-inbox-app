@@ -1,3 +1,5 @@
+export type { AiProcessingCancelButtonProps } from './AiProcessingCancelButton';
+export { AiProcessingCancelButton } from './AiProcessingCancelButton';
 export { AiTabErrorBanner } from './AiTabErrorBanner';
 export { AiTabHintIcon } from './AiTabHintIcon';
 export { AiTabLoadingState } from './AiTabLoadingState';

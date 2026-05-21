@@ -9,8 +9,7 @@ export type UserSelectableAIModelId =
   | 'minimax/minimax-m2.7'
   | 'deepseek/deepseek-v4-flash'
   | 'xiaomi/mimo-v2-flash'
-  | 'nvidia/nemotron-3-super-120b-a12b'
-  | 'stepfun/step-3.5-flash';
+  | 'nvidia/nemotron-3-super-120b-a12b';
 export type LocalAiModelId =
   | 'local/qwen3-1.7b-q4_k_m'
   | 'local/gemma-2-2b-it-q4_k_m'
@@ -48,8 +47,7 @@ export type AiModelTierLabelKey =
   | 'aiModels.tierPremium'
   | 'aiModels.tierDeepSeek'
   | 'aiModels.tierMiMo'
-  | 'aiModels.tierNemotron'
-  | 'aiModels.tierStepFlash';
+  | 'aiModels.tierNemotron';
 
 export type AiUserTierCode = 'fast' | 'smarter' | 'premium_experimental';
 export type AiModelRoutingMode = 'manual' | 'auto';

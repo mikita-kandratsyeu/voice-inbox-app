@@ -52,7 +52,6 @@ type TasksTabProps = {
   onDismissError?: () => void;
   showPrivateModeCta?: boolean;
   onSwitchToSmartMode?: () => void;
-  showProcessingCancel?: boolean;
   onCancelProcessing?: () => void;
   usePrivateProcessingPanel?: boolean;
   privateAiBatchProgress?: number;
@@ -144,7 +143,6 @@ export const TasksTab = ({
   privateAiBatchProgress,
   privateAiBatchProgressLabel,
   showPrivateModeCta = false,
-  showProcessingCancel = false,
   onSwitchToSmartMode: _onSwitchToSmartMode,
   usePrivateProcessingPanel = false,
 }: TasksTabProps) => {
@@ -219,7 +217,6 @@ export const TasksTab = ({
       <>
         <AiTabLoadingState
           message={t('recordingDetail.tasksProcessing')}
-          showCancelButton={showProcessingCancel}
           onCancel={onCancelProcessing}
         />
         {reextractSheet}

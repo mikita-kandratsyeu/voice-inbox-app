@@ -36,6 +36,7 @@ type AskMainContentProps = {
   onCopy: (text: string) => void;
   onShare: (text: string, title: string) => void;
   onFollowUp: (q: string) => void;
+  onCancelAsk?: () => void;
 };
 
 export const AskMainContent = ({
@@ -57,6 +58,7 @@ export const AskMainContent = ({
   onCopy,
   onShare,
   onFollowUp,
+  onCancelAsk,
 }: AskMainContentProps) => {
   if (!hasTranscript) return <NoTranscriptState color={color} />;
   if (isRestoringSession) return <SessionRestoringSkeleton color={color} />;
@@ -77,6 +79,7 @@ export const AskMainContent = ({
               progress={privateAskProgress}
               phase={privateAskPhase}
               color={color}
+              onCancel={onCancelAsk}
               hintText={t('privateAi.batteryHint')}
               leadingIcon={<Sparkles size={22} color={color.accent.primary} strokeWidth={2} />}
               context="private_llm"
@@ -91,6 +94,7 @@ export const AskMainContent = ({
         record={liveRecord}
         priorDepth={history.length}
         aiExecutionMode={aiExecutionMode}
+        onCancel={onCancelAsk}
       />
     );
   }

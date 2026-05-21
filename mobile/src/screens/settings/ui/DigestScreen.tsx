@@ -1,7 +1,7 @@
 import { useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import { AlertTriangle, CalendarDays, CheckCircle2, Clock3, Sparkles } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -24,13 +24,14 @@ import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import type { DigestAiResult } from '@/shared/lib/ai-api';
 import { generateDigest } from '@/shared/lib/ai-api';
+import { isAiRequestCancelled } from '@/shared/lib/ai-api/abort';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import {
   formatLocalTimeOfDay,
   formatTaskDeadlineTimeForDisplay,
 } from '@/shared/lib/taskDeadlineTimeDisplay';
-import { Button, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
+import { AiProcessingCancelButton, Button, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
 
 import {
   buildDeterministicDigest,
@@ -109,7 +110,7 @@ function SectionCard({
   );
 }
 
-function DigestAiLoadingState() {
+function DigestAiLoadingState({ onCancel }: { onCancel?: () => void }) {
   const { t } = useTranslation();
   const color = useColors();
 
@@ -141,6 +142,9 @@ function DigestAiLoadingState() {
           </Text>
         </View>
       </View>
+      {onCancel ? (
+        <AiProcessingCancelButton color={color} onPress={onCancel} className="mt-3" />
+      ) : null}
     </View>
   );
 }
@@ -234,6 +238,7 @@ export const DigestScreen = () => {
   const [aiResult, setAiResult] = useState<DigestAiResult | null>(null);
   const [aiCreatedAt, setAiCreatedAt] = useState<string | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
+  const digestAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (isSmartMode && !isLoaded) {
@@ -281,6 +286,12 @@ export const DigestScreen = () => {
     }
   }, [isSmartMode, loadRecords]);
 
+  const handleCancelDigestGeneration = useCallback(() => {
+    digestAbortRef.current?.abort();
+    digestAbortRef.current = null;
+    setAiLoading(false);
+  }, []);
+
   const handleGenerate = useCallback(async () => {
     if (!isSmartMode) {
       Alert.alert(t('settings.digest.smartModeOnlyTitle'), t('settings.digest.smartModeOnlyDesc'));
@@ -291,16 +302,28 @@ export const DigestScreen = () => {
     const consentOk = await ensureCloudAiThirdPartyConsent();
     if (!consentOk) return;
 
+    const abortController = new AbortController();
+    digestAbortRef.current = abortController;
     setAiLoading(true);
     try {
       const language = i18n.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
-      const result = await generateDigest({
-        payload: buildDigestAiPayload(digest, language),
-        model: selectedAIModel,
-        modelMode: aiModelRoutingMode,
-      });
+      const result = await generateDigest(
+        {
+          payload: buildDigestAiPayload(digest, language),
+          model: selectedAIModel,
+          modelMode: aiModelRoutingMode,
+        },
+        { signal: abortController.signal },
+      );
+
+      if (abortController.signal.aborted) {
+        return;
+      }
 
       if (!result.ok) {
+        if ('error' in result && isAiRequestCancelled(result.error)) {
+          return;
+        }
         const message = result.limitExceeded ? t('settings.digest.aiLimitError') : result.error;
         Alert.alert(t('common.error'), message);
         return;
@@ -310,7 +333,12 @@ export const DigestScreen = () => {
       setAiResult(cached.result);
       setAiCreatedAt(cached.createdAt);
     } finally {
-      setAiLoading(false);
+      if (digestAbortRef.current === abortController) {
+        digestAbortRef.current = null;
+      }
+      if (!abortController.signal.aborted) {
+        setAiLoading(false);
+      }
     }
   }, [aiModelRoutingMode, digest, digestCacheKey, i18n.language, isSmartMode, selectedAIModel, t]);
 
@@ -533,7 +561,7 @@ export const DigestScreen = () => {
                 <Markdown style={markdownStyles}>{aiResult.markdown}</Markdown>
               </View>
             ) : aiLoading ? (
-              <DigestAiLoadingState />
+              <DigestAiLoadingState onCancel={handleCancelDigestGeneration} />
             ) : (
               <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
                 {digest.recordCount === 0
@@ -541,7 +569,9 @@ export const DigestScreen = () => {
                   : t('settings.digest.aiDescription')}
               </Text>
             )}
-            {aiLoading && aiResult ? <DigestAiLoadingState /> : null}
+            {aiLoading && aiResult ? (
+              <DigestAiLoadingState onCancel={handleCancelDigestGeneration} />
+            ) : null}
             {!aiLoading ? (
               <Button
                 label={

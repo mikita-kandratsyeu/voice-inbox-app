@@ -2,7 +2,9 @@ import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 
 import { isString } from '../type-guards';
+import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from './abort';
 import { headersForAiOperation } from './aiOperation';
+import { pollGetLoop } from './pollGetLoop';
 
 type AskApiRequestBody = {
   id: string;
@@ -67,17 +69,20 @@ export type AskMessageResult =
   | { ok: true; result: { answer: string; model?: string } }
   | { ok: false; error: string };
 
-const POLL_TIMEOUT_MS = 120_000;
-const POLL_BACKOFF_INITIAL_MS = 2_000;
-const POLL_BACKOFF_CAP_MS = 8_000;
-
 type AskResponse =
   | { id: string; status: 'processing'; model?: string }
   | { id: string; status: 'done'; answer: string; model?: string }
   | { id: string; status: 'error'; error: string; model?: string };
 
-export async function postAskQuestion(body: AskApiRequestBody): Promise<AskApiResult> {
+export async function postAskQuestion(
+  body: AskApiRequestBody,
+  options?: AiFetchOptions,
+): Promise<AskApiResult> {
   const url = `${getWebApiUrl()}/api/ask`;
+
+  if (options?.signal?.aborted) {
+    return aiRequestCancelledFailure();
+  }
 
   const priorSanitized = body.priorTurns?.length
     ? sanitizePriorTurnsForAskApi(body.priorTurns)
@@ -99,8 +104,12 @@ export async function postAskQuestion(body: AskApiRequestBody): Promise<AskApiRe
         ...headersForAiOperation('transcript_ask'),
       },
       body: JSON.stringify(payload),
+      signal: options?.signal,
     });
   } catch (err) {
+    if (options?.signal?.aborted || isAbortLikeError(err)) {
+      return aiRequestCancelledFailure();
+    }
     const errorMsg = err instanceof Error ? err.message : 'Network error';
     if (__DEV__) console.warn('[AI] postAskQuestion: fetch failed', { error: errorMsg, url });
     return { ok: false, error: errorMsg };
@@ -124,53 +133,45 @@ export async function postAskQuestion(body: AskApiRequestBody): Promise<AskApiRe
   return { ok: true, data };
 }
 
-export async function pollAskResult(id: string, syncToken?: string): Promise<AskMessageResult> {
+export async function pollAskResult(
+  id: string,
+  syncToken?: string,
+  options?: AiFetchOptions,
+): Promise<AskMessageResult> {
   const headers: Record<string, string> = {};
   if (syncToken) {
     headers['x-upstash-sync-token'] = syncToken;
   }
 
   const url = `${getWebApiUrl()}/api/ask/${id}`;
-  const deadline = Date.now() + POLL_TIMEOUT_MS;
-  let intervalMs = POLL_BACKOFF_INITIAL_MS;
 
-  while (Date.now() < deadline) {
-    await new Promise<void>((resolve) => setTimeout(resolve, intervalMs));
-    intervalMs = Math.min(intervalMs * 2, POLL_BACKOFF_CAP_MS);
+  const result = await pollGetLoop<{ answer: string; model?: string }>(
+    url,
+    (json) => {
+      const msg = json as AskResponse;
+      if (msg.status === 'done') {
+        return {
+          ok: true,
+          result: {
+            answer: msg.answer,
+            ...(isString(msg.model) && msg.model.trim() ? { model: msg.model.trim() } : {}),
+          },
+        };
+      }
 
-    let response: Response;
-    try {
-      response = await fetchWithAuth(url, { headers });
-    } catch (err) {
-      if (__DEV__) console.warn('[AI] pollAskResult: fetch failed', { id, error: String(err) });
-      continue;
-    }
+      if (msg.status === 'error') {
+        if (__DEV__) console.warn('[AI] pollAskResult: server error', { id, error: msg.error });
+        return { ok: false, error: msg.error };
+      }
 
-    if (!response.ok) {
-      const text = await response.text();
-      if (__DEV__)
-        console.warn('[AI] pollAskResult: HTTP error', { id, status: response.status, body: text });
-      continue;
-    }
+      return 'processing';
+    },
+    { ...options, headers },
+  );
 
-    const msg = (await response.json()) as AskResponse;
-
-    if (msg.status === 'done') {
-      return {
-        ok: true,
-        result: {
-          answer: msg.answer,
-          ...(isString(msg.model) && msg.model.trim() ? { model: msg.model.trim() } : {}),
-        },
-      };
-    }
-
-    if (msg.status === 'error') {
-      if (__DEV__) console.warn('[AI] pollAskResult: server error', { id, error: msg.error });
-      return { ok: false, error: msg.error };
-    }
+  if (!result.ok && result.error === 'Timeout waiting for AI result' && __DEV__) {
+    console.warn('[AI] pollAskResult: timeout', { id });
   }
 
-  if (__DEV__) console.warn('[AI] pollAskResult: timeout', { id });
-  return { ok: false, error: 'Timeout waiting for AI result' };
+  return result;
 }
