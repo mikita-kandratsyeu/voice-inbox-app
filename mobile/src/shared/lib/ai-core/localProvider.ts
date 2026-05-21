@@ -196,7 +196,7 @@ export async function runLocalSummaryTasks(
       ok: true,
       provider: 'local',
       mode: ctx.aiExecutionMode,
-      result: outcome.result,
+      result: { ...outcome.result, model: ctx.selectedLocalAiModel },
     };
   } catch (err) {
     return {

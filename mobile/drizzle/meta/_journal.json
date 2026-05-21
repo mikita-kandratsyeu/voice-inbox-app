@@ -85,6 +85,27 @@
       "when": 1775500000000,
       "tag": "0011_meeting_dialogue",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "6",
+      "when": 1775600000000,
+      "tag": "0012_summary_reasoning",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "6",
+      "when": 1775700000000,
+      "tag": "0013_summary_ai_model",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "6",
+      "when": 1775800000000,
+      "tag": "0014_summary_tokens",
+      "breakpoints": true
     }
   ]
 }

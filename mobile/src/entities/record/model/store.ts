@@ -129,6 +129,10 @@ type RecordStore = {
       keyPhrases?: string[];
       nextSteps?: string[];
       meetingDialogue?: string | null;
+      summaryReasoning?: string | null;
+      summaryAiModel?: string | null;
+      summaryTokensPrompt?: number | null;
+      summaryTokensCompletion?: number | null;
     },
   ) => Promise<void>;
   promoteNextStepToTask: (id: string, tasks: TaskItem[], nextSteps: string[]) => Promise<void>;
@@ -438,6 +442,20 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
         patch.meetingDialogue = data.meetingDialogue?.trim()
           ? data.meetingDialogue.trim()
           : undefined;
+      }
+      if (data.summaryReasoning !== undefined) {
+        patch.summaryReasoning = data.summaryReasoning?.trim()
+          ? data.summaryReasoning.trim()
+          : undefined;
+      }
+      if (data.summaryAiModel !== undefined) {
+        patch.summaryAiModel = data.summaryAiModel?.trim() ? data.summaryAiModel.trim() : undefined;
+      }
+      if (data.summaryTokensPrompt !== undefined) {
+        patch.summaryTokensPrompt = data.summaryTokensPrompt ?? undefined;
+      }
+      if (data.summaryTokensCompletion !== undefined) {
+        patch.summaryTokensCompletion = data.summaryTokensCompletion ?? undefined;
       }
       return { records: updateRecord(s.records, id, patch) };
     });

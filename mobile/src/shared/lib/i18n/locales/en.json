@@ -383,6 +383,10 @@
     "askUsage": "Generations: {{used}} of {{limit}} this week",
     "continueViewing": "Continue",
     "keyPhrases": "Key phrases",
+    "summaryReasoningTitle": "Reasoning",
+    "summaryReasoningExpandA11y": "Show reasoning",
+    "summaryReasoningCollapseA11y": "Hide reasoning",
+    "summaryMetaTokens": "{{input}} input / {{output}} output",
     "nextSteps": "What to do next",
     "nextStepAddA11y": "Add to tasks: {{text}}",
     "nextStepAlreadyInTasks": "This suggestion is already in your task list.",
@@ -1077,6 +1081,12 @@
       "m900": "15 minutes",
       "m1800": "30 minutes",
       "m3600": "1 hour"
+    },
+    "showSummaryReasoning": {
+      "title": "Summary reasoning",
+      "label": "Show reasoning block",
+      "subtitle": "Optional collapsed block with the model's reasoning after each summary.",
+      "a11y": "Show reasoning block on summary"
     }
   },
   "privateAiMode": {

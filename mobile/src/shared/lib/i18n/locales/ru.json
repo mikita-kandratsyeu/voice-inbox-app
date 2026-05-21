@@ -383,6 +383,10 @@
     "askUsage": "Генераций: {{used}} из {{limit}} на этой неделе",
     "continueViewing": "Продолжить",
     "keyPhrases": "Ключевые фразы",
+    "summaryReasoningTitle": "Рассуждения",
+    "summaryReasoningExpandA11y": "Показать рассуждения",
+    "summaryReasoningCollapseA11y": "Скрыть рассуждения",
+    "summaryMetaTokens": "{{input}} ввод / {{output}} вывод",
     "nextSteps": "Что сделать дальше",
     "nextStepAddA11y": "Добавить в задачи: {{text}}",
     "nextStepAlreadyInTasks": "Этот пункт уже есть в списке задач.",
@@ -1094,6 +1098,12 @@
       "m900": "15 минут",
       "m1800": "30 минут",
       "m3600": "1 час"
+    },
+    "showSummaryReasoning": {
+      "title": "Рассуждения в сводке",
+      "label": "Показывать блок рассуждений",
+      "subtitle": "Свёрнутый блок с рассуждениями модели после каждой сводки.",
+      "a11y": "Показывать блок рассуждений в сводке"
     }
   },
   "privateAiMode": {

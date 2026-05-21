@@ -62,6 +62,7 @@ const KEYS = {
   AUTO_ARCHIVE_AFTER_DAYS: 'settings.autoArchiveAfterDays',
   CLOUD_AI_THIRD_PARTY_CONSENT: 'settings.cloudAiThirdPartyConsentAccepted',
   CLOUD_AI_KV_TTL_SECONDS: 'settings.cloudAiKvTtlSeconds',
+  SHOW_SUMMARY_REASONING_IN_NOTES: 'settings.showSummaryReasoningInNotes',
   PRIVATE_PREVIOUS_THEME: 'settings.private.previousTheme',
   PRIVATE_PREVIOUS_AUTO_TRANSCRIBE: 'settings.private.previousAutoTranscribeOnSave',
   PRIVATE_PREVIOUS_AUTO_AI: 'settings.private.previousAutoAiAfterTranscription',
@@ -246,6 +247,14 @@ const getStoredAiOutputLanguage = (): AiOutputLanguage => {
   return (val as AiOutputLanguage) ?? 'same';
 };
 
+const getStoredShowSummaryReasoningInNotes = (): boolean => {
+  if (!storage.contains(KEYS.SHOW_SUMMARY_REASONING_IN_NOTES)) {
+    return true;
+  }
+
+  return storage.getString(KEYS.SHOW_SUMMARY_REASONING_IN_NOTES) === 'true';
+};
+
 const getStoredAiExecutionMode = (): AiExecutionMode => {
   const val = storage.getString(KEYS.AI_EXECUTION_MODE);
   return val === 'private_experimental' ? 'private_experimental' : 'smart_hybrid';
@@ -316,6 +325,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   autoArchiveAfterDays: getStoredAutoArchiveAfterDays(),
   cloudAiThirdPartyConsentAccepted: getStoredCloudAiThirdPartyConsentAccepted(),
   cloudAiKvTtlSeconds: getStoredCloudAiKvTtlSeconds(),
+  showSummaryReasoningInNotes: getStoredShowSummaryReasoningInNotes(),
   whisperModelStatuses: getStoredWhisperStatuses(),
   whisperDownloadProgress: {},
   whisperDownloadBytes: {},
@@ -516,6 +526,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     const next = snapCloudAiKvTtlToChoice(value);
     storage.set(KEYS.CLOUD_AI_KV_TTL_SECONDS, String(next));
     set({ cloudAiKvTtlSeconds: next });
+  },
+
+  setShowSummaryReasoningInNotes: (value: boolean) => {
+    storage.set(KEYS.SHOW_SUMMARY_REASONING_IN_NOTES, String(value));
+    set({ showSummaryReasoningInNotes: value });
   },
 
   setWhisperModelStatus: (

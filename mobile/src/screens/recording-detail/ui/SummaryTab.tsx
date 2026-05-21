@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import type { RecordingStatus } from '@/entities/record';
-import { useSettingsStore } from '@/entities/settings';
+import { formatAiModelDisplayName, useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
+import { buildSummaryMetaLines, type SummaryTokenUsage } from '@/shared/lib/summaryMetaSubtitle';
 import {
   AiTabErrorBanner,
   AiTabHintIcon,
@@ -16,6 +17,8 @@ import {
 } from '@/shared/ui';
 
 import { DetailTabProcessingView } from './DetailTabProcessingView';
+import { SummaryMetaLinesText } from './SummaryMetaLinesText';
+import { SummaryReasoningDisclosure } from './SummaryReasoningDisclosure';
 
 type SummaryTabProps = {
   summary: string;
@@ -35,6 +38,9 @@ type SummaryTabProps = {
   privateAiBatchProgress?: number;
   privateAiBatchPhase?: 'loading_model' | 'processing';
   privateAiBatchProgressLabel?: string;
+  summaryReasoning?: string;
+  summaryAiModel?: string;
+  summaryTokenUsage?: SummaryTokenUsage;
 };
 
 export const SummaryTab = ({
@@ -54,13 +60,31 @@ export const SummaryTab = ({
   status,
   summary,
   usePrivateProcessingPanel = false,
+  summaryReasoning,
+  summaryAiModel,
+  summaryTokenUsage,
 }: SummaryTabProps) => {
   const { t } = useTranslation();
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
   const aiModelName = useAiModelName();
   const { isConnected } = useNetworkStatus();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const showSummaryReasoningInNotes = useSettingsStore((s) => s.showSummaryReasoningInNotes);
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
+
+  const summaryModelLabel = useMemo(() => {
+    const id = summaryAiModel?.trim();
+    return id ? formatAiModelDisplayName(id) : '';
+  }, [summaryAiModel]);
+
+  const summaryMetaLines = useMemo(
+    () => buildSummaryMetaLines(t, summaryModelLabel, summaryTokenUsage),
+    [summaryModelLabel, summaryTokenUsage, t],
+  );
+
+  const isSmartMode = aiExecutionMode === 'smart_hybrid';
+  const showReasoningBlock =
+    isSmartMode && showSummaryReasoningInNotes && Boolean(summaryReasoning?.trim());
 
   const errMessage = useMemo(() => {
     return errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '');
@@ -161,6 +185,15 @@ export const SummaryTab = ({
       <Text className="text-sm leading-6" style={{ color: color.text.primary }}>
         {summary}
       </Text>
+      {!showReasoningBlock ? <SummaryMetaLinesText lines={summaryMetaLines} color={color} /> : null}
+      {showReasoningBlock && summaryReasoning ? (
+        <SummaryReasoningDisclosure
+          reasoning={summaryReasoning}
+          color={color}
+          modelLabel={summaryModelLabel || undefined}
+          tokenUsage={summaryTokenUsage}
+        />
+      ) : null}
       {keyPhrases.length > 0 && (
         <View className="gap-2">
           <Text className="text-xs font-semibold uppercase" style={{ color: color.text.secondary }}>

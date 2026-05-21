@@ -83,6 +83,12 @@ export type VoiceRecord = {
   keyPhrases?: string[];
   nextSteps?: string[];
   meetingDialogue?: string;
+  /** OpenRouter reasoning trace from Smart summary (optional). */
+  summaryReasoning?: string;
+  /** Model id used for the last summary generation (OpenRouter or local). */
+  summaryAiModel?: string;
+  summaryTokensPrompt?: number;
+  summaryTokensCompletion?: number;
   translatedTranscript?: string;
   translationLanguage?: string;
   translationStatus?: RecordingStatus;

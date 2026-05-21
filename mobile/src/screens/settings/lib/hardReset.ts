@@ -112,6 +112,7 @@ export async function performHardReset(): Promise<void> {
     taskStrictness: 'balanced',
     aiOutputLanguage: 'same',
     cloudAiKvTtlSeconds: CLOUD_AI_KV_TTL_DEFAULT_SECONDS,
+    showSummaryReasoningInNotes: true,
     autoTranscribeOnSave: false,
     autoAiAfterTranscription: false,
     whisperModelStatuses: {},

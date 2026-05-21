@@ -156,6 +156,13 @@ export const useAiProcessing = () => {
       setSummaryError(record.id, undefined);
       setTasksError(record.id, undefined);
 
+      await updateAiExtras(record.id, {
+        summaryAiModel: null,
+        summaryTokensPrompt: null,
+        summaryTokensCompletion: null,
+        summaryReasoning: null,
+      });
+
       if (aiExecutionMode === 'private_experimental') {
         setPrivateAiBatchUi(record.id, {
           privateAiBatchProgress: 0,
@@ -344,6 +351,9 @@ export const useAiProcessing = () => {
           keyPhrases,
           nextSteps,
           meetingDialogueMarkdown,
+          reasoning: summaryReasoningRaw,
+          model: summaryModelRaw,
+          tokenUsage: summaryTokenUsageRaw,
         } = runResult.result;
 
         const aiTaskItems: TaskItem[] = rawTasks.map((t, index) => ({
@@ -393,20 +403,54 @@ export const useAiProcessing = () => {
 
         const classificationClearedForNonPro = !isProActive && classification === 'meeting';
 
-        if (
+        const summaryReasoningForStore =
+          aiExecutionMode === 'smart_hybrid' && summaryReasoningRaw?.trim()
+            ? summaryReasoningRaw.trim()
+            : null;
+
+        const shouldUpdateAiExtras =
           resolvedClassification ||
           (keyPhrases && keyPhrases.length > 0) ||
           rawNextSteps.length > 0 ||
           nextStepsForStore.length > 0 ||
           classificationClearedForNonPro ||
           includeMeetingSpeakerBreakdown ||
-          prevHadMeetingDialogue
-        ) {
+          prevHadMeetingDialogue ||
+          aiExecutionMode === 'smart_hybrid';
+
+        const summaryModelForStore =
+          summaryModelRaw?.trim() ||
+          (aiExecutionMode === 'private_experimental' ? effectiveLocalAiModelId : '');
+
+        if (shouldUpdateAiExtras) {
           await updateAiExtras(record.id, {
             classification: resolvedClassification ?? null,
             keyPhrases: keyPhrases ?? [],
             nextSteps: nextStepsForStore,
             meetingDialogue: includeMeetingSpeakerBreakdown ? meetingDialogueForStore : null,
+            ...(aiExecutionMode === 'smart_hybrid'
+              ? { summaryReasoning: summaryReasoningForStore }
+              : {}),
+          });
+        }
+
+        const summaryTokensForStore =
+          summaryTokenUsageRaw &&
+          summaryTokenUsageRaw.prompt >= 0 &&
+          summaryTokenUsageRaw.completion >= 0
+            ? {
+                summaryTokensPrompt: Math.floor(summaryTokenUsageRaw.prompt),
+                summaryTokensCompletion: Math.floor(summaryTokenUsageRaw.completion),
+              }
+            : {
+                summaryTokensPrompt: null,
+                summaryTokensCompletion: null,
+              };
+
+        if (summaryModelForStore || summaryTokenUsageRaw) {
+          await updateAiExtras(record.id, {
+            ...(summaryModelForStore ? { summaryAiModel: summaryModelForStore } : {}),
+            ...summaryTokensForStore,
           });
         }
 

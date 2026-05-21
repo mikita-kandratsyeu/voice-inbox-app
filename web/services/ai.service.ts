@@ -3,7 +3,12 @@ import {
   isRetryableOpenRouterTransportError,
   withSequentialModelFallback,
 } from '@/lib/ai-model-fallback';
+import {
+  extractOpenRouterReasoning,
+  openRouterReasoningParamsForModel,
+} from '@/lib/openrouter-reasoning';
 import { openRouterJsonObjectResponseFormat } from '@/lib/openrouter-response-format';
+import { extractOpenRouterTokenUsage } from '@/lib/openrouter-token-usage';
 import {
   AUTO_ORGANIZE_MAX_SUMMARY_CHARS,
   AUTO_ORGANIZE_MAX_TITLE_CHARS,
@@ -28,6 +33,7 @@ async function callOpenRouter(
   clientUserAgent?: string | null,
 ): Promise<AiResult> {
   const client = createOpenRouterClient(clientUserAgent);
+  const reasoning = openRouterReasoningParamsForModel(model);
   const response = await client.chat.send({
     chatGenerationParams: {
       model,
@@ -39,10 +45,12 @@ async function callOpenRouter(
       responseFormat: openRouterJsonObjectResponseFormat(),
       temperature: 0.3,
       stream: false,
+      ...(reasoning ? { reasoning } : {}),
     },
   });
 
-  const content = response.choices[0]?.message?.content;
+  const message = response.choices[0]?.message;
+  const content = message?.content;
   if (typeof content !== 'string') {
     throw new Error('Invalid AI response: missing content');
   }
@@ -116,6 +124,9 @@ async function callOpenRouter(
       ? String(parsed.suggestedTitle).trim()
       : '';
 
+  const reasoningText = extractOpenRouterReasoning(message);
+  const tokenUsage = extractOpenRouterTokenUsage(response);
+
   return {
     summary: String(parsed.summary),
     suggestedTitle: suggestedTitle || String(parsed.summary).slice(0, 50).trim() || 'Voice note',
@@ -124,6 +135,8 @@ async function callOpenRouter(
     ...(classification && { classification }),
     ...(keyPhrases.length > 0 && { keyPhrases }),
     ...(nextSteps.length > 0 && { nextSteps }),
+    ...(reasoningText ? { reasoning: reasoningText } : {}),
+    ...(tokenUsage ? { tokenUsage } : {}),
   };
 }
 
@@ -201,7 +214,7 @@ export async function processMeetingDialogueMarkdown(
   model: string,
   systemPrompt: string,
   clientUserAgent?: string | null,
-): Promise<Pick<AiResult, 'meetingDialogueMarkdown'>> {
+): Promise<Pick<AiResult, 'meetingDialogueMarkdown' | 'tokenUsage'>> {
   const models = [model, ...USER_AI_MODEL_FALLBACK_CHAIN];
 
   return withSequentialModelFallback(
@@ -227,7 +240,11 @@ export async function processMeetingDialogueMarkdown(
         throw new Error('Invalid AI response: missing content');
       }
 
-      return parseMeetingDialogueOpenRouterContent(responseContent);
+      const tokenUsage = extractOpenRouterTokenUsage(response);
+      return {
+        ...parseMeetingDialogueOpenRouterContent(responseContent),
+        ...(tokenUsage ? { tokenUsage } : {}),
+      };
     },
     isRetryableOpenRouterTransportError,
   );

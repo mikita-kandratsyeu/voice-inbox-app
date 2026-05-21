@@ -13,6 +13,7 @@ import {
   buildMeetingDialogueUserContent,
   type MeetingDialogueTranscriptSegment,
 } from '@/lib/meeting-dialogue-user-prompt';
+import { mergeOpenRouterTokenUsage } from '@/lib/openrouter-token-usage';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import { processMeetingDialogueMarkdown, processTranscript } from '@/services/ai.service';
 import type { Message } from '@/types';
@@ -87,7 +88,11 @@ export const createMessage = async (
             meetingDialogueSystemPrompt.trim(),
             clientUserAgent,
           );
-          result = { ...mainResult, ...mdPart };
+          result = {
+            ...mainResult,
+            ...mdPart,
+            tokenUsage: mergeOpenRouterTokenUsage(mainResult.tokenUsage, mdPart.tokenUsage),
+          };
         } catch (mdErr) {
           console.warn('[AI] meeting dialogue phase failed; returning main extraction only', {
             messageId: id,
@@ -115,6 +120,8 @@ export const createMessage = async (
           ...(result.meetingDialogueMarkdown?.trim() && {
             meetingDialogueMarkdown: result.meetingDialogueMarkdown.trim(),
           }),
+          ...(result.reasoning?.trim() && { reasoning: result.reasoning.trim() }),
+          ...(result.tokenUsage && { tokenUsage: result.tokenUsage }),
         },
         ttl,
       );

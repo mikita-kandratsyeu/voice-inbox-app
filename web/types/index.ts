@@ -16,6 +16,10 @@ export type AiResult = {
   nextSteps?: string[];
   /** Pro + meeting pseudo-diarization; plain text, optional. */
   meetingDialogueMarkdown?: string;
+  /** OpenRouter reasoning trace (Smart summary job); optional. */
+  reasoning?: string;
+  /** Tokens charged for this summary job (main + optional meeting pass). */
+  tokenUsage?: { prompt: number; completion: number };
 };
 
 export type Message =
@@ -32,6 +36,8 @@ export type Message =
       keyPhrases?: string[];
       nextSteps?: string[];
       meetingDialogueMarkdown?: string;
+      reasoning?: string;
+      tokenUsage?: { prompt: number; completion: number };
     }
   | { id: string; status: 'error'; error: string; model?: string };
 

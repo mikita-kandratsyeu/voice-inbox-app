@@ -2,7 +2,14 @@ import { useNavigation } from '@react-navigation/native';
 import { Check } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
+import {
+  ScrollView,
+  Switch,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -18,7 +25,7 @@ import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
-import { ScreenHeader, SettingsSection } from '@/shared/ui';
+import { ScreenHeader, SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { CloudAiKvTtlSlider } from './CloudAiKvTtlSlider';
 
@@ -110,6 +117,8 @@ export const AiSettingsScreen = () => {
   const setPrivateLocalLlmBudget = useSettingsStore((s) => s.setPrivateLocalLlmBudget);
   const cloudAiKvTtlSeconds = useSettingsStore((s) => s.cloudAiKvTtlSeconds);
   const setCloudAiKvTtlSeconds = useSettingsStore((s) => s.setCloudAiKvTtlSeconds);
+  const showSummaryReasoningInNotes = useSettingsStore((s) => s.showSummaryReasoningInNotes);
+  const setShowSummaryReasoningInNotes = useSettingsStore((s) => s.setShowSummaryReasoningInNotes);
   const isPrivateMode = aiExecutionMode === 'private_experimental';
 
   const cloudRetentionLabel = (sec: CloudAiKvTtlSeconds) =>
@@ -192,6 +201,29 @@ export const AiSettingsScreen = () => {
                 />
               </View>
             </View>
+          )}
+          {!isPrivateMode && (
+            <SettingsSection title={t('aiSettings.showSummaryReasoning.title')}>
+              <SettingsRow
+                label={t('aiSettings.showSummaryReasoning.label')}
+                subtitle={t('aiSettings.showSummaryReasoning.subtitle')}
+                rightSlot={
+                  <Switch
+                    value={showSummaryReasoningInNotes}
+                    onValueChange={setShowSummaryReasoningInNotes}
+                    accessibilityLabel={t('aiSettings.showSummaryReasoning.a11y')}
+                    trackColor={{
+                      false: color.background.tertiary,
+                      true: color.accent.primary,
+                    }}
+                    thumbColor={color.icon.onAccent}
+                  />
+                }
+                showChevron={false}
+                isFirst
+                isLast
+              />
+            </SettingsSection>
           )}
           <SettingsSection title={t('aiSettings.summaryStyle')}>
             <PickerSection

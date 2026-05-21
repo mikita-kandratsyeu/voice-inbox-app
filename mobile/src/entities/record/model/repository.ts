@@ -76,6 +76,10 @@ type RecordListQueryRow = {
   keyPhrases: string | null;
   nextSteps: string | null;
   meetingDialogue: string | null;
+  summaryReasoning: string | null;
+  summaryAiModel: string | null;
+  summaryTokensPrompt: number | null;
+  summaryTokensCompletion: number | null;
   translatedTranscript: string | null;
   translationLanguage: string | null;
   audioPath: string | null;
@@ -113,6 +117,16 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     keyPhrases: JSON.parse(row.keyPhrases ?? '[]') as string[],
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
     meetingDialogue: row.meetingDialogue?.trim() ? row.meetingDialogue.trim() : undefined,
+    summaryReasoning: row.summaryReasoning?.trim() ? row.summaryReasoning.trim() : undefined,
+    summaryAiModel: row.summaryAiModel?.trim() ? row.summaryAiModel.trim() : undefined,
+    summaryTokensPrompt:
+      row.summaryTokensPrompt != null && row.summaryTokensPrompt >= 0
+        ? row.summaryTokensPrompt
+        : undefined,
+    summaryTokensCompletion:
+      row.summaryTokensCompletion != null && row.summaryTokensCompletion >= 0
+        ? row.summaryTokensCompletion
+        : undefined,
     translatedTranscript: row.translatedTranscript ?? undefined,
     translationLanguage: row.translationLanguage ?? undefined,
     translationStatus: row.translatedTranscript
@@ -151,6 +165,16 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
     keyPhrases: JSON.parse(row.keyPhrases ?? '[]') as string[],
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
     meetingDialogue: row.meetingDialogue?.trim() ? row.meetingDialogue.trim() : undefined,
+    summaryReasoning: row.summaryReasoning?.trim() ? row.summaryReasoning.trim() : undefined,
+    summaryAiModel: row.summaryAiModel?.trim() ? row.summaryAiModel.trim() : undefined,
+    summaryTokensPrompt:
+      row.summaryTokensPrompt != null && row.summaryTokensPrompt >= 0
+        ? row.summaryTokensPrompt
+        : undefined,
+    summaryTokensCompletion:
+      row.summaryTokensCompletion != null && row.summaryTokensCompletion >= 0
+        ? row.summaryTokensCompletion
+        : undefined,
     translatedTranscript: row.translatedTranscript ?? undefined,
     translationLanguage: row.translationLanguage ?? undefined,
     translationStatus: row.translatedTranscript
@@ -185,6 +209,10 @@ const recordListColumns = {
   keyPhrases: recordsTable.keyPhrases,
   nextSteps: recordsTable.nextSteps,
   meetingDialogue: recordsTable.meetingDialogue,
+  summaryReasoning: recordsTable.summaryReasoning,
+  summaryAiModel: recordsTable.summaryAiModel,
+  summaryTokensPrompt: recordsTable.summaryTokensPrompt,
+  summaryTokensCompletion: recordsTable.summaryTokensCompletion,
   translatedTranscript: recordsTable.translatedTranscript,
   translationLanguage: recordsTable.translationLanguage,
   audioPath: recordsTable.audioPath,
@@ -311,6 +339,10 @@ export const recordRepository = {
         keyPhrases: JSON.stringify(record.keyPhrases ?? []),
         nextSteps: JSON.stringify(record.nextSteps ?? []),
         meetingDialogue: record.meetingDialogue?.trim() ? record.meetingDialogue.trim() : null,
+        summaryReasoning: record.summaryReasoning?.trim() ? record.summaryReasoning.trim() : null,
+        summaryAiModel: record.summaryAiModel?.trim() ? record.summaryAiModel.trim() : null,
+        summaryTokensPrompt: record.summaryTokensPrompt ?? null,
+        summaryTokensCompletion: record.summaryTokensCompletion ?? null,
         translatedTranscript: record.translatedTranscript ?? null,
         translationLanguage: record.translationLanguage ?? null,
         audioPath: audioPathToDbValue(record.audioPath),
@@ -458,6 +490,10 @@ export const recordRepository = {
       keyPhrases?: string[];
       nextSteps?: string[];
       meetingDialogue?: string | null;
+      summaryReasoning?: string | null;
+      summaryAiModel?: string | null;
+      summaryTokensPrompt?: number | null;
+      summaryTokensCompletion?: number | null;
     },
   ): Promise<void> => {
     logDb('updateAiExtras', { id });
@@ -474,6 +510,20 @@ export const recordRepository = {
     }
     if (data.meetingDialogue !== undefined) {
       updates.meetingDialogue = data.meetingDialogue?.trim() ? data.meetingDialogue.trim() : null;
+    }
+    if (data.summaryReasoning !== undefined) {
+      updates.summaryReasoning = data.summaryReasoning?.trim()
+        ? data.summaryReasoning.trim()
+        : null;
+    }
+    if (data.summaryAiModel !== undefined) {
+      updates.summaryAiModel = data.summaryAiModel?.trim() ? data.summaryAiModel.trim() : null;
+    }
+    if (data.summaryTokensPrompt !== undefined) {
+      updates.summaryTokensPrompt = data.summaryTokensPrompt;
+    }
+    if (data.summaryTokensCompletion !== undefined) {
+      updates.summaryTokensCompletion = data.summaryTokensCompletion;
     }
     if (Object.keys(updates).length > 0) {
       await db.update(recordsTable).set(updates).where(eq(recordsTable.id, id));

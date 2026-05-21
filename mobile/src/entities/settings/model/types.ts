@@ -101,6 +101,8 @@ export type SettingsState = {
   autoArchiveAfterDays: AutoArchiveAfterDays;
   cloudAiThirdPartyConsentAccepted: boolean;
   cloudAiKvTtlSeconds: number;
+  /** Smart mode: show optional reasoning block on the summary tab. */
+  showSummaryReasoningInNotes: boolean;
   whisperModelStatuses: Partial<Record<WhisperModelVariantId, WhisperModelStatus>>;
   whisperDownloadProgress: Partial<Record<WhisperModelVariantId, number>>;
   whisperDownloadBytes: Partial<Record<WhisperModelVariantId, DownloadBytes>>;
@@ -131,6 +133,7 @@ export type SettingsState = {
   setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => void;
   setCloudAiThirdPartyConsentAccepted: (value: boolean) => void;
   setCloudAiKvTtlSeconds: (value: number) => void;
+  setShowSummaryReasoningInNotes: (value: boolean) => void;
   setWhisperModelStatus: (
     id: WhisperModelId,
     format: WhisperModelWeightsFormat,

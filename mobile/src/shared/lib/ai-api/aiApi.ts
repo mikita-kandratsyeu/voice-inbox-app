@@ -6,6 +6,20 @@ import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from
 import { headersForAiOperation } from './aiOperation';
 import { pollGetLoop } from './pollGetLoop';
 
+function parseTokenUsage(raw: unknown): { prompt: number; completion: number } | undefined {
+  if (!raw || typeof raw !== 'object') {
+    return undefined;
+  }
+  const row = raw as Record<string, unknown>;
+  const prompt = isNumber(row.prompt) && row.prompt >= 0 ? Math.floor(row.prompt) : undefined;
+  const completion =
+    isNumber(row.completion) && row.completion >= 0 ? Math.floor(row.completion) : undefined;
+  if (prompt == null || completion == null) {
+    return undefined;
+  }
+  return { prompt, completion };
+}
+
 export type AiRecordingMarkOption = {
   offsetMs: number;
   label: string;
@@ -75,7 +89,9 @@ export type AiProcessingResult = {
   keyPhrases?: string[];
   nextSteps?: string[];
   meetingDialogueMarkdown?: string;
+  reasoning?: string;
   model?: string;
+  tokenUsage?: { prompt: number; completion: number };
 };
 
 export type AiMessageResult =
@@ -96,6 +112,8 @@ type MessageResponse =
       keyPhrases?: string[];
       nextSteps?: string[];
       meetingDialogueMarkdown?: string;
+      reasoning?: string;
+      tokenUsage?: { prompt: number; completion: number };
     }
   | { id: string; status: 'error'; error: string; model?: string };
 
@@ -267,6 +285,11 @@ export async function pollAiMessage(
         const mdRaw = (msg as { meetingDialogueMarkdown?: unknown }).meetingDialogueMarkdown;
         const meetingMd =
           isString(mdRaw) && mdRaw.trim() ? { meetingDialogueMarkdown: mdRaw.trim() } : {};
+        const reasoningRaw = (msg as { reasoning?: unknown }).reasoning;
+        const reasoningField =
+          isString(reasoningRaw) && reasoningRaw.trim() ? { reasoning: reasoningRaw.trim() } : {};
+        const tokenUsage = parseTokenUsage((msg as { tokenUsage?: unknown }).tokenUsage);
+        const tokenUsageField = tokenUsage ? { tokenUsage } : {};
 
         return {
           ok: true,
@@ -280,6 +303,8 @@ export async function pollAiMessage(
             ...(msg.keyPhrases && { keyPhrases: msg.keyPhrases }),
             ...(msg.nextSteps && { nextSteps: msg.nextSteps }),
             ...meetingMd,
+            ...reasoningField,
+            ...tokenUsageField,
           },
         };
       }

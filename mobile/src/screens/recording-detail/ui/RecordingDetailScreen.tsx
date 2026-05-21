@@ -617,6 +617,17 @@ export const RecordingDetailScreen = () => {
                   privateAiBatchProgress={liveRecord.privateAiBatchProgress}
                   privateAiBatchPhase={liveRecord.privateAiBatchPhase}
                   privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
+                  summaryReasoning={isPrivateMode ? undefined : liveRecord.summaryReasoning}
+                  summaryAiModel={liveRecord.summaryAiModel}
+                  summaryTokenUsage={
+                    liveRecord.summaryTokensPrompt != null &&
+                    liveRecord.summaryTokensCompletion != null
+                      ? {
+                          prompt: liveRecord.summaryTokensPrompt,
+                          completion: liveRecord.summaryTokensCompletion,
+                        }
+                      : undefined
+                  }
                 />
               </View>
             )}
