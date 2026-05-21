@@ -41,7 +41,6 @@ type AskMainContentProps = {
 };
 
 export const AskMainContent = ({
-  t,
   color,
   liveRecord,
   hasTranscript,
