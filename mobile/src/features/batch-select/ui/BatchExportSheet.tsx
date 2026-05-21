@@ -7,13 +7,9 @@ import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native'
 import type { ShareBriefTemplate } from '@/features/share-record';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
-import { IS_IOS } from '@/shared/lib/platform';
 import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
 import type { BatchExportPackaging } from '../model/batchExportPackaging';
-
-/** Matches `SaveRecordModal` when the keyboard is open. */
-const SAVE_SHEET_KEYBOARD_BOTTOM_PADDING = 24;
 
 function ExportPackagingChip({
   packaging,
@@ -89,7 +85,6 @@ export const BatchExportSheet = ({
   const [email, setEmail] = useState('');
   const [emailBodyTemplate, setEmailBodyTemplate] = useState<ShareBriefTemplate>('meetingBrief');
   const [exportPackaging, setExportPackaging] = useState<BatchExportPackaging>('single');
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   const trimmedEmail = email.trim();
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
@@ -107,7 +102,6 @@ export const BatchExportSheet = ({
     setEmail('');
     setEmailBodyTemplate('meetingBrief');
     setExportPackaging('single');
-    setKeyboardVisible(false);
   }, [visible]);
 
   useEffect(() => {
@@ -120,21 +114,6 @@ export const BatchExportSheet = ({
       setEmailBodyTemplate('meetingBrief');
     }
   }, [emailBodyTemplate, showSpeakerTurnsExport]);
-
-  useEffect(() => {
-    if (!emailVisible) {
-      setKeyboardVisible(false);
-      return undefined;
-    }
-    const showEvent = IS_IOS ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = IS_IOS ? 'keyboardWillHide' : 'keyboardDidHide';
-    const show = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
-    const hide = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, [emailVisible]);
 
   const handleExportNoteBrief = useCallback(() => {
     onClose();
@@ -157,7 +136,6 @@ export const BatchExportSheet = ({
 
   const handleCancelEmail = useCallback(() => {
     Keyboard.dismiss();
-    setKeyboardVisible(false);
     setEmailVisible(false);
     setEmail('');
   }, []);
@@ -208,7 +186,7 @@ export const BatchExportSheet = ({
   );
 
   return (
-    <AppBottomSheetModal visible={visible} onClose={onClose} keyboardBlurBehavior="none">
+    <AppBottomSheetModal visible={visible} onClose={onClose}>
       {emailVisible ? (
         <BottomSheetScrollView
           keyboardShouldPersistTaps="handled"
@@ -217,9 +195,7 @@ export const BatchExportSheet = ({
           contentContainerStyle={{
             paddingHorizontal: 20,
             paddingTop: 4,
-            ...(keyboardVisible
-              ? { paddingBottom: SAVE_SHEET_KEYBOARD_BOTTOM_PADDING }
-              : contentPadding),
+            ...contentPadding,
             gap: 12,
           }}
         >

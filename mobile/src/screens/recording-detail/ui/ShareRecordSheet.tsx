@@ -6,11 +6,7 @@ import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native'
 
 import type { ShareBriefTemplate } from '@/features/share-record';
 import { useColors } from '@/shared/config';
-import { IS_IOS } from '@/shared/lib/platform';
 import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
-
-/** Matches `SaveRecordModal` / `AddRecordingMarkSheet` bottom padding when the keyboard is open. */
-const SAVE_SHEET_KEYBOARD_BOTTOM_PADDING = 24;
 
 type ShareRecordSheetProps = {
   visible: boolean;
@@ -42,7 +38,6 @@ export const ShareRecordSheet = ({
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [emailSendTemplate, setEmailSendTemplate] = useState<ShareBriefTemplate>('meetingBrief');
-  const [keyboardVisible, setKeyboardVisible] = useState(false);
   const trimmedEmail = email.trim();
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
 
@@ -53,7 +48,6 @@ export const ShareRecordSheet = ({
     }
     setEmailVisible(false);
     setEmail('');
-    setKeyboardVisible(false);
   }, [visible]);
 
   useEffect(() => {
@@ -61,21 +55,6 @@ export const ShareRecordSheet = ({
       setEmailSendTemplate('meetingBrief');
     }
   }, [emailSendTemplate, showSpeakerTurnsExport]);
-
-  useEffect(() => {
-    if (!emailVisible) {
-      setKeyboardVisible(false);
-      return undefined;
-    }
-    const showEvent = IS_IOS ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = IS_IOS ? 'keyboardWillHide' : 'keyboardDidHide';
-    const show = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
-    const hide = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
-    return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, [emailVisible]);
 
   const handleShareNoteBrief = useCallback(() => {
     onClose();
@@ -103,7 +82,6 @@ export const ShareRecordSheet = ({
 
   const handleCancelEmail = useCallback(() => {
     Keyboard.dismiss();
-    setKeyboardVisible(false);
     setEmailVisible(false);
     setEmail('');
   }, []);
@@ -166,7 +144,7 @@ export const ShareRecordSheet = ({
   }, [showSpeakerTurnsExport, t]);
 
   return (
-    <AppBottomSheetModal visible={visible} onClose={onClose} keyboardBlurBehavior="none">
+    <AppBottomSheetModal visible={visible} onClose={onClose}>
       {emailVisible ? (
         <BottomSheetScrollView
           keyboardShouldPersistTaps="handled"
@@ -175,9 +153,7 @@ export const ShareRecordSheet = ({
           contentContainerStyle={{
             paddingHorizontal: 20,
             paddingTop: 4,
-            ...(keyboardVisible
-              ? { paddingBottom: SAVE_SHEET_KEYBOARD_BOTTOM_PADDING }
-              : contentPadding),
+            ...contentPadding,
             gap: 12,
           }}
         >
