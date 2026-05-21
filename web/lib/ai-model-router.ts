@@ -1,5 +1,5 @@
 import {
-  AI_MODEL_DEEPSEEK_V4_FLASH_NITRO,
+  AI_MODEL_DEEPSEEK_V4_FLASH,
   AI_MODEL_GEMINI_2_5_FLASH_LITE,
   AI_MODEL_GEMINI_3_1_FLASH_LITE,
 } from '@/config/constants';
@@ -83,7 +83,7 @@ function resolveAutoAiModelByThresholds(
   }
 
   if (routingChars >= mediumAt) {
-    return AI_MODEL_DEEPSEEK_V4_FLASH_NITRO;
+    return AI_MODEL_DEEPSEEK_V4_FLASH;
   }
 
   return AI_MODEL_GEMINI_2_5_FLASH_LITE;

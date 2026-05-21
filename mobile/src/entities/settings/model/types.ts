@@ -7,7 +7,7 @@ export type UserSelectableAIModelId =
   | 'google/gemini-2.5-flash-lite'
   | 'google/gemini-3.1-flash-lite'
   | 'minimax/minimax-m2.7'
-  | 'deepseek/deepseek-v4-flash'
+  | 'deepseek/deepseek-v4-flash:nitro'
   | 'xiaomi/mimo-v2-flash'
   | 'nvidia/nemotron-3-super-120b-a12b';
 export type LocalAiModelId =

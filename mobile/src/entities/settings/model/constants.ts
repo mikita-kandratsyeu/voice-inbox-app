@@ -32,7 +32,7 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     contextTokens: 1_048_576,
   },
   {
-    id: 'deepseek/deepseek-v4-flash',
+    id: 'deepseek/deepseek-v4-flash:nitro',
     name: 'DeepSeek V4 Flash',
     provider: 'DeepSeek',
     descriptionKey: 'aiModels.deepSeekDesc',
