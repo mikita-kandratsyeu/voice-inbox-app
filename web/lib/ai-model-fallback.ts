@@ -9,11 +9,20 @@ const RETRYABLE_OPENROUTER_ERROR_NAMES = new Set([
   'InternalServerResponseError',
 ]);
 
+function isJsonObjectResponseFormatUnsupported(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  return msg.includes('json_object response format is not supported');
+}
+
 export function isRetryableOpenRouterTransportError(err: unknown): boolean {
   if (
     err instanceof TooManyRequestsResponseError ||
     err instanceof ServiceUnavailableResponseError
   ) {
+    return true;
+  }
+
+  if (isJsonObjectResponseFormatUnsupported(err)) {
     return true;
   }
 

@@ -3,6 +3,7 @@ import {
   isRetryableOpenRouterTransportError,
   withSequentialModelFallback,
 } from '@/lib/ai-model-fallback';
+import { openRouterJsonObjectResponseFormat } from '@/lib/openrouter-response-format';
 import {
   AUTO_ORGANIZE_MAX_SUMMARY_CHARS,
   AUTO_ORGANIZE_MAX_TITLE_CHARS,
@@ -27,6 +28,7 @@ async function callOpenRouter(
   clientUserAgent?: string | null,
 ): Promise<AiResult> {
   const client = createOpenRouterClient(clientUserAgent);
+  const jsonFormat = openRouterJsonObjectResponseFormat(model);
   const response = await client.chat.send({
     chatGenerationParams: {
       model,
@@ -35,7 +37,7 @@ async function callOpenRouter(
         { role: 'user', content: transcript },
       ],
       provider: { zdr: true },
-      responseFormat: { type: 'json_object' },
+      ...(jsonFormat ? { responseFormat: jsonFormat } : {}),
       temperature: 0.3,
       stream: false,
     },
@@ -207,6 +209,7 @@ export async function processMeetingDialogueMarkdown(
     models,
     async (m) => {
       const client = createOpenRouterClient(clientUserAgent);
+      const jsonFormat = openRouterJsonObjectResponseFormat(m);
       const response = await client.chat.send({
         chatGenerationParams: {
           model: m,
@@ -215,7 +218,7 @@ export async function processMeetingDialogueMarkdown(
             { role: 'user', content: userContent },
           ],
           provider: { zdr: true },
-          responseFormat: { type: 'json_object' },
+          ...(jsonFormat ? { responseFormat: jsonFormat } : {}),
           temperature: 0.3,
           stream: false,
         },
@@ -257,6 +260,7 @@ export async function processAskQuestion(
     sysPrompt: string,
   ): Promise<{ answer: string }> => {
     const client = createOpenRouterClient(clientUserAgent);
+    const jsonFormat = openRouterJsonObjectResponseFormat(m);
     const response = await client.chat.send({
       chatGenerationParams: {
         model: m,
@@ -265,7 +269,7 @@ export async function processAskQuestion(
           { role: 'user', content },
         ],
         provider: { zdr: true },
-        responseFormat: { type: 'json_object' },
+        ...(jsonFormat ? { responseFormat: jsonFormat } : {}),
         temperature: 0.3,
         stream: false,
       },
@@ -359,6 +363,7 @@ export async function processDigest(
 }> {
   const callDigest = async (m: string) => {
     const client = createOpenRouterClient(clientUserAgent);
+    const jsonFormat = openRouterJsonObjectResponseFormat(m);
     const response = await client.chat.send({
       chatGenerationParams: {
         model: m,
@@ -367,7 +372,7 @@ export async function processDigest(
           { role: 'user', content: digestPayload },
         ],
         provider: { zdr: true },
-        responseFormat: { type: 'json_object' },
+        ...(jsonFormat ? { responseFormat: jsonFormat } : {}),
         temperature: 0.25,
         stream: false,
       },
@@ -646,6 +651,7 @@ export async function processAutoOrganizeFolders(
 
   const sendOrganize = async (m: string, userContent: string): Promise<AutoOrganizeResult> => {
     const client = createOpenRouterClient(clientUserAgent);
+    const jsonFormat = openRouterJsonObjectResponseFormat(m);
     const response = await client.chat.send({
       chatGenerationParams: {
         model: m,
@@ -654,7 +660,7 @@ export async function processAutoOrganizeFolders(
           { role: 'user', content: userContent },
         ],
         provider: { zdr: true },
-        responseFormat: { type: 'json_object' },
+        ...(jsonFormat ? { responseFormat: jsonFormat } : {}),
         temperature: 0.12,
         stream: false,
       },
