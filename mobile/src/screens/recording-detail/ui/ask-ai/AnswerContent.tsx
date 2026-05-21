@@ -20,6 +20,7 @@ import { hapticSelection } from '@/shared/lib';
 import { AskAiAnswerMarkdown } from './AskAiAnswerMarkdown';
 import { AskAiContextDisclosure } from './AskAiContextDisclosure';
 import { formatAskTurnForClipboard, formatAskTurnForShare } from './askAiFormat';
+import { AskAiSuggestedQuestions } from './AskAiSuggestedQuestions';
 import { buildFollowUpQuestions } from './askAiSuggestions';
 
 type AskCopyTurnButtonProps = {
@@ -212,31 +213,12 @@ export const AnswerContent = ({
           onShare={onShare}
         />
       ))}
-      <View className="gap-2">
-        <Text className="text-sm font-semibold" style={{ color: color.text.secondary }}>
-          {t('recordingDetail.nextSteps')}
-        </Text>
-        <View className="flex-row flex-wrap gap-2">
-          {followUpQuestions.map((followUpQuestion, index) => (
-            <TouchableOpacity
-              key={`followup-${index}`}
-              onPress={() => {
-                hapticSelection();
-                onFollowUpQuestion(followUpQuestion);
-              }}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel={followUpQuestion}
-              className="rounded-xl px-3 py-2"
-              style={{ backgroundColor: color.background.tertiary }}
-            >
-              <Text className="text-base leading-6" style={{ color: color.text.primary }}>
-                {followUpQuestion}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      </View>
+      <AskAiSuggestedQuestions
+        color={color}
+        title={t('recordingDetail.nextSteps')}
+        suggestions={followUpQuestions}
+        onQuestionPress={onFollowUpQuestion}
+      />
     </View>
   );
 };

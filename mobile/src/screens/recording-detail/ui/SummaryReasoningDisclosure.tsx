@@ -18,6 +18,7 @@ import {
   type SummaryTokenUsage,
 } from '@/shared/lib/summaryMetaSubtitle';
 
+import { AskAiAnswerMarkdown } from './ask-ai/AskAiAnswerMarkdown';
 import { SummaryMetaLinesText } from './SummaryMetaLinesText';
 
 const REASONING_SCROLL_MAX_HEIGHT = 280;
@@ -124,9 +125,9 @@ export const SummaryReasoningDisclosure = ({
             nestedScrollEnabled
             showsVerticalScrollIndicator
           >
-            <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
+            <AskAiAnswerMarkdown color={color} variant="reasoning">
               {trimmed}
-            </Text>
+            </AskAiAnswerMarkdown>
           </ScrollView>
         </Animated.View>
       ) : null}

@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import type { AiExecutionMode } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
 
 import { AskAiContextDisclosure } from './AskAiContextDisclosure';
+import { AskAiSuggestedQuestions } from './AskAiSuggestedQuestions';
 import { buildSuggestedQuestions } from './askAiSuggestions';
 
 type EmptyStateProps = {
@@ -40,34 +40,13 @@ export const EmptyState = ({
         aiExecutionMode={aiExecutionMode}
         containerClassName=""
       />
-      <Text className="text-xs font-semibold" style={{ color: color.text.secondary }}>
-        {t('recordingDetail.askSuggestedSection')}
-      </Text>
-      <View className="gap-3">
-        {suggestedQuestions.map((questionText, index) => (
-          <TouchableOpacity
-            key={`suggested-${index}`}
-            onPress={() => {
-              hapticSelection();
-              onSuggestedQuestion(questionText);
-            }}
-            disabled={disabled || showOfflineState}
-            activeOpacity={0.7}
-            accessibilityRole="button"
-            accessibilityLabel={questionText}
-            accessibilityState={{ disabled: Boolean(disabled || showOfflineState) }}
-            className="rounded-xl px-4 py-4"
-            style={{ backgroundColor: color.background.tertiary }}
-          >
-            <Text
-              className="text-[15px] font-normal leading-[22px]"
-              style={{ color: color.text.primary }}
-            >
-              {questionText}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <AskAiSuggestedQuestions
+        color={color}
+        title={t('recordingDetail.askSuggestedSection')}
+        suggestions={suggestedQuestions}
+        onQuestionPress={onSuggestedQuestion}
+        disabled={disabled || showOfflineState}
+      />
     </View>
   );
 };

@@ -7,61 +7,71 @@ import { type Colors, useAppTheme } from '@/shared/config';
 type AskAiAnswerMarkdownProps = {
   color: Colors;
   children: string;
+  /** Compact secondary text for summary reasoning and similar disclosures. */
+  variant?: 'answer' | 'reasoning';
 };
 
-export const AskAiAnswerMarkdown = ({ color, children }: AskAiAnswerMarkdownProps) => {
+export const AskAiAnswerMarkdown = ({
+  color,
+  children,
+  variant = 'answer',
+}: AskAiAnswerMarkdownProps) => {
   const browserScheme = useAppTheme();
+  const isReasoning = variant === 'reasoning';
+  const textColor = isReasoning ? color.text.secondary : color.text.primary;
+  const fontSize = isReasoning ? 13 : 16;
+  const lineHeight = isReasoning ? 20 : 28;
 
   const markdownStyles = useMemo(
     () => ({
       body: {
-        color: color.text.primary,
-        fontSize: 16,
-        lineHeight: 28,
+        color: textColor,
+        fontSize,
+        lineHeight,
         marginBottom: 0,
       },
       text: {
-        color: color.text.primary,
-        fontSize: 16,
-        lineHeight: 28,
+        color: textColor,
+        fontSize,
+        lineHeight,
       },
       paragraph: {
-        color: color.text.primary,
-        fontSize: 16,
-        lineHeight: 28,
+        color: textColor,
+        fontSize,
+        lineHeight,
         marginTop: 0,
-        marginBottom: 8,
+        marginBottom: isReasoning ? 6 : 8,
       },
       heading1: {
-        color: color.text.primary,
-        fontSize: 18,
-        lineHeight: 26,
+        color: textColor,
+        fontSize: isReasoning ? 15 : 18,
+        lineHeight: isReasoning ? 22 : 26,
         fontWeight: '600' as const,
-        marginTop: 4,
-        marginBottom: 8,
+        marginTop: isReasoning ? 2 : 4,
+        marginBottom: isReasoning ? 6 : 8,
       },
       heading2: {
-        color: color.text.primary,
-        fontSize: 17,
-        lineHeight: 24,
+        color: textColor,
+        fontSize: isReasoning ? 14 : 17,
+        lineHeight: isReasoning ? 20 : 24,
         fontWeight: '600' as const,
-        marginTop: 8,
-        marginBottom: 6,
+        marginTop: isReasoning ? 4 : 8,
+        marginBottom: isReasoning ? 4 : 6,
       },
       heading3: {
-        color: color.text.primary,
-        fontSize: 16,
-        lineHeight: 24,
+        color: textColor,
+        fontSize: isReasoning ? 13 : 16,
+        lineHeight: isReasoning ? 20 : 24,
         fontWeight: '600' as const,
-        marginTop: 6,
-        marginBottom: 4,
+        marginTop: isReasoning ? 4 : 6,
+        marginBottom: isReasoning ? 2 : 4,
       },
       strong: {
-        color: color.text.primary,
+        color: isReasoning ? color.text.primary : textColor,
         fontWeight: '600' as const,
       },
       em: {
-        color: color.text.primary,
+        color: textColor,
         fontStyle: 'italic' as const,
       },
       link: {
@@ -77,30 +87,30 @@ export const AskAiAnswerMarkdown = ({ color, children }: AskAiAnswerMarkdownProp
         marginBottom: 4,
       },
       list_item: {
-        color: color.text.primary,
-        fontSize: 16,
-        lineHeight: 28,
-        marginBottom: 4,
+        color: textColor,
+        fontSize,
+        lineHeight,
+        marginBottom: isReasoning ? 2 : 4,
       },
       bullet_list_icon: {
         color: color.accent.primary,
-        fontSize: 16,
-        lineHeight: 28,
+        fontSize,
+        lineHeight,
       },
       bullet_list_content: {
-        color: color.text.primary,
-        fontSize: 16,
-        lineHeight: 28,
+        color: textColor,
+        fontSize,
+        lineHeight,
       },
       ordered_list_icon: {
         color: color.accent.primary,
-        fontSize: 16,
-        lineHeight: 28,
+        fontSize,
+        lineHeight,
       },
       ordered_list_content: {
-        color: color.text.primary,
-        fontSize: 16,
-        lineHeight: 28,
+        color: textColor,
+        fontSize,
+        lineHeight,
       },
       code_inline: {
         backgroundColor: color.background.tertiary,
@@ -131,7 +141,7 @@ export const AskAiAnswerMarkdown = ({ color, children }: AskAiAnswerMarkdownProp
         borderRadius: 4,
       },
     }),
-    [color],
+    [color, fontSize, isReasoning, lineHeight, textColor],
   );
 
   const onLinkPress = useCallback(

@@ -66,6 +66,7 @@ const AskAIComposerInner = ({
             value={questionInput}
             onChangeText={onChangeQuestion}
             returnKeyType="send"
+            submitBehavior="submit"
             editable={!disableByNetwork}
             multiline
             numberOfLines={1}
