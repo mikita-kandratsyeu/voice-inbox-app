@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next';
 
+import { formatSummaryGenerationDuration } from './formatSummaryGenerationDuration';
 import { formatTokenCount } from './formatTokenCount';
 
 export type SummaryTokenUsage = {
@@ -10,12 +11,14 @@ export type SummaryTokenUsage = {
 export type SummaryMetaLines = {
   modelLine?: string;
   tokensLine?: string;
+  durationLine?: string;
 };
 
 export function buildSummaryMetaLines(
   t: TFunction,
   modelLabel: string | undefined,
   tokenUsage: SummaryTokenUsage | undefined,
+  generationDurationMs?: number,
 ): SummaryMetaLines {
   const model = modelLabel?.trim();
   const lines: SummaryMetaLines = {};
@@ -29,15 +32,21 @@ export function buildSummaryMetaLines(
       output: formatTokenCount(tokenUsage.completion),
     });
   }
+  if (generationDurationMs != null && generationDurationMs > 0) {
+    const duration = formatSummaryGenerationDuration(generationDurationMs, t);
+    lines.durationLine = t('recordingDetail.summaryMetaDuration', { duration });
+  }
 
   return lines;
 }
 
 export function hasSummaryMetaLines(lines: SummaryMetaLines): boolean {
-  return Boolean(lines.modelLine?.trim() || lines.tokensLine?.trim());
+  return Boolean(lines.modelLine?.trim() || lines.tokensLine?.trim() || lines.durationLine?.trim());
 }
 
 export function summaryMetaA11yHint(lines: SummaryMetaLines): string | undefined {
-  const parts = [lines.modelLine, lines.tokensLine].map((s) => s?.trim()).filter(Boolean);
+  const parts = [lines.modelLine, lines.tokensLine, lines.durationLine]
+    .map((s) => s?.trim())
+    .filter(Boolean);
   return parts.length > 0 ? parts.join('. ') : undefined;
 }

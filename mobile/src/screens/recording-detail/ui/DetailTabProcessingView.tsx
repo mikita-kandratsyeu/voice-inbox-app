@@ -4,9 +4,10 @@ import { Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
+import { useRotatingI18nTip } from '@/shared/lib/aiGenerationTips';
 import { AiProcessingCancelButton } from '@/shared/ui';
 
-export type DetailTabProcessingContext = 'transcription' | 'private_llm';
+export type DetailTabProcessingContext = 'transcription' | 'private_llm' | 'cloud_ai';
 
 type DetailTabProcessingViewProps = {
   progress: number;
@@ -15,8 +16,13 @@ type DetailTabProcessingViewProps = {
   color: Colors;
   onCancel?: () => void;
   leadingIcon: React.ReactNode;
-  hintText: string;
+  /** Static hint (e.g. transcription). Prefer `tipKeys` for AI generation. */
+  hintText?: string;
+  /** i18n keys rotated while processing (AI generation screens). */
+  tipKeys?: readonly string[];
   context?: DetailTabProcessingContext;
+  /** Overrides default title from `context` + `phase` (e.g. tab-specific cloud AI labels). */
+  statusTitle?: string;
 };
 
 export const DetailTabProcessingView = ({
@@ -27,9 +33,13 @@ export const DetailTabProcessingView = ({
   onCancel,
   leadingIcon,
   hintText,
+  tipKeys,
   context = 'transcription',
+  statusTitle: statusTitleOverride,
 }: DetailTabProcessingViewProps) => {
   const { t } = useTranslation();
+  const rotatingTip = useRotatingI18nTip(tipKeys ?? []);
+  const hintDisplay = tipKeys?.length ? rotatingTip : (hintText ?? '');
   const animatedWidth = useSharedValue(0);
   const clampedProgress = Math.min(100, Math.max(0, progress));
 
@@ -38,9 +48,16 @@ export const DetailTabProcessingView = ({
       ? phase === 'loading_model'
         ? 'privateAi.loadingModel'
         : 'privateAi.processing'
-      : (`aiStatus.${phase}` as const);
+      : context === 'cloud_ai'
+        ? phase === 'loading_model'
+          ? 'cloudAi.preparing'
+          : 'cloudAi.processing'
+        : (`aiStatus.${phase}` as const);
 
-  const timeNs = context === 'private_llm' ? 'privateAi' : 'transcription';
+  const statusTitle = statusTitleOverride ?? t(statusTitleKey);
+
+  const timeNs =
+    context === 'private_llm' ? 'privateAi' : context === 'cloud_ai' ? 'cloudAi' : 'transcription';
 
   useEffect(() => {
     if (progress === 0) {
@@ -73,24 +90,26 @@ export const DetailTabProcessingView = ({
         </View>
         <View className="gap-0.5">
           <Text className="text-base font-bold" style={{ color: color.text.primary }}>
-            {t(statusTitleKey)}
+            {statusTitle}
           </Text>
           <Text className="text-[14px]" style={{ color: color.text.secondary }}>
             {timeLabel}
           </Text>
         </View>
       </View>
-      <View className="rounded-xl p-3" style={{ backgroundColor: color.background.tertiary }}>
-        <Text className="text-xs" style={{ color: color.text.secondary }}>
-          {hintText}
-        </Text>
-      </View>
+      {hintDisplay ? (
+        <View className="rounded-xl p-3" style={{ backgroundColor: color.background.tertiary }}>
+          <Text className="text-xs leading-[18px]" style={{ color: color.text.secondary }}>
+            {hintDisplay}
+          </Text>
+        </View>
+      ) : null}
       <View
         className="h-1.5 overflow-hidden rounded-sm"
         style={{ backgroundColor: color.background.tertiary }}
         accessibilityRole="progressbar"
         accessibilityValue={{ min: 0, max: 100, now: clampedProgress }}
-        accessibilityLabel={t(statusTitleKey)}
+        accessibilityLabel={statusTitle}
       >
         <Animated.View
           className="h-1.5 rounded-sm"

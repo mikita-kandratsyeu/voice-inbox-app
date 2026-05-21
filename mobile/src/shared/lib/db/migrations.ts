@@ -76,6 +76,8 @@ const migration0013 = `ALTER TABLE \`records\` ADD \`summaryAiModel\` text;`;
 const migration0014 = `ALTER TABLE \`records\` ADD \`summaryTokensPrompt\` integer;--> statement-breakpoint
 ALTER TABLE \`records\` ADD \`summaryTokensCompletion\` integer;`;
 
+const migration0015 = `ALTER TABLE \`records\` ADD \`summaryGenerationMs\` integer;`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -101,5 +103,6 @@ export const migrationsConfig = {
     m0012: migration0012,
     m0013: migration0013,
     m0014: migration0014,
+    m0015: migration0015,
   } as Record<string, string>,
 };

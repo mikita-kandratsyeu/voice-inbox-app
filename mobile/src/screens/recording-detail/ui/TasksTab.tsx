@@ -24,14 +24,13 @@ import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/share
 import {
   AiTabErrorBanner,
   AiTabHintIcon,
-  AiTabLoadingState,
   Button,
   getInputFieldInputStyle,
   InputField,
   TabEmptyState,
 } from '@/shared/ui';
 
-import { DetailTabProcessingView } from './DetailTabProcessingView';
+import { AiTabProcessing } from './AiTabProcessing';
 import { TaskEditSheet } from './TaskEditSheet';
 import { TaskReextractHintSheet } from './TaskReextractHintSheet';
 
@@ -53,7 +52,7 @@ type TasksTabProps = {
   showPrivateModeCta?: boolean;
   onSwitchToSmartMode?: () => void;
   onCancelProcessing?: () => void;
-  usePrivateProcessingPanel?: boolean;
+  isPrivateMode?: boolean;
   privateAiBatchProgress?: number;
   privateAiBatchPhase?: 'loading_model' | 'processing';
   privateAiBatchProgressLabel?: string;
@@ -144,7 +143,7 @@ export const TasksTab = ({
   privateAiBatchProgressLabel,
   showPrivateModeCta = false,
   onSwitchToSmartMode: _onSwitchToSmartMode,
-  usePrivateProcessingPanel = false,
+  isPrivateMode = false,
 }: TasksTabProps) => {
   const theme = useAppTheme();
   const isDark = theme === 'dark';
@@ -194,30 +193,16 @@ export const TasksTab = ({
   };
 
   if (status === 'processing') {
-    if (usePrivateProcessingPanel && onCancelProcessing) {
-      return (
-        <>
-          <DetailTabProcessingView
-            progress={privateAiBatchProgress ?? 0}
-            progressLabel={privateAiBatchProgressLabel}
-            phase={privateAiBatchPhase ?? 'loading_model'}
-            color={color}
-            onCancel={onCancelProcessing}
-            context="private_llm"
-            hintText={t('privateAi.batteryHint')}
-            leadingIcon={<ListChecks size={22} color={color.accent.primary} strokeWidth={2} />}
-          />
-          {reextractSheet}
-          {editTaskSheet}
-        </>
-      );
-    }
-
     return (
       <>
-        <AiTabLoadingState
-          message={t('recordingDetail.tasksProcessing')}
+        <AiTabProcessing
+          variant="tasks"
+          progress={privateAiBatchProgress ?? 0}
+          progressLabel={privateAiBatchProgressLabel}
+          phase={privateAiBatchPhase ?? (isPrivateMode ? 'loading_model' : 'processing')}
+          color={color}
           onCancel={onCancelProcessing}
+          isPrivateMode={isPrivateMode}
         />
         {reextractSheet}
         {editTaskSheet}

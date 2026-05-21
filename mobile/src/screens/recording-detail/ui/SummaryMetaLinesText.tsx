@@ -29,6 +29,11 @@ export const SummaryMetaLinesText = ({ lines, color }: SummaryMetaLinesTextProps
           {lines.tokensLine.trim()}
         </Text>
       ) : null}
+      {lines.durationLine?.trim() ? (
+        <Text className="text-[12px] leading-[18px]" style={secondaryStyle}>
+          {lines.durationLine.trim()}
+        </Text>
+      ) : null}
     </View>
   );
 };

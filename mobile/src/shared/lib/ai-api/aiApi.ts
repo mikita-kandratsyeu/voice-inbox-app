@@ -5,6 +5,7 @@ import { isNumber, isString } from '@/shared/lib/type-guards';
 import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from './abort';
 import { headersForAiOperation } from './aiOperation';
 import { pollGetLoop } from './pollGetLoop';
+import { readResponseJson } from './responseJson';
 
 function parseTokenUsage(raw: unknown): { prompt: number; completion: number } | undefined {
   if (!raw || typeof raw !== 'object') {
@@ -148,7 +149,11 @@ export async function postAiMessage(
   }
 
   if (response.status === 429) {
-    const json = (await response.json()) as AiApiLimitResponse;
+    const limitBody = await readResponseJson(response);
+    if (!limitBody.ok) {
+      return { ok: false, error: limitBody.error };
+    }
+    const json = limitBody.data as AiApiLimitResponse;
     if (__DEV__) console.warn('[AI] postAiMessage: limit exceeded', json.usage);
     return { ok: false, limitExceeded: true, usage: json.usage };
   }
@@ -160,7 +165,12 @@ export async function postAiMessage(
     return { ok: false, error: text || `HTTP ${response.status}` };
   }
 
-  const data = (await response.json()) as AiApiSuccessResponse;
+  const successBody = await readResponseJson(response);
+  if (!successBody.ok) {
+    return { ok: false, error: successBody.error };
+  }
+
+  const data = successBody.data as AiApiSuccessResponse;
 
   return { ok: true, data };
 }

@@ -7,6 +7,7 @@ import {
   isAbortLikeError,
 } from './abort';
 import { AI_POLL_TIMEOUT_MS } from './constants';
+import { readResponseJson } from './responseJson';
 const POLL_BACKOFF_INITIAL_MS = 2_000;
 const POLL_BACKOFF_CAP_MS = 8_000;
 
@@ -60,8 +61,15 @@ export async function pollGetLoop<T>(
       continue;
     }
 
-    const json: unknown = await response.json();
-    const parsed = parseResponse(json);
+    const body = await readResponseJson(response);
+    if (!body.ok) {
+      if (__DEV__) {
+        console.warn('[AI] poll: non-JSON body', body.error);
+      }
+      continue;
+    }
+
+    const parsed = parseResponse(body.data);
     if (parsed === 'processing') {
       continue;
     }

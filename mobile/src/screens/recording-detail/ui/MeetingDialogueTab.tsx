@@ -1,4 +1,4 @@
-import { AlertCircle, FileText, RefreshCw, Sparkles, UsersRound } from 'lucide-react-native';
+import { AlertCircle, FileText, RefreshCw, UsersRound } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -7,16 +7,10 @@ import type { RecordingStatus } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
-import {
-  AiTabErrorBanner,
-  AiTabHintIcon,
-  AiTabLoadingState,
-  Button,
-  TabEmptyState,
-} from '@/shared/ui';
+import { AiTabErrorBanner, AiTabHintIcon, Button, TabEmptyState } from '@/shared/ui';
 
 import { parseMeetingDialogue, utteranceStripeColor } from '../lib/parseMeetingDialogue';
-import { DetailTabProcessingView } from './DetailTabProcessingView';
+import { AiTabProcessing } from './AiTabProcessing';
 
 type MeetingDialogueTabProps = {
   meetingDialogue?: string;
@@ -28,7 +22,7 @@ type MeetingDialogueTabProps = {
   onDismissError?: () => void;
   showPrivateModeCta?: boolean;
   onCancelProcessing?: () => void;
-  usePrivateProcessingPanel?: boolean;
+  isPrivateMode?: boolean;
   privateAiBatchProgress?: number;
   privateAiBatchPhase?: 'loading_model' | 'processing';
   privateAiBatchProgressLabel?: string;
@@ -47,7 +41,7 @@ export const MeetingDialogueTab = ({
   privateAiBatchProgressLabel,
   showPrivateModeCta = false,
   status,
-  usePrivateProcessingPanel = false,
+  isPrivateMode = false,
 }: MeetingDialogueTabProps) => {
   const { t } = useTranslation();
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
@@ -63,25 +57,15 @@ export const MeetingDialogueTab = ({
   const utterances = useMemo(() => parseMeetingDialogue(meetingDialogue ?? ''), [meetingDialogue]);
 
   if (status === 'processing') {
-    if (usePrivateProcessingPanel && onCancelProcessing) {
-      return (
-        <DetailTabProcessingView
-          progress={privateAiBatchProgress ?? 0}
-          progressLabel={privateAiBatchProgressLabel}
-          phase={privateAiBatchPhase ?? 'loading_model'}
-          color={color}
-          onCancel={onCancelProcessing}
-          context="private_llm"
-          hintText={t('privateAi.batteryHint')}
-          leadingIcon={<Sparkles size={22} color={color.accent.primary} strokeWidth={2} />}
-        />
-      );
-    }
-
     return (
-      <AiTabLoadingState
-        message={t('recordingDetail.meetingDialogueProcessing')}
+      <AiTabProcessing
+        variant="meetingDialogue"
+        progress={privateAiBatchProgress ?? 0}
+        progressLabel={privateAiBatchProgressLabel}
+        phase={privateAiBatchPhase ?? (isPrivateMode ? 'loading_model' : 'processing')}
+        color={color}
         onCancel={onCancelProcessing}
+        isPrivateMode={isPrivateMode}
       />
     );
   }

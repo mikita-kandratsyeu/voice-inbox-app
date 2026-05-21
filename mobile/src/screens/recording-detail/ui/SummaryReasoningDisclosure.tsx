@@ -28,6 +28,7 @@ type SummaryReasoningDisclosureProps = {
   surfaceBackgroundColor?: string;
   modelLabel?: string;
   tokenUsage?: SummaryTokenUsage;
+  generationDurationMs?: number;
 };
 
 export const SummaryReasoningDisclosure = ({
@@ -36,6 +37,7 @@ export const SummaryReasoningDisclosure = ({
   surfaceBackgroundColor,
   modelLabel,
   tokenUsage,
+  generationDurationMs,
 }: SummaryReasoningDisclosureProps) => {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
@@ -53,8 +55,8 @@ export const SummaryReasoningDisclosure = ({
   }));
 
   const headerMeta = useMemo(
-    () => buildSummaryMetaLines(t, modelLabel, tokenUsage),
-    [modelLabel, tokenUsage, t],
+    () => buildSummaryMetaLines(t, modelLabel, tokenUsage, generationDurationMs),
+    [generationDurationMs, modelLabel, tokenUsage, t],
   );
   const headerMetaA11y = useMemo(() => summaryMetaA11yHint(headerMeta), [headerMeta]);
 

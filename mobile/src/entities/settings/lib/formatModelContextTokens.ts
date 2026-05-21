@@ -2,7 +2,10 @@
 export function formatModelContextTokens(tokens: number): string {
   if (tokens >= 1_000_000) {
     const millions = tokens / 1_000_000;
-    return Number.isInteger(millions) ? `${millions}M` : `${millions.toFixed(1)}M`;
+    const label = Number.isInteger(millions)
+      ? String(millions)
+      : String(parseFloat(millions.toFixed(1)));
+    return `${label}M`;
   }
   if (tokens >= 1024) {
     return `${Math.round(tokens / 1024)}K`;

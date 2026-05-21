@@ -19,6 +19,7 @@ import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
 import {
   type AiAbortHandle,
   createAiAbortHandle,
+  isAbortLikeError,
   isAiRequestCancelled,
 } from '@/shared/lib/ai-api/abort';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
@@ -105,6 +106,8 @@ export const useAiProcessing = () => {
     (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
 
   const inFlightRef = useRef<Set<string>>(new Set());
+  /** Bumped on cancel or new run so stale `finally` blocks do not clear a newer generation. */
+  const runGenerationRef = useRef<Map<string, number>>(new Map());
   const abortHandlesRef = useRef<Map<string, AiAbortHandle>>(new Map());
   const { isProActive } = useProEntitlement();
 
@@ -128,6 +131,8 @@ export const useAiProcessing = () => {
       const handle = abortHandlesRef.current.get(recordId);
       if (!handle) return;
 
+      runGenerationRef.current.set(recordId, (runGenerationRef.current.get(recordId) ?? 0) + 1);
+      inFlightRef.current.delete(`${recordId}-ai`);
       handle.abort();
       applyCancelledUiState(recordId);
 
@@ -161,17 +166,34 @@ export const useAiProcessing = () => {
         summaryTokensPrompt: null,
         summaryTokensCompletion: null,
         summaryReasoning: null,
+        summaryGenerationMs: null,
       });
 
-      if (aiExecutionMode === 'private_experimental') {
-        setPrivateAiBatchUi(record.id, {
-          privateAiBatchProgress: 0,
-          privateAiBatchPhase: 'loading_model',
-        });
-      }
+      const isPrivateAi = aiExecutionMode === 'private_experimental';
+      setPrivateAiBatchUi(record.id, {
+        privateAiBatchProgress: isPrivateAi ? 0 : 5,
+        privateAiBatchPhase: isPrivateAi ? 'loading_model' : 'processing',
+      });
+
+      const runGeneration = (runGenerationRef.current.get(record.id) ?? 0) + 1;
+      runGenerationRef.current.set(record.id, runGeneration);
 
       const abortHandle = createAiAbortHandle();
       abortHandlesRef.current.set(record.id, abortHandle);
+
+      const generationStartedAt = Date.now();
+      let cloudProgressTimer: ReturnType<typeof setInterval> | null = null;
+      let cloudDisplayedPct = 5;
+      if (!isPrivateAi) {
+        cloudProgressTimer = setInterval(() => {
+          if (abortHandle.cancelled) return;
+          cloudDisplayedPct = Math.min(92, cloudDisplayedPct + 2 + Math.floor(Math.random() * 5));
+          setPrivateAiBatchUi(record.id, {
+            privateAiBatchProgress: cloudDisplayedPct,
+            privateAiBatchPhase: 'processing',
+          });
+        }, 2000);
+      }
 
       const requestId = `${baseId}-${Date.now()}`;
       inFlightRef.current.add(baseId);
@@ -335,12 +357,10 @@ export const useAiProcessing = () => {
           return;
         }
 
-        if (aiExecutionMode === 'private_experimental') {
-          setPrivateAiBatchUi(record.id, {
-            privateAiBatchProgress: 100,
-            privateAiBatchPhase: 'processing',
-          });
-        }
+        setPrivateAiBatchUi(record.id, {
+          privateAiBatchProgress: 98,
+          privateAiBatchPhase: 'processing',
+        });
 
         const {
           summary,
@@ -447,10 +467,13 @@ export const useAiProcessing = () => {
                 summaryTokensCompletion: null,
               };
 
-        if (summaryModelForStore || summaryTokenUsageRaw) {
+        const summaryGenerationMs = Date.now() - generationStartedAt;
+
+        if (summaryModelForStore || summaryTokenUsageRaw || summaryGenerationMs > 0) {
           await updateAiExtras(record.id, {
             ...(summaryModelForStore ? { summaryAiModel: summaryModelForStore } : {}),
             ...summaryTokensForStore,
+            ...(summaryGenerationMs > 0 ? { summaryGenerationMs } : {}),
           });
         }
 
@@ -468,7 +491,7 @@ export const useAiProcessing = () => {
           tier: privateCapabilityTier,
         });
       } catch (err) {
-        if (abortHandle.cancelled) {
+        if (abortHandle.cancelled || isAbortLikeError(err)) {
           applyCancelledUiState(record.id);
           void logAnalyticsEvent('ai_action_cancelled', {
             action: 'summary_tasks',
@@ -494,9 +517,16 @@ export const useAiProcessing = () => {
           tier: privateCapabilityTier,
         });
       } finally {
+        if (cloudProgressTimer) {
+          clearInterval(cloudProgressTimer);
+        }
         clearPrivateAiBatchUi(record.id);
-        inFlightRef.current.delete(baseId);
-        abortHandlesRef.current.delete(record.id);
+        if (runGenerationRef.current.get(record.id) === runGeneration) {
+          inFlightRef.current.delete(baseId);
+          if (abortHandlesRef.current.get(record.id) === abortHandle) {
+            abortHandlesRef.current.delete(record.id);
+          }
+        }
       }
     },
     [

@@ -1,5 +1,13 @@
 import { i18n } from '@/shared/lib/i18n';
 
+function looksLikeJsonParseFailure(message: string): boolean {
+  return (
+    /is not valid JSON/i.test(message) ||
+    /^Unexpected token/i.test(message) ||
+    message.startsWith('Invalid AI response')
+  );
+}
+
 function looksLikeIosNetworkErrorDump(message: string): boolean {
   return (
     message.includes('NSURLErrorDomain') ||
@@ -15,6 +23,10 @@ export function toUserFacingFetchErrorMessage(message: string): string {
   const trimmed = message?.trim() ?? '';
   if (!trimmed) {
     return i18n.t('ai.smartModeNetworkError');
+  }
+
+  if (looksLikeJsonParseFailure(trimmed)) {
+    return i18n.t('ai.modelResponseInvalid');
   }
 
   if (looksLikeIosNetworkErrorDump(trimmed)) {

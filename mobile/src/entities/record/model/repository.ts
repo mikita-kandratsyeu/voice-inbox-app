@@ -80,6 +80,7 @@ type RecordListQueryRow = {
   summaryAiModel: string | null;
   summaryTokensPrompt: number | null;
   summaryTokensCompletion: number | null;
+  summaryGenerationMs: number | null;
   translatedTranscript: string | null;
   translationLanguage: string | null;
   audioPath: string | null;
@@ -126,6 +127,10 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     summaryTokensCompletion:
       row.summaryTokensCompletion != null && row.summaryTokensCompletion >= 0
         ? row.summaryTokensCompletion
+        : undefined,
+    summaryGenerationMs:
+      row.summaryGenerationMs != null && row.summaryGenerationMs > 0
+        ? row.summaryGenerationMs
         : undefined,
     translatedTranscript: row.translatedTranscript ?? undefined,
     translationLanguage: row.translationLanguage ?? undefined,
@@ -175,6 +180,10 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
       row.summaryTokensCompletion != null && row.summaryTokensCompletion >= 0
         ? row.summaryTokensCompletion
         : undefined,
+    summaryGenerationMs:
+      row.summaryGenerationMs != null && row.summaryGenerationMs > 0
+        ? row.summaryGenerationMs
+        : undefined,
     translatedTranscript: row.translatedTranscript ?? undefined,
     translationLanguage: row.translationLanguage ?? undefined,
     translationStatus: row.translatedTranscript
@@ -213,6 +222,7 @@ const recordListColumns = {
   summaryAiModel: recordsTable.summaryAiModel,
   summaryTokensPrompt: recordsTable.summaryTokensPrompt,
   summaryTokensCompletion: recordsTable.summaryTokensCompletion,
+  summaryGenerationMs: recordsTable.summaryGenerationMs,
   translatedTranscript: recordsTable.translatedTranscript,
   translationLanguage: recordsTable.translationLanguage,
   audioPath: recordsTable.audioPath,
@@ -343,6 +353,7 @@ export const recordRepository = {
         summaryAiModel: record.summaryAiModel?.trim() ? record.summaryAiModel.trim() : null,
         summaryTokensPrompt: record.summaryTokensPrompt ?? null,
         summaryTokensCompletion: record.summaryTokensCompletion ?? null,
+        summaryGenerationMs: record.summaryGenerationMs ?? null,
         translatedTranscript: record.translatedTranscript ?? null,
         translationLanguage: record.translationLanguage ?? null,
         audioPath: audioPathToDbValue(record.audioPath),
@@ -494,6 +505,7 @@ export const recordRepository = {
       summaryAiModel?: string | null;
       summaryTokensPrompt?: number | null;
       summaryTokensCompletion?: number | null;
+      summaryGenerationMs?: number | null;
     },
   ): Promise<void> => {
     logDb('updateAiExtras', { id });
@@ -524,6 +536,9 @@ export const recordRepository = {
     }
     if (data.summaryTokensCompletion !== undefined) {
       updates.summaryTokensCompletion = data.summaryTokensCompletion;
+    }
+    if (data.summaryGenerationMs !== undefined) {
+      updates.summaryGenerationMs = data.summaryGenerationMs;
     }
     if (Object.keys(updates).length > 0) {
       await db.update(recordsTable).set(updates).where(eq(recordsTable.id, id));

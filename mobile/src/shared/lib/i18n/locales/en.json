@@ -160,7 +160,8 @@
     "privateModeUnsupportedLocale": "The local model does not support the current language or locale for this request. Try English in AI settings or switch to Smart mode.",
     "privateModeTooLongForLocal": "This text is too long for the local model. Shorten the note or switch to Smart mode.",
     "privateModeGenericError": "The local request failed. Try again or switch to Smart mode.",
-    "smartModeNetworkError": "Could not connect to the server."
+    "smartModeNetworkError": "Could not connect to the server.",
+    "modelResponseInvalid": "The AI model returned an invalid response. Try again or pick another model in settings."
   },
   "search": {
     "a11yOpen": "Open search",
@@ -387,6 +388,10 @@
     "summaryReasoningExpandA11y": "Show reasoning",
     "summaryReasoningCollapseA11y": "Hide reasoning",
     "summaryMetaTokens": "{{input}} input / {{output}} output",
+    "summaryMetaDuration": "Request: {{duration}}",
+    "summaryMetaDurationSeconds": "{{count}} s",
+    "summaryMetaDurationMinutesOnly": "{{count}} min",
+    "summaryMetaDurationMinutes": "{{minutes}} min {{seconds}} s",
     "nextSteps": "What to do next",
     "nextStepAddA11y": "Add to tasks: {{text}}",
     "nextStepAlreadyInTasks": "This suggestion is already in your task list.",
@@ -1369,12 +1374,33 @@
     "idea": "Idea",
     "other": "Other"
   },
+  "aiGeneration": {
+    "tips": {
+      "background": "Generation can continue in the background — you can leave the app.",
+      "recordingMarks": "Marks you set while recording help AI pick out tasks and important moments.",
+      "askAfterSummary": "When the summary is ready, open Ask to chat about this note.",
+      "regenerateAfterEdit": "Changed the transcript? Tap Regenerate to refresh the summary and tasks.",
+      "tasksEditable": "AI tasks are a draft — edit deadlines, wording, or add your own anytime.",
+      "transcribeFirst": "Transcribe first, then generate only for notes that need a summary or tasks.",
+      "folders": "Long-press notes in the inbox to move them into folders or archive in bulk.",
+      "meetingDialogue": "Meetings in Smart mode with Pro: after the summary, open Speaker turns — AI splits who said what.",
+      "privateKeepOpen": "On-device AI runs while the app is open.",
+      "privateBattery": "Long notes on device may take longer and use more battery than short ones."
+    }
+  },
   "privateAi": {
     "loadingModel": "Loading AI model…",
     "processing": "AI is working on this note…",
     "secondsLeft": "~{{ count }} sec left",
     "minutesLeft": "~{{ count }} min left",
     "batteryHint": "On-device AI runs only while the app is open. Battery usage may increase."
+  },
+  "cloudAi": {
+    "preparing": "Sending request…",
+    "processing": "Generating…",
+    "secondsLeft": "~{{ count }} sec left",
+    "minutesLeft": "~{{ count }} min left",
+    "batteryHint": "Generation can continue in the background — you can leave the app."
   },
   "transcription": {
     "progress": "Processed {{ current }} of {{ total }} segments...",

@@ -1,4 +1,4 @@
-import { AlertCircle, FileText, RefreshCw, Share, Sparkles, UsersRound } from 'lucide-react-native';
+import { AlertCircle, FileText, RefreshCw, Share, UsersRound } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -7,17 +7,10 @@ import type { RecordingStatus } from '@/entities/record';
 import { formatAiModelDisplayName, useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
-import { buildSummaryMetaLines, type SummaryTokenUsage } from '@/shared/lib/summaryMetaSubtitle';
-import {
-  AiTabErrorBanner,
-  AiTabHintIcon,
-  AiTabLoadingState,
-  Button,
-  TabEmptyState,
-} from '@/shared/ui';
+import type { SummaryTokenUsage } from '@/shared/lib/summaryMetaSubtitle';
+import { AiTabErrorBanner, AiTabHintIcon, Button, TabEmptyState } from '@/shared/ui';
 
-import { DetailTabProcessingView } from './DetailTabProcessingView';
-import { SummaryMetaLinesText } from './SummaryMetaLinesText';
+import { AiTabProcessing } from './AiTabProcessing';
 import { SummaryReasoningDisclosure } from './SummaryReasoningDisclosure';
 
 type SummaryTabProps = {
@@ -34,13 +27,14 @@ type SummaryTabProps = {
   showPrivateModeCta?: boolean;
   onSwitchToSmartMode?: () => void;
   onCancelProcessing?: () => void;
-  usePrivateProcessingPanel?: boolean;
+  isPrivateMode?: boolean;
   privateAiBatchProgress?: number;
   privateAiBatchPhase?: 'loading_model' | 'processing';
   privateAiBatchProgressLabel?: string;
   summaryReasoning?: string;
   summaryAiModel?: string;
   summaryTokenUsage?: SummaryTokenUsage;
+  summaryGenerationMs?: number;
 };
 
 export const SummaryTab = ({
@@ -59,10 +53,11 @@ export const SummaryTab = ({
   showPrivateModeCta = false,
   status,
   summary,
-  usePrivateProcessingPanel = false,
+  isPrivateMode = false,
   summaryReasoning,
   summaryAiModel,
   summaryTokenUsage,
+  summaryGenerationMs,
 }: SummaryTabProps) => {
   const { t } = useTranslation();
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
@@ -77,11 +72,6 @@ export const SummaryTab = ({
     return id ? formatAiModelDisplayName(id) : '';
   }, [summaryAiModel]);
 
-  const summaryMetaLines = useMemo(
-    () => buildSummaryMetaLines(t, summaryModelLabel, summaryTokenUsage),
-    [summaryModelLabel, summaryTokenUsage, t],
-  );
-
   const isSmartMode = aiExecutionMode === 'smart_hybrid';
   const showReasoningBlock =
     isSmartMode && showSummaryReasoningInNotes && Boolean(summaryReasoning?.trim());
@@ -91,25 +81,15 @@ export const SummaryTab = ({
   }, [errorMessage, showPrivateModeCta, t]);
 
   if (status === 'processing') {
-    if (usePrivateProcessingPanel && onCancelProcessing) {
-      return (
-        <DetailTabProcessingView
-          progress={privateAiBatchProgress ?? 0}
-          progressLabel={privateAiBatchProgressLabel}
-          phase={privateAiBatchPhase ?? 'loading_model'}
-          color={color}
-          onCancel={onCancelProcessing}
-          context="private_llm"
-          hintText={t('privateAi.batteryHint')}
-          leadingIcon={<Sparkles size={22} color={color.accent.primary} strokeWidth={2} />}
-        />
-      );
-    }
-
     return (
-      <AiTabLoadingState
-        message={t('recordingDetail.summaryProcessing')}
+      <AiTabProcessing
+        variant="summary"
+        progress={privateAiBatchProgress ?? 0}
+        progressLabel={privateAiBatchProgressLabel}
+        phase={privateAiBatchPhase ?? (isPrivateMode ? 'loading_model' : 'processing')}
+        color={color}
         onCancel={onCancelProcessing}
+        isPrivateMode={isPrivateMode}
       />
     );
   }
@@ -185,13 +165,13 @@ export const SummaryTab = ({
       <Text className="text-sm leading-6" style={{ color: color.text.primary }}>
         {summary}
       </Text>
-      {!showReasoningBlock ? <SummaryMetaLinesText lines={summaryMetaLines} color={color} /> : null}
       {showReasoningBlock && summaryReasoning ? (
         <SummaryReasoningDisclosure
           reasoning={summaryReasoning}
           color={color}
           modelLabel={summaryModelLabel || undefined}
           tokenUsage={summaryTokenUsage}
+          generationDurationMs={summaryGenerationMs}
         />
       ) : null}
       {keyPhrases.length > 0 && (

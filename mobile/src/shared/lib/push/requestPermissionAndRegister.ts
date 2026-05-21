@@ -18,7 +18,20 @@ function getPushRegisterUrl(): string {
 const PUSH_REGISTER_THROTTLE_MS = 5 * 60 * 1000;
 
 let lastRegisteredToken: string | null = null;
+let lastRegisteredLocale: string | null = null;
 let lastRegisterTime = 0;
+
+/** Locale bucket stored server-side for push copy (must match web `normalizePushLocale`). */
+export function getPushRegisterLocale(): 'en' | 'ru' {
+  const lang = (i18n.language ?? 'en').toLowerCase();
+  return lang.startsWith('ru') ? 'ru' : 'en';
+}
+
+function markPushRegistered(token: string): void {
+  lastRegisteredToken = token;
+  lastRegisteredLocale = getPushRegisterLocale();
+  lastRegisterTime = Date.now();
+}
 
 export type PushPermissionStatus = 'granted' | 'denied' | 'not-determined';
 
@@ -31,16 +44,22 @@ export async function ensurePushRegistered(): Promise<void> {
   const token = await registerForPushToken();
   if (!token) return;
 
+  const locale = getPushRegisterLocale();
   const now = Date.now();
-  if (lastRegisteredToken === token && now - lastRegisterTime < PUSH_REGISTER_THROTTLE_MS) {
+  if (
+    lastRegisteredToken === token &&
+    lastRegisteredLocale === locale &&
+    now - lastRegisterTime < PUSH_REGISTER_THROTTLE_MS
+  ) {
     return;
   }
 
-  const ok = await sendTokenToBackend(token);
-  if (ok) {
-    lastRegisteredToken = token;
-    lastRegisterTime = now;
-  }
+  await sendTokenToBackend(token);
+}
+
+/** Re-register push token when app language changes (updates server-side locale). */
+export async function syncPushLocaleRegistration(): Promise<void> {
+  await ensurePushRegistered();
 }
 
 export async function requestPushPermission(): Promise<PushPermissionStatus> {
@@ -95,7 +114,7 @@ export async function sendTokenToBackend(token: string): Promise<boolean> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         deviceToken: token,
-        locale: (i18n.language ?? 'en').slice(0, 2),
+        locale: getPushRegisterLocale(),
         platform: PLATFORM_OS,
         ...(meta.deviceModel ? { deviceModel: meta.deviceModel } : {}),
         ...(meta.appVersion ? { appVersion: meta.appVersion } : {}),
@@ -111,6 +130,7 @@ export async function sendTokenToBackend(token: string): Promise<boolean> {
       return false;
     }
 
+    markPushRegistered(token);
     return true;
   } catch (err) {
     if (__DEV__) {

@@ -89,6 +89,8 @@ export type VoiceRecord = {
   summaryAiModel?: string;
   summaryTokensPrompt?: number;
   summaryTokensCompletion?: number;
+  /** Wall-clock ms for the last summary+tasks generation. */
+  summaryGenerationMs?: number;
   translatedTranscript?: string;
   translationLanguage?: string;
   translationStatus?: RecordingStatus;

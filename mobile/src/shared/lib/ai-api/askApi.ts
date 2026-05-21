@@ -5,6 +5,7 @@ import { isString } from '../type-guards';
 import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from './abort';
 import { headersForAiOperation } from './aiOperation';
 import { pollGetLoop } from './pollGetLoop';
+import { readResponseJson } from './responseJson';
 
 type AskApiRequestBody = {
   id: string;
@@ -116,7 +117,11 @@ export async function postAskQuestion(
   }
 
   if (response.status === 429) {
-    const json = (await response.json()) as AskApiLimitResponse;
+    const limitBody = await readResponseJson(response);
+    if (!limitBody.ok) {
+      return { ok: false, error: limitBody.error };
+    }
+    const json = limitBody.data as AskApiLimitResponse;
     if (__DEV__) console.warn('[AI] postAskQuestion: limit exceeded', json.usage);
     return { ok: false, limitExceeded: true, usage: json.usage };
   }
@@ -128,7 +133,12 @@ export async function postAskQuestion(
     return { ok: false, error: text || `HTTP ${response.status}` };
   }
 
-  const data = (await response.json()) as AskApiSuccessResponse;
+  const successBody = await readResponseJson(response);
+  if (!successBody.ok) {
+    return { ok: false, error: successBody.error };
+  }
+
+  const data = successBody.data as AskApiSuccessResponse;
 
   return { ok: true, data };
 }

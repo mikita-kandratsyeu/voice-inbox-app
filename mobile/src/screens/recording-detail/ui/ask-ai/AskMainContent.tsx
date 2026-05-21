@@ -7,6 +7,7 @@ import type { VoiceRecord } from '@/entities/record';
 import type { AiExecutionMode } from '@/entities/settings';
 import type { AskAIHistoryItem } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
+import { PRIVATE_AI_GENERATION_TIP_KEYS } from '@/shared/lib/aiGenerationTips';
 
 import { DetailTabProcessingView } from '../DetailTabProcessingView';
 import { AnswerContent } from './AnswerContent';
@@ -80,7 +81,7 @@ export const AskMainContent = ({
               phase={privateAskPhase}
               color={color}
               onCancel={onCancelAsk}
-              hintText={t('privateAi.batteryHint')}
+              tipKeys={PRIVATE_AI_GENERATION_TIP_KEYS}
               leadingIcon={<Sparkles size={22} color={color.accent.primary} strokeWidth={2} />}
               context="private_llm"
             />

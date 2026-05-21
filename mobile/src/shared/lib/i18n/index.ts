@@ -45,11 +45,19 @@ function getEffectiveLocale(): string {
   return getDeviceLocale();
 }
 
+function schedulePushLocaleSync(): void {
+  void import('@/shared/lib/push/requestPermissionAndRegister')
+    .then((mod) => mod.syncPushLocaleRegistration())
+    .catch(() => {});
+}
+
 export function applyAppLanguage(): void {
   const locale = getEffectiveLocale();
   dayjs.locale(resolveDayjsLocale(locale));
-  if (i18n.language !== locale) {
+  const languageChanged = i18n.language !== locale;
+  if (languageChanged) {
     i18n.changeLanguage(locale);
+    schedulePushLocaleSync();
   }
 }
 

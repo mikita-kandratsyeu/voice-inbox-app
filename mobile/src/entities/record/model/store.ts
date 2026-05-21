@@ -133,6 +133,7 @@ type RecordStore = {
       summaryAiModel?: string | null;
       summaryTokensPrompt?: number | null;
       summaryTokensCompletion?: number | null;
+      summaryGenerationMs?: number | null;
     },
   ) => Promise<void>;
   promoteNextStepToTask: (id: string, tasks: TaskItem[], nextSteps: string[]) => Promise<void>;
@@ -456,6 +457,9 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
       }
       if (data.summaryTokensCompletion !== undefined) {
         patch.summaryTokensCompletion = data.summaryTokensCompletion ?? undefined;
+      }
+      if (data.summaryGenerationMs !== undefined) {
+        patch.summaryGenerationMs = data.summaryGenerationMs ?? undefined;
       }
       return { records: updateRecord(s.records, id, patch) };
     });

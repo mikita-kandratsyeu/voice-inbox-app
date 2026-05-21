@@ -18,6 +18,7 @@ import {
 } from '@/lib/auto-organize-input-limits';
 import { normalizeAutoOrganizeFolderColor } from '@/lib/folder-accent-colors';
 import { buildAskUserMessageContent } from '@/lib/ask-user-message';
+import { parseOpenRouterJsonContent } from '@/lib/parse-openrouter-json';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
 import { ASK_QUESTION_SYSTEM_PROMPT, AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT } from '@/lib/prompts';
 import type { AiResult, AutoOrganizeResult, RecordClassification } from '@/types';
@@ -55,7 +56,7 @@ async function callOpenRouter(
     throw new Error('Invalid AI response: missing content');
   }
 
-  const parsed = JSON.parse(content) as unknown;
+  const parsed = parseOpenRouterJsonContent(content);
   if (
     !parsed ||
     typeof parsed !== 'object' ||
@@ -180,14 +181,16 @@ export async function processTranscript(
   return withSequentialModelFallback(
     models,
     (m) => callOpenRouter(transcript, m, systemPrompt, clientUserAgent),
-    isRetryableOpenRouterTransportError,
+    (err) =>
+      isRetryableOpenRouterTransportError(err) ||
+      (err instanceof Error && err.message.startsWith('Invalid AI response')),
   );
 }
 
 function parseMeetingDialogueOpenRouterContent(
   content: string,
 ): Pick<AiResult, 'meetingDialogueMarkdown'> {
-  const parsed = JSON.parse(content.trim()) as unknown;
+  const parsed = parseOpenRouterJsonContent(content);
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('Invalid AI response: meeting dialogue expected object');
   }
@@ -338,8 +341,7 @@ function parseDigestResult(responseContent: string): {
   risks: string[];
   nextActions: string[];
 } {
-  const trimmed = responseContent.trim();
-  const parsed = JSON.parse(trimmed) as unknown;
+  const parsed = parseOpenRouterJsonContent(responseContent);
   if (!parsed || typeof parsed !== 'object') {
     throw new Error('Invalid AI response: expected object');
   }

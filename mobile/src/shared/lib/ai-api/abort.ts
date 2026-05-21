@@ -40,9 +40,16 @@ export type AiFetchOptions = {
   signal?: AbortSignal;
 };
 
+/** RN-safe abort error (DOMException is not available in Hermes). */
+function createAbortError(): Error {
+  const err = new Error('Aborted');
+  err.name = 'AbortError';
+  return err;
+}
+
 export async function interruptibleDelay(ms: number, signal?: AbortSignal): Promise<void> {
   if (signal?.aborted) {
-    throw new DOMException('Aborted', 'AbortError');
+    throw createAbortError();
   }
 
   await new Promise<void>((resolve, reject) => {
@@ -53,7 +60,7 @@ export async function interruptibleDelay(ms: number, signal?: AbortSignal): Prom
 
     const onAbort = () => {
       clearTimeout(timer);
-      reject(new DOMException('Aborted', 'AbortError'));
+      reject(createAbortError());
     };
 
     signal?.addEventListener('abort', onAbort, { once: true });

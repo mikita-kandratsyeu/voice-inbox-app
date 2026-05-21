@@ -613,7 +613,7 @@ export const RecordingDetailScreen = () => {
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onSwitchToSmartMode={handleSwitchToSmartMode}
                   onCancelProcessing={handleCancelAiGeneration}
-                  usePrivateProcessingPanel={isPrivateMode}
+                  isPrivateMode={isPrivateMode}
                   privateAiBatchProgress={liveRecord.privateAiBatchProgress}
                   privateAiBatchPhase={liveRecord.privateAiBatchPhase}
                   privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
@@ -628,6 +628,7 @@ export const RecordingDetailScreen = () => {
                         }
                       : undefined
                   }
+                  summaryGenerationMs={liveRecord.summaryGenerationMs}
                 />
               </View>
             )}
@@ -643,7 +644,7 @@ export const RecordingDetailScreen = () => {
                   onDismissError={handleDismissSummaryError}
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onCancelProcessing={handleCancelAiGeneration}
-                  usePrivateProcessingPanel={isPrivateMode}
+                  isPrivateMode={isPrivateMode}
                   privateAiBatchProgress={liveRecord.privateAiBatchProgress}
                   privateAiBatchPhase={liveRecord.privateAiBatchPhase}
                   privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
@@ -670,7 +671,7 @@ export const RecordingDetailScreen = () => {
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onSwitchToSmartMode={handleSwitchToSmartMode}
                   onCancelProcessing={handleCancelAiGeneration}
-                  usePrivateProcessingPanel={isPrivateMode}
+                  isPrivateMode={isPrivateMode}
                   privateAiBatchProgress={liveRecord.privateAiBatchProgress}
                   privateAiBatchPhase={liveRecord.privateAiBatchPhase}
                   privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
