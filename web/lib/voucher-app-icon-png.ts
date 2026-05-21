@@ -12,7 +12,22 @@ export async function loadVoucherAppIconPng(sizePx: number): Promise<Buffer> {
   if (cached) return cached;
 
   const libDir = path.dirname(fileURLToPath(import.meta.url));
-  const svgPath = path.join(libDir, '../public/app-icon.svg');
+  const candidates = [
+    path.join(process.cwd(), 'public/app-icon.svg'),
+    path.join(process.cwd(), 'web/public/app-icon.svg'),
+    path.join(libDir, '../public/app-icon.svg'),
+  ];
+  let svgPath: string | null = null;
+  for (const p of candidates) {
+    try {
+      await fs.access(p);
+      svgPath = p;
+      break;
+    } catch {
+      /* try next */
+    }
+  }
+  if (!svgPath) throw new Error('app-icon.svg not found');
   const svg = await fs.readFile(svgPath);
   const png = await sharp(svg, { density: 150 })
     .resize(sizePx, sizePx, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })

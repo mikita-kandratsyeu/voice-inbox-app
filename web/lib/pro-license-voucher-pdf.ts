@@ -396,7 +396,7 @@ export async function renderVouchersPrintPdf(inputs: VoucherPdfInput[]): Promise
   }
   const doc = createVoucherPdfDocument();
   const done = collectPdfBuffer(doc);
-  const fonts = resolveVoucherPdfFonts(doc);
+  const fonts = await resolveVoucherPdfFonts(doc);
   try {
     for (const input of inputs) {
       await drawVoucherPage(doc, input, fonts);

@@ -19,6 +19,9 @@ const nextConfig: NextConfig = {
     ];
   },
   serverExternalPackages: ['@prisma/client', 'pg', '@prisma/adapter-pg', 'pdfkit', 'sharp'],
+  outputFileTracingIncludes: {
+    '/api/admin/pro-licenses/**': ['./public/app-icon.svg'],
+  },
   images: {
     remotePatterns: [
       {
