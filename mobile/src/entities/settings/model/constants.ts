@@ -61,6 +61,16 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     supportTierCode: 'premium_experimental',
     contextTokens: 209_920,
   },
+  {
+    id: 'nvidia/nemotron-3-super-120b-a12b',
+    name: 'Nemotron 3 Super',
+    provider: 'NVIDIA',
+    descriptionKey: 'aiModels.nemotronDesc',
+    speed: 'slow',
+    tierLabelKey: 'aiModels.tierNemotron',
+    supportTierCode: 'premium_experimental',
+    contextTokens: 1_048_576,
+  },
 ];
 
 const AI_MODEL_SPEED_RANK: Record<UserFacingAIModel['speed'], number> = {
