@@ -20,6 +20,7 @@ type PostBody = {
   durationDays?: unknown;
   locale?: unknown;
   adminNotes?: unknown;
+  promoLabel?: unknown;
 };
 
 function normalizeRecipientEmail(raw: unknown): string | null {
@@ -84,7 +85,9 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   let pdf: Buffer;
   try {
-    pdf = await renderVoucherPdf(buildVoucherPdfInput(plainKey, parsed.spec, parsed.locale));
+    pdf = await renderVoucherPdf(
+      buildVoucherPdfInput(plainKey, keyId, parsed.spec, parsed.locale, parsed.promoLabel),
+    );
   } catch (e) {
     console.error('[vouchers/send-email] pdf', e);
     try {

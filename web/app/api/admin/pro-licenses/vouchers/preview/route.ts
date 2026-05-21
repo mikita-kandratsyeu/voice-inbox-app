@@ -31,7 +31,9 @@ export async function POST(request: Request): Promise<Response> {
 
   let pdf: Buffer;
   try {
-    pdf = await renderVoucherPdf(buildVoucherPreviewPdfInput(parsed.spec, parsed.locale));
+    pdf = await renderVoucherPdf(
+      buildVoucherPreviewPdfInput(parsed.spec, parsed.locale, parsed.promoLabel),
+    );
   } catch (e) {
     console.error('[admin/pro-licenses/vouchers/preview POST]', e);
     return apiError('Failed to render preview', HttpStatus.SERVICE_UNAVAILABLE, {

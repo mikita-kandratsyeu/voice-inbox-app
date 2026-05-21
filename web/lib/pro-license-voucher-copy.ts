@@ -11,7 +11,8 @@ export function parseVoucherLocale(raw: unknown): VoucherLocale {
 }
 
 export type VoucherPdfCopy = {
-  giftVoucherTitle: string;
+  titleGiftLine: string;
+  titleVoucherLine: string;
   scanToOpen: string;
   yourCode: string;
   thankYouSidebar: string;
@@ -22,7 +23,8 @@ export type VoucherPdfCopy = {
 };
 
 const COPY_EN: VoucherPdfCopy = {
-  giftVoucherTitle: 'GIFT VOUCHER',
+  titleGiftLine: 'GIFT',
+  titleVoucherLine: 'VOUCHER',
   scanToOpen: 'SCAN TO OPEN',
   yourCode: 'YOUR CODE',
   thankYouSidebar: 'THANK YOU FOR\nCHOOSING\nVOICE INBOX AI',
@@ -37,7 +39,8 @@ const COPY_EN: VoucherPdfCopy = {
 };
 
 const COPY_RU: VoucherPdfCopy = {
-  giftVoucherTitle: 'ПОДАРОЧНЫЙ ВАУЧЕР',
+  titleGiftLine: 'ПОДАРОЧНЫЙ',
+  titleVoucherLine: 'ВАУЧЕР',
   scanToOpen: 'ОТСКАНИРУЙТЕ',
   yourCode: 'ВАШ КОД',
   thankYouSidebar: 'СПАСИБО,\nЧТО ВЫБРАЛИ\nVOICE INBOX AI',

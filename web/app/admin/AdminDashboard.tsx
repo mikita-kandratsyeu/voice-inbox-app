@@ -326,6 +326,7 @@ export function AdminDashboard() {
   const [voucherLocale, setVoucherLocale] = useState<'en' | 'ru'>('en');
   const [voucherOutput, setVoucherOutput] = useState<'print_pdf' | 'zip'>('print_pdf');
   const [voucherExtraNote, setVoucherExtraNote] = useState('');
+  const [voucherPromoLabel, setVoucherPromoLabel] = useState('');
   const [voucherGenerating, setVoucherGenerating] = useState(false);
   const [voucherPreviewLoading, setVoucherPreviewLoading] = useState(false);
   const [voucherPreviewUrl, setVoucherPreviewUrl] = useState<string | null>(null);
@@ -708,7 +709,11 @@ export function AdminDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ locale: voucherLocale, ...bodyPayload }),
+        body: JSON.stringify({
+          locale: voucherLocale,
+          ...bodyPayload,
+          ...(voucherPromoLabel.trim() ? { promoLabel: voucherPromoLabel.trim() } : {}),
+        }),
       });
       if (!res.ok) {
         let err = 'Preview failed';
@@ -753,6 +758,7 @@ export function AdminDashboard() {
           locale: voucherLocale,
           ...bodyPayload,
           ...(voucherExtraNote.trim() ? { adminNotes: voucherExtraNote.trim() } : {}),
+          ...(voucherPromoLabel.trim() ? { promoLabel: voucherPromoLabel.trim() } : {}),
         }),
       });
       const data = (await res.json()) as { ok?: boolean; error?: string };
@@ -795,6 +801,7 @@ export function AdminDashboard() {
           output: voucherOutput,
           ...bodyPayload,
           ...(voucherExtraNote.trim() ? { adminNotes: voucherExtraNote.trim() } : {}),
+          ...(voucherPromoLabel.trim() ? { promoLabel: voucherPromoLabel.trim() } : {}),
         }),
       });
       if (!res.ok) {
@@ -1814,6 +1821,19 @@ export function AdminDashboard() {
                     </div>
                     <div className="min-w-0 flex-1 sm:max-w-xs">
                       <label className="mb-1 block text-sm font-medium text-violet-900/90 dark:text-violet-200/90">
+                        Promo label (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={voucherPromoLabel}
+                        onChange={(e) => setVoucherPromoLabel(e.target.value)}
+                        placeholder="e.g. Acme Corp"
+                        maxLength={48}
+                        className={`${adminInputClass} w-full`}
+                      />
+                    </div>
+                    <div className="min-w-0 flex-1 sm:max-w-xs">
+                      <label className="mb-1 block text-sm font-medium text-violet-900/90 dark:text-violet-200/90">
                         Extra note (optional)
                       </label>
                       <input
@@ -2056,6 +2076,7 @@ export function AdminDashboard() {
                     <table className="min-w-full text-left text-sm">
                       <thead>
                         <tr className="border-b border-zinc-200 dark:border-zinc-600">
+                          <th className="py-2 pr-4 font-medium">ID</th>
                           <th className="py-2 pr-4 font-medium">Created</th>
                           <th className="py-2 pr-4 font-medium">Duration</th>
                           <th className="py-2 pr-4 font-medium">Email</th>
@@ -2100,6 +2121,11 @@ export function AdminDashboard() {
                               key={row.id}
                               className="border-b border-zinc-100 dark:border-zinc-700/80"
                             >
+                              <td className="max-w-[11rem] py-2 pr-4 font-mono text-[11px] leading-snug text-zinc-500 dark:text-zinc-400">
+                                <span className="break-all" title={row.id}>
+                                  {row.id}
+                                </span>
+                              </td>
                               <td className="py-2 pr-4 text-zinc-600 dark:text-zinc-400">
                                 {formatDate(new Date(row.createdAt).getTime())}
                               </td>

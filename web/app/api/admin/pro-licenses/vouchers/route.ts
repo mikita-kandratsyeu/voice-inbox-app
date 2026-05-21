@@ -25,6 +25,7 @@ type PostBody = {
   durationDays?: unknown;
   adminNotes?: unknown;
   locale?: unknown;
+  promoLabel?: unknown;
   /** `print_pdf` (default) or `zip` */
   output?: unknown;
 };
@@ -93,7 +94,9 @@ export async function POST(request: Request): Promise<Response> {
     return NextResponse.json({ ok: false, error: 'Failed to create keys' }, { status: 503 });
   }
 
-  const inputs = created.map((row) => buildVoucherPdfInput(row.plainKey, spec, locale));
+  const inputs = created.map((row) =>
+    buildVoucherPdfInput(row.plainKey, row.keyId, spec, locale, parsed.promoLabel),
+  );
   const stamp = new Date().toISOString().slice(0, 10);
   const label = formatVoucherPremiumAccessLabel(spec);
 
