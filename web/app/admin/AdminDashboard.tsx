@@ -324,6 +324,7 @@ export function AdminDashboard() {
   const [voucherCount, setVoucherCount] = useState('1');
   const [voucherDuration, setVoucherDuration] = useState<string>('d:14');
   const [voucherLocale, setVoucherLocale] = useState<'en' | 'ru'>('en');
+  const [voucherPrintSize, setVoucherPrintSize] = useState<'a4' | 'us-letter'>('a4');
   const [voucherOutput, setVoucherOutput] = useState<'print_pdf' | 'zip'>('print_pdf');
   const [voucherExtraNote, setVoucherExtraNote] = useState('');
   const [voucherPromoLabel, setVoucherPromoLabel] = useState('');
@@ -711,6 +712,7 @@ export function AdminDashboard() {
         credentials: 'include',
         body: JSON.stringify({
           locale: voucherLocale,
+          printSize: voucherPrintSize,
           ...bodyPayload,
           ...(voucherPromoLabel.trim() ? { promoLabel: voucherPromoLabel.trim() } : {}),
         }),
@@ -756,6 +758,7 @@ export function AdminDashboard() {
         body: JSON.stringify({
           email,
           locale: voucherLocale,
+          printSize: voucherPrintSize,
           ...bodyPayload,
           ...(voucherExtraNote.trim() ? { adminNotes: voucherExtraNote.trim() } : {}),
           ...(voucherPromoLabel.trim() ? { promoLabel: voucherPromoLabel.trim() } : {}),
@@ -798,6 +801,7 @@ export function AdminDashboard() {
         body: JSON.stringify({
           count,
           locale: voucherLocale,
+          printSize: voucherPrintSize,
           output: voucherOutput,
           ...bodyPayload,
           ...(voucherExtraNote.trim() ? { adminNotes: voucherExtraNote.trim() } : {}),
@@ -1752,7 +1756,7 @@ export function AdminDashboard() {
                     ), then download as one print PDF or a ZIP of separate files (language below).
                     Universal QR link (
                     <code className="rounded bg-white/80 px-1 font-mono text-[11px] dark:bg-violet-950/80">
-                      /go
+                      /go?voucher=…
                     </code>
                     ) that redirects to the App Store or Google Play by device.
                   </p>
@@ -1804,6 +1808,19 @@ export function AdminDashboard() {
                       >
                         <option value="en">English</option>
                         <option value="ru">Russian</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-violet-900/90 dark:text-violet-200/90">
+                        Print size
+                      </label>
+                      <select
+                        value={voucherPrintSize}
+                        onChange={(e) => setVoucherPrintSize(e.target.value as 'a4' | 'us-letter')}
+                        className={adminSelectClass}
+                      >
+                        <option value="a4">A4 — 297×105 mm (EU)</option>
+                        <option value="us-letter">US Letter — 11×4.25 in</option>
                       </select>
                     </div>
                     <div>
@@ -1870,7 +1887,11 @@ export function AdminDashboard() {
                       <p className="mb-2 text-xs font-medium text-violet-900/90 dark:text-violet-200/85">
                         Preview (sample code VI-XXXX-XXXX-XXXX)
                       </p>
-                      <div className="relative aspect-[792/306] min-h-[380px] w-full overflow-hidden rounded-lg border border-violet-200 bg-white dark:border-violet-800 dark:bg-zinc-900">
+                      <div
+                        className={`relative min-h-[380px] w-full overflow-hidden rounded-lg border border-violet-200 bg-white dark:border-violet-800 dark:bg-zinc-900 ${
+                          voucherPrintSize === 'a4' ? 'aspect-[842/298]' : 'aspect-[792/306]'
+                        }`}
+                      >
                         <iframe
                           title="Voucher PDF preview"
                           src={voucherPreviewUrl}

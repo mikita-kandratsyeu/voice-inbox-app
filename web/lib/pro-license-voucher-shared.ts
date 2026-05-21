@@ -6,6 +6,7 @@ import {
 import { getProLicenseVoucherScanUrl } from '@/lib/pro-license-go-url';
 import { parseVoucherLocale, type VoucherLocale } from '@/lib/pro-license-voucher-copy';
 import type { VoucherPdfInput } from '@/lib/pro-license-voucher-pdf';
+import { parseVoucherPrintSize, type VoucherPrintSize } from '@/lib/pro-license-voucher-print-size';
 
 export const VOUCHER_PREVIEW_PLAIN_KEY = 'VI-XXXX-XXXX-XXXX';
 export const VOUCHER_PREVIEW_KEY_ID = 'preview-sample';
@@ -45,13 +46,20 @@ export function parseVoucherRequestBody(body: {
   durationDays?: unknown;
   locale?: unknown;
   promoLabel?: unknown;
-}): { spec: ProLicenseDurationSpec; locale: VoucherLocale; promoLabel: string | null } | null {
+  printSize?: unknown;
+}): {
+  spec: ProLicenseDurationSpec;
+  locale: VoucherLocale;
+  promoLabel: string | null;
+  printSize: VoucherPrintSize;
+} | null {
   const spec = parseProLicenseDurationFromBody(body);
   if (spec == null) return null;
   return {
     spec,
     locale: parseVoucherLocale(body.locale),
     promoLabel: sanitizeVoucherPromoLabel(body.promoLabel),
+    printSize: parseVoucherPrintSize(body.printSize),
   };
 }
 
@@ -60,14 +68,16 @@ export function buildVoucherPdfInput(
   keyId: string,
   spec: ProLicenseDurationSpec,
   locale: VoucherLocale,
+  printSize: VoucherPrintSize,
   promoLabel?: string | null,
 ): VoucherPdfInput {
   return {
     plainKey,
     keyId,
     duration: spec,
-    scanUrl: getProLicenseVoucherScanUrl(),
+    scanUrl: getProLicenseVoucherScanUrl(keyId),
     locale,
+    printSize,
     promoLabel: promoLabel ?? null,
   };
 }
@@ -75,6 +85,7 @@ export function buildVoucherPdfInput(
 export function buildVoucherPreviewPdfInput(
   spec: ProLicenseDurationSpec,
   locale: VoucherLocale,
+  printSize: VoucherPrintSize,
   promoLabel?: string | null,
 ): VoucherPdfInput {
   return buildVoucherPdfInput(
@@ -82,6 +93,7 @@ export function buildVoucherPreviewPdfInput(
     VOUCHER_PREVIEW_KEY_ID,
     spec,
     locale,
+    printSize,
     promoLabel,
   );
 }

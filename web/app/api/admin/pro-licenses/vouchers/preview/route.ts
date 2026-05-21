@@ -10,6 +10,7 @@ type PostBody = {
   durationMonths?: unknown;
   durationDays?: unknown;
   locale?: unknown;
+  printSize?: unknown;
 };
 
 export async function POST(request: Request): Promise<Response> {
@@ -32,7 +33,7 @@ export async function POST(request: Request): Promise<Response> {
   let pdf: Buffer;
   try {
     pdf = await renderVoucherPdf(
-      buildVoucherPreviewPdfInput(parsed.spec, parsed.locale, parsed.promoLabel),
+      buildVoucherPreviewPdfInput(parsed.spec, parsed.locale, parsed.printSize, parsed.promoLabel),
     );
   } catch (e) {
     console.error('[admin/pro-licenses/vouchers/preview POST]', e);

@@ -86,7 +86,14 @@ export async function POST(request: Request): Promise<NextResponse> {
   let pdf: Buffer;
   try {
     pdf = await renderVoucherPdf(
-      buildVoucherPdfInput(plainKey, keyId, parsed.spec, parsed.locale, parsed.promoLabel),
+      buildVoucherPdfInput(
+        plainKey,
+        keyId,
+        parsed.spec,
+        parsed.locale,
+        parsed.printSize,
+        parsed.promoLabel,
+      ),
     );
   } catch (e) {
     console.error('[vouchers/send-email] pdf', e);

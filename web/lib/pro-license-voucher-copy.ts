@@ -11,11 +11,11 @@ export function parseVoucherLocale(raw: unknown): VoucherLocale {
 }
 
 export type VoucherPdfCopy = {
-  titleGiftLine: string;
-  titleVoucherLine: string;
+  titleLine: string;
   scanToOpen: string;
   yourCode: string;
   thankYouSidebar: string;
+  cutAlongOuterLine: string;
   premiumHeadline: string;
   stepTitles: [string, string, string];
   stepDetails: [string, string, string];
@@ -23,11 +23,11 @@ export type VoucherPdfCopy = {
 };
 
 const COPY_EN: VoucherPdfCopy = {
-  titleGiftLine: 'GIFT',
-  titleVoucherLine: 'VOUCHER',
+  titleLine: 'GIFT VOUCHER',
   scanToOpen: 'SCAN TO OPEN',
   yourCode: 'YOUR CODE',
-  thankYouSidebar: 'THANK YOU FOR\nCHOOSING\nVOICE INBOX AI',
+  thankYouSidebar: 'Thank you for choosing Voice Inbox AI',
+  cutAlongOuterLine: 'CUT ALONG THE OUTER LINE',
   premiumHeadline: '',
   stepTitles: ['OPEN THE APP', 'OPEN CODE ENTRY', 'REDEEM YOUR CODE'],
   stepDetails: [
@@ -39,11 +39,11 @@ const COPY_EN: VoucherPdfCopy = {
 };
 
 const COPY_RU: VoucherPdfCopy = {
-  titleGiftLine: 'ПОДАРОЧНЫЙ',
-  titleVoucherLine: 'ВАУЧЕР',
+  titleLine: 'ПОДАРОЧНЫЙ\nВАУЧЕР',
   scanToOpen: 'ОТСКАНИРУЙТЕ',
   yourCode: 'ВАШ КОД',
-  thankYouSidebar: 'СПАСИБО,\nЧТО ВЫБРАЛИ\nVOICE INBOX AI',
+  thankYouSidebar: 'Спасибо, что выбрали Voice Inbox AI',
+  cutAlongOuterLine: 'РЕЖЬТЕ ПО ВНЕШНЕЙ ЛИНИИ',
   premiumHeadline: '',
   stepTitles: ['ОТКРОЙТЕ\nПРИЛОЖЕНИЕ', 'ОТКРОЙТЕ\nВВОД КОДА', 'АКТИВИРУЙТЕ\nКОД'],
   stepDetails: [
@@ -66,22 +66,22 @@ export function formatVoucherPremiumAccessHeadline(
 ): string {
   if (locale === 'ru') {
     if (duration.kind === 'days') {
-      if (duration.days === 1) return '1 ДЕНЬ\nPRO\nДОСТУП';
-      return `${duration.days} ${duration.days >= 5 ? 'ДНЕЙ' : 'ДНЯ'}\nPRO\nДОСТУП`;
+      if (duration.days === 1) return '1 ДЕНЬ\nPRO ДОСТУП';
+      return `${duration.days} ${duration.days >= 5 ? 'ДНЕЙ' : 'ДНЯ'}\nPRO ДОСТУП`;
     }
-    if (duration.months === 1) return '1 МЕСЯЦ\nPRO\nДОСТУП';
+    if (duration.months === 1) return '1 МЕСЯЦ\nPRO ДОСТУП';
     const mod10 = duration.months % 10;
     const mod100 = duration.months % 100;
     const word = mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? 'МЕСЯЦА' : 'МЕСЯЦЕВ';
-    return `${duration.months} ${word}\nPRO\nДОСТУП`;
+    return `${duration.months} ${word}\nPRO ДОСТУП`;
   }
 
   if (duration.kind === 'days') {
-    if (duration.days === 1) return '1 DAY\nPRO\nACCESS';
-    return `${duration.days} DAYS\nPRO\nACCESS`;
+    if (duration.days === 1) return '1 DAY\nPRO ACCESS';
+    return `${duration.days} DAYS\nPRO ACCESS`;
   }
-  if (duration.months === 1) return '1 MONTH\nPRO\nACCESS';
-  return `${duration.months} MONTHS\nPRO\nACCESS`;
+  if (duration.months === 1) return '1 MONTH\nPRO ACCESS';
+  return `${duration.months} MONTHS\nPRO ACCESS`;
 }
 
 /** Single-line variant for filenames and metadata. */

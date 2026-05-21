@@ -1,12 +1,13 @@
 import type PDFDocument from 'pdfkit';
 
-export type VoucherPdfFonts = { regular: string; bold: string };
+export type VoucherPdfFonts = { regular: string; bold: string; mono: string };
 
-/** Same family as the site (`next/font/google` Onest). */
-const VOUCHER_FONT_FAMILY = 'Onest';
-const GOOGLE_FONTS_CSS = `https://fonts.googleapis.com/css2?family=${VOUCHER_FONT_FAMILY}:wght@400;700&display=swap`;
+const GOOGLE_FONTS_CSS_ONEST =
+  'https://fonts.googleapis.com/css2?family=Onest:wght@400;700&display=swap';
+const GOOGLE_FONTS_CSS_MONO =
+  'https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&display=swap';
 
-let loadPromise: Promise<{ regular: Buffer; bold: Buffer }> | null = null;
+let loadPromise: Promise<{ regular: Buffer; bold: Buffer; mono: Buffer }> | null = null;
 
 function parseFontUrlsFromCss(css: string, weights: number[]): Map<number, string> {
   const urls = new Map<number, string>();
@@ -20,43 +21,60 @@ function parseFontUrlsFromCss(css: string, weights: number[]): Map<number, strin
   return urls;
 }
 
-async function loadOnestFromGoogleCdn(): Promise<{ regular: Buffer; bold: Buffer }> {
-  const cssRes = await fetch(GOOGLE_FONTS_CSS, {
-    headers: { Accept: 'text/css' },
-  });
-  if (!cssRes.ok) {
-    throw new Error(`Google Fonts CSS failed: ${cssRes.status}`);
-  }
-  const css = await cssRes.text();
-  const urls = parseFontUrlsFromCss(css, [400, 700]);
-  const regularUrl = urls.get(400);
-  const boldUrl = urls.get(700);
-  if (!regularUrl || !boldUrl) {
-    throw new Error(`Google Fonts CDN: missing Onest 400/700 URLs`);
-  }
-
-  const [regularRes, boldRes] = await Promise.all([fetch(regularUrl), fetch(boldUrl)]);
-  if (!regularRes.ok || !boldRes.ok) {
-    throw new Error('Google Fonts CDN: failed to download Onest files');
-  }
-
-  return {
-    regular: Buffer.from(await regularRes.arrayBuffer()),
-    bold: Buffer.from(await boldRes.arrayBuffer()),
-  };
+async function fetchFontBuffer(url: string): Promise<Buffer> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Google Fonts CDN: failed to download ${url}`);
+  return Buffer.from(await res.arrayBuffer());
 }
 
-function getOnestBuffers(): Promise<{ regular: Buffer; bold: Buffer }> {
-  if (!loadPromise) loadPromise = loadOnestFromGoogleCdn();
+async function loadVoucherFontsFromGoogleCdn(): Promise<{
+  regular: Buffer;
+  bold: Buffer;
+  mono: Buffer;
+}> {
+  const [onestCssRes, monoCssRes] = await Promise.all([
+    fetch(GOOGLE_FONTS_CSS_ONEST, { headers: { Accept: 'text/css' } }),
+    fetch(GOOGLE_FONTS_CSS_MONO, { headers: { Accept: 'text/css' } }),
+  ]);
+  if (!onestCssRes.ok) {
+    throw new Error(`Google Fonts CSS failed: ${onestCssRes.status}`);
+  }
+  if (!monoCssRes.ok) {
+    throw new Error(`Google Fonts CSS failed: ${monoCssRes.status}`);
+  }
+
+  const onestUrls = parseFontUrlsFromCss(await onestCssRes.text(), [400, 700]);
+  const monoUrls = parseFontUrlsFromCss(await monoCssRes.text(), [700]);
+  const regularUrl = onestUrls.get(400);
+  const boldUrl = onestUrls.get(700);
+  const monoUrl = monoUrls.get(700);
+  if (!regularUrl || !boldUrl) {
+    throw new Error('Google Fonts CDN: missing Onest 400/700 URLs');
+  }
+  if (!monoUrl) {
+    throw new Error('Google Fonts CDN: missing JetBrains Mono 700 URL');
+  }
+
+  const [regular, bold, mono] = await Promise.all([
+    fetchFontBuffer(regularUrl),
+    fetchFontBuffer(boldUrl),
+    fetchFontBuffer(monoUrl),
+  ]);
+  return { regular, bold, mono };
+}
+
+function getFontBuffers(): Promise<{ regular: Buffer; bold: Buffer; mono: Buffer }> {
+  if (!loadPromise) loadPromise = loadVoucherFontsFromGoogleCdn();
   return loadPromise;
 }
 
-/** Loads Onest from [Google Fonts](https://fonts.google.com/) CDN into PDFKit. */
+/** Loads Onest + JetBrains Mono (code) from Google Fonts CDN into PDFKit. */
 export async function resolveVoucherPdfFonts(
   doc: InstanceType<typeof PDFDocument>,
 ): Promise<VoucherPdfFonts> {
-  const { regular, bold } = await getOnestBuffers();
+  const { regular, bold, mono } = await getFontBuffers();
   doc.registerFont('VoucherSans', regular);
   doc.registerFont('VoucherSans-Bold', bold);
-  return { regular: 'VoucherSans', bold: 'VoucherSans-Bold' };
+  doc.registerFont('VoucherMono', mono);
+  return { regular: 'VoucherSans', bold: 'VoucherSans-Bold', mono: 'VoucherMono' };
 }

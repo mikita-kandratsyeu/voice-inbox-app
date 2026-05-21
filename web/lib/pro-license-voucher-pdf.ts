@@ -7,22 +7,22 @@ import {
   getVoucherPdfCopy,
   type VoucherLocale,
 } from '@/lib/pro-license-voucher-copy';
+import {
+  getVoucherPageDimensions,
+  type VoucherPrintSize,
+} from '@/lib/pro-license-voucher-print-size';
 import { resolveVoucherPdfFonts, type VoucherPdfFonts } from '@/lib/voucher-fonts';
 import { VOUCHER_PREVIEW_KEY_ID } from '@/lib/pro-license-voucher-shared';
 import { loadVoucherAppIconPng } from '@/lib/voucher-app-icon-png';
 
-const PAGE_W = 792;
-const PAGE_H = 306;
-const MARGIN = 18;
-const SIDEBAR_W = 200;
+const MARGIN = 14;
+const CUT_RADIUS = 8;
+const PANEL_PAD = 12;
 
 const COL = {
-  sidebarBg: '#F3F3F3',
-  codeBg: '#FFFFFF',
   muted: '#555555',
   faint: '#B5B5B5',
   watermark: '#D8D8D8',
-  line: '#D0D0D0',
   ink: '#000000',
 } as const;
 
@@ -32,61 +32,107 @@ export type VoucherPdfInput = {
   duration: ProLicenseDurationSpec;
   scanUrl: string;
   locale: VoucherLocale;
-  /** Partner / promo name shown under the gift title line (optional). */
+  printSize: VoucherPrintSize;
+  /** Partner / promo name shown on the left flap (optional). */
   promoLabel?: string | null;
 };
 
-type PdfDoc = InstanceType<typeof PDFDocument>;
+export type { VoucherPrintSize } from '@/lib/pro-license-voucher-print-size';
 
+type PdfDoc = InstanceType<typeof PDFDocument>;
 type PdfFonts = VoucherPdfFonts;
+type VoucherPdfCopy = ReturnType<typeof getVoucherPdfCopy>;
+
+type VoucherLayout = {
+  bounds: { x: number; y: number; w: number; h: number };
+  panelW: number;
+  fold1X: number;
+  fold2X: number;
+};
+
+function getVoucherLayout(pageW: number, pageH: number): VoucherLayout {
+  const bounds = {
+    x: MARGIN,
+    y: MARGIN,
+    w: pageW - MARGIN * 2,
+    h: pageH - MARGIN * 2,
+  };
+  const panelW = bounds.w / 3;
+  return {
+    bounds,
+    panelW,
+    fold1X: bounds.x + panelW,
+    fold2X: bounds.x + panelW * 2,
+  };
+}
 
 /** Preview-only SAMPLE watermark; issued print vouchers have none. */
-function drawVoucherWatermark(doc: PdfDoc, fonts: PdfFonts, input: VoucherPdfInput): void {
+function drawVoucherWatermark(
+  doc: PdfDoc,
+  fonts: PdfFonts,
+  input: VoucherPdfInput,
+  layout: VoucherLayout,
+): void {
   if (input.keyId !== VOUCHER_PREVIEW_KEY_ID) return;
 
   const label = input.locale === 'ru' ? 'ОБРАЗЕЦ' : 'SAMPLE';
-
-  const innerL = MARGIN;
-  const innerT = MARGIN;
-  const innerW = PAGE_W - MARGIN * 2;
-  const innerH = PAGE_H - MARGIN * 2;
-  const cx = innerL + innerW / 2;
-  const cy = innerT + innerH / 2;
-  const maxTextW = innerW * 0.78;
+  const { bounds } = layout;
+  const cx = bounds.x + bounds.w / 2;
+  const cy = bounds.y + bounds.h / 2;
+  const maxTextW = bounds.w * 0.72;
 
   doc.save();
-  doc.rect(innerL, innerT, innerW, innerH).clip();
-
+  doc.rect(bounds.x, bounds.y, bounds.w, bounds.h).clip();
   doc.translate(cx, cy);
   doc.rotate(-45);
   doc.fillColor(COL.watermark);
 
-  let fontSize = 64;
+  let fontSize = 58;
   doc.font(fonts.bold).fontSize(fontSize);
-  while (fontSize > 28 && doc.widthOfString(label) > maxTextW) {
+  while (fontSize > 24 && doc.widthOfString(label) > maxTextW) {
     fontSize -= 2;
     doc.fontSize(fontSize);
   }
   doc.opacity(0.12);
   const w = doc.widthOfString(label);
   doc.text(label, -w / 2, -fontSize * 0.35, { lineBreak: false });
-
   doc.opacity(1);
   doc.restore();
 }
 
-function drawDashedCutLine(doc: PdfDoc): void {
+/** Trim guide only — dashed, cut away before folding. */
+function drawCutGuide(doc: PdfDoc, layout: VoucherLayout): void {
+  const { bounds } = layout;
   doc.save();
-  doc.lineWidth(0.75);
+  doc.lineWidth(0.5);
   doc.dash(4, { space: 3 });
   doc.strokeColor(COL.ink);
-  doc.rect(MARGIN, MARGIN, PAGE_W - MARGIN * 2, PAGE_H - MARGIN * 2).stroke();
+  doc.roundedRect(bounds.x, bounds.y, bounds.w, bounds.h, CUT_RADIUS).stroke();
+  doc.undash();
+  doc.restore();
+}
+
+function drawFoldGuides(doc: PdfDoc, layout: VoucherLayout): void {
+  const { bounds, fold1X, fold2X } = layout;
+
+  doc.save();
+  doc.lineWidth(0.75);
+  doc.dash(5, { space: 4 });
+  doc.strokeColor(COL.ink);
+  doc
+    .moveTo(fold1X, bounds.y + 4)
+    .lineTo(fold1X, bounds.y + bounds.h - 4)
+    .stroke();
+  doc
+    .moveTo(fold2X, bounds.y + 4)
+    .lineTo(fold2X, bounds.y + bounds.h - 4)
+    .stroke();
   doc.undash();
   doc.restore();
 }
 
 function drawScissors(doc: PdfDoc, x: number, y: number, flip = false): void {
-  const scale = 0.6;
+  const scale = 0.55;
   doc.save();
   doc.translate(x, y);
   if (flip) doc.rotate(180);
@@ -100,22 +146,46 @@ function drawScissors(doc: PdfDoc, x: number, y: number, flip = false): void {
   doc.restore();
 }
 
-function drawPhoneIcon(doc: PdfDoc, cx: number, cy: number): void {
-  const w = 10;
-  const h = 16;
+function drawCutAlongLabels(
+  doc: PdfDoc,
+  fonts: PdfFonts,
+  copy: VoucherPdfCopy,
+  layout: VoucherLayout,
+): void {
+  const { bounds } = layout;
+  const fontSize = 5.5;
+  doc.font(fonts.bold).fontSize(fontSize).fillColor(COL.ink);
+
+  drawScissors(doc, bounds.x - 10, bounds.y - 8);
+  doc.text(copy.cutAlongOuterLine, bounds.x + 2, bounds.y - 11, { lineBreak: false });
+
+  const labelW = doc.widthOfString(copy.cutAlongOuterLine);
+  const brX = bounds.x + bounds.w + 10;
+  const brY = bounds.y + bounds.h + 8;
+  drawScissors(doc, brX, brY, true);
   doc.save();
-  doc.lineWidth(0.9);
+  doc.translate(brX - 2, brY + 2);
+  doc.rotate(180);
+  doc.text(copy.cutAlongOuterLine, -labelW, -fontSize + 1, { lineBreak: false });
+  doc.restore();
+}
+
+function drawPhoneIcon(doc: PdfDoc, cx: number, cy: number): void {
+  const w = 9;
+  const h = 14;
+  doc.save();
+  doc.lineWidth(0.85);
   doc.strokeColor(COL.ink);
   doc.roundedRect(cx - w / 2, cy - h / 2, w, h, 1.5).stroke();
-  doc.circle(cx, cy + h / 2 - 3, 0.9).fill(COL.ink);
+  doc.circle(cx, cy + h / 2 - 2.5, 0.8).fill(COL.ink);
   doc.restore();
 }
 
 function drawCardIcon(doc: PdfDoc, cx: number, cy: number): void {
-  const w = 17;
-  const h = 11;
+  const w = 15;
+  const h = 10;
   doc.save();
-  doc.lineWidth(0.9);
+  doc.lineWidth(0.85);
   doc.strokeColor(COL.ink);
   doc.rect(cx - w / 2, cy - h / 2, w, h).stroke();
   doc
@@ -127,18 +197,16 @@ function drawCardIcon(doc: PdfDoc, cx: number, cy: number): void {
 
 function drawCheckIcon(doc: PdfDoc, cx: number, cy: number): void {
   doc.save();
-  doc.lineWidth(0.9);
+  doc.lineWidth(0.85);
   doc.strokeColor(COL.ink);
-  doc.circle(cx, cy, 8).stroke();
+  doc.circle(cx, cy, 7).stroke();
   doc
-    .moveTo(cx - 3, cy)
-    .lineTo(cx - 0.5, cy + 3)
-    .lineTo(cx + 4, cy - 3.5)
+    .moveTo(cx - 2.5, cy)
+    .lineTo(cx - 0.5, cy + 2.5)
+    .lineTo(cx + 3.5, cy - 3)
     .stroke();
   doc.restore();
 }
-
-const STEP_COL_W = 124;
 
 function drawStep(
   doc: PdfDoc,
@@ -150,131 +218,229 @@ function drawStep(
   detail: string,
   icon: 'phone' | 'card' | 'check',
   locale: VoucherLocale,
+  colW: number,
 ): number {
-  const left = x - STEP_COL_W / 2;
-  const titleSize = locale === 'ru' ? 6.5 : 7;
-  const detailSize = locale === 'ru' ? 5.25 : 5.5;
-  const titleGap = locale === 'ru' ? 5 : 4;
-  const detailLineGap = locale === 'ru' ? 0.35 : 0.5;
+  const left = x - colW / 2;
+  const titleSize = locale === 'ru' ? 5.5 : 6;
+  const detailSize = locale === 'ru' ? 4.75 : 5;
+  const titleGap = locale === 'ru' ? 4 : 3;
+  const detailLineGap = locale === 'ru' ? 0.25 : 0.4;
 
-  const iconY = y + 9;
+  const iconY = y + 7;
   if (icon === 'phone') drawPhoneIcon(doc, x, iconY);
   else if (icon === 'card') drawCardIcon(doc, x, iconY);
   else drawCheckIcon(doc, x, iconY);
 
   const titleText = `${stepNum}. ${title}`;
   doc.font(fonts.bold).fontSize(titleSize).fillColor(COL.ink);
-  const titleY = y + 24;
+  const titleY = y + 20;
   const titleHeight = doc.heightOfString(titleText, {
-    width: STEP_COL_W,
+    width: colW,
     align: 'center',
     lineGap: 0,
   });
-  doc.text(titleText, left, titleY, { width: STEP_COL_W, align: 'center', lineGap: 0 });
+  doc.text(titleText, left, titleY, { width: colW, align: 'center', lineGap: 0 });
 
   doc.font(fonts.regular).fontSize(detailSize).fillColor(COL.muted);
   const detailY = titleY + titleHeight + titleGap;
   const detailHeight = doc.heightOfString(detail, {
-    width: STEP_COL_W,
+    width: colW,
     align: 'center',
     lineGap: detailLineGap,
   });
   doc.text(detail, left, detailY, {
-    width: STEP_COL_W,
+    width: colW,
     align: 'center',
     lineGap: detailLineGap,
   });
   return detailY + detailHeight;
 }
 
-type VoucherPdfCopy = ReturnType<typeof getVoucherPdfCopy>;
-
-/** Stacked title: GIFT → VOUCHER. Returns Y below the block. */
-function drawVoucherTitleBlock(
-  doc: PdfDoc,
-  fonts: PdfFonts,
-  copy: VoucherPdfCopy,
-  x: number,
-  y: number,
-  width: number,
-): number {
-  let cursorY = y;
-
-  doc.font(fonts.bold).fontSize(28).fillColor(COL.ink);
-  const giftH = doc.heightOfString(copy.titleGiftLine, { width, lineGap: 0 });
-  doc.text(copy.titleGiftLine, x, cursorY, { width, lineGap: 0 });
-  cursorY += giftH + 2;
-
-  doc.font(fonts.bold).fontSize(28).fillColor(COL.ink);
-  const voucherH = doc.heightOfString(copy.titleVoucherLine, { width, lineGap: 0 });
-  doc.text(copy.titleVoucherLine, x, cursorY, { width, lineGap: 0 });
-  cursorY += voucherH;
-
-  return cursorY;
-}
-
-async function qrPngBuffer(url: string): Promise<Buffer> {
+async function qrPngBuffer(url: string, size: number): Promise<Buffer> {
   return QRCode.toBuffer(url, {
     type: 'png',
     margin: 1,
-    width: 140,
+    width: size,
     errorCorrectionLevel: 'M',
   });
 }
 
-async function drawGiftSidebar(
+async function drawLeftFlap(
   doc: PdfDoc,
   fonts: PdfFonts,
-  copy: ReturnType<typeof getVoucherPdfCopy>,
+  copy: VoucherPdfCopy,
   headline: string,
   promoLabel: string | null | undefined,
+  layout: VoucherLayout,
 ): Promise<void> {
-  const innerL = MARGIN;
-  const innerR = MARGIN + SIDEBAR_W;
-  const innerT = MARGIN;
-  const innerB = PAGE_H - MARGIN;
+  const panelX = layout.bounds.x;
+  const panelW = layout.panelW;
+  const contentX = panelX + PANEL_PAD;
+  const contentW = panelW - PANEL_PAD * 2;
+  const top = layout.bounds.y + PANEL_PAD + 8;
+  const bottom = layout.bounds.y + layout.bounds.h - PANEL_PAD;
 
-  doc.save();
-  doc.rect(innerL, innerT, innerR - innerL, innerB - innerT).fill(COL.sidebarBg);
-  doc.restore();
-
-  const contentX = MARGIN + 14;
-  const contentW = SIDEBAR_W - 28;
-  const iconSize = 46;
-  const iconTop = innerT + 22;
+  const iconSize = 40;
   const iconBuf = await loadVoucherAppIconPng(Math.round(iconSize * 3));
+  doc.image(iconBuf, contentX, top, { width: iconSize, height: iconSize });
 
-  doc.image(iconBuf, contentX, iconTop, {
-    width: iconSize,
-    height: iconSize,
-  });
-
-  let textY = iconTop + iconSize + 10;
+  let textY = top + iconSize + 10;
   const promo = promoLabel?.trim();
   if (promo) {
-    doc.font(fonts.regular).fontSize(9).fillColor(COL.muted);
+    doc.font(fonts.regular).fontSize(8).fillColor(COL.muted);
     const promoH = doc.heightOfString(promo, { width: contentW, lineGap: 0 });
-    doc.text(promo, contentX, textY, {
-      width: contentW,
-      align: 'left',
-      lineGap: 0,
-      characterSpacing: 0.3,
-    });
-    textY += promoH + 8;
+    doc.text(promo, contentX, textY, { width: contentW, align: 'left', lineGap: 0 });
+    textY += promoH + 10;
   }
 
-  doc.font(fonts.bold).fontSize(22).fillColor(COL.ink);
-  doc.text(headline, contentX, textY, {
-    width: contentW,
-    lineGap: 1,
-    align: 'left',
-  });
+  doc.font(fonts.bold).fontSize(18).fillColor(COL.ink);
+  doc.text(headline, contentX, textY, { width: contentW, lineGap: 1, align: 'left' });
+
+  const thankY = bottom - 36;
+  doc.moveTo(contentX, thankY).lineTo(contentX + contentW * 0.55, thankY);
+  doc.lineWidth(0.6).strokeColor(COL.ink);
+  doc.stroke();
 
   doc.font(fonts.regular).fontSize(7).fillColor(COL.muted);
-  doc.text(copy.thankYouSidebar, contentX, innerB - 50, {
+  doc.text(copy.thankYouSidebar, contentX, thankY + 8, {
     width: contentW,
-    lineGap: 1,
+    lineGap: 0.5,
     align: 'left',
+  });
+}
+
+function drawCenterPanel(
+  doc: PdfDoc,
+  fonts: PdfFonts,
+  copy: VoucherPdfCopy,
+  plainKey: string,
+  keyId: string,
+  locale: VoucherLocale,
+  layout: VoucherLayout,
+): void {
+  const panelX = layout.bounds.x + layout.panelW;
+  const panelW = layout.panelW;
+  const contentX = panelX + PANEL_PAD;
+  const contentW = panelW - PANEL_PAD * 2;
+  const top = layout.bounds.y + PANEL_PAD + 6;
+  const bottom = layout.bounds.y + layout.bounds.h - PANEL_PAD;
+
+  doc
+    .font(fonts.bold)
+    .fontSize(locale === 'ru' ? 17 : 20)
+    .fillColor(COL.ink);
+  const titleH = doc.heightOfString(copy.titleLine, {
+    width: contentW,
+    align: 'center',
+    lineGap: 0,
+  });
+  doc.text(copy.titleLine, contentX, top, { width: contentW, align: 'center', lineGap: 0 });
+
+  const yourCodeY = top + titleH + 10;
+  doc.font(fonts.regular).fontSize(7).fillColor(COL.ink);
+  doc.text(copy.yourCode, contentX, yourCodeY, { width: contentW, align: 'center' });
+
+  const codeY = yourCodeY + 11;
+  const codeH = 32;
+  const codeW = contentW - 8;
+  const codeX = contentX + 4;
+  doc.lineWidth(1).strokeColor(COL.ink);
+  doc.rect(codeX, codeY, codeW, codeH).stroke();
+  doc.font(fonts.mono).fontSize(14).fillColor(COL.ink);
+  doc.text(plainKey, codeX + 6, codeY + 9, {
+    width: codeW - 12,
+    align: 'center',
+    characterSpacing: 0.8,
+  });
+
+  const codeBottom = codeY + codeH;
+  const stepColW = (contentW - 12) / 3;
+  const stepsY = codeBottom + 14;
+  const step1X = contentX + stepColW * 0.5 + 6;
+  const step2X = contentX + stepColW * 1.5 + 6;
+  const step3X = contentX + stepColW * 2.5 + 6;
+  const stepBottom = Math.max(
+    drawStep(
+      doc,
+      fonts,
+      step1X,
+      stepsY,
+      1,
+      copy.stepTitles[0],
+      copy.stepDetails[0],
+      'phone',
+      locale,
+      stepColW - 4,
+    ),
+    drawStep(
+      doc,
+      fonts,
+      step2X,
+      stepsY,
+      2,
+      copy.stepTitles[1],
+      copy.stepDetails[1],
+      'card',
+      locale,
+      stepColW - 4,
+    ),
+    drawStep(
+      doc,
+      fonts,
+      step3X,
+      stepsY,
+      3,
+      copy.stepTitles[2],
+      copy.stepDetails[2],
+      'check',
+      locale,
+      stepColW - 4,
+    ),
+  );
+
+  const footerY = Math.min(stepBottom + 10, bottom - 30);
+  doc.font(fonts.regular).fontSize(5.5).fillColor(COL.muted);
+  const footerH = doc.heightOfString(copy.footerLegal, {
+    width: contentW,
+    align: 'center',
+    lineGap: 0.3,
+  });
+  doc.text(copy.footerLegal, contentX, footerY, {
+    width: contentW,
+    align: 'center',
+    lineGap: 0.3,
+  });
+
+  doc.font(fonts.regular).fontSize(4.5).fillColor(COL.faint);
+  doc.text(keyId, contentX, footerY + footerH + 4, {
+    width: contentW,
+    align: 'center',
+    lineGap: 0,
+  });
+}
+
+async function drawRightFlap(
+  doc: PdfDoc,
+  fonts: PdfFonts,
+  copy: VoucherPdfCopy,
+  scanUrl: string,
+  layout: VoucherLayout,
+): Promise<void> {
+  const panelX = layout.bounds.x + layout.panelW * 2;
+  const panelW = layout.panelW;
+  const centerX = panelX + panelW / 2;
+  const midY = layout.bounds.y + layout.bounds.h / 2;
+
+  const qrSize = Math.min(118, panelW - PANEL_PAD * 2 - 8);
+  const qrBuf = await qrPngBuffer(scanUrl, Math.round(qrSize * 2));
+  const qrX = centerX - qrSize / 2;
+  const qrY = midY - qrSize / 2 - 6;
+  doc.image(qrBuf, qrX, qrY, { width: qrSize, height: qrSize });
+
+  doc.font(fonts.regular).fontSize(7).fillColor(COL.ink);
+  doc.text(copy.scanToOpen, panelX, qrY + qrSize + 8, {
+    width: panelW,
+    align: 'center',
   });
 }
 
@@ -283,98 +449,26 @@ async function drawVoucherPage(
   input: VoucherPdfInput,
   fonts: PdfFonts,
 ): Promise<void> {
-  doc.addPage({ size: [PAGE_W, PAGE_H], margins: { top: 0, bottom: 0, left: 0, right: 0 } });
+  const { width: pageW, height: pageH } = getVoucherPageDimensions(input.printSize);
+  doc.addPage({ size: [pageW, pageH], margins: { top: 0, bottom: 0, left: 0, right: 0 } });
   const copy = getVoucherPdfCopy(input.locale);
   const headline = formatVoucherPremiumAccessHeadline(input.duration, input.locale);
+  const layout = getVoucherLayout(pageW, pageH);
 
-  drawDashedCutLine(doc);
-  drawVoucherWatermark(doc, fonts, input);
-  // Scissors sit in the page margin, outside the dashed cut line.
-  drawScissors(doc, MARGIN - 12, MARGIN - 10);
-  drawScissors(doc, PAGE_W - MARGIN + 12, PAGE_H - MARGIN + 10, true);
+  drawCutGuide(doc, layout);
+  drawFoldGuides(doc, layout);
+  drawCutAlongLabels(doc, fonts, copy, layout);
+  drawVoucherWatermark(doc, fonts, input, layout);
 
-  await drawGiftSidebar(doc, fonts, copy, headline, input.promoLabel);
-
-  const mainX = MARGIN + SIDEBAR_W + 10;
-  const mainW = PAGE_W - mainX - MARGIN - 10;
-
-  doc.moveTo(MARGIN + SIDEBAR_W, MARGIN + 14).lineTo(MARGIN + SIDEBAR_W, PAGE_H - MARGIN - 14);
-  doc.lineWidth(0.75).strokeColor(COL.line);
-
-  const titleWidth = mainW - 140;
-  const titleBottom = drawVoucherTitleBlock(doc, fonts, copy, mainX, MARGIN + 26, titleWidth);
-
-  const qrSize = 72;
-  const qrX = PAGE_W - MARGIN - qrSize - 14;
-  const qrY = MARGIN + 22;
-  const qrBuf = await qrPngBuffer(input.scanUrl);
-  doc.image(qrBuf, qrX, qrY, { width: qrSize, height: qrSize });
-
-  doc.font(fonts.regular).fontSize(7).fillColor(COL.ink);
-  doc.text(copy.scanToOpen, qrX - 2, qrY + qrSize + 5, {
-    width: qrSize + 4,
-    align: 'center',
-  });
-
-  const codeW = Math.min(380, mainW - 32);
-  const codeX = mainX + (mainW - codeW) / 2;
-
-  const yourCodeY = titleBottom + 12;
-  doc.font(fonts.regular).fontSize(8).fillColor(COL.ink);
-  doc.text(copy.yourCode, mainX, yourCodeY, { width: mainW, align: 'center' });
-
-  const codeY = yourCodeY + 14;
-  const codeH = 38;
-  doc.lineWidth(1).strokeColor(COL.ink);
-  doc.rect(codeX, codeY, codeW, codeH).stroke();
-  doc.font(fonts.bold).fontSize(18).fillColor(COL.ink);
-  doc.text(input.plainKey, codeX + 8, codeY + 11, {
-    width: codeW - 16,
-    align: 'center',
-    characterSpacing: 0.8,
-  });
-
-  const loc = input.locale;
-  const codeBottom = codeY + codeH;
-  const stepsAnchor = loc === 'ru' ? PAGE_H - MARGIN - 108 : PAGE_H - MARGIN - 96;
-  const stepsY = Math.max(codeBottom + 20, stepsAnchor);
-  const stepW = (mainW - 40) / 3;
-  const step1X = mainX + stepW * 0.5;
-  const step2X = mainX + stepW * 1.5;
-  const step3X = mainX + stepW * 2.5;
-  const stepBottom = Math.max(
-    drawStep(doc, fonts, step1X, stepsY, 1, copy.stepTitles[0], copy.stepDetails[0], 'phone', loc),
-    drawStep(doc, fonts, step2X, stepsY, 2, copy.stepTitles[1], copy.stepDetails[1], 'card', loc),
-    drawStep(doc, fonts, step3X, stepsY, 3, copy.stepTitles[2], copy.stepDetails[2], 'check', loc),
-  );
-
-  const footerGap = loc === 'ru' ? 18 : 13;
-  let footerTextY = stepBottom + footerGap;
-  const footerBottomLimit = PAGE_H - MARGIN - (loc === 'ru' ? 26 : 20);
-  const footerTopLimit = stepBottom + 12;
-  if (footerTextY > footerBottomLimit) footerTextY = footerBottomLimit;
-  if (footerTextY < footerTopLimit) footerTextY = footerTopLimit;
-
-  const footerRuleY = footerTextY - 9;
-  doc.moveTo(mainX, footerRuleY).lineTo(PAGE_W - MARGIN - 12, footerRuleY);
-  doc.lineWidth(0.5).strokeColor(COL.line);
-  doc.font(fonts.regular).fontSize(7).fillColor(COL.muted);
-  doc.text(copy.footerLegal, mainX, footerTextY, {
-    width: mainW,
-    align: 'center',
-  });
-
-  doc.font(fonts.regular).fontSize(4.5).fillColor(COL.faint);
-  doc.text(input.keyId, MARGIN + 8, PAGE_H - MARGIN - 10, {
-    width: PAGE_W - MARGIN * 2 - 16,
-    align: 'left',
-    lineGap: 0,
-  });
+  await drawLeftFlap(doc, fonts, copy, headline, input.promoLabel, layout);
+  drawCenterPanel(doc, fonts, copy, input.plainKey, input.keyId, input.locale, layout);
+  await drawRightFlap(doc, fonts, copy, input.scanUrl, layout);
 }
 
-function createVoucherPdfDocument(): PdfDoc {
+function createVoucherPdfDocument(printSize: VoucherPrintSize): PdfDoc {
+  const { width, height } = getVoucherPageDimensions(printSize);
   return new PDFDocument({
-    size: [PAGE_W, PAGE_H],
+    size: [width, height],
     margins: { top: 0, bottom: 0, left: 0, right: 0 },
     autoFirstPage: false,
   });
@@ -394,7 +488,7 @@ export async function renderVouchersPrintPdf(inputs: VoucherPdfInput[]): Promise
   if (inputs.length === 0) {
     throw new Error('At least one voucher is required');
   }
-  const doc = createVoucherPdfDocument();
+  const doc = createVoucherPdfDocument(inputs[0]!.printSize);
   const done = collectPdfBuffer(doc);
   const fonts = await resolveVoucherPdfFonts(doc);
   try {

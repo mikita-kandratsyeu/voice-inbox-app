@@ -95,7 +95,14 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const inputs = created.map((row) =>
-    buildVoucherPdfInput(row.plainKey, row.keyId, spec, locale, parsed.promoLabel),
+    buildVoucherPdfInput(
+      row.plainKey,
+      row.keyId,
+      spec,
+      locale,
+      parsed.printSize,
+      parsed.promoLabel,
+    ),
   );
   const stamp = new Date().toISOString().slice(0, 10);
   const label = formatVoucherPremiumAccessLabel(spec);
