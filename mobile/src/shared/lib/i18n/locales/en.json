@@ -32,6 +32,13 @@
   "proLicense": {
     "modalTitle": "Special offer",
     "modalSubtitle": "Enter the code below to enable additional features in the app. Codes may come from our team or a special offer.",
+    "activationStepsTitle": "How to redeem your voucher",
+    "activationSteps": [
+      "Install or open Voice Inbox AI on your phone",
+      "Open Settings, then About the app",
+      "Tap the app icon at the top eight times in quick succession to open the code screen",
+      "Enter your voucher code and tap Apply"
+    ],
     "keyPlaceholder": "VI-XXXX-XXXX-XXXX",
     "activate": "Apply",
     "activatingTitle": "Almost there",

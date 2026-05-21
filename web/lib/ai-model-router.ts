@@ -1,4 +1,8 @@
-import { AI_MODEL_GEMINI_2_5_FLASH_LITE, AI_MODEL_GEMINI_3_1_FLASH_LITE } from '@/config/constants';
+import {
+  AI_MODEL_DEEPSEEK_V4_FLASH,
+  AI_MODEL_GEMINI_2_5_FLASH_LITE,
+  AI_MODEL_GEMINI_3_1_FLASH_LITE,
+} from '@/config/constants';
 import {
   ASK_QUESTION_SYSTEM_PROMPT,
   buildAiProcessingPromptAppendBlocks,
@@ -16,7 +20,9 @@ export type AiModelRoutingContext = {
   askRoutingBasis?: AskRoutingBasis;
 };
 
+const DEFAULT_ASK_MEDIUM_TRANSCRIPT_ANCHOR_CHARS = 5_000;
 const DEFAULT_ASK_LONG_TRANSCRIPT_ANCHOR_CHARS = 9_000;
+const DEFAULT_SUMMARY_MEDIUM_ROUTING_CHARS = 8_000;
 const DEFAULT_SUMMARY_LONG_ROUTING_CHARS = 14_000;
 const ASK_ROUTING_WRAPPER_FUZZ_CHARS = 80;
 
@@ -36,12 +42,49 @@ function askLongRoutingCharsFullEstimate(): number {
   return anchor + ASK_QUESTION_SYSTEM_PROMPT.length + ASK_ROUTING_WRAPPER_FUZZ_CHARS;
 }
 
+function askMediumRoutingCharsTranscriptOnly(): number {
+  return readRoutingThreshold(
+    'AI_ROUTE_ASK_MEDIUM_CHARS',
+    DEFAULT_ASK_MEDIUM_TRANSCRIPT_ANCHOR_CHARS,
+  );
+}
+
 function askLongRoutingCharsTranscriptOnly(): number {
   return readRoutingThreshold('AI_ROUTE_ASK_LONG_CHARS', DEFAULT_ASK_LONG_TRANSCRIPT_ANCHOR_CHARS);
 }
 
+function askMediumRoutingCharsFullEstimate(): number {
+  return (
+    askMediumRoutingCharsTranscriptOnly() +
+    ASK_QUESTION_SYSTEM_PROMPT.length +
+    ASK_ROUTING_WRAPPER_FUZZ_CHARS
+  );
+}
+
+function summaryMediumRoutingChars(): number {
+  return readRoutingThreshold(
+    'AI_ROUTE_SUMMARY_MEDIUM_CHARS',
+    DEFAULT_SUMMARY_MEDIUM_ROUTING_CHARS,
+  );
+}
+
 function summaryLongRoutingChars(): number {
   return readRoutingThreshold('AI_ROUTE_SUMMARY_LONG_CHARS', DEFAULT_SUMMARY_LONG_ROUTING_CHARS);
+}
+
+/** Auto tier: short → Gemini 2.5, medium → DeepSeek, long → Gemini 3.1. */
+function resolveAutoAiModelByThresholds(
+  routingChars: number,
+  mediumAt: number,
+  longAt: number,
+): string {
+  if (routingChars >= longAt) {
+    return AI_MODEL_GEMINI_3_1_FLASH_LITE;
+  }
+  if (routingChars >= mediumAt) {
+    return AI_MODEL_DEEPSEEK_V4_FLASH;
+  }
+  return AI_MODEL_GEMINI_2_5_FLASH_LITE;
 }
 
 function normalizeRoutingChars(raw: number | undefined): number {
@@ -69,17 +112,20 @@ export function resolveAutoAiModel(context: AiModelRoutingContext): string {
   const routingChars = normalizeRoutingChars(context.routingChars);
 
   if (context.taskType === 'ask') {
-    const threshold =
-      context.askRoutingBasis === 'transcript_only'
-        ? askLongRoutingCharsTranscriptOnly()
-        : askLongRoutingCharsFullEstimate();
+    const transcriptOnly = context.askRoutingBasis === 'transcript_only';
+    const mediumAt = transcriptOnly
+      ? askMediumRoutingCharsTranscriptOnly()
+      : askMediumRoutingCharsFullEstimate();
+    const longAt = transcriptOnly
+      ? askLongRoutingCharsTranscriptOnly()
+      : askLongRoutingCharsFullEstimate();
 
-    return routingChars >= threshold
-      ? AI_MODEL_GEMINI_3_1_FLASH_LITE
-      : AI_MODEL_GEMINI_2_5_FLASH_LITE;
+    return resolveAutoAiModelByThresholds(routingChars, mediumAt, longAt);
   }
 
-  return routingChars >= summaryLongRoutingChars()
-    ? AI_MODEL_GEMINI_3_1_FLASH_LITE
-    : AI_MODEL_GEMINI_2_5_FLASH_LITE;
+  return resolveAutoAiModelByThresholds(
+    routingChars,
+    summaryMediumRoutingChars(),
+    summaryLongRoutingChars(),
+  );
 }

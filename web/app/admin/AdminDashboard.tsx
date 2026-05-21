@@ -15,7 +15,7 @@ import {
   Wrench,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import {
   AdminMetricCard,
@@ -158,6 +158,7 @@ type ProLicenseRow = {
   durationDays: number | null;
   createdAt: string;
   issuedToEmail?: string | null;
+  adminNotes?: string | null;
   consumed: boolean;
   consumedAt: string | null;
   nominalGrantEndsAt?: string | null;
@@ -316,6 +317,22 @@ export function AdminDashboard() {
   const [proLicenseError, setProLicenseError] = useState<string | null>(null);
   const [proLicenseDeletingId, setProLicenseDeletingId] = useState<string | null>(null);
   const [proLicenseResettingId, setProLicenseResettingId] = useState<string | null>(null);
+  const [proLicenseNotesEditingId, setProLicenseNotesEditingId] = useState<string | null>(null);
+  const [proLicenseNotesDraft, setProLicenseNotesDraft] = useState('');
+  const [proLicenseNotesSavingId, setProLicenseNotesSavingId] = useState<string | null>(null);
+
+  const [voucherCount, setVoucherCount] = useState('1');
+  const [voucherDuration, setVoucherDuration] = useState<string>('d:14');
+  const [voucherLocale, setVoucherLocale] = useState<'en' | 'ru'>('en');
+  const [voucherOutput, setVoucherOutput] = useState<'print_pdf' | 'zip'>('print_pdf');
+  const [voucherExtraNote, setVoucherExtraNote] = useState('');
+  const [voucherGenerating, setVoucherGenerating] = useState(false);
+  const [voucherPreviewLoading, setVoucherPreviewLoading] = useState(false);
+  const [voucherPreviewUrl, setVoucherPreviewUrl] = useState<string | null>(null);
+  const voucherPreviewUrlRef = useRef<string | null>(null);
+  const [voucherEmail, setVoucherEmail] = useState('');
+  const [voucherEmailSending, setVoucherEmailSending] = useState(false);
+  const [voucherMessage, setVoucherMessage] = useState<string | null>(null);
 
   const [proKeyRequests, setProKeyRequests] = useState<ProKeyRequestRow[]>([]);
   const [proKeyRequestsLoading, setProKeyRequestsLoading] = useState(false);
@@ -534,6 +551,14 @@ export function AdminDashboard() {
     }
   }, [adminTab, fetchProLicenseList]);
 
+  useEffect(() => {
+    return () => {
+      if (voucherPreviewUrlRef.current) {
+        URL.revokeObjectURL(voucherPreviewUrlRef.current);
+      }
+    };
+  }, []);
+
   const handleGenerateProLicense = async () => {
     setProLicenseError(null);
     setProLicensePlainKey(null);
@@ -624,6 +649,183 @@ export function AdminDashboard() {
       setProLicenseError('Request failed');
     } finally {
       setProLicenseResettingId(null);
+    }
+  };
+
+  const handleStartEditProLicenseNotes = (row: ProLicenseRow) => {
+    setProLicenseNotesEditingId(row.id);
+    setProLicenseNotesDraft(row.adminNotes ?? '');
+  };
+
+  const handleCancelEditProLicenseNotes = () => {
+    setProLicenseNotesEditingId(null);
+    setProLicenseNotesDraft('');
+  };
+
+  const handleSaveProLicenseNotes = async (row: ProLicenseRow) => {
+    setProLicenseError(null);
+    setProLicenseNotesSavingId(row.id);
+    try {
+      const res = await fetch(`/api/admin/pro-licenses/${encodeURIComponent(row.id)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ adminNotes: proLicenseNotesDraft.trim() || null }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setProLicenseError(data.error ?? 'Failed to save notes');
+        return;
+      }
+      handleCancelEditProLicenseNotes();
+      void fetchProLicenseList();
+    } catch {
+      setProLicenseError('Request failed');
+    } finally {
+      setProLicenseNotesSavingId(null);
+    }
+  };
+
+  const setVoucherPreviewBlobUrl = (url: string | null) => {
+    if (voucherPreviewUrlRef.current) {
+      URL.revokeObjectURL(voucherPreviewUrlRef.current);
+      voucherPreviewUrlRef.current = null;
+    }
+    if (url) voucherPreviewUrlRef.current = url;
+    setVoucherPreviewUrl(url);
+  };
+
+  const handlePreviewVoucher = async () => {
+    setVoucherMessage(null);
+    const bodyPayload = proLicenseDurationSelectToRequestBody(voucherDuration);
+    if (!bodyPayload) {
+      setVoucherMessage('Invalid duration.');
+      return;
+    }
+    setVoucherPreviewLoading(true);
+    try {
+      const res = await fetch('/api/admin/pro-licenses/vouchers/preview', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ locale: voucherLocale, ...bodyPayload }),
+      });
+      if (!res.ok) {
+        let err = 'Preview failed';
+        try {
+          const data = (await res.json()) as { error?: string };
+          if (data.error) err = data.error;
+        } catch {
+          /* non-json */
+        }
+        setVoucherMessage(err);
+        return;
+      }
+      const blob = await res.blob();
+      setVoucherPreviewBlobUrl(URL.createObjectURL(blob));
+    } catch {
+      setVoucherMessage('Preview request failed');
+    } finally {
+      setVoucherPreviewLoading(false);
+    }
+  };
+
+  const handleEmailVoucher = async () => {
+    setVoucherMessage(null);
+    const email = voucherEmail.trim();
+    if (!email) {
+      setVoucherMessage('Enter a recipient email.');
+      return;
+    }
+    const bodyPayload = proLicenseDurationSelectToRequestBody(voucherDuration);
+    if (!bodyPayload) {
+      setVoucherMessage('Invalid duration.');
+      return;
+    }
+    setVoucherEmailSending(true);
+    try {
+      const res = await fetch('/api/admin/pro-licenses/vouchers/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          email,
+          locale: voucherLocale,
+          ...bodyPayload,
+          ...(voucherExtraNote.trim() ? { adminNotes: voucherExtraNote.trim() } : {}),
+        }),
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setVoucherMessage(data.error ?? 'Failed to send voucher email');
+        return;
+      }
+      setVoucherMessage(`Voucher emailed to ${email}.`);
+      setVoucherEmail('');
+      void fetchProLicenseList();
+    } catch {
+      setVoucherMessage('Email request failed');
+    } finally {
+      setVoucherEmailSending(false);
+    }
+  };
+
+  const handleGenerateVouchers = async () => {
+    setVoucherMessage(null);
+    setProLicenseError(null);
+    const count = parseInt(voucherCount.trim(), 10);
+    if (!Number.isFinite(count) || count < 1 || count > 50) {
+      setVoucherMessage('Enter a count between 1 and 50.');
+      return;
+    }
+    const bodyPayload = proLicenseDurationSelectToRequestBody(voucherDuration);
+    if (!bodyPayload) {
+      setVoucherMessage('Invalid duration.');
+      return;
+    }
+    setVoucherGenerating(true);
+    try {
+      const res = await fetch('/api/admin/pro-licenses/vouchers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          count,
+          locale: voucherLocale,
+          output: voucherOutput,
+          ...bodyPayload,
+          ...(voucherExtraNote.trim() ? { adminNotes: voucherExtraNote.trim() } : {}),
+        }),
+      });
+      if (!res.ok) {
+        let err = 'Voucher generation failed';
+        try {
+          const data = (await res.json()) as { error?: string };
+          if (data.error) err = data.error;
+        } catch {
+          /* binary error body */
+        }
+        setVoucherMessage(err);
+        return;
+      }
+      const blob = await res.blob();
+      const stamp = new Date().toISOString().slice(0, 10);
+      const ext = voucherOutput === 'zip' ? 'zip' : 'pdf';
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `voice-inbox-vouchers-${voucherLocale}-${count}x-${stamp}.${ext}`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+      setVoucherMessage(
+        voucherOutput === 'zip'
+          ? `Created ${count} key${count === 1 ? '' : 's'} with note “voucher” and downloaded ZIP (${count} PDFs).`
+          : `Created ${count} key${count === 1 ? '' : 's'} with note “voucher” and downloaded one print PDF (${count} page${count === 1 ? '' : 's'}).`,
+      );
+      void fetchProLicenseList();
+    } catch {
+      setVoucherMessage('Request failed');
+    } finally {
+      setVoucherGenerating(false);
     }
   };
 
@@ -1531,6 +1733,160 @@ export function AdminDashboard() {
                   </div>
                 </div>
 
+                <div className="mb-6 rounded-lg border border-violet-200 bg-violet-50/90 p-4 dark:border-violet-900/60 dark:bg-violet-950/30">
+                  <h3 className="mb-1 text-sm font-semibold text-violet-950 dark:text-violet-100">
+                    Gift vouchers (PDF)
+                  </h3>
+                  <p className="mb-3 text-xs leading-relaxed text-violet-900/90 dark:text-violet-200/85">
+                    Creates N license keys (each tagged{' '}
+                    <code className="rounded bg-white/80 px-1 font-mono text-[11px] dark:bg-violet-950/80">
+                      voucher
+                    </code>
+                    ), then download as one print PDF or a ZIP of separate files (language below).
+                    Universal QR link (
+                    <code className="rounded bg-white/80 px-1 font-mono text-[11px] dark:bg-violet-950/80">
+                      /go
+                    </code>
+                    ) that redirects to the App Store or Google Play by device.
+                  </p>
+                  {voucherMessage && (
+                    <p className="mb-3 text-sm font-medium text-violet-900 dark:text-violet-200">
+                      {voucherMessage}
+                    </p>
+                  )}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-violet-900/90 dark:text-violet-200/90">
+                        Count (1–50)
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={50}
+                        value={voucherCount}
+                        onChange={(e) => setVoucherCount(e.target.value)}
+                        className={`${adminInputClass} w-24`}
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-violet-900/90 dark:text-violet-200/90">
+                        Duration
+                      </label>
+                      <select
+                        value={voucherDuration}
+                        onChange={(e) => setVoucherDuration(e.target.value)}
+                        className={adminSelectClass}
+                      >
+                        <option value="d:1">1 day</option>
+                        <option value="d:7">7 days</option>
+                        <option value="d:14">14 days</option>
+                        <option value="m:1">1 mo</option>
+                        <option value="m:3">3 mo</option>
+                        <option value="m:6">6 mo</option>
+                        <option value="m:12">12 mo</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-violet-900/90 dark:text-violet-200/90">
+                        PDF language
+                      </label>
+                      <select
+                        value={voucherLocale}
+                        onChange={(e) => setVoucherLocale(e.target.value as 'en' | 'ru')}
+                        className={adminSelectClass}
+                      >
+                        <option value="en">English</option>
+                        <option value="ru">Russian</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-violet-900/90 dark:text-violet-200/90">
+                        Download
+                      </label>
+                      <select
+                        value={voucherOutput}
+                        onChange={(e) => setVoucherOutput(e.target.value as 'print_pdf' | 'zip')}
+                        className={adminSelectClass}
+                      >
+                        <option value="print_pdf">Single PDF (print)</option>
+                        <option value="zip">ZIP (one PDF per voucher)</option>
+                      </select>
+                    </div>
+                    <div className="min-w-0 flex-1 sm:max-w-xs">
+                      <label className="mb-1 block text-sm font-medium text-violet-900/90 dark:text-violet-200/90">
+                        Extra note (optional)
+                      </label>
+                      <input
+                        type="text"
+                        value={voucherExtraNote}
+                        onChange={(e) => setVoucherExtraNote(e.target.value)}
+                        placeholder="e.g. batch Berlin 2026"
+                        className={`${adminInputClass} w-full`}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      disabled={voucherPreviewLoading || voucherGenerating}
+                      onClick={() => void handlePreviewVoucher()}
+                      className={adminBtnSecondaryClass}
+                    >
+                      {voucherPreviewLoading ? 'Loading preview…' : 'Preview voucher'}
+                    </button>
+                    <button
+                      type="button"
+                      disabled={voucherGenerating}
+                      onClick={() => void handleGenerateVouchers()}
+                      className={adminBtnPrimaryClass}
+                    >
+                      {voucherGenerating
+                        ? 'Generating…'
+                        : voucherOutput === 'zip'
+                          ? 'Generate vouchers (ZIP)'
+                          : 'Generate vouchers (PDF)'}
+                    </button>
+                  </div>
+                  {voucherPreviewUrl && (
+                    <div className="mt-4">
+                      <p className="mb-2 text-xs font-medium text-violet-900/90 dark:text-violet-200/85">
+                        Preview (sample code VI-XXXX-XXXX-XXXX)
+                      </p>
+                      <iframe
+                        title="Voucher PDF preview"
+                        src={voucherPreviewUrl}
+                        className="h-[220px] w-full rounded-lg border border-violet-200 bg-white dark:border-violet-800 dark:bg-zinc-900"
+                      />
+                    </div>
+                  )}
+                  <div className="mt-4 border-t border-violet-200/80 pt-4 dark:border-violet-800/50">
+                    <p className="mb-2 text-xs font-medium text-violet-900/90 dark:text-violet-200/85">
+                      Email one voucher (creates a key, sends PDF attachment)
+                    </p>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
+                      <div className="min-w-0 flex-1 sm:max-w-md">
+                        <label className="mb-1 block text-sm font-medium text-violet-900/90 dark:text-violet-200/90">
+                          Recipient email
+                        </label>
+                        <input
+                          type="email"
+                          autoComplete="email"
+                          value={voucherEmail}
+                          onChange={(e) => setVoucherEmail(e.target.value)}
+                          placeholder="name@example.com"
+                          className={`${adminInputClass} w-full`}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        disabled={voucherEmailSending}
+                        onClick={() => void handleEmailVoucher()}
+                        className={adminBtnPrimaryClass}
+                      >
+                        {voucherEmailSending ? 'Sending…' : 'Email voucher'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="mb-4 flex flex-wrap items-end gap-3">
                   <div>
                     <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
@@ -1701,6 +2057,7 @@ export function AdminDashboard() {
                           <th className="py-2 pr-4 font-medium">Created</th>
                           <th className="py-2 pr-4 font-medium">Duration</th>
                           <th className="py-2 pr-4 font-medium">Email</th>
+                          <th className="py-2 pr-4 font-medium">Notes</th>
                           <th className="py-2 pr-4 font-medium">Activated</th>
                           <th
                             className="py-2 pr-4 font-medium"
@@ -1749,6 +2106,52 @@ export function AdminDashboard() {
                               </td>
                               <td className="max-w-[200px] truncate py-2 pr-4 text-zinc-700 dark:text-zinc-300">
                                 {row.issuedToEmail ?? '—'}
+                              </td>
+                              <td className="max-w-[220px] py-2 pr-4 text-zinc-700 dark:text-zinc-300">
+                                {proLicenseNotesEditingId === row.id ? (
+                                  <div className="flex flex-col gap-1">
+                                    <textarea
+                                      value={proLicenseNotesDraft}
+                                      onChange={(e) => setProLicenseNotesDraft(e.target.value)}
+                                      rows={2}
+                                      className={`${adminInputClass} w-full min-w-[160px] text-xs`}
+                                      placeholder="Internal note…"
+                                    />
+                                    <div className="flex flex-wrap gap-1">
+                                      <button
+                                        type="button"
+                                        disabled={proLicenseNotesSavingId === row.id}
+                                        onClick={() => void handleSaveProLicenseNotes(row)}
+                                        className="rounded border border-zinc-300 bg-white px-2 py-0.5 text-[11px] font-medium dark:border-zinc-600 dark:bg-zinc-800"
+                                      >
+                                        {proLicenseNotesSavingId === row.id ? 'Saving…' : 'Save'}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={handleCancelEditProLicenseNotes}
+                                        className="rounded border border-zinc-200 px-2 py-0.5 text-[11px] text-zinc-600 dark:border-zinc-600 dark:text-zinc-400"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex flex-col gap-0.5">
+                                    <span
+                                      className="line-clamp-2 text-xs"
+                                      title={row.adminNotes ?? undefined}
+                                    >
+                                      {row.adminNotes ?? '—'}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStartEditProLicenseNotes(row)}
+                                      className="self-start text-[11px] font-medium text-violet-700 hover:underline dark:text-violet-300"
+                                    >
+                                      Edit
+                                    </button>
+                                  </div>
+                                )}
                               </td>
                               <td className="whitespace-nowrap py-2 pr-4 text-zinc-600 dark:text-zinc-400">
                                 {row.consumedAt

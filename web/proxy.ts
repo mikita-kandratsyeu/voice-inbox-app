@@ -76,6 +76,10 @@ export const proxy = async (request: NextRequest): Promise<NextResponse> => {
     return NextResponse.next();
   }
 
+  if (pathname === '/go' || pathname === '/en/go' || pathname === '/ru/go') {
+    return NextResponse.next();
+  }
+
   if (request.method === 'POST' && pathname === '/api/messages') {
     const ip = getClientIp(request);
     const key = getRateLimitKey(ip);

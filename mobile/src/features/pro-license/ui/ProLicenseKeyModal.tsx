@@ -314,6 +314,31 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
             >
               {t('proLicense.modalSubtitle')}
             </Text>
+            <View
+              className="mb-3 rounded-xl border px-3 py-2.5"
+              style={{
+                borderColor: color.border.default,
+                backgroundColor: color.background.secondary,
+              }}
+            >
+              <Text
+                className="mb-1.5 text-[12px] font-semibold"
+                style={{ color: color.text.primary }}
+              >
+                {t('proLicense.activationStepsTitle')}
+              </Text>
+              {(t('proLicense.activationSteps', { returnObjects: true }) as string[]).map(
+                (step, index) => (
+                  <Text
+                    key={step}
+                    className="text-[12px] leading-[17px]"
+                    style={{ color: color.text.secondary }}
+                  >
+                    {index + 1}. {step}
+                  </Text>
+                ),
+              )}
+            </View>
             <BottomSheetTextInput
               value={formatProOfferCodeDisplay(offerCodeCompact)}
               onChangeText={(text) => setOfferCodeCompact(parseProOfferCodeInput(text))}

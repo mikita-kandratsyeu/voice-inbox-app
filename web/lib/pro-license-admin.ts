@@ -52,16 +52,22 @@ export function formatProLicenseDurationShort(row: {
   return `${row.durationMonths} mo`;
 }
 
+export const PRO_LICENSE_VOUCHER_NOTE = 'voucher';
+
 export async function createProLicenseKeyRecord(
   adminId: string,
   duration: ProLicenseDurationSpec,
-  opts?: { issuedToEmail?: string | null },
+  opts?: { issuedToEmail?: string | null; adminNotes?: string | null },
 ): Promise<{ plainKey: string; keyId: string }> {
   const plainKey = generatePlainLicenseKey();
   const keyHash = hashLicenseKey(normalizeLicenseKeyInput(plainKey));
   const issuedToEmail =
     typeof opts?.issuedToEmail === 'string' && opts.issuedToEmail.trim()
       ? opts.issuedToEmail.trim()
+      : null;
+  const adminNotes =
+    typeof opts?.adminNotes === 'string' && opts.adminNotes.trim()
+      ? opts.adminNotes.trim().slice(0, 2000)
       : null;
   const durationMonths = duration.kind === 'months' ? duration.months : 0;
   const durationDays = duration.kind === 'days' ? duration.days : null;
@@ -72,6 +78,7 @@ export async function createProLicenseKeyRecord(
       durationDays,
       createdByAdminId: adminId,
       ...(issuedToEmail != null ? { issuedToEmail } : {}),
+      ...(adminNotes != null ? { adminNotes } : {}),
     },
     select: { id: true },
   });

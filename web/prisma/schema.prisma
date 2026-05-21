@@ -98,6 +98,7 @@ model ProLicenseKey {
   createdAt          DateTime  @default(now())
   createdByAdminId   String
   issuedToEmail      String?
+  adminNotes         String?   @db.Text
   consumedAt         DateTime?
   consumedByDeviceId String?
 

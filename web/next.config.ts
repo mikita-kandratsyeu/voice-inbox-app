@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
       { source: '/ru/releases/:slug', destination: '/ru/blog/:slug', permanent: true },
     ];
   },
-  serverExternalPackages: ['@prisma/client', 'pg', '@prisma/adapter-pg'],
+  serverExternalPackages: ['@prisma/client', 'pg', '@prisma/adapter-pg', 'pdfkit'],
   images: {
     remotePatterns: [
       {
