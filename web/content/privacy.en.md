@@ -41,10 +41,13 @@ If you enable push notifications, we store your push token (FCM) and app languag
 **Cloud AI via OpenRouter:** When AI runs in the cloud, your transcript is sent to third-party model providers through [OpenRouter](https://openrouter.ai). We route those requests exclusively through OpenRouter — we do not call those providers’ APIs directly. Models we may use for your requests include:
 
 - **Google** (Gemini family) — summaries, task extraction, Ask AI
-- **MiniMax** — summaries, task extraction, Ask AI
 - **DeepSeek** — summaries, task extraction, Ask AI (including as a fallback when another model fails)
+- **MiniMax** — summaries, task extraction, Ask AI
+- **Xiaomi** (MiMo) — summaries, task extraction, Ask AI
+- **StepFun** — summaries, task extraction, Ask AI
+- **NVIDIA** (Nemotron) — summaries, task extraction, Ask AI
 
-We may add or change models over time; the in-app model picker reflects what you can select for cloud mode.
+We may add or change models over time; the in-app model picker reflects what you can select for cloud mode. If you choose **Auto** in cloud AI settings, our servers select a model based on request characteristics (such as transcript length); otherwise we use the model you pick.
 
 We apply **Zero Data Retention (ZDR)** to **cloud** requests where supported: routing prefers endpoints where providers do not retain your content for training. OpenRouter's ZDR policy is described [here](https://openrouter.ai/docs/guides/features/zdr).
 
