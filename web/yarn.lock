@@ -9432,6 +9432,7 @@ __metadata:
     react-markdown: "npm:^10.1.0"
     rehype-sanitize: "npm:^6.0.0"
     remark-gfm: "npm:^4.0.1"
+    sharp: "npm:^0.34.5"
     tailwindcss: "npm:^4"
     tsx: "npm:^4.21.0"
     typescript: "npm:^5"

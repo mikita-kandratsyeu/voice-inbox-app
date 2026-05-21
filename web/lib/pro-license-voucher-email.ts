@@ -5,21 +5,21 @@ import { formatVoucherPremiumAccessLabel } from '@/lib/pro-license-voucher-copy'
 function durationLabel(spec: ProLicenseDurationSpec, locale: VoucherLocale): string {
   if (locale === 'ru') {
     if (spec.kind === 'days') {
-      if (spec.days === 1) return '1 день Premium';
-      return `${spec.days} ${spec.days >= 5 ? 'дней' : 'дня'} Premium`;
+      if (spec.days === 1) return '1 день Pro';
+      return `${spec.days} ${spec.days >= 5 ? 'дней' : 'дня'} Pro`;
     }
-    if (spec.months === 1) return '1 месяц Premium';
+    if (spec.months === 1) return '1 месяц Pro';
     const mod10 = spec.months % 10;
     const mod100 = spec.months % 100;
     const word = mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? 'месяца' : 'месяцев';
-    return `${spec.months} ${word} Premium`;
+    return `${spec.months} ${word} Pro`;
   }
   if (spec.kind === 'days') {
-    if (spec.days === 1) return '1 day of Premium';
-    return `${spec.days} days of Premium`;
+    if (spec.days === 1) return '1 day of Pro';
+    return `${spec.days} days of Pro`;
   }
-  if (spec.months === 1) return '1 month of Premium';
-  return `${spec.months} months of Premium`;
+  if (spec.months === 1) return '1 month of Pro';
+  return `${spec.months} months of Pro`;
 }
 
 export function buildVoucherGiftEmail(params: {

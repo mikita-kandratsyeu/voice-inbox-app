@@ -1850,11 +1850,13 @@ export function AdminDashboard() {
                       <p className="mb-2 text-xs font-medium text-violet-900/90 dark:text-violet-200/85">
                         Preview (sample code VI-XXXX-XXXX-XXXX)
                       </p>
-                      <iframe
-                        title="Voucher PDF preview"
-                        src={voucherPreviewUrl}
-                        className="h-[220px] w-full rounded-lg border border-violet-200 bg-white dark:border-violet-800 dark:bg-zinc-900"
-                      />
+                      <div className="relative aspect-[792/306] min-h-[380px] w-full overflow-hidden rounded-lg border border-violet-200 bg-white dark:border-violet-800 dark:bg-zinc-900">
+                        <iframe
+                          title="Voucher PDF preview"
+                          src={voucherPreviewUrl}
+                          className="absolute inset-0 h-full w-full border-0"
+                        />
+                      </div>
                     </div>
                   )}
                   <div className="mt-4 border-t border-violet-200/80 pt-4 dark:border-violet-800/50">

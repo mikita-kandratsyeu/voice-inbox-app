@@ -11,7 +11,6 @@ export function parseVoucherLocale(raw: unknown): VoucherLocale {
 }
 
 export type VoucherPdfCopy = {
-  brandName: string;
   giftVoucherTitle: string;
   scanToOpen: string;
   yourCode: string;
@@ -23,7 +22,6 @@ export type VoucherPdfCopy = {
 };
 
 const COPY_EN: VoucherPdfCopy = {
-  brandName: 'VOICE INBOX AI',
   giftVoucherTitle: 'GIFT VOUCHER',
   scanToOpen: 'SCAN TO OPEN',
   yourCode: 'YOUR CODE',
@@ -35,11 +33,10 @@ const COPY_EN: VoucherPdfCopy = {
     'In Settings, open About the app. Tap the app icon eight times quickly.',
     'Enter your voucher code and tap Apply.',
   ],
-  footerLegal: 'VALID FOR ONE-TIME USE ONLY',
+  footerLegal: 'VALID FOR ONE-TIME USE ONLY • NON-TRANSFERABLE',
 };
 
 const COPY_RU: VoucherPdfCopy = {
-  brandName: 'VOICE INBOX AI',
   giftVoucherTitle: 'ПОДАРОЧНЫЙ ВАУЧЕР',
   scanToOpen: 'ОТСКАНИРУЙТЕ',
   yourCode: 'ВАШ КОД',
@@ -51,7 +48,7 @@ const COPY_RU: VoucherPdfCopy = {
     'Настройки → О приложении. Быстро нажмите на иконку приложения 8 раз подряд.',
     'Введите код с ваучера и нажмите «Применить».',
   ],
-  footerLegal: 'ТОЛЬКО ДЛЯ ОДНОКРАТНОГО ИСПОЛЬЗОВАНИЯ',
+  footerLegal: 'ТОЛЬКО ДЛЯ ОДНОКРАТНОГО ИСПОЛЬЗОВАНИЯ • НЕ ПЕРЕДАЁТСЯ',
 };
 
 export function getVoucherPdfCopy(locale: VoucherLocale): VoucherPdfCopy {
@@ -59,29 +56,29 @@ export function getVoucherPdfCopy(locale: VoucherLocale): VoucherPdfCopy {
   return { ...base };
 }
 
-/** Headline for the voucher sidebar (e.g. "14 DAYS PREMIUM ACCESS"). */
+/** Headline for the voucher sidebar (e.g. "14 DAYS PRO ACCESS"). */
 export function formatVoucherPremiumAccessHeadline(
   duration: ProLicenseDurationSpec,
   locale: VoucherLocale,
 ): string {
   if (locale === 'ru') {
     if (duration.kind === 'days') {
-      if (duration.days === 1) return '1 ДЕНЬ\nПРЕМИУМ\nДОСТУП';
-      return `${duration.days} ${duration.days >= 5 ? 'ДНЕЙ' : 'ДНЯ'}\nПРЕМИУМ\nДОСТУП`;
+      if (duration.days === 1) return '1 ДЕНЬ\nPRO\nДОСТУП';
+      return `${duration.days} ${duration.days >= 5 ? 'ДНЕЙ' : 'ДНЯ'}\nPRO\nДОСТУП`;
     }
-    if (duration.months === 1) return '1 МЕСЯЦ\nПРЕМИУМ\nДОСТУП';
+    if (duration.months === 1) return '1 МЕСЯЦ\nPRO\nДОСТУП';
     const mod10 = duration.months % 10;
     const mod100 = duration.months % 100;
     const word = mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? 'МЕСЯЦА' : 'МЕСЯЦЕВ';
-    return `${duration.months} ${word}\nПРЕМИУМ\nДОСТУП`;
+    return `${duration.months} ${word}\nPRO\nДОСТУП`;
   }
 
   if (duration.kind === 'days') {
-    if (duration.days === 1) return '1 DAY\nPREMIUM\nACCESS';
-    return `${duration.days} DAYS\nPREMIUM\nACCESS`;
+    if (duration.days === 1) return '1 DAY\nPRO\nACCESS';
+    return `${duration.days} DAYS\nPRO\nACCESS`;
   }
-  if (duration.months === 1) return '1 MONTH\nPREMIUM\nACCESS';
-  return `${duration.months} MONTHS\nPREMIUM\nACCESS`;
+  if (duration.months === 1) return '1 MONTH\nPRO\nACCESS';
+  return `${duration.months} MONTHS\nPRO\nACCESS`;
 }
 
 /** Single-line variant for filenames and metadata. */
