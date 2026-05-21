@@ -98,7 +98,10 @@ export function normalizeIncomingAiModel(model: string): string {
 
   return t;
 }
+/** Manual picker + fallbacks. Auto routing uses {@link AI_MODEL_DEEPSEEK_V4_FLASH_NITRO}. */
 export const AI_MODEL_DEEPSEEK_V4_FLASH = 'deepseek/deepseek-v4-flash';
+/** Auto tier only (medium transcript length). */
+export const AI_MODEL_DEEPSEEK_V4_FLASH_NITRO = 'deepseek/deepseek-v4-flash:nitro';
 export const AI_MODEL_MIMO_V2_FLASH = 'xiaomi/mimo-v2-flash';
 export const AI_MODEL_NEMOTRON_3_SUPER = 'nvidia/nemotron-3-super-120b-a12b';
 /** Removed from catalog — accepted from old clients, mapped in {@link normalizeIncomingAiModel}. */
@@ -126,6 +129,7 @@ export const ALLOWED_AI_MODELS: string[] = [
   'minimax/minimax-m2.7',
   'google/gemini-2.5-flash-lite',
   AI_MODEL_DEEPSEEK_V4_FLASH,
+  AI_MODEL_DEEPSEEK_V4_FLASH_NITRO,
   AI_MODEL_MIMO_V2_FLASH,
   AI_MODEL_NEMOTRON_3_SUPER,
 ];
