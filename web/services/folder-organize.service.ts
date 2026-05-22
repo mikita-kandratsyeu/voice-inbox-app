@@ -1,12 +1,12 @@
-import { after } from 'next/server';
-
 import { checkAndIncrement, decrement, getResetAt } from '@/lib/ai-rate-limit';
+import { dispatchAiJob } from '@/lib/ai-job-dispatch';
+import { saveJobPayload } from '@/lib/ai-job-payload';
 import { isProDevice } from '@/lib/pro-entitlement';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import { redis } from '@/lib/redis';
-import { processAutoOrganizeFolders } from '@/services/ai.service';
+import type { AutoOrganizeJobPayload } from '@/types/ai-job';
 import type { AutoOrganizeMessage, AutoOrganizeResult, Message } from '@/types';
-import { MESSAGE_TTL_SECONDS, SYSTEM_MICRO_TASK_MODEL, WEEK_TTL_SECONDS } from '@/config/constants';
+import { MESSAGE_TTL_SECONDS, WEEK_TTL_SECONDS } from '@/config/constants';
 
 const AUTO_ORGANIZE_FREE_WEEKLY_LIMIT = 2;
 const AUTO_ORGANIZE_WEEKLY_KEY_PREFIX = 'ai_auto_organize_weekly:';
@@ -63,13 +63,6 @@ async function checkAndIncrementAutoOrganize(
   return { allowed: true };
 }
 
-async function decrementAutoOrganize(deviceId: string): Promise<void> {
-  const pro = await isProDevice(deviceId);
-  if (pro) return;
-  const key = getAutoOrganizeWeekKey(deviceId);
-  await redis.decr(key);
-}
-
 export const createAutoOrganizeRequest = async (
   id: string,
   notesPayload: string,
@@ -124,28 +117,17 @@ export const createAutoOrganizeRequest = async (
 
   const syncToken = getSyncToken();
 
-  after(async () => {
-    try {
-      const result = await processAutoOrganizeFolders(
-        notesPayload,
-        SYSTEM_MICRO_TASK_MODEL,
-        clientUserAgent,
-      );
-      await saveAutoOrganizeMessage(id, {
-        id,
-        status: 'done',
-        result,
-      });
-    } catch (err) {
-      await decrement(deviceId);
-      await decrementAutoOrganize(deviceId);
-      await saveAutoOrganizeMessage(id, {
-        id,
-        status: 'error',
-        error: err instanceof Error ? err.message : 'Unknown error',
-      });
-    }
-  });
+  const jobPayload: AutoOrganizeJobPayload = {
+    operation: 'folder_auto_organize',
+    jobId: id,
+    deviceId,
+    messageTtlSeconds: ttl,
+    notesPayload,
+    clientUserAgent,
+  };
+
+  await saveJobPayload(jobPayload);
+  await dispatchAiJob(jobPayload);
 
   return { created: true, syncToken };
 };

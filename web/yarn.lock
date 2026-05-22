@@ -2695,6 +2695,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@upstash/qstash@npm:^2.11.0":
+  version: 2.11.0
+  resolution: "@upstash/qstash@npm:2.11.0"
+  dependencies:
+    crypto-js: "npm:>=4.2.0"
+    jose: "npm:^5.2.3"
+    neverthrow: "npm:^7.0.1"
+  checksum: 10c0/226dc11a5402bf9708a6565d68fd7f8e36208eff260d7baacb5ce03c9e7c681c139e77c4c17e07ed9704e467d345f17b7f836ba08fd0443a924e589ed4749341
+  languageName: node
+  linkType: hard
+
 "@upstash/redis@npm:^1.37.0":
   version: 1.37.0
   resolution: "@upstash/redis@npm:1.37.0"
@@ -3446,6 +3457,13 @@ __metadata:
     shebang-command: "npm:^2.0.0"
     which: "npm:^2.0.1"
   checksum: 10c0/053ea8b2135caff68a9e81470e845613e374e7309a47731e81639de3eaeb90c3d01af0e0b44d2ab9d50b43467223b88567dfeb3262db942dc063b9976718ffc1
+  languageName: node
+  linkType: hard
+
+"crypto-js@npm:>=4.2.0":
+  version: 4.2.0
+  resolution: "crypto-js@npm:4.2.0"
+  checksum: 10c0/8fbdf9d56f47aea0794ab87b0eb9833baf80b01a7c5c1b0edc7faf25f662fb69ab18dc2199e2afcac54670ff0cd9607a9045a3f7a80336cccd18d77a55b9fdf0
   languageName: node
   linkType: hard
 
@@ -5713,6 +5731,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jose@npm:^5.2.3":
+  version: 5.10.0
+  resolution: "jose@npm:5.10.0"
+  checksum: 10c0/e20d9fc58d7e402f2e5f04e824b8897d5579aae60e64cb88ebdea1395311c24537bf4892f7de413fab1acf11e922797fb1b42269bc8fc65089a3749265ccb7b0
+  languageName: node
+  linkType: hard
+
 "jose@npm:^6.2.2":
   version: 6.2.2
   resolution: "jose@npm:6.2.2"
@@ -7034,6 +7059,13 @@ __metadata:
   version: 1.0.0
   resolution: "negotiator@npm:1.0.0"
   checksum: 10c0/4c559dd52669ea48e1914f9d634227c561221dd54734070791f999c52ed0ff36e437b2e07d5c1f6e32909fc625fe46491c16e4a8f0572567d4dd15c3a4fda04b
+  languageName: node
+  linkType: hard
+
+"neverthrow@npm:^7.0.1":
+  version: 7.2.0
+  resolution: "neverthrow@npm:7.2.0"
+  checksum: 10c0/16d1b07638e109c3e96a737fdb59703aa65e89cb68318db3cfe04c03a17a64d47e8462c8d25cb51d4199f15f37596db3097ff74ef33074eaa4b2248d3d5b599d
   languageName: node
   linkType: hard
 
@@ -9404,6 +9436,7 @@ __metadata:
     "@types/qrcode": "npm:^1.5.6"
     "@types/react": "npm:^19"
     "@types/react-dom": "npm:^19"
+    "@upstash/qstash": "npm:^2.11.0"
     "@upstash/redis": "npm:^1.37.0"
     "@vercel/analytics": "npm:^2.0.1"
     "@zip.js/zip.js": "npm:^2.7.62"

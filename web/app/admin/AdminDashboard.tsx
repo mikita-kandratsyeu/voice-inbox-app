@@ -70,9 +70,16 @@ type DatabaseStatus = {
   error?: string;
 };
 
+type QStashStatus = {
+  ok: boolean;
+  error?: string;
+  transport?: string;
+};
+
 type StatusResponse = {
   vercel: VercelStatus;
   upstash: UpstashStatus;
+  qstash?: QStashStatus;
   database: DatabaseStatus;
   app: { baseUrl: string; env: string; devicesWithPush?: number };
 };
@@ -1194,10 +1201,20 @@ export function AdminDashboard() {
                   {statusLoading ? (
                     <p className="text-sm text-zinc-500">Loading…</p>
                   ) : status?.upstash.ok ? (
-                    <AdminStatusBadge tone="success">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
-                      Connected
-                    </AdminStatusBadge>
+                    <div className="space-y-1">
+                      <AdminStatusBadge tone="success">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+                        Connected
+                      </AdminStatusBadge>
+                      {status.qstash ? (
+                        <p className="text-xs text-zinc-500">
+                          QStash:{' '}
+                          {status.qstash.ok
+                            ? `ok (${status.qstash.transport ?? 'qstash'})`
+                            : (status.qstash.error ?? 'not configured')}
+                        </p>
+                      ) : null}
+                    </div>
                   ) : (
                     <p className="text-sm text-red-600 dark:text-red-400">
                       {status?.upstash.error ?? 'Disconnected'}

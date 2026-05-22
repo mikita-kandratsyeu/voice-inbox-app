@@ -1,17 +1,11 @@
-import { after } from 'next/server';
-import { sendPushNotification } from '@/lib/push';
-import {
-  collectPendingAndUnlock,
-  getPushTokenWithLocale,
-  isAppInForeground,
-  registerAiCompletion,
-  sendLimitExceededPush,
-} from '@/lib/push-tokens';
-import { MESSAGE_TTL_SECONDS, PUSH_DEBOUNCE_MS } from '@/config/constants';
-import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
+import { sendLimitExceededPush } from '@/lib/push-tokens';
+import { MESSAGE_TTL_SECONDS } from '@/config/constants';
+import { checkAndIncrement } from '@/lib/ai-rate-limit';
+import { dispatchAiJob } from '@/lib/ai-job-dispatch';
+import { saveJobPayload } from '@/lib/ai-job-payload';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
-import { processAskQuestion } from '@/services/ai.service';
+import type { AskJobPayload } from '@/types/ai-job';
 import type { AskMessage, Message } from '@/types';
 
 type CreateAskResult =
@@ -67,67 +61,23 @@ export const createAsk = async (
 
   const syncToken = getSyncToken();
 
-  after(async () => {
-    try {
-      const result = await processAskQuestion(
-        transcript,
-        question,
-        model,
-        summary,
-        tasks,
-        priorTurns,
-        clientUserAgent,
-        recordingMarks,
-      );
-      await saveAskMessage(id, {
-        id,
-        status: 'done',
-        model,
-        answer: result.answer,
-      });
+  const jobPayload: AskJobPayload = {
+    operation: 'transcript_ask',
+    jobId: id,
+    deviceId,
+    messageTtlSeconds: ttl,
+    transcript,
+    question,
+    model,
+    summary,
+    tasks,
+    priorTurns,
+    clientUserAgent,
+    recordingMarks,
+  };
 
-      const isLeader = await registerAiCompletion(deviceId);
-      if (!isLeader) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[Push] Ask complete: queued (leader will send)', { deviceId });
-        }
-        return;
-      }
-
-      await new Promise((resolve) => setTimeout(resolve, PUSH_DEBOUNCE_MS));
-
-      const inForeground = await isAppInForeground(deviceId);
-      const count = await collectPendingAndUnlock(deviceId);
-      if (count === 0) return;
-      if (inForeground) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[Push] Ask complete: skip (app in foreground after debounce)', { deviceId });
-        }
-        return;
-      }
-
-      const data = await getPushTokenWithLocale(deviceId);
-      if (data) {
-        const sent = await sendPushNotification(
-          data.token,
-          { type: 'ai_complete', recordId: id },
-          data.locale,
-          count,
-        );
-        console.log('[Push] Ask complete:', sent ? 'sent' : 'failed', { deviceId, count });
-      } else {
-        console.warn('[Push] Ask complete: no token for deviceId', deviceId);
-      }
-    } catch (err) {
-      await decrement(deviceId);
-      await saveAskMessage(id, {
-        id,
-        status: 'error',
-        error: err instanceof Error ? err.message : 'Unknown error',
-        model,
-      });
-    }
-  });
+  await saveJobPayload(jobPayload);
+  await dispatchAiJob(jobPayload);
 
   return { created: true, syncToken };
 };

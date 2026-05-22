@@ -1,27 +1,13 @@
-import { after } from 'next/server';
-import { sendPushNotification } from '@/lib/push';
-import {
-  collectPendingAndUnlock,
-  getPushTokenWithLocale,
-  isAppInForeground,
-  registerAiCompletion,
-  sendLimitExceededPush,
-} from '@/lib/push-tokens';
-import { PUSH_DEBOUNCE_MS, MESSAGE_TTL_SECONDS } from '@/config/constants';
-import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
-import {
-  buildMeetingDialogueUserContent,
-  type MeetingDialogueTranscriptSegment,
-} from '@/lib/meeting-dialogue-user-prompt';
-import { mergeOpenRouterTokenUsage } from '@/lib/openrouter-token-usage';
+import { sendLimitExceededPush } from '@/lib/push-tokens';
+import { MESSAGE_TTL_SECONDS } from '@/config/constants';
+import { checkAndIncrement } from '@/lib/ai-rate-limit';
+import { dispatchAiJob } from '@/lib/ai-job-dispatch';
+import { saveJobPayload } from '@/lib/ai-job-payload';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
-import { processMeetingDialogueMarkdown, processTranscript } from '@/services/ai.service';
+import type { MeetingDialogueAuxPayload, SummarizeJobPayload } from '@/types/ai-job';
 import type { Message } from '@/types';
 
-export type MeetingDialogueAuxPayload = {
-  transcriptSegments?: MeetingDialogueTranscriptSegment[];
-  taskExtractionHint?: string;
-};
+export type { MeetingDialogueAuxPayload } from '@/types/ai-job';
 
 type CreateMessageResult =
   | { created: true; syncToken?: string }
@@ -65,115 +51,22 @@ export const createMessage = async (
 
   const syncToken = getSyncToken();
 
-  after(async () => {
-    try {
-      const mainResult = await processTranscript(transcript, model, systemPrompt, clientUserAgent);
+  const jobPayload: SummarizeJobPayload = {
+    operation: 'transcript_summarize',
+    jobId: id,
+    deviceId,
+    messageTtlSeconds: ttl,
+    transcript,
+    model,
+    systemPrompt,
+    clientUserAgent,
+    pseudoDiarizationEligible,
+    meetingDialogueSystemPrompt,
+    meetingDialogueAux,
+  };
 
-      let result = mainResult;
-      if (pseudoDiarizationEligible && meetingDialogueSystemPrompt?.trim()) {
-        try {
-          const mdUserContent = buildMeetingDialogueUserContent({
-            plainTranscript: transcript,
-            segments: meetingDialogueAux?.transcriptSegments,
-            phase1: {
-              suggestedTitle: mainResult.suggestedTitle,
-              keyPhrases: mainResult.keyPhrases,
-              summary: mainResult.summary,
-            },
-            taskExtractionHint: meetingDialogueAux?.taskExtractionHint,
-          });
-          const mdPart = await processMeetingDialogueMarkdown(
-            mdUserContent,
-            model,
-            meetingDialogueSystemPrompt.trim(),
-            clientUserAgent,
-          );
-          result = {
-            ...mainResult,
-            ...mdPart,
-            tokenUsage: mergeOpenRouterTokenUsage(mainResult.tokenUsage, mdPart.tokenUsage),
-          };
-        } catch (mdErr) {
-          console.warn('[AI] meeting dialogue phase failed; returning main extraction only', {
-            messageId: id,
-            error: mdErr instanceof Error ? mdErr.message : String(mdErr),
-          });
-        }
-      }
-
-      await saveMessage(
-        id,
-        {
-          id,
-          status: 'done',
-          model,
-          summary: result.summary,
-          suggestedTitle: result.suggestedTitle,
-          tasks: result.tasks,
-          tags: result.tags,
-          ...(result.classification && { classification: result.classification }),
-          ...(result.keyPhrases &&
-            result.keyPhrases.length > 0 && {
-              keyPhrases: result.keyPhrases,
-            }),
-          ...(result.nextSteps && result.nextSteps.length > 0 && { nextSteps: result.nextSteps }),
-          ...(result.meetingDialogueMarkdown?.trim() && {
-            meetingDialogueMarkdown: result.meetingDialogueMarkdown.trim(),
-          }),
-          ...(result.reasoning?.trim() && { reasoning: result.reasoning.trim() }),
-          ...(result.tokenUsage && { tokenUsage: result.tokenUsage }),
-        },
-        ttl,
-      );
-
-      // Register completion. Only the first caller (leader) waits and sends the push.
-      const isLeader = await registerAiCompletion(deviceId);
-      if (!isLeader) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[Push] AI complete: queued (leader will send)', { deviceId });
-        }
-        return;
-      }
-
-      // Leader waits for debounce window to collect all parallel completions
-      await new Promise((resolve) => setTimeout(resolve, PUSH_DEBOUNCE_MS));
-
-      const inForeground = await isAppInForeground(deviceId);
-      const count = await collectPendingAndUnlock(deviceId);
-      if (count === 0) return;
-      if (inForeground) {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log('[Push] AI complete: skip (app in foreground after debounce)', { deviceId });
-        }
-        return;
-      }
-
-      const data = await getPushTokenWithLocale(deviceId);
-      if (data) {
-        const sent = await sendPushNotification(
-          data.token,
-          { type: 'ai_complete', recordId: id },
-          data.locale,
-          count,
-        );
-        console.log('[Push] AI complete:', sent ? 'sent' : 'failed', { deviceId, count });
-      } else {
-        console.warn('[Push] AI complete: no token for deviceId', deviceId);
-      }
-    } catch (err) {
-      await decrement(deviceId);
-      await saveMessage(
-        id,
-        {
-          id,
-          status: 'error',
-          error: err instanceof Error ? err.message : 'Unknown error',
-          model,
-        },
-        ttl,
-      );
-    }
-  });
+  await saveJobPayload(jobPayload);
+  await dispatchAiJob(jobPayload);
 
   return { created: true, syncToken };
 };

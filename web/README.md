@@ -49,6 +49,11 @@ The site showcases Voice Inbox AI: explains features, walks through the workflow
 | `OPENROUTER_API_KEY`       | OpenRouter API key (for AI services)                                 |
 | `UPSTASH_REDIS_REST_URL`   | Upstash Redis URL                                                    |
 | `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis token                                                  |
+| `QSTASH_TOKEN`             | Upstash QStash token for async AI workers (optional; falls back to `after()` locally) |
+| `QSTASH_CURRENT_SIGNING_KEY` | Verifies QStash webhook calls to `/api/internal/ai/worker`       |
+| `QSTASH_NEXT_SIGNING_KEY`  | Optional signing key rotation for QStash                               |
+| `AI_JOB_TRANSPORT`         | `qstash` or `after` (default: `qstash` when `QSTASH_TOKEN` is set)   |
+| `QSTASH_URL`               | Optional local QStash dev server URL                                 |
 | `APP_SECRET`               | Secret used only to obtain JWT from `POST /api/token`                |
 | `JWT_SECRET`               | Secret to sign API JWTs (min 32 chars); required for API auth        |
 | `JWT_EXPIRES_IN`           | Optional mobile API JWT expiry (e.g. `1h`, `12h`, `24h`; default `12h`) |
@@ -62,6 +67,8 @@ The site showcases Voice Inbox AI: explains features, walks through the workflow
 
 
 Without Redis, an in-memory store is used (suitable for development).
+
+**Async AI jobs:** Mobile POST endpoints enqueue work in Redis (`msg:*`) and return immediately; the app polls GET until `done`. Background processing uses **QStash** when `QSTASH_TOKEN` is set (worker: `POST /api/internal/ai/worker`), otherwise Next.js `after()` on the same deployment. Set `NEXT_PUBLIC_BASE_URL` to a public HTTPS origin so QStash can reach the worker. On Vercel, if Deployment Protection blocks webhooks, allow QStash or exclude `/api/internal/ai/worker`.
 
 ---
 

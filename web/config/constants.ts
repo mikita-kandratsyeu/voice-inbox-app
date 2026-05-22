@@ -67,6 +67,10 @@ export const AI_BONUS_COOLDOWN_SECONDS = 900; // 15 min
 export const MESSAGE_TTL_MIN_SECONDS = 300; // 5 minutes
 export const MESSAGE_TTL_SECONDS = 3600; // default / max selectable (1 hour)
 export const MESSAGE_KEY_PREFIX = 'msg:';
+/** Staging payload for async AI workers (QStash / after). */
+export const JOB_PAYLOAD_KEY_PREFIX = 'job-payload:';
+/** QStash delivery retries when publishing async AI jobs. */
+export const AI_JOB_QSTASH_RETRIES = 3;
 /** Max length for optional device model string stored in push_token JSON. */
 export const DEVICE_MODEL_MAX_CHARS = 128;
 /** Push registration metadata (app / OS strings). */

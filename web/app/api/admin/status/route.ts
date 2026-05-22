@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { BASE_URL_OR_FALLBACK } from '@/config/constants';
 import { getAllDeviceIdsWithPushTokens } from '@/lib/push-tokens';
 import { prisma } from '@/lib/prisma';
+import { getQStashStatus } from '@/lib/qstash';
 import { redis } from '@/lib/redis';
 
 type VercelDeployment = {
@@ -138,6 +139,7 @@ export async function GET(): Promise<NextResponse> {
   return NextResponse.json({
     vercel,
     upstash,
+    qstash: getQStashStatus(),
     database,
     app: {
       baseUrl: BASE_URL_OR_FALLBACK,
