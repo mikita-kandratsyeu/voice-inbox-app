@@ -1,3 +1,9 @@
+import {
+  deepSeekChatCompletion,
+  isRetryableDeepSeekTransportError,
+  shouldCallDeepSeekDirect,
+} from '@/lib/deepseek';
+import { extractDeepSeekReasoning } from '@/lib/deepseek-reasoning';
 import { createOpenRouterClient } from '@/lib/openrouter';
 import {
   isRetryableOpenRouterTransportError,
@@ -27,35 +33,12 @@ import { SYSTEM_TASK_MODEL_FALLBACK_CHAIN, USER_AI_MODEL_FALLBACK_CHAIN } from '
 
 const MEETING_DIALOGUE_MARKDOWN_MAX_CHARS = 12_000;
 
-async function callOpenRouter(
-  transcript: string,
-  model: string,
-  systemPrompt: string,
-  clientUserAgent?: string | null,
-): Promise<AiResult> {
-  const client = createOpenRouterClient(clientUserAgent);
-  const reasoning = openRouterReasoningParamsForModel(model);
-  const response = await client.chat.send({
-    chatGenerationParams: {
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: transcript },
-      ],
-      provider: { zdr: true },
-      responseFormat: openRouterJsonObjectResponseFormat(),
-      temperature: 0.3,
-      stream: false,
-      ...(reasoning ? { reasoning } : {}),
-    },
-  });
-
-  const message = response.choices[0]?.message;
-  const content = message?.content;
-  if (typeof content !== 'string') {
-    throw new Error('Invalid AI response: missing content');
-  }
-
+function buildSummaryAiResult(
+  content: string,
+  message: unknown,
+  response: unknown,
+  extractReasoning: (msg: unknown) => string | undefined,
+): AiResult {
   const parsed = parseOpenRouterJsonContent(content);
   if (
     !parsed ||
@@ -125,7 +108,7 @@ async function callOpenRouter(
       ? String(parsed.suggestedTitle).trim()
       : '';
 
-  const reasoningText = extractOpenRouterReasoning(message);
+  const reasoningText = extractReasoning(message);
   const tokenUsage = extractOpenRouterTokenUsage(response);
 
   return {
@@ -139,6 +122,67 @@ async function callOpenRouter(
     ...(reasoningText ? { reasoning: reasoningText } : {}),
     ...(tokenUsage ? { tokenUsage } : {}),
   };
+}
+
+async function callDeepSeekDirect(
+  transcript: string,
+  systemPrompt: string,
+): Promise<AiResult> {
+  const { content, message, raw } = await deepSeekChatCompletion({
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: transcript },
+    ],
+    jsonObject: true,
+    withReasoning: true,
+  });
+
+  return buildSummaryAiResult(content, message, raw, extractDeepSeekReasoning);
+}
+
+async function callOpenRouter(
+  transcript: string,
+  model: string,
+  systemPrompt: string,
+  clientUserAgent?: string | null,
+): Promise<AiResult> {
+  const client = createOpenRouterClient(clientUserAgent);
+  const reasoning = openRouterReasoningParamsForModel(model);
+  const response = await client.chat.send({
+    chatGenerationParams: {
+      model,
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: transcript },
+      ],
+      provider: { zdr: true },
+      responseFormat: openRouterJsonObjectResponseFormat(),
+      temperature: 0.3,
+      stream: false,
+      ...(reasoning ? { reasoning } : {}),
+    },
+  });
+
+  const message = response.choices[0]?.message;
+  const content = message?.content;
+  if (typeof content !== 'string') {
+    throw new Error('Invalid AI response: missing content');
+  }
+
+  return buildSummaryAiResult(content, message, response, extractOpenRouterReasoning);
+}
+
+async function callSummaryModel(
+  transcript: string,
+  model: string,
+  systemPrompt: string,
+  clientUserAgent?: string | null,
+): Promise<AiResult> {
+  if (shouldCallDeepSeekDirect(model)) {
+    return callDeepSeekDirect(transcript, systemPrompt);
+  }
+
+  return callOpenRouter(transcript, model, systemPrompt, clientUserAgent);
 }
 
 function extractAnswerFromResponse(responseContent: string): string {
@@ -180,9 +224,10 @@ export async function processTranscript(
 
   return withSequentialModelFallback(
     models,
-    (m) => callOpenRouter(transcript, m, systemPrompt, clientUserAgent),
+    (m) => callSummaryModel(transcript, m, systemPrompt, clientUserAgent),
     (err) =>
       isRetryableOpenRouterTransportError(err) ||
+      isRetryableDeepSeekTransportError(err) ||
       (err instanceof Error && err.message.startsWith('Invalid AI response')),
   );
 }
