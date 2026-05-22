@@ -302,7 +302,10 @@ export const useBatchRecordActions = ({
         let exportDir: string | undefined;
         let zipPath: string | undefined;
         try {
-          const built = await buildBatchMarkdownZip(records, template);
+          const built = await buildBatchMarkdownZip(records, template, {
+            ...resolveShareExportContext(),
+            forEmail: true,
+          });
           exportDir = built.exportDir;
           zipPath = built.zipPath;
 

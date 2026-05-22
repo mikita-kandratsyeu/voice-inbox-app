@@ -309,7 +309,7 @@ function buildMeetingSpeakerTurnsOnly(record: VoiceRecord, ctx: ShareExportConte
   return lines.join('\n');
 }
 
-/** Compact export for email: summary, dialogue, tasks — no full transcript. */
+/** Compact export: summary, tasks, meeting dialogue — no transcript or translation. */
 function buildEmailBrief(record: VoiceRecord, ctx: ShareExportContext): string {
   const lines: string[] = [];
   pushRecordHeader(lines, record, ctx);
@@ -321,7 +321,6 @@ function buildEmailBrief(record: VoiceRecord, ctx: ShareExportContext): string {
   if (isMeeting) {
     pushMeetingDialogue(lines, record);
   }
-  pushTranslation(lines, record);
   pushNextSteps(lines, record);
   pushTasks(lines, record);
   pushFooter(lines);

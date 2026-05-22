@@ -1,5 +1,5 @@
 import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
-import { FileText, ListChecks, Mail, UsersRound } from 'lucide-react-native';
+import { ClipboardList, FileText, ListChecks, Mail, UsersRound } from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
@@ -123,6 +123,11 @@ export const BatchExportSheet = ({
   const handleExportNoteBrief = useCallback(() => {
     onClose();
     onExportText('noteBrief', exportPackaging);
+  }, [exportPackaging, onClose, onExportText]);
+
+  const handleExportEmailBrief = useCallback(() => {
+    onClose();
+    onExportText('emailBrief', exportPackaging);
   }, [exportPackaging, onClose, onExportText]);
 
   const handleExportMeetingBrief = useCallback(() => {
@@ -403,6 +408,14 @@ export const BatchExportSheet = ({
             description: t('share.noteBriefDescription'),
             accessibilityLabel: t('share.noteBrief'),
             onPress: handleExportNoteBrief,
+          })}
+
+          {renderOption({
+            icon: <ClipboardList size={20} color={color.text.primary} strokeWidth={2.1} />,
+            title: t('share.emailBrief'),
+            description: t('share.emailBriefDescription'),
+            accessibilityLabel: t('share.emailBrief'),
+            onPress: handleExportEmailBrief,
           })}
 
           {showSpeakerTurnsExport

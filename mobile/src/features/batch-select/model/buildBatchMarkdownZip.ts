@@ -9,7 +9,10 @@ import {
   buildShareText,
   type ShareBriefTemplate,
 } from '@/features/share-record/lib/buildShareText';
-import { resolveShareExportContext } from '@/features/share-record/lib/shareExportContext';
+import {
+  resolveShareExportContext,
+  type ShareExportContext,
+} from '@/features/share-record/lib/shareExportContext';
 import { i18n } from '@/shared/lib';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
@@ -22,6 +25,7 @@ export type BuildBatchMarkdownZipResult = {
 export async function buildBatchMarkdownZip(
   records: VoiceRecord[],
   template: ShareBriefTemplate,
+  context?: ShareExportContext,
 ): Promise<BuildBatchMarkdownZipResult> {
   const cache = getCachesDirectoryPath();
   const timestamp = Date.now();
@@ -29,7 +33,7 @@ export async function buildBatchMarkdownZip(
   const zipFileName = `voice-inbox-batch-${timestamp}.zip`;
   const zipPath = `${cache}/${zipFileName}`;
 
-  const ctx = resolveShareExportContext();
+  const ctx = resolveShareExportContext(context);
   const fileNameByRecordId: Record<string, string> = {};
 
   await NitroFS.mkdir(exportDir);

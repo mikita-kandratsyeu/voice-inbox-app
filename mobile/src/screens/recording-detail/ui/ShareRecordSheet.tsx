@@ -1,5 +1,5 @@
 import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
-import { FileText, ListChecks, Mail, Music, UsersRound } from 'lucide-react-native';
+import { ClipboardList, FileText, ListChecks, Mail, Music, UsersRound } from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
@@ -62,6 +62,11 @@ export const ShareRecordSheet = ({
   const handleShareNoteBrief = useCallback(() => {
     onClose();
     onShareText('noteBrief');
+  }, [onClose, onShareText]);
+
+  const handleShareEmailBrief = useCallback(() => {
+    onClose();
+    onShareText('emailBrief');
   }, [onClose, onShareText]);
 
   const handleShareMeetingBrief = useCallback(() => {
@@ -297,6 +302,14 @@ export const ShareRecordSheet = ({
             description: t('share.noteBriefDescription'),
             accessibilityLabel: t('share.noteBrief'),
             onPress: handleShareNoteBrief,
+          })}
+
+          {renderOption({
+            icon: <ClipboardList size={20} color={color.text.primary} strokeWidth={2.1} />,
+            title: t('share.emailBrief'),
+            description: t('share.emailBriefDescription'),
+            accessibilityLabel: t('share.emailBrief'),
+            onPress: handleShareEmailBrief,
           })}
 
           {showSpeakerTurnsExport

@@ -18,7 +18,7 @@ export type ShareNoteBrandedEmailOptions = {
   title: string;
   bodyInnerHtml: string;
   preheader?: string;
-  /** Shown under the card (default: brand name only). */
+  /** Optional block under the card; omitted by default (brand is in the header). */
   footerHtml?: string;
 };
 
@@ -33,7 +33,13 @@ export function buildShareNoteBrandedEmailHtml(options: ShareNoteBrandedEmailOpt
     ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;mso-hide:all;">${escapeHtml(preheader.trim())}</div>`
     : '';
 
-  const defaultFooter = `<p style="margin:0;font-size:12px;line-height:1.5;color:${b.faint};">Voice Inbox AI</p>`;
+  const footerRow = footerHtml?.trim()
+    ? `<tr>
+            <td align="center" style="padding:24px ${EMAIL_PAD_X}px 0;">
+              ${footerHtml.trim()}
+            </td>
+          </tr>`
+    : '';
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -60,11 +66,7 @@ export function buildShareNoteBrandedEmailHtml(options: ShareNoteBrandedEmailOpt
               ${bodyInnerHtml}
             </td>
           </tr>
-          <tr>
-            <td align="center" style="padding:24px ${EMAIL_PAD_X}px 0;">
-              ${footerHtml ?? defaultFooter}
-            </td>
-          </tr>
+          ${footerRow}
         </table>
       </td>
     </tr>

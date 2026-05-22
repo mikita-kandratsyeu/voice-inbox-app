@@ -484,7 +484,7 @@
     "shareAsTitle": "Share",
     "shareAsText": "Share text",
     "emailBrief": "Brief summary",
-    "emailBriefDescription": "Summary and tasks — no full transcript.",
+    "emailBriefDescription": "Summary and tasks — no transcript or translation.",
     "emailBriefMeetingHint": "Compact meeting recap for email (no full transcript).",
     "emailBriefSubject": "Note: {{title}}",
     "emailAutoZipBodySingle": "The note is attached as a ZIP archive (Markdown file inside).",

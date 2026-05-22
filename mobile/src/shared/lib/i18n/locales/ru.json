@@ -483,7 +483,7 @@
     "shareAsTitle": "Поделиться",
     "shareAsText": "Поделиться текстом",
     "emailBrief": "Краткая сводка",
-    "emailBriefDescription": "Сводка и задачи — без полного транскрипта.",
+    "emailBriefDescription": "Сводка и задачи — без транскрипта и перевода.",
     "emailBriefMeetingHint": "Краткие итоги встречи для почты (без полного транскрипта).",
     "emailBriefSubject": "Заметка: {{title}}",
     "emailAutoZipBodySingle": "Заметка во вложении ZIP (файл Markdown внутри).",
