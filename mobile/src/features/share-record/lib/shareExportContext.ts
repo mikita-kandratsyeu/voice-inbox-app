@@ -1,10 +1,5 @@
 import { useFolderStore } from '@/entities/folder';
 
-/** Convention for opening a note in the app (handler may be added later). */
-export function buildRecordDeepLink(recordId: string): string {
-  return `voiceinbox://note/${recordId}`;
-}
-
 export type ShareExportContext = {
   folderNameById?: Record<string, string>;
 };

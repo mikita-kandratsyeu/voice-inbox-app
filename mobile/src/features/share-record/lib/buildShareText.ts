@@ -123,7 +123,6 @@ function pushMeta(lines: string[], record: VoiceRecord, ctx: ShareExportContext)
   }
 
   lines.push(`**${i18n.t('share.recordIdLabel')}:** \`${record.id}\``);
-  lines.push(`**${i18n.t('share.openInAppLabel')}:** ${buildRecordDeepLink(record.id)}`);
 }
 
 const pushTags = (lines: string[], record: VoiceRecord): void => {
