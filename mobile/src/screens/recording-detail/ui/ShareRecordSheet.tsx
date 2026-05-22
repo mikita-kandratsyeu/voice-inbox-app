@@ -51,7 +51,10 @@ export const ShareRecordSheet = ({
   }, [visible]);
 
   useEffect(() => {
-    if (!showSpeakerTurnsExport && emailSendTemplate === 'meetingSpeakerTurns') {
+    if (
+      !showSpeakerTurnsExport &&
+      (emailSendTemplate === 'meetingSpeakerTurns' || emailSendTemplate === 'meetingBrief')
+    ) {
       setEmailSendTemplate('emailBrief');
     }
   }, [emailSendTemplate, showSpeakerTurnsExport]);
@@ -296,13 +299,15 @@ export const ShareRecordSheet = ({
             onPress: handleShareNoteBrief,
           })}
 
-          {renderOption({
-            icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
-            title: t('share.meetingBrief'),
-            description: t('share.meetingBriefDescription'),
-            accessibilityLabel: t('share.meetingBrief'),
-            onPress: handleShareMeetingBrief,
-          })}
+          {showSpeakerTurnsExport
+            ? renderOption({
+                icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
+                title: t('share.meetingBrief'),
+                description: t('share.meetingBriefDescription'),
+                accessibilityLabel: t('share.meetingBrief'),
+                onPress: handleShareMeetingBrief,
+              })
+            : null}
 
           {showSpeakerTurnsExport
             ? renderOption({

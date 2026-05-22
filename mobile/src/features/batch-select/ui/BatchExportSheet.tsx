@@ -112,7 +112,10 @@ export const BatchExportSheet = ({
   }, [emailFormatTemplates, visible]);
 
   useEffect(() => {
-    if (!showSpeakerTurnsExport && emailBodyTemplate === 'meetingSpeakerTurns') {
+    if (
+      !showSpeakerTurnsExport &&
+      (emailBodyTemplate === 'meetingSpeakerTurns' || emailBodyTemplate === 'meetingBrief')
+    ) {
       setEmailBodyTemplate('emailBrief');
     }
   }, [emailBodyTemplate, showSpeakerTurnsExport]);
@@ -402,13 +405,15 @@ export const BatchExportSheet = ({
             onPress: handleExportNoteBrief,
           })}
 
-          {renderOption({
-            icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
-            title: t('share.meetingBrief'),
-            description: t('share.meetingBriefDescription'),
-            accessibilityLabel: t('share.meetingBrief'),
-            onPress: handleExportMeetingBrief,
-          })}
+          {showSpeakerTurnsExport
+            ? renderOption({
+                icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
+                title: t('share.meetingBrief'),
+                description: t('share.meetingBriefDescription'),
+                accessibilityLabel: t('share.meetingBrief'),
+                onPress: handleExportMeetingBrief,
+              })
+            : null}
 
           {showSpeakerTurnsExport
             ? renderOption({
