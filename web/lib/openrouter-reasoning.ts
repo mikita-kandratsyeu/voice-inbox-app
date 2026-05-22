@@ -4,7 +4,6 @@ import { normalizeIncomingAiModel } from '@/config/constants';
 export const OPENROUTER_REASONING_CAPABLE_MODEL_IDS = new Set<string>([
   'google/gemini-2.5-flash-lite',
   'google/gemini-3.1-flash-lite',
-  'deepseek/deepseek-v4-flash:nitro',
   'xiaomi/mimo-v2-flash',
   'minimax/minimax-m2.7',
   'nvidia/nemotron-3-super-120b-a12b',

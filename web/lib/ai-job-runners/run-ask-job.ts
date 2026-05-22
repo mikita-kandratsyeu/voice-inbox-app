@@ -33,6 +33,7 @@ export async function runAskJob(payload: AskJobPayload): Promise<void> {
       priorTurns,
       clientUserAgent,
       recordingMarks,
+      deviceId,
     );
     await saveAskMessage(id, {
       id,

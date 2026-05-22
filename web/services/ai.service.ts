@@ -1,13 +1,12 @@
-import { createOpenRouterClient } from '@/lib/openrouter';
 import {
-  isRetryableOpenRouterTransportError,
-  withSequentialModelFallback,
-} from '@/lib/ai-model-fallback';
-import {
-  extractOpenRouterReasoning,
-  openRouterReasoningParamsForModel,
-} from '@/lib/openrouter-reasoning';
-import { openRouterJsonObjectResponseFormat } from '@/lib/openrouter-response-format';
+  filterModelsForAiChat,
+  isRetryableAiChatTransportError,
+  sendAiChatCompletion,
+} from '@/lib/ai-chat';
+import { isDeepSeekOpenRouterModel } from '@/lib/deepseek';
+import { extractDeepSeekReasoning } from '@/lib/deepseek-reasoning';
+import { withSequentialModelFallback } from '@/lib/ai-model-fallback';
+import { extractOpenRouterReasoning } from '@/lib/openrouter-reasoning';
 import { extractOpenRouterTokenUsage } from '@/lib/openrouter-token-usage';
 import {
   AUTO_ORGANIZE_MAX_SUMMARY_CHARS,
@@ -27,35 +26,12 @@ import { SYSTEM_TASK_MODEL_FALLBACK_CHAIN, USER_AI_MODEL_FALLBACK_CHAIN } from '
 
 const MEETING_DIALOGUE_MARKDOWN_MAX_CHARS = 12_000;
 
-async function callOpenRouter(
-  transcript: string,
-  model: string,
-  systemPrompt: string,
-  clientUserAgent?: string | null,
-): Promise<AiResult> {
-  const client = createOpenRouterClient(clientUserAgent);
-  const reasoning = openRouterReasoningParamsForModel(model);
-  const response = await client.chat.send({
-    chatGenerationParams: {
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: transcript },
-      ],
-      provider: { zdr: true },
-      responseFormat: openRouterJsonObjectResponseFormat(),
-      temperature: 0.3,
-      stream: false,
-      ...(reasoning ? { reasoning } : {}),
-    },
-  });
-
-  const message = response.choices[0]?.message;
-  const content = message?.content;
-  if (typeof content !== 'string') {
-    throw new Error('Invalid AI response: missing content');
-  }
-
+function buildSummaryAiResult(
+  content: string,
+  message: unknown,
+  response: unknown,
+  extractReasoning: (msg: unknown) => string | undefined,
+): AiResult {
   const parsed = parseOpenRouterJsonContent(content);
   if (
     !parsed ||
@@ -125,7 +101,7 @@ async function callOpenRouter(
       ? String(parsed.suggestedTitle).trim()
       : '';
 
-  const reasoningText = extractOpenRouterReasoning(message);
+  const reasoningText = extractReasoning(message);
   const tokenUsage = extractOpenRouterTokenUsage(response);
 
   return {
@@ -139,6 +115,33 @@ async function callOpenRouter(
     ...(reasoningText ? { reasoning: reasoningText } : {}),
     ...(tokenUsage ? { tokenUsage } : {}),
   };
+}
+
+async function callSummaryModel(
+  transcript: string,
+  model: string,
+  systemPrompt: string,
+  clientUserAgent?: string | null,
+  deviceId?: string | null,
+): Promise<AiResult> {
+  const { content, message, raw } = await sendAiChatCompletion({
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: transcript },
+    ],
+    jsonObject: true,
+    withReasoning: true,
+    temperature: isDeepSeekOpenRouterModel(model) ? undefined : 0.3,
+    clientUserAgent,
+    userId: deviceId,
+  });
+
+  const extractReasoningFn = isDeepSeekOpenRouterModel(model)
+    ? extractDeepSeekReasoning
+    : extractOpenRouterReasoning;
+
+  return buildSummaryAiResult(content, message, raw, extractReasoningFn);
 }
 
 function extractAnswerFromResponse(responseContent: string): string {
@@ -175,14 +178,15 @@ export async function processTranscript(
   model: string,
   systemPrompt: string,
   clientUserAgent?: string | null,
+  deviceId?: string | null,
 ): Promise<AiResult> {
-  const models = [model, ...USER_AI_MODEL_FALLBACK_CHAIN];
+  const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);
 
   return withSequentialModelFallback(
     models,
-    (m) => callOpenRouter(transcript, m, systemPrompt, clientUserAgent),
+    (m) => callSummaryModel(transcript, m, systemPrompt, clientUserAgent, deviceId),
     (err) =>
-      isRetryableOpenRouterTransportError(err) ||
+      isRetryableAiChatTransportError(err) ||
       (err instanceof Error && err.message.startsWith('Invalid AI response')),
   );
 }
@@ -217,39 +221,32 @@ export async function processMeetingDialogueMarkdown(
   model: string,
   systemPrompt: string,
   clientUserAgent?: string | null,
+  deviceId?: string | null,
 ): Promise<Pick<AiResult, 'meetingDialogueMarkdown' | 'tokenUsage'>> {
-  const models = [model, ...USER_AI_MODEL_FALLBACK_CHAIN];
+  const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);
 
   return withSequentialModelFallback(
     models,
     async (m) => {
-      const client = createOpenRouterClient(clientUserAgent);
-      const response = await client.chat.send({
-        chatGenerationParams: {
-          model: m,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userContent },
-          ],
-          provider: { zdr: true },
-          responseFormat: openRouterJsonObjectResponseFormat(),
-          temperature: 0.3,
-          stream: false,
-        },
+      const { content, raw } = await sendAiChatCompletion({
+        model: m,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userContent },
+        ],
+        jsonObject: true,
+        temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
+        clientUserAgent,
+        userId: deviceId,
       });
 
-      const responseContent = response.choices[0]?.message?.content;
-      if (typeof responseContent !== 'string') {
-        throw new Error('Invalid AI response: missing content');
-      }
-
-      const tokenUsage = extractOpenRouterTokenUsage(response);
+      const tokenUsage = extractOpenRouterTokenUsage(raw);
       return {
-        ...parseMeetingDialogueOpenRouterContent(responseContent),
+        ...parseMeetingDialogueOpenRouterContent(content),
         ...(tokenUsage ? { tokenUsage } : {}),
       };
     },
-    isRetryableOpenRouterTransportError,
+    isRetryableAiChatTransportError,
   );
 }
 
@@ -262,6 +259,7 @@ export async function processAskQuestion(
   priorTurns?: { question: string; answer: string }[],
   clientUserAgent?: string | null,
   recordingMarks?: RecordingMarkForPrompt[],
+  deviceId?: string | null,
 ): Promise<{ answer: string }> {
   const userContent = buildAskUserMessageContent(
     transcript,
@@ -272,43 +270,25 @@ export async function processAskQuestion(
     recordingMarks,
   );
 
-  const callAsk = async (
-    content: string,
-    m: string,
-    sysPrompt: string,
-  ): Promise<{ answer: string }> => {
-    const client = createOpenRouterClient(clientUserAgent);
-    const response = await client.chat.send({
-      chatGenerationParams: {
-        model: m,
-        messages: [
-          { role: 'system', content: sysPrompt },
-          { role: 'user', content },
-        ],
-        provider: { zdr: true },
-        responseFormat: openRouterJsonObjectResponseFormat(),
-        temperature: 0.3,
-        stream: false,
-      },
+  const callAsk = async (m: string): Promise<{ answer: string }> => {
+    const { content } = await sendAiChatCompletion({
+      model: m,
+      messages: [
+        { role: 'system', content: ASK_QUESTION_SYSTEM_PROMPT },
+        { role: 'user', content: userContent },
+      ],
+      jsonObject: true,
+      temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.3,
+      clientUserAgent,
+      userId: deviceId,
     });
 
-    const responseContent = response.choices[0]?.message?.content;
-    if (typeof responseContent !== 'string') {
-      throw new Error('Invalid AI response: missing content');
-    }
-
-    const answer = extractAnswerFromResponse(responseContent);
-
-    return { answer };
+    return { answer: extractAnswerFromResponse(content) };
   };
 
-  const models = [model, ...USER_AI_MODEL_FALLBACK_CHAIN];
+  const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);
 
-  return withSequentialModelFallback(
-    models,
-    (m) => callAsk(userContent, m, ASK_QUESTION_SYSTEM_PROMPT),
-    isRetryableOpenRouterTransportError,
-  );
+  return withSequentialModelFallback(models, callAsk, isRetryableAiChatTransportError);
 }
 
 const DIGEST_SYSTEM_PROMPT = `You write a daily, weekly, or rolling 30-day digest for Voice Inbox AI from already-extracted note metadata.
@@ -378,35 +358,26 @@ export async function processDigest(
   nextActions: string[];
 }> {
   const callDigest = async (m: string) => {
-    const client = createOpenRouterClient(clientUserAgent);
-    const response = await client.chat.send({
-      chatGenerationParams: {
-        model: m,
-        messages: [
-          { role: 'system', content: DIGEST_SYSTEM_PROMPT },
-          { role: 'user', content: digestPayload },
-        ],
-        provider: { zdr: true },
-        responseFormat: openRouterJsonObjectResponseFormat(),
-        temperature: 0.25,
-        stream: false,
-      },
+    const { content } = await sendAiChatCompletion({
+      model: m,
+      messages: [
+        { role: 'system', content: DIGEST_SYSTEM_PROMPT },
+        { role: 'user', content: digestPayload },
+      ],
+      jsonObject: true,
+      temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.25,
+      clientUserAgent,
     });
-
-    const content = response.choices[0]?.message?.content;
-    if (typeof content !== 'string') {
-      throw new Error('Invalid AI response: missing content');
-    }
 
     return parseDigestResult(content);
   };
 
-  const models = [model, ...USER_AI_MODEL_FALLBACK_CHAIN];
+  const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);
   return withSequentialModelFallback(
     models,
     callDigest,
     (err) =>
-      isRetryableOpenRouterTransportError(err) ||
+      isRetryableAiChatTransportError(err) ||
       (err instanceof Error && err.message.startsWith('Invalid AI response')),
   );
 }
@@ -665,25 +636,16 @@ export async function processAutoOrganizeFolders(
   }
 
   const sendOrganize = async (m: string, userContent: string): Promise<AutoOrganizeResult> => {
-    const client = createOpenRouterClient(clientUserAgent);
-    const response = await client.chat.send({
-      chatGenerationParams: {
-        model: m,
-        messages: [
-          { role: 'system', content: AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT },
-          { role: 'user', content: userContent },
-        ],
-        provider: { zdr: true },
-        responseFormat: openRouterJsonObjectResponseFormat(),
-        temperature: 0.12,
-        stream: false,
-      },
+    const { content } = await sendAiChatCompletion({
+      model: m,
+      messages: [
+        { role: 'system', content: AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT },
+        { role: 'user', content: userContent },
+      ],
+      jsonObject: true,
+      temperature: isDeepSeekOpenRouterModel(m) ? undefined : 0.12,
+      clientUserAgent,
     });
-
-    const content = response.choices[0]?.message?.content;
-    if (typeof content !== 'string') {
-      throw new Error('Invalid AI response: missing content');
-    }
 
     const result = parseAutoOrganizeResult(content);
     assertAutoOrganizeComplete(result, expectedIds);
@@ -702,10 +664,10 @@ export async function processAutoOrganizeFolders(
     }
   };
 
-  const models = [model, ...SYSTEM_TASK_MODEL_FALLBACK_CHAIN];
+  const models = filterModelsForAiChat([model, ...SYSTEM_TASK_MODEL_FALLBACK_CHAIN]);
   return withSequentialModelFallback(
     models,
     organizeWithRepair,
-    (err) => isRetryableOpenRouterTransportError(err) || isAutoOrganizeParseFailure(err),
+    (err) => isRetryableAiChatTransportError(err) || isAutoOrganizeParseFailure(err),
   );
 }

@@ -21,7 +21,13 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
   } = payload;
 
   try {
-    const mainResult = await processTranscript(transcript, model, systemPrompt, clientUserAgent);
+    const mainResult = await processTranscript(
+      transcript,
+      model,
+      systemPrompt,
+      clientUserAgent,
+      deviceId,
+    );
 
     let result = mainResult;
     if (pseudoDiarizationEligible && meetingDialogueSystemPrompt?.trim()) {
@@ -41,6 +47,7 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
           model,
           meetingDialogueSystemPrompt.trim(),
           clientUserAgent,
+          deviceId,
         );
         result = {
           ...mainResult,
