@@ -127,6 +127,7 @@ function buildSummaryAiResult(
 async function callDeepSeekDirect(
   transcript: string,
   systemPrompt: string,
+  deviceId?: string | null,
 ): Promise<AiResult> {
   const { content, message, raw } = await deepSeekChatCompletion({
     messages: [
@@ -135,6 +136,7 @@ async function callDeepSeekDirect(
     ],
     jsonObject: true,
     withReasoning: true,
+    userId: deviceId,
   });
 
   return buildSummaryAiResult(content, message, raw, extractDeepSeekReasoning);
@@ -177,9 +179,10 @@ async function callSummaryModel(
   model: string,
   systemPrompt: string,
   clientUserAgent?: string | null,
+  deviceId?: string | null,
 ): Promise<AiResult> {
   if (shouldCallDeepSeekDirect(model)) {
-    return callDeepSeekDirect(transcript, systemPrompt);
+    return callDeepSeekDirect(transcript, systemPrompt, deviceId);
   }
 
   return callOpenRouter(transcript, model, systemPrompt, clientUserAgent);
@@ -219,12 +222,13 @@ export async function processTranscript(
   model: string,
   systemPrompt: string,
   clientUserAgent?: string | null,
+  deviceId?: string | null,
 ): Promise<AiResult> {
   const models = [model, ...USER_AI_MODEL_FALLBACK_CHAIN];
 
   return withSequentialModelFallback(
     models,
-    (m) => callSummaryModel(transcript, m, systemPrompt, clientUserAgent),
+    (m) => callSummaryModel(transcript, m, systemPrompt, clientUserAgent, deviceId),
     (err) =>
       isRetryableOpenRouterTransportError(err) ||
       isRetryableDeepSeekTransportError(err) ||

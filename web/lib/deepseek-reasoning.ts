@@ -7,7 +7,7 @@ export function extractDeepSeekReasoning(message: unknown): string | undefined {
   }
 
   const row = message as Record<string, unknown>;
-  const direct = row.reasoning_content ?? row.reasoning;
+  const direct = row.reasoning_content;
   if (typeof direct === 'string' && direct.trim()) {
     return clampReasoningText(direct.trim());
   }

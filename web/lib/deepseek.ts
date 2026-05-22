@@ -1,9 +1,14 @@
 import { AI_MODEL_DEEPSEEK_V4_FLASH, normalizeIncomingAiModel } from '@/config/constants';
-
-const DEEPSEEK_CHAT_COMPLETIONS_URL = 'https://api.deepseek.com/chat/completions';
+import OpenAI from 'openai';
+import type { ChatCompletionCreateParamsNonStreaming } from 'openai/resources/chat/completions';
 
 /** DeepSeek API model id (not the OpenRouter catalog id). */
 export const DEEPSEEK_API_MODEL_V4_FLASH = 'deepseek-v4-flash';
+
+const DEFAULT_DEEPSEEK_BASE_URL = 'https://api.deepseek.com';
+
+/** Default max output tokens (CoT + answer); see DeepSeek reasoning / pricing docs. */
+const DEFAULT_DEEPSEEK_MAX_TOKENS = 32_768;
 
 export type DeepSeekChatMessage = {
   role: 'system' | 'user' | 'assistant';
@@ -12,9 +17,12 @@ export type DeepSeekChatMessage = {
 
 export type DeepSeekChatCompletionParams = {
   messages: DeepSeekChatMessage[];
+  /** `response_format: { type: 'json_object' }` — prompt must mention JSON (our system prompts do). */
   jsonObject?: boolean;
-  /** When true, request thinking mode and return `reasoning_content`. */
+  /** Thinking mode: `reasoning_content` + `content` (docs: thinking defaults to enabled). */
   withReasoning?: boolean;
+  /** Per-device scheduling isolation (`user_id`, max 512, `[a-zA-Z0-9\-_]+`). */
+  userId?: string | null;
 };
 
 export type DeepSeekChatCompletionResult = {
@@ -33,6 +41,58 @@ export class DeepSeekApiError extends Error {
   }
 }
 
+let cachedClient: OpenAI | null = null;
+let cachedClientKey: string | null = null;
+
+function readDeepSeekMaxTokens(): number {
+  const raw = process.env.DEEPSEEK_MAX_TOKENS;
+  if (typeof raw !== 'string' || !raw.trim()) {
+    return DEFAULT_DEEPSEEK_MAX_TOKENS;
+  }
+  const n = Number.parseInt(raw.trim(), 10);
+  if (!Number.isFinite(n) || n <= 0) {
+    return DEFAULT_DEEPSEEK_MAX_TOKENS;
+  }
+  return n;
+}
+
+function deepSeekBaseUrl(): string {
+  const fromEnv = process.env.DEEPSEEK_BASE_URL?.trim();
+  return (fromEnv || DEFAULT_DEEPSEEK_BASE_URL).replace(/\/$/, '');
+}
+
+function getDeepSeekClient(): OpenAI {
+  const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
+  if (!apiKey) {
+    throw new DeepSeekApiError('DEEPSEEK_API_KEY is not configured');
+  }
+
+  const baseURL = deepSeekBaseUrl();
+  const cacheKey = `${baseURL}\0${apiKey}`;
+  if (cachedClient && cachedClientKey === cacheKey) {
+    return cachedClient;
+  }
+
+  cachedClient = new OpenAI({ apiKey, baseURL });
+  cachedClientKey = cacheKey;
+  return cachedClient;
+}
+
+/** Maps device id to DeepSeek `user_id` (rate-limit isolation). */
+export function normalizeDeepSeekUserId(deviceId: string | null | undefined): string | undefined {
+  if (typeof deviceId !== 'string') {
+    return undefined;
+  }
+
+  const trimmed = deviceId.trim().slice(0, 512);
+  if (!trimmed) {
+    return undefined;
+  }
+
+  const sanitized = trimmed.replace(/[^a-zA-Z0-9\-_]/g, '_');
+  return sanitized || undefined;
+}
+
 export function deepSeekDirectApiConfigured(): boolean {
   return Boolean(process.env.DEEPSEEK_API_KEY?.trim());
 }
@@ -48,91 +108,90 @@ export function shouldCallDeepSeekDirect(model: string): boolean {
 export function isRetryableDeepSeekTransportError(err: unknown): boolean {
   if (err instanceof DeepSeekApiError) {
     const s = err.status;
-    return s === 429 || s === 502 || s === 503 || s === 504;
+    return s === 429 || s === 500 || s === 502 || s === 503 || s === 504;
+  }
+
+  if (err instanceof OpenAI.APIError) {
+    const s = err.status;
+    return s === 429 || s === 500 || s === 502 || s === 503 || s === 504;
   }
 
   return err instanceof TypeError;
 }
 
-export async function deepSeekChatCompletion(
-  params: DeepSeekChatCompletionParams,
-): Promise<DeepSeekChatCompletionResult> {
-  const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
-  if (!apiKey) {
-    throw new DeepSeekApiError('DEEPSEEK_API_KEY is not configured');
+function mapOpenAiError(err: unknown): never {
+  if (err instanceof OpenAI.APIError) {
+    throw new DeepSeekApiError(err.message, err.status);
   }
+  throw err;
+}
 
-  const body: Record<string, unknown> = {
-    model: DEEPSEEK_API_MODEL_V4_FLASH,
-    messages: params.messages,
-    stream: false,
-  };
-
-  if (params.jsonObject) {
-    body.response_format = { type: 'json_object' };
-  }
-
-  if (params.withReasoning) {
-    body.thinking = { type: 'enabled' };
-    body.reasoning_effort = 'high';
-  } else {
-    body.thinking = { type: 'disabled' };
-  }
-
-  const res = await fetch(DEEPSEEK_CHAT_COMPLETIONS_URL, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-
-  const rawText = await res.text();
-  let raw: Record<string, unknown>;
-  try {
-    raw = JSON.parse(rawText) as Record<string, unknown>;
-  } catch {
-    throw new DeepSeekApiError(
-      `DeepSeek API returned non-JSON (${res.status})`,
-      res.status,
-    );
-  }
-
-  if (!res.ok) {
-    const errMsg =
-      typeof raw.error === 'object' &&
-      raw.error &&
-      typeof (raw.error as { message?: unknown }).message === 'string'
-        ? String((raw.error as { message: string }).message)
-        : `DeepSeek API error (${res.status})`;
-    throw new DeepSeekApiError(errMsg, res.status);
-  }
-
-  const choices = raw.choices;
-  if (!Array.isArray(choices) || choices.length === 0) {
-    throw new DeepSeekApiError('DeepSeek API response missing choices');
-  }
-
-  const first = choices[0];
-  if (!first || typeof first !== 'object') {
-    throw new DeepSeekApiError('DeepSeek API response invalid choice');
-  }
-
-  const message = (first as Record<string, unknown>).message;
-  if (!message || typeof message !== 'object') {
+function readAssistantMessage(response: OpenAI.Chat.Completions.ChatCompletion): {
+  message: Record<string, unknown>;
+  content: string;
+  finishReason: string | null;
+} {
+  const choice = response.choices[0];
+  if (!choice?.message) {
     throw new DeepSeekApiError('DeepSeek API response missing message');
   }
 
-  const msg = message as Record<string, unknown>;
+  const msg = choice.message as OpenAI.Chat.Completions.ChatCompletionMessage & {
+    reasoning_content?: string | null;
+  };
+
   const content = msg.content;
-  if (typeof content !== 'string') {
-    throw new DeepSeekApiError('DeepSeek API response missing content');
+  if (typeof content !== 'string' || !content.trim()) {
+    throw new DeepSeekApiError('DeepSeek API returned empty content');
   }
 
   return {
-    message: msg,
+    message: msg as unknown as Record<string, unknown>,
     content,
-    raw,
+    finishReason: choice.finish_reason ?? null,
+  };
+}
+
+/**
+ * Chat Completions via the official OpenAI SDK pointed at DeepSeek
+ * (https://api-docs.deepseek.com/ — base_url + thinking in extra_body).
+ */
+export async function deepSeekChatCompletion(
+  params: DeepSeekChatCompletionParams,
+): Promise<DeepSeekChatCompletionResult> {
+  const client = getDeepSeekClient();
+  const thinkingType = params.withReasoning ? 'enabled' : 'disabled';
+  const userId = normalizeDeepSeekUserId(params.userId);
+
+  // DeepSeek extends OpenAI Chat Completions (thinking, user_id, reasoning_effort).
+  // https://api-docs.deepseek.com/guides/thinking_mode
+  const request = {
+    model: DEEPSEEK_API_MODEL_V4_FLASH,
+    messages: params.messages,
+    stream: false as const,
+    max_tokens: readDeepSeekMaxTokens(),
+    thinking: { type: thinkingType },
+    ...(params.jsonObject ? { response_format: { type: 'json_object' as const } } : {}),
+    ...(params.withReasoning ? { reasoning_effort: 'high' as const } : {}),
+    ...(userId ? { user_id: userId } : {}),
+  } as ChatCompletionCreateParamsNonStreaming;
+
+  let response: OpenAI.Chat.Completions.ChatCompletion;
+  try {
+    response = await client.chat.completions.create(request);
+  } catch (err) {
+    mapOpenAiError(err);
+  }
+
+  const { message, content, finishReason } = readAssistantMessage(response);
+
+  if (finishReason === 'length') {
+    throw new DeepSeekApiError('DeepSeek API output truncated (finish_reason=length)');
+  }
+
+  return {
+    message,
+    content,
+    raw: response as unknown as Record<string, unknown>,
   };
 }
