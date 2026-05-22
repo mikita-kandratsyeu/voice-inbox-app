@@ -5,12 +5,38 @@ const SPEAKER_LABEL =
 
 const SPEAKER_BLOCKQUOTE_RE = new RegExp(`^\\s*(?:\\*\\*)?(${SPEAKER_LABEL})\\s*:(?:\\*\\*)?`, 'i');
 
+const EMAIL_META_LINE_RE = /^\*\*[^*]+\*\*:\s/;
+
+/** Strip leading metadata lines (**Date:**, **Note ID:**, etc.) from share markdown. */
+export function stripLeadingShareNoteMetadata(markdown: string): string {
+  const lines = markdown.split(/\r?\n/);
+  let i = 0;
+  while (i < lines.length) {
+    const trimmed = lines[i].trim();
+    if (!trimmed) {
+      i++;
+      continue;
+    }
+    if (EMAIL_META_LINE_RE.test(trimmed)) {
+      i++;
+      continue;
+    }
+    if (/^_[^_].*_$/.test(trimmed)) {
+      i++;
+      continue;
+    }
+    break;
+  }
+  return lines.slice(i).join('\n').trimStart();
+}
+
 /** Normalize markdown before HTML / plain-text email rendering. */
 export function prepareShareNoteMarkdownForEmail(markdown: string, emailTitle?: string): string {
   let out = normalizeInlineSpeakerLabelsToParagraphBreaks(markdown.trim());
   if (emailTitle?.trim()) {
     out = stripLeadingTitleHeading(out, emailTitle.trim());
   }
+  out = stripLeadingShareNoteMetadata(out);
   out = collapseExtraBlankLines(out);
   return out;
 }

@@ -251,6 +251,7 @@ const pushFooter = (lines: string[]): void => {
 };
 
 const pushRecordHeader = (lines: string[], record: VoiceRecord, ctx: ShareExportContext): void => {
+  if (ctx.forEmail) return;
   lines.push(`# ${record.title}`);
   lines.push('');
   pushMeta(lines, record, ctx);
@@ -313,10 +314,6 @@ function buildEmailBrief(record: VoiceRecord, ctx: ShareExportContext): string {
   const lines: string[] = [];
   pushRecordHeader(lines, record, ctx);
   const isMeeting = record.classification === 'meeting' || Boolean(record.meetingDialogue?.trim());
-  if (isMeeting) {
-    lines.push(`_${i18n.t('share.emailBriefMeetingHint')}_`);
-    lines.push('');
-  }
   pushTags(lines, record);
   pushRecordingMarks(lines, record);
   pushSummary(lines, record);

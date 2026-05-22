@@ -45,7 +45,7 @@ const emailMarkdownComponents: Components = {
   h2: ({ children }) => (
     <h3
       style={{
-        margin: '20px 0 8px',
+        margin: '16px 0 8px',
         fontSize: '16px',
         lineHeight: 1.35,
         fontWeight: 700,
@@ -295,7 +295,7 @@ export async function renderShareNoteMarkdownEmailInnerHtml(
   const { renderToStaticMarkup } = await import('react-dom/server');
   const prepared = prepareShareNoteMarkdownForEmail(markdown, options?.emailTitle);
   return renderToStaticMarkup(
-    <div style={{ fontFamily: b.font, marginTop: '2px' }}>
+    <div style={{ fontFamily: b.font, margin: 0, padding: 0 }}>
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeSanitize]}

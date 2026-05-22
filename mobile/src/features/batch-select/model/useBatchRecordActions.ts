@@ -12,6 +12,7 @@ import {
   SHARE_EMAIL_ZIP_MAX_BYTES,
 } from '@/features/share-record/api/sendRecordEmail';
 import { buildBatchShareMarkdown } from '@/features/share-record/lib/batchShareMarkdown';
+import { resolveShareExportContext } from '@/features/share-record/lib/shareExportContext';
 import { hapticError, hapticSuccess } from '@/shared/lib';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
@@ -276,7 +277,10 @@ export const useBatchRecordActions = ({
       let autoZipFallback = false;
 
       if (effectivePackaging === 'single') {
-        const markdown = buildBatchShareMarkdown(records, template);
+        const markdown = buildBatchShareMarkdown(records, template, {
+          ...resolveShareExportContext(),
+          forEmail: true,
+        });
         if (markdown.length > SHARE_EMAIL_MARKDOWN_MAX) {
           effectivePackaging = 'zip';
           autoZipFallback = true;

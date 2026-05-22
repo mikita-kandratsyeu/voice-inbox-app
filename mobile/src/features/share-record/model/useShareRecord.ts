@@ -19,6 +19,7 @@ import {
   getShareExportDirectoryPath,
   pruneShareExportCache,
 } from '../lib/shareExportCache';
+import { resolveShareExportContext } from '../lib/shareExportContext';
 
 export type { ShareBriefTemplate } from '../lib/buildShareText';
 export { buildShareText, RECORD_TEXT_EXPORT_EXTENSION } from '../lib/buildShareText';
@@ -131,7 +132,10 @@ export const useShareRecord = () => {
   ) => {
     const subject = emailSubjectForTemplate(record, template);
 
-    const markdown = buildShareText(record, template);
+    const markdown = buildShareText(record, template, {
+      ...resolveShareExportContext(),
+      forEmail: true,
+    });
     if (markdown.length <= SHARE_EMAIL_MARKDOWN_MAX) {
       const result = await sendRecordEmail({
         to,
@@ -146,7 +150,10 @@ export const useShareRecord = () => {
     let exportDir: string | undefined;
     let zipPath: string | undefined;
     try {
-      const built = await buildSingleNoteEmailZip(record, template);
+      const built = await buildSingleNoteEmailZip(record, template, {
+        ...resolveShareExportContext(),
+        forEmail: true,
+      });
       exportDir = built.exportDir;
       zipPath = built.zipPath;
 
