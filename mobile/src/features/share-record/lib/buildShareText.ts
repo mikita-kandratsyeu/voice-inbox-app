@@ -8,11 +8,7 @@ import {
   formatTranscriptBodyForShare,
   wrapTranscriptInMarkdownFence,
 } from './formatShareMarkdown';
-import {
-  buildRecordDeepLink,
-  resolveShareExportContext,
-  type ShareExportContext,
-} from './shareExportContext';
+import { resolveShareExportContext, type ShareExportContext } from './shareExportContext';
 
 export type ShareBriefTemplate =
   | 'noteBrief'
