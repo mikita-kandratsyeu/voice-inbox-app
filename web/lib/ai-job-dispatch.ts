@@ -32,6 +32,7 @@ export async function dispatchAiJob(payload: AiJobPayload): Promise<void> {
         body: envelope,
         retries: AI_JOB_QSTASH_RETRIES,
         timeout: '300s',
+        deduplicationId: envelope.jobId,
       });
       return;
     } catch (err) {

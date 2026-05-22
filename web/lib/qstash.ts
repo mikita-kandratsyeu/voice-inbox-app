@@ -1,6 +1,6 @@
 import { Receiver, Client } from '@upstash/qstash';
 
-import { BASE_URL_OR_FALLBACK } from '@/config/constants';
+import { AI_JOB_QSTASH_RETRIES, BASE_URL_OR_FALLBACK } from '@/config/constants';
 
 export function isQStashConfigured(): boolean {
   return Boolean(process.env.QSTASH_TOKEN?.trim());
@@ -48,6 +48,20 @@ export async function verifyQStashRequest(request: Request, body: string): Promi
   } catch {
     return false;
   }
+}
+
+/** `Upstash-Retried` from QStash delivery (0 = first attempt). Undefined for `after()` fallback. */
+export function parseUpstashRetried(request: Request): number | undefined {
+  const raw = request.headers.get('upstash-retried') ?? request.headers.get('Upstash-Retried');
+  if (raw == null || raw === '') return undefined;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n >= 0 ? n : undefined;
+}
+
+/** Last delivery when publish used `retries: AI_JOB_QSTASH_RETRIES` (retried 0..N inclusive). */
+export function isLastQStashDelivery(retried: number | undefined): boolean {
+  if (retried == null) return false;
+  return retried >= AI_JOB_QSTASH_RETRIES;
 }
 
 export function getQStashStatus(): { ok: boolean; error?: string; transport?: string } {

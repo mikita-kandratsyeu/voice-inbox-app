@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 
+import { markAiJobFailed } from '@/lib/ai-job-fail';
 import { runAiJobFromEnvelope } from '@/lib/run-ai-job-from-envelope';
-import { verifyQStashRequest } from '@/lib/qstash';
+import { isLastQStashDelivery, parseUpstashRetried, verifyQStashRequest } from '@/lib/qstash';
 import type { AiJobEnvelope } from '@/types/ai-job';
 import type { AiOperation } from '@/lib/ai-operation';
 
@@ -59,17 +60,33 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     return NextResponse.json({ error: 'invalid_envelope' }, { status: 400 });
   }
 
+  const retried = parseUpstashRetried(request);
   const result = await runAiJobFromEnvelope(envelope);
 
   if (result.ok) {
     return NextResponse.json({
       ok: true,
-      ...(result.skipped ? { skipped: true } : {}),
+      ...(result.skipped ? { skipped: true, skipReason: result.skipReason } : {}),
     });
   }
 
+  if (result.retryable && isLastQStashDelivery(retried)) {
+    await markAiJobFailed(envelope, result.error);
+    console.warn(
+      '[AI job worker]',
+      JSON.stringify({
+        jobId: envelope.jobId,
+        operation: envelope.operation,
+        phase: 'failed_terminal',
+        retried,
+        error: result.error,
+      }),
+    );
+    return NextResponse.json({ ok: true, failed: true, error: result.error });
+  }
+
   if (result.retryable) {
-    return NextResponse.json({ error: result.error }, { status: 500 });
+    return NextResponse.json({ error: result.error, retried }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, error: result.error });

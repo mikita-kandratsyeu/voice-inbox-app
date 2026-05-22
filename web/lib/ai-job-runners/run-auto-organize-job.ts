@@ -19,7 +19,7 @@ function getAutoOrganizeWeekKey(deviceId: string): string {
   return `${AUTO_ORGANIZE_WEEKLY_KEY_PREFIX}${deviceId}:${d.getUTCFullYear()}:${weekNo}`;
 }
 
-async function decrementAutoOrganize(deviceId: string): Promise<void> {
+export async function decrementAutoOrganizeWeekly(deviceId: string): Promise<void> {
   const pro = await isProDevice(deviceId);
   if (pro) return;
   const key = getAutoOrganizeWeekKey(deviceId);
@@ -45,7 +45,7 @@ export async function runAutoOrganizeJob(payload: AutoOrganizeJobPayload): Promi
     });
   } catch (err) {
     await decrement(deviceId);
-    await decrementAutoOrganize(deviceId);
+    await decrementAutoOrganizeWeekly(deviceId);
     await saveAutoOrganizeMessage(id, {
       id,
       status: 'error',

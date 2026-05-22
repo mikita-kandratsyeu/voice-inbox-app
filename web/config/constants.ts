@@ -71,6 +71,9 @@ export const MESSAGE_KEY_PREFIX = 'msg:';
 export const JOB_PAYLOAD_KEY_PREFIX = 'job-payload:';
 /** QStash delivery retries when publishing async AI jobs. */
 export const AI_JOB_QSTASH_RETRIES = 3;
+/** Worker exclusive lock (`job-lock:*`). Slightly above App Router `maxDuration` (300s). */
+export const JOB_LOCK_KEY_PREFIX = 'job-lock:';
+export const JOB_LOCK_TTL_SECONDS = 330;
 /** Max length for optional device model string stored in push_token JSON. */
 export const DEVICE_MODEL_MAX_CHARS = 128;
 /** Push registration metadata (app / OS strings). */
