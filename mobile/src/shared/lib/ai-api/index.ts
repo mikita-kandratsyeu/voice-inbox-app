@@ -11,6 +11,7 @@ export type { AskApiResult, AskMessageResult } from './askApi';
 export { pollAskResult, postAskQuestion } from './askApi';
 export type { AutoOrganizeApiResult, AutoOrganizePollResult } from './autoOrganizeApi';
 export { pollAutoOrganizeFolders, postAutoOrganizeFolders } from './autoOrganizeApi';
+export { cancelCloudAiJob } from './cancelCloudAiJob';
 export type { DigestAiResult, DigestApiResult } from './digestApi';
 export { generateDigest } from './digestApi';
 export type {

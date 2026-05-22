@@ -22,6 +22,7 @@ import {
   isAbortLikeError,
   isAiRequestCancelled,
 } from '@/shared/lib/ai-api/abort';
+import { cancelCloudAiJob } from '@/shared/lib/ai-api/cancelCloudAiJob';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
 import { TASK_EXTRACTION_HINT_MAX_CHARS } from '@/shared/lib/ai-core/local-provider/localAiConstants';
@@ -109,6 +110,8 @@ export const useAiProcessing = () => {
   /** Bumped on cancel or new run so stale `finally` blocks do not clear a newer generation. */
   const runGenerationRef = useRef<Map<string, number>>(new Map());
   const abortHandlesRef = useRef<Map<string, AiAbortHandle>>(new Map());
+  /** Cloud summarize/ask job id for server cancel (`{recordId}-ai-{ts}`). */
+  const activeCloudJobIdRef = useRef<Map<string, string>>(new Map());
   const { isProActive } = useProEntitlement();
 
   const applyCancelledUiState = useCallback(
@@ -135,6 +138,12 @@ export const useAiProcessing = () => {
       inFlightRef.current.delete(`${recordId}-ai`);
       handle.abort();
       applyCancelledUiState(recordId);
+
+      const cloudJobId = activeCloudJobIdRef.current.get(recordId);
+      activeCloudJobIdRef.current.delete(recordId);
+      if (cloudJobId && useSettingsStore.getState().aiExecutionMode !== 'private_experimental') {
+        void cancelCloudAiJob(cloudJobId);
+      }
 
       if (useSettingsStore.getState().aiExecutionMode === 'private_experimental') {
         void releaseLocalLlmSession();
@@ -196,6 +205,9 @@ export const useAiProcessing = () => {
       }
 
       const requestId = `${baseId}-${Date.now()}`;
+      if (aiExecutionMode !== 'private_experimental') {
+        activeCloudJobIdRef.current.set(record.id, requestId);
+      }
       inFlightRef.current.add(baseId);
       void logAnalyticsEvent('ai_action_started', {
         action: 'summary_tasks',
@@ -526,6 +538,7 @@ export const useAiProcessing = () => {
           if (abortHandlesRef.current.get(record.id) === abortHandle) {
             abortHandlesRef.current.delete(record.id);
           }
+          activeCloudJobIdRef.current.delete(record.id);
         }
       }
     },

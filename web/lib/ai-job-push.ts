@@ -1,4 +1,5 @@
 import { PUSH_DEBOUNCE_MS } from '@/config/constants';
+import { isAiJobCancelled } from '@/lib/ai-job-cancel';
 import { sendPushNotification } from '@/lib/push';
 import {
   collectPendingAndUnlock,
@@ -13,6 +14,13 @@ export async function notifyAiJobComplete(params: {
   logLabel: string;
 }): Promise<void> {
   const { deviceId, recordId, logLabel } = params;
+
+  if (await isAiJobCancelled(recordId)) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[Push] ${logLabel}: skip (job cancelled)`, { deviceId, recordId });
+    }
+    return;
+  }
 
   const isLeader = await registerAiCompletion(deviceId);
   if (!isLeader) {

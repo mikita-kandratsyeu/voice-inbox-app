@@ -1,3 +1,4 @@
+import { isAiJobCancelled } from '@/lib/ai-job-cancel';
 import { runAiJob } from '@/lib/ai-job-runners';
 import { acquireJobLock, releaseJobLock } from '@/lib/ai-job-lock';
 import { deleteJobPayload, getJobPayload } from '@/lib/ai-job-payload';
@@ -5,7 +6,7 @@ import { getMessage } from '@/lib/redis';
 import type { AiJobEnvelope } from '@/types/ai-job';
 
 export type RunAiJobFromEnvelopeResult =
-  | { ok: true; skipped?: boolean; skipReason?: 'done' | 'lock' }
+  | { ok: true; skipped?: boolean; skipReason?: 'done' | 'lock' | 'cancelled' }
   | { ok: false; error: string; retryable: boolean };
 
 /**
@@ -17,6 +18,10 @@ export async function runAiJobFromEnvelope(
 ): Promise<RunAiJobFromEnvelopeResult> {
   const { jobId, operation } = envelope;
   const started = Date.now();
+
+  if (await isAiJobCancelled(jobId)) {
+    return { ok: true, skipped: true, skipReason: 'cancelled' };
+  }
 
   if (!options?.skipIdempotency) {
     const existing = await getMessage(jobId);
@@ -31,6 +36,10 @@ export async function runAiJobFromEnvelope(
   }
 
   try {
+    if (await isAiJobCancelled(jobId)) {
+      return { ok: true, skipped: true, skipReason: 'cancelled' };
+    }
+
     const payload = await getJobPayload(jobId);
     if (!payload || payload.operation !== operation) {
       return {

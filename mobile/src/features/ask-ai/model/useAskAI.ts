@@ -7,6 +7,7 @@ import {
   createAiAbortHandle,
   isAiRequestCancelled,
 } from '@/shared/lib/ai-api/abort';
+import { cancelCloudAiJob } from '@/shared/lib/ai-api/cancelCloudAiJob';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
 import type { AskPriorTurn } from '@/shared/lib/ai-core';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
@@ -75,6 +76,7 @@ export const useAskAI = (
 
   const inFlightRef = useRef(false);
   const abortHandlesRef = useRef<Map<string, AiAbortHandle>>(new Map());
+  const activeCloudJobIdRef = useRef<string | null>(null);
   const transcriptFpInvalidateRef = useRef<string | null>(null);
   const loadEpochRef = useRef(0);
   const recordForResumeRef = useRef<VoiceRecord | null>(null);
@@ -152,6 +154,9 @@ export const useAskAI = (
       if (askInFlightRecordIds.has(record.id)) return;
 
       const requestId = `${record.id}-ask-${Date.now()}`;
+      if (aiExecutionMode !== 'private_experimental') {
+        activeCloudJobIdRef.current = requestId;
+      }
       const trimmedQuestion = question.trim();
       const abortHandle = createAiAbortHandle();
       abortHandlesRef.current.set(record.id, abortHandle);
@@ -389,6 +394,7 @@ export const useAskAI = (
         });
       } finally {
         abortHandlesRef.current.delete(record.id);
+        activeCloudJobIdRef.current = null;
         inFlightRef.current = false;
         askInFlightRecordIds.delete(record.id);
       }
@@ -412,6 +418,12 @@ export const useAskAI = (
 
   const cancelAsk = useCallback(() => {
     abortHandlesRef.current.get(recordId)?.abort();
+
+    const cloudJobId = activeCloudJobIdRef.current;
+    activeCloudJobIdRef.current = null;
+    if (cloudJobId && aiExecutionMode !== 'private_experimental') {
+      void cancelCloudAiJob(cloudJobId);
+    }
 
     inFlightRef.current = false;
     askInFlightRecordIds.delete(recordId);
@@ -444,7 +456,7 @@ export const useAskAI = (
     if (useSettingsStore.getState().aiExecutionMode === 'private_experimental') {
       void releaseLocalLlmSession();
     }
-  }, [recordId]);
+  }, [recordId, aiExecutionMode]);
 
   useEffect(() => {
     const epochAtStart = loadEpochRef.current;
