@@ -257,15 +257,65 @@ const TRANSLATE_LANGUAGE_NAMES: Record<ValidLanguage, string> = {
   ja: 'Japanese',
 };
 
-export function buildTranslatePrompt(targetLangCode: string): string {
+export type TranslatePromptOptions = {
+  targetLangCode: string;
+  sourceLangCode?: ValidLanguage;
+  isContinuation?: boolean;
+};
+
+export function buildTranslatePrompt(
+  targetLangCodeOrOptions: string | TranslatePromptOptions,
+): string {
+  const options: TranslatePromptOptions =
+    typeof targetLangCodeOrOptions === 'string'
+      ? { targetLangCode: targetLangCodeOrOptions }
+      : targetLangCodeOrOptions;
+
+  const targetLangCode = options.targetLangCode;
   const langName = isValidTranslateLanguage(targetLangCode)
     ? TRANSLATE_LANGUAGE_NAMES[targetLangCode]
     : targetLangCode;
 
-  return `Translate the text into ${langName}.
-Preserve the original meaning, formatting, paragraph breaks, list structure, punctuation, and tone.
-Do not add explanations, notes, quotes, or markdown fences.
+  const sourceLine =
+    options.sourceLangCode && isValidTranslateLanguage(options.sourceLangCode)
+      ? `The source text is in ${TRANSLATE_LANGUAGE_NAMES[options.sourceLangCode]}.`
+      : 'Infer the source language from the text.';
+
+  const continuationBlock = options.isContinuation
+    ? `
+This is a continuation chunk. The user message includes prior source/translation endings for consistency only — do not translate those context lines.
+Match names, terms, pronouns, and tone with the previous translation ending.
+Return ONLY the translated text under "## Text to translate".`
+    : `
 Return ONLY the translated text.`;
+
+  return `Translate the user message into ${langName}.
+${sourceLine}
+The text is spoken voice transcript (dictation or meeting speech): use natural conversational ${langName}, not stiff literal calques.
+Preserve line breaks, speaker labels (e.g. "Speaker 1:", "Участник 1:"), timestamps in brackets, lists, numbers, and proper nouns when they are normally kept untranslated.
+Do not add explanations, notes, quotes, or markdown fences.${continuationBlock}`.trim();
+}
+
+export function buildTranslateUserMessage(
+  chunk: string,
+  context?: { priorSourceTail: string; priorTranslationTail: string },
+): string {
+  const body = chunk.trim();
+  if (!context?.priorSourceTail.trim()) {
+    return body;
+  }
+
+  return [
+    '## Continuation context (for consistency only — do not translate)',
+    'Previous source ending:',
+    context.priorSourceTail.trim(),
+    '',
+    'Previous translation ending:',
+    context.priorTranslationTail.trim(),
+    '',
+    '## Text to translate',
+    body,
+  ].join('\n');
 }
 
 export type AiRecordingMarkOption = {

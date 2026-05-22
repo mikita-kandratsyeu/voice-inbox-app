@@ -10,7 +10,9 @@ import {
 } from '@/lib/api';
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { logAiRequest } from '@/lib/ai-operation';
+import { sanitizeTranscriptSegmentsForMeetingPrompt } from '@/lib/meeting-dialogue-user-prompt';
 import { isValidTranslateLanguage } from '@/lib/prompts';
+import type { TranslateTranscriptSegment } from '@/lib/translate-chunking';
 import { translateTranscript } from '@/services/translate.service';
 
 export const runtime = 'nodejs';
@@ -20,7 +22,21 @@ export const maxDuration = 300;
 type TranslateBody = {
   transcript?: unknown;
   targetLanguage?: unknown;
+  sourceLanguage?: unknown;
+  transcriptSegments?: unknown;
 };
+
+function mapSegmentsForTranslate(
+  raw: unknown,
+): TranslateTranscriptSegment[] | undefined {
+  const sanitized = sanitizeTranscriptSegmentsForMeetingPrompt(raw);
+  if (!sanitized) return undefined;
+  return sanitized.map((s) => ({
+    text: s.text,
+    ...(s.startMs !== undefined ? { startMs: s.startMs } : {}),
+    ...(s.endMs !== undefined ? { endMs: s.endMs } : {}),
+  }));
+}
 
 export const POST = async (request: Request): Promise<NextResponse> => {
   const guard = await assertMobileAiRouteContext(request);
@@ -49,9 +65,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     });
   }
 
-  const { transcript, targetLanguage } = body as {
+  const { transcript, targetLanguage, sourceLanguage: rawSourceLanguage } = body as {
     transcript: string;
     targetLanguage: string;
+    sourceLanguage?: unknown;
   };
 
   if (!isValidTranslateLanguage(targetLanguage)) {
@@ -61,6 +78,13 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     });
   }
 
+  const sourceLanguage =
+    typeof rawSourceLanguage === 'string' && isValidTranslateLanguage(rawSourceLanguage)
+      ? rawSourceLanguage
+      : undefined;
+
+  const transcriptSegments = mapSegmentsForTranslate(body.transcriptSegments);
+
   logAiRequest(aiOperation, { path: pathname });
 
   const result = await translateTranscript(
@@ -68,6 +92,10 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     targetLanguage,
     deviceIdTrimmed,
     req.headers.get('user-agent'),
+    {
+      sourceLanguage,
+      transcriptSegments,
+    },
   );
 
   if (!result.ok && 'limitExceeded' in result && result.limitExceeded) {

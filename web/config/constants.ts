@@ -86,7 +86,7 @@ export const PUSH_TOKEN_OS_VERSION_MAX_CHARS = 64;
 export const GET_RETRY_ATTEMPTS = 3;
 export const GET_RETRY_DELAY_MS = 100;
 
-/** System micro-tasks (folder organize, translation primary, etc.). */
+/** System micro-tasks (folder organize, etc.). */
 export const SYSTEM_MICRO_TASK_MODEL = 'google/gemini-2.5-flash-lite';
 
 export const AI_MODEL_GEMINI_2_5_FLASH_LITE = 'google/gemini-2.5-flash-lite';
@@ -110,6 +110,14 @@ export function normalizeIncomingAiModel(model: string): string {
 }
 /** Manual picker, fallbacks, and auto medium tier (OpenRouter nitro). */
 export const AI_MODEL_DEEPSEEK_V4_FLASH = 'deepseek/deepseek-v4-flash:nitro';
+
+/** Transcript translation: quality-first model chain (see translate.service). */
+export const TRANSLATE_MODEL_CHAIN: readonly string[] = [
+  AI_MODEL_GEMINI_3_1_FLASH_LITE,
+  AI_MODEL_GEMINI_2_5_FLASH_LITE,
+  AI_MODEL_DEEPSEEK_V4_FLASH,
+];
+
 export const AI_MODEL_MIMO_V2_FLASH = 'xiaomi/mimo-v2-flash';
 export const AI_MODEL_NEMOTRON_3_SUPER = 'nvidia/nemotron-3-super-120b-a12b';
 /** Removed from catalog — accepted from old clients, mapped in {@link normalizeIncomingAiModel}. */
