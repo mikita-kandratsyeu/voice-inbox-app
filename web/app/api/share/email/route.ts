@@ -56,6 +56,12 @@ function safeZipFileName(raw: string): string {
   return base.toLowerCase().endsWith('.zip') ? base : `${base}.zip`;
 }
 
+function safeMarkdownAttachmentFilename(title: string): string {
+  const stripped = title.replace(/[/\\]/g, '').replace(/[^a-zA-Z0-9._\u0400-\u04FF\s-]/g, '_');
+  const base = stripped.replace(/\s+/g, '-').slice(0, 80).trim() || 'voice-inbox-note';
+  return base.toLowerCase().endsWith('.md') ? base : `${base}.md`;
+}
+
 export async function POST(request: Request): Promise<NextResponse> {
   const path = new URL(request.url).pathname;
 
@@ -210,6 +216,13 @@ export async function POST(request: Request): Promise<NextResponse> {
       subject,
       text,
       html,
+      attachments: [
+        {
+          filename: safeMarkdownAttachmentFilename(title),
+          content: Buffer.from(markdown, 'utf8'),
+          contentType: 'text/markdown; charset=utf-8',
+        },
+      ],
     });
   } catch (e) {
     console.error('[share/email POST]', e);

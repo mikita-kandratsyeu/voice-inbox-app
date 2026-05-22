@@ -64,8 +64,10 @@ type BatchExportSheetProps = {
 };
 
 function emailTemplateChipLabel(tpl: ShareBriefTemplate, t: (key: string) => string): string {
+  if (tpl === 'emailBrief') return t('share.emailBrief');
   if (tpl === 'meetingBrief') return t('share.meetingBrief');
-  return t('share.speakerTurnsBrief');
+  if (tpl === 'meetingSpeakerTurns') return t('share.speakerTurnsBrief');
+  return t('share.noteBrief');
 }
 
 export const BatchExportSheet = ({
@@ -83,7 +85,7 @@ export const BatchExportSheet = ({
   const listContentPadding = useBottomSheetContentPadding(20);
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
-  const [emailBodyTemplate, setEmailBodyTemplate] = useState<ShareBriefTemplate>('meetingBrief');
+  const [emailBodyTemplate, setEmailBodyTemplate] = useState<ShareBriefTemplate>('emailBrief');
   const [exportPackaging, setExportPackaging] = useState<BatchExportPackaging>('single');
 
   const trimmedEmail = email.trim();
@@ -91,27 +93,27 @@ export const BatchExportSheet = ({
 
   const emailFormatTemplates = useMemo((): ShareBriefTemplate[] => {
     if (showSpeakerTurnsExport) {
-      return ['meetingBrief', 'meetingSpeakerTurns'];
+      return ['emailBrief', 'meetingBrief', 'meetingSpeakerTurns'];
     }
-    return ['meetingBrief'];
+    return ['emailBrief', 'noteBrief'];
   }, [showSpeakerTurnsExport]);
 
   useEffect(() => {
     if (visible) return;
     setEmailVisible(false);
     setEmail('');
-    setEmailBodyTemplate('meetingBrief');
+    setEmailBodyTemplate('emailBrief');
     setExportPackaging('single');
   }, [visible]);
 
   useEffect(() => {
     if (!visible) return;
-    setEmailBodyTemplate((prev) => (emailFormatTemplates.includes(prev) ? prev : 'meetingBrief'));
+    setEmailBodyTemplate((prev) => (emailFormatTemplates.includes(prev) ? prev : 'emailBrief'));
   }, [emailFormatTemplates, visible]);
 
   useEffect(() => {
     if (!showSpeakerTurnsExport && emailBodyTemplate === 'meetingSpeakerTurns') {
-      setEmailBodyTemplate('meetingBrief');
+      setEmailBodyTemplate('emailBrief');
     }
   }, [emailBodyTemplate, showSpeakerTurnsExport]);
 

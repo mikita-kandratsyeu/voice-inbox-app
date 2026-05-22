@@ -338,10 +338,20 @@ export function useInboxScreen() {
       const selectedRecords = filtered.filter((r) => batchSelect.selectedIds.has(r.id));
       setBatchEmailSending(true);
       try {
-        await batchEmailExport(selectedRecords, template, email, packaging);
+        const { autoZipFallback } = await batchEmailExport(
+          selectedRecords,
+          template,
+          email,
+          packaging,
+        );
         hapticSuccess();
         handleCloseBatchExportSheet();
-        Alert.alert(t('share.emailSentTitle'), t('share.emailBatchSentMessage', { email }));
+        Alert.alert(
+          t('share.emailSentTitle'),
+          autoZipFallback
+            ? t('batch.emailAutoZipFallback', { email })
+            : t('share.emailBatchSentMessage', { email }),
+        );
       } catch (err) {
         hapticError();
         Alert.alert(

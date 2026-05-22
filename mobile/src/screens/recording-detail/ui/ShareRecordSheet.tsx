@@ -37,13 +37,13 @@ export const ShareRecordSheet = ({
   const listContentPadding = useBottomSheetContentPadding(20);
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
-  const [emailSendTemplate, setEmailSendTemplate] = useState<ShareBriefTemplate>('meetingBrief');
+  const [emailSendTemplate, setEmailSendTemplate] = useState<ShareBriefTemplate>('emailBrief');
   const trimmedEmail = email.trim();
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
 
   useEffect(() => {
     if (visible) {
-      setEmailSendTemplate('meetingBrief');
+      setEmailSendTemplate('emailBrief');
       return;
     }
     setEmailVisible(false);
@@ -52,7 +52,7 @@ export const ShareRecordSheet = ({
 
   useEffect(() => {
     if (!showSpeakerTurnsExport && emailSendTemplate === 'meetingSpeakerTurns') {
-      setEmailSendTemplate('meetingBrief');
+      setEmailSendTemplate('emailBrief');
     }
   }, [emailSendTemplate, showSpeakerTurnsExport]);
 
@@ -135,10 +135,15 @@ export const ShareRecordSheet = ({
 
   const emailFormatTemplates = useMemo((): { tpl: ShareBriefTemplate; label: string }[] => {
     const row: { tpl: ShareBriefTemplate; label: string }[] = [
-      { tpl: 'meetingBrief', label: t('share.meetingBrief') },
+      { tpl: 'emailBrief', label: t('share.emailBrief') },
     ];
     if (showSpeakerTurnsExport) {
-      row.push({ tpl: 'meetingSpeakerTurns', label: t('share.speakerTurnsBrief') });
+      row.push(
+        { tpl: 'meetingBrief', label: t('share.meetingBrief') },
+        { tpl: 'meetingSpeakerTurns', label: t('share.speakerTurnsBrief') },
+      );
+    } else {
+      row.push({ tpl: 'noteBrief', label: t('share.noteBrief') });
     }
     return row;
   }, [showSpeakerTurnsExport, t]);
