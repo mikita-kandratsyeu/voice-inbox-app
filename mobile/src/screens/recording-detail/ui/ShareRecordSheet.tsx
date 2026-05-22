@@ -1,5 +1,5 @@
 import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
-import { FileText, ListChecks, Mail, Music, UsersRound } from 'lucide-react-native';
+import { ClipboardList, FileText, ListChecks, Mail, Music, UsersRound } from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
@@ -37,13 +37,13 @@ export const ShareRecordSheet = ({
   const listContentPadding = useBottomSheetContentPadding(20);
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
-  const [emailSendTemplate, setEmailSendTemplate] = useState<ShareBriefTemplate>('meetingBrief');
+  const [emailSendTemplate, setEmailSendTemplate] = useState<ShareBriefTemplate>('emailBrief');
   const trimmedEmail = email.trim();
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
 
   useEffect(() => {
     if (visible) {
-      setEmailSendTemplate('meetingBrief');
+      setEmailSendTemplate('emailBrief');
       return;
     }
     setEmailVisible(false);
@@ -51,14 +51,22 @@ export const ShareRecordSheet = ({
   }, [visible]);
 
   useEffect(() => {
-    if (!showSpeakerTurnsExport && emailSendTemplate === 'meetingSpeakerTurns') {
-      setEmailSendTemplate('meetingBrief');
+    if (
+      !showSpeakerTurnsExport &&
+      (emailSendTemplate === 'meetingSpeakerTurns' || emailSendTemplate === 'meetingBrief')
+    ) {
+      setEmailSendTemplate('emailBrief');
     }
   }, [emailSendTemplate, showSpeakerTurnsExport]);
 
   const handleShareNoteBrief = useCallback(() => {
     onClose();
     onShareText('noteBrief');
+  }, [onClose, onShareText]);
+
+  const handleShareEmailBrief = useCallback(() => {
+    onClose();
+    onShareText('emailBrief');
   }, [onClose, onShareText]);
 
   const handleShareMeetingBrief = useCallback(() => {
@@ -135,10 +143,15 @@ export const ShareRecordSheet = ({
 
   const emailFormatTemplates = useMemo((): { tpl: ShareBriefTemplate; label: string }[] => {
     const row: { tpl: ShareBriefTemplate; label: string }[] = [
-      { tpl: 'meetingBrief', label: t('share.meetingBrief') },
+      { tpl: 'emailBrief', label: t('share.emailBrief') },
     ];
     if (showSpeakerTurnsExport) {
-      row.push({ tpl: 'meetingSpeakerTurns', label: t('share.speakerTurnsBrief') });
+      row.push(
+        { tpl: 'meetingBrief', label: t('share.meetingBrief') },
+        { tpl: 'meetingSpeakerTurns', label: t('share.speakerTurnsBrief') },
+      );
+    } else {
+      row.push({ tpl: 'noteBrief', label: t('share.noteBrief') });
     }
     return row;
   }, [showSpeakerTurnsExport, t]);
@@ -292,12 +305,22 @@ export const ShareRecordSheet = ({
           })}
 
           {renderOption({
-            icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
-            title: t('share.meetingBrief'),
-            description: t('share.meetingBriefDescription'),
-            accessibilityLabel: t('share.meetingBrief'),
-            onPress: handleShareMeetingBrief,
+            icon: <ClipboardList size={20} color={color.text.primary} strokeWidth={2.1} />,
+            title: t('share.emailBrief'),
+            description: t('share.emailBriefDescription'),
+            accessibilityLabel: t('share.emailBrief'),
+            onPress: handleShareEmailBrief,
           })}
+
+          {showSpeakerTurnsExport
+            ? renderOption({
+                icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
+                title: t('share.meetingBrief'),
+                description: t('share.meetingBriefDescription'),
+                accessibilityLabel: t('share.meetingBrief'),
+                onPress: handleShareMeetingBrief,
+              })
+            : null}
 
           {showSpeakerTurnsExport
             ? renderOption({

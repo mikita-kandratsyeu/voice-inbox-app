@@ -4,23 +4,24 @@ import { Alert, Share } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import {
-  buildShareText,
-  RECORD_TEXT_EXPORT_EXTENSION,
-  type ShareBriefTemplate,
-} from '@/features/share-record';
+import { RECORD_TEXT_EXPORT_EXTENSION, type ShareBriefTemplate } from '@/features/share-record';
 import {
   sendRecordEmail,
   sendShareEmailZipAttachment,
+  SHARE_EMAIL_MARKDOWN_MAX,
   SHARE_EMAIL_ZIP_MAX_BYTES,
 } from '@/features/share-record/api/sendRecordEmail';
+import { buildBatchShareMarkdown } from '@/features/share-record/lib/batchShareMarkdown';
+import { resolveShareExportContext } from '@/features/share-record/lib/shareExportContext';
 import { hapticError, hapticSuccess } from '@/shared/lib';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
 import type { BatchExportPackaging } from './batchExportPackaging';
 import { buildBatchMarkdownZip } from './buildBatchMarkdownZip';
 
-const SHARE_EMAIL_MARKDOWN_MAX = 80_000;
+export type BatchEmailExportResult = {
+  autoZipFallback?: boolean;
+};
 
 async function removeDirRecursive(path: string): Promise<void> {
   const items = await NitroFS.readdir(path);
@@ -210,8 +211,7 @@ export const useBatchRecordActions = ({
       const timestamp = Date.now();
 
       if (packaging === 'single') {
-        const lines = records.map((record) => buildShareText(record, template));
-        const content = lines.join('\n\n---\n\n');
+        const content = buildBatchShareMarkdown(records, template);
         const fileName = `voice-inbox-export-${timestamp}.${RECORD_TEXT_EXPORT_EXTENSION}`;
         const filePath = `${cache}/${fileName}`;
 
@@ -267,22 +267,45 @@ export const useBatchRecordActions = ({
       template: ShareBriefTemplate,
       to: string,
       packaging: BatchExportPackaging = 'single',
-    ) => {
-      if (records.length === 0) return;
+    ): Promise<BatchEmailExportResult> => {
+      if (records.length === 0) return {};
 
-      const subject =
-        template === 'meetingBrief'
-          ? t('share.emailBatchMeetingSubject', { count: records.length })
-          : template === 'meetingSpeakerTurns'
-            ? t('share.emailBatchSpeakerTurnsSubject', { count: records.length })
-            : t('share.emailBatchNoteSubject', { count: records.length });
+      const subject = batchEmailSubject(t, template, records.length);
       const title = t('share.emailBatchDocumentTitle', { count: records.length });
 
-      if (packaging === 'zip') {
+      let effectivePackaging = packaging;
+      let autoZipFallback = false;
+
+      if (effectivePackaging === 'single') {
+        const markdown = buildBatchShareMarkdown(records, template, {
+          ...resolveShareExportContext(),
+          forEmail: true,
+        });
+        if (markdown.length > SHARE_EMAIL_MARKDOWN_MAX) {
+          effectivePackaging = 'zip';
+          autoZipFallback = true;
+        } else {
+          const result = await sendRecordEmail({
+            to,
+            subject,
+            title,
+            markdown,
+          });
+          if (!result.ok) {
+            throw new Error(result.error);
+          }
+          return { autoZipFallback: false };
+        }
+      }
+
+      if (effectivePackaging === 'zip') {
         let exportDir: string | undefined;
         let zipPath: string | undefined;
         try {
-          const built = await buildBatchMarkdownZip(records, template);
+          const built = await buildBatchMarkdownZip(records, template, {
+            ...resolveShareExportContext(),
+            forEmail: true,
+          });
           exportDir = built.exportDir;
           zipPath = built.zipPath;
 
@@ -314,25 +337,10 @@ export const useBatchRecordActions = ({
             await unlinkIfExists(zipPath);
           }
         }
-        return;
+        return { autoZipFallback };
       }
 
-      const markdown = records.map((r) => buildShareText(r, template)).join('\n\n---\n\n');
-
-      if (markdown.length > SHARE_EMAIL_MARKDOWN_MAX) {
-        throw new Error(t('batch.emailTooLargeBody'));
-      }
-
-      const result = await sendRecordEmail({
-        to,
-        subject,
-        title,
-        markdown,
-      });
-
-      if (!result.ok) {
-        throw new Error(result.error);
-      }
+      return { autoZipFallback: false };
     },
     [t],
   );
@@ -366,3 +374,20 @@ export const useBatchRecordActions = ({
     batchMoveToFolder,
   };
 };
+
+function batchEmailSubject(
+  t: (key: string, opts?: { count: number }) => string,
+  template: ShareBriefTemplate,
+  count: number,
+): string {
+  switch (template) {
+    case 'meetingBrief':
+      return t('share.emailBatchMeetingSubject', { count });
+    case 'meetingSpeakerTurns':
+      return t('share.emailBatchSpeakerTurnsSubject', { count });
+    case 'emailBrief':
+      return t('share.emailBatchEmailBriefSubject', { count });
+    default:
+      return t('share.emailBatchNoteSubject', { count });
+  }
+}

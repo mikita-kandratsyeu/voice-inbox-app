@@ -1,309 +1,63 @@
 import { Share } from 'react-native';
 
-import { getRecordingMarkKindUi, type VoiceRecord } from '@/entities/record';
-import { normalizeMeetingDialogueMarkdownParagraphs } from '@/screens/recording-detail/lib/parseMeetingDialogue';
-import { formatShortDate, formatTime, i18n } from '@/shared/lib';
+import type { VoiceRecord } from '@/entities/record';
+import { i18n } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
-import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeDisplay';
 
-import { sendRecordEmail } from '../api/sendRecordEmail';
+import { sendRecordEmail, sendShareEmailZipAttachment } from '../api/sendRecordEmail';
+import { SHARE_EMAIL_MARKDOWN_MAX } from '../api/sendRecordEmail';
+import {
+  buildShareText,
+  RECORD_TEXT_EXPORT_EXTENSION,
+  sanitizeTitleForFileName,
+  type ShareBriefTemplate,
+  shareTemplateFileSuffix,
+} from '../lib/buildShareText';
+import { buildSingleNoteEmailZip } from '../lib/buildSingleNoteEmailZip';
 import {
   ensureShareExportDirectory,
   getShareExportDirectoryPath,
   pruneShareExportCache,
 } from '../lib/shareExportCache';
+import { resolveShareExportContext } from '../lib/shareExportContext';
+
+export type { ShareBriefTemplate } from '../lib/buildShareText';
+export { buildShareText, RECORD_TEXT_EXPORT_EXTENSION } from '../lib/buildShareText';
 
 const toFileUri = (path: string): string => (path.startsWith('file://') ? path : `file://${path}`);
-export type ShareBriefTemplate = 'noteBrief' | 'meetingBrief' | 'meetingSpeakerTurns';
-export const RECORD_TEXT_EXPORT_EXTENSION = 'md';
-const sanitizeTitleForFileName = (title: string): string =>
-  title.replace(/[^a-zA-Z0-9\u0400-\u04FF\s]/g, '_');
 
-const SHARE_WRAP_WIDTH = 72;
-
-function wrapParagraphToWidth(paragraph: string, maxWidth: number): string {
-  const normalized = paragraph.replace(/\s+/g, ' ').trim();
-  if (!normalized) {
-    return '';
-  }
-  if (normalized.length <= maxWidth) {
-    return normalized;
-  }
-
-  const words = normalized.split(' ');
-  const outLines: string[] = [];
-  let line = '';
-
-  const flush = () => {
-    if (line) {
-      outLines.push(line);
-      line = '';
-    }
-  };
-
-  for (const word of words) {
-    if (!word) {
-      continue;
-    }
-    if (word.length >= maxWidth) {
-      flush();
-      let rest = word;
-      while (rest.length > maxWidth) {
-        outLines.push(rest.slice(0, maxWidth));
-        rest = rest.slice(maxWidth);
-      }
-      line = rest;
-      continue;
-    }
-
-    const candidate = line ? `${line} ${word}` : word;
-    if (candidate.length <= maxWidth) {
-      line = candidate;
+async function removeDirRecursive(path: string): Promise<void> {
+  const items = await NitroFS.readdir(path);
+  for (const item of items) {
+    const st = await NitroFS.stat(item.path);
+    if (st.isFile) {
+      await NitroFS.unlink(item.path);
     } else {
-      flush();
-      line = word;
+      await removeDirRecursive(item.path);
     }
   }
-  flush();
-
-  return outLines.join('\n');
+  await NitroFS.unlink(path);
 }
 
-function formatPlainTranscriptForShare(text: string): string {
-  const trimmed = text.trim();
-  if (!trimmed) {
-    return '';
+async function removeDirRecursiveIfExists(path: string): Promise<void> {
+  try {
+    if (await NitroFS.exists(path)) {
+      await removeDirRecursive(path);
+    }
+  } catch {
+    if (__DEV__) console.warn('[share] cleanup failed', path);
   }
-
-  const blocks = trimmed
-    .split(/\n\s*\n/)
-    .map((b) => b.replace(/\s+/g, ' ').trim())
-    .filter(Boolean);
-
-  return blocks.map((b) => wrapParagraphToWidth(b, SHARE_WRAP_WIDTH)).join('\n\n');
 }
 
-function formatSegmentBlockForShare(startTime: string, text: string): string {
-  const wrapped = wrapParagraphToWidth(text.trim(), SHARE_WRAP_WIDTH);
-  if (!wrapped) {
-    return '';
+async function unlinkIfExists(path: string): Promise<void> {
+  try {
+    if (await NitroFS.exists(path)) {
+      await NitroFS.unlink(path);
+    }
+  } catch {
+    if (__DEV__) console.warn('[share] unlink failed', path);
   }
-  const lines = wrapped.split('\n');
-  const prefix = `[${startTime}] `;
-  const hangIndent = ' '.repeat(prefix.length);
-
-  return lines.map((line, i) => (i === 0 ? prefix + line : hangIndent + line)).join('\n');
 }
-
-function formatTranscriptForShare(record: VoiceRecord): string {
-  const segments = record.transcriptSegments ?? [];
-  if (segments.length > 0) {
-    return segments
-      .map((s) => formatSegmentBlockForShare(s.startTime, s.text))
-      .filter(Boolean)
-      .join('\n\n');
-  }
-
-  return formatPlainTranscriptForShare(record.transcript ?? '');
-}
-
-const pushMeta = (lines: string[], record: VoiceRecord): void => {
-  const locale = i18n.language ?? 'en';
-  const dateLabel = i18n.t('share.dateLabel');
-  const durationLabel = i18n.t('share.durationLabel');
-  const dateValue = record.createdAt ? formatShortDate(record.createdAt, locale) : record.createdAt;
-
-  lines.push(`${dateLabel}: ${dateValue}`);
-  lines.push(`${durationLabel}: ${record.duration}`);
-};
-
-const pushTags = (lines: string[], record: VoiceRecord): void => {
-  if (record.tags && record.tags.length > 0) {
-    lines.push('');
-    lines.push(`## ${i18n.t('share.tagsLabel')}`);
-    lines.push(record.tags.map((tag) => `#${tag}`).join(' '));
-  }
-};
-
-const pushRecordingMarks = (lines: string[], record: VoiceRecord): void => {
-  const marks = record.recordingMarks ?? [];
-  if (marks.length === 0) {
-    return;
-  }
-  const sorted = [...marks].sort((a, b) => a.offsetMs - b.offsetMs);
-  lines.push('');
-  lines.push(`## ${i18n.t('recordingDetail.marksSectionTitle')}`);
-  sorted.forEach((m) => {
-    const timeStr = formatTime(Math.floor(m.offsetMs / 1000));
-    const label = m.label.trim();
-    const { sharePrefix, untitledKey } = getRecordingMarkKindUi(m.kind);
-    const text = (label.length > 0 ? label : i18n.t(untitledKey))
-      .replace(/\r?\n/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-    lines.push(`- ${sharePrefix} **${timeStr}** — ${text}`);
-  });
-};
-
-const pushSummary = (lines: string[], record: VoiceRecord): void => {
-  if (record.summary) {
-    lines.push('');
-    lines.push(`## ${i18n.t('recordingDetail.summary')}`);
-    lines.push(formatPlainTranscriptForShare(record.summary));
-  }
-};
-
-const pushKeyPhrases = (lines: string[], record: VoiceRecord): void => {
-  if (record.keyPhrases && record.keyPhrases.length > 0) {
-    lines.push('');
-    lines.push(`## ${i18n.t('recordingDetail.keyPhrases')}`);
-    record.keyPhrases.forEach((phrase) => {
-      lines.push(`- ${phrase}`);
-    });
-  }
-};
-
-const formatTaskForShare = (task: NonNullable<VoiceRecord['tasks']>[number]): string => {
-  const meta: string[] = [];
-  if (task.deadline) {
-    const timeLabel =
-      task.deadlineTime != null && String(task.deadlineTime).trim() !== ''
-        ? formatTaskDeadlineTimeForDisplay(task.deadlineTime)
-        : '';
-    const deadline = timeLabel.length > 0 ? `${task.deadline} ${timeLabel}` : task.deadline;
-    meta.push(`${i18n.t('tasks.deadlineLabel')}: ${deadline}`);
-  }
-  if (task.priority) {
-    meta.push(`${i18n.t('tasks.priorityLabel')}: ${i18n.t(`tasks.priority.${task.priority}`)}`);
-  }
-
-  const suffix = meta.length > 0 ? ` (${meta.join(', ')})` : '';
-  return `- [${task.isDone ? 'x' : ' '}] ${task.text}${suffix}`;
-};
-
-const pushTasks = (lines: string[], record: VoiceRecord): void => {
-  if (record.tasks && record.tasks.length > 0) {
-    lines.push('');
-    lines.push(`## ${i18n.t('recordingDetail.tasks')}`);
-    record.tasks.forEach((t) => {
-      lines.push(formatTaskForShare(t));
-    });
-  }
-};
-
-const pushNextSteps = (lines: string[], record: VoiceRecord): void => {
-  if (record.nextSteps && record.nextSteps.length > 0) {
-    lines.push('');
-    lines.push(`## ${i18n.t('recordingDetail.nextSteps')}`);
-    record.nextSteps.forEach((step) => {
-      lines.push(`- ${step}`);
-    });
-  }
-};
-
-const pushTranscript = (lines: string[], record: VoiceRecord): void => {
-  const transcriptBody = formatTranscriptForShare(record);
-  if (transcriptBody) {
-    lines.push('');
-    lines.push(`## ${i18n.t('recordingDetail.transcript')}`);
-    lines.push(transcriptBody);
-  }
-};
-
-const pushMeetingDialogue = (lines: string[], record: VoiceRecord): void => {
-  const body = record.meetingDialogue?.trim();
-  if (!body) {
-    return;
-  }
-  lines.push('');
-  lines.push(`## ${i18n.t('recordingDetail.meetingDialogueTitle')}`);
-  lines.push('');
-  lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
-  lines.push('');
-  lines.push(normalizeMeetingDialogueMarkdownParagraphs(body));
-};
-
-const pushFooter = (lines: string[]): void => {
-  lines.push('');
-  lines.push(i18n.t('share.exportedFrom'));
-};
-
-const buildNoteBrief = (record: VoiceRecord): string => {
-  const lines: string[] = [];
-
-  lines.push(`# ${record.title}`);
-  lines.push('');
-  pushMeta(lines, record);
-  pushTags(lines, record);
-  pushRecordingMarks(lines, record);
-  pushSummary(lines, record);
-  pushKeyPhrases(lines, record);
-  pushNextSteps(lines, record);
-  pushTasks(lines, record);
-  pushTranscript(lines, record);
-  pushFooter(lines);
-
-  return lines.join('\n');
-};
-
-const buildMeetingBrief = (record: VoiceRecord): string => {
-  const lines: string[] = [];
-
-  lines.push(`# ${record.title}`);
-  lines.push('');
-  lines.push(`_${i18n.t('share.meetingBriefSubtitle')}_`);
-  lines.push('');
-  pushMeta(lines, record);
-  pushTags(lines, record);
-  pushRecordingMarks(lines, record);
-  pushSummary(lines, record);
-  pushKeyPhrases(lines, record);
-  pushMeetingDialogue(lines, record);
-  pushNextSteps(lines, record);
-  pushTasks(lines, record);
-  pushTranscript(lines, record);
-  pushFooter(lines);
-
-  return lines.join('\n');
-};
-
-const buildMeetingSpeakerTurnsOnly = (record: VoiceRecord): string => {
-  const lines: string[] = [];
-
-  lines.push(`# ${record.title}`);
-  lines.push('');
-  pushMeta(lines, record);
-  pushTags(lines, record);
-  lines.push('');
-  lines.push(`## ${i18n.t('recordingDetail.meetingDialogueTitle')}`);
-  lines.push('');
-  lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
-  lines.push('');
-  const body = record.meetingDialogue?.trim();
-  if (body) {
-    lines.push(normalizeMeetingDialogueMarkdownParagraphs(body));
-  } else {
-    lines.push(`_${i18n.t('share.speakerTurnsEmpty')}_`);
-  }
-  lines.push('');
-  pushFooter(lines);
-
-  return lines.join('\n');
-};
-
-export const buildShareText = (
-  record: VoiceRecord,
-  template: ShareBriefTemplate = 'noteBrief',
-): string => {
-  if (template === 'meetingBrief') {
-    return buildMeetingBrief(record);
-  }
-  if (template === 'meetingSpeakerTurns') {
-    return buildMeetingSpeakerTurnsOnly(record);
-  }
-
-  return buildNoteBrief(record);
-};
 
 export const useShareRecord = () => {
   const shareRecord = async (record: VoiceRecord, template: ShareBriefTemplate = 'noteBrief') => {
@@ -311,13 +65,7 @@ export const useShareRecord = () => {
     await ensureShareExportDirectory();
 
     const text = buildShareText(record, template);
-    const templateSuffix =
-      template === 'meetingBrief'
-        ? '-meeting-brief'
-        : template === 'meetingSpeakerTurns'
-          ? '-speaker-turns'
-          : '-note-brief';
-    const fileName = `${sanitizeTitleForFileName(record.title)}${templateSuffix}.${RECORD_TEXT_EXPORT_EXTENSION}`;
+    const fileName = `${sanitizeTitleForFileName(record.title)}${shareTemplateFileSuffix(template)}.${RECORD_TEXT_EXPORT_EXTENSION}`;
     const filePath = `${getShareExportDirectoryPath()}/${fileName}`;
 
     try {
@@ -380,26 +128,62 @@ export const useShareRecord = () => {
   const emailRecord = async (
     record: VoiceRecord,
     to: string,
-    template: ShareBriefTemplate = 'noteBrief',
+    template: ShareBriefTemplate = 'emailBrief',
   ) => {
-    const markdown = buildShareText(record, template);
-    const subject =
-      template === 'meetingBrief'
-        ? i18n.t('share.emailMeetingSubject', { title: record.title })
-        : template === 'meetingSpeakerTurns'
-          ? i18n.t('share.emailSpeakerTurnsSubject', { title: record.title })
-          : i18n.t('share.emailNoteSubject', { title: record.title });
-    const result = await sendRecordEmail({
-      to,
-      subject,
-      title: record.title,
-      markdown,
-    });
+    const subject = emailSubjectForTemplate(record, template);
 
-    if (!result.ok) {
-      throw new Error(result.error);
+    const markdown = buildShareText(record, template, {
+      ...resolveShareExportContext(),
+      forEmail: true,
+    });
+    if (markdown.length <= SHARE_EMAIL_MARKDOWN_MAX) {
+      const result = await sendRecordEmail({
+        to,
+        subject,
+        title: record.title,
+        markdown,
+      });
+      if (!result.ok) throw new Error(result.error);
+      return;
+    }
+
+    let exportDir: string | undefined;
+    let zipPath: string | undefined;
+    try {
+      const built = await buildSingleNoteEmailZip(record, template, {
+        ...resolveShareExportContext(),
+        forEmail: true,
+      });
+      exportDir = built.exportDir;
+      zipPath = built.zipPath;
+
+      const result = await sendShareEmailZipAttachment({
+        to,
+        subject,
+        title: record.title,
+        bodyText: i18n.t('share.emailAutoZipBodySingle'),
+        zipAbsolutePath: zipPath,
+        zipDisplayName: built.zipFileName,
+      });
+      if (!result.ok) throw new Error(result.error);
+    } finally {
+      if (exportDir) await removeDirRecursiveIfExists(exportDir);
+      if (zipPath) await unlinkIfExists(zipPath);
     }
   };
 
   return { shareRecord, shareAudio, emailRecord };
 };
+
+function emailSubjectForTemplate(record: VoiceRecord, template: ShareBriefTemplate): string {
+  switch (template) {
+    case 'meetingBrief':
+      return i18n.t('share.emailMeetingSubject', { title: record.title });
+    case 'meetingSpeakerTurns':
+      return i18n.t('share.emailSpeakerTurnsSubject', { title: record.title });
+    case 'emailBrief':
+      return i18n.t('share.emailBriefSubject', { title: record.title });
+    default:
+      return i18n.t('share.emailNoteSubject', { title: record.title });
+  }
+}

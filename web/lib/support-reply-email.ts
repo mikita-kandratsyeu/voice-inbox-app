@@ -1,6 +1,9 @@
-import { BASE_URL_OR_FALLBACK, SUPPORT_EMAIL } from '@/config/constants';
+import { SUPPORT_EMAIL } from '@/config/constants';
 import { formatSupportReference } from '@/lib/support-reference';
+import { shareEmailBrand } from '@/lib/share-email-brand';
+import { renderShareNotePlainText } from '@/lib/share-note-markdown';
 import { renderShareNoteMarkdownEmailInnerHtml } from '@/lib/shareNoteMarkdownEmailHtml';
+import { buildShareNoteBrandedEmailHtml } from '@/lib/share-note-email-shell';
 
 function escapeHtml(s: string): string {
   return s
@@ -37,25 +40,33 @@ export async function buildSupportReplyEmail(params: {
 
   const footer = locale === 'ru' ? `\n\n— Команда Voice Inbox AI` : `\n\n— Voice Inbox AI team`;
 
-  const text = `${intro}${params.markdown.trim()}${footer}`;
+  const plainBody = renderShareNotePlainText(params.markdown.trim());
+  const text = `${intro}${plainBody}${footer}`;
 
   const support = SUPPORT_EMAIL.trim();
+  const brand = shareEmailBrand;
   const supportLine = support
     ? locale === 'ru'
-      ? `Вопросы: <a href="mailto:${escapeHtml(support)}" style="color:#2563eb">${escapeHtml(support)}</a>`
-      : `Questions: <a href="mailto:${escapeHtml(support)}" style="color:#2563eb">${escapeHtml(support)}</a>`
+      ? `Вопросы: <a href="mailto:${escapeHtml(support)}" style="color:${brand.link}">${escapeHtml(support)}</a>`
+      : `Questions: <a href="mailto:${escapeHtml(support)}" style="color:${brand.link}">${escapeHtml(support)}</a>`
     : '';
 
   const introHtml =
     locale === 'ru'
-      ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.55;color:#0f172a">Здравствуйте! Ниже ответ по обращению <strong>${escapeHtml(ref)}</strong>:</p>`
-      : `<p style="margin:0 0 16px;font-size:15px;line-height:1.55;color:#0f172a">Hello! Below is our reply regarding request <strong>${escapeHtml(ref)}</strong>:</p>`;
+      ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.55;color:${brand.ink}">Здравствуйте! Ниже ответ по обращению <strong>${escapeHtml(ref)}</strong>:</p>`
+      : `<p style="margin:0 0 16px;font-size:15px;line-height:1.55;color:${brand.ink}">Hello! Below is our reply regarding request <strong>${escapeHtml(ref)}</strong>:</p>`;
 
-  const footerHtml = `<p style="margin:24px 0 0;font-size:14px;line-height:1.5;color:#64748b">${
+  const footerBlock = `<p style="margin:24px 0 0;font-size:14px;line-height:1.5;color:${brand.muted}">${
     locale === 'ru' ? '— Команда Voice Inbox AI' : '— Voice Inbox AI team'
   }${supportLine ? `<br>${supportLine}` : ''}</p>`;
 
-  const html = `<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#e8edf5;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif"><table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center"><table role="presentation" width="100%" style="max-width:560px;background:#fff;border-radius:12px;padding:28px 24px"><tr><td>${introHtml}${inner}${footerHtml}</td></tr></table><p style="margin:16px 0 0;font-size:12px;color:#94a3b8"><a href="${escapeHtml(BASE_URL_OR_FALLBACK)}" style="color:#64748b">voice-inbox.online</a></p></td></tr></table></body></html>`;
+  const emailTitle = locale === 'ru' ? `Ответ по обращению ${ref}` : `Reply to request ${ref}`;
+
+  const html = buildShareNoteBrandedEmailHtml({
+    title: emailTitle,
+    bodyInnerHtml: `${introHtml}${inner}${footerBlock}`,
+    preheader: plainBody.slice(0, 140),
+  });
 
   return { subject, text, html };
 }

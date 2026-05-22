@@ -2,14 +2,19 @@ import { zip } from 'react-native-zip-archive';
 
 import type { VoiceRecord } from '@/entities/record';
 import {
+  batchMarkdownFileName,
+  buildBatchTableOfContents,
+} from '@/features/share-record/lib/batchShareMarkdown';
+import {
   buildShareText,
-  RECORD_TEXT_EXPORT_EXTENSION,
   type ShareBriefTemplate,
-} from '@/features/share-record';
+} from '@/features/share-record/lib/buildShareText';
+import {
+  resolveShareExportContext,
+  type ShareExportContext,
+} from '@/features/share-record/lib/shareExportContext';
+import { i18n } from '@/shared/lib';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
-
-const sanitizeTitleForFileName = (title: string): string =>
-  title.replace(/[^a-zA-Z0-9\u0400-\u04FF\s]/g, '_');
 
 export type BuildBatchMarkdownZipResult = {
   zipPath: string;
@@ -20,28 +25,34 @@ export type BuildBatchMarkdownZipResult = {
 export async function buildBatchMarkdownZip(
   records: VoiceRecord[],
   template: ShareBriefTemplate,
+  context?: ShareExportContext,
 ): Promise<BuildBatchMarkdownZipResult> {
   const cache = getCachesDirectoryPath();
   const timestamp = Date.now();
-  const templateSuffix =
-    template === 'meetingBrief'
-      ? '-meeting-brief'
-      : template === 'meetingSpeakerTurns'
-        ? '-speaker-turns'
-        : '-note-brief';
   const exportDir = `${cache}/voice-inbox-batch-md-${timestamp}`;
   const zipFileName = `voice-inbox-batch-${timestamp}.zip`;
   const zipPath = `${cache}/${zipFileName}`;
 
+  const ctx = resolveShareExportContext(context);
+  const fileNameByRecordId: Record<string, string> = {};
+
   await NitroFS.mkdir(exportDir);
 
   for (const record of records) {
-    const text = buildShareText(record, template);
-    const base = sanitizeTitleForFileName(record.title).trim() || 'note';
-    const truncated = base.slice(0, 60);
-    const fileName = `${truncated}${templateSuffix}-${record.id.slice(0, 8)}.${RECORD_TEXT_EXPORT_EXTENSION}`;
+    const fileName = batchMarkdownFileName(record, template);
+    fileNameByRecordId[record.id] = fileName;
+    const text = buildShareText(record, template, ctx);
     await NitroFS.writeFile(`${exportDir}/${fileName}`, text, 'utf8');
   }
+
+  const indexMd = [
+    `# ${i18n.t('share.batchIndexTitle')}`,
+    '',
+    buildBatchTableOfContents(records, { fileNameByRecordId }),
+    '',
+    `_${i18n.t('share.exportedFrom')}_`,
+  ].join('\n');
+  await NitroFS.writeFile(`${exportDir}/index.md`, indexMd, 'utf8');
 
   await zip(exportDir, zipPath);
 

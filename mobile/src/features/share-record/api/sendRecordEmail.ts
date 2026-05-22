@@ -3,7 +3,8 @@ import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 import { isString } from '@/shared/lib/type-guards';
 
-/** Keep in sync with `web/app/api/share/email/route.ts` ZIP_ATTACHMENT_MAX_BYTES */
+/** Keep in sync with `web/app/api/share/email/route.ts` */
+export const SHARE_EMAIL_MARKDOWN_MAX = 80_000;
 export const SHARE_EMAIL_ZIP_MAX_BYTES = 10 * 1024 * 1024;
 
 export type SendRecordEmailInput = {

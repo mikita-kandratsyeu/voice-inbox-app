@@ -1,5 +1,5 @@
 import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
-import { FileText, ListChecks, Mail, UsersRound } from 'lucide-react-native';
+import { ClipboardList, FileText, ListChecks, Mail, UsersRound } from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
@@ -64,8 +64,10 @@ type BatchExportSheetProps = {
 };
 
 function emailTemplateChipLabel(tpl: ShareBriefTemplate, t: (key: string) => string): string {
+  if (tpl === 'emailBrief') return t('share.emailBrief');
   if (tpl === 'meetingBrief') return t('share.meetingBrief');
-  return t('share.speakerTurnsBrief');
+  if (tpl === 'meetingSpeakerTurns') return t('share.speakerTurnsBrief');
+  return t('share.noteBrief');
 }
 
 export const BatchExportSheet = ({
@@ -83,7 +85,7 @@ export const BatchExportSheet = ({
   const listContentPadding = useBottomSheetContentPadding(20);
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
-  const [emailBodyTemplate, setEmailBodyTemplate] = useState<ShareBriefTemplate>('meetingBrief');
+  const [emailBodyTemplate, setEmailBodyTemplate] = useState<ShareBriefTemplate>('emailBrief');
   const [exportPackaging, setExportPackaging] = useState<BatchExportPackaging>('single');
 
   const trimmedEmail = email.trim();
@@ -91,33 +93,41 @@ export const BatchExportSheet = ({
 
   const emailFormatTemplates = useMemo((): ShareBriefTemplate[] => {
     if (showSpeakerTurnsExport) {
-      return ['meetingBrief', 'meetingSpeakerTurns'];
+      return ['emailBrief', 'meetingBrief', 'meetingSpeakerTurns'];
     }
-    return ['meetingBrief'];
+    return ['emailBrief', 'noteBrief'];
   }, [showSpeakerTurnsExport]);
 
   useEffect(() => {
     if (visible) return;
     setEmailVisible(false);
     setEmail('');
-    setEmailBodyTemplate('meetingBrief');
+    setEmailBodyTemplate('emailBrief');
     setExportPackaging('single');
   }, [visible]);
 
   useEffect(() => {
     if (!visible) return;
-    setEmailBodyTemplate((prev) => (emailFormatTemplates.includes(prev) ? prev : 'meetingBrief'));
+    setEmailBodyTemplate((prev) => (emailFormatTemplates.includes(prev) ? prev : 'emailBrief'));
   }, [emailFormatTemplates, visible]);
 
   useEffect(() => {
-    if (!showSpeakerTurnsExport && emailBodyTemplate === 'meetingSpeakerTurns') {
-      setEmailBodyTemplate('meetingBrief');
+    if (
+      !showSpeakerTurnsExport &&
+      (emailBodyTemplate === 'meetingSpeakerTurns' || emailBodyTemplate === 'meetingBrief')
+    ) {
+      setEmailBodyTemplate('emailBrief');
     }
   }, [emailBodyTemplate, showSpeakerTurnsExport]);
 
   const handleExportNoteBrief = useCallback(() => {
     onClose();
     onExportText('noteBrief', exportPackaging);
+  }, [exportPackaging, onClose, onExportText]);
+
+  const handleExportEmailBrief = useCallback(() => {
+    onClose();
+    onExportText('emailBrief', exportPackaging);
   }, [exportPackaging, onClose, onExportText]);
 
   const handleExportMeetingBrief = useCallback(() => {
@@ -386,7 +396,7 @@ export const BatchExportSheet = ({
               color={color}
             />
           </View>
-          <Text style={{ fontSize: 12, color: color.text.muted, lineHeight: 17 }}>
+          <Text style={{ fontSize: 13, color: color.text.muted, lineHeight: 17 }}>
             {exportPackaging === 'zip'
               ? t('batch.exportPackagingHintZip')
               : t('batch.exportPackagingHintSingle')}
@@ -401,12 +411,22 @@ export const BatchExportSheet = ({
           })}
 
           {renderOption({
-            icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
-            title: t('share.meetingBrief'),
-            description: t('share.meetingBriefDescription'),
-            accessibilityLabel: t('share.meetingBrief'),
-            onPress: handleExportMeetingBrief,
+            icon: <ClipboardList size={20} color={color.text.primary} strokeWidth={2.1} />,
+            title: t('share.emailBrief'),
+            description: t('share.emailBriefDescription'),
+            accessibilityLabel: t('share.emailBrief'),
+            onPress: handleExportEmailBrief,
           })}
+
+          {showSpeakerTurnsExport
+            ? renderOption({
+                icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
+                title: t('share.meetingBrief'),
+                description: t('share.meetingBriefDescription'),
+                accessibilityLabel: t('share.meetingBrief'),
+                onPress: handleExportMeetingBrief,
+              })
+            : null}
 
           {showSpeakerTurnsExport
             ? renderOption({
