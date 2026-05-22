@@ -101,10 +101,6 @@ export function isDeepSeekOpenRouterModel(model: string): boolean {
   return normalizeIncomingAiModel(model.trim()) === AI_MODEL_DEEPSEEK_V4_FLASH;
 }
 
-export function shouldCallDeepSeekDirect(model: string): boolean {
-  return deepSeekDirectApiConfigured() && isDeepSeekOpenRouterModel(model);
-}
-
 export function isRetryableDeepSeekTransportError(err: unknown): boolean {
   if (err instanceof DeepSeekApiError) {
     const s = err.status;

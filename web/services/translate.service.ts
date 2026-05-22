@@ -1,12 +1,14 @@
 import {
-  isRetryableOpenRouterTransportError,
-  withSequentialModelFallback,
-} from '@/lib/ai-model-fallback';
+  filterModelsForAiChat,
+  isRetryableAiChatTransportError,
+  sendAiChatCompletion,
+} from '@/lib/ai-chat';
+import { isDeepSeekOpenRouterModel } from '@/lib/deepseek';
+import { withSequentialModelFallback } from '@/lib/ai-model-fallback';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
 import { buildTranslatePrompt } from '@/lib/prompts';
 import { sendLimitExceededPush } from '@/lib/push-tokens';
 import { SYSTEM_MICRO_TASK_MODEL, SYSTEM_TASK_MODEL_FALLBACK_CHAIN } from '@/config/constants';
-import { createOpenRouterClient } from '@/lib/openrouter';
 
 type TranslateResult =
   | { ok: true; translatedText: string }
@@ -88,25 +90,22 @@ async function callTranslate(
   targetLang: string,
   model: string,
   clientUserAgent?: string | null,
+  deviceId?: string,
 ): Promise<string> {
   const systemPrompt = buildTranslatePrompt(targetLang);
-  const client = createOpenRouterClient(clientUserAgent);
 
-  const response = await client.chat.send({
-    chatGenerationParams: {
-      model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: transcript },
-      ],
-      provider: { zdr: true },
-      temperature: 0.2,
-      stream: false,
-    },
+  const { content } = await sendAiChatCompletion({
+    model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: transcript },
+    ],
+    temperature: isDeepSeekOpenRouterModel(model) ? undefined : 0.2,
+    clientUserAgent,
+    userId: deviceId,
   });
 
-  const content = response.choices[0]?.message?.content;
-  if (typeof content !== 'string' || !content.trim()) {
+  if (!content.trim()) {
     throw new Error('Invalid translation response');
   }
 
@@ -126,9 +125,12 @@ export async function translateTranscript(
   }
 
   try {
-    const models = [SYSTEM_MICRO_TASK_MODEL, ...SYSTEM_TASK_MODEL_FALLBACK_CHAIN];
+    const models = filterModelsForAiChat([
+      SYSTEM_MICRO_TASK_MODEL,
+      ...SYSTEM_TASK_MODEL_FALLBACK_CHAIN,
+    ]);
     const shouldTryNext = (err: unknown) =>
-      isRetryableOpenRouterTransportError(err) ||
+      isRetryableAiChatTransportError(err) ||
       (err instanceof Error && err.message.includes('Invalid translation'));
 
     const { chunks, separators } = splitTranscriptForChunkedTranslation(transcript);
@@ -137,7 +139,7 @@ export async function translateTranscript(
     for (let i = 0; i < chunks.length; i++) {
       const piece = await withSequentialModelFallback(
         models,
-        (m) => callTranslate(chunks[i], targetLanguage, m, clientUserAgent),
+        (m) => callTranslate(chunks[i], targetLanguage, m, clientUserAgent, deviceId),
         shouldTryNext,
       );
       translatedParts.push(piece);

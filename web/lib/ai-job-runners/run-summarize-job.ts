@@ -47,6 +47,7 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
           model,
           meetingDialogueSystemPrompt.trim(),
           clientUserAgent,
+          deviceId,
         );
         result = {
           ...mainResult,
