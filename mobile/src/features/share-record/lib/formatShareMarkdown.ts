@@ -1,11 +1,14 @@
+import type { VoiceRecord } from '@/entities/record';
 import {
   normalizeMeetingDialogueMarkdownParagraphs,
   parseMeetingDialogue,
 } from '@/screens/recording-detail/lib/parseMeetingDialogue';
-import type { VoiceRecord } from '@/entities/record';
 
 /** Email-safe task line (avoids GFM checkboxes stripped in HTML mail). */
-export function formatTaskLineForShare(task: NonNullable<VoiceRecord['tasks']>[number], suffix: string): string {
+export function formatTaskLineForShare(
+  task: NonNullable<VoiceRecord['tasks']>[number],
+  suffix: string,
+): string {
   const mark = task.isDone ? '✅' : '☐';
   return `- ${mark} ${task.text}${suffix}`;
 }
