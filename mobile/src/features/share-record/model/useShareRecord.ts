@@ -1,12 +1,17 @@
 import { Share } from 'react-native';
 
 import { getRecordingMarkKindUi, type VoiceRecord } from '@/entities/record';
-import { normalizeMeetingDialogueMarkdownParagraphs } from '@/screens/recording-detail/lib/parseMeetingDialogue';
 import { formatShortDate, formatTime, i18n } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
 import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeDisplay';
 
 import { sendRecordEmail } from '../api/sendRecordEmail';
+import {
+  formatMeetingDialogueForShareMarkdown,
+  formatTaskLineForShare,
+  formatTranscriptBodyForShare,
+  wrapTranscriptInMarkdownFence,
+} from '../lib/formatShareMarkdown';
 import {
   ensureShareExportDirectory,
   getShareExportDirectoryPath,
@@ -83,38 +88,14 @@ function formatPlainTranscriptForShare(text: string): string {
   return blocks.map((b) => wrapParagraphToWidth(b, SHARE_WRAP_WIDTH)).join('\n\n');
 }
 
-function formatSegmentBlockForShare(startTime: string, text: string): string {
-  const wrapped = wrapParagraphToWidth(text.trim(), SHARE_WRAP_WIDTH);
-  if (!wrapped) {
-    return '';
-  }
-  const lines = wrapped.split('\n');
-  const prefix = `[${startTime}] `;
-  const hangIndent = ' '.repeat(prefix.length);
-
-  return lines.map((line, i) => (i === 0 ? prefix + line : hangIndent + line)).join('\n');
-}
-
-function formatTranscriptForShare(record: VoiceRecord): string {
-  const segments = record.transcriptSegments ?? [];
-  if (segments.length > 0) {
-    return segments
-      .map((s) => formatSegmentBlockForShare(s.startTime, s.text))
-      .filter(Boolean)
-      .join('\n\n');
-  }
-
-  return formatPlainTranscriptForShare(record.transcript ?? '');
-}
-
 const pushMeta = (lines: string[], record: VoiceRecord): void => {
   const locale = i18n.language ?? 'en';
   const dateLabel = i18n.t('share.dateLabel');
   const durationLabel = i18n.t('share.durationLabel');
   const dateValue = record.createdAt ? formatShortDate(record.createdAt, locale) : record.createdAt;
 
-  lines.push(`${dateLabel}: ${dateValue}`);
-  lines.push(`${durationLabel}: ${record.duration}`);
+  lines.push(`**${dateLabel}:** ${dateValue}`);
+  lines.push(`**${durationLabel}:** ${record.duration}`);
 };
 
 const pushTags = (lines: string[], record: VoiceRecord): void => {
@@ -178,7 +159,7 @@ const formatTaskForShare = (task: NonNullable<VoiceRecord['tasks']>[number]): st
   }
 
   const suffix = meta.length > 0 ? ` (${meta.join(', ')})` : '';
-  return `- [${task.isDone ? 'x' : ' '}] ${task.text}${suffix}`;
+  return formatTaskLineForShare(task, suffix);
 };
 
 const pushTasks = (lines: string[], record: VoiceRecord): void => {
@@ -202,11 +183,13 @@ const pushNextSteps = (lines: string[], record: VoiceRecord): void => {
 };
 
 const pushTranscript = (lines: string[], record: VoiceRecord): void => {
-  const transcriptBody = formatTranscriptForShare(record);
-  if (transcriptBody) {
+  const transcriptBody = formatTranscriptBodyForShare(record);
+  const fenced = wrapTranscriptInMarkdownFence(transcriptBody);
+  if (fenced) {
     lines.push('');
     lines.push(`## ${i18n.t('recordingDetail.transcript')}`);
-    lines.push(transcriptBody);
+    lines.push('');
+    lines.push(fenced);
   }
 };
 
@@ -220,7 +203,7 @@ const pushMeetingDialogue = (lines: string[], record: VoiceRecord): void => {
   lines.push('');
   lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
   lines.push('');
-  lines.push(normalizeMeetingDialogueMarkdownParagraphs(body));
+  lines.push(formatMeetingDialogueForShareMarkdown(body));
 };
 
 const pushFooter = (lines: string[]): void => {
@@ -281,7 +264,7 @@ const buildMeetingSpeakerTurnsOnly = (record: VoiceRecord): string => {
   lines.push('');
   const body = record.meetingDialogue?.trim();
   if (body) {
-    lines.push(normalizeMeetingDialogueMarkdownParagraphs(body));
+    lines.push(formatMeetingDialogueForShareMarkdown(body));
   } else {
     lines.push(`_${i18n.t('share.speakerTurnsEmpty')}_`);
   }

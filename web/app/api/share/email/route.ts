@@ -9,7 +9,8 @@ import {
 } from '@/lib/api';
 import { HEADER_DEVICE_ID } from '@/config/constants';
 import { isSmtpConfigured, sendTransactionalMail } from '@/lib/mailer';
-import { renderShareNoteMarkdownEmailInnerHtml } from '@/lib/shareNoteMarkdownEmailHtml';
+import { buildShareNoteEmailContent } from '@/lib/shareNoteMarkdownEmailHtml';
+import { buildShareNoteBrandedEmailHtml } from '@/lib/share-note-email-shell';
 import { NextResponse } from 'next/server';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -147,23 +148,19 @@ export async function POST(request: Request): Promise<NextResponse> {
         ? safeZipFileName(zipNameRaw.trim())
         : 'voice-inbox-export.zip';
 
-    const escapedTitle = escapeHtml(title);
     const escapedBody = escapeHtml(bodyText);
+    const zipBodyHtml = `<p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">${escapedBody}</p>`;
 
     try {
       await sendTransactionalMail({
         to,
         subject,
         text: bodyText,
-        html: `<!doctype html>
-<html>
-  <body style="margin:0;padding:24px;background:#f6f7fb;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-    <main style="max-width:720px;margin:0 auto;background:#ffffff;border-radius:16px;padding:24px;border:1px solid #e5e7eb;">
-      <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;">${escapedTitle}</h1>
-      <p style="margin:0;font-size:15px;line-height:1.55;color:#374151;">${escapedBody}</p>
-    </main>
-  </body>
-</html>`,
+        html: buildShareNoteBrandedEmailHtml({
+          title,
+          bodyInnerHtml: zipBodyHtml,
+          preheader: bodyText,
+        }),
         attachments: [
           {
             filename: attachmentFilename,
@@ -205,23 +202,14 @@ export async function POST(request: Request): Promise<NextResponse> {
   const subject =
     normalizeBoundedString(body.subject, SUBJECT_MAX) ??
     `Voice Inbox AI note: ${title}`.slice(0, SUBJECT_MAX);
-  const escapedTitle = escapeHtml(title);
-  const noteBodyHtml = await renderShareNoteMarkdownEmailInnerHtml(markdown);
 
   try {
+    const { html, text } = await buildShareNoteEmailContent(markdown, title);
     await sendTransactionalMail({
       to,
       subject,
-      text: markdown,
-      html: `<!doctype html>
-<html>
-  <body style="margin:0;padding:24px;background:#f6f7fb;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-    <main style="max-width:720px;margin:0 auto;background:#ffffff;border-radius:16px;padding:24px;border:1px solid #e5e7eb;">
-      <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;">${escapedTitle}</h1>
-      ${noteBodyHtml}
-    </main>
-  </body>
-</html>`,
+      text,
+      html,
     });
   } catch (e) {
     console.error('[share/email POST]', e);
