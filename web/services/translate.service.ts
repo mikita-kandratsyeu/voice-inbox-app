@@ -14,7 +14,7 @@ type TranslateResult =
   | { ok: false; error: string };
 
 /** Keeps each model call within a predictable duration/output size; full transcript is reassembled. */
-const TRANSLATE_CHUNK_MAX_CHARS = 4000;
+const TRANSLATE_CHUNK_MAX_CHARS = 2000;
 
 function splitLargeParagraph(paragraph: string, maxChars: number): string[] {
   const p = paragraph.trim();
