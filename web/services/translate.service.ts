@@ -6,103 +6,66 @@ import {
 import { isDeepSeekOpenRouterModel } from '@/lib/deepseek';
 import { withSequentialModelFallback } from '@/lib/ai-model-fallback';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
-import { buildTranslatePrompt } from '@/lib/prompts';
+import { buildTranslatePrompt, buildTranslateUserMessage, type ValidLanguage } from '@/lib/prompts';
 import { sendLimitExceededPush } from '@/lib/push-tokens';
-import { SYSTEM_MICRO_TASK_MODEL, SYSTEM_TASK_MODEL_FALLBACK_CHAIN } from '@/config/constants';
+import {
+  buildTranslateChunkContext,
+  isSuspiciouslyShortTranslation,
+  normalizeTranslatedTranscript,
+  resolveTranscriptTextForTranslation,
+  splitTranscriptForChunkedTranslation,
+  type TranslateTranscriptSegment,
+} from '@/lib/translate-chunking';
+import { TRANSLATE_MODEL_CHAIN } from '@/config/constants';
 
 type TranslateResult =
   | { ok: true; translatedText: string }
   | { ok: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
   | { ok: false; error: string };
 
-/** Keeps each model call within a predictable duration/output size; full transcript is reassembled. */
-const TRANSLATE_CHUNK_MAX_CHARS = 2000;
-
-function splitLargeParagraph(paragraph: string, maxChars: number): string[] {
-  const p = paragraph.trim();
-  if (p.length <= maxChars) {
-    return [p];
-  }
-
-  const parts: string[] = [];
-  let rest = p;
-
-  while (rest.length > maxChars) {
-    const window = rest.slice(0, maxChars);
-    let cut = window.lastIndexOf(' ');
-    if (cut < Math.floor(maxChars * 0.45)) {
-      cut = maxChars;
-    }
-    const piece = rest.slice(0, cut).trimEnd();
-    if (!piece) {
-      parts.push(rest.slice(0, maxChars));
-      rest = rest.slice(maxChars).trimStart();
-      continue;
-    }
-    parts.push(piece);
-    rest = rest.slice(cut).trimStart();
-  }
-
-  if (rest) {
-    parts.push(rest);
-  }
-
-  return parts;
-}
-
-/**
- * Splits on paragraph breaks first, then word-bounded slices so each chunk fits `TRANSLATE_CHUNK_MAX_CHARS`.
- * `separators[i]` is inserted after translated chunk `i` (last is always "").
- */
-function splitTranscriptForChunkedTranslation(full: string): {
-  chunks: string[];
-  separators: string[];
-} {
-  const normalized = full.replace(/\r\n/g, '\n');
-  const paragraphs = normalized
-    .split(/\n\n+/)
-    .map((block) => block.trim())
-    .filter(Boolean);
-
-  if (paragraphs.length === 0) {
-    const t = normalized.trim();
-    return { chunks: [t || full], separators: [''] };
-  }
-
-  const chunks: string[] = [];
-  const separators: string[] = [];
-
-  for (let pi = 0; pi < paragraphs.length; pi++) {
-    const subs = splitLargeParagraph(paragraphs[pi], TRANSLATE_CHUNK_MAX_CHARS);
-    for (let si = 0; si < subs.length; si++) {
-      chunks.push(subs[si]);
-      const lastInPara = si === subs.length - 1;
-      const sep = !lastInPara ? ' ' : pi < paragraphs.length - 1 ? '\n\n' : '';
-      separators.push(sep);
-    }
-  }
-
-  return { chunks, separators };
-}
+export type TranslateTranscriptOptions = {
+  sourceLanguage?: ValidLanguage;
+  transcriptSegments?: TranslateTranscriptSegment[];
+};
 
 async function callTranslate(
-  transcript: string,
-  targetLang: string,
+  chunk: string,
+  targetLanguage: string,
   model: string,
-  clientUserAgent?: string | null,
-  deviceId?: string,
+  options: {
+    sourceLanguage?: ValidLanguage;
+    isContinuation: boolean;
+    clientUserAgent?: string | null;
+    deviceId?: string;
+    priorSourceTail?: string;
+    priorTranslationTail?: string;
+  },
 ): Promise<string> {
-  const systemPrompt = buildTranslatePrompt(targetLang);
+  const systemPrompt = buildTranslatePrompt({
+    targetLangCode: targetLanguage,
+    sourceLangCode: options.sourceLanguage,
+    isContinuation: options.isContinuation,
+  });
+
+  const userContent = buildTranslateUserMessage(
+    chunk,
+    options.priorSourceTail
+      ? {
+          priorSourceTail: options.priorSourceTail,
+          priorTranslationTail: options.priorTranslationTail ?? '',
+        }
+      : undefined,
+  );
 
   const { content } = await sendAiChatCompletion({
     model,
     messages: [
       { role: 'system', content: systemPrompt },
-      { role: 'user', content: transcript },
+      { role: 'user', content: userContent },
     ],
     temperature: isDeepSeekOpenRouterModel(model) ? undefined : 0.2,
-    clientUserAgent,
-    userId: deviceId,
+    clientUserAgent: options.clientUserAgent,
+    userId: options.deviceId,
   });
 
   if (!content.trim()) {
@@ -112,11 +75,47 @@ async function callTranslate(
   return content.trim();
 }
 
+function shouldRetryTranslation(err: unknown): boolean {
+  return (
+    isRetryableAiChatTransportError(err) ||
+    (err instanceof Error &&
+      (err.message.includes('Invalid translation') ||
+        err.message.includes('Suspiciously short translation')))
+  );
+}
+
+async function translateChunkWithFallback(
+  chunk: string,
+  targetLanguage: string,
+  models: string[],
+  chunkOptions: {
+    sourceLanguage?: ValidLanguage;
+    isContinuation: boolean;
+    clientUserAgent?: string | null;
+    deviceId?: string;
+    priorSourceTail?: string;
+    priorTranslationTail?: string;
+  },
+): Promise<string> {
+  return withSequentialModelFallback(
+    models,
+    async (m) => {
+      const translated = await callTranslate(chunk, targetLanguage, m, chunkOptions);
+      if (isSuspiciouslyShortTranslation(chunk, translated)) {
+        throw new Error('Suspiciously short translation');
+      }
+      return translated;
+    },
+    shouldRetryTranslation,
+  );
+}
+
 export async function translateTranscript(
   transcript: string,
   targetLanguage: string,
   deviceId: string,
   clientUserAgent?: string | null,
+  translateOptions?: TranslateTranscriptOptions,
 ): Promise<TranslateResult> {
   const limitResult = await checkAndIncrement(deviceId);
   if (!limitResult.allowed) {
@@ -125,30 +124,42 @@ export async function translateTranscript(
   }
 
   try {
-    const models = filterModelsForAiChat([
-      SYSTEM_MICRO_TASK_MODEL,
-      ...SYSTEM_TASK_MODEL_FALLBACK_CHAIN,
-    ]);
-    const shouldTryNext = (err: unknown) =>
-      isRetryableAiChatTransportError(err) ||
-      (err instanceof Error && err.message.includes('Invalid translation'));
+    const models = filterModelsForAiChat([...TRANSLATE_MODEL_CHAIN]);
+    const sourceLanguage = translateOptions?.sourceLanguage;
+    const fullText = resolveTranscriptTextForTranslation(
+      transcript,
+      translateOptions?.transcriptSegments,
+    );
 
-    const { chunks, separators } = splitTranscriptForChunkedTranslation(transcript);
+    const { chunks, separators } = splitTranscriptForChunkedTranslation(fullText);
 
     const translatedParts: string[] = [];
+    let priorSource = '';
+    let priorTranslation = '';
+
     for (let i = 0; i < chunks.length; i++) {
-      const piece = await withSequentialModelFallback(
-        models,
-        (m) => callTranslate(chunks[i], targetLanguage, m, clientUserAgent, deviceId),
-        shouldTryNext,
-      );
+      const isContinuation = i > 0;
+      const ctx = isContinuation
+        ? buildTranslateChunkContext(priorSource, priorTranslation)
+        : undefined;
+
+      const piece = await translateChunkWithFallback(chunks[i], targetLanguage, models, {
+        sourceLanguage,
+        isContinuation,
+        clientUserAgent,
+        deviceId,
+        priorSourceTail: ctx?.priorSourceTail,
+        priorTranslationTail: ctx?.priorTranslationTail,
+      });
+
       translatedParts.push(piece);
+      priorSource = `${priorSource}${i > 0 ? (separators[i - 1] ?? '') : ''}${chunks[i]}`;
+      priorTranslation = `${priorTranslation}${i > 0 ? (separators[i - 1] ?? '') : ''}${piece}`;
     }
 
-    const translatedText = translatedParts
-      .map((t, i) => `${t}${separators[i] ?? ''}`)
-      .join('')
-      .trim();
+    const translatedText = normalizeTranslatedTranscript(
+      translatedParts.map((t, i) => `${t}${separators[i] ?? ''}`).join(''),
+    );
 
     return { ok: true, translatedText };
   } catch (err) {
