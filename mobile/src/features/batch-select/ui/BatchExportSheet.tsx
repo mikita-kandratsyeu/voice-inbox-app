@@ -396,7 +396,7 @@ export const BatchExportSheet = ({
               color={color}
             />
           </View>
-          <Text style={{ fontSize: 12, color: color.text.muted, lineHeight: 17 }}>
+          <Text style={{ fontSize: 13, color: color.text.muted, lineHeight: 17 }}>
             {exportPackaging === 'zip'
               ? t('batch.exportPackagingHintZip')
               : t('batch.exportPackagingHintSingle')}
