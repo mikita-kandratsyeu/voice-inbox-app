@@ -127,7 +127,10 @@ function splitParagraphIntoSentences(paragraph: string): string[] {
   const trimmed = paragraph.trim();
   if (!trimmed) return [];
 
-  const byLine = trimmed.split('\n').map((l) => l.trim()).filter(Boolean);
+  const byLine = trimmed
+    .split('\n')
+    .map((l) => l.trim())
+    .filter(Boolean);
   const units: string[] = [];
 
   for (const line of byLine) {
@@ -136,7 +139,10 @@ function splitParagraphIntoSentences(paragraph: string): string[] {
       continue;
     }
 
-    const sentences = line.split(SENTENCE_BOUNDARY_RE).map((s) => s.trim()).filter(Boolean);
+    const sentences = line
+      .split(SENTENCE_BOUNDARY_RE)
+      .map((s) => s.trim())
+      .filter(Boolean);
     if (sentences.length <= 1) {
       units.push(line);
       continue;

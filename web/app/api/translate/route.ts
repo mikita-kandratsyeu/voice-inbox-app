@@ -26,9 +26,7 @@ type TranslateBody = {
   transcriptSegments?: unknown;
 };
 
-function mapSegmentsForTranslate(
-  raw: unknown,
-): TranslateTranscriptSegment[] | undefined {
+function mapSegmentsForTranslate(raw: unknown): TranslateTranscriptSegment[] | undefined {
   const sanitized = sanitizeTranscriptSegmentsForMeetingPrompt(raw);
   if (!sanitized) return undefined;
   return sanitized.map((s) => ({
@@ -65,7 +63,11 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     });
   }
 
-  const { transcript, targetLanguage, sourceLanguage: rawSourceLanguage } = body as {
+  const {
+    transcript,
+    targetLanguage,
+    sourceLanguage: rawSourceLanguage,
+  } = body as {
     transcript: string;
     targetLanguage: string;
     sourceLanguage?: unknown;
