@@ -9,8 +9,7 @@ import {
 } from '@/lib/api';
 import { HEADER_DEVICE_ID } from '@/config/constants';
 import { isSmtpConfigured, sendTransactionalMail } from '@/lib/mailer';
-import { buildShareNoteEmailContent } from '@/lib/shareNoteMarkdownEmailHtml';
-import { buildShareNoteBrandedEmailHtml } from '@/lib/share-note-email-shell';
+import { buildShareNoteEmailHtml } from '@/lib/shareNoteMarkdownEmailHtml';
 import { NextResponse } from 'next/server';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -154,19 +153,23 @@ export async function POST(request: Request): Promise<NextResponse> {
         ? safeZipFileName(zipNameRaw.trim())
         : 'voice-inbox-export.zip';
 
+    const escapedTitle = escapeHtml(title);
     const escapedBody = escapeHtml(bodyText);
-    const zipBodyHtml = `<p style="margin:0;font-size:15px;line-height:1.6;color:#374151;">${escapedBody}</p>`;
 
     try {
       await sendTransactionalMail({
         to,
         subject,
         text: bodyText,
-        html: buildShareNoteBrandedEmailHtml({
-          title,
-          bodyInnerHtml: zipBodyHtml,
-          preheader: bodyText,
-        }),
+        html: `<!doctype html>
+<html>
+  <body style="margin:0;padding:24px;background:#f6f7fb;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    <main style="max-width:720px;margin:0 auto;background:#ffffff;border-radius:16px;padding:24px;border:1px solid #e5e7eb;">
+      <h1 style="margin:0 0 16px;font-size:22px;line-height:1.3;">${escapedTitle}</h1>
+      <p style="margin:0;font-size:15px;line-height:1.55;color:#374151;">${escapedBody}</p>
+    </main>
+  </body>
+</html>`,
         attachments: [
           {
             filename: attachmentFilename,
@@ -210,11 +213,11 @@ export async function POST(request: Request): Promise<NextResponse> {
     `Voice Inbox AI note: ${title}`.slice(0, SUBJECT_MAX);
 
   try {
-    const { html, text } = await buildShareNoteEmailContent(markdown, title);
+    const html = await buildShareNoteEmailHtml(markdown, title);
     await sendTransactionalMail({
       to,
       subject,
-      text,
+      text: markdown,
       html,
       attachments: [
         {

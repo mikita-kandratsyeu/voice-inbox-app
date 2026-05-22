@@ -42,8 +42,13 @@ export function useTranslate(recordId: string) {
     [recordId, setTranslationStatus, transcript, updateTranslation],
   );
 
+  const clearTranslation = useCallback(async (): Promise<void> => {
+    await updateTranslation(recordId, null, null);
+  }, [recordId, updateTranslation]);
+
   return {
     translate,
+    clearTranslation,
     isTranslating,
     hasTranscript: transcript.length > 0,
   };

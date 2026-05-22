@@ -2,7 +2,6 @@ import type { VoiceRecord } from '@/entities/record';
 
 export const SUGGESTED_QUESTION_LIMIT = 3;
 
-const CHIP_LABEL_MAX_CHARS = 36;
 const TASK_IN_PROMPT_MAX_CHARS = 120;
 
 export type AskAiSuggestion = {
@@ -20,10 +19,6 @@ function truncateText(text: string, max: number): string {
   return `${normalized.slice(0, max - 1)}…`;
 }
 
-function truncateForLabel(text: string): string {
-  return truncateText(text, CHIP_LABEL_MAX_CHARS);
-}
-
 function truncateForPrompt(text: string): string {
   return truncateText(text, TASK_IN_PROMPT_MAX_CHARS);
 }
@@ -31,7 +26,7 @@ function truncateForPrompt(text: string): string {
 function flatSuggestion(text: string, priority: number): SuggestionCandidate {
   const prompt = text.trim();
   return {
-    label: truncateForLabel(prompt),
+    label: prompt,
     prompt,
     priority,
   };
@@ -65,7 +60,7 @@ function buildContextCandidates(
     const taskText = focusTask.text.trim();
     candidates.push({
       label: t('recordingDetail.askSuggestedTaskAboutLabel', {
-        task: truncateForLabel(taskText),
+        task: taskText,
       }),
       prompt: t('recordingDetail.askSuggestedTaskAbout', {
         task: truncateForPrompt(taskText),

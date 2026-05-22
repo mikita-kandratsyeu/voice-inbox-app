@@ -27,6 +27,7 @@ type TranscriptTabProps = {
   onTranscribe: () => void;
   onEditTranscript: () => void;
   onTranslate?: (targetLanguage: string) => Promise<boolean>;
+  onDeleteTranslation?: () => void;
   isTranslating?: boolean;
   isAiProcessing?: boolean;
   isPrivateMode?: boolean;
@@ -94,6 +95,7 @@ export const TranscriptTab = ({
   onTranscribe,
   onEditTranscript,
   onTranslate,
+  onDeleteTranslation,
   isTranslating = false,
   isAiProcessing = false,
   isPrivateMode = false,
@@ -102,10 +104,17 @@ export const TranscriptTab = ({
   const theme = useAppTheme();
   const isDark = theme === 'dark';
   const [viewMode, setViewMode] = useState<'original' | 'translated'>('original');
+  const hasTranslation = Boolean(translatedTranscript?.trim());
 
   useEffect(() => {
     setViewMode('original');
   }, [recordId]);
+
+  useEffect(() => {
+    if (!hasTranslation) {
+      setViewMode('original');
+    }
+  }, [hasTranslation]);
 
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
@@ -116,7 +125,6 @@ export const TranscriptTab = ({
   );
   const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
 
-  const hasTranslation = Boolean(translatedTranscript?.trim());
   const showTranslation = hasTranslation && viewMode === 'translated';
   const translatedParagraphs = buildReadableParagraphs(translatedTranscript ?? '');
   const hint =
@@ -192,20 +200,38 @@ export const TranscriptTab = ({
             key={theme}
             themeVariant={isDark ? 'dark' : 'light'}
             onPressAction={async ({ nativeEvent }) => {
-              const lang = nativeEvent.event;
-              if ((TRANSLATE_LANGUAGES as readonly string[]).includes(lang)) {
-                const ok = await onTranslate(lang);
+              const action = nativeEvent.event;
+              if (action === 'deleteTranslation') {
+                onDeleteTranslation?.();
+                return;
+              }
+              if ((TRANSLATE_LANGUAGES as readonly string[]).includes(action)) {
+                const ok = await onTranslate(action);
 
                 if (ok) {
                   setViewMode('translated');
                 }
               }
             }}
-            actions={TRANSLATE_LANGUAGES.map((lang) => ({
-              id: lang,
-              title: t(`recordingDetail.language.${lang}`),
-              titleColor: color.text.primary,
-            }))}
+            actions={[
+              ...TRANSLATE_LANGUAGES.map((lang) => ({
+                id: lang,
+                title: t(`recordingDetail.language.${lang}`),
+                titleColor: color.text.primary,
+              })),
+              ...(hasTranslation && onDeleteTranslation
+                ? [
+                    {
+                      id: 'deleteTranslation',
+                      title: t('recordingDetail.deleteTranslation'),
+                      image: 'trash' as const,
+                      imageColor: color.accent.delete,
+                      titleColor: color.accent.delete,
+                      attributes: { destructive: true },
+                    },
+                  ]
+                : []),
+            ]}
           >
             <View>
               <Button

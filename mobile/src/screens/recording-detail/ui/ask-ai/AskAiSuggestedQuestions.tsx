@@ -6,7 +6,10 @@ import { hapticSelection } from '@/shared/lib';
 
 import type { AskAiSuggestion } from './askAiSuggestions';
 
-const CHIP_MIN_HEIGHT = 44;
+/** Spacing between section title and chips, and between chips (kept equal). */
+const SECTION_GAP = 12;
+const CHIP_PADDING_X = 12;
+const CHIP_PADDING_Y = 10;
 
 type AskAiSuggestedQuestionsProps = {
   color: Colors;
@@ -28,11 +31,11 @@ export const AskAiSuggestedQuestions = ({
   }
 
   return (
-    <View className="gap-3">
+    <View style={{ gap: SECTION_GAP }}>
       <Text className="text-xs font-semibold" style={{ color: color.text.secondary }}>
         {title}
       </Text>
-      <View className="flex-row flex-wrap gap-2">
+      <View style={{ gap: SECTION_GAP }}>
         {suggestions.map((suggestion, index) => (
           <TouchableOpacity
             key={`suggested-${index}`}
@@ -45,17 +48,20 @@ export const AskAiSuggestedQuestions = ({
             accessibilityRole="button"
             accessibilityLabel={suggestion.prompt}
             accessibilityState={{ disabled: Boolean(disabled) }}
-            className="max-w-full rounded-xl px-3"
             style={{
-              minHeight: CHIP_MIN_HEIGHT,
-              justifyContent: 'center',
               alignSelf: 'flex-start',
+              maxWidth: '100%',
+              paddingHorizontal: CHIP_PADDING_X,
+              paddingVertical: CHIP_PADDING_Y,
+              borderRadius: 12,
               backgroundColor: color.background.tertiary,
             }}
           >
             <Text
               className="text-[15px] font-normal leading-[22px]"
               style={{ color: color.text.primary }}
+              numberOfLines={4}
+              ellipsizeMode="tail"
               {...(Platform.OS === 'android' ? { includeFontPadding: false } : {})}
             >
               {suggestion.label}

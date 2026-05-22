@@ -32,7 +32,7 @@ export const EmptyState = ({
   const suggestedQuestions = useMemo(() => buildSuggestedQuestions(t, record), [t, record]);
 
   return (
-    <View className="gap-3 pb-1 pt-1">
+    <View className="gap-4 pb-1">
       <AskAiContextDisclosure
         color={color}
         record={record}

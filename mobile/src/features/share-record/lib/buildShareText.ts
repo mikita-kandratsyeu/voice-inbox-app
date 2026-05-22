@@ -6,7 +6,6 @@ import {
   formatMeetingDialogueForShareMarkdown,
   formatTaskLineForShare,
   formatTranscriptBodyForShare,
-  wrapTranscriptInMarkdownFence,
 } from './formatShareMarkdown';
 import { resolveShareExportContext, type ShareExportContext } from './shareExportContext';
 
@@ -220,12 +219,10 @@ const pushTranslation = (lines: string[], record: VoiceRecord): void => {
 
 const pushTranscript = (lines: string[], record: VoiceRecord): void => {
   const transcriptBody = formatTranscriptBodyForShare(record);
-  const fenced = wrapTranscriptInMarkdownFence(transcriptBody);
-  if (fenced) {
+  if (transcriptBody) {
     lines.push('');
     lines.push(`## ${i18n.t('recordingDetail.transcript')}`);
-    lines.push('');
-    lines.push(fenced);
+    lines.push(transcriptBody);
   }
 };
 

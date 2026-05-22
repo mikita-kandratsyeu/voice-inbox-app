@@ -35,7 +35,7 @@ export const TranscriptContent = ({
 }: TranscriptContentProps) => {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { translate, isTranslating } = useTranslate(record.id);
+  const { translate, clearTranslation, isTranslating } = useTranslate(record.id);
 
   const { recordFromStore, hydrateRecordDetails } = useRecordStore(
     useShallow((s) => ({
@@ -109,6 +109,23 @@ export const TranscriptContent = ({
     return true;
   };
 
+  const handleDeleteTranslation = () => {
+    Alert.alert(
+      t('recordingDetail.deleteTranslationTitle'),
+      t('recordingDetail.deleteTranslationMessage'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.delete'),
+          style: 'destructive',
+          onPress: () => {
+            void clearTranslation();
+          },
+        },
+      ],
+    );
+  };
+
   return (
     <>
       <TranscriptTab
@@ -122,6 +139,7 @@ export const TranscriptContent = ({
         onTranscribe={onTranscribe}
         onEditTranscript={() => navigation.navigate('EditTranscript', { record: r })}
         onTranslate={handleTranslate}
+        onDeleteTranslation={handleDeleteTranslation}
         isTranslating={isTranslating}
         isAiProcessing={isAiProcessing}
         isPrivateMode={isPrivateMode}
