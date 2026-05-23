@@ -1,8 +1,10 @@
 import type { Components } from 'react-markdown';
 import { normalizeInlineSpeakerLabelsToParagraphBreaks } from '@/lib/normalizeSpeakerTurnsMarkdown';
+import { normalizeSpeakerTurnsForEmail } from '@/lib/normalizeSpeakerTurnsForEmail';
 import { normalizeTranscriptTimestampLinesForEmail } from '@/lib/normalizeTranscriptTimestampsForEmail';
 import ReactMarkdown from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
+import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 
 const bodyFont = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
@@ -258,11 +260,12 @@ const emailMarkdownComponents: Components = {
 export async function renderShareNoteMarkdownEmailInnerHtml(markdown: string): Promise<string> {
   const { renderToStaticMarkup } = await import('react-dom/server');
   let markdownForEmail = normalizeTranscriptTimestampLinesForEmail(markdown);
+  markdownForEmail = normalizeSpeakerTurnsForEmail(markdownForEmail);
   markdownForEmail = normalizeInlineSpeakerLabelsToParagraphBreaks(markdownForEmail);
   return renderToStaticMarkup(
     <div style={{ fontFamily: bodyFont, marginTop: '4px' }}>
       <ReactMarkdown
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[remarkGfm, remarkBreaks]}
         rehypePlugins={[rehypeSanitize]}
         components={emailMarkdownComponents}
         skipHtml
