@@ -1,5 +1,6 @@
 import type { Components } from 'react-markdown';
 import { normalizeInlineSpeakerLabelsToParagraphBreaks } from '@/lib/normalizeSpeakerTurnsMarkdown';
+import { normalizeTranscriptTimestampLinesForEmail } from '@/lib/normalizeTranscriptTimestampsForEmail';
 import ReactMarkdown from 'react-markdown';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
@@ -256,7 +257,8 @@ const emailMarkdownComponents: Components = {
  */
 export async function renderShareNoteMarkdownEmailInnerHtml(markdown: string): Promise<string> {
   const { renderToStaticMarkup } = await import('react-dom/server');
-  const markdownForEmail = normalizeInlineSpeakerLabelsToParagraphBreaks(markdown);
+  let markdownForEmail = normalizeTranscriptTimestampLinesForEmail(markdown);
+  markdownForEmail = normalizeInlineSpeakerLabelsToParagraphBreaks(markdownForEmail);
   return renderToStaticMarkup(
     <div style={{ fontFamily: bodyFont, marginTop: '4px' }}>
       <ReactMarkdown
