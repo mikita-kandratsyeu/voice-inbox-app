@@ -23,6 +23,7 @@ import { useTranscription } from '@/features/transcription';
 import { useColors } from '@/shared/config';
 import {
   hapticError,
+  hapticLight,
   hapticSelection,
   hapticSuccess,
   resolveDisplayFolderColor,
@@ -40,6 +41,7 @@ import { RecordingDetailCard } from './RecordingDetailCard';
 import { RecordingDetailHeader } from './RecordingDetailHeader';
 import { RecordingDetailTabBar } from './RecordingDetailTabBar';
 import { RecordingMarksSection } from './RecordingMarksSection';
+import { RecordingMeetingModeSection } from './RecordingMeetingModeSection';
 import { RelatedNotesSection } from './RelatedNotesSection';
 import { ShareRecordSheet } from './ShareRecordSheet';
 import { SummaryTab } from './SummaryTab';
@@ -74,6 +76,7 @@ export const RecordingDetailScreen = () => {
     setRecordFolder,
     renameRecord,
     updateRecordingMarks,
+    updateAiExtras,
   } = useRecordStore(
     useShallow((s) => ({
       liveRecord: s.records.find((r) => r.id === recordId) ?? routeRecord,
@@ -90,6 +93,7 @@ export const RecordingDetailScreen = () => {
       setRecordFolder: s.setRecordFolder,
       renameRecord: s.renameRecord,
       updateRecordingMarks: s.updateRecordingMarks,
+      updateAiExtras: s.updateAiExtras,
     })),
   );
 
@@ -363,6 +367,78 @@ export const RecordingDetailScreen = () => {
   const contentMaxWidth = useTabletContentMaxWidth();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const isPrivateMode = aiExecutionMode === 'private_experimental';
+  const isMeetingMode = liveRecord.classification === 'meeting';
+  const aiBusy =
+    liveRecord.summaryStatus === 'processing' || liveRecord.tasksStatus === 'processing';
+  const hasTranscript = Boolean(liveRecord.transcript?.trim());
+  const showMeetingModeToggle = isProActive && !isPrivateMode && hasTranscript;
+
+  const applyMeetingModeOff = useCallback(() => {
+    void updateAiExtras(liveRecord.id, { classification: null, meetingDialogue: null });
+  }, [liveRecord.id, updateAiExtras]);
+
+  const promptRegenerateAfterMeetingOn = useCallback(() => {
+    const hasPriorSummary =
+      Boolean(liveRecord.summary?.trim()) ||
+      liveRecord.summaryStatus === 'done' ||
+      liveRecord.summaryStatus === 'error';
+    if (!hasPriorSummary) return;
+
+    Alert.alert(
+      t('recordingDetail.meetingModeRegenerateTitle'),
+      t('recordingDetail.meetingModeRegenerateMessage'),
+      [
+        { text: t('recordingDetail.meetingModeRegenerateLater'), style: 'cancel' },
+        {
+          text: t('recordingDetail.meetingModeRegenerateConfirm'),
+          onPress: () => {
+            generateSummary(liveRecord).catch(() => {});
+          },
+        },
+      ],
+    );
+  }, [generateSummary, liveRecord, t]);
+
+  const handleToggleMeetingMode = useCallback(() => {
+    if (aiBusy) return;
+
+    hapticLight();
+
+    if (isMeetingMode) {
+      if (liveRecord.meetingDialogue?.trim()) {
+        Alert.alert(
+          t('recordingDetail.meetingModeDisableTitle'),
+          t('recordingDetail.meetingModeDisableMessage'),
+          [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('recordingDetail.meetingModeDisableConfirm'),
+              style: 'destructive',
+              onPress: applyMeetingModeOff,
+            },
+          ],
+        );
+        return;
+      }
+      applyMeetingModeOff();
+      return;
+    }
+
+    void (async () => {
+      await updateAiExtras(liveRecord.id, { classification: 'meeting' });
+      hapticSuccess();
+      promptRegenerateAfterMeetingOn();
+    })();
+  }, [
+    aiBusy,
+    applyMeetingModeOff,
+    isMeetingMode,
+    liveRecord,
+    promptRegenerateAfterMeetingOn,
+    t,
+    updateAiExtras,
+  ]);
+
   const hasAudio = Boolean(liveRecord.audioPath?.trim());
   const hasRecordingMarks = (liveRecord.recordingMarks?.length ?? 0) > 0;
   const meetingPresetUiActive = useMemo(
@@ -573,6 +649,16 @@ export const RecordingDetailScreen = () => {
               />
             </View>
           )}
+
+          {showMeetingModeToggle ? (
+            <RecordingMeetingModeSection
+              isMeetingMode={isMeetingMode}
+              disabled={aiBusy}
+              color={color}
+              surfaceBackgroundColor={tabPanelBackgroundColor}
+              onToggle={handleToggleMeetingMode}
+            />
+          ) : null}
 
           <View
             className="overflow-hidden rounded-2xl"
