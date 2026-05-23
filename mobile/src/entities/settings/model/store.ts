@@ -501,6 +501,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   setPrivateCapabilityTier: (value: PrivateCapabilityTier) => {
+    if (get().privateCapabilityTier === value) return;
     storage.set(KEYS.PRIVATE_CAPABILITY_TIER, value);
     set({ privateCapabilityTier: value });
   },

@@ -22,7 +22,11 @@ import { AppLockGate, AppSwitcherPrivacyOverlay } from '@/features/app-lock';
 import { AppRatingPromptRoot } from '@/features/app-review';
 import { flushPendingSharedAudioImport } from '@/features/import-audio-file/lib/sharedAudioImportRegistry';
 import { OnboardingGate } from '@/features/onboarding';
-import { useResetAccentWhenNotPro, useResetProOnlyAiModelWhenNotPro } from '@/features/pro-license';
+import {
+  ProEntitlementProvider,
+  useResetAccentWhenNotPro,
+  useResetProOnlyAiModelWhenNotPro,
+} from '@/features/pro-license';
 import { TranscriptionResumePrompt } from '@/features/transcription';
 import {
   BootSplashVisibleProvider,
@@ -50,7 +54,9 @@ const App = () => {
 
   return (
     <BootSplashVisibleProvider value={bootSplashVisible}>
-      <AppShell setBootSplashVisible={setBootSplashVisible} />
+      <ProEntitlementProvider>
+        <AppShell setBootSplashVisible={setBootSplashVisible} />
+      </ProEntitlementProvider>
     </BootSplashVisibleProvider>
   );
 };

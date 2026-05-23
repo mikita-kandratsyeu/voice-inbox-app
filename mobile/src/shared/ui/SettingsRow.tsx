@@ -1,8 +1,11 @@
 import { ChevronRight } from 'lucide-react-native';
-import React from 'react';
+import React, { useContext } from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
+import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
+
+import { SettingsSurfaceColorContext } from './SettingsSurfaceColorContext';
 
 type SettingsRowProps = {
   label: string;
@@ -17,7 +20,11 @@ type SettingsRowProps = {
   dangerous?: boolean;
 };
 
-export const SettingsRow = ({
+type SettingsRowInnerProps = SettingsRowProps & {
+  color: Colors;
+};
+
+const SettingsRowInner = ({
   label,
   subtitle,
   value,
@@ -28,8 +35,8 @@ export const SettingsRow = ({
   isFirst = false,
   isLast = false,
   dangerous = false,
-}: SettingsRowProps) => {
-  const color = useColors();
+  color,
+}: SettingsRowInnerProps) => {
   const borderStyle = !isLast
     ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
     : {};
@@ -106,4 +113,17 @@ export const SettingsRow = ({
     );
   }
   return content;
+};
+
+const SettingsRowWithHook = (props: SettingsRowProps) => {
+  const color = useColors();
+  return <SettingsRowInner {...props} color={color} />;
+};
+
+export const SettingsRow = (props: SettingsRowProps) => {
+  const contextColor = useContext(SettingsSurfaceColorContext);
+  if (contextColor != null) {
+    return <SettingsRowInner {...props} color={contextColor} />;
+  }
+  return <SettingsRowWithHook {...props} />;
 };
