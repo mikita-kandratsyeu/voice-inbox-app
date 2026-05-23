@@ -1,11 +1,13 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Check } from 'lucide-react-native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Check, Crown } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import type { SettingsStackParamList } from '@/app/navigation/types';
 import type {
   LocalAiModelCatalogEntry,
   LocalAiModelId,
@@ -14,6 +16,7 @@ import type {
 import {
   DEFAULT_LOCAL_AI_MODEL_ID,
   formatModelContextTokens,
+  isProOnlyAiModel,
   LOCAL_AI_MODELS,
   USER_FACING_AI_MODELS,
   USER_FACING_AI_MODELS_BY_SPEED,
@@ -21,11 +24,13 @@ import {
 } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { getLocalLlmModelFileSizeBytes, useModelManager } from '@/features/model-manager';
+import { useProEntitlement } from '@/features/pro-license';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
 import { ScreenHeader } from '@/shared/ui';
 
+import { AutomationComingSoonSheet } from './AutomationComingSoonSheet';
 import { LocalAiModelCard } from './LocalAiModelCard';
 import { type ModelMetaChip, ModelMetaChips } from './ModelMetaChips';
 
@@ -73,7 +78,9 @@ export const AIModelPickerScreen = () => {
   const { t } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const { isProActive } = useProEntitlement();
+  const [premiumModelSheet, setPremiumModelSheet] = useState(false);
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
@@ -149,6 +156,10 @@ export const AIModelPickerScreen = () => {
   }, [refreshRealLocalSizes]);
 
   const handleSelectManual = (id: UserSelectableAIModelId) => {
+    if (!isProActive && isProOnlyAiModel(id)) {
+      setPremiumModelSheet(true);
+      return;
+    }
     setAiModelRoutingMode('manual');
     setAIModel(id);
     navigation.goBack();
@@ -376,26 +387,48 @@ export const AIModelPickerScreen = () => {
                           : '';
                   const isSelected =
                     aiModelRoutingMode === 'manual' && cloudOption.id === selectedAIModel;
+                  const locked =
+                    !isProActive && isProOnlyAiModel(cloudOption.id as UserSelectableAIModelId);
 
                   return (
                     <TouchableOpacity
                       key={cloudOption.id}
-                      onPress={() => handleSelectManual(cloudOption.id as UserSelectableAIModelId)}
+                      onPress={() => {
+                        if (locked) {
+                          setPremiumModelSheet(true);
+                          return;
+                        }
+                        handleSelectManual(cloudOption.id as UserSelectableAIModelId);
+                      }}
                       activeOpacity={0.7}
                       accessibilityRole="button"
                       accessibilityLabel={cloudOption.name}
                       accessibilityState={{ selected: isSelected }}
+                      accessibilityHint={locked ? t('aiModels.proModelTitle') : undefined}
                       className={`px-4 py-4 ${radiusClass}`}
                       style={[{ backgroundColor: color.background.card }, borderStyle]}
                     >
                       <View className="flex-row items-center justify-between">
                         <View className="mr-3 flex-1">
-                          <Text
-                            className="mb-1 text-[16px] font-semibold"
-                            style={{ color: color.text.primary }}
-                          >
-                            {cloudOption.tierLabel}
-                          </Text>
+                          <View className="mb-1 flex-row flex-wrap items-center gap-2">
+                            <Text
+                              className="text-[16px] font-semibold"
+                              style={{ color: color.text.primary }}
+                            >
+                              {cloudOption.tierLabel}
+                            </Text>
+                            {locked ? (
+                              <View className="flex-row items-center gap-1">
+                                <Crown size={14} color={color.accent.primary} strokeWidth={2} />
+                                <Text
+                                  className="text-xs font-semibold"
+                                  style={{ color: color.accent.primary }}
+                                >
+                                  {t('common.pro')}
+                                </Text>
+                              </View>
+                            ) : null}
+                          </View>
                           <Text
                             className="mb-1 text-[13px] leading-5"
                             style={{ color: color.text.muted }}
@@ -435,6 +468,17 @@ export const AIModelPickerScreen = () => {
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
+      {premiumModelSheet ? (
+        <AutomationComingSoonSheet
+          visible
+          feature="premiumAiModel"
+          onUpgradePress={() => {
+            setPremiumModelSheet(false);
+            navigation.navigate('Settings', { openPlanPaywall: true });
+          }}
+          onClose={() => setPremiumModelSheet(false)}
+        />
+      ) : null}
     </View>
   );
 };

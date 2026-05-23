@@ -16,7 +16,7 @@ import { openRouterJsonObjectResponseFormat } from '@/lib/openrouter-response-fo
 export type AiChatMessage = DeepSeekChatMessage;
 
 export type SendAiChatCompletionParams = {
-  /** Catalog id from clients (e.g. deepseek/deepseek-v4-flash:nitro) or OpenRouter id. */
+  /** Catalog id from clients (e.g. deepseek/deepseek-v4-flash) or OpenRouter id. */
   model: string;
   messages: AiChatMessage[];
   jsonObject?: boolean;

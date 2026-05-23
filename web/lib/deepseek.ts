@@ -98,7 +98,7 @@ export function deepSeekDirectApiConfigured(): boolean {
 }
 
 export function isDeepSeekOpenRouterModel(model: string): boolean {
-  return normalizeIncomingAiModel(model.trim()) === AI_MODEL_DEEPSEEK_V4_FLASH;
+  return normalizeIncomingAiModel(model) === AI_MODEL_DEEPSEEK_V4_FLASH;
 }
 
 export function isRetryableDeepSeekTransportError(err: unknown): boolean {

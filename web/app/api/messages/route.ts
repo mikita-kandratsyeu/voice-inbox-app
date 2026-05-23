@@ -3,7 +3,7 @@ import {
   apiError,
   HttpStatus,
   parseJsonBody,
-  parseAllowedAiModel,
+  parseAllowedAiModelForDevice,
   validateRequiredStrings,
   weeklyAiLimitExceededResponse,
 } from '@/lib/api';
@@ -139,11 +139,14 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         })
       : model;
 
-  const modelParsed = parseAllowedAiModel(resolvedModel);
+  const modelParsed = await parseAllowedAiModelForDevice(deviceIdTrimmed, resolvedModel);
   if (!modelParsed.ok) {
     return apiError(modelParsed.error, HttpStatus.BAD_REQUEST, {
       pathname,
-      code: ApiErrorCode.InvalidModel,
+      code:
+        modelParsed.reason === 'pro_required'
+          ? ApiErrorCode.ProModelRequired
+          : ApiErrorCode.InvalidModel,
     });
   }
   resolvedModel = modelParsed.model;

@@ -766,6 +766,7 @@
       "freeLimitsDisclosureTitle": "What's included in Free",
       "freeLimits": {
         "manualAi": "AI runs manually only",
+        "basicModels": "Core models for summaries and Q&A",
         "recording": "Recordings up to {{minutes}} minutes",
         "weeklyAi": "Up to {{limit}} AI requests per week"
       },
@@ -802,6 +803,7 @@
         "accentCustomization": "Accent color — buttons & progress",
         "folderColors": "Custom folder colors",
         "meetingModeAndPinnedMoments": "Meeting mode and pinned moments",
+        "premiumAiModels": "Advanced AI models",
         "extendedShareAndBatchExport": "Extended note export — summaries, email, and audio",
         "noAds": "No ads"
       }
@@ -1177,7 +1179,9 @@
       "heavy": "Higher memory use"
     },
     "contextChip": "{{size}}",
-    "autoRoutingChip": "Smart routing"
+    "autoRoutingChip": "Smart routing",
+    "proModelTitle": "Advanced models",
+    "proModelBody": "Upgrade to Pro to choose models for your most important notes—deep summaries, long recordings, and thoughtful answers."
   },
   "onboarding": {
     "downloadBeforeStart": "Download the Whisper model for transcription?",

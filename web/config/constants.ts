@@ -106,10 +106,16 @@ export function normalizeIncomingAiModel(model: string): string {
     return AI_MODEL_GEMINI_2_5_FLASH_LITE;
   }
 
+  if (t === LEGACY_AI_MODEL_DEEPSEEK_V4_FLASH_NITRO) {
+    return AI_MODEL_DEEPSEEK_V4_FLASH;
+  }
+
   return t;
 }
-/** Manual picker, fallbacks, and auto medium tier (OpenRouter nitro). */
-export const AI_MODEL_DEEPSEEK_V4_FLASH = 'deepseek/deepseek-v4-flash:nitro';
+/** Manual picker, fallbacks, and auto medium tier. */
+export const AI_MODEL_DEEPSEEK_V4_FLASH = 'deepseek/deepseek-v4-flash';
+/** Legacy OpenRouter nitro suffix — mapped in {@link normalizeIncomingAiModel}. */
+export const LEGACY_AI_MODEL_DEEPSEEK_V4_FLASH_NITRO = 'deepseek/deepseek-v4-flash:nitro';
 
 /** Transcript translation: quality-first model chain (see translate.service). */
 export const TRANSLATE_MODEL_CHAIN: readonly string[] = [

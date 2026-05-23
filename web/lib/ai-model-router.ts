@@ -72,7 +72,7 @@ function summaryLongRoutingChars(): number {
   return readRoutingThreshold('AI_ROUTE_SUMMARY_LONG_CHARS', DEFAULT_SUMMARY_LONG_ROUTING_CHARS);
 }
 
-/** Auto tier: short → Gemini 2.5, medium → DeepSeek nitro, long → Gemini 3.1. */
+/** Auto tier: short → Gemini 2.5, medium → DeepSeek V4 Flash, long → Gemini 3.1. */
 function resolveAutoAiModelByThresholds(
   routingChars: number,
   mediumAt: number,

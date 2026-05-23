@@ -86,7 +86,14 @@ const getStoredAppLanguage = (): AppLanguage => {
 
 const USER_SELECTABLE_SET = new Set<string>(USER_FACING_AI_MODELS.map((m) => m.id));
 
+/** Legacy catalog id before we dropped the OpenRouter `:nitro` suffix. */
+const LEGACY_DEEPSEEK_V4_FLASH_NITRO = 'deepseek/deepseek-v4-flash:nitro';
+
 const normalizeStoredAIModel = (raw: string | undefined): UserSelectableAIModelId => {
+  if (raw === LEGACY_DEEPSEEK_V4_FLASH_NITRO) {
+    return 'deepseek/deepseek-v4-flash';
+  }
+
   if (raw && USER_SELECTABLE_SET.has(raw)) {
     return raw as UserSelectableAIModelId;
   }
@@ -96,6 +103,11 @@ const normalizeStoredAIModel = (raw: string | undefined): UserSelectableAIModelI
 
 const getStoredAIModel = (): UserSelectableAIModelId => {
   const val = storage.getString(KEYS.AI_MODEL);
+  if (val === LEGACY_DEEPSEEK_V4_FLASH_NITRO) {
+    const migrated: UserSelectableAIModelId = 'deepseek/deepseek-v4-flash';
+    storage.set(KEYS.AI_MODEL, migrated);
+    return migrated;
+  }
   return normalizeStoredAIModel(val);
 };
 

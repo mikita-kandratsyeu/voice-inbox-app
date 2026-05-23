@@ -7,6 +7,7 @@ import type { UserSelectableAIModelId, WhisperModelId } from '@/entities/setting
 import {
   getWhisperEstimatedDownloadSizeMb,
   getWhisperModelVariantId,
+  isProOnlyAiModel,
   USER_FACING_AI_MODELS_BY_SPEED,
   useRecommendedWhisperModelId,
   useSettingsStore,
@@ -14,6 +15,7 @@ import {
   WHISPER_MODELS,
 } from '@/entities/settings';
 import { useModelManager } from '@/features/model-manager';
+import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import { formatFileSize, getWhisperLabel } from '@/shared/lib/whisper';
@@ -30,6 +32,7 @@ export const OnboardingSetupStep = ({
   selectedColor = color.accent.primary,
 }: OnboardingSetupStepProps) => {
   const { t } = useTranslation();
+  const { isProActive } = useProEntitlement();
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const aiModelRoutingMode = useSettingsStore((s) => s.aiModelRoutingMode);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
@@ -72,13 +75,16 @@ export const OnboardingSetupStep = ({
   };
 
   if (mode === 'ai') {
+    const cloudModelsForOnboarding = USER_FACING_AI_MODELS_BY_SPEED.filter(
+      (model) => isProActive || !isProOnlyAiModel(model.id),
+    );
     const aiOptions = [
       {
         id: 'auto',
         name: t('aiModels.autoRecommendedLabel'),
         isRecommended: true,
       },
-      ...USER_FACING_AI_MODELS_BY_SPEED.map((model) => ({
+      ...cloudModelsForOnboarding.map((model) => ({
         id: model.id,
         name: model.name,
         isRecommended: false,

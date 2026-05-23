@@ -22,7 +22,7 @@ import { AppLockGate, AppSwitcherPrivacyOverlay } from '@/features/app-lock';
 import { AppRatingPromptRoot } from '@/features/app-review';
 import { flushPendingSharedAudioImport } from '@/features/import-audio-file/lib/sharedAudioImportRegistry';
 import { OnboardingGate } from '@/features/onboarding';
-import { useResetAccentWhenNotPro } from '@/features/pro-license';
+import { useResetAccentWhenNotPro, useResetProOnlyAiModelWhenNotPro } from '@/features/pro-license';
 import { TranscriptionResumePrompt } from '@/features/transcription';
 import {
   BootSplashVisibleProvider,
@@ -95,6 +95,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
   useAppBootstrap(onPushData, { onBootstrapReady, onCriticalError });
   useAppForegroundLifecycle();
   useResetAccentWhenNotPro({ enabled: !bootSplashVisible });
+  useResetProOnlyAiModelWhenNotPro({ enabled: !bootSplashVisible });
 
   const rootStyle = { flex: 1 };
   const safeAreaStyle = { backgroundColor: color.background.primary };

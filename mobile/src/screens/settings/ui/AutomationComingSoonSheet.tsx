@@ -14,7 +14,8 @@ export type AutomationFeatureKind =
   | 'autoArchive'
   | 'accentColor'
   | 'folderColor'
-  | 'batchExport';
+  | 'batchExport'
+  | 'premiumAiModel';
 
 type AutomationComingSoonSheetProps = {
   visible: boolean;
@@ -47,7 +48,9 @@ export function AutomationComingSoonSheet({
                 ? 'batch_export'
                 : feature === 'folderColor'
                   ? 'folder_color'
-                  : 'accent_color',
+                  : feature === 'premiumAiModel'
+                    ? 'premium_ai_model'
+                    : 'accent_color',
     });
     if (feature === 'autoTranscribe') {
       void logAnalyticsEvent('premium_feature_tapped_auto_whisper', {
@@ -67,6 +70,10 @@ export function AutomationComingSoonSheet({
       void logAnalyticsEvent('premium_feature_tapped_folder_color', {
         surface: 'folder_form_sheet',
       });
+    } else if (feature === 'premiumAiModel') {
+      void logAnalyticsEvent('premium_feature_tapped_ai_model', {
+        surface: 'ai_model_picker',
+      });
     } else {
       void logAnalyticsEvent('premium_feature_tapped_accent_color', {
         surface: 'appearance_sheet',
@@ -85,7 +92,9 @@ export function AutomationComingSoonSheet({
             ? t('batch.exportProTitle')
             : feature === 'folderColor'
               ? t('folders.colorProTitle')
-              : t('appearance.accentColor.proTitle');
+              : feature === 'premiumAiModel'
+                ? t('aiModels.proModelTitle')
+                : t('appearance.accentColor.proTitle');
   const body =
     feature === 'autoTranscribe'
       ? t('settings.automationSoon.autoTranscribeBody')
@@ -97,7 +106,9 @@ export function AutomationComingSoonSheet({
             ? t('batch.exportProBody')
             : feature === 'folderColor'
               ? t('folders.colorProBody')
-              : t('appearance.accentColor.proBody');
+              : feature === 'premiumAiModel'
+                ? t('aiModels.proModelBody')
+                : t('appearance.accentColor.proBody');
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>

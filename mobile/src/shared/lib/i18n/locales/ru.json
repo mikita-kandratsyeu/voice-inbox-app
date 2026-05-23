@@ -781,6 +781,7 @@
       "freeLimitsDisclosureTitle": "Что входит в бесплатный план",
       "freeLimits": {
         "manualAi": "ИИ только вручную",
+        "basicModels": "Базовые модели для сводок и ответов",
         "recording": "Запись до {{minutes}} минут",
         "weeklyAi": "До {{limit}} генераций в неделю"
       },
@@ -817,6 +818,7 @@
         "accentCustomization": "Цвет акцента — кнопки и индикаторы",
         "folderColors": "Персональные цвета папок",
         "meetingModeAndPinnedMoments": "Режим встречи и отметки моментов",
+        "premiumAiModels": "Продвинутые модели ИИ",
         "extendedShareAndBatchExport": "Расширенный экспорт заметок — сводки, почта и аудио",
         "noAds": "Без рекламы"
       }
@@ -1196,7 +1198,9 @@
       "heavy": "Выше нагрузка на память"
     },
     "contextChip": "{{size}}",
-    "autoRoutingChip": "Умный подбор"
+    "autoRoutingChip": "Умный подбор",
+    "proModelTitle": "Продвинутые модели",
+    "proModelBody": "С Pro можно выбрать модели для важных заметок — глубокие сводки, длинные записи и развёрнутые ответы."
   },
   "onboarding": {
     "downloadBeforeStart": "Скачать модель Whisper для транскрипции?",

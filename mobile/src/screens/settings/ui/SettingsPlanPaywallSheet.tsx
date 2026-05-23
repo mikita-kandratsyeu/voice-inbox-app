@@ -462,6 +462,7 @@ export function SettingsPlanPaywallSheet({
                 style={{ borderTopColor: c.border.default, gap: PLAN_PAYWALL_FEATURE_LIST_GAP }}
               >
                 <FeatureRow mutedCheck text={t('settings.planPaywall.freeLimits.manualAi')} />
+                <FeatureRow mutedCheck text={t('settings.planPaywall.freeLimits.basicModels')} />
                 <FeatureRow
                   mutedCheck
                   text={t('settings.planPaywall.freeLimits.recording', {
@@ -505,6 +506,7 @@ export function SettingsPlanPaywallSheet({
                 text={t('settings.planPaywall.features.meetingModeAndPinnedMoments')}
                 emphasized
               />
+              <FeatureRow text={t('settings.planPaywall.features.premiumAiModels')} />
               <FeatureRow text={t('settings.planPaywall.features.extendedShareAndBatchExport')} />
               <FeatureRow text={t('settings.planPaywall.features.accentCustomization')} />
               <FeatureRow text={t('settings.planPaywall.features.folderColors')} />

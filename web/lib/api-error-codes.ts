@@ -12,6 +12,7 @@ export const ApiErrorCode = {
   InvalidJson: 'invalid_json',
   ValidationError: 'validation_error',
   InvalidModel: 'invalid_model',
+  ProModelRequired: 'pro_model_required',
   PayloadTooLarge: 'payload_too_large',
   DeviceRateLimited: 'device_rate_limited',
   WeeklyAiLimit: 'weekly_ai_limit',

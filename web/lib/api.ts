@@ -18,6 +18,8 @@ import {
 import { ApiErrorCode } from '@/lib/api-error-codes';
 import { recordApiError } from '@/lib/api-telemetry';
 import { verifyAppToken } from '@/lib/jwt';
+import { isProOnlyAiModel } from '@/lib/pro-only-ai-models';
+import { isProDevice } from '@/lib/pro-entitlement';
 import { redis } from '@/lib/redis';
 import {
   apiError,
@@ -31,19 +33,41 @@ export { HttpStatus, apiError, weeklyAiLimitExceededResponse };
 
 const MOBILE_USER_AGENT_SUBSTRING = process.env.MOBILE_USER_AGENT?.trim() ?? '';
 
-export type ParseAllowedAiModelResult = { ok: true; model: string } | { ok: false; error: string };
+export type ParseAllowedAiModelResult =
+  | { ok: true; model: string }
+  | { ok: false; error: string; reason: 'invalid' | 'pro_required' };
 
 /** Trims, maps preview Gemini lite → stable id, then checks {@link ALLOWED_AI_MODELS}. */
 export function parseAllowedAiModel(model: string): ParseAllowedAiModelResult {
   const trimmed = typeof model === 'string' ? model.trim() : '';
   if (!trimmed) {
-    return { ok: false, error: 'model is required' };
+    return { ok: false, error: 'model is required', reason: 'invalid' };
   }
   const canonical = normalizeIncomingAiModel(trimmed);
   if (!ALLOWED_AI_MODELS.includes(canonical)) {
-    return { ok: false, error: `model must be one of: ${ALLOWED_AI_MODELS.join(', ')}` };
+    return {
+      ok: false,
+      error: `model must be one of: ${ALLOWED_AI_MODELS.join(', ')}`,
+      reason: 'invalid',
+    };
   }
   return { ok: true, model: canonical };
+}
+
+export async function parseAllowedAiModelForDevice(
+  deviceId: string,
+  model: string,
+): Promise<ParseAllowedAiModelResult> {
+  const parsed = parseAllowedAiModel(model);
+  if (!parsed.ok) {
+    return parsed;
+  }
+
+  if (isProOnlyAiModel(parsed.model) && !(await isProDevice(deviceId))) {
+    return { ok: false, error: 'This model requires Pro', reason: 'pro_required' };
+  }
+
+  return parsed;
 }
 
 export async function requireMobileUserAgent(): Promise<NextResponse | null> {
