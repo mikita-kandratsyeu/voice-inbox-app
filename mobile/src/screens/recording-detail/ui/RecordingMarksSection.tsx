@@ -2,7 +2,7 @@ import { MenuView } from '@react-native-menu/menu';
 import { Bookmark, ChevronDown, MoreHorizontal } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, LayoutAnimation, Platform, Pressable, Text, View } from 'react-native';
+import { Alert, LayoutAnimation, Pressable, Text, View } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
@@ -22,6 +22,7 @@ import {
   folderChipActiveForeground,
   formatTime,
   hapticSelection,
+  IS_ANDROID,
   isDarkSurfaceColor,
 } from '@/shared/lib';
 
@@ -204,7 +205,7 @@ export const RecordingMarksSection = ({
                         className="text-[12px] font-semibold tabular-nums"
                         style={[
                           { color: markBadgeFg, lineHeight: 16, minWidth: 32, textAlign: 'center' },
-                          Platform.OS === 'android'
+                          IS_ANDROID
                             ? {
                                 textAlignVertical: 'center',
                                 includeFontPadding: false,

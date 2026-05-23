@@ -15,7 +15,7 @@ import type { VoiceRecord } from '@/entities/record';
 import type { AiExecutionMode } from '@/entities/settings';
 import { type AskAIHistoryItem } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
+import { hapticSelection, IS_ANDROID } from '@/shared/lib';
 
 import { AskAiAnswerMarkdown } from './AskAiAnswerMarkdown';
 import { AskAiContextDisclosure } from './AskAiContextDisclosure';
@@ -35,6 +35,8 @@ const COPY_SPRING_STIFFNESS = 280;
 
 /** Same min height as Share chip so the row stays visually aligned. */
 const ASK_ACTION_CHIP_MIN_HEIGHT = 40;
+
+const askActionChipTextProps = IS_ANDROID ? ({ includeFontPadding: false } as const) : {};
 
 const AskCopyTurnButton = ({ color, clipboardText, onCopy }: AskCopyTurnButtonProps) => {
   const { t } = useTranslation();
@@ -62,7 +64,7 @@ const AskCopyTurnButton = ({ color, clipboardText, onCopy }: AskCopyTurnButtonPr
       accessibilityRole="button"
       accessibilityLabel={t('recordingDetail.askCopyThisTurn')}
       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-      className="rounded-xl px-3 py-2"
+      className="flex-row items-center justify-center gap-2 rounded-xl px-3"
       style={{ backgroundColor: color.background.tertiary, minHeight: ASK_ACTION_CHIP_MIN_HEIGHT }}
     >
       <Animated.View className="flex-row items-center gap-2" style={chipAnimStyle}>
@@ -70,9 +72,10 @@ const AskCopyTurnButton = ({ color, clipboardText, onCopy }: AskCopyTurnButtonPr
           <Copy size={17} color={color.text.primary} strokeWidth={2} />
         </View>
         <Text
-          className="text-sm font-medium"
+          className="text-sm font-medium leading-5"
           style={{ color: color.text.primary }}
           numberOfLines={1}
+          {...askActionChipTextProps}
         >
           {t('recordingDetail.askCopy')}
         </Text>
@@ -140,7 +143,7 @@ const AnswerTurnBlock = ({
           accessibilityRole="button"
           accessibilityLabel={t('recordingDetail.askShareThisTurn')}
           hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-          className="flex-row items-center gap-2 rounded-xl px-3 py-2"
+          className="flex-row items-center justify-center gap-2 rounded-xl px-3"
           style={{
             backgroundColor: color.background.tertiary,
             minHeight: ASK_ACTION_CHIP_MIN_HEIGHT,
@@ -149,7 +152,11 @@ const AnswerTurnBlock = ({
           <View className="h-[17] w-[17] shrink-0 items-center justify-center">
             <ShareIcon size={17} color={color.text.primary} strokeWidth={2} />
           </View>
-          <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
+          <Text
+            className="text-sm font-medium leading-5"
+            style={{ color: color.text.primary }}
+            {...askActionChipTextProps}
+          >
             {t('recordingDetail.askShare')}
           </Text>
         </TouchableOpacity>

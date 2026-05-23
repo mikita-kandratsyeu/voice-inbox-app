@@ -4,13 +4,13 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Download, HardDrive, Pin, Rocket, Video, Wrench } from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Image, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { Easing, FadeIn, FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import { useAppTheme, useColors } from '@/shared/config';
-import { hapticSelection, useTabletContentMaxWidth } from '@/shared/lib';
+import { hapticSelection, IS_ANDROID, useTabletContentMaxWidth } from '@/shared/lib';
 import { Button, PlanPaywallProChip } from '@/shared/ui';
 
 const KNOWN_EVENT_ID_UPDATE_1_1_0 = 'update_1-1-0';
@@ -83,7 +83,7 @@ export const InAppEventDetailScreen = () => {
     [color.shadow.color, color.shadow.opacity],
   );
 
-  const titleStyle = Platform.OS === 'android' ? { includeFontPadding: false } : undefined;
+  const titleStyle = IS_ANDROID ? { includeFontPadding: false } : undefined;
 
   const iconAccentPairs = useMemo(
     () => [

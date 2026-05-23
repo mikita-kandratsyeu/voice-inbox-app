@@ -1,13 +1,14 @@
-import { NativeModules, Platform } from 'react-native';
+import { NativeModules } from 'react-native';
+
+import { IS_ANDROID } from '@/shared/lib';
 
 type SharedAudioImportNative = {
   getPendingImportPath: () => Promise<string | null>;
 };
 
-const native: SharedAudioImportNative | undefined =
-  Platform.OS === 'android'
-    ? (NativeModules.SharedAudioImport as SharedAudioImportNative | undefined)
-    : undefined;
+const native: SharedAudioImportNative | undefined = IS_ANDROID
+  ? (NativeModules.SharedAudioImport as SharedAudioImportNative | undefined)
+  : undefined;
 
 /** Android: path written by MainActivity when the app receives Share / View audio intent. */
 export async function consumeAndroidPendingSharedAudioPath(): Promise<string | null> {

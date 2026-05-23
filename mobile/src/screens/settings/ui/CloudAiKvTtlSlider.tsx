@@ -7,7 +7,7 @@ import {
   type CloudAiKvTtlSeconds,
 } from '@/entities/settings/lib/cloudAiKvTtl';
 import type { Colors } from '@/shared/config';
-import { hapticLight, withAlphaHex } from '@/shared/lib';
+import { hapticLight, IS_IOS, withAlphaHex } from '@/shared/lib';
 
 const SLIDER_MAX_INDEX = CLOUD_AI_KV_TTL_CHOICES.length - 1;
 
@@ -146,7 +146,7 @@ export function CloudAiKvTtlSlider({
                       : withAlphaHex(color.text.primary, 0.14),
                     borderWidth: active ? 0 : StyleSheet.hairlineWidth,
                     borderColor: withAlphaHex(color.text.primary, 0.22),
-                    ...(active && Platform.OS === 'ios'
+                    ...(active && IS_IOS
                       ? {
                           shadowColor: color.accent.primary,
                           shadowOffset: { width: 0, height: 0 },

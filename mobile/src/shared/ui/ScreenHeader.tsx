@@ -1,12 +1,13 @@
 import { ChevronLeft } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 import { KeyboardController } from 'react-native-keyboard-controller';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/shared/config';
 
+import { IS_ANDROID } from '../lib';
 import { Button } from './Button';
 
 type ScreenHeaderProps = {
@@ -37,7 +38,7 @@ export const ScreenHeader = ({
   const titleStyle = [
     { color: color.text.primary },
     titleAlign === 'left' ? { paddingLeft: onBack ? 8 : 0 } : null,
-    Platform.OS === 'android' ? { includeFontPadding: false } : null,
+    IS_ANDROID ? { includeFontPadding: false } : null,
   ];
 
   return (
