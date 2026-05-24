@@ -1,17 +1,20 @@
 'use client';
 
+import { Plus, Receipt, Wallet } from 'lucide-react';
+import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { formatCents } from '@/lib/admin-budget-money';
 
+import { AdminBudgetRowMenu } from './AdminBudgetRowMenu';
 import {
   AdminCard,
+  AdminStatusBadge,
   adminBtnPrimaryClass,
   adminBtnSecondaryClass,
   adminInputClass,
   adminSelectClass,
 } from './admin-ui';
-import Link from 'next/link';
 
 type BudgetItem = {
   id: string;
@@ -50,6 +53,17 @@ function isoToDateInput(iso: string): string {
   return `${y}-${m}-${day}`;
 }
 
+function formatSpentDate(iso: string): string {
+  return new Date(iso).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
+const tableCellClass = 'px-4 py-3.5 align-middle text-sm';
+
 function todayDateInput(): string {
   const d = new Date();
   const y = d.getFullYear();
@@ -62,6 +76,129 @@ function centsToAmountInput(cents: number): string {
   return (cents / 100).toFixed(2);
 }
 
+type ExpenseFormFieldsProps = {
+  spentAt: string;
+  category: string;
+  description: string;
+  amount: string;
+  currency: string;
+  onSpentAtChange: (value: string) => void;
+  onCategoryChange: (value: string) => void;
+  onDescriptionChange: (value: string) => void;
+  onAmountChange: (value: string) => void;
+  onCurrencyChange: (value: string) => void;
+  currencyOptions: string[];
+  idPrefix: string;
+};
+
+function ExpenseFormFields({
+  spentAt,
+  category,
+  description,
+  amount,
+  currency,
+  onSpentAtChange,
+  onCategoryChange,
+  onDescriptionChange,
+  onAmountChange,
+  onCurrencyChange,
+  currencyOptions,
+  idPrefix,
+}: ExpenseFormFieldsProps) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:items-end">
+      <div className="lg:col-span-2">
+        <label
+          htmlFor={`${idPrefix}-date`}
+          className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400"
+        >
+          Date
+        </label>
+        <input
+          id={`${idPrefix}-date`}
+          type="date"
+          value={spentAt}
+          onChange={(e) => onSpentAtChange(e.target.value)}
+          className={adminInputClass}
+        />
+      </div>
+      <div className="lg:col-span-2">
+        <label
+          htmlFor={`${idPrefix}-category`}
+          className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400"
+        >
+          Category
+        </label>
+        <input
+          id={`${idPrefix}-category`}
+          type="text"
+          value={category}
+          onChange={(e) => onCategoryChange(e.target.value)}
+          placeholder="Hosting, AI…"
+          maxLength={80}
+          className={adminInputClass}
+        />
+      </div>
+      <div className="lg:col-span-4">
+        <label
+          htmlFor={`${idPrefix}-description`}
+          className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400"
+        >
+          Description
+        </label>
+        <input
+          id={`${idPrefix}-description`}
+          type="text"
+          value={description}
+          onChange={(e) => onDescriptionChange(e.target.value)}
+          placeholder="What you paid for"
+          maxLength={500}
+          className={adminInputClass}
+        />
+      </div>
+      <div className="flex gap-2 lg:col-span-3">
+        <div className="min-w-0 flex-1">
+          <label
+            htmlFor={`${idPrefix}-amount`}
+            className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400"
+          >
+            Amount
+          </label>
+          <input
+            id={`${idPrefix}-amount`}
+            type="text"
+            inputMode="decimal"
+            value={amount}
+            onChange={(e) => onAmountChange(e.target.value)}
+            placeholder="0.00"
+            className={`${adminInputClass} font-mono tabular-nums`}
+          />
+        </div>
+        <div className="w-24 shrink-0">
+          <label
+            htmlFor={`${idPrefix}-currency`}
+            className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400"
+          >
+            Currency
+          </label>
+          <select
+            id={`${idPrefix}-currency`}
+            value={normalizeCurrency(currency)}
+            onChange={(e) => onCurrencyChange(e.target.value)}
+            className={adminSelectClass}
+          >
+            {currencyOptions.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 type BudgetRowProps = {
   item: BudgetItem;
   onTotals: (totals: Record<string, number>) => void;
@@ -70,6 +207,7 @@ type BudgetRowProps = {
 };
 
 function BudgetExpenseRow({ item, onTotals, onReplace, onRemove }: BudgetRowProps) {
+  const [isEditing, setIsEditing] = useState(false);
   const [spentAt, setSpentAt] = useState(() => isoToDateInput(item.spentAt));
   const [category, setCategory] = useState(item.category ?? '');
   const [description, setDescription] = useState(item.description);
@@ -80,13 +218,14 @@ function BudgetExpenseRow({ item, onTotals, onReplace, onRemove }: BudgetRowProp
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (isEditing) return;
     setSpentAt(isoToDateInput(item.spentAt));
     setCategory(item.category ?? '');
     setDescription(item.description);
     setAmount(centsToAmountInput(item.amountCents));
     setCurrency(normalizeCurrency(item.currency));
     setError(null);
-  }, [item]);
+  }, [item, isEditing]);
 
   const dirty = useMemo(() => {
     return (
@@ -97,6 +236,15 @@ function BudgetExpenseRow({ item, onTotals, onReplace, onRemove }: BudgetRowProp
       currency !== normalizeCurrency(item.currency)
     );
   }, [item, spentAt, category, description, amount, currency]);
+
+  const resetForm = () => {
+    setSpentAt(isoToDateInput(item.spentAt));
+    setCategory(item.category ?? '');
+    setDescription(item.description);
+    setAmount(centsToAmountInput(item.amountCents));
+    setCurrency(normalizeCurrency(item.currency));
+    setError(null);
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -126,6 +274,7 @@ function BudgetExpenseRow({ item, onTotals, onReplace, onRemove }: BudgetRowProp
       }
       onReplace(data.item);
       onTotals(data.totals);
+      setIsEditing(false);
     } catch {
       setError('Network error');
     } finally {
@@ -134,7 +283,7 @@ function BudgetExpenseRow({ item, onTotals, onReplace, onRemove }: BudgetRowProp
   };
 
   const handleDelete = async () => {
-    if (!globalThis.confirm('Delete this expense line?')) return;
+    if (!globalThis.confirm('Delete this expense?')) return;
     setDeleting(true);
     setError(null);
     try {
@@ -161,86 +310,99 @@ function BudgetExpenseRow({ item, onTotals, onReplace, onRemove }: BudgetRowProp
   };
 
   return (
-    <tr className="border-b border-zinc-100 align-top dark:border-zinc-700/80">
-      <td className="py-2 pr-2">
-        <input
-          type="date"
-          value={spentAt}
-          onChange={(e) => setSpentAt(e.target.value)}
-          className={`${adminInputClass} w-[9.5rem] py-1.5 text-xs`}
-        />
-      </td>
-      <td className="py-2 pr-2">
-        <input
-          type="text"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          placeholder="Hosting, AI…"
-          maxLength={80}
-          className={`${adminInputClass} min-w-[6rem] py-1.5 text-xs`}
-        />
-      </td>
-      <td className="py-2 pr-2">
-        <input
-          type="text"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          maxLength={500}
-          className={`${adminInputClass} min-w-[12rem] py-1.5 text-xs`}
-        />
-      </td>
-      <td className="py-2 pr-2">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <input
-            type="text"
-            inputMode="decimal"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className={`${adminInputClass} w-24 py-1.5 text-right font-mono text-xs`}
-            aria-label="Amount"
+    <>
+      <tr
+        className={`group transition-colors ${
+          isEditing
+            ? 'bg-indigo-50/50 dark:bg-indigo-950/20'
+            : 'hover:bg-zinc-50/80 dark:hover:bg-zinc-800/40'
+        }`}
+      >
+        <td className={`${tableCellClass} whitespace-nowrap text-zinc-700 dark:text-zinc-300`}>
+          <time dateTime={item.spentAt.slice(0, 10)}>{formatSpentDate(item.spentAt)}</time>
+        </td>
+        <td className={`${tableCellClass} text-left`}>
+          {item.category?.trim() ? (
+            <AdminStatusBadge tone="neutral">{item.category.trim()}</AdminStatusBadge>
+          ) : (
+            <span className="text-xs text-zinc-400 dark:text-zinc-500">—</span>
+          )}
+        </td>
+        <td
+          className={`${tableCellClass} max-w-xs text-zinc-900 dark:text-zinc-100 sm:max-w-md`}
+          title={item.description}
+        >
+          <span className="line-clamp-2 leading-snug">{item.description}</span>
+        </td>
+        <td
+          className={`${tableCellClass} whitespace-nowrap text-right font-medium tabular-nums text-zinc-900 dark:text-zinc-50`}
+        >
+          {formatCents(item.amountCents, item.currency)}
+        </td>
+        <td className={`${tableCellClass} w-12 px-2 text-right`}>
+          <AdminBudgetRowMenu
+            isDeleting={deleting}
+            onEdit={() => {
+              resetForm();
+              setIsEditing(true);
+            }}
+            onDelete={() => void handleDelete()}
           />
-          <select
-            value={normalizeCurrency(currency)}
-            onChange={(e) => setCurrency(e.target.value)}
-            className={`${adminSelectClass} min-w-[4.25rem] py-1.5 text-xs`}
-            aria-label="Currency"
-          >
-            {rowCurrencyOptions(currency).map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-      </td>
-      <td className="py-2 text-right">
-        <div className="flex flex-col items-end gap-1">
-          <div className="flex flex-wrap justify-end gap-1.5">
-            <button
-              type="button"
-              disabled={!dirty || saving}
-              onClick={() => void handleSave()}
-              className={`${adminBtnPrimaryClass} px-2.5 py-1 text-xs disabled:pointer-events-none disabled:opacity-40`}
-            >
-              {saving ? 'Saving…' : 'Save'}
-            </button>
-            <button
-              type="button"
-              disabled={deleting}
-              onClick={() => void handleDelete()}
-              className="rounded-lg border border-red-200 bg-white px-2.5 py-1 text-xs font-medium text-red-700 shadow-sm hover:bg-red-50 disabled:opacity-50 dark:border-red-900 dark:bg-zinc-800 dark:text-red-400 dark:hover:bg-red-950/40"
-            >
-              {deleting ? '…' : 'Delete'}
-            </button>
-          </div>
-          {error ? (
-            <p className="max-w-[12rem] text-left text-[11px] text-red-600 dark:text-red-400">
-              {error}
+        </td>
+      </tr>
+      {isEditing ? (
+        <tr className="border-b border-zinc-100 bg-zinc-50/90 dark:border-zinc-800 dark:bg-zinc-900/60">
+          <td colSpan={5} className="px-3 py-4 sm:px-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Edit expense
             </p>
-          ) : null}
-        </div>
-      </td>
-    </tr>
+            <ExpenseFormFields
+              idPrefix={`edit-${item.id}`}
+              spentAt={spentAt}
+              category={category}
+              description={description}
+              amount={amount}
+              currency={currency}
+              onSpentAtChange={setSpentAt}
+              onCategoryChange={setCategory}
+              onDescriptionChange={setDescription}
+              onAmountChange={setAmount}
+              onCurrencyChange={setCurrency}
+              currencyOptions={rowCurrencyOptions(currency)}
+            />
+            <div className="mt-4 flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                disabled={!dirty || saving || !description.trim() || !amount.trim()}
+                onClick={() => void handleSave()}
+                className={adminBtnPrimaryClass}
+              >
+                {saving ? 'Saving…' : 'Save changes'}
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => {
+                  resetForm();
+                  setIsEditing(false);
+                }}
+                className={adminBtnSecondaryClass}
+              >
+                Cancel
+              </button>
+            </div>
+            {error ? <p className="mt-2 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+          </td>
+        </tr>
+      ) : null}
+      {!isEditing && error ? (
+        <tr>
+          <td colSpan={5} className="pb-2 text-sm text-red-600 dark:text-red-400">
+            {error}
+          </td>
+        </tr>
+      ) : null}
+    </>
   );
 }
 
@@ -331,11 +493,37 @@ export function AdminBudgetPanel() {
 
   return (
     <div className="space-y-6">
+      {!loading && !listError ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {totalsSorted.map(([cur, cents]) => (
+            <div
+              key={cur}
+              className="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-sm shadow-zinc-950/5 dark:border-zinc-700/90 dark:bg-zinc-900/95 dark:shadow-black/20"
+            >
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                Total · {cur}
+              </p>
+              <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-zinc-900 dark:text-zinc-50">
+                {formatCents(cents, cur)}
+              </p>
+            </div>
+          ))}
+          <div className="rounded-2xl border border-zinc-200/90 bg-white p-4 shadow-sm shadow-zinc-950/5 dark:border-zinc-700/90 dark:bg-zinc-900/95 dark:shadow-black/20">
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              Expenses
+            </p>
+            <p className="mt-1 text-2xl font-semibold tabular-nums tracking-tight text-zinc-900 dark:text-zinc-50">
+              {items.length}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       <AdminCard
         title="Budget ledger"
-        description="Manual expense lines; amounts are stored exactly (minor units). Totals update from the database after each change."
+        description="Track manual expenses. Amounts are stored in minor units; totals refresh after each change."
         headerRight={
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <Link href="/api/admin/budget/export" className={adminBtnSecondaryClass}>
               Export CSV
             </Link>
@@ -349,90 +537,36 @@ export function AdminBudgetPanel() {
           </div>
         }
       >
-        <section
-          className="mb-6 rounded-xl border border-dashed border-zinc-200 bg-zinc-50/80 p-4 dark:border-zinc-600 dark:bg-zinc-800/40"
-          aria-label="Add expense"
-        >
-          <h3 className="mb-3 text-sm font-medium text-zinc-800 dark:text-zinc-200">New expense</h3>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-12 lg:items-end">
-            <div className="lg:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                Date
-              </label>
-              <input
-                type="date"
-                value={nDate}
-                onChange={(e) => setNDate(e.target.value)}
-                className={adminInputClass}
-              />
+        <section className="mb-8 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900/50">
+          <div className="mb-4 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+              <Plus className="h-4 w-4" strokeWidth={2} aria-hidden />
             </div>
-            <div className="lg:col-span-2">
-              <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                Category
-              </label>
-              <input
-                type="text"
-                value={nCategory}
-                onChange={(e) => setNCategory(e.target.value)}
-                placeholder="Optional"
-                maxLength={80}
-                className={adminInputClass}
-              />
-            </div>
-            <div className="lg:col-span-4">
-              <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                Description
-              </label>
-              <input
-                type="text"
-                value={nDescription}
-                onChange={(e) => setNDescription(e.target.value)}
-                placeholder="What you paid for"
-                maxLength={500}
-                className={adminInputClass}
-              />
-            </div>
-            <div className="flex flex-wrap gap-2 lg:col-span-3">
-              <div className="min-w-[5rem] flex-1">
-                <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                  Amount
-                </label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={nAmount}
-                  onChange={(e) => setNAmount(e.target.value)}
-                  placeholder="0.00"
-                  className={`${adminInputClass} font-mono`}
-                />
-              </div>
-              <div className="w-24">
-                <label className="mb-1 block text-xs font-medium text-zinc-500 dark:text-zinc-400">
-                  Curr.
-                </label>
-                <select
-                  value={nCurrency}
-                  onChange={(e) => setNCurrency(e.target.value)}
-                  className={adminSelectClass}
-                >
-                  {CURRENCIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-            <div className="lg:col-span-1">
-              <button
-                type="button"
-                disabled={adding || !nDescription.trim() || !nAmount.trim()}
-                onClick={() => void handleAdd()}
-                className={`${adminBtnPrimaryClass} w-full whitespace-nowrap`}
-              >
-                {adding ? 'Adding…' : 'Add'}
-              </button>
-            </div>
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Add expense</h3>
+          </div>
+          <ExpenseFormFields
+            idPrefix="new"
+            spentAt={nDate}
+            category={nCategory}
+            description={nDescription}
+            amount={nAmount}
+            currency={nCurrency}
+            onSpentAtChange={setNDate}
+            onCategoryChange={setNCategory}
+            onDescriptionChange={setNDescription}
+            onAmountChange={setNAmount}
+            onCurrencyChange={setNCurrency}
+            currencyOptions={[...CURRENCIES]}
+          />
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={adding || !nDescription.trim() || !nAmount.trim()}
+              onClick={() => void handleAdd()}
+              className={adminBtnPrimaryClass}
+            >
+              {adding ? 'Adding…' : 'Add expense'}
+            </button>
           </div>
           {addError ? (
             <p className="mt-2 text-sm text-red-600 dark:text-red-400">{addError}</p>
@@ -440,75 +574,65 @@ export function AdminBudgetPanel() {
         </section>
 
         {loading ? (
-          <p className="text-sm text-zinc-500">Loading…</p>
+          <p className="text-sm text-zinc-500">Loading expenses…</p>
         ) : listError ? (
           <p className="text-sm text-red-600 dark:text-red-400">{listError}</p>
+        ) : items.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-zinc-200 px-6 py-14 text-center dark:border-zinc-700">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400">
+              <Receipt className="h-6 w-6" strokeWidth={1.75} aria-hidden />
+            </div>
+            <p className="mt-4 text-sm font-medium text-zinc-800 dark:text-zinc-200">
+              No expenses yet
+            </p>
+            <p className="mt-1 max-w-sm text-sm text-zinc-500 dark:text-zinc-400">
+              Add your first line above — hosting, AI credits, domains, and other project costs.
+            </p>
+          </div>
         ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="min-w-[720px] w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-zinc-200 dark:border-zinc-600">
-                    <th className="py-2 pr-2 font-medium text-zinc-600 dark:text-zinc-400">Date</th>
-                    <th className="py-2 pr-2 font-medium text-zinc-600 dark:text-zinc-400">
-                      Category
-                    </th>
-                    <th className="py-2 pr-2 font-medium text-zinc-600 dark:text-zinc-400">
-                      Description
-                    </th>
-                    <th className="py-2 pr-2 font-medium text-zinc-600 dark:text-zinc-400">
-                      Amount
-                    </th>
-                    <th className="py-2 text-right font-medium text-zinc-600 dark:text-zinc-400">
-                      {' '}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {items.map((item) => (
-                    <BudgetExpenseRow
-                      key={item.id}
-                      item={item}
-                      onTotals={setTotals}
-                      onReplace={(next) =>
-                        setItems((prev) => prev.map((x) => (x.id === next.id ? next : x)))
-                      }
-                      onRemove={(id) => setItems((prev) => prev.filter((x) => x.id !== id))}
-                    />
-                  ))}
-                </tbody>
-              </table>
-              {items.length === 0 ? (
-                <p className="mt-3 text-sm text-zinc-500">No lines yet — add an expense above.</p>
-              ) : null}
-            </div>
-
-            <div className="mt-6 border-t border-zinc-200 pt-4 dark:border-zinc-700">
-              <p className="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                Totals (all lines in DB)
-              </p>
-              {totalsSorted.length === 0 ? (
-                <p className="mt-2 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50">
-                  {formatCents(0, 'USD')}
-                </p>
-              ) : (
-                <ul className="mt-2 space-y-1">
-                  {totalsSorted.map(([cur, cents]) => (
-                    <li
-                      key={cur}
-                      className="flex items-baseline justify-between gap-4 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-50"
-                    >
-                      <span className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
-                        {cur}
-                      </span>
-                      <span>{formatCents(cents, cur)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </>
+          <div className="overflow-x-auto rounded-xl border border-zinc-200 dark:border-zinc-700">
+            <table className="w-full min-w-[36rem] table-fixed text-left text-sm">
+              <colgroup>
+                <col className="w-[7.25rem]" />
+                <col className="w-[9.5rem]" />
+                <col />
+                <col className="w-[8.75rem]" />
+                <col className="w-12" />
+              </colgroup>
+              <thead className="sticky top-0 z-10 bg-zinc-50 text-xs font-medium uppercase tracking-wide text-zinc-500 dark:bg-zinc-800/95 dark:text-zinc-400">
+                <tr>
+                  <th className={`${tableCellClass} text-left font-medium`}>Date</th>
+                  <th className={`${tableCellClass} text-left font-medium`}>Category</th>
+                  <th className={`${tableCellClass} text-left font-medium`}>Description</th>
+                  <th className={`${tableCellClass} text-right font-medium`}>Amount</th>
+                  <th className={`${tableCellClass} w-12 px-2`}>
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-100 bg-white dark:divide-zinc-800 dark:bg-zinc-900/30">
+                {items.map((item) => (
+                  <BudgetExpenseRow
+                    key={item.id}
+                    item={item}
+                    onTotals={setTotals}
+                    onReplace={(next) =>
+                      setItems((prev) => prev.map((x) => (x.id === next.id ? next : x)))
+                    }
+                    onRemove={(id) => setItems((prev) => prev.filter((x) => x.id !== id))}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
+
+        {!loading && !listError && totalsSorted.length === 0 && items.length > 0 ? (
+          <p className="mt-4 flex items-center gap-2 text-xs text-zinc-500 dark:text-zinc-400">
+            <Wallet className="h-3.5 w-3.5 shrink-0" strokeWidth={2} aria-hidden />
+            Totals by currency appear once amounts are saved.
+          </p>
+        ) : null}
       </AdminCard>
     </div>
   );
