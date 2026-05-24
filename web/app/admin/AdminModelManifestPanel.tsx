@@ -3,9 +3,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import {
+  AdminAlert,
+  AdminCard,
+  AdminFormField,
   adminBtnPrimaryClass,
   adminBtnSecondaryClass,
-  adminCardSurfaceClass,
   adminInputClass,
 } from './admin-ui';
 import {
@@ -97,7 +99,7 @@ export function AdminModelManifestPanel() {
         setError((data as ManifestApiErr).error ?? 'Save failed');
         return;
       }
-      setMessage('Manifest saved. Public endpoint will serve this copy.');
+      setMessage('Manifest saved.');
       if (data.jsonText) setJsonText(data.jsonText);
       setHasStoredCopy(true);
     } catch {
@@ -111,33 +113,46 @@ export function AdminModelManifestPanel() {
     setError(null);
     try {
       await navigator.clipboard.writeText(publicUrl);
-      setMessage('Public URL copied to clipboard.');
+      setMessage('Public URL copied.');
     } catch {
       setError('Could not copy URL');
     }
   };
 
   return (
-    <section className={`mb-8 ${adminCardSurfaceClass} p-5`}>
-      <h2 className="mb-1 text-lg font-medium">Mobile model manifest</h2>
-      <p className="mb-4 text-sm text-zinc-500 dark:text-zinc-400">
-        JSON describing on-device model artifacts (Whisper weights, iOS Core ML encoders, local GGUF
-        LLMs): stable <code className="text-xs">id</code>, <code className="text-xs">url</code>,{' '}
-        <code className="text-xs">active</code>, optional <code className="text-xs">bytes</code> /{' '}
-        <code className="text-xs">sha256</code> / <code className="text-xs">platform</code>. Use{' '}
-        <span className="font-medium">Generate default</span> to pre-fill from the same Hugging Face
-        URLs as the current mobile app, then edit and save. The mobile client can fetch the public
-        endpoint below (not wired yet in the app).
-      </p>
+    <AdminCard
+      title="Mobile model manifest"
+      description="On-device model artifacts (Whisper, Core ML, local LLMs). Public endpoint serves the saved copy or built-in default."
+      headerRight={
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => void fetchManifest()}
+            className={adminBtnSecondaryClass}
+          >
+            Refresh
+          </button>
+          <button
+            type="button"
+            disabled={!editable || saving}
+            onClick={() => void handleSave()}
+            className={adminBtnPrimaryClass}
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        </div>
+      }
+    >
       <p className="mb-3 font-mono text-xs text-zinc-600 dark:text-zinc-400">GET {publicUrl}</p>
-      <div className="mb-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => void fetchManifest()}
-          className={adminBtnSecondaryClass}
-        >
-          Refresh
-        </button>
+
+      {!hasStoredCopy && editable ? (
+        <AdminAlert tone="warning" className="mb-3">
+          Nothing saved yet — the public API uses the built-in default until you save.
+        </AdminAlert>
+      ) : null}
+      {hint ? <AdminAlert tone="warning">{hint}</AdminAlert> : null}
+
+      <div className="mb-4 flex flex-wrap gap-2">
         <button type="button" onClick={handleInsertDefault} className={adminBtnSecondaryClass}>
           Generate default
         </button>
@@ -151,44 +166,27 @@ export function AdminModelManifestPanel() {
         >
           Copy public URL
         </button>
-        <button
-          type="button"
-          disabled={!editable || saving}
-          onClick={() => void handleSave()}
-          className={adminBtnPrimaryClass}
-        >
-          {saving ? 'Saving…' : 'Save to database'}
-        </button>
       </div>
-      {!hasStoredCopy && editable && (
-        <p className="mb-3 text-sm text-amber-800 dark:text-amber-200">
-          Nothing saved yet — the public API falls back to the built-in default until you save.
-        </p>
-      )}
-      {hint && (
-        <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-          {hint}
-        </p>
-      )}
+
       {loading ? (
         <p className="text-sm text-zinc-500">Loading…</p>
       ) : (
-        <div>
-          <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
-            Manifest JSON
-          </label>
+        <AdminFormField label="Manifest JSON">
           <textarea
             value={jsonText}
             onChange={(e) => setJsonText(e.target.value)}
             disabled={!editable}
             spellCheck={false}
-            rows={22}
-            className={`${adminInputClass} min-h-[320px] resize-y font-mono text-xs leading-relaxed disabled:opacity-60`}
+            rows={18}
+            className={`${adminInputClass} min-h-[280px] resize-y font-mono text-xs leading-relaxed disabled:opacity-60`}
           />
-        </div>
+        </AdminFormField>
       )}
-      {message && <p className="mt-3 text-sm text-green-600 dark:text-green-400">{message}</p>}
-      {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
-    </section>
+
+      {message ? (
+        <p className="mt-3 text-sm text-emerald-600 dark:text-emerald-400">{message}</p>
+      ) : null}
+      {error ? <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+    </AdminCard>
   );
 }

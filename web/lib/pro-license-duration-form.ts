@@ -1,5 +1,15 @@
 /** Admin UI helpers — safe for client components (no Prisma). */
 
+export const PRO_LICENSE_DURATION_OPTIONS = [
+  { value: 'd:1', label: '1 day' },
+  { value: 'd:7', label: '7 days' },
+  { value: 'd:14', label: '14 days' },
+  { value: 'm:1', label: '1 month' },
+  { value: 'm:3', label: '3 months' },
+  { value: 'm:6', label: '6 months' },
+  { value: 'm:12', label: '12 months' },
+] as const;
+
 export function proLicenseDurationSelectToRequestBody(
   raw: string,
 ): { durationMonths: number } | { durationDays: number } | null {

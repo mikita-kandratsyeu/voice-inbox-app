@@ -3,10 +3,8 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/lib/i18n';
 import { LanguageSwitcher } from '@/components/ui/LanguageSwitcher';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { utilitiesShellClass, utilitiesShellDividerClass } from '@/components/ui/utilities-shell';
 import { APP_STORE_URL } from '@/config/constants';
-
-const utilitiesShellClass =
-  'flex h-11 shrink-0 items-center gap-0.5 rounded-2xl border border-black/8 bg-black/[0.03] p-1 dark:border-white/10 dark:bg-white/[0.06]';
 
 export function Header(): React.ReactElement {
   const t = useTranslations('header');
@@ -44,7 +42,7 @@ export function Header(): React.ReactElement {
 
           <div className={utilitiesShellClass} role="group" aria-label={t('preferencesAria')}>
             <LanguageSwitcher variant="grouped" />
-            <span className="mx-0.5 h-6 w-px shrink-0 bg-black/10 dark:bg-white/12" aria-hidden />
+            <span className={utilitiesShellDividerClass} aria-hidden />
             <ThemeToggle variant="grouped" />
           </div>
         </div>

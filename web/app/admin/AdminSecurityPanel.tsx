@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import {
   AdminCard,
+  AdminDetailsSection,
   adminBtnPrimaryClass,
   adminBtnSecondaryClass,
   adminInputClass,
@@ -338,7 +339,7 @@ export function AdminSecurityPanel() {
         )}
       </AdminCard>
 
-      <AdminCard title="Change your password">
+      <AdminDetailsSection summary="Change your password">
         <form onSubmit={handlePassword} className="max-w-md space-y-3">
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
@@ -373,16 +374,12 @@ export function AdminSecurityPanel() {
           {pwMsg && <p className="text-sm text-green-600 dark:text-green-400">{pwMsg}</p>}
           {pwErr && <p className="text-sm text-red-600 dark:text-red-400">{pwErr}</p>}
         </form>
-      </AdminCard>
+      </AdminDetailsSection>
 
-      <AdminCard
-        title="Create admin"
-        description={
-          <>
-            Login: letters, digits, <code className="text-xs">._@-</code> · password min 10.
-          </>
-        }
-      >
+      <AdminDetailsSection summary="Create admin">
+        <p className="mb-3 text-xs text-zinc-500 dark:text-zinc-400">
+          Login: letters, digits, <code className="text-xs">._@-</code> · password min 10.
+        </p>
         <form onSubmit={handleCreate} className="max-w-md space-y-3">
           <div>
             <label className="mb-1 block text-sm font-medium text-zinc-600 dark:text-zinc-400">
@@ -415,7 +412,7 @@ export function AdminSecurityPanel() {
           {createMsg && <p className="text-sm text-green-600 dark:text-green-400">{createMsg}</p>}
           {createErr && <p className="text-sm text-red-600 dark:text-red-400">{createErr}</p>}
         </form>
-      </AdminCard>
+      </AdminDetailsSection>
     </div>
   );
 }

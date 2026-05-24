@@ -3,8 +3,12 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import {
+  AdminAlert,
+  AdminCard,
   AdminEmptyState,
-  AdminPanelHeading,
+  AdminStatusBadge,
+  AdminSubNav,
+  adminBtnGhostClass,
   adminBtnPrimaryClass,
   adminBtnSecondaryClass,
   adminInputClass,
@@ -12,14 +16,18 @@ import {
 } from './admin-ui';
 import {
   formatSupportProKeySentLabel,
+  PRO_LICENSE_DURATION_OPTIONS,
   proLicenseDurationSelectToRequestBody,
 } from '@/lib/pro-license-duration-form';
-import {
-  isSupportProKeyRequestSubject,
-  SUPPORT_PRO_KEY_SUBJECT_MARKER,
-} from '@/lib/support-pro-key-request';
+import { isSupportProKeyRequestSubject } from '@/lib/support-pro-key-request';
 
 const PUSH_MESSAGE_MAX = 3500;
+
+const SUPPORT_STATUS_FILTERS = [
+  { id: 'open', label: 'Open' },
+  { id: 'closed', label: 'Closed' },
+  { id: 'all', label: 'All' },
+] as const;
 
 function guessLocaleFromDiagnostics(diagnostics: unknown): 'en' | 'ru' | undefined {
   if (!diagnostics || typeof diagnostics !== 'object') return undefined;
@@ -357,11 +365,16 @@ export function AdminSupportPanel() {
 
   return (
     <div className="space-y-4">
-      <AdminPanelHeading
-        title="Support requests"
-        description="Messages from the in-app form (device diagnostics attached)."
-        actions={
-          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:items-center">
+      <AdminCard>
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <AdminSubNav
+            items={SUPPORT_STATUS_FILTERS}
+            value={statusFilter}
+            onChange={(id) => {
+              setStatusFilter(id);
+            }}
+          />
+          <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row sm:items-center lg:max-w-xl lg:justify-end">
             <label className="sr-only" htmlFor="support-search">
               Search
             </label>
@@ -370,41 +383,24 @@ export function AdminSupportPanel() {
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search device, email, subject, message…"
+              placeholder="Search…"
               autoComplete="off"
-              className={`min-w-0 flex-1 sm:min-w-[220px] sm:max-w-md ${adminInputClass}`}
+              className={`min-w-0 flex-1 ${adminInputClass}`}
             />
-            <label className="sr-only" htmlFor="support-filter">
-              Status
-            </label>
-            <select
-              id="support-filter"
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as 'all' | 'open' | 'closed')}
-              className={adminSelectClass}
-            >
-              <option value="open">Open</option>
-              <option value="closed">Closed</option>
-              <option value="all">All</option>
-            </select>
             <button
               type="button"
               onClick={() => {
                 void fetchPage(false, null);
               }}
-              className={adminBtnSecondaryClass}
+              className={`${adminBtnSecondaryClass} shrink-0`}
             >
               Refresh
             </button>
           </div>
-        }
-      />
+        </div>
+      </AdminCard>
 
-      {error && (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-200">
-          {error}
-        </p>
-      )}
+      {error ? <AdminAlert tone="error">{error}</AdminAlert> : null}
 
       {loading && items.length === 0 ? (
         <p className="text-sm text-zinc-500">Loading…</p>
@@ -418,145 +414,143 @@ export function AdminSupportPanel() {
         <ul className="space-y-3">
           {items.map((row) => {
             const isOpen = expanded === row.id;
+            const isProKey = isSupportProKeyRequestSubject(row.subject);
+            const showReply = replyOpenId === row.id;
+            const deviceShort =
+              row.deviceId.length > 12 ? `${row.deviceId.slice(0, 8)}…` : row.deviceId;
+
             return (
               <li
                 key={row.id}
-                className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-800/80"
+                className="overflow-hidden rounded-xl border border-zinc-200/90 bg-white shadow-sm dark:border-zinc-700 dark:bg-zinc-900/80"
               >
-                <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="min-w-0 flex-1 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-mono text-xs text-zinc-400">{row.reference}</span>
-                      <span
+                <div className="p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-mono text-xs font-medium text-zinc-500">
+                          {row.reference}
+                        </span>
+                        {row.status === 'open' ? (
+                          <AdminStatusBadge tone="success">Open</AdminStatusBadge>
+                        ) : (
+                          <AdminStatusBadge tone="neutral">Closed</AdminStatusBadge>
+                        )}
+                        {isProKey ? <AdminStatusBadge tone="info">Pro key</AdminStatusBadge> : null}
+                      </div>
+                      <p className="text-xs text-zinc-500">
+                        {formatDate(row.createdAt)}
+                        {row.email ? ` · ${row.email}` : ''}
+                        <span className="text-zinc-400"> · </span>
+                        <span className="font-mono">{deviceShort}</span>
+                      </p>
+                      {row.subject ? (
+                        <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                          {row.subject}
+                        </p>
+                      ) : null}
+                      <p
+                        className={`text-sm leading-relaxed text-zinc-700 dark:text-zinc-300 ${
+                          isOpen || showReply ? 'whitespace-pre-wrap' : 'line-clamp-2'
+                        }`}
+                      >
+                        {row.message}
+                      </p>
+                      {isProKey && row.proLicenseEmailSentAt ? (
+                        <p className="text-xs text-teal-700 dark:text-teal-300">
+                          Pro key sent (
+                          {formatSupportProKeySentLabel(
+                            row.proLicenseDurationMonths,
+                            row.proLicenseDurationDays,
+                          )}
+                          ) · {formatDate(row.proLicenseEmailSentAt)}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                      <label className="sr-only" htmlFor={`status-${row.id}`}>
+                        Status
+                      </label>
+                      <select
+                        id={`status-${row.id}`}
+                        value={row.status}
+                        disabled={patching === row.id}
+                        onChange={(e) =>
+                          void handlePatch(row.id, e.target.value as 'open' | 'closed')
+                        }
+                        className={`${adminSelectClass} w-[6.5rem]`}
+                      >
+                        <option value="open">Open</option>
+                        <option value="closed">Closed</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => setExpanded(isOpen ? null : row.id)}
+                        className={adminBtnGhostClass}
+                      >
+                        {isOpen ? 'Hide logs' : 'Logs'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setReplyOpenId(showReply ? null : row.id)}
                         className={
-                          row.status === 'open'
-                            ? 'rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-200'
-                            : 'rounded-full bg-zinc-200 px-2 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-600 dark:text-zinc-200'
+                          showReply
+                            ? `${adminBtnSecondaryClass} ring-2 ring-violet-500/30`
+                            : adminBtnSecondaryClass
                         }
                       >
-                        {row.status}
-                      </span>
-                      {isSupportProKeyRequestSubject(row.subject) && (
-                        <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-900 dark:bg-teal-950/60 dark:text-teal-200">
-                          Pro key ({SUPPORT_PRO_KEY_SUBJECT_MARKER})
-                        </span>
-                      )}
+                        {showReply ? 'Hide reply' : 'Reply'}
+                      </button>
                     </div>
-                    <p className="text-xs text-zinc-500">{formatDate(row.createdAt)}</p>
-                    {row.subject && (
-                      <p className="font-medium text-zinc-900 dark:text-zinc-100">{row.subject}</p>
-                    )}
-                    <p className="whitespace-pre-wrap text-sm text-zinc-700 dark:text-zinc-300">
-                      {row.message}
-                    </p>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-zinc-500">
-                      <span>
-                        <span className="font-medium text-zinc-400">Device</span>{' '}
-                        <span className="font-mono text-zinc-600 dark:text-zinc-400">
-                          {row.deviceId}
-                        </span>
-                      </span>
-                      {row.email && (
-                        <span>
-                          <span className="font-medium text-zinc-400">Email</span> {row.email}
-                        </span>
-                      )}
-                    </div>
-                    {isSupportProKeyRequestSubject(row.subject) && (
-                      <div className="mt-3 rounded-lg border border-teal-200 bg-teal-50/80 p-3 dark:border-teal-900/50 dark:bg-teal-950/25">
-                        {row.proLicenseEmailSentAt ? (
-                          <p className="text-xs font-medium text-teal-900 dark:text-teal-200">
-                            Pro key emailed (
-                            {formatSupportProKeySentLabel(
-                              row.proLicenseDurationMonths,
-                              row.proLicenseDurationDays,
-                            )}
-                            ) — {formatDate(row.proLicenseEmailSentAt)}. Ticket closed.
+                  </div>
+
+                  {isProKey && !row.proLicenseEmailSentAt ? (
+                    <div className="mt-3 rounded-lg border border-teal-200/80 bg-teal-50/60 px-3 py-2.5 dark:border-teal-900/40 dark:bg-teal-950/20">
+                      {!row.email ? (
+                        <p className="text-xs text-amber-800 dark:text-amber-200">
+                          No email — ask the user to resubmit with an address.
+                        </p>
+                      ) : (
+                        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                          <p className="min-w-0 flex-1 text-xs text-teal-900 dark:text-teal-200">
+                            Email Pro key to {row.email}
                           </p>
-                        ) : !row.email ? (
-                          <p className="text-xs text-amber-800 dark:text-amber-200">
-                            No email on file. Ask the user to send support again with an email
-                            address.
-                          </p>
-                        ) : (
-                          <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-                            <p className="text-xs text-teal-900 dark:text-teal-200">
-                              Send a license key to {row.email} (HTML email via SMTP).
-                            </p>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <select
-                                value={supportProKeyDuration[row.id] ?? 'm:12'}
-                                onChange={(e) =>
-                                  setSupportProKeyDuration((prev) => ({
-                                    ...prev,
-                                    [row.id]: e.target.value,
-                                  }))
-                                }
-                                className="rounded-lg border border-teal-200 bg-white px-2 py-1.5 text-sm dark:border-teal-800 dark:bg-zinc-900 dark:text-zinc-100"
-                              >
-                                <option value="d:1">1 day</option>
-                                <option value="d:7">7 days</option>
-                                <option value="d:14">14 days</option>
-                                <option value="m:1">1 mo</option>
-                                <option value="m:3">3 mo</option>
-                                <option value="m:6">6 mo</option>
-                                <option value="m:12">12 mo</option>
-                              </select>
-                              <button
-                                type="button"
-                                disabled={supportProKeySendingId === row.id}
-                                onClick={() => void handleSendProKeyEmail(row)}
-                                className={adminBtnPrimaryClass}
-                              >
-                                {supportProKeySendingId === row.id ? 'Sending…' : 'Email Pro key'}
-                              </button>
-                            </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <select
+                              value={supportProKeyDuration[row.id] ?? 'm:12'}
+                              onChange={(e) =>
+                                setSupportProKeyDuration((prev) => ({
+                                  ...prev,
+                                  [row.id]: e.target.value,
+                                }))
+                              }
+                              className={adminSelectClass}
+                            >
+                              {PRO_LICENSE_DURATION_OPTIONS.map((opt) => (
+                                <option key={opt.value} value={opt.value}>
+                                  {opt.label}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              disabled={supportProKeySendingId === row.id}
+                              onClick={() => void handleSendProKeyEmail(row)}
+                              className={adminBtnPrimaryClass}
+                            >
+                              {supportProKeySendingId === row.id ? 'Sending…' : 'Send key'}
+                            </button>
                           </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex shrink-0 flex-col gap-2 sm:items-end">
-                    <label className="sr-only" htmlFor={`status-${row.id}`}>
-                      Update status
-                    </label>
-                    <select
-                      id={`status-${row.id}`}
-                      value={row.status}
-                      disabled={patching === row.id}
-                      onChange={(e) =>
-                        void handlePatch(row.id, e.target.value as 'open' | 'closed')
-                      }
-                      className="rounded-lg border border-zinc-200 bg-white px-2 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
-                    >
-                      <option value="open">Open</option>
-                      <option value="closed">Closed</option>
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setExpanded(isOpen ? null : row.id);
-                      }}
-                      className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
-                    >
-                      {isOpen ? 'Hide details' : 'Diagnostics & logs'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setReplyOpenId((cur) => (cur === row.id ? null : row.id))}
-                      className="text-sm font-medium text-violet-600 hover:underline dark:text-violet-400"
-                    >
-                      {replyOpenId === row.id ? 'Hide reply' : 'Reply to user'}
-                    </button>
-                  </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
                 </div>
-                {replyOpenId === row.id && (
-                  <div className="space-y-3 border-t border-violet-100 bg-violet-50/50 p-4 dark:border-violet-900/40 dark:bg-violet-950/20">
+                {showReply && (
+                  <div className="space-y-3 border-t border-violet-100 bg-violet-50/40 p-4 dark:border-violet-900/40 dark:bg-violet-950/15">
                     <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                      <strong>Push</strong> — <span className="font-mono">policy_update</span>{' '}
-                      notification + in-app Markdown sheet. <strong>Email</strong> — sends the
-                      Markdown below to {row.email ?? 'the user’s address'} (requires SMTP).
-                      Optional notes are only for AI draft generation.
+                      Push delivers in-app Markdown; email sends the same text to{' '}
+                      {row.email ?? 'the user'} (SMTP required).
                     </p>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="sm:col-span-2">
@@ -574,7 +568,7 @@ export function AdminSupportPanel() {
                           }
                           rows={2}
                           placeholder="e.g. Fixed sync on server, please reopen the app"
-                          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                          className={adminInputClass}
                         />
                       </div>
                       <div>
@@ -592,7 +586,7 @@ export function AdminSupportPanel() {
                               locale: e.target.value as ReplyDraft['locale'],
                             })
                           }
-                          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                          className={adminSelectClass}
                         >
                           <option value="auto">
                             Auto ({guessLocaleFromDiagnostics(row.diagnostics) ?? 'from message'})
@@ -606,9 +600,9 @@ export function AdminSupportPanel() {
                           type="button"
                           disabled={aiLoadingId === row.id}
                           onClick={() => void handleGenerateDraft(row)}
-                          className="w-full rounded-lg border border-violet-300 bg-white px-3 py-2 text-sm font-medium text-violet-800 shadow-sm hover:bg-violet-50 disabled:opacity-50 dark:border-violet-700 dark:bg-violet-950/80 dark:text-violet-200 dark:hover:bg-violet-900/60"
+                          className={`${adminBtnSecondaryClass} w-full`}
                         >
-                          {aiLoadingId === row.id ? 'Generating…' : 'Generate Markdown (AI)'}
+                          {aiLoadingId === row.id ? 'Generating…' : 'AI draft'}
                         </button>
                       </div>
                       <div className="sm:col-span-2">
@@ -624,7 +618,7 @@ export function AdminSupportPanel() {
                           onChange={(e) => setDraftField(row.id, { markdown: e.target.value })}
                           rows={8}
                           placeholder={'## What we changed\n\n- …'}
-                          className="w-full rounded-lg border border-zinc-200 bg-white px-3 py-2 font-mono text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100"
+                          className={`${adminInputClass} font-mono`}
                         />
                         <p className="mt-1 text-xs text-zinc-500">
                           {getDraft(row.id).markdown.length} / {PUSH_MESSAGE_MAX}
@@ -646,7 +640,7 @@ export function AdminSupportPanel() {
                         type="button"
                         disabled={pushLoadingId === row.id}
                         onClick={() => void handleSendPush(row)}
-                        className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-violet-700 disabled:opacity-50 dark:bg-violet-700 dark:hover:bg-violet-600"
+                        className={adminBtnPrimaryClass}
                       >
                         {pushLoadingId === row.id ? 'Sending…' : 'Send push'}
                       </button>
@@ -654,7 +648,7 @@ export function AdminSupportPanel() {
                         type="button"
                         disabled={emailLoadingId === row.id || !row.email?.trim()}
                         onClick={() => void handleSendReplyEmail(row)}
-                        className="rounded-lg border border-violet-300 bg-white px-4 py-2 text-sm font-medium text-violet-900 shadow-sm hover:bg-violet-50 disabled:opacity-50 dark:border-violet-700 dark:bg-violet-950/80 dark:text-violet-100 dark:hover:bg-violet-900/60"
+                        className={adminBtnSecondaryClass}
                       >
                         {emailLoadingId === row.id ? 'Sending…' : 'Send email'}
                       </button>
@@ -695,7 +689,7 @@ export function AdminSupportPanel() {
             type="button"
             disabled={loading}
             onClick={() => void fetchPage(true, nextCursor)}
-            className="rounded-lg border border-zinc-200 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-200 dark:hover:bg-zinc-700"
+            className={adminBtnSecondaryClass}
           >
             {loading ? 'Loading…' : 'Load more'}
           </button>

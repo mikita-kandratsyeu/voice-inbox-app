@@ -109,7 +109,7 @@ export function AdminMetricCard({
   );
 }
 
-type StatusTone = 'success' | 'warning' | 'error' | 'neutral';
+type StatusTone = 'success' | 'warning' | 'error' | 'neutral' | 'info';
 
 export function AdminStatusBadge({ tone, children }: { tone: StatusTone; children: ReactNode }) {
   const map: Record<StatusTone, string> = {
@@ -121,10 +121,11 @@ export function AdminStatusBadge({ tone, children }: { tone: StatusTone; childre
       'bg-red-50 text-red-800 ring-1 ring-red-600/15 dark:bg-red-950/45 dark:text-red-200 dark:ring-red-500/20',
     neutral:
       'bg-zinc-100 text-zinc-700 ring-1 ring-zinc-400/20 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-500/20',
+    info: 'bg-sky-50 text-sky-900 ring-1 ring-sky-600/15 dark:bg-sky-950/50 dark:text-sky-200 dark:ring-sky-500/20',
   };
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${map[tone]}`}
+      className={`inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium ${map[tone]}`}
     >
       {children}
     </span>
@@ -147,5 +148,140 @@ export function AdminEmptyState({
       <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200">{title}</p>
       {hint ? <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">{hint}</p> : null}
     </div>
+  );
+}
+
+export function formatAdminDate(ts: number | Date): string {
+  return new Date(ts).toLocaleString();
+}
+
+type AdminSubNavItem<T extends string> = {
+  id: T;
+  label: string;
+};
+
+export function AdminSubNav<T extends string>({
+  items,
+  value,
+  onChange,
+  className = '',
+}: {
+  items: readonly AdminSubNavItem<T>[];
+  value: T;
+  onChange: (id: T) => void;
+  className?: string;
+}) {
+  return (
+    <nav
+      className={`inline-flex w-fit max-w-full flex-wrap gap-1 rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-1 dark:border-zinc-700 dark:bg-zinc-900/60 ${className}`.trim()}
+      aria-label="Section"
+    >
+      {items.map((item) => {
+        const active = item.id === value;
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onChange(item.id)}
+            aria-current={active ? 'page' : undefined}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${
+              active
+                ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-50'
+                : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
+            }`}
+          >
+            {item.label}
+          </button>
+        );
+      })}
+    </nav>
+  );
+}
+
+type AdminFormFieldProps = {
+  label: string;
+  hint?: string;
+  mono?: boolean;
+  children: ReactNode;
+};
+
+export function AdminFormField({ label, hint, mono, children }: AdminFormFieldProps) {
+  return (
+    <div>
+      <label
+        className={`mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300 ${mono ? 'font-mono text-xs' : ''}`}
+      >
+        {label}
+      </label>
+      {children}
+      {hint ? (
+        <p className="mt-1 text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">{hint}</p>
+      ) : null}
+    </div>
+  );
+}
+
+export function AdminAlert({
+  tone,
+  children,
+  className = '',
+}: {
+  tone: 'warning' | 'info' | 'success' | 'error';
+  children: ReactNode;
+  className?: string;
+}) {
+  const map = {
+    warning:
+      'bg-amber-50 text-amber-950 dark:bg-amber-950/40 dark:text-amber-100 border-amber-200/80 dark:border-amber-900/50',
+    info: 'bg-sky-50 text-sky-950 dark:bg-sky-950/35 dark:text-sky-100 border-sky-200/80 dark:border-sky-900/50',
+    success:
+      'bg-emerald-50 text-emerald-950 dark:bg-emerald-950/35 dark:text-emerald-100 border-emerald-200/80 dark:border-emerald-900/50',
+    error:
+      'bg-red-50 text-red-900 dark:bg-red-950/40 dark:text-red-100 border-red-200/80 dark:border-red-900/50',
+  };
+  return (
+    <p
+      className={`rounded-lg border px-3 py-2 text-sm ${map[tone]} ${className}`.trim()}
+      role={tone === 'error' ? 'alert' : undefined}
+    >
+      {children}
+    </p>
+  );
+}
+
+export function AdminDetailsSection({
+  summary,
+  defaultOpen = false,
+  badge,
+  children,
+  className = '',
+}: {
+  summary: string;
+  defaultOpen?: boolean;
+  badge?: ReactNode;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <details
+      open={defaultOpen}
+      className={`group rounded-xl border border-zinc-200/90 bg-zinc-50/50 dark:border-zinc-700 dark:bg-zinc-900/30 ${className}`.trim()}
+    >
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-2 px-4 py-3 text-sm font-medium text-zinc-800 marker:content-none dark:text-zinc-100 [&::-webkit-details-marker]:hidden">
+        <span className="flex items-center gap-2">
+          <span
+            className="text-zinc-400 transition group-open:rotate-90 dark:text-zinc-500"
+            aria-hidden
+          >
+            ▸
+          </span>
+          {summary}
+        </span>
+        {badge}
+      </summary>
+      <div className="border-t border-zinc-200/80 px-4 pb-4 pt-3 dark:border-zinc-700">
+        {children}
+      </div>
+    </details>
   );
 }

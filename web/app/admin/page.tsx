@@ -1,4 +1,4 @@
-import { isAdminPageSession } from '@/lib/admin-auth';
+import { getAdminSession } from '@/lib/admin-session';
 
 import { AdminDashboard } from './AdminDashboard';
 import { AdminLogin } from './AdminLogin';
@@ -41,10 +41,11 @@ export default async function AdminPage() {
     );
   }
 
-  const isAdmin = await isAdminPageSession();
+  const session = await getAdminSession();
+  const isAdmin = session !== null;
 
   if (isAdmin) {
-    return <AdminDashboard />;
+    return <AdminDashboard adminLogin={session.login} />;
   }
   return <AdminLogin />;
 }
