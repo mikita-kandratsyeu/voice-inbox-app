@@ -15,9 +15,10 @@ import {
   Wrench,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { adminHasPermission, type AdminPermission } from '@/lib/admin-permissions';
 import {
   utilitiesGroupedActionClass,
   utilitiesShellClass,
@@ -34,6 +35,7 @@ import {
   adminSelectClass,
 } from './admin-ui';
 import { AdminBudgetPanel } from './AdminBudgetPanel';
+import { AdminChangePasswordForm } from './AdminChangePasswordForm';
 import { AdminConfigPanel } from './AdminConfigPanel';
 import { AdminOperationsPanel } from './AdminOperationsPanel';
 import { AdminReleasesPanel } from './AdminReleasesPanel';
@@ -196,11 +198,28 @@ const ADMIN_TAB_ORDER: AdminTab[] = [
 
 type AdminDashboardProps = {
   adminLogin: string;
+  isSuperadmin: boolean;
+  permissions: AdminPermission[];
 };
 
-export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
+export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminDashboardProps) {
   const router = useRouter();
-  const [adminTab, setAdminTab] = useState<AdminTab>('overview');
+  const accessProfile = useMemo(() => ({ isSuperadmin, permissions }), [isSuperadmin, permissions]);
+  const visibleTabs = useMemo(
+    () => ADMIN_TAB_ORDER.filter((tab) => adminHasPermission(accessProfile, tab)),
+    [accessProfile],
+  );
+  const canAccessSecurity = adminHasPermission(accessProfile, 'security');
+  const canAccessOverview = adminHasPermission(accessProfile, 'overview');
+  const canAccessMessaging = adminHasPermission(accessProfile, 'messaging');
+  const [adminTab, setAdminTab] = useState<AdminTab>(() => visibleTabs[0] ?? 'overview');
+
+  useEffect(() => {
+    if (visibleTabs.length === 0) return;
+    if (!visibleTabs.includes(adminTab)) {
+      setAdminTab(visibleTabs[0]!);
+    }
+  }, [adminTab, visibleTabs]);
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [statusLoading, setStatusLoading] = useState(true);
   const [broadcastLoading, setBroadcastLoading] = useState(false);
@@ -254,8 +273,8 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
     setStatusLoading(true);
     try {
       const res = await fetch('/api/admin/status', { credentials: 'include' });
-      const data = await res.json();
-      setStatus(data as StatusResponse);
+      const data = (await res.json()) as StatusResponse;
+      setStatus(res.ok ? data : null);
     } catch {
       setStatus(null);
     } finally {
@@ -279,17 +298,18 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
   }, []);
 
   useEffect(() => {
-    fetchStatus();
-    const t = setInterval(fetchStatus, 60_000);
+    if (!canAccessOverview) return;
+    void fetchStatus();
+    const t = setInterval(() => void fetchStatus(), 60_000);
     return () => clearInterval(t);
-  }, [fetchStatus]);
+  }, [fetchStatus, canAccessOverview]);
 
   const fetchGithub = useCallback(async () => {
     setGithubLoading(true);
     try {
       const res = await fetch('/api/admin/github', { credentials: 'include' });
-      const data = await res.json();
-      setGithub(data as GitHubResponse);
+      const data = (await res.json()) as GitHubResponse;
+      setGithub(res.ok ? data : { ok: false, error: data.error ?? `HTTP ${res.status}` });
     } catch {
       setGithub({ ok: false, error: 'Request failed' });
     } finally {
@@ -298,12 +318,14 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
   }, []);
 
   useEffect(() => {
-    fetchDeviceIds();
-  }, [fetchDeviceIds]);
+    if (!canAccessMessaging && !canAccessOverview) return;
+    void fetchDeviceIds();
+  }, [fetchDeviceIds, canAccessMessaging, canAccessOverview]);
 
   useEffect(() => {
-    fetchGithub();
-  }, [fetchGithub]);
+    if (!canAccessOverview) return;
+    void fetchGithub();
+  }, [fetchGithub, canAccessOverview]);
 
   useEffect(() => {
     if (adminTab === 'messaging') void fetchBroadcastHistory();
@@ -457,12 +479,20 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
               <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
                 Voice Inbox AI
               </p>
-              <p
-                className="truncate text-xs font-medium text-zinc-600 dark:text-zinc-300"
-                title={adminLogin}
-              >
-                {adminLogin}
-              </p>
+              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+                <p
+                  className="truncate text-xs font-medium text-zinc-600 dark:text-zinc-300"
+                  title={adminLogin}
+                >
+                  {adminLogin}
+                </p>
+                {isSuperadmin ? (
+                  <AdminStatusBadge tone="warning">
+                    <Shield className="h-2.5 w-2.5 shrink-0" strokeWidth={2.25} aria-hidden />
+                    Super
+                  </AdminStatusBadge>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
@@ -470,7 +500,7 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
           Navigate
         </p>
         <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pr-3">
-          {ADMIN_TAB_ORDER.map((t) => {
+          {visibleTabs.map((t) => {
             const { label, icon: NavIcon } = ADMIN_TAB_META[t];
             return (
               <button
@@ -490,9 +520,17 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
         <header className="sticky top-0 z-10 border-b border-zinc-200/80 bg-white/85 px-4 py-4 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/85 md:px-8 lg:px-10">
           <div className="mx-auto flex max-w-screen-2xl flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <p className="text-xs font-medium uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-                Voice Inbox AI · Admin
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs font-medium uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+                  Voice Inbox AI · Admin
+                </p>
+                {isSuperadmin ? (
+                  <AdminStatusBadge tone="warning">
+                    <Shield className="h-3 w-3 shrink-0" strokeWidth={2.25} aria-hidden />
+                    Superadmin
+                  </AdminStatusBadge>
+                ) : null}
+              </div>
               <p className="mt-1 truncate text-sm font-medium text-zinc-600 md:hidden dark:text-zinc-300">
                 {adminLogin}
               </p>
@@ -517,7 +555,7 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
             </div>
           </div>
           <div className="mx-auto mt-4 flex max-w-screen-2xl gap-2 overflow-x-auto pt-2 pb-0.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {ADMIN_TAB_ORDER.map((t) => (
+            {visibleTabs.map((t) => (
               <button
                 key={t}
                 type="button"
@@ -582,7 +620,7 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
                 <AdminMetricCard title="Upstash" icon={Cloud}>
                   {statusLoading ? (
                     <p className="text-sm text-zinc-500">Loading…</p>
-                  ) : status?.upstash.ok ? (
+                  ) : status?.upstash?.ok ? (
                     <div className="space-y-1">
                       <AdminStatusBadge tone="success">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
@@ -599,7 +637,7 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
                     </div>
                   ) : (
                     <p className="text-sm text-red-600 dark:text-red-400">
-                      {status?.upstash.error ?? 'Disconnected'}
+                      {status?.upstash?.error ?? 'Disconnected'}
                     </p>
                   )}
                 </AdminMetricCard>
@@ -614,7 +652,7 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
                           URL
                         </dt>
                         <dd className="mt-0.5 text-zinc-800 dark:text-zinc-200">
-                          {status.app.baseUrl || '—'}
+                          {status.app?.baseUrl || '—'}
                         </dd>
                       </div>
                       <div>
@@ -622,8 +660,8 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
                           Environment · Push devices
                         </dt>
                         <dd className="mt-0.5 text-zinc-800 dark:text-zinc-200">
-                          {status.app.env}
-                          {typeof status.app.devicesWithPush === 'number' && (
+                          {status.app?.env ?? '—'}
+                          {typeof status.app?.devicesWithPush === 'number' && (
                             <> · {status.app.devicesWithPush}</>
                           )}
                         </dd>
@@ -647,9 +685,9 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
                     <div className="min-h-0 flex-1 overflow-auto p-4">
                       {statusLoading ? (
                         <p className="text-sm text-zinc-500">Loading…</p>
-                      ) : status?.vercel.ok ? (
+                      ) : status?.vercel?.ok ? (
                         <div className="space-y-2 text-sm">
-                          {status.vercel.deployments?.length ? (
+                          {status.vercel?.deployments?.length ? (
                             <ul className="space-y-2">
                               {status.vercel.deployments.map((d) => (
                                 <li
@@ -718,7 +756,7 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
                         </div>
                       ) : (
                         <p className="text-sm text-red-600 dark:text-red-400">
-                          {status?.vercel.error ?? 'Not configured'}
+                          {status?.vercel?.error ?? 'Not configured'}
                         </p>
                       )}
                     </div>
@@ -777,6 +815,11 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
                   </section>
                 </div>
               </div>
+              {!canAccessSecurity ? (
+                <div className="mt-8">
+                  <AdminChangePasswordForm />
+                </div>
+              ) : null}
             </>
           )}
 
@@ -1085,7 +1128,7 @@ export function AdminDashboard({ adminLogin }: AdminDashboardProps) {
                         <dd className="inline">
                           {statusLoading
                             ? '…'
-                            : typeof status?.app.devicesWithPush === 'number'
+                            : typeof status?.app?.devicesWithPush === 'number'
                               ? `${status.app.devicesWithPush} devices (last status refresh)`
                               : '—'}
                         </dd>

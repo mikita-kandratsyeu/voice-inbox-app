@@ -1,8 +1,10 @@
 import bcrypt from 'bcryptjs';
 import { NextResponse } from 'next/server';
 
+import { getAdminAccessProfileFromRequestCookie } from '@/lib/admin-auth';
 import { writeAdminAudit } from '@/lib/admin-audit';
-import { getAdminSession } from '@/lib/admin-session';
+import { normalizeAdminPermissions, type AdminPermission } from '@/lib/admin-permissions';
+import { assertCanManageAdminUsers, sanitizePermissionsForGrant } from '@/lib/admin-user-mutations';
 import { prisma } from '@/lib/prisma';
 
 const LOGIN_MAX = 64;
@@ -26,23 +28,42 @@ export async function GET(): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: 'Database not configured' }, { status: 503 });
   }
 
-  const admin = await getAdminSession();
-  if (!admin) {
+  const actor = await getAdminAccessProfileFromRequestCookie();
+  if (!actor) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const forbidden = assertCanManageAdminUsers(actor);
+  if (forbidden) {
+    return NextResponse.json({ ok: false, error: forbidden }, { status: 403 });
   }
 
   try {
     const users = await prisma.adminUser.findMany({
       orderBy: { createdAt: 'asc' },
-      select: { id: true, login: true, createdAt: true },
+      select: {
+        id: true,
+        login: true,
+        createdAt: true,
+        isSuperadmin: true,
+        permissions: true,
+      },
     });
     return NextResponse.json({
       ok: true,
+      actor: {
+        isSuperadmin: actor.isSuperadmin,
+        grantablePermissions: actor.isSuperadmin
+          ? null
+          : normalizeAdminPermissions(actor.permissions),
+      },
       items: users.map((u) => ({
         id: u.id,
         login: u.login,
         createdAt: u.createdAt.toISOString(),
-        isCurrent: u.id === admin.adminId,
+        isSuperadmin: u.isSuperadmin,
+        permissions: normalizeAdminPermissions(u.permissions) as AdminPermission[],
+        isCurrent: u.id === actor.adminId,
       })),
     });
   } catch (e) {
@@ -51,16 +72,26 @@ export async function GET(): Promise<NextResponse> {
   }
 }
 
-type PostBody = { login?: unknown; password?: unknown };
+type PostBody = {
+  login?: unknown;
+  password?: unknown;
+  permissions?: unknown;
+  isSuperadmin?: unknown;
+};
 
 export async function POST(request: Request): Promise<NextResponse> {
   if (!process.env.DATABASE_URL?.trim()) {
     return NextResponse.json({ ok: false, error: 'Database not configured' }, { status: 503 });
   }
 
-  const admin = await getAdminSession();
-  if (!admin) {
+  const actor = await getAdminAccessProfileFromRequestCookie();
+  if (!actor) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const forbidden = assertCanManageAdminUsers(actor);
+  if (forbidden) {
+    return NextResponse.json({ ok: false, error: forbidden }, { status: 403 });
   }
 
   let body: PostBody;
@@ -72,25 +103,50 @@ export async function POST(request: Request): Promise<NextResponse> {
 
   const login = typeof body.login === 'string' ? body.login.trim() : '';
   const password = typeof body.password === 'string' ? body.password : '';
+  const requestedSuperadmin = body.isSuperadmin === true;
+  const requestedPermissions = normalizeAdminPermissions(body.permissions);
 
   const le = validateLogin(login);
   if (le) return NextResponse.json({ ok: false, error: le }, { status: 400 });
   const pe = validatePassword(password);
   if (pe) return NextResponse.json({ ok: false, error: pe }, { status: 400 });
 
+  const sanitized = sanitizePermissionsForGrant(actor, requestedPermissions, requestedSuperadmin);
+  if (!sanitized.ok) {
+    return NextResponse.json({ ok: false, error: sanitized.error }, { status: 400 });
+  }
+
   try {
     const hash = await bcrypt.hash(password, 12);
     const created = await prisma.adminUser.create({
-      data: { login, passwordHash: hash },
-      select: { id: true, login: true, createdAt: true },
+      data: {
+        login,
+        passwordHash: hash,
+        isSuperadmin: sanitized.isSuperadmin,
+        permissions: sanitized.permissions,
+      },
+      select: {
+        id: true,
+        login: true,
+        createdAt: true,
+        isSuperadmin: true,
+        permissions: true,
+      },
     });
-    await writeAdminAudit(admin, 'admin.user_create', { newLogin: created.login, id: created.id });
+    await writeAdminAudit(actor, 'admin.user_create', {
+      newLogin: created.login,
+      id: created.id,
+      isSuperadmin: created.isSuperadmin,
+      permissions: created.permissions,
+    });
     return NextResponse.json({
       ok: true,
       user: {
         id: created.id,
         login: created.login,
         createdAt: created.createdAt.toISOString(),
+        isSuperadmin: created.isSuperadmin,
+        permissions: normalizeAdminPermissions(created.permissions) as AdminPermission[],
       },
     });
   } catch {

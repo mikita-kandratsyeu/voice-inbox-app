@@ -1,5 +1,6 @@
 'use client';
 
+import { Copy } from 'lucide-react';
 import { useCallback, useEffect, useState } from 'react';
 
 import {
@@ -8,6 +9,7 @@ import {
   AdminFormField,
   AdminStatusBadge,
   AdminSubNav,
+  adminBtnGhostClass,
   adminBtnPrimaryClass,
   adminBtnSecondaryClass,
   adminInputClass,
@@ -58,6 +60,31 @@ const emptyForm = {
   published: false,
   publishedAtLocal: '',
 };
+
+function slugBaseForClone(slug: string): string {
+  const stripped = slug.replace(/(-copy(-\d+)?)+$/, '');
+  return stripped.length >= 2 ? stripped : slug;
+}
+
+function suggestCloneSlug(slug: string, locale: string, items: ReleaseItem[]): string {
+  const base = slugBaseForClone(slug);
+  const taken = new Set(items.filter((i) => i.locale === locale).map((i) => i.slug));
+  const first = `${base}-copy`;
+  if (!taken.has(first) && first.length <= 120) return first;
+  for (let n = 2; n < 500; n++) {
+    const candidate = `${base}-copy-${n}`;
+    if (!taken.has(candidate) && candidate.length <= 120) return candidate;
+  }
+  const fallback = `${base.slice(0, 100)}-copy`;
+  return fallback.length <= 120 ? fallback : fallback.slice(0, 120);
+}
+
+function cloneTitle(title: string): string {
+  const suffix = ' (copy)';
+  if (title.endsWith(suffix)) return title;
+  const next = `${title}${suffix}`;
+  return next.length > 200 ? `${title.slice(0, 200 - suffix.length)}${suffix}` : next;
+}
 
 export function AdminReleasesPanel() {
   const [listLocale, setListLocale] = useState<'all' | 'en' | 'ru'>('all');
@@ -116,6 +143,22 @@ export function AdminReleasesPanel() {
     setSaveMsg(null);
     setSaveErr(null);
     setForm({ ...emptyForm });
+  };
+
+  const cloneRelease = (r: ReleaseItem) => {
+    setEditingId(null);
+    setSaveErr(null);
+    setForm({
+      locale: r.locale === 'ru' ? 'ru' : 'en',
+      slug: suggestCloneSlug(r.slug, r.locale, items),
+      title: cloneTitle(r.title),
+      version: r.version ?? '',
+      summary: r.summary ?? '',
+      body: r.body,
+      published: false,
+      publishedAtLocal: '',
+    });
+    setSaveMsg('Cloned as draft — review slug and title, then Create.');
   };
 
   const handleGenerateDraft = async () => {
@@ -291,11 +334,11 @@ export function AdminReleasesPanel() {
                 {items.map((r) => {
                   const active = editingId === r.id;
                   return (
-                    <li key={r.id}>
+                    <li key={r.id} className="group flex items-stretch gap-0.5">
                       <button
                         type="button"
                         onClick={() => selectItem(r)}
-                        className={`w-full rounded-lg px-3 py-2.5 text-left transition-colors ${
+                        className={`min-w-0 flex-1 rounded-lg px-3 py-2.5 text-left transition-colors ${
                           active
                             ? 'bg-indigo-50 ring-1 ring-indigo-200 dark:bg-indigo-950/40 dark:ring-indigo-800'
                             : 'hover:bg-zinc-50 dark:hover:bg-zinc-800/60'
@@ -317,6 +360,15 @@ export function AdminReleasesPanel() {
                             <AdminStatusBadge tone="warning">Draft</AdminStatusBadge>
                           )}
                         </div>
+                      </button>
+                      <button
+                        type="button"
+                        title="Clone post"
+                        aria-label={`Clone ${r.title}`}
+                        onClick={() => cloneRelease(r)}
+                        className={`${adminBtnGhostClass} shrink-0 self-center px-2 opacity-70 group-hover:opacity-100`}
+                      >
+                        <Copy className="h-4 w-4" aria-hidden />
                       </button>
                     </li>
                   );
@@ -340,6 +392,12 @@ export function AdminReleasesPanel() {
             </button>
           }
         >
+          {saveMsg || saveErr ? (
+            <div className="mb-4 space-y-2">
+              {saveMsg ? <AdminAlert tone="success">{saveMsg}</AdminAlert> : null}
+              {saveErr ? <AdminAlert tone="error">{saveErr}</AdminAlert> : null}
+            </div>
+          ) : null}
           <form
             onSubmit={(e) => void handleSave(e)}
             className="flex max-h-[min(72vh,640px)] flex-col"
@@ -429,17 +487,27 @@ export function AdminReleasesPanel() {
                   {saving ? 'Saving…' : editingId ? 'Save' : 'Create'}
                 </button>
                 {editingId ? (
-                  <button
-                    type="button"
-                    onClick={() => void handleDelete()}
-                    className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
-                  >
-                    Delete
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const source = items.find((i) => i.id === editingId);
+                        if (source) cloneRelease(source);
+                      }}
+                      className={adminBtnSecondaryClass}
+                    >
+                      Clone
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleDelete()}
+                      className="rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/40"
+                    >
+                      Delete
+                    </button>
+                  </>
                 ) : null}
               </div>
-              {saveMsg ? <AdminAlert tone="success">{saveMsg}</AdminAlert> : null}
-              {saveErr ? <AdminAlert tone="error">{saveErr}</AdminAlert> : null}
             </div>
           </form>
         </AdminCard>

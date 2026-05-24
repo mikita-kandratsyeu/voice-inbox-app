@@ -11,6 +11,11 @@ import {
   RATE_LIMIT_MAX_REQUESTS,
   RATE_LIMIT_WINDOW_SECONDS,
 } from '@/config/constants';
+import { resolveAdminApiAccess } from '@/lib/admin-api-access';
+import {
+  adminAccessRequirementMet,
+  getAdminAccessProfileFromCookie,
+} from '@/lib/admin-access-profile';
 import { isAdminCookieValid } from '@/lib/admin-auth';
 import { redis } from '@/lib/redis';
 import { routing } from '@/lib/i18n';
@@ -63,11 +68,20 @@ export const proxy = async (request: NextRequest): Promise<NextResponse> => {
           },
         );
       }
-    } else if (pathname !== '/api/admin/logout') {
+    } else if (pathname === '/api/admin/logout') {
       const cookie = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
-      const allowed = await isAdminCookieValid(cookie);
-      if (!allowed) {
+      if (!(await isAdminCookieValid(cookie))) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    } else {
+      const cookie = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
+      const profile = await getAdminAccessProfileFromCookie(cookie);
+      if (!profile) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const requirement = resolveAdminApiAccess(pathname, request.method);
+      if (!adminAccessRequirementMet(profile, requirement)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     }
     return NextResponse.next();

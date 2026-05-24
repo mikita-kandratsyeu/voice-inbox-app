@@ -1,4 +1,4 @@
-import { getAdminSession } from '@/lib/admin-session';
+import { getAdminAccessProfileFromRequestCookie } from '@/lib/admin-auth';
 
 import { AdminDashboard } from './AdminDashboard';
 import { AdminLogin } from './AdminLogin';
@@ -41,11 +41,16 @@ export default async function AdminPage() {
     );
   }
 
-  const session = await getAdminSession();
-  const isAdmin = session !== null;
+  const profile = await getAdminAccessProfileFromRequestCookie();
 
-  if (isAdmin) {
-    return <AdminDashboard adminLogin={session.login} />;
+  if (profile) {
+    return (
+      <AdminDashboard
+        adminLogin={profile.login}
+        isSuperadmin={profile.isSuperadmin}
+        permissions={profile.permissions}
+      />
+    );
   }
   return <AdminLogin />;
 }
