@@ -1,4 +1,4 @@
-import type { LucideIcon } from 'lucide-react';
+import { ChevronDown, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 /** Shared form controls — focus rings for keyboard users */
@@ -246,6 +246,38 @@ export function AdminAlert({
     >
       {children}
     </p>
+  );
+}
+
+export function AdminCollapsibleCard({
+  title,
+  defaultOpen = true,
+  children,
+  contentClassName = '',
+}: {
+  title: string;
+  defaultOpen?: boolean;
+  children: ReactNode;
+  contentClassName?: string;
+}) {
+  return (
+    <details
+      open={defaultOpen}
+      className={`group flex flex-col ${adminCardSurfaceClass} open:min-h-[260px] open:max-h-[60vh]`}
+    >
+      <summary className="flex shrink-0 cursor-pointer list-none items-center justify-between gap-2 border-b border-zinc-100 px-4 py-3 transition-colors hover:bg-zinc-50/80 marker:content-none dark:border-zinc-800 dark:hover:bg-zinc-800/40 [&::-webkit-details-marker]:hidden">
+        <span className="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+          {title}
+        </span>
+        <ChevronDown
+          className="h-4 w-4 shrink-0 text-zinc-400 transition-transform duration-200 group-open:rotate-180 dark:text-zinc-500"
+          aria-hidden
+        />
+      </summary>
+      <div className={`min-h-0 flex-1 overflow-auto p-4 ${contentClassName}`.trim()}>
+        {children}
+      </div>
+    </details>
   );
 }
 

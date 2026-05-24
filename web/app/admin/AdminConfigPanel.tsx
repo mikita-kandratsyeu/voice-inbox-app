@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { AdminAiLimitsPanel } from './AdminAiLimitsPanel';
 import { AdminModelManifestPanel } from './AdminModelManifestPanel';
 import { AdminProLicensesPanel } from './AdminProLicensesPanel';
-import { AdminPanelHeading, AdminSubNav } from './admin-ui';
+import { AdminSubNav } from './admin-ui';
 
 const CONFIG_SECTIONS = [
   { id: 'ai', label: 'AI limits' },
@@ -20,11 +20,6 @@ export function AdminConfigPanel() {
 
   return (
     <div className="space-y-6">
-      <AdminPanelHeading
-        title="App configuration"
-        description="Runtime limits, on-device model downloads, and internal Pro license tooling."
-      />
-
       <AdminSubNav items={CONFIG_SECTIONS} value={section} onChange={setSection} />
 
       {section === 'ai' ? <AdminAiLimitsPanel /> : null}
