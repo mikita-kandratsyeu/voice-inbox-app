@@ -2,7 +2,7 @@ import { InlineKeyboard } from 'grammy';
 
 import type { HandlerCtx } from '../context.js';
 import { apiConfigured } from '../context.js';
-import { clearSession } from '../session/store.js';
+import { clearFlow, clearSession, getFlow, setFlow } from '../session/store.js';
 import { hasPermission } from '../auth/permissions.js';
 import { escapeHtml } from '../ui/format.js';
 import type { ScreenReply } from '../ui/reply.js';
@@ -48,4 +48,95 @@ export function accountScreen(h: HandlerCtx): ScreenReply {
 
 export function resetBotSession(telegramUserId: string): void {
   clearSession(telegramUserId);
+}
+
+const PASSWORD_MIN = 10;
+
+export function accountPasswordStart(h: HandlerCtx): ScreenReply {
+  if (!h.profile) {
+    return { text: `${screenTitle('Change password')}\nLink an admin account first.` };
+  }
+  if (!h.adminApi) {
+    return { text: `${screenTitle('Change password')}\nAPI not configured.` };
+  }
+
+  setFlow(h.telegramUserId, { kind: 'admin_password', step: 'current', data: {} });
+  const kb = new InlineKeyboard().text('❌ Cancel', 'ac').row();
+  return {
+    text: [
+      screenTitle('Change password'),
+      '',
+      'Send your <b>current</b> admin password in the next message.',
+      'Use /cancel to abort.',
+    ].join('\n'),
+    keyboard: kb,
+  };
+}
+
+/** Returns a screen reply when handling a password-change flow message. */
+export async function handleAccountPasswordMessage(
+  h: HandlerCtx,
+  text: string,
+): Promise<ScreenReply | null> {
+  const flow = getFlow(h.telegramUserId);
+  if (!flow || flow.kind !== 'admin_password') return null;
+
+  if (!h.profile || !h.adminApi) {
+    clearFlow(h.telegramUserId);
+    return { text: `${screenTitle('Change password')}\nNot available.` };
+  }
+
+  const password = text.trim();
+  if (!password) {
+    return {
+      text: `${screenTitle('Change password')}\nPassword cannot be empty. Try again or /cancel.`,
+    };
+  }
+
+  if (flow.step === 'current') {
+    setFlow(h.telegramUserId, {
+      kind: 'admin_password',
+      step: 'new',
+      data: { current: password },
+    });
+    const kb = new InlineKeyboard().text('❌ Cancel', 'ac').row();
+    return {
+      text: `${screenTitle('Change password')}\nSend your <b>new</b> password (min ${PASSWORD_MIN} characters).`,
+      keyboard: kb,
+    };
+  }
+
+  if (flow.step === 'new') {
+    const current = flow.data.current;
+    if (typeof current !== 'string' || !current) {
+      clearFlow(h.telegramUserId);
+      return accountPasswordStart(h);
+    }
+    if (password.length < PASSWORD_MIN) {
+      return {
+        text: `${screenTitle('Change password')}\nNew password must be at least ${PASSWORD_MIN} characters.`,
+      };
+    }
+
+    const res = await h.adminApi.patch<{ ok: boolean; error?: string }>('/api/admin/users/me', {
+      currentPassword: current,
+      newPassword: password,
+    });
+    clearFlow(h.telegramUserId);
+
+    if (!res.ok) {
+      const err =
+        res.status === 401
+          ? 'Current password incorrect.'
+          : escapeHtml(res.error || 'Update failed');
+      return { text: `${screenTitle('Change password')}\n❌ ${err}` };
+    }
+
+    return {
+      text: `${screenTitle('Change password')}\n✅ Password updated. Use it on next web login.`,
+    };
+  }
+
+  clearFlow(h.telegramUserId);
+  return null;
 }

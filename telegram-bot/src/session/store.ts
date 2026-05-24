@@ -1,4 +1,4 @@
-import type { UserSession } from './types.js';
+import type { FlowStep, UserSession } from './types.js';
 
 const sessions = new Map<string, UserSession>();
 
@@ -19,6 +19,14 @@ export function clearFlow(telegramUserId: string): void {
   const s = getSession(telegramUserId);
   delete s.flow;
   delete s.pendingConfirm;
+}
+
+export function getFlow(telegramUserId: string): FlowStep | undefined {
+  return getSession(telegramUserId).flow;
+}
+
+export function setFlow(telegramUserId: string, flow: FlowStep): void {
+  getSession(telegramUserId).flow = flow;
 }
 
 export function setListIds(telegramUserId: string, ids: string[]): void {

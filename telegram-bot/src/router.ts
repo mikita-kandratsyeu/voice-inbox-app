@@ -2,8 +2,20 @@ import type { Bot, Context } from 'grammy';
 
 import type { AppContext, HandlerCtx } from './context.js';
 import { apiConfigured, resolveHandlerCtx } from './context.js';
-import { accountScreen, resetBotSession } from './modules/account.js';
-import { budgetAddQuick, budgetDeleteExpense, budgetHomeScreen, budgetListScreen } from './modules/budget.js';
+import {
+  accountPasswordStart,
+  accountScreen,
+  handleAccountPasswordMessage,
+  resetBotSession,
+} from './modules/account.js';
+import {
+  budgetAddQuick,
+  budgetDeleteConfirm,
+  budgetDeleteExpense,
+  budgetDetailScreen,
+  budgetHomeScreen,
+  budgetListScreen,
+} from './modules/budget.js';
 import { configScreen } from './modules/config.js';
 import { menuScreen } from './modules/menu.js';
 import {
@@ -105,6 +117,16 @@ export function registerRouter(bot: Bot<Context>, app: AppContext): void {
     });
   });
 
+  bot.on('message:text', async (ctx) => {
+    const text = ctx.message.text;
+    if (text.startsWith('/')) return;
+    await withHandler(ctx, app, async (h) => {
+      const flowReply = await handleAccountPasswordMessage(h, text);
+      if (!flowReply) return;
+      await sendScreen(ctx, flowReply);
+    });
+  });
+
   bot.callbackQuery(/.*/, async (ctx) => {
     const data = ctx.callbackQuery.data;
     await ctx.answerCallbackQuery();
@@ -115,7 +137,11 @@ export function registerRouter(bot: Bot<Context>, app: AppContext): void {
       };
 
       if (data === 'm') return send(menuScreen(h));
-      if (data === 'ac') return send(accountScreen(h));
+      if (data === 'ac') {
+        clearFlow(h.telegramUserId);
+        return send(accountScreen(h));
+      }
+      if (data === 'ac:pw') return send(accountPasswordStart(h));
       if (data === 'ac:rs') {
         resetBotSession(h.telegramUserId);
         return send(accountScreen(h));
@@ -202,6 +228,16 @@ export function registerRouter(bot: Bot<Context>, app: AppContext): void {
       if (data === 'bu:add') return send(await budgetAddQuick(h));
       const bul = data.match(/^bu:l:(\d+)$/);
       if (bul) return send(await budgetListScreen(h, parseInt(bul[1]!, 10)));
+      const buv = data.match(/^bu:v:(\d+):(\d+)$/);
+      if (buv) return send(await budgetDetailScreen(h, parseInt(buv[1]!, 10), parseInt(buv[2]!, 10)));
+      const buxd = data.match(/^bu:xd:(\d+):(\d+)$/);
+      if (buxd) return send(budgetDeleteConfirm(h, parseInt(buxd[1]!, 10), parseInt(buxd[2]!, 10)));
+      const buxs = data.match(/^bu:xs:(\d+):(\d+)$/);
+      if (buxs) {
+        return send(
+          await budgetDeleteExpense(h, parseInt(buxs[1]!, 10), parseInt(buxs[2]!, 10)),
+        );
+      }
 
       if (data === 'op' || data === 'op:r') return send(await operationsHomeScreen(h));
       if (data === 'op:ln') return send(operationsLinksScreen(h));

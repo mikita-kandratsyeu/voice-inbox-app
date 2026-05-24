@@ -1,4 +1,5 @@
 import type { AdminPermission } from '../auth/permissions.js';
+import { getTelegramBotUserAgent } from './user-agent.js';
 
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: string; status: number };
 
@@ -13,6 +14,7 @@ export class AdminApiClient {
     return {
       Authorization: `Bearer ${this.secret}`,
       'X-Telegram-User-Id': this.telegramUserId,
+      'User-Agent': getTelegramBotUserAgent(),
       ...extra,
     };
   }

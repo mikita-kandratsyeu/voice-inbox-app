@@ -2,10 +2,12 @@ import { InlineKeyboard } from 'grammy';
 
 import type { HandlerCtx } from '../context.js';
 import { getListId, setListIds } from '../session/store.js';
-import { requirePerm } from '../ui/keyboards.js';
+import { confirmKeyboard, requirePerm } from '../ui/keyboards.js';
 import { escapeHtml, formatCents, formatIsoShort } from '../ui/format.js';
 import type { ScreenReply } from '../ui/reply.js';
 import { screenTitle } from '../ui/reply.js';
+
+const BUDGET_PAGE_SIZE = 8;
 
 type ExpenseItem = {
   id: string;
@@ -58,21 +60,63 @@ export async function budgetListScreen(h: HandlerCtx, page: number): Promise<Scr
   const res = await h.adminApi.get<{ ok: boolean; items: ExpenseItem[] }>('/api/admin/budget');
   if (!res.ok) return { text: `${screenTitle('Budget')}\n❌ ${escapeHtml(res.error)}` };
   const all = res.data.items ?? [];
-  const pageSize = 8;
-  const slice = all.slice(page * pageSize, (page + 1) * pageSize);
-  setListIds(h.telegramUserId, all.map((i) => i.id));
+  const slice = all.slice(page * BUDGET_PAGE_SIZE, (page + 1) * BUDGET_PAGE_SIZE);
+  setListIds(
+    h.telegramUserId,
+    slice.map((i) => i.id),
+  );
 
   const kb = new InlineKeyboard();
   slice.forEach((e, idx) => {
     kb.text(`${e.category} · ${formatCents(e.amountCents, e.currency)}`, `bu:v:${page}:${idx}`).row();
   });
   if (page > 0) kb.text('◀️ Prev', `bu:l:${page - 1}`);
-  if ((page + 1) * pageSize < all.length) kb.text('Next ▶️', `bu:l:${page + 1}`);
+  if ((page + 1) * BUDGET_PAGE_SIZE < all.length) kb.text('Next ▶️', `bu:l:${page + 1}`);
   kb.row().text('◀️ Budget', 'bu').row().text('◀️ Menu', 'm');
 
   return {
     text: `${screenTitle('Expenses', `Page ${page + 1}`)}`,
     keyboard: kb,
+  };
+}
+
+export async function budgetDetailScreen(
+  h: HandlerCtx,
+  page: number,
+  index: number,
+): Promise<ScreenReply> {
+  const id = getListId(h.telegramUserId, index);
+  if (!id || !h.adminApi) return { text: `${screenTitle('Budget')}\nExpense not found.` };
+
+  const res = await h.adminApi.get<{ ok: boolean; items: ExpenseItem[] }>('/api/admin/budget');
+  if (!res.ok) return { text: `${screenTitle('Budget')}\n❌ ${escapeHtml(res.error)}` };
+  const item = (res.data.items ?? []).find((e) => e.id === id);
+  if (!item) return { text: `${screenTitle('Budget')}\nExpense not found.` };
+
+  const lines = [
+    screenTitle('Expense', escapeHtml(item.category)),
+    `Date: ${formatIsoShort(item.spentAt)}`,
+    `Amount: ${formatCents(item.amountCents, item.currency)}`,
+    item.description ? `Description: ${escapeHtml(item.description)}` : null,
+    `Id: <code>${escapeHtml(item.id)}</code>`,
+  ].filter(Boolean) as string[];
+
+  const kb = new InlineKeyboard()
+    .text('🗑 Delete', `bu:xd:${page}:${index}`)
+    .row()
+    .text('◀️ List', `bu:l:${page}`)
+    .row()
+    .text('◀️ Menu', 'm');
+
+  return { text: lines.join('\n'), keyboard: kb };
+}
+
+export function budgetDeleteConfirm(h: HandlerCtx, page: number, index: number): ScreenReply {
+  const id = getListId(h.telegramUserId, index);
+  const label = id ? `<code>${escapeHtml(id.slice(0, 12))}…</code>` : 'this expense';
+  return {
+    text: `${screenTitle('Confirm')}\nDelete ${label}?`,
+    keyboard: confirmKeyboard(`bu:xs:${page}:${index}`, `bu:v:${page}:${index}`),
   };
 }
 

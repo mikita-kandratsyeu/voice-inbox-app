@@ -16,6 +16,7 @@ Mobile-first admin interface for the Voice Inbox web dashboard (`/admin`). Engli
 | `DATABASE_URL` | yes | Postgres connection (admin `telegramUserId` lookup) |
 | `WEB_ADMIN_URL` | yes* | Site origin, e.g. `https://voice-inbox.example` |
 | `TELEGRAM_BOT_API_SECRET` | yes* | Shared secret; set the same value on web as `TELEGRAM_BOT_API_SECRET` |
+| `TELEGRAM_BOT_USER_AGENT` | no | Product token in `User-Agent` (default `VoiceInbox-Bot`). Use in Vercel Firewall → Bypass when User Agent **Contains** this string (same pattern as mobile `VoiceInbox-Mobile`). |
 
 \*Required for API-backed actions (overview, support, keys, push, etc.). Without them the bot only shows link/setup screens.
 
