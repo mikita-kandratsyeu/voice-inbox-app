@@ -29,10 +29,12 @@ export async function GET(request: Request): Promise<NextResponse> {
     statusFilter !== 'all' && isIssueStatus(statusFilter) ? { status: statusFilter } : {};
 
   const refNum = q ? parseSupportReferenceQuery(q) : null;
+  const qLooksLikeId = Boolean(q && /^[a-z0-9]{20,36}$/i.test(q));
   const searchWhere: Prisma.SupportIssueWhereInput | undefined = q
     ? {
         OR: [
           ...(refNum != null ? [{ referenceNumber: refNum }] : []),
+          ...(qLooksLikeId ? [{ id: q }] : []),
           { deviceId: { contains: q, mode: 'insensitive' } },
           { email: { contains: q, mode: 'insensitive' } },
           { subject: { contains: q, mode: 'insensitive' } },

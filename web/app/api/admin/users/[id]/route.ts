@@ -9,10 +9,12 @@ import {
 } from '@/lib/admin-user-mutations';
 import { normalizeAdminPermissions, type AdminPermission } from '@/lib/admin-permissions';
 import { prisma } from '@/lib/prisma';
+import { isValidTelegramUserIdString } from '@/lib/telegram-admin-whitelist';
 
 type PatchBody = {
   permissions?: unknown;
   isSuperadmin?: unknown;
+  telegramUserId?: unknown;
 };
 
 export async function PATCH(
@@ -48,6 +50,25 @@ export async function PATCH(
 
   const requestedSuperadmin = body.isSuperadmin === true;
   const requestedPermissions = normalizeAdminPermissions(body.permissions);
+  const hasTelegramField = Object.prototype.hasOwnProperty.call(body, 'telegramUserId');
+
+  let telegramUserId: string | null | undefined;
+  if (hasTelegramField) {
+    if (body.telegramUserId === null || body.telegramUserId === '') {
+      telegramUserId = null;
+    } else if (typeof body.telegramUserId === 'string') {
+      const t = body.telegramUserId.trim();
+      if (!isValidTelegramUserIdString(t)) {
+        return NextResponse.json(
+          { ok: false, error: 'Invalid Telegram user id (digits only)' },
+          { status: 400 },
+        );
+      }
+      telegramUserId = t;
+    } else {
+      return NextResponse.json({ ok: false, error: 'Invalid telegramUserId' }, { status: 400 });
+    }
+  }
 
   const sanitized = sanitizePermissionsForGrant(actor, requestedPermissions, requestedSuperadmin);
   if (!sanitized.ok) {
@@ -57,7 +78,7 @@ export async function PATCH(
   try {
     const existing = await prisma.adminUser.findUnique({
       where: { id: targetId },
-      select: { id: true, login: true, isSuperadmin: true },
+      select: { id: true, login: true, isSuperadmin: true, telegramUserId: true },
     });
     if (!existing) {
       return NextResponse.json({ ok: false, error: 'User not found' }, { status: 404 });
@@ -81,11 +102,25 @@ export async function PATCH(
       );
     }
 
+    if (telegramUserId !== undefined && telegramUserId !== null) {
+      const taken = await prisma.adminUser.findFirst({
+        where: { telegramUserId, NOT: { id: targetId } },
+        select: { id: true },
+      });
+      if (taken) {
+        return NextResponse.json(
+          { ok: false, error: 'Telegram user id already linked to another admin' },
+          { status: 400 },
+        );
+      }
+    }
+
     const updated = await prisma.adminUser.update({
       where: { id: targetId },
       data: {
         isSuperadmin: sanitized.isSuperadmin,
         permissions: sanitized.permissions,
+        ...(telegramUserId !== undefined ? { telegramUserId } : {}),
       },
       select: {
         id: true,
@@ -93,6 +128,7 @@ export async function PATCH(
         isSuperadmin: true,
         permissions: true,
         createdAt: true,
+        telegramUserId: true,
       },
     });
 
@@ -101,6 +137,12 @@ export async function PATCH(
       targetLogin: updated.login,
       isSuperadmin: updated.isSuperadmin,
       permissions: updated.permissions,
+      ...(telegramUserId !== undefined
+        ? {
+            telegramUserId: updated.telegramUserId,
+            telegramLinked: Boolean(updated.telegramUserId),
+          }
+        : {}),
     });
 
     return NextResponse.json({
@@ -111,6 +153,7 @@ export async function PATCH(
         isSuperadmin: updated.isSuperadmin,
         permissions: normalizeAdminPermissions(updated.permissions) as AdminPermission[],
         createdAt: updated.createdAt.toISOString(),
+        telegramUserId: updated.telegramUserId,
         isCurrent: updated.id === actor.adminId,
       },
     });

@@ -6,6 +6,7 @@ import { writeAdminAudit } from '@/lib/admin-audit';
 import { normalizeAdminPermissions, type AdminPermission } from '@/lib/admin-permissions';
 import { assertCanManageAdminUsers, sanitizePermissionsForGrant } from '@/lib/admin-user-mutations';
 import { prisma } from '@/lib/prisma';
+import { isValidTelegramUserIdString } from '@/lib/telegram-admin-whitelist';
 
 const LOGIN_MAX = 64;
 const PASSWORD_MIN = 10;
@@ -47,6 +48,7 @@ export async function GET(): Promise<NextResponse> {
         createdAt: true,
         isSuperadmin: true,
         permissions: true,
+        telegramUserId: true,
       },
     });
     return NextResponse.json({
@@ -63,6 +65,7 @@ export async function GET(): Promise<NextResponse> {
         createdAt: u.createdAt.toISOString(),
         isSuperadmin: u.isSuperadmin,
         permissions: normalizeAdminPermissions(u.permissions) as AdminPermission[],
+        telegramUserId: u.telegramUserId,
         isCurrent: u.id === actor.adminId,
       })),
     });
@@ -77,6 +80,7 @@ type PostBody = {
   password?: unknown;
   permissions?: unknown;
   isSuperadmin?: unknown;
+  telegramUserId?: unknown;
 };
 
 export async function POST(request: Request): Promise<NextResponse> {
@@ -116,7 +120,35 @@ export async function POST(request: Request): Promise<NextResponse> {
     return NextResponse.json({ ok: false, error: sanitized.error }, { status: 400 });
   }
 
+  let telegramUserId: string | null = null;
+  if (body.telegramUserId != null && body.telegramUserId !== '') {
+    if (typeof body.telegramUserId !== 'string') {
+      return NextResponse.json({ ok: false, error: 'Invalid telegramUserId' }, { status: 400 });
+    }
+    const t = body.telegramUserId.trim();
+    if (!isValidTelegramUserIdString(t)) {
+      return NextResponse.json(
+        { ok: false, error: 'Invalid Telegram user id (digits only)' },
+        { status: 400 },
+      );
+    }
+    telegramUserId = t;
+  }
+
   try {
+    if (telegramUserId) {
+      const taken = await prisma.adminUser.findFirst({
+        where: { telegramUserId },
+        select: { id: true },
+      });
+      if (taken) {
+        return NextResponse.json(
+          { ok: false, error: 'Telegram user id already linked to another admin' },
+          { status: 400 },
+        );
+      }
+    }
+
     const hash = await bcrypt.hash(password, 12);
     const created = await prisma.adminUser.create({
       data: {
@@ -124,6 +156,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         passwordHash: hash,
         isSuperadmin: sanitized.isSuperadmin,
         permissions: sanitized.permissions,
+        telegramUserId,
       },
       select: {
         id: true,
@@ -131,6 +164,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         createdAt: true,
         isSuperadmin: true,
         permissions: true,
+        telegramUserId: true,
       },
     });
     await writeAdminAudit(actor, 'admin.user_create', {
@@ -138,6 +172,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       id: created.id,
       isSuperadmin: created.isSuperadmin,
       permissions: created.permissions,
+      telegramUserId: created.telegramUserId,
     });
     return NextResponse.json({
       ok: true,
@@ -147,6 +182,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         createdAt: created.createdAt.toISOString(),
         isSuperadmin: created.isSuperadmin,
         permissions: normalizeAdminPermissions(created.permissions) as AdminPermission[],
+        telegramUserId: created.telegramUserId,
       },
     });
   } catch {

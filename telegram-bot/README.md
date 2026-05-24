@@ -1,59 +1,93 @@
 # Voice Inbox — Telegram admin bot
 
-Separate Node process. Reads allowed Telegram user ids from the **`AppConfig`** row `TELEGRAM_ADMIN_USER_IDS` (JSON array of digit strings), managed in the web admin under **Security → Telegram admin bot**.
+Mobile-first admin interface for the Voice Inbox web dashboard (`/admin`). English UI.
+
+## Requirements
+
+- Node.js ≥ 24
+- Same Postgres database as `web/`
+- Running web app (or deployed URL) for mutating operations via `/api/admin/*`
+
+## Environment variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `TELEGRAM_BOT_TOKEN` | yes | Bot token from [@BotFather](https://t.me/BotFather) |
+| `DATABASE_URL` | yes | Postgres connection (admin `telegramUserId` lookup) |
+| `WEB_ADMIN_URL` | yes* | Site origin, e.g. `https://voice-inbox.example` |
+| `TELEGRAM_BOT_API_SECRET` | yes* | Shared secret; set the same value on web as `TELEGRAM_BOT_API_SECRET` |
+
+\*Required for API-backed actions (overview, support, keys, push, etc.). Without them the bot only shows link/setup screens.
+
+Optional: `ADMIN_LINK_*` for Operations console URLs.
+
+Copy `.env.example` to `.env` and fill in values.
+
+## Auth model
+
+1. **Per-admin Telegram id** — each `AdminUser` can have `telegramUserId` (unique). Set it in web admin → Security → Admin users (create or edit).
+2. **RBAC** — the bot loads `isSuperadmin` and `permissions[]` from that admin row (same tabs as web). Menu sections are hidden without permission.
+3. **API calls** — the bot calls `WEB_ADMIN_URL/api/admin/...` with `Authorization: Bearer <TELEGRAM_BOT_API_SECRET>` and `X-Telegram-User-Id: <telegram id>`. Web validates the secret and linked admin, then applies the same route permissions as the browser session.
+
+Secrets (keys, passwords) are never shown in full; keys use masked prefixes only.
 
 ## Setup
 
-From this directory:
-
 ```bash
+cd telegram-bot
 yarn install
 cp .env.example .env
-# fill TELEGRAM_BOT_TOKEN and DATABASE_URL
+# Edit .env, run web migration for telegramUserId column
 yarn dev
 ```
 
-`dotenv` loads `.env` from the **current working directory** when you run `yarn dev` / `yarn start` (run commands from `telegram-bot/`, not the repo root). On production, set variables in the host environment instead; a missing `.env` file is fine.
+Link your Telegram account:
 
-Use a **dedicated** Postgres user for the bot (not the web superuser). Minimum privileges:
+1. Message the bot `/whoami` and copy your numeric id.
+2. In web admin → Security → Admin users, set **Telegram user id** on your admin row (or ask a superadmin).
 
-**`SELECT`** on: `"AppConfig"`, `"SupportIssue"`, `"AdminAuditLog"`, `"BroadcastHistory"`, `"ProLicenseKey"` (for overview counts).
-
-**`UPDATE`** on `"SupportIssue"` (close / reopen tickets).
-
-**`INSERT`** on `"AdminAuditLog"` (audit row on ticket status change, same shape as web admin).
-
-After you change the whitelist in the web admin, the bot may serve the previous list until the in-memory cache expires (**10 minutes** by default). Restart the bot or set `TELEGRAM_WHITELIST_CACHE_SECONDS` (60–86400) in `.env` if you want a shorter or longer TTL (e.g. `3600` for one hour).
-
-## Commands (after whitelist access)
+## Commands
 
 | Command | Description |
 |---------|-------------|
-| `/start` | Short welcome |
-| `/help` | List commands |
-| `/me` | Your Telegram user id (for the web admin whitelist) |
-| `/ping` | `SELECT 1` round-trip to Postgres |
-| `/whitelist` | Count of ids in the cached whitelist |
-| `/admin` | Full panel: overview, support queue & stats, audit log, app config, broadcasts, Pro keys |
+| `/start`, `/menu` | Main menu (permission-filtered when linked) |
+| `/help` | Command list |
+| `/whoami` | Telegram id, linked login, permissions |
+| `/status` | Quick overview (Postgres, Redis, Vercel, devices) |
+| `/cancel` | Cancel an in-progress flow |
+| `/ping` | Database latency |
 
-Telegram’s command menu is set on startup (`setMyCommands`).
+## Sections (inline menu)
 
-### `/admin` — overview and sections
-
-- **Home / Refresh overview** — open support count, unissued Pro keys, broadcast row count, cached whitelist size.
-- **Support — queue** — open tickets, paginated; open a ticket to close or reopen; writes `support.status` to **`AdminAuditLog`** with `metadata.source = telegram_bot`.
-- **Support — stats** — same idea as web: open total, open created in last 7 / 30 days.
-- **Audit log** — latest entries, paginated; tap a line for JSON metadata (read-only).
-- **App config** — all `AppConfig` key/value rows, truncated for chat; multi-part navigation if long (read-only).
-- **Broadcasts** — recent `BroadcastHistory` rows (read-only).
-- **Pro keys** — recent `ProLicenseKey` rows (read-only); list shows a short **hash prefix** only, not redeemable keys. Tap a row for full metadata.
-
-When **`WEB_ADMIN_URL`** is **`https`**, or **`WEB_ADMIN_MINI_APP_URL`** is set to an **`https`** URL, the home and Pro-keys views get a **Web admin (Mini App)** button that opens the admin UI **inside Telegram**. Plain `http` URLs (for example local dev) do not get a button unless you set **`WEB_ADMIN_MINI_APP_URL`** to a working `https` entrypoint.
-
-Optional env **`TELEGRAM_BOT_AUDIT_LOGIN`** / **`TELEGRAM_BOT_AUDIT_ID`** (default `telegram-bot`) for rows written when changing support status from the bot.
+| Section | Permission | Features |
+|---------|------------|----------|
+| Overview | overview | Health, Vercel deploys, GitHub commits, push device count |
+| Config | config | App config summary, link to Pro keys |
+| Support | support | Ticket lists, detail, close/reopen with confirmation |
+| Pro Keys | config | List, generate, view masked key metadata |
+| Releases | releases | List by locale, publish/unpublish |
+| Push | messaging | Broadcast types, history |
+| Operations | operations | Support stats, API errors, audit log, console links |
+| Budget | budget | Totals, recent expenses, quick add |
+| Security | security | Access policy, admin list |
+| My Account | — | Profile, reset session |
 
 ## Scripts
 
 - `yarn dev` — long polling (development)
-- `yarn start` — same with `NODE_ENV=production`
+- `yarn start` — production
 - `yarn type:check` — TypeScript
+- `yarn test` — unit tests (format helpers)
+
+## Project layout
+
+```
+src/
+  auth/          admin profile from DB (telegramUserId)
+  api/           HTTP client for web admin API
+  modules/       overview, support, pro-keys, …
+  session/       in-memory flows and list indices
+  ui/            HTML formatting, keyboards, replies
+  router.ts      commands & callback routing
+  index.ts       entrypoint
+```

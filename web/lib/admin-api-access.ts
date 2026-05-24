@@ -16,6 +16,9 @@ export function resolveAdminApiAccess(pathname: string, method: string): AdminAc
   if (pathname === '/api/admin/users/me' && method === 'PATCH') {
     return { type: 'authenticated' };
   }
+  if (pathname === '/api/admin/bot/me' && method === 'GET') {
+    return { type: 'none' };
+  }
 
   if (pathname.startsWith('/api/admin/users')) {
     return { type: 'permission', permission: 'security' };

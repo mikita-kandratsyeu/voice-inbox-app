@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "node --import tsx src/index.ts",
     "start": "NODE_ENV=production node --import tsx src/index.ts",
-    "type:check": "tsc --noEmit"
+    "type:check": "tsc --noEmit",
+    "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
     "dotenv": "^16.6.1",

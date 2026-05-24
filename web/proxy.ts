@@ -16,6 +16,11 @@ import {
   adminAccessRequirementMet,
   getAdminAccessProfileFromCookie,
 } from '@/lib/admin-access-profile';
+import {
+  getAdminAccessProfileFromBotRequest,
+  setAdminBotTrustHeaders,
+  stripAdminBotTrustHeaders,
+} from '@/lib/admin-bot-auth';
 import { isAdminCookieValid } from '@/lib/admin-auth';
 import { redis } from '@/lib/redis';
 import { routing } from '@/lib/i18n';
@@ -73,15 +78,26 @@ export const proxy = async (request: NextRequest): Promise<NextResponse> => {
       if (!(await isAdminCookieValid(cookie))) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
+    } else if (pathname === '/api/admin/bot/me') {
+      // Bot auth handled in route handler (secret + Telegram user id).
     } else {
+      const requirement = resolveAdminApiAccess(pathname, request.method);
+      const forwardedHeaders = new Headers(request.headers);
+      stripAdminBotTrustHeaders(forwardedHeaders);
+
+      const botProfile = await getAdminAccessProfileFromBotRequest(request);
       const cookie = request.cookies.get(ADMIN_COOKIE_NAME)?.value;
-      const profile = await getAdminAccessProfileFromCookie(cookie);
+      const profile = botProfile ?? (await getAdminAccessProfileFromCookie(cookie));
       if (!profile) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
-      const requirement = resolveAdminApiAccess(pathname, request.method);
       if (!adminAccessRequirementMet(profile, requirement)) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
+      if (botProfile) {
+        setAdminBotTrustHeaders(forwardedHeaders, botProfile);
+        return NextResponse.next({ request: { headers: forwardedHeaders } });
       }
     }
     return NextResponse.next();

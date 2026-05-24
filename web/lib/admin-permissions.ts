@@ -48,7 +48,7 @@ export const ADMIN_PERMISSION_META: Record<
   },
   security: {
     label: 'Security',
-    description: 'Access policy, admin accounts, and Telegram bot whitelist',
+    description: 'Access policy, admin accounts, and Telegram bot user ids',
   },
 };
 
