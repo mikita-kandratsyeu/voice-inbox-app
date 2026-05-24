@@ -42,3 +42,31 @@ export function sanitizePermissionsForGrant(
 
   return { ok: true, isSuperadmin: false, permissions: validated.permissions };
 }
+
+export function validateAdminUserDeletion(params: {
+  actor: AdminAccessProfile;
+  target: { id: string; isSuperadmin: boolean };
+  totalAdminCount: number;
+  superadminCount: number;
+}): string | null {
+  const forbidden = assertCanManageAdminUsers(params.actor);
+  if (forbidden) return forbidden;
+
+  if (params.target.id === params.actor.adminId) {
+    return 'Cannot delete your own account';
+  }
+
+  if (params.totalAdminCount <= 1) {
+    return 'Cannot delete the only admin account';
+  }
+
+  if (params.target.isSuperadmin && !params.actor.isSuperadmin) {
+    return 'Only a superadmin can delete another superadmin';
+  }
+
+  if (params.target.isSuperadmin && params.superadminCount <= 1) {
+    return 'Cannot delete the only superadmin';
+  }
+
+  return null;
+}

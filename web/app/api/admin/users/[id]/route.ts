@@ -2,7 +2,11 @@ import { NextResponse } from 'next/server';
 
 import { getAdminAccessProfileFromRequestCookie } from '@/lib/admin-auth';
 import { writeAdminAudit } from '@/lib/admin-audit';
-import { assertCanManageAdminUsers, sanitizePermissionsForGrant } from '@/lib/admin-user-mutations';
+import {
+  assertCanManageAdminUsers,
+  sanitizePermissionsForGrant,
+  validateAdminUserDeletion,
+} from '@/lib/admin-user-mutations';
 import { normalizeAdminPermissions, type AdminPermission } from '@/lib/admin-permissions';
 import { prisma } from '@/lib/prisma';
 
@@ -113,5 +117,63 @@ export async function PATCH(
   } catch (e) {
     console.error('[admin/users PATCH]', e);
     return NextResponse.json({ ok: false, error: 'Update failed' }, { status: 503 });
+  }
+}
+
+export async function DELETE(
+  _request: Request,
+  context: { params: Promise<{ id: string }> },
+): Promise<NextResponse> {
+  if (!process.env.DATABASE_URL?.trim()) {
+    return NextResponse.json({ ok: false, error: 'Database not configured' }, { status: 503 });
+  }
+
+  const actor = await getAdminAccessProfileFromRequestCookie();
+  if (!actor) {
+    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const { id } = await context.params;
+  const targetId = id?.trim();
+  if (!targetId) {
+    return NextResponse.json({ ok: false, error: 'Invalid id' }, { status: 400 });
+  }
+
+  try {
+    const [existing, totalAdminCount, superadminCount] = await Promise.all([
+      prisma.adminUser.findUnique({
+        where: { id: targetId },
+        select: { id: true, login: true, isSuperadmin: true },
+      }),
+      prisma.adminUser.count(),
+      prisma.adminUser.count({ where: { isSuperadmin: true } }),
+    ]);
+
+    if (!existing) {
+      return NextResponse.json({ ok: false, error: 'User not found' }, { status: 404 });
+    }
+
+    const validationError = validateAdminUserDeletion({
+      actor,
+      target: existing,
+      totalAdminCount,
+      superadminCount,
+    });
+    if (validationError) {
+      return NextResponse.json({ ok: false, error: validationError }, { status: 400 });
+    }
+
+    await prisma.adminUser.delete({ where: { id: targetId } });
+
+    await writeAdminAudit(actor, 'admin.user_delete', {
+      targetId: existing.id,
+      targetLogin: existing.login,
+      wasSuperadmin: existing.isSuperadmin,
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    console.error('[admin/users DELETE]', e);
+    return NextResponse.json({ ok: false, error: 'Delete failed' }, { status: 503 });
   }
 }

@@ -10,10 +10,10 @@ import {
 
 import { AdminChangePasswordForm } from './AdminChangePasswordForm';
 import { AdminPermissionFields } from './AdminPermissionFields';
+import { AdminUserRowMenu } from './AdminUserRowMenu';
 import {
   AdminCard,
   AdminDetailsSection,
-  adminBtnGhostClass,
   adminBtnPrimaryClass,
   adminBtnSecondaryClass,
   adminInputClass,
@@ -70,6 +70,8 @@ export function AdminSecurityPanel() {
   const [editMsg, setEditMsg] = useState<string | null>(null);
   const [editErr, setEditErr] = useState<string | null>(null);
   const [editSaving, setEditSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteErr, setDeleteErr] = useState<string | null>(null);
 
   const [tgIdsText, setTgIdsText] = useState('');
   const [tgWhitelistLoading, setTgWhitelistLoading] = useState(true);
@@ -231,6 +233,34 @@ export function AdminSecurityPanel() {
     }
   };
 
+  const handleDelete = async (user: AdminUserRow) => {
+    if (user.isCurrent) return;
+    const confirmed = window.confirm(`Delete admin “${user.login}”? This cannot be undone.`);
+    if (!confirmed) return;
+
+    setDeleteErr(null);
+    setDeletingId(user.id);
+    try {
+      const res = await fetch(`/api/admin/users/${encodeURIComponent(user.id)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const data = (await res.json()) as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setDeleteErr(data.error ?? 'Delete failed');
+        return;
+      }
+      if (editingUserId === user.id) {
+        setEditingUserId(null);
+      }
+      void loadUsers();
+    } catch {
+      setDeleteErr('Request failed');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   const handleSavePermissions = async (userId: string) => {
     setEditMsg(null);
     setEditErr(null);
@@ -386,61 +416,70 @@ export function AdminSecurityPanel() {
         {usersLoading ? (
           <p className="text-sm text-zinc-500">Loading…</p>
         ) : (
-          <ul className="space-y-3 text-sm">
-            {users.map((u) => (
-              <li key={u.id} className="rounded-lg border border-zinc-100 dark:border-zinc-700">
-                <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
-                  <div className="min-w-0">
-                    <span className="font-medium text-zinc-900 dark:text-zinc-100">{u.login}</span>
-                    <p className="mt-0.5 text-xs text-zinc-500">{formatPermissionSummary(u)}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-zinc-500">
-                      {u.isCurrent ? 'current session' : new Date(u.createdAt).toLocaleDateString()}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        editingUserId === u.id ? setEditingUserId(null) : startEditUser(u)
-                      }
-                      className={adminBtnGhostClass}
-                    >
-                      {editingUserId === u.id ? 'Close' : 'Edit access'}
-                    </button>
-                  </div>
-                </div>
-                {editingUserId === u.id ? (
-                  <div className="border-t border-zinc-100 px-3 py-3 dark:border-zinc-700">
-                    <AdminPermissionFields
-                      isSuperadmin={editIsSuperadmin}
-                      permissions={editPermissions}
-                      grantablePermissions={grantablePermissions}
-                      canSetSuperadmin={actorIsSuperadmin}
-                      onSuperadminChange={setEditIsSuperadmin}
-                      onPermissionsChange={setEditPermissions}
-                      disabled={editSaving}
-                    />
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        disabled={editSaving}
-                        onClick={() => void handleSavePermissions(u.id)}
-                        className={adminBtnPrimaryClass}
-                      >
-                        {editSaving ? 'Saving…' : 'Save permissions'}
-                      </button>
+          <>
+            {deleteErr ? (
+              <p className="mb-3 text-sm text-red-600 dark:text-red-400">{deleteErr}</p>
+            ) : null}
+            <ul className="space-y-3 text-sm">
+              {users.map((u) => (
+                <li key={u.id} className="rounded-lg border border-zinc-100 dark:border-zinc-700">
+                  <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+                    <div className="min-w-0">
+                      <span className="font-medium text-zinc-900 dark:text-zinc-100">
+                        {u.login}
+                      </span>
+                      <p className="mt-0.5 text-xs text-zinc-500">{formatPermissionSummary(u)}</p>
                     </div>
-                    {editMsg && (
-                      <p className="mt-2 text-sm text-green-600 dark:text-green-400">{editMsg}</p>
-                    )}
-                    {editErr && (
-                      <p className="mt-2 text-sm text-red-600 dark:text-red-400">{editErr}</p>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-zinc-500">
+                        {u.isCurrent
+                          ? 'current session'
+                          : new Date(u.createdAt).toLocaleDateString()}
+                      </span>
+                      <AdminUserRowMenu
+                        isCurrent={u.isCurrent}
+                        isEditing={editingUserId === u.id}
+                        isDeleting={deletingId === u.id}
+                        onEdit={() =>
+                          editingUserId === u.id ? setEditingUserId(null) : startEditUser(u)
+                        }
+                        onDelete={() => void handleDelete(u)}
+                      />
+                    </div>
                   </div>
-                ) : null}
-              </li>
-            ))}
-          </ul>
+                  {editingUserId === u.id ? (
+                    <div className="border-t border-zinc-100 px-3 py-3 dark:border-zinc-700">
+                      <AdminPermissionFields
+                        isSuperadmin={editIsSuperadmin}
+                        permissions={editPermissions}
+                        grantablePermissions={grantablePermissions}
+                        canSetSuperadmin={actorIsSuperadmin}
+                        onSuperadminChange={setEditIsSuperadmin}
+                        onPermissionsChange={setEditPermissions}
+                        disabled={editSaving}
+                      />
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          disabled={editSaving}
+                          onClick={() => void handleSavePermissions(u.id)}
+                          className={adminBtnPrimaryClass}
+                        >
+                          {editSaving ? 'Saving…' : 'Save permissions'}
+                        </button>
+                      </div>
+                      {editMsg && (
+                        <p className="mt-2 text-sm text-green-600 dark:text-green-400">{editMsg}</p>
+                      )}
+                      {editErr && (
+                        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{editErr}</p>
+                      )}
+                    </div>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </AdminCard>
 
