@@ -55,6 +55,12 @@ function safeZipFileName(raw: string): string {
   return base.toLowerCase().endsWith('.zip') ? base : `${base}.zip`;
 }
 
+function safePdfFileName(raw: string): string {
+  const stripped = raw.replace(/[/\\]/g, '').replace(/[^a-zA-Z0-9._\u0400-\u04FF-]/g, '_');
+  const base = stripped.slice(0, 120).trim() || 'voice-inbox-export';
+  return base.toLowerCase().endsWith('.pdf') ? base : `${base}.pdf`;
+}
+
 function safeMarkdownAttachmentFilename(title: string): string {
   const stripped = title.replace(/[/\\]/g, '').replace(/[^a-zA-Z0-9._\u0400-\u04FF\s-]/g, '_');
   const base = stripped.replace(/\s+/g, '-').slice(0, 80).trim() || 'voice-inbox-note';
@@ -117,27 +123,36 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const file = formData.get('file');
     if (!(file instanceof File)) {
-      return apiError('ZIP attachment is required', HttpStatus.BAD_REQUEST, { pathname: path });
+      return apiError('File attachment is required', HttpStatus.BAD_REQUEST, { pathname: path });
     }
+
+    const attachmentKindRaw = formData.get('attachmentKind');
+    const attachmentKind =
+      typeof attachmentKindRaw === 'string' && attachmentKindRaw.trim() === 'pdf' ? 'pdf' : 'zip';
 
     const mime = (file.type ?? '').toLowerCase();
     const nameLower = file.name.toLowerCase();
+    const looksPdf = attachmentKind === 'pdf' || mime.includes('pdf') || nameLower.endsWith('.pdf');
     const looksZip =
-      mime.includes('zip') || mime.includes('octet-stream') || nameLower.endsWith('.zip');
-    if (!looksZip) {
-      return apiError('Attachment must be a ZIP file', HttpStatus.BAD_REQUEST, { pathname: path });
+      !looksPdf &&
+      (mime.includes('zip') || mime.includes('octet-stream') || nameLower.endsWith('.zip'));
+
+    if (!looksZip && !looksPdf) {
+      return apiError('Attachment must be a ZIP or PDF file', HttpStatus.BAD_REQUEST, {
+        pathname: path,
+      });
     }
 
     if (file.size > ZIP_ATTACHMENT_MAX_BYTES) {
       return apiError(
-        `ZIP attachment too large (max ${ZIP_ATTACHMENT_MAX_BYTES} bytes)`,
+        `Attachment too large (max ${ZIP_ATTACHMENT_MAX_BYTES} bytes)`,
         HttpStatus.PAYLOAD_TOO_LARGE,
         { pathname: path },
       );
     }
 
     if (file.size === 0) {
-      return apiError('Empty ZIP attachment', HttpStatus.BAD_REQUEST, { pathname: path });
+      return apiError('Empty attachment', HttpStatus.BAD_REQUEST, { pathname: path });
     }
 
     let buffer: Buffer;
@@ -147,11 +162,19 @@ export async function POST(request: Request): Promise<NextResponse> {
       return apiError('Could not read attachment', HttpStatus.BAD_REQUEST, { pathname: path });
     }
 
-    const zipNameRaw = formData.get('zipFileName');
-    const attachmentFilename =
-      typeof zipNameRaw === 'string' && zipNameRaw.trim()
-        ? safeZipFileName(zipNameRaw.trim())
-        : 'voice-inbox-export.zip';
+    const attachmentFilename = looksPdf
+      ? (() => {
+          const pdfNameRaw = formData.get('pdfFileName');
+          return typeof pdfNameRaw === 'string' && pdfNameRaw.trim()
+            ? safePdfFileName(pdfNameRaw.trim())
+            : 'voice-inbox-export.pdf';
+        })()
+      : (() => {
+          const zipNameRaw = formData.get('zipFileName');
+          return typeof zipNameRaw === 'string' && zipNameRaw.trim()
+            ? safeZipFileName(zipNameRaw.trim())
+            : 'voice-inbox-export.zip';
+        })();
 
     const escapedTitle = escapeHtml(title);
     const escapedBody = escapeHtml(bodyText);
@@ -174,7 +197,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           {
             filename: attachmentFilename,
             content: buffer,
-            contentType: 'application/zip',
+            contentType: looksPdf ? 'application/pdf' : 'application/zip',
           },
         ],
       });
