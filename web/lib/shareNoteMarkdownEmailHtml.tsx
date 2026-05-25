@@ -11,6 +11,58 @@ const bodyFont = "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 const monoFont =
   "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', monospace";
 
+const tableCellBaseStyle = {
+  border: '1px solid #e5e7eb',
+  padding: '8px 10px',
+  verticalAlign: 'top' as const,
+};
+
+/** First column: speaker labels and timestamps — keep on one line in mail clients. */
+const tableFirstColumnStyle = {
+  ...tableCellBaseStyle,
+  width: '32%',
+  minWidth: '7.5rem',
+  whiteSpace: 'nowrap' as const,
+};
+
+const tableSecondColumnStyle = {
+  ...tableCellBaseStyle,
+  width: '68%',
+};
+
+function getTableCellColumnIndex(node: unknown): number {
+  if (!node || typeof node !== 'object' || !('tagName' in node)) {
+    return -1;
+  }
+  const cell = node as { tagName?: string; parent?: { children?: unknown[] } };
+  if (cell.tagName !== 'td' && cell.tagName !== 'th') {
+    return -1;
+  }
+  const row = cell.parent;
+  if (!row || !Array.isArray(row.children)) {
+    return -1;
+  }
+  let col = 0;
+  for (const child of row.children) {
+    if (child === node) {
+      return col;
+    }
+    if (
+      child &&
+      typeof child === 'object' &&
+      'tagName' in child &&
+      (child.tagName === 'td' || child.tagName === 'th')
+    ) {
+      col += 1;
+    }
+  }
+  return -1;
+}
+
+function tableCellStyleForColumn(col: number) {
+  return col === 0 ? tableFirstColumnStyle : tableSecondColumnStyle;
+}
+
 const emailMarkdownComponents: Components = {
   h1: ({ children }) => (
     <h1
@@ -218,6 +270,7 @@ const emailMarkdownComponents: Components = {
     <table
       style={{
         width: '100%',
+        tableLayout: 'fixed',
         borderCollapse: 'collapse',
         margin: '0 0 16px',
         fontSize: '14px',
@@ -231,11 +284,10 @@ const emailMarkdownComponents: Components = {
   thead: ({ children }) => <thead style={{ background: '#f9fafb' }}>{children}</thead>,
   tbody: ({ children }) => <tbody>{children}</tbody>,
   tr: ({ children }) => <tr>{children}</tr>,
-  th: ({ children }) => (
+  th: ({ children, node }) => (
     <th
       style={{
-        border: '1px solid #e5e7eb',
-        padding: '8px 10px',
+        ...tableCellStyleForColumn(getTableCellColumnIndex(node)),
         textAlign: 'left',
         fontWeight: 600,
         color: '#111827',
@@ -244,10 +296,8 @@ const emailMarkdownComponents: Components = {
       {children}
     </th>
   ),
-  td: ({ children }) => (
-    <td style={{ border: '1px solid #e5e7eb', padding: '8px 10px', verticalAlign: 'top' }}>
-      {children}
-    </td>
+  td: ({ children, node }) => (
+    <td style={tableCellStyleForColumn(getTableCellColumnIndex(node))}>{children}</td>
   ),
   del: ({ children }) => (
     <del style={{ color: '#6b7280', textDecoration: 'line-through' }}>{children}</del>
