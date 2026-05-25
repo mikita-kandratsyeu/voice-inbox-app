@@ -1,9 +1,9 @@
-/** Physical strip size for tri-fold voucher PDFs (PDF points: 72 pt = 1 in). */
+/** Physical strip size for gate-fold gift voucher PDFs (PDF points: 72 pt = 1 in). */
 export type VoucherPrintSize = 'a4' | 'us-letter';
 
 const MM_TO_PT = 72 / 25.4;
 
-/** A4 landscape strip: 297 × 105 mm (full width, tri-fold height). */
+/** A4 landscape strip: 297 × 105 mm (full width, gate-fold height). */
 export const VOUCHER_PAGE_A4 = {
   width: Math.round(297 * MM_TO_PT),
   height: Math.round(105 * MM_TO_PT),

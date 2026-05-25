@@ -9,6 +9,7 @@ import {
   getVoucherPdfCopy,
   VOUCHER_TEMPLATE_VERSION,
   type VoucherLocale,
+  type VoucherSidebarPerkIcon,
 } from '@/lib/pro-license-voucher-copy';
 import {
   getVoucherPageDimensions,
@@ -29,8 +30,10 @@ import {
 const MARGIN = 14;
 const CUT_RADIUS = 8;
 const PANEL_PAD = 12;
-/** Center panel width for tri-fold (narrower than left/right wings). */
-const FOLD_CENTER_SHARE = 0.27;
+/** Gate-fold: center ~50%, wings each cover half of center plus seam overlap. */
+const GATE_CENTER_SHARE = 0.5;
+/** Overlap at the center seam so the code panel is fully covered when closed. */
+const GATE_SEAM_OVERLAP_PT = 3;
 /** Radius of the gift-title badge circle (center panel header). */
 const GIFT_BADGE_R = 18;
 
@@ -91,7 +94,7 @@ type VoucherLayout = {
   fold2X: number;
 };
 
-/** Tri-fold panel fills inside the trim area (center narrower). */
+/** Gate-fold panel fills inside the trim area (wide center, narrow wings). */
 function drawPanelBackgrounds(doc: PdfDoc, layout: VoucherLayout): void {
   const { bounds, left, center, right } = layout;
   const y = bounds.y;
@@ -112,10 +115,10 @@ function getVoucherLayout(pageW: number, stripH: number): VoucherLayout {
     w: pageW - MARGIN * 2,
     h: stripH - MARGIN * 2,
   };
-  const centerW = Math.round(bounds.w * FOLD_CENTER_SHARE);
-  const sideW = Math.floor((bounds.w - centerW) / 2);
-  const leftW = sideW;
-  const rightW = bounds.w - leftW - centerW;
+  const centerW = Math.round(bounds.w * GATE_CENTER_SHARE);
+  const wingW = Math.ceil(centerW / 2) + GATE_SEAM_OVERLAP_PT;
+  const leftW = wingW;
+  const rightW = bounds.w - centerW - leftW;
   const leftX = bounds.x;
   const fold1X = leftX + leftW;
   const fold2X = fold1X + centerW;
@@ -356,66 +359,94 @@ function drawSidebarPerkRow(
   label: string,
   iconBuf: Buffer,
   iconDisplay: number,
+  perkFontSize: number,
 ): number {
   const iconGap = 5;
-  doc.image(iconBuf, x, y, {
+  const textX = x + iconDisplay + iconGap;
+  const textW = w - (textX - x);
+  doc.font(fonts.regular).fontSize(perkFontSize).fillColor(COL.ink);
+  const textH = doc.heightOfString(label, { width: textW, lineGap: 0.15 });
+  const rowH = Math.max(iconDisplay, textH);
+  const iconY = y + (rowH - iconDisplay) / 2;
+  const textY = y + (rowH - textH) / 2;
+
+  doc.image(iconBuf, x, iconY, {
     width: iconDisplay,
     height: iconDisplay,
   });
-
-  const textX = x + iconDisplay + iconGap;
-  const textW = w - (textX - x);
-  doc.font(fonts.regular).fontSize(7).fillColor(COL.ink);
-  const textY = y + iconDisplay / 2 - 3.5;
-  const textH = doc.heightOfString(label, { width: textW, lineGap: 0.2 });
-  doc.text(label, textX, textY, { width: textW, lineGap: 0.2 });
-  return y + Math.max(iconDisplay, textH + 4);
+  doc.text(label, textX, textY, { width: textW, lineGap: 0.15 });
+  return y + rowH;
 }
 
-async function drawSidebarPerks(
+type LeftWingPerksOpts = {
+  compact: boolean;
+  boxPadX: number;
+  boxPadY: number;
+  rowGap: number;
+};
+
+async function measureLeftWingPerksBlock(
   doc: PdfDoc,
   fonts: PdfFonts,
   copy: VoucherPdfCopy,
-  contentX: number,
-  contentW: number,
-  topY: number,
-  bottomY: number,
-  tagline: string,
-): Promise<void> {
-  const taglineSize = 7.5;
-  doc.font(fonts.regular).fontSize(taglineSize).fillColor(COL.brandDark);
-  const taglineH = doc.heightOfString(tagline, {
-    width: contentW,
-    lineGap: 0.35,
+  innerW: number,
+  opts: LeftWingPerksOpts,
+): Promise<{ blockH: number }> {
+  const perkFontSize = opts.compact ? 6 : 6.75;
+  doc.font(fonts.regular).fontSize(perkFontSize);
+  const rowHeights = copy.sidebarPerks.map((label, i) => {
+    const iconW = leftWingPerkIconDisplay(copy.sidebarPerkIcons[i]!, opts.compact);
+    const textH = doc.heightOfString(label, { width: innerW - iconW - 5, lineGap: 0.15 });
+    return Math.max(iconW, textH);
   });
-  doc.text(tagline, contentX, topY, { width: contentW, lineGap: 0.35 });
+  const rowsH = rowHeights.reduce((sum, h) => sum + h, 0) + opts.rowGap * (rowHeights.length - 1);
+  return { blockH: opts.boxPadY * 2 + rowsH };
+}
 
+function leftWingPerkIconDisplay(kind: VoucherSidebarPerkIcon, compact: boolean): number {
+  const base = VOUCHER_PERK_ICON_DISPLAY_PT[kind];
+  return compact ? Math.min(10.5, base) : base;
+}
+
+async function drawLeftWingPerksBlock(
+  doc: PdfDoc,
+  fonts: PdfFonts,
+  copy: VoucherPdfCopy,
+  boxX: number,
+  boxY: number,
+  boxW: number,
+  opts: LeftWingPerksOpts,
+): Promise<number> {
+  const innerX = boxX + opts.boxPadX;
+  const innerW = boxW - opts.boxPadX * 2;
+  const perkFontSize = opts.compact ? 6 : 6.75;
   const perkIconBufs = await Promise.all(
     copy.sidebarPerkIcons.map((kind) =>
-      loadVoucherPerkIconPng(kind, VOUCHER_PERK_ICON_DISPLAY_PT[kind]),
+      loadVoucherPerkIconPng(kind, Math.round(leftWingPerkIconDisplay(kind, opts.compact) * 2)),
     ),
   );
 
-  const perksTop = topY + taglineH + 9;
-  const rowCount = copy.sidebarPerks.length;
-  const rowArea = bottomY - perksTop;
-  const rowGap = Math.max(5, (rowArea - rowCount * 16) / (rowCount + 1));
+  const { blockH } = await measureLeftWingPerksBlock(doc, fonts, copy, innerW, opts);
 
-  let rowY = perksTop + rowGap;
-  for (let i = 0; i < rowCount; i += 1) {
+  let rowY = boxY + opts.boxPadY;
+  for (let i = 0; i < copy.sidebarPerks.length; i += 1) {
     const kind = copy.sidebarPerkIcons[i]!;
-    rowY =
-      drawSidebarPerkRow(
-        doc,
-        fonts,
-        contentX,
-        rowY,
-        contentW,
-        copy.sidebarPerks[i]!,
-        perkIconBufs[i]!,
-        VOUCHER_PERK_ICON_DISPLAY_PT[kind],
-      ) + rowGap;
+    rowY = drawSidebarPerkRow(
+      doc,
+      fonts,
+      innerX,
+      rowY,
+      innerW,
+      copy.sidebarPerks[i]!,
+      perkIconBufs[i]!,
+      leftWingPerkIconDisplay(kind, opts.compact),
+      perkFontSize,
+    );
+    if (i < copy.sidebarPerks.length - 1) {
+      rowY += opts.rowGap;
+    }
   }
+  return boxY + blockH;
 }
 
 async function qrPngBuffer(url: string, size: number): Promise<Buffer> {
@@ -440,60 +471,127 @@ async function drawLeftFlap(
   locale: VoucherLocale,
   layout: VoucherLayout,
 ): Promise<void> {
-  const { left } = layout;
-  const contentX = left.x + PANEL_PAD;
-  const contentW = left.w - PANEL_PAD * 2;
-  const top = layout.bounds.y + PANEL_PAD + 8;
-  const bottom = layout.bounds.y + layout.bounds.h - PANEL_PAD;
+  const { left, bounds } = layout;
+  const compactWing = left.w - PANEL_PAD * 2 < 200;
+  const pad = compactWing ? 10 : PANEL_PAD;
+  const contentX = left.x + pad;
+  const contentW = left.w - pad * 2;
+  const top = bounds.y + pad;
+  const bottom = bounds.y + bounds.h - pad;
 
-  const iconSize = 40;
-  const iconBuf = await loadVoucherAppIconPng(Math.round(iconSize * 3));
-  doc.image(iconBuf, contentX, top, { width: iconSize, height: iconSize });
-
-  const textY = top + iconSize + 10;
   const promo = promoLabel?.trim();
   const sidebarTagline = promo || copy.sidebarTagline;
 
-  doc.font(fonts.bold).fontSize(18).fillColor(COL.brandDark);
-  const headlineH = doc.heightOfString(headline, { width: contentW, lineGap: 1 });
-  doc.text(headline, contentX, textY, { width: contentW, lineGap: 1, align: 'left' });
-  const headlineBottom = textY + headlineH;
+  const iconSize = compactWing ? 28 : 34;
+  const headlineSize = compactWing ? (locale === 'ru' ? 11.5 : 12) : 15;
+  const headlineLineGap = compactWing ? 0.35 : 0.5;
+  const taglineSize = compactWing ? 6 : 7;
+  const thanksSize = compactWing ? 6.25 : 7;
+  const brandSize = compactWing ? 6.75 : 7.5;
+  const heartPx = compactWing ? 7 : 8;
 
-  const thanksLead = copy.thanksLead;
-  const thanksBrand = 'Voice Inbox AI';
-  const thanksSize = 7.5;
-  const brandSize = 8;
-  const thanksLineH = thanksSize * 1.25;
-  const thankBlockH = thanksLineH + brandSize * 1.2 + 6;
-  const thankPadBottom = 12;
-  const dividerY = bottom - thankBlockH - thankPadBottom;
-  const thankTextY = dividerY + 9;
-  const heartPx = 8;
-  await drawSidebarPerks(
+  const gapAfterIcon = compactWing ? 6 : 8;
+  const gapAfterHeadline = compactWing ? 3 : 4;
+  const gapBeforePerks = compactWing ? 7 : 9;
+  const perksOpts: LeftWingPerksOpts = {
+    compact: compactWing,
+    boxPadX: 0,
+    boxPadY: 0,
+    rowGap: compactWing ? 4 : 5,
+  };
+
+  doc.font(fonts.bold).fontSize(headlineSize);
+  const headlineH = doc.heightOfString(headline, {
+    width: contentW,
+    lineGap: headlineLineGap,
+  });
+  doc.font(fonts.regular).fontSize(taglineSize);
+  const taglineH = doc.heightOfString(sidebarTagline, {
+    width: contentW,
+    lineGap: 0.25,
+  });
+  const { blockH: perksBlockH } = await measureLeftWingPerksBlock(
     doc,
     fonts,
     copy,
-    contentX,
     contentW,
-    headlineBottom + 10,
-    dividerY - 4,
-    sidebarTagline,
+    perksOpts,
   );
 
-  doc.moveTo(contentX, dividerY).lineTo(contentX + contentW * 0.72, dividerY);
+  const thanksTextW = contentW - heartPx - 5;
+  const thanksBrand = 'Voice Inbox AI';
+  const thanksLineGap = compactWing ? 2 : 3;
+
+  doc.font(fonts.regular).fontSize(thanksSize);
+  const thanksLineH = doc.heightOfString(copy.thanksLead, {
+    width: thanksTextW,
+    lineGap: 0,
+    lineBreak: false,
+  });
+  doc.font(fonts.bold).fontSize(brandSize);
+  const brandLineH = doc.heightOfString(thanksBrand, {
+    width: thanksTextW,
+    lineGap: 0,
+    lineBreak: false,
+  });
+  const thanksStackH = thanksLineH + thanksLineGap + brandLineH;
+  const thanksRowH = Math.max(heartPx, thanksStackH);
+  const thankPadBottom = compactWing ? 6 : 8;
+  const gapAfterDivider = compactWing ? 5 : 6;
+
+  const thanksY = bottom - thankPadBottom - thanksStackH;
+  const dividerY = thanksY - gapAfterDivider;
+
+  const mainBlockH =
+    iconSize +
+    gapAfterIcon +
+    headlineH +
+    gapAfterHeadline +
+    taglineH +
+    gapBeforePerks +
+    perksBlockH;
+  const footerReserve = gapAfterDivider + thanksRowH + thankPadBottom + 1;
+  const mainAreaForTop = bottom - top - footerReserve;
+  const mainTop =
+    top + Math.min(Math.max(0, (mainAreaForTop - mainBlockH) * 0.22), compactWing ? 4 : 8);
+
+  const iconBuf = await loadVoucherAppIconPng(Math.round(iconSize * 3));
+  doc.image(iconBuf, contentX, mainTop, { width: iconSize, height: iconSize });
+
+  const headlineY = mainTop + iconSize + gapAfterIcon;
+  doc.font(fonts.bold).fontSize(headlineSize).fillColor(COL.brandDark);
+  doc.text(headline, contentX, headlineY, {
+    width: contentW,
+    lineGap: headlineLineGap,
+    align: 'left',
+  });
+
+  const taglineY = headlineY + headlineH + gapAfterHeadline;
+  doc.font(fonts.regular).fontSize(taglineSize).fillColor(COL.muted);
+  doc.text(sidebarTagline, contentX, taglineY, { width: contentW, lineGap: 0.25 });
+
+  const perksBoxY = taglineY + taglineH + gapBeforePerks;
+  await drawLeftWingPerksBlock(doc, fonts, copy, contentX, perksBoxY, contentW, perksOpts);
+
+  const heartY = thanksY + (thanksRowH - heartPx) / 2;
+  const textX = contentX + heartPx + 5;
+
+  doc.moveTo(contentX, dividerY).lineTo(contentX + contentW, dividerY);
   doc.lineWidth(0.5).strokeColor(COL.badgeStroke);
   doc.stroke();
 
   const heartBuf = await loadVoucherHeartIconPng(heartPx);
-  doc.image(heartBuf, contentX, thankTextY + 0.5, { width: heartPx, height: heartPx });
+  doc.image(heartBuf, contentX, heartY, { width: heartPx, height: heartPx });
 
-  const textX = contentX + heartPx + 5;
-  const textW = contentW - (heartPx + 5);
   doc.font(fonts.regular).fontSize(thanksSize).fillColor(COL.muted);
-  doc.text(thanksLead, textX, thankTextY, { width: textW, lineGap: 0, lineBreak: false });
+  doc.text(copy.thanksLead, textX, thanksY, {
+    width: thanksTextW,
+    lineGap: 0,
+    lineBreak: false,
+  });
   doc.font(fonts.bold).fontSize(brandSize).fillColor(COL.brand);
-  doc.text(thanksBrand, textX, thankTextY + thanksLineH, {
-    width: textW,
+  doc.text(thanksBrand, textX, thanksY + thanksLineH + thanksLineGap, {
+    width: thanksTextW,
     lineGap: 0,
     lineBreak: false,
   });
@@ -772,22 +870,39 @@ async function drawRightFlap(
   layout: VoucherLayout,
 ): Promise<void> {
   const { right, bounds } = layout;
-  const centerX = right.x + right.w / 2;
+  const contentX = right.x + PANEL_PAD;
+  const contentW = Math.max(0, right.w - PANEL_PAD * 2);
+  const blockCenterX = contentX + contentW / 2;
   const top = bounds.y + PANEL_PAD + 8;
   const bottom = bounds.y + bounds.h - PANEL_PAD;
-  const contentW = right.w - PANEL_PAD * 2;
-  const labelH = 14;
-  const availableH = bottom - top - labelH;
-  const qrSize = Math.min(118, contentW - 4, availableH * 0.78);
-  const qrY = top + (availableH - qrSize) / 2;
+  const compactWing = contentW < 200;
+
+  const labelFontSize = 7;
+  const labelGap = 8;
+  doc.font(fonts.bold).fontSize(labelFontSize).fillColor(COL.brand);
+  const captionH = doc.heightOfString(copy.scanToOpen, {
+    width: contentW,
+    align: 'center',
+    lineGap: 0,
+  });
+  const stackMaxH = bottom - top;
+  const qrSize = Math.min(
+    compactWing ? 92 : 118,
+    contentW,
+    Math.max(48, stackMaxH - captionH - labelGap),
+  );
+  const stackH = qrSize + labelGap + captionH;
+  const stackTop = top + Math.max(0, (stackMaxH - stackH) / 2);
+
   const qrBuf = await qrPngBuffer(scanUrl, Math.round(qrSize * 2));
-  const qrX = centerX - qrSize / 2;
+  const qrX = Math.round(blockCenterX - qrSize / 2);
+  const qrY = stackTop;
   doc.image(qrBuf, qrX, qrY, { width: qrSize, height: qrSize });
 
-  doc.font(fonts.bold).fontSize(7).fillColor(COL.brand);
-  doc.text(copy.scanToOpen, right.x, qrY + qrSize + 8, {
-    width: right.w,
+  doc.text(copy.scanToOpen, contentX, qrY + qrSize + labelGap, {
+    width: contentW,
     align: 'center',
+    lineGap: 0,
   });
 }
 

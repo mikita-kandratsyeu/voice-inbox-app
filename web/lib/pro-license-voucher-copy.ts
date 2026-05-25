@@ -27,12 +27,12 @@ export type VoucherPdfCopy = {
   stepDetails: [string, string, string];
   footerLegal: string;
   foldTitle: string;
-  foldSteps: [string, string, string];
+  foldSteps: [string, string, string, string];
   belowStripLegalTitle: string;
 };
 
 /** Bump when below-strip or voucher legal copy changes (printed on every PDF). */
-export const VOUCHER_TEMPLATE_VERSION = 'v2';
+export const VOUCHER_TEMPLATE_VERSION = 'v10';
 
 export type VoucherBelowStripLegalOpts = {
   site: string;
@@ -189,7 +189,7 @@ const COPY_EN: VoucherPdfCopy = {
   thankYouSidebar: 'Thank you for choosing Voice Inbox AI',
   thanksLead: 'Thank you for choosing',
   sidebarTagline: 'From thought to clarity — in seconds.',
-  sidebarPerks: ['All PRO Features', 'Summaries & Tasks, Instantly', 'Private Mode on Your Device'],
+  sidebarPerks: ['All PRO Features', 'AI summaries & tasks', 'Private mode on your device'],
   sidebarPerkIcons: ['zap', 'brain', 'shield'],
   cutAlongOuterLine: 'CUT ALONG THE OUTER LINE',
   premiumHeadline: '',
@@ -203,8 +203,9 @@ const COPY_EN: VoucherPdfCopy = {
   foldTitle: 'HOW TO FOLD',
   foldSteps: [
     '1. Cut along the outer dashed line.',
-    '2. Fold the right panel over the center.',
-    '3. Fold the left panel over the stack.',
+    '2. Fold the left panel toward the center.',
+    '3. Fold the right panel toward the center so the edges meet in the middle.',
+    '4. When closed, the center (your code) is covered — open both panels to use it.',
   ],
   belowStripLegalTitle: 'TERMS & INFORMATION',
 };
@@ -216,11 +217,7 @@ const COPY_RU: VoucherPdfCopy = {
   thankYouSidebar: 'Спасибо, что выбрали Voice Inbox AI',
   thanksLead: 'Спасибо, что выбрали',
   sidebarTagline: 'От мысли — к ясности за секунды.',
-  sidebarPerks: [
-    'Все PRO-возможности',
-    'Сводки и задачи мгновенно',
-    'Приватный режим на устройстве',
-  ],
+  sidebarPerks: ['Все PRO-возможности', 'ИИ сводки и задачи', 'Приватный режим на устройстве'],
   sidebarPerkIcons: ['zap', 'brain', 'shield'],
   cutAlongOuterLine: 'РЕЖЬТЕ ПО ВНЕШНЕЙ ЛИНИИ',
   premiumHeadline: '',
@@ -234,8 +231,9 @@ const COPY_RU: VoucherPdfCopy = {
   foldTitle: 'КАК СЛОЖИТЬ',
   foldSteps: [
     '1. Вырежьте по внешней пунктирной линии.',
-    '2. Сложите правую панель на центр.',
-    '3. Сложите левую панель на стопку.',
+    '2. Сложите левую боковую панель к центру.',
+    '3. Сложите правую боковую панель к центру — края встречаются посередине.',
+    '4. В сложенном виде центр с кодом закрыт крыльями — разверните, чтобы прочитать код.',
   ],
   belowStripLegalTitle: 'УСЛОВИЯ И СВЕДЕНИЯ',
 };
