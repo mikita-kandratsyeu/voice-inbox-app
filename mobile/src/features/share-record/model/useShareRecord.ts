@@ -20,12 +20,14 @@ import {
   shareTemplateFileSuffix,
 } from '../lib/buildShareText';
 import { buildSingleNoteEmailZip } from '../lib/buildSingleNoteEmailZip';
+import { isUserCancelledShare } from '../lib/isUserCancelledShare';
 import {
   ensureShareExportDirectory,
   getShareExportDirectoryPath,
   pruneShareExportCache,
 } from '../lib/shareExportCache';
 import { resolveShareExportContext } from '../lib/shareExportContext';
+import { shareMarkdownAsPdf } from '../lib/shareMarkdownAsPdf';
 import { writeShareMarkdownPdf } from '../lib/writeShareMarkdownPdf';
 import type { ShareRecordExportFormat } from './shareRecordExportFormat';
 
@@ -83,27 +85,21 @@ export const useShareRecord = () => {
     const baseName = `${sanitizeTitleForFileName(record.title)}${shareTemplateFileSuffix(template)}`;
 
     if (format === 'pdf') {
-      let pdfPath: string | undefined;
+      const pdfFileName = `${baseName}.pdf`;
       setIsGeneratingSharePdf(true);
       try {
-        pdfPath = await writeShareMarkdownPdf(text, baseName);
-        await Share.share(
-          {
-            title: record.title,
-            url: toFileUri(pdfPath),
-          },
-          { dialogTitle: i18n.t('share.shareNote') },
-        );
+        await shareMarkdownAsPdf({
+          markdown: text,
+          fileNameWithoutExtension: baseName,
+          shareTitle: pdfFileName,
+        });
       } catch (err) {
-        const error = err as Error;
-        if (error.message !== 'User did not share') {
-          throw error;
+        if (isUserCancelledShare(err)) {
+          return;
         }
+        throw err;
       } finally {
         setIsGeneratingSharePdf(false);
-        if (pdfPath) {
-          await unlinkIfExists(pdfPath);
-        }
       }
       return;
     }

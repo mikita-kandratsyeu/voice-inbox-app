@@ -13,7 +13,9 @@ import {
   SHARE_EMAIL_ZIP_MAX_BYTES,
 } from '@/features/share-record/api/sendRecordEmail';
 import { buildBatchShareMarkdown } from '@/features/share-record/lib/batchShareMarkdown';
+import { isUserCancelledShare } from '@/features/share-record/lib/isUserCancelledShare';
 import { resolveShareExportContext } from '@/features/share-record/lib/shareExportContext';
+import { shareMarkdownAsPdf } from '@/features/share-record/lib/shareMarkdownAsPdf';
 import { writeShareMarkdownPdf } from '@/features/share-record/lib/writeShareMarkdownPdf';
 import { hapticError, hapticSuccess } from '@/shared/lib';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
@@ -62,10 +64,6 @@ async function removeDirRecursiveIfExists(path: string): Promise<void> {
       console.warn('[batchExport] removeDirRecursiveIfExists failed', path);
     }
   }
-}
-
-function isUserCancelledShare(err: unknown): boolean {
-  return err instanceof Error && err.message === 'User did not share';
 }
 
 /** Progress overlay kind for sequential batch inbox actions. */
@@ -240,15 +238,13 @@ export const useBatchRecordActions = ({
       if (packaging === 'pdf') {
         const content = buildBatchShareMarkdown(records, template);
         const fileName = `voice-inbox-export-${timestamp}.pdf`;
-        let pdfPath: string | undefined;
 
         setIsGeneratingSharePdf(true);
         try {
-          pdfPath = await writeShareMarkdownPdf(content, `voice-inbox-export-${timestamp}`);
-
-          await Share.share({
-            url: pdfPath.startsWith('file://') ? pdfPath : `file://${pdfPath}`,
-            title: fileName,
+          await shareMarkdownAsPdf({
+            markdown: content,
+            fileNameWithoutExtension: `voice-inbox-export-${timestamp}`,
+            shareTitle: fileName,
           });
           hapticSuccess();
         } catch (err) {
@@ -260,9 +256,6 @@ export const useBatchRecordActions = ({
           Alert.alert(t('common.error'), t('batch.exportFailed'));
         } finally {
           setIsGeneratingSharePdf(false);
-          if (pdfPath) {
-            await unlinkIfExists(pdfPath);
-          }
         }
         return;
       }

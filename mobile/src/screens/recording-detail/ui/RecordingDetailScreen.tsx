@@ -21,7 +21,6 @@ import type { ShareBriefTemplate, ShareRecordExportFormat } from '@/features/sha
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
 import { useColors } from '@/shared/config';
-import { BlockingProgressModal } from '@/shared/ui';
 import {
   hapticError,
   hapticLight,
@@ -33,6 +32,7 @@ import {
 } from '@/shared/lib';
 import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 import { NitroFS } from '@/shared/lib/fs';
+import { BlockingProgressModal } from '@/shared/ui';
 import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
@@ -324,7 +324,7 @@ export const RecordingDetailScreen = () => {
 
   const handleShare = useCallback(
     (template: ShareBriefTemplate, format: ShareRecordExportFormat) => {
-      shareRecord(liveRecord, template, format).catch((err: unknown) => {
+      void shareRecord(liveRecord, template, format).catch((err: unknown) => {
         Alert.alert(t('recordingDetail.shareFailed'), toUserFacingFetchErrorFromUnknown(err));
       });
     },
