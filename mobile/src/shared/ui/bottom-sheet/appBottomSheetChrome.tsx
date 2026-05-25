@@ -26,6 +26,12 @@ export const APP_BOTTOM_SHEET_HANDLE = {
   borderRadius: 2.5,
 } as const;
 
+/** Gorhom defaults (appearsOnIndex=1) keep backdrop invisible on single-snap / dynamic modals. */
+export const APP_BOTTOM_SHEET_BACKDROP_SNAP = {
+  appearsOnIndex: 0,
+  disappearsOnIndex: -1,
+} as const;
+
 export type AppBottomSheetChromeOptions = {
   surface?: 'primary' | 'card';
   backdrop?: AppBottomSheetBackdropPreset;
@@ -68,7 +74,14 @@ export function useAppBottomSheetBackdrop(
         return createElement(custom, props);
       }
       const { pressBehavior, opacity } = BACKDROP_BY_PRESET[preset];
-      return <BottomSheetBackdrop {...props} pressBehavior={pressBehavior} opacity={opacity} />;
+      return (
+        <BottomSheetBackdrop
+          {...props}
+          {...APP_BOTTOM_SHEET_BACKDROP_SNAP}
+          pressBehavior={pressBehavior}
+          opacity={opacity}
+        />
+      );
     },
     [custom, preset],
   );

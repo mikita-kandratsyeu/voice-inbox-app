@@ -21,7 +21,12 @@ import { useColors } from '@/shared/config';
 import { hapticError, hapticSuccess, IS_IOS, selectPlatform } from '@/shared/lib';
 import { redeemProLicenseKey } from '@/shared/lib/ai-api/proLicenseApi';
 import { resolveDayjsLocale } from '@/shared/lib/date';
-import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  APP_BOTTOM_SHEET_BACKDROP_SNAP,
+  AppBottomSheetModal,
+  Button,
+  useBottomSheetContentPadding,
+} from '@/shared/ui';
 
 import {
   isRevenueCatStoreBillingConfigured,
@@ -443,7 +448,12 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior={busy ? 'none' : 'close'} opacity={0.45} />
+      <BottomSheetBackdrop
+        {...props}
+        {...APP_BOTTOM_SHEET_BACKDROP_SNAP}
+        pressBehavior={busy ? 'none' : 'close'}
+        opacity={0.45}
+      />
     ),
     [busy],
   );

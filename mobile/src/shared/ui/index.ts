@@ -6,6 +6,7 @@ export { AiTabLoadingState } from './AiTabLoadingState';
 export type { BlockingProgressModalProps } from './BlockingProgressModal';
 export { BlockingProgressModal } from './BlockingProgressModal';
 export {
+  APP_BOTTOM_SHEET_BACKDROP_SNAP,
   APP_BOTTOM_SHEET_HANDLE,
   type AppBottomSheetBackdropPreset,
   type AppBottomSheetChromeOptions,

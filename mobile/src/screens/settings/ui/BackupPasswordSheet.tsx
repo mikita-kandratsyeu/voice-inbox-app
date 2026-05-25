@@ -7,7 +7,12 @@ import { Text, View } from 'react-native';
 import { BACKUP_PASSWORD_MIN_LENGTH, validateBackupPassword } from '@/features/sync-data';
 import { useColors } from '@/shared/config';
 import { IS_IOS, withAlphaHex } from '@/shared/lib';
-import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  APP_BOTTOM_SHEET_BACKDROP_SNAP,
+  AppBottomSheetModal,
+  Button,
+  useBottomSheetContentPadding,
+} from '@/shared/ui';
 
 export type BackupPasswordSheetMode = 'export' | 'import';
 
@@ -74,7 +79,12 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior={busy ? 'none' : 'close'} opacity={0.45} />
+      <BottomSheetBackdrop
+        {...props}
+        {...APP_BOTTOM_SHEET_BACKDROP_SNAP}
+        pressBehavior={busy ? 'none' : 'close'}
+        opacity={0.45}
+      />
     ),
     [busy],
   );

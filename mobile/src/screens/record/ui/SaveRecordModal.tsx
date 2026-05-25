@@ -16,7 +16,12 @@ import {
   iosHitSlopForVisualSize,
   IS_IOS,
 } from '@/shared/lib';
-import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  APP_BOTTOM_SHEET_BACKDROP_SNAP,
+  AppBottomSheetModal,
+  Button,
+  useBottomSheetContentPadding,
+} from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';
 import { getAutoTitle } from '../lib/getAutoTitle';
@@ -69,7 +74,12 @@ export const SaveRecordModal = ({
 
   const renderBackdrop = useCallback(
     (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} pressBehavior="none" opacity={0.35} />
+      <BottomSheetBackdrop
+        {...props}
+        {...APP_BOTTOM_SHEET_BACKDROP_SNAP}
+        pressBehavior="none"
+        opacity={0.35}
+      />
     ),
     [],
   );

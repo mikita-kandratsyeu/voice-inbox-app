@@ -1,5 +1,4 @@
-import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
-import { BottomSheetBackdrop, BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, BottomSheetView } from '@gorhom/bottom-sheet';
 import { ChevronRight, Cloud, Shield } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -53,19 +52,6 @@ export const AskAiContextDisclosure = ({
     ? t('recordingDetail.askContextProcessingPrivate')
     : t('recordingDetail.askContextProcessingCloud');
   const a11yMeta = `${sourcesLine}. ${processingLine}`;
-
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop
-        {...props}
-        appearsOnIndex={0}
-        disappearsOnIndex={-1}
-        opacity={0.5}
-        pressBehavior="close"
-      />
-    ),
-    [],
-  );
 
   const openSheet = useCallback(() => {
     KeyboardController.dismiss();
@@ -142,7 +128,7 @@ export const AskAiContextDisclosure = ({
   );
 
   const sheet = (
-    <BottomSheetModal ref={sheetRef} {...sheetChrome} backdropComponent={renderBackdrop}>
+    <BottomSheetModal ref={sheetRef} {...sheetChrome}>
       <BottomSheetView
         style={{
           paddingHorizontal: 20,
