@@ -796,13 +796,13 @@ const SlideItem = ({
             }
             accessibilityState={{ disabled: isRestoring }}
             style={{
-              alignSelf: 'stretch',
+              alignSelf: 'center',
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 8,
-              paddingVertical: 14,
-              paddingHorizontal: 20,
+              paddingVertical: 12,
+              paddingHorizontal: 16,
               borderRadius: 12,
               backgroundColor: item.iconBg,
             }}
@@ -862,47 +862,57 @@ const SlideItem = ({
         </Text>
 
         {item.extra === 'meeting-import' && (
-          <View className="w-full gap-2.5" style={{ maxWidth: contentMaxWidth }}>
-            {([1, 2] as const).map((n) => (
-              <View key={n} className="flex-row items-start gap-3">
+          <View className="items-center gap-2.5" style={{ alignSelf: 'center' }}>
+            {([1, 2] as const).map((n) => {
+              const stepMaxWidth = Math.min(contentMaxWidth ?? windowWidth - 64, windowWidth - 64);
+              const textMaxWidth = stepMaxWidth - 22 - 12;
+
+              return (
                 <View
-                  style={{
-                    width: 22,
-                    height: 22,
-                    borderRadius: 11,
-                    marginTop: IS_IOS ? 1 : 0,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: item.iconBg,
-                  }}
+                  key={n}
+                  className="flex-row items-start gap-3"
+                  style={{ alignSelf: 'center', maxWidth: stepMaxWidth }}
                 >
-                  <Text
-                    className="font-bold"
+                  <View
                     style={{
-                      color: item.iconColor,
-                      fontSize: 12,
-                      lineHeight: 14,
-                      textAlign: 'center',
-                      ...(IS_ANDROID
-                        ? { includeFontPadding: false, textAlignVertical: 'center' }
-                        : {}),
+                      width: 22,
+                      height: 22,
+                      borderRadius: 11,
+                      marginTop: IS_IOS ? 1 : 0,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: item.iconBg,
                     }}
                   >
-                    {n}
+                    <Text
+                      className="font-bold"
+                      style={{
+                        color: item.iconColor,
+                        fontSize: 12,
+                        lineHeight: 14,
+                        textAlign: 'center',
+                        ...(IS_ANDROID
+                          ? { includeFontPadding: false, textAlignVertical: 'center' }
+                          : {}),
+                      }}
+                    >
+                      {n}
+                    </Text>
+                  </View>
+                  <Text
+                    className="shrink text-[15px]"
+                    style={{
+                      maxWidth: textMaxWidth,
+                      color: color.text.secondary,
+                      lineHeight: 22,
+                      ...(IS_ANDROID ? { includeFontPadding: false } : {}),
+                    }}
+                  >
+                    {t(`onboarding.meetingImportStep${n}`)}
                   </Text>
                 </View>
-                <Text
-                  className="flex-1 text-left text-[15px]"
-                  style={{
-                    color: color.text.secondary,
-                    lineHeight: 22,
-                    ...(IS_ANDROID ? { includeFontPadding: false } : {}),
-                  }}
-                >
-                  {t(`onboarding.meetingImportStep${n}`)}
-                </Text>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
 
