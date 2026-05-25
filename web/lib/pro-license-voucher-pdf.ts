@@ -24,8 +24,8 @@ import {
   loadVoucherGiftIconPng,
   loadVoucherHeartIconPng,
   loadVoucherPerkIconPng,
-  VOUCHER_PERK_ICON_DISPLAY_PT,
 } from '@/lib/voucher-lucide-icons-png';
+import { drawEnvelopeAssemblyPage } from '@/lib/pro-license-voucher-envelope-pdf';
 
 const MARGIN = 14;
 const CUT_RADIUS = 8;
@@ -238,6 +238,8 @@ function drawCutAlongLabels(
 }
 
 const STEP_ICON_BADGE_R = 9;
+/** Max glyph box inside the step badge circle (same for phone / card / check). */
+const STEP_GLYPH_BOX = 8;
 
 function drawStepIconBadge(doc: PdfDoc, cx: number, cy: number): void {
   doc.circle(cx, cy, STEP_ICON_BADGE_R).fill(COL.badgeFill);
@@ -245,20 +247,20 @@ function drawStepIconBadge(doc: PdfDoc, cx: number, cy: number): void {
 }
 
 function drawPhoneIcon(doc: PdfDoc, cx: number, cy: number): void {
-  const w = 6.5;
-  const h = 10;
+  const w = 5.5;
+  const h = STEP_GLYPH_BOX;
   drawStepIconBadge(doc, cx, cy);
   doc.save();
   doc.lineWidth(0.75);
   doc.strokeColor(COL.brand);
   doc.roundedRect(cx - w / 2, cy - h / 2, w, h, 1.2).stroke();
-  doc.circle(cx, cy + h / 2 - 2, 0.65).fill(COL.brand);
+  doc.circle(cx, cy + h / 2 - 1.8, 0.6).fill(COL.brand);
   doc.restore();
 }
 
 function drawCardIcon(doc: PdfDoc, cx: number, cy: number): void {
-  const w = 11;
-  const h = 7;
+  const w = STEP_GLYPH_BOX;
+  const h = 5.5;
   drawStepIconBadge(doc, cx, cy);
   doc.save();
   doc.lineWidth(0.75);
@@ -272,14 +274,15 @@ function drawCardIcon(doc: PdfDoc, cx: number, cy: number): void {
 }
 
 function drawCheckIcon(doc: PdfDoc, cx: number, cy: number): void {
+  const half = STEP_GLYPH_BOX / 2 - 0.5;
   drawStepIconBadge(doc, cx, cy);
   doc.save();
   doc.lineWidth(0.9);
   doc.strokeColor(COL.success);
   doc
-    .moveTo(cx - 2.2, cy + 0.2)
-    .lineTo(cx - 0.35, cy + 2)
-    .lineTo(cx + 2.6, cy - 2.3)
+    .moveTo(cx - half * 0.55, cy + half * 0.05)
+    .lineTo(cx - half * 0.08, cy + half * 0.48)
+    .lineTo(cx + half * 0.62, cy - half * 0.55)
     .stroke();
   doc.restore();
 }
@@ -297,6 +300,44 @@ async function drawGiftHeaderBadge(doc: PdfDoc, cx: number, cy: number): Promise
   doc.restore();
 }
 
+type StepSpacing = {
+  iconTopPad: number;
+  iconToTitleGap: number;
+  titleToDetailGap: number;
+};
+
+function getStepSpacing(locale: VoucherLocale, compact: boolean, tight = false): StepSpacing {
+  if (tight) {
+    return {
+      iconTopPad: 1,
+      iconToTitleGap: 5,
+      titleToDetailGap: locale === 'ru' ? 3 : 2.5,
+    };
+  }
+  return {
+    iconTopPad: compact ? 2 : 3,
+    iconToTitleGap: compact ? 6 : 7,
+    titleToDetailGap: compact ? (locale === 'ru' ? 4 : 3.5) : locale === 'ru' ? 4.5 : 3.5,
+  };
+}
+
+function fitFooterLegalFontSize(
+  doc: PdfDoc,
+  fonts: PdfFonts,
+  text: string,
+  maxWidth: number,
+  startSize: number,
+  minSize = 3.5,
+): number {
+  let size = startSize;
+  doc.font(fonts.regular).fontSize(size);
+  while (size > minSize && doc.widthOfString(text) > maxWidth) {
+    size -= 0.25;
+    doc.fontSize(size);
+  }
+  return size;
+}
+
 function drawStep(
   doc: PdfDoc,
   fonts: PdfFonts,
@@ -308,22 +349,23 @@ function drawStep(
   icon: 'phone' | 'card' | 'check',
   locale: VoucherLocale,
   colW: number,
+  compact = false,
+  spacing = getStepSpacing(locale, compact),
 ): number {
   const left = x - colW / 2;
-  const titleSize = locale === 'ru' ? 5.5 : 6;
-  const detailSize = locale === 'ru' ? 4.75 : 5;
-  const titleGap = locale === 'ru' ? 4 : 3;
-  const detailLineGap = locale === 'ru' ? 0.25 : 0.4;
+  const titleSize = compact ? (locale === 'ru' ? 5 : 5.25) : locale === 'ru' ? 5.5 : 6;
+  const detailSize = compact ? (locale === 'ru' ? 4.5 : 4.75) : locale === 'ru' ? 4.75 : 5;
+  const detailLineGap = compact ? (locale === 'ru' ? 0.28 : 0.38) : locale === 'ru' ? 0.32 : 0.42;
 
-  const iconY = y + 7;
-  if (icon === 'phone') drawPhoneIcon(doc, x, iconY);
-  else if (icon === 'card') drawCardIcon(doc, x, iconY);
-  else drawCheckIcon(doc, x, iconY);
+  const iconCy = y + spacing.iconTopPad + STEP_ICON_BADGE_R;
+  if (icon === 'phone') drawPhoneIcon(doc, x, iconCy);
+  else if (icon === 'card') drawCardIcon(doc, x, iconCy);
+  else drawCheckIcon(doc, x, iconCy);
 
   const titleText = `${stepNum}. ${title}`;
   const titleLineGap = locale === 'ru' ? 0.15 : 0;
   doc.font(fonts.bold).fontSize(titleSize).fillColor(COL.brandDark);
-  const titleY = y + 20;
+  const titleY = iconCy + STEP_ICON_BADGE_R + spacing.iconToTitleGap;
   const titleHeight = doc.heightOfString(titleText, {
     width: colW,
     align: 'center',
@@ -336,7 +378,7 @@ function drawStep(
   });
 
   doc.font(fonts.regular).fontSize(detailSize).fillColor(COL.muted);
-  const detailY = titleY + titleHeight + titleGap;
+  const detailY = titleY + titleHeight + spacing.titleToDetailGap;
   const detailHeight = doc.heightOfString(detail, {
     width: colW,
     align: 'center',
@@ -348,6 +390,41 @@ function drawStep(
     lineGap: detailLineGap,
   });
   return detailY + detailHeight;
+}
+
+function measureStepBlockHeight(
+  doc: PdfDoc,
+  fonts: PdfFonts,
+  copy: VoucherPdfCopy,
+  locale: VoucherLocale,
+  stepColInner: number,
+  titleSize: number,
+  detailSize: number,
+  detailLineGap: number,
+  spacing: StepSpacing,
+): number {
+  const iconBlockH = spacing.iconTopPad + STEP_ICON_BADGE_R * 2 + spacing.iconToTitleGap;
+  doc.font(fonts.bold).fontSize(titleSize);
+  const maxTitleH = Math.max(
+    ...copy.stepTitles.map((title, i) =>
+      doc.heightOfString(`${i + 1}. ${title}`, {
+        width: stepColInner,
+        align: 'center',
+        lineGap: locale === 'ru' ? 0.15 : 0,
+      }),
+    ),
+  );
+  doc.font(fonts.regular).fontSize(detailSize);
+  const maxDetailH = Math.max(
+    ...copy.stepDetails.map((d) =>
+      doc.heightOfString(d, {
+        width: stepColInner,
+        align: 'center',
+        lineGap: detailLineGap,
+      }),
+    ),
+  );
+  return iconBlockH + maxTitleH + spacing.titleToDetailGap + maxDetailH;
 }
 
 function drawSidebarPerkRow(
@@ -403,9 +480,10 @@ async function measureLeftWingPerksBlock(
   return { blockH: opts.boxPadY * 2 + rowsH };
 }
 
-function leftWingPerkIconDisplay(kind: VoucherSidebarPerkIcon, compact: boolean): number {
-  const base = VOUCHER_PERK_ICON_DISPLAY_PT[kind];
-  return compact ? Math.min(10.5, base) : base;
+const SIDEBAR_PERK_ICON_PT = 10;
+
+function leftWingPerkIconDisplay(_kind: VoucherSidebarPerkIcon, _compact: boolean): number {
+  return SIDEBAR_PERK_ICON_PT;
 }
 
 async function drawLeftWingPerksBlock(
@@ -473,6 +551,7 @@ async function drawLeftFlap(
 ): Promise<void> {
   const { left, bounds } = layout;
   const compactWing = left.w - PANEL_PAD * 2 < 200;
+  const compactHeight = bounds.h < 175;
   const pad = compactWing ? 10 : PANEL_PAD;
   const contentX = left.x + pad;
   const contentW = left.w - pad * 2;
@@ -482,22 +561,30 @@ async function drawLeftFlap(
   const promo = promoLabel?.trim();
   const sidebarTagline = promo || copy.sidebarTagline;
 
-  const iconSize = compactWing ? 28 : 34;
-  const headlineSize = compactWing ? (locale === 'ru' ? 11.5 : 12) : 15;
+  const iconSize = compactHeight ? 24 : compactWing ? 28 : 34;
+  const headlineSize = compactHeight
+    ? locale === 'ru'
+      ? 10.5
+      : 11
+    : compactWing
+      ? locale === 'ru'
+        ? 11.5
+        : 12
+      : 15;
   const headlineLineGap = compactWing ? 0.35 : 0.5;
-  const taglineSize = compactWing ? 6 : 7;
+  const taglineSize = compactHeight ? 5.5 : compactWing ? 6 : 7;
   const thanksSize = compactWing ? 6.25 : 7;
   const brandSize = compactWing ? 6.75 : 7.5;
   const heartPx = compactWing ? 7 : 8;
 
-  const gapAfterIcon = compactWing ? 6 : 8;
-  const gapAfterHeadline = compactWing ? 3 : 4;
-  const gapBeforePerks = compactWing ? 7 : 9;
+  const gapAfterIcon = compactHeight ? 5 : compactWing ? 6 : 8;
+  const gapAfterHeadline = compactHeight ? 2 : compactWing ? 3 : 4;
+  const gapBeforePerks = compactHeight ? 5 : compactWing ? 7 : 9;
   const perksOpts: LeftWingPerksOpts = {
     compact: compactWing,
     boxPadX: 0,
     boxPadY: 0,
-    rowGap: compactWing ? 4 : 5,
+    rowGap: compactWing ? 6 : 7,
   };
 
   doc.font(fonts.bold).fontSize(headlineSize);
@@ -536,7 +623,7 @@ async function drawLeftFlap(
   });
   const thanksStackH = thanksLineH + thanksLineGap + brandLineH;
   const thanksRowH = Math.max(heartPx, thanksStackH);
-  const thankPadBottom = compactWing ? 6 : 8;
+  const thankPadBottom = compactWing ? 4 : 6;
   const gapAfterDivider = compactWing ? 5 : 6;
 
   const thanksY = bottom - thankPadBottom - thanksStackH;
@@ -615,6 +702,21 @@ function drawVoucherKeyId(
   });
 }
 
+async function drawGiftHeaderBadgeSized(
+  doc: PdfDoc,
+  cx: number,
+  cy: number,
+  badgeR: number,
+): Promise<void> {
+  doc.save();
+  doc.circle(cx, cy, badgeR).fill(COL.brandLight);
+  doc.circle(cx, cy, badgeR).lineWidth(0.75).strokeColor(COL.brand).stroke();
+  const iconPx = Math.round(badgeR * 1.05);
+  const iconBuf = await loadVoucherGiftIconPng(iconPx);
+  doc.image(iconBuf, cx - iconPx / 2, cy - iconPx / 2, { width: iconPx, height: iconPx });
+  doc.restore();
+}
+
 async function drawCenterPanel(
   doc: PdfDoc,
   fonts: PdfFonts,
@@ -623,21 +725,38 @@ async function drawCenterPanel(
   locale: VoucherLocale,
   layout: VoucherLayout,
 ): Promise<void> {
-  const { center } = layout;
+  const { center, bounds } = layout;
+  doc.save();
+  doc.rect(center.x, bounds.y, center.w, bounds.h).clip();
   const contentX = center.x + PANEL_PAD;
   const contentW = center.w - PANEL_PAD * 2;
-  const top = layout.bounds.y + PANEL_PAD + 6;
+  const top = layout.bounds.y + PANEL_PAD + 4;
   const bottom = layout.bounds.y + layout.bounds.h - PANEL_PAD;
+  const contentH = bottom - top;
   const titleCenterX = contentX + contentW / 2;
+  const compact = contentH < 168;
 
-  const giftBadgeGap = 8;
-  await drawGiftHeaderBadge(doc, titleCenterX, top + GIFT_BADGE_R);
+  const giftBadgeR = compact ? 14 : GIFT_BADGE_R;
+  const giftBadgeGap = compact ? 4 : 6;
+  const titleSize = compact ? (locale === 'ru' ? 12 : 13) : locale === 'ru' ? 15 : 17;
+  const stepTitleSize = compact ? (locale === 'ru' ? 5 : 5.25) : locale === 'ru' ? 5.5 : 6;
+  const stepDetailSize = compact ? (locale === 'ru' ? 4.5 : 4.75) : locale === 'ru' ? 4.75 : 5;
+  const stepDetailLineGap = compact
+    ? locale === 'ru'
+      ? 0.28
+      : 0.38
+    : locale === 'ru'
+      ? 0.32
+      : 0.42;
+  const footerTextW = contentW - 12;
+  const footerTextX = contentX + 6;
+  const footerBottomPad = compact ? 2 : 3;
+  const codeGapAfterTitle = compact ? 5 : 6;
 
-  const titleTop = top + GIFT_BADGE_R * 2 + giftBadgeGap;
-  doc
-    .font(fonts.bold)
-    .fontSize(locale === 'ru' ? 15 : 17)
-    .fillColor(COL.brandDark);
+  await drawGiftHeaderBadgeSized(doc, titleCenterX, top + giftBadgeR, giftBadgeR);
+
+  const titleTop = top + giftBadgeR * 2 + giftBadgeGap;
+  doc.font(fonts.bold).fontSize(titleSize).fillColor(COL.brandDark);
   const titleH = doc.heightOfString(copy.titleLine, {
     width: contentW,
     align: 'center',
@@ -645,54 +764,81 @@ async function drawCenterPanel(
   });
   doc.text(copy.titleLine, contentX, titleTop, { width: contentW, align: 'center', lineGap: 0 });
 
-  const yourCodeY = titleTop + titleH + 10;
-  doc.font(fonts.regular).fontSize(7).fillColor(COL.brand);
-  doc.text(copy.yourCode, contentX, yourCodeY, { width: contentW, align: 'center' });
-
-  const codeY = yourCodeY + 11;
-  const codeH = 32;
+  const codeY = titleTop + titleH + codeGapAfterTitle;
+  const codeH = compact ? 24 : 28;
   const codeW = contentW - 8;
   const codeX = contentX + 4;
+  const codeFontSize = compact ? 10 : 11;
   doc.roundedRect(codeX, codeY, codeW, codeH, 2).fill(COL.codeBg);
-  doc.lineWidth(1.25).strokeColor(COL.codeBorder);
+  doc.lineWidth(1.1).strokeColor(COL.codeBorder);
   doc.roundedRect(codeX, codeY, codeW, codeH, 2).stroke();
-  doc.font(fonts.mono).fontSize(12).fillColor(COL.brandDark);
-  doc.text(plainKey, codeX + 6, codeY + 9, {
-    width: codeW - 12,
+  doc.font(fonts.mono).fontSize(codeFontSize).fillColor(COL.brandDark);
+  doc.text(plainKey, codeX + 5, codeY + (codeH - codeFontSize) / 2 - 1, {
+    width: codeW - 10,
     align: 'center',
-    characterSpacing: 0.8,
+    characterSpacing: compact ? 0.5 : 0.7,
   });
 
   const codeBottom = codeY + codeH;
-  const stepColW = (contentW - 12) / 3;
-  const stepColInner = stepColW - 4;
-  const stepDetailSize = locale === 'ru' ? 4.75 : 5;
-  const stepDetailLineGap = locale === 'ru' ? 0.25 : 0.4;
-  doc.font(fonts.regular).fontSize(stepDetailSize);
-  const maxStepDetailH = Math.max(
-    ...copy.stepDetails.map((d) =>
-      doc.heightOfString(d, {
-        width: stepColInner,
-        align: 'center',
-        lineGap: stepDetailLineGap,
-      }),
-    ),
+  const stepColW = contentW / 3;
+  const stepColInner = stepColW - 14;
+
+  let footerFontSize = compact ? (locale === 'ru' ? 4 : 4.5) : locale === 'ru' ? 4.25 : 5;
+  footerFontSize = fitFooterLegalFontSize(
+    doc,
+    fonts,
+    copy.footerLegal,
+    footerTextW,
+    footerFontSize,
+    locale === 'ru' ? 3.5 : 3.75,
   );
-  const stepBlockH = 22 + 12 + maxStepDetailH;
-  const footerGap = 12;
-  const footerFontSize = 5.5;
-  doc.font(fonts.regular).fontSize(footerFontSize);
-  const footerH = doc.heightOfString(copy.footerLegal, {
-    width: contentW,
-    align: 'center',
-    lineGap: 0.3,
-  });
-  const footerReserve = footerH + footerGap + 4;
-  const stepsGapAfterCode = locale === 'ru' ? 18 : 14;
-  const stepsY = Math.min(codeBottom + stepsGapAfterCode, bottom - footerReserve - stepBlockH);
-  const step1X = contentX + stepColW * 0.5 + 6;
-  const step2X = contentX + stepColW * 1.5 + 6;
-  const step3X = contentX + stepColW * 2.5 + 6;
+  const measureFooterH = () =>
+    doc.heightOfString(copy.footerLegal, {
+      width: footerTextW,
+      align: 'center',
+      lineGap: 0.2,
+    });
+
+  let footerGap = compact ? 5 : 7;
+  let stepSpacing = getStepSpacing(locale, compact);
+  let stepBlockH = measureStepBlockHeight(
+    doc,
+    fonts,
+    copy,
+    locale,
+    stepColInner,
+    stepTitleSize,
+    stepDetailSize,
+    stepDetailLineGap,
+    stepSpacing,
+  );
+  let footerH = measureFooterH();
+  let footerY = bottom - footerBottomPad - footerH;
+  const minStepsY = codeBottom + (compact ? 6 : 8);
+  let stepsY = footerY - footerGap - stepBlockH;
+
+  if (stepsY < minStepsY) {
+    stepSpacing = getStepSpacing(locale, compact, true);
+    footerGap = compact ? 4 : 5;
+    stepBlockH = measureStepBlockHeight(
+      doc,
+      fonts,
+      copy,
+      locale,
+      stepColInner,
+      stepTitleSize,
+      stepDetailSize,
+      stepDetailLineGap,
+      stepSpacing,
+    );
+    footerH = measureFooterH();
+    footerY = bottom - footerBottomPad - footerH;
+    stepsY = footerY - footerGap - stepBlockH;
+  }
+
+  const step1X = contentX + stepColW * 0.5;
+  const step2X = contentX + stepColW * 1.5;
+  const step3X = contentX + stepColW * 2.5;
   const stepBottom = Math.max(
     drawStep(
       doc,
@@ -705,6 +851,8 @@ async function drawCenterPanel(
       'phone',
       locale,
       stepColInner,
+      compact,
+      stepSpacing,
     ),
     drawStep(
       doc,
@@ -717,6 +865,8 @@ async function drawCenterPanel(
       'card',
       locale,
       stepColInner,
+      compact,
+      stepSpacing,
     ),
     drawStep(
       doc,
@@ -729,15 +879,20 @@ async function drawCenterPanel(
       'check',
       locale,
       stepColInner,
+      compact,
+      stepSpacing,
     ),
   );
 
+  footerH = measureFooterH();
+  footerY = bottom - footerBottomPad - footerH;
   doc.font(fonts.regular).fontSize(footerFontSize).fillColor(COL.muted);
-  doc.text(copy.footerLegal, contentX, stepBottom + footerGap, {
-    width: contentW,
+  doc.text(copy.footerLegal, footerTextX, footerY, {
+    width: footerTextW,
     align: 'center',
-    lineGap: 0.3,
+    lineGap: 0.2,
   });
+  doc.restore();
 }
 
 const BELOW_STRIP_GAP_PT = 8;
@@ -960,6 +1115,7 @@ export async function renderVouchersPrintPdf(inputs: VoucherPdfInput[]): Promise
     for (const input of inputs) {
       await drawVoucherPage(doc, input, fonts);
     }
+    await drawEnvelopeAssemblyPage(doc, fonts, inputs[0]!.locale, inputs[0]!.printSize);
     doc.end();
   } catch (e) {
     doc.destroy();

@@ -775,8 +775,8 @@ export function AdminProLicensesPanel() {
               src={voucherPreviewUrl}
               className={`w-full rounded-lg border border-zinc-200 dark:border-zinc-700 ${
                 voucherPrintSize === 'a4'
-                  ? 'aspect-[842/298] min-h-[200px]'
-                  : 'aspect-[792/306] min-h-[200px]'
+                  ? 'aspect-[590/210] min-h-[200px]'
+                  : 'aspect-[559/215] min-h-[200px]'
               }`}
             />
           </div>

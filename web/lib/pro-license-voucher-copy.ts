@@ -31,8 +31,29 @@ export type VoucherPdfCopy = {
   belowStripLegalTitle: string;
 };
 
-/** Bump when below-strip or voucher legal copy changes (printed on every PDF). */
-export const VOUCHER_TEMPLATE_VERSION = 'v10';
+/** Bump when below-strip, envelope, or voucher legal copy changes (printed on every PDF). */
+export const VOUCHER_TEMPLATE_VERSION = 'v11';
+
+export type VoucherEnvelopeCopy = {
+  pageTitle: string;
+  cutAlongOuterLine: string;
+  foldLineLabel: string;
+  cutLineLabel: string;
+  scissorsLabel: string;
+  stepOrderLabel: string;
+  topFlapHeadline: string;
+  topFlapHint: string;
+  frontTagline: string;
+  foldInLabel: string;
+  foldUpLabel: string;
+  foldDownLabel: string;
+  slotLabel: string;
+  assemblyTitle: string;
+  assemblySteps: [string, string, string, string, string];
+  previewTitle: string;
+  previewCaption: string;
+  pocketFitNote: string;
+};
 
 export type VoucherBelowStripLegalOpts = {
   site: string;
@@ -241,6 +262,64 @@ const COPY_RU: VoucherPdfCopy = {
 export function getVoucherPdfCopy(locale: VoucherLocale): VoucherPdfCopy {
   const base = locale === 'ru' ? COPY_RU : COPY_EN;
   return { ...base };
+}
+
+const ENVELOPE_COPY_EN: VoucherEnvelopeCopy = {
+  pageTitle: 'BRANDED GIFT ENVELOPE — ASSEMBLY SHEET',
+  cutAlongOuterLine: 'CUT ALONG SOLID LINE',
+  foldLineLabel: 'FOLD LINE',
+  cutLineLabel: 'CUT LINE',
+  scissorsLabel: 'CUT',
+  stepOrderLabel: 'STEP',
+  topFlapHeadline: 'YOUR GIFT IS INSIDE!',
+  topFlapHint: 'Fold down and tuck the tab into the slot.',
+  frontTagline: 'Gift voucher enclosed',
+  foldInLabel: 'FOLD IN',
+  foldUpLabel: 'FOLD UP',
+  foldDownLabel: 'FOLD DOWN',
+  slotLabel: 'SLOT',
+  assemblyTitle: 'HOW TO ASSEMBLE THE ENVELOPE',
+  assemblySteps: [
+    '1. Cut along the outer solid line. Cut the small slot on the front panel (scissors mark).',
+    '2. Fold the left and right side flaps inward along the dashed lines.',
+    '3. Fold the bottom flap up over the sides.',
+    '4. Slide the folded voucher into the pocket.',
+    '5. Fold the top flap down and insert the tab into the slot — no glue needed.',
+  ],
+  previewTitle: 'FINISHED ENVELOPE',
+  previewCaption: 'Secure closure without glue',
+  pocketFitNote: 'Pocket sized for the folded voucher from page 1.',
+};
+
+const ENVELOPE_COPY_RU: VoucherEnvelopeCopy = {
+  pageTitle: 'БРЕНДИРОВАННЫЙ ПОДАРОЧНЫЙ КОНВЕРТ — СБОРКА',
+  cutAlongOuterLine: 'РЕЖЬТЕ ПО СПЛОШНОЙ ЛИНИИ',
+  foldLineLabel: 'ЛИНИЯ СГИБА',
+  cutLineLabel: 'ЛИНИЯ РЕЗА',
+  scissorsLabel: 'ВЫРЕЗАТЬ',
+  stepOrderLabel: 'ШАГ',
+  topFlapHeadline: 'ВАШ ПОДАРОК ВНУТРИ!',
+  topFlapHint: 'Опустите клапан и вставьте язычок в прорезь.',
+  frontTagline: 'Подарочный ваучер внутри',
+  foldInLabel: 'СОГНИТЕ',
+  foldUpLabel: 'СОГНИТЕ ВВЕРХ',
+  foldDownLabel: 'СОГНИТЕ ВНИЗ',
+  slotLabel: 'ПРОРЕЗЬ',
+  assemblyTitle: 'КАК СОБРАТЬ КОНВЕРТ',
+  assemblySteps: [
+    '1. Вырежьте по внешнему сплошному контуру. Сделайте прорезь на передней панели (метка с ножницами).',
+    '2. Согните боковые клапаны внутрь по пунктирным линиям.',
+    '3. Поднимите нижний клапан вверх поверх боковых.',
+    '4. Вложите сложенный ваучер со страницы 1 в карман.',
+    '5. Опустите верхний клапан и вставьте язычок в прорезь — клей не нужен.',
+  ],
+  previewTitle: 'ГОТОВЫЙ КОНВЕРТ',
+  previewCaption: 'Надёжная фиксация без клея',
+  pocketFitNote: 'Карман рассчитан на сложенный ваучер со страницы 1.',
+};
+
+export function getVoucherEnvelopeCopy(locale: VoucherLocale): VoucherEnvelopeCopy {
+  return locale === 'ru' ? ENVELOPE_COPY_RU : ENVELOPE_COPY_EN;
 }
 
 /** Headline for the voucher sidebar (e.g. "14 DAYS PRO ACCESS"). */

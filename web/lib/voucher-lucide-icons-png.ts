@@ -16,17 +16,17 @@ const iconCache = new Map<string, Buffer>();
 const ICON_RASTER_SCALE = 4;
 
 /** Bump when perk SVG paths change (invalidates in-process cache). */
-const PERK_ICON_CACHE_VERSION = 'v3';
+const PERK_ICON_CACHE_VERSION = 'v4';
 
 function lucideSvg(paths: string, stroke: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" shape-rendering="geometricPrecision">${paths}</svg>`;
 }
 
-/** PDF display size (pt) inside 14pt circles — zap is optically thinner than shield. */
+/** Uniform PDF display size (pt) for all sidebar perk icons. */
 export const VOUCHER_PERK_ICON_DISPLAY_PT: Record<VoucherSidebarPerkIcon, number> = {
   zap: 10,
-  brain: 9.5,
-  shield: 9,
+  brain: 10,
+  shield: 10,
 };
 
 async function rasterLucideIcon(cacheKey: string, svg: string, displayPx: number): Promise<Buffer> {

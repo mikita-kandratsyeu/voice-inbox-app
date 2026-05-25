@@ -3,16 +3,16 @@ export type VoucherPrintSize = 'a4' | 'us-letter';
 
 const MM_TO_PT = 72 / 25.4;
 
-/** A4 landscape strip: 297 × 105 mm (full width, gate-fold height). */
+/** A4 landscape strip: 208 × 74 mm (gate-fold; sized to fit the envelope pocket). */
 export const VOUCHER_PAGE_A4 = {
-  width: Math.round(297 * MM_TO_PT),
-  height: Math.round(105 * MM_TO_PT),
+  width: Math.round(208 * MM_TO_PT),
+  height: Math.round(74 * MM_TO_PT),
 } as const;
 
-/** US Letter landscape strip: 11 × 4.25 in. */
+/** US Letter landscape strip (same aspect as A4 variant). */
 export const VOUCHER_PAGE_US_LETTER = {
-  width: 792,
-  height: 306,
+  width: Math.round(7.77 * 72),
+  height: Math.round(2.99 * 72),
 } as const;
 
 /** Strip height only (trim / cut area) — excludes fold guide below. */
@@ -35,6 +35,101 @@ export function getVoucherPageDimensions(size: VoucherPrintSize): {
 } {
   const strip = getVoucherStripDimensions(size);
   return { width: strip.width, height: strip.height + VOUCHER_BELOW_STRIP_HEIGHT_PT };
+}
+
+/** Matches {@link MARGIN} in `pro-license-voucher-pdf.ts`. */
+export const VOUCHER_STRIP_MARGIN_PT = 14;
+
+/** Gate-fold center panel share (closed width ≈ this × trim width). */
+export const VOUCHER_GATE_CENTER_SHARE = 0.5;
+
+/** Folded voucher card size in PDF points (gate-fold closed). */
+export function getVoucherFoldedCardDimensionsPt(size: VoucherPrintSize): {
+  width: number;
+  height: number;
+} {
+  const strip = getVoucherStripDimensions(size);
+  const boundsW = strip.width - VOUCHER_STRIP_MARGIN_PT * 2;
+  const boundsH = strip.height - VOUCHER_STRIP_MARGIN_PT * 2;
+  return {
+    width: Math.round(boundsW * VOUCHER_GATE_CENTER_SHARE),
+    height: boundsH,
+  };
+}
+
+const ptToMm = (pt: number) => (pt * 25.4) / 72;
+
+/** Dieline dimensions (mm) derived from the folded gate-fold voucher on page 1. */
+export type EnvelopeDielineDimensionsMm = {
+  /** Interior pocket (front panel) — card must fit inside. */
+  pocket: { width: number; height: number };
+  /** Left/right glue flaps — each covers half the front when folded in. */
+  sideFlap: number;
+  topFlap: number;
+  bottomFlap: number;
+  topTab: number;
+  /** Closed card face (center panel) for assembly copy. */
+  card: { width: number; height: number };
+};
+
+/** Pocket + flap sizes so the folded voucher fits and the envelope fully closes. */
+export function getEnvelopeDielineDimensionsMm(
+  size: VoucherPrintSize,
+): EnvelopeDielineDimensionsMm {
+  const folded = getVoucherFoldedCardDimensionsPt(size);
+  const cardW = ptToMm(folded.width);
+  const cardH = ptToMm(folded.height);
+
+  const pocketPadW = 5;
+  const pocketPadH = 4;
+  const cardThicknessMm = 2.5;
+  const sideSeamMm = 4;
+  const flapOverlapMm = 10;
+  const topTabMm = 11;
+
+  const pocketW = Math.ceil(cardW + pocketPadW * 2);
+  const pocketH = Math.ceil(cardH + pocketPadH * 2 + cardThicknessMm);
+  const sideFlap = Math.ceil(pocketW / 2) + sideSeamMm;
+  const bottomFlap = Math.ceil((pocketH + flapOverlapMm) * 0.44);
+  const topFlap = Math.ceil((pocketH + flapOverlapMm) * 0.56);
+
+  return {
+    pocket: { width: pocketW, height: pocketH },
+    sideFlap,
+    topFlap,
+    bottomFlap,
+    topTab: topTabMm,
+    card: {
+      width: Math.round(cardW * 10) / 10,
+      height: Math.round(cardH * 10) / 10,
+    },
+  };
+}
+
+/** Pocket inside the branded envelope (mm). */
+export function getEnvelopePocketDimensionsMm(size: VoucherPrintSize): {
+  width: number;
+  height: number;
+} {
+  return getEnvelopeDielineDimensionsMm(size).pocket;
+}
+
+/** Full landscape sheet for the envelope assembly template. */
+export const ENVELOPE_PAGE_A4 = {
+  width: Math.round(297 * MM_TO_PT),
+  height: Math.round(210 * MM_TO_PT),
+} as const;
+
+export const ENVELOPE_PAGE_US_LETTER = {
+  width: Math.round(11 * 72),
+  height: Math.round(8.5 * 72),
+} as const;
+
+export function getEnvelopePageDimensions(size: VoucherPrintSize): {
+  width: number;
+  height: number;
+} {
+  return size === 'us-letter' ? ENVELOPE_PAGE_US_LETTER : ENVELOPE_PAGE_A4;
 }
 
 /** Default for EU printers — no scaling on A4 width. */
