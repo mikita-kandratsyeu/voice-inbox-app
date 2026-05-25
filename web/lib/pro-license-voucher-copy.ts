@@ -212,7 +212,7 @@ const COPY_EN: VoucherPdfCopy = {
   sidebarTagline: 'From thought to clarity — in seconds.',
   sidebarPerks: ['All PRO Features', 'AI summaries & tasks', 'Private mode on your device'],
   sidebarPerkIcons: ['zap', 'brain', 'shield'],
-  cutAlongOuterLine: 'CUT ALONG THE OUTER LINE',
+  cutAlongOuterLine: 'CUT ALONG SOLID LINE',
   premiumHeadline: '',
   stepTitles: ['OPEN THE APP', 'OPEN CODE ENTRY', 'REDEEM YOUR CODE'],
   stepDetails: [
@@ -223,7 +223,7 @@ const COPY_EN: VoucherPdfCopy = {
   footerLegal: 'VALID FOR ONE-TIME USE ONLY • NON-TRANSFERABLE',
   foldTitle: 'HOW TO FOLD',
   foldSteps: [
-    '1. Cut along the outer dashed line.',
+    '1. Cut along the outer solid line.',
     '2. Fold the left panel toward the center.',
     '3. Fold the right panel toward the center so the edges meet in the middle.',
     '4. When closed, the center (your code) is covered — open both panels to use it.',
@@ -240,7 +240,7 @@ const COPY_RU: VoucherPdfCopy = {
   sidebarTagline: 'От мысли — к ясности за секунды.',
   sidebarPerks: ['Все PRO-возможности', 'ИИ сводки и задачи', 'Приватный режим на устройстве'],
   sidebarPerkIcons: ['zap', 'brain', 'shield'],
-  cutAlongOuterLine: 'РЕЖЬТЕ ПО ВНЕШНЕЙ ЛИНИИ',
+  cutAlongOuterLine: 'РЕЖЬТЕ ПО СПЛОШНОЙ ЛИНИИ',
   premiumHeadline: '',
   stepTitles: ['ОТКРОЙТЕ ПРИЛОЖЕНИЕ', 'ОТКРОЙТЕ ВВОД КОДА', 'АКТИВИРУЙТЕ КОД'],
   stepDetails: [
@@ -251,7 +251,7 @@ const COPY_RU: VoucherPdfCopy = {
   footerLegal: 'ТОЛЬКО ДЛЯ ОДНОКРАТНОГО ИСПОЛЬЗОВАНИЯ • НЕ ПЕРЕДАЁТСЯ',
   foldTitle: 'КАК СЛОЖИТЬ',
   foldSteps: [
-    '1. Вырежьте по внешней пунктирной линии.',
+    '1. Вырежьте по внешней сплошной линии.',
     '2. Сложите левую боковую панель к центру.',
     '3. Сложите правую боковую панель к центру — края встречаются посередине.',
     '4. В сложенном виде центр с кодом закрыт крыльями — разверните, чтобы прочитать код.',

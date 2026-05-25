@@ -9,7 +9,6 @@ import {
   getVoucherPdfCopy,
   VOUCHER_TEMPLATE_VERSION,
   type VoucherLocale,
-  type VoucherSidebarPerkIcon,
 } from '@/lib/pro-license-voucher-copy';
 import {
   getVoucherPageDimensions,
@@ -167,15 +166,13 @@ function drawVoucherWatermark(
   doc.restore();
 }
 
-/** Trim guide only — dashed, cut away before folding. */
+/** Trim guide only — solid brand line (matches envelope cut contour). */
 function drawCutGuide(doc: PdfDoc, layout: VoucherLayout): void {
   const { bounds } = layout;
   doc.save();
-  doc.lineWidth(0.5);
-  doc.dash(4, { space: 3 });
-  doc.strokeColor(COL.border);
+  doc.lineWidth(0.95);
+  doc.strokeColor(COL.brand);
   doc.roundedRect(bounds.x, bounds.y, bounds.w, bounds.h, CUT_RADIUS).stroke();
-  doc.undash();
   doc.restore();
 }
 
@@ -284,19 +281,6 @@ function drawCheckIcon(doc: PdfDoc, cx: number, cy: number): void {
     .lineTo(cx - half * 0.08, cy + half * 0.48)
     .lineTo(cx + half * 0.62, cy - half * 0.55)
     .stroke();
-  doc.restore();
-}
-
-/** Gift header: soft circle badge + Lucide `Gift` icon. */
-async function drawGiftHeaderBadge(doc: PdfDoc, cx: number, cy: number): Promise<void> {
-  doc.save();
-  doc.circle(cx, cy, GIFT_BADGE_R).fill(COL.brandLight);
-  doc.circle(cx, cy, GIFT_BADGE_R).lineWidth(0.75).strokeColor(COL.brand).stroke();
-
-  const iconPx = Math.round(GIFT_BADGE_R * 1.05);
-  const iconBuf = await loadVoucherGiftIconPng(iconPx);
-  doc.image(iconBuf, cx - iconPx / 2, cy - iconPx / 2, { width: iconPx, height: iconPx });
-
   doc.restore();
 }
 
@@ -471,8 +455,8 @@ async function measureLeftWingPerksBlock(
 ): Promise<{ blockH: number }> {
   const perkFontSize = opts.compact ? 6 : 6.75;
   doc.font(fonts.regular).fontSize(perkFontSize);
-  const rowHeights = copy.sidebarPerks.map((label, i) => {
-    const iconW = leftWingPerkIconDisplay(copy.sidebarPerkIcons[i]!, opts.compact);
+  const rowHeights = copy.sidebarPerks.map((label) => {
+    const iconW = SIDEBAR_PERK_ICON_PT;
     const textH = doc.heightOfString(label, { width: innerW - iconW - 5, lineGap: 0.15 });
     return Math.max(iconW, textH);
   });
@@ -481,10 +465,6 @@ async function measureLeftWingPerksBlock(
 }
 
 const SIDEBAR_PERK_ICON_PT = 10;
-
-function leftWingPerkIconDisplay(_kind: VoucherSidebarPerkIcon, _compact: boolean): number {
-  return SIDEBAR_PERK_ICON_PT;
-}
 
 async function drawLeftWingPerksBlock(
   doc: PdfDoc,
@@ -500,7 +480,7 @@ async function drawLeftWingPerksBlock(
   const perkFontSize = opts.compact ? 6 : 6.75;
   const perkIconBufs = await Promise.all(
     copy.sidebarPerkIcons.map((kind) =>
-      loadVoucherPerkIconPng(kind, Math.round(leftWingPerkIconDisplay(kind, opts.compact) * 2)),
+      loadVoucherPerkIconPng(kind, Math.round(SIDEBAR_PERK_ICON_PT * 2)),
     ),
   );
 
@@ -508,7 +488,6 @@ async function drawLeftWingPerksBlock(
 
   let rowY = boxY + opts.boxPadY;
   for (let i = 0; i < copy.sidebarPerks.length; i += 1) {
-    const kind = copy.sidebarPerkIcons[i]!;
     rowY = drawSidebarPerkRow(
       doc,
       fonts,
@@ -517,7 +496,7 @@ async function drawLeftWingPerksBlock(
       innerW,
       copy.sidebarPerks[i]!,
       perkIconBufs[i]!,
-      leftWingPerkIconDisplay(kind, opts.compact),
+      SIDEBAR_PERK_ICON_PT,
       perkFontSize,
     );
     if (i < copy.sidebarPerks.length - 1) {
@@ -839,49 +818,47 @@ async function drawCenterPanel(
   const step1X = contentX + stepColW * 0.5;
   const step2X = contentX + stepColW * 1.5;
   const step3X = contentX + stepColW * 2.5;
-  const stepBottom = Math.max(
-    drawStep(
-      doc,
-      fonts,
-      step1X,
-      stepsY,
-      1,
-      copy.stepTitles[0],
-      copy.stepDetails[0],
-      'phone',
-      locale,
-      stepColInner,
-      compact,
-      stepSpacing,
-    ),
-    drawStep(
-      doc,
-      fonts,
-      step2X,
-      stepsY,
-      2,
-      copy.stepTitles[1],
-      copy.stepDetails[1],
-      'card',
-      locale,
-      stepColInner,
-      compact,
-      stepSpacing,
-    ),
-    drawStep(
-      doc,
-      fonts,
-      step3X,
-      stepsY,
-      3,
-      copy.stepTitles[2],
-      copy.stepDetails[2],
-      'check',
-      locale,
-      stepColInner,
-      compact,
-      stepSpacing,
-    ),
+  drawStep(
+    doc,
+    fonts,
+    step1X,
+    stepsY,
+    1,
+    copy.stepTitles[0],
+    copy.stepDetails[0],
+    'phone',
+    locale,
+    stepColInner,
+    compact,
+    stepSpacing,
+  );
+  drawStep(
+    doc,
+    fonts,
+    step2X,
+    stepsY,
+    2,
+    copy.stepTitles[1],
+    copy.stepDetails[1],
+    'card',
+    locale,
+    stepColInner,
+    compact,
+    stepSpacing,
+  );
+  drawStep(
+    doc,
+    fonts,
+    step3X,
+    stepsY,
+    3,
+    copy.stepTitles[2],
+    copy.stepDetails[2],
+    'check',
+    locale,
+    stepColInner,
+    compact,
+    stepSpacing,
   );
 
   footerH = measureFooterH();
