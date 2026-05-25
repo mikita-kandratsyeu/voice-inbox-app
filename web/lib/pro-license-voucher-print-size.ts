@@ -15,11 +15,26 @@ export const VOUCHER_PAGE_US_LETTER = {
   height: 306,
 } as const;
 
-export function getVoucherPageDimensions(size: VoucherPrintSize): {
+/** Strip height only (trim / cut area) — excludes fold guide below. */
+export function getVoucherStripDimensions(size: VoucherPrintSize): {
   width: number;
   height: number;
 } {
   return size === 'us-letter' ? VOUCHER_PAGE_US_LETTER : VOUCHER_PAGE_A4;
+}
+
+/** Extra page height under the voucher for fold steps + legal fine print (not part of the cut). */
+export const VOUCHER_BELOW_STRIP_HEIGHT_PT = 108;
+
+/** @deprecated Use {@link VOUCHER_BELOW_STRIP_HEIGHT_PT}. */
+export const VOUCHER_FOLD_GUIDE_HEIGHT_PT = VOUCHER_BELOW_STRIP_HEIGHT_PT;
+
+export function getVoucherPageDimensions(size: VoucherPrintSize): {
+  width: number;
+  height: number;
+} {
+  const strip = getVoucherStripDimensions(size);
+  return { width: strip.width, height: strip.height + VOUCHER_BELOW_STRIP_HEIGHT_PT };
 }
 
 /** Default for EU printers — no scaling on A4 width. */

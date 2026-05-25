@@ -6,6 +6,7 @@ import {
   Database,
   LayoutDashboard,
   LifeBuoy,
+  ExternalLink,
   LogOut,
   Radio,
   Rocket,
@@ -580,20 +581,14 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
         <div className="mx-auto w-full max-w-screen-2xl px-4 py-6 md:px-8 lg:px-10">
           {adminTab === 'overview' && (
             <>
-              <div className="mb-6 flex flex-wrap gap-2">
+              <div className="mb-2 flex justify-end">
                 <button
                   type="button"
-                  onClick={() => fetchStatus()}
+                  onClick={() => void fetchStatus()}
+                  disabled={statusLoading}
                   className={adminBtnSecondaryClass}
                 >
-                  Refresh status
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fetchGithub()}
-                  className={adminBtnSecondaryClass}
-                >
-                  Refresh GitHub
+                  {statusLoading ? 'Refreshing…' : 'Refresh status'}
                 </button>
               </div>
 
@@ -676,67 +671,89 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
 
               <div className="mb-8 space-y-4 lg:space-y-6">
                 {/* Колонка: Vercel, затем GitHub */}
-                <div className="flex flex-col gap-4 lg:gap-6">
-                  <AdminCollapsibleCard title="Vercel">
+                <div className="flex min-w-0 flex-col gap-4 lg:gap-6">
+                  <AdminCollapsibleCard
+                    title="Vercel"
+                    headerAction={
+                      <button
+                        type="button"
+                        onClick={() => void fetchStatus()}
+                        disabled={statusLoading}
+                        className={`${adminBtnSecondaryClass} px-2 py-1 text-xs`}
+                      >
+                        {statusLoading ? '…' : 'Refresh'}
+                      </button>
+                    }
+                  >
                     {statusLoading ? (
                       <p className="text-sm text-zinc-500">Loading…</p>
                     ) : status?.vercel?.ok ? (
-                      <div className="space-y-2 text-sm">
+                      <div className="min-w-0 space-y-2 text-sm">
                         {status.vercel?.deployments?.length ? (
-                          <ul className="space-y-2">
+                          <ul className="min-w-0 space-y-2">
                             {status.vercel.deployments.map((d) => (
                               <li
                                 key={d.uid}
-                                className="rounded-lg border border-zinc-200 p-2 dark:border-zinc-600"
+                                className="min-w-0 overflow-hidden rounded-lg border border-zinc-200 p-2 dark:border-zinc-600"
                               >
-                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                  <span className="font-mono text-zinc-500">
-                                    {d.uid.slice(0, 8)}
-                                  </span>
-                                  <span
-                                    className={
-                                      d.state === 'READY'
-                                        ? 'text-green-600 dark:text-green-400'
-                                        : d.state === 'ERROR' || d.state === 'CANCELED'
-                                          ? 'text-red-600 dark:text-red-400'
-                                          : 'text-amber-600 dark:text-amber-400'
-                                    }
-                                  >
-                                    {d.state}
-                                  </span>
-                                  {d.target && (
-                                    <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-xs dark:bg-zinc-600">
-                                      {d.target}
-                                    </span>
-                                  )}
-                                  {d.branch && <span className="text-zinc-500">{d.branch}</span>}
-                                </div>
-                                <div className="mt-1 text-xs text-zinc-500">
-                                  {formatDate(d.created)}
-                                  {d.source && ` · ${d.source}`}
-                                </div>
-                                {d.url && (
-                                  <div className="mt-1">
+                                <div className="flex items-start gap-2">
+                                  <div className="min-w-0 flex-1 space-y-1">
+                                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                                      <span className="font-mono text-zinc-500">
+                                        {d.uid.slice(0, 8)}
+                                      </span>
+                                      <span
+                                        className={
+                                          d.state === 'READY'
+                                            ? 'text-green-600 dark:text-green-400'
+                                            : d.state === 'ERROR' || d.state === 'CANCELED'
+                                              ? 'text-red-600 dark:text-red-400'
+                                              : 'text-amber-600 dark:text-amber-400'
+                                        }
+                                      >
+                                        {d.state}
+                                      </span>
+                                      {d.target && (
+                                        <span className="rounded bg-zinc-200 px-1.5 py-0.5 text-xs dark:bg-zinc-600">
+                                          {d.target}
+                                        </span>
+                                      )}
+                                      {d.branch && (
+                                        <span className="text-zinc-500">{d.branch}</span>
+                                      )}
+                                    </div>
+                                    <div className="text-xs text-zinc-500">
+                                      {formatDate(d.created)}
+                                      {d.source && ` · ${d.source}`}
+                                    </div>
+                                    {d.url ? (
+                                      <a
+                                        href={d.url.startsWith('http') ? d.url : `https://${d.url}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        title={d.url}
+                                        className="block min-w-0 break-all text-xs text-blue-600 underline dark:text-blue-400"
+                                      >
+                                        {d.url}
+                                      </a>
+                                    ) : null}
+                                  </div>
+                                  {d.inspectorUrl ? (
                                     <a
-                                      href={d.url.startsWith('http') ? d.url : `https://${d.url}`}
+                                      href={d.inspectorUrl}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-xs text-blue-600 underline dark:text-blue-400"
+                                      className={`${adminBtnSecondaryClass} shrink-0 px-2 py-1 text-xs`}
                                     >
-                                      {d.url}
+                                      <ExternalLink
+                                        className="h-3.5 w-3.5"
+                                        strokeWidth={2}
+                                        aria-hidden
+                                      />
+                                      Vercel
                                     </a>
-                                  </div>
-                                )}
-                                {d.inspectorUrl && (
-                                  <a
-                                    href={d.inspectorUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="mt-0.5 block text-xs text-zinc-500 underline hover:text-zinc-700 dark:hover:text-zinc-400"
-                                  >
-                                    Inspect
-                                  </a>
-                                )}
+                                  ) : null}
+                                </div>
                                 {d.state === 'ERROR' && d.errorMessage && (
                                   <p className="mt-1 text-xs text-red-600 dark:text-red-400">
                                     {d.errorMessage}
@@ -758,38 +775,49 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
 
                   <AdminCollapsibleCard
                     title="GitHub"
-                    contentClassName="flex min-h-0 flex-1 flex-col"
+                    headerAction={
+                      <button
+                        type="button"
+                        onClick={() => void fetchGithub()}
+                        disabled={githubLoading}
+                        className={`${adminBtnSecondaryClass} px-2 py-1 text-xs`}
+                      >
+                        {githubLoading ? '…' : 'Refresh'}
+                      </button>
+                    }
                   >
                     {githubLoading ? (
                       <p className="text-sm text-zinc-500">Loading…</p>
                     ) : github?.ok && github.repoUrl && github.commits?.length ? (
-                      <div className="flex min-h-0 flex-1 flex-col text-sm">
+                      <div className="min-w-0 space-y-2 text-sm">
                         <a
                           href={github.repoUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="shrink-0 text-blue-600 underline dark:text-blue-400"
+                          className="block min-w-0 break-all text-blue-600 underline dark:text-blue-400"
                         >
                           {github.repo}
                         </a>
-                        <ul className="min-h-0 flex-1 space-y-1.5 overflow-y-auto py-1">
+                        <ul className="min-w-0 space-y-1.5">
                           {github.commits.map((c) => (
                             <li
                               key={c.sha}
-                              className="shrink-0 rounded border border-zinc-200 p-1.5 dark:border-zinc-600"
+                              className="min-w-0 overflow-hidden rounded-lg border border-zinc-200 p-2 dark:border-zinc-600"
                             >
-                              <a
-                                href={c.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="font-mono text-xs text-blue-600 dark:text-blue-400"
-                              >
-                                {c.shortSha}
-                              </a>
-                              <span className="ml-1.5 text-zinc-600 dark:text-zinc-400">
-                                {c.message}
-                              </span>
-                              <div className="mt-0.5 text-xs text-zinc-500">
+                              <div className="min-w-0">
+                                <a
+                                  href={c.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="font-mono text-xs text-blue-600 dark:text-blue-400"
+                                >
+                                  {c.shortSha}
+                                </a>
+                                <p className="mt-0.5 break-words text-zinc-600 dark:text-zinc-400">
+                                  {c.message}
+                                </p>
+                              </div>
+                              <div className="mt-1 text-xs text-zinc-500">
                                 {c.author}
                                 {c.date && ` · ${formatDate(new Date(c.date).getTime())}`}
                               </div>

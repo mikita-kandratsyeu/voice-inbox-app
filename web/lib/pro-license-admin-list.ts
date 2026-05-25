@@ -24,6 +24,8 @@ const rowSelect = {
   createdAt: true,
   issuedToEmail: true,
   adminNotes: true,
+  voucherBatchId: true,
+  voucherTemplateVersion: true,
   consumedAt: true,
   consumedByDeviceId: true,
 } as const;
@@ -37,6 +39,8 @@ export type ProLicenseAdminItem = {
   createdAt: string;
   issuedToEmail: string | null;
   adminNotes: string | null;
+  voucherBatchId: string | null;
+  voucherTemplateVersion: string | null;
   consumed: boolean;
   consumedAt: string | null;
   nominalGrantEndsAt: string | null;
@@ -214,6 +218,8 @@ export function enrichProLicenseRows(
       createdAt: r.createdAt.toISOString(),
       issuedToEmail: r.issuedToEmail,
       adminNotes: r.adminNotes,
+      voucherBatchId: r.voucherBatchId,
+      voucherTemplateVersion: r.voucherTemplateVersion,
       consumed: r.consumedAt != null,
       consumedAt: r.consumedAt?.toISOString() ?? null,
       nominalGrantEndsAt: nominalEnd?.toISOString() ?? null,

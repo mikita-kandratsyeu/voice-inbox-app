@@ -2,28 +2,58 @@ import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
 
 import type { ProLicenseDurationSpec } from '@/lib/pro-license-admin';
+import { BASE_URL_OR_FALLBACK, SUPPORT_EMAIL } from '@/config/constants';
 import {
   formatVoucherPremiumAccessHeadline,
+  getVoucherBelowStripLegalLines,
   getVoucherPdfCopy,
+  VOUCHER_TEMPLATE_VERSION,
   type VoucherLocale,
 } from '@/lib/pro-license-voucher-copy';
 import {
   getVoucherPageDimensions,
+  getVoucherStripDimensions,
   type VoucherPrintSize,
 } from '@/lib/pro-license-voucher-print-size';
 import { resolveVoucherPdfFonts, type VoucherPdfFonts } from '@/lib/voucher-fonts';
 import { VOUCHER_PREVIEW_KEY_ID } from '@/lib/pro-license-voucher-shared';
 import { loadVoucherAppIconPng } from '@/lib/voucher-app-icon-png';
+import {
+  loadVoucherGiftIconPng,
+  loadVoucherHeartIconPng,
+  loadVoucherPerkIconPng,
+} from '@/lib/voucher-lucide-icons-png';
 
 const MARGIN = 14;
 const CUT_RADIUS = 8;
 const PANEL_PAD = 12;
+/** Center panel width for tri-fold (narrower than left/right wings). */
+const FOLD_CENTER_SHARE = 0.27;
+/** Radius of the gift-title badge circle (center panel header). */
+const GIFT_BADGE_R = 18;
 
+/** Brand palette for color printers (aligned with web blue / indigo). */
 const COL = {
-  muted: '#555555',
-  faint: '#B5B5B5',
-  watermark: '#D8D8D8',
-  ink: '#000000',
+  brand: '#2563EB',
+  brandDark: '#1D4ED8',
+  brandLight: '#DBEAFE',
+  brandSoft: '#EFF6FF',
+  indigo: '#4F46E5',
+  amber: '#D97706',
+  rose: '#E11D48',
+  success: '#16A34A',
+  ink: '#0F172A',
+  muted: '#475569',
+  faint: '#94A3B8',
+  border: '#CBD5E1',
+  watermark: '#BFDBFE',
+  badgeFill: '#DBEAFE',
+  badgeStroke: '#93C5FD',
+  panelLeft: '#EFF6FF',
+  panelCenter: '#FFFFFF',
+  panelRight: '#F0F9FF',
+  codeBg: '#F8FAFC',
+  codeBorder: '#2563EB',
 } as const;
 
 export type VoucherPdfInput = {
@@ -35,6 +65,11 @@ export type VoucherPdfInput = {
   printSize: VoucherPrintSize;
   /** Partner / promo name shown on the left flap (optional). */
   promoLabel?: string | null;
+  /** ISO YYYY-MM-DD — printed in below-strip metadata. */
+  issuedAt: string;
+  /** Shared batch id for one print/email run. */
+  batchId: string;
+  templateVersion: string;
 };
 
 export type { VoucherPrintSize } from '@/lib/pro-license-voucher-print-size';
@@ -43,26 +78,53 @@ type PdfDoc = InstanceType<typeof PDFDocument>;
 type PdfFonts = VoucherPdfFonts;
 type VoucherPdfCopy = ReturnType<typeof getVoucherPdfCopy>;
 
+type VoucherPanelRect = { x: number; w: number };
+
 type VoucherLayout = {
   bounds: { x: number; y: number; w: number; h: number };
-  panelW: number;
+  left: VoucherPanelRect;
+  center: VoucherPanelRect;
+  right: VoucherPanelRect;
   fold1X: number;
   fold2X: number;
 };
 
-function getVoucherLayout(pageW: number, pageH: number): VoucherLayout {
+/** Tri-fold panel fills inside the trim area (center narrower). */
+function drawPanelBackgrounds(doc: PdfDoc, layout: VoucherLayout): void {
+  const { bounds, left, center, right } = layout;
+  const y = bounds.y;
+  const h = bounds.h;
+
+  doc.save();
+  doc.rect(left.x, y, left.w, h).fill(COL.panelLeft);
+  doc.rect(center.x, y, center.w, h).fill(COL.panelCenter);
+  doc.rect(right.x, y, right.w, h).fill(COL.panelRight);
+  doc.restore();
+}
+
+/** Layout for the trim/cut voucher strip only (fold guide is drawn below). */
+function getVoucherLayout(pageW: number, stripH: number): VoucherLayout {
   const bounds = {
     x: MARGIN,
     y: MARGIN,
     w: pageW - MARGIN * 2,
-    h: pageH - MARGIN * 2,
+    h: stripH - MARGIN * 2,
   };
-  const panelW = bounds.w / 3;
+  const centerW = Math.round(bounds.w * FOLD_CENTER_SHARE);
+  const sideW = Math.floor((bounds.w - centerW) / 2);
+  const leftW = sideW;
+  const rightW = bounds.w - leftW - centerW;
+  const leftX = bounds.x;
+  const fold1X = leftX + leftW;
+  const fold2X = fold1X + centerW;
+
   return {
     bounds,
-    panelW,
-    fold1X: bounds.x + panelW,
-    fold2X: bounds.x + panelW * 2,
+    left: { x: leftX, w: leftW },
+    center: { x: fold1X, w: centerW },
+    right: { x: fold2X, w: rightW },
+    fold1X,
+    fold2X,
   };
 }
 
@@ -85,7 +147,7 @@ function drawVoucherWatermark(
   doc.rect(bounds.x, bounds.y, bounds.w, bounds.h).clip();
   doc.translate(cx, cy);
   doc.rotate(-45);
-  doc.fillColor(COL.watermark);
+  doc.fillColor(COL.brand);
 
   let fontSize = 58;
   doc.font(fonts.bold).fontSize(fontSize);
@@ -93,7 +155,7 @@ function drawVoucherWatermark(
     fontSize -= 2;
     doc.fontSize(fontSize);
   }
-  doc.opacity(0.12);
+  doc.opacity(0.1);
   const w = doc.widthOfString(label);
   doc.text(label, -w / 2, -fontSize * 0.35, { lineBreak: false });
   doc.opacity(1);
@@ -106,7 +168,7 @@ function drawCutGuide(doc: PdfDoc, layout: VoucherLayout): void {
   doc.save();
   doc.lineWidth(0.5);
   doc.dash(4, { space: 3 });
-  doc.strokeColor(COL.ink);
+  doc.strokeColor(COL.border);
   doc.roundedRect(bounds.x, bounds.y, bounds.w, bounds.h, CUT_RADIUS).stroke();
   doc.undash();
   doc.restore();
@@ -118,7 +180,7 @@ function drawFoldGuides(doc: PdfDoc, layout: VoucherLayout): void {
   doc.save();
   doc.lineWidth(0.75);
   doc.dash(5, { space: 4 });
-  doc.strokeColor(COL.ink);
+  doc.strokeColor(COL.border);
   doc
     .moveTo(fold1X, bounds.y + 4)
     .lineTo(fold1X, bounds.y + bounds.h - 4)
@@ -138,7 +200,7 @@ function drawScissors(doc: PdfDoc, x: number, y: number, flip = false): void {
   if (flip) doc.rotate(180);
   doc.scale(scale);
   doc.lineWidth(0.85);
-  doc.strokeColor(COL.ink);
+  doc.strokeColor(COL.muted);
   doc.circle(-4, 0, 3).stroke();
   doc.circle(4, 0, 3).stroke();
   doc.moveTo(-4, 0).lineTo(8, 10).stroke();
@@ -154,7 +216,7 @@ function drawCutAlongLabels(
 ): void {
   const { bounds } = layout;
   const fontSize = 5.5;
-  doc.font(fonts.bold).fontSize(fontSize).fillColor(COL.ink);
+  doc.font(fonts.bold).fontSize(fontSize).fillColor(COL.muted);
 
   drawScissors(doc, bounds.x - 10, bounds.y - 8);
   doc.text(copy.cutAlongOuterLine, bounds.x + 2, bounds.y - 11, { lineBreak: false });
@@ -170,41 +232,63 @@ function drawCutAlongLabels(
   doc.restore();
 }
 
+const STEP_ICON_BADGE_R = 9;
+
+function drawStepIconBadge(doc: PdfDoc, cx: number, cy: number): void {
+  doc.circle(cx, cy, STEP_ICON_BADGE_R).fill(COL.badgeFill);
+  doc.circle(cx, cy, STEP_ICON_BADGE_R).lineWidth(0.35).strokeColor(COL.badgeStroke).stroke();
+}
+
 function drawPhoneIcon(doc: PdfDoc, cx: number, cy: number): void {
-  const w = 9;
-  const h = 14;
+  const w = 6.5;
+  const h = 10;
+  drawStepIconBadge(doc, cx, cy);
   doc.save();
-  doc.lineWidth(0.85);
-  doc.strokeColor(COL.ink);
-  doc.roundedRect(cx - w / 2, cy - h / 2, w, h, 1.5).stroke();
-  doc.circle(cx, cy + h / 2 - 2.5, 0.8).fill(COL.ink);
+  doc.lineWidth(0.75);
+  doc.strokeColor(COL.brand);
+  doc.roundedRect(cx - w / 2, cy - h / 2, w, h, 1.2).stroke();
+  doc.circle(cx, cy + h / 2 - 2, 0.65).fill(COL.brand);
   doc.restore();
 }
 
 function drawCardIcon(doc: PdfDoc, cx: number, cy: number): void {
-  const w = 15;
-  const h = 10;
+  const w = 11;
+  const h = 7;
+  drawStepIconBadge(doc, cx, cy);
   doc.save();
-  doc.lineWidth(0.85);
-  doc.strokeColor(COL.ink);
+  doc.lineWidth(0.75);
+  doc.strokeColor(COL.indigo);
   doc.rect(cx - w / 2, cy - h / 2, w, h).stroke();
   doc
-    .moveTo(cx - w / 2 + 2, cy - 1.5)
-    .lineTo(cx + w / 2 - 2, cy - 1.5)
+    .moveTo(cx - w / 2 + 1.5, cy - 1)
+    .lineTo(cx + w / 2 - 1.5, cy - 1)
     .stroke();
   doc.restore();
 }
 
 function drawCheckIcon(doc: PdfDoc, cx: number, cy: number): void {
+  drawStepIconBadge(doc, cx, cy);
   doc.save();
-  doc.lineWidth(0.85);
-  doc.strokeColor(COL.ink);
-  doc.circle(cx, cy, 7).stroke();
+  doc.lineWidth(0.9);
+  doc.strokeColor(COL.success);
   doc
-    .moveTo(cx - 2.5, cy)
-    .lineTo(cx - 0.5, cy + 2.5)
-    .lineTo(cx + 3.5, cy - 3)
+    .moveTo(cx - 2.2, cy + 0.2)
+    .lineTo(cx - 0.35, cy + 2)
+    .lineTo(cx + 2.6, cy - 2.3)
     .stroke();
+  doc.restore();
+}
+
+/** Gift header: soft circle badge + Lucide `Gift` icon. */
+async function drawGiftHeaderBadge(doc: PdfDoc, cx: number, cy: number): Promise<void> {
+  doc.save();
+  doc.circle(cx, cy, GIFT_BADGE_R).fill(COL.brandLight);
+  doc.circle(cx, cy, GIFT_BADGE_R).lineWidth(0.75).strokeColor(COL.brand).stroke();
+
+  const iconPx = Math.round(GIFT_BADGE_R * 1.05);
+  const iconBuf = await loadVoucherGiftIconPng(iconPx);
+  doc.image(iconBuf, cx - iconPx / 2, cy - iconPx / 2, { width: iconPx, height: iconPx });
+
   doc.restore();
 }
 
@@ -232,14 +316,19 @@ function drawStep(
   else drawCheckIcon(doc, x, iconY);
 
   const titleText = `${stepNum}. ${title}`;
-  doc.font(fonts.bold).fontSize(titleSize).fillColor(COL.ink);
+  const titleLineGap = locale === 'ru' ? 0.15 : 0;
+  doc.font(fonts.bold).fontSize(titleSize).fillColor(COL.brandDark);
   const titleY = y + 20;
   const titleHeight = doc.heightOfString(titleText, {
     width: colW,
     align: 'center',
-    lineGap: 0,
+    lineGap: titleLineGap,
   });
-  doc.text(titleText, left, titleY, { width: colW, align: 'center', lineGap: 0 });
+  doc.text(titleText, left, titleY, {
+    width: colW,
+    align: 'center',
+    lineGap: titleLineGap,
+  });
 
   doc.font(fonts.regular).fontSize(detailSize).fillColor(COL.muted);
   const detailY = titleY + titleHeight + titleGap;
@@ -256,12 +345,87 @@ function drawStep(
   return detailY + detailHeight;
 }
 
+function drawSidebarPerkRow(
+  doc: PdfDoc,
+  fonts: PdfFonts,
+  x: number,
+  y: number,
+  w: number,
+  label: string,
+  iconBuf: Buffer,
+): number {
+  const iconR = 7;
+  const iconDisplay = 9;
+  const iconCx = x + iconR;
+  const iconCy = y + iconR;
+
+  doc.circle(iconCx, iconCy, iconR).fill(COL.badgeFill);
+  doc.circle(iconCx, iconCy, iconR).lineWidth(0.35).strokeColor(COL.badgeStroke).stroke();
+  doc.image(iconBuf, iconCx - iconDisplay / 2, iconCy - iconDisplay / 2, {
+    width: iconDisplay,
+    height: iconDisplay,
+  });
+
+  const textX = x + iconR * 2 + 6;
+  const textW = w - (textX - x);
+  doc.font(fonts.regular).fontSize(7).fillColor(COL.ink);
+  const textY = iconCy - 3.5;
+  const textH = doc.heightOfString(label, { width: textW, lineGap: 0.2 });
+  doc.text(label, textX, textY, { width: textW, lineGap: 0.2 });
+  return y + Math.max(iconR * 2, textH + 5);
+}
+
+async function drawSidebarPerks(
+  doc: PdfDoc,
+  fonts: PdfFonts,
+  copy: VoucherPdfCopy,
+  contentX: number,
+  contentW: number,
+  topY: number,
+  bottomY: number,
+): Promise<void> {
+  const taglineSize = 7.5;
+  doc.font(fonts.regular).fontSize(taglineSize).fillColor(COL.brandDark);
+  const taglineH = doc.heightOfString(copy.sidebarTagline, {
+    width: contentW,
+    lineGap: 0.35,
+  });
+  doc.text(copy.sidebarTagline, contentX, topY, { width: contentW, lineGap: 0.35 });
+
+  const perkIconBufs = await Promise.all(
+    copy.sidebarPerkIcons.map((kind) => loadVoucherPerkIconPng(kind, 9)),
+  );
+
+  const perksTop = topY + taglineH + 9;
+  const rowCount = copy.sidebarPerks.length;
+  const rowArea = bottomY - perksTop;
+  const rowGap = Math.max(5, (rowArea - rowCount * 16) / (rowCount + 1));
+
+  let rowY = perksTop + rowGap;
+  for (let i = 0; i < rowCount; i += 1) {
+    rowY =
+      drawSidebarPerkRow(
+        doc,
+        fonts,
+        contentX,
+        rowY,
+        contentW,
+        copy.sidebarPerks[i]!,
+        perkIconBufs[i]!,
+      ) + rowGap;
+  }
+}
+
 async function qrPngBuffer(url: string, size: number): Promise<Buffer> {
   return QRCode.toBuffer(url, {
     type: 'png',
     margin: 1,
     width: size,
     errorCorrectionLevel: 'M',
+    color: {
+      dark: COL.brandDark,
+      light: '#FFFFFF',
+    },
   });
 }
 
@@ -271,12 +435,12 @@ async function drawLeftFlap(
   copy: VoucherPdfCopy,
   headline: string,
   promoLabel: string | null | undefined,
+  locale: VoucherLocale,
   layout: VoucherLayout,
 ): Promise<void> {
-  const panelX = layout.bounds.x;
-  const panelW = layout.panelW;
-  const contentX = panelX + PANEL_PAD;
-  const contentW = panelW - PANEL_PAD * 2;
+  const { left } = layout;
+  const contentX = left.x + PANEL_PAD;
+  const contentW = left.w - PANEL_PAD * 2;
   const top = layout.bounds.y + PANEL_PAD + 8;
   const bottom = layout.bounds.y + layout.bounds.h - PANEL_PAD;
 
@@ -293,60 +457,102 @@ async function drawLeftFlap(
     textY += promoH + 10;
   }
 
-  doc.font(fonts.bold).fontSize(18).fillColor(COL.ink);
+  doc.font(fonts.bold).fontSize(18).fillColor(COL.brandDark);
+  const headlineH = doc.heightOfString(headline, { width: contentW, lineGap: 1 });
   doc.text(headline, contentX, textY, { width: contentW, lineGap: 1, align: 'left' });
+  const headlineBottom = textY + headlineH;
 
-  const thankY = bottom - 36;
-  doc.moveTo(contentX, thankY).lineTo(contentX + contentW * 0.55, thankY);
-  doc.lineWidth(0.6).strokeColor(COL.ink);
+  const thanksLead = copy.thanksLead;
+  const thanksBrand = 'Voice Inbox AI';
+  const thanksSize = 7.5;
+  const brandSize = 8;
+  const thanksLineH = thanksSize * 1.25;
+  const thankBlockH = thanksLineH + brandSize * 1.2 + 6;
+  const thankPadBottom = 12;
+  const dividerY = bottom - thankBlockH - thankPadBottom;
+  const thankTextY = dividerY + 9;
+  const heartPx = 8;
+  await drawSidebarPerks(doc, fonts, copy, contentX, contentW, headlineBottom + 10, dividerY - 4);
+
+  doc.moveTo(contentX, dividerY).lineTo(contentX + contentW * 0.72, dividerY);
+  doc.lineWidth(0.5).strokeColor(COL.badgeStroke);
   doc.stroke();
 
-  doc.font(fonts.regular).fontSize(7).fillColor(COL.muted);
-  doc.text(copy.thankYouSidebar, contentX, thankY + 8, {
-    width: contentW,
-    lineGap: 0.5,
-    align: 'left',
+  const heartBuf = await loadVoucherHeartIconPng(heartPx);
+  doc.image(heartBuf, contentX, thankTextY + 0.5, { width: heartPx, height: heartPx });
+
+  const textX = contentX + heartPx + 5;
+  const textW = contentW - (heartPx + 5);
+  doc.font(fonts.regular).fontSize(thanksSize).fillColor(COL.muted);
+  doc.text(thanksLead, textX, thankTextY, { width: textW, lineGap: 0, lineBreak: false });
+  doc.font(fonts.bold).fontSize(brandSize).fillColor(COL.brand);
+  doc.text(thanksBrand, textX, thankTextY + thanksLineH, {
+    width: textW,
+    lineGap: 0,
+    lineBreak: false,
   });
 }
 
-function drawCenterPanel(
+/** Internal reference id — bottom-right of the trim area (common on tickets / gift cards). */
+function drawVoucherKeyId(
+  doc: PdfDoc,
+  fonts: PdfFonts,
+  keyId: string,
+  layout: VoucherLayout,
+): void {
+  const fontSize = 4.5;
+  const { bounds } = layout;
+  const inset = PANEL_PAD;
+  doc.font(fonts.mono).fontSize(fontSize).fillColor(COL.faint);
+  doc.text(keyId, bounds.x + inset, bounds.y + bounds.h - inset - fontSize, {
+    width: bounds.w - inset * 2,
+    align: 'right',
+    lineBreak: false,
+  });
+}
+
+async function drawCenterPanel(
   doc: PdfDoc,
   fonts: PdfFonts,
   copy: VoucherPdfCopy,
   plainKey: string,
-  keyId: string,
   locale: VoucherLocale,
   layout: VoucherLayout,
-): void {
-  const panelX = layout.bounds.x + layout.panelW;
-  const panelW = layout.panelW;
-  const contentX = panelX + PANEL_PAD;
-  const contentW = panelW - PANEL_PAD * 2;
+): Promise<void> {
+  const { center } = layout;
+  const contentX = center.x + PANEL_PAD;
+  const contentW = center.w - PANEL_PAD * 2;
   const top = layout.bounds.y + PANEL_PAD + 6;
   const bottom = layout.bounds.y + layout.bounds.h - PANEL_PAD;
+  const titleCenterX = contentX + contentW / 2;
 
+  const giftBadgeGap = 8;
+  await drawGiftHeaderBadge(doc, titleCenterX, top + GIFT_BADGE_R);
+
+  const titleTop = top + GIFT_BADGE_R * 2 + giftBadgeGap;
   doc
     .font(fonts.bold)
-    .fontSize(locale === 'ru' ? 17 : 20)
-    .fillColor(COL.ink);
+    .fontSize(locale === 'ru' ? 15 : 17)
+    .fillColor(COL.brandDark);
   const titleH = doc.heightOfString(copy.titleLine, {
     width: contentW,
     align: 'center',
     lineGap: 0,
   });
-  doc.text(copy.titleLine, contentX, top, { width: contentW, align: 'center', lineGap: 0 });
+  doc.text(copy.titleLine, contentX, titleTop, { width: contentW, align: 'center', lineGap: 0 });
 
-  const yourCodeY = top + titleH + 10;
-  doc.font(fonts.regular).fontSize(7).fillColor(COL.ink);
+  const yourCodeY = titleTop + titleH + 10;
+  doc.font(fonts.regular).fontSize(7).fillColor(COL.brand);
   doc.text(copy.yourCode, contentX, yourCodeY, { width: contentW, align: 'center' });
 
   const codeY = yourCodeY + 11;
   const codeH = 32;
   const codeW = contentW - 8;
   const codeX = contentX + 4;
-  doc.lineWidth(1).strokeColor(COL.ink);
-  doc.rect(codeX, codeY, codeW, codeH).stroke();
-  doc.font(fonts.mono).fontSize(14).fillColor(COL.ink);
+  doc.roundedRect(codeX, codeY, codeW, codeH, 2).fill(COL.codeBg);
+  doc.lineWidth(1.25).strokeColor(COL.codeBorder);
+  doc.roundedRect(codeX, codeY, codeW, codeH, 2).stroke();
+  doc.font(fonts.mono).fontSize(12).fillColor(COL.brandDark);
   doc.text(plainKey, codeX + 6, codeY + 9, {
     width: codeW - 12,
     align: 'center',
@@ -355,7 +561,31 @@ function drawCenterPanel(
 
   const codeBottom = codeY + codeH;
   const stepColW = (contentW - 12) / 3;
-  const stepsY = codeBottom + 14;
+  const stepColInner = stepColW - 4;
+  const stepDetailSize = locale === 'ru' ? 4.75 : 5;
+  const stepDetailLineGap = locale === 'ru' ? 0.25 : 0.4;
+  doc.font(fonts.regular).fontSize(stepDetailSize);
+  const maxStepDetailH = Math.max(
+    ...copy.stepDetails.map((d) =>
+      doc.heightOfString(d, {
+        width: stepColInner,
+        align: 'center',
+        lineGap: stepDetailLineGap,
+      }),
+    ),
+  );
+  const stepBlockH = 22 + 12 + maxStepDetailH;
+  const footerGap = 12;
+  const footerFontSize = 5.5;
+  doc.font(fonts.regular).fontSize(footerFontSize);
+  const footerH = doc.heightOfString(copy.footerLegal, {
+    width: contentW,
+    align: 'center',
+    lineGap: 0.3,
+  });
+  const footerReserve = footerH + footerGap + 4;
+  const stepsGapAfterCode = locale === 'ru' ? 18 : 14;
+  const stepsY = Math.min(codeBottom + stepsGapAfterCode, bottom - footerReserve - stepBlockH);
   const step1X = contentX + stepColW * 0.5 + 6;
   const step2X = contentX + stepColW * 1.5 + 6;
   const step3X = contentX + stepColW * 2.5 + 6;
@@ -370,7 +600,7 @@ function drawCenterPanel(
       copy.stepDetails[0],
       'phone',
       locale,
-      stepColW - 4,
+      stepColInner,
     ),
     drawStep(
       doc,
@@ -382,7 +612,7 @@ function drawCenterPanel(
       copy.stepDetails[1],
       'card',
       locale,
-      stepColW - 4,
+      stepColInner,
     ),
     drawStep(
       doc,
@@ -394,29 +624,78 @@ function drawCenterPanel(
       copy.stepDetails[2],
       'check',
       locale,
-      stepColW - 4,
+      stepColInner,
     ),
   );
 
-  const footerY = Math.min(stepBottom + 10, bottom - 30);
-  doc.font(fonts.regular).fontSize(5.5).fillColor(COL.muted);
-  const footerH = doc.heightOfString(copy.footerLegal, {
+  doc.font(fonts.regular).fontSize(footerFontSize).fillColor(COL.muted);
+  doc.text(copy.footerLegal, contentX, stepBottom + footerGap, {
     width: contentW,
     align: 'center',
     lineGap: 0.3,
   });
-  doc.text(copy.footerLegal, contentX, footerY, {
-    width: contentW,
-    align: 'center',
-    lineGap: 0.3,
+}
+
+/** Fold steps + standard legal fine print below the cut line (trim off with the voucher). */
+function drawBelowVoucherStrip(
+  doc: PdfDoc,
+  fonts: PdfFonts,
+  copy: VoucherPdfCopy,
+  input: VoucherPdfInput,
+  layout: VoucherLayout,
+): void {
+  const { bounds } = layout;
+  const sectionTitleSize = 6;
+  const bodySize = 4.75;
+  const stepGap = 2;
+  const sectionGap = 7;
+  const gapBelowVoucher = 8;
+  const contentX = bounds.x;
+  const contentW = bounds.w;
+  let y = bounds.y + bounds.h + gapBelowVoucher;
+
+  doc.font(fonts.bold).fontSize(sectionTitleSize).fillColor(COL.brandDark);
+  let blockH = doc.heightOfString(copy.foldTitle, { width: contentW, lineGap: 0 });
+  doc.text(copy.foldTitle, contentX, y, { width: contentW, lineGap: 0 });
+  y += blockH + 3;
+
+  doc
+    .font(fonts.regular)
+    .fontSize(bodySize + 0.75)
+    .fillColor(COL.muted);
+  for (const step of copy.foldSteps) {
+    blockH = doc.heightOfString(step, { width: contentW, lineGap: 0.12 });
+    doc.text(step, contentX, y, { width: contentW, lineGap: 0.12 });
+    y += blockH + stepGap;
+  }
+
+  y += sectionGap - stepGap;
+  doc.moveTo(contentX, y).lineTo(contentX + contentW, y);
+  doc.lineWidth(0.35).strokeColor(COL.border);
+  doc.stroke();
+  y += 5;
+
+  const legalLines = getVoucherBelowStripLegalLines(input.locale, {
+    site: BASE_URL_OR_FALLBACK,
+    supportEmail: SUPPORT_EMAIL,
+    year: new Date().getFullYear(),
+    duration: input.duration,
+    issuedAt: input.issuedAt,
+    batchId: input.batchId,
+    templateVersion: input.templateVersion || VOUCHER_TEMPLATE_VERSION,
   });
 
-  doc.font(fonts.regular).fontSize(4.5).fillColor(COL.faint);
-  doc.text(keyId, contentX, footerY + footerH + 4, {
-    width: contentW,
-    align: 'center',
-    lineGap: 0,
-  });
+  doc.font(fonts.bold).fontSize(sectionTitleSize).fillColor(COL.brandDark);
+  blockH = doc.heightOfString(copy.belowStripLegalTitle, { width: contentW, lineGap: 0 });
+  doc.text(copy.belowStripLegalTitle, contentX, y, { width: contentW, lineGap: 0 });
+  y += blockH + 3;
+
+  doc.font(fonts.regular).fontSize(bodySize).fillColor(COL.faint);
+  for (const line of legalLines) {
+    blockH = doc.heightOfString(line, { width: contentW, lineGap: 0.1 });
+    doc.text(line, contentX, y, { width: contentW, lineGap: 0.1 });
+    y += blockH + 1.5;
+  }
 }
 
 async function drawRightFlap(
@@ -426,20 +705,22 @@ async function drawRightFlap(
   scanUrl: string,
   layout: VoucherLayout,
 ): Promise<void> {
-  const panelX = layout.bounds.x + layout.panelW * 2;
-  const panelW = layout.panelW;
-  const centerX = panelX + panelW / 2;
-  const midY = layout.bounds.y + layout.bounds.h / 2;
-
-  const qrSize = Math.min(118, panelW - PANEL_PAD * 2 - 8);
+  const { right, bounds } = layout;
+  const centerX = right.x + right.w / 2;
+  const top = bounds.y + PANEL_PAD + 8;
+  const bottom = bounds.y + bounds.h - PANEL_PAD;
+  const contentW = right.w - PANEL_PAD * 2;
+  const labelH = 14;
+  const availableH = bottom - top - labelH;
+  const qrSize = Math.min(118, contentW - 4, availableH * 0.78);
+  const qrY = top + (availableH - qrSize) / 2;
   const qrBuf = await qrPngBuffer(scanUrl, Math.round(qrSize * 2));
   const qrX = centerX - qrSize / 2;
-  const qrY = midY - qrSize / 2 - 6;
   doc.image(qrBuf, qrX, qrY, { width: qrSize, height: qrSize });
 
-  doc.font(fonts.regular).fontSize(7).fillColor(COL.ink);
-  doc.text(copy.scanToOpen, panelX, qrY + qrSize + 8, {
-    width: panelW,
+  doc.font(fonts.bold).fontSize(7).fillColor(COL.brand);
+  doc.text(copy.scanToOpen, right.x, qrY + qrSize + 8, {
+    width: right.w,
     align: 'center',
   });
 }
@@ -450,19 +731,23 @@ async function drawVoucherPage(
   fonts: PdfFonts,
 ): Promise<void> {
   const { width: pageW, height: pageH } = getVoucherPageDimensions(input.printSize);
+  const { height: stripH } = getVoucherStripDimensions(input.printSize);
   doc.addPage({ size: [pageW, pageH], margins: { top: 0, bottom: 0, left: 0, right: 0 } });
   const copy = getVoucherPdfCopy(input.locale);
   const headline = formatVoucherPremiumAccessHeadline(input.duration, input.locale);
-  const layout = getVoucherLayout(pageW, pageH);
+  const layout = getVoucherLayout(pageW, stripH);
 
+  drawPanelBackgrounds(doc, layout);
   drawCutGuide(doc, layout);
   drawFoldGuides(doc, layout);
   drawCutAlongLabels(doc, fonts, copy, layout);
   drawVoucherWatermark(doc, fonts, input, layout);
 
-  await drawLeftFlap(doc, fonts, copy, headline, input.promoLabel, layout);
-  drawCenterPanel(doc, fonts, copy, input.plainKey, input.keyId, input.locale, layout);
+  await drawLeftFlap(doc, fonts, copy, headline, input.promoLabel, input.locale, layout);
+  await drawCenterPanel(doc, fonts, copy, input.plainKey, input.locale, layout);
   await drawRightFlap(doc, fonts, copy, input.scanUrl, layout);
+  drawVoucherKeyId(doc, fonts, input.keyId, layout);
+  drawBelowVoucherStrip(doc, fonts, copy, input, layout);
 }
 
 function createVoucherPdfDocument(printSize: VoucherPrintSize): PdfDoc {

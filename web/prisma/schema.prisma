@@ -94,18 +94,27 @@ model SupportIssue {
 }
 
 model ProLicenseKey {
-  id                 String    @id @default(cuid())
-  keyHash            String    @unique
-  durationMonths     Int
-  durationDays       Int?
-  createdAt          DateTime  @default(now())
-  createdByAdminId   String
-  issuedToEmail      String?
-  adminNotes         String?   @db.Text
-  consumedAt         DateTime?
-  consumedByDeviceId String?
+  id                     String    @id @default(cuid())
+  keyHash                String    @unique
+  durationMonths         Int
+  durationDays           Int?
+  createdAt              DateTime  @default(now())
+  createdByAdminId       String
+  issuedToEmail          String?
+  adminNotes             String?   @db.Text
+  /**
+   * Set when the key is issued as a printable gift voucher (one batch per print/email run).
+   */
+  voucherBatchId         String?
+  /**
+   * Voucher PDF template version at issue time (e.g. v2).
+   */
+  voucherTemplateVersion String?
+  consumedAt             DateTime?
+  consumedByDeviceId     String?
 
   @@index([createdAt(sort: Desc)])
+  @@index([voucherBatchId])
 }
 
 model DeviceProEntitlement {

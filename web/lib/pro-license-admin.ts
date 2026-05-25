@@ -54,10 +54,29 @@ export function formatProLicenseDurationShort(row: {
 
 export const PRO_LICENSE_VOUCHER_NOTE = 'voucher';
 
+function sanitizeVoucherBatchId(raw: string | null | undefined): string | null {
+  if (typeof raw !== 'string') return null;
+  const t = raw.trim();
+  if (!t) return null;
+  return t.slice(0, 48);
+}
+
+function sanitizeVoucherTemplateVersion(raw: string | null | undefined): string | null {
+  if (typeof raw !== 'string') return null;
+  const t = raw.trim();
+  if (!t) return null;
+  return t.slice(0, 16);
+}
+
 export async function createProLicenseKeyRecord(
   adminId: string,
   duration: ProLicenseDurationSpec,
-  opts?: { issuedToEmail?: string | null; adminNotes?: string | null },
+  opts?: {
+    issuedToEmail?: string | null;
+    adminNotes?: string | null;
+    voucherBatchId?: string | null;
+    voucherTemplateVersion?: string | null;
+  },
 ): Promise<{ plainKey: string; keyId: string }> {
   const plainKey = generatePlainLicenseKey();
   const keyHash = hashLicenseKey(normalizeLicenseKeyInput(plainKey));
@@ -69,6 +88,8 @@ export async function createProLicenseKeyRecord(
     typeof opts?.adminNotes === 'string' && opts.adminNotes.trim()
       ? opts.adminNotes.trim().slice(0, 2000)
       : null;
+  const voucherBatchId = sanitizeVoucherBatchId(opts?.voucherBatchId);
+  const voucherTemplateVersion = sanitizeVoucherTemplateVersion(opts?.voucherTemplateVersion);
   const durationMonths = duration.kind === 'months' ? duration.months : 0;
   const durationDays = duration.kind === 'days' ? duration.days : null;
   const row = await prisma.proLicenseKey.create({
@@ -79,6 +100,8 @@ export async function createProLicenseKeyRecord(
       createdByAdminId: adminId,
       ...(issuedToEmail != null ? { issuedToEmail } : {}),
       ...(adminNotes != null ? { adminNotes } : {}),
+      ...(voucherBatchId != null ? { voucherBatchId } : {}),
+      ...(voucherTemplateVersion != null ? { voucherTemplateVersion } : {}),
     },
     select: { id: true },
   });

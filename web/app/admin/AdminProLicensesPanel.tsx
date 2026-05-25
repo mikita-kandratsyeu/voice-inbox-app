@@ -45,6 +45,8 @@ type ProLicenseRow = {
   createdAt: string;
   issuedToEmail?: string | null;
   adminNotes?: string | null;
+  voucherBatchId?: string | null;
+  voucherTemplateVersion?: string | null;
   consumed: boolean;
   consumedAt: string | null;
   nominalGrantEndsAt?: string | null;
@@ -1014,6 +1016,14 @@ export function AdminProLicensesPanel() {
                             ) : (
                               'Add note'
                             )}
+                            {row.voucherBatchId ? (
+                              <span className="mt-1 block font-mono text-[10px] text-zinc-500 dark:text-zinc-400">
+                                {row.voucherBatchId}
+                                {row.voucherTemplateVersion
+                                  ? ` · tpl ${row.voucherTemplateVersion}`
+                                  : ''}
+                              </span>
+                            ) : null}
                           </button>
                         )}
                       </td>

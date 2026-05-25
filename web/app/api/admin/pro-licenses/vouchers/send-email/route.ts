@@ -4,13 +4,16 @@ import { apiError, HttpStatus, parseJsonBody } from '@/lib/api';
 import { sendTransactionalMail, isSmtpConfigured } from '@/lib/mailer';
 import { createProLicenseKeyRecord } from '@/lib/pro-license-admin';
 import { prisma } from '@/lib/prisma';
+import { VOUCHER_TEMPLATE_VERSION } from '@/lib/pro-license-voucher-copy';
 import { buildVoucherGiftEmail } from '@/lib/pro-license-voucher-email';
 import { renderVoucherPdf } from '@/lib/pro-license-voucher-pdf';
 import {
   buildVoucherAdminNotes,
   buildVoucherPdfInput,
+  generateVoucherBatchId,
   parseVoucherRequestBody,
   sanitizeVoucherExtraNote,
+  voucherIssuedDateIso,
 } from '@/lib/pro-license-voucher-shared';
 import { NextResponse } from 'next/server';
 
@@ -66,6 +69,8 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   const adminNotes = buildVoucherAdminNotes(sanitizeVoucherExtraNote(body?.adminNotes));
+  const issuedAt = voucherIssuedDateIso();
+  const batchId = generateVoucherBatchId(new Date(`${issuedAt}T12:00:00Z`));
 
   let plainKey: string;
   let keyId: string;
@@ -73,6 +78,8 @@ export async function POST(request: Request): Promise<NextResponse> {
     const created = await createProLicenseKeyRecord(admin.adminId, parsed.spec, {
       issuedToEmail: to,
       adminNotes,
+      voucherBatchId: batchId,
+      voucherTemplateVersion: VOUCHER_TEMPLATE_VERSION,
     });
     plainKey = created.plainKey;
     keyId = created.keyId;
@@ -86,14 +93,11 @@ export async function POST(request: Request): Promise<NextResponse> {
   let pdf: Buffer;
   try {
     pdf = await renderVoucherPdf(
-      buildVoucherPdfInput(
-        plainKey,
-        keyId,
-        parsed.spec,
-        parsed.locale,
-        parsed.printSize,
-        parsed.promoLabel,
-      ),
+      buildVoucherPdfInput(plainKey, keyId, parsed.spec, parsed.locale, parsed.printSize, {
+        promoLabel: parsed.promoLabel,
+        batchId,
+        issuedAt,
+      }),
     );
   } catch (e) {
     console.error('[vouchers/send-email] pdf', e);

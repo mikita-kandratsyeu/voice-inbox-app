@@ -4,15 +4,18 @@ import { apiError, HttpStatus, parseJsonBody } from '@/lib/api';
 import { createProLicenseKeyRecord, type ProLicenseDurationSpec } from '@/lib/pro-license-admin';
 import {
   formatVoucherPremiumAccessLabel,
+  VOUCHER_TEMPLATE_VERSION,
   type VoucherLocale,
 } from '@/lib/pro-license-voucher-copy';
 import { buildVoucherPdfZip, renderVouchersPrintPdf } from '@/lib/pro-license-voucher-pdf';
 import {
   buildVoucherAdminNotes,
   buildVoucherPdfInput,
+  generateVoucherBatchId,
   parseVoucherOutputFormat,
   parseVoucherRequestBody,
   sanitizeVoucherExtraNote,
+  voucherIssuedDateIso,
 } from '@/lib/pro-license-voucher-shared';
 import { NextResponse } from 'next/server';
 
@@ -82,11 +85,17 @@ export async function POST(request: Request): Promise<Response> {
 
   const adminNotes = buildVoucherAdminNotes(sanitizeVoucherExtraNote(body?.adminNotes));
   const output = parseVoucherOutputFormat(body?.output);
+  const issuedAt = voucherIssuedDateIso();
+  const batchId = generateVoucherBatchId(new Date(`${issuedAt}T12:00:00Z`));
 
   const created: { plainKey: string; keyId: string }[] = [];
   try {
     for (let i = 0; i < count; i += 1) {
-      const row = await createProLicenseKeyRecord(admin.adminId, spec, { adminNotes });
+      const row = await createProLicenseKeyRecord(admin.adminId, spec, {
+        adminNotes,
+        voucherBatchId: batchId,
+        voucherTemplateVersion: VOUCHER_TEMPLATE_VERSION,
+      });
       created.push(row);
     }
   } catch (e) {
@@ -95,16 +104,13 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const inputs = created.map((row) =>
-    buildVoucherPdfInput(
-      row.plainKey,
-      row.keyId,
-      spec,
-      locale,
-      parsed.printSize,
-      parsed.promoLabel,
-    ),
+    buildVoucherPdfInput(row.plainKey, row.keyId, spec, locale, parsed.printSize, {
+      promoLabel: parsed.promoLabel,
+      batchId,
+      issuedAt,
+    }),
   );
-  const stamp = new Date().toISOString().slice(0, 10);
+  const stamp = issuedAt;
   const label = formatVoucherPremiumAccessLabel(spec);
 
   try {
@@ -120,13 +126,15 @@ export async function POST(request: Request): Promise<Response> {
         count,
         locale,
         output,
+        batchId,
+        issuedAt,
         durationMonths: spec.kind === 'months' ? spec.months : 0,
         durationDays: spec.kind === 'days' ? spec.days : null,
         keyIds: created.map((c) => c.keyId),
         adminNotes,
       });
 
-      const filename = `voice-inbox-vouchers-${locale}-${count}x-${label}-${stamp}.zip`;
+      const filename = `voice-inbox-vouchers-${locale}-${count}x-${label}-${stamp}-${batchId}.zip`;
       return new Response(new Uint8Array(zip), {
         status: 200,
         headers: {
@@ -144,13 +152,15 @@ export async function POST(request: Request): Promise<Response> {
       count,
       locale,
       output,
+      batchId,
+      issuedAt,
       durationMonths: spec.kind === 'months' ? spec.months : 0,
       durationDays: spec.kind === 'days' ? spec.days : null,
       keyIds: created.map((c) => c.keyId),
       adminNotes,
     });
 
-    const filename = `voice-inbox-vouchers-${locale}-${count}x-${label}-${stamp}.pdf`;
+    const filename = `voice-inbox-vouchers-${locale}-${count}x-${label}-${stamp}-${batchId}.pdf`;
     return new Response(new Uint8Array(pdf), {
       status: 200,
       headers: {

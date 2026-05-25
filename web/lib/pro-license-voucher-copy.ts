@@ -10,48 +10,234 @@ export function parseVoucherLocale(raw: unknown): VoucherLocale {
   return s === 'ru' ? 'ru' : 'en';
 }
 
+export type VoucherSidebarPerkIcon = 'zap' | 'brain' | 'shield';
+
 export type VoucherPdfCopy = {
   titleLine: string;
   scanToOpen: string;
   yourCode: string;
   thankYouSidebar: string;
+  thanksLead: string;
+  sidebarTagline: string;
+  sidebarPerks: [string, string, string];
+  sidebarPerkIcons: [VoucherSidebarPerkIcon, VoucherSidebarPerkIcon, VoucherSidebarPerkIcon];
   cutAlongOuterLine: string;
   premiumHeadline: string;
   stepTitles: [string, string, string];
   stepDetails: [string, string, string];
   footerLegal: string;
+  foldTitle: string;
+  foldSteps: [string, string, string];
+  belowStripLegalTitle: string;
 };
+
+/** Bump when below-strip or voucher legal copy changes (printed on every PDF). */
+export const VOUCHER_TEMPLATE_VERSION = 'v2';
+
+export type VoucherBelowStripLegalOpts = {
+  site: string;
+  supportEmail: string;
+  year: number;
+  duration: ProLicenseDurationSpec;
+  issuedAt: string;
+  batchId: string;
+  templateVersion: string;
+};
+
+const EN_MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+] as const;
+
+export function formatVoucherIssuedDateLabel(isoDate: string, locale: VoucherLocale): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate.trim());
+  if (!m) return locale === 'ru' ? 'Дата выпуска: —' : 'Issued: —';
+  const year = Number(m[1]);
+  const month = Number(m[2]);
+  const day = Number(m[3]);
+  if (locale === 'ru') {
+    return `Дата выпуска: ${String(day).padStart(2, '0')}.${String(month).padStart(2, '0')}.${year}`;
+  }
+  const monthName = EN_MONTHS[month - 1] ?? '—';
+  return `Issued: ${day} ${monthName} ${year}`;
+}
+
+export function formatVoucherBatchIdLabel(batchId: string, locale: VoucherLocale): string {
+  const id = batchId.trim() || '—';
+  return locale === 'ru' ? `ID партии: ${id}` : `Batch ID: ${id}`;
+}
+
+export function formatVoucherTemplateVersionLabel(version: string, locale: VoucherLocale): string {
+  const v = version.trim() || VOUCHER_TEMPLATE_VERSION;
+  return locale === 'ru'
+    ? `Шаблон документа: Voucher Template ${v}`
+    : `Document: Voucher Template ${v}`;
+}
+
+/** PRO period starts at redemption, not print date. */
+export function formatVoucherProFromActivationLine(
+  duration: ProLicenseDurationSpec,
+  locale: VoucherLocale,
+): string {
+  if (locale === 'ru') {
+    if (duration.kind === 'days') {
+      if (duration.days === 1) {
+        return '1 день PRO-доступа начинается с момента активации кода, а не с даты печати ваучера.';
+      }
+      const word = duration.days >= 5 ? 'дней' : 'дня';
+      return `${duration.days} ${word} PRO-доступа начинаются с момента активации кода, а не с даты печати ваучера.`;
+    }
+    if (duration.months === 1) {
+      return '1 месяц PRO-доступа начинается с момента активации кода, а не с даты печати ваучера.';
+    }
+    const mod10 = duration.months % 10;
+    const mod100 = duration.months % 100;
+    const word = mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14) ? 'месяца' : 'месяцев';
+    return `${duration.months} ${word} PRO-доступа начинаются с момента активации кода, а не с даты печати ваучера.`;
+  }
+
+  if (duration.kind === 'days') {
+    if (duration.days === 1) {
+      return '1 day of PRO access begins when the code is redeemed, not when this voucher is printed.';
+    }
+    return `${duration.days} days of PRO access begin when the code is redeemed, not when this voucher is printed.`;
+  }
+  if (duration.months === 1) {
+    return '1 month of PRO access begins when the code is redeemed, not when this voucher is printed.';
+  }
+  return `${duration.months} months of PRO access begin when the code is redeemed, not when this voucher is printed.`;
+}
+
+function formatVoucherActivationHelpLine(
+  locale: VoucherLocale,
+  site: string,
+  supportEmail: string,
+): string {
+  const email = supportEmail.trim();
+  if (locale === 'ru') {
+    if (email) {
+      return `Не получается активировать? Напишите на ${email}, укажите код ваучера и ID партии ниже.`;
+    }
+    return `Не получается активировать? Обратитесь в поддержку через сайт ${site} и укажите код ваучера и ID партии ниже.`;
+  }
+  if (email) {
+    return `Cannot activate? Email ${email} with your voucher code and Batch ID below.`;
+  }
+  return `Cannot activate? Contact support via ${site} with your voucher code and Batch ID below.`;
+}
+
+/** Fine print below the cut line (not printed on the voucher itself). */
+export function getVoucherBelowStripLegalLines(
+  locale: VoucherLocale,
+  opts: VoucherBelowStripLegalOpts,
+): string[] {
+  const privacy = `${opts.site.replace(/\/$/, '')}/privacy`;
+  const terms = `${opts.site.replace(/\/$/, '')}/terms`;
+  const supportLine =
+    opts.supportEmail.trim().length > 0
+      ? locale === 'ru'
+        ? `Поддержка: ${opts.supportEmail.trim()}`
+        : `Support: ${opts.supportEmail.trim()}`
+      : null;
+
+  const meta = [
+    formatVoucherIssuedDateLabel(opts.issuedAt, locale),
+    formatVoucherBatchIdLabel(opts.batchId, locale),
+    formatVoucherTemplateVersionLabel(opts.templateVersion, locale),
+    formatVoucherProFromActivationLine(opts.duration, locale),
+  ];
+
+  const activationHelp = formatVoucherActivationHelpLine(locale, opts.site, opts.supportEmail);
+
+  if (locale === 'ru') {
+    return [
+      ...meta,
+      'Подарочный ваучер предоставляет указанный срок PRO-доступа в приложении Voice Inbox AI после активации кода. Один код — один получатель; не обменивается на деньги, не передаётся третьим лицам.',
+      activationHelp,
+      'Активируя код, вы соглашаетесь с Условиями использования и Политикой конфиденциальности Voice Inbox AI.',
+      `Политика конфиденциальности: ${privacy} · Условия: ${terms}`,
+      ...(supportLine ? [supportLine] : []),
+      `© ${opts.year} Voice Inbox AI. Все права защищены.`,
+    ];
+  }
+
+  return [
+    ...meta,
+    'This gift voucher grants the stated PRO access in the Voice Inbox AI app when the code is redeemed. One code per recipient; no cash value; not transferable.',
+    activationHelp,
+    'By redeeming this code you agree to the Voice Inbox AI Terms of Service and Privacy Policy.',
+    `Privacy Policy: ${privacy} · Terms of Service: ${terms}`,
+    ...(supportLine ? [supportLine] : []),
+    `© ${opts.year} Voice Inbox AI. All rights reserved.`,
+  ];
+}
 
 const COPY_EN: VoucherPdfCopy = {
   titleLine: 'GIFT VOUCHER',
   scanToOpen: 'SCAN TO OPEN',
   yourCode: 'YOUR CODE',
   thankYouSidebar: 'Thank you for choosing Voice Inbox AI',
+  thanksLead: 'Thank you for choosing',
+  sidebarTagline: 'From thought to clarity — in seconds.',
+  sidebarPerks: ['All PRO Features', 'Summaries & Tasks, Instantly', 'Private Mode on Your Device'],
+  sidebarPerkIcons: ['zap', 'brain', 'shield'],
   cutAlongOuterLine: 'CUT ALONG THE OUTER LINE',
   premiumHeadline: '',
   stepTitles: ['OPEN THE APP', 'OPEN CODE ENTRY', 'REDEEM YOUR CODE'],
   stepDetails: [
     'Scan the QR code to install or open the app.',
-    'In Settings, open About the app. Tap the app icon eight times quickly.',
-    'Enter your voucher code and tap Apply.',
+    'Settings → About. Tap the app icon 8 times quickly.',
+    'Enter your code below and tap Apply.',
   ],
   footerLegal: 'VALID FOR ONE-TIME USE ONLY • NON-TRANSFERABLE',
+  foldTitle: 'HOW TO FOLD',
+  foldSteps: [
+    '1. Cut along the outer dashed line.',
+    '2. Fold the right panel over the center.',
+    '3. Fold the left panel over the stack.',
+  ],
+  belowStripLegalTitle: 'TERMS & INFORMATION',
 };
 
 const COPY_RU: VoucherPdfCopy = {
-  titleLine: 'ПОДАРОЧНЫЙ\nВАУЧЕР',
+  titleLine: 'ПОДАРОЧНЫЙ ВАУЧЕР',
   scanToOpen: 'ОТСКАНИРУЙТЕ',
   yourCode: 'ВАШ КОД',
   thankYouSidebar: 'Спасибо, что выбрали Voice Inbox AI',
+  thanksLead: 'Спасибо, что выбрали',
+  sidebarTagline: 'От мысли — к ясности за секунды.',
+  sidebarPerks: [
+    'Все PRO-возможности',
+    'Сводки и задачи мгновенно',
+    'Приватный режим на устройстве',
+  ],
+  sidebarPerkIcons: ['zap', 'brain', 'shield'],
   cutAlongOuterLine: 'РЕЖЬТЕ ПО ВНЕШНЕЙ ЛИНИИ',
   premiumHeadline: '',
-  stepTitles: ['ОТКРОЙТЕ\nПРИЛОЖЕНИЕ', 'ОТКРОЙТЕ\nВВОД КОДА', 'АКТИВИРУЙТЕ\nКОД'],
+  stepTitles: ['ОТКРОЙТЕ ПРИЛОЖЕНИЕ', 'ОТКРОЙТЕ ВВОД КОДА', 'АКТИВИРУЙТЕ КОД'],
   stepDetails: [
-    'Отсканируйте QR-код, чтобы установить или открыть приложение.',
-    'Настройки → О приложении. Быстро нажмите на иконку приложения 8 раз подряд.',
-    'Введите код с ваучера и нажмите «Применить».',
+    'Отсканируйте QR-код — установите или откройте приложение.',
+    'Настройки → О приложении. 8 быстрых нажатий на иконку.',
+    'Введите код ниже и нажмите «Применить».',
   ],
   footerLegal: 'ТОЛЬКО ДЛЯ ОДНОКРАТНОГО ИСПОЛЬЗОВАНИЯ • НЕ ПЕРЕДАЁТСЯ',
+  foldTitle: 'КАК СЛОЖИТЬ',
+  foldSteps: [
+    '1. Вырежьте по внешней пунктирной линии.',
+    '2. Сложите правую панель на центр.',
+    '3. Сложите левую панель на стопку.',
+  ],
+  belowStripLegalTitle: 'УСЛОВИЯ И СВЕДЕНИЯ',
 };
 
 export function getVoucherPdfCopy(locale: VoucherLocale): VoucherPdfCopy {
