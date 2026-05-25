@@ -107,6 +107,7 @@ export const InboxScreen = () => {
     showInboxScrollResetSkeleton,
     onInboxListScroll,
     batchProgressModal,
+    isGeneratingSharePdf,
   } = inbox;
 
   return (
@@ -276,6 +277,12 @@ export const InboxScreen = () => {
         description={batchProgressModal?.description ?? ''}
         total={batchProgressModal?.total ?? 0}
         progressLabel={batchProgressModal?.progressLabel}
+      />
+      <BlockingProgressModal
+        visible={isGeneratingSharePdf}
+        title={t('share.generatingPdfTitle')}
+        description={t('share.generatingPdfDescription')}
+        total={0}
       />
     </View>
   );

@@ -3,7 +3,7 @@ import MarkdownIt from 'markdown-it';
 const md = new MarkdownIt({
   html: false,
   linkify: true,
-  breaks: false,
+  breaks: true,
 });
 
 const SHARE_PDF_HTML_STYLES = `
@@ -21,8 +21,10 @@ const SHARE_PDF_HTML_STYLES = `
   h2 { font-size: 15pt; margin: 18pt 0 8pt; line-height: 1.3; }
   h3 { font-size: 12pt; margin: 14pt 0 6pt; }
   p { margin: 0 0 8pt; }
+  p + p { margin-top: 6pt; }
   ul, ol { margin: 0 0 10pt; padding-left: 20pt; }
   li { margin: 0 0 4pt; }
+  strong { font-weight: 600; color: #1f2937; }
   hr {
     border: none;
     border-top: 1px solid #d1d5db;
@@ -44,7 +46,6 @@ const SHARE_PDF_HTML_STYLES = `
     margin: 0 0 10pt;
   }
   pre code { background: transparent; padding: 0; }
-  strong { font-weight: 600; }
   a { color: #2563eb; text-decoration: none; }
 `;
 

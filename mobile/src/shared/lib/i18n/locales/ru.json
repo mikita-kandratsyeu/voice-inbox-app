@@ -521,6 +521,8 @@
     "shareAsTitle": "Поделиться",
     "exportPackagingHintMarkdown": "Заметка экспортируется в файл Markdown.",
     "exportPackagingHintPdf": "Заметка экспортируется в PDF на этом устройстве.",
+    "generatingPdfTitle": "Готовим PDF",
+    "generatingPdfDescription": "Форматируем текст с таймкодами и репликами спикеров. Это может занять немного времени.",
     "shareAsText": "Поделиться текстом",
     "emailBrief": "Краткая сводка",
     "emailBriefDescription": "Сводка, задачи и реплики по спикерам (если есть) — без транскрипта и перевода.",

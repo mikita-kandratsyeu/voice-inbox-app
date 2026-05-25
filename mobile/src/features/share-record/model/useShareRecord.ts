@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Share } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
@@ -68,6 +69,8 @@ async function unlinkIfExists(path: string): Promise<void> {
 }
 
 export const useShareRecord = () => {
+  const [isGeneratingSharePdf, setIsGeneratingSharePdf] = useState(false);
+
   const shareRecord = async (
     record: VoiceRecord,
     template: ShareBriefTemplate = 'noteBrief',
@@ -81,6 +84,7 @@ export const useShareRecord = () => {
 
     if (format === 'pdf') {
       let pdfPath: string | undefined;
+      setIsGeneratingSharePdf(true);
       try {
         pdfPath = await writeShareMarkdownPdf(text, baseName);
         await Share.share(
@@ -96,6 +100,7 @@ export const useShareRecord = () => {
           throw error;
         }
       } finally {
+        setIsGeneratingSharePdf(false);
         if (pdfPath) {
           await unlinkIfExists(pdfPath);
         }
@@ -178,6 +183,7 @@ export const useShareRecord = () => {
 
     if (format === 'pdf') {
       let pdfPath: string | undefined;
+      setIsGeneratingSharePdf(true);
       try {
         const baseName = `${sanitizeTitleForFileName(record.title)}${shareTemplateFileSuffix(template)}`;
         const timestamp = Date.now();
@@ -203,6 +209,7 @@ export const useShareRecord = () => {
           throw new Error(result.error);
         }
       } finally {
+        setIsGeneratingSharePdf(false);
         if (pdfPath) {
           await unlinkIfExists(pdfPath);
         }
@@ -246,7 +253,7 @@ export const useShareRecord = () => {
     }
   };
 
-  return { shareRecord, shareAudio, emailRecord };
+  return { shareRecord, shareAudio, emailRecord, isGeneratingSharePdf };
 };
 
 function emailSubjectForTemplate(record: VoiceRecord, template: ShareBriefTemplate): string {

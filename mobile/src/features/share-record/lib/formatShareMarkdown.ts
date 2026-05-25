@@ -1,5 +1,49 @@
 import type { VoiceRecord } from '@/entities/record';
-import { normalizeMeetingDialogueMarkdownParagraphs } from '@/screens/recording-detail/lib/parseMeetingDialogue';
+import {
+  normalizeMeetingDialogueMarkdownParagraphs,
+  parseMeetingDialogue,
+} from '@/screens/recording-detail/lib/parseMeetingDialogue';
+
+const TRANSCRIPT_TIMESTAMP_RE = /\[\d{1,2}:\d{2}(?::\d{2})?\]/;
+
+function normalizeTimestampLabel(raw: string): string {
+  const trimmed = raw.trim();
+  return trimmed.startsWith('[') ? trimmed : `[${trimmed}]`;
+}
+
+function formatTranscriptTurn(timestamp: string, text: string): string {
+  const body = text.replace(/\s+/g, ' ').trim();
+  if (!body) return '';
+  return `**${normalizeTimestampLabel(timestamp)}**\n\n${body}`;
+}
+
+/** Splits a flat transcript string into timestamped blocks for share / PDF. */
+export function formatPlainTranscriptWithTimestamps(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return '';
+
+  if (!TRANSCRIPT_TIMESTAMP_RE.test(trimmed)) {
+    return trimmed;
+  }
+
+  const parts = trimmed.split(/(?=\[\d{1,2}:\d{2}(?::\d{2})?\])/);
+  const blocks: string[] = [];
+
+  for (const part of parts) {
+    const chunk = part.trim();
+    if (!chunk) continue;
+
+    const match = chunk.match(/^(\[\d{1,2}:\d{2}(?::\d{2})?\])\s*([\s\S]*)$/);
+    if (match) {
+      const line = formatTranscriptTurn(match[1], match[2] ?? '');
+      if (line) blocks.push(line);
+    } else {
+      blocks.push(chunk);
+    }
+  }
+
+  return blocks.join('\n\n');
+}
 
 export function formatTaskLineForShare(
   task: NonNullable<VoiceRecord['tasks']>[number],
@@ -9,17 +53,32 @@ export function formatTaskLineForShare(
 }
 
 export function formatMeetingDialogueForShareMarkdown(raw: string): string {
-  return normalizeMeetingDialogueMarkdownParagraphs(raw);
+  const normalized = normalizeMeetingDialogueMarkdownParagraphs(raw);
+  const utterances = parseMeetingDialogue(normalized);
+  if (utterances.length === 0) {
+    return normalized;
+  }
+
+  return utterances
+    .map((u) => {
+      const label = u.speakerLabel.trim();
+      const body = u.body.trim();
+      if (!body && !label) return '';
+      if (!label) return body;
+      return `**${label}**\n\n${body}`;
+    })
+    .filter((block) => block.length > 0)
+    .join('\n\n');
 }
 
-/** Transcript for share / email. */
+/** Transcript for share / email / PDF — one block per timestamp or segment. */
 export function formatTranscriptBodyForShare(record: VoiceRecord): string {
   const segments = record.transcriptSegments ?? [];
   if (segments.length > 0) {
     return segments
-      .map((s) => `[${s.startTime}] ${s.text.trim()}`)
-      .filter((line) => line.length > 6)
-      .join('\n');
+      .map((s) => formatTranscriptTurn(s.startTime, s.text))
+      .filter((block) => block.length > 0)
+      .join('\n\n');
   }
-  return (record.transcript ?? '').trim();
+  return formatPlainTranscriptWithTimestamps(record.transcript ?? '');
 }

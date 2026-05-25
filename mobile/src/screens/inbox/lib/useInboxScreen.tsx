@@ -255,6 +255,7 @@ export function useInboxScreen() {
     batchExport,
     batchEmailExport,
     batchMoveToFolder,
+    isGeneratingSharePdf,
   } = useBatchRecordActions({
     onComplete: exitBatchMode,
     onBatchStart,
@@ -768,6 +769,7 @@ export function useInboxScreen() {
     showInboxScrollResetSkeleton,
     onInboxListScroll: handleInboxListScroll,
     batchProgressModal,
+    isGeneratingSharePdf,
     isProActive,
   };
 }

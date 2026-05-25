@@ -4,6 +4,7 @@ import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeD
 
 import {
   formatMeetingDialogueForShareMarkdown,
+  formatPlainTranscriptWithTimestamps,
   formatTaskLineForShare,
   formatTranscriptBodyForShare,
 } from './formatShareMarkdown';
@@ -214,7 +215,7 @@ const pushTranslation = (lines: string[], record: VoiceRecord): void => {
 
   lines.push('');
   lines.push(`## ${heading}`);
-  lines.push(formatPlainTranscriptForShare(translated));
+  lines.push(formatPlainTranscriptWithTimestamps(translated));
 };
 
 const pushTranscript = (lines: string[], record: VoiceRecord): void => {

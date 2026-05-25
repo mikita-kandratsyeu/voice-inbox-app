@@ -21,6 +21,7 @@ import type { ShareBriefTemplate, ShareRecordExportFormat } from '@/features/sha
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
 import { useColors } from '@/shared/config';
+import { BlockingProgressModal } from '@/shared/ui';
 import {
   hapticError,
   hapticLight,
@@ -174,7 +175,7 @@ export const RecordingDetailScreen = () => {
   const handleCancelAiGeneration = useCallback(() => {
     cancelAiGeneration(liveRecord.id);
   }, [cancelAiGeneration, liveRecord.id]);
-  const { shareRecord, shareAudio, emailRecord } = useShareRecord();
+  const { shareRecord, shareAudio, emailRecord, isGeneratingSharePdf } = useShareRecord();
   const onDeleted = useCallback(() => navigation.goBack(), [navigation]);
   const { promptDelete } = useRecordActions({ onDeleted });
 
@@ -581,6 +582,12 @@ export const RecordingDetailScreen = () => {
         onShareText={handleShare}
         onEmailRecord={handleEmailRecord}
         onShareAudio={handleShareAudio}
+      />
+      <BlockingProgressModal
+        visible={isGeneratingSharePdf}
+        title={t('share.generatingPdfTitle')}
+        description={t('share.generatingPdfDescription')}
+        total={0}
       />
       {renameRecordSheet}
       {!isPrivateMode && (

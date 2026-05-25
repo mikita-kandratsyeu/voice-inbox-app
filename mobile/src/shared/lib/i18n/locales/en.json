@@ -522,6 +522,8 @@
     "shareAsTitle": "Share",
     "exportPackagingHintMarkdown": "The note is exported as a Markdown file.",
     "exportPackagingHintPdf": "The note is exported as a PDF generated on this device.",
+    "generatingPdfTitle": "Preparing PDF",
+    "generatingPdfDescription": "Formatting notes with timestamps and speaker turns. This may take a moment.",
     "shareAsText": "Share text",
     "emailBrief": "Brief summary",
     "emailBriefDescription": "Summary, tasks, and speaker turns (when available) — no transcript or translation.",

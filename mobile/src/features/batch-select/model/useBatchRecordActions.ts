@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Share } from 'react-native';
 
@@ -98,6 +98,7 @@ export const useBatchRecordActions = ({
   const moveRecordToTrash = useRecordStore((s) => s.moveRecordToTrash);
   const purgeRecordPermanently = useRecordStore((s) => s.purgeRecordPermanently);
   const setRecordFolder = useRecordStore((s) => s.setRecordFolder);
+  const [isGeneratingSharePdf, setIsGeneratingSharePdf] = useState(false);
 
   const batchArchive = useCallback(
     async (ids: string[]) => {
@@ -241,6 +242,7 @@ export const useBatchRecordActions = ({
         const fileName = `voice-inbox-export-${timestamp}.pdf`;
         let pdfPath: string | undefined;
 
+        setIsGeneratingSharePdf(true);
         try {
           pdfPath = await writeShareMarkdownPdf(content, `voice-inbox-export-${timestamp}`);
 
@@ -257,6 +259,7 @@ export const useBatchRecordActions = ({
           if (__DEV__) console.warn('[batchExport] pdf failed:', err);
           Alert.alert(t('common.error'), t('batch.exportFailed'));
         } finally {
+          setIsGeneratingSharePdf(false);
           if (pdfPath) {
             await unlinkIfExists(pdfPath);
           }
@@ -330,6 +333,7 @@ export const useBatchRecordActions = ({
 
       if (effectivePackaging === 'pdf') {
         let pdfPath: string | undefined;
+        setIsGeneratingSharePdf(true);
         try {
           const markdown = buildBatchShareMarkdown(records, template, {
             ...resolveShareExportContext(),
@@ -359,6 +363,7 @@ export const useBatchRecordActions = ({
             throw new Error(result.error);
           }
         } finally {
+          setIsGeneratingSharePdf(false);
           if (pdfPath) {
             await unlinkIfExists(pdfPath);
           }
@@ -440,6 +445,7 @@ export const useBatchRecordActions = ({
     batchExport,
     batchEmailExport,
     batchMoveToFolder,
+    isGeneratingSharePdf,
   };
 };
 
