@@ -177,7 +177,7 @@ export type ProLicenseRedeemErrorCode =
   | 'iap_active';
 
 export type RedeemProLicenseResult =
-  | { ok: true; expiresAt: string }
+  | { ok: true; expiresAt: string; isVoucher: boolean }
   | { ok: false; error: string; code?: ProLicenseRedeemErrorCode; status?: number };
 
 function parseRedeemErrorCode(raw: unknown): ProLicenseRedeemErrorCode | undefined {
@@ -200,7 +200,12 @@ export async function redeemProLicenseKey(key: string): Promise<RedeemProLicense
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ key }),
     });
-    const raw = (await response.json()) as { error?: string; code?: unknown; expiresAt?: string };
+    const raw = (await response.json()) as {
+      error?: string;
+      code?: unknown;
+      expiresAt?: string;
+      isVoucher?: unknown;
+    };
     if (!response.ok) {
       const serverCode = parseRedeemErrorCode(raw.code);
       const code: ProLicenseRedeemErrorCode =
@@ -220,7 +225,7 @@ export async function redeemProLicenseKey(key: string): Promise<RedeemProLicense
       return { ok: false, error: 'Invalid server response', code: 'invalid_response' };
     }
     invalidateProLicenseStatusCache();
-    return { ok: true, expiresAt };
+    return { ok: true, expiresAt, isVoucher: raw.isVoucher === true };
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Network error';
     return { ok: false, error: message, code: 'network' };

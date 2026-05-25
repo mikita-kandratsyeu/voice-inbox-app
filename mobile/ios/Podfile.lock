@@ -256,6 +256,27 @@ PODS:
   - hermes-engine (250829098.0.9):
     - hermes-engine/Pre-built (= 250829098.0.9)
   - hermes-engine/Pre-built (250829098.0.9)
+  - HtmlToPdf (1.3.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - InappbrowserNitro (3.0.1):
     - hermes-engine
     - NitroModules
@@ -3068,6 +3089,7 @@ DEPENDENCIES:
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - GoogleUtilities
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
+  - HtmlToPdf (from `../node_modules/react-native-html-to-pdf`)
   - InappbrowserNitro (from `../node_modules/react-native-inappbrowser-nitro`)
   - llama-rn (from `../node_modules/llama.rn`)
   - NitroDeviceInfo (from `../node_modules/react-native-nitro-device-info`)
@@ -3253,6 +3275,8 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-v250829098.0.9
+  HtmlToPdf:
+    :path: "../node_modules/react-native-html-to-pdf"
   InappbrowserNitro:
     :path: "../node_modules/react-native-inappbrowser-nitro"
   llama-rn:
@@ -3533,6 +3557,7 @@ SPEC CHECKSUMS:
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   hermes-engine: 0437e9839a87c1d737989c1116dd08492d271607
+  HtmlToPdf: ec9d25cbf1ba0cedf6c05afe4edcfd3e63dcc21c
   InappbrowserNitro: e4e4ba49eb5e0cb1b6ed7ffe0224bfcaf5bd8d28
   llama-rn: 1ac0a6063df0057d6ad39c56300c6f3f97bc947e
   MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa

@@ -11,6 +11,18 @@ import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/sha
 
 import type { BatchExportPackaging } from '../model/batchExportPackaging';
 
+function exportPackagingHintKey(packaging: BatchExportPackaging): string {
+  if (packaging === 'zip') return 'batch.exportPackagingHintZip';
+  if (packaging === 'pdf') return 'batch.exportPackagingHintPdf';
+  return 'batch.exportPackagingHintSingle';
+}
+
+function exportEmailLimitReminderKey(packaging: BatchExportPackaging): string {
+  if (packaging === 'pdf') return 'batch.emailPdfLimitReminder';
+  if (packaging === 'zip') return 'batch.emailZipLimitReminder';
+  return 'batch.emailLimitReminder';
+}
+
 function ExportPackagingChip({
   packaging,
   selectedPackaging,
@@ -227,7 +239,7 @@ export const BatchExportSheet = ({
           <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
             {t('batch.exportPackagingLabel')}
           </Text>
-          <View className="flex-row gap-3">
+          <View className="flex-row flex-wrap gap-3">
             <ExportPackagingChip
               packaging="single"
               selectedPackaging={exportPackaging}
@@ -242,11 +254,16 @@ export const BatchExportSheet = ({
               onSelect={setExportPackaging}
               color={color}
             />
+            <ExportPackagingChip
+              packaging="pdf"
+              selectedPackaging={exportPackaging}
+              label={t('batch.exportPackagingPdf')}
+              onSelect={setExportPackaging}
+              color={color}
+            />
           </View>
           <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
-            {exportPackaging === 'zip'
-              ? t('batch.exportPackagingHintZip')
-              : t('batch.exportPackagingHintSingle')}
+            {t(exportPackagingHintKey(exportPackaging))}
           </Text>
 
           {emailFormatTemplates.length > 1 ? (
@@ -255,9 +272,7 @@ export const BatchExportSheet = ({
                 {t('batch.emailBodyFormatHint')}
               </Text>
               <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
-                {exportPackaging === 'zip'
-                  ? t('batch.emailZipLimitReminder')
-                  : t('batch.emailLimitReminder')}
+                {t(exportEmailLimitReminderKey(exportPackaging))}
               </Text>
 
               <View className="flex-row gap-3">
@@ -291,9 +306,7 @@ export const BatchExportSheet = ({
             </>
           ) : (
             <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
-              {exportPackaging === 'zip'
-                ? t('batch.emailZipLimitReminder')
-                : t('batch.emailLimitReminder')}
+              {t(exportEmailLimitReminderKey(exportPackaging))}
             </Text>
           )}
 
@@ -380,7 +393,7 @@ export const BatchExportSheet = ({
           <Text style={{ fontSize: 13, fontWeight: '600', color: color.text.secondary }}>
             {t('batch.exportPackagingLabel')}
           </Text>
-          <View className="flex-row gap-3">
+          <View className="flex-row flex-wrap gap-3">
             <ExportPackagingChip
               packaging="single"
               selectedPackaging={exportPackaging}
@@ -395,11 +408,16 @@ export const BatchExportSheet = ({
               onSelect={setExportPackaging}
               color={color}
             />
+            <ExportPackagingChip
+              packaging="pdf"
+              selectedPackaging={exportPackaging}
+              label={t('batch.exportPackagingPdf')}
+              onSelect={setExportPackaging}
+              color={color}
+            />
           </View>
           <Text style={{ fontSize: 13, color: color.text.muted, lineHeight: 17 }}>
-            {exportPackaging === 'zip'
-              ? t('batch.exportPackagingHintZip')
-              : t('batch.exportPackagingHintSingle')}
+            {t(exportPackagingHintKey(exportPackaging))}
           </Text>
 
           {renderOption({

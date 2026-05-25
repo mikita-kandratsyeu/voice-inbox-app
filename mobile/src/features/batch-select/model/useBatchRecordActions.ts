@@ -7,12 +7,14 @@ import { useRecordStore } from '@/entities/record';
 import { RECORD_TEXT_EXPORT_EXTENSION, type ShareBriefTemplate } from '@/features/share-record';
 import {
   sendRecordEmail,
+  sendShareEmailPdfAttachment,
   sendShareEmailZipAttachment,
   SHARE_EMAIL_MARKDOWN_MAX,
   SHARE_EMAIL_ZIP_MAX_BYTES,
 } from '@/features/share-record/api/sendRecordEmail';
 import { buildBatchShareMarkdown } from '@/features/share-record/lib/batchShareMarkdown';
 import { resolveShareExportContext } from '@/features/share-record/lib/shareExportContext';
+import { writeShareMarkdownPdf } from '@/features/share-record/lib/writeShareMarkdownPdf';
 import { hapticError, hapticSuccess } from '@/shared/lib';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 
@@ -234,6 +236,34 @@ export const useBatchRecordActions = ({
         return;
       }
 
+      if (packaging === 'pdf') {
+        const content = buildBatchShareMarkdown(records, template);
+        const fileName = `voice-inbox-export-${timestamp}.pdf`;
+        let pdfPath: string | undefined;
+
+        try {
+          pdfPath = await writeShareMarkdownPdf(content, `voice-inbox-export-${timestamp}`);
+
+          await Share.share({
+            url: pdfPath.startsWith('file://') ? pdfPath : `file://${pdfPath}`,
+            title: fileName,
+          });
+          hapticSuccess();
+        } catch (err) {
+          if (isUserCancelledShare(err)) {
+            return;
+          }
+          hapticError();
+          if (__DEV__) console.warn('[batchExport] pdf failed:', err);
+          Alert.alert(t('common.error'), t('batch.exportFailed'));
+        } finally {
+          if (pdfPath) {
+            await unlinkIfExists(pdfPath);
+          }
+        }
+        return;
+      }
+
       let built: Awaited<ReturnType<typeof buildBatchMarkdownZip>> | undefined;
 
       try {
@@ -296,6 +326,44 @@ export const useBatchRecordActions = ({
           }
           return { autoZipFallback: false };
         }
+      }
+
+      if (effectivePackaging === 'pdf') {
+        let pdfPath: string | undefined;
+        try {
+          const markdown = buildBatchShareMarkdown(records, template, {
+            ...resolveShareExportContext(),
+            forEmail: true,
+          });
+          const timestamp = Date.now();
+          pdfPath = await writeShareMarkdownPdf(markdown, `voice-inbox-export-${timestamp}`);
+
+          const stat = await NitroFS.stat(pdfPath);
+          if (stat.size > SHARE_EMAIL_ZIP_MAX_BYTES) {
+            throw new Error(t('batch.emailPdfTooLarge'));
+          }
+
+          const result = await sendShareEmailPdfAttachment({
+            to,
+            subject,
+            title,
+            bodyText: t('batch.emailPdfBodyPlain'),
+            pdfAbsolutePath: pdfPath,
+            pdfDisplayName: `voice-inbox-export-${timestamp}.pdf`,
+          });
+
+          if (!result.ok) {
+            if (result.status === 413) {
+              throw new Error(t('batch.emailPdfTooLarge'));
+            }
+            throw new Error(result.error);
+          }
+        } finally {
+          if (pdfPath) {
+            await unlinkIfExists(pdfPath);
+          }
+        }
+        return { autoZipFallback: false };
       }
 
       if (effectivePackaging === 'zip') {

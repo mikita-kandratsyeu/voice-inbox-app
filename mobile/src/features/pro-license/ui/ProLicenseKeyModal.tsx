@@ -1,7 +1,7 @@
 import type { BottomSheetBackdropProps, BottomSheetModal } from '@gorhom/bottom-sheet';
 import { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import dayjs from 'dayjs';
-import { CheckCircle2 } from 'lucide-react-native';
+import { Brain, CheckCircle2, Crown, Gift, ShieldCheck, Zap } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
@@ -10,6 +10,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withDelay,
+  withRepeat,
   withSequence,
   withSpring,
   withTiming,
@@ -47,6 +48,87 @@ function formatExpiryDate(iso: string, locale: string): string {
   }
 
   return d.locale(resolveDayjsLocale(locale)).format('D MMMM YYYY');
+}
+
+const VOUCHER_ORBIT_LAYOUT = [
+  { x: -50, y: -30, delay: 0, icon: 'crown' as const, tilt: -14 },
+  { x: 52, y: -28, delay: 110, icon: 'zap' as const, tilt: 10 },
+  { x: -46, y: 40, delay: 220, icon: 'brain' as const, tilt: -8 },
+  { x: 50, y: 38, delay: 330, icon: 'shield' as const, tilt: 12 },
+] as const;
+
+type VoucherOrbitIconKind = (typeof VOUCHER_ORBIT_LAYOUT)[number]['icon'];
+
+type VoucherOrbitIconProps = {
+  x: number;
+  y: number;
+  delay: number;
+  tilt: number;
+  icon: VoucherOrbitIconKind;
+  accent: string;
+};
+
+function VoucherOrbitIconGlyph({ icon, accent }: { icon: VoucherOrbitIconKind; accent: string }) {
+  const stroke = 2.15;
+  const size = 14;
+
+  switch (icon) {
+    case 'crown':
+      return <Crown size={size} color={accent} strokeWidth={stroke} />;
+    case 'zap':
+      return <Zap size={size} color={accent} strokeWidth={stroke} fill={`${accent}30`} />;
+    case 'brain':
+      return <Brain size={size} color={accent} strokeWidth={stroke} />;
+    case 'shield':
+      return <ShieldCheck size={size} color={accent} strokeWidth={stroke} />;
+  }
+}
+
+function VoucherOrbitIcon({ x, y, delay, tilt, icon, accent }: VoucherOrbitIconProps) {
+  const pulse = useSharedValue(0);
+
+  useEffect(() => {
+    pulse.value = 0;
+    pulse.value = withDelay(
+      delay,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 560, easing: Easing.out(Easing.cubic) }),
+          withTiming(0, { duration: 500, easing: Easing.in(Easing.cubic) }),
+        ),
+        -1,
+        false,
+      ),
+    );
+  }, [delay, pulse]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: 0.35 + pulse.value * 0.65,
+    transform: [
+      { translateX: x },
+      { translateY: y - pulse.value * 6 },
+      { scale: 0.82 + pulse.value * 0.18 },
+      { rotate: `${tilt + pulse.value * 6}deg` },
+    ],
+  }));
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      className="absolute items-center justify-center"
+      style={style}
+    >
+      <View
+        className="h-7 w-7 items-center justify-center rounded-full border"
+        style={{
+          borderColor: `${accent}30`,
+          backgroundColor: `${accent}14`,
+        }}
+      >
+        <VoucherOrbitIconGlyph icon={icon} accent={accent} />
+      </View>
+    </Animated.View>
+  );
 }
 
 type SuccessPanelProps = {
@@ -144,6 +226,123 @@ function ProActivationSuccessPanel({ color, expiresAtIso, onDismiss }: SuccessPa
   );
 }
 
+function VoucherActivationSuccessPanel({ color, expiresAtIso, onDismiss }: SuccessPanelProps) {
+  const { t, i18n } = useTranslation();
+  const cardScale = useSharedValue(0.9);
+  const cardOpacity = useSharedValue(0);
+  const giftScale = useSharedValue(0);
+  const giftRotate = useSharedValue(0);
+  const halo = useSharedValue(0);
+
+  useEffect(() => {
+    cardScale.value = 0.9;
+    cardOpacity.value = 0;
+    giftScale.value = 0;
+    giftRotate.value = 0;
+    halo.value = 0;
+
+    cardOpacity.value = withTiming(1, { duration: 240, easing: Easing.out(Easing.cubic) });
+    cardScale.value = withSpring(1, { damping: 15, stiffness: 210, mass: 0.9 });
+    giftScale.value = withDelay(100, withSpring(1, { damping: 11, stiffness: 240 }));
+    giftRotate.value = withDelay(
+      220,
+      withSequence(
+        withTiming(-10, { duration: 110, easing: Easing.out(Easing.quad) }),
+        withTiming(10, { duration: 120, easing: Easing.inOut(Easing.quad) }),
+        withTiming(-5, { duration: 90 }),
+        withTiming(0, { duration: 90 }),
+      ),
+    );
+    halo.value = withDelay(
+      180,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 900, easing: Easing.out(Easing.cubic) }),
+          withTiming(0.35, { duration: 900, easing: Easing.in(Easing.cubic) }),
+        ),
+        -1,
+        true,
+      ),
+    );
+  }, [cardOpacity, cardScale, giftRotate, giftScale, halo]);
+
+  const cardStyle = useAnimatedStyle(() => ({
+    opacity: cardOpacity.value,
+    transform: [{ scale: cardScale.value }],
+  }));
+
+  const giftStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: giftScale.value }, { rotate: `${giftRotate.value}deg` }],
+  }));
+
+  const haloStyle = useAnimatedStyle(() => ({
+    opacity: 0.18 + halo.value * 0.28,
+    transform: [{ scale: 0.92 + halo.value * 0.14 }],
+  }));
+
+  const dateText = formatExpiryDate(expiresAtIso, i18n.language);
+  const accent = color.accent.primary;
+
+  return (
+    <Animated.View style={cardStyle} className="items-center py-1">
+      <View className="relative mb-4 h-28 w-28 items-center justify-center">
+        <Animated.View
+          pointerEvents="none"
+          className="absolute h-28 w-28 rounded-full"
+          style={[haloStyle, { backgroundColor: accent }]}
+        />
+        {VOUCHER_ORBIT_LAYOUT.map((orbit) => (
+          <VoucherOrbitIcon
+            key={orbit.icon}
+            x={orbit.x}
+            y={orbit.y}
+            delay={orbit.delay}
+            tilt={orbit.tilt}
+            icon={orbit.icon}
+            accent={accent}
+          />
+        ))}
+        <Animated.View style={giftStyle}>
+          <View
+            className="h-20 w-20 items-center justify-center rounded-full"
+            style={{ backgroundColor: `${accent}24` }}
+          >
+            <Gift size={42} color={accent} strokeWidth={2.1} />
+          </View>
+        </Animated.View>
+      </View>
+      <Text
+        className="text-center text-xl font-bold tracking-tight"
+        style={{ color: color.text.primary }}
+      >
+        {t('proLicense.voucher.successTitle')}
+      </Text>
+      <Text
+        className="mt-2 px-3 text-center text-[15px] leading-[22px]"
+        style={{ color: color.text.secondary }}
+      >
+        {t('proLicense.voucher.successSubtitle')}
+      </Text>
+      {dateText.length > 0 && (
+        <Text
+          className="mt-3 text-center text-sm font-medium"
+          style={{ color: color.text.primary }}
+        >
+          {t('proLicense.voucher.successUntil', { date: dateText })}
+        </Text>
+      )}
+      <Button
+        variant="primary"
+        label={t('proLicense.voucher.successButton')}
+        color={color}
+        onPress={onDismiss}
+        fullWidth
+        className="mt-6"
+      />
+    </Animated.View>
+  );
+}
+
 export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicenseKeyModalProps) {
   const { t } = useTranslation();
   const color = useColors();
@@ -154,6 +353,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<'form' | 'success'>('form');
   const [successExpiresAt, setSuccessExpiresAt] = useState<string | null>(null);
+  const [successIsVoucher, setSuccessIsVoucher] = useState(false);
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
 
@@ -162,6 +362,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
     setOfferCodeCompact('');
     setError(null);
     setSuccessExpiresAt(null);
+    setSuccessIsVoucher(false);
   }, []);
 
   const finishSuccess = useCallback(() => {
@@ -230,11 +431,12 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
       onActivated();
       hapticSuccess();
       setSuccessExpiresAt(result.expiresAt);
+      setSuccessIsVoucher(result.isVoucher);
       setPhase('success');
       return;
     }
     hapticError();
-    setError(proLicenseMessageForRedeemError(t, result));
+    setError(proLicenseMessageForRedeemError(t, result, { voucher: true }));
   }, [offerCodeCompact, busy, onActivated, t]);
 
   const showActivatingOverlay = busy && phase !== 'success';
@@ -271,29 +473,45 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
               className="mt-5 px-6 text-center text-[17px] font-semibold"
               style={{ color: color.text.primary }}
             >
-              {t('proLicense.activatingTitle')}
+              {t('proLicense.voucher.activatingTitle')}
             </Text>
             <Text
               className="px-2 text-center text-[13px] leading-[18px]"
               style={{ color: color.text.secondary }}
             >
-              {t('proLicense.activatingSubtitle')}
+              {t('proLicense.voucher.activatingSubtitle')}
             </Text>
           </View>
         ) : phase === 'success' && successExpiresAt != null ? (
-          <ProActivationSuccessPanel
-            color={color}
-            expiresAtIso={successExpiresAt}
-            onDismiss={finishSuccess}
-          />
+          successIsVoucher ? (
+            <VoucherActivationSuccessPanel
+              color={color}
+              expiresAtIso={successExpiresAt}
+              onDismiss={finishSuccess}
+            />
+          ) : (
+            <ProActivationSuccessPanel
+              color={color}
+              expiresAtIso={successExpiresAt}
+              onDismiss={finishSuccess}
+            />
+          )
         ) : (
           <>
+            <View className="mb-3 items-center">
+              <View
+                className="mb-2.5 h-11 w-11 items-center justify-center rounded-full"
+                style={{ backgroundColor: `${color.accent.primary}20` }}
+              >
+                <Gift size={22} color={color.accent.primary} strokeWidth={2.1} />
+              </View>
+            </View>
             <View className="mb-3 justify-center">
               <Text
                 className="px-14 text-center text-[17px] font-semibold"
                 style={{ color: color.text.primary }}
               >
-                {t('proLicense.modalTitle')}
+                {t('proLicense.voucher.modalTitle')}
               </Text>
               <TouchableOpacity
                 onPress={handleClose}
@@ -312,7 +530,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
               className="mb-3 px-2 text-center text-[13px] leading-[18px]"
               style={{ color: color.text.secondary }}
             >
-              {t('proLicense.modalSubtitle')}
+              {t('proLicense.voucher.modalSubtitle')}
             </Text>
             <View
               className="mb-3 rounded-xl border px-3 py-2.5"
@@ -325,9 +543,9 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
                 className="mb-1.5 text-[12px] font-semibold"
                 style={{ color: color.text.primary }}
               >
-                {t('proLicense.activationStepsTitle')}
+                {t('proLicense.voucher.activationStepsTitle')}
               </Text>
-              {(t('proLicense.activationSteps', { returnObjects: true }) as string[]).map(
+              {(t('proLicense.voucher.activationSteps', { returnObjects: true }) as string[]).map(
                 (step, index) => (
                   <Text
                     key={step}
@@ -346,7 +564,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
               autoCorrect={false}
               editable={!busy}
               maxLength={17}
-              placeholder={t('proLicense.keyPlaceholder')}
+              placeholder={t('proLicense.voucher.keyPlaceholder')}
               placeholderTextColor={color.text.muted}
               className="rounded-xl border px-3 text-[16px] leading-[22px]"
               style={{
@@ -373,7 +591,7 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
               <Button
                 variant="primary"
                 size="lg"
-                label={t('proLicense.activate')}
+                label={t('proLicense.voucher.activate')}
                 color={color}
                 onPress={() => void handleSubmit()}
                 disabled={!isCompleteProOfferCode(offerCodeCompact) || busy}

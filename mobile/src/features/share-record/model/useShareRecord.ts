@@ -4,8 +4,13 @@ import type { VoiceRecord } from '@/entities/record';
 import { i18n } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
 
-import { sendRecordEmail, sendShareEmailZipAttachment } from '../api/sendRecordEmail';
-import { SHARE_EMAIL_MARKDOWN_MAX } from '../api/sendRecordEmail';
+import {
+  sendRecordEmail,
+  sendShareEmailPdfAttachment,
+  sendShareEmailZipAttachment,
+  SHARE_EMAIL_MARKDOWN_MAX,
+  SHARE_EMAIL_ZIP_MAX_BYTES,
+} from '../api/sendRecordEmail';
 import {
   buildShareText,
   RECORD_TEXT_EXPORT_EXTENSION,
@@ -20,9 +25,12 @@ import {
   pruneShareExportCache,
 } from '../lib/shareExportCache';
 import { resolveShareExportContext } from '../lib/shareExportContext';
+import { writeShareMarkdownPdf } from '../lib/writeShareMarkdownPdf';
+import type { ShareRecordExportFormat } from './shareRecordExportFormat';
 
 export type { ShareBriefTemplate } from '../lib/buildShareText';
 export { buildShareText, RECORD_TEXT_EXPORT_EXTENSION } from '../lib/buildShareText';
+export type { ShareRecordExportFormat } from './shareRecordExportFormat';
 
 const toFileUri = (path: string): string => (path.startsWith('file://') ? path : `file://${path}`);
 
@@ -60,12 +68,42 @@ async function unlinkIfExists(path: string): Promise<void> {
 }
 
 export const useShareRecord = () => {
-  const shareRecord = async (record: VoiceRecord, template: ShareBriefTemplate = 'noteBrief') => {
+  const shareRecord = async (
+    record: VoiceRecord,
+    template: ShareBriefTemplate = 'noteBrief',
+    format: ShareRecordExportFormat = 'markdown',
+  ) => {
     void pruneShareExportCache().catch(() => {});
     await ensureShareExportDirectory();
 
     const text = buildShareText(record, template);
-    const fileName = `${sanitizeTitleForFileName(record.title)}${shareTemplateFileSuffix(template)}.${RECORD_TEXT_EXPORT_EXTENSION}`;
+    const baseName = `${sanitizeTitleForFileName(record.title)}${shareTemplateFileSuffix(template)}`;
+
+    if (format === 'pdf') {
+      let pdfPath: string | undefined;
+      try {
+        pdfPath = await writeShareMarkdownPdf(text, baseName);
+        await Share.share(
+          {
+            title: record.title,
+            url: toFileUri(pdfPath),
+          },
+          { dialogTitle: i18n.t('share.shareNote') },
+        );
+      } catch (err) {
+        const error = err as Error;
+        if (error.message !== 'User did not share') {
+          throw error;
+        }
+      } finally {
+        if (pdfPath) {
+          await unlinkIfExists(pdfPath);
+        }
+      }
+      return;
+    }
+
+    const fileName = `${baseName}.${RECORD_TEXT_EXPORT_EXTENSION}`;
     const filePath = `${getShareExportDirectoryPath()}/${fileName}`;
 
     try {
@@ -129,6 +167,7 @@ export const useShareRecord = () => {
     record: VoiceRecord,
     to: string,
     template: ShareBriefTemplate = 'emailBrief',
+    format: ShareRecordExportFormat = 'markdown',
   ) => {
     const subject = emailSubjectForTemplate(record, template);
 
@@ -136,6 +175,41 @@ export const useShareRecord = () => {
       ...resolveShareExportContext(),
       forEmail: true,
     });
+
+    if (format === 'pdf') {
+      let pdfPath: string | undefined;
+      try {
+        const baseName = `${sanitizeTitleForFileName(record.title)}${shareTemplateFileSuffix(template)}`;
+        const timestamp = Date.now();
+        pdfPath = await writeShareMarkdownPdf(markdown, `${baseName}-${timestamp}`);
+
+        const stat = await NitroFS.stat(pdfPath);
+        if (stat.size > SHARE_EMAIL_ZIP_MAX_BYTES) {
+          throw new Error(i18n.t('batch.emailPdfTooLarge'));
+        }
+
+        const result = await sendShareEmailPdfAttachment({
+          to,
+          subject,
+          title: record.title,
+          bodyText: i18n.t('batch.emailPdfBodyPlain'),
+          pdfAbsolutePath: pdfPath,
+          pdfDisplayName: `${baseName}.pdf`,
+        });
+        if (!result.ok) {
+          if (result.status === 413) {
+            throw new Error(i18n.t('batch.emailPdfTooLarge'));
+          }
+          throw new Error(result.error);
+        }
+      } finally {
+        if (pdfPath) {
+          await unlinkIfExists(pdfPath);
+        }
+      }
+      return;
+    }
+
     if (markdown.length <= SHARE_EMAIL_MARKDOWN_MAX) {
       const result = await sendRecordEmail({
         to,

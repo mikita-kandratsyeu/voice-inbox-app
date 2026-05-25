@@ -1,1 +1,1 @@
-export type BatchExportPackaging = 'single' | 'zip';
+export type BatchExportPackaging = 'single' | 'zip' | 'pdf';

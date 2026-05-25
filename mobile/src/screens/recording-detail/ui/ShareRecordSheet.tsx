@@ -5,8 +5,54 @@ import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
 
 import type { ShareBriefTemplate } from '@/features/share-record';
-import { useColors } from '@/shared/config';
+import type { ShareRecordExportFormat } from '@/features/share-record';
+import { type Colors, useColors } from '@/shared/config';
 import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
+
+function ShareExportFormatChip({
+  format,
+  selectedFormat,
+  label,
+  onSelect,
+  color,
+}: {
+  format: ShareRecordExportFormat;
+  selectedFormat: ShareRecordExportFormat;
+  label: string;
+  onSelect: (format: ShareRecordExportFormat) => void;
+  color: Colors;
+}) {
+  const selected = selectedFormat === format;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected }}
+      accessibilityLabel={label}
+      onPress={() => onSelect(format)}
+      className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
+      style={{
+        borderColor: selected ? color.accent.primary : color.border.default,
+        backgroundColor: color.background.tertiary,
+      }}
+    >
+      <Text
+        className="text-center text-[15px] font-semibold leading-5"
+        style={{ color: selected ? color.accent.primary : color.text.primary }}
+        numberOfLines={2}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function shareExportFormatHintKey(format: ShareRecordExportFormat): string {
+  return format === 'pdf' ? 'share.exportPackagingHintPdf' : 'share.exportPackagingHintMarkdown';
+}
+
+function shareEmailLimitReminderKey(format: ShareRecordExportFormat): string {
+  return format === 'pdf' ? 'batch.emailPdfLimitReminder' : 'batch.emailLimitReminder';
+}
 
 type ShareRecordSheetProps = {
   visible: boolean;
@@ -15,8 +61,12 @@ type ShareRecordSheetProps = {
   showSpeakerTurnsExport?: boolean;
   isSendingEmail?: boolean;
   onClose: () => void;
-  onShareText: (template: ShareBriefTemplate) => void;
-  onEmailRecord: (email: string, template: ShareBriefTemplate) => void;
+  onShareText: (template: ShareBriefTemplate, format: ShareRecordExportFormat) => void;
+  onEmailRecord: (
+    email: string,
+    template: ShareBriefTemplate,
+    format: ShareRecordExportFormat,
+  ) => void;
   onShareAudio: () => void;
 };
 
@@ -38,6 +88,7 @@ export const ShareRecordSheet = ({
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
   const [emailSendTemplate, setEmailSendTemplate] = useState<ShareBriefTemplate>('emailBrief');
+  const [exportFormat, setExportFormat] = useState<ShareRecordExportFormat>('markdown');
   const trimmedEmail = email.trim();
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
 
@@ -48,6 +99,7 @@ export const ShareRecordSheet = ({
     }
     setEmailVisible(false);
     setEmail('');
+    setExportFormat('markdown');
   }, [visible]);
 
   useEffect(() => {
@@ -61,23 +113,23 @@ export const ShareRecordSheet = ({
 
   const handleShareNoteBrief = useCallback(() => {
     onClose();
-    onShareText('noteBrief');
-  }, [onClose, onShareText]);
+    onShareText('noteBrief', exportFormat);
+  }, [exportFormat, onClose, onShareText]);
 
   const handleShareEmailBrief = useCallback(() => {
     onClose();
-    onShareText('emailBrief');
-  }, [onClose, onShareText]);
+    onShareText('emailBrief', exportFormat);
+  }, [exportFormat, onClose, onShareText]);
 
   const handleShareMeetingBrief = useCallback(() => {
     onClose();
-    onShareText('meetingBrief');
-  }, [onClose, onShareText]);
+    onShareText('meetingBrief', exportFormat);
+  }, [exportFormat, onClose, onShareText]);
 
   const handleShareSpeakerTurns = useCallback(() => {
     onClose();
-    onShareText('meetingSpeakerTurns');
-  }, [onClose, onShareText]);
+    onShareText('meetingSpeakerTurns', exportFormat);
+  }, [exportFormat, onClose, onShareText]);
 
   const handleShareAudio = useCallback(() => {
     onClose();
@@ -96,8 +148,8 @@ export const ShareRecordSheet = ({
 
   const handleSendEmail = useCallback(() => {
     if (!emailValid || isSendingEmail) return;
-    onEmailRecord(trimmedEmail, emailSendTemplate);
-  }, [emailSendTemplate, emailValid, isSendingEmail, onEmailRecord, trimmedEmail]);
+    onEmailRecord(trimmedEmail, emailSendTemplate, exportFormat);
+  }, [emailSendTemplate, emailValid, exportFormat, isSendingEmail, onEmailRecord, trimmedEmail]);
 
   const renderOption = ({
     icon,
@@ -183,6 +235,32 @@ export const ShareRecordSheet = ({
           </Text>
           <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
             {t(isMeeting ? 'share.emailMeetingDescription' : 'share.emailNoteDescription')}
+          </Text>
+
+          <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+            {t('batch.exportPackagingLabel')}
+          </Text>
+          <View className="flex-row gap-3">
+            <ShareExportFormatChip
+              format="markdown"
+              selectedFormat={exportFormat}
+              label={t('batch.exportPackagingSingle')}
+              onSelect={setExportFormat}
+              color={color}
+            />
+            <ShareExportFormatChip
+              format="pdf"
+              selectedFormat={exportFormat}
+              label={t('batch.exportPackagingPdf')}
+              onSelect={setExportFormat}
+              color={color}
+            />
+          </View>
+          <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
+            {t(shareExportFormatHintKey(exportFormat))}
+          </Text>
+          <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
+            {t(shareEmailLimitReminderKey(exportFormat))}
           </Text>
 
           {emailFormatTemplates.length > 1 ? (
@@ -294,6 +372,29 @@ export const ShareRecordSheet = ({
             }}
           >
             {t('share.shareAsTitle')}
+          </Text>
+
+          <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+            {t('batch.exportPackagingLabel')}
+          </Text>
+          <View className="flex-row gap-3">
+            <ShareExportFormatChip
+              format="markdown"
+              selectedFormat={exportFormat}
+              label={t('batch.exportPackagingSingle')}
+              onSelect={setExportFormat}
+              color={color}
+            />
+            <ShareExportFormatChip
+              format="pdf"
+              selectedFormat={exportFormat}
+              label={t('batch.exportPackagingPdf')}
+              onSelect={setExportFormat}
+              color={color}
+            />
+          </View>
+          <Text style={{ fontSize: 13, color: color.text.muted, lineHeight: 17 }}>
+            {t(shareExportFormatHintKey(exportFormat))}
           </Text>
 
           {renderOption({

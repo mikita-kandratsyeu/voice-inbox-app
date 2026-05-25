@@ -17,7 +17,7 @@ import { useAiProcessing } from '@/features/ai-processing';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import { useRecordActions } from '@/features/record-actions';
-import type { ShareBriefTemplate } from '@/features/share-record';
+import type { ShareBriefTemplate, ShareRecordExportFormat } from '@/features/share-record';
 import { useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
 import { useColors } from '@/shared/config';
@@ -322,8 +322,8 @@ export const RecordingDetailScreen = () => {
   );
 
   const handleShare = useCallback(
-    (template: ShareBriefTemplate) => {
-      shareRecord(liveRecord, template).catch((err: unknown) => {
+    (template: ShareBriefTemplate, format: ShareRecordExportFormat) => {
+      shareRecord(liveRecord, template, format).catch((err: unknown) => {
         Alert.alert(t('recordingDetail.shareFailed'), toUserFacingFetchErrorFromUnknown(err));
       });
     },
@@ -336,9 +336,9 @@ export const RecordingDetailScreen = () => {
     });
   }, [t, liveRecord, shareAudio]);
   const handleEmailRecord = useCallback(
-    (email: string, template: ShareBriefTemplate) => {
+    (email: string, template: ShareBriefTemplate, format: ShareRecordExportFormat) => {
       setEmailSending(true);
-      emailRecord(liveRecord, email, template)
+      emailRecord(liveRecord, email, template, format)
         .then(() => {
           hapticSuccess();
           setShareSheetVisible(false);
@@ -359,7 +359,7 @@ export const RecordingDetailScreen = () => {
       setShareSheetVisible(true);
       return;
     }
-    handleShare('noteBrief');
+    handleShare('noteBrief', 'markdown');
   }, [isProActive, handleShare]);
   const onCloseShareMenu = useCallback(() => setShareSheetVisible(false), []);
 
