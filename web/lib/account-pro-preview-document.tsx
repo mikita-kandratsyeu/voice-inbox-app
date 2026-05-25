@@ -8,28 +8,18 @@ import {
   ProAccountSuccess,
   type AccountProSuccessCopy,
   type ProAccountAlertTone,
-  type ProActivationKind,
 } from '@/components/account-pro/AccountProViews';
+import type {
+  AccountProPreviewOptions,
+  AccountProPreviewState,
+} from '@/lib/account-pro-preview-fixtures';
 import { BASE_URL_OR_FALLBACK } from '@/config/constants';
 import enMessages from '@/messages/en.json';
 import ruMessages from '@/messages/ru.json';
 
-type PreviewLocale = 'en' | 'ru';
-type PreviewState = 'success' | 'missing' | 'invalid' | 'inactive';
-type PreviewTheme = 'light' | 'dark';
+export type { AccountProPreviewOptions } from '@/lib/account-pro-preview-fixtures';
 
-export type AccountProPreviewOptions = {
-  locale: PreviewLocale;
-  state: PreviewState;
-  theme: PreviewTheme;
-  /** When state is success */
-  kind: ProActivationKind;
-  isLifetime: boolean;
-  /** ISO date string for non-lifetime success preview */
-  sampleExpiresAt: string;
-};
-
-function homeHref(locale: PreviewLocale): string {
+function homeHref(locale: AccountProPreviewOptions['locale']): string {
   const base = BASE_URL_OR_FALLBACK.replace(/\/$/, '');
   return locale === 'en' ? `${base}/` : `${base}/ru/`;
 }
@@ -40,7 +30,9 @@ function pickSuccessCopy(m: (typeof enMessages)['accountPro']): AccountProSucces
     title: m.title,
     activationType: m.activationType,
     typeLicense: m.typeLicense,
+    typeVoucher: m.typeVoucher,
     typeStore: m.typeStore,
+    footerNoteVoucher: m.footerNoteVoucher,
     status: m.status,
     statusActive: m.statusActive,
     renewsOrExpires: m.renewsOrExpires,
@@ -50,58 +42,17 @@ function pickSuccessCopy(m: (typeof enMessages)['accountPro']): AccountProSucces
   };
 }
 
-function alertToneForState(state: Exclude<PreviewState, 'success'>): ProAccountAlertTone {
+function alertToneForState(state: Exclude<AccountProPreviewState, 'success'>): ProAccountAlertTone {
   if (state === 'missing') return 'neutral';
   if (state === 'invalid') return 'danger';
   return 'warning';
 }
 
-function paramFirst(
-  searchParams: Record<string, string | string[] | undefined>,
-  key: string,
-): string | undefined {
-  const v = searchParams[key];
-  if (v == null) return undefined;
-  const s = Array.isArray(v) ? v[0] : v;
-  return typeof s === 'string' ? s.trim() : undefined;
-}
-
-export function parseAccountProPreviewOptions(
-  searchParams: Record<string, string | string[] | undefined>,
-  routeLocale: string,
-): AccountProPreviewOptions {
-  const locale: PreviewLocale = routeLocale === 'ru' ? 'ru' : 'en';
-  const rawState = paramFirst(searchParams, 'state') ?? 'success';
-  const state: PreviewState =
-    rawState === 'missing' ||
-    rawState === 'invalid' ||
-    rawState === 'inactive' ||
-    rawState === 'success'
-      ? rawState
-      : 'success';
-
-  const kind: ProActivationKind =
-    paramFirst(searchParams, 'kind') === 'store' ? 'store' : 'license';
-
-  const lifetimeParam = paramFirst(searchParams, 'lifetime');
-  const isLifetime = lifetimeParam === '1' || lifetimeParam === 'true';
-
-  const theme: PreviewTheme = paramFirst(searchParams, 'theme') === 'dark' ? 'dark' : 'light';
-
-  const expiresRaw = paramFirst(searchParams, 'expires');
-  const sampleExpiresAt = expiresRaw && expiresRaw !== '' ? expiresRaw : '2030-06-15T00:00:00.000Z';
-
-  return {
-    locale,
-    state,
-    kind,
-    isLifetime,
-    theme,
-    sampleExpiresAt,
-  };
-}
-
-function MinimalPreviewHeader({ locale }: { locale: PreviewLocale }): ReactElement {
+function MinimalPreviewHeader({
+  locale,
+}: {
+  locale: AccountProPreviewOptions['locale'];
+}): ReactElement {
   const home = homeHref(locale);
 
   return (

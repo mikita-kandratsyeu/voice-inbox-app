@@ -12,6 +12,7 @@ import {
   Rocket,
   Settings,
   Shield,
+  User,
   Wallet,
   Wrench,
 } from 'lucide-react';
@@ -477,25 +478,9 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-md shadow-indigo-600/20 dark:bg-indigo-500">
               <AppWindow className="h-4 w-4" strokeWidth={2} aria-hidden />
             </div>
-            <div className="min-w-0 leading-tight">
-              <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
-                Voice Inbox AI
-              </p>
-              <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                <p
-                  className="truncate text-xs font-medium text-zinc-600 dark:text-zinc-300"
-                  title={adminLogin}
-                >
-                  {adminLogin}
-                </p>
-                {isSuperadmin ? (
-                  <AdminStatusBadge tone="warning">
-                    <Shield className="h-2.5 w-2.5 shrink-0" strokeWidth={2.25} aria-hidden />
-                    Super
-                  </AdminStatusBadge>
-                ) : null}
-              </div>
-            </div>
+            <p className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-50">
+              Voice Inbox AI
+            </p>
           </div>
         </div>
         <p className="px-4 pb-2 text-[11px] font-semibold uppercase tracking-widest text-zinc-400">
@@ -522,19 +507,8 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
         <header className="sticky top-0 z-10 border-b border-zinc-200/80 bg-white/85 px-4 py-4 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/85 md:px-8 lg:px-10">
           <div className="mx-auto flex max-w-screen-2xl flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-xs font-medium uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-                  Voice Inbox AI · Admin
-                </p>
-                {isSuperadmin ? (
-                  <AdminStatusBadge tone="warning">
-                    <Shield className="h-3 w-3 shrink-0" strokeWidth={2.25} aria-hidden />
-                    Superadmin
-                  </AdminStatusBadge>
-                ) : null}
-              </div>
-              <p className="mt-1 truncate text-sm font-medium text-zinc-600 md:hidden dark:text-zinc-300">
-                {adminLogin}
+              <p className="text-xs font-medium uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+                Voice Inbox AI · Admin
               </p>
               <h1 className="mt-1 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 md:text-2xl">
                 {currentMeta.label}
@@ -548,6 +522,28 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
               role="group"
               aria-label="Admin preferences"
             >
+              <div
+                className="inline-flex h-full min-h-0 max-w-[11rem] items-center gap-2 rounded-lg px-2.5 sm:max-w-[14rem] sm:px-3"
+                title={adminLogin}
+              >
+                <span
+                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600/12 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-200"
+                  aria-hidden
+                >
+                  <User className="h-3.5 w-3.5" strokeWidth={2.25} />
+                </span>
+                <span className="flex min-w-0 flex-col leading-tight">
+                  <span className="truncate text-sm font-medium text-black/85 dark:text-white/90">
+                    {adminLogin}
+                  </span>
+                  {isSuperadmin ? (
+                    <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                      Superadmin
+                    </span>
+                  ) : null}
+                </span>
+              </div>
+              <span className={utilitiesShellDividerClass} aria-hidden />
               <ThemeToggle variant="grouped" />
               <span className={utilitiesShellDividerClass} aria-hidden />
               <button type="button" onClick={handleLogout} className={utilitiesGroupedActionClass}>

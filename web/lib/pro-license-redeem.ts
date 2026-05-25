@@ -12,6 +12,8 @@ export type RedeemOk = {
   ok: true;
   expiresAt: string;
   weeklyLimitPro: number;
+  /** True when the key was issued as a printed or emailed gift voucher. */
+  isVoucher: boolean;
 };
 
 export type ProLicenseRedeemErrorCode = 'invalid_key' | 'used_elsewhere' | 'server_error';
@@ -50,7 +52,11 @@ export async function redeemProLicenseKey(
           where: { deviceId },
         });
         const expiresAt = ent?.expiresAt ?? keyRow.consumedAt;
-        return { type: 'idempotent' as const, expiresAt };
+        return {
+          type: 'idempotent' as const,
+          expiresAt,
+          isVoucher: keyRow.voucherBatchId != null,
+        };
       }
 
       if (keyRow.consumedAt != null && keyRow.consumedByDeviceId !== deviceId) {
@@ -92,7 +98,11 @@ export async function redeemProLicenseKey(
         update: { expiresAt: newExpires },
       });
 
-      return { type: 'success' as const, expiresAt: newExpires };
+      return {
+        type: 'success' as const,
+        expiresAt: newExpires,
+        isVoucher: keyRow.voucherBatchId != null,
+      };
     });
 
     if (result.type === 'bad_key') {
@@ -108,7 +118,7 @@ export async function redeemProLicenseKey(
     }
 
     const expiresAt = result.expiresAt.toISOString();
-    return { ok: true, expiresAt, weeklyLimitPro };
+    return { ok: true, expiresAt, weeklyLimitPro, isVoucher: result.isVoucher };
   } catch (e) {
     console.error('[redeemProLicenseKey]', e);
     return { ok: false, error: 'Could not activate license', code: 'server_error', status: 503 };

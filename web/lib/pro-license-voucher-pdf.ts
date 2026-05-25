@@ -13,6 +13,7 @@ import {
 import {
   getVoucherPageDimensions,
   getVoucherStripDimensions,
+  VOUCHER_BELOW_STRIP_HEIGHT_PT,
   type VoucherPrintSize,
 } from '@/lib/pro-license-voucher-print-size';
 import { resolveVoucherPdfFonts, type VoucherPdfFonts } from '@/lib/voucher-fonts';
@@ -22,6 +23,7 @@ import {
   loadVoucherGiftIconPng,
   loadVoucherHeartIconPng,
   loadVoucherPerkIconPng,
+  VOUCHER_PERK_ICON_DISPLAY_PT,
 } from '@/lib/voucher-lucide-icons-png';
 
 const MARGIN = 14;
@@ -353,26 +355,21 @@ function drawSidebarPerkRow(
   w: number,
   label: string,
   iconBuf: Buffer,
+  iconDisplay: number,
 ): number {
-  const iconR = 7;
-  const iconDisplay = 9;
-  const iconCx = x + iconR;
-  const iconCy = y + iconR;
-
-  doc.circle(iconCx, iconCy, iconR).fill(COL.badgeFill);
-  doc.circle(iconCx, iconCy, iconR).lineWidth(0.35).strokeColor(COL.badgeStroke).stroke();
-  doc.image(iconBuf, iconCx - iconDisplay / 2, iconCy - iconDisplay / 2, {
+  const iconGap = 5;
+  doc.image(iconBuf, x, y, {
     width: iconDisplay,
     height: iconDisplay,
   });
 
-  const textX = x + iconR * 2 + 6;
+  const textX = x + iconDisplay + iconGap;
   const textW = w - (textX - x);
   doc.font(fonts.regular).fontSize(7).fillColor(COL.ink);
-  const textY = iconCy - 3.5;
+  const textY = y + iconDisplay / 2 - 3.5;
   const textH = doc.heightOfString(label, { width: textW, lineGap: 0.2 });
   doc.text(label, textX, textY, { width: textW, lineGap: 0.2 });
-  return y + Math.max(iconR * 2, textH + 5);
+  return y + Math.max(iconDisplay, textH + 4);
 }
 
 async function drawSidebarPerks(
@@ -394,7 +391,9 @@ async function drawSidebarPerks(
   doc.text(tagline, contentX, topY, { width: contentW, lineGap: 0.35 });
 
   const perkIconBufs = await Promise.all(
-    copy.sidebarPerkIcons.map((kind) => loadVoucherPerkIconPng(kind, 9)),
+    copy.sidebarPerkIcons.map((kind) =>
+      loadVoucherPerkIconPng(kind, VOUCHER_PERK_ICON_DISPLAY_PT[kind]),
+    ),
   );
 
   const perksTop = topY + taglineH + 9;
@@ -404,6 +403,7 @@ async function drawSidebarPerks(
 
   let rowY = perksTop + rowGap;
   for (let i = 0; i < rowCount; i += 1) {
+    const kind = copy.sidebarPerkIcons[i]!;
     rowY =
       drawSidebarPerkRow(
         doc,
@@ -413,6 +413,7 @@ async function drawSidebarPerks(
         contentW,
         copy.sidebarPerks[i]!,
         perkIconBufs[i]!,
+        VOUCHER_PERK_ICON_DISPLAY_PT[kind],
       ) + rowGap;
   }
 }
@@ -641,6 +642,67 @@ async function drawCenterPanel(
   });
 }
 
+const BELOW_STRIP_GAP_PT = 8;
+const BELOW_STRIP_BOTTOM_PAD_PT = 10;
+
+/** Height of fold + legal block (PDFKit adds extra pages if the page is too short). */
+function measureBelowStripContentHeight(
+  doc: PdfDoc,
+  fonts: PdfFonts,
+  copy: VoucherPdfCopy,
+  input: VoucherPdfInput,
+  contentW: number,
+): number {
+  const sectionTitleSize = 6;
+  const bodySize = 4.75;
+  const stepGap = 2;
+  const sectionGap = 7;
+  let total = 0;
+
+  doc.font(fonts.bold).fontSize(sectionTitleSize);
+  total += doc.heightOfString(copy.foldTitle, { width: contentW, lineGap: 0 }) + 3;
+
+  doc.font(fonts.regular).fontSize(bodySize + 0.75);
+  for (const step of copy.foldSteps) {
+    total += doc.heightOfString(step, { width: contentW, lineGap: 0.12 }) + stepGap;
+  }
+  total += sectionGap - stepGap + 5;
+
+  doc.font(fonts.bold).fontSize(sectionTitleSize);
+  total += doc.heightOfString(copy.belowStripLegalTitle, { width: contentW, lineGap: 0 }) + 3;
+
+  doc.font(fonts.regular).fontSize(bodySize);
+  const legalLines = getVoucherBelowStripLegalLines(input.locale, {
+    site: BASE_URL_OR_FALLBACK,
+    supportEmail: SUPPORT_EMAIL,
+    year: new Date().getFullYear(),
+    duration: input.duration,
+    issuedAt: input.issuedAt,
+    batchId: input.batchId,
+    templateVersion: input.templateVersion || VOUCHER_TEMPLATE_VERSION,
+  });
+  for (const line of legalLines) {
+    total += doc.heightOfString(line, { width: contentW, lineGap: 0.1 }) + 1.5;
+  }
+
+  return total;
+}
+
+function resolveVoucherPageSize(
+  doc: PdfDoc,
+  fonts: PdfFonts,
+  copy: VoucherPdfCopy,
+  input: VoucherPdfInput,
+  printSize: VoucherPrintSize,
+): { pageW: number; pageH: number; stripH: number } {
+  const { width: pageW, height: stripH } = getVoucherStripDimensions(printSize);
+  const contentW = pageW - MARGIN * 2;
+  const belowContentH = measureBelowStripContentHeight(doc, fonts, copy, input, contentW);
+  const belowArea = BELOW_STRIP_GAP_PT + belowContentH + BELOW_STRIP_BOTTOM_PAD_PT;
+  const pageH = stripH + Math.max(VOUCHER_BELOW_STRIP_HEIGHT_PT, belowArea);
+  return { pageW, pageH, stripH };
+}
+
 /** Fold steps + standard legal fine print below the cut line (trim off with the voucher). */
 function drawBelowVoucherStrip(
   doc: PdfDoc,
@@ -654,10 +716,9 @@ function drawBelowVoucherStrip(
   const bodySize = 4.75;
   const stepGap = 2;
   const sectionGap = 7;
-  const gapBelowVoucher = 8;
   const contentX = bounds.x;
   const contentW = bounds.w;
-  let y = bounds.y + bounds.h + gapBelowVoucher;
+  let y = bounds.y + bounds.h + BELOW_STRIP_GAP_PT;
 
   doc.font(fonts.bold).fontSize(sectionTitleSize).fillColor(COL.brandDark);
   let blockH = doc.heightOfString(copy.foldTitle, { width: contentW, lineGap: 0 });
@@ -735,10 +796,9 @@ async function drawVoucherPage(
   input: VoucherPdfInput,
   fonts: PdfFonts,
 ): Promise<void> {
-  const { width: pageW, height: pageH } = getVoucherPageDimensions(input.printSize);
-  const { height: stripH } = getVoucherStripDimensions(input.printSize);
-  doc.addPage({ size: [pageW, pageH], margins: { top: 0, bottom: 0, left: 0, right: 0 } });
   const copy = getVoucherPdfCopy(input.locale);
+  const { pageW, pageH, stripH } = resolveVoucherPageSize(doc, fonts, copy, input, input.printSize);
+  doc.addPage({ size: [pageW, pageH], margins: { top: 0, bottom: 0, left: 0, right: 0 } });
   const headline = formatVoucherPremiumAccessHeadline(input.duration, input.locale);
   const layout = getVoucherLayout(pageW, stripH);
 

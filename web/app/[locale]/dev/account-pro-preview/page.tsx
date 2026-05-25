@@ -2,10 +2,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { setRequestLocale } from 'next-intl/server';
 
-import {
-  AccountProDevPreview,
-  parseAccountProPreviewOptions,
-} from '@/lib/account-pro-preview-document';
+import { AccountProDevPreview } from '@/lib/account-pro-preview-document';
+import { parseAccountProPreviewOptions } from '@/lib/account-pro-preview-fixtures';
 import { routing } from '@/lib/i18n';
 
 type Props = {
@@ -24,13 +22,13 @@ export const metadata: Metadata = {
 
 /**
  * Local QA for `/account/pro` UI. Not available in production.
- * The old `/api/dev/account-pro-preview` URL 307-redirects here (dev only).
+ * Prefer `/api/dev/account-pro-preview` for raw HTML (same query params).
  *
- * Examples (default locale prefix `as-needed`: English has no `/en` prefix):
- * - http://localhost:3000/dev/account-pro-preview
- * - http://localhost:3000/ru/dev/account-pro-preview?state=missing
+ * Examples:
+ * - http://localhost:3000/api/dev/account-pro-preview?list=1
+ * - http://localhost:3000/dev/account-pro-preview?variant=voucher-success
+ * - http://localhost:3000/ru/dev/account-pro-preview?variant=voucher-success&theme=dark
  * - http://localhost:3000/dev/account-pro-preview?state=success&kind=license&lifetime=1
- * - http://localhost:3000/dev/account-pro-preview?state=success&kind=store&expires=2027-01-20T00:00:00.000Z&theme=dark
  */
 export default async function DevAccountProPreviewPage({ params, searchParams }: Props) {
   if (process.env.NODE_ENV === 'production') {

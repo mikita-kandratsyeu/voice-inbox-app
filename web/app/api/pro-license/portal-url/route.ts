@@ -45,7 +45,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   const kind = await getProActivationKind(deviceIdTrimmed);
 
-  if (kind !== 'license') {
+  if (kind !== 'license' && kind !== 'voucher') {
     return apiError('portal_license_only', HttpStatus.FORBIDDEN, { pathname: path });
   }
 

@@ -1,6 +1,14 @@
 import type { ReactNode } from 'react';
-import { AlertCircle, CalendarClock, Crown, KeyRound, ShieldCheck, Store } from 'lucide-react';
 
+import {
+  AccountProIconAlertCircle,
+  AccountProIconCalendar,
+  AccountProIconCrown,
+  AccountProIconGift,
+  AccountProIconKeyRound,
+  AccountProIconShieldCheck,
+  AccountProIconStore,
+} from '@/components/account-pro/account-pro-icons';
 import type { ProActivationKind } from '@/lib/pro-entitlement';
 
 export type { ProActivationKind };
@@ -10,7 +18,9 @@ export type AccountProSuccessCopy = {
   title: string;
   activationType: string;
   typeLicense: string;
+  typeVoucher: string;
   typeStore: string;
+  footerNoteVoucher: string;
   status: string;
   statusActive: string;
   renewsOrExpires: string;
@@ -20,6 +30,14 @@ export type AccountProSuccessCopy = {
 };
 
 export type ProAccountAlertTone = 'neutral' | 'caution' | 'danger' | 'warning';
+
+const accountProIconTileClass =
+  'flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-black/[0.04] dark:bg-white/[0.08]';
+
+const accountProIconGlyphClass = 'h-4 w-4 shrink-0';
+
+const accountProSectionLabelClass =
+  'text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-black/45 dark:text-zinc-300';
 
 const ALERT_TONE: Record<ProAccountAlertTone, { wrap: string; title: string; iconWrap: string }> = {
   neutral: {
@@ -103,7 +121,7 @@ export function ProAccountAlert({
     <div className={`rounded-2xl border p-5 sm:p-6 ${s.wrap}`}>
       <div className={`mb-2 flex items-start gap-3 ${s.title}`}>
         <span className={`mt-0.5 shrink-0 ${s.iconWrap}`}>
-          <AlertCircle className="h-5 w-5" aria-hidden />
+          <AccountProIconAlertCircle className="h-5 w-5" />
         </span>
         <p className="text-base font-semibold leading-snug">{title}</p>
       </div>
@@ -123,69 +141,75 @@ export function ProAccountSuccess({
   isLifetime: boolean;
   dateLabel: string | null;
 }): ReactNode {
-  const activationLabel = kind === 'license' ? copy.typeLicense : copy.typeStore;
+  const activationLabel =
+    kind === 'voucher' ? copy.typeVoucher : kind === 'license' ? copy.typeLicense : copy.typeStore;
+  const footerText = kind === 'voucher' ? copy.footerNoteVoucher : copy.footerNote;
   const dateHeading = isLifetime ? copy.validThrough : copy.renewsOrExpires;
   const dateValue = isLifetime ? copy.lifetimeValue : (dateLabel ?? '—');
+
+  const ActivationIcon =
+    kind === 'voucher'
+      ? AccountProIconGift
+      : kind === 'license'
+        ? AccountProIconKeyRound
+        : AccountProIconStore;
+  const activationIconClass =
+    kind === 'voucher'
+      ? 'text-amber-600 dark:text-amber-400'
+      : kind === 'license'
+        ? 'text-blue-600 dark:text-blue-400'
+        : 'text-blue-600 dark:text-blue-400';
 
   return (
     <div className="space-y-4">
       <header className="space-y-3">
         <span className="inline-flex items-center gap-2 rounded-full border border-blue-500/22 bg-gradient-to-r from-blue-500/12 to-indigo-500/10 px-3.5 py-1.5 text-xs font-semibold tracking-wide text-blue-800 shadow-sm shadow-blue-500/10 dark:border-blue-400/28 dark:from-blue-500/16 dark:to-indigo-500/12 dark:text-blue-200">
-          <Crown className="h-3.5 w-3.5" aria-hidden />
+          <AccountProIconCrown className="h-3.5 w-3.5 shrink-0" />
           {copy.planLabel}
         </span>
         <div className="space-y-2">
           <h1 className="text-balance text-3xl font-semibold tracking-tight text-black dark:text-white sm:text-[2rem] sm:leading-tight">
             {copy.title}
           </h1>
-          <p className="max-w-prose text-sm leading-relaxed text-black/60 dark:text-white/58">
-            {copy.footerNote}
+          <p className="max-w-prose text-sm leading-relaxed text-zinc-600 dark:text-zinc-300">
+            {footerText}
           </p>
         </div>
       </header>
 
       <section aria-label={copy.status}>
-        <ul className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <ul className="flex flex-col gap-3">
           <li className="flex flex-col rounded-2xl border border-black/[0.07] bg-white/70 p-4 dark:border-white/[0.09] dark:bg-white/[0.04]">
-            <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-black/45 dark:text-white/45">
-              {copy.activationType}
-            </span>
-            <span className="mt-3 flex items-center gap-2 text-sm font-medium text-black dark:text-white">
-              <span
-                className="flex h-5 w-4 shrink-0 items-center justify-center text-blue-600 dark:text-blue-400"
-                aria-hidden
-              >
-                {kind === 'license' ? (
-                  <KeyRound className="h-4 w-4" aria-hidden />
-                ) : (
-                  <Store className="h-4 w-4" aria-hidden />
-                )}
+            <span className={accountProSectionLabelClass}>{copy.activationType}</span>
+            <span className="mt-3 flex items-center gap-2.5 text-sm font-medium text-black dark:text-white">
+              <span className={`${accountProIconTileClass} ${activationIconClass}`} aria-hidden>
+                <ActivationIcon className={accountProIconGlyphClass} />
               </span>
-              <span className="min-w-0 leading-snug">{activationLabel}</span>
+              <span className="min-w-0 flex-1 break-words leading-snug">{activationLabel}</span>
             </span>
           </li>
-          <li className="flex flex-col rounded-2xl border border-black/[0.07] bg-white/70 p-4 dark:border-white/[0.09] dark:bg-white/[0.04]">
-            <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-black/45 dark:text-white/45">
-              {copy.status}
-            </span>
-            <span className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-emerald-500/28 bg-emerald-500/[0.11] px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-500/15 dark:text-emerald-200">
-              <ShieldCheck className="h-3.5 w-3.5" aria-hidden />
-              {copy.statusActive}
-            </span>
-          </li>
-          <li className="flex flex-col rounded-2xl border border-black/[0.07] bg-white/70 p-4 dark:border-white/[0.09] dark:bg-white/[0.04] sm:col-span-1">
-            <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-black/45 dark:text-white/45">
-              {dateHeading}
-            </span>
-            <span className="mt-3 flex items-center gap-2 text-sm font-medium leading-snug text-black dark:text-white">
-              <span
-                className="flex h-5 w-4 shrink-0 items-center justify-center text-violet-600 dark:text-violet-400"
-                aria-hidden
-              >
-                <CalendarClock className="h-4 w-4" aria-hidden />
+          <li className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="flex flex-col rounded-2xl border border-black/[0.07] bg-white/70 p-4 dark:border-white/[0.09] dark:bg-white/[0.04]">
+              <span className={accountProSectionLabelClass}>{copy.status}</span>
+              <span className="mt-3 flex min-h-8 items-center">
+                <span className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-emerald-500/28 bg-emerald-500/[0.11] px-2.5 py-1.5 text-xs font-semibold leading-none text-emerald-800 dark:border-emerald-400/30 dark:bg-emerald-500/15 dark:text-emerald-200">
+                  <AccountProIconShieldCheck className="h-3.5 w-3.5 shrink-0" />
+                  {copy.statusActive}
+                </span>
               </span>
-              <span className="min-w-0">{dateValue}</span>
-            </span>
+            </div>
+            <div className="flex flex-col rounded-2xl border border-black/[0.07] bg-white/70 p-4 dark:border-white/[0.09] dark:bg-white/[0.04]">
+              <span className={accountProSectionLabelClass}>{dateHeading}</span>
+              <span className="mt-3 flex items-center gap-2.5 text-sm font-medium leading-snug text-black dark:text-white">
+                <span
+                  className={`${accountProIconTileClass} text-violet-600 dark:text-violet-300`}
+                  aria-hidden
+                >
+                  <AccountProIconCalendar className={accountProIconGlyphClass} />
+                </span>
+                <span className="min-w-0 flex-1 break-words">{dateValue}</span>
+              </span>
+            </div>
           </li>
         </ul>
       </section>

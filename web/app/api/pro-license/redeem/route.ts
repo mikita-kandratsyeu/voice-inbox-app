@@ -62,5 +62,6 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   return NextResponse.json({
     expiresAt: result.expiresAt,
     weeklyLimitPro: result.weeklyLimitPro,
+    isVoucher: result.isVoucher,
   });
 };

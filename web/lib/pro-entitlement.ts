@@ -38,7 +38,7 @@ export async function deviceHasActivatedLicenseKey(deviceId: string): Promise<bo
   }
 }
 
-export type ProActivationKind = 'license' | 'store';
+export type ProActivationKind = 'voucher' | 'license' | 'store';
 
 export async function getProActivationKind(deviceId: string): Promise<ProActivationKind | null> {
   const active = await isProDevice(deviceId);
@@ -46,8 +46,21 @@ export async function getProActivationKind(deviceId: string): Promise<ProActivat
     return null;
   }
 
-  if (await deviceHasActivatedLicenseKey(deviceId)) {
-    return 'license';
+  if (!process.env.DATABASE_URL?.trim()) {
+    return 'store';
+  }
+
+  try {
+    const row = await prisma.proLicenseKey.findFirst({
+      where: { consumedByDeviceId: deviceId },
+      select: { voucherBatchId: true },
+    });
+
+    if (row != null) {
+      return row.voucherBatchId != null ? 'voucher' : 'license';
+    }
+  } catch {
+    // fall through to store
   }
 
   return 'store';

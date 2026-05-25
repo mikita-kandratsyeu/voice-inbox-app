@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import { AdminCard, AdminSubNav, adminBtnSecondaryClass } from './admin-ui';
+import { AdminDevPreviewsPanel } from './AdminDevPreviewsPanel';
 import { AdminExternalObservabilityLinks } from './AdminExternalObservabilityLinks';
+import { isDevPreviewCatalogEnabled } from '@/lib/dev-preview-catalog';
 
 type SupportStats = {
   ok: boolean;
@@ -34,14 +36,24 @@ type ObservabilityResponse = {
   error?: string;
 };
 
-const OPS_SECTIONS = [
+const OPS_SECTIONS_BASE = [
   { id: 'links', label: 'Links' },
   { id: 'support', label: 'Support stats' },
   { id: 'errors', label: 'API errors' },
   { id: 'audit', label: 'Audit log' },
 ] as const;
 
-type OpsSection = (typeof OPS_SECTIONS)[number]['id'];
+const OPS_SECTION_DEV = { id: 'dev-previews', label: 'Dev previews' } as const;
+
+type OpsSectionBase = (typeof OPS_SECTIONS_BASE)[number]['id'];
+type OpsSection = OpsSectionBase | typeof OPS_SECTION_DEV.id;
+
+function opsSectionsForEnv(): readonly { id: OpsSection; label: string }[] {
+  if (isDevPreviewCatalogEnabled()) {
+    return [...OPS_SECTIONS_BASE, OPS_SECTION_DEV];
+  }
+  return OPS_SECTIONS_BASE;
+}
 
 export function AdminOperationsPanel() {
   const [section, setSection] = useState<OpsSection>('links');
@@ -114,7 +126,7 @@ export function AdminOperationsPanel() {
 
   return (
     <div className="space-y-6">
-      <AdminSubNav items={OPS_SECTIONS} value={section} onChange={setSection} />
+      <AdminSubNav items={opsSectionsForEnv()} value={section} onChange={setSection} />
 
       {section === 'links' ? <AdminExternalObservabilityLinks /> : null}
 
@@ -288,6 +300,8 @@ export function AdminOperationsPanel() {
           )}
         </AdminCard>
       ) : null}
+
+      {section === 'dev-previews' ? <AdminDevPreviewsPanel /> : null}
     </div>
   );
 }

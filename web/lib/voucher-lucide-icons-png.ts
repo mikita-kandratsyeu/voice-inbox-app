@@ -15,9 +15,19 @@ const iconCache = new Map<string, Buffer>();
 /** Raster multiplier — PNG is larger than PDF display size for crisp strokes. */
 const ICON_RASTER_SCALE = 4;
 
+/** Bump when perk SVG paths change (invalidates in-process cache). */
+const PERK_ICON_CACHE_VERSION = 'v3';
+
 function lucideSvg(paths: string, stroke: string): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" shape-rendering="geometricPrecision">${paths}</svg>`;
 }
+
+/** PDF display size (pt) inside 14pt circles — zap is optically thinner than shield. */
+export const VOUCHER_PERK_ICON_DISPLAY_PT: Record<VoucherSidebarPerkIcon, number> = {
+  zap: 10,
+  brain: 9.5,
+  shield: 9,
+};
 
 async function rasterLucideIcon(cacheKey: string, svg: string, displayPx: number): Promise<Buffer> {
   const cacheId = `${cacheKey}:${displayPx}`;
@@ -78,7 +88,11 @@ const LUCIDE_PERK_SVGS: Record<VoucherSidebarPerkIcon, string> = {
 /** Lucide perk icons for voucher sidebar (zap / brain / shield-check). */
 export function loadVoucherPerkIconPng(
   kind: VoucherSidebarPerkIcon,
-  displayPx: number,
+  displayPx: number = VOUCHER_PERK_ICON_DISPLAY_PT[kind],
 ): Promise<Buffer> {
-  return rasterLucideIcon(`perk-${kind}`, LUCIDE_PERK_SVGS[kind], displayPx);
+  return rasterLucideIcon(
+    `perk-${kind}:${PERK_ICON_CACHE_VERSION}`,
+    LUCIDE_PERK_SVGS[kind],
+    displayPx,
+  );
 }
