@@ -50,7 +50,13 @@ import {
 import { BackupPasswordSheet } from '@/screens/settings/ui/BackupPasswordSheet';
 import type { Colors } from '@/shared/config';
 import { getWebsiteUrl, useAppTheme, useColors } from '@/shared/config';
-import { hapticSelection, IS_ANDROID, IS_IOS, useTabletContentMaxWidth } from '@/shared/lib';
+import {
+  hapticSelection,
+  IS_ANDROID,
+  IS_IOS,
+  useIsTablet,
+  useTabletContentMaxWidth,
+} from '@/shared/lib';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import { getCachesDirectoryPath, NitroFS } from '@/shared/lib/fs';
 import {
@@ -69,6 +75,8 @@ import { Button } from '@/shared/ui';
 import { getHasSeenOnboarding, getTermsAgreedAt, setTermsAgreedAt } from '../lib/onboardingStorage';
 import { getOnboardingSlides, type OnboardingSlideContent } from '../model/constants';
 import { OnboardingSetupStep } from './OnboardingSetupStep';
+
+const ONBOARDING_MODAL_MAX_WIDTH = 480;
 
 const ICON_MAP = {
   Mic,
@@ -90,21 +98,27 @@ const OnboardingTermsGateModal = ({
   visible,
   onAgree,
   onNotNow,
+  contentMaxWidth,
 }: {
   visible: boolean;
   onAgree: () => void;
   onNotNow: () => void;
+  contentMaxWidth?: number;
 }) => {
   const { t } = useTranslation();
   const c = useColors();
   const insets = useSafeAreaInsets();
   const browserScheme = useAppTheme();
   const baseUrl = getWebsiteUrl().trim();
+  const isTablet = useIsTablet();
+  const modalMaxWidth = isTablet
+    ? Math.min(contentMaxWidth ?? ONBOARDING_MODAL_MAX_WIDTH, ONBOARDING_MODAL_MAX_WIDTH)
+    : undefined;
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onNotNow}>
       <View
-        className="flex-1 justify-end px-4"
+        className={isTablet ? 'flex-1 items-center justify-center px-6' : 'flex-1 justify-end px-4'}
         style={{
           paddingTop: insets.top + 12,
           paddingBottom: Math.max(insets.bottom, 16),
@@ -114,6 +128,8 @@ const OnboardingTermsGateModal = ({
         <View
           className="max-h-[88%] overflow-hidden rounded-2xl"
           style={{
+            width: '100%',
+            maxWidth: modalMaxWidth,
             backgroundColor: c.background.primary,
             borderWidth: 1,
             borderColor: c.border.default,
@@ -550,7 +566,7 @@ const PermissionsSlide = ({
 
   return (
     <Animated.View
-      style={[{ width: windowWidth, paddingHorizontal: 24, paddingTop: 48 }, animatedStyle]}
+      style={[{ width: windowWidth, paddingHorizontal: 32, paddingTop: 48 }, animatedStyle]}
       className="flex-1"
     >
       <ScrollView
@@ -864,7 +880,7 @@ const SlideItem = ({
         {item.extra === 'meeting-import' && (
           <View className="items-center gap-2.5" style={{ alignSelf: 'center' }}>
             {([1, 2] as const).map((n) => {
-              const stepMaxWidth = Math.min(contentMaxWidth ?? windowWidth - 64, windowWidth - 64);
+              const stepMaxWidth = contentMaxWidth ?? windowWidth - 64;
               const textMaxWidth = stepMaxWidth - 22 - 12;
 
               return (
@@ -1302,8 +1318,12 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         visible={termsGateVisible}
         onAgree={handleTermsModalAgree}
         onNotNow={handleTermsModalDismiss}
+        contentMaxWidth={contentMaxWidth}
       />
-      <View className="flex-row justify-end px-5 py-3" style={{ minHeight: 48 }}>
+      <View
+        className="flex-row justify-end px-5 py-3"
+        style={{ minHeight: 48, alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}
+      >
         <View
           style={{ opacity: showSkipButton ? 1 : 0 }}
           pointerEvents={showSkipButton ? 'auto' : 'none'}
@@ -1351,7 +1371,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         style={{
           paddingBottom: insets.bottom + 48,
           paddingTop: 32,
-          paddingHorizontal: 24,
+          paddingHorizontal: 32,
           alignSelf: 'center',
           width: '100%',
           maxWidth: contentMaxWidth,
