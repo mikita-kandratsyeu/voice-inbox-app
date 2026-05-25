@@ -383,14 +383,15 @@ async function drawSidebarPerks(
   contentW: number,
   topY: number,
   bottomY: number,
+  tagline: string,
 ): Promise<void> {
   const taglineSize = 7.5;
   doc.font(fonts.regular).fontSize(taglineSize).fillColor(COL.brandDark);
-  const taglineH = doc.heightOfString(copy.sidebarTagline, {
+  const taglineH = doc.heightOfString(tagline, {
     width: contentW,
     lineGap: 0.35,
   });
-  doc.text(copy.sidebarTagline, contentX, topY, { width: contentW, lineGap: 0.35 });
+  doc.text(tagline, contentX, topY, { width: contentW, lineGap: 0.35 });
 
   const perkIconBufs = await Promise.all(
     copy.sidebarPerkIcons.map((kind) => loadVoucherPerkIconPng(kind, 9)),
@@ -448,14 +449,9 @@ async function drawLeftFlap(
   const iconBuf = await loadVoucherAppIconPng(Math.round(iconSize * 3));
   doc.image(iconBuf, contentX, top, { width: iconSize, height: iconSize });
 
-  let textY = top + iconSize + 10;
+  const textY = top + iconSize + 10;
   const promo = promoLabel?.trim();
-  if (promo) {
-    doc.font(fonts.regular).fontSize(8).fillColor(COL.muted);
-    const promoH = doc.heightOfString(promo, { width: contentW, lineGap: 0 });
-    doc.text(promo, contentX, textY, { width: contentW, align: 'left', lineGap: 0 });
-    textY += promoH + 10;
-  }
+  const sidebarTagline = promo || copy.sidebarTagline;
 
   doc.font(fonts.bold).fontSize(18).fillColor(COL.brandDark);
   const headlineH = doc.heightOfString(headline, { width: contentW, lineGap: 1 });
@@ -472,7 +468,16 @@ async function drawLeftFlap(
   const dividerY = bottom - thankBlockH - thankPadBottom;
   const thankTextY = dividerY + 9;
   const heartPx = 8;
-  await drawSidebarPerks(doc, fonts, copy, contentX, contentW, headlineBottom + 10, dividerY - 4);
+  await drawSidebarPerks(
+    doc,
+    fonts,
+    copy,
+    contentX,
+    contentW,
+    headlineBottom + 10,
+    dividerY - 4,
+    sidebarTagline,
+  );
 
   doc.moveTo(contentX, dividerY).lineTo(contentX + contentW * 0.72, dividerY);
   doc.lineWidth(0.5).strokeColor(COL.badgeStroke);
