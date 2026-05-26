@@ -6,8 +6,9 @@ import {
   type VoucherLocale,
 } from '@/lib/pro-license-voucher-copy';
 import {
-  getEnvelopeDielineDimensionsMm,
+  getEnvelopeDielineDimensionsMmForStrip,
   getEnvelopePageDimensions,
+  type EnvelopeDielineDimensionsMm,
   type VoucherPrintSize,
 } from '@/lib/pro-license-voucher-print-size';
 import { loadVoucherAppIconPng } from '@/lib/voucher-app-icon-png';
@@ -124,10 +125,9 @@ function measureAssemblyBlockHeight(
 function getEnvelopeDielineLayout(
   pageW: number,
   pageH: number,
-  printSize: VoucherPrintSize,
+  dims: EnvelopeDielineDimensionsMm,
   instructionsH: number,
 ): EnvelopeDielineLayout {
-  const dims = getEnvelopeDielineDimensionsMm(printSize);
   const pocketW = mmToPt(dims.pocket.width);
   const pocketH = mmToPt(dims.pocket.height);
   let sideW = mmToPt(dims.sideFlap);
@@ -501,7 +501,7 @@ async function drawAssemblyBlock(
   doc: PdfDoc,
   fonts: VoucherPdfFonts,
   copy: VoucherEnvelopeCopy,
-  dims: ReturnType<typeof getEnvelopeDielineDimensionsMm>,
+  dims: EnvelopeDielineDimensionsMm,
   pageW: number,
   pageH: number,
   startY: number,
@@ -559,21 +559,23 @@ function drawPageHeader(
   });
 }
 
-/** Second PDF page: branded envelope dieline sized for the folded gate-fold voucher. */
+/** Second PDF page: branded envelope dieline sized for the folded bi-fold voucher. */
 export async function drawEnvelopeAssemblyPage(
   doc: PdfDoc,
   fonts: VoucherPdfFonts,
   locale: VoucherLocale,
   printSize: VoucherPrintSize,
+  stripW: number,
+  stripH: number,
 ): Promise<void> {
   const copy = getVoucherEnvelopeCopy(locale);
   const { width: pageW, height: pageH } = getEnvelopePageDimensions(printSize);
-  const dims = getEnvelopeDielineDimensionsMm(printSize);
+  const dims = getEnvelopeDielineDimensionsMmForStrip(stripW, stripH);
 
   doc.addPage({ size: [pageW, pageH], margins: { top: 0, bottom: 0, left: 0, right: 0 } });
 
   const instructionsH = measureAssemblyBlockHeight(doc, fonts, copy, pageW);
-  const layout = getEnvelopeDielineLayout(pageW, pageH, printSize, instructionsH);
+  const layout = getEnvelopeDielineLayout(pageW, pageH, dims, instructionsH);
   const instructionsY = layout.y + layout.totalH + DIELINE_TO_INSTRUCTIONS_GAP_PT;
 
   drawPageHeader(doc, fonts, copy, pageW);

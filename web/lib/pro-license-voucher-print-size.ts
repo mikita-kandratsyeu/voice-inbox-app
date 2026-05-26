@@ -1,9 +1,9 @@
-/** Physical strip size for gate-fold gift voucher PDFs (PDF points: 72 pt = 1 in). */
+/** Physical strip size for bi-fold gift voucher PDFs (PDF points: 72 pt = 1 in). */
 export type VoucherPrintSize = 'a4' | 'us-letter';
 
 const MM_TO_PT = 72 / 25.4;
 
-/** A4 landscape strip: 208 × 74 mm (gate-fold; sized to fit the envelope pocket). */
+/** A4 landscape strip: 208 × 74 mm (single center fold; fits the envelope pocket). */
 export const VOUCHER_PAGE_A4 = {
   width: Math.round(208 * MM_TO_PT),
   height: Math.round(74 * MM_TO_PT),
@@ -29,24 +29,48 @@ export const VOUCHER_BELOW_STRIP_HEIGHT_PT = 108;
 /** @deprecated Use {@link VOUCHER_BELOW_STRIP_HEIGHT_PT}. */
 export const VOUCHER_FOLD_GUIDE_HEIGHT_PT = VOUCHER_BELOW_STRIP_HEIGHT_PT;
 
-/** Portrait A4 — voucher sheet for home printers. */
+/** Landscape A4 — voucher + footer on one sheet (matches home printer “album” orientation). */
 export const VOUCHER_SHEET_A4 = {
-  width: Math.round(210 * MM_TO_PT),
-  height: Math.round(297 * MM_TO_PT),
+  width: Math.round(297 * MM_TO_PT),
+  height: Math.round(210 * MM_TO_PT),
 } as const;
 
-/** Portrait US Letter. */
+/** Landscape US Letter. */
 export const VOUCHER_SHEET_US_LETTER = {
-  width: Math.round(8.5 * 72),
-  height: Math.round(11 * 72),
+  width: Math.round(11 * 72),
+  height: Math.round(8.5 * 72),
 } as const;
 
-/** Full print sheet (portrait) — voucher centered, instructions pinned to the bottom. */
+/** Side margins on the print sheet (see `pro-license-voucher-pdf.ts`). */
+export const VOUCHER_SHEET_SIDE_MARGIN_PT = 24;
+
+/** Full print sheet (landscape) — scaled voucher centered, instructions at the bottom. */
 export function getVoucherSheetDimensions(size: VoucherPrintSize): {
   width: number;
   height: number;
 } {
   return size === 'us-letter' ? VOUCHER_SHEET_US_LETTER : VOUCHER_SHEET_A4;
+}
+
+/** Largest strip that fits the sheet while keeping the standard bi-fold aspect ratio. */
+export function fitVoucherStripToSheet(
+  printSize: VoucherPrintSize,
+  sheetW: number,
+  sheetH: number,
+  reservedTopPt: number,
+  reservedBottomPt: number,
+): { width: number; height: number } {
+  const base = getVoucherStripDimensions(printSize);
+  const aspect = base.width / base.height;
+  const maxW = sheetW - VOUCHER_SHEET_SIDE_MARGIN_PT * 2;
+  const maxH = sheetH - reservedTopPt - reservedBottomPt;
+  let width = maxW;
+  let height = width / aspect;
+  if (height > maxH) {
+    height = maxH;
+    width = height * aspect;
+  }
+  return { width: Math.round(width), height: Math.round(height) };
 }
 
 export function getVoucherPageDimensions(size: VoucherPrintSize): {
@@ -59,10 +83,7 @@ export function getVoucherPageDimensions(size: VoucherPrintSize): {
 /** Matches {@link MARGIN} in `pro-license-voucher-pdf.ts`. */
 export const VOUCHER_STRIP_MARGIN_PT = 14;
 
-/** Gate-fold center panel share (closed width ≈ this × trim width). */
-export const VOUCHER_GATE_CENTER_SHARE = 0.5;
-
-/** Folded voucher card size in PDF points (gate-fold closed). */
+/** Folded voucher card size in PDF points (bi-fold closed — half of open trim width). */
 export function getVoucherFoldedCardDimensionsPt(size: VoucherPrintSize): {
   width: number;
   height: number;
@@ -71,14 +92,14 @@ export function getVoucherFoldedCardDimensionsPt(size: VoucherPrintSize): {
   const boundsW = strip.width - VOUCHER_STRIP_MARGIN_PT * 2;
   const boundsH = strip.height - VOUCHER_STRIP_MARGIN_PT * 2;
   return {
-    width: Math.round(boundsW * VOUCHER_GATE_CENTER_SHARE),
+    width: Math.round(boundsW / 2),
     height: boundsH,
   };
 }
 
 const ptToMm = (pt: number) => (pt * 25.4) / 72;
 
-/** Dieline dimensions (mm) derived from the folded gate-fold voucher on page 1. */
+/** Dieline dimensions (mm) derived from the folded bi-fold voucher on page 1. */
 export type EnvelopeDielineDimensionsMm = {
   /** Interior pocket (front panel) — card must fit inside. */
   pocket: { width: number; height: number };
@@ -87,17 +108,19 @@ export type EnvelopeDielineDimensionsMm = {
   topFlap: number;
   bottomFlap: number;
   topTab: number;
-  /** Closed card face (center panel) for assembly copy. */
+  /** Closed card face for assembly copy. */
   card: { width: number; height: number };
 };
 
-/** Pocket + flap sizes so the folded voucher fits and the envelope fully closes. */
-export function getEnvelopeDielineDimensionsMm(
-  size: VoucherPrintSize,
+/** Pocket + flap sizes for a printed strip (scaled or default). */
+export function getEnvelopeDielineDimensionsMmForStrip(
+  stripW: number,
+  stripH: number,
 ): EnvelopeDielineDimensionsMm {
-  const folded = getVoucherFoldedCardDimensionsPt(size);
-  const cardW = ptToMm(folded.width);
-  const cardH = ptToMm(folded.height);
+  const boundsW = stripW - VOUCHER_STRIP_MARGIN_PT * 2;
+  const boundsH = stripH - VOUCHER_STRIP_MARGIN_PT * 2;
+  const cardW = ptToMm(boundsW / 2);
+  const cardH = ptToMm(boundsH);
 
   const pocketPadW = 5;
   const pocketPadH = 4;
@@ -123,6 +146,14 @@ export function getEnvelopeDielineDimensionsMm(
       height: Math.round(cardH * 10) / 10,
     },
   };
+}
+
+/** Pocket + flap sizes so the folded voucher fits and the envelope fully closes. */
+export function getEnvelopeDielineDimensionsMm(
+  size: VoucherPrintSize,
+): EnvelopeDielineDimensionsMm {
+  const strip = getVoucherStripDimensions(size);
+  return getEnvelopeDielineDimensionsMmForStrip(strip.width, strip.height);
 }
 
 /** Pocket inside the branded envelope (mm). */

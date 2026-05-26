@@ -27,12 +27,12 @@ export type VoucherPdfCopy = {
   stepDetails: [string, string, string];
   footerLegal: string;
   foldTitle: string;
-  foldSteps: [string, string, string, string];
+  foldSteps: [string, string, string];
   belowStripLegalTitle: string;
 };
 
 /** Bump when below-strip, envelope, or voucher legal copy changes (printed on every PDF). */
-export const VOUCHER_TEMPLATE_VERSION = 'v11';
+export const VOUCHER_TEMPLATE_VERSION = 'v15';
 
 export type VoucherEnvelopeCopy = {
   pageTitle: string;
@@ -224,9 +224,8 @@ const COPY_EN: VoucherPdfCopy = {
   foldTitle: 'HOW TO FOLD',
   foldSteps: [
     '1. Cut along the outer solid line.',
-    '2. Fold the left panel toward the center.',
-    '3. Fold the right panel toward the center so the edges meet in the middle.',
-    '4. When closed, the center (your code) is covered — open both panels to use it.',
+    '2. Fold the right half over the left along the dashed center line.',
+    '3. When closed, your code is hidden inside — open the card to redeem.',
   ],
   belowStripLegalTitle: 'TERMS & INFORMATION',
 };
@@ -252,9 +251,8 @@ const COPY_RU: VoucherPdfCopy = {
   foldTitle: 'КАК СЛОЖИТЬ',
   foldSteps: [
     '1. Вырежьте по внешней сплошной линии.',
-    '2. Сложите левую боковую панель к центру.',
-    '3. Сложите правую боковую панель к центру — края встречаются посередине.',
-    '4. В сложенном виде центр с кодом закрыт крыльями — разверните, чтобы прочитать код.',
+    '2. Сложите правую половину на левую по пунктирной линии посередине.',
+    '3. В сложенном виде код скрыт внутри — разверните карточку, чтобы активировать.',
   ],
   belowStripLegalTitle: 'УСЛОВИЯ И СВЕДЕНИЯ',
 };

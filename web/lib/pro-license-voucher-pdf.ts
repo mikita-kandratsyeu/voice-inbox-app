@@ -11,9 +11,9 @@ import {
   type VoucherLocale,
 } from '@/lib/pro-license-voucher-copy';
 import {
+  fitVoucherStripToSheet,
   getVoucherPageDimensions,
   getVoucherSheetDimensions,
-  getVoucherStripDimensions,
   type VoucherPrintSize,
 } from '@/lib/pro-license-voucher-print-size';
 import { resolveVoucherPdfFonts, type VoucherPdfFonts } from '@/lib/voucher-fonts';
@@ -29,12 +29,10 @@ import { drawEnvelopeAssemblyPage } from '@/lib/pro-license-voucher-envelope-pdf
 const MARGIN = 14;
 const CUT_RADIUS = 8;
 const PANEL_PAD = 12;
-/** Gate-fold: center ~50%, wings each cover half of center plus seam overlap. */
-const GATE_CENTER_SHARE = 0.5;
-/** Overlap at the center seam so the code panel is fully covered when closed. */
-const GATE_SEAM_OVERLAP_PT = 3;
-/** Radius of the gift-title badge circle (center panel header). */
+/** Radius of the gift-title badge circle (right panel / front cover header). */
 const GIFT_BADGE_R = 18;
+/** QR on the left panel (top-right — visible on the branded cover when bi-fold is closed). */
+const LEFT_PANEL_QR_GAP_PT = 10;
 
 /** Brand palette for color printers (aligned with web blue / indigo). */
 const COL = {
@@ -55,7 +53,6 @@ const COL = {
   badgeStroke: '#93C5FD',
   panelLeft: '#EFF6FF',
   panelCenter: '#FFFFFF',
-  panelRight: '#F0F9FF',
   codeBg: '#F8FAFC',
   codeBorder: '#2563EB',
 } as const;
@@ -67,7 +64,7 @@ export type VoucherPdfInput = {
   scanUrl: string;
   locale: VoucherLocale;
   printSize: VoucherPrintSize;
-  /** Partner / promo name shown on the left flap (optional). */
+  /** Partner / promo name shown on the left panel (optional). */
   promoLabel?: string | null;
   /** ISO YYYY-MM-DD — printed in below-strip metadata. */
   issuedAt: string;
@@ -89,22 +86,19 @@ type VoucherPanelRect = { x: number; w: number };
 type VoucherLayout = {
   bounds: { x: number; y: number; w: number; h: number };
   left: VoucherPanelRect;
-  center: VoucherPanelRect;
   right: VoucherPanelRect;
-  fold1X: number;
-  fold2X: number;
+  foldX: number;
 };
 
-/** Gate-fold panel fills inside the trim area (wide center, narrow wings). */
+/** Bi-fold: left = brand story, right = gift code + steps + QR. */
 function drawPanelBackgrounds(doc: PdfDoc, layout: VoucherLayout): void {
-  const { bounds, left, center, right } = layout;
+  const { bounds, left, right } = layout;
   const y = bounds.y;
   const h = bounds.h;
 
   doc.save();
   doc.rect(left.x, y, left.w, h).fill(COL.panelLeft);
-  doc.rect(center.x, y, center.w, h).fill(COL.panelCenter);
-  doc.rect(right.x, y, right.w, h).fill(COL.panelRight);
+  doc.rect(right.x, y, right.w, h).fill(COL.panelCenter);
   doc.restore();
 }
 
@@ -121,21 +115,16 @@ function getVoucherLayout(
     w: stripW - MARGIN * 2,
     h: stripH - MARGIN * 2,
   };
-  const centerW = Math.round(bounds.w * GATE_CENTER_SHARE);
-  const wingW = Math.ceil(centerW / 2) + GATE_SEAM_OVERLAP_PT;
-  const leftW = wingW;
-  const rightW = bounds.w - centerW - leftW;
+  const leftW = Math.round(bounds.w / 2);
+  const rightW = bounds.w - leftW;
   const leftX = bounds.x;
-  const fold1X = leftX + leftW;
-  const fold2X = fold1X + centerW;
+  const foldX = leftX + leftW;
 
   return {
     bounds,
     left: { x: leftX, w: leftW },
-    center: { x: fold1X, w: centerW },
-    right: { x: fold2X, w: rightW },
-    fold1X,
-    fold2X,
+    right: { x: foldX, w: rightW },
+    foldX,
   };
 }
 
@@ -184,19 +173,15 @@ function drawCutGuide(doc: PdfDoc, layout: VoucherLayout): void {
 }
 
 function drawFoldGuides(doc: PdfDoc, layout: VoucherLayout): void {
-  const { bounds, fold1X, fold2X } = layout;
+  const { bounds, foldX } = layout;
 
   doc.save();
   doc.lineWidth(0.75);
   doc.dash(5, { space: 4 });
   doc.strokeColor(COL.border);
   doc
-    .moveTo(fold1X, bounds.y + 4)
-    .lineTo(fold1X, bounds.y + bounds.h - 4)
-    .stroke();
-  doc
-    .moveTo(fold2X, bounds.y + 4)
-    .lineTo(fold2X, bounds.y + bounds.h - 4)
+    .moveTo(foldX, bounds.y + 4)
+    .lineTo(foldX, bounds.y + bounds.h - 4)
     .stroke();
   doc.undash();
   doc.restore();
@@ -531,21 +516,38 @@ async function drawLeftFlap(
   fonts: PdfFonts,
   copy: VoucherPdfCopy,
   headline: string,
+  scanUrl: string,
   promoLabel: string | null | undefined,
   locale: VoucherLocale,
   layout: VoucherLayout,
 ): Promise<void> {
   const { left, bounds } = layout;
   const compactWing = left.w - PANEL_PAD * 2 < 200;
-  const compactHeight = bounds.h < 175;
+  const compactHeight = bounds.h < 200;
   const pad = compactWing ? 10 : PANEL_PAD;
   const contentX = left.x + pad;
   const contentW = left.w - pad * 2;
   const top = bounds.y + pad;
   const bottom = bounds.y + bounds.h - pad;
+  const contentH = bottom - top;
 
   const promo = promoLabel?.trim();
   const sidebarTagline = promo || copy.sidebarTagline;
+
+  const qrLabelSize = 7;
+  const qrLabelGap = 6;
+  doc.font(fonts.bold).fontSize(qrLabelSize).fillColor(COL.brand);
+  const qrCaptionH = doc.heightOfString(copy.scanToOpen, {
+    width: contentW,
+    align: 'center',
+    lineGap: 0,
+  });
+  const qrSize = Math.min(compactHeight ? 60 : 72, contentW * 0.36, contentH * 0.26);
+  const qrBlockW = qrSize;
+  const qrBlockH = qrSize + qrLabelGap + qrCaptionH;
+  const qrX = contentX + contentW - qrSize;
+  const qrY = top + 2;
+  const mainTextW = Math.max(80, contentW - qrBlockW - LEFT_PANEL_QR_GAP_PT);
 
   const iconSize = compactHeight ? 24 : compactWing ? 28 : 34;
   const headlineSize = compactHeight
@@ -575,15 +577,15 @@ async function drawLeftFlap(
 
   doc.font(fonts.bold).fontSize(headlineSize);
   const headlineH = doc.heightOfString(headline, {
-    width: contentW,
+    width: mainTextW,
     lineGap: headlineLineGap,
   });
   doc.font(fonts.regular).fontSize(taglineSize);
   const taglineH = doc.heightOfString(sidebarTagline, {
-    width: contentW,
+    width: mainTextW,
     lineGap: 0.25,
   });
-  const { blockH: perksBlockH } = await measureLeftWingPerksBlock(
+  let { blockH: perksBlockH } = await measureLeftWingPerksBlock(
     doc,
     fonts,
     copy,
@@ -614,19 +616,40 @@ async function drawLeftFlap(
 
   const thanksY = bottom - thankPadBottom - thanksStackH;
   const dividerY = thanksY - gapAfterDivider;
+  const perksMaxBottom = dividerY - LEFT_PANEL_PERKS_FOOTER_GAP_PT;
 
-  const mainBlockH =
-    iconSize +
-    gapAfterIcon +
-    headlineH +
-    gapAfterHeadline +
-    taglineH +
-    gapBeforePerks +
-    perksBlockH;
-  const footerReserve = gapAfterDivider + thanksRowH + thankPadBottom + 1;
-  const mainAreaForTop = bottom - top - footerReserve;
-  const mainTop =
-    top + Math.min(Math.max(0, (mainAreaForTop - mainBlockH) * 0.22), compactWing ? 4 : 8);
+  const headerBottomFor = (mainTopY: number) => {
+    const headlineY = mainTopY + iconSize + gapAfterIcon;
+    const taglineY = headlineY + headlineH + gapAfterHeadline;
+    return Math.max(taglineY + taglineH, qrY + qrBlockH);
+  };
+  const perksBoxYFor = (mainTopY: number, perksGap = gapBeforePerks) =>
+    headerBottomFor(mainTopY) + Math.max(4, perksGap);
+
+  let mainTop = top + (compactHeight ? 4 : 8);
+  let perksBoxY = perksBoxYFor(mainTop);
+
+  for (let pass = 0; pass < 6 && perksBoxY + perksBlockH > perksMaxBottom; pass += 1) {
+    if (pass === 1) {
+      perksOpts.rowGap = Math.max(4, perksOpts.rowGap - 2);
+    } else if (pass === 2) {
+      perksOpts.compact = true;
+      perksOpts.rowGap = 4;
+    } else if (pass >= 3) {
+      mainTop = top + 2;
+    }
+    const remeasured = await measureLeftWingPerksBlock(doc, fonts, copy, contentW, perksOpts);
+    perksBlockH = remeasured.blockH;
+    perksBoxY = perksBoxYFor(mainTop, Math.max(4, gapBeforePerks - pass));
+  }
+
+  const qrBuf = await qrPngBuffer(scanUrl, Math.round(qrSize * 2));
+  doc.image(qrBuf, qrX, qrY, { width: qrSize, height: qrSize });
+  doc.text(copy.scanToOpen, qrX, qrY + qrSize + qrLabelGap, {
+    width: qrBlockW,
+    align: 'center',
+    lineGap: 0,
+  });
 
   const iconBuf = await loadVoucherAppIconPng(Math.round(iconSize * 3));
   doc.image(iconBuf, contentX, mainTop, { width: iconSize, height: iconSize });
@@ -634,17 +657,21 @@ async function drawLeftFlap(
   const headlineY = mainTop + iconSize + gapAfterIcon;
   doc.font(fonts.bold).fontSize(headlineSize).fillColor(COL.brandDark);
   doc.text(headline, contentX, headlineY, {
-    width: contentW,
+    width: mainTextW,
     lineGap: headlineLineGap,
     align: 'left',
   });
 
   const taglineY = headlineY + headlineH + gapAfterHeadline;
   doc.font(fonts.regular).fontSize(taglineSize).fillColor(COL.muted);
-  doc.text(sidebarTagline, contentX, taglineY, { width: contentW, lineGap: 0.25 });
+  doc.text(sidebarTagline, contentX, taglineY, { width: mainTextW, lineGap: 0.25 });
 
-  const perksBoxY = taglineY + taglineH + gapBeforePerks;
+  perksBoxY = perksBoxYFor(mainTop);
+  const perksClipH = Math.max(0, perksMaxBottom - perksBoxY);
+  doc.save();
+  doc.rect(contentX, perksBoxY, contentW, perksClipH).clip();
   await drawLeftWingPerksBlock(doc, fonts, copy, contentX, perksBoxY, contentW, perksOpts);
+  doc.restore();
 
   const heartY = thanksY + (thanksRowH - heartPx) / 2;
   const textX = contentX + heartPx + 5;
@@ -703,7 +730,7 @@ async function drawGiftHeaderBadgeSized(
   doc.restore();
 }
 
-async function drawCenterPanel(
+async function drawRightPanel(
   doc: PdfDoc,
   fonts: PdfFonts,
   copy: VoucherPdfCopy,
@@ -711,16 +738,16 @@ async function drawCenterPanel(
   locale: VoucherLocale,
   layout: VoucherLayout,
 ): Promise<void> {
-  const { center, bounds } = layout;
+  const { right, bounds } = layout;
   doc.save();
-  doc.rect(center.x, bounds.y, center.w, bounds.h).clip();
-  const contentX = center.x + PANEL_PAD;
-  const contentW = center.w - PANEL_PAD * 2;
+  doc.rect(right.x, bounds.y, right.w, bounds.h).clip();
+  const contentX = right.x + PANEL_PAD;
+  const contentW = right.w - PANEL_PAD * 2;
   const top = layout.bounds.y + PANEL_PAD + 4;
   const bottom = layout.bounds.y + layout.bounds.h - PANEL_PAD;
   const contentH = bottom - top;
   const titleCenterX = contentX + contentW / 2;
-  const compact = contentH < 168;
+  const compact = contentH < layout.bounds.h * 0.82;
 
   const giftBadgeR = compact ? 14 : GIFT_BADGE_R;
   const giftBadgeGap = compact ? 4 : 6;
@@ -879,8 +906,10 @@ async function drawCenterPanel(
   doc.restore();
 }
 
-const SHEET_TOP_MARGIN_PT = 28;
+const SHEET_TOP_MARGIN_PT = 22;
+const STRIP_TO_FOOTER_GAP_PT = 14;
 const BELOW_STRIP_BOTTOM_PAD_PT = 14;
+const LEFT_PANEL_PERKS_FOOTER_GAP_PT = 10;
 
 /** Height of fold + legal block (PDFKit adds extra pages if the page is too short). */
 function measureBelowStripContentHeight(
@@ -943,12 +972,19 @@ function resolveVoucherPageLayout(
   printSize: VoucherPrintSize,
 ): VoucherPageLayout {
   const { width: sheetW, height: sheetH } = getVoucherSheetDimensions(printSize);
-  const { width: stripW, height: stripH } = getVoucherStripDimensions(printSize);
   const contentW = sheetW - MARGIN * 2;
   const belowContentH = measureBelowStripContentHeight(doc, fonts, copy, input, contentW);
   const belowArea = belowContentH + BELOW_STRIP_BOTTOM_PAD_PT;
+  const reservedBottom = belowArea + STRIP_TO_FOOTER_GAP_PT;
+  const { width: stripW, height: stripH } = fitVoucherStripToSheet(
+    printSize,
+    sheetW,
+    sheetH,
+    SHEET_TOP_MARGIN_PT,
+    reservedBottom,
+  );
   const stripX = Math.max(0, (sheetW - stripW) / 2);
-  const mainAreaH = sheetH - belowArea - SHEET_TOP_MARGIN_PT;
+  const mainAreaH = sheetH - reservedBottom - SHEET_TOP_MARGIN_PT;
   const stripY = SHEET_TOP_MARGIN_PT + Math.max(0, (mainAreaH - stripH) / 2);
   return { sheetW, sheetH, stripW, stripH, stripX, stripY, belowContentH };
 }
@@ -1015,50 +1051,6 @@ function drawBelowVoucherStrip(
   }
 }
 
-async function drawRightFlap(
-  doc: PdfDoc,
-  fonts: PdfFonts,
-  copy: VoucherPdfCopy,
-  scanUrl: string,
-  layout: VoucherLayout,
-): Promise<void> {
-  const { right, bounds } = layout;
-  const contentX = right.x + PANEL_PAD;
-  const contentW = Math.max(0, right.w - PANEL_PAD * 2);
-  const blockCenterX = contentX + contentW / 2;
-  const top = bounds.y + PANEL_PAD + 8;
-  const bottom = bounds.y + bounds.h - PANEL_PAD;
-  const compactWing = contentW < 200;
-
-  const labelFontSize = 7;
-  const labelGap = 8;
-  doc.font(fonts.bold).fontSize(labelFontSize).fillColor(COL.brand);
-  const captionH = doc.heightOfString(copy.scanToOpen, {
-    width: contentW,
-    align: 'center',
-    lineGap: 0,
-  });
-  const stackMaxH = bottom - top;
-  const qrSize = Math.min(
-    compactWing ? 92 : 118,
-    contentW,
-    Math.max(48, stackMaxH - captionH - labelGap),
-  );
-  const stackH = qrSize + labelGap + captionH;
-  const stackTop = top + Math.max(0, (stackMaxH - stackH) / 2);
-
-  const qrBuf = await qrPngBuffer(scanUrl, Math.round(qrSize * 2));
-  const qrX = Math.round(blockCenterX - qrSize / 2);
-  const qrY = stackTop;
-  doc.image(qrBuf, qrX, qrY, { width: qrSize, height: qrSize });
-
-  doc.text(copy.scanToOpen, contentX, qrY + qrSize + labelGap, {
-    width: contentW,
-    align: 'center',
-    lineGap: 0,
-  });
-}
-
 async function drawVoucherPage(
   doc: PdfDoc,
   input: VoucherPdfInput,
@@ -1077,9 +1069,17 @@ async function drawVoucherPage(
   drawCutAlongLabels(doc, fonts, copy, layout);
   drawVoucherWatermark(doc, fonts, input, layout);
 
-  await drawLeftFlap(doc, fonts, copy, headline, input.promoLabel, input.locale, layout);
-  await drawCenterPanel(doc, fonts, copy, input.plainKey, input.locale, layout);
-  await drawRightFlap(doc, fonts, copy, input.scanUrl, layout);
+  await drawLeftFlap(
+    doc,
+    fonts,
+    copy,
+    headline,
+    input.scanUrl,
+    input.promoLabel,
+    input.locale,
+    layout,
+  );
+  await drawRightPanel(doc, fonts, copy, input.plainKey, input.locale, layout);
   drawVoucherKeyId(doc, fonts, input.keyId, layout);
   drawBelowVoucherStrip(doc, fonts, copy, input, sheetW, sheetH, belowContentH);
 }
@@ -1116,7 +1116,14 @@ export async function renderVouchersPrintPdf(inputs: VoucherPdfInput[]): Promise
     }
     const first = inputs[0]!;
     if (first.includeEnvelope) {
-      await drawEnvelopeAssemblyPage(doc, fonts, first.locale, first.printSize);
+      const { stripW, stripH } = resolveVoucherPageLayout(
+        doc,
+        fonts,
+        getVoucherPdfCopy(first.locale),
+        first,
+        first.printSize,
+      );
+      await drawEnvelopeAssemblyPage(doc, fonts, first.locale, first.printSize, stripW, stripH);
     }
     doc.end();
   } catch (e) {
