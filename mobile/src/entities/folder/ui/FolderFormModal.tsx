@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, Keyboard, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 
-import { navigationRef } from '@/app/navigation/navigationRef';
+import { openPlanPaywall } from '@/app/navigation/openPlanPaywall';
 import { useSettingsStore } from '@/entities/settings/model/store';
 import { useProEntitlement } from '@/features/pro-license';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
@@ -102,18 +102,7 @@ export const FolderFormModal = ({
     }
 
     const timer = setTimeout(() => {
-      if (!navigationRef.isReady()) {
-        return;
-      }
-
-      navigationRef.navigate('Main', {
-        screen: 'SettingsRoot',
-        params: {
-          screen: 'Settings',
-          params: { openPlanPaywall: true },
-        },
-      });
-
+      openPlanPaywall();
       setPendingPaywallOpen(false);
     }, 250);
     return () => clearTimeout(timer);

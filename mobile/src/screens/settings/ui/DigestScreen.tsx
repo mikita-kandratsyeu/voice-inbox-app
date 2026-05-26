@@ -17,6 +17,7 @@ import Markdown from 'react-native-markdown-display';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
@@ -301,8 +302,11 @@ export const DigestScreen = () => {
       });
 
       if (!result.ok) {
-        const message = result.limitExceeded ? t('settings.digest.aiLimitError') : result.error;
-        Alert.alert(t('common.error'), message);
+        if (result.limitExceeded) {
+          alertAiLimitExceeded(t('settings.digest.aiLimitError'));
+        } else {
+          Alert.alert(t('common.error'), result.error);
+        }
         return;
       }
 

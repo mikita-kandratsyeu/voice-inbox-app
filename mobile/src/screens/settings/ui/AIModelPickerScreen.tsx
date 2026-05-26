@@ -7,6 +7,7 @@ import { Alert, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import { openPlanPaywall } from '@/app/navigation/openPlanPaywall';
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import type {
   LocalAiModelCatalogEntry,
@@ -474,7 +475,7 @@ export const AIModelPickerScreen = () => {
           feature="premiumAiModel"
           onUpgradePress={() => {
             setPremiumModelSheet(false);
-            navigation.navigate('Settings', { openPlanPaywall: true });
+            openPlanPaywall();
           }}
           onClose={() => setPremiumModelSheet(false)}
         />

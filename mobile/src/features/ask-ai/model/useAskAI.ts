@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
+import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import { useRecordStore, type VoiceRecord } from '@/entities/record';
 import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
 import {
@@ -344,6 +345,9 @@ export const useAskAI = (
               mode: runResult.mode,
               tier: privateCapabilityTier,
             });
+          if (runResult.limitExceeded) {
+            alertAiLimitExceeded(errorMsg);
+          }
           persistOutcome({ isLoading: false, error: errorMsg, answer: null });
           void logAnalyticsEvent('ai_action_failed', {
             action: 'ask',

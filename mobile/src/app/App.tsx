@@ -22,6 +22,7 @@ import { AppLockGate, AppSwitcherPrivacyOverlay } from '@/features/app-lock';
 import { AppRatingPromptRoot } from '@/features/app-review';
 import { flushPendingSharedAudioImport } from '@/features/import-audio-file/lib/sharedAudioImportRegistry';
 import { OnboardingGate } from '@/features/onboarding';
+import { PlanPaywallProvider } from '@/features/plan-paywall';
 import {
   ProEntitlementProvider,
   useResetAccentWhenNotPro,
@@ -110,43 +111,45 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
     <GestureHandlerRootView style={rootStyle}>
       <KeyboardProvider>
         <SafeAreaProvider style={safeAreaStyle}>
-          <NetworkStatusProvider>
-            <BottomSheetModalProvider>
-              <StatusBar
-                barStyle={isDark ? 'light-content' : 'dark-content'}
-                backgroundColor={color.background.primary}
-              />
-              <NavigationContainer
-                ref={navigationRef}
-                onReady={() => {
-                  routeNameRef.current = navigationRef.getCurrentRoute()?.name;
-                  flushPendingRecordModalNavigation();
-                  flushPendingSharedAudioImport();
-                }}
-                onStateChange={() => {
-                  const previous = routeNameRef.current;
-                  const current = navigationRef.getCurrentRoute()?.name;
-                  if (current != null && current !== previous) {
-                    routeNameRef.current = current;
-                    void logAnalyticsScreenView(current);
-                  }
-                }}
-              >
-                <OnboardingGate>
-                  <AppLockGate>
-                    <AppProcessingKeepAwake />
-                    <TranscriptionResumePrompt />
-                    <RootNavigator />
-                  </AppLockGate>
-                </OnboardingGate>
-              </NavigationContainer>
-              <WarmupBottomSheet />
-              <CloudAiThirdPartyConsentModal />
-              <PushNotificationSheet />
-              <AppRatingPromptRoot />
-            </BottomSheetModalProvider>
-            <AppSwitcherPrivacyOverlay />
-          </NetworkStatusProvider>
+          <PlanPaywallProvider>
+            <NetworkStatusProvider>
+              <BottomSheetModalProvider>
+                <StatusBar
+                  barStyle={isDark ? 'light-content' : 'dark-content'}
+                  backgroundColor={color.background.primary}
+                />
+                <NavigationContainer
+                  ref={navigationRef}
+                  onReady={() => {
+                    routeNameRef.current = navigationRef.getCurrentRoute()?.name;
+                    flushPendingRecordModalNavigation();
+                    flushPendingSharedAudioImport();
+                  }}
+                  onStateChange={() => {
+                    const previous = routeNameRef.current;
+                    const current = navigationRef.getCurrentRoute()?.name;
+                    if (current != null && current !== previous) {
+                      routeNameRef.current = current;
+                      void logAnalyticsScreenView(current);
+                    }
+                  }}
+                >
+                  <OnboardingGate>
+                    <AppLockGate>
+                      <AppProcessingKeepAwake />
+                      <TranscriptionResumePrompt />
+                      <RootNavigator />
+                    </AppLockGate>
+                  </OnboardingGate>
+                </NavigationContainer>
+                <WarmupBottomSheet />
+                <CloudAiThirdPartyConsentModal />
+                <PushNotificationSheet />
+                <AppRatingPromptRoot />
+              </BottomSheetModalProvider>
+              <AppSwitcherPrivacyOverlay />
+            </NetworkStatusProvider>
+          </PlanPaywallProvider>
         </SafeAreaProvider>
       </KeyboardProvider>
       {bootSplashVisible && (

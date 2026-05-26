@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
+import { openPlanPaywall } from '@/features/plan-paywall';
 import { isInternalDebugBuild } from '@/shared/config/buildEnv';
 import {
   IS_ANDROID,
@@ -29,7 +30,6 @@ import {
   SettingsPermissionsSection,
   SettingsPrivacySection,
 } from './sections';
-import { SettingsPlanPaywallSheet } from './SettingsPlanPaywallSheet';
 import { SettingsPlanStatusCard } from './SettingsPlanStatusCard';
 
 export const SettingsScreen = () => {
@@ -191,20 +191,6 @@ export const SettingsScreen = () => {
           )}
           <DeferredInboxBannerAd color={settings.color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
-        <SettingsPlanPaywallSheet
-          visible={settings.planPaywallVisible}
-          mode={settings.monetizationMode}
-          freeAiLimit={settings.freeWeeklyLimit}
-          proAiLimit={settings.proWeeklyLimit}
-          onClose={() => settings.setPlanPaywallVisible(false)}
-          onUpgradePress={settings.handleUpgradePress}
-          onRestorePurchasesPress={settings.handleRestorePurchasesPress}
-          iapBusy={settings.iapPaywallBusy}
-          iapBilling={settings.iapBilling}
-          selectedIapPeriod={settings.selectedIapPeriod}
-          onIapBillingPeriodChange={settings.onIapBillingPeriodChange}
-          iapProPriceLoading={settings.iapProPriceLoading}
-        />
         <BackupEncryptionNoticeSheet
           visible={settings.backupNoticeSheetVisible}
           onClose={settings.handleBackupNoticeClose}
@@ -224,7 +210,7 @@ export const SettingsScreen = () => {
               feature={settings.automationSheet ?? 'autoTranscribe'}
               onUpgradePress={() => {
                 settings.setAutomationSheet(null);
-                settings.setPlanPaywallVisible(true);
+                openPlanPaywall();
               }}
               onClose={() => settings.setAutomationSheet(null)}
             />

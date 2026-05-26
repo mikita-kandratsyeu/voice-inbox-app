@@ -1,6 +1,7 @@
 import { useCallback, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
+import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import type { RecordClassification, TaskItem, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { mergeManualTasksWithAi } from '@/entities/record/model/mergeManualTasksWithAi';
@@ -355,6 +356,9 @@ export const useAiProcessing = () => {
               mode: runResult.mode,
               tier: privateCapabilityTier,
             });
+          if (runResult.limitExceeded) {
+            alertAiLimitExceeded(errorMsg);
+          }
           setSummaryStatus(record.id, 'error');
           setTasksStatus(record.id, 'error');
           setSummaryError(record.id, errorMsg);

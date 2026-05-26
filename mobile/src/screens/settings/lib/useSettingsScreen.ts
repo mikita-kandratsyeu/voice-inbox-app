@@ -1,7 +1,7 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState } from 'react-native';
 
@@ -26,26 +26,19 @@ import {
 } from '@/features/app-storefront';
 import { useClaimAiBonus } from '@/features/claim-ai-bonus';
 import { regenerateAllEmbeddings } from '@/features/embedding-generation';
-import type { IapBillingOptions, IapBillingPeriod } from '@/features/entitlements';
-import {
-  getProBillingPriceOptions,
-  openStoreSubscriptionManagement,
-  purchaseProPackageForPeriod,
-  resolveDefaultIapBillingPeriod,
-  restoreProPurchases,
-} from '@/features/entitlements';
+import { openStoreSubscriptionManagement } from '@/features/entitlements';
 import { openInAppBrowser } from '@/features/in-app-browser';
+import { openPlanPaywall } from '@/features/plan-paywall';
 import { isStoreProEntitlementActiveNow, useProEntitlement } from '@/features/pro-license';
-import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import {
   exportData,
   IMPORT_ERROR_WRONG_BACKUP_PASSWORD,
   importData,
   type ImportResult,
 } from '@/features/sync-data';
-import { FREE_WEEKLY_LIMIT, useAppTheme, useColors } from '@/shared/config';
+import { useAppTheme, useColors } from '@/shared/config';
 import { IS_IOS } from '@/shared/lib';
-import { getAiUsage, getAiWeeklyLimits } from '@/shared/lib/ai-api';
+import { getAiUsage } from '@/shared/lib/ai-api';
 import { fetchProAccountPortalUrl } from '@/shared/lib/ai-api/proLicenseApi';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import {
@@ -71,13 +64,6 @@ import { getWhisperLabel } from '@/shared/lib/whisper';
 
 import type { AutomationFeatureKind } from '../ui/AutomationComingSoonSheet';
 import type { BackupPasswordSheetMode } from '../ui/BackupPasswordSheet';
-
-const RESET_IAP_BILLING: IapBillingOptions = {
-  annual: null,
-  monthly: null,
-  annualComparedToMonthlyYearPriceString: null,
-  savePercentVsMonthly: null,
-};
 
 export function useSettingsScreen() {
   const { t, i18n } = useTranslation();
@@ -120,20 +106,12 @@ export function useSettingsScreen() {
   const pendingEnableEncryptAfterNoticeRef = useRef(false);
   const [aiUsage, setAiUsage] = useState<Awaited<ReturnType<typeof getAiUsage>>>(null);
   const [aiUsageLoading, setAiUsageLoading] = useState(true);
-  const [proWeeklyLimit, setProWeeklyLimit] = useState<number>(75);
-  const [freeWeeklyLimit, setFreeWeeklyLimit] = useState<number>(FREE_WEEKLY_LIMIT);
   const [refreshing, setRefreshing] = useState(false);
   const [isUpdatingEmbeddings, setIsUpdatingEmbeddings] = useState(false);
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
   const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
   const [automationSheet, setAutomationSheet] = useState<AutomationFeatureKind | null>(null);
   const [autoArchiveDelaySheetVisible, setAutoArchiveDelaySheetVisible] = useState(false);
-  const [planPaywallVisible, setPlanPaywallVisibleState] = useState(false);
-  const [iapPaywallBusy, setIapPaywallBusy] = useState(false);
-  const [iapBilling, setIapBilling] = useState<IapBillingOptions>(RESET_IAP_BILLING);
-  const [selectedIapPeriod, setSelectedIapPeriod] = useState<IapBillingPeriod>('annual');
-  const [iapProPriceLoading, setIapProPriceLoading] = useState(false);
-
   const {
     refresh: refreshProEntitlement,
     isProActive: proEntitlementActive,
@@ -141,14 +119,6 @@ export function useSettingsScreen() {
   } = useProEntitlement();
   const automationLocked = isAutomationUiLockedForPublicStore(proEntitlementActive);
   const monetizationMode = getMonetizationMode();
-
-  const setPlanPaywallVisible = useCallback((visible: boolean) => {
-    if (visible && getMonetizationMode() === 'iap_public') {
-      setIapProPriceLoading(true);
-      setIapBilling(RESET_IAP_BILLING);
-    }
-    setPlanPaywallVisibleState(visible);
-  }, []);
 
   const [planCardStoreProActive, setPlanCardStoreProActive] = useState<boolean | null>(null);
 
@@ -172,25 +142,6 @@ export function useSettingsScreen() {
     };
   }, [proEntitlementActive, monetizationMode, expiresAtMs]);
 
-  useLayoutEffect(() => {
-    if (!planPaywallVisible || monetizationMode !== 'iap_public') {
-      return;
-    }
-
-    let cancelled = false;
-
-    void getProBillingPriceOptions().then((opts) => {
-      if (!cancelled) {
-        setIapBilling(opts);
-        setSelectedIapPeriod(resolveDefaultIapBillingPeriod(opts));
-      }
-      setIapProPriceLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [planPaywallVisible, monetizationMode, i18n.language]);
-
   useFocusEffect(
     useCallback(() => {
       void logAnalyticsEvent('settings_opened');
@@ -203,17 +154,6 @@ export function useSettingsScreen() {
     setAiUsage(data ?? null);
 
     return data;
-  }, []);
-
-  const fetchProWeeklyLimit = useCallback(async (options?: { force?: boolean }) => {
-    const limits = await getAiWeeklyLimits({ force: options?.force === true });
-    if (limits?.proWeeklyLimit && limits.proWeeklyLimit > 0) {
-      setProWeeklyLimit(limits.proWeeklyLimit);
-    }
-    if (limits?.freeWeeklyLimit && limits.freeWeeklyLimit > 0) {
-      setFreeWeeklyLimit(limits.freeWeeklyLimit);
-    }
-    return limits;
   }, []);
 
   const onBonusSuccess = useCallback(
@@ -236,7 +176,7 @@ export function useSettingsScreen() {
     let cancelled = false;
 
     const timer = setTimeout(() => {
-      Promise.all([fetchAiUsage(), fetchProWeeklyLimit()]).finally(() => {
+      void fetchAiUsage().finally(() => {
         if (!cancelled) setAiUsageLoading(false);
       });
     }, 0);
@@ -245,7 +185,7 @@ export function useSettingsScreen() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [fetchAiUsage, fetchProWeeklyLimit]);
+  }, [fetchAiUsage]);
 
   const prevProSnapshotRef = useRef<{ isProActive: boolean; expiresAtMs: number | null } | null>(
     null,
@@ -264,8 +204,7 @@ export function useSettingsScreen() {
     if (!shouldRefresh) return;
 
     void fetchAiUsage();
-    void fetchProWeeklyLimit({ force: true });
-  }, [proEntitlementActive, expiresAtMs, fetchAiUsage, fetchProWeeklyLimit]);
+  }, [proEntitlementActive, expiresAtMs, fetchAiUsage]);
 
   const refreshPermissions = useCallback(async () => {
     const mic = await checkMicPermission();
@@ -297,11 +236,10 @@ export function useSettingsScreen() {
     setRefreshing(true);
     try {
       await Promise.all([fetchAiUsage(), refreshProEntitlement({ force: true })]);
-      await fetchProWeeklyLimit({ force: true });
     } finally {
       setRefreshing(false);
     }
-  }, [fetchAiUsage, fetchProWeeklyLimit, refreshProEntitlement]);
+  }, [fetchAiUsage, refreshProEntitlement]);
 
   const userFacing = USER_FACING_AI_MODELS.find((m) => m.id === selectedAIModel);
   const localModel =
@@ -603,86 +541,17 @@ export function useSettingsScreen() {
       })();
       return;
     }
-    setPlanPaywallVisible(true);
-  }, [
-    i18n.language,
-    monetizationMode,
-    proEntitlementActive,
-    resolvedColorScheme,
-    setPlanPaywallVisible,
-    t,
-  ]);
+    openPlanPaywall();
+  }, [i18n.language, monetizationMode, proEntitlementActive, resolvedColorScheme, t]);
 
   useEffect(() => {
     if (!route.params?.openPlanPaywall) {
       return;
     }
 
-    setPlanPaywallVisible(true);
+    openPlanPaywall();
     navigation.setParams({ openPlanPaywall: false });
-  }, [navigation, route.params?.openPlanPaywall, setPlanPaywallVisible]);
-
-  const handleUpgradePress = useCallback(() => {
-    if (monetizationMode === 'iap_public') {
-      setIapPaywallBusy(true);
-      void (async () => {
-        try {
-          const result = await purchaseProPackageForPeriod(selectedIapPeriod);
-          if (result.ok) {
-            setPlanPaywallVisible(false);
-            void refreshProEntitlement({ force: true });
-            return;
-          }
-          if (result.cancelled) {
-            return;
-          }
-          const body =
-            result.message === 'no_package'
-              ? t('settings.planPaywall.purchaseErrorNoPackage')
-              : result.message === 'iap_unavailable'
-                ? t('settings.planPaywall.purchaseErrorUnavailable')
-                : t('settings.planPaywall.purchaseError');
-          Alert.alert(t('common.error'), body);
-        } finally {
-          setIapPaywallBusy(false);
-        }
-      })();
-    }
-  }, [monetizationMode, refreshProEntitlement, selectedIapPeriod, setPlanPaywallVisible, t]);
-
-  const onIapBillingPeriodChange = useCallback((period: IapBillingPeriod) => {
-    setSelectedIapPeriod(period);
-  }, []);
-
-  const handleRestorePurchasesPress = useCallback(() => {
-    if (monetizationMode !== 'iap_public') {
-      return;
-    }
-
-    setIapPaywallBusy(true);
-    void (async () => {
-      try {
-        const result = await restoreProPurchases();
-        if (result.ok) {
-          await refreshProEntitlement({ force: true });
-          if (result.entitlementActive || isProActiveFromStorageSync()) {
-            setPlanPaywallVisible(false);
-            Alert.alert(t('common.done'), t('settings.planPaywall.restoreSuccess'));
-            return;
-          }
-          Alert.alert(t('common.done'), t('settings.planPaywall.restoreNothingFound'));
-          return;
-        }
-        const restoreErrBody =
-          result.message === 'iap_unavailable'
-            ? t('settings.planPaywall.purchaseErrorUnavailable')
-            : t('settings.planPaywall.restoreError');
-        Alert.alert(t('common.error'), restoreErrBody);
-      } finally {
-        setIapPaywallBusy(false);
-      }
-    })();
-  }, [monetizationMode, refreshProEntitlement, setPlanPaywallVisible, t]);
+  }, [navigation, route.params?.openPlanPaywall]);
 
   const openDebugScreen = useCallback(() => {
     if (!navigationRef.isReady()) {
@@ -697,8 +566,6 @@ export function useSettingsScreen() {
     navigation,
     monetizationMode,
     planCardStoreProActive,
-    proWeeklyLimit,
-    freeWeeklyLimit,
     proEntitlementActive,
     refreshProEntitlement,
     refreshing,
@@ -752,16 +619,7 @@ export function useSettingsScreen() {
     handleNotificationsPress,
     isAppLockEnabled,
     handleRateApp,
-    planPaywallVisible,
-    setPlanPaywallVisible,
     automationSheet,
-    handleUpgradePress,
-    handleRestorePurchasesPress,
-    iapPaywallBusy,
-    iapBilling,
-    selectedIapPeriod,
-    onIapBillingPeriodChange,
-    iapProPriceLoading,
     openDebugScreen,
   };
 }

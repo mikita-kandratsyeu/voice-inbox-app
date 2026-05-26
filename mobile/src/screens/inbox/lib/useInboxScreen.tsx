@@ -14,6 +14,7 @@ import {
   getFloatingTabBarScrollPaddingBottom,
   getInboxBatchModeScrollPaddingBottom,
 } from '@/app/navigation/config';
+import { openPlanPaywall } from '@/app/navigation/openPlanPaywall';
 import type { BottomTabParamList } from '@/app/navigation/types';
 import { useFolderStore } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
@@ -320,11 +321,8 @@ export function useInboxScreen() {
 
   const handleBatchExportProUpgrade = useCallback(() => {
     setBatchExportProSheetVisible(false);
-    navigation.navigate('SettingsRoot', {
-      screen: 'Settings',
-      params: { openPlanPaywall: true },
-    });
-  }, [navigation]);
+    openPlanPaywall();
+  }, []);
 
   const handleBatchExportTemplate = useCallback(
     (template: ShareBriefTemplate, packaging: BatchExportPackaging) => {

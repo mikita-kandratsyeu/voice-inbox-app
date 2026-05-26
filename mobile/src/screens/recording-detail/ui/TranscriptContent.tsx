@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
+import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
@@ -96,12 +97,11 @@ export const TranscriptContent = ({
     const result = await translate(targetLanguage);
 
     if (!result.ok) {
-      const message =
-        result.error === 'limit'
-          ? t('recordingDetail.translateLimitReached')
-          : t('recordingDetail.translateError');
-
-      Alert.alert(t('common.error'), message);
+      if (result.error === 'limit') {
+        alertAiLimitExceeded(t('recordingDetail.translateLimitReached'));
+      } else {
+        Alert.alert(t('common.error'), t('recordingDetail.translateError'));
+      }
 
       return false;
     }

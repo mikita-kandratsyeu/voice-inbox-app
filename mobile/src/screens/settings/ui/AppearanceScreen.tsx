@@ -7,6 +7,7 @@ import { ScrollView, Text, TouchableOpacity, useWindowDimensions, View } from 'r
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import { openPlanPaywall } from '@/app/navigation/openPlanPaywall';
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { AppLanguage, AppTheme } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
@@ -261,7 +262,7 @@ export const AppearanceScreen = () => {
         feature="accentColor"
         onUpgradePress={() => {
           setAccentProSheet(false);
-          navigation.navigate('Settings', { openPlanPaywall: true });
+          openPlanPaywall();
         }}
         onClose={() => setAccentProSheet(false)}
       />

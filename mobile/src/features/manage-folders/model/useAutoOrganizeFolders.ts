@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert } from 'react-native';
 
+import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import { useFolderStore } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
@@ -162,17 +163,21 @@ export function useAutoOrganizeFolders(
         messageTtlSeconds: cloudAiKvTtlSeconds,
       });
       if (!postResult.ok) {
-        const msg =
-          'limitExceeded' in postResult && postResult.limitExceeded
-            ? postResult.reason === 'auto_organize_free_limit'
-              ? getAutoOrganizeWeeklyLimitExceededMessage()
-              : getAiWeeklyLimitExceededMessage()
-            : postResult.error;
+        const isLimitExceeded = 'limitExceeded' in postResult && postResult.limitExceeded;
+        const msg = isLimitExceeded
+          ? postResult.reason === 'auto_organize_free_limit'
+            ? getAutoOrganizeWeeklyLimitExceededMessage()
+            : getAiWeeklyLimitExceededMessage()
+          : postResult.error;
         const safeMsg =
           isString(msg) && isLikelyNetworkError(msg)
             ? t('folders.autoOrganizeFailedDescription')
             : msg;
-        Alert.alert(t('common.error'), safeMsg);
+        if (isLimitExceeded && isString(safeMsg)) {
+          alertAiLimitExceeded(safeMsg);
+        } else {
+          Alert.alert(t('common.error'), safeMsg);
+        }
         return;
       }
 
