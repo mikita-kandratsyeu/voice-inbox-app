@@ -23,18 +23,37 @@ export function getVoucherStripDimensions(size: VoucherPrintSize): {
   return size === 'us-letter' ? VOUCHER_PAGE_US_LETTER : VOUCHER_PAGE_A4;
 }
 
-/** Extra page height under the voucher for fold steps + legal fine print (not part of the cut). */
+/** Minimum reserved height for fold + legal block when estimating layout (legacy). */
 export const VOUCHER_BELOW_STRIP_HEIGHT_PT = 108;
 
 /** @deprecated Use {@link VOUCHER_BELOW_STRIP_HEIGHT_PT}. */
 export const VOUCHER_FOLD_GUIDE_HEIGHT_PT = VOUCHER_BELOW_STRIP_HEIGHT_PT;
 
+/** Portrait A4 — voucher sheet for home printers. */
+export const VOUCHER_SHEET_A4 = {
+  width: Math.round(210 * MM_TO_PT),
+  height: Math.round(297 * MM_TO_PT),
+} as const;
+
+/** Portrait US Letter. */
+export const VOUCHER_SHEET_US_LETTER = {
+  width: Math.round(8.5 * 72),
+  height: Math.round(11 * 72),
+} as const;
+
+/** Full print sheet (portrait) — voucher centered, instructions pinned to the bottom. */
+export function getVoucherSheetDimensions(size: VoucherPrintSize): {
+  width: number;
+  height: number;
+} {
+  return size === 'us-letter' ? VOUCHER_SHEET_US_LETTER : VOUCHER_SHEET_A4;
+}
+
 export function getVoucherPageDimensions(size: VoucherPrintSize): {
   width: number;
   height: number;
 } {
-  const strip = getVoucherStripDimensions(size);
-  return { width: strip.width, height: strip.height + VOUCHER_BELOW_STRIP_HEIGHT_PT };
+  return getVoucherSheetDimensions(size);
 }
 
 /** Matches {@link MARGIN} in `pro-license-voucher-pdf.ts`. */

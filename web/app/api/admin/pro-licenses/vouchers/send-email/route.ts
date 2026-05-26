@@ -97,6 +97,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         promoLabel: parsed.promoLabel,
         batchId,
         issuedAt,
+        includeEnvelope: parsed.includeEnvelope,
       }),
     );
   } catch (e) {

@@ -134,6 +134,7 @@ export function AdminProLicensesPanel() {
   const [voucherLocale, setVoucherLocale] = useState<'en' | 'ru'>('en');
   const [voucherPrintSize, setVoucherPrintSize] = useState<'a4' | 'us-letter'>('a4');
   const [voucherOutput, setVoucherOutput] = useState<'print_pdf' | 'zip'>('print_pdf');
+  const [voucherIncludeEnvelope, setVoucherIncludeEnvelope] = useState(true);
   const [voucherExtraNote, setVoucherExtraNote] = useState('');
   const [voucherPromoLabel, setVoucherPromoLabel] = useState('');
   const [voucherGenerating, setVoucherGenerating] = useState(false);
@@ -430,6 +431,7 @@ export function AdminProLicensesPanel() {
         body: JSON.stringify({
           locale: voucherLocale,
           printSize: voucherPrintSize,
+          includeEnvelope: voucherIncludeEnvelope,
           ...bodyPayload,
           ...(voucherPromoLabel.trim() ? { promoLabel: voucherPromoLabel.trim() } : {}),
         }),
@@ -478,6 +480,7 @@ export function AdminProLicensesPanel() {
           locale: voucherLocale,
           printSize: voucherPrintSize,
           output: voucherOutput,
+          includeEnvelope: voucherIncludeEnvelope,
           ...bodyPayload,
           ...(voucherExtraNote.trim() ? { adminNotes: voucherExtraNote.trim() } : {}),
           ...(voucherPromoLabel.trim() ? { promoLabel: voucherPromoLabel.trim() } : {}),
@@ -537,6 +540,7 @@ export function AdminProLicensesPanel() {
           email,
           locale: voucherLocale,
           printSize: voucherPrintSize,
+          includeEnvelope: voucherIncludeEnvelope,
           ...bodyPayload,
           ...(voucherExtraNote.trim() ? { adminNotes: voucherExtraNote.trim() } : {}),
           ...(voucherPromoLabel.trim() ? { promoLabel: voucherPromoLabel.trim() } : {}),
@@ -731,6 +735,17 @@ export function AdminProLicensesPanel() {
               <option value="print_pdf">Single PDF</option>
               <option value="zip">ZIP (one PDF each)</option>
             </select>
+          </AdminFormField>
+          <AdminFormField label="Envelope sheet">
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300">
+              <input
+                type="checkbox"
+                checked={voucherIncludeEnvelope}
+                onChange={(e) => setVoucherIncludeEnvelope(e.target.checked)}
+                className="size-4 rounded border-zinc-300 dark:border-zinc-600"
+              />
+              Include second page (branded envelope)
+            </label>
           </AdminFormField>
           <AdminFormField label="Promo label (optional)">
             <input

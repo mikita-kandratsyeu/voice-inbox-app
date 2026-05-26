@@ -108,6 +108,7 @@ export async function POST(request: Request): Promise<Response> {
       promoLabel: parsed.promoLabel,
       batchId,
       issuedAt,
+      includeEnvelope: parsed.includeEnvelope,
     }),
   );
   const stamp = issuedAt;
@@ -126,6 +127,7 @@ export async function POST(request: Request): Promise<Response> {
         count,
         locale,
         output,
+        includeEnvelope: parsed.includeEnvelope,
         batchId,
         issuedAt,
         durationMonths: spec.kind === 'months' ? spec.months : 0,
@@ -152,6 +154,7 @@ export async function POST(request: Request): Promise<Response> {
       count,
       locale,
       output,
+      includeEnvelope: parsed.includeEnvelope,
       batchId,
       issuedAt,
       durationMonths: spec.kind === 'months' ? spec.months : 0,

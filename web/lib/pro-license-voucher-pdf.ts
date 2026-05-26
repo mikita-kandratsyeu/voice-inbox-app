@@ -12,8 +12,8 @@ import {
 } from '@/lib/pro-license-voucher-copy';
 import {
   getVoucherPageDimensions,
+  getVoucherSheetDimensions,
   getVoucherStripDimensions,
-  VOUCHER_BELOW_STRIP_HEIGHT_PT,
   type VoucherPrintSize,
 } from '@/lib/pro-license-voucher-print-size';
 import { resolveVoucherPdfFonts, type VoucherPdfFonts } from '@/lib/voucher-fonts';
@@ -74,6 +74,8 @@ export type VoucherPdfInput = {
   /** Shared batch id for one print/email run. */
   batchId: string;
   templateVersion: string;
+  /** When false, skip the branded envelope assembly sheet (second page). */
+  includeEnvelope: boolean;
 };
 
 export type { VoucherPrintSize } from '@/lib/pro-license-voucher-print-size';
@@ -106,12 +108,17 @@ function drawPanelBackgrounds(doc: PdfDoc, layout: VoucherLayout): void {
   doc.restore();
 }
 
-/** Layout for the trim/cut voucher strip only (fold guide is drawn below). */
-function getVoucherLayout(pageW: number, stripH: number): VoucherLayout {
+/** Layout for the trim/cut voucher strip on the sheet (fold + legal text is separate, at page bottom). */
+function getVoucherLayout(
+  stripX: number,
+  stripY: number,
+  stripW: number,
+  stripH: number,
+): VoucherLayout {
   const bounds = {
-    x: MARGIN,
-    y: MARGIN,
-    w: pageW - MARGIN * 2,
+    x: stripX + MARGIN,
+    y: stripY + MARGIN,
+    w: stripW - MARGIN * 2,
     h: stripH - MARGIN * 2,
   };
   const centerW = Math.round(bounds.w * GATE_CENTER_SHARE);
@@ -872,8 +879,8 @@ async function drawCenterPanel(
   doc.restore();
 }
 
-const BELOW_STRIP_GAP_PT = 8;
-const BELOW_STRIP_BOTTOM_PAD_PT = 10;
+const SHEET_TOP_MARGIN_PT = 28;
+const BELOW_STRIP_BOTTOM_PAD_PT = 14;
 
 /** Height of fold + legal block (PDFKit adds extra pages if the page is too short). */
 function measureBelowStripContentHeight(
@@ -918,37 +925,51 @@ function measureBelowStripContentHeight(
   return total;
 }
 
-function resolveVoucherPageSize(
+type VoucherPageLayout = {
+  sheetW: number;
+  sheetH: number;
+  stripW: number;
+  stripH: number;
+  stripX: number;
+  stripY: number;
+  belowContentH: number;
+};
+
+function resolveVoucherPageLayout(
   doc: PdfDoc,
   fonts: PdfFonts,
   copy: VoucherPdfCopy,
   input: VoucherPdfInput,
   printSize: VoucherPrintSize,
-): { pageW: number; pageH: number; stripH: number } {
-  const { width: pageW, height: stripH } = getVoucherStripDimensions(printSize);
-  const contentW = pageW - MARGIN * 2;
+): VoucherPageLayout {
+  const { width: sheetW, height: sheetH } = getVoucherSheetDimensions(printSize);
+  const { width: stripW, height: stripH } = getVoucherStripDimensions(printSize);
+  const contentW = sheetW - MARGIN * 2;
   const belowContentH = measureBelowStripContentHeight(doc, fonts, copy, input, contentW);
-  const belowArea = BELOW_STRIP_GAP_PT + belowContentH + BELOW_STRIP_BOTTOM_PAD_PT;
-  const pageH = stripH + Math.max(VOUCHER_BELOW_STRIP_HEIGHT_PT, belowArea);
-  return { pageW, pageH, stripH };
+  const belowArea = belowContentH + BELOW_STRIP_BOTTOM_PAD_PT;
+  const stripX = Math.max(0, (sheetW - stripW) / 2);
+  const mainAreaH = sheetH - belowArea - SHEET_TOP_MARGIN_PT;
+  const stripY = SHEET_TOP_MARGIN_PT + Math.max(0, (mainAreaH - stripH) / 2);
+  return { sheetW, sheetH, stripW, stripH, stripX, stripY, belowContentH };
 }
 
-/** Fold steps + standard legal fine print below the cut line (trim off with the voucher). */
+/** Fold steps + legal fine print pinned to the bottom of the print sheet (full page width). */
 function drawBelowVoucherStrip(
   doc: PdfDoc,
   fonts: PdfFonts,
   copy: VoucherPdfCopy,
   input: VoucherPdfInput,
-  layout: VoucherLayout,
+  sheetW: number,
+  sheetH: number,
+  belowContentH: number,
 ): void {
-  const { bounds } = layout;
   const sectionTitleSize = 6;
   const bodySize = 4.75;
   const stepGap = 2;
   const sectionGap = 7;
-  const contentX = bounds.x;
-  const contentW = bounds.w;
-  let y = bounds.y + bounds.h + BELOW_STRIP_GAP_PT;
+  const contentX = MARGIN;
+  const contentW = sheetW - MARGIN * 2;
+  let y = sheetH - BELOW_STRIP_BOTTOM_PAD_PT - belowContentH;
 
   doc.font(fonts.bold).fontSize(sectionTitleSize).fillColor(COL.brandDark);
   let blockH = doc.heightOfString(copy.foldTitle, { width: contentW, lineGap: 0 });
@@ -1044,10 +1065,11 @@ async function drawVoucherPage(
   fonts: PdfFonts,
 ): Promise<void> {
   const copy = getVoucherPdfCopy(input.locale);
-  const { pageW, pageH, stripH } = resolveVoucherPageSize(doc, fonts, copy, input, input.printSize);
-  doc.addPage({ size: [pageW, pageH], margins: { top: 0, bottom: 0, left: 0, right: 0 } });
+  const pageLayout = resolveVoucherPageLayout(doc, fonts, copy, input, input.printSize);
+  const { sheetW, sheetH, stripW, stripH, stripX, stripY, belowContentH } = pageLayout;
+  doc.addPage({ size: [sheetW, sheetH], margins: { top: 0, bottom: 0, left: 0, right: 0 } });
   const headline = formatVoucherPremiumAccessHeadline(input.duration, input.locale);
-  const layout = getVoucherLayout(pageW, stripH);
+  const layout = getVoucherLayout(stripX, stripY, stripW, stripH);
 
   drawPanelBackgrounds(doc, layout);
   drawCutGuide(doc, layout);
@@ -1059,7 +1081,7 @@ async function drawVoucherPage(
   await drawCenterPanel(doc, fonts, copy, input.plainKey, input.locale, layout);
   await drawRightFlap(doc, fonts, copy, input.scanUrl, layout);
   drawVoucherKeyId(doc, fonts, input.keyId, layout);
-  drawBelowVoucherStrip(doc, fonts, copy, input, layout);
+  drawBelowVoucherStrip(doc, fonts, copy, input, sheetW, sheetH, belowContentH);
 }
 
 function createVoucherPdfDocument(printSize: VoucherPrintSize): PdfDoc {
@@ -1092,7 +1114,10 @@ export async function renderVouchersPrintPdf(inputs: VoucherPdfInput[]): Promise
     for (const input of inputs) {
       await drawVoucherPage(doc, input, fonts);
     }
-    await drawEnvelopeAssemblyPage(doc, fonts, inputs[0]!.locale, inputs[0]!.printSize);
+    const first = inputs[0]!;
+    if (first.includeEnvelope) {
+      await drawEnvelopeAssemblyPage(doc, fonts, first.locale, first.printSize);
+    }
     doc.end();
   } catch (e) {
     doc.destroy();

@@ -33,7 +33,10 @@ export async function POST(request: Request): Promise<Response> {
   let pdf: Buffer;
   try {
     pdf = await renderVoucherPdf(
-      buildVoucherPreviewPdfInput(parsed.spec, parsed.locale, parsed.printSize, parsed.promoLabel),
+      buildVoucherPreviewPdfInput(parsed.spec, parsed.locale, parsed.printSize, {
+        promoLabel: parsed.promoLabel,
+        includeEnvelope: parsed.includeEnvelope,
+      }),
     );
   } catch (e) {
     console.error('[admin/pro-licenses/vouchers/preview POST]', e);

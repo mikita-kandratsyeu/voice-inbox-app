@@ -34,6 +34,16 @@ export function parseVoucherOutputFormat(raw: unknown): VoucherOutputFormat {
   return s === 'zip' ? 'zip' : 'print_pdf';
 }
 
+/** Default true — set `includeEnvelope: false` to omit the assembly sheet. */
+export function parseVoucherIncludeEnvelope(raw: unknown): boolean {
+  if (raw === false || raw === 0) return false;
+  if (typeof raw === 'string') {
+    const s = raw.trim().toLowerCase();
+    if (s === 'false' || s === '0' || s === 'no' || s === 'off') return false;
+  }
+  return true;
+}
+
 export function sanitizeVoucherExtraNote(raw: unknown): string | null {
   if (typeof raw !== 'string') return null;
   const t = raw.trim();
@@ -62,11 +72,13 @@ export function parseVoucherRequestBody(body: {
   locale?: unknown;
   promoLabel?: unknown;
   printSize?: unknown;
+  includeEnvelope?: unknown;
 }): {
   spec: ProLicenseDurationSpec;
   locale: VoucherLocale;
   promoLabel: string | null;
   printSize: VoucherPrintSize;
+  includeEnvelope: boolean;
 } | null {
   const spec = parseProLicenseDurationFromBody(body);
   if (spec == null) return null;
@@ -75,6 +87,7 @@ export function parseVoucherRequestBody(body: {
     locale: parseVoucherLocale(body.locale),
     promoLabel: sanitizeVoucherPromoLabel(body.promoLabel),
     printSize: parseVoucherPrintSize(body.printSize),
+    includeEnvelope: parseVoucherIncludeEnvelope(body.includeEnvelope),
   };
 }
 
@@ -84,6 +97,8 @@ export type BuildVoucherPdfInputOpts = {
   batchId?: string;
   /** ISO YYYY-MM-DD; defaults to today (UTC). */
   issuedAt?: string;
+  /** Branded envelope assembly sheet; defaults to true. */
+  includeEnvelope?: boolean;
 };
 
 export function buildVoucherPdfInput(
@@ -107,6 +122,7 @@ export function buildVoucherPdfInput(
     issuedAt,
     batchId,
     templateVersion: VOUCHER_TEMPLATE_VERSION,
+    includeEnvelope: opts?.includeEnvelope ?? true,
   };
 }
 
@@ -114,7 +130,7 @@ export function buildVoucherPreviewPdfInput(
   spec: ProLicenseDurationSpec,
   locale: VoucherLocale,
   printSize: VoucherPrintSize,
-  promoLabel?: string | null,
+  opts?: { promoLabel?: string | null; includeEnvelope?: boolean } | null,
 ): VoucherPdfInput {
   return buildVoucherPdfInput(
     VOUCHER_PREVIEW_PLAIN_KEY,
@@ -123,9 +139,10 @@ export function buildVoucherPreviewPdfInput(
     locale,
     printSize,
     {
-      promoLabel,
+      promoLabel: opts?.promoLabel,
       batchId: VOUCHER_PREVIEW_BATCH_ID,
       issuedAt: voucherIssuedDateIso(),
+      includeEnvelope: opts?.includeEnvelope,
     },
   );
 }
