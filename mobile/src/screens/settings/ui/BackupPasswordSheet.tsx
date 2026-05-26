@@ -6,7 +6,7 @@ import { Text, View } from 'react-native';
 
 import { BACKUP_PASSWORD_MIN_LENGTH, validateBackupPassword } from '@/features/sync-data';
 import { useColors } from '@/shared/config';
-import { IS_IOS, useIsTablet, useTabletContentMaxWidth, withAlphaHex } from '@/shared/lib';
+import { IS_IOS, withAlphaHex } from '@/shared/lib';
 import {
   APP_BOTTOM_SHEET_BACKDROP_SNAP,
   AppBottomSheetModal,
@@ -25,20 +25,11 @@ type Props = {
 };
 
 const textInputPadding = IS_IOS ? { paddingTop: 11, paddingBottom: 11 } : { paddingVertical: 12 };
-const TABLET_SHEET_CONTENT_MAX_WIDTH = 480;
 
 export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSubmit }: Props) {
   const { t } = useTranslation();
   const c = useColors();
   const contentPadding = useBottomSheetContentPadding(20);
-  const isTablet = useIsTablet();
-  const tabletContentMaxWidth = useTabletContentMaxWidth();
-  const sheetContentMaxWidth = isTablet
-    ? Math.min(
-        tabletContentMaxWidth ?? TABLET_SHEET_CONTENT_MAX_WIDTH,
-        TABLET_SHEET_CONTENT_MAX_WIDTH,
-      )
-    : undefined;
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -109,10 +100,7 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
     >
       <BottomSheetView
         style={{
-          alignSelf: 'center',
-          width: '100%',
-          maxWidth: sheetContentMaxWidth,
-          paddingHorizontal: isTablet ? 24 : 20,
+          paddingHorizontal: 20,
           paddingTop: 8,
           ...contentPadding,
         }}
