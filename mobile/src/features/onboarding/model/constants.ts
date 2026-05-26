@@ -16,8 +16,7 @@ type SlideIconName =
   | 'Zap'
   | 'Settings'
   | 'Shield'
-  | 'UploadCloud'
-  | 'Video';
+  | 'UploadCloud';
 
 type SlideExtra =
   | 'dots'
@@ -31,52 +30,13 @@ type SlideExtra =
   | 'restore'
   | 'meeting-import';
 
-const ONBOARDING_SLIDES_HEAD: SlideDef[] = [
+const ONBOARDING_SLIDES: SlideDef[] = [
   {
     id: 'record',
     titleKey: 'onboarding.recordTitle',
     descKey: 'onboarding.recordDesc',
     iconName: 'Mic',
     extra: 'dots',
-  },
-  {
-    id: 'meetingImport',
-    titleKey: 'onboarding.meetingImportTitle',
-    descKey: 'onboarding.meetingImportDesc',
-    iconName: 'Video',
-    extra: 'meeting-import',
-  },
-  {
-    id: 'transcribe',
-    titleKey: 'onboarding.transcribeTitle',
-    descKey: 'onboarding.transcribeDesc',
-    iconName: 'Lock',
-    extra: 'privacy',
-  },
-  {
-    id: 'ai',
-    titleKey: 'onboarding.aiTitle',
-    descKey: 'onboarding.aiDesc',
-    iconName: 'Sparkles',
-    extra: 'ai-features',
-  },
-];
-
-const ONBOARDING_SLIDE_PRIVATE: SlideDef = {
-  id: 'privateMode',
-  titleKey: 'onboarding.privateModeTitle',
-  descKey: 'onboarding.privateModeDesc',
-  iconName: 'Smartphone',
-  extra: 'private-mode',
-};
-
-const ONBOARDING_SLIDES_TAIL: SlideDef[] = [
-  {
-    id: 'ready',
-    titleKey: 'onboarding.readyTitle',
-    descKey: 'onboarding.readyDesc',
-    iconName: 'Zap',
-    extra: 'check',
   },
   {
     id: 'permissions',
@@ -99,13 +59,6 @@ const ONBOARDING_SLIDES_TAIL: SlideDef[] = [
     iconName: 'Settings',
     extra: 'setupWhisper',
   },
-  {
-    id: 'restore',
-    titleKey: 'onboarding.restoreTitle',
-    descKey: 'onboarding.restoreDesc',
-    iconName: 'UploadCloud',
-    extra: 'restore',
-  },
 ];
 
 const ICON_KEYS: Record<SlideIconName, keyof Colors['onboarding']> = {
@@ -117,7 +70,6 @@ const ICON_KEYS: Record<SlideIconName, keyof Colors['onboarding']> = {
   Settings: 'setup',
   Shield: 'shield',
   UploadCloud: 'restore',
-  Video: 'setup',
 };
 
 export type OnboardingSlide = OnboardingSlideContent;
@@ -132,7 +84,7 @@ export type OnboardingSlideContent = {
 };
 
 export const getOnboardingSlides = (colors: Colors): OnboardingSlideContent[] =>
-  [...ONBOARDING_SLIDES_HEAD, ONBOARDING_SLIDE_PRIVATE, ...ONBOARDING_SLIDES_TAIL].map((slide) => {
+  ONBOARDING_SLIDES.map((slide) => {
     const key = ICON_KEYS[slide.iconName];
     const tone = colors.onboarding[key];
     if ('color' in tone && 'bg' in tone) {

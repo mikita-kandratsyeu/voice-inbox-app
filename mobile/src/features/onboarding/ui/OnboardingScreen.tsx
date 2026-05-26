@@ -1,6 +1,5 @@
 import {
   Bell,
-  Check,
   Lock,
   Mic,
   Settings,
@@ -8,7 +7,6 @@ import {
   Smartphone,
   Sparkles,
   UploadCloud,
-  Video,
   Zap,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -79,7 +77,6 @@ const ICON_MAP = {
   Settings,
   Shield,
   UploadCloud,
-  Video,
 } as const;
 
 type OnboardingScreenProps = {
@@ -351,8 +348,6 @@ type SlideItemProps = {
   windowWidth: number;
   contentMaxWidth?: number;
   color: Colors;
-  agreedToTerms?: boolean;
-  onAgreeChange?: (value: boolean) => void;
   onRestorePress?: () => void;
   isRestoring?: boolean;
 };
@@ -488,8 +483,6 @@ type PermissionsSlideProps = {
   index: number;
   scrollX: SharedValue<number>;
   screenWidth: SharedValue<number>;
-  agreedToTerms?: boolean;
-  onAgreeChange?: (value: boolean) => void;
 };
 
 const PermissionsSlide = ({
@@ -500,8 +493,6 @@ const PermissionsSlide = ({
   index,
   scrollX,
   screenWidth,
-  agreedToTerms = false,
-  onAgreeChange,
 }: PermissionsSlideProps) => {
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
   const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
@@ -550,16 +541,11 @@ const PermissionsSlide = ({
 
   return (
     <Animated.View
-      style={[{ width: windowWidth, paddingHorizontal: 24, paddingTop: 48 }, animatedStyle]}
-      className="flex-1"
+      style={[{ width: windowWidth, paddingHorizontal: 24 }, animatedStyle]}
+      className="flex-1 items-center justify-center"
     >
-      <ScrollView
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{
-          flexGrow: 1,
-          paddingBottom: 24,
-          alignSelf: 'center',
+      <View
+        style={{
           width: '100%',
           maxWidth: contentMaxWidth ?? '100%',
         }}
@@ -605,47 +591,7 @@ const PermissionsSlide = ({
             t={t}
           />
         </View>
-        <View className="mt-6 flex-row items-center gap-3">
-          <TouchableOpacity
-            activeOpacity={0.7}
-            onPress={() => {
-              hapticSelection();
-              onAgreeChange?.(!agreedToTerms);
-            }}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            accessibilityRole="checkbox"
-            accessibilityLabel={t('onboarding.termsCheckboxA11y')}
-            accessibilityState={{ checked: Boolean(agreedToTerms) }}
-          >
-            <View
-              className="h-7 w-7 items-center justify-center rounded-md"
-              style={{
-                backgroundColor: agreedToTerms ? color.onboarding.shield.color : 'transparent',
-                borderWidth: 2,
-                borderColor: agreedToTerms ? color.onboarding.shield.color : color.text.secondary,
-              }}
-            >
-              {agreedToTerms && <Check size={16} color={color.icon.onAccent} strokeWidth={2.5} />}
-            </View>
-          </TouchableOpacity>
-          <Text className="flex-1 text-sm leading-5" style={{ color: color.text.secondary }}>
-            {t('onboarding.agreeToTermsPrefix')}
-            <Text
-              style={{ color: color.accent.primary, textDecorationLine: 'underline' }}
-              onPress={() => getWebsiteUrl() && openInAppBrowser(`${getWebsiteUrl()}/terms`)}
-            >
-              {t('onboarding.agreeToTermsLink')}
-            </Text>
-            {t('onboarding.agreeToTermsAnd')}
-            <Text
-              style={{ color: color.accent.primary, textDecorationLine: 'underline' }}
-              onPress={() => getWebsiteUrl() && openInAppBrowser(`${getWebsiteUrl()}/privacy`)}
-            >
-              {t('onboarding.agreeToTermsLink2')}
-            </Text>
-          </Text>
-        </View>
-      </ScrollView>
+      </View>
     </Animated.View>
   );
 };
@@ -659,8 +605,6 @@ const SlideItem = ({
   contentMaxWidth,
   color,
   t,
-  agreedToTerms = false,
-  onAgreeChange,
   onRestorePress,
   isRestoring = false,
 }: SlideItemProps & { t: (k: string) => string }) => {
@@ -690,8 +634,6 @@ const SlideItem = ({
         index={index}
         scrollX={scrollX}
         screenWidth={screenWidth}
-        agreedToTerms={agreedToTerms}
-        onAgreeChange={onAgreeChange}
       />
     );
   }
@@ -981,7 +923,6 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const { width: windowWidth } = useWindowDimensions();
   const [currentIndex, setCurrentIndex] = useState(0);
   const hasSeenOnboarding = useMemo(() => getHasSeenOnboarding(), []);
-  const [agreedToTerms, setAgreedToTerms] = useState(() => getTermsAgreedAt() != null);
   const [termsGateVisible, setTermsGateVisible] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
   const [restorePasswordSheetVisible, setRestorePasswordSheetVisible] = useState(false);
@@ -990,8 +931,6 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   const finishingRef = useRef(false);
   const flatListRef = useRef<FlatList<OnboardingSlideContent>>(null);
   const pendingAfterTermsRef = useRef<(() => void) | null>(null);
-  const agreedToTermsRef = useRef(agreedToTerms);
-  agreedToTermsRef.current = agreedToTerms;
   const scrollX = useSharedValue(0);
   const screenWidth = useSharedValue(windowWidth);
 
@@ -1177,7 +1116,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   }, [onComplete]);
 
   const queueAfterTermsAccepted = useCallback((continuation: () => void) => {
-    if (agreedToTermsRef.current) {
+    if (getTermsAgreedAt() != null) {
       continuation();
       return;
     }
@@ -1191,8 +1130,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
   }, []);
 
   const handleTermsModalAgree = useCallback(() => {
-    setAgreedToTerms(true);
-    agreedToTermsRef.current = true;
+    setTermsAgreedAt();
     setTermsGateVisible(false);
     const run = pendingAfterTermsRef.current;
     pendingAfterTermsRef.current = null;
@@ -1265,30 +1203,16 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
         contentMaxWidth={contentMaxWidth}
         color={color}
         t={t}
-        agreedToTerms={agreedToTerms}
-        onAgreeChange={setAgreedToTerms}
         onRestorePress={handleRestore}
         isRestoring={isRestoring}
       />
     ),
-    [
-      agreedToTerms,
-      color,
-      contentMaxWidth,
-      handleRestore,
-      isRestoring,
-      scrollX,
-      screenWidth,
-      t,
-      windowWidth,
-    ],
+    [color, contentMaxWidth, handleRestore, isRestoring, scrollX, screenWidth, t, windowWidth],
   );
 
   const isLastSlide = currentIndex === slides.length - 1;
-  const permissionsSlideIndex = slides.findIndex((s) => s.id === 'permissions');
-  const isOnPermissionsSlide = permissionsSlideIndex >= 0 && currentIndex === permissionsSlideIndex;
-  const isOnLastFourScreens = currentIndex >= slides.length - 4;
-  const showSkipButton = hasSeenOnboarding && !isOnLastFourScreens;
+  const isOnSetupScreens = currentIndex >= slides.length - 2;
+  const showSkipButton = hasSeenOnboarding && !isOnSetupScreens;
 
   return (
     <View
@@ -1372,7 +1296,7 @@ export const OnboardingScreen = ({ onComplete }: OnboardingScreenProps) => {
           screenWidth={screenWidth}
           slideColors={slideColors}
           iconOnAccent={color.icon.onAccent}
-          disabled={isFinishingOnboarding || (isOnPermissionsSlide && !agreedToTerms)}
+          disabled={isFinishingOnboarding}
           loading={isFinishingOnboarding}
         />
       </View>
