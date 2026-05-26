@@ -128,8 +128,8 @@ function getEnvelopeDielineLayout(
   dims: EnvelopeDielineDimensionsMm,
   instructionsH: number,
 ): EnvelopeDielineLayout {
-  const pocketW = mmToPt(dims.pocket.width);
-  const pocketH = mmToPt(dims.pocket.height);
+  let pocketW = mmToPt(dims.pocket.width);
+  let pocketH = mmToPt(dims.pocket.height);
   let sideW = mmToPt(dims.sideFlap);
   let topH = mmToPt(dims.topFlap);
   let bottomH = mmToPt(dims.bottomFlap);
@@ -153,14 +153,30 @@ function getEnvelopeDielineLayout(
     bottomH *= flapScale;
     totalH = topH + pocketH + bottomH;
   }
+  if (totalH > maxDielineH) {
+    const fitScale = maxDielineH / totalH;
+    topH *= fitScale;
+    pocketH *= fitScale;
+    bottomH *= fitScale;
+    sideW *= fitScale;
+    pocketW *= fitScale;
+    totalH = topH + pocketH + bottomH;
+  }
 
   const minSideMm = Math.ceil(dims.pocket.width / 2) + 2;
   sideW = Math.max(sideW, mmToPt(minSideMm));
 
-  const totalW = sideW * 2 + pocketW;
+  let totalW = sideW * 2 + pocketW;
   const maxTotalW = pageW - PAGE_MARGIN_PT * 2;
   if (totalW > maxTotalW) {
-    sideW = Math.max(mmToPt(minSideMm), (maxTotalW - pocketW) / 2);
+    const widthScale = maxTotalW / totalW;
+    sideW *= widthScale;
+    pocketW *= widthScale;
+    topH *= widthScale;
+    bottomH *= widthScale;
+    pocketH *= widthScale;
+    totalW = sideW * 2 + pocketW;
+    totalH = topH + pocketH + bottomH;
   }
   const x = (pageW - totalW) / 2;
   const y = PAGE_MARGIN_PT + HEADER_H_PT;
@@ -576,7 +592,10 @@ export async function drawEnvelopeAssemblyPage(
 
   const instructionsH = measureAssemblyBlockHeight(doc, fonts, copy, pageW);
   const layout = getEnvelopeDielineLayout(pageW, pageH, dims, instructionsH);
-  const instructionsY = layout.y + layout.totalH + DIELINE_TO_INSTRUCTIONS_GAP_PT;
+  const instructionsY = Math.min(
+    layout.y + layout.totalH + DIELINE_TO_INSTRUCTIONS_GAP_PT,
+    pageH - INSTRUCTION_BOTTOM_PAD_PT - instructionsH,
+  );
 
   drawPageHeader(doc, fonts, copy, pageW);
   drawPanelFills(doc, layout);

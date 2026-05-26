@@ -14,7 +14,6 @@ export type VoucherSidebarPerkIcon = 'zap' | 'brain' | 'shield';
 
 export type VoucherPdfCopy = {
   titleLine: string;
-  scanToOpen: string;
   yourCode: string;
   thankYouSidebar: string;
   thanksLead: string;
@@ -32,7 +31,7 @@ export type VoucherPdfCopy = {
 };
 
 /** Bump when below-strip, envelope, or voucher legal copy changes (printed on every PDF). */
-export const VOUCHER_TEMPLATE_VERSION = 'v15';
+export const VOUCHER_TEMPLATE_VERSION = 'v17';
 
 export type VoucherEnvelopeCopy = {
   pageTitle: string;
@@ -205,7 +204,6 @@ export function getVoucherBelowStripLegalLines(
 
 const COPY_EN: VoucherPdfCopy = {
   titleLine: 'GIFT VOUCHER',
-  scanToOpen: 'SCAN TO OPEN',
   yourCode: 'YOUR CODE',
   thankYouSidebar: 'Thank you for choosing Voice Inbox AI',
   thanksLead: 'Thank you for choosing',
@@ -232,7 +230,6 @@ const COPY_EN: VoucherPdfCopy = {
 
 const COPY_RU: VoucherPdfCopy = {
   titleLine: 'ПОДАРОЧНЫЙ ВАУЧЕР',
-  scanToOpen: 'ОТСКАНИРУЙТЕ',
   yourCode: 'ВАШ КОД',
   thankYouSidebar: 'Спасибо, что выбрали Voice Inbox AI',
   thanksLead: 'Спасибо, что выбрали',

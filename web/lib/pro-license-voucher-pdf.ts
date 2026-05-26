@@ -314,6 +314,25 @@ function fitFooterLegalFontSize(
   return size;
 }
 
+function fitBoldSingleLineFontSize(
+  doc: PdfDoc,
+  fonts: PdfFonts,
+  lines: string[],
+  maxWidth: number,
+  startSize: number,
+  minSize: number,
+): number {
+  let size = startSize;
+  doc.font(fonts.bold).fontSize(size);
+  while (size > minSize) {
+    const fits = lines.every((line) => doc.widthOfString(line) <= maxWidth);
+    if (fits) return size;
+    size -= 0.25;
+    doc.fontSize(size);
+  }
+  return minSize;
+}
+
 function drawStep(
   doc: PdfDoc,
   fonts: PdfFonts,
@@ -325,12 +344,12 @@ function drawStep(
   icon: 'phone' | 'card' | 'check',
   locale: VoucherLocale,
   colW: number,
+  titleSize: number,
+  detailSize: number,
   compact = false,
   spacing = getStepSpacing(locale, compact),
 ): number {
   const left = x - colW / 2;
-  const titleSize = compact ? (locale === 'ru' ? 5 : 5.25) : locale === 'ru' ? 5.5 : 6;
-  const detailSize = compact ? (locale === 'ru' ? 4.5 : 4.75) : locale === 'ru' ? 4.75 : 5;
   const detailLineGap = compact ? (locale === 'ru' ? 0.28 : 0.38) : locale === 'ru' ? 0.32 : 0.42;
 
   const iconCy = y + spacing.iconTopPad + STEP_ICON_BADGE_R;
@@ -534,18 +553,10 @@ async function drawLeftFlap(
   const promo = promoLabel?.trim();
   const sidebarTagline = promo || copy.sidebarTagline;
 
-  const qrLabelSize = 7;
-  const qrLabelGap = 6;
-  doc.font(fonts.bold).fontSize(qrLabelSize).fillColor(COL.brand);
-  const qrCaptionH = doc.heightOfString(copy.scanToOpen, {
-    width: contentW,
-    align: 'center',
-    lineGap: 0,
-  });
   const qrSize = Math.min(compactHeight ? 60 : 72, contentW * 0.36, contentH * 0.26);
   const qrBlockW = qrSize;
-  const qrBlockH = qrSize + qrLabelGap + qrCaptionH;
-  const qrX = contentX + contentW - qrSize;
+  const qrBlockH = qrSize;
+  const qrBlockX = contentX + contentW - qrBlockW;
   const qrY = top + 2;
   const mainTextW = Math.max(80, contentW - qrBlockW - LEFT_PANEL_QR_GAP_PT);
 
@@ -609,12 +620,11 @@ async function drawLeftFlap(
     lineGap: 0,
     lineBreak: false,
   });
-  const thanksStackH = thanksLineH + thanksLineGap + brandLineH;
-  const thanksRowH = Math.max(heartPx, thanksStackH);
+  const thanksTextH = thanksLineH + thanksLineGap + brandLineH;
   const thankPadBottom = compactWing ? 4 : 6;
   const gapAfterDivider = compactWing ? 5 : 6;
 
-  const thanksY = bottom - thankPadBottom - thanksStackH;
+  const thanksY = bottom - thankPadBottom - thanksTextH;
   const dividerY = thanksY - gapAfterDivider;
   const perksMaxBottom = dividerY - LEFT_PANEL_PERKS_FOOTER_GAP_PT;
 
@@ -644,12 +654,7 @@ async function drawLeftFlap(
   }
 
   const qrBuf = await qrPngBuffer(scanUrl, Math.round(qrSize * 2));
-  doc.image(qrBuf, qrX, qrY, { width: qrSize, height: qrSize });
-  doc.text(copy.scanToOpen, qrX, qrY + qrSize + qrLabelGap, {
-    width: qrBlockW,
-    align: 'center',
-    lineGap: 0,
-  });
+  doc.image(qrBuf, qrBlockX, qrY, { width: qrSize, height: qrSize });
 
   const iconBuf = await loadVoucherAppIconPng(Math.round(iconSize * 3));
   doc.image(iconBuf, contentX, mainTop, { width: iconSize, height: iconSize });
@@ -673,7 +678,7 @@ async function drawLeftFlap(
   await drawLeftWingPerksBlock(doc, fonts, copy, contentX, perksBoxY, contentW, perksOpts);
   doc.restore();
 
-  const heartY = thanksY + (thanksRowH - heartPx) / 2;
+  const heartY = thanksY + Math.max(0, (thanksTextH - heartPx) / 2);
   const textX = contentX + heartPx + 5;
 
   doc.moveTo(contentX, dividerY).lineTo(contentX + contentW, dividerY);
@@ -752,8 +757,6 @@ async function drawRightPanel(
   const giftBadgeR = compact ? 14 : GIFT_BADGE_R;
   const giftBadgeGap = compact ? 4 : 6;
   const titleSize = compact ? (locale === 'ru' ? 12 : 13) : locale === 'ru' ? 15 : 17;
-  const stepTitleSize = compact ? (locale === 'ru' ? 5 : 5.25) : locale === 'ru' ? 5.5 : 6;
-  const stepDetailSize = compact ? (locale === 'ru' ? 4.5 : 4.75) : locale === 'ru' ? 4.75 : 5;
   const stepDetailLineGap = compact
     ? locale === 'ru'
       ? 0.28
@@ -763,7 +766,8 @@ async function drawRightPanel(
       : 0.42;
   const footerTextW = contentW - 12;
   const footerTextX = contentX + 6;
-  const footerBottomPad = compact ? 2 : 3;
+  const footerBottomPad = compact ? 7 : 9;
+  const stepsLiftPt = compact ? 8 : 11;
   const codeGapAfterTitle = compact ? 5 : 6;
 
   await drawGiftHeaderBadgeSized(doc, titleCenterX, top + giftBadgeR, giftBadgeR);
@@ -794,7 +798,17 @@ async function drawRightPanel(
 
   const codeBottom = codeY + codeH;
   const stepColW = contentW / 3;
-  const stepColInner = stepColW - 14;
+  const stepColInner = stepColW - 8;
+  const stepTitleLines = copy.stepTitles.map((title, i) => `${i + 1}. ${title}`);
+  const stepTitleSize = fitBoldSingleLineFontSize(
+    doc,
+    fonts,
+    stepTitleLines,
+    stepColInner,
+    compact ? (locale === 'ru' ? 5 : 5.25) : locale === 'ru' ? 5.5 : 6,
+    locale === 'ru' ? 4.25 : 4.5,
+  );
+  const stepDetailSize = compact ? (locale === 'ru' ? 4.5 : 4.75) : locale === 'ru' ? 4.75 : 5;
 
   let footerFontSize = compact ? (locale === 'ru' ? 4 : 4.5) : locale === 'ru' ? 4.25 : 5;
   footerFontSize = fitFooterLegalFontSize(
@@ -827,8 +841,8 @@ async function drawRightPanel(
   );
   let footerH = measureFooterH();
   let footerY = bottom - footerBottomPad - footerH;
-  const minStepsY = codeBottom + (compact ? 6 : 8);
-  let stepsY = footerY - footerGap - stepBlockH;
+  const minStepsY = codeBottom + (compact ? 4 : 5);
+  let stepsY = footerY - footerGap - stepBlockH - stepsLiftPt;
 
   if (stepsY < minStepsY) {
     stepSpacing = getStepSpacing(locale, compact, true);
@@ -846,8 +860,9 @@ async function drawRightPanel(
     );
     footerH = measureFooterH();
     footerY = bottom - footerBottomPad - footerH;
-    stepsY = footerY - footerGap - stepBlockH;
+    stepsY = footerY - footerGap - stepBlockH - stepsLiftPt;
   }
+  stepsY = Math.max(minStepsY, stepsY);
 
   const step1X = contentX + stepColW * 0.5;
   const step2X = contentX + stepColW * 1.5;
@@ -863,6 +878,8 @@ async function drawRightPanel(
     'phone',
     locale,
     stepColInner,
+    stepTitleSize,
+    stepDetailSize,
     compact,
     stepSpacing,
   );
@@ -877,6 +894,8 @@ async function drawRightPanel(
     'card',
     locale,
     stepColInner,
+    stepTitleSize,
+    stepDetailSize,
     compact,
     stepSpacing,
   );
@@ -891,6 +910,8 @@ async function drawRightPanel(
     'check',
     locale,
     stepColInner,
+    stepTitleSize,
+    stepDetailSize,
     compact,
     stepSpacing,
   );
@@ -1005,7 +1026,11 @@ function drawBelowVoucherStrip(
   const sectionGap = 7;
   const contentX = MARGIN;
   const contentW = sheetW - MARGIN * 2;
-  let y = sheetH - BELOW_STRIP_BOTTOM_PAD_PT - belowContentH;
+  const footerTop = sheetH - BELOW_STRIP_BOTTOM_PAD_PT - belowContentH;
+  let y = footerTop;
+
+  doc.save();
+  doc.rect(contentX, footerTop - 2, contentW, belowContentH + BELOW_STRIP_BOTTOM_PAD_PT + 4).clip();
 
   doc.font(fonts.bold).fontSize(sectionTitleSize).fillColor(COL.brandDark);
   let blockH = doc.heightOfString(copy.foldTitle, { width: contentW, lineGap: 0 });
@@ -1049,13 +1074,14 @@ function drawBelowVoucherStrip(
     doc.text(line, contentX, y, { width: contentW, lineGap: 0.1 });
     y += blockH + 1.5;
   }
+  doc.restore();
 }
 
 async function drawVoucherPage(
   doc: PdfDoc,
   input: VoucherPdfInput,
   fonts: PdfFonts,
-): Promise<void> {
+): Promise<{ stripW: number; stripH: number }> {
   const copy = getVoucherPdfCopy(input.locale);
   const pageLayout = resolveVoucherPageLayout(doc, fonts, copy, input, input.printSize);
   const { sheetW, sheetH, stripW, stripH, stripX, stripY, belowContentH } = pageLayout;
@@ -1082,6 +1108,7 @@ async function drawVoucherPage(
   await drawRightPanel(doc, fonts, copy, input.plainKey, input.locale, layout);
   drawVoucherKeyId(doc, fonts, input.keyId, layout);
   drawBelowVoucherStrip(doc, fonts, copy, input, sheetW, sheetH, belowContentH);
+  return { stripW, stripH };
 }
 
 function createVoucherPdfDocument(printSize: VoucherPrintSize): PdfDoc {
@@ -1111,19 +1138,21 @@ export async function renderVouchersPrintPdf(inputs: VoucherPdfInput[]): Promise
   const done = collectPdfBuffer(doc);
   const fonts = await resolveVoucherPdfFonts(doc);
   try {
+    let stripForEnvelope: { stripW: number; stripH: number } | null = null;
     for (const input of inputs) {
-      await drawVoucherPage(doc, input, fonts);
+      const strip = await drawVoucherPage(doc, input, fonts);
+      stripForEnvelope ??= strip;
     }
     const first = inputs[0]!;
-    if (first.includeEnvelope) {
-      const { stripW, stripH } = resolveVoucherPageLayout(
+    if (first.includeEnvelope && stripForEnvelope) {
+      await drawEnvelopeAssemblyPage(
         doc,
         fonts,
-        getVoucherPdfCopy(first.locale),
-        first,
+        first.locale,
         first.printSize,
+        stripForEnvelope.stripW,
+        stripForEnvelope.stripH,
       );
-      await drawEnvelopeAssemblyPage(doc, fonts, first.locale, first.printSize, stripW, stripH);
     }
     doc.end();
   } catch (e) {
