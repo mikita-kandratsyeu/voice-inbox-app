@@ -16,7 +16,7 @@ import {
   type AiAbortHandle,
   createAiAbortHandle,
   isAbortLikeError,
-  isAiRequestCancelled,
+  isAiGenerationCancelledError,
 } from '@/shared/lib/ai-api/abort';
 import { cancelCloudAiJob } from '@/shared/lib/ai-api/cancelCloudAiJob';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
@@ -413,18 +413,20 @@ export const useAiProcessing = () => {
           },
         );
 
-        if (abortHandle.cancelled) {
-          applyCancelledUiState(record.id);
-          void logAnalyticsEvent('ai_action_cancelled', {
-            action: 'summary_tasks',
-            mode: aiExecutionMode,
-            tier: privateCapabilityTier,
-          });
+        if (abortHandle.cancelled || runGenerationRef.current.get(record.id) !== runGeneration) {
+          if (abortHandle.cancelled) {
+            applyCancelledUiState(record.id);
+            void logAnalyticsEvent('ai_action_cancelled', {
+              action: 'summary_tasks',
+              mode: aiExecutionMode,
+              tier: privateCapabilityTier,
+            });
+          }
           return;
         }
 
         if (!runResult.ok) {
-          if (isAiRequestCancelled(runResult.error)) {
+          if (isAiGenerationCancelledError(runResult.error)) {
             applyCancelledUiState(record.id);
             void logAnalyticsEvent('ai_action_cancelled', {
               action: 'summary_tasks',
@@ -484,6 +486,10 @@ export const useAiProcessing = () => {
           return;
         }
 
+        if (abortHandle.cancelled || runGenerationRef.current.get(record.id) !== runGeneration) {
+          return;
+        }
+
         setPrivateAiBatchUi(record.id, {
           privateAiBatchProgress: 98,
           privateAiBatchPhase: 'processing',
@@ -504,16 +510,24 @@ export const useAiProcessing = () => {
         }
 
         if (includeMeetingSpeakerBreakdown) {
-          const mdUiStatus = resolveMeetingDialogueUiStatus(
-            true,
-            meetingDialogueMarkdown,
-            runResult.meetingDialogueStatus,
-          );
-          setMeetingDialogueStatus(record.id, mdUiStatus);
-          if (mdUiStatus === 'failed') {
-            setMeetingDialogueError(record.id, i18n.t('recordingDetail.meetingDialogueFailedDesc'));
-          } else {
+          if (runResult.meetingDialogueStatus === 'skipped') {
+            setMeetingDialogueStatus(record.id, 'idle');
             setMeetingDialogueError(record.id, undefined);
+          } else {
+            const mdUiStatus = resolveMeetingDialogueUiStatus(
+              true,
+              meetingDialogueMarkdown,
+              runResult.meetingDialogueStatus,
+            );
+            setMeetingDialogueStatus(record.id, mdUiStatus);
+            if (mdUiStatus === 'failed') {
+              setMeetingDialogueError(
+                record.id,
+                i18n.t('recordingDetail.meetingDialogueFailedDesc'),
+              );
+            } else {
+              setMeetingDialogueError(record.id, undefined);
+            }
           }
         }
 

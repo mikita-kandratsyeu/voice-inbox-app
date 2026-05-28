@@ -8,7 +8,13 @@ import { formatAiModelDisplayName, useSettingsStore } from '@/entities/settings'
 import type { Colors } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
 import type { SummaryTokenUsage } from '@/shared/lib/summaryMetaSubtitle';
-import { AiTabErrorBanner, AiTabHintIcon, Button, TabEmptyState } from '@/shared/ui';
+import {
+  AiProcessingCancelButton,
+  AiTabErrorBanner,
+  AiTabHintIcon,
+  Button,
+  TabEmptyState,
+} from '@/shared/ui';
 
 import { AiTabProcessing } from './AiTabProcessing';
 import { SummaryReasoningDisclosure } from './SummaryReasoningDisclosure';
@@ -27,6 +33,8 @@ type SummaryTabProps = {
   showPrivateModeCta?: boolean;
   onSwitchToSmartMode?: () => void;
   onCancelProcessing?: () => void;
+  /** Phase-2 meeting speakers still running while summary is already shown. */
+  speakerBreakdownProcessing?: boolean;
   isPrivateMode?: boolean;
   privateAiBatchProgress?: number;
   privateAiBatchPhase?: 'loading_model' | 'processing';
@@ -47,6 +55,7 @@ export const SummaryTab = ({
   onGenerate,
   onShareMeetingBrief,
   onCancelProcessing,
+  speakerBreakdownProcessing = false,
   privateAiBatchPhase,
   privateAiBatchProgress,
   privateAiBatchProgressLabel,
@@ -137,6 +146,20 @@ export const SummaryTab = ({
 
   return (
     <View className="gap-3.5 p-4">
+      {speakerBreakdownProcessing && onCancelProcessing ? (
+        <View
+          className="gap-2 rounded-xl border p-3"
+          style={{
+            borderColor: color.border.default,
+            backgroundColor: color.background.tertiary,
+          }}
+        >
+          <Text className="text-sm" style={{ color: color.text.secondary }}>
+            {t('aiStatus.speakerTurnsProcessing')}
+          </Text>
+          <AiProcessingCancelButton color={color} onPress={onCancelProcessing} />
+        </View>
+      ) : null}
       {showBanner && <AiTabErrorBanner message={errMessage} onDismiss={handleDismiss} />}
       {isMeeting && (
         <View

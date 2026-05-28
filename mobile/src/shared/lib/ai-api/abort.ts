@@ -1,6 +1,9 @@
 /** Internal error code when the user cancels an in-flight cloud AI request. */
 export const AI_REQUEST_CANCELLED = 'request_cancelled';
 
+/** Matches web {@link AI_JOB_CANCELLED_ERROR} when cancel API marks the Redis message. */
+export const AI_SERVER_JOB_CANCELLED_MESSAGE = 'Cancelled by user';
+
 export type AiAbortHandle = {
   cancelled: boolean;
   readonly signal: AbortSignal;
@@ -23,6 +26,15 @@ export function createAiAbortHandle(): AiAbortHandle {
 
 export function isAiRequestCancelled(error: string | undefined): boolean {
   return error === AI_REQUEST_CANCELLED;
+}
+
+/** Local abort or server-side cancel (full job or meeting-dialogue-only). */
+export function isAiGenerationCancelledError(error: string | undefined): boolean {
+  return (
+    isAiRequestCancelled(error) ||
+    error === AI_SERVER_JOB_CANCELLED_MESSAGE ||
+    error?.trim() === AI_SERVER_JOB_CANCELLED_MESSAGE
+  );
 }
 
 export function isAbortLikeError(err: unknown): boolean {

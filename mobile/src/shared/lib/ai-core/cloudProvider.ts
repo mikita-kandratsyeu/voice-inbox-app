@@ -7,7 +7,7 @@ import {
   postAiMessage,
   postAskQuestion,
 } from '@/shared/lib/ai-api';
-import { AI_REQUEST_CANCELLED } from '@/shared/lib/ai-api/abort';
+import { AI_REQUEST_CANCELLED, isAiGenerationCancelledError } from '@/shared/lib/ai-api/abort';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 import { isNonNegativeFiniteNumber } from '@/shared/lib/type-guards';
 
@@ -140,7 +140,7 @@ export async function runCloudSummaryTasks(
     onSummaryReady: request.onCloudSummaryReady,
   });
   if (!pollResult.ok) {
-    if (pollResult.error === AI_REQUEST_CANCELLED) {
+    if (isAiGenerationCancelledError(pollResult.error)) {
       return cloudSummaryCancelledFailure(ctx.aiExecutionMode);
     }
     return {

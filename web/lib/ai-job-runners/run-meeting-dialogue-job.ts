@@ -1,4 +1,5 @@
 import { MEETING_DIALOGUE_OMIT_FULL_TRANSCRIPT_CHARS } from '@/config/constants';
+import { isAiJobCancelled } from '@/lib/ai-job-cancel';
 import { isRetryableAiJobError } from '@/lib/ai-job-retry';
 import { notifyAiJobComplete } from '@/lib/ai-job-push';
 import {
@@ -30,9 +31,18 @@ export async function runMeetingDialogueJob(payload: MeetingDialogueJobPayload):
     clientUserAgent,
   } = payload;
 
+  if (await isAiJobCancelled(id)) {
+    return;
+  }
+
   const existing = await getMessage(id);
   if (!existing || existing.status !== 'done') {
     throw new Error('Meeting dialogue job requires a completed summarize message');
+  }
+
+  const mdStatus = (existing as { meetingDialogueStatus?: string }).meetingDialogueStatus;
+  if (mdStatus === 'skipped' || mdStatus === 'done' || mdStatus === 'failed') {
+    return;
   }
 
   const promptInput: MeetingDialogueUserPromptInput = {
@@ -52,6 +62,10 @@ export async function runMeetingDialogueJob(payload: MeetingDialogueJobPayload):
       clientUserAgent,
       deviceId,
     );
+
+    if (await isAiJobCancelled(id)) {
+      return;
+    }
 
     const done = existing as Extract<Message, { status: 'done' }>;
     const mergedTokenUsage = mergeOpenRouterTokenUsage(done.tokenUsage, mdPart.tokenUsage);

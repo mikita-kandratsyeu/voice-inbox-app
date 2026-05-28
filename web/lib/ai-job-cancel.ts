@@ -1,9 +1,10 @@
 import { AI_JOB_CANCELLED_ERROR, JOB_CANCELLED_KEY_PREFIX } from '@/config/constants';
 import { releaseJobLock } from '@/lib/ai-job-lock';
 import { deleteJobPayload, getJobPayload } from '@/lib/ai-job-payload';
+import { deleteMeetingJobPayload, getMeetingJobPayload } from '@/lib/meeting-job-payload';
 import { getMessage, saveMessage } from '@/lib/redis';
 import { redis } from '@/lib/redis';
-import type { Message } from '@/types';
+import type { Message, MeetingDialogueStatus } from '@/types';
 
 export function getJobCancelledKey(jobId: string): string {
   return `${JOB_CANCELLED_KEY_PREFIX}${jobId}`;
@@ -24,9 +25,20 @@ export type CancelAiJobResult =
   | { ok: true; cancelled: false; reason: 'not_found' | 'not_processing' }
   | { ok: false; forbidden: true };
 
+function readMeetingDialogueStatus(msg: Message): MeetingDialogueStatus | undefined {
+  if (msg.status !== 'done') return undefined;
+  const md = (msg as { meetingDialogueStatus?: unknown }).meetingDialogueStatus;
+  if (md === 'processing' || md === 'done' || md === 'failed' || md === 'skipped') {
+    return md;
+  }
+  return undefined;
+}
+
 export async function cancelAiJob(jobId: string, deviceId: string): Promise<CancelAiJobResult> {
-  const payload = await getJobPayload(jobId);
-  if (payload && payload.deviceId !== deviceId) {
+  const summarizePayload = await getJobPayload(jobId);
+  const meetingPayload = await getMeetingJobPayload(jobId);
+  const ownerDeviceId = summarizePayload?.deviceId ?? meetingPayload?.deviceId;
+  if (ownerDeviceId && ownerDeviceId !== deviceId) {
     return { ok: false, forbidden: true };
   }
 
@@ -35,11 +47,36 @@ export async function cancelAiJob(jobId: string, deviceId: string): Promise<Canc
     return { ok: true, cancelled: false, reason: 'not_found' };
   }
 
+  const ttl = summarizePayload?.messageTtlSeconds ?? meetingPayload?.messageTtlSeconds ?? 3600;
+
+  if (existing.status === 'done') {
+    if (readMeetingDialogueStatus(existing) !== 'processing') {
+      return { ok: true, cancelled: false, reason: 'not_processing' };
+    }
+
+    await redis.set(getJobCancelledKey(jobId), '1', { ex: ttl });
+    await saveMessage(
+      jobId,
+      {
+        ...(existing as Extract<Message, { status: 'done' }>),
+        meetingDialogueStatus: 'skipped',
+      },
+      ttl,
+    );
+    await deleteMeetingJobPayload(jobId);
+    await releaseJobLock(jobId);
+
+    console.info(
+      '[AI job]',
+      JSON.stringify({ jobId, phase: 'cancelled_meeting_dialogue', deviceId }),
+    );
+    return { ok: true, cancelled: true };
+  }
+
   if (existing.status !== 'processing') {
     return { ok: true, cancelled: false, reason: 'not_processing' };
   }
 
-  const ttl = payload?.messageTtlSeconds ?? 3600;
   const model =
     'model' in existing && typeof existing.model === 'string' ? existing.model : undefined;
 
@@ -57,6 +94,7 @@ export async function cancelAiJob(jobId: string, deviceId: string): Promise<Canc
 
   await releaseJobLock(jobId);
   await deleteJobPayload(jobId);
+  await deleteMeetingJobPayload(jobId);
 
   console.info('[AI job]', JSON.stringify({ jobId, phase: 'cancelled', deviceId }));
 
