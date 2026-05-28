@@ -32,9 +32,10 @@ export async function dispatchAiJob(payload: AiJobPayload): Promise<void> {
         body: envelope,
         retries: AI_JOB_QSTASH_RETRIES,
         timeout: '300s',
+        // QStash rejects ':' in deduplicationId; keep summarize vs meeting_dialogue distinct.
         deduplicationId:
           envelope.operation === 'meeting_dialogue'
-            ? `${envelope.jobId}:meeting-dialogue`
+            ? `${envelope.jobId}-meeting-dialogue`
             : envelope.jobId,
       });
       return;
