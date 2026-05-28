@@ -12,6 +12,7 @@ let applyHandler: TabletInboxSidebarApply | null = null;
 let pendingTarget: TabletInboxSidebarTarget | null = null;
 let createFolderHandler: (() => void) | null = null;
 let editFolderHandler: ((folderId: string) => void) | null = null;
+let reorderFoldersHandler: (() => void) | null = null;
 
 export function requestTabletOpenCreateFolder(): void {
   createFolderHandler?.();
@@ -37,6 +38,19 @@ export function registerTabletOpenEditFolderHandler(
   return () => {
     if (editFolderHandler === handler) {
       editFolderHandler = null;
+    }
+  };
+}
+
+export function requestTabletOpenReorderFolders(): void {
+  reorderFoldersHandler?.();
+}
+
+export function registerTabletOpenReorderFoldersHandler(handler: (() => void) | null): () => void {
+  reorderFoldersHandler = handler;
+  return () => {
+    if (reorderFoldersHandler === handler) {
+      reorderFoldersHandler = null;
     }
   };
 }

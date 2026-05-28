@@ -1,4 +1,4 @@
-import { Folder, Plus } from 'lucide-react-native';
+import { ArrowDownUp, Folder, Plus } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
@@ -9,6 +9,7 @@ import type { Colors } from '@/shared/config';
 import { hapticSelection, resolveDisplayFolderColor } from '@/shared/lib';
 
 import type { TabletInboxSidebarTarget } from './tabletInboxNavBridge';
+import { requestTabletOpenReorderFolders } from './tabletInboxNavBridge';
 import {
   TabletSidebarNavIcon,
   TabletSidebarNavItem,
@@ -18,6 +19,34 @@ import {
 import type { TabletSidebarTheme } from './tabletSidebarTheme';
 import { navigateMainTab } from './tabletTabNavigation';
 import type { TabletSidebarNavCounts } from './useTabletSidebarNavCounts';
+
+function FolderSectionHeaderAction({
+  onPress,
+  accessibilityLabel,
+  children,
+}: {
+  onPress: () => void;
+  accessibilityLabel: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      hitSlop={6}
+      style={({ pressed }) => ({
+        width: 28,
+        height: 28,
+        alignItems: 'center',
+        justifyContent: 'center',
+        opacity: pressed ? 0.7 : 1,
+      })}
+    >
+      {children}
+    </Pressable>
+  );
+}
 
 type TabletSidebarFoldersSectionProps = {
   color: Colors;
@@ -89,24 +118,31 @@ export function TabletSidebarFoldersSection({
         label={t('tablet.sidebar.folders')}
         color={color}
         trailing={
-          <Pressable
-            onPress={() => {
-              hapticSelection();
-              onOpenCreateFolder();
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={t('folders.create')}
-            hitSlop={10}
-            style={({ pressed }) => ({
-              width: 28,
-              height: 28,
-              alignItems: 'center',
-              justifyContent: 'center',
-              opacity: pressed ? 0.7 : 1,
-            })}
-          >
-            <Plus size={20} color={color.accent.primary} strokeWidth={2.4} />
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {folders.length >= 2 ? (
+              <FolderSectionHeaderAction
+                accessibilityLabel={t('folders.reorderOpenA11y')}
+                onPress={() => {
+                  hapticSelection();
+                  if (currentTab !== 'Inbox') {
+                    navigateMainTab('Inbox');
+                  }
+                  requestTabletOpenReorderFolders();
+                }}
+              >
+                <ArrowDownUp size={18} color={color.text.secondary} strokeWidth={2.2} />
+              </FolderSectionHeaderAction>
+            ) : null}
+            <FolderSectionHeaderAction
+              accessibilityLabel={t('folders.create')}
+              onPress={() => {
+                hapticSelection();
+                onOpenCreateFolder();
+              }}
+            >
+              <Plus size={20} color={color.accent.primary} strokeWidth={2.4} />
+            </FolderSectionHeaderAction>
+          </View>
         }
       />
 

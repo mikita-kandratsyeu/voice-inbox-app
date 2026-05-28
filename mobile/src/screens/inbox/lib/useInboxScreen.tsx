@@ -20,6 +20,7 @@ import {
   registerTabletInboxSidebarNavHandler,
   registerTabletOpenCreateFolderHandler,
   registerTabletOpenEditFolderHandler,
+  registerTabletOpenReorderFoldersHandler,
 } from '@/app/navigation/tablet';
 import { useTabletInboxSidebarStore } from '@/app/navigation/tablet/tabletInboxSidebarStore';
 import type { BottomTabParamList } from '@/app/navigation/types';
@@ -494,6 +495,12 @@ export function useInboxScreen() {
       }
     });
   }, [folders, openEditFolderModal]);
+
+  useEffect(() => {
+    return registerTabletOpenReorderFoldersHandler(() => {
+      openFolderReorderSheet();
+    });
+  }, [openFolderReorderSheet]);
 
   useEffect(() => {
     if (!inboxFiltersReset) return;

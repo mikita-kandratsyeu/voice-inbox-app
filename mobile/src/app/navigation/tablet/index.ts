@@ -4,9 +4,11 @@ export {
   registerTabletInboxSidebarNavHandler,
   registerTabletOpenCreateFolderHandler,
   registerTabletOpenEditFolderHandler,
+  registerTabletOpenReorderFoldersHandler,
   requestTabletInboxSidebarNav,
   requestTabletOpenCreateFolder,
   requestTabletOpenEditFolder,
+  requestTabletOpenReorderFolders,
 } from './tabletInboxNavBridge';
 export { useTabletInboxSidebarStore } from './tabletInboxSidebarStore';
 export { TabletShellLayout } from './TabletShellLayout';

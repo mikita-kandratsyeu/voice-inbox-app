@@ -52,8 +52,6 @@ export function TabletSidebarComposeRow({
 }: TabletSidebarComposeRowProps) {
   const { t } = useTranslation();
 
-  const textNoteBg = color.accent.models;
-
   return (
     <View
       style={{
@@ -106,13 +104,13 @@ export function TabletSidebarComposeRow({
       </View>
 
       <Button
-        variant="icon"
+        variant="secondary"
         iconOnly
         size="lg"
         color={color}
-        icon={<SquarePen size={22} color={color.icon.onAccent} strokeWidth={2.2} />}
+        icon={<SquarePen size={22} color={color.text.primary} strokeWidth={2.2} />}
         accessibilityLabel={t('textNote.openCreate')}
-        activeOpacity={0.9}
+        activeOpacity={0.85}
         onPress={() => {
           hapticSelection();
           onTextNote();
@@ -122,8 +120,10 @@ export function TabletSidebarComposeRow({
           width: ICON_ACTION_SIZE,
           height: ICON_ACTION_SIZE,
           borderRadius: COMPOSE_BUTTON_RADIUS,
-          backgroundColor: textNoteBg,
-          ...iconActionShadow(color, textNoteBg),
+          paddingVertical: 0,
+          backgroundColor: color.background.tertiary,
+          borderWidth: 1,
+          borderColor: color.border.default,
         }}
       />
     </View>
