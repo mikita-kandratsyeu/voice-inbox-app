@@ -27,6 +27,7 @@ import { TabletSidebarBody } from './TabletSidebarBody';
 import { TABLET_SIDEBAR_PAD, TABLET_SIDEBAR_WIDTH } from './tabletSidebarMetrics';
 import { getTabletSidebarTheme } from './tabletSidebarTheme';
 import { navigateMainTab, useTabletTabNavigationStore } from './tabletTabNavigation';
+import { useTabletSidebarAiProcessing } from './useTabletSidebarAiProcessing';
 import { useTabletSidebarNavCounts } from './useTabletSidebarNavCounts';
 
 export const TabletSidebar = () => {
@@ -47,6 +48,7 @@ export const TabletSidebar = () => {
     openTasks: openTasksCount,
     folderCounts,
   } = useTabletSidebarNavCounts();
+  const aiProcessing = useTabletSidebarAiProcessing();
 
   const activeTranscriptionRecord = useRecordStore((s) =>
     s.records.find((r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing'),
@@ -179,6 +181,7 @@ export const TabletSidebar = () => {
         pinnedCount={pinnedCount}
         archivedCount={archivedCount}
         openTasksCount={openTasksCount}
+        aiProcessing={aiProcessing}
         inboxActive={inboxActive}
         pinnedActive={pinnedActive}
         archivedActive={archivedActive}

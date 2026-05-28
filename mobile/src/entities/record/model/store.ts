@@ -4,6 +4,7 @@ import { folderRepository } from '@/entities/folder/model/repository';
 import { loadAskAiInboxStatusesByRecordId } from '@/features/ask-ai/model/askAiSessionDb';
 import { NitroFS } from '@/shared/lib/fs';
 
+import { isRecordAiOperating } from '../lib/isRecordAiOperating';
 import { recordRepository } from './repository';
 import type {
   RecordClassification,
@@ -52,11 +53,8 @@ const clearAiPersistDebounce = (id: string) => {
   aiPersistTimers.delete(id);
 };
 
-const isActiveAiStatus = (status?: RecordingStatus): boolean =>
-  status === 'loading_model' || status === 'processing';
-
 const computeHasActiveAiJobs = (records: Array<VoiceRecord | RecordListItem>): boolean =>
-  records.some((r) => isActiveAiStatus(r.aiStatus) || r.askAiStatus === 'processing');
+  records.some(isRecordAiOperating);
 
 const updateRecord = (
   records: RecordListItem[],
@@ -369,15 +367,17 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   },
 
   setSummaryStatus: (id, summaryStatus) => {
-    set((s) => ({
-      records: updateRecord(s.records, id, { summaryStatus }),
-    }));
+    set((s) => {
+      const next = updateRecord(s.records, id, { summaryStatus });
+      return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
+    });
   },
 
   setTasksStatus: (id, tasksStatus) => {
-    set((s) => ({
-      records: updateRecord(s.records, id, { tasksStatus }),
-    }));
+    set((s) => {
+      const next = updateRecord(s.records, id, { tasksStatus });
+      return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
+    });
   },
 
   setSummaryError: (id, summaryError) => {
@@ -501,9 +501,10 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   },
 
   setTranslationStatus: (id, translationStatus) => {
-    set((s) => ({
-      records: updateRecord(s.records, id, { translationStatus }),
-    }));
+    set((s) => {
+      const next = updateRecord(s.records, id, { translationStatus });
+      return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
+    });
   },
 
   setAskAiStatus: (id, status) => {

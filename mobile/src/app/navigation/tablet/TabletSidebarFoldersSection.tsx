@@ -53,6 +53,7 @@ type TabletSidebarFoldersSectionProps = {
   theme: TabletSidebarTheme;
   folders: FolderEntity[];
   folderCounts: TabletSidebarNavCounts['folderCounts'];
+  folderAiProcessing: ReadonlySet<string>;
   isProActive: boolean;
   isPrivateMode: boolean;
   isSettingsTab: boolean;
@@ -120,6 +121,7 @@ export function TabletSidebarFoldersSection({
   theme,
   folders,
   folderCounts,
+  folderAiProcessing,
   isProActive,
   isPrivateMode,
   isSettingsTab,
@@ -207,6 +209,7 @@ export function TabletSidebarFoldersSection({
               theme={theme}
               appearance="folder"
               badgeCount={folderCount}
+              showProcessingIndicator={folderAiProcessing.has(folder.id)}
               accentHex={folderHex}
               accessibilityHint={t('tablet.sidebar.editFolderHint')}
               onPress={() => onNavigateToInbox({ kind: 'folder', folderId: folder.id })}

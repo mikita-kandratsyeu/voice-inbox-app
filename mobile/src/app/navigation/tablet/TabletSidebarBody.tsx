@@ -22,6 +22,7 @@ import { TabletSidebarFooter } from './TabletSidebarFooter';
 import { TabletSidebarNavIcon, TabletSidebarNavItem } from './TabletSidebarNavItem';
 import type { TabletSidebarTheme } from './tabletSidebarTheme';
 import { navigateMainTab } from './tabletTabNavigation';
+import type { TabletSidebarAiProcessing } from './useTabletSidebarAiProcessing';
 import type { TabletSidebarNavCounts } from './useTabletSidebarNavCounts';
 
 export type TabletSidebarBodyProps = {
@@ -43,6 +44,7 @@ export type TabletSidebarBodyProps = {
   pinnedCount: number;
   archivedCount: number;
   openTasksCount: number;
+  aiProcessing: TabletSidebarAiProcessing;
   inboxActive: boolean;
   pinnedActive: boolean;
   archivedActive: boolean;
@@ -75,6 +77,7 @@ export function TabletSidebarBody({
   pinnedCount,
   archivedCount,
   openTasksCount,
+  aiProcessing,
   inboxActive,
   pinnedActive,
   archivedActive,
@@ -93,6 +96,8 @@ export function TabletSidebarBody({
   const allTasksIconColor = color.accent.primary;
   const mutedIcon = color.text.secondary;
 
+  const aiProcessingHint = t('aiStatus.aiProcessing');
+
   const inboxNav = (
     <TabletSidebarNavItem
       label={t('tabs.inbox')}
@@ -100,6 +105,8 @@ export function TabletSidebarBody({
       color={color}
       theme={theme}
       appearance="primary"
+      showProcessingIndicator={aiProcessing.inbox}
+      accessibilityHint={aiProcessing.inbox ? aiProcessingHint : undefined}
       onPress={() => navigateToInbox({ kind: 'inbox' })}
       icon={
         <TabletSidebarNavIcon
@@ -122,6 +129,8 @@ export function TabletSidebarBody({
         theme={theme}
         appearance="secondary"
         badgeCount={pinnedCount}
+        showProcessingIndicator={aiProcessing.pinned}
+        accessibilityHint={aiProcessing.pinned ? aiProcessingHint : undefined}
         onPress={() => navigateToInbox({ kind: 'pinned' })}
         icon={
           <TabletSidebarNavIcon
@@ -140,6 +149,8 @@ export function TabletSidebarBody({
         theme={theme}
         appearance="secondary"
         badgeCount={archivedCount}
+        showProcessingIndicator={aiProcessing.archived}
+        accessibilityHint={aiProcessing.archived ? aiProcessingHint : undefined}
         onPress={() => navigateToInbox({ kind: 'archived' })}
         icon={
           <TabletSidebarNavIcon
@@ -178,6 +189,7 @@ export function TabletSidebarBody({
       theme={theme}
       folders={folders}
       folderCounts={folderCounts}
+      folderAiProcessing={aiProcessing.folderIds}
       isProActive={isProActive}
       isPrivateMode={isPrivateMode}
       isSettingsTab={isSettingsTab}

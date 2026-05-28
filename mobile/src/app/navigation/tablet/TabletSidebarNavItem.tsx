@@ -11,6 +11,7 @@ import {
   TABLET_SIDEBAR_NAV_ITEM_RADIUS,
 } from './tabletSidebarMetrics';
 import { TabletSidebarNavBadge } from './TabletSidebarNavBadge';
+import { TabletSidebarNavProcessingIndicator } from './TabletSidebarNavProcessingIndicator';
 import type { TabletSidebarTheme } from './tabletSidebarTheme';
 import { getTabletSidebarLabelStyle } from './tabletSidebarTypography';
 
@@ -26,6 +27,7 @@ export type TabletSidebarNavItemProps = {
   onLongPress?: () => void;
   appearance?: TabletSidebarNavAppearance;
   badgeCount?: number;
+  showProcessingIndicator?: boolean;
   accessibilityHint?: string;
   /** Folder tint when selected; defaults to accent.primary. */
   accentHex?: string;
@@ -46,6 +48,7 @@ export function TabletSidebarNavItem({
   onLongPress,
   appearance = 'secondary',
   badgeCount = 0,
+  showProcessingIndicator = false,
   accessibilityHint,
   accentHex,
 }: TabletSidebarNavItemProps) {
@@ -105,7 +108,9 @@ export function TabletSidebarNavItem({
       labelStyle={getTabletSidebarLabelStyle(isActive, labelColor)}
       icon={icon}
       trailingIcon={
-        badgeCount > 0 ? (
+        showProcessingIndicator ? (
+          <TabletSidebarNavProcessingIndicator color={color} isActive={isActive} />
+        ) : badgeCount > 0 ? (
           <TabletSidebarNavBadge
             count={badgeCount}
             color={color}
