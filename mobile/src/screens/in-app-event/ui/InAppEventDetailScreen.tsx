@@ -1,7 +1,7 @@
 import type { RouteProp } from '@react-navigation/native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Download, HardDrive, Pin, Rocket, Video, Wrench } from 'lucide-react-native';
+import { Download, FolderOpen, Palette, Pin, Rocket, Sparkles, Wrench } from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -25,7 +25,7 @@ type UpdateFeature = { title: string; description: string; isPro?: boolean };
 
 type ScreenCopy =
   | {
-      kind: 'update110';
+      kind: 'update';
       appName: string;
       version: string;
       tagline: string;
@@ -33,7 +33,7 @@ type ScreenCopy =
     }
   | { kind: 'unknown'; title: string; subtitle: string };
 
-const FEATURE_ICONS = [Video, Pin, Download, HardDrive, Wrench] as const;
+const FEATURE_ICONS = [Sparkles, Download, FolderOpen, Palette, Pin, Wrench] as const;
 
 export const InAppEventDetailScreen = () => {
   const { t } = useTranslation();
@@ -53,7 +53,7 @@ export const InAppEventDetailScreen = () => {
         ? (raw as UpdateFeature[]).filter((f) => f && typeof f.title === 'string')
         : [];
       return {
-        kind: 'update110',
+        kind: 'update',
         appName: t('inAppEvent.update110.appName'),
         version: t('inAppEvent.update110.version'),
         tagline: t('inAppEvent.update110.tagline'),
@@ -193,7 +193,7 @@ export const InAppEventDetailScreen = () => {
               </Text>
             </View>
 
-            {copy.kind === 'update110' ? (
+            {copy.kind === 'update' ? (
               <View className="mb-5 w-full self-stretch">
                 <View className="min-w-0 flex-1 justify-center py-0.5">
                   <Text
@@ -255,7 +255,7 @@ export const InAppEventDetailScreen = () => {
             )}
           </Animated.View>
 
-          {copy.kind === 'update110' && copy.features.length > 0 ? (
+          {copy.kind === 'update' && copy.features.length > 0 ? (
             <Animated.View entering={enterHighlights} className="mt-0 gap-2">
               {copy.features.map((feature, index) => {
                 const Icon = FEATURE_ICONS[index % FEATURE_ICONS.length]!;

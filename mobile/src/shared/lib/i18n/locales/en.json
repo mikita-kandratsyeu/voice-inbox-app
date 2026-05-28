@@ -1616,27 +1616,32 @@
     "primaryCta": "Continue",
     "update110": {
       "appName": "Voice Inbox AI",
-      "version": "1.1.0",
-      "tagline": "Smarter meetings. Better insights. More control.",
+      "version": "1.2.0",
+      "tagline": "More powerful AI, richer export, and an inbox that fits your style.",
       "features": [
         {
-          "title": "Meeting Mode",
-          "description": "Record, transcribe, and get AI summaries from your meetings automatically.",
+          "title": "Advanced AI models",
+          "description": "Choose stronger models for summaries, Q&A, and organization when you need more depth.",
           "isPro": true
         },
         {
-          "title": "Pinned moments",
-          "description": "Pin important moments so they stay easy to find in long recordings.",
+          "title": "Extended export & batch",
+          "description": "Email summaries, batch-export multiple notes, and share audio when you need files elsewhere.",
           "isPro": true
         },
         {
-          "title": "Extended export",
-          "description": "More export options for your notes and transcripts when you need them elsewhere.",
+          "title": "Custom folder colors",
+          "description": "Color-code folders so your inbox stays scannable at a glance.",
           "isPro": true
         },
         {
-          "title": "Storage controls",
-          "description": "Clearer controls for models and on-device data so you always know what uses space."
+          "title": "Accent color",
+          "description": "Match buttons and progress accents to your style across the app.",
+          "isPro": true
+        },
+        {
+          "title": "AI organize notes",
+          "description": "Let AI suggest folders and sort notes—review everything before you apply."
         },
         {
           "title": "Polish & stability",
