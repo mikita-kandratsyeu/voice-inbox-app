@@ -13,6 +13,7 @@ export async function ensureTaskDeadlineNotificationChannel(): Promise<void> {
     id: TASK_DEADLINE_NOTIFICATION_CHANNEL_ID,
     name: i18n.t('settings.taskDeadlineNotificationsChannel'),
     importance: AndroidImportance.HIGH,
+    sound: 'default',
     vibration: true,
   });
 

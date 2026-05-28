@@ -51,6 +51,10 @@ async function scheduleTaskDeadlineNotification(input: {
       android: {
         channelId: TASK_DEADLINE_NOTIFICATION_CHANNEL_ID,
         pressAction: { id: 'default' },
+        sound: 'default',
+      },
+      ios: {
+        sound: 'default',
       },
     },
     {

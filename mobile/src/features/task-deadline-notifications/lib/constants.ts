@@ -1,4 +1,5 @@
-export const TASK_DEADLINE_NOTIFICATION_CHANNEL_ID = 'task-deadline-reminders';
+/** Bump suffix when Android channel sound/importance changes (channels are immutable). */
+export const TASK_DEADLINE_NOTIFICATION_CHANNEL_ID = 'task-deadline-reminders-v2';
 
 export const TASK_DEADLINE_NOTIFICATION_TYPE = 'task_deadline';
 
