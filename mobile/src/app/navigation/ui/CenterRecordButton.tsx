@@ -1,6 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Mic } from 'lucide-react-native';
 import React, { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, TouchableOpacity, View } from 'react-native';
@@ -16,6 +15,7 @@ import Animated, {
 import { useRecordStore } from '@/entities/record';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import { hapticLight } from '@/shared/lib';
+import { RecordVoiceIcon } from '@/shared/ui';
 
 import type { RootStackParamList } from '../types';
 
@@ -127,7 +127,7 @@ export const CenterRecordButton = ({
             justifyContent: 'center',
           }}
         >
-          <Mic size={isTablet ? 28 : 24} color={iconColor} strokeWidth={2} />
+          <RecordVoiceIcon size={isTablet ? 28 : 24} color={iconColor} strokeWidth={2.25} />
         </TouchableOpacity>
       </Animated.View>
     </View>

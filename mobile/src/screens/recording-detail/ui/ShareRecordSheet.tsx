@@ -4,8 +4,8 @@ import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
 
-import type { ShareBriefTemplate } from '@/features/share-record';
-import type { ShareRecordExportFormat } from '@/features/share-record';
+import type { ShareBriefTemplate, ShareRecordExportFormat } from '@/features/share-record';
+import { EmailBodyFormatPicker } from '@/features/share-record/ui/EmailBodyFormatPicker';
 import { type Colors, useColors } from '@/shared/config';
 import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
 
@@ -202,15 +202,15 @@ export const ShareRecordSheet = ({
   const emailFormatTemplates = useMemo(() => {
     const noteBriefOption = {
       tpl: 'noteBrief' as const,
-      icon: <FileText size={20} color={color.text.primary} strokeWidth={2.1} />,
-      title: t('share.noteBrief'),
-      description: t('share.noteBriefDescription'),
+      Icon: FileText,
+      chipLabel: t('share.emailFormatChipNote'),
+      accessibilityHint: t('share.noteBriefDescription'),
     };
     const emailBriefOption = {
       tpl: 'emailBrief' as const,
-      icon: <ClipboardList size={20} color={color.text.primary} strokeWidth={2.1} />,
-      title: t('share.emailBrief'),
-      description: t('share.emailBriefDescription'),
+      Icon: ClipboardList,
+      chipLabel: t('share.emailFormatChipBrief'),
+      accessibilityHint: t('share.emailBriefDescription'),
     };
 
     if (showSpeakerTurnsExport) {
@@ -219,21 +219,21 @@ export const ShareRecordSheet = ({
         emailBriefOption,
         {
           tpl: 'meetingBrief' as const,
-          icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
-          title: t('share.meetingBrief'),
-          description: t('share.meetingBriefDescription'),
+          Icon: ListChecks,
+          chipLabel: t('share.emailFormatChipMeeting'),
+          accessibilityHint: t('share.meetingBriefDescription'),
         },
         {
           tpl: 'meetingSpeakerTurns' as const,
-          icon: <UsersRound size={20} color={color.text.primary} strokeWidth={2.1} />,
-          title: t('share.speakerTurnsBrief'),
-          description: t('share.speakerTurnsBriefDescription'),
+          Icon: UsersRound,
+          chipLabel: t('share.emailFormatChipSpeakers'),
+          accessibilityHint: t('share.speakerTurnsBriefDescription'),
         },
       ];
     }
 
     return [emailBriefOption, noteBriefOption];
-  }, [color.text.primary, showSpeakerTurnsExport, t]);
+  }, [showSpeakerTurnsExport, t]);
 
   const resolvedEmailTemplate = useMemo((): ShareBriefTemplate | null => {
     if (emailFormatTemplates.length === 1) {
@@ -309,21 +309,12 @@ export const ShareRecordSheet = ({
               <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
                 {t('batch.emailBodyFormatHint')}
               </Text>
-              <View style={{ gap: 10 }}>
-                {emailFormatTemplates.map(({ tpl, icon, title, description }) => (
-                  <View key={tpl}>
-                    {renderShareFormatRow({
-                      icon,
-                      title,
-                      description,
-                      selected: emailSendTemplate === tpl,
-                      showSelectionBorder: true,
-                      accessibilityLabel: title,
-                      onPress: () => setEmailSendTemplate(tpl),
-                    })}
-                  </View>
-                ))}
-              </View>
+              <EmailBodyFormatPicker
+                options={emailFormatTemplates}
+                selected={emailSendTemplate}
+                onSelect={setEmailSendTemplate}
+                color={color}
+              />
             </>
           ) : null}
 

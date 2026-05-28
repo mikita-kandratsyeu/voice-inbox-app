@@ -1,11 +1,11 @@
-import { Mic, SquarePen } from 'lucide-react-native';
+import { SquarePen } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { hapticSelection, selectPlatform } from '@/shared/lib';
-import { Button } from '@/shared/ui';
+import { Button, RecordVoiceIcon } from '@/shared/ui';
 
 import {
   TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE,
@@ -75,7 +75,7 @@ export function TabletSidebarComposeRow({
             iconOnly
             size="lg"
             color={color}
-            icon={<Mic size={22} color={color.icon.onAccent} strokeWidth={2.4} />}
+            icon={<RecordVoiceIcon size={22} color={color.icon.onAccent} strokeWidth={2.4} />}
             accessibilityLabel={t('tablet.sidebar.newRecording')}
             accessibilityHint={t('inbox.emptyImportHint')}
             accessibilityState={{ busy: isImporting }}
@@ -156,7 +156,7 @@ export function TabletSidebarComposeRow({
           color={color}
           label={t('tablet.sidebar.startRecording')}
           labelStyle={{ fontSize: TABLET_SIDEBAR_LABEL_FONT_SIZE, fontWeight: '600' }}
-          icon={<Mic size={22} color={color.icon.onAccent} strokeWidth={2.4} />}
+          icon={<RecordVoiceIcon size={22} color={color.icon.onAccent} strokeWidth={2.4} />}
           accessibilityLabel={t('tablet.sidebar.newRecording')}
           accessibilityHint={t('inbox.emptyImportHint')}
           accessibilityState={{ busy: isImporting }}

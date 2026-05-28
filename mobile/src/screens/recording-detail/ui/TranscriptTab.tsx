@@ -1,5 +1,5 @@
 import { MenuView } from '@react-native-menu/menu';
-import { Eye, Languages, Mic, Pencil, RefreshCw, Undo2 } from 'lucide-react-native';
+import { Eye, Languages, Pencil, RefreshCw, Undo2 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -14,7 +14,7 @@ import { getWhisperModelDisplayName } from '@/entities/settings/model/constants'
 import { TranscriptHighlight } from '@/features/transcript-highlight';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { Button, TabEmptyState } from '@/shared/ui';
+import { Button, RecordVoiceIcon, TabEmptyState } from '@/shared/ui';
 
 type TranscriptTabProps = {
   recordId: string;
@@ -141,11 +141,11 @@ export const TranscriptTab = ({
   if (segments.length === 0) {
     return (
       <TabEmptyState
-        icon={<Mic size={28} color={color.icon.muted} strokeWidth={1.8} />}
+        icon={<RecordVoiceIcon size={28} color={color.icon.muted} strokeWidth={1.9} />}
         title={t('recordingDetail.transcriptNotCreated')}
         description={t('recordingDetail.transcriptNotCreatedDesc')}
         buttonLabel={t('recordingDetail.transcribe')}
-        buttonIcon={<Mic size={18} color="#fff" strokeWidth={2} />}
+        buttonIcon={<RecordVoiceIcon size={18} color="#fff" strokeWidth={2.2} />}
         hint={hint}
         onPress={onTranscribe}
         hideButton={!hasAudio}

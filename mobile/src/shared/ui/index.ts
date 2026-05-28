@@ -29,6 +29,7 @@ export { getInputFieldInputStyle, InputField } from './InputField';
 export { SCREEN_PADDING, SECTION_STACK_GAP } from './layoutSpacing';
 export { PLAN_PAYWALL_FEATURE_LINE_HEIGHT, PlanPaywallProChip } from './PlanPaywallProChip';
 export { PrivateModeBadge } from './PrivateModeBadge';
+export { RecordVoiceIcon } from './RecordVoiceIcon';
 export { ScreenHeader } from './ScreenHeader';
 export { SectionHeader } from './SectionHeader';
 export { SettingsRow } from './SettingsRow';

@@ -1,8 +1,8 @@
-import { Mic } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { Colors } from '@/shared/config';
+import { RecordVoiceIcon } from '@/shared/ui';
 
 import { DetailTabProcessingView } from './DetailTabProcessingView';
 
@@ -32,7 +32,7 @@ export const TranscriptProcessing = ({
       onCancel={onCancel}
       context="transcription"
       hintText={t('transcription.batteryHint')}
-      leadingIcon={<Mic size={22} color={color.accent.primary} strokeWidth={2} />}
+      leadingIcon={<RecordVoiceIcon size={22} color={color.accent.primary} strokeWidth={2.2} />}
     />
   );
 };
