@@ -123,6 +123,7 @@ export function TabletSidebarNavItem({
                 color={color}
                 accentHex={accentHex}
                 isActive={isActive}
+                onFilledSurface={appearance === 'primary'}
               />
             ) : null}
           </View>

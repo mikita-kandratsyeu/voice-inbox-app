@@ -11,6 +11,8 @@ type TabletSidebarNavBadgeProps = {
   color: Colors;
   accentHex?: string;
   isActive: boolean;
+  /** Primary sidebar rows use a filled surface; badge needs a contrasting chip. */
+  onFilledSurface?: boolean;
 };
 
 export function TabletSidebarNavBadge({
@@ -18,10 +20,17 @@ export function TabletSidebarNavBadge({
   color,
   accentHex,
   isActive,
+  onFilledSurface = false,
 }: TabletSidebarNavBadgeProps) {
   if (count <= 0) return null;
 
   const accent = accentHex ?? color.accent.primary;
+
+  const backgroundColor = isActive
+    ? withAlphaHex(accent, 0.22)
+    : onFilledSurface
+      ? color.background.card
+      : color.background.tertiary;
 
   return (
     <View
@@ -32,7 +41,9 @@ export function TabletSidebarNavBadge({
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: isActive ? withAlphaHex(accent, 0.22) : color.background.tertiary,
+        backgroundColor,
+        borderWidth: onFilledSurface && !isActive ? 1 : 0,
+        borderColor: color.border.default,
       }}
     >
       <Text
