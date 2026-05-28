@@ -372,7 +372,8 @@ export const RecordingDetailScreen = () => {
   const aiBusy =
     liveRecord.summaryStatus === 'processing' || liveRecord.tasksStatus === 'processing';
   const hasTranscript = Boolean(liveRecord.transcript?.trim());
-  const showMeetingModeToggle = isProActive && !isPrivateMode && hasTranscript;
+  const hasAudio = Boolean(liveRecord.audioPath?.trim());
+  const showMeetingModeToggle = isProActive && !isPrivateMode && hasTranscript && hasAudio;
 
   const applyMeetingModeOff = useCallback(() => {
     void updateAiExtras(liveRecord.id, { classification: null, meetingDialogue: null });
@@ -440,7 +441,6 @@ export const RecordingDetailScreen = () => {
     updateAiExtras,
   ]);
 
-  const hasAudio = Boolean(liveRecord.audioPath?.trim());
   const hasRecordingMarks = (liveRecord.recordingMarks?.length ?? 0) > 0;
   const meetingPresetUiActive = useMemo(
     () =>
