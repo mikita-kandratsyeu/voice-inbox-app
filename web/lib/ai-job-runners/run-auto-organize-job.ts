@@ -1,4 +1,5 @@
 import { decrement } from '@/lib/ai-rate-limit';
+import { isRetryableAiJobError } from '@/lib/ai-job-retry';
 import { saveMessage } from '@/lib/redis';
 import { redis } from '@/lib/redis';
 import { isProDevice } from '@/lib/pro-entitlement';
@@ -44,13 +45,15 @@ export async function runAutoOrganizeJob(payload: AutoOrganizeJobPayload): Promi
       result,
     });
   } catch (err) {
-    await decrement(deviceId);
-    await decrementAutoOrganizeWeekly(deviceId);
-    await saveAutoOrganizeMessage(id, {
-      id,
-      status: 'error',
-      error: err instanceof Error ? err.message : 'Unknown error',
-    });
+    if (!isRetryableAiJobError(err)) {
+      await decrement(deviceId);
+      await decrementAutoOrganizeWeekly(deviceId);
+      await saveAutoOrganizeMessage(id, {
+        id,
+        status: 'error',
+        error: err instanceof Error ? err.message : 'Unknown error',
+      });
+    }
     throw err;
   }
 }

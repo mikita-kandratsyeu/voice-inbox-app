@@ -79,7 +79,10 @@ export const OPENROUTER_PENDING_GENERATION_KEY_PREFIX = 'or-gen:';
 export const OPENROUTER_PENDING_GENERATION_TTL_SECONDS = JOB_LOCK_TTL_SECONDS;
 /** Poll OpenRouter `/generation/content` when the live HTTP call fails but a generation id exists. */
 export const OPENROUTER_GENERATION_RECOVERY_POLL_INTERVAL_MS = 2_000;
-export const OPENROUTER_GENERATION_RECOVERY_MAX_WAIT_MS = 120_000;
+/** Poll `/generation/content` after transport failure (within one worker attempt). */
+export const OPENROUTER_GENERATION_RECOVERY_MAX_WAIT_MS = 180_000;
+/** Skip second meeting-dialogue OpenRouter pass above this transcript size (main pass often nears 300s). */
+export const SUMMARIZE_MEETING_DIALOGUE_MAX_TRANSCRIPT_CHARS = 10_000;
 /** Set on `msg:{id}` when the user cancels; worker must not run LLM or send push. */
 export const AI_JOB_CANCELLED_ERROR = 'Cancelled by user';
 export const JOB_CANCELLED_KEY_PREFIX = 'job-cancelled:';

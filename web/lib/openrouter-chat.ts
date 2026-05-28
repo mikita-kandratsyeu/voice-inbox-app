@@ -1,4 +1,7 @@
-import { BASE_URL_OR_FALLBACK } from '@/config/constants';
+import {
+  BASE_URL_OR_FALLBACK,
+  OPENROUTER_GENERATION_RECOVERY_MAX_WAIT_MS,
+} from '@/config/constants';
 import { getAiJobRunContext } from '@/lib/ai-job-context';
 import {
   openRouterModelSupportsReasoning,
@@ -43,6 +46,16 @@ type StreamAccumulation = {
   usage?: unknown;
 };
 
+/** Activity dashboard + recovery correlation; falls back to device id outside workers. */
+function resolveOpenRouterUserParam(deviceId: string | null | undefined): string | undefined {
+  const ctx = getAiJobRunContext();
+  if (ctx?.jobId) {
+    return `vi:${ctx.jobId}`;
+  }
+  const id = deviceId?.trim();
+  return id || undefined;
+}
+
 function openRouterApiKey(): string {
   const key = process.env.OPENROUTER_API_KEY?.trim();
   if (!key) {
@@ -58,6 +71,8 @@ function buildRequestBody(params: SendOpenRouterChatCompletionParams): Record<st
       ? openRouterReasoningParamsForModel(model)
       : undefined;
 
+  const user = resolveOpenRouterUserParam(params.userId);
+
   return {
     model,
     messages: params.messages,
@@ -66,7 +81,7 @@ function buildRequestBody(params: SendOpenRouterChatCompletionParams): Record<st
     ...(params.jsonObject ? { response_format: openRouterJsonObjectResponseFormat() } : {}),
     ...(params.temperature != null ? { temperature: params.temperature } : {}),
     ...(reasoning ? { reasoning } : {}),
-    ...(params.userId?.trim() ? { user: params.userId.trim() } : {}),
+    ...(user ? { user } : {}),
   };
 }
 
@@ -323,7 +338,7 @@ export async function sendOpenRouterChatCompletion(
 
     if (jobCtx && isOpenRouterRecoverableTransportError(err)) {
       const pending = await tryRecoverOpenRouterPendingGeneration(jobCtx.jobId, {
-        maxWaitMs: 60_000,
+        maxWaitMs: OPENROUTER_GENERATION_RECOVERY_MAX_WAIT_MS,
       });
       if (pending) {
         return recoveredToCompletion(pending);

@@ -1,4 +1,5 @@
 import { decrement } from '@/lib/ai-rate-limit';
+import { isRetryableAiJobError } from '@/lib/ai-job-retry';
 import { notifyAiJobComplete } from '@/lib/ai-job-push';
 import { saveMessage } from '@/lib/redis';
 import { processAskQuestion } from '@/services/ai.service';
@@ -48,13 +49,15 @@ export async function runAskJob(payload: AskJobPayload): Promise<void> {
       logLabel: 'Ask complete',
     });
   } catch (err) {
-    await decrement(deviceId);
-    await saveAskMessage(id, {
-      id,
-      status: 'error',
-      error: err instanceof Error ? err.message : 'Unknown error',
-      model,
-    });
+    if (!isRetryableAiJobError(err)) {
+      await decrement(deviceId);
+      await saveAskMessage(id, {
+        id,
+        status: 'error',
+        error: err instanceof Error ? err.message : 'Unknown error',
+        model,
+      });
+    }
     throw err;
   }
 }

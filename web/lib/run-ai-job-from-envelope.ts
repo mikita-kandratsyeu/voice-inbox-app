@@ -3,8 +3,11 @@ import { isAiJobCancelled } from '@/lib/ai-job-cancel';
 import { runAiJob } from '@/lib/ai-job-runners';
 import { acquireJobLock, releaseJobLock } from '@/lib/ai-job-lock';
 import { deleteJobPayload, getJobPayload } from '@/lib/ai-job-payload';
-import { getMessage } from '@/lib/redis';
+import { isRetryableAiJobError } from '@/lib/ai-job-retry';
+import { getOpenRouterPendingGeneration } from '@/lib/openrouter-recovery';
+import { getMessage, saveMessage } from '@/lib/redis';
 import type { AiJobEnvelope } from '@/types/ai-job';
+import type { Message } from '@/types';
 
 export type RunAiJobFromEnvelopeResult =
   | { ok: true; skipped?: boolean; skipReason?: 'done' | 'lock' | 'cancelled' }
@@ -26,8 +29,32 @@ export async function runAiJobFromEnvelope(
 
   if (!options?.skipIdempotency) {
     const existing = await getMessage(jobId);
-    if (existing && existing.status !== 'processing') {
+    if (existing?.status === 'done') {
       return { ok: true, skipped: true, skipReason: 'done' };
+    }
+
+    // Prior attempt may have written `error` before retryable handling was fixed — allow QStash retry
+    // when OpenRouter generation recovery is still pending.
+    if (existing?.status === 'error') {
+      const pendingGen = await getOpenRouterPendingGeneration(jobId);
+      if (!pendingGen) {
+        return { ok: true, skipped: true, skipReason: 'done' };
+      }
+
+      const model =
+        typeof (existing as { model?: unknown }).model === 'string'
+          ? (existing as { model: string }).model
+          : undefined;
+
+      await saveMessage(
+        jobId,
+        {
+          id: jobId,
+          status: 'processing',
+          ...(model ? { model } : {}),
+        } as Message,
+        envelope.messageTtlSeconds,
+      );
     }
   }
 
@@ -73,10 +100,11 @@ export async function runAiJobFromEnvelope(
           error: err instanceof Error ? err.message : String(err),
         }),
       );
+      const retryable = isRetryableAiJobError(err);
       return {
         ok: false,
         error: err instanceof Error ? err.message : 'Unknown error',
-        retryable: false,
+        retryable,
       };
     }
   } finally {

@@ -1,4 +1,6 @@
+import { SUMMARIZE_MEETING_DIALOGUE_MAX_TRANSCRIPT_CHARS } from '@/config/constants';
 import { decrement } from '@/lib/ai-rate-limit';
+import { isRetryableAiJobError } from '@/lib/ai-job-retry';
 import { notifyAiJobComplete } from '@/lib/ai-job-push';
 import { buildMeetingDialogueUserContent } from '@/lib/meeting-dialogue-user-prompt';
 import { mergeOpenRouterTokenUsage } from '@/lib/openrouter-token-usage';
@@ -30,7 +32,21 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
     );
 
     let result = mainResult;
-    if (pseudoDiarizationEligible && meetingDialogueSystemPrompt?.trim()) {
+    const runMeetingDialogue =
+      pseudoDiarizationEligible &&
+      meetingDialogueSystemPrompt?.trim() &&
+      transcript.length <= SUMMARIZE_MEETING_DIALOGUE_MAX_TRANSCRIPT_CHARS;
+
+    if (pseudoDiarizationEligible && meetingDialogueSystemPrompt?.trim() && !runMeetingDialogue) {
+      console.info('[AI] meeting dialogue skipped (long transcript)', {
+        messageId: id,
+        transcriptChars: transcript.length,
+        limit: SUMMARIZE_MEETING_DIALOGUE_MAX_TRANSCRIPT_CHARS,
+      });
+    }
+
+    if (runMeetingDialogue) {
+      const meetingPrompt = meetingDialogueSystemPrompt!.trim();
       try {
         const mdUserContent = buildMeetingDialogueUserContent({
           plainTranscript: transcript,
@@ -45,7 +61,7 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
         const mdPart = await processMeetingDialogueMarkdown(
           mdUserContent,
           model,
-          meetingDialogueSystemPrompt.trim(),
+          meetingPrompt,
           clientUserAgent,
           deviceId,
         );
@@ -93,17 +109,19 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
       logLabel: 'AI complete',
     });
   } catch (err) {
-    await decrement(deviceId);
-    await saveMessage(
-      id,
-      {
+    if (!isRetryableAiJobError(err)) {
+      await decrement(deviceId);
+      await saveMessage(
         id,
-        status: 'error',
-        error: err instanceof Error ? err.message : 'Unknown error',
-        model,
-      },
-      ttl,
-    );
+        {
+          id,
+          status: 'error',
+          error: err instanceof Error ? err.message : 'Unknown error',
+          model,
+        },
+        ttl,
+      );
+    }
     throw err;
   }
 }
