@@ -304,7 +304,12 @@ export const FolderFormModal = ({
             {t('folders.iconLabel')}
           </Text>
           <View
-            style={{ gap: ICON_GAP, marginBottom: 24, width: iconGridWidth, alignSelf: 'center' }}
+            style={{
+              gap: ICON_GAP,
+              marginBottom: 24,
+              width: isTablet ? '100%' : iconGridWidth,
+              alignSelf: isTablet ? 'stretch' : 'center',
+            }}
           >
             {iconRows.map((row, rowIdx) => (
               <View
@@ -312,6 +317,7 @@ export const FolderFormModal = ({
                 style={{
                   flexDirection: 'row',
                   gap: ICON_GAP,
+                  justifyContent: 'flex-start',
                 }}
               >
                 {row.map((key) => {
