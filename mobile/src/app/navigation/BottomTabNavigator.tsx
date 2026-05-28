@@ -24,6 +24,7 @@ import {
 } from './config';
 import { InboxNavigator } from './InboxNavigator';
 import { SettingsNavigator } from './SettingsNavigator';
+import { TabletShellLayout } from './tablet';
 import type { BottomTabParamList } from './types';
 import {
   AnimatedTabButton,
@@ -114,94 +115,96 @@ export const BottomTabNavigator = () => {
     lazy: true,
   };
 
-  const bottomTouchShieldHeight = FLOAT_TAB_BOTTOM_GAP + insets.bottom;
+  const bottomTouchShieldHeight = isTablet ? 0 : FLOAT_TAB_BOTTOM_GAP + insets.bottom;
+
+  const tabNavigator = (
+    <Tab.Navigator
+      screenOptions={screenOptions}
+      tabBar={isTablet ? () => null : (props) => <EvenlySpacedBottomTabBar {...props} />}
+    >
+      <Tab.Screen
+        name="Inbox"
+        component={InboxNavigator}
+        listeners={
+          inboxFiltersReset
+            ? {
+                tabPress: () => inboxFiltersReset.triggerReset(),
+              }
+            : undefined
+        }
+        options={{
+          tabBarLabel: ({ color: c }) => (
+            <View style={{ alignItems: 'center', marginTop: isTablet ? 4 : 2 }}>
+              <Text style={{ color: c, fontSize: isTablet ? 14 : 12, fontWeight: '500' }}>
+                {TAB_LABELS.Inbox}
+              </Text>
+            </View>
+          ),
+          tabBarIcon: ({ color: c }) => (
+            <TAB_ICONS.Inbox size={isTablet ? 28 : TAB_ICON_SIZE} color={c} strokeWidth={1.8} />
+          ),
+          tabBarAccessibilityLabel: TAB_LABELS.Inbox,
+        }}
+      />
+      <Tab.Screen
+        name="Record"
+        component={EmptyScreen}
+        listeners={({ navigation }) => ({
+          tabPress: (e) => {
+            e.preventDefault();
+            navigation.navigate('RecordModal' as never);
+          },
+        })}
+        options={{
+          tabBarLabel: () => null,
+          tabBarIcon: () => null,
+          tabBarButton: () => (
+            <CenterRecordButton
+              iconColor={color.icon.onAccent}
+              accentColor={color.accent.primary}
+              isTablet={isTablet}
+              onLongPress={importAudioFile}
+            />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="SettingsRoot"
+        component={SettingsNavigator}
+        options={{
+          tabBarLabel: ({ color: c }) => (
+            <View style={{ alignItems: 'center', marginTop: isTablet ? 4 : 2 }}>
+              <Text style={{ color: c, fontSize: isTablet ? 14 : 12, fontWeight: '500' }}>
+                {TAB_LABELS.Settings}
+              </Text>
+            </View>
+          ),
+          tabBarIcon: ({ color: c }) => (
+            <TAB_ICONS.Settings size={isTablet ? 28 : TAB_ICON_SIZE} color={c} strokeWidth={1.8} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
 
   return (
     <View className="flex-1">
       <ImportAudioProgressOverlay visible={isImporting} phase={importPhase} />
-      <Tab.Navigator
-        screenOptions={screenOptions}
-        tabBar={(props) => <EvenlySpacedBottomTabBar {...props} />}
-      >
-        <Tab.Screen
-          name="Inbox"
-          component={InboxNavigator}
-          listeners={
-            inboxFiltersReset
-              ? {
-                  tabPress: () => inboxFiltersReset.triggerReset(),
-                }
-              : undefined
-          }
-          options={{
-            tabBarLabel: ({ color: c }) => (
-              <View style={{ alignItems: 'center', marginTop: isTablet ? 4 : 2 }}>
-                <Text style={{ color: c, fontSize: isTablet ? 14 : 12, fontWeight: '500' }}>
-                  {TAB_LABELS.Inbox}
-                </Text>
-              </View>
-            ),
-            tabBarIcon: ({ color: c }) => (
-              <TAB_ICONS.Inbox size={isTablet ? 28 : TAB_ICON_SIZE} color={c} strokeWidth={1.8} />
-            ),
-            tabBarAccessibilityLabel: TAB_LABELS.Inbox,
+      {isTablet ? <TabletShellLayout>{tabNavigator}</TabletShellLayout> : tabNavigator}
+      {bottomTouchShieldHeight > 0 ? (
+        <View
+          pointerEvents="box-only"
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: bottomTouchShieldHeight,
           }}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
         />
-        <Tab.Screen
-          name="Record"
-          component={EmptyScreen}
-          listeners={({ navigation }) => ({
-            tabPress: (e) => {
-              e.preventDefault();
-              navigation.navigate('RecordModal' as never);
-            },
-          })}
-          options={{
-            tabBarLabel: () => null,
-            tabBarIcon: () => null,
-            tabBarButton: () => (
-              <CenterRecordButton
-                iconColor={color.icon.onAccent}
-                accentColor={color.accent.primary}
-                isTablet={isTablet}
-                onLongPress={importAudioFile}
-              />
-            ),
-          }}
-        />
-        <Tab.Screen
-          name="SettingsRoot"
-          component={SettingsNavigator}
-          options={{
-            tabBarLabel: ({ color: c }) => (
-              <View style={{ alignItems: 'center', marginTop: isTablet ? 4 : 2 }}>
-                <Text style={{ color: c, fontSize: isTablet ? 14 : 12, fontWeight: '500' }}>
-                  {TAB_LABELS.Settings}
-                </Text>
-              </View>
-            ),
-            tabBarIcon: ({ color: c }) => (
-              <TAB_ICONS.Settings
-                size={isTablet ? 28 : TAB_ICON_SIZE}
-                color={c}
-                strokeWidth={1.8}
-              />
-            ),
-          }}
-        />
-      </Tab.Navigator>
-      <View
-        pointerEvents="box-only"
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: bottomTouchShieldHeight,
-        }}
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      />
+      ) : null}
     </View>
   );
 };

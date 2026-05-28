@@ -92,6 +92,15 @@
     "record": "Record",
     "settings": "Settings"
   },
+  "tablet": {
+    "sidebar": {
+      "newRecording": "New recording",
+      "recordShort": "Record",
+      "importAudio": "Import audio",
+      "textNote": "Text note",
+      "folders": "Folders"
+    }
+  },
   "textNote": {
     "title": "Text note",
     "openCreate": "Create text note",

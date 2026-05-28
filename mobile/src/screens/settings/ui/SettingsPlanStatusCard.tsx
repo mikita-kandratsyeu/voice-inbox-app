@@ -24,6 +24,8 @@ type SettingsPlanStatusCardProps = {
   monetizationMode: MonetizationMode;
   storeProEntitlementActive?: boolean;
   onPress?: () => void;
+  /** Compact card for the tablet sidebar footer. */
+  layout?: 'default' | 'sidebar';
 };
 
 const CARD_RADIUS = 16;
@@ -33,7 +35,9 @@ export function SettingsPlanStatusCard({
   monetizationMode,
   storeProEntitlementActive,
   onPress,
+  layout = 'default',
 }: SettingsPlanStatusCardProps) {
+  const isSidebar = layout === 'sidebar';
   const { t, i18n } = useTranslation();
   const { isProActive, expiresAtMs } = useProEntitlement();
   const loggedSoonRef = useRef(false);
@@ -132,7 +136,9 @@ export function SettingsPlanStatusCard({
     >
       <Animated.View
         entering={FadeIn.duration(160).delay(24)}
-        className="mb-4 overflow-hidden rounded-2xl p-5"
+        className={
+          isSidebar ? 'overflow-hidden rounded-2xl p-3.5' : 'mb-4 overflow-hidden rounded-2xl p-5'
+        }
         style={[
           {
             borderWidth: 1,
@@ -176,14 +182,21 @@ export function SettingsPlanStatusCard({
         </View>
         <View className="flex-row items-center">
           <View
-            className="mr-3 h-14 w-14 items-center justify-center rounded-2xl"
+            className={
+              isSidebar
+                ? 'mr-2.5 h-10 w-10 items-center justify-center rounded-xl'
+                : 'mr-3 h-14 w-14 items-center justify-center rounded-2xl'
+            }
             style={{ backgroundColor: color.background.tertiary }}
           >
-            <Crown size={28} color={color.accent.primary} strokeWidth={1.75} />
+            <Crown size={isSidebar ? 22 : 28} color={color.accent.primary} strokeWidth={1.75} />
           </View>
           <View className="min-w-0 flex-1">
             <View className="flex-row items-center">
-              <Text className="text-base font-semibold" style={{ color: color.text.primary }}>
+              <Text
+                className={isSidebar ? 'text-sm font-semibold' : 'text-base font-semibold'}
+                style={{ color: color.text.primary }}
+              >
                 {title}
               </Text>
               {statusBadge != null && (
@@ -201,18 +214,22 @@ export function SettingsPlanStatusCard({
               )}
             </View>
             <Text
-              className="mt-1 text-sm leading-5"
+              className={isSidebar ? 'mt-0.5 text-xs leading-4' : 'mt-1 text-sm leading-5'}
               style={{ color: isProActive ? color.text.primary : color.text.secondary }}
+              numberOfLines={isSidebar ? 2 : undefined}
             >
               {subtitle}
             </Text>
             {!isProActive && (
-              <Text className="mt-2 text-xs font-semibold" style={{ color: color.accent.primary }}>
+              <Text
+                className={isSidebar ? 'mt-2 text-xs font-semibold' : 'mt-2 text-xs font-semibold'}
+                style={{ color: color.accent.primary }}
+              >
                 {t('settings.planStatus.comparePlansCta')}
               </Text>
             )}
           </View>
-          {onPress != null && (
+          {onPress != null && !isSidebar && (
             <ChevronRight size={18} color={color.icon.muted} strokeWidth={2} className="ml-2" />
           )}
         </View>

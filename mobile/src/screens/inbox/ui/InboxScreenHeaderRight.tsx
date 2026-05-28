@@ -26,6 +26,8 @@ type InboxScreenHeaderRightProps = {
   onEnterBatchMode: () => void;
   onOpenAllTasks: () => void;
   onCreateTextNote: () => void;
+  /** Tablet sidebar already exposes text note compose. */
+  hideCreateTextNote?: boolean;
   t: TFunction;
 };
 
@@ -46,6 +48,7 @@ function InboxScreenHeaderRightInner({
   onEnterBatchMode,
   onOpenAllTasks,
   onCreateTextNote,
+  hideCreateTextNote = false,
   t,
 }: InboxScreenHeaderRightProps) {
   const theme = useAppTheme();
@@ -133,16 +136,18 @@ function InboxScreenHeaderRightInner({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         />
       )}
-      <Button
-        iconOnly
-        variant="icon"
-        size="md"
-        icon={<SquarePen size={20} color={color.text.primary} strokeWidth={2.2} />}
-        color={color}
-        onPress={onCreateTextNote}
-        accessibilityLabel={t('textNote.openCreate')}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      />
+      {!hideCreateTextNote ? (
+        <Button
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<SquarePen size={20} color={color.text.primary} strokeWidth={2.2} />}
+          color={color}
+          onPress={onCreateTextNote}
+          accessibilityLabel={t('textNote.openCreate')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        />
+      ) : null}
       <MenuView
         key={`inbox-more-${theme}`}
         title=""

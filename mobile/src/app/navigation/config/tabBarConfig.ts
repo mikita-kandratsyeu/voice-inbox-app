@@ -32,7 +32,10 @@ export function getFloatingTabBarScrollPaddingBottom(
   safeAreaBottom: number,
   isTablet: boolean,
 ): number {
-  const barH = isTablet ? FLOAT_TAB_BAR_HEIGHT_TABLET : FLOAT_TAB_BAR_HEIGHT_PHONE;
+  if (isTablet) {
+    return safeAreaBottom + EXTRA_SCROLL_BUFFER;
+  }
+  const barH = FLOAT_TAB_BAR_HEIGHT_PHONE;
   return barH + FLOAT_TAB_BOTTOM_GAP + safeAreaBottom + EXTRA_SCROLL_BUFFER;
 }
 

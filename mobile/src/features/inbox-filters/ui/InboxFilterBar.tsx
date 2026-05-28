@@ -106,6 +106,8 @@ type InboxFilterBarProps = {
   onSortChange: (option: InboxSortOption) => void;
   color: Colors;
   onLayout?: (event: LayoutChangeEvent) => void;
+  /** Tablet sidebar already exposes All / Pinned / Archive. */
+  hidePrimaryFilters?: boolean;
 };
 
 export const InboxFilterBar = ({
@@ -117,6 +119,7 @@ export const InboxFilterBar = ({
   onSortChange,
   color,
   onLayout,
+  hidePrimaryFilters = false,
 }: InboxFilterBarProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
@@ -143,37 +146,39 @@ export const InboxFilterBar = ({
         paddingBottom: FILTER_FLOAT_BOTTOM_PAD,
       }}
     >
-      <FrostedFilterSurface color={color} style={{ flex: 1, minWidth: 0 }}>
-        <View className="flex-row" style={{ padding: 4, gap: 4 }}>
-          {PRIMARY_FILTERS.map((status) => {
-            const isActive = filterStatus === status;
-            const Icon = FILTER_ICONS[status];
-            return (
-              <TouchableOpacity
-                key={status}
-                accessibilityRole="button"
-                accessibilityState={{ selected: isActive }}
-                onPress={() => {
-                  hapticSelection();
-                  onFilterChange(status);
-                }}
-                activeOpacity={0.7}
-                style={[
-                  buttonStyle,
-                  { flex: 1, backgroundColor: isActive ? color.accent.primary : 'transparent' },
-                ]}
-                accessibilityLabel={t(`inbox.filters.${status}`)}
-              >
-                <Icon
-                  size={18}
-                  strokeWidth={2}
-                  color={isActive ? color.icon.onAccent : color.text.secondary}
-                />
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </FrostedFilterSurface>
+      {!hidePrimaryFilters ? (
+        <FrostedFilterSurface color={color} style={{ flex: 1, minWidth: 0 }}>
+          <View className="flex-row" style={{ padding: 4, gap: 4 }}>
+            {PRIMARY_FILTERS.map((status) => {
+              const isActive = filterStatus === status;
+              const Icon = FILTER_ICONS[status];
+              return (
+                <TouchableOpacity
+                  key={status}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isActive }}
+                  onPress={() => {
+                    hapticSelection();
+                    onFilterChange(status);
+                  }}
+                  activeOpacity={0.7}
+                  style={[
+                    buttonStyle,
+                    { flex: 1, backgroundColor: isActive ? color.accent.primary : 'transparent' },
+                  ]}
+                  accessibilityLabel={t(`inbox.filters.${status}`)}
+                >
+                  <Icon
+                    size={18}
+                    strokeWidth={2}
+                    color={isActive ? color.icon.onAccent : color.text.secondary}
+                  />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </FrostedFilterSurface>
+      ) : null}
       <FrostedFilterSurface color={color}>
         <View style={{ padding: 4 }}>
           <MenuView

@@ -4,6 +4,7 @@ import {
   type StyleProp,
   StyleSheet,
   Text,
+  type TextStyle,
   TouchableOpacity,
   type TouchableOpacityProps,
   View,
@@ -31,6 +32,9 @@ export type ButtonProps = TouchableOpacityProps & {
   containerStyle?: StyleProp<ViewStyle>;
   fullWidth?: boolean;
   className?: string;
+  /** `start` — icon/label left, trailing at end (sidebar rows). Default: centered. */
+  contentAlign?: 'center' | 'start';
+  labelStyle?: StyleProp<TextStyle>;
 };
 
 const VARIANT_STYLES: Record<ButtonVariant, (color: Colors) => VariantStyle> = {
@@ -96,6 +100,8 @@ export const Button = ({
   activeOpacity = 0.75,
   disabled,
   className,
+  contentAlign = 'center',
+  labelStyle,
   accessibilityLabel: accessibilityLabelProp,
   accessibilityState: accessibilityStateProp,
   ...rest
@@ -120,8 +126,11 @@ export const Button = ({
 
   const sizeClasses = isIconOnly ? ICON_ONLY_SIZES[size] : SIZE_CLASSES[size].container;
 
+  const isStartAligned = contentAlign === 'start' && !isIconOnly;
+
   const containerClassName = [
-    'flex-row items-center justify-center gap-2',
+    'flex-row items-center gap-2',
+    isStartAligned ? 'justify-start' : 'justify-center',
     sizeClasses,
     fullWidth && 'w-full self-stretch',
     isIconOnly && 'rounded-full',
@@ -160,20 +169,31 @@ export const Button = ({
     >
       {icon}
       {!isIconOnly && label && (
-        <View className="flex-row items-center justify-center gap-2">
-          <View className="items-center justify-center">
+        <View
+          className={[
+            'flex-row items-center gap-2',
+            isStartAligned ? 'min-w-0 flex-1' : 'justify-center',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <View
+            className={
+              isStartAligned ? 'min-w-0 flex-1 items-start' : 'items-center justify-center'
+            }
+          >
             <View
               style={{
                 flexDirection: 'row',
                 alignItems: 'baseline',
-                justifyContent: 'center',
+                justifyContent: isStartAligned ? 'flex-start' : 'center',
                 maxWidth: '100%',
                 opacity: loading ? 0 : 1,
               }}
             >
               <Text
                 className={textClassName}
-                style={[textStyle, { flexShrink: 1 }]}
+                style={[textStyle, { flexShrink: 1 }, labelStyle]}
                 numberOfLines={1}
               >
                 {label}
@@ -221,7 +241,11 @@ export const Button = ({
             )}
           </View>
           {!loading && trailingIcon ? (
-            <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            <View
+              className={isStartAligned ? 'ml-auto shrink-0' : undefined}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+            >
               {trailingIcon}
             </View>
           ) : null}

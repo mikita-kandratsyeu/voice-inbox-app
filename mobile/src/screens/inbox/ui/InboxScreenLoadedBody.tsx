@@ -157,6 +157,7 @@ type InboxScreenLoadedBodyProps = {
   color: Colors;
   insetsBottom: number;
   isTablet: boolean;
+  hidePrimaryFilters?: boolean;
   contentMaxWidth: number | undefined;
   filteredLength: number;
   showInboxSearchBar: boolean;
@@ -196,6 +197,7 @@ function InboxScreenLoadedBodyInner({
   color,
   insetsBottom,
   isTablet,
+  hidePrimaryFilters = false,
   contentMaxWidth,
   filteredLength,
   showInboxSearchBar,
@@ -302,6 +304,7 @@ function InboxScreenLoadedBodyInner({
                 onMenuFilterChange={onMenuFilterChange}
                 onSortChange={onSortChange}
                 color={color}
+                hidePrimaryFilters={hidePrimaryFilters}
                 onLayout={handleFilterBarLayout}
               />
             </View>

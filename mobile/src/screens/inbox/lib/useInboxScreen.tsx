@@ -15,6 +15,13 @@ import {
   getInboxBatchModeScrollPaddingBottom,
 } from '@/app/navigation/config';
 import { openPlanPaywall } from '@/app/navigation/openPlanPaywall';
+import {
+  mapTabletSidebarTargetToFilter,
+  registerTabletInboxSidebarNavHandler,
+  registerTabletOpenCreateFolderHandler,
+  registerTabletOpenEditFolderHandler,
+} from '@/app/navigation/tablet';
+import { useTabletInboxSidebarStore } from '@/app/navigation/tablet/tabletInboxSidebarStore';
 import type { BottomTabParamList } from '@/app/navigation/types';
 import { useFolderStore } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
@@ -42,6 +49,7 @@ import {
   useIsTablet,
   useScrollToTopOnTabPress,
   useTabletContentMaxWidth,
+  useTabletShellLayout,
 } from '@/shared/lib';
 import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 import { getHasSeenSwipeHint, setHasSeenSwipeHint } from '@/shared/lib/hintsStorage';
@@ -61,6 +69,8 @@ export function useInboxScreen() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
+  const useTabletShell = useTabletShellLayout();
+  const setTabletSidebarFilterStatus = useTabletInboxSidebarStore((s) => s.setFilterStatus);
   const color = useColors();
   const { width: windowWidth } = useWindowDimensions();
   const contentMaxWidth = useTabletContentMaxWidth();
@@ -455,6 +465,37 @@ export function useInboxScreen() {
   );
 
   useEffect(() => {
+    setTabletSidebarFilterStatus(filterStatus);
+  }, [filterStatus, setTabletSidebarFilterStatus]);
+
+  useEffect(() => {
+    return registerTabletInboxSidebarNavHandler((target) => {
+      setMenuFilterStatus(null);
+      setFilterStatus(mapTabletSidebarTargetToFilter(target));
+      if (target.kind === 'folder') {
+        handleFolderSelect(target.folderId);
+        return;
+      }
+      handleFolderSelect(null);
+    });
+  }, [handleFolderSelect, setFilterStatus, setMenuFilterStatus]);
+
+  useEffect(() => {
+    return registerTabletOpenCreateFolderHandler(() => {
+      openCreateFolderModal();
+    });
+  }, [openCreateFolderModal]);
+
+  useEffect(() => {
+    return registerTabletOpenEditFolderHandler((folderId) => {
+      const folder = folders.find((f) => f.id === folderId);
+      if (folder) {
+        openEditFolderModal(folder);
+      }
+    });
+  }, [folders, openEditFolderModal]);
+
+  useEffect(() => {
     if (!inboxFiltersReset) return;
     return inboxFiltersReset.registerReset(() => {
       resetToDefault();
@@ -643,6 +684,10 @@ export function useInboxScreen() {
     visibleRecordIds.length > 0 && batchSelect.selectedIds.size === visibleRecordIds.length;
 
   useLayoutEffect(() => {
+    if (useTabletShell) {
+      return;
+    }
+
     const tabNav = navigation.getParent<BottomTabNavigationProp<BottomTabParamList>>();
     if (!tabNav) {
       return;
@@ -679,6 +724,7 @@ export function useInboxScreen() {
     isTablet,
     color.shadow.color,
     color.shadow.opacity,
+    useTabletShell,
   ]);
 
   return {
@@ -686,6 +732,7 @@ export function useInboxScreen() {
     color,
     insets,
     isTablet,
+    useTabletShell,
     contentMaxWidth,
     navigation,
     records,

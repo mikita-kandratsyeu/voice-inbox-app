@@ -26,6 +26,7 @@ export const InboxScreen = () => {
     color,
     insets,
     isTablet,
+    useTabletShell,
     contentMaxWidth,
     navigation,
     records,
@@ -142,11 +143,12 @@ export const InboxScreen = () => {
             onEnterBatchMode={() => enterBatchMode(undefined, { haptic: false })}
             onOpenAllTasks={() => navigation.navigate('AllTasks')}
             onCreateTextNote={handleCreateTextNote}
+            hideCreateTextNote={useTabletShell}
             t={t}
           />
         }
       />
-      {!isPrivateMode && (
+      {!isPrivateMode && !useTabletShell && (
         <FolderChipBar
           folders={folders}
           activeFolderId={effectiveActiveFolderId}
@@ -175,6 +177,7 @@ export const InboxScreen = () => {
           color={color}
           insetsBottom={insets.bottom}
           isTablet={isTablet}
+          hidePrimaryFilters={useTabletShell}
           contentMaxWidth={contentMaxWidth}
           filteredLength={filtered.length}
           showInboxSearchBar={showInboxSearchBar}

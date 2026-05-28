@@ -92,6 +92,15 @@
     "record": "Запись",
     "settings": "Настройки"
   },
+  "tablet": {
+    "sidebar": {
+      "newRecording": "Новая запись",
+      "recordShort": "Запись",
+      "importAudio": "Загрузить аудио",
+      "textNote": "Текстовая заметка",
+      "folders": "Папки"
+    }
+  },
   "textNote": {
     "title": "Текстовая заметка",
     "openCreate": "Создать текстовую заметку",
