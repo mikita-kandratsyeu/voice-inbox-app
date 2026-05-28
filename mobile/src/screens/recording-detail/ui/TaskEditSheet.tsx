@@ -502,7 +502,9 @@ export function TaskEditSheet({
                       if (selectedDate) {
                         setDeadlineDraft(formatTaskDeadline(selectedDate));
                       }
-                      setDatePickerOpen(false);
+                      if (!IS_IOS) {
+                        setDatePickerOpen(false);
+                      }
                     }}
                     onDismiss={() => setDatePickerOpen(false)}
                   />
