@@ -77,7 +77,10 @@ export const TranscriptContent = ({
     return <TranscriptError color={color} onRetry={onTranscribe} />;
   }
 
-  const isAiProcessing = r.summaryStatus === 'processing' || r.tasksStatus === 'processing';
+  const isAiProcessing =
+    r.summaryStatus === 'processing' ||
+    r.tasksStatus === 'processing' ||
+    r.meetingDialogueStatus === 'processing';
   const transcriptSegments =
     (r.transcriptSegments?.length ?? 0) > 0
       ? (r.transcriptSegments ?? [])

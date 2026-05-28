@@ -10,7 +10,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import { FolderPickerSheet, useFolderStore } from '@/entities/folder';
-import { type RecordingMark, useRecordStore } from '@/entities/record';
+import { type RecordingMark, type RecordingStatus, useRecordStore } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
 import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
 import { useAiProcessing } from '@/features/ai-processing';
@@ -70,6 +70,8 @@ export const RecordingDetailScreen = () => {
     promoteNextStepToTask,
     setSummaryStatus,
     setTasksStatus,
+    setMeetingDialogueStatus,
+    setMeetingDialogueError,
     clearAudioPath,
     archiveRecord,
     unarchiveRecord,
@@ -87,6 +89,8 @@ export const RecordingDetailScreen = () => {
       promoteNextStepToTask: s.promoteNextStepToTask,
       setSummaryStatus: s.setSummaryStatus,
       setTasksStatus: s.setTasksStatus,
+      setMeetingDialogueStatus: s.setMeetingDialogueStatus,
+      setMeetingDialogueError: s.setMeetingDialogueError,
       clearAudioPath: s.clearAudioPath,
       archiveRecord: s.archiveRecord,
       unarchiveRecord: s.unarchiveRecord,
@@ -371,7 +375,18 @@ export const RecordingDetailScreen = () => {
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const isMeetingMode = liveRecord.classification === 'meeting';
   const aiBusy =
-    liveRecord.summaryStatus === 'processing' || liveRecord.tasksStatus === 'processing';
+    liveRecord.summaryStatus === 'processing' ||
+    liveRecord.tasksStatus === 'processing' ||
+    liveRecord.meetingDialogueStatus === 'processing';
+
+  const meetingDialogueTabStatus = useMemo((): RecordingStatus => {
+    if (liveRecord.meetingDialogueStatus === 'processing') return 'processing';
+    if (liveRecord.meetingDialogueStatus === 'failed') return 'error';
+    if (liveRecord.meetingDialogue?.trim()) return 'done';
+    if (liveRecord.summaryStatus === 'processing') return 'processing';
+    return 'idle';
+  }, [liveRecord.meetingDialogue, liveRecord.meetingDialogueStatus, liveRecord.summaryStatus]);
+
   const hasTranscript = Boolean(liveRecord.transcript?.trim());
   const hasAudio = Boolean(liveRecord.audioPath?.trim());
   const showMeetingModeToggle = isProActive && !isPrivateMode && hasTranscript && hasAudio;
@@ -519,6 +534,16 @@ export const RecordingDetailScreen = () => {
     setSummaryStatus(liveRecord.id, 'done');
     setTasksStatus(liveRecord.id, 'done');
   }, [liveRecord.id, setSummaryStatus, setTasksStatus]);
+
+  const handleDismissMeetingDialogueError = useCallback(() => {
+    setMeetingDialogueStatus(liveRecord.id, liveRecord.meetingDialogue?.trim() ? 'done' : 'idle');
+    setMeetingDialogueError(liveRecord.id, undefined);
+  }, [
+    liveRecord.id,
+    liveRecord.meetingDialogue,
+    setMeetingDialogueError,
+    setMeetingDialogueStatus,
+  ]);
   const handleSwitchToSmartMode = useCallback(() => {
     setAiExecutionMode('smart_hybrid');
   }, [setAiExecutionMode]);
@@ -733,9 +758,9 @@ export const RecordingDetailScreen = () => {
                   hasTranscript={Boolean(liveRecord.transcript)}
                   color={color}
                   onGenerate={handleGenerateSummary}
-                  status={liveRecord.summaryStatus ?? 'idle'}
-                  errorMessage={liveRecord.summaryError}
-                  onDismissError={handleDismissSummaryError}
+                  status={meetingDialogueTabStatus}
+                  errorMessage={liveRecord.meetingDialogueError ?? liveRecord.summaryError}
+                  onDismissError={handleDismissMeetingDialogueError}
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onCancelProcessing={handleCancelAiGeneration}
                   isPrivateMode={isPrivateMode}

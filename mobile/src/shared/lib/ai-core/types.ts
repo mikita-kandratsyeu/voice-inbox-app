@@ -6,7 +6,7 @@ import type {
   TaskStrictness,
   UserSelectableAIModelId,
 } from '@/entities/settings';
-import type { AiProcessingResult } from '@/shared/lib/ai-api';
+import type { AiProcessingResult, ServerMeetingDialogueStatus } from '@/shared/lib/ai-api';
 
 import type { RecordingMarkForPrompt } from './recordingMarksForPrompt';
 
@@ -53,6 +53,10 @@ export type SummaryTaskRequest = {
   onLocalGenerationProgress?: (event: AiLocalGenerationProgressEvent) => void;
   /** Aborts cloud POST/poll when the user cancels (Smart mode). */
   abortSignal?: AbortSignal;
+  /** Long meeting: poll until async `meeting_dialogue` job finishes (extra timeout). */
+  expectAsyncMeetingDialogue?: boolean;
+  /** Cloud only: summary/tasks applied while speaker breakdown still runs. */
+  onCloudSummaryReady?: (result: AiProcessingResult) => void | Promise<void>;
 };
 
 export type AskPriorTurn = { question: string; answer: string };
@@ -74,6 +78,8 @@ export type AiOrchestratorSuccess<T> = {
   provider: AiProviderKind;
   mode: 'smart_hybrid' | 'private_experimental';
   result: T;
+  /** Set when cloud poll finishes (meeting speaker-breakdown phase). */
+  meetingDialogueStatus?: ServerMeetingDialogueStatus;
 };
 
 export type AiOrchestratorFailure = {

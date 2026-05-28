@@ -1,0 +1,188 @@
+import type { RecordClassification, TaskItem, VoiceRecord } from '@/entities/record';
+import { mergeManualTasksWithAi } from '@/entities/record/model/mergeManualTasksWithAi';
+import { mergeSimilarExtractedTasks } from '@/entities/record/model/mergeSimilarExtractedTasks';
+import {
+  buildNormalizedTextSet,
+  collectExistingTaskTextsForAiPrompt,
+  filterAiTaskItemsByNormalizedSet,
+  filterNextStepsByNormalizedTaskSet,
+  normalizedManualTaskTextSet,
+} from '@/entities/record/model/taskTextDedupe';
+import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
+import type { AiProcessingResult } from '@/shared/lib/ai-api';
+
+export type ApplyAiSummaryResultParams = {
+  record: VoiceRecord;
+  result: AiProcessingResult;
+  isProActive: boolean;
+  recordIsMeeting: boolean;
+  includeMeetingSpeakerBreakdown: boolean;
+  aiExecutionMode: 'smart_hybrid' | 'private_experimental';
+  effectiveLocalAiModelId: string;
+  /** Cloud phase-1: summary/tasks only; meeting dialogue arrives later. */
+  skipMeetingDialogue?: boolean;
+  generationStartedAt: number;
+  updateSummary: (id: string, summary: string) => Promise<void>;
+  updateTasks: (id: string, tasks: TaskItem[]) => Promise<void>;
+  updateTags: (id: string, tags: string[]) => Promise<void>;
+  updateAiExtras: (
+    id: string,
+    data: {
+      classification?: RecordClassification | null;
+      keyPhrases?: string[];
+      nextSteps?: string[];
+      meetingDialogue?: string | null;
+      summaryReasoning?: string | null;
+      summaryAiModel?: string | null;
+      summaryTokensPrompt?: number | null;
+      summaryTokensCompletion?: number | null;
+      summaryGenerationMs?: number | null;
+    },
+  ) => Promise<void>;
+  renameRecord: (id: string, title: string) => Promise<void>;
+  getLatestRecord: (id: string) => VoiceRecord | undefined;
+};
+
+/** Persists summary, tasks, tags, classification, and optional meeting dialogue from AI output. */
+export async function applyAiSummaryResult(params: ApplyAiSummaryResultParams): Promise<void> {
+  const {
+    record,
+    result,
+    isProActive,
+    recordIsMeeting,
+    includeMeetingSpeakerBreakdown,
+    aiExecutionMode,
+    effectiveLocalAiModelId,
+    skipMeetingDialogue = false,
+    generationStartedAt,
+    updateSummary,
+    updateTasks,
+    updateTags,
+    updateAiExtras,
+    renameRecord,
+    getLatestRecord,
+  } = params;
+
+  const {
+    summary,
+    suggestedTitle,
+    tasks: rawTasks,
+    tags,
+    classification,
+    keyPhrases,
+    nextSteps,
+    meetingDialogueMarkdown,
+    reasoning: summaryReasoningRaw,
+    model: summaryModelRaw,
+    tokenUsage: summaryTokenUsageRaw,
+  } = result;
+
+  const aiTaskItems: TaskItem[] = rawTasks.map((t, index) => ({
+    id: `${record.id}-task-${index}`,
+    text: t.title,
+    isDone: false,
+    deadline: t.deadline ?? undefined,
+    priority: t.priority,
+    source: 'ai',
+  }));
+
+  const latest = getLatestRecord(record.id);
+  const manualNorm = normalizedManualTaskTextSet(latest?.tasks);
+  const aiTaskItemsFiltered = filterAiTaskItemsByNormalizedSet(aiTaskItems, manualNorm);
+  const aiTasksDeduped = mergeSimilarExtractedTasks(aiTaskItemsFiltered);
+  const mergedTasks = mergeManualTasksWithAi(latest?.tasks, aiTasksDeduped);
+  const taskNormMerged = buildNormalizedTextSet(mergedTasks.map((x) => x.text));
+  const rawNextSteps = nextSteps ?? [];
+  const nextStepsForStore = filterNextStepsByNormalizedTaskSet(rawNextSteps, taskNormMerged);
+
+  const prevHadMeetingDialogue = Boolean(latest?.meetingDialogue?.trim());
+  const meetingDialogueForStore =
+    !skipMeetingDialogue && includeMeetingSpeakerBreakdown && meetingDialogueMarkdown?.trim()
+      ? meetingDialogueMarkdown.trim()
+      : null;
+
+  await updateSummary(record.id, summary);
+  await updateTasks(record.id, mergedTasks);
+
+  if (suggestedTitle?.trim()) {
+    const currentRecord = getLatestRecord(record.id);
+    if (currentRecord) {
+      const standardTitle = getAutoTitleForDate(currentRecord.createdAt);
+      if (currentRecord.title === standardTitle) {
+        await renameRecord(record.id, suggestedTitle.trim());
+      }
+    }
+  }
+  if (tags.length > 0) {
+    await updateTags(record.id, tags);
+  }
+
+  let resolvedClassification: RecordClassification | undefined =
+    isProActive && recordIsMeeting ? 'meeting' : classification;
+  if (!isProActive && resolvedClassification === 'meeting') {
+    resolvedClassification = undefined;
+  }
+
+  const classificationClearedForNonPro = !isProActive && classification === 'meeting';
+
+  const summaryReasoningForStore =
+    aiExecutionMode === 'smart_hybrid' && summaryReasoningRaw?.trim()
+      ? summaryReasoningRaw.trim()
+      : null;
+
+  const shouldUpdateAiExtras =
+    resolvedClassification ||
+    (keyPhrases && keyPhrases.length > 0) ||
+    rawNextSteps.length > 0 ||
+    nextStepsForStore.length > 0 ||
+    classificationClearedForNonPro ||
+    (includeMeetingSpeakerBreakdown && !skipMeetingDialogue) ||
+    prevHadMeetingDialogue ||
+    aiExecutionMode === 'smart_hybrid';
+
+  const summaryModelForStore =
+    summaryModelRaw?.trim() ||
+    (aiExecutionMode === 'private_experimental' ? effectiveLocalAiModelId : '');
+
+  if (shouldUpdateAiExtras) {
+    await updateAiExtras(record.id, {
+      classification: resolvedClassification ?? null,
+      keyPhrases: keyPhrases ?? [],
+      nextSteps: nextStepsForStore,
+      ...(includeMeetingSpeakerBreakdown && !skipMeetingDialogue
+        ? { meetingDialogue: meetingDialogueForStore }
+        : {}),
+      ...(aiExecutionMode === 'smart_hybrid' ? { summaryReasoning: summaryReasoningForStore } : {}),
+    });
+  }
+
+  const summaryTokensForStore =
+    summaryTokenUsageRaw && summaryTokenUsageRaw.prompt >= 0 && summaryTokenUsageRaw.completion >= 0
+      ? {
+          summaryTokensPrompt: Math.floor(summaryTokenUsageRaw.prompt),
+          summaryTokensCompletion: Math.floor(summaryTokenUsageRaw.completion),
+        }
+      : {
+          summaryTokensPrompt: null,
+          summaryTokensCompletion: null,
+        };
+
+  const summaryGenerationMs = Date.now() - generationStartedAt;
+
+  if (summaryModelForStore || summaryTokenUsageRaw || summaryGenerationMs > 0) {
+    await updateAiExtras(record.id, {
+      ...(summaryModelForStore ? { summaryAiModel: summaryModelForStore } : {}),
+      ...summaryTokensForStore,
+      ...(summaryGenerationMs > 0 ? { summaryGenerationMs } : {}),
+    });
+  }
+}
+
+/** Task texts for cloud/local re-runs (deduped manual + AI). */
+export function existingTaskTextsForRecord(
+  getLatestRecord: (id: string) => VoiceRecord | undefined,
+  recordId: string,
+): string[] {
+  const snapshot = getLatestRecord(recordId);
+  return collectExistingTaskTextsForAiPrompt(snapshot?.tasks);
+}

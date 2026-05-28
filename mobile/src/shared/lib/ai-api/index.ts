@@ -5,6 +5,8 @@ export type {
   AiTask,
   AiUsage,
   ClaimAiBonusResult,
+  PollAiMessageOptions,
+  ServerMeetingDialogueStatus,
 } from './aiApi';
 export { claimAiBonus, getAiUsage, pollAiMessage, postAiMessage } from './aiApi';
 export type { AskApiResult, AskMessageResult } from './askApi';

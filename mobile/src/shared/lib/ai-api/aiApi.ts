@@ -4,22 +4,12 @@ import { isNumber, isString } from '@/shared/lib/type-guards';
 
 import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from './abort';
 import { headersForAiOperation } from './aiOperation';
+import { aiPollTimeoutMs } from './constants';
+import { parseMessagePollState, type ServerMeetingDialogueStatus } from './parseMessageResponse';
 import { pollGetLoop } from './pollGetLoop';
 import { readResponseJson } from './responseJson';
 
-function parseTokenUsage(raw: unknown): { prompt: number; completion: number } | undefined {
-  if (!raw || typeof raw !== 'object') {
-    return undefined;
-  }
-  const row = raw as Record<string, unknown>;
-  const prompt = isNumber(row.prompt) && row.prompt >= 0 ? Math.floor(row.prompt) : undefined;
-  const completion =
-    isNumber(row.completion) && row.completion >= 0 ? Math.floor(row.completion) : undefined;
-  if (prompt == null || completion == null) {
-    return undefined;
-  }
-  return { prompt, completion };
-}
+export type { ServerMeetingDialogueStatus };
 
 export type AiRecordingMarkOption = {
   offsetMs: number;
@@ -95,29 +85,20 @@ export type AiProcessingResult = {
   tokenUsage?: { prompt: number; completion: number };
 };
 
-export type AiMessageResult =
-  | { ok: true; result: AiProcessingResult }
-  | { ok: false; error: string };
+export type PollAiMessageOptions = AiFetchOptions & {
+  /** Second QStash pass for long meetings; extends poll deadline. */
+  expectAsyncMeetingDialogue?: boolean;
+  /** Fired when summary/tasks are ready but speaker breakdown is still processing. */
+  onSummaryReady?: (result: AiProcessingResult) => void | Promise<void>;
+};
 
-type MessageResponse =
-  | { id: string; status: 'processing'; model?: string }
+export type AiMessageResult =
   | {
-      id: string;
-      status: 'done';
-      model?: string;
-      summary: string;
-      suggestedTitle?: string;
-      tasks: AiTask[];
-      tags: string[];
-      classification?: RecordClassification;
-      keyPhrases?: string[];
-      nextSteps?: string[];
-      meetingDialogueMarkdown?: string;
-      meetingDialogueStatus?: 'processing' | 'done' | 'failed' | 'skipped';
-      reasoning?: string;
-      tokenUsage?: { prompt: number; completion: number };
+      ok: true;
+      result: AiProcessingResult;
+      meetingDialogueStatus?: ServerMeetingDialogueStatus;
     }
-  | { id: string; status: 'error'; error: string; model?: string };
+  | { ok: false; error: string };
 
 export async function postAiMessage(
   body: AiApiRequestBody,
@@ -271,7 +252,7 @@ export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
 export async function pollAiMessage(
   id: string,
   syncToken?: string,
-  options?: AiFetchOptions,
+  options?: PollAiMessageOptions,
 ): Promise<AiMessageResult> {
   const headers: Record<string, string> = {};
   if (syncToken) {
@@ -279,65 +260,60 @@ export async function pollAiMessage(
   }
 
   const url = `${getWebApiUrl()}/api/messages/${id}`;
+  const expectAsyncMeetingDialogue = options?.expectAsyncMeetingDialogue === true;
+  let summaryReadyDelivered = false;
 
-  const result = await pollGetLoop<AiProcessingResult>(
+  const result = await pollGetLoop<{
+    result: AiProcessingResult;
+    meetingDialogueStatus?: ServerMeetingDialogueStatus;
+  }>(
     url,
     (json) => {
-      const msg = json as MessageResponse;
-      if (msg.status === 'done') {
-        const mdStatus = (msg as { meetingDialogueStatus?: string }).meetingDialogueStatus;
-        if (mdStatus === 'processing') {
-          return 'processing';
+      const state = parseMessagePollState(json);
+      if (state.kind === 'processing') {
+        return 'processing';
+      }
+      if (state.kind === 'error') {
+        if (__DEV__) console.warn('[AI] pollAiMessage: server error', { id, error: state.error });
+        return { ok: false, error: state.error };
+      }
+
+      if (state.meetingDialogueStatus === 'processing') {
+        if (!summaryReadyDelivered && options?.onSummaryReady) {
+          summaryReadyDelivered = true;
+          return Promise.resolve(options.onSummaryReady(state.result)).then(
+            () => 'processing' as const,
+          );
         }
-
-        const suggested =
-          'suggestedTitle' in msg &&
-          isString((msg as { suggestedTitle?: string }).suggestedTitle) &&
-          (msg as { suggestedTitle: string }).suggestedTitle.trim()
-            ? { suggestedTitle: (msg as { suggestedTitle: string }).suggestedTitle.trim() }
-            : {};
-        const modelField =
-          isString(msg.model) && msg.model.trim() ? { model: msg.model.trim() } : {};
-        const mdRaw = (msg as { meetingDialogueMarkdown?: unknown }).meetingDialogueMarkdown;
-        const meetingMd =
-          isString(mdRaw) && mdRaw.trim() ? { meetingDialogueMarkdown: mdRaw.trim() } : {};
-        const reasoningRaw = (msg as { reasoning?: unknown }).reasoning;
-        const reasoningField =
-          isString(reasoningRaw) && reasoningRaw.trim() ? { reasoning: reasoningRaw.trim() } : {};
-        const tokenUsage = parseTokenUsage((msg as { tokenUsage?: unknown }).tokenUsage);
-        const tokenUsageField = tokenUsage ? { tokenUsage } : {};
-
-        return {
-          ok: true,
-          result: {
-            summary: msg.summary,
-            tasks: msg.tasks,
-            tags: msg.tags ?? [],
-            ...suggested,
-            ...modelField,
-            ...(msg.classification && { classification: msg.classification }),
-            ...(msg.keyPhrases && { keyPhrases: msg.keyPhrases }),
-            ...(msg.nextSteps && { nextSteps: msg.nextSteps }),
-            ...meetingMd,
-            ...reasoningField,
-            ...tokenUsageField,
-          },
-        };
+        return 'processing';
       }
 
-      if (msg.status === 'error') {
-        if (__DEV__) console.warn('[AI] pollAiMessage: server error', { id, error: msg.error });
-        return { ok: false, error: msg.error };
-      }
-
-      return 'processing';
+      return {
+        ok: true,
+        result: {
+          result: state.result,
+          meetingDialogueStatus: state.meetingDialogueStatus,
+        },
+      };
     },
-    { ...options, headers },
+    {
+      signal: options?.signal,
+      headers,
+      timeoutMs: aiPollTimeoutMs(expectAsyncMeetingDialogue),
+    },
   );
 
   if (!result.ok && result.error === 'Timeout waiting for AI result' && __DEV__) {
-    console.warn('[AI] pollAiMessage: timeout', { id });
+    console.warn('[AI] pollAiMessage: timeout', { id, expectAsyncMeetingDialogue });
   }
 
-  return result;
+  if (!result.ok) {
+    return result;
+  }
+
+  return {
+    ok: true,
+    result: result.result.result,
+    meetingDialogueStatus: result.result.meetingDialogueStatus,
+  };
 }

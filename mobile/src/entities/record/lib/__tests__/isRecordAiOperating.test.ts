@@ -8,6 +8,7 @@ describe('isRecordAiOperating', () => {
     expect(isRecordAiOperating({ tasksStatus: 'processing' })).toBe(true);
     expect(isRecordAiOperating({ translationStatus: 'processing' })).toBe(true);
     expect(isRecordAiOperating({ askAiStatus: 'processing' })).toBe(true);
+    expect(isRecordAiOperating({ meetingDialogueStatus: 'processing' })).toBe(true);
   });
 
   it('returns false when no ai operation is active', () => {

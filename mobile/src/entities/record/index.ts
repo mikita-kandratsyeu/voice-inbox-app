@@ -15,6 +15,7 @@ export type { TrashedRecordListItem } from './model/repository';
 export { useRecordStore } from './model/store';
 export type {
   isRecordingMarkKind,
+  MeetingDialogueLoadStatus,
   RecordClassification,
   RecordHeavyFields,
   RecordingMark,

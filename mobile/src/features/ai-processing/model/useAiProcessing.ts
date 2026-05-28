@@ -2,21 +2,16 @@ import { useCallback, useRef } from 'react';
 import { useShallow } from 'zustand/react/shallow';
 
 import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
-import type { RecordClassification, TaskItem, VoiceRecord } from '@/entities/record';
+import type { MeetingDialogueLoadStatus, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { mergeManualTasksWithAi } from '@/entities/record/model/mergeManualTasksWithAi';
-import { mergeSimilarExtractedTasks } from '@/entities/record/model/mergeSimilarExtractedTasks';
-import {
-  buildNormalizedTextSet,
-  collectExistingTaskTextsForAiPrompt,
-  filterAiTaskItemsByNormalizedSet,
-  filterNextStepsByNormalizedTaskSet,
-  normalizedManualTaskTextSet,
-} from '@/entities/record/model/taskTextDedupe';
 import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
+import {
+  applyAiSummaryResult,
+  existingTaskTextsForRecord,
+} from '@/features/ai-processing/lib/applyAiSummaryResult';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
-import { getAutoTitleForDate } from '@/screens/record/lib/getAutoTitle';
+import type { AiProcessingResult } from '@/shared/lib/ai-api';
 import {
   type AiAbortHandle,
   createAiAbortHandle,
@@ -35,6 +30,7 @@ import {
   toUserFacingFetchErrorFromUnknown,
   toUserFacingFetchErrorMessage,
 } from '@/shared/lib/fetch/userFacingFetchError';
+import { i18n } from '@/shared/lib/i18n';
 import { isNonNegativeFiniteNumber } from '@/shared/lib/type-guards';
 
 function normalizeTaskExtractionHint(raw?: string): string | undefined {
@@ -51,6 +47,8 @@ export const useAiProcessing = () => {
     setTasksStatus,
     setSummaryError,
     setTasksError,
+    setMeetingDialogueStatus,
+    setMeetingDialogueError,
     setPrivateAiBatchUi,
     clearPrivateAiBatchUi,
     updateSummary,
@@ -64,6 +62,8 @@ export const useAiProcessing = () => {
       setTasksStatus: s.setTasksStatus,
       setSummaryError: s.setSummaryError,
       setTasksError: s.setTasksError,
+      setMeetingDialogueStatus: s.setMeetingDialogueStatus,
+      setMeetingDialogueError: s.setMeetingDialogueError,
       setPrivateAiBatchUi: s.setPrivateAiBatchUi,
       clearPrivateAiBatchUi: s.clearPrivateAiBatchUi,
       updateSummary: s.updateSummary,
@@ -115,19 +115,57 @@ export const useAiProcessing = () => {
   const activeCloudJobIdRef = useRef<Map<string, string>>(new Map());
   const { isProActive } = useProEntitlement();
 
+  const resolveMeetingDialogueUiStatus = useCallback(
+    (
+      includeMeetingSpeakerBreakdown: boolean,
+      meetingDialogueMarkdown: string | undefined,
+      pollStatus?: 'processing' | 'done' | 'failed' | 'skipped',
+    ): MeetingDialogueLoadStatus => {
+      if (!includeMeetingSpeakerBreakdown) return 'idle';
+      if (pollStatus === 'failed') return 'failed';
+      if (meetingDialogueMarkdown?.trim()) return 'done';
+      return 'idle';
+    },
+    [],
+  );
+
   const applyCancelledUiState = useCallback(
     (recordId: string) => {
       clearPrivateAiBatchUi(recordId);
       const latest = useRecordStore.getState().records.find((r) => r.id === recordId);
       const hadSummary = Boolean(latest?.summary?.trim());
       const hadTasks = (latest?.tasks?.length ?? 0) > 0;
+      const hadMeetingDialogue = Boolean(latest?.meetingDialogue?.trim());
 
       setSummaryStatus(recordId, hadSummary ? 'done' : 'idle');
       setTasksStatus(recordId, hadTasks ? 'done' : 'idle');
       setSummaryError(recordId, undefined);
       setTasksError(recordId, undefined);
+      setMeetingDialogueStatus(recordId, hadMeetingDialogue ? 'done' : 'idle');
+      setMeetingDialogueError(recordId, undefined);
     },
-    [clearPrivateAiBatchUi, setSummaryError, setSummaryStatus, setTasksError, setTasksStatus],
+    [
+      clearPrivateAiBatchUi,
+      setMeetingDialogueError,
+      setMeetingDialogueStatus,
+      setSummaryError,
+      setSummaryStatus,
+      setTasksError,
+      setTasksStatus,
+    ],
+  );
+
+  const isSummaryAlreadyApplied = useCallback((recordId: string): boolean => {
+    const latest = useRecordStore.getState().records.find((r) => r.id === recordId);
+    return latest?.summaryStatus === 'done' && Boolean(latest?.summary?.trim());
+  }, []);
+
+  const applyMeetingDialogueFailure = useCallback(
+    (recordId: string, errorMsg: string) => {
+      setMeetingDialogueStatus(recordId, 'failed');
+      setMeetingDialogueError(recordId, errorMsg);
+    },
+    [setMeetingDialogueError, setMeetingDialogueStatus],
   );
 
   const cancelAiGeneration = useCallback(
@@ -216,16 +254,61 @@ export const useAiProcessing = () => {
         tier: privateCapabilityTier,
       });
 
+      let includeMeetingSpeakerBreakdown = false;
+
       try {
         const snapshot = useRecordStore.getState().records.find((r) => r.id === record.id);
-        const existingTaskTexts = collectExistingTaskTextsForAiPrompt(snapshot?.tasks);
+        const existingTaskTexts = existingTaskTextsForRecord(
+          (id) => useRecordStore.getState().records.find((r) => r.id === id),
+          record.id,
+        );
         const taskExtractionHint = normalizeTaskExtractionHint(aiRunOptions?.taskExtractionHint);
         const recordingMarks = sanitizeRecordingMarksForPrompt(
           snapshot?.recordingMarks ?? record.recordingMarks,
         );
         const recordIsMeeting = (snapshot?.classification ?? record.classification) === 'meeting';
-        const includeMeetingSpeakerBreakdown =
+        includeMeetingSpeakerBreakdown =
           isProActive && recordIsMeeting && aiExecutionMode !== 'private_experimental';
+
+        if (includeMeetingSpeakerBreakdown) {
+          setMeetingDialogueStatus(record.id, 'idle');
+          setMeetingDialogueError(record.id, undefined);
+          await updateAiExtras(record.id, { meetingDialogue: null });
+        }
+
+        const getLatestRecord = (id: string) =>
+          useRecordStore.getState().records.find((r) => r.id === id);
+
+        const applyResultParams = {
+          record,
+          isProActive,
+          recordIsMeeting,
+          includeMeetingSpeakerBreakdown,
+          aiExecutionMode,
+          effectiveLocalAiModelId,
+          generationStartedAt,
+          updateSummary,
+          updateTasks,
+          updateTags,
+          updateAiExtras,
+          renameRecord,
+          getLatestRecord,
+        };
+
+        const onCloudSummaryReady = includeMeetingSpeakerBreakdown
+          ? async (partial: AiProcessingResult) => {
+              if (abortHandle.cancelled) return;
+              if (runGenerationRef.current.get(record.id) !== runGeneration) return;
+
+              await applyAiSummaryResult({
+                ...applyResultParams,
+                result: partial,
+                skipMeetingDialogue: true,
+              });
+              setMeetingDialogueStatus(record.id, 'processing');
+              setMeetingDialogueError(record.id, undefined);
+            }
+          : undefined;
 
         const transcriptSegmentsForCloud =
           includeMeetingSpeakerBreakdown && (snapshot?.transcriptSegments?.length ?? 0) > 0
@@ -308,6 +391,12 @@ export const useAiProcessing = () => {
             ...(recordingMarks?.length ? { recordingMarks } : {}),
             onLocalGenerationProgress,
             abortSignal: abortHandle.signal,
+            ...(includeMeetingSpeakerBreakdown
+              ? {
+                  expectAsyncMeetingDialogue: true,
+                  onCloudSummaryReady,
+                }
+              : {}),
           },
           {
             selectedAIModel,
@@ -359,10 +448,32 @@ export const useAiProcessing = () => {
           if (runResult.limitExceeded) {
             alertAiLimitExceeded(errorMsg);
           }
+          if (
+            includeMeetingSpeakerBreakdown &&
+            isSummaryAlreadyApplied(record.id) &&
+            !runResult.limitExceeded
+          ) {
+            applyMeetingDialogueFailure(
+              record.id,
+              i18n.t('recordingDetail.meetingDialogueFailedDesc'),
+            );
+            void logAnalyticsEvent('ai_action_failed', {
+              action: 'summary_tasks',
+              reason: 'meeting_dialogue',
+              mode: runResult.mode,
+              provider: runResult.provider,
+              tier: privateCapabilityTier,
+            });
+            return;
+          }
           setSummaryStatus(record.id, 'error');
           setTasksStatus(record.id, 'error');
           setSummaryError(record.id, errorMsg);
           setTasksError(record.id, errorMsg);
+          if (includeMeetingSpeakerBreakdown) {
+            setMeetingDialogueStatus(record.id, 'idle');
+            setMeetingDialogueError(record.id, undefined);
+          }
           void logAnalyticsEvent('ai_action_failed', {
             action: 'summary_tasks',
             reason: runResult.limitExceeded ? 'limit' : 'run',
@@ -378,127 +489,41 @@ export const useAiProcessing = () => {
           privateAiBatchPhase: 'processing',
         });
 
-        const {
-          summary,
-          suggestedTitle,
-          tasks: rawTasks,
-          tags,
-          classification,
-          keyPhrases,
-          nextSteps,
-          meetingDialogueMarkdown,
-          reasoning: summaryReasoningRaw,
-          model: summaryModelRaw,
-          tokenUsage: summaryTokenUsageRaw,
-        } = runResult.result;
+        const { summary, keyPhrases, meetingDialogueMarkdown } = runResult.result;
+        const summaryAlreadyOnDevice = isSummaryAlreadyApplied(record.id);
 
-        const aiTaskItems: TaskItem[] = rawTasks.map((t, index) => ({
-          id: `${record.id}-task-${index}`,
-          text: t.title,
-          isDone: false,
-          deadline: t.deadline ?? undefined,
-          priority: t.priority,
-          source: 'ai',
-        }));
+        if (!summaryAlreadyOnDevice) {
+          await applyAiSummaryResult({
+            ...applyResultParams,
+            result: runResult.result,
+          });
+        } else if (includeMeetingSpeakerBreakdown && meetingDialogueMarkdown?.trim()) {
+          await updateAiExtras(record.id, {
+            meetingDialogue: meetingDialogueMarkdown.trim(),
+          });
+        }
 
-        const latest = useRecordStore.getState().records.find((r) => r.id === record.id);
-        const manualNorm = normalizedManualTaskTextSet(latest?.tasks);
-        const aiTaskItemsFiltered = filterAiTaskItemsByNormalizedSet(aiTaskItems, manualNorm);
-        const aiTasksDeduped = mergeSimilarExtractedTasks(aiTaskItemsFiltered);
-        const mergedTasks = mergeManualTasksWithAi(latest?.tasks, aiTasksDeduped);
-        const taskNormMerged = buildNormalizedTextSet(mergedTasks.map((x) => x.text));
-        const rawNextSteps = nextSteps ?? [];
-        const nextStepsForStore = filterNextStepsByNormalizedTaskSet(rawNextSteps, taskNormMerged);
-
-        const prevHadMeetingDialogue = Boolean(latest?.meetingDialogue?.trim());
-        const meetingDialogueForStore =
-          includeMeetingSpeakerBreakdown && meetingDialogueMarkdown?.trim()
-            ? meetingDialogueMarkdown.trim()
-            : null;
-
-        await updateSummary(record.id, summary);
-        await updateTasks(record.id, mergedTasks);
-
-        if (suggestedTitle?.trim()) {
-          const currentRecord = useRecordStore.getState().records.find((r) => r.id === record.id);
-          if (currentRecord) {
-            const standardTitle = getAutoTitleForDate(currentRecord.createdAt);
-            if (currentRecord.title === standardTitle) {
-              await renameRecord(record.id, suggestedTitle.trim());
-            }
+        if (includeMeetingSpeakerBreakdown) {
+          const mdUiStatus = resolveMeetingDialogueUiStatus(
+            true,
+            meetingDialogueMarkdown,
+            runResult.meetingDialogueStatus,
+          );
+          setMeetingDialogueStatus(record.id, mdUiStatus);
+          if (mdUiStatus === 'failed') {
+            setMeetingDialogueError(record.id, i18n.t('recordingDetail.meetingDialogueFailedDesc'));
+          } else {
+            setMeetingDialogueError(record.id, undefined);
           }
-        }
-        if (tags.length > 0) {
-          await updateTags(record.id, tags);
-        }
-        let resolvedClassification: RecordClassification | undefined =
-          isProActive && recordIsMeeting ? 'meeting' : classification;
-        if (!isProActive && resolvedClassification === 'meeting') {
-          resolvedClassification = undefined;
-        }
-
-        const classificationClearedForNonPro = !isProActive && classification === 'meeting';
-
-        const summaryReasoningForStore =
-          aiExecutionMode === 'smart_hybrid' && summaryReasoningRaw?.trim()
-            ? summaryReasoningRaw.trim()
-            : null;
-
-        const shouldUpdateAiExtras =
-          resolvedClassification ||
-          (keyPhrases && keyPhrases.length > 0) ||
-          rawNextSteps.length > 0 ||
-          nextStepsForStore.length > 0 ||
-          classificationClearedForNonPro ||
-          includeMeetingSpeakerBreakdown ||
-          prevHadMeetingDialogue ||
-          aiExecutionMode === 'smart_hybrid';
-
-        const summaryModelForStore =
-          summaryModelRaw?.trim() ||
-          (aiExecutionMode === 'private_experimental' ? effectiveLocalAiModelId : '');
-
-        if (shouldUpdateAiExtras) {
-          await updateAiExtras(record.id, {
-            classification: resolvedClassification ?? null,
-            keyPhrases: keyPhrases ?? [],
-            nextSteps: nextStepsForStore,
-            meetingDialogue: includeMeetingSpeakerBreakdown ? meetingDialogueForStore : null,
-            ...(aiExecutionMode === 'smart_hybrid'
-              ? { summaryReasoning: summaryReasoningForStore }
-              : {}),
-          });
-        }
-
-        const summaryTokensForStore =
-          summaryTokenUsageRaw &&
-          summaryTokenUsageRaw.prompt >= 0 &&
-          summaryTokenUsageRaw.completion >= 0
-            ? {
-                summaryTokensPrompt: Math.floor(summaryTokenUsageRaw.prompt),
-                summaryTokensCompletion: Math.floor(summaryTokenUsageRaw.completion),
-              }
-            : {
-                summaryTokensPrompt: null,
-                summaryTokensCompletion: null,
-              };
-
-        const summaryGenerationMs = Date.now() - generationStartedAt;
-
-        if (summaryModelForStore || summaryTokenUsageRaw || summaryGenerationMs > 0) {
-          await updateAiExtras(record.id, {
-            ...(summaryModelForStore ? { summaryAiModel: summaryModelForStore } : {}),
-            ...summaryTokensForStore,
-            ...(summaryGenerationMs > 0 ? { summaryGenerationMs } : {}),
-          });
         }
 
         inFlightRef.current.delete(baseId);
 
+        const latestAfterApply = getLatestRecord(record.id);
         await generateAndSaveEmbeddingForRecord({
           ...record,
-          summary,
-          keyPhrases: keyPhrases ?? [],
+          summary: latestAfterApply?.summary ?? summary,
+          keyPhrases: latestAfterApply?.keyPhrases ?? keyPhrases ?? [],
         });
         void logAnalyticsEvent('ai_action_success', {
           action: 'summary_tasks',
@@ -521,11 +546,18 @@ export const useAiProcessing = () => {
             recordId: record.id,
             error: err instanceof Error ? err.message : String(err),
           });
-        setSummaryStatus(record.id, 'error');
-        setTasksStatus(record.id, 'error');
         const errorMsg = toUserFacingFetchErrorFromUnknown(err);
-        setSummaryError(record.id, errorMsg);
-        setTasksError(record.id, errorMsg);
+        if (includeMeetingSpeakerBreakdown && isSummaryAlreadyApplied(record.id)) {
+          applyMeetingDialogueFailure(
+            record.id,
+            i18n.t('recordingDetail.meetingDialogueFailedDesc'),
+          );
+        } else {
+          setSummaryStatus(record.id, 'error');
+          setTasksStatus(record.id, 'error');
+          setSummaryError(record.id, errorMsg);
+          setTasksError(record.id, errorMsg);
+        }
         void logAnalyticsEvent('ai_action_failed', {
           action: 'summary_tasks',
           reason: 'exception',
@@ -565,6 +597,11 @@ export const useAiProcessing = () => {
       setTasksStatus,
       setSummaryError,
       setTasksError,
+      setMeetingDialogueStatus,
+      setMeetingDialogueError,
+      applyMeetingDialogueFailure,
+      isSummaryAlreadyApplied,
+      resolveMeetingDialogueUiStatus,
       updateSummary,
       updateTasks,
       updateTags,

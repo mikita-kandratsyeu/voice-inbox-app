@@ -134,7 +134,11 @@ export async function runCloudSummaryTasks(
     return mapPostError(postResult, ctx.aiExecutionMode, 'AI weekly limit exceeded');
   }
 
-  const pollResult = await pollAiMessage(request.id, postResult.data.syncToken, fetchOptions);
+  const pollResult = await pollAiMessage(request.id, postResult.data.syncToken, {
+    ...fetchOptions,
+    expectAsyncMeetingDialogue: request.expectAsyncMeetingDialogue,
+    onSummaryReady: request.onCloudSummaryReady,
+  });
   if (!pollResult.ok) {
     if (pollResult.error === AI_REQUEST_CANCELLED) {
       return cloudSummaryCancelledFailure(ctx.aiExecutionMode);
@@ -152,6 +156,7 @@ export async function runCloudSummaryTasks(
     provider: 'cloud',
     mode: ctx.aiExecutionMode,
     result: pollResult.result,
+    meetingDialogueStatus: pollResult.meetingDialogueStatus,
   };
 }
 

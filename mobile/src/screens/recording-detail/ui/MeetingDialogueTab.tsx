@@ -71,12 +71,21 @@ export const MeetingDialogueTab = ({
   }
 
   if (status === 'error' && utterances.length === 0) {
+    const isMeetingDialogueOnlyFailure = Boolean(errorMessage?.trim());
     return (
       <View className="gap-3 p-4">
         <TabEmptyState
           icon={<AlertCircle size={28} color={color.accent.delete} strokeWidth={1.8} />}
-          title={t('recordingDetail.summaryError')}
-          description={errMessage}
+          title={
+            isMeetingDialogueOnlyFailure
+              ? t('recordingDetail.meetingDialogueFailedTitle')
+              : t('recordingDetail.summaryError')
+          }
+          description={
+            isMeetingDialogueOnlyFailure
+              ? errorMessage?.trim() || t('recordingDetail.meetingDialogueFailedDesc')
+              : errMessage
+          }
           buttonLabel={t('recordingDetail.summaryRetry')}
           buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
           onPress={onGenerate}

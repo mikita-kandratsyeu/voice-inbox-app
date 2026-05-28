@@ -7,6 +7,7 @@ import { NitroFS } from '@/shared/lib/fs';
 import { isRecordAiOperating } from '../lib/isRecordAiOperating';
 import { recordRepository } from './repository';
 import type {
+  MeetingDialogueLoadStatus,
   RecordClassification,
   RecordingMark,
   RecordingStatus,
@@ -113,6 +114,8 @@ type RecordStore = {
   setTasksStatus: (id: string, status: RecordingStatus) => void;
   setSummaryError: (id: string, error?: string) => void;
   setTasksError: (id: string, error?: string) => void;
+  setMeetingDialogueStatus: (id: string, status: MeetingDialogueLoadStatus) => void;
+  setMeetingDialogueError: (id: string, error?: string) => void;
   setPrivateAiBatchUi: (
     id: string,
     patch: {
@@ -389,6 +392,19 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   setTasksError: (id, tasksError) => {
     set((s) => ({
       records: updateRecord(s.records, id, { tasksError }),
+    }));
+  },
+
+  setMeetingDialogueStatus: (id, meetingDialogueStatus) => {
+    set((s) => {
+      const next = updateRecord(s.records, id, { meetingDialogueStatus });
+      return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
+    });
+  },
+
+  setMeetingDialogueError: (id, meetingDialogueError) => {
+    set((s) => ({
+      records: updateRecord(s.records, id, { meetingDialogueError }),
     }));
   },
 

@@ -6,6 +6,9 @@ export type RecordClassification = 'personal' | 'work' | 'meeting' | 'idea' | 'o
 
 export type RecordingStatus = 'idle' | 'loading_model' | 'processing' | 'done' | 'error';
 
+/** Speaker-breakdown tab lifecycle (cloud long meetings). */
+export type MeetingDialogueLoadStatus = 'idle' | 'processing' | 'done' | 'failed';
+
 export type WordToken = {
   text: string;
   startMs: number;
@@ -83,6 +86,8 @@ export type VoiceRecord = {
   keyPhrases?: string[];
   nextSteps?: string[];
   meetingDialogue?: string;
+  meetingDialogueStatus?: MeetingDialogueLoadStatus;
+  meetingDialogueError?: string;
   /** OpenRouter reasoning trace from Smart summary (optional). */
   summaryReasoning?: string;
   /** Model id used for the last summary generation (OpenRouter or local). */

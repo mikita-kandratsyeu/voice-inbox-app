@@ -7,6 +7,11 @@ import {
   isAbortLikeError,
 } from './abort';
 import { AI_POLL_TIMEOUT_MS } from './constants';
+
+export type PollGetParseOutcome<T> =
+  | PollGetLoopResult<T>
+  | 'processing'
+  | Promise<PollGetLoopResult<T> | 'processing'>;
 import { readResponseJson } from './responseJson';
 const POLL_BACKOFF_INITIAL_MS = 2_000;
 const POLL_BACKOFF_CAP_MS = 8_000;
@@ -19,12 +24,15 @@ export type PollGetLoopResult<T> = { ok: true; result: T } | { ok: false; error:
  */
 export async function pollGetLoop<T>(
   url: string,
-  parseResponse: (json: unknown) => PollGetLoopResult<T> | 'processing',
-  options?: AiFetchOptions & { headers?: Record<string, string> },
+  parseResponse: (json: unknown) => PollGetParseOutcome<T>,
+  options?: AiFetchOptions & {
+    headers?: Record<string, string>;
+    timeoutMs?: number;
+  },
 ): Promise<PollGetLoopResult<T>> {
   const headers = options?.headers ?? {};
   const signal = options?.signal;
-  const deadline = Date.now() + AI_POLL_TIMEOUT_MS;
+  const deadline = Date.now() + (options?.timeoutMs ?? AI_POLL_TIMEOUT_MS);
   let intervalMs = POLL_BACKOFF_INITIAL_MS;
 
   while (Date.now() < deadline) {
@@ -69,7 +77,7 @@ export async function pollGetLoop<T>(
       continue;
     }
 
-    const parsed = parseResponse(body.data);
+    const parsed = await Promise.resolve(parseResponse(body.data));
     if (parsed === 'processing') {
       continue;
     }
