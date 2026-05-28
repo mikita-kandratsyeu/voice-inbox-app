@@ -88,8 +88,11 @@ export function TabletSidebarNavItem({
   const containerStyle: ViewStyle = {
     height: itemHeight,
     minHeight: itemHeight,
+    maxHeight: itemHeight,
     width: collapsed ? TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE : undefined,
+    maxWidth: collapsed ? TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE : undefined,
     alignSelf: collapsed ? 'center' : undefined,
+    overflow: collapsed ? 'hidden' : undefined,
     borderRadius:
       appearance === 'folder' ? TABLET_SIDEBAR_NAV_ITEM_RADIUS - 2 : TABLET_SIDEBAR_NAV_ITEM_RADIUS,
     paddingVertical: 0,
@@ -141,27 +144,38 @@ export function TabletSidebarNavItem({
     />
   );
 
-  if (!collapsed || badgeCount <= 0) {
+  if (!collapsed) {
     return button;
   }
 
-  return (
-    <View style={{ alignSelf: 'center', width: TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE }}>
+  const collapsedSlot = (
+    <View
+      style={{
+        width: TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE,
+        height: TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       {button}
-      <View
-        pointerEvents="none"
-        style={{
-          position: 'absolute',
-          top: 8,
-          right: 8,
-          minWidth: 8,
-          height: 8,
-          borderRadius: 4,
-          backgroundColor: accent,
-        }}
-      />
+      {badgeCount > 0 ? (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: 8,
+            right: 8,
+            minWidth: 8,
+            height: 8,
+            borderRadius: 4,
+            backgroundColor: accent,
+          }}
+        />
+      ) : null}
     </View>
   );
+
+  return collapsedSlot;
 }
 
 /** Renders a nav icon with optional fixed tint (inactive) or accent (active). */
@@ -208,17 +222,20 @@ export function TabletSidebarSectionLabel({
 export function TabletSidebarSectionDivider({
   color,
   align = 'default',
+  compact = false,
 }: {
   color: Colors;
   /** `stretch` — full width inside a center-aligned collapsed rail. */
   align?: 'default' | 'stretch';
+  /** Collapsed rail: spacing comes from parent `gap`, not divider margins. */
+  compact?: boolean;
 }) {
   return (
     <View
       style={{
         height: 1,
-        marginTop: 12,
-        marginBottom: 4,
+        marginTop: compact ? 0 : 12,
+        marginBottom: compact ? 0 : 4,
         backgroundColor: color.border.default,
         opacity: 0.85,
         ...(align === 'stretch' ? { alignSelf: 'stretch', width: '100%' } : null),

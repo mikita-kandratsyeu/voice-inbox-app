@@ -9,7 +9,6 @@ export type TabletSidebarLayoutContextValue = {
   sidebarShellStyle: AnimatedStyle<{ width: number }>;
   expandedLayerStyle: AnimatedStyle<{ opacity: number }>;
   collapsedLayerStyle: AnimatedStyle<{ opacity: number }>;
-  contentInnerStyle: AnimatedStyle<{ width: number }>;
 };
 
 const TabletSidebarLayoutContext = createContext<TabletSidebarLayoutContextValue | null>(null);

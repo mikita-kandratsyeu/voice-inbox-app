@@ -3,6 +3,8 @@ export const TABLET_SIDEBAR_COLLAPSED_WIDTH = 72;
 export const TABLET_SIDEBAR_PAD = 16;
 export const TABLET_SIDEBAR_COLLAPSED_PAD = 12;
 export const TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE = 48;
+/** Vertical gap between icon rows in the collapsed rail. */
+export const TABLET_SIDEBAR_COLLAPSED_STACK_GAP = 8;
 export const TABLET_SIDEBAR_SURFACE_PAD = 4;
 export const TABLET_SIDEBAR_SURFACE_RADIUS = 14;
 /** Fixed height for Inbox / filters / Settings rows in the sidebar. */

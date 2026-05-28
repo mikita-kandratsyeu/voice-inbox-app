@@ -1054,64 +1054,56 @@ export const StorageDetailsScreen = () => {
                     })}
                   </View>
                 ) : null}
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={
-                    isClearing
-                      ? t('storage.loading')
-                      : `${t('storage.clearCache')}, ${
-                          hasClearableCache
-                            ? formatFileSize(stats.cacheKb * 1024)
-                            : `0 ${t('storage.mb')}`
-                        }`
-                  }
-                  accessibilityState={{ disabled: !hasClearableCache || isClearing }}
-                  onPress={hasClearableCache && !isClearing ? handleClearCache : undefined}
-                  disabled={!hasClearableCache || isClearing}
-                  className="mt-4 items-center justify-center rounded-2xl py-4"
-                  style={{
-                    minHeight: 52,
-                    backgroundColor: hasClearableCache
-                      ? color.accent.primary
-                      : color.background.tertiary,
-                    opacity: isClearing ? 0.55 : 1,
-                  }}
-                >
-                  {isClearing ? (
-                    <Text
-                      className="text-[16px] font-semibold"
-                      style={{
-                        color: hasClearableCache ? color.icon.onAccent : color.text.muted,
-                      }}
-                    >
-                      {t('storage.loading')}
-                    </Text>
-                  ) : (
-                    <Text
-                      className="text-center text-[16px] font-semibold leading-6"
-                      style={{
-                        color: hasClearableCache ? color.icon.onAccent : color.text.muted,
-                        ...(IS_ANDROID ? { includeFontPadding: false } : null),
-                      }}
-                    >
-                      {t('storage.clearCache')}
+                {hasClearableCache || isClearing ? (
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      isClearing
+                        ? t('storage.loading')
+                        : `${t('storage.clearCache')}, ${formatFileSize(stats.cacheKb * 1024)}`
+                    }
+                    accessibilityState={{ disabled: isClearing }}
+                    onPress={!isClearing ? handleClearCache : undefined}
+                    disabled={isClearing}
+                    className="mt-4 items-center justify-center rounded-2xl py-4"
+                    style={{
+                      minHeight: 52,
+                      backgroundColor: color.accent.primary,
+                      opacity: isClearing ? 0.55 : 1,
+                    }}
+                  >
+                    {isClearing ? (
                       <Text
-                        className="text-[14px] font-medium leading-6"
+                        className="text-[16px] font-semibold"
+                        style={{ color: color.icon.onAccent }}
+                      >
+                        {t('storage.loading')}
+                      </Text>
+                    ) : (
+                      <Text
+                        className="text-center text-[16px] font-semibold leading-6"
                         style={{
-                          color: hasClearableCache ? color.icon.onAccent : color.text.muted,
-                          opacity: hasClearableCache ? 0.82 : 1,
-                          fontVariant: ['tabular-nums'],
+                          color: color.icon.onAccent,
                           ...(IS_ANDROID ? { includeFontPadding: false } : null),
                         }}
                       >
-                        {' '}
-                        {hasClearableCache
-                          ? formatFileSize(stats.cacheKb * 1024)
-                          : `0 ${t('storage.mb')}`}
+                        {t('storage.clearCache')}
+                        <Text
+                          className="text-[14px] font-medium leading-6"
+                          style={{
+                            color: color.icon.onAccent,
+                            opacity: 0.82,
+                            fontVariant: ['tabular-nums'],
+                            ...(IS_ANDROID ? { includeFontPadding: false } : null),
+                          }}
+                        >
+                          {' '}
+                          {formatFileSize(stats.cacheKb * 1024)}
+                        </Text>
                       </Text>
-                    </Text>
-                  )}
-                </Pressable>
+                    )}
+                  </Pressable>
+                ) : null}
               </>
             )}
           </View>

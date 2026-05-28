@@ -64,7 +64,7 @@ export function TabletSidebarFooter({
 
   if (isCollapsed) {
     return (
-      <View style={{ alignItems: 'center', gap: 8 }}>
+      <View style={{ alignItems: 'center', gap: 4 }}>
         {settingsItem}
         {collapseButton}
       </View>

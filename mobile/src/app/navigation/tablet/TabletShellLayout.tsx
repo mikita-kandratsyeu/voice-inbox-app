@@ -1,12 +1,11 @@
 import React from 'react';
 import { View } from 'react-native';
-import Animated from 'react-native-reanimated';
 
 import { useColors } from '@/shared/config';
 
 import { TabletSidebar } from './TabletSidebar';
 import { useTabletSidebarCollapsedStore } from './tabletSidebarCollapsedStore';
-import { TabletSidebarLayoutProvider, useTabletSidebarLayout } from './TabletSidebarLayoutContext';
+import { TabletSidebarLayoutProvider } from './TabletSidebarLayoutContext';
 import { getTabletSidebarTheme } from './tabletSidebarTheme';
 
 type TabletShellLayoutProps = {
@@ -16,7 +15,6 @@ type TabletShellLayoutProps = {
 function TabletShellLayoutBody({ children }: TabletShellLayoutProps) {
   const color = useColors();
   const theme = getTabletSidebarTheme(color);
-  const { contentInnerStyle } = useTabletSidebarLayout();
 
   return (
     <View
@@ -36,11 +34,7 @@ function TabletShellLayoutBody({ children }: TabletShellLayoutProps) {
           backgroundColor: theme.content,
         }}
       >
-        <Animated.View
-          style={[{ flex: 1, width: '100%', backgroundColor: theme.content }, contentInnerStyle]}
-        >
-          {children}
-        </Animated.View>
+        <View style={{ flex: 1, width: '100%', backgroundColor: theme.content }}>{children}</View>
       </View>
     </View>
   );

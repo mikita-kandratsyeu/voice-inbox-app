@@ -9,6 +9,7 @@ import { Button } from '@/shared/ui';
 
 import {
   TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE,
+  TABLET_SIDEBAR_COLLAPSED_STACK_GAP,
   TABLET_SIDEBAR_NAV_ITEM_RADIUS,
 } from './tabletSidebarMetrics';
 import { TABLET_SIDEBAR_LABEL_FONT_SIZE } from './tabletSidebarTypography';
@@ -61,7 +62,13 @@ export function TabletSidebarComposeRow({
   if (collapsed) {
     const iconSize = TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE;
     return (
-      <View style={{ width: '100%', alignItems: 'center', gap: COMPOSE_ROW_GAP }}>
+      <View
+        style={{
+          width: '100%',
+          alignItems: 'center',
+          gap: TABLET_SIDEBAR_COLLAPSED_STACK_GAP,
+        }}
+      >
         <View style={{ width: iconSize, height: iconSize }}>
           <Button
             variant="primary"
