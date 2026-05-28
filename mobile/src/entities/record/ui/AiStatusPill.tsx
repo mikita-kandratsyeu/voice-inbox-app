@@ -5,7 +5,7 @@ import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
 
-import type { RecordingStatus } from '../model/types';
+import type { MeetingDialogueLoadStatus, RecordingStatus } from '../model/types';
 
 type AiStatusPillProps = {
   aiStatus: RecordingStatus;
@@ -16,6 +16,7 @@ type AiStatusPillProps = {
   tasksStatus?: RecordingStatus;
   translationStatus?: RecordingStatus;
   askAiStatus?: RecordingStatus;
+  meetingDialogueStatus?: MeetingDialogueLoadStatus;
   onPress: () => void;
 };
 
@@ -30,21 +31,27 @@ export const AiStatusPill = ({
   tasksStatus,
   translationStatus,
   askAiStatus,
+  meetingDialogueStatus,
   onPress,
 }: AiStatusPillProps) => {
   const { t } = useTranslation();
   const color = useColors();
 
+  const meetingDialogueProcessing = meetingDialogueStatus === 'processing';
+  const meetingDialogueFailed = meetingDialogueStatus === 'failed';
+
   const aiProcessing =
     isAiProcessing(summaryStatus) ||
     isAiProcessing(tasksStatus) ||
     isAiProcessing(translationStatus) ||
-    isAiProcessing(askAiStatus);
+    isAiProcessing(askAiStatus) ||
+    meetingDialogueProcessing;
   const aiError =
     isAiError(summaryStatus) ||
     isAiError(tasksStatus) ||
     isAiError(translationStatus) ||
-    isAiError(askAiStatus);
+    isAiError(askAiStatus) ||
+    meetingDialogueFailed;
 
   const isTranscriptionInProgress = aiStatus === 'loading_model' || aiStatus === 'processing';
 
@@ -90,17 +97,25 @@ export const AiStatusPill = ({
 
   if (aiProcessing) {
     const aiLabel =
-      translationStatus === 'processing' &&
-      summaryStatus !== 'processing' &&
-      tasksStatus !== 'processing' &&
-      askAiStatus !== 'processing'
-        ? t('recordingDetail.translating')
-        : askAiStatus === 'processing' &&
-            summaryStatus !== 'processing' &&
-            tasksStatus !== 'processing' &&
-            translationStatus !== 'processing'
-          ? t('aiStatus.askProcessing')
-          : t('aiStatus.aiProcessing');
+      meetingDialogueProcessing &&
+      !isAiProcessing(summaryStatus) &&
+      !isAiProcessing(tasksStatus) &&
+      !isAiProcessing(translationStatus) &&
+      !isAiProcessing(askAiStatus)
+        ? t('aiStatus.speakerTurnsProcessing')
+        : translationStatus === 'processing' &&
+            !isAiProcessing(summaryStatus) &&
+            !isAiProcessing(tasksStatus) &&
+            !isAiProcessing(askAiStatus) &&
+            !meetingDialogueProcessing
+          ? t('recordingDetail.translating')
+          : askAiStatus === 'processing' &&
+              !isAiProcessing(summaryStatus) &&
+              !isAiProcessing(tasksStatus) &&
+              !isAiProcessing(translationStatus) &&
+              !meetingDialogueProcessing
+            ? t('aiStatus.askProcessing')
+            : t('aiStatus.aiProcessing');
     return (
       <TouchableOpacity
         accessibilityRole="button"
@@ -121,17 +136,25 @@ export const AiStatusPill = ({
 
   if (aiStatus === 'error' || aiError) {
     const errLabel =
-      translationStatus === 'error' &&
-      summaryStatus !== 'error' &&
-      tasksStatus !== 'error' &&
-      askAiStatus !== 'error'
-        ? t('recordingDetail.translateErrorShort')
-        : askAiStatus === 'error' &&
-            summaryStatus !== 'error' &&
-            tasksStatus !== 'error' &&
-            translationStatus !== 'error'
-          ? t('recordingDetail.askError')
-          : t('common.error');
+      meetingDialogueFailed &&
+      !isAiError(summaryStatus) &&
+      !isAiError(tasksStatus) &&
+      !isAiError(translationStatus) &&
+      !isAiError(askAiStatus)
+        ? t('recordingDetail.meetingDialogueFailedTitle')
+        : translationStatus === 'error' &&
+            !isAiError(summaryStatus) &&
+            !isAiError(tasksStatus) &&
+            !isAiError(askAiStatus) &&
+            !meetingDialogueFailed
+          ? t('recordingDetail.translateErrorShort')
+          : askAiStatus === 'error' &&
+              !isAiError(summaryStatus) &&
+              !isAiError(tasksStatus) &&
+              !isAiError(translationStatus) &&
+              !meetingDialogueFailed
+            ? t('recordingDetail.askError')
+            : t('common.error');
     return (
       <TouchableOpacity
         accessibilityRole="button"

@@ -489,6 +489,7 @@
     "loading_model": "Loading model…",
     "processing": "Transcribing...",
     "aiProcessing": "Generating summary...",
+    "speakerTurnsProcessing": "Speaker turns…",
     "askProcessing": "Answering…",
     "done": "Transcript ready",
     "error": "Transcription error",

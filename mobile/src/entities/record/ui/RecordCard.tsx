@@ -55,11 +55,16 @@ export const RecordCard = memo(function RecordCard({
   const aiProcessing =
     item.summaryStatus === 'processing' ||
     item.tasksStatus === 'processing' ||
-    item.askAiStatus === 'processing';
+    item.askAiStatus === 'processing' ||
+    item.meetingDialogueStatus === 'processing';
   const translationProcessing = item.translationStatus === 'processing';
   const translationError = item.translationStatus === 'error';
+  const meetingDialogueError = item.meetingDialogueStatus === 'failed';
   const aiError =
-    item.summaryStatus === 'error' || item.tasksStatus === 'error' || item.askAiStatus === 'error';
+    item.summaryStatus === 'error' ||
+    item.tasksStatus === 'error' ||
+    item.askAiStatus === 'error' ||
+    meetingDialogueError;
   const hasTranscriptPreview = Boolean(item.transcript?.trim());
   const showStatusPill =
     item.aiStatus === 'loading_model' ||
@@ -149,6 +154,7 @@ export const RecordCard = memo(function RecordCard({
               tasksStatus={item.tasksStatus}
               translationStatus={item.translationStatus}
               askAiStatus={item.askAiStatus}
+              meetingDialogueStatus={item.meetingDialogueStatus}
               onPress={onStatusPress}
             />
           )}

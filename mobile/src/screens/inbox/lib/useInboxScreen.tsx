@@ -559,7 +559,9 @@ export function useInboxScreen() {
         item.translationStatus === 'processing' ||
         item.translationStatus === 'error' ||
         item.askAiStatus === 'processing' ||
-        item.askAiStatus === 'error'
+        item.askAiStatus === 'error' ||
+        item.meetingDialogueStatus === 'processing' ||
+        item.meetingDialogueStatus === 'failed'
       ) {
         navigation.navigate('RecordingDetail', { record: item });
       }

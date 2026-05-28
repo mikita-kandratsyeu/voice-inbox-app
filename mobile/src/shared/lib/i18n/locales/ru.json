@@ -489,6 +489,7 @@
     "loading_model": "Загрузка модели…",
     "processing": "Транскрипция...",
     "aiProcessing": "Создание сводки...",
+    "speakerTurnsProcessing": "Реплики по спикерам…",
     "askProcessing": "Ответ генерируется…",
     "done": "Транскрипт готов",
     "error": "Ошибка транскрипции",
