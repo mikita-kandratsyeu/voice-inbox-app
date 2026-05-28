@@ -120,7 +120,7 @@ export function TabletSidebarFoldersSection({
   if (isPrivateMode) {
     return (
       <View style={{ paddingTop: 4, alignItems: collapsed ? 'center' : undefined }}>
-        <TabletSidebarSectionDivider color={color} />
+        <TabletSidebarSectionDivider color={color} align={collapsed ? 'stretch' : 'default'} />
         {collapsed ? (
           <CollapsedFolderAction
             accessibilityLabel={t('tablet.sidebar.privateFoldersCta')}
@@ -154,34 +154,13 @@ export function TabletSidebarFoldersSection({
   }
 
   if (collapsed) {
+    if (folders.length === 0) {
+      return <TabletSidebarSectionDivider color={color} align="stretch" />;
+    }
+
     return (
       <>
-        <TabletSidebarSectionDivider color={color} />
-        <View style={{ alignItems: 'center', gap: 8 }}>
-          {folders.length >= 2 ? (
-            <CollapsedFolderAction
-              accessibilityLabel={t('folders.reorderOpenA11y')}
-              onPress={() => {
-                hapticSelection();
-                if (currentTab !== 'Inbox') {
-                  navigateMainTab('Inbox');
-                }
-                requestTabletOpenReorderFolders();
-              }}
-            >
-              <ArrowDownUp size={20} color={color.text.secondary} strokeWidth={2.2} />
-            </CollapsedFolderAction>
-          ) : null}
-          <CollapsedFolderAction
-            accessibilityLabel={t('folders.create')}
-            onPress={() => {
-              hapticSelection();
-              onOpenCreateFolder();
-            }}
-          >
-            <Plus size={22} color={color.accent.primary} strokeWidth={2.4} />
-          </CollapsedFolderAction>
-        </View>
+        <TabletSidebarSectionDivider color={color} align="stretch" />
         {folders.map((folder) => {
           const folderHex = resolveDisplayFolderColor(folder.color, isProActive);
           const isActive =

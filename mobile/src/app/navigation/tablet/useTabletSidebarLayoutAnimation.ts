@@ -3,7 +3,6 @@ import { useWindowDimensions } from 'react-native';
 import {
   Extrapolation,
   interpolate,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -11,11 +10,10 @@ import {
 
 import { TABLET_SIDEBAR_COLLAPSED_WIDTH, TABLET_SIDEBAR_WIDTH } from './tabletSidebarMetrics';
 
-/** iPad-style spring: quick settle without bounce. */
+/** ~280ms, critical damping — predictable sidebar motion without bounce. */
 export const TABLET_SIDEBAR_LAYOUT_SPRING = {
-  damping: 24,
-  stiffness: 320,
-  mass: 0.85,
+  duration: 280,
+  dampingRatio: 1,
 };
 
 function contentLayoutWidth(windowWidth: number, isCollapsed: boolean): number {
@@ -37,13 +35,16 @@ export function useTabletSidebarLayoutAnimation(isCollapsed: boolean) {
   }, [windowWidth, windowWidthSv, contentLayoutWidthSv]);
 
   useEffect(() => {
-    const settleLayoutWidth = () => {
-      contentLayoutWidthSv.value = contentLayoutWidth(windowWidth, isCollapsed);
-    };
+    const targetLayoutWidth = contentLayoutWidth(windowWidth, isCollapsed);
+
+    if (isCollapsed) {
+      // Viewport grows while collapsing — apply target width immediately to avoid a white strip on the right.
+      contentLayoutWidthSv.value = targetLayoutWidth;
+    }
 
     progress.value = withSpring(isCollapsed ? 1 : 0, TABLET_SIDEBAR_LAYOUT_SPRING, (finished) => {
       if (finished) {
-        runOnJS(settleLayoutWidth)();
+        contentLayoutWidthSv.value = targetLayoutWidth;
       }
     });
   }, [isCollapsed, progress, windowWidth, contentLayoutWidthSv]);
@@ -58,14 +59,17 @@ export function useTabletSidebarLayoutAnimation(isCollapsed: boolean) {
   }));
 
   const expandedLayerStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 0.38], [1, 0], Extrapolation.CLAMP),
+    opacity: interpolate(progress.value, [0, 0.35], [1, 0], Extrapolation.CLAMP),
   }));
 
   const collapsedLayerStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0.62, 1], [0, 1], Extrapolation.CLAMP),
+    opacity: interpolate(progress.value, [0.65, 1], [0, 1], Extrapolation.CLAMP),
   }));
 
-  /** Frozen for the duration of the spring; updated once when motion settles. */
+  /**
+   * Expanding: frozen until spring ends (viewport shrinks, overflow clips).
+   * Collapsing: updated at start (viewport grows, must fill immediately).
+   */
   const contentInnerStyle = useAnimatedStyle(() => ({
     width: contentLayoutWidthSv.value,
   }));

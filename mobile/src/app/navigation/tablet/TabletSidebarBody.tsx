@@ -18,7 +18,11 @@ import {
   TabletSidebarFoldersSection,
 } from './TabletSidebarFoldersSection';
 import { TabletSidebarFooter } from './TabletSidebarFooter';
-import { TabletSidebarNavIcon, TabletSidebarNavItem } from './TabletSidebarNavItem';
+import {
+  TabletSidebarNavIcon,
+  TabletSidebarNavItem,
+  TabletSidebarSectionDivider,
+} from './TabletSidebarNavItem';
 import type { TabletSidebarTheme } from './tabletSidebarTheme';
 import { navigateMainTab } from './tabletTabNavigation';
 import type { TabletSidebarNavCounts } from './useTabletSidebarNavCounts';
@@ -148,6 +152,7 @@ export function TabletSidebarBody({
               </TabletSidebarNavIcon>
             }
           />
+          {collapsed ? <TabletSidebarSectionDivider color={color} align="stretch" /> : null}
           <TabletSidebarNavItem
             label={t('inbox.filters.pinned')}
             isActive={pinnedActive}

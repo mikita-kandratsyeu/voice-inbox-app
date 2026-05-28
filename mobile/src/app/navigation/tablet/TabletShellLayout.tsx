@@ -36,7 +36,11 @@ function TabletShellLayoutBody({ children }: TabletShellLayoutProps) {
           backgroundColor: theme.content,
         }}
       >
-        <Animated.View style={[{ flex: 1 }, contentInnerStyle]}>{children}</Animated.View>
+        <Animated.View
+          style={[{ flex: 1, width: '100%', backgroundColor: theme.content }, contentInnerStyle]}
+        >
+          {children}
+        </Animated.View>
       </View>
     </View>
   );

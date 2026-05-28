@@ -26,19 +26,19 @@ export function TabletSidebarCollapseButton({
   const iconColor = color.text.secondary;
 
   const expandIconStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0.55, 1], [0, 1], Extrapolation.CLAMP),
+    opacity: interpolate(progress.value, [0.65, 1], [0, 1], Extrapolation.CLAMP),
     transform: [
       {
-        scale: interpolate(progress.value, [0.55, 1], [0.88, 1], Extrapolation.CLAMP),
+        scale: interpolate(progress.value, [0.65, 1], [0.88, 1], Extrapolation.CLAMP),
       },
     ],
   }));
 
   const collapseIconStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 0.45], [1, 0], Extrapolation.CLAMP),
+    opacity: interpolate(progress.value, [0, 0.35], [1, 0], Extrapolation.CLAMP),
     transform: [
       {
-        scale: interpolate(progress.value, [0, 0.45], [1, 0.88], Extrapolation.CLAMP),
+        scale: interpolate(progress.value, [0, 0.35], [1, 0.88], Extrapolation.CLAMP),
       },
     ],
   }));

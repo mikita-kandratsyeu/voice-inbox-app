@@ -205,7 +205,14 @@ export function TabletSidebarSectionLabel({
   );
 }
 
-export function TabletSidebarSectionDivider({ color }: { color: Colors }) {
+export function TabletSidebarSectionDivider({
+  color,
+  align = 'default',
+}: {
+  color: Colors;
+  /** `stretch` — full width inside a center-aligned collapsed rail. */
+  align?: 'default' | 'stretch';
+}) {
   return (
     <View
       style={{
@@ -214,6 +221,7 @@ export function TabletSidebarSectionDivider({ color }: { color: Colors }) {
         marginBottom: 4,
         backgroundColor: color.border.default,
         opacity: 0.85,
+        ...(align === 'stretch' ? { alignSelf: 'stretch', width: '100%' } : null),
       }}
     />
   );
