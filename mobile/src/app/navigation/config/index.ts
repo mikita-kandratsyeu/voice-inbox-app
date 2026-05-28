@@ -11,7 +11,7 @@ export {
   FLOAT_TAB_INNER_PAD_VERTICAL,
   FLOAT_TAB_IOS_SHADOW_OFFSET_Y,
   FLOAT_TAB_IOS_SHADOW_RADIUS,
-  FLOAT_TAB_MAX_WIDTH_TABLET,
+  FLOAT_TAB_MAX_WIDTH,
   floatingTabBarShadowOpacity,
   getBatchActionBarHeight,
   getFloatingTabBarScrollPaddingBottom,

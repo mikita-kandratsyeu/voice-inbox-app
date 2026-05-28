@@ -3,10 +3,10 @@ import { type ViewStyle } from 'react-native';
 
 import { i18n, selectPlatform } from '@/shared/lib';
 
-/** Horizontal inset from screen edges (floating pill). */
+/** Horizontal inset from screen edges when the pill is narrower than {@link FLOAT_TAB_MAX_WIDTH}. */
 export const FLOAT_TAB_HORIZONTAL_INSET = 28;
-/** Fixed width of the floating pill on tablet (centered). */
-export const FLOAT_TAB_MAX_WIDTH_TABLET = 480;
+/** Max width of the floating tab bar pill (phone and tablet, centered). */
+export const FLOAT_TAB_MAX_WIDTH = 480;
 /** Gap between home indicator / screen bottom and the tab bar. */
 export const FLOAT_TAB_BOTTOM_GAP = 10;
 /** Tab bar pill fill: 1 = opaque; lower = slight glass effect over the screen behind. */
@@ -64,27 +64,17 @@ export type BuildFloatingTabBarStyleParams = {
 export function buildFloatingTabBarStyle(p: BuildFloatingTabBarStyleParams): ViewStyle {
   const tabBarHeight = p.isTablet ? FLOAT_TAB_BAR_HEIGHT_TABLET : FLOAT_TAB_BAR_HEIGHT_PHONE;
   const usableW = p.windowWidth - p.insets.left - p.insets.right;
-  let tabletTabBarWidth: number | undefined;
-  let tabletTabBarLeft: number | undefined;
-
-  if (p.isTablet) {
-    tabletTabBarWidth = Math.min(FLOAT_TAB_MAX_WIDTH_TABLET, usableW);
-    tabletTabBarLeft = p.insets.left + (usableW - tabletTabBarWidth) / 2;
-  }
+  const tabBarWidth = Math.min(
+    FLOAT_TAB_MAX_WIDTH,
+    Math.max(0, usableW - FLOAT_TAB_HORIZONTAL_INSET * 2),
+  );
+  const tabBarLeft = p.insets.left + (usableW - tabBarWidth) / 2;
 
   return {
     position: 'absolute',
-    ...(p.isTablet
-      ? {
-          left: tabletTabBarLeft,
-          width: tabletTabBarWidth,
-          marginHorizontal: 0,
-        }
-      : {
-          left: 0,
-          right: 0,
-          marginHorizontal: FLOAT_TAB_HORIZONTAL_INSET,
-        }),
+    left: tabBarLeft,
+    width: tabBarWidth,
+    marginHorizontal: 0,
     bottom: FLOAT_TAB_BOTTOM_GAP + p.insets.bottom,
     height: tabBarHeight,
     paddingTop: FLOAT_TAB_INNER_PAD_VERTICAL,
