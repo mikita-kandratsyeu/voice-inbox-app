@@ -95,10 +95,14 @@
   "tablet": {
     "sidebar": {
       "newRecording": "New recording",
-      "recordShort": "Record",
+      "startRecording": "Start recording",
       "importAudio": "Import audio",
       "textNote": "Text note",
-      "folders": "Folders"
+      "folders": "Folders",
+      "foldersEmpty": "Create a folder to organize your notes",
+      "editFolderHint": "Long press to edit folder",
+      "privateFoldersUnavailable": "Folders aren't available in Private mode",
+      "privateFoldersCta": "Open Private AI settings"
     }
   },
   "textNote": {
@@ -788,9 +792,9 @@
     "permissionOpenSettings": "Open Settings",
     "planStatus": {
       "freeTitle": "Free plan",
-      "freeValueSubtitle": "Pro runs everything automatically",
-      "freeValueSubtitleSoon": "Pro runs everything automatically",
-      "freeValueSubtitleAvailable": "Pro runs everything automatically",
+      "freeValueSubtitle": "Pro runs everything automatically.",
+      "freeValueSubtitleSoon": "Pro runs everything automatically.",
+      "freeValueSubtitleAvailable": "Pro runs everything automatically.",
       "comparePlansCta": "Compare plans",
       "soonBadge": "Coming soon",
       "privateBadge": "Private",

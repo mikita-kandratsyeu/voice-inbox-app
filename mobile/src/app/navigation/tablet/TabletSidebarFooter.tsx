@@ -1,22 +1,23 @@
 import { Settings } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
-import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 
-import { getTabletSidebarLabelStyle } from './tabletSidebarTypography';
+import { TabletSidebarNavIcon, TabletSidebarNavItem } from './TabletSidebarNavItem';
+import type { TabletSidebarTheme } from './tabletSidebarTheme';
 
 type TabletSidebarFooterProps = {
   color: Colors;
+  theme: TabletSidebarTheme;
   isSettingsActive: boolean;
   onOpenSettings: () => void;
 };
 
 export function TabletSidebarFooter({
   color,
+  theme,
   isSettingsActive,
   onOpenSettings,
 }: TabletSidebarFooterProps) {
@@ -24,34 +25,25 @@ export function TabletSidebarFooter({
   const accent = color.accent.primary;
 
   return (
-    <Pressable
+    <TabletSidebarNavItem
+      label={t('tabs.settings')}
+      isActive={isSettingsActive}
+      color={color}
+      theme={theme}
+      appearance="secondary"
       onPress={() => {
         hapticSelection();
         onOpenSettings();
       }}
-      accessibilityRole="button"
-      accessibilityState={{ selected: isSettingsActive }}
-      accessibilityLabel={t('tabs.settings')}
-      className="w-full flex-row items-center gap-2 px-1"
-      style={({ pressed }) => ({
-        minHeight: IOS_MIN_TOUCH_TARGET,
-        opacity: pressed ? 0.7 : 1,
-      })}
-    >
-      <Settings
-        size={22}
-        color={isSettingsActive ? accent : color.text.secondary}
-        strokeWidth={2}
-      />
-      <Text
-        style={getTabletSidebarLabelStyle(
-          isSettingsActive,
-          isSettingsActive ? accent : color.text.primary,
-        )}
-        numberOfLines={1}
-      >
-        {t('tabs.settings')}
-      </Text>
-    </Pressable>
+      icon={
+        <TabletSidebarNavIcon
+          isActive={isSettingsActive}
+          activeColor={accent}
+          inactiveColor={color.text.secondary}
+        >
+          <Settings />
+        </TabletSidebarNavIcon>
+      }
+    />
   );
 }

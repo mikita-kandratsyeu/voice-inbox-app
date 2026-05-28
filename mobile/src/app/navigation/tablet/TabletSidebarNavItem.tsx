@@ -3,11 +3,18 @@ import { Text, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { withAlphaHex } from '@/shared/lib';
-import { IOS_MIN_TOUCH_TARGET } from '@/shared/lib/iosTouchTarget';
 import { Button } from '@/shared/ui';
 
+import {
+  TABLET_SIDEBAR_FOLDER_ITEM_HEIGHT,
+  TABLET_SIDEBAR_NAV_ITEM_HEIGHT,
+  TABLET_SIDEBAR_NAV_ITEM_RADIUS,
+} from './tabletSidebarMetrics';
+import { TabletSidebarNavBadge } from './TabletSidebarNavBadge';
 import type { TabletSidebarTheme } from './tabletSidebarTheme';
 import { getTabletSidebarLabelStyle } from './tabletSidebarTypography';
+
+export type TabletSidebarNavAppearance = 'primary' | 'secondary' | 'folder';
 
 export type TabletSidebarNavItemProps = {
   label: string;
@@ -17,9 +24,18 @@ export type TabletSidebarNavItemProps = {
   theme: TabletSidebarTheme;
   onPress: () => void;
   onLongPress?: () => void;
+  appearance?: TabletSidebarNavAppearance;
+  badgeCount?: number;
+  accessibilityHint?: string;
   /** Folder tint when selected; defaults to accent.primary. */
   accentHex?: string;
 };
+
+function getNavItemHeight(appearance: TabletSidebarNavAppearance): number {
+  return appearance === 'folder'
+    ? TABLET_SIDEBAR_FOLDER_ITEM_HEIGHT
+    : TABLET_SIDEBAR_NAV_ITEM_HEIGHT;
+}
 
 export function TabletSidebarNavItem({
   label,
@@ -29,11 +45,44 @@ export function TabletSidebarNavItem({
   theme,
   onPress,
   onLongPress,
+  appearance = 'secondary',
+  badgeCount = 0,
+  accessibilityHint,
   accentHex,
 }: TabletSidebarNavItemProps) {
   const accent = accentHex ?? color.accent.primary;
   const activeBg = withAlphaHex(accent, 0.16);
+  const itemHeight = getNavItemHeight(appearance);
+  const isNavRow = appearance === 'primary' || appearance === 'secondary';
   const labelColor = isActive ? accent : color.text.primary;
+
+  const borderColor = isActive
+    ? withAlphaHex(accent, 0.35)
+    : isNavRow
+      ? theme.border
+      : 'transparent';
+
+  const backgroundColor =
+    appearance === 'folder'
+      ? isActive
+        ? activeBg
+        : 'transparent'
+      : isActive
+        ? activeBg
+        : appearance === 'primary'
+          ? theme.surface
+          : 'transparent';
+
+  const containerStyle = {
+    height: itemHeight,
+    minHeight: itemHeight,
+    borderRadius:
+      appearance === 'folder' ? TABLET_SIDEBAR_NAV_ITEM_RADIUS - 2 : TABLET_SIDEBAR_NAV_ITEM_RADIUS,
+    paddingVertical: 0,
+    borderWidth: isNavRow ? 1 : 0,
+    borderColor,
+    backgroundColor,
+  };
 
   return (
     <Button
@@ -45,19 +94,23 @@ export function TabletSidebarNavItem({
       label={label}
       labelStyle={getTabletSidebarLabelStyle(isActive, labelColor)}
       icon={icon}
+      trailingIcon={
+        badgeCount > 0 ? (
+          <TabletSidebarNavBadge
+            count={badgeCount}
+            color={color}
+            accentHex={accentHex}
+            isActive={isActive}
+          />
+        ) : undefined
+      }
       onPress={onPress}
       onLongPress={onLongPress}
       accessibilityState={{ selected: isActive }}
+      accessibilityHint={accessibilityHint}
       activeOpacity={0.85}
-      className="rounded-[12px] px-3"
-      containerStyle={{
-        minHeight: IOS_MIN_TOUCH_TARGET + 6,
-        borderRadius: 12,
-        borderWidth: 1,
-        borderColor: isActive ? withAlphaHex(accent, 0.35) : theme.border,
-        backgroundColor: isActive ? activeBg : theme.surface,
-        paddingVertical: 14,
-      }}
+      className="min-h-0 px-3 py-0"
+      containerStyle={containerStyle}
     />
   );
 }
@@ -91,7 +144,7 @@ export function TabletSidebarSectionLabel({
   trailing?: React.ReactNode;
 }) {
   return (
-    <View className="mb-1.5 mt-5 w-full flex-row items-center justify-between px-1">
+    <View className="mb-1.5 mt-2 w-full flex-row items-center justify-between px-1">
       <Text
         className="text-[11px] font-semibold uppercase tracking-wider"
         style={{ color: color.text.muted }}
@@ -100,5 +153,19 @@ export function TabletSidebarSectionLabel({
       </Text>
       {trailing}
     </View>
+  );
+}
+
+export function TabletSidebarSectionDivider({ color }: { color: Colors }) {
+  return (
+    <View
+      style={{
+        height: 1,
+        marginTop: 12,
+        marginBottom: 4,
+        backgroundColor: color.border.default,
+        opacity: 0.85,
+      }}
+    />
   );
 }

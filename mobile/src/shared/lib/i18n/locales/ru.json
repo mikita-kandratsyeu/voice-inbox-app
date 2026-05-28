@@ -95,10 +95,14 @@
   "tablet": {
     "sidebar": {
       "newRecording": "Новая запись",
-      "recordShort": "Запись",
+      "startRecording": "Начать запись",
       "importAudio": "Загрузить аудио",
       "textNote": "Текстовая заметка",
-      "folders": "Папки"
+      "folders": "Папки",
+      "foldersEmpty": "Создайте папку для сортировки заметок",
+      "editFolderHint": "Удерживайте, чтобы изменить папку",
+      "privateFoldersUnavailable": "Папки недоступны в приватном режиме",
+      "privateFoldersCta": "Открыть настройки приватного ИИ"
     }
   },
   "textNote": {
@@ -803,9 +807,9 @@
     "permissionOpenSettings": "Открыть настройки",
     "planStatus": {
       "freeTitle": "Бесплатный план",
-      "freeValueSubtitle": "В Pro — всё работает автоматически",
-      "freeValueSubtitleSoon": "В Pro — всё работает автоматически",
-      "freeValueSubtitleAvailable": "В Pro — всё работает автоматически",
+      "freeValueSubtitle": "В Pro — всё работает автоматически.",
+      "freeValueSubtitleSoon": "В Pro — всё работает автоматически.",
+      "freeValueSubtitleAvailable": "В Pro — всё работает автоматически.",
       "comparePlansCta": "Смотреть планы",
       "soonBadge": "Скоро",
       "privateBadge": "Private",
