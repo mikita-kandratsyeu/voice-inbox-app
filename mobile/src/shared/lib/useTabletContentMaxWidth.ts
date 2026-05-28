@@ -1,7 +1,6 @@
 import { useWindowDimensions } from 'react-native';
 
-import { useTabletSidebarCollapsedStore } from '@/app/navigation/tablet/tabletSidebarCollapsedStore';
-import { getTabletSidebarWidth } from '@/app/navigation/tablet/tabletSidebarMetrics';
+import { TABLET_SIDEBAR_WIDTH } from '@/app/navigation/tablet/tabletSidebarMetrics';
 
 import { useTabletShellLayout } from './useTabletShellLayout';
 
@@ -20,16 +19,14 @@ export function useTabletContentMaxWidth(
 ): number | undefined {
   const { width } = useWindowDimensions();
   const inTabletShell = useTabletShellLayout();
-  const isSidebarCollapsed = useTabletSidebarCollapsedStore((s) => s.isCollapsed);
 
   if (width < TABLET_MIN_WIDTH) {
     return undefined;
   }
 
-  const layoutWidth = inTabletShell ? width - getTabletSidebarWidth(isSidebarCollapsed) : width;
+  const layoutWidth = inTabletShell ? width - TABLET_SIDEBAR_WIDTH : width;
 
   if (inTabletShell) {
-    // Inbox, settings, etc. — fill the shell content column (sidebar already offsets width).
     return layoutWidth;
   }
 

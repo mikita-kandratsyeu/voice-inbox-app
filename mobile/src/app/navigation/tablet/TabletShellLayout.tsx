@@ -4,15 +4,13 @@ import { View } from 'react-native';
 import { useColors } from '@/shared/config';
 
 import { TabletSidebar } from './TabletSidebar';
-import { useTabletSidebarCollapsedStore } from './tabletSidebarCollapsedStore';
-import { TabletSidebarLayoutProvider } from './TabletSidebarLayoutContext';
 import { getTabletSidebarTheme } from './tabletSidebarTheme';
 
 type TabletShellLayoutProps = {
   children: React.ReactNode;
 };
 
-function TabletShellLayoutBody({ children }: TabletShellLayoutProps) {
+export const TabletShellLayout = ({ children }: TabletShellLayoutProps) => {
   const color = useColors();
   const theme = getTabletSidebarTheme(color);
 
@@ -37,15 +35,5 @@ function TabletShellLayoutBody({ children }: TabletShellLayoutProps) {
         <View style={{ flex: 1, width: '100%', backgroundColor: theme.content }}>{children}</View>
       </View>
     </View>
-  );
-}
-
-export const TabletShellLayout = ({ children }: TabletShellLayoutProps) => {
-  const isCollapsed = useTabletSidebarCollapsedStore((s) => s.isCollapsed);
-
-  return (
-    <TabletSidebarLayoutProvider isCollapsed={isCollapsed}>
-      <TabletShellLayoutBody>{children}</TabletShellLayoutBody>
-    </TabletSidebarLayoutProvider>
   );
 };

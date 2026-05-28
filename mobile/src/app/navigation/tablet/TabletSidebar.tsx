@@ -3,7 +3,6 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, View } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -25,14 +24,7 @@ import {
 } from './tabletInboxNavBridge';
 import { useTabletInboxSidebarStore } from './tabletInboxSidebarStore';
 import { TabletSidebarBody } from './TabletSidebarBody';
-import { useTabletSidebarCollapsedStore } from './tabletSidebarCollapsedStore';
-import { useTabletSidebarLayout } from './TabletSidebarLayoutContext';
-import {
-  TABLET_SIDEBAR_COLLAPSED_PAD,
-  TABLET_SIDEBAR_COLLAPSED_WIDTH,
-  TABLET_SIDEBAR_PAD,
-  TABLET_SIDEBAR_WIDTH,
-} from './tabletSidebarMetrics';
+import { TABLET_SIDEBAR_PAD, TABLET_SIDEBAR_WIDTH } from './tabletSidebarMetrics';
 import { getTabletSidebarTheme } from './tabletSidebarTheme';
 import { navigateMainTab, useTabletTabNavigationStore } from './tabletTabNavigation';
 import { useTabletSidebarNavCounts } from './useTabletSidebarNavCounts';
@@ -68,11 +60,8 @@ export const TabletSidebar = () => {
   );
 
   const filterStatus = useTabletInboxSidebarStore((s) => s.filterStatus);
-  const isCollapsed = useTabletSidebarCollapsedStore((s) => s.isCollapsed);
-  const toggleCollapsed = useTabletSidebarCollapsedStore((s) => s.toggleCollapsed);
 
   const isSettingsTab = currentTab === 'SettingsRoot';
-  const { sidebarShellStyle, expandedLayerStyle, collapsedLayerStyle } = useTabletSidebarLayout();
   const navDimmed = isSettingsTab;
 
   const inboxSelection = useMemo(() => {
@@ -150,50 +139,15 @@ export const TabletSidebar = () => {
   const pinnedActive = !isSettingsTab && inboxSelection?.kind === 'pinned';
   const archivedActive = !isSettingsTab && inboxSelection?.kind === 'archived';
 
-  const bodyProps = {
-    color,
-    theme,
-    insets,
-    t,
-    isCollapsedToggle: isCollapsed,
-    isSettingsTab,
-    navDimmed,
-    isImporting,
-    isProActive,
-    monetizationMode,
-    folders,
-    folderCounts,
-    isPrivateMode,
-    currentTab,
-    inboxSelection,
-    pinnedCount,
-    archivedCount,
-    openTasksCount,
-    inboxActive,
-    pinnedActive,
-    archivedActive,
-    onToggleCollapsed: toggleCollapsed,
-    onOpenSettings: openSettings,
-    onOpenPlanPaywall: openPlanPaywall,
-    onRecord: handleNewRecording,
-    onRecordLongPress: handleImportAudio,
-    onTextNote: handleTextNote,
-    navigateToInbox,
-    openAllTasks,
-    openCreateFolder,
-  };
-
   return (
-    <Animated.View
-      style={[
-        {
-          flexShrink: 0,
-          alignSelf: 'stretch',
-          overflow: 'hidden',
-          backgroundColor: theme.panel,
-        },
-        sidebarShellStyle,
-      ]}
+    <View
+      style={{
+        width: TABLET_SIDEBAR_WIDTH,
+        flexShrink: 0,
+        alignSelf: 'stretch',
+        overflow: 'hidden',
+        backgroundColor: theme.panel,
+      }}
     >
       <View
         pointerEvents="none"
@@ -207,43 +161,37 @@ export const TabletSidebar = () => {
           zIndex: 2,
         }}
       />
-      <View style={{ flex: 1, position: 'relative' }}>
-        <Animated.View
-          pointerEvents={isCollapsed ? 'none' : 'box-none'}
-          style={[
-            {
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: TABLET_SIDEBAR_WIDTH,
-            },
-            expandedLayerStyle,
-          ]}
-        >
-          <TabletSidebarBody {...bodyProps} collapsed={false} horizontalPad={TABLET_SIDEBAR_PAD} />
-        </Animated.View>
-
-        <Animated.View
-          pointerEvents={isCollapsed ? 'box-none' : 'none'}
-          style={[
-            {
-              position: 'absolute',
-              left: 0,
-              top: 0,
-              bottom: 0,
-              width: TABLET_SIDEBAR_COLLAPSED_WIDTH,
-            },
-            collapsedLayerStyle,
-          ]}
-        >
-          <TabletSidebarBody
-            {...bodyProps}
-            collapsed
-            horizontalPad={TABLET_SIDEBAR_COLLAPSED_PAD}
-          />
-        </Animated.View>
-      </View>
-    </Animated.View>
+      <TabletSidebarBody
+        color={color}
+        theme={theme}
+        insets={insets}
+        t={t}
+        isSettingsTab={isSettingsTab}
+        navDimmed={navDimmed}
+        isImporting={isImporting}
+        isProActive={isProActive}
+        monetizationMode={monetizationMode}
+        folders={folders}
+        folderCounts={folderCounts}
+        isPrivateMode={isPrivateMode}
+        currentTab={currentTab}
+        inboxSelection={inboxSelection}
+        pinnedCount={pinnedCount}
+        archivedCount={archivedCount}
+        openTasksCount={openTasksCount}
+        inboxActive={inboxActive}
+        pinnedActive={pinnedActive}
+        archivedActive={archivedActive}
+        horizontalPad={TABLET_SIDEBAR_PAD}
+        onOpenSettings={openSettings}
+        onOpenPlanPaywall={openPlanPaywall}
+        onRecord={handleNewRecording}
+        onRecordLongPress={handleImportAudio}
+        onTextNote={handleTextNote}
+        navigateToInbox={navigateToInbox}
+        openAllTasks={openAllTasks}
+        openCreateFolder={openCreateFolder}
+      />
+    </View>
   );
 };

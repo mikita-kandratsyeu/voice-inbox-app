@@ -6,7 +6,6 @@ import { withAlphaHex } from '@/shared/lib';
 import { Button } from '@/shared/ui';
 
 import {
-  TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE,
   TABLET_SIDEBAR_FOLDER_ITEM_HEIGHT,
   TABLET_SIDEBAR_NAV_ITEM_HEIGHT,
   TABLET_SIDEBAR_NAV_ITEM_RADIUS,
@@ -30,7 +29,6 @@ export type TabletSidebarNavItemProps = {
   accessibilityHint?: string;
   /** Folder tint when selected; defaults to accent.primary. */
   accentHex?: string;
-  collapsed?: boolean;
 };
 
 function getNavItemHeight(appearance: TabletSidebarNavAppearance): number {
@@ -50,12 +48,11 @@ export function TabletSidebarNavItem({
   badgeCount = 0,
   accessibilityHint,
   accentHex,
-  collapsed = false,
 }: TabletSidebarNavItemProps) {
   const accent = accentHex ?? color.accent.primary;
   const activeBg = withAlphaHex(accent, 0.16);
   const isGhost = appearance === 'ghost';
-  const itemHeight = collapsed ? TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE : getNavItemHeight(appearance);
+  const itemHeight = getNavItemHeight(appearance);
   const isNavRow = appearance === 'primary' || appearance === 'secondary';
   const labelColor = isGhost
     ? isActive
@@ -83,48 +80,32 @@ export function TabletSidebarNavItem({
           ? theme.surface
           : 'transparent';
 
-  const showNavChrome = !isGhost && (isNavRow || collapsed);
-
   const containerStyle: ViewStyle = {
     height: itemHeight,
     minHeight: itemHeight,
     maxHeight: itemHeight,
-    width: collapsed ? TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE : undefined,
-    maxWidth: collapsed ? TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE : undefined,
-    alignSelf: collapsed ? 'center' : undefined,
-    overflow: collapsed ? 'hidden' : undefined,
     borderRadius:
       appearance === 'folder' ? TABLET_SIDEBAR_NAV_ITEM_RADIUS - 2 : TABLET_SIDEBAR_NAV_ITEM_RADIUS,
     paddingVertical: 0,
-    borderWidth: showNavChrome ? 1 : 0,
-    borderColor:
-      collapsed && !isActive && appearance !== 'primary' && !isGhost ? theme.border : borderColor,
-    backgroundColor:
-      collapsed && appearance === 'primary' && !isActive ? theme.surface : backgroundColor,
+    borderWidth: isGhost ? 0 : 1,
+    borderColor,
+    backgroundColor,
     justifyContent: 'center',
     alignItems: 'center',
   };
 
-  const buttonVariant =
-    appearance === 'ghost'
-      ? 'ghost'
-      : collapsed && appearance === 'primary'
-        ? 'primary'
-        : 'secondary';
-
-  const button = (
+  return (
     <Button
-      variant={buttonVariant}
+      variant={appearance === 'ghost' ? 'ghost' : 'secondary'}
       size="md"
-      fullWidth={!collapsed}
-      iconOnly={collapsed}
+      fullWidth
       contentAlign="start"
       color={color}
-      label={collapsed ? undefined : label}
+      label={label}
       labelStyle={getTabletSidebarLabelStyle(isActive, labelColor)}
       icon={icon}
       trailingIcon={
-        !collapsed && badgeCount > 0 ? (
+        badgeCount > 0 ? (
           <TabletSidebarNavBadge
             count={badgeCount}
             color={color}
@@ -135,7 +116,6 @@ export function TabletSidebarNavItem({
       }
       onPress={onPress}
       onLongPress={onLongPress}
-      accessibilityLabel={collapsed ? label : undefined}
       accessibilityState={{ selected: isActive }}
       accessibilityHint={accessibilityHint}
       activeOpacity={0.85}
@@ -143,39 +123,6 @@ export function TabletSidebarNavItem({
       containerStyle={containerStyle}
     />
   );
-
-  if (!collapsed) {
-    return button;
-  }
-
-  const collapsedSlot = (
-    <View
-      style={{
-        width: TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE,
-        height: TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE,
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      {button}
-      {badgeCount > 0 ? (
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            minWidth: 8,
-            height: 8,
-            borderRadius: 4,
-            backgroundColor: accent,
-          }}
-        />
-      ) : null}
-    </View>
-  );
-
-  return collapsedSlot;
 }
 
 /** Renders a nav icon with optional fixed tint (inactive) or accent (active). */
@@ -219,26 +166,15 @@ export function TabletSidebarSectionLabel({
   );
 }
 
-export function TabletSidebarSectionDivider({
-  color,
-  align = 'default',
-  compact = false,
-}: {
-  color: Colors;
-  /** `stretch` — full width inside a center-aligned collapsed rail. */
-  align?: 'default' | 'stretch';
-  /** Collapsed rail: spacing comes from parent `gap`, not divider margins. */
-  compact?: boolean;
-}) {
+export function TabletSidebarSectionDivider({ color }: { color: Colors }) {
   return (
     <View
       style={{
         height: 1,
-        marginTop: compact ? 0 : 12,
-        marginBottom: compact ? 0 : 4,
+        marginTop: 12,
+        marginBottom: 4,
         backgroundColor: color.border.default,
         opacity: 0.85,
-        ...(align === 'stretch' ? { alignSelf: 'stretch', width: '100%' } : null),
       }}
     />
   );

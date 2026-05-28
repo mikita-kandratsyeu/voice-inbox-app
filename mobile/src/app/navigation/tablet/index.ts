@@ -13,9 +13,4 @@ export {
 export { useTabletInboxSidebarStore } from './tabletInboxSidebarStore';
 export { TabletShellLayout } from './TabletShellLayout';
 export { TabletSidebar } from './TabletSidebar';
-export { useTabletSidebarCollapsedStore } from './tabletSidebarCollapsedStore';
-export {
-  getTabletSidebarWidth,
-  TABLET_SIDEBAR_COLLAPSED_WIDTH,
-  TABLET_SIDEBAR_WIDTH,
-} from './tabletSidebarMetrics';
+export { getTabletSidebarWidth, TABLET_SIDEBAR_WIDTH } from './tabletSidebarMetrics';

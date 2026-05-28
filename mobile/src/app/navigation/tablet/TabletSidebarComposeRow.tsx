@@ -8,16 +8,14 @@ import { hapticSelection, selectPlatform } from '@/shared/lib';
 import { Button, RecordVoiceIcon } from '@/shared/ui';
 
 import {
-  TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE,
-  TABLET_SIDEBAR_COLLAPSED_STACK_GAP,
-  TABLET_SIDEBAR_NAV_ITEM_RADIUS,
+  TABLET_SIDEBAR_COMPOSE_BUTTON_HEIGHT,
+  TABLET_SIDEBAR_COMPOSE_BUTTON_RADIUS,
+  TABLET_SIDEBAR_COMPOSE_ICON_SIZE,
 } from './tabletSidebarMetrics';
-import { TABLET_SIDEBAR_LABEL_FONT_SIZE } from './tabletSidebarTypography';
+import { TABLET_SIDEBAR_COMPOSE_LABEL_FONT_SIZE } from './tabletSidebarTypography';
 
-const COMPOSE_BUTTON_RADIUS = 14;
-const COMPOSE_BUTTON_HEIGHT = 54;
 const COMPOSE_ROW_GAP = 8;
-const ICON_ACTION_SIZE = COMPOSE_BUTTON_HEIGHT;
+const ICON_ACTION_SIZE = TABLET_SIDEBAR_COMPOSE_BUTTON_HEIGHT;
 
 const styles = StyleSheet.create({
   importSpinner: {
@@ -29,7 +27,6 @@ const styles = StyleSheet.create({
 
 type TabletSidebarComposeRowProps = {
   color: Colors;
-  collapsed?: boolean;
   onRecord: () => void;
   onRecordLongPress: () => void;
   onTextNote: () => void;
@@ -40,18 +37,17 @@ function iconActionShadow(color: Colors, shadowColor: string) {
   return selectPlatform({
     ios: {
       shadowColor,
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.28,
-      shadowRadius: 8,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.24,
+      shadowRadius: 6,
     },
-    android: { elevation: 4 },
+    android: { elevation: 3 },
     default: {},
   });
 }
 
 export function TabletSidebarComposeRow({
   color,
-  collapsed = false,
   onRecord,
   onRecordLongPress,
   onTextNote,
@@ -59,104 +55,31 @@ export function TabletSidebarComposeRow({
 }: TabletSidebarComposeRowProps) {
   const { t } = useTranslation();
 
-  if (collapsed) {
-    const iconSize = TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE;
-    return (
-      <View
-        style={{
-          width: '100%',
-          alignItems: 'center',
-          gap: TABLET_SIDEBAR_COLLAPSED_STACK_GAP,
-        }}
-      >
-        <View style={{ width: iconSize, height: iconSize }}>
-          <Button
-            variant="primary"
-            iconOnly
-            size="lg"
-            color={color}
-            icon={<RecordVoiceIcon size={22} color={color.icon.onAccent} strokeWidth={2.4} />}
-            accessibilityLabel={t('tablet.sidebar.newRecording')}
-            accessibilityHint={t('inbox.emptyImportHint')}
-            accessibilityState={{ busy: isImporting }}
-            activeOpacity={0.9}
-            disabled={isImporting}
-            onPress={() => {
-              if (isImporting) return;
-              hapticSelection();
-              onRecord();
-            }}
-            onLongPress={() => {
-              if (isImporting) return;
-              hapticSelection();
-              onRecordLongPress();
-            }}
-            className="rounded-[14px]"
-            containerStyle={{
-              width: iconSize,
-              height: iconSize,
-              minHeight: iconSize,
-              borderRadius: TABLET_SIDEBAR_NAV_ITEM_RADIUS,
-              paddingVertical: 0,
-              backgroundColor: color.accent.primary,
-              opacity: isImporting ? 0.7 : 1,
-              ...iconActionShadow(color, color.accent.primary),
-            }}
-          />
-          {isImporting ? (
-            <View pointerEvents="none" style={styles.importSpinner}>
-              <ActivityIndicator size="small" color={color.icon.onAccent} />
-            </View>
-          ) : null}
-        </View>
-
-        <Button
-          variant="secondary"
-          iconOnly
-          size="lg"
-          color={color}
-          icon={<SquarePen size={22} color={color.text.primary} strokeWidth={2.2} />}
-          accessibilityLabel={t('textNote.openCreate')}
-          activeOpacity={0.85}
-          onPress={() => {
-            hapticSelection();
-            onTextNote();
-          }}
-          className="rounded-[14px]"
-          containerStyle={{
-            width: iconSize,
-            height: iconSize,
-            minHeight: iconSize,
-            borderRadius: TABLET_SIDEBAR_NAV_ITEM_RADIUS,
-            paddingVertical: 0,
-            backgroundColor: color.background.tertiary,
-            borderWidth: 1,
-            borderColor: color.border.default,
-          }}
-        />
-      </View>
-    );
-  }
-
   return (
     <View
       style={{
         width: '100%',
-        height: COMPOSE_BUTTON_HEIGHT,
+        height: TABLET_SIDEBAR_COMPOSE_BUTTON_HEIGHT,
         flexDirection: 'row',
         alignItems: 'center',
         gap: COMPOSE_ROW_GAP,
       }}
     >
-      <View style={{ flex: 1, minWidth: 0, height: COMPOSE_BUTTON_HEIGHT }}>
+      <View style={{ flex: 1, minWidth: 0, height: TABLET_SIDEBAR_COMPOSE_BUTTON_HEIGHT }}>
         <Button
           variant="primary"
-          size="lg"
+          size="md"
           fullWidth
           color={color}
           label={t('tablet.sidebar.startRecording')}
-          labelStyle={{ fontSize: TABLET_SIDEBAR_LABEL_FONT_SIZE, fontWeight: '600' }}
-          icon={<RecordVoiceIcon size={22} color={color.icon.onAccent} strokeWidth={2.4} />}
+          labelStyle={{ fontSize: TABLET_SIDEBAR_COMPOSE_LABEL_FONT_SIZE, fontWeight: '600' }}
+          icon={
+            <RecordVoiceIcon
+              size={TABLET_SIDEBAR_COMPOSE_ICON_SIZE}
+              color={color.icon.onAccent}
+              strokeWidth={2.4}
+            />
+          }
           accessibilityLabel={t('tablet.sidebar.newRecording')}
           accessibilityHint={t('inbox.emptyImportHint')}
           accessibilityState={{ busy: isImporting }}
@@ -172,11 +95,11 @@ export function TabletSidebarComposeRow({
             hapticSelection();
             onRecordLongPress();
           }}
-          className="rounded-[14px]"
+          className="rounded-[12px]"
           containerStyle={{
-            minHeight: COMPOSE_BUTTON_HEIGHT,
-            height: COMPOSE_BUTTON_HEIGHT,
-            borderRadius: COMPOSE_BUTTON_RADIUS,
+            minHeight: TABLET_SIDEBAR_COMPOSE_BUTTON_HEIGHT,
+            height: TABLET_SIDEBAR_COMPOSE_BUTTON_HEIGHT,
+            borderRadius: TABLET_SIDEBAR_COMPOSE_BUTTON_RADIUS,
             paddingVertical: 0,
             opacity: isImporting ? 0.7 : 1,
             ...iconActionShadow(color, color.accent.primary),
@@ -192,20 +115,26 @@ export function TabletSidebarComposeRow({
       <Button
         variant="secondary"
         iconOnly
-        size="lg"
+        size="md"
         color={color}
-        icon={<SquarePen size={22} color={color.text.primary} strokeWidth={2.2} />}
+        icon={
+          <SquarePen
+            size={TABLET_SIDEBAR_COMPOSE_ICON_SIZE}
+            color={color.text.primary}
+            strokeWidth={2.2}
+          />
+        }
         accessibilityLabel={t('textNote.openCreate')}
         activeOpacity={0.85}
         onPress={() => {
           hapticSelection();
           onTextNote();
         }}
-        className="rounded-[14px]"
+        className="rounded-[12px]"
         containerStyle={{
           width: ICON_ACTION_SIZE,
           height: ICON_ACTION_SIZE,
-          borderRadius: COMPOSE_BUTTON_RADIUS,
+          borderRadius: TABLET_SIDEBAR_COMPOSE_BUTTON_RADIUS,
           paddingVertical: 0,
           backgroundColor: color.background.tertiary,
           borderWidth: 1,

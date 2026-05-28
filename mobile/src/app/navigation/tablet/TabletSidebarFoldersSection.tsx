@@ -1,17 +1,15 @@
 import { ArrowDownUp, Folder, Plus } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, type StyleProp, Text, View, type ViewStyle } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import type { Folder as FolderEntity } from '@/entities/folder';
 import { FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
 import type { Colors } from '@/shared/config';
 import { hapticSelection, resolveDisplayFolderColor } from '@/shared/lib';
 
-import { CollapsedRailStack } from './CollapsedRailStack';
 import type { TabletInboxSidebarTarget } from './tabletInboxNavBridge';
 import { requestTabletOpenReorderFolders } from './tabletInboxNavBridge';
-import { TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE } from './tabletSidebarMetrics';
 import {
   TabletSidebarNavIcon,
   TabletSidebarNavItem,
@@ -53,7 +51,6 @@ function FolderSectionHeaderAction({
 type TabletSidebarFoldersSectionProps = {
   color: Colors;
   theme: TabletSidebarTheme;
-  collapsed?: boolean;
   folders: FolderEntity[];
   folderCounts: TabletSidebarNavCounts['folderCounts'];
   isProActive: boolean;
@@ -71,7 +68,7 @@ type TabletSidebarFoldersExpandedHeaderProps = Pick<
   'color' | 'folders' | 'currentTab' | 'onOpenCreateFolder'
 >;
 
-/** Pinned above the scrollable folder list in expanded tablet sidebar. */
+/** Pinned above the scrollable folder list in the tablet sidebar. */
 export function TabletSidebarFoldersExpandedHeader({
   color,
   folders,
@@ -118,40 +115,9 @@ export function TabletSidebarFoldersExpandedHeader({
   );
 }
 
-function CollapsedFolderAction({
-  onPress,
-  accessibilityLabel,
-  children,
-}: {
-  onPress: () => void;
-  accessibilityLabel: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      style={({ pressed }) => ({
-        width: TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE,
-        height: TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE,
-        borderRadius: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
-        alignSelf: 'center',
-        backgroundColor: 'transparent',
-        opacity: pressed ? 0.7 : 1,
-      })}
-    >
-      {children}
-    </Pressable>
-  );
-}
-
 export function TabletSidebarFoldersSection({
   color,
   theme,
-  collapsed = false,
   folders,
   folderCounts,
   isProActive,
@@ -170,7 +136,7 @@ export function TabletSidebarFoldersSection({
     navigateMainTab('SettingsRoot', { screen: 'PrivateAiMode' });
   };
 
-  if (isPrivateMode && !collapsed) {
+  if (isPrivateMode) {
     return (
       <View>
         <TabletSidebarSectionDivider color={color} />
@@ -194,77 +160,6 @@ export function TabletSidebarFoldersSection({
           </Text>
         </Pressable>
       </View>
-    );
-  }
-
-  if (collapsed) {
-    if (folders.length === 0 && !isPrivateMode) {
-      return null;
-    }
-
-    if (isPrivateMode) {
-      return (
-        <CollapsedFolderAction
-          accessibilityLabel={t('tablet.sidebar.privateFoldersCta')}
-          onPress={openPrivateModeSettings}
-        >
-          <Folder size={22} color={color.text.secondary} strokeWidth={2} />
-        </CollapsedFolderAction>
-      );
-    }
-
-    return (
-      <CollapsedRailStack>
-        {folders.map((folder) => {
-          const folderHex = resolveDisplayFolderColor(folder.color, isProActive);
-          const isActive =
-            !isSettingsTab &&
-            inboxSelection?.kind === 'folder' &&
-            inboxSelection.folderId === folder.id;
-          const folderCount = folderCounts.get(folder.id) ?? 0;
-
-          return (
-            <TabletSidebarNavItem
-              key={folder.id}
-              label={folder.name}
-              isActive={isActive}
-              color={color}
-              theme={theme}
-              appearance="folder"
-              collapsed
-              badgeCount={folderCount}
-              accentHex={folderHex}
-              accessibilityHint={t('tablet.sidebar.editFolderHint')}
-              onPress={() => onNavigateToInbox({ kind: 'folder', folderId: folder.id })}
-              onLongPress={() => {
-                hapticSelection();
-                if (currentTab !== 'Inbox') {
-                  navigateMainTab('Inbox');
-                }
-                onOpenEditFolder(folder.id);
-              }}
-              icon={
-                folder.icon ? (
-                  <FolderLucideIcon
-                    iconId={folder.icon}
-                    size={21}
-                    color={folderHex}
-                    strokeWidth={2}
-                  />
-                ) : (
-                  <TabletSidebarNavIcon
-                    isActive={isActive}
-                    activeColor={folderHex}
-                    inactiveColor={color.text.secondary}
-                  >
-                    <Folder />
-                  </TabletSidebarNavIcon>
-                )
-              }
-            />
-          );
-        })}
-      </CollapsedRailStack>
     );
   }
 
@@ -352,25 +247,17 @@ export function TabletSidebarFoldersSection({
 export function TabletSidebarFoldersScroll({
   children,
   contentDimmed,
-  collapsed = false,
-  contentContainerStyle,
 }: {
   children: React.ReactNode;
   contentDimmed: boolean;
-  collapsed?: boolean;
-  contentContainerStyle?: StyleProp<ViewStyle>;
 }) {
   return (
     <ScrollView
       style={{ flex: 1, opacity: contentDimmed ? 0.62 : 1 }}
-      contentContainerStyle={[
-        {
-          paddingBottom: 8,
-          alignItems: collapsed ? 'center' : 'stretch',
-          gap: collapsed ? 0 : 8,
-        },
-        contentContainerStyle,
-      ]}
+      contentContainerStyle={{
+        paddingBottom: 8,
+        gap: 8,
+      }}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >

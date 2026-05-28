@@ -10,7 +10,6 @@ import { SettingsPlanStatusCard } from '@/screens/settings/ui/SettingsPlanStatus
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
-import { CollapsedRailStack } from './CollapsedRailStack';
 import type { TabletInboxSidebarTarget } from './tabletInboxNavBridge';
 import { requestTabletOpenEditFolder } from './tabletInboxNavBridge';
 import { TabletSidebarComposeRow } from './TabletSidebarComposeRow';
@@ -20,24 +19,17 @@ import {
   TabletSidebarFoldersSection,
 } from './TabletSidebarFoldersSection';
 import { TabletSidebarFooter } from './TabletSidebarFooter';
-import { TABLET_SIDEBAR_COLLAPSED_STACK_GAP } from './tabletSidebarMetrics';
-import {
-  TabletSidebarNavIcon,
-  TabletSidebarNavItem,
-  TabletSidebarSectionDivider,
-} from './TabletSidebarNavItem';
+import { TabletSidebarNavIcon, TabletSidebarNavItem } from './TabletSidebarNavItem';
 import type { TabletSidebarTheme } from './tabletSidebarTheme';
 import { navigateMainTab } from './tabletTabNavigation';
 import type { TabletSidebarNavCounts } from './useTabletSidebarNavCounts';
 
 export type TabletSidebarBodyProps = {
-  collapsed: boolean;
   horizontalPad: number;
   color: Colors;
   theme: TabletSidebarTheme;
   insets: EdgeInsets;
   t: TFunction;
-  isCollapsedToggle: boolean;
   isSettingsTab: boolean;
   navDimmed: boolean;
   isImporting: boolean;
@@ -54,7 +46,6 @@ export type TabletSidebarBodyProps = {
   inboxActive: boolean;
   pinnedActive: boolean;
   archivedActive: boolean;
-  onToggleCollapsed: () => void;
   onOpenSettings: () => void;
   onOpenPlanPaywall: () => void;
   onRecord: () => void;
@@ -66,13 +57,11 @@ export type TabletSidebarBodyProps = {
 };
 
 export function TabletSidebarBody({
-  collapsed,
   horizontalPad,
   color,
   theme,
   insets,
   t,
-  isCollapsedToggle,
   isSettingsTab,
   navDimmed,
   isImporting,
@@ -89,7 +78,6 @@ export function TabletSidebarBody({
   inboxActive,
   pinnedActive,
   archivedActive,
-  onToggleCollapsed,
   onOpenSettings,
   onOpenPlanPaywall,
   onRecord,
@@ -112,7 +100,6 @@ export function TabletSidebarBody({
       color={color}
       theme={theme}
       appearance="primary"
-      collapsed={collapsed}
       onPress={() => navigateToInbox({ kind: 'inbox' })}
       icon={
         <TabletSidebarNavIcon
@@ -134,7 +121,6 @@ export function TabletSidebarBody({
         color={color}
         theme={theme}
         appearance="secondary"
-        collapsed={collapsed}
         badgeCount={pinnedCount}
         onPress={() => navigateToInbox({ kind: 'pinned' })}
         icon={
@@ -153,7 +139,6 @@ export function TabletSidebarBody({
         color={color}
         theme={theme}
         appearance="secondary"
-        collapsed={collapsed}
         badgeCount={archivedCount}
         onPress={() => navigateToInbox({ kind: 'archived' })}
         icon={
@@ -172,7 +157,6 @@ export function TabletSidebarBody({
         color={color}
         theme={theme}
         appearance="secondary"
-        collapsed={collapsed}
         badgeCount={openTasksCount}
         onPress={openAllTasks}
         icon={
@@ -192,7 +176,6 @@ export function TabletSidebarBody({
     <TabletSidebarFoldersSection
       color={color}
       theme={theme}
-      collapsed={collapsed}
       folders={folders}
       folderCounts={folderCounts}
       isProActive={isProActive}
@@ -212,23 +195,20 @@ export function TabletSidebarBody({
     />
   );
 
-  const showCollapsedFoldersDivider = collapsed && (isPrivateMode || folders.length > 0);
-
   return (
     <View style={{ flex: 1 }}>
       <View
         style={{
           paddingTop: insets.top + 8,
           paddingHorizontal: horizontalPad,
-          paddingBottom: collapsed ? TABLET_SIDEBAR_COLLAPSED_STACK_GAP : 14,
-          gap: collapsed ? TABLET_SIDEBAR_COLLAPSED_STACK_GAP : 14,
+          paddingBottom: 14,
+          gap: 14,
           borderBottomWidth: 1,
           borderBottomColor: theme.border,
         }}
       >
         <TabletSidebarComposeRow
           color={color}
-          collapsed={collapsed}
           onRecord={onRecord}
           onRecordLongPress={onRecordLongPress}
           onTextNote={onTextNote}
@@ -237,76 +217,34 @@ export function TabletSidebarBody({
       </View>
 
       <View style={{ flex: 1, minHeight: 0, paddingHorizontal: horizontalPad }}>
-        {collapsed ? (
-          <>
-            <View
-              style={{
-                flexShrink: 0,
-                opacity: navDimmed ? 0.62 : 1,
-                paddingTop: TABLET_SIDEBAR_COLLAPSED_STACK_GAP,
-              }}
-            >
-              <CollapsedRailStack>
-                {inboxNav}
-                <TabletSidebarSectionDivider color={color} align="stretch" compact />
-                {secondaryNav}
-              </CollapsedRailStack>
-            </View>
+        <View
+          style={{
+            paddingTop: 16,
+            paddingBottom: 8,
+            gap: 8,
+            opacity: navDimmed ? 0.62 : 1,
+          }}
+        >
+          {inboxNav}
+          {secondaryNav}
+        </View>
 
-            {showCollapsedFoldersDivider ? (
-              <View
-                style={{
-                  flexShrink: 0,
-                  paddingVertical: TABLET_SIDEBAR_COLLAPSED_STACK_GAP,
-                  opacity: navDimmed ? 0.62 : 1,
-                }}
-              >
-                <TabletSidebarSectionDivider color={color} align="stretch" compact />
-              </View>
-            ) : null}
-
-            <TabletSidebarFoldersScroll
-              contentDimmed={navDimmed}
-              collapsed
-              contentContainerStyle={{
-                paddingTop: showCollapsedFoldersDivider ? 0 : TABLET_SIDEBAR_COLLAPSED_STACK_GAP,
-              }}
-            >
-              {foldersBlock}
-            </TabletSidebarFoldersScroll>
-          </>
+        {isPrivateMode ? (
+          <View style={{ flexShrink: 0, opacity: navDimmed ? 0.62 : 1 }}>{foldersBlock}</View>
         ) : (
           <>
-            <View
-              style={{
-                paddingTop: 16,
-                paddingBottom: 8,
-                gap: 8,
-                opacity: navDimmed ? 0.62 : 1,
-              }}
-            >
-              {inboxNav}
-              {secondaryNav}
+            <View style={{ flexShrink: 0, opacity: navDimmed ? 0.62 : 1 }}>
+              <TabletSidebarFoldersExpandedHeader
+                color={color}
+                folders={folders}
+                currentTab={currentTab}
+                onOpenCreateFolder={openCreateFolder}
+              />
             </View>
 
-            {isPrivateMode ? (
-              <View style={{ flexShrink: 0, opacity: navDimmed ? 0.62 : 1 }}>{foldersBlock}</View>
-            ) : (
-              <>
-                <View style={{ flexShrink: 0, opacity: navDimmed ? 0.62 : 1 }}>
-                  <TabletSidebarFoldersExpandedHeader
-                    color={color}
-                    folders={folders}
-                    currentTab={currentTab}
-                    onOpenCreateFolder={openCreateFolder}
-                  />
-                </View>
-
-                <TabletSidebarFoldersScroll contentDimmed={navDimmed} collapsed={false}>
-                  {foldersBlock}
-                </TabletSidebarFoldersScroll>
-              </>
-            )}
+            <TabletSidebarFoldersScroll contentDimmed={navDimmed}>
+              {foldersBlock}
+            </TabletSidebarFoldersScroll>
           </>
         )}
       </View>
@@ -314,15 +252,15 @@ export function TabletSidebarBody({
       <View
         style={{
           paddingHorizontal: horizontalPad,
-          paddingTop: collapsed ? 8 : 12,
-          paddingBottom: Math.max(insets.bottom, collapsed ? 10 : 14),
-          gap: collapsed ? 8 : 14,
+          paddingTop: 12,
+          paddingBottom: Math.max(insets.bottom, 14),
+          gap: 14,
           borderTopWidth: 1,
           borderTopColor: theme.border,
           backgroundColor: theme.panel,
         }}
       >
-        {!isProActive && !collapsed ? (
+        {!isProActive ? (
           <SettingsPlanStatusCard
             color={color}
             monetizationMode={monetizationMode}
@@ -335,9 +273,7 @@ export function TabletSidebarBody({
           color={color}
           theme={theme}
           isSettingsActive={isSettingsTab}
-          isCollapsed={isCollapsedToggle}
           onOpenSettings={onOpenSettings}
-          onToggleCollapsed={onToggleCollapsed}
         />
       </View>
     </View>
