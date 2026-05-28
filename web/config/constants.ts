@@ -110,6 +110,14 @@ export const AI_MODEL_GEMINI_3_1_FLASH_LITE = 'google/gemini-3.1-flash-lite';
 /** OpenRouter preview id — accepted from clients but always mapped to {@link AI_MODEL_GEMINI_3_1_FLASH_LITE} server-side. */
 export const AI_MODEL_GEMINI_3_1_FLASH_LITE_PREVIEW = 'google/gemini-3.1-flash-lite-preview';
 
+/** Speaker-turn / pseudo-diarization pass (meeting_dialogue job); independent of user-selected summarize model. */
+export const MEETING_DIALOGUE_MODEL = AI_MODEL_GEMINI_3_1_FLASH_LITE;
+
+export const MEETING_DIALOGUE_MODEL_FALLBACK_CHAIN: readonly string[] = [
+  AI_MODEL_GEMINI_3_1_FLASH_LITE,
+  AI_MODEL_GEMINI_2_5_FLASH_LITE,
+];
+
 /** Map legacy / preview OpenRouter ids to the model id we actually call. */
 export function normalizeIncomingAiModel(model: string): string {
   const t = model.trim();

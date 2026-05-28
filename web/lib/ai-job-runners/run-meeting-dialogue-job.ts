@@ -24,7 +24,6 @@ export async function runMeetingDialogueJob(payload: MeetingDialogueJobPayload):
     deviceId,
     messageTtlSeconds: ttl,
     transcript,
-    model,
     meetingDialogueSystemPrompt,
     meetingDialogueAux,
     phase1,
@@ -49,7 +48,6 @@ export async function runMeetingDialogueJob(payload: MeetingDialogueJobPayload):
     const mdUserContent = buildMeetingDialogueUserContent(promptInput);
     const mdPart = await processMeetingDialogueMarkdown(
       mdUserContent,
-      model,
       meetingDialogueSystemPrompt.trim(),
       clientUserAgent,
       deviceId,

@@ -22,7 +22,11 @@ import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
 import { ASK_QUESTION_SYSTEM_PROMPT, AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT } from '@/lib/prompts';
 import type { AiResult, AutoOrganizeResult, RecordClassification } from '@/types';
 
-import { SYSTEM_TASK_MODEL_FALLBACK_CHAIN, USER_AI_MODEL_FALLBACK_CHAIN } from '@/config/constants';
+import {
+  MEETING_DIALOGUE_MODEL_FALLBACK_CHAIN,
+  SYSTEM_TASK_MODEL_FALLBACK_CHAIN,
+  USER_AI_MODEL_FALLBACK_CHAIN,
+} from '@/config/constants';
 
 const MEETING_DIALOGUE_MARKDOWN_MAX_CHARS = 12_000;
 
@@ -215,15 +219,15 @@ function parseMeetingDialogueOpenRouterContent(
 
 /**
  * Second OpenRouter pass: only pseudo-diarization JSON. Same weekly limit slot as the main transcript run.
+ * Always uses {@link MEETING_DIALOGUE_MODEL} (Gemini 3.1 Flash Lite), not the user’s summarize model.
  */
 export async function processMeetingDialogueMarkdown(
   userContent: string,
-  model: string,
   systemPrompt: string,
   clientUserAgent?: string | null,
   deviceId?: string | null,
 ): Promise<Pick<AiResult, 'meetingDialogueMarkdown' | 'tokenUsage'>> {
-  const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);
+  const models = filterModelsForAiChat([...MEETING_DIALOGUE_MODEL_FALLBACK_CHAIN]);
 
   return withSequentialModelFallback(
     models,

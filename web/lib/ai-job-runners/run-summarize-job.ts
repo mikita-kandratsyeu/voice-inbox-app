@@ -34,7 +34,6 @@ async function runInlineMeetingDialogue(
   const {
     jobId: id,
     transcript,
-    model,
     meetingDialogueSystemPrompt,
     meetingDialogueAux,
     clientUserAgent,
@@ -57,7 +56,6 @@ async function runInlineMeetingDialogue(
     const mdUserContent = buildMeetingDialogueUserContent(promptInput);
     const mdPart = await processMeetingDialogueMarkdown(
       mdUserContent,
-      model,
       meetingDialogueSystemPrompt!.trim(),
       clientUserAgent,
       deviceId,
