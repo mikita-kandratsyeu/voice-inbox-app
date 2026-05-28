@@ -124,7 +124,7 @@ export const TRANSLATE_MODEL_CHAIN: readonly string[] = [
   AI_MODEL_DEEPSEEK_V4_FLASH,
 ];
 
-export const AI_MODEL_MIMO_V2_FLASH = 'xiaomi/mimo-v2-flash';
+export const AI_MODEL_MIMO_V2_5_PRO = 'xiaomi/mimo-v2.5-pro';
 export const AI_MODEL_NEMOTRON_3_SUPER = 'nvidia/nemotron-3-super-120b-a12b';
 /** Removed from catalog — accepted from old clients, mapped in {@link normalizeIncomingAiModel}. */
 export const LEGACY_AI_MODEL_STEP_3_5_FLASH = 'stepfun/step-3.5-flash';
@@ -151,7 +151,7 @@ export const ALLOWED_AI_MODELS: string[] = [
   'minimax/minimax-m2.7',
   'google/gemini-2.5-flash-lite',
   AI_MODEL_DEEPSEEK_V4_FLASH,
-  AI_MODEL_MIMO_V2_FLASH,
+  AI_MODEL_MIMO_V2_5_PRO,
   AI_MODEL_NEMOTRON_3_SUPER,
 ];
 

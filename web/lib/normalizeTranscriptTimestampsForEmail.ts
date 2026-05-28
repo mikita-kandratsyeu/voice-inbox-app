@@ -5,8 +5,11 @@
  */
 import { replaceMarkdownSection, twoColumnMarkdownTable } from '@/lib/shareNoteEmailMarkdownTables';
 
-const TIMESTAMP_TOKEN = /\[\d{1,2}:\d{2}\]/;
-const TIMESTAMP_LINE = /^\[(\d{1,2}:\d{2})\]\s*(.*)$/;
+const TIMESTAMP_TOKEN = /\[\d{1,2}:\d{2}(?::\d{2})?\]/;
+const TIMESTAMP_LINE = /^\[(\d{1,2}:\d{2}(?::\d{2})?)\]\s*(.*)$/;
+
+/** Mobile share/PDF export uses `**[00:42]**` blocks instead of `[00:42] …` lines. */
+const BOLD_TIMESTAMP_HEADING = /^\s*\*\*(\[\d{1,2}:\d{2}(?::\d{2})?\])\*\*\s*$/;
 
 const TRANSCRIPT_HEADING = /^## (?:Транскрипт|Transcript)\r?\n/im;
 
@@ -15,11 +18,73 @@ export type TranscriptTimestampEntry = {
   text: string;
 };
 
+function isBoldTimestampHeadingLine(line: string): boolean {
+  return BOLD_TIMESTAMP_HEADING.test(line.trim());
+}
+
+/** Converts legacy mobile bold timestamp blocks into inline `[MM:SS] text` lines. */
+export function expandBoldTimestampBlocksToInlineLines(text: string): string {
+  if (!text.includes('**')) {
+    return text;
+  }
+
+  const lines = text.split(/\r?\n/);
+  const out: string[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const trimmed = lines[i]!.trim();
+    const boldMatch = trimmed.match(BOLD_TIMESTAMP_HEADING);
+    if (!boldMatch) {
+      out.push(lines[i]!);
+      i += 1;
+      continue;
+    }
+
+    const timeToken = boldMatch[1]!;
+    const time = timeToken.replace(/^\[|\]$/g, '');
+    i += 1;
+    while (i < lines.length && !lines[i]!.trim()) {
+      i += 1;
+    }
+
+    const bodyLines: string[] = [];
+    while (i < lines.length) {
+      const nextTrimmed = lines[i]!.trim();
+      if (!nextTrimmed) {
+        let j = i + 1;
+        while (j < lines.length && !lines[j]!.trim()) {
+          j += 1;
+        }
+        if (j < lines.length && isBoldTimestampHeadingLine(lines[j]!)) {
+          break;
+        }
+        i += 1;
+        continue;
+      }
+      if (isBoldTimestampHeadingLine(nextTrimmed)) {
+        break;
+      }
+      bodyLines.push(nextTrimmed);
+      i += 1;
+    }
+
+    const body = bodyLines.join(' ').trim();
+    out.push(body ? `[${time}] ${body}` : `[${time}]`);
+    if (i < lines.length) {
+      out.push('');
+    }
+  }
+
+  return out.join('\n');
+}
+
 /** Split inline `[MM:SS]` tokens and single-newline segment lines into discrete entries. */
 export function splitTranscriptTimestampEntries(text: string): TranscriptTimestampEntry[] {
-  const normalized = text
+  const expanded = expandBoldTimestampBlocksToInlineLines(text);
+  const normalized = expanded
     .split(/\r?\n/)
-    .map((line) => line.replace(/(?<=\S)\s+(?=\[\d{1,2}:\d{2}\](?:\s|$))/g, '\n'))
+    .map((line) => line.replace(/(?<=\S)\s+(?=\[\d{1,2}:\d{2}(?::\d{2})?\](?:\s|$))/g, '\n'))
     .join('\n');
 
   const entries: TranscriptTimestampEntry[] = [];
@@ -67,7 +132,7 @@ export function normalizeTranscriptTimestampLinesForEmail(markdown: string): str
   }
 
   if (!TRANSCRIPT_HEADING.test(markdown)) {
-    return markdown.replace(/\r?\n(?=\[\d{1,2}:\d{2}\](?:\s|$))/g, '\n\n');
+    return markdown.replace(/\r?\n(?=\[\d{1,2}:\d{2}(?::\d{2})?\](?:\s|$))/g, '\n\n');
   }
 
   return replaceMarkdownSection(markdown, TRANSCRIPT_HEADING, replaceTranscriptSection);

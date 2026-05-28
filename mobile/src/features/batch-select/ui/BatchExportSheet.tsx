@@ -75,13 +75,6 @@ type BatchExportSheetProps = {
   ) => void;
 };
 
-function emailTemplateChipLabel(tpl: ShareBriefTemplate, t: (key: string) => string): string {
-  if (tpl === 'emailBrief') return t('share.emailBrief');
-  if (tpl === 'meetingBrief') return t('share.meetingBrief');
-  if (tpl === 'meetingSpeakerTurns') return t('share.speakerTurnsBrief');
-  return t('share.noteBrief');
-}
-
 export const BatchExportSheet = ({
   visible,
   count,
@@ -97,38 +90,62 @@ export const BatchExportSheet = ({
   const listContentPadding = useBottomSheetContentPadding(20);
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
-  const [emailBodyTemplate, setEmailBodyTemplate] = useState<ShareBriefTemplate>('emailBrief');
+  const [emailBodyTemplate, setEmailBodyTemplate] = useState<ShareBriefTemplate | null>(null);
   const [exportPackaging, setExportPackaging] = useState<BatchExportPackaging>('single');
 
   const trimmedEmail = email.trim();
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
 
-  const emailFormatTemplates = useMemo((): ShareBriefTemplate[] => {
+  const emailFormatTemplates = useMemo(() => {
+    const noteBriefOption = {
+      tpl: 'noteBrief' as const,
+      icon: <FileText size={20} color={color.text.primary} strokeWidth={2.1} />,
+      title: t('share.noteBrief'),
+      description: t('share.noteBriefDescription'),
+    };
+    const emailBriefOption = {
+      tpl: 'emailBrief' as const,
+      icon: <ClipboardList size={20} color={color.text.primary} strokeWidth={2.1} />,
+      title: t('share.emailBrief'),
+      description: t('share.emailBriefDescription'),
+    };
+
     if (showSpeakerTurnsExport) {
-      return ['emailBrief', 'meetingBrief', 'meetingSpeakerTurns'];
+      return [
+        noteBriefOption,
+        emailBriefOption,
+        {
+          tpl: 'meetingBrief' as const,
+          icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
+          title: t('share.meetingBrief'),
+          description: t('share.meetingBriefDescription'),
+        },
+        {
+          tpl: 'meetingSpeakerTurns' as const,
+          icon: <UsersRound size={20} color={color.text.primary} strokeWidth={2.1} />,
+          title: t('share.speakerTurnsBrief'),
+          description: t('share.speakerTurnsBriefDescription'),
+        },
+      ];
     }
-    return ['emailBrief', 'noteBrief'];
-  }, [showSpeakerTurnsExport]);
+
+    return [emailBriefOption, noteBriefOption];
+  }, [color.text.primary, showSpeakerTurnsExport, t]);
 
   useEffect(() => {
     if (visible) return;
     setEmailVisible(false);
     setEmail('');
-    setEmailBodyTemplate('emailBrief');
+    setEmailBodyTemplate(null);
     setExportPackaging('single');
   }, [visible]);
-
-  useEffect(() => {
-    if (!visible) return;
-    setEmailBodyTemplate((prev) => (emailFormatTemplates.includes(prev) ? prev : 'emailBrief'));
-  }, [emailFormatTemplates, visible]);
 
   useEffect(() => {
     if (
       !showSpeakerTurnsExport &&
       (emailBodyTemplate === 'meetingSpeakerTurns' || emailBodyTemplate === 'meetingBrief')
     ) {
-      setEmailBodyTemplate('emailBrief');
+      setEmailBodyTemplate(null);
     }
   }, [emailBodyTemplate, showSpeakerTurnsExport]);
 
@@ -153,6 +170,7 @@ export const BatchExportSheet = ({
   }, [exportPackaging, onClose, onExportText]);
 
   const handleOpenEmail = useCallback(() => {
+    setEmailBodyTemplate(null);
     setEmailVisible(true);
   }, []);
 
@@ -160,20 +178,32 @@ export const BatchExportSheet = ({
     Keyboard.dismiss();
     setEmailVisible(false);
     setEmail('');
+    setEmailBodyTemplate(null);
   }, []);
 
-  const handleSendEmail = useCallback(() => {
-    if (!emailValid || isSendingEmail) return;
-    onEmailBatch(trimmedEmail, emailBodyTemplate, exportPackaging);
-  }, [emailBodyTemplate, emailValid, exportPackaging, isSendingEmail, onEmailBatch, trimmedEmail]);
+  const resolvedEmailTemplate = useMemo((): ShareBriefTemplate | null => {
+    if (emailFormatTemplates.length === 1) {
+      return emailFormatTemplates[0]!.tpl;
+    }
+    return emailBodyTemplate;
+  }, [emailBodyTemplate, emailFormatTemplates]);
 
-  const renderOption = ({
+  const canSendEmail = emailValid && resolvedEmailTemplate != null && !isSendingEmail;
+
+  const handleSendEmail = useCallback(() => {
+    if (!canSendEmail || resolvedEmailTemplate == null) return;
+    onEmailBatch(trimmedEmail, resolvedEmailTemplate, exportPackaging);
+  }, [canSendEmail, exportPackaging, onEmailBatch, resolvedEmailTemplate, trimmedEmail]);
+
+  const renderShareFormatRow = ({
     icon,
     title,
     description,
     onPress,
     accessibilityLabel,
     disabled = false,
+    selected = false,
+    showSelectionBorder = false,
   }: {
     icon: ReactNode;
     title: string;
@@ -181,11 +211,14 @@ export const BatchExportSheet = ({
     onPress: () => void;
     accessibilityLabel: string;
     disabled?: boolean;
+    selected?: boolean;
+    showSelectionBorder?: boolean;
   }) => (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.7}
       accessibilityRole="button"
+      accessibilityState={{ selected, disabled }}
       accessibilityLabel={accessibilityLabel}
       disabled={disabled}
       style={{
@@ -194,6 +227,12 @@ export const BatchExportSheet = ({
         paddingVertical: 14,
         paddingHorizontal: 14,
         borderRadius: 12,
+        borderWidth: 2,
+        borderColor: showSelectionBorder
+          ? selected
+            ? color.accent.primary
+            : color.border.default
+          : 'transparent',
         backgroundColor: color.background.tertiary,
         gap: 10,
         opacity: disabled ? 0.45 : 1,
@@ -275,33 +314,20 @@ export const BatchExportSheet = ({
                 {t(exportEmailLimitReminderKey(exportPackaging))}
               </Text>
 
-              <View className="flex-row gap-3">
-                {emailFormatTemplates.map((tpl) => {
-                  const label = emailTemplateChipLabel(tpl, t);
-                  const selected = emailBodyTemplate === tpl;
-                  return (
-                    <Pressable
-                      key={tpl}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      accessibilityLabel={label}
-                      onPress={() => setEmailBodyTemplate(tpl)}
-                      className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
-                      style={{
-                        borderColor: selected ? color.accent.primary : color.border.default,
-                        backgroundColor: color.background.tertiary,
-                      }}
-                    >
-                      <Text
-                        className="text-center text-[15px] font-semibold leading-5"
-                        style={{ color: selected ? color.accent.primary : color.text.primary }}
-                        numberOfLines={2}
-                      >
-                        {label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+              <View style={{ gap: 10 }}>
+                {emailFormatTemplates.map(({ tpl, icon, title, description }) => (
+                  <View key={tpl}>
+                    {renderShareFormatRow({
+                      icon,
+                      title,
+                      description,
+                      selected: emailBodyTemplate === tpl,
+                      showSelectionBorder: true,
+                      accessibilityLabel: title,
+                      onPress: () => setEmailBodyTemplate(tpl),
+                    })}
+                  </View>
+                ))}
               </View>
             </>
           ) : (
@@ -355,7 +381,7 @@ export const BatchExportSheet = ({
               activeOpacity={0.85}
               className="min-w-0 flex-1"
               color={color}
-              disabled={!emailValid}
+              disabled={!canSendEmail}
               loading={isSendingEmail}
               containerStyle={{
                 backgroundColor: color.accent.primary,
@@ -420,7 +446,7 @@ export const BatchExportSheet = ({
             {t(exportPackagingHintKey(exportPackaging))}
           </Text>
 
-          {renderOption({
+          {renderShareFormatRow({
             icon: <FileText size={20} color={color.text.primary} strokeWidth={2.1} />,
             title: t('share.noteBrief'),
             description: t('share.noteBriefDescription'),
@@ -428,7 +454,7 @@ export const BatchExportSheet = ({
             onPress: handleExportNoteBrief,
           })}
 
-          {renderOption({
+          {renderShareFormatRow({
             icon: <ClipboardList size={20} color={color.text.primary} strokeWidth={2.1} />,
             title: t('share.emailBrief'),
             description: t('share.emailBriefDescription'),
@@ -437,7 +463,7 @@ export const BatchExportSheet = ({
           })}
 
           {showSpeakerTurnsExport
-            ? renderOption({
+            ? renderShareFormatRow({
                 icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
                 title: t('share.meetingBrief'),
                 description: t('share.meetingBriefDescription'),
@@ -447,7 +473,7 @@ export const BatchExportSheet = ({
             : null}
 
           {showSpeakerTurnsExport
-            ? renderOption({
+            ? renderShareFormatRow({
                 icon: <UsersRound size={20} color={color.text.primary} strokeWidth={2.1} />,
                 title: t('share.speakerTurnsBrief'),
                 description: t('share.speakerTurnsBriefDescription'),
@@ -456,7 +482,7 @@ export const BatchExportSheet = ({
               })
             : null}
 
-          {renderOption({
+          {renderShareFormatRow({
             icon: <Mail size={20} color={color.text.primary} strokeWidth={2.1} />,
             title: t('share.emailNote'),
             description: t('batch.emailBatchDescription'),

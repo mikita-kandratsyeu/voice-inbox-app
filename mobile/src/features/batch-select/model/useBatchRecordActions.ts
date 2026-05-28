@@ -326,7 +326,6 @@ export const useBatchRecordActions = ({
 
       if (effectivePackaging === 'pdf') {
         let pdfPath: string | undefined;
-        setIsGeneratingSharePdf(true);
         try {
           const markdown = buildBatchShareMarkdown(records, template, {
             ...resolveShareExportContext(),
@@ -356,7 +355,6 @@ export const useBatchRecordActions = ({
             throw new Error(result.error);
           }
         } finally {
-          setIsGeneratingSharePdf(false);
           if (pdfPath) {
             await unlinkIfExists(pdfPath);
           }

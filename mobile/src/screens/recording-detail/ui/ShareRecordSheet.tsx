@@ -87,18 +87,16 @@ export const ShareRecordSheet = ({
   const listContentPadding = useBottomSheetContentPadding(20);
   const [emailVisible, setEmailVisible] = useState(false);
   const [email, setEmail] = useState('');
-  const [emailSendTemplate, setEmailSendTemplate] = useState<ShareBriefTemplate>('emailBrief');
+  const [emailSendTemplate, setEmailSendTemplate] = useState<ShareBriefTemplate | null>(null);
   const [exportFormat, setExportFormat] = useState<ShareRecordExportFormat>('markdown');
   const trimmedEmail = email.trim();
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
 
   useEffect(() => {
-    if (visible) {
-      setEmailSendTemplate('emailBrief');
-      return;
-    }
+    if (visible) return;
     setEmailVisible(false);
     setEmail('');
+    setEmailSendTemplate(null);
     setExportFormat('markdown');
   }, [visible]);
 
@@ -107,7 +105,7 @@ export const ShareRecordSheet = ({
       !showSpeakerTurnsExport &&
       (emailSendTemplate === 'meetingSpeakerTurns' || emailSendTemplate === 'meetingBrief')
     ) {
-      setEmailSendTemplate('emailBrief');
+      setEmailSendTemplate(null);
     }
   }, [emailSendTemplate, showSpeakerTurnsExport]);
 
@@ -137,6 +135,7 @@ export const ShareRecordSheet = ({
   }, [onClose, onShareAudio]);
 
   const handleOpenEmail = useCallback(() => {
+    setEmailSendTemplate(null);
     setEmailVisible(true);
   }, []);
 
@@ -144,19 +143,17 @@ export const ShareRecordSheet = ({
     Keyboard.dismiss();
     setEmailVisible(false);
     setEmail('');
+    setEmailSendTemplate(null);
   }, []);
 
-  const handleSendEmail = useCallback(() => {
-    if (!emailValid || isSendingEmail) return;
-    onEmailRecord(trimmedEmail, emailSendTemplate, exportFormat);
-  }, [emailSendTemplate, emailValid, exportFormat, isSendingEmail, onEmailRecord, trimmedEmail]);
-
-  const renderOption = ({
+  const renderShareFormatRow = ({
     icon,
     title,
     description,
     onPress,
     disabled = false,
+    selected = false,
+    showSelectionBorder = false,
     accessibilityLabel,
   }: {
     icon: ReactNode;
@@ -164,12 +161,15 @@ export const ShareRecordSheet = ({
     description?: string;
     onPress: () => void;
     disabled?: boolean;
+    selected?: boolean;
+    showSelectionBorder?: boolean;
     accessibilityLabel: string;
   }) => (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.7}
       accessibilityRole="button"
+      accessibilityState={{ selected, disabled }}
       accessibilityLabel={accessibilityLabel}
       disabled={disabled}
       style={{
@@ -178,6 +178,12 @@ export const ShareRecordSheet = ({
         paddingVertical: 14,
         paddingHorizontal: 14,
         borderRadius: 12,
+        borderWidth: 2,
+        borderColor: showSelectionBorder
+          ? selected
+            ? color.accent.primary
+            : color.border.default
+          : 'transparent',
         backgroundColor: color.background.tertiary,
         gap: 10,
         opacity: disabled ? 0.45 : 1,
@@ -193,20 +199,55 @@ export const ShareRecordSheet = ({
     </TouchableOpacity>
   );
 
-  const emailFormatTemplates = useMemo((): { tpl: ShareBriefTemplate; label: string }[] => {
-    const row: { tpl: ShareBriefTemplate; label: string }[] = [
-      { tpl: 'emailBrief', label: t('share.emailBrief') },
-    ];
+  const emailFormatTemplates = useMemo(() => {
+    const noteBriefOption = {
+      tpl: 'noteBrief' as const,
+      icon: <FileText size={20} color={color.text.primary} strokeWidth={2.1} />,
+      title: t('share.noteBrief'),
+      description: t('share.noteBriefDescription'),
+    };
+    const emailBriefOption = {
+      tpl: 'emailBrief' as const,
+      icon: <ClipboardList size={20} color={color.text.primary} strokeWidth={2.1} />,
+      title: t('share.emailBrief'),
+      description: t('share.emailBriefDescription'),
+    };
+
     if (showSpeakerTurnsExport) {
-      row.push(
-        { tpl: 'meetingBrief', label: t('share.meetingBrief') },
-        { tpl: 'meetingSpeakerTurns', label: t('share.speakerTurnsBrief') },
-      );
-    } else {
-      row.push({ tpl: 'noteBrief', label: t('share.noteBrief') });
+      return [
+        noteBriefOption,
+        emailBriefOption,
+        {
+          tpl: 'meetingBrief' as const,
+          icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
+          title: t('share.meetingBrief'),
+          description: t('share.meetingBriefDescription'),
+        },
+        {
+          tpl: 'meetingSpeakerTurns' as const,
+          icon: <UsersRound size={20} color={color.text.primary} strokeWidth={2.1} />,
+          title: t('share.speakerTurnsBrief'),
+          description: t('share.speakerTurnsBriefDescription'),
+        },
+      ];
     }
-    return row;
-  }, [showSpeakerTurnsExport, t]);
+
+    return [emailBriefOption, noteBriefOption];
+  }, [color.text.primary, showSpeakerTurnsExport, t]);
+
+  const resolvedEmailTemplate = useMemo((): ShareBriefTemplate | null => {
+    if (emailFormatTemplates.length === 1) {
+      return emailFormatTemplates[0]!.tpl;
+    }
+    return emailSendTemplate;
+  }, [emailFormatTemplates, emailSendTemplate]);
+
+  const canSendEmail = emailValid && resolvedEmailTemplate != null && !isSendingEmail;
+
+  const handleSendEmail = useCallback(() => {
+    if (!canSendEmail || resolvedEmailTemplate == null) return;
+    onEmailRecord(trimmedEmail, resolvedEmailTemplate, exportFormat);
+  }, [canSendEmail, exportFormat, onEmailRecord, resolvedEmailTemplate, trimmedEmail]);
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
@@ -268,32 +309,20 @@ export const ShareRecordSheet = ({
               <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
                 {t('batch.emailBodyFormatHint')}
               </Text>
-              <View className="flex-row gap-3">
-                {emailFormatTemplates.map(({ tpl, label }) => {
-                  const selected = emailSendTemplate === tpl;
-                  return (
-                    <Pressable
-                      key={tpl}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                      accessibilityLabel={label}
-                      onPress={() => setEmailSendTemplate(tpl)}
-                      className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
-                      style={{
-                        borderColor: selected ? color.accent.primary : color.border.default,
-                        backgroundColor: color.background.tertiary,
-                      }}
-                    >
-                      <Text
-                        className="text-center text-[15px] font-semibold leading-5"
-                        style={{ color: selected ? color.accent.primary : color.text.primary }}
-                        numberOfLines={2}
-                      >
-                        {label}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+              <View style={{ gap: 10 }}>
+                {emailFormatTemplates.map(({ tpl, icon, title, description }) => (
+                  <View key={tpl}>
+                    {renderShareFormatRow({
+                      icon,
+                      title,
+                      description,
+                      selected: emailSendTemplate === tpl,
+                      showSelectionBorder: true,
+                      accessibilityLabel: title,
+                      onPress: () => setEmailSendTemplate(tpl),
+                    })}
+                  </View>
+                ))}
               </View>
             </>
           ) : null}
@@ -343,7 +372,7 @@ export const ShareRecordSheet = ({
               activeOpacity={0.85}
               className="min-w-0 flex-1"
               color={color}
-              disabled={!emailValid}
+              disabled={!canSendEmail}
               loading={isSendingEmail}
               containerStyle={{
                 backgroundColor: color.accent.primary,
@@ -397,7 +426,7 @@ export const ShareRecordSheet = ({
             {t(shareExportFormatHintKey(exportFormat))}
           </Text>
 
-          {renderOption({
+          {renderShareFormatRow({
             icon: <FileText size={20} color={color.text.primary} strokeWidth={2.1} />,
             title: t('share.noteBrief'),
             description: t('share.noteBriefDescription'),
@@ -405,7 +434,7 @@ export const ShareRecordSheet = ({
             onPress: handleShareNoteBrief,
           })}
 
-          {renderOption({
+          {renderShareFormatRow({
             icon: <ClipboardList size={20} color={color.text.primary} strokeWidth={2.1} />,
             title: t('share.emailBrief'),
             description: t('share.emailBriefDescription'),
@@ -414,7 +443,7 @@ export const ShareRecordSheet = ({
           })}
 
           {showSpeakerTurnsExport
-            ? renderOption({
+            ? renderShareFormatRow({
                 icon: <ListChecks size={20} color={color.text.primary} strokeWidth={2.1} />,
                 title: t('share.meetingBrief'),
                 description: t('share.meetingBriefDescription'),
@@ -424,7 +453,7 @@ export const ShareRecordSheet = ({
             : null}
 
           {showSpeakerTurnsExport
-            ? renderOption({
+            ? renderShareFormatRow({
                 icon: <UsersRound size={20} color={color.text.primary} strokeWidth={2.1} />,
                 title: t('share.speakerTurnsBrief'),
                 description: t('share.speakerTurnsBriefDescription'),
@@ -433,7 +462,7 @@ export const ShareRecordSheet = ({
               })
             : null}
 
-          {renderOption({
+          {renderShareFormatRow({
             icon: <Mail size={20} color={color.text.primary} strokeWidth={2.1} />,
             title: t('share.emailNote'),
             description: t(
@@ -443,7 +472,7 @@ export const ShareRecordSheet = ({
             onPress: handleOpenEmail,
           })}
 
-          {renderOption({
+          {renderShareFormatRow({
             icon: <Music size={20} color={color.text.primary} strokeWidth={2.1} />,
             title: t('share.shareAudio'),
             description: hasAudio ? undefined : t('share.noAudio'),

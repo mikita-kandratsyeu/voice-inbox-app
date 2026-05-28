@@ -42,14 +42,14 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     contextTokens: 1_048_576,
   },
   {
-    id: 'xiaomi/mimo-v2-flash',
-    name: 'MiMo V2 Flash',
+    id: 'xiaomi/mimo-v2.5-pro',
+    name: 'MiMo V2.5 Pro',
     provider: 'Xiaomi',
     descriptionKey: 'aiModels.mimoDesc',
     speed: 'medium',
     tierLabelKey: 'aiModels.tierMiMo',
     supportTierCode: 'premium_experimental',
-    contextTokens: 268_288,
+    contextTokens: 1_048_576,
   },
   {
     id: 'minimax/minimax-m2.7',

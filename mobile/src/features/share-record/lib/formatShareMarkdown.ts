@@ -11,14 +11,18 @@ function normalizeTimestampLabel(raw: string): string {
   return trimmed.startsWith('[') ? trimmed : `[${trimmed}]`;
 }
 
-function formatTranscriptTurn(timestamp: string, text: string): string {
+function formatTranscriptTurn(timestamp: string, text: string, forEmail = false): string {
   const body = text.replace(/\s+/g, ' ').trim();
   if (!body) return '';
-  return `**${normalizeTimestampLabel(timestamp)}**\n\n${body}`;
+  const label = normalizeTimestampLabel(timestamp);
+  if (forEmail) {
+    return `${label} ${body}`;
+  }
+  return `**${label}**\n\n${body}`;
 }
 
 /** Splits a flat transcript string into timestamped blocks for share / PDF. */
-export function formatPlainTranscriptWithTimestamps(raw: string): string {
+export function formatPlainTranscriptWithTimestamps(raw: string, forEmail = false): string {
   const trimmed = raw.trim();
   if (!trimmed) return '';
 
@@ -35,7 +39,7 @@ export function formatPlainTranscriptWithTimestamps(raw: string): string {
 
     const match = chunk.match(/^(\[\d{1,2}:\d{2}(?::\d{2})?\])\s*([\s\S]*)$/);
     if (match) {
-      const line = formatTranscriptTurn(match[1], match[2] ?? '');
+      const line = formatTranscriptTurn(match[1], match[2] ?? '', forEmail);
       if (line) blocks.push(line);
     } else {
       blocks.push(chunk);
@@ -52,7 +56,7 @@ export function formatTaskLineForShare(
   return `- [${task.isDone ? 'x' : ' '}] ${task.text}${suffix}`;
 }
 
-export function formatMeetingDialogueForShareMarkdown(raw: string): string {
+export function formatMeetingDialogueForShareMarkdown(raw: string, forEmail = false): string {
   const normalized = normalizeMeetingDialogueMarkdownParagraphs(raw);
   const utterances = parseMeetingDialogue(normalized);
   if (utterances.length === 0) {
@@ -65,6 +69,10 @@ export function formatMeetingDialogueForShareMarkdown(raw: string): string {
       const body = u.body.trim();
       if (!body && !label) return '';
       if (!label) return body;
+      if (forEmail) {
+        const flatBody = body.replace(/\r?\n+/g, ' ').trim();
+        return `${label}: ${flatBody}`;
+      }
       return `**${label}**\n\n${body}`;
     })
     .filter((block) => block.length > 0)
@@ -72,13 +80,13 @@ export function formatMeetingDialogueForShareMarkdown(raw: string): string {
 }
 
 /** Transcript for share / email / PDF — one block per timestamp or segment. */
-export function formatTranscriptBodyForShare(record: VoiceRecord): string {
+export function formatTranscriptBodyForShare(record: VoiceRecord, forEmail = false): string {
   const segments = record.transcriptSegments ?? [];
   if (segments.length > 0) {
     return segments
-      .map((s) => formatTranscriptTurn(s.startTime, s.text))
+      .map((s) => formatTranscriptTurn(s.startTime, s.text, forEmail))
       .filter((block) => block.length > 0)
-      .join('\n\n');
+      .join(forEmail ? '\n' : '\n\n');
   }
-  return formatPlainTranscriptWithTimestamps(record.transcript ?? '');
+  return formatPlainTranscriptWithTimestamps(record.transcript ?? '', forEmail);
 }

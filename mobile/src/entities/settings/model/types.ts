@@ -8,7 +8,7 @@ export type UserSelectableAIModelId =
   | 'google/gemini-3.1-flash-lite'
   | 'minimax/minimax-m2.7'
   | 'deepseek/deepseek-v4-flash'
-  | 'xiaomi/mimo-v2-flash'
+  | 'xiaomi/mimo-v2.5-pro'
   | 'nvidia/nemotron-3-super-120b-a12b';
 export type LocalAiModelId =
   | 'local/qwen3-1.7b-q4_k_m'

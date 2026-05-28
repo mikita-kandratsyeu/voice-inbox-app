@@ -203,7 +203,7 @@ const pushNextSteps = (lines: string[], record: VoiceRecord): void => {
   }
 };
 
-const pushTranslation = (lines: string[], record: VoiceRecord): void => {
+const pushTranslation = (lines: string[], record: VoiceRecord, ctx: ShareExportContext): void => {
   const translated = record.translatedTranscript?.trim();
   if (!translated) return;
 
@@ -215,11 +215,11 @@ const pushTranslation = (lines: string[], record: VoiceRecord): void => {
 
   lines.push('');
   lines.push(`## ${heading}`);
-  lines.push(formatPlainTranscriptWithTimestamps(translated));
+  lines.push(formatPlainTranscriptWithTimestamps(translated, ctx.forEmail));
 };
 
-const pushTranscript = (lines: string[], record: VoiceRecord): void => {
-  const transcriptBody = formatTranscriptBodyForShare(record);
+const pushTranscript = (lines: string[], record: VoiceRecord, ctx: ShareExportContext): void => {
+  const transcriptBody = formatTranscriptBodyForShare(record, ctx.forEmail);
   if (transcriptBody) {
     lines.push('');
     lines.push(`## ${i18n.t('recordingDetail.transcript')}`);
@@ -227,7 +227,11 @@ const pushTranscript = (lines: string[], record: VoiceRecord): void => {
   }
 };
 
-const pushMeetingDialogue = (lines: string[], record: VoiceRecord): void => {
+const pushMeetingDialogue = (
+  lines: string[],
+  record: VoiceRecord,
+  ctx: ShareExportContext,
+): void => {
   const body = record.meetingDialogue?.trim();
   if (!body) return;
 
@@ -236,7 +240,7 @@ const pushMeetingDialogue = (lines: string[], record: VoiceRecord): void => {
   lines.push('');
   lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
   lines.push('');
-  lines.push(formatMeetingDialogueForShareMarkdown(body));
+  lines.push(formatMeetingDialogueForShareMarkdown(body, ctx.forEmail));
 };
 
 const pushFooter = (lines: string[]): void => {
@@ -258,10 +262,10 @@ function buildNoteBrief(record: VoiceRecord, ctx: ShareExportContext): string {
   pushRecordingMarks(lines, record);
   pushSummary(lines, record);
   pushKeyPhrases(lines, record);
-  pushTranslation(lines, record);
+  pushTranslation(lines, record, ctx);
   pushNextSteps(lines, record);
   pushTasks(lines, record);
-  pushTranscript(lines, record);
+  pushTranscript(lines, record, ctx);
   pushFooter(lines);
   return lines.join('\n');
 }
@@ -275,11 +279,11 @@ function buildMeetingBrief(record: VoiceRecord, ctx: ShareExportContext): string
   pushRecordingMarks(lines, record);
   pushSummary(lines, record);
   pushKeyPhrases(lines, record);
-  pushMeetingDialogue(lines, record);
-  pushTranslation(lines, record);
+  pushMeetingDialogue(lines, record, ctx);
+  pushTranslation(lines, record, ctx);
   pushNextSteps(lines, record);
   pushTasks(lines, record);
-  pushTranscript(lines, record);
+  pushTranscript(lines, record, ctx);
   pushFooter(lines);
   return lines.join('\n');
 }
@@ -295,7 +299,7 @@ function buildMeetingSpeakerTurnsOnly(record: VoiceRecord, ctx: ShareExportConte
   lines.push('');
   const body = record.meetingDialogue?.trim();
   if (body) {
-    lines.push(formatMeetingDialogueForShareMarkdown(body));
+    lines.push(formatMeetingDialogueForShareMarkdown(body, ctx.forEmail));
   } else {
     lines.push(`_${i18n.t('share.speakerTurnsEmpty')}_`);
   }
@@ -313,7 +317,7 @@ function buildEmailBrief(record: VoiceRecord, ctx: ShareExportContext): string {
   pushSummary(lines, record);
   pushKeyPhrases(lines, record);
   if (isMeeting) {
-    pushMeetingDialogue(lines, record);
+    pushMeetingDialogue(lines, record, ctx);
   }
   pushNextSteps(lines, record);
   pushTasks(lines, record);

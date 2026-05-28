@@ -179,7 +179,6 @@ export const useShareRecord = () => {
 
     if (format === 'pdf') {
       let pdfPath: string | undefined;
-      setIsGeneratingSharePdf(true);
       try {
         const baseName = `${sanitizeTitleForFileName(record.title)}${shareTemplateFileSuffix(template)}`;
         const timestamp = Date.now();
@@ -205,7 +204,6 @@ export const useShareRecord = () => {
           throw new Error(result.error);
         }
       } finally {
-        setIsGeneratingSharePdf(false);
         if (pdfPath) {
           await unlinkIfExists(pdfPath);
         }

@@ -13,6 +13,9 @@ const SPEAKER_LABEL_INLINE = new RegExp(`([^\\n\\r\\s])\\s*(${SPEAKER_LABEL_HEAD
 
 const SPEAKER_LINE = new RegExp(`^\\s*(${SPEAKER_LABEL_HEAD})\\s*:\\s*(.*)$`, 'i');
 
+/** Mobile share/PDF export uses `**Участник 1**` blocks instead of `Участник 1: …` lines. */
+const BOLD_SPEAKER_HEADING = new RegExp(`^\\s*\\*\\*(${SPEAKER_LABEL_HEAD})\\*\\*\\s*$`, 'i');
+
 const SPEAKER_SECTION_HEADING = /^## (?:Реплики по спикерам|Speaker turns)\r?\n/im;
 
 export type SpeakerTurnEntry = {
@@ -27,8 +30,68 @@ function normalizeInlineSpeakerLabels(text: string): string {
   return text.replace(SPEAKER_LABEL_INLINE, '$1\n\n$2');
 }
 
+function isBoldSpeakerHeadingLine(line: string): boolean {
+  return BOLD_SPEAKER_HEADING.test(line.trim());
+}
+
+/** Converts legacy mobile bold speaker blocks into colon lines for table parsing. */
+export function expandBoldSpeakerBlocksToColonLines(text: string): string {
+  if (!text.includes('**')) {
+    return text;
+  }
+
+  const lines = text.split(/\r?\n/);
+  const out: string[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const trimmed = lines[i]!.trim();
+    const boldMatch = trimmed.match(BOLD_SPEAKER_HEADING);
+    if (!boldMatch) {
+      out.push(lines[i]!);
+      i += 1;
+      continue;
+    }
+
+    const speaker = boldMatch[1]!.trim();
+    i += 1;
+    while (i < lines.length && !lines[i]!.trim()) {
+      i += 1;
+    }
+
+    const bodyLines: string[] = [];
+    while (i < lines.length) {
+      const nextTrimmed = lines[i]!.trim();
+      if (!nextTrimmed) {
+        let j = i + 1;
+        while (j < lines.length && !lines[j]!.trim()) {
+          j += 1;
+        }
+        if (j < lines.length && isBoldSpeakerHeadingLine(lines[j]!)) {
+          break;
+        }
+        i += 1;
+        continue;
+      }
+      if (isBoldSpeakerHeadingLine(nextTrimmed)) {
+        break;
+      }
+      bodyLines.push(nextTrimmed);
+      i += 1;
+    }
+
+    const body = bodyLines.join(' ').trim();
+    out.push(body ? `${speaker}: ${body}` : `${speaker}:`);
+    if (i < lines.length) {
+      out.push('');
+    }
+  }
+
+  return out.join('\n');
+}
+
 export function splitSpeakerTurnEntries(text: string): SpeakerTurnEntry[] {
-  const normalized = normalizeInlineSpeakerLabels(text);
+  const normalized = normalizeInlineSpeakerLabels(expandBoldSpeakerBlocksToColonLines(text));
   const entries: SpeakerTurnEntry[] = [];
 
   for (const rawLine of normalized.split(/\r?\n/)) {
@@ -51,9 +114,12 @@ export function splitSpeakerTurnEntries(text: string): SpeakerTurnEntry[] {
 }
 
 function partitionSpeakerSectionBody(body: string): { prefix: string; speakerText: string } {
-  const normalized = normalizeInlineSpeakerLabels(body);
+  const normalized = normalizeInlineSpeakerLabels(expandBoldSpeakerBlocksToColonLines(body));
   const lines = normalized.split(/\r?\n/);
-  const firstSpeakerIdx = lines.findIndex((line) => SPEAKER_LINE.test(line.trim()));
+  const firstSpeakerIdx = lines.findIndex((line) => {
+    const trimmed = line.trim();
+    return SPEAKER_LINE.test(trimmed) || isBoldSpeakerHeadingLine(trimmed);
+  });
 
   if (firstSpeakerIdx === -1) {
     return { prefix: body, speakerText: '' };
