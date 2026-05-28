@@ -1,7 +1,7 @@
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import { AlertTriangle, CalendarDays, CheckCircle2, Clock3, Sparkles } from 'lucide-react-native';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
@@ -24,7 +24,6 @@ import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import type { DigestAiResult } from '@/shared/lib/ai-api';
-import { generateDigest } from '@/shared/lib/ai-api';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import {
@@ -39,8 +38,12 @@ import {
   type DigestPeriod,
   getDigestCacheKey,
   loadCachedDigest,
-  saveCachedDigest,
 } from '../lib/digest';
+import {
+  consumeDigestGenerationError,
+  startDigestGeneration,
+  useDigestGenerating,
+} from '../lib/digestGeneration';
 
 type MetricCardProps = {
   label: string;
@@ -234,7 +237,7 @@ export const DigestScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [aiResult, setAiResult] = useState<DigestAiResult | null>(null);
   const [aiCreatedAt, setAiCreatedAt] = useState<string | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
     if (isSmartMode && !isLoaded) {
@@ -244,12 +247,45 @@ export const DigestScreen = () => {
 
   const digest = useMemo(() => buildDeterministicDigest(period, records), [period, records]);
   const digestCacheKey = useMemo(() => getDigestCacheKey(digest), [digest]);
+  const aiLoading = useDigestGenerating(digestCacheKey);
 
-  useEffect(() => {
+  const syncCachedDigest = useCallback(() => {
     const cached = loadCachedDigest(digestCacheKey);
     setAiResult(cached?.result ?? null);
     setAiCreatedAt(cached?.createdAt ?? null);
   }, [digestCacheKey]);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    syncCachedDigest();
+  }, [digestCacheKey, aiLoading, syncCachedDigest]);
+
+  const showDigestGenerationError = useCallback(
+    (error: NonNullable<ReturnType<typeof consumeDigestGenerationError>>) => {
+      if (error.type === 'limit') {
+        alertAiLimitExceeded(t('settings.digest.aiLimitError'));
+        return;
+      }
+      Alert.alert(t('common.error'), error.message);
+    },
+    [t],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      const pendingError = consumeDigestGenerationError(digestCacheKey);
+      if (pendingError) {
+        showDigestGenerationError(pendingError);
+      }
+      syncCachedDigest();
+    }, [digestCacheKey, showDigestGenerationError, syncCachedDigest]),
+  );
 
   const dayjsLocale = resolveDayjsLocale(i18n.language);
   const rangeText =
@@ -292,31 +328,34 @@ export const DigestScreen = () => {
     const consentOk = await ensureCloudAiThirdPartyConsent();
     if (!consentOk) return;
 
-    setAiLoading(true);
-    try {
-      const language = i18n.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
-      const result = await generateDigest({
-        payload: buildDigestAiPayload(digest, language),
-        model: selectedAIModel,
-        modelMode: aiModelRoutingMode,
-      });
+    const language = i18n.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
+    void startDigestGeneration({
+      cacheKey: digestCacheKey,
+      payload: buildDigestAiPayload(digest, language),
+      model: selectedAIModel,
+      modelMode: aiModelRoutingMode,
+    }).then(() => {
+      if (!mountedRef.current) return;
 
-      if (!result.ok) {
-        if (result.limitExceeded) {
-          alertAiLimitExceeded(t('settings.digest.aiLimitError'));
-        } else {
-          Alert.alert(t('common.error'), result.error);
-        }
+      const pendingError = consumeDigestGenerationError(digestCacheKey);
+      if (pendingError) {
+        showDigestGenerationError(pendingError);
         return;
       }
 
-      const cached = saveCachedDigest(digestCacheKey, result.result);
-      setAiResult(cached.result);
-      setAiCreatedAt(cached.createdAt);
-    } finally {
-      setAiLoading(false);
-    }
-  }, [aiModelRoutingMode, digest, digestCacheKey, i18n.language, isSmartMode, selectedAIModel, t]);
+      syncCachedDigest();
+    });
+  }, [
+    aiModelRoutingMode,
+    digest,
+    digestCacheKey,
+    i18n.language,
+    isSmartMode,
+    selectedAIModel,
+    showDigestGenerationError,
+    syncCachedDigest,
+    t,
+  ]);
 
   const topPhraseItems = digest.topKeyPhrases.map((item) =>
     item.count > 1 ? `${item.phrase} x${item.count}` : item.phrase,
