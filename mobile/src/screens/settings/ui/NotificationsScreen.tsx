@@ -72,6 +72,11 @@ export const NotificationsScreen = () => {
               label={screen.t('settings.permissionNotifications')}
               subtitle={screen.t('settings.permissionNotificationsDesc')}
               leftIcon={<Bell size={20} color={screen.color.accent.primary} strokeWidth={1.8} />}
+              value={
+                permissionGranted
+                  ? screen.t('settings.notificationsScreen.aiAlertsFollowsSystem')
+                  : undefined
+              }
               showChevron={false}
               isFirst
             />
