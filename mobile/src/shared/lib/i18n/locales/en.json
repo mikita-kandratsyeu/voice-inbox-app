@@ -796,6 +796,7 @@
     "permissionOpenSettings": "Open Settings",
     "planStatus": {
       "freeTitle": "Free plan",
+      "freeSidebarTitle": "Upgrade to Pro",
       "freeValueSubtitle": "Pro runs everything automatically.",
       "freeValueSubtitleSoon": "Pro runs everything automatically.",
       "freeValueSubtitleAvailable": "Pro runs everything automatically.",
@@ -807,6 +808,7 @@
       "proActiveUntil": "Active until {{date}}",
       "a11yUnknownDate": "unknown date",
       "a11yOpenPlans": "Open plan comparison",
+      "a11yOpenPlansSidebar": "Upgrade to Pro, compare plans",
       "a11yOpenPlansHint": "Opens a screen with Free and Pro plans",
       "a11yCurrentPlanPro": "Current plan Pro, active until {{date}}",
       "a11yCurrentPlanHint": "This is information about your current plan",

@@ -86,7 +86,9 @@ export function SettingsPlanStatusCard({
 
   const title = isProActive
     ? t('settings.planStatus.proTitle')
-    : t('settings.planStatus.freeTitle');
+    : isSidebar
+      ? t('settings.planStatus.freeSidebarTitle')
+      : t('settings.planStatus.freeTitle');
 
   let subtitle = t('settings.planStatus.freeValueSubtitle');
 
@@ -111,7 +113,9 @@ export function SettingsPlanStatusCard({
     ? t('settings.planStatus.a11yCurrentPlanPro', {
         date: proExpiresText ?? t('settings.planStatus.a11yUnknownDate'),
       })
-    : t('settings.planStatus.a11yOpenPlans');
+    : isSidebar
+      ? t('settings.planStatus.a11yOpenPlansSidebar')
+      : t('settings.planStatus.a11yOpenPlans');
   const opensStoreSubscriptionManagement =
     isProActive && monetizationMode === 'iap_public' && storeProEntitlementActive === true;
 

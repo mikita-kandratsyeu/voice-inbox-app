@@ -811,6 +811,7 @@
     "permissionOpenSettings": "Открыть настройки",
     "planStatus": {
       "freeTitle": "Бесплатный план",
+      "freeSidebarTitle": "Перейти на Pro",
       "freeValueSubtitle": "В Pro — всё работает автоматически.",
       "freeValueSubtitleSoon": "В Pro — всё работает автоматически.",
       "freeValueSubtitleAvailable": "В Pro — всё работает автоматически.",
@@ -822,6 +823,7 @@
       "proActiveUntil": "Активен до {{date}}",
       "a11yUnknownDate": "дата не указана",
       "a11yOpenPlans": "Открыть сравнение планов",
+      "a11yOpenPlansSidebar": "Перейти на Pro, сравнить планы",
       "a11yOpenPlansHint": "Откроется экран с планами Free и Pro",
       "a11yCurrentPlanPro": "Текущий план Pro, активен до {{date}}",
       "a11yCurrentPlanHint": "Это информация о текущем плане",
