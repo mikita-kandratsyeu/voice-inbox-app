@@ -7,6 +7,7 @@ import { Alert, Keyboard, Text, TouchableOpacity, useWindowDimensions, View } fr
 
 import { openPlanPaywall } from '@/app/navigation/openPlanPaywall';
 import { useSettingsStore } from '@/entities/settings/model/store';
+import { usePlanPaywall } from '@/features/plan-paywall';
 import { useProEntitlement } from '@/features/pro-license';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import {
@@ -71,6 +72,9 @@ export const FolderFormModal = ({
   const contentPadding = useBottomSheetContentPadding(24);
   const { width } = useWindowDimensions();
   const ref = useRef<BottomSheetModal>(null);
+  const restoreFormAfterOverlayRef = useRef(false);
+  const paywallWasVisibleRef = useRef(false);
+  const { visible: paywallVisible } = usePlanPaywall();
   const { isProActive } = useProEntitlement();
   const accentColorId = useSettingsStore((state) => state.accentColorId);
   const globalAccentHex = getPreviewHexByAccentId(accentColorId, scheme);
@@ -96,17 +100,53 @@ export const FolderFormModal = ({
     }
   }, [folder, visible, globalAccentHex, scheme]);
 
+  const presentFolderForm = useCallback(() => {
+    requestAnimationFrame(() => {
+      ref.current?.present();
+    });
+  }, []);
+
   useEffect(() => {
-    if (!pendingPaywallOpen || visible || folderProSheet) {
-      return;
+    if (!pendingPaywallOpen || folderProSheet) {
+      return undefined;
     }
 
     const timer = setTimeout(() => {
+      restoreFormAfterOverlayRef.current = true;
       openPlanPaywall();
       setPendingPaywallOpen(false);
     }, 250);
     return () => clearTimeout(timer);
-  }, [folderProSheet, pendingPaywallOpen, visible]);
+  }, [folderProSheet, pendingPaywallOpen]);
+
+  useEffect(() => {
+    if (folderProSheet || pendingPaywallOpen || !visible) {
+      return undefined;
+    }
+    if (!restoreFormAfterOverlayRef.current) {
+      return undefined;
+    }
+    restoreFormAfterOverlayRef.current = false;
+    presentFolderForm();
+    return undefined;
+  }, [folderProSheet, pendingPaywallOpen, presentFolderForm, visible]);
+
+  useEffect(() => {
+    if (paywallVisible) {
+      paywallWasVisibleRef.current = true;
+      return undefined;
+    }
+    if (!paywallWasVisibleRef.current || !visible) {
+      return undefined;
+    }
+    paywallWasVisibleRef.current = false;
+    if (!restoreFormAfterOverlayRef.current) {
+      return undefined;
+    }
+    restoreFormAfterOverlayRef.current = false;
+    presentFolderForm();
+    return undefined;
+  }, [paywallVisible, presentFolderForm, visible]);
 
   useEffect(() => {
     if (!visible) return undefined;
@@ -156,6 +196,14 @@ export const FolderFormModal = ({
     [isProActive],
   );
 
+  const handleFormClose = useCallback(() => {
+    if (folderProSheet || pendingPaywallOpen) {
+      restoreFormAfterOverlayRef.current = true;
+      return;
+    }
+    onClose();
+  }, [folderProSheet, onClose, pendingPaywallOpen]);
+
   const handleDelete = () => {
     Alert.alert(t('folders.deleteTitle'), t('folders.deleteConfirm'), [
       { text: t('common.cancel'), style: 'cancel' },
@@ -185,7 +233,7 @@ export const FolderFormModal = ({
 
   return (
     <>
-      <AppBottomSheetModal ref={ref} visible={visible} onClose={onClose}>
+      <AppBottomSheetModal ref={ref} visible={visible} onClose={handleFormClose}>
         <BottomSheetScrollView
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -436,9 +484,9 @@ export const FolderFormModal = ({
         visible={folderProSheet}
         feature="folderColor"
         onUpgradePress={() => {
-          ref.current?.dismiss();
-          setPendingPaywallOpen(true);
+          restoreFormAfterOverlayRef.current = true;
           setFolderProSheet(false);
+          setPendingPaywallOpen(true);
         }}
         onClose={() => setFolderProSheet(false)}
       />

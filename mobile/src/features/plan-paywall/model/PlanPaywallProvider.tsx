@@ -35,6 +35,7 @@ const RESET_IAP_BILLING: IapBillingOptions = {
 type PlanPaywallContextValue = {
   open: () => void;
   close: () => void;
+  visible: boolean;
 };
 
 const PlanPaywallContext = createContext<PlanPaywallContextValue | null>(null);
@@ -172,6 +173,7 @@ export function PlanPaywallProvider({ children }: { children: React.ReactNode })
   const contextValue: PlanPaywallContextValue = {
     open,
     close,
+    visible,
   };
 
   return (
