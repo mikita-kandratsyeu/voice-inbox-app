@@ -2,7 +2,7 @@ import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import dayjs from 'dayjs';
-import { Calendar, ChevronLeft, ChevronRight, Clock } from 'lucide-react-native';
+import { Calendar, ChevronRight, Clock } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -47,16 +47,7 @@ type TaskEditSheetProps = {
 };
 
 const PRIORITIES: NonNullable<TaskItem['priority']>[] = ['low', 'medium', 'high'];
-const WEEKDAY_KEYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
-
-type CalendarDay = {
-  date: Date;
-  dayOfMonth: number;
-  isCurrentMonth: boolean;
-  isPast: boolean;
-  isSelected: boolean;
-  key: string;
-};
+const IOS_INLINE_DATE_PICKER_HEIGHT = 370;
 
 const formatTaskDeadline = (date: Date): string => {
   const year = date.getFullYear();
@@ -129,37 +120,6 @@ const getTimePickerValue = (value: string, deadline: string): Date => {
   return date;
 };
 
-const buildCalendarDays = (monthDate: Date, selectedDate: Date | null): CalendarDay[] => {
-  const monthStart = dayjs(monthDate).startOf('month');
-  const startOffset = (monthStart.day() + 6) % 7;
-  const gridStart = monthStart.subtract(startOffset, 'day');
-  const selectedKey = selectedDate ? formatTaskDeadline(selectedDate) : null;
-
-  return Array.from({ length: 42 }, (_, index) => {
-    const day = gridStart.add(index, 'day');
-    const key = day.format('YYYY-MM-DD');
-    return {
-      date: day.toDate(),
-      dayOfMonth: day.date(),
-      isCurrentMonth: day.month() === monthStart.month(),
-      isPast: day.isBefore(dayjs(), 'day'),
-      isSelected: key === selectedKey,
-      key,
-    };
-  });
-};
-
-const buildCalendarWeeks = (days: CalendarDay[]): CalendarDay[][] => {
-  return Array.from({ length: Math.ceil(days.length / 7) }, (_, weekIndex) =>
-    days.slice(weekIndex * 7, weekIndex * 7 + 7),
-  );
-};
-
-const formatCalendarMonthTitle = (date: Date, language: string): string => {
-  const formatted = dayjs(date).locale(resolveDayjsLocale(language)).format('MMMM YYYY');
-  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
-};
-
 const formatDeadlineDisplay = (date: Date | null, language: string): string | null => {
   if (!date) return null;
   return dayjs(date).locale(resolveDayjsLocale(language)).format('D MMMM YYYY');
@@ -209,7 +169,6 @@ export function TaskEditSheet({
   const [priorityDraft, setPriorityDraft] = useState<NonNullable<TaskItem['priority']>>('medium');
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [timePickerOpen, setTimePickerOpen] = useState(false);
-  const [calendarMonth, setCalendarMonth] = useState(() => new Date());
   const datePickerValue = useMemo(
     () => parseTaskDeadlineDraft(deadlineDraft) ?? new Date(),
     [deadlineDraft],
@@ -232,15 +191,6 @@ export function TaskEditSheet({
     () => formatDeadlineDisplay(selectedDeadlineDate, i18n.language),
     [i18n.language, selectedDeadlineDate],
   );
-  const calendarDays = useMemo(
-    () => buildCalendarDays(calendarMonth, selectedDeadlineDate),
-    [calendarMonth, selectedDeadlineDate],
-  );
-  const calendarWeeks = useMemo(() => buildCalendarWeeks(calendarDays), [calendarDays]);
-  const calendarMonthTitle = useMemo(
-    () => formatCalendarMonthTitle(calendarMonth, i18n.language),
-    [calendarMonth, i18n.language],
-  );
   const deadlineTimeLabelText = useMemo(() => {
     const trimmed = deadlineTimeDraft.trim();
 
@@ -256,9 +206,6 @@ export function TaskEditSheet({
     }),
     [color.accent.cache, color.accent.delete, color.text.secondary],
   );
-  const canGoToPreviousMonth = dayjs(calendarMonth)
-    .startOf('month')
-    .isAfter(dayjs().startOf('month'));
   const sheetContentMaxWidth = isTablet
     ? Math.min(
         tabletContentMaxWidth ?? TABLET_SHEET_CONTENT_MAX_WIDTH,
@@ -274,7 +221,6 @@ export function TaskEditSheet({
     setPriorityDraft(initialPriority ?? 'medium');
     setDatePickerOpen(false);
     setTimePickerOpen(false);
-    setCalendarMonth(parseTaskDeadlineDraft(initialDeadline ?? '') ?? new Date());
   }, [visible, initialText, initialDeadline, initialDeadlineTime, initialPriority]);
 
   const handleSave = useCallback(() => {
@@ -299,8 +245,8 @@ export function TaskEditSheet({
       ref={bottomSheetRef}
       visible={visible}
       onClose={onClose}
-      enablePanDownToClose={!timePickerOpen}
-      enableContentPanningGesture={!timePickerOpen}
+      enablePanDownToClose={!datePickerOpen && !timePickerOpen}
+      enableContentPanningGesture={!datePickerOpen && !timePickerOpen}
     >
       <BottomSheetScrollView
         keyboardShouldPersistTaps="handled"
@@ -527,136 +473,42 @@ export function TaskEditSheet({
                   </Pressable>
                 )}
               </View>
-              {datePickerOpen && IS_IOS && (
+              {datePickerOpen && (
                 <View
-                  className="mt-3 rounded-2xl px-2 py-4"
+                  className="mt-3 items-center overflow-hidden rounded-2xl"
                   style={{
                     alignSelf: 'center',
                     backgroundColor: color.background.tertiary,
                     width: '100%',
                   }}
                 >
-                  <View
-                    style={{
-                      alignItems: 'center',
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      paddingHorizontal: 6,
-                      marginBottom: 14,
-                    }}
-                  >
-                    <Pressable
-                      onPress={() =>
-                        setCalendarMonth((prev) => dayjs(prev).subtract(1, 'month').toDate())
-                      }
-                      disabled={!canGoToPreviousMonth}
-                      accessibilityRole="button"
-                      accessibilityLabel={t('tasks.previousMonth')}
-                      accessibilityState={{ disabled: !canGoToPreviousMonth }}
-                      className="h-10 w-10 items-center justify-center rounded-full"
-                    >
-                      <ChevronLeft
-                        size={24}
-                        color={canGoToPreviousMonth ? color.accent.primary : color.icon.muted}
-                        strokeWidth={2.4}
-                      />
-                    </Pressable>
-                    <Text
-                      className="text-[18px] font-semibold"
-                      style={{ color: color.text.primary }}
-                      numberOfLines={1}
-                    >
-                      {calendarMonthTitle}
-                    </Text>
-                    <Pressable
-                      onPress={() =>
-                        setCalendarMonth((prev) => dayjs(prev).add(1, 'month').toDate())
-                      }
-                      accessibilityRole="button"
-                      accessibilityLabel={t('tasks.nextMonth')}
-                      className="h-10 w-10 items-center justify-center rounded-full"
-                    >
-                      <ChevronRight size={24} color={color.accent.primary} strokeWidth={2.4} />
-                    </Pressable>
-                  </View>
-                  <View className="mb-2 flex-row">
-                    {WEEKDAY_KEYS.map((key) => (
-                      <Text
-                        key={key}
-                        className="flex-1 text-center text-[13px] font-semibold"
-                        style={{ color: color.text.secondary }}
-                      >
-                        {t(`tasks.weekdays.${key}`)}
-                      </Text>
-                    ))}
-                  </View>
-                  <View>
-                    {calendarWeeks.map((week, weekIndex) => (
-                      <View key={week[0]?.key ?? weekIndex} className="flex-row">
-                        {week.map((day) => (
-                          <View key={day.key} className="flex-1 p-[3px]">
-                            <Pressable
-                              onPress={() => {
-                                if (day.isPast) return;
-                                setDeadlineDraft(formatTaskDeadline(day.date));
-                                setCalendarMonth(day.date);
-                                setDatePickerOpen(false);
-                              }}
-                              disabled={day.isPast}
-                              accessibilityRole="button"
-                              accessibilityState={{
-                                disabled: day.isPast,
-                                selected: day.isSelected,
-                              }}
-                              accessibilityLabel={day.key}
-                              className="aspect-square items-center justify-center rounded-full"
-                              style={{
-                                backgroundColor: day.isSelected
-                                  ? color.accent.primary
-                                  : 'transparent',
-                              }}
-                            >
-                              <Text
-                                className="text-[17px] font-medium"
-                                style={{
-                                  color: day.isSelected
-                                    ? color.icon.onAccent
-                                    : day.isCurrentMonth && !day.isPast
-                                      ? color.text.primary
-                                      : color.text.muted,
-                                  opacity: day.isPast
-                                    ? 0.3
-                                    : day.isCurrentMonth || day.isSelected
-                                      ? 1
-                                      : 0.45,
-                                }}
-                              >
-                                {day.dayOfMonth}
-                              </Text>
-                            </Pressable>
-                          </View>
-                        ))}
-                      </View>
-                    ))}
-                  </View>
-                </View>
-              )}
-              {datePickerOpen && !IS_IOS && (
-                <DateTimePicker
-                  value={datePickerValue}
-                  mode="date"
-                  display="default"
-                  accentColor={color.accent.primary}
-                  minimumDate={new Date()}
-                  onValueChange={(_, selectedDate) => {
-                    setDatePickerOpen(false);
-                    if (selectedDate) {
-                      setDeadlineDraft(formatTaskDeadline(selectedDate));
-                      setCalendarMonth(selectedDate);
+                  <DateTimePicker
+                    value={datePickerValue}
+                    mode="date"
+                    display={IS_IOS ? 'inline' : 'default'}
+                    accentColor={color.accent.primary}
+                    themeVariant={theme}
+                    minimumDate={new Date()}
+                    style={
+                      IS_IOS
+                        ? {
+                            alignSelf: 'center',
+                            height: IOS_INLINE_DATE_PICKER_HEIGHT,
+                            width: '100%',
+                          }
+                        : undefined
                     }
-                  }}
-                  onDismiss={() => setDatePickerOpen(false)}
-                />
+                    onValueChange={(_, selectedDate) => {
+                      if (!IS_IOS) {
+                        setDatePickerOpen(false);
+                      }
+                      if (selectedDate) {
+                        setDeadlineDraft(formatTaskDeadline(selectedDate));
+                      }
+                    }}
+                    onDismiss={() => setDatePickerOpen(false)}
+                  />
+                </View>
               )}
               {timePickerOpen && (
                 <View
