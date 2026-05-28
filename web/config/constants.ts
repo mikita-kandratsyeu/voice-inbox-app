@@ -74,6 +74,12 @@ export const AI_JOB_QSTASH_RETRIES = 3;
 /** Worker exclusive lock (`job-lock:*`). Slightly above App Router `maxDuration` (300s). */
 export const JOB_LOCK_KEY_PREFIX = 'job-lock:';
 export const JOB_LOCK_TTL_SECONDS = 330;
+/** OpenRouter generation id for async recovery after worker timeout (`or-gen:*`). */
+export const OPENROUTER_PENDING_GENERATION_KEY_PREFIX = 'or-gen:';
+export const OPENROUTER_PENDING_GENERATION_TTL_SECONDS = JOB_LOCK_TTL_SECONDS;
+/** Poll OpenRouter `/generation/content` when the live HTTP call fails but a generation id exists. */
+export const OPENROUTER_GENERATION_RECOVERY_POLL_INTERVAL_MS = 2_000;
+export const OPENROUTER_GENERATION_RECOVERY_MAX_WAIT_MS = 120_000;
 /** Set on `msg:{id}` when the user cancels; worker must not run LLM or send push. */
 export const AI_JOB_CANCELLED_ERROR = 'Cancelled by user';
 export const JOB_CANCELLED_KEY_PREFIX = 'job-cancelled:';

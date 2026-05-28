@@ -70,6 +70,8 @@ Without Redis, an in-memory store is used (suitable for development).
 
 **Async AI jobs:** Mobile POST endpoints enqueue work in Redis (`msg:*`) and return immediately; the app polls GET until `done`. Background processing uses **QStash** when `QSTASH_TOKEN` is set (worker: `POST /api/internal/ai/worker`), otherwise Next.js `after()` on the same deployment. Set `NEXT_PUBLIC_BASE_URL` to a public HTTPS origin so QStash can reach the worker. On Vercel, if Deployment Protection blocks webhooks, allow QStash or exclude `/api/internal/ai/worker`.
 
+**OpenRouter generation recovery:** Cloud chat calls stream from OpenRouter and persist `X-Generation-Id` in Redis (`or-gen:{jobId}`). If the worker times out while OpenRouter still completes the generation, QStash retries resume via `GET /api/v1/generation/content` instead of starting a duplicate chat request when possible.
+
 ---
 
 ## Localization

@@ -5,13 +5,8 @@ import {
   isRetryableDeepSeekTransportError,
   type DeepSeekChatMessage,
 } from '@/lib/deepseek';
-import { createOpenRouterClient } from '@/lib/openrouter';
 import { isRetryableOpenRouterTransportError } from '@/lib/ai-model-fallback';
-import {
-  openRouterModelSupportsReasoning,
-  openRouterReasoningParamsForModel,
-} from '@/lib/openrouter-reasoning';
-import { openRouterJsonObjectResponseFormat } from '@/lib/openrouter-response-format';
+import { sendOpenRouterChatCompletion } from '@/lib/openrouter-chat';
 
 export type AiChatMessage = DeepSeekChatMessage;
 
@@ -65,29 +60,13 @@ export async function sendAiChatCompletion(
     return { content, message, raw };
   }
 
-  const client = createOpenRouterClient(params.clientUserAgent);
-  const reasoning =
-    params.withReasoning && openRouterModelSupportsReasoning(model)
-      ? openRouterReasoningParamsForModel(model)
-      : undefined;
-
-  const response = await client.chat.send({
-    chatGenerationParams: {
-      model,
-      messages: params.messages,
-      provider: { zdr: true },
-      ...(params.jsonObject ? { responseFormat: openRouterJsonObjectResponseFormat() } : {}),
-      ...(params.temperature != null ? { temperature: params.temperature } : {}),
-      stream: false,
-      ...(reasoning ? { reasoning } : {}),
-    },
+  return sendOpenRouterChatCompletion({
+    model,
+    messages: params.messages,
+    jsonObject: params.jsonObject,
+    withReasoning: params.withReasoning,
+    temperature: params.temperature,
+    clientUserAgent: params.clientUserAgent,
+    userId: params.userId,
   });
-
-  const message = response.choices[0]?.message;
-  const content = message?.content;
-  if (typeof content !== 'string') {
-    throw new Error('Invalid AI response: missing content');
-  }
-
-  return { content, message, raw: response };
 }

@@ -1,3 +1,4 @@
+import { aiJobRunContext } from '@/lib/ai-job-context';
 import { isAiJobCancelled } from '@/lib/ai-job-cancel';
 import { runAiJob } from '@/lib/ai-job-runners';
 import { acquireJobLock, releaseJobLock } from '@/lib/ai-job-lock';
@@ -52,7 +53,9 @@ export async function runAiJobFromEnvelope(
     console.info('[AI job worker]', JSON.stringify({ operation, jobId, phase: 'start' }));
 
     try {
-      await runAiJob(payload);
+      await aiJobRunContext.run({ jobId, messageTtlSeconds: envelope.messageTtlSeconds }, () =>
+        runAiJob(payload),
+      );
       await deleteJobPayload(jobId);
       console.info(
         '[AI job worker]',
