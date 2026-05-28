@@ -4,7 +4,11 @@ import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
 
-import type { ShareBriefTemplate, ShareRecordExportFormat } from '@/features/share-record';
+import {
+  getLastShareRecipientEmail,
+  type ShareBriefTemplate,
+  type ShareRecordExportFormat,
+} from '@/features/share-record';
 import { EmailBodyFormatPicker } from '@/features/share-record/ui/EmailBodyFormatPicker';
 import { type Colors, useColors } from '@/shared/config';
 import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
@@ -136,6 +140,7 @@ export const ShareRecordSheet = ({
 
   const handleOpenEmail = useCallback(() => {
     setEmailSendTemplate(null);
+    setEmail(getLastShareRecipientEmail() ?? '');
     setEmailVisible(true);
   }, []);
 

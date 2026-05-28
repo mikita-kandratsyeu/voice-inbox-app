@@ -18,7 +18,7 @@ import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import { useRecordActions } from '@/features/record-actions';
 import type { ShareBriefTemplate, ShareRecordExportFormat } from '@/features/share-record';
-import { useShareRecord } from '@/features/share-record';
+import { saveLastShareRecipientEmail, useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
 import { useColors } from '@/shared/config';
 import {
@@ -341,6 +341,7 @@ export const RecordingDetailScreen = () => {
       setEmailSending(true);
       emailRecord(liveRecord, email, template, format)
         .then(() => {
+          saveLastShareRecipientEmail(email);
           hapticSuccess();
           setShareSheetVisible(false);
           Alert.alert(t('share.emailSentTitle'), t('share.emailSentMessage', { email }));

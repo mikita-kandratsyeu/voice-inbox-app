@@ -1,4 +1,9 @@
 export {
+  clearLastShareRecipientEmail,
+  getLastShareRecipientEmail,
+  saveLastShareRecipientEmail,
+} from './lib/shareRecipientEmailStorage';
+export {
   buildShareText,
   RECORD_TEXT_EXPORT_EXTENSION,
   type ShareBriefTemplate,

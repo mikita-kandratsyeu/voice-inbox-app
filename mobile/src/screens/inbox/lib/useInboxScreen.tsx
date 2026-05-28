@@ -41,7 +41,7 @@ import { useAutoOrganizeFolders, useManageFolders } from '@/features/manage-fold
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { useProEntitlement } from '@/features/pro-license';
 import { useSearchRecords } from '@/features/search-records';
-import type { ShareBriefTemplate } from '@/features/share-record';
+import { saveLastShareRecipientEmail, type ShareBriefTemplate } from '@/features/share-record';
 import { useColors } from '@/shared/config';
 import {
   flashListJumpToTop,
@@ -354,6 +354,7 @@ export function useInboxScreen() {
           email,
           packaging,
         );
+        saveLastShareRecipientEmail(email);
         hapticSuccess();
         handleCloseBatchExportSheet();
         Alert.alert(

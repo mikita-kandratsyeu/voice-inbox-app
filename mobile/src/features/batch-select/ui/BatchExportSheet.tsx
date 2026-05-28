@@ -4,7 +4,7 @@ import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
 
-import type { ShareBriefTemplate } from '@/features/share-record';
+import { getLastShareRecipientEmail, type ShareBriefTemplate } from '@/features/share-record';
 import { EmailBodyFormatPicker } from '@/features/share-record/ui/EmailBodyFormatPicker';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
@@ -172,6 +172,7 @@ export const BatchExportSheet = ({
 
   const handleOpenEmail = useCallback(() => {
     setEmailBodyTemplate(null);
+    setEmail(getLastShareRecipientEmail() ?? '');
     setEmailVisible(true);
   }, []);
 
