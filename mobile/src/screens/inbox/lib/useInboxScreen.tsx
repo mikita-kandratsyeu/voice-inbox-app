@@ -74,7 +74,7 @@ export function useInboxScreen() {
   const setTabletSidebarFilterStatus = useTabletInboxSidebarStore((s) => s.setFilterStatus);
   const color = useColors();
   const { width: windowWidth } = useWindowDimensions();
-  const contentMaxWidth = useTabletContentMaxWidth();
+  const contentMaxWidth = useTabletContentMaxWidth('wide');
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const navigation = useNavigation<InboxNavigationProp>();
   const isInboxTabFocused = useIsFocused();

@@ -102,7 +102,9 @@
       "foldersEmpty": "Создайте папку для сортировки заметок",
       "editFolderHint": "Удерживайте, чтобы изменить папку",
       "privateFoldersUnavailable": "Папки недоступны в приватном режиме",
-      "privateFoldersCta": "Открыть настройки приватного ИИ"
+      "privateFoldersCta": "Открыть настройки режима ИИ",
+      "collapseSidebar": "Свернуть боковую панель",
+      "expandSidebar": "Развернуть боковую панель"
     }
   },
   "textNote": {

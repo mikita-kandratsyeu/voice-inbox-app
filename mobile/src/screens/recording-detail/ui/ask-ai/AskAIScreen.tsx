@@ -33,7 +33,7 @@ export const AskAIScreen = () => {
   const route = useRoute<RouteProp<RootStackParamList, 'RecordingAskAI'>>();
   const insets = useSafeAreaInsets();
   const color = useColors();
-  const contentMaxWidth = useTabletContentMaxWidth();
+  const contentMaxWidth = useTabletContentMaxWidth('wide');
   const isTablet = useIsTablet();
 
   const { record: routeRecord } = route.params;

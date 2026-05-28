@@ -42,7 +42,7 @@ export const InAppEventDetailScreen = () => {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const route = useRoute<RouteProp<RootStackParamList, 'InAppEventDetail'>>();
-  const contentMaxWidth = useTabletContentMaxWidth();
+  const contentMaxWidth = useTabletContentMaxWidth('wide');
 
   const { eventId } = route.params;
 

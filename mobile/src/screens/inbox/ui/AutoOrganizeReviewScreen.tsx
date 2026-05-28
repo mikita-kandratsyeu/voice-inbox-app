@@ -129,7 +129,7 @@ export const AutoOrganizeReviewScreen = () => {
     [closePicker, picker.recordId, setAssignmentDestination],
   );
 
-  const contentMaxWidth = useTabletContentMaxWidth();
+  const contentMaxWidth = useTabletContentMaxWidth('wide');
   const assignmentsSectionLabel = t('folders.autoOrganizeReviewAssignmentsSection', {
     defaultValue: t('folders.autoOrganizeReviewAssignmentsSection'),
   });

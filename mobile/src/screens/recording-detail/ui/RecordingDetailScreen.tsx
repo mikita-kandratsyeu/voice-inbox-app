@@ -365,7 +365,7 @@ export const RecordingDetailScreen = () => {
   const onCloseShareMenu = useCallback(() => setShareSheetVisible(false), []);
 
   const scrollPadding = isTablet ? 24 : 16;
-  const contentMaxWidth = useTabletContentMaxWidth();
+  const contentMaxWidth = useTabletContentMaxWidth('wide');
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const isMeetingMode = liveRecord.classification === 'meeting';

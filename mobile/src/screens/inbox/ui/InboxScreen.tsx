@@ -143,6 +143,7 @@ export const InboxScreen = () => {
             onEnterBatchMode={() => enterBatchMode(undefined, { haptic: false })}
             onOpenAllTasks={() => navigation.navigate('AllTasks')}
             onCreateTextNote={handleCreateTextNote}
+            useTabletShell={useTabletShell}
             hideCreateTextNote={useTabletShell}
             t={t}
           />

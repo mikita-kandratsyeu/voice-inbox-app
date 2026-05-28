@@ -5,6 +5,7 @@ import { useRecordStore } from '@/entities/record';
 export type TabletSidebarNavCounts = {
   pinned: number;
   archived: number;
+  openTasks: number;
   folderCounts: Map<string, number>;
 };
 
@@ -14,6 +15,7 @@ export function useTabletSidebarNavCounts(): TabletSidebarNavCounts {
   return useMemo(() => {
     let pinned = 0;
     let archived = 0;
+    let openTasks = 0;
     const folderCounts = new Map<string, number>();
 
     for (const record of records) {
@@ -27,9 +29,14 @@ export function useTabletSidebarNavCounts(): TabletSidebarNavCounts {
       if (record.folderId) {
         folderCounts.set(record.folderId, (folderCounts.get(record.folderId) ?? 0) + 1);
       }
+      for (const task of record.tasks ?? []) {
+        if (!task.isDone) {
+          openTasks += 1;
+        }
+      }
     }
 
-    return { pinned, archived, folderCounts };
+    return { pinned, archived, openTasks, folderCounts };
   }, [records]);
 }
 

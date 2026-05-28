@@ -102,7 +102,9 @@
       "foldersEmpty": "Create a folder to organize your notes",
       "editFolderHint": "Long press to edit folder",
       "privateFoldersUnavailable": "Folders aren't available in Private mode",
-      "privateFoldersCta": "Open Private AI settings"
+      "privateFoldersCta": "Open AI mode settings",
+      "collapseSidebar": "Collapse sidebar",
+      "expandSidebar": "Expand sidebar"
     }
   },
   "textNote": {

@@ -80,7 +80,10 @@ export { useAiTabBannerDismiss } from './useAiTabBannerDismiss';
 export { useIsSmallScreen } from './useIsSmallScreen';
 export { useIsTablet } from './useIsTablet';
 export { useScrollToTopOnTabPress } from './useScrollToTopOnTabPress';
-export { useTabletContentMaxWidth } from './useTabletContentMaxWidth';
+export {
+  type TabletContentMaxWidthVariant,
+  useTabletContentMaxWidth,
+} from './useTabletContentMaxWidth';
 export { useTabletShellLayout } from './useTabletShellLayout';
 export {
   formatFileSize,

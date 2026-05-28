@@ -1,9 +1,9 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Archive, Inbox, Pin } from 'lucide-react-native';
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -15,7 +15,6 @@ import { useImportAudioFile } from '@/features/import-audio-file';
 import { openPlanPaywall } from '@/features/plan-paywall';
 import { useProEntitlement } from '@/features/pro-license';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
-import { SettingsPlanStatusCard } from '@/screens/settings/ui/SettingsPlanStatusCard';
 import { useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
@@ -23,17 +22,17 @@ import type { RootStackParamList } from '../types';
 import {
   requestTabletInboxSidebarNav,
   requestTabletOpenCreateFolder,
-  requestTabletOpenEditFolder,
 } from './tabletInboxNavBridge';
 import { useTabletInboxSidebarStore } from './tabletInboxSidebarStore';
-import { TabletSidebarComposeRow } from './TabletSidebarComposeRow';
+import { TabletSidebarBody } from './TabletSidebarBody';
+import { useTabletSidebarCollapsedStore } from './tabletSidebarCollapsedStore';
+import { useTabletSidebarLayout } from './TabletSidebarLayoutContext';
 import {
-  TabletSidebarFoldersScroll,
-  TabletSidebarFoldersSection,
-} from './TabletSidebarFoldersSection';
-import { TabletSidebarFooter } from './TabletSidebarFooter';
-import { TABLET_SIDEBAR_PAD, TABLET_SIDEBAR_WIDTH } from './tabletSidebarMetrics';
-import { TabletSidebarNavIcon, TabletSidebarNavItem } from './TabletSidebarNavItem';
+  TABLET_SIDEBAR_COLLAPSED_PAD,
+  TABLET_SIDEBAR_COLLAPSED_WIDTH,
+  TABLET_SIDEBAR_PAD,
+  TABLET_SIDEBAR_WIDTH,
+} from './tabletSidebarMetrics';
 import { getTabletSidebarTheme } from './tabletSidebarTheme';
 import { navigateMainTab, useTabletTabNavigationStore } from './tabletTabNavigation';
 import { useTabletSidebarNavCounts } from './useTabletSidebarNavCounts';
@@ -53,6 +52,7 @@ export const TabletSidebar = () => {
   const {
     pinned: pinnedCount,
     archived: archivedCount,
+    openTasks: openTasksCount,
     folderCounts,
   } = useTabletSidebarNavCounts();
 
@@ -68,8 +68,11 @@ export const TabletSidebar = () => {
   );
 
   const filterStatus = useTabletInboxSidebarStore((s) => s.filterStatus);
+  const isCollapsed = useTabletSidebarCollapsedStore((s) => s.isCollapsed);
+  const toggleCollapsed = useTabletSidebarCollapsedStore((s) => s.toggleCollapsed);
 
   const isSettingsTab = currentTab === 'SettingsRoot';
+  const { sidebarShellStyle, expandedLayerStyle, collapsedLayerStyle } = useTabletSidebarLayout();
   const navDimmed = isSettingsTab;
 
   const inboxSelection = useMemo(() => {
@@ -95,6 +98,14 @@ export const TabletSidebar = () => {
     hapticSelection();
     navigateMainTab('SettingsRoot');
   }, []);
+
+  const openAllTasks = useCallback(() => {
+    hapticSelection();
+    if (currentTab !== 'Inbox') {
+      navigateMainTab('Inbox');
+    }
+    rootNavigation.navigate('AllTasks');
+  }, [currentTab, rootNavigation]);
 
   const openCreateFolder = useCallback(() => {
     if (currentTab !== 'Inbox') {
@@ -139,162 +150,100 @@ export const TabletSidebar = () => {
   const pinnedActive = !isSettingsTab && inboxSelection?.kind === 'pinned';
   const archivedActive = !isSettingsTab && inboxSelection?.kind === 'archived';
 
-  const inboxIconColor = color.accent.primary;
-  const pinnedIconColor = color.accent.unpin;
-  const archiveIconColor = color.accent.success;
-  const mutedIcon = color.text.secondary;
+  const bodyProps = {
+    color,
+    theme,
+    insets,
+    t,
+    isCollapsedToggle: isCollapsed,
+    isSettingsTab,
+    navDimmed,
+    isImporting,
+    isProActive,
+    monetizationMode,
+    folders,
+    folderCounts,
+    isPrivateMode,
+    currentTab,
+    inboxSelection,
+    pinnedCount,
+    archivedCount,
+    openTasksCount,
+    inboxActive,
+    pinnedActive,
+    archivedActive,
+    onToggleCollapsed: toggleCollapsed,
+    onOpenSettings: openSettings,
+    onOpenPlanPaywall: openPlanPaywall,
+    onRecord: handleNewRecording,
+    onRecordLongPress: handleImportAudio,
+    onTextNote: handleTextNote,
+    navigateToInbox,
+    openAllTasks,
+    openCreateFolder,
+  };
 
   return (
-    <View
-      style={{
-        width: TABLET_SIDEBAR_WIDTH,
-        flexShrink: 0,
-        alignSelf: 'stretch',
-        backgroundColor: theme.panel,
-        borderRightWidth: 1,
-        borderRightColor: theme.border,
-      }}
+    <Animated.View
+      style={[
+        {
+          flexShrink: 0,
+          alignSelf: 'stretch',
+          overflow: 'hidden',
+          backgroundColor: theme.panel,
+        },
+        sidebarShellStyle,
+      ]}
     >
       <View
+        pointerEvents="none"
         style={{
-          paddingTop: insets.top + 8,
-          paddingHorizontal: TABLET_SIDEBAR_PAD,
-          paddingBottom: 14,
-          gap: 14,
-          borderBottomWidth: 1,
-          borderBottomColor: theme.border,
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: 1,
+          backgroundColor: theme.border,
+          zIndex: 2,
         }}
-      >
-        <TabletSidebarComposeRow
-          color={color}
-          onRecord={handleNewRecording}
-          onRecordLongPress={handleImportAudio}
-          onTextNote={handleTextNote}
-          isImporting={isImporting}
-        />
-      </View>
-
-      <View
-        style={{
-          flex: 1,
-          minHeight: 0,
-          paddingHorizontal: TABLET_SIDEBAR_PAD,
-        }}
-      >
-        <View
-          style={{
-            paddingTop: 16,
-            paddingBottom: 8,
-            gap: 8,
-            opacity: navDimmed ? 0.62 : 1,
-          }}
+      />
+      <View style={{ flex: 1, position: 'relative' }}>
+        <Animated.View
+          pointerEvents={isCollapsed ? 'none' : 'box-none'}
+          style={[
+            {
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: TABLET_SIDEBAR_WIDTH,
+            },
+            expandedLayerStyle,
+          ]}
         >
-          <TabletSidebarNavItem
-            label={t('tabs.inbox')}
-            isActive={inboxActive}
-            color={color}
-            theme={theme}
-            appearance="primary"
-            onPress={() => navigateToInbox({ kind: 'inbox' })}
-            icon={
-              <TabletSidebarNavIcon
-                isActive={inboxActive}
-                activeColor={inboxIconColor}
-                inactiveColor={mutedIcon}
-              >
-                <Inbox />
-              </TabletSidebarNavIcon>
-            }
-          />
-          <TabletSidebarNavItem
-            label={t('inbox.filters.pinned')}
-            isActive={pinnedActive}
-            color={color}
-            theme={theme}
-            appearance="secondary"
-            badgeCount={pinnedCount}
-            onPress={() => navigateToInbox({ kind: 'pinned' })}
-            icon={
-              <TabletSidebarNavIcon
-                isActive={pinnedActive}
-                activeColor={pinnedIconColor}
-                inactiveColor={mutedIcon}
-              >
-                <Pin />
-              </TabletSidebarNavIcon>
-            }
-          />
-          <TabletSidebarNavItem
-            label={t('inbox.filters.archived')}
-            isActive={archivedActive}
-            color={color}
-            theme={theme}
-            appearance="secondary"
-            badgeCount={archivedCount}
-            onPress={() => navigateToInbox({ kind: 'archived' })}
-            icon={
-              <TabletSidebarNavIcon
-                isActive={archivedActive}
-                activeColor={archiveIconColor}
-                inactiveColor={mutedIcon}
-              >
-                <Archive />
-              </TabletSidebarNavIcon>
-            }
-          />
-        </View>
+          <TabletSidebarBody {...bodyProps} collapsed={false} horizontalPad={TABLET_SIDEBAR_PAD} />
+        </Animated.View>
 
-        <TabletSidebarFoldersScroll contentDimmed={navDimmed}>
-          <TabletSidebarFoldersSection
-            color={color}
-            theme={theme}
-            folders={folders}
-            folderCounts={folderCounts}
-            isProActive={isProActive}
-            isPrivateMode={isPrivateMode}
-            isSettingsTab={isSettingsTab}
-            inboxSelection={inboxSelection}
-            currentTab={currentTab}
-            onNavigateToInbox={navigateToInbox}
-            onOpenCreateFolder={openCreateFolder}
-            onOpenEditFolder={(folderId) => {
-              hapticSelection();
-              if (currentTab !== 'Inbox') {
-                navigateMainTab('Inbox');
-              }
-              requestTabletOpenEditFolder(folderId);
-            }}
+        <Animated.View
+          pointerEvents={isCollapsed ? 'box-none' : 'none'}
+          style={[
+            {
+              position: 'absolute',
+              left: 0,
+              top: 0,
+              bottom: 0,
+              width: TABLET_SIDEBAR_COLLAPSED_WIDTH,
+            },
+            collapsedLayerStyle,
+          ]}
+        >
+          <TabletSidebarBody
+            {...bodyProps}
+            collapsed
+            horizontalPad={TABLET_SIDEBAR_COLLAPSED_PAD}
           />
-        </TabletSidebarFoldersScroll>
+        </Animated.View>
       </View>
-
-      <View
-        style={{
-          paddingHorizontal: TABLET_SIDEBAR_PAD,
-          paddingTop: 12,
-          paddingBottom: Math.max(insets.bottom, 14),
-          gap: 14,
-          borderTopWidth: 1,
-          borderTopColor: theme.border,
-          backgroundColor: theme.panel,
-        }}
-      >
-        {!isProActive ? (
-          <SettingsPlanStatusCard
-            color={color}
-            monetizationMode={monetizationMode}
-            layout="sidebar"
-            onPress={() => openPlanPaywall()}
-          />
-        ) : null}
-
-        <TabletSidebarFooter
-          color={color}
-          theme={theme}
-          isSettingsActive={isSettingsTab}
-          onOpenSettings={openSettings}
-        />
-      </View>
-    </View>
+    </Animated.View>
   );
 };

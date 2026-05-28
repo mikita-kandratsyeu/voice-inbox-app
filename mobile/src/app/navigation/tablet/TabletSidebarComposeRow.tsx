@@ -7,6 +7,10 @@ import type { Colors } from '@/shared/config';
 import { hapticSelection, selectPlatform } from '@/shared/lib';
 import { Button } from '@/shared/ui';
 
+import {
+  TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE,
+  TABLET_SIDEBAR_NAV_ITEM_RADIUS,
+} from './tabletSidebarMetrics';
 import { TABLET_SIDEBAR_LABEL_FONT_SIZE } from './tabletSidebarTypography';
 
 const COMPOSE_BUTTON_RADIUS = 14;
@@ -24,6 +28,7 @@ const styles = StyleSheet.create({
 
 type TabletSidebarComposeRowProps = {
   color: Colors;
+  collapsed?: boolean;
   onRecord: () => void;
   onRecordLongPress: () => void;
   onTextNote: () => void;
@@ -45,12 +50,86 @@ function iconActionShadow(color: Colors, shadowColor: string) {
 
 export function TabletSidebarComposeRow({
   color,
+  collapsed = false,
   onRecord,
   onRecordLongPress,
   onTextNote,
   isImporting = false,
 }: TabletSidebarComposeRowProps) {
   const { t } = useTranslation();
+
+  if (collapsed) {
+    const iconSize = TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE;
+    return (
+      <View style={{ width: '100%', alignItems: 'center', gap: COMPOSE_ROW_GAP }}>
+        <View style={{ width: iconSize, height: iconSize }}>
+          <Button
+            variant="primary"
+            iconOnly
+            size="lg"
+            color={color}
+            icon={<Mic size={22} color={color.icon.onAccent} strokeWidth={2.4} />}
+            accessibilityLabel={t('tablet.sidebar.newRecording')}
+            accessibilityHint={t('inbox.emptyImportHint')}
+            accessibilityState={{ busy: isImporting }}
+            activeOpacity={0.9}
+            disabled={isImporting}
+            onPress={() => {
+              if (isImporting) return;
+              hapticSelection();
+              onRecord();
+            }}
+            onLongPress={() => {
+              if (isImporting) return;
+              hapticSelection();
+              onRecordLongPress();
+            }}
+            className="rounded-[14px]"
+            containerStyle={{
+              width: iconSize,
+              height: iconSize,
+              minHeight: iconSize,
+              borderRadius: TABLET_SIDEBAR_NAV_ITEM_RADIUS,
+              paddingVertical: 0,
+              backgroundColor: color.accent.primary,
+              opacity: isImporting ? 0.7 : 1,
+              ...iconActionShadow(color, color.accent.primary),
+            }}
+          />
+          {isImporting ? (
+            <View pointerEvents="none" style={styles.importSpinner}>
+              <ActivityIndicator size="small" color={color.icon.onAccent} />
+            </View>
+          ) : null}
+        </View>
+
+        <Button
+          variant="secondary"
+          iconOnly
+          size="lg"
+          color={color}
+          icon={<SquarePen size={22} color={color.text.primary} strokeWidth={2.2} />}
+          accessibilityLabel={t('textNote.openCreate')}
+          activeOpacity={0.85}
+          onPress={() => {
+            hapticSelection();
+            onTextNote();
+          }}
+          className="rounded-[14px]"
+          containerStyle={{
+            width: iconSize,
+            height: iconSize,
+            minHeight: iconSize,
+            borderRadius: TABLET_SIDEBAR_NAV_ITEM_RADIUS,
+            paddingVertical: 0,
+            backgroundColor: color.background.tertiary,
+            borderWidth: 1,
+            borderColor: color.border.default,
+          }}
+        />
+      </View>
+    );
+  }
 
   return (
     <View

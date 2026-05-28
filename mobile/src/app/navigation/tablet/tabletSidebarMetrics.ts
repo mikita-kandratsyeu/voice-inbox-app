@@ -1,5 +1,8 @@
 export const TABLET_SIDEBAR_WIDTH = 300;
+export const TABLET_SIDEBAR_COLLAPSED_WIDTH = 72;
 export const TABLET_SIDEBAR_PAD = 16;
+export const TABLET_SIDEBAR_COLLAPSED_PAD = 12;
+export const TABLET_SIDEBAR_COLLAPSED_ITEM_SIZE = 48;
 export const TABLET_SIDEBAR_SURFACE_PAD = 4;
 export const TABLET_SIDEBAR_SURFACE_RADIUS = 14;
 /** Fixed height for Inbox / filters / Settings rows in the sidebar. */
@@ -19,4 +22,8 @@ export function getTabletSidebarInnerWidth(
   surfacePad = TABLET_SIDEBAR_SURFACE_PAD,
 ): number {
   return contentWidth - surfacePad * 2;
+}
+
+export function getTabletSidebarWidth(isCollapsed: boolean): number {
+  return isCollapsed ? TABLET_SIDEBAR_COLLAPSED_WIDTH : TABLET_SIDEBAR_WIDTH;
 }

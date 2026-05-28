@@ -224,7 +224,7 @@ export const AllTasksScreen = () => {
     [recordFilterId, records],
   );
 
-  const contentMaxWidth = useTabletContentMaxWidth();
+  const contentMaxWidth = useTabletContentMaxWidth('wide');
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const { adsAllowed } = useAdsAllowed();
   const filterPadH = isTablet ? 24 : 16;

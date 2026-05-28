@@ -1,6 +1,6 @@
 import { MenuView } from '@react-native-menu/menu';
 import type { TFunction } from 'i18next';
-import { MoreVertical, Search, SquarePen } from 'lucide-react-native';
+import { CheckCircle2, FolderPlus, MoreVertical, Search, SquarePen } from 'lucide-react-native';
 import React, { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
@@ -26,10 +26,14 @@ type InboxScreenHeaderRightProps = {
   onEnterBatchMode: () => void;
   onOpenAllTasks: () => void;
   onCreateTextNote: () => void;
+  /** Tablet sidebar: no overflow menu; actions as header icons. */
+  useTabletShell?: boolean;
   /** Tablet sidebar already exposes text note compose. */
   hideCreateTextNote?: boolean;
   t: TFunction;
 };
+
+const HEADER_ICON_HIT_SLOP = { top: 8, bottom: 8, left: 8, right: 8 };
 
 function InboxScreenHeaderRightInner({
   color,
@@ -48,6 +52,7 @@ function InboxScreenHeaderRightInner({
   onEnterBatchMode,
   onOpenAllTasks,
   onCreateTextNote,
+  useTabletShell = false,
   hideCreateTextNote = false,
   t,
 }: InboxScreenHeaderRightProps) {
@@ -106,36 +111,80 @@ function InboxScreenHeaderRightInner({
     );
   }
 
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-      {recordsLength > 0 && (
+  const searchButton =
+    recordsLength > 0 ? (
+      <Button
+        iconOnly
+        variant="icon"
+        size="md"
+        icon={
+          <Search
+            size={21}
+            color={
+              searchBarExplicitOpen || query.trim().length > 0
+                ? color.accent.primary
+                : color.text.primary
+            }
+            strokeWidth={2.2}
+          />
+        }
+        color={color}
+        onPress={onSearchHeaderPress}
+        accessibilityLabel={
+          !showInboxSearchBar
+            ? t('search.a11yOpen')
+            : query.trim() === ''
+              ? t('search.a11yHide')
+              : t('search.a11yFocus')
+        }
+        hitSlop={HEADER_ICON_HIT_SLOP}
+      />
+    ) : null;
+
+  if (useTabletShell) {
+    return (
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+        {searchButton}
+        {!isPrivateMode ? (
+          <Button
+            iconOnly
+            variant="icon"
+            size="md"
+            color={color}
+            disabled={isAutoOrganizing}
+            icon={
+              <FolderPlus
+                size={20}
+                color={isAutoOrganizing ? color.text.muted : color.text.primary}
+                strokeWidth={2.2}
+              />
+            }
+            accessibilityLabel={t('inbox.menuAutoOrganize')}
+            accessibilityState={{ disabled: isAutoOrganizing }}
+            onPress={() => {
+              if (isAutoOrganizing) return;
+              onAutoOrganize();
+            }}
+            hitSlop={HEADER_ICON_HIT_SLOP}
+          />
+        ) : null}
         <Button
           iconOnly
           variant="icon"
           size="md"
-          icon={
-            <Search
-              size={21}
-              color={
-                searchBarExplicitOpen || query.trim().length > 0
-                  ? color.accent.primary
-                  : color.text.primary
-              }
-              strokeWidth={2.2}
-            />
-          }
           color={color}
-          onPress={onSearchHeaderPress}
-          accessibilityLabel={
-            !showInboxSearchBar
-              ? t('search.a11yOpen')
-              : query.trim() === ''
-                ? t('search.a11yHide')
-                : t('search.a11yFocus')
-          }
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          icon={<CheckCircle2 size={20} color={color.text.primary} strokeWidth={2.2} />}
+          accessibilityLabel={t('inbox.menuSelectNotes')}
+          onPress={onEnterBatchMode}
+          hitSlop={HEADER_ICON_HIT_SLOP}
         />
-      )}
+      </View>
+    );
+  }
+
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+      {searchButton}
       {!hideCreateTextNote ? (
         <Button
           iconOnly
@@ -145,7 +194,7 @@ function InboxScreenHeaderRightInner({
           color={color}
           onPress={onCreateTextNote}
           accessibilityLabel={t('textNote.openCreate')}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          hitSlop={HEADER_ICON_HIT_SLOP}
         />
       ) : null}
       <MenuView
@@ -169,7 +218,7 @@ function InboxScreenHeaderRightInner({
           color={color}
           onPress={() => {}}
           accessibilityLabel={t('common.moreActions')}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          hitSlop={HEADER_ICON_HIT_SLOP}
         />
       </MenuView>
     </View>
