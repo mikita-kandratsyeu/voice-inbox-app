@@ -43,6 +43,8 @@ export const TabletSidebar = () => {
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const {
+    inbox: inboxCount,
+    unread: unreadCount,
     pinned: pinnedCount,
     archived: archivedCount,
     openTasks: openTasksCount,
@@ -178,6 +180,8 @@ export const TabletSidebar = () => {
         isPrivateMode={isPrivateMode}
         currentTab={currentTab}
         inboxSelection={inboxSelection}
+        inboxCount={inboxCount}
+        hasUnread={unreadCount > 0}
         pinnedCount={pinnedCount}
         archivedCount={archivedCount}
         openTasksCount={openTasksCount}

@@ -12,6 +12,7 @@ import {
 } from './tabletSidebarMetrics';
 import { TabletSidebarNavBadge } from './TabletSidebarNavBadge';
 import { TabletSidebarNavProcessingIndicator } from './TabletSidebarNavProcessingIndicator';
+import { TabletSidebarNavUnreadDot } from './TabletSidebarNavUnreadDot';
 import type { TabletSidebarTheme } from './tabletSidebarTheme';
 import { getTabletSidebarLabelStyle } from './tabletSidebarTypography';
 
@@ -27,6 +28,7 @@ export type TabletSidebarNavItemProps = {
   onLongPress?: () => void;
   appearance?: TabletSidebarNavAppearance;
   badgeCount?: number;
+  showUnreadDot?: boolean;
   showProcessingIndicator?: boolean;
   accessibilityHint?: string;
   /** Folder tint when selected; defaults to accent.primary. */
@@ -48,6 +50,7 @@ export function TabletSidebarNavItem({
   onLongPress,
   appearance = 'secondary',
   badgeCount = 0,
+  showUnreadDot = false,
   showProcessingIndicator = false,
   accessibilityHint,
   accentHex,
@@ -108,15 +111,21 @@ export function TabletSidebarNavItem({
       labelStyle={getTabletSidebarLabelStyle(isActive, labelColor)}
       icon={icon}
       trailingIcon={
-        showProcessingIndicator ? (
-          <TabletSidebarNavProcessingIndicator color={color} isActive={isActive} />
-        ) : badgeCount > 0 ? (
-          <TabletSidebarNavBadge
-            count={badgeCount}
-            color={color}
-            accentHex={accentHex}
-            isActive={isActive}
-          />
+        showProcessingIndicator || showUnreadDot || badgeCount > 0 ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            {showProcessingIndicator ? (
+              <TabletSidebarNavProcessingIndicator color={color} isActive={isActive} />
+            ) : null}
+            {showUnreadDot ? <TabletSidebarNavUnreadDot color={color} /> : null}
+            {badgeCount > 0 ? (
+              <TabletSidebarNavBadge
+                count={badgeCount}
+                color={color}
+                accentHex={accentHex}
+                isActive={isActive}
+              />
+            ) : null}
+          </View>
         ) : undefined
       }
       onPress={onPress}

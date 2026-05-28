@@ -41,6 +41,8 @@ export type TabletSidebarBodyProps = {
   isPrivateMode: boolean;
   currentTab: string;
   inboxSelection: { kind: 'folder'; folderId: string } | { kind: string; folderId?: string } | null;
+  inboxCount: number;
+  hasUnread: boolean;
   pinnedCount: number;
   archivedCount: number;
   openTasksCount: number;
@@ -74,6 +76,8 @@ export function TabletSidebarBody({
   isPrivateMode,
   currentTab,
   inboxSelection,
+  inboxCount,
+  hasUnread,
   pinnedCount,
   archivedCount,
   openTasksCount,
@@ -105,8 +109,12 @@ export function TabletSidebarBody({
       color={color}
       theme={theme}
       appearance="primary"
+      badgeCount={inboxCount}
+      showUnreadDot={hasUnread}
       showProcessingIndicator={aiProcessing.inbox}
-      accessibilityHint={aiProcessing.inbox ? aiProcessingHint : undefined}
+      accessibilityHint={
+        aiProcessing.inbox ? aiProcessingHint : hasUnread ? t('inbox.filters.unread') : undefined
+      }
       onPress={() => navigateToInbox({ kind: 'inbox' })}
       icon={
         <TabletSidebarNavIcon

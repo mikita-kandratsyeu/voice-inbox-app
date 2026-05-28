@@ -3,6 +3,8 @@ import { useMemo } from 'react';
 import { useRecordStore } from '@/entities/record';
 
 export type TabletSidebarNavCounts = {
+  inbox: number;
+  unread: number;
   pinned: number;
   archived: number;
   openTasks: number;
@@ -13,6 +15,8 @@ export function useTabletSidebarNavCounts(): TabletSidebarNavCounts {
   const records = useRecordStore((s) => s.records);
 
   return useMemo(() => {
+    let inbox = 0;
+    let unread = 0;
     let pinned = 0;
     let archived = 0;
     let openTasks = 0;
@@ -22,6 +26,10 @@ export function useTabletSidebarNavCounts(): TabletSidebarNavCounts {
       if (record.status === 'archived') {
         archived += 1;
         continue;
+      }
+      inbox += 1;
+      if (record.status === 'unread') {
+        unread += 1;
       }
       if (record.isPinned) {
         pinned += 1;
@@ -36,7 +44,7 @@ export function useTabletSidebarNavCounts(): TabletSidebarNavCounts {
       }
     }
 
-    return { pinned, archived, openTasks, folderCounts };
+    return { inbox, unread, pinned, archived, openTasks, folderCounts };
   }, [records]);
 }
 
