@@ -20,6 +20,8 @@ export type MeetingDialogueUserPromptInput = {
     summary?: string;
   };
   taskExtractionHint?: string;
+  /** When true and segments exist, skip the verbatim full-transcript block (smaller/faster prompt). */
+  omitFullTranscript?: boolean;
 };
 
 function formatClockFromMs(ms: number): string {
@@ -139,11 +141,21 @@ export function buildMeetingDialogueUserContent(input: MeetingDialogueUserPrompt
   }
 
   const flat = input.plainTranscript.trim();
-  parts.push(
-    input.segments && input.segments.length > 0
-      ? ['## Full transcript (verbatim; primary source)', flat].join('\n')
-      : ['## Transcript', flat].join('\n'),
-  );
+  const hasSegments = Boolean(input.segments && input.segments.length > 0);
+  if (!(input.omitFullTranscript && hasSegments)) {
+    parts.push(
+      hasSegments
+        ? ['## Full transcript (verbatim; primary source)', flat].join('\n')
+        : ['## Transcript', flat].join('\n'),
+    );
+  } else {
+    parts.push(
+      [
+        '## Transcript source',
+        'Use the timestamped segment lines above as the primary source. Do not invent lines outside those segments.',
+      ].join('\n'),
+    );
+  }
 
   let body = parts.filter(Boolean).join('\n\n');
   if (body.length > USER_CONTENT_MAX_CHARS) {

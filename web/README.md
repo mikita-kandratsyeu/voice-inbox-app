@@ -72,6 +72,8 @@ Without Redis, an in-memory store is used (suitable for development).
 
 **OpenRouter generation recovery:** Cloud chat calls stream from OpenRouter and persist `X-Generation-Id` in Redis (`or-gen:{jobId}`). If the worker times out while OpenRouter still completes the generation, QStash retries resume via `GET /api/v1/generation/content` instead of starting a duplicate chat request when possible.
 
+**Meeting speaker breakdown (long notes):** Summarize completes first (`status: done`). For Pro meeting notes longer than ~10k chars, a second QStash job (`meeting_dialogue`, own 300s) fills `meetingDialogueMarkdown`; the app keeps polling while `meetingDialogueStatus` is `processing`. Shorter meetings still use an inline second pass in the summarize worker.
+
 ---
 
 ## Localization

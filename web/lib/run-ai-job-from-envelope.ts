@@ -4,10 +4,11 @@ import { runAiJob } from '@/lib/ai-job-runners';
 import { acquireJobLock, releaseJobLock } from '@/lib/ai-job-lock';
 import { deleteJobPayload, getJobPayload } from '@/lib/ai-job-payload';
 import { isRetryableAiJobError } from '@/lib/ai-job-retry';
+import { deleteMeetingJobPayload, getMeetingJobPayload } from '@/lib/meeting-job-payload';
 import { getOpenRouterPendingGeneration } from '@/lib/openrouter-recovery';
 import { getMessage, saveMessage } from '@/lib/redis';
 import type { AiJobEnvelope } from '@/types/ai-job';
-import type { Message } from '@/types';
+import type { Message, MeetingDialogueStatus } from '@/types';
 
 export type RunAiJobFromEnvelopeResult =
   | { ok: true; skipped?: boolean; skipReason?: 'done' | 'lock' | 'cancelled' }
@@ -29,7 +30,22 @@ export async function runAiJobFromEnvelope(
 
   if (!options?.skipIdempotency) {
     const existing = await getMessage(jobId);
-    if (existing?.status === 'done') {
+
+    if (operation === 'meeting_dialogue') {
+      if (existing?.status === 'done') {
+        const mdStatus = (existing as { meetingDialogueStatus?: MeetingDialogueStatus })
+          .meetingDialogueStatus;
+        if (mdStatus === 'done' || mdStatus === 'failed' || mdStatus === 'skipped') {
+          return { ok: true, skipped: true, skipReason: 'done' };
+        }
+      } else {
+        return {
+          ok: false,
+          error: 'Meeting dialogue requires completed summarize message',
+          retryable: true,
+        };
+      }
+    } else if (existing?.status === 'done') {
       return { ok: true, skipped: true, skipReason: 'done' };
     }
 
@@ -68,7 +84,10 @@ export async function runAiJobFromEnvelope(
       return { ok: true, skipped: true, skipReason: 'cancelled' };
     }
 
-    const payload = await getJobPayload(jobId);
+    const payload =
+      operation === 'meeting_dialogue'
+        ? await getMeetingJobPayload(jobId)
+        : await getJobPayload(jobId);
     if (!payload || payload.operation !== operation) {
       return {
         ok: false,
@@ -83,7 +102,11 @@ export async function runAiJobFromEnvelope(
       await aiJobRunContext.run({ jobId, messageTtlSeconds: envelope.messageTtlSeconds }, () =>
         runAiJob(payload),
       );
-      await deleteJobPayload(jobId);
+      if (operation === 'meeting_dialogue') {
+        await deleteMeetingJobPayload(jobId);
+      } else {
+        await deleteJobPayload(jobId);
+      }
       console.info(
         '[AI job worker]',
         JSON.stringify({ operation, jobId, phase: 'done', durationMs: Date.now() - started }),

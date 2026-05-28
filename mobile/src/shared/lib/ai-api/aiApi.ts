@@ -113,6 +113,7 @@ type MessageResponse =
       keyPhrases?: string[];
       nextSteps?: string[];
       meetingDialogueMarkdown?: string;
+      meetingDialogueStatus?: 'processing' | 'done' | 'failed' | 'skipped';
       reasoning?: string;
       tokenUsage?: { prompt: number; completion: number };
     }
@@ -284,6 +285,11 @@ export async function pollAiMessage(
     (json) => {
       const msg = json as MessageResponse;
       if (msg.status === 'done') {
+        const mdStatus = (msg as { meetingDialogueStatus?: string }).meetingDialogueStatus;
+        if (mdStatus === 'processing') {
+          return 'processing';
+        }
+
         const suggested =
           'suggestedTitle' in msg &&
           isString((msg as { suggestedTitle?: string }).suggestedTitle) &&

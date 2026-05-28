@@ -1,5 +1,8 @@
 export type MessageStatus = 'processing' | 'done' | 'error';
 
+/** Async meeting-dialogue pass (Pro meeting notes); set when `status` is already `done`. */
+export type MeetingDialogueStatus = 'processing' | 'done' | 'failed' | 'skipped';
+
 export type RecordClassification = 'personal' | 'work' | 'meeting' | 'idea' | 'other';
 
 export type AiResult = {
@@ -36,6 +39,7 @@ export type Message =
       keyPhrases?: string[];
       nextSteps?: string[];
       meetingDialogueMarkdown?: string;
+      meetingDialogueStatus?: MeetingDialogueStatus;
       reasoning?: string;
       tokenUsage?: { prompt: number; completion: number };
     }

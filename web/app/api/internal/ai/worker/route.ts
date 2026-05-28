@@ -16,6 +16,7 @@ const AI_OPERATIONS = new Set<string>([
   'digest',
   'translate',
   'folder_auto_organize',
+  'meeting_dialogue',
 ]);
 
 function parseEnvelope(body: unknown): AiJobEnvelope | null {

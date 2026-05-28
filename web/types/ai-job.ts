@@ -53,4 +53,26 @@ export type AutoOrganizeJobPayload = {
   clientUserAgent?: string | null;
 };
 
-export type AiJobPayload = SummarizeJobPayload | AskJobPayload | AutoOrganizeJobPayload;
+/** Second QStash worker: pseudo-diarization after main summarize `done`. */
+export type MeetingDialogueJobPayload = {
+  operation: 'meeting_dialogue';
+  jobId: string;
+  deviceId: string;
+  messageTtlSeconds: number;
+  transcript: string;
+  model: string;
+  meetingDialogueSystemPrompt: string;
+  meetingDialogueAux?: MeetingDialogueAuxPayload;
+  phase1: {
+    suggestedTitle: string;
+    keyPhrases?: string[];
+    summary: string;
+  };
+  clientUserAgent?: string | null;
+};
+
+export type AiJobPayload =
+  | SummarizeJobPayload
+  | AskJobPayload
+  | AutoOrganizeJobPayload
+  | MeetingDialogueJobPayload;

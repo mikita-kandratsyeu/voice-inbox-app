@@ -10,6 +10,8 @@ export const AI_OPERATIONS = [
   'digest',
   'translate',
   'folder_auto_organize',
+  /** Internal QStash worker only (not sent from mobile headers). */
+  'meeting_dialogue',
 ] as const;
 
 export type AiOperation = (typeof AI_OPERATIONS)[number];

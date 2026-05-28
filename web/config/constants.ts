@@ -69,6 +69,8 @@ export const MESSAGE_TTL_SECONDS = 3600; // default / max selectable (1 hour)
 export const MESSAGE_KEY_PREFIX = 'msg:';
 /** Staging payload for async AI workers (QStash / after). */
 export const JOB_PAYLOAD_KEY_PREFIX = 'job-payload:';
+/** Staging payload for the async meeting-dialogue worker (separate from summarize payload). */
+export const MEETING_JOB_PAYLOAD_KEY_PREFIX = 'job-payload:meeting:';
 /** QStash delivery retries when publishing async AI jobs. */
 export const AI_JOB_QSTASH_RETRIES = 3;
 /** Worker exclusive lock (`job-lock:*`). Slightly above App Router `maxDuration` (300s). */
@@ -81,8 +83,13 @@ export const OPENROUTER_PENDING_GENERATION_TTL_SECONDS = JOB_LOCK_TTL_SECONDS;
 export const OPENROUTER_GENERATION_RECOVERY_POLL_INTERVAL_MS = 2_000;
 /** Poll `/generation/content` after transport failure (within one worker attempt). */
 export const OPENROUTER_GENERATION_RECOVERY_MAX_WAIT_MS = 180_000;
-/** Skip second meeting-dialogue OpenRouter pass above this transcript size (main pass often nears 300s). */
-export const SUMMARIZE_MEETING_DIALOGUE_MAX_TRANSCRIPT_CHARS = 10_000;
+/**
+ * Above this size, meeting dialogue runs in a separate QStash job (own 300s).
+ * At or below: inline second pass in the summarize worker (faster for short meetings).
+ */
+export const SUMMARIZE_MEETING_DIALOGUE_INLINE_MAX_TRANSCRIPT_CHARS = 10_000;
+/** When using timed segments, omit duplicate full transcript from the meeting prompt above this size. */
+export const MEETING_DIALOGUE_OMIT_FULL_TRANSCRIPT_CHARS = 8_000;
 /** Set on `msg:{id}` when the user cancels; worker must not run LLM or send push. */
 export const AI_JOB_CANCELLED_ERROR = 'Cancelled by user';
 export const JOB_CANCELLED_KEY_PREFIX = 'job-cancelled:';
