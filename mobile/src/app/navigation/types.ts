@@ -19,9 +19,7 @@ export type InboxStackParamList = {
 };
 
 export type RootStackParamList = {
-  Main:
-    | undefined
-    | { screen: 'SettingsRoot'; params?: NavigatorScreenParams<SettingsStackParamList> };
+  Main: undefined | NavigatorScreenParams<BottomTabParamList>;
   RecordModal: undefined;
   TextNoteModal: undefined;
   RecordingDetail: { record: VoiceRecord };

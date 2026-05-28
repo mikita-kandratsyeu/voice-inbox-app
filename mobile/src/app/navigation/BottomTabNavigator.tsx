@@ -25,6 +25,7 @@ import {
 import { InboxNavigator } from './InboxNavigator';
 import { SettingsNavigator } from './SettingsNavigator';
 import { TabletShellLayout } from './tablet';
+import { TabletTabBarBridge } from './tablet/TabletTabBarBridge';
 import type { BottomTabParamList } from './types';
 import {
   AnimatedTabButton,
@@ -120,7 +121,9 @@ export const BottomTabNavigator = () => {
   const tabNavigator = (
     <Tab.Navigator
       screenOptions={screenOptions}
-      tabBar={isTablet ? () => null : (props) => <EvenlySpacedBottomTabBar {...props} />}
+      tabBar={(props) =>
+        isTablet ? <TabletTabBarBridge {...props} /> : <EvenlySpacedBottomTabBar {...props} />
+      }
     >
       <Tab.Screen
         name="Inbox"

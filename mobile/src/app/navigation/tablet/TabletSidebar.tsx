@@ -1,4 +1,3 @@
-import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Archive, Inbox, Pin, Plus } from 'lucide-react-native';
@@ -21,7 +20,7 @@ import { SettingsPlanStatusCard } from '@/screens/settings/ui/SettingsPlanStatus
 import { useColors } from '@/shared/config';
 import { hapticSelection, resolveDisplayFolderColor } from '@/shared/lib';
 
-import type { BottomTabParamList, RootStackParamList } from '../types';
+import type { RootStackParamList } from '../types';
 import {
   requestTabletInboxSidebarNav,
   requestTabletOpenCreateFolder,
@@ -37,14 +36,15 @@ import {
   TabletSidebarSectionLabel,
 } from './TabletSidebarNavItem';
 import { getTabletSidebarTheme } from './tabletSidebarTheme';
+import { navigateMainTab, useTabletTabNavigationStore } from './tabletTabNavigation';
 
 export const TabletSidebar = () => {
   const { t } = useTranslation();
   const color = useColors();
   const theme = getTabletSidebarTheme(color);
   const insets = useSafeAreaInsets();
-  const tabNavigation = useNavigation<BottomTabNavigationProp<BottomTabParamList>>();
   const rootNavigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const currentTab = useTabletTabNavigationStore((s) => s.activeTab);
   const { importAudioFile, isImporting } = useImportAudioFile();
   const { isProActive } = useProEntitlement();
   const monetizationMode = getMonetizationMode();
@@ -64,8 +64,6 @@ export const TabletSidebar = () => {
 
   const filterStatus = useTabletInboxSidebarStore((s) => s.filterStatus);
 
-  const tabIndex = tabNavigation.getState().index;
-  const currentTab = tabNavigation.getState().routes[tabIndex]?.name ?? 'Inbox';
   const isSettingsTab = currentTab === 'SettingsRoot';
 
   const inboxSelection = useMemo(() => {
@@ -80,17 +78,17 @@ export const TabletSidebar = () => {
     (target: Parameters<typeof requestTabletInboxSidebarNav>[0]) => {
       hapticSelection();
       if (currentTab !== 'Inbox') {
-        tabNavigation.navigate('Inbox');
+        navigateMainTab('Inbox');
       }
       requestTabletInboxSidebarNav(target);
     },
-    [currentTab, tabNavigation],
+    [currentTab],
   );
 
   const openSettings = useCallback(() => {
     hapticSelection();
-    tabNavigation.navigate('SettingsRoot');
-  }, [tabNavigation]);
+    navigateMainTab('SettingsRoot');
+  }, []);
 
   const handleNewRecording = useCallback(() => {
     hapticSelection();
@@ -232,7 +230,7 @@ export const TabletSidebar = () => {
                   onPress={() => {
                     hapticSelection();
                     if (currentTab !== 'Inbox') {
-                      tabNavigation.navigate('Inbox');
+                      navigateMainTab('Inbox');
                     }
                     requestTabletOpenCreateFolder();
                   }}
@@ -269,7 +267,7 @@ export const TabletSidebar = () => {
                   onLongPress={() => {
                     hapticSelection();
                     if (currentTab !== 'Inbox') {
-                      tabNavigation.navigate('Inbox');
+                      navigateMainTab('Inbox');
                     }
                     requestTabletOpenEditFolder(folder.id);
                   }}
