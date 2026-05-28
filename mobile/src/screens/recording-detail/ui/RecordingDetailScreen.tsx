@@ -13,7 +13,7 @@ import { FolderPickerSheet, useFolderStore } from '@/entities/folder';
 import { type RecordingMark, type RecordingStatus, useRecordStore } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
 import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
-import { useAiProcessing } from '@/features/ai-processing';
+import { resumeCloudSummarizeForRecord, useAiProcessing } from '@/features/ai-processing';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import { useRecordActions } from '@/features/record-actions';
@@ -173,6 +173,10 @@ export const RecordingDetailScreen = () => {
   useEffect(() => {
     void hydrateRecordDetails(recordId);
   }, [hydrateRecordDetails, recordId]);
+
+  useEffect(() => {
+    resumeCloudSummarizeForRecord(recordId);
+  }, [recordId]);
 
   const { startTranscription, cancelTranscription } = useTranscription();
   const { generateSummary, extractTasks, cancelAiGeneration } = useAiProcessing();

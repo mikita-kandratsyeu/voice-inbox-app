@@ -27,6 +27,7 @@ export async function pollGetLoop<T>(
   parseResponse: (json: unknown) => PollGetParseOutcome<T>,
   options?: AiFetchOptions & {
     headers?: Record<string, string>;
+    /** Overrides default AI poll budget (e.g. resume after app restart). */
     timeoutMs?: number;
   },
 ): Promise<PollGetLoopResult<T>> {

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
 import { useRecordStore } from '@/entities/record';
+import { scheduleResumeAllPendingCloudSummarize } from '@/features/ai-processing';
 import { localLlmModelDownloader } from '@/features/model-manager/lib/local-llm-download';
 import { whisperModelDownloader } from '@/features/model-manager/lib/whisper-download';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
@@ -59,6 +60,7 @@ export function useAppForegroundLifecycle(): void {
           lastHeartbeatAt = 0;
           sendForegroundHeartbeat();
           lastForegroundAt = now;
+          scheduleResumeAllPendingCloudSummarize();
         }
         foregroundInterval = setInterval(maybeNotifyForeground, HEARTBEAT_INTERVAL_MS);
       } else {

@@ -60,8 +60,23 @@ export const recordAskAiTable = sqliteTable('record_ask_ai', {
   updatedAt: text('updatedAt').notNull(),
 });
 
+/** Cloud summarize job to resume after app kill (one row per record). */
+export const cloudAiPendingTable = sqliteTable(
+  'cloud_ai_pending',
+  {
+    recordId: text('recordId').primaryKey(),
+    jobId: text('jobId').notNull(),
+    syncToken: text('syncToken'),
+    expectAsyncMeetingDialogue: integer('expectAsyncMeetingDialogue').default(0).notNull(),
+    expiresAtMs: integer('expiresAtMs').notNull(),
+    updatedAt: text('updatedAt').notNull(),
+  },
+  (t) => [index('idx_cloud_ai_pending_jobId').on(t.jobId)],
+);
+
 export type RecordRow = typeof recordsTable.$inferSelect;
 export type RecordInsert = typeof recordsTable.$inferInsert;
 export type FolderRow = typeof foldersTable.$inferSelect;
 export type FolderInsert = typeof foldersTable.$inferInsert;
 export type RecordAskAiRow = typeof recordAskAiTable.$inferSelect;
+export type CloudAiPendingRow = typeof cloudAiPendingTable.$inferSelect;

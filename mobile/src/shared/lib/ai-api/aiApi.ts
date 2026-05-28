@@ -4,8 +4,12 @@ import { isNumber, isString } from '@/shared/lib/type-guards';
 
 import { type AiFetchOptions, aiRequestCancelledFailure, isAbortLikeError } from './abort';
 import { headersForAiOperation } from './aiOperation';
-import { aiPollTimeoutMs } from './constants';
-import { parseMessagePollState, type ServerMeetingDialogueStatus } from './parseMessageResponse';
+import { aiPollTimeoutMs, aiResumePollTimeoutMs } from './constants';
+import {
+  type ParsedMessagePollState,
+  parseMessagePollState,
+  type ServerMeetingDialogueStatus,
+} from './parseMessageResponse';
 import { pollGetLoop } from './pollGetLoop';
 import { readResponseJson } from './responseJson';
 
@@ -249,15 +253,88 @@ export async function claimAiBonus(): Promise<ClaimAiBonusResult> {
   }
 }
 
-export async function pollAiMessage(
-  id: string,
-  syncToken?: string,
-  options?: PollAiMessageOptions,
-): Promise<AiMessageResult> {
+function aiMessagePollHeaders(syncToken?: string): Record<string, string> {
   const headers: Record<string, string> = {};
   if (syncToken) {
     headers['x-upstash-sync-token'] = syncToken;
   }
+  return headers;
+}
+
+/** Single GET for resume path — avoids poll loop when the job is already done on the server. */
+export async function fetchAiMessageOnce(
+  id: string,
+  syncToken?: string,
+): Promise<
+  | { ok: true; state: ParsedMessagePollState }
+  | { ok: false; notFound: true }
+  | { ok: false; error: string }
+> {
+  const url = `${getWebApiUrl()}/api/messages/${encodeURIComponent(id)}`;
+  try {
+    const response = await fetchWithAuth(url, { headers: aiMessagePollHeaders(syncToken) });
+    if (response.status === 404) {
+      return { ok: false, notFound: true };
+    }
+    if (!response.ok) {
+      return { ok: false, error: `HTTP ${response.status}` };
+    }
+    const body = await readResponseJson(response);
+    if (!body.ok) {
+      return { ok: false, error: body.error };
+    }
+    return { ok: true, state: parseMessagePollState(body.data) };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Network error';
+    return { ok: false, error: message };
+  }
+}
+
+export type ResumePollAiMessageOptions = Omit<PollAiMessageOptions, 'signal'> & {
+  expiresAtMs: number;
+};
+
+/** Poll with a shorter deadline for jobs resumed after app restart. */
+export async function resumePollAiMessage(
+  id: string,
+  syncToken: string | undefined,
+  options: ResumePollAiMessageOptions,
+): Promise<AiMessageResult> {
+  const once = await fetchAiMessageOnce(id, syncToken);
+  if (once.ok) {
+    if (once.state.kind === 'done') {
+      if (once.state.meetingDialogueStatus === 'processing') {
+        // fall through to limited poll for speakers
+      } else {
+        return {
+          ok: true,
+          result: once.state.result,
+          meetingDialogueStatus: once.state.meetingDialogueStatus,
+        };
+      }
+    } else if (once.state.kind === 'error') {
+      return { ok: false, error: once.state.error };
+    }
+  } else if ('notFound' in once && once.notFound) {
+    return { ok: false, error: 'AI result expired' };
+  }
+
+  return pollAiMessage(id, syncToken, {
+    ...options,
+    expectAsyncMeetingDialogue: options.expectAsyncMeetingDialogue,
+    timeoutMs: aiResumePollTimeoutMs(
+      options.expectAsyncMeetingDialogue === true,
+      options.expiresAtMs,
+    ),
+  });
+}
+
+export async function pollAiMessage(
+  id: string,
+  syncToken?: string,
+  options?: PollAiMessageOptions & { timeoutMs?: number },
+): Promise<AiMessageResult> {
+  const headers = aiMessagePollHeaders(syncToken);
 
   const url = `${getWebApiUrl()}/api/messages/${id}`;
   const expectAsyncMeetingDialogue = options?.expectAsyncMeetingDialogue === true;
@@ -299,7 +376,7 @@ export async function pollAiMessage(
     {
       signal: options?.signal,
       headers,
-      timeoutMs: aiPollTimeoutMs(expectAsyncMeetingDialogue),
+      timeoutMs: options?.timeoutMs ?? aiPollTimeoutMs(expectAsyncMeetingDialogue),
     },
   );
 
