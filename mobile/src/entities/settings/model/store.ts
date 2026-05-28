@@ -60,6 +60,8 @@ const KEYS = {
   AUTO_AI_AFTER_TRANSCRIPTION: 'settings.autoAiAfterTranscription',
   AUTO_ARCHIVE_ENABLED: 'settings.autoArchiveEnabled',
   AUTO_ARCHIVE_AFTER_DAYS: 'settings.autoArchiveAfterDays',
+  TASK_DEADLINE_NOTIFICATIONS_ENABLED: 'settings.taskDeadlineNotificationsEnabled',
+  AI_PROCESSING_ALERTS_ENABLED: 'settings.aiProcessingAlertsEnabled',
   CLOUD_AI_THIRD_PARTY_CONSENT: 'settings.cloudAiThirdPartyConsentAccepted',
   CLOUD_AI_KV_TTL_SECONDS: 'settings.cloudAiKvTtlSeconds',
   SHOW_SUMMARY_REASONING_IN_NOTES: 'settings.showSummaryReasoningInNotes',
@@ -241,6 +243,17 @@ const getStoredAutoArchiveAfterDays = (): AutoArchiveAfterDays => {
   return parseAutoArchiveAfterDays(storage.getString(KEYS.AUTO_ARCHIVE_AFTER_DAYS));
 };
 
+const getStoredTaskDeadlineNotificationsEnabled = (): boolean => {
+  return storage.getString(KEYS.TASK_DEADLINE_NOTIFICATIONS_ENABLED) === 'true';
+};
+
+const getStoredAiProcessingAlertsEnabled = (): boolean => {
+  if (!storage.contains(KEYS.AI_PROCESSING_ALERTS_ENABLED)) {
+    return true;
+  }
+  return storage.getString(KEYS.AI_PROCESSING_ALERTS_ENABLED) === 'true';
+};
+
 const getStoredSummaryStyle = (): SummaryStyle => {
   const val = storage.getString(KEYS.SUMMARY_STYLE);
 
@@ -335,6 +348,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   autoAiAfterTranscription: getStoredAutoAiAfterTranscription(),
   autoArchiveEnabled: getStoredAutoArchiveEnabled(),
   autoArchiveAfterDays: getStoredAutoArchiveAfterDays(),
+  taskDeadlineNotificationsEnabled: getStoredTaskDeadlineNotificationsEnabled(),
+  aiProcessingAlertsEnabled: getStoredAiProcessingAlertsEnabled(),
   cloudAiThirdPartyConsentAccepted: getStoredCloudAiThirdPartyConsentAccepted(),
   cloudAiKvTtlSeconds: getStoredCloudAiKvTtlSeconds(),
   showSummaryReasoningInNotes: getStoredShowSummaryReasoningInNotes(),
@@ -524,6 +539,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => {
     storage.set(KEYS.AUTO_ARCHIVE_AFTER_DAYS, String(value));
     set({ autoArchiveAfterDays: value });
+  },
+
+  setTaskDeadlineNotificationsEnabled: (value: boolean) => {
+    storage.set(KEYS.TASK_DEADLINE_NOTIFICATIONS_ENABLED, String(value));
+    set({ taskDeadlineNotificationsEnabled: value });
+  },
+
+  setAiProcessingAlertsEnabled: (value: boolean) => {
+    storage.set(KEYS.AI_PROCESSING_ALERTS_ENABLED, String(value));
+    set({ aiProcessingAlertsEnabled: value });
   },
 
   setCloudAiThirdPartyConsentAccepted: (value: boolean) => {

@@ -802,13 +802,28 @@
     "pushRegisterFailed": "Не удалось зарегистрировать пуши. Проверьте интернет и попробуйте снова.",
     "permissionsSection": "Разрешения",
     "permissionMicrophone": "Микрофон",
-    "permissionMicrophoneDesc": "Необходим для записи голоса",
-    "permissionNotifications": "Уведомления",
-    "permissionNotificationsDesc": "Оповещения о готовности генерации",
+    "permissionMicrophoneDesc": "Необходим для записи голоса.",
+    "permissionNotifications": "Оповещения об ИИ",
+    "permissionNotificationsDesc": "Когда в облаке завершится расшифровка или обработка.",
     "permissionGranted": "Разрешено",
     "permissionDenied": "Отказано",
     "permissionNotDetermined": "Не задано",
     "permissionOpenSettings": "Открыть настройки",
+    "notificationsEntry": "Уведомления",
+    "notificationsEnabledCount": "{{count}} вкл.",
+    "notificationsScreen": {
+      "title": "Уведомления",
+      "intro": "Сначала разрешите уведомления в системных настройках. Напоминания о сроках можно отключить отдельно ниже. Оповещения об ИИ следуют системному разрешению.",
+      "sectionTitle": "Типы оповещений",
+      "aiAlertsDeniedTitle": "Включите уведомления",
+      "aiAlertsDeniedMessage": "Разрешите уведомления для Voice Inbox AI в системных настройках, чтобы получать оповещения об ИИ.",
+      "taskRemindersDeniedTitle": "Включите уведомления",
+      "taskRemindersDeniedMessage": "Разрешите уведомления для Voice Inbox AI в системных настройках, чтобы получать напоминания о сроках.",
+      "systemDeniedHint": "Уведомления выключены в системных настройках. Включите их там и вернитесь сюда."
+    },
+    "taskDeadlineNotifications": "Напоминания о сроках",
+    "taskDeadlineNotificationsHint": "На этом устройстве в день и время срока — офлайн, не оповещения об ИИ.",
+    "taskDeadlineNotificationsChannel": "Сроки задач",
     "planStatus": {
       "freeTitle": "Бесплатный план",
       "freeSidebarTitle": "Перейти на Pro",
@@ -1378,11 +1393,11 @@
     "allow": "Разрешить",
     "deny": "Отказать",
     "onboardingTitle": "Разрешения",
-    "onboardingDesc": "Микрофон нужен для записи голосовых заметок. Уведомления сообщат, когда расшифровка или обработка ИИ завершены.",
+    "onboardingDesc": "Микрофон нужен для голосовых заметок. Уведомления — о готовности ИИ и сроках задач.",
     "micLabel": "Микрофон",
-    "micDesc": "Необходим для записи голоса",
+    "micDesc": "Необходим для записи голоса.",
     "notificationsLabel": "Уведомления",
-    "notificationsDesc": "Сообщим, когда генерация будет готова",
+    "notificationsDesc": "О готовности ИИ и напоминания о сроках.",
     "granted": "Разрешено",
     "denied": "Отказано",
     "notDetermined": "Продолжить",
@@ -1478,6 +1493,11 @@
       "sat": "СБ",
       "sun": "ВС"
     }
+  },
+  "taskDeadlineNotifications": {
+    "fallbackTitle": "Срок задачи",
+    "body": "Задача из «{{recordTitle}}»",
+    "bodyWithTime": "Срок в {{time}} · «{{recordTitle}}»"
   },
   "classification": {
     "personal": "Личное",

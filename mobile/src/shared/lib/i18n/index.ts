@@ -51,6 +51,12 @@ function schedulePushLocaleSync(): void {
     .catch(() => {});
 }
 
+function scheduleTaskDeadlineNotificationLocaleSync(): void {
+  void import('@/features/task-deadline-notifications')
+    .then((mod) => mod.syncAllTaskDeadlineNotifications())
+    .catch(() => {});
+}
+
 export function applyAppLanguage(): void {
   const locale = getEffectiveLocale();
   dayjs.locale(resolveDayjsLocale(locale));
@@ -58,6 +64,7 @@ export function applyAppLanguage(): void {
   if (languageChanged) {
     i18n.changeLanguage(locale);
     schedulePushLocaleSync();
+    scheduleTaskDeadlineNotificationLocaleSync();
   }
 }
 

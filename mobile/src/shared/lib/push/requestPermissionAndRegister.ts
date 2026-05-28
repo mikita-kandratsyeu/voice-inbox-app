@@ -6,6 +6,7 @@ import {
   requestPermission,
 } from '@react-native-firebase/messaging';
 
+import { useSettingsStore } from '@/entities/settings';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 import { i18n } from '@/shared/lib/i18n';
@@ -37,6 +38,7 @@ export type PushPermissionStatus = 'granted' | 'denied' | 'not-determined';
 
 export async function ensurePushRegistered(): Promise<void> {
   if (!IS_IOS) return;
+  if (!useSettingsStore.getState().aiProcessingAlertsEnabled) return;
 
   const status = await checkPushPermission();
   if (status !== 'granted') return;
@@ -138,4 +140,24 @@ export async function sendTokenToBackend(token: string): Promise<boolean> {
     }
     return false;
   }
+}
+
+export async function enableAiProcessingAlerts(): Promise<boolean> {
+  if (!IS_IOS) return false;
+
+  const current = await checkPushPermission();
+  const granted = current === 'granted' || (await requestPushPermission()) === 'granted';
+  if (!granted) return false;
+
+  useSettingsStore.getState().setAiProcessingAlertsEnabled(true);
+  lastRegisteredToken = null;
+  await ensurePushRegistered();
+  return true;
+}
+
+export async function disableAiProcessingAlerts(): Promise<void> {
+  useSettingsStore.getState().setAiProcessingAlertsEnabled(false);
+  lastRegisteredToken = null;
+  lastRegisteredLocale = null;
+  lastRegisterTime = 0;
 }

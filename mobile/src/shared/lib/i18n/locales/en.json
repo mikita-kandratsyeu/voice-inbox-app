@@ -787,13 +787,28 @@
     "pushRegisterFailed": "Failed to register for push notifications. Check your internet connection and try again.",
     "permissionsSection": "Permissions",
     "permissionMicrophone": "Microphone",
-    "permissionMicrophoneDesc": "Required for voice recording",
-    "permissionNotifications": "Notifications",
-    "permissionNotificationsDesc": "Get notified when generation is ready",
+    "permissionMicrophoneDesc": "Required for voice recording.",
+    "permissionNotifications": "AI processing alerts",
+    "permissionNotificationsDesc": "When cloud transcription or AI processing finishes.",
     "permissionGranted": "Granted",
     "permissionDenied": "Denied",
     "permissionNotDetermined": "Not set",
     "permissionOpenSettings": "Open Settings",
+    "notificationsEntry": "Notifications",
+    "notificationsEnabledCount": "{{count}} on",
+    "notificationsScreen": {
+      "title": "Notifications",
+      "intro": "Allow notifications in system settings first. Task due reminders can be turned off separately below. AI alerts follow the system permission.",
+      "sectionTitle": "Alert types",
+      "aiAlertsDeniedTitle": "Turn on notifications",
+      "aiAlertsDeniedMessage": "Allow notifications for Voice Inbox AI in your device settings to get processing alerts.",
+      "taskRemindersDeniedTitle": "Turn on notifications",
+      "taskRemindersDeniedMessage": "Allow notifications for Voice Inbox AI in your device settings to get task due reminders.",
+      "systemDeniedHint": "Notifications are turned off in system settings. Enable them there, then return here."
+    },
+    "taskDeadlineNotifications": "Task due reminders",
+    "taskDeadlineNotificationsHint": "On this device when a deadline arrives — works offline, not AI alerts.",
+    "taskDeadlineNotificationsChannel": "Task due reminders",
     "planStatus": {
       "freeTitle": "Free plan",
       "freeSidebarTitle": "Upgrade to Pro",
@@ -1355,11 +1370,11 @@
     "allow": "Allow",
     "deny": "Deny",
     "onboardingTitle": "Allow permissions",
-    "onboardingDesc": "Microphone access lets you record voice notes. Notifications tell you when transcription or AI processing has finished.",
+    "onboardingDesc": "Microphone access lets you record voice notes. Notifications cover AI processing and task due dates.",
     "micLabel": "Microphone",
-    "micDesc": "Required for voice recording",
+    "micDesc": "Required for voice recording.",
     "notificationsLabel": "Notifications",
-    "notificationsDesc": "We’ll let you know when the AI has finished processing",
+    "notificationsDesc": "AI processing finished and task due reminders.",
     "granted": "Granted",
     "denied": "Denied",
     "notDetermined": "Continue",
@@ -1455,6 +1470,11 @@
       "sat": "Sat",
       "sun": "Sun"
     }
+  },
+  "taskDeadlineNotifications": {
+    "fallbackTitle": "Task due",
+    "body": "From {{recordTitle}}",
+    "bodyWithTime": "Due at {{time}} · {{recordTitle}}"
   },
   "classification": {
     "personal": "Personal",

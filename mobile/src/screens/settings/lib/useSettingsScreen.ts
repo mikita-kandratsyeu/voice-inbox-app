@@ -37,7 +37,6 @@ import {
   type ImportResult,
 } from '@/features/sync-data';
 import { useAppTheme, useColors } from '@/shared/config';
-import { IS_IOS } from '@/shared/lib';
 import { getAiUsage } from '@/shared/lib/ai-api';
 import { fetchProAccountPortalUrl } from '@/shared/lib/ai-api/proLicenseApi';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
@@ -55,11 +54,6 @@ import {
   openAppSettings,
   requestMicPermission,
 } from '@/shared/lib/permissions';
-import {
-  checkPushPermission,
-  type PushPermissionStatus,
-  requestPushPermission,
-} from '@/shared/lib/push';
 import { getWhisperLabel } from '@/shared/lib/whisper';
 
 import type { AutomationFeatureKind } from '../ui/AutomationComingSoonSheet';
@@ -109,7 +103,6 @@ export function useSettingsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [isUpdatingEmbeddings, setIsUpdatingEmbeddings] = useState(false);
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
-  const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
   const [automationSheet, setAutomationSheet] = useState<AutomationFeatureKind | null>(null);
   const [autoArchiveDelaySheetVisible, setAutoArchiveDelaySheetVisible] = useState(false);
   const {
@@ -209,10 +202,6 @@ export function useSettingsScreen() {
   const refreshPermissions = useCallback(async () => {
     const mic = await checkMicPermission();
     setMicStatus(mic);
-    if (IS_IOS) {
-      const push = await checkPushPermission();
-      setPushStatus(push);
-    }
   }, []);
 
   useEffect(() => {
@@ -470,17 +459,6 @@ export function useSettingsScreen() {
     );
   }, [t]);
 
-  const handleNotificationsPress = useCallback(async () => {
-    if (!IS_IOS) return;
-    if (pushStatus === 'denied') {
-      await openAppSettings();
-      return;
-    }
-    if (pushStatus === 'granted') return;
-    const status = await requestPushPermission();
-    setPushStatus(status);
-  }, [pushStatus]);
-
   const handleAutoArchiveDelayPress = useCallback(() => {
     setAutoArchiveDelaySheetVisible(true);
   }, []);
@@ -614,9 +592,7 @@ export function useSettingsScreen() {
     appLanguage,
     appTheme,
     micStatus,
-    pushStatus,
     handleMicPermission,
-    handleNotificationsPress,
     isAppLockEnabled,
     handleRateApp,
     automationSheet,

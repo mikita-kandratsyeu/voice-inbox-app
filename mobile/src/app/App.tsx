@@ -28,6 +28,7 @@ import {
   useResetAccentWhenNotPro,
   useResetProOnlyAiModelWhenNotPro,
 } from '@/features/pro-license';
+import { useTaskDeadlineNotificationHandlers } from '@/features/task-deadline-notifications/model/useTaskDeadlineNotificationHandlers';
 import { TranscriptionResumePrompt } from '@/features/transcription';
 import {
   BootSplashVisibleProvider,
@@ -97,6 +98,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
   useInitDeepLinking();
   usePushNotifications({ onNotification: onPushData });
   usePushNotificationOpenedApp(onPushData);
+  useTaskDeadlineNotificationHandlers();
   useAndroidLayoutAnimation();
   useYandexMobileAdsInit();
   useAppBootstrap(onPushData, { onBootstrapReady, onCriticalError });

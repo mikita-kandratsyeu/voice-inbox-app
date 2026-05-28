@@ -10,6 +10,7 @@ import {
   AppLockSetupScreen,
   DigestScreen,
   ImportRecordsScreen,
+  NotificationsScreen,
   PrivateAiModeScreen,
   SettingsScreen,
   StorageDetailsScreen,
@@ -89,6 +90,11 @@ export const SettingsNavigator = () => {
         <Stack.Screen
           name="Support"
           component={SupportScreen}
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="Notifications"
+          component={NotificationsScreen}
           options={{ animation: 'slide_from_right' }}
         />
         <Stack.Screen

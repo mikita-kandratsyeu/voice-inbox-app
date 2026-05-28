@@ -1,11 +1,11 @@
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { TFunction } from 'i18next';
 import { Bell, Mic } from 'lucide-react-native';
 import React from 'react';
 
+import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { Colors } from '@/shared/config';
-import { IS_IOS } from '@/shared/lib';
 import type { MicPermissionStatus } from '@/shared/lib/permissions';
-import type { PushPermissionStatus } from '@/shared/lib/push';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { SettingsPermissionStatusBadge } from '../SettingsPermissionStatusBadge';
@@ -13,19 +13,17 @@ import { SettingsPermissionStatusBadge } from '../SettingsPermissionStatusBadge'
 type Props = {
   color: Colors;
   t: TFunction;
+  navigation: NativeStackNavigationProp<SettingsStackParamList>;
   micStatus: MicPermissionStatus | null;
-  pushStatus: PushPermissionStatus | null;
   onMicPress: () => void;
-  onNotificationsPress: () => void;
 };
 
 export const SettingsPermissionsSection = ({
   color,
   t,
+  navigation,
   micStatus,
-  pushStatus,
   onMicPress,
-  onNotificationsPress,
 }: Props) => (
   <SettingsSection title={t('settings.permissionsSection')}>
     <SettingsRow
@@ -45,27 +43,12 @@ export const SettingsPermissionsSection = ({
         ) : null
       }
       isFirst
-      isLast={!IS_IOS}
     />
-    {IS_IOS && (
-      <SettingsRow
-        label={t('settings.permissionNotifications')}
-        leftIcon={<Bell size={20} color={color.accent.primary} strokeWidth={1.8} />}
-        onPress={pushStatus === 'granted' ? undefined : onNotificationsPress}
-        showChevron={pushStatus !== 'granted'}
-        rightSlot={
-          pushStatus !== null ? (
-            <SettingsPermissionStatusBadge
-              status={pushStatus}
-              color={color}
-              labelGranted={t('settings.permissionGranted')}
-              labelDenied={t('settings.permissionDenied')}
-              labelNotDetermined={t('settings.permissionNotDetermined')}
-            />
-          ) : null
-        }
-        isLast
-      />
-    )}
+    <SettingsRow
+      label={t('settings.notificationsEntry')}
+      leftIcon={<Bell size={20} color={color.accent.primary} strokeWidth={1.8} />}
+      onPress={() => navigation.navigate('Notifications')}
+      isLast
+    />
   </SettingsSection>
 );

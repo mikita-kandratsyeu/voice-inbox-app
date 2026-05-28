@@ -99,6 +99,8 @@ export type SettingsState = {
   autoAiAfterTranscription: boolean;
   autoArchiveEnabled: boolean;
   autoArchiveAfterDays: AutoArchiveAfterDays;
+  taskDeadlineNotificationsEnabled: boolean;
+  aiProcessingAlertsEnabled: boolean;
   cloudAiThirdPartyConsentAccepted: boolean;
   cloudAiKvTtlSeconds: number;
   /** Smart mode: show optional reasoning block on the summary tab. */
@@ -131,6 +133,8 @@ export type SettingsState = {
   setAutoAiAfterTranscription: (value: boolean) => void;
   setAutoArchiveEnabled: (value: boolean) => void;
   setAutoArchiveAfterDays: (value: AutoArchiveAfterDays) => void;
+  setTaskDeadlineNotificationsEnabled: (value: boolean) => void;
+  setAiProcessingAlertsEnabled: (value: boolean) => void;
   setCloudAiThirdPartyConsentAccepted: (value: boolean) => void;
   setCloudAiKvTtlSeconds: (value: number) => void;
   setShowSummaryReasoningInNotes: (value: boolean) => void;

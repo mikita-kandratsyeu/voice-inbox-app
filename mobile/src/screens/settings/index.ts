@@ -6,6 +6,7 @@ export { AppearanceScreen } from './ui/AppearanceScreen';
 export { AppLockSetupScreen } from './ui/AppLockSetupScreen';
 export { DigestScreen } from './ui/DigestScreen';
 export { ImportRecordsScreen } from './ui/ImportRecordsScreen';
+export { NotificationsScreen } from './ui/NotificationsScreen';
 export { PrivateAiModeScreen } from './ui/PrivateAiModeScreen';
 export { SettingsScreen } from './ui/SettingsScreen';
 export { StorageDetailsScreen } from './ui/StorageDetailsScreen';

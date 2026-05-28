@@ -45,6 +45,10 @@ import {
   importData,
   type ImportResult,
 } from '@/features/sync-data';
+import {
+  checkTaskNotificationPermission,
+  enableTaskDeadlineNotifications,
+} from '@/features/task-deadline-notifications';
 import { BackupPasswordSheet } from '@/screens/settings/ui/BackupPasswordSheet';
 import type { Colors } from '@/shared/config';
 import { getWebsiteUrl, useAppTheme, useColors } from '@/shared/config';
@@ -59,8 +63,8 @@ import {
 } from '@/shared/lib/permissions';
 import {
   checkPushPermission,
+  enableAiProcessingAlerts,
   type PushPermissionStatus,
-  requestPushPermission,
 } from '@/shared/lib/push';
 import { Button } from '@/shared/ui';
 
@@ -495,13 +499,17 @@ const PermissionsSlide = ({
   screenWidth,
 }: PermissionsSlideProps) => {
   const [micStatus, setMicStatus] = useState<MicPermissionStatus | null>(null);
-  const [pushStatus, setPushStatus] = useState<PushPermissionStatus | null>(null);
+  const [notificationStatus, setNotificationStatus] = useState<PushPermissionStatus | null>(null);
 
   useEffect(() => {
     checkMicPermission().then(setMicStatus);
-    if (IS_IOS) {
-      checkPushPermission().then(setPushStatus);
-    }
+    void (async () => {
+      if (IS_IOS) {
+        setNotificationStatus(await checkPushPermission());
+        return;
+      }
+      setNotificationStatus(await checkTaskNotificationPermission());
+    })();
   }, []);
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -530,13 +538,17 @@ const PermissionsSlide = ({
     setMicStatus(granted ? 'granted' : 'denied');
   };
 
-  const handlePushPress = async () => {
-    if (pushStatus === 'denied') {
+  const handleNotificationsPress = async () => {
+    if (notificationStatus === 'denied') {
       await openAppSettings();
       return;
     }
-    const status = await requestPushPermission();
-    setPushStatus(status);
+
+    const granted = IS_IOS
+      ? await enableAiProcessingAlerts()
+      : await enableTaskDeadlineNotifications();
+
+    setNotificationStatus(granted ? 'granted' : 'denied');
   };
 
   return (
@@ -585,8 +597,8 @@ const PermissionsSlide = ({
             icon={<Bell size={22} color={color.onboarding.shield.color} strokeWidth={2} />}
             label={t('permissions.notificationsLabel')}
             description={t('permissions.notificationsDesc')}
-            status={pushStatus}
-            onPress={handlePushPress}
+            status={notificationStatus}
+            onPress={handleNotificationsPress}
             color={color}
             t={t}
           />

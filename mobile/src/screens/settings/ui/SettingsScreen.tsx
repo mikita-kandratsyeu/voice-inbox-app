@@ -161,10 +161,9 @@ export const SettingsScreen = () => {
           <SettingsPermissionsSection
             color={settings.color}
             t={settings.t}
+            navigation={settings.navigation}
             micStatus={settings.micStatus}
-            pushStatus={settings.pushStatus}
             onMicPress={settings.handleMicPermission}
-            onNotificationsPress={settings.handleNotificationsPress}
           />
           <SettingsDeviceSection
             color={settings.color}

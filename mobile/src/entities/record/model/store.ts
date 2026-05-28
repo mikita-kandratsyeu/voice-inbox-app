@@ -73,6 +73,12 @@ const updateRecord = (
 let recordListLoadInFlight: Promise<void> | null = null;
 const recordDetailsHydrateById = new Map<string, Promise<void>>();
 
+function scheduleTaskDeadlineNotificationSync(): void {
+  void import('@/features/task-deadline-notifications')
+    .then((mod) => mod.scheduleTaskDeadlineNotificationSync())
+    .catch(() => {});
+}
+
 type RecordStore = {
   records: RecordListItem[];
   hasActiveAiJobs: boolean;
@@ -178,6 +184,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
           hasActiveAiJobs: computeHasActiveAiJobs(merged),
           isLoaded: true,
         });
+        scheduleTaskDeadlineNotificationSync();
       } finally {
         recordListLoadInFlight = null;
       }
@@ -235,6 +242,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
       const next = s.records.filter((r) => r.id !== id);
       return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
     });
+    scheduleTaskDeadlineNotificationSync();
   },
 
   restoreRecordFromTrash: async (id) => {
@@ -261,6 +269,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
       const next = s.records.filter((r) => r.id !== id);
       return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
     });
+    scheduleTaskDeadlineNotificationSync();
   },
 
   purgeExpiredTrashRecords: async () => {
@@ -415,6 +424,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     set((s) => ({
       records: updateRecord(s.records, id, { tasks, tasksStatus: 'done', tasksError: undefined }),
     }));
+    scheduleTaskDeadlineNotificationSync();
   },
 
   updateTags: async (id, tags) => {
@@ -476,6 +486,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
         tasksError: undefined,
       }),
     }));
+    scheduleTaskDeadlineNotificationSync();
   },
 
   updateTranslation: async (id, translatedTranscript, translationLanguage) => {
@@ -513,6 +524,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     set((s) => ({
       records: updateRecord(s.records, id, { tasks: updatedTasks }),
     }));
+    scheduleTaskDeadlineNotificationSync();
   },
 
   clearAudioPath: async (id) => {
