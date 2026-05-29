@@ -38,8 +38,8 @@ import {
 } from '@/features/sync-data';
 import { useAppTheme, useColors } from '@/shared/config';
 import { getAiUsage } from '@/shared/lib/ai-api';
-import { subscribeAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { fetchProAccountPortalUrl } from '@/shared/lib/ai-api/proLicenseApi';
+import { subscribeAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import {
   getBackupEncryptExportEnabled,
