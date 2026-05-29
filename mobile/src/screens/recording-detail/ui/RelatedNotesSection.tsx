@@ -181,7 +181,7 @@ export const RelatedNotesSection = ({ recordId, color }: RelatedNotesSectionProp
   if (relatedNotes.length === 0) return null;
 
   const handlePress = (record: VoiceRecord) => {
-    navigation.navigate('RecordingDetail', { record });
+    navigation.push('RecordingDetail', { record });
   };
 
   return (
