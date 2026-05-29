@@ -1,18 +1,19 @@
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { Check } from 'lucide-react-native';
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TouchableOpacity } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { useColors } from '@/shared/config';
+import { useAppTheme, useColors } from '@/shared/config';
+import { resolveFolderColorForCurrentScheme } from '@/shared/lib';
 import { AppBottomSheetModal, useBottomSheetContentPadding } from '@/shared/ui';
 
-import { FolderLucideIcon } from '../lib/folderLucideIcons';
 import type { Folder } from '../model/types';
+import { FolderPickerRow } from './FolderPickerRow';
 
 type FolderPickerSheetProps = {
   visible: boolean;
   title: string;
+  subtitle?: string;
   folders: Folder[];
   currentFolderId?: string | null;
   onClose: () => void;
@@ -22,6 +23,7 @@ type FolderPickerSheetProps = {
 export const FolderPickerSheet = ({
   visible,
   title,
+  subtitle,
   folders,
   currentFolderId,
   onClose,
@@ -30,7 +32,13 @@ export const FolderPickerSheet = ({
   const showChecks = currentFolderId !== undefined;
   const { t } = useTranslation();
   const color = useColors();
+  const scheme = useAppTheme();
   const contentPadding = useBottomSheetContentPadding(20);
+
+  const sortedFolders = useMemo(
+    () => [...folders].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
+    [folders],
+  );
 
   const pickInbox = useCallback(() => {
     onSelect(null);
@@ -45,6 +53,8 @@ export const FolderPickerSheet = ({
     [onSelect, onClose],
   );
 
+  const rowCount = 1 + sortedFolders.length;
+
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
       <BottomSheetScrollView
@@ -57,79 +67,66 @@ export const FolderPickerSheet = ({
       >
         <Text
           style={{
+            color: color.text.primary,
             fontSize: 17,
             fontWeight: '600',
-            color: color.text.primary,
-            textAlign: 'center',
-            marginBottom: 16,
+            marginBottom: subtitle ? 4 : 16,
             marginTop: 4,
+            textAlign: 'center',
           }}
         >
           {title}
         </Text>
-        <TouchableOpacity
-          onPress={pickInbox}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={t('folders.pickerInboxOnly')}
-          accessibilityState={{ selected: showChecks && currentFolderId == null }}
+        {subtitle ? (
+          <Text
+            style={{
+              color: color.text.secondary,
+              fontSize: 14,
+              lineHeight: 20,
+              marginBottom: 16,
+              textAlign: 'center',
+            }}
+          >
+            {subtitle}
+          </Text>
+        ) : null}
+        <View
           style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingVertical: 14,
-            paddingHorizontal: 14,
+            backgroundColor: color.background.card,
+            borderColor: color.border.default,
             borderRadius: 12,
-            marginBottom: 8,
-            backgroundColor: color.background.tertiary,
+            borderWidth: 1,
+            overflow: 'hidden',
           }}
         >
-          <Text
-            style={{ flex: 1, fontSize: 16, color: color.text.primary, fontWeight: '500' }}
-            numberOfLines={1}
-          >
-            {t('folders.pickerInboxOnly')}
-          </Text>
-          {showChecks && currentFolderId == null && (
-            <Check size={20} color={color.accent.primary} strokeWidth={2.5} />
-          )}
-        </TouchableOpacity>
-        {folders.map((folder) => {
-          const selected = showChecks && currentFolderId === folder.id;
-          return (
-            <TouchableOpacity
-              key={folder.id}
-              onPress={() => pickFolder(folder.id)}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel={folder.name}
-              accessibilityState={{ selected }}
-              style={{
-                alignItems: 'center',
-                backgroundColor: color.background.tertiary,
-                borderRadius: 12,
-                flexDirection: 'row',
-                gap: 10,
-                marginBottom: 8,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-              }}
-            >
-              <FolderLucideIcon
+          <FolderPickerRow
+            label={t('folders.pickerInboxOnly')}
+            subtitle={t('tabs.inbox')}
+            color={color}
+            inbox
+            selected={showChecks && currentFolderId == null}
+            showSelectionCheck={showChecks}
+            isLast={rowCount === 1}
+            onPress={pickInbox}
+          />
+          {sortedFolders.map((folder, index) => {
+            const tintHex = resolveFolderColorForCurrentScheme(folder.color, scheme);
+            const selected = showChecks && currentFolderId === folder.id;
+            return (
+              <FolderPickerRow
+                key={folder.id}
+                label={folder.name}
+                color={color}
                 iconId={folder.icon}
-                size={22}
-                color={folder.color}
-                strokeWidth={2}
+                tintHex={tintHex}
+                selected={selected}
+                showSelectionCheck={showChecks}
+                isLast={index === sortedFolders.length - 1}
+                onPress={() => pickFolder(folder.id)}
               />
-              <Text
-                style={{ flex: 1, fontSize: 16, color: color.text.primary, fontWeight: '500' }}
-                numberOfLines={1}
-              >
-                {folder.name}
-              </Text>
-              {selected && <Check size={20} color={color.accent.primary} strokeWidth={2.5} />}
-            </TouchableOpacity>
-          );
-        })}
+            );
+          })}
+        </View>
       </BottomSheetScrollView>
     </AppBottomSheetModal>
   );

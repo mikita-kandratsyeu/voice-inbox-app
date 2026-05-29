@@ -1674,6 +1674,7 @@
     "colorProBody": "С подпиской Pro можно настроить визуальный стиль приложения: акценты, папки и цветовые элементы интерфейса.",
     "pickerInboxOnly": "Только во входящих",
     "moveToFolderTitle": "Переместить в папку",
+    "moveToFolderSubtitle": "Заметка будет перемещена в выбранную папку",
     "moveToFolderMenu": "Переместить в папку",
     "detailInbox": "Входящие",
     "detailFolderRemoved": "Папка недоступна",

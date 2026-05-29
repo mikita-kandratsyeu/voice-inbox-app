@@ -22,7 +22,7 @@ import { getWebsiteUrl, useAppTheme, useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
 import {
-  Button,
+  HeaderIconButton,
   PLAN_PAYWALL_FEATURE_LINE_HEIGHT,
   PlanPaywallProChip,
   SheetFooterButtons,
@@ -363,7 +363,7 @@ export function SettingsPlanPaywallSheet({
             paddingTop: insets.top + 2,
           }}
         >
-          <Button
+          <HeaderIconButton
             iconOnly
             variant="icon"
             size="md"

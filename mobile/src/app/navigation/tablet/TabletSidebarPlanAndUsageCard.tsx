@@ -16,10 +16,10 @@ import Animated, {
 import { type MonetizationMode } from '@/features/app-storefront';
 import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
-import { logAnalyticsEvent } from '@/shared/lib/analytics';
-import { resolveDayjsLocale } from '@/shared/lib/date';
 import { withAlphaHex } from '@/shared/lib';
 import type { AiUsage } from '@/shared/lib/ai-api';
+import { logAnalyticsEvent } from '@/shared/lib/analytics';
+import { resolveDayjsLocale } from '@/shared/lib/date';
 import { SkeletonPulse } from '@/shared/ui';
 
 const CARD_RADIUS = 14;
@@ -37,13 +37,7 @@ type Props = {
   onOpenAiUsageDashboard: () => void;
 };
 
-function PlanCardGradient({
-  color,
-  isProActive,
-}: {
-  color: Colors;
-  isProActive: boolean;
-}) {
+function PlanCardGradient({ color, isProActive }: { color: Colors; isProActive: boolean }) {
   const strength = isProActive
     ? { base: '14', topOrb: '30', bottomOrb: '1a' }
     : { base: '0f', topOrb: '22', bottomOrb: '12' };
@@ -200,11 +194,7 @@ export function TabletSidebarPlanAndUsageCard({
       return { borderColor: `${accent}2A` };
     }
     return {
-      borderColor: interpolateColor(
-        borderPulse.value,
-        [0, 1],
-        [`${accent}28`, `${accent}5A`],
-      ),
+      borderColor: interpolateColor(borderPulse.value, [0, 1], [`${accent}28`, `${accent}5A`]),
     };
   }, [isProActive, accent]);
 
@@ -230,9 +220,7 @@ export function TabletSidebarPlanAndUsageCard({
   }
 
   const statusBadge =
-    monetizationMode === 'coming_soon' && !isProActive
-      ? t('settings.planStatus.soonBadge')
-      : null;
+    monetizationMode === 'coming_soon' && !isProActive ? t('settings.planStatus.soonBadge') : null;
 
   const isExhausted = usage ? usage.remaining === 0 : false;
   const progressPercent =
@@ -282,12 +270,7 @@ export function TabletSidebarPlanAndUsageCard({
             {planTitle}
           </Text>
           {statusBadge != null ? (
-            <View
-              style={[
-                styles.badge,
-                { backgroundColor: withAlphaHex(accent, 0.14) },
-              ]}
-            >
+            <View style={[styles.badge, { backgroundColor: withAlphaHex(accent, 0.14) }]}>
               <Text style={[styles.badgeText, { color: accent }]}>{statusBadge}</Text>
             </View>
           ) : null}

@@ -234,6 +234,7 @@ export const InboxScreen = () => {
         <FolderPickerSheet
           visible={folderPickerVisible}
           title={t('folders.moveToFolderTitle')}
+          subtitle={t('folders.moveToFolderSubtitle')}
           folders={folders}
           onClose={handleCloseBatchFolderPicker}
           onSelect={handleBatchFolderPicked}

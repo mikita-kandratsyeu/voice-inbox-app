@@ -624,6 +624,7 @@ export const RecordingDetailScreen = () => {
         <FolderPickerSheet
           visible={folderPickerVisible}
           title={t('folders.moveToFolderTitle')}
+          subtitle={t('folders.moveToFolderSubtitle')}
           folders={folders}
           currentFolderId={liveRecord.folderId ?? null}
           onClose={onCloseFolderPicker}

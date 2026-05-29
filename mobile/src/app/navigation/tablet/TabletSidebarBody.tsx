@@ -12,7 +12,6 @@ import type { AiUsage } from '@/shared/lib/ai-api';
 
 import type { TabletInboxSidebarTarget } from './tabletInboxNavBridge';
 import { requestTabletOpenEditFolder } from './tabletInboxNavBridge';
-import { TabletSidebarPlanAndUsageCard } from './TabletSidebarPlanAndUsageCard';
 import { TabletSidebarComposeRow } from './TabletSidebarComposeRow';
 import {
   TabletSidebarFoldersExpandedHeader,
@@ -21,6 +20,7 @@ import {
 } from './TabletSidebarFoldersSection';
 import { TabletSidebarFooter } from './TabletSidebarFooter';
 import { TabletSidebarNavIcon, TabletSidebarNavItem } from './TabletSidebarNavItem';
+import { TabletSidebarPlanAndUsageCard } from './TabletSidebarPlanAndUsageCard';
 import type { TabletSidebarTheme } from './tabletSidebarTheme';
 import { navigateMainTab } from './tabletTabNavigation';
 import type { TabletSidebarAiProcessing } from './useTabletSidebarAiProcessing';

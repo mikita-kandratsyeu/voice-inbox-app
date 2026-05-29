@@ -205,6 +205,7 @@ export const BatchActionBar = ({
             iconOnly
             variant="icon"
             size="md"
+            shape="circle"
             icon={<X size={22} color={color.text.secondary} strokeWidth={2.2} />}
             color={color}
             onPress={handleCancel}
