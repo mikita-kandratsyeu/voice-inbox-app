@@ -8,9 +8,9 @@ const TABLET_MIN_WIDTH = 768;
 /** Readable column for settings, onboarding, pickers (matches portrait cap). */
 const TABLET_FORM_MAX_WIDTH = 720;
 /** Wider lists on full-screen routes (no tablet shell). */
-const TABLET_WIDE_MAX_WIDTH = 1080;
+const TABLET_WIDE_MAX_WIDTH = 1280;
 const TABLET_FORM_HORIZONTAL_INSET = 32;
-const TABLET_WIDE_HORIZONTAL_INSET = 48 * 2;
+const TABLET_WIDE_HORIZONTAL_INSET = 24;
 
 export type TabletContentMaxWidthVariant = 'form' | 'wide';
 

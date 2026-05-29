@@ -22,7 +22,7 @@ import {
   useNetworkStatus,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
-import { Button, ScreenHeader } from '@/shared/ui';
+import { Button, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 import { AskAIComposer } from './AskAIComposer';
 import { AskMainContent } from './AskMainContent';
@@ -179,7 +179,7 @@ export const AskAIScreen = () => {
   const clearHistoryHeaderButton = useMemo(
     () =>
       canClearAskHistory ? (
-        <Button
+        <HeaderIconButton
           iconOnly
           variant="icon"
           size="md"

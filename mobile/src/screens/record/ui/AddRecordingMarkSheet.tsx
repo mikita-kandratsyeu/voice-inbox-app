@@ -32,7 +32,7 @@ import {
   IS_IOS,
   isDarkSurfaceColor,
 } from '@/shared/lib';
-import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
 const MARK_LABEL_MAX_CHARS = 280;
 const MARK_SHEET_KEYBOARD_BOTTOM_PADDING = 24;
@@ -284,34 +284,14 @@ export const AddRecordingMarkSheet = ({
               accessibilityLabel={t('record.markLabelPlaceholder')}
             />
 
-            <View className="flex-row gap-2.5">
-              <Button
-                variant="secondary"
-                label={t('common.goBack')}
-                onPress={handleLabelBack}
-                activeOpacity={0.8}
-                className="min-w-0 flex-1"
-                color={c}
-                containerStyle={{
-                  backgroundColor: c.background.tertiary,
-                  borderRadius: 14,
-                }}
-                accessibilityLabel={t('common.goBack')}
-              />
-              <Button
-                variant="primary"
-                label={t('record.markSave')}
-                onPress={handleLabelSave}
-                activeOpacity={0.85}
-                className="min-w-0 flex-1"
-                color={c}
-                containerStyle={{
-                  backgroundColor: c.accent.primary,
-                  borderRadius: 14,
-                }}
-                accessibilityLabel={t('record.markSave')}
-              />
-            </View>
+            <SheetFooterButtons
+              className="w-full"
+              color={c}
+              primaryLabel={t('record.markSave')}
+              onPrimaryPress={handleLabelSave}
+              secondaryLabel={t('common.goBack')}
+              onSecondaryPress={handleLabelBack}
+            />
           </>
         )}
       </BottomSheetView>

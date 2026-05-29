@@ -5,7 +5,7 @@ import { Dimensions, ScrollView, Text } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 
 import { useColors } from '@/shared/config';
-import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
 import { usePushSheet } from './usePushSheet';
 
@@ -109,14 +109,11 @@ export const PushNotificationSheet = () => {
           </ScrollView>
         )}
 
-        <Button
-          label={t('push.policyUpdateAck')}
-          variant="primary"
-          size="lg"
-          fullWidth
+        <SheetFooterButtons
+          className="mt-4 w-full"
           color={color}
-          onPress={hide}
-          containerStyle={{ marginTop: 16 }}
+          primaryLabel={t('push.policyUpdateAck')}
+          onPrimaryPress={hide}
         />
       </BottomSheetView>
     </AppBottomSheetModal>

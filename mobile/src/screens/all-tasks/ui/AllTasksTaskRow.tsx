@@ -32,6 +32,7 @@ const CARD_RADIUS = 16;
 type AllTasksTaskRowProps = {
   item: TaskWithRecord;
   color: Colors;
+  compactHorizontalMargin?: boolean;
   openNoteLabel: string;
   onToggle: (recordId: string, taskId: string, currentlyDone: boolean) => void;
   onOpenNote: (recordId: string) => void;
@@ -44,6 +45,7 @@ type AllTasksTaskRowProps = {
 export const AllTasksTaskRow = memo(function AllTasksTaskRow({
   item,
   color,
+  compactHorizontalMargin = false,
   openNoteLabel,
   onToggle,
   onOpenNote,
@@ -140,7 +142,7 @@ export const AllTasksTaskRow = memo(function AllTasksTaskRow({
 
   return (
     <View
-      className="mx-4 mb-4"
+      className={compactHorizontalMargin ? 'mx-3 mb-4' : 'mx-4 mb-4'}
       style={[
         cardShadowStyle,
         { borderRadius: CARD_RADIUS, backgroundColor: color.background.card },

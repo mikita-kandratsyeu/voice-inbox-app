@@ -196,7 +196,9 @@
     "createTask": "Создать задачу",
     "createTaskA11y": "Создать задачу",
     "pickNoteTitle": "Выберите заметку",
+    "pickNoteSubtitle": "Задача будет добавлена в выбранную заметку",
     "pickNoteEmpty": "Нет заметок для задачи. Сначала создайте заметку во Входящих.",
+    "pickNoteMoreTags": "+{{count}}",
     "createTaskNoNotesTitle": "Пока нет заметок",
     "createTaskNoNotesMessage": "Добавьте голосовую или текстовую заметку во Входящих, затем создайте задачу здесь.",
     "sections": {

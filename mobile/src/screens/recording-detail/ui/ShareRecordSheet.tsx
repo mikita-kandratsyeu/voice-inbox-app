@@ -11,7 +11,7 @@ import {
 } from '@/features/share-record';
 import { EmailBodyFormatPicker } from '@/features/share-record/ui/EmailBodyFormatPicker';
 import { type Colors, useColors } from '@/shared/config';
-import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
 function ShareExportFormatChip({
   format,
@@ -345,38 +345,20 @@ export const ShareRecordSheet = ({
             accessibilityLabel={t('share.emailPlaceholder')}
           />
 
-          <View className="mt-1 flex-row gap-3">
-            <Button
-              variant="secondary"
-              label={t('common.goBack')}
-              onPress={handleCancelEmail}
-              onPressIn={handleCancelEmail}
-              activeOpacity={0.8}
-              className="min-w-0 flex-1"
-              color={color}
-              disabled={isSendingEmail}
-              containerStyle={{
-                backgroundColor: color.background.tertiary,
-                borderRadius: 12,
-              }}
-              accessibilityLabel={t('common.goBack')}
-            />
-            <Button
-              variant="primary"
-              label={t('share.sendEmail')}
-              onPress={handleSendEmail}
-              activeOpacity={0.85}
-              className="min-w-0 flex-1"
-              color={color}
-              disabled={!canSendEmail}
-              loading={isSendingEmail}
-              containerStyle={{
-                backgroundColor: color.accent.primary,
-                borderRadius: 12,
-              }}
-              accessibilityLabel={t('share.sendEmail')}
-            />
-          </View>
+          <SheetFooterButtons
+            className="mt-1 w-full"
+            color={color}
+            primaryLabel={t('share.sendEmail')}
+            onPrimaryPress={handleSendEmail}
+            onPrimaryPressIn={handleSendEmail}
+            primaryDisabled={!canSendEmail}
+            primaryLoading={isSendingEmail}
+            primaryAccessibilityLabel={t('share.sendEmail')}
+            secondaryLabel={t('common.goBack')}
+            onSecondaryPress={handleCancelEmail}
+            onSecondaryPressIn={handleCancelEmail}
+            secondaryDisabled={isSendingEmail}
+          />
         </BottomSheetScrollView>
       ) : (
         <BottomSheetView

@@ -7,7 +7,7 @@ import { View } from 'react-native';
 import type { BatchSelectState } from '@/features/batch-select';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { Button } from '@/shared/ui';
+import { Button, HeaderIconButton } from '@/shared/ui';
 
 type InboxScreenHeaderRightProps = {
   color: Colors;
@@ -113,7 +113,7 @@ function InboxScreenHeaderRightInner({
 
   const searchButton =
     recordsLength > 0 ? (
-      <Button
+      <HeaderIconButton
         iconOnly
         variant="icon"
         size="md"
@@ -146,7 +146,7 @@ function InboxScreenHeaderRightInner({
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         {searchButton}
         {!isPrivateMode ? (
-          <Button
+          <HeaderIconButton
             iconOnly
             variant="icon"
             size="md"
@@ -168,7 +168,7 @@ function InboxScreenHeaderRightInner({
             hitSlop={HEADER_ICON_HIT_SLOP}
           />
         ) : null}
-        <Button
+        <HeaderIconButton
           iconOnly
           variant="icon"
           size="md"
@@ -186,7 +186,7 @@ function InboxScreenHeaderRightInner({
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
       {searchButton}
       {!hideCreateTextNote ? (
-        <Button
+        <HeaderIconButton
           iconOnly
           variant="icon"
           size="md"
@@ -210,7 +210,7 @@ function InboxScreenHeaderRightInner({
           if (id === 'selectNotes') onEnterBatchMode();
         }}
       >
-        <Button
+        <HeaderIconButton
           iconOnly
           variant="icon"
           size="md"

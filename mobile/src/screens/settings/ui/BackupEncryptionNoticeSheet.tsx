@@ -6,7 +6,7 @@ import { Text, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
 import { withAlphaHex } from '@/shared/lib';
-import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
 type Props = {
   visible: boolean;
@@ -55,25 +55,13 @@ export function BackupEncryptionNoticeSheet({ visible, onClose, onAcknowledge }:
           </Text>
         </View>
 
-        <Button
-          variant="primary"
-          size="lg"
-          fullWidth
-          label={t('settings.backupEncryption.noticeConfirm')}
-          onPress={onAcknowledge}
+        <SheetFooterButtons
           color={c}
-          activeOpacity={0.85}
+          primaryLabel={t('settings.backupEncryption.noticeConfirm')}
+          onPrimaryPress={onAcknowledge}
+          secondaryLabel={t('common.cancel')}
+          onSecondaryPress={onClose}
         />
-        <View style={{ marginTop: 10 }}>
-          <Button
-            variant="secondary"
-            size="lg"
-            fullWidth
-            label={t('common.cancel')}
-            onPress={onClose}
-            color={c}
-          />
-        </View>
       </BottomSheetView>
     </AppBottomSheetModal>
   );

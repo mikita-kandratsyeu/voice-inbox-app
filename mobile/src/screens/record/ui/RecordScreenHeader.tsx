@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button } from '@/shared/ui';
+import { HeaderIconButton } from '@/shared/ui';
 
 import type { RecordingState } from '../config';
 import { getHeaderTitle } from '../config';
@@ -22,7 +22,7 @@ export const RecordScreenHeader = ({ state, onClose }: RecordScreenHeaderProps) 
 
   return (
     <View className="flex-row items-center justify-between px-4 pb-3" style={topStyle}>
-      <Button
+      <HeaderIconButton
         iconOnly
         size="md"
         icon={<X size={22} color="#ffffff" strokeWidth={2.5} />}

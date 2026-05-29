@@ -6,7 +6,7 @@ import { Text, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
-import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
 export type AutomationFeatureKind =
   | 'autoTranscribe'
@@ -133,15 +133,11 @@ export function AutomationComingSoonSheet({
             {body}
           </Text>
         </View>
-        <Button
-          variant="primary"
-          size="lg"
-          fullWidth
-          label={t('common.tryPro')}
-          onPress={onUpgradePress ?? onClose}
+        <SheetFooterButtons
           color={c}
-          activeOpacity={0.85}
-          accessibilityLabel={t('common.tryPro')}
+          primaryLabel={t('common.tryPro')}
+          onPrimaryPress={onUpgradePress ?? onClose}
+          primaryAccessibilityLabel={t('common.tryPro')}
         />
       </BottomSheetView>
     </AppBottomSheetModal>

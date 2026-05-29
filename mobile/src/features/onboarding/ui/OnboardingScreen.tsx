@@ -66,7 +66,7 @@ import {
   enableAiProcessingAlerts,
   type PushPermissionStatus,
 } from '@/shared/lib/push';
-import { Button } from '@/shared/ui';
+import { BUTTON_BORDER_RADIUS, Button } from '@/shared/ui';
 
 import { getHasSeenOnboarding, getTermsAgreedAt, setTermsAgreedAt } from '../lib/onboardingStorage';
 import { getOnboardingSlides, type OnboardingSlideContent } from '../model/constants';
@@ -314,7 +314,7 @@ const AnimatedNextButton = ({
       style={[
         {
           width: '100%',
-          borderRadius: 9999,
+          borderRadius: BUTTON_BORDER_RADIUS,
           minHeight: 52,
           overflow: 'hidden',
           backgroundColor: slideColors[0],

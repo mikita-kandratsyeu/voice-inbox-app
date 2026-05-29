@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { Archive, CalendarDays, Sparkles, Zap } from 'lucide-react-native';
+import { Archive, CalendarDays, ClipboardList, Zap } from 'lucide-react-native';
 import React from 'react';
 import { Switch, View } from 'react-native';
 
@@ -79,7 +79,7 @@ export const SettingsAutomationSection = ({
       <SettingsRow
         label={t('settings.autoAiAfterTranscription')}
         subtitle={t('settings.autoAiAfterTranscriptionHint')}
-        leftIcon={<Sparkles size={20} color={color.accent.primary} strokeWidth={1.8} />}
+        leftIcon={<ClipboardList size={20} color={color.accent.primary} strokeWidth={1.8} />}
         rightSlot={
           <View
             className="flex-row items-center gap-2"

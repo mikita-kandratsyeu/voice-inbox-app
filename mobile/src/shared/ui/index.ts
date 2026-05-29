@@ -14,12 +14,15 @@ export {
   type AppBottomSheetModalProps,
   getAppBottomSheetBackgroundStyle,
   getAppBottomSheetHandleStyle,
+  SheetFooterButtons,
+  type SheetFooterButtonsProps,
   useAppBottomSheetBackdrop,
   useAppBottomSheetChrome,
   useBottomSheetContentPadding,
 } from './bottom-sheet';
-export type { ButtonProps, ButtonSize, ButtonVariant } from './Button';
-export { Button } from './Button';
+export type { ButtonProps, ButtonShape, ButtonSize, ButtonVariant } from './Button';
+export { BUTTON_BORDER_RADIUS, Button } from './Button';
+export { HeaderIconButton } from './HeaderIconButton';
 export { EmptyState } from './EmptyState';
 export { FrostedBottomChrome } from './FrostedBottomChrome';
 export type { FrostedChromeBackgroundProps } from './FrostedChromeBackground';

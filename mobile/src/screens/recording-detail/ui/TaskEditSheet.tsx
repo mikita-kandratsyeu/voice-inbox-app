@@ -15,7 +15,7 @@ import {
   formatTaskDeadlineTimeForDisplay,
   parseTaskDeadlineTime,
 } from '@/shared/lib/taskDeadlineTimeDisplay';
-import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
 const TASK_TEXT_MAX_CHARS = 500;
 const DEADLINE_ROW_MIN_HEIGHT = 48;
@@ -43,8 +43,10 @@ type TaskEditSheetProps = {
   }) => boolean;
   sheetTitleKey?: string;
   placeholderKey?: string;
-  /** Shown below Save — e.g. return to note picker when creating from All Tasks. */
+  /** Secondary action in the footer row (left of Save). */
   onBack?: () => void;
+  /** i18n key for the secondary footer label when `onBack` is set. @default common.goBack */
+  footerSecondaryLabelKey?: string;
 };
 
 const PRIORITIES: NonNullable<TaskItem['priority']>[] = ['low', 'medium', 'high'];
@@ -157,6 +159,7 @@ export function TaskEditSheet({
   sheetTitleKey = 'tasks.editTaskSheetTitle',
   placeholderKey = 'recordingDetail.addTaskPlaceholder',
   onBack,
+  footerSecondaryLabelKey = 'common.goBack',
 }: TaskEditSheetProps) {
   const { t, i18n } = useTranslation();
   const color = useColors();
@@ -216,6 +219,16 @@ export function TaskEditSheet({
     setDatePickerOpen(false);
     setTimePickerOpen(false);
   }, [visible, initialText, initialDeadline, initialDeadlineTime, initialPriority]);
+
+  const handleFooterSecondary = useCallback(() => {
+    setDatePickerOpen(false);
+    setTimePickerOpen(false);
+    if (onBack) {
+      onBack();
+      return;
+    }
+    onClose();
+  }, [onBack, onClose]);
 
   const handleSave = useCallback(() => {
     const trimmed = draft.split('\0').join('').trim();
@@ -684,54 +697,15 @@ export function TaskEditSheet({
             </View>
           </View>
         )}
-        <View className="mt-7 w-full">
-          {onBack ? (
-            <View className="flex-row gap-3">
-              <Button
-                variant="secondary"
-                label={t('common.goBack')}
-                onPress={() => {
-                  setDatePickerOpen(false);
-                  setTimePickerOpen(false);
-                  onBack();
-                }}
-                activeOpacity={0.8}
-                className="min-w-0 flex-1"
-                color={color}
-                containerStyle={{
-                  backgroundColor: color.background.tertiary,
-                  borderRadius: 12,
-                }}
-                accessibilityLabel={t('common.goBack')}
-              />
-              <Button
-                variant="primary"
-                label={t('common.save')}
-                onPress={handleSave}
-                activeOpacity={0.85}
-                className="min-w-0 flex-1"
-                color={color}
-                disabled={draft.trim().length === 0}
-                containerStyle={{
-                  backgroundColor: color.accent.primary,
-                  borderRadius: 12,
-                }}
-                accessibilityLabel={t('common.save')}
-                accessibilityState={{ disabled: draft.trim().length === 0 }}
-              />
-            </View>
-          ) : (
-            <Button
-              variant="primary"
-              size="lg"
-              fullWidth
-              label={t('common.save')}
-              color={color}
-              onPress={handleSave}
-              disabled={draft.trim().length === 0}
-            />
-          )}
-        </View>
+        <SheetFooterButtons
+          className="mt-7 w-full"
+          color={color}
+          primaryLabel={t('common.save')}
+          onPrimaryPress={handleSave}
+          primaryDisabled={draft.trim().length === 0}
+          secondaryLabel={t(onBack ? footerSecondaryLabelKey : 'common.cancel')}
+          onSecondaryPress={handleFooterSecondary}
+        />
       </BottomSheetScrollView>
     </AppBottomSheetModal>
   );

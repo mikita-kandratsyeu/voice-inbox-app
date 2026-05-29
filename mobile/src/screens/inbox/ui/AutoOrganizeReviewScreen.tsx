@@ -32,7 +32,7 @@ import { useColors } from '@/shared/config';
 import { DEFAULT_FOLDER_BRAND_HEX, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import {
   AppBottomSheetModal,
-  Button,
+  HeaderIconButton,
   ScreenHeader,
   useBottomSheetContentPadding,
 } from '@/shared/ui';
@@ -213,7 +213,7 @@ export const AutoOrganizeReviewScreen = () => {
         onBack={goBackOrInboxHome}
         titleAlign="center"
         rightSlot={
-          <Button
+          <HeaderIconButton
             iconOnly
             variant="icon"
             size="md"

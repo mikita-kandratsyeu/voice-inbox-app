@@ -14,7 +14,7 @@ import { useRecordStore } from '@/entities/record';
 import { useEditTranscript } from '@/features/edit-transcript';
 import { useColors } from '@/shared/config';
 import { useIsTablet } from '@/shared/lib';
-import { Button, getInputFieldInputStyle, ScreenHeader } from '@/shared/ui';
+import { getInputFieldInputStyle, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 export const EditTranscriptScreen = () => {
   const { t } = useTranslation();
@@ -85,7 +85,7 @@ export const EditTranscriptScreen = () => {
         title={t('recordingDetail.editTranscriptTitle')}
         onBack={handleBack}
         rightSlot={
-          <Button
+          <HeaderIconButton
             iconOnly
             variant="icon"
             size="md"

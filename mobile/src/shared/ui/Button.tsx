@@ -15,6 +15,10 @@ import type { Colors } from '@/shared/config';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'icon';
 export type ButtonSize = 'sm' | 'md' | 'lg';
+export type ButtonShape = 'default' | 'circle';
+
+/** Shared corner radius for labeled buttons (not chips / avatars). */
+export const BUTTON_BORDER_RADIUS = 12;
 type VariantStyle = { bg: ViewStyle; textColor?: string; textClassName?: string };
 
 export type ButtonProps = TouchableOpacityProps & {
@@ -31,6 +35,8 @@ export type ButtonProps = TouchableOpacityProps & {
   color?: Colors;
   containerStyle?: StyleProp<ViewStyle>;
   fullWidth?: boolean;
+  /** `circle` — round icon-only controls (headers). `default` — 12px corners for actions. */
+  shape?: ButtonShape;
   className?: string;
   /** `start` — icon/label left, trailing at end (sidebar rows). Default: centered. */
   contentAlign?: 'center' | 'start';
@@ -61,27 +67,30 @@ const VARIANT_STYLES: Record<ButtonVariant, (color: Colors) => VariantStyle> = {
   }),
 };
 
-const SIZE_CLASSES = {
-  sm: {
-    container: 'min-h-[44px] min-w-[44px] rounded-full px-3 py-2',
-    text: 'text-sm',
-  },
-  md: {
-    container: 'min-h-[44px] rounded-full px-4 py-3',
-    text: 'text-[16px] font-semibold',
-  },
-  lg: {
-    container: 'min-h-[44px] rounded-full px-7 py-3.5',
-    text: 'text-[16px] font-semibold',
-  },
-};
+function radiusClass(shape: ButtonShape, isIconOnly: boolean): string {
+  return shape === 'circle' && isIconOnly ? 'rounded-full' : 'rounded-xl';
+}
+
+function labeledContainerClass(size: ButtonSize, shape: ButtonShape, isIconOnly: boolean): string {
+  const radius = radiusClass(shape, isIconOnly);
+  const bySize: Record<ButtonSize, string> = {
+    sm: `min-h-[44px] min-w-[44px] ${radius} px-3 py-2`,
+    md: `min-h-[44px] ${radius} px-4 py-3`,
+    lg: `min-h-[44px] ${radius} px-7 py-3.5`,
+  };
+  return bySize[size];
+}
 
 /** Icon-only: 44×44 pt minimum (Apple HIG); `lg` is slightly larger for primary actions. */
-const ICON_ONLY_SIZES: Record<ButtonSize, string> = {
-  sm: 'h-11 w-11',
-  md: 'h-11 w-11',
-  lg: 'h-12 w-12',
-};
+function iconOnlyContainerClass(size: ButtonSize, shape: ButtonShape): string {
+  const radius = radiusClass(shape, true);
+  const bySize: Record<ButtonSize, string> = {
+    sm: `h-11 w-11 ${radius}`,
+    md: `h-11 w-11 ${radius}`,
+    lg: `h-12 w-12 ${radius}`,
+  };
+  return bySize[size];
+}
 
 const DANGER_BG = { backgroundColor: 'transparent' };
 
@@ -97,6 +106,7 @@ export const Button = ({
   color,
   containerStyle,
   fullWidth,
+  shape = 'default',
   activeOpacity = 0.75,
   disabled,
   className,
@@ -124,7 +134,12 @@ export const Button = ({
     ? { bg: DANGER_BG, textColor: undefined, textClassName: 'text-red-600 dark:text-red-400' }
     : VARIANT_STYLES[variantKey](colorScheme);
 
-  const sizeClasses = isIconOnly ? ICON_ONLY_SIZES[size] : SIZE_CLASSES[size].container;
+  const useCircle = shape === 'circle' && isIconOnly;
+  const sizeClasses = isIconOnly
+    ? iconOnlyContainerClass(size, shape)
+    : labeledContainerClass(size, shape, isIconOnly);
+  const textSizeClass =
+    size === 'sm' ? 'text-sm' : 'text-[16px] font-semibold';
 
   const isStartAligned = contentAlign === 'start' && !isIconOnly;
 
@@ -133,13 +148,12 @@ export const Button = ({
     isStartAligned ? 'justify-start' : 'justify-center',
     sizeClasses,
     fullWidth && 'w-full self-stretch',
-    isIconOnly && 'rounded-full',
     className,
   ]
     .filter(Boolean)
     .join(' ');
 
-  const textClassName = [SIZE_CLASSES[size].text, variantTextClass].filter(Boolean).join(' ');
+  const textClassName = [textSizeClass, variantTextClass].filter(Boolean).join(' ');
 
   const textStyle = textColor ? { color: textColor } : undefined;
 
@@ -160,6 +174,7 @@ export const Button = ({
       className={containerClassName}
       style={[
         variantKey === 'danger' ? DANGER_BG : bg,
+        useCircle ? { borderRadius: 9999 } : { borderRadius: BUTTON_BORDER_RADIUS },
         containerStyle,
         disabled && !loading && { opacity: 0.4 },
       ]}

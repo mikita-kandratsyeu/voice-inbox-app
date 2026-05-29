@@ -10,7 +10,7 @@ import { IS_IOS, withAlphaHex } from '@/shared/lib';
 import {
   APP_BOTTOM_SHEET_BACKDROP_SNAP,
   AppBottomSheetModal,
-  Button,
+  SheetFooterButtons,
   useBottomSheetContentPadding,
 } from '@/shared/ui';
 
@@ -223,33 +223,18 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
           </Text>
         ) : null}
 
-        <View className="mt-4 w-full">
-          <Button
-            variant="primary"
-            size="lg"
-            fullWidth
-            label={primaryLabel}
-            color={c}
-            onPress={handleSubmit}
-            disabled={!canSubmit}
-            loading={busy}
-            activeOpacity={0.85}
-            accessibilityLabel={primaryLabel}
-          />
-        </View>
-
-        <View style={{ marginTop: 10 }}>
-          <Button
-            label={t('common.cancel')}
-            color={c}
-            variant="secondary"
-            size="lg"
-            fullWidth
-            onPress={handleClose}
-            disabled={busy}
-            activeOpacity={0.85}
-          />
-        </View>
+        <SheetFooterButtons
+          className="mt-4 w-full"
+          color={c}
+          primaryLabel={primaryLabel}
+          onPrimaryPress={handleSubmit}
+          primaryDisabled={!canSubmit}
+          primaryLoading={busy}
+          primaryAccessibilityLabel={primaryLabel}
+          secondaryLabel={t('common.cancel')}
+          onSecondaryPress={handleClose}
+          secondaryDisabled={busy}
+        />
       </BottomSheetView>
     </AppBottomSheetModal>
   );

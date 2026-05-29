@@ -7,7 +7,7 @@ import { useSettingsStore } from '@/entities/settings';
 import { openInAppBrowser } from '@/features/in-app-browser';
 import { getWebsiteUrl, useAppTheme, useColors } from '@/shared/config';
 import { IS_ANDROID } from '@/shared/lib/platform';
-import { Button } from '@/shared/ui';
+import { SheetFooterButtons } from '@/shared/ui';
 
 import { useCloudAiConsentUiStore } from './cloudAiConsentUiStore';
 
@@ -78,25 +78,16 @@ export function CloudAiThirdPartyConsentModal() {
               </Pressable>
             )}
           </ScrollView>
-          <View className="gap-3 px-5 pb-5 pt-2">
-            <Button
-              variant="primary"
-              size="lg"
-              fullWidth
-              label={t('cloudAiConsent.agree')}
-              onPress={() => {
+          <View className="px-5 pb-5 pt-2">
+            <SheetFooterButtons
+              color={c}
+              primaryLabel={t('cloudAiConsent.agree')}
+              onPrimaryPress={() => {
                 setConsent(true);
                 submit(true);
               }}
-              color={c}
-            />
-            <Button
-              variant="secondary"
-              size="lg"
-              fullWidth
-              label={t('cloudAiConsent.notNow')}
-              onPress={() => submit(false)}
-              color={c}
+              secondaryLabel={t('cloudAiConsent.notNow')}
+              onSecondaryPress={() => submit(false)}
             />
           </View>
         </View>

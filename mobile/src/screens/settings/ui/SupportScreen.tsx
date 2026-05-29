@@ -12,7 +12,7 @@ import { SupportForm, useSupportForm } from '@/features/tech-support';
 import { useColors } from '@/shared/config';
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
-import { Button, ScreenHeader } from '@/shared/ui';
+import { HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 export const SupportScreen = () => {
   const { t } = useTranslation();
@@ -34,7 +34,7 @@ export const SupportScreen = () => {
         onBack={() => navigation.goBack()}
         rightSlot={
           apiConfigured ? (
-            <Button
+            <HeaderIconButton
               iconOnly
               variant="icon"
               size="md"

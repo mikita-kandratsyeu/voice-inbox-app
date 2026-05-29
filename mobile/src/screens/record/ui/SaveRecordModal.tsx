@@ -19,7 +19,7 @@ import {
 import {
   APP_BOTTOM_SHEET_BACKDROP_SNAP,
   AppBottomSheetModal,
-  Button,
+  SheetFooterButtons,
   useBottomSheetContentPadding,
 } from '@/shared/ui';
 
@@ -266,37 +266,17 @@ export const SaveRecordModal = ({
             {contextHint}
           </Text>
         )}
-        <View className="mt-1 flex-row gap-3">
-          {allowResume && (
-            <Button
-              variant="secondary"
-              label={t('record.continueRecording')}
-              onPress={handleCancel}
-              activeOpacity={0.8}
-              className="min-w-0 flex-1"
-              color={c}
-              containerStyle={{
-                backgroundColor: c.background.tertiary,
-                borderRadius: 12,
-              }}
-              accessibilityLabel={t('record.continueRecording')}
-              accessibilityHint={t('record.resume')}
-            />
-          )}
-          <Button
-            variant="primary"
-            label={t('common.save')}
-            onPress={handleSave}
-            activeOpacity={0.85}
-            className={allowResume ? 'min-w-0 flex-1' : 'w-full self-stretch'}
-            color={c}
-            containerStyle={{
-              backgroundColor: c.accent.primary,
-              borderRadius: 12,
-            }}
-            accessibilityLabel={t('common.save')}
-          />
-        </View>
+        <SheetFooterButtons
+          className="mt-1 w-full"
+          color={c}
+          primaryLabel={t('common.save')}
+          onPrimaryPress={handleSave}
+          secondaryLabel={allowResume ? t('record.continueRecording') : undefined}
+          onSecondaryPress={allowResume ? handleCancel : undefined}
+          secondaryAccessibilityLabel={
+            allowResume ? t('record.continueRecording') : undefined
+          }
+        />
         {onDiscard && (
           <Pressable
             accessibilityRole="button"

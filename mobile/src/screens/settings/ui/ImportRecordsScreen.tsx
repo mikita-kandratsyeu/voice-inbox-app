@@ -29,7 +29,7 @@ import {
   useIsTablet,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
-import { BlockingProgressModal, Button, ScreenHeader } from '@/shared/ui';
+import { BlockingProgressModal, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 type ImportRecordsRouteProp = RouteProp<SettingsStackParamList, 'ImportRecords'>;
 
@@ -314,7 +314,7 @@ export const ImportRecordsScreen = () => {
         onBack={() => navigation.goBack()}
         rightSlot={
           dbRecordIds !== null && (importable.length > 0 || duplicatesTrash.length > 0) ? (
-            <Button
+            <HeaderIconButton
               iconOnly
               variant="icon"
               size="md"

@@ -1,4 +1,4 @@
-import { useIsTablet } from './useIsTablet';
+import { useIsInsideTabletShell } from '@/app/navigation/tablet/TabletShellContext';
 
-/** Persistent left sidebar instead of the floating bottom tab bar. */
-export const useTabletShellLayout = (): boolean => useIsTablet();
+/** Persistent left sidebar layout (Inbox/Settings tabs), not every tablet-sized screen. */
+export const useTabletShellLayout = (): boolean => useIsInsideTabletShell();

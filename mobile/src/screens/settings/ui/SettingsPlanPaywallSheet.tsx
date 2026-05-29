@@ -21,7 +21,12 @@ import { openInAppBrowser } from '@/features/in-app-browser';
 import { getWebsiteUrl, useAppTheme, useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import { IS_ANDROID, IS_IOS } from '@/shared/lib/platform';
-import { Button, PLAN_PAYWALL_FEATURE_LINE_HEIGHT, PlanPaywallProChip } from '@/shared/ui';
+import {
+  Button,
+  PLAN_PAYWALL_FEATURE_LINE_HEIGHT,
+  PlanPaywallProChip,
+  SheetFooterButtons,
+} from '@/shared/ui';
 
 type SettingsPlanPaywallSheetProps = {
   visible: boolean;
@@ -565,16 +570,13 @@ export function SettingsPlanPaywallSheet({
             backgroundColor: c.background.primary,
           }}
         >
-          <Button
-            variant="primary"
-            size="lg"
-            fullWidth
-            label={upgradeLabel}
-            loading={isIapPublic && (iapBusy || iapProPriceLoading)}
-            onPress={onUpgradePress}
-            disabled={upgradeDisabled}
+          <SheetFooterButtons
+            className="w-full"
             color={c}
-            activeOpacity={0.85}
+            primaryLabel={upgradeLabel}
+            onPrimaryPress={() => onUpgradePress?.()}
+            primaryDisabled={upgradeDisabled}
+            primaryLoading={isIapPublic && (iapBusy || iapProPriceLoading)}
           />
           {isIapPublic && getWebsiteUrl().trim().length > 0 && (
             <View className="mt-2.5 items-center gap-y-1 gap-x-3 px-2 flex-row justify-center">

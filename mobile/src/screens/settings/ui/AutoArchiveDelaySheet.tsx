@@ -6,7 +6,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 
 import type { AutoArchiveAfterDays } from '@/entities/settings';
 import { useColors } from '@/shared/config';
-import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
 const DELAY_OPTIONS: AutoArchiveAfterDays[] = [1, 7, 14, 30];
 
@@ -95,9 +95,13 @@ export function AutoArchiveDelaySheet({
             );
           })}
         </View>
-        <View style={{ marginTop: 12 }}>
-          <Button label={t('common.cancel')} color={c} variant="secondary" onPress={onClose} />
-        </View>
+        <SheetFooterButtons
+          className="mt-3 w-full"
+          color={c}
+          primaryLabel={t('common.cancel')}
+          onPrimaryPress={onClose}
+          singleVariant="secondary"
+        />
       </BottomSheetView>
     </AppBottomSheetModal>
   );

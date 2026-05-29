@@ -24,7 +24,7 @@ import { resolveDayjsLocale } from '@/shared/lib/date';
 import {
   APP_BOTTOM_SHEET_BACKDROP_SNAP,
   AppBottomSheetModal,
-  Button,
+  SheetFooterButtons,
   useBottomSheetContentPadding,
 } from '@/shared/ui';
 
@@ -219,13 +219,11 @@ function ProActivationSuccessPanel({ color, expiresAtIso, onDismiss }: SuccessPa
           {t('proLicense.successUntil', { date: dateText })}
         </Text>
       )}
-      <Button
-        variant="primary"
-        label={t('proLicense.successButton')}
+      <SheetFooterButtons
+        className="mt-6 w-full"
         color={color}
-        onPress={onDismiss}
-        fullWidth
-        className="mt-6"
+        primaryLabel={t('proLicense.successButton')}
+        onPrimaryPress={onDismiss}
       />
     </Animated.View>
   );
@@ -336,13 +334,11 @@ function VoucherActivationSuccessPanel({ color, expiresAtIso, onDismiss }: Succe
           {t('proLicense.voucher.successUntil', { date: dateText })}
         </Text>
       )}
-      <Button
-        variant="primary"
-        label={t('proLicense.voucher.successButton')}
+      <SheetFooterButtons
+        className="mt-6 w-full"
         color={color}
-        onPress={onDismiss}
-        fullWidth
-        className="mt-6"
+        primaryLabel={t('proLicense.voucher.successButton')}
+        onPrimaryPress={onDismiss}
       />
     </Animated.View>
   );
@@ -597,16 +593,12 @@ export function ProLicenseKeyModal({ visible, onClose, onActivated }: ProLicense
                 {error}
               </Text>
             )}
-            <View className="mt-4 w-full">
-              <Button
-                variant="primary"
-                size="lg"
-                label={t('proLicense.voucher.activate')}
-                color={color}
-                onPress={() => void handleSubmit()}
-                disabled={!isCompleteProOfferCode(offerCodeCompact) || busy}
-              />
-            </View>
+            <SheetFooterButtons
+              color={color}
+              primaryLabel={t('proLicense.voucher.activate')}
+              onPrimaryPress={() => void handleSubmit()}
+              primaryDisabled={!isCompleteProOfferCode(offerCodeCompact) || busy}
+            />
           </>
         )}
       </BottomSheetView>

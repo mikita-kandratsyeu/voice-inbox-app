@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/shared/config';
 
 import { IS_ANDROID } from '../lib';
-import { Button } from './Button';
+import { HeaderIconButton } from './HeaderIconButton';
 
 type ScreenHeaderProps = {
   title: string;
@@ -53,7 +53,7 @@ export const ScreenHeader = ({
     >
       <View className="min-w-[44px]">
         {onBack ? (
-          <Button
+          <HeaderIconButton
             iconOnly
             variant="icon"
             size="md"

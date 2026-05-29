@@ -196,7 +196,9 @@
     "createTask": "Create task",
     "createTaskA11y": "Create task",
     "pickNoteTitle": "Choose a note",
+    "pickNoteSubtitle": "The task will be added to the note you select",
     "pickNoteEmpty": "No notes to add a task to. Create a note in Inbox first.",
+    "pickNoteMoreTags": "+{{count}}",
     "createTaskNoNotesTitle": "No notes yet",
     "createTaskNoNotesMessage": "Add a voice or text note in Inbox, then create a task here.",
     "sections": {

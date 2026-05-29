@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { VoiceRecord } from '@/entities/record';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { Button, PrivateModeBadge } from '@/shared/ui';
+import { HeaderIconButton, PrivateModeBadge } from '@/shared/ui';
 
 type RecordingDetailHeaderProps = {
   record: VoiceRecord;
@@ -58,7 +58,7 @@ export const RecordingDetailHeader = ({
       style={{ backgroundColor: headerBackgroundColor, paddingTop: insets.top + 12 }}
     >
       <View className="flex-row items-center gap-2">
-        <Button
+        <HeaderIconButton
           iconOnly
           variant="icon"
           size="md"
@@ -72,7 +72,7 @@ export const RecordingDetailHeader = ({
         {isPrivateMode && <PrivateModeBadge color={color} compact />}
       </View>
       <View className="flex-row items-center gap-2">
-        <Button
+        <HeaderIconButton
           iconOnly
           variant="icon"
           size="md"
@@ -91,7 +91,7 @@ export const RecordingDetailHeader = ({
           containerStyle={record.isPinned ? pinActiveStyle : iconBtnBg}
           accessibilityLabel={record.isPinned ? t('recordActions.unpin') : t('recordActions.pin')}
         />
-        <Button
+        <HeaderIconButton
           iconOnly
           variant="icon"
           size="md"
@@ -178,7 +178,7 @@ export const RecordingDetailHeader = ({
             },
           ]}
         >
-          <Button
+          <HeaderIconButton
             iconOnly
             variant="icon"
             size="md"

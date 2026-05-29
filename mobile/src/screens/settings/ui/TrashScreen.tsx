@@ -33,9 +33,9 @@ import {
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import {
   BlockingProgressModal,
-  Button,
   EmptyState,
   SCREEN_PADDING,
+  HeaderIconButton,
   ScreenHeader,
 } from '@/shared/ui';
 
@@ -208,7 +208,7 @@ export const TrashScreen = () => {
         onBack={() => navigation.goBack()}
         rightSlot={
           !loading && items.length > 0 && !isEmptyingTrash ? (
-            <Button
+            <HeaderIconButton
               iconOnly
               variant="icon"
               size="md"

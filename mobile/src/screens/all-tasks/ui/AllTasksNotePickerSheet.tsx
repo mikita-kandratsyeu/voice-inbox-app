@@ -1,17 +1,19 @@
 import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
-import { FileText } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
+import type { Folder } from '@/entities/folder/model/types';
 import type { RecordListItem } from '@/entities/record';
 import { useColors } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
 import { AppBottomSheetModal, useBottomSheetContentPadding } from '@/shared/ui';
+
+import { AllTasksNotePickerRow } from './AllTasksNotePickerRow';
 
 type AllTasksNotePickerSheetProps = {
   visible: boolean;
   records: RecordListItem[];
+  folders: Folder[];
   onClose: () => void;
   onSelect: (recordId: string) => void;
 };
@@ -19,12 +21,15 @@ type AllTasksNotePickerSheetProps = {
 export function AllTasksNotePickerSheet({
   visible,
   records,
+  folders,
   onClose,
   onSelect,
 }: AllTasksNotePickerSheetProps) {
   const { t } = useTranslation();
   const color = useColors();
   const contentPadding = useBottomSheetContentPadding(20);
+
+  const folderById = useMemo(() => new Map(folders.map((f) => [f.id, f])), [folders]);
 
   const sortedRecords = useMemo(
     () =>
@@ -49,12 +54,23 @@ export function AllTasksNotePickerSheet({
             color: color.text.primary,
             fontSize: 17,
             fontWeight: '600',
-            marginBottom: 16,
+            marginBottom: 4,
             marginTop: 4,
             textAlign: 'center',
           }}
         >
           {t('allTasks.pickNoteTitle')}
+        </Text>
+        <Text
+          style={{
+            color: color.text.secondary,
+            fontSize: 14,
+            lineHeight: 20,
+            marginBottom: 16,
+            textAlign: 'center',
+          }}
+        >
+          {t('allTasks.pickNoteSubtitle')}
         </Text>
         {sortedRecords.length === 0 ? (
           <Text
@@ -69,46 +85,26 @@ export function AllTasksNotePickerSheet({
             {t('allTasks.pickNoteEmpty')}
           </Text>
         ) : (
-          sortedRecords.map((record) => (
-            <Pressable
-              key={record.id}
-              onPress={() => {
-                hapticSelection();
-                onSelect(record.id);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={record.title}
-              style={{
-                alignItems: 'center',
-                backgroundColor: color.background.tertiary,
-                borderRadius: 12,
-                flexDirection: 'row',
-                gap: 12,
-                marginBottom: 8,
-                paddingHorizontal: 14,
-                paddingVertical: 12,
-              }}
-            >
-              <View
-                style={{
-                  alignItems: 'center',
-                  backgroundColor: color.background.secondary,
-                  borderRadius: 10,
-                  height: 40,
-                  justifyContent: 'center',
-                  width: 40,
-                }}
-              >
-                <FileText size={20} color={color.accent.primary} strokeWidth={2} />
-              </View>
-              <Text
-                style={{ color: color.text.primary, flex: 1, fontSize: 16, fontWeight: '500' }}
-                numberOfLines={2}
-              >
-                {record.title}
-              </Text>
-            </Pressable>
-          ))
+          <View
+            style={{
+              backgroundColor: color.background.card,
+              borderColor: color.border.default,
+              borderRadius: 12,
+              borderWidth: 1,
+              overflow: 'hidden',
+            }}
+          >
+            {sortedRecords.map((record, index) => (
+              <AllTasksNotePickerRow
+                key={record.id}
+                record={record}
+                folder={record.folderId ? (folderById.get(record.folderId) ?? null) : null}
+                color={color}
+                isLast={index === sortedRecords.length - 1}
+                onPress={() => onSelect(record.id)}
+              />
+            ))}
+          </View>
         )}
       </BottomSheetScrollView>
     </AppBottomSheetModal>

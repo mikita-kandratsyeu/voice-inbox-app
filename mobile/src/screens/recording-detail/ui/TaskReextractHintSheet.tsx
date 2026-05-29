@@ -6,7 +6,7 @@ import { Pressable, ScrollView, Text, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
 import { TASK_EXTRACTION_HINT_MAX_CHARS } from '@/shared/lib/ai-core/local-provider/localAiConstants';
-import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
 type TaskReextractHintSheetProps = {
   onClose: () => void;
@@ -129,15 +129,11 @@ export function TaskReextractHintSheet({
             max: TASK_EXTRACTION_HINT_MAX_CHARS,
           })}
         </Text>
-        <View className="mt-4 w-full">
-          <Button
-            variant="primary"
-            size="lg"
-            label={t('recordingDetail.reextractTasks')}
-            color={color}
-            onPress={handleConfirm}
-          />
-        </View>
+        <SheetFooterButtons
+          color={color}
+          primaryLabel={t('recordingDetail.reextractTasks')}
+          onPrimaryPress={handleConfirm}
+        />
       </BottomSheetView>
     </AppBottomSheetModal>
   );

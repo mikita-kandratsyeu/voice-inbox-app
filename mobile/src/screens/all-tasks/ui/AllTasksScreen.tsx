@@ -44,7 +44,7 @@ import {
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
-import { Button, EmptyState, ScreenHeader, SectionHeader } from '@/shared/ui';
+import { Button, EmptyState, HeaderIconButton, ScreenHeader, SectionHeader } from '@/shared/ui';
 
 import {
   type AllTasksFlattenedItem,
@@ -239,7 +239,7 @@ export const AllTasksScreen = () => {
   const contentMaxWidth = useTabletContentMaxWidth('wide');
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const { adsAllowed } = useAdsAllowed();
-  const filterPadH = isTablet ? 24 : 16;
+  const filterPadH = isTablet ? 20 : 16;
   const filterPadV = isTablet ? 14 : 10;
 
   const sectionList = useMemo(() => {
@@ -615,19 +615,20 @@ export const AllTasksScreen = () => {
   );
 
   const headerRightSlot = useMemo(
-    () => (
-      <Button
-        iconOnly
-        variant="icon"
-        size="md"
-        icon={<Plus size={22} color={color.text.primary} strokeWidth={2.2} />}
-        color={color}
-        onPress={openCreateTask}
-        accessibilityLabel={t('allTasks.createTaskA11y')}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      />
-    ),
-    [color, openCreateTask, t],
+    () =>
+      recordFilterId ? null : (
+        <HeaderIconButton
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<Plus size={22} color={color.text.primary} strokeWidth={2.2} />}
+          color={color}
+          onPress={openCreateTask}
+          accessibilityLabel={t('allTasks.createTaskA11y')}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        />
+      ),
+    [color, openCreateTask, recordFilterId, t],
   );
 
   const renderListItem = useCallback(
@@ -642,6 +643,7 @@ export const AllTasksScreen = () => {
         <AllTasksTaskRow
           item={item.row}
           color={color}
+          compactHorizontalMargin={isTablet}
           openNoteLabel={t('allTasks.openNote')}
           onToggle={onToggle}
           onOpenNote={openNote}
@@ -679,6 +681,7 @@ export const AllTasksScreen = () => {
       onAddTaskToCalendar,
       t,
       onDeleteTask,
+      isTablet,
     ],
   );
 
@@ -855,6 +858,7 @@ export const AllTasksScreen = () => {
           getItemType={getItemType}
           contentContainerStyle={{
             paddingBottom: getFloatingTabBarScrollPaddingBottom(insets.bottom, isTablet),
+            paddingHorizontal: isTablet ? 12 : 0,
             paddingTop: 8,
           }}
           style={{
@@ -888,6 +892,7 @@ export const AllTasksScreen = () => {
       <AllTasksNotePickerSheet
         visible={notePickerVisible}
         records={eligibleNotesForCreate}
+        folders={folders}
         onClose={() => setNotePickerVisible(false)}
         onSelect={(recordId) => {
           setNotePickerVisible(false);

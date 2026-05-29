@@ -8,7 +8,7 @@ import { KeyboardController } from 'react-native-keyboard-controller';
 import type { VoiceRecord } from '@/entities/record';
 import type { AiExecutionMode } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
-import { Button, useAppBottomSheetChrome, useBottomSheetContentPadding } from '@/shared/ui';
+import { SheetFooterButtons, useAppBottomSheetChrome, useBottomSheetContentPadding } from '@/shared/ui';
 
 type AskAiContextDisclosureProps = {
   color: Colors;
@@ -169,16 +169,11 @@ export const AskAiContextDisclosure = ({
         >
           {footerText}
         </Text>
-        <View className="mt-4">
-          <Button
-            label={t('common.gotIt')}
-            variant="primary"
-            size="lg"
-            fullWidth
-            color={color}
-            onPress={closeSheet}
-          />
-        </View>
+        <SheetFooterButtons
+          color={color}
+          primaryLabel={t('common.gotIt')}
+          onPrimaryPress={closeSheet}
+        />
       </BottomSheetView>
     </BottomSheetModal>
   );

@@ -7,7 +7,7 @@ import { BatchCheckbox } from '@/features/batch-select';
 import { useColors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import { formatFileSize } from '@/shared/lib/whisper';
-import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
 export type DeleteStorageCategoryId = 'library' | 'whisper' | 'localLlm' | 'cache';
 
@@ -210,30 +210,18 @@ export function DeleteStorageDataSheet({
           </Text>
         )}
 
-        <View className="mt-4 w-full">
-          <Button
-            variant="primary"
-            size="lg"
-            fullWidth
-            label={canSubmit ? t('storage.deleteChooserAction') : t('storage.deleteChooserNothing')}
-            labelSuffix={canSubmit ? formatFileSize(selectedBytes) : undefined}
-            color={color}
-            disabled={!canSubmit}
-            onPress={handlePrimaryPress}
-            activeOpacity={0.85}
-          />
-        </View>
-
-        <View style={{ marginTop: 10 }}>
-          <Button
-            label={t('common.cancel')}
-            color={color}
-            variant="secondary"
-            size="lg"
-            fullWidth
-            onPress={onClose}
-          />
-        </View>
+        <SheetFooterButtons
+          className="mt-4 w-full"
+          color={color}
+          primaryLabel={
+            canSubmit ? t('storage.deleteChooserAction') : t('storage.deleteChooserNothing')
+          }
+          labelSuffix={canSubmit ? formatFileSize(selectedBytes) : undefined}
+          onPrimaryPress={handlePrimaryPress}
+          primaryDisabled={!canSubmit}
+          secondaryLabel={t('common.cancel')}
+          onSecondaryPress={onClose}
+        />
       </BottomSheetView>
     </AppBottomSheetModal>
   );
