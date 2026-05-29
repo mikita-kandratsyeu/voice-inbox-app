@@ -39,6 +39,9 @@ import {
 import { i18n } from '@/shared/lib/i18n';
 import { isNonNegativeFiniteNumber } from '@/shared/lib/type-guards';
 
+/** Cloud faux progress after summarize phase-1 completes and meeting dialogue poll continues. */
+const CLOUD_MEETING_DIALOGUE_PROGRESS_START = 8;
+
 function normalizeTaskExtractionHint(raw?: string): string | undefined {
   const t = (raw ?? '').split('\0').join('').trim();
 
@@ -317,6 +320,18 @@ export const useAiProcessing = () => {
               });
               setMeetingDialogueStatus(record.id, 'processing');
               setMeetingDialogueError(record.id, undefined);
+
+              cloudDisplayedPct = CLOUD_MEETING_DIALOGUE_PROGRESS_START;
+              privateBatchProgress.lastDisplayedPct = CLOUD_MEETING_DIALOGUE_PROGRESS_START;
+              privateBatchProgress.retryContinuationFloor = CLOUD_MEETING_DIALOGUE_PROGRESS_START;
+              privateBatchProgress.tokenEvents = 0;
+              setPrivateAiBatchUi(record.id, {
+                privateAiBatchProgress: CLOUD_MEETING_DIALOGUE_PROGRESS_START,
+                privateAiBatchPhase: 'processing',
+                privateAiBatchProgressLabel: i18n.t(
+                  'recordingDetail.meetingDialogueProgressStepLabel',
+                ),
+              });
             }
           : undefined;
 

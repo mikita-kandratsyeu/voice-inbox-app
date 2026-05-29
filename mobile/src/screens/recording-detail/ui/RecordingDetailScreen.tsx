@@ -736,6 +736,9 @@ export const RecordingDetailScreen = () => {
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onSwitchToSmartMode={handleSwitchToSmartMode}
                   onCancelProcessing={handleCancelAiGeneration}
+                  speakerBreakdownProcessing={
+                    meetingPresetUiActive && liveRecord.meetingDialogueStatus === 'processing'
+                  }
                   isPrivateMode={isPrivateMode}
                   privateAiBatchProgress={liveRecord.privateAiBatchProgress}
                   privateAiBatchPhase={liveRecord.privateAiBatchPhase}

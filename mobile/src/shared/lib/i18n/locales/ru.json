@@ -365,6 +365,8 @@
     "meetingDialogueTabEmptyDesc": "Создайте сводку по этой встрече. ИИ постарается разделить реплики по спикерам. Обновить разметку можно через «Пересоздать».",
     "meetingDialoguePreamble": "Без метки спикера",
     "meetingDialogueProcessing": "Готовим реплики по спикерам...",
+    "meetingDialogueProgressStepLabel": "Реплики по спикерам — шаг 2 из 2.",
+    "regenerateSummaryWaitForSpeakers": "Сначала дождитесь реплик, потом можно пересоздать сводку.",
     "meetingDialogueFailedTitle": "Не удалось разбить реплики",
     "meetingDialogueFailedDesc": "Сводка уже готова. Повторите генерацию или откройте заметку позже — разбивка может появиться после уведомления.",
     "shareMeetingBrief": "Поделиться итогами встречи",

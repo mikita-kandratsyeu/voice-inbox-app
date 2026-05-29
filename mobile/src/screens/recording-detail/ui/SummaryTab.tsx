@@ -27,6 +27,8 @@ type SummaryTabProps = {
   showPrivateModeCta?: boolean;
   onSwitchToSmartMode?: () => void;
   onCancelProcessing?: () => void;
+  /** Phase-2 speaker breakdown in progress; block full regenerate on summary. */
+  speakerBreakdownProcessing?: boolean;
   isPrivateMode?: boolean;
   privateAiBatchProgress?: number;
   privateAiBatchPhase?: 'loading_model' | 'processing';
@@ -47,6 +49,7 @@ export const SummaryTab = ({
   onGenerate,
   onShareMeetingBrief,
   onCancelProcessing,
+  speakerBreakdownProcessing = false,
   privateAiBatchPhase,
   privateAiBatchProgress,
   privateAiBatchProgressLabel,
@@ -66,6 +69,7 @@ export const SummaryTab = ({
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const showSummaryReasoningInNotes = useSettingsStore((s) => s.showSummaryReasoningInNotes);
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
+  const regenerateDisabled = disableByNetwork || speakerBreakdownProcessing;
 
   const summaryModelLabel = useMemo(() => {
     const id = summaryAiModel?.trim();
@@ -205,10 +209,15 @@ export const SummaryTab = ({
         label={t('recordingDetail.regenerateSummary')}
         color={color}
         onPress={onGenerate}
-        disabled={disableByNetwork}
+        disabled={regenerateDisabled}
         className="mt-1"
-        accessibilityState={{ disabled: disableByNetwork }}
+        accessibilityState={{ disabled: regenerateDisabled }}
       />
+      {speakerBreakdownProcessing ? (
+        <Text className="text-center text-xs leading-5" style={{ color: color.text.secondary }}>
+          {t('recordingDetail.regenerateSummaryWaitForSpeakers')}
+        </Text>
+      ) : null}
       {isMeeting && onShareMeetingBrief && (
         <Button
           variant="primary"

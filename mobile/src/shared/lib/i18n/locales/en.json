@@ -365,6 +365,8 @@
     "meetingDialogueTabEmptyDesc": "Generate a summary for this meeting. AI will try to separate who said what. Tap Regenerate anytime to refresh.",
     "meetingDialoguePreamble": "Unlabeled section",
     "meetingDialogueProcessing": "Preparing speaker turns...",
+    "meetingDialogueProgressStepLabel": "Speaker turns — step 2 of 2.",
+    "regenerateSummaryWaitForSpeakers": "Wait for speaker turns before regenerating the summary.",
     "meetingDialogueFailedTitle": "Speaker turns failed",
     "meetingDialogueFailedDesc": "Your summary is ready. Try Regenerate, or reopen this note later — turns may finish after a notification.",
     "shareMeetingBrief": "Share meeting brief",
