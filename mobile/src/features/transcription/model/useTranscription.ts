@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useRef } from 'react';
 import { AppState } from 'react-native';
 
 import type { TranscriptSegment, VoiceRecord } from '@/entities/record';
@@ -31,9 +31,11 @@ import {
 import {
   beginTranscriptionSession,
   clearTranscriptionBackgroundCancelled,
+  clearTranscriptionCheckpointSnapshot,
   endTranscriptionSession,
   isTranscriptionBackgroundCancelled,
   registerActiveTranscription,
+  rememberTranscriptionCheckpointSnapshot,
   unregisterActiveTranscription,
 } from './transcriptionRuntimeRegistry';
 
@@ -139,8 +141,10 @@ export const useTranscription = () => {
         devLog('stopping previous run for same record', { recordId: record.id });
         const prevStop = stopRef.current;
         stopRef.current = null;
-        prevStop().catch(() => {});
+        await prevStop().catch(() => {});
       }
+
+      clearTranscriptionBackgroundCancelled(record.id);
 
       const jobGen = beginTranscriptionJob(record.id);
       beginTranscriptionSession(record.id);
@@ -152,16 +156,25 @@ export const useTranscription = () => {
       const language = languageOverride ?? transcriptionLanguage;
       let usedContext = false;
       let transcodeWavPath: string | null = null;
+      let keepCheckpointSnapshot = false;
 
       try {
         const context = await getWhisperContext(selectedWhisperModel, selectedWhisperModelFormat);
         usedContext = true;
 
-        if (
-          !isActiveTranscriptionJob(record.id, jobGen) ||
-          isTranscriptionBackgroundCancelled(record.id)
-        ) {
+        if (!isActiveTranscriptionJob(record.id, jobGen)) {
           devLog('aborted after getWhisperContext (stale job)', { recordId: record.id, jobGen });
+          updateAiStatus(record.id, 'idle');
+          return;
+        }
+
+        if (isTranscriptionBackgroundCancelled(record.id)) {
+          devLog('aborted after getWhisperContext (background flag)', {
+            recordId: record.id,
+            jobGen,
+          });
+          clearTranscriptionBackgroundCancelled(record.id);
+          updateAiStatus(record.id, 'idle');
           return;
         }
 
@@ -226,11 +239,8 @@ export const useTranscription = () => {
               if (!isActiveTranscriptionJob(record.id, jobGen)) {
                 return;
               }
-              const shouldPersist =
-                (chunkIndex + 1) % CHECKPOINT_EVERY_N_CHUNKS === 0 || chunkIndex + 1 >= totalChunks;
-              if (!shouldPersist) return;
 
-              saveTranscriptionCheckpoint({
+              const snapshot = {
                 recordId: record.id,
                 audioPath: normalizedAudioPath,
                 modelId: selectedWhisperModel,
@@ -239,7 +249,14 @@ export const useTranscription = () => {
                 lastCompletedChunkIndex: chunkIndex,
                 fullText,
                 segments,
-              }).catch(() => {});
+              };
+              rememberTranscriptionCheckpointSnapshot(snapshot);
+
+              const shouldPersist =
+                (chunkIndex + 1) % CHECKPOINT_EVERY_N_CHUNKS === 0 || chunkIndex + 1 >= totalChunks;
+              if (!shouldPersist) return;
+
+              saveTranscriptionCheckpoint(snapshot).catch(() => {});
             },
           });
 
@@ -296,6 +313,7 @@ export const useTranscription = () => {
         devLog('saving transcript', { recordId: record.id, segments: segments.length });
         await updateTranscript(record.id, fullText, segments);
         await removeTranscriptionCheckpoint(record.id).catch(() => {});
+        clearTranscriptionCheckpointSnapshot(record.id);
         void cancelTranscriptionPausedNotification(record.id);
 
         const recordWithTranscript = {
@@ -347,6 +365,7 @@ export const useTranscription = () => {
         });
 
         const pausedForBackground = isTranscriptionBackgroundCancelled(record.id);
+        keepCheckpointSnapshot = pausedForBackground;
 
         if (wasCancelled || pausedForBackground) {
           if (!pausedForBackground) {
@@ -378,6 +397,9 @@ export const useTranscription = () => {
         }
         endTranscriptionJobIfCurrent(record.id, jobGen);
         endTranscriptionSession(record.id);
+        if (!keepCheckpointSnapshot) {
+          clearTranscriptionCheckpointSnapshot(record.id);
+        }
         if (usedContext) {
           scheduleIdleRelease();
         }
@@ -417,7 +439,9 @@ export const useTranscription = () => {
         stop().catch(() => {});
       }
       unregisterActiveTranscription(recordId);
+      endTranscriptionSession(recordId);
       clearTranscriptionBackgroundCancelled(recordId);
+      clearTranscriptionCheckpointSnapshot(recordId);
       removeTranscriptionCheckpoint(recordId).catch(() => {});
       void cancelTranscriptionPausedNotification(recordId);
       clearPendingBackgroundTranscriptionRecord();

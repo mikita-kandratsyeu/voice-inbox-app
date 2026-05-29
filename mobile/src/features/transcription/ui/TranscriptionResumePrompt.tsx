@@ -134,6 +134,9 @@ export const TranscriptionResumePrompt = () => {
   useEffect(() => {
     scheduleResumeCheck('mount');
     const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'background' || next === 'inactive') {
+        promptInFlightRef.current = false;
+      }
       if (next === 'active') {
         InteractionManager.runAfterInteractions(() => {
           scheduleResumeCheck('foreground');

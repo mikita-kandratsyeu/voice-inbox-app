@@ -15,9 +15,10 @@ export async function notifyTranscriptionPaused(input: {
   recordId: string;
   recordTitle: string;
 }): Promise<void> {
-  if (!useSettingsStore.getState().taskDeadlineNotificationsEnabled) return;
-
+  const enabled = useSettingsStore.getState().taskDeadlineNotificationsEnabled;
   const permission = await checkTaskNotificationPermission();
+  if (!enabled) return;
+
   if (permission !== 'granted') return;
 
   await ensureTranscriptionPausedNotificationChannel();

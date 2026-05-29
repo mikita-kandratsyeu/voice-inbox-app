@@ -1,8 +1,37 @@
 import { useRecordStore } from '@/entities/record';
 
 import { schedulePausedNotificationIfResumable } from '../lib/paused-notification/schedulePausedNotificationIfResumable';
+import {
+  getTranscriptionCheckpoint,
+  saveTranscriptionCheckpoint,
+  type TranscriptionCheckpoint,
+} from '../lib/transcriptionCheckpoint';
+import { isWhisperNativeWorkActive } from '../lib/whisperNativeLifecycle';
 import { markTranscriptionPausedForBackground } from './pendingBackgroundTranscriptionRecord';
 import { invalidateTranscriptionJob } from './transcriptionJobRegistry';
+import { requestTranscriptionResumePrompt } from './transcriptionResumePromptRequest';
+
+type CheckpointSnapshot = Omit<TranscriptionCheckpoint, 'schemaVersion' | 'updatedAt'>;
+
+let lastCheckpointSnapshot: CheckpointSnapshot | null = null;
+
+export function rememberTranscriptionCheckpointSnapshot(snapshot: CheckpointSnapshot): void {
+  lastCheckpointSnapshot = snapshot;
+}
+
+export function clearTranscriptionCheckpointSnapshot(recordId: string): void {
+  if (lastCheckpointSnapshot?.recordId === recordId) {
+    lastCheckpointSnapshot = null;
+  }
+}
+
+async function flushTranscriptionCheckpointForBackground(recordId: string): Promise<void> {
+  const existing = await getTranscriptionCheckpoint(recordId);
+  if (existing) return;
+  if (lastCheckpointSnapshot?.recordId !== recordId) return;
+
+  await saveTranscriptionCheckpoint(lastCheckpointSnapshot);
+}
 
 const backgroundCancelledRecordIds = new Set<string>();
 
@@ -55,15 +84,12 @@ export function getActiveTranscriptionRecordId(): string | null {
 
 /** True while a transcription session or native whisper_full may be active. */
 export function isNativeTranscriptionRunning(): boolean {
-  return sessionRecordId != null || activeRecordId != null || abortInFlight != null;
-}
-
-function pauseTranscriptionForBackground(recordId: string): void {
-  backgroundCancelledRecordIds.add(recordId);
-  markTranscriptionPausedForBackground(recordId);
-  invalidateTranscriptionJob(recordId);
-  useRecordStore.getState().updateAiStatus(recordId, 'idle');
-  void schedulePausedNotificationIfResumable(recordId);
+  return (
+    sessionRecordId != null ||
+    activeRecordId != null ||
+    abortInFlight != null ||
+    isWhisperNativeWorkActive()
+  );
 }
 
 /** Stops native whisper when possible; always pauses UI. Never releases Metal context. */
@@ -80,6 +106,13 @@ export async function abortTranscriptionForAppBackground(): Promise<void> {
   const stop = activeStop;
 
   abortInFlight = (async () => {
+    // Before stop(): useTranscription catch checks backgroundCancelled to keep checkpoint.
+    backgroundCancelledRecordIds.add(recordId);
+    markTranscriptionPausedForBackground(recordId);
+
+    // Flush before stop(): useTranscription `finally` clears the in-memory snapshot.
+    await flushTranscriptionCheckpointForBackground(recordId);
+
     if (stop) {
       try {
         await stop();
@@ -87,7 +120,14 @@ export async function abortTranscriptionForAppBackground(): Promise<void> {
         // Native cancel may reject while Metal tears down.
       }
     }
-    pauseTranscriptionForBackground(recordId);
+
+    invalidateTranscriptionJob(recordId);
+    useRecordStore.getState().updateAiStatus(recordId, 'idle');
+    const checkpoint = await getTranscriptionCheckpoint(recordId);
+    await schedulePausedNotificationIfResumable(recordId);
+    if (checkpoint) {
+      requestTranscriptionResumePrompt(recordId);
+    }
   })().finally(() => {
     activeRecordId = null;
     activeStop = null;

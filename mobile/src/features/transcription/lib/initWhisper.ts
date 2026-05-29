@@ -5,11 +5,12 @@ import { IS_IOS } from '@/shared/lib';
 import { getWhisperModelPath } from '@/shared/lib/whisper';
 
 import { WHISPER_IDLE_RELEASE_MS } from '../config/constants';
+import { isTranscriptionSessionActive } from '../model/transcriptionRuntimeRegistry';
 import {
-  abortTranscriptionForAppBackground,
-  isNativeTranscriptionRunning,
-  isTranscriptionSessionActive,
-} from '../model/transcriptionRuntimeRegistry';
+  isWhisperNativeWorkActive,
+  setWhisperNativeIdleListener,
+  waitForWhisperNativeIdle,
+} from './whisperNativeLifecycle';
 
 type CachedContext = {
   context: WhisperContext;
@@ -20,6 +21,8 @@ type CachedContext = {
 let cachedContext: CachedContext | null = null;
 let initPromise: Promise<WhisperContext> | null = null;
 let idleTimeoutId: ReturnType<typeof setTimeout> | null = null;
+let releaseInFlight: Promise<void> | null = null;
+let releaseQueued = false;
 
 const clearIdleTimer = (): void => {
   if (idleTimeoutId) {
@@ -28,9 +31,43 @@ const clearIdleTimer = (): void => {
   }
 };
 
+const releaseWhisperContextNow = async (): Promise<void> => {
+  clearIdleTimer();
+  if (!cachedContext) return;
+
+  await waitForWhisperNativeIdle();
+
+  if (isTranscriptionSessionActive() || isWhisperNativeWorkActive()) {
+    releaseQueued = true;
+    return;
+  }
+
+  cachedContext = null;
+  try {
+    await releaseAllWhisper();
+  } catch (e) {
+    if (__DEV__) console.warn('[whisper] release failed:', e);
+  }
+};
+
+const drainQueuedRelease = (): void => {
+  if (!releaseQueued || releaseInFlight) return;
+  if (isTranscriptionSessionActive() || isWhisperNativeWorkActive()) return;
+
+  releaseQueued = false;
+  releaseInFlight = releaseWhisperContextNow().finally(() => {
+    releaseInFlight = null;
+    if (releaseQueued) {
+      drainQueuedRelease();
+    }
+  });
+};
+
 export const scheduleIdleRelease = (): void => {
   clearIdleTimer();
-  if (!cachedContext || isNativeTranscriptionRunning()) return;
+  if (!cachedContext || isWhisperNativeWorkActive() || isTranscriptionSessionActive()) {
+    return;
+  }
 
   idleTimeoutId = setTimeout(() => {
     idleTimeoutId = null;
@@ -62,9 +99,10 @@ export const getWhisperContext = async (
       }
 
       if (cachedContext) {
-        if (isTranscriptionSessionActive()) {
+        if (isTranscriptionSessionActive() || isWhisperNativeWorkActive()) {
           throw new Error('whisper_context_busy');
         }
+        await waitForWhisperNativeIdle();
         cachedContext = null;
         try {
           await releaseAllWhisper();
@@ -91,25 +129,24 @@ export const getWhisperContext = async (
 };
 
 export const releaseWhisperContext = async (): Promise<void> => {
-  clearIdleTimer();
-  if (!cachedContext) return;
+  if (releaseInFlight) {
+    releaseQueued = true;
+    return releaseInFlight;
+  }
 
-  if (isTranscriptionSessionActive()) {
-    await abortTranscriptionForAppBackground();
+  if (isTranscriptionSessionActive() || isWhisperNativeWorkActive()) {
+    releaseQueued = true;
     return;
   }
 
-  if (isNativeTranscriptionRunning()) {
-    await abortTranscriptionForAppBackground();
-    if (isTranscriptionSessionActive()) {
-      return;
-    }
-  }
+  releaseInFlight = releaseWhisperContextNow().finally(() => {
+    releaseInFlight = null;
+    drainQueuedRelease();
+  });
 
-  cachedContext = null;
-  try {
-    await releaseAllWhisper();
-  } catch (e) {
-    if (__DEV__) console.warn('[whisper] release failed:', e);
-  }
+  return releaseInFlight;
 };
+
+setWhisperNativeIdleListener(() => {
+  drainQueuedRelease();
+});

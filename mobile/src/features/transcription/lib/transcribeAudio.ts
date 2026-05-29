@@ -5,6 +5,8 @@ import type { AudioChunk } from '@/shared/lib/audio';
 import { splitAudioIntoChunks } from '@/shared/lib/audio';
 import { isArray, isRecord, isString } from '@/shared/lib/type-guards';
 
+import { beginWhisperNativeWork, endWhisperNativeWork } from './whisperNativeLifecycle';
+
 const MIN_DURATION_MS = 500;
 
 const CHUNK_THRESHOLD_MS = 30_000;
@@ -138,42 +140,47 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
   };
 
   const promise = (async (): Promise<TranscribeAudioResult> => {
-    // Let the caller register `stop` before native whisper_full starts.
-    await Promise.resolve();
+    beginWhisperNativeWork();
+    try {
+      // Let the caller register `stop` before native whisper_full starts.
+      await Promise.resolve();
 
-    if (cancelled) {
-      throw new Error('abort');
-    }
+      if (cancelled) {
+        throw new Error('abort');
+      }
 
-    if (durationMs < MIN_DURATION_MS) {
-      return { segments: [], fullText: '', skipped: true };
-    }
+      if (durationMs < MIN_DURATION_MS) {
+        return { segments: [], fullText: '', skipped: true };
+      }
 
-    if (durationMs < CHUNK_THRESHOLD_MS) {
-      return transcribeShort({
+      if (durationMs < CHUNK_THRESHOLD_MS) {
+        return transcribeShort({
+          context,
+          audioPath,
+          language,
+          cancelled: () => cancelled,
+          setStop: (fn) => {
+            activeStop = fn;
+          },
+        });
+      }
+
+      return transcribeLong({
         context,
         audioPath,
         language,
+        totalDurationSec: durationMs / 1000,
+        onProgress,
+        resume,
+        onChunkCompleted,
         cancelled: () => cancelled,
         setStop: (fn) => {
           activeStop = fn;
         },
       });
+    } finally {
+      endWhisperNativeWork();
     }
-
-    return transcribeLong({
-      context,
-      audioPath,
-      language,
-      totalDurationSec: durationMs / 1000,
-      onProgress,
-      resume,
-      onChunkCompleted,
-      cancelled: () => cancelled,
-      setStop: (fn) => {
-        activeStop = fn;
-      },
-    });
   })();
 
   return { promise, stop };

@@ -4,8 +4,8 @@ import { getTranscriptionCheckpoint } from '../transcriptionCheckpoint';
 import { notifyTranscriptionPaused } from './notifyTranscriptionPaused';
 
 /** Shows a local notification when there is checkpoint progress to resume. */
-export function schedulePausedNotificationIfResumable(recordId: string): void {
-  void (async () => {
+export async function schedulePausedNotificationIfResumable(recordId: string): Promise<void> {
+  await (async () => {
     const checkpoint = await getTranscriptionCheckpoint(recordId);
     if (!checkpoint) return;
 

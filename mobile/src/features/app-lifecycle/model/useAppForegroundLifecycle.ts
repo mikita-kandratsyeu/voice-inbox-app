@@ -10,6 +10,7 @@ import {
   abortTranscriptionForAppBackground,
   releaseWhisperContext,
 } from '@/features/transcription';
+import { isWhisperNativeWorkActive } from '@/features/transcription/lib/whisperNativeLifecycle';
 import { isTranscriptionSessionActive } from '@/features/transcription/model/transcriptionRuntimeRegistry';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { ensurePushRegistered, notifyAppBackground, notifyAppForeground } from '@/shared/lib/push';
@@ -53,7 +54,7 @@ export function useAppForegroundLifecycle(): void {
     };
 
     const releaseIdleOnDeviceModels = () => {
-      if (isTranscriptionSessionActive()) {
+      if (isTranscriptionSessionActive() || isWhisperNativeWorkActive()) {
         return;
       }
 
