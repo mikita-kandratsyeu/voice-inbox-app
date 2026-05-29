@@ -9,9 +9,15 @@ import {
   applyAiSummaryResult,
   existingTaskTextsForRecord,
 } from '@/features/ai-processing/lib/applyAiSummaryResult';
+import {
+  clearCloudSummarizeInFlight,
+  isCloudSummarizeInFlight,
+  markCloudSummarizeInFlight,
+} from '@/features/ai-processing/lib/cloudSummarizeInFlight';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import type { AiProcessingResult } from '@/shared/lib/ai-api';
+import { clearCloudSummarizePending } from '@/shared/lib/ai-api';
 import {
   type AiAbortHandle,
   createAiAbortHandle,
@@ -180,6 +186,8 @@ export const useAiProcessing = () => {
 
       const cloudJobId = activeCloudJobIdRef.current.get(recordId);
       activeCloudJobIdRef.current.delete(recordId);
+      clearCloudSummarizeInFlight(recordId);
+      void clearCloudSummarizePending(recordId);
       if (cloudJobId && useSettingsStore.getState().aiExecutionMode !== 'private_experimental') {
         void cancelCloudAiJob(cloudJobId);
       }
@@ -200,9 +208,11 @@ export const useAiProcessing = () => {
         return;
       }
 
-      if (inFlightRef.current.has(baseId)) {
+      if (inFlightRef.current.has(baseId) || isCloudSummarizeInFlight(record.id)) {
         return;
       }
+
+      markCloudSummarizeInFlight(record.id);
 
       setSummaryStatus(record.id, 'processing');
       setTasksStatus(record.id, 'processing');
@@ -428,6 +438,7 @@ export const useAiProcessing = () => {
         if (!runResult.ok) {
           if (isAiGenerationCancelledError(runResult.error)) {
             applyCancelledUiState(record.id);
+            void clearCloudSummarizePending(record.id);
             void logAnalyticsEvent('ai_action_cancelled', {
               action: 'summary_tasks',
               mode: aiExecutionMode,
@@ -435,6 +446,13 @@ export const useAiProcessing = () => {
             });
             return;
           }
+          const isPollTimeout = runResult.error === 'Timeout waiting for AI result';
+          if (isPollTimeout) {
+            setSummaryStatus(record.id, 'processing');
+            setTasksStatus(record.id, 'processing');
+            return;
+          }
+          void clearCloudSummarizePending(record.id);
           const errorMsg = runResult.limitExceeded
             ? getAiWeeklyLimitExceededMessage()
             : toUserFacingFetchErrorMessage(runResult.error ?? '');
@@ -533,6 +551,8 @@ export const useAiProcessing = () => {
 
         inFlightRef.current.delete(baseId);
 
+        void clearCloudSummarizePending(record.id);
+
         const latestAfterApply = getLatestRecord(record.id);
         await generateAndSaveEmbeddingForRecord({
           ...record,
@@ -585,6 +605,7 @@ export const useAiProcessing = () => {
         clearPrivateAiBatchUi(record.id);
         if (runGenerationRef.current.get(record.id) === runGeneration) {
           inFlightRef.current.delete(baseId);
+          clearCloudSummarizeInFlight(record.id);
           if (abortHandlesRef.current.get(record.id) === abortHandle) {
             abortHandlesRef.current.delete(record.id);
           }
