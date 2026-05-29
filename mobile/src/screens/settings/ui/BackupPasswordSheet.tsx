@@ -2,7 +2,7 @@ import type { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { BottomSheetBackdrop, BottomSheetTextInput, BottomSheetView } from '@gorhom/bottom-sheet';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 
 import { BACKUP_PASSWORD_MIN_LENGTH, validateBackupPassword } from '@/features/sync-data';
 import { useColors } from '@/shared/config';
