@@ -16,8 +16,6 @@ export {
   postAiMessage,
   resumePollAiMessage,
 } from './aiApi';
-export { finalizeAiMessageAfterPollTimeout } from './finalizePollTimeout';
-export { AI_POLL_TIMEOUT_ERROR } from './pollGetLoop';
 export type { AskApiResult, AskMessageResult } from './askApi';
 export { pollAskResult, postAskQuestion } from './askApi';
 export type { AutoOrganizeApiResult, AutoOrganizePollResult } from './autoOrganizeApi';
@@ -33,6 +31,8 @@ export {
 } from './cloudPendingJobDb';
 export type { DigestAiResult, DigestApiResult } from './digestApi';
 export { generateDigest } from './digestApi';
+export { finalizeAiMessageAfterPollTimeout } from './finalizePollTimeout';
+export { AI_POLL_TIMEOUT_ERROR } from './pollGetLoop';
 export type {
   AiWeeklyLimits,
   ProLicenseRedeemErrorCode,

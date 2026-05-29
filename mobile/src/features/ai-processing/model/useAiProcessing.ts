@@ -516,10 +516,7 @@ export const useAiProcessing = () => {
                   getLatestRecord: (id) =>
                     useRecordStore.getState().records.find((r) => r.id === id),
                 });
-              } else if (
-                includeMeetingSpeakerBreakdown &&
-                meetingDialogueMarkdown?.trim()
-              ) {
+              } else if (includeMeetingSpeakerBreakdown && meetingDialogueMarkdown?.trim()) {
                 await updateAiExtras(record.id, {
                   meetingDialogue: meetingDialogueMarkdown.trim(),
                 });
@@ -554,10 +551,7 @@ export const useAiProcessing = () => {
             }
             void clearCloudSummarizePending(record.id);
             const timeoutMsg = toUserFacingFetchErrorMessage(finalized.error);
-            if (
-              includeMeetingSpeakerBreakdown &&
-              isSummaryAlreadyApplied(record.id)
-            ) {
+            if (includeMeetingSpeakerBreakdown && isSummaryAlreadyApplied(record.id)) {
               applyMeetingDialogueFailure(record.id, timeoutMsg);
               return;
             }
