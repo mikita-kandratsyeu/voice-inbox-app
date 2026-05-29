@@ -27,7 +27,10 @@ import { TabletSidebarBody } from './TabletSidebarBody';
 import { TABLET_SIDEBAR_PAD, TABLET_SIDEBAR_WIDTH } from './tabletSidebarMetrics';
 import { getTabletSidebarTheme } from './tabletSidebarTheme';
 import {
+  isOnSettingsRootScreen,
+  isOnSettingsStackScreen,
   navigateMainTab,
+  navigateSettingsRoot,
   navigateSettingsStackScreen,
   useTabletTabNavigationStore,
 } from './tabletTabNavigation';
@@ -113,8 +116,11 @@ export const TabletSidebar = () => {
   );
 
   const openSettings = useCallback(() => {
+    if (isOnSettingsRootScreen()) {
+      return;
+    }
     hapticSelection();
-    navigateMainTab('SettingsRoot');
+    navigateSettingsRoot();
   }, []);
 
   const openAllTasks = useCallback(() => {
@@ -165,6 +171,9 @@ export const TabletSidebar = () => {
   }, [rootNavigation]);
 
   const openAiUsageDashboard = useCallback(() => {
+    if (isOnSettingsStackScreen('AiUsageDashboard')) {
+      return;
+    }
     hapticSelection();
     navigateSettingsStackScreen('AiUsageDashboard');
   }, []);
