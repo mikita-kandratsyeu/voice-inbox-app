@@ -6,14 +6,13 @@ import type { EdgeInsets } from 'react-native-safe-area-context';
 
 import type { Folder } from '@/entities/folder';
 import type { MonetizationMode } from '@/features/app-storefront';
-import { SettingsPlanStatusCard } from '@/screens/settings/ui/SettingsPlanStatusCard';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 import type { AiUsage } from '@/shared/lib/ai-api';
 
 import type { TabletInboxSidebarTarget } from './tabletInboxNavBridge';
 import { requestTabletOpenEditFolder } from './tabletInboxNavBridge';
-import { TabletSidebarAiUsageCard } from './TabletSidebarAiUsageCard';
+import { TabletSidebarPlanAndUsageCard } from './TabletSidebarPlanAndUsageCard';
 import { TabletSidebarComposeRow } from './TabletSidebarComposeRow';
 import {
   TabletSidebarFoldersExpandedHeader,
@@ -294,21 +293,16 @@ export function TabletSidebarBody({
           backgroundColor: theme.panel,
         }}
       >
-        {!isProActive ? (
-          <SettingsPlanStatusCard
+        {showAiUsageCard || !isProActive ? (
+          <TabletSidebarPlanAndUsageCard
             color={color}
             monetizationMode={monetizationMode}
-            layout="sidebar"
-            onPress={onOpenPlanPaywall}
-          />
-        ) : null}
-
-        {showAiUsageCard ? (
-          <TabletSidebarAiUsageCard
-            color={color}
+            isProActive={isProActive}
+            showUsage={showAiUsageCard}
             usage={aiUsage}
-            loading={aiUsageLoading}
-            onPress={onOpenAiUsageDashboard}
+            usageLoading={aiUsageLoading}
+            onOpenPlanPaywall={onOpenPlanPaywall}
+            onOpenAiUsageDashboard={onOpenAiUsageDashboard}
           />
         ) : null}
 
