@@ -1,4 +1,3 @@
-import { useNavigation } from '@react-navigation/native';
 import {
   CalendarDays,
   Cloud,
@@ -22,6 +21,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import { useSettingsStackBack } from '@/app/navigation/useSettingsStackBack';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
@@ -111,9 +111,9 @@ function UsageMetricsSkeleton({ color }: { color: Colors }) {
 }
 
 export const AiUsageDashboardScreen = () => {
+  const handleBack = useSettingsStackBack();
   const { t, i18n } = useTranslation();
   const color = useColors();
-  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
@@ -202,10 +202,7 @@ export const AiUsageDashboardScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader
-        title={t('settings.aiUsageDashboard.title')}
-        onBack={() => navigation.goBack()}
-      />
+      <ScreenHeader title={t('settings.aiUsageDashboard.title')} onBack={handleBack} />
       <View
         style={{
           flex: 1,

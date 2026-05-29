@@ -2,6 +2,7 @@ import { create } from 'zustand';
 
 import { folderRepository } from '@/entities/folder/model/repository';
 import { loadAskAiInboxStatusesByRecordId } from '@/features/ask-ai/model/askAiSessionDb';
+import { waitForDb } from '@/shared/lib';
 import { NitroFS } from '@/shared/lib/fs';
 
 import { isRecordAiOperating } from '../lib/isRecordAiOperating';
@@ -21,9 +22,11 @@ const AI_PERSIST_DEBOUNCE_MS = 750;
 const aiPersistTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 const flushPersistAiState = (id: string, aiStatus: RecordingStatus, transcriptProgress: number) => {
-  void recordRepository.persistAiState(id, aiStatus, transcriptProgress).catch((err) => {
-    if (__DEV__) console.warn('[recordStore] persistAiState failed', id, err);
-  });
+  void waitForDb()
+    .then(() => recordRepository.persistAiState(id, aiStatus, transcriptProgress))
+    .catch((err) => {
+      if (__DEV__) console.warn('[recordStore] persistAiState failed', id, err);
+    });
 };
 
 const schedulePersistAiState = (

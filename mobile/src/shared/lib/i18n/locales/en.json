@@ -102,7 +102,11 @@
       "foldersEmpty": "Create a folder to organize your notes",
       "editFolderHint": "Long press to edit folder",
       "privateFoldersUnavailable": "Folders aren't available in Private mode",
-      "privateFoldersCta": "Open AI mode settings"
+      "privateFoldersCta": "Open AI mode settings",
+      "aiProcessingHint": "AI is working on notes in this section",
+      "aiUsage": {
+        "openDetails": "Open usage details"
+      }
     }
   },
   "textNote": {
@@ -365,8 +369,8 @@
     "meetingDialogueTabEmptyDesc": "Generate a summary for this meeting. AI will try to separate who said what. Tap Regenerate anytime to refresh.",
     "meetingDialoguePreamble": "Unlabeled section",
     "meetingDialogueProcessing": "Preparing speaker turns...",
-    "meetingDialogueProgressStepLabel": "Speaker turns — step 2 of 2.",
-    "regenerateSummaryWaitForSpeakers": "Wait for speaker turns before regenerating the summary.",
+    "meetingDialogueProgressStepLabel": "Step 2 of 2: speaker turns",
+    "regenerateSummaryWaitForSpeakers": "Wait for speaker turns, then you can regenerate the summary",
     "meetingDialogueFailedTitle": "Speaker turns failed",
     "meetingDialogueFailedDesc": "Your summary is ready. Try Regenerate, or reopen this note later — turns may finish after a notification.",
     "shareMeetingBrief": "Share meeting brief",
@@ -621,7 +625,7 @@
       "claimBonusSuccess": "+{{count}} bonus generations",
       "claimBonusUnavailableHint": "The ad bonus unlocks after you start using your weekly generation limit.",
       "claimBonusNoUsage": "Use some generations first — the bonus refunds part of what you’ve already spent.",
-      "openDashboard": "Open usage dashboard"
+      "openDashboard": "Open usage details"
     },
     "aiUsageDashboard": {
       "title": "AI usage",

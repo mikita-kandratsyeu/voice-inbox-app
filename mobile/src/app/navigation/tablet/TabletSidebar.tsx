@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,8 +26,13 @@ import { useTabletInboxSidebarStore } from './tabletInboxSidebarStore';
 import { TabletSidebarBody } from './TabletSidebarBody';
 import { TABLET_SIDEBAR_PAD, TABLET_SIDEBAR_WIDTH } from './tabletSidebarMetrics';
 import { getTabletSidebarTheme } from './tabletSidebarTheme';
-import { navigateMainTab, useTabletTabNavigationStore } from './tabletTabNavigation';
+import {
+  navigateMainTab,
+  navigateSettingsStackScreen,
+  useTabletTabNavigationStore,
+} from './tabletTabNavigation';
 import { useTabletSidebarAiProcessing } from './useTabletSidebarAiProcessing';
+import { useTabletSidebarAiUsage } from './useTabletSidebarAiUsage';
 import { useTabletSidebarNavCounts } from './useTabletSidebarNavCounts';
 
 export const TabletSidebar = () => {
@@ -51,6 +56,26 @@ export const TabletSidebar = () => {
     folderCounts,
   } = useTabletSidebarNavCounts();
   const aiProcessing = useTabletSidebarAiProcessing();
+  const showAiUsageCard = !isPrivateMode;
+  const {
+    usage: aiUsage,
+    loading: aiUsageLoading,
+    refresh: refreshAiUsage,
+  } = useTabletSidebarAiUsage(showAiUsageCard);
+
+  const anySidebarAiProcessing =
+    aiProcessing.inbox ||
+    aiProcessing.pinned ||
+    aiProcessing.archived ||
+    aiProcessing.folderIds.size > 0;
+  const hadSidebarAiProcessing = useRef(false);
+
+  useEffect(() => {
+    if (hadSidebarAiProcessing.current && !anySidebarAiProcessing) {
+      void refreshAiUsage();
+    }
+    hadSidebarAiProcessing.current = anySidebarAiProcessing;
+  }, [anySidebarAiProcessing, refreshAiUsage]);
 
   const activeTranscriptionRecord = useRecordStore((s) =>
     s.records.find((r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing'),
@@ -139,6 +164,11 @@ export const TabletSidebar = () => {
     rootNavigation.navigate('TextNoteModal');
   }, [rootNavigation]);
 
+  const openAiUsageDashboard = useCallback(() => {
+    hapticSelection();
+    navigateSettingsStackScreen('AiUsageDashboard');
+  }, []);
+
   const inboxActive = !isSettingsTab && inboxSelection?.kind === 'inbox';
   const pinnedActive = !isSettingsTab && inboxSelection?.kind === 'pinned';
   const archivedActive = !isSettingsTab && inboxSelection?.kind === 'archived';
@@ -191,6 +221,10 @@ export const TabletSidebar = () => {
         archivedActive={archivedActive}
         horizontalPad={TABLET_SIDEBAR_PAD}
         onOpenSettings={openSettings}
+        onOpenAiUsageDashboard={openAiUsageDashboard}
+        showAiUsageCard={showAiUsageCard}
+        aiUsage={aiUsage}
+        aiUsageLoading={aiUsageLoading}
         onOpenPlanPaywall={openPlanPaywall}
         onRecord={handleNewRecording}
         onRecordLongPress={handleImportAudio}

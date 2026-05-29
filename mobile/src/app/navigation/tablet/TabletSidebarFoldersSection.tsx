@@ -8,6 +8,7 @@ import { FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
 import type { Colors } from '@/shared/config';
 import { hapticSelection, resolveDisplayFolderColor } from '@/shared/lib';
 
+import type { TabletSidebarAiOperationKind } from './classifySidebarRecordAiOperation';
 import type { TabletInboxSidebarTarget } from './tabletInboxNavBridge';
 import { requestTabletOpenReorderFolders } from './tabletInboxNavBridge';
 import {
@@ -17,7 +18,7 @@ import {
   TabletSidebarSectionLabel,
 } from './TabletSidebarNavItem';
 import type { TabletSidebarTheme } from './tabletSidebarTheme';
-import { navigateMainTab } from './tabletTabNavigation';
+import { navigateMainTab, navigateSettingsStackScreen } from './tabletTabNavigation';
 import type { TabletSidebarNavCounts } from './useTabletSidebarNavCounts';
 
 function FolderSectionHeaderAction({
@@ -54,6 +55,7 @@ type TabletSidebarFoldersSectionProps = {
   folders: FolderEntity[];
   folderCounts: TabletSidebarNavCounts['folderCounts'];
   folderAiProcessing: ReadonlySet<string>;
+  folderAiProcessingKinds: ReadonlyMap<string, TabletSidebarAiOperationKind>;
   isProActive: boolean;
   isPrivateMode: boolean;
   isSettingsTab: boolean;
@@ -122,6 +124,7 @@ export function TabletSidebarFoldersSection({
   folders,
   folderCounts,
   folderAiProcessing,
+  folderAiProcessingKinds,
   isProActive,
   isPrivateMode,
   isSettingsTab,
@@ -135,7 +138,7 @@ export function TabletSidebarFoldersSection({
 
   const openPrivateModeSettings = () => {
     hapticSelection();
-    navigateMainTab('SettingsRoot', { screen: 'PrivateAiMode' });
+    navigateSettingsStackScreen('PrivateAiMode');
   };
 
   if (isPrivateMode) {
@@ -210,6 +213,7 @@ export function TabletSidebarFoldersSection({
               appearance="folder"
               badgeCount={folderCount}
               showProcessingIndicator={folderAiProcessing.has(folder.id)}
+              processingKind={folderAiProcessingKinds.get(folder.id) ?? null}
               accentHex={folderHex}
               accessibilityHint={t('tablet.sidebar.editFolderHint')}
               onPress={() => onNavigateToInbox({ kind: 'folder', folderId: folder.id })}

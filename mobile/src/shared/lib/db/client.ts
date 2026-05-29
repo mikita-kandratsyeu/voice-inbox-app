@@ -9,6 +9,7 @@ import { migrationsConfig } from './migrations';
 import * as schema from './schema';
 
 let _db: ReturnType<typeof drizzle> | null = null;
+let _dbInitPromise: Promise<void> | null = null;
 const DB_NAME = 'voice-inbox.db';
 
 async function migrateIosSqliteFromLibraryToDocumentsIfNeeded(): Promise<void> {
@@ -32,6 +33,8 @@ async function migrateIosSqliteFromLibraryToDocumentsIfNeeded(): Promise<void> {
 
 export type Database = ReturnType<typeof drizzle<typeof schema>>;
 
+export const isDbReady = (): boolean => _db !== null;
+
 export const getDB = (): Database => {
   if (!_db) {
     throw new Error('[db] Database is not initialized. Call initDB() first.');
@@ -40,7 +43,19 @@ export const getDB = (): Database => {
   return _db as Database;
 };
 
-export const initDB = async (): Promise<void> => {
+/** Resolves when `initDB()` has finished (safe for early app lifecycle / foreground handlers). */
+export const waitForDb = async (): Promise<Database> => {
+  if (_db) {
+    return getDB();
+  }
+  if (_dbInitPromise) {
+    await _dbInitPromise;
+    return getDB();
+  }
+  throw new Error('[db] Database is not initialized. Call initDB() first.');
+};
+
+async function openAndMigrateDb(): Promise<void> {
   if (IS_IOS && IOS_DOCUMENT_PATH) {
     await migrateIosSqliteFromLibraryToDocumentsIfNeeded();
   }
@@ -56,4 +71,19 @@ export const initDB = async (): Promise<void> => {
   await migrate(db, migrationsConfig);
 
   _db = db;
+}
+
+export const initDB = async (): Promise<void> => {
+  if (_db) {
+    return;
+  }
+
+  if (!_dbInitPromise) {
+    _dbInitPromise = openAndMigrateDb().catch((err) => {
+      _dbInitPromise = null;
+      throw err;
+    });
+  }
+
+  await _dbInitPromise;
 };

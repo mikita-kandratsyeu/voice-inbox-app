@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { eq, gt } from 'drizzle-orm';
 
-import { cloudAiPendingTable, getDB } from '@/shared/lib';
+import { cloudAiPendingTable, waitForDb } from '@/shared/lib';
 
 export type CloudSummarizePendingJob = {
   recordId: string;
@@ -18,7 +18,7 @@ export function recordIdFromSummarizeJobId(jobId: string): string | null {
 }
 
 export async function saveCloudSummarizePending(job: CloudSummarizePendingJob): Promise<void> {
-  const db = getDB();
+  const db = await waitForDb();
   await db
     .insert(cloudAiPendingTable)
     .values({
@@ -42,14 +42,14 @@ export async function saveCloudSummarizePending(job: CloudSummarizePendingJob): 
 }
 
 export async function clearCloudSummarizePending(recordId: string): Promise<void> {
-  const db = getDB();
+  const db = await waitForDb();
   await db.delete(cloudAiPendingTable).where(eq(cloudAiPendingTable.recordId, recordId));
 }
 
 export async function getCloudSummarizePending(
   recordId: string,
 ): Promise<CloudSummarizePendingJob | null> {
-  const db = getDB();
+  const db = await waitForDb();
   const rows = await db
     .select()
     .from(cloudAiPendingTable)
@@ -73,7 +73,7 @@ export async function getCloudSummarizePending(
 const PENDING_RESUME_BATCH_LIMIT = 4;
 
 export async function listCloudSummarizePendingForResume(): Promise<CloudSummarizePendingJob[]> {
-  const db = getDB();
+  const db = await waitForDb();
   const now = Date.now();
   const rows = await db
     .select()

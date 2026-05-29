@@ -73,13 +73,15 @@ export function useAppBootstrap(
       }
     });
 
+    const dbInit = initDB();
+
     initRuntimeConfig()
       .catch(() => {
         if (__DEV__) console.warn('[bootstrap] failed to initialize remote config');
       })
       .then(() => {
         prefetchModelManifest();
-        return initDB();
+        return dbInit;
       })
       .then(async () => {
         useSettingsStore.getState().reconcileAiExecutionModeAfterRemoteConfig();

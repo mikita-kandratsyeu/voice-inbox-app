@@ -1,3 +1,4 @@
+import { waitForDb } from '@/shared/lib';
 import { getCloudSummarizePending, listCloudSummarizePendingForResume } from '@/shared/lib/ai-api';
 
 import { isCloudSummarizeInFlight } from './cloudSummarizeInFlight';
@@ -62,8 +63,13 @@ async function runResume(
 /** Resume a single record's cloud summarize job (no-op if none / in-flight live run). */
 export function resumeCloudSummarizeForRecord(recordId: string): void {
   void (async () => {
-    const pending = await getCloudSummarizePending(recordId);
-    await runResume(pending);
+    try {
+      await waitForDb();
+      const pending = await getCloudSummarizePending(recordId);
+      await runResume(pending);
+    } catch {
+      // DB not ready yet or init failed — caller may retry on next foreground.
+    }
   })();
 }
 
@@ -82,13 +88,21 @@ export function scheduleResumeAllPendingCloudSummarize(): void {
       });
       return;
     }
-    resumeAllInFlight = resumeAllPendingCloudSummarize().finally(() => {
-      resumeAllInFlight = null;
-    });
+    resumeAllInFlight = resumeAllPendingCloudSummarize()
+      .catch(() => {})
+      .finally(() => {
+        resumeAllInFlight = null;
+      });
   }, FOREGROUND_RESUME_DEBOUNCE_MS);
 }
 
 async function resumeAllPendingCloudSummarize(): Promise<void> {
+  try {
+    await waitForDb();
+  } catch {
+    return;
+  }
+
   const pendingList = await listCloudSummarizePendingForResume();
   for (const pending of pendingList) {
     await runResume(pending);

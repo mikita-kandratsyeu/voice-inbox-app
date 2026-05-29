@@ -49,8 +49,26 @@ describe('collectTabletSidebarAiProcessing', () => {
     ] as RecordListItem[]);
 
     expect(result.archived).toBe(true);
+    expect(result.archivedKind).toBe('transcription');
     expect(result.folderIds).toEqual(new Set(['work']));
+    expect(result.folderKinds.get('work')).toBe('summary');
     expect(result.pinned).toBe(true);
+    expect(result.pinnedKind).toBe('ask');
     expect(result.inbox).toBe(true);
+    expect(result.inboxKind).toBe('transcription');
+  });
+
+  it('tracks speaker breakdown on the matching folder', () => {
+    const result = collectTabletSidebarAiProcessing([
+      {
+        id: '1',
+        status: 'read',
+        folderId: 'work',
+        meetingDialogueStatus: 'processing',
+      },
+    ] as RecordListItem[]);
+
+    expect(result.folderIds).toEqual(new Set(['work']));
+    expect(result.folderKinds.get('work')).toBe('speakers');
   });
 });

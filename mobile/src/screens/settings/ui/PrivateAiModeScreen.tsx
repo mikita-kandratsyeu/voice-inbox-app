@@ -1,4 +1,3 @@
-import { useNavigation } from '@react-navigation/native';
 import { Check } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,6 +5,7 @@ import { Alert, ScrollView, Text, TouchableOpacity, useWindowDimensions, View } 
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
+import { useSettingsStackBack } from '@/app/navigation/useSettingsStackBack';
 import type { AiExecutionMode } from '@/entities/settings';
 import { useSettingsStore } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
@@ -16,10 +16,10 @@ import { ScreenHeader } from '@/shared/ui';
 const AI_EXECUTION_MODES: AiExecutionMode[] = ['smart_hybrid', 'private_experimental'];
 
 export const PrivateAiModeScreen = () => {
+  const handleBack = useSettingsStackBack();
   const { t } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
@@ -46,7 +46,7 @@ export const PrivateAiModeScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title={t('privateAiMode.title')} onBack={() => navigation.goBack()} />
+      <ScreenHeader title={t('privateAiMode.title')} onBack={handleBack} />
       <View
         style={{
           flex: 1,

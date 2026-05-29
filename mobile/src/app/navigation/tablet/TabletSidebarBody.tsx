@@ -9,9 +9,11 @@ import type { MonetizationMode } from '@/features/app-storefront';
 import { SettingsPlanStatusCard } from '@/screens/settings/ui/SettingsPlanStatusCard';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
+import type { AiUsage } from '@/shared/lib/ai-api';
 
 import type { TabletInboxSidebarTarget } from './tabletInboxNavBridge';
 import { requestTabletOpenEditFolder } from './tabletInboxNavBridge';
+import { TabletSidebarAiUsageCard } from './TabletSidebarAiUsageCard';
 import { TabletSidebarComposeRow } from './TabletSidebarComposeRow';
 import {
   TabletSidebarFoldersExpandedHeader,
@@ -51,6 +53,10 @@ export type TabletSidebarBodyProps = {
   pinnedActive: boolean;
   archivedActive: boolean;
   onOpenSettings: () => void;
+  onOpenAiUsageDashboard: () => void;
+  showAiUsageCard: boolean;
+  aiUsage: AiUsage | null;
+  aiUsageLoading: boolean;
   onOpenPlanPaywall: () => void;
   onRecord: () => void;
   onRecordLongPress: () => void;
@@ -86,6 +92,10 @@ export function TabletSidebarBody({
   pinnedActive,
   archivedActive,
   onOpenSettings,
+  onOpenAiUsageDashboard,
+  showAiUsageCard,
+  aiUsage,
+  aiUsageLoading,
   onOpenPlanPaywall,
   onRecord,
   onRecordLongPress,
@@ -100,7 +110,7 @@ export function TabletSidebarBody({
   const allTasksIconColor = color.accent.primary;
   const mutedIcon = color.text.secondary;
 
-  const aiProcessingHint = t('aiStatus.aiProcessing');
+  const aiProcessingHint = t('tablet.sidebar.aiProcessingHint');
 
   const inboxNav = (
     <TabletSidebarNavItem
@@ -112,6 +122,7 @@ export function TabletSidebarBody({
       badgeCount={inboxCount}
       showUnreadDot={hasUnread}
       showProcessingIndicator={aiProcessing.inbox}
+      processingKind={aiProcessing.inboxKind}
       accessibilityHint={
         aiProcessing.inbox ? aiProcessingHint : hasUnread ? t('inbox.filters.unread') : undefined
       }
@@ -138,6 +149,7 @@ export function TabletSidebarBody({
         appearance="secondary"
         badgeCount={pinnedCount}
         showProcessingIndicator={aiProcessing.pinned}
+        processingKind={aiProcessing.pinnedKind}
         accessibilityHint={aiProcessing.pinned ? aiProcessingHint : undefined}
         onPress={() => navigateToInbox({ kind: 'pinned' })}
         icon={
@@ -158,6 +170,7 @@ export function TabletSidebarBody({
         appearance="secondary"
         badgeCount={archivedCount}
         showProcessingIndicator={aiProcessing.archived}
+        processingKind={aiProcessing.archivedKind}
         accessibilityHint={aiProcessing.archived ? aiProcessingHint : undefined}
         onPress={() => navigateToInbox({ kind: 'archived' })}
         icon={
@@ -198,6 +211,7 @@ export function TabletSidebarBody({
       folders={folders}
       folderCounts={folderCounts}
       folderAiProcessing={aiProcessing.folderIds}
+      folderAiProcessingKinds={aiProcessing.folderKinds}
       isProActive={isProActive}
       isPrivateMode={isPrivateMode}
       isSettingsTab={isSettingsTab}
@@ -286,6 +300,15 @@ export function TabletSidebarBody({
             monetizationMode={monetizationMode}
             layout="sidebar"
             onPress={onOpenPlanPaywall}
+          />
+        ) : null}
+
+        {showAiUsageCard ? (
+          <TabletSidebarAiUsageCard
+            color={color}
+            usage={aiUsage}
+            loading={aiUsageLoading}
+            onPress={onOpenAiUsageDashboard}
           />
         ) : null}
 
