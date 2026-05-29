@@ -16,6 +16,8 @@ export {
   postAiMessage,
   resumePollAiMessage,
 } from './aiApi';
+export { finalizeAiMessageAfterPollTimeout } from './finalizePollTimeout';
+export { AI_POLL_TIMEOUT_ERROR } from './pollGetLoop';
 export type { AskApiResult, AskMessageResult } from './askApi';
 export { pollAskResult, postAskQuestion } from './askApi';
 export type { AutoOrganizeApiResult, AutoOrganizePollResult } from './autoOrganizeApi';

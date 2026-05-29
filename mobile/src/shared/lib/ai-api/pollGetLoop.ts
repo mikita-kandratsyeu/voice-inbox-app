@@ -18,6 +18,8 @@ const POLL_BACKOFF_CAP_MS = 8_000;
 
 export type PollGetLoopResult<T> = { ok: true; result: T } | { ok: false; error: string };
 
+export const AI_POLL_TIMEOUT_ERROR = 'Timeout waiting for AI result';
+
 /**
  * Polls a GET endpoint until `parseResponse` returns done/error, or timeout.
  * Aborts in-flight fetch and stops when `options.signal` is aborted.
@@ -85,5 +87,5 @@ export async function pollGetLoop<T>(
     return parsed;
   }
 
-  return { ok: false, error: 'Timeout waiting for AI result' };
+  return { ok: false, error: AI_POLL_TIMEOUT_ERROR };
 }

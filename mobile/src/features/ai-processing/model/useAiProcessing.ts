@@ -18,7 +18,12 @@ import { markUnreadAfterSummaryRegenerationIfNeeded } from '@/features/ai-proces
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import type { AiProcessingResult } from '@/shared/lib/ai-api';
-import { clearCloudSummarizePending } from '@/shared/lib/ai-api';
+import {
+  AI_POLL_TIMEOUT_ERROR,
+  clearCloudSummarizePending,
+  finalizeAiMessageAfterPollTimeout,
+  getCloudSummarizePending,
+} from '@/shared/lib/ai-api';
 import {
   type AiAbortHandle,
   createAiAbortHandle,
@@ -478,10 +483,88 @@ export const useAiProcessing = () => {
             });
             return;
           }
-          const isPollTimeout = runResult.error === 'Timeout waiting for AI result';
-          if (isPollTimeout) {
-            setSummaryStatus(record.id, 'processing');
-            setTasksStatus(record.id, 'processing');
+          if (runResult.error === AI_POLL_TIMEOUT_ERROR) {
+            const pending = await getCloudSummarizePending(record.id);
+            const finalized = await finalizeAiMessageAfterPollTimeout(
+              pending?.jobId ?? requestId,
+              pending?.syncToken,
+              { expectAsyncMeetingDialogue: includeMeetingSpeakerBreakdown },
+            );
+            if (finalized.ok) {
+              // Race: worker finished just after poll budget expired.
+              setPrivateAiBatchUi(record.id, {
+                privateAiBatchProgress: 98,
+                privateAiBatchPhase: 'processing',
+              });
+              const { summary, keyPhrases, meetingDialogueMarkdown } = finalized.result;
+              const summaryAlreadyOnDevice = isSummaryAlreadyApplied(record.id);
+              if (!summaryAlreadyOnDevice) {
+                await applyAiSummaryResult({
+                  record,
+                  result: finalized.result,
+                  isProActive,
+                  recordIsMeeting,
+                  includeMeetingSpeakerBreakdown,
+                  aiExecutionMode,
+                  effectiveLocalAiModelId,
+                  generationStartedAt,
+                  updateSummary,
+                  updateTasks,
+                  updateTags,
+                  updateAiExtras,
+                  renameRecord,
+                  getLatestRecord: (id) =>
+                    useRecordStore.getState().records.find((r) => r.id === id),
+                });
+              } else if (
+                includeMeetingSpeakerBreakdown &&
+                meetingDialogueMarkdown?.trim()
+              ) {
+                await updateAiExtras(record.id, {
+                  meetingDialogue: meetingDialogueMarkdown.trim(),
+                });
+              }
+              setSummaryStatus(record.id, 'done');
+              setTasksStatus(record.id, 'done');
+              setSummaryError(record.id, undefined);
+              setTasksError(record.id, undefined);
+              if (includeMeetingSpeakerBreakdown) {
+                const mdUiStatus = resolveMeetingDialogueUiStatus(
+                  includeMeetingSpeakerBreakdown,
+                  meetingDialogueMarkdown,
+                  finalized.meetingDialogueStatus,
+                );
+                setMeetingDialogueStatus(record.id, mdUiStatus);
+                setMeetingDialogueError(record.id, undefined);
+              }
+              await generateAndSaveEmbeddingForRecord({
+                ...record,
+                summary: summary ?? record.summary,
+                keyPhrases: keyPhrases ?? record.keyPhrases ?? [],
+              });
+              markUnreadAfterSummaryRegenerationIfNeeded(record.id, wasSummaryRegeneration);
+              void clearCloudSummarizePending(record.id);
+              return;
+            }
+            if (finalized.error === 'AI result expired') {
+              void clearCloudSummarizePending(record.id);
+              setSummaryStatus(record.id, 'idle');
+              setTasksStatus(record.id, 'idle');
+              return;
+            }
+            void clearCloudSummarizePending(record.id);
+            const timeoutMsg = toUserFacingFetchErrorMessage(finalized.error);
+            if (
+              includeMeetingSpeakerBreakdown &&
+              isSummaryAlreadyApplied(record.id)
+            ) {
+              applyMeetingDialogueFailure(record.id, timeoutMsg);
+              return;
+            }
+            setSummaryStatus(record.id, 'error');
+            setTasksStatus(record.id, 'error');
+            setSummaryError(record.id, timeoutMsg);
+            setTasksError(record.id, timeoutMsg);
             return;
           }
           void clearCloudSummarizePending(record.id);

@@ -1,3 +1,4 @@
+import { AI_POLL_TIMEOUT_ERROR } from '@/shared/lib/ai-api/pollGetLoop';
 import { i18n } from '@/shared/lib/i18n';
 
 function looksLikeJsonParseFailure(message: string): boolean {
@@ -6,6 +7,10 @@ function looksLikeJsonParseFailure(message: string): boolean {
     /^Unexpected token/i.test(message) ||
     message.startsWith('Invalid AI response')
   );
+}
+
+function looksLikeOpenRouterStreamFailure(message: string): boolean {
+  return /OpenRouter stream error/i.test(message);
 }
 
 function looksLikeIosNetworkErrorDump(message: string): boolean {
@@ -25,7 +30,11 @@ export function toUserFacingFetchErrorMessage(message: string): string {
     return i18n.t('ai.smartModeNetworkError');
   }
 
-  if (looksLikeJsonParseFailure(trimmed)) {
+  if (looksLikeJsonParseFailure(trimmed) || looksLikeOpenRouterStreamFailure(trimmed)) {
+    return i18n.t('ai.modelResponseInvalid');
+  }
+
+  if (trimmed === AI_POLL_TIMEOUT_ERROR) {
     return i18n.t('ai.modelResponseInvalid');
   }
 

@@ -1,6 +1,7 @@
 import { after } from 'next/server';
 
 import { AI_JOB_QSTASH_RETRIES, BASE_URL_OR_FALLBACK } from '@/config/constants';
+import { markAiJobFailed } from '@/lib/ai-job-fail';
 import { envelopeFromPayload } from '@/lib/ai-job-payload';
 import { runAiJobFromEnvelope } from '@/lib/run-ai-job-from-envelope';
 import { getAiJobWorkerUrl, getQStashClient, shouldUseQStashTransport } from '@/lib/qstash';
@@ -55,6 +56,10 @@ export async function dispatchAiJob(payload: AiJobPayload): Promise<void> {
 
 function scheduleAfterFallback(envelope: ReturnType<typeof envelopeFromPayload>): void {
   after(async () => {
-    await runAiJobFromEnvelope(envelope, { skipIdempotency: true });
+    const result = await runAiJobFromEnvelope(envelope, { skipIdempotency: true });
+    // `after()` has no QStash retries — write terminal `error` so clients stop polling `processing`.
+    if (!result.ok) {
+      await markAiJobFailed(envelope, result.error);
+    }
   });
 }

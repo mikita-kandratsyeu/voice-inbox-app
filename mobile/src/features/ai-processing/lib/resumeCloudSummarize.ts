@@ -7,9 +7,11 @@ import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generati
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import type { AiProcessingResult, ServerMeetingDialogueStatus } from '@/shared/lib/ai-api';
 import {
+  AI_POLL_TIMEOUT_ERROR,
   clearCloudSummarizePending,
   type CloudSummarizePendingJob,
   fetchAiMessageOnce,
+  finalizeAiMessageAfterPollTimeout,
   resumePollAiMessage,
 } from '@/shared/lib/ai-api';
 import { toUserFacingFetchErrorMessage } from '@/shared/lib/fetch/userFacingFetchError';
@@ -258,11 +260,27 @@ export async function resumeCloudSummarizeJob(pending: CloudSummarizePendingJob)
     return;
   }
 
-  if (pollResult.error === 'Timeout waiting for AI result') {
-    if (!partialSummary) {
-      setSummaryStatus(record.id, 'processing');
-      setTasksStatus(record.id, 'processing');
+  if (pollResult.error === AI_POLL_TIMEOUT_ERROR) {
+    const finalized = await finalizeAiMessageAfterPollTimeout(pending.jobId, pending.syncToken, {
+      expectAsyncMeetingDialogue: pending.expectAsyncMeetingDialogue,
+    });
+    if (finalized.ok) {
+      await applyPollSuccess(
+        record,
+        finalized.result,
+        finalized.meetingDialogueStatus,
+        pending.expectAsyncMeetingDialogue,
+        partialSummary,
+      );
+      await clearCloudSummarizePending(pending.recordId);
+      return;
     }
+    if (finalized.error === 'AI result expired') {
+      await clearCloudSummarizePending(pending.recordId);
+      return;
+    }
+    applyResumeFailure(record.id, toUserFacingFetchErrorMessage(finalized.error), partialSummary);
+    await clearCloudSummarizePending(pending.recordId);
     return;
   }
 
