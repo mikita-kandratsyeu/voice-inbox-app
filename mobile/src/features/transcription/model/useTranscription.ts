@@ -8,13 +8,13 @@ import { useAiProcessing } from '@/features/ai-processing';
 import { shouldApplyAutoAiAfterTranscription } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
+import { agentDebugLog } from '@/shared/lib/agentDebugLog';
 import { ensureRecordingsDir, i18n, RECORDINGS_DIR, useNetworkStatus } from '@/shared/lib';
 import { convertToWav } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
 import { getWhisperModelPath } from '@/shared/lib/whisper';
 
 import { getWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
-import { cancelTranscriptionPausedNotification } from '../lib/paused-notification/cancelTranscriptionPausedNotification';
 import { transcribeAudio } from '../lib/transcribeAudio';
 import {
   getTranscriptionCheckpoint,
@@ -28,6 +28,7 @@ import {
   invalidateTranscriptionJob,
   isActiveTranscriptionJob,
 } from './transcriptionJobRegistry';
+import { isTranscriptionBlockedForRecord } from './transcriptionConcurrency';
 import {
   beginTranscriptionSession,
   clearTranscriptionBackgroundCancelled,
@@ -114,6 +115,13 @@ export const useTranscription = () => {
         devLog('aborted: no audio path', { recordId: record.id });
         return;
       }
+
+      const records = useRecordStore.getState().records;
+      if (isTranscriptionBlockedForRecord(record.id, records)) {
+        devLog('blocked: another transcription active', { recordId: record.id });
+        return;
+      }
+
       const audioPath = record.audioPath;
 
       const variantId = getWhisperModelVariantId(selectedWhisperModel, selectedWhisperModelFormat);
@@ -148,6 +156,14 @@ export const useTranscription = () => {
 
       const jobGen = beginTranscriptionJob(record.id);
       beginTranscriptionSession(record.id);
+      // #region agent log
+      agentDebugLog(
+        'useTranscription.ts',
+        'startTranscription',
+        { recordId: record.id, jobGen, appState: AppState.currentState },
+        'H7',
+      );
+      // #endregion
       devLog('job started', { recordId: record.id, jobGen });
 
       updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'), null);
@@ -314,8 +330,6 @@ export const useTranscription = () => {
         await updateTranscript(record.id, fullText, segments);
         await removeTranscriptionCheckpoint(record.id).catch(() => {});
         clearTranscriptionCheckpointSnapshot(record.id);
-        void cancelTranscriptionPausedNotification(record.id);
-
         const recordWithTranscript = {
           ...record,
           transcript: fullText,
@@ -368,6 +382,14 @@ export const useTranscription = () => {
         keepCheckpointSnapshot = pausedForBackground;
 
         if (wasCancelled || pausedForBackground) {
+          // #region agent log
+          agentDebugLog(
+            'useTranscription.ts',
+            'cancel path',
+            { recordId: record.id, wasCancelled, pausedForBackground },
+            'H7',
+          );
+          // #endregion
           if (!pausedForBackground) {
             await removeTranscriptionCheckpoint(record.id).catch(() => {});
           } else {
@@ -443,7 +465,6 @@ export const useTranscription = () => {
       clearTranscriptionBackgroundCancelled(recordId);
       clearTranscriptionCheckpointSnapshot(recordId);
       removeTranscriptionCheckpoint(recordId).catch(() => {});
-      void cancelTranscriptionPausedNotification(recordId);
       clearPendingBackgroundTranscriptionRecord();
     },
     [updateAiStatus],

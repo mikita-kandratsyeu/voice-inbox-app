@@ -9,6 +9,7 @@ import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
+import { useTranscriptionBlockedForRecord } from '@/features/transcription/model/transcriptionConcurrency';
 import { hasActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import { useTranslate } from '@/features/translate';
 import type { Colors } from '@/shared/config';
@@ -47,6 +48,7 @@ export const TranscriptContent = ({
   );
   const r = recordFromStore ?? record;
   const registryInFlight = hasActiveTranscriptionJob(record.id);
+  const transcriptionBlocked = useTranscriptionBlockedForRecord(record.id);
 
   useEffect(() => {
     if (!r.detailsHydrated) {
@@ -77,7 +79,13 @@ export const TranscriptContent = ({
   }
 
   if (r.aiStatus === 'error') {
-    return <TranscriptError color={color} onRetry={onTranscribe} />;
+    return (
+      <TranscriptError
+        color={color}
+        onRetry={onTranscribe}
+        retryDisabled={transcriptionBlocked}
+      />
+    );
   }
 
   const isAiProcessing =

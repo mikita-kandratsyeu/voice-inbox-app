@@ -1,3 +1,4 @@
+import { AppState } from 'react-native';
 import type { WhisperContext } from 'whisper.rn';
 
 import type { TranscriptSegment, WordToken } from '@/entities/record';
@@ -5,6 +6,7 @@ import type { AudioChunk } from '@/shared/lib/audio';
 import { splitAudioIntoChunks } from '@/shared/lib/audio';
 import { isArray, isRecord, isString } from '@/shared/lib/type-guards';
 
+import { canRunWhisperGpuWork } from './whisperAppState';
 import { beginWhisperNativeWork, endWhisperNativeWork } from './whisperNativeLifecycle';
 
 const MIN_DURATION_MS = 500;
@@ -140,12 +142,17 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
   };
 
   const promise = (async (): Promise<TranscribeAudioResult> => {
-    beginWhisperNativeWork();
+    const appStateSub = AppState.addEventListener('change', (nextState) => {
+      if (nextState !== 'active') {
+        cancelled = true;
+        void stop();
+      }
+    });
     try {
       // Let the caller register `stop` before native whisper_full starts.
       await Promise.resolve();
 
-      if (cancelled) {
+      if (cancelled || !canRunWhisperGpuWork()) {
         throw new Error('abort');
       }
 
@@ -179,7 +186,7 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
         },
       });
     } finally {
-      endWhisperNativeWork();
+      appStateSub.remove();
     }
   })();
 
@@ -201,35 +208,44 @@ const transcribeShort = async ({
   cancelled,
   setStop,
 }: ShortOptions): Promise<TranscribeAudioResult> => {
-  const { stop, promise: rawPromise } = context.transcribe(audioPath, { language });
-
-  setStop(stop);
-
-  if (cancelled()) {
-    await stop();
+  if (cancelled() || !canRunWhisperGpuWork()) {
     throw new Error('abort');
   }
 
-  let raw: unknown;
+  beginWhisperNativeWork();
   try {
-    raw = await rawPromise;
-  } catch (err) {
+    const { stop, promise: rawPromise } = context.transcribe(audioPath, { language });
+
+    setStop(stop);
+
+    if (cancelled()) {
+      await stop();
+      throw new Error('abort');
+    }
+
+    let raw: unknown;
+    try {
+      raw = await rawPromise;
+    } catch (err) {
+      if (cancelled() || !canRunWhisperGpuWork()) {
+        throw new Error('abort');
+      }
+      throw err;
+    }
+    setStop(async () => {});
+
     if (cancelled()) {
       throw new Error('abort');
     }
-    throw err;
-  }
-  setStop(async () => {});
 
-  if (cancelled()) {
-    throw new Error('abort');
+    const result = normalizeResult(raw);
+    return {
+      segments: mapSegments(result, 0, 0),
+      fullText: (result.result ?? '').trim(),
+    };
+  } finally {
+    endWhisperNativeWork();
   }
-
-  const result = normalizeResult(raw);
-  return {
-    segments: mapSegments(result, 0, 0),
-    fullText: (result.result ?? '').trim(),
-  };
 };
 
 type LongOptions = {
@@ -281,7 +297,7 @@ const transcribeLong = async ({
   }
 
   for (let i = startChunkIndex; i < chunks.length; i++) {
-    if (cancelled()) {
+    if (cancelled() || !canRunWhisperGpuWork()) {
       throw new Error('abort');
     }
 
@@ -289,28 +305,37 @@ const transcribeLong = async ({
 
     const prompt = fullText.length > 0 ? fullText.slice(-PROMPT_TAIL_LENGTH) : undefined;
 
-    const { stop: chunkStop, promise: rawPromise } = context.transcribe(audioPath, {
-      language,
-      prompt,
-      offset: chunk.offsetMs,
-      duration: chunk.durationMs,
-    });
+    if (!canRunWhisperGpuWork()) {
+      throw new Error('abort');
+    }
 
-    setStop(chunkStop);
-
+    beginWhisperNativeWork();
     let raw: unknown;
     try {
-      raw = await rawPromise;
-    } catch (chunkErr) {
+      const { stop: chunkStop, promise: rawPromise } = context.transcribe(audioPath, {
+        language,
+        prompt,
+        offset: chunk.offsetMs,
+        duration: chunk.durationMs,
+      });
+
+      setStop(chunkStop);
+
+      try {
+        raw = await rawPromise;
+      } catch (chunkErr) {
+        if (cancelled() || !canRunWhisperGpuWork()) {
+          throw new Error('abort');
+        }
+        throw chunkErr;
+      }
+      setStop(async () => {});
+
       if (cancelled()) {
         throw new Error('abort');
       }
-      throw chunkErr;
-    }
-    setStop(async () => {});
-
-    if (cancelled()) {
-      throw new Error('abort');
+    } finally {
+      endWhisperNativeWork();
     }
 
     const result = normalizeResult(raw);

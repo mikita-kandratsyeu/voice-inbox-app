@@ -2,12 +2,15 @@ import { initWhisper, releaseAllWhisper, type WhisperContext } from 'whisper.rn'
 
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
 import { IS_IOS } from '@/shared/lib';
+import { agentDebugLog } from '@/shared/lib/agentDebugLog';
 import { getWhisperModelPath } from '@/shared/lib/whisper';
 
 import { WHISPER_IDLE_RELEASE_MS } from '../config/constants';
-import { isTranscriptionSessionActive } from '../model/transcriptionRuntimeRegistry';
+import { isNativeTranscriptionRunning } from '../model/transcriptionRuntimeRegistry';
 import {
-  isWhisperNativeWorkActive,
+  beginWhisperNativeWork,
+  endWhisperNativeWork,
+  enqueueWhisperOperation,
   setWhisperNativeIdleListener,
   waitForWhisperNativeIdle,
 } from './whisperNativeLifecycle';
@@ -37,25 +40,39 @@ const releaseWhisperContextNow = async (): Promise<void> => {
 
   await waitForWhisperNativeIdle();
 
-  if (isTranscriptionSessionActive() || isWhisperNativeWorkActive()) {
+  if (isNativeTranscriptionRunning()) {
+    // #region agent log
+    agentDebugLog(
+      'initWhisper.ts',
+      'releaseWhisperContextNow deferred',
+      { nativeRunning: true },
+      'H4',
+    );
+    // #endregion
     releaseQueued = true;
     return;
   }
 
+  // #region agent log
+  agentDebugLog('initWhisper.ts', 'releaseWhisperContextNow executing releaseAllWhisper', {}, 'H4');
+  // #endregion
+  beginWhisperNativeWork();
   cachedContext = null;
   try {
     await releaseAllWhisper();
   } catch (e) {
     if (__DEV__) console.warn('[whisper] release failed:', e);
+  } finally {
+    endWhisperNativeWork();
   }
 };
 
 const drainQueuedRelease = (): void => {
   if (!releaseQueued || releaseInFlight) return;
-  if (isTranscriptionSessionActive() || isWhisperNativeWorkActive()) return;
+  if (isNativeTranscriptionRunning()) return;
 
   releaseQueued = false;
-  releaseInFlight = releaseWhisperContextNow().finally(() => {
+  releaseInFlight = enqueueWhisperOperation(releaseWhisperContextNow, 'drainRelease').finally(() => {
     releaseInFlight = null;
     if (releaseQueued) {
       drainQueuedRelease();
@@ -65,7 +82,7 @@ const drainQueuedRelease = (): void => {
 
 export const scheduleIdleRelease = (): void => {
   clearIdleTimer();
-  if (!cachedContext || isWhisperNativeWorkActive() || isTranscriptionSessionActive()) {
+  if (!cachedContext || isNativeTranscriptionRunning()) {
     return;
   }
 
@@ -75,77 +92,106 @@ export const scheduleIdleRelease = (): void => {
   }, WHISPER_IDLE_RELEASE_MS);
 };
 
-export const getWhisperContext = async (
+const loadWhisperContext = async (
   modelId: WhisperModelId,
-  format: WhisperModelWeightsFormat = 'q5_1',
+  format: WhisperModelWeightsFormat,
 ): Promise<WhisperContext> => {
+  await waitForWhisperNativeIdle();
+
   if (cachedContext?.modelId === modelId && cachedContext.format === format) {
-    clearIdleTimer();
     return cachedContext.context;
   }
 
-  if (initPromise) {
-    await initPromise;
+  if (cachedContext) {
+    if (isNativeTranscriptionRunning()) {
+      throw new Error('whisper_context_busy');
+    }
+    await waitForWhisperNativeIdle();
+    beginWhisperNativeWork();
+    cachedContext = null;
+    try {
+      await releaseAllWhisper();
+    } catch (e) {
+      if (__DEV__) console.warn('[whisper] release failed:', e);
+    } finally {
+      endWhisperNativeWork();
+    }
+  }
+
+  // #region agent log
+  agentDebugLog(
+    'initWhisper.ts',
+    'loadWhisperContext initWhisper',
+    { modelId, format, nativeRunning: isNativeTranscriptionRunning() },
+    'H3',
+  );
+  // #endregion
+  beginWhisperNativeWork();
+  try {
+    const filePath = getWhisperModelPath(modelId, format);
+    const iosWhisperOptions = IS_IOS ? { useGpu: false as const, useCoreMLIos: true as const } : {};
+    // #region agent log
+    agentDebugLog('initWhisper.ts', 'initWhisper options', { ...iosWhisperOptions, modelId }, 'H8');
+    // #endregion
+    const context = await initWhisper({
+      filePath,
+      // Metal GPU cannot run in background (iOS kills command buffers → wsp_ggml_abort).
+      ...iosWhisperOptions,
+    });
+    cachedContext = { context, modelId, format };
+    return context;
+  } finally {
+    endWhisperNativeWork();
+  }
+};
+
+export const getWhisperContext = (
+  modelId: WhisperModelId,
+  format: WhisperModelWeightsFormat = 'q5_1',
+): Promise<WhisperContext> =>
+  enqueueWhisperOperation(async () => {
     if (cachedContext?.modelId === modelId && cachedContext.format === format) {
       clearIdleTimer();
       return cachedContext.context;
     }
-  }
 
-  initPromise = (async () => {
-    try {
+    if (initPromise) {
+      await initPromise;
       if (cachedContext?.modelId === modelId && cachedContext.format === format) {
+        clearIdleTimer();
         return cachedContext.context;
       }
-
-      if (cachedContext) {
-        if (isTranscriptionSessionActive() || isWhisperNativeWorkActive()) {
-          throw new Error('whisper_context_busy');
-        }
-        await waitForWhisperNativeIdle();
-        cachedContext = null;
-        try {
-          await releaseAllWhisper();
-        } catch (e) {
-          if (__DEV__) console.warn('[whisper] release failed:', e);
-        }
-      }
-
-      const filePath = getWhisperModelPath(modelId, format);
-      const context = await initWhisper({
-        filePath,
-        ...(IS_IOS ? { useCoreMLIos: true } : {}),
-      });
-      cachedContext = { context, modelId, format };
-      return context;
-    } finally {
-      initPromise = null;
     }
-  })();
 
-  const context = await initPromise;
-  clearIdleTimer();
-  return context;
-};
+    initPromise = loadWhisperContext(modelId, format).finally(() => {
+      initPromise = null;
+    });
 
-export const releaseWhisperContext = async (): Promise<void> => {
-  if (releaseInFlight) {
-    releaseQueued = true;
-    return releaseInFlight;
-  }
+    const context = await initPromise;
+    clearIdleTimer();
+    return context;
+  }, 'getWhisperContext');
 
-  if (isTranscriptionSessionActive() || isWhisperNativeWorkActive()) {
-    releaseQueued = true;
-    return;
-  }
+export const releaseWhisperContext = (): Promise<void> =>
+  enqueueWhisperOperation(async () => {
+    if (releaseInFlight) {
+      releaseQueued = true;
+      await releaseInFlight;
+      return;
+    }
 
-  releaseInFlight = releaseWhisperContextNow().finally(() => {
-    releaseInFlight = null;
-    drainQueuedRelease();
-  });
+    if (isNativeTranscriptionRunning()) {
+      releaseQueued = true;
+      return;
+    }
 
-  return releaseInFlight;
-};
+    releaseInFlight = releaseWhisperContextNow().finally(() => {
+      releaseInFlight = null;
+      drainQueuedRelease();
+    });
+
+    await releaseInFlight;
+  }, 'releaseWhisperContext');
 
 setWhisperNativeIdleListener(() => {
   drainQueuedRelease();

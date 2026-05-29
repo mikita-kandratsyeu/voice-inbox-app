@@ -4,7 +4,6 @@ import { Alert, AppState, InteractionManager } from 'react-native';
 
 import { useRecordStore } from '@/entities/record';
 
-import { cancelTranscriptionPausedNotification } from '../lib/paused-notification/cancelTranscriptionPausedNotification';
 import {
   getTranscriptionCheckpoint,
   listTranscriptionCheckpoints,
@@ -74,7 +73,6 @@ export const TranscriptionResumePrompt = () => {
       return;
     }
 
-    void cancelTranscriptionPausedNotification(record.id);
     clearPendingTranscriptionResumePrompt();
     clearPendingBackgroundTranscriptionRecord();
 
@@ -144,7 +142,7 @@ export const TranscriptionResumePrompt = () => {
       }
     });
     const unsubscribeRequest = subscribeTranscriptionResumePromptRequest(() => {
-      scheduleResumeCheck('notification');
+      scheduleResumeCheck('resumeRequest');
     });
     return () => {
       sub.remove();

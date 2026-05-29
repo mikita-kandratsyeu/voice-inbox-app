@@ -11,6 +11,7 @@ import {
   useSettingsStore,
 } from '@/entities/settings';
 import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
+import { useTranscriptionBlockedForRecord } from '@/features/transcription';
 import { TranscriptHighlight } from '@/features/transcript-highlight';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
@@ -124,6 +125,8 @@ export const TranscriptTab = ({
     selectedWhisperModelFormat,
   );
   const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
+  const transcriptionBlocked = useTranscriptionBlockedForRecord(recordId);
+  const transcribeDisabled = isAiProcessing || transcriptionBlocked;
 
   const showTranslation = hasTranslation && viewMode === 'translated';
   const translatedParagraphs = buildReadableParagraphs(translatedTranscript ?? '');
@@ -149,7 +152,7 @@ export const TranscriptTab = ({
         hint={hint}
         onPress={onTranscribe}
         hideButton={!hasAudio}
-        disabled={isAiProcessing}
+        disabled={transcribeDisabled}
       />
     );
   }
@@ -284,7 +287,7 @@ export const TranscriptTab = ({
             label={t('recordingDetail.retranscribe')}
             color={color}
             onPress={onTranscribe}
-            disabled={isAiProcessing}
+            disabled={transcribeDisabled}
           />
         )}
       </ScrollView>

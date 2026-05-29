@@ -3,7 +3,7 @@ type Listener = () => void;
 let pendingRecordId: string | null = null;
 const listeners = new Set<Listener>();
 
-/** Prioritize resume prompt for this record (e.g. after tapping the paused notification). */
+/** Prioritize resume prompt for this record (e.g. right after background abort). */
 export function requestTranscriptionResumePrompt(recordId: string): void {
   pendingRecordId = recordId;
   for (const listener of listeners) {

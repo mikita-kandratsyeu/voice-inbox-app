@@ -13,6 +13,7 @@ import {
 import { isWhisperNativeWorkActive } from '@/features/transcription/lib/whisperNativeLifecycle';
 import { isTranscriptionSessionActive } from '@/features/transcription/model/transcriptionRuntimeRegistry';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
+import { agentDebugLog } from '@/shared/lib/agentDebugLog';
 import { ensurePushRegistered, notifyAppBackground, notifyAppForeground } from '@/shared/lib/push';
 
 const HEARTBEAT_INTERVAL_MS = 40_000;
@@ -58,15 +59,31 @@ export function useAppForegroundLifecycle(): void {
         return;
       }
 
+      // Releasing Whisper while Metal is still tearing down after abort causes wsp_ggml_abort.
+      if (AppState.currentState !== 'active') {
+        return;
+      }
+
       const hasHeavyWork = useRecordStore.getState().hasActiveAiJobs || isModelDownloading();
 
       if (!hasHeavyWork) {
+        // #region agent log
+        agentDebugLog(
+          'useAppForegroundLifecycle.ts',
+          'releaseIdleOnDeviceModels calling releaseWhisperContext',
+          { appState: AppState.currentState },
+          'H6',
+        );
+        // #endregion
         releaseWhisperContext().catch(() => {});
         releaseLocalLlmSession().catch(() => {});
       }
     };
 
     const handleAppStateChange = (state: AppStateStatus) => {
+      // #region agent log
+      agentDebugLog('useAppForegroundLifecycle.ts', 'AppState change', { state }, 'H5');
+      // #endregion
       if (state === 'inactive') {
         void abortTranscriptionForAppBackground();
       }

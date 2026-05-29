@@ -10,9 +10,10 @@ import { Button } from '@/shared/ui';
 type TranscriptErrorProps = {
   color: Colors;
   onRetry: () => void;
+  retryDisabled?: boolean;
 };
 
-export const TranscriptError = ({ color, onRetry }: TranscriptErrorProps) => {
+export const TranscriptError = ({ color, onRetry, retryDisabled = false }: TranscriptErrorProps) => {
   const { t } = useTranslation();
   const err = color.status.error.text;
   const errBg = color.status.error.bg;
@@ -49,6 +50,7 @@ export const TranscriptError = ({ color, onRetry }: TranscriptErrorProps) => {
           icon={<RefreshCw size={14} color={err} strokeWidth={2.5} />}
           label={t('recordingDetail.summaryRetry')}
           onPress={onRetry}
+          disabled={retryDisabled}
           activeOpacity={0.7}
           containerStyle={{ paddingVertical: 12 }}
           accessibilityLabel={t('recordingDetail.summaryRetry')}

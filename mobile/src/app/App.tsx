@@ -30,7 +30,6 @@ import {
 } from '@/features/pro-license';
 import { useTaskDeadlineNotificationHandlers } from '@/features/task-deadline-notifications/model/useTaskDeadlineNotificationHandlers';
 import { TranscriptionResumePrompt } from '@/features/transcription';
-import { useTranscriptionPausedNotificationHandlers } from '@/features/transcription/model/useTranscriptionPausedNotificationHandlers';
 import {
   BootSplashVisibleProvider,
   useAppTheme,
@@ -100,7 +99,6 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
   usePushNotifications({ onNotification: onPushData });
   usePushNotificationOpenedApp(onPushData);
   useTaskDeadlineNotificationHandlers();
-  useTranscriptionPausedNotificationHandlers();
   useAndroidLayoutAnimation();
   useYandexMobileAdsInit();
   useAppBootstrap(onPushData, { onBootstrapReady, onCriticalError });

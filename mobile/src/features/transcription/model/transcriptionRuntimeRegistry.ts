@@ -1,12 +1,15 @@
 import { useRecordStore } from '@/entities/record';
+import { agentDebugLog } from '@/shared/lib/agentDebugLog';
 
-import { schedulePausedNotificationIfResumable } from '../lib/paused-notification/schedulePausedNotificationIfResumable';
 import {
   getTranscriptionCheckpoint,
   saveTranscriptionCheckpoint,
   type TranscriptionCheckpoint,
 } from '../lib/transcriptionCheckpoint';
-import { isWhisperNativeWorkActive } from '../lib/whisperNativeLifecycle';
+import {
+  isWhisperNativeWorkActive,
+  waitForWhisperNativeIdleAfterAbort,
+} from '../lib/whisperNativeLifecycle';
 import { markTranscriptionPausedForBackground } from './pendingBackgroundTranscriptionRecord';
 import { invalidateTranscriptionJob } from './transcriptionJobRegistry';
 import { requestTranscriptionResumePrompt } from './transcriptionResumePromptRequest';
@@ -99,6 +102,19 @@ export async function abortTranscriptionForAppBackground(): Promise<void> {
   }
 
   const recordId = activeRecordId ?? sessionRecordId;
+  // #region agent log
+  agentDebugLog(
+    'transcriptionRuntimeRegistry.ts',
+    'abortTranscriptionForAppBackground',
+    {
+      recordId,
+      hasActiveStop: activeStop != null,
+      sessionRecordId,
+      activeRecordId,
+    },
+    'H5',
+  );
+  // #endregion
   if (!recordId) {
     return;
   }
@@ -110,9 +126,6 @@ export async function abortTranscriptionForAppBackground(): Promise<void> {
     backgroundCancelledRecordIds.add(recordId);
     markTranscriptionPausedForBackground(recordId);
 
-    // Flush before stop(): useTranscription `finally` clears the in-memory snapshot.
-    await flushTranscriptionCheckpointForBackground(recordId);
-
     if (stop) {
       try {
         await stop();
@@ -121,10 +134,22 @@ export async function abortTranscriptionForAppBackground(): Promise<void> {
       }
     }
 
+    await waitForWhisperNativeIdleAfterAbort();
+    // #region agent log
+    agentDebugLog(
+      'transcriptionRuntimeRegistry.ts',
+      'abortTranscription native idle after stop',
+      { recordId, appState: 'post-abort-settle' },
+      'H8',
+    );
+    // #endregion
+
+    // Flush after stop: useTranscription `finally` clears the in-memory snapshot.
+    await flushTranscriptionCheckpointForBackground(recordId);
+
     invalidateTranscriptionJob(recordId);
     useRecordStore.getState().updateAiStatus(recordId, 'idle');
     const checkpoint = await getTranscriptionCheckpoint(recordId);
-    await schedulePausedNotificationIfResumable(recordId);
     if (checkpoint) {
       requestTranscriptionResumePrompt(recordId);
     }

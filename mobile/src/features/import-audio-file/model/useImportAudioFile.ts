@@ -15,7 +15,7 @@ import {
   shouldApplyAutoTranscribeOnSave,
 } from '@/features/app-storefront';
 import { useProEntitlement } from '@/features/pro-license';
-import { useTranscription } from '@/features/transcription';
+import { isTranscriptionBlockedForRecord, useTranscription } from '@/features/transcription';
 import { generateRecordId } from '@/screens/record/lib/generateRecordId';
 import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
 import { hapticError, hapticMedium, hapticSuccess } from '@/shared/lib';
@@ -181,7 +181,10 @@ export function useImportAudioFile() {
         hapticSuccess();
 
         if (applyAutoTranscribe) {
-          startTranscription(record);
+          const records = useRecordStore.getState().records;
+          if (!isTranscriptionBlockedForRecord(record.id, records)) {
+            startTranscription(record);
+          }
         }
 
         navigation.navigate('RecordingDetail', { record });
