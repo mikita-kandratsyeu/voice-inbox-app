@@ -9,12 +9,12 @@ import {
   applyAiSummaryResult,
   existingTaskTextsForRecord,
 } from '@/features/ai-processing/lib/applyAiSummaryResult';
-import { markUnreadAfterSummaryRegenerationIfNeeded } from '@/features/ai-processing/lib/markUnreadAfterSummaryRegeneration';
 import {
   clearCloudSummarizeInFlight,
   isCloudSummarizeInFlight,
   markCloudSummarizeInFlight,
 } from '@/features/ai-processing/lib/cloudSummarizeInFlight';
+import { markUnreadAfterSummaryRegenerationIfNeeded } from '@/features/ai-processing/lib/markUnreadAfterSummaryRegeneration';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import type { AiProcessingResult } from '@/shared/lib/ai-api';

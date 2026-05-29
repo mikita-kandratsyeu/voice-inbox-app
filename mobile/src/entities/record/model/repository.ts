@@ -392,7 +392,10 @@ export const recordRepository = {
   markAsUnread: async (id: string): Promise<void> => {
     logDb('markAsUnread', { id });
     const db = getDB();
-    await db.update(recordsTable).set({ status: 'unread', readAt: null }).where(eq(recordsTable.id, id));
+    await db
+      .update(recordsTable)
+      .set({ status: 'unread', readAt: null })
+      .where(eq(recordsTable.id, id));
   },
 
   archive: async (id: string): Promise<void> => {

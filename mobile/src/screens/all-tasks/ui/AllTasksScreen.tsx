@@ -593,9 +593,7 @@ export const AllTasksScreen = () => {
     if (!createTaskRecordId) return undefined;
     const record = records.find((r) => r.id === createTaskRecordId);
     if (!record) return undefined;
-    const folder = record.folderId
-      ? (folders.find((f) => f.id === record.folderId) ?? null)
-      : null;
+    const folder = record.folderId ? (folders.find((f) => f.id === record.folderId) ?? null) : null;
     return {
       title: record.title || t('record.autoTitle.morning'),
       folder,
