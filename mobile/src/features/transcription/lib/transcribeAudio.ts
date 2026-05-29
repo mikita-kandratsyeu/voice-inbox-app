@@ -138,6 +138,13 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
   };
 
   const promise = (async (): Promise<TranscribeAudioResult> => {
+    // Let the caller register `stop` before native whisper_full starts.
+    await Promise.resolve();
+
+    if (cancelled) {
+      throw new Error('abort');
+    }
+
     if (durationMs < MIN_DURATION_MS) {
       return { segments: [], fullText: '', skipped: true };
     }

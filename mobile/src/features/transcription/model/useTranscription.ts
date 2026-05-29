@@ -29,7 +29,9 @@ import {
   isActiveTranscriptionJob,
 } from './transcriptionJobRegistry';
 import {
+  beginTranscriptionSession,
   clearTranscriptionBackgroundCancelled,
+  endTranscriptionSession,
   isTranscriptionBackgroundCancelled,
   registerActiveTranscription,
   unregisterActiveTranscription,
@@ -141,6 +143,7 @@ export const useTranscription = () => {
       }
 
       const jobGen = beginTranscriptionJob(record.id);
+      beginTranscriptionSession(record.id);
       devLog('job started', { recordId: record.id, jobGen });
 
       updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'), null);
@@ -154,7 +157,10 @@ export const useTranscription = () => {
         const context = await getWhisperContext(selectedWhisperModel, selectedWhisperModelFormat);
         usedContext = true;
 
-        if (!isActiveTranscriptionJob(record.id, jobGen)) {
+        if (
+          !isActiveTranscriptionJob(record.id, jobGen) ||
+          isTranscriptionBackgroundCancelled(record.id)
+        ) {
           devLog('aborted after getWhisperContext (stale job)', { recordId: record.id, jobGen });
           return;
         }
@@ -181,7 +187,10 @@ export const useTranscription = () => {
           transcribeInputPath = transcodeWavPath;
         }
 
-        if (!isActiveTranscriptionJob(record.id, jobGen)) {
+        if (
+          !isActiveTranscriptionJob(record.id, jobGen) ||
+          isTranscriptionBackgroundCancelled(record.id)
+        ) {
           devLog('aborted after wav prep (stale job)', { recordId: record.id, jobGen });
           return;
         }
@@ -206,7 +215,7 @@ export const useTranscription = () => {
           fullText: string;
           segments: TranscriptSegment[];
         }) => {
-          const { stop, promise } = transcribeAudio({
+          const transcribeHandle = transcribeAudio({
             context,
             audioPath: transcribeInputPath,
             durationMs: record.durationMs ?? 0,
@@ -234,6 +243,7 @@ export const useTranscription = () => {
             },
           });
 
+          const { stop, promise } = transcribeHandle;
           stopRef.current = stop;
           registerActiveTranscription(record.id, stop);
           return promise;
@@ -367,6 +377,7 @@ export const useTranscription = () => {
           void NitroFS.unlink(transcodeWavPath).catch(() => {});
         }
         endTranscriptionJobIfCurrent(record.id, jobGen);
+        endTranscriptionSession(record.id);
         if (usedContext) {
           scheduleIdleRelease();
         }

@@ -8,6 +8,7 @@ import { WHISPER_IDLE_RELEASE_MS } from '../config/constants';
 import {
   abortTranscriptionForAppBackground,
   isNativeTranscriptionRunning,
+  isTranscriptionSessionActive,
 } from '../model/transcriptionRuntimeRegistry';
 
 type CachedContext = {
@@ -61,8 +62,8 @@ export const getWhisperContext = async (
       }
 
       if (cachedContext) {
-        if (isNativeTranscriptionRunning()) {
-          await abortTranscriptionForAppBackground();
+        if (isTranscriptionSessionActive()) {
+          throw new Error('whisper_context_busy');
         }
         cachedContext = null;
         try {
@@ -93,8 +94,16 @@ export const releaseWhisperContext = async (): Promise<void> => {
   clearIdleTimer();
   if (!cachedContext) return;
 
+  if (isTranscriptionSessionActive()) {
+    await abortTranscriptionForAppBackground();
+    return;
+  }
+
   if (isNativeTranscriptionRunning()) {
     await abortTranscriptionForAppBackground();
+    if (isTranscriptionSessionActive()) {
+      return;
+    }
   }
 
   cachedContext = null;

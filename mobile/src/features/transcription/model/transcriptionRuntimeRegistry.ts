@@ -6,6 +6,8 @@ import { invalidateTranscriptionJob } from './transcriptionJobRegistry';
 
 const backgroundCancelledRecordIds = new Set<string>();
 
+/** Set when startTranscription begins; cleared in its `finally`. */
+let sessionRecordId: string | null = null;
 let activeRecordId: string | null = null;
 let activeStop: (() => Promise<void>) | null = null;
 let abortInFlight: Promise<void> | null = null;
@@ -16,6 +18,23 @@ export function isTranscriptionBackgroundCancelled(recordId: string): boolean {
 
 export function clearTranscriptionBackgroundCancelled(recordId: string): void {
   backgroundCancelledRecordIds.delete(recordId);
+}
+
+export function beginTranscriptionSession(recordId: string): void {
+  sessionRecordId = recordId;
+}
+
+export function endTranscriptionSession(recordId: string): void {
+  if (sessionRecordId === recordId) {
+    sessionRecordId = null;
+  }
+}
+
+export function isTranscriptionSessionActive(recordId?: string): boolean {
+  if (recordId != null) {
+    return sessionRecordId === recordId;
+  }
+  return sessionRecordId != null;
 }
 
 export function registerActiveTranscription(recordId: string, stop: () => Promise<void>): void {
@@ -31,12 +50,12 @@ export function unregisterActiveTranscription(recordId: string): void {
 }
 
 export function getActiveTranscriptionRecordId(): string | null {
-  return activeRecordId;
+  return activeRecordId ?? sessionRecordId;
 }
 
-/** True while native whisper_full may still be using Metal (incl. during abort). */
+/** True while a transcription session or native whisper_full may be active. */
 export function isNativeTranscriptionRunning(): boolean {
-  return activeRecordId != null || abortInFlight != null;
+  return sessionRecordId != null || activeRecordId != null || abortInFlight != null;
 }
 
 function pauseTranscriptionForBackground(recordId: string): void {
@@ -47,23 +66,26 @@ function pauseTranscriptionForBackground(recordId: string): void {
   void schedulePausedNotificationIfResumable(recordId);
 }
 
-/** Stops native whisper work, then marks the record paused-for-resume. */
+/** Stops native whisper when possible; always pauses UI. Never releases Metal context. */
 export async function abortTranscriptionForAppBackground(): Promise<void> {
   if (abortInFlight) {
     return abortInFlight;
   }
 
-  const recordId = activeRecordId;
-  const stop = activeStop;
-  if (!recordId || !stop) {
+  const recordId = activeRecordId ?? sessionRecordId;
+  if (!recordId) {
     return;
   }
 
+  const stop = activeStop;
+
   abortInFlight = (async () => {
-    try {
-      await stop();
-    } catch {
-      // Native cancel may reject while Metal tears down.
+    if (stop) {
+      try {
+        await stop();
+      } catch {
+        // Native cancel may reject while Metal tears down.
+      }
     }
     pauseTranscriptionForBackground(recordId);
   })().finally(() => {

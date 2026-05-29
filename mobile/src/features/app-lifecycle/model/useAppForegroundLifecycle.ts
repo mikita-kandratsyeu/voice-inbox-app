@@ -10,7 +10,7 @@ import {
   abortTranscriptionForAppBackground,
   releaseWhisperContext,
 } from '@/features/transcription';
-import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
+import { isTranscriptionSessionActive } from '@/features/transcription/model/transcriptionRuntimeRegistry';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { ensurePushRegistered, notifyAppBackground, notifyAppForeground } from '@/shared/lib/push';
 
@@ -53,10 +53,11 @@ export function useAppForegroundLifecycle(): void {
     };
 
     const releaseIdleOnDeviceModels = () => {
-      const hasHeavyWork =
-        useRecordStore.getState().hasActiveAiJobs ||
-        isModelDownloading() ||
-        hasAnyActiveTranscriptionJob();
+      if (isTranscriptionSessionActive()) {
+        return;
+      }
+
+      const hasHeavyWork = useRecordStore.getState().hasActiveAiJobs || isModelDownloading();
 
       if (!hasHeavyWork) {
         releaseWhisperContext().catch(() => {});
