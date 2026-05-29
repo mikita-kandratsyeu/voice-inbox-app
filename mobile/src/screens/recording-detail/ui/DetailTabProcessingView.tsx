@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
-import { useAiGenerationTipMaxWidth, useRotatingI18nTip } from '@/shared/lib/aiGenerationTips';
+import { useRotatingI18nTip } from '@/shared/lib/aiGenerationTips';
 import { AiProcessingCancelButton } from '@/shared/ui';
 
 export type DetailTabProcessingContext = 'transcription' | 'private_llm' | 'cloud_ai';
@@ -23,6 +23,8 @@ type DetailTabProcessingViewProps = {
   context?: DetailTabProcessingContext;
   /** Overrides default title from `context` + `phase` (e.g. tab-specific cloud AI labels). */
   statusTitle?: string;
+  /** Hide progress bar and time estimate (e.g. Ask AI cloud). */
+  showProgress?: boolean;
 };
 
 export const DetailTabProcessingView = ({
@@ -36,11 +38,11 @@ export const DetailTabProcessingView = ({
   tipKeys,
   context = 'transcription',
   statusTitle: statusTitleOverride,
+  showProgress = true,
 }: DetailTabProcessingViewProps) => {
   const { t } = useTranslation();
   const rotatingTip = useRotatingI18nTip(tipKeys ?? []);
   const hintDisplay = tipKeys?.length ? rotatingTip : (hintText ?? '');
-  const tipMaxWidth = useAiGenerationTipMaxWidth();
   const animatedWidth = useSharedValue(0);
   const clampedProgress = Math.min(100, Math.max(0, progress));
 
@@ -93,48 +95,50 @@ export const DetailTabProcessingView = ({
           <Text className="text-base font-bold" style={{ color: color.text.primary }}>
             {statusTitle}
           </Text>
-          <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-            {timeLabel}
-          </Text>
+          {showProgress ? (
+            <Text className="text-[14px]" style={{ color: color.text.secondary }}>
+              {timeLabel}
+            </Text>
+          ) : null}
         </View>
       </View>
       {hintDisplay ? (
         <View
-          className="w-full rounded-xl p-3"
-          style={{
-            alignSelf: 'center',
-            backgroundColor: color.background.tertiary,
-            maxWidth: tipMaxWidth,
-          }}
+          className="w-full rounded-xl px-4 py-3"
+          style={{ backgroundColor: color.background.tertiary }}
         >
           <Text
-            className="text-xs leading-[18px] text-center"
+            className="text-[13px] leading-5"
             style={{ color: color.text.secondary }}
           >
             {hintDisplay}
           </Text>
         </View>
       ) : null}
-      <View
-        className="h-1.5 overflow-hidden rounded-sm"
-        style={{ backgroundColor: color.background.tertiary }}
-        accessibilityRole="progressbar"
-        accessibilityValue={{ min: 0, max: 100, now: clampedProgress }}
-        accessibilityLabel={statusTitle}
-      >
-        <Animated.View
-          className="h-1.5 rounded-sm"
-          style={[trackStyle, { backgroundColor: color.accent.primary }]}
-        />
-      </View>
-      <View className="-mt-1 flex-row justify-between">
-        <Text className="text-xs font-medium" style={{ color: color.text.secondary }}>
-          {clampedProgress}%
-        </Text>
-        <Text className="text-xs font-medium" style={{ color: color.text.secondary }}>
-          100%
-        </Text>
-      </View>
+      {showProgress ? (
+        <>
+          <View
+            className="h-1.5 overflow-hidden rounded-sm"
+            style={{ backgroundColor: color.background.tertiary }}
+            accessibilityRole="progressbar"
+            accessibilityValue={{ min: 0, max: 100, now: clampedProgress }}
+            accessibilityLabel={statusTitle}
+          >
+            <Animated.View
+              className="h-1.5 rounded-sm"
+              style={[trackStyle, { backgroundColor: color.accent.primary }]}
+            />
+          </View>
+          <View className="-mt-1 flex-row justify-between">
+            <Text className="text-xs font-medium" style={{ color: color.text.secondary }}>
+              {clampedProgress}%
+            </Text>
+            <Text className="text-xs font-medium" style={{ color: color.text.secondary }}>
+              100%
+            </Text>
+          </View>
+        </>
+      ) : null}
       {onCancel ? (
         <AiProcessingCancelButton color={color} onPress={onCancel} className="mt-1" />
       ) : null}

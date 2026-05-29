@@ -15,7 +15,13 @@ import {
   formatTaskDeadlineTimeForDisplay,
   parseTaskDeadlineTime,
 } from '@/shared/lib/taskDeadlineTimeDisplay';
-import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  AppBottomSheetModal,
+  type LinkedNoteContext,
+  LinkedNoteContextBanner,
+  SheetFooterButtons,
+  useBottomSheetContentPadding,
+} from '@/shared/ui';
 
 const TASK_TEXT_MAX_CHARS = 500;
 const DEADLINE_ROW_MIN_HEIGHT = 48;
@@ -47,6 +53,8 @@ type TaskEditSheetProps = {
   onBack?: () => void;
   /** i18n key for the secondary footer label when `onBack` is set. @default common.goBack */
   footerSecondaryLabelKey?: string;
+  /** Shown when creating a task linked to a note (e.g. from All tasks note picker). */
+  linkedNoteContext?: LinkedNoteContext;
 };
 
 const PRIORITIES: NonNullable<TaskItem['priority']>[] = ['low', 'medium', 'high'];
@@ -160,6 +168,7 @@ export function TaskEditSheet({
   placeholderKey = 'recordingDetail.addTaskPlaceholder',
   onBack,
   footerSecondaryLabelKey = 'common.goBack',
+  linkedNoteContext,
 }: TaskEditSheetProps) {
   const { t, i18n } = useTranslation();
   const color = useColors();
@@ -270,13 +279,16 @@ export function TaskEditSheet({
             color: color.text.primary,
             fontSize: 17,
             fontWeight: '600',
-            marginBottom: 20,
+            marginBottom: linkedNoteContext ? 12 : 20,
             paddingTop: 4,
             textAlign: 'center',
           }}
         >
           {t(sheetTitleKey)}
         </Text>
+        {linkedNoteContext ? (
+          <LinkedNoteContextBanner context={linkedNoteContext} color={color} />
+        ) : null}
         <BottomSheetTextInput
           value={draft}
           onChangeText={(text) => setDraft(text.split('\0').join('').slice(0, TASK_TEXT_MAX_CHARS))}

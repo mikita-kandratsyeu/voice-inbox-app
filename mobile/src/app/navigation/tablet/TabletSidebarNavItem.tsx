@@ -105,6 +105,11 @@ export function TabletSidebarNavItem({
           ? theme.surface
           : 'transparent';
 
+  const aiPulseBorderFrom = withAlphaHex(processingAccent, 0.28);
+  const aiPulseBorderTo = withAlphaHex(processingAccent, 0.62);
+  const aiPulseBgFrom = withAlphaHex(processingAccent, 0.1);
+  const aiPulseBgTo = withAlphaHex(processingAccent, 0.2);
+
   useEffect(() => {
     if (!showAiPulse) {
       borderPulse.value = 0;
@@ -123,16 +128,15 @@ export function TabletSidebarNavItem({
       return {};
     }
 
-    const borderFrom = withAlphaHex(processingAccent, 0.28);
-    const borderTo = withAlphaHex(processingAccent, 0.62);
-    const bgFrom = withAlphaHex(processingAccent, 0.1);
-    const bgTo = withAlphaHex(processingAccent, 0.2);
-
     return {
-      borderColor: interpolateColor(borderPulse.value, [0, 1], [borderFrom, borderTo]),
-      backgroundColor: interpolateColor(borderPulse.value, [0, 1], [bgFrom, bgTo]),
+      borderColor: interpolateColor(
+        borderPulse.value,
+        [0, 1],
+        [aiPulseBorderFrom, aiPulseBorderTo],
+      ),
+      backgroundColor: interpolateColor(borderPulse.value, [0, 1], [aiPulseBgFrom, aiPulseBgTo]),
     };
-  }, [showAiPulse, processingAccent]);
+  }, [showAiPulse, aiPulseBorderFrom, aiPulseBorderTo, aiPulseBgFrom, aiPulseBgTo]);
 
   const containerStyle: ViewStyle = {
     height: itemHeight,

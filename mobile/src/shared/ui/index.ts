@@ -29,6 +29,8 @@ export { FrostedChromeBackground } from './FrostedChromeBackground';
 export { HeaderIconButton } from './HeaderIconButton';
 export type { InputFieldProps } from './InputField';
 export { getInputFieldInputStyle, InputField } from './InputField';
+export type { LinkedNoteContext } from './LinkedNoteContextBanner';
+export { LinkedNoteContextBanner } from './LinkedNoteContextBanner';
 export { SCREEN_PADDING, SECTION_STACK_GAP } from './layoutSpacing';
 export { PLAN_PAYWALL_FEATURE_LINE_HEIGHT, PlanPaywallProChip } from './PlanPaywallProChip';
 export { PrivateModeBadge } from './PrivateModeBadge';

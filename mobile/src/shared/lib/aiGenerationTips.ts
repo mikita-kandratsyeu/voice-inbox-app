@@ -1,20 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { useTabletContentMaxWidth } from './useTabletContentMaxWidth';
-
 /** How long each tip stays visible during AI generation. */
 export const AI_GENERATION_TIP_ROTATE_MS = 9_000;
-
-/** Readable line length for rotating tips (especially on iPad). */
-export const AI_GENERATION_TIP_MAX_WIDTH = 420;
-
-/** Caps tip card width on tablet; on phone returns `undefined` (parent padding is enough). */
-export function useAiGenerationTipMaxWidth(): number | undefined {
-  const layoutMax = useTabletContentMaxWidth('form');
-  if (!layoutMax) return undefined;
-  return Math.min(AI_GENERATION_TIP_MAX_WIDTH, layoutMax - 48);
-}
 
 export const CLOUD_AI_GENERATION_TIP_KEYS = [
   'aiGeneration.tips.background',
@@ -33,6 +21,23 @@ export const PRIVATE_AI_GENERATION_TIP_KEYS = [
   'aiGeneration.tips.recordingMarks',
   'aiGeneration.tips.tasksEditable',
   'aiGeneration.tips.regenerateAfterEdit',
+] as const;
+
+export const ASK_AI_GENERATION_TIP_KEYS = [
+  'aiGeneration.tips.askContext',
+  'aiGeneration.tips.askFollowUp',
+  'aiGeneration.tips.askCheckTranscript',
+  'aiGeneration.tips.background',
+  'aiGeneration.tips.askAfterRegenerate',
+  'aiGeneration.tips.recordingMarks',
+] as const;
+
+export const ASK_AI_PRIVATE_TIP_KEYS = [
+  'aiGeneration.tips.askContext',
+  'aiGeneration.tips.askFollowUp',
+  'aiGeneration.tips.privateKeepOpen',
+  'aiGeneration.tips.privateBattery',
+  'aiGeneration.tips.askCheckTranscript',
 ] as const;
 
 export function useRotatingI18nTip(tipKeys: readonly string[]): string {

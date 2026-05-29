@@ -9,6 +9,7 @@ import {
   applyAiSummaryResult,
   existingTaskTextsForRecord,
 } from '@/features/ai-processing/lib/applyAiSummaryResult';
+import { markUnreadAfterSummaryRegenerationIfNeeded } from '@/features/ai-processing/lib/markUnreadAfterSummaryRegeneration';
 import {
   clearCloudSummarizeInFlight,
   isCloudSummarizeInFlight,
@@ -215,6 +216,8 @@ export const useAiProcessing = () => {
         return;
       }
 
+      const wasSummaryRegeneration = Boolean(record.summary?.trim());
+
       markCloudSummarizeInFlight(record.id);
 
       setSummaryStatus(record.id, 'processing');
@@ -318,6 +321,7 @@ export const useAiProcessing = () => {
                 result: partial,
                 skipMeetingDialogue: true,
               });
+              markUnreadAfterSummaryRegenerationIfNeeded(record.id, wasSummaryRegeneration);
               setMeetingDialogueStatus(record.id, 'processing');
               setMeetingDialogueError(record.id, undefined);
 
@@ -574,6 +578,7 @@ export const useAiProcessing = () => {
           summary: latestAfterApply?.summary ?? summary,
           keyPhrases: latestAfterApply?.keyPhrases ?? keyPhrases ?? [],
         });
+        markUnreadAfterSummaryRegenerationIfNeeded(record.id, wasSummaryRegeneration);
         void logAnalyticsEvent('ai_action_success', {
           action: 'summary_tasks',
           mode: runResult.mode,

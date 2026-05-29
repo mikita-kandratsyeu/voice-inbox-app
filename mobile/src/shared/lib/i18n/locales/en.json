@@ -1513,7 +1513,11 @@
       "folders": "Long-press notes in the inbox to move them into folders or archive in bulk.",
       "meetingDialogue": "Meetings in Smart mode with Pro: after the summary, open Speaker turns — AI splits who said what.",
       "privateKeepOpen": "On-device AI runs while the app is open.",
-      "privateBattery": "Long notes on device may take longer and use more battery than short ones."
+      "privateBattery": "Long notes on device may take longer and use more battery than short ones.",
+      "askContext": "AI uses the transcript, summary, tasks, and earlier questions in this chat.",
+      "askFollowUp": "Ask follow-up questions — AI keeps the conversation context.",
+      "askCheckTranscript": "Answers are based on the note. Check the transcript for exact wording.",
+      "askAfterRegenerate": "Regenerated the summary? Ask again if you need an answer from the new version."
     }
   },
   "privateAi": {

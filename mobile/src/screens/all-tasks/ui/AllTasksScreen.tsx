@@ -589,6 +589,21 @@ export const AllTasksScreen = () => {
     [editTaskTarget, onEditTask],
   );
 
+  const createTaskLinkedNoteContext = useMemo(() => {
+    if (!createTaskRecordId) return undefined;
+    const record = records.find((r) => r.id === createTaskRecordId);
+    if (!record) return undefined;
+    const folder = record.folderId
+      ? (folders.find((f) => f.id === record.folderId) ?? null)
+      : null;
+    return {
+      title: record.title || t('record.autoTitle.morning'),
+      folder,
+      folderId: record.folderId,
+      classification: record.classification,
+    };
+  }, [createTaskRecordId, folders, records, t]);
+
   const createTaskSheet = useMemo(
     () => (
       <TaskEditSheet
@@ -597,6 +612,7 @@ export const AllTasksScreen = () => {
         initialPriority="medium"
         showMetadataFields
         sheetTitleKey="tasks.createTaskSheetTitle"
+        linkedNoteContext={createTaskLinkedNoteContext}
         onClose={closeCreateTaskSheet}
         onBack={createTaskFromPicker ? backFromCreateTaskToNotePicker : undefined}
         onSave={(value) => {
@@ -609,6 +625,7 @@ export const AllTasksScreen = () => {
       backFromCreateTaskToNotePicker,
       closeCreateTaskSheet,
       createTaskFromPicker,
+      createTaskLinkedNoteContext,
       createTaskRecordId,
       onCreateTask,
     ],

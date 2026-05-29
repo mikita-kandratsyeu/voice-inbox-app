@@ -98,6 +98,7 @@ type RecordStore = {
   purgeExpiredTrashRecords: () => Promise<number>;
   togglePin: (id: string) => Promise<void>;
   markAsRead: (id: string) => Promise<void>;
+  markAsUnread: (id: string) => Promise<void>;
   archiveRecord: (id: string) => Promise<void>;
   unarchiveRecord: (id: string) => Promise<void>;
   updateAiStatus: (
@@ -299,6 +300,15 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     const readAt = await recordRepository.markAsRead(id);
     set((s) => ({
       records: updateRecord(s.records, id, { status: 'read', readAt }),
+    }));
+  },
+
+  markAsUnread: async (id) => {
+    const record = get().records.find((r) => r.id === id);
+    if (!record || record.status === 'archived') return;
+    await recordRepository.markAsUnread(id);
+    set((s) => ({
+      records: updateRecord(s.records, id, { status: 'unread', readAt: null }),
     }));
   },
 

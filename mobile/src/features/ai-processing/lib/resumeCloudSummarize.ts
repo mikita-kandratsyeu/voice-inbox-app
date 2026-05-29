@@ -2,6 +2,7 @@ import type { MeetingDialogueLoadStatus, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { applyAiSummaryResult } from '@/features/ai-processing/lib/applyAiSummaryResult';
+import { markUnreadAfterSummaryRegenerationIfNeeded } from '@/features/ai-processing/lib/markUnreadAfterSummaryRegeneration';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import type { AiProcessingResult, ServerMeetingDialogueStatus } from '@/shared/lib/ai-api';
@@ -39,6 +40,7 @@ async function applyPollSuccess(
   result: AiProcessingResult,
   meetingDialogueStatus: ServerMeetingDialogueStatus | undefined,
   expectAsyncMeetingDialogue: boolean,
+  wasSummaryRegeneration: boolean,
 ): Promise<void> {
   const settings = useSettingsStore.getState();
   const isProActive = isProActiveFromStorageSync();
@@ -119,6 +121,8 @@ async function applyPollSuccess(
     summary: latest?.summary ?? result.summary,
     keyPhrases: latest?.keyPhrases ?? result.keyPhrases ?? [],
   });
+
+  markUnreadAfterSummaryRegenerationIfNeeded(record.id, wasSummaryRegeneration);
 }
 
 function applyResumeFailure(recordId: string, errorMsg: string, partialSummary: boolean): void {
@@ -243,6 +247,7 @@ export async function resumeCloudSummarizeJob(pending: CloudSummarizePendingJob)
       pollResult.result,
       pollResult.meetingDialogueStatus,
       pending.expectAsyncMeetingDialogue,
+      partialSummary,
     );
     await clearCloudSummarizePending(pending.recordId);
     return;
