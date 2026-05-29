@@ -78,6 +78,17 @@ ALTER TABLE \`records\` ADD \`summaryTokensCompletion\` integer;`;
 
 const migration0015 = `ALTER TABLE \`records\` ADD \`summaryGenerationMs\` integer;`;
 
+const migration0016 = `CREATE TABLE IF NOT EXISTS \`cloud_ai_pending\` (
+	\`recordId\` text PRIMARY KEY NOT NULL,
+	\`jobId\` text NOT NULL,
+	\`syncToken\` text,
+	\`expectAsyncMeetingDialogue\` integer DEFAULT 0 NOT NULL,
+	\`expiresAtMs\` integer NOT NULL,
+	\`updatedAt\` text NOT NULL
+);
+--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS \`idx_cloud_ai_pending_jobId\` ON \`cloud_ai_pending\` (\`jobId\`);`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -104,5 +115,6 @@ export const migrationsConfig = {
     m0013: migration0013,
     m0014: migration0014,
     m0015: migration0015,
+    m0016: migration0016,
   } as Record<string, string>,
 };

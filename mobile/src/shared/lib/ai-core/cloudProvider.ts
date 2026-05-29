@@ -6,6 +6,8 @@ import {
   pollAskResult,
   postAiMessage,
   postAskQuestion,
+  recordIdFromSummarizeJobId,
+  saveCloudSummarizePending,
 } from '@/shared/lib/ai-api';
 import { AI_REQUEST_CANCELLED, isAiGenerationCancelledError } from '@/shared/lib/ai-api/abort';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
@@ -132,6 +134,18 @@ export async function runCloudSummaryTasks(
       return cloudSummaryCancelledFailure(ctx.aiExecutionMode);
     }
     return mapPostError(postResult, ctx.aiExecutionMode, 'AI weekly limit exceeded');
+  }
+
+  const recordId = recordIdFromSummarizeJobId(request.id);
+  if (recordId) {
+    const ttlSec = ctx.cloudMessageTtlSeconds;
+    await saveCloudSummarizePending({
+      recordId,
+      jobId: request.id,
+      syncToken: postResult.data.syncToken,
+      expectAsyncMeetingDialogue: request.expectAsyncMeetingDialogue === true,
+      expiresAtMs: Date.now() + ttlSec * 1000,
+    });
   }
 
   const pollResult = await pollAiMessage(request.id, postResult.data.syncToken, {
