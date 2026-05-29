@@ -8,6 +8,7 @@ import type { Folder } from '@/entities/folder';
 import type { MonetizationMode } from '@/features/app-storefront';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
+
 import type { TabletInboxSidebarTarget } from './tabletInboxNavBridge';
 import { requestTabletOpenEditFolder } from './tabletInboxNavBridge';
 import { TabletSidebarComposeRow } from './TabletSidebarComposeRow';

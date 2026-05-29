@@ -62,7 +62,11 @@ function PlanCardGradient({ color }: { color: Colors }) {
   );
 }
 
-export function TabletSidebarPlanAndUsageCard({ color, monetizationMode, onOpenPlanPaywall }: Props) {
+export function TabletSidebarPlanAndUsageCard({
+  color,
+  monetizationMode,
+  onOpenPlanPaywall,
+}: Props) {
   const { t } = useTranslation();
   const accent = color.accent.primary;
   const loggedSoonRef = useRef(false);

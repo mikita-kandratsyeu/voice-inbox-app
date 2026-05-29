@@ -36,8 +36,8 @@ export { PLAN_PAYWALL_FEATURE_LINE_HEIGHT, PlanPaywallProChip } from './PlanPayw
 export { PrivateModeBadge } from './PrivateModeBadge';
 export { ProcessingArcSpinner } from './ProcessingArcSpinner';
 export { ProcessingStatusTitle } from './ProcessingStatusTitle';
-export { RotatingTipText } from './RotatingTipText';
 export { RecordVoiceIcon } from './RecordVoiceIcon';
+export { RotatingTipText } from './RotatingTipText';
 export { ScreenHeader } from './ScreenHeader';
 export { SectionHeader } from './SectionHeader';
 export { SettingsRow } from './SettingsRow';
