@@ -1,10 +1,10 @@
-import { ChevronRight } from 'lucide-react-native';
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
-import { folderIconComponents, parseFolderIconKey } from '@/entities/folder/lib/folderLucideIcons';
+import { FolderPickerRow } from '@/entities/folder/ui/FolderPickerRow';
 import type { Colors } from '@/shared/config';
-import { DEFAULT_FOLDER_BRAND_HEX } from '@/shared/lib';
+import { useAppTheme } from '@/shared/config';
+import { resolveFolderListTintHex } from '@/shared/lib';
 import { SectionHeader } from '@/shared/ui';
 
 import type { ReviewFolderItem } from '../model/useAutoOrganizeReview';
@@ -34,85 +34,45 @@ export const AutoOrganizeReviewFoldersSection = ({
   folderSectionLabel,
   getFolderNoteCountLabel,
 }: Props) => {
+  const scheme = useAppTheme();
+
   return (
     <>
       <SectionHeader title={folderSectionLabel} isFirst />
       <View
         style={{
           marginBottom: 16,
-          borderRadius: 16,
-          overflow: 'hidden',
-          borderWidth: 1,
-          borderColor: color.border.default,
           backgroundColor: color.background.card,
-          shadowColor: color.shadow.color,
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: color.shadow.opacity,
-          shadowRadius: 4,
-          elevation: 2,
+          borderColor: color.border.default,
+          borderRadius: 12,
+          borderWidth: 1,
+          overflow: 'hidden',
         }}
       >
         {reviewFolders.map((item, idx) => {
           const isProposed = item.kind === 'proposed';
           const folderId = isProposed ? item.folder.tempId : item.folder.id;
           const folderName = item.folder.name.trim();
-          const folderColor =
-            isProposed && !isProActive
-              ? DEFAULT_FOLDER_BRAND_HEX
-              : item.folder.color || DEFAULT_FOLDER_BRAND_HEX;
-          const IconComp = folderIconComponents[parseFolderIconKey(item.folder.icon)];
+          const tintHex = resolveFolderListTintHex(item.folder.color, isProActive, scheme);
           const noteCount = isProposed
             ? (proposedFolderNoteCountByTempId.get(item.folder.tempId) ?? 0)
             : (existingFolderNoteCountById.get(item.folder.id) ?? 0);
 
           return (
-            <Pressable
+            <FolderPickerRow
               key={`${item.kind}-${folderId}`}
+              label={folderName || unnamedFolderLabel}
+              subtitle={getFolderNoteCountLabel(noteCount)}
+              color={color}
+              iconId={item.folder.icon}
+              tintHex={tintHex}
+              isLast={idx === reviewFolders.length - 1}
               onPress={() => onPressFolder(item)}
-              style={{
-                paddingHorizontal: 16,
-                paddingVertical: 14,
-                borderBottomWidth: idx < reviewFolders.length - 1 ? 1 : 0,
-                borderBottomColor: color.border.default,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 12,
-              }}
-            >
-              <View
-                style={{
-                  width: 44,
-                  height: 44,
-                  borderRadius: 12,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: color.background.tertiary,
-                  borderWidth: 1,
-                  borderColor: color.border.default,
-                }}
-              >
-                <IconComp size={20} color={folderColor} strokeWidth={2} />
-              </View>
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text
-                  style={{ fontSize: 16, fontWeight: '600', color: color.text.primary }}
-                  numberOfLines={1}
-                >
-                  {folderName || unnamedFolderLabel}
-                </Text>
-                <Text
-                  style={{ marginTop: 2, fontSize: 13, color: color.text.secondary }}
-                  numberOfLines={1}
-                >
-                  {getFolderNoteCountLabel(noteCount)}
-                </Text>
-              </View>
-              <ChevronRight size={18} color={color.text.secondary} strokeWidth={2.4} />
-            </Pressable>
+            />
           );
         })}
         {reviewFolders.length === 0 && (
-          <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
+          <View style={{ paddingHorizontal: 14, paddingVertical: 12 }}>
             <Text style={{ fontSize: 14, color: color.text.secondary }}>{noFoldersLabel}</Text>
           </View>
         )}

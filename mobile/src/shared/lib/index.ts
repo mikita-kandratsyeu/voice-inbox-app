@@ -1,5 +1,6 @@
 export type { AiApiResult, AiMessageResult, AiProcessingResult, AiTask } from './ai-api';
 export { pollAiMessage, postAiMessage } from './ai-api';
+export { requestAiUsageRefresh, subscribeAiUsageRefresh } from './aiUsageRefresh';
 export type { RecordForStats, StorageStats } from './async-storage';
 export {
   clearCache,

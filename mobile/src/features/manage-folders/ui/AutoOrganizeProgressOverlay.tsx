@@ -4,17 +4,21 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, Easing, Modal, Text, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
-import { Button } from '@/shared/ui';
+import { AiProcessingCancelButton } from '@/shared/ui';
+
+export type AutoOrganizeProgressVariant = 'organize' | 'apply';
 
 type AutoOrganizeProgressOverlayProps = {
   visible: boolean;
   mode: 'loading' | 'success';
+  variant?: AutoOrganizeProgressVariant;
   onCancel?: () => void;
 };
 
 export const AutoOrganizeProgressOverlay = ({
   visible,
   mode,
+  variant = 'organize',
   onCancel,
 }: AutoOrganizeProgressOverlayProps) => {
   const { t } = useTranslation();
@@ -24,14 +28,32 @@ export const AutoOrganizeProgressOverlay = ({
   const successScale = useRef(new Animated.Value(0.7)).current;
   const successOpacity = useRef(new Animated.Value(0)).current;
 
-  const loadingSteps = useMemo(
-    () => [
+  const loadingSteps = useMemo(() => {
+    if (variant === 'apply') {
+      return [
+        t('folders.autoOrganizeApplyStepCreatingFolders'),
+        t('folders.autoOrganizeApplyStepDistributingNotes'),
+      ];
+    }
+    return [
       t('folders.autoOrganizeStepAnalyzing'),
       t('folders.autoOrganizeStepCreatingFolders'),
       t('folders.autoOrganizeStepDistributingNotes'),
-    ],
-    [t],
-  );
+    ];
+  }, [t, variant]);
+
+  const loadingTitle =
+    variant === 'apply'
+      ? t('folders.autoOrganizeApplyLoadingTitle')
+      : t('folders.autoOrganizeLoadingTitle');
+  const successTitle =
+    variant === 'apply'
+      ? t('folders.autoOrganizeApplyDoneTitle')
+      : t('folders.autoOrganizeDoneTitle');
+  const successDescription =
+    variant === 'apply'
+      ? t('folders.autoOrganizeApplyDoneDescription')
+      : t('folders.autoOrganizeDoneDescription');
 
   useEffect(() => {
     if (!visible || mode !== 'loading') return;
@@ -109,9 +131,7 @@ export const AutoOrganizeProgressOverlay = ({
             className="mt-5 text-center text-[16px] font-semibold leading-6"
             style={{ color: color.text.primary }}
           >
-            {mode === 'loading'
-              ? t('folders.autoOrganizeLoadingTitle')
-              : t('folders.autoOrganizeDoneTitle')}
+            {mode === 'loading' ? loadingTitle : successTitle}
           </Text>
           {mode === 'loading' ? (
             <Animated.Text
@@ -122,20 +142,18 @@ export const AutoOrganizeProgressOverlay = ({
             </Animated.Text>
           ) : null}
           {mode === 'loading' && onCancel ? (
-            <Button
-              variant="secondary"
-              fullWidth
-              className="mt-6"
-              label={t('common.cancel')}
+            <AiProcessingCancelButton
               color={color}
               onPress={onCancel}
+              fullWidth
+              className="mt-6"
             />
           ) : mode === 'success' ? (
             <Text
               className="mt-2 text-center text-[14px] leading-5"
               style={{ color: color.text.secondary }}
             >
-              {t('folders.autoOrganizeDoneDescription')}
+              {successDescription}
             </Text>
           ) : null}
         </View>

@@ -6,7 +6,7 @@ import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import { useFolderStore } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
-import { isString, useNetworkStatus } from '@/shared/lib';
+import { isString, requestAiUsageRefresh, useNetworkStatus } from '@/shared/lib';
 import { pollAutoOrganizeFolders, postAutoOrganizeFolders } from '@/shared/lib/ai-api';
 import {
   getAiWeeklyLimitExceededMessage,
@@ -206,6 +206,7 @@ export function useAutoOrganizeFolders(
         Alert.alert(t('common.error'), t('folders.autoOrganizeFailedDescription'));
       }
     } finally {
+      requestAiUsageRefresh();
       if (!cancelledRef.current) {
         setIsRunning(false);
       }

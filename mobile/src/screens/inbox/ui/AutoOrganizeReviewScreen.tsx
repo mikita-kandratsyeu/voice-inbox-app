@@ -6,7 +6,7 @@ import dayjs from 'dayjs';
 import { Check } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -23,6 +23,7 @@ import {
   type ReviewFolderItem,
   useAutoOrganizeReview,
 } from '@/features/auto-organize-review';
+import { AutoOrganizeProgressOverlay } from '@/features/manage-folders';
 import { useProEntitlement } from '@/features/pro-license';
 import {
   runAfterNavigationTransition,
@@ -39,6 +40,8 @@ import {
 
 type AutoOrganizeReviewRouteProp = RouteProp<InboxStackParamList, 'AutoOrganizeReview'>;
 type EditingFolderTarget = { kind: 'existing'; id: string } | { kind: 'proposed'; tempId: string };
+
+const APPLY_SUCCESS_OVERLAY_MS = 1400;
 
 export const AutoOrganizeReviewScreen = () => {
   const { t } = useTranslation();
@@ -71,6 +74,8 @@ export const AutoOrganizeReviewScreen = () => {
     visible: false,
     recordId: null,
   });
+  const [applyOverlayVisible, setApplyOverlayVisible] = useState(false);
+  const [applyOverlayMode, setApplyOverlayMode] = useState<'loading' | 'success'>('loading');
 
   const goBackOrInboxHome = useCallback(() => {
     if (navigation.canGoBack()) {
@@ -108,8 +113,29 @@ export const AutoOrganizeReviewScreen = () => {
     isProActive,
     createFolder,
     setRecordFolder,
-    onApplied: onAppliedAfterAutoOrganize,
   });
+
+  const confirmApply = useCallback(async () => {
+    if (isApplying || applyOverlayVisible) return;
+
+    setApplyOverlayVisible(true);
+    setApplyOverlayMode('loading');
+
+    const ok = await apply();
+    if (!ok) {
+      setApplyOverlayVisible(false);
+      setApplyOverlayMode('loading');
+      return;
+    }
+
+    setApplyOverlayMode('success');
+    await new Promise<void>((resolve) => {
+      setTimeout(resolve, APPLY_SUCCESS_OVERLAY_MS);
+    });
+    setApplyOverlayVisible(false);
+    setApplyOverlayMode('loading');
+    onAppliedAfterAutoOrganize();
+  }, [apply, applyOverlayVisible, isApplying, onAppliedAfterAutoOrganize]);
 
   const openPicker = useCallback((recordId: string) => {
     setPicker({ visible: true, recordId });
@@ -210,26 +236,23 @@ export const AutoOrganizeReviewScreen = () => {
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
       <ScreenHeader
         title={t('folders.autoOrganizeReviewTitle')}
-        onBack={goBackOrInboxHome}
+        onBack={() => {
+          if (applyOverlayVisible) return;
+          goBackOrInboxHome();
+        }}
         titleAlign="center"
         rightSlot={
           <HeaderIconButton
             iconOnly
             variant="icon"
             size="md"
-            accessibilityState={{ disabled: isApplying }}
-            icon={
-              isApplying ? (
-                <ActivityIndicator size="small" color={color.accent.primary} />
-              ) : (
-                <Check size={22} color={color.accent.primary} strokeWidth={2.5} />
-              )
-            }
+            accessibilityState={{ disabled: isApplying || applyOverlayVisible }}
+            icon={<Check size={22} color={color.accent.primary} strokeWidth={2.5} />}
             color={color}
             onPress={() => {
-              void apply();
+              void confirmApply();
             }}
-            disabled={isApplying}
+            disabled={isApplying || applyOverlayVisible}
           />
         }
       />
@@ -299,6 +322,7 @@ export const AutoOrganizeReviewScreen = () => {
         >
           <AutoOrganizeDestinationPickerContent
             color={color}
+            isProActive={isProActive}
             folders={folders}
             visibleProposedFolders={visibleProposedFolders}
             onPickDestination={pickDestination}
@@ -311,6 +335,11 @@ export const AutoOrganizeReviewScreen = () => {
           />
         </BottomSheetScrollView>
       </AppBottomSheetModal>
+      <AutoOrganizeProgressOverlay
+        visible={applyOverlayVisible}
+        mode={applyOverlayMode}
+        variant="apply"
+      />
       <FolderFormModal
         visible={Boolean(editingFolderTarget)}
         folder={editingFolder}

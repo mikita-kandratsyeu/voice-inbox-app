@@ -33,7 +33,6 @@ type UseAutoOrganizeReviewParams = {
   isProActive: boolean;
   createFolder: (name: string, color: string, icon: string) => Promise<Folder>;
   setRecordFolder: (recordId: string, folderId: string | null) => Promise<void> | void;
-  onApplied: () => void | Promise<void>;
 };
 
 function buildInitialProposedFolders(
@@ -96,7 +95,6 @@ export function useAutoOrganizeReview({
   isProActive,
   createFolder,
   setRecordFolder,
-  onApplied,
 }: UseAutoOrganizeReviewParams) {
   const [proposedFolders, setProposedFolders] = useState<ProposedFolderDraft[]>(() =>
     buildInitialProposedFolders(result, isProActive),
@@ -161,8 +159,8 @@ export function useAutoOrganizeReview({
     [],
   );
 
-  const apply = useCallback(async () => {
-    if (isApplying) return;
+  const apply = useCallback(async (): Promise<boolean> => {
+    if (isApplying) return false;
     setIsApplying(true);
 
     const existingById = new Map(folders.map((f) => [f.id, f]));
@@ -216,7 +214,9 @@ export function useAutoOrganizeReview({
         await setRecordFolder(a.recordId, folderId);
       }
 
-      await Promise.resolve(onApplied());
+      return true;
+    } catch {
+      return false;
     } finally {
       setIsApplying(false);
     }
@@ -226,7 +226,6 @@ export function useAutoOrganizeReview({
     folders,
     isApplying,
     isProActive,
-    onApplied,
     proposedFolders,
     setRecordFolder,
   ]);

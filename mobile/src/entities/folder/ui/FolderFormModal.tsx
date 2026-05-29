@@ -466,16 +466,12 @@ export const FolderFormModal = ({
             color={color}
             primaryLabel={t('common.save')}
             onPrimaryPress={handleSave}
-            secondaryLabel={t('common.cancel')}
-            onSecondaryPress={onClose}
-            bottomAction={
-              isEditing && onDelete
-                ? {
-                    label: t('folders.delete'),
-                    onPress: handleDelete,
-                  }
-                : undefined
-            }
+            {...(isEditing && onDelete
+              ? {
+                  secondaryLabel: t('folders.delete'),
+                  onSecondaryPress: handleDelete,
+                }
+              : {})}
           />
         </BottomSheetScrollView>
       </AppBottomSheetModal>
