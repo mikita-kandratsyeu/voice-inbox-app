@@ -6,7 +6,11 @@ import { scheduleResumeAllPendingCloudSummarize } from '@/features/ai-processing
 import { localLlmModelDownloader } from '@/features/model-manager/lib/local-llm-download';
 import { whisperModelDownloader } from '@/features/model-manager/lib/whisper-download';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
-import { releaseWhisperContext } from '@/features/transcription';
+import {
+  abortTranscriptionForAppBackground,
+  releaseWhisperContext,
+} from '@/features/transcription';
+import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { ensurePushRegistered, notifyAppBackground, notifyAppForeground } from '@/shared/lib/push';
 
@@ -48,7 +52,23 @@ export function useAppForegroundLifecycle(): void {
       }
     };
 
+    const releaseIdleOnDeviceModels = () => {
+      const hasHeavyWork =
+        useRecordStore.getState().hasActiveAiJobs ||
+        isModelDownloading() ||
+        hasAnyActiveTranscriptionJob();
+
+      if (!hasHeavyWork) {
+        releaseWhisperContext().catch(() => {});
+        releaseLocalLlmSession().catch(() => {});
+      }
+    };
+
     const handleAppStateChange = (state: AppStateStatus) => {
+      if (state === 'inactive') {
+        void abortTranscriptionForAppBackground();
+      }
+
       if (state === 'active') {
         if (getHasSeenOnboarding()) {
           ensurePushRegistered().catch(() => {});
@@ -75,12 +95,7 @@ export function useAppForegroundLifecycle(): void {
           lastForegroundAt = 0;
         }
         if (state === 'background') {
-          const hasHeavyWork = useRecordStore.getState().hasActiveAiJobs || isModelDownloading();
-
-          if (!hasHeavyWork) {
-            releaseWhisperContext().catch(() => {});
-            releaseLocalLlmSession().catch(() => {});
-          }
+          void abortTranscriptionForAppBackground().finally(releaseIdleOnDeviceModels);
         }
       }
     };

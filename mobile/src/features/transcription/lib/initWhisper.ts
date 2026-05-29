@@ -5,6 +5,10 @@ import { IS_IOS } from '@/shared/lib';
 import { getWhisperModelPath } from '@/shared/lib/whisper';
 
 import { WHISPER_IDLE_RELEASE_MS } from '../config/constants';
+import {
+  abortTranscriptionForAppBackground,
+  isNativeTranscriptionRunning,
+} from '../model/transcriptionRuntimeRegistry';
 
 type CachedContext = {
   context: WhisperContext;
@@ -25,7 +29,7 @@ const clearIdleTimer = (): void => {
 
 export const scheduleIdleRelease = (): void => {
   clearIdleTimer();
-  if (!cachedContext) return;
+  if (!cachedContext || isNativeTranscriptionRunning()) return;
 
   idleTimeoutId = setTimeout(() => {
     idleTimeoutId = null;
@@ -57,6 +61,9 @@ export const getWhisperContext = async (
       }
 
       if (cachedContext) {
+        if (isNativeTranscriptionRunning()) {
+          await abortTranscriptionForAppBackground();
+        }
         cachedContext = null;
         try {
           await releaseAllWhisper();
@@ -84,12 +91,16 @@ export const getWhisperContext = async (
 
 export const releaseWhisperContext = async (): Promise<void> => {
   clearIdleTimer();
-  if (cachedContext) {
-    cachedContext = null;
-    try {
-      await releaseAllWhisper();
-    } catch (e) {
-      if (__DEV__) console.warn('[whisper] release failed:', e);
-    }
+  if (!cachedContext) return;
+
+  if (isNativeTranscriptionRunning()) {
+    await abortTranscriptionForAppBackground();
+  }
+
+  cachedContext = null;
+  try {
+    await releaseAllWhisper();
+  } catch (e) {
+    if (__DEV__) console.warn('[whisper] release failed:', e);
   }
 };

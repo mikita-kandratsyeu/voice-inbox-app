@@ -15,23 +15,25 @@ import { getWhisperModelPath } from '@/shared/lib/whisper';
 
 import { getWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
 import { cancelTranscriptionPausedNotification } from '../lib/paused-notification/cancelTranscriptionPausedNotification';
-import { schedulePausedNotificationIfResumable } from '../lib/paused-notification/schedulePausedNotificationIfResumable';
 import { transcribeAudio } from '../lib/transcribeAudio';
 import {
   getTranscriptionCheckpoint,
   removeTranscriptionCheckpoint,
   saveTranscriptionCheckpoint,
 } from '../lib/transcriptionCheckpoint';
-import {
-  clearPendingBackgroundTranscriptionRecord,
-  markTranscriptionPausedForBackground,
-} from './pendingBackgroundTranscriptionRecord';
+import { clearPendingBackgroundTranscriptionRecord } from './pendingBackgroundTranscriptionRecord';
 import {
   beginTranscriptionJob,
   endTranscriptionJobIfCurrent,
   invalidateTranscriptionJob,
   isActiveTranscriptionJob,
 } from './transcriptionJobRegistry';
+import {
+  clearTranscriptionBackgroundCancelled,
+  isTranscriptionBackgroundCancelled,
+  registerActiveTranscription,
+  unregisterActiveTranscription,
+} from './transcriptionRuntimeRegistry';
 
 const PROGRESS_THROTTLE_MS = 500;
 const CHECKPOINT_EVERY_N_CHUNKS = 2;
@@ -98,7 +100,6 @@ export const useTranscription = () => {
 
   const stopRef = useRef<(() => Promise<void>) | null>(null);
   const currentRecordIdRef = useRef<string | null>(null);
-  const backgroundCancelledRef = useRef<Set<string>>(new Set());
 
   const startTranscription = useCallback(
     async (record: VoiceRecord, languageOverride?: string): Promise<void> => {
@@ -234,6 +235,7 @@ export const useTranscription = () => {
           });
 
           stopRef.current = stop;
+          registerActiveTranscription(record.id, stop);
           return promise;
         };
 
@@ -260,6 +262,7 @@ export const useTranscription = () => {
         if (isActiveTranscriptionJob(record.id, jobGen)) {
           stopRef.current = null;
           currentRecordIdRef.current = null;
+          unregisterActiveTranscription(record.id);
         }
 
         if (!isActiveTranscriptionJob(record.id, jobGen)) {
@@ -307,16 +310,18 @@ export const useTranscription = () => {
       } catch (err) {
         if (!isActiveTranscriptionJob(record.id, jobGen)) {
           devLog('catch ignored (stale job)', { recordId: record.id, jobGen, err });
-          if (backgroundCancelledRef.current.has(record.id)) {
-            backgroundCancelledRef.current.delete(record.id);
+          if (isTranscriptionBackgroundCancelled(record.id)) {
+            clearTranscriptionBackgroundCancelled(record.id);
             updateAiStatus(record.id, 'idle');
           }
+          unregisterActiveTranscription(record.id);
           return;
         }
 
         const hadStop = stopRef.current != null;
         stopRef.current = null;
         currentRecordIdRef.current = null;
+        unregisterActiveTranscription(record.id);
 
         const msg = err instanceof Error ? err.message.toLowerCase() : '';
         const isCancelled = msg.includes('abort') || msg.includes('cancel') || msg.includes('stop');
@@ -331,13 +336,13 @@ export const useTranscription = () => {
           err: err instanceof Error ? err.message : String(err),
         });
 
-        const pausedForBackground = backgroundCancelledRef.current.has(record.id);
+        const pausedForBackground = isTranscriptionBackgroundCancelled(record.id);
 
         if (wasCancelled || pausedForBackground) {
           if (!pausedForBackground) {
             await removeTranscriptionCheckpoint(record.id).catch(() => {});
           } else {
-            backgroundCancelledRef.current.delete(record.id);
+            clearTranscriptionBackgroundCancelled(record.id);
           }
           updateAiStatus(record.id, 'idle');
         } else {
@@ -400,47 +405,14 @@ export const useTranscription = () => {
         stopRef.current = null;
         stop().catch(() => {});
       }
+      unregisterActiveTranscription(recordId);
+      clearTranscriptionBackgroundCancelled(recordId);
       removeTranscriptionCheckpoint(recordId).catch(() => {});
       void cancelTranscriptionPausedNotification(recordId);
       clearPendingBackgroundTranscriptionRecord();
     },
     [updateAiStatus],
   );
-
-  const cancelTranscriptionToIdleOnBackground = useCallback(
-    (recordId: string): void => {
-      devLog('cancel requested (background)', { recordId });
-      backgroundCancelledRef.current.add(recordId);
-      markTranscriptionPausedForBackground(recordId);
-      invalidateTranscriptionJob(recordId);
-      currentRecordIdRef.current = null;
-      updateAiStatus(recordId, 'idle');
-      if (stopRef.current) {
-        const stop = stopRef.current;
-        stopRef.current = null;
-        stop().catch(() => {});
-      }
-
-      schedulePausedNotificationIfResumable(recordId);
-    },
-    [updateAiStatus],
-  );
-
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (next) => {
-      if (next === 'background') {
-        const recordId = currentRecordIdRef.current;
-
-        if (!recordId) {
-          return;
-        }
-
-        cancelTranscriptionToIdleOnBackground(recordId);
-      }
-    });
-
-    return () => sub.remove();
-  }, [cancelTranscriptionToIdleOnBackground]);
 
   return { startTranscription, cancelTranscription };
 };
