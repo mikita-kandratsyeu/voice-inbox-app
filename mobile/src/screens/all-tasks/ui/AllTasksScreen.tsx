@@ -4,7 +4,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { FlashListRef } from '@shopify/flash-list';
 import { FlashList } from '@shopify/flash-list';
 import dayjs from 'dayjs';
-import { X } from 'lucide-react-native';
+import { Plus, X } from 'lucide-react-native';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -44,7 +44,7 @@ import {
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
-import { EmptyState, ScreenHeader, SectionHeader } from '@/shared/ui';
+import { Button, EmptyState, ScreenHeader, SectionHeader } from '@/shared/ui';
 
 import {
   type AllTasksFlattenedItem,
@@ -52,6 +52,7 @@ import {
   injectAllTasksListBannerCard,
 } from '../lib/injectAllTasksListBannerCard';
 import type { TaskDeadlineBucket, TaskWithRecord } from '../types';
+import { AllTasksNotePickerSheet } from './AllTasksNotePickerSheet';
 import { AllTasksTaskRow } from './AllTasksTaskRow';
 
 const TASK_DEADLINE_BUCKETS: TaskDeadlineBucket[] = [
@@ -153,6 +154,9 @@ export const AllTasksScreen = () => {
     deadlineTime?: string | null;
     priority?: TaskItem['priority'];
   } | null>(null);
+  const [notePickerVisible, setNotePickerVisible] = useState(false);
+  const [createTaskRecordId, setCreateTaskRecordId] = useState<string | null>(null);
+  const [createTaskFromPicker, setCreateTaskFromPicker] = useState(false);
 
   const listRef = useRef<FlashListRef<AllTasksListItem>>(null);
   const folderChipScrollRef = useRef<ScrollView>(null);
@@ -223,6 +227,14 @@ export const AllTasksScreen = () => {
     () => (recordFilterId ? records.find((r) => r.id === recordFilterId) : undefined),
     [recordFilterId, records],
   );
+
+  const eligibleNotesForCreate = useMemo(() => {
+    let pool = records.filter((r) => r.status !== 'archived');
+    if (effectiveActiveFolderId) {
+      pool = pool.filter((r) => r.folderId === effectiveActiveFolderId);
+    }
+    return pool;
+  }, [records, effectiveActiveFolderId]);
 
   const contentMaxWidth = useTabletContentMaxWidth('wide');
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
@@ -342,6 +354,107 @@ export const AllTasksScreen = () => {
       }
     },
     [toggleTask, openOnly],
+  );
+
+  const openCreateTask = useCallback(() => {
+    hapticSelection();
+    if (eligibleNotesForCreate.length === 0) {
+      Alert.alert(t('allTasks.createTaskNoNotesTitle'), t('allTasks.createTaskNoNotesMessage'));
+      return;
+    }
+    if (recordFilterId) {
+      const filteredRecord = records.find((r) => r.id === recordFilterId);
+      if (!filteredRecord || filteredRecord.status === 'archived') {
+        Alert.alert(t('allTasks.createTaskNoNotesTitle'), t('allTasks.noteUnavailable'));
+        return;
+      }
+      setCreateTaskFromPicker(false);
+      setCreateTaskRecordId(recordFilterId);
+      return;
+    }
+    if (eligibleNotesForCreate.length === 1) {
+      setCreateTaskFromPicker(false);
+      setCreateTaskRecordId(eligibleNotesForCreate[0].id);
+      return;
+    }
+    setCreateTaskFromPicker(false);
+    setNotePickerVisible(true);
+  }, [eligibleNotesForCreate, recordFilterId, records, t]);
+
+  const closeCreateTaskSheet = useCallback(() => {
+    setCreateTaskRecordId(null);
+    setCreateTaskFromPicker(false);
+  }, []);
+
+  const backFromCreateTaskToNotePicker = useCallback(() => {
+    setCreateTaskRecordId(null);
+    setNotePickerVisible(true);
+  }, []);
+
+  const onCreateTask = useCallback(
+    (
+      recordId: string,
+      nextValue: {
+        text: string;
+        deadline?: string | null;
+        deadlineTime?: string | null;
+        priority?: TaskItem['priority'];
+      },
+    ): boolean => {
+      const trimmed = nextValue.text.trim();
+      if (!trimmed) return false;
+
+      const record = records.find((r) => r.id === recordId);
+      if (!record) return false;
+
+      const prev = record.tasks ?? [];
+      const duplicate = prev.some((x) => x.text.trim().toLowerCase() === trimmed.toLowerCase());
+      if (duplicate) {
+        Alert.alert(t('recordingDetail.nextSteps'), t('recordingDetail.nextStepAlreadyInTasks'));
+        return false;
+      }
+
+      const nextDeadline = nextValue.deadline?.trim() ?? '';
+      const nextDeadlineTime = nextValue.deadlineTime?.trim() ?? '';
+      if (nextDeadline.length > 0 && !isValidDeadlineInput(nextDeadline)) {
+        Alert.alert(t('common.error'), t('tasks.deadlineInvalid'));
+        return false;
+      }
+      if (nextDeadlineTime.length > 0 && !isValidDeadlineTimeInput(nextDeadlineTime)) {
+        Alert.alert(t('common.error'), t('tasks.deadlineInvalid'));
+        return false;
+      }
+      if (nextDeadline.length > 0 && isPastDeadlineInput(nextDeadline)) {
+        Alert.alert(t('common.error'), t('tasks.deadlinePastInvalid'));
+        return false;
+      }
+      if (
+        nextDeadline.length > 0 &&
+        nextDeadlineTime.length > 0 &&
+        isPastDeadlineDateTimeInput(nextDeadline, nextDeadlineTime)
+      ) {
+        Alert.alert(t('common.error'), t('tasks.deadlineTimePastInvalid'));
+        return false;
+      }
+
+      const taskId = `${recordId}-manual-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+      const next: TaskItem[] = [
+        ...prev,
+        {
+          id: taskId,
+          text: trimmed,
+          isDone: false,
+          source: 'manual',
+          deadline: nextDeadline.length > 0 ? nextDeadline : null,
+          deadlineTime:
+            nextDeadline.length > 0 && nextDeadlineTime.length > 0 ? nextDeadlineTime : null,
+          priority: nextValue.priority ?? 'medium',
+        },
+      ];
+      updateTasks(recordId, next).catch(() => {});
+      return true;
+    },
+    [records, t, updateTasks],
   );
 
   const onEditTask = useCallback(
@@ -476,6 +589,47 @@ export const AllTasksScreen = () => {
     [editTaskTarget, onEditTask],
   );
 
+  const createTaskSheet = useMemo(
+    () => (
+      <TaskEditSheet
+        visible={createTaskRecordId !== null}
+        initialText=""
+        initialPriority="medium"
+        showMetadataFields
+        sheetTitleKey="tasks.createTaskSheetTitle"
+        onClose={closeCreateTaskSheet}
+        onBack={createTaskFromPicker ? backFromCreateTaskToNotePicker : undefined}
+        onSave={(value) => {
+          if (!createTaskRecordId) return false;
+          return onCreateTask(createTaskRecordId, value);
+        }}
+      />
+    ),
+    [
+      backFromCreateTaskToNotePicker,
+      closeCreateTaskSheet,
+      createTaskFromPicker,
+      createTaskRecordId,
+      onCreateTask,
+    ],
+  );
+
+  const headerRightSlot = useMemo(
+    () => (
+      <Button
+        iconOnly
+        variant="icon"
+        size="md"
+        icon={<Plus size={22} color={color.text.primary} strokeWidth={2.2} />}
+        color={color}
+        onPress={openCreateTask}
+        accessibilityLabel={t('allTasks.createTaskA11y')}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      />
+    ),
+    [color, openCreateTask, t],
+  );
+
   const renderListItem = useCallback(
     ({ item }: { item: AllTasksListItem }) => {
       if (item.type === 'section') {
@@ -544,7 +698,11 @@ export const AllTasksScreen = () => {
 
   return (
     <View className="flex-1" style={{ backgroundColor: color.background.secondary }}>
-      <ScreenHeader title={t('allTasks.title')} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('allTasks.title')}
+        onBack={() => navigation.goBack()}
+        rightSlot={headerRightSlot}
+      />
       <View
         style={{
           backgroundColor: color.background.primary,
@@ -676,6 +834,15 @@ export const AllTasksScreen = () => {
               title={openOnly ? t('allTasks.emptyFiltered') : t('allTasks.emptyTitle')}
               description={t('allTasks.emptyDescription')}
             />
+            <View className="mt-6 items-center px-2">
+              <Button
+                variant="primary"
+                size="lg"
+                label={t('allTasks.createTask')}
+                color={color}
+                onPress={openCreateTask}
+              />
+            </View>
           </View>
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
         </View>
@@ -718,7 +885,18 @@ export const AllTasksScreen = () => {
           onClose={closeFolderModal}
         />
       )}
+      <AllTasksNotePickerSheet
+        visible={notePickerVisible}
+        records={eligibleNotesForCreate}
+        onClose={() => setNotePickerVisible(false)}
+        onSelect={(recordId) => {
+          setNotePickerVisible(false);
+          setCreateTaskFromPicker(true);
+          setCreateTaskRecordId(recordId);
+        }}
+      />
       {editTaskSheet}
+      {createTaskSheet}
     </View>
   );
 };

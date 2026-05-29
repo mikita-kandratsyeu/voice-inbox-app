@@ -22,7 +22,7 @@ import {
   hapticError,
   resolveFolderColorForCurrentScheme,
 } from '@/shared/lib';
-import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/shared/ui';
+import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
 
 import {
   DEFAULT_FOLDER_ICON_KEY,
@@ -462,28 +462,21 @@ export const FolderFormModal = ({
               {t('appearance.accentColor.subtitle')}
             </Text>
           ) : null}
-          <Button
-            variant="primary"
-            size="lg"
-            fullWidth
-            label={t('common.save')}
-            onPress={handleSave}
+          <SheetFooterButtons
             color={color}
-            accessibilityLabel={t('common.save')}
+            primaryLabel={t('common.save')}
+            onPrimaryPress={handleSave}
+            secondaryLabel={t('common.cancel')}
+            onSecondaryPress={onClose}
+            bottomAction={
+              isEditing && onDelete
+                ? {
+                    label: t('folders.delete'),
+                    onPress: handleDelete,
+                  }
+                : undefined
+            }
           />
-          {isEditing && onDelete && (
-            <View style={{ marginTop: 10 }}>
-              <Button
-                variant="secondary"
-                size="lg"
-                fullWidth
-                label={t('folders.delete')}
-                onPress={handleDelete}
-                color={color}
-                accessibilityLabel={t('folders.delete')}
-              />
-            </View>
-          )}
         </BottomSheetScrollView>
       </AppBottomSheetModal>
       <AutomationComingSoonSheet

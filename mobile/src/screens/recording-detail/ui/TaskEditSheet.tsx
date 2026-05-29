@@ -9,7 +9,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { TaskItem } from '@/entities/record';
 import { useAppTheme, useColors } from '@/shared/config';
-import { IS_IOS, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import { IS_IOS, useIsTablet } from '@/shared/lib';
 import { resolveDayjsLocale } from '@/shared/lib/date';
 import {
   formatTaskDeadlineTimeForDisplay,
@@ -19,7 +19,6 @@ import { AppBottomSheetModal, Button, useBottomSheetContentPadding } from '@/sha
 
 const TASK_TEXT_MAX_CHARS = 500;
 const DEADLINE_ROW_MIN_HEIGHT = 48;
-const TABLET_SHEET_CONTENT_MAX_WIDTH = 720;
 const SECTION_LABEL_STYLE = {
   fontSize: 12,
   fontWeight: '600' as const,
@@ -44,6 +43,8 @@ type TaskEditSheetProps = {
   }) => boolean;
   sheetTitleKey?: string;
   placeholderKey?: string;
+  /** Shown below Save — e.g. return to note picker when creating from All Tasks. */
+  onBack?: () => void;
 };
 
 const PRIORITIES: NonNullable<TaskItem['priority']>[] = ['low', 'medium', 'high'];
@@ -155,13 +156,13 @@ export function TaskEditSheet({
   onSave,
   sheetTitleKey = 'tasks.editTaskSheetTitle',
   placeholderKey = 'recordingDetail.addTaskPlaceholder',
+  onBack,
 }: TaskEditSheetProps) {
   const { t, i18n } = useTranslation();
   const color = useColors();
   const theme = useAppTheme();
   const contentPadding = useBottomSheetContentPadding(24);
   const isTablet = useIsTablet();
-  const tabletContentMaxWidth = useTabletContentMaxWidth();
   const bottomSheetRef = useRef<BottomSheetModal>(null);
   const [draft, setDraft] = useState('');
   const [deadlineDraft, setDeadlineDraft] = useState('');
@@ -206,13 +207,6 @@ export function TaskEditSheet({
     }),
     [color.accent.cache, color.accent.delete, color.text.secondary],
   );
-  const sheetContentMaxWidth = isTablet
-    ? Math.min(
-        tabletContentMaxWidth ?? TABLET_SHEET_CONTENT_MAX_WIDTH,
-        TABLET_SHEET_CONTENT_MAX_WIDTH,
-      )
-    : undefined;
-
   useEffect(() => {
     if (!visible) return;
     setDraft(initialText);
@@ -253,8 +247,6 @@ export function TaskEditSheet({
         showsVerticalScrollIndicator={false}
         automaticallyAdjustKeyboardInsets={false}
         contentContainerStyle={{
-          alignSelf: 'center',
-          maxWidth: sheetContentMaxWidth,
           paddingHorizontal: isTablet ? 24 : 20,
           width: '100%',
           ...contentPadding,
@@ -310,140 +302,247 @@ export function TaskEditSheet({
               </Text>
               <View>
                 <View
-                  style={{
-                    borderRadius: 12,
-                    borderWidth: StyleSheet.hairlineWidth,
-                    borderColor: color.border.default,
-                    backgroundColor: color.background.tertiary,
-                    overflow: 'hidden',
-                  }}
-                >
-                  <Pressable
-                    onPress={() => {
-                      setDatePickerOpen((prev) => !prev);
-                      setTimePickerOpen(false);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${t('tasks.deadlineDateLabel')}, ${deadlineDisplay ?? t('tasks.noDeadline')}`}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 12,
-                      minHeight: DEADLINE_ROW_MIN_HEIGHT,
-                      paddingHorizontal: 14,
-                      paddingVertical: 14,
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                      <Calendar
-                        size={20}
-                        color={deadlineDraft.length > 0 ? color.accent.primary : color.icon.muted}
-                        strokeWidth={2}
-                      />
-                      <Text
-                        style={{ fontSize: 15, fontWeight: '500', color: color.text.secondary }}
-                      >
-                        {t('tasks.deadlineDateLabel')}
-                      </Text>
-                    </View>
-                    <View
-                      style={{
-                        flex: 1,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        gap: 6,
-                        minWidth: 0,
-                      }}
-                    >
-                      <Text
-                        className="text-[16px]"
-                        style={{
-                          flexShrink: 1,
-                          textAlign: 'right',
-                          color: deadlineDraft ? color.text.primary : color.text.muted,
-                        }}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                      >
-                        {deadlineDisplay ?? t('tasks.noDeadline')}
-                      </Text>
-                      <ChevronRight size={18} color={color.icon.muted} strokeWidth={2.25} />
-                    </View>
-                  </Pressable>
-                  <View
-                    style={{
-                      marginLeft: 14,
-                      height: StyleSheet.hairlineWidth,
-                      backgroundColor: color.border.default,
-                    }}
-                  />
-                  <Pressable
-                    onPress={() => {
-                      if (!deadlineDraft) return;
-                      setTimePickerOpen((prev) => !prev);
-                      setDatePickerOpen(false);
-                    }}
-                    disabled={!deadlineDraft}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${t('tasks.deadlineTimeLabel')}, ${deadlineTimeLabelText || t('tasks.noDeadlineTime')}`}
-                    accessibilityState={{ disabled: !deadlineDraft }}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: 12,
-                      minHeight: DEADLINE_ROW_MIN_HEIGHT,
-                      paddingHorizontal: 14,
-                      paddingVertical: 14,
-                      opacity: deadlineDraft ? 1 : 0.5,
-                    }}
-                  >
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                      <Clock
-                        size={20}
-                        color={
-                          deadlineTimeDraft.length > 0 && deadlineDraft
-                            ? color.accent.primary
-                            : color.icon.muted
+                  style={
+                    isTablet
+                      ? { flexDirection: 'row', gap: 10 }
+                      : {
+                          borderRadius: 12,
+                          borderWidth: StyleSheet.hairlineWidth,
+                          borderColor: color.border.default,
+                          backgroundColor: color.background.tertiary,
+                          overflow: 'hidden',
                         }
-                        strokeWidth={2}
+                  }
+                >
+                  <View
+                    style={
+                      isTablet
+                        ? {
+                            flex: 1,
+                            borderRadius: 12,
+                            borderWidth: StyleSheet.hairlineWidth,
+                            borderColor: color.border.default,
+                            backgroundColor: color.background.tertiary,
+                            overflow: 'hidden',
+                          }
+                        : undefined
+                    }
+                  >
+                    <Pressable
+                      onPress={() => {
+                        setDatePickerOpen((prev) => !prev);
+                        setTimePickerOpen(false);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${t('tasks.deadlineDateLabel')}, ${deadlineDisplay ?? t('tasks.noDeadline')}`}
+                      style={
+                        isTablet
+                          ? {
+                              gap: 8,
+                              minHeight: DEADLINE_ROW_MIN_HEIGHT,
+                              paddingHorizontal: 14,
+                              paddingVertical: 14,
+                            }
+                          : {
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 12,
+                              minHeight: DEADLINE_ROW_MIN_HEIGHT,
+                              paddingHorizontal: 14,
+                              paddingVertical: 14,
+                            }
+                      }
+                    >
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                        <Calendar
+                          size={20}
+                          color={deadlineDraft.length > 0 ? color.accent.primary : color.icon.muted}
+                          strokeWidth={2}
+                        />
+                        <Text
+                          style={{ fontSize: 15, fontWeight: '500', color: color.text.secondary }}
+                        >
+                          {t('tasks.deadlineDateLabel')}
+                        </Text>
+                      </View>
+                      {isTablet ? (
+                        <Text
+                          className="text-[16px]"
+                          style={{
+                            color: deadlineDraft ? color.text.primary : color.text.muted,
+                            fontWeight: '600',
+                          }}
+                          numberOfLines={2}
+                        >
+                          {deadlineDisplay ?? t('tasks.noDeadline')}
+                        </Text>
+                      ) : (
+                        <View
+                          style={{
+                            flex: 1,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            gap: 6,
+                            minWidth: 0,
+                          }}
+                        >
+                          <Text
+                            className="text-[16px]"
+                            style={{
+                              flexShrink: 1,
+                              textAlign: 'right',
+                              color: deadlineDraft ? color.text.primary : color.text.muted,
+                            }}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                          >
+                            {deadlineDisplay ?? t('tasks.noDeadline')}
+                          </Text>
+                          <ChevronRight size={18} color={color.icon.muted} strokeWidth={2.25} />
+                        </View>
+                      )}
+                    </Pressable>
+                    {!isTablet && (
+                      <View
+                        style={{
+                          marginLeft: 14,
+                          height: StyleSheet.hairlineWidth,
+                          backgroundColor: color.border.default,
+                        }}
                       />
-                      <Text
-                        style={{ fontSize: 15, fontWeight: '500', color: color.text.secondary }}
+                    )}
+                    {!isTablet && (
+                      <Pressable
+                        onPress={() => {
+                          if (!deadlineDraft) return;
+                          setTimePickerOpen((prev) => !prev);
+                          setDatePickerOpen(false);
+                        }}
+                        disabled={!deadlineDraft}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${t('tasks.deadlineTimeLabel')}, ${deadlineTimeLabelText || t('tasks.noDeadlineTime')}`}
+                        accessibilityState={{ disabled: !deadlineDraft }}
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 12,
+                          minHeight: DEADLINE_ROW_MIN_HEIGHT,
+                          paddingHorizontal: 14,
+                          paddingVertical: 14,
+                          opacity: deadlineDraft ? 1 : 0.5,
+                        }}
                       >
-                        {t('tasks.deadlineTimeLabel')}
-                      </Text>
-                    </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <Clock
+                            size={20}
+                            color={
+                              deadlineTimeDraft.length > 0 && deadlineDraft
+                                ? color.accent.primary
+                                : color.icon.muted
+                            }
+                            strokeWidth={2}
+                          />
+                          <Text
+                            style={{ fontSize: 15, fontWeight: '500', color: color.text.secondary }}
+                          >
+                            {t('tasks.deadlineTimeLabel')}
+                          </Text>
+                        </View>
+                        <View
+                          style={{
+                            flex: 1,
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            gap: 6,
+                            minWidth: 0,
+                          }}
+                        >
+                          <Text
+                            className="text-[16px]"
+                            style={{
+                              flexShrink: 1,
+                              textAlign: 'right',
+                              color:
+                                deadlineTimeDraft && deadlineDraft
+                                  ? color.text.primary
+                                  : color.text.muted,
+                              fontVariant: ['tabular-nums'],
+                            }}
+                            numberOfLines={1}
+                          >
+                            {deadlineTimeLabelText || t('tasks.noDeadlineTime')}
+                          </Text>
+                          <ChevronRight size={18} color={color.icon.muted} strokeWidth={2.25} />
+                        </View>
+                      </Pressable>
+                    )}
+                  </View>
+                  {isTablet && (
                     <View
                       style={{
                         flex: 1,
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'flex-end',
-                        gap: 6,
-                        minWidth: 0,
+                        borderRadius: 12,
+                        borderWidth: StyleSheet.hairlineWidth,
+                        borderColor: color.border.default,
+                        backgroundColor: color.background.tertiary,
+                        overflow: 'hidden',
                       }}
                     >
-                      <Text
-                        className="text-[16px]"
-                        style={{
-                          flexShrink: 1,
-                          textAlign: 'right',
-                          color:
-                            deadlineTimeDraft && deadlineDraft
-                              ? color.text.primary
-                              : color.text.muted,
-                          fontVariant: ['tabular-nums'],
+                      <Pressable
+                        onPress={() => {
+                          if (!deadlineDraft) return;
+                          setTimePickerOpen((prev) => !prev);
+                          setDatePickerOpen(false);
                         }}
-                        numberOfLines={1}
+                        disabled={!deadlineDraft}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${t('tasks.deadlineTimeLabel')}, ${deadlineTimeLabelText || t('tasks.noDeadlineTime')}`}
+                        accessibilityState={{ disabled: !deadlineDraft }}
+                        style={{
+                          gap: 8,
+                          minHeight: DEADLINE_ROW_MIN_HEIGHT,
+                          opacity: deadlineDraft ? 1 : 0.5,
+                          paddingHorizontal: 14,
+                          paddingVertical: 14,
+                        }}
                       >
-                        {deadlineTimeLabelText || t('tasks.noDeadlineTime')}
-                      </Text>
-                      <ChevronRight size={18} color={color.icon.muted} strokeWidth={2.25} />
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                          <Clock
+                            size={20}
+                            color={
+                              deadlineTimeDraft.length > 0 && deadlineDraft
+                                ? color.accent.primary
+                                : color.icon.muted
+                            }
+                            strokeWidth={2}
+                          />
+                          <Text
+                            style={{ fontSize: 15, fontWeight: '500', color: color.text.secondary }}
+                          >
+                            {t('tasks.deadlineTimeLabel')}
+                          </Text>
+                        </View>
+                        <Text
+                          className="text-[16px]"
+                          style={{
+                            color:
+                              deadlineTimeDraft && deadlineDraft
+                                ? color.text.primary
+                                : color.text.muted,
+                            fontVariant: ['tabular-nums'],
+                            fontWeight: '600',
+                          }}
+                          numberOfLines={1}
+                        >
+                          {deadlineTimeLabelText || t('tasks.noDeadlineTime')}
+                        </Text>
+                      </Pressable>
                     </View>
-                  </Pressable>
+                  )}
                 </View>
                 {deadlineDraft.length > 0 && (
                   <Pressable
@@ -586,15 +685,52 @@ export function TaskEditSheet({
           </View>
         )}
         <View className="mt-7 w-full">
-          <Button
-            variant="primary"
-            size="lg"
-            fullWidth
-            label={t('common.save')}
-            color={color}
-            onPress={handleSave}
-            disabled={draft.trim().length === 0}
-          />
+          {onBack ? (
+            <View className="flex-row gap-3">
+              <Button
+                variant="secondary"
+                label={t('common.goBack')}
+                onPress={() => {
+                  setDatePickerOpen(false);
+                  setTimePickerOpen(false);
+                  onBack();
+                }}
+                activeOpacity={0.8}
+                className="min-w-0 flex-1"
+                color={color}
+                containerStyle={{
+                  backgroundColor: color.background.tertiary,
+                  borderRadius: 12,
+                }}
+                accessibilityLabel={t('common.goBack')}
+              />
+              <Button
+                variant="primary"
+                label={t('common.save')}
+                onPress={handleSave}
+                activeOpacity={0.85}
+                className="min-w-0 flex-1"
+                color={color}
+                disabled={draft.trim().length === 0}
+                containerStyle={{
+                  backgroundColor: color.accent.primary,
+                  borderRadius: 12,
+                }}
+                accessibilityLabel={t('common.save')}
+                accessibilityState={{ disabled: draft.trim().length === 0 }}
+              />
+            </View>
+          ) : (
+            <Button
+              variant="primary"
+              size="lg"
+              fullWidth
+              label={t('common.save')}
+              color={color}
+              onPress={handleSave}
+              disabled={draft.trim().length === 0}
+            />
+          )}
         </View>
       </BottomSheetScrollView>
     </AppBottomSheetModal>
