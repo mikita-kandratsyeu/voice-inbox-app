@@ -4,15 +4,18 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Animated, Easing, Modal, Text, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
+import { Button } from '@/shared/ui';
 
 type AutoOrganizeProgressOverlayProps = {
   visible: boolean;
   mode: 'loading' | 'success';
+  onCancel?: () => void;
 };
 
 export const AutoOrganizeProgressOverlay = ({
   visible,
   mode,
+  onCancel,
 }: AutoOrganizeProgressOverlayProps) => {
   const { t } = useTranslation();
   const color = useColors();
@@ -117,14 +120,24 @@ export const AutoOrganizeProgressOverlay = ({
             >
               {loadingSteps[loadingStepIdx]}
             </Animated.Text>
-          ) : (
+          ) : null}
+          {mode === 'loading' && onCancel ? (
+            <Button
+              variant="secondary"
+              fullWidth
+              className="mt-6"
+              label={t('common.cancel')}
+              color={color}
+              onPress={onCancel}
+            />
+          ) : mode === 'success' ? (
             <Text
               className="mt-2 text-center text-[14px] leading-5"
               style={{ color: color.text.secondary }}
             >
               {t('folders.autoOrganizeDoneDescription')}
             </Text>
-          )}
+          ) : null}
         </View>
       </View>
     </Modal>

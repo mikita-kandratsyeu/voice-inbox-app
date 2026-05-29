@@ -81,6 +81,7 @@ export function useAutoOrganizeFolders(
   const folders = useFolderStore((s) => s.folders);
   const cloudAiKvTtlSeconds = useSettingsStore((s) => s.cloudAiKvTtlSeconds);
   const [isRunning, setIsRunning] = useState(false);
+  const cancelledRef = useRef(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -120,6 +121,11 @@ export function useAutoOrganizeFolders(
     [records],
   );
 
+  const cancelAutoOrganize = useCallback(() => {
+    cancelledRef.current = true;
+    setIsRunning(false);
+  }, []);
+
   const runAutoOrganize = useCallback(async () => {
     if (isRunning) {
       return;
@@ -148,6 +154,7 @@ export function useAutoOrganizeFolders(
       return;
     }
 
+    cancelledRef.current = false;
     setIsRunning(true);
     try {
       const requestId = `auto-organize-${Date.now()}`;
@@ -181,17 +188,27 @@ export function useAutoOrganizeFolders(
         return;
       }
 
-      const pollResult = await pollAutoOrganizeFolders(requestId, postResult.data.syncToken);
+      if (cancelledRef.current) return;
+
+      const pollResult = await pollAutoOrganizeFolders(requestId, postResult.data.syncToken, {
+        isCancelled: () => cancelledRef.current,
+      });
+      if (cancelledRef.current) return;
       if (!pollResult.ok) {
+        if (pollResult.error === 'cancelled') return;
         Alert.alert(t('common.error'), t('folders.autoOrganizeFailedDescription'));
         return;
       }
 
       await options?.onResult?.(pollResult.result);
     } catch {
-      Alert.alert(t('common.error'), t('folders.autoOrganizeFailedDescription'));
+      if (!cancelledRef.current) {
+        Alert.alert(t('common.error'), t('folders.autoOrganizeFailedDescription'));
+      }
     } finally {
-      setIsRunning(false);
+      if (!cancelledRef.current) {
+        setIsRunning(false);
+      }
     }
   }, [
     eligibleNotes,
@@ -208,6 +225,7 @@ export function useAutoOrganizeFolders(
 
   return {
     runAutoOrganize,
+    cancelAutoOrganize,
     isRunning,
     overlayVisible: isRunning,
     overlayMode,

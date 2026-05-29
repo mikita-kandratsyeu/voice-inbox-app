@@ -14,7 +14,7 @@ import {
 import type { Colors } from '@/shared/config';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'icon';
-export type ButtonSize = 'sm' | 'md' | 'lg';
+export type ButtonSize = 'sm' | 'md' | 'lg' | 'header';
 export type ButtonShape = 'default' | 'circle';
 
 /** Shared corner radius for labeled buttons (not chips / avatars). */
@@ -77,6 +77,7 @@ function labeledContainerClass(size: ButtonSize, shape: ButtonShape, isIconOnly:
     sm: `min-h-[44px] min-w-[44px] ${radius} px-3 py-2`,
     md: `min-h-[44px] ${radius} px-4 py-3`,
     lg: `min-h-[44px] ${radius} px-7 py-3.5`,
+    header: 'rounded-full px-3.5 py-[14px]',
   };
   return bySize[size];
 }
@@ -88,6 +89,7 @@ function iconOnlyContainerClass(size: ButtonSize, shape: ButtonShape): string {
     sm: `h-11 w-11 ${radius}`,
     md: `h-11 w-11 ${radius}`,
     lg: `h-12 w-12 ${radius}`,
+    header: `h-11 w-11 ${radius}`,
   };
   return bySize[size];
 }
@@ -138,7 +140,12 @@ export const Button = ({
   const sizeClasses = isIconOnly
     ? iconOnlyContainerClass(size, shape)
     : labeledContainerClass(size, shape, isIconOnly);
-  const textSizeClass = size === 'sm' ? 'text-sm' : 'text-[16px] font-semibold';
+  const textSizeClass =
+    size === 'header'
+      ? 'text-[15px] font-semibold leading-5'
+      : size === 'sm'
+        ? 'text-sm'
+        : 'text-[16px] font-semibold';
 
   const isStartAligned = contentAlign === 'start' && !isIconOnly;
 
@@ -173,7 +180,9 @@ export const Button = ({
       className={containerClassName}
       style={[
         variantKey === 'danger' ? DANGER_BG : bg,
-        useCircle ? { borderRadius: 9999 } : { borderRadius: BUTTON_BORDER_RADIUS },
+        useCircle || size === 'header'
+          ? { borderRadius: 9999 }
+          : { borderRadius: BUTTON_BORDER_RADIUS },
         containerStyle,
         disabled && !loading && { opacity: 0.4 },
       ]}

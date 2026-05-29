@@ -228,10 +228,6 @@ export function TabletSidebarPlanAndUsageCard({
   const isPastWarningThreshold = Boolean(
     usage && usage.limit > 0 && !isExhausted && usage.used / usage.limit > 0.75,
   );
-  const isLowRemaining = Boolean(
-    usage && usage.limit > 0 && !isExhausted && usage.remaining / usage.limit <= 0.2,
-  );
-
   const progressFillColor = isExhausted
     ? color.accent.delete
     : isPastWarningThreshold
@@ -241,13 +237,6 @@ export function TabletSidebarPlanAndUsageCard({
   const progressA11y = usage
     ? t('settings.aiUsage.a11yProgress', { used: usage.used, limit: usage.limit })
     : t('settings.aiUsage.loadFailed');
-
-  const usageFootnote = (() => {
-    if (!usage || usageLoading) return null;
-    if (isExhausted) return t('settings.aiUsage.exhausted');
-    if (isLowRemaining) return t('settings.aiUsage.remaining', { count: usage.remaining });
-    return null;
-  })();
 
   const cardBaseTint = isProActive ? '14' : '0f';
 
@@ -349,17 +338,6 @@ export function TabletSidebarPlanAndUsageCard({
             {t('settings.aiUsage.loadFailed')}
           </Text>
         )}
-        {usageFootnote ? (
-          <Text
-            numberOfLines={1}
-            style={[
-              styles.footnote,
-              { color: isExhausted ? color.accent.delete : color.text.secondary },
-            ]}
-          >
-            {usageFootnote}
-          </Text>
-        ) : null}
       </View>
       <ChevronRight size={16} color={color.icon.muted} strokeWidth={2} style={styles.chevron} />
     </View>
@@ -543,11 +521,6 @@ const styles = StyleSheet.create({
     borderRadius: PROGRESS_HEIGHT / 2,
     height: PROGRESS_HEIGHT,
     marginTop: 2,
-  },
-  footnote: {
-    fontSize: 10,
-    fontWeight: '500',
-    lineHeight: 13,
   },
   loadFailed: {
     fontSize: 12,

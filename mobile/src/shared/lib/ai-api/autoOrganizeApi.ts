@@ -98,6 +98,7 @@ export async function postAutoOrganizeFolders(body: RequestBody): Promise<AutoOr
 export async function pollAutoOrganizeFolders(
   id: string,
   syncToken?: string,
+  options?: { isCancelled?: () => boolean },
 ): Promise<AutoOrganizePollResult> {
   const headers: Record<string, string> = {};
   if (syncToken) headers['x-upstash-sync-token'] = syncToken;
@@ -106,7 +107,13 @@ export async function pollAutoOrganizeFolders(
   const deadline = Date.now() + AI_POLL_TIMEOUT_MS;
 
   while (Date.now() < deadline) {
+    if (options?.isCancelled?.()) {
+      return { ok: false, error: 'cancelled' };
+    }
     await new Promise<void>((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+    if (options?.isCancelled?.()) {
+      return { ok: false, error: 'cancelled' };
+    }
     let response: Response;
     try {
       response = await fetchWithAuth(url, { headers });

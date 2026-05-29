@@ -7,7 +7,7 @@ import { View } from 'react-native';
 import type { BatchSelectState } from '@/features/batch-select';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
-import { Button, HeaderIconButton } from '@/shared/ui';
+import { HeaderIconButton } from '@/shared/ui';
 
 type InboxScreenHeaderRightProps = {
   color: Colors;
@@ -100,10 +100,7 @@ function InboxScreenHeaderRightInner({
 
   if (batchSelect.isSelectMode) {
     return (
-      <Button
-        iconOnly={false}
-        variant="icon"
-        size="md"
+      <HeaderIconButton
         label={allSelected ? t('batch.deselectAll') : t('batch.selectAll')}
         color={color}
         onPress={onSelectAll}

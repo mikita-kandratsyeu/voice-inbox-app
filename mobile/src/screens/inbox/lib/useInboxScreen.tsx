@@ -114,6 +114,7 @@ export function useInboxScreen() {
   } = useManageFolders();
   const {
     runAutoOrganize,
+    cancelAutoOrganize,
     isRunning: isAutoOrganizing,
     overlayVisible: autoOrganizeOverlayVisible,
     overlayMode: autoOrganizeOverlayMode,
@@ -764,6 +765,7 @@ export function useInboxScreen() {
     handleFolderSave,
     handleFolderDelete,
     runAutoOrganize,
+    cancelAutoOrganize,
     isAutoOrganizing,
     autoOrganizeOverlayVisible,
     autoOrganizeOverlayMode,

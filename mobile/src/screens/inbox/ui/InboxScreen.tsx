@@ -48,6 +48,7 @@ export const InboxScreen = () => {
     handleFolderSave,
     handleFolderDelete,
     runAutoOrganize,
+    cancelAutoOrganize,
     isAutoOrganizing,
     autoOrganizeOverlayVisible,
     autoOrganizeOverlayMode,
@@ -275,6 +276,7 @@ export const InboxScreen = () => {
       <AutoOrganizeProgressOverlay
         visible={autoOrganizeOverlayVisible}
         mode={autoOrganizeOverlayMode}
+        onCancel={cancelAutoOrganize}
       />
       <BlockingProgressModal
         visible={batchProgressModal != null}
