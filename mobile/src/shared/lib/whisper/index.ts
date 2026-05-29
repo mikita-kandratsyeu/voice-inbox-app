@@ -5,6 +5,11 @@ export { hasOtherInstalledWhisperWeights } from './hasOtherInstalledWhisperWeigh
 export { isWhisperCoreMlEncoderInstalled } from './isWhisperCoreMlEncoderInstalled';
 export { removeWhisperCoreMlEncoder } from './removeWhisperCoreMlEncoder';
 export {
+  isWhisperCoreMlSupportedForModel,
+  resolveWhisperContextInitOptions,
+  type WhisperContextInitOptions,
+} from './resolveWhisperContextInitOptions';
+export {
   getWhisperCoreMlDownloadUrl,
   getWhisperCoreMlEncoderDirName,
   getWhisperCoreMlEncoderPath,

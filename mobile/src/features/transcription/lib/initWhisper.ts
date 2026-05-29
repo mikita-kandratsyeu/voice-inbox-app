@@ -3,7 +3,11 @@ import { initWhisper, releaseAllWhisper, type WhisperContext } from 'whisper.rn'
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
 import { IS_IOS } from '@/shared/lib';
 import { agentDebugLog } from '@/shared/lib/agentDebugLog';
-import { getWhisperModelPath } from '@/shared/lib/whisper';
+import {
+  getWhisperModelPath,
+  isWhisperCoreMlSupportedForModel,
+  resolveWhisperContextInitOptions,
+} from '@/shared/lib/whisper';
 
 import { WHISPER_IDLE_RELEASE_MS } from '../config/constants';
 import { isNativeTranscriptionRunning } from '../model/transcriptionRuntimeRegistry';
@@ -72,12 +76,14 @@ const drainQueuedRelease = (): void => {
   if (isNativeTranscriptionRunning()) return;
 
   releaseQueued = false;
-  releaseInFlight = enqueueWhisperOperation(releaseWhisperContextNow, 'drainRelease').finally(() => {
-    releaseInFlight = null;
-    if (releaseQueued) {
-      drainQueuedRelease();
-    }
-  });
+  releaseInFlight = enqueueWhisperOperation(releaseWhisperContextNow, 'drainRelease').finally(
+    () => {
+      releaseInFlight = null;
+      if (releaseQueued) {
+        drainQueuedRelease();
+      }
+    },
+  );
 };
 
 export const scheduleIdleRelease = (): void => {
@@ -129,15 +135,25 @@ const loadWhisperContext = async (
   beginWhisperNativeWork();
   try {
     const filePath = getWhisperModelPath(modelId, format);
-    const iosWhisperOptions = IS_IOS ? { useGpu: false as const, useCoreMLIos: true as const } : {};
+    const whisperInitOptions = await resolveWhisperContextInitOptions(modelId);
+    const coreMlActive = await isWhisperCoreMlSupportedForModel(modelId);
     // #region agent log
-    agentDebugLog('initWhisper.ts', 'initWhisper options', { ...iosWhisperOptions, modelId }, 'H8');
+    agentDebugLog(
+      'initWhisper.ts',
+      'initWhisper options',
+      { ...whisperInitOptions, modelId, coreMlActive },
+      'H8',
+    );
     // #endregion
     const context = await initWhisper({
       filePath,
-      // Metal GPU cannot run in background (iOS kills command buffers → wsp_ggml_abort).
-      ...iosWhisperOptions,
+      ...whisperInitOptions,
     });
+    if (__DEV__ && IS_IOS) {
+      console.warn(
+        `[whisper] context id=${context.id} gpu=${context.gpu} coreML=${whisperInitOptions.useCoreMLIos === true} encoder=${coreMlActive}`,
+      );
+    }
     cachedContext = { context, modelId, format };
     return context;
   } finally {
