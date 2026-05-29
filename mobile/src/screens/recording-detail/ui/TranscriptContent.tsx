@@ -36,7 +36,8 @@ export const TranscriptContent = ({
 }: TranscriptContentProps) => {
   const { t } = useTranslation();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { translate, clearTranslation, isTranslating } = useTranslate(record.id);
+  const { translate, clearTranslation, isTranslating, isTranscriptTooLongForTranslate } =
+    useTranslate(record.id);
 
   const { recordFromStore, hydrateRecordDetails } = useRecordStore(
     useShallow((s) => ({
@@ -141,7 +142,7 @@ export const TranscriptContent = ({
         hasAudio={!!r.audioPath}
         onTranscribe={onTranscribe}
         onEditTranscript={() => navigation.navigate('EditTranscript', { record: r })}
-        onTranslate={handleTranslate}
+        onTranslate={isTranscriptTooLongForTranslate ? undefined : handleTranslate}
         onDeleteTranslation={handleDeleteTranslation}
         isTranslating={isTranslating}
         isAiProcessing={isAiProcessing}

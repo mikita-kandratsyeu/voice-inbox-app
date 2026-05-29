@@ -81,9 +81,7 @@ export function FolderPickerRow({
         <View
           style={{
             alignItems: 'center',
-            backgroundColor: tintHex
-              ? withAlphaHex(tintHex, 0.1)
-              : color.background.tertiary,
+            backgroundColor: tintHex ? withAlphaHex(tintHex, 0.1) : color.background.tertiary,
             borderRadius: 10,
             flexShrink: 0,
             height: 36,

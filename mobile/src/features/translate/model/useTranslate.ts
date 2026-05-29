@@ -3,7 +3,9 @@ import { useCallback } from 'react';
 import { useRecordStore } from '@/entities/record';
 import { postTranslate } from '@/shared/lib/ai-api/translateApi';
 
-export type TranslateResult = { ok: true } | { ok: false; error: 'limit' | 'network' };
+import { isTranscriptTooLongForTranslate } from '../lib/translateLimits';
+
+export type TranslateResult = { ok: true } | { ok: false; error: 'limit' | 'network' | 'tooLong' };
 
 export function useTranslate(recordId: string) {
   const records = useRecordStore((s) => s.records);
@@ -17,6 +19,9 @@ export function useTranslate(recordId: string) {
   const translate = useCallback(
     async (targetLanguage: string): Promise<TranslateResult> => {
       if (!transcript.trim()) return { ok: false, error: 'network' };
+      if (isTranscriptTooLongForTranslate(transcript)) {
+        return { ok: false, error: 'tooLong' };
+      }
 
       setTranslationStatus(recordId, 'processing');
       try {
@@ -51,5 +56,6 @@ export function useTranslate(recordId: string) {
     clearTranslation,
     isTranslating,
     hasTranscript: transcript.length > 0,
+    isTranscriptTooLongForTranslate: isTranscriptTooLongForTranslate(transcript),
   };
 }

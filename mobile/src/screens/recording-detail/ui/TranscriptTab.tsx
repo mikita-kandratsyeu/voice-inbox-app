@@ -1,5 +1,5 @@
 import { MenuView } from '@react-native-menu/menu';
-import { Eye, Languages, Pencil, RefreshCw, Undo2 } from 'lucide-react-native';
+import { Eye, Languages, Pencil, RefreshCw, Trash2, Undo2 } from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, View } from 'react-native';
@@ -195,60 +195,78 @@ export const TranscriptTab = ({
             onPress={() => setViewMode(showTranslation ? 'original' : 'translated')}
           />
         )}
-        {onTranslate && segments.length > 0 && !isPrivateMode && (
-          <MenuView
-            key={theme}
-            themeVariant={isDark ? 'dark' : 'light'}
-            onPressAction={async ({ nativeEvent }) => {
-              const action = nativeEvent.event;
-              if (action === 'deleteTranslation') {
-                onDeleteTranslation?.();
-                return;
-              }
-              if ((TRANSLATE_LANGUAGES as readonly string[]).includes(action)) {
-                const ok = await onTranslate(action);
+        {(onTranslate || (hasTranslation && onDeleteTranslation)) &&
+          segments.length > 0 &&
+          !isPrivateMode && (
+            <MenuView
+              key={theme}
+              themeVariant={isDark ? 'dark' : 'light'}
+              onPressAction={async ({ nativeEvent }) => {
+                const action = nativeEvent.event;
+                if (action === 'deleteTranslation') {
+                  onDeleteTranslation?.();
+                  return;
+                }
+                if (onTranslate && (TRANSLATE_LANGUAGES as readonly string[]).includes(action)) {
+                  const ok = await onTranslate(action);
 
-                if (ok) {
-                  setViewMode('translated');
+                  if (ok) {
+                    setViewMode('translated');
+                  }
                 }
-              }
-            }}
-            actions={[
-              ...TRANSLATE_LANGUAGES.map((lang) => ({
-                id: lang,
-                title: t(`recordingDetail.language.${lang}`),
-                titleColor: color.text.primary,
-              })),
-              ...(hasTranslation && onDeleteTranslation
-                ? [
-                    {
-                      id: 'deleteTranslation',
-                      title: t('recordingDetail.deleteTranslation'),
-                      image: 'trash' as const,
-                      imageColor: color.accent.delete,
-                      titleColor: color.accent.delete,
-                      attributes: { destructive: true },
-                    },
-                  ]
-                : []),
-            ]}
-          >
-            <View>
-              <Button
-                variant="secondary"
-                size="lg"
-                icon={<Languages size={15} color={color.text.primary} strokeWidth={2} />}
-                label={
-                  isTranslating ? t('recordingDetail.translating') : t('recordingDetail.translate')
-                }
-                color={color}
-                onPress={() => {}}
-                disabled={isAiProcessing || isTranslating}
-                accessibilityHint={t('recordingDetail.translateMenuHint')}
-              />
-            </View>
-          </MenuView>
-        )}
+              }}
+              actions={[
+                ...(onTranslate
+                  ? TRANSLATE_LANGUAGES.map((lang) => ({
+                      id: lang,
+                      title: t(`recordingDetail.language.${lang}`),
+                      titleColor: color.text.primary,
+                    }))
+                  : []),
+                ...(hasTranslation && onDeleteTranslation
+                  ? [
+                      {
+                        id: 'deleteTranslation',
+                        title: t('recordingDetail.deleteTranslation'),
+                        image: 'trash' as const,
+                        imageColor: color.accent.delete,
+                        titleColor: color.accent.delete,
+                        attributes: { destructive: true },
+                      },
+                    ]
+                  : []),
+              ]}
+            >
+              <View>
+                <Button
+                  variant="secondary"
+                  size="lg"
+                  icon={
+                    onTranslate ? (
+                      <Languages size={15} color={color.text.primary} strokeWidth={2} />
+                    ) : (
+                      <Trash2 size={15} color={color.accent.delete} strokeWidth={2} />
+                    )
+                  }
+                  label={
+                    isTranslating
+                      ? t('recordingDetail.translating')
+                      : onTranslate
+                        ? t('recordingDetail.translate')
+                        : t('recordingDetail.deleteTranslation')
+                  }
+                  color={color}
+                  onPress={() => {}}
+                  disabled={isAiProcessing || isTranslating}
+                  accessibilityHint={
+                    onTranslate
+                      ? t('recordingDetail.translateMenuHint')
+                      : t('recordingDetail.deleteTranslation')
+                  }
+                />
+              </View>
+            </MenuView>
+          )}
         <Button
           variant="secondary"
           size="lg"

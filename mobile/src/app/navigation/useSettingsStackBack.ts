@@ -14,9 +14,7 @@ export function useSettingsStackBack(): () => void {
       navigation.goBack();
       return;
     }
-    const hasSettingsRoot = navigation
-      .getState()
-      .routes.some((route) => route.name === 'Settings');
+    const hasSettingsRoot = navigation.getState().routes.some((route) => route.name === 'Settings');
     if (hasSettingsRoot) {
       navigation.dispatch(StackActions.popToTop());
       return;
