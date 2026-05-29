@@ -129,6 +129,9 @@ export async function enableTaskDeadlineNotifications(): Promise<boolean> {
 export async function disableTaskDeadlineNotifications(): Promise<void> {
   useSettingsStore.getState().setTaskDeadlineNotificationsEnabled(false);
   await cancelAllTaskDeadlineNotifications();
+  const { cancelAllTranscriptionPausedNotifications } =
+    await import('@/features/transcription/lib/paused-notification/cancelAllTranscriptionPausedNotifications');
+  await cancelAllTranscriptionPausedNotifications();
 }
 
 export function resetTaskDeadlineNotificationSyncForTests(): void {

@@ -15,6 +15,8 @@ import { getWhisperModelPath } from '@/shared/lib/whisper';
 
 import { getWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
 import { transcribeAudio } from '../lib/transcribeAudio';
+import { cancelTranscriptionPausedNotification } from '../lib/paused-notification/cancelTranscriptionPausedNotification';
+import { schedulePausedNotificationIfResumable } from '../lib/paused-notification/schedulePausedNotificationIfResumable';
 import {
   getTranscriptionCheckpoint,
   removeTranscriptionCheckpoint,
@@ -277,6 +279,7 @@ export const useTranscription = () => {
         devLog('saving transcript', { recordId: record.id, segments: segments.length });
         await updateTranscript(record.id, fullText, segments);
         await removeTranscriptionCheckpoint(record.id).catch(() => {});
+        void cancelTranscriptionPausedNotification(record.id);
 
         const recordWithTranscript = {
           ...record,
@@ -388,6 +391,7 @@ export const useTranscription = () => {
         stop().catch(() => {});
       }
       removeTranscriptionCheckpoint(recordId).catch(() => {});
+      void cancelTranscriptionPausedNotification(recordId);
     },
     [updateAiStatus],
   );
@@ -404,6 +408,8 @@ export const useTranscription = () => {
         stopRef.current = null;
         stop().catch(() => {});
       }
+
+      schedulePausedNotificationIfResumable(recordId);
     },
     [updateAiStatus],
   );

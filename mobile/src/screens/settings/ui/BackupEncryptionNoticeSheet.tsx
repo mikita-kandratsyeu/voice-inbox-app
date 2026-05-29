@@ -5,8 +5,9 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
-import { withAlphaHex } from '@/shared/lib';
 import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding } from '@/shared/ui';
+
+import { BackupEncryptionWarningBanner } from './BackupEncryptionWarningBanner';
 
 type Props = {
   visible: boolean;
@@ -43,17 +44,9 @@ export function BackupEncryptionNoticeSheet({ visible, onClose, onAcknowledge }:
           </Text>
         </View>
 
-        <View
-          className="mb-6 rounded-2xl border px-3.5 py-3"
-          style={{
-            backgroundColor: c.status.error.bg,
-            borderColor: withAlphaHex(c.status.error.text, 0.22),
-          }}
-        >
-          <Text className="text-center text-sm leading-5" style={{ color: c.status.error.text }}>
-            {t('settings.backupEncryption.noticeWarning')}
-          </Text>
-        </View>
+        <BackupEncryptionWarningBanner style={{ marginBottom: 24 }}>
+          {t('settings.backupEncryption.noticeWarning')}
+        </BackupEncryptionWarningBanner>
 
         <SheetFooterButtons
           color={c}

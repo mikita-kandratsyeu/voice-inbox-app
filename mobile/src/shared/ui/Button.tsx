@@ -77,7 +77,7 @@ function labeledContainerClass(size: ButtonSize, shape: ButtonShape, isIconOnly:
     sm: `min-h-[44px] min-w-[44px] ${radius} px-3 py-2`,
     md: `min-h-[44px] ${radius} px-4 py-3`,
     lg: `min-h-[44px] ${radius} px-7 py-3.5`,
-    header: 'rounded-full px-3.5 py-[14px]',
+    header: 'rounded-full px-5 py-[14px]',
   };
   return bySize[size];
 }

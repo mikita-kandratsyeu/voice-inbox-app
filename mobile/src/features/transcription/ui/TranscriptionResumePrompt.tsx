@@ -4,8 +4,14 @@ import { Alert, AppState } from 'react-native';
 
 import { useRecordStore } from '@/entities/record';
 
+import { cancelTranscriptionPausedNotification } from '../lib/paused-notification/cancelTranscriptionPausedNotification';
 import { listTranscriptionCheckpoints } from '../lib/transcriptionCheckpoint';
 import { useTranscription } from '../model/useTranscription';
+import {
+  clearPendingTranscriptionResumePrompt,
+  peekPendingTranscriptionResumeRecordId,
+  subscribeTranscriptionResumePromptRequest,
+} from '../model/transcriptionResumePromptRequest';
 
 export const TranscriptionResumePrompt = () => {
   const { t } = useTranslation();
@@ -20,13 +26,29 @@ export const TranscriptionResumePrompt = () => {
     if (checkpoints.length === 0) return;
 
     const records = useRecordStore.getState().records;
-    const checkpoint = checkpoints.find((item) =>
-      records.some((r) => r.id === item.recordId && Boolean(r.audioPath)),
-    );
-    if (!checkpoint) return;
+    const preferredRecordId = peekPendingTranscriptionResumeRecordId();
+
+    const checkpoint =
+      (preferredRecordId
+        ? checkpoints.find((item) => item.recordId === preferredRecordId)
+        : undefined) ??
+      checkpoints.find((item) =>
+        records.some((r) => r.id === item.recordId && Boolean(r.audioPath)),
+      );
+
+    if (!checkpoint) {
+      clearPendingTranscriptionResumePrompt();
+      return;
+    }
 
     const record = records.find((r) => r.id === checkpoint.recordId);
-    if (!record?.audioPath) return;
+    if (!record?.audioPath) {
+      clearPendingTranscriptionResumePrompt();
+      return;
+    }
+
+    void cancelTranscriptionPausedNotification(record.id);
+    clearPendingTranscriptionResumePrompt();
 
     promptInFlightRef.current = true;
     Alert.alert(
@@ -65,7 +87,15 @@ export const TranscriptionResumePrompt = () => {
         });
       }
     });
-    return () => sub.remove();
+    const unsubscribeRequest = subscribeTranscriptionResumePromptRequest(() => {
+      checkInterruptedTranscriptions().catch(() => {
+        promptInFlightRef.current = false;
+      });
+    });
+    return () => {
+      sub.remove();
+      unsubscribeRequest();
+    };
   }, [checkInterruptedTranscriptions]);
 
   return null;

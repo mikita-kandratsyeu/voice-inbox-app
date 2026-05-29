@@ -1,5 +1,5 @@
 import { useNavigation } from '@react-navigation/native';
-import { Bell, CalendarDays } from 'lucide-react-native';
+import { Bell, CalendarClock, CloudCheck } from 'lucide-react-native';
 import React from 'react';
 import { ScrollView, Switch, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -71,7 +71,13 @@ export const NotificationsScreen = () => {
             <SettingsRow
               label={screen.t('settings.permissionNotifications')}
               subtitle={screen.t('settings.permissionNotificationsDesc')}
-              leftIcon={<Bell size={20} color={screen.color.accent.primary} strokeWidth={1.8} />}
+              leftIcon={
+                <CloudCheck
+                  size={20}
+                  color={screen.color.accent.success}
+                  strokeWidth={1.8}
+                />
+              }
               value={
                 permissionGranted
                   ? screen.t('settings.notificationsScreen.aiAlertsFollowsSystem')
@@ -85,7 +91,11 @@ export const NotificationsScreen = () => {
             label={screen.t('settings.taskDeadlineNotifications')}
             subtitle={screen.t('settings.taskDeadlineNotificationsHint')}
             leftIcon={
-              <CalendarDays size={20} color={screen.color.accent.primary} strokeWidth={1.8} />
+              <CalendarClock
+                size={20}
+                color={screen.color.accent.primary}
+                strokeWidth={1.8}
+              />
             }
             rightSlot={
               <Switch

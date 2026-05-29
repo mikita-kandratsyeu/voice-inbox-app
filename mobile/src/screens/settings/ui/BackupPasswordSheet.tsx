@@ -6,13 +6,15 @@ import { Text, View } from 'react-native';
 
 import { BACKUP_PASSWORD_MIN_LENGTH, validateBackupPassword } from '@/features/sync-data';
 import { useColors } from '@/shared/config';
-import { IS_IOS, withAlphaHex } from '@/shared/lib';
+import { IS_IOS } from '@/shared/lib';
 import {
   APP_BOTTOM_SHEET_BACKDROP_SNAP,
   AppBottomSheetModal,
   SheetFooterButtons,
   useBottomSheetContentPadding,
 } from '@/shared/ui';
+
+import { BackupEncryptionWarningBanner } from './BackupEncryptionWarningBanner';
 
 export type BackupPasswordSheetMode = 'export' | 'import';
 
@@ -131,24 +133,9 @@ export function BackupPasswordSheet({ visible, mode, busy = false, onClose, onSu
         </Text>
 
         {isExport ? (
-          <View
-            className="mb-4 rounded-2xl border px-3.5 py-3"
-            style={{
-              backgroundColor: c.status.error.bg,
-              borderColor: withAlphaHex(c.status.error.text, 0.22),
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 14,
-                lineHeight: 20,
-                color: c.status.error.text,
-                textAlign: 'center',
-              }}
-            >
-              {t('settings.backupEncryption.noticeWarning')}
-            </Text>
-          </View>
+          <BackupEncryptionWarningBanner style={{ marginBottom: 16 }}>
+            {t('settings.backupEncryption.noticeWarning')}
+          </BackupEncryptionWarningBanner>
         ) : null}
 
         <Text className="mb-1.5 text-[13px] font-semibold" style={{ color: c.text.secondary }}>
