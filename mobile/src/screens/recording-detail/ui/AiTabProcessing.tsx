@@ -2,6 +2,7 @@ import { FileText, ListChecks, UsersRound } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+import { useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import {
   CLOUD_AI_GENERATION_TIP_KEYS,
@@ -20,6 +21,9 @@ type AiTabProcessingProps = {
   color: Colors;
   onCancel?: () => void;
   isPrivateMode?: boolean;
+  processingStartedAtMs?: number;
+  transcriptCharCount?: number;
+  cloudMeetingDialogueExtra?: boolean;
 };
 
 const VARIANT_CONFIG = {
@@ -45,8 +49,12 @@ export const AiTabProcessing = ({
   color,
   onCancel,
   isPrivateMode = false,
+  processingStartedAtMs,
+  transcriptCharCount,
+  cloudMeetingDialogueExtra = false,
 }: AiTabProcessingProps) => {
   const { t } = useTranslation();
+  const privateLocalLlmBudget = useSettingsStore((s) => s.privateLocalLlmBudget);
   const { Icon, titleKey } = VARIANT_CONFIG[variant];
 
   return (
@@ -60,6 +68,10 @@ export const AiTabProcessing = ({
       tipKeys={isPrivateMode ? PRIVATE_AI_GENERATION_TIP_KEYS : CLOUD_AI_GENERATION_TIP_KEYS}
       statusTitle={isPrivateMode ? undefined : t(titleKey)}
       leadingIcon={<Icon size={22} color={color.accent.primary} strokeWidth={2} />}
+      processingStartedAtMs={processingStartedAtMs}
+      transcriptCharCount={transcriptCharCount}
+      privateLlmBudget={isPrivateMode ? privateLocalLlmBudget : undefined}
+      cloudMeetingDialogue={!isPrivateMode && cloudMeetingDialogueExtra}
     />
   );
 };

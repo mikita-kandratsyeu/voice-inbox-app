@@ -33,6 +33,9 @@ type SummaryTabProps = {
   privateAiBatchProgress?: number;
   privateAiBatchPhase?: 'loading_model' | 'processing';
   privateAiBatchProgressLabel?: string;
+  privateAiBatchStartedAt?: number;
+  transcriptCharCount?: number;
+  cloudMeetingDialogueExtra?: boolean;
   summaryReasoning?: string;
   summaryAiModel?: string;
   summaryTokenUsage?: SummaryTokenUsage;
@@ -53,6 +56,9 @@ export const SummaryTab = ({
   privateAiBatchPhase,
   privateAiBatchProgress,
   privateAiBatchProgressLabel,
+  privateAiBatchStartedAt,
+  transcriptCharCount,
+  cloudMeetingDialogueExtra = false,
   showPrivateModeCta = false,
   status,
   summary,
@@ -94,6 +100,9 @@ export const SummaryTab = ({
         color={color}
         onCancel={onCancelProcessing}
         isPrivateMode={isPrivateMode}
+        processingStartedAtMs={privateAiBatchStartedAt}
+        transcriptCharCount={transcriptCharCount}
+        cloudMeetingDialogueExtra={cloudMeetingDialogueExtra}
       />
     );
   }

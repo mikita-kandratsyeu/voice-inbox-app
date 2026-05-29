@@ -70,6 +70,8 @@ export const TranscriptContent = ({
         phase={processingPhase}
         color={color}
         onCancel={onCancelTranscription}
+        durationMs={record.durationMs}
+        transcriptionSegments={r.transcriptProgressSegments}
       />
     );
   }

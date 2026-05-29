@@ -56,6 +56,9 @@ type TasksTabProps = {
   privateAiBatchProgress?: number;
   privateAiBatchPhase?: 'loading_model' | 'processing';
   privateAiBatchProgressLabel?: string;
+  privateAiBatchStartedAt?: number;
+  transcriptCharCount?: number;
+  cloudMeetingDialogueExtra?: boolean;
 };
 
 const ManualTaskAddRow = ({
@@ -141,6 +144,9 @@ export const TasksTab = ({
   privateAiBatchPhase,
   privateAiBatchProgress,
   privateAiBatchProgressLabel,
+  privateAiBatchStartedAt,
+  transcriptCharCount,
+  cloudMeetingDialogueExtra = false,
   showPrivateModeCta = false,
   onSwitchToSmartMode: _onSwitchToSmartMode,
   isPrivateMode = false,
@@ -203,6 +209,9 @@ export const TasksTab = ({
           color={color}
           onCancel={onCancelProcessing}
           isPrivateMode={isPrivateMode}
+          processingStartedAtMs={privateAiBatchStartedAt}
+          transcriptCharCount={transcriptCharCount}
+          cloudMeetingDialogueExtra={cloudMeetingDialogueExtra}
         />
         {reextractSheet}
         {editTaskSheet}

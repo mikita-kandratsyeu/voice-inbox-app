@@ -79,6 +79,8 @@ export type VoiceRecord = {
   privateAiBatchProgress?: number;
   privateAiBatchPhase?: 'loading_model' | 'processing';
   privateAiBatchProgressLabel?: string;
+  /** Wall-clock start for summary/tasks batch UI (time-remaining estimate). */
+  privateAiBatchStartedAt?: number;
   isPinned?: boolean;
   tags?: string[];
   recordingMarks?: RecordingMark[];

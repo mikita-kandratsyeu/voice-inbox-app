@@ -1,11 +1,16 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
+import type { PrivateLocalLlmBudget } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { withAlphaHex } from '@/shared/lib';
 import { useRotatingI18nTip } from '@/shared/lib/aiGenerationTips';
+import {
+  estimateProcessingSecondsRemaining,
+  formatProcessingTimeRemaining,
+} from '@/shared/lib/estimateProcessingTimeRemaining';
 import { AiProcessingCancelButton, ProcessingStatusTitle, RotatingTipText } from '@/shared/ui';
 
 export type DetailTabProcessingContext = 'transcription' | 'private_llm' | 'cloud_ai';
@@ -26,6 +31,12 @@ type DetailTabProcessingViewProps = {
   statusTitle?: string;
   /** Hide progress bar and time estimate (e.g. Ask AI cloud). */
   showProgress?: boolean;
+  processingStartedAtMs?: number;
+  transcriptCharCount?: number;
+  durationMs?: number;
+  transcriptionSegments?: { current: number; total: number };
+  privateLlmBudget?: PrivateLocalLlmBudget;
+  cloudMeetingDialogue?: boolean;
 };
 
 export const DetailTabProcessingView = ({
@@ -40,6 +51,12 @@ export const DetailTabProcessingView = ({
   context = 'transcription',
   statusTitle: statusTitleOverride,
   showProgress = true,
+  processingStartedAtMs,
+  transcriptCharCount,
+  durationMs,
+  transcriptionSegments,
+  privateLlmBudget,
+  cloudMeetingDialogue,
 }: DetailTabProcessingViewProps) => {
   const { t } = useTranslation();
   const rotatingTip = useRotatingI18nTip(tipKeys ?? []);
@@ -47,6 +64,7 @@ export const DetailTabProcessingView = ({
   const animatedWidth = useSharedValue(0);
   const clampedProgress = Math.min(100, Math.max(0, progress));
   const isCompact = !showProgress;
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
   const statusTitleKey =
     context === 'private_llm'
@@ -73,12 +91,44 @@ export const DetailTabProcessingView = ({
     animatedWidth.value = withTiming(clampedProgress, { duration: 400 });
   }, [animatedWidth, clampedProgress, progress]);
 
-  const secondsLeft = Math.round(((100 - clampedProgress) / 100) * 60);
-  const timeLabel = progressLabel
-    ? progressLabel
-    : secondsLeft < 60
-      ? t(`${timeNs}.secondsLeft`, { count: secondsLeft })
-      : t(`${timeNs}.minutesLeft`, { count: Math.ceil(secondsLeft / 60) });
+  useEffect(() => {
+    if (!showProgress || progressLabel) return;
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [showProgress, progressLabel]);
+
+  const timeLabel = useMemo(() => {
+    if (progressLabel) return progressLabel;
+
+    const secondsLeft = estimateProcessingSecondsRemaining({
+      context,
+      phase,
+      progressPercent: clampedProgress,
+      startedAtMs: processingStartedAtMs,
+      nowMs,
+      transcriptCharCount,
+      durationMs,
+      transcriptionSegments,
+      privateLlmBudget,
+      cloudMeetingDialogue,
+    });
+
+    return formatProcessingTimeRemaining(secondsLeft, t, timeNs);
+  }, [
+    clampedProgress,
+    cloudMeetingDialogue,
+    context,
+    durationMs,
+    nowMs,
+    phase,
+    privateLlmBudget,
+    processingStartedAtMs,
+    progressLabel,
+    t,
+    timeNs,
+    transcriptCharCount,
+    transcriptionSegments,
+  ]);
 
   const trackStyle = useAnimatedStyle(() => ({
     width: `${animatedWidth.value}%`,

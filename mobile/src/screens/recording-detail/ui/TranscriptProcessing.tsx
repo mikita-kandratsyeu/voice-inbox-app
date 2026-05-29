@@ -12,6 +12,8 @@ type TranscriptProcessingProps = {
   phase: 'loading_model' | 'processing';
   color: Colors;
   onCancel: () => void;
+  durationMs?: number;
+  transcriptionSegments?: { current: number; total: number };
 };
 
 export const TranscriptProcessing = ({
@@ -20,6 +22,8 @@ export const TranscriptProcessing = ({
   phase,
   color,
   onCancel,
+  durationMs,
+  transcriptionSegments,
 }: TranscriptProcessingProps) => {
   const { t } = useTranslation();
 
@@ -33,6 +37,8 @@ export const TranscriptProcessing = ({
       context="transcription"
       hintText={t('transcription.batteryHint')}
       leadingIcon={<RecordVoiceIcon size={22} color={color.accent.primary} strokeWidth={2.2} />}
+      durationMs={durationMs}
+      transcriptionSegments={transcriptionSegments}
     />
   );
 };

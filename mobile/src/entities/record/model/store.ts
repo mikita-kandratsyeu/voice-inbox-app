@@ -126,6 +126,7 @@ type RecordStore = {
       privateAiBatchProgress?: number;
       privateAiBatchPhase?: 'loading_model' | 'processing';
       privateAiBatchProgressLabel?: string;
+      privateAiBatchStartedAt?: number;
     },
   ) => void;
   clearPrivateAiBatchUi: (id: string) => void;
@@ -433,6 +434,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
         privateAiBatchProgress: undefined,
         privateAiBatchPhase: undefined,
         privateAiBatchProgressLabel: undefined,
+        privateAiBatchStartedAt: undefined,
       }),
     }));
   },

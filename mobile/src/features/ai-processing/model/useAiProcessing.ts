@@ -246,9 +246,11 @@ export const useAiProcessing = () => {
       });
 
       const isPrivateAi = aiExecutionMode === 'private_experimental';
+      const generationStartedAt = Date.now();
       setPrivateAiBatchUi(record.id, {
         privateAiBatchProgress: isPrivateAi ? 0 : 5,
         privateAiBatchPhase: isPrivateAi ? 'loading_model' : 'processing',
+        privateAiBatchStartedAt: generationStartedAt,
       });
 
       const runGeneration = (runGenerationRef.current.get(record.id) ?? 0) + 1;
@@ -256,8 +258,6 @@ export const useAiProcessing = () => {
 
       const abortHandle = createAiAbortHandle();
       abortHandlesRef.current.set(record.id, abortHandle);
-
-      const generationStartedAt = Date.now();
       let cloudProgressTimer: ReturnType<typeof setInterval> | null = null;
       let cloudDisplayedPct = 5;
       if (!isPrivateAi) {

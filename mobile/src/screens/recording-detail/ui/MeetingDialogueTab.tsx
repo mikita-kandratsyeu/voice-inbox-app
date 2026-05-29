@@ -26,6 +26,9 @@ type MeetingDialogueTabProps = {
   privateAiBatchProgress?: number;
   privateAiBatchPhase?: 'loading_model' | 'processing';
   privateAiBatchProgressLabel?: string;
+  privateAiBatchStartedAt?: number;
+  transcriptCharCount?: number;
+  cloudMeetingDialogueExtra?: boolean;
 };
 
 export const MeetingDialogueTab = ({
@@ -39,6 +42,9 @@ export const MeetingDialogueTab = ({
   privateAiBatchPhase,
   privateAiBatchProgress,
   privateAiBatchProgressLabel,
+  privateAiBatchStartedAt,
+  transcriptCharCount,
+  cloudMeetingDialogueExtra = false,
   showPrivateModeCta = false,
   status,
   isPrivateMode = false,
@@ -66,6 +72,9 @@ export const MeetingDialogueTab = ({
         color={color}
         onCancel={onCancelProcessing}
         isPrivateMode={isPrivateMode}
+        processingStartedAtMs={privateAiBatchStartedAt}
+        transcriptCharCount={transcriptCharCount}
+        cloudMeetingDialogueExtra={cloudMeetingDialogueExtra}
       />
     );
   }

@@ -745,6 +745,9 @@ export const RecordingDetailScreen = () => {
                   privateAiBatchProgress={liveRecord.privateAiBatchProgress}
                   privateAiBatchPhase={liveRecord.privateAiBatchPhase}
                   privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
+                  privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
+                  transcriptCharCount={liveRecord.transcript?.length ?? 0}
+                  cloudMeetingDialogueExtra={meetingPresetUiActive && !isPrivateMode}
                   summaryReasoning={isPrivateMode ? undefined : liveRecord.summaryReasoning}
                   summaryAiModel={liveRecord.summaryAiModel}
                   summaryTokenUsage={
@@ -776,6 +779,9 @@ export const RecordingDetailScreen = () => {
                   privateAiBatchProgress={liveRecord.privateAiBatchProgress}
                   privateAiBatchPhase={liveRecord.privateAiBatchPhase}
                   privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
+                  privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
+                  transcriptCharCount={liveRecord.transcript?.length ?? 0}
+                  cloudMeetingDialogueExtra={meetingPresetUiActive && !isPrivateMode}
                 />
               </View>
             )}
@@ -803,6 +809,9 @@ export const RecordingDetailScreen = () => {
                   privateAiBatchProgress={liveRecord.privateAiBatchProgress}
                   privateAiBatchPhase={liveRecord.privateAiBatchPhase}
                   privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
+                  privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
+                  transcriptCharCount={liveRecord.transcript?.length ?? 0}
+                  cloudMeetingDialogueExtra={meetingPresetUiActive && !isPrivateMode}
                 />
               </View>
             )}
