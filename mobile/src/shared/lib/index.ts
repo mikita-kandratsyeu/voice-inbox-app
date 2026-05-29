@@ -39,6 +39,7 @@ export {
   relativeLuminanceFromHex,
   resolveDisplayFolderColor,
   resolveFolderColorForCurrentScheme,
+  resolveFolderListTintHex,
   withAlphaHex,
 } from './folderColor';
 export { formatStorageSharePercent } from './format-storage-share-percent';

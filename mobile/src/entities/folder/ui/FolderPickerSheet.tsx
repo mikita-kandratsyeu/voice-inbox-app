@@ -3,8 +3,9 @@ import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
+import { useProEntitlement } from '@/features/pro-license';
 import { useAppTheme, useColors } from '@/shared/config';
-import { resolveFolderColorForCurrentScheme } from '@/shared/lib';
+import { resolveFolderListTintHex } from '@/shared/lib';
 import { AppBottomSheetModal, useBottomSheetContentPadding } from '@/shared/ui';
 
 import type { Folder } from '../model/types';
@@ -33,10 +34,12 @@ export const FolderPickerSheet = ({
   const { t } = useTranslation();
   const color = useColors();
   const scheme = useAppTheme();
+  const { isProActive } = useProEntitlement();
   const contentPadding = useBottomSheetContentPadding(20);
 
   const sortedFolders = useMemo(
-    () => [...folders].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
+    () =>
+      [...folders].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })),
     [folders],
   );
 
@@ -110,7 +113,7 @@ export const FolderPickerSheet = ({
             onPress={pickInbox}
           />
           {sortedFolders.map((folder, index) => {
-            const tintHex = resolveFolderColorForCurrentScheme(folder.color, scheme);
+            const tintHex = resolveFolderListTintHex(folder.color, isProActive, scheme);
             const selected = showChecks && currentFolderId === folder.id;
             return (
               <FolderPickerRow

@@ -20,13 +20,13 @@ import { useRecordActions } from '@/features/record-actions';
 import type { ShareBriefTemplate, ShareRecordExportFormat } from '@/features/share-record';
 import { saveLastShareRecipientEmail, useShareRecord } from '@/features/share-record';
 import { useTranscription } from '@/features/transcription';
-import { useColors } from '@/shared/config';
+import { useAppTheme, useColors } from '@/shared/config';
 import {
   hapticError,
   hapticLight,
   hapticSelection,
   hapticSuccess,
-  resolveDisplayFolderColor,
+  resolveFolderListTintHex,
   useIsTablet,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
@@ -104,6 +104,7 @@ export const RecordingDetailScreen = () => {
 
   const folders = useFolderStore(useShallow((s) => s.folders));
   const { isProActive } = useProEntitlement();
+  const scheme = useAppTheme();
 
   const folderPlacement = useMemo(() => {
     const fid = liveRecord.folderId;
@@ -113,9 +114,9 @@ export const RecordingDetailScreen = () => {
     return {
       kind: 'folder' as const,
       folder: f,
-      tintHex: resolveDisplayFolderColor(f.color, isProActive),
+      tintHex: resolveFolderListTintHex(f.color, isProActive, scheme),
     };
-  }, [liveRecord.folderId, folders, isProActive]);
+  }, [liveRecord.folderId, folders, isProActive, scheme]);
 
   const {
     whisperModelStatuses,

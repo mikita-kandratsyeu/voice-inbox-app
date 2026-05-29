@@ -219,8 +219,6 @@ export function DeleteStorageDataSheet({
           labelSuffix={canSubmit ? formatFileSize(selectedBytes) : undefined}
           onPrimaryPress={handlePrimaryPress}
           primaryDisabled={!canSubmit}
-          secondaryLabel={t('common.cancel')}
-          onSecondaryPress={onClose}
         />
       </BottomSheetView>
     </AppBottomSheetModal>

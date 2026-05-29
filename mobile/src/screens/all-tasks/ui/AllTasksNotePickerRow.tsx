@@ -3,21 +3,15 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
-import { type FolderIconKey, FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
+import { resolveFolderListRowChrome } from '@/entities/folder/lib/folderListRowChrome';
+import { FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
 import type { Folder as FolderModel } from '@/entities/folder/model/types';
-import type { RecordClassification, RecordListItem } from '@/entities/record';
+import type { RecordListItem } from '@/entities/record';
+import { useProEntitlement } from '@/features/pro-license';
 import { type Colors, useAppTheme } from '@/shared/config';
-import { hapticSelection, resolveFolderColorForCurrentScheme, withAlphaHex } from '@/shared/lib';
+import { hapticSelection, withAlphaHex } from '@/shared/lib';
 
 const MAX_VISIBLE_TAGS = 2;
-
-const CLASSIFICATION_FOLDER_ICON: Record<RecordClassification, FolderIconKey> = {
-  work: 'briefcase',
-  personal: 'home',
-  meeting: 'globe',
-  idea: 'lightbulb',
-  other: 'star',
-};
 
 type AllTasksNotePickerRowProps = {
   record: RecordListItem;
@@ -45,24 +39,29 @@ export function AllTasksNotePickerRow({
 }: AllTasksNotePickerRowProps) {
   const { t } = useTranslation();
   const scheme = useAppTheme();
+  const { isProActive } = useProEntitlement();
 
   const tags = record.tags ?? [];
-
-  const folderTintHex = useMemo(() => {
-    if (!folder) return undefined;
-    return resolveFolderColorForCurrentScheme(folder.color, scheme);
-  }, [folder, scheme]);
 
   const classificationLabel =
     record.classification && !record.folderId ? t(`classification.${record.classification}`) : null;
 
-  const locationLabel = folder
-    ? folder.name
-    : record.folderId
-      ? t('folders.detailFolderRemoved')
-      : classificationLabel
-        ? classificationLabel
-        : t('tabs.inbox');
+  const { folderTintHex, locationLabel, leadingFolderIconId, showInboxIcon } = useMemo(
+    () =>
+      resolveFolderListRowChrome({
+        folder,
+        folderId: record.folderId,
+        classification: record.classification,
+        isProActive,
+        scheme,
+        labels: {
+          inbox: t('tabs.inbox'),
+          folderRemoved: t('folders.detailFolderRemoved'),
+          classificationLabel,
+        },
+      }),
+    [classificationLabel, folder, isProActive, record.classification, record.folderId, scheme, t],
+  );
 
   const tagSummary = buildTagSummary(
     tags,
@@ -70,20 +69,13 @@ export function AllTasksNotePickerRow({
   );
 
   const leadingIconColor = folderTintHex ?? color.text.secondary;
-  const leadingFolderIconId = folder
-    ? folder.icon
-    : record.classification && !record.folderId
-      ? CLASSIFICATION_FOLDER_ICON[record.classification]
-      : null;
-  const showInboxIcon = !folder && !record.folderId && !record.classification;
+  const stripeColor = folderTintHex ?? color.border.default;
 
   const accessibilityLabel = useMemo(() => {
     const parts = [record.title, locationLabel];
     if (tagSummary) parts.push(tagSummary);
     return parts.join(', ');
   }, [locationLabel, record.title, tagSummary]);
-
-  const stripeColor = folderTintHex ?? color.border.default;
 
   return (
     <Pressable

@@ -64,6 +64,7 @@ export function resolveFolderColorForCurrentScheme(
   return getAccentPreviewHex(bestId, scheme);
 }
 
+/** Nav chips, sidebar, reorder — non‑Pro gets one default accent for every folder. */
 export function resolveDisplayFolderColor(
   storedHex: string | null | undefined,
   isPro: boolean,
@@ -71,6 +72,16 @@ export function resolveDisplayFolderColor(
   const raw = storedHex?.trim();
   if (isPro && raw) return raw;
   return DEFAULT_FOLDER_BRAND_HEX;
+}
+
+/** List rows, pickers, related notes, detail folder chip — non‑Pro → neutral (undefined). */
+export function resolveFolderListTintHex(
+  storedHex: string | null | undefined,
+  isPro: boolean,
+  scheme: ColorScheme,
+): string | undefined {
+  if (!isPro) return undefined;
+  return resolveFolderColorForCurrentScheme(resolveDisplayFolderColor(storedHex, true), scheme);
 }
 
 export function parseRgbFromHex(hex: string): { r: number; g: number; b: number } | null {

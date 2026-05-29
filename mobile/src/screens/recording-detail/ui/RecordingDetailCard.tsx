@@ -14,7 +14,7 @@ import { RecordDetailTag } from './RecordDetailTag';
 export type RecordingDetailFolderPlacement =
   | { kind: 'inbox' }
   | { kind: 'missing' }
-  | { kind: 'folder'; folder: Folder; tintHex: string };
+  | { kind: 'folder'; folder: Folder; tintHex?: string };
 
 type RecordingDetailCardProps = {
   record: VoiceRecord;
@@ -181,13 +181,15 @@ export const RecordingDetailCard = ({
                 paddingHorizontal: 8,
                 paddingVertical: 4,
                 borderRadius: 999,
-                backgroundColor: withAlphaHex(folderPlacement.tintHex, 0.14),
+                backgroundColor: folderPlacement.tintHex
+                  ? withAlphaHex(folderPlacement.tintHex, 0.14)
+                  : color.background.tertiary,
               }}
             >
               <FolderLucideIcon
                 iconId={folderPlacement.folder.icon}
                 size={14}
-                color={folderPlacement.tintHex}
+                color={folderPlacement.tintHex ?? color.text.secondary}
                 strokeWidth={2}
               />
               <Text
