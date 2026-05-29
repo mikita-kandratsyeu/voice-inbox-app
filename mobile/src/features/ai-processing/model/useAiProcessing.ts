@@ -32,6 +32,11 @@ import { TASK_EXTRACTION_HINT_MAX_CHARS } from '@/shared/lib/ai-core/local-provi
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { sanitizeRecordingMarksForPrompt } from '@/shared/lib/ai-core/recordingMarksForPrompt';
 import type { AiLocalGenerationProgressEvent } from '@/shared/lib/ai-core/types';
+import {
+  abortAiGeneration,
+  registerAiGeneration,
+  unregisterAiGeneration,
+} from '@/shared/lib/aiGenerationAbortRegistry';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 import {
   toUserFacingFetchErrorFromUnknown,
@@ -180,16 +185,18 @@ export const useAiProcessing = () => {
 
   const cancelAiGeneration = useCallback(
     (recordId: string) => {
-      const handle = abortHandlesRef.current.get(recordId);
-      if (!handle) return;
+      const registryAbort = abortAiGeneration(recordId, 'summary');
+      const refHandle = abortHandlesRef.current.get(recordId);
+      refHandle?.abort();
+      abortHandlesRef.current.delete(recordId);
 
       runGenerationRef.current.set(recordId, (runGenerationRef.current.get(recordId) ?? 0) + 1);
       inFlightRef.current.delete(`${recordId}-ai`);
-      handle.abort();
       applyCancelledUiState(recordId);
 
-      const cloudJobId = activeCloudJobIdRef.current.get(recordId);
+      const refCloudJobId = activeCloudJobIdRef.current.get(recordId);
       activeCloudJobIdRef.current.delete(recordId);
+      const cloudJobId = registryAbort.cloudJobId ?? refCloudJobId ?? null;
       clearCloudSummarizeInFlight(recordId);
       void clearCloudSummarizePending(recordId);
       if (cloudJobId && useSettingsStore.getState().aiExecutionMode !== 'private_experimental') {
@@ -263,6 +270,12 @@ export const useAiProcessing = () => {
       if (aiExecutionMode !== 'private_experimental') {
         activeCloudJobIdRef.current.set(record.id, requestId);
       }
+      registerAiGeneration(
+        record.id,
+        'summary',
+        abortHandle,
+        aiExecutionMode !== 'private_experimental' ? requestId : null,
+      );
       inFlightRef.current.add(baseId);
       void logAnalyticsEvent('ai_action_started', {
         action: 'summary_tasks',
@@ -626,6 +639,7 @@ export const useAiProcessing = () => {
         if (runGenerationRef.current.get(record.id) === runGeneration) {
           inFlightRef.current.delete(baseId);
           clearCloudSummarizeInFlight(record.id);
+          unregisterAiGeneration(record.id, 'summary', abortHandle);
           if (abortHandlesRef.current.get(record.id) === abortHandle) {
             abortHandlesRef.current.delete(record.id);
           }

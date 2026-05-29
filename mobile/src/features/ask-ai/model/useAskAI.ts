@@ -15,6 +15,11 @@ import { AIOrchestrator } from '@/shared/lib/ai-core';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { sanitizeRecordingMarksForPrompt } from '@/shared/lib/ai-core/recordingMarksForPrompt';
 import type { AiLocalGenerationProgressEvent } from '@/shared/lib/ai-core/types';
+import {
+  abortAiGeneration,
+  registerAiGeneration,
+  unregisterAiGeneration,
+} from '@/shared/lib/aiGenerationAbortRegistry';
 import { logAnalyticsEvent } from '@/shared/lib/analytics';
 
 import {
@@ -161,6 +166,12 @@ export const useAskAI = (
       const trimmedQuestion = question.trim();
       const abortHandle = createAiAbortHandle();
       abortHandlesRef.current.set(record.id, abortHandle);
+      registerAiGeneration(
+        record.id,
+        'ask',
+        abortHandle,
+        aiExecutionMode !== 'private_experimental' ? requestId : null,
+      );
       inFlightRef.current = true;
       askInFlightRecordIds.add(record.id);
 
@@ -397,6 +408,7 @@ export const useAskAI = (
           tier: privateCapabilityTier,
         });
       } finally {
+        unregisterAiGeneration(record.id, 'ask', abortHandle);
         abortHandlesRef.current.delete(record.id);
         activeCloudJobIdRef.current = null;
         inFlightRef.current = false;
@@ -421,9 +433,11 @@ export const useAskAI = (
   askQuestionRef.current = askQuestion;
 
   const cancelAsk = useCallback(() => {
+    const registryAbort = abortAiGeneration(recordId, 'ask');
     abortHandlesRef.current.get(recordId)?.abort();
+    abortHandlesRef.current.delete(recordId);
 
-    const cloudJobId = activeCloudJobIdRef.current;
+    const cloudJobId = registryAbort.cloudJobId ?? activeCloudJobIdRef.current;
     activeCloudJobIdRef.current = null;
     if (cloudJobId && aiExecutionMode !== 'private_experimental') {
       void cancelCloudAiJob(cloudJobId);
@@ -433,8 +447,6 @@ export const useAskAI = (
     askInFlightRecordIds.delete(recordId);
 
     setState((s) => {
-      if (!s.isLoading) return s;
-
       const next: AskAIState = {
         ...s,
         isLoading: false,
