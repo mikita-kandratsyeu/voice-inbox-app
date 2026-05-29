@@ -64,7 +64,12 @@ export function agentDebugLog(
   if (!loggedIngestTarget) {
     loggedIngestTarget = true;
     const sourceCode = NativeModules.SourceCode as { scriptURL?: string } | undefined;
-    console.warn('[agent-debug] ingest', resolveDebugIngestUrl(), 'scriptURL', sourceCode?.scriptURL);
+    console.warn(
+      '[agent-debug] ingest',
+      resolveDebugIngestUrl(),
+      'scriptURL',
+      sourceCode?.scriptURL,
+    );
   }
 
   const payload = {

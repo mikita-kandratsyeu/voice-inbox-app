@@ -8,8 +8,8 @@ import { useAiProcessing } from '@/features/ai-processing';
 import { shouldApplyAutoAiAfterTranscription } from '@/features/app-storefront';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
-import { agentDebugLog } from '@/shared/lib/agentDebugLog';
 import { ensureRecordingsDir, i18n, RECORDINGS_DIR, useNetworkStatus } from '@/shared/lib';
+import { agentDebugLog } from '@/shared/lib/agentDebugLog';
 import { convertToWav } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
 import { getWhisperModelPath } from '@/shared/lib/whisper';
@@ -22,13 +22,13 @@ import {
   saveTranscriptionCheckpoint,
 } from '../lib/transcriptionCheckpoint';
 import { clearPendingBackgroundTranscriptionRecord } from './pendingBackgroundTranscriptionRecord';
+import { isTranscriptionBlockedForRecord } from './transcriptionConcurrency';
 import {
   beginTranscriptionJob,
   endTranscriptionJobIfCurrent,
   invalidateTranscriptionJob,
   isActiveTranscriptionJob,
 } from './transcriptionJobRegistry';
-import { isTranscriptionBlockedForRecord } from './transcriptionConcurrency';
 import {
   beginTranscriptionSession,
   clearTranscriptionBackgroundCancelled,

@@ -37,10 +37,7 @@ export const NotificationsScreen = () => {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Text
-          className="mb-4 text-[14px] leading-5"
-          style={{ color: screen.color.text.secondary }}
-        >
+        <Text className="mb-4 text-[14px] leading-5" style={{ color: screen.color.text.secondary }}>
           {screen.t('settings.notificationsScreen.intro')}
         </Text>
 

@@ -1,6 +1,9 @@
 import { useRecordStore, type VoiceRecord } from '@/entities/record';
 
-import { hasActiveTranscriptionJob, hasAnyActiveTranscriptionJob } from './transcriptionJobRegistry';
+import {
+  hasActiveTranscriptionJob,
+  hasAnyActiveTranscriptionJob,
+} from './transcriptionJobRegistry';
 
 const isRecordTranscribing = (record: Pick<VoiceRecord, 'aiStatus'>): boolean =>
   record.aiStatus === 'loading_model' || record.aiStatus === 'processing';

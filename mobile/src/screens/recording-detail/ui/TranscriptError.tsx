@@ -13,7 +13,11 @@ type TranscriptErrorProps = {
   retryDisabled?: boolean;
 };
 
-export const TranscriptError = ({ color, onRetry, retryDisabled = false }: TranscriptErrorProps) => {
+export const TranscriptError = ({
+  color,
+  onRetry,
+  retryDisabled = false,
+}: TranscriptErrorProps) => {
   const { t } = useTranslation();
   const err = color.status.error.text;
   const errBg = color.status.error.bg;

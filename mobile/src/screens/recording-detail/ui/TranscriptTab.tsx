@@ -11,8 +11,8 @@ import {
   useSettingsStore,
 } from '@/entities/settings';
 import { getWhisperModelDisplayName } from '@/entities/settings/model/constants';
-import { useTranscriptionBlockedForRecord } from '@/features/transcription';
 import { TranscriptHighlight } from '@/features/transcript-highlight';
+import { useTranscriptionBlockedForRecord } from '@/features/transcription';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
 import { Button, RecordVoiceIcon, TabEmptyState } from '@/shared/ui';

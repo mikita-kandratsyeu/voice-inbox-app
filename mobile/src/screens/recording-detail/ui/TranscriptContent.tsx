@@ -80,11 +80,7 @@ export const TranscriptContent = ({
 
   if (r.aiStatus === 'error') {
     return (
-      <TranscriptError
-        color={color}
-        onRetry={onTranscribe}
-        retryDisabled={transcriptionBlocked}
-      />
+      <TranscriptError color={color} onRetry={onTranscribe} retryDisabled={transcriptionBlocked} />
     );
   }
 

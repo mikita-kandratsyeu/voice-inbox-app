@@ -12,8 +12,8 @@ import {
 } from '@/features/transcription';
 import { isWhisperNativeWorkActive } from '@/features/transcription/lib/whisperNativeLifecycle';
 import { isTranscriptionSessionActive } from '@/features/transcription/model/transcriptionRuntimeRegistry';
-import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { agentDebugLog } from '@/shared/lib/agentDebugLog';
+import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { ensurePushRegistered, notifyAppBackground, notifyAppForeground } from '@/shared/lib/push';
 
 const HEARTBEAT_INTERVAL_MS = 40_000;

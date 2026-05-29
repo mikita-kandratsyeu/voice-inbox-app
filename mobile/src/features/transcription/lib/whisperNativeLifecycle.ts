@@ -46,14 +46,24 @@ export function beginWhisperNativeWork(): void {
   }
   nativeWorkDepth += 1;
   // #region agent log
-  agentDebugLog('whisperNativeLifecycle.ts', 'beginWhisperNativeWork', { depth: nativeWorkDepth }, 'H1');
+  agentDebugLog(
+    'whisperNativeLifecycle.ts',
+    'beginWhisperNativeWork',
+    { depth: nativeWorkDepth },
+    'H1',
+  );
   // #endregion
 }
 
 export function endWhisperNativeWork(): void {
   nativeWorkDepth = Math.max(0, nativeWorkDepth - 1);
   // #region agent log
-  agentDebugLog('whisperNativeLifecycle.ts', 'endWhisperNativeWork', { depth: nativeWorkDepth }, 'H1');
+  agentDebugLog(
+    'whisperNativeLifecycle.ts',
+    'endWhisperNativeWork',
+    { depth: nativeWorkDepth },
+    'H1',
+  );
   // #endregion
   if (nativeWorkDepth > 0) {
     return;
@@ -88,7 +98,12 @@ export function enqueueWhisperOperation<T>(
   label?: string,
 ): Promise<T> {
   // #region agent log
-  agentDebugLog('whisperNativeLifecycle.ts', 'enqueueWhisperOperation', { label, depth: nativeWorkDepth }, 'H2');
+  agentDebugLog(
+    'whisperNativeLifecycle.ts',
+    'enqueueWhisperOperation',
+    { label, depth: nativeWorkDepth },
+    'H2',
+  );
   // #endregion
   const run = operationChain.then(operation, operation);
   operationChain = run.then(
