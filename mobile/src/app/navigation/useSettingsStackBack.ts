@@ -1,4 +1,4 @@
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { StackActions, useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useCallback } from 'react';
 import { BackHandler } from 'react-native';
@@ -12,6 +12,13 @@ export function useSettingsStackBack(): () => void {
   const handleBack = useCallback(() => {
     if (navigation.canGoBack()) {
       navigation.goBack();
+      return;
+    }
+    const hasSettingsRoot = navigation
+      .getState()
+      .routes.some((route) => route.name === 'Settings');
+    if (hasSettingsRoot) {
+      navigation.dispatch(StackActions.popToTop());
       return;
     }
     navigation.navigate('Settings');

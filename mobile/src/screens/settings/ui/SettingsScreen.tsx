@@ -1,5 +1,7 @@
+import { useFocusEffect } from '@react-navigation/native';
 import { Bug } from 'lucide-react-native';
-import React, { useRef } from 'react';
+import React, { useCallback, useRef } from 'react';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import { RefreshControl, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -35,12 +37,30 @@ import { SettingsPlanStatusCard } from './SettingsPlanStatusCard';
 export const SettingsScreen = () => {
   const settings = useSettingsScreen();
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const scrollOffsetRef = useRef(0);
   const insets = useSafeAreaInsets();
   const isTablet = useIsTablet();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   useScrollToTopOnTabPress(scrollRef);
+
+  const handleScroll = useCallback((event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    scrollOffsetRef.current = event.nativeEvent.contentOffset.y;
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const y = scrollOffsetRef.current;
+      if (y <= 0) {
+        return;
+      }
+      const frame = requestAnimationFrame(() => {
+        scrollRef.current?.scrollTo({ y, animated: false });
+      });
+      return () => cancelAnimationFrame(frame);
+    }, []),
+  );
 
   const showDebugEntry = isInternalDebugBuild();
 
@@ -74,6 +94,8 @@ export const SettingsScreen = () => {
       >
         <ScrollView
           ref={scrollRef}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
           contentContainerStyle={{
             paddingHorizontal: SCREEN_PADDING,
             paddingTop: 16,

@@ -21,7 +21,12 @@ export const useDownloadingDeeplink = () => {
       }
       navigationRef.navigate('Main', {
         screen: 'SettingsRoot',
-        params: { screen: settingsScreen },
+        params: {
+          state: {
+            routes: [{ name: 'Settings' }, { name: settingsScreen }],
+            index: 1,
+          },
+        },
       });
     } catch (e) {
       if (__DEV__) {

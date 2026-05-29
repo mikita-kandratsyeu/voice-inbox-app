@@ -2,7 +2,7 @@ import React from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 
 import { useColors } from '@/shared/config';
-import { useRotatingI18nTip } from '@/shared/lib/aiGenerationTips';
+import { useAiGenerationTipMaxWidth, useRotatingI18nTip } from '@/shared/lib/aiGenerationTips';
 
 import { AiProcessingCancelButton } from './AiProcessingCancelButton';
 
@@ -15,9 +15,10 @@ type AiTabLoadingStateProps = {
 export const AiTabLoadingState = ({ message, tipKeys, onCancel }: AiTabLoadingStateProps) => {
   const color = useColors();
   const rotatingTip = useRotatingI18nTip(tipKeys ?? []);
+  const tipMaxWidth = useAiGenerationTipMaxWidth();
 
   return (
-    <View className="items-center gap-3 p-8">
+    <View className="w-full items-center gap-3 p-8">
       <ActivityIndicator color={color.accent.primary} />
       <Text className="text-sm text-center" style={{ color: color.text.secondary }}>
         {message}
@@ -25,7 +26,11 @@ export const AiTabLoadingState = ({ message, tipKeys, onCancel }: AiTabLoadingSt
       {tipKeys?.length ? (
         <View
           className="w-full rounded-xl p-3"
-          style={{ backgroundColor: color.background.tertiary }}
+          style={{
+            alignSelf: 'center',
+            backgroundColor: color.background.tertiary,
+            maxWidth: tipMaxWidth,
+          }}
         >
           <Text
             className="text-xs leading-[18px] text-center"

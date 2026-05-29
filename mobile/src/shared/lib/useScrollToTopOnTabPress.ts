@@ -3,6 +3,7 @@ import {
   type NavigationProp,
   type NavigationState,
   type ParamListBase,
+  useIsFocused,
   useNavigation,
 } from '@react-navigation/native';
 import { useEffect } from 'react';
@@ -21,6 +22,7 @@ export const useScrollToTopOnTabPress = (
   onJumpVisualEnd?: () => void,
 ) => {
   const navigation = useNavigation();
+  const isFocused = useIsFocused();
 
   useEffect(() => {
     const parentNavigation = navigation.getParent() as
@@ -39,6 +41,9 @@ export const useScrollToTopOnTabPress = (
     }
 
     const unsubscribe = parentNavigation.addListener('tabPress', () => {
+      if (!isFocused) {
+        return;
+      }
       onJumpVisualStart?.();
       onTabPress?.();
       ref.current?.scrollTo?.({ x: 0, y: 0, animated: false });
@@ -51,5 +56,5 @@ export const useScrollToTopOnTabPress = (
     });
 
     return unsubscribe;
-  }, [navigation, onJumpVisualEnd, onJumpVisualStart, onTabPress, ref]);
+  }, [isFocused, navigation, onJumpVisualEnd, onJumpVisualStart, onTabPress, ref]);
 };

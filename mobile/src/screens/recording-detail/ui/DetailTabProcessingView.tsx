@@ -4,7 +4,7 @@ import { Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
-import { useRotatingI18nTip } from '@/shared/lib/aiGenerationTips';
+import { useAiGenerationTipMaxWidth, useRotatingI18nTip } from '@/shared/lib/aiGenerationTips';
 import { AiProcessingCancelButton } from '@/shared/ui';
 
 export type DetailTabProcessingContext = 'transcription' | 'private_llm' | 'cloud_ai';
@@ -40,6 +40,7 @@ export const DetailTabProcessingView = ({
   const { t } = useTranslation();
   const rotatingTip = useRotatingI18nTip(tipKeys ?? []);
   const hintDisplay = tipKeys?.length ? rotatingTip : (hintText ?? '');
+  const tipMaxWidth = useAiGenerationTipMaxWidth();
   const animatedWidth = useSharedValue(0);
   const clampedProgress = Math.min(100, Math.max(0, progress));
 
@@ -98,8 +99,18 @@ export const DetailTabProcessingView = ({
         </View>
       </View>
       {hintDisplay ? (
-        <View className="rounded-xl p-3" style={{ backgroundColor: color.background.tertiary }}>
-          <Text className="text-xs leading-[18px]" style={{ color: color.text.secondary }}>
+        <View
+          className="w-full rounded-xl p-3"
+          style={{
+            alignSelf: 'center',
+            backgroundColor: color.background.tertiary,
+            maxWidth: tipMaxWidth,
+          }}
+        >
+          <Text
+            className="text-xs leading-[18px] text-center"
+            style={{ color: color.text.secondary }}
+          >
             {hintDisplay}
           </Text>
         </View>
