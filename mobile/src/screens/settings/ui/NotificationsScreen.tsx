@@ -72,11 +72,7 @@ export const NotificationsScreen = () => {
               label={screen.t('settings.permissionNotifications')}
               subtitle={screen.t('settings.permissionNotificationsDesc')}
               leftIcon={
-                <CloudCheck
-                  size={20}
-                  color={screen.color.accent.success}
-                  strokeWidth={1.8}
-                />
+                <CloudCheck size={20} color={screen.color.accent.success} strokeWidth={1.8} />
               }
               value={
                 permissionGranted
@@ -91,11 +87,7 @@ export const NotificationsScreen = () => {
             label={screen.t('settings.taskDeadlineNotifications')}
             subtitle={screen.t('settings.taskDeadlineNotificationsHint')}
             leftIcon={
-              <CalendarClock
-                size={20}
-                color={screen.color.accent.primary}
-                strokeWidth={1.8}
-              />
+              <CalendarClock size={20} color={screen.color.accent.primary} strokeWidth={1.8} />
             }
             rightSlot={
               <Switch

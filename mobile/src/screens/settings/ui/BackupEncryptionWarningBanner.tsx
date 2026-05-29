@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { type StyleProp, Text, View, type ViewStyle } from 'react-native';
 
 import { useColors } from '@/shared/config';
 import { useIsTablet, withAlphaHex } from '@/shared/lib';

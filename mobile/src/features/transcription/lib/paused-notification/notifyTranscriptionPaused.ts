@@ -3,12 +3,12 @@ import notifee from '@notifee/react-native';
 import { useSettingsStore } from '@/entities/settings';
 import { checkTaskNotificationPermission } from '@/features/task-deadline-notifications';
 
+import { buildTranscriptionPausedNotificationCopy } from './buildTranscriptionPausedNotificationCopy';
 import {
   getTranscriptionPausedNotificationId,
   TRANSCRIPTION_PAUSED_NOTIFICATION_CHANNEL_ID,
   TRANSCRIPTION_PAUSED_NOTIFICATION_TYPE,
 } from './constants';
-import { buildTranscriptionPausedNotificationCopy } from './buildTranscriptionPausedNotificationCopy';
 import { ensureTranscriptionPausedNotificationChannel } from './ensureTranscriptionPausedNotificationChannel';
 
 export async function notifyTranscriptionPaused(input: {

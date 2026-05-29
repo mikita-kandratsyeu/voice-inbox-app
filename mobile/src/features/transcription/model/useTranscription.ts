@@ -14,14 +14,18 @@ import { NitroFS } from '@/shared/lib/fs';
 import { getWhisperModelPath } from '@/shared/lib/whisper';
 
 import { getWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
-import { transcribeAudio } from '../lib/transcribeAudio';
 import { cancelTranscriptionPausedNotification } from '../lib/paused-notification/cancelTranscriptionPausedNotification';
 import { schedulePausedNotificationIfResumable } from '../lib/paused-notification/schedulePausedNotificationIfResumable';
+import { transcribeAudio } from '../lib/transcribeAudio';
 import {
   getTranscriptionCheckpoint,
   removeTranscriptionCheckpoint,
   saveTranscriptionCheckpoint,
 } from '../lib/transcriptionCheckpoint';
+import {
+  clearPendingBackgroundTranscriptionRecord,
+  markTranscriptionPausedForBackground,
+} from './pendingBackgroundTranscriptionRecord';
 import {
   beginTranscriptionJob,
   endTranscriptionJobIfCurrent,
@@ -218,7 +222,7 @@ export const useTranscription = () => {
 
               saveTranscriptionCheckpoint({
                 recordId: record.id,
-                audioPath,
+                audioPath: normalizedAudioPath,
                 modelId: selectedWhisperModel,
                 language,
                 totalChunks,
@@ -303,6 +307,10 @@ export const useTranscription = () => {
       } catch (err) {
         if (!isActiveTranscriptionJob(record.id, jobGen)) {
           devLog('catch ignored (stale job)', { recordId: record.id, jobGen, err });
+          if (backgroundCancelledRef.current.has(record.id)) {
+            backgroundCancelledRef.current.delete(record.id);
+            updateAiStatus(record.id, 'idle');
+          }
           return;
         }
 
@@ -323,8 +331,10 @@ export const useTranscription = () => {
           err: err instanceof Error ? err.message : String(err),
         });
 
-        if (wasCancelled) {
-          if (!backgroundCancelledRef.current.has(record.id)) {
+        const pausedForBackground = backgroundCancelledRef.current.has(record.id);
+
+        if (wasCancelled || pausedForBackground) {
+          if (!pausedForBackground) {
             await removeTranscriptionCheckpoint(record.id).catch(() => {});
           } else {
             backgroundCancelledRef.current.delete(record.id);
@@ -392,6 +402,7 @@ export const useTranscription = () => {
       }
       removeTranscriptionCheckpoint(recordId).catch(() => {});
       void cancelTranscriptionPausedNotification(recordId);
+      clearPendingBackgroundTranscriptionRecord();
     },
     [updateAiStatus],
   );
@@ -400,6 +411,7 @@ export const useTranscription = () => {
     (recordId: string): void => {
       devLog('cancel requested (background)', { recordId });
       backgroundCancelledRef.current.add(recordId);
+      markTranscriptionPausedForBackground(recordId);
       invalidateTranscriptionJob(recordId);
       currentRecordIdRef.current = null;
       updateAiStatus(recordId, 'idle');
