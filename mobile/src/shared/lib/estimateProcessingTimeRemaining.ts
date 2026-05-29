@@ -52,7 +52,10 @@ function estimatePrivateGenerationSeconds(
   return 6 + promptSec + outputSec;
 }
 
-function estimateCloudTotalSeconds(transcriptCharCount: number, cloudMeetingDialogue: boolean): number {
+function estimateCloudTotalSeconds(
+  transcriptCharCount: number,
+  cloudMeetingDialogue: boolean,
+): number {
   const chars = Math.max(0, transcriptCharCount);
   const base = 14 + Math.round(chars / 550) * 9;
   const meetingExtra = cloudMeetingDialogue ? 42 : 0;
@@ -65,8 +68,7 @@ function estimateCloudTotalSeconds(transcriptCharCount: number, cloudMeetingDial
  */
 export function estimateProcessingSecondsRemaining(input: ProcessingTimeEstimateInput): number {
   const now = input.nowMs ?? Date.now();
-  const elapsedSec =
-    input.startedAtMs != null ? Math.max(0, (now - input.startedAtMs) / 1000) : 0;
+  const elapsedSec = input.startedAtMs != null ? Math.max(0, (now - input.startedAtMs) / 1000) : 0;
   const progress = clampProgress(input.progressPercent);
   const chars = input.transcriptCharCount ?? 0;
 
