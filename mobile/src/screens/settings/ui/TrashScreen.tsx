@@ -34,8 +34,8 @@ import { resolveDayjsLocale } from '@/shared/lib/date';
 import {
   BlockingProgressModal,
   EmptyState,
-  SCREEN_PADDING,
   HeaderIconButton,
+  SCREEN_PADDING,
   ScreenHeader,
 } from '@/shared/ui';
 

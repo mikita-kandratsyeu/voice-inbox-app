@@ -3,18 +3,11 @@ import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
-import {
-  FolderLucideIcon,
-  type FolderIconKey,
-} from '@/entities/folder/lib/folderLucideIcons';
+import { type FolderIconKey, FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
 import type { Folder as FolderModel } from '@/entities/folder/model/types';
 import type { RecordClassification, RecordListItem } from '@/entities/record';
 import { type Colors, useAppTheme } from '@/shared/config';
-import {
-  hapticSelection,
-  resolveFolderColorForCurrentScheme,
-  withAlphaHex,
-} from '@/shared/lib';
+import { hapticSelection, resolveFolderColorForCurrentScheme, withAlphaHex } from '@/shared/lib';
 
 const MAX_VISIBLE_TAGS = 2;
 

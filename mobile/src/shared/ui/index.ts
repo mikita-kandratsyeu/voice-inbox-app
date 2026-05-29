@@ -21,12 +21,12 @@ export {
   useBottomSheetContentPadding,
 } from './bottom-sheet';
 export type { ButtonProps, ButtonShape, ButtonSize, ButtonVariant } from './Button';
-export { BUTTON_BORDER_RADIUS, Button } from './Button';
-export { HeaderIconButton } from './HeaderIconButton';
+export { Button, BUTTON_BORDER_RADIUS } from './Button';
 export { EmptyState } from './EmptyState';
 export { FrostedBottomChrome } from './FrostedBottomChrome';
 export type { FrostedChromeBackgroundProps } from './FrostedChromeBackground';
 export { FrostedChromeBackground } from './FrostedChromeBackground';
+export { HeaderIconButton } from './HeaderIconButton';
 export type { InputFieldProps } from './InputField';
 export { getInputFieldInputStyle, InputField } from './InputField';
 export { SCREEN_PADDING, SECTION_STACK_GAP } from './layoutSpacing';

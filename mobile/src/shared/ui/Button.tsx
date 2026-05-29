@@ -138,8 +138,7 @@ export const Button = ({
   const sizeClasses = isIconOnly
     ? iconOnlyContainerClass(size, shape)
     : labeledContainerClass(size, shape, isIconOnly);
-  const textSizeClass =
-    size === 'sm' ? 'text-sm' : 'text-[16px] font-semibold';
+  const textSizeClass = size === 'sm' ? 'text-sm' : 'text-[16px] font-semibold';
 
   const isStartAligned = contentAlign === 'start' && !isIconOnly;
 

@@ -1,10 +1,10 @@
 import React from 'react';
-import { View } from 'react-native';
 import type { ViewStyle } from 'react-native';
+import { View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 
-import { BUTTON_BORDER_RADIUS, Button } from '../Button';
+import { Button, BUTTON_BORDER_RADIUS } from '../Button';
 
 export const SHEET_FOOTER_BUTTON_RADIUS = BUTTON_BORDER_RADIUS;
 

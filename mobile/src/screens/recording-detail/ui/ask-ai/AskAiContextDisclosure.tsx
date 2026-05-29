@@ -8,7 +8,11 @@ import { KeyboardController } from 'react-native-keyboard-controller';
 import type { VoiceRecord } from '@/entities/record';
 import type { AiExecutionMode } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
-import { SheetFooterButtons, useAppBottomSheetChrome, useBottomSheetContentPadding } from '@/shared/ui';
+import {
+  SheetFooterButtons,
+  useAppBottomSheetChrome,
+  useBottomSheetContentPadding,
+} from '@/shared/ui';
 
 type AskAiContextDisclosureProps = {
   color: Colors;

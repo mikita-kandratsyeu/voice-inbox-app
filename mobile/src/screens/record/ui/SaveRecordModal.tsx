@@ -273,9 +273,7 @@ export const SaveRecordModal = ({
           onPrimaryPress={handleSave}
           secondaryLabel={allowResume ? t('record.continueRecording') : undefined}
           onSecondaryPress={allowResume ? handleCancel : undefined}
-          secondaryAccessibilityLabel={
-            allowResume ? t('record.continueRecording') : undefined
-          }
+          secondaryAccessibilityLabel={allowResume ? t('record.continueRecording') : undefined}
         />
         {onDiscard && (
           <Pressable

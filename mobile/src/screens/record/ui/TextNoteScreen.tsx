@@ -24,7 +24,7 @@ import {
 } from '@/features/yandex-interstitial';
 import { useColors } from '@/shared/config';
 import { hapticSelection, useNetworkStatus } from '@/shared/lib';
-import { HeaderIconButton, getInputFieldInputStyle, InputField } from '@/shared/ui';
+import { getInputFieldInputStyle, HeaderIconButton, InputField } from '@/shared/ui';
 
 import { generateRecordId } from '../lib/generateRecordId';
 import { getAutoTitle } from '../lib/getAutoTitle';

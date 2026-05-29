@@ -66,7 +66,7 @@ import {
   enableAiProcessingAlerts,
   type PushPermissionStatus,
 } from '@/shared/lib/push';
-import { BUTTON_BORDER_RADIUS, Button } from '@/shared/ui';
+import { Button, BUTTON_BORDER_RADIUS } from '@/shared/ui';
 
 import { getHasSeenOnboarding, getTermsAgreedAt, setTermsAgreedAt } from '../lib/onboardingStorage';
 import { getOnboardingSlides, type OnboardingSlideContent } from '../model/constants';
