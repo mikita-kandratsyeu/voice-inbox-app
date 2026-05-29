@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 
 import { type Colors, useColors } from '@/shared/config';
 
-import { Button } from './Button';
+import { Button, type ButtonSize, type ButtonVariant } from './Button';
 
 export type AiProcessingCancelButtonProps = {
   onPress: () => void;
@@ -12,6 +12,8 @@ export type AiProcessingCancelButtonProps = {
   /** Extra NativeWind classes on the button (e.g. `mt-1`, `mt-3`). */
   className?: string;
   fullWidth?: boolean;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   accessibilityLabel?: string;
 };
 
@@ -21,6 +23,8 @@ export const AiProcessingCancelButton = ({
   color: colorProp,
   className,
   fullWidth = false,
+  variant = 'secondary',
+  size = 'md',
   accessibilityLabel,
 }: AiProcessingCancelButtonProps) => {
   const colors = useColors();
@@ -30,8 +34,8 @@ export const AiProcessingCancelButton = ({
 
   return (
     <Button
-      variant="secondary"
-      size="lg"
+      variant={variant}
+      size={size}
       icon={<X size={16} color={color.text.primary} strokeWidth={2.5} />}
       label={label}
       color={color}

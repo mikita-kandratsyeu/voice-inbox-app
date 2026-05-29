@@ -8,8 +8,6 @@ import type { Folder } from '@/entities/folder';
 import type { MonetizationMode } from '@/features/app-storefront';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
-import type { AiUsage } from '@/shared/lib/ai-api';
-
 import type { TabletInboxSidebarTarget } from './tabletInboxNavBridge';
 import { requestTabletOpenEditFolder } from './tabletInboxNavBridge';
 import { TabletSidebarComposeRow } from './TabletSidebarComposeRow';
@@ -52,10 +50,6 @@ export type TabletSidebarBodyProps = {
   pinnedActive: boolean;
   archivedActive: boolean;
   onOpenSettings: () => void;
-  onOpenAiUsageDashboard: () => void;
-  showAiUsageCard: boolean;
-  aiUsage: AiUsage | null;
-  aiUsageLoading: boolean;
   onOpenPlanPaywall: () => void;
   onRecord: () => void;
   onRecordLongPress: () => void;
@@ -91,10 +85,6 @@ export function TabletSidebarBody({
   pinnedActive,
   archivedActive,
   onOpenSettings,
-  onOpenAiUsageDashboard,
-  showAiUsageCard,
-  aiUsage,
-  aiUsageLoading,
   onOpenPlanPaywall,
   onRecord,
   onRecordLongPress,
@@ -293,16 +283,11 @@ export function TabletSidebarBody({
           backgroundColor: theme.panel,
         }}
       >
-        {showAiUsageCard || !isProActive ? (
+        {!isProActive ? (
           <TabletSidebarPlanAndUsageCard
             color={color}
             monetizationMode={monetizationMode}
-            isProActive={isProActive}
-            showUsage={showAiUsageCard}
-            usage={aiUsage}
-            usageLoading={aiUsageLoading}
             onOpenPlanPaywall={onOpenPlanPaywall}
-            onOpenAiUsageDashboard={onOpenAiUsageDashboard}
           />
         ) : null}
 

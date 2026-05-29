@@ -142,7 +142,14 @@ export const AutoOrganizeProgressOverlay = ({
             </Animated.Text>
           ) : null}
           {mode === 'loading' && onCancel ? (
-            <AiProcessingCancelButton color={color} onPress={onCancel} fullWidth className="mt-6" />
+            <AiProcessingCancelButton
+              color={color}
+              onPress={onCancel}
+              fullWidth
+              variant="secondary"
+              size="lg"
+              className="mt-6"
+            />
           ) : mode === 'success' ? (
             <Text
               className="mt-2 text-center text-[14px] leading-5"

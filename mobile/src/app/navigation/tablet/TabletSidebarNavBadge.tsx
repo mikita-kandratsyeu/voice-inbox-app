@@ -32,13 +32,15 @@ export function TabletSidebarNavBadge({
       ? color.background.card
       : color.background.tertiary;
 
+  const borderRadius = isActive && accentHex ? 999 : 10;
+
   return (
     <View
       style={{
         minWidth: 22,
         paddingHorizontal: 6,
         paddingVertical: 2,
-        borderRadius: 10,
+        borderRadius,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor,

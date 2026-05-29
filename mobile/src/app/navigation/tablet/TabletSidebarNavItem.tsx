@@ -1,13 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Text, View, type ViewStyle } from 'react-native';
-import Animated, {
-  Easing,
-  interpolateColor,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
 import { withAlphaHex } from '@/shared/lib';
@@ -16,6 +8,7 @@ import { Button } from '@/shared/ui';
 import type { TabletSidebarAiOperationKind } from './classifySidebarRecordAiOperation';
 import {
   TABLET_SIDEBAR_FOLDER_ITEM_HEIGHT,
+  TABLET_SIDEBAR_FOLDER_ITEM_RADIUS,
   TABLET_SIDEBAR_NAV_ITEM_HEIGHT,
   TABLET_SIDEBAR_NAV_ITEM_RADIUS,
 } from './tabletSidebarMetrics';
@@ -67,13 +60,12 @@ export function TabletSidebarNavItem({
   accentHex,
 }: TabletSidebarNavItemProps) {
   const accent = accentHex ?? color.accent.primary;
-  const processingAccent = color.status.processing.text;
   const activeBg = withAlphaHex(accent, 0.16);
-  const activeProcessingBg = withAlphaHex(processingAccent, 0.14);
   const isGhost = appearance === 'ghost';
-  const showAiPulse = isActive && showProcessingIndicator && !isGhost;
-  const borderPulse = useSharedValue(0);
+  const showSelectionChrome = isActive && !isGhost;
   const itemHeight = getNavItemHeight(appearance);
+  const itemRadius =
+    appearance === 'folder' ? TABLET_SIDEBAR_FOLDER_ITEM_RADIUS : TABLET_SIDEBAR_NAV_ITEM_RADIUS;
   const isNavRow = appearance === 'primary' || appearance === 'secondary';
   const labelColor = isGhost
     ? isActive
@@ -83,8 +75,8 @@ export function TabletSidebarNavItem({
       ? accent
       : color.text.primary;
 
-  const borderColor = isActive
-    ? withAlphaHex(showAiPulse ? processingAccent : accent, 0.35)
+  const borderColor = showSelectionChrome
+    ? withAlphaHex(accent, 0.35)
     : isNavRow
       ? theme.border
       : 'transparent';
@@ -92,58 +84,21 @@ export function TabletSidebarNavItem({
   const backgroundColor = isGhost
     ? 'transparent'
     : appearance === 'folder'
-      ? isActive
-        ? showAiPulse
-          ? activeProcessingBg
-          : activeBg
+      ? showSelectionChrome
+        ? activeBg
         : 'transparent'
-      : isActive
-        ? showAiPulse
-          ? activeProcessingBg
-          : activeBg
+      : showSelectionChrome
+        ? activeBg
         : appearance === 'primary'
           ? theme.surface
           : 'transparent';
-
-  const aiPulseBorderFrom = withAlphaHex(processingAccent, 0.28);
-  const aiPulseBorderTo = withAlphaHex(processingAccent, 0.62);
-  const aiPulseBgFrom = withAlphaHex(processingAccent, 0.1);
-  const aiPulseBgTo = withAlphaHex(processingAccent, 0.2);
-
-  useEffect(() => {
-    if (!showAiPulse) {
-      borderPulse.value = 0;
-      return;
-    }
-
-    borderPulse.value = withRepeat(
-      withTiming(1, { duration: 1600, easing: Easing.inOut(Easing.sin) }),
-      -1,
-      true,
-    );
-  }, [showAiPulse, borderPulse]);
-
-  const aiPulseStyle = useAnimatedStyle(() => {
-    if (!showAiPulse) {
-      return {};
-    }
-
-    return {
-      borderColor: interpolateColor(
-        borderPulse.value,
-        [0, 1],
-        [aiPulseBorderFrom, aiPulseBorderTo],
-      ),
-      backgroundColor: interpolateColor(borderPulse.value, [0, 1], [aiPulseBgFrom, aiPulseBgTo]),
-    };
-  }, [showAiPulse, aiPulseBorderFrom, aiPulseBorderTo, aiPulseBgFrom, aiPulseBgTo]);
 
   const containerStyle: ViewStyle = {
     height: itemHeight,
     minHeight: itemHeight,
     maxHeight: itemHeight,
-    borderRadius:
-      appearance === 'folder' ? TABLET_SIDEBAR_NAV_ITEM_RADIUS - 2 : TABLET_SIDEBAR_NAV_ITEM_RADIUS,
+    borderRadius: itemRadius,
+    overflow: 'hidden',
     paddingVertical: 0,
     borderWidth: isGhost ? 0 : 1,
     borderColor,
@@ -152,50 +107,52 @@ export function TabletSidebarNavItem({
     alignItems: 'center',
   };
 
-  return (
-    <Animated.View style={aiPulseStyle}>
-      <Button
-        variant={appearance === 'ghost' ? 'ghost' : 'secondary'}
-        size="md"
-        fullWidth
-        contentAlign="start"
-        color={color}
-        label={label}
-        labelStyle={getTabletSidebarLabelStyle(isActive, labelColor)}
-        icon={icon}
-        trailingIcon={
-          showProcessingIndicator || showUnreadDot || badgeCount > 0 ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-              {showProcessingIndicator ? (
-                <TabletSidebarNavProcessingIndicator
-                  color={color}
-                  isActive={isActive}
-                  kind={processingKind}
-                />
-              ) : null}
-              {showUnreadDot ? <TabletSidebarNavUnreadDot color={color} /> : null}
-              {badgeCount > 0 ? (
-                <TabletSidebarNavBadge
-                  count={badgeCount}
-                  color={color}
-                  accentHex={accentHex}
-                  isActive={isActive}
-                  onFilledSurface={appearance === 'primary'}
-                />
-              ) : null}
-            </View>
-          ) : undefined
-        }
-        onPress={onPress}
-        onLongPress={onLongPress}
-        accessibilityState={{ selected: isActive }}
-        accessibilityHint={accessibilityHint}
-        activeOpacity={0.85}
-        className="min-h-0 px-3 py-0"
-        containerStyle={containerStyle}
-      />
-    </Animated.View>
+  const shellStyle = { borderRadius: itemRadius, overflow: 'hidden' as const };
+
+  const rowButton = (
+    <Button
+      variant={appearance === 'ghost' ? 'ghost' : 'secondary'}
+      size="md"
+      fullWidth
+      contentAlign="start"
+      color={color}
+      label={label}
+      labelStyle={getTabletSidebarLabelStyle(isActive, labelColor)}
+      icon={icon}
+      trailingIcon={
+        showProcessingIndicator || showUnreadDot || badgeCount > 0 ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+            {showProcessingIndicator ? (
+              <TabletSidebarNavProcessingIndicator
+                color={color}
+                isActive={isActive}
+                kind={processingKind}
+              />
+            ) : null}
+            {showUnreadDot ? <TabletSidebarNavUnreadDot color={color} /> : null}
+            {badgeCount > 0 ? (
+              <TabletSidebarNavBadge
+                count={badgeCount}
+                color={color}
+                accentHex={accentHex}
+                isActive={isActive}
+                onFilledSurface={appearance === 'primary'}
+              />
+            ) : null}
+          </View>
+        ) : undefined
+      }
+      onPress={onPress}
+      onLongPress={onLongPress}
+      accessibilityState={{ selected: isActive }}
+      accessibilityHint={accessibilityHint}
+      activeOpacity={0.85}
+      className="min-h-0 rounded-none px-3 py-0"
+      containerStyle={containerStyle}
+    />
   );
+
+  return <View style={shellStyle}>{rowButton}</View>;
 }
 
 /** Renders a nav icon with optional fixed tint (inactive) or accent (active). */

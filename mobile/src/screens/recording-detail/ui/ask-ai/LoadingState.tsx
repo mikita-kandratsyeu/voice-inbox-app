@@ -1,4 +1,4 @@
-import { Sparkles } from 'lucide-react-native';
+import { Sparkle } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -46,7 +46,7 @@ export const LoadingState = ({
           showProgress={false}
           tipKeys={ASK_AI_GENERATION_TIP_KEYS}
           statusTitle={t('recordingDetail.askProcessing')}
-          leadingIcon={<Sparkles size={22} color={color.accent.primary} strokeWidth={2} />}
+          leadingIcon={<Sparkle size={22} color={color.accent.primary} strokeWidth={2} />}
           context="cloud_ai"
         />
       </View>

@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { Sparkles } from 'lucide-react-native';
+import { Sparkle } from 'lucide-react-native';
 import React from 'react';
 import { View } from 'react-native';
 
@@ -83,7 +83,7 @@ export const AskMainContent = ({
               onCancel={onCancelAsk}
               tipKeys={ASK_AI_PRIVATE_TIP_KEYS}
               statusTitle={t('recordingDetail.askProcessing')}
-              leadingIcon={<Sparkles size={22} color={color.accent.primary} strokeWidth={2} />}
+              leadingIcon={<Sparkle size={22} color={color.accent.primary} strokeWidth={2} />}
               context="private_llm"
             />
           </View>

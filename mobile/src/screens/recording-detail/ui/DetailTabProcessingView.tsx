@@ -4,8 +4,9 @@ import { Text, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import type { Colors } from '@/shared/config';
+import { withAlphaHex } from '@/shared/lib';
 import { useRotatingI18nTip } from '@/shared/lib/aiGenerationTips';
-import { AiProcessingCancelButton } from '@/shared/ui';
+import { AiProcessingCancelButton, ProcessingStatusTitle, RotatingTipText } from '@/shared/ui';
 
 export type DetailTabProcessingContext = 'transcription' | 'private_llm' | 'cloud_ai';
 
@@ -45,6 +46,7 @@ export const DetailTabProcessingView = ({
   const hintDisplay = tipKeys?.length ? rotatingTip : (hintText ?? '');
   const animatedWidth = useSharedValue(0);
   const clampedProgress = Math.min(100, Math.max(0, progress));
+  const isCompact = !showProgress;
 
   const statusTitleKey =
     context === 'private_llm'
@@ -82,63 +84,78 @@ export const DetailTabProcessingView = ({
     width: `${animatedWidth.value}%`,
   }));
 
+  const cardStyle = {
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: withAlphaHex(color.border.default, 0.9),
+    backgroundColor: color.background.secondary,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 12,
+  } as const;
+
   return (
-    <View className="gap-3 p-4">
-      <View className="flex-row items-center gap-3">
-        <View
-          className="h-11 w-11 items-center justify-center rounded-full"
-          style={{ backgroundColor: color.accent.primary + '1A' }}
-        >
-          {leadingIcon}
-        </View>
-        <View className="gap-0.5">
-          <Text className="text-base font-bold" style={{ color: color.text.primary }}>
-            {statusTitle}
-          </Text>
-          {showProgress ? (
-            <Text className="text-[14px]" style={{ color: color.text.secondary }}>
-              {timeLabel}
-            </Text>
-          ) : null}
-        </View>
-      </View>
-      {hintDisplay ? (
-        <View
-          className="w-full rounded-xl px-4 py-3"
-          style={{ backgroundColor: color.background.tertiary }}
-        >
-          <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
-            {hintDisplay}
-          </Text>
-        </View>
-      ) : null}
-      {showProgress ? (
-        <>
-          <View
-            className="h-1.5 overflow-hidden rounded-sm"
-            style={{ backgroundColor: color.background.tertiary }}
-            accessibilityRole="progressbar"
-            accessibilityValue={{ min: 0, max: 100, now: clampedProgress }}
-            accessibilityLabel={statusTitle}
-          >
-            <Animated.View
-              className="h-1.5 rounded-sm"
-              style={[trackStyle, { backgroundColor: color.accent.primary }]}
+    <View
+      className={isCompact ? 'w-full' : 'p-4'}
+      style={isCompact ? { maxWidth: 440, width: '100%', alignSelf: 'center' } : undefined}
+    >
+      <View style={cardStyle}>
+        <View className="flex-row items-start gap-3">
+          <View className="h-9 w-9 shrink-0 items-center justify-center">{leadingIcon}</View>
+          <View className="min-w-0 flex-1 gap-1.5">
+            <ProcessingStatusTitle
+              title={statusTitle}
+              color={color.text.primary}
+              loaderColor={color.accent.primary}
+              className={isCompact ? 'text-[17px] font-semibold leading-6' : 'text-base font-bold'}
             />
+            {showProgress ? (
+              <Text className="text-[14px] leading-5" style={{ color: color.text.secondary }}>
+                {timeLabel}
+              </Text>
+            ) : null}
+            {hintDisplay ? (
+              <RotatingTipText
+                text={hintDisplay}
+                color={color.text.secondary}
+                className="text-[14px] leading-5"
+              />
+            ) : null}
           </View>
-          <View className="-mt-1 flex-row justify-between">
-            <Text className="text-xs font-medium" style={{ color: color.text.secondary }}>
-              {clampedProgress}%
-            </Text>
-            <Text className="text-xs font-medium" style={{ color: color.text.secondary }}>
-              100%
-            </Text>
+        </View>
+
+        {showProgress ? (
+          <View className="gap-1.5">
+            <View
+              className="h-1.5 overflow-hidden rounded-full"
+              style={{ backgroundColor: color.background.tertiary }}
+              accessibilityRole="progressbar"
+              accessibilityValue={{ min: 0, max: 100, now: clampedProgress }}
+              accessibilityLabel={statusTitle}
+            >
+              <Animated.View
+                className="h-1.5 rounded-full"
+                style={[trackStyle, { backgroundColor: color.accent.primary }]}
+              />
+            </View>
+            <View className="flex-row justify-between">
+              <Text className="text-xs font-medium" style={{ color: color.text.muted }}>
+                {clampedProgress}%
+              </Text>
+              <Text className="text-xs font-medium" style={{ color: color.text.muted }}>
+                100%
+              </Text>
+            </View>
           </View>
-        </>
-      ) : null}
-      {onCancel ? (
-        <AiProcessingCancelButton color={color} onPress={onCancel} className="mt-1" />
-      ) : null}
+        ) : null}
+
+        {onCancel ? (
+          <>
+            <View style={{ height: 1, backgroundColor: color.border.default, opacity: 0.85 }} />
+            <AiProcessingCancelButton color={color} onPress={onCancel} fullWidth />
+          </>
+        ) : null}
+      </View>
     </View>
   );
 };

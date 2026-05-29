@@ -6,6 +6,8 @@ export const TABLET_SIDEBAR_SURFACE_RADIUS = 14;
 export const TABLET_SIDEBAR_NAV_ITEM_HEIGHT = 50;
 export const TABLET_SIDEBAR_NAV_ITEM_RADIUS = 12;
 export const TABLET_SIDEBAR_FOLDER_ITEM_HEIGHT = 44;
+/** Pill radius for folder rows (half of row height). */
+export const TABLET_SIDEBAR_FOLDER_ITEM_RADIUS = TABLET_SIDEBAR_FOLDER_ITEM_HEIGHT / 2;
 /** Compose row (record + text note) — slightly below full nav row height. */
 export const TABLET_SIDEBAR_COMPOSE_BUTTON_HEIGHT = 46;
 export const TABLET_SIDEBAR_COMPOSE_BUTTON_RADIUS = 12;
