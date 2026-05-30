@@ -64,14 +64,12 @@ const drainQueuedRelease = (): void => {
   if (isNativeTranscriptionRunning()) return;
 
   releaseQueued = false;
-  releaseInFlight = enqueueWhisperOperation(releaseWhisperContextNow, 'drainRelease').finally(
-    () => {
-      releaseInFlight = null;
-      if (releaseQueued) {
-        drainQueuedRelease();
-      }
-    },
-  );
+  releaseInFlight = enqueueWhisperOperation(releaseWhisperContextNow).finally(() => {
+    releaseInFlight = null;
+    if (releaseQueued) {
+      drainQueuedRelease();
+    }
+  });
 };
 
 export const scheduleIdleRelease = (): void => {
@@ -158,7 +156,7 @@ export const getWhisperContext = (
     const context = await initPromise;
     clearIdleTimer();
     return context;
-  }, 'getWhisperContext');
+  });
 
 export const releaseWhisperContext = (): Promise<void> =>
   enqueueWhisperOperation(async () => {
@@ -179,7 +177,7 @@ export const releaseWhisperContext = (): Promise<void> =>
     });
 
     await releaseInFlight;
-  }, 'releaseWhisperContext');
+  });
 
 setWhisperNativeIdleListener(() => {
   drainQueuedRelease();

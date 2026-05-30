@@ -75,10 +75,7 @@ export async function waitForWhisperNativeIdleAfterAbort(): Promise<void> {
 }
 
 /** Serializes init/release/transcribe so RNWhisper never races on Metal. */
-export function enqueueWhisperOperation<T>(
-  operation: () => Promise<T>,
-  label?: string,
-): Promise<T> {
+export function enqueueWhisperOperation<T>(operation: () => Promise<T>): Promise<T> {
   const run = operationChain.then(operation, operation);
   operationChain = run.then(
     () => undefined,
