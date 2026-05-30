@@ -2,7 +2,6 @@ import { initWhisper, releaseAllWhisper, type WhisperContext } from 'whisper.rn'
 
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
 import { IS_IOS } from '@/shared/lib';
-import { agentDebugLog } from '@/shared/lib/agentDebugLog';
 import {
   getWhisperModelPath,
   isWhisperCoreMlSupportedForModel,
@@ -45,21 +44,10 @@ const releaseWhisperContextNow = async (): Promise<void> => {
   await waitForWhisperNativeIdle();
 
   if (isNativeTranscriptionRunning()) {
-    // #region agent log
-    agentDebugLog(
-      'initWhisper.ts',
-      'releaseWhisperContextNow deferred',
-      { nativeRunning: true },
-      'H4',
-    );
-    // #endregion
     releaseQueued = true;
     return;
   }
 
-  // #region agent log
-  agentDebugLog('initWhisper.ts', 'releaseWhisperContextNow executing releaseAllWhisper', {}, 'H4');
-  // #endregion
   beginWhisperNativeWork();
   cachedContext = null;
   try {
@@ -124,27 +112,11 @@ const loadWhisperContext = async (
     }
   }
 
-  // #region agent log
-  agentDebugLog(
-    'initWhisper.ts',
-    'loadWhisperContext initWhisper',
-    { modelId, format, nativeRunning: isNativeTranscriptionRunning() },
-    'H3',
-  );
-  // #endregion
   beginWhisperNativeWork();
   try {
     const filePath = getWhisperModelPath(modelId, format);
     const whisperInitOptions = await resolveWhisperContextInitOptions(modelId);
     const coreMlActive = await isWhisperCoreMlSupportedForModel(modelId);
-    // #region agent log
-    agentDebugLog(
-      'initWhisper.ts',
-      'initWhisper options',
-      { ...whisperInitOptions, modelId, coreMlActive },
-      'H8',
-    );
-    // #endregion
     const context = await initWhisper({
       filePath,
       ...whisperInitOptions,

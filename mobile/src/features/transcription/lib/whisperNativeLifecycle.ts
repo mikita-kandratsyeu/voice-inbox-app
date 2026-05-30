@@ -1,5 +1,3 @@
-import { agentDebugLog } from '@/shared/lib/agentDebugLog';
-
 import { WHISPER_ABORT_SETTLE_MS, WHISPER_NATIVE_SETTLE_MS } from '../config/constants';
 
 /** Tracks in-flight whisper.rn native work (whisper_full / mel workers / init). */
@@ -45,26 +43,10 @@ export function beginWhisperNativeWork(): void {
     settleTimer = null;
   }
   nativeWorkDepth += 1;
-  // #region agent log
-  agentDebugLog(
-    'whisperNativeLifecycle.ts',
-    'beginWhisperNativeWork',
-    { depth: nativeWorkDepth },
-    'H1',
-  );
-  // #endregion
 }
 
 export function endWhisperNativeWork(): void {
   nativeWorkDepth = Math.max(0, nativeWorkDepth - 1);
-  // #region agent log
-  agentDebugLog(
-    'whisperNativeLifecycle.ts',
-    'endWhisperNativeWork',
-    { depth: nativeWorkDepth },
-    'H1',
-  );
-  // #endregion
   if (nativeWorkDepth > 0) {
     return;
   }
@@ -97,14 +79,6 @@ export function enqueueWhisperOperation<T>(
   operation: () => Promise<T>,
   label?: string,
 ): Promise<T> {
-  // #region agent log
-  agentDebugLog(
-    'whisperNativeLifecycle.ts',
-    'enqueueWhisperOperation',
-    { label, depth: nativeWorkDepth },
-    'H2',
-  );
-  // #endregion
   const run = operationChain.then(operation, operation);
   operationChain = run.then(
     () => undefined,

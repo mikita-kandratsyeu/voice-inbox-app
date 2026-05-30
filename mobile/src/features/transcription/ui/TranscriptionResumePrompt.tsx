@@ -19,7 +19,8 @@ import {
 } from '../model/transcriptionResumePromptRequest';
 import { useTranscription } from '../model/useTranscription';
 
-const RESUME_CHECK_AFTER_FOREGROUND_MS = 350;
+const RESUME_CHECK_AFTER_FOREGROUND_MS = 400;
+const RESUME_CHECK_PENDING_ABORT_MS = 800;
 
 async function resolveInterruptedCheckpoints(): Promise<
   Awaited<ReturnType<typeof listTranscriptionCheckpoints>>
@@ -39,13 +40,23 @@ export const TranscriptionResumePrompt = () => {
   const { startTranscription, cancelTranscription } = useTranscription();
   const promptInFlightRef = useRef(false);
   const checkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingAbortRetriesRef = useRef(0);
+  const scheduleResumeCheckRef = useRef<(reason: string) => void>(() => {});
 
   const checkInterruptedTranscriptions = useCallback(async () => {
     if (promptInFlightRef.current) return;
     if (AppState.currentState !== 'active') return;
 
     const checkpoints = await resolveInterruptedCheckpoints();
-    if (checkpoints.length === 0) return;
+    const pendingBackgroundId = peekPendingBackgroundTranscriptionRecord();
+    if (checkpoints.length === 0) {
+      if (pendingBackgroundId && pendingAbortRetriesRef.current < 5) {
+        pendingAbortRetriesRef.current += 1;
+        scheduleResumeCheckRef.current('pendingAbort');
+      }
+      return;
+    }
+    pendingAbortRetriesRef.current = 0;
 
     const records = useRecordStore.getState().records;
     const preferredRecordId = peekPendingTranscriptionResumeRecordId();
@@ -108,9 +119,11 @@ export const TranscriptionResumePrompt = () => {
         clearTimeout(checkTimerRef.current);
       }
       const delayMs =
-        reason === 'foreground' && peekPendingBackgroundTranscriptionRecord()
-          ? RESUME_CHECK_AFTER_FOREGROUND_MS
-          : 0;
+        reason === 'pendingAbort'
+          ? RESUME_CHECK_PENDING_ABORT_MS
+          : reason === 'foreground' && peekPendingBackgroundTranscriptionRecord()
+            ? RESUME_CHECK_AFTER_FOREGROUND_MS
+            : 0;
 
       checkTimerRef.current = setTimeout(() => {
         checkTimerRef.current = null;
@@ -121,6 +134,8 @@ export const TranscriptionResumePrompt = () => {
     },
     [checkInterruptedTranscriptions],
   );
+
+  scheduleResumeCheckRef.current = scheduleResumeCheck;
 
   const recordsLoaded = useRecordStore((s) => s.isLoaded);
 
@@ -134,6 +149,7 @@ export const TranscriptionResumePrompt = () => {
     const sub = AppState.addEventListener('change', (next) => {
       if (next === 'background' || next === 'inactive') {
         promptInFlightRef.current = false;
+        pendingAbortRetriesRef.current = 0;
       }
       if (next === 'active') {
         InteractionManager.runAfterInteractions(() => {

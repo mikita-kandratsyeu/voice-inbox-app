@@ -12,7 +12,6 @@ import {
 } from '@/features/transcription';
 import { isWhisperNativeWorkActive } from '@/features/transcription/lib/whisperNativeLifecycle';
 import { isTranscriptionSessionActive } from '@/features/transcription/model/transcriptionRuntimeRegistry';
-import { agentDebugLog } from '@/shared/lib/agentDebugLog';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { ensurePushRegistered, notifyAppBackground, notifyAppForeground } from '@/shared/lib/push';
 
@@ -67,23 +66,12 @@ export function useAppForegroundLifecycle(): void {
       const hasHeavyWork = useRecordStore.getState().hasActiveAiJobs || isModelDownloading();
 
       if (!hasHeavyWork) {
-        // #region agent log
-        agentDebugLog(
-          'useAppForegroundLifecycle.ts',
-          'releaseIdleOnDeviceModels calling releaseWhisperContext',
-          { appState: AppState.currentState },
-          'H6',
-        );
-        // #endregion
         releaseWhisperContext().catch(() => {});
         releaseLocalLlmSession().catch(() => {});
       }
     };
 
     const handleAppStateChange = (state: AppStateStatus) => {
-      // #region agent log
-      agentDebugLog('useAppForegroundLifecycle.ts', 'AppState change', { state }, 'H5');
-      // #endregion
       if (state === 'inactive') {
         void abortTranscriptionForAppBackground();
       }
