@@ -44,7 +44,7 @@ import {
   useTabletContentMaxWidth,
 } from '@/shared/lib';
 import { parseTaskDeadline } from '@/shared/lib/parseTaskDeadline';
-import { Button, EmptyState, HeaderIconButton, ScreenHeader, SectionHeader } from '@/shared/ui';
+import { EmptyState, HeaderIconButton, ScreenHeader, SectionHeader } from '@/shared/ui';
 
 import {
   type AllTasksFlattenedItem,
