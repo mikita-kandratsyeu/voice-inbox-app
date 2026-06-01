@@ -26,11 +26,12 @@ export type AiResult = {
 };
 
 export type Message =
-  | { id: string; status: 'processing'; model?: string }
+  | { id: string; status: 'processing'; model?: string; modelLabel?: string }
   | {
       id: string;
       status: 'done';
       model?: string;
+      modelLabel?: string;
       summary: string;
       suggestedTitle: string;
       tasks: AiResult['tasks'];
@@ -43,12 +44,12 @@ export type Message =
       reasoning?: string;
       tokenUsage?: { prompt: number; completion: number };
     }
-  | { id: string; status: 'error'; error: string; model?: string };
+  | { id: string; status: 'error'; error: string; model?: string; modelLabel?: string };
 
 export type AskMessage =
-  | { id: string; status: 'processing'; model?: string }
-  | { id: string; status: 'done'; model?: string; answer: string }
-  | { id: string; status: 'error'; error: string; model?: string };
+  | { id: string; status: 'processing'; model?: string; modelLabel?: string }
+  | { id: string; status: 'done'; model?: string; modelLabel?: string; answer: string }
+  | { id: string; status: 'error'; error: string; model?: string; modelLabel?: string };
 
 export type AutoOrganizeResult = {
   folders: Array<{

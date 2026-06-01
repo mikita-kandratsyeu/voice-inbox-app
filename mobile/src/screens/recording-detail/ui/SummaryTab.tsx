@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
 import type { RecordingStatus } from '@/entities/record';
-import { formatAiModelDisplayName, useSettingsStore } from '@/entities/settings';
+import { resolveAiModelDisplayLabel, useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
 import type { SummaryTokenUsage } from '@/shared/lib/summaryMetaSubtitle';
@@ -40,6 +40,7 @@ type SummaryTabProps = {
   cloudMeetingDialogueExtra?: boolean;
   summaryReasoning?: string;
   summaryAiModel?: string;
+  summaryAiModelLabel?: string;
   summaryTokenUsage?: SummaryTokenUsage;
   summaryGenerationMs?: number;
 };
@@ -67,6 +68,7 @@ export const SummaryTab = ({
   isPrivateMode = false,
   summaryReasoning,
   summaryAiModel,
+  summaryAiModelLabel,
   summaryTokenUsage,
   summaryGenerationMs,
 }: SummaryTabProps) => {
@@ -79,10 +81,10 @@ export const SummaryTab = ({
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
   const regenerateDisabled = disableByNetwork || speakerBreakdownProcessing;
 
-  const summaryModelLabel = useMemo(() => {
-    const id = summaryAiModel?.trim();
-    return id ? formatAiModelDisplayName(id) : '';
-  }, [summaryAiModel]);
+  const summaryModelLabel = useMemo(
+    () => resolveAiModelDisplayLabel(summaryAiModel, summaryAiModelLabel),
+    [summaryAiModel, summaryAiModelLabel],
+  );
 
   const isSmartMode = aiExecutionMode === 'smart_hybrid';
   const showReasoningBlock =

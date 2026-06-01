@@ -12,6 +12,7 @@ import {
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { logAiRequest } from '@/lib/ai-operation';
 import { checkAndIncrement, decrement } from '@/lib/ai-rate-limit';
+import { aiModelResponseFields } from '@/lib/ai-model-display';
 import { resolveAutoAiModel, type AiModelMode } from '@/lib/ai-model-router';
 import { setAppForeground } from '@/lib/push-tokens';
 import { processDigest } from '@/services/ai.service';
@@ -90,7 +91,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
 
   try {
     const result = await processDigest(payload, resolvedModel, req.headers.get('user-agent'));
-    return NextResponse.json({ ...result, model: resolvedModel });
+    return NextResponse.json({ ...result, ...aiModelResponseFields(resolvedModel) });
   } catch (err) {
     await decrement(deviceIdTrimmed);
     return apiError(err instanceof Error ? err.message : 'Digest generation failed', 503, {

@@ -145,6 +145,7 @@ type RecordStore = {
       cloudAiJobId?: string | null;
       summaryReasoning?: string | null;
       summaryAiModel?: string | null;
+      summaryAiModelLabel?: string | null;
       summaryTokensPrompt?: number | null;
       summaryTokensCompletion?: number | null;
       summaryGenerationMs?: number | null;
@@ -503,6 +504,11 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
       }
       if (data.summaryAiModel !== undefined) {
         patch.summaryAiModel = data.summaryAiModel?.trim() ? data.summaryAiModel.trim() : undefined;
+      }
+      if (data.summaryAiModelLabel !== undefined) {
+        patch.summaryAiModelLabel = data.summaryAiModelLabel?.trim()
+          ? data.summaryAiModelLabel.trim()
+          : undefined;
       }
       if (data.summaryTokensPrompt !== undefined) {
         patch.summaryTokensPrompt = data.summaryTokensPrompt ?? undefined;

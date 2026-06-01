@@ -3,6 +3,7 @@ import { MESSAGE_TTL_SECONDS } from '@/config/constants';
 import { checkAndIncrement } from '@/lib/ai-rate-limit';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
+import { aiModelResponseFields, enrichMessageWithModelLabel } from '@/lib/ai-model-display';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
 import type { AskJobPayload } from '@/types/ai-job';
@@ -36,7 +37,7 @@ export const createAsk = async (
     {
       id,
       status: 'processing',
-      model,
+      ...aiModelResponseFields(model),
     } as unknown as Message,
     ttl,
   );
@@ -52,7 +53,7 @@ export const createAsk = async (
       id,
       status: 'error',
       error: 'Weekly AI limit reached',
-      model,
+      ...aiModelResponseFields(model),
     });
     await sendLimitExceededPush(deviceId);
 
@@ -90,23 +91,36 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
     id?: string;
     status?: string;
     model?: string;
+    modelLabel?: string;
     answer?: string;
     error?: string;
   };
   if (!msg?.id || !msg?.status) return null;
 
+  const enriched = enrichMessageWithModelLabel(msg);
   const modelField =
-    typeof msg.model === 'string' && msg.model.trim() ? msg.model.trim() : undefined;
+    typeof enriched.model === 'string' && enriched.model.trim() ? enriched.model.trim() : undefined;
+  const modelLabelField =
+    typeof enriched.modelLabel === 'string' && enriched.modelLabel.trim()
+      ? enriched.modelLabel.trim()
+      : undefined;
+  const modelFields =
+    modelField != null
+      ? {
+          model: modelField,
+          ...(modelLabelField ? { modelLabel: modelLabelField } : {}),
+        }
+      : {};
 
   if (msg.status === 'processing') {
-    return { id: msg.id, status: 'processing', ...(modelField ? { model: modelField } : {}) };
+    return { id: msg.id, status: 'processing', ...modelFields };
   }
   if (msg.status === 'done' && typeof msg.answer === 'string') {
     return {
       id: msg.id,
       status: 'done',
       answer: msg.answer,
-      ...(modelField ? { model: modelField } : {}),
+      ...modelFields,
     };
   }
   if (msg.status === 'error' && typeof msg.error === 'string') {
@@ -114,7 +128,7 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
       id: msg.id,
       status: 'error',
       error: msg.error,
-      ...(modelField ? { model: modelField } : {}),
+      ...modelFields,
     };
   }
 

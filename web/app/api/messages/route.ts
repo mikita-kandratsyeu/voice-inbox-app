@@ -10,6 +10,7 @@ import {
 import { HEADER_SYNC_TOKEN } from '@/config/constants';
 import { assertMobileAiRouteContext } from '@/lib/mobile-ai-route';
 import { logAiRequest } from '@/lib/ai-operation';
+import { aiModelResponseFields } from '@/lib/ai-model-display';
 import {
   estimateSummaryTasksRoutingChars,
   resolveAutoAiModel,
@@ -211,7 +212,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   const response = NextResponse.json({
     id,
     status: 'processing',
-    model: resolvedModel,
+    ...aiModelResponseFields(resolvedModel),
     ...(result.syncToken && { syncToken: result.syncToken }),
   });
 

@@ -1,5 +1,8 @@
 export { canDeviceRunWhisperModel } from './lib/canDeviceRunWhisperModel';
-export { formatAiModelDisplayName } from './lib/formatAiModelDisplayName';
+export {
+  formatAiModelDisplayName,
+  resolveAiModelDisplayLabel,
+} from './lib/formatAiModelDisplayName';
 export { formatModelContextTokens } from './lib/formatModelContextTokens';
 export {
   type AiSettingsDiagnostics,

@@ -98,6 +98,8 @@ export type VoiceRecord = {
   summaryReasoning?: string;
   /** Model id used for the last summary generation (OpenRouter or local). */
   summaryAiModel?: string;
+  /** Server-provided display name for {@link summaryAiModel}. */
+  summaryAiModelLabel?: string;
   summaryTokensPrompt?: number;
   summaryTokensCompletion?: number;
   /** Wall-clock ms for the last summary+tasks generation. */

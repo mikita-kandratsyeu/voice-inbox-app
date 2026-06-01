@@ -7,6 +7,7 @@ import { isRetryableAiJobError } from '@/lib/ai-job-retry';
 import { dispatchMeetingDialogueJob } from '@/lib/meeting-dialogue-dispatch';
 import { deleteMeetingJobPayload, getMeetingJobPayload } from '@/lib/meeting-job-payload';
 import { getOpenRouterPendingGeneration } from '@/lib/openrouter-recovery';
+import { aiModelResponseFields } from '@/lib/ai-model-display';
 import { getMessage, saveMessage } from '@/lib/redis';
 import type { AiJobEnvelope } from '@/types/ai-job';
 import type { Message, MeetingDialogueStatus } from '@/types';
@@ -84,7 +85,7 @@ export async function runAiJobFromEnvelope(
         {
           id: jobId,
           status: 'processing',
-          ...(model ? { model } : {}),
+          ...(model ? aiModelResponseFields(model) : {}),
         } as Message,
         envelope.messageTtlSeconds,
       );

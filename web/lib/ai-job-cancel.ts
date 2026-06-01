@@ -2,6 +2,7 @@ import { AI_JOB_CANCELLED_ERROR, JOB_CANCELLED_KEY_PREFIX } from '@/config/const
 import { releaseJobLock } from '@/lib/ai-job-lock';
 import { deleteJobPayload, getJobPayload } from '@/lib/ai-job-payload';
 import { deleteMeetingJobPayload, getMeetingJobPayload } from '@/lib/meeting-job-payload';
+import { aiModelResponseFields } from '@/lib/ai-model-display';
 import { getMessage, saveMessage } from '@/lib/redis';
 import { redis } from '@/lib/redis';
 import type { Message, MeetingDialogueStatus } from '@/types';
@@ -93,7 +94,7 @@ export async function cancelAiJob(jobId: string, deviceId: string): Promise<Canc
       id: jobId,
       status: 'error',
       error: AI_JOB_CANCELLED_ERROR,
-      ...(model ? { model } : {}),
+      ...(model ? aiModelResponseFields(model) : {}),
     } as Message,
     ttl,
   );

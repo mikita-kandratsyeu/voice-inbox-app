@@ -242,6 +242,7 @@ export const useAiProcessing = () => {
 
       await updateAiExtras(record.id, {
         summaryAiModel: null,
+        summaryAiModelLabel: null,
         summaryTokensPrompt: null,
         summaryTokensCompletion: null,
         summaryReasoning: null,

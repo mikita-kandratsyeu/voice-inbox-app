@@ -37,6 +37,7 @@ export const recordsTable = sqliteTable(
     cloudAiJobId: text('cloudAiJobId'),
     summaryReasoning: text('summaryReasoning'),
     summaryAiModel: text('summaryAiModel'),
+    summaryAiModelLabel: text('summaryAiModelLabel'),
     summaryTokensPrompt: integer('summaryTokensPrompt'),
     summaryTokensCompletion: integer('summaryTokensCompletion'),
     summaryGenerationMs: integer('summaryGenerationMs'),

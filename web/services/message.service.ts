@@ -6,6 +6,7 @@ import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
 import { releaseJobLock } from '@/lib/ai-job-lock';
 import { dispatchMeetingDialogueJob } from '@/lib/meeting-dialogue-dispatch';
+import { aiModelResponseFields, enrichMessageWithModelLabel } from '@/lib/ai-model-display';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import type {
   MeetingDialogueAuxPayload,
@@ -34,7 +35,11 @@ export const createMessage = async (
   meetingDialogueAux?: MeetingDialogueAuxPayload,
 ): Promise<CreateMessageResult> => {
   const ttl = messageTtlSeconds;
-  const created = await saveMessageIfNotExists(id, { id, status: 'processing', model }, ttl);
+  const created = await saveMessageIfNotExists(
+    id,
+    { id, status: 'processing', ...aiModelResponseFields(model) },
+    ttl,
+  );
   if (!created) {
     return { created: false };
   }
@@ -47,7 +52,7 @@ export const createMessage = async (
         id,
         status: 'error',
         error: 'Weekly AI limit reached',
-        model,
+        ...aiModelResponseFields(model),
       },
       ttl,
     );
@@ -78,8 +83,10 @@ export const createMessage = async (
   return { created: true, syncToken };
 };
 
-export const getMessageById = async (id: string, syncToken?: string): Promise<Message | null> =>
-  getMessage(id, syncToken);
+export const getMessageById = async (id: string, syncToken?: string): Promise<Message | null> => {
+  const message = await getMessage(id, syncToken);
+  return message ? enrichMessageWithModelLabel(message) : null;
+};
 
 type RetryMeetingDialogueResult =
   | { ok: true; syncToken?: string }

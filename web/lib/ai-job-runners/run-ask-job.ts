@@ -1,6 +1,7 @@
 import { decrement } from '@/lib/ai-rate-limit';
 import { isRetryableAiJobError } from '@/lib/ai-job-retry';
 import { notifyAiJobComplete } from '@/lib/ai-job-push';
+import { aiModelResponseFields } from '@/lib/ai-model-display';
 import { saveMessage } from '@/lib/redis';
 import { processAskQuestion } from '@/services/ai.service';
 import type { AskJobPayload } from '@/types/ai-job';
@@ -39,7 +40,7 @@ export async function runAskJob(payload: AskJobPayload): Promise<void> {
     await saveAskMessage(id, {
       id,
       status: 'done',
-      model,
+      ...aiModelResponseFields(model),
       answer: result.answer,
     });
 
@@ -55,7 +56,7 @@ export async function runAskJob(payload: AskJobPayload): Promise<void> {
         id,
         status: 'error',
         error: err instanceof Error ? err.message : 'Unknown error',
-        model,
+        ...aiModelResponseFields(model),
       });
     }
     throw err;

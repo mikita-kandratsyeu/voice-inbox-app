@@ -34,6 +34,7 @@ export type ApplyAiSummaryResultParams = {
       meetingDialogue?: string | null;
       summaryReasoning?: string | null;
       summaryAiModel?: string | null;
+      summaryAiModelLabel?: string | null;
       summaryTokensPrompt?: number | null;
       summaryTokensCompletion?: number | null;
       summaryGenerationMs?: number | null;
@@ -74,6 +75,7 @@ export async function applyAiSummaryResult(params: ApplyAiSummaryResultParams): 
     meetingDialogueMarkdown,
     reasoning: summaryReasoningRaw,
     model: summaryModelRaw,
+    modelLabel: summaryModelLabelRaw,
     tokenUsage: summaryTokenUsageRaw,
   } = result;
 
@@ -143,6 +145,9 @@ export async function applyAiSummaryResult(params: ApplyAiSummaryResultParams): 
   const summaryModelForStore =
     summaryModelRaw?.trim() ||
     (aiExecutionMode === 'private_experimental' ? effectiveLocalAiModelId : '');
+  const summaryModelLabelForStore = summaryModelLabelRaw?.trim()
+    ? summaryModelLabelRaw.trim()
+    : null;
 
   if (shouldUpdateAiExtras) {
     await updateAiExtras(record.id, {
@@ -172,9 +177,15 @@ export async function applyAiSummaryResult(params: ApplyAiSummaryResultParams): 
 
   const summaryGenerationMs = Date.now() - generationStartedAt;
 
-  if (summaryModelForStore || summaryTokenUsageRaw || summaryGenerationMs > 0) {
+  if (
+    summaryModelForStore ||
+    summaryModelLabelForStore ||
+    summaryTokenUsageRaw ||
+    summaryGenerationMs > 0
+  ) {
     await updateAiExtras(record.id, {
       ...(summaryModelForStore ? { summaryAiModel: summaryModelForStore } : {}),
+      ...(summaryModelLabelForStore ? { summaryAiModelLabel: summaryModelLabelForStore } : {}),
       ...summaryTokensForStore,
       ...(summaryGenerationMs > 0 ? { summaryGenerationMs } : {}),
     });

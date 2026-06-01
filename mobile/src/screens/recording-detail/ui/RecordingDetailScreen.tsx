@@ -770,6 +770,7 @@ export const RecordingDetailScreen = () => {
                   cloudMeetingDialogueExtra={meetingPresetUiActive}
                   summaryReasoning={isPrivateMode ? undefined : liveRecord.summaryReasoning}
                   summaryAiModel={liveRecord.summaryAiModel}
+                  summaryAiModelLabel={liveRecord.summaryAiModelLabel}
                   summaryTokenUsage={
                     liveRecord.summaryTokensPrompt != null &&
                     liveRecord.summaryTokensCompletion != null

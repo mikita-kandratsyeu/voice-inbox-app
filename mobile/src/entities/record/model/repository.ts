@@ -89,6 +89,7 @@ type RecordListQueryRow = {
   cloudAiJobId: string | null;
   summaryReasoning: string | null;
   summaryAiModel: string | null;
+  summaryAiModelLabel: string | null;
   summaryTokensPrompt: number | null;
   summaryTokensCompletion: number | null;
   summaryGenerationMs: number | null;
@@ -133,6 +134,9 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     cloudAiJobId: row.cloudAiJobId?.trim() ? row.cloudAiJobId.trim() : undefined,
     summaryReasoning: row.summaryReasoning?.trim() ? row.summaryReasoning.trim() : undefined,
     summaryAiModel: row.summaryAiModel?.trim() ? row.summaryAiModel.trim() : undefined,
+    summaryAiModelLabel: row.summaryAiModelLabel?.trim()
+      ? row.summaryAiModelLabel.trim()
+      : undefined,
     summaryTokensPrompt:
       row.summaryTokensPrompt != null && row.summaryTokensPrompt >= 0
         ? row.summaryTokensPrompt
@@ -187,6 +191,9 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
     cloudAiJobId: row.cloudAiJobId?.trim() ? row.cloudAiJobId.trim() : undefined,
     summaryReasoning: row.summaryReasoning?.trim() ? row.summaryReasoning.trim() : undefined,
     summaryAiModel: row.summaryAiModel?.trim() ? row.summaryAiModel.trim() : undefined,
+    summaryAiModelLabel: row.summaryAiModelLabel?.trim()
+      ? row.summaryAiModelLabel.trim()
+      : undefined,
     summaryTokensPrompt:
       row.summaryTokensPrompt != null && row.summaryTokensPrompt >= 0
         ? row.summaryTokensPrompt
@@ -237,6 +244,7 @@ const recordListColumns = {
   cloudAiJobId: recordsTable.cloudAiJobId,
   summaryReasoning: recordsTable.summaryReasoning,
   summaryAiModel: recordsTable.summaryAiModel,
+  summaryAiModelLabel: recordsTable.summaryAiModelLabel,
   summaryTokensPrompt: recordsTable.summaryTokensPrompt,
   summaryTokensCompletion: recordsTable.summaryTokensCompletion,
   summaryGenerationMs: recordsTable.summaryGenerationMs,
@@ -372,6 +380,9 @@ export const recordRepository = {
         cloudAiJobId: record.cloudAiJobId?.trim() ? record.cloudAiJobId.trim() : null,
         summaryReasoning: record.summaryReasoning?.trim() ? record.summaryReasoning.trim() : null,
         summaryAiModel: record.summaryAiModel?.trim() ? record.summaryAiModel.trim() : null,
+        summaryAiModelLabel: record.summaryAiModelLabel?.trim()
+          ? record.summaryAiModelLabel.trim()
+          : null,
         summaryTokensPrompt: record.summaryTokensPrompt ?? null,
         summaryTokensCompletion: record.summaryTokensCompletion ?? null,
         summaryGenerationMs: record.summaryGenerationMs ?? null,
@@ -535,6 +546,7 @@ export const recordRepository = {
       cloudAiJobId?: string | null;
       summaryReasoning?: string | null;
       summaryAiModel?: string | null;
+      summaryAiModelLabel?: string | null;
       summaryTokensPrompt?: number | null;
       summaryTokensCompletion?: number | null;
       summaryGenerationMs?: number | null;
@@ -571,6 +583,11 @@ export const recordRepository = {
     }
     if (data.summaryAiModel !== undefined) {
       updates.summaryAiModel = data.summaryAiModel?.trim() ? data.summaryAiModel.trim() : null;
+    }
+    if (data.summaryAiModelLabel !== undefined) {
+      updates.summaryAiModelLabel = data.summaryAiModelLabel?.trim()
+        ? data.summaryAiModelLabel.trim()
+        : null;
     }
     if (data.summaryTokensPrompt !== undefined) {
       updates.summaryTokensPrompt = data.summaryTokensPrompt;

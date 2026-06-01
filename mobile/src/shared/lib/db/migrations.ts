@@ -92,6 +92,8 @@ CREATE INDEX IF NOT EXISTS \`idx_cloud_ai_pending_jobId\` ON \`cloud_ai_pending\
 const migration0017 = `ALTER TABLE \`records\` ADD \`meetingSpeakerLabels\` text;--> statement-breakpoint
 ALTER TABLE \`records\` ADD \`cloudAiJobId\` text;`;
 
+const migration0018 = `ALTER TABLE \`records\` ADD \`summaryAiModelLabel\` text;`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -120,5 +122,6 @@ export const migrationsConfig = {
     m0015: migration0015,
     m0016: migration0016,
     m0017: migration0017,
+    m0018: migration0018,
   } as Record<string, string>,
 };

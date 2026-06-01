@@ -11,6 +11,7 @@ import {
   type MeetingDialogueUserPromptInput,
 } from '@/lib/meeting-dialogue-user-prompt';
 import { mergeOpenRouterTokenUsage } from '@/lib/openrouter-token-usage';
+import { aiModelResponseFields } from '@/lib/ai-model-display';
 import { saveMessage } from '@/lib/redis';
 import { processMeetingDialogueMarkdown, processTranscript } from '@/services/ai.service';
 import type { MeetingDialogueJobPayload, SummarizeJobPayload } from '@/types/ai-job';
@@ -118,7 +119,7 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
       {
         id,
         status: 'done',
-        model,
+        ...aiModelResponseFields(model),
         summary: result.summary,
         suggestedTitle: result.suggestedTitle,
         tasks: result.tasks,
@@ -173,7 +174,7 @@ export async function runSummarizeJob(payload: SummarizeJobPayload): Promise<voi
           id,
           status: 'error',
           error: err instanceof Error ? err.message : 'Unknown error',
-          model,
+          ...aiModelResponseFields(model),
         },
         ttl,
       );

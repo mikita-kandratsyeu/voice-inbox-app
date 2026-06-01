@@ -2,6 +2,7 @@ import { decrement } from '@/lib/ai-rate-limit';
 import { decrementAutoOrganizeWeekly } from '@/lib/ai-job-runners/run-auto-organize-job';
 import { deleteJobPayload } from '@/lib/ai-job-payload';
 import { deleteMeetingJobPayload } from '@/lib/meeting-job-payload';
+import { aiModelResponseFields } from '@/lib/ai-model-display';
 import { getMessage, saveMessage } from '@/lib/redis';
 import type { AiJobEnvelope } from '@/types/ai-job';
 import type { Message } from '@/types';
@@ -41,7 +42,7 @@ export async function markAiJobFailed(envelope: AiJobEnvelope, error: string): P
         id: jobId,
         status: 'error',
         error,
-        ...(model ? { model } : {}),
+        ...(model ? aiModelResponseFields(model) : {}),
       },
       ttl,
     );

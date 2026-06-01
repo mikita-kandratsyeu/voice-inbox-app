@@ -86,6 +86,8 @@ export type AiProcessingResult = {
   meetingDialogueMarkdown?: string;
   reasoning?: string;
   model?: string;
+  /** Human-readable model name from server (prefer over formatting `model`). */
+  modelLabel?: string;
   tokenUsage?: { prompt: number; completion: number };
 };
 

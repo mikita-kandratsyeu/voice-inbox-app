@@ -58,6 +58,8 @@ export function parseMessagePollState(json: unknown): ParsedMessagePollState {
       ? { suggestedTitle: msg.suggestedTitle.trim() }
       : {};
   const modelField = isString(msg.model) && msg.model.trim() ? { model: msg.model.trim() } : {};
+  const modelLabelField =
+    isString(msg.modelLabel) && msg.modelLabel.trim() ? { modelLabel: msg.modelLabel.trim() } : {};
   const mdRaw = msg.meetingDialogueMarkdown;
   const meetingMd =
     isString(mdRaw) && mdRaw.trim() ? { meetingDialogueMarkdown: mdRaw.trim() } : {};
@@ -80,6 +82,7 @@ export function parseMessagePollState(json: unknown): ParsedMessagePollState {
       tags,
       ...suggested,
       ...modelField,
+      ...modelLabelField,
       ...(typeof msg.classification === 'string'
         ? { classification: msg.classification as RecordClassification }
         : {}),
