@@ -193,7 +193,6 @@
     "noteFilterLabel": "Note",
     "noteUnavailable": "Note not found",
     "clearNoteFilterA11y": "Show tasks from all notes",
-    "createTask": "Create task",
     "createTaskA11y": "Create task",
     "pickNoteTitle": "Choose a note",
     "pickNoteSubtitle": "The task will be added to the note you select",

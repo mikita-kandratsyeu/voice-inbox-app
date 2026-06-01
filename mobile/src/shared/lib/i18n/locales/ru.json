@@ -193,7 +193,6 @@
     "noteFilterLabel": "Заметка",
     "noteUnavailable": "Заметка не найдена",
     "clearNoteFilterA11y": "Показать задачи из всех заметок",
-    "createTask": "Создать задачу",
     "createTaskA11y": "Создать задачу",
     "pickNoteTitle": "Выберите заметку",
     "pickNoteSubtitle": "Задача будет добавлена в выбранную заметку",

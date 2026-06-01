@@ -851,15 +851,6 @@ export const AllTasksScreen = () => {
               title={openOnly ? t('allTasks.emptyFiltered') : t('allTasks.emptyTitle')}
               description={t('allTasks.emptyDescription')}
             />
-            <View className="mt-6 items-center px-2">
-              <Button
-                variant="primary"
-                size="lg"
-                label={t('allTasks.createTask')}
-                color={color}
-                onPress={openCreateTask}
-              />
-            </View>
           </View>
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} density="compact" />
         </View>
