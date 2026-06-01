@@ -6,10 +6,15 @@ export type LocalLlmCompletionIntent = 'json' | 'chat';
 
 /**
  * Default KV context when a model profile does not set nCtx.
- * Kept at 8 192 — sufficient for all task budgets (max prompt ~14 K chars ≈ 4 700 tokens
- * + 2 048 output + 1 024 overhead = ~7 772), while halving KV RAM vs 16 K.
+ * 10 240 (10K): moderate bump over 8K for long transcripts; still ~35% less KV RAM than 16K.
  */
-export const DEFAULT_LOCAL_LLM_N_CTX = 8_192;
+export const DEFAULT_LOCAL_LLM_N_CTX = 10_240;
+
+/** Llama / Qwen on-device profiles (1B–1.7B). */
+export const LOCAL_LLM_N_CTX_COMPACT = 10_240;
+
+/** Gemma 2 2B — slightly larger window for sliding-window attention. */
+export const LOCAL_LLM_N_CTX_GEMMA = 14_336;
 
 /**
  * Shared initLlama context params.
@@ -38,9 +43,7 @@ type LocalLlmModelProfile = {
 
 const PROFILES: Record<LocalAiModelId, LocalLlmModelProfile> = {
   'local/qwen3-1.7b-q4_k_m': {
-    // 8 K is enough: max task input ~14 K chars ≈ 4 700 tokens + 2 048 output + overhead.
-    // Halves KV RAM vs 16 K (~210 MB → ~105 MB on device).
-    nCtx: 8_192,
+    nCtx: LOCAL_LLM_N_CTX_COMPACT,
     base: {
       enable_thinking: false,
       reasoning_format: 'none',
@@ -62,7 +65,7 @@ const PROFILES: Record<LocalAiModelId, LocalLlmModelProfile> = {
     },
   },
   'local/llama-3.2-1b-q4_k_m': {
-    nCtx: 8192,
+    nCtx: LOCAL_LLM_N_CTX_COMPACT,
     base: {
       enable_thinking: false,
       min_p: 0.05,
@@ -81,9 +84,8 @@ const PROFILES: Record<LocalAiModelId, LocalLlmModelProfile> = {
     },
   },
   'local/gemma-2-2b-it-q4_k_m': {
-    // Gemma 2 uses local sliding window attention up to 4 096 and global at 8 192;
-    // 12 K covers both windows with headroom for long transcripts.
-    nCtx: 12288,
+    // Gemma 2: sliding window 4K + global 8K; 14K n_ctx gives headroom without 16K KV cost.
+    nCtx: LOCAL_LLM_N_CTX_GEMMA,
     summaryTemperature: 0.18,
     askTemperature: 0.22,
     base: {

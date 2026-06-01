@@ -1,4 +1,4 @@
-/** Compact label for model context window (e.g. 8192 → "8K", 1_048_576 → "1M"). */
+/** Compact label for model context window (e.g. 10240 → "10K", 1_048_576 → "1M"). */
 export function formatModelContextTokens(tokens: number): string {
   if (tokens >= 1_000_000) {
     const millions = tokens / 1_000_000;

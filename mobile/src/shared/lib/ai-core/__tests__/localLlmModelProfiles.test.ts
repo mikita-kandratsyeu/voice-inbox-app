@@ -52,14 +52,14 @@ describe('localLlmModelProfiles', () => {
     expect(p.min_p).toBeGreaterThan(0);
   });
 
-  it('DEFAULT_LOCAL_LLM_N_CTX is 8 192 (fits all task budgets, halves KV RAM vs 16 K)', () => {
-    expect(DEFAULT_LOCAL_LLM_N_CTX).toBe(8_192);
+  it('DEFAULT_LOCAL_LLM_N_CTX is 10 240 (moderate on-device window)', () => {
+    expect(DEFAULT_LOCAL_LLM_N_CTX).toBe(10_240);
   });
 
   it('getLocalLlmNCtx returns explicit nCtx for all models', () => {
-    expect(getLocalLlmNCtx('local/qwen3-1.7b-q4_k_m')).toBe(8_192);
-    expect(getLocalLlmNCtx('local/llama-3.2-1b-q4_k_m')).toBe(8192);
-    expect(getLocalLlmNCtx('local/gemma-2-2b-it-q4_k_m')).toBe(12288);
+    expect(getLocalLlmNCtx('local/qwen3-1.7b-q4_k_m')).toBe(10_240);
+    expect(getLocalLlmNCtx('local/llama-3.2-1b-q4_k_m')).toBe(10_240);
+    expect(getLocalLlmNCtx('local/gemma-2-2b-it-q4_k_m')).toBe(14_336);
   });
 
   it('applies Gemma-specific generation temperatures when set', () => {
