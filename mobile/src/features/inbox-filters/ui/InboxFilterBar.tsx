@@ -80,6 +80,7 @@ const MENU_FILTERS: InboxMenuFilterStatus[] = [
   'withoutSummary',
   'withoutTasks',
   'withTasks',
+  'meetingMode',
   'processingError',
 ];
 

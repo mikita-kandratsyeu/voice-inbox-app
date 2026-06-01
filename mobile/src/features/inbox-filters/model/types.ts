@@ -8,6 +8,7 @@ export type InboxMenuFilterStatus =
   | 'withoutSummary'
   | 'withoutTasks'
   | 'withTasks'
+  | 'meetingMode'
   | 'processingError';
 
 export type PrimaryFilterStatus = 'all' | 'pinned' | 'archived';

@@ -48,6 +48,8 @@ export const useInboxFilters = () => {
         result = result.filter((r) => !r.tasks || r.tasks.length === 0);
       } else if (menuFilterStatus === 'withTasks') {
         result = result.filter((r) => Boolean(r.tasks && r.tasks.length > 0));
+      } else if (menuFilterStatus === 'meetingMode') {
+        result = result.filter((r) => r.classification === 'meeting');
       } else if (menuFilterStatus === 'processingError') {
         result = result.filter(
           (r) =>

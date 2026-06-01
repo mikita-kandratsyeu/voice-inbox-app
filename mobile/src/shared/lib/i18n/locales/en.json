@@ -161,6 +161,7 @@
       "withoutSummary": "Without summary",
       "withoutTasks": "Without tasks",
       "withTasks": "With tasks",
+      "meetingMode": "Meeting mode",
       "processingError": "Processing error",
       "moreFilters": "Filters",
       "read": "Read",
