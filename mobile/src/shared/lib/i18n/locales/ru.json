@@ -392,7 +392,7 @@
     "generateMeetingDialogueWithSummary": "Сводка и участники",
     "meetingDialoguePreamble": "Без подписи",
     "meetingDialogueProcessing": "Разбираем по участникам…",
-    "meetingDialogueProgressStepLabel": "Шаг 2 из 2 · реплики по участникам",
+    "meetingDialogueProgressStepLabel": "Шаг 2 из 2 — реплики по участникам",
     "regenerateSummaryWaitForSpeakers": "Обновляем разбивку по участникам. Когда закончим — можно пересоздать сводку.",
     "meetingDialogueFailedTitle": "Не удалось разложить по участникам",
     "meetingDialogueFailedDesc": "Сводка на месте. Нажмите «Обновить разбивку» или зайдите позже — иногда результат приходит уведомлением.",

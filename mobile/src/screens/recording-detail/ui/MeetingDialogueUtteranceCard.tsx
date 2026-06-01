@@ -111,13 +111,21 @@ export function MeetingDialogueUtteranceCard({
         borderWidth: 1,
         borderColor: color.border.default,
         backgroundColor: color.background.card,
-        paddingVertical: 14,
-        paddingRight: 14,
-        paddingLeft: 11,
-        borderLeftWidth: 3,
-        borderLeftColor: stripe,
+        overflow: 'hidden',
       }}
     >
+      <View
+        pointerEvents="none"
+        style={{
+          position: 'absolute',
+          left: 0,
+          top: 10,
+          bottom: 10,
+          width: 3,
+          backgroundColor: stripe,
+        }}
+      />
+      <View style={{ paddingVertical: 14, paddingRight: 14, paddingLeft: 13 }}>
       {hasSpeaker ? (
         <SpeakerNameRow
           label={utterance.speakerLabel}
@@ -150,6 +158,7 @@ export function MeetingDialogueUtteranceCard({
       >
         {utterance.body}
       </Text>
+      </View>
     </View>
   );
 }

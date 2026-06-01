@@ -105,38 +105,18 @@ export const RecordingMeetingModeSection = ({
 
   const autoRefreshIcon = (
     <View
-      className="relative h-9 w-9 items-center justify-center rounded-full"
+      className="h-9 w-9 items-center justify-center rounded-full"
       style={{
         backgroundColor: autoRefreshSpeakersOnRegen
           ? color.accent.primary
           : color.background.tertiary,
       }}
     >
-      <UsersRound
-        size={16}
+      <RefreshCw
+        size={18}
         color={autoRefreshSpeakersOnRegen ? '#fff' : color.text.secondary}
         strokeWidth={2}
       />
-      <View
-        className="absolute -bottom-0.5 -right-0.5 h-4 w-4 items-center justify-center rounded-full"
-        style={{
-          backgroundColor: autoRefreshSpeakersOnRegen
-            ? color.background.primary
-            : color.background.secondary,
-          borderWidth: 1,
-          borderColor: autoRefreshSpeakersOnRegen
-            ? color.accent.primary
-            : color.border.default,
-        }}
-      >
-        <RefreshCw
-          size={9}
-          color={
-            autoRefreshSpeakersOnRegen ? color.accent.primary : color.text.secondary
-          }
-          strokeWidth={2.5}
-        />
-      </View>
     </View>
   );
 
