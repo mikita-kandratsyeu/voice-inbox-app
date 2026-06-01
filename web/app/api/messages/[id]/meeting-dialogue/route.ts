@@ -17,7 +17,11 @@ import {
 } from '@/lib/prompts';
 import { isProDevice } from '@/lib/pro-entitlement';
 import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
-import { retryMeetingDialogue, type MeetingDialogueAuxPayload } from '@/services/message.service';
+import {
+  retryMeetingDialogue,
+  type MeetingDialogueAuxPayload,
+  type MeetingDialogueRehydratePhase1,
+} from '@/services/message.service';
 import { NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
@@ -30,6 +34,12 @@ type RetryMeetingDialogueBody = {
   model?: unknown;
   options?: AiProcessingOptions & { taskExtractionHint?: unknown };
   messageTtlSeconds?: unknown;
+  /** Required when the original summarize Redis entry has expired. */
+  phase1?: {
+    suggestedTitle?: unknown;
+    summary?: unknown;
+    keyPhrases?: unknown;
+  };
 };
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -119,6 +129,29 @@ export const POST = async (request: Request, { params }: RouteContext): Promise<
 
   const messageTtlSeconds = clampMessageTtlSeconds(body.messageTtlSeconds);
 
+  let rehydratePhase1: MeetingDialogueRehydratePhase1 | undefined;
+  const rawPhase1 = body.phase1;
+  if (rawPhase1 && typeof rawPhase1 === 'object') {
+    const summary =
+      typeof rawPhase1.summary === 'string' ? rawPhase1.summary.trim() : '';
+    if (summary) {
+      const suggestedTitle =
+        typeof rawPhase1.suggestedTitle === 'string' && rawPhase1.suggestedTitle.trim()
+          ? rawPhase1.suggestedTitle.trim()
+          : 'Meeting';
+      const keyPhrases = Array.isArray(rawPhase1.keyPhrases)
+        ? rawPhase1.keyPhrases
+            .filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
+            .map((p) => p.trim())
+        : undefined;
+      rehydratePhase1 = {
+        suggestedTitle,
+        summary,
+        ...(keyPhrases?.length ? { keyPhrases } : {}),
+      };
+    }
+  }
+
   logAiRequest(aiOperation, { path: pathname, messageId: jobId });
 
   const result = await retryMeetingDialogue({
@@ -130,6 +163,7 @@ export const POST = async (request: Request, { params }: RouteContext): Promise<
     meetingDialogueAux,
     clientUserAgent: req.headers.get('user-agent'),
     messageTtlSeconds,
+    rehydratePhase1,
   });
 
   if (!result.ok) {

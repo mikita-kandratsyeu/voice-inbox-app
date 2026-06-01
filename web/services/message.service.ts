@@ -84,6 +84,12 @@ type RetryMeetingDialogueResult =
   | { ok: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
   | { ok: false; error: string };
 
+export type MeetingDialogueRehydratePhase1 = {
+  suggestedTitle: string;
+  summary: string;
+  keyPhrases?: string[];
+};
+
 export const retryMeetingDialogue = async (params: {
   jobId: string;
   deviceId: string;
@@ -93,14 +99,34 @@ export const retryMeetingDialogue = async (params: {
   meetingDialogueAux?: MeetingDialogueAuxPayload;
   clientUserAgent?: string | null;
   messageTtlSeconds?: number;
+  /** Local summarize result when Redis KV for the original job has expired. */
+  rehydratePhase1?: MeetingDialogueRehydratePhase1;
 }): Promise<RetryMeetingDialogueResult> => {
   const ttl = params.messageTtlSeconds ?? MESSAGE_TTL_SECONDS;
   const existing = await getMessage(params.jobId);
-  if (!existing || existing.status !== 'done') {
-    return { ok: false, error: 'Summarize job not complete' };
+
+  let done: Extract<Message, { status: 'done' }>;
+
+  if (existing?.status === 'done') {
+    done = existing;
+  } else {
+    const p1 = params.rehydratePhase1;
+    const summary = p1?.summary?.trim() ?? '';
+    if (!summary || !p1) {
+      return { ok: false, error: 'Summarize job not complete' };
+    }
+    done = {
+      id: params.jobId,
+      status: 'done',
+      model: params.model,
+      summary,
+      suggestedTitle: p1.suggestedTitle?.trim() || 'Meeting',
+      tasks: [],
+      tags: [],
+      ...(p1.keyPhrases?.length ? { keyPhrases: p1.keyPhrases } : {}),
+    };
   }
 
-  const done = existing as Extract<Message, { status: 'done' }>;
   if (done.meetingDialogueStatus === 'processing') {
     return { ok: false, error: 'Meeting dialogue already processing' };
   }

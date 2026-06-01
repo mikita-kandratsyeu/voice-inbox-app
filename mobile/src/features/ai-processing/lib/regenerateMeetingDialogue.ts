@@ -112,6 +112,11 @@ export async function regenerateMeetingDialogue(
         model: deps.selectedAIModel,
         options: { processingPreset: 'meeting', outputLanguage: settings.aiOutputLanguage },
         messageTtlSeconds: deps.cloudAiKvTtlSeconds,
+        phase1: {
+          suggestedTitle: record.title?.trim() || 'Meeting',
+          summary: record.summary!.trim(),
+          ...(record.keyPhrases?.length ? { keyPhrases: record.keyPhrases } : {}),
+        },
       },
       { signal: abortHandle.signal },
     );

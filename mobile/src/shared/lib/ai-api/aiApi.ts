@@ -167,6 +167,12 @@ export type MeetingDialogueRetryRequestBody = {
   model: string;
   options: AiProcessingOptions;
   messageTtlSeconds?: number;
+  /** Summarize snapshot for server rehydration when Redis KV expired. */
+  phase1?: {
+    suggestedTitle: string;
+    summary: string;
+    keyPhrases?: string[];
+  };
 };
 
 export async function postMeetingDialogueRetry(

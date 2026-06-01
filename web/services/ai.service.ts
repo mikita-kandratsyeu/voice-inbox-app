@@ -30,6 +30,24 @@ import {
 
 const MEETING_DIALOGUE_MARKDOWN_MAX_CHARS = 12_000;
 
+function stripOptionalMarkdownFences(raw: string): string {
+  return raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+}
+
+function normalizeMeetingDialogueMarkdownField(
+  rawMd: string,
+): Pick<AiResult, 'meetingDialogueMarkdown'> {
+  const trimmed = rawMd.trim();
+  if (!trimmed) {
+    return {};
+  }
+  const meetingDialogueMarkdown =
+    trimmed.length > MEETING_DIALOGUE_MARKDOWN_MAX_CHARS
+      ? trimmed.slice(0, MEETING_DIALOGUE_MARKDOWN_MAX_CHARS)
+      : trimmed;
+  return { meetingDialogueMarkdown };
+}
+
 function buildSummaryAiResult(
   content: string,
   message: unknown,
@@ -198,23 +216,24 @@ export async function processTranscript(
 function parseMeetingDialogueOpenRouterContent(
   content: string,
 ): Pick<AiResult, 'meetingDialogueMarkdown'> {
-  const parsed = parseOpenRouterJsonContent(content);
-  if (!parsed || typeof parsed !== 'object') {
-    throw new Error('Invalid AI response: meeting dialogue expected object');
+  try {
+    const parsed = parseOpenRouterJsonContent(content);
+    if (!parsed || typeof parsed !== 'object') {
+      throw new Error('Invalid AI response: meeting dialogue expected object');
+    }
+    const rawMd =
+      'meetingDialogueMarkdown' in parsed &&
+      typeof (parsed as { meetingDialogueMarkdown?: unknown }).meetingDialogueMarkdown === 'string'
+        ? String((parsed as { meetingDialogueMarkdown: string }).meetingDialogueMarkdown).trim()
+        : '';
+    return normalizeMeetingDialogueMarkdownField(rawMd);
+  } catch (err) {
+    const plain = stripOptionalMarkdownFences(content);
+    if (plain && !plain.startsWith('{')) {
+      return normalizeMeetingDialogueMarkdownField(plain);
+    }
+    throw err;
   }
-  const rawMd =
-    'meetingDialogueMarkdown' in parsed &&
-    typeof (parsed as { meetingDialogueMarkdown?: unknown }).meetingDialogueMarkdown === 'string'
-      ? String((parsed as { meetingDialogueMarkdown: string }).meetingDialogueMarkdown).trim()
-      : '';
-  if (!rawMd) {
-    return {};
-  }
-  const meetingDialogueMarkdown =
-    rawMd.length > MEETING_DIALOGUE_MARKDOWN_MAX_CHARS
-      ? rawMd.slice(0, MEETING_DIALOGUE_MARKDOWN_MAX_CHARS)
-      : rawMd;
-  return { meetingDialogueMarkdown };
 }
 
 /**
@@ -250,7 +269,9 @@ export async function processMeetingDialogueMarkdown(
         ...(tokenUsage ? { tokenUsage } : {}),
       };
     },
-    isRetryableAiChatTransportError,
+    (err) =>
+      isRetryableAiChatTransportError(err) ||
+      (err instanceof Error && err.message.startsWith('Invalid AI response')),
   );
 }
 
