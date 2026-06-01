@@ -32,8 +32,7 @@ function buildPrivateAiContext(settings: ReturnType<typeof useSettingsStore.getS
   const effectiveLocalAiModelId = settings.selectedLocalAiModel ?? DEFAULT_LOCAL_AI_MODEL_ID;
   const isLocalLlmModelDownloaded =
     settings.selectedLocalAiModel != null &&
-    (settings.localLlmModelStatuses[effectiveLocalAiModelId] ?? 'not_downloaded') ===
-      'downloaded';
+    (settings.localLlmModelStatuses[effectiveLocalAiModelId] ?? 'not_downloaded') === 'downloaded';
 
   return {
     isLocalLlmModelDownloaded,
@@ -77,18 +76,15 @@ async function regeneratePrivateMeetingDialogue(
   const { ctx, isLocalLlmModelDownloaded } = buildPrivateAiContext(settings);
 
   if (!isLocalLlmModelDownloaded) {
-    useRecordStore.getState().setMeetingDialogueError(record.id, i18n.t('ai.privateModeModelNotDownloaded'));
+    useRecordStore
+      .getState()
+      .setMeetingDialogueError(record.id, i18n.t('ai.privateModeModelNotDownloaded'));
     useRecordStore.getState().setMeetingDialogueStatus(record.id, 'failed');
     return;
   }
 
-  const {
-    setMeetingDialogueStatus,
-    setMeetingDialogueError,
-    updateAiExtras,
-    setPrivateAiBatchUi,
-    clearPrivateAiBatchUi,
-  } = useRecordStore.getState();
+  const { setMeetingDialogueStatus, setMeetingDialogueError, updateAiExtras, setPrivateAiBatchUi } =
+    useRecordStore.getState();
 
   const abortHandle = createAiAbortHandle();
   if (options?.signal) {

@@ -20,9 +20,9 @@ import {
 import { parseMeetingDialogue } from '../lib/parseMeetingDialogue';
 import { AiTabProcessing } from './AiTabProcessing';
 import { MeetingDialogueSpeakerRoster } from './MeetingDialogueSpeakerRoster';
-import { PrivateModeTranscriptLimitNotice } from './PrivateModeTranscriptLimitNotice';
 import { MeetingDialogueUtteranceCard } from './MeetingDialogueUtteranceCard';
 import { MeetingTabInfoCallout, MeetingTabInfoCalloutText } from './MeetingTabInfoCallout';
+import { PrivateModeTranscriptLimitNotice } from './PrivateModeTranscriptLimitNotice';
 import { TaskEditSheet } from './TaskEditSheet';
 
 type MeetingDialogueTabProps = {

@@ -1,8 +1,8 @@
 import type { AiProcessingResult } from '@/shared/lib/ai-api';
 import { isString } from '@/shared/lib/type-guards';
 
-import { getLocalLlmSummaryTemperature } from '../localLlmModelProfiles';
 import { localPromptFitsLlmContext } from '../localLlmBudget';
+import { getLocalLlmSummaryTemperature } from '../localLlmModelProfiles';
 import type { LocalLlmCompletionIntent, LocalLlmSessionProgressEvent } from '../localLlmSession';
 import { completeLocalChat } from '../localLlmSession';
 import type {
@@ -99,10 +99,7 @@ async function generateMeetingDialogueRaw(
     ],
     {
       maxTokens,
-      temperature: getLocalLlmSummaryTemperature(
-        modelId,
-        LOCAL_GEN_MEETING_DIALOGUE.temperature,
-      ),
+      temperature: getLocalLlmSummaryTemperature(modelId, LOCAL_GEN_MEETING_DIALOGUE.temperature),
       intent: 'json' satisfies LocalLlmCompletionIntent,
       onLlmSessionProgress,
     },

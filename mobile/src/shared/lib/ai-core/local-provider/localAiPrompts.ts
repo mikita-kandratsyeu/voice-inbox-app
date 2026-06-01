@@ -95,9 +95,9 @@ export function buildLocalSummaryUserContent(
   const isMeeting = processingPreset === 'meeting';
   const includeDialogueField = isMeeting && options?.includeMeetingDialogueField !== false;
   const head = [
-    (includeDialogueField
-      ? LOCAL_OUTPUT_LANGUAGE_HINT
-      : LOCAL_OUTPUT_LANGUAGE_HINT_SUMMARY_ONLY)[ctx.aiOutputLanguage],
+    (includeDialogueField ? LOCAL_OUTPUT_LANGUAGE_HINT : LOCAL_OUTPUT_LANGUAGE_HINT_SUMMARY_ONLY)[
+      ctx.aiOutputLanguage
+    ],
     includeDialogueField
       ? 'Also include meetingDialogueMarkdown in the JSON (see system rules).'
       : '',

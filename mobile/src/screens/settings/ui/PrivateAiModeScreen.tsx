@@ -17,8 +17,8 @@ import {
 } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useColors } from '@/shared/config';
-import { getTranscriptCharLimit } from '@/shared/lib/ai-core/localProvider';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
+import { getTranscriptCharLimit } from '@/shared/lib/ai-core/localProvider';
 import { ScreenHeader } from '@/shared/ui';
 
 const AI_EXECUTION_MODES: AiExecutionMode[] = ['smart_hybrid', 'private_experimental'];
@@ -41,7 +41,7 @@ export const PrivateAiModeScreen = () => {
     syncPrivateCapabilityTier();
   }, []);
 
-  const { diagnostics } = useMemo(() => resolvePrivateAiCapabilityTier(), [privateCapabilityTier]);
+  const { diagnostics } = resolvePrivateAiCapabilityTier();
 
   const privateAllowed = canEnablePrivateMode(privateCapabilityTier);
   const limitedCharLimit = getTranscriptCharLimit('limited');
@@ -55,10 +55,7 @@ export const PrivateAiModeScreen = () => {
         disk: `${disk} GB`,
       });
     }
-    const parts = [
-      ram ? `${ram} GB RAM` : null,
-      disk ? `${disk} GB` : null,
-    ].filter(Boolean);
+    const parts = [ram ? `${ram} GB RAM` : null, disk ? `${disk} GB` : null].filter(Boolean);
     if (parts.length === 0) return null;
     return t('privateAiMode.unavailableDiagnosticsPartial', { details: parts.join(', ') });
   }, [diagnostics, t]);

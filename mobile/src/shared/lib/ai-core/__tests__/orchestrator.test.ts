@@ -1,8 +1,8 @@
 import { DEFAULT_LOCAL_AI_MODEL_ID } from '@/entities/settings/model/constants';
 
-import { AIOrchestrator } from '../orchestrator';
 import { runLocalMeetingDialogue } from '../local-provider/localAiMeetingDialogue';
 import { runLocalSummaryTasks } from '../localProvider';
+import { AIOrchestrator } from '../orchestrator';
 import type { AiExecutionContext } from '../types';
 
 jest.mock('../localProvider', () => ({

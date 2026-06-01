@@ -130,8 +130,7 @@ export async function runLocalSummaryTasks(
 
     const referenceDate = getLocalReferenceDateIsoLocal();
     const isMeetingPreset = request.processingPreset === 'meeting';
-    const includeDialogueInPass =
-      isMeetingPreset && request.omitMeetingDialogue !== true;
+    const includeDialogueInPass = isMeetingPreset && request.omitMeetingDialogue !== true;
     const systemPrompt = buildLocalSummarySystemPrompt(referenceDate, {
       includePseudoDiarization: includeDialogueInPass,
       aiOutputLanguage: ctx.aiOutputLanguage,

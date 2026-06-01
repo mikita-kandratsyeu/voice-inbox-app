@@ -77,7 +77,9 @@ export function canEnablePrivateMode(tier: PrivateCapabilityTier): boolean {
   return tier !== 'unavailable';
 }
 
-export function formatPrivateDiagnosticsRamGb(diagnostics: PrivateAiCapabilityDiagnostics): string | null {
+export function formatPrivateDiagnosticsRamGb(
+  diagnostics: PrivateAiCapabilityDiagnostics,
+): string | null {
   if (diagnostics.totalRamMb == null) return null;
   const gb = diagnostics.totalRamMb / 1024;
   return gb >= 10 ? String(Math.round(gb)) : gb.toFixed(1);

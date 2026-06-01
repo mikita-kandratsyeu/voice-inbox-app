@@ -2,8 +2,8 @@ import { i18n } from '@/shared/lib';
 import { AI_REQUEST_CANCELLED } from '@/shared/lib/ai-api/abort';
 
 import { runCloudAsk, runCloudSummaryTasks } from './cloudProvider';
-import { runLocalAsk, runLocalSummaryTasks } from './localProvider';
 import { runLocalMeetingDialogue } from './local-provider/localAiMeetingDialogue';
+import { runLocalAsk, runLocalSummaryTasks } from './localProvider';
 import type {
   AiExecutionContext,
   AskRequest,

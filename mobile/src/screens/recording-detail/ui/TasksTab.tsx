@@ -276,7 +276,10 @@ export const TasksTab = ({
     return (
       <>
         <View className="gap-3 p-4">
-          <PrivateModeTranscriptLimitNotice color={color} transcriptCharCount={transcriptCharCount} />
+          <PrivateModeTranscriptLimitNotice
+            color={color}
+            transcriptCharCount={transcriptCharCount}
+          />
           <TabEmptyState
             icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
             title={t('recordingDetail.tasksNotExtracted')}
