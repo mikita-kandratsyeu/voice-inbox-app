@@ -9,7 +9,7 @@ import { useEffect } from 'react';
 import { checkAndFlagLegacyPinHash } from '@/entities/app-lock';
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
-import { syncPrivateCapabilityTier, useSettingsStore } from '@/entities/settings';
+import { syncPrivateCapabilityTier } from '@/entities/settings';
 import { runAutoArchiveReadNotesIfEligible } from '@/features/auto-archive/model/runAutoArchiveReadNotesIfEligible';
 import { initRevenueCatWhenReady } from '@/features/entitlements';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
