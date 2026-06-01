@@ -134,13 +134,15 @@ export const DetailTabProcessingView = ({
     width: `${animatedWidth.value}%`,
   }));
 
+  const compactWithCancel = isCompact && Boolean(onCancel);
   const cardStyle = {
     borderRadius: 16,
     borderWidth: 1,
     borderColor: withAlphaHex(color.border.default, 0.9),
     backgroundColor: color.background.secondary,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingTop: compactWithCancel ? 22 : 14,
+    paddingBottom: compactWithCancel ? 16 : 14,
     gap: 12,
   } as const;
 

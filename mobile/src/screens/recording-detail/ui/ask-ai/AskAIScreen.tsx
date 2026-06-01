@@ -71,7 +71,7 @@ export const AskAIScreen = () => {
   const answerScrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
-    if (!answer || isLoading) return;
+    if (!answer && !isLoading) return;
     let raf2 = 0;
     const raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
@@ -82,7 +82,7 @@ export const AskAIScreen = () => {
       cancelAnimationFrame(raf1);
       cancelAnimationFrame(raf2);
     };
-  }, [answer, history.length, isLoading]);
+  }, [answer, history.length, isLoading, question]);
 
   useEffect(() => {
     void hydrateRecordDetails(routeRecord.id);
@@ -195,11 +195,9 @@ export const AskAIScreen = () => {
   );
 
   const shouldShowInputRow = hasTranscript && !isRestoringSession && !isLoading;
-  /** Fill scroll height when loading so the loader can be centered below the disclosure. */
-  const scrollContentFlexGrow =
-    !hasTranscript || isLoading || Boolean(error && !answer && hasTranscript);
-  /** Center whole content only when not loading (loading centers the spinner inside LoadingState). */
-  const scrollContentCentered = !hasTranscript || Boolean(error && !answer && hasTranscript);
+  /** Fill scroll height for empty / error states that vertically center content. */
+  const scrollContentFlexGrow = !hasTranscript || Boolean(error && !answer && hasTranscript);
+  const scrollContentCentered = scrollContentFlexGrow;
   const canSend =
     Boolean(questionInput.trim()) &&
     hasTranscript &&
@@ -259,7 +257,6 @@ export const AskAIScreen = () => {
             }}
           >
             <AskMainContent
-              t={t}
               color={color}
               liveRecord={liveRecord}
               hasTranscript={hasTranscript}

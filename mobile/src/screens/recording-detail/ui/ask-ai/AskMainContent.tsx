@@ -1,17 +1,11 @@
-import type { TFunction } from 'i18next';
-import { Sparkle } from 'lucide-react-native';
 import React from 'react';
-import { View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
 import type { AiExecutionMode } from '@/entities/settings';
 import type { AskAIHistoryItem } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
-import { ASK_AI_PRIVATE_TIP_KEYS } from '@/shared/lib/aiGenerationTips';
 
-import { DetailTabProcessingView } from '../DetailTabProcessingView';
 import { AnswerContent } from './AnswerContent';
-import { AskAiContextDisclosure } from './AskAiContextDisclosure';
 import { EmptyState } from './EmptyState';
 import { ErrorState } from './ErrorState';
 import { LoadingState } from './LoadingState';
@@ -19,7 +13,6 @@ import { NoTranscriptState } from './NoTranscriptState';
 import { SessionRestoringSkeleton } from './SessionRestoringSkeleton';
 
 type AskMainContentProps = {
-  t: TFunction;
   color: Colors;
   liveRecord: VoiceRecord;
   hasTranscript: boolean;
@@ -41,7 +34,6 @@ type AskMainContentProps = {
 };
 
 export const AskMainContent = ({
-  t,
   color,
   liveRecord,
   hasTranscript,
@@ -65,37 +57,18 @@ export const AskMainContent = ({
   if (isRestoringSession) return <SessionRestoringSkeleton color={color} />;
 
   if (isLoading) {
-    if (aiExecutionMode === 'private_experimental') {
-      return (
-        <View className="w-full flex-1 gap-3 py-4">
-          <AskAiContextDisclosure
-            color={color}
-            record={liveRecord}
-            priorDepth={history.length}
-            aiExecutionMode={aiExecutionMode}
-            containerClassName=""
-          />
-          <View className="min-h-0 w-full flex-1 justify-center">
-            <DetailTabProcessingView
-              progress={privateAskProgress}
-              phase={privateAskPhase}
-              color={color}
-              onCancel={onCancelAsk}
-              tipKeys={ASK_AI_PRIVATE_TIP_KEYS}
-              statusTitle={t('recordingDetail.askProcessing')}
-              leadingIcon={<Sparkle size={22} color={color.accent.primary} strokeWidth={2} />}
-              context="private_llm"
-            />
-          </View>
-        </View>
-      );
-    }
     return (
       <LoadingState
         color={color}
         record={liveRecord}
         priorDepth={history.length}
         aiExecutionMode={aiExecutionMode}
+        question={question}
+        history={history}
+        privateAskProgress={privateAskProgress}
+        privateAskPhase={privateAskPhase}
+        onCopy={onCopy}
+        onShare={onShare}
         onCancel={onCancelAsk}
       />
     );

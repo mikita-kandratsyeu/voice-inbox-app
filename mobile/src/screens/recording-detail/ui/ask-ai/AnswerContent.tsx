@@ -22,6 +22,7 @@ import { AskAiContextDisclosure } from './AskAiContextDisclosure';
 import { formatAskTurnForClipboard, formatAskTurnForShare } from './askAiFormat';
 import { AskAiSuggestedQuestions } from './AskAiSuggestedQuestions';
 import { buildFollowUpQuestions } from './askAiSuggestions';
+import { AskTurnQuestion } from './AskTurnQuestion';
 
 type AskCopyTurnButtonProps = {
   color: Colors;
@@ -94,7 +95,7 @@ type AnswerTurnBlockProps = {
   onShare: (text: string, title: string) => void;
 };
 
-const AnswerTurnBlock = ({
+export const AnswerTurnBlock = ({
   color,
   question,
   answer,
@@ -121,16 +122,7 @@ const AnswerTurnBlock = ({
           : undefined
       }
     >
-      {question.trim() ? (
-        <View className="gap-1">
-          <Text className="text-sm font-semibold" style={{ color: color.text.secondary }}>
-            {t('recordingDetail.ask')}
-          </Text>
-          <Text className="text-base leading-6" style={{ color: color.text.primary }}>
-            {question}
-          </Text>
-        </View>
-      ) : null}
+      <AskTurnQuestion color={color} question={question} />
       <AskAiAnswerMarkdown color={color}>{answer}</AskAiAnswerMarkdown>
       <View className="mt-1 flex-row flex-wrap gap-2">
         <AskCopyTurnButton color={color} clipboardText={clipboardText} onCopy={onCopy} />
