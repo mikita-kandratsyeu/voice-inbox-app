@@ -1,19 +1,22 @@
 ## Description
 
-## Steps to Reproduce the Problem
+<!-- What happened or what you need -->
+
+## Steps to reproduce (bugs)
 
 1.
 2.
 
-## Expected Behavior
+## Expected behavior
 
-## Actual Behavior
+## Actual behavior
 
-## Specifications
+## Environment
 
-- Version:
-- Platform:
+- App: mobile / web / telegram-bot
+- Version: <!-- e.g. 1.2.0 from package.json -->
+- Platform: <!-- iOS / Android / browser / Node -->
 
-###### DO NOT REMOVE MENTION BELOW
+---
 
-**Owner - @mikita-kandratsyeu**
+**Owner — @mikita-kandratsyeu**

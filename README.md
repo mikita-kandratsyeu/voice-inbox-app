@@ -1,56 +1,103 @@
 # Voice Inbox AI
 
-Voice Inbox AI is an **offline-first voice notes** application built with React Native.
+Voice Inbox AI is an **offline-first voice notes** application: capture audio on device, then get **transcripts, summaries, and actionable tasks** — with optional cloud AI and a public web presence.
 
-It lets you quickly capture ideas, meetings, and daily thoughts as audio, then turn them into **transcripts, concise summaries, and actionable tasks**.
+This repository is a **single Git repo** with **standalone** apps (no root `package.json`, no Yarn workspaces). Install dependencies and run scripts **from each app directory**. **Node.js ≥ 24.**
 
-The repository is a **single Git repo** with standalone apps: **`mobile/`** (React Native), **`web/`** (Next.js), and optionally **`telegram-bot/`** (Node admin bot reading the same Postgres `AppConfig` as web). There is no root `package.json` or Yarn workspaces — install and run scripts **from each app directory**. See [`.cursor/rules/repo-layout.mdc`](.cursor/rules/repo-layout.mdc) for commands and conventions.
+| App | Path | Role |
+|-----|------|------|
+| **Mobile** | [`mobile/`](mobile/) | React Native app — Drizzle + SQLite, on-device Whisper, optional cloud API |
+| **Web** | [`web/`](web/) | Next.js landing, legal pages, mobile API, admin dashboard |
+| **Telegram bot** | [`telegram-bot/`](telegram-bot/) | Optional Grammy admin bot (same Postgres as web) |
 
-The codebase is structured for a small team: clear layers (entities / features / screens), typed data access, and separation between local storage, on-device jobs, and optional cloud AI.
+Detailed setup and feature lists: **[mobile/README.md](mobile/README.md)** · **[web/README.md](web/README.md)** · **[telegram-bot/README.md](telegram-bot/README.md)**.
 
-
-## Features (mobile)
-
-- **Voice capture** — Full-screen recording with waveform, timer, pause/resume; audio is stored on device first.
-- **Transcription & AI** — On-device Whisper transcription; tabs for _Transcript_, _Summary_, and _Tasks_; optional cloud LLM flows where enabled (with consent and network handling).
-- **Inbox** — All recordings, pins, folders, tags, duration and preview metadata; batch actions and filters.
-- **Search** — **Hybrid search**: lexical scoring over title, summary, transcript, tags, and tasks, combined with **local embeddings** when the embedding model is available (see `mobile/src/features/search-records/model/useSearchRecords.ts` and `mobile/src/shared/lib/embeddings/`).
-- **Backup** — Export/import as zip (JSON metadata + audio files); see `mobile/src/features/sync-data/`.
-- **Monetization & growth** — RevenueCat subscriptions, optional Yandex ads on non–ad-free tiers, Firebase (Analytics, Crashlytics, Messaging, Remote Config, App Check), in-app review prompts.
-- **Platform extras (iOS)** — App Intents / Siri shortcuts, widgets and Live Activity extensions under `mobile/ios/`.
-- **Theming** — System / light / dark; NativeWind plus shared color tokens.
+Cursor/agent conventions: [`.cursor/rules/repo-layout.mdc`](.cursor/rules/repo-layout.mdc).
 
 
-## Tech stack — mobile (`mobile/`)
+## Quick start
 
-| Area | Choice |
-|------|--------|
-| Framework | React Native (CLI), TypeScript |
-| UI | React 19, NativeWind (Tailwind-style), `@gorhom/bottom-sheet`, FlashList |
-| Navigation | React Navigation (native stack + bottom tabs + modals) |
-| Client state | **Zustand** stores per domain (`entities/*/model/store.ts`, `features/*/model/store.ts`) |
-| Persistence | **Drizzle ORM** + **SQLite** via `@op-engineering/op-sqlite`; schema in `mobile/src/shared/lib/db/schema.ts`; migrations in `mobile/drizzle/` (`yarn db:generate` from `mobile/`) |
-| Key-value / prefs | `react-native-mmkv`, settings entities |
-| Audio | `react-native-nitro-sound`, Whisper via `whisper.rn`, optional `llama.rn` / Apple on-device AI where integrated |
-| i18n | `i18next` + `react-i18next` |
-| Validation / types | `zod` |
+### Mobile (`mobile/`)
 
-**Web (`web/`)** — Next.js, Prisma, Postgres; legal and marketing content in `web/content/`. The mobile app does **not** use the web database for note data (Drizzle + SQLite on device). An optional **`telegram-bot/`** process may read the same Postgres **`AppConfig`** row as web for the Telegram admin whitelist only.
+```bash
+cd mobile
+yarn install
+cp .env.example .env
+# iOS: Xcode + CocoaPods; Android: google-services.json from Firebase
+yarn start
+yarn ios    # or yarn android
+```
+
+Quality gates: `yarn lint`, `yarn type:check`, `yarn test` (or `yarn validate` before push).
+
+### Web (`web/`)
+
+```bash
+cd web
+yarn install
+cp .env.example .env
+# Set DATABASE_URL, JWT_SECRET, APP_SECRET, …
+yarn db:push
+yarn db:seed    # first superadmin when ADMIN_SEED_* are set
+yarn dev
+```
+
+Admin UI: `/admin`. Legal copy: [`web/content/`](web/content/).
+
+### Telegram bot (`telegram-bot/`)
+
+```bash
+cd telegram-bot
+yarn install
+cp .env.example .env
+yarn dev
+```
+
+Requires `DATABASE_URL`, `WEB_ADMIN_URL`, and `TELEGRAM_BOT_API_SECRET` (same value as on web) for API-backed menus.
 
 
-## Privacy & terms (web)
+## Mobile highlights
 
-Legal pages are built from Markdown in **`web/content/`** (`privacy.*.md`, `terms.*.md`). They describe **current** behavior (e.g. Yandex ads when not on a paid ad-free tier, Firebase Crashlytics in release builds) and are tied to the “Last updated” date — revise when product or law changes. Code: `mobile/src/features/app-storefront/model/useAdsAllowed.ts`, `mobile/src/shared/lib/crashlytics.ts`.
+- **Voice capture** — Waveform, timer, pause/resume; audio stored locally first.
+- **Transcription** — On-device Whisper (`whisper.rn`); iOS Core ML encoder when downloaded; context lifecycle in `mobile/src/features/transcription/`.
+- **AI** — Private (on-device `llama.rn`) and Smart (HTTPS to web API); tabs for transcript, summary, tasks, meeting dialogue.
+- **Inbox** — Folders, tags, pins, archive/trash, batch actions.
+- **Search** — Hybrid lexical + local embeddings when available (`mobile/src/features/search-records/`, `mobile/src/shared/lib/embeddings/`).
+- **Backup** — ZIP export/import (`mobile/src/features/sync-data/`).
+- **Monetization** — RevenueCat; optional Yandex ads (banner, rewarded, interstitial) without Pro.
+- **Platform** — Firebase, deep links, iOS widgets / App Intents, Android shortcuts.
+
+Stack summary: React Native 0.84, React 19, NativeWind, Zustand, Drizzle + op-sqlite — see [mobile/README.md](mobile/README.md).
+
+
+## Web highlights
+
+- **Site** — i18n (`en` / `ru`), marketing pages, blog, backup ZIP viewer.
+- **API** — JWT auth, async AI jobs (QStash or `after()`), support intake, Pro license sync.
+- **Admin** — Support inbox, push, release notes, audit log, infra status — see [web/README.md](web/README.md).
+
+
+## Privacy & terms
+
+Legal pages are Markdown in **`web/content/`** (`privacy.*.md`, `terms.*.md`). Keep them aligned with product behavior (ads, Firebase, cloud AI, IAP). Update **Last updated** when behavior changes. See [web/content/README.md](web/content/README.md) and [`.cursor/rules/legal-content.mdc`](.cursor/rules/legal-content.mdc).
 
 
 ## Release versioning
 
-From the **repository root**, run `node scripts/release.mjs` to bump **semver** and **integer build** together in `mobile/package.json`, `web/package.json`, the iOS Xcode project (`MARKETING_VERSION` / `CURRENT_PROJECT_VERSION`), and `mobile/android/app/build.gradle` (`versionName` / `versionCode`). The script can create a commit and git tag `v<semver>`. Use `node scripts/release.mjs --help` for flags (`--dry-run`, `--no-git`, `--yes` with `RELEASE_VERSION` / `RELEASE_BUILD`, `--allow-dirty`).
+From the **repository root**:
+
+```bash
+node scripts/release.mjs
+```
+
+Bumps semver + integer build in `mobile/package.json`, `web/package.json`, iOS `MARKETING_VERSION` / `CURRENT_PROJECT_VERSION`, and Android `versionName` / `versionCode`. Optional git commit and tag `v<semver>`. Flags: `--dry-run`, `--no-git`, `--yes` with `RELEASE_VERSION` / `RELEASE_BUILD`, `--allow-dirty` — run `node scripts/release.mjs --help`.
+
+
+## Security
+
+See [SECURITY.md](SECURITY.md) for supported versions and how to report vulnerabilities.
 
 
 ## License
 
-This project is **proprietary** and distributed under **UNLICENSED / all rights reserved** terms.
-
-- See the root `LICENSE` file for the full terms.
-- Third-party dependencies keep their own licenses.
+**Proprietary** — UNLICENSED / all rights reserved. See [LICENSE](LICENSE). Third-party dependencies retain their own licenses.

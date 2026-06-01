@@ -12,5 +12,6 @@ alwaysApply: false
 - **Styles:** Tailwind v4 + PostCSS; follow existing component patterns.
 - **i18n:** follow existing next-intl patterns; legal pages — content in `web/content/`.
 - **Checks:** from `web/`: `yarn lint`, `yarn type:check`.
+- **DB:** `yarn db:push`, `yarn db:seed` (`ADMIN_SEED_*` for first superadmin), `yarn db:backup` / `yarn db:restore`.
 
 Do not add mobile-app dependencies to `web/` unless there is a clear need.

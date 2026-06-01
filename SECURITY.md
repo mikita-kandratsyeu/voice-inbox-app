@@ -9,8 +9,8 @@ Security fixes are applied to the **actively maintained** development line. Rele
 | Scope | Supported with security fixes |
 | ----- | ----------------------------- |
 | **Current `main` branch** | Yes — primary target for fixes |
-| **Latest patch of the current minor** (e.g. `0.4.x` app versions in `web/package.json` and `mobile/package.json`) | Yes, when aligned with what is shipped to users |
-| **Older minor lines** (e.g. `0.3.x` and below) | Best effort only; upgrade recommended |
+| **Latest patch of the current minor** (e.g. `1.2.x` in `web/package.json` and `mobile/package.json`) | Yes, when aligned with what is shipped to users |
+| **Older minor lines** (e.g. `1.1.x` and below) | Best effort only; upgrade recommended |
 | **Forks and unofficial builds** | Not supported |
 
 Exact version numbers are defined per app in each app’s `package.json`. When in doubt, run the latest code from `main` or install updates from the official app stores / official web deployment.

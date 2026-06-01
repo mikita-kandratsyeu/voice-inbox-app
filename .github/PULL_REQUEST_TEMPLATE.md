@@ -1,10 +1,23 @@
-## [TRELLO_TICKET](https://trello.com/TRELLO_TICKET)
+## Summary
 
-### Description
+<!-- What changed and why (1–3 bullets). Link Trello/issue if applicable. -->
 
-### Type of change
+## Type of change
 
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] This change requires a documentation update
+- [ ] Bug fix (non-breaking)
+- [ ] New feature (non-breaking)
+- [ ] Breaking change
+- [ ] Documentation only
+
+## Test plan
+
+<!-- How you verified (device/OS, commands run). -->
+
+- [ ] `yarn lint` / `yarn type:check` / `yarn test` in affected app (`mobile/`, `web/`, `telegram-bot/`)
+
+## Apps touched
+
+- [ ] `mobile/`
+- [ ] `web/`
+- [ ] `telegram-bot/`
+- [ ] Root / docs / CI only

@@ -14,6 +14,7 @@
     "type:check": "prisma generate && tsc --noEmit",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
+    "db:seed": "tsx scripts/db-seed-admin.ts",
     "db:backup": "tsx scripts/db-backup.ts",
     "db:restore": "tsx scripts/db-restore.ts",
     "release-post:draft": "tsx scripts/generate-release-post.ts"

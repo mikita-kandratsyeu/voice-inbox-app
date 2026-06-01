@@ -1,78 +1,110 @@
 # Voice Inbox AI — Web
 
-Web landing page for **Voice Inbox AI** — an offline-first voice notes app with AI transcription and summarization.
+Next.js site and backend for **Voice Inbox AI**: marketing pages, legal docs, mobile API, admin dashboard, and optional Telegram bot integration.
+
+Repository overview: [../README.md](../README.md).
 
 ---
 
-## About
+## Getting started
 
-The site showcases Voice Inbox AI: explains features, walks through the workflow, and directs users to download the mobile app from the App Store and Google Play.
+```bash
+cd web
+yarn install
+cp .env.example .env
+```
+
+1. Set **`DATABASE_URL`** (Neon Postgres recommended; see comment in `.env.example` for `uselibpqcompat`).
+2. Set **`JWT_SECRET`** and **`APP_SECRET`** (min 32 characters for JWT).
+3. Apply schema: `yarn db:push` (or `prisma migrate deploy` in production).
+4. Seed the first superadmin (empty `AdminUser` table only):
+
+   ```bash
+   ADMIN_SEED_LOGIN=admin ADMIN_SEED_PASSWORD='your-secure-password' yarn db:seed
+   ```
+
+5. Run dev server: `yarn dev` → open `/admin` to sign in.
+
+Without Redis (`UPSTASH_*`), the API uses an in-memory job store — fine for local development.
 
 ---
 
 ## Features
 
 - **Internationalization (i18n)** — English and Russian (`next-intl`)
-- **Light & dark theme** — toggle via `next-themes`
+- **Light & dark theme** — `next-themes`
 - **Responsive layout** — Tailwind CSS v4
 - **SEO & Open Graph** — metadata, canonical URLs, dynamic OG images
-- **Pages** — home, Privacy Policy, Terms of Service (Markdown in `content/` — Yandex ads when not on paid ad-free tier, subject to policy updates)
-- **API** — AI/sync/message endpoints (Redis or in-memory), mobile JWT auth, **in-app support** (`POST /api/support` → Postgres)
-- **Admin** — dashboard at `/admin` (bonus config, infra status incl. Postgres ping, push + **email** support replies, support inbox with search & CSV export, **release notes** for the landing blog with **generate from git**, audit log, API error histogram via Redis, admin users & access policy)
-- **Blog** — `/blog` and `/blog/[slug]` (localized); RSS at `/blog/feed.xml`; content from Postgres, edited in admin (**Blog** tab)
-- **Backup viewer** — `/viewer` with search, deep links (`?note=`), local ZIP parsing
+- **Pages** — home, Privacy Policy, Terms of Service (Markdown in `content/`)
+- **API** — AI/sync/message endpoints, mobile JWT auth, in-app support (`POST /api/support` → Postgres)
+- **Admin** — `/admin`: bonus config, infra status (Postgres ping), push + email support replies, support inbox (search & CSV), release notes with git-based draft, audit log, API error histogram (Redis), admin users & access policy
+- **Blog** — `/blog`, `/blog/[slug]`, RSS `/blog/feed.xml`; Postgres content, **Blog** tab in admin
+- **Backup viewer** — `/viewer` with search, deep links (`?note=`), client-side ZIP parsing
 
 ---
 
-## Tech Stack
+## Tech stack
 
-
-| Category  | Technology              |
-| --------- | ----------------------- |
+| Category | Technology |
+| -------- | ---------- |
 | Framework | Next.js 16 (App Router) |
-| Language  | TypeScript              |
-| Styling   | Tailwind CSS v4         |
-| i18n      | next-intl               |
-| Theme     | next-themes             |
-| Icons     | lucide-react            |
-| Analytics | @vercel/analytics       |
+| Language | TypeScript |
+| Styling | Tailwind CSS v4 |
+| i18n | next-intl |
+| Theme | next-themes |
+| Database | Prisma 7 + Postgres (`@prisma/adapter-pg`) |
+| Icons | lucide-react |
+| Analytics | @vercel/analytics |
 
+**Prisma client** is generated to `web/generated/prisma` (gitignored). After schema changes: `yarn db:generate` (also runs on `yarn build` / `yarn type:check`).
 
 ---
 
-## Environment Variables
+## Scripts (from `web/`)
 
+| Script | Description |
+| ------ | ----------- |
+| `yarn dev` | Next.js dev server |
+| `yarn build` | `prisma generate` + production build |
+| `yarn start` | Production server |
+| `yarn lint` / `yarn lint:fix` | ESLint |
+| `yarn type:check` | Prisma generate + `tsc` |
+| `yarn db:generate` | Prisma client only |
+| `yarn db:push` | Push schema to database (dev) |
+| `yarn db:seed` | Create first superadmin (`ADMIN_SEED_*`) |
+| `yarn db:backup` / `yarn db:restore` | `pg_dump` / restore helpers (requires `libpq`) |
+| `yarn release-post:draft` | Draft blog release post from git + `package.json` version |
 
-| Variable                   | Description                                                          |
-| -------------------------- | -------------------------------------------------------------------- |
-| `NEXT_PUBLIC_BASE_URL`     | Base URL of the site                                                 |
-| `OPENROUTER_API_KEY`       | OpenRouter API key (for AI services)                                 |
-| `UPSTASH_REDIS_REST_URL`   | Upstash Redis URL                                                    |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis token                                                  |
-| `QSTASH_TOKEN`             | Upstash QStash token for async AI workers (optional; falls back to `after()` locally) |
-| `QSTASH_CURRENT_SIGNING_KEY` | Verifies QStash webhook calls to `/api/internal/ai/worker`       |
-| `QSTASH_NEXT_SIGNING_KEY`  | Optional signing key rotation for QStash                               |
-| `AI_JOB_TRANSPORT`         | `qstash` or `after` (default: `qstash` when `QSTASH_TOKEN` is set)   |
-| `QSTASH_URL`               | Optional local QStash dev server URL                                 |
-| `APP_SECRET`               | Secret used only to obtain JWT from `POST /api/token`                |
-| `JWT_SECRET`               | Secret to sign API JWTs (min 32 chars); required for API auth        |
-| `JWT_EXPIRES_IN`           | Optional mobile API JWT expiry (e.g. `1h`, `12h`, `24h`; default `12h`) |
-| `DATABASE_URL`             | Neon Postgres — admin users, `AppConfig`, **support issues** (required for `/admin` and `POST /api/support`) |
-| `ADMIN_JWT_SECRET`         | Signs admin session JWT (min 32 chars); falls back to `JWT_SECRET`  |
-| `ADMIN_SEED_*`             | See `.env.example` — seed first admin via `yarn db:seed`             |
-| `VERCEL_TOKEN`             | Vercel API token for deployment status on admin dashboard (optional) |
-| `VERCEL_PROJECT_ID`        | Vercel project ID to filter deployments (optional)                   |
-| `NEXT_PUBLIC_FIREBASE_CONSOLE_PROJECT_ID` | Optional; enables direct admin links to Firebase Crashlytics, Cloud Messaging & Remote Config |
-| `NEXT_PUBLIC_GOOGLE_ANALYTICS_ID`         | Optional; GA4 on the landing; admin shows link when set                |
+---
 
+## Environment variables
 
-Without Redis, an in-memory store is used (suitable for development).
+See **`.env.example`** for the full list and comments. Core groups:
 
-**Async AI jobs:** Mobile POST endpoints enqueue work in Redis (`msg:*`) and return immediately; the app polls GET until `done`. Background processing uses **QStash** when `QSTASH_TOKEN` is set (worker: `POST /api/internal/ai/worker`), otherwise Next.js `after()` on the same deployment. Set `NEXT_PUBLIC_BASE_URL` to a public HTTPS origin so QStash can reach the worker. On Vercel, if Deployment Protection blocks webhooks, allow QStash or exclude `/api/internal/ai/worker`.
+| Group | Variables |
+| ----- | ----------- |
+| **Site** | `NEXT_PUBLIC_BASE_URL`, store URLs, waitlist, support email |
+| **Mobile API** | `APP_SECRET`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `MOBILE_USER_AGENT` |
+| **AI** | `OPENROUTER_API_KEY`, optional `DEEPSEEK_*`, `AI_JOB_TRANSPORT`, QStash (`QSTASH_*`) |
+| **Cache / jobs** | `UPSTASH_REDIS_REST_*` (optional — in-memory fallback) |
+| **Database** | `DATABASE_URL`, `ADMIN_JWT_SECRET`, `ADMIN_SEED_*` |
+| **Email** | `MAIL_FROM`, `SMTP_*` (Pro license / support replies from admin) |
+| **Integrations** | `VERCEL_*`, `GITHUB_*`, `FIREBASE_SERVICE_ACCOUNT`, RevenueCat webhook keys |
+| **Telegram bot** | `TELEGRAM_BOT_API_SECRET` (shared with `telegram-bot/`) |
 
-**OpenRouter generation recovery:** Cloud chat calls stream from OpenRouter and persist `X-Generation-Id` in Redis (`or-gen:{jobId}`). If the worker times out while OpenRouter still completes the generation, QStash retries resume via `GET /api/v1/generation/content` instead of starting a duplicate chat request when possible.
+---
 
-**Meeting speaker breakdown (long notes):** Summarize completes first (`status: done`). For Pro meeting notes longer than ~10k chars, a second QStash job (`meeting_dialogue`, own 300s) fills `meetingDialogueMarkdown`; the app keeps polling while `meetingDialogueStatus` is `processing`. Shorter meetings still use an inline second pass in the summarize worker.
+## Async AI jobs
+
+Mobile POST endpoints enqueue work in Redis (`msg:*`) and return immediately; the app polls GET until `done`.
+
+- **Transport:** With `QSTASH_TOKEN`, work runs via **QStash** → `POST /api/internal/ai/worker`. Otherwise Next.js **`after()`** on the same deployment (`AI_JOB_TRANSPORT=after`).
+- Set **`NEXT_PUBLIC_BASE_URL`** to a public HTTPS origin so QStash can reach the worker.
+- On Vercel, if Deployment Protection blocks webhooks, allow QStash or exclude `/api/internal/ai/worker`.
+
+**OpenRouter recovery:** Streaming stores `X-Generation-Id` in Redis (`or-gen:{jobId}`). If the worker times out while OpenRouter still completes, QStash retries can resume via `GET /api/v1/generation/content` instead of duplicating the chat request.
+
+**Meeting speaker breakdown:** Summarize completes first (`status: done`). For long Pro meeting notes (~10k+ chars), a second QStash job (`meeting_dialogue`, 300s) fills `meetingDialogueMarkdown`; the app polls while `meetingDialogueStatus` is `processing`. Shorter meetings may use an inline second pass in the summarize worker.
 
 ---
 
@@ -80,5 +112,23 @@ Without Redis, an in-memory store is used (suitable for development).
 
 - **Languages:** `en` (default), `ru`
 - **URLs:** `/` — English, `/ru` — Russian
-- **Translation files:** `messages/en.json`, `messages/ru.json`
+- **Messages:** `messages/en.json`, `messages/ru.json`
+- **Legal:** `content/privacy.*.md`, `content/terms.*.md` — see [content/README.md](content/README.md)
 
+---
+
+## Project layout
+
+```
+app/           App Router pages and API routes
+components/    Shared UI
+config/        Constants (rate limits, TTLs)
+content/       Legal Markdown
+lib/           Auth, Prisma helpers, admin, AI utilities
+messages/      next-intl JSON
+prisma/        Schema and migrations
+scripts/       db-seed, backup, release-post draft
+server/        Route handlers (some API logic)
+services/      AI, translate, ask, etc.
+generated/     Prisma client (generated, gitignored)
+```

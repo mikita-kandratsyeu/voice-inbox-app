@@ -2,35 +2,41 @@
 
 Mobile-first admin interface for the Voice Inbox web dashboard (`/admin`). English UI.
 
+Repository overview: [../README.md](../README.md). Web admin setup: [../web/README.md](../web/README.md).
+
 ## Requirements
 
 - Node.js ≥ 24
-- Same Postgres database as `web/`
-- Running web app (or deployed URL) for mutating operations via `/api/admin/*`
+- Same Postgres database as `web/` (`DATABASE_URL`)
+- Running or deployed web app for mutating operations via `/api/admin/*`
 
 ## Environment variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `TELEGRAM_BOT_TOKEN` | yes | Bot token from [@BotFather](https://t.me/BotFather) |
-| `DATABASE_URL` | yes | Postgres connection (admin `telegramUserId` lookup) |
+| `DATABASE_URL` | yes | Postgres (`AdminUser.telegramUserId` lookup) |
 | `WEB_ADMIN_URL` | yes* | Site origin, e.g. `https://voice-inbox.example` |
-| `TELEGRAM_BOT_API_SECRET` | yes* | Shared secret; set the same value on web as `TELEGRAM_BOT_API_SECRET` |
-| `TELEGRAM_BOT_USER_AGENT` | no | Product token in `User-Agent` (default `VoiceInbox-Bot`). Use in Vercel Firewall → Bypass when User Agent **Contains** this string (same pattern as mobile `VoiceInbox-Mobile`). |
+| `TELEGRAM_BOT_API_SECRET` | yes* | Shared secret — same as web `TELEGRAM_BOT_API_SECRET` |
+| `TELEGRAM_BOT_USER_AGENT` | no | Product token in `User-Agent` (default `VoiceInbox-Bot`). Vercel Firewall: bypass when User-Agent **contains** this string (like mobile `MOBILE_USER_AGENT`). |
 
-\*Required for API-backed actions (overview, support, keys, push, etc.). Without them the bot only shows link/setup screens.
+\*Required for API-backed actions (overview, support, keys, push, etc.). Without them the bot shows link/setup screens only.
 
 Optional: `ADMIN_LINK_*` for Operations console URLs.
 
-Copy `.env.example` to `.env` and fill in values.
+```bash
+cd telegram-bot
+cp .env.example .env
+# Edit .env
+```
 
 ## Auth model
 
-1. **Per-admin Telegram id** — each `AdminUser` can have `telegramUserId` (unique). Set it in web admin → Security → Admin users (create or edit).
-2. **RBAC** — the bot loads `isSuperadmin` and `permissions[]` from that admin row (same tabs as web). Menu sections are hidden without permission.
-3. **API calls** — the bot calls `WEB_ADMIN_URL/api/admin/...` with `Authorization: Bearer <TELEGRAM_BOT_API_SECRET>` and `X-Telegram-User-Id: <telegram id>`. Web validates the secret and linked admin, then applies the same route permissions as the browser session.
+1. **Per-admin Telegram id** — each `AdminUser` can have `telegramUserId` (unique). Set in web admin → Security → Admin users.
+2. **RBAC** — bot loads `isSuperadmin` and `permissions[]` from that row (same tabs as web).
+3. **API calls** — `WEB_ADMIN_URL/api/admin/...` with `Authorization: Bearer <TELEGRAM_BOT_API_SECRET>` and `X-Telegram-User-Id: <id>`. Web validates secret + linked admin, then applies route permissions.
 
-Secrets (keys, passwords) are never shown in full; keys use masked prefixes only.
+Secrets (keys, passwords) are never shown in full; API keys use masked prefixes only.
 
 ## Setup
 
@@ -38,14 +44,14 @@ Secrets (keys, passwords) are never shown in full; keys use masked prefixes only
 cd telegram-bot
 yarn install
 cp .env.example .env
-# Edit .env, run web migration for telegramUserId column
+# Configure .env; ensure web schema is applied (yarn db:push in web/)
 yarn dev
 ```
 
 Link your Telegram account:
 
 1. Message the bot `/whoami` and copy your numeric id.
-2. In web admin → Security → Admin users, set **Telegram user id** on your admin row (or ask a superadmin).
+2. In web admin → Security → Admin users, set **Telegram user id** on your admin row (superadmin required).
 
 ## Commands
 
@@ -75,20 +81,22 @@ Link your Telegram account:
 
 ## Scripts
 
-- `yarn dev` — long polling (development)
-- `yarn start` — production
-- `yarn type:check` — TypeScript
-- `yarn test` — unit tests (format helpers)
+| Script | Description |
+| ------ | ----------- |
+| `yarn dev` | Long polling (development) |
+| `yarn start` | Production |
+| `yarn type:check` | TypeScript |
+| `yarn test` | Unit tests (format helpers) |
 
 ## Project layout
 
 ```
 src/
-  auth/          admin profile from DB (telegramUserId)
+  auth/          Admin profile from DB (telegramUserId)
   api/           HTTP client for web admin API
   modules/       overview, support, pro-keys, …
-  session/       in-memory flows and list indices
+  session/       In-memory flows and list indices
   ui/            HTML formatting, keyboards, replies
-  router.ts      commands & callback routing
-  index.ts       entrypoint
+  router.ts      Commands & callback routing
+  index.ts       Entrypoint
 ```

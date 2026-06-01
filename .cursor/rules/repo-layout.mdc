@@ -9,24 +9,38 @@ One **Git repository** with **standalone** apps in `web/`, `mobile/`, and option
 
 | App | Path | Role |
 |-----|------|------|
-| Web | `web/` | Next.js, Prisma, public site / API |
+| Web | `web/` | Next.js, Prisma, public site / API / admin |
 | Mobile | `mobile/` | React Native (CLI), Drizzle, offline-first app |
-| Telegram bot | `telegram-bot/` | Optional admin bot (Grammy); reads `AppConfig` from the same Postgres as web |
+| Telegram bot | `telegram-bot/` | Optional admin bot (Grammy); `AdminUser.telegramUserId` + web `/api/admin/*` |
 
 Install dependencies and run scripts **from the app directory** (`cd web`, `cd mobile`, or `cd telegram-bot`), not from the repo root.
 
 ## Commands (from each app directory)
 
-- **Web:** `yarn dev`, `yarn build`, `yarn lint`, `yarn type:check`, `yarn db:generate` / `db:push`
-- **Mobile:** `yarn start`, `yarn ios`, `yarn lint`, `yarn type:check`, `yarn test`
-- **Telegram bot:** `yarn dev`, `yarn start`, `yarn type:check`
+**Web:** `yarn dev`, `yarn build`, `yarn lint`, `yarn type:check`, `yarn db:generate`, `yarn db:push`, `yarn db:seed` (first admin via `ADMIN_SEED_*`), `yarn db:backup` / `yarn db:restore`
 
-Do not mix layers: **web** uses Prisma and Postgres; **mobile** uses Drizzle and local storage (op-sqlite, etc.). When changing shared business logic, keep both apps in mind, but do not copy database schemas blindly.
+**Mobile:** `yarn start`, `yarn ios`, `yarn android`, `yarn lint`, `yarn type:check`, `yarn test`, `yarn db:generate`
+
+**Telegram bot:** `yarn dev`, `yarn start`, `yarn type:check`, `yarn test`
+
+**Repo root:** `node scripts/release.mjs` — bump mobile/web semver + native build numbers
+
+## Data layers
+
+- **Web:** Prisma + Postgres — admin, `AppConfig`, support, blog, Pro keys; **not** mobile note payloads.
+- **Mobile:** Drizzle + SQLite (op-sqlite) — records, transcripts, embeddings locally.
+
+Do not copy schemas between apps. When changing shared business logic (AI modes, backup format, entitlements), consider both sides.
+
+## Docs & legal
+
+- Overview: root `README.md`
+- Legal Markdown: `web/content/` — see `web/content/README.md` and `.cursor/rules/legal-content.mdc`
 
 ## Scope of changes
 
-Change only what the task requires. Web legal copy lives in Markdown under `web/content/` (see root `README.md`).
+Change only what the task requires.
 
 ## Cursor indexing
 
-Use a root `.cursorignore` so `node_modules`, build outputs, and `.env` are not pulled into context. Keep it up to date when adding new generated directories.
+Use a root `.cursorignore` so `node_modules`, build outputs, and `.env` are not pulled into context. Keep it up to date when adding new generated directories (`web/generated`, `mobile/drizzle`, etc.).
