@@ -380,6 +380,8 @@
     "meetingDialogueSingleSpeakerHint": "Looks like one person spoke — or we couldn’t split the replies.",
     "meetingDialogueNoLabelsHint": "We couldn’t split this by participant. Try again or update the summary.",
     "retryMeetingDialogue": "Refresh breakdown",
+    "meetingDialogueSpeakersSection": "Participants",
+    "meetingDialogueSpeakersSectionHint": "Tap a name to customize how they appear in this note",
     "renameSpeakerTitle": "Participant name",
     "renameSpeakerPlaceholder": "Anna, Client…",
     "renameSpeakerA11y": "Edit name: {{name}}",

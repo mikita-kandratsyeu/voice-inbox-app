@@ -9,6 +9,7 @@ import type { Colors } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
 import { AiTabErrorBanner, AiTabHintIcon, Button, TabEmptyState } from '@/shared/ui';
 
+import { buildSpeakerRoster, shouldShowInlineSpeakerLabel } from '../lib/buildSpeakerRoster';
 import {
   analyzeMeetingDialogueHeuristics,
   applySpeakerLabelsToUtterances,
@@ -18,6 +19,7 @@ import {
 } from '../lib/meetingSpeakerLabels';
 import { parseMeetingDialogue } from '../lib/parseMeetingDialogue';
 import { AiTabProcessing } from './AiTabProcessing';
+import { MeetingDialogueSpeakerRoster } from './MeetingDialogueSpeakerRoster';
 import { MeetingDialogueUtteranceCard } from './MeetingDialogueUtteranceCard';
 import { MeetingTabInfoCallout, MeetingTabInfoCalloutText } from './MeetingTabInfoCallout';
 import { TaskEditSheet } from './TaskEditSheet';
@@ -101,6 +103,13 @@ export const MeetingDialogueTab = ({
     () => analyzeMeetingDialogueHeuristics(rawUtterances),
     [rawUtterances],
   );
+
+  const speakerRoster = useMemo(
+    () => buildSpeakerRoster(rawUtterances, speakerLabels),
+    [rawUtterances, speakerLabels],
+  );
+
+  const showSpeakerRoster = Boolean(onRenameSpeaker && speakerRoster.length > 0);
 
   const errMessage = useMemo(() => {
     return errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '');
@@ -260,19 +269,29 @@ export const MeetingDialogueTab = ({
           </MeetingTabInfoCalloutText>
         ) : null}
       </MeetingTabInfoCallout>
+      {showSpeakerRoster ? (
+        <MeetingDialogueSpeakerRoster
+          speakers={speakerRoster}
+          color={color}
+          onRename={openRename}
+        />
+      ) : null}
       <View className="gap-2.5">
         {utterances.map((u, index) => {
           const rawLabel = rawUtterances[index]?.speakerLabel?.trim() ?? '';
-          const canRename = Boolean(onRenameSpeaker && rawLabel);
           const key = `${index}-${normalizeSpeakerLabelKey(rawLabel)}-${u.body.slice(0, 24)}`;
+          const showInlineSpeakerLabel = shouldShowInlineSpeakerLabel(rawUtterances, index);
+          const speakerLabelVariant = showSpeakerRoster
+            ? ('subtle' as const)
+            : ('emphasized' as const);
 
           return (
             <MeetingDialogueUtteranceCard
               key={key}
               utterance={u}
               color={color}
-              canRename={canRename}
-              onRename={canRename ? () => openRename(rawLabel) : undefined}
+              showInlineSpeakerLabel={showInlineSpeakerLabel}
+              speakerLabelVariant={speakerLabelVariant}
             />
           );
         })}

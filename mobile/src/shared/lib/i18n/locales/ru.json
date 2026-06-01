@@ -380,6 +380,8 @@
     "meetingDialogueSingleSpeakerHint": "Похоже, говорил один человек — или не удалось разделить реплики.",
     "meetingDialogueNoLabelsHint": "Не получилось разложить по участникам. Попробуйте ещё раз или обновите сводку.",
     "retryMeetingDialogue": "Обновить разбивку",
+    "meetingDialogueSpeakersSection": "Участники",
+    "meetingDialogueSpeakersSectionHint": "Нажмите на имя, чтобы задать своё отображение в этой заметке",
     "renameSpeakerTitle": "Имя участника",
     "renameSpeakerPlaceholder": "Аня, Клиент…",
     "renameSpeakerA11y": "Изменить имя: {{name}}",
