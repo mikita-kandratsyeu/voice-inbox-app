@@ -630,20 +630,19 @@ export const AllTasksScreen = () => {
   );
 
   const headerRightSlot = useMemo(
-    () =>
-      recordFilterId ? null : (
-        <HeaderIconButton
-          iconOnly
-          variant="icon"
-          size="md"
-          icon={<Plus size={22} color={color.text.primary} strokeWidth={2.2} />}
-          color={color}
-          onPress={openCreateTask}
-          accessibilityLabel={t('allTasks.createTaskA11y')}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        />
-      ),
-    [color, openCreateTask, recordFilterId, t],
+    () => (
+      <HeaderIconButton
+        iconOnly
+        variant="icon"
+        size="md"
+        icon={<Plus size={22} color={color.text.primary} strokeWidth={2.2} />}
+        color={color}
+        onPress={openCreateTask}
+        accessibilityLabel={t('allTasks.createTaskA11y')}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      />
+    ),
+    [color, openCreateTask, t],
   );
 
   const renderListItem = useCallback(
