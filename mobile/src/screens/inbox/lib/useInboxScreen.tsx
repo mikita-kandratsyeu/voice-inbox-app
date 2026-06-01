@@ -156,6 +156,46 @@ export function useInboxScreen() {
     resetToDefault,
   } = useSearchRecords(folderFilteredRecords);
 
+  const activeFolder = useMemo(
+    () =>
+      effectiveActiveFolderId
+        ? (folders.find((f) => f.id === effectiveActiveFolderId) ?? null)
+        : null,
+    [effectiveActiveFolderId, folders],
+  );
+
+  const headerTitle = useMemo(() => {
+    if (!useTabletShell) {
+      return t('inbox.title');
+    }
+    if (activeFolder) {
+      return activeFolder.name;
+    }
+    if (filterStatus === 'pinned') {
+      return t('inbox.filters.pinned');
+    }
+    if (filterStatus === 'archived') {
+      return t('inbox.filters.archived');
+    }
+    return t('inbox.title');
+  }, [activeFolder, filterStatus, t, useTabletShell]);
+
+  const headerSubtitleText = useMemo(() => {
+    if (!useTabletShell) {
+      return subtitleText;
+    }
+    if (menuFilterStatus) {
+      return t('inbox.filterSummary', {
+        filterName: t(`inbox.filters.${menuFilterStatus}`),
+        count: filtered.length,
+      });
+    }
+    if (isSearching) {
+      return subtitleText;
+    }
+    return t('inbox.recordsCount', { count: filtered.length });
+  }, [filtered.length, isSearching, menuFilterStatus, subtitleText, t, useTabletShell]);
+
   const totalFlattenedRecords = useMemo(
     () => countFlattenedRecords(flattenedData),
     [flattenedData],
@@ -473,7 +513,10 @@ export function useInboxScreen() {
 
   useEffect(() => {
     return registerTabletInboxSidebarNavHandler((target) => {
-      setMenuFilterStatus(null);
+      if (target.kind === 'inbox') {
+        inboxFiltersReset?.triggerReset();
+        return;
+      }
       setFilterStatus(mapTabletSidebarTargetToFilter(target));
       if (target.kind === 'folder') {
         handleFolderSelect(target.folderId);
@@ -481,7 +524,7 @@ export function useInboxScreen() {
       }
       handleFolderSelect(null);
     });
-  }, [handleFolderSelect, setFilterStatus, setMenuFilterStatus]);
+  }, [handleFolderSelect, inboxFiltersReset, setFilterStatus]);
 
   useEffect(() => {
     return registerTabletOpenCreateFolderHandler(() => {
@@ -757,6 +800,8 @@ export function useInboxScreen() {
     closeFolderReorderSheet,
     isPrivateMode,
     subtitleText,
+    headerTitle,
+    headerSubtitleText,
     folderModalVisible,
     editingFolder,
     openCreateFolderModal,

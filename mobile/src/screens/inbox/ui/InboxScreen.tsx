@@ -39,7 +39,8 @@ export const InboxScreen = () => {
     openFolderReorderSheet,
     closeFolderReorderSheet,
     isPrivateMode,
-    subtitleText,
+    headerTitle,
+    headerSubtitleText,
     folderModalVisible,
     editingFolder,
     openCreateFolderModal,
@@ -121,9 +122,9 @@ export const InboxScreen = () => {
         subtitleText={
           batchSelect.isSelectMode
             ? t('batch.selectedCount', { count: batchSelect.selectedIds.size })
-            : subtitleText
+            : headerSubtitleText
         }
-        title={t('inbox.title')}
+        title={headerTitle}
         rightSlot={
           <InboxScreenHeaderRight
             color={color}
