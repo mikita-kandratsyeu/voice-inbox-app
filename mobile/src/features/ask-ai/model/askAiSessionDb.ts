@@ -8,6 +8,20 @@ type AskTurn = { question: string; answer: string };
 const PERSIST_VERSION = 1 as const;
 const MAX_HISTORY_ITEMS = 25;
 
+/** Serialize writes per record so concurrent delete+insert cannot hit UNIQUE on recordId. */
+const saveAskAiSessionChains = new Map<string, Promise<void>>();
+
+function enqueueSaveAskAiSession(recordId: string, run: () => Promise<void>): Promise<void> {
+  const prev = saveAskAiSessionChains.get(recordId) ?? Promise.resolve();
+  const next = prev.then(run, run);
+  saveAskAiSessionChains.set(recordId, next);
+  return next.finally(() => {
+    if (saveAskAiSessionChains.get(recordId) === next) {
+      saveAskAiSessionChains.delete(recordId);
+    }
+  });
+}
+
 export function askAiTranscriptFingerprint(transcript: string): string {
   if (!transcript) {
     return '0';
@@ -210,47 +224,57 @@ function computePendingAsk(snapshot: AskAiSessionPersistInput): boolean {
   );
 }
 
-export async function saveAskAiSession(
+export function saveAskAiSession(
   recordId: string,
   transcript: string,
   snapshot: AskAiSessionPersistInput,
 ): Promise<void> {
   const trimmed = transcript.trim();
-  if (!trimmed) return;
+  if (!trimmed) return Promise.resolve();
 
-  const pendingAsk = computePendingAsk(snapshot);
+  return enqueueSaveAskAiSession(recordId, async () => {
+    const pendingAsk = computePendingAsk(snapshot);
 
-  const hasContent =
-    snapshot.history.length > 0 ||
-    (snapshot.question && snapshot.question.trim()) ||
-    (snapshot.answer && snapshot.answer.trim()) ||
-    (snapshot.error && snapshot.error.trim()) ||
-    pendingAsk;
+    const hasContent =
+      snapshot.history.length > 0 ||
+      (snapshot.question && snapshot.question.trim()) ||
+      (snapshot.answer && snapshot.answer.trim()) ||
+      (snapshot.error && snapshot.error.trim()) ||
+      pendingAsk;
 
-  const db = getDB();
+    const db = getDB();
 
-  if (!hasContent) {
-    await db.delete(recordAskAiTable).where(eq(recordAskAiTable.recordId, recordId));
-    return;
-  }
+    if (!hasContent) {
+      await db.delete(recordAskAiTable).where(eq(recordAskAiTable.recordId, recordId));
+      return;
+    }
 
-  const payload: PersistedPayloadV1 = {
-    v: PERSIST_VERSION,
-    transcriptFp: askAiTranscriptFingerprint(transcript),
-    history: capHistory(snapshot.history),
-    question: snapshot.question,
-    answer: snapshot.answer,
-    error: snapshot.error,
-    ...(pendingAsk ? { pendingAsk: true } : {}),
-  };
+    const payload: PersistedPayloadV1 = {
+      v: PERSIST_VERSION,
+      transcriptFp: askAiTranscriptFingerprint(transcript),
+      history: capHistory(snapshot.history),
+      question: snapshot.question,
+      answer: snapshot.answer,
+      error: snapshot.error,
+      ...(pendingAsk ? { pendingAsk: true } : {}),
+    };
 
-  const updatedAt = dayjs().toISOString();
-  const payloadJson = JSON.stringify(payload);
-  await db.delete(recordAskAiTable).where(eq(recordAskAiTable.recordId, recordId));
-  await db.insert(recordAskAiTable).values({
-    recordId,
-    payload: payloadJson,
-    updatedAt,
+    const updatedAt = dayjs().toISOString();
+    const payloadJson = JSON.stringify(payload);
+    await db
+      .insert(recordAskAiTable)
+      .values({
+        recordId,
+        payload: payloadJson,
+        updatedAt,
+      })
+      .onConflictDoUpdate({
+        target: recordAskAiTable.recordId,
+        set: {
+          payload: payloadJson,
+          updatedAt,
+        },
+      });
   });
 }
 

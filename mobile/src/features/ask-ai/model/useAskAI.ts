@@ -55,6 +55,39 @@ const INITIAL_ASK_AI_STATE: AskAIState = {
 
 const askInFlightRecordIds = new Set<string>();
 
+/** Undo history promotion from askQuestion start when the in-flight ask is cancelled. */
+function applyAskCancelState(s: AskAIState, revertPromotedTurn: boolean): AskAIState {
+  const idleFields = {
+    isLoading: false as const,
+    privateAskProgress: 0,
+    privateAskPhase: 'loading_model' as const,
+  };
+
+  if (!revertPromotedTurn) {
+    return { ...s, ...idleFields };
+  }
+
+  if (s.history.length > 0) {
+    const restored = s.history[s.history.length - 1]!;
+    return {
+      ...s,
+      history: s.history.slice(0, -1),
+      question: restored.question,
+      answer: restored.answer,
+      error: null,
+      ...idleFields,
+    };
+  }
+
+  return {
+    ...s,
+    question: null,
+    answer: null,
+    error: null,
+    ...idleFields,
+  };
+}
+
 export const useAskAI = (
   recordId: string,
   transcript: string,
@@ -85,6 +118,7 @@ export const useAskAI = (
   const activeCloudJobIdRef = useRef<string | null>(null);
   const transcriptFpInvalidateRef = useRef<string | null>(null);
   const loadEpochRef = useRef(0);
+  const promotedTurnPendingRevertRef = useRef(false);
   const recordForResumeRef = useRef<VoiceRecord | null>(null);
   recordForResumeRef.current = recordForResume ?? null;
 
@@ -176,10 +210,11 @@ export const useAskAI = (
       askInFlightRecordIds.add(record.id);
 
       setState((s) => {
-        const nextHistory =
-          s.question && s.answer
-            ? [...s.history, { question: s.question, answer: s.answer }]
-            : s.history;
+        const didPromoteCurrentTurn = Boolean(s.question && s.answer);
+        promotedTurnPendingRevertRef.current = didPromoteCurrentTurn;
+        const nextHistory = didPromoteCurrentTurn
+          ? [...s.history, { question: s.question!, answer: s.answer! }]
+          : s.history;
         const next: AskAIState = {
           ...s,
           history: nextHistory,
@@ -266,6 +301,24 @@ export const useAskAI = (
             }
           : undefined;
 
+      const persistCancelledAsk = () => {
+        setState((s) => {
+          const next = applyAskCancelState(s, promotedTurnPendingRevertRef.current);
+          promotedTurnPendingRevertRef.current = false;
+          queueMicrotask(() => {
+            void saveAskAiSession(record.id, record.transcript!, {
+              history: next.history,
+              question: next.question,
+              answer: next.answer,
+              error: next.error,
+              isLoading: next.isLoading,
+            });
+            useRecordStore.getState().setAskAiStatus(record.id, undefined);
+          });
+          return next;
+        });
+      };
+
       const persistOutcome = (
         patch: Partial<Pick<AskAIState, 'answer' | 'error' | 'isLoading'>>,
       ) => {
@@ -278,6 +331,9 @@ export const useAskAI = (
             privateAskProgress: 0,
             privateAskPhase: 'loading_model',
           };
+          if (patch.answer !== undefined && patch.answer?.trim()) {
+            promotedTurnPendingRevertRef.current = false;
+          }
           queueMicrotask(() => {
             void saveAskAiSession(record.id, record.transcript!, {
               history: next.history,
@@ -325,7 +381,7 @@ export const useAskAI = (
         );
 
         if (abortHandle.cancelled) {
-          persistOutcome({ isLoading: false, error: null, answer: null });
+          persistCancelledAsk();
           void logAnalyticsEvent('ai_action_cancelled', {
             action: 'ask',
             mode: aiExecutionMode,
@@ -336,7 +392,7 @@ export const useAskAI = (
 
         if (!runResult.ok) {
           if (isAiRequestCancelled(runResult.error)) {
-            persistOutcome({ isLoading: false, error: null, answer: null });
+            persistCancelledAsk();
             void logAnalyticsEvent('ai_action_cancelled', {
               action: 'ask',
               mode: aiExecutionMode,
@@ -383,7 +439,7 @@ export const useAskAI = (
         });
       } catch (err: unknown) {
         if (abortHandle.cancelled) {
-          persistOutcome({ isLoading: false, error: null, answer: null });
+          persistCancelledAsk();
           void logAnalyticsEvent('ai_action_cancelled', {
             action: 'ask',
             mode: aiExecutionMode,
@@ -408,6 +464,7 @@ export const useAskAI = (
           tier: privateCapabilityTier,
         });
       } finally {
+        promotedTurnPendingRevertRef.current = false;
         unregisterAiGeneration(record.id, 'ask', abortHandle);
         abortHandlesRef.current.delete(record.id);
         activeCloudJobIdRef.current = null;
@@ -447,12 +504,8 @@ export const useAskAI = (
     askInFlightRecordIds.delete(recordId);
 
     setState((s) => {
-      const next: AskAIState = {
-        ...s,
-        isLoading: false,
-        privateAskProgress: 0,
-        privateAskPhase: 'loading_model',
-      };
+      const next = applyAskCancelState(s, promotedTurnPendingRevertRef.current);
+      promotedTurnPendingRevertRef.current = false;
       queueMicrotask(() => {
         const rec = useRecordStore.getState().records.find((r) => r.id === recordId);
         if (rec?.transcript?.trim()) {
