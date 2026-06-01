@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last updated: May 2026**
+**Last updated: June 2026**
 
 Voice Inbox AI ("we", "our", or "the app") is an offline voice notes application. This Privacy Policy explains how we handle your data when you use the mobile app, the optional web API for AI processing, optional in-app support requests, and optional sign-ups on our website (such as the Android waitlist).
 
@@ -41,14 +41,15 @@ If you enable push notifications, we store your push token (FCM) and app languag
 **Cloud AI via OpenRouter:** When AI runs in the cloud, your transcript is sent to third-party model providers through [OpenRouter](https://openrouter.ai). We route those requests exclusively through OpenRouter — we do not call those providers’ APIs directly. Models we may use for your requests include:
 
 - **Google** (Gemini family) — summaries, task extraction, Ask AI
+- **OpenAI** (GPT-5.4 family, including Nano) — summaries, task extraction, Ask AI (including for short transcripts in **Auto** mode)
 - **DeepSeek** — summaries, task extraction, Ask AI (including as a fallback when another model fails)
 - **MiniMax** — summaries, task extraction, Ask AI
 - **Xiaomi** (MiMo) — summaries, task extraction, Ask AI
 - **NVIDIA** (Nemotron) — summaries, task extraction, Ask AI
 
-We may add or change models over time; the in-app model picker reflects what you can select for cloud mode. If you choose **Auto** in cloud AI settings, our servers select a model based on request characteristics (such as transcript length); otherwise we use the model you pick.
+We may add or change models over time; the in-app model picker reflects what you can select for cloud mode. If you choose **Auto** in cloud AI settings, our servers select a model based on request characteristics (such as transcript length): shorter transcripts may use **OpenAI GPT-5.4 Nano**, medium-length transcripts **DeepSeek**, and longer transcripts **Google Gemini**; otherwise we use the model you pick.
 
-We apply **Zero Data Retention (ZDR)** to **cloud** requests where supported: routing prefers endpoints where providers do not retain your content for training. OpenRouter's ZDR policy is described [here](https://openrouter.ai/docs/guides/features/zdr).
+We apply **Zero Data Retention (ZDR)** to **cloud** requests where supported: routing prefers endpoints where providers do not retain your content for training. For **OpenAI GPT-5.4** models, ZDR-compatible endpoints on OpenRouter may be unavailable or unreliable; those requests may route through standard OpenAI endpoints instead (see OpenRouter and OpenAI data policies). Other models continue to use ZDR routing when available. OpenRouter's ZDR policy is described [here](https://openrouter.ai/docs/guides/features/zdr).
 
 **On-device models:** Private mode downloads open-weight model files from third-party hosts (for example, Hugging Face). We do not receive your transcripts when you use on-device inference.
 

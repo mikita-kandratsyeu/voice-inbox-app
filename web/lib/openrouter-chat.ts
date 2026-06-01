@@ -7,6 +7,7 @@ import {
   openRouterModelSupportsReasoning,
   openRouterReasoningParamsForModel,
 } from '@/lib/openrouter-reasoning';
+import { openRouterProviderParamsForModel } from '@/lib/openrouter-provider';
 import { openRouterJsonObjectResponseFormat } from '@/lib/openrouter-response-format';
 import { normalizeClientUserAgent } from '@/lib/openrouter';
 import {
@@ -77,7 +78,7 @@ function buildRequestBody(params: SendOpenRouterChatCompletionParams): Record<st
     model,
     messages: params.messages,
     stream: true,
-    provider: { zdr: true },
+    provider: openRouterProviderParamsForModel(model),
     ...(params.jsonObject ? { response_format: openRouterJsonObjectResponseFormat() } : {}),
     ...(params.temperature != null ? { temperature: params.temperature } : {}),
     ...(reasoning ? { reasoning } : {}),

@@ -14,6 +14,16 @@ function isJsonObjectResponseFormatUnsupported(err: unknown): boolean {
   return msg.includes('json_object response format is not supported');
 }
 
+/** OpenRouter rejected all ZDR/routing candidates for the requested model (try fallback). */
+function isOpenRouterProviderRoutingError(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (/OpenRouter stream error:\s*Forbidden/i.test(msg)) return true;
+  if (/OpenRouter chat failed \(403\)/i.test(msg)) return true;
+  if (/No allowed providers are available for the selected model/i.test(msg)) return true;
+  if (/permission_denied/i.test(msg)) return true;
+  return false;
+}
+
 export function isRetryableOpenRouterTransportError(err: unknown): boolean {
   if (
     err instanceof TooManyRequestsResponseError ||
@@ -23,6 +33,10 @@ export function isRetryableOpenRouterTransportError(err: unknown): boolean {
   }
 
   if (isJsonObjectResponseFormatUnsupported(err)) {
+    return true;
+  }
+
+  if (isOpenRouterProviderRoutingError(err)) {
     return true;
   }
 

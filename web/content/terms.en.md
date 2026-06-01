@@ -1,6 +1,6 @@
 # Terms of Service
 
-**Last updated: May 2026**
+**Last updated: June 2026**
 
 These Terms of Service ("Terms") govern your use of the Voice Inbox AI mobile application, related web services, and optional interactions with our website (such as joining the Android waitlist). By using the app or submitting information through our website forms covered by these Terms, you agree to these Terms and to our **Privacy Policy**.
 
@@ -44,7 +44,7 @@ To the maximum extent permitted by law, we are not liable for any indirect, inci
 
 ## 7. Third-Party Services
 
-The app relies on third-party services. **Cloud AI** uses OpenRouter and underlying model providers (for example **Google / Gemini, DeepSeek, MiniMax, Xiaomi / MiMo, and NVIDIA / Nemotron**). **On-device AI** may download model weights from public repositories (for example **Hugging Face**). The app may also use **Google Firebase services** for crash diagnostics (Crashlytics) and product analytics (Analytics). Your use of those services is governed by their own terms and policies. We are not responsible for the actions or content of third parties.
+The app relies on third-party services. **Cloud AI** uses OpenRouter and underlying model providers (for example **Google / Gemini, OpenAI / GPT-5.4, DeepSeek, MiniMax, Xiaomi / MiMo, and NVIDIA / Nemotron**). **On-device AI** may download model weights from public repositories (for example **Hugging Face**). The app may also use **Google Firebase services** for crash diagnostics (Crashlytics) and product analytics (Analytics). Your use of those services is governed by their own terms and policies. We are not responsible for the actions or content of third parties.
 
 *As of the “Last updated” date above*, unless you have a paid entitlement that removes ads, **Yandex Mobile Ads** may be used to display a banner, optional full-screen (interstitial) ads at natural breakpoints (for example after saving a note, importing data, or applying bulk folder organization), and optional rewarded ads. Frequency caps may apply. We may revise how advertising works with an updated policy (and any consent or controls required by law) if that changes.
 
