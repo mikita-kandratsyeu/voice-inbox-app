@@ -49,9 +49,7 @@ export function applySpeakerLabelsToUtterances(
   if (!labels || Object.keys(labels).length === 0) return utterances;
   return utterances.map((u) => ({
     ...u,
-    speakerLabel: u.speakerLabel
-      ? displaySpeakerLabel(u.speakerLabel, labels)
-      : u.speakerLabel,
+    speakerLabel: u.speakerLabel ? displaySpeakerLabel(u.speakerLabel, labels) : u.speakerLabel,
   }));
 }
 

@@ -38,9 +38,7 @@ function MeetingModeSwitchRow({
       className="flex-row items-center gap-3 px-4 py-3.5"
       style={{
         opacity: disabled ? 0.55 : 1,
-        ...(borderedTop
-          ? { borderTopWidth: 1, borderTopColor: color.border.default }
-          : undefined),
+        ...(borderedTop ? { borderTopWidth: 1, borderTopColor: color.border.default } : undefined),
       }}
     >
       {leadingIcon ?? <View className="h-9 w-9" />}
@@ -95,11 +93,7 @@ export const RecordingMeetingModeSection = ({
         backgroundColor: isMeetingMode ? color.accent.primary : color.background.tertiary,
       }}
     >
-      <UsersRound
-        size={18}
-        color={isMeetingMode ? '#fff' : color.text.secondary}
-        strokeWidth={2}
-      />
+      <UsersRound size={18} color={isMeetingMode ? '#fff' : color.text.secondary} strokeWidth={2} />
     </View>
   );
 

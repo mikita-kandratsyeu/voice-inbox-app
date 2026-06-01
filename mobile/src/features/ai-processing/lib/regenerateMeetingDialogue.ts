@@ -1,27 +1,24 @@
+import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
-import { createAiAbortHandle, isAiGenerationCancelledError } from '@/shared/lib/ai-api/abort';
-import {
-  registerAiGeneration,
-  unregisterAiGeneration,
-} from '@/shared/lib/aiGenerationAbortRegistry';
 import {
   pollAiMessage,
   postMeetingDialogueRetry,
   saveCloudSummarizePending,
 } from '@/shared/lib/ai-api';
+import { createAiAbortHandle, isAiGenerationCancelledError } from '@/shared/lib/ai-api/abort';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
-import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
-import { isNonNegativeFiniteNumber } from '@/shared/lib/type-guards';
+import {
+  registerAiGeneration,
+  unregisterAiGeneration,
+} from '@/shared/lib/aiGenerationAbortRegistry';
 import { toUserFacingFetchErrorMessage } from '@/shared/lib/fetch/userFacingFetchError';
 import { i18n } from '@/shared/lib/i18n';
+import { isNonNegativeFiniteNumber } from '@/shared/lib/type-guards';
 
-import {
-  clearCloudSummarizeInFlight,
-  markCloudSummarizeInFlight,
-} from './cloudSummarizeInFlight';
+import { clearCloudSummarizeInFlight, markCloudSummarizeInFlight } from './cloudSummarizeInFlight';
 
 const CLOUD_MEETING_DIALOGUE_PROGRESS_START = 72;
 

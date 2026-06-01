@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
 import { and, desc, eq, inArray, isNotNull, isNull, lt, lte, ne } from 'drizzle-orm';
 
+import { sanitizeMeetingSpeakerLabels } from '@/screens/recording-detail/lib/meetingSpeakerLabels';
 import {
   audioPathFromDbValue,
   audioPathToDbValue,
@@ -11,7 +12,6 @@ import {
   recordsTable,
 } from '@/shared/lib';
 import type { RecordForStats } from '@/shared/lib/async-storage/storage';
-import { sanitizeMeetingSpeakerLabels } from '@/screens/recording-detail/lib/meetingSpeakerLabels';
 
 import { sanitizeRecordingMark } from './normalizeRecordingMark';
 import { TRASH_RETENTION_DAYS } from './trashConfig';

@@ -6,7 +6,7 @@ import { Pressable, Text, View } from 'react-native';
 import type { Colors } from '@/shared/config';
 import { hapticSelection } from '@/shared/lib';
 
-import { utteranceStripeColor, type MeetingUtterance } from '../lib/parseMeetingDialogue';
+import { type MeetingUtterance, utteranceStripeColor } from '../lib/parseMeetingDialogue';
 
 type MeetingDialogueUtteranceCardProps = {
   utterance: MeetingUtterance;
@@ -126,38 +126,38 @@ export function MeetingDialogueUtteranceCard({
         }}
       />
       <View style={{ paddingVertical: 14, paddingRight: 14, paddingLeft: 13 }}>
-      {hasSpeaker ? (
-        <SpeakerNameRow
-          label={utterance.speakerLabel}
-          stripe={stripe}
-          color={color}
-          canRename={canRename}
-          onRename={onRename}
-        />
-      ) : (
+        {hasSpeaker ? (
+          <SpeakerNameRow
+            label={utterance.speakerLabel}
+            stripe={stripe}
+            color={color}
+            canRename={canRename}
+            onRename={onRename}
+          />
+        ) : (
+          <Text
+            selectable
+            style={{
+              fontSize: 13,
+              fontWeight: '600',
+              lineHeight: 18,
+              color: color.text.secondary,
+              marginBottom: 8,
+            }}
+          >
+            {t('recordingDetail.meetingDialoguePreamble')}
+          </Text>
+        )}
         <Text
           selectable
           style={{
-            fontSize: 13,
-            fontWeight: '600',
-            lineHeight: 18,
-            color: color.text.secondary,
-            marginBottom: 8,
+            fontSize: 15,
+            lineHeight: 22,
+            color: color.text.primary,
           }}
         >
-          {t('recordingDetail.meetingDialoguePreamble')}
+          {utterance.body}
         </Text>
-      )}
-      <Text
-        selectable
-        style={{
-          fontSize: 15,
-          lineHeight: 22,
-          color: color.text.primary,
-        }}
-      >
-        {utterance.body}
-      </Text>
       </View>
     </View>
   );

@@ -20,8 +20,7 @@ export type AiOperation = (typeof AI_OPERATIONS)[number];
 const isAiOperation = (value: string): value is AiOperation =>
   (AI_OPERATIONS as readonly string[]).includes(value);
 
-const MEETING_DIALOGUE_RETRY_PATH_RE =
-  /^\/api\/messages\/[^/]+\/meeting-dialogue$/;
+const MEETING_DIALOGUE_RETRY_PATH_RE = /^\/api\/messages\/[^/]+\/meeting-dialogue$/;
 
 const PATH_DEFAULT: Record<string, AiOperation> = {
   '/api/messages': 'transcript_summarize',

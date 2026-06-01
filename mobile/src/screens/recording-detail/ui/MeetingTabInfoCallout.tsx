@@ -11,7 +11,12 @@ type MeetingTabInfoCalloutProps = {
 };
 
 /** Info callout shared by meeting-related detail tabs (summary, who-said-what). */
-export function MeetingTabInfoCallout({ color, icon, title, children }: MeetingTabInfoCalloutProps) {
+export function MeetingTabInfoCallout({
+  color,
+  icon,
+  title,
+  children,
+}: MeetingTabInfoCalloutProps) {
   return (
     <View
       className="flex-row gap-3 rounded-xl border p-3"

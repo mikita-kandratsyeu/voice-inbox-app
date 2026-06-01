@@ -8,6 +8,7 @@ export type {
   PollAiMessageOptions,
   ServerMeetingDialogueStatus,
 } from './aiApi';
+export type { MeetingDialogueRetryRequestBody } from './aiApi';
 export {
   claimAiBonus,
   fetchAiMessageOnce,
@@ -17,7 +18,6 @@ export {
   postMeetingDialogueRetry,
   resumePollAiMessage,
 } from './aiApi';
-export type { MeetingDialogueRetryRequestBody } from './aiApi';
 export type { AskApiResult, AskMessageResult } from './askApi';
 export { pollAskResult, postAskQuestion } from './askApi';
 export type { AutoOrganizeApiResult, AutoOrganizePollResult } from './autoOrganizeApi';

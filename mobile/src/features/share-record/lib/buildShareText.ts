@@ -240,7 +240,9 @@ const pushMeetingDialogue = (
   lines.push('');
   lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
   lines.push('');
-  lines.push(formatMeetingDialogueForShareMarkdown(body, ctx.forEmail, record.meetingSpeakerLabels));
+  lines.push(
+    formatMeetingDialogueForShareMarkdown(body, ctx.forEmail, record.meetingSpeakerLabels),
+  );
 };
 
 const pushFooter = (lines: string[]): void => {

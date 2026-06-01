@@ -98,7 +98,9 @@ export const POST = async (request: Request, { params }: RouteContext): Promise<
     });
   }
 
-  const meetingDialogueSystemPrompt = buildMeetingDialogueStandalonePrompt(body.options ?? undefined);
+  const meetingDialogueSystemPrompt = buildMeetingDialogueStandalonePrompt(
+    body.options ?? undefined,
+  );
   if (!meetingDialogueSystemPrompt.trim()) {
     return apiError('Meeting dialogue prompt could not be built', HttpStatus.BAD_REQUEST, {
       pathname,
