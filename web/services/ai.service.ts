@@ -31,7 +31,11 @@ import {
 const MEETING_DIALOGUE_MARKDOWN_MAX_CHARS = 12_000;
 
 function stripOptionalMarkdownFences(raw: string): string {
-  return raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
+  return raw
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
 }
 
 function normalizeMeetingDialogueMarkdownField(

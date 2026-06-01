@@ -132,8 +132,7 @@ export const POST = async (request: Request, { params }: RouteContext): Promise<
   let rehydratePhase1: MeetingDialogueRehydratePhase1 | undefined;
   const rawPhase1 = body.phase1;
   if (rawPhase1 && typeof rawPhase1 === 'object') {
-    const summary =
-      typeof rawPhase1.summary === 'string' ? rawPhase1.summary.trim() : '';
+    const summary = typeof rawPhase1.summary === 'string' ? rawPhase1.summary.trim() : '';
     if (summary) {
       const suggestedTitle =
         typeof rawPhase1.suggestedTitle === 'string' && rawPhase1.suggestedTitle.trim()
