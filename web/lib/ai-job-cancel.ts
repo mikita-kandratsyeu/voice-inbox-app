@@ -20,6 +20,11 @@ export async function isAiJobCancelled(jobId: string): Promise<boolean> {
   return msg?.status === 'error' && msg.error === AI_JOB_CANCELLED_ERROR;
 }
 
+/** Clears a stale cancel flag when starting a new meeting-dialogue attempt for the same job id. */
+export async function clearAiJobCancelled(jobId: string): Promise<void> {
+  await redis.del(getJobCancelledKey(jobId));
+}
+
 export type CancelAiJobResult =
   | { ok: true; cancelled: true }
   | { ok: true; cancelled: false; reason: 'not_found' | 'not_processing' }
@@ -65,6 +70,7 @@ export async function cancelAiJob(jobId: string, deviceId: string): Promise<Canc
     );
     await deleteMeetingJobPayload(jobId);
     await releaseJobLock(jobId);
+    await clearAiJobCancelled(jobId);
 
     console.info(
       '[AI job]',

@@ -1,8 +1,10 @@
 import { sendLimitExceededPush } from '@/lib/push-tokens';
 import { MESSAGE_TTL_SECONDS } from '@/config/constants';
 import { checkAndIncrement } from '@/lib/ai-rate-limit';
+import { clearAiJobCancelled } from '@/lib/ai-job-cancel';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
+import { releaseJobLock } from '@/lib/ai-job-lock';
 import { dispatchMeetingDialogueJob } from '@/lib/meeting-dialogue-dispatch';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
 import type {
@@ -136,6 +138,9 @@ export const retryMeetingDialogue = async (params: {
     await sendLimitExceededPush(params.deviceId);
     return { ok: false, limitExceeded: true, usage: limitResult.usage };
   }
+
+  await clearAiJobCancelled(params.jobId);
+  await releaseJobLock(params.jobId);
 
   const processingState = { ...done, meetingDialogueStatus: 'processing' as const };
   delete processingState.meetingDialogueMarkdown;

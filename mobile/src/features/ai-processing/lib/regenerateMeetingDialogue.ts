@@ -121,7 +121,12 @@ export async function regenerateMeetingDialogue(
 
     if (abortHandle.cancelled) return;
 
-    if (!postResult.ok) {
+    const alreadyProcessingOnServer =
+      !postResult.ok &&
+      !postResult.limitExceeded &&
+      /already processing/i.test(postResult.error ?? '');
+
+    if (!postResult.ok && !alreadyProcessingOnServer) {
       const errorMsg = postResult.limitExceeded
         ? getAiWeeklyLimitExceededMessage()
         : toUserFacingFetchErrorMessage(postResult.error);
@@ -133,15 +138,17 @@ export async function regenerateMeetingDialogue(
       return;
     }
 
+    const syncToken = postResult.ok ? postResult.data.syncToken : undefined;
+
     await saveCloudSummarizePending({
       recordId: record.id,
       jobId,
-      syncToken: postResult.data.syncToken,
+      syncToken,
       expectAsyncMeetingDialogue: true,
       expiresAtMs: Date.now() + deps.cloudAiKvTtlSeconds * 1000,
     });
 
-    const pollResult = await pollAiMessage(jobId, postResult.data.syncToken, {
+    const pollResult = await pollAiMessage(jobId, syncToken, {
       signal: abortHandle.signal,
       expectAsyncMeetingDialogue: true,
     });
