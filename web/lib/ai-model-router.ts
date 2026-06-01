@@ -1,7 +1,7 @@
 import {
   AI_MODEL_DEEPSEEK_V4_FLASH,
-  AI_MODEL_GEMINI_2_5_FLASH_LITE,
   AI_MODEL_GEMINI_3_1_FLASH_LITE,
+  AI_MODEL_MIMO_V2_5,
 } from '@/config/constants';
 import {
   ASK_QUESTION_SYSTEM_PROMPT,
@@ -72,7 +72,7 @@ function summaryLongRoutingChars(): number {
   return readRoutingThreshold('AI_ROUTE_SUMMARY_LONG_CHARS', DEFAULT_SUMMARY_LONG_ROUTING_CHARS);
 }
 
-/** Auto tier: short → Gemini 2.5, medium → DeepSeek V4 Flash, long → Gemini 3.1. */
+/** Auto tier: short → MiMo V2.5, medium → DeepSeek V4 Flash, long → Gemini 3.1. */
 function resolveAutoAiModelByThresholds(
   routingChars: number,
   mediumAt: number,
@@ -86,7 +86,7 @@ function resolveAutoAiModelByThresholds(
     return AI_MODEL_DEEPSEEK_V4_FLASH;
   }
 
-  return AI_MODEL_GEMINI_2_5_FLASH_LITE;
+  return AI_MODEL_MIMO_V2_5;
 }
 
 function normalizeRoutingChars(raw: number | undefined): number {
