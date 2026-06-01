@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { AppState, type AppStateStatus } from 'react-native';
 
+import { syncPrivateCapabilityTier } from '@/entities/settings';
 import { useRecordStore } from '@/entities/record';
 import { scheduleResumeAllPendingCloudSummarize } from '@/features/ai-processing';
 import { localLlmModelDownloader } from '@/features/model-manager/lib/local-llm-download';
@@ -77,6 +78,7 @@ export function useAppForegroundLifecycle(): void {
       }
 
       if (state === 'active') {
+        syncPrivateCapabilityTier();
         if (getHasSeenOnboarding()) {
           ensurePushRegistered().catch(() => {});
         }

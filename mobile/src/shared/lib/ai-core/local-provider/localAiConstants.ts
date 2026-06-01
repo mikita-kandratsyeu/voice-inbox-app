@@ -22,6 +22,20 @@ export function resolvePrivateAskMaxTokens(budget: PrivateLocalLlmBudget): numbe
   return PRIVATE_LOCAL_LLM_BUDGET_ASK_MAX_TOKENS[budget];
 }
 
+/** Second on-device pass: pseudo-diarization only (meeting dialogue). */
+export const PRIVATE_LOCAL_LLM_BUDGET_MEETING_DIALOGUE_MAX_TOKENS: Record<
+  PrivateLocalLlmBudget,
+  number
+> = {
+  efficient: 1536,
+  balanced: 2048,
+  expanded: 3072,
+};
+
+export function resolvePrivateMeetingDialogueMaxTokens(budget: PrivateLocalLlmBudget): number {
+  return PRIVATE_LOCAL_LLM_BUDGET_MEETING_DIALOGUE_MAX_TOKENS[budget];
+}
+
 export const TRANSCRIPT_CHAR_LIMIT_BY_TIER: Record<
   AiExecutionContext['privateCapabilityTier'],
   number

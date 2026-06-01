@@ -395,7 +395,7 @@ export const RecordingDetailScreen = () => {
 
   const hasTranscript = Boolean(liveRecord.transcript?.trim());
   const hasAudio = Boolean(liveRecord.audioPath?.trim());
-  const showMeetingModeToggle = isProActive && !isPrivateMode && hasTranscript && hasAudio;
+  const showMeetingModeToggle = isProActive && hasTranscript && hasAudio;
 
   const applyMeetingModeOff = useCallback(() => {
     void updateAiExtras(liveRecord.id, {
@@ -469,11 +469,8 @@ export const RecordingDetailScreen = () => {
 
   const hasRecordingMarks = (liveRecord.recordingMarks?.length ?? 0) > 0;
   const meetingPresetUiActive = useMemo(
-    () =>
-      isProActive &&
-      liveRecord.classification === 'meeting' &&
-      aiExecutionMode !== 'private_experimental',
-    [isProActive, liveRecord.classification, aiExecutionMode],
+    () => isProActive && liveRecord.classification === 'meeting',
+    [isProActive, liveRecord.classification],
   );
   const showSpeakerTurnsExport = useMemo(
     () => meetingPresetUiActive && Boolean(liveRecord.meetingDialogue?.trim()),
@@ -492,14 +489,11 @@ export const RecordingDetailScreen = () => {
     regenerateMeetingDialogue(liveRecord).catch(() => {});
   }, [liveRecord, regenerateMeetingDialogue]);
 
-  const canRegenerateMeetingDialogueOnly = useMemo(
-    () =>
-      meetingPresetUiActive &&
-      !isPrivateMode &&
-      Boolean(liveRecord.summary?.trim()) &&
-      Boolean(liveRecord.cloudAiJobId?.trim()),
-    [meetingPresetUiActive, isPrivateMode, liveRecord.summary, liveRecord.cloudAiJobId],
-  );
+  const canRegenerateMeetingDialogueOnly = useMemo(() => {
+    if (!meetingPresetUiActive || !liveRecord.summary?.trim()) return false;
+    if (isPrivateMode) return true;
+    return Boolean(liveRecord.cloudAiJobId?.trim());
+  }, [meetingPresetUiActive, isPrivateMode, liveRecord.summary, liveRecord.cloudAiJobId]);
 
   const detailTabs = useMemo<Tab[]>(() => {
     const row: Tab[] = ['transcript', 'summary'];
@@ -773,7 +767,7 @@ export const RecordingDetailScreen = () => {
                   privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
                   privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
                   transcriptCharCount={liveRecord.transcript?.length ?? 0}
-                  cloudMeetingDialogueExtra={meetingPresetUiActive && !isPrivateMode}
+                  cloudMeetingDialogueExtra={meetingPresetUiActive}
                   summaryReasoning={isPrivateMode ? undefined : liveRecord.summaryReasoning}
                   summaryAiModel={liveRecord.summaryAiModel}
                   summaryTokenUsage={
@@ -816,7 +810,7 @@ export const RecordingDetailScreen = () => {
                   privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
                   privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
                   transcriptCharCount={liveRecord.transcript?.length ?? 0}
-                  cloudMeetingDialogueExtra={meetingPresetUiActive && !isPrivateMode}
+                  cloudMeetingDialogueExtra={meetingPresetUiActive}
                 />
               </View>
             )}
@@ -846,7 +840,7 @@ export const RecordingDetailScreen = () => {
                   privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
                   privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
                   transcriptCharCount={liveRecord.transcript?.length ?? 0}
-                  cloudMeetingDialogueExtra={meetingPresetUiActive && !isPrivateMode}
+                  cloudMeetingDialogueExtra={meetingPresetUiActive}
                 />
               </View>
             )}

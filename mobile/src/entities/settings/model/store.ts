@@ -453,6 +453,13 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAiExecutionMode: (value: AiExecutionMode) => {
     const currentState = get();
     const wasPrivate = currentState.aiExecutionMode === 'private_experimental';
+    if (
+      !wasPrivate &&
+      value === 'private_experimental' &&
+      currentState.privateCapabilityTier === 'unavailable'
+    ) {
+      return;
+    }
     if (!wasPrivate && value === 'private_experimental') {
       storage.set(KEYS.PRIVATE_PREVIOUS_THEME, currentState.appTheme);
       storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE, String(currentState.autoTranscribeOnSave));

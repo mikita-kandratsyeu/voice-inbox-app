@@ -129,9 +129,11 @@ export async function runLocalSummaryTasks(
     );
 
     const referenceDate = getLocalReferenceDateIsoLocal();
-    const includePseudo = request.processingPreset === 'meeting';
+    const isMeetingPreset = request.processingPreset === 'meeting';
+    const includeDialogueInPass =
+      isMeetingPreset && request.omitMeetingDialogue !== true;
     const systemPrompt = buildLocalSummarySystemPrompt(referenceDate, {
-      includePseudoDiarization: includePseudo,
+      includePseudoDiarization: includeDialogueInPass,
       aiOutputLanguage: ctx.aiOutputLanguage,
     });
     const userContent = buildLocalSummaryUserContent(
@@ -141,6 +143,7 @@ export async function runLocalSummaryTasks(
       request.taskExtractionHint,
       request.processingPreset,
       request.recordingMarks,
+      { includeMeetingDialogueField: includeDialogueInPass },
     );
 
     const summaryMaxTokens = resolvePrivateSummaryMaxTokens(ctx.privateLocalLlmBudget);
@@ -171,7 +174,7 @@ export async function runLocalSummaryTasks(
       );
     };
 
-    const parseOpts = { includePseudoDiarization: includePseudo };
+    const parseOpts = { includePseudoDiarization: includeDialogueInPass };
 
     let raw = await runOnce(userContent);
     let outcome = tryBuildSummaryFromModelRaw(raw, parseOpts);

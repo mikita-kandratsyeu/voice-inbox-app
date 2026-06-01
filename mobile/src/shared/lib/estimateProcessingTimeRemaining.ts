@@ -1,6 +1,9 @@
 import type { PrivateLocalLlmBudget } from '@/entities/settings';
 
-import { resolvePrivateSummaryMaxTokens } from './ai-core/local-provider/localAiConstants';
+import {
+  resolvePrivateMeetingDialogueMaxTokens,
+  resolvePrivateSummaryMaxTokens,
+} from './ai-core/local-provider/localAiConstants';
 
 export type ProcessingTimeEstimateContext = 'transcription' | 'private_llm' | 'cloud_ai';
 
@@ -104,7 +107,11 @@ export function estimateProcessingSecondsRemaining(input: ProcessingTimeEstimate
 
   const budget = input.privateLlmBudget ?? 'balanced';
   const modelLoad = estimatePrivateModelLoadSeconds();
-  const generation = estimatePrivateGenerationSeconds(chars, budget);
+  let generation = estimatePrivateGenerationSeconds(chars, budget);
+  if (input.cloudMeetingDialogue) {
+    const mdTokens = resolvePrivateMeetingDialogueMaxTokens(budget);
+    generation += 6 + Math.round(mdTokens * 0.055);
+  }
   const total = modelLoad + generation;
 
   if (input.phase === 'loading_model' || progress <= PRIVATE_GEN_PROGRESS_FLOOR) {

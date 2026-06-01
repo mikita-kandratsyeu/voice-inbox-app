@@ -46,6 +46,8 @@ export type SummaryTaskRequest = {
   /** Sent to cloud for meeting pseudo-diarization pass (timed lines). */
   transcriptSegments?: SummaryTaskTranscriptSegment[];
   processingPreset?: 'meeting';
+  /** Meeting preset without `meetingDialogueMarkdown` (second local pass fills it). */
+  omitMeetingDialogue?: boolean;
   existingTaskTexts?: string[];
   taskExtractionHint?: string;
   /** User-placed recording pins (offset + optional label). */

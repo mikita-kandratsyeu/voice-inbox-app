@@ -12,6 +12,7 @@ import { AiTabErrorBanner, AiTabHintIcon, Button, TabEmptyState } from '@/shared
 
 import { AiTabProcessing } from './AiTabProcessing';
 import { MeetingTabInfoCallout, MeetingTabInfoCalloutText } from './MeetingTabInfoCallout';
+import { PrivateModeTranscriptLimitNotice } from './PrivateModeTranscriptLimitNotice';
 import { SummaryReasoningDisclosure } from './SummaryReasoningDisclosure';
 
 type SummaryTabProps = {
@@ -135,22 +136,26 @@ export const SummaryTab = ({
 
   if (!summary) {
     return (
-      <TabEmptyState
-        icon={<FileText size={28} color={color.icon.muted} strokeWidth={1.8} />}
-        title={t('recordingDetail.summaryNotCreated')}
-        description={t('recordingDetail.summaryNotCreatedDesc')}
-        buttonLabel={t('recordingDetail.generateSummary')}
-        buttonIcon={<FileText size={18} color="#fff" strokeWidth={2} />}
-        hint={aiModelName}
-        hintIcon={<AiTabHintIcon />}
-        disabled={disableByNetwork}
-        onPress={onGenerate}
-      />
+      <View className="gap-3 p-4">
+        <PrivateModeTranscriptLimitNotice color={color} transcriptCharCount={transcriptCharCount} />
+        <TabEmptyState
+          icon={<FileText size={28} color={color.icon.muted} strokeWidth={1.8} />}
+          title={t('recordingDetail.summaryNotCreated')}
+          description={t('recordingDetail.summaryNotCreatedDesc')}
+          buttonLabel={t('recordingDetail.generateSummary')}
+          buttonIcon={<FileText size={18} color="#fff" strokeWidth={2} />}
+          hint={aiModelName}
+          hintIcon={<AiTabHintIcon />}
+          disabled={disableByNetwork}
+          onPress={onGenerate}
+        />
+      </View>
     );
   }
 
   return (
     <View className="gap-3.5 p-4">
+      <PrivateModeTranscriptLimitNotice color={color} transcriptCharCount={transcriptCharCount} />
       {showBanner && <AiTabErrorBanner message={errMessage} onDismiss={handleDismiss} />}
       {speakerBreakdownProcessing ? (
         <View

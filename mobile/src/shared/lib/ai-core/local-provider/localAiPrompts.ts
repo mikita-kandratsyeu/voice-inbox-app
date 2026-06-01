@@ -34,6 +34,12 @@ const LOCAL_OUTPUT_LANGUAGE_HINT: Record<AiOutputLanguage, string> = {
   en: 'Language: write ALL of those text fields (including meetingDialogueMarkdown when present) in English, even if the transcript is not English.',
 };
 
+const LOCAL_OUTPUT_LANGUAGE_HINT_SUMMARY_ONLY: Record<AiOutputLanguage, string> = {
+  same: 'Language: write summary, suggestedTitle, every task title, tags, keyPhrases, and nextSteps in the SAME language as the transcript.',
+  ru: 'Language: write summary, suggestedTitle, tasks, tags, keyPhrases, and nextSteps in Russian, even if the transcript is not Russian.',
+  en: 'Language: write summary, suggestedTitle, tasks, tags, keyPhrases, and nextSteps in English, even if the transcript is not English.',
+};
+
 const LOCAL_MEETING_PRESET_HINT = [
   'Preset: meeting.',
   'Treat the transcript as a meeting, call, interview, or sync recap.',
@@ -42,12 +48,12 @@ const LOCAL_MEETING_PRESET_HINT = [
   'tasks[] should contain concrete owner/action items only when supported; nextSteps should contain high-level follow-ups that do not duplicate tasks.',
 ].join(' ');
 
-const LOCAL_MEETING_PSEUDO_BASE = [
+export const LOCAL_MEETING_PSEUDO_BASE = [
   'meetingDialogueMarkdown: plain text with line breaks; neutral speaker labels unless names/roles are stated in the transcript.',
   'This is NOT verified audio diarization. Do not invent turns. Use empty string if single-speaker, too short, or unclear.',
 ].join(' ');
 
-const LOCAL_MEETING_DIALOGUE_OUTPUT_LANGUAGE_HINT: Record<AiOutputLanguage, string> = {
+export const LOCAL_MEETING_DIALOGUE_OUTPUT_LANGUAGE_HINT: Record<AiOutputLanguage, string> = {
   same: 'meetingDialogueMarkdown language: same as the transcript for labels and each line after the colon; keep proper names and technical tokens when normally left as-is.',
   ru: 'meetingDialogueMarkdown language: write every line in Russian (labels and spoken content). If the transcript is not Russian, translate faithfully into natural Russian.',
   en: 'meetingDialogueMarkdown language: write every line in English (labels and spoken content). If the transcript is not English, translate faithfully into natural English.',
@@ -84,15 +90,20 @@ export function buildLocalSummaryUserContent(
   taskExtractionHint?: string,
   processingPreset?: 'meeting',
   recordingMarks?: RecordingMarkForPrompt[],
+  options?: { includeMeetingDialogueField?: boolean },
 ): string {
+  const isMeeting = processingPreset === 'meeting';
+  const includeDialogueField = isMeeting && options?.includeMeetingDialogueField !== false;
   const head = [
-    LOCAL_OUTPUT_LANGUAGE_HINT[ctx.aiOutputLanguage],
-    processingPreset === 'meeting'
+    (includeDialogueField
+      ? LOCAL_OUTPUT_LANGUAGE_HINT
+      : LOCAL_OUTPUT_LANGUAGE_HINT_SUMMARY_ONLY)[ctx.aiOutputLanguage],
+    includeDialogueField
       ? 'Also include meetingDialogueMarkdown in the JSON (see system rules).'
       : '',
     LOCAL_SUMMARY_STYLE_HINT[ctx.summaryStyle],
     LOCAL_TASK_STRICTNESS_HINT[ctx.taskStrictness],
-    processingPreset === 'meeting' ? LOCAL_MEETING_PRESET_HINT : '',
+    isMeeting ? LOCAL_MEETING_PRESET_HINT : '',
   ]
     .filter(Boolean)
     .join('\n');

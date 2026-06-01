@@ -1,7 +1,9 @@
 import { i18n } from '@/shared/lib';
+import { AI_REQUEST_CANCELLED } from '@/shared/lib/ai-api/abort';
 
 import { runCloudAsk, runCloudSummaryTasks } from './cloudProvider';
 import { runLocalAsk, runLocalSummaryTasks } from './localProvider';
+import { runLocalMeetingDialogue } from './local-provider/localAiMeetingDialogue';
 import type {
   AiExecutionContext,
   AskRequest,
@@ -13,6 +15,15 @@ import type {
 function guardPrivateMode(_request: { transcript: string }, ctx: AiExecutionContext) {
   if (ctx.aiExecutionMode !== 'private_experimental') return null;
 
+  if (ctx.privateCapabilityTier === 'unavailable') {
+    return {
+      ok: false as const,
+      provider: 'cloud' as const,
+      mode: ctx.aiExecutionMode,
+      error: i18n.t('ai.privateModeUnavailable'),
+    };
+  }
+
   if (!ctx.isLocalLlmModelDownloaded) {
     return {
       ok: false as const,
@@ -22,12 +33,103 @@ function guardPrivateMode(_request: { transcript: string }, ctx: AiExecutionCont
     };
   }
 
-  // Transcript length is not checked here: prepareTranscriptForLocalLlm trims it
-  // to the tier-appropriate char limit before inference, and localPromptFitsLlmContext
-  // catches genuine context overflows. A pre-trim character check would reject
-  // transcripts that would have fit fine after truncation.
-
   return null;
+}
+
+async function runPrivateSummaryTasks(
+  request: SummaryTaskRequest,
+  ctx: AiExecutionContext,
+): Promise<SummaryTaskResult> {
+  if (!request.expectAsyncMeetingDialogue) {
+    return runLocalSummaryTasks(request, ctx);
+  }
+
+  const pass1 = await runLocalSummaryTasks(
+    {
+      ...request,
+      processingPreset: 'meeting',
+      omitMeetingDialogue: true,
+      expectAsyncMeetingDialogue: false,
+      onCloudSummaryReady: undefined,
+    },
+    ctx,
+  );
+
+  if (!pass1.ok) {
+    return pass1;
+  }
+
+  if (request.abortSignal?.aborted) {
+    return {
+      ok: false,
+      provider: 'local',
+      mode: ctx.aiExecutionMode,
+      error: AI_REQUEST_CANCELLED,
+    };
+  }
+
+  try {
+    await request.onCloudSummaryReady?.(pass1.result);
+  } catch {
+    return {
+      ok: false,
+      provider: 'local',
+      mode: ctx.aiExecutionMode,
+      error: i18n.t('ai.privateModeGenericError'),
+    };
+  }
+
+  if (request.abortSignal?.aborted) {
+    return {
+      ok: false,
+      provider: 'local',
+      mode: ctx.aiExecutionMode,
+      error: AI_REQUEST_CANCELLED,
+    };
+  }
+
+  const dialogueResult = await runLocalMeetingDialogue(
+    {
+      transcript: request.transcript,
+      transcriptSegments: request.transcriptSegments,
+      phase1: pass1.result,
+      taskExtractionHint: request.taskExtractionHint,
+      onLocalGenerationProgress: request.onLocalGenerationProgress,
+      abortSignal: request.abortSignal,
+    },
+    ctx,
+  );
+
+  if (request.abortSignal?.aborted) {
+    return {
+      ok: false,
+      provider: 'local',
+      mode: ctx.aiExecutionMode,
+      error: AI_REQUEST_CANCELLED,
+    };
+  }
+
+  if (!dialogueResult.ok) {
+    return {
+      ok: true,
+      provider: 'local',
+      mode: ctx.aiExecutionMode,
+      result: pass1.result,
+      meetingDialogueStatus: 'failed',
+    };
+  }
+
+  const md = dialogueResult.meetingDialogueMarkdown.trim();
+  return {
+    ok: true,
+    provider: 'local',
+    mode: ctx.aiExecutionMode,
+    result: {
+      ...pass1.result,
+      ...(md ? { meetingDialogueMarkdown: md } : {}),
+    },
+    meetingDialogueStatus: md ? 'done' : 'skipped',
+  };
 }
 
 export const AIOrchestrator = {
@@ -39,7 +141,7 @@ export const AIOrchestrator = {
     if (guardResult) return guardResult;
 
     if (ctx.aiExecutionMode === 'private_experimental') {
-      return runLocalSummaryTasks(request, ctx);
+      return runPrivateSummaryTasks(request, ctx);
     }
 
     return runCloudSummaryTasks(request, ctx);

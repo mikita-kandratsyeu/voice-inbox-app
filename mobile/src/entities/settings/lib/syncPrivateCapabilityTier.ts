@@ -1,7 +1,11 @@
 import { useSettingsStore } from '../model/store';
-import { resolvePrivateAiCapabilityTier } from './privateAiCapability';
+import { canEnablePrivateMode, resolvePrivateAiCapabilityTier } from './privateAiCapability';
 
 export function syncPrivateCapabilityTier(): void {
   const { tier } = resolvePrivateAiCapabilityTier();
-  useSettingsStore.getState().setPrivateCapabilityTier(tier);
+  const store = useSettingsStore.getState();
+  store.setPrivateCapabilityTier(tier);
+  if (!canEnablePrivateMode(tier) && store.aiExecutionMode === 'private_experimental') {
+    store.setAiExecutionMode('smart_hybrid');
+  }
 }

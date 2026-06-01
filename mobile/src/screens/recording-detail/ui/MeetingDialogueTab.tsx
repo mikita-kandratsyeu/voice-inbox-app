@@ -20,6 +20,7 @@ import {
 import { parseMeetingDialogue } from '../lib/parseMeetingDialogue';
 import { AiTabProcessing } from './AiTabProcessing';
 import { MeetingDialogueSpeakerRoster } from './MeetingDialogueSpeakerRoster';
+import { PrivateModeTranscriptLimitNotice } from './PrivateModeTranscriptLimitNotice';
 import { MeetingDialogueUtteranceCard } from './MeetingDialogueUtteranceCard';
 import { MeetingTabInfoCallout, MeetingTabInfoCalloutText } from './MeetingTabInfoCallout';
 import { TaskEditSheet } from './TaskEditSheet';
@@ -228,6 +229,7 @@ export const MeetingDialogueTab = ({
     );
     return (
       <View className="gap-3 p-4">
+        <PrivateModeTranscriptLimitNotice color={color} transcriptCharCount={transcriptCharCount} />
         <TabEmptyState
           icon={<UsersRound size={28} color={color.icon.muted} strokeWidth={1.8} />}
           title={t('recordingDetail.meetingDialogueTabEmptyTitle')}
@@ -246,6 +248,7 @@ export const MeetingDialogueTab = ({
 
   return (
     <View className="gap-3.5 p-4">
+      <PrivateModeTranscriptLimitNotice color={color} transcriptCharCount={transcriptCharCount} />
       {showBanner && <AiTabErrorBanner message={errMessage} onDismiss={handleDismiss} />}
       <MeetingTabInfoCallout
         color={color}

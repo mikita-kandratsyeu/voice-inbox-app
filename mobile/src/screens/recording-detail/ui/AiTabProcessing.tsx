@@ -71,7 +71,7 @@ export const AiTabProcessing = ({
       processingStartedAtMs={processingStartedAtMs}
       transcriptCharCount={transcriptCharCount}
       privateLlmBudget={isPrivateMode ? privateLocalLlmBudget : undefined}
-      cloudMeetingDialogue={!isPrivateMode && cloudMeetingDialogueExtra}
+      cloudMeetingDialogue={cloudMeetingDialogueExtra}
     />
   );
 };

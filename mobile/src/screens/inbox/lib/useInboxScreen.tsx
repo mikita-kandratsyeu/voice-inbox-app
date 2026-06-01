@@ -253,12 +253,12 @@ export function useInboxScreen() {
   const visibleRecordIds = useMemo(() => filtered.map((r) => r.id), [filtered]);
 
   const batchSpeakerTurnsExportAvailable = useMemo(() => {
-    if (!isProActive || isPrivateMode) return false;
+    if (!isProActive) return false;
     const selected = filtered.filter((r) => batchSelect.selectedIds.has(r.id));
     return selected.some(
       (r) => r.classification === 'meeting' && Boolean(r.meetingDialogue?.trim()),
     );
-  }, [batchSelect.selectedIds, filtered, isPrivateMode, isProActive]);
+  }, [batchSelect.selectedIds, filtered, isProActive]);
 
   const {
     batchArchive,

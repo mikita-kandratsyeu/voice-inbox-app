@@ -31,6 +31,7 @@ import {
 } from '@/shared/ui';
 
 import { AiTabProcessing } from './AiTabProcessing';
+import { PrivateModeTranscriptLimitNotice } from './PrivateModeTranscriptLimitNotice';
 import { TaskEditSheet } from './TaskEditSheet';
 import { TaskReextractHintSheet } from './TaskReextractHintSheet';
 
@@ -274,7 +275,8 @@ export const TasksTab = ({
   if (tasks.length === 0) {
     return (
       <>
-        <View>
+        <View className="gap-3 p-4">
+          <PrivateModeTranscriptLimitNotice color={color} transcriptCharCount={transcriptCharCount} />
           <TabEmptyState
             icon={<ListChecks size={28} color={color.icon.muted} strokeWidth={1.8} />}
             title={t('recordingDetail.tasksNotExtracted')}

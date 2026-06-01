@@ -463,6 +463,8 @@
     "askError": "Failed to get answer",
     "askErrorContinueHint": "Close to view summary and tasks.",
     "privateModeErrorHint": "This error is related to Private mode. You can switch to Smart mode and retry.",
+    "privateLimitedTranscriptHint": "Private mode on this device uses about {{limit}} characters of the transcript for AI (yours is {{count}}). The middle is skipped; summary and speaker breakdown may miss context.",
+    "privateTranscriptTruncationHint": "This transcript is longer than the Private mode limit (~{{limit}} characters (yours is {{count}}). Only the beginning and end are sent to the on-device model.",
     "askAnother": "Ask another question",
     "askCopy": "Copy",
     "askCopied": "Copied to clipboard",
@@ -1186,8 +1188,8 @@
     "executionMode.private_experimental": "Private",
     "privateCapabilityTier": {
       "full": "Your device is ready for Private mode.",
-      "limited": "Limited Private mode is available: length and speed limits may apply.",
-      "unavailable": "Local LLM is not available on this device yet. You can use Smart mode."
+      "limited": "Limited Private mode: AI uses about 5,000 characters of each transcript. Longer notes are trimmed before generation.",
+      "unavailable": "Private mode needs more free RAM and storage on this device."
     },
     "summaryStyle": "Summary style",
     "summaryStyle.brief": "Brief (1–2 sentences)",
@@ -1238,7 +1240,12 @@
     "title": "Private vs Smart",
     "description": "In Private mode, AI runs entirely on your device—summaries and tasks remain fully private and never leave for our servers. In Smart mode, cloud-powered features deliver faster performance and expanded capabilities.",
     "enableAlertTitle": "Turn on Private mode?",
-    "enableAlertMessage": "Maximum privacy.\n\nAll data, including transcripts, is processed only on this device.\n\nWhat to expect:\n• May run more slowly\n• Higher battery use\n• Some features aren't available\n\nYou can switch back to Smart mode anytime."
+    "enableAlertMessage": "Maximum privacy.\n\nAll data, including transcripts, is processed only on this device.\n\nWhat to expect:\n• May run more slowly\n• Higher battery use\n• Some features aren't available\n\nYou can switch back to Smart mode anytime.",
+    "unavailableDeviceHint": "This device does not meet Private mode requirements (about 5.5 GB RAM and 3.5 GB free storage). Use Smart mode.",
+    "unavailableDiagnostics": "Detected: {{ram}} RAM, {{disk}} free storage.",
+    "unavailableDiagnosticsPartial": "Detected: {{details}}.",
+    "unavailableOptionHint": "Not available on this device",
+    "limitedBeforeAiHint": "On this device, Private mode analyzes about {{limit}} characters per note. Longer transcripts are trimmed automatically."
   },
   "aiModels": {
     "title": "Generation model",

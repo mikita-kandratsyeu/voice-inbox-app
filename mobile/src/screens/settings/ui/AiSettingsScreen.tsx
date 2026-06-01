@@ -128,7 +128,7 @@ export const AiSettingsScreen = () => {
   );
   const { isProActive } = useProEntitlement();
   const isPrivateMode = aiExecutionMode === 'private_experimental';
-  const showMeetingSpeakerSettings = isProActive && !isPrivateMode;
+  const showMeetingSpeakerSettings = isProActive;
 
   const cloudRetentionLabel = (sec: CloudAiKvTtlSeconds) =>
     t(`aiSettings.smartModeCloudRetention.m${sec}`);

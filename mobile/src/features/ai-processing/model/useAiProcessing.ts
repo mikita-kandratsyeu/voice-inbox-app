@@ -307,10 +307,7 @@ export const useAiProcessing = () => {
         const shouldRefreshSpeakersOnRegen =
           autoRefreshMeetingSpeakersOnRegen || !wasSummaryRegeneration;
         includeMeetingSpeakerBreakdown =
-          isProActive &&
-          recordIsMeeting &&
-          aiExecutionMode !== 'private_experimental' &&
-          shouldRefreshSpeakersOnRegen;
+          isProActive && recordIsMeeting && shouldRefreshSpeakersOnRegen;
 
         const getLatestRecord = (id: string) =>
           useRecordStore.getState().records.find((r) => r.id === id);
