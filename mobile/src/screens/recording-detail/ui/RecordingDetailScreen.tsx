@@ -322,9 +322,12 @@ export const RecordingDetailScreen = () => {
     cancelTranscription(liveRecord.id);
   }, [liveRecord.id, cancelTranscription]);
 
-  const handleGenerateSummary = useCallback(() => {
-    generateSummary(liveRecord).catch(() => {});
-  }, [liveRecord, generateSummary]);
+  const handleGenerateSummary = useCallback(
+    (options?: { taskExtractionHint?: string }) => {
+      generateSummary(liveRecord, options).catch(() => {});
+    },
+    [liveRecord, generateSummary],
+  );
 
   const handleExtractTasks = useCallback(
     (options?: { taskExtractionHint?: string }) => {

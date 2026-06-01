@@ -1,5 +1,5 @@
 import { AlertCircle, FileText, RefreshCw, Share, UsersRound } from 'lucide-react-native';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
@@ -14,6 +14,7 @@ import { AiTabProcessing } from './AiTabProcessing';
 import { MeetingTabInfoCallout, MeetingTabInfoCalloutText } from './MeetingTabInfoCallout';
 import { PrivateModeTranscriptLimitNotice } from './PrivateModeTranscriptLimitNotice';
 import { SummaryReasoningDisclosure } from './SummaryReasoningDisclosure';
+import { SummaryRegenerateHintSheet } from './SummaryRegenerateHintSheet';
 
 type SummaryTabProps = {
   summary: string;
@@ -22,7 +23,7 @@ type SummaryTabProps = {
   errorMessage?: string;
   hasTranscript?: boolean;
   color: Colors;
-  onGenerate: () => void;
+  onGenerate: (options?: { taskExtractionHint?: string }) => void;
   isMeeting?: boolean;
   onShareMeetingBrief?: () => void;
   onDismissError?: () => void;
@@ -80,6 +81,21 @@ export const SummaryTab = ({
   const showSummaryReasoningInNotes = useSettingsStore((s) => s.showSummaryReasoningInNotes);
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
   const regenerateDisabled = disableByNetwork || speakerBreakdownProcessing;
+  const [regenerateSheetOpen, setRegenerateSheetOpen] = useState(false);
+
+  const regenerateSheet = useMemo(
+    () => (
+      <SummaryRegenerateHintSheet
+        visible={regenerateSheetOpen}
+        isMeeting={isMeeting}
+        onClose={() => setRegenerateSheetOpen(false)}
+        onConfirm={(hint) => {
+          onGenerate(hint ? { taskExtractionHint: hint } : undefined);
+        }}
+      />
+    ),
+    [isMeeting, onGenerate, regenerateSheetOpen],
+  );
 
   const summaryModelLabel = useMemo(
     () => resolveAiModelDisplayLabel(summaryAiModel, summaryAiModelLabel),
@@ -226,7 +242,7 @@ export const SummaryTab = ({
         icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
         label={t('recordingDetail.regenerateSummary')}
         color={color}
-        onPress={onGenerate}
+        onPress={() => setRegenerateSheetOpen(true)}
         disabled={regenerateDisabled}
         className="mt-1"
         accessibilityState={{ disabled: regenerateDisabled }}
@@ -246,6 +262,7 @@ export const SummaryTab = ({
           onPress={onShareMeetingBrief}
         />
       )}
+      {regenerateSheet}
     </View>
   );
 };

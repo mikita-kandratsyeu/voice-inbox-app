@@ -772,7 +772,8 @@ export const useAiProcessing = () => {
   );
 
   const generateSummary = useCallback(
-    (record: VoiceRecord): Promise<void> => processRecord(record),
+    (record: VoiceRecord, options?: { taskExtractionHint?: string }): Promise<void> =>
+      processRecord(record, options),
     [processRecord],
   );
 
