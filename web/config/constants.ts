@@ -102,9 +102,6 @@ export const PUSH_TOKEN_OS_VERSION_MAX_CHARS = 64;
 export const GET_RETRY_ATTEMPTS = 3;
 export const GET_RETRY_DELAY_MS = 100;
 
-/** System micro-tasks (folder organize, etc.). */
-export const SYSTEM_MICRO_TASK_MODEL = 'google/gemini-2.5-flash-lite';
-
 export const AI_MODEL_GEMINI_2_5_FLASH_LITE = 'google/gemini-2.5-flash-lite';
 export const AI_MODEL_GEMINI_3_1_FLASH_LITE = 'google/gemini-3.1-flash-lite';
 /** OpenRouter preview id — accepted from clients but always mapped to {@link AI_MODEL_GEMINI_3_1_FLASH_LITE} server-side. */
@@ -150,6 +147,8 @@ export const TRANSLATE_MODEL_CHAIN: readonly string[] = [
 
 /** Auto-routing short tier (OpenRouter). */
 export const AI_MODEL_GPT_5_4_NANO = 'openai/gpt-5.4-nano';
+/** System micro-tasks (folder auto-organize, etc.). */
+export const SYSTEM_MICRO_TASK_MODEL = AI_MODEL_GPT_5_4_NANO;
 export const AI_MODEL_MIMO_V2_5_PRO = 'xiaomi/mimo-v2.5-pro';
 export const AI_MODEL_NEMOTRON_3_SUPER = 'nvidia/nemotron-3-super-120b-a12b';
 /** Removed from catalog — accepted from old clients, mapped in {@link normalizeIncomingAiModel}. */
