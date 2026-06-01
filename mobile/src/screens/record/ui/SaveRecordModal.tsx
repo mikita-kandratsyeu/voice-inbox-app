@@ -26,7 +26,7 @@ import {
 import { generateRecordId } from '../lib/generateRecordId';
 import { getAutoTitle } from '../lib/getAutoTitle';
 
-const SAVE_SHEET_KEYBOARD_BOTTOM_PADDING = 24;
+const SAVE_SHEET_KEYBOARD_BOTTOM_PADDING = 12;
 
 type SaveRecordModalProps = {
   visible: boolean;
