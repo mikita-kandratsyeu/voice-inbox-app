@@ -36,6 +36,7 @@ import { BlockingProgressModal } from '@/shared/ui';
 import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
+import { mergeSpeakerRename } from '../lib/meetingSpeakerLabels';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { MeetingDialogueTab } from './MeetingDialogueTab';
 import { RecordingDetailCard } from './RecordingDetailCard';
@@ -125,6 +126,8 @@ export const RecordingDetailScreen = () => {
     globalTranscriptionLanguage,
     aiExecutionMode,
     setAiExecutionMode,
+    autoRefreshMeetingSpeakersOnRegen,
+    setAutoRefreshMeetingSpeakersOnRegen,
   } = useSettingsStore(
     useShallow((s) => ({
       whisperModelStatuses: s.whisperModelStatuses,
@@ -133,6 +136,8 @@ export const RecordingDetailScreen = () => {
       globalTranscriptionLanguage: s.transcriptionLanguage,
       aiExecutionMode: s.aiExecutionMode,
       setAiExecutionMode: s.setAiExecutionMode,
+      autoRefreshMeetingSpeakersOnRegen: s.autoRefreshMeetingSpeakersOnRegen,
+      setAutoRefreshMeetingSpeakersOnRegen: s.setAutoRefreshMeetingSpeakersOnRegen,
     })),
   );
 
@@ -180,7 +185,8 @@ export const RecordingDetailScreen = () => {
   }, [recordId]);
 
   const { startTranscription, cancelTranscription } = useTranscription();
-  const { generateSummary, extractTasks, cancelAiGeneration } = useAiProcessing();
+  const { generateSummary, extractTasks, cancelAiGeneration, regenerateMeetingDialogue } =
+    useAiProcessing();
   const handleCancelAiGeneration = useCallback(() => {
     cancelAiGeneration(liveRecord.id);
   }, [cancelAiGeneration, liveRecord.id]);
@@ -388,16 +394,19 @@ export const RecordingDetailScreen = () => {
     if (liveRecord.meetingDialogueStatus === 'processing') return 'processing';
     if (liveRecord.meetingDialogueStatus === 'failed') return 'error';
     if (liveRecord.meetingDialogue?.trim()) return 'done';
-    if (liveRecord.summaryStatus === 'processing') return 'processing';
     return 'idle';
-  }, [liveRecord.meetingDialogue, liveRecord.meetingDialogueStatus, liveRecord.summaryStatus]);
+  }, [liveRecord.meetingDialogue, liveRecord.meetingDialogueStatus]);
 
   const hasTranscript = Boolean(liveRecord.transcript?.trim());
   const hasAudio = Boolean(liveRecord.audioPath?.trim());
   const showMeetingModeToggle = isProActive && !isPrivateMode && hasTranscript && hasAudio;
 
   const applyMeetingModeOff = useCallback(() => {
-    void updateAiExtras(liveRecord.id, { classification: null, meetingDialogue: null });
+    void updateAiExtras(liveRecord.id, {
+      classification: null,
+      meetingDialogue: null,
+      meetingSpeakerLabels: null,
+    });
   }, [liveRecord.id, updateAiExtras]);
 
   const promptRegenerateAfterMeetingOn = useCallback(() => {
@@ -473,6 +482,27 @@ export const RecordingDetailScreen = () => {
   const showSpeakerTurnsExport = useMemo(
     () => meetingPresetUiActive && Boolean(liveRecord.meetingDialogue?.trim()),
     [meetingPresetUiActive, liveRecord.meetingDialogue],
+  );
+
+  const handleRenameSpeaker = useCallback(
+    (originalLabel: string, displayName: string) => {
+      const next = mergeSpeakerRename(liveRecord.meetingSpeakerLabels, originalLabel, displayName);
+      void updateAiExtras(liveRecord.id, { meetingSpeakerLabels: next ?? null });
+    },
+    [liveRecord.id, liveRecord.meetingSpeakerLabels, updateAiExtras],
+  );
+
+  const handleRegenerateMeetingDialogueOnly = useCallback(() => {
+    regenerateMeetingDialogue(liveRecord).catch(() => {});
+  }, [liveRecord, regenerateMeetingDialogue]);
+
+  const canRegenerateMeetingDialogueOnly = useMemo(
+    () =>
+      meetingPresetUiActive &&
+      !isPrivateMode &&
+      Boolean(liveRecord.summary?.trim()) &&
+      Boolean(liveRecord.cloudAiJobId?.trim()),
+    [meetingPresetUiActive, isPrivateMode, liveRecord.summary, liveRecord.cloudAiJobId],
   );
 
   const detailTabs = useMemo<Tab[]>(() => {
@@ -692,10 +722,14 @@ export const RecordingDetailScreen = () => {
           {showMeetingModeToggle ? (
             <RecordingMeetingModeSection
               isMeetingMode={isMeetingMode}
+              autoRefreshSpeakersOnRegen={autoRefreshMeetingSpeakersOnRegen}
               disabled={aiBusy}
               color={color}
               surfaceBackgroundColor={tabPanelBackgroundColor}
-              onToggle={handleToggleMeetingMode}
+              onToggleMeetingMode={handleToggleMeetingMode}
+              onToggleAutoRefreshSpeakers={() =>
+                setAutoRefreshMeetingSpeakersOnRegen(!autoRefreshMeetingSpeakersOnRegen)
+              }
             />
           ) : null}
 
@@ -767,9 +801,18 @@ export const RecordingDetailScreen = () => {
               <View style={activeTab !== 'dialogue' ? { display: 'none' } : undefined}>
                 <MeetingDialogueTab
                   meetingDialogue={liveRecord.meetingDialogue}
+                  speakerLabels={liveRecord.meetingSpeakerLabels}
+                  onRenameSpeaker={handleRenameSpeaker}
                   hasTranscript={Boolean(liveRecord.transcript)}
+                  hasSummary={Boolean(liveRecord.summary?.trim())}
+                  summaryProcessing={
+                    liveRecord.summaryStatus === 'processing' ||
+                    liveRecord.tasksStatus === 'processing'
+                  }
                   color={color}
                   onGenerate={handleGenerateSummary}
+                  onRegenerateDialogueOnly={handleRegenerateMeetingDialogueOnly}
+                  canRegenerateDialogueOnly={canRegenerateMeetingDialogueOnly}
                   status={meetingDialogueTabStatus}
                   errorMessage={liveRecord.meetingDialogueError ?? liveRecord.summaryError}
                   onDismissError={handleDismissMeetingDialogueError}

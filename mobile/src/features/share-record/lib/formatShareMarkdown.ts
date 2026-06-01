@@ -1,4 +1,5 @@
 import type { VoiceRecord } from '@/entities/record';
+import { applySpeakerLabelsToUtterances } from '@/screens/recording-detail/lib/meetingSpeakerLabels';
 import {
   normalizeMeetingDialogueMarkdownParagraphs,
   parseMeetingDialogue,
@@ -56,9 +57,16 @@ export function formatTaskLineForShare(
   return `- [${task.isDone ? 'x' : ' '}] ${task.text}${suffix}`;
 }
 
-export function formatMeetingDialogueForShareMarkdown(raw: string, forEmail = false): string {
+export function formatMeetingDialogueForShareMarkdown(
+  raw: string,
+  forEmail = false,
+  speakerLabels?: Record<string, string>,
+): string {
   const normalized = normalizeMeetingDialogueMarkdownParagraphs(raw);
-  const utterances = parseMeetingDialogue(normalized);
+  const utterances = applySpeakerLabelsToUtterances(
+    parseMeetingDialogue(normalized),
+    speakerLabels,
+  );
   if (utterances.length === 0) {
     return normalized;
   }

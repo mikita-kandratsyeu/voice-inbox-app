@@ -105,6 +105,8 @@ export type SettingsState = {
   cloudAiKvTtlSeconds: number;
   /** Smart mode: show optional reasoning block on the summary tab. */
   showSummaryReasoningInNotes: boolean;
+  /** Meeting mode: re-run speaker breakdown when summary/tasks are regenerated. */
+  autoRefreshMeetingSpeakersOnRegen: boolean;
   whisperModelStatuses: Partial<Record<WhisperModelVariantId, WhisperModelStatus>>;
   whisperDownloadProgress: Partial<Record<WhisperModelVariantId, number>>;
   whisperDownloadBytes: Partial<Record<WhisperModelVariantId, DownloadBytes>>;
@@ -138,6 +140,7 @@ export type SettingsState = {
   setCloudAiThirdPartyConsentAccepted: (value: boolean) => void;
   setCloudAiKvTtlSeconds: (value: number) => void;
   setShowSummaryReasoningInNotes: (value: boolean) => void;
+  setAutoRefreshMeetingSpeakersOnRegen: (value: boolean) => void;
   setWhisperModelStatus: (
     id: WhisperModelId,
     format: WhisperModelWeightsFormat,

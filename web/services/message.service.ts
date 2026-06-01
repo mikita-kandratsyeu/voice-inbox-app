@@ -3,8 +3,13 @@ import { MESSAGE_TTL_SECONDS } from '@/config/constants';
 import { checkAndIncrement } from '@/lib/ai-rate-limit';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
+import { dispatchMeetingDialogueJob } from '@/lib/meeting-dialogue-dispatch';
 import { getMessage, getSyncToken, saveMessage, saveMessageIfNotExists } from '@/lib/redis';
-import type { MeetingDialogueAuxPayload, SummarizeJobPayload } from '@/types/ai-job';
+import type {
+  MeetingDialogueAuxPayload,
+  MeetingDialogueJobPayload,
+  SummarizeJobPayload,
+} from '@/types/ai-job';
 import type { Message } from '@/types';
 
 export type { MeetingDialogueAuxPayload } from '@/types/ai-job';
@@ -73,3 +78,68 @@ export const createMessage = async (
 
 export const getMessageById = async (id: string, syncToken?: string): Promise<Message | null> =>
   getMessage(id, syncToken);
+
+type RetryMeetingDialogueResult =
+  | { ok: true; syncToken?: string }
+  | { ok: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
+  | { ok: false; error: string };
+
+export const retryMeetingDialogue = async (params: {
+  jobId: string;
+  deviceId: string;
+  transcript: string;
+  model: string;
+  meetingDialogueSystemPrompt: string;
+  meetingDialogueAux?: MeetingDialogueAuxPayload;
+  clientUserAgent?: string | null;
+  messageTtlSeconds?: number;
+}): Promise<RetryMeetingDialogueResult> => {
+  const ttl = params.messageTtlSeconds ?? MESSAGE_TTL_SECONDS;
+  const existing = await getMessage(params.jobId);
+  if (!existing || existing.status !== 'done') {
+    return { ok: false, error: 'Summarize job not complete' };
+  }
+
+  const done = existing as Extract<Message, { status: 'done' }>;
+  if (done.meetingDialogueStatus === 'processing') {
+    return { ok: false, error: 'Meeting dialogue already processing' };
+  }
+
+  const limitResult = await checkAndIncrement(params.deviceId);
+  if (!limitResult.allowed) {
+    await sendLimitExceededPush(params.deviceId);
+    return { ok: false, limitExceeded: true, usage: limitResult.usage };
+  }
+
+  const { meetingDialogueMarkdown: _omit, ...doneWithoutMd } = done;
+  await saveMessage(
+    params.jobId,
+    {
+      ...doneWithoutMd,
+      meetingDialogueStatus: 'processing',
+    },
+    ttl,
+  );
+
+  const meetingPayload: MeetingDialogueJobPayload = {
+    operation: 'meeting_dialogue',
+    jobId: params.jobId,
+    deviceId: params.deviceId,
+    messageTtlSeconds: ttl,
+    transcript: params.transcript,
+    model: params.model,
+    meetingDialogueSystemPrompt: params.meetingDialogueSystemPrompt,
+    meetingDialogueAux: params.meetingDialogueAux,
+    phase1: {
+      suggestedTitle: done.suggestedTitle,
+      keyPhrases: done.keyPhrases,
+      summary: done.summary,
+    },
+    clientUserAgent: params.clientUserAgent,
+    retryNonce: String(Date.now()),
+  };
+
+  await dispatchMeetingDialogueJob(meetingPayload);
+
+  return { ok: true, syncToken: getSyncToken() };
+};

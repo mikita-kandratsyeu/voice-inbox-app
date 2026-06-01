@@ -15,6 +15,7 @@ import {
   markCloudSummarizeInFlight,
 } from '@/features/ai-processing/lib/cloudSummarizeInFlight';
 import { markUnreadAfterSummaryRegenerationIfNeeded } from '@/features/ai-processing/lib/markUnreadAfterSummaryRegeneration';
+import { regenerateMeetingDialogue as runRegenerateMeetingDialogue } from '@/features/ai-processing/lib/regenerateMeetingDialogue';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import type { AiProcessingResult } from '@/shared/lib/ai-api';
@@ -106,6 +107,7 @@ export const useAiProcessing = () => {
     privateLocalLlmBudget,
     privateCapabilityTier,
     cloudAiKvTtlSeconds,
+    autoRefreshMeetingSpeakersOnRegen,
   } = useSettingsStore(
     useShallow((s) => ({
       selectedAIModel: s.selectedAIModel,
@@ -119,6 +121,7 @@ export const useAiProcessing = () => {
       privateLocalLlmBudget: s.privateLocalLlmBudget,
       privateCapabilityTier: s.privateCapabilityTier,
       cloudAiKvTtlSeconds: s.cloudAiKvTtlSeconds,
+      autoRefreshMeetingSpeakersOnRegen: s.autoRefreshMeetingSpeakersOnRegen,
     })),
   );
 
@@ -301,14 +304,13 @@ export const useAiProcessing = () => {
           snapshot?.recordingMarks ?? record.recordingMarks,
         );
         const recordIsMeeting = (snapshot?.classification ?? record.classification) === 'meeting';
+        const shouldRefreshSpeakersOnRegen =
+          autoRefreshMeetingSpeakersOnRegen || !wasSummaryRegeneration;
         includeMeetingSpeakerBreakdown =
-          isProActive && recordIsMeeting && aiExecutionMode !== 'private_experimental';
-
-        if (includeMeetingSpeakerBreakdown) {
-          setMeetingDialogueStatus(record.id, 'idle');
-          setMeetingDialogueError(record.id, undefined);
-          await updateAiExtras(record.id, { meetingDialogue: null });
-        }
+          isProActive &&
+          recordIsMeeting &&
+          aiExecutionMode !== 'private_experimental' &&
+          shouldRefreshSpeakersOnRegen;
 
         const getLatestRecord = (id: string) =>
           useRecordStore.getState().records.find((r) => r.id === id);
@@ -340,6 +342,10 @@ export const useAiProcessing = () => {
                 skipMeetingDialogue: true,
               });
               markUnreadAfterSummaryRegenerationIfNeeded(record.id, wasSummaryRegeneration);
+              await updateAiExtras(record.id, {
+                meetingDialogue: null,
+                meetingSpeakerLabels: null,
+              });
               setMeetingDialogueStatus(record.id, 'processing');
               setMeetingDialogueError(record.id, undefined);
 
@@ -519,6 +525,7 @@ export const useAiProcessing = () => {
               } else if (includeMeetingSpeakerBreakdown && meetingDialogueMarkdown?.trim()) {
                 await updateAiExtras(record.id, {
                   meetingDialogue: meetingDialogueMarkdown.trim(),
+                  meetingSpeakerLabels: null,
                 });
               }
               setSummaryStatus(record.id, 'done');
@@ -633,6 +640,7 @@ export const useAiProcessing = () => {
         } else if (includeMeetingSpeakerBreakdown && meetingDialogueMarkdown?.trim()) {
           await updateAiExtras(record.id, {
             meetingDialogue: meetingDialogueMarkdown.trim(),
+            meetingSpeakerLabels: null,
           });
         }
 
@@ -656,6 +664,13 @@ export const useAiProcessing = () => {
               setMeetingDialogueError(record.id, undefined);
             }
           }
+        }
+
+        if (isSummaryAlreadyApplied(record.id)) {
+          setSummaryStatus(record.id, 'done');
+          setTasksStatus(record.id, 'done');
+          setSummaryError(record.id, undefined);
+          setTasksError(record.id, undefined);
         }
 
         inFlightRef.current.delete(baseId);
@@ -737,6 +752,7 @@ export const useAiProcessing = () => {
       privateLocalLlmBudget,
       privateCapabilityTier,
       cloudAiKvTtlSeconds,
+      autoRefreshMeetingSpeakersOnRegen,
       applyCancelledUiState,
       setPrivateAiBatchUi,
       setSummaryStatus,
@@ -768,5 +784,22 @@ export const useAiProcessing = () => {
     [processRecord],
   );
 
-  return { generateSummary, extractTasks, processRecord, cancelAiGeneration };
+  const regenerateMeetingDialogue = useCallback(
+    (record: VoiceRecord) =>
+      runRegenerateMeetingDialogue(record, {
+        selectedAIModel,
+        cloudAiKvTtlSeconds,
+        setPrivateAiBatchUi,
+        clearPrivateAiBatchUi,
+      }),
+    [selectedAIModel, cloudAiKvTtlSeconds, setPrivateAiBatchUi, clearPrivateAiBatchUi],
+  );
+
+  return {
+    generateSummary,
+    extractTasks,
+    processRecord,
+    cancelAiGeneration,
+    regenerateMeetingDialogue,
+  };
 };

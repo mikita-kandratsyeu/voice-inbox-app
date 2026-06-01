@@ -11,7 +11,7 @@ export type MeetingUtterance = {
 const SPEAKER_LABEL_HEAD =
   '(?:Speaker|Участник|Спикер|Participant|Interviewer|Interviewee|Host|Guest|Модератор|Интервьюер|Ведущий)(?:\\s+\\d+|\\s*\\d+)?';
 
-const SPEAKER_LINE_RE = new RegExp(`^\\s*(${SPEAKER_LABEL_HEAD})\\s*:\\s*(.*)$`, 'i');
+export const SPEAKER_LINE_RE = new RegExp(`^\\s*(${SPEAKER_LABEL_HEAD})\\s*:\\s*(.*)$`, 'i');
 
 /** Same as web `normalizeInlineSpeakerLabelsToParagraphBreaks` — keeps share/email readable. */
 const INLINE_SPEAKER_PARAGRAPH_BREAK = new RegExp(

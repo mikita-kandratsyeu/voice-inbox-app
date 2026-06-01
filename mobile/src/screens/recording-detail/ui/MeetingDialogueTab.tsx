@@ -1,7 +1,7 @@
 import { AlertCircle, FileText, RefreshCw, UsersRound } from 'lucide-react-native';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 
 import type { RecordingStatus } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
@@ -9,14 +9,31 @@ import type { Colors } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
 import { AiTabErrorBanner, AiTabHintIcon, Button, TabEmptyState } from '@/shared/ui';
 
-import { parseMeetingDialogue, utteranceStripeColor } from '../lib/parseMeetingDialogue';
+import {
+  analyzeMeetingDialogueHeuristics,
+  applySpeakerLabelsToUtterances,
+  displaySpeakerLabel,
+  type MeetingSpeakerLabels,
+  normalizeSpeakerLabelKey,
+} from '../lib/meetingSpeakerLabels';
+import { parseMeetingDialogue } from '../lib/parseMeetingDialogue';
 import { AiTabProcessing } from './AiTabProcessing';
+import { MeetingDialogueUtteranceCard } from './MeetingDialogueUtteranceCard';
+import { MeetingTabInfoCallout, MeetingTabInfoCalloutText } from './MeetingTabInfoCallout';
+import { TaskEditSheet } from './TaskEditSheet';
 
 type MeetingDialogueTabProps = {
   meetingDialogue?: string;
+  speakerLabels?: MeetingSpeakerLabels;
+  onRenameSpeaker?: (originalLabel: string, displayName: string) => void;
   hasTranscript: boolean;
+  hasSummary?: boolean;
+  /** Summary/tasks AI run in progress — block speaker breakdown actions. */
+  summaryProcessing?: boolean;
   color: Colors;
   onGenerate: () => void;
+  onRegenerateDialogueOnly?: () => void;
+  canRegenerateDialogueOnly?: boolean;
   status: RecordingStatus;
   errorMessage?: string;
   onDismissError?: () => void;
@@ -31,14 +48,25 @@ type MeetingDialogueTabProps = {
   cloudMeetingDialogueExtra?: boolean;
 };
 
+type SpeakerRenameTarget = {
+  originalLabel: string;
+  initialDisplay: string;
+};
+
 export const MeetingDialogueTab = ({
   color,
   errorMessage,
   hasTranscript,
+  hasSummary = false,
+  summaryProcessing = false,
   meetingDialogue,
+  speakerLabels,
+  onRenameSpeaker,
+  onRegenerateDialogueOnly,
+  canRegenerateDialogueOnly = false,
+  onGenerate,
   onCancelProcessing,
   onDismissError,
-  onGenerate,
   privateAiBatchPhase,
   privateAiBatchProgress,
   privateAiBatchProgressLabel,
@@ -55,27 +83,73 @@ export const MeetingDialogueTab = ({
   const { isConnected } = useNetworkStatus();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
+  const blockDialogueActions = disableByNetwork || summaryProcessing;
+
+  const [renameTarget, setRenameTarget] = useState<SpeakerRenameTarget | null>(null);
+
+  const rawUtterances = useMemo(
+    () => parseMeetingDialogue(meetingDialogue ?? ''),
+    [meetingDialogue],
+  );
+
+  const utterances = useMemo(
+    () => applySpeakerLabelsToUtterances(rawUtterances, speakerLabels),
+    [rawUtterances, speakerLabels],
+  );
+
+  const heuristics = useMemo(
+    () => analyzeMeetingDialogueHeuristics(rawUtterances),
+    [rawUtterances],
+  );
 
   const errMessage = useMemo(() => {
     return errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '');
   }, [errorMessage, showPrivateModeCta, t]);
 
-  const utterances = useMemo(() => parseMeetingDialogue(meetingDialogue ?? ''), [meetingDialogue]);
+  const openRename = useCallback(
+    (originalLabel: string) => {
+      if (!onRenameSpeaker) return;
+      const display = displaySpeakerLabel(originalLabel, speakerLabels) || originalLabel;
+      setRenameTarget({ originalLabel, initialDisplay: display });
+    },
+    [onRenameSpeaker, speakerLabels],
+  );
+
+  const renameSheet = useMemo(
+    () => (
+      <TaskEditSheet
+        visible={renameTarget !== null}
+        initialText={renameTarget?.initialDisplay ?? ''}
+        sheetTitleKey="recordingDetail.renameSpeakerTitle"
+        placeholderKey="recordingDetail.renameSpeakerPlaceholder"
+        onClose={() => setRenameTarget(null)}
+        onSave={({ text }) => {
+          if (!renameTarget || !onRenameSpeaker) return false;
+          onRenameSpeaker(renameTarget.originalLabel, text);
+          return true;
+        }}
+      />
+    ),
+    [onRenameSpeaker, renameTarget],
+  );
 
   if (status === 'processing') {
     return (
-      <AiTabProcessing
-        variant="meetingDialogue"
-        progress={privateAiBatchProgress ?? 0}
-        progressLabel={privateAiBatchProgressLabel}
-        phase={privateAiBatchPhase ?? (isPrivateMode ? 'loading_model' : 'processing')}
-        color={color}
-        onCancel={onCancelProcessing}
-        isPrivateMode={isPrivateMode}
-        processingStartedAtMs={privateAiBatchStartedAt}
-        transcriptCharCount={transcriptCharCount}
-        cloudMeetingDialogueExtra={cloudMeetingDialogueExtra}
-      />
+      <>
+        <AiTabProcessing
+          variant="meetingDialogue"
+          progress={privateAiBatchProgress ?? 0}
+          progressLabel={privateAiBatchProgressLabel}
+          phase={privateAiBatchPhase ?? (isPrivateMode ? 'loading_model' : 'processing')}
+          color={color}
+          onCancel={onCancelProcessing}
+          isPrivateMode={isPrivateMode}
+          processingStartedAtMs={privateAiBatchStartedAt}
+          transcriptCharCount={transcriptCharCount}
+          cloudMeetingDialogueExtra={cloudMeetingDialogueExtra}
+        />
+        {renameSheet}
+      </>
     );
   }
 
@@ -95,38 +169,68 @@ export const MeetingDialogueTab = ({
               ? errorMessage?.trim() || t('recordingDetail.meetingDialogueFailedDesc')
               : errMessage
           }
-          buttonLabel={t('recordingDetail.summaryRetry')}
+          buttonLabel={
+            canRegenerateDialogueOnly
+              ? t('recordingDetail.retryMeetingDialogue')
+              : t('recordingDetail.summaryRetry')
+          }
           buttonIcon={<RefreshCw size={18} color="#fff" strokeWidth={2} />}
-          onPress={onGenerate}
+          disabled={blockDialogueActions}
+          onPress={
+            canRegenerateDialogueOnly && onRegenerateDialogueOnly
+              ? onRegenerateDialogueOnly
+              : onGenerate
+          }
         />
+        {renameSheet}
       </View>
     );
   }
 
   if (!hasTranscript) {
     return (
-      <TabEmptyState
-        icon={<FileText size={28} color={color.icon.muted} strokeWidth={1.8} />}
-        title={t('recordingDetail.noTranscriptForAi')}
-        description={t('recordingDetail.noTranscriptForAiDesc')}
-      />
+      <>
+        <TabEmptyState
+          icon={<FileText size={28} color={color.icon.muted} strokeWidth={1.8} />}
+          title={t('recordingDetail.noTranscriptForAi')}
+          description={t('recordingDetail.noTranscriptForAiDesc')}
+        />
+        {renameSheet}
+      </>
     );
   }
 
   if (utterances.length === 0) {
+    const dialogueOnlyAction = canRegenerateDialogueOnly && Boolean(onRegenerateDialogueOnly);
+    const emptyDescriptionKey = dialogueOnlyAction
+      ? 'recordingDetail.meetingDialogueTabEmptyDescReady'
+      : hasSummary
+        ? 'recordingDetail.meetingDialogueTabEmptyDescReady'
+        : 'recordingDetail.meetingDialogueTabEmptyDescNeedSummary';
+    const emptyButtonLabel = dialogueOnlyAction
+      ? t('recordingDetail.retryMeetingDialogue')
+      : hasSummary
+        ? t('recordingDetail.generateMeetingDialogue')
+        : t('recordingDetail.generateMeetingDialogueWithSummary');
+    const emptyButtonIcon = dialogueOnlyAction ? (
+      <RefreshCw size={18} color="#fff" strokeWidth={2} />
+    ) : (
+      <UsersRound size={18} color="#fff" strokeWidth={2} />
+    );
     return (
       <View className="gap-3 p-4">
         <TabEmptyState
           icon={<UsersRound size={28} color={color.icon.muted} strokeWidth={1.8} />}
           title={t('recordingDetail.meetingDialogueTabEmptyTitle')}
-          description={t('recordingDetail.meetingDialogueTabEmptyDesc')}
-          buttonLabel={t('recordingDetail.generateSummary')}
-          buttonIcon={<FileText size={18} color="#fff" strokeWidth={2} />}
-          hint={aiModelName}
-          hintIcon={<AiTabHintIcon />}
-          disabled={disableByNetwork}
-          onPress={onGenerate}
+          description={t(emptyDescriptionKey)}
+          buttonLabel={emptyButtonLabel}
+          buttonIcon={emptyButtonIcon}
+          hint={dialogueOnlyAction ? undefined : aiModelName}
+          hintIcon={dialogueOnlyAction ? undefined : <AiTabHintIcon />}
+          disabled={blockDialogueActions}
+          onPress={dialogueOnlyAction ? onRegenerateDialogueOnly! : onGenerate}
         />
+        {renameSheet}
       </View>
     );
   }
@@ -134,87 +238,59 @@ export const MeetingDialogueTab = ({
   return (
     <View className="gap-3.5 p-4">
       {showBanner && <AiTabErrorBanner message={errMessage} onDismiss={handleDismiss} />}
-      <View
-        className="flex-row gap-3 rounded-xl border p-3"
-        style={{
-          borderColor: color.border.default,
-          backgroundColor: color.background.tertiary,
-        }}
+      <MeetingTabInfoCallout
+        color={color}
+        icon={<UsersRound size={20} color={color.accent.primary} strokeWidth={2} />}
+        title={t('recordingDetail.meetingDialogueTabCalloutTitle')}
       >
-        <UsersRound
-          size={20}
-          color={color.accent.primary}
-          strokeWidth={2}
-          style={{ marginTop: 2 }}
-        />
-        <View className="min-w-0 flex-1 gap-1">
-          <Text className="text-[15px] font-semibold" style={{ color: color.text.primary }}>
-            {t('recordingDetail.meetingDialogueTabCalloutTitle')}
-          </Text>
-          <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
-            {t('recordingDetail.meetingDialogueDisclaimer')}
-          </Text>
-        </View>
-      </View>
-      <View className="gap-3">
+        <MeetingTabInfoCalloutText color={color}>
+          {t('recordingDetail.meetingDialogueDisclaimer')}
+        </MeetingTabInfoCalloutText>
+        <MeetingTabInfoCalloutText color={color}>
+          {t('recordingDetail.meetingDialogueNotRealDiarization')}
+        </MeetingTabInfoCalloutText>
+        {heuristics.showSingleSpeakerHint ? (
+          <MeetingTabInfoCalloutText color={color} variant="muted">
+            {t('recordingDetail.meetingDialogueSingleSpeakerHint')}
+          </MeetingTabInfoCalloutText>
+        ) : null}
+        {heuristics.showNoSpeakerLabelsHint ? (
+          <MeetingTabInfoCalloutText color={color} variant="muted">
+            {t('recordingDetail.meetingDialogueNoLabelsHint')}
+          </MeetingTabInfoCalloutText>
+        ) : null}
+      </MeetingTabInfoCallout>
+      <View className="gap-2.5">
         {utterances.map((u, index) => {
-          const stripe = utteranceStripeColor(color, u.colorSlot);
-          const key = `${index}-${u.speakerLabel}-${u.body.slice(0, 24)}`;
+          const rawLabel = rawUtterances[index]?.speakerLabel?.trim() ?? '';
+          const canRename = Boolean(onRenameSpeaker && rawLabel);
+          const key = `${index}-${normalizeSpeakerLabelKey(rawLabel)}-${u.body.slice(0, 24)}`;
 
           return (
-            <View
+            <MeetingDialogueUtteranceCard
               key={key}
-              className="flex-row gap-3 rounded-xl border p-3"
-              style={{
-                borderColor: color.border.default,
-                backgroundColor: color.background.tertiary,
-              }}
-            >
-              <View
-                className="mt-0.5 w-1 self-stretch rounded-full"
-                style={{ backgroundColor: stripe, minHeight: 24 }}
-              />
-              <View className="min-w-0 flex-1 gap-1">
-                {u.speakerLabel ? (
-                  <Text
-                    className="text-[15px] font-semibold"
-                    style={{ color: color.text.primary }}
-                    selectable
-                  >
-                    {u.speakerLabel}
-                  </Text>
-                ) : (
-                  <Text
-                    className="text-[13px] font-semibold"
-                    style={{ color: color.text.secondary }}
-                    selectable
-                  >
-                    {t('recordingDetail.meetingDialoguePreamble')}
-                  </Text>
-                )}
-                <Text
-                  className="text-sm leading-6"
-                  style={{ color: color.text.primary }}
-                  selectable
-                >
-                  {u.body}
-                </Text>
-              </View>
-            </View>
+              utterance={u}
+              color={color}
+              canRename={canRename}
+              onRename={canRename ? () => openRename(rawLabel) : undefined}
+            />
           );
         })}
       </View>
-      <Button
-        variant="secondary"
-        size="lg"
-        icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
-        label={t('recordingDetail.regenerateSummary')}
-        color={color}
-        onPress={onGenerate}
-        disabled={disableByNetwork}
-        className="mt-1"
-        accessibilityState={{ disabled: disableByNetwork }}
-      />
+      {canRegenerateDialogueOnly && onRegenerateDialogueOnly ? (
+        <Button
+          variant="secondary"
+          size="lg"
+          icon={<RefreshCw size={15} color={color.text.primary} strokeWidth={2} />}
+          label={t('recordingDetail.retryMeetingDialogue')}
+          color={color}
+          onPress={onRegenerateDialogueOnly}
+          disabled={blockDialogueActions}
+          className="mt-1"
+          accessibilityState={{ disabled: blockDialogueActions }}
+        />
+      ) : null}
+      {renameSheet}
     </View>
   );
 };

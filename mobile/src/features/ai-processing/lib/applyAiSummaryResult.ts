@@ -150,7 +150,10 @@ export async function applyAiSummaryResult(params: ApplyAiSummaryResultParams): 
       keyPhrases: keyPhrases ?? [],
       nextSteps: nextStepsForStore,
       ...(includeMeetingSpeakerBreakdown && !skipMeetingDialogue
-        ? { meetingDialogue: meetingDialogueForStore }
+        ? {
+            meetingDialogue: meetingDialogueForStore,
+            ...(meetingDialogueForStore ? { meetingSpeakerLabels: null } : {}),
+          }
         : {}),
       ...(aiExecutionMode === 'smart_hybrid' ? { summaryReasoning: summaryReasoningForStore } : {}),
     });

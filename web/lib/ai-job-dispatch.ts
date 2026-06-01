@@ -7,7 +7,10 @@ import { runAiJobFromEnvelope } from '@/lib/run-ai-job-from-envelope';
 import { getAiJobWorkerUrl, getQStashClient, shouldUseQStashTransport } from '@/lib/qstash';
 import type { AiJobPayload } from '@/types/ai-job';
 
-export async function dispatchAiJob(payload: AiJobPayload): Promise<void> {
+export async function dispatchAiJob(
+  payload: AiJobPayload,
+  options?: { deduplicationId?: string },
+): Promise<void> {
   const envelope = envelopeFromPayload(payload);
   const transport = shouldUseQStashTransport() ? 'qstash' : 'after';
 
@@ -35,9 +38,10 @@ export async function dispatchAiJob(payload: AiJobPayload): Promise<void> {
         timeout: '300s',
         // QStash rejects ':' in deduplicationId; keep summarize vs meeting_dialogue distinct.
         deduplicationId:
-          envelope.operation === 'meeting_dialogue'
+          options?.deduplicationId ??
+          (envelope.operation === 'meeting_dialogue'
             ? `${envelope.jobId}-meeting-dialogue`
-            : envelope.jobId,
+            : envelope.jobId),
       });
       return;
     } catch (err) {

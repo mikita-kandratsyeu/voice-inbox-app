@@ -10,6 +10,7 @@ export const AI_OPERATIONS = [
   'digest',
   'translate',
   'folder_auto_organize',
+  'meeting_dialogue_retry',
 ] as const;
 
 export type AiOperation = (typeof AI_OPERATIONS)[number];

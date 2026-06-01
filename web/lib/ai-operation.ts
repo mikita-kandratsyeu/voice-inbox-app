@@ -12,12 +12,16 @@ export const AI_OPERATIONS = [
   'folder_auto_organize',
   /** Internal QStash worker only (not sent from mobile headers). */
   'meeting_dialogue',
+  'meeting_dialogue_retry',
 ] as const;
 
 export type AiOperation = (typeof AI_OPERATIONS)[number];
 
 const isAiOperation = (value: string): value is AiOperation =>
   (AI_OPERATIONS as readonly string[]).includes(value);
+
+const MEETING_DIALOGUE_RETRY_PATH_RE =
+  /^\/api\/messages\/[^/]+\/meeting-dialogue$/;
 
 const PATH_DEFAULT: Record<string, AiOperation> = {
   '/api/messages': 'transcript_summarize',
@@ -51,6 +55,22 @@ export type ResolveAiOperationResult =
  */
 export function resolveAiOperation(request: Request, pathname: string): ResolveAiOperationResult {
   const path = normalizePathname(pathname);
+
+  if (MEETING_DIALOGUE_RETRY_PATH_RE.test(path)) {
+    const allowed = new Set<AiOperation>(['meeting_dialogue_retry']);
+    const raw = request.headers.get(HEADER_AI_OPERATION)?.trim().toLowerCase() ?? '';
+    if (!raw) {
+      return { ok: true, operation: 'meeting_dialogue_retry' };
+    }
+    if (!isAiOperation(raw) || !allowed.has(raw)) {
+      return {
+        ok: false,
+        error: `Invalid or mismatched ${HEADER_AI_OPERATION} header`,
+      };
+    }
+    return { ok: true, operation: raw };
+  }
+
   const defaultOp = PATH_DEFAULT[path];
   const allowed = ALLOWED_BY_PATH[path];
 

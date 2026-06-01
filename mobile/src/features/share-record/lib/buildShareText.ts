@@ -240,7 +240,7 @@ const pushMeetingDialogue = (
   lines.push('');
   lines.push(`_${i18n.t('recordingDetail.meetingDialogueDisclaimer')}_`);
   lines.push('');
-  lines.push(formatMeetingDialogueForShareMarkdown(body, ctx.forEmail));
+  lines.push(formatMeetingDialogueForShareMarkdown(body, ctx.forEmail, record.meetingSpeakerLabels));
 };
 
 const pushFooter = (lines: string[]): void => {
@@ -299,7 +299,9 @@ function buildMeetingSpeakerTurnsOnly(record: VoiceRecord, ctx: ShareExportConte
   lines.push('');
   const body = record.meetingDialogue?.trim();
   if (body) {
-    lines.push(formatMeetingDialogueForShareMarkdown(body, ctx.forEmail));
+    lines.push(
+      formatMeetingDialogueForShareMarkdown(body, ctx.forEmail, record.meetingSpeakerLabels),
+    );
   } else {
     lines.push(`_${i18n.t('share.speakerTurnsEmpty')}_`);
   }

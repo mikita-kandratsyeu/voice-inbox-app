@@ -6,5 +6,8 @@ export async function dispatchMeetingDialogueJob(
   payload: MeetingDialogueJobPayload,
 ): Promise<void> {
   await saveMeetingJobPayload(payload);
-  await dispatchAiJob(payload);
+  const deduplicationId = payload.retryNonce?.trim()
+    ? `${payload.jobId}-meeting-dialogue-${payload.retryNonce.trim()}`
+    : `${payload.jobId}-meeting-dialogue`;
+  await dispatchAiJob(payload, { deduplicationId });
 }

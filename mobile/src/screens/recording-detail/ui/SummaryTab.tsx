@@ -11,6 +11,7 @@ import type { SummaryTokenUsage } from '@/shared/lib/summaryMetaSubtitle';
 import { AiTabErrorBanner, AiTabHintIcon, Button, TabEmptyState } from '@/shared/ui';
 
 import { AiTabProcessing } from './AiTabProcessing';
+import { MeetingTabInfoCallout, MeetingTabInfoCalloutText } from './MeetingTabInfoCallout';
 import { SummaryReasoningDisclosure } from './SummaryReasoningDisclosure';
 
 type SummaryTabProps = {
@@ -102,7 +103,7 @@ export const SummaryTab = ({
         isPrivateMode={isPrivateMode}
         processingStartedAtMs={privateAiBatchStartedAt}
         transcriptCharCount={transcriptCharCount}
-        cloudMeetingDialogueExtra={cloudMeetingDialogueExtra}
+        cloudMeetingDialogueExtra={cloudMeetingDialogueExtra && speakerBreakdownProcessing}
       />
     );
   }
@@ -151,29 +152,30 @@ export const SummaryTab = ({
   return (
     <View className="gap-3.5 p-4">
       {showBanner && <AiTabErrorBanner message={errMessage} onDismiss={handleDismiss} />}
-      {isMeeting && (
+      {speakerBreakdownProcessing ? (
         <View
-          className="flex-row gap-3 rounded-xl border p-3"
+          className="rounded-xl border p-3"
           style={{
             borderColor: color.border.default,
             backgroundColor: color.background.tertiary,
           }}
         >
-          <UsersRound
-            size={20}
-            color={color.accent.primary}
-            strokeWidth={2}
-            style={{ marginTop: 2 }}
-          />
-          <View className="min-w-0 flex-1 gap-1">
-            <Text className="text-[15px] font-semibold" style={{ color: color.text.primary }}>
-              {t('recordingDetail.meetingSummaryTitle')}
-            </Text>
-            <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
-              {t('recordingDetail.meetingSummaryDescription')}
-            </Text>
-          </View>
+          <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
+            {privateAiBatchProgressLabel?.trim() ||
+              t('recordingDetail.regenerateSummaryWaitForSpeakers')}
+          </Text>
         </View>
+      ) : null}
+      {isMeeting && (
+        <MeetingTabInfoCallout
+          color={color}
+          icon={<UsersRound size={20} color={color.accent.primary} strokeWidth={2} />}
+          title={t('recordingDetail.meetingSummaryTitle')}
+        >
+          <MeetingTabInfoCalloutText color={color}>
+            {t('recordingDetail.meetingSummaryDescription')}
+          </MeetingTabInfoCalloutText>
+        </MeetingTabInfoCallout>
       )}
       <Text className="text-sm leading-6" style={{ color: color.text.primary }}>
         {summary}

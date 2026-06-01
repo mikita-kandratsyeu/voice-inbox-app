@@ -141,6 +141,8 @@ type RecordStore = {
       keyPhrases?: string[];
       nextSteps?: string[];
       meetingDialogue?: string | null;
+      meetingSpeakerLabels?: Record<string, string> | null;
+      cloudAiJobId?: string | null;
       summaryReasoning?: string | null;
       summaryAiModel?: string | null;
       summaryTokensPrompt?: number | null;
@@ -484,6 +486,15 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
         patch.meetingDialogue = data.meetingDialogue?.trim()
           ? data.meetingDialogue.trim()
           : undefined;
+      }
+      if (data.meetingSpeakerLabels !== undefined) {
+        patch.meetingSpeakerLabels =
+          data.meetingSpeakerLabels && Object.keys(data.meetingSpeakerLabels).length > 0
+            ? data.meetingSpeakerLabels
+            : undefined;
+      }
+      if (data.cloudAiJobId !== undefined) {
+        patch.cloudAiJobId = data.cloudAiJobId?.trim() ? data.cloudAiJobId.trim() : undefined;
       }
       if (data.summaryReasoning !== undefined) {
         patch.summaryReasoning = data.summaryReasoning?.trim()

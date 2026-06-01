@@ -88,6 +88,10 @@ export type VoiceRecord = {
   keyPhrases?: string[];
   nextSteps?: string[];
   meetingDialogue?: string;
+  /** Maps normalized AI speaker label → user display name. */
+  meetingSpeakerLabels?: Record<string, string>;
+  /** Last cloud summarize Redis message id (for meeting-dialogue retry). */
+  cloudAiJobId?: string;
   meetingDialogueStatus?: MeetingDialogueLoadStatus;
   meetingDialogueError?: string;
   /** OpenRouter reasoning trace from Smart summary (optional). */

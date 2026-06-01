@@ -11,6 +11,7 @@ import {
   recordsTable,
 } from '@/shared/lib';
 import type { RecordForStats } from '@/shared/lib/async-storage/storage';
+import { sanitizeMeetingSpeakerLabels } from '@/screens/recording-detail/lib/meetingSpeakerLabels';
 
 import { sanitizeRecordingMark } from './normalizeRecordingMark';
 import { TRASH_RETENTION_DAYS } from './trashConfig';
@@ -24,6 +25,14 @@ import type {
   TranscriptSegment,
   VoiceRecord,
 } from './types';
+
+function parseMeetingSpeakerLabelsJson(raw: string | null | undefined) {
+  try {
+    return sanitizeMeetingSpeakerLabels(JSON.parse(raw ?? 'null') as unknown);
+  } catch {
+    return undefined;
+  }
+}
 
 function parseRecordingMarks(raw: string | null | undefined): RecordingMark[] {
   try {
@@ -76,6 +85,8 @@ type RecordListQueryRow = {
   keyPhrases: string | null;
   nextSteps: string | null;
   meetingDialogue: string | null;
+  meetingSpeakerLabels: string | null;
+  cloudAiJobId: string | null;
   summaryReasoning: string | null;
   summaryAiModel: string | null;
   summaryTokensPrompt: number | null;
@@ -118,6 +129,8 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     keyPhrases: JSON.parse(row.keyPhrases ?? '[]') as string[],
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
     meetingDialogue: row.meetingDialogue?.trim() ? row.meetingDialogue.trim() : undefined,
+    meetingSpeakerLabels: parseMeetingSpeakerLabelsJson(row.meetingSpeakerLabels),
+    cloudAiJobId: row.cloudAiJobId?.trim() ? row.cloudAiJobId.trim() : undefined,
     summaryReasoning: row.summaryReasoning?.trim() ? row.summaryReasoning.trim() : undefined,
     summaryAiModel: row.summaryAiModel?.trim() ? row.summaryAiModel.trim() : undefined,
     summaryTokensPrompt:
@@ -170,6 +183,8 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
     keyPhrases: JSON.parse(row.keyPhrases ?? '[]') as string[],
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
     meetingDialogue: row.meetingDialogue?.trim() ? row.meetingDialogue.trim() : undefined,
+    meetingSpeakerLabels: parseMeetingSpeakerLabelsJson(row.meetingSpeakerLabels),
+    cloudAiJobId: row.cloudAiJobId?.trim() ? row.cloudAiJobId.trim() : undefined,
     summaryReasoning: row.summaryReasoning?.trim() ? row.summaryReasoning.trim() : undefined,
     summaryAiModel: row.summaryAiModel?.trim() ? row.summaryAiModel.trim() : undefined,
     summaryTokensPrompt:
@@ -218,6 +233,8 @@ const recordListColumns = {
   keyPhrases: recordsTable.keyPhrases,
   nextSteps: recordsTable.nextSteps,
   meetingDialogue: recordsTable.meetingDialogue,
+  meetingSpeakerLabels: recordsTable.meetingSpeakerLabels,
+  cloudAiJobId: recordsTable.cloudAiJobId,
   summaryReasoning: recordsTable.summaryReasoning,
   summaryAiModel: recordsTable.summaryAiModel,
   summaryTokensPrompt: recordsTable.summaryTokensPrompt,
@@ -349,6 +366,10 @@ export const recordRepository = {
         keyPhrases: JSON.stringify(record.keyPhrases ?? []),
         nextSteps: JSON.stringify(record.nextSteps ?? []),
         meetingDialogue: record.meetingDialogue?.trim() ? record.meetingDialogue.trim() : null,
+        meetingSpeakerLabels: record.meetingSpeakerLabels
+          ? JSON.stringify(record.meetingSpeakerLabels)
+          : null,
+        cloudAiJobId: record.cloudAiJobId?.trim() ? record.cloudAiJobId.trim() : null,
         summaryReasoning: record.summaryReasoning?.trim() ? record.summaryReasoning.trim() : null,
         summaryAiModel: record.summaryAiModel?.trim() ? record.summaryAiModel.trim() : null,
         summaryTokensPrompt: record.summaryTokensPrompt ?? null,
@@ -510,6 +531,8 @@ export const recordRepository = {
       keyPhrases?: string[];
       nextSteps?: string[];
       meetingDialogue?: string | null;
+      meetingSpeakerLabels?: Record<string, string> | null;
+      cloudAiJobId?: string | null;
       summaryReasoning?: string | null;
       summaryAiModel?: string | null;
       summaryTokensPrompt?: number | null;
@@ -531,6 +554,15 @@ export const recordRepository = {
     }
     if (data.meetingDialogue !== undefined) {
       updates.meetingDialogue = data.meetingDialogue?.trim() ? data.meetingDialogue.trim() : null;
+    }
+    if (data.meetingSpeakerLabels !== undefined) {
+      updates.meetingSpeakerLabels =
+        data.meetingSpeakerLabels && Object.keys(data.meetingSpeakerLabels).length > 0
+          ? JSON.stringify(data.meetingSpeakerLabels)
+          : null;
+    }
+    if (data.cloudAiJobId !== undefined) {
+      updates.cloudAiJobId = data.cloudAiJobId?.trim() ? data.cloudAiJobId.trim() : null;
     }
     if (data.summaryReasoning !== undefined) {
       updates.summaryReasoning = data.summaryReasoning?.trim()

@@ -65,6 +65,7 @@ const KEYS = {
   CLOUD_AI_THIRD_PARTY_CONSENT: 'settings.cloudAiThirdPartyConsentAccepted',
   CLOUD_AI_KV_TTL_SECONDS: 'settings.cloudAiKvTtlSeconds',
   SHOW_SUMMARY_REASONING_IN_NOTES: 'settings.showSummaryReasoningInNotes',
+  AUTO_REFRESH_MEETING_SPEAKERS_ON_REGEN: 'settings.autoRefreshMeetingSpeakersOnRegen',
   PRIVATE_PREVIOUS_THEME: 'settings.private.previousTheme',
   PRIVATE_PREVIOUS_AUTO_TRANSCRIBE: 'settings.private.previousAutoTranscribeOnSave',
   PRIVATE_PREVIOUS_AUTO_AI: 'settings.private.previousAutoAiAfterTranscription',
@@ -280,6 +281,14 @@ const getStoredShowSummaryReasoningInNotes = (): boolean => {
   return storage.getString(KEYS.SHOW_SUMMARY_REASONING_IN_NOTES) === 'true';
 };
 
+const getStoredAutoRefreshMeetingSpeakersOnRegen = (): boolean => {
+  if (!storage.contains(KEYS.AUTO_REFRESH_MEETING_SPEAKERS_ON_REGEN)) {
+    return true;
+  }
+
+  return storage.getString(KEYS.AUTO_REFRESH_MEETING_SPEAKERS_ON_REGEN) === 'true';
+};
+
 const getStoredAiExecutionMode = (): AiExecutionMode => {
   const val = storage.getString(KEYS.AI_EXECUTION_MODE);
   return val === 'private_experimental' ? 'private_experimental' : 'smart_hybrid';
@@ -353,6 +362,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   cloudAiThirdPartyConsentAccepted: getStoredCloudAiThirdPartyConsentAccepted(),
   cloudAiKvTtlSeconds: getStoredCloudAiKvTtlSeconds(),
   showSummaryReasoningInNotes: getStoredShowSummaryReasoningInNotes(),
+  autoRefreshMeetingSpeakersOnRegen: getStoredAutoRefreshMeetingSpeakersOnRegen(),
   whisperModelStatuses: getStoredWhisperStatuses(),
   whisperDownloadProgress: {},
   whisperDownloadBytes: {},
@@ -569,6 +579,11 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setShowSummaryReasoningInNotes: (value: boolean) => {
     storage.set(KEYS.SHOW_SUMMARY_REASONING_IN_NOTES, String(value));
     set({ showSummaryReasoningInNotes: value });
+  },
+
+  setAutoRefreshMeetingSpeakersOnRegen: (value: boolean) => {
+    storage.set(KEYS.AUTO_REFRESH_MEETING_SPEAKERS_ON_REGEN, String(value));
+    set({ autoRefreshMeetingSpeakersOnRegen: value });
   },
 
   setWhisperModelStatus: (

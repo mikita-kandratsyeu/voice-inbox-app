@@ -1,3 +1,4 @@
+import { useRecordStore } from '@/entities/record';
 import { i18n } from '@/shared/lib';
 import {
   type AiApiResult,
@@ -146,6 +147,7 @@ export async function runCloudSummaryTasks(
       expectAsyncMeetingDialogue: request.expectAsyncMeetingDialogue === true,
       expiresAtMs: Date.now() + ttlSec * 1000,
     });
+    void useRecordStore.getState().updateAiExtras(recordId, { cloudAiJobId: request.id });
   }
 
   const pollResult = await pollAiMessage(request.id, postResult.data.syncToken, {

@@ -69,6 +69,8 @@ export type MeetingDialogueJobPayload = {
     summary: string;
   };
   clientUserAgent?: string | null;
+  /** Unique per user-initiated retry (QStash deduplication). */
+  retryNonce?: string;
 };
 
 export type AiJobPayload =

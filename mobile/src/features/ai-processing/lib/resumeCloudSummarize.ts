@@ -91,6 +91,7 @@ async function applyPollSuccess(
   } else if (includeMeetingSpeakerBreakdown && result.meetingDialogueMarkdown?.trim()) {
     await updateAiExtras(record.id, {
       meetingDialogue: result.meetingDialogueMarkdown.trim(),
+      meetingSpeakerLabels: null,
     });
   }
 
@@ -223,6 +224,10 @@ export async function resumeCloudSummarizeJob(pending: CloudSummarizePendingJob)
             updateAiExtras,
             renameRecord,
             getLatestRecord: (id) => useRecordStore.getState().records.find((r) => r.id === id),
+          });
+          await updateAiExtras(record.id, {
+            meetingDialogue: null,
+            meetingSpeakerLabels: null,
           });
           setMeetingDialogueStatus(record.id, 'processing');
         }

@@ -33,6 +33,8 @@ export const recordsTable = sqliteTable(
     keyPhrases: text('keyPhrases').default('[]'),
     nextSteps: text('nextSteps').default('[]'),
     meetingDialogue: text('meetingDialogue'),
+    meetingSpeakerLabels: text('meetingSpeakerLabels'),
+    cloudAiJobId: text('cloudAiJobId'),
     summaryReasoning: text('summaryReasoning'),
     summaryAiModel: text('summaryAiModel'),
     summaryTokensPrompt: integer('summaryTokensPrompt'),

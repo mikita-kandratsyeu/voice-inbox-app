@@ -120,6 +120,13 @@
       "when": 1776000000000,
       "tag": "0016_cloud_ai_pending",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "6",
+      "when": 1776100000000,
+      "tag": "0017_meeting_speaker_labels",
+      "breakpoints": true
     }
   ]
 }

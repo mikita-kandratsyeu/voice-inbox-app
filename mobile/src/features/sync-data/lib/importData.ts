@@ -9,6 +9,7 @@ import { DEFAULT_FOLDER_ICON_KEY } from '@/entities/folder/lib/folderLucideIcons
 import { folderRepository } from '@/entities/folder/model/repository';
 import type { RecordClassification, RecordingMark, VoiceRecord } from '@/entities/record';
 import { sanitizeRecordingMark } from '@/entities/record';
+import { sanitizeMeetingSpeakerLabels } from '@/screens/recording-detail/lib/meetingSpeakerLabels';
 import {
   DEFAULT_FOLDER_BRAND_HEX,
   ensureRecordingsDir,
@@ -51,6 +52,7 @@ const VoiceRecordSchema = z.looseObject({
   keyPhrases: z.array(safeString).max(MAX_ARRAY_LENGTH).optional().nullable(),
   nextSteps: z.array(safeString).max(MAX_ARRAY_LENGTH).optional().nullable(),
   meetingDialogue: safeOptionalString,
+  meetingSpeakerLabels: z.record(z.string(), z.string()).optional().nullable(),
   folderId: safeOptionalString,
   audioPath: safeOptionalString,
   duration: z
@@ -206,6 +208,7 @@ function normalizeRecord(raw: z.infer<typeof VoiceRecordSchema>): VoiceRecord {
     keyPhrases: keyPhrases.length > 0 ? keyPhrases : (base.keyPhrases ?? []),
     nextSteps: nextSteps.length > 0 ? nextSteps : (base.nextSteps ?? []),
     meetingDialogue: normalizeMeetingDialogueImport(base.meetingDialogue),
+    meetingSpeakerLabels: sanitizeMeetingSpeakerLabels(base.meetingSpeakerLabels),
     translatedTranscript: isString(base.translatedTranscript)
       ? base.translatedTranscript
       : undefined,

@@ -161,6 +161,67 @@ export async function postAiMessage(
   return { ok: true, data };
 }
 
+export type MeetingDialogueRetryRequestBody = {
+  transcript: string;
+  transcriptSegments?: Array<{ startMs?: number; endMs?: number; text: string }>;
+  model: string;
+  options: AiProcessingOptions;
+  messageTtlSeconds?: number;
+};
+
+export async function postMeetingDialogueRetry(
+  jobId: string,
+  body: MeetingDialogueRetryRequestBody,
+  options?: AiFetchOptions,
+): Promise<AiApiResult> {
+  const url = `${getWebApiUrl()}/api/messages/${encodeURIComponent(jobId)}/meeting-dialogue`;
+
+  if (options?.signal?.aborted) {
+    return aiRequestCancelledFailure();
+  }
+
+  let response: Response;
+  try {
+    response = await fetchWithAuth(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...headersForAiOperation('meeting_dialogue_retry'),
+      },
+      body: JSON.stringify(body),
+      signal: options?.signal,
+    });
+  } catch (err) {
+    if (options?.signal?.aborted || isAbortLikeError(err)) {
+      return aiRequestCancelledFailure();
+    }
+    const errorMsg = err instanceof Error ? err.message : 'Network error';
+    if (__DEV__) console.warn('[AI] postMeetingDialogueRetry: fetch failed', { error: errorMsg });
+    return { ok: false, error: errorMsg };
+  }
+
+  if (response.status === 429) {
+    const limitBody = await readResponseJson(response);
+    if (!limitBody.ok) {
+      return { ok: false, error: limitBody.error };
+    }
+    const json = limitBody.data as AiApiLimitResponse;
+    return { ok: false, limitExceeded: true, usage: json.usage };
+  }
+
+  if (!response.ok) {
+    const text = await response.text();
+    return { ok: false, error: text || `HTTP ${response.status}` };
+  }
+
+  const successBody = await readResponseJson(response);
+  if (!successBody.ok) {
+    return { ok: false, error: successBody.error };
+  }
+
+  return { ok: true, data: successBody.data as AiApiSuccessResponse };
+}
+
 export type AiUsage = {
   used: number;
   limit: number;

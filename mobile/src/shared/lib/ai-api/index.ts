@@ -14,8 +14,10 @@ export {
   getAiUsage,
   pollAiMessage,
   postAiMessage,
+  postMeetingDialogueRetry,
   resumePollAiMessage,
 } from './aiApi';
+export type { MeetingDialogueRetryRequestBody } from './aiApi';
 export type { AskApiResult, AskMessageResult } from './askApi';
 export { pollAskResult, postAskQuestion } from './askApi';
 export type { AutoOrganizeApiResult, AutoOrganizePollResult } from './autoOrganizeApi';
