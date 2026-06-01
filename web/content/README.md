@@ -28,6 +28,8 @@ Align claims with implementation:
 | Ads | `mobile/src/features/app-storefront/`, `mobile/src/features/yandex-interstitial/` |
 | Entitlements / IAP | `mobile/src/features/entitlements/`, `mobile/src/features/pro-license/`, `web/app/api/pro-license/**` |
 | Cloud vs private AI | `mobile/src/shared/lib/ai-core/`, `mobile/src/screens/settings/ui/PrivateAiModeScreen.tsx`, `mobile/src/entities/settings/model/constants.ts` |
+| Meeting dialogue (cloud) | `web/services/message.service.ts`, `web/app/api/messages/[id]/meeting-dialogue/route.ts`, `web/lib/ai-job-runners/` |
+| Meeting dialogue (mobile UI / labels) | `mobile/src/screens/recording-detail/`, `mobile/src/features/ai-processing/lib/regenerateMeetingDialogue.ts` |
 | Support diagnostics | `mobile/src/features/tech-support/`, `web/app/api/support/**` |
 | Cloud API / rate limits | `web/services/ai.service.ts`, `web/services/translate.service.ts`, `web/services/ask.service.ts`, `web/config/constants.ts` |
 

@@ -60,7 +60,7 @@ Requires `DATABASE_URL`, `WEB_ADMIN_URL`, and `TELEGRAM_BOT_API_SECRET` (same va
 
 - **Voice capture** — Waveform, timer, pause/resume; audio stored locally first.
 - **Transcription** — On-device Whisper (`whisper.rn`); iOS Core ML encoder when downloaded; context lifecycle in `mobile/src/features/transcription/`.
-- **AI** — Private (on-device `llama.rn`) and Smart (HTTPS to web API); tabs for transcript, summary, tasks, meeting dialogue.
+- **AI** — Private (on-device `llama.rn`) and Smart (HTTPS to web API); tabs for transcript, summary, tasks, and **meeting dialogue** (speaker turns, renameable roster on Pro meetings).
 - **Inbox** — Folders, tags, pins, archive/trash, batch actions.
 - **Search** — Hybrid lexical + local embeddings when available (`mobile/src/features/search-records/`, `mobile/src/shared/lib/embeddings/`).
 - **Backup** — ZIP export/import (`mobile/src/features/sync-data/`).

@@ -9,7 +9,9 @@ alwaysApply: false
 - **Stack:** React Native 0.84, React 19, TypeScript, **React Navigation** (stack + tabs), **NativeWind** v4, **Drizzle ORM**, **Zustand**, Firebase (Analytics, Messaging, Crashlytics, etc.).
 - **Layout:** `src/app`, `entities`, `features`, `screens`, `widgets`, `shared` — path aliases in `tsconfig.json`.
 - **Whisper:** `src/features/transcription/` + `src/shared/lib/whisper/`; serialize native calls via `whisperNativeLifecycle.ts`.
-- **Database:** Drizzle (`yarn db:generate` runs `drizzle-kit generate`). Do not use Prisma inside `mobile/`.
+- **Meeting dialogue:** `src/screens/recording-detail/` (tab UI, `meetingSpeakerLabels`, roster); cloud regen in `src/features/ai-processing/lib/regenerateMeetingDialogue.ts`.
+- **Bootstrap:** `src/features/app-lifecycle/model/useAppBootstrap.ts` — DB + stores before first screen; defer push/RevenueCat.
+- **Database:** Drizzle (`yarn db:generate` runs `drizzle-kit generate`). Do not use Prisma inside `mobile/`. Recent columns: `meetingSpeakerLabels`, `cloudAiJobId` on `records`.
 - **Styles:** NativeWind / Tailwind-like utilities; respect `dark` mode as in existing screens.
 - **Animations:** `react-native-reanimated` + `react-native-worklets` — follow worklet rules (not everything can run on the UI thread).
 - **Native modules:** when adding dependencies, verify iOS/Android setup (Pods, permissions); `patch-package` runs on `postinstall` — keep patches under `patches/`.

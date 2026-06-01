@@ -11,6 +11,7 @@ alwaysApply: false
 - **Generated client:** `web/generated` (gitignored) — do not edit by hand.
 - **Styles:** Tailwind v4 + PostCSS; follow existing component patterns.
 - **i18n:** follow existing next-intl patterns; legal pages — content in `web/content/`.
+- **Async AI / meetings:** summarize + optional `meeting_dialogue` jobs in `web/lib/ai-job-runners/`; dialogue-only retry at `web/app/api/messages/[id]/meeting-dialogue/route.ts`.
 - **Checks:** from `web/`: `yarn lint`, `yarn type:check`.
 - **DB:** `yarn db:push`, `yarn db:seed` (`ADMIN_SEED_*` for first superadmin), `yarn db:backup` / `yarn db:restore`.
 

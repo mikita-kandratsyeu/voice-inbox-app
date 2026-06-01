@@ -31,10 +31,29 @@ Release builds: `yarn ios:release` / `yarn android:release` (`APP_ENV=production
 ## Features
 
 - **Voice capture** — Full-screen UI with waveform, timer, pause/resume; audio stored on device first.
-- **AI structure** — Tabs for _Transcript_, _Summary_, _Tasks_, and meeting-style dialogue when relevant.
+- **AI structure** — Tabs for _Transcript_, _Summary_, _Tasks_, and _Meeting dialogue_ on meeting-classified notes.
   - **Private** mode: on-device LLM (`llama.rn`) where enabled.
   - **Smart** mode: cloud AI via web API (HTTPS); in-app consent copy.
   - Optional **Apple embedding** APIs on iOS for vector search.
+
+### Meeting dialogue (Pro meetings)
+
+Shown on the recording detail screen when the note is classified as a **meeting** (Smart or Private AI).
+
+| Capability | Smart (cloud) | Private |
+| ---------- | ------------- | ------- |
+| Speaker-turn markdown | Second job after summarize (`meeting_dialogue` on web) or inline for shorter notes | On-device batch in the same flow as summary/tasks |
+| **Speaker roster** | Rename display names; stored in `meetingSpeakerLabels` (SQLite) | Same |
+| **Regenerate dialogue only** | `POST /api/messages/:jobId/meeting-dialogue` — needs existing `cloudAiJobId` | N/A |
+| Cancel in-flight dialogue | Shared AI cancel + `meeting_dialogue` worker checks cancel flag | Local abort handle |
+
+**UI:** `src/screens/recording-detail/` (`MeetingDialogueTab`, `MeetingDialogueSpeakerRoster`, `parseMeetingDialogue`, `meetingSpeakerLabels`).
+
+**Cloud retry / regen:** `src/features/ai-processing/lib/regenerateMeetingDialogue.ts`.
+
+**Settings → AI:** _Refresh speaker list when regenerating_ (`autoRefreshMeetingSpeakersOnRegen`, default **off**). When **off**, regenerating summary/tasks skips a new meeting-dialogue pass so renamed speakers stay as-is. When **on**, a full regen may replace dialogue and clear `meetingSpeakerLabels`. Dialogue-only regen prunes labels to speakers still present in the new markdown.
+
+**Backup ZIP (v3):** `meetingDialogue` and `meetingSpeakerLabels` are included in `metadata.json` records (full `VoiceRecord` export).
 - **Inbox** — Pins, folders, tags, archive/trash, text notes, batch actions.
 - **Search** — Lexical scoring; **hybrid** ranking with local embeddings when stored (`src/features/search-records/`, `src/shared/lib/embeddings/`).
 - **Themes** — System / light / dark (NativeWind + shared tokens).
@@ -69,9 +88,13 @@ Push: `@react-native-firebase/messaging`. Crashlytics, Analytics, Remote Config,
 
 Models downloaded before Core ML bundles existed: **delete the model in Settings and re-download**. The model picker “Recommended” badge uses RAM / `isLowRamDevice` (Android); nothing auto-downloads.
 
+### App bootstrap
+
+Cold start: `src/features/app-lifecycle/model/useAppBootstrap.ts` — Firebase App Check, `initDB`, runtime config + model manifest prefetch, record/folder load, trash purge, optional auto-archive, task-deadline notification sync, then UI ready; deferred push token / RevenueCat / analytics user id.
+
 ### Import & export
 
-- **Full backup (ZIP)** — `metadata.json` v**3**, `audio/`, folders + records (`src/features/sync-data/`). Restore via document picker / import review screen.
+- **Full backup (ZIP)** — `metadata.json` v**3**, `audio/`, folders + records (`src/features/sync-data/`). Restore via document picker / import review screen. Records include AI fields (`meetingDialogue`, `meetingSpeakerLabels`, etc.).
 - **Import audio** — Document picker → copy, optional WAV conversion, duration limits, optional transcription (`src/features/import-audio-file/`).
 - **Per-note share** — Markdown briefs, plain share, email helpers (`src/features/share-record/`).
 - **Batch export** — Inbox multi-select: Markdown or ZIP (`src/features/batch-select/`).
@@ -109,8 +132,8 @@ Models downloaded before Core ML bundles existed: **delete the model in Settings
 src/
   app/           App shell, navigation, deep linking
   entities/      Domain models, repositories, Zustand stores
-  features/      Use cases (transcription, sync-data, search-records, …)
-  screens/       Route-level UI
+  features/      Use cases (transcription, sync-data, ai-processing, app-lifecycle, …)
+  screens/       Route-level UI (incl. recording-detail / meeting dialogue)
   widgets/       Composed UI blocks shared across screens
   shared/        config, lib (db, whisper, ai-core, analytics), ui
 drizzle/         Generated SQL migrations

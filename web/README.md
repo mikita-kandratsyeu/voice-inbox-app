@@ -104,7 +104,14 @@ Mobile POST endpoints enqueue work in Redis (`msg:*`) and return immediately; th
 
 **OpenRouter recovery:** Streaming stores `X-Generation-Id` in Redis (`or-gen:{jobId}`). If the worker times out while OpenRouter still completes, QStash retries can resume via `GET /api/v1/generation/content` instead of duplicating the chat request.
 
-**Meeting speaker breakdown:** Summarize completes first (`status: done`). For long Pro meeting notes (~10k+ chars), a second QStash job (`meeting_dialogue`, 300s) fills `meetingDialogueMarkdown`; the app polls while `meetingDialogueStatus` is `processing`. Shorter meetings may use an inline second pass in the summarize worker.
+**Meeting speaker breakdown (Pro meetings):**
+
+1. **Summarize** completes first (`status: done`, summary/tasks in Redis `msg:*`).
+2. **Dialogue pass** — For long transcripts (~10k+ chars), a separate QStash job (`meeting_dialogue`, `maxDuration` 300s) writes `meetingDialogueMarkdown`; mobile polls while `meetingDialogueStatus` is `processing`. Shorter meetings may run an inline second pass inside the summarize worker.
+3. **Regenerate dialogue only** — `POST /api/messages/[id]/meeting-dialogue` (`web/services/message.service.ts` → `retryMeetingDialogue`). Re-dispatches `meeting_dialogue` without re-running summarize; counts against AI rate limits. Body may include `phase1` when the original Redis entry expired but the device still has title/summary/key phrases.
+4. **Cancel** — Existing job cancel clears in-flight work; `web/lib/ai-job-cancel.ts` also clears stale cancel flags when starting a new dialogue attempt for the same `jobId`.
+
+Mobile stores `cloudAiJobId` on the record for retries; custom speaker display names stay on device (`meetingSpeakerLabels`), not in Postgres.
 
 ---
 
