@@ -22,6 +22,7 @@ import type {
 import { useSettingsStore } from '@/entities/settings';
 import { type CloudAiKvTtlSeconds } from '@/entities/settings/lib/cloudAiKvTtl';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
+import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
@@ -119,7 +120,15 @@ export const AiSettingsScreen = () => {
   const setCloudAiKvTtlSeconds = useSettingsStore((s) => s.setCloudAiKvTtlSeconds);
   const showSummaryReasoningInNotes = useSettingsStore((s) => s.showSummaryReasoningInNotes);
   const setShowSummaryReasoningInNotes = useSettingsStore((s) => s.setShowSummaryReasoningInNotes);
+  const autoRefreshMeetingSpeakersOnRegen = useSettingsStore(
+    (s) => s.autoRefreshMeetingSpeakersOnRegen,
+  );
+  const setAutoRefreshMeetingSpeakersOnRegen = useSettingsStore(
+    (s) => s.setAutoRefreshMeetingSpeakersOnRegen,
+  );
+  const { isProActive } = useProEntitlement();
   const isPrivateMode = aiExecutionMode === 'private_experimental';
+  const showMeetingSpeakerSettings = isProActive && !isPrivateMode;
 
   const cloudRetentionLabel = (sec: CloudAiKvTtlSeconds) =>
     t(`aiSettings.smartModeCloudRetention.m${sec}`);
@@ -202,7 +211,7 @@ export const AiSettingsScreen = () => {
               </View>
             </View>
           )}
-          {!isPrivateMode && (
+          {!isPrivateMode ? (
             <SettingsSection title={t('aiSettings.showSummaryReasoning.title')}>
               <SettingsRow
                 label={t('aiSettings.showSummaryReasoning.label')}
@@ -224,7 +233,30 @@ export const AiSettingsScreen = () => {
                 isLast
               />
             </SettingsSection>
-          )}
+          ) : null}
+          {showMeetingSpeakerSettings ? (
+            <SettingsSection title={t('aiSettings.autoRefreshMeetingSpeakers.title')}>
+              <SettingsRow
+                label={t('aiSettings.autoRefreshMeetingSpeakers.label')}
+                subtitle={t('aiSettings.autoRefreshMeetingSpeakers.subtitle')}
+                rightSlot={
+                  <Switch
+                    value={autoRefreshMeetingSpeakersOnRegen}
+                    onValueChange={setAutoRefreshMeetingSpeakersOnRegen}
+                    accessibilityLabel={t('aiSettings.autoRefreshMeetingSpeakers.a11y')}
+                    trackColor={{
+                      false: color.background.tertiary,
+                      true: color.accent.primary,
+                    }}
+                    thumbColor={color.icon.onAccent}
+                  />
+                }
+                showChevron={false}
+                isFirst
+                isLast
+              />
+            </SettingsSection>
+          ) : null}
           <SettingsSection title={t('aiSettings.summaryStyle')}>
             <PickerSection
               options={SUMMARY_STYLES}

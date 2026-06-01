@@ -283,7 +283,7 @@ const getStoredShowSummaryReasoningInNotes = (): boolean => {
 
 const getStoredAutoRefreshMeetingSpeakersOnRegen = (): boolean => {
   if (!storage.contains(KEYS.AUTO_REFRESH_MEETING_SPEAKERS_ON_REGEN)) {
-    return true;
+    return false;
   }
 
   return storage.getString(KEYS.AUTO_REFRESH_MEETING_SPEAKERS_ON_REGEN) === 'true';

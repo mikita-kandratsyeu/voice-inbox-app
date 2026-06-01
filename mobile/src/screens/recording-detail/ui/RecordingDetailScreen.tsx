@@ -126,8 +126,6 @@ export const RecordingDetailScreen = () => {
     globalTranscriptionLanguage,
     aiExecutionMode,
     setAiExecutionMode,
-    autoRefreshMeetingSpeakersOnRegen,
-    setAutoRefreshMeetingSpeakersOnRegen,
   } = useSettingsStore(
     useShallow((s) => ({
       whisperModelStatuses: s.whisperModelStatuses,
@@ -136,8 +134,6 @@ export const RecordingDetailScreen = () => {
       globalTranscriptionLanguage: s.transcriptionLanguage,
       aiExecutionMode: s.aiExecutionMode,
       setAiExecutionMode: s.setAiExecutionMode,
-      autoRefreshMeetingSpeakersOnRegen: s.autoRefreshMeetingSpeakersOnRegen,
-      setAutoRefreshMeetingSpeakersOnRegen: s.setAutoRefreshMeetingSpeakersOnRegen,
     })),
   );
 
@@ -722,14 +718,10 @@ export const RecordingDetailScreen = () => {
           {showMeetingModeToggle ? (
             <RecordingMeetingModeSection
               isMeetingMode={isMeetingMode}
-              autoRefreshSpeakersOnRegen={autoRefreshMeetingSpeakersOnRegen}
               disabled={aiBusy}
               color={color}
               surfaceBackgroundColor={tabPanelBackgroundColor}
               onToggleMeetingMode={handleToggleMeetingMode}
-              onToggleAutoRefreshSpeakers={() =>
-                setAutoRefreshMeetingSpeakersOnRegen(!autoRefreshMeetingSpeakersOnRegen)
-              }
             />
           ) : null}
 

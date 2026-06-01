@@ -94,6 +94,22 @@ export function rawMeetingDialogueHasSpeakerPrefixes(raw: string): boolean {
   return text.split(/\r?\n/).some((line) => SPEAKER_LINE_RE.test(line.trim()));
 }
 
+/** Keep user renames only for speakers still present after a new AI breakdown. */
+export function pruneSpeakerLabelsForDialogue(
+  labels: MeetingSpeakerLabels | undefined,
+  dialogueMarkdown: string,
+): MeetingSpeakerLabels | undefined {
+  if (!labels || Object.keys(labels).length === 0) return labels;
+  const present = new Set(
+    collectSpeakerLabelsFromDialogue(dialogueMarkdown).map((l) => normalizeSpeakerLabelKey(l)),
+  );
+  const out: MeetingSpeakerLabels = {};
+  for (const [key, name] of Object.entries(labels)) {
+    if (present.has(key)) out[key] = name;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
 export function mergeSpeakerRename(
   labels: MeetingSpeakerLabels | undefined,
   originalLabel: string,

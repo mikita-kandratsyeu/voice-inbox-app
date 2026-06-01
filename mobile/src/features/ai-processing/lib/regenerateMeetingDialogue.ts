@@ -3,6 +3,7 @@ import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
+import { pruneSpeakerLabelsForDialogue } from '@/screens/recording-detail/lib/meetingSpeakerLabels';
 import {
   pollAiMessage,
   postMeetingDialogueRetry,
@@ -81,10 +82,7 @@ export async function regenerateMeetingDialogue(
 
   setMeetingDialogueStatus(record.id, 'processing');
   setMeetingDialogueError(record.id, undefined);
-  await updateAiExtras(record.id, {
-    meetingDialogue: null,
-    meetingSpeakerLabels: null,
-  });
+  await updateAiExtras(record.id, { meetingDialogue: null });
 
   const startedAt = Date.now();
   setPrivateAiBatchUi(record.id, {
@@ -162,7 +160,11 @@ export async function regenerateMeetingDialogue(
 
     const md = pollResult.result.meetingDialogueMarkdown?.trim();
     if (md) {
-      await updateAiExtras(record.id, { meetingDialogue: md, meetingSpeakerLabels: null });
+      const keptLabels = pruneSpeakerLabelsForDialogue(record.meetingSpeakerLabels, md);
+      await updateAiExtras(record.id, {
+        meetingDialogue: md,
+        meetingSpeakerLabels: keptLabels ?? null,
+      });
       setMeetingDialogueStatus(record.id, 'done');
       setMeetingDialogueError(record.id, undefined);
     } else if (pollResult.meetingDialogueStatus === 'failed') {

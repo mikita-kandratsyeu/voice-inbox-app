@@ -4,6 +4,7 @@ import {
   displaySpeakerLabel,
   mergeSpeakerRename,
   normalizeSpeakerLabelKey,
+  pruneSpeakerLabelsForDialogue,
 } from '../meetingSpeakerLabels';
 import { parseMeetingDialogue } from '../parseMeetingDialogue';
 
@@ -27,6 +28,15 @@ describe('meetingSpeakerLabels', () => {
     });
     expect(utterances[0].speakerLabel).toBe('Speaker 1');
     expect(utterances[1].speakerLabel).toBe('Client');
+  });
+
+  it('prunes renames when speaker keys disappear from new dialogue', () => {
+    const labels = { 'speaker 1': 'Anna', 'speaker 2': 'Client', 'speaker 3': 'Guest' };
+    const md = 'Speaker 1: Hi\n\nSpeaker 2: Hello';
+    expect(pruneSpeakerLabelsForDialogue(labels, md)).toEqual({
+      'speaker 1': 'Anna',
+      'speaker 2': 'Client',
+    });
   });
 
   it('detects single-speaker and no-label heuristics', () => {

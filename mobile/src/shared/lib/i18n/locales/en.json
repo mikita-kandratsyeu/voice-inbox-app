@@ -368,9 +368,6 @@
     "meetingModeDisableTitle": "Turn off meeting mode?",
     "meetingModeDisableMessage": "The participant breakdown will be hidden. Turn meeting mode back on and update the summary to bring it back.",
     "meetingModeDisableConfirm": "Turn off",
-    "meetingAutoRefreshSpeakersTitle": "Update with summary",
-    "meetingAutoRefreshSpeakersHint": "When you regenerate the summary or tasks, we’ll split replies by participant again. Turn off to keep the current breakdown.",
-    "meetingAutoRefreshSpeakersA11y": "Update participant breakdown when regenerating summary or tasks",
     "meetingSummaryTitle": "Meeting recap",
     "meetingSummaryDescription": "Summary for meetings: decisions, tasks, and next steps.",
     "meetingDialogueTitle": "Participants",
@@ -1229,6 +1226,12 @@
       "label": "Show reasoning block",
       "subtitle": "Optional collapsed block with the model's reasoning after each summary.",
       "a11y": "Show reasoning block on summary"
+    },
+    "autoRefreshMeetingSpeakers": {
+      "title": "Meeting participants",
+      "label": "Update with summary",
+      "subtitle": "When you regenerate the summary or tasks, split replies by participant again. Turn off to keep the current breakdown. Use Refresh breakdown on the note to update speakers only.",
+      "a11y": "Update participant breakdown when regenerating summary or tasks"
     }
   },
   "privateAiMode": {
