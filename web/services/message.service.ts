@@ -111,15 +111,9 @@ export const retryMeetingDialogue = async (params: {
     return { ok: false, limitExceeded: true, usage: limitResult.usage };
   }
 
-  const { meetingDialogueMarkdown: _omit, ...doneWithoutMd } = done;
-  await saveMessage(
-    params.jobId,
-    {
-      ...doneWithoutMd,
-      meetingDialogueStatus: 'processing',
-    },
-    ttl,
-  );
+  const processingState = { ...done, meetingDialogueStatus: 'processing' as const };
+  delete processingState.meetingDialogueMarkdown;
+  await saveMessage(params.jobId, processingState, ttl);
 
   const meetingPayload: MeetingDialogueJobPayload = {
     operation: 'meeting_dialogue',
