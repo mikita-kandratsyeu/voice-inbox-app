@@ -84,7 +84,6 @@ export function useAppBootstrap(
         return dbInit;
       })
       .then(async () => {
-        useSettingsStore.getState().reconcileAiExecutionModeAfterRemoteConfig();
         syncPrivateCapabilityTier();
         await Promise.all([useRecordStore.getState().load(), useFolderStore.getState().load()]);
 

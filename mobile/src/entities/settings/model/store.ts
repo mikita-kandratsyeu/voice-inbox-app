@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 
 import { parseAccentColorId } from '@/shared/config';
-import { getExperimentalPrivateAiEnabled } from '@/shared/config/runtimeConfig';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { storage } from '@/shared/lib/async-storage';
 
@@ -454,9 +453,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setAiExecutionMode: (value: AiExecutionMode) => {
     const currentState = get();
     const wasPrivate = currentState.aiExecutionMode === 'private_experimental';
-    const nextValue = getExperimentalPrivateAiEnabled() ? value : 'smart_hybrid';
-
-    if (!wasPrivate && nextValue === 'private_experimental') {
+    if (!wasPrivate && value === 'private_experimental') {
       storage.set(KEYS.PRIVATE_PREVIOUS_THEME, currentState.appTheme);
       storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE, String(currentState.autoTranscribeOnSave));
       storage.set(KEYS.PRIVATE_PREVIOUS_AUTO_AI, String(currentState.autoAiAfterTranscription));
@@ -467,16 +464,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       storage.set(KEYS.AUTO_AI_AFTER_TRANSCRIPTION, 'false');
       storage.set(KEYS.AUTO_ARCHIVE_ENABLED, 'false');
       set({
-        aiExecutionMode: nextValue,
+        aiExecutionMode: value,
         autoTranscribeOnSave: false,
         autoAiAfterTranscription: false,
         autoArchiveEnabled: false,
       });
-      storage.set(KEYS.AI_EXECUTION_MODE, nextValue);
+      storage.set(KEYS.AI_EXECUTION_MODE, value);
       return;
     }
 
-    if (wasPrivate && nextValue !== 'private_experimental') {
+    if (wasPrivate && value !== 'private_experimental') {
       void releaseLocalLlmSession();
       const prevTheme = storage.getString(KEYS.PRIVATE_PREVIOUS_THEME) as AppTheme | undefined;
       const prevAutoTranscribe = storage.getString(KEYS.PRIVATE_PREVIOUS_AUTO_TRANSCRIBE);
@@ -505,24 +502,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       storage.remove(KEYS.PRIVATE_PREVIOUS_AUTO_ARCHIVE);
 
       set({
-        aiExecutionMode: nextValue,
+        aiExecutionMode: value,
         ...(restoredTheme ? { appTheme: prevTheme } : {}),
         autoTranscribeOnSave: restoredAutoTranscribe,
         autoAiAfterTranscription: restoredAutoAi,
         autoArchiveEnabled: restoredAutoArchive,
       });
-      storage.set(KEYS.AI_EXECUTION_MODE, nextValue);
+      storage.set(KEYS.AI_EXECUTION_MODE, value);
       return;
     }
 
-    storage.set(KEYS.AI_EXECUTION_MODE, nextValue);
-    set({ aiExecutionMode: nextValue });
-  },
-
-  reconcileAiExecutionModeAfterRemoteConfig: () => {
-    if (!getExperimentalPrivateAiEnabled() && get().aiExecutionMode === 'private_experimental') {
-      get().setAiExecutionMode('smart_hybrid');
-    }
+    storage.set(KEYS.AI_EXECUTION_MODE, value);
+    set({ aiExecutionMode: value });
   },
 
   setPrivateCapabilityTier: (value: PrivateCapabilityTier) => {

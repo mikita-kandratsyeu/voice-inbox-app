@@ -129,7 +129,6 @@ export type SettingsState = {
   setAiOutputLanguage: (value: AiOutputLanguage) => void;
   setAiExecutionMode: (value: AiExecutionMode) => void;
   setPrivateLocalLlmBudget: (value: PrivateLocalLlmBudget) => void;
-  reconcileAiExecutionModeAfterRemoteConfig: () => void;
   setPrivateCapabilityTier: (value: PrivateCapabilityTier) => void;
   setAutoTranscribeOnSave: (value: boolean) => void;
   setAutoAiAfterTranscription: (value: boolean) => void;

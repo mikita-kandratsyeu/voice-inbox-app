@@ -1,6 +1,5 @@
 import {
   APP_STORE_URL,
-  EXPERIMENTAL_PRIVATE_AI_ENABLED,
   GOOGLE_PLAY_URL,
   PRO_LICENSE_KEY_ACTIVATION_ENABLED,
   REVENUECAT_API_KEY_ANDROID,
@@ -33,7 +32,6 @@ type RemoteKey =
   | 'YANDEX_REWARDED_AD_UNIT_ID'
   | 'YANDEX_BANNER_AD_UNIT_ID'
   | 'YANDEX_INTERSTITIAL_AD_UNIT_ID'
-  | 'EXPERIMENTAL_PRIVATE_AI_ENABLED'
   | 'REVENUECAT_API_KEY_IOS'
   | 'REVENUECAT_API_KEY_ANDROID'
   | 'REVENUECAT_ENTITLEMENT_ID'
@@ -51,7 +49,6 @@ export type RuntimeConfigSnapshot = {
   yandexRewardedAdUnitId: string;
   yandexBannerAdUnitId: string;
   yandexInterstitialAdUnitId: string;
-  experimentalPrivateAiEnabled: boolean;
   revenueCatApiKeyIos: string;
   revenueCatApiKeyAndroid: string;
   revenueCatEntitlementId: string;
@@ -75,7 +72,6 @@ function buildEmbedded(): RuntimeConfigSnapshot {
     yandexRewardedAdUnitId: YANDEX_REWARDED_AD_UNIT_ID?.trim() ?? '',
     yandexBannerAdUnitId: YANDEX_BANNER_AD_UNIT_ID?.trim() ?? '',
     yandexInterstitialAdUnitId: YANDEX_INTERSTITIAL_AD_UNIT_ID?.trim() ?? '',
-    experimentalPrivateAiEnabled: isTruthyEnvFlag(EXPERIMENTAL_PRIVATE_AI_ENABLED),
     revenueCatApiKeyIos: REVENUECAT_API_KEY_IOS?.trim() ?? '',
     revenueCatApiKeyAndroid: REVENUECAT_API_KEY_ANDROID?.trim() ?? '',
     revenueCatEntitlementId: REVENUECAT_ENTITLEMENT_ID?.trim() ?? '',
@@ -94,7 +90,6 @@ function toFirebaseDefaults(s: RuntimeConfigSnapshot): Record<string, string> {
     YANDEX_REWARDED_AD_UNIT_ID: s.yandexRewardedAdUnitId,
     YANDEX_BANNER_AD_UNIT_ID: s.yandexBannerAdUnitId,
     YANDEX_INTERSTITIAL_AD_UNIT_ID: s.yandexInterstitialAdUnitId,
-    EXPERIMENTAL_PRIVATE_AI_ENABLED: s.experimentalPrivateAiEnabled ? '1' : '0',
     REVENUECAT_API_KEY_IOS: s.revenueCatApiKeyIos,
     REVENUECAT_API_KEY_ANDROID: s.revenueCatApiKeyAndroid,
     REVENUECAT_ENTITLEMENT_ID: s.revenueCatEntitlementId,
@@ -190,11 +185,6 @@ function mergeRemote(
       'YANDEX_INTERSTITIAL_AD_UNIT_ID',
       embedded.yandexInterstitialAdUnitId,
     ),
-    experimentalPrivateAiEnabled: readRemoteBool(
-      rc,
-      'EXPERIMENTAL_PRIVATE_AI_ENABLED',
-      embedded.experimentalPrivateAiEnabled,
-    ),
     revenueCatApiKeyIos: readRemoteString(
       rc,
       'REVENUECAT_API_KEY_IOS',
@@ -289,10 +279,6 @@ export function getYandexBannerAdUnitId(): string {
 
 export function getYandexInterstitialAdUnitId(): string {
   return snapshot.yandexInterstitialAdUnitId;
-}
-
-export function getExperimentalPrivateAiEnabled(): boolean {
-  return snapshot.experimentalPrivateAiEnabled;
 }
 
 export function getRevenueCatApiKeyIos(): string {

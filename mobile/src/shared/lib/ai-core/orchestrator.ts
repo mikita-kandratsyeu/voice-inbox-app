@@ -1,4 +1,3 @@
-import { getExperimentalPrivateAiEnabled } from '@/shared/config/runtimeConfig';
 import { i18n } from '@/shared/lib';
 
 import { runCloudAsk, runCloudSummaryTasks } from './cloudProvider';
@@ -10,16 +9,6 @@ import type {
   SummaryTaskRequest,
   SummaryTaskResult,
 } from './types';
-
-function resolveMode(
-  mode: AiExecutionContext['aiExecutionMode'],
-): AiExecutionContext['aiExecutionMode'] {
-  if (!getExperimentalPrivateAiEnabled()) {
-    return 'smart_hybrid';
-  }
-
-  return mode;
-}
 
 function guardPrivateMode(_request: { transcript: string }, ctx: AiExecutionContext) {
   if (ctx.aiExecutionMode !== 'private_experimental') return null;
@@ -46,32 +35,24 @@ export const AIOrchestrator = {
     request: SummaryTaskRequest,
     ctx: AiExecutionContext,
   ): Promise<SummaryTaskResult> {
-    const effectiveCtx: AiExecutionContext = {
-      ...ctx,
-      aiExecutionMode: resolveMode(ctx.aiExecutionMode),
-    };
-    const guardResult = guardPrivateMode(request, effectiveCtx);
+    const guardResult = guardPrivateMode(request, ctx);
     if (guardResult) return guardResult;
 
-    if (effectiveCtx.aiExecutionMode === 'private_experimental') {
-      return runLocalSummaryTasks(request, effectiveCtx);
+    if (ctx.aiExecutionMode === 'private_experimental') {
+      return runLocalSummaryTasks(request, ctx);
     }
 
-    return runCloudSummaryTasks(request, effectiveCtx);
+    return runCloudSummaryTasks(request, ctx);
   },
 
   async runAsk(request: AskRequest, ctx: AiExecutionContext): Promise<AskTaskResult> {
-    const effectiveCtx: AiExecutionContext = {
-      ...ctx,
-      aiExecutionMode: resolveMode(ctx.aiExecutionMode),
-    };
-    const guardResult = guardPrivateMode(request, effectiveCtx);
+    const guardResult = guardPrivateMode(request, ctx);
     if (guardResult) return guardResult;
 
-    if (effectiveCtx.aiExecutionMode === 'private_experimental') {
-      return runLocalAsk(request, effectiveCtx);
+    if (ctx.aiExecutionMode === 'private_experimental') {
+      return runLocalAsk(request, ctx);
     }
 
-    return runCloudAsk(request, effectiveCtx);
+    return runCloudAsk(request, ctx);
   },
 };

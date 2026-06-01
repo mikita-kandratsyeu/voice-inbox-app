@@ -16,7 +16,6 @@ declare module '@env' {
   export const TESTFLIGHT_INTERNAL_BUILD: string | undefined;
   export const SUBSCRIPTIONS_PUBLICLY_AVAILABLE: string | undefined;
   export const PRO_LICENSE_KEY_ACTIVATION_ENABLED: string | undefined;
-  export const EXPERIMENTAL_PRIVATE_AI_ENABLED: string | undefined;
   export const FIREBASE_APP_CHECK_DEBUG_TOKEN: string | undefined;
   export const REVENUECAT_API_KEY_IOS: string | undefined;
   export const REVENUECAT_API_KEY_ANDROID: string | undefined;

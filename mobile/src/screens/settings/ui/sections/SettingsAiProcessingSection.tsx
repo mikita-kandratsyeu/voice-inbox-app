@@ -5,7 +5,6 @@ import React from 'react';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { Colors } from '@/shared/config';
-import { getExperimentalPrivateAiEnabled } from '@/shared/config/runtimeConfig';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
 type Props = {
@@ -31,26 +30,22 @@ export const SettingsAiProcessingSection = ({
   isUpdatingEmbeddings,
   onUpdateEmbeddings,
 }: Props) => {
-  const showPrivateMode = getExperimentalPrivateAiEnabled();
   const aiSettingsIsLast = !embeddingAvailable;
 
   return (
     <SettingsSection title={t('settings.aiProcessing')}>
-      {showPrivateMode && (
-        <SettingsRow
-          label={t('settings.privateAiMode')}
-          value={privateAiModeValue}
-          leftIcon={<Cpu size={20} color={color.accent.primary} strokeWidth={1.8} />}
-          onPress={() => navigation.navigate('PrivateAiMode')}
-          isFirst
-        />
-      )}
+      <SettingsRow
+        label={t('settings.privateAiMode')}
+        value={privateAiModeValue}
+        leftIcon={<Cpu size={20} color={color.accent.primary} strokeWidth={1.8} />}
+        onPress={() => navigation.navigate('PrivateAiMode')}
+        isFirst
+      />
       <SettingsRow
         label={t('settings.aiModel')}
         value={aiModelName}
         leftIcon={<Bot size={20} color={color.accent.transcript} strokeWidth={1.8} />}
         onPress={() => navigation.navigate('AIModelPicker')}
-        isFirst={!showPrivateMode}
       />
       <SettingsRow
         label={t('settings.transcription')}
