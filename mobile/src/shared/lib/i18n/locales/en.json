@@ -1228,7 +1228,7 @@
       "title": "Private Source",
       "description": "Choose where Private mode runs: on your device or your own server.",
       "local": "On device",
-      "custom_openai": "Custom server (Ollama / LM Studio)",
+      "custom_openai": "Custom server",
       "proOnlyHint": "Pro only",
       "proTitle": "Bring Your AI Server in Pro",
       "proBody": "Connect Ollama or LM Studio and run Private mode through your own server.",

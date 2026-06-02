@@ -703,54 +703,43 @@ export const AiSettingsScreen = () => {
                   }
                 >
                   <View
-                    className="overflow-hidden rounded-2xl"
+                    className="flex-row rounded-xl p-1"
                     style={{
-                      backgroundColor: color.background.card,
+                      backgroundColor: color.background.tertiary,
                       opacity: customProviderLocked ? 0.7 : 1,
                     }}
                     pointerEvents={customProviderLocked ? 'none' : 'auto'}
                   >
-                    {PRIVATE_AI_PROVIDERS.map((provider, index) => {
+                    {PRIVATE_AI_PROVIDERS.map((provider) => {
                       const isSelected = privateAiProvider === provider;
-                      const isLast = index === PRIVATE_AI_PROVIDERS.length - 1;
                       return (
                         <TouchableOpacity
                           key={provider}
                           onPress={() => {
+                            if (isSelected) return;
                             void handlePrivateProviderSelect(provider);
                           }}
-                          activeOpacity={0.7}
+                          activeOpacity={0.8}
+                          className="flex-1 items-center justify-center rounded-lg px-2 py-3"
+                          style={{
+                            minHeight: 44,
+                            backgroundColor: isSelected ? color.background.card : 'transparent',
+                            borderWidth: isSelected ? 1 : 0,
+                            borderColor: isSelected ? color.accent.primary : 'transparent',
+                          }}
                           accessibilityRole="button"
                           accessibilityLabel={t(`aiSettings.privateProvider.${provider}`)}
                           accessibilityState={{ selected: isSelected }}
-                          className="px-4 py-3.5"
-                          style={
-                            !isLast
-                              ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
-                              : undefined
-                          }
                         >
-                          <View className="flex-row items-center justify-between">
-                            <Text
-                              className="pr-3 text-[16px]"
-                              style={{ color: color.text.primary }}
-                            >
-                              {t(`aiSettings.privateProvider.${provider}`)}
-                            </Text>
-                            {isSelected ? (
-                              <View
-                                className="h-6 w-6 rounded-full items-center justify-center"
-                                style={{ backgroundColor: color.accent.primary }}
-                              >
-                                <Check size={14} color="#ffffff" strokeWidth={2.5} />
-                              </View>
-                            ) : (
-                              <View
-                                className="h-6 w-6 rounded-full"
-                                style={{ borderWidth: 2, borderColor: color.border.default }}
-                              />
-                            )}
-                          </View>
+                          <Text
+                            className="text-center text-[14px] font-medium"
+                            numberOfLines={2}
+                            style={{
+                              color: isSelected ? color.accent.primary : color.text.secondary,
+                            }}
+                          >
+                            {t(`aiSettings.privateProvider.${provider}`)}
+                          </Text>
                         </TouchableOpacity>
                       );
                     })}

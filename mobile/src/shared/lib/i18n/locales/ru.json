@@ -1247,7 +1247,7 @@
       "title": "Источник Private",
       "description": "Выберите, где ИИ работает в режиме Private: на устройстве или на вашем сервере.",
       "local": "На устройстве",
-      "custom_openai": "Свой сервер (Ollama / LM Studio)",
+      "custom_openai": "Свой сервер",
       "proOnlyHint": "Только в Pro",
       "proTitle": "Свой ИИ-сервер в Pro",
       "proBody": "Подключите Ollama или LM Studio и запускайте Private-режим через свой сервер.",
