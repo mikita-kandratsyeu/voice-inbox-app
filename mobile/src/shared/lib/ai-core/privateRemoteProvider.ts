@@ -1,4 +1,5 @@
 import { i18n } from '@/shared/lib';
+import { isRecord, isString } from '@/shared/lib/type-guards';
 
 import { AI_REQUEST_CANCELLED } from '../ai-api/abort';
 import {
@@ -37,8 +38,32 @@ type OpenAiModelsResponse = {
   data?: Array<{ id?: string }>;
 };
 
+function extractTextFromUnknown(value: unknown): string {
+  if (isString(value)) return value;
+  if (!isRecord(value) && !Array.isArray(value)) return '';
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => extractTextFromUnknown(item))
+      .filter((item) => item.trim().length > 0)
+      .join('\n')
+      .trim();
+  }
+
+  const record = value as Record<string, unknown>;
+  const directCandidates = ['text', 'content', 'value', 'output_text'] as const;
+  for (const key of directCandidates) {
+    const next = record[key];
+    const text = extractTextFromUnknown(next);
+    if (text.trim().length > 0) return text.trim();
+  }
+
+  return '';
+}
+
 type RemoteCompletionOutput = {
   content: string;
+  reasoning?: string;
   model?: string;
   tokenUsage?: { prompt: number; completion: number };
 };
@@ -96,7 +121,7 @@ function isAuthFailureStatus(status: number): boolean {
 function extractModelIds(json: OpenAiModelsResponse): string[] {
   if (!Array.isArray(json.data)) return [];
   return json.data
-    .map((item) => (typeof item?.id === 'string' ? item.id.trim() : ''))
+    .map((item) => (isString(item?.id) ? item.id.trim() : ''))
     .filter((id) => id.length > 0);
 }
 
@@ -109,14 +134,38 @@ async function readJsonSafe<T>(response: Response): Promise<T | null> {
 }
 
 function readMessageContent(response: OpenAiChatResponse): string {
-  const content = response.choices?.[0]?.message?.content;
-  if (typeof content === 'string') return content.trim();
-  if (Array.isArray(content)) {
-    return content
-      .map((item) => (item?.type === 'text' && item.text ? item.text : ''))
-      .join('\n')
-      .trim();
+  const firstChoice = response.choices?.[0];
+  const content = firstChoice?.message?.content;
+  const messageContentText = extractTextFromUnknown(content);
+  if (messageContentText) return messageContentText;
+  if (
+    firstChoice?.message &&
+    isRecord(firstChoice.message) &&
+    'reasoning_content' in firstChoice.message
+  ) {
+    const reasoning = (firstChoice.message as { reasoning_content?: unknown }).reasoning_content;
+    if (isString(reasoning) && reasoning.trim().length > 0) {
+      return reasoning.trim();
+    }
   }
+  if (firstChoice && 'text' in firstChoice && isString((firstChoice as { text?: unknown }).text)) {
+    return ((firstChoice as { text: string }).text ?? '').trim();
+  }
+  return '';
+}
+
+function readMessageReasoning(response: OpenAiChatResponse): string {
+  const firstChoice = response.choices?.[0];
+  if (!firstChoice?.message || !isRecord(firstChoice.message)) {
+    return '';
+  }
+  const reasoning = (firstChoice.message as { reasoning?: unknown; reasoning_content?: unknown })
+    .reasoning;
+  if (isString(reasoning)) return reasoning.trim();
+  const reasoningContent = (
+    firstChoice.message as { reasoning?: unknown; reasoning_content?: unknown }
+  ).reasoning_content;
+  if (isString(reasoningContent)) return reasoningContent.trim();
   return '';
 }
 
@@ -157,6 +206,7 @@ async function callRemoteCompletion(
   }
   const json = (await response.json()) as OpenAiChatResponse;
   const content = readMessageContent(json);
+  const messageReasoning = readMessageReasoning(json);
   if (!content) {
     throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
   }
@@ -171,9 +221,8 @@ async function callRemoteCompletion(
       : undefined;
   return {
     content,
-    ...(typeof json.model === 'string' && json.model.trim().length > 0
-      ? { model: json.model.trim() }
-      : {}),
+    ...(messageReasoning ? { reasoning: messageReasoning } : {}),
+    ...(isString(json.model) && json.model.trim().length > 0 ? { model: json.model.trim() } : {}),
     ...(tokenUsage ? { tokenUsage } : {}),
   };
 }
@@ -351,6 +400,11 @@ export async function runPrivateRemoteSummaryTasks(
         : undefined;
     const enrichedResult = {
       ...outcome.result,
+      ...(outcome.result.reasoning?.trim()
+        ? {}
+        : remote.reasoning?.trim()
+          ? { reasoning: remote.reasoning.trim() }
+          : {}),
       ...(remote.model ? { model: remote.model } : {}),
       ...(remote.tokenUsage ? { tokenUsage: remote.tokenUsage } : {}),
     };
