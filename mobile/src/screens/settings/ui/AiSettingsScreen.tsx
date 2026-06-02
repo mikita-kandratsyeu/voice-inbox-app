@@ -1,4 +1,4 @@
-import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { useNavigation } from '@react-navigation/native';
 import { Check, Crown, Trash2 } from 'lucide-react-native';
 import React from 'react';
@@ -9,7 +9,6 @@ import {
   ScrollView,
   Switch,
   Text,
-  TextInput,
   TouchableOpacity,
   useWindowDimensions,
   View,
@@ -989,7 +988,7 @@ export const AiSettingsScreen = () => {
           <Text className="mb-2 text-[13px] font-semibold" style={{ color: color.text.secondary }}>
             {t('aiSettings.privateProvider.baseUrl')}
           </Text>
-          <TextInput
+          <BottomSheetTextInput
             value={privateRemoteBaseUrl}
             onChangeText={setPrivateRemoteBaseUrl}
             autoCapitalize="none"
@@ -1016,7 +1015,7 @@ export const AiSettingsScreen = () => {
           >
             {t('aiSettings.privateProvider.model')}
           </Text>
-          <TextInput
+          <BottomSheetTextInput
             value={privateRemoteModel}
             onChangeText={setPrivateRemoteModel}
             autoCapitalize="none"
@@ -1036,7 +1035,7 @@ export const AiSettingsScreen = () => {
           >
             {t('aiSettings.privateProvider.apiKey')}
           </Text>
-          <TextInput
+          <BottomSheetTextInput
             value={privateRemoteApiKey}
             onChangeText={setPrivateRemoteApiKey}
             autoCapitalize="none"
