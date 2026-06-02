@@ -198,7 +198,7 @@ export const AiSettingsScreen = () => {
   const { isProActive } = useProEntitlement();
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const customProviderLocked = !isProActive;
-  const showMeetingSpeakerSettings = isProActive;
+  const showMeetingSpeakerSettings = isProActive && !isPrivateMode;
   const [privateServerProSheet, setPrivateServerProSheet] = React.useState(false);
   const [isTestingConnection, setIsTestingConnection] = React.useState(false);
   const [remoteConfigSheetVisible, setRemoteConfigSheetVisible] = React.useState(false);

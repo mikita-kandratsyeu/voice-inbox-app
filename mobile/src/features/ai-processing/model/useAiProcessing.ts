@@ -319,7 +319,8 @@ export const useAiProcessing = () => {
         );
         const recordIsMeeting = (snapshot?.classification ?? record.classification) === 'meeting';
         const shouldRefreshSpeakersOnRegen =
-          autoRefreshMeetingSpeakersOnRegen || !wasSummaryRegeneration;
+          aiExecutionMode !== 'private_experimental' &&
+          (autoRefreshMeetingSpeakersOnRegen || !wasSummaryRegeneration);
         includeMeetingSpeakerBreakdown =
           isProActive && recordIsMeeting && shouldRefreshSpeakersOnRegen;
 
