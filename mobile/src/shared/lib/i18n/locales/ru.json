@@ -1294,7 +1294,34 @@
       "testAndUpdateConnection": "Проверить и обновить",
       "editConfig": "Изменить",
       "setupConfig": "Настроить",
-      "showDetails": "Показать детали"
+      "showDetails": "Показать детали",
+      "connectionStatus": {
+        "checking": "Проверка...",
+        "connected": "Подключено",
+        "disconnected": "Отключено",
+        "serverUnavailable": "Сервер недоступен",
+        "authFailed": "Ошибка авторизации",
+        "modelNotFound": "Модель не найдена",
+        "invalidResponse": "Некорректный ответ"
+      },
+      "healthCheck": {
+        "serverUnavailable": "Сервер недоступен. Проверьте URL, сеть и что сервер запущен.",
+        "authFailed": "Ошибка авторизации. Проверьте API-ключ или настройки доступа на сервере.",
+        "modelNotFound": "Модели \"{{model}}\" нет в /v1/models. Доступно: {{modelsPreview}}",
+        "invalidResponse": "Сервер вернул некорректный формат ответа. Убедитесь, что сервер OpenAI-совместимый."
+      },
+      "exportProfiles": "Экспорт профилей",
+      "importProfiles": "Импорт профилей",
+      "exportTitle": "Экспорт профилей сервера",
+      "exportEmptyTitle": "Нечего экспортировать",
+      "exportFailedTitle": "Ошибка экспорта",
+      "exportFailedMessage": "Не удалось экспортировать профили сервера.",
+      "importSuccessTitle": "Профили импортированы",
+      "importSuccessMessage": "Импортировано: {{count}}. API-ключи по умолчанию не импортируются.",
+      "importFailedTitle": "Ошибка импорта",
+      "importFailedMessage": "Не удалось импортировать профили из файла.",
+      "importInvalidTitle": "Некорректный файл",
+      "importInvalidMessage": "Выберите корректный JSON-файл экспорта профилей."
     },
     "smartModeCloudRetention": {
       "title": "Время в облаке",

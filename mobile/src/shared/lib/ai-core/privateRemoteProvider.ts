@@ -33,11 +33,25 @@ type OpenAiChatResponse = {
   }>;
 };
 
+type OpenAiModelsResponse = {
+  data?: Array<{ id?: string }>;
+};
+
 type RemoteCompletionOutput = {
   content: string;
   model?: string;
   tokenUsage?: { prompt: number; completion: number };
 };
+
+export type PrivateRemoteConnectionFailureReason =
+  | 'server_unreachable'
+  | 'auth_failed'
+  | 'model_not_found'
+  | 'invalid_response';
+
+export type PrivateRemoteConnectionTestResult =
+  | { ok: true; models: string[] }
+  | { ok: false; reason: PrivateRemoteConnectionFailureReason; error?: string; models?: string[] };
 
 function normalizeBaseUrl(raw: string): string | null {
   const trimmed = raw.trim().replace(/\/+$/, '');
@@ -53,6 +67,45 @@ function resolveRemoteCompletionUrl(rawBaseUrl: string): string | null {
     return `${baseUrl}/chat/completions`;
   }
   return `${baseUrl}/v1/chat/completions`;
+}
+
+function resolveRemoteModelsUrl(rawBaseUrl: string): string | null {
+  const baseUrl = normalizeBaseUrl(rawBaseUrl);
+  if (!baseUrl) return null;
+  if (baseUrl.endsWith('/v1')) {
+    return `${baseUrl}/models`;
+  }
+  return `${baseUrl}/v1/models`;
+}
+
+function createRemoteHeaders(apiKeyRaw: string): Record<string, string> {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  const apiKey = apiKeyRaw.trim();
+  if (apiKey.length > 0) {
+    headers.Authorization = `Bearer ${apiKey}`;
+  }
+  return headers;
+}
+
+function isAuthFailureStatus(status: number): boolean {
+  return status === 401 || status === 403;
+}
+
+function extractModelIds(json: OpenAiModelsResponse): string[] {
+  if (!Array.isArray(json.data)) return [];
+  return json.data
+    .map((item) => (typeof item?.id === 'string' ? item.id.trim() : ''))
+    .filter((id) => id.length > 0);
+}
+
+async function readJsonSafe<T>(response: Response): Promise<T | null> {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
 }
 
 function readMessageContent(response: OpenAiChatResponse): string {
@@ -130,20 +183,52 @@ export async function testPrivateRemoteConnection(
     AiExecutionContext,
     'privateRemoteBaseUrl' | 'privateRemoteApiKey' | 'privateRemoteModel'
   >,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+): Promise<PrivateRemoteConnectionTestResult> {
   try {
     const endpoint = resolveRemoteCompletionUrl(config.privateRemoteBaseUrl);
+    const modelsEndpoint = resolveRemoteModelsUrl(config.privateRemoteBaseUrl);
     const model = config.privateRemoteModel.trim();
-    if (!endpoint || !model) {
-      throw new Error(i18n.t('ai.privateModeRemoteConfigMissing'));
+    if (!endpoint || !modelsEndpoint || !model) {
+      return {
+        ok: false,
+        reason: 'invalid_response',
+        error: i18n.t('ai.privateModeRemoteConfigMissing'),
+      };
     }
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    const apiKey = config.privateRemoteApiKey.trim();
-    if (apiKey.length > 0) {
-      headers.Authorization = `Bearer ${apiKey}`;
+    const headers = createRemoteHeaders(config.privateRemoteApiKey);
+
+    let modelIds: string[] = [];
+    try {
+      const modelsResponse = await fetch(modelsEndpoint, {
+        method: 'GET',
+        headers,
+      });
+      if (isAuthFailureStatus(modelsResponse.status)) {
+        return { ok: false, reason: 'auth_failed' };
+      }
+      if (!modelsResponse.ok) {
+        return {
+          ok: false,
+          reason: 'server_unreachable',
+          error: `HTTP ${modelsResponse.status}`,
+        };
+      }
+      const modelsJson = await readJsonSafe<OpenAiModelsResponse>(modelsResponse);
+      if (!modelsJson) {
+        return { ok: false, reason: 'invalid_response' };
+      }
+      modelIds = extractModelIds(modelsJson);
+      if (modelIds.length > 0 && !modelIds.includes(model)) {
+        return { ok: false, reason: 'model_not_found', models: modelIds };
+      }
+    } catch (err) {
+      return {
+        ok: false,
+        reason: 'server_unreachable',
+        error: err instanceof Error ? err.message : i18n.t('ai.privateModeGenericError'),
+      };
     }
+
     const response = await fetch(endpoint, {
       method: 'POST',
       headers,
@@ -158,19 +243,40 @@ export async function testPrivateRemoteConnection(
         stream: false,
       }),
     });
-    if (!response.ok) {
-      const bodyText = await response.text();
-      throw new Error(bodyText || `HTTP ${response.status}`);
+    if (isAuthFailureStatus(response.status)) {
+      return { ok: false, reason: 'auth_failed' };
     }
-    const json = (await response.json()) as OpenAiChatResponse;
+    if (!response.ok) {
+      return {
+        ok: false,
+        reason: 'server_unreachable',
+        error: `HTTP ${response.status}`,
+        ...(modelIds.length > 0 ? { models: modelIds } : {}),
+      };
+    }
+    const json = await readJsonSafe<OpenAiChatResponse>(response);
+    if (!json) {
+      return {
+        ok: false,
+        reason: 'invalid_response',
+        ...(modelIds.length > 0 ? { models: modelIds } : {}),
+      };
+    }
     const hasMessageObject = json.choices?.[0]?.message != null;
     if (!hasMessageObject) {
-      throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
+      return {
+        ok: false,
+        reason: 'invalid_response',
+        ...(modelIds.length > 0 ? { models: modelIds } : {}),
+      };
     }
-    return { ok: true };
+    return { ok: true, models: modelIds };
   } catch (err) {
-    const error = err instanceof Error ? err.message : i18n.t('ai.privateModeGenericError');
-    return { ok: false, error };
+    return {
+      ok: false,
+      reason: 'server_unreachable',
+      error: err instanceof Error ? err.message : i18n.t('ai.privateModeGenericError'),
+    };
   }
 }
 

@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Alert,
   ScrollView,
+  Share,
   Switch,
   Text,
   TouchableOpacity,
@@ -31,7 +32,16 @@ import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
-import { testPrivateRemoteConnection } from '@/shared/lib/ai-core/privateRemoteProvider';
+import {
+  type PrivateRemoteConnectionFailureReason,
+  testPrivateRemoteConnection,
+} from '@/shared/lib/ai-core/privateRemoteProvider';
+import {
+  getCachesDirectoryPath,
+  getReadableDocumentPickerFsPath,
+  NitroFS,
+  pickSingleFileToCachesDirectory,
+} from '@/shared/lib/fs';
 import {
   AppBottomSheetModal,
   ScreenHeader,
@@ -60,6 +70,24 @@ const PRIVATE_QUICK_TEMPLATES = [
     model: 'openai/gpt-oss-20b',
   },
 ] as const;
+
+const PRIVATE_REMOTE_PROFILES_EXPORT_VERSION = 1 as const;
+
+type ExportableRemoteProfile = {
+  name: string;
+  baseUrl: string;
+  model: string;
+};
+
+type PrivateRemoteProfilesExportPayload = {
+  version: typeof PRIVATE_REMOTE_PROFILES_EXPORT_VERSION;
+  exportedAt: string;
+  profiles: ExportableRemoteProfile[];
+};
+
+function toFsPath(uri: string): string {
+  return uri.startsWith('file://') ? uri.slice(7) : uri;
+}
 
 function validatePrivateBaseUrl(baseUrl: string): string | null {
   const trimmed = baseUrl.trim();
@@ -202,7 +230,11 @@ export const AiSettingsScreen = () => {
   const [isTestingConnection, setIsTestingConnection] = React.useState(false);
   const [isAutoTestingProviderConnection, setIsAutoTestingProviderConnection] =
     React.useState(false);
+  const [isExportingProfiles, setIsExportingProfiles] = React.useState(false);
+  const [isImportingProfiles, setIsImportingProfiles] = React.useState(false);
   const [lastConnectionCheckOk, setLastConnectionCheckOk] = React.useState<boolean | null>(null);
+  const [lastConnectionFailureReason, setLastConnectionFailureReason] =
+    React.useState<PrivateRemoteConnectionFailureReason | null>(null);
   const didRunInitialProviderCheckRef = React.useRef(false);
   const [remoteConfigSheetVisible, setRemoteConfigSheetVisible] = React.useState(false);
   const [previousProfileBeforeCreateId, setPreviousProfileBeforeCreateId] = React.useState<
@@ -262,17 +294,23 @@ export const AiSettingsScreen = () => {
     privateRemoteLastSuccessfulModel.trim().length > 0;
   const connectionCheckInProgress = isTestingConnection || isAutoTestingProviderConnection;
   const remoteConnectionStatusLabel = connectionCheckInProgress
-    ? 'Проверка...'
+    ? t('aiSettings.privateProvider.connectionStatus.checking')
     : lastConnectionCheckOk == null
       ? hasSavedRemoteConfig
-        ? 'Подключено'
-        : 'Отключено'
+        ? t('aiSettings.privateProvider.connectionStatus.connected')
+        : t('aiSettings.privateProvider.connectionStatus.disconnected')
       : lastConnectionCheckOk
-        ? 'Подключено'
-        : 'Отключено';
+        ? t('aiSettings.privateProvider.connectionStatus.connected')
+        : lastConnectionFailureReason === 'auth_failed'
+          ? t('aiSettings.privateProvider.connectionStatus.authFailed')
+          : lastConnectionFailureReason === 'model_not_found'
+            ? t('aiSettings.privateProvider.connectionStatus.modelNotFound')
+            : lastConnectionFailureReason === 'server_unreachable'
+              ? t('aiSettings.privateProvider.connectionStatus.serverUnavailable')
+              : t('aiSettings.privateProvider.connectionStatus.invalidResponse');
   const remoteConnectionStatusColor = connectionCheckInProgress
     ? color.text.muted
-    : remoteConnectionStatusLabel === 'Подключено'
+    : lastConnectionCheckOk === true
       ? color.accent.aiData
       : color.accent.delete;
   const isRemoteModelFilled = privateRemoteModel.trim().length > 0;
@@ -337,6 +375,33 @@ export const AiSettingsScreen = () => {
     },
     [t],
   );
+  const getConnectionFailureMessage = React.useCallback(
+    (
+      reason: PrivateRemoteConnectionFailureReason,
+      model: string,
+      models?: string[],
+      fallbackError?: string,
+    ) => {
+      switch (reason) {
+        case 'server_unreachable':
+          return t('aiSettings.privateProvider.healthCheck.serverUnavailable');
+        case 'auth_failed':
+          return t('aiSettings.privateProvider.healthCheck.authFailed');
+        case 'model_not_found': {
+          const preview = (models ?? []).slice(0, 3).join(', ');
+          return t('aiSettings.privateProvider.healthCheck.modelNotFound', {
+            model,
+            modelsPreview: preview || '—',
+          });
+        }
+        case 'invalid_response':
+          return fallbackError || t('aiSettings.privateProvider.healthCheck.invalidResponse');
+        default:
+          return fallbackError || t('aiSettings.privateProvider.connectionFailMessage');
+      }
+    },
+    [t],
+  );
   const runRemoteConnectionCheck = React.useCallback(
     async (
       config: { baseUrl: string; apiKey: string; model: string },
@@ -354,18 +419,160 @@ export const AiSettingsScreen = () => {
           privateRemoteModel: config.model,
         });
         setLastConnectionCheckOk(result.ok);
+        setLastConnectionFailureReason(result.ok ? null : result.reason);
         if (showFailureAlert && !result.ok) {
-          Alert.alert(
-            t('aiSettings.privateProvider.connectionFailTitle'),
-            result.error || t('aiSettings.privateProvider.connectionFailMessage'),
+          const message = getConnectionFailureMessage(
+            result.reason,
+            config.model.trim(),
+            result.models,
+            result.error,
           );
+          Alert.alert(t('aiSettings.privateProvider.connectionFailTitle'), message);
         }
       } finally {
         setIsAutoTestingProviderConnection(false);
       }
     },
-    [t],
+    [getConnectionFailureMessage, t],
   );
+  const exportRemoteProfiles = React.useCallback(async () => {
+    if (privateRemoteProfiles.length === 0) {
+      Alert.alert(
+        t('aiSettings.privateProvider.exportEmptyTitle'),
+        t('aiSettings.privateProvider.savedConnectionsEmpty'),
+      );
+      return;
+    }
+
+    setIsExportingProfiles(true);
+    const cacheDir = getCachesDirectoryPath();
+    const timestamp = Date.now();
+    const filePath = `${cacheDir}/voice-inbox-remote-profiles-${timestamp}.json`;
+    try {
+      const payload: PrivateRemoteProfilesExportPayload = {
+        version: PRIVATE_REMOTE_PROFILES_EXPORT_VERSION,
+        exportedAt: new Date(timestamp).toISOString(),
+        profiles: privateRemoteProfiles.map((profile) => ({
+          name: profile.name,
+          baseUrl: profile.baseUrl,
+          model: profile.model,
+        })),
+      };
+      await NitroFS.writeFile(filePath, JSON.stringify(payload, null, 2), 'utf8');
+      await Share.share({
+        url: `file://${filePath}`,
+        title: t('aiSettings.privateProvider.exportTitle'),
+      });
+    } catch {
+      Alert.alert(
+        t('aiSettings.privateProvider.exportFailedTitle'),
+        t('aiSettings.privateProvider.exportFailedMessage'),
+      );
+    } finally {
+      setIsExportingProfiles(false);
+      try {
+        const exists = await NitroFS.exists(filePath);
+        if (exists) await NitroFS.unlink(filePath);
+      } catch {
+        // ignore temp cleanup failures
+      }
+    }
+  }, [privateRemoteProfiles, t]);
+  const importRemoteProfiles = React.useCallback(async () => {
+    setIsImportingProfiles(true);
+    let pickedFsPath: string | null = null;
+    try {
+      const picked = await pickSingleFileToCachesDirectory();
+      if (picked.kind === 'canceled') return;
+      if (picked.kind === 'failed') {
+        Alert.alert(
+          t('aiSettings.privateProvider.importFailedTitle'),
+          t('aiSettings.privateProvider.importFailedMessage'),
+        );
+        return;
+      }
+      const fileLike = {
+        uri: picked.localUri,
+        fileUri: picked.localUri,
+        fileCopyUri: picked.localUri,
+      };
+      const fsPath = await getReadableDocumentPickerFsPath(fileLike);
+      if (!fsPath) {
+        Alert.alert(
+          t('aiSettings.privateProvider.importInvalidTitle'),
+          t('aiSettings.privateProvider.importInvalidMessage'),
+        );
+        return;
+      }
+      pickedFsPath = fsPath;
+      const raw = await NitroFS.readFile(fsPath, 'utf8');
+      const parsed = JSON.parse(raw) as Partial<PrivateRemoteProfilesExportPayload>;
+      const profilesRaw = Array.isArray(parsed?.profiles) ? parsed.profiles : [];
+      const validProfiles = profilesRaw
+        .map((profile) => ({
+          name: typeof profile?.name === 'string' ? profile.name.trim() : '',
+          baseUrl: typeof profile?.baseUrl === 'string' ? profile.baseUrl.trim() : '',
+          model: typeof profile?.model === 'string' ? profile.model.trim() : '',
+        }))
+        .filter((profile) => profile.baseUrl.length > 0 && profile.model.length > 0);
+
+      if (validProfiles.length === 0) {
+        Alert.alert(
+          t('aiSettings.privateProvider.importInvalidTitle'),
+          t('aiSettings.privateProvider.importInvalidMessage'),
+        );
+        return;
+      }
+
+      const existingBySignature = new Map(
+        privateRemoteProfiles.map((profile) => [
+          `${profile.baseUrl.trim().toLowerCase()}|${profile.model.trim().toLowerCase()}`,
+          profile,
+        ]),
+      );
+
+      let importedCount = 0;
+      for (const profile of validProfiles) {
+        const signature = `${profile.baseUrl.toLowerCase()}|${profile.model.toLowerCase()}`;
+        const existing = existingBySignature.get(signature);
+        const id = existing?.id ?? `remote-import-${Date.now()}-${importedCount}`;
+        const name =
+          profile.name.length > 0
+            ? profile.name
+            : buildRemoteProfileName(profile.baseUrl, profile.model);
+        upsertPrivateRemoteProfile({
+          id,
+          name,
+          baseUrl: profile.baseUrl,
+          model: profile.model,
+          apiKey: existing?.apiKey ?? '',
+          updatedAt: Date.now(),
+        });
+        importedCount += 1;
+      }
+
+      Alert.alert(
+        t('aiSettings.privateProvider.importSuccessTitle'),
+        t('aiSettings.privateProvider.importSuccessMessage', { count: importedCount }),
+      );
+    } catch {
+      Alert.alert(
+        t('aiSettings.privateProvider.importFailedTitle'),
+        t('aiSettings.privateProvider.importFailedMessage'),
+      );
+    } finally {
+      setIsImportingProfiles(false);
+      if (pickedFsPath) {
+        try {
+          const normalized = toFsPath(pickedFsPath);
+          const exists = await NitroFS.exists(normalized);
+          if (exists) await NitroFS.unlink(normalized);
+        } catch {
+          // ignore temp cleanup failures
+        }
+      }
+    }
+  }, [buildRemoteProfileName, privateRemoteProfiles, t, upsertPrivateRemoteProfile]);
   const handlePrivateProviderSelect = React.useCallback(
     async (provider: PrivateAiProvider) => {
       setPrivateAiProvider(provider);
@@ -964,6 +1171,46 @@ export const AiSettingsScreen = () => {
               </View>
             )}
           </View>
+          <View className="mb-4 flex-row gap-2">
+            <TouchableOpacity
+              onPress={() => {
+                void exportRemoteProfiles();
+              }}
+              disabled={isExportingProfiles || privateRemoteProfiles.length === 0}
+              className="min-h-[44px] min-w-0 flex-1 flex-row items-center justify-center rounded-xl border px-3 py-2.5"
+              style={{
+                borderColor: color.border.default,
+                opacity: isExportingProfiles || privateRemoteProfiles.length === 0 ? 0.5 : 1,
+              }}
+            >
+              {isExportingProfiles ? (
+                <ActivityIndicator size="small" color={color.text.muted} />
+              ) : (
+                <Text className="text-[13px] font-semibold" style={{ color: color.text.primary }}>
+                  {t('aiSettings.privateProvider.exportProfiles')}
+                </Text>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => {
+                void importRemoteProfiles();
+              }}
+              disabled={isImportingProfiles}
+              className="min-h-[44px] min-w-0 flex-1 flex-row items-center justify-center rounded-xl border px-3 py-2.5"
+              style={{
+                borderColor: color.border.default,
+                opacity: isImportingProfiles ? 0.5 : 1,
+              }}
+            >
+              {isImportingProfiles ? (
+                <ActivityIndicator size="small" color={color.text.muted} />
+              ) : (
+                <Text className="text-[13px] font-semibold" style={{ color: color.text.primary }}>
+                  {t('aiSettings.privateProvider.importProfiles')}
+                </Text>
+              )}
+            </TouchableOpacity>
+          </View>
           <Text className="mb-2 text-[13px] font-semibold" style={{ color: color.text.secondary }}>
             {t('aiSettings.privateProvider.baseUrl')}
           </Text>
@@ -1043,6 +1290,7 @@ export const AiSettingsScreen = () => {
                   privateRemoteModel,
                 });
                 setLastConnectionCheckOk(result.ok);
+                setLastConnectionFailureReason(result.ok ? null : result.reason);
                 if (result.ok) {
                   const profileId = privateRemoteActiveProfileId ?? `remote-${Date.now()}`;
                   const profileName = buildRemoteProfileName(
@@ -1069,10 +1317,13 @@ export const AiSettingsScreen = () => {
                   );
                   return;
                 }
-                Alert.alert(
-                  t('aiSettings.privateProvider.connectionFailTitle'),
-                  result.error || t('aiSettings.privateProvider.connectionFailMessage'),
+                const message = getConnectionFailureMessage(
+                  result.reason,
+                  privateRemoteModel.trim(),
+                  result.models,
+                  result.error,
                 );
+                Alert.alert(t('aiSettings.privateProvider.connectionFailTitle'), message);
               } finally {
                 setIsTestingConnection(false);
               }

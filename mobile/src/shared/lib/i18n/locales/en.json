@@ -1275,7 +1275,34 @@
       "testAndUpdateConnection": "Test and update",
       "editConfig": "Edit",
       "setupConfig": "Set up",
-      "showDetails": "Show details"
+      "showDetails": "Show details",
+      "connectionStatus": {
+        "checking": "Checking...",
+        "connected": "Connected",
+        "disconnected": "Disconnected",
+        "serverUnavailable": "Server unavailable",
+        "authFailed": "Auth failed",
+        "modelNotFound": "Model not found",
+        "invalidResponse": "Invalid response"
+      },
+      "healthCheck": {
+        "serverUnavailable": "Server is unavailable. Check URL, network, and that your server is running.",
+        "authFailed": "Authorization failed. Check API key or server auth settings.",
+        "modelNotFound": "Model \"{{model}}\" is not in /v1/models. Available: {{modelsPreview}}",
+        "invalidResponse": "Server returned an invalid response format. Make sure it is OpenAI-compatible."
+      },
+      "exportProfiles": "Export profiles",
+      "importProfiles": "Import profiles",
+      "exportTitle": "Export server profiles",
+      "exportEmptyTitle": "Nothing to export",
+      "exportFailedTitle": "Export failed",
+      "exportFailedMessage": "Could not export server profiles.",
+      "importSuccessTitle": "Profiles imported",
+      "importSuccessMessage": "Imported {{count}} profile(s). API keys are not imported by default.",
+      "importFailedTitle": "Import failed",
+      "importFailedMessage": "Could not import profiles from file.",
+      "importInvalidTitle": "Invalid file",
+      "importInvalidMessage": "Choose a valid profiles JSON export file."
     },
     "smartModeCloudRetention": {
       "title": "Cloud copy time",
