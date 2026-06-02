@@ -252,7 +252,40 @@ function parseMeetingDialogueMarkdownUnlimited(raw: string): string | null {
     if (!t) return '';
     return t;
   } catch {
-    return null;
+    const tryExtractField = (text: string, field: string): string | null => {
+      const quotedKey = new RegExp(`"${field}"\\s*:\\s*"`, 'i').exec(text);
+      const bareKey = new RegExp(`${field}\\s*:\\s*"`, 'i').exec(text);
+      const match = quotedKey ?? bareKey;
+      if (!match) return null;
+
+      let i = (match.index ?? 0) + match[0].length;
+      let out = '';
+      while (i < text.length) {
+        const c = text[i]!;
+        if (c === '\\') {
+          if (i + 1 >= text.length) break;
+          const n = text[i + 1]!;
+          if (n === 'n') out += '\n';
+          else if (n === 'r') out += '\r';
+          else if (n === 't') out += '\t';
+          else out += n;
+          i += 2;
+          continue;
+        }
+        if (c === '"') {
+          return out.trim();
+        }
+        out += c;
+        i += 1;
+      }
+      return out.trim() || null;
+    };
+
+    const fallback =
+      tryExtractField(raw, 'meetingDialogueMarkdown') ??
+      tryExtractField(raw, 'meeting_dialogue_markdown') ??
+      tryExtractField(raw, 'meetingDialogue');
+    return fallback;
   }
 }
 
