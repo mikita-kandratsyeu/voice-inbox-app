@@ -131,21 +131,42 @@ export async function testPrivateRemoteConnection(
     'privateRemoteBaseUrl' | 'privateRemoteApiKey' | 'privateRemoteModel'
   >,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
-  const fakeCtx = {
-    privateRemoteBaseUrl: config.privateRemoteBaseUrl,
-    privateRemoteApiKey: config.privateRemoteApiKey,
-    privateRemoteModel: config.privateRemoteModel,
-  } as AiExecutionContext;
   try {
-    await callRemoteCompletion(
-      fakeCtx,
-      [
-        { role: 'system', content: 'Reply with plain text "pong".' },
-        { role: 'user', content: 'ping' },
-      ],
-      32,
-      0,
-    );
+    const endpoint = resolveRemoteCompletionUrl(config.privateRemoteBaseUrl);
+    const model = config.privateRemoteModel.trim();
+    if (!endpoint || !model) {
+      throw new Error(i18n.t('ai.privateModeRemoteConfigMissing'));
+    }
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    const apiKey = config.privateRemoteApiKey.trim();
+    if (apiKey.length > 0) {
+      headers.Authorization = `Bearer ${apiKey}`;
+    }
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: 'Reply with plain text "pong".' },
+          { role: 'user', content: 'ping' },
+        ],
+        temperature: 0,
+        max_tokens: 32,
+        stream: false,
+      }),
+    });
+    if (!response.ok) {
+      const bodyText = await response.text();
+      throw new Error(bodyText || `HTTP ${response.status}`);
+    }
+    const json = (await response.json()) as OpenAiChatResponse;
+    const hasMessageObject = json.choices?.[0]?.message != null;
+    if (!hasMessageObject) {
+      throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
+    }
     return { ok: true };
   } catch (err) {
     const error = err instanceof Error ? err.message : i18n.t('ai.privateModeGenericError');

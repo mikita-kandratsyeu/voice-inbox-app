@@ -209,11 +209,6 @@ export const AiSettingsScreen = () => {
     string | null
   >(null);
   const sheetContentPadding = useBottomSheetContentPadding(16);
-  const activeRemoteProfile = React.useMemo(
-    () =>
-      privateRemoteProfiles.find((profile) => profile.id === privateRemoteActiveProfileId) ?? null,
-    [privateRemoteActiveProfileId, privateRemoteProfiles],
-  );
 
   React.useEffect(() => {
     if (customProviderLocked && privateAiProvider === 'custom_openai') {
@@ -258,12 +253,6 @@ export const AiSettingsScreen = () => {
 
   const cloudRetentionLabel = (sec: CloudAiKvTtlSeconds) =>
     t(`aiSettings.smartModeCloudRetention.m${sec}`);
-  const resolvedRemoteProviderName = React.useMemo(() => {
-    const base = privateRemoteBaseUrl.trim().toLowerCase();
-    if (base.includes(':11434')) return t('aiSettings.privateProvider.templates.ollama');
-    if (base.includes(':1234')) return t('aiSettings.privateProvider.templates.lm_studio');
-    return t('settings.privateRemoteProviderCustom');
-  }, [privateRemoteBaseUrl, t]);
   const baseUrlValidationError = React.useMemo(
     () => validatePrivateBaseUrl(privateRemoteBaseUrl),
     [privateRemoteBaseUrl],
@@ -615,16 +604,6 @@ export const AiSettingsScreen = () => {
                               style={{ color: color.text.muted }}
                               numberOfLines={1}
                             >
-                              {activeRemoteProfile?.name ??
-                                t('aiSettings.privateProvider.savedProviderLabel', {
-                                  provider: resolvedRemoteProviderName,
-                                })}
-                            </Text>
-                            <Text
-                              className="text-[13px] leading-5"
-                              style={{ color: color.text.muted }}
-                              numberOfLines={1}
-                            >
                               {t('aiSettings.privateProvider.savedModelLabel', {
                                 model: privateRemoteLastSuccessfulModel,
                               })}
@@ -948,7 +927,7 @@ export const AiSettingsScreen = () => {
                           style={{ color: isActive ? color.text.primary : color.text.secondary }}
                           numberOfLines={1}
                         >
-                          {profile.name}
+                          {profile.model}
                         </Text>
                         <Text
                           className="text-[12px]"
