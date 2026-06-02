@@ -80,6 +80,8 @@ type RemoteCompletionOutput = {
   tokenUsage?: { prompt: number; completion: number };
 };
 
+type RepairKind = 'summary' | 'meeting_dialogue';
+
 export type PrivateRemoteConnectionFailureReason =
   | 'server_unreachable'
   | 'auth_failed'
@@ -289,6 +291,87 @@ function parseMeetingDialogueMarkdownUnlimited(raw: string): string | null {
   }
 }
 
+function normalizeRemoteJsonFields(input: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...input };
+
+  const alias = (to: string, from: string) => {
+    if (!(to in out) && from in out) out[to] = out[from];
+  };
+
+  alias('suggestedTitle', 'suggested_title');
+  alias('keyPhrases', 'key_phrases');
+  alias('nextSteps', 'next_steps');
+  alias('meetingDialogueMarkdown', 'meeting_dialogue_markdown');
+  alias('meetingDialogueMarkdown', 'meetingDialogue');
+
+  if (Array.isArray(out.tasks)) {
+    out.tasks = out.tasks.map((task) => {
+      if (!isRecord(task)) return task;
+      const item: Record<string, unknown> = { ...task };
+      if (!('title' in item)) {
+        if (isString(item.task)) item.title = item.task;
+        else if (isString(item.name)) item.title = item.name;
+      }
+      if (!('deadline' in item)) {
+        if (isString(item.due_date)) item.deadline = item.due_date;
+        else if (isString(item.dueDate)) item.deadline = item.dueDate;
+      }
+      if (!('priority' in item)) {
+        if (isString(item.priority_level)) item.priority = item.priority_level;
+        else if (isString(item.priorityLevel)) item.priority = item.priorityLevel;
+      }
+      return item;
+    });
+  }
+
+  return out;
+}
+
+function normalizeRawJsonIfPossible(raw: string): string | null {
+  try {
+    const parsed = parseJsonObjectWithFallbacks(raw);
+    const normalized = normalizeRemoteJsonFields(parsed);
+    return JSON.stringify(normalized);
+  } catch {
+    return null;
+  }
+}
+
+async function runRemoteJsonRepairPass(
+  ctx: AiExecutionContext,
+  raw: string,
+  kind: RepairKind,
+  abortSignal?: AbortSignal,
+): Promise<string | null> {
+  const schemaHint =
+    kind === 'summary'
+      ? '{"summary":"...","suggestedTitle":"...","tasks":[{"title":"...","priority":"high|medium|low","deadline":null}],"tags":[],"classification":"personal|work|meeting|idea|other","keyPhrases":[],"nextSteps":[],"meetingDialogueMarkdown":"..."}'
+      : '{"meetingDialogueMarkdown":"..."}';
+  const repairSystemPrompt = [
+    'You are a strict JSON repair assistant.',
+    'Input may contain malformed JSON, prose, or mixed keys.',
+    'Return exactly one valid JSON object only, no markdown/code fences/comments.',
+    `Target schema: ${schemaHint}`,
+    'Map snake_case keys to camelCase when needed.',
+  ].join(' ');
+  const repairUser = `Fix this response into one valid JSON object.\n\n${raw.slice(0, 12000)}`;
+  try {
+    const repaired = await callRemoteCompletion(
+      ctx,
+      [
+        { role: 'system', content: repairSystemPrompt },
+        { role: 'user', content: repairUser },
+      ],
+      2048,
+      0,
+      abortSignal,
+    );
+    return repaired.content;
+  } catch {
+    return null;
+  }
+}
+
 export async function testPrivateRemoteConnection(
   config: Pick<
     AiExecutionContext,
@@ -427,14 +510,30 @@ async function runPrivateRemoteSummaryPass(
     );
 
   let remote = await runOnce(userContent);
-  let outcome = tryBuildSummaryFromModelRaw(remote.content, {
+  const normalizedFirst = normalizeRawJsonIfPossible(remote.content);
+  let outcome = tryBuildSummaryFromModelRaw(normalizedFirst ?? remote.content, {
     includePseudoDiarization: opts.includeMeetingDialogueField,
   });
   if (!outcome.ok) {
     remote = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
-    outcome = tryBuildSummaryFromModelRaw(remote.content, {
+    const normalizedRetry = normalizeRawJsonIfPossible(remote.content);
+    outcome = tryBuildSummaryFromModelRaw(normalizedRetry ?? remote.content, {
       includePseudoDiarization: opts.includeMeetingDialogueField,
     });
+  }
+  if (!outcome.ok) {
+    const repaired = await runRemoteJsonRepairPass(
+      ctx,
+      remote.content,
+      'summary',
+      request.abortSignal,
+    );
+    if (repaired) {
+      const normalizedRepaired = normalizeRawJsonIfPossible(repaired);
+      outcome = tryBuildSummaryFromModelRaw(normalizedRepaired ?? repaired, {
+        includePseudoDiarization: opts.includeMeetingDialogueField,
+      });
+    }
   }
   if (!outcome.ok) {
     return { ok: false, error: i18n.t('ai.privateModeParseFailed') };
@@ -483,6 +582,17 @@ export async function runPrivateRemoteMeetingDialogue(
     if (markdown === null) {
       remote = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
       markdown = parseMeetingDialogueMarkdownUnlimited(remote.content);
+    }
+    if (markdown === null) {
+      const repaired = await runRemoteJsonRepairPass(
+        ctx,
+        remote.content,
+        'meeting_dialogue',
+        request.abortSignal,
+      );
+      if (repaired) {
+        markdown = parseMeetingDialogueMarkdownUnlimited(repaired);
+      }
     }
     if (markdown === null) {
       throw new Error(i18n.t('ai.privateModeParseFailed'));

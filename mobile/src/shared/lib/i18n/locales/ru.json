@@ -1252,7 +1252,7 @@
       "proTitle": "Свой ИИ-сервер в Pro",
       "proBody": "Подключите Ollama или LM Studio и запускайте Private-режим через свой сервер.",
       "serverConfig": "Подключение к серверу",
-      "serverConfigHint": "Используйте OpenAI-совместимый сервер. Пример: http://192.168.0.10:11434",
+      "serverConfigHint": "Используйте OpenAI-совместимый сервер.",
       "quickTemplates": "Быстрый выбор",
       "templates": {
         "ollama": "Ollama",

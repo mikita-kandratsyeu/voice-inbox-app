@@ -1233,7 +1233,7 @@
       "proTitle": "Bring Your AI Server in Pro",
       "proBody": "Connect Ollama or LM Studio and run Private mode through your own server.",
       "serverConfig": "Server connection",
-      "serverConfigHint": "Use an OpenAI-compatible server. Example: http://192.168.0.10:11434",
+      "serverConfigHint": "Use an OpenAI-compatible server.",
       "quickTemplates": "Quick setup",
       "templates": {
         "ollama": "Ollama",
