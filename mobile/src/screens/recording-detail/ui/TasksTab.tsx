@@ -157,6 +157,7 @@ export const TasksTab = ({
   const { t } = useTranslation();
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
   const aiModelName = useAiModelName();
+  const modelHint = aiModelName.trim() ? aiModelName : undefined;
   const { isConnected } = useNetworkStatus();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
@@ -286,8 +287,8 @@ export const TasksTab = ({
             description={t('recordingDetail.tasksNotExtractedDesc')}
             buttonLabel={t('recordingDetail.extractTasks')}
             buttonIcon={<ListChecks size={18} color="#fff" strokeWidth={2} />}
-            hint={aiModelName}
-            hintIcon={<AiTabHintIcon />}
+            hint={modelHint}
+            hintIcon={modelHint ? <AiTabHintIcon /> : undefined}
             disabled={disableByNetwork}
             onPress={() => onExtract(undefined)}
           />

@@ -591,7 +591,7 @@ export const AiSettingsScreen = () => {
               </View>
             </View>
           )}
-          {!isPrivateMode ? (
+          {!isPrivateMode || privateAiProvider === 'custom_openai' ? (
             <SettingsSection title={t('aiSettings.showSummaryReasoning.title')}>
               <SettingsRow
                 label={t('aiSettings.showSummaryReasoning.label')}

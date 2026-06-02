@@ -156,5 +156,10 @@ export function sanitizeSummaryPayload(
     }
   }
 
+  const reasoningRaw = isString(parsed.reasoning) ? parsed.reasoning.trim() : '';
+  if (reasoningRaw) {
+    result.reasoning = reasoningRaw.slice(0, 2400);
+  }
+
   return result;
 }

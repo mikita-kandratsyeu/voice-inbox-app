@@ -13,6 +13,7 @@ import { useRecordStore } from '@/entities/record';
 import type { AutoArchiveAfterDays } from '@/entities/settings';
 import {
   getWhisperModelVariantId,
+  isPrivateCustomServerMode,
   LOCAL_AI_MODELS,
   syncPrivateCapabilityTier,
   USER_FACING_AI_MODELS,
@@ -72,7 +73,6 @@ export function useSettingsScreen() {
   const localLlmModelStatuses = useSettingsStore((s) => s.localLlmModelStatuses);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
-  const privateRemoteBaseUrl = useSettingsStore((s) => s.privateRemoteBaseUrl);
   const privateRemoteModel = useSettingsStore((s) => s.privateRemoteModel);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
@@ -248,9 +248,13 @@ export function useSettingsScreen() {
   const localLlmDownloaded =
     selectedLocalAiModel != null &&
     (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
+  const privateCustomServerModeActive = isPrivateCustomServerMode(
+    aiExecutionMode,
+    privateAiProvider,
+  );
   const aiModelBaseName =
     aiExecutionMode === 'private_experimental'
-      ? privateAiProvider === 'custom_openai'
+      ? privateCustomServerModeActive
         ? privateRemoteModel.trim() || t('settings.whisperModelNotSet')
         : localLlmDownloaded
           ? (localModel?.name ?? selectedLocalAiModel ?? '')
@@ -258,8 +262,7 @@ export function useSettingsScreen() {
       : aiModelRoutingMode === 'auto'
         ? t('aiModels.autoRecommendedLabel')
         : (userFacing?.name ?? selectedAIModel);
-  const aiModelLockedByPrivateRemote =
-    aiExecutionMode === 'private_experimental' && privateAiProvider === 'custom_openai';
+  const aiModelLockedByPrivateRemote = privateCustomServerModeActive;
   const aiModelLockedHint = aiModelLockedByPrivateRemote
     ? t('settings.aiModelLockedByPrivateRemoteHint')
     : undefined;

@@ -12,7 +12,7 @@ type Props = {
   t: TFunction;
   navigation: NativeStackNavigationProp<SettingsStackParamList>;
   privateAiModeValue: string;
-  aiModelName: string;
+  aiModelName?: string;
   aiModelLockedByPrivateRemote: boolean;
   aiModelLockedHint?: string;
   transcriptionValue: string;
@@ -47,7 +47,7 @@ export const SettingsAiProcessingSection = ({
       />
       <SettingsRow
         label={t('settings.aiModel')}
-        value={aiModelName}
+        value={aiModelName?.trim() ? aiModelName : undefined}
         subtitle={aiModelLockedHint}
         leftIcon={<Bot size={20} color={color.accent.transcript} strokeWidth={1.8} />}
         onPress={

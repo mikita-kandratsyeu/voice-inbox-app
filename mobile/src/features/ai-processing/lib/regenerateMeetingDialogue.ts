@@ -10,6 +10,8 @@ import {
   saveCloudSummarizePending,
 } from '@/shared/lib/ai-api';
 import { createAiAbortHandle, isAiGenerationCancelledError } from '@/shared/lib/ai-api/abort';
+import { runPrivateRemoteSummaryTasks } from '@/shared/lib/ai-core/privateRemoteProvider';
+import { sanitizeRecordingMarksForPrompt } from '@/shared/lib/ai-core/recordingMarksForPrompt';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
 import { runLocalMeetingDialogue } from '@/shared/lib/ai-core/local-provider/localAiMeetingDialogue';
 import type { AiExecutionContext } from '@/shared/lib/ai-core/types';
@@ -83,7 +85,9 @@ async function regeneratePrivateMeetingDialogue(
   const settings = useSettingsStore.getState();
   const { ctx, isLocalLlmModelDownloaded } = buildPrivateAiContext(settings);
 
-  if (!isLocalLlmModelDownloaded) {
+  const usesCustomRemoteProvider = ctx.privateAiProvider === 'custom_openai';
+
+  if (!usesCustomRemoteProvider && !isLocalLlmModelDownloaded) {
     useRecordStore
       .getState()
       .setMeetingDialogueError(record.id, i18n.t('ai.privateModeModelNotDownloaded'));
@@ -127,6 +131,58 @@ async function regeneratePrivateMeetingDialogue(
       : undefined;
 
   try {
+    if (usesCustomRemoteProvider) {
+      const remoteResult = await runPrivateRemoteSummaryTasks(
+        {
+          id: record.id,
+          transcript: record.transcript ?? '',
+          ...(transcriptSegments?.length ? { transcriptSegments } : {}),
+          processingPreset: 'meeting',
+          expectAsyncMeetingDialogue: true,
+          ...(record.tasks?.length
+            ? {
+                existingTaskTexts: record.tasks
+                  .map((task) => task.text?.trim())
+                  .filter((text): text is string => Boolean(text)),
+              }
+            : {}),
+          ...(record.recordingMarks?.length
+            ? {
+                recordingMarks: sanitizeRecordingMarksForPrompt(record.recordingMarks),
+              }
+            : {}),
+          abortSignal: abortHandle.signal,
+        },
+        ctx,
+      );
+
+      if (abortHandle.cancelled) return;
+
+      if (!remoteResult.ok) {
+        setMeetingDialogueStatus(record.id, 'failed');
+        setMeetingDialogueError(record.id, remoteResult.error);
+        return;
+      }
+
+      const md = remoteResult.result.meetingDialogueMarkdown?.trim() ?? '';
+      if (md) {
+        const keptLabels = pruneSpeakerLabelsForDialogue(record.meetingSpeakerLabels, md);
+        await updateAiExtras(record.id, {
+          meetingDialogue: md,
+          meetingSpeakerLabels: keptLabels ?? null,
+        });
+        setMeetingDialogueStatus(record.id, 'done');
+        setMeetingDialogueError(record.id, undefined);
+      } else if (remoteResult.meetingDialogueStatus === 'failed') {
+        setMeetingDialogueStatus(record.id, 'failed');
+        setMeetingDialogueError(record.id, i18n.t('recordingDetail.meetingDialogueFailedDesc'));
+      } else {
+        setMeetingDialogueStatus(record.id, 'idle');
+        setMeetingDialogueError(record.id, undefined);
+      }
+      return;
+    }
+
     const dialogueResult = await runLocalMeetingDialogue(
       {
         transcript: record.transcript ?? '',

@@ -2,9 +2,14 @@ import { AlertCircle, FileText, RefreshCw, Share, UsersRound } from 'lucide-reac
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
+import { useShallow } from 'zustand/react/shallow';
 
 import type { RecordingStatus } from '@/entities/record';
-import { resolveAiModelDisplayLabel, useSettingsStore } from '@/entities/settings';
+import {
+  isPrivateCustomServerMode,
+  resolveAiModelDisplayLabel,
+  useSettingsStore,
+} from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/shared/lib';
 import type { SummaryTokenUsage } from '@/shared/lib/summaryMetaSubtitle';
@@ -77,8 +82,13 @@ export const SummaryTab = ({
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
   const aiModelName = useAiModelName();
   const { isConnected } = useNetworkStatus();
-  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
-  const showSummaryReasoningInNotes = useSettingsStore((s) => s.showSummaryReasoningInNotes);
+  const { aiExecutionMode, privateAiProvider, showSummaryReasoningInNotes } = useSettingsStore(
+    useShallow((s) => ({
+      aiExecutionMode: s.aiExecutionMode,
+      privateAiProvider: s.privateAiProvider,
+      showSummaryReasoningInNotes: s.showSummaryReasoningInNotes,
+    })),
+  );
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
   const regenerateDisabled = disableByNetwork || speakerBreakdownProcessing;
   const [regenerateSheetOpen, setRegenerateSheetOpen] = useState(false);
@@ -103,8 +113,15 @@ export const SummaryTab = ({
   );
 
   const isSmartMode = aiExecutionMode === 'smart_hybrid';
+  const isPrivateCustomServerModeActive = isPrivateCustomServerMode(
+    aiExecutionMode,
+    privateAiProvider,
+  );
   const showReasoningBlock =
-    isSmartMode && showSummaryReasoningInNotes && Boolean(summaryReasoning?.trim());
+    (isSmartMode || isPrivateCustomServerModeActive) &&
+    showSummaryReasoningInNotes &&
+    Boolean(summaryReasoning?.trim());
+  const modelHint = aiModelName.trim() ? aiModelName : undefined;
 
   const errMessage = useMemo(() => {
     return errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '');
@@ -162,8 +179,8 @@ export const SummaryTab = ({
           description={t('recordingDetail.summaryNotCreatedDesc')}
           buttonLabel={t('recordingDetail.generateSummary')}
           buttonIcon={<FileText size={18} color="#fff" strokeWidth={2} />}
-          hint={aiModelName}
-          hintIcon={<AiTabHintIcon />}
+          hint={modelHint}
+          hintIcon={modelHint ? <AiTabHintIcon /> : undefined}
           disabled={disableByNetwork}
           onPress={onGenerate}
         />
@@ -207,7 +224,7 @@ export const SummaryTab = ({
         <SummaryReasoningDisclosure
           reasoning={summaryReasoning}
           color={color}
-          modelLabel={summaryModelLabel || undefined}
+          modelLabel={isPrivateCustomServerModeActive ? undefined : summaryModelLabel || undefined}
           tokenUsage={summaryTokenUsage}
           generationDurationMs={summaryGenerationMs}
         />

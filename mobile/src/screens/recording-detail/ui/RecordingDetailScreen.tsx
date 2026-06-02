@@ -771,7 +771,7 @@ export const RecordingDetailScreen = () => {
                   privateAiBatchStartedAt={liveRecord.privateAiBatchStartedAt}
                   transcriptCharCount={liveRecord.transcript?.length ?? 0}
                   cloudMeetingDialogueExtra={meetingPresetUiActive}
-                  summaryReasoning={isPrivateMode ? undefined : liveRecord.summaryReasoning}
+                  summaryReasoning={liveRecord.summaryReasoning}
                   summaryAiModel={liveRecord.summaryAiModel}
                   summaryAiModelLabel={liveRecord.summaryAiModelLabel}
                   summaryTokenUsage={

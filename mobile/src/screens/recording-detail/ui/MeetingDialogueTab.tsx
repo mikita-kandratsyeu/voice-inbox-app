@@ -83,6 +83,7 @@ export const MeetingDialogueTab = ({
   const { t } = useTranslation();
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
   const aiModelName = useAiModelName();
+  const modelHint = aiModelName.trim() ? aiModelName : undefined;
   const { isConnected } = useNetworkStatus();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
@@ -236,8 +237,8 @@ export const MeetingDialogueTab = ({
           description={t(emptyDescriptionKey)}
           buttonLabel={emptyButtonLabel}
           buttonIcon={emptyButtonIcon}
-          hint={dialogueOnlyAction ? undefined : aiModelName}
-          hintIcon={dialogueOnlyAction ? undefined : <AiTabHintIcon />}
+          hint={dialogueOnlyAction ? undefined : modelHint}
+          hintIcon={dialogueOnlyAction || !modelHint ? undefined : <AiTabHintIcon />}
           disabled={blockDialogueActions}
           onPress={dialogueOnlyAction ? onRegenerateDialogueOnly! : onGenerate}
         />

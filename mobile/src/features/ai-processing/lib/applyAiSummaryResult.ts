@@ -127,10 +127,7 @@ export async function applyAiSummaryResult(params: ApplyAiSummaryResultParams): 
 
   const classificationClearedForNonPro = !isProActive && classification === 'meeting';
 
-  const summaryReasoningForStore =
-    aiExecutionMode === 'smart_hybrid' && summaryReasoningRaw?.trim()
-      ? summaryReasoningRaw.trim()
-      : null;
+  const summaryReasoningForStore = summaryReasoningRaw?.trim() ? summaryReasoningRaw.trim() : null;
 
   const shouldUpdateAiExtras =
     resolvedClassification ||
@@ -140,6 +137,7 @@ export async function applyAiSummaryResult(params: ApplyAiSummaryResultParams): 
     classificationClearedForNonPro ||
     (includeMeetingSpeakerBreakdown && !skipMeetingDialogue) ||
     prevHadMeetingDialogue ||
+    summaryReasoningForStore != null ||
     aiExecutionMode === 'smart_hybrid';
 
   const summaryModelForStore =
@@ -160,7 +158,7 @@ export async function applyAiSummaryResult(params: ApplyAiSummaryResultParams): 
             ...(meetingDialogueForStore ? { meetingSpeakerLabels: null } : {}),
           }
         : {}),
-      ...(aiExecutionMode === 'smart_hybrid' ? { summaryReasoning: summaryReasoningForStore } : {}),
+      ...(summaryReasoningForStore != null ? { summaryReasoning: summaryReasoningForStore } : {}),
     });
   }
 

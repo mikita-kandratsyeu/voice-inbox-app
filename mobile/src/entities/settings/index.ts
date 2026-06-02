@@ -16,6 +16,7 @@ export {
   resolvePrivateAiCapabilityTier,
 } from './lib/privateAiCapability';
 export { FALLBACK_AI_MODEL_WHEN_NOT_PRO, isProOnlyAiModel } from './lib/proOnlyAiModels';
+export { isPrivateCustomServerMode } from './lib/isPrivateCustomServerMode';
 export { RECOMMENDED_AI_MODEL_ID } from './lib/recommendAiModel';
 export { getRecommendedWhisperModelId } from './lib/recommendWhisperModel';
 export { syncPrivateCapabilityTier } from './lib/syncPrivateCapabilityTier';
