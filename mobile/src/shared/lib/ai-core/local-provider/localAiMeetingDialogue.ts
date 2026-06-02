@@ -12,6 +12,7 @@ import type {
 } from '../types';
 import {
   FIELD_LIMITS,
+  LOCAL_GEN_MEETING_DIALOGUE,
   resolvePrivateMeetingDialogueMaxTokens,
   STRICT_JSON_TAIL,
 } from './localAiConstants';
@@ -24,15 +25,13 @@ import {
 } from './localAiPrompts';
 import { prepareTranscriptForLocalLlm } from './localAiTranscript';
 
-const LOCAL_GEN_MEETING_DIALOGUE = { temperature: 0.15 } as const;
-
 const MEETING_DIALOGUE_SYSTEM_PREFIX = [
   'You are a layout assistant for voice note transcripts. Output one JSON object only: raw JSON, no markdown fences, no commentary.',
   'Schema: {"meetingDialogueMarkdown":"..."}',
   LOCAL_MEETING_PSEUDO_BASE,
 ].join(' ');
 
-function buildMeetingDialogueSystemPrompt(ctx: AiExecutionContext): string {
+export function buildMeetingDialogueSystemPrompt(ctx: AiExecutionContext): string {
   return `${MEETING_DIALOGUE_SYSTEM_PREFIX} ${LOCAL_MEETING_DIALOGUE_OUTPUT_LANGUAGE_HINT[ctx.aiOutputLanguage]}`;
 }
 
@@ -61,7 +60,7 @@ export type LocalMeetingDialogueResult =
   | { ok: true; meetingDialogueMarkdown: string }
   | { ok: false; error: string };
 
-function parseMeetingDialogueMarkdown(raw: string): string | null {
+export function parseMeetingDialogueMarkdown(raw: string): string | null {
   try {
     const record = parseJsonObjectWithFallbacks(raw);
     const md = record.meetingDialogueMarkdown;
@@ -106,7 +105,7 @@ async function generateMeetingDialogueRaw(
   );
 }
 
-function buildUserContent(
+export function buildMeetingDialogueUserContent(
   transcript: string,
   phase1: LocalMeetingDialogueRequest['phase1'],
   transcriptSegments?: SummaryTaskTranscriptSegment[],
@@ -153,7 +152,7 @@ export async function runLocalMeetingDialogue(
 
     const transcript = prepareTranscriptForLocalLlm(request.transcript, ctx.privateCapabilityTier);
     const systemPrompt = buildMeetingDialogueSystemPrompt(ctx);
-    const userContent = buildUserContent(
+    const userContent = buildMeetingDialogueUserContent(
       transcript,
       request.phase1,
       request.transcriptSegments,

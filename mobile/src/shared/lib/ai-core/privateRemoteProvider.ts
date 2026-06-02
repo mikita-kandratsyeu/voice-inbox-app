@@ -2,17 +2,29 @@ import { i18n } from '@/shared/lib';
 import { isRecord, isString } from '@/shared/lib/type-guards';
 
 import { AI_REQUEST_CANCELLED } from '../ai-api/abort';
+import type { AiProcessingResult } from '../ai-api/aiApi';
 import {
   LOCAL_GEN_ASK,
+  LOCAL_GEN_MEETING_DIALOGUE,
   LOCAL_GEN_SUMMARY,
   resolvePrivateAskMaxTokens,
+  resolvePrivateMeetingDialogueMaxTokens,
   resolvePrivateSummaryMaxTokens,
   STRICT_JSON_TAIL,
 } from './local-provider/localAiConstants';
-import { parseLocalAskResponse } from './local-provider/localAiJson';
+import { parseJsonObjectWithFallbacks, parseLocalAskResponse } from './local-provider/localAiJson';
 import { mapLocalError } from './local-provider/localAiMapError';
+import {
+  buildMeetingDialogueSystemPrompt,
+  buildMeetingDialogueUserContent,
+  type LocalMeetingDialogueRequest,
+  type LocalMeetingDialogueResult,
+} from './local-provider/localAiMeetingDialogue';
 import { tryBuildSummaryFromModelRaw } from './local-provider/localAiSummaryParse';
-import { getLocalReferenceDateIsoLocal } from './local-provider/localAiTranscript';
+import {
+  getLocalReferenceDateIsoLocal,
+  prepareTranscriptForLocalLlm,
+} from './local-provider/localAiTranscript';
 import {
   buildWebParityAiProcessingPrompt,
   buildWebParityAskUserMessageContent,
@@ -172,7 +184,7 @@ function readMessageReasoning(response: OpenAiChatResponse): string {
 async function callRemoteCompletion(
   ctx: AiExecutionContext,
   messages: Array<{ role: 'system' | 'user'; content: string }>,
-  maxTokens: number,
+  maxTokens: number | null,
   temperature: number,
   abortSignal?: AbortSignal,
 ): Promise<RemoteCompletionOutput> {
@@ -188,16 +200,20 @@ async function callRemoteCompletion(
     headers.Authorization = `Bearer ${apiKey}`;
   }
 
+  const payload: Record<string, unknown> = {
+    model: ctx.privateRemoteModel.trim(),
+    messages,
+    temperature,
+    stream: false,
+  };
+  if (maxTokens != null) {
+    payload.max_tokens = maxTokens;
+  }
+
   const response = await fetch(endpoint, {
     method: 'POST',
     headers,
-    body: JSON.stringify({
-      model: ctx.privateRemoteModel.trim(),
-      messages,
-      temperature,
-      max_tokens: maxTokens,
-      stream: false,
-    }),
+    body: JSON.stringify(payload),
     signal: abortSignal,
   });
   if (!response.ok) {
@@ -225,6 +241,19 @@ async function callRemoteCompletion(
     ...(isString(json.model) && json.model.trim().length > 0 ? { model: json.model.trim() } : {}),
     ...(tokenUsage ? { tokenUsage } : {}),
   };
+}
+
+function parseMeetingDialogueMarkdownUnlimited(raw: string): string | null {
+  try {
+    const record = parseJsonObjectWithFallbacks(raw);
+    const md = record.meetingDialogueMarkdown;
+    if (!isString(md)) return null;
+    const t = md.trim();
+    if (!t) return '';
+    return t;
+  } catch {
+    return null;
+  }
 }
 
 export async function testPrivateRemoteConnection(
@@ -329,6 +358,108 @@ export async function testPrivateRemoteConnection(
   }
 }
 
+async function runPrivateRemoteSummaryPass(
+  request: SummaryTaskRequest,
+  ctx: AiExecutionContext,
+  opts: { includeMeetingDialogueField: boolean },
+): Promise<
+  | { ok: true; result: AiProcessingResult; remote: RemoteCompletionOutput }
+  | { ok: false; error: string }
+> {
+  const systemPrompt = buildWebParityAiProcessingPrompt(
+    {
+      summaryStyle: ctx.summaryStyle,
+      taskStrictness: ctx.taskStrictness,
+      outputLanguage: ctx.aiOutputLanguage,
+      processingPreset: request.processingPreset,
+      referenceDate: getLocalReferenceDateIsoLocal(),
+      existingTaskTexts: request.existingTaskTexts,
+      taskExtractionHint: request.taskExtractionHint,
+      recordingMarks: request.recordingMarks,
+    },
+    { pseudoDiarizationEligible: opts.includeMeetingDialogueField },
+  );
+  const userContent = request.transcript;
+  const summaryMaxTokens = resolvePrivateSummaryMaxTokens(ctx.privateLocalLlmBudget);
+  const runOnce = (user: string) =>
+    callRemoteCompletion(
+      ctx,
+      [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: user },
+      ],
+      summaryMaxTokens,
+      LOCAL_GEN_SUMMARY.temperature,
+      request.abortSignal,
+    );
+
+  let remote = await runOnce(userContent);
+  let outcome = tryBuildSummaryFromModelRaw(remote.content, {
+    includePseudoDiarization: opts.includeMeetingDialogueField,
+  });
+  if (!outcome.ok) {
+    remote = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
+    outcome = tryBuildSummaryFromModelRaw(remote.content, {
+      includePseudoDiarization: opts.includeMeetingDialogueField,
+    });
+  }
+  if (!outcome.ok) {
+    return { ok: false, error: i18n.t('ai.privateModeParseFailed') };
+  }
+  return { ok: true, result: outcome.result, remote };
+}
+
+export async function runPrivateRemoteMeetingDialogue(
+  request: LocalMeetingDialogueRequest,
+  ctx: AiExecutionContext,
+): Promise<LocalMeetingDialogueResult> {
+  try {
+    if (request.abortSignal?.aborted) {
+      return { ok: false, error: 'cancelled' };
+    }
+    const systemPrompt = buildMeetingDialogueSystemPrompt(ctx);
+    // Mimic local behaviour: deterministic prefix+suffix trimming by private tier.
+    const trimmedTranscript = prepareTranscriptForLocalLlm(
+      request.transcript,
+      ctx.privateCapabilityTier,
+    );
+    const userContent = buildMeetingDialogueUserContent(
+      trimmedTranscript,
+      request.phase1,
+      request.transcriptSegments,
+      request.taskExtractionHint,
+    );
+    const maxTokensBudget = resolvePrivateMeetingDialogueMaxTokens(ctx.privateLocalLlmBudget);
+    // Cap generation to avoid runaway / infinite generation on some servers/models.
+    // Keep it higher than local defaults so speaker breakdown has room.
+    const maxTokensSent = Math.max(4096, maxTokensBudget);
+    const runOnce = (user: string) =>
+      callRemoteCompletion(
+        ctx,
+        [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: user },
+        ],
+        maxTokensSent,
+        LOCAL_GEN_MEETING_DIALOGUE.temperature,
+        request.abortSignal,
+      );
+
+    let remote = await runOnce(userContent);
+    let markdown = parseMeetingDialogueMarkdownUnlimited(remote.content);
+    if (markdown === null) {
+      remote = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
+      markdown = parseMeetingDialogueMarkdownUnlimited(remote.content);
+    }
+    if (markdown === null) {
+      throw new Error(i18n.t('ai.privateModeParseFailed'));
+    }
+    return { ok: true, meetingDialogueMarkdown: markdown };
+  } catch (err) {
+    return { ok: false, error: mapLocalError(err) };
+  }
+}
+
 export async function runPrivateRemoteSummaryTasks(
   request: SummaryTaskRequest,
   ctx: AiExecutionContext,
@@ -342,47 +473,99 @@ export async function runPrivateRemoteSummaryTasks(
         error: AI_REQUEST_CANCELLED,
       };
     }
-    const transcript = request.transcript;
-    const includeMeetingDialogueField = request.expectAsyncMeetingDialogue === true;
-    const systemPrompt = buildWebParityAiProcessingPrompt(
-      {
-        summaryStyle: ctx.summaryStyle,
-        taskStrictness: ctx.taskStrictness,
-        outputLanguage: ctx.aiOutputLanguage,
-        processingPreset: request.processingPreset,
-        referenceDate: getLocalReferenceDateIsoLocal(),
-        existingTaskTexts: request.existingTaskTexts,
-        taskExtractionHint: request.taskExtractionHint,
-        recordingMarks: request.recordingMarks,
-      },
-      { pseudoDiarizationEligible: includeMeetingDialogueField },
-    );
-    const userContent = transcript;
-    const summaryMaxTokens = resolvePrivateSummaryMaxTokens(ctx.privateLocalLlmBudget);
-    const runOnce = (user: string) =>
-      callRemoteCompletion(
+
+    if (request.expectAsyncMeetingDialogue) {
+      const pass1 = await runPrivateRemoteSummaryPass(request, ctx, {
+        includeMeetingDialogueField: false,
+      });
+      if (!pass1.ok) {
+        throw new Error(pass1.error);
+      }
+      if (request.abortSignal?.aborted) {
+        return {
+          ok: false,
+          provider: 'private_remote',
+          mode: ctx.aiExecutionMode,
+          error: AI_REQUEST_CANCELLED,
+        };
+      }
+      try {
+        await request.onCloudSummaryReady?.(pass1.result);
+      } catch {
+        return {
+          ok: false,
+          provider: 'private_remote',
+          mode: ctx.aiExecutionMode,
+          error: i18n.t('ai.privateModeGenericError'),
+        };
+      }
+      if (request.abortSignal?.aborted) {
+        return {
+          ok: false,
+          provider: 'private_remote',
+          mode: ctx.aiExecutionMode,
+          error: AI_REQUEST_CANCELLED,
+        };
+      }
+
+      const dialogueResult = await runPrivateRemoteMeetingDialogue(
+        {
+          transcript: request.transcript,
+          transcriptSegments: request.transcriptSegments,
+          phase1: pass1.result,
+          taskExtractionHint: request.taskExtractionHint,
+          abortSignal: request.abortSignal,
+        },
         ctx,
-        [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: user },
-        ],
-        summaryMaxTokens,
-        LOCAL_GEN_SUMMARY.temperature,
-        request.abortSignal,
       );
 
-    let remote = await runOnce(userContent);
-    let outcome = tryBuildSummaryFromModelRaw(remote.content, {
-      includePseudoDiarization: includeMeetingDialogueField,
-    });
-    if (!outcome.ok) {
-      remote = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
-      outcome = tryBuildSummaryFromModelRaw(remote.content, {
-        includePseudoDiarization: includeMeetingDialogueField,
-      });
+      if (request.abortSignal?.aborted) {
+        return {
+          ok: false,
+          provider: 'private_remote',
+          mode: ctx.aiExecutionMode,
+          error: AI_REQUEST_CANCELLED,
+        };
+      }
+
+      if (!dialogueResult.ok) {
+        return {
+          ok: true,
+          provider: 'private_remote',
+          mode: ctx.aiExecutionMode,
+          result: pass1.result,
+          meetingDialogueStatus: 'failed',
+        };
+      }
+
+      const md = dialogueResult.meetingDialogueMarkdown.trim();
+      const enrichedPass1 = {
+        ...pass1.result,
+        ...(pass1.result.reasoning?.trim()
+          ? {}
+          : pass1.remote.reasoning?.trim()
+            ? { reasoning: pass1.remote.reasoning.trim() }
+            : {}),
+        ...(pass1.remote.model ? { model: pass1.remote.model } : {}),
+        ...(pass1.remote.tokenUsage ? { tokenUsage: pass1.remote.tokenUsage } : {}),
+      };
+      return {
+        ok: true,
+        provider: 'private_remote',
+        mode: ctx.aiExecutionMode,
+        result: {
+          ...enrichedPass1,
+          ...(md ? { meetingDialogueMarkdown: md } : {}),
+        },
+        meetingDialogueStatus: md ? 'done' : 'skipped',
+      };
     }
-    if (!outcome.ok) {
-      throw new Error(i18n.t('ai.privateModeParseFailed'));
+
+    const singlePass = await runPrivateRemoteSummaryPass(request, ctx, {
+      includeMeetingDialogueField: false,
+    });
+    if (!singlePass.ok) {
+      throw new Error(singlePass.error);
     }
     if (request.abortSignal?.aborted) {
       return {
@@ -392,28 +575,21 @@ export async function runPrivateRemoteSummaryTasks(
         error: AI_REQUEST_CANCELLED,
       };
     }
-    const meetingDialogueStatus =
-      request.expectAsyncMeetingDialogue === true
-        ? outcome.result.meetingDialogueMarkdown?.trim()
-          ? 'done'
-          : 'skipped'
-        : undefined;
     const enrichedResult = {
-      ...outcome.result,
-      ...(outcome.result.reasoning?.trim()
+      ...singlePass.result,
+      ...(singlePass.result.reasoning?.trim()
         ? {}
-        : remote.reasoning?.trim()
-          ? { reasoning: remote.reasoning.trim() }
+        : singlePass.remote.reasoning?.trim()
+          ? { reasoning: singlePass.remote.reasoning.trim() }
           : {}),
-      ...(remote.model ? { model: remote.model } : {}),
-      ...(remote.tokenUsage ? { tokenUsage: remote.tokenUsage } : {}),
+      ...(singlePass.remote.model ? { model: singlePass.remote.model } : {}),
+      ...(singlePass.remote.tokenUsage ? { tokenUsage: singlePass.remote.tokenUsage } : {}),
     };
     return {
       ok: true,
       provider: 'private_remote',
       mode: ctx.aiExecutionMode,
       result: enrichedResult,
-      ...(meetingDialogueStatus ? { meetingDialogueStatus } : {}),
     };
   } catch (err) {
     if (request.abortSignal?.aborted) {

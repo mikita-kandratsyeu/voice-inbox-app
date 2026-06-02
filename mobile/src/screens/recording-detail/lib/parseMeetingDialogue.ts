@@ -32,7 +32,7 @@ export function normalizeMeetingDialogueMarkdownParagraphs(raw: string): string 
  * to the previous turn (multi-line replies).
  */
 export function parseMeetingDialogue(raw: string): MeetingUtterance[] {
-  const text = raw.trim();
+  const text = normalizeMeetingDialogueMarkdownParagraphs(raw).trim();
   if (!text) return [];
 
   const lines = text.split(/\r?\n/);

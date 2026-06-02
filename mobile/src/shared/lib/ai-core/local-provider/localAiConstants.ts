@@ -72,6 +72,8 @@ export const LOCAL_GEN_ASK = {
   temperature: 0.25,
 } as const;
 
+export const LOCAL_GEN_MEETING_DIALOGUE = { temperature: 0.15 } as const;
+
 export const STRICT_JSON_TAIL =
   'Return JSON only: a single JSON object, no prose, no markdown, no code fences, no backticks.';
 

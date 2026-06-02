@@ -10,7 +10,7 @@ import {
   saveCloudSummarizePending,
 } from '@/shared/lib/ai-api';
 import { createAiAbortHandle, isAiGenerationCancelledError } from '@/shared/lib/ai-api/abort';
-import { runPrivateRemoteSummaryTasks } from '@/shared/lib/ai-core/privateRemoteProvider';
+import { runPrivateRemoteMeetingDialogue } from '@/shared/lib/ai-core/privateRemoteProvider';
 import { sanitizeRecordingMarksForPrompt } from '@/shared/lib/ai-core/recordingMarksForPrompt';
 import { getAiWeeklyLimitExceededMessage } from '@/shared/lib/ai-api/limitUserMessage';
 import { runLocalMeetingDialogue } from '@/shared/lib/ai-core/local-provider/localAiMeetingDialogue';
@@ -132,25 +132,15 @@ async function regeneratePrivateMeetingDialogue(
 
   try {
     if (usesCustomRemoteProvider) {
-      const remoteResult = await runPrivateRemoteSummaryTasks(
+      const dialogueResult = await runPrivateRemoteMeetingDialogue(
         {
-          id: record.id,
           transcript: record.transcript ?? '',
           ...(transcriptSegments?.length ? { transcriptSegments } : {}),
-          processingPreset: 'meeting',
-          expectAsyncMeetingDialogue: true,
-          ...(record.tasks?.length
-            ? {
-                existingTaskTexts: record.tasks
-                  .map((task) => task.text?.trim())
-                  .filter((text): text is string => Boolean(text)),
-              }
-            : {}),
-          ...(record.recordingMarks?.length
-            ? {
-                recordingMarks: sanitizeRecordingMarksForPrompt(record.recordingMarks),
-              }
-            : {}),
+          phase1: {
+            suggestedTitle: record.title?.trim() || 'Meeting',
+            summary: record.summary!.trim(),
+            keyPhrases: record.keyPhrases,
+          },
           abortSignal: abortHandle.signal,
         },
         ctx,
@@ -158,13 +148,13 @@ async function regeneratePrivateMeetingDialogue(
 
       if (abortHandle.cancelled) return;
 
-      if (!remoteResult.ok) {
+      if (!dialogueResult.ok) {
         setMeetingDialogueStatus(record.id, 'failed');
-        setMeetingDialogueError(record.id, remoteResult.error);
+        setMeetingDialogueError(record.id, dialogueResult.error);
         return;
       }
 
-      const md = remoteResult.result.meetingDialogueMarkdown?.trim() ?? '';
+      const md = dialogueResult.meetingDialogueMarkdown.trim();
       if (md) {
         const keptLabels = pruneSpeakerLabelsForDialogue(record.meetingSpeakerLabels, md);
         await updateAiExtras(record.id, {
@@ -173,9 +163,6 @@ async function regeneratePrivateMeetingDialogue(
         });
         setMeetingDialogueStatus(record.id, 'done');
         setMeetingDialogueError(record.id, undefined);
-      } else if (remoteResult.meetingDialogueStatus === 'failed') {
-        setMeetingDialogueStatus(record.id, 'failed');
-        setMeetingDialogueError(record.id, i18n.t('recordingDetail.meetingDialogueFailedDesc'));
       } else {
         setMeetingDialogueStatus(record.id, 'idle');
         setMeetingDialogueError(record.id, undefined);

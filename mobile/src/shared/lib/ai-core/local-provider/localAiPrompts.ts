@@ -50,7 +50,7 @@ const LOCAL_MEETING_PRESET_HINT = [
 
 export const LOCAL_MEETING_PSEUDO_BASE = [
   'meetingDialogueMarkdown: plain text with line breaks; neutral speaker labels unless names/roles are stated in the transcript.',
-  'This is NOT verified audio diarization. Do not invent turns. Use empty string if single-speaker, too short, or unclear.',
+  'This is NOT verified audio diarization. Do not invent turns. Use empty string if too short, or unclear.',
 ].join(' ');
 
 export const LOCAL_MEETING_DIALOGUE_OUTPUT_LANGUAGE_HINT: Record<AiOutputLanguage, string> = {
