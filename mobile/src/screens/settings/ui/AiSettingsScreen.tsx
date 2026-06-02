@@ -236,6 +236,7 @@ export const AiSettingsScreen = () => {
   const [lastConnectionFailureReason, setLastConnectionFailureReason] =
     React.useState<PrivateRemoteConnectionFailureReason | null>(null);
   const didRunInitialProviderCheckRef = React.useRef(false);
+  const didTouchRemoteConfigRef = React.useRef(false);
   const [remoteConfigSheetVisible, setRemoteConfigSheetVisible] = React.useState(false);
   const [previousProfileBeforeCreateId, setPreviousProfileBeforeCreateId] = React.useState<
     string | null
@@ -250,6 +251,7 @@ export const AiSettingsScreen = () => {
 
   React.useEffect(() => {
     if (privateAiProvider !== 'custom_openai') return;
+    if (didTouchRemoteConfigRef.current) return;
     const isCreatingNewConnection =
       privateRemoteActiveProfileId == null && privateRemoteProfiles.length > 0;
     if (isCreatingNewConnection) return;
@@ -319,6 +321,7 @@ export const AiSettingsScreen = () => {
   const isCreatingNewConnection = privateRemoteActiveProfileId == null;
   const hasSavedProfiles = privateRemoteProfiles.length > 0;
   const switchToCreateConnectionMode = React.useCallback(() => {
+    didTouchRemoteConfigRef.current = false;
     setPreviousProfileBeforeCreateId(privateRemoteActiveProfileId);
     setPrivateRemoteActiveProfile(null);
     setPrivateRemoteBaseUrl('');
@@ -332,6 +335,7 @@ export const AiSettingsScreen = () => {
     setPrivateRemoteModel,
   ]);
   const switchToSavedConnectionMode = React.useCallback(() => {
+    didTouchRemoteConfigRef.current = false;
     const restoreProfileId = previousProfileBeforeCreateId ?? privateRemoteProfiles[0]?.id ?? null;
     if (restoreProfileId) {
       setPrivateRemoteActiveProfile(restoreProfileId);
@@ -339,6 +343,7 @@ export const AiSettingsScreen = () => {
     setPreviousProfileBeforeCreateId(null);
   }, [previousProfileBeforeCreateId, privateRemoteProfiles, setPrivateRemoteActiveProfile]);
   const openRemoteConfigSheet = React.useCallback(() => {
+    didTouchRemoteConfigRef.current = false;
     if (privateRemoteProfiles.length > 0) {
       // Keep default state predictable on open: edit saved connection if any exist.
       const defaultProfileId = privateRemoteActiveProfileId ?? privateRemoteProfiles[0]?.id ?? null;
@@ -1017,6 +1022,7 @@ export const AiSettingsScreen = () => {
               <TouchableOpacity
                 key={template.id}
                 onPress={() => {
+                  didTouchRemoteConfigRef.current = false;
                   setPrivateRemoteBaseUrl(template.baseUrl);
                   setPrivateRemoteModel(template.model);
                 }}
@@ -1116,22 +1122,37 @@ export const AiSettingsScreen = () => {
                     >
                       <TouchableOpacity
                         onPress={() => setPrivateRemoteActiveProfile(profile.id)}
-                        className="min-w-0 flex-1 pr-2"
+                        className="min-w-0 flex-1 flex-row items-center pr-2"
                       >
-                        <Text
-                          className="text-[13px] font-semibold"
-                          style={{ color: isActive ? color.text.primary : color.text.secondary }}
-                          numberOfLines={1}
+                        <View
+                          className="mr-2 h-5 w-5 items-center justify-center rounded-full border"
+                          style={{
+                            borderColor: isActive ? color.accent.primary : color.border.default,
+                            backgroundColor: isActive
+                              ? color.accent.primary
+                              : color.background.tertiary,
+                          }}
                         >
-                          {profile.model}
-                        </Text>
-                        <Text
-                          className="text-[12px]"
-                          style={{ color: color.text.muted }}
-                          numberOfLines={1}
-                        >
-                          {profile.baseUrl}
-                        </Text>
+                          {isActive ? (
+                            <Check size={12} color={color.icon.onAccent} strokeWidth={3} />
+                          ) : null}
+                        </View>
+                        <View className="min-w-0 flex-1">
+                          <Text
+                            className="text-[13px] font-semibold"
+                            style={{ color: isActive ? color.text.primary : color.text.secondary }}
+                            numberOfLines={1}
+                          >
+                            {profile.model}
+                          </Text>
+                          <Text
+                            className="text-[12px]"
+                            style={{ color: color.text.muted }}
+                            numberOfLines={1}
+                          >
+                            {profile.baseUrl}
+                          </Text>
+                        </View>
                       </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() =>
@@ -1205,7 +1226,10 @@ export const AiSettingsScreen = () => {
           </Text>
           <BottomSheetTextInput
             value={privateRemoteBaseUrl}
-            onChangeText={setPrivateRemoteBaseUrl}
+            onChangeText={(value) => {
+              didTouchRemoteConfigRef.current = true;
+              setPrivateRemoteBaseUrl(value);
+            }}
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="url"
@@ -1232,7 +1256,10 @@ export const AiSettingsScreen = () => {
           </Text>
           <BottomSheetTextInput
             value={privateRemoteModel}
-            onChangeText={setPrivateRemoteModel}
+            onChangeText={(value) => {
+              didTouchRemoteConfigRef.current = true;
+              setPrivateRemoteModel(value);
+            }}
             autoCapitalize="none"
             autoCorrect={false}
             placeholder={t('aiSettings.privateProvider.modelPlaceholder')}
