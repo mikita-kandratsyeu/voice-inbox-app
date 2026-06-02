@@ -263,9 +263,6 @@ export function useSettingsScreen() {
         ? t('aiModels.autoRecommendedLabel')
         : (userFacing?.name ?? selectedAIModel);
   const aiModelLockedByPrivateRemote = privateCustomServerModeActive;
-  const aiModelLockedHint = aiModelLockedByPrivateRemote
-    ? t('settings.aiModelLockedByPrivateRemoteHint')
-    : undefined;
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const whisperVariantId = getWhisperModelVariantId(
     selectedWhisperModel,
@@ -591,7 +588,6 @@ export function useSettingsScreen() {
     setAutomationSheet,
     aiModelName: aiModelBaseName,
     aiModelLockedByPrivateRemote,
-    aiModelLockedHint,
     privateAiModeValue,
     transcriptionValue,
     embeddingAvailable: isEmbeddingAvailable(),

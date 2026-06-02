@@ -793,7 +793,6 @@
     "aiProcessing": "Generations",
     "privateAiMode": "AI mode",
     "aiModel": "Generation model",
-    "aiModelLockedByPrivateRemoteHint": "Set the model in Server connection.",
     "privateRemoteProviderCustom": "Custom server",
     "aiSettings": "AI settings",
     "transcription": "Transcription",

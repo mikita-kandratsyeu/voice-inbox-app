@@ -14,7 +14,6 @@ type Props = {
   privateAiModeValue: string;
   aiModelName?: string;
   aiModelLockedByPrivateRemote: boolean;
-  aiModelLockedHint?: string;
   transcriptionValue: string;
   embeddingAvailable: boolean;
   isUpdatingEmbeddings: boolean;
@@ -28,7 +27,6 @@ export const SettingsAiProcessingSection = ({
   privateAiModeValue,
   aiModelName,
   aiModelLockedByPrivateRemote,
-  aiModelLockedHint,
   transcriptionValue,
   embeddingAvailable,
   isUpdatingEmbeddings,
@@ -48,12 +46,13 @@ export const SettingsAiProcessingSection = ({
       <SettingsRow
         label={t('settings.aiModel')}
         value={aiModelName?.trim() ? aiModelName : undefined}
-        subtitle={aiModelLockedHint}
         leftIcon={<Bot size={20} color={color.accent.transcript} strokeWidth={1.8} />}
         onPress={
-          aiModelLockedByPrivateRemote ? undefined : () => navigation.navigate('AIModelPicker')
+          aiModelLockedByPrivateRemote
+            ? () => navigation.navigate('AiSettings')
+            : () => navigation.navigate('AIModelPicker')
         }
-        showChevron={!aiModelLockedByPrivateRemote}
+        showChevron
       />
       <SettingsRow
         label={t('settings.transcription')}

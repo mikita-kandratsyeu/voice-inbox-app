@@ -157,7 +157,6 @@ export const SettingsScreen = () => {
             privateAiModeValue={settings.privateAiModeValue}
             aiModelName={settings.aiModelName}
             aiModelLockedByPrivateRemote={settings.aiModelLockedByPrivateRemote}
-            aiModelLockedHint={settings.aiModelLockedHint}
             transcriptionValue={settings.transcriptionValue}
             embeddingAvailable={settings.embeddingAvailable}
             isUpdatingEmbeddings={settings.isUpdatingEmbeddings}

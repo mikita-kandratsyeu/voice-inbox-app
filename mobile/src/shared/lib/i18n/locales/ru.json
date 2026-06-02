@@ -806,7 +806,6 @@
     "aiProcessing": "Генерации",
     "privateAiMode": "Режим ИИ",
     "aiModel": "Модель генерации",
-    "aiModelLockedByPrivateRemoteHint": "Модель задается в «Подключении к серверу».",
     "privateRemoteProviderCustom": "Свой сервер",
     "aiSettings": "Настройки ИИ",
     "transcription": "Транскрипция",
