@@ -141,7 +141,10 @@ export const AIOrchestrator = {
     const guardResult = guardPrivateMode(request, ctx);
     if (guardResult) return guardResult;
 
-    if (ctx.aiExecutionMode === 'private_experimental' && ctx.privateAiProvider === 'custom_openai') {
+    if (
+      ctx.aiExecutionMode === 'private_experimental' &&
+      ctx.privateAiProvider === 'custom_openai'
+    ) {
       return runPrivateRemoteSummaryTasks(request, ctx);
     }
 
@@ -156,7 +159,10 @@ export const AIOrchestrator = {
     const guardResult = guardPrivateMode(request, ctx);
     if (guardResult) return guardResult;
 
-    if (ctx.aiExecutionMode === 'private_experimental' && ctx.privateAiProvider === 'custom_openai') {
+    if (
+      ctx.aiExecutionMode === 'private_experimental' &&
+      ctx.privateAiProvider === 'custom_openai'
+    ) {
       return runPrivateRemoteAsk(request, ctx);
     }
 

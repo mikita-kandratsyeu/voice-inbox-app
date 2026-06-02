@@ -51,7 +51,8 @@ function formatSegmentLines(segments: SummaryTaskTranscriptSegment[]): string {
     const seg = segments[i]!;
     const text = seg.text.replace(/\s+/g, ' ').trim();
     if (!text) continue;
-    const hasStart = typeof seg.startMs === 'number' && Number.isFinite(seg.startMs) && seg.startMs >= 0;
+    const hasStart =
+      typeof seg.startMs === 'number' && Number.isFinite(seg.startMs) && seg.startMs >= 0;
     const hasEnd = typeof seg.endMs === 'number' && Number.isFinite(seg.endMs) && seg.endMs >= 0;
     if (hasStart || hasEnd) {
       const start = hasStart ? formatClockFromMs(seg.startMs as number) : '?';

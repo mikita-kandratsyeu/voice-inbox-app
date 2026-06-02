@@ -51,9 +51,9 @@ export function AutomationComingSoonSheet({
                   ? 'folder_color'
                   : feature === 'premiumAiModel'
                     ? 'premium_ai_model'
-                  : feature === 'privateCustomServer'
-                    ? 'private_custom_server'
-                    : 'accent_color',
+                    : feature === 'privateCustomServer'
+                      ? 'private_custom_server'
+                      : 'accent_color',
     });
     if (feature === 'autoTranscribe') {
       void logAnalyticsEvent('premium_feature_tapped_auto_whisper', {
@@ -103,7 +103,7 @@ export function AutomationComingSoonSheet({
                 ? t('aiModels.proModelTitle')
                 : feature === 'privateCustomServer'
                   ? t('aiSettings.privateProvider.proTitle')
-                : t('appearance.accentColor.proTitle');
+                  : t('appearance.accentColor.proTitle');
   const body =
     feature === 'autoTranscribe'
       ? t('settings.automationSoon.autoTranscribeBody')
@@ -119,7 +119,7 @@ export function AutomationComingSoonSheet({
                 ? t('aiModels.proModelBody')
                 : feature === 'privateCustomServer'
                   ? t('aiSettings.privateProvider.proBody')
-                : t('appearance.accentColor.proBody');
+                  : t('appearance.accentColor.proBody');
 
   return (
     <AppBottomSheetModal visible={visible} onClose={onClose}>
