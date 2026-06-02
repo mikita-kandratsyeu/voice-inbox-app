@@ -309,6 +309,17 @@ export const AiSettingsScreen = () => {
         imageColor: color.text.primary,
         titleColor: color.text.primary,
       },
+      ...(hasSavedRemoteConfig
+        ? [
+            {
+              id: 'checkRemoteConnection',
+              title: t('aiSettings.privateProvider.testConnection'),
+              image: 'network' as const,
+              imageColor: color.text.primary,
+              titleColor: color.text.primary,
+            },
+          ]
+        : []),
     ],
     [color.text.primary, hasSavedRemoteConfig, t],
   );
@@ -828,6 +839,16 @@ export const AiSettingsScreen = () => {
                             onPressAction={({ nativeEvent }) => {
                               if (nativeEvent.event === 'openRemoteConfig') {
                                 openRemoteConfigSheet();
+                              }
+                              if (nativeEvent.event === 'checkRemoteConnection') {
+                                void runRemoteConnectionCheck(
+                                  {
+                                    baseUrl: privateRemoteLastSuccessfulBaseUrl,
+                                    apiKey: privateRemoteLastSuccessfulApiKey,
+                                    model: privateRemoteLastSuccessfulModel,
+                                  },
+                                  true,
+                                );
                               }
                             }}
                           >
