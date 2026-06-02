@@ -13,6 +13,8 @@ type Props = {
   navigation: NativeStackNavigationProp<SettingsStackParamList>;
   privateAiModeValue: string;
   aiModelName: string;
+  aiModelLockedByPrivateRemote: boolean;
+  aiModelLockedHint?: string;
   transcriptionValue: string;
   embeddingAvailable: boolean;
   isUpdatingEmbeddings: boolean;
@@ -25,6 +27,8 @@ export const SettingsAiProcessingSection = ({
   navigation,
   privateAiModeValue,
   aiModelName,
+  aiModelLockedByPrivateRemote,
+  aiModelLockedHint,
   transcriptionValue,
   embeddingAvailable,
   isUpdatingEmbeddings,
@@ -44,8 +48,12 @@ export const SettingsAiProcessingSection = ({
       <SettingsRow
         label={t('settings.aiModel')}
         value={aiModelName}
+        subtitle={aiModelLockedHint}
         leftIcon={<Bot size={20} color={color.accent.transcript} strokeWidth={1.8} />}
-        onPress={() => navigation.navigate('AIModelPicker')}
+        onPress={
+          aiModelLockedByPrivateRemote ? undefined : () => navigation.navigate('AIModelPicker')
+        }
+        showChevron={!aiModelLockedByPrivateRemote}
       />
       <SettingsRow
         label={t('settings.transcription')}

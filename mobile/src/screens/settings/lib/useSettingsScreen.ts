@@ -71,6 +71,9 @@ export function useSettingsScreen() {
   const selectedLocalAiModel = useSettingsStore((s) => s.selectedLocalAiModel);
   const localLlmModelStatuses = useSettingsStore((s) => s.localLlmModelStatuses);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
+  const privateRemoteBaseUrl = useSettingsStore((s) => s.privateRemoteBaseUrl);
+  const privateRemoteModel = useSettingsStore((s) => s.privateRemoteModel);
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
   const whisperModelStatuses = useSettingsStore((s) => s.whisperModelStatuses);
@@ -247,12 +250,19 @@ export function useSettingsScreen() {
     (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
   const aiModelBaseName =
     aiExecutionMode === 'private_experimental'
-      ? localLlmDownloaded
-        ? (localModel?.name ?? selectedLocalAiModel ?? '')
-        : t('settings.whisperModelNotSet')
+      ? privateAiProvider === 'custom_openai'
+        ? privateRemoteModel.trim() || t('settings.whisperModelNotSet')
+        : localLlmDownloaded
+          ? (localModel?.name ?? selectedLocalAiModel ?? '')
+          : t('settings.whisperModelNotSet')
       : aiModelRoutingMode === 'auto'
         ? t('aiModels.autoRecommendedLabel')
         : (userFacing?.name ?? selectedAIModel);
+  const aiModelLockedByPrivateRemote =
+    aiExecutionMode === 'private_experimental' && privateAiProvider === 'custom_openai';
+  const aiModelLockedHint = aiModelLockedByPrivateRemote
+    ? t('settings.aiModelLockedByPrivateRemoteHint')
+    : undefined;
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const whisperVariantId = getWhisperModelVariantId(
     selectedWhisperModel,
@@ -577,6 +587,8 @@ export function useSettingsScreen() {
     handleAutoArchiveDelaySelect,
     setAutomationSheet,
     aiModelName: aiModelBaseName,
+    aiModelLockedByPrivateRemote,
+    aiModelLockedHint,
     privateAiModeValue,
     transcriptionValue,
     embeddingAvailable: isEmbeddingAvailable(),

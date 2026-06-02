@@ -24,6 +24,17 @@ export type AiOutputLanguage = 'same' | 'ru' | 'en';
 export type AiExecutionMode = 'smart_hybrid' | 'private_experimental';
 export type PrivateLocalLlmBudget = 'efficient' | 'balanced' | 'expanded';
 export type PrivateCapabilityTier = 'full' | 'limited' | 'unavailable';
+export type PrivateAiProvider = 'local' | 'custom_openai';
+export type PrivateRemoteConfig = {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+};
+export type PrivateRemoteProfile = PrivateRemoteConfig & {
+  id: string;
+  name: string;
+  updatedAt: number;
+};
 
 export type WhisperModelId = 'whisper-tiny' | 'whisper-base' | 'whisper-small' | 'whisper-medium';
 export type WhisperModelWeightsFormat = 'q5_1' | 'full';
@@ -95,6 +106,15 @@ export type SettingsState = {
   aiExecutionMode: AiExecutionMode;
   privateLocalLlmBudget: PrivateLocalLlmBudget;
   privateCapabilityTier: PrivateCapabilityTier;
+  privateAiProvider: PrivateAiProvider;
+  privateRemoteBaseUrl: string;
+  privateRemoteApiKey: string;
+  privateRemoteModel: string;
+  privateRemoteLastSuccessfulBaseUrl: string;
+  privateRemoteLastSuccessfulApiKey: string;
+  privateRemoteLastSuccessfulModel: string;
+  privateRemoteProfiles: PrivateRemoteProfile[];
+  privateRemoteActiveProfileId: string | null;
   autoTranscribeOnSave: boolean;
   autoAiAfterTranscription: boolean;
   autoArchiveEnabled: boolean;
@@ -130,6 +150,14 @@ export type SettingsState = {
   setAiExecutionMode: (value: AiExecutionMode) => void;
   setPrivateLocalLlmBudget: (value: PrivateLocalLlmBudget) => void;
   setPrivateCapabilityTier: (value: PrivateCapabilityTier) => void;
+  setPrivateAiProvider: (value: PrivateAiProvider) => void;
+  setPrivateRemoteBaseUrl: (value: string) => void;
+  setPrivateRemoteApiKey: (value: string) => void;
+  setPrivateRemoteModel: (value: string) => void;
+  setPrivateRemoteLastSuccessfulConfig: (value: PrivateRemoteConfig) => void;
+  upsertPrivateRemoteProfile: (value: PrivateRemoteProfile) => void;
+  setPrivateRemoteActiveProfile: (id: string | null) => void;
+  removePrivateRemoteProfile: (id: string) => void;
   setAutoTranscribeOnSave: (value: boolean) => void;
   setAutoAiAfterTranscription: (value: boolean) => void;
   setAutoArchiveEnabled: (value: boolean) => void;

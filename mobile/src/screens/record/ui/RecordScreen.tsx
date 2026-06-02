@@ -52,10 +52,11 @@ export const RecordScreen = () => {
   );
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const { isProActive } = useProEntitlement();
   const maxRecordingMs = useMemo(
-    () => getMaxRecordingMsForTier(isProActive, aiExecutionMode),
-    [isProActive, aiExecutionMode],
+    () => getMaxRecordingMsForTier(isProActive, aiExecutionMode, privateAiProvider),
+    [isProActive, aiExecutionMode, privateAiProvider],
   );
   const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(autoTranscribeOnSave, isProActive);
   const { startTranscription } = useTranscription();

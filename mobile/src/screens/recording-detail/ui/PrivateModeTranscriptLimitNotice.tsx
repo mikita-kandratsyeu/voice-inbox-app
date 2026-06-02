@@ -15,9 +15,14 @@ export function PrivateModeTranscriptLimitNotice({
   transcriptCharCount,
 }: PrivateModeTranscriptLimitNoticeProps) {
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const privateCapabilityTier = useSettingsStore((s) => s.privateCapabilityTier);
 
-  if (aiExecutionMode !== 'private_experimental' || transcriptCharCount == null) {
+  if (
+    aiExecutionMode !== 'private_experimental' ||
+    privateAiProvider !== 'local' ||
+    transcriptCharCount == null
+  ) {
     return null;
   }
 

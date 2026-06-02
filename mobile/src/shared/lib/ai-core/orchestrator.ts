@@ -4,6 +4,7 @@ import { AI_REQUEST_CANCELLED } from '@/shared/lib/ai-api/abort';
 import { runCloudAsk, runCloudSummaryTasks } from './cloudProvider';
 import { runLocalMeetingDialogue } from './local-provider/localAiMeetingDialogue';
 import { runLocalAsk, runLocalSummaryTasks } from './localProvider';
+import { runPrivateRemoteAsk, runPrivateRemoteSummaryTasks } from './privateRemoteProvider';
 import type {
   AiExecutionContext,
   AskRequest,
@@ -24,7 +25,7 @@ function guardPrivateMode(_request: { transcript: string }, ctx: AiExecutionCont
     };
   }
 
-  if (!ctx.isLocalLlmModelDownloaded) {
+  if (ctx.privateAiProvider === 'local' && !ctx.isLocalLlmModelDownloaded) {
     return {
       ok: false as const,
       provider: 'cloud' as const,
@@ -140,6 +141,10 @@ export const AIOrchestrator = {
     const guardResult = guardPrivateMode(request, ctx);
     if (guardResult) return guardResult;
 
+    if (ctx.aiExecutionMode === 'private_experimental' && ctx.privateAiProvider === 'custom_openai') {
+      return runPrivateRemoteSummaryTasks(request, ctx);
+    }
+
     if (ctx.aiExecutionMode === 'private_experimental') {
       return runPrivateSummaryTasks(request, ctx);
     }
@@ -150,6 +155,10 @@ export const AIOrchestrator = {
   async runAsk(request: AskRequest, ctx: AiExecutionContext): Promise<AskTaskResult> {
     const guardResult = guardPrivateMode(request, ctx);
     if (guardResult) return guardResult;
+
+    if (ctx.aiExecutionMode === 'private_experimental' && ctx.privateAiProvider === 'custom_openai') {
+      return runPrivateRemoteAsk(request, ctx);
+    }
 
     if (ctx.aiExecutionMode === 'private_experimental') {
       return runLocalAsk(request, ctx);

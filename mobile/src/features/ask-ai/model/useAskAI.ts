@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import { useRecordStore, type VoiceRecord } from '@/entities/record';
 import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
+import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import {
   type AiAbortHandle,
   createAiAbortHandle,
@@ -103,7 +104,15 @@ export const useAskAI = (
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateLocalLlmBudget = useSettingsStore((s) => s.privateLocalLlmBudget);
   const privateCapabilityTier = useSettingsStore((s) => s.privateCapabilityTier);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
+  const privateRemoteBaseUrl = useSettingsStore((s) => s.privateRemoteBaseUrl);
+  const privateRemoteApiKey = useSettingsStore((s) => s.privateRemoteApiKey);
+  const privateRemoteModel = useSettingsStore((s) => s.privateRemoteModel);
   const cloudAiKvTtlSeconds = useSettingsStore((s) => s.cloudAiKvTtlSeconds);
+  const effectivePrivateAiProvider =
+    isProActiveFromStorageSync() && privateAiProvider === 'custom_openai'
+      ? 'custom_openai'
+      : 'local';
   const effectiveLocalAiModelId = selectedLocalAiModel ?? DEFAULT_LOCAL_AI_MODEL_ID;
   const isLocalLlmModelDownloaded =
     selectedLocalAiModel != null &&
@@ -376,6 +385,10 @@ export const useAskAI = (
             aiExecutionMode,
             privateLocalLlmBudget,
             privateCapabilityTier,
+            privateAiProvider: effectivePrivateAiProvider,
+            privateRemoteBaseUrl,
+            privateRemoteApiKey,
+            privateRemoteModel,
             cloudMessageTtlSeconds: cloudAiKvTtlSeconds,
           },
         );
@@ -483,6 +496,10 @@ export const useAskAI = (
       aiExecutionMode,
       privateLocalLlmBudget,
       privateCapabilityTier,
+      effectivePrivateAiProvider,
+      privateRemoteBaseUrl,
+      privateRemoteApiKey,
+      privateRemoteModel,
       cloudAiKvTtlSeconds,
     ],
   );

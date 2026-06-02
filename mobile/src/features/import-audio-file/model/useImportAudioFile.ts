@@ -39,10 +39,11 @@ export function useImportAudioFile() {
   const addRecord = useRecordStore((s) => s.addRecord);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const { isProActive } = useProEntitlement();
   const maxImportMs = useMemo(
-    () => getMaxRecordingMsForTier(isProActive, aiExecutionMode),
-    [isProActive, aiExecutionMode],
+    () => getMaxRecordingMsForTier(isProActive, aiExecutionMode, privateAiProvider),
+    [isProActive, aiExecutionMode, privateAiProvider],
   );
   const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(autoTranscribeOnSave, isProActive);
   const { startTranscription } = useTranscription();

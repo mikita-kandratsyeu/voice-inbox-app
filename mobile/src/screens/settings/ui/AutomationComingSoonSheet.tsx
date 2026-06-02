@@ -15,7 +15,8 @@ export type AutomationFeatureKind =
   | 'accentColor'
   | 'folderColor'
   | 'batchExport'
-  | 'premiumAiModel';
+  | 'premiumAiModel'
+  | 'privateCustomServer';
 
 type AutomationComingSoonSheetProps = {
   visible: boolean;
@@ -50,6 +51,8 @@ export function AutomationComingSoonSheet({
                   ? 'folder_color'
                   : feature === 'premiumAiModel'
                     ? 'premium_ai_model'
+                  : feature === 'privateCustomServer'
+                    ? 'private_custom_server'
                     : 'accent_color',
     });
     if (feature === 'autoTranscribe') {
@@ -74,6 +77,10 @@ export function AutomationComingSoonSheet({
       void logAnalyticsEvent('premium_feature_tapped_ai_model', {
         surface: 'ai_model_picker',
       });
+    } else if (feature === 'privateCustomServer') {
+      void logAnalyticsEvent('premium_feature_tapped_private_server', {
+        surface: 'ai_settings',
+      });
     } else {
       void logAnalyticsEvent('premium_feature_tapped_accent_color', {
         surface: 'appearance_sheet',
@@ -94,6 +101,8 @@ export function AutomationComingSoonSheet({
               ? t('folders.colorProTitle')
               : feature === 'premiumAiModel'
                 ? t('aiModels.proModelTitle')
+                : feature === 'privateCustomServer'
+                  ? t('aiSettings.privateProvider.proTitle')
                 : t('appearance.accentColor.proTitle');
   const body =
     feature === 'autoTranscribe'
@@ -108,6 +117,8 @@ export function AutomationComingSoonSheet({
               ? t('folders.colorProBody')
               : feature === 'premiumAiModel'
                 ? t('aiModels.proModelBody')
+                : feature === 'privateCustomServer'
+                  ? t('aiSettings.privateProvider.proBody')
                 : t('appearance.accentColor.proBody');
 
   return (

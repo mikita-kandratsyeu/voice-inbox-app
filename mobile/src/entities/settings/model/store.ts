@@ -28,6 +28,7 @@ import type {
   TaskStrictness,
   TranscriptionLanguage,
   UserSelectableAIModelId,
+  PrivateRemoteProfile,
   WhisperDownloadPhase,
   WhisperModelId,
   WhisperModelStatus,
@@ -55,6 +56,15 @@ const KEYS = {
   AI_EXECUTION_MODE: 'settings.aiExecutionMode',
   PRIVATE_LOCAL_LLM_BUDGET: 'settings.privateLocalLlmBudget',
   PRIVATE_CAPABILITY_TIER: 'settings.privateCapabilityTier',
+  PRIVATE_AI_PROVIDER: 'settings.privateAiProvider',
+  PRIVATE_REMOTE_BASE_URL: 'settings.privateRemoteBaseUrl',
+  PRIVATE_REMOTE_API_KEY: 'settings.privateRemoteApiKey',
+  PRIVATE_REMOTE_MODEL: 'settings.privateRemoteModel',
+  PRIVATE_REMOTE_LAST_SUCCESS_BASE_URL: 'settings.privateRemoteLastSuccessBaseUrl',
+  PRIVATE_REMOTE_LAST_SUCCESS_API_KEY: 'settings.privateRemoteLastSuccessApiKey',
+  PRIVATE_REMOTE_LAST_SUCCESS_MODEL: 'settings.privateRemoteLastSuccessModel',
+  PRIVATE_REMOTE_PROFILES: 'settings.privateRemoteProfiles',
+  PRIVATE_REMOTE_ACTIVE_PROFILE_ID: 'settings.privateRemoteActiveProfileId',
   AUTO_TRANSCRIBE_ON_SAVE: 'settings.autoTranscribeOnSave',
   AUTO_AI_AFTER_TRANSCRIPTION: 'settings.autoAiAfterTranscription',
   AUTO_ARCHIVE_ENABLED: 'settings.autoArchiveEnabled',
@@ -323,6 +333,77 @@ const getStoredPrivateCapabilityTier = (): PrivateCapabilityTier => {
   return 'unavailable';
 };
 
+const getStoredPrivateAiProvider = (): 'local' | 'custom_openai' => {
+  const val = storage.getString(KEYS.PRIVATE_AI_PROVIDER);
+  return val === 'custom_openai' ? 'custom_openai' : 'local';
+};
+
+const getStoredPrivateRemoteBaseUrl = (): string => {
+  return storage.getString(KEYS.PRIVATE_REMOTE_BASE_URL) ?? '';
+};
+
+const getStoredPrivateRemoteApiKey = (): string => {
+  return storage.getString(KEYS.PRIVATE_REMOTE_API_KEY) ?? '';
+};
+
+const getStoredPrivateRemoteModel = (): string => {
+  return storage.getString(KEYS.PRIVATE_REMOTE_MODEL) ?? '';
+};
+
+const getStoredPrivateRemoteLastSuccessBaseUrl = (): string => {
+  return storage.getString(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_BASE_URL) ?? '';
+};
+
+const getStoredPrivateRemoteLastSuccessApiKey = (): string => {
+  return storage.getString(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY) ?? '';
+};
+
+const getStoredPrivateRemoteLastSuccessModel = (): string => {
+  return storage.getString(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_MODEL) ?? '';
+};
+
+const getStoredPrivateRemoteProfiles = (): PrivateRemoteProfile[] => {
+  try {
+    const raw = storage.getString(KEYS.PRIVATE_REMOTE_PROFILES);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item) => {
+        if (!item || typeof item !== 'object') return null;
+        const profile = item as Partial<PrivateRemoteProfile>;
+        if (
+          typeof profile.id !== 'string' ||
+          typeof profile.name !== 'string' ||
+          typeof profile.baseUrl !== 'string' ||
+          typeof profile.apiKey !== 'string' ||
+          typeof profile.model !== 'string'
+        ) {
+          return null;
+        }
+        return {
+          id: profile.id,
+          name: profile.name,
+          baseUrl: profile.baseUrl,
+          apiKey: profile.apiKey,
+          model: profile.model,
+          updatedAt: typeof profile.updatedAt === 'number' ? profile.updatedAt : Date.now(),
+        } satisfies PrivateRemoteProfile;
+      })
+      .filter((profile): profile is PrivateRemoteProfile => profile != null);
+  } catch {
+    return [];
+  }
+};
+
+const getStoredPrivateRemoteActiveProfileId = (
+  profiles: PrivateRemoteProfile[],
+): string | null => {
+  const value = storage.getString(KEYS.PRIVATE_REMOTE_ACTIVE_PROFILE_ID);
+  if (!value) return null;
+  return profiles.some((profile) => profile.id === value) ? value : null;
+};
+
 const getStoredWhisperStatuses = (): Partial<Record<WhisperModelVariantId, WhisperModelStatus>> => {
   try {
     const raw = storage.getString(KEYS.WHISPER_STATUSES);
@@ -352,6 +433,21 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   aiExecutionMode: getStoredAiExecutionMode(),
   privateLocalLlmBudget: getStoredPrivateLocalLlmBudget(),
   privateCapabilityTier: getStoredPrivateCapabilityTier(),
+  privateAiProvider: getStoredPrivateAiProvider(),
+  privateRemoteBaseUrl: getStoredPrivateRemoteBaseUrl(),
+  privateRemoteApiKey: getStoredPrivateRemoteApiKey(),
+  privateRemoteModel: getStoredPrivateRemoteModel(),
+  privateRemoteLastSuccessfulBaseUrl: getStoredPrivateRemoteLastSuccessBaseUrl(),
+  privateRemoteLastSuccessfulApiKey: getStoredPrivateRemoteLastSuccessApiKey(),
+  privateRemoteLastSuccessfulModel: getStoredPrivateRemoteLastSuccessModel(),
+  ...(() => {
+    const profiles = getStoredPrivateRemoteProfiles();
+    const activeProfileId = getStoredPrivateRemoteActiveProfileId(profiles);
+    return {
+      privateRemoteProfiles: profiles,
+      privateRemoteActiveProfileId: activeProfileId,
+    };
+  })(),
   autoTranscribeOnSave: getStoredAutoTranscribeOnSave(),
   autoAiAfterTranscription: getStoredAutoAiAfterTranscription(),
   autoArchiveEnabled: getStoredAutoArchiveEnabled(),
@@ -369,7 +465,6 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   localLlmModelStatuses: getStoredLocalLlmStatuses(),
   localLlmDownloadProgress: {},
   localLlmDownloadBytes: {},
-
   setAppTheme: (value: AppTheme) => {
     storage.set(KEYS.APP_THEME, value);
     set({ appTheme: value });
@@ -527,6 +622,125 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     if (get().privateCapabilityTier === value) return;
     storage.set(KEYS.PRIVATE_CAPABILITY_TIER, value);
     set({ privateCapabilityTier: value });
+  },
+
+  setPrivateAiProvider: (value) => {
+    storage.set(KEYS.PRIVATE_AI_PROVIDER, value);
+    set({ privateAiProvider: value });
+  },
+
+  setPrivateRemoteBaseUrl: (value) => {
+    storage.set(KEYS.PRIVATE_REMOTE_BASE_URL, value);
+    set({ privateRemoteBaseUrl: value });
+  },
+
+  setPrivateRemoteApiKey: (value) => {
+    storage.set(KEYS.PRIVATE_REMOTE_API_KEY, value);
+    set({ privateRemoteApiKey: value });
+  },
+
+  setPrivateRemoteModel: (value) => {
+    storage.set(KEYS.PRIVATE_REMOTE_MODEL, value);
+    set({ privateRemoteModel: value });
+  },
+
+  setPrivateRemoteLastSuccessfulConfig: (value) => {
+    storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_BASE_URL, value.baseUrl);
+    storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY, value.apiKey);
+    storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_MODEL, value.model);
+    set({
+      privateRemoteLastSuccessfulBaseUrl: value.baseUrl,
+      privateRemoteLastSuccessfulApiKey: value.apiKey,
+      privateRemoteLastSuccessfulModel: value.model,
+    });
+  },
+
+  upsertPrivateRemoteProfile: (value) => {
+    const currentProfiles = get().privateRemoteProfiles;
+    const nextProfiles = currentProfiles.some((profile) => profile.id === value.id)
+      ? currentProfiles.map((profile) => (profile.id === value.id ? value : profile))
+      : [value, ...currentProfiles];
+    storage.set(KEYS.PRIVATE_REMOTE_PROFILES, JSON.stringify(nextProfiles));
+    storage.set(KEYS.PRIVATE_REMOTE_ACTIVE_PROFILE_ID, value.id);
+    set({
+      privateRemoteProfiles: nextProfiles,
+      privateRemoteActiveProfileId: value.id,
+    });
+  },
+
+  setPrivateRemoteActiveProfile: (id) => {
+    if (!id) {
+      storage.remove(KEYS.PRIVATE_REMOTE_ACTIVE_PROFILE_ID);
+      set({ privateRemoteActiveProfileId: null });
+      return;
+    }
+    const profile = get().privateRemoteProfiles.find((item) => item.id === id);
+    if (!profile) return;
+    storage.set(KEYS.PRIVATE_REMOTE_ACTIVE_PROFILE_ID, id);
+    storage.set(KEYS.PRIVATE_REMOTE_BASE_URL, profile.baseUrl);
+    storage.set(KEYS.PRIVATE_REMOTE_API_KEY, profile.apiKey);
+    storage.set(KEYS.PRIVATE_REMOTE_MODEL, profile.model);
+    storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_BASE_URL, profile.baseUrl);
+    storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY, profile.apiKey);
+    storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_MODEL, profile.model);
+    set({
+      privateRemoteActiveProfileId: id,
+      privateRemoteBaseUrl: profile.baseUrl,
+      privateRemoteApiKey: profile.apiKey,
+      privateRemoteModel: profile.model,
+      privateRemoteLastSuccessfulBaseUrl: profile.baseUrl,
+      privateRemoteLastSuccessfulApiKey: profile.apiKey,
+      privateRemoteLastSuccessfulModel: profile.model,
+    });
+  },
+
+  removePrivateRemoteProfile: (id) => {
+    const currentProfiles = get().privateRemoteProfiles;
+    const nextProfiles = currentProfiles.filter((profile) => profile.id !== id);
+    storage.set(KEYS.PRIVATE_REMOTE_PROFILES, JSON.stringify(nextProfiles));
+    const wasActive = get().privateRemoteActiveProfileId === id;
+    if (!wasActive) {
+      set({ privateRemoteProfiles: nextProfiles });
+      return;
+    }
+    const fallback = nextProfiles[0];
+    if (fallback) {
+      storage.set(KEYS.PRIVATE_REMOTE_ACTIVE_PROFILE_ID, fallback.id);
+      storage.set(KEYS.PRIVATE_REMOTE_BASE_URL, fallback.baseUrl);
+      storage.set(KEYS.PRIVATE_REMOTE_API_KEY, fallback.apiKey);
+      storage.set(KEYS.PRIVATE_REMOTE_MODEL, fallback.model);
+      storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_BASE_URL, fallback.baseUrl);
+      storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY, fallback.apiKey);
+      storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_MODEL, fallback.model);
+      set({
+        privateRemoteProfiles: nextProfiles,
+        privateRemoteActiveProfileId: fallback.id,
+        privateRemoteBaseUrl: fallback.baseUrl,
+        privateRemoteApiKey: fallback.apiKey,
+        privateRemoteModel: fallback.model,
+        privateRemoteLastSuccessfulBaseUrl: fallback.baseUrl,
+        privateRemoteLastSuccessfulApiKey: fallback.apiKey,
+        privateRemoteLastSuccessfulModel: fallback.model,
+      });
+      return;
+    }
+    storage.remove(KEYS.PRIVATE_REMOTE_ACTIVE_PROFILE_ID);
+    storage.set(KEYS.PRIVATE_REMOTE_BASE_URL, '');
+    storage.set(KEYS.PRIVATE_REMOTE_API_KEY, '');
+    storage.set(KEYS.PRIVATE_REMOTE_MODEL, '');
+    storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_BASE_URL, '');
+    storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY, '');
+    storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_MODEL, '');
+    set({
+      privateRemoteProfiles: [],
+      privateRemoteActiveProfileId: null,
+      privateRemoteBaseUrl: '',
+      privateRemoteApiKey: '',
+      privateRemoteModel: '',
+      privateRemoteLastSuccessfulBaseUrl: '',
+      privateRemoteLastSuccessfulApiKey: '',
+      privateRemoteLastSuccessfulModel: '',
+    });
   },
 
   setAutoTranscribeOnSave: (value: boolean) => {

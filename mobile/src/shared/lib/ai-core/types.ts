@@ -1,6 +1,7 @@
 import type {
   AiOutputLanguage,
   LocalAiModelId,
+  PrivateAiProvider,
   PrivateLocalLlmBudget,
   SummaryStyle,
   TaskStrictness,
@@ -11,7 +12,7 @@ import type { AiProcessingResult, ServerMeetingDialogueStatus } from '@/shared/l
 import type { RecordingMarkForPrompt } from './recordingMarksForPrompt';
 
 export type AiTaskIntent = 'summary_tasks' | 'ask';
-export type AiProviderKind = 'cloud' | 'local';
+export type AiProviderKind = 'cloud' | 'local' | 'private_remote';
 
 export type AiLocalGenerationProgressEvent =
   | { kind: 'prepare_model_start' }
@@ -29,6 +30,10 @@ export type AiExecutionContext = {
   aiExecutionMode: 'smart_hybrid' | 'private_experimental';
   privateLocalLlmBudget: PrivateLocalLlmBudget;
   privateCapabilityTier: 'full' | 'limited' | 'unavailable';
+  privateAiProvider: PrivateAiProvider;
+  privateRemoteBaseUrl: string;
+  privateRemoteApiKey: string;
+  privateRemoteModel: string;
   /** TTL (seconds) for cloud AI job payloads in API KV; used only in Smart (cloud) mode. */
   cloudMessageTtlSeconds: number;
 };

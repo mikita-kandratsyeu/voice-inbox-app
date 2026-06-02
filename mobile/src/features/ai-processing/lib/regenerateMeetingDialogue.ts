@@ -30,6 +30,10 @@ function buildPrivateAiContext(settings: ReturnType<typeof useSettingsStore.getS
   isLocalLlmModelDownloaded: boolean;
 } {
   const effectiveLocalAiModelId = settings.selectedLocalAiModel ?? DEFAULT_LOCAL_AI_MODEL_ID;
+  const effectivePrivateAiProvider =
+    isProActiveFromStorageSync() && settings.privateAiProvider === 'custom_openai'
+      ? 'custom_openai'
+      : 'local';
   const isLocalLlmModelDownloaded =
     settings.selectedLocalAiModel != null &&
     (settings.localLlmModelStatuses[effectiveLocalAiModelId] ?? 'not_downloaded') === 'downloaded';
@@ -47,6 +51,10 @@ function buildPrivateAiContext(settings: ReturnType<typeof useSettingsStore.getS
       aiExecutionMode: 'private_experimental',
       privateLocalLlmBudget: settings.privateLocalLlmBudget,
       privateCapabilityTier: settings.privateCapabilityTier,
+      privateAiProvider: effectivePrivateAiProvider,
+      privateRemoteBaseUrl: settings.privateRemoteBaseUrl,
+      privateRemoteApiKey: settings.privateRemoteApiKey,
+      privateRemoteModel: settings.privateRemoteModel,
       cloudMessageTtlSeconds: settings.cloudAiKvTtlSeconds,
     },
   };

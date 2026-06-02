@@ -18,6 +18,7 @@ import { markUnreadAfterSummaryRegenerationIfNeeded } from '@/features/ai-proces
 import { regenerateMeetingDialogue as runRegenerateMeetingDialogue } from '@/features/ai-processing/lib/regenerateMeetingDialogue';
 import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
+import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import type { AiProcessingResult } from '@/shared/lib/ai-api';
 import {
   AI_POLL_TIMEOUT_ERROR,
@@ -106,6 +107,10 @@ export const useAiProcessing = () => {
     aiExecutionMode,
     privateLocalLlmBudget,
     privateCapabilityTier,
+    privateAiProvider,
+    privateRemoteBaseUrl,
+    privateRemoteApiKey,
+    privateRemoteModel,
     cloudAiKvTtlSeconds,
     autoRefreshMeetingSpeakersOnRegen,
   } = useSettingsStore(
@@ -120,12 +125,20 @@ export const useAiProcessing = () => {
       aiExecutionMode: s.aiExecutionMode,
       privateLocalLlmBudget: s.privateLocalLlmBudget,
       privateCapabilityTier: s.privateCapabilityTier,
+      privateAiProvider: s.privateAiProvider,
+      privateRemoteBaseUrl: s.privateRemoteBaseUrl,
+      privateRemoteApiKey: s.privateRemoteApiKey,
+      privateRemoteModel: s.privateRemoteModel,
       cloudAiKvTtlSeconds: s.cloudAiKvTtlSeconds,
       autoRefreshMeetingSpeakersOnRegen: s.autoRefreshMeetingSpeakersOnRegen,
     })),
   );
 
   const effectiveLocalAiModelId = selectedLocalAiModel ?? DEFAULT_LOCAL_AI_MODEL_ID;
+  const effectivePrivateAiProvider =
+    isProActiveFromStorageSync() && privateAiProvider === 'custom_openai'
+      ? 'custom_openai'
+      : 'local';
   const isLocalLlmModelDownloaded =
     selectedLocalAiModel != null &&
     (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';
@@ -460,6 +473,10 @@ export const useAiProcessing = () => {
             aiExecutionMode,
             privateLocalLlmBudget,
             privateCapabilityTier,
+            privateAiProvider: effectivePrivateAiProvider,
+            privateRemoteBaseUrl,
+            privateRemoteApiKey,
+            privateRemoteModel,
             cloudMessageTtlSeconds: cloudAiKvTtlSeconds,
           },
         );
@@ -749,6 +766,10 @@ export const useAiProcessing = () => {
       aiOutputLanguage,
       privateLocalLlmBudget,
       privateCapabilityTier,
+      effectivePrivateAiProvider,
+      privateRemoteBaseUrl,
+      privateRemoteApiKey,
+      privateRemoteModel,
       cloudAiKvTtlSeconds,
       autoRefreshMeetingSpeakersOnRegen,
       applyCancelledUiState,
