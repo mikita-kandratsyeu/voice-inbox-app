@@ -504,73 +504,80 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
         </nav>
       </aside>
       <div className="min-w-0 flex-1">
-        <header className="sticky top-0 z-10 border-b border-zinc-200/80 bg-white/85 px-4 py-4 backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/85 md:px-8 lg:px-10">
-          <div className="mx-auto flex max-w-screen-2xl flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="min-w-0">
-              <p className="text-xs font-medium uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
-                Voice Inbox AI · Admin
-              </p>
-              <h1 className="mt-1 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 md:text-2xl">
-                {currentMeta.label}
-              </h1>
-              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
-                {currentMeta.description}
-              </p>
-            </div>
-            <div
-              className={`${utilitiesShellClass} self-start sm:mt-0.5`}
-              role="group"
-              aria-label="Admin preferences"
-            >
-              <div
-                className="inline-flex h-full min-h-0 max-w-[11rem] items-center gap-2 rounded-lg px-2.5 sm:max-w-[14rem] sm:px-3"
-                title={adminLogin}
-              >
-                <span
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600/12 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-200"
-                  aria-hidden
-                >
-                  <User className="h-3.5 w-3.5" strokeWidth={2.25} />
-                </span>
-                <span className="flex min-w-0 flex-col leading-tight">
-                  <span className="truncate text-sm font-medium text-black/85 dark:text-white/90">
-                    {adminLogin}
-                  </span>
-                  {isSuperadmin ? (
-                    <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
-                      Superadmin
-                    </span>
-                  ) : null}
-                </span>
+        <header className="sticky top-3 z-10 px-3 pt-3 sm:px-4 md:px-8 md:pt-4 lg:px-10">
+          <div className="mx-auto max-w-screen-2xl rounded-2xl border border-black/10 bg-white/75 px-3 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-4 sm:py-4 dark:border-white/12 dark:bg-black/55 dark:shadow-[0_14px_36px_rgba(0,0,0,0.35)]">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+                  Voice Inbox AI · Admin
+                </p>
+                <h1 className="mt-1 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 md:text-2xl">
+                  {currentMeta.label}
+                </h1>
+                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
+                  {currentMeta.description}
+                </p>
               </div>
-              <span className={utilitiesShellDividerClass} aria-hidden />
-              <ThemeToggle variant="grouped" />
-              <span className={utilitiesShellDividerClass} aria-hidden />
-              <button type="button" onClick={handleLogout} className={utilitiesGroupedActionClass}>
-                <LogOut className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-                <span className="hidden sm:inline">Log out</span>
-              </button>
-            </div>
-          </div>
-          <div className="mx-auto mt-4 flex max-w-screen-2xl gap-2 overflow-x-auto pt-2 pb-0.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            {visibleTabs.map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setAdminTab(t)}
-                className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                  adminTab === t
-                    ? 'bg-indigo-600 text-white dark:bg-indigo-500'
-                    : 'bg-white text-zinc-600 ring-1 ring-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:ring-zinc-600'
-                }`}
+
+              <div
+                className={`${utilitiesShellClass} shrink-0 self-center`}
+                role="group"
+                aria-label="Admin preferences"
               >
-                {(() => {
-                  const I = ADMIN_TAB_META[t].icon;
-                  return <I className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />;
-                })()}
-                {ADMIN_TAB_META[t].short}
-              </button>
-            ))}
+                <div
+                  className="inline-flex h-full min-h-0 max-w-44 items-center gap-2 rounded-lg px-2.5 sm:max-w-56 sm:px-3"
+                  title={adminLogin}
+                >
+                  <span
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-indigo-600/12 text-indigo-700 dark:bg-indigo-400/15 dark:text-indigo-200"
+                    aria-hidden
+                  >
+                    <User className="h-3.5 w-3.5" strokeWidth={2.25} />
+                  </span>
+                  <span className="flex min-w-0 flex-col leading-tight">
+                    <span className="truncate text-sm font-medium text-black/85 dark:text-white/90">
+                      {adminLogin}
+                    </span>
+                    {isSuperadmin ? (
+                      <span className="truncate text-[10px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                        Superadmin
+                      </span>
+                    ) : null}
+                  </span>
+                </div>
+                <span className={utilitiesShellDividerClass} aria-hidden />
+                <ThemeToggle variant="grouped" />
+                <span className={utilitiesShellDividerClass} aria-hidden />
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  className={utilitiesGroupedActionClass}
+                >
+                  <LogOut className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
+                  <span className="hidden sm:inline">Log out</span>
+                </button>
+              </div>
+            </div>
+            <div className="mt-4 flex gap-2 overflow-x-auto pt-2 pb-0.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+              {visibleTabs.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setAdminTab(t)}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                    adminTab === t
+                      ? 'bg-indigo-600 text-white dark:bg-indigo-500'
+                      : 'bg-white/85 text-zinc-600 ring-1 ring-zinc-200/85 dark:bg-zinc-800/80 dark:text-zinc-300 dark:ring-zinc-600/85'
+                  }`}
+                >
+                  {(() => {
+                    const I = ADMIN_TAB_META[t].icon;
+                    return <I className="h-3.5 w-3.5" strokeWidth={2} aria-hidden />;
+                  })()}
+                  {ADMIN_TAB_META[t].short}
+                </button>
+              ))}
+            </div>
           </div>
         </header>
 
@@ -809,7 +816,7 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
                                 >
                                   {c.shortSha}
                                 </a>
-                                <p className="mt-0.5 break-words text-zinc-600 dark:text-zinc-400">
+                                <p className="mt-0.5 wrap-break-word text-zinc-600 dark:text-zinc-400">
                                   {c.message}
                                 </p>
                               </div>
