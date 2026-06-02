@@ -1,13 +1,11 @@
 import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { MenuView } from '@react-native-menu/menu';
 import { useNavigation } from '@react-navigation/native';
-import { Check, Crown, MoreHorizontal, Trash2 } from 'lucide-react-native';
+import { Check, Crown, Trash2 } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ActivityIndicator,
   Alert,
-  Pressable,
   ScrollView,
   Share,
   Switch,
@@ -32,7 +30,7 @@ import { type CloudAiKvTtlSeconds } from '@/entities/settings/lib/cloudAiKvTtl';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import type { Colors } from '@/shared/config';
-import { useAppTheme, useColors } from '@/shared/config';
+import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import {
   type PrivateRemoteConnectionFailureReason,
@@ -173,8 +171,6 @@ function PickerSection<T extends string | number>({
 export const AiSettingsScreen = () => {
   const { t } = useTranslation();
   const color = useColors();
-  const theme = useAppTheme();
-  const isDark = theme === 'dark';
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const contentMaxWidth = useTabletContentMaxWidth();
@@ -298,31 +294,6 @@ export const AiSettingsScreen = () => {
   const hasSavedRemoteConfig =
     privateRemoteLastSuccessfulBaseUrl.trim().length > 0 &&
     privateRemoteLastSuccessfulModel.trim().length > 0;
-  const remoteConfigMenuActions = React.useMemo(
-    () => [
-      {
-        id: 'openRemoteConfig',
-        title: hasSavedRemoteConfig
-          ? t('aiSettings.privateProvider.editConfig')
-          : t('aiSettings.privateProvider.setupConfig'),
-        image: hasSavedRemoteConfig ? ('pencil' as const) : ('gearshape' as const),
-        imageColor: color.text.primary,
-        titleColor: color.text.primary,
-      },
-      ...(hasSavedRemoteConfig
-        ? [
-            {
-              id: 'checkRemoteConnection',
-              title: t('aiSettings.privateProvider.testConnection'),
-              image: 'network' as const,
-              imageColor: color.text.primary,
-              titleColor: color.text.primary,
-            },
-          ]
-        : []),
-    ],
-    [color.text.primary, hasSavedRemoteConfig, t],
-  );
   const connectionCheckInProgress = isTestingConnection || isAutoTestingProviderConnection;
   const remoteConnectionStatusLabel = connectionCheckInProgress
     ? t('aiSettings.privateProvider.connectionStatus.checking')
@@ -829,41 +800,9 @@ export const AiSettingsScreen = () => {
                           <View className="h-[26px] w-[26px] items-center justify-center">
                             <ActivityIndicator size="small" color={color.text.muted} />
                           </View>
-                        ) : (
-                          <MenuView
-                            key={`private-remote-summary-menu-${theme}-${hasSavedRemoteConfig ? 'saved' : 'new'}`}
-                            title=""
-                            themeVariant={isDark ? 'dark' : 'light'}
-                            shouldOpenOnLongPress={false}
-                            actions={remoteConfigMenuActions}
-                            onPressAction={({ nativeEvent }) => {
-                              if (nativeEvent.event === 'openRemoteConfig') {
-                                openRemoteConfigSheet();
-                              }
-                              if (nativeEvent.event === 'checkRemoteConnection') {
-                                void runRemoteConnectionCheck(
-                                  {
-                                    baseUrl: privateRemoteLastSuccessfulBaseUrl,
-                                    apiKey: privateRemoteLastSuccessfulApiKey,
-                                    model: privateRemoteLastSuccessfulModel,
-                                  },
-                                  true,
-                                );
-                              }
-                            }}
-                          >
-                            <Pressable
-                              accessibilityRole="button"
-                              accessibilityLabel={t('aiSettings.privateProvider.configMenuA11y')}
-                              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-                            >
-                              <MoreHorizontal size={18} color={color.icon.muted} strokeWidth={2} />
-                            </Pressable>
-                          </MenuView>
-                        )
+                        ) : undefined
                       }
-                      showChevron={false}
+                      onPress={openRemoteConfigSheet}
                       isFirst
                       isLast
                     />
