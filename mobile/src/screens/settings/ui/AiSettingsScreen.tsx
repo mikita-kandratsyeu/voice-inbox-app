@@ -803,6 +803,7 @@ export const AiSettingsScreen = () => {
                         ) : undefined
                       }
                       onPress={openRemoteConfigSheet}
+                      showChevron={!connectionCheckInProgress}
                       isFirst
                       isLast
                     />
