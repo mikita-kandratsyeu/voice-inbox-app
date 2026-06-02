@@ -36,13 +36,30 @@ export function buildMeetingDialogueSystemPrompt(ctx: AiExecutionContext): strin
 }
 
 function formatSegmentLines(segments: SummaryTaskTranscriptSegment[]): string {
+  const formatClockFromMs = (ms: number): string => {
+    if (!Number.isFinite(ms) || ms < 0) return '?';
+    const totalSec = Math.floor(ms / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    return `${m}:${String(s).padStart(2, '0')}`;
+  };
   const lines: string[] = [];
-  const max = Math.min(segments.length, 200);
+  const max = Math.min(segments.length, 280);
   for (let i = 0; i < max; i++) {
     const seg = segments[i]!;
     const text = seg.text.replace(/\s+/g, ' ').trim();
     if (!text) continue;
-    lines.push(text);
+    const hasStart = typeof seg.startMs === 'number' && Number.isFinite(seg.startMs) && seg.startMs >= 0;
+    const hasEnd = typeof seg.endMs === 'number' && Number.isFinite(seg.endMs) && seg.endMs >= 0;
+    if (hasStart || hasEnd) {
+      const start = hasStart ? formatClockFromMs(seg.startMs as number) : '?';
+      const end = hasEnd ? `–${formatClockFromMs(seg.endMs as number)}` : '';
+      lines.push(`[${start}${end}] ${text}`);
+    } else {
+      lines.push(text);
+    }
   }
   return lines.join('\n');
 }
@@ -129,14 +146,26 @@ export function buildMeetingDialogueUserContent(
 
   const hint = taskExtractionHint?.trim();
   if (hint) {
-    parts.push('', 'User hint for this run:', hint.slice(0, 500));
+    parts.push(
+      '',
+      'Optional user note (use only to disambiguate speaker layout; keep every line grounded in transcript):',
+      hint.slice(0, 500),
+    );
   }
 
   if (transcriptSegments?.length) {
-    parts.push('', 'Timestamped lines:', formatSegmentLines(transcriptSegments));
+    parts.push(
+      '',
+      'Transcript with segment timestamps (soft hints for pauses and ordering):',
+      formatSegmentLines(transcriptSegments),
+    );
   }
 
-  parts.push('', 'Full transcript:', transcript);
+  parts.push(
+    '',
+    'Full transcript (primary source; if evidence is enough, produce at least one turn even for single-speaker):',
+    transcript,
+  );
 
   return parts.join('\n');
 }

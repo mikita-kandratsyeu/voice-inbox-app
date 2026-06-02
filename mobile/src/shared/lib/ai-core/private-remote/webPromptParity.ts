@@ -77,7 +77,8 @@ const PSEUDO_DIARIZATION_SECTION = `## Pseudo-diarization (meetingDialogueMarkdo
 - Use neutral labels such as "Speaker 1:", "Speaker 2:", or "Участник 1:" unless a name or role is clearly stated in the transcript.
 - Do not invent people, roles, or lines that are not grounded in the transcript.
 - Do not repeat task titles or copy long passages verbatim from tasks[] or nextSteps[].
-- If the transcript is too short, or unclear, set meetingDialogueMarkdown to an empty string.
+- If the transcript has enough content, produce at least one turn (single-speaker is allowed).
+- Set meetingDialogueMarkdown to an empty string only when the transcript is too short or unclear.
 `.trim();
 
 type WebParityPromptOptions = {
