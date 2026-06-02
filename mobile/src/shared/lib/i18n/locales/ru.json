@@ -1293,6 +1293,7 @@
       "testAndUpdateConnection": "Проверить и обновить",
       "editConfig": "Изменить",
       "setupConfig": "Настроить",
+      "configMenuA11y": "Действия подключения",
       "showDetails": "Показать детали",
       "connectionStatus": {
         "checking": "Проверка...",

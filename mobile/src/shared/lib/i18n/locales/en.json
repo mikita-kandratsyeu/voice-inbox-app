@@ -1274,6 +1274,7 @@
       "testAndUpdateConnection": "Test and update",
       "editConfig": "Edit",
       "setupConfig": "Set up",
+      "configMenuA11y": "Connection actions",
       "showDetails": "Show details",
       "connectionStatus": {
         "checking": "Checking...",

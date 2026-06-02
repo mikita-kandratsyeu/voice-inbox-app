@@ -3,8 +3,17 @@ import { create } from 'zustand';
 import { parseAccentColorId } from '@/shared/config';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { storage } from '@/shared/lib/async-storage';
+import { isNumber, isRecord, isString } from '@/shared/lib/type-guards';
 
 import { CLOUD_AI_KV_TTL_DEFAULT_SECONDS, snapCloudAiKvTtlToChoice } from '../lib/cloudAiKvTtl';
+import {
+  getPrivateRemoteSecrets,
+  removePrivateRemoteProfileApiKey,
+  setPrivateRemoteAllSecrets,
+  setPrivateRemoteCurrentApiKey,
+  setPrivateRemoteLastSuccessfulApiKey,
+  setPrivateRemoteProfileApiKey,
+} from '../lib/privateRemoteSecrets';
 import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
 import {
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
@@ -343,7 +352,7 @@ const getStoredPrivateRemoteBaseUrl = (): string => {
 };
 
 const getStoredPrivateRemoteApiKey = (): string => {
-  return storage.getString(KEYS.PRIVATE_REMOTE_API_KEY) ?? '';
+  return '';
 };
 
 const getStoredPrivateRemoteModel = (): string => {
@@ -355,41 +364,41 @@ const getStoredPrivateRemoteLastSuccessBaseUrl = (): string => {
 };
 
 const getStoredPrivateRemoteLastSuccessApiKey = (): string => {
-  return storage.getString(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY) ?? '';
+  return '';
 };
 
 const getStoredPrivateRemoteLastSuccessModel = (): string => {
   return storage.getString(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_MODEL) ?? '';
 };
 
+function parseStoredPrivateRemoteProfile(item: unknown): PrivateRemoteProfile | null {
+  if (!isRecord(item)) return null;
+  if (
+    !isString(item.id) ||
+    !isString(item.name) ||
+    !isString(item.baseUrl) ||
+    !isString(item.model)
+  ) {
+    return null;
+  }
+  return {
+    id: item.id,
+    name: item.name,
+    baseUrl: item.baseUrl,
+    apiKey: isString(item.apiKey) ? item.apiKey : '',
+    model: item.model,
+    updatedAt: isNumber(item.updatedAt) ? item.updatedAt : Date.now(),
+  };
+}
+
 const getStoredPrivateRemoteProfiles = (): PrivateRemoteProfile[] => {
   try {
     const raw = storage.getString(KEYS.PRIVATE_REMOTE_PROFILES);
     if (!raw) return [];
-    const parsed = JSON.parse(raw) as unknown[];
+    const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     return parsed
-      .map((item) => {
-        if (!item || typeof item !== 'object') return null;
-        const profile = item as Partial<PrivateRemoteProfile>;
-        if (
-          typeof profile.id !== 'string' ||
-          typeof profile.name !== 'string' ||
-          typeof profile.baseUrl !== 'string' ||
-          typeof profile.apiKey !== 'string' ||
-          typeof profile.model !== 'string'
-        ) {
-          return null;
-        }
-        return {
-          id: profile.id,
-          name: profile.name,
-          baseUrl: profile.baseUrl,
-          apiKey: profile.apiKey,
-          model: profile.model,
-          updatedAt: typeof profile.updatedAt === 'number' ? profile.updatedAt : Date.now(),
-        } satisfies PrivateRemoteProfile;
-      })
+      .map((item) => parseStoredPrivateRemoteProfile(item))
       .filter((profile): profile is PrivateRemoteProfile => profile != null);
   } catch {
     return [];
@@ -633,7 +642,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   setPrivateRemoteApiKey: (value) => {
-    storage.set(KEYS.PRIVATE_REMOTE_API_KEY, value);
+    storage.remove(KEYS.PRIVATE_REMOTE_API_KEY);
+    void setPrivateRemoteCurrentApiKey(value);
     set({ privateRemoteApiKey: value });
   },
 
@@ -644,7 +654,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   setPrivateRemoteLastSuccessfulConfig: (value) => {
     storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_BASE_URL, value.baseUrl);
-    storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY, value.apiKey);
+    storage.remove(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY);
+    void setPrivateRemoteLastSuccessfulApiKey(value.apiKey);
     storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_MODEL, value.model);
     set({
       privateRemoteLastSuccessfulBaseUrl: value.baseUrl,
@@ -654,14 +665,24 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   upsertPrivateRemoteProfile: (value) => {
+    void setPrivateRemoteProfileApiKey(value.id, value.apiKey);
     const currentProfiles = get().privateRemoteProfiles;
+    const valueForStorage = {
+      ...value,
+      apiKey: '',
+    };
     const nextProfiles = currentProfiles.some((profile) => profile.id === value.id)
-      ? currentProfiles.map((profile) => (profile.id === value.id ? value : profile))
-      : [value, ...currentProfiles];
-    storage.set(KEYS.PRIVATE_REMOTE_PROFILES, JSON.stringify(nextProfiles));
+      ? currentProfiles.map((profile) => (profile.id === value.id ? valueForStorage : profile))
+      : [valueForStorage, ...currentProfiles];
+    storage.set(
+      KEYS.PRIVATE_REMOTE_PROFILES,
+      JSON.stringify(nextProfiles.map((profile) => ({ ...profile, apiKey: '' }))),
+    );
     storage.set(KEYS.PRIVATE_REMOTE_ACTIVE_PROFILE_ID, value.id);
     set({
-      privateRemoteProfiles: nextProfiles,
+      privateRemoteProfiles: currentProfiles.some((profile) => profile.id === value.id)
+        ? currentProfiles.map((profile) => (profile.id === value.id ? value : profile))
+        : [value, ...currentProfiles],
       privateRemoteActiveProfileId: value.id,
     });
   },
@@ -676,10 +697,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     if (!profile) return;
     storage.set(KEYS.PRIVATE_REMOTE_ACTIVE_PROFILE_ID, id);
     storage.set(KEYS.PRIVATE_REMOTE_BASE_URL, profile.baseUrl);
-    storage.set(KEYS.PRIVATE_REMOTE_API_KEY, profile.apiKey);
+    storage.remove(KEYS.PRIVATE_REMOTE_API_KEY);
+    void setPrivateRemoteCurrentApiKey(profile.apiKey);
     storage.set(KEYS.PRIVATE_REMOTE_MODEL, profile.model);
     storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_BASE_URL, profile.baseUrl);
-    storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY, profile.apiKey);
+    storage.remove(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY);
+    void setPrivateRemoteLastSuccessfulApiKey(profile.apiKey);
     storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_MODEL, profile.model);
     set({
       privateRemoteActiveProfileId: id,
@@ -693,9 +716,13 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   removePrivateRemoteProfile: (id) => {
+    void removePrivateRemoteProfileApiKey(id);
     const currentProfiles = get().privateRemoteProfiles;
     const nextProfiles = currentProfiles.filter((profile) => profile.id !== id);
-    storage.set(KEYS.PRIVATE_REMOTE_PROFILES, JSON.stringify(nextProfiles));
+    storage.set(
+      KEYS.PRIVATE_REMOTE_PROFILES,
+      JSON.stringify(nextProfiles.map((profile) => ({ ...profile, apiKey: '' }))),
+    );
     const wasActive = get().privateRemoteActiveProfileId === id;
     if (!wasActive) {
       set({ privateRemoteProfiles: nextProfiles });
@@ -705,10 +732,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     if (fallback) {
       storage.set(KEYS.PRIVATE_REMOTE_ACTIVE_PROFILE_ID, fallback.id);
       storage.set(KEYS.PRIVATE_REMOTE_BASE_URL, fallback.baseUrl);
-      storage.set(KEYS.PRIVATE_REMOTE_API_KEY, fallback.apiKey);
+      storage.remove(KEYS.PRIVATE_REMOTE_API_KEY);
+      void setPrivateRemoteCurrentApiKey(fallback.apiKey);
       storage.set(KEYS.PRIVATE_REMOTE_MODEL, fallback.model);
       storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_BASE_URL, fallback.baseUrl);
-      storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY, fallback.apiKey);
+      storage.remove(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY);
+      void setPrivateRemoteLastSuccessfulApiKey(fallback.apiKey);
       storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_MODEL, fallback.model);
       set({
         privateRemoteProfiles: nextProfiles,
@@ -724,10 +753,12 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
     storage.remove(KEYS.PRIVATE_REMOTE_ACTIVE_PROFILE_ID);
     storage.set(KEYS.PRIVATE_REMOTE_BASE_URL, '');
-    storage.set(KEYS.PRIVATE_REMOTE_API_KEY, '');
+    storage.remove(KEYS.PRIVATE_REMOTE_API_KEY);
+    void setPrivateRemoteCurrentApiKey('');
     storage.set(KEYS.PRIVATE_REMOTE_MODEL, '');
     storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_BASE_URL, '');
-    storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY, '');
+    storage.remove(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY);
+    void setPrivateRemoteLastSuccessfulApiKey('');
     storage.set(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_MODEL, '');
     set({
       privateRemoteProfiles: [],
@@ -930,3 +961,61 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     });
   },
 }));
+
+async function hydratePrivateRemoteSecretsFromKeychain(): Promise<void> {
+  const legacyCurrentApiKey = storage.getString(KEYS.PRIVATE_REMOTE_API_KEY) ?? '';
+  const legacyLastSuccessfulApiKey =
+    storage.getString(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY) ?? '';
+  const state = useSettingsStore.getState();
+  const legacyProfileApiKeys = Object.fromEntries(
+    state.privateRemoteProfiles
+      .filter((profile) => profile.apiKey.trim().length > 0)
+      .map((profile) => [profile.id, profile.apiKey]),
+  );
+  const hasLegacySecrets =
+    legacyCurrentApiKey.trim().length > 0 ||
+    legacyLastSuccessfulApiKey.trim().length > 0 ||
+    Object.keys(legacyProfileApiKeys).length > 0;
+  const keychainSecrets = await getPrivateRemoteSecrets();
+  const hasKeychainSecrets =
+    keychainSecrets.currentApiKey.trim().length > 0 ||
+    keychainSecrets.lastSuccessfulApiKey.trim().length > 0 ||
+    Object.keys(keychainSecrets.profileApiKeys).length > 0;
+
+  if (!hasKeychainSecrets && hasLegacySecrets) {
+    await setPrivateRemoteAllSecrets({
+      currentApiKey: legacyCurrentApiKey,
+      lastSuccessfulApiKey: legacyLastSuccessfulApiKey,
+      profileApiKeys: legacyProfileApiKeys,
+    });
+  }
+
+  const nextSecrets =
+    !hasKeychainSecrets && hasLegacySecrets
+      ? {
+          currentApiKey: legacyCurrentApiKey,
+          lastSuccessfulApiKey: legacyLastSuccessfulApiKey,
+          profileApiKeys: legacyProfileApiKeys,
+        }
+      : keychainSecrets;
+
+  const nextProfiles = useSettingsStore.getState().privateRemoteProfiles.map((profile) => ({
+    ...profile,
+    apiKey: nextSecrets.profileApiKeys[profile.id] ?? '',
+  }));
+
+  storage.remove(KEYS.PRIVATE_REMOTE_API_KEY);
+  storage.remove(KEYS.PRIVATE_REMOTE_LAST_SUCCESS_API_KEY);
+  storage.set(
+    KEYS.PRIVATE_REMOTE_PROFILES,
+    JSON.stringify(nextProfiles.map((profile) => ({ ...profile, apiKey: '' }))),
+  );
+
+  useSettingsStore.setState({
+    privateRemoteApiKey: nextSecrets.currentApiKey,
+    privateRemoteLastSuccessfulApiKey: nextSecrets.lastSuccessfulApiKey,
+    privateRemoteProfiles: nextProfiles,
+  });
+}
+
+void hydratePrivateRemoteSecretsFromKeychain();

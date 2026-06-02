@@ -18,6 +18,7 @@ type SettingsRowProps = {
   isFirst?: boolean;
   isLast?: boolean;
   dangerous?: boolean;
+  labelClassName?: string;
 };
 
 type SettingsRowInnerProps = SettingsRowProps & {
@@ -35,6 +36,7 @@ const SettingsRowInner = ({
   isFirst = false,
   isLast = false,
   dangerous = false,
+  labelClassName,
   color,
 }: SettingsRowInnerProps) => {
   const borderStyle = !isLast
@@ -68,7 +70,7 @@ const SettingsRowInner = ({
       )}
       <View className="min-w-0 flex-1">
         <Text
-          className="text-[16px]"
+          className={`text-[16px] ${labelClassName ?? ''}`}
           style={{
             color: dangerous ? color.accent.delete : color.text.primary,
             lineHeight: 21,
