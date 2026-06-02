@@ -1,4 +1,4 @@
-import { BottomSheetView } from '@gorhom/bottom-sheet';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { useNavigation } from '@react-navigation/native';
 import { Check, Crown, Trash2 } from 'lucide-react-native';
 import React from 'react';
@@ -201,6 +201,10 @@ export const AiSettingsScreen = () => {
   const showMeetingSpeakerSettings = isProActive && !isPrivateMode;
   const [privateServerProSheet, setPrivateServerProSheet] = React.useState(false);
   const [isTestingConnection, setIsTestingConnection] = React.useState(false);
+  const [isAutoTestingProviderConnection, setIsAutoTestingProviderConnection] =
+    React.useState(false);
+  const [lastConnectionCheckOk, setLastConnectionCheckOk] = React.useState<boolean | null>(null);
+  const didRunInitialProviderCheckRef = React.useRef(false);
   const [remoteConfigSheetVisible, setRemoteConfigSheetVisible] = React.useState(false);
   const [previousProfileBeforeCreateId, setPreviousProfileBeforeCreateId] = React.useState<
     string | null
@@ -220,6 +224,9 @@ export const AiSettingsScreen = () => {
 
   React.useEffect(() => {
     if (privateAiProvider !== 'custom_openai') return;
+    const isCreatingNewConnection =
+      privateRemoteActiveProfileId == null && privateRemoteProfiles.length > 0;
+    if (isCreatingNewConnection) return;
     const needsBaseUrl = privateRemoteBaseUrl.trim().length === 0;
     const needsModel = privateRemoteModel.trim().length === 0;
     const hasLastSuccess =
@@ -240,6 +247,8 @@ export const AiSettingsScreen = () => {
     privateRemoteBaseUrl,
     privateRemoteModel,
     privateRemoteApiKey,
+    privateRemoteActiveProfileId,
+    privateRemoteProfiles.length,
     privateRemoteLastSuccessfulBaseUrl,
     privateRemoteLastSuccessfulApiKey,
     privateRemoteLastSuccessfulModel,
@@ -263,6 +272,21 @@ export const AiSettingsScreen = () => {
   const hasSavedRemoteConfig =
     privateRemoteLastSuccessfulBaseUrl.trim().length > 0 &&
     privateRemoteLastSuccessfulModel.trim().length > 0;
+  const connectionCheckInProgress = isTestingConnection || isAutoTestingProviderConnection;
+  const remoteConnectionStatusLabel = connectionCheckInProgress
+    ? 'Проверка...'
+    : lastConnectionCheckOk == null
+      ? hasSavedRemoteConfig
+        ? 'Подключено'
+        : 'Отключено'
+      : lastConnectionCheckOk
+        ? 'Подключено'
+        : 'Отключено';
+  const remoteConnectionStatusColor = connectionCheckInProgress
+    ? color.text.muted
+    : remoteConnectionStatusLabel === 'Подключено'
+      ? color.accent.aiData
+      : color.accent.delete;
   const isRemoteModelFilled = privateRemoteModel.trim().length > 0;
   const canTestConnection =
     baseUrlValidationError == null && isRemoteModelFilled && !isTestingConnection;
@@ -325,6 +349,104 @@ export const AiSettingsScreen = () => {
     },
     [t],
   );
+  const runRemoteConnectionCheck = React.useCallback(
+    async (
+      config: { baseUrl: string; apiKey: string; model: string },
+      showFailureAlert = false,
+    ) => {
+      const isConfigReady =
+        validatePrivateBaseUrl(config.baseUrl) == null && config.model.trim().length > 0;
+      if (!isConfigReady) return;
+
+      setIsAutoTestingProviderConnection(true);
+      try {
+        const result = await testPrivateRemoteConnection({
+          privateRemoteBaseUrl: config.baseUrl,
+          privateRemoteApiKey: config.apiKey,
+          privateRemoteModel: config.model,
+        });
+        setLastConnectionCheckOk(result.ok);
+        if (showFailureAlert && !result.ok) {
+          Alert.alert(
+            t('aiSettings.privateProvider.connectionFailTitle'),
+            result.error || t('aiSettings.privateProvider.connectionFailMessage'),
+          );
+        }
+      } finally {
+        setIsAutoTestingProviderConnection(false);
+      }
+    },
+    [t],
+  );
+  const handlePrivateProviderSelect = React.useCallback(
+    async (provider: PrivateAiProvider) => {
+      setPrivateAiProvider(provider);
+      if (provider !== 'custom_openai') return;
+
+      const baseUrlCandidate =
+        privateRemoteBaseUrl.trim().length > 0
+          ? privateRemoteBaseUrl
+          : privateRemoteLastSuccessfulBaseUrl;
+      const modelCandidate =
+        privateRemoteModel.trim().length > 0
+          ? privateRemoteModel
+          : privateRemoteLastSuccessfulModel;
+      const apiKeyCandidate =
+        privateRemoteApiKey.trim().length > 0
+          ? privateRemoteApiKey
+          : privateRemoteLastSuccessfulApiKey;
+      await runRemoteConnectionCheck(
+        {
+          baseUrl: baseUrlCandidate,
+          apiKey: apiKeyCandidate,
+          model: modelCandidate,
+        },
+        false,
+      );
+    },
+    [
+      privateRemoteBaseUrl,
+      privateRemoteModel,
+      privateRemoteApiKey,
+      privateRemoteLastSuccessfulBaseUrl,
+      privateRemoteLastSuccessfulApiKey,
+      privateRemoteLastSuccessfulModel,
+      setPrivateAiProvider,
+      runRemoteConnectionCheck,
+    ],
+  );
+
+  React.useEffect(() => {
+    if (didRunInitialProviderCheckRef.current) return;
+    if (privateAiProvider !== 'custom_openai') return;
+    didRunInitialProviderCheckRef.current = true;
+
+    const baseUrlCandidate =
+      privateRemoteBaseUrl.trim().length > 0
+        ? privateRemoteBaseUrl
+        : privateRemoteLastSuccessfulBaseUrl;
+    const modelCandidate =
+      privateRemoteModel.trim().length > 0 ? privateRemoteModel : privateRemoteLastSuccessfulModel;
+    const apiKeyCandidate =
+      privateRemoteApiKey.trim().length > 0
+        ? privateRemoteApiKey
+        : privateRemoteLastSuccessfulApiKey;
+
+    void runRemoteConnectionCheck({
+      baseUrl: baseUrlCandidate,
+      apiKey: apiKeyCandidate,
+      model: modelCandidate,
+    });
+  }, [
+    privateAiProvider,
+    privateRemoteBaseUrl,
+    privateRemoteApiKey,
+    privateRemoteModel,
+    privateRemoteLastSuccessfulBaseUrl,
+    privateRemoteLastSuccessfulApiKey,
+    privateRemoteLastSuccessfulModel,
+    runRemoteConnectionCheck,
+  ]);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -400,7 +522,7 @@ export const AiSettingsScreen = () => {
                         <TouchableOpacity
                           key={provider}
                           onPress={() => {
-                            setPrivateAiProvider(provider);
+                            void handlePrivateProviderSelect(provider);
                           }}
                           activeOpacity={0.7}
                           accessibilityRole="button"
@@ -467,19 +589,18 @@ export const AiSettingsScreen = () => {
                           <View
                             className="h-2.5 w-2.5 rounded-full"
                             style={{
-                              backgroundColor: hasSavedRemoteConfig
-                                ? color.accent.aiData
-                                : color.text.muted,
+                              backgroundColor: remoteConnectionStatusColor,
                             }}
                           />
                           <Text
                             className="text-[13px] font-semibold"
                             style={{ color: color.text.primary }}
                           >
-                            {hasSavedRemoteConfig
-                              ? t('aiSettings.privateProvider.savedConfigTitle')
-                              : t('aiSettings.privateProvider.notConfiguredTitle')}
+                            {remoteConnectionStatusLabel}
                           </Text>
+                          {connectionCheckInProgress ? (
+                            <ActivityIndicator size="small" color={color.text.muted} />
+                          ) : null}
                         </View>
                         {hasSavedRemoteConfig ? (
                           <>
@@ -680,8 +801,11 @@ export const AiSettingsScreen = () => {
         visible={remoteConfigSheetVisible}
         onClose={() => setRemoteConfigSheetVisible(false)}
       >
-        <BottomSheetView
-          style={{
+        <BottomSheetScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
             paddingHorizontal: 20,
             paddingTop: 8,
             ...sheetContentPadding,
@@ -818,10 +942,7 @@ export const AiSettingsScreen = () => {
                     >
                       <TouchableOpacity
                         onPress={() => setPrivateRemoteActiveProfile(profile.id)}
-                        className="min-w-0 flex-1 rounded-md px-2 py-1 pr-2"
-                        style={{
-                          backgroundColor: isActive ? color.background.secondary : 'transparent',
-                        }}
+                        className="min-w-0 flex-1 pr-2"
                       >
                         <Text
                           className="text-[13px] font-semibold"
@@ -943,6 +1064,7 @@ export const AiSettingsScreen = () => {
                   privateRemoteApiKey,
                   privateRemoteModel,
                 });
+                setLastConnectionCheckOk(result.ok);
                 if (result.ok) {
                   const profileId = privateRemoteActiveProfileId ?? `remote-${Date.now()}`;
                   const profileName = buildRemoteProfileName(
@@ -1002,7 +1124,7 @@ export const AiSettingsScreen = () => {
               </Text>
             </View>
           </TouchableOpacity>
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </AppBottomSheetModal>
     </View>
   );
