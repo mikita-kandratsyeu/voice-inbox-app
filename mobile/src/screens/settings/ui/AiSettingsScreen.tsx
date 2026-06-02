@@ -267,6 +267,51 @@ export const AiSettingsScreen = () => {
   const canTestConnection =
     baseUrlValidationError == null && isRemoteModelFilled && !isTestingConnection;
   const isCreatingNewConnection = privateRemoteActiveProfileId == null;
+  const hasSavedProfiles = privateRemoteProfiles.length > 0;
+  const switchToCreateConnectionMode = React.useCallback(() => {
+    setPreviousProfileBeforeCreateId(privateRemoteActiveProfileId);
+    setPrivateRemoteActiveProfile(null);
+    setPrivateRemoteBaseUrl('');
+    setPrivateRemoteApiKey('');
+    setPrivateRemoteModel('');
+  }, [
+    privateRemoteActiveProfileId,
+    setPrivateRemoteActiveProfile,
+    setPrivateRemoteApiKey,
+    setPrivateRemoteBaseUrl,
+    setPrivateRemoteModel,
+  ]);
+  const switchToSavedConnectionMode = React.useCallback(() => {
+    const restoreProfileId = previousProfileBeforeCreateId ?? privateRemoteProfiles[0]?.id ?? null;
+    if (restoreProfileId) {
+      setPrivateRemoteActiveProfile(restoreProfileId);
+    }
+    setPreviousProfileBeforeCreateId(null);
+  }, [previousProfileBeforeCreateId, privateRemoteProfiles, setPrivateRemoteActiveProfile]);
+  const openRemoteConfigSheet = React.useCallback(() => {
+    if (privateRemoteProfiles.length > 0) {
+      // Keep default state predictable on open: edit saved connection if any exist.
+      const defaultProfileId = privateRemoteActiveProfileId ?? privateRemoteProfiles[0]?.id ?? null;
+      if (defaultProfileId) {
+        setPrivateRemoteActiveProfile(defaultProfileId);
+      }
+      setPreviousProfileBeforeCreateId(null);
+    } else {
+      setPrivateRemoteActiveProfile(null);
+      setPreviousProfileBeforeCreateId(null);
+      setPrivateRemoteBaseUrl('');
+      setPrivateRemoteApiKey('');
+      setPrivateRemoteModel('');
+    }
+    setRemoteConfigSheetVisible(true);
+  }, [
+    privateRemoteProfiles,
+    privateRemoteActiveProfileId,
+    setPrivateRemoteActiveProfile,
+    setPrivateRemoteApiKey,
+    setPrivateRemoteBaseUrl,
+    setPrivateRemoteModel,
+  ]);
   const buildRemoteProfileName = React.useCallback(
     (baseUrl: string, model: string) => {
       const base = baseUrl.trim().toLowerCase();
@@ -475,7 +520,7 @@ export const AiSettingsScreen = () => {
                         )}
                       </View>
                       <TouchableOpacity
-                        onPress={() => setRemoteConfigSheetVisible(true)}
+                        onPress={openRemoteConfigSheet}
                         className="rounded-lg px-3 py-2"
                         style={{ backgroundColor: color.background.secondary }}
                       >
@@ -687,47 +732,57 @@ export const AiSettingsScreen = () => {
             ))}
           </View>
           <View className="mb-3">
-            <View
-              className="mb-2 rounded-xl border px-3 py-2.5"
-              style={{ borderColor: color.border.default }}
-            >
-              <View className="flex-row items-center justify-between">
-                <View className="min-w-0 flex-1 pr-3">
+            <View className="mb-2">
+              <View className="mb-2">
+                <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+                  {t('aiSettings.privateProvider.savedConnections')}
+                </Text>
+              </View>
+              <View className="flex-row gap-3">
+                <TouchableOpacity
+                  onPress={switchToSavedConnectionMode}
+                  disabled={!hasSavedProfiles}
+                  activeOpacity={0.85}
+                  className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
+                  style={{
+                    borderColor: !isCreatingNewConnection
+                      ? color.accent.primary
+                      : color.border.default,
+                    backgroundColor: color.background.tertiary,
+                    opacity: hasSavedProfiles ? 1 : 0.45,
+                  }}
+                >
                   <Text
-                    className="text-[13px] font-semibold"
-                    style={{ color: color.text.secondary }}
+                    className="text-center text-[15px] font-semibold leading-5"
+                    style={{
+                      color: !isCreatingNewConnection ? color.accent.primary : color.text.primary,
+                    }}
+                    numberOfLines={2}
                   >
-                    {t('aiSettings.privateProvider.savedConnections')}
+                    {t('aiSettings.privateProvider.editConfig')}
                   </Text>
-                  <Text className="mt-0.5 text-[12px]" style={{ color: color.text.muted }}>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={switchToCreateConnectionMode}
+                  activeOpacity={0.85}
+                  className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
+                  style={{
+                    borderColor: isCreatingNewConnection
+                      ? color.accent.primary
+                      : color.border.default,
+                    backgroundColor: color.background.tertiary,
+                  }}
+                >
+                  <Text
+                    className="text-center text-[15px] font-semibold leading-5"
+                    style={{
+                      color: isCreatingNewConnection ? color.accent.primary : color.text.primary,
+                    }}
+                    numberOfLines={2}
+                  >
                     {t('aiSettings.privateProvider.newConnectionSwitch')}
                   </Text>
-                </View>
-                <Switch
-                  value={isCreatingNewConnection}
-                  onValueChange={(next) => {
-                    if (next) {
-                      setPreviousProfileBeforeCreateId(privateRemoteActiveProfileId);
-                      setPrivateRemoteActiveProfile(null);
-                      setPrivateRemoteBaseUrl('');
-                      setPrivateRemoteApiKey('');
-                      setPrivateRemoteModel('');
-                      return;
-                    }
-                    const restoreProfileId =
-                      previousProfileBeforeCreateId ?? privateRemoteProfiles[0]?.id ?? null;
-                    if (restoreProfileId) {
-                      setPrivateRemoteActiveProfile(restoreProfileId);
-                    }
-                    setPreviousProfileBeforeCreateId(null);
-                  }}
-                  accessibilityLabel={t('aiSettings.privateProvider.newConnectionSwitch')}
-                  trackColor={{
-                    false: color.background.tertiary,
-                    true: color.accent.primary,
-                  }}
-                  thumbColor={color.icon.onAccent}
-                />
+                </TouchableOpacity>
               </View>
             </View>
             <Text className="mb-2 text-[12px] leading-4" style={{ color: color.text.muted }}>
@@ -735,7 +790,7 @@ export const AiSettingsScreen = () => {
                 ? t('aiSettings.privateProvider.newConnectionHint')
                 : t('aiSettings.privateProvider.editConnectionHint')}
             </Text>
-            {privateRemoteProfiles.length === 0 ? (
+            {!hasSavedProfiles ? (
               <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
                 {t('aiSettings.privateProvider.savedConnectionsEmpty')}
               </Text>
@@ -763,7 +818,10 @@ export const AiSettingsScreen = () => {
                     >
                       <TouchableOpacity
                         onPress={() => setPrivateRemoteActiveProfile(profile.id)}
-                        className="min-w-0 flex-1 pr-2"
+                        className="min-w-0 flex-1 rounded-md px-2 py-1 pr-2"
+                        style={{
+                          backgroundColor: isActive ? color.background.secondary : 'transparent',
+                        }}
                       >
                         <Text
                           className="text-[13px] font-semibold"

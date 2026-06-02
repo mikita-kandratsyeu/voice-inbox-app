@@ -23,12 +23,12 @@ import type {
   LocalAiModelId,
   PrivateCapabilityTier,
   PrivateLocalLlmBudget,
+  PrivateRemoteProfile,
   SettingsState,
   SummaryStyle,
   TaskStrictness,
   TranscriptionLanguage,
   UserSelectableAIModelId,
-  PrivateRemoteProfile,
   WhisperDownloadPhase,
   WhisperModelId,
   WhisperModelStatus,
@@ -396,9 +396,7 @@ const getStoredPrivateRemoteProfiles = (): PrivateRemoteProfile[] => {
   }
 };
 
-const getStoredPrivateRemoteActiveProfileId = (
-  profiles: PrivateRemoteProfile[],
-): string | null => {
+const getStoredPrivateRemoteActiveProfileId = (profiles: PrivateRemoteProfile[]): string | null => {
   const value = storage.getString(KEYS.PRIVATE_REMOTE_ACTIVE_PROFILE_ID);
   if (!value) return null;
   return profiles.some((profile) => profile.id === value) ? value : null;
