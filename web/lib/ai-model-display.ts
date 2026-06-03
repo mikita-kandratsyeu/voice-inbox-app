@@ -4,8 +4,10 @@ import {
   AI_MODEL_GEMINI_2_5_FLASH_LITE,
   AI_MODEL_GEMINI_3_1_FLASH_LITE,
   AI_MODEL_GPT_5_4_NANO,
+  AI_MODEL_MINIMAX_M3,
   AI_MODEL_MIMO_V2_5_PRO,
   AI_MODEL_NEMOTRON_3_SUPER,
+  LEGACY_AI_MODEL_MINIMAX_M2_7,
   normalizeIncomingAiModel,
 } from '@/config/constants';
 
@@ -17,7 +19,8 @@ const AI_MODEL_DISPLAY_LABELS: Record<string, string> = {
   [AI_MODEL_DEEPSEEK_V4_PRO]: 'DeepSeek V4 Pro',
   [AI_MODEL_GPT_5_4_NANO]: 'GPT-5.4 Nano',
   [AI_MODEL_MIMO_V2_5_PRO]: 'MiMo V2.5 Pro',
-  'minimax/minimax-m2.7': 'MiniMax M2.7',
+  [AI_MODEL_MINIMAX_M3]: 'MiniMax M3',
+  [LEGACY_AI_MODEL_MINIMAX_M2_7]: 'MiniMax M2.7',
   [AI_MODEL_NEMOTRON_3_SUPER]: 'Nemotron 3 Super',
 };
 

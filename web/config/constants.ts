@@ -152,6 +152,10 @@ export const AI_MODEL_GPT_5_4_NANO = 'openai/gpt-5.4-nano';
 /** System micro-tasks (folder auto-organize, etc.). */
 export const SYSTEM_MICRO_TASK_MODEL = AI_MODEL_GPT_5_4_NANO;
 export const AI_MODEL_MIMO_V2_5_PRO = 'xiaomi/mimo-v2.5-pro';
+/** Current MiniMax on OpenRouter (not ZDR-routed). */
+export const AI_MODEL_MINIMAX_M3 = 'minimax/minimax-m3';
+/** Legacy MiniMax — kept for clients that selected it before M3. */
+export const LEGACY_AI_MODEL_MINIMAX_M2_7 = 'minimax/minimax-m2.7';
 export const AI_MODEL_NEMOTRON_3_SUPER = 'nvidia/nemotron-3-super-120b-a12b';
 /** Removed from catalog — accepted from old clients, mapped in {@link normalizeIncomingAiModel}. */
 export const LEGACY_AI_MODEL_STEP_3_5_FLASH = 'stepfun/step-3.5-flash';
@@ -175,7 +179,8 @@ export const FALLBACK_MODEL = AI_MODEL_GEMINI_2_5_FLASH_LITE;
 export const ALLOWED_AI_MODELS: string[] = [
   AI_MODEL_GEMINI_2_5_FLASH_LITE,
   AI_MODEL_GEMINI_3_1_FLASH_LITE,
-  'minimax/minimax-m2.7',
+  AI_MODEL_MINIMAX_M3,
+  LEGACY_AI_MODEL_MINIMAX_M2_7,
   'google/gemini-2.5-flash-lite',
   AI_MODEL_DEEPSEEK_V4_FLASH,
   AI_MODEL_DEEPSEEK_V4_PRO,
