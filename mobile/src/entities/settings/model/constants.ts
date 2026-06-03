@@ -50,7 +50,7 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     provider: 'DeepSeek',
     descriptionKey: 'aiModels.deepSeekProDesc',
     speed: 'slow',
-    tierLabelKey: 'aiModels.tierPremium',
+    tierLabelKey: 'aiModels.tierDeepSeekPro',
     supportTierCode: 'premium_experimental',
     contextTokens: 1_000_000,
     usesOpenRouterZdr: false,

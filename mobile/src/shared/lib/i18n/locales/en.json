@@ -1362,6 +1362,7 @@
     "tierFast": "Fast",
     "tierSmart": "Smarter",
     "tierPremium": "Maximum",
+    "tierDeepSeekPro": "Deep analysis",
     "tierDeepSeek": "Structure",
     "tierMiMo": "Long recordings",
     "tierNemotron": "Reasoning",

@@ -58,6 +58,7 @@ export type AiModelTierLabelKey =
   | 'aiModels.tierSmart'
   | 'aiModels.tierPremium'
   | 'aiModels.tierDeepSeek'
+  | 'aiModels.tierDeepSeekPro'
   | 'aiModels.tierMiMo'
   | 'aiModels.tierNemotron';
 
