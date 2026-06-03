@@ -42,9 +42,11 @@ export function Header(): React.ReactElement {
             href={APP_STORE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-11 min-h-[44px] max-w-[9.5rem] items-center justify-center truncate rounded-xl bg-black px-3.5 text-sm font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_18px_rgba(15,23,42,0.2)] transition-[transform,background-color,box-shadow] hover:-translate-y-px hover:bg-black/90 hover:shadow-[0_8px_22px_rgba(15,23,42,0.24)] active:translate-y-0 active:shadow-[0_4px_14px_rgba(15,23,42,0.18)] sm:max-w-none sm:px-4 dark:bg-white dark:text-black dark:hover:bg-white/90 dark:hover:shadow-[0_8px_22px_rgba(255,255,255,0.18)] dark:active:bg-white/85 dark:active:shadow-[0_4px_14px_rgba(255,255,255,0.12)]"
+            aria-label={t('installApp')}
+            className="inline-flex h-11 min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-black px-3.5 text-sm font-semibold text-white shadow-[0_1px_0_rgba(255,255,255,0.12)_inset,0_6px_18px_rgba(15,23,42,0.2)] transition-[transform,background-color,box-shadow] hover:-translate-y-px hover:bg-black/90 hover:shadow-[0_8px_22px_rgba(15,23,42,0.24)] active:translate-y-0 active:shadow-[0_4px_14px_rgba(15,23,42,0.18)] sm:px-4 md:px-5 dark:bg-white dark:text-black dark:hover:bg-white/90 dark:hover:shadow-[0_8px_22px_rgba(255,255,255,0.18)] dark:active:bg-white/85 dark:active:shadow-[0_4px_14px_rgba(255,255,255,0.12)]"
           >
-            <span className="truncate">{t('installApp')}</span>
+            <span className="md:hidden">{t('installAppShort')}</span>
+            <span className="hidden md:inline">{t('installApp')}</span>
           </a>
 
           <div className={utilitiesShellClass} role="group" aria-label={t('preferencesAria')}>
