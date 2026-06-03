@@ -2,7 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import { useRecordStore, type VoiceRecord } from '@/entities/record';
-import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
+import {
+  DEFAULT_LOCAL_AI_MODEL_ID,
+  resolveEffectivePrivateAiProvider,
+  useSettingsStore,
+} from '@/entities/settings';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import {
   type AiAbortHandle,
@@ -111,10 +115,10 @@ export const useAskAI = (
   const privateRemoteApiKey = useSettingsStore((s) => s.privateRemoteApiKey);
   const privateRemoteModel = useSettingsStore((s) => s.privateRemoteModel);
   const cloudAiKvTtlSeconds = useSettingsStore((s) => s.cloudAiKvTtlSeconds);
-  const effectivePrivateAiProvider =
-    isProActiveFromStorageSync() && privateAiProvider === 'custom_openai'
-      ? 'custom_openai'
-      : 'local';
+  const effectivePrivateAiProvider = resolveEffectivePrivateAiProvider(
+    privateAiProvider,
+    isProActiveFromStorageSync(),
+  );
   const effectiveLocalAiModelId = selectedLocalAiModel ?? DEFAULT_LOCAL_AI_MODEL_ID;
   const isLocalLlmModelDownloaded =
     selectedLocalAiModel != null &&

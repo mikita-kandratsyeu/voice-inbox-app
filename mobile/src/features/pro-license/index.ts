@@ -14,4 +14,5 @@ export { useProEntitlement } from './model/ProEntitlementProvider';
 export { useProActiveFromStorage } from './model/useProActiveFromStorage';
 export { useResetAccentWhenNotPro } from './model/useResetAccentWhenNotPro';
 export { useResetProOnlyAiModelWhenNotPro } from './model/useResetProOnlyAiModelWhenNotPro';
+export { useResetPrivateAiServerWhenNotPro } from './model/useResetPrivateAiServerWhenNotPro';
 export { ProLicenseKeyModal } from './ui/ProLicenseKeyModal';

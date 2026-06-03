@@ -102,7 +102,7 @@
       "foldersEmpty": "Tap + to add your first folder.",
       "editFolderHint": "Long press to edit folder",
       "privateFoldersUnavailable": "Folders and AI folder organization aren't available with the on-device model in Private mode.",
-      "privateFoldersCta": "Connect your AI server in settings",
+      "privateFoldersCta": "Set up AI server",
       "aiProcessingHint": "AI is working on notes in this section",
       "aiUsage": {
         "openDetails": "Open usage details"
@@ -708,7 +708,7 @@
         },
         "digest": {
           "title": "AI digest",
-          "subtitle": "Recap a day, week, or month — optional AI narrative."
+          "subtitle": "Your day, week, or month at a glance — with an optional AI recap."
         },
         "autoOrganize": {
           "title": "Auto-organize",
@@ -722,11 +722,12 @@
       }
     },
     "digest": {
+      "sectionTitle": "Overview",
       "title": "AI digest",
-      "settingsSubtitle": "Notes, tasks, and themes for today, the last 7 days, or 30 days.",
-      "subtitle": "Metrics and lists are built on your device from summaries, tasks, and key phrases.",
-      "smartModeOnlyTitle": "Digest is available in Smart mode",
-      "smartModeOnlyDesc": "Switch AI mode to Smart to view your recap for today, the last 7 days, or 30 days and generate an AI narrative.",
+      "settingsSubtitle": "Notes, tasks, and themes — today, the last 7 days, or 30 days.",
+      "subtitle": "We build the numbers and lists on your device from your summaries, tasks, and key phrases.",
+      "unavailableTitle": "Digest isn't available yet",
+      "unavailableDesc": "Turn on Smart mode, or connect an AI server in Private (Pro), to see your day, week, or month at a glance and get an AI-written recap.",
       "period": {
         "day": "Today",
         "week": "Last 7 days",
@@ -753,16 +754,24 @@
         "overdueHelper": "Past deadline"
       },
       "aiTitle": "AI recap",
-      "aiDescription": "Turn this period into a short narrative of what mattered. Uses one cloud generation.",
-      "aiManualHint": "Not generated yet. Metrics and lists above update for free.",
-      "aiGeneratedAt": "Generated {{date}}. Regenerate after you add or edit notes.",
-      "aiCoverageNotesPartial": "{{included}} of {{total}} notes are included — newest first. Older notes are left out of the AI recap.",
+      "aiDescription": "A short story of what mattered in this period.",
+      "aiDescriptionCloud": "A short story of what mattered. Counts toward your weekly Smart AI limit.",
+      "aiDescriptionPrivateRemote": "A short story of what mattered — powered by your connected AI server.",
+      "aiManualHint": "Not created yet. The numbers and lists above still update on their own.",
+      "aiGeneratedAt": "Updated {{date}}. Refresh after you add or edit notes.",
+      "aiCoverageNotesPartial": "{{included}} of {{total}} notes are in this recap — newest first. Older ones aren't sent to the AI.",
       "aiCoverageSummariesTruncated_one": "One long summary is shortened to keep the request fast.",
       "aiCoverageSummariesTruncated_other": "{{count}} summaries are shortened to keep the request fast.",
-      "aiGenerating": "Writing your recap...",
-      "aiGeneratingDescription": "Sending your newest notes and tasks to the cloud for a short summary.",
-      "generateAi": "Generate AI recap",
-      "regenerateAi": "Refresh AI recap",
+      "aiGenerating": "Creating your recap…",
+      "aiGeneratingDescription": "We're pulling your latest notes and tasks into a short recap.",
+      "aiGeneratingDescriptionCloud": "We're sending your latest notes and tasks to the cloud.",
+      "aiGeneratingDescriptionPrivateRemote": "We're sending your latest notes and tasks to your AI server.",
+      "generateAi": "Create recap",
+      "regenerateAi": "Refresh recap",
+      "shareRecap": "Share recap",
+      "shareRecapDescription": "Markdown file or PDF via the system share sheet.",
+      "emailDescription": "Send the recap as Markdown in the message body or as a PDF attachment.",
+      "emailSentMessage": "The digest was sent to {{email}}.",
       "aiLimitError": "Weekly AI limit reached. Try again after reset or upgrade your plan.",
       "emptyAi": "Nothing here yet — record a note and your digest will fill in.",
       "topicsTitle": "Top topics",
@@ -934,7 +943,7 @@
         "accentCustomization": "Accent color — buttons & progress",
         "folderColors": "Custom folder colors",
         "meetingModeAndPinnedMoments": "Meeting mode and pinned moments",
-        "premiumAiModels": "Advanced AI models, including your AI server in Private mode",
+        "premiumAiModels": "Advanced models and an AI server in Private mode",
         "extendedShareAndBatchExport": "Extended note export — summaries, email, and audio",
         "noAds": "No ads"
       }
@@ -1234,12 +1243,12 @@
     "privateLocalGenerationHint": "How detailed summaries and answers are when running without a server.",
     "privateProvider": {
       "title": "Private Source",
-      "description": "Choose where Private mode runs: on your device or your AI server. Folders and AI folder organization are available with Custom AI server.",
+      "description": "Choose where Private mode runs: on this device or a connected AI server. Folders and auto-organize need an AI server.",
       "local": "On device",
       "custom_openai": "AI server",
       "proOnlyHint": "Pro only",
-      "proTitle": "Bring Your AI Server in Pro",
-      "proBody": "Connect Ollama or LM Studio to run Private mode on your AI server—including folders and AI folder organization.",
+      "proTitle": "AI server in Pro",
+      "proBody": "Connect Ollama or LM Studio for folders, auto-organize, and Private mode without Voice Inbox cloud.",
       "serverConfig": "AI server connection",
       "serverConfigHint": "For example, Ollama or LM Studio on your computer or home network.",
       "quickTemplates": "Quick setup",
@@ -1326,15 +1335,15 @@
       "modelList": {
         "title": "Choose a model",
         "sheetTitle": "Choose a model",
-        "sheetSubtitle": "Models available on your server",
+        "sheetSubtitle": "Models on your connected server",
         "pickFromServer": "Choose from server list",
         "needBaseUrl": "Enter a server address first",
         "empty": "Couldn't load the model list. Check the server address and try again."
       }
     },
     "privateRemoteGeneration": {
-      "title": "Your AI server",
-      "hint": "How long answers from your connected AI server can be. Doesn't affect on-device models.",
+      "title": "AI server",
+      "hint": "How long answers can be when using your connected server. Doesn't affect on-device models.",
       "efficient": "Shorter",
       "balanced": "Balanced",
       "expanded": "Longer",
@@ -1373,9 +1382,9 @@
   },
   "privateAiMode": {
     "title": "Private vs Smart",
-    "description": "Private mode runs AI on your device or your AI server—nothing goes to Voice Inbox AI servers. Folders and AI folder organization work with Custom AI server. Smart mode adds cloud speed and more features.",
+    "description": "Private keeps AI on your device or AI server—off Voice Inbox cloud. Folders and auto-organize need an AI server. Smart is faster, with more features in the cloud.",
     "enableAlertTitle": "Turn on Private mode?",
-    "enableAlertMessage": "Maximum privacy.\n\nWith the on-device model, all data—including transcripts—is processed only on this device.\n\nWhat to expect:\n• May run more slowly\n• Higher battery use\n• Folders and AI folder organization need Custom AI server (or Smart mode)\n\nYou can switch back to Smart mode anytime.",
+    "enableAlertMessage": "Maximum privacy.\n\nWith the on-device model, everything—including transcripts—stays on this phone.\n\nGood to know:\n• May feel slower\n• Uses more battery\n• Folders and auto-organize need an AI server or Smart mode\n\nYou can switch back to Smart anytime.",
     "unavailableDeviceHint": "This device does not meet Private mode requirements (about 5.5 GB RAM and 3.5 GB free storage). Use Smart mode.",
     "unavailableDiagnostics": "Detected: {{ram}} RAM, {{disk}} free storage.",
     "unavailableDiagnosticsPartial": "Detected: {{details}}.",
@@ -1384,7 +1393,7 @@
   },
   "aiModels": {
     "title": "Generation model",
-    "privateDescription": "On-device: local models only. Custom AI server: folders, AI organization, and your chosen model—requests go only to your AI server.",
+    "privateDescription": "On-device: local models and core features. AI server: folders, auto-organize, and your model—nothing goes to Voice Inbox cloud.",
     "privateBudgetHint": "Output length and generation time are set in AI settings under \"On-device inference\".",
     "localDownloadBlockedTitle": "Download in progress",
     "localDownloadBlockedBody": "Wait for the current model to finish downloading, or cancel it, then try again.",
@@ -1543,7 +1552,7 @@
   },
   "cloudAiConsent": {
     "title": "Cloud AI and your notes",
-    "body": "To generate summaries, tasks, answers, translations, and folder suggestions in Smart mode, the app sends the relevant text from your notes (for example transcripts, titles, summaries, tasks, and your questions about a note) to Voice Inbox AI servers over HTTPS. Our servers forward those requests to third-party AI providers through OpenRouter (including Google Gemini, MiniMax, and DeepSeek, depending on routing and availability).\n\nAudio files are not uploaded for these features. Only the text you choose to process is sent. In Private mode with the on-device model, summaries and note Q&A run locally; folders and AI folder organization need Custom AI server or Smart mode.\n\nDo you allow sending this note content to our servers for cloud AI processing?",
+    "body": "To generate summaries, tasks, answers, translations, and folder suggestions in Smart mode, the app sends the relevant text from your notes (for example transcripts, titles, summaries, tasks, and your questions about a note) to Voice Inbox AI servers over HTTPS. Our servers forward those requests to third-party AI providers through OpenRouter (including Google Gemini, MiniMax, and DeepSeek, depending on routing and availability).\n\nAudio files are not uploaded for these features. Only the text you choose to process is sent. In Private mode with the on-device model, summaries and note Q&A run locally; folders and auto-organize need an AI server or Smart mode.\n\nDo you allow sending this note content to our servers for cloud AI processing?",
     "privacyLink": "Privacy Policy",
     "agree": "Allow",
     "notNow": "Not now",
@@ -1695,8 +1704,8 @@
     "batteryHint": "On-device AI runs only while the app is open. Battery usage may increase."
   },
   "privateRemoteAi": {
-    "requesting": "Contacting your server…",
-    "generating": "Your server is generating a response…",
+    "requesting": "Connecting to AI server…",
+    "generating": "AI server is working on your answer…",
     "secondsLeft": "~{{ count }} sec left",
     "minutesLeft": "~{{ count }} min left"
   },

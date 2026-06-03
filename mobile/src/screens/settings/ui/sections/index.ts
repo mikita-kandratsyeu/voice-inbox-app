@@ -1,4 +1,5 @@
 export { SettingsAiProcessingSection } from './SettingsAiProcessingSection';
+export { SettingsDigestSection } from './SettingsDigestSection';
 export { SettingsAppearanceSection } from './SettingsAppearanceSection';
 export { SettingsAutomationSection } from './SettingsAutomationSection';
 export { SettingsBackupSection } from './SettingsBackupSection';

@@ -4,7 +4,11 @@ import { useShallow } from 'zustand/react/shallow';
 import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import type { MeetingDialogueLoadStatus, VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
+import {
+  DEFAULT_LOCAL_AI_MODEL_ID,
+  resolveEffectivePrivateAiProvider,
+  useSettingsStore,
+} from '@/entities/settings';
 import {
   applyAiSummaryResult,
   existingTaskTextsForRecord,
@@ -139,10 +143,10 @@ export const useAiProcessing = () => {
   );
 
   const effectiveLocalAiModelId = selectedLocalAiModel ?? DEFAULT_LOCAL_AI_MODEL_ID;
-  const effectivePrivateAiProvider =
-    isProActiveFromStorageSync() && privateAiProvider === 'custom_openai'
-      ? 'custom_openai'
-      : 'local';
+  const effectivePrivateAiProvider = resolveEffectivePrivateAiProvider(
+    privateAiProvider,
+    isProActiveFromStorageSync(),
+  );
   const isLocalLlmModelDownloaded =
     selectedLocalAiModel != null &&
     (localLlmModelStatuses[selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded';

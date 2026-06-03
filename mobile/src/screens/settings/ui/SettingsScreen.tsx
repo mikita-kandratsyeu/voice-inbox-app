@@ -27,6 +27,7 @@ import {
   SettingsAiProcessingSection,
   SettingsAppearanceSection,
   SettingsAutomationSection,
+  SettingsDigestSection,
   SettingsBackupSection,
   SettingsDeviceSection,
   SettingsPermissionsSection,
@@ -149,6 +150,13 @@ export const SettingsScreen = () => {
               onLockedPress={settings.setAutomationSheet}
             />
           )}
+          {settings.digestAiEnabled ? (
+            <SettingsDigestSection
+              color={settings.color}
+              t={settings.t}
+              onOpenDigest={() => settings.navigation.navigate('Digest')}
+            />
+          ) : null}
           <SettingsAiProcessingSection
             color={settings.color}
             t={settings.t}
@@ -160,8 +168,6 @@ export const SettingsScreen = () => {
             embeddingAvailable={settings.embeddingAvailable}
             isUpdatingEmbeddings={settings.isUpdatingEmbeddings}
             onUpdateEmbeddings={settings.handleUpdateEmbeddings}
-            showDigest={settings.digestAiEnabled}
-            onOpenDigest={() => settings.navigation.navigate('Digest')}
           />
           <SettingsBackupSection
             color={settings.color}

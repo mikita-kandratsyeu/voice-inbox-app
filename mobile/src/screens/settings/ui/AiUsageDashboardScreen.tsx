@@ -1,10 +1,10 @@
 import {
-  CalendarDays,
   Cloud,
   FolderTree,
   Languages,
   MessageCircleQuestion,
   Mic,
+  Newspaper,
   Sparkles,
   WifiOff,
 } from 'lucide-react-native';
@@ -184,7 +184,7 @@ export const AiUsageDashboardScreen = () => {
       },
       {
         key: 'digest',
-        icon: <CalendarDays size={20} color={color.accent.primary} strokeWidth={1.8} />,
+        icon: <Newspaper size={20} color={color.accent.transcript} strokeWidth={1.8} />,
         label: t('settings.aiUsageDashboard.features.digest.title'),
         value: t('settings.aiUsageDashboard.cloudBadge'),
         subtitle: t('settings.aiUsageDashboard.features.digest.subtitle'),

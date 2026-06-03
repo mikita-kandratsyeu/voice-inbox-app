@@ -3,7 +3,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
-import { useSettingsStore } from '@/entities/settings';
+import { isPrivateCustomServerMode, useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 
 type PrivateModeBadgeProps = {
@@ -95,7 +95,7 @@ export function PrivateExecutionBadge({ color, compact = false }: PrivateModeBad
     return null;
   }
 
-  if (privateAiProvider === 'custom_openai') {
+  if (isPrivateCustomServerMode(aiExecutionMode, privateAiProvider)) {
     return <CustomServerModeBadge color={color} compact={compact} />;
   }
 

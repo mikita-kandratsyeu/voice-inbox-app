@@ -8,6 +8,7 @@ import type { VoiceRecord } from '@/entities/record';
 import {
   DEFAULT_LOCAL_AI_MODEL_ID,
   isPrivateCustomServerMode,
+  resolveEffectivePrivateAiProvider,
   useSettingsStore,
 } from '@/entities/settings';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
@@ -82,10 +83,10 @@ function isLikelyNetworkError(raw: string): boolean {
 
 function buildAiExecutionContextFromSettings(): AiExecutionContext {
   const s = useSettingsStore.getState();
-  const effectivePrivateAiProvider =
-    isProActiveFromStorageSync() && s.privateAiProvider === 'custom_openai'
-      ? 'custom_openai'
-      : 'local';
+  const effectivePrivateAiProvider = resolveEffectivePrivateAiProvider(
+    s.privateAiProvider,
+    isProActiveFromStorageSync(),
+  );
 
   return {
     selectedAIModel: s.selectedAIModel,

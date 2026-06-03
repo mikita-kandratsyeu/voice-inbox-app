@@ -1,7 +1,11 @@
 import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { DEFAULT_LOCAL_AI_MODEL_ID, useSettingsStore } from '@/entities/settings';
+import {
+  DEFAULT_LOCAL_AI_MODEL_ID,
+  resolveEffectivePrivateAiProvider,
+  useSettingsStore,
+} from '@/entities/settings';
 import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import { pruneSpeakerLabelsForDialogue } from '@/screens/recording-detail/lib/meetingSpeakerLabels';
 import {
@@ -31,10 +35,10 @@ function buildPrivateAiContext(settings: ReturnType<typeof useSettingsStore.getS
   isLocalLlmModelDownloaded: boolean;
 } {
   const effectiveLocalAiModelId = settings.selectedLocalAiModel ?? DEFAULT_LOCAL_AI_MODEL_ID;
-  const effectivePrivateAiProvider =
-    isProActiveFromStorageSync() && settings.privateAiProvider === 'custom_openai'
-      ? 'custom_openai'
-      : 'local';
+  const effectivePrivateAiProvider = resolveEffectivePrivateAiProvider(
+    settings.privateAiProvider,
+    isProActiveFromStorageSync(),
+  );
   const isLocalLlmModelDownloaded =
     settings.selectedLocalAiModel != null &&
     (settings.localLlmModelStatuses[effectiveLocalAiModelId] ?? 'not_downloaded') === 'downloaded';

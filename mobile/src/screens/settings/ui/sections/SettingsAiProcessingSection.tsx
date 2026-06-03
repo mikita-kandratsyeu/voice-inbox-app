@@ -1,6 +1,6 @@
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { TFunction } from 'i18next';
-import { Bot, CalendarDays, Cpu, Mic, RefreshCw, Settings2 } from 'lucide-react-native';
+import { Bot, Cpu, Mic, RefreshCw, Settings2 } from 'lucide-react-native';
 import React from 'react';
 
 import type { SettingsStackParamList } from '@/app/navigation/types';
@@ -18,8 +18,6 @@ type Props = {
   embeddingAvailable: boolean;
   isUpdatingEmbeddings: boolean;
   onUpdateEmbeddings: () => void;
-  showDigest: boolean;
-  onOpenDigest: () => void;
 };
 
 export const SettingsAiProcessingSection = ({
@@ -33,11 +31,8 @@ export const SettingsAiProcessingSection = ({
   embeddingAvailable,
   isUpdatingEmbeddings,
   onUpdateEmbeddings,
-  showDigest,
-  onOpenDigest,
 }: Props) => {
-  const aiSettingsIsLast = !showDigest && !embeddingAvailable;
-  const digestIsLast = showDigest && !embeddingAvailable;
+  const aiSettingsIsLast = !embeddingAvailable;
 
   return (
     <SettingsSection title={t('settings.aiProcessing')}>
@@ -71,16 +66,6 @@ export const SettingsAiProcessingSection = ({
         onPress={() => navigation.navigate('AiSettings')}
         isLast={aiSettingsIsLast}
       />
-      {showDigest ? (
-        <SettingsRow
-          label={t('settings.digest.title')}
-          subtitle={t('settings.digest.settingsSubtitle')}
-          leftIcon={<CalendarDays size={20} color={color.accent.primary} strokeWidth={1.8} />}
-          onPress={onOpenDigest}
-          showChevron
-          isLast={digestIsLast}
-        />
-      ) : null}
       {embeddingAvailable && (
         <SettingsRow
           label={

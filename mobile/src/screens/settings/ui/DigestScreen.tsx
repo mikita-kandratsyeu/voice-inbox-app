@@ -6,8 +6,8 @@ import {
   CheckCircle2,
   Clock3,
   Info,
+  Newspaper,
   Share as ShareIcon,
-  Sparkles,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +16,6 @@ import {
   Alert,
   RefreshControl,
   ScrollView,
-  Share,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -30,12 +29,16 @@ import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import { useRecordStore } from '@/entities/record';
 import { isDigestAiEnabled, useSettingsStore } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
-import { isUserCancelledShare } from '@/features/share-record/lib/isUserCancelledShare';
+import { useProEntitlement } from '@/features/pro-license';
+import { saveLastShareRecipientEmail } from '@/features/share-record';
+import type { ShareRecordExportFormat } from '@/features/share-record/model/shareRecordExportFormat';
 import { useColors } from '@/shared/config';
+import { hapticError, hapticSuccess } from '@/shared/lib';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import type { DigestAiResult } from '@/shared/lib/ai-api';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 import { resolveDayjsLocale } from '@/shared/lib/date';
+import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 import {
   formatLocalTimeOfDay,
   formatTaskDeadlineTimeForDisplay,
@@ -58,6 +61,13 @@ import {
   startDigestGeneration,
   useDigestGenerating,
 } from '../lib/digestGeneration';
+import {
+  emailDigestExport,
+  sanitizeDigestFileBaseName,
+  shareDigestExport,
+  shareDigestPlainText,
+} from '../lib/shareDigest';
+import { DigestShareSheet } from './DigestShareSheet';
 
 type MetricCardProps = {
   label: string;
@@ -302,6 +312,9 @@ export const DigestScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [aiResult, setAiResult] = useState<DigestAiResult | null>(null);
   const [aiCreatedAt, setAiCreatedAt] = useState<string | null>(null);
+  const [shareSheetVisible, setShareSheetVisible] = useState(false);
+  const [emailSending, setEmailSending] = useState(false);
+  const { isProActive } = useProEntitlement();
   const mountedRef = useRef(true);
 
   useEffect(() => {
@@ -529,8 +542,8 @@ export const DigestScreen = () => {
       ? 'settings.digest.aiDescriptionCloud'
       : 'settings.digest.aiDescription';
 
-  const handleShareDigest = useCallback(async () => {
-    if (!aiResult) return;
+  const digestSharePayload = useMemo(() => {
+    if (!aiResult) return null;
 
     const { message, title } = buildDigestSharePayload({
       title: t('settings.digest.title'),
@@ -539,14 +552,61 @@ export const DigestScreen = () => {
       markdown: aiResult.markdown,
     });
 
-    try {
-      await Share.share({ message, title });
-    } catch (err) {
-      if (!isUserCancelledShare(err)) {
-        Alert.alert(t('common.error'), t('recordingDetail.shareFailed'));
-      }
-    }
+    return {
+      message,
+      title,
+      fileBaseName: sanitizeDigestFileBaseName(title),
+    };
   }, [aiResult, period, rangeText, t]);
+
+  const handleShareDigestExport = useCallback(
+    async (format: ShareRecordExportFormat) => {
+      if (!digestSharePayload) return;
+
+      try {
+        await shareDigestExport(digestSharePayload, format);
+      } catch (err) {
+        Alert.alert(t('common.error'), toUserFacingFetchErrorFromUnknown(err));
+      }
+    },
+    [digestSharePayload, t],
+  );
+
+  const handleEmailDigest = useCallback(
+    async (email: string, format: ShareRecordExportFormat) => {
+      if (!digestSharePayload) return;
+
+      setEmailSending(true);
+      try {
+        await emailDigestExport(email, digestSharePayload, format);
+        saveLastShareRecipientEmail(email);
+        hapticSuccess();
+        setShareSheetVisible(false);
+        Alert.alert(t('share.emailSentTitle'), t('settings.digest.emailSentMessage', { email }));
+      } catch (err) {
+        hapticError();
+        Alert.alert(t('share.emailFailedTitle'), toUserFacingFetchErrorFromUnknown(err));
+      } finally {
+        setEmailSending(false);
+      }
+    },
+    [digestSharePayload, t],
+  );
+
+  const onOpenShare = useCallback(() => {
+    if (!digestSharePayload) return;
+
+    if (isProActive) {
+      setShareSheetVisible(true);
+      return;
+    }
+
+    void shareDigestPlainText(digestSharePayload).catch((err: unknown) => {
+      Alert.alert(t('common.error'), toUserFacingFetchErrorFromUnknown(err));
+    });
+  }, [digestSharePayload, isProActive, t]);
+
+  const onCloseShareSheet = useCallback(() => setShareSheetVisible(false), []);
 
   const shareHeaderButton = useMemo(
     () =>
@@ -557,13 +617,13 @@ export const DigestScreen = () => {
           size="md"
           icon={<ShareIcon size={20} color={color.text.primary} strokeWidth={2.2} />}
           color={color}
-          onPress={() => void handleShareDigest()}
+          onPress={onOpenShare}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           accessibilityLabel={t('share.share')}
         />
       ) : null,
-    [aiResult, color, handleShareDigest, t],
+    [aiResult, color, onOpenShare, t],
   );
 
   if (!digestAiEnabled) {
@@ -586,7 +646,7 @@ export const DigestScreen = () => {
               className="mb-4 h-14 w-14 items-center justify-center rounded-full"
               style={{ backgroundColor: color.background.tertiary }}
             >
-              <Sparkles size={24} color={color.accent.primary} strokeWidth={1.9} />
+              <Newspaper size={24} color={color.accent.transcript} strokeWidth={1.8} />
             </View>
             <Text
               className="text-center text-[20px] font-semibold leading-7"
@@ -683,7 +743,7 @@ export const DigestScreen = () => {
 
           <SectionCard
             title={t('settings.digest.aiTitle')}
-            icon={<Sparkles size={18} color={color.accent.primary} strokeWidth={1.8} />}
+            icon={<Newspaper size={18} color={color.accent.transcript} strokeWidth={1.8} />}
           >
             <Text className="mb-3 text-[13px] leading-[18px]" style={{ color: color.text.muted }}>
               {aiGeneratedText}
@@ -751,6 +811,14 @@ export const DigestScreen = () => {
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
         </ScrollView>
       </View>
+
+      <DigestShareSheet
+        visible={shareSheetVisible}
+        isSendingEmail={emailSending}
+        onClose={onCloseShareSheet}
+        onShare={handleShareDigestExport}
+        onEmail={handleEmailDigest}
+      />
     </View>
   );
 };

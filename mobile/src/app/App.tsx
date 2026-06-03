@@ -26,6 +26,7 @@ import { PlanPaywallProvider } from '@/features/plan-paywall';
 import {
   ProEntitlementProvider,
   useResetAccentWhenNotPro,
+  useResetPrivateAiServerWhenNotPro,
   useResetProOnlyAiModelWhenNotPro,
 } from '@/features/pro-license';
 import { useTaskDeadlineNotificationHandlers } from '@/features/task-deadline-notifications/model/useTaskDeadlineNotificationHandlers';
@@ -105,6 +106,7 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
   useAppForegroundLifecycle();
   useResetAccentWhenNotPro({ enabled: !bootSplashVisible });
   useResetProOnlyAiModelWhenNotPro({ enabled: !bootSplashVisible });
+  useResetPrivateAiServerWhenNotPro({ enabled: !bootSplashVisible });
 
   const rootStyle = { flex: 1 };
   const safeAreaStyle = { backgroundColor: color.background.primary };

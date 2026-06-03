@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 
+import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import { parseAccentColorId } from '@/shared/config';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { storage } from '@/shared/lib/async-storage';
 import { isNumber, isRecord, isString } from '@/shared/lib/type-guards';
 
 import { CLOUD_AI_KV_TTL_DEFAULT_SECONDS, snapCloudAiKvTtlToChoice } from '../lib/cloudAiKvTtl';
+import { resolveEffectivePrivateAiProvider } from '../lib/resolveEffectivePrivateAiProvider';
 import {
   getPrivateRemoteSecrets,
   removePrivateRemoteProfileApiKey,
@@ -368,7 +370,12 @@ const getStoredPrivateCapabilityTier = (): PrivateCapabilityTier => {
 
 const getStoredPrivateAiProvider = (): 'local' | 'custom_openai' => {
   const val = storage.getString(KEYS.PRIVATE_AI_PROVIDER);
-  return val === 'custom_openai' ? 'custom_openai' : 'local';
+  const stored = val === 'custom_openai' ? 'custom_openai' : 'local';
+  const effective = resolveEffectivePrivateAiProvider(stored, isProActiveFromStorageSync());
+  if (effective !== stored) {
+    storage.set(KEYS.PRIVATE_AI_PROVIDER, effective);
+  }
+  return effective;
 };
 
 const getStoredPrivateRemoteBaseUrl = (): string => {
@@ -668,8 +675,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   setPrivateAiProvider: (value) => {
-    storage.set(KEYS.PRIVATE_AI_PROVIDER, value);
-    set({ privateAiProvider: value });
+    const effective = resolveEffectivePrivateAiProvider(value, isProActiveFromStorageSync());
+    storage.set(KEYS.PRIVATE_AI_PROVIDER, effective);
+    set({ privateAiProvider: effective });
   },
 
   setPrivateRemoteBaseUrl: (value) => {
