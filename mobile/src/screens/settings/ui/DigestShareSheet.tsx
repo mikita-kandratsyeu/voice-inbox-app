@@ -47,7 +47,9 @@ function ShareExportFormatChip({
 }
 
 function shareExportFormatHintKey(format: ShareRecordExportFormat): string {
-  return format === 'pdf' ? 'share.exportPackagingHintPdf' : 'share.exportPackagingHintMarkdown';
+  return format === 'pdf'
+    ? 'settings.digest.exportPackagingHintPdf'
+    : 'settings.digest.exportPackagingHintMarkdown';
 }
 
 function shareEmailLimitReminderKey(format: ShareRecordExportFormat): string {
