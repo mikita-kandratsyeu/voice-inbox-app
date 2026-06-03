@@ -12,12 +12,14 @@ type PrivateModeBadgeProps = {
   text?: string;
 };
 
-type BadgeChromeProps = PrivateModeBadgeProps & {
+type BadgeChromeProps = {
+  compact?: boolean;
   accentColor: string;
   icon: React.ReactNode;
+  text: string;
 };
 
-function BadgeChrome({ color, compact = false, accentColor, icon, text }: BadgeChromeProps) {
+function BadgeChrome({ compact = false, accentColor, icon, text }: BadgeChromeProps) {
   return (
     <View
       className="flex-row items-center rounded-full"
@@ -55,13 +57,7 @@ export const PrivateModeBadge = ({ color, compact = false, text }: PrivateModeBa
   const icon = text ? <Mic {...iconProps} /> : <Shield {...iconProps} />;
 
   return (
-    <BadgeChrome
-      color={color}
-      compact={compact}
-      accentColor={color.accent.primary}
-      icon={icon}
-      text={label}
-    />
+    <BadgeChrome compact={compact} accentColor={color.accent.primary} icon={icon} text={label} />
   );
 };
 
@@ -77,7 +73,6 @@ function CustomServerModeBadge({ color, compact = false }: PrivateModeBadgeProps
 
   return (
     <BadgeChrome
-      color={color}
       compact={compact}
       accentColor={accentColor}
       icon={<Server {...iconProps} />}
