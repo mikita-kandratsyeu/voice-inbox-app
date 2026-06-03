@@ -101,8 +101,8 @@
       "folders": "Folders",
       "foldersEmpty": "Tap + to add your first folder.",
       "editFolderHint": "Long press to edit folder",
-      "privateFoldersUnavailable": "Folders aren't available in Private mode",
-      "privateFoldersCta": "Open AI mode settings",
+      "privateFoldersUnavailable": "Folders and AI folder organization aren't available with the on-device model in Private mode.",
+      "privateFoldersCta": "Connect your server in AI settings",
       "aiProcessingHint": "AI is working on notes in this section",
       "aiUsage": {
         "openDetails": "Open usage details"
@@ -1234,12 +1234,12 @@
     "privateLocalGenerationHint": "How detailed summaries and answers are when running without a server.",
     "privateProvider": {
       "title": "Private Source",
-      "description": "Choose where Private mode runs: on your device or your own server.",
+      "description": "Choose where Private mode runs: on your device or your own server. Folders and AI folder organization are available with Custom server.",
       "local": "On device",
       "custom_openai": "Custom server",
       "proOnlyHint": "Pro only",
       "proTitle": "Bring Your AI Server in Pro",
-      "proBody": "Connect Ollama or LM Studio and run Private mode through your own server.",
+      "proBody": "Connect Ollama or LM Studio to run Private mode on your server—including folders and AI folder organization.",
       "serverConfig": "Server connection",
       "serverConfigHint": "For example, Ollama or LM Studio on your computer or home network.",
       "quickTemplates": "Quick setup",
@@ -1373,9 +1373,9 @@
   },
   "privateAiMode": {
     "title": "Private vs Smart",
-    "description": "In Private mode, AI runs entirely on your device—summaries and tasks remain fully private and never leave for our servers. In Smart mode, cloud-powered features deliver faster performance and expanded capabilities.",
+    "description": "Private mode runs AI on your device or your own server—nothing goes to Voice Inbox servers. Folders and AI folder organization work with Custom server. Smart mode adds cloud speed and more features.",
     "enableAlertTitle": "Turn on Private mode?",
-    "enableAlertMessage": "Maximum privacy.\n\nAll data, including transcripts, is processed only on this device.\n\nWhat to expect:\n• May run more slowly\n• Higher battery use\n• Some features aren't available\n\nYou can switch back to Smart mode anytime.",
+    "enableAlertMessage": "Maximum privacy.\n\nWith the on-device model, all data—including transcripts—is processed only on this device.\n\nWhat to expect:\n• May run more slowly\n• Higher battery use\n• Folders and AI folder organization need Custom server (or Smart mode)\n\nYou can switch back to Smart mode anytime.",
     "unavailableDeviceHint": "This device does not meet Private mode requirements (about 5.5 GB RAM and 3.5 GB free storage). Use Smart mode.",
     "unavailableDiagnostics": "Detected: {{ram}} RAM, {{disk}} free storage.",
     "unavailableDiagnosticsPartial": "Detected: {{details}}.",
@@ -1384,7 +1384,7 @@
   },
   "aiModels": {
     "title": "Generation model",
-    "privateDescription": "Private mode uses local on-device models. Cloud models are disabled in this mode.",
+    "privateDescription": "On-device: local models only. Custom server: folders, AI organization, and your chosen model—requests go only to your server.",
     "privateBudgetHint": "Output length and generation time are set in AI settings under \"On-device inference\".",
     "localDownloadBlockedTitle": "Download in progress",
     "localDownloadBlockedBody": "Wait for the current model to finish downloading, or cancel it, then try again.",
@@ -1543,7 +1543,7 @@
   },
   "cloudAiConsent": {
     "title": "Cloud AI and your notes",
-    "body": "To generate summaries, tasks, answers, translations, and folder suggestions in Smart mode, the app sends the relevant text from your notes (for example transcripts, titles, summaries, tasks, and your questions about a note) to Voice Inbox AI servers over HTTPS. Our servers forward those requests to third-party AI providers through OpenRouter (including Google Gemini, MiniMax, and DeepSeek, depending on routing and availability).\n\nAudio files are not uploaded for these features. Only the text you choose to process is sent. You can use Private mode with an on-device model so that summaries and note Q&A run locally instead (other features may still use the network).\n\nDo you allow sending this note content to our servers for cloud AI processing?",
+    "body": "To generate summaries, tasks, answers, translations, and folder suggestions in Smart mode, the app sends the relevant text from your notes (for example transcripts, titles, summaries, tasks, and your questions about a note) to Voice Inbox AI servers over HTTPS. Our servers forward those requests to third-party AI providers through OpenRouter (including Google Gemini, MiniMax, and DeepSeek, depending on routing and availability).\n\nAudio files are not uploaded for these features. Only the text you choose to process is sent. In Private mode with the on-device model, summaries and note Q&A run locally; folders and AI folder organization need Custom server (your server) or Smart mode.\n\nDo you allow sending this note content to our servers for cloud AI processing?",
     "privacyLink": "Privacy Policy",
     "agree": "Allow",
     "notNow": "Not now",

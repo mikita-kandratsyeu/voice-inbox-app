@@ -5,13 +5,21 @@ import { Alert } from 'react-native';
 import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import { useFolderStore } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
-import { useSettingsStore } from '@/entities/settings';
+import {
+  DEFAULT_LOCAL_AI_MODEL_ID,
+  isPrivateCustomServerMode,
+  useSettingsStore,
+} from '@/entities/settings';
+import { isProActiveFromStorageSync } from '@/features/pro-license/lib/proEntitlementStorage';
 import { isString, requestAiUsageRefresh, useNetworkStatus } from '@/shared/lib';
 import { pollAutoOrganizeFolders, postAutoOrganizeFolders } from '@/shared/lib/ai-api';
+import { AI_REQUEST_CANCELLED } from '@/shared/lib/ai-api/abort';
 import {
   getAiWeeklyLimitExceededMessage,
   getAutoOrganizeWeeklyLimitExceededMessage,
 } from '@/shared/lib/ai-api/limitUserMessage';
+import { runPrivateRemoteAutoOrganizeFolders } from '@/shared/lib/ai-core/privateRemoteProvider';
+import type { AiExecutionContext } from '@/shared/lib/ai-core/types';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
 type AutoOrganizeResult = {
@@ -72,6 +80,36 @@ function isLikelyNetworkError(raw: string): boolean {
   );
 }
 
+function buildAiExecutionContextFromSettings(): AiExecutionContext {
+  const s = useSettingsStore.getState();
+  const effectivePrivateAiProvider =
+    isProActiveFromStorageSync() && s.privateAiProvider === 'custom_openai'
+      ? 'custom_openai'
+      : 'local';
+
+  return {
+    selectedAIModel: s.selectedAIModel,
+    aiModelRoutingMode: s.aiModelRoutingMode,
+    selectedLocalAiModel: s.selectedLocalAiModel ?? DEFAULT_LOCAL_AI_MODEL_ID,
+    isLocalLlmModelDownloaded:
+      s.selectedLocalAiModel != null &&
+      (s.localLlmModelStatuses[s.selectedLocalAiModel] ?? 'not_downloaded') === 'downloaded',
+    summaryStyle: s.summaryStyle,
+    taskStrictness: s.taskStrictness,
+    aiOutputLanguage: s.aiOutputLanguage,
+    aiExecutionMode: s.aiExecutionMode,
+    privateLocalLlmBudget: s.privateLocalLlmBudget,
+    privateRemoteOutputBudget: s.privateRemoteOutputBudget,
+    privateRemotePreferJsonObject: s.privateRemotePreferJsonObject,
+    privateCapabilityTier: s.privateCapabilityTier,
+    privateAiProvider: effectivePrivateAiProvider,
+    privateRemoteBaseUrl: s.privateRemoteBaseUrl,
+    privateRemoteApiKey: s.privateRemoteApiKey,
+    privateRemoteModel: s.privateRemoteModel,
+    cloudMessageTtlSeconds: s.cloudAiKvTtlSeconds,
+  };
+}
+
 export function useAutoOrganizeFolders(
   records: VoiceRecord[],
   options?: UseAutoOrganizeFoldersOptions,
@@ -80,9 +118,16 @@ export function useAutoOrganizeFolders(
   const { isConnected } = useNetworkStatus();
   const folders = useFolderStore((s) => s.folders);
   const cloudAiKvTtlSeconds = useSettingsStore((s) => s.cloudAiKvTtlSeconds);
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const [isRunning, setIsRunning] = useState(false);
   const cancelledRef = useRef(false);
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const usePrivateRemoteOrganize = useMemo(
+    () => isPrivateCustomServerMode(aiExecutionMode, privateAiProvider),
+    [aiExecutionMode, privateAiProvider],
+  );
 
   useEffect(() => {
     return () => {
@@ -148,15 +193,46 @@ export function useAutoOrganizeFolders(
       return;
     }
 
-    const consentOk = await ensureCloudAiThirdPartyConsent();
-
-    if (!consentOk) {
-      return;
-    }
-
     cancelledRef.current = false;
     setIsRunning(true);
+
     try {
+      if (usePrivateRemoteOrganize) {
+        const remoteResult = await runPrivateRemoteAutoOrganizeFolders(
+          {
+            appLanguage: i18n.language,
+            existingFolders: folders.map((f) => ({
+              name: f.name,
+              icon: f.icon,
+              color: f.color,
+            })),
+            notes: eligibleNotes,
+          },
+          buildAiExecutionContextFromSettings(),
+          { isCancelled: () => cancelledRef.current },
+        );
+
+        if (cancelledRef.current) return;
+
+        if (!remoteResult.ok) {
+          if (remoteResult.error === AI_REQUEST_CANCELLED) return;
+          const safeMsg = isLikelyNetworkError(remoteResult.error)
+            ? t('folders.autoOrganizeFailedDescription')
+            : remoteResult.error;
+          Alert.alert(t('common.error'), safeMsg);
+          return;
+        }
+
+        await options?.onResult?.(remoteResult.result);
+        return;
+      }
+
+      const consentOk = await ensureCloudAiThirdPartyConsent();
+
+      if (!consentOk) {
+        return;
+      }
+
       const requestId = `auto-organize-${Date.now()}`;
       const postResult = await postAutoOrganizeFolders({
         id: requestId,
@@ -206,7 +282,9 @@ export function useAutoOrganizeFolders(
         Alert.alert(t('common.error'), t('folders.autoOrganizeFailedDescription'));
       }
     } finally {
-      requestAiUsageRefresh();
+      if (!usePrivateRemoteOrganize) {
+        requestAiUsageRefresh();
+      }
       if (!cancelledRef.current) {
         setIsRunning(false);
       }
@@ -220,6 +298,7 @@ export function useAutoOrganizeFolders(
     options,
     t,
     cloudAiKvTtlSeconds,
+    usePrivateRemoteOrganize,
   ]);
 
   const overlayMode: 'loading' | 'success' = isRunning ? 'loading' : 'success';

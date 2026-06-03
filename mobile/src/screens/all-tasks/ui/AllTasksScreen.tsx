@@ -28,7 +28,7 @@ import {
   useFolderStore,
 } from '@/entities/folder';
 import { type TaskItem, useRecordStore } from '@/entities/record';
-import { useSettingsStore } from '@/entities/settings';
+import { areFoldersEnabledInAiMode, useSettingsStore } from '@/entities/settings';
 import { useAddToCalendar } from '@/features/add-to-calendar';
 import { useAddToReminder } from '@/features/add-to-reminder';
 import { useAdsAllowed } from '@/features/app-storefront';
@@ -193,8 +193,9 @@ export const AllTasksScreen = () => {
   );
 
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
-  const isPrivateMode = aiExecutionMode === 'private_experimental';
-  const effectiveActiveFolderId = isPrivateMode ? null : activeFolderId;
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
+  const foldersEnabled = areFoldersEnabledInAiMode(aiExecutionMode, privateAiProvider);
+  const effectiveActiveFolderId = foldersEnabled ? activeFolderId : null;
 
   const {
     folders,
@@ -765,7 +766,7 @@ export const AllTasksScreen = () => {
         </View>
       </View>
 
-      {!isPrivateMode && (
+      {foldersEnabled && (
         <FolderChipBar
           folders={folders}
           activeFolderId={effectiveActiveFolderId}
@@ -877,7 +878,7 @@ export const AllTasksScreen = () => {
           maintainVisibleContentPosition={{ disabled: true }}
         />
       )}
-      {!isPrivateMode && (
+      {foldersEnabled && (
         <FolderReorderSheet
           visible={folderReorderVisible}
           folders={folders}
@@ -885,7 +886,7 @@ export const AllTasksScreen = () => {
           onReorder={handleFoldersReorder}
         />
       )}
-      {!isPrivateMode && (
+      {foldersEnabled && (
         <FolderFormModal
           visible={folderModalVisible}
           folder={editingFolder}

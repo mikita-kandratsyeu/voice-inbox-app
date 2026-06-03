@@ -1,3 +1,4 @@
+export { areFoldersEnabledInAiMode } from './lib/areFoldersEnabledInAiMode';
 export { canDeviceRunWhisperModel } from './lib/canDeviceRunWhisperModel';
 export {
   AUTO_ROUTING_CONTEXT_TOKENS,

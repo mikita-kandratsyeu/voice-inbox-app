@@ -57,7 +57,20 @@ export function navigateSettingsStackScreen<T extends keyof SettingsStackParamLi
     return;
   }
 
-  if (isOnSettingsStackScreen(screen)) {
+  if (isOnSettingsStackScreen(screen) && params === undefined) {
+    return;
+  }
+
+  if (isOnSettingsStackScreen(screen) && params !== undefined) {
+    navigationRef.navigate('Main', {
+      screen: 'SettingsRoot',
+      params: {
+        screen,
+        params,
+        merge: true,
+      },
+    } as never);
+    useTabletTabNavigationStore.getState().setActiveTab('SettingsRoot');
     return;
   }
 

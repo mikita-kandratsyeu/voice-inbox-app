@@ -13,6 +13,7 @@ import { FolderPickerSheet, useFolderStore } from '@/entities/folder';
 import { type RecordingMark, type RecordingStatus, useRecordStore } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
 import {
+  areFoldersEnabledInAiMode,
   getWhisperModelVariantId,
   isPrivateCustomServerMode,
   useSettingsStore,
@@ -390,6 +391,7 @@ export const RecordingDetailScreen = () => {
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const isPrivateMode = aiExecutionMode === 'private_experimental';
   const isPrivateCustomServer = isPrivateCustomServerMode(aiExecutionMode, privateAiProvider);
+  const foldersEnabled = areFoldersEnabledInAiMode(aiExecutionMode, privateAiProvider);
   const isMeetingMode = liveRecord.classification === 'meeting';
   const aiBusy =
     liveRecord.summaryStatus === 'processing' ||
@@ -680,7 +682,7 @@ export const RecordingDetailScreen = () => {
             record={liveRecord}
             color={color}
             folderPlacement={folderPlacement}
-            hideFolderPlacement={isPrivateMode}
+            hideFolderPlacement={!foldersEnabled}
             surfaceBackgroundColor={tabPanelBackgroundColor}
           />
 

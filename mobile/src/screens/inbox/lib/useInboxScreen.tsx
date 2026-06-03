@@ -27,7 +27,7 @@ import type { BottomTabParamList } from '@/app/navigation/types';
 import { useFolderStore } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
-import { useSettingsStore } from '@/entities/settings';
+import { areFoldersEnabledInAiMode, useSettingsStore } from '@/entities/settings';
 import { useAdsAllowed } from '@/features/app-storefront';
 import { useAutoArchiveReadNotes } from '@/features/auto-archive';
 import {
@@ -99,7 +99,9 @@ export function useInboxScreen() {
   const { isProActive } = useProEntitlement();
   const { adsAllowed } = useAdsAllowed();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const isPrivateMode = aiExecutionMode === 'private_experimental';
+  const foldersEnabled = areFoldersEnabledInAiMode(aiExecutionMode, privateAiProvider);
 
   useAutoArchiveReadNotes();
 
@@ -124,7 +126,7 @@ export function useInboxScreen() {
     },
   });
 
-  const effectiveActiveFolderId = isPrivateMode ? null : activeFolderId;
+  const effectiveActiveFolderId = foldersEnabled ? activeFolderId : null;
 
   const folderFilteredRecords = useMemo(() => {
     if (!effectiveActiveFolderId) return records;
@@ -630,7 +632,7 @@ export function useInboxScreen() {
         bannerMaxWidth={bannerMaxWidth}
         batchSelect={batchSelect}
         effectiveActiveFolderId={effectiveActiveFolderId}
-        isPrivateMode={isPrivateMode}
+        foldersEnabled={foldersEnabled}
         folderColorById={folderColorById}
         isProActive={isProActive}
         isArchivedView={isArchivedView}
@@ -649,7 +651,7 @@ export function useInboxScreen() {
       bannerMaxWidth,
       effectiveActiveFolderId,
       folderColorById,
-      isPrivateMode,
+      foldersEnabled,
       isProActive,
       isArchivedView,
       dismissSwipeHint,
@@ -799,6 +801,7 @@ export function useInboxScreen() {
     openFolderReorderSheet,
     closeFolderReorderSheet,
     isPrivateMode,
+    foldersEnabled,
     subtitleText,
     headerTitle,
     headerSubtitleText,

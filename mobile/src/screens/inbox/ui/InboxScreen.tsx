@@ -39,6 +39,7 @@ export const InboxScreen = () => {
     openFolderReorderSheet,
     closeFolderReorderSheet,
     isPrivateMode,
+    foldersEnabled,
     headerTitle,
     headerSubtitleText,
     folderModalVisible,
@@ -135,7 +136,7 @@ export const InboxScreen = () => {
             query={query}
             showInboxSearchBar={showInboxSearchBar}
             allSelected={allSelected}
-            isPrivateMode={isPrivateMode}
+            foldersEnabled={foldersEnabled}
             isAutoOrganizing={isAutoOrganizing}
             onSearchHeaderPress={handleSearchHeaderPress}
             onSelectAll={handleSelectAll}
@@ -151,7 +152,7 @@ export const InboxScreen = () => {
           />
         }
       />
-      {!isPrivateMode && !useTabletShell && (
+      {foldersEnabled && !useTabletShell && (
         <FolderChipBar
           folders={folders}
           activeFolderId={effectiveActiveFolderId}
@@ -227,12 +228,12 @@ export const InboxScreen = () => {
           onDeleteLongPress={handleBatchDeleteLongPress}
           onExport={handleBatchExport}
           onMoveToFolder={handleOpenBatchFolderPicker}
-          hideMoveToFolder={isPrivateMode}
+          hideMoveToFolder={!foldersEnabled}
           onCancel={exitBatchMode}
           dockToScreenBottom
         />
       )}
-      {!isPrivateMode && (
+      {foldersEnabled && (
         <FolderPickerSheet
           visible={folderPickerVisible}
           title={t('folders.moveToFolderTitle')}
@@ -257,7 +258,7 @@ export const InboxScreen = () => {
         onClose={handleCloseBatchExportProSheet}
         onUpgradePress={handleBatchExportProUpgrade}
       />
-      {!isPrivateMode && (
+      {foldersEnabled && (
         <FolderReorderSheet
           visible={folderReorderVisible}
           folders={folders}
@@ -265,7 +266,7 @@ export const InboxScreen = () => {
           onReorder={handleFoldersReorder}
         />
       )}
-      {!isPrivateMode && (
+      {foldersEnabled && (
         <FolderFormModal
           visible={folderModalVisible}
           folder={editingFolder}

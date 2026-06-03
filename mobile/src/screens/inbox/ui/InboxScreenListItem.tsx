@@ -20,7 +20,7 @@ export type InboxScreenListItemProps = {
   bannerMaxWidth: number;
   batchSelect: BatchSelectState;
   effectiveActiveFolderId: string | null;
-  isPrivateMode: boolean;
+  foldersEnabled: boolean;
   folderColorById: Map<string, string>;
   isProActive: boolean;
   isArchivedView: boolean;
@@ -40,7 +40,7 @@ function InboxScreenListItemInner({
   bannerMaxWidth,
   batchSelect,
   effectiveActiveFolderId,
-  isPrivateMode,
+  foldersEnabled,
   folderColorById,
   isProActive,
   isArchivedView,
@@ -69,7 +69,7 @@ function InboxScreenListItemInner({
       ? `${item.item.title}, ${t('inbox.recordUnreadA11y')}`
       : item.item.title;
   const folderStripeColor =
-    !effectiveActiveFolderId && !isPrivateMode && item.item.folderId
+    !effectiveActiveFolderId && foldersEnabled && item.item.folderId
       ? resolveDisplayFolderColor(folderColorById.get(item.item.folderId), isProActive)
       : undefined;
 

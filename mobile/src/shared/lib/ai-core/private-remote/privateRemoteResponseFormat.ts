@@ -5,7 +5,29 @@ export type PrivateRemoteStructuredSchemaKind =
   | 'summary_with_meeting'
   | 'meeting_dialogue'
   | 'ask'
+  | 'auto_organize'
   | 'generic';
+
+const AUTO_ORGANIZE_FOLDER_SCHEMA = {
+  type: 'object',
+  properties: {
+    name: { type: 'string' },
+    icon: { type: 'string' },
+    color: { type: 'string' },
+  },
+  required: ['name', 'icon', 'color'],
+  additionalProperties: true,
+} as const;
+
+const AUTO_ORGANIZE_ASSIGNMENT_SCHEMA = {
+  type: 'object',
+  properties: {
+    recordId: { type: 'string' },
+    folderName: { type: 'string' },
+  },
+  required: ['recordId', 'folderName'],
+  additionalProperties: true,
+} as const;
 
 const TASK_ITEM_SCHEMA = {
   type: 'object',
@@ -92,6 +114,18 @@ const SCHEMAS: Record<
         answer: { type: 'string' },
       },
       required: ['answer'],
+      additionalProperties: true,
+    },
+  },
+  auto_organize: {
+    name: 'voice_inbox_auto_organize',
+    schema: {
+      type: 'object',
+      properties: {
+        folders: { type: 'array', items: AUTO_ORGANIZE_FOLDER_SCHEMA },
+        assignments: { type: 'array', items: AUTO_ORGANIZE_ASSIGNMENT_SCHEMA },
+      },
+      required: ['folders', 'assignments'],
       additionalProperties: true,
     },
   },

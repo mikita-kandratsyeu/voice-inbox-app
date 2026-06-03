@@ -57,7 +57,7 @@ type TabletSidebarFoldersSectionProps = {
   folderAiProcessing: ReadonlySet<string>;
   folderAiProcessingKinds: ReadonlyMap<string, TabletSidebarAiOperationKind>;
   isProActive: boolean;
-  isPrivateMode: boolean;
+  foldersEnabled: boolean;
   isSettingsTab: boolean;
   inboxSelection: { kind: 'folder'; folderId: string } | { kind: string; folderId?: string } | null;
   currentTab: string;
@@ -126,7 +126,7 @@ export function TabletSidebarFoldersSection({
   folderAiProcessing,
   folderAiProcessingKinds,
   isProActive,
-  isPrivateMode,
+  foldersEnabled,
   isSettingsTab,
   inboxSelection,
   currentTab,
@@ -136,17 +136,17 @@ export function TabletSidebarFoldersSection({
 }: TabletSidebarFoldersSectionProps) {
   const { t } = useTranslation();
 
-  const openPrivateModeSettings = () => {
+  const openPrivateServerSettings = () => {
     hapticSelection();
-    navigateSettingsStackScreen('PrivateAiMode');
+    navigateSettingsStackScreen('AiSettings', { focusPrivateServer: true });
   };
 
-  if (isPrivateMode) {
+  if (!foldersEnabled) {
     return (
       <View>
         <TabletSidebarSectionDivider color={color} />
         <Pressable
-          onPress={openPrivateModeSettings}
+          onPress={openPrivateServerSettings}
           accessibilityRole="button"
           accessibilityLabel={t('tablet.sidebar.privateFoldersCta')}
           className="mt-3 rounded-[10px] px-3 py-3"

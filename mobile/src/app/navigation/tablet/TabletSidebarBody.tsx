@@ -38,7 +38,7 @@ export type TabletSidebarBodyProps = {
   monetizationMode: MonetizationMode;
   folders: Folder[];
   folderCounts: TabletSidebarNavCounts['folderCounts'];
-  isPrivateMode: boolean;
+  foldersEnabled: boolean;
   currentTab: string;
   inboxSelection: { kind: 'folder'; folderId: string } | { kind: string; folderId?: string } | null;
   inboxCount: number;
@@ -73,7 +73,7 @@ export function TabletSidebarBody({
   monetizationMode,
   folders,
   folderCounts,
-  isPrivateMode,
+  foldersEnabled,
   currentTab,
   inboxSelection,
   inboxCount,
@@ -203,7 +203,7 @@ export function TabletSidebarBody({
       folderAiProcessing={aiProcessing.folderIds}
       folderAiProcessingKinds={aiProcessing.folderKinds}
       isProActive={isProActive}
-      isPrivateMode={isPrivateMode}
+      foldersEnabled={foldersEnabled}
       isSettingsTab={isSettingsTab}
       inboxSelection={inboxSelection}
       currentTab={currentTab}
@@ -253,7 +253,7 @@ export function TabletSidebarBody({
           {secondaryNav}
         </View>
 
-        {isPrivateMode ? (
+        {!foldersEnabled ? (
           <View style={{ flexShrink: 0, opacity: navDimmed ? 0.62 : 1 }}>{foldersBlock}</View>
         ) : (
           <>

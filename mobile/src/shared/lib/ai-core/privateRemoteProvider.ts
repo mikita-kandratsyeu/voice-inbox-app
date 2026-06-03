@@ -38,6 +38,16 @@ import {
   resolvePrivateRemoteSummaryMaxTokens,
 } from './private-remote/privateRemoteConstants';
 import {
+  AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT,
+  buildAutoOrganizeRepairUserSuffix,
+} from './private-remote/autoOrganizePrompt';
+import {
+  assertAutoOrganizeComplete,
+  isAutoOrganizeParseFailure,
+  parseAutoOrganizeResult,
+  type AutoOrganizeFoldersResult,
+} from './private-remote/parseAutoOrganizeResult';
+import {
   buildPrivateRemoteJsonSchemaResponseFormat,
   type PrivateRemoteStructuredSchemaKind,
 } from './private-remote/privateRemoteResponseFormat';
@@ -1026,5 +1036,84 @@ export async function runPrivateRemoteAsk(
       mode: ctx.aiExecutionMode,
       error: mapPrivateRemoteError(err),
     };
+  }
+}
+
+export type { AutoOrganizeFoldersResult };
+
+export type PrivateRemoteAutoOrganizeInput = {
+  appLanguage: string;
+  existingFolders: Array<{ name: string; icon: string; color: string }>;
+  notes: Array<{
+    id: string;
+    title?: string;
+    transcript?: string;
+    summary?: string;
+    classification?: string;
+  }>;
+};
+
+export type PrivateRemoteAutoOrganizeResult =
+  | { ok: true; result: AutoOrganizeFoldersResult }
+  | { ok: false; error: string };
+
+export async function runPrivateRemoteAutoOrganizeFolders(
+  input: PrivateRemoteAutoOrganizeInput,
+  ctx: AiExecutionContext,
+  options?: { abortSignal?: AbortSignal; isCancelled?: () => boolean },
+): Promise<PrivateRemoteAutoOrganizeResult> {
+  const expectedIds = input.notes.map((n) => n.id).filter((id) => id.trim().length > 0);
+  if (expectedIds.length === 0) {
+    return { ok: false, error: i18n.t('folders.autoOrganizeFailedDescription') };
+  }
+
+  const userPayload = JSON.stringify({
+    appLanguage: input.appLanguage.trim().slice(0, 2) || undefined,
+    existingFolders: input.existingFolders,
+    notes: input.notes,
+  });
+
+  const maxTokens = resolvePrivateRemoteSummaryMaxTokens(ctx.privateRemoteOutputBudget) ?? 8192;
+
+  const sendOrganize = async (userContent: string): Promise<AutoOrganizeFoldersResult> => {
+    if (options?.isCancelled?.()) {
+      throw new Error(AI_REQUEST_CANCELLED);
+    }
+    const remote = await callRemoteCompletion(
+      ctx,
+      [
+        { role: 'system', content: AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT },
+        { role: 'user', content: userContent },
+      ],
+      maxTokens,
+      0.12,
+      options?.abortSignal,
+      { jsonObject: true, schemaKind: 'auto_organize' },
+    );
+    const result = parseAutoOrganizeResult(remote.content);
+    assertAutoOrganizeComplete(result, expectedIds);
+    return result;
+  };
+
+  try {
+    try {
+      const result = await sendOrganize(userPayload);
+      return { ok: true, result };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : '';
+      if (msg === AI_REQUEST_CANCELLED || options?.abortSignal?.aborted) {
+        return { ok: false, error: AI_REQUEST_CANCELLED };
+      }
+      if (!msg.startsWith('Invalid AI response') && !isAutoOrganizeParseFailure(e)) {
+        throw e;
+      }
+      const repaired = await sendOrganize(userPayload + buildAutoOrganizeRepairUserSuffix(expectedIds));
+      return { ok: true, result: repaired };
+    }
+  } catch (err) {
+    if (options?.abortSignal?.aborted || (err instanceof Error && err.message === AI_REQUEST_CANCELLED)) {
+      return { ok: false, error: AI_REQUEST_CANCELLED };
+    }
+    return { ok: false, error: mapPrivateRemoteError(err) };
   }
 }

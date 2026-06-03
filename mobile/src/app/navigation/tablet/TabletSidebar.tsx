@@ -8,7 +8,7 @@ import { useShallow } from 'zustand/react/shallow';
 
 import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
-import { useSettingsStore } from '@/entities/settings';
+import { areFoldersEnabledInAiMode, useSettingsStore } from '@/entities/settings';
 import { getMonetizationMode } from '@/features/app-storefront';
 import { useImportAudioFile } from '@/features/import-audio-file';
 import { openPlanPaywall } from '@/features/plan-paywall';
@@ -46,7 +46,8 @@ export const TabletSidebar = () => {
   const { isProActive } = useProEntitlement();
   const monetizationMode = getMonetizationMode();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
-  const isPrivateMode = aiExecutionMode === 'private_experimental';
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
+  const foldersEnabled = areFoldersEnabledInAiMode(aiExecutionMode, privateAiProvider);
   const {
     inbox: inboxCount,
     unread: unreadCount,
@@ -185,7 +186,7 @@ export const TabletSidebar = () => {
         monetizationMode={monetizationMode}
         folders={folders}
         folderCounts={folderCounts}
-        isPrivateMode={isPrivateMode}
+        foldersEnabled={foldersEnabled}
         currentTab={currentTab}
         inboxSelection={inboxSelection}
         inboxCount={inboxCount}

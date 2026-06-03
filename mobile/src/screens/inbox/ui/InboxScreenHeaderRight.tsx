@@ -18,7 +18,7 @@ type InboxScreenHeaderRightProps = {
   query: string;
   showInboxSearchBar: boolean;
   allSelected: boolean;
-  isPrivateMode: boolean;
+  foldersEnabled: boolean;
   isAutoOrganizing: boolean;
   onSearchHeaderPress: () => void;
   onSelectAll: () => void;
@@ -44,7 +44,7 @@ function InboxScreenHeaderRightInner({
   query,
   showInboxSearchBar,
   allSelected,
-  isPrivateMode,
+  foldersEnabled,
   isAutoOrganizing,
   onSearchHeaderPress,
   onSelectAll,
@@ -76,7 +76,7 @@ function InboxScreenHeaderRightInner({
         imageColor: color.text.primary,
       },
     ];
-    if (!isPrivateMode) {
+    if (foldersEnabled) {
       items.push({
         id: 'autoOrganize',
         title: t('inbox.menuAutoOrganize'),
@@ -94,7 +94,7 @@ function InboxScreenHeaderRightInner({
       imageColor: color.text.primary,
     });
     return items;
-  }, [color.text.primary, isAutoOrganizing, isPrivateMode, t]);
+  }, [color.text.primary, foldersEnabled, isAutoOrganizing, t]);
 
   if (!isLoaded) return null;
 
@@ -142,7 +142,7 @@ function InboxScreenHeaderRightInner({
     return (
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
         {searchButton}
-        {!isPrivateMode ? (
+        {foldersEnabled ? (
           <HeaderIconButton
             iconOnly
             variant="icon"
@@ -203,7 +203,7 @@ function InboxScreenHeaderRightInner({
         onPressAction={({ nativeEvent }) => {
           const id = nativeEvent.event;
           if (id === 'allTasks') onOpenAllTasks();
-          if (id === 'autoOrganize' && !isAutoOrganizing && !isPrivateMode) onAutoOrganize();
+          if (id === 'autoOrganize' && !isAutoOrganizing && foldersEnabled) onAutoOrganize();
           if (id === 'selectNotes') onEnterBatchMode();
         }}
       >

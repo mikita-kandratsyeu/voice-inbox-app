@@ -1,5 +1,7 @@
 import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
-import { useNavigation } from '@react-navigation/native';
+import type { RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Check, Crown } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
@@ -18,6 +20,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { openPlanPaywall } from '@/app/navigation/openPlanPaywall';
+import type { SettingsStackParamList } from '@/app/navigation/types';
 import type {
   AiOutputLanguage,
   PrivateAiProvider,
@@ -202,7 +205,8 @@ export const AiSettingsScreen = () => {
   const { t } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<SettingsStackParamList>>();
+  const route = useRoute<RouteProp<SettingsStackParamList, 'AiSettings'>>();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
@@ -721,6 +725,30 @@ export const AiSettingsScreen = () => {
       runRemoteConnectionCheck,
     ],
   );
+
+  React.useEffect(() => {
+    if (!route.params?.focusPrivateServer) return;
+
+    navigation.setParams({ focusPrivateServer: undefined });
+
+    if (!isPrivateMode) return;
+
+    if (customProviderLocked) {
+      setPrivateServerProSheet(true);
+      return;
+    }
+
+    if (privateAiProvider !== 'custom_openai') {
+      void handlePrivateProviderSelect('custom_openai');
+    }
+  }, [
+    route.params?.focusPrivateServer,
+    navigation,
+    isPrivateMode,
+    customProviderLocked,
+    privateAiProvider,
+    handlePrivateProviderSelect,
+  ]);
 
   React.useEffect(() => {
     if (didRunInitialProviderCheckRef.current) return;
