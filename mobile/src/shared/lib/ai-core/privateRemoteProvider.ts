@@ -30,6 +30,10 @@ import {
   resolvePrivateRemoteSummaryMaxTokens,
 } from './private-remote/privateRemoteConstants';
 import {
+  buildPrivateRemoteJsonSchemaResponseFormat,
+  type PrivateRemoteStructuredSchemaKind,
+} from './private-remote/privateRemoteResponseFormat';
+import {
   buildWebParityAiProcessingPrompt,
   buildWebParityAskUserMessageContent,
   WEB_PARITY_ASK_SYSTEM_PROMPT,
@@ -191,20 +195,41 @@ function extractHttpErrorMessage(bodyText: string): string {
   return bodyText;
 }
 
-/** Server rejected `response_format: { type: 'json_object' }` — retry without it. */
-function isJsonObjectFormatUnsupported(err: unknown): boolean {
+type RemoteStructuredFormatMode = 'plain' | 'json_object' | 'json_schema';
+type RemoteFormatCapability = 'unknown' | RemoteStructuredFormatMode;
+
+const remoteFormatCapabilityByBaseUrl = new Map<string, RemoteFormatCapability>();
+
+/** @internal test helper */
+export function resetPrivateRemoteFormatCapabilityCacheForTests(): void {
+  remoteFormatCapabilityByBaseUrl.clear();
+}
+
+function remoteBaseUrlKey(raw: string): string {
+  return normalizeBaseUrl(raw)?.toLowerCase() ?? raw.trim().toLowerCase();
+}
+
+/** Server rejected the requested `response_format` — try the next mode in the ladder. */
+function isStructuredFormatRejected(err: unknown): boolean {
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
-  if (/json_object/.test(msg)) {
+  if (/json_object|json_schema/.test(msg)) {
     return true;
   }
   if (/response_format/.test(msg)) {
     return (
-      /not supported|unsupported|invalid|unknown|unrecognized|must be|json_schema|'text'|"text"/.test(
-        msg,
-      ) || /response_format\.type/.test(msg)
+      /not supported|unsupported|invalid|unknown|unrecognized|must be|'text'|"text"/.test(msg) ||
+      /response_format\.type/.test(msg)
     );
   }
   return false;
+}
+
+function structuredModesForBaseUrl(baseUrl: string): RemoteStructuredFormatMode[] {
+  const cached = remoteFormatCapabilityByBaseUrl.get(remoteBaseUrlKey(baseUrl)) ?? 'unknown';
+  if (cached === 'json_object') return ['json_object'];
+  if (cached === 'json_schema') return ['json_schema'];
+  if (cached === 'plain') return ['plain'];
+  return ['json_schema', 'json_object', 'plain'];
 }
 
 function readMessageReasoning(response: OpenAiChatResponse): string {
@@ -223,8 +248,9 @@ function readMessageReasoning(response: OpenAiChatResponse): string {
 }
 
 type RemoteCompletionCallOptions = {
-  /** When true and user setting allows, sends OpenAI `response_format: json_object`. */
+  /** When true and user setting allows, tries structured `response_format` (json_schema → json_object). */
   jsonObject?: boolean;
+  schemaKind?: PrivateRemoteStructuredSchemaKind;
 };
 
 async function callRemoteCompletion(
@@ -240,9 +266,14 @@ async function callRemoteCompletion(
     throw new Error(i18n.t('ai.privateModeRemoteConfigMissing'));
   }
   const headers = createRemoteHeaders(ctx.privateRemoteApiKey);
-  const wantJsonObject = Boolean(options?.jsonObject && ctx.privateRemotePreferJsonObject);
+  const wantStructured = Boolean(options?.jsonObject && ctx.privateRemotePreferJsonObject);
+  const schemaKind = options?.schemaKind ?? 'generic';
+  const baseUrlKey = remoteBaseUrlKey(ctx.privateRemoteBaseUrl);
 
-  const postOnce = async (useJsonObject: boolean): Promise<RemoteCompletionOutput> => {
+  const postOnce = async (
+    formatMode: RemoteStructuredFormatMode,
+    omitAbortSignal: boolean,
+  ): Promise<RemoteCompletionOutput> => {
     const payload: Record<string, unknown> = {
       model: ctx.privateRemoteModel.trim(),
       messages,
@@ -252,15 +283,17 @@ async function callRemoteCompletion(
     if (maxTokens != null) {
       payload.max_tokens = maxTokens;
     }
-    if (useJsonObject) {
+    if (formatMode === 'json_object') {
       payload.response_format = { type: 'json_object' };
+    } else if (formatMode === 'json_schema') {
+      payload.response_format = buildPrivateRemoteJsonSchemaResponseFormat(schemaKind);
     }
 
     const response = await nitroFetch(endpoint, {
       method: 'POST',
       headers,
       body: JSON.stringify(payload),
-      signal: abortSignal,
+      signal: omitAbortSignal ? undefined : abortSignal,
     });
     if (!response.ok) {
       const bodyText = await response.text();
@@ -290,18 +323,27 @@ async function callRemoteCompletion(
     };
   };
 
-  if (!wantJsonObject) {
-    return postOnce(false);
+  if (!wantStructured) {
+    return postOnce('plain', false);
   }
 
-  try {
-    return await postOnce(true);
-  } catch (err) {
-    if (isJsonObjectFormatUnsupported(err)) {
-      return postOnce(false);
+  const modes = structuredModesForBaseUrl(ctx.privateRemoteBaseUrl);
+  let lastErr: unknown;
+  for (let i = 0; i < modes.length; i += 1) {
+    const mode = modes[i]!;
+    try {
+      const result = await postOnce(mode, i > 0);
+      remoteFormatCapabilityByBaseUrl.set(baseUrlKey, mode);
+      return result;
+    } catch (err) {
+      lastErr = err;
+      const hasNext = i < modes.length - 1;
+      if (!hasNext || !isStructuredFormatRejected(err)) {
+        throw err;
+      }
     }
-    throw err;
   }
+  throw lastErr;
 }
 
 function parseMeetingDialogueMarkdownUnlimited(raw: string): string | null {
@@ -424,7 +466,10 @@ async function runRemoteJsonRepairPass(
       resolvePrivateRemoteJsonRepairMaxTokens(),
       0,
       abortSignal,
-      { jsonObject: true },
+      {
+        jsonObject: true,
+        schemaKind: kind === 'summary' ? 'summary' : 'meeting_dialogue',
+      },
     );
     return repaired.content;
   } catch {
@@ -614,7 +659,10 @@ async function runPrivateRemoteSummaryPass(
       summaryMaxTokens,
       LOCAL_GEN_SUMMARY.temperature,
       request.abortSignal,
-      { jsonObject: true },
+      {
+        jsonObject: true,
+        schemaKind: opts.includeMeetingDialogueField ? 'summary_with_meeting' : 'summary',
+      },
     );
 
   let remote = await runOnce(userContent);
@@ -683,7 +731,7 @@ export async function runPrivateRemoteMeetingDialogue(
         maxTokensSent,
         LOCAL_GEN_MEETING_DIALOGUE.temperature,
         request.abortSignal,
-        { jsonObject: true },
+        { jsonObject: true, schemaKind: 'meeting_dialogue' },
       );
 
     let remote = await runOnce(userContent);
@@ -895,7 +943,7 @@ export async function runPrivateRemoteAsk(
         askMaxTokens,
         LOCAL_GEN_ASK.temperature,
         request.abortSignal,
-        { jsonObject: true },
+        { jsonObject: true, schemaKind: 'ask' },
       );
 
     let remote = await runOnce(userContent);

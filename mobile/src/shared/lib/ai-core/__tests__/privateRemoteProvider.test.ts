@@ -1,6 +1,9 @@
 import { DEFAULT_LOCAL_AI_MODEL_ID } from '@/entities/settings/model/constants';
 
-import { runPrivateRemoteMeetingDialogue } from '../privateRemoteProvider';
+import {
+  resetPrivateRemoteFormatCapabilityCacheForTests,
+  runPrivateRemoteMeetingDialogue,
+} from '../privateRemoteProvider';
 import type { AiExecutionContext } from '../types';
 
 jest.mock('../local-provider/localAiMeetingDialogue', () => ({
@@ -71,14 +74,21 @@ function createCtx(overrides: Partial<AiExecutionContext> = {}): AiExecutionCont
 }
 
 describe('runPrivateRemoteMeetingDialogue', () => {
+  beforeEach(() => {
+    resetPrivateRemoteFormatCapabilityCacheForTests();
+  });
+
   afterEach(() => {
     mockNitroFetch.mockReset();
   });
 
-  it('sends response_format json_object when preferJsonObject is enabled', async () => {
+  it('sends json_schema first when preferJsonObject is enabled', async () => {
     mockNitroFetch.mockImplementation(async (_url, init) => {
-      const body = JSON.parse(String(init?.body)) as { response_format?: { type: string } };
-      expect(body.response_format).toEqual({ type: 'json_object' });
+      const body = JSON.parse(String(init?.body)) as {
+        response_format?: { type: string; json_schema?: { name: string } };
+      };
+      expect(body.response_format?.type).toBe('json_schema');
+      expect(body.response_format?.json_schema?.name).toBe('voice_inbox_meeting_dialogue');
       return mockChatCompletion({
         content: '{"meetingDialogueMarkdown":"Speaker 1: Hi"}',
       });
@@ -96,19 +106,19 @@ describe('runPrivateRemoteMeetingDialogue', () => {
     expect(mockNitroFetch).toHaveBeenCalledTimes(1);
   });
 
-  it('retries without json_object when server rejects response_format', async () => {
+  it('retries with json_object when server rejects json_schema', async () => {
     let call = 0;
     mockNitroFetch.mockImplementation(async (_url, init) => {
       call += 1;
       const body = JSON.parse(String(init?.body)) as { response_format?: { type: string } };
       if (call === 1) {
-        expect(body.response_format).toEqual({ type: 'json_object' });
+        expect(body.response_format?.type).toBe('json_schema');
         return {
           ok: false,
-          text: async () => 'response_format json_object is not supported',
+          text: async () => 'response_format json_schema is not supported',
         } as Response;
       }
-      expect(body.response_format).toBeUndefined();
+      expect(body.response_format).toEqual({ type: 'json_object' });
       return mockChatCompletion({
         content: '{"meetingDialogueMarkdown":"Speaker 1: Ok"}',
       });
@@ -126,22 +136,13 @@ describe('runPrivateRemoteMeetingDialogue', () => {
     expect(mockNitroFetch).toHaveBeenCalledTimes(2);
   });
 
-  it('retries without json_object when server only allows json_schema or text', async () => {
-    let call = 0;
+  it('succeeds with json_schema on first try for LM Studio-style servers', async () => {
     mockNitroFetch.mockImplementation(async (_url, init) => {
-      call += 1;
-      const body = JSON.parse(String(init?.body)) as { response_format?: { type: string } };
-      if (call === 1) {
-        expect(body.response_format).toEqual({ type: 'json_object' });
-        return {
-          ok: false,
-          text: async () =>
-            JSON.stringify({
-              error: "'response_format.type' must be 'json_schema' or 'text'",
-            }),
-        } as Response;
-      }
-      expect(body.response_format).toBeUndefined();
+      const body = JSON.parse(String(init?.body)) as {
+        response_format?: { type: string; json_schema?: { name: string } };
+      };
+      expect(body.response_format?.type).toBe('json_schema');
+      expect(body.response_format?.json_schema?.name).toBe('voice_inbox_meeting_dialogue');
       return mockChatCompletion({
         content: '{"meetingDialogueMarkdown":"Speaker 1: Ok"}',
       });
@@ -156,7 +157,7 @@ describe('runPrivateRemoteMeetingDialogue', () => {
     );
 
     expect(result.ok).toBe(true);
-    expect(mockNitroFetch).toHaveBeenCalledTimes(2);
+    expect(mockNitroFetch).toHaveBeenCalledTimes(1);
   });
 
   it('extracts meeting dialogue from loose malformed payload', async () => {
