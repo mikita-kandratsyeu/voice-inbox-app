@@ -1373,7 +1373,7 @@
   },
   "privateAiMode": {
     "title": "Private vs Smart",
-    "description": "Private mode runs AI on your device or your AI server—nothing goes to Voice Inbox servers. Folders and AI folder organization work with Custom AI server. Smart mode adds cloud speed and more features.",
+    "description": "Private mode runs AI on your device or your AI server—nothing goes to Voice Inbox AI servers. Folders and AI folder organization work with Custom AI server. Smart mode adds cloud speed and more features.",
     "enableAlertTitle": "Turn on Private mode?",
     "enableAlertMessage": "Maximum privacy.\n\nWith the on-device model, all data—including transcripts—is processed only on this device.\n\nWhat to expect:\n• May run more slowly\n• Higher battery use\n• Folders and AI folder organization need Custom AI server (or Smart mode)\n\nYou can switch back to Smart mode anytime.",
     "unavailableDeviceHint": "This device does not meet Private mode requirements (about 5.5 GB RAM and 3.5 GB free storage). Use Smart mode.",
