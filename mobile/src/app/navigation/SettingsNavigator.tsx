@@ -12,6 +12,7 @@ import {
   ImportRecordsScreen,
   NotificationsScreen,
   PrivateAiModeScreen,
+  PrivateRemoteServerScreen,
   SettingsScreen,
   StorageDetailsScreen,
   SupportScreen,
@@ -50,6 +51,11 @@ export const SettingsNavigator = () => {
         <Stack.Screen
           name="AiSettings"
           component={AiSettingsScreen}
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="PrivateRemoteServer"
+          component={PrivateRemoteServerScreen}
           options={{ animation: 'slide_from_right' }}
         />
         <Stack.Screen

@@ -138,7 +138,7 @@ export function TabletSidebarFoldersSection({
 
   const openPrivateServerSettings = () => {
     hapticSelection();
-    navigateSettingsStackScreen('AiSettings', { focusPrivateServer: true });
+    navigateSettingsStackScreen('PrivateRemoteServer');
   };
 
   if (!foldersEnabled) {

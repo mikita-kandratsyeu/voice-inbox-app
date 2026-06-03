@@ -1240,7 +1240,7 @@
       "proOnlyHint": "Pro only",
       "proTitle": "Bring Your AI Server in Pro",
       "proBody": "Connect Ollama or LM Studio to run Private mode on your AI server—including folders and AI folder organization.",
-      "serverConfig": "Server connection",
+      "serverConfig": "AI server connection",
       "serverConfigHint": "For example, Ollama or LM Studio on your computer or home network.",
       "quickTemplates": "Quick setup",
       "templates": {
@@ -1252,6 +1252,7 @@
         "google": "Google AI"
       },
       "baseUrl": "Server URL",
+      "copyBaseUrl": "Copy server URL",
       "baseUrlPlaceholder": "http://192.168.0.10:11434",
       "baseUrlError": {
         "invalid_protocol": "URL must start with http:// or https://",
@@ -1318,18 +1319,17 @@
       "importInvalidMessage": "Choose a valid profiles JSON export file.",
       "profilesList": {
         "title": "Your profiles",
-        "expandA11y": "Show saved profiles",
-        "collapseA11y": "Hide saved profiles",
+        "sheetTitle": "Your profiles",
+        "sheetSubtitle": "Choose a saved server connection",
         "collapsedSummary": "{{count}} saved connections"
       },
       "modelList": {
         "title": "Choose a model",
-        "empty": "Couldn't load the model list. Check the server address and try again.",
-        "expandA11y": "Show model list",
-        "collapseA11y": "Hide model list",
-        "collapsedSummary": "{{count}} models available",
-        "loadingSummary": "Loading models…",
-        "errorSummary": "Couldn't load models"
+        "sheetTitle": "Choose a model",
+        "sheetSubtitle": "Models available on your server",
+        "pickFromServer": "Choose from server list",
+        "needBaseUrl": "Enter a server address first",
+        "empty": "Couldn't load the model list. Check the server address and try again."
       }
     },
     "privateRemoteGeneration": {

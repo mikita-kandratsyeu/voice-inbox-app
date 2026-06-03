@@ -8,6 +8,7 @@ export { DigestScreen } from './ui/DigestScreen';
 export { ImportRecordsScreen } from './ui/ImportRecordsScreen';
 export { NotificationsScreen } from './ui/NotificationsScreen';
 export { PrivateAiModeScreen } from './ui/PrivateAiModeScreen';
+export { PrivateRemoteServerScreen } from './ui/PrivateRemoteServerScreen';
 export { SettingsScreen } from './ui/SettingsScreen';
 export { StorageDetailsScreen } from './ui/StorageDetailsScreen';
 export { SupportScreen } from './ui/SupportScreen';

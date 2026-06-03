@@ -1261,7 +1261,7 @@
       "proOnlyHint": "Только в Pro",
       "proTitle": "Свой ИИ-сервер в Pro",
       "proBody": "Подключите Ollama или LM Studio: Private на вашем ИИ-сервере, включая папки и авто-раскладку.",
-      "serverConfig": "Подключение к серверу",
+      "serverConfig": "Подключение к ИИ-серверу",
       "serverConfigHint": "Например, Ollama или LM Studio на компьютере или в домашней сети.",
       "quickTemplates": "Быстрый выбор",
       "templates": {
@@ -1273,6 +1273,7 @@
         "google": "Google AI"
       },
       "baseUrl": "Адрес сервера",
+      "copyBaseUrl": "Скопировать адрес сервера",
       "baseUrlPlaceholder": "http://192.168.0.10:11434",
       "baseUrlError": {
         "invalid_protocol": "Адрес должен начинаться с http:// или https://",
@@ -1339,18 +1340,17 @@
       "importInvalidMessage": "Выберите корректный JSON-файл экспорта профилей.",
       "profilesList": {
         "title": "Ваши профили",
-        "expandA11y": "Показать сохранённые профили",
-        "collapseA11y": "Скрыть сохранённые профили",
+        "sheetTitle": "Ваши профили",
+        "sheetSubtitle": "Выберите сохранённое подключение",
         "collapsedSummary": "Сохранено подключений: {{count}}"
       },
       "modelList": {
         "title": "Выбор модели",
-        "empty": "Не удалось загрузить список. Проверьте адрес сервера и попробуйте снова.",
-        "expandA11y": "Показать список моделей",
-        "collapseA11y": "Скрыть список моделей",
-        "collapsedSummary": "Доступно моделей: {{count}}",
-        "loadingSummary": "Загрузка списка…",
-        "errorSummary": "Не удалось загрузить список"
+        "sheetTitle": "Выбор модели",
+        "sheetSubtitle": "Модели на вашем сервере",
+        "pickFromServer": "Выбрать из списка сервера",
+        "needBaseUrl": "Сначала укажите адрес сервера",
+        "empty": "Не удалось загрузить список. Проверьте адрес сервера и попробуйте снова."
       }
     },
     "privateRemoteGeneration": {
