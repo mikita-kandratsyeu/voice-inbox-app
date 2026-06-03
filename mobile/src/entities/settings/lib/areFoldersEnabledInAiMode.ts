@@ -10,7 +10,5 @@ export function areFoldersEnabledInAiMode(
   isProActive: boolean = isProActiveFromStorageSync(),
 ): boolean {
   if (aiExecutionMode !== 'private_experimental') return true;
-  return (
-    resolveEffectivePrivateAiProvider(privateAiProvider, isProActive) === 'custom_openai'
-  );
+  return resolveEffectivePrivateAiProvider(privateAiProvider, isProActive) === 'custom_openai';
 }

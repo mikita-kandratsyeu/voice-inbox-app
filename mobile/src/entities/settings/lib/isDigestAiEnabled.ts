@@ -11,7 +11,5 @@ export function isDigestAiEnabled(
 ): boolean {
   if (aiExecutionMode === 'smart_hybrid') return true;
   if (aiExecutionMode !== 'private_experimental') return false;
-  return (
-    resolveEffectivePrivateAiProvider(privateAiProvider, isProActive) === 'custom_openai'
-  );
+  return resolveEffectivePrivateAiProvider(privateAiProvider, isProActive) === 'custom_openai';
 }

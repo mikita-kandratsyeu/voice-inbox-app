@@ -7,7 +7,6 @@ import { storage } from '@/shared/lib/async-storage';
 import { isNumber, isRecord, isString } from '@/shared/lib/type-guards';
 
 import { CLOUD_AI_KV_TTL_DEFAULT_SECONDS, snapCloudAiKvTtlToChoice } from '../lib/cloudAiKvTtl';
-import { resolveEffectivePrivateAiProvider } from '../lib/resolveEffectivePrivateAiProvider';
 import {
   getPrivateRemoteSecrets,
   removePrivateRemoteProfileApiKey,
@@ -17,6 +16,7 @@ import {
   setPrivateRemoteProfileApiKey,
 } from '../lib/privateRemoteSecrets';
 import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
+import { resolveEffectivePrivateAiProvider } from '../lib/resolveEffectivePrivateAiProvider';
 import {
   ALL_SELECTABLE_CLOUD_AI_MODEL_IDS,
   DEFAULT_SELECTED_WHISPER_MODEL_ID,

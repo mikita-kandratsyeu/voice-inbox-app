@@ -17,7 +17,6 @@ export {
 } from './lib/getAiSettingsDiagnostics';
 export { isDigestAiEnabled } from './lib/isDigestAiEnabled';
 export { isPrivateCustomServerMode } from './lib/isPrivateCustomServerMode';
-export { resolveEffectivePrivateAiProvider } from './lib/resolveEffectivePrivateAiProvider';
 export {
   getOnboardingCuratedCloudModels,
   ONBOARDING_CURATED_CLOUD_MODEL_IDS,
@@ -33,6 +32,7 @@ export {
 export { FALLBACK_AI_MODEL_WHEN_NOT_PRO, isProOnlyAiModel } from './lib/proOnlyAiModels';
 export { RECOMMENDED_AI_MODEL_ID } from './lib/recommendAiModel';
 export { getRecommendedWhisperModelId } from './lib/recommendWhisperModel';
+export { resolveEffectivePrivateAiProvider } from './lib/resolveEffectivePrivateAiProvider';
 export { syncPrivateCapabilityTier } from './lib/syncPrivateCapabilityTier';
 export { TRANSCRIPTION_LANGUAGES, TRANSLATE_LANGUAGES } from './lib/transcriptionLanguages';
 export { useRecommendedWhisperModelId } from './lib/useRecommendedWhisperModelId';

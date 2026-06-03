@@ -27,9 +27,9 @@ import {
   SettingsAiProcessingSection,
   SettingsAppearanceSection,
   SettingsAutomationSection,
-  SettingsDigestSection,
   SettingsBackupSection,
   SettingsDeviceSection,
+  SettingsDigestSection,
   SettingsPermissionsSection,
   SettingsPrivacySection,
 } from './sections';
