@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Clock3,
   Info,
+  Share as ShareIcon,
   Sparkles,
 } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -15,6 +16,7 @@ import {
   Alert,
   RefreshControl,
   ScrollView,
+  Share,
   Text,
   TouchableOpacity,
   useWindowDimensions,
@@ -28,6 +30,7 @@ import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import { useRecordStore } from '@/entities/record';
 import { isDigestAiEnabled, useSettingsStore } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
+import { isUserCancelledShare } from '@/features/share-record/lib/isUserCancelledShare';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import type { DigestAiResult } from '@/shared/lib/ai-api';
@@ -37,12 +40,13 @@ import {
   formatLocalTimeOfDay,
   formatTaskDeadlineTimeForDisplay,
 } from '@/shared/lib/taskDeadlineTimeDisplay';
-import { Button, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
+import { Button, HeaderIconButton, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
 
 import { buildDigestAiExecutionContext } from '../lib/buildDigestAiExecutionContext';
 import {
   buildDeterministicDigest,
   buildDigestAiPayload,
+  buildDigestSharePayload,
   type DigestAiPayloadCoverage,
   type DigestPeriod,
   getDigestAiPayloadCoverage,
@@ -525,6 +529,43 @@ export const DigestScreen = () => {
       ? 'settings.digest.aiDescriptionCloud'
       : 'settings.digest.aiDescription';
 
+  const handleShareDigest = useCallback(async () => {
+    if (!aiResult) return;
+
+    const { message, title } = buildDigestSharePayload({
+      title: t('settings.digest.title'),
+      periodLabel: t(`settings.digest.period.${period}`),
+      rangeText,
+      markdown: aiResult.markdown,
+    });
+
+    try {
+      await Share.share({ message, title });
+    } catch (err) {
+      if (!isUserCancelledShare(err)) {
+        Alert.alert(t('common.error'), t('recordingDetail.shareFailed'));
+      }
+    }
+  }, [aiResult, period, rangeText, t]);
+
+  const shareHeaderButton = useMemo(
+    () =>
+      aiResult ? (
+        <HeaderIconButton
+          iconOnly
+          variant="icon"
+          size="md"
+          icon={<ShareIcon size={20} color={color.text.primary} strokeWidth={2.2} />}
+          color={color}
+          onPress={() => void handleShareDigest()}
+          activeOpacity={0.7}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          accessibilityLabel={t('share.share')}
+        />
+      ) : null,
+    [aiResult, color, handleShareDigest, t],
+  );
+
   if (!digestAiEnabled) {
     return (
       <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -576,7 +617,11 @@ export const DigestScreen = () => {
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
-      <ScreenHeader title={t('settings.digest.title')} onBack={() => navigation.goBack()} />
+      <ScreenHeader
+        title={t('settings.digest.title')}
+        onBack={() => navigation.goBack()}
+        rightSlot={shareHeaderButton}
+      />
       <View style={{ flex: 1, alignSelf: 'center', width: '100%', maxWidth: contentMaxWidth }}>
         <ScrollView
           contentContainerStyle={{

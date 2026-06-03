@@ -274,3 +274,16 @@ export function saveCachedDigest(key: string, result: DigestAiResult): CachedDig
   storage.set(`${CACHE_PREFIX}${key}`, JSON.stringify(cached));
   return cached;
 }
+
+export function buildDigestSharePayload(params: {
+  title: string;
+  periodLabel: string;
+  rangeText: string;
+  markdown: string;
+}): { message: string; title: string } {
+  const headline = `${params.title} — ${params.periodLabel}`;
+  return {
+    title: headline,
+    message: `${headline}\n${params.rangeText}\n\n${params.markdown.trim()}`,
+  };
+}
