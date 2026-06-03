@@ -1,6 +1,7 @@
 import { DEFAULT_LOCAL_AI_MODEL_ID } from '@/entities/settings/model/constants';
 
 import {
+  listPrivateRemoteModels,
   resetPrivateRemoteFormatCapabilityCacheForTests,
   runPrivateRemoteMeetingDialogue,
 } from '../privateRemoteProvider';
@@ -223,5 +224,62 @@ describe('runPrivateRemoteMeetingDialogue', () => {
     if (!result.ok) return;
     expect(result.meetingDialogueMarkdown).toBe('Speaker 1: Финальный рабочий вариант');
     expect(mockNitroFetch).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('listPrivateRemoteModels', () => {
+  beforeEach(() => {
+    mockNitroFetch.mockReset();
+  });
+
+  it('maps connection refused to a friendly server-unavailable message', async () => {
+    mockNitroFetch.mockRejectedValue(
+      new Error(
+        'Error Domain=NSURLErrorDomain Code=-1004 "Не удалось подключиться к серверу." UserInfo={kCFStreamErrorDomainKey=1, kCFStreamErrorCodeKey=61}',
+      ),
+    );
+
+    const result = await listPrivateRemoteModels({
+      privateRemoteBaseUrl: 'http://192.168.1.34:1234',
+      privateRemoteApiKey: '',
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('aiSettings.privateProvider.healthCheck.serverUnavailable');
+  });
+
+  it('maps auth failures to a friendly auth message', async () => {
+    mockNitroFetch.mockResolvedValue({
+      ok: false,
+      status: 401,
+      json: async () => ({}),
+    } as Response);
+
+    const result = await listPrivateRemoteModels({
+      privateRemoteBaseUrl: 'http://127.0.0.1:1234',
+      privateRemoteApiKey: 'bad-key',
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('aiSettings.privateProvider.healthCheck.authFailed');
+  });
+
+  it('maps HTTP errors to a friendly load-failed message', async () => {
+    mockNitroFetch.mockResolvedValue({
+      ok: false,
+      status: 404,
+      json: async () => ({}),
+    } as Response);
+
+    const result = await listPrivateRemoteModels({
+      privateRemoteBaseUrl: 'http://127.0.0.1:1234',
+      privateRemoteApiKey: '',
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(result.error).toBe('aiSettings.privateProvider.modelList.loadFailed');
   });
 });

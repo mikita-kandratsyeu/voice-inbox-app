@@ -446,14 +446,6 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
     [setPrivateRemoteModel],
   );
 
-  const onSelectModelFromList = React.useCallback(
-    (modelId: string) => {
-      didTouchRemoteConfigRef.current = true;
-      setPrivateRemoteModel(modelId);
-    },
-    [setPrivateRemoteModel],
-  );
-
   const connectAccessibilityLabel = isCreatingNewConnection
     ? t('aiSettings.privateProvider.testAndSaveConnection')
     : t('aiSettings.privateProvider.testAndUpdateConnection');
@@ -484,7 +476,6 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
     applyQuickTemplate,
     onBaseUrlChange,
     onModelChange,
-    onSelectModelFromList,
     connectAccessibilityLabel,
   };
 }

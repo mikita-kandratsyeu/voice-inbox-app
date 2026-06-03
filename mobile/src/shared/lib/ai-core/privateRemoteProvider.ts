@@ -237,6 +237,52 @@ function isPrivateRemoteFetchTimeout(err: unknown): boolean {
   );
 }
 
+function isPrivateRemoteNoNetwork(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return (
+    /NSURLErrorDomain Code=-1009/i.test(message) ||
+    /internet connection appears to be offline|not connected to internet|network connection was lost/i.test(
+      message,
+    ) ||
+    /нет подключения к интернету|сеть недоступна/i.test(message)
+  );
+}
+
+function isPrivateRemoteConnectionFailed(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return (
+    /NSURLErrorDomain Code=-1004/i.test(message) ||
+    /NSURLErrorDomain Code=-1005/i.test(message) ||
+    /NSURLErrorDomain Code=-1200/i.test(message) ||
+    /ECONNREFUSED|connection refused|could not connect/i.test(message) ||
+    /Не удалось подключиться к серверу/i.test(message) ||
+    /kCFStreamErrorDomainKey=1[\s\S]*Code=61/i.test(message)
+  );
+}
+
+function mapPrivateRemoteListModelsHttpError(status: number): string {
+  if (isAuthFailureStatus(status)) {
+    return i18n.t('aiSettings.privateProvider.healthCheck.authFailed');
+  }
+  if (status >= 500) {
+    return i18n.t('aiSettings.privateProvider.healthCheck.serverUnavailable');
+  }
+  return i18n.t('aiSettings.privateProvider.modelList.loadFailed');
+}
+
+function mapPrivateRemoteListModelsError(err: unknown): string {
+  if (isPrivateRemoteFetchTimeout(err)) {
+    return i18n.t('aiSettings.privateProvider.modelList.loadTimeout');
+  }
+  if (isPrivateRemoteNoNetwork(err)) {
+    return i18n.t('aiSettings.privateProvider.modelList.noNetwork');
+  }
+  if (isPrivateRemoteConnectionFailed(err)) {
+    return i18n.t('aiSettings.privateProvider.healthCheck.serverUnavailable');
+  }
+  return i18n.t('aiSettings.privateProvider.modelList.loadFailed');
+}
+
 function mapPrivateRemoteError(err: unknown): string {
   if (isPrivateRemoteFetchTimeout(err)) {
     return i18n.t('ai.privateRemoteServerTimeout');
@@ -554,19 +600,19 @@ export async function listPrivateRemoteModels(
       timeoutMs: PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
     });
     if (isAuthFailureStatus(modelsResponse.status)) {
-      return { ok: false, error: i18n.t('aiSettings.privateProvider.connectionStatus.authFailed') };
+      return { ok: false, error: i18n.t('aiSettings.privateProvider.healthCheck.authFailed') };
     }
     if (!modelsResponse.ok) {
       return {
         ok: false,
-        error: `HTTP ${modelsResponse.status}`,
+        error: mapPrivateRemoteListModelsHttpError(modelsResponse.status),
       };
     }
     const modelsJson = await readJsonSafe<OpenAiModelsResponse>(modelsResponse);
     if (!modelsJson) {
       return {
         ok: false,
-        error: i18n.t('aiSettings.privateProvider.connectionStatus.invalidResponse'),
+        error: i18n.t('aiSettings.privateProvider.healthCheck.invalidResponse'),
       };
     }
     const models = extractModelIds(modelsJson);
@@ -577,7 +623,7 @@ export async function listPrivateRemoteModels(
   } catch (err) {
     return {
       ok: false,
-      error: err instanceof Error ? err.message : i18n.t('ai.privateModeGenericError'),
+      error: mapPrivateRemoteListModelsError(err),
     };
   }
 }

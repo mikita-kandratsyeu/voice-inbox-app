@@ -1338,9 +1338,16 @@
         "title": "Choose a model",
         "sheetTitle": "Choose a model",
         "sheetSubtitle": "Models on your connected server",
+        "manualInput": "Enter manually",
+        "fromServer": "From server",
+        "retry": "Try again",
         "pickFromServer": "Choose from server list",
         "needBaseUrl": "Enter a server address first",
-        "empty": "Couldn't load the model list. Check the server address and try again."
+        "loadErrorTitle": "Couldn't load models",
+        "empty": "No models found on this server. Enter a model name manually or check your server settings.",
+        "loadFailed": "Couldn't load the model list. Check the server address and try again.",
+        "loadTimeout": "The server didn't respond in time. Make sure it's running and reachable on your network.",
+        "noNetwork": "You're offline. Connect to Wi‑Fi or mobile data and try again."
       }
     },
     "privateRemoteGeneration": {

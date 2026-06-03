@@ -37,6 +37,7 @@ export { PrivateExecutionBadge, PrivateModeBadge } from './PrivateModeBadge';
 export { ProcessingArcSpinner } from './ProcessingArcSpinner';
 export { ProcessingStatusTitle } from './ProcessingStatusTitle';
 export { RecordVoiceIcon } from './RecordVoiceIcon';
+export { RetryErrorState, type RetryErrorStateProps } from './RetryErrorState';
 export { RotatingTipText } from './RotatingTipText';
 export { ScreenHeader } from './ScreenHeader';
 export { SectionHeader } from './SectionHeader';

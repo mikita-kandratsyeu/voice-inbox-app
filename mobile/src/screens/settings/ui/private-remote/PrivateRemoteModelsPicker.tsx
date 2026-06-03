@@ -1,21 +1,28 @@
+import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Box } from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Text, View } from 'react-native';
+import { ActivityIndicator, InteractionManager, Text, View } from 'react-native';
+import type { TextInput } from 'react-native-gesture-handler';
 
 import type { Colors } from '@/shared/config';
-import { hapticSelection } from '@/shared/lib';
+import { hapticSelection, hapticSuccess } from '@/shared/lib';
 import { listPrivateRemoteModels } from '@/shared/lib/ai-core/privateRemoteProvider';
-import { SettingsRow } from '@/shared/ui';
+import {
+  AppBottomSheetModal,
+  RetryErrorState,
+  SettingsRow,
+  SheetFooterButtons,
+  useBottomSheetContentPadding,
+} from '@/shared/ui';
 
-import { PrivateRemotePickerSheetFrame } from './PrivateRemotePickerSheetFrame';
 import { PrivateRemoteSheetPickerRow } from './PrivateRemoteSheetPickerRow';
 
 type PrivateRemoteModelsPickerProps = {
   baseUrl: string;
   apiKey: string;
   selectedModel: string;
-  onSelectModel: (modelId: string) => void;
+  onModelChange: (modelId: string) => void;
   color: Colors;
   refreshNonce?: number;
 };
@@ -24,19 +31,22 @@ export function PrivateRemoteModelsPicker({
   baseUrl,
   apiKey,
   selectedModel,
-  onSelectModel,
+  onModelChange,
   color,
   refreshNonce = 0,
 }: PrivateRemoteModelsPickerProps) {
   const { t } = useTranslation();
+  const contentPadding = useBottomSheetContentPadding(24);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [models, setModels] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const requestIdRef = useRef(0);
+  const modelInputRef = useRef<TextInput>(null);
 
   const trimmedSelected = selectedModel.trim();
   const trimmedUrl = baseUrl.trim();
+  const canDone = trimmedSelected.length > 0;
 
   const loadModels = useCallback(async () => {
     if (!trimmedUrl) {
@@ -76,6 +86,16 @@ export function PrivateRemoteModelsPicker({
     void loadModels();
   }, [sheetVisible, loadModels, refreshNonce]);
 
+  useEffect(() => {
+    if (!sheetVisible) return;
+    const task = InteractionManager.runAfterInteractions(() => {
+      requestAnimationFrame(() => {
+        modelInputRef.current?.focus();
+      });
+    });
+    return () => task.cancel();
+  }, [sheetVisible]);
+
   const openSheet = useCallback(() => {
     hapticSelection();
     setSheetVisible(true);
@@ -83,13 +103,26 @@ export function PrivateRemoteModelsPicker({
 
   const closeSheet = useCallback(() => setSheetVisible(false), []);
 
+  const handleDone = useCallback(() => {
+    if (!canDone) return;
+    onModelChange(trimmedSelected);
+    hapticSuccess();
+    closeSheet();
+  }, [canDone, closeSheet, onModelChange, trimmedSelected]);
+
   const pickModel = useCallback(
     (modelId: string) => {
-      onSelectModel(modelId);
+      onModelChange(modelId);
+      hapticSuccess();
       closeSheet();
     },
-    [closeSheet, onSelectModel],
+    [closeSheet, onModelChange],
   );
+
+  const handleRetry = useCallback(() => {
+    hapticSelection();
+    void loadModels();
+  }, [loadModels]);
 
   const triggerSubtitle = useMemo(() => {
     if (trimmedSelected) return undefined;
@@ -97,7 +130,7 @@ export function PrivateRemoteModelsPicker({
     return t('aiSettings.privateProvider.modelList.pickFromServer');
   }, [t, trimmedSelected, trimmedUrl]);
 
-  const sheetBody = (() => {
+  const serverListBody = (() => {
     if (!trimmedUrl) {
       return (
         <View className="px-4 py-5">
@@ -119,23 +152,26 @@ export function PrivateRemoteModelsPicker({
     }
     if (error) {
       return (
-        <View className="px-4 py-5">
-          <Text
-            className="text-center text-[14px] leading-5"
-            style={{ color: color.accent.delete }}
-          >
-            {error}
-          </Text>
-        </View>
+        <RetryErrorState
+          color={color}
+          title={t('aiSettings.privateProvider.modelList.loadErrorTitle')}
+          message={error}
+          retryLabel={t('recordingDetail.summaryRetry')}
+          onRetry={handleRetry}
+          retryDisabled={isLoading}
+        />
       );
     }
     if (models.length === 0) {
       return (
-        <View className="px-4 py-5">
-          <Text className="text-center text-[14px] leading-5" style={{ color: color.text.muted }}>
-            {t('aiSettings.privateProvider.modelList.empty')}
-          </Text>
-        </View>
+        <RetryErrorState
+          color={color}
+          title={t('aiSettings.privateProvider.modelList.loadErrorTitle')}
+          message={t('aiSettings.privateProvider.modelList.empty')}
+          retryLabel={t('recordingDetail.summaryRetry')}
+          onRetry={handleRetry}
+          retryDisabled={isLoading}
+        />
       );
     }
     return models.map((modelId, index) => (
@@ -154,7 +190,7 @@ export function PrivateRemoteModelsPicker({
   return (
     <>
       <Text className="mb-2 text-[13px] font-semibold" style={{ color: color.text.secondary }}>
-        {t('aiSettings.privateProvider.modelList.title')}
+        {t('aiSettings.privateProvider.model')}
       </Text>
       <View
         className="overflow-hidden rounded-2xl"
@@ -171,15 +207,87 @@ export function PrivateRemoteModelsPicker({
         />
       </View>
 
-      <PrivateRemotePickerSheetFrame
-        visible={sheetVisible}
-        title={t('aiSettings.privateProvider.modelList.sheetTitle')}
-        subtitle={t('aiSettings.privateProvider.modelList.sheetSubtitle')}
-        color={color}
-        onClose={closeSheet}
-      >
-        {sheetBody}
-      </PrivateRemotePickerSheetFrame>
+      <AppBottomSheetModal visible={sheetVisible} onClose={closeSheet}>
+        <BottomSheetScrollView
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            paddingTop: 4,
+            ...contentPadding,
+            gap: 12,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 17,
+              fontWeight: '600',
+              color: color.text.primary,
+              textAlign: 'center',
+              marginBottom: 4,
+            }}
+          >
+            {t('aiSettings.privateProvider.modelList.sheetTitle')}
+          </Text>
+
+          <Text
+            className="mb-1.5 text-[13px] font-semibold"
+            style={{ color: color.text.secondary }}
+          >
+            {t('aiSettings.privateProvider.modelList.manualInput')}
+          </Text>
+          <BottomSheetTextInput
+            ref={modelInputRef}
+            value={selectedModel}
+            onChangeText={onModelChange}
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholder={t('aiSettings.privateProvider.modelPlaceholder')}
+            placeholderTextColor={color.text.muted}
+            className="rounded-xl border px-4 py-3 text-[16px]"
+            style={{
+              borderColor: color.border.default,
+              color: color.text.primary,
+              backgroundColor: color.background.tertiary,
+            }}
+            returnKeyType="done"
+            blurOnSubmit
+            onSubmitEditing={handleDone}
+            accessibilityLabel={t('aiSettings.privateProvider.model')}
+          />
+
+          <Text
+            className="mb-1.5 mt-1 text-[13px] font-semibold"
+            style={{ color: color.text.secondary }}
+          >
+            {t('aiSettings.privateProvider.modelList.fromServer')}
+          </Text>
+          <View
+            style={{
+              backgroundColor: color.background.card,
+              borderColor: color.border.default,
+              borderRadius: 12,
+              borderWidth: 1,
+              overflow: 'hidden',
+            }}
+          >
+            {serverListBody}
+          </View>
+
+          <SheetFooterButtons
+            className="mt-1 w-full"
+            color={color}
+            primaryLabel={t('common.done')}
+            onPrimaryPress={handleDone}
+            primaryDisabled={!canDone}
+            primaryAccessibilityLabel={t('common.done')}
+            secondaryLabel={t('common.cancel')}
+            onSecondaryPress={closeSheet}
+            secondaryAccessibilityLabel={t('common.cancel')}
+          />
+        </BottomSheetScrollView>
+      </AppBottomSheetModal>
     </>
   );
 }

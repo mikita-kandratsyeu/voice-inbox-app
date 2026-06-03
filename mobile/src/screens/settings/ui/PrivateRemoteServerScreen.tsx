@@ -341,39 +341,6 @@ export const PrivateRemoteServerScreen = () => {
               className="mb-2 text-[13px] font-semibold"
               style={{ color: color.text.secondary }}
             >
-              {t('aiSettings.privateProvider.model')}
-            </Text>
-            <TextInput
-              value={screen.privateRemoteModel}
-              onChangeText={screen.onModelChange}
-              autoCapitalize="none"
-              autoCorrect={false}
-              placeholder={t('aiSettings.privateProvider.modelPlaceholder')}
-              placeholderTextColor={color.text.muted}
-              className="min-h-[48px] rounded-xl border px-4 py-3 text-[15px]"
-              style={{
-                borderColor: color.border.default,
-                color: color.text.primary,
-                backgroundColor: color.background.card,
-              }}
-            />
-            <View className="mt-3">
-              <PrivateRemoteModelsPicker
-                baseUrl={screen.privateRemoteBaseUrl}
-                apiKey={screen.privateRemoteApiKey}
-                selectedModel={screen.privateRemoteModel}
-                onSelectModel={screen.onSelectModelFromList}
-                color={color}
-                refreshNonce={screen.remoteModelListNonce}
-              />
-            </View>
-          </View>
-
-          <View className="mb-4">
-            <Text
-              className="mb-2 text-[13px] font-semibold"
-              style={{ color: color.text.secondary }}
-            >
               {t('aiSettings.privateProvider.apiKey')}
             </Text>
             <TextInput
@@ -393,6 +360,17 @@ export const PrivateRemoteServerScreen = () => {
                 color: color.text.primary,
                 backgroundColor: color.background.card,
               }}
+            />
+          </View>
+
+          <View className="mb-4">
+            <PrivateRemoteModelsPicker
+              baseUrl={screen.privateRemoteBaseUrl}
+              apiKey={screen.privateRemoteApiKey}
+              selectedModel={screen.privateRemoteModel}
+              onModelChange={screen.onModelChange}
+              color={color}
+              refreshNonce={screen.remoteModelListNonce}
             />
           </View>
 
