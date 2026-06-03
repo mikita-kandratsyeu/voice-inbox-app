@@ -1,6 +1,6 @@
 import { BottomSheetScrollView, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { useNavigation } from '@react-navigation/native';
-import { Check, Crown, Trash2 } from 'lucide-react-native';
+import { Check, Crown } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -55,6 +55,7 @@ import {
 import { AutomationComingSoonSheet } from './AutomationComingSoonSheet';
 import { CloudAiKvTtlSlider } from './CloudAiKvTtlSlider';
 import { PrivateRemoteModelList } from './PrivateRemoteModelList';
+import { PrivateRemoteSavedConnectionsList } from './PrivateRemoteSavedConnectionsList';
 
 const SUMMARY_STYLES: SummaryStyle[] = ['brief', 'standard', 'detailed'];
 const TASK_STRICTNESS_OPTIONS: TaskStrictness[] = ['strict', 'balanced', 'soft'];
@@ -1230,86 +1231,14 @@ export const AiSettingsScreen = () => {
                 {t('aiSettings.privateProvider.savedConnectionsEmpty')}
               </Text>
             ) : (
-              <View
-                className="rounded-xl border"
-                style={{
-                  borderColor: color.border.default,
-                  opacity: isCreatingNewConnection ? 0.55 : 1,
-                }}
-                pointerEvents={isCreatingNewConnection ? 'none' : 'auto'}
-              >
-                {privateRemoteProfiles.map((profile, index) => {
-                  const isActive = profile.id === privateRemoteActiveProfileId;
-                  const isLast = index === privateRemoteProfiles.length - 1;
-                  return (
-                    <View
-                      key={profile.id}
-                      className="flex-row items-center px-4 py-3"
-                      style={
-                        !isLast
-                          ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
-                          : undefined
-                      }
-                    >
-                      <TouchableOpacity
-                        onPress={() => setPrivateRemoteActiveProfile(profile.id)}
-                        className="min-w-0 flex-1 flex-row items-center pr-2"
-                      >
-                        <View
-                          className="mr-2 h-5 w-5 items-center justify-center rounded-full border"
-                          style={{
-                            borderColor: isActive ? color.accent.primary : color.border.default,
-                            backgroundColor: isActive
-                              ? color.accent.primary
-                              : color.background.tertiary,
-                          }}
-                        >
-                          {isActive ? (
-                            <Check size={12} color={color.icon.onAccent} strokeWidth={3} />
-                          ) : null}
-                        </View>
-                        <View className="min-w-0 flex-1">
-                          <Text
-                            className="text-[13px] font-semibold"
-                            style={{ color: isActive ? color.text.primary : color.text.secondary }}
-                            numberOfLines={1}
-                          >
-                            {profile.model}
-                          </Text>
-                          <Text
-                            className="text-[12px]"
-                            style={{ color: color.text.muted }}
-                            numberOfLines={1}
-                          >
-                            {profile.baseUrl}
-                          </Text>
-                        </View>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() =>
-                          Alert.alert(
-                            t('aiSettings.privateProvider.deleteConnectionTitle'),
-                            t('aiSettings.privateProvider.deleteConnectionMessage'),
-                            [
-                              { text: t('common.cancel'), style: 'cancel' },
-                              {
-                                text: t('common.delete'),
-                                style: 'destructive',
-                                onPress: () => removePrivateRemoteProfile(profile.id),
-                              },
-                            ],
-                          )
-                        }
-                        className="rounded-lg p-2"
-                        accessibilityRole="button"
-                        accessibilityLabel={t('aiSettings.privateProvider.deleteConnection')}
-                      >
-                        <Trash2 size={16} color={color.accent.delete} />
-                      </TouchableOpacity>
-                    </View>
-                  );
-                })}
-              </View>
+              <PrivateRemoteSavedConnectionsList
+                profiles={privateRemoteProfiles}
+                activeProfileId={privateRemoteActiveProfileId}
+                onSelectProfile={setPrivateRemoteActiveProfile}
+                onDeleteProfile={removePrivateRemoteProfile}
+                color={color}
+                disabled={isCreatingNewConnection}
+              />
             )}
           </View>
           <View className="mb-8 flex-row gap-3">

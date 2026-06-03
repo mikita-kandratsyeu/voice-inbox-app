@@ -220,6 +220,7 @@
     "privateModeTooLongForLocal": "This text is too long for the local model. Shorten the note or switch to Smart mode.",
     "privateModeGenericError": "The local request failed. Try again or switch to Smart mode.",
     "privateModeRemoteConfigMissing": "Enter server URL and model.",
+    "privateRemoteServerTimeout": "Your server took too long to respond (over 10 minutes). Try a shorter note, a faster model, or check if the server is not overloaded.",
     "smartModeNetworkError": "Could not connect to the server.",
     "modelResponseInvalid": "The AI model returned an invalid response. Try again or pick another model in settings."
   },
@@ -1274,7 +1275,7 @@
       "savedModelLabel": "Model: {{model}}",
       "savedConnections": "Saved connections",
       "savedConnectionsEmpty": "No saved connections yet.",
-      "newConnectionSwitch": "Create new connection",
+      "newConnectionSwitch": "New connection",
       "addConnection": "Add",
       "cancelAddConnection": "Cancel",
       "newConnectionHint": "Creating new connection. It will be saved after successful test.",
@@ -1315,9 +1316,14 @@
       "importFailedMessage": "Could not import profiles from file.",
       "importInvalidTitle": "Invalid file",
       "importInvalidMessage": "Choose a valid profiles JSON export file.",
+      "profilesList": {
+        "title": "Your profiles",
+        "expandA11y": "Show saved profiles",
+        "collapseA11y": "Hide saved profiles",
+        "collapsedSummary": "{{count}} saved connections"
+      },
       "modelList": {
         "title": "Choose a model",
-        "refresh": "Load models",
         "empty": "Couldn't load the model list. Check the server address and try again.",
         "expandA11y": "Show model list",
         "collapseA11y": "Hide model list",

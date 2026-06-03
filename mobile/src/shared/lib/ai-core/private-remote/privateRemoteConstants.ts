@@ -30,6 +30,12 @@ export const PRIVATE_REMOTE_BUDGET_MEETING_DIALOGUE_MAX_TOKENS: Record<
 
 const REMOTE_JSON_REPAIR_MAX_TOKENS = 4096;
 
+/** iOS/RN default URLSession timeout is ~60s; LM Studio often needs longer. */
+export const PRIVATE_REMOTE_COMPLETION_TIMEOUT_MS = 10 * 60 * 1000;
+
+/** Health check and model list. */
+export const PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS = 45 * 1000;
+
 export function resolvePrivateRemoteSummaryMaxTokens(
   budget: PrivateRemoteOutputBudget,
 ): number | null {

@@ -24,6 +24,8 @@ import {
   prepareTranscriptForLocalLlm,
 } from './local-provider/localAiTranscript';
 import {
+  PRIVATE_REMOTE_COMPLETION_TIMEOUT_MS,
+  PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
   resolvePrivateRemoteAskMaxTokens,
   resolvePrivateRemoteJsonRepairMaxTokens,
   resolvePrivateRemoteMeetingDialogueMaxTokens,
@@ -209,6 +211,21 @@ function remoteBaseUrlKey(raw: string): string {
   return normalizeBaseUrl(raw)?.toLowerCase() ?? raw.trim().toLowerCase();
 }
 
+function isPrivateRemoteFetchTimeout(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return (
+    /NSURLErrorDomain Code=-1001/i.test(message) ||
+    /timed out|timeout|time-out|Превышен лимит времени/i.test(message)
+  );
+}
+
+function mapPrivateRemoteError(err: unknown): string {
+  if (isPrivateRemoteFetchTimeout(err)) {
+    return i18n.t('ai.privateRemoteServerTimeout');
+  }
+  return mapLocalError(err);
+}
+
 /** Server rejected the requested `response_format` — try the next mode in the ladder. */
 function isStructuredFormatRejected(err: unknown): boolean {
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
@@ -294,7 +311,9 @@ async function callRemoteCompletion(
       headers,
       body: JSON.stringify(payload),
       signal: omitAbortSignal ? undefined : abortSignal,
+      timeoutMs: PRIVATE_REMOTE_COMPLETION_TIMEOUT_MS,
     });
+
     if (!response.ok) {
       const bodyText = await response.text();
       const message = extractHttpErrorMessage(bodyText) || `HTTP ${response.status}`;
@@ -338,7 +357,8 @@ async function callRemoteCompletion(
     } catch (err) {
       lastErr = err;
       const hasNext = i < modes.length - 1;
-      if (!hasNext || !isStructuredFormatRejected(err)) {
+      const rejected = isStructuredFormatRejected(err);
+      if (!hasNext || !rejected) {
         throw err;
       }
     }
@@ -494,6 +514,7 @@ export async function listPrivateRemoteModels(
     const modelsResponse = await nitroFetch(modelsEndpoint, {
       method: 'GET',
       headers: createRemoteHeaders(config.privateRemoteApiKey),
+      timeoutMs: PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
     });
     if (isAuthFailureStatus(modelsResponse.status)) {
       return { ok: false, error: i18n.t('aiSettings.privateProvider.connectionStatus.authFailed') };
@@ -548,6 +569,7 @@ export async function testPrivateRemoteConnection(
       const modelsResponse = await nitroFetch(modelsEndpoint, {
         method: 'GET',
         headers,
+        timeoutMs: PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
       });
       if (isAuthFailureStatus(modelsResponse.status)) {
         return { ok: false, reason: 'auth_failed' };
@@ -588,6 +610,7 @@ export async function testPrivateRemoteConnection(
         max_tokens: 32,
         stream: false,
       }),
+      timeoutMs: PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
     });
     if (isAuthFailureStatus(response.status)) {
       return { ok: false, reason: 'auth_failed' };
@@ -756,7 +779,7 @@ export async function runPrivateRemoteMeetingDialogue(
     }
     return { ok: true, meetingDialogueMarkdown: markdown };
   } catch (err) {
-    return { ok: false, error: mapLocalError(err) };
+    return { ok: false, error: mapPrivateRemoteError(err) };
   }
 }
 
@@ -904,7 +927,7 @@ export async function runPrivateRemoteSummaryTasks(
       ok: false,
       provider: 'private_remote',
       mode: ctx.aiExecutionMode,
-      error: mapLocalError(err),
+      error: mapPrivateRemoteError(err),
     };
   }
 }
@@ -974,7 +997,7 @@ export async function runPrivateRemoteAsk(
       ok: false,
       provider: 'private_remote',
       mode: ctx.aiExecutionMode,
-      error: mapLocalError(err),
+      error: mapPrivateRemoteError(err),
     };
   }
 }

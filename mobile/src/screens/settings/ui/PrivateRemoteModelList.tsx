@@ -1,4 +1,4 @@
-import { Check, ChevronDown, RefreshCw } from 'lucide-react-native';
+import { Check, ChevronDown } from 'lucide-react-native';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -88,8 +88,14 @@ export function PrivateRemoteModelList({
   }, [apiKey, baseUrl]);
 
   useEffect(() => {
+    setModels([]);
+    setError(null);
+  }, [baseUrl, apiKey, refreshNonce]);
+
+  useEffect(() => {
+    if (!expanded) return;
     void loadModels();
-  }, [loadModels, refreshNonce]);
+  }, [expanded, loadModels, refreshNonce]);
 
   const trimmedSelected = selectedModel.trim();
   const collapsedSummary =
@@ -106,74 +112,53 @@ export function PrivateRemoteModelList({
       className="overflow-hidden rounded-xl border"
       style={{ borderColor: color.border.default }}
     >
-      <View className="flex-row items-center gap-2">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityState={{ expanded }}
-          accessibilityLabel={
-            expanded
-              ? t('aiSettings.privateProvider.modelList.collapseA11y')
-              : t('aiSettings.privateProvider.modelList.expandA11y')
-          }
-          onPress={() => {
-            hapticSelection();
-            setExpanded((v) => {
-              if (!v) {
-                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-              }
-              return !v;
-            });
-          }}
-          className="min-h-[48px] min-w-0 flex-1 flex-row items-center justify-between gap-3 px-4 py-3 active:opacity-80"
-        >
-          <View className="min-w-0 flex-1">
-            <Text
-              className="text-[13px] font-semibold leading-5"
-              style={{ color: color.text.secondary }}
-            >
-              {t('aiSettings.privateProvider.modelList.title')}
-            </Text>
-            {!expanded && collapsedSummary ? (
-              <Text className="mt-0.5 text-[12px] leading-4" style={{ color: color.text.muted }}>
-                {collapsedSummary}
-              </Text>
-            ) : null}
-          </View>
-          <Animated.View
-            style={[
-              chevronAnimatedStyle,
-              {
-                width: 28,
-                height: 28,
-                flexShrink: 0,
-                alignItems: 'center',
-                justifyContent: 'center',
-              },
-            ]}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityState={{ expanded }}
+        accessibilityLabel={
+          expanded
+            ? t('aiSettings.privateProvider.modelList.collapseA11y')
+            : t('aiSettings.privateProvider.modelList.expandA11y')
+        }
+        onPress={() => {
+          hapticSelection();
+          setExpanded((v) => {
+            if (!v) {
+              LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            }
+            return !v;
+          });
+        }}
+        className="min-h-[48px] flex-row items-center justify-between gap-3 px-4 py-3 active:opacity-80"
+      >
+        <View className="min-w-0 flex-1">
+          <Text
+            className="text-[13px] font-semibold leading-5"
+            style={{ color: color.text.secondary }}
           >
-            <ChevronDown size={18} color={color.text.secondary} strokeWidth={2} />
-          </Animated.View>
-        </Pressable>
-        <TouchableOpacity
-          onPress={() => {
-            void loadModels();
-          }}
-          disabled={isLoading || baseUrl.trim().length === 0}
-          className="mr-3 h-10 w-10 shrink-0 items-center justify-center rounded-lg border"
-          style={{
-            borderColor: color.border.default,
-            opacity: isLoading || baseUrl.trim().length === 0 ? 0.5 : 1,
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={t('aiSettings.privateProvider.modelList.refresh')}
+            {t('aiSettings.privateProvider.modelList.title')}
+          </Text>
+          {!expanded && collapsedSummary ? (
+            <Text className="mt-0.5 text-[12px] leading-4" style={{ color: color.text.muted }}>
+              {collapsedSummary}
+            </Text>
+          ) : null}
+        </View>
+        <Animated.View
+          style={[
+            chevronAnimatedStyle,
+            {
+              width: 28,
+              height: 28,
+              flexShrink: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+            },
+          ]}
         >
-          {isLoading ? (
-            <ActivityIndicator size="small" color={color.text.muted} />
-          ) : (
-            <RefreshCw size={18} color={color.text.secondary} strokeWidth={2} />
-          )}
-        </TouchableOpacity>
-      </View>
+          <ChevronDown size={18} color={color.text.secondary} strokeWidth={2} />
+        </Animated.View>
+      </Pressable>
       {expanded ? (
         <View className="border-t px-4 pb-3 pt-2" style={{ borderTopColor: color.border.default }}>
           {error ? (
