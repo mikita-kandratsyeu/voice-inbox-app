@@ -67,10 +67,11 @@ export const PrivateModeBadge = ({ color, compact = false, text }: PrivateModeBa
 
 function CustomServerModeBadge({ color, compact = false }: PrivateModeBadgeProps) {
   const { t } = useTranslation();
+  const accentColor = color.accent.primary;
 
   const iconProps = {
     size: compact ? 11 : 12,
-    color: color.accent.aiData,
+    color: accentColor,
     strokeWidth: compact ? 2.2 : 2,
   };
 
@@ -78,7 +79,7 @@ function CustomServerModeBadge({ color, compact = false }: PrivateModeBadgeProps
     <BadgeChrome
       color={color}
       compact={compact}
-      accentColor={color.accent.aiData}
+      accentColor={accentColor}
       icon={<Server {...iconProps} />}
       text={t('aiSettings.privateProvider.custom_openai')}
     />

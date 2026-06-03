@@ -185,6 +185,70 @@ export const privateModeColors: Colors = {
   },
 };
 
+/** Private mode + custom OpenAI-compatible server (cyan/sky — distinct from on-device blue). */
+export const customServerModeColors: Colors = {
+  background: {
+    primary: '#080c10',
+    secondary: '#0a1218',
+    tertiary: '#151d28',
+    card: '#101822',
+  },
+  text: {
+    primary: '#e8f4ff',
+    secondary: '#94b8d4',
+    muted: '#7399b5',
+  },
+  border: {
+    default: '#1e3348',
+  },
+  accent: {
+    primary: '#38bdf8',
+    pin: '#7dd3fc',
+    unpin: '#f0b45b',
+    delete: '#ff6b7a',
+    archive: '#8aa3b8',
+    success: '#3ad18b',
+    transcript: '#7dd3fc',
+    cache: '#f0b45b',
+    aiData: '#22d3ee',
+    models: '#67e8f9',
+  },
+  icon: {
+    onAccent: '#ffffff',
+    muted: '#6d8faa',
+  },
+  tab: {
+    inactive: '#6b8fa8',
+  },
+  onboarding: {
+    mic: { color: '#38bdf8', bg: '#112233' },
+    lock: { color: '#7dd3fc', bg: '#152a3d' },
+    sparkles: { color: '#f0b45b', bg: '#362711' },
+    zap: { color: '#3ad18b', bg: '#0f2e24' },
+    setup: { color: '#7dd3fc', bg: '#112233' },
+    shield: { color: '#7dd3fc', bg: '#112233' },
+    restore: { color: '#22d3ee', bg: '#0f2838' },
+    privateSlide: {
+      color: '#7dd3fc',
+      bg: '#112233',
+      chipBorder: '#38bdf8',
+      chipText: '#e8f4ff',
+    },
+    privacy: { border: '#3b6a8f', text: '#9fd4ff' },
+    ai: { border: '#4d8fb8', text: '#c8e7ff' },
+  },
+  status: {
+    success: '#3ad18b',
+    processing: { bg: '#112233', text: '#7dd3fc' },
+    error: { bg: '#4a1d29', text: '#ff9aa5' },
+    muted: { bg: '#1a2a3d', text: '#94b8d4' },
+  },
+  shadow: {
+    color: '#000000',
+    opacity: 0.45,
+  },
+};
+
 export type ColorScheme = keyof typeof colors;
 
 export type Colors = {

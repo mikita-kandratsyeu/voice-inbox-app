@@ -210,7 +210,7 @@ export const AiSettingsScreen = () => {
   const remoteConnectionStatusColor = connectionCheckInProgress
     ? color.text.muted
     : lastConnectionCheckOk === true
-      ? color.accent.aiData
+      ? color.accent.primary
       : color.accent.delete;
   const openPrivateRemoteServerScreen = React.useCallback(() => {
     navigation.navigate('PrivateRemoteServer');
