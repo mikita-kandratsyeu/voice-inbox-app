@@ -5,7 +5,11 @@ import {
   resolvePrivateSummaryMaxTokens,
 } from './ai-core/local-provider/localAiConstants';
 
-export type ProcessingTimeEstimateContext = 'transcription' | 'private_llm' | 'cloud_ai';
+export type ProcessingTimeEstimateContext =
+  | 'transcription'
+  | 'private_llm'
+  | 'private_remote'
+  | 'cloud_ai';
 
 export type ProcessingTimeEstimateInput = {
   context: ProcessingTimeEstimateContext;
@@ -92,7 +96,7 @@ export function estimateProcessingSecondsRemaining(input: ProcessingTimeEstimate
     return Math.max(MIN_REMAINING_SEC, Math.round(Math.min(fromProgress, fromElapsed)));
   }
 
-  if (input.context === 'cloud_ai') {
+  if (input.context === 'cloud_ai' || input.context === 'private_remote') {
     if (input.startedAtMs == null) {
       const total = estimateCloudTotalSeconds(chars, Boolean(input.cloudMeetingDialogue));
       return Math.max(MIN_REMAINING_SEC, Math.round(((100 - progress) / 100) * total));
@@ -136,7 +140,7 @@ export function estimateProcessingSecondsRemaining(input: ProcessingTimeEstimate
 export function formatProcessingTimeRemaining(
   seconds: number,
   t: (key: string, options?: { count: number }) => string,
-  namespace: 'privateAi' | 'cloudAi' | 'transcription',
+  namespace: 'privateAi' | 'privateRemoteAi' | 'cloudAi' | 'transcription',
 ): string {
   const rounded = Math.max(MIN_REMAINING_SEC, Math.round(seconds));
   if (rounded < 60) {

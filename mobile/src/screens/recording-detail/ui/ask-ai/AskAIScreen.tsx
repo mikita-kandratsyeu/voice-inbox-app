@@ -59,6 +59,7 @@ export const AskAIScreen = () => {
   } = useAskAI(liveRecord.id, liveRecord.transcript ?? '', liveRecord);
   const { isConnected } = useNetworkStatus();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
 
   const disableByNetwork = isConnected === false && aiExecutionMode !== 'private_experimental';
   const hasTranscript = Boolean(liveRecord.transcript);
@@ -269,6 +270,7 @@ export const AskAIScreen = () => {
               privateAskProgress={privateAskProgress}
               privateAskPhase={privateAskPhase}
               aiExecutionMode={aiExecutionMode}
+              privateAiProvider={privateAiProvider}
               disableByNetwork={disableByNetwork}
               onRetry={handleRetry}
               onCopy={handleCopy}

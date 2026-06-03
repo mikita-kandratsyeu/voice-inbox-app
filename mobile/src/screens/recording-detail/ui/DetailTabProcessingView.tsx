@@ -13,7 +13,11 @@ import {
 } from '@/shared/lib/estimateProcessingTimeRemaining';
 import { AiProcessingCancelButton, ProcessingStatusTitle, RotatingTipText } from '@/shared/ui';
 
-export type DetailTabProcessingContext = 'transcription' | 'private_llm' | 'cloud_ai';
+export type DetailTabProcessingContext =
+  | 'transcription'
+  | 'private_llm'
+  | 'private_remote'
+  | 'cloud_ai';
 
 type DetailTabProcessingViewProps = {
   progress: number;
@@ -67,20 +71,30 @@ export const DetailTabProcessingView = ({
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   const statusTitleKey =
-    context === 'private_llm'
+    context === 'private_remote'
       ? phase === 'loading_model'
-        ? 'privateAi.loadingModel'
-        : 'privateAi.processing'
-      : context === 'cloud_ai'
+        ? 'privateRemoteAi.requesting'
+        : 'privateRemoteAi.generating'
+      : context === 'private_llm'
         ? phase === 'loading_model'
-          ? 'cloudAi.preparing'
-          : 'cloudAi.processing'
-        : (`aiStatus.${phase}` as const);
+          ? 'privateAi.loadingModel'
+          : 'privateAi.processing'
+        : context === 'cloud_ai'
+          ? phase === 'loading_model'
+            ? 'cloudAi.preparing'
+            : 'cloudAi.processing'
+          : (`aiStatus.${phase}` as const);
 
   const statusTitle = statusTitleOverride ?? t(statusTitleKey);
 
   const timeNs =
-    context === 'private_llm' ? 'privateAi' : context === 'cloud_ai' ? 'cloudAi' : 'transcription';
+    context === 'private_remote'
+      ? 'privateRemoteAi'
+      : context === 'private_llm'
+        ? 'privateAi'
+        : context === 'cloud_ai'
+          ? 'cloudAi'
+          : 'transcription';
 
   useEffect(() => {
     if (progress === 0) {

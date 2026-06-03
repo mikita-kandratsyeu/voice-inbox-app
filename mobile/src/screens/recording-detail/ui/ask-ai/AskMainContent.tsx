@@ -1,7 +1,7 @@
 import React from 'react';
 
 import type { VoiceRecord } from '@/entities/record';
-import type { AiExecutionMode } from '@/entities/settings';
+import type { AiExecutionMode, PrivateAiProvider } from '@/entities/settings';
 import type { AskAIHistoryItem } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
 
@@ -25,6 +25,7 @@ type AskMainContentProps = {
   privateAskProgress: number;
   privateAskPhase: 'loading_model' | 'processing';
   aiExecutionMode: AiExecutionMode;
+  privateAiProvider: PrivateAiProvider;
   disableByNetwork: boolean;
   onRetry: () => void;
   onCopy: (text: string) => void;
@@ -46,6 +47,7 @@ export const AskMainContent = ({
   privateAskProgress,
   privateAskPhase,
   aiExecutionMode,
+  privateAiProvider,
   disableByNetwork,
   onRetry,
   onCopy,
@@ -63,6 +65,7 @@ export const AskMainContent = ({
         record={liveRecord}
         priorDepth={history.length}
         aiExecutionMode={aiExecutionMode}
+        privateAiProvider={privateAiProvider}
         question={question}
         history={history}
         privateAskProgress={privateAskProgress}

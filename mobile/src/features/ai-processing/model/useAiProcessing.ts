@@ -267,10 +267,15 @@ export const useAiProcessing = () => {
       });
 
       const isPrivateAi = aiExecutionMode === 'private_experimental';
+      const isPrivateRemote = isPrivateAi && effectivePrivateAiProvider === 'custom_openai';
       const generationStartedAt = Date.now();
       setPrivateAiBatchUi(record.id, {
-        privateAiBatchProgress: isPrivateAi ? 0 : 5,
-        privateAiBatchPhase: isPrivateAi ? 'loading_model' : 'processing',
+        privateAiBatchProgress: isPrivateAi ? (isPrivateRemote ? 5 : 0) : 5,
+        privateAiBatchPhase: isPrivateRemote
+          ? 'processing'
+          : isPrivateAi
+            ? 'loading_model'
+            : 'processing',
         privateAiBatchStartedAt: generationStartedAt,
       });
 

@@ -12,7 +12,11 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import { FolderPickerSheet, useFolderStore } from '@/entities/folder';
 import { type RecordingMark, type RecordingStatus, useRecordStore } from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
-import { getWhisperModelVariantId, useSettingsStore } from '@/entities/settings';
+import {
+  getWhisperModelVariantId,
+  isPrivateCustomServerMode,
+  useSettingsStore,
+} from '@/entities/settings';
 import { resumeCloudSummarizeForRecord, useAiProcessing } from '@/features/ai-processing';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
@@ -125,6 +129,7 @@ export const RecordingDetailScreen = () => {
     selectedWhisperModelFormat,
     globalTranscriptionLanguage,
     aiExecutionMode,
+    privateAiProvider,
     setAiExecutionMode,
   } = useSettingsStore(
     useShallow((s) => ({
@@ -133,6 +138,7 @@ export const RecordingDetailScreen = () => {
       selectedWhisperModelFormat: s.selectedWhisperModelFormat,
       globalTranscriptionLanguage: s.transcriptionLanguage,
       aiExecutionMode: s.aiExecutionMode,
+      privateAiProvider: s.privateAiProvider,
       setAiExecutionMode: s.setAiExecutionMode,
     })),
   );
@@ -383,6 +389,7 @@ export const RecordingDetailScreen = () => {
   const contentMaxWidth = useTabletContentMaxWidth('wide');
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const isPrivateMode = aiExecutionMode === 'private_experimental';
+  const isPrivateCustomServer = isPrivateCustomServerMode(aiExecutionMode, privateAiProvider);
   const isMeetingMode = liveRecord.classification === 'meeting';
   const aiBusy =
     liveRecord.summaryStatus === 'processing' ||
@@ -765,6 +772,7 @@ export const RecordingDetailScreen = () => {
                     meetingPresetUiActive && liveRecord.meetingDialogueStatus === 'processing'
                   }
                   isPrivateMode={isPrivateMode}
+                  isPrivateCustomServer={isPrivateCustomServer}
                   privateAiBatchProgress={liveRecord.privateAiBatchProgress}
                   privateAiBatchPhase={liveRecord.privateAiBatchPhase}
                   privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
@@ -809,6 +817,7 @@ export const RecordingDetailScreen = () => {
                   showPrivateModeCta={aiExecutionMode === 'private_experimental'}
                   onCancelProcessing={handleCancelAiGeneration}
                   isPrivateMode={isPrivateMode}
+                  isPrivateCustomServer={isPrivateCustomServer}
                   privateAiBatchProgress={liveRecord.privateAiBatchProgress}
                   privateAiBatchPhase={liveRecord.privateAiBatchPhase}
                   privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}
@@ -839,6 +848,7 @@ export const RecordingDetailScreen = () => {
                   onSwitchToSmartMode={handleSwitchToSmartMode}
                   onCancelProcessing={handleCancelAiGeneration}
                   isPrivateMode={isPrivateMode}
+                  isPrivateCustomServer={isPrivateCustomServer}
                   privateAiBatchProgress={liveRecord.privateAiBatchProgress}
                   privateAiBatchPhase={liveRecord.privateAiBatchPhase}
                   privateAiBatchProgressLabel={liveRecord.privateAiBatchProgressLabel}

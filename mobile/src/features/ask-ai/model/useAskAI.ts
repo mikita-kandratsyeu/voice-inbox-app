@@ -234,7 +234,11 @@ export const useAskAI = (
           question: trimmedQuestion,
           answer: null,
           privateAskProgress: aiExecutionMode === 'private_experimental' ? 0 : s.privateAskProgress,
-          privateAskPhase: 'loading_model',
+          privateAskPhase:
+            aiExecutionMode === 'private_experimental' &&
+            effectivePrivateAiProvider === 'custom_openai'
+              ? 'processing'
+              : 'loading_model',
         };
         queueMicrotask(() => {
           void saveAskAiSession(record.id, record.transcript!, {

@@ -21,6 +21,8 @@ type AiTabProcessingProps = {
   color: Colors;
   onCancel?: () => void;
   isPrivateMode?: boolean;
+  /** Private mode + custom OpenAI-compatible server (not on-device model). */
+  isPrivateCustomServer?: boolean;
   processingStartedAtMs?: number;
   transcriptCharCount?: number;
   cloudMeetingDialogueExtra?: boolean;
@@ -49,6 +51,7 @@ export const AiTabProcessing = ({
   color,
   onCancel,
   isPrivateMode = false,
+  isPrivateCustomServer = false,
   processingStartedAtMs,
   transcriptCharCount,
   cloudMeetingDialogueExtra = false,
@@ -64,7 +67,9 @@ export const AiTabProcessing = ({
       phase={phase}
       color={color}
       onCancel={onCancel}
-      context={isPrivateMode ? 'private_llm' : 'cloud_ai'}
+      context={
+        isPrivateCustomServer ? 'private_remote' : isPrivateMode ? 'private_llm' : 'cloud_ai'
+      }
       tipKeys={isPrivateMode ? PRIVATE_AI_GENERATION_TIP_KEYS : CLOUD_AI_GENERATION_TIP_KEYS}
       statusTitle={isPrivateMode ? undefined : t(titleKey)}
       leadingIcon={<Icon size={22} color={color.accent.primary} strokeWidth={2} />}

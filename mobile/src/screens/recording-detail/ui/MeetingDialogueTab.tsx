@@ -43,6 +43,7 @@ type MeetingDialogueTabProps = {
   showPrivateModeCta?: boolean;
   onCancelProcessing?: () => void;
   isPrivateMode?: boolean;
+  isPrivateCustomServer?: boolean;
   privateAiBatchProgress?: number;
   privateAiBatchPhase?: 'loading_model' | 'processing';
   privateAiBatchProgressLabel?: string;
@@ -79,6 +80,7 @@ export const MeetingDialogueTab = ({
   showPrivateModeCta = false,
   status,
   isPrivateMode = false,
+  isPrivateCustomServer = false,
 }: MeetingDialogueTabProps) => {
   const { t } = useTranslation();
   const { showBanner, handleDismiss } = useAiTabBannerDismiss(status, onDismissError);
@@ -151,10 +153,14 @@ export const MeetingDialogueTab = ({
           variant="meetingDialogue"
           progress={privateAiBatchProgress ?? 0}
           progressLabel={privateAiBatchProgressLabel}
-          phase={privateAiBatchPhase ?? (isPrivateMode ? 'loading_model' : 'processing')}
+          phase={
+            privateAiBatchPhase ??
+            (isPrivateCustomServer ? 'processing' : isPrivateMode ? 'loading_model' : 'processing')
+          }
           color={color}
           onCancel={onCancelProcessing}
           isPrivateMode={isPrivateMode}
+          isPrivateCustomServer={isPrivateCustomServer}
           processingStartedAtMs={privateAiBatchStartedAt}
           transcriptCharCount={transcriptCharCount}
           cloudMeetingDialogueExtra={cloudMeetingDialogueExtra}

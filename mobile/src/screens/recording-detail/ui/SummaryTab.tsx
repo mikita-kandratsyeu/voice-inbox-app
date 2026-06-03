@@ -38,6 +38,7 @@ type SummaryTabProps = {
   /** Phase-2 speaker breakdown in progress; block full regenerate on summary. */
   speakerBreakdownProcessing?: boolean;
   isPrivateMode?: boolean;
+  isPrivateCustomServer?: boolean;
   privateAiBatchProgress?: number;
   privateAiBatchPhase?: 'loading_model' | 'processing';
   privateAiBatchProgressLabel?: string;
@@ -72,6 +73,7 @@ export const SummaryTab = ({
   status,
   summary,
   isPrivateMode = false,
+  isPrivateCustomServer = false,
   summaryReasoning,
   summaryAiModel,
   summaryAiModelLabel,
@@ -133,10 +135,14 @@ export const SummaryTab = ({
         variant="summary"
         progress={privateAiBatchProgress ?? 0}
         progressLabel={privateAiBatchProgressLabel}
-        phase={privateAiBatchPhase ?? (isPrivateMode ? 'loading_model' : 'processing')}
+        phase={
+          privateAiBatchPhase ??
+          (isPrivateCustomServer ? 'processing' : isPrivateMode ? 'loading_model' : 'processing')
+        }
         color={color}
         onCancel={onCancelProcessing}
         isPrivateMode={isPrivateMode}
+        isPrivateCustomServer={isPrivateCustomServer}
         processingStartedAtMs={privateAiBatchStartedAt}
         transcriptCharCount={transcriptCharCount}
         cloudMeetingDialogueExtra={cloudMeetingDialogueExtra && speakerBreakdownProcessing}

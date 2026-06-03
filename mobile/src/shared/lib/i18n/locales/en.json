@@ -1688,6 +1688,12 @@
     "minutesLeft": "~{{ count }} min left",
     "batteryHint": "On-device AI runs only while the app is open. Battery usage may increase."
   },
+  "privateRemoteAi": {
+    "requesting": "Contacting your server…",
+    "generating": "Your server is generating a response…",
+    "secondsLeft": "~{{ count }} sec left",
+    "minutesLeft": "~{{ count }} min left"
+  },
   "cloudAi": {
     "preparing": "Sending request…",
     "processing": "Generating…",

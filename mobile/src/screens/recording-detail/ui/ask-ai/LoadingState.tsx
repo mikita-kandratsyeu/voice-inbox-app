@@ -4,7 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import type { VoiceRecord } from '@/entities/record';
-import type { AiExecutionMode } from '@/entities/settings';
+import {
+  type AiExecutionMode,
+  isPrivateCustomServerMode,
+  type PrivateAiProvider,
+} from '@/entities/settings';
 import type { AskAIHistoryItem } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
 import { ASK_AI_GENERATION_TIP_KEYS, ASK_AI_PRIVATE_TIP_KEYS } from '@/shared/lib/aiGenerationTips';
@@ -19,6 +23,7 @@ type LoadingStateProps = {
   record: VoiceRecord;
   priorDepth: number;
   aiExecutionMode: AiExecutionMode;
+  privateAiProvider: PrivateAiProvider;
   question: string | null;
   history: AskAIHistoryItem[];
   privateAskProgress: number;
@@ -33,6 +38,7 @@ export const LoadingState = ({
   record,
   priorDepth,
   aiExecutionMode,
+  privateAiProvider,
   question,
   history,
   privateAskProgress,
@@ -43,6 +49,7 @@ export const LoadingState = ({
 }: LoadingStateProps) => {
   const { t } = useTranslation();
   const isPrivate = aiExecutionMode === 'private_experimental';
+  const isPrivateCustomServer = isPrivateCustomServerMode(aiExecutionMode, privateAiProvider);
   const pendingQuestion = question?.trim() ?? '';
 
   return (
@@ -78,7 +85,9 @@ export const LoadingState = ({
           tipKeys={isPrivate ? ASK_AI_PRIVATE_TIP_KEYS : ASK_AI_GENERATION_TIP_KEYS}
           statusTitle={t('recordingDetail.askProcessing')}
           leadingIcon={<Sparkle size={22} color={color.accent.primary} strokeWidth={2} />}
-          context={isPrivate ? 'private_llm' : 'cloud_ai'}
+          context={
+            isPrivateCustomServer ? 'private_remote' : isPrivate ? 'private_llm' : 'cloud_ai'
+          }
         />
       </View>
     </View>

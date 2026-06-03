@@ -54,6 +54,7 @@ type TasksTabProps = {
   onSwitchToSmartMode?: () => void;
   onCancelProcessing?: () => void;
   isPrivateMode?: boolean;
+  isPrivateCustomServer?: boolean;
   privateAiBatchProgress?: number;
   privateAiBatchPhase?: 'loading_model' | 'processing';
   privateAiBatchProgressLabel?: string;
@@ -151,6 +152,7 @@ export const TasksTab = ({
   showPrivateModeCta = false,
   onSwitchToSmartMode: _onSwitchToSmartMode,
   isPrivateMode = false,
+  isPrivateCustomServer = false,
 }: TasksTabProps) => {
   const theme = useAppTheme();
   const isDark = theme === 'dark';
@@ -207,10 +209,14 @@ export const TasksTab = ({
           variant="tasks"
           progress={privateAiBatchProgress ?? 0}
           progressLabel={privateAiBatchProgressLabel}
-          phase={privateAiBatchPhase ?? (isPrivateMode ? 'loading_model' : 'processing')}
+          phase={
+            privateAiBatchPhase ??
+            (isPrivateCustomServer ? 'processing' : isPrivateMode ? 'loading_model' : 'processing')
+          }
           color={color}
           onCancel={onCancelProcessing}
           isPrivateMode={isPrivateMode}
+          isPrivateCustomServer={isPrivateCustomServer}
           processingStartedAtMs={privateAiBatchStartedAt}
           transcriptCharCount={transcriptCharCount}
           cloudMeetingDialogueExtra={cloudMeetingDialogueExtra}

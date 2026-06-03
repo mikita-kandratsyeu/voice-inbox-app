@@ -1220,7 +1220,7 @@ export const AiSettingsScreen = () => {
                 </Text>
               </TouchableOpacity>
             </View>
-            <Text className="mb-3 text-[13px] leading-5" style={{ color: color.text.muted }}>
+            <Text className="mb-3 mt-3 text-[13px] leading-5" style={{ color: color.text.muted }}>
               {isCreatingNewConnection
                 ? t('aiSettings.privateProvider.newConnectionHint')
                 : t('aiSettings.privateProvider.editConnectionHint')}
