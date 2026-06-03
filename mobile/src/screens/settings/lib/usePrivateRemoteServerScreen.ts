@@ -269,7 +269,7 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
     getConnectionFailureMessage,
     isTestingConnection,
     navigation,
-    options.onConnectionSaved,
+    options,
     privateRemoteActiveProfileId,
     privateRemoteApiKey,
     privateRemoteBaseUrl,
