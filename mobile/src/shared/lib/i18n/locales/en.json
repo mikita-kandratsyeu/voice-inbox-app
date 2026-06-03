@@ -1340,7 +1340,7 @@
     "autoRefreshMeetingSpeakers": {
       "title": "Meeting participants",
       "label": "Update with summary",
-      "subtitle": "When you regenerate the summary or tasks, split replies by participant again. Turn off to keep the current breakdown. Use Refresh breakdown on the note to update speakers only.",
+      "subtitle": "Regenerating the summary or tasks also refreshes the Participants tab. Turn off to keep your current list and name edits. To refresh participants only, use the button on that tab.",
       "a11y": "Update participant breakdown when regenerating summary or tasks"
     }
   },
