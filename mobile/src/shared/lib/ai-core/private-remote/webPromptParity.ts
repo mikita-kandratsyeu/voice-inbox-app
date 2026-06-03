@@ -268,7 +268,7 @@ ${presetInstruction ? `## Processing Preset\n${presetInstruction}\n` : ''}${pseu
 - deadline:
   - Convert clearly stated dates or relative dates to ISO 8601 format (YYYY-MM-DD).
   - Use the reference date above for words like "today", "tomorrow", "next week", or weekday names.
-  - If the date is unclear, approximate, or missing, use null.
+  - If the date is unclear, approximate, or missing, use null or an empty string "".
   - Do NOT guess missing dates.
   - Do NOT turn vague periods like "sometime later" into dates.
 

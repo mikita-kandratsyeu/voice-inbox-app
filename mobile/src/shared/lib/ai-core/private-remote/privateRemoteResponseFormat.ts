@@ -34,7 +34,8 @@ const TASK_ITEM_SCHEMA = {
   properties: {
     title: { type: 'string' },
     priority: { type: 'string', enum: ['high', 'medium', 'low'] },
-    deadline: { type: ['string', 'null'] },
+    // Outlines / LM Studio require `type` to be a string (no JSON Schema unions).
+    deadline: { type: 'string' },
   },
   required: ['title', 'priority', 'deadline'],
   additionalProperties: true,
