@@ -175,10 +175,7 @@ export function PrivateRemoteModelList({
         </TouchableOpacity>
       </View>
       {expanded ? (
-        <View
-          className="border-t px-4 pb-3 pt-2"
-          style={{ borderTopColor: color.border.default }}
-        >
+        <View className="border-t px-4 pb-3 pt-2" style={{ borderTopColor: color.border.default }}>
           {error ? (
             <Text className="mb-3 text-[13px] leading-5" style={{ color: color.accent.delete }}>
               {error}
