@@ -30,6 +30,16 @@ import {
   prepareTranscriptForLocalLlm,
 } from './local-provider/localAiTranscript';
 import {
+  AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT,
+  buildAutoOrganizeRepairUserSuffix,
+} from './private-remote/autoOrganizePrompt';
+import {
+  assertAutoOrganizeComplete,
+  type AutoOrganizeFoldersResult,
+  isAutoOrganizeParseFailure,
+  parseAutoOrganizeResult,
+} from './private-remote/parseAutoOrganizeResult';
+import {
   PRIVATE_REMOTE_COMPLETION_TIMEOUT_MS,
   PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
   resolvePrivateRemoteAskMaxTokens,
@@ -37,16 +47,6 @@ import {
   resolvePrivateRemoteMeetingDialogueMaxTokens,
   resolvePrivateRemoteSummaryMaxTokens,
 } from './private-remote/privateRemoteConstants';
-import {
-  AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT,
-  buildAutoOrganizeRepairUserSuffix,
-} from './private-remote/autoOrganizePrompt';
-import {
-  assertAutoOrganizeComplete,
-  isAutoOrganizeParseFailure,
-  parseAutoOrganizeResult,
-  type AutoOrganizeFoldersResult,
-} from './private-remote/parseAutoOrganizeResult';
 import {
   buildPrivateRemoteJsonSchemaResponseFormat,
   type PrivateRemoteStructuredSchemaKind,
@@ -384,9 +384,7 @@ async function callRemoteCompletion(
 
 function readMeetingDialogueMarkdownField(record: Record<string, unknown>): string | null {
   const md =
-    record.meetingDialogueMarkdown ??
-    record.meeting_dialogue_markdown ??
-    record.meetingDialogue;
+    record.meetingDialogueMarkdown ?? record.meeting_dialogue_markdown ?? record.meetingDialogue;
   if (!isString(md)) return null;
   const t = md.trim();
   if (!t) return '';
@@ -1107,11 +1105,16 @@ export async function runPrivateRemoteAutoOrganizeFolders(
       if (!msg.startsWith('Invalid AI response') && !isAutoOrganizeParseFailure(e)) {
         throw e;
       }
-      const repaired = await sendOrganize(userPayload + buildAutoOrganizeRepairUserSuffix(expectedIds));
+      const repaired = await sendOrganize(
+        userPayload + buildAutoOrganizeRepairUserSuffix(expectedIds),
+      );
       return { ok: true, result: repaired };
     }
   } catch (err) {
-    if (options?.abortSignal?.aborted || (err instanceof Error && err.message === AI_REQUEST_CANCELLED)) {
+    if (
+      options?.abortSignal?.aborted ||
+      (err instanceof Error && err.message === AI_REQUEST_CANCELLED)
+    ) {
       return { ok: false, error: AI_REQUEST_CANCELLED };
     }
     return { ok: false, error: mapPrivateRemoteError(err) };
