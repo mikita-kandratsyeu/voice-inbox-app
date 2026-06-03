@@ -1,17 +1,22 @@
 import { useSyncExternalStore } from 'react';
 
 import { generateDigest } from '@/shared/lib/ai-api';
+import { runPrivateRemoteDigest } from '@/shared/lib/ai-core/privateRemoteProvider';
+import type { AiExecutionContext } from '@/shared/lib/ai-core/types';
 import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 
 import { saveCachedDigest } from './digest';
 
 type DigestGenerationPendingError = { type: 'limit' } | { type: 'message'; message: string };
 
+export type DigestGenerationTarget =
+  | { kind: 'cloud'; model: string; modelMode?: 'manual' | 'auto' }
+  | { kind: 'private_remote'; ctx: AiExecutionContext };
+
 export type StartDigestGenerationArgs = {
   cacheKey: string;
   payload: string;
-  model: string;
-  modelMode?: 'manual' | 'auto';
+  target: DigestGenerationTarget;
 };
 
 const inflightKeys = new Set<string>();
@@ -64,18 +69,29 @@ export function startDigestGeneration(args: StartDigestGenerationArgs): Promise<
     emitDigestGenerationChange();
 
     try {
-      const result = await generateDigest({
-        payload: args.payload,
-        model: args.model,
-        modelMode: args.modelMode,
-      });
+      if (args.target.kind === 'cloud') {
+        const result = await generateDigest({
+          payload: args.payload,
+          model: args.target.model,
+          modelMode: args.target.modelMode,
+        });
 
-      if (!result.ok) {
-        if (result.limitExceeded) {
-          pendingErrors.set(args.cacheKey, { type: 'limit' });
-        } else {
-          pendingErrors.set(args.cacheKey, { type: 'message', message: result.error });
+        if (!result.ok) {
+          if (result.limitExceeded) {
+            pendingErrors.set(args.cacheKey, { type: 'limit' });
+          } else {
+            pendingErrors.set(args.cacheKey, { type: 'message', message: result.error });
+          }
+          return;
         }
+
+        saveCachedDigest(args.cacheKey, result.result);
+        return;
+      }
+
+      const result = await runPrivateRemoteDigest(args.payload, args.target.ctx);
+      if (!result.ok) {
+        pendingErrors.set(args.cacheKey, { type: 'message', message: result.error });
         return;
       }
 

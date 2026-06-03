@@ -146,7 +146,6 @@ export const SettingsScreen = () => {
               setAutoArchiveEnabled={settings.setAutoArchiveEnabled}
               autoArchiveAfterDays={settings.autoArchiveAfterDays}
               onAutoArchiveDelayPress={settings.handleAutoArchiveDelayPress}
-              onOpenDigest={() => settings.navigation.navigate('Digest')}
               onLockedPress={settings.setAutomationSheet}
             />
           )}
@@ -161,6 +160,8 @@ export const SettingsScreen = () => {
             embeddingAvailable={settings.embeddingAvailable}
             isUpdatingEmbeddings={settings.isUpdatingEmbeddings}
             onUpdateEmbeddings={settings.handleUpdateEmbeddings}
+            showDigest={settings.digestAiEnabled}
+            onOpenDigest={() => settings.navigation.navigate('Digest')}
           />
           <SettingsBackupSection
             color={settings.color}

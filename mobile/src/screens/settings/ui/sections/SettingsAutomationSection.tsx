@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { Archive, CalendarDays, ClipboardList, Zap } from 'lucide-react-native';
+import { Archive, ClipboardList, Zap } from 'lucide-react-native';
 import React from 'react';
 import { Switch, View } from 'react-native';
 
@@ -21,7 +21,6 @@ type Props = {
   setAutoArchiveEnabled: (v: boolean) => void;
   autoArchiveAfterDays: AutoArchiveAfterDays;
   onAutoArchiveDelayPress: () => void;
-  onOpenDigest: () => void;
   onLockedPress: (kind: AutomationFeatureKind) => void;
 };
 
@@ -37,7 +36,6 @@ export const SettingsAutomationSection = ({
   setAutoArchiveEnabled,
   autoArchiveAfterDays,
   onAutoArchiveDelayPress,
-  onOpenDigest,
   onLockedPress,
 }: Props) => {
   const showArchiveDelayRow = !automationLocked && autoArchiveEnabled;
@@ -45,16 +43,10 @@ export const SettingsAutomationSection = ({
   return (
     <SettingsSection title={t('settings.automation')}>
       <SettingsRow
-        label={t('settings.digest.title')}
-        subtitle={t('settings.digest.settingsSubtitle')}
-        leftIcon={<CalendarDays size={20} color={color.accent.primary} strokeWidth={1.8} />}
-        onPress={onOpenDigest}
-        isFirst
-      />
-      <SettingsRow
         label={t('settings.autoTranscribeOnSave')}
         subtitle={t('settings.autoTranscribeOnSaveHint')}
         leftIcon={<Zap size={20} color={color.accent.primary} strokeWidth={1.8} />}
+        isFirst
         rightSlot={
           <View
             className="flex-row items-center gap-2"

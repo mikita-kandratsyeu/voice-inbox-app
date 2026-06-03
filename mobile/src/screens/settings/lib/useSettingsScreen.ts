@@ -14,6 +14,7 @@ import type { AutoArchiveAfterDays } from '@/entities/settings';
 import {
   findCloudAiModelCatalogEntry,
   getWhisperModelVariantId,
+  isDigestAiEnabled,
   isPrivateCustomServerMode,
   LOCAL_AI_MODELS,
   syncPrivateCapabilityTier,
@@ -264,6 +265,7 @@ export function useSettingsScreen() {
         : (userFacing?.name ?? selectedAIModel);
   const aiModelLockedByPrivateRemote = privateCustomServerModeActive;
   const isPrivateMode = aiExecutionMode === 'private_experimental';
+  const digestAiEnabled = isDigestAiEnabled(aiExecutionMode, privateAiProvider);
   const whisperVariantId = getWhisperModelVariantId(
     selectedWhisperModel,
     selectedWhisperModelFormat,
@@ -573,6 +575,7 @@ export function useSettingsScreen() {
     claimLoading,
     claimError,
     isPrivateMode,
+    digestAiEnabled,
     automationLocked,
     autoTranscribeOnSave,
     setAutoTranscribeOnSave,

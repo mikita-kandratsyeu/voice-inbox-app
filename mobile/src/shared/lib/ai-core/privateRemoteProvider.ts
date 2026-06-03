@@ -33,12 +33,14 @@ import {
   AUTO_ORGANIZE_FOLDERS_SYSTEM_PROMPT,
   buildAutoOrganizeRepairUserSuffix,
 } from './private-remote/autoOrganizePrompt';
+import { DIGEST_SYSTEM_PROMPT } from './private-remote/digestPrompt';
 import {
   assertAutoOrganizeComplete,
   type AutoOrganizeFoldersResult,
   isAutoOrganizeParseFailure,
   parseAutoOrganizeResult,
 } from './private-remote/parseAutoOrganizeResult';
+import { parseDigestResult } from './private-remote/parseDigestResult';
 import {
   PRIVATE_REMOTE_COMPLETION_TIMEOUT_MS,
   PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
@@ -1115,6 +1117,67 @@ export async function runPrivateRemoteAutoOrganizeFolders(
       options?.abortSignal?.aborted ||
       (err instanceof Error && err.message === AI_REQUEST_CANCELLED)
     ) {
+      return { ok: false, error: AI_REQUEST_CANCELLED };
+    }
+    return { ok: false, error: mapPrivateRemoteError(err) };
+  }
+}
+
+export type PrivateRemoteDigestAiResult = {
+  markdown: string;
+  highlights: string[];
+  risks: string[];
+  nextActions: string[];
+  model?: string;
+};
+
+export type PrivateRemoteDigestResult =
+  | { ok: true; result: PrivateRemoteDigestAiResult }
+  | { ok: false; error: string };
+
+export async function runPrivateRemoteDigest(
+  digestPayload: string,
+  ctx: AiExecutionContext,
+  options?: { abortSignal?: AbortSignal },
+): Promise<PrivateRemoteDigestResult> {
+  try {
+    if (options?.abortSignal?.aborted) {
+      return { ok: false, error: AI_REQUEST_CANCELLED };
+    }
+
+    const maxTokens = resolvePrivateRemoteSummaryMaxTokens(ctx.privateRemoteOutputBudget) ?? 8192;
+    const runOnce = (userContent: string) =>
+      callRemoteCompletion(
+        ctx,
+        [
+          { role: 'system', content: DIGEST_SYSTEM_PROMPT },
+          { role: 'user', content: userContent },
+        ],
+        maxTokens,
+        0.25,
+        options?.abortSignal,
+        { jsonObject: true, schemaKind: 'digest' },
+      );
+
+    let remote = await runOnce(digestPayload);
+    let parsed = parseDigestResult(remote.content);
+    if (!parsed) {
+      remote = await runOnce(`${digestPayload}\n\n${STRICT_JSON_TAIL}`);
+      parsed = parseDigestResult(remote.content);
+    }
+    if (!parsed) {
+      throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
+    }
+
+    return {
+      ok: true,
+      result: {
+        ...parsed,
+        ...(remote.model ? { model: remote.model } : {}),
+      },
+    };
+  } catch (err) {
+    if (options?.abortSignal?.aborted) {
       return { ok: false, error: AI_REQUEST_CANCELLED };
     }
     return { ok: false, error: mapPrivateRemoteError(err) };

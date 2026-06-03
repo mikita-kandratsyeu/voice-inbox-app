@@ -26,7 +26,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { alertAiLimitExceeded } from '@/app/navigation/openPlanPaywall';
 import { useRecordStore } from '@/entities/record';
-import { useSettingsStore } from '@/entities/settings';
+import { isDigestAiEnabled, useSettingsStore } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useColors } from '@/shared/config';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
@@ -39,6 +39,7 @@ import {
 } from '@/shared/lib/taskDeadlineTimeDisplay';
 import { Button, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
 
+import { buildDigestAiExecutionContext } from '../lib/buildDigestAiExecutionContext';
 import {
   buildDeterministicDigest,
   buildDigestAiPayload,
@@ -165,9 +166,12 @@ function DigestAiCoverageBanner({ coverage }: { coverage: DigestAiPayloadCoverag
   );
 }
 
-function DigestAiLoadingState() {
+function DigestAiLoadingState({ viaPrivateRemote }: { viaPrivateRemote: boolean }) {
   const { t } = useTranslation();
   const color = useColors();
+  const generatingDescriptionKey = viaPrivateRemote
+    ? 'settings.digest.aiGeneratingDescriptionPrivateRemote'
+    : 'settings.digest.aiGeneratingDescriptionCloud';
 
   return (
     <View
@@ -193,7 +197,7 @@ function DigestAiLoadingState() {
             {t('settings.digest.aiGenerating')}
           </Text>
           <Text className="mt-1 text-[13px] leading-[18px]" style={{ color: color.text.secondary }}>
-            {t('settings.digest.aiGeneratingDescription')}
+            {t(generatingDescriptionKey)}
           </Text>
         </View>
       </View>
@@ -281,11 +285,14 @@ export const DigestScreen = () => {
   const selectedAIModel = useSettingsStore((s) => s.selectedAIModel);
   const aiModelRoutingMode = useSettingsStore((s) => s.aiModelRoutingMode);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
   const isTablet = useIsTablet();
-  const isSmartMode = aiExecutionMode === 'smart_hybrid';
+  const digestAiEnabled = isDigestAiEnabled(aiExecutionMode, privateAiProvider);
+  const useCloudDigest = aiExecutionMode === 'smart_hybrid';
+  const usePrivateRemoteDigest = digestAiEnabled && !useCloudDigest;
 
   const [period, setPeriod] = useState<DigestPeriod>('day');
   const [refreshing, setRefreshing] = useState(false);
@@ -294,10 +301,10 @@ export const DigestScreen = () => {
   const mountedRef = useRef(true);
 
   useEffect(() => {
-    if (isSmartMode && !isLoaded) {
+    if (digestAiEnabled && !isLoaded) {
       void loadRecords();
     }
-  }, [isLoaded, isSmartMode, loadRecords]);
+  }, [digestAiEnabled, isLoaded, loadRecords]);
 
   const digest = useMemo(() => buildDeterministicDigest(period, records), [period, records]);
   const aiPayloadCoverage = useMemo(() => getDigestAiPayloadCoverage(digest), [digest]);
@@ -363,7 +370,7 @@ export const DigestScreen = () => {
   };
 
   const onRefresh = useCallback(async () => {
-    if (!isSmartMode) return;
+    if (!digestAiEnabled) return;
 
     setRefreshing(true);
     try {
@@ -371,24 +378,27 @@ export const DigestScreen = () => {
     } finally {
       setRefreshing(false);
     }
-  }, [isSmartMode, loadRecords]);
+  }, [digestAiEnabled, loadRecords]);
 
   const handleGenerate = useCallback(async () => {
-    if (!isSmartMode) {
-      Alert.alert(t('settings.digest.smartModeOnlyTitle'), t('settings.digest.smartModeOnlyDesc'));
+    if (!digestAiEnabled) {
+      Alert.alert(t('settings.digest.unavailableTitle'), t('settings.digest.unavailableDesc'));
       return;
     }
     if (digest.recordCount === 0) return;
 
-    const consentOk = await ensureCloudAiThirdPartyConsent();
-    if (!consentOk) return;
+    if (useCloudDigest) {
+      const consentOk = await ensureCloudAiThirdPartyConsent();
+      if (!consentOk) return;
+    }
 
     const language = i18n.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
     void startDigestGeneration({
       cacheKey: digestCacheKey,
       payload: buildDigestAiPayload(digest, language),
-      model: selectedAIModel,
-      modelMode: aiModelRoutingMode,
+      target: useCloudDigest
+        ? { kind: 'cloud', model: selectedAIModel, modelMode: aiModelRoutingMode }
+        : { kind: 'private_remote', ctx: buildDigestAiExecutionContext() },
     }).then(() => {
       if (!mountedRef.current) return;
 
@@ -403,10 +413,11 @@ export const DigestScreen = () => {
   }, [
     aiModelRoutingMode,
     digest,
+    digestAiEnabled,
     digestCacheKey,
     i18n.language,
-    isSmartMode,
     selectedAIModel,
+    useCloudDigest,
     showDigestGenerationError,
     syncCachedDigest,
     t,
@@ -508,7 +519,13 @@ export const DigestScreen = () => {
     [color],
   );
 
-  if (!isSmartMode) {
+  const aiDescriptionKey = usePrivateRemoteDigest
+    ? 'settings.digest.aiDescriptionPrivateRemote'
+    : useCloudDigest
+      ? 'settings.digest.aiDescriptionCloud'
+      : 'settings.digest.aiDescription';
+
+  if (!digestAiEnabled) {
     return (
       <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
         <ScreenHeader title={t('settings.digest.title')} onBack={() => navigation.goBack()} />
@@ -534,13 +551,13 @@ export const DigestScreen = () => {
               className="text-center text-[20px] font-semibold leading-7"
               style={{ color: color.text.primary }}
             >
-              {t('settings.digest.smartModeOnlyTitle')}
+              {t('settings.digest.unavailableTitle')}
             </Text>
             <Text
               className="mt-2 text-center text-[14px] leading-5"
               style={{ color: color.text.secondary }}
             >
-              {t('settings.digest.smartModeOnlyDesc')}
+              {t('settings.digest.unavailableDesc')}
             </Text>
             <View className="mt-6 w-full">
               <Button
@@ -634,15 +651,15 @@ export const DigestScreen = () => {
                 <Markdown style={markdownStyles}>{aiResult.markdown}</Markdown>
               </View>
             ) : aiLoading ? (
-              <DigestAiLoadingState />
+              <DigestAiLoadingState viaPrivateRemote={usePrivateRemoteDigest} />
             ) : (
               <Text className="mb-4 text-[14px] leading-5" style={{ color: color.text.secondary }}>
-                {digest.recordCount === 0
-                  ? t('settings.digest.emptyAi')
-                  : t('settings.digest.aiDescription')}
+                {digest.recordCount === 0 ? t('settings.digest.emptyAi') : t(aiDescriptionKey)}
               </Text>
             )}
-            {aiLoading && aiResult ? <DigestAiLoadingState /> : null}
+            {aiLoading && aiResult ? (
+              <DigestAiLoadingState viaPrivateRemote={usePrivateRemoteDigest} />
+            ) : null}
             {!aiLoading ? (
               <Button
                 label={

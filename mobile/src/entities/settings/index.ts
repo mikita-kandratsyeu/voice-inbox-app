@@ -15,6 +15,7 @@ export {
   type AiSettingsDiagnostics,
   getAiSettingsDiagnostics,
 } from './lib/getAiSettingsDiagnostics';
+export { isDigestAiEnabled } from './lib/isDigestAiEnabled';
 export { isPrivateCustomServerMode } from './lib/isPrivateCustomServerMode';
 export {
   getOnboardingCuratedCloudModels,

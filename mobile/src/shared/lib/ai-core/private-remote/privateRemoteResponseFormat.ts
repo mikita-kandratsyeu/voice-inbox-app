@@ -6,6 +6,7 @@ export type PrivateRemoteStructuredSchemaKind =
   | 'meeting_dialogue'
   | 'ask'
   | 'auto_organize'
+  | 'digest'
   | 'generic';
 
 const AUTO_ORGANIZE_FOLDER_SCHEMA = {
@@ -127,6 +128,20 @@ const SCHEMAS: Record<
         assignments: { type: 'array', items: AUTO_ORGANIZE_ASSIGNMENT_SCHEMA },
       },
       required: ['folders', 'assignments'],
+      additionalProperties: true,
+    },
+  },
+  digest: {
+    name: 'voice_inbox_digest',
+    schema: {
+      type: 'object',
+      properties: {
+        markdown: { type: 'string' },
+        highlights: { type: 'array', items: { type: 'string' } },
+        risks: { type: 'array', items: { type: 'string' } },
+        nextActions: { type: 'array', items: { type: 'string' } },
+      },
+      required: ['markdown', 'highlights', 'risks', 'nextActions'],
       additionalProperties: true,
     },
   },

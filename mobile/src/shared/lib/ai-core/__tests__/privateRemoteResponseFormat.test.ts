@@ -35,4 +35,10 @@ describe('buildPrivateRemoteJsonSchemaResponseFormat', () => {
     };
     expect(tasks.items.properties.deadline.type).toBe('string');
   });
+
+  it('digest schema uses only string JSON Schema type fields', () => {
+    const format = buildPrivateRemoteJsonSchemaResponseFormat('digest');
+    const schema = (format.json_schema as { schema: unknown }).schema;
+    expect(collectTypeFields(schema)).toEqual([]);
+  });
 });
