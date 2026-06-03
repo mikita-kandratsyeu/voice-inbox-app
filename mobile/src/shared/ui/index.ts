@@ -33,7 +33,7 @@ export { SCREEN_PADDING, SECTION_STACK_GAP } from './layoutSpacing';
 export type { LinkedNoteContext } from './LinkedNoteContextBanner';
 export { LinkedNoteContextBanner } from './LinkedNoteContextBanner';
 export { PLAN_PAYWALL_FEATURE_LINE_HEIGHT, PlanPaywallProChip } from './PlanPaywallProChip';
-export { PrivateModeBadge } from './PrivateModeBadge';
+export { PrivateExecutionBadge, PrivateModeBadge } from './PrivateModeBadge';
 export { ProcessingArcSpinner } from './ProcessingArcSpinner';
 export { ProcessingStatusTitle } from './ProcessingStatusTitle';
 export { RecordVoiceIcon } from './RecordVoiceIcon';

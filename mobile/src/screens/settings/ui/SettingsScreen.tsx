@@ -15,7 +15,7 @@ import {
   useScrollToTopOnTabPress,
   useTabletContentMaxWidth,
 } from '@/shared/lib';
-import { PrivateModeBadge, SCREEN_PADDING, SettingsRow, SettingsSection } from '@/shared/ui';
+import { PrivateExecutionBadge, SCREEN_PADDING, SettingsRow, SettingsSection } from '@/shared/ui';
 
 import { useSettingsScreen } from '../lib/useSettingsScreen';
 import { AiUsageCard } from './AiUsageCard';
@@ -80,7 +80,7 @@ export const SettingsScreen = () => {
           <Text className="text-2xl font-bold" style={{ color: settings.color.text.primary }}>
             {settings.t('settings.title')}
           </Text>
-          {settings.isPrivateMode && <PrivateModeBadge color={settings.color} compact />}
+          {settings.isPrivateMode ? <PrivateExecutionBadge color={settings.color} compact /> : null}
         </View>
       </View>
 

@@ -1,8 +1,9 @@
-import { Mic, Shield } from 'lucide-react-native';
+import { Mic, Server, Shield } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
 
+import { useSettingsStore } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 
 type PrivateModeBadgeProps = {
@@ -11,6 +12,36 @@ type PrivateModeBadgeProps = {
   text?: string;
 };
 
+type BadgeChromeProps = PrivateModeBadgeProps & {
+  accentColor: string;
+  icon: React.ReactNode;
+};
+
+function BadgeChrome({ color, compact = false, accentColor, icon, text }: BadgeChromeProps) {
+  return (
+    <View
+      className="flex-row items-center rounded-full"
+      style={{
+        gap: compact ? 4 : 6,
+        paddingHorizontal: compact ? 8 : 10,
+        paddingVertical: compact ? 3 : 4,
+        backgroundColor: `${accentColor}22`,
+        borderWidth: 1,
+        borderColor: `${accentColor}66`,
+      }}
+    >
+      {icon}
+      <Text
+        className={compact ? 'text-[11px] font-semibold' : 'text-xs font-semibold'}
+        style={{ color: accentColor }}
+      >
+        {text}
+      </Text>
+    </View>
+  );
+}
+
+/** On-device private AI (Shield + Private). */
 export const PrivateModeBadge = ({ color, compact = false, text }: PrivateModeBadgeProps) => {
   const { t } = useTranslation();
 
@@ -20,26 +51,52 @@ export const PrivateModeBadge = ({ color, compact = false, text }: PrivateModeBa
     strokeWidth: compact ? 2.2 : 2,
   };
 
+  const label = text ?? t('settings.planStatus.privateBadge');
+  const icon = text ? <Mic {...iconProps} /> : <Shield {...iconProps} />;
+
   return (
-    <View
-      className="flex-row items-center rounded-full"
-      style={{
-        gap: compact ? 4 : 6,
-        paddingHorizontal: compact ? 8 : 10,
-        paddingVertical: compact ? 3 : 4,
-        backgroundColor: `${color.accent.primary}22`,
-        borderWidth: 1,
-        borderColor: `${color.accent.primary}66`,
-      }}
-    >
-      {text && <Mic {...iconProps} />}
-      {!text && <Shield {...iconProps} />}
-      <Text
-        className={compact ? 'text-[11px] font-semibold' : 'text-xs font-semibold'}
-        style={{ color: color.accent.primary }}
-      >
-        {text ?? t('settings.planStatus.privateBadge')}
-      </Text>
-    </View>
+    <BadgeChrome
+      color={color}
+      compact={compact}
+      accentColor={color.accent.primary}
+      icon={icon}
+      text={label}
+    />
   );
 };
+
+function CustomServerModeBadge({ color, compact = false }: PrivateModeBadgeProps) {
+  const { t } = useTranslation();
+
+  const iconProps = {
+    size: compact ? 11 : 12,
+    color: color.accent.aiData,
+    strokeWidth: compact ? 2.2 : 2,
+  };
+
+  return (
+    <BadgeChrome
+      color={color}
+      compact={compact}
+      accentColor={color.accent.aiData}
+      icon={<Server {...iconProps} />}
+      text={t('aiSettings.privateProvider.custom_openai')}
+    />
+  );
+}
+
+/** Header chip for private execution mode (on-device vs custom server). */
+export function PrivateExecutionBadge({ color, compact = false }: PrivateModeBadgeProps) {
+  const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
+  const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
+
+  if (aiExecutionMode !== 'private_experimental') {
+    return null;
+  }
+
+  if (privateAiProvider === 'custom_openai') {
+    return <CustomServerModeBadge color={color} compact={compact} />;
+  }
+
+  return <PrivateModeBadge color={color} compact={compact} />;
+}

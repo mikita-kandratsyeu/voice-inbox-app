@@ -3,7 +3,7 @@ import { Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Colors } from '@/shared/config';
-import { PrivateModeBadge } from '@/shared/ui';
+import { PrivateExecutionBadge } from '@/shared/ui';
 
 type InboxHeaderProps = {
   color: Colors;
@@ -41,7 +41,7 @@ export const InboxHeader = ({
             <Text className="text-2xl font-bold" style={titleStyle}>
               {title}
             </Text>
-            {isPrivateMode && <PrivateModeBadge color={color} compact />}
+            {isPrivateMode ? <PrivateExecutionBadge color={color} compact /> : null}
           </View>
           {isLoaded ? (
             <Text className="mt-1 text-sm" style={subtitleStyle}>
