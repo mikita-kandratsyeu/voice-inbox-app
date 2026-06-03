@@ -22,11 +22,19 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { adminHasPermission, type AdminPermission } from '@/lib/admin-permissions';
 import {
+  utilitiesGroupedActionBaseClass,
   utilitiesGroupedActionClass,
   utilitiesShellClass,
   utilitiesShellDividerClass,
 } from '@/components/ui/utilities-shell';
 
+import {
+  adminHeaderShellClass,
+  adminMainContainerClass,
+  adminHeaderScrollRowClass,
+  adminMainGutterXClass,
+  adminMainInsetClass,
+} from './admin-layout';
 import {
   AdminCollapsibleCard,
   AdminMetricCard,
@@ -503,29 +511,31 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
           })}
         </nav>
       </aside>
-      <div className="min-w-0 flex-1">
-        <header className="sticky top-3 z-10 px-3 pt-3 sm:px-4 md:px-8 md:pt-4 lg:px-10">
-          <div className="mx-auto max-w-screen-2xl rounded-2xl border border-black/10 bg-white/75 px-3 py-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-4 sm:py-4 dark:border-white/12 dark:bg-black/55 dark:shadow-[0_14px_36px_rgba(0,0,0,0.35)]">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-              <div className="min-w-0">
-                <p className="text-xs font-medium uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
+      <div className={`min-w-0 flex-1 ${adminMainGutterXClass}`}>
+        <header className="sticky top-2 z-10 pt-2 sm:top-3 sm:pt-3 md:pt-4">
+          <div
+            className={`${adminMainContainerClass} ${adminHeaderShellClass} ${adminMainInsetClass} py-2.5 sm:py-4`}
+          >
+            <div className="flex items-start justify-between gap-2 sm:gap-3">
+              <div className="min-w-0 flex-1 pr-2">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-indigo-600 dark:text-indigo-400">
                   Voice Inbox AI · Admin
                 </p>
-                <h1 className="mt-1 text-xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50 md:text-2xl">
+                <h1 className="mt-0.5 text-lg font-semibold tracking-tight text-zinc-900 sm:mt-1 sm:text-xl md:text-2xl dark:text-zinc-50">
                   {currentMeta.label}
                 </h1>
-                <p className="mt-1 max-w-2xl text-sm leading-relaxed text-zinc-500 dark:text-zinc-400">
+                <p className="mt-1 hidden max-w-2xl text-sm leading-relaxed text-zinc-500 sm:block dark:text-zinc-400">
                   {currentMeta.description}
                 </p>
               </div>
 
               <div
-                className={`${utilitiesShellClass} shrink-0 self-center`}
+                className={`${utilitiesShellClass} shrink-0`}
                 role="group"
                 aria-label="Admin preferences"
               >
                 <div
-                  className="inline-flex h-full min-h-0 max-w-44 items-center gap-2 rounded-lg px-2.5 sm:max-w-56 sm:px-3"
+                  className={`flex ${utilitiesGroupedActionBaseClass} max-w-36 items-center gap-2 px-2 sm:max-w-44 sm:px-2.5 md:max-w-56 md:px-3`}
                   title={adminLogin}
                 >
                   <span
@@ -534,7 +544,7 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
                   >
                     <User className="h-3.5 w-3.5" strokeWidth={2.25} />
                   </span>
-                  <span className="flex min-w-0 flex-col leading-tight">
+                  <span className="hidden min-w-0 flex-col leading-tight min-[360px]:flex">
                     <span className="truncate text-sm font-medium text-black/85 dark:text-white/90">
                       {adminLogin}
                     </span>
@@ -551,20 +561,23 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
                 <button
                   type="button"
                   onClick={handleLogout}
+                  aria-label="Log out"
                   className={utilitiesGroupedActionClass}
                 >
                   <LogOut className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden />
-                  <span className="hidden sm:inline">Log out</span>
+                  <span className="hidden md:inline">Log out</span>
                 </button>
               </div>
             </div>
-            <div className="mt-4 flex gap-2 overflow-x-auto pt-2 pb-0.5 md:hidden [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div
+              className={`${adminHeaderScrollRowClass} mt-3 border-t border-zinc-200/80 pt-3 md:hidden dark:border-zinc-700/80`}
+            >
               {visibleTabs.map((t) => (
                 <button
                   key={t}
                   type="button"
                   onClick={() => setAdminTab(t)}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium whitespace-nowrap transition-colors ${
                     adminTab === t
                       ? 'bg-indigo-600 text-white dark:bg-indigo-500'
                       : 'bg-white/85 text-zinc-600 ring-1 ring-zinc-200/85 dark:bg-zinc-800/80 dark:text-zinc-300 dark:ring-zinc-600/85'
@@ -581,7 +594,7 @@ export function AdminDashboard({ adminLogin, isSuperadmin, permissions }: AdminD
           </div>
         </header>
 
-        <div className="mx-auto w-full max-w-screen-2xl px-4 py-6 md:px-8 lg:px-10">
+        <div className={`${adminMainContainerClass} min-w-0 pb-8 pt-3 sm:pt-5`}>
           {adminTab === 'overview' && (
             <>
               <div className="mb-2 flex justify-end">

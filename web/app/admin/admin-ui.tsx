@@ -1,6 +1,8 @@
 import { ChevronDown, type LucideIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
+import { adminMainScrollRowClass } from './admin-layout';
+
 /** Shared form controls — focus rings for keyboard users */
 export const adminInputClass =
   'w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder:text-zinc-500 dark:focus:border-indigo-400 dark:focus:ring-indigo-400/25';
@@ -172,29 +174,31 @@ export function AdminSubNav<T extends string>({
   className?: string;
 }) {
   return (
-    <nav
-      className={`inline-flex w-fit max-w-full flex-wrap gap-1 rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-1 dark:border-zinc-700 dark:bg-zinc-900/60 ${className}`.trim()}
-      aria-label="Section"
-    >
-      {items.map((item) => {
-        const active = item.id === value;
-        return (
-          <button
-            key={item.id}
-            type="button"
-            onClick={() => onChange(item.id)}
-            aria-current={active ? 'page' : undefined}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${
-              active
-                ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-50'
-                : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
-            }`}
-          >
-            {item.label}
-          </button>
-        );
-      })}
-    </nav>
+    <div className={adminMainScrollRowClass}>
+      <nav
+        className={`inline-flex w-max max-w-none flex-nowrap gap-1 rounded-xl border border-zinc-200/90 bg-zinc-50/80 p-1 dark:border-zinc-700 dark:bg-zinc-900/60 md:w-fit md:max-w-full md:flex-wrap ${className}`.trim()}
+        aria-label="Section"
+      >
+        {items.map((item) => {
+          const active = item.id === value;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => onChange(item.id)}
+              aria-current={active ? 'page' : undefined}
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500 ${
+                active
+                  ? 'bg-white text-zinc-900 shadow-sm dark:bg-zinc-800 dark:text-zinc-50'
+                  : 'text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100'
+              }`}
+            >
+              {item.label}
+            </button>
+          );
+        })}
+      </nav>
+    </div>
   );
 }
 
