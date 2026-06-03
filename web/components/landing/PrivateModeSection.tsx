@@ -1,6 +1,7 @@
 import { Lock, ShieldCheck, Smartphone, WifiOff } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import { marketingContentClass, marketingGutterClass } from '@/components/landing/marketing-layout';
 import { AnimateOnScroll } from '@/components/ui/AnimateOnScroll';
 
 const ITEMS = [
@@ -14,8 +15,8 @@ export function PrivateModeSection(): React.ReactElement {
   const t = useTranslations('privateMode');
 
   return (
-    <section className="px-4 py-14 sm:px-6 sm:py-18 lg:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section className={`py-14 sm:py-18 ${marketingGutterClass}`}>
+      <div className={marketingContentClass}>
         <AnimateOnScroll>
           <div className="relative overflow-hidden rounded-4xl border border-white/12 bg-slate-950 p-7 shadow-[0_24px_70px_rgba(15,23,42,0.4)] sm:p-10">
             <div

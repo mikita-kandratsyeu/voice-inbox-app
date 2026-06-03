@@ -1,4 +1,5 @@
 import { useTranslations } from 'next-intl';
+import { marketingContentClass, marketingGutterClass } from '@/components/landing/marketing-layout';
 import { AnimateOnScroll } from '@/components/ui/AnimateOnScroll';
 import { CtaAndroidWaitlist } from './CtaAndroidWaitlist';
 import { StoreButtons } from './StoreButtons';
@@ -8,10 +9,10 @@ export function CTASection(): React.ReactElement {
 
   return (
     <section
-      className="scroll-mt-24 px-4 py-15 sm:scroll-mt-28 sm:px-6 sm:py-20 lg:px-8"
+      className={`scroll-mt-24 py-15 sm:scroll-mt-28 sm:py-20 ${marketingGutterClass}`}
       id="download"
     >
-      <div className="mx-auto max-w-5xl">
+      <div className={marketingContentClass}>
         <AnimateOnScroll>
           <div className="relative overflow-hidden rounded-[2.2rem] border border-black/10 bg-linear-to-br from-slate-950 via-slate-900 to-blue-950 text-center shadow-[0_26px_80px_rgba(15,23,42,0.38)] dark:border-white/10">
             <div

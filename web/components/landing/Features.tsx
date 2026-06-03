@@ -1,6 +1,7 @@
 import { Brain, CheckSquare, Lightbulb, Search } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import { marketingContentClass, marketingGutterClass } from '@/components/landing/marketing-layout';
 import { AnimateOnScroll } from '@/components/ui/AnimateOnScroll';
 
 const FEATURES = [
@@ -14,8 +15,8 @@ export function Features(): React.ReactElement {
   const t = useTranslations();
 
   return (
-    <section className="px-4 py-15 sm:px-6 sm:py-20 md:px-8 lg:px-8">
-      <div className="mx-auto max-w-7xl">
+    <section className={`py-15 sm:py-20 ${marketingGutterClass}`}>
+      <div className={marketingContentClass}>
         <AnimateOnScroll>
           <div className="mb-10 text-center sm:mb-12">
             <h2 className="mb-3 text-3xl font-semibold tracking-tight text-black sm:text-4xl dark:text-white">

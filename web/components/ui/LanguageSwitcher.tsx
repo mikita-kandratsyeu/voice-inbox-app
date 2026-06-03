@@ -6,6 +6,12 @@ import { startTransition, useEffect, useRef, useState } from 'react';
 
 import { usePathname, useRouter } from '@/lib/i18n';
 import { routing } from '@/lib/i18n';
+import {
+  utilitiesGroupedActionBaseClass,
+  utilitiesMenuClass,
+  utilitiesMenuItemClass,
+  utilitiesMenuItemSelectedClass,
+} from '@/components/ui/utilities-shell';
 
 const LOCALES = [
   { code: 'en' as const, label: 'English' },
@@ -53,8 +59,7 @@ export function LanguageSwitcher({
 
   const currentLabel = LOCALES.find((l) => l.code === locale)?.label ?? locale.toUpperCase();
 
-  const triggerGrouped =
-    'h-full min-h-0 min-w-0 gap-1 rounded-lg border-0 bg-transparent px-2.5 text-sm font-medium leading-none text-black/80 shadow-none ring-0 transition-colors hover:bg-black/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 dark:text-white/85 dark:hover:bg-white/[0.08] dark:focus-visible:ring-white/25 sm:gap-1.5 sm:px-3 sm:text-sm';
+  const triggerGrouped = `${utilitiesGroupedActionBaseClass} min-w-0 gap-1 px-2.5 text-sm font-medium leading-snug text-black/80 shadow-none ring-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/15 dark:text-white/85 dark:focus-visible:ring-white/25 sm:gap-1.5 sm:px-3 sm:text-sm`;
 
   const triggerDefault =
     'h-11 min-h-[44px] gap-1 rounded-xl border border-black/8 bg-black/[0.04] px-2.5 text-sm font-medium leading-none text-black shadow-[0_1px_0_rgba(255,255,255,0.6)_inset] transition-[color,background-color,box-shadow] hover:bg-black/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/12 dark:border-white/10 dark:bg-white/[0.06] dark:text-white dark:shadow-none dark:hover:bg-white/[0.1] dark:focus-visible:ring-white/20 sm:gap-1.5 sm:px-3.5 sm:text-sm';
@@ -62,7 +67,11 @@ export function LanguageSwitcher({
   return (
     <div
       ref={containerRef}
-      className={variant === 'grouped' ? 'relative flex min-h-0 items-stretch' : 'relative'}
+      className={
+        variant === 'grouped'
+          ? 'relative flex h-full min-h-0 self-stretch items-stretch'
+          : 'relative'
+      }
     >
       <button
         type="button"
@@ -81,17 +90,14 @@ export function LanguageSwitcher({
       </button>
 
       {isOpen && (
-        <ul
-          role="listbox"
-          className="absolute right-0 top-full z-50 mt-1.5 min-w-38 overflow-hidden rounded-xl border border-black/8 bg-white/95 p-1 shadow-[0_12px_40px_rgba(15,23,42,0.12)] backdrop-blur-md dark:border-white/10 dark:bg-zinc-900/95 dark:shadow-[0_16px_48px_rgba(0,0,0,0.45)]"
-        >
+        <ul role="listbox" className={utilitiesMenuClass}>
           {LOCALES.map(({ code, label }) => (
             <li key={code} role="option" aria-selected={code === locale}>
               <button
                 type="button"
                 onClick={() => handleSelect(code)}
-                className={`block w-full rounded-lg px-3 py-2 text-left text-sm font-medium text-black transition-colors hover:bg-black/6 dark:text-white dark:hover:bg-white/8 ${
-                  code === locale ? 'bg-black/6 dark:bg-white/10' : ''
+                className={`${utilitiesMenuItemClass} ${
+                  code === locale ? utilitiesMenuItemSelectedClass : ''
                 }`}
               >
                 {label}

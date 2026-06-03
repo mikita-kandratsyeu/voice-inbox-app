@@ -1,6 +1,7 @@
 import { Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import { marketingContentClass, marketingGutterClass } from '@/components/landing/marketing-layout';
 import { AnimateOnScroll } from '@/components/ui/AnimateOnScroll';
 import { Link } from '@/lib/i18n';
 
@@ -17,8 +18,9 @@ export function FAQSection(): React.ReactElement {
   const t = useTranslations('faq');
 
   return (
-    <section className="px-4 py-15 sm:px-6 sm:py-20 lg:px-8">
-      <div className="mx-auto max-w-4xl">
+    <section className={`py-15 sm:py-20 ${marketingGutterClass}`}>
+      <div className={marketingContentClass}>
+        <div className="mx-auto max-w-4xl">
         <AnimateOnScroll>
           <div className="mb-10 text-center sm:mb-12">
             <h2 className="mb-3 text-3xl font-semibold tracking-tight text-black sm:text-4xl dark:text-white">
@@ -62,6 +64,7 @@ export function FAQSection(): React.ReactElement {
               </details>
             </AnimateOnScroll>
           ))}
+        </div>
         </div>
       </div>
     </section>

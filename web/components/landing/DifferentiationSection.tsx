@@ -1,6 +1,7 @@
 import { CheckCircle2, XCircle } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import { marketingContentClass, marketingGutterClass } from '@/components/landing/marketing-layout';
 import { AnimateOnScroll } from '@/components/ui/AnimateOnScroll';
 
 const OTHERS = ['others1', 'others2', 'others3', 'others4'] as const;
@@ -10,8 +11,8 @@ export function DifferentiationSection(): React.ReactElement {
   const t = useTranslations('differentiation');
 
   return (
-    <section className="px-4 py-15 sm:px-6 sm:py-20 lg:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section className={`py-15 sm:py-20 ${marketingGutterClass}`}>
+      <div className={marketingContentClass}>
         <AnimateOnScroll>
           <div className="mb-8 text-center sm:mb-11">
             <h2 className="text-3xl font-semibold tracking-tight text-black sm:text-4xl dark:text-white">

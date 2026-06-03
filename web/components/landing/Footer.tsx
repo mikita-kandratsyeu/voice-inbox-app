@@ -1,6 +1,7 @@
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { VERIFIED_METRICS_URL } from '@/config/constants';
+import { marketingContentClass, marketingGutterClass } from '@/components/landing/marketing-layout';
 import { Link } from '@/lib/i18n';
 
 export function Footer(): React.ReactElement {
@@ -8,7 +9,8 @@ export function Footer(): React.ReactElement {
 
   return (
     <footer className="mt-16 border-t border-black/8 bg-white/35 backdrop-blur-sm dark:border-white/8 dark:bg-white/2">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
+      <div className={`${marketingGutterClass} py-12 sm:py-14`}>
+        <div className={marketingContentClass}>
         <div className="mb-6 flex flex-col items-center justify-between gap-6 md:flex-row">
           <Link
             href="/"
@@ -73,6 +75,7 @@ export function Footer(): React.ReactElement {
         <p className="text-center text-xs text-black/50 sm:text-sm dark:text-white/50">
           {t('copyright', { year: new Date().getFullYear() })}
         </p>
+        </div>
       </div>
     </footer>
   );

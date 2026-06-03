@@ -1,6 +1,7 @@
 import { Briefcase, GraduationCap, ListTodo } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
+import { marketingContentClass, marketingGutterClass } from '@/components/landing/marketing-layout';
 import { AnimateOnScroll } from '@/components/ui/AnimateOnScroll';
 
 const USE_CASES = [
@@ -13,8 +14,8 @@ export function UseCasesSection(): React.ReactElement {
   const t = useTranslations('useCases');
 
   return (
-    <section className="px-4 py-15 sm:px-6 sm:py-20 lg:px-8">
-      <div className="mx-auto max-w-6xl">
+    <section className={`py-15 sm:py-20 ${marketingGutterClass}`}>
+      <div className={marketingContentClass}>
         <AnimateOnScroll>
           <div className="mb-8 text-center sm:mb-10">
             <h2 className="mb-3 text-3xl font-semibold tracking-tight text-black sm:text-4xl dark:text-white">

@@ -2,16 +2,22 @@ import { CheckCircle2, Sparkles, Workflow } from 'lucide-react';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 
+import { marketingContentClass, marketingGutterClass } from '@/components/landing/marketing-layout';
+
 export function Hero(): React.ReactElement {
   const t = useTranslations('hero');
 
   return (
-    <section className="relative overflow-hidden px-3 pt-9 pb-7 sm:px-6 sm:pt-12 sm:pb-10 md:pt-24 md:pb-11 lg:px-8">
+    <section
+      className={`relative overflow-hidden pt-9 pb-7 sm:pt-12 sm:pb-10 md:pt-24 md:pb-11 ${marketingGutterClass}`}
+    >
       <div
         className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_15%_5%,rgba(99,102,241,0.2)_0%,transparent_45%),radial-gradient(circle_at_85%_0%,rgba(59,130,246,0.16)_0%,transparent_50%)]"
         aria-hidden
       />
-      <div className="mx-auto grid max-w-6xl gap-6 sm:gap-8 md:min-h-[400px] md:grid-cols-[minmax(0,1fr)_minmax(220px,280px)] md:items-start md:gap-6 lg:min-h-[480px] lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:gap-6 xl:gap-8">
+      <div
+        className={`${marketingContentClass} grid gap-6 sm:gap-8 md:min-h-[400px] md:grid-cols-[minmax(0,1fr)_minmax(220px,280px)] md:items-start md:gap-6 lg:min-h-[480px] lg:grid-cols-[minmax(0,1fr)_minmax(300px,360px)] lg:gap-6 xl:gap-8`}
+      >
         <div className="min-w-0 max-w-[540px] md:max-w-none lg:max-w-[540px]">
           <div className="animate-fade-in mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1.5 text-[11px] font-medium tracking-wide text-blue-700 sm:mb-5 sm:px-3.5 sm:text-xs dark:border-blue-400/25 dark:bg-blue-500/14 dark:text-blue-300">
             <Sparkles className="h-3.5 w-3.5" aria-hidden />
