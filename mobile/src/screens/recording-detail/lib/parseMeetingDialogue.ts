@@ -9,7 +9,7 @@ export type MeetingUtterance = {
 };
 
 const SPEAKER_LABEL_HEAD =
-  '(?:Speaker|Участник|Спикер|Participant|Interviewer|Interviewee|Host|Guest|Модератор|Интервьюер|Ведущий)(?:\\s+\\d+|\\s*\\d+)?';
+  '(?:Speaker|Участник|Спикер|Собеседник|Собеседница|Participant|Interviewer|Interviewee|Host|Guest|Модератор|Интервьюер|Ведущий|Клиент|Гость)(?:\\s+\\d+|\\s*\\d+)?';
 
 export const SPEAKER_LINE_RE = new RegExp(`^\\s*(${SPEAKER_LABEL_HEAD})\\s*:\\s*(.*)$`, 'i');
 
@@ -19,10 +19,73 @@ const INLINE_SPEAKER_PARAGRAPH_BREAK = new RegExp(
   'gi',
 );
 
+const BOLD_SPEAKER_HEADING = new RegExp(`^\\s*\\*\\*(${SPEAKER_LABEL_HEAD})\\*\\*\\s*$`, 'i');
+
+function isBoldSpeakerHeadingLine(line: string): boolean {
+  return BOLD_SPEAKER_HEADING.test(line.trim());
+}
+
+/** Converts `**Участник 1**` / `**Собеседник 2**` blocks into `Label: body` lines (web parity). */
+export function expandBoldSpeakerBlocksToColonLines(text: string): string {
+  if (!text.includes('**')) {
+    return text;
+  }
+
+  const lines = text.split(/\r?\n/);
+  const out: string[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const trimmed = lines[i]!.trim();
+    const boldMatch = trimmed.match(BOLD_SPEAKER_HEADING);
+    if (!boldMatch) {
+      out.push(lines[i]!);
+      i += 1;
+      continue;
+    }
+
+    const speaker = boldMatch[1]!.trim();
+    i += 1;
+    while (i < lines.length && !lines[i]!.trim()) {
+      i += 1;
+    }
+
+    const bodyLines: string[] = [];
+    while (i < lines.length) {
+      const nextTrimmed = lines[i]!.trim();
+      if (!nextTrimmed) {
+        let j = i + 1;
+        while (j < lines.length && !lines[j]!.trim()) {
+          j += 1;
+        }
+        if (j < lines.length && isBoldSpeakerHeadingLine(lines[j]!)) {
+          break;
+        }
+        i += 1;
+        continue;
+      }
+      if (isBoldSpeakerHeadingLine(nextTrimmed)) {
+        break;
+      }
+      bodyLines.push(nextTrimmed);
+      i += 1;
+    }
+
+    const body = bodyLines.join(' ').trim();
+    out.push(body ? `${speaker}: ${body}` : `${speaker}:`);
+    if (i < lines.length) {
+      out.push('');
+    }
+  }
+
+  return out.join('\n');
+}
+
 export function normalizeMeetingDialogueMarkdownParagraphs(raw: string): string {
-  const t = raw.trim();
+  const expanded = expandBoldSpeakerBlocksToColonLines(raw);
+  const t = expanded.trim();
   if (!t || !t.includes(':')) {
-    return raw;
+    return expanded;
   }
   return t.replace(INLINE_SPEAKER_PARAGRAPH_BREAK, '$1\n\n$2');
 }

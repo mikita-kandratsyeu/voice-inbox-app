@@ -6,7 +6,7 @@
  * Label prefixes mirror `mobile/src/screens/recording-detail/lib/parseMeetingDialogue.ts`.
  */
 const SPEAKER_LABEL_INLINE =
-  '(?:Speaker|Участник|Спикер|Participant|Interviewer|Interviewee|Host|Guest|Модератор|Интервьюер|Ведущий)(?:\\s+\\d+|\\s*\\d+)?\\s*:';
+  '(?:Speaker|Участник|Спикер|Собеседник|Собеседница|Participant|Interviewer|Interviewee|Host|Guest|Модератор|Интервьюер|Ведущий|Клиент|Гость)(?:\\s+\\d+|\\s*\\d+)?\\s*:';
 
 const INLINE_SPEAKER_PARAGRAPH_BREAK = new RegExp(
   `([^\\n\\r\\s])\\s*(${SPEAKER_LABEL_INLINE})`,

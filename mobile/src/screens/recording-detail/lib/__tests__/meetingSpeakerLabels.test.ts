@@ -46,4 +46,22 @@ describe('meetingSpeakerLabels', () => {
     const none = parseMeetingDialogue('Just a wall of text without labels.');
     expect(analyzeMeetingDialogueHeuristics(none).showNoSpeakerLabelsHint).toBe(true);
   });
+
+  it('parses Собеседник speaker labels', () => {
+    const utterances = parseMeetingDialogue(
+      'Собеседник 1: Привет\n\nСобеседник 2: До связи',
+    );
+    expect(utterances).toHaveLength(2);
+    expect(utterances[0]?.speakerLabel).toBe('Собеседник 1');
+    expect(analyzeMeetingDialogueHeuristics(utterances).showNoSpeakerLabelsHint).toBe(false);
+  });
+
+  it('parses bold speaker blocks from model output', () => {
+    const utterances = parseMeetingDialogue(
+      '**Собеседник 1**\nПервая реплика\n\n**Собеседник 2**\nВторая реплика',
+    );
+    expect(utterances).toHaveLength(2);
+    expect(utterances[0]?.body).toBe('Первая реплика');
+    expect(utterances[1]?.speakerLabel).toBe('Собеседник 2');
+  });
 });

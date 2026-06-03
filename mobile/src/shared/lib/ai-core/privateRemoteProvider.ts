@@ -10,7 +10,13 @@ import {
   LOCAL_GEN_SUMMARY,
   STRICT_JSON_TAIL,
 } from './local-provider/localAiConstants';
-import { parseJsonObjectWithFallbacks, parseLocalAskResponse } from './local-provider/localAiJson';
+import {
+  extractBalancedJsonObject,
+  extractJsonObjectLoose,
+  parseJsonObjectWithFallbacks,
+  parseLocalAskResponse,
+  stripMarkdownCodeFence,
+} from './local-provider/localAiJson';
 import { mapLocalError } from './local-provider/localAiMapError';
 import {
   buildMeetingDialogueSystemPrompt,
@@ -366,16 +372,37 @@ async function callRemoteCompletion(
   throw lastErr;
 }
 
+function readMeetingDialogueMarkdownField(record: Record<string, unknown>): string | null {
+  const md =
+    record.meetingDialogueMarkdown ??
+    record.meeting_dialogue_markdown ??
+    record.meetingDialogue;
+  if (!isString(md)) return null;
+  const t = md.trim();
+  if (!t) return '';
+  return t;
+}
+
 function parseMeetingDialogueMarkdownUnlimited(raw: string): string | null {
   try {
-    const record = parseJsonObjectWithFallbacks(raw);
-    const md = record.meetingDialogueMarkdown;
-    if (!isString(md)) return null;
-    const t = md.trim();
-    if (!t) return '';
-    return t;
+    return readMeetingDialogueMarkdownField(parseJsonObjectWithFallbacks(raw));
   } catch {
-    const tryExtractField = (text: string, field: string): string | null => {
+    const cleaned = stripMarkdownCodeFence(raw.trim());
+    const blobs = [
+      cleaned,
+      extractBalancedJsonObject(cleaned),
+      extractJsonObjectLoose(cleaned),
+    ].filter((b): b is string => Boolean(b));
+    for (const blob of blobs) {
+      try {
+        const md = readMeetingDialogueMarkdownField(parseJsonObjectWithFallbacks(blob));
+        if (md !== null) return md;
+      } catch {
+        // try next blob candidate
+      }
+    }
+
+    const tryExtractQuotedField = (text: string, field: string): string | null => {
       const quotedKey = new RegExp(`"${field}"\\s*:\\s*"`, 'i').exec(text);
       const bareKey = new RegExp(`${field}\\s*:\\s*"`, 'i').exec(text);
       const match = quotedKey ?? bareKey;
@@ -404,11 +431,11 @@ function parseMeetingDialogueMarkdownUnlimited(raw: string): string | null {
       return out.trim() || null;
     };
 
-    const fallback =
-      tryExtractField(raw, 'meetingDialogueMarkdown') ??
-      tryExtractField(raw, 'meeting_dialogue_markdown') ??
-      tryExtractField(raw, 'meetingDialogue');
-    return fallback;
+    return (
+      tryExtractQuotedField(raw, 'meetingDialogueMarkdown') ??
+      tryExtractQuotedField(raw, 'meeting_dialogue_markdown') ??
+      tryExtractQuotedField(raw, 'meetingDialogue')
+    );
   }
 }
 

@@ -7,7 +7,7 @@
 import { replaceMarkdownSection, twoColumnMarkdownTable } from '@/lib/shareNoteEmailMarkdownTables';
 
 const SPEAKER_LABEL_HEAD =
-  '(?:Speaker|Участник|Спикер|Participant|Interviewer|Interviewee|Host|Guest|Модератор|Интервьюер|Ведущий)(?:\\s+\\d+|\\s*\\d+)?';
+  '(?:Speaker|Участник|Спикер|Собеседник|Собеседница|Participant|Interviewer|Interviewee|Host|Guest|Модератор|Интервьюер|Ведущий|Клиент|Гость)(?:\\s+\\d+|\\s*\\d+)?';
 
 const SPEAKER_LABEL_INLINE = new RegExp(`([^\\n\\r\\s])\\s*(${SPEAKER_LABEL_HEAD}\\s*:)`, 'gi');
 

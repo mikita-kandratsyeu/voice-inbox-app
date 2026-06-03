@@ -74,7 +74,7 @@ const PROCESSING_PRESET_INSTRUCTIONS: Record<'meeting', string> = {
 const PSEUDO_DIARIZATION_SECTION = `## Pseudo-diarization (meetingDialogueMarkdown)
 - meetingDialogueMarkdown is plain text (line breaks allowed). Do not use markdown tables or code fences.
 - Split the transcript into estimated speaker turns for easier reading only. This is NOT verified speaker diarization from audio.
-- Use neutral labels such as "Speaker 1:", "Speaker 2:", or "Участник 1:" unless a name or role is clearly stated in the transcript.
+- Use neutral labels such as "Speaker 1:", "Speaker 2:", "Участник 1:", or "Собеседник 1:" (one label style per note) unless a name or role is clearly stated in the transcript.
 - Do not invent people, roles, or lines that are not grounded in the transcript.
 - Do not repeat task titles or copy long passages verbatim from tasks[] or nextSteps[].
 - If the transcript has enough content, produce at least one turn (single-speaker is allowed).
