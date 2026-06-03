@@ -83,7 +83,7 @@ function RelatedNoteRow({ record, folder, color, isLast, onPress }: RelatedNoteR
     >
       <View
         style={{
-          alignItems: 'center',
+          alignItems: 'flex-start',
           flexDirection: 'row',
           gap: 12,
           minHeight: 56,
@@ -125,7 +125,7 @@ function RelatedNoteRow({ record, folder, color, isLast, onPress }: RelatedNoteR
             />
           )}
         </View>
-        <View style={{ flex: 1, flexShrink: 1, justifyContent: 'center', minWidth: 0 }}>
+        <View style={{ flex: 1, flexShrink: 1, minWidth: 0 }}>
           <Text
             style={{ color: color.text.primary, fontSize: 16, fontWeight: '600', lineHeight: 21 }}
             numberOfLines={1}
@@ -162,7 +162,7 @@ function RelatedNoteRow({ record, folder, color, isLast, onPress }: RelatedNoteR
             </Text>
           ) : null}
         </View>
-        <View style={{ flexShrink: 0, marginLeft: 2 }}>
+        <View style={{ alignSelf: 'center', flexShrink: 0, marginLeft: 2 }}>
           <ChevronRight size={18} color={color.text.muted} strokeWidth={2.2} />
         </View>
       </View>

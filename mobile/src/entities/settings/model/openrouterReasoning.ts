@@ -10,6 +10,7 @@ export const OPENROUTER_REASONING_CAPABLE_MODEL_IDS = new Set<UserSelectableAIMo
   'deepseek/deepseek-v4-flash',
   'deepseek/deepseek-v4-pro',
   'xiaomi/mimo-v2.5-pro',
+  'minimax/minimax-m3',
   'minimax/minimax-m2.7',
   'nvidia/nemotron-3-super-120b-a12b',
 ]);

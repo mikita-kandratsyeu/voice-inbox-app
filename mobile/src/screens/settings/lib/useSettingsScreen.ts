@@ -12,11 +12,11 @@ import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import type { AutoArchiveAfterDays } from '@/entities/settings';
 import {
+  findCloudAiModelCatalogEntry,
   getWhisperModelVariantId,
   isPrivateCustomServerMode,
   LOCAL_AI_MODELS,
   syncPrivateCapabilityTier,
-  USER_FACING_AI_MODELS,
   useSettingsStore,
 } from '@/entities/settings';
 import { openAppReviewFromSettings } from '@/features/app-review';
@@ -240,7 +240,7 @@ export function useSettingsScreen() {
     }
   }, [fetchAiUsage, refreshProEntitlement]);
 
-  const userFacing = USER_FACING_AI_MODELS.find((m) => m.id === selectedAIModel);
+  const userFacing = findCloudAiModelCatalogEntry(selectedAIModel);
   const localModel =
     selectedLocalAiModel != null
       ? LOCAL_AI_MODELS.find((m) => m.id === selectedLocalAiModel)

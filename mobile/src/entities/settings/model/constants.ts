@@ -4,6 +4,7 @@ import type {
   AIModel,
   LocalAiModelId,
   UserFacingAIModel,
+  UserSelectableAIModelId,
   WhisperModel,
   WhisperModelId,
   WhisperModelVariantId,
@@ -67,15 +68,15 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     usesOpenRouterZdr: true,
   },
   {
-    id: 'minimax/minimax-m2.7',
-    name: 'MiniMax M2.7',
+    id: 'minimax/minimax-m3',
+    name: 'MiniMax M3',
     provider: 'MiniMax',
     descriptionKey: 'aiModels.minimaxDesc',
     speed: 'slow',
     tierLabelKey: 'aiModels.tierPremium',
     supportTierCode: 'premium_experimental',
-    contextTokens: 209_920,
-    usesOpenRouterZdr: true,
+    contextTokens: 1_000_000,
+    usesOpenRouterZdr: false,
   },
   {
     id: 'nvidia/nemotron-3-super-120b-a12b',
@@ -97,9 +98,48 @@ const AI_MODEL_SPEED_RANK: Record<UserFacingAIModel['speed'], number> = {
 };
 
 /** Manual picker / onboarding list: fastest models first. */
+/** Legacy cloud models: hidden from picker, still valid if already selected (see store). */
+export const LEGACY_CLOUD_AI_MODEL_ENTRIES: readonly UserFacingAIModel[] = [
+  {
+    id: 'minimax/minimax-m2.7',
+    name: 'MiniMax M2.7',
+    provider: 'MiniMax',
+    descriptionKey: 'aiModels.minimaxM27LegacyDesc',
+    speed: 'slow',
+    tierLabelKey: 'aiModels.tierPremium',
+    supportTierCode: 'premium_experimental',
+    contextTokens: 209_920,
+    usesOpenRouterZdr: true,
+  },
+];
+
+export const ALL_SELECTABLE_CLOUD_AI_MODEL_IDS: readonly UserSelectableAIModelId[] = [
+  ...USER_FACING_AI_MODELS.map((m) => m.id),
+  ...LEGACY_CLOUD_AI_MODEL_ENTRIES.map((m) => m.id),
+];
+
+export function findCloudAiModelCatalogEntry(modelId: string): UserFacingAIModel | undefined {
+  return (
+    USER_FACING_AI_MODELS.find((m) => m.id === modelId) ??
+    LEGACY_CLOUD_AI_MODEL_ENTRIES.find((m) => m.id === modelId)
+  );
+}
+
 export const USER_FACING_AI_MODELS_BY_SPEED = [...USER_FACING_AI_MODELS].sort(
   (a, b) => AI_MODEL_SPEED_RANK[a.speed] - AI_MODEL_SPEED_RANK[b.speed],
 );
+
+/** Picker list plus the current selection when it is a legacy id (e.g. MiniMax M2.7). */
+export function getCloudModelsForPicker(
+  selectedModelId: string | undefined,
+): readonly UserFacingAIModel[] {
+  const base = USER_FACING_AI_MODELS_BY_SPEED;
+  if (!selectedModelId || base.some((m) => m.id === selectedModelId)) {
+    return base;
+  }
+  const legacy = LEGACY_CLOUD_AI_MODEL_ENTRIES.find((m) => m.id === selectedModelId);
+  return legacy ? [...base, legacy] : base;
+}
 
 export const AI_MODELS: AIModel[] = USER_FACING_AI_MODELS.map(
   ({ tierLabelKey: _t, supportTierCode: _s, ...m }) => m,

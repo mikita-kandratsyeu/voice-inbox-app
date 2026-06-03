@@ -1,7 +1,7 @@
 import {
+  findCloudAiModelCatalogEntry,
   isPrivateCustomServerMode,
   LOCAL_AI_MODELS,
-  USER_FACING_AI_MODELS,
   useSettingsStore,
 } from '@/entities/settings';
 
@@ -29,6 +29,6 @@ export function useAiModelName(): string {
     return i18n.t('aiModels.autoRecommendedLabel');
   }
 
-  const userFacing = USER_FACING_AI_MODELS.find((m) => m.id === selectedAIModel);
-  return userFacing?.name ?? selectedAIModel;
+  const cloud = findCloudAiModelCatalogEntry(selectedAIModel);
+  return cloud?.name ?? selectedAIModel;
 }

@@ -1,11 +1,11 @@
-import { LOCAL_AI_MODELS, USER_FACING_AI_MODELS } from '../model/constants';
+import { findCloudAiModelCatalogEntry, LOCAL_AI_MODELS } from '../model/constants';
 
 /** Human-readable label for an OpenRouter or local LLM model id (fallback when server omits `modelLabel`). */
 export function formatAiModelDisplayName(modelId: string): string {
   const id = modelId.trim();
   if (!id) return id;
 
-  const cloud = USER_FACING_AI_MODELS.find((m) => m.id === id);
+  const cloud = findCloudAiModelCatalogEntry(id);
   if (cloud) return cloud.name;
 
   const local = LOCAL_AI_MODELS.find((m) => m.id === id);

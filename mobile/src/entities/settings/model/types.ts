@@ -6,6 +6,7 @@ export type AppLanguage = 'system' | 'en' | 'ru';
 export type UserSelectableAIModelId =
   | 'google/gemini-2.5-flash-lite'
   | 'google/gemini-3.1-flash-lite'
+  | 'minimax/minimax-m3'
   | 'minimax/minimax-m2.7'
   | 'deepseek/deepseek-v4-flash'
   | 'deepseek/deepseek-v4-pro'

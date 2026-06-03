@@ -18,9 +18,9 @@ import {
   buildAutoModelMetaChips,
   buildCloudModelMetaChips,
   DEFAULT_LOCAL_AI_MODEL_ID,
+  getCloudModelsForPicker,
   isProOnlyAiModel,
   LOCAL_AI_MODELS,
-  USER_FACING_AI_MODELS_BY_SPEED,
   useSettingsStore,
 } from '@/entities/settings';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
@@ -197,7 +197,7 @@ export const AIModelPickerScreen = () => {
       isRecommended: true,
       metaChips: buildAutoModelMetaChips(t),
     },
-    ...USER_FACING_AI_MODELS_BY_SPEED.map((model) => ({
+    ...getCloudModelsForPicker(selectedAIModel).map((model) => ({
       id: model.id,
       tierLabel: t(model.tierLabelKey),
       name: model.name,

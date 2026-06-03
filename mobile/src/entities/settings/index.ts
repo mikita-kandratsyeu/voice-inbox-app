@@ -40,6 +40,8 @@ export {
   DEFAULT_LOCAL_AI_MODEL_ID,
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
+  findCloudAiModelCatalogEntry,
+  getCloudModelsForPicker,
   getLocalAiModelEntry,
   getWhisperCoreMlSizeMb,
   getWhisperEstimatedDownloadSizeMb,

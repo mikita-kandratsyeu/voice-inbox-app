@@ -16,11 +16,11 @@ import {
 } from '../lib/privateRemoteSecrets';
 import { RECOMMENDED_AI_MODEL_ID } from '../lib/recommendAiModel';
 import {
+  ALL_SELECTABLE_CLOUD_AI_MODEL_IDS,
   DEFAULT_SELECTED_WHISPER_MODEL_ID,
   DEFAULT_WHISPER_MODEL_WEIGHTS_FORMAT,
   getWhisperModelVariantId,
   LOCAL_AI_MODELS,
-  USER_FACING_AI_MODELS,
 } from './constants';
 import type {
   AiExecutionMode,
@@ -105,10 +105,10 @@ const getStoredAppLanguage = (): AppLanguage => {
   return (val as AppLanguage) ?? 'system';
 };
 
-const USER_SELECTABLE_SET = new Set<string>(USER_FACING_AI_MODELS.map((m) => m.id));
-
 /** Legacy catalog id before we dropped the OpenRouter `:nitro` suffix. */
 const LEGACY_DEEPSEEK_V4_FLASH_NITRO = 'deepseek/deepseek-v4-flash:nitro';
+
+const USER_SELECTABLE_SET = new Set<string>(ALL_SELECTABLE_CLOUD_AI_MODEL_IDS);
 
 const normalizeStoredAIModel = (raw: string | undefined): UserSelectableAIModelId => {
   if (raw === LEGACY_DEEPSEEK_V4_FLASH_NITRO) {
