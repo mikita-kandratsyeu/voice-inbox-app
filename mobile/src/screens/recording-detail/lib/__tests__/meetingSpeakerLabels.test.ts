@@ -48,9 +48,7 @@ describe('meetingSpeakerLabels', () => {
   });
 
   it('parses Собеседник speaker labels', () => {
-    const utterances = parseMeetingDialogue(
-      'Собеседник 1: Привет\n\nСобеседник 2: До связи',
-    );
+    const utterances = parseMeetingDialogue('Собеседник 1: Привет\n\nСобеседник 2: До связи');
     expect(utterances).toHaveLength(2);
     expect(utterances[0]?.speakerLabel).toBe('Собеседник 1');
     expect(analyzeMeetingDialogueHeuristics(utterances).showNoSpeakerLabelsHint).toBe(false);
