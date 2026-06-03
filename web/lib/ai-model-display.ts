@@ -1,5 +1,6 @@
 import {
   AI_MODEL_DEEPSEEK_V4_FLASH,
+  AI_MODEL_DEEPSEEK_V4_PRO,
   AI_MODEL_GEMINI_2_5_FLASH_LITE,
   AI_MODEL_GEMINI_3_1_FLASH_LITE,
   AI_MODEL_GPT_5_4_NANO,
@@ -13,6 +14,7 @@ const AI_MODEL_DISPLAY_LABELS: Record<string, string> = {
   [AI_MODEL_GEMINI_2_5_FLASH_LITE]: 'Gemini 2.5 Flash Lite',
   [AI_MODEL_GEMINI_3_1_FLASH_LITE]: 'Gemini 3.1 Flash Lite',
   [AI_MODEL_DEEPSEEK_V4_FLASH]: 'DeepSeek V4 Flash',
+  [AI_MODEL_DEEPSEEK_V4_PRO]: 'DeepSeek V4 Pro',
   [AI_MODEL_GPT_5_4_NANO]: 'GPT-5.4 Nano',
   [AI_MODEL_MIMO_V2_5_PRO]: 'MiMo V2.5 Pro',
   'minimax/minimax-m2.7': 'MiniMax M2.7',

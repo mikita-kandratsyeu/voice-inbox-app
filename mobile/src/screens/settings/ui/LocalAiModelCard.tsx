@@ -56,7 +56,13 @@ export const LocalAiModelCard = ({
   const isError = status === 'error';
   const isLast = index === total - 1;
   const isRecommended = model.id === recommendedModelId;
+  // provider → speed → context → size (see cloudModelMetaChips in AIModelPickerScreen)
   const metaChips: ModelMetaChip[] = [
+    { key: 'provider', label: model.provider },
+    {
+      key: 'speed',
+      label: t(`aiModels.speed.${model.speed}`, { defaultValue: model.speed }),
+    },
     {
       key: 'context',
       label: t('aiModels.contextChip', {
@@ -64,10 +70,6 @@ export const LocalAiModelCard = ({
       }),
     },
     { key: 'size', label: displaySize },
-    {
-      key: 'speed',
-      label: t(`aiModels.speed.${model.speed}`, { defaultValue: model.speed }),
-    },
   ];
   const pct = Math.min(100, Math.max(0, Math.round(downloadPercent)));
   const showByteProgress =

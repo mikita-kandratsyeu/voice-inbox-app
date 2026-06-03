@@ -1372,6 +1372,7 @@
     "openaiDesc": "Balanced speed and quality for summaries and task extraction.",
     "metaLlamaDesc": "Open-source model with strong reasoning and instruction following",
     "deepSeekDesc": "An efficient model for reasoning, structure, and detailed answers.",
+    "deepSeekProDesc": "Flagshipmodel for complex reasoning, long recordings, and detailed analysis.",
     "mimoDesc": "Flagship model for long recordings, summaries, and Q&A.",
     "minimaxDesc": "Best quality for complex summaries, important notes, and deep analysis.",
     "nemotronDesc": "Thorough summaries and detailed answers for very long recordings and notes.",
@@ -1398,6 +1399,7 @@
     },
     "contextChip": "{{size}}",
     "autoRoutingChip": "Smart routing",
+    "zdrChip": "ZDR",
     "proModelTitle": "Advanced models",
     "proModelBody": "Upgrade to Pro to choose models for your most important notes—deep summaries, long recordings, and thoughtful answers."
   },

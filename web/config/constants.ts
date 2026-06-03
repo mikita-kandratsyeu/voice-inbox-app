@@ -135,6 +135,8 @@ export function normalizeIncomingAiModel(model: string): string {
 }
 /** Manual picker, fallbacks, and auto medium tier. */
 export const AI_MODEL_DEEPSEEK_V4_FLASH = 'deepseek/deepseek-v4-flash';
+/** Pro-only; routed to DeepSeek direct API (`deepseek-v4-pro`). */
+export const AI_MODEL_DEEPSEEK_V4_PRO = 'deepseek/deepseek-v4-pro';
 /** Legacy OpenRouter nitro suffix — mapped in {@link normalizeIncomingAiModel}. */
 export const LEGACY_AI_MODEL_DEEPSEEK_V4_FLASH_NITRO = 'deepseek/deepseek-v4-flash:nitro';
 
@@ -176,6 +178,7 @@ export const ALLOWED_AI_MODELS: string[] = [
   'minimax/minimax-m2.7',
   'google/gemini-2.5-flash-lite',
   AI_MODEL_DEEPSEEK_V4_FLASH,
+  AI_MODEL_DEEPSEEK_V4_PRO,
   AI_MODEL_GPT_5_4_NANO,
   AI_MODEL_MIMO_V2_5_PRO,
   AI_MODEL_NEMOTRON_3_SUPER,

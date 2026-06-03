@@ -1,13 +1,10 @@
 import React from 'react';
 import { ScrollView, Text, View } from 'react-native';
 
+import type { ModelMetaChip } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
 
-export type ModelMetaChip = {
-  key: string;
-  label: string;
-  variant?: 'default' | 'accent';
-};
+export type { ModelMetaChip };
 
 type ModelMetaChipsProps = {
   chips: ModelMetaChip[];

@@ -67,10 +67,11 @@ export const WhisperModelCard = ({
   const isError = status === 'error';
   const isLast = index === total - 1;
   const isRecommended = model.id === recommendedModelId;
+  // speed → size → Core ML (no provider row; behavior → specs → platform)
   const metaChips: ModelMetaChip[] = [
+    { key: 'speed', label: getSpeedLabel(model.speed) },
     { key: 'size', label: displaySize },
     ...(coreMlEncoderActive ? [{ key: 'coreml', label: t('whisper.coreMlChip') }] : []),
-    { key: 'speed', label: getSpeedLabel(model.speed) },
   ];
   const pct = Math.min(100, Math.max(0, Math.round(downloadPercent)));
   const showByteProgress =

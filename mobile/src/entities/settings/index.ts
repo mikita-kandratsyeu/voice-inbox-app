@@ -1,5 +1,11 @@
 export { canDeviceRunWhisperModel } from './lib/canDeviceRunWhisperModel';
 export {
+  AUTO_ROUTING_CONTEXT_TOKENS,
+  buildAutoModelMetaChips,
+  buildCloudModelMetaChips,
+  type ModelMetaChip,
+} from './lib/cloudModelMetaChips';
+export {
   formatAiModelDisplayName,
   resolveAiModelDisplayLabel,
 } from './lib/formatAiModelDisplayName';

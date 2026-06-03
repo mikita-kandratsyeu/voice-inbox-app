@@ -15,11 +15,11 @@ import type {
   UserSelectableAIModelId,
 } from '@/entities/settings';
 import {
+  buildAutoModelMetaChips,
+  buildCloudModelMetaChips,
   DEFAULT_LOCAL_AI_MODEL_ID,
-  formatModelContextTokens,
   isProOnlyAiModel,
   LOCAL_AI_MODELS,
-  USER_FACING_AI_MODELS,
   USER_FACING_AI_MODELS_BY_SPEED,
   useSettingsStore,
 } from '@/entities/settings';
@@ -33,40 +33,7 @@ import { ScreenHeader } from '@/shared/ui';
 
 import { AutomationComingSoonSheet } from './AutomationComingSoonSheet';
 import { LocalAiModelCard } from './LocalAiModelCard';
-import { type ModelMetaChip, ModelMetaChips } from './ModelMetaChips';
-
-const AUTO_ROUTING_CONTEXT_TOKENS = 1_048_576;
-
-function autoModelMetaChips(
-  t: (key: string, options?: Record<string, unknown>) => string,
-): ModelMetaChip[] {
-  return [
-    {
-      key: 'context',
-      label: t('aiModels.contextChip', {
-        size: formatModelContextTokens(AUTO_ROUTING_CONTEXT_TOKENS),
-      }),
-    },
-    { key: 'routing', label: t('aiModels.autoRoutingChip') },
-  ];
-}
-
-function cloudModelMetaChips(
-  model: (typeof USER_FACING_AI_MODELS)[number],
-  t: (key: string, options?: Record<string, unknown>) => string,
-): ModelMetaChip[] {
-  return [
-    {
-      key: 'context',
-      label: t('aiModels.contextChip', { size: formatModelContextTokens(model.contextTokens) }),
-    },
-    { key: 'provider', label: model.provider },
-    {
-      key: 'speed',
-      label: t(`aiModels.speed.${model.speed}`, { defaultValue: model.speed }),
-    },
-  ];
-}
+import { ModelMetaChips } from './ModelMetaChips';
 
 function formatApproxSizeMb(sizeMb: number): string {
   if (sizeMb >= 1000) {
@@ -228,7 +195,7 @@ export const AIModelPickerScreen = () => {
       name: t('aiModels.autoName'),
       description: t('aiModels.autoDescription'),
       isRecommended: true,
-      metaChips: autoModelMetaChips(t),
+      metaChips: buildAutoModelMetaChips(t),
     },
     ...USER_FACING_AI_MODELS_BY_SPEED.map((model) => ({
       id: model.id,
@@ -237,7 +204,7 @@ export const AIModelPickerScreen = () => {
       description: t(model.descriptionKey as 'aiModels.geminiDesc'),
       speed: model.speed,
       isRecommended: false,
-      metaChips: cloudModelMetaChips(model, t),
+      metaChips: buildCloudModelMetaChips(model, t),
     })),
   ];
   const models = isPrivateMode ? LOCAL_AI_MODELS : cloudOptions;

@@ -1,9 +1,28 @@
-import { AI_MODEL_DEEPSEEK_V4_FLASH, normalizeIncomingAiModel } from '@/config/constants';
+import {
+  AI_MODEL_DEEPSEEK_V4_FLASH,
+  AI_MODEL_DEEPSEEK_V4_PRO,
+  normalizeIncomingAiModel,
+} from '@/config/constants';
 import OpenAI from 'openai';
 import type { ChatCompletionCreateParamsNonStreaming } from 'openai/resources/chat/completions';
 
-/** DeepSeek API model id (not the OpenRouter catalog id). */
+/** DeepSeek API model ids (not OpenRouter catalog ids). */
 export const DEEPSEEK_API_MODEL_V4_FLASH = 'deepseek-v4-flash';
+export const DEEPSEEK_API_MODEL_V4_PRO = 'deepseek-v4-pro';
+
+const DEEPSEEK_CATALOG_TO_API_MODEL: Record<string, string> = {
+  [AI_MODEL_DEEPSEEK_V4_FLASH]: DEEPSEEK_API_MODEL_V4_FLASH,
+  [AI_MODEL_DEEPSEEK_V4_PRO]: DEEPSEEK_API_MODEL_V4_PRO,
+};
+
+function resolveDeepSeekApiModel(catalogModel: string): string {
+  const canonical = normalizeIncomingAiModel(catalogModel.trim());
+  const apiModel = DEEPSEEK_CATALOG_TO_API_MODEL[canonical];
+  if (!apiModel) {
+    throw new DeepSeekApiError(`Unsupported DeepSeek catalog model: ${catalogModel}`);
+  }
+  return apiModel;
+}
 
 const DEFAULT_DEEPSEEK_BASE_URL = 'https://api.deepseek.com';
 
@@ -16,6 +35,8 @@ export type DeepSeekChatMessage = {
 };
 
 export type DeepSeekChatCompletionParams = {
+  /** Catalog id (`deepseek/deepseek-v4-flash` or `deepseek/deepseek-v4-pro`). */
+  model: string;
   messages: DeepSeekChatMessage[];
   /** `response_format: { type: 'json_object' }` — prompt must mention JSON (our system prompts do). */
   jsonObject?: boolean;
@@ -98,7 +119,8 @@ export function deepSeekDirectApiConfigured(): boolean {
 }
 
 export function isDeepSeekOpenRouterModel(model: string): boolean {
-  return normalizeIncomingAiModel(model) === AI_MODEL_DEEPSEEK_V4_FLASH;
+  const canonical = normalizeIncomingAiModel(model.trim());
+  return canonical in DEEPSEEK_CATALOG_TO_API_MODEL;
 }
 
 export function isRetryableDeepSeekTransportError(err: unknown): boolean {
@@ -162,7 +184,7 @@ export async function deepSeekChatCompletion(
   // DeepSeek extends OpenAI Chat Completions (thinking, user_id, reasoning_effort).
   // https://api-docs.deepseek.com/guides/thinking_mode
   const request = {
-    model: DEEPSEEK_API_MODEL_V4_FLASH,
+    model: resolveDeepSeekApiModel(params.model),
     messages: params.messages,
     stream: false as const,
     max_tokens: readDeepSeekMaxTokens(),

@@ -218,7 +218,7 @@ function buildLinkGroups(): LinkGroup[] {
       {
         label: 'DeepSeek — Platform',
         href: 'https://platform.deepseek.com/usage',
-        caption: 'Direct API for deepseek/deepseek-v4-flash when DEEPSEEK_API_KEY is set.',
+        caption: 'Direct API for DeepSeek catalog models when DEEPSEEK_API_KEY is set.',
       },
     ],
   };

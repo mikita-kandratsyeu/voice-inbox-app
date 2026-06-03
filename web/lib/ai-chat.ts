@@ -51,6 +51,7 @@ export async function sendAiChatCompletion(
     }
 
     const { content, message, raw } = await deepSeekChatCompletion({
+      model,
       messages: params.messages,
       jsonObject: params.jsonObject,
       withReasoning: params.withReasoning,

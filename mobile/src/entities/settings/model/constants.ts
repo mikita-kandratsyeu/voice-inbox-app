@@ -20,6 +20,7 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     tierLabelKey: 'aiModels.tierFast',
     supportTierCode: 'fast',
     contextTokens: 1_048_576,
+    usesOpenRouterZdr: true,
   },
   {
     id: 'google/gemini-3.1-flash-lite',
@@ -30,6 +31,7 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     tierLabelKey: 'aiModels.tierSmart',
     supportTierCode: 'smarter',
     contextTokens: 1_048_576,
+    usesOpenRouterZdr: true,
   },
   {
     id: 'deepseek/deepseek-v4-flash',
@@ -40,6 +42,18 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     tierLabelKey: 'aiModels.tierDeepSeek',
     supportTierCode: 'fast',
     contextTokens: 1_048_576,
+    usesOpenRouterZdr: false,
+  },
+  {
+    id: 'deepseek/deepseek-v4-pro',
+    name: 'DeepSeek V4 Pro',
+    provider: 'DeepSeek',
+    descriptionKey: 'aiModels.deepSeekProDesc',
+    speed: 'slow',
+    tierLabelKey: 'aiModels.tierPremium',
+    supportTierCode: 'premium_experimental',
+    contextTokens: 1_000_000,
+    usesOpenRouterZdr: false,
   },
   {
     id: 'xiaomi/mimo-v2.5-pro',
@@ -50,6 +64,7 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     tierLabelKey: 'aiModels.tierMiMo',
     supportTierCode: 'premium_experimental',
     contextTokens: 1_048_576,
+    usesOpenRouterZdr: true,
   },
   {
     id: 'minimax/minimax-m2.7',
@@ -60,6 +75,7 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     tierLabelKey: 'aiModels.tierPremium',
     supportTierCode: 'premium_experimental',
     contextTokens: 209_920,
+    usesOpenRouterZdr: true,
   },
   {
     id: 'nvidia/nemotron-3-super-120b-a12b',
@@ -70,6 +86,7 @@ export const USER_FACING_AI_MODELS: UserFacingAIModel[] = [
     tierLabelKey: 'aiModels.tierNemotron',
     supportTierCode: 'premium_experimental',
     contextTokens: 1_048_576,
+    usesOpenRouterZdr: true,
   },
 ];
 

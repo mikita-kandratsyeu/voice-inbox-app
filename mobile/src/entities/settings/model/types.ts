@@ -8,6 +8,7 @@ export type UserSelectableAIModelId =
   | 'google/gemini-3.1-flash-lite'
   | 'minimax/minimax-m2.7'
   | 'deepseek/deepseek-v4-flash'
+  | 'deepseek/deepseek-v4-pro'
   | 'xiaomi/mimo-v2.5-pro'
   | 'nvidia/nemotron-3-super-120b-a12b';
 export type LocalAiModelId =
@@ -69,6 +70,8 @@ export type UserFacingAIModel = Omit<AIModel, 'id'> & {
   supportTierCode: AiUserTierCode;
   /** Model context window for picker chips (tokens). */
   contextTokens: number;
+  /** Cloud Smart mode: OpenRouter routes with `provider.zdr` (see web `openRouterProviderParamsForModel`). */
+  usesOpenRouterZdr: boolean;
 };
 
 export type WhisperModel = {
