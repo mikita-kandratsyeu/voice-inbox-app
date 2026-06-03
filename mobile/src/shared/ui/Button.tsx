@@ -159,9 +159,18 @@ export const Button = ({
     .filter(Boolean)
     .join(' ');
 
-  const textClassName = [textSizeClass, variantTextClass].filter(Boolean).join(' ');
+  const isDisabled = Boolean(disabled && !loading);
+  const isDisabledPrimary = isDisabled && variantKey === 'primary';
 
-  const textStyle = textColor ? { color: textColor } : undefined;
+  const textClassName = [textSizeClass, isDisabledPrimary ? '' : variantTextClass]
+    .filter(Boolean)
+    .join(' ');
+
+  const textStyle = isDisabledPrimary
+    ? { color: colorScheme.text.muted }
+    : textColor
+      ? { color: textColor }
+      : undefined;
 
   const accessibilityLabel =
     accessibilityLabelProp ??
@@ -183,8 +192,9 @@ export const Button = ({
         useCircle || size === 'header'
           ? { borderRadius: 9999 }
           : { borderRadius: BUTTON_BORDER_RADIUS },
+        isDisabledPrimary && { backgroundColor: colorScheme.background.tertiary },
         containerStyle,
-        disabled && !loading && { opacity: 0.4 },
+        isDisabled && !isDisabledPrimary && { opacity: 0.55 },
       ]}
       activeOpacity={activeOpacity}
       disabled={disabled || loading}

@@ -1,3 +1,4 @@
+export { pickDefaultEmailBodyTemplate } from './lib/pickDefaultEmailBodyTemplate';
 export {
   clearLastShareRecipientEmail,
   getLastShareRecipientEmail,

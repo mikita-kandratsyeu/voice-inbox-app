@@ -29,9 +29,10 @@ export function sheetFooterPrimaryButtonContainerStyle(
   const disabled = options?.disabled ?? false;
   return {
     backgroundColor: disabled
-      ? (options?.disabledBackgroundColor ?? color.background.tertiary)
+      ? (options?.disabledBackgroundColor ?? color.status.muted.bg)
       : (options?.backgroundColor ?? color.accent.primary),
     borderRadius: SHEET_FOOTER_BUTTON_RADIUS,
+    ...(disabled ? { borderWidth: 1, borderColor: color.border.default } : {}),
   };
 }
 
@@ -92,8 +93,7 @@ export function SheetFooterButtons({
     disabledBackgroundColor: primaryDisabledBackgroundColor,
     disabled: primaryDisabled,
   });
-  const primaryLabelStyle =
-    primaryDisabled && primaryBackgroundColor != null ? { color: color.text.muted } : undefined;
+  const primaryLabelStyle = primaryDisabled ? { color: color.text.muted } : undefined;
 
   return (
     <View className={className}>

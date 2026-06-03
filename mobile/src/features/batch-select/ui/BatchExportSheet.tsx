@@ -4,7 +4,11 @@ import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from
 import { useTranslation } from 'react-i18next';
 import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
 
-import { getLastShareRecipientEmail, type ShareBriefTemplate } from '@/features/share-record';
+import {
+  getLastShareRecipientEmail,
+  pickDefaultEmailBodyTemplate,
+  type ShareBriefTemplate,
+} from '@/features/share-record';
 import { EmailBodyFormatPicker } from '@/features/share-record/ui/EmailBodyFormatPicker';
 import type { Colors } from '@/shared/config';
 import { useColors } from '@/shared/config';
@@ -133,6 +137,11 @@ export const BatchExportSheet = ({
     return [emailBriefOption, noteBriefOption];
   }, [showSpeakerTurnsExport, t]);
 
+  const defaultEmailBodyTemplate = useMemo(
+    () => pickDefaultEmailBodyTemplate(emailFormatTemplates.map((option) => option.tpl)),
+    [emailFormatTemplates],
+  );
+
   useEffect(() => {
     if (visible) return;
     setEmailVisible(false);
@@ -146,9 +155,9 @@ export const BatchExportSheet = ({
       !showSpeakerTurnsExport &&
       (emailBodyTemplate === 'meetingSpeakerTurns' || emailBodyTemplate === 'meetingBrief')
     ) {
-      setEmailBodyTemplate(null);
+      setEmailBodyTemplate(defaultEmailBodyTemplate);
     }
-  }, [emailBodyTemplate, showSpeakerTurnsExport]);
+  }, [defaultEmailBodyTemplate, emailBodyTemplate, showSpeakerTurnsExport]);
 
   const handleExportNoteBrief = useCallback(() => {
     onClose();
@@ -171,10 +180,10 @@ export const BatchExportSheet = ({
   }, [exportPackaging, onClose, onExportText]);
 
   const handleOpenEmail = useCallback(() => {
-    setEmailBodyTemplate(null);
+    setEmailBodyTemplate(defaultEmailBodyTemplate);
     setEmail(getLastShareRecipientEmail() ?? '');
     setEmailVisible(true);
-  }, []);
+  }, [defaultEmailBodyTemplate]);
 
   const handleCancelEmail = useCallback(() => {
     Keyboard.dismiss();

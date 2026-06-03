@@ -6,6 +6,7 @@ import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native'
 
 import {
   getLastShareRecipientEmail,
+  pickDefaultEmailBodyTemplate,
   type ShareBriefTemplate,
   type ShareRecordExportFormat,
 } from '@/features/share-record';
@@ -104,15 +105,6 @@ export const ShareRecordSheet = ({
     setExportFormat('markdown');
   }, [visible]);
 
-  useEffect(() => {
-    if (
-      !showSpeakerTurnsExport &&
-      (emailSendTemplate === 'meetingSpeakerTurns' || emailSendTemplate === 'meetingBrief')
-    ) {
-      setEmailSendTemplate(null);
-    }
-  }, [emailSendTemplate, showSpeakerTurnsExport]);
-
   const handleShareNoteBrief = useCallback(() => {
     onClose();
     onShareText('noteBrief', exportFormat);
@@ -137,12 +129,6 @@ export const ShareRecordSheet = ({
     onClose();
     onShareAudio();
   }, [onClose, onShareAudio]);
-
-  const handleOpenEmail = useCallback(() => {
-    setEmailSendTemplate(null);
-    setEmail(getLastShareRecipientEmail() ?? '');
-    setEmailVisible(true);
-  }, []);
 
   const handleCancelEmail = useCallback(() => {
     Keyboard.dismiss();
@@ -240,6 +226,20 @@ export const ShareRecordSheet = ({
     return [emailBriefOption, noteBriefOption];
   }, [showSpeakerTurnsExport, t]);
 
+  const defaultEmailBodyTemplate = useMemo(
+    () => pickDefaultEmailBodyTemplate(emailFormatTemplates.map((option) => option.tpl)),
+    [emailFormatTemplates],
+  );
+
+  useEffect(() => {
+    if (
+      !showSpeakerTurnsExport &&
+      (emailSendTemplate === 'meetingSpeakerTurns' || emailSendTemplate === 'meetingBrief')
+    ) {
+      setEmailSendTemplate(defaultEmailBodyTemplate);
+    }
+  }, [defaultEmailBodyTemplate, emailSendTemplate, showSpeakerTurnsExport]);
+
   const resolvedEmailTemplate = useMemo((): ShareBriefTemplate | null => {
     if (emailFormatTemplates.length === 1) {
       return emailFormatTemplates[0]!.tpl;
@@ -248,6 +248,12 @@ export const ShareRecordSheet = ({
   }, [emailFormatTemplates, emailSendTemplate]);
 
   const canSendEmail = emailValid && resolvedEmailTemplate != null && !isSendingEmail;
+
+  const handleOpenEmail = useCallback(() => {
+    setEmailSendTemplate(defaultEmailBodyTemplate);
+    setEmail(getLastShareRecipientEmail() ?? '');
+    setEmailVisible(true);
+  }, [defaultEmailBodyTemplate]);
 
   const handleSendEmail = useCallback(() => {
     if (!canSendEmail || resolvedEmailTemplate == null) return;
