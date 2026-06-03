@@ -1236,7 +1236,9 @@
       "quickTemplates": "Quick setup",
       "templates": {
         "ollama": "Ollama",
-        "lm_studio": "LM Studio"
+        "lm_studio": "LM Studio",
+        "openai": "OpenAI",
+        "deepseek": "DeepSeek"
       },
       "baseUrl": "Server URL",
       "baseUrlPlaceholder": "http://192.168.0.10:11434",

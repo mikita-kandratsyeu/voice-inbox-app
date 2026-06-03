@@ -14,5 +14,6 @@ export {
   sheetFooterButtonContainerStyle,
   SheetFooterButtons,
   type SheetFooterButtonsProps,
+  sheetFooterPrimaryButtonContainerStyle,
 } from './SheetFooterButtons';
 export { useBottomSheetContentPadding } from './useBottomSheetContentPadding';

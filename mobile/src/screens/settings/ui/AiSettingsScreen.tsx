@@ -47,6 +47,7 @@ import {
   ScreenHeader,
   SettingsRow,
   SettingsSection,
+  SheetFooterButtons,
   useBottomSheetContentPadding,
 } from '@/shared/ui';
 
@@ -68,6 +69,16 @@ const PRIVATE_QUICK_TEMPLATES = [
     id: 'lm_studio',
     baseUrl: 'http://127.0.0.1:1234',
     model: 'openai/gpt-oss-20b',
+  },
+  {
+    id: 'openai',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-5.5',
+  },
+  {
+    id: 'deepseek',
+    baseUrl: 'https://api.deepseek.com/v1',
+    model: 'deepseek-v4-pro',
   },
 ] as const;
 
@@ -374,7 +385,11 @@ export const AiSettingsScreen = () => {
         ? t('aiSettings.privateProvider.templates.ollama')
         : base.includes(':1234')
           ? t('aiSettings.privateProvider.templates.lm_studio')
-          : t('settings.privateRemoteProviderCustom');
+          : base.includes('api.openai.com')
+            ? t('aiSettings.privateProvider.templates.openai')
+            : base.includes('api.deepseek.com') || base.includes('deepseek.com')
+              ? t('aiSettings.privateProvider.templates.deepseek')
+              : t('settings.privateRemoteProviderCustom');
       const trimmedModel = model.trim();
       return trimmedModel.length > 0 ? `${provider} · ${trimmedModel}` : provider;
     },
@@ -407,6 +422,66 @@ export const AiSettingsScreen = () => {
     },
     [t],
   );
+  const remoteConfigPrimaryLabel = isCreatingNewConnection
+    ? t('aiSettings.privateProvider.testAndSaveConnection')
+    : t('aiSettings.privateProvider.testAndUpdateConnection');
+  const handleTestAndSaveRemoteConnection = React.useCallback(async () => {
+    if (!canTestConnection || isTestingConnection) return;
+    setIsTestingConnection(true);
+    try {
+      const result = await testPrivateRemoteConnection({
+        privateRemoteBaseUrl,
+        privateRemoteApiKey,
+        privateRemoteModel,
+      });
+      setLastConnectionCheckOk(result.ok);
+      setLastConnectionFailureReason(result.ok ? null : result.reason);
+      if (result.ok) {
+        const profileId = privateRemoteActiveProfileId ?? `remote-${Date.now()}`;
+        const profileName = buildRemoteProfileName(privateRemoteBaseUrl, privateRemoteModel);
+        setPrivateRemoteLastSuccessfulConfig({
+          baseUrl: privateRemoteBaseUrl,
+          apiKey: privateRemoteApiKey,
+          model: privateRemoteModel,
+        });
+        upsertPrivateRemoteProfile({
+          id: profileId,
+          name: profileName,
+          baseUrl: privateRemoteBaseUrl,
+          apiKey: privateRemoteApiKey,
+          model: privateRemoteModel,
+          updatedAt: Date.now(),
+        });
+        setRemoteConfigSheetVisible(false);
+        Alert.alert(
+          t('aiSettings.privateProvider.connectionOkTitle'),
+          t('aiSettings.privateProvider.connectionOkMessage'),
+        );
+        return;
+      }
+      const message = getConnectionFailureMessage(
+        result.reason,
+        privateRemoteModel.trim(),
+        result.models,
+        result.error,
+      );
+      Alert.alert(t('aiSettings.privateProvider.connectionFailTitle'), message);
+    } finally {
+      setIsTestingConnection(false);
+    }
+  }, [
+    buildRemoteProfileName,
+    canTestConnection,
+    getConnectionFailureMessage,
+    isTestingConnection,
+    privateRemoteActiveProfileId,
+    privateRemoteApiKey,
+    privateRemoteBaseUrl,
+    privateRemoteModel,
+    setPrivateRemoteLastSuccessfulConfig,
+    t,
+    upsertPrivateRemoteProfile,
+  ]);
   const runRemoteConnectionCheck = React.useCallback(
     async (
       config: { baseUrl: string; apiKey: string; model: string },
@@ -990,7 +1065,7 @@ export const AiSettingsScreen = () => {
           <Text className="mb-2 text-[13px] font-semibold" style={{ color: color.text.secondary }}>
             {t('aiSettings.privateProvider.quickTemplates')}
           </Text>
-          <View className="mb-3 flex-row gap-2">
+          <View className="mb-3 flex-row flex-wrap gap-2">
             {PRIVATE_QUICK_TEMPLATES.map((template) => (
               <TouchableOpacity
                 key={template.id}
@@ -1268,80 +1343,16 @@ export const AiSettingsScreen = () => {
               backgroundColor: color.background.secondary,
             }}
           />
-          <TouchableOpacity
-            onPress={async () => {
-              if (!canTestConnection) return;
-              setIsTestingConnection(true);
-              try {
-                const result = await testPrivateRemoteConnection({
-                  privateRemoteBaseUrl,
-                  privateRemoteApiKey,
-                  privateRemoteModel,
-                });
-                setLastConnectionCheckOk(result.ok);
-                setLastConnectionFailureReason(result.ok ? null : result.reason);
-                if (result.ok) {
-                  const profileId = privateRemoteActiveProfileId ?? `remote-${Date.now()}`;
-                  const profileName = buildRemoteProfileName(
-                    privateRemoteBaseUrl,
-                    privateRemoteModel,
-                  );
-                  setPrivateRemoteLastSuccessfulConfig({
-                    baseUrl: privateRemoteBaseUrl,
-                    apiKey: privateRemoteApiKey,
-                    model: privateRemoteModel,
-                  });
-                  upsertPrivateRemoteProfile({
-                    id: profileId,
-                    name: profileName,
-                    baseUrl: privateRemoteBaseUrl,
-                    apiKey: privateRemoteApiKey,
-                    model: privateRemoteModel,
-                    updatedAt: Date.now(),
-                  });
-                  setRemoteConfigSheetVisible(false);
-                  Alert.alert(
-                    t('aiSettings.privateProvider.connectionOkTitle'),
-                    t('aiSettings.privateProvider.connectionOkMessage'),
-                  );
-                  return;
-                }
-                const message = getConnectionFailureMessage(
-                  result.reason,
-                  privateRemoteModel.trim(),
-                  result.models,
-                  result.error,
-                );
-                Alert.alert(t('aiSettings.privateProvider.connectionFailTitle'), message);
-              } finally {
-                setIsTestingConnection(false);
-              }
+          <SheetFooterButtons
+            color={color}
+            primaryLabel={remoteConfigPrimaryLabel}
+            onPrimaryPress={() => {
+              void handleTestAndSaveRemoteConnection();
             }}
-            className="mt-4 rounded-xl px-4 py-3.5"
-            disabled={!canTestConnection}
-            style={{
-              backgroundColor: canTestConnection ? color.accent.aiData : color.background.tertiary,
-            }}
-          >
-            <View className="flex-row items-center justify-center gap-2">
-              {isTestingConnection ? (
-                <ActivityIndicator
-                  size="small"
-                  color={canTestConnection ? '#fff' : color.text.muted}
-                />
-              ) : null}
-              <Text
-                className="text-center text-[14px] font-semibold"
-                style={{ color: canTestConnection ? '#fff' : color.text.muted }}
-              >
-                {isTestingConnection
-                  ? t('aiSettings.privateProvider.testingConnection')
-                  : isCreatingNewConnection
-                    ? t('aiSettings.privateProvider.testAndSaveConnection')
-                    : t('aiSettings.privateProvider.testAndUpdateConnection')}
-              </Text>
-            </View>
-          </TouchableOpacity>
+            primaryDisabled={!canTestConnection}
+            primaryLoading={isTestingConnection}
+            primaryBackgroundColor={color.accent.aiData}
+          />
         </BottomSheetScrollView>
       </AppBottomSheetModal>
     </View>

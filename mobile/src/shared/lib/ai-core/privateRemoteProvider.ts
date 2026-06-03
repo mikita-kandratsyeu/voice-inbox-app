@@ -1,4 +1,5 @@
 import { i18n } from '@/shared/lib';
+import { nitroFetch } from '@/shared/lib/fetch';
 import { isRecord, isString } from '@/shared/lib/type-guards';
 
 import { AI_REQUEST_CANCELLED } from '../ai-api/abort';
@@ -212,7 +213,7 @@ async function callRemoteCompletion(
     payload.max_tokens = maxTokens;
   }
 
-  const response = await fetch(endpoint, {
+  const response = await nitroFetch(endpoint, {
     method: 'POST',
     headers,
     body: JSON.stringify(payload),
@@ -393,7 +394,7 @@ export async function testPrivateRemoteConnection(
 
     let modelIds: string[] = [];
     try {
-      const modelsResponse = await fetch(modelsEndpoint, {
+      const modelsResponse = await nitroFetch(modelsEndpoint, {
         method: 'GET',
         headers,
       });
@@ -423,7 +424,7 @@ export async function testPrivateRemoteConnection(
       };
     }
 
-    const response = await fetch(endpoint, {
+    const response = await nitroFetch(endpoint, {
       method: 'POST',
       headers,
       body: JSON.stringify({

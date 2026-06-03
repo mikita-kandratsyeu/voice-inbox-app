@@ -18,6 +18,23 @@ export function sheetFooterButtonContainerStyle(
   };
 }
 
+export function sheetFooterPrimaryButtonContainerStyle(
+  color: Colors,
+  options?: {
+    backgroundColor?: string;
+    disabledBackgroundColor?: string;
+    disabled?: boolean;
+  },
+): ViewStyle {
+  const disabled = options?.disabled ?? false;
+  return {
+    backgroundColor: disabled
+      ? (options?.disabledBackgroundColor ?? color.background.tertiary)
+      : (options?.backgroundColor ?? color.accent.primary),
+    borderRadius: SHEET_FOOTER_BUTTON_RADIUS,
+  };
+}
+
 export type SheetFooterButtonsProps = {
   color: Colors;
   primaryLabel: string;
@@ -41,6 +58,10 @@ export type SheetFooterButtonsProps = {
     disabled?: boolean;
   };
   className?: string;
+  /** Primary button background when enabled (default: `color.accent.primary`). */
+  primaryBackgroundColor?: string;
+  /** Primary button background when disabled (default: `color.background.tertiary`). */
+  primaryDisabledBackgroundColor?: string;
 };
 
 const ROW_BUTTON_CLASS = 'min-w-0 flex-1';
@@ -62,8 +83,17 @@ export function SheetFooterButtons({
   singleVariant = 'primary',
   bottomAction,
   className = 'mt-4 w-full',
+  primaryBackgroundColor,
+  primaryDisabledBackgroundColor,
 }: SheetFooterButtonsProps) {
   const hasSecondary = Boolean(secondaryLabel && onSecondaryPress);
+  const primaryContainerStyle = sheetFooterPrimaryButtonContainerStyle(color, {
+    backgroundColor: primaryBackgroundColor,
+    disabledBackgroundColor: primaryDisabledBackgroundColor,
+    disabled: primaryDisabled,
+  });
+  const primaryLabelStyle =
+    primaryDisabled && primaryBackgroundColor != null ? { color: color.text.muted } : undefined;
 
   return (
     <View className={className}>
@@ -92,7 +122,8 @@ export function SheetFooterButtons({
             color={color}
             disabled={primaryDisabled}
             loading={primaryLoading}
-            containerStyle={sheetFooterButtonContainerStyle(color, 'primary')}
+            containerStyle={primaryContainerStyle}
+            labelStyle={primaryLabelStyle}
             accessibilityLabel={primaryAccessibilityLabel ?? primaryLabel}
             accessibilityState={{ disabled: primaryDisabled }}
           />
@@ -123,7 +154,8 @@ export function SheetFooterButtons({
           disabled={primaryDisabled}
           loading={primaryLoading}
           activeOpacity={0.85}
-          containerStyle={sheetFooterButtonContainerStyle(color, 'primary')}
+          containerStyle={primaryContainerStyle}
+          labelStyle={primaryLabelStyle}
           accessibilityLabel={primaryAccessibilityLabel ?? primaryLabel}
           accessibilityState={{ disabled: primaryDisabled }}
         />

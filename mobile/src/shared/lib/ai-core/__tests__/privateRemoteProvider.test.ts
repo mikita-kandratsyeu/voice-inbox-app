@@ -14,6 +14,12 @@ jest.mock('@/shared/lib', () => ({
   },
 }));
 
+const mockNitroFetch = jest.fn();
+
+jest.mock('@/shared/lib/fetch', () => ({
+  nitroFetch: (...args: unknown[]) => mockNitroFetch(...args),
+}));
+
 type MockChatPayload = {
   content: string;
   model?: string;
@@ -63,21 +69,17 @@ function createCtx(overrides: Partial<AiExecutionContext> = {}): AiExecutionCont
 }
 
 describe('runPrivateRemoteMeetingDialogue', () => {
-  const originalFetch = global.fetch;
-
   afterEach(() => {
-    jest.restoreAllMocks();
-    global.fetch = originalFetch;
+    mockNitroFetch.mockReset();
   });
 
   it('extracts meeting dialogue from loose malformed payload', async () => {
-    const fetchMock = jest.fn().mockResolvedValue(
+    mockNitroFetch.mockResolvedValue(
       mockChatCompletion({
         content:
           'not-json prefix... "meetingDialogueMarkdown":"Speaker 1: Привет\\nSpeaker 1: Обновление статуса" suffix',
       }),
     );
-    global.fetch = fetchMock as unknown as typeof fetch;
 
     const result = await runPrivateRemoteMeetingDialogue(
       {
@@ -94,12 +96,11 @@ describe('runPrivateRemoteMeetingDialogue', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.meetingDialogueMarkdown).toContain('Speaker 1: Привет');
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(mockNitroFetch).toHaveBeenCalledTimes(1);
   });
 
   it('uses repair pass when first and retry responses are unparseable', async () => {
-    const fetchMock = jest
-      .fn()
+    mockNitroFetch
       .mockResolvedValueOnce(
         mockChatCompletion({
           content: 'bad json one without usable key',
@@ -118,7 +119,6 @@ describe('runPrivateRemoteMeetingDialogue', () => {
           completionTokens: 120,
         }),
       );
-    global.fetch = fetchMock as unknown as typeof fetch;
 
     const result = await runPrivateRemoteMeetingDialogue(
       {
@@ -135,6 +135,6 @@ describe('runPrivateRemoteMeetingDialogue', () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.meetingDialogueMarkdown).toBe('Speaker 1: Финальный рабочий вариант');
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(mockNitroFetch).toHaveBeenCalledTimes(3);
   });
 });
