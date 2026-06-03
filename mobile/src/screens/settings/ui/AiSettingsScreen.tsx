@@ -80,6 +80,16 @@ const PRIVATE_QUICK_TEMPLATES = [
     baseUrl: 'https://api.deepseek.com/v1',
     model: 'deepseek-v4-pro',
   },
+  {
+    id: 'openrouter',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: 'google/gemini-3.1-flash-lite',
+  },
+  {
+    id: 'google',
+    baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai',
+    model: 'gemini-3.5-flash',
+  },
 ] as const;
 
 const PRIVATE_REMOTE_PROFILES_EXPORT_VERSION = 1 as const;
@@ -389,7 +399,11 @@ export const AiSettingsScreen = () => {
             ? t('aiSettings.privateProvider.templates.openai')
             : base.includes('api.deepseek.com') || base.includes('deepseek.com')
               ? t('aiSettings.privateProvider.templates.deepseek')
-              : t('settings.privateRemoteProviderCustom');
+              : base.includes('openrouter.ai')
+                ? t('aiSettings.privateProvider.templates.openrouter')
+                : base.includes('generativelanguage.googleapis.com')
+                  ? t('aiSettings.privateProvider.templates.google')
+                  : t('settings.privateRemoteProviderCustom');
       const trimmedModel = model.trim();
       return trimmedModel.length > 0 ? `${provider} · ${trimmedModel}` : provider;
     },

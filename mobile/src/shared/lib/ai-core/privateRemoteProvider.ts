@@ -103,7 +103,7 @@ function normalizeBaseUrl(raw: string): string | null {
 function resolveRemoteCompletionUrl(rawBaseUrl: string): string | null {
   const baseUrl = normalizeBaseUrl(rawBaseUrl);
   if (!baseUrl) return null;
-  if (baseUrl.endsWith('/v1')) {
+  if (baseUrl.endsWith('/openai') || baseUrl.endsWith('/v1')) {
     return `${baseUrl}/chat/completions`;
   }
   return `${baseUrl}/v1/chat/completions`;
@@ -112,7 +112,7 @@ function resolveRemoteCompletionUrl(rawBaseUrl: string): string | null {
 function resolveRemoteModelsUrl(rawBaseUrl: string): string | null {
   const baseUrl = normalizeBaseUrl(rawBaseUrl);
   if (!baseUrl) return null;
-  if (baseUrl.endsWith('/v1')) {
+  if (baseUrl.endsWith('/openai') || baseUrl.endsWith('/v1')) {
     return `${baseUrl}/models`;
   }
   return `${baseUrl}/v1/models`;

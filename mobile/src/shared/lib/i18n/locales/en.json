@@ -1238,7 +1238,9 @@
         "ollama": "Ollama",
         "lm_studio": "LM Studio",
         "openai": "OpenAI",
-        "deepseek": "DeepSeek"
+        "deepseek": "DeepSeek",
+        "openrouter": "OpenRouter",
+        "google": "Google AI"
       },
       "baseUrl": "Server URL",
       "baseUrlPlaceholder": "http://192.168.0.10:11434",
