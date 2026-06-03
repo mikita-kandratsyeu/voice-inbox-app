@@ -1226,11 +1226,11 @@
     "outputLanguage.same": "Same as transcript",
     "outputLanguage.ru": "Always Russian",
     "outputLanguage.en": "Always English",
-    "privateLocalGeneration": "On-device inference",
+    "privateLocalGeneration": "On-device model",
     "privateLocalGeneration.efficient": "Faster",
     "privateLocalGeneration.balanced": "Balanced",
     "privateLocalGeneration.expanded": "More detail",
-    "privateLocalGenerationHint": "Controls how long local answers can be.",
+    "privateLocalGenerationHint": "How detailed summaries and answers are when running without a server.",
     "privateProvider": {
       "title": "Private Source",
       "description": "Choose where Private mode runs: on your device or your own server.",
@@ -1240,7 +1240,7 @@
       "proTitle": "Bring Your AI Server in Pro",
       "proBody": "Connect Ollama or LM Studio and run Private mode through your own server.",
       "serverConfig": "Server connection",
-      "serverConfigHint": "Use an OpenAI-compatible server.",
+      "serverConfigHint": "For example, Ollama or LM Studio on your computer or home network.",
       "quickTemplates": "Quick setup",
       "templates": {
         "ollama": "Ollama",
@@ -1300,8 +1300,8 @@
       "healthCheck": {
         "serverUnavailable": "Server is unavailable. Check URL, network, and that your server is running.",
         "authFailed": "Authorization failed. Check API key or server auth settings.",
-        "modelNotFound": "Model \"{{model}}\" is not in /v1/models. Available: {{modelsPreview}}",
-        "invalidResponse": "Server returned an invalid response format. Make sure it is OpenAI-compatible."
+        "modelNotFound": "Model \"{{model}}\" wasn't found on the server. Try: {{modelsPreview}}",
+        "invalidResponse": "The server replied in an unexpected format. Check the server settings and try again."
       },
       "exportProfiles": "Export profiles",
       "importProfiles": "Import profiles",
@@ -1314,7 +1314,28 @@
       "importFailedTitle": "Import failed",
       "importFailedMessage": "Could not import profiles from file.",
       "importInvalidTitle": "Invalid file",
-      "importInvalidMessage": "Choose a valid profiles JSON export file."
+      "importInvalidMessage": "Choose a valid profiles JSON export file.",
+      "modelList": {
+        "title": "Choose a model",
+        "refresh": "Load models",
+        "empty": "Couldn't load the model list. Check the server address and try again.",
+        "expandA11y": "Show model list",
+        "collapseA11y": "Hide model list",
+        "collapsedSummary": "{{count}} models available",
+        "loadingSummary": "Loading models…",
+        "errorSummary": "Couldn't load models"
+      }
+    },
+    "privateRemoteGeneration": {
+      "title": "Your server",
+      "hint": "How long answers from your connected server can be. Doesn't affect on-device models.",
+      "efficient": "Shorter",
+      "balanced": "Balanced",
+      "expanded": "Longer",
+      "unlimited": "No limits",
+      "jsonObjectLabel": "Reliable structured output",
+      "jsonObjectHint": "Helps summaries and tasks parse correctly. If your server doesn't support it, we'll try another way.",
+      "jsonObjectA11y": "Prefer structured responses from your server"
     },
     "smartModeCloudRetention": {
       "title": "Cloud copy time",
@@ -1384,7 +1405,7 @@
     "deepSeekProDesc": "Flagshipmodel for complex reasoning, long recordings, and detailed analysis.",
     "mimoDesc": "Flagship model for long recordings, summaries, and Q&A.",
     "minimaxDesc": "Best quality for complex summaries, important notes, and deep analysis.",
-    "minimaxM27LegacyDesc": "Previous MiniMax generation. Still available if you already selected it.",
+    "minimaxM27LegacyDesc": "Earlier MiniMax version. Stays in your list if you chose it before.",
     "nemotronDesc": "Thorough summaries and detailed answers for very long recordings and notes.",
     "localQwen3Desc": "Balanced quality on most devices.",
     "localGemma2Desc": "Strong instruction following. Slightly larger download.",

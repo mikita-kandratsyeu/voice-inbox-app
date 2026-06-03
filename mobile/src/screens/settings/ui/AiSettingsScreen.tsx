@@ -22,6 +22,7 @@ import type {
   AiOutputLanguage,
   PrivateAiProvider,
   PrivateLocalLlmBudget,
+  PrivateRemoteOutputBudget,
   SummaryStyle,
   TaskStrictness,
 } from '@/entities/settings';
@@ -53,11 +54,18 @@ import {
 
 import { AutomationComingSoonSheet } from './AutomationComingSoonSheet';
 import { CloudAiKvTtlSlider } from './CloudAiKvTtlSlider';
+import { PrivateRemoteModelList } from './PrivateRemoteModelList';
 
 const SUMMARY_STYLES: SummaryStyle[] = ['brief', 'standard', 'detailed'];
 const TASK_STRICTNESS_OPTIONS: TaskStrictness[] = ['strict', 'balanced', 'soft'];
 const OUTPUT_LANGUAGES: AiOutputLanguage[] = ['same', 'ru', 'en'];
 const PRIVATE_LOCAL_LLM_BUDGETS: PrivateLocalLlmBudget[] = ['efficient', 'balanced', 'expanded'];
+const PRIVATE_REMOTE_OUTPUT_BUDGETS: PrivateRemoteOutputBudget[] = [
+  'efficient',
+  'balanced',
+  'expanded',
+  'unlimited',
+];
 const PRIVATE_AI_PROVIDERS: PrivateAiProvider[] = ['local', 'custom_openai'];
 const PRIVATE_QUICK_TEMPLATES = [
   {
@@ -208,6 +216,13 @@ export const AiSettingsScreen = () => {
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateLocalLlmBudget = useSettingsStore((s) => s.privateLocalLlmBudget);
   const setPrivateLocalLlmBudget = useSettingsStore((s) => s.setPrivateLocalLlmBudget);
+  const privateRemoteOutputBudget = useSettingsStore((s) => s.privateRemoteOutputBudget);
+  const setPrivateRemoteOutputBudget = useSettingsStore((s) => s.setPrivateRemoteOutputBudget);
+  const privateRemotePreferJsonObject = useSettingsStore((s) => s.privateRemotePreferJsonObject);
+  const setPrivateRemotePreferJsonObject = useSettingsStore(
+    (s) => s.setPrivateRemotePreferJsonObject,
+  );
+  const [remoteModelListNonce, setRemoteModelListNonce] = React.useState(0);
   const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const setPrivateAiProvider = useSettingsStore((s) => s.setPrivateAiProvider);
   const privateRemoteBaseUrl = useSettingsStore((s) => s.privateRemoteBaseUrl);
@@ -379,6 +394,7 @@ export const AiSettingsScreen = () => {
       setPrivateRemoteApiKey('');
       setPrivateRemoteModel('');
     }
+    setRemoteModelListNonce((n) => n + 1);
     setRemoteConfigSheetVisible(true);
   }, [
     privateRemoteProfiles,
@@ -899,32 +915,88 @@ export const AiSettingsScreen = () => {
                   </View>
                 </View>
               ) : null}
-              <View className="mb-7">
-                <Text
-                  className="mb-2.5 px-1 text-xs font-semibold uppercase tracking-widest"
-                  style={{ color: color.text.secondary }}
-                >
-                  {t('aiSettings.privateLocalGeneration')}
-                </Text>
-                <Text
-                  className="mb-2 px-1 text-[13px] leading-5"
-                  style={{ color: color.text.muted }}
-                >
-                  {t('aiSettings.privateLocalGenerationHint')}
-                </Text>
-                <View
-                  className="overflow-hidden rounded-2xl"
-                  style={{ borderWidth: 1, borderColor: color.border.default }}
-                >
-                  <PickerSection
-                    options={PRIVATE_LOCAL_LLM_BUDGETS}
-                    selected={privateLocalLlmBudget}
-                    onSelect={setPrivateLocalLlmBudget}
-                    labelKey={(v) => t(`aiSettings.privateLocalGeneration.${v}`)}
-                    color={color}
-                  />
+              {privateAiProvider === 'custom_openai' ? (
+                <View className="mb-7">
+                  <Text
+                    className="mb-2.5 px-1 text-xs font-semibold uppercase tracking-widest"
+                    style={{ color: color.text.secondary }}
+                  >
+                    {t('aiSettings.privateRemoteGeneration.title')}
+                  </Text>
+                  <Text
+                    className="mb-2 px-1 text-[13px] leading-5"
+                    style={{ color: color.text.muted }}
+                  >
+                    {t('aiSettings.privateRemoteGeneration.hint')}
+                  </Text>
+                  <View
+                    className="mb-3 overflow-hidden rounded-2xl"
+                    style={{ borderWidth: 1, borderColor: color.border.default }}
+                  >
+                    <PickerSection
+                      options={PRIVATE_REMOTE_OUTPUT_BUDGETS}
+                      selected={privateRemoteOutputBudget}
+                      onSelect={setPrivateRemoteOutputBudget}
+                      labelKey={(v) => t(`aiSettings.privateRemoteGeneration.${v}`)}
+                      color={color}
+                    />
+                  </View>
+                  <View
+                    className="overflow-hidden rounded-2xl"
+                    style={{ borderWidth: 1, borderColor: color.border.default }}
+                  >
+                    <SettingsRow
+                      label={t('aiSettings.privateRemoteGeneration.jsonObjectLabel')}
+                      subtitle={t('aiSettings.privateRemoteGeneration.jsonObjectHint')}
+                      rightSlot={
+                        <Switch
+                          value={privateRemotePreferJsonObject}
+                          onValueChange={setPrivateRemotePreferJsonObject}
+                          accessibilityLabel={t(
+                            'aiSettings.privateRemoteGeneration.jsonObjectA11y',
+                          )}
+                          trackColor={{
+                            false: color.background.tertiary,
+                            true: color.accent.primary,
+                          }}
+                          thumbColor={color.icon.onAccent}
+                        />
+                      }
+                      showChevron={false}
+                      isFirst
+                      isLast
+                    />
+                  </View>
                 </View>
-              </View>
+              ) : null}
+              {privateAiProvider === 'local' ? (
+                <View className="mb-7">
+                  <Text
+                    className="mb-2.5 px-1 text-xs font-semibold uppercase tracking-widest"
+                    style={{ color: color.text.secondary }}
+                  >
+                    {t('aiSettings.privateLocalGeneration')}
+                  </Text>
+                  <Text
+                    className="mb-2 px-1 text-[13px] leading-5"
+                    style={{ color: color.text.muted }}
+                  >
+                    {t('aiSettings.privateLocalGenerationHint')}
+                  </Text>
+                  <View
+                    className="overflow-hidden rounded-2xl"
+                    style={{ borderWidth: 1, borderColor: color.border.default }}
+                  >
+                    <PickerSection
+                      options={PRIVATE_LOCAL_LLM_BUDGETS}
+                      selected={privateLocalLlmBudget}
+                      onSelect={setPrivateLocalLlmBudget}
+                      labelKey={(v) => t(`aiSettings.privateLocalGeneration.${v}`)}
+                      color={color}
+                    />
+                  </View>
+                </View>
+              ) : null}
             </>
           )}
           {!isPrivateMode && (
@@ -1048,7 +1120,7 @@ export const AiSettingsScreen = () => {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{
             paddingHorizontal: 20,
-            paddingTop: 8,
+            paddingTop: 12,
             ...sheetContentPadding,
           }}
         >
@@ -1058,8 +1130,7 @@ export const AiSettingsScreen = () => {
               fontWeight: '600',
               color: color.text.primary,
               textAlign: 'center',
-              paddingTop: 4,
-              marginBottom: 6,
+              marginBottom: 8,
             }}
           >
             {t('aiSettings.privateProvider.serverConfig')}
@@ -1070,16 +1141,16 @@ export const AiSettingsScreen = () => {
               lineHeight: 20,
               color: color.text.secondary,
               textAlign: 'center',
-              marginBottom: 12,
+              marginBottom: 20,
               paddingHorizontal: 4,
             }}
           >
             {t('aiSettings.privateProvider.serverConfigHint')}
           </Text>
-          <Text className="mb-2 text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+          <Text className="mb-3 text-[13px] font-semibold" style={{ color: color.text.secondary }}>
             {t('aiSettings.privateProvider.quickTemplates')}
           </Text>
-          <View className="mb-3 flex-row flex-wrap gap-2">
+          <View className="mb-6 flex-row flex-wrap gap-2">
             {PRIVATE_QUICK_TEMPLATES.map((template) => (
               <TouchableOpacity
                 key={template.id}
@@ -1097,61 +1168,59 @@ export const AiSettingsScreen = () => {
               </TouchableOpacity>
             ))}
           </View>
-          <View className="mb-3">
-            <View className="mb-2">
-              <View className="mb-2">
-                <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
-                  {t('aiSettings.privateProvider.savedConnections')}
-                </Text>
-              </View>
-              <View className="flex-row gap-3">
-                <TouchableOpacity
-                  onPress={switchToSavedConnectionMode}
-                  disabled={!hasSavedProfiles}
-                  activeOpacity={0.85}
-                  className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
-                  style={{
-                    borderColor: !isCreatingNewConnection
-                      ? color.accent.primary
-                      : color.border.default,
-                    backgroundColor: color.background.tertiary,
-                    opacity: hasSavedProfiles ? 1 : 0.45,
-                  }}
-                >
-                  <Text
-                    className="text-center text-[15px] font-semibold leading-5"
-                    style={{
-                      color: !isCreatingNewConnection ? color.accent.primary : color.text.primary,
-                    }}
-                    numberOfLines={2}
-                  >
-                    {t('aiSettings.privateProvider.editConfig')}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={switchToCreateConnectionMode}
-                  activeOpacity={0.85}
-                  className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
-                  style={{
-                    borderColor: isCreatingNewConnection
-                      ? color.accent.primary
-                      : color.border.default,
-                    backgroundColor: color.background.tertiary,
-                  }}
-                >
-                  <Text
-                    className="text-center text-[15px] font-semibold leading-5"
-                    style={{
-                      color: isCreatingNewConnection ? color.accent.primary : color.text.primary,
-                    }}
-                    numberOfLines={2}
-                  >
-                    {t('aiSettings.privateProvider.newConnectionSwitch')}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+          <View className="mb-6">
+            <View className="mb-3">
+              <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+                {t('aiSettings.privateProvider.savedConnections')}
+              </Text>
             </View>
-            <Text className="mb-2 text-[12px] leading-4" style={{ color: color.text.muted }}>
+            <View className="flex-row gap-3">
+              <TouchableOpacity
+                onPress={switchToSavedConnectionMode}
+                disabled={!hasSavedProfiles}
+                activeOpacity={0.85}
+                className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
+                style={{
+                  borderColor: !isCreatingNewConnection
+                    ? color.accent.primary
+                    : color.border.default,
+                  backgroundColor: color.background.tertiary,
+                  opacity: hasSavedProfiles ? 1 : 0.45,
+                }}
+              >
+                <Text
+                  className="text-center text-[15px] font-semibold leading-5"
+                  style={{
+                    color: !isCreatingNewConnection ? color.accent.primary : color.text.primary,
+                  }}
+                  numberOfLines={2}
+                >
+                  {t('aiSettings.privateProvider.editConfig')}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={switchToCreateConnectionMode}
+                activeOpacity={0.85}
+                className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
+                style={{
+                  borderColor: isCreatingNewConnection
+                    ? color.accent.primary
+                    : color.border.default,
+                  backgroundColor: color.background.tertiary,
+                }}
+              >
+                <Text
+                  className="text-center text-[15px] font-semibold leading-5"
+                  style={{
+                    color: isCreatingNewConnection ? color.accent.primary : color.text.primary,
+                  }}
+                  numberOfLines={2}
+                >
+                  {t('aiSettings.privateProvider.newConnectionSwitch')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <Text className="mb-3 text-[13px] leading-5" style={{ color: color.text.muted }}>
               {isCreatingNewConnection
                 ? t('aiSettings.privateProvider.newConnectionHint')
                 : t('aiSettings.privateProvider.editConnectionHint')}
@@ -1175,7 +1244,7 @@ export const AiSettingsScreen = () => {
                   return (
                     <View
                       key={profile.id}
-                      className="flex-row items-center px-3 py-2.5"
+                      className="flex-row items-center px-4 py-3"
                       style={
                         !isLast
                           ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
@@ -1243,7 +1312,7 @@ export const AiSettingsScreen = () => {
               </View>
             )}
           </View>
-          <View className="mb-4 flex-row gap-2">
+          <View className="mb-8 flex-row gap-3">
             <TouchableOpacity
               onPress={() => {
                 void exportRemoteProfiles();
@@ -1283,81 +1352,105 @@ export const AiSettingsScreen = () => {
               )}
             </TouchableOpacity>
           </View>
-          <Text className="mb-2 text-[13px] font-semibold" style={{ color: color.text.secondary }}>
-            {t('aiSettings.privateProvider.baseUrl')}
-          </Text>
-          <BottomSheetTextInput
-            value={privateRemoteBaseUrl}
-            onChangeText={(value) => {
-              didTouchRemoteConfigRef.current = true;
-              setPrivateRemoteBaseUrl(value);
-            }}
-            autoCapitalize="none"
-            autoCorrect={false}
-            keyboardType="url"
-            placeholder={t('aiSettings.privateProvider.baseUrlPlaceholder')}
-            placeholderTextColor={color.text.muted}
-            className="rounded-xl border px-3 py-2 text-[14px]"
-            style={{
-              borderColor:
-                baseUrlValidationError != null ? color.accent.delete : color.border.default,
-              color: color.text.primary,
-              backgroundColor: color.background.secondary,
-            }}
-          />
-          {baseUrlValidationError != null ? (
-            <Text className="mt-1 text-[12px] leading-4" style={{ color: color.accent.delete }}>
-              {t(`aiSettings.privateProvider.baseUrlError.${baseUrlValidationError}`)}
+          <View className="mb-6">
+            <Text
+              className="mb-2 text-[13px] font-semibold"
+              style={{ color: color.text.secondary }}
+            >
+              {t('aiSettings.privateProvider.baseUrl')}
             </Text>
-          ) : null}
-          <Text
-            className="mb-2 mt-3 text-[13px] font-semibold"
-            style={{ color: color.text.secondary }}
-          >
-            {t('aiSettings.privateProvider.model')}
-          </Text>
-          <BottomSheetTextInput
-            value={privateRemoteModel}
-            onChangeText={(value) => {
-              didTouchRemoteConfigRef.current = true;
-              setPrivateRemoteModel(value);
-            }}
-            autoCapitalize="none"
-            autoCorrect={false}
-            placeholder={t('aiSettings.privateProvider.modelPlaceholder')}
-            placeholderTextColor={color.text.muted}
-            className="rounded-xl border px-3 py-2 text-[14px]"
-            style={{
-              borderColor: color.border.default,
-              color: color.text.primary,
-              backgroundColor: color.background.secondary,
-            }}
-          />
-          <Text
-            className="mb-2 mt-3 text-[13px] font-semibold"
-            style={{ color: color.text.secondary }}
-          >
-            {t('aiSettings.privateProvider.apiKey')}
-          </Text>
-          <BottomSheetTextInput
-            value={privateRemoteApiKey}
-            onChangeText={setPrivateRemoteApiKey}
-            autoCapitalize="none"
-            autoCorrect={false}
-            autoComplete="off"
-            textContentType="none"
-            importantForAutofill="no"
-            secureTextEntry
-            placeholder={t('aiSettings.privateProvider.apiKeyPlaceholder')}
-            placeholderTextColor={color.text.muted}
-            className="rounded-xl border px-3 py-2 text-[14px]"
-            style={{
-              borderColor: color.border.default,
-              color: color.text.primary,
-              backgroundColor: color.background.secondary,
-            }}
-          />
+            <BottomSheetTextInput
+              value={privateRemoteBaseUrl}
+              onChangeText={(value) => {
+                didTouchRemoteConfigRef.current = true;
+                setPrivateRemoteBaseUrl(value);
+                setRemoteModelListNonce((n) => n + 1);
+              }}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="url"
+              placeholder={t('aiSettings.privateProvider.baseUrlPlaceholder')}
+              placeholderTextColor={color.text.muted}
+              className="min-h-[48px] rounded-xl border px-4 py-3 text-[15px]"
+              style={{
+                borderColor:
+                  baseUrlValidationError != null ? color.accent.delete : color.border.default,
+                color: color.text.primary,
+                backgroundColor: color.background.secondary,
+              }}
+            />
+            {baseUrlValidationError != null ? (
+              <Text className="mt-2 text-[13px] leading-5" style={{ color: color.accent.delete }}>
+                {t(`aiSettings.privateProvider.baseUrlError.${baseUrlValidationError}`)}
+              </Text>
+            ) : null}
+          </View>
+          <View className="mb-6">
+            <Text
+              className="mb-2 text-[13px] font-semibold"
+              style={{ color: color.text.secondary }}
+            >
+              {t('aiSettings.privateProvider.model')}
+            </Text>
+            <BottomSheetTextInput
+              value={privateRemoteModel}
+              onChangeText={(value) => {
+                didTouchRemoteConfigRef.current = true;
+                setPrivateRemoteModel(value);
+              }}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder={t('aiSettings.privateProvider.modelPlaceholder')}
+              placeholderTextColor={color.text.muted}
+              className="min-h-[48px] rounded-xl border px-4 py-3 text-[15px]"
+              style={{
+                borderColor: color.border.default,
+                color: color.text.primary,
+                backgroundColor: color.background.secondary,
+              }}
+            />
+            <View className="mt-4">
+              <PrivateRemoteModelList
+                baseUrl={privateRemoteBaseUrl}
+                apiKey={privateRemoteApiKey}
+                selectedModel={privateRemoteModel}
+                onSelectModel={(modelId) => {
+                  didTouchRemoteConfigRef.current = true;
+                  setPrivateRemoteModel(modelId);
+                }}
+                color={color}
+                refreshNonce={remoteModelListNonce}
+              />
+            </View>
+          </View>
+          <View className="mb-4">
+            <Text
+              className="mb-2 text-[13px] font-semibold"
+              style={{ color: color.text.secondary }}
+            >
+              {t('aiSettings.privateProvider.apiKey')}
+            </Text>
+            <BottomSheetTextInput
+              value={privateRemoteApiKey}
+              onChangeText={setPrivateRemoteApiKey}
+              autoCapitalize="none"
+              autoCorrect={false}
+              autoComplete="off"
+              textContentType="none"
+              importantForAutofill="no"
+              secureTextEntry
+              placeholder={t('aiSettings.privateProvider.apiKeyPlaceholder')}
+              placeholderTextColor={color.text.muted}
+              className="min-h-[48px] rounded-xl border px-4 py-3 text-[15px]"
+              style={{
+                borderColor: color.border.default,
+                color: color.text.primary,
+                backgroundColor: color.background.secondary,
+              }}
+            />
+          </View>
           <SheetFooterButtons
+            className="mt-6 w-full"
             color={color}
             primaryLabel={remoteConfigPrimaryLabel}
             onPrimaryPress={() => {

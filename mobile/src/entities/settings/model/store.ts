@@ -32,6 +32,7 @@ import type {
   LocalAiModelId,
   PrivateCapabilityTier,
   PrivateLocalLlmBudget,
+  PrivateRemoteOutputBudget,
   PrivateRemoteProfile,
   SettingsState,
   SummaryStyle,
@@ -64,6 +65,8 @@ const KEYS = {
   AI_OUTPUT_LANGUAGE: 'settings.aiOutputLanguage',
   AI_EXECUTION_MODE: 'settings.aiExecutionMode',
   PRIVATE_LOCAL_LLM_BUDGET: 'settings.privateLocalLlmBudget',
+  PRIVATE_REMOTE_OUTPUT_BUDGET: 'settings.privateRemoteOutputBudget',
+  PRIVATE_REMOTE_PREFER_JSON_OBJECT: 'settings.privateRemotePreferJsonObject',
   PRIVATE_CAPABILITY_TIER: 'settings.privateCapabilityTier',
   PRIVATE_AI_PROVIDER: 'settings.privateAiProvider',
   PRIVATE_REMOTE_BASE_URL: 'settings.privateRemoteBaseUrl',
@@ -322,6 +325,27 @@ const getStoredPrivateLocalLlmBudget = (): PrivateLocalLlmBudget => {
   return 'balanced';
 };
 
+const PRIVATE_REMOTE_OUTPUT_BUDGET_SET = new Set<string>([
+  'efficient',
+  'balanced',
+  'expanded',
+  'unlimited',
+]);
+
+const getStoredPrivateRemoteOutputBudget = (): PrivateRemoteOutputBudget => {
+  const val = storage.getString(KEYS.PRIVATE_REMOTE_OUTPUT_BUDGET);
+  if (val && PRIVATE_REMOTE_OUTPUT_BUDGET_SET.has(val)) {
+    return val as PrivateRemoteOutputBudget;
+  }
+  return 'balanced';
+};
+
+const getStoredPrivateRemotePreferJsonObject = (): boolean => {
+  const val = storage.getString(KEYS.PRIVATE_REMOTE_PREFER_JSON_OBJECT);
+  if (val === 'false') return false;
+  return true;
+};
+
 const getStoredCloudAiThirdPartyConsentAccepted = (): boolean => {
   return storage.getString(KEYS.CLOUD_AI_THIRD_PARTY_CONSENT) === 'true';
 };
@@ -439,6 +463,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   aiOutputLanguage: getStoredAiOutputLanguage(),
   aiExecutionMode: getStoredAiExecutionMode(),
   privateLocalLlmBudget: getStoredPrivateLocalLlmBudget(),
+  privateRemoteOutputBudget: getStoredPrivateRemoteOutputBudget(),
+  privateRemotePreferJsonObject: getStoredPrivateRemotePreferJsonObject(),
   privateCapabilityTier: getStoredPrivateCapabilityTier(),
   privateAiProvider: getStoredPrivateAiProvider(),
   privateRemoteBaseUrl: getStoredPrivateRemoteBaseUrl(),
@@ -550,6 +576,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setPrivateLocalLlmBudget: (value: PrivateLocalLlmBudget) => {
     storage.set(KEYS.PRIVATE_LOCAL_LLM_BUDGET, value);
     set({ privateLocalLlmBudget: value });
+  },
+
+  setPrivateRemoteOutputBudget: (value: PrivateRemoteOutputBudget) => {
+    storage.set(KEYS.PRIVATE_REMOTE_OUTPUT_BUDGET, value);
+    set({ privateRemoteOutputBudget: value });
+  },
+
+  setPrivateRemotePreferJsonObject: (value: boolean) => {
+    storage.set(KEYS.PRIVATE_REMOTE_PREFER_JSON_OBJECT, value ? 'true' : 'false');
+    set({ privateRemotePreferJsonObject: value });
   },
 
   setAiExecutionMode: (value: AiExecutionMode) => {

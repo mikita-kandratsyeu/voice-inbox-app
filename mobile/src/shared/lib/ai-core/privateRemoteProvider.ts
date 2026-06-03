@@ -8,9 +8,6 @@ import {
   LOCAL_GEN_ASK,
   LOCAL_GEN_MEETING_DIALOGUE,
   LOCAL_GEN_SUMMARY,
-  resolvePrivateAskMaxTokens,
-  resolvePrivateMeetingDialogueMaxTokens,
-  resolvePrivateSummaryMaxTokens,
   STRICT_JSON_TAIL,
 } from './local-provider/localAiConstants';
 import { parseJsonObjectWithFallbacks, parseLocalAskResponse } from './local-provider/localAiJson';
@@ -26,6 +23,12 @@ import {
   getLocalReferenceDateIsoLocal,
   prepareTranscriptForLocalLlm,
 } from './local-provider/localAiTranscript';
+import {
+  resolvePrivateRemoteAskMaxTokens,
+  resolvePrivateRemoteJsonRepairMaxTokens,
+  resolvePrivateRemoteMeetingDialogueMaxTokens,
+  resolvePrivateRemoteSummaryMaxTokens,
+} from './private-remote/privateRemoteConstants';
 import {
   buildWebParityAiProcessingPrompt,
   buildWebParityAskUserMessageContent,
@@ -169,6 +172,41 @@ function readMessageContent(response: OpenAiChatResponse): string {
   return '';
 }
 
+function extractHttpErrorMessage(bodyText: string): string {
+  const trimmed = bodyText.trim();
+  if (!trimmed) return bodyText;
+  try {
+    const parsed = JSON.parse(trimmed) as unknown;
+    if (!isRecord(parsed)) return bodyText;
+    const errorField = parsed.error;
+    if (isString(errorField)) return errorField;
+    if (isRecord(errorField)) {
+      const nested = errorField.message ?? errorField.msg;
+      if (isString(nested)) return nested;
+    }
+    if (isString(parsed.message)) return parsed.message;
+  } catch {
+    /* plain text body */
+  }
+  return bodyText;
+}
+
+/** Server rejected `response_format: { type: 'json_object' }` — retry without it. */
+function isJsonObjectFormatUnsupported(err: unknown): boolean {
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  if (/json_object/.test(msg)) {
+    return true;
+  }
+  if (/response_format/.test(msg)) {
+    return (
+      /not supported|unsupported|invalid|unknown|unrecognized|must be|json_schema|'text'|"text"/.test(
+        msg,
+      ) || /response_format\.type/.test(msg)
+    );
+  }
+  return false;
+}
+
 function readMessageReasoning(response: OpenAiChatResponse): string {
   const firstChoice = response.choices?.[0];
   if (!firstChoice?.message || !isRecord(firstChoice.message)) {
@@ -184,66 +222,86 @@ function readMessageReasoning(response: OpenAiChatResponse): string {
   return '';
 }
 
+type RemoteCompletionCallOptions = {
+  /** When true and user setting allows, sends OpenAI `response_format: json_object`. */
+  jsonObject?: boolean;
+};
+
 async function callRemoteCompletion(
   ctx: AiExecutionContext,
   messages: Array<{ role: 'system' | 'user'; content: string }>,
   maxTokens: number | null,
   temperature: number,
   abortSignal?: AbortSignal,
+  options?: RemoteCompletionCallOptions,
 ): Promise<RemoteCompletionOutput> {
   const endpoint = resolveRemoteCompletionUrl(ctx.privateRemoteBaseUrl);
   if (!endpoint || !ctx.privateRemoteModel.trim()) {
     throw new Error(i18n.t('ai.privateModeRemoteConfigMissing'));
   }
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
+  const headers = createRemoteHeaders(ctx.privateRemoteApiKey);
+  const wantJsonObject = Boolean(options?.jsonObject && ctx.privateRemotePreferJsonObject);
+
+  const postOnce = async (useJsonObject: boolean): Promise<RemoteCompletionOutput> => {
+    const payload: Record<string, unknown> = {
+      model: ctx.privateRemoteModel.trim(),
+      messages,
+      temperature,
+      stream: false,
+    };
+    if (maxTokens != null) {
+      payload.max_tokens = maxTokens;
+    }
+    if (useJsonObject) {
+      payload.response_format = { type: 'json_object' };
+    }
+
+    const response = await nitroFetch(endpoint, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(payload),
+      signal: abortSignal,
+    });
+    if (!response.ok) {
+      const bodyText = await response.text();
+      const message = extractHttpErrorMessage(bodyText) || `HTTP ${response.status}`;
+      throw new Error(message);
+    }
+    const json = (await response.json()) as OpenAiChatResponse;
+    const content = readMessageContent(json);
+    const messageReasoning = readMessageReasoning(json);
+    if (!content) {
+      throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
+    }
+    const promptTokens = Number(json.usage?.prompt_tokens);
+    const completionTokens = Number(json.usage?.completion_tokens);
+    const tokenUsage =
+      Number.isFinite(promptTokens) && Number.isFinite(completionTokens)
+        ? {
+            prompt: Math.max(0, Math.floor(promptTokens)),
+            completion: Math.max(0, Math.floor(completionTokens)),
+          }
+        : undefined;
+    return {
+      content,
+      ...(messageReasoning ? { reasoning: messageReasoning } : {}),
+      ...(isString(json.model) && json.model.trim().length > 0 ? { model: json.model.trim() } : {}),
+      ...(tokenUsage ? { tokenUsage } : {}),
+    };
   };
-  const apiKey = ctx.privateRemoteApiKey.trim();
-  if (apiKey.length > 0) {
-    headers.Authorization = `Bearer ${apiKey}`;
+
+  if (!wantJsonObject) {
+    return postOnce(false);
   }
 
-  const payload: Record<string, unknown> = {
-    model: ctx.privateRemoteModel.trim(),
-    messages,
-    temperature,
-    stream: false,
-  };
-  if (maxTokens != null) {
-    payload.max_tokens = maxTokens;
+  try {
+    return await postOnce(true);
+  } catch (err) {
+    if (isJsonObjectFormatUnsupported(err)) {
+      return postOnce(false);
+    }
+    throw err;
   }
-
-  const response = await nitroFetch(endpoint, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(payload),
-    signal: abortSignal,
-  });
-  if (!response.ok) {
-    const bodyText = await response.text();
-    throw new Error(bodyText || `HTTP ${response.status}`);
-  }
-  const json = (await response.json()) as OpenAiChatResponse;
-  const content = readMessageContent(json);
-  const messageReasoning = readMessageReasoning(json);
-  if (!content) {
-    throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
-  }
-  const promptTokens = Number(json.usage?.prompt_tokens);
-  const completionTokens = Number(json.usage?.completion_tokens);
-  const tokenUsage =
-    Number.isFinite(promptTokens) && Number.isFinite(completionTokens)
-      ? {
-          prompt: Math.max(0, Math.floor(promptTokens)),
-          completion: Math.max(0, Math.floor(completionTokens)),
-        }
-      : undefined;
-  return {
-    content,
-    ...(messageReasoning ? { reasoning: messageReasoning } : {}),
-    ...(isString(json.model) && json.model.trim().length > 0 ? { model: json.model.trim() } : {}),
-    ...(tokenUsage ? { tokenUsage } : {}),
-  };
 }
 
 function parseMeetingDialogueMarkdownUnlimited(raw: string): string | null {
@@ -363,13 +421,61 @@ async function runRemoteJsonRepairPass(
         { role: 'system', content: repairSystemPrompt },
         { role: 'user', content: repairUser },
       ],
-      2048,
+      resolvePrivateRemoteJsonRepairMaxTokens(),
       0,
       abortSignal,
+      { jsonObject: true },
     );
     return repaired.content;
   } catch {
     return null;
+  }
+}
+
+export type PrivateRemoteServerConfig = Pick<
+  AiExecutionContext,
+  'privateRemoteBaseUrl' | 'privateRemoteApiKey'
+>;
+
+export async function listPrivateRemoteModels(
+  config: PrivateRemoteServerConfig,
+): Promise<{ ok: true; models: string[] } | { ok: false; error: string }> {
+  const modelsEndpoint = resolveRemoteModelsUrl(config.privateRemoteBaseUrl);
+  if (!modelsEndpoint) {
+    return { ok: false, error: i18n.t('ai.privateModeRemoteConfigMissing') };
+  }
+
+  try {
+    const modelsResponse = await nitroFetch(modelsEndpoint, {
+      method: 'GET',
+      headers: createRemoteHeaders(config.privateRemoteApiKey),
+    });
+    if (isAuthFailureStatus(modelsResponse.status)) {
+      return { ok: false, error: i18n.t('aiSettings.privateProvider.connectionStatus.authFailed') };
+    }
+    if (!modelsResponse.ok) {
+      return {
+        ok: false,
+        error: `HTTP ${modelsResponse.status}`,
+      };
+    }
+    const modelsJson = await readJsonSafe<OpenAiModelsResponse>(modelsResponse);
+    if (!modelsJson) {
+      return {
+        ok: false,
+        error: i18n.t('aiSettings.privateProvider.connectionStatus.invalidResponse'),
+      };
+    }
+    const models = extractModelIds(modelsJson);
+    if (models.length === 0) {
+      return { ok: false, error: i18n.t('aiSettings.privateProvider.modelList.empty') };
+    }
+    return { ok: true, models };
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : i18n.t('ai.privateModeGenericError'),
+    };
   }
 }
 
@@ -497,7 +603,7 @@ async function runPrivateRemoteSummaryPass(
     { pseudoDiarizationEligible: opts.includeMeetingDialogueField },
   );
   const userContent = request.transcript;
-  const summaryMaxTokens = resolvePrivateSummaryMaxTokens(ctx.privateLocalLlmBudget);
+  const summaryMaxTokens = resolvePrivateRemoteSummaryMaxTokens(ctx.privateRemoteOutputBudget);
   const runOnce = (user: string) =>
     callRemoteCompletion(
       ctx,
@@ -508,6 +614,7 @@ async function runPrivateRemoteSummaryPass(
       summaryMaxTokens,
       LOCAL_GEN_SUMMARY.temperature,
       request.abortSignal,
+      { jsonObject: true },
     );
 
   let remote = await runOnce(userContent);
@@ -562,10 +669,10 @@ export async function runPrivateRemoteMeetingDialogue(
       request.transcriptSegments,
       request.taskExtractionHint,
     );
-    const maxTokensBudget = resolvePrivateMeetingDialogueMaxTokens(ctx.privateLocalLlmBudget);
-    // Cap generation to avoid runaway / infinite generation on some servers/models.
-    // Keep it higher than local defaults so speaker breakdown has room.
-    const maxTokensSent = Math.max(4096, maxTokensBudget);
+    const maxTokensBudget = resolvePrivateRemoteMeetingDialogueMaxTokens(
+      ctx.privateRemoteOutputBudget,
+    );
+    const maxTokensSent = maxTokensBudget == null ? null : Math.max(4096, maxTokensBudget);
     const runOnce = (user: string) =>
       callRemoteCompletion(
         ctx,
@@ -576,6 +683,7 @@ export async function runPrivateRemoteMeetingDialogue(
         maxTokensSent,
         LOCAL_GEN_MEETING_DIALOGUE.temperature,
         request.abortSignal,
+        { jsonObject: true },
       );
 
     let remote = await runOnce(userContent);
@@ -776,7 +884,7 @@ export async function runPrivateRemoteAsk(
       request.recordingMarks,
     );
     const askSystemPrompt = WEB_PARITY_ASK_SYSTEM_PROMPT;
-    const askMaxTokens = resolvePrivateAskMaxTokens(ctx.privateLocalLlmBudget);
+    const askMaxTokens = resolvePrivateRemoteAskMaxTokens(ctx.privateRemoteOutputBudget);
     const runOnce = (user: string) =>
       callRemoteCompletion(
         ctx,
@@ -787,6 +895,7 @@ export async function runPrivateRemoteAsk(
         askMaxTokens,
         LOCAL_GEN_ASK.temperature,
         request.abortSignal,
+        { jsonObject: true },
       );
 
     let remote = await runOnce(userContent);

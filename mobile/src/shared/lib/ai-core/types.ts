@@ -3,6 +3,7 @@ import type {
   LocalAiModelId,
   PrivateAiProvider,
   PrivateLocalLlmBudget,
+  PrivateRemoteOutputBudget,
   SummaryStyle,
   TaskStrictness,
   UserSelectableAIModelId,
@@ -29,6 +30,8 @@ export type AiExecutionContext = {
   aiOutputLanguage: AiOutputLanguage;
   aiExecutionMode: 'smart_hybrid' | 'private_experimental';
   privateLocalLlmBudget: PrivateLocalLlmBudget;
+  privateRemoteOutputBudget: PrivateRemoteOutputBudget;
+  privateRemotePreferJsonObject: boolean;
   privateCapabilityTier: 'full' | 'limited' | 'unavailable';
   privateAiProvider: PrivateAiProvider;
   privateRemoteBaseUrl: string;

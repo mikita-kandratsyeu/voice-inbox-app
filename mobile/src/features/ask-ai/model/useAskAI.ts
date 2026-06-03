@@ -103,6 +103,8 @@ export const useAskAI = (
   const aiOutputLanguage = useSettingsStore((s) => s.aiOutputLanguage);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateLocalLlmBudget = useSettingsStore((s) => s.privateLocalLlmBudget);
+  const privateRemoteOutputBudget = useSettingsStore((s) => s.privateRemoteOutputBudget);
+  const privateRemotePreferJsonObject = useSettingsStore((s) => s.privateRemotePreferJsonObject);
   const privateCapabilityTier = useSettingsStore((s) => s.privateCapabilityTier);
   const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const privateRemoteBaseUrl = useSettingsStore((s) => s.privateRemoteBaseUrl);
@@ -384,6 +386,8 @@ export const useAskAI = (
             aiOutputLanguage,
             aiExecutionMode,
             privateLocalLlmBudget,
+            privateRemoteOutputBudget,
+            privateRemotePreferJsonObject,
             privateCapabilityTier,
             privateAiProvider: effectivePrivateAiProvider,
             privateRemoteBaseUrl,
@@ -495,6 +499,8 @@ export const useAskAI = (
       aiOutputLanguage,
       aiExecutionMode,
       privateLocalLlmBudget,
+      privateRemoteOutputBudget,
+      privateRemotePreferJsonObject,
       privateCapabilityTier,
       effectivePrivateAiProvider,
       privateRemoteBaseUrl,

@@ -40,6 +40,8 @@ function createCtx(overrides: Partial<AiExecutionContext> = {}): AiExecutionCont
     aiOutputLanguage: 'same',
     aiExecutionMode: 'private_experimental',
     privateLocalLlmBudget: 'balanced',
+    privateRemoteOutputBudget: 'balanced',
+    privateRemotePreferJsonObject: true,
     privateCapabilityTier: 'full',
     privateAiProvider: 'local',
     privateRemoteBaseUrl: '',

@@ -1247,11 +1247,11 @@
     "outputLanguage.same": "Как в транскрипте",
     "outputLanguage.ru": "Всегда русский",
     "outputLanguage.en": "Всегда английский",
-    "privateLocalGeneration": "Локальная инференция",
+    "privateLocalGeneration": "Модель на устройстве",
     "privateLocalGeneration.efficient": "Быстрее",
     "privateLocalGeneration.balanced": "Сбалансировано",
     "privateLocalGeneration.expanded": "Подробнее",
-    "privateLocalGenerationHint": "Задаёт, насколько длинными могут быть локальные ответы.",
+    "privateLocalGenerationHint": "Насколько подробными будут сводки и ответы при работе без сервера.",
     "privateProvider": {
       "title": "Источник Private",
       "description": "Выберите, где ИИ работает в режиме Private: на устройстве или на вашем сервере.",
@@ -1261,7 +1261,7 @@
       "proTitle": "Свой ИИ-сервер в Pro",
       "proBody": "Подключите Ollama или LM Studio и запускайте Private-режим через свой сервер.",
       "serverConfig": "Подключение к серверу",
-      "serverConfigHint": "Используйте OpenAI-совместимый сервер.",
+      "serverConfigHint": "Например, Ollama или LM Studio на компьютере или в домашней сети.",
       "quickTemplates": "Быстрый выбор",
       "templates": {
         "ollama": "Ollama",
@@ -1321,8 +1321,8 @@
       "healthCheck": {
         "serverUnavailable": "Сервер недоступен. Проверьте URL, сеть и что сервер запущен.",
         "authFailed": "Ошибка авторизации. Проверьте API-ключ или настройки доступа на сервере.",
-        "modelNotFound": "Модели \"{{model}}\" нет в /v1/models. Доступно: {{modelsPreview}}",
-        "invalidResponse": "Сервер вернул некорректный формат ответа. Убедитесь, что сервер OpenAI-совместимый."
+        "modelNotFound": "Модель «{{model}}» не найдена на сервере. Попробуйте: {{modelsPreview}}",
+        "invalidResponse": "Сервер ответил в неожиданном формате. Проверьте настройки сервера и попробуйте снова."
       },
       "exportProfiles": "Экспорт профилей",
       "importProfiles": "Импорт профилей",
@@ -1335,7 +1335,28 @@
       "importFailedTitle": "Ошибка импорта",
       "importFailedMessage": "Не удалось импортировать профили из файла.",
       "importInvalidTitle": "Некорректный файл",
-      "importInvalidMessage": "Выберите корректный JSON-файл экспорта профилей."
+      "importInvalidMessage": "Выберите корректный JSON-файл экспорта профилей.",
+      "modelList": {
+        "title": "Выбор модели",
+        "refresh": "Загрузить модели",
+        "empty": "Не удалось загрузить список. Проверьте адрес сервера и попробуйте снова.",
+        "expandA11y": "Показать список моделей",
+        "collapseA11y": "Скрыть список моделей",
+        "collapsedSummary": "Доступно моделей: {{count}}",
+        "loadingSummary": "Загрузка списка…",
+        "errorSummary": "Не удалось загрузить список"
+      }
+    },
+    "privateRemoteGeneration": {
+      "title": "Ваш сервер",
+      "hint": "Насколько длинными могут быть ответы с подключённого сервера. На модели на устройстве не влияет.",
+      "efficient": "Короче",
+      "balanced": "Сбалансировано",
+      "expanded": "Подробнее",
+      "unlimited": "Без ограничений",
+      "jsonObjectLabel": "Надёжный разбор ответов",
+      "jsonObjectHint": "Помогает корректно собирать сводки и задачи. Если сервер не поддерживает — попробуем другой способ.",
+      "jsonObjectA11y": "Предпочитать структурированные ответы с сервера"
     },
     "smartModeCloudRetention": {
       "title": "Время в облаке",
@@ -1405,7 +1426,7 @@
     "deepSeekProDesc": "Флагманская модель для сложных рассуждений, длинных записей и глубокого анализа.",
     "mimoDesc": "Флагманская модель для длинных записей, сводок и ответов на вопросы.",
     "minimaxDesc": "Лучшее качество для сложных сводок, важных записей и глубокого анализа.",
-    "minimaxM27LegacyDesc": "Предыдущее поколение MiniMax. Доступно, если вы уже выбрали эту модель.",
+    "minimaxM27LegacyDesc": "Предыдущая версия MiniMax. Остаётся в списке, если вы уже выбирали её раньше.",
     "nemotronDesc": "Подробные сводки и развёрнутые ответы для очень длинных записей и заметок.",
     "localQwen3Desc": "Сбалансированное качество на большинстве устройств.",
     "localGemma2Desc": "Сильнее следует инструкциям. Чуть больше размер загрузки.",

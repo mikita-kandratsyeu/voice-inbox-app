@@ -69,6 +69,7 @@ export type {
   PrivateAiProvider,
   PrivateCapabilityTier,
   PrivateLocalLlmBudget,
+  PrivateRemoteOutputBudget,
   PrivateRemoteConfig,
   PrivateRemoteProfile,
   SettingsState,

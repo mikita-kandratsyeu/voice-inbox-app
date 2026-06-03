@@ -57,6 +57,8 @@ function createCtx(overrides: Partial<AiExecutionContext> = {}): AiExecutionCont
     aiOutputLanguage: 'same',
     aiExecutionMode: 'private_experimental',
     privateLocalLlmBudget: 'balanced',
+    privateRemoteOutputBudget: 'balanced',
+    privateRemotePreferJsonObject: true,
     privateCapabilityTier: 'full',
     privateAiProvider: 'custom_openai',
     privateRemoteBaseUrl: 'http://127.0.0.1:1234',
@@ -71,6 +73,90 @@ function createCtx(overrides: Partial<AiExecutionContext> = {}): AiExecutionCont
 describe('runPrivateRemoteMeetingDialogue', () => {
   afterEach(() => {
     mockNitroFetch.mockReset();
+  });
+
+  it('sends response_format json_object when preferJsonObject is enabled', async () => {
+    mockNitroFetch.mockImplementation(async (_url, init) => {
+      const body = JSON.parse(String(init?.body)) as { response_format?: { type: string } };
+      expect(body.response_format).toEqual({ type: 'json_object' });
+      return mockChatCompletion({
+        content: '{"meetingDialogueMarkdown":"Speaker 1: Hi"}',
+      });
+    });
+
+    const result = await runPrivateRemoteMeetingDialogue(
+      {
+        transcript: 'short transcript',
+        phase1: { suggestedTitle: 'T', summary: 'S', keyPhrases: [] },
+      },
+      createCtx({ privateRemotePreferJsonObject: true }),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(mockNitroFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('retries without json_object when server rejects response_format', async () => {
+    let call = 0;
+    mockNitroFetch.mockImplementation(async (_url, init) => {
+      call += 1;
+      const body = JSON.parse(String(init?.body)) as { response_format?: { type: string } };
+      if (call === 1) {
+        expect(body.response_format).toEqual({ type: 'json_object' });
+        return {
+          ok: false,
+          text: async () => 'response_format json_object is not supported',
+        } as Response;
+      }
+      expect(body.response_format).toBeUndefined();
+      return mockChatCompletion({
+        content: '{"meetingDialogueMarkdown":"Speaker 1: Ok"}',
+      });
+    });
+
+    const result = await runPrivateRemoteMeetingDialogue(
+      {
+        transcript: 'short transcript',
+        phase1: { suggestedTitle: 'T', summary: 'S', keyPhrases: [] },
+      },
+      createCtx({ privateRemotePreferJsonObject: true }),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(mockNitroFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it('retries without json_object when server only allows json_schema or text', async () => {
+    let call = 0;
+    mockNitroFetch.mockImplementation(async (_url, init) => {
+      call += 1;
+      const body = JSON.parse(String(init?.body)) as { response_format?: { type: string } };
+      if (call === 1) {
+        expect(body.response_format).toEqual({ type: 'json_object' });
+        return {
+          ok: false,
+          text: async () =>
+            JSON.stringify({
+              error: "'response_format.type' must be 'json_schema' or 'text'",
+            }),
+        } as Response;
+      }
+      expect(body.response_format).toBeUndefined();
+      return mockChatCompletion({
+        content: '{"meetingDialogueMarkdown":"Speaker 1: Ok"}',
+      });
+    });
+
+    const result = await runPrivateRemoteMeetingDialogue(
+      {
+        transcript: 'short transcript',
+        phase1: { suggestedTitle: 'T', summary: 'S', keyPhrases: [] },
+      },
+      createCtx({ privateRemotePreferJsonObject: true }),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(mockNitroFetch).toHaveBeenCalledTimes(2);
   });
 
   it('extracts meeting dialogue from loose malformed payload', async () => {
@@ -90,7 +176,7 @@ describe('runPrivateRemoteMeetingDialogue', () => {
           keyPhrases: ['задачи'],
         },
       },
-      createCtx(),
+      createCtx({ privateRemotePreferJsonObject: false }),
     );
 
     expect(result.ok).toBe(true);

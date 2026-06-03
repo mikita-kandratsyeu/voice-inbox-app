@@ -25,6 +25,8 @@ export type TaskStrictness = 'strict' | 'balanced' | 'soft';
 export type AiOutputLanguage = 'same' | 'ru' | 'en';
 export type AiExecutionMode = 'smart_hybrid' | 'private_experimental';
 export type PrivateLocalLlmBudget = 'efficient' | 'balanced' | 'expanded';
+/** Custom OpenAI-compatible server output length (null max_tokens when unlimited). */
+export type PrivateRemoteOutputBudget = PrivateLocalLlmBudget | 'unlimited';
 export type PrivateCapabilityTier = 'full' | 'limited' | 'unavailable';
 export type PrivateAiProvider = 'local' | 'custom_openai';
 export type PrivateRemoteConfig = {
@@ -110,6 +112,9 @@ export type SettingsState = {
   aiOutputLanguage: AiOutputLanguage;
   aiExecutionMode: AiExecutionMode;
   privateLocalLlmBudget: PrivateLocalLlmBudget;
+  privateRemoteOutputBudget: PrivateRemoteOutputBudget;
+  /** Request `response_format: json_object` on custom server when supported. */
+  privateRemotePreferJsonObject: boolean;
   privateCapabilityTier: PrivateCapabilityTier;
   privateAiProvider: PrivateAiProvider;
   privateRemoteBaseUrl: string;
@@ -154,6 +159,8 @@ export type SettingsState = {
   setAiOutputLanguage: (value: AiOutputLanguage) => void;
   setAiExecutionMode: (value: AiExecutionMode) => void;
   setPrivateLocalLlmBudget: (value: PrivateLocalLlmBudget) => void;
+  setPrivateRemoteOutputBudget: (value: PrivateRemoteOutputBudget) => void;
+  setPrivateRemotePreferJsonObject: (value: boolean) => void;
   setPrivateCapabilityTier: (value: PrivateCapabilityTier) => void;
   setPrivateAiProvider: (value: PrivateAiProvider) => void;
   setPrivateRemoteBaseUrl: (value: string) => void;

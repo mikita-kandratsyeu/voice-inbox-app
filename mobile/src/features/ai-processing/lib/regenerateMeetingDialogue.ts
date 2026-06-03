@@ -51,6 +51,8 @@ function buildPrivateAiContext(settings: ReturnType<typeof useSettingsStore.getS
       aiOutputLanguage: settings.aiOutputLanguage,
       aiExecutionMode: 'private_experimental',
       privateLocalLlmBudget: settings.privateLocalLlmBudget,
+      privateRemoteOutputBudget: settings.privateRemoteOutputBudget,
+      privateRemotePreferJsonObject: settings.privateRemotePreferJsonObject,
       privateCapabilityTier: settings.privateCapabilityTier,
       privateAiProvider: effectivePrivateAiProvider,
       privateRemoteBaseUrl: settings.privateRemoteBaseUrl,
