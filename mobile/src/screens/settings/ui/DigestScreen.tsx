@@ -1,6 +1,13 @@
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
-import { AlertTriangle, CalendarDays, CheckCircle2, Clock3, Sparkles } from 'lucide-react-native';
+import {
+  AlertTriangle,
+  CalendarDays,
+  CheckCircle2,
+  Clock3,
+  Info,
+  Sparkles,
+} from 'lucide-react-native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -35,7 +42,9 @@ import { Button, SCREEN_PADDING, ScreenHeader } from '@/shared/ui';
 import {
   buildDeterministicDigest,
   buildDigestAiPayload,
+  type DigestAiPayloadCoverage,
   type DigestPeriod,
+  getDigestAiPayloadCoverage,
   getDigestCacheKey,
   loadCachedDigest,
 } from '../lib/digest';
@@ -109,6 +118,49 @@ function SectionCard({
         </Text>
       </View>
       {children}
+    </View>
+  );
+}
+
+function DigestAiCoverageBanner({ coverage }: { coverage: DigestAiPayloadCoverage }) {
+  const { t } = useTranslation();
+  const color = useColors();
+  const showNotesPartial = coverage.hasOmittedNotes;
+  const showSummariesTruncated = coverage.truncatedSummaryCount > 0;
+
+  if (!showNotesPartial && !showSummariesTruncated) {
+    return null;
+  }
+
+  return (
+    <View
+      className="mb-4 rounded-2xl px-4 py-3"
+      style={{
+        borderWidth: 1,
+        borderColor: color.border.default,
+        backgroundColor: color.background.tertiary,
+      }}
+    >
+      <View className="flex-row items-start gap-3">
+        <Info size={18} color={color.accent.primary} strokeWidth={1.8} style={{ marginTop: 1 }} />
+        <View className="flex-1 gap-1">
+          {showNotesPartial ? (
+            <Text className="text-[13px] leading-[18px]" style={{ color: color.text.secondary }}>
+              {t('settings.digest.aiCoverageNotesPartial', {
+                included: coverage.includedNotes,
+                total: coverage.totalNotes,
+              })}
+            </Text>
+          ) : null}
+          {showSummariesTruncated ? (
+            <Text className="text-[13px] leading-[18px]" style={{ color: color.text.secondary }}>
+              {t('settings.digest.aiCoverageSummariesTruncated', {
+                count: coverage.truncatedSummaryCount,
+              })}
+            </Text>
+          ) : null}
+        </View>
+      </View>
     </View>
   );
 }
@@ -198,16 +250,18 @@ function PeriodTabs({
             key={item}
             accessibilityRole="button"
             accessibilityState={{ selected }}
-            className="flex-1 rounded-full px-4 py-2.5"
+            accessibilityLabel={t(`settings.digest.period.${item}`)}
+            className="min-h-10 flex-1 items-center justify-center rounded-full px-2 py-2"
             style={{ backgroundColor: selected ? color.background.card : 'transparent' }}
             onPress={() => onChange(item)}
             activeOpacity={0.75}
           >
             <Text
-              className="text-center text-[15px] font-semibold"
+              className="text-center text-[13px] font-semibold leading-[16px]"
+              numberOfLines={1}
               style={{ color: selected ? color.text.primary : color.text.secondary }}
             >
-              {t(`settings.digest.period.${item}`)}
+              {t(`settings.digest.periodTab.${item}`)}
             </Text>
           </TouchableOpacity>
         );
@@ -246,6 +300,7 @@ export const DigestScreen = () => {
   }, [isLoaded, isSmartMode, loadRecords]);
 
   const digest = useMemo(() => buildDeterministicDigest(period, records), [period, records]);
+  const aiPayloadCoverage = useMemo(() => getDigestAiPayloadCoverage(digest), [digest]);
   const digestCacheKey = useMemo(() => getDigestCacheKey(digest), [digest]);
   const aiLoading = useDigestGenerating(digestCacheKey);
 
@@ -571,6 +626,9 @@ export const DigestScreen = () => {
             <Text className="mb-3 text-[13px] leading-[18px]" style={{ color: color.text.muted }}>
               {aiGeneratedText}
             </Text>
+            {digest.recordCount > 0 ? (
+              <DigestAiCoverageBanner coverage={aiPayloadCoverage} />
+            ) : null}
             {aiResult ? (
               <View className="mb-4">
                 <Markdown style={markdownStyles}>{aiResult.markdown}</Markdown>

@@ -34,9 +34,38 @@ type CachedDigest = {
 
 const CACHE_PREFIX = 'digest.ai.';
 /** Notes included in cloud digest payload (longer window needs a bit more coverage). */
-const MAX_AI_NOTES_IN_PAYLOAD = 30;
-const MAX_AI_NOTES_IN_PAYLOAD_MONTH = 40;
-const MAX_TEXT_CHARS = 900;
+export const MAX_AI_NOTES_IN_PAYLOAD = 30;
+export const MAX_AI_NOTES_IN_PAYLOAD_MONTH = 40;
+export const MAX_DIGEST_SUMMARY_CHARS = 900;
+
+export type DigestAiPayloadCoverage = {
+  totalNotes: number;
+  includedNotes: number;
+  notesLimit: number;
+  hasOmittedNotes: boolean;
+  truncatedSummaryCount: number;
+};
+
+export function getDigestAiNotesLimit(period: DigestPeriod): number {
+  return period === 'month' ? MAX_AI_NOTES_IN_PAYLOAD_MONTH : MAX_AI_NOTES_IN_PAYLOAD;
+}
+
+export function getDigestAiPayloadCoverage(digest: DeterministicDigest): DigestAiPayloadCoverage {
+  const notesLimit = getDigestAiNotesLimit(digest.period);
+  const includedNotes = Math.min(digest.recordCount, notesLimit);
+  const recordsInPayload = digest.records.slice(0, notesLimit);
+  const truncatedSummaryCount = recordsInPayload.filter(
+    (record) => (record.summary?.trim().length ?? 0) > MAX_DIGEST_SUMMARY_CHARS,
+  ).length;
+
+  return {
+    totalNotes: digest.recordCount,
+    includedNotes,
+    notesLimit,
+    hasOmittedNotes: digest.recordCount > notesLimit,
+    truncatedSummaryCount,
+  };
+}
 
 export function getDigestRange(period: DigestPeriod, now = dayjs()) {
   if (period === 'day') {
@@ -195,7 +224,7 @@ export function buildDigestAiPayload(digest: DeterministicDigest, language: 'en'
         title: truncate(record.title, 160),
         createdAt: record.createdAt,
         classification: record.classification,
-        summary: truncate(record.summary, MAX_TEXT_CHARS),
+        summary: truncate(record.summary, MAX_DIGEST_SUMMARY_CHARS),
         keyPhrases: record.keyPhrases?.slice(0, 8),
         nextSteps: record.nextSteps?.slice(0, 5),
         tasks: record.tasks?.slice(0, 8).map((task) => ({

@@ -707,7 +707,7 @@
         },
         "digest": {
           "title": "AI digest",
-          "subtitle": "Available in Smart mode and uses one cloud generation."
+          "subtitle": "Recap a day, week, or month — optional AI narrative."
         },
         "autoOrganize": {
           "title": "Auto-organize",
@@ -722,13 +722,18 @@
     },
     "digest": {
       "title": "AI digest",
-      "settingsSubtitle": "Local recap with optional AI generation.",
-      "subtitle": "Built from saved summaries, tasks, key phrases, and next steps.",
+      "settingsSubtitle": "Notes, tasks, and themes for today, the last 7 days, or 30 days.",
+      "subtitle": "Metrics and lists are built on your device from summaries, tasks, and key phrases.",
       "smartModeOnlyTitle": "Digest is available in Smart mode",
-      "smartModeOnlyDesc": "Switch AI mode to Smart to view the daily, weekly, or 30-day digest and generate an AI recap.",
+      "smartModeOnlyDesc": "Switch AI mode to Smart to view your recap for today, the last 7 days, or 30 days and generate an AI narrative.",
       "period": {
         "day": "Today",
         "week": "Last 7 days",
+        "month": "Last 30 days"
+      },
+      "periodTab": {
+        "day": "Today",
+        "week": "7 days",
         "month": "30 days"
       },
       "durationMinutes_one": "{{count}} min",
@@ -738,30 +743,33 @@
       "durationHoursMinutes": "{{hours}} h {{minutes}} min",
       "metrics": {
         "records": "Notes",
-        "recordsHelper": "Recorded in period",
+        "recordsHelper": "In this period",
         "duration": "Audio",
-        "durationHelper": "Total duration",
+        "durationHelper": "Total recorded",
         "openTasks": "Open",
-        "openTasksHelper": "Tasks to follow up",
+        "openTasksHelper": "Still to do",
         "overdue": "Overdue",
-        "overdueHelper": "Past deadlines"
+        "overdueHelper": "Past deadline"
       },
-      "aiTitle": "AI digest",
-      "aiDescription": "Generate a concise narrative digest from this local recap. This uses one cloud AI credit.",
-      "aiManualHint": "Not generated yet. Local metrics above are free.",
-      "aiGeneratedAt": "Generated {{date}}. Regenerate if notes or tasks changed.",
-      "aiGenerating": "Generating digest...",
-      "aiGeneratingDescription": "Collecting notes, tasks, and topics into a short recap.",
-      "generateAi": "Generate digest",
-      "regenerateAi": "Regenerate digest",
+      "aiTitle": "AI recap",
+      "aiDescription": "Turn this period into a short narrative of what mattered. Uses one cloud generation.",
+      "aiManualHint": "Not generated yet. Metrics and lists above update for free.",
+      "aiGeneratedAt": "Generated {{date}}. Regenerate after you add or edit notes.",
+      "aiCoverageNotesPartial": "{{included}} of {{total}} notes are included — newest first. Older notes are left out of the AI recap.",
+      "aiCoverageSummariesTruncated_one": "One long summary is shortened to keep the request fast.",
+      "aiCoverageSummariesTruncated_other": "{{count}} summaries are shortened to keep the request fast.",
+      "aiGenerating": "Writing your recap...",
+      "aiGeneratingDescription": "Sending your newest notes and tasks to the cloud for a short summary.",
+      "generateAi": "Generate AI recap",
+      "regenerateAi": "Refresh AI recap",
       "aiLimitError": "Weekly AI limit reached. Try again after reset or upgrade your plan.",
-      "emptyAi": "No notes in this period yet.",
+      "emptyAi": "Nothing here yet — record a note and your digest will fill in.",
       "topicsTitle": "Top topics",
-      "emptyTopics": "No key phrases yet. Generate summaries for notes to improve the digest.",
+      "emptyTopics": "Generate summaries for your notes to see recurring themes here.",
       "nextStepsTitle": "Next steps",
-      "emptyNextSteps": "No next steps found for this period.",
+      "emptyNextSteps": "Next steps from note summaries will show up here.",
       "openTasksTitle": "Open tasks",
-      "emptyOpenTasks": "No open tasks in this period.",
+      "emptyOpenTasks": "No open tasks linked to notes in this period.",
       "overdueTitle": "Overdue tasks",
       "emptyOverdue": "No overdue tasks."
     },
