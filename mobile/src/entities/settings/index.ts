@@ -16,6 +16,11 @@ export {
 } from './lib/getAiSettingsDiagnostics';
 export { isPrivateCustomServerMode } from './lib/isPrivateCustomServerMode';
 export {
+  getOnboardingCuratedCloudModels,
+  ONBOARDING_CURATED_CLOUD_MODEL_IDS,
+  shouldShowOnboardingAllModelsHint,
+} from './lib/onboardingCuratedAiModels';
+export {
   canEnablePrivateMode,
   formatPrivateDiagnosticsFreeDiskGb,
   formatPrivateDiagnosticsRamGb,

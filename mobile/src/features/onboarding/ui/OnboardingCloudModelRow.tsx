@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react-native';
+import { Check, Crown } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
@@ -14,6 +14,7 @@ type OnboardingCloudModelRowProps = {
   metaChips: ModelMetaChip[];
   isSelected: boolean;
   isRecommended?: boolean;
+  isProLocked?: boolean;
   isLast: boolean;
   color: Colors;
   selectedColor: string;
@@ -27,20 +28,23 @@ export const OnboardingCloudModelRow = ({
   metaChips,
   isSelected,
   isRecommended = false,
+  isProLocked = false,
   isLast,
   color,
   selectedColor,
   onPress,
 }: OnboardingCloudModelRowProps) => {
   const { t } = useTranslation();
+  const showName = name.trim().length > 0 && name.trim() !== tierLabel.trim();
 
   return (
     <TouchableOpacity
       onPress={onPress}
       activeOpacity={0.7}
       accessibilityRole="button"
-      accessibilityLabel={name}
+      accessibilityLabel={showName ? name : tierLabel}
       accessibilityState={{ selected: isSelected }}
+      accessibilityHint={isProLocked ? t('aiModels.proModelTitle') : undefined}
       className={`px-4 py-4 flex-row items-center justify-between ${!isLast ? 'border-b' : ''}`}
       style={{
         backgroundColor: color.background.card,
@@ -65,11 +69,24 @@ export const OnboardingCloudModelRow = ({
               </Text>
             </View>
           ) : null}
+          {isProLocked ? (
+            <View className="flex-row items-center gap-1">
+              <Crown size={14} color={color.accent.primary} strokeWidth={2} />
+              <Text className="text-xs font-semibold" style={{ color: color.accent.primary }}>
+                {t('common.pro')}
+              </Text>
+            </View>
+          ) : null}
         </View>
-        <Text className="mb-1 text-[13px] leading-5" style={{ color: color.text.muted }}>
-          {name}
-        </Text>
-        <Text className="mb-2 text-[14px] leading-5" style={{ color: color.text.secondary }}>
+        {showName ? (
+          <Text className="mb-1 text-[13px] leading-5" style={{ color: color.text.muted }}>
+            {name}
+          </Text>
+        ) : null}
+        <Text
+          className={`text-[14px] leading-5 ${showName ? 'mb-2' : 'mb-1'}`}
+          style={{ color: color.text.secondary }}
+        >
           {description}
         </Text>
         <ModelMetaChips color={color} chips={metaChips} />

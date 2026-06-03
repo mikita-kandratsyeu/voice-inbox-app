@@ -1,15 +1,15 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, ScrollView, View } from 'react-native';
+import { Alert, ScrollView, Text, TouchableOpacity, View } from 'react-native';
 
 import type { UserSelectableAIModelId, WhisperModelId } from '@/entities/settings';
 import {
   buildAutoModelMetaChips,
   buildCloudModelMetaChips,
+  getOnboardingCuratedCloudModels,
   getWhisperEstimatedDownloadSizeMb,
   getWhisperModelVariantId,
-  isProOnlyAiModel,
-  USER_FACING_AI_MODELS_BY_SPEED,
+  shouldShowOnboardingAllModelsHint,
   useRecommendedWhisperModelId,
   useSettingsStore,
   useWhisperModelCompatibility,
@@ -86,10 +86,9 @@ export const OnboardingSetupStep = ({
   } as const;
 
   if (mode === 'ai') {
-    const cloudModelsForOnboarding = USER_FACING_AI_MODELS_BY_SPEED.filter(
-      (model) => isProActive || !isProOnlyAiModel(model.id),
-    );
-    const manualRows = cloudModelsForOnboarding.map((model) => ({
+    const curatedCloudModels = getOnboardingCuratedCloudModels(isProActive);
+    const showAllModelsHint = shouldShowOnboardingAllModelsHint(isProActive);
+    const manualRows = curatedCloudModels.map((model) => ({
       id: model.id,
       tierLabel: t(model.tierLabelKey),
       name: model.name,
@@ -139,6 +138,14 @@ export const OnboardingSetupStep = ({
             />
           ))}
         </View>
+        {showAllModelsHint ? (
+          <Text
+            className="mt-3 px-1 text-center text-[13px] leading-5"
+            style={{ color: color.text.muted }}
+          >
+            {t('onboarding.allAiModelsInSettingsHint')}
+          </Text>
+        ) : null}
       </ScrollView>
     );
   }
