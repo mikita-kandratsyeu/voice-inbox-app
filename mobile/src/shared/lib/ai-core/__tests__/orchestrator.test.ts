@@ -23,6 +23,10 @@ jest.mock('@/shared/lib', () => ({
   i18n: { t: (key: string) => key },
 }));
 
+jest.mock('@/shared/lib/fetch', () => ({
+  nitroFetch: jest.fn(),
+}));
+
 const mockedSummary = jest.mocked(runLocalSummaryTasks);
 const mockedMeeting = jest.mocked(runLocalMeetingDialogue);
 
