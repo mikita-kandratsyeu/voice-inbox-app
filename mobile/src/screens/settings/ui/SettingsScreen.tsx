@@ -134,6 +134,14 @@ export const SettingsScreen = () => {
               claimError={settings.claimError}
             />
           )}
+          {settings.digestAiEnabled ? (
+            <SettingsDigestSection
+              color={settings.color}
+              onOpenDigest={() => settings.navigation.navigate('Digest')}
+              onOpenSiriShortcuts={() => settings.navigation.navigate('SiriShortcuts')}
+              t={settings.t}
+            />
+          ) : null}
           {!settings.isPrivateMode && (
             <SettingsAutomationSection
               color={settings.color}
@@ -150,14 +158,6 @@ export const SettingsScreen = () => {
               onLockedPress={settings.setAutomationSheet}
             />
           )}
-          {settings.digestAiEnabled ? (
-            <SettingsDigestSection
-              color={settings.color}
-              onOpenDigest={() => settings.navigation.navigate('Digest')}
-              onOpenSiriShortcuts={() => settings.navigation.navigate('SiriShortcuts')}
-              t={settings.t}
-            />
-          ) : null}
           <SettingsAiProcessingSection
             color={settings.color}
             t={settings.t}
