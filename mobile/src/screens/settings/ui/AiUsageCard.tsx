@@ -150,7 +150,12 @@ export const AiUsageCard = ({
       ? color.accent.cache
       : color.accent.primary;
 
-  const usageText = usage ? `${usage.used} / ${usage.limit}` : '—';
+  const usageText = usage
+    ? t('settings.aiUsage.used', { used: usage.used, limit: usage.limit })
+    : '—';
+  const remainingText = usage
+    ? t('settings.aiUsage.remainingShort', { count: usage.remaining })
+    : null;
   const statusText = getAiUsageStatusText(usage, isExhausted, t);
   const resetDateText = usage ? formatLocalizedLongDateWithTime(usage.resetAt, i18n.language) : '—';
 
@@ -224,23 +229,35 @@ export const AiUsageCard = ({
           <View className="mb-2">
             <View className="mb-2 flex-row flex-wrap items-center justify-between gap-x-2 gap-y-1">
               {usage != null && !isExhausted && (
-                <Text
-                  className="text-[15px] font-semibold"
-                  style={[styles.tabular, { color: color.text.primary }]}
-                  accessibilityLabel={progressA11y}
-                >
-                  {usageText}
-                </Text>
+                <>
+                  <View className="flex-row items-center gap-1.5" accessibilityLabel={progressA11y}>
+                    <Text
+                      className="text-[15px] font-semibold"
+                      style={[styles.tabular, { color: color.text.primary }]}
+                    >
+                      {usageText}
+                    </Text>
+                  </View>
+                  {remainingText != null && (
+                    <Text
+                      className="text-right text-sm font-medium leading-5"
+                      style={[styles.tabular, { color: color.text.secondary }]}
+                    >
+                      {remainingText}
+                    </Text>
+                  )}
+                </>
               )}
               {usage != null && isExhausted && (
                 <>
-                  <Text
-                    className="text-[15px] font-semibold"
-                    style={[styles.tabular, { color: color.accent.delete }]}
-                    accessibilityLabel={progressA11y}
-                  >
-                    {usageText}
-                  </Text>
+                  <View className="flex-row items-center gap-1.5" accessibilityLabel={progressA11y}>
+                    <Text
+                      className="text-[15px] font-semibold"
+                      style={[styles.tabular, { color: color.accent.delete }]}
+                    >
+                      {usageText}
+                    </Text>
+                  </View>
                   <Text
                     className="max-w-[58%] text-right text-sm font-medium leading-5"
                     style={{ color: color.accent.delete }}

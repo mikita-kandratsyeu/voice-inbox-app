@@ -105,7 +105,7 @@
       "privateFoldersCta": "Set up AI server",
       "aiProcessingHint": "AI is working on notes in this section",
       "aiUsage": {
-        "openDetails": "Open usage details"
+        "openDetails": "Open AI credit usage"
       }
     }
   },
@@ -211,7 +211,7 @@
     }
   },
   "ai": {
-    "limitWeeklyExceeded": "You’ve used this week’s generation limit. Try again next week.",
+    "limitWeeklyExceeded": "You’ve used this week’s AI credits. Try again next week.",
     "privateModeUnavailable": "Private mode is not available on this device yet.",
     "privateModeModelNotDownloaded": "Download the selected GGUF model in Settings before using Private mode.",
     "privateModeLimitedTooLong": "This note is too long for Private mode. Switch to Smart mode.",
@@ -645,29 +645,32 @@
   "settings": {
     "title": "Settings",
     "aiUsage": {
-      "title": "Generation limit",
-      "subtitle": "Weekly limit for summaries, tasks, answers, and folder auto-organization",
-      "a11yProgress": "{{used}} of {{limit}} generations used this week",
+      "title": "AI credits",
+      "subtitle": "Weekly balance for summaries, tasks, answers, and folder auto-organization",
+      "a11yProgress": "{{used}} of {{limit}} AI credits used this week",
       "used": "{{used}} / {{limit}}",
       "remaining": "Remaining: {{count}}",
+      "remainingShort": "{{count}} left",
+      "remainingCredits_one": "{{count}} credit remaining",
+      "remainingCredits_other": "{{count}} credits remaining",
       "exhausted": "Weekly quota used",
       "resetAt": "Resets: {{date}}",
       "loading": "Loading...",
       "unavailable": "—",
       "loadFailed": "No connection",
       "loadFailedHint": "Pull down to refresh when you’re back online.",
-      "claimBonus": "Watch ad for {{count}} bonus generations",
+      "claimBonus": "Watch ad for {{count}} bonus credits",
       "claimBonusTitle": "Bonus for watching",
-      "claimBonusSubtitle": "Restore {{count}} generations in your weekly limit",
+      "claimBonusSubtitle": "Restore {{count}} credits in your weekly balance",
       "claimBonusLoading": "Loading ad...",
       "claimBonusError": "Something went wrong. Try again.",
       "claimBonusErrorIosAd": "We couldn’t load an ad just now. Please try again in a few minutes.",
       "claimBonusErrorNoInventory": "No ad is available right now. Try again later.",
       "claimBonusCooldown": "Available again soon",
-      "claimBonusSuccess": "+{{count}} bonus generations",
-      "claimBonusUnavailableHint": "The ad bonus unlocks after you start using your weekly generation limit.",
-      "claimBonusNoUsage": "Use some generations first — the bonus refunds part of what you’ve already spent.",
-      "openDashboard": "Open usage details"
+      "claimBonusSuccess": "+{{count}} bonus credits",
+      "claimBonusUnavailableHint": "The ad bonus unlocks after you start spending your weekly AI credit balance.",
+      "claimBonusNoUsage": "Use some credits first — the bonus refunds part of what you’ve already spent.",
+      "openDashboard": "Open AI credit usage"
     },
     "aiUsageDashboard": {
       "title": "AI usage",
@@ -675,16 +678,16 @@
       "cloudBadge": "Cloud",
       "hybridBadge": "Hybrid",
       "proBenefitTitle": "Pro keeps AI automatic",
-      "proBenefitSubtitle": "Your Pro plan includes a higher weekly cloud AI limit for summaries, answers, translations, and organization.",
-      "freePlanTitle": "Free weekly limit",
-      "freePlanSubtitle": "Upgrade to Pro for a higher weekly limit and smoother automatic processing.",
-      "currentWeekOnly": "This dashboard uses the current weekly counter. Feature-level history will require a backend usage history model.",
+      "proBenefitSubtitle": "Your Pro plan includes a higher weekly AI credit balance for summaries, answers, translations, and organization.",
+      "freePlanTitle": "Free AI credits",
+      "freePlanSubtitle": "Upgrade to Pro for more weekly AI credits and smoother automatic processing.",
+      "currentWeekOnly": "This dashboard uses the current weekly credit counter. Feature-level history will require a backend usage history model.",
       "featureBreakdownTitle": "What uses credits",
       "savingTitle": "How to save credits",
       "metrics": {
         "used": "Used",
         "remaining": "Remaining",
-        "limit": "Limit",
+        "limit": "Balance",
         "reset": "Reset",
         "weekly": "Weekly",
         "usedHelper": "{{percent}}% of this week",
@@ -707,7 +710,7 @@
         },
         "translate": {
           "title": "Translate",
-          "subtitle": "Cloud translation uses the generation limit when an online model is selected."
+          "subtitle": "Cloud translation spends AI credits when Smart mode is selected."
         },
         "digest": {
           "title": "AI digest",
@@ -721,7 +724,7 @@
       "savingTips": {
         "localTranscription": "Transcribe first and generate only for notes that need a summary or tasks.",
         "batchAsk": "Ask one focused question instead of several follow-ups when possible.",
-        "privateMode": "Use local/private AI for eligible workflows when you want to avoid cloud usage."
+        "privateMode": "Use local/private AI for eligible workflows when you want to avoid spending cloud AI credits."
       }
     },
     "digest": {
@@ -942,7 +945,7 @@
       "soonBadge": "Coming soon",
       "privateBadge": "Private",
       "proTitle": "Pro",
-      "proValueSubtitle": "Higher generation limits, folder auto-organization, auto-archive for read notes, and no ads.",
+      "proValueSubtitle": "More AI credits, folder auto-organization, auto-archive for read notes, and no ads.",
       "proActiveUntil": "Active until {{date}}",
       "a11yUnknownDate": "unknown date",
       "a11yOpenPlans": "Open plan comparison",
@@ -964,7 +967,7 @@
         "manualAi": "AI runs manually only",
         "basicModels": "Core models for summaries and Q&A",
         "recording": "Recordings up to {{minutes}} minutes",
-        "weeklyAi": "Up to {{limit}} AI requests per week"
+        "weeklyAi": "Up to {{limit}} AI credits per week"
       },
       "proTitle": "Pro",
       "billingMonthly": "Monthly",
@@ -994,7 +997,7 @@
         "autoTranscription": "Auto-transcription",
         "autoSummaryAndTasks": "Auto-summaries and tasks",
         "autoArchiveReadNotes": "Auto-archive for read notes",
-        "aiLimit": "Up to {{limit}} AI requests per week",
+        "aiLimit": "Up to {{limit}} AI credits per week",
         "recordingUpToOneHour": "Recordings up to 1 hour",
         "accentCustomization": "Accent color — buttons & progress",
         "folderColors": "Custom folder colors",
