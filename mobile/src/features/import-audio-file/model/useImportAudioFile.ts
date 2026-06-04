@@ -36,7 +36,8 @@ import { isAudioImportFileName } from '../lib/isAudioImportFileName';
 import { isSubtitleImportFileName } from '../lib/isSubtitleImportFile';
 import { parseSubtitleFile } from '../lib/parseSubtitleFile';
 import { readPickedSubtitleUtf8 } from '../lib/readPickedSubtitleUtf8';
-import type { ImportAudioPhase } from './types';
+import type { SubtitleImportConfirmOptions } from '../ui/ImportSubtitleConfirmSheet';
+import type { ImportAudioPhase, PendingSubtitleImport } from './types';
 
 type PickedCopy = { localUri: string; name: string | null };
 
@@ -60,6 +61,10 @@ export function useImportAudioFile() {
   const { startTranscription } = useTranscription();
   const [isImporting, setIsImporting] = useState(false);
   const [importPhase, setImportPhase] = useState<ImportAudioPhase | null>(null);
+  const [pendingSubtitleImport, setPendingSubtitleImport] = useState<PendingSubtitleImport | null>(
+    null,
+  );
+  const [subtitleConfirmVisible, setSubtitleConfirmVisible] = useState(false);
 
   const titleFromFileName = useCallback((name: string | null | undefined): string => {
     const base = name?.replace(/\.[^.]+$/, '')?.trim();
@@ -100,23 +105,48 @@ export function useImportAudioFile() {
         return;
       }
 
-      const durationSec = Math.max(1, Math.floor(durationMs / 1000));
+      setPendingSubtitleImport({
+        transcript,
+        transcriptSegments: segments,
+        durationMs,
+        defaultTitle: titleFromFileName(picked.name),
+      });
+      setSubtitleConfirmVisible(true);
+    },
+    [t, maxImportMs, titleFromFileName],
+  );
+
+  const cancelSubtitleImport = useCallback(() => {
+    setSubtitleConfirmVisible(false);
+    setPendingSubtitleImport(null);
+  }, []);
+
+  const confirmSubtitleImport = useCallback(
+    async ({ title, isMeetingMode }: SubtitleImportConfirmOptions) => {
+      const pending = pendingSubtitleImport;
+      if (!pending) return;
+
+      setSubtitleConfirmVisible(false);
+      setPendingSubtitleImport(null);
+
+      const durationSec = Math.max(1, Math.floor(pending.durationMs / 1000));
       const recordId = generateRecordId();
       const record: VoiceRecord = {
         id: recordId,
-        title: titleFromFileName(picked.name),
-        transcript,
-        transcriptSegments: segments,
+        title: title.trim() || pending.defaultTitle,
+        transcript: pending.transcript,
+        transcriptSegments: pending.transcriptSegments,
         summary: '',
         tasks: [],
         duration: formatTime(durationSec),
-        durationMs: Math.round(durationMs),
+        durationMs: Math.round(pending.durationMs),
         createdAt: dayjs().toISOString(),
         status: 'unread',
         aiStatus: 'idle',
         transcriptProgress: 0,
         isPinned: false,
         tags: [],
+        classification: isMeetingMode && isProActive ? 'meeting' : undefined,
         audioPath: '',
       };
 
@@ -131,10 +161,9 @@ export function useImportAudioFile() {
       navigation.navigate('RecordingDetail', { record });
     },
     [
-      t,
+      pendingSubtitleImport,
+      isProActive,
       addRecord,
-      maxImportMs,
-      titleFromFileName,
       applyAutoAi,
       isConnected,
       processRecord,
@@ -403,5 +432,14 @@ export function useImportAudioFile() {
     }
   }, [isImporting, t, runImportFromPickedCopy]);
 
-  return { importAudioFile, importAudioFromExternalUri, isImporting, importPhase };
+  return {
+    importAudioFile,
+    importAudioFromExternalUri,
+    isImporting,
+    importPhase,
+    subtitleConfirmVisible,
+    pendingSubtitleImport,
+    confirmSubtitleImport,
+    cancelSubtitleImport,
+  };
 }

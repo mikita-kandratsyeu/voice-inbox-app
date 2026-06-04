@@ -1591,7 +1591,10 @@
     "subtitleInvalidTitle": "Субтитры не распознаны",
     "subtitleInvalid": "В файле нет подписей с таймкодами. Нужен корректный .vtt или .srt.",
     "unsupportedFormatTitle": "Формат не подходит",
-    "unsupportedFormat": "Можно добавить аудио (M4A, MP3, WAV и др.) или субтитры VTT и SRT. Выберите подходящий файл."
+    "unsupportedFormat": "Можно добавить аудио (M4A, MP3, WAV и др.) или субтитры VTT и SRT. Выберите подходящий файл.",
+    "subtitleImportTitle": "Импорт субтитров",
+    "subtitleImportDuration": "Длительность: {{time}}",
+    "subtitleImportConfirm": "Добавить в заметки"
   },
   "cloudAiConsent": {
     "title": "Облачный ИИ и ваши заметки",

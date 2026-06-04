@@ -1566,7 +1566,10 @@
     "subtitleInvalidTitle": "Subtitles not recognized",
     "subtitleInvalid": "This file has no timed cues. Use a valid .vtt or .srt subtitle file.",
     "unsupportedFormatTitle": "Format not supported",
-    "unsupportedFormat": "You can import audio (M4A, MP3, WAV, and more) or VTT/SRT subtitles. Choose a matching file."
+    "unsupportedFormat": "You can import audio (M4A, MP3, WAV, and more) or VTT/SRT subtitles. Choose a matching file.",
+    "subtitleImportTitle": "Import subtitles",
+    "subtitleImportDuration": "Duration: {{time}}",
+    "subtitleImportConfirm": "Add to notes"
   },
   "cloudAiConsent": {
     "title": "Cloud AI and your notes",

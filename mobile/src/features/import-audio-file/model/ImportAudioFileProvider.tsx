@@ -1,5 +1,6 @@
 import React, { createContext, useContext } from 'react';
 
+import { ImportSubtitleConfirmSheet } from '../ui/ImportSubtitleConfirmSheet';
 import { ImportAudioProgressOverlay } from '../ui/ImportAudioProgressOverlay';
 import { useImportAudioFile } from './useImportAudioFile';
 
@@ -18,6 +19,13 @@ export function ImportAudioFileProvider({ children }: ImportAudioFileProviderPro
     <ImportAudioFileContext.Provider value={value}>
       {children}
       <ImportAudioProgressOverlay visible={value.isImporting} phase={value.importPhase} />
+      <ImportSubtitleConfirmSheet
+        visible={value.subtitleConfirmVisible}
+        defaultTitle={value.pendingSubtitleImport?.defaultTitle ?? ''}
+        durationMs={value.pendingSubtitleImport?.durationMs ?? 0}
+        onConfirm={value.confirmSubtitleImport}
+        onCancel={value.cancelSubtitleImport}
+      />
     </ImportAudioFileContext.Provider>
   );
 }

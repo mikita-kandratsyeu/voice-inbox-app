@@ -407,7 +407,7 @@ export const RecordingDetailScreen = () => {
 
   const hasTranscript = Boolean(liveRecord.transcript?.trim());
   const hasAudio = Boolean(liveRecord.audioPath?.trim());
-  const showMeetingModeToggle = isProActive && hasTranscript && hasAudio;
+  const showMeetingModeToggle = isProActive && hasTranscript;
 
   const applyMeetingModeOff = useCallback(() => {
     void updateAiExtras(liveRecord.id, {
