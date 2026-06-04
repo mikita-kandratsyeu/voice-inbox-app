@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   ImportAudioProgressOverlay,
+  ImportFileActionProvider,
   ImportSubtitleConfirmSheet,
   useImportAudioFile,
 } from '@/features/import-audio-file';
@@ -203,11 +204,13 @@ export const BottomTabNavigator = () => {
     <View className="flex-1">
       <ImportAudioProgressOverlay visible={isImporting} phase={importPhase} />
       <ImportSubtitleConfirmSheet {...subtitleImportConfirm} />
-      {isTablet ? (
-        <TabletShellLayout importAudioFile={importAudioFile}>{tabNavigator}</TabletShellLayout>
-      ) : (
-        tabNavigator
-      )}
+      <ImportFileActionProvider importFile={importAudioFile}>
+        {isTablet ? (
+          <TabletShellLayout importAudioFile={importAudioFile}>{tabNavigator}</TabletShellLayout>
+        ) : (
+          tabNavigator
+        )}
+      </ImportFileActionProvider>
       {bottomTouchShieldHeight > 0 ? (
         <View
           pointerEvents="box-only"

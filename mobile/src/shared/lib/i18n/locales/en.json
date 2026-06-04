@@ -137,11 +137,12 @@
   "inbox": {
     "menuSelectNotes": "Select",
     "menuAutoOrganize": "Organize notes",
+    "menuImportFile": "Import file",
     "adLabel": "Ad",
     "title": "Inbox",
     "emptyTitle": "Start your first recording",
     "emptyDescription": "Voice notes you record or import will show up here.",
-    "emptyImportHint": "Long-press the record button to import an audio file",
+    "emptyImportHint": "Import audio or subtitles from the header menu.",
     "emptyFolderHint": "Open a note and choose Move to folder to place it here",
     "swipeHint": "Swipe left to archive, right to pin.",
     "recordUnreadA11y": "Unread",
