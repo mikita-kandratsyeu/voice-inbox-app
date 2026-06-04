@@ -1,7 +1,5 @@
 import { getCachesDirectoryPath, NitroFS, readUtf8WithAllFallbacks } from '@/shared/lib/fs';
 
-import { subtitleFormatFromFileName } from './isSubtitleImportFile';
-
 function stripFileScheme(uri: string): string {
   return uri.startsWith('file://') ? uri.slice(7) : uri;
 }
@@ -27,7 +25,6 @@ function collectReadCandidates(sourcePath: string, localUri: string | null): str
 export async function readPickedSubtitleUtf8(
   sourcePath: string,
   localUri: string,
-  originalFileName?: string | null,
 ): Promise<string> {
   const candidates = collectReadCandidates(sourcePath, localUri);
   let lastErr: unknown;
@@ -40,8 +37,7 @@ export async function readPickedSubtitleUtf8(
     }
   }
 
-  const ext = subtitleFormatFromFileName(originalFileName) === 'vtt' ? '.vtt' : '.srt';
-  const safePath = `${getCachesDirectoryPath()}/import-subtitle-${Date.now()}${ext}`;
+  const safePath = `${getCachesDirectoryPath()}/import-subtitle-${Date.now()}.srt`;
   for (const candidate of candidates) {
     try {
       await NitroFS.copyFile(candidate, safePath);
