@@ -10,7 +10,7 @@ import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { areFoldersEnabledInAiMode, useSettingsStore } from '@/entities/settings';
 import { getMonetizationMode } from '@/features/app-storefront';
-import { useImportAudioFileContext } from '@/features/import-audio-file';
+import { useImportAudioFile } from '@/features/import-audio-file';
 import { openPlanPaywall } from '@/features/plan-paywall';
 import { useProEntitlement } from '@/features/pro-license';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
@@ -42,7 +42,7 @@ export const TabletSidebar = () => {
   const insets = useSafeAreaInsets();
   const rootNavigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const currentTab = useTabletTabNavigationStore((s) => s.activeTab);
-  const { importAudioFile, isImporting } = useImportAudioFileContext();
+  const { importAudioFile, isImporting } = useImportAudioFile();
   const { isProActive } = useProEntitlement();
   const monetizationMode = getMonetizationMode();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);

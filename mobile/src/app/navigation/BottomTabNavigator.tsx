@@ -6,7 +6,7 @@ import React, { useCallback, useEffect } from 'react';
 import { AppState, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ImportAudioFileProvider, useImportAudioFileContext } from '@/features/import-audio-file';
+import { ImportAudioProgressOverlay, useImportAudioFile } from '@/features/import-audio-file';
 import { consumeAndroidPendingSharedAudioPath } from '@/features/import-audio-file/lib/androidSharedAudioImport';
 import { registerSharedAudioImportHandler } from '@/features/import-audio-file/lib/sharedAudioImportRegistry';
 import { useInboxFiltersReset } from '@/features/inbox-filters';
@@ -37,18 +37,13 @@ import {
 
 const Tab = createBottomTabNavigator<BottomTabParamList>();
 
-export const BottomTabNavigator = () => (
-  <ImportAudioFileProvider>
-    <BottomTabNavigatorInner />
-  </ImportAudioFileProvider>
-);
-
-function BottomTabNavigatorInner() {
+export const BottomTabNavigator = () => {
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
   const isTablet = useIsTablet();
   const inboxFiltersReset = useInboxFiltersReset();
-  const { importAudioFile, importAudioFromExternalUri, isImporting } = useImportAudioFileContext();
+  const { importAudioFile, importAudioFromExternalUri, isImporting, importPhase } =
+    useImportAudioFile();
 
   const openSharedUri = useCallback(
     async (uri: string) => {
@@ -197,6 +192,7 @@ function BottomTabNavigatorInner() {
 
   return (
     <View className="flex-1">
+      <ImportAudioProgressOverlay visible={isImporting} phase={importPhase} />
       {isTablet ? <TabletShellLayout>{tabNavigator}</TabletShellLayout> : tabNavigator}
       {bottomTouchShieldHeight > 0 ? (
         <View
@@ -214,4 +210,4 @@ function BottomTabNavigatorInner() {
       ) : null}
     </View>
   );
-}
+};

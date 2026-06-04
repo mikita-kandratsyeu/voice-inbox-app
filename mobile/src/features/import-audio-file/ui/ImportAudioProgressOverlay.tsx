@@ -22,9 +22,7 @@ export const ImportAudioProgressOverlay = ({ visible, phase }: ImportAudioProgre
         ? 'importAudio.phaseConverting'
         : phase === 'analyzing'
           ? 'importAudio.phaseAnalyzing'
-          : phase === 'reading'
-            ? 'importAudio.phaseReading'
-            : 'importAudio.phasePreparing';
+          : 'importAudio.phasePreparing';
 
   return (
     <Modal visible={visible} transparent animationType="fade" statusBarTranslucent>
