@@ -73,7 +73,7 @@ export function TabletSidebarComposeRow({
             />
           }
           accessibilityLabel={t('tablet.sidebar.newRecording')}
-          accessibilityHint={t('inbox.recordImportLongPressHint')}
+          accessibilityHint={t('inbox.emptyImportHint')}
           accessibilityState={{ busy: isImporting }}
           activeOpacity={0.9}
           disabled={isImporting}

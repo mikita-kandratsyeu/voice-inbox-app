@@ -8,7 +8,6 @@ import {
   FolderReorderSheet,
 } from '@/entities/folder';
 import { BatchActionBar, BatchExportSheet } from '@/features/batch-select';
-import { useImportAudioFileContext } from '@/features/import-audio-file';
 import { AutoOrganizeProgressOverlay } from '@/features/manage-folders';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { BlockingProgressModal } from '@/shared/ui';
@@ -21,9 +20,6 @@ import { InboxScreenLoadedBody } from './InboxScreenLoadedBody';
 import { InboxSkeleton } from './InboxSkeleton';
 
 export const InboxScreen = () => {
-  const { importAudioFile, isImporting, audioConfirmVisible, subtitleConfirmVisible } =
-    useImportAudioFileContext();
-  const isImportBusy = isImporting || audioConfirmVisible || subtitleConfirmVisible;
   const inbox = useInboxScreen();
   const {
     t,
@@ -150,10 +146,6 @@ export const InboxScreen = () => {
             onEnterBatchMode={() => enterBatchMode(undefined, { haptic: false })}
             onOpenAllTasks={() => navigation.navigate('AllTasks')}
             onCreateTextNote={handleCreateTextNote}
-            onImportFromFile={() => {
-              void importAudioFile();
-            }}
-            importFromFileDisabled={isImportBusy}
             useTabletShell={useTabletShell}
             hideCreateTextNote={useTabletShell}
             t={t}

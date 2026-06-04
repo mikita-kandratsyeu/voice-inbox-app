@@ -113,7 +113,7 @@ export const CenterRecordButton = ({
         <TouchableOpacity
           accessibilityRole="button"
           accessibilityLabel={t('tabs.record')}
-          accessibilityHint={onLongPress ? t('inbox.recordImportLongPressHint') : undefined}
+          accessibilityHint={onLongPress ? t('inbox.emptyImportHint') : undefined}
           activeOpacity={1}
           onPress={handlePress}
           onLongPress={onLongPress}
