@@ -1,4 +1,8 @@
 import { getRecordingMarkKindUi, type VoiceRecord } from '@/entities/record';
+import {
+  type MeetingRecapSection,
+  parseMeetingRecapSummary,
+} from '@/screens/recording-detail/lib/parseMeetingRecapSummary';
 import { formatShortDate, formatTime, i18n } from '@/shared/lib';
 import { formatTaskDeadlineTimeForDisplay } from '@/shared/lib/taskDeadlineTimeDisplay';
 
@@ -19,6 +23,11 @@ export type ShareBriefTemplate =
 export const RECORD_TEXT_EXPORT_EXTENSION = 'md';
 
 const SHARE_WRAP_WIDTH = 72;
+const MEETING_RECAP_EXPORT_SECTION_KINDS = new Set<MeetingRecapSection['kind']>([
+  'brief',
+  'decisions',
+  'openQuestions',
+]);
 
 const sanitizeTitleForFileName = (title: string): string =>
   title.replace(/[^a-zA-Z0-9\u0400-\u04FF\s]/g, '_');
@@ -156,6 +165,42 @@ const pushSummary = (lines: string[], record: VoiceRecord): void => {
   }
 };
 
+const pushMeetingSummary = (lines: string[], record: VoiceRecord): void => {
+  const summary = record.summary?.trim();
+  if (!summary) return;
+
+  lines.push('');
+  lines.push(`## ${i18n.t('recordingDetail.meetingSummaryTitle')}`);
+
+  const sections = parseMeetingRecapSummary(summary).filter((section) =>
+    MEETING_RECAP_EXPORT_SECTION_KINDS.has(section.kind),
+  );
+
+  if (sections.length === 0) {
+    lines.push(formatPlainTranscriptForShare(summary));
+    return;
+  }
+
+  sections.forEach((section) => {
+    lines.push('');
+    lines.push(`### ${section.title}`);
+    splitMeetingRecapBodyForShare(section.body).forEach((item) => {
+      lines.push(`- ${item}`);
+    });
+  });
+};
+
+function splitMeetingRecapBodyForShare(body: string): string[] {
+  const normalized = body
+    .replace(/\r\n?/g, '\n')
+    .replace(/\s+(\d+[.)]\s+)/g, '\n$1')
+    .split('\n')
+    .map((line) => line.replace(/^\s*(?:[-*]|•|\d+[.)])\s*/, '').trim())
+    .filter(Boolean);
+
+  return normalized.length > 0 ? normalized : [body.trim()].filter(Boolean);
+}
+
 const pushKeyPhrases = (lines: string[], record: VoiceRecord): void => {
   if (record.keyPhrases && record.keyPhrases.length > 0) {
     lines.push('');
@@ -279,7 +324,7 @@ function buildMeetingBrief(record: VoiceRecord, ctx: ShareExportContext): string
   lines.push('');
   pushTags(lines, record);
   pushRecordingMarks(lines, record);
-  pushSummary(lines, record);
+  pushMeetingSummary(lines, record);
   pushKeyPhrases(lines, record);
   pushMeetingDialogue(lines, record, ctx);
   pushTranslation(lines, record, ctx);
@@ -318,7 +363,11 @@ function buildEmailBrief(record: VoiceRecord, ctx: ShareExportContext): string {
   const isMeeting = record.classification === 'meeting' || Boolean(record.meetingDialogue?.trim());
   pushTags(lines, record);
   pushRecordingMarks(lines, record);
-  pushSummary(lines, record);
+  if (isMeeting) {
+    pushMeetingSummary(lines, record);
+  } else {
+    pushSummary(lines, record);
+  }
   pushKeyPhrases(lines, record);
   if (isMeeting) {
     pushMeetingDialogue(lines, record, ctx);

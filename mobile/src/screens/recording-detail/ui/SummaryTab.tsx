@@ -73,6 +73,7 @@ function MeetingRecapSectionBlock({
   section: MeetingRecapSection;
   color: Colors;
 }) {
+  const bodyItems = useMemo(() => splitMeetingRecapBody(section.body), [section.body]);
   const iconColor =
     section.kind === 'decisions'
       ? color.accent.success
@@ -93,18 +94,47 @@ function MeetingRecapSectionBlock({
     );
 
   return (
-    <View className="gap-2 rounded-xl border p-3" style={{ borderColor: color.border.default }}>
+    <View
+      className="gap-2.5 rounded-xl border p-3"
+      style={{
+        borderColor: color.border.default,
+        backgroundColor: color.background.tertiary,
+      }}
+    >
       <View className="flex-row items-center gap-2">
         {icon}
         <Text className="text-[13px] font-semibold" style={{ color: color.text.primary }}>
           {section.title}
         </Text>
       </View>
-      <Text className="text-sm leading-6" style={{ color: color.text.primary }}>
-        {section.body}
-      </Text>
+      <View className="gap-2">
+        {bodyItems.map((item, index) => (
+          <View key={`${section.kind}:${index}:${item}`} className="flex-row gap-2">
+            {bodyItems.length > 1 ? (
+              <View
+                className="mt-[9px] h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: iconColor }}
+              />
+            ) : null}
+            <Text className="flex-1 text-sm leading-6" style={{ color: color.text.primary }}>
+              {item}
+            </Text>
+          </View>
+        ))}
+      </View>
     </View>
   );
+}
+
+function splitMeetingRecapBody(body: string): string[] {
+  const normalized = body
+    .replace(/\r\n?/g, '\n')
+    .replace(/\s+(\d+[.)]\s+)/g, '\n$1')
+    .split('\n')
+    .map((line) => line.replace(/^\s*(?:[-*]|•|\d+[.)])\s*/, '').trim())
+    .filter(Boolean);
+
+  return normalized.length > 0 ? normalized : [body.trim()].filter(Boolean);
 }
 
 export const SummaryTab = ({
@@ -180,7 +210,12 @@ export const SummaryTab = ({
     Boolean(summaryReasoning?.trim());
   const modelHint = aiModelName.trim() ? aiModelName : undefined;
   const meetingRecapSections = useMemo(
-    () => (isMeeting ? parseMeetingRecapSummary(summary) : []),
+    () =>
+      isMeeting
+        ? parseMeetingRecapSummary(summary).filter(
+            (section) => section.kind !== 'tasks' && section.kind !== 'nextSteps',
+          )
+        : [],
     [isMeeting, summary],
   );
 

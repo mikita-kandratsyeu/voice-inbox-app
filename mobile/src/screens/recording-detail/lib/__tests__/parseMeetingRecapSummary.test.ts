@@ -37,4 +37,20 @@ describe('parseMeetingRecapSummary', () => {
     ).toHaveLength(2);
     expect(parseMeetingRecapSummary('The team discussed launch status.')).toEqual([]);
   });
+
+  it('parses inline sections returned as a dense paragraph', () => {
+    const sections = parseMeetingRecapSummary(
+      'Коротко: Обсуждение переноса сроков. Решения: 1. Сроки переносятся. 2. Список будет доработан. Задачи: None Открытые вопросы: 1. Как реализовать RFID? Следующие шаги: 1. Переслать итоги встречи.',
+    );
+
+    expect(sections.map((section) => section.kind)).toEqual([
+      'brief',
+      'decisions',
+      'tasks',
+      'openQuestions',
+      'nextSteps',
+    ]);
+    expect(sections[0]?.body).toBe('Обсуждение переноса сроков.');
+    expect(sections[1]?.body).toContain('2. Список будет доработан.');
+  });
 });

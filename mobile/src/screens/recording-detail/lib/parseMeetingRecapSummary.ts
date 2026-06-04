@@ -33,6 +33,18 @@ const LABEL_TO_KIND = new Map<string, MeetingRecapSectionKind>(
   ),
 );
 
+const SECTION_LABEL_PATTERN = Object.values(SECTION_LABELS)
+  .flat()
+  .sort((a, b) => b.length - a.length)
+  .map((label) => label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  .join('|');
+
+const INLINE_SECTION_RE = new RegExp(`([^\\n])\\s+(${SECTION_LABEL_PATTERN})\\s*:`, 'gi');
+const SECTION_START_RE = new RegExp(
+  `^(?:#{1,4}\\s+|\\d+[.)]\\s+|[-*]\\s+)?\\*?\\*?(${SECTION_LABEL_PATTERN})\\*?\\*?\\s*:\\s*(.*)$`,
+  'i',
+);
+
 function normalizeHeading(raw: string): string {
   return raw
     .replace(/^#{1,4}\s*/, '')
@@ -44,34 +56,44 @@ function normalizeHeading(raw: string): string {
     .toLowerCase();
 }
 
-function parseHeadingLine(line: string): { kind: MeetingRecapSectionKind; title: string } | null {
+function parseSectionStart(
+  line: string,
+): { kind: MeetingRecapSectionKind; title: string; body: string } | null {
   const trimmed = line.trim();
   if (!trimmed) return null;
 
+  const inlineMatch = trimmed.match(SECTION_START_RE);
+  if (inlineMatch?.[1]) {
+    const title = inlineMatch[1].trim();
+    const kind = LABEL_TO_KIND.get(normalizeHeading(title));
+    return kind ? { kind, title, body: inlineMatch[2]?.trim() ?? '' } : null;
+  }
+
   const headingCandidate =
-    trimmed.match(/^#{1,4}\s+(.+)$/)?.[1] ??
-    trimmed.match(/^\*\*(.+?)\*\*:?\s*$/)?.[1] ??
-    trimmed.match(/^([^:]{2,48}):\s*$/)?.[1] ??
-    trimmed.match(/^\d+[.)]\s+([^:]{2,48}):?\s*$/)?.[1];
-
+    trimmed.match(/^#{1,4}\s+(.+)$/)?.[1] ?? trimmed.match(/^\*\*(.+?)\*\*:?\s*$/)?.[1];
   if (!headingCandidate) return null;
-
   const kind = LABEL_TO_KIND.get(normalizeHeading(headingCandidate));
-  return kind ? { kind, title: headingCandidate.trim() } : null;
+  return kind ? { kind, title: headingCandidate.trim(), body: '' } : null;
+}
+
+function normalizeInlineSections(summary: string): string {
+  return summary.replace(INLINE_SECTION_RE, (_match, before: string, label: string) => {
+    return `${before}\n${label}:`;
+  });
 }
 
 export function parseMeetingRecapSummary(summary: string): MeetingRecapSection[] {
-  const lines = summary.replace(/\r\n?/g, '\n').split('\n');
+  const lines = normalizeInlineSections(summary).replace(/\r\n?/g, '\n').split('\n');
   const sections: MeetingRecapSection[] = [];
   let current: MeetingRecapSection | null = null;
 
   for (const line of lines) {
-    const heading = parseHeadingLine(line);
-    if (heading) {
+    const sectionStart = parseSectionStart(line);
+    if (sectionStart) {
       if (current?.body.trim()) {
         sections.push({ ...current, body: current.body.trim() });
       }
-      current = { ...heading, body: '' };
+      current = sectionStart;
       continue;
     }
 
