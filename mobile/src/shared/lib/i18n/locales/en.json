@@ -1459,8 +1459,8 @@
   },
   "aiModels": {
     "title": "Generation model",
-    "privateDescription": "On-device: local AI and core features. With an AI server (Pro): folders, auto-organize, AI digest, and your model—off Voice Inbox AI cloud.",
-    "privateBudgetHint": "Output length and generation time are set in AI settings under \"On-device inference\".",
+    "privateDescription": "On device: summaries, tasks, and note Q&A. With an AI server (Pro): folders, auto-organize, and AI digest.",
+    "privateBudgetHint": "Response length and speed are in AI settings under \"On-device model\" and \"AI server\".",
     "localDownloadBlockedTitle": "Download in progress",
     "localDownloadBlockedBody": "Wait for the current model to finish downloading, or cancel it, then try again.",
     "privateModeLabel": "On-device",
