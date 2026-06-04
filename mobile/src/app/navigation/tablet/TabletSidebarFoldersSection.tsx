@@ -18,7 +18,7 @@ import {
   TabletSidebarSectionLabel,
 } from './TabletSidebarNavItem';
 import type { TabletSidebarTheme } from './tabletSidebarTheme';
-import { navigateMainTab } from './tabletTabNavigation';
+import { navigateMainTab, navigateSettingsStackScreen } from './tabletTabNavigation';
 import type { TabletSidebarNavCounts } from './useTabletSidebarNavCounts';
 
 function FolderSectionHeaderAction({
@@ -136,15 +136,46 @@ export function TabletSidebarFoldersSection({
 }: TabletSidebarFoldersSectionProps) {
   const { t } = useTranslation();
 
+  const openPrivateServerSettings = () => {
+    if (!isProActive) return;
+    hapticSelection();
+    navigateSettingsStackScreen('PrivateRemoteServer');
+  };
+
   if (!foldersEnabled) {
+    const panelStyle = { backgroundColor: theme.surface };
+    const unavailableMessage = (
+      <Text style={{ fontSize: 14, fontWeight: '500', color: color.text.primary }}>
+        {t('tablet.sidebar.privateFoldersUnavailable')}
+      </Text>
+    );
+
     return (
       <View>
         <TabletSidebarSectionDivider color={color} />
-        <View className="mt-3 rounded-[10px] px-3 py-3" style={{ backgroundColor: theme.surface }}>
-          <Text style={{ fontSize: 14, fontWeight: '500', color: color.text.primary }}>
-            {t('tablet.sidebar.privateFoldersUnavailable')}
-          </Text>
-        </View>
+        {isProActive ? (
+          <Pressable
+            onPress={openPrivateServerSettings}
+            accessibilityRole="button"
+            accessibilityLabel={t('tablet.sidebar.privateFoldersCta')}
+            className="mt-3 rounded-[10px] px-3 py-3"
+            style={({ pressed }) => ({
+              ...panelStyle,
+              opacity: pressed ? 0.85 : 1,
+            })}
+          >
+            {unavailableMessage}
+            <Text
+              style={{ fontSize: 13, fontWeight: '500', color: color.accent.primary, marginTop: 6 }}
+            >
+              {t('tablet.sidebar.privateFoldersCta')}
+            </Text>
+          </Pressable>
+        ) : (
+          <View className="mt-3 rounded-[10px] px-3 py-3" style={panelStyle}>
+            {unavailableMessage}
+          </View>
+        )}
       </View>
     );
   }
