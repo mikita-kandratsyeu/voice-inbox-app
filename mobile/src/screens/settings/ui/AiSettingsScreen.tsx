@@ -213,8 +213,12 @@ export const AiSettingsScreen = () => {
       ? color.accent.primary
       : color.accent.delete;
   const openPrivateRemoteServerScreen = React.useCallback(() => {
+    if (!isProActive) {
+      setPrivateServerProSheet(true);
+      return;
+    }
     navigation.navigate('PrivateRemoteServer');
-  }, [navigation]);
+  }, [isProActive, navigation]);
   const getConnectionFailureMessage = React.useCallback(
     (
       reason: PrivateRemoteConnectionFailureReason,
@@ -277,6 +281,10 @@ export const AiSettingsScreen = () => {
   );
   const handlePrivateProviderSelect = React.useCallback(
     async (provider: PrivateAiProvider) => {
+      if (provider === 'custom_openai' && !isProActive) {
+        setPrivateServerProSheet(true);
+        return;
+      }
       setPrivateAiProvider(provider);
       if (provider !== 'custom_openai') return;
 
@@ -302,6 +310,7 @@ export const AiSettingsScreen = () => {
       );
     },
     [
+      isProActive,
       privateRemoteBaseUrl,
       privateRemoteModel,
       privateRemoteApiKey,

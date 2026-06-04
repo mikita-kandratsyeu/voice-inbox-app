@@ -24,6 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import { DeferredInboxBannerAd } from '@/features/inbox-banner';
+import { useProEntitlement } from '@/features/pro-license';
 import { type Colors, useColors } from '@/shared/config';
 import { hapticLight, useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import { HeaderIconButton, ScreenHeader } from '@/shared/ui';
@@ -104,12 +105,23 @@ export const PrivateRemoteServerScreen = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const color = useColors();
+  const { isProActive } = useProEntitlement();
   const isTablet = useIsTablet();
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
   const bannerMaxWidth = contentMaxWidth ?? windowWidth;
 
+  React.useEffect(() => {
+    if (!isProActive) {
+      navigation.goBack();
+    }
+  }, [isProActive, navigation]);
+
   const screen = usePrivateRemoteServerScreen();
+
+  if (!isProActive) {
+    return null;
+  }
 
   const baseUrlBorderColor =
     screen.baseUrlValidationError != null ? color.accent.delete : color.border.default;

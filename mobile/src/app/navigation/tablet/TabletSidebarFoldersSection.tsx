@@ -137,6 +137,7 @@ export function TabletSidebarFoldersSection({
   const { t } = useTranslation();
 
   const openPrivateServerSettings = () => {
+    if (!isProActive) return;
     hapticSelection();
     navigateSettingsStackScreen('PrivateRemoteServer');
   };
