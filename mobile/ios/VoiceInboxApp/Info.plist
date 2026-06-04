@@ -151,7 +151,12 @@
 				<string>public.text</string>
 				<string>public.plain-text</string>
 				<string>public.utf8-plain-text</string>
+				<string>public.srt</string>
+				<string>public.subrip</string>
+				<string>public.subtitle</string>
 				<string>public.webvtt</string>
+				<string>com.apple.quicktime.srt</string>
+				<string>org.videolan.srt</string>
 			</array>
 		</dict>
 	</array>

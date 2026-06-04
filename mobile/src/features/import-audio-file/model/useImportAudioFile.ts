@@ -21,7 +21,7 @@ import { useProEntitlement } from '@/features/pro-license';
 import { isTranscriptionBlockedForRecord, useTranscription } from '@/features/transcription';
 import { generateRecordId } from '@/screens/record/lib/generateRecordId';
 import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
-import { hapticError, hapticMedium, useNetworkStatus } from '@/shared/lib';
+import { hapticError, hapticMedium, IS_IOS, useNetworkStatus } from '@/shared/lib';
 import { convertToWav, getAudioDurationMs } from '@/shared/lib/audio';
 import { formatTime } from '@/shared/lib/date';
 import {
@@ -57,6 +57,7 @@ type PendingAudioImport = {
 type PendingFileImport = PendingAudioImport | PendingSubtitleImport;
 
 const FALLBACK_SHARED_IMPORT_NAME = 'shared-import';
+const IMPORT_LOG_PREFIX = '[importAudioFile]';
 
 const AUDIO_PICKER_TYPES = [
   types.audio,
@@ -73,13 +74,21 @@ const SUBTITLE_PICKER_TYPES = [
   types.plainText,
   'text/plain',
   'text/srt',
+  'application/srt',
   'application/x-subrip',
   'text/vtt',
   'text/webvtt',
   'public.text',
   'public.plain-text',
   'public.utf8-plain-text',
+  'public.srt',
+  'public.subrip',
+  'public.subtitle',
+  'com.apple.quicktime.srt',
+  'org.videolan.srt',
 ] as const;
+
+const IOS_PICKER_FALLBACK_TYPES = IS_IOS ? ([types.allFiles] as const) : [];
 
 function stripFileScheme(uri: string): string {
   return uri.startsWith('file://') ? uri.slice(7) : uri;
@@ -255,8 +264,9 @@ export function useImportAudioFile() {
         if (shouldTrySubtitleImport) {
           setImportPhase('parsing_subtitles');
           const rawText = await readTextFile(normalizedSource);
+          const contentLooksSubtitle = looksLikeSubtitleContent(rawText);
           const parsed =
-            looksLikeSubtitleContent(rawText) || isSubtitleImportFileName(picked.name)
+            contentLooksSubtitle || isSubtitleImportFileName(picked.name)
               ? parseSubtitleImport(rawText)
               : null;
 
@@ -461,20 +471,26 @@ export function useImportAudioFile() {
   );
 
   const importAudioFile = useCallback(async () => {
-    if (isImporting || pendingFileImport) return;
+    if (isImporting || pendingFileImport) {
+      return;
+    }
 
     hapticMedium();
 
     try {
       const picked = await pickSingleFileToCachesDirectory({
-        type: [...AUDIO_PICKER_TYPES, ...SUBTITLE_PICKER_TYPES],
+        type: [...AUDIO_PICKER_TYPES, ...SUBTITLE_PICKER_TYPES, ...IOS_PICKER_FALLBACK_TYPES],
       });
 
-      if (picked.kind === 'canceled') return;
+      if (picked.kind === 'canceled') {
+        return;
+      }
       if (picked.kind === 'failed') {
         if (__DEV__) {
           console.warn('[importAudioFile] pick/copy failed', picked.message);
         }
+        hapticError();
+        Alert.alert(t('common.error'), picked.message || t('importAudio.importError'));
         return;
       }
 
