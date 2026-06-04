@@ -1252,10 +1252,10 @@
       "local": "On device",
       "custom_openai": "AI server",
       "proOnlyHint": "Pro only",
-      "proTitle": "AI server in Pro",
-      "proBody": "Connect Ollama or LM Studio for Private mode off Voice Inbox AI cloud — plus folders, auto-organize, and AI digest.",
+      "proTitle": "Your AI server",
+      "proBody": "Connect a local or home server with an OpenAI-compatible API: Private summaries and answers without Voice Inbox AI cloud. Pro also adds folders, auto-organize, and AI digest.",
       "serverConfig": "AI server connection",
-      "serverConfigHint": "For example, Ollama or LM Studio on your computer or home network.",
+      "serverConfigHint": "A server on this device, your computer, or home network — Ollama, LM Studio, and other compatible options.",
       "quickTemplates": "Quick setup",
       "templates": {
         "ollama": "Ollama",
