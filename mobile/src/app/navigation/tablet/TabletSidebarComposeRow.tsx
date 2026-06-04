@@ -1,7 +1,7 @@
 import { SquarePen } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { hapticSelection, selectPlatform } from '@/shared/lib';
@@ -16,14 +16,6 @@ import { TABLET_SIDEBAR_COMPOSE_LABEL_FONT_SIZE } from './tabletSidebarTypograph
 
 const COMPOSE_ROW_GAP = 8;
 const ICON_ACTION_SIZE = TABLET_SIDEBAR_COMPOSE_BUTTON_HEIGHT;
-
-const styles = StyleSheet.create({
-  importSpinner: {
-    ...StyleSheet.absoluteFill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
 
 type TabletSidebarComposeRowProps = {
   color: Colors;
@@ -105,11 +97,6 @@ export function TabletSidebarComposeRow({
             ...iconActionShadow(color, color.accent.primary),
           }}
         />
-        {isImporting ? (
-          <View pointerEvents="none" style={styles.importSpinner}>
-            <ActivityIndicator size="small" color={color.icon.onAccent} />
-          </View>
-        ) : null}
       </View>
 
       <Button

@@ -1,4 +1,3 @@
-import { types } from '@react-native-documents/picker';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import dayjs from 'dayjs';
@@ -10,15 +9,18 @@ import type { RootStackParamList } from '@/app/navigation/types';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
+import { useAiProcessing } from '@/features/ai-processing';
 import {
   getMaxRecordingMsForTier,
+  shouldApplyAutoAiAfterTranscription,
   shouldApplyAutoTranscribeOnSave,
 } from '@/features/app-storefront';
+import { generateAndSaveEmbeddingForRecord } from '@/features/embedding-generation';
 import { useProEntitlement } from '@/features/pro-license';
 import { isTranscriptionBlockedForRecord, useTranscription } from '@/features/transcription';
 import { generateRecordId } from '@/screens/record/lib/generateRecordId';
 import { getAutoTitle } from '@/screens/record/lib/getAutoTitle';
-import { hapticError, hapticMedium, hapticSuccess } from '@/shared/lib';
+import { hapticError, hapticMedium, hapticSuccess, useNetworkStatus } from '@/shared/lib';
 import { convertToWav, getAudioDurationMs } from '@/shared/lib/audio';
 import { formatTime } from '@/shared/lib/date';
 import {
@@ -29,6 +31,10 @@ import {
 } from '@/shared/lib/fs';
 import { ensureRecordingsDir, RECORDINGS_DIR } from '@/shared/lib/recordings';
 
+import { getImportMediaPickerTypes } from '../lib/getImportMediaPickerTypes';
+import { isAudioImportFileName } from '../lib/isAudioImportFileName';
+import { isSubtitleImportFileName } from '../lib/isSubtitleImportFile';
+import { parseSubtitleFile } from '../lib/parseSubtitleFile';
 import type { ImportAudioPhase } from './types';
 
 type PickedCopy = { localUri: string; name: string | null };
@@ -38,17 +44,102 @@ export function useImportAudioFile() {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const addRecord = useRecordStore((s) => s.addRecord);
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
+  const autoAiAfterTranscription = useSettingsStore((s) => s.autoAiAfterTranscription);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
   const privateAiProvider = useSettingsStore((s) => s.privateAiProvider);
   const { isProActive } = useProEntitlement();
+  const { isConnected } = useNetworkStatus();
+  const { processRecord } = useAiProcessing();
   const maxImportMs = useMemo(
     () => getMaxRecordingMsForTier(isProActive, aiExecutionMode, privateAiProvider),
     [isProActive, aiExecutionMode, privateAiProvider],
   );
   const applyAutoTranscribe = shouldApplyAutoTranscribeOnSave(autoTranscribeOnSave, isProActive);
+  const applyAutoAi = shouldApplyAutoAiAfterTranscription(autoAiAfterTranscription, isProActive);
   const { startTranscription } = useTranscription();
   const [isImporting, setIsImporting] = useState(false);
   const [importPhase, setImportPhase] = useState<ImportAudioPhase | null>(null);
+
+  const titleFromFileName = useCallback((name: string | null | undefined): string => {
+    const base = name?.replace(/\.[^.]+$/, '')?.trim();
+    return base && base.length > 0 ? base : getAutoTitle();
+  }, []);
+
+  const runSubtitleImportFromPath = useCallback(
+    async (sourcePath: string, picked: PickedCopy) => {
+      setImportPhase('reading');
+      setIsImporting(true);
+
+      let raw: string;
+      try {
+        raw = await NitroFS.readFile(sourcePath, 'utf8');
+      } catch {
+        hapticError();
+        Alert.alert(t('importAudio.subtitleReadErrorTitle'), t('importAudio.subtitleReadError'));
+        return;
+      }
+
+      const parsed = parseSubtitleFile(raw, picked.name);
+      if (!parsed) {
+        hapticError();
+        Alert.alert(t('importAudio.subtitleInvalidTitle'), t('importAudio.subtitleInvalid'));
+        return;
+      }
+
+      const { transcript, segments, durationMs } = parsed;
+      if (durationMs > maxImportMs) {
+        hapticError();
+        Alert.alert(
+          t('importAudio.maxDurationTitle'),
+          t('importAudio.maxDurationMessage', {
+            max: Math.round(maxImportMs / (60 * 1000)),
+          }),
+          [{ text: t('common.ok') }],
+        );
+        return;
+      }
+
+      const durationSec = Math.max(1, Math.floor(durationMs / 1000));
+      const recordId = generateRecordId();
+      const record: VoiceRecord = {
+        id: recordId,
+        title: titleFromFileName(picked.name),
+        transcript,
+        transcriptSegments: segments,
+        summary: '',
+        tasks: [],
+        duration: formatTime(durationSec),
+        durationMs: Math.round(durationMs),
+        createdAt: dayjs().toISOString(),
+        status: 'unread',
+        aiStatus: 'idle',
+        transcriptProgress: 0,
+        isPinned: false,
+        tags: [],
+        audioPath: '',
+      };
+
+      await addRecord(record);
+      hapticSuccess();
+      generateAndSaveEmbeddingForRecord(record).catch(() => {});
+
+      if (applyAutoAi && isConnected) {
+        void processRecord(record).catch(() => {});
+      }
+
+      navigation.navigate('RecordingDetail', { record });
+    },
+    [
+      t,
+      addRecord,
+      maxImportMs,
+      titleFromFileName,
+      applyAutoAi,
+      isConnected,
+      processRecord,
+      navigation,
+    ],
+  );
 
   const runImportFromPickedCopy = useCallback(
     async (picked: PickedCopy) => {
@@ -67,6 +158,17 @@ export function useImportAudioFile() {
               fileCopyUri: fileRef.fileCopyUri,
             });
           }
+          return;
+        }
+
+        if (isSubtitleImportFileName(picked.name)) {
+          await runSubtitleImportFromPath(sourcePath, picked);
+          return;
+        }
+
+        if (!isAudioImportFileName(picked.name)) {
+          hapticError();
+          Alert.alert(t('importAudio.unsupportedFormatTitle'), t('importAudio.unsupportedFormat'));
           return;
         }
 
@@ -93,7 +195,7 @@ export function useImportAudioFile() {
           const converted = await convertToWav(destPath, wavPath);
           if (converted === null) {
             hapticError();
-            Alert.alert(t('common.error'), t('importAudio.conversionError'));
+            Alert.alert(t('importAudio.conversionErrorTitle'), t('importAudio.conversionError'));
             try {
               if (destPath !== normalizedSource) await NitroFS.unlink(destPath);
             } catch {
@@ -196,14 +298,22 @@ export function useImportAudioFile() {
             console.warn('[importAudioFile] pipeline', err);
           }
           hapticError();
-          Alert.alert(t('common.error'), t('importAudio.importError'));
+          Alert.alert(t('importAudio.importErrorTitle'), t('importAudio.importError'));
         }
       } finally {
         setIsImporting(false);
         setImportPhase(null);
       }
     },
-    [t, addRecord, applyAutoTranscribe, maxImportMs, startTranscription, navigation],
+    [
+      t,
+      addRecord,
+      applyAutoTranscribe,
+      maxImportMs,
+      startTranscription,
+      navigation,
+      runSubtitleImportFromPath,
+    ],
   );
 
   const importAudioFromExternalUri = useCallback(
@@ -231,7 +341,7 @@ export function useImportAudioFile() {
             console.warn('[importAudioFile] keepLocalCopy failed', copyResult.message);
           }
           hapticError();
-          Alert.alert(t('common.error'), t('importAudio.importError'));
+          Alert.alert(t('importAudio.importErrorTitle'), t('importAudio.importError'));
           return;
         }
         if (copyResult.kind !== 'picked') {
@@ -251,7 +361,7 @@ export function useImportAudioFile() {
           console.warn('[importAudioFile] external uri', err);
         }
         hapticError();
-        Alert.alert(t('common.error'), t('importAudio.importError'));
+        Alert.alert(t('importAudio.importErrorTitle'), t('importAudio.importError'));
       }
     },
     [isImporting, t, runImportFromPickedCopy],
@@ -264,16 +374,7 @@ export function useImportAudioFile() {
 
     try {
       const picked = await pickSingleFileToCachesDirectory({
-        type: [
-          types.audio,
-          'audio/mpeg',
-          'audio/mp3',
-          'public.mp3',
-          'audio/mp4',
-          'audio/x-m4a',
-          'audio/wav',
-          'audio/x-wav',
-        ],
+        type: getImportMediaPickerTypes(),
       });
 
       if (picked.kind === 'canceled') return;
@@ -297,7 +398,7 @@ export function useImportAudioFile() {
         console.warn('[importAudioFile]', err);
       }
       hapticError();
-      Alert.alert(t('common.error'), t('importAudio.importError'));
+      Alert.alert(t('importAudio.importErrorTitle'), t('importAudio.importError'));
     }
   }, [isImporting, t, runImportFromPickedCopy]);
 

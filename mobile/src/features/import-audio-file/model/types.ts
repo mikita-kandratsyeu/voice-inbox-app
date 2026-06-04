@@ -1,1 +1,1 @@
-export type ImportAudioPhase = 'copying' | 'converting' | 'analyzing';
+export type ImportAudioPhase = 'copying' | 'converting' | 'analyzing' | 'reading';

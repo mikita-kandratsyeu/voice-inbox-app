@@ -95,7 +95,7 @@ Cold start: `src/features/app-lifecycle/model/useAppBootstrap.ts` — Firebase A
 ### Import & export
 
 - **Full backup (ZIP)** — `metadata.json` v**3**, `audio/`, folders + records (`src/features/sync-data/`). Restore via document picker / import review screen. Records include AI fields (`meetingDialogue`, `meetingSpeakerLabels`, etc.).
-- **Import audio** — Document picker → copy, optional WAV conversion, duration limits, optional transcription (`src/features/import-audio-file/`).
+- **Import audio / subtitles** — Document picker → audio (copy, WAV conversion, transcription) or VTT/SRT (transcript + segments, optional auto-AI) (`src/features/import-audio-file/`).
 - **Per-note share** — Markdown briefs, plain share, email helpers (`src/features/share-record/`).
 - **Batch export** — Inbox multi-select: Markdown or ZIP (`src/features/batch-select/`).
 
