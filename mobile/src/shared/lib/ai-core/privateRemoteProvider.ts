@@ -49,6 +49,7 @@ import {
   resolvePrivateRemoteMeetingDialogueMaxTokens,
   resolvePrivateRemoteSummaryMaxTokens,
 } from './private-remote/privateRemoteConstants';
+import { mapPrivateRemoteUserFacingError } from './private-remote/privateRemoteErrorMapping';
 import {
   buildPrivateRemoteJsonSchemaResponseFormat,
   type PrivateRemoteStructuredSchemaKind,
@@ -287,6 +288,8 @@ function mapPrivateRemoteError(err: unknown): string {
   if (isPrivateRemoteFetchTimeout(err)) {
     return i18n.t('ai.privateRemoteServerTimeout');
   }
+  const mapped = mapPrivateRemoteUserFacingError(err);
+  if (mapped) return mapped;
   return mapLocalError(err);
 }
 

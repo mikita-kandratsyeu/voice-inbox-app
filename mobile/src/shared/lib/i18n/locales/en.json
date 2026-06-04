@@ -221,6 +221,7 @@
     "privateModeGenericError": "The local request failed. Try again or switch to Smart mode.",
     "privateModeRemoteConfigMissing": "Enter server URL and model.",
     "privateRemoteServerTimeout": "Your server took too long to respond (over 10 minutes). Try a shorter note, a faster model, or check if the server is not overloaded.",
+    "privateRemoteContextTooLong": "Your AI server can't accept this much text in one request. Shorten the note or use a model with a larger context window on the server.",
     "smartModeNetworkError": "Could not connect to the server.",
     "modelResponseInvalid": "The AI model returned an invalid response. Try again or pick another model in settings."
   },
