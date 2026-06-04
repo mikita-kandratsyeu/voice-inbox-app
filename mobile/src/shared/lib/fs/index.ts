@@ -11,3 +11,4 @@ export {
   getReadableDocumentPickerFsPath,
   pickSingleFileToCachesDirectory,
 } from './documentPicker';
+export { readUtf8WithAllFallbacks } from './readUtf8WithFallbacks';

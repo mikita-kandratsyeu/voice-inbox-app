@@ -35,6 +35,7 @@ import { getImportMediaPickerTypes } from '../lib/getImportMediaPickerTypes';
 import { isAudioImportFileName } from '../lib/isAudioImportFileName';
 import { isSubtitleImportFileName } from '../lib/isSubtitleImportFile';
 import { parseSubtitleFile } from '../lib/parseSubtitleFile';
+import { readPickedSubtitleUtf8 } from '../lib/readPickedSubtitleUtf8';
 import type { ImportAudioPhase } from './types';
 
 type PickedCopy = { localUri: string; name: string | null };
@@ -72,7 +73,7 @@ export function useImportAudioFile() {
 
       let raw: string;
       try {
-        raw = await NitroFS.readFile(sourcePath, 'utf8');
+        raw = await readPickedSubtitleUtf8(sourcePath, picked.localUri);
       } catch {
         hapticError();
         Alert.alert(t('importAudio.subtitleReadErrorTitle'), t('importAudio.subtitleReadError'));
