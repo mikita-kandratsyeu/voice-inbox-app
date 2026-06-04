@@ -142,28 +142,41 @@ export function TabletSidebarFoldersSection({
   };
 
   if (!foldersEnabled) {
+    const unavailableMessage = (
+      <Text style={{ fontSize: 14, fontWeight: '500', color: color.text.primary }}>
+        {t('tablet.sidebar.privateFoldersUnavailable')}
+      </Text>
+    );
+    const panelStyle = {
+      backgroundColor: theme.surface,
+    };
+
     return (
       <View>
         <TabletSidebarSectionDivider color={color} />
-        <Pressable
-          onPress={openPrivateServerSettings}
-          accessibilityRole="button"
-          accessibilityLabel={t('tablet.sidebar.privateFoldersCta')}
-          className="mt-3 rounded-[10px] px-3 py-3"
-          style={({ pressed }) => ({
-            backgroundColor: theme.surface,
-            opacity: pressed ? 0.85 : 1,
-          })}
-        >
-          <Text style={{ fontSize: 14, fontWeight: '500', color: color.text.primary }}>
-            {t('tablet.sidebar.privateFoldersUnavailable')}
-          </Text>
-          <Text
-            style={{ fontSize: 13, fontWeight: '500', color: color.accent.primary, marginTop: 6 }}
+        {isProActive ? (
+          <Pressable
+            onPress={openPrivateServerSettings}
+            accessibilityRole="button"
+            accessibilityLabel={t('tablet.sidebar.privateFoldersCta')}
+            className="mt-3 rounded-[10px] px-3 py-3"
+            style={({ pressed }) => ({
+              ...panelStyle,
+              opacity: pressed ? 0.85 : 1,
+            })}
           >
-            {t('tablet.sidebar.privateFoldersCta')}
-          </Text>
-        </Pressable>
+            {unavailableMessage}
+            <Text
+              style={{ fontSize: 13, fontWeight: '500', color: color.accent.primary, marginTop: 6 }}
+            >
+              {t('tablet.sidebar.privateFoldersCta')}
+            </Text>
+          </Pressable>
+        ) : (
+          <View className="mt-3 rounded-[10px] px-3 py-3" style={panelStyle}>
+            {unavailableMessage}
+          </View>
+        )}
       </View>
     );
   }
