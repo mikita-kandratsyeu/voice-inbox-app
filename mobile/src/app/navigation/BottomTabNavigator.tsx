@@ -193,7 +193,11 @@ export const BottomTabNavigator = () => {
   return (
     <View className="flex-1">
       <ImportAudioProgressOverlay visible={isImporting} phase={importPhase} />
-      {isTablet ? <TabletShellLayout>{tabNavigator}</TabletShellLayout> : tabNavigator}
+      {isTablet ? (
+        <TabletShellLayout importAudioFile={importAudioFile}>{tabNavigator}</TabletShellLayout>
+      ) : (
+        tabNavigator
+      )}
       {bottomTouchShieldHeight > 0 ? (
         <View
           pointerEvents="box-only"

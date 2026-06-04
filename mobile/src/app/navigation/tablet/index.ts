@@ -11,7 +11,11 @@ export {
   requestTabletOpenReorderFolders,
 } from './tabletInboxNavBridge';
 export { useTabletInboxSidebarStore } from './tabletInboxSidebarStore';
-export { TabletShellProvider, useIsInsideTabletShell } from './TabletShellContext';
+export {
+  TabletShellProvider,
+  useIsInsideTabletShell,
+  useTabletShellImportAudio,
+} from './TabletShellContext';
 export { TabletShellLayout } from './TabletShellLayout';
 export { TabletSidebar } from './TabletSidebar';
 export { getTabletSidebarWidth, TABLET_SIDEBAR_WIDTH } from './tabletSidebarMetrics';

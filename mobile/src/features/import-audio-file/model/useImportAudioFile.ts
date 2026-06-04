@@ -52,6 +52,9 @@ export function useImportAudioFile() {
 
   const runImportFromPickedCopy = useCallback(
     async (picked: PickedCopy) => {
+      setImportPhase('copying');
+      setIsImporting(true);
+
       try {
         const fileRef = {
           uri: picked.localUri,
@@ -69,9 +72,6 @@ export function useImportAudioFile() {
           }
           return;
         }
-
-        setImportPhase('copying');
-        setIsImporting(true);
 
         const normalizedSource = sourcePath;
 
@@ -211,6 +211,8 @@ export function useImportAudioFile() {
       if (isImporting) return;
 
       hapticMedium();
+      setImportPhase('copying');
+      setIsImporting(true);
 
       try {
         const trimmed = uri.trim();
@@ -252,6 +254,9 @@ export function useImportAudioFile() {
         }
         hapticError();
         Alert.alert(t('common.error'), t('importAudio.importError'));
+      } finally {
+        setIsImporting(false);
+        setImportPhase(null);
       }
     },
     [isImporting, t, runImportFromPickedCopy],

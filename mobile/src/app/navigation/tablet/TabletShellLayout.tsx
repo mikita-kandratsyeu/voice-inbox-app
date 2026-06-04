@@ -9,14 +9,15 @@ import { getTabletSidebarTheme } from './tabletSidebarTheme';
 
 type TabletShellLayoutProps = {
   children: React.ReactNode;
+  importAudioFile: () => Promise<void>;
 };
 
-export const TabletShellLayout = ({ children }: TabletShellLayoutProps) => {
+export const TabletShellLayout = ({ children, importAudioFile }: TabletShellLayoutProps) => {
   const color = useColors();
   const theme = getTabletSidebarTheme(color);
 
   return (
-    <TabletShellProvider value={true}>
+    <TabletShellProvider value={{ importAudioFile }}>
       <View
         style={{
           flex: 1,

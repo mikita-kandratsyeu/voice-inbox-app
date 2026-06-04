@@ -33,7 +33,6 @@ export type TabletSidebarBodyProps = {
   t: TFunction;
   isSettingsTab: boolean;
   navDimmed: boolean;
-  isImporting: boolean;
   isProActive: boolean;
   monetizationMode: MonetizationMode;
   folders: Folder[];
@@ -68,7 +67,6 @@ export function TabletSidebarBody({
   t,
   isSettingsTab,
   navDimmed,
-  isImporting,
   isProActive,
   monetizationMode,
   folders,
@@ -236,7 +234,6 @@ export function TabletSidebarBody({
           onRecord={onRecord}
           onRecordLongPress={onRecordLongPress}
           onTextNote={onTextNote}
-          isImporting={isImporting}
         />
       </View>
 

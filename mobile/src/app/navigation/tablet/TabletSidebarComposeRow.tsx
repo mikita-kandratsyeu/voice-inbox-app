@@ -1,7 +1,7 @@
 import { SquarePen } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { hapticSelection, selectPlatform } from '@/shared/lib';
@@ -17,20 +17,11 @@ import { TABLET_SIDEBAR_COMPOSE_LABEL_FONT_SIZE } from './tabletSidebarTypograph
 const COMPOSE_ROW_GAP = 8;
 const ICON_ACTION_SIZE = TABLET_SIDEBAR_COMPOSE_BUTTON_HEIGHT;
 
-const styles = StyleSheet.create({
-  importSpinner: {
-    ...StyleSheet.absoluteFill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
-
 type TabletSidebarComposeRowProps = {
   color: Colors;
   onRecord: () => void;
   onRecordLongPress: () => void;
   onTextNote: () => void;
-  isImporting?: boolean;
 };
 
 function iconActionShadow(color: Colors, shadowColor: string) {
@@ -51,7 +42,6 @@ export function TabletSidebarComposeRow({
   onRecord,
   onRecordLongPress,
   onTextNote,
-  isImporting = false,
 }: TabletSidebarComposeRowProps) {
   const { t } = useTranslation();
 
@@ -82,16 +72,12 @@ export function TabletSidebarComposeRow({
           }
           accessibilityLabel={t('tablet.sidebar.newRecording')}
           accessibilityHint={t('inbox.emptyImportHint')}
-          accessibilityState={{ busy: isImporting }}
           activeOpacity={0.9}
-          disabled={isImporting}
           onPress={() => {
-            if (isImporting) return;
             hapticSelection();
             onRecord();
           }}
           onLongPress={() => {
-            if (isImporting) return;
             hapticSelection();
             onRecordLongPress();
           }}
@@ -101,15 +87,9 @@ export function TabletSidebarComposeRow({
             height: TABLET_SIDEBAR_COMPOSE_BUTTON_HEIGHT,
             borderRadius: TABLET_SIDEBAR_COMPOSE_BUTTON_RADIUS,
             paddingVertical: 0,
-            opacity: isImporting ? 0.7 : 1,
             ...iconActionShadow(color, color.accent.primary),
           }}
         />
-        {isImporting ? (
-          <View pointerEvents="none" style={styles.importSpinner}>
-            <ActivityIndicator size="small" color={color.icon.onAccent} />
-          </View>
-        ) : null}
       </View>
 
       <Button

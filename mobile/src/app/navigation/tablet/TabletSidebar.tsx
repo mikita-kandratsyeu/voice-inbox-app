@@ -10,7 +10,6 @@ import { useFolderStore } from '@/entities/folder';
 import { useRecordStore } from '@/entities/record';
 import { areFoldersEnabledInAiMode, useSettingsStore } from '@/entities/settings';
 import { getMonetizationMode } from '@/features/app-storefront';
-import { useImportAudioFile } from '@/features/import-audio-file';
 import { openPlanPaywall } from '@/features/plan-paywall';
 import { useProEntitlement } from '@/features/pro-license';
 import { hasAnyActiveTranscriptionJob } from '@/features/transcription/model/transcriptionJobRegistry';
@@ -23,6 +22,7 @@ import {
   requestTabletOpenCreateFolder,
 } from './tabletInboxNavBridge';
 import { useTabletInboxSidebarStore } from './tabletInboxSidebarStore';
+import { useTabletShellImportAudio } from './TabletShellContext';
 import { TabletSidebarBody } from './TabletSidebarBody';
 import { TABLET_SIDEBAR_PAD, TABLET_SIDEBAR_WIDTH } from './tabletSidebarMetrics';
 import { getTabletSidebarTheme } from './tabletSidebarTheme';
@@ -42,7 +42,7 @@ export const TabletSidebar = () => {
   const insets = useSafeAreaInsets();
   const rootNavigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const currentTab = useTabletTabNavigationStore((s) => s.activeTab);
-  const { importAudioFile, isImporting } = useImportAudioFile();
+  const importAudioFile = useTabletShellImportAudio();
   const { isProActive } = useProEntitlement();
   const monetizationMode = getMonetizationMode();
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
@@ -181,7 +181,6 @@ export const TabletSidebar = () => {
         t={t}
         isSettingsTab={isSettingsTab}
         navDimmed={navDimmed}
-        isImporting={isImporting}
         isProActive={isProActive}
         monetizationMode={monetizationMode}
         folders={folders}
