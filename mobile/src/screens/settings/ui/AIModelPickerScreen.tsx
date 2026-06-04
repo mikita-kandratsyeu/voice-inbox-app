@@ -210,6 +210,35 @@ export const AIModelPickerScreen = () => {
   const models = isPrivateMode ? LOCAL_AI_MODELS : cloudOptions;
   const autoOption = cloudOptions[0];
   const manualCloudOptions = cloudOptions.slice(1);
+  const standardCloudOptions = manualCloudOptions.filter(
+    (option) => !isProOnlyAiModel(option.id as UserSelectableAIModelId),
+  );
+  const advancedCloudOptions = manualCloudOptions.filter((option) =>
+    isProOnlyAiModel(option.id as UserSelectableAIModelId),
+  );
+  const smartModelSections = [
+    {
+      key: 'recommended',
+      title: t('aiModels.recommendedSectionTitle'),
+      description: t('aiModels.recommendedSectionDescription'),
+      showsProBadge: false,
+      options: [autoOption],
+    },
+    {
+      key: 'standard',
+      title: t('aiModels.standardSectionTitle'),
+      description: t('aiModels.standardSectionDescription'),
+      showsProBadge: false,
+      options: standardCloudOptions,
+    },
+    {
+      key: 'advanced',
+      title: t('aiModels.advancedSectionTitle'),
+      description: t('aiModels.advancedSectionDescription'),
+      showsProBadge: !isProActive,
+      options: advancedCloudOptions,
+    },
+  ].filter((section) => section.options.length > 0);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -274,163 +303,145 @@ export const AIModelPickerScreen = () => {
             </View>
           ) : (
             <>
-              <View className="overflow-hidden rounded-2xl">
-                <TouchableOpacity
-                  onPress={handleSelectAuto}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel={autoOption.name}
-                  accessibilityState={{ selected: aiModelRoutingMode === 'auto' }}
-                  className="rounded-2xl px-4 py-4"
-                  style={{ backgroundColor: color.background.card }}
-                >
-                  <View className="flex-row items-center justify-between">
-                    <View className="mr-3 flex-1">
-                      <View className="mb-1 flex-row flex-wrap items-center gap-2">
-                        <Text
-                          className="text-[16px] font-semibold"
-                          style={{ color: color.text.primary }}
-                        >
-                          {autoOption.tierLabel}
-                        </Text>
-                        <View
-                          className="rounded-full px-2 py-0.5"
-                          style={{ backgroundColor: color.status.processing.bg }}
-                        >
-                          <Text
-                            className="text-[12px] font-medium"
-                            style={{ color: color.status.processing.text }}
-                          >
-                            {t('whisper.recommended')}
-                          </Text>
-                        </View>
-                      </View>
+              {smartModelSections.map((section) => (
+                <View key={section.key} className="mb-7">
+                  <View className="mb-2.5 px-1">
+                    <View className="flex-row items-center gap-1.5">
                       <Text
-                        className="mb-2 text-[14px] leading-5"
+                        className="text-xs font-semibold uppercase tracking-widest"
                         style={{ color: color.text.secondary }}
                       >
-                        {autoOption.description}
+                        {section.title}
                       </Text>
-                      {'metaChips' in autoOption && autoOption.metaChips ? (
-                        <ModelMetaChips color={color} chips={autoOption.metaChips} />
+                      {section.showsProBadge ? (
+                        <View className="flex-row items-center gap-1">
+                          <Crown size={13} color={color.accent.primary} strokeWidth={2} />
+                          <Text
+                            className="text-xs font-semibold"
+                            style={{ color: color.accent.primary }}
+                          >
+                            {t('common.pro')}
+                          </Text>
+                        </View>
                       ) : null}
                     </View>
-                    {aiModelRoutingMode === 'auto' ? (
-                      <View
-                        className="h-8 w-8 items-center justify-center rounded-full"
-                        style={{ backgroundColor: color.accent.primary }}
-                      >
-                        <Check size={16} color={color.icon.onAccent} strokeWidth={2.5} />
-                      </View>
-                    ) : (
-                      <View
-                        className="h-8 w-8 rounded-full"
-                        style={{ borderWidth: 2, borderColor: color.border.default }}
-                      />
-                    )}
-                  </View>
-                </TouchableOpacity>
-              </View>
-
-              <Text
-                className="mb-2 mt-4 px-1 text-xs font-semibold uppercase tracking-widest"
-                style={{ color: color.text.secondary }}
-              >
-                {t('aiModels.manualSectionTitle')}
-              </Text>
-              <View className="overflow-hidden rounded-2xl">
-                {manualCloudOptions.map((cloudOption, index) => {
-                  const isFirst = index === 0;
-                  const isLast = index === manualCloudOptions.length - 1;
-                  const borderStyle = !isLast
-                    ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
-                    : {};
-                  const radiusClass =
-                    isFirst && isLast
-                      ? 'rounded-2xl'
-                      : isFirst
-                        ? 'rounded-t-2xl'
-                        : isLast
-                          ? 'rounded-b-2xl'
-                          : '';
-                  const isSelected =
-                    aiModelRoutingMode === 'manual' && cloudOption.id === selectedAIModel;
-                  const locked =
-                    !isProActive && isProOnlyAiModel(cloudOption.id as UserSelectableAIModelId);
-
-                  return (
-                    <TouchableOpacity
-                      key={cloudOption.id}
-                      onPress={() => {
-                        if (locked) {
-                          setPremiumModelSheet(true);
-                          return;
-                        }
-                        handleSelectManual(cloudOption.id as UserSelectableAIModelId);
-                      }}
-                      activeOpacity={0.7}
-                      accessibilityRole="button"
-                      accessibilityLabel={cloudOption.name}
-                      accessibilityState={{ selected: isSelected }}
-                      accessibilityHint={locked ? t('aiModels.proModelTitle') : undefined}
-                      className={`px-4 py-4 ${radiusClass}`}
-                      style={[{ backgroundColor: color.background.card }, borderStyle]}
+                    <Text
+                      className="mt-0.5 text-[13px] leading-5"
+                      style={{ color: color.text.muted }}
                     >
-                      <View className="flex-row items-center justify-between">
-                        <View className="mr-3 flex-1">
-                          <View className="mb-1 flex-row flex-wrap items-center gap-2">
-                            <Text
-                              className="text-[16px] font-semibold"
-                              style={{ color: color.text.primary }}
-                            >
-                              {cloudOption.tierLabel}
-                            </Text>
-                            {locked ? (
-                              <View className="flex-row items-center gap-1">
-                                <Crown size={14} color={color.accent.primary} strokeWidth={2} />
+                      {section.description}
+                    </Text>
+                  </View>
+                  <View
+                    className="overflow-hidden rounded-2xl"
+                    style={{ borderWidth: 1, borderColor: color.border.default }}
+                  >
+                    {section.options.map((cloudOption, index) => {
+                      const isFirst = index === 0;
+                      const isLast = index === section.options.length - 1;
+                      const borderStyle = !isLast
+                        ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
+                        : {};
+                      const radiusClass =
+                        isFirst && isLast
+                          ? 'rounded-2xl'
+                          : isFirst
+                            ? 'rounded-t-2xl'
+                            : isLast
+                              ? 'rounded-b-2xl'
+                              : '';
+                      const isSelected =
+                        cloudOption.id === 'auto'
+                          ? aiModelRoutingMode === 'auto'
+                          : aiModelRoutingMode === 'manual' && cloudOption.id === selectedAIModel;
+                      const locked =
+                        cloudOption.id !== 'auto' &&
+                        !isProActive &&
+                        isProOnlyAiModel(cloudOption.id as UserSelectableAIModelId);
+
+                      return (
+                        <TouchableOpacity
+                          key={cloudOption.id}
+                          onPress={() => {
+                            if (cloudOption.id === 'auto') {
+                              handleSelectAuto();
+                              return;
+                            }
+                            if (locked) {
+                              setPremiumModelSheet(true);
+                              return;
+                            }
+                            handleSelectManual(cloudOption.id as UserSelectableAIModelId);
+                          }}
+                          activeOpacity={0.7}
+                          accessibilityRole="button"
+                          accessibilityLabel={cloudOption.name}
+                          accessibilityState={{ selected: isSelected }}
+                          accessibilityHint={locked ? t('aiModels.proModelTitle') : undefined}
+                          className={`px-4 py-4 ${radiusClass}`}
+                          style={[{ backgroundColor: color.background.card }, borderStyle]}
+                        >
+                          <View className="flex-row items-center justify-between">
+                            <View className="mr-3 flex-1">
+                              <View className="mb-1 flex-row flex-wrap items-center gap-2">
                                 <Text
-                                  className="text-xs font-semibold"
-                                  style={{ color: color.accent.primary }}
+                                  className="text-[16px] font-semibold"
+                                  style={{ color: color.text.primary }}
                                 >
-                                  {t('common.pro')}
+                                  {cloudOption.tierLabel}
                                 </Text>
+                                {cloudOption.id === 'auto' ? (
+                                  <View
+                                    className="rounded-full px-2 py-0.5"
+                                    style={{ backgroundColor: color.status.processing.bg }}
+                                  >
+                                    <Text
+                                      className="text-[12px] font-medium"
+                                      style={{ color: color.status.processing.text }}
+                                    >
+                                      {t('whisper.recommended')}
+                                    </Text>
+                                  </View>
+                                ) : null}
                               </View>
-                            ) : null}
+                              {cloudOption.id === 'auto' ? null : (
+                                <Text
+                                  className="mb-1 text-[13px] leading-5"
+                                  style={{ color: color.text.muted }}
+                                >
+                                  {cloudOption.name}
+                                </Text>
+                              )}
+                              <Text
+                                className="mb-2 text-[14px] leading-5"
+                                style={{ color: color.text.secondary }}
+                              >
+                                {cloudOption.description}
+                              </Text>
+                              {'metaChips' in cloudOption && cloudOption.metaChips ? (
+                                <ModelMetaChips color={color} chips={cloudOption.metaChips} />
+                              ) : null}
+                            </View>
+                            {isSelected ? (
+                              <View
+                                className="h-8 w-8 items-center justify-center rounded-full"
+                                style={{ backgroundColor: color.accent.primary }}
+                              >
+                                <Check size={16} color={color.icon.onAccent} strokeWidth={2.5} />
+                              </View>
+                            ) : (
+                              <View
+                                className="h-8 w-8 rounded-full"
+                                style={{ borderWidth: 2, borderColor: color.border.default }}
+                              />
+                            )}
                           </View>
-                          <Text
-                            className="mb-1 text-[13px] leading-5"
-                            style={{ color: color.text.muted }}
-                          >
-                            {cloudOption.name}
-                          </Text>
-                          <Text
-                            className="mb-2 text-[14px] leading-5"
-                            style={{ color: color.text.secondary }}
-                          >
-                            {cloudOption.description}
-                          </Text>
-                          {'metaChips' in cloudOption && cloudOption.metaChips ? (
-                            <ModelMetaChips color={color} chips={cloudOption.metaChips} />
-                          ) : null}
-                        </View>
-                        {isSelected ? (
-                          <View
-                            className="h-8 w-8 items-center justify-center rounded-full"
-                            style={{ backgroundColor: color.accent.primary }}
-                          >
-                            <Check size={16} color={color.icon.onAccent} strokeWidth={2.5} />
-                          </View>
-                        ) : (
-                          <View
-                            className="h-8 w-8 rounded-full"
-                            style={{ borderWidth: 2, borderColor: color.border.default }}
-                          />
-                        )}
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
             </>
           )}
           <DeferredInboxBannerAd color={color} contentMaxWidth={bannerMaxWidth} />
