@@ -1386,8 +1386,8 @@
     },
     "autoRefreshMeetingSpeakers": {
       "title": "Meeting participants",
-      "label": "Update with summary",
-      "subtitle": "Regenerating the summary or tasks also refreshes the Participants tab. Turn off to keep your current list and name edits. To refresh participants only, use the button on that tab.",
+      "label": "Update on regenerate",
+      "subtitle": "Regenerating the summary or tasks also updates the participant breakdown. Turn off to keep your current list and name edits. Use the button on the Participants tab to update participants only.",
       "a11y": "Update participant breakdown when regenerating summary or tasks"
     }
   },
