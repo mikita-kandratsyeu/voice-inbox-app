@@ -1392,7 +1392,7 @@
   },
   "privateAiMode": {
     "title": "Private vs Smart",
-    "description": "Private keeps AI on your phone or a connected AI server (Pro)—off Voice Inbox AI cloud. Folders, auto-organize, and AI digest unlock with a server. Smart is faster, with more features.",
+    "description": "Private runs AI on your device or your own AI server (Pro), so note content stays out of Voice Inbox AI cloud. Connect a server to unlock folders, auto-organize, and AI Digest. Smart uses the cloud for faster processing and the full feature set.",
     "enableAlertTitle": "Turn on Private?",
     "enableAlertMessage": "Maximum privacy.\n\nTranscripts and notes stay on this phone—Voice Inbox AI cloud never sees them.\n\nWorth knowing:\n• On-device AI can feel slower and use more battery\n• Folders, auto-organize, and AI digest unlock with an AI server in Pro or Smart mode\n\nYou can switch back to Smart anytime.",
     "unavailableDeviceHint": "This device does not meet Private mode requirements (about 5.5 GB RAM and 3.5 GB free storage). Use Smart mode.",
