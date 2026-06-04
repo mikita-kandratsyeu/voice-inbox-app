@@ -78,7 +78,7 @@ export function useImportAudioFile() {
 
       let raw: string;
       try {
-        raw = await readPickedSubtitleUtf8(sourcePath, picked.localUri);
+        raw = await readPickedSubtitleUtf8(sourcePath, picked.localUri, picked.name);
       } catch {
         hapticError();
         Alert.alert(t('importAudio.subtitleReadErrorTitle'), t('importAudio.subtitleReadError'));

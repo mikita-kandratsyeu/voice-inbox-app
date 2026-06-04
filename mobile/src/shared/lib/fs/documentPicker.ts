@@ -84,6 +84,19 @@ export type PickToCachesResult =
   | { kind: 'canceled' }
   | { kind: 'failed'; message: string };
 
+const SUBTITLE_CACHE_EXT = /\.(vtt|srt)(\?.*)?$/i;
+
+/** Safe on-disk name for import copy; keeps original display name for UI and title. */
+export function cacheFileNameForImportCopy(displayName: string): string {
+  const trimmed = displayName.trim();
+  if (!trimmed) return 'file';
+  if (SUBTITLE_CACHE_EXT.test(trimmed)) {
+    const ext = trimmed.toLowerCase().endsWith('.vtt') ? '.vtt' : '.srt';
+    return `import-subtitle-${Date.now()}${ext}`;
+  }
+  return trimmed;
+}
+
 export async function pickSingleFileToCachesDirectory(
   pickOptions?: DocumentPickerOptions,
 ): Promise<PickToCachesResult> {
@@ -93,7 +106,8 @@ export async function pickSingleFileToCachesDirectory(
       return { kind: 'failed', message: file.error };
     }
 
-    const fileName = file.name && file.name.trim().length > 0 ? file.name.trim() : 'file';
+    const displayName = file.name && file.name.trim().length > 0 ? file.name.trim() : 'file';
+    const fileName = cacheFileNameForImportCopy(displayName);
 
     const toCopy: {
       uri: string;
@@ -131,7 +145,8 @@ export async function copyExternalUriToCachesForImport(
   uri: string,
   fileName: string,
 ): Promise<PickToCachesResult> {
-  const safeName = fileName.trim().length > 0 ? fileName.trim() : 'shared-audio.m4a';
+  const safeName =
+    fileName.trim().length > 0 ? cacheFileNameForImportCopy(fileName.trim()) : 'shared-audio.m4a';
 
   const [copyResult] = await keepLocalCopy({
     destination: 'cachesDirectory',

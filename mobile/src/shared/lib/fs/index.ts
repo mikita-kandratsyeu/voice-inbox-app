@@ -6,6 +6,7 @@ export {
 } from './appFs';
 export type { PickToCachesResult } from './documentPicker';
 export {
+  cacheFileNameForImportCopy,
   copyExternalUriToCachesForImport,
   getDocumentPickerFsPath,
   getReadableDocumentPickerFsPath,
