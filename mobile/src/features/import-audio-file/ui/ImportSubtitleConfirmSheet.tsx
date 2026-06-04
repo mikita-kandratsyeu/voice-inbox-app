@@ -15,21 +15,23 @@ import {
   useBottomSheetContentPadding,
 } from '@/shared/ui';
 
-export type SubtitleImportConfirmOptions = {
+export type ImportFileConfirmOptions = {
   title: string;
   isMeetingMode: boolean;
 };
 
 type ImportSubtitleConfirmSheetProps = {
   visible: boolean;
+  kind?: 'audio' | 'subtitles';
   defaultTitle: string;
   durationMs: number;
-  onConfirm: (options: SubtitleImportConfirmOptions) => void | Promise<void>;
+  onConfirm: (options: ImportFileConfirmOptions) => void | Promise<void>;
   onCancel: () => void;
 };
 
 export function ImportSubtitleConfirmSheet({
   visible,
+  kind = 'subtitles',
   defaultTitle,
   durationMs,
   onConfirm,
@@ -40,6 +42,7 @@ export function ImportSubtitleConfirmSheet({
   const { isProActive } = useProEntitlement();
   const contentPadding = useBottomSheetContentPadding(24);
   const bottomSheetRef = useRef<BottomSheetModal>(null);
+  const skipNextDismissRef = useRef(false);
   const [title, setTitle] = useState(defaultTitle);
   const [isMeetingMode, setIsMeetingMode] = useState(false);
 
@@ -62,10 +65,15 @@ export function ImportSubtitleConfirmSheet({
   }, [visible, defaultTitle]);
 
   const handleDismiss = useCallback(() => {
+    if (skipNextDismissRef.current) {
+      skipNextDismissRef.current = false;
+      return;
+    }
     onCancel();
   }, [onCancel]);
 
   const handleCancel = useCallback(() => {
+    skipNextDismissRef.current = true;
     onCancel();
     bottomSheetRef.current?.dismiss();
   }, [onCancel]);
@@ -74,6 +82,7 @@ export function ImportSubtitleConfirmSheet({
     const resolvedTitle = title.trim() || defaultTitle.trim();
     await onConfirm({ title: resolvedTitle, isMeetingMode });
     hapticSuccess();
+    skipNextDismissRef.current = true;
     bottomSheetRef.current?.dismiss();
   }, [title, defaultTitle, isMeetingMode, onConfirm]);
 
@@ -103,7 +112,7 @@ export function ImportSubtitleConfirmSheet({
         }}
       >
         <Text className="text-lg font-bold" style={{ color: c.text.primary }}>
-          {t('importAudio.subtitleImportTitle')}
+          {t(kind === 'audio' ? 'importAudio.audioImportTitle' : 'importAudio.subtitleImportTitle')}
         </Text>
 
         <BottomSheetTextInput
@@ -124,7 +133,12 @@ export function ImportSubtitleConfirmSheet({
         />
 
         <Text className="-mt-1 text-[13px]" style={{ color: c.text.secondary }}>
-          {t('importAudio.subtitleImportDuration', { time: formatTime(durationSec) })}
+          {t(
+            kind === 'audio'
+              ? 'importAudio.audioImportDuration'
+              : 'importAudio.subtitleImportDuration',
+            { time: formatTime(durationSec) },
+          )}
         </Text>
 
         {isProActive ? (
@@ -174,7 +188,7 @@ export function ImportSubtitleConfirmSheet({
         <SheetFooterButtons
           className="mt-1 w-full"
           color={c}
-          primaryLabel={t('importAudio.subtitleImportConfirm')}
+          primaryLabel={t('importAudio.importConfirm')}
           onPrimaryPress={handleConfirm}
           secondaryLabel={t('common.cancel')}
           onSecondaryPress={handleCancel}
