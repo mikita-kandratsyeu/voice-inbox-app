@@ -5,6 +5,7 @@ import type { DigestAiResult } from '@/shared/lib/ai-api';
 import { storage } from '@/shared/lib/async-storage/mmkv';
 
 export type DigestPeriod = 'day' | 'week' | 'month';
+export type DigestFormat = 'brief' | 'detailed' | 'tasks';
 
 export type DigestTask = TaskItem & {
   recordId: string;
@@ -33,10 +34,24 @@ type CachedDigest = {
 };
 
 const CACHE_PREFIX = 'digest.ai.';
+const DIGEST_FORMAT_KEY = 'digest.format';
+const DIGEST_FORMATS: readonly DigestFormat[] = ['brief', 'detailed', 'tasks'];
 /** Notes included in cloud digest payload (longer window needs a bit more coverage). */
 export const MAX_AI_NOTES_IN_PAYLOAD = 30;
 export const MAX_AI_NOTES_IN_PAYLOAD_MONTH = 40;
 export const MAX_DIGEST_SUMMARY_CHARS = 900;
+
+export function parseDigestFormat(value: string | undefined): DigestFormat {
+  return DIGEST_FORMATS.includes(value as DigestFormat) ? (value as DigestFormat) : 'brief';
+}
+
+export function getStoredDigestFormat(): DigestFormat {
+  return parseDigestFormat(storage.getString(DIGEST_FORMAT_KEY));
+}
+
+export function saveStoredDigestFormat(format: DigestFormat): void {
+  storage.set(DIGEST_FORMAT_KEY, format);
+}
 
 export type DigestAiPayloadCoverage = {
   totalNotes: number;
@@ -190,9 +205,14 @@ export function buildDeterministicDigest(
   };
 }
 
-export function buildDigestAiPayload(digest: DeterministicDigest, language: 'en' | 'ru'): string {
+export function buildDigestAiPayload(
+  digest: DeterministicDigest,
+  language: 'en' | 'ru',
+  format: DigestFormat,
+): string {
   return JSON.stringify({
     language,
+    format,
     period: digest.period,
     from: digest.fromIso,
     to: digest.toIso,
@@ -238,7 +258,7 @@ export function buildDigestAiPayload(digest: DeterministicDigest, language: 'en'
   });
 }
 
-export function getDigestCacheKey(digest: DeterministicDigest): string {
+export function getDigestCacheKey(digest: DeterministicDigest, format: DigestFormat): string {
   const newestRecord = digest.records[0]?.createdAt ?? 'empty';
   const taskFingerprint = digest.openTasks
     .map(
@@ -248,7 +268,7 @@ export function getDigestCacheKey(digest: DeterministicDigest): string {
         }`,
     )
     .join('|');
-  return `${digest.period}:${digest.fromIso}:${digest.toIso}:${digest.recordCount}:${newestRecord}:${taskFingerprint}`;
+  return `${digest.period}:${format}:${digest.fromIso}:${digest.toIso}:${digest.recordCount}:${newestRecord}:${taskFingerprint}`;
 }
 
 export function loadCachedDigest(key: string): CachedDigest | null {
@@ -279,11 +299,34 @@ export function buildDigestSharePayload(params: {
   title: string;
   periodLabel: string;
   rangeText: string;
+  formatLabel: string;
+  generatedAtText: string;
+  sourceNote: string;
+  labels: {
+    period: string;
+    dates: string;
+    format: string;
+    generated: string;
+  };
   markdown: string;
 }): { message: string; title: string } {
   const headline = `${params.title} — ${params.periodLabel}`;
+  const header = [
+    `# ${params.title}`,
+    '',
+    `${params.labels.period}: ${params.periodLabel}`,
+    `${params.labels.dates}: ${params.rangeText}`,
+    `${params.labels.format}: ${params.formatLabel}`,
+    `${params.labels.generated}: ${params.generatedAtText}`,
+    '',
+    params.sourceNote,
+    '',
+    '---',
+    '',
+  ].join('\n');
+
   return {
     title: headline,
-    message: `${headline}\n${params.rangeText}\n\n${params.markdown.trim()}`,
+    message: `${header}${params.markdown.trim()}`,
   };
 }

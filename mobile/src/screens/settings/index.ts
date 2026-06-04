@@ -10,6 +10,7 @@ export { NotificationsScreen } from './ui/NotificationsScreen';
 export { PrivateAiModeScreen } from './ui/PrivateAiModeScreen';
 export { PrivateRemoteServerScreen } from './ui/PrivateRemoteServerScreen';
 export { SettingsScreen } from './ui/SettingsScreen';
+export { SiriShortcutsScreen } from './ui/SiriShortcutsScreen';
 export { StorageDetailsScreen } from './ui/StorageDetailsScreen';
 export { SupportScreen } from './ui/SupportScreen';
 export { TrashScreen } from './ui/TrashScreen';

@@ -1,10 +1,11 @@
 import type { TFunction } from 'i18next';
-import { Archive, ClipboardList, Zap } from 'lucide-react-native';
+import { Archive, ClipboardList, Command, Zap } from 'lucide-react-native';
 import React from 'react';
 import { Switch, View } from 'react-native';
 
 import type { AutoArchiveAfterDays } from '@/entities/settings';
 import type { Colors } from '@/shared/config';
+import { IS_IOS } from '@/shared/lib';
 import { SettingsRow, SettingsSection } from '@/shared/ui';
 
 import type { AutomationFeatureKind } from '../AutomationComingSoonSheet';
@@ -21,6 +22,7 @@ type Props = {
   setAutoArchiveEnabled: (v: boolean) => void;
   autoArchiveAfterDays: AutoArchiveAfterDays;
   onAutoArchiveDelayPress: () => void;
+  onOpenSiriShortcuts: () => void;
   onLockedPress: (kind: AutomationFeatureKind) => void;
 };
 
@@ -36,17 +38,27 @@ export const SettingsAutomationSection = ({
   setAutoArchiveEnabled,
   autoArchiveAfterDays,
   onAutoArchiveDelayPress,
+  onOpenSiriShortcuts,
   onLockedPress,
 }: Props) => {
   const showArchiveDelayRow = !automationLocked && autoArchiveEnabled;
 
   return (
     <SettingsSection title={t('settings.automation')}>
+      {IS_IOS ? (
+        <SettingsRow
+          label={t('settings.siriShortcuts.entryTitle')}
+          subtitle={t('settings.siriShortcuts.entrySubtitle')}
+          leftIcon={<Command size={20} color={color.accent.transcript} strokeWidth={1.8} />}
+          onPress={onOpenSiriShortcuts}
+          isFirst
+        />
+      ) : null}
       <SettingsRow
         label={t('settings.autoTranscribeOnSave')}
         subtitle={t('settings.autoTranscribeOnSaveHint')}
         leftIcon={<Zap size={20} color={color.accent.primary} strokeWidth={1.8} />}
-        isFirst
+        isFirst={!IS_IOS}
         rightSlot={
           <View
             className="flex-row items-center gap-2"
@@ -117,6 +129,7 @@ export const SettingsAutomationSection = ({
         }
         showChevron={false}
         onPress={automationLocked ? () => onLockedPress('autoArchive') : undefined}
+        isLast={!showArchiveDelayRow && !IS_IOS}
       />
       {showArchiveDelayRow ? (
         <SettingsRow
@@ -124,7 +137,7 @@ export const SettingsAutomationSection = ({
           value={t('settings.autoArchiveDelayValue', { count: autoArchiveAfterDays })}
           onPress={onAutoArchiveDelayPress}
           showChevron
-          isLast
+          isLast={!IS_IOS}
         />
       ) : null}
     </SettingsSection>

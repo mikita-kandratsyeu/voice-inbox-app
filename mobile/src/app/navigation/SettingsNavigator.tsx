@@ -14,6 +14,7 @@ import {
   PrivateAiModeScreen,
   PrivateRemoteServerScreen,
   SettingsScreen,
+  SiriShortcutsScreen,
   StorageDetailsScreen,
   SupportScreen,
   TrashScreen,
@@ -61,6 +62,11 @@ export const SettingsNavigator = () => {
         <Stack.Screen
           name="AiUsageDashboard"
           component={AiUsageDashboardScreen}
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="SiriShortcuts"
+          component={SiriShortcutsScreen}
           options={{ animation: 'slide_from_right' }}
         />
         <Stack.Screen

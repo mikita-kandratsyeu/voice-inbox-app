@@ -740,6 +740,18 @@
         "week": "7 days",
         "month": "30 days"
       },
+      "formatTitle": "Summary format",
+      "formatHint": "How the AI response is structured",
+      "format": {
+        "brief": "Brief",
+        "detailed": "Detailed",
+        "tasks": "Tasks only"
+      },
+      "formatTab": {
+        "brief": "Brief",
+        "detailed": "Detailed",
+        "tasks": "Tasks"
+      },
       "durationMinutes_one": "{{count}} min",
       "durationMinutes_other": "{{count}} min",
       "durationHours_one": "{{count}} h",
@@ -772,18 +784,26 @@
       "regenerateAi": "Refresh recap",
       "shareRecap": "AI digest",
       "shareRecapDescription": "AI recap for the selected period.",
+      "exportPreparing": "Preparing export…",
+      "exportHeader": {
+        "period": "Period",
+        "dates": "Dates",
+        "format": "Format",
+        "generated": "Generated"
+      },
+      "exportSourceNote": "Based on note summaries, tasks, and key phrases.",
       "exportPackagingHintMarkdown": "The digest is exported as a Markdown file.",
       "exportPackagingHintPdf": "The digest is exported as a PDF generated on this device.",
       "emailDescription": "Digest by email — Markdown in the message body or a PDF attachment.",
       "emailSentMessage": "The digest was sent to {{email}}.",
       "aiLimitError": "Weekly AI limit reached. Try again after reset or upgrade your plan.",
-      "emptyAi": "Nothing here yet — record a note and your digest will fill in.",
+      "emptyAi": "Not enough data yet. Add notes with summaries, tasks, or key phrases to make the digest useful.",
       "topicsTitle": "Top topics",
-      "emptyTopics": "Generate summaries for your notes to see recurring themes here.",
+      "emptyTopics": "No recurring topics yet. Generate summaries or add key phrases to your notes.",
       "nextStepsTitle": "Next steps",
-      "emptyNextSteps": "Next steps from note summaries will show up here.",
+      "emptyNextSteps": "No next steps yet. Add tasks or regenerate summaries for your notes.",
       "openTasksTitle": "Open tasks",
-      "emptyOpenTasks": "No open tasks linked to notes in this period.",
+      "emptyOpenTasks": "No open tasks for this period. Add tasks to notes to see them in the digest.",
       "overdueTitle": "Overdue tasks",
       "emptyOverdue": "No overdue tasks."
     },
@@ -830,6 +850,37 @@
     "autoArchiveDelayValue_other": "After {{count}} days",
     "autoArchiveDelayPickerTitle": "Delay before archiving",
     "autoArchiveDelayPickerMessage": "Read notes move to the archive after this many days if they are not pinned and every task in the list is done.",
+    "siriShortcuts": {
+      "entryTitle": "Siri Shortcuts",
+      "entrySubtitle": "Start recording, create a text note, or open tasks from iPhone and iPad.",
+      "title": "Siri Shortcuts",
+      "aboutTitle": "Quick actions on iOS and iPadOS",
+      "aboutDescription": "Voice Inbox AI adds actions for Siri, the Shortcuts app, and Home Screen quick actions. They open the right place in the app without extra taps.",
+      "availableTitle": "Available shortcuts",
+      "howToUseTitle": "How to use them",
+      "shortcuts": {
+        "startRecording": {
+          "title": "Start recording",
+          "subtitle": "Opens Voice Inbox AI and starts a new voice note right away.",
+          "value": "Siri"
+        },
+        "newTextNote": {
+          "title": "New text note",
+          "subtitle": "Opens text note creation when typing is easier than recording.",
+          "value": "Shortcuts"
+        },
+        "allTasks": {
+          "title": "All tasks",
+          "subtitle": "Shows the task list collected from your notes.",
+          "value": "Tasks"
+        }
+      },
+      "tips": {
+        "askSiri": "Ask Siri with a phrase like “Start recording in Voice Inbox AI” or “Show tasks in Voice Inbox AI.”",
+        "shortcutsApp": "In the Shortcuts app, add these actions to your own workflows and launch them from widgets, Focus, or automations.",
+        "homeScreen": "Long-press the app icon on the Home Screen to quickly open recording, a text note, or tasks."
+      }
+    },
     "appearance": "Appearance",
     "appLanguage": "App language",
     "appTheme": "Theme",
