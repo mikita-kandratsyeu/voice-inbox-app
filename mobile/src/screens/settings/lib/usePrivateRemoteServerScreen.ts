@@ -37,6 +37,7 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
   const setPrivateRemoteApiKey = useSettingsStore((s) => s.setPrivateRemoteApiKey);
   const privateRemoteModel = useSettingsStore((s) => s.privateRemoteModel);
   const setPrivateRemoteModel = useSettingsStore((s) => s.setPrivateRemoteModel);
+  const setPrivateAiProvider = useSettingsStore((s) => s.setPrivateAiProvider);
   const privateRemoteLastSuccessfulBaseUrl = useSettingsStore(
     (s) => s.privateRemoteLastSuccessfulBaseUrl,
   );
@@ -236,6 +237,7 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
           model: privateRemoteModel,
           updatedAt: Date.now(),
         });
+        setPrivateAiProvider('custom_openai');
         Alert.alert(
           t('aiSettings.privateProvider.connectionOkTitle'),
           t('aiSettings.privateProvider.connectionOkMessage'),
@@ -274,6 +276,7 @@ export function usePrivateRemoteServerScreen(options: UsePrivateRemoteServerScre
     privateRemoteApiKey,
     privateRemoteBaseUrl,
     privateRemoteModel,
+    setPrivateAiProvider,
     setPrivateRemoteLastSuccessfulConfig,
     t,
     upsertPrivateRemoteProfile,

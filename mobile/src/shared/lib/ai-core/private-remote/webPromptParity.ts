@@ -65,7 +65,11 @@ const PROCESSING_PRESET_INSTRUCTIONS: Record<'meeting', string> = {
   meeting: [
     'Treat this transcript as a meeting, call, interview, or sync recap.',
     'Use classification "meeting" unless the transcript is effectively empty or clearly unrelated.',
-    'The summary should read like a structured meeting recap in plain prose: purpose, main topics, decisions, blockers, and follow-up context when supported.',
+    'The summary must read like meeting minutes, not a generic paragraph.',
+    'Format summary with these section labels, localized to the required output language: Brief, Decisions, Open questions.',
+    'In Russian use: Коротко, Решения, Открытые вопросы.',
+    'Each section label must be on its own line with a colon. Put section content on the following line(s), not on the same line as the label. Use "None" / "Нет" when the transcript does not support that section.',
+    'Decisions are agreements already made. Open questions are unresolved points. Do not include Tasks or Next steps inside summary; those belong only in tasks[] and nextSteps[].',
     'For tasks[], extract concrete action items only when supported by the transcript.',
     'For nextSteps[], include high-level follow-ups that move the meeting forward and do not duplicate task titles.',
   ].join('\n'),
@@ -244,10 +248,16 @@ ${presetInstruction ? `## Processing Preset\n${presetInstruction}\n` : ''}${pseu
 
 ## Field Rules
 
-**summary:** ${summaryInstruction}
-- Plain prose only.
-- No bullet points.
-- Mention the main topic and the most important actions or decisions, if any.
+**summary:** ${
+    processingPreset === 'meeting'
+      ? 'For the meeting preset, ignore the generic summary length/style above and use the meeting-minutes format from Processing Preset.'
+      : summaryInstruction
+  }
+${
+  processingPreset === 'meeting'
+    ? '- Plain text only; section labels and line breaks are allowed.\n- Do not use markdown headings, tables, or code fences.\n- Keep each section concise and grounded in the transcript.'
+    : '- Plain prose only.\n- No bullet points.\n- Mention the main topic and the most important actions or decisions, if any.'
+}
 
 **suggestedTitle:**
 - A short 3–8 word phrase capturing the core subject of the note.

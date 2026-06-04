@@ -2,7 +2,7 @@ import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@g
 import { ClipboardList, FileText, ListChecks, Mail, UsersRound } from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
 
 import {
   getLastShareRecipientEmail,
@@ -34,24 +34,28 @@ function ExportPackagingChip({
   label,
   onSelect,
   color,
+  disabled = false,
 }: {
   packaging: BatchExportPackaging;
   selectedPackaging: BatchExportPackaging;
   label: string;
   onSelect: (p: BatchExportPackaging) => void;
   color: Colors;
+  disabled?: boolean;
 }) {
   const selected = selectedPackaging === packaging;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ selected }}
+      accessibilityState={{ selected, disabled }}
       accessibilityLabel={label}
+      disabled={disabled}
       onPress={() => onSelect(packaging)}
       className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
       style={{
         borderColor: selected ? color.accent.primary : color.border.default,
         backgroundColor: color.background.tertiary,
+        opacity: disabled ? 0.55 : 1,
       }}
     >
       <Text
@@ -72,7 +76,10 @@ type BatchExportSheetProps = {
   showSpeakerTurnsExport?: boolean;
   isSendingEmail?: boolean;
   onClose: () => void;
-  onExportText: (template: ShareBriefTemplate, packaging: BatchExportPackaging) => void;
+  onExportText: (
+    template: ShareBriefTemplate,
+    packaging: BatchExportPackaging,
+  ) => Promise<void> | void;
   onEmailBatch: (
     email: string,
     template: ShareBriefTemplate,
@@ -97,6 +104,7 @@ export const BatchExportSheet = ({
   const [email, setEmail] = useState('');
   const [emailBodyTemplate, setEmailBodyTemplate] = useState<ShareBriefTemplate | null>(null);
   const [exportPackaging, setExportPackaging] = useState<BatchExportPackaging>('single');
+  const [exportingTemplate, setExportingTemplate] = useState<ShareBriefTemplate | null>(null);
 
   const trimmedEmail = email.trim();
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
@@ -148,6 +156,7 @@ export const BatchExportSheet = ({
     setEmail('');
     setEmailBodyTemplate(null);
     setExportPackaging('single');
+    setExportingTemplate(null);
   }, [visible]);
 
   useEffect(() => {
@@ -159,31 +168,57 @@ export const BatchExportSheet = ({
     }
   }, [defaultEmailBodyTemplate, emailBodyTemplate, showSpeakerTurnsExport]);
 
+  const isExporting = exportingTemplate != null;
+
+  const handleExportText = useCallback(
+    async (template: ShareBriefTemplate) => {
+      if (isExporting) return;
+      setExportingTemplate(template);
+      try {
+        await onExportText(template, exportPackaging);
+        onClose();
+      } finally {
+        setExportingTemplate(null);
+      }
+    },
+    [exportPackaging, isExporting, onClose, onExportText],
+  );
+
   const handleExportNoteBrief = useCallback(() => {
-    onClose();
-    onExportText('noteBrief', exportPackaging);
-  }, [exportPackaging, onClose, onExportText]);
+    void handleExportText('noteBrief');
+  }, [handleExportText]);
 
   const handleExportEmailBrief = useCallback(() => {
-    onClose();
-    onExportText('emailBrief', exportPackaging);
-  }, [exportPackaging, onClose, onExportText]);
+    void handleExportText('emailBrief');
+  }, [handleExportText]);
 
   const handleExportMeetingBrief = useCallback(() => {
-    onClose();
-    onExportText('meetingBrief', exportPackaging);
-  }, [exportPackaging, onClose, onExportText]);
+    void handleExportText('meetingBrief');
+  }, [handleExportText]);
 
   const handleExportSpeakerTurns = useCallback(() => {
+    void handleExportText('meetingSpeakerTurns');
+  }, [handleExportText]);
+
+  const handleSelectExportPackaging = useCallback(
+    (packaging: BatchExportPackaging) => {
+      if (isExporting) return;
+      setExportPackaging(packaging);
+    },
+    [isExporting],
+  );
+
+  const handleClose = useCallback(() => {
+    if (isExporting) return;
     onClose();
-    onExportText('meetingSpeakerTurns', exportPackaging);
-  }, [exportPackaging, onClose, onExportText]);
+  }, [isExporting, onClose]);
 
   const handleOpenEmail = useCallback(() => {
+    if (isExporting) return;
     setEmailBodyTemplate(defaultEmailBodyTemplate);
     setEmail(getLastShareRecipientEmail() ?? '');
     setEmailVisible(true);
-  }, [defaultEmailBodyTemplate]);
+  }, [defaultEmailBodyTemplate, isExporting]);
 
   const handleCancelEmail = useCallback(() => {
     Keyboard.dismiss();
@@ -199,7 +234,8 @@ export const BatchExportSheet = ({
     return emailBodyTemplate;
   }, [emailBodyTemplate, emailFormatTemplates]);
 
-  const canSendEmail = emailValid && resolvedEmailTemplate != null && !isSendingEmail;
+  const canSendEmail =
+    emailValid && resolvedEmailTemplate != null && !isSendingEmail && !isExporting;
 
   const handleSendEmail = useCallback(() => {
     if (!canSendEmail || resolvedEmailTemplate == null) return;
@@ -213,6 +249,7 @@ export const BatchExportSheet = ({
     onPress,
     accessibilityLabel,
     disabled = false,
+    loading = false,
     selected = false,
     showSelectionBorder = false,
   }: {
@@ -222,16 +259,17 @@ export const BatchExportSheet = ({
     onPress: () => void;
     accessibilityLabel: string;
     disabled?: boolean;
+    loading?: boolean;
     selected?: boolean;
     showSelectionBorder?: boolean;
   }) => (
     <TouchableOpacity
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={disabled || loading ? 1 : 0.7}
       accessibilityRole="button"
       accessibilityState={{ selected, disabled }}
       accessibilityLabel={accessibilityLabel}
-      disabled={disabled}
+      disabled={disabled || loading}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -249,16 +287,18 @@ export const BatchExportSheet = ({
         opacity: disabled ? 0.45 : 1,
       }}
     >
-      {icon}
+      {loading ? <ActivityIndicator size="small" color={color.accent.primary} /> : icon}
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>{title}</Text>
+        <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>
+          {loading ? t('share.exportPreparing') : title}
+        </Text>
         <Text style={{ fontSize: 13, color: color.text.muted, marginTop: 2 }}>{description}</Text>
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <AppBottomSheetModal visible={visible} onClose={onClose}>
+    <AppBottomSheetModal visible={visible} onClose={handleClose}>
       {emailVisible ? (
         <BottomSheetScrollView
           keyboardShouldPersistTaps="handled"
@@ -294,22 +334,25 @@ export const BatchExportSheet = ({
               packaging="single"
               selectedPackaging={exportPackaging}
               label={t('batch.exportPackagingSingle')}
-              onSelect={setExportPackaging}
+              onSelect={handleSelectExportPackaging}
               color={color}
+              disabled={isExporting}
             />
             <ExportPackagingChip
               packaging="zip"
               selectedPackaging={exportPackaging}
               label={t('batch.exportPackagingZip')}
-              onSelect={setExportPackaging}
+              onSelect={handleSelectExportPackaging}
               color={color}
+              disabled={isExporting}
             />
             <ExportPackagingChip
               packaging="pdf"
               selectedPackaging={exportPackaging}
               label={t('batch.exportPackagingPdf')}
-              onSelect={setExportPackaging}
+              onSelect={handleSelectExportPackaging}
               color={color}
+              disabled={isExporting}
             />
           </View>
           <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
@@ -372,7 +415,7 @@ export const BatchExportSheet = ({
             secondaryLabel={t('common.goBack')}
             onSecondaryPress={handleCancelEmail}
             onSecondaryPressIn={handleCancelEmail}
-            secondaryDisabled={isSendingEmail}
+            secondaryDisabled={isSendingEmail || isExporting}
           />
         </BottomSheetScrollView>
       ) : (
@@ -408,22 +451,25 @@ export const BatchExportSheet = ({
               packaging="single"
               selectedPackaging={exportPackaging}
               label={t('batch.exportPackagingSingle')}
-              onSelect={setExportPackaging}
+              onSelect={handleSelectExportPackaging}
               color={color}
+              disabled={isExporting}
             />
             <ExportPackagingChip
               packaging="zip"
               selectedPackaging={exportPackaging}
               label={t('batch.exportPackagingZip')}
-              onSelect={setExportPackaging}
+              onSelect={handleSelectExportPackaging}
               color={color}
+              disabled={isExporting}
             />
             <ExportPackagingChip
               packaging="pdf"
               selectedPackaging={exportPackaging}
               label={t('batch.exportPackagingPdf')}
-              onSelect={setExportPackaging}
+              onSelect={handleSelectExportPackaging}
               color={color}
+              disabled={isExporting}
             />
           </View>
           <Text style={{ fontSize: 13, color: color.text.muted, lineHeight: 17 }}>
@@ -436,6 +482,8 @@ export const BatchExportSheet = ({
             description: t('share.noteBriefDescription'),
             accessibilityLabel: t('share.noteBrief'),
             onPress: handleExportNoteBrief,
+            disabled: isExporting && exportingTemplate !== 'noteBrief',
+            loading: exportingTemplate === 'noteBrief',
           })}
 
           {renderShareFormatRow({
@@ -444,6 +492,8 @@ export const BatchExportSheet = ({
             description: t('share.emailBriefDescription'),
             accessibilityLabel: t('share.emailBrief'),
             onPress: handleExportEmailBrief,
+            disabled: isExporting && exportingTemplate !== 'emailBrief',
+            loading: exportingTemplate === 'emailBrief',
           })}
 
           {showSpeakerTurnsExport
@@ -453,6 +503,8 @@ export const BatchExportSheet = ({
                 description: t('share.meetingBriefDescription'),
                 accessibilityLabel: t('share.meetingBrief'),
                 onPress: handleExportMeetingBrief,
+                disabled: isExporting && exportingTemplate !== 'meetingBrief',
+                loading: exportingTemplate === 'meetingBrief',
               })
             : null}
 
@@ -463,6 +515,8 @@ export const BatchExportSheet = ({
                 description: t('share.speakerTurnsBriefDescription'),
                 accessibilityLabel: t('share.speakerTurnsBrief'),
                 onPress: handleExportSpeakerTurns,
+                disabled: isExporting && exportingTemplate !== 'meetingSpeakerTurns',
+                loading: exportingTemplate === 'meetingSpeakerTurns',
               })
             : null}
 
@@ -472,6 +526,7 @@ export const BatchExportSheet = ({
             description: t('batch.emailBatchDescription'),
             accessibilityLabel: t('share.emailNote'),
             onPress: handleOpenEmail,
+            disabled: isExporting,
           })}
         </BottomSheetView>
       )}

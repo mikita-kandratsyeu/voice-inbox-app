@@ -1,9 +1,11 @@
+import { MenuView } from '@react-native-menu/menu';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import dayjs from 'dayjs';
 import {
   AlertTriangle,
   CalendarDays,
   CheckCircle2,
+  ChevronDown,
   Clock3,
   Info,
   Newspaper,
@@ -32,8 +34,8 @@ import { DeferredInboxBannerAd } from '@/features/inbox-banner';
 import { useProEntitlement } from '@/features/pro-license';
 import { saveLastShareRecipientEmail } from '@/features/share-record';
 import type { ShareRecordExportFormat } from '@/features/share-record/model/shareRecordExportFormat';
-import { useColors } from '@/shared/config';
-import { hapticError, hapticSuccess } from '@/shared/lib';
+import { useAppTheme, useColors } from '@/shared/config';
+import { hapticError, hapticSelection, hapticSuccess } from '@/shared/lib';
 import { useIsTablet, useTabletContentMaxWidth } from '@/shared/lib';
 import type { DigestAiResult } from '@/shared/lib/ai-api';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
@@ -51,10 +53,13 @@ import {
   buildDigestAiPayload,
   buildDigestSharePayload,
   type DigestAiPayloadCoverage,
+  type DigestFormat,
   type DigestPeriod,
   getDigestAiPayloadCoverage,
   getDigestCacheKey,
+  getStoredDigestFormat,
   loadCachedDigest,
+  saveStoredDigestFormat,
 } from '../lib/digest';
 import {
   consumeDigestGenerationError,
@@ -288,6 +293,82 @@ function PeriodTabs({
   );
 }
 
+function DigestFormatTabs({
+  format,
+  onChange,
+}: {
+  format: DigestFormat;
+  onChange: (format: DigestFormat) => void;
+}) {
+  const { t } = useTranslation();
+  const color = useColors();
+  const theme = useAppTheme();
+  const isDark = theme === 'dark';
+  const items: DigestFormat[] = ['brief', 'detailed', 'tasks'];
+  const selectedLabel = t(`settings.digest.format.${format}`);
+
+  return (
+    <View
+      className="mb-5 flex-row items-center justify-between gap-3 rounded-2xl px-4 py-3"
+      style={{
+        borderWidth: 1,
+        borderColor: color.border.default,
+        backgroundColor: color.background.card,
+      }}
+    >
+      <View className="min-w-0 flex-1">
+        <Text
+          className="text-xs font-semibold uppercase tracking-widest"
+          style={{ color: color.text.secondary }}
+        >
+          {t('settings.digest.formatTitle')}
+        </Text>
+        <Text
+          className="mt-0.5 text-[13px] leading-[18px]"
+          style={{ color: color.text.muted }}
+          numberOfLines={1}
+        >
+          {t('settings.digest.formatHint')}
+        </Text>
+      </View>
+      <MenuView
+        key={`digest-format-${theme}`}
+        themeVariant={isDark ? 'dark' : 'light'}
+        shouldOpenOnLongPress={false}
+        onPressAction={({ nativeEvent }) => {
+          const next = nativeEvent.event as DigestFormat;
+          if (!items.includes(next)) return;
+          hapticSelection();
+          onChange(next);
+        }}
+        actions={items.map((item) => ({
+          id: item,
+          title: t(`settings.digest.format.${item}`),
+          titleColor: color.text.primary,
+          state: item === format ? 'on' : 'off',
+        }))}
+      >
+        <TouchableOpacity
+          accessibilityRole="button"
+          accessibilityLabel={`${t('settings.digest.formatTitle')}: ${selectedLabel}`}
+          className="min-h-10 flex-row items-center gap-1.5 rounded-full px-3.5 py-2"
+          style={{ backgroundColor: color.background.tertiary }}
+          activeOpacity={0.75}
+        >
+          <Text
+            className="text-[14px] font-semibold leading-[18px]"
+            style={{ color: color.text.primary }}
+            numberOfLines={1}
+          >
+            {selectedLabel}
+          </Text>
+          <ChevronDown size={16} color={color.text.secondary} strokeWidth={2} />
+        </TouchableOpacity>
+      </MenuView>
+    </View>
+  );
+}
+
 export const DigestScreen = () => {
   const { t, i18n } = useTranslation();
   const color = useColors();
@@ -309,6 +390,7 @@ export const DigestScreen = () => {
   const usePrivateRemoteDigest = digestAiEnabled && !useCloudDigest;
 
   const [period, setPeriod] = useState<DigestPeriod>('day');
+  const [digestFormat, setDigestFormat] = useState<DigestFormat>(() => getStoredDigestFormat());
   const [refreshing, setRefreshing] = useState(false);
   const [aiResult, setAiResult] = useState<DigestAiResult | null>(null);
   const [aiCreatedAt, setAiCreatedAt] = useState<string | null>(null);
@@ -325,7 +407,10 @@ export const DigestScreen = () => {
 
   const digest = useMemo(() => buildDeterministicDigest(period, records), [period, records]);
   const aiPayloadCoverage = useMemo(() => getDigestAiPayloadCoverage(digest), [digest]);
-  const digestCacheKey = useMemo(() => getDigestCacheKey(digest), [digest]);
+  const digestCacheKey = useMemo(
+    () => getDigestCacheKey(digest, digestFormat),
+    [digest, digestFormat],
+  );
   const aiLoading = useDigestGenerating(digestCacheKey);
 
   const syncCachedDigest = useCallback(() => {
@@ -333,6 +418,11 @@ export const DigestScreen = () => {
     setAiResult(cached?.result ?? null);
     setAiCreatedAt(cached?.createdAt ?? null);
   }, [digestCacheKey]);
+
+  const handleDigestFormatChange = useCallback((format: DigestFormat) => {
+    saveStoredDigestFormat(format);
+    setDigestFormat(format);
+  }, []);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -412,7 +502,7 @@ export const DigestScreen = () => {
     const language = i18n.language.toLowerCase().startsWith('ru') ? 'ru' : 'en';
     void startDigestGeneration({
       cacheKey: digestCacheKey,
-      payload: buildDigestAiPayload(digest, language),
+      payload: buildDigestAiPayload(digest, language, digestFormat),
       target: useCloudDigest
         ? { kind: 'cloud', model: selectedAIModel, modelMode: aiModelRoutingMode }
         : { kind: 'private_remote', ctx: buildDigestAiExecutionContext() },
@@ -432,6 +522,7 @@ export const DigestScreen = () => {
     digest,
     digestAiEnabled,
     digestCacheKey,
+    digestFormat,
     i18n.language,
     selectedAIModel,
     useCloudDigest,
@@ -545,10 +636,20 @@ export const DigestScreen = () => {
   const digestSharePayload = useMemo(() => {
     if (!aiResult) return null;
 
+    const generatedDate = aiCreatedAt ? dayjs(aiCreatedAt).toDate() : new Date();
     const { message, title } = buildDigestSharePayload({
       title: t('settings.digest.title'),
       periodLabel: t(`settings.digest.period.${period}`),
       rangeText,
+      formatLabel: t(`settings.digest.format.${digestFormat}`),
+      generatedAtText: `${dayjs(generatedDate).locale(dayjsLocale).format('D MMM YYYY')} ${formatLocalTimeOfDay(generatedDate)}`,
+      sourceNote: t('settings.digest.exportSourceNote'),
+      labels: {
+        period: t('settings.digest.exportHeader.period'),
+        dates: t('settings.digest.exportHeader.dates'),
+        format: t('settings.digest.exportHeader.format'),
+        generated: t('settings.digest.exportHeader.generated'),
+      },
       markdown: aiResult.markdown,
     });
 
@@ -557,7 +658,7 @@ export const DigestScreen = () => {
       title,
       fileBaseName: sanitizeDigestFileBaseName(title),
     };
-  }, [aiResult, period, rangeText, t]);
+  }, [aiCreatedAt, aiResult, dayjsLocale, digestFormat, period, rangeText, t]);
 
   const handleShareDigestExport = useCallback(
     async (format: ShareRecordExportFormat) => {
@@ -701,6 +802,7 @@ export const DigestScreen = () => {
           }
         >
           <PeriodTabs period={period} onChange={setPeriod} />
+          <DigestFormatTabs format={digestFormat} onChange={handleDigestFormatChange} />
 
           <View className="mb-5 px-1">
             <Text

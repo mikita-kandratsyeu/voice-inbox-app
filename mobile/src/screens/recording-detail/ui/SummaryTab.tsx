@@ -1,4 +1,14 @@
-import { AlertCircle, FileText, RefreshCw, Share, UsersRound } from 'lucide-react-native';
+import {
+  AlertCircle,
+  CheckCircle2,
+  ClipboardList,
+  FileText,
+  HelpCircle,
+  ListChecks,
+  RefreshCw,
+  Share,
+  UsersRound,
+} from 'lucide-react-native';
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, View } from 'react-native';
@@ -15,6 +25,10 @@ import { useAiModelName, useAiTabBannerDismiss, useNetworkStatus } from '@/share
 import type { SummaryTokenUsage } from '@/shared/lib/summaryMetaSubtitle';
 import { AiTabErrorBanner, AiTabHintIcon, Button, TabEmptyState } from '@/shared/ui';
 
+import {
+  type MeetingRecapSection,
+  parseMeetingRecapSummary,
+} from '../lib/parseMeetingRecapSummary';
 import { AiTabProcessing } from './AiTabProcessing';
 import { MeetingTabInfoCallout, MeetingTabInfoCalloutText } from './MeetingTabInfoCallout';
 import { PrivateModeTranscriptLimitNotice } from './PrivateModeTranscriptLimitNotice';
@@ -51,6 +65,77 @@ type SummaryTabProps = {
   summaryTokenUsage?: SummaryTokenUsage;
   summaryGenerationMs?: number;
 };
+
+function MeetingRecapSectionBlock({
+  section,
+  color,
+}: {
+  section: MeetingRecapSection;
+  color: Colors;
+}) {
+  const bodyItems = useMemo(() => splitMeetingRecapBody(section.body), [section.body]);
+  const iconColor =
+    section.kind === 'decisions'
+      ? color.accent.success
+      : section.kind === 'openQuestions'
+        ? color.accent.cache
+        : color.accent.primary;
+  const icon =
+    section.kind === 'decisions' ? (
+      <CheckCircle2 size={18} color={iconColor} strokeWidth={2} />
+    ) : section.kind === 'tasks' ? (
+      <ClipboardList size={18} color={iconColor} strokeWidth={2} />
+    ) : section.kind === 'openQuestions' ? (
+      <HelpCircle size={18} color={iconColor} strokeWidth={2} />
+    ) : section.kind === 'nextSteps' ? (
+      <ListChecks size={18} color={iconColor} strokeWidth={2} />
+    ) : (
+      <FileText size={18} color={iconColor} strokeWidth={2} />
+    );
+
+  return (
+    <View
+      className="gap-2.5 rounded-xl border p-3"
+      style={{
+        borderColor: color.border.default,
+        backgroundColor: color.background.tertiary,
+      }}
+    >
+      <View className="flex-row items-center gap-2">
+        {icon}
+        <Text className="text-[13px] font-semibold" style={{ color: color.text.primary }}>
+          {section.title}
+        </Text>
+      </View>
+      <View className="gap-2">
+        {bodyItems.map((item, index) => (
+          <View key={`${section.kind}:${index}:${item}`} className="flex-row gap-2">
+            {bodyItems.length > 1 ? (
+              <View
+                className="mt-[9px] h-1.5 w-1.5 rounded-full"
+                style={{ backgroundColor: iconColor }}
+              />
+            ) : null}
+            <Text className="flex-1 text-sm leading-6" style={{ color: color.text.primary }}>
+              {item}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+function splitMeetingRecapBody(body: string): string[] {
+  const normalized = body
+    .replace(/\r\n?/g, '\n')
+    .replace(/\s+(\d+[.)]\s+)/g, '\n$1')
+    .split('\n')
+    .map((line) => line.replace(/^\s*(?:[-*]|•|\d+[.)])\s*/, '').trim())
+    .filter(Boolean);
+
+  return normalized.length > 0 ? normalized : [body.trim()].filter(Boolean);
+}
 
 export const SummaryTab = ({
   color,
@@ -124,6 +209,15 @@ export const SummaryTab = ({
     showSummaryReasoningInNotes &&
     Boolean(summaryReasoning?.trim());
   const modelHint = aiModelName.trim() ? aiModelName : undefined;
+  const meetingRecapSections = useMemo(
+    () =>
+      isMeeting
+        ? parseMeetingRecapSummary(summary).filter(
+            (section) => section.kind !== 'tasks' && section.kind !== 'nextSteps',
+          )
+        : [],
+    [isMeeting, summary],
+  );
 
   const errMessage = useMemo(() => {
     return errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '');
@@ -223,9 +317,21 @@ export const SummaryTab = ({
           </MeetingTabInfoCalloutText>
         </MeetingTabInfoCallout>
       )}
-      <Text className="text-sm leading-6" style={{ color: color.text.primary }}>
-        {summary}
-      </Text>
+      {meetingRecapSections.length > 0 ? (
+        <View className="gap-3">
+          {meetingRecapSections.map((section) => (
+            <MeetingRecapSectionBlock
+              key={`${section.kind}:${section.title}`}
+              section={section}
+              color={color}
+            />
+          ))}
+        </View>
+      ) : (
+        <Text className="text-sm leading-6" style={{ color: color.text.primary }}>
+          {summary}
+        </Text>
+      )}
       {showReasoningBlock && summaryReasoning ? (
         <SummaryReasoningDisclosure
           reasoning={summaryReasoning}

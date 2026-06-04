@@ -141,6 +141,24 @@
 				<string>public.mpeg-4-audio</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeName</key>
+			<string>Subtitles</string>
+			<key>LSHandlerRank</key>
+			<string>Alternate</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>public.text</string>
+				<string>public.plain-text</string>
+				<string>public.utf8-plain-text</string>
+				<string>public.srt</string>
+				<string>public.subrip</string>
+				<string>public.subtitle</string>
+				<string>public.webvtt</string>
+				<string>com.apple.quicktime.srt</string>
+				<string>org.videolan.srt</string>
+			</array>
+		</dict>
 	</array>
 	<key>SKAdNetworkItems</key>
 	<array>

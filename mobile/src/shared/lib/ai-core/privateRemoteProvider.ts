@@ -218,12 +218,15 @@ function extractHttpErrorMessage(bodyText: string): string {
 
 type RemoteStructuredFormatMode = 'plain' | 'json_object' | 'json_schema';
 type RemoteFormatCapability = 'unknown' | RemoteStructuredFormatMode;
+type RemoteMaxTokensParam = 'max_tokens' | 'max_completion_tokens';
 
 const remoteFormatCapabilityByBaseUrl = new Map<string, RemoteFormatCapability>();
+const remoteMaxTokensParamByBaseUrl = new Map<string, RemoteMaxTokensParam>();
 
 /** @internal test helper */
 export function resetPrivateRemoteFormatCapabilityCacheForTests(): void {
   remoteFormatCapabilityByBaseUrl.clear();
+  remoteMaxTokensParamByBaseUrl.clear();
 }
 
 function remoteBaseUrlKey(raw: string): string {
@@ -293,6 +296,33 @@ function mapPrivateRemoteError(err: unknown): string {
   return mapLocalError(err);
 }
 
+function applyOutputBudgetToPayload(
+  payload: Record<string, unknown>,
+  maxTokens: number | null,
+  param: RemoteMaxTokensParam,
+): void {
+  if (maxTokens == null) return;
+  payload[param] = maxTokens;
+}
+
+function maxTokensParamModesForBaseUrl(baseUrl: string): RemoteMaxTokensParam[] {
+  const cached = remoteMaxTokensParamByBaseUrl.get(remoteBaseUrlKey(baseUrl));
+  if (cached) return [cached];
+  return ['max_tokens', 'max_completion_tokens'];
+}
+
+/** Server rejected `max_tokens` (e.g. newer OpenAI models) — retry with `max_completion_tokens`. */
+function isMaxTokensParameterRejected(err: unknown): boolean {
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  if (!/max_tokens/.test(msg)) return false;
+  return (
+    /max_completion_tokens/.test(msg) ||
+    /not supported|unsupported|unsupported_parameter|use 'max_completion_tokens'|use "max_completion_tokens"/.test(
+      msg,
+    )
+  );
+}
+
 /** Server rejected the requested `response_format` — try the next mode in the ladder. */
 function isStructuredFormatRejected(err: unknown): boolean {
   const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
@@ -358,55 +388,70 @@ async function callRemoteCompletion(
     formatMode: RemoteStructuredFormatMode,
     omitAbortSignal: boolean,
   ): Promise<RemoteCompletionOutput> => {
-    const payload: Record<string, unknown> = {
-      model: ctx.privateRemoteModel.trim(),
-      messages,
-      temperature,
-      stream: false,
-    };
-    if (maxTokens != null) {
-      payload.max_tokens = maxTokens;
-    }
-    if (formatMode === 'json_object') {
-      payload.response_format = { type: 'json_object' };
-    } else if (formatMode === 'json_schema') {
-      payload.response_format = buildPrivateRemoteJsonSchemaResponseFormat(schemaKind);
-    }
+    const maxTokensModes = maxTokensParamModesForBaseUrl(ctx.privateRemoteBaseUrl);
+    let lastErr: unknown;
+    for (let t = 0; t < maxTokensModes.length; t += 1) {
+      const maxTokensParam = maxTokensModes[t]!;
+      try {
+        const payload: Record<string, unknown> = {
+          model: ctx.privateRemoteModel.trim(),
+          messages,
+          temperature,
+          stream: false,
+        };
+        applyOutputBudgetToPayload(payload, maxTokens, maxTokensParam);
+        if (formatMode === 'json_object') {
+          payload.response_format = { type: 'json_object' };
+        } else if (formatMode === 'json_schema') {
+          payload.response_format = buildPrivateRemoteJsonSchemaResponseFormat(schemaKind);
+        }
 
-    const response = await nitroFetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(payload),
-      signal: omitAbortSignal ? undefined : abortSignal,
-      timeoutMs: PRIVATE_REMOTE_COMPLETION_TIMEOUT_MS,
-    });
+        const response = await nitroFetch(endpoint, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify(payload),
+          signal: omitAbortSignal ? undefined : abortSignal,
+          timeoutMs: PRIVATE_REMOTE_COMPLETION_TIMEOUT_MS,
+        });
 
-    if (!response.ok) {
-      const bodyText = await response.text();
-      const message = extractHttpErrorMessage(bodyText) || `HTTP ${response.status}`;
-      throw new Error(message);
+        if (!response.ok) {
+          const bodyText = await response.text();
+          const message = extractHttpErrorMessage(bodyText) || `HTTP ${response.status}`;
+          throw new Error(message);
+        }
+        const json = (await response.json()) as OpenAiChatResponse;
+        const content = readMessageContent(json);
+        const messageReasoning = readMessageReasoning(json);
+        if (!content) {
+          throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
+        }
+        const promptTokens = Number(json.usage?.prompt_tokens);
+        const completionTokens = Number(json.usage?.completion_tokens);
+        const tokenUsage =
+          Number.isFinite(promptTokens) && Number.isFinite(completionTokens)
+            ? {
+                prompt: Math.max(0, Math.floor(promptTokens)),
+                completion: Math.max(0, Math.floor(completionTokens)),
+              }
+            : undefined;
+        remoteMaxTokensParamByBaseUrl.set(baseUrlKey, maxTokensParam);
+        return {
+          content,
+          ...(messageReasoning ? { reasoning: messageReasoning } : {}),
+          ...(isString(json.model) && json.model.trim().length > 0
+            ? { model: json.model.trim() }
+            : {}),
+          ...(tokenUsage ? { tokenUsage } : {}),
+        };
+      } catch (err) {
+        lastErr = err;
+        const hasNext = t < maxTokensModes.length - 1;
+        if (!hasNext || !isMaxTokensParameterRejected(err)) {
+          throw err;
+        }
+      }
     }
-    const json = (await response.json()) as OpenAiChatResponse;
-    const content = readMessageContent(json);
-    const messageReasoning = readMessageReasoning(json);
-    if (!content) {
-      throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
-    }
-    const promptTokens = Number(json.usage?.prompt_tokens);
-    const completionTokens = Number(json.usage?.completion_tokens);
-    const tokenUsage =
-      Number.isFinite(promptTokens) && Number.isFinite(completionTokens)
-        ? {
-            prompt: Math.max(0, Math.floor(promptTokens)),
-            completion: Math.max(0, Math.floor(completionTokens)),
-          }
-        : undefined;
-    return {
-      content,
-      ...(messageReasoning ? { reasoning: messageReasoning } : {}),
-      ...(isString(json.model) && json.model.trim().length > 0 ? { model: json.model.trim() } : {}),
-      ...(tokenUsage ? { tokenUsage } : {}),
-    };
+    throw lastErr;
   };
 
   if (!wantStructured) {
@@ -683,29 +728,53 @@ export async function testPrivateRemoteConnection(
       };
     }
 
-    const response = await nitroFetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
+    const pingBaseUrlKey = remoteBaseUrlKey(config.privateRemoteBaseUrl);
+    const maxTokensModes = maxTokensParamModesForBaseUrl(config.privateRemoteBaseUrl);
+    let response: Awaited<ReturnType<typeof nitroFetch>> | null = null;
+    for (let t = 0; t < maxTokensModes.length; t += 1) {
+      const maxTokensParam = maxTokensModes[t]!;
+      const pingPayload: Record<string, unknown> = {
         model,
         messages: [
           { role: 'system', content: 'Reply with plain text "pong".' },
           { role: 'user', content: 'ping' },
         ],
         temperature: 0,
-        max_tokens: 32,
         stream: false,
-      }),
-      timeoutMs: PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
-    });
-    if (isAuthFailureStatus(response.status)) {
-      return { ok: false, reason: 'auth_failed' };
-    }
-    if (!response.ok) {
+      };
+      applyOutputBudgetToPayload(pingPayload, 32, maxTokensParam);
+      const attempt = await nitroFetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(pingPayload),
+        timeoutMs: PRIVATE_REMOTE_QUICK_FETCH_TIMEOUT_MS,
+      });
+      if (isAuthFailureStatus(attempt.status)) {
+        return { ok: false, reason: 'auth_failed' };
+      }
+      if (attempt.ok) {
+        remoteMaxTokensParamByBaseUrl.set(pingBaseUrlKey, maxTokensParam);
+        response = attempt;
+        break;
+      }
+      const bodyText = await attempt.text();
+      const message = extractHttpErrorMessage(bodyText) || `HTTP ${attempt.status}`;
+      const hasNext = t < maxTokensModes.length - 1;
+      if (hasNext && isMaxTokensParameterRejected(new Error(message))) {
+        continue;
+      }
       return {
         ok: false,
         reason: 'server_unreachable',
-        error: `HTTP ${response.status}`,
+        error: message,
+        ...(modelIds.length > 0 ? { models: modelIds } : {}),
+      };
+    }
+    if (!response) {
+      return {
+        ok: false,
+        reason: 'server_unreachable',
+        error: i18n.t('ai.privateModeGenericError'),
         ...(modelIds.length > 0 ? { models: modelIds } : {}),
       };
     }

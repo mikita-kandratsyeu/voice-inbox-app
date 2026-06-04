@@ -1,6 +1,7 @@
 import { IS_IOS } from '@/shared/lib/platform';
 
-const AUDIO_EXT = /\.(m4a|mp4|mp3|wav|aac|caf|flac|ogg|opus|webm|aiff|aif|wma|3gp|amr)(\?|$)/i;
+const IMPORT_EXT =
+  /\.(m4a|mp4|mp3|wav|aac|caf|flac|ogg|opus|webm|aiff|aif|wma|3gp|amr|srt|vtt|sbv|sub|txt)(\?|$)/i;
 
 /** iOS handoff paths: Documents/Inbox, *-Inbox (e.g. org.telegram.Telegram-Inbox), or /Inbox/ segment. */
 const IOS_SHARED_IMPORT_PATH = /\/(Documents\/Inbox|[^/]+-Inbox|Inbox)\//i;
@@ -91,7 +92,7 @@ export function isAudioImportDeepLinkUrl(rawUrl: string): boolean {
 
   try {
     const { pathname } = new URL(trimmed);
-    if (AUDIO_EXT.test(pathname)) return true;
+    if (IMPORT_EXT.test(pathname)) return true;
     if (IOS_SHARED_IMPORT_PATH.test(pathname)) return true;
     if (fileUrlLooksLikeIosSharedImport(pathname)) return true;
     if (fileUrlLooksLikeIosContainerHandoff(pathname)) return true;
@@ -99,7 +100,7 @@ export function isAudioImportDeepLinkUrl(rawUrl: string): boolean {
     return false;
   } catch {
     return (
-      AUDIO_EXT.test(trimmed) ||
+      IMPORT_EXT.test(trimmed) ||
       fileUrlLooksLikeIosSharedImport(trimmed) ||
       fileUrlLooksLikeIosContainerHandoff(trimmed) ||
       fileUrlLooksLikeIosLinkingHandoff(trimmed)

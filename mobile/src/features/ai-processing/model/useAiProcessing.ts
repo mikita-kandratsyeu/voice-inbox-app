@@ -331,11 +331,11 @@ export const useAiProcessing = () => {
           snapshot?.recordingMarks ?? record.recordingMarks,
         );
         const recordIsMeeting = (snapshot?.classification ?? record.classification) === 'meeting';
+        const includeMeetingPreset = isProActive && recordIsMeeting;
         const shouldRefreshSpeakersOnRegen =
           aiExecutionMode !== 'private_experimental' &&
           (autoRefreshMeetingSpeakersOnRegen || !wasSummaryRegeneration);
-        includeMeetingSpeakerBreakdown =
-          isProActive && recordIsMeeting && shouldRefreshSpeakersOnRegen;
+        includeMeetingSpeakerBreakdown = includeMeetingPreset && shouldRefreshSpeakersOnRegen;
 
         const getLatestRecord = (id: string) =>
           useRecordStore.getState().records.find((r) => r.id === id);
@@ -460,7 +460,7 @@ export const useAiProcessing = () => {
           {
             id: requestId,
             transcript: record.transcript,
-            ...(includeMeetingSpeakerBreakdown ? { processingPreset: 'meeting' as const } : {}),
+            ...(includeMeetingPreset ? { processingPreset: 'meeting' as const } : {}),
             existingTaskTexts,
             ...(taskExtractionHint ? { taskExtractionHint } : {}),
             ...(transcriptSegmentsForCloud?.length

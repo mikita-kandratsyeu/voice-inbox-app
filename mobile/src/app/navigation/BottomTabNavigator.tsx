@@ -6,7 +6,12 @@ import React, { useCallback, useEffect } from 'react';
 import { AppState, Text, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ImportAudioProgressOverlay, useImportAudioFile } from '@/features/import-audio-file';
+import {
+  ImportAudioProgressOverlay,
+  ImportFileActionProvider,
+  ImportSubtitleConfirmSheet,
+  useImportAudioFile,
+} from '@/features/import-audio-file';
 import { consumeAndroidPendingSharedAudioPath } from '@/features/import-audio-file/lib/androidSharedAudioImport';
 import { registerSharedAudioImportHandler } from '@/features/import-audio-file/lib/sharedAudioImportRegistry';
 import { useInboxFiltersReset } from '@/features/inbox-filters';
@@ -42,8 +47,13 @@ export const BottomTabNavigator = () => {
   const { width: windowWidth } = useWindowDimensions();
   const isTablet = useIsTablet();
   const inboxFiltersReset = useInboxFiltersReset();
-  const { importAudioFile, importAudioFromExternalUri, isImporting, importPhase } =
-    useImportAudioFile();
+  const {
+    importAudioFile,
+    importAudioFromExternalUri,
+    isImporting,
+    importPhase,
+    subtitleImportConfirm,
+  } = useImportAudioFile();
 
   const openSharedUri = useCallback(
     async (uri: string) => {
@@ -193,11 +203,14 @@ export const BottomTabNavigator = () => {
   return (
     <View className="flex-1">
       <ImportAudioProgressOverlay visible={isImporting} phase={importPhase} />
-      {isTablet ? (
-        <TabletShellLayout importAudioFile={importAudioFile}>{tabNavigator}</TabletShellLayout>
-      ) : (
-        tabNavigator
-      )}
+      <ImportSubtitleConfirmSheet {...subtitleImportConfirm} />
+      <ImportFileActionProvider importFile={importAudioFile}>
+        {isTablet ? (
+          <TabletShellLayout importAudioFile={importAudioFile}>{tabNavigator}</TabletShellLayout>
+        ) : (
+          tabNavigator
+        )}
+      </ImportFileActionProvider>
       {bottomTouchShieldHeight > 0 ? (
         <View
           pointerEvents="box-only"

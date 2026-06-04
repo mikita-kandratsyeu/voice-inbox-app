@@ -105,7 +105,7 @@
       "privateFoldersCta": "Set up AI server",
       "aiProcessingHint": "AI is working on notes in this section",
       "aiUsage": {
-        "openDetails": "Open usage details"
+        "openDetails": "Open AI credit usage"
       }
     }
   },
@@ -137,11 +137,12 @@
   "inbox": {
     "menuSelectNotes": "Select",
     "menuAutoOrganize": "Organize notes",
+    "menuImportFile": "Import file",
     "adLabel": "Ad",
     "title": "Inbox",
     "emptyTitle": "Start your first recording",
     "emptyDescription": "Voice notes you record or import will show up here.",
-    "emptyImportHint": "Long-press the record button to import an audio file",
+    "emptyImportHint": "Import audio or subtitles from the header menu.",
     "emptyFolderHint": "Open a note and choose Move to folder to place it here",
     "swipeHint": "Swipe left to archive, right to pin.",
     "recordUnreadA11y": "Unread",
@@ -210,7 +211,7 @@
     }
   },
   "ai": {
-    "limitWeeklyExceeded": "You’ve used this week’s generation limit. Try again next week.",
+    "limitWeeklyExceeded": "You’ve used this week’s AI credits. Try again next week.",
     "privateModeUnavailable": "Private mode is not available on this device yet.",
     "privateModeModelNotDownloaded": "Download the selected GGUF model in Settings before using Private mode.",
     "privateModeLimitedTooLong": "This note is too long for Private mode. Switch to Smart mode.",
@@ -372,7 +373,7 @@
     "meetingModeDisableMessage": "The participant breakdown will be hidden. Turn meeting mode back on and update the summary to bring it back.",
     "meetingModeDisableConfirm": "Turn off",
     "meetingSummaryTitle": "Meeting recap",
-    "meetingSummaryDescription": "Summary for meetings: decisions, tasks, and next steps.",
+    "meetingSummaryDescription": "Meeting minutes: brief recap, decisions, and open questions.",
     "meetingDialogueTitle": "Participants",
     "meetingDialogueTabCalloutTitle": "How to read this tab",
     "meetingDialogueDisclaimer": "Lines are grouped for easier reading. Participant labels are AI hints — not a verbatim transcript.",
@@ -584,19 +585,20 @@
     "shareAsTitle": "Share",
     "exportPackagingHintMarkdown": "The note is exported as a Markdown file.",
     "exportPackagingHintPdf": "The note is exported as a PDF generated on this device.",
+    "exportPreparing": "Preparing export…",
     "generatingPdfTitle": "Preparing PDF",
     "generatingPdfDescription": "Formatting notes with timestamps and replies by participant. This may take a moment.",
     "shareAsText": "Share text",
     "emailBrief": "Brief summary",
     "emailBriefDescription": "Summary, tasks, and replies by participant (when available) — no transcript or translation.",
-    "emailBriefMeetingHint": "Compact meeting email: summary, replies by participant, and tasks — no full transcript.",
+    "emailBriefMeetingHint": "Compact meeting email: recap, participant replies, tasks, and next steps — no full transcript.",
     "emailBriefSubject": "Note: {{title}}",
     "emailAutoZipBodySingle": "The note is attached as a ZIP archive (Markdown file inside).",
     "noteBrief": "Full note",
     "noteBriefDescription": "Summary, tasks, tags, and full transcript.",
     "meetingBrief": "Meeting brief",
     "meetingBriefSubtitle": "Structured meeting recap.",
-    "meetingBriefDescription": "Meeting recap with next steps, tasks, and replies by participant.",
+    "meetingBriefDescription": "Meeting recap, participant replies, tasks, and next steps in separate sections.",
     "speakerTurnsBrief": "Replies by participant",
     "speakerTurnsBriefDescription": "Participant breakdown only — with title, date, tags, and disclaimer.",
     "emailFormatChipNote": "Full",
@@ -643,29 +645,32 @@
   "settings": {
     "title": "Settings",
     "aiUsage": {
-      "title": "Generation limit",
-      "subtitle": "Weekly limit for summaries, tasks, answers, and folder auto-organization",
-      "a11yProgress": "{{used}} of {{limit}} generations used this week",
+      "title": "AI credits",
+      "subtitle": "Weekly balance for summaries, tasks, answers, and folder auto-organization",
+      "a11yProgress": "{{used}} of {{limit}} AI credits used this week",
       "used": "{{used}} / {{limit}}",
       "remaining": "Remaining: {{count}}",
+      "remainingShort": "{{count}} left",
+      "remainingCredits_one": "{{count}} credit remaining",
+      "remainingCredits_other": "{{count}} credits remaining",
       "exhausted": "Weekly quota used",
       "resetAt": "Resets: {{date}}",
       "loading": "Loading...",
       "unavailable": "—",
       "loadFailed": "No connection",
       "loadFailedHint": "Pull down to refresh when you’re back online.",
-      "claimBonus": "Watch ad for {{count}} bonus generations",
+      "claimBonus": "Watch ad for {{count}} bonus credits",
       "claimBonusTitle": "Bonus for watching",
-      "claimBonusSubtitle": "Restore {{count}} generations in your weekly limit",
+      "claimBonusSubtitle": "Restore {{count}} credits in your weekly balance",
       "claimBonusLoading": "Loading ad...",
       "claimBonusError": "Something went wrong. Try again.",
       "claimBonusErrorIosAd": "We couldn’t load an ad just now. Please try again in a few minutes.",
       "claimBonusErrorNoInventory": "No ad is available right now. Try again later.",
       "claimBonusCooldown": "Available again soon",
-      "claimBonusSuccess": "+{{count}} bonus generations",
-      "claimBonusUnavailableHint": "The ad bonus unlocks after you start using your weekly generation limit.",
-      "claimBonusNoUsage": "Use some generations first — the bonus refunds part of what you’ve already spent.",
-      "openDashboard": "Open usage details"
+      "claimBonusSuccess": "+{{count}} bonus credits",
+      "claimBonusUnavailableHint": "The ad bonus unlocks after you start spending your weekly AI credit balance.",
+      "claimBonusNoUsage": "Use some credits first — the bonus refunds part of what you’ve already spent.",
+      "openDashboard": "Open AI credit usage"
     },
     "aiUsageDashboard": {
       "title": "AI usage",
@@ -673,16 +678,16 @@
       "cloudBadge": "Cloud",
       "hybridBadge": "Hybrid",
       "proBenefitTitle": "Pro keeps AI automatic",
-      "proBenefitSubtitle": "Your Pro plan includes a higher weekly cloud AI limit for summaries, answers, translations, and organization.",
-      "freePlanTitle": "Free weekly limit",
-      "freePlanSubtitle": "Upgrade to Pro for a higher weekly limit and smoother automatic processing.",
-      "currentWeekOnly": "This dashboard uses the current weekly counter. Feature-level history will require a backend usage history model.",
+      "proBenefitSubtitle": "Your Pro plan includes a higher weekly AI credit balance for summaries, answers, translations, and organization.",
+      "freePlanTitle": "Free AI credits",
+      "freePlanSubtitle": "Upgrade to Pro for more weekly AI credits and smoother automatic processing.",
+      "currentWeekOnly": "This dashboard uses the current weekly credit counter. Feature-level history will require a backend usage history model.",
       "featureBreakdownTitle": "What uses credits",
       "savingTitle": "How to save credits",
       "metrics": {
         "used": "Used",
         "remaining": "Remaining",
-        "limit": "Limit",
+        "limit": "Balance",
         "reset": "Reset",
         "weekly": "Weekly",
         "usedHelper": "{{percent}}% of this week",
@@ -705,7 +710,7 @@
         },
         "translate": {
           "title": "Translate",
-          "subtitle": "Cloud translation uses the generation limit when an online model is selected."
+          "subtitle": "Cloud translation spends AI credits when Smart mode is selected."
         },
         "digest": {
           "title": "AI digest",
@@ -719,7 +724,7 @@
       "savingTips": {
         "localTranscription": "Transcribe first and generate only for notes that need a summary or tasks.",
         "batchAsk": "Ask one focused question instead of several follow-ups when possible.",
-        "privateMode": "Use local/private AI for eligible workflows when you want to avoid cloud usage."
+        "privateMode": "Use local/private AI for eligible workflows when you want to avoid spending cloud AI credits."
       }
     },
     "digest": {
@@ -738,6 +743,18 @@
         "day": "Today",
         "week": "7 days",
         "month": "30 days"
+      },
+      "formatTitle": "Summary format",
+      "formatHint": "How the AI response is structured",
+      "format": {
+        "brief": "Brief",
+        "detailed": "Detailed",
+        "tasks": "Tasks only"
+      },
+      "formatTab": {
+        "brief": "Brief",
+        "detailed": "Detailed",
+        "tasks": "Tasks"
       },
       "durationMinutes_one": "{{count}} min",
       "durationMinutes_other": "{{count}} min",
@@ -771,18 +788,26 @@
       "regenerateAi": "Refresh recap",
       "shareRecap": "AI digest",
       "shareRecapDescription": "AI recap for the selected period.",
+      "exportPreparing": "Preparing export…",
+      "exportHeader": {
+        "period": "Period",
+        "dates": "Dates",
+        "format": "Format",
+        "generated": "Generated"
+      },
+      "exportSourceNote": "Based on note summaries, tasks, and key phrases.",
       "exportPackagingHintMarkdown": "The digest is exported as a Markdown file.",
       "exportPackagingHintPdf": "The digest is exported as a PDF generated on this device.",
       "emailDescription": "Digest by email — Markdown in the message body or a PDF attachment.",
       "emailSentMessage": "The digest was sent to {{email}}.",
       "aiLimitError": "Weekly AI limit reached. Try again after reset or upgrade your plan.",
-      "emptyAi": "Nothing here yet — record a note and your digest will fill in.",
+      "emptyAi": "Not enough data yet. Add notes with summaries, tasks, or key phrases to make the digest useful.",
       "topicsTitle": "Top topics",
-      "emptyTopics": "Generate summaries for your notes to see recurring themes here.",
+      "emptyTopics": "No recurring topics yet. Generate summaries or add key phrases to your notes.",
       "nextStepsTitle": "Next steps",
-      "emptyNextSteps": "Next steps from note summaries will show up here.",
+      "emptyNextSteps": "No next steps yet. Add tasks or regenerate summaries for your notes.",
       "openTasksTitle": "Open tasks",
-      "emptyOpenTasks": "No open tasks linked to notes in this period.",
+      "emptyOpenTasks": "No open tasks for this period. Add tasks to notes to see them in the digest.",
       "overdueTitle": "Overdue tasks",
       "emptyOverdue": "No overdue tasks."
     },
@@ -829,6 +854,37 @@
     "autoArchiveDelayValue_other": "After {{count}} days",
     "autoArchiveDelayPickerTitle": "Delay before archiving",
     "autoArchiveDelayPickerMessage": "Read notes move to the archive after this many days if they are not pinned and every task in the list is done.",
+    "siriShortcuts": {
+      "entryTitle": "Siri Shortcuts",
+      "entrySubtitle": "Start recording, create a text note, or open tasks from iPhone and iPad.",
+      "title": "Siri Shortcuts",
+      "aboutTitle": "Quick actions on iOS and iPadOS",
+      "aboutDescription": "Voice Inbox AI adds actions for Siri, the Shortcuts app, and Home Screen quick actions. They open the right place in the app without extra taps.",
+      "availableTitle": "Available shortcuts",
+      "howToUseTitle": "How to use them",
+      "shortcuts": {
+        "startRecording": {
+          "title": "Start recording",
+          "subtitle": "Opens Voice Inbox AI and starts a new voice note right away.",
+          "value": "Siri"
+        },
+        "newTextNote": {
+          "title": "New text note",
+          "subtitle": "Opens text note creation when typing is easier than recording.",
+          "value": "Shortcuts"
+        },
+        "allTasks": {
+          "title": "All tasks",
+          "subtitle": "Shows the task list collected from your notes.",
+          "value": "Tasks"
+        }
+      },
+      "tips": {
+        "askSiri": "Ask Siri with a phrase like “Start recording in Voice Inbox AI” or “Show tasks in Voice Inbox AI.”",
+        "shortcutsApp": "In the Shortcuts app, add these actions to your own workflows and launch them from widgets, Focus, or automations.",
+        "homeScreen": "Long-press the app icon on the Home Screen to quickly open recording, a text note, or tasks."
+      }
+    },
     "appearance": "Appearance",
     "appLanguage": "App language",
     "appTheme": "Theme",
@@ -857,8 +913,8 @@
     "permissionsSection": "Permissions",
     "permissionMicrophone": "Microphone",
     "permissionMicrophoneDesc": "Required for voice recording.",
-    "permissionNotifications": "Processing complete",
-    "permissionNotificationsDesc": "Push when transcription or cloud AI finishes. Follows system notifications above.",
+    "permissionNotifications": "Processing ready",
+    "permissionNotificationsDesc": "Push notifications when a transcript, summary, or other AI processing is ready. Controlled by the system permission above.",
     "permissionGranted": "Granted",
     "permissionDenied": "Denied",
     "permissionNotDetermined": "Not set",
@@ -867,17 +923,17 @@
     "notificationsEnabledCount": "{{count}} on",
     "notificationsScreen": {
       "title": "Notifications",
-      "intro": "Turn on notifications in your device settings first — otherwise nothing can be delivered. AI-ready alerts are sent as push when permission is on. Task due-date reminders on this device can be turned off with the switch below.",
-      "sectionTitle": "What we send",
-      "aiAlertsFollowsSystem": "With system",
+      "intro": "Allow notifications in system settings so Voice Inbox can tell you when transcripts or AI processing are ready. Task reminders are controlled separately below and run locally on this device.",
+      "sectionTitle": "Notification types",
+      "aiAlertsFollowsSystem": "System",
       "aiAlertsDeniedTitle": "Turn on notifications",
-      "aiAlertsDeniedMessage": "Allow notifications for Voice Inbox AI in your device settings so you know when AI processing is done.",
+      "aiAlertsDeniedMessage": "Allow notifications for Voice Inbox AI in your device settings to get transcript and AI processing updates.",
       "taskRemindersDeniedTitle": "Turn on notifications",
-      "taskRemindersDeniedMessage": "Allow notifications for Voice Inbox AI in your device settings so you don't miss a task due date.",
+      "taskRemindersDeniedMessage": "Allow notifications for Voice Inbox in your device settings to receive task due-date reminders.",
       "systemDeniedHint": "Notifications are off in your device settings. Turn them on there, then come back to the app."
     },
-    "taskDeadlineNotifications": "On-device reminders",
-    "taskDeadlineNotificationsHint": "Reminders when a task is due. Scheduled on this device — works offline.",
+    "taskDeadlineNotifications": "Task reminders",
+    "taskDeadlineNotificationsHint": "Due dates on this device. They work offline and are not sent to the cloud.",
     "taskDeadlineNotificationsChannel": "Voice Inbox reminders",
     "planStatus": {
       "freeTitle": "Free plan",
@@ -889,7 +945,7 @@
       "soonBadge": "Coming soon",
       "privateBadge": "Private",
       "proTitle": "Pro",
-      "proValueSubtitle": "Higher generation limits, folder auto-organization, auto-archive for read notes, and no ads.",
+      "proValueSubtitle": "More AI credits, folder auto-organization, auto-archive for read notes, and no ads.",
       "proActiveUntil": "Active until {{date}}",
       "a11yUnknownDate": "unknown date",
       "a11yOpenPlans": "Open plan comparison",
@@ -911,7 +967,7 @@
         "manualAi": "AI runs manually only",
         "basicModels": "Core models for summaries and Q&A",
         "recording": "Recordings up to {{minutes}} minutes",
-        "weeklyAi": "Up to {{limit}} AI requests per week"
+        "weeklyAi": "Up to {{limit}} AI credits per week"
       },
       "proTitle": "Pro",
       "billingMonthly": "Monthly",
@@ -941,7 +997,7 @@
         "autoTranscription": "Auto-transcription",
         "autoSummaryAndTasks": "Auto-summaries and tasks",
         "autoArchiveReadNotes": "Auto-archive for read notes",
-        "aiLimit": "Up to {{limit}} AI requests per week",
+        "aiLimit": "Up to {{limit}} AI credits per week",
         "recordingUpToOneHour": "Recordings up to 1 hour",
         "accentCustomization": "Accent color — buttons & progress",
         "folderColors": "Custom folder colors",
@@ -1385,16 +1441,16 @@
     },
     "autoRefreshMeetingSpeakers": {
       "title": "Meeting participants",
-      "label": "Update with summary",
-      "subtitle": "Regenerating the summary or tasks also refreshes the Participants tab. Turn off to keep your current list and name edits. To refresh participants only, use the button on that tab.",
+      "label": "Update on regenerate",
+      "subtitle": "Regenerating the summary or tasks also updates the participant breakdown. Turn off to keep your current list and name edits. Use the button on the Participants tab to update participants only.",
       "a11y": "Update participant breakdown when regenerating summary or tasks"
     }
   },
   "privateAiMode": {
     "title": "Private vs Smart",
-    "description": "Private keeps AI on your phone or a connected AI server (Pro)—off Voice Inbox AI cloud. Folders, auto-organize, and AI digest unlock with a server. Smart is faster, with more features.",
+    "description": "Private runs AI on your device or your own AI server (Pro), so note content is not sent to the Voice Inbox AI cloud. Connect a server to unlock folders, auto-organize, and AI Digest. Smart uses the cloud for faster processing and the full feature set.",
     "enableAlertTitle": "Turn on Private?",
-    "enableAlertMessage": "Maximum privacy.\n\nTranscripts and notes stay on this phone—Voice Inbox AI cloud never sees them.\n\nWorth knowing:\n• On-device AI can feel slower and use more battery\n• Folders, auto-organize, and AI digest unlock with an AI server in Pro or Smart mode\n\nYou can switch back to Smart anytime.",
+    "enableAlertMessage": "Maximum privacy.\n\nTranscripts and notes are processed on this device. They are not sent to the Voice Inbox AI cloud.\n\nWorth knowing:\n• Local AI can be slower and use more battery\n• Folders, auto-organize, and AI Digest are available with your AI server (Pro) or in Smart\n\nYou can switch back to Smart anytime.",
     "unavailableDeviceHint": "This device does not meet Private mode requirements (about 5.5 GB RAM and 3.5 GB free storage). Use Smart mode.",
     "unavailableDiagnostics": "Detected: {{ram}} RAM, {{disk}} free storage.",
     "unavailableDiagnosticsPartial": "Detected: {{details}}.",
@@ -1403,15 +1459,20 @@
   },
   "aiModels": {
     "title": "Generation model",
-    "privateDescription": "On-device: local AI and core features. With an AI server (Pro): folders, auto-organize, AI digest, and your model—off Voice Inbox AI cloud.",
-    "privateBudgetHint": "Output length and generation time are set in AI settings under \"On-device inference\".",
+    "privateDescription": "On device: summaries, tasks, and note Q&A. With an AI server (Pro): folders, auto-organize, and AI digest.",
+    "privateBudgetHint": "Response length and speed are in AI settings under \"On-device model\" and \"AI server\".",
     "localDownloadBlockedTitle": "Download in progress",
     "localDownloadBlockedBody": "Wait for the current model to finish downloading, or cancel it, then try again.",
     "privateModeLabel": "On-device",
     "autoName": "Auto",
     "autoDescription": "The app automatically selects the best model for each task.",
     "autoRecommendedLabel": "Auto",
-    "manualSectionTitle": "Fine-tune",
+    "recommendedSectionTitle": "Recommended",
+    "recommendedSectionDescription": "Best default for Smart mode. The app chooses the model for each request.",
+    "standardSectionTitle": "Everyday models",
+    "standardSectionDescription": "Fast, reliable choices for most summaries, tasks, and note Q&A.",
+    "advancedSectionTitle": "Advanced models",
+    "advancedSectionDescription": "Stronger models for long recordings, deeper analysis, and important notes.",
     "tierAuto": "Auto",
     "tierFast": "Fast",
     "tierSmart": "Smarter",
@@ -1427,7 +1488,7 @@
     "openaiDesc": "Balanced speed and quality for summaries and task extraction.",
     "metaLlamaDesc": "Open-source model with strong reasoning and instruction following",
     "deepSeekDesc": "An efficient model for reasoning, structure, and detailed answers.",
-    "deepSeekProDesc": "Flagshipmodel for complex reasoning, long recordings, and detailed analysis.",
+    "deepSeekProDesc": "Flagship model for complex reasoning, long recordings, and detailed analysis.",
     "mimoDesc": "Flagship model for long recordings, summaries, and Q&A.",
     "minimaxDesc": "Best quality for complex summaries, important notes, and deep analysis.",
     "minimaxM27LegacyDesc": "Earlier MiniMax version. Stays in your list if you chose it before.",
@@ -1548,17 +1609,26 @@
     "title": "Export Voice Inbox AI data"
   },
   "importAudio": {
-    "preparingTitle": "Importing audio",
+    "preparingTitle": "Importing file",
     "phasePreparing": "Please wait…",
     "phaseCopying": "Copying file to the app…",
     "phaseConverting": "Converting to a supported format…",
     "phaseAnalyzing": "Reading duration — large files can take a while.",
+    "phaseParsingSubtitles": "Reading subtitle timings…",
     "maxDurationTitle": "File too long",
     "maxDurationMessage": "Recording must be no longer than {{ max }} minutes.",
     "durationUnknownTitle": "Could not read duration",
     "durationUnknownMessage": "The app could not read this file's length, so the {{ max }}-minute limit cannot be verified. Try WAV, M4A, or MP3, or re-export the file.",
     "importError": "Could not add the audio file. Try another format (e.g. WAV, M4A, MP3).",
-    "conversionError": "Could not convert the audio file. Try a different file or format."
+    "conversionError": "Could not convert the audio file. Try a different file or format.",
+    "audioImportTitle": "Import audio",
+    "audioImportDuration": "Audio length: {{ time }}",
+    "subtitleImportTitle": "Import subtitles",
+    "subtitleImportDuration": "Transcript length: {{ time }}",
+    "importConfirm": "Create",
+    "subtitleImportConfirm": "Create",
+    "subtitleImportErrorTitle": "Could not read subtitles",
+    "subtitleImportError": "Choose an SRT, VTT, SBV, or SUB file with subtitle timings."
   },
   "cloudAiConsent": {
     "title": "Cloud AI and your notes",

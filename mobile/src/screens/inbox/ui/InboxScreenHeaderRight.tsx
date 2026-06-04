@@ -1,6 +1,6 @@
 import { MenuView } from '@react-native-menu/menu';
 import type { TFunction } from 'i18next';
-import { CheckCircle2, FolderPlus, MoreVertical, Search, SquarePen } from 'lucide-react-native';
+import { FolderPlus, MoreVertical, Search, SquarePen } from 'lucide-react-native';
 import React, { memo, useMemo } from 'react';
 import { View } from 'react-native';
 
@@ -26,6 +26,7 @@ type InboxScreenHeaderRightProps = {
   onEnterBatchMode: () => void;
   onOpenAllTasks: () => void;
   onCreateTextNote: () => void;
+  onImportFile: () => void;
   /** Tablet sidebar: no overflow menu; actions as header icons. */
   useTabletShell?: boolean;
   /** Tablet sidebar already exposes text note compose. */
@@ -52,6 +53,7 @@ function InboxScreenHeaderRightInner({
   onEnterBatchMode,
   onOpenAllTasks,
   onCreateTextNote,
+  onImportFile,
   useTabletShell = false,
   hideCreateTextNote = false,
   t,
@@ -67,16 +69,19 @@ function InboxScreenHeaderRightInner({
       image?: string;
       imageColor?: string;
       attributes?: { disabled?: boolean };
-    }> = [
-      {
+    }> = [];
+
+    if (!useTabletShell) {
+      items.push({
         id: 'allTasks',
         title: t('allTasks.title'),
         titleColor: color.text.primary,
         image: 'checklist',
         imageColor: color.text.primary,
-      },
-    ];
-    if (foldersEnabled) {
+      });
+    }
+
+    if (foldersEnabled && !useTabletShell) {
       items.push({
         id: 'autoOrganize',
         title: t('inbox.menuAutoOrganize'),
@@ -93,8 +98,15 @@ function InboxScreenHeaderRightInner({
       image: 'checkmark.circle',
       imageColor: color.text.primary,
     });
+    items.push({
+      id: 'importFile',
+      title: t('inbox.menuImportFile'),
+      titleColor: color.text.primary,
+      image: 'doc.badge.plus',
+      imageColor: color.text.primary,
+    });
     return items;
-  }, [color.text.primary, foldersEnabled, isAutoOrganizing, t]);
+  }, [color.text.primary, foldersEnabled, isAutoOrganizing, t, useTabletShell]);
 
   if (!isLoaded) return null;
 
@@ -165,16 +177,29 @@ function InboxScreenHeaderRightInner({
             hitSlop={HEADER_ICON_HIT_SLOP}
           />
         ) : null}
-        <HeaderIconButton
-          iconOnly
-          variant="icon"
-          size="md"
-          color={color}
-          icon={<CheckCircle2 size={20} color={color.text.primary} strokeWidth={2.2} />}
-          accessibilityLabel={t('inbox.menuSelectNotes')}
-          onPress={onEnterBatchMode}
-          hitSlop={HEADER_ICON_HIT_SLOP}
-        />
+        <MenuView
+          key={`inbox-tablet-more-${theme}`}
+          title=""
+          themeVariant={isDark ? 'dark' : 'light'}
+          shouldOpenOnLongPress={false}
+          actions={moreMenuActions}
+          onPressAction={({ nativeEvent }) => {
+            const id = nativeEvent.event;
+            if (id === 'selectNotes') onEnterBatchMode();
+            if (id === 'importFile') onImportFile();
+          }}
+        >
+          <HeaderIconButton
+            iconOnly
+            variant="icon"
+            size="md"
+            icon={<MoreVertical size={20} color={color.text.primary} strokeWidth={2.2} />}
+            color={color}
+            onPress={() => {}}
+            accessibilityLabel={t('common.moreActions')}
+            hitSlop={HEADER_ICON_HIT_SLOP}
+          />
+        </MenuView>
       </View>
     );
   }
@@ -202,6 +227,7 @@ function InboxScreenHeaderRightInner({
         actions={moreMenuActions}
         onPressAction={({ nativeEvent }) => {
           const id = nativeEvent.event;
+          if (id === 'importFile') onImportFile();
           if (id === 'allTasks') onOpenAllTasks();
           if (id === 'autoOrganize' && !isAutoOrganizing && foldersEnabled) onAutoOrganize();
           if (id === 'selectNotes') onEnterBatchMode();

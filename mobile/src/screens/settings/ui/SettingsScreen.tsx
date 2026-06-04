@@ -147,6 +147,7 @@ export const SettingsScreen = () => {
               setAutoArchiveEnabled={settings.setAutoArchiveEnabled}
               autoArchiveAfterDays={settings.autoArchiveAfterDays}
               onAutoArchiveDelayPress={settings.handleAutoArchiveDelayPress}
+              onOpenSiriShortcuts={() => settings.navigation.navigate('SiriShortcuts')}
               onLockedPress={settings.setAutomationSheet}
             />
           )}

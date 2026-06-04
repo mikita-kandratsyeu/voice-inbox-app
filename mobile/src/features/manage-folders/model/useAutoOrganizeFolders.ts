@@ -189,7 +189,7 @@ export function useAutoOrganizeFolders(
       return;
     }
 
-    if (isConnected === false) {
+    if (isConnected === false && !usePrivateRemoteOrganize) {
       Alert.alert(t('common.error'), t('folders.autoOrganizeFailedDescription'));
       return;
     }

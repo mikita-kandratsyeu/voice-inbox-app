@@ -4,6 +4,7 @@ import {
   listPrivateRemoteModels,
   resetPrivateRemoteFormatCapabilityCacheForTests,
   runPrivateRemoteMeetingDialogue,
+  testPrivateRemoteConnection,
 } from '../privateRemoteProvider';
 import type { AiExecutionContext } from '../types';
 
@@ -137,6 +138,47 @@ describe('runPrivateRemoteMeetingDialogue', () => {
     expect(mockNitroFetch).toHaveBeenCalledTimes(2);
   });
 
+  it('retries with max_completion_tokens when server rejects max_tokens', async () => {
+    let call = 0;
+    mockNitroFetch.mockImplementation(async (_url, init) => {
+      call += 1;
+      const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      if (call === 1) {
+        expect(body.max_tokens).toBeDefined();
+        expect(body.max_completion_tokens).toBeUndefined();
+        return {
+          ok: false,
+          text: async () =>
+            JSON.stringify({
+              error: {
+                message:
+                  "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+                type: 'invalid_request_error',
+                param: 'max_tokens',
+                code: 'unsupported_parameter',
+              },
+            }),
+        } as Response;
+      }
+      expect(body.max_completion_tokens).toBeDefined();
+      expect(body.max_tokens).toBeUndefined();
+      return mockChatCompletion({
+        content: '{"meetingDialogueMarkdown":"Speaker 1: Ok"}',
+      });
+    });
+
+    const result = await runPrivateRemoteMeetingDialogue(
+      {
+        transcript: 'short transcript',
+        phase1: { suggestedTitle: 'T', summary: 'S', keyPhrases: [] },
+      },
+      createCtx({ privateRemotePreferJsonObject: false }),
+    );
+
+    expect(result.ok).toBe(true);
+    expect(mockNitroFetch).toHaveBeenCalledTimes(2);
+  });
+
   it('succeeds with json_schema on first try for LM Studio-style servers', async () => {
     mockNitroFetch.mockImplementation(async (_url, init) => {
       const body = JSON.parse(String(init?.body)) as {
@@ -224,6 +266,52 @@ describe('runPrivateRemoteMeetingDialogue', () => {
     if (!result.ok) return;
     expect(result.meetingDialogueMarkdown).toBe('Speaker 1: Финальный рабочий вариант');
     expect(mockNitroFetch).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('testPrivateRemoteConnection', () => {
+  beforeEach(() => {
+    resetPrivateRemoteFormatCapabilityCacheForTests();
+    mockNitroFetch.mockReset();
+  });
+
+  it('retries ping with max_completion_tokens when max_tokens is rejected', async () => {
+    let completionCalls = 0;
+    mockNitroFetch.mockImplementation(async (url, init) => {
+      const urlText = String(url);
+      if (urlText.endsWith('/models')) {
+        return {
+          ok: true,
+          json: async () => ({ data: [{ id: 'gpt-test' }] }),
+        } as Response;
+      }
+      completionCalls += 1;
+      const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      if (completionCalls === 1) {
+        expect(body.max_tokens).toBe(32);
+        return {
+          ok: false,
+          text: async () =>
+            JSON.stringify({
+              error: {
+                message:
+                  "Unsupported parameter: 'max_tokens' is not supported with this model. Use 'max_completion_tokens' instead.",
+              },
+            }),
+        } as Response;
+      }
+      expect(body.max_completion_tokens).toBe(32);
+      return mockChatCompletion({ content: 'pong' });
+    });
+
+    const result = await testPrivateRemoteConnection({
+      privateRemoteBaseUrl: 'http://127.0.0.1:1234',
+      privateRemoteApiKey: '',
+      privateRemoteModel: 'gpt-test',
+    });
+
+    expect(result.ok).toBe(true);
+    expect(completionCalls).toBe(2);
   });
 });
 

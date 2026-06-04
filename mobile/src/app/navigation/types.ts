@@ -39,6 +39,7 @@ export type SettingsStackParamList = {
   AiSettings: { focusPrivateServer?: boolean } | undefined;
   PrivateRemoteServer: undefined;
   AiUsageDashboard: undefined;
+  SiriShortcuts: undefined;
   Digest: undefined;
   WhisperModelPicker: undefined;
   StorageDetails: undefined;

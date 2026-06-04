@@ -44,7 +44,11 @@ const LOCAL_MEETING_PRESET_HINT = [
   'Preset: meeting.',
   'Treat the transcript as a meeting, call, interview, or sync recap.',
   'classification must be meeting unless the transcript is effectively empty.',
-  'Summary should read like a structured meeting recap in prose: purpose, main topics, decisions, blockers, and follow-up context when supported.',
+  'summary must read like meeting minutes, not a generic paragraph.',
+  'Format summary with section labels localized to the output language: Brief, Decisions, Open questions.',
+  'In Russian use: Коротко, Решения, Открытые вопросы.',
+  'Each section label must be on its own line with a colon. Put section content on the following line(s), not on the same line as the label. Use "None" / "Нет" when the transcript does not support that section.',
+  'Decisions are agreements already made. Open questions are unresolved points. Do not include Tasks or Next steps inside summary; those belong only in tasks[] and nextSteps[].',
   'tasks[] should contain concrete owner/action items only when supported; nextSteps should contain high-level follow-ups that do not duplicate tasks.',
 ].join(' ');
 

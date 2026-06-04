@@ -8,6 +8,7 @@ import {
   FolderReorderSheet,
 } from '@/entities/folder';
 import { BatchActionBar, BatchExportSheet } from '@/features/batch-select';
+import { useImportFileAction } from '@/features/import-audio-file';
 import { AutoOrganizeProgressOverlay } from '@/features/manage-folders';
 import { AutomationComingSoonSheet } from '@/screens/settings/ui/AutomationComingSoonSheet';
 import { BlockingProgressModal } from '@/shared/ui';
@@ -21,6 +22,7 @@ import { InboxSkeleton } from './InboxSkeleton';
 
 export const InboxScreen = () => {
   const inbox = useInboxScreen();
+  const importFile = useImportFileAction();
   const {
     t,
     color,
@@ -146,6 +148,9 @@ export const InboxScreen = () => {
             onEnterBatchMode={() => enterBatchMode(undefined, { haptic: false })}
             onOpenAllTasks={() => navigation.navigate('AllTasks')}
             onCreateTextNote={handleCreateTextNote}
+            onImportFile={() => {
+              void importFile();
+            }}
             useTabletShell={useTabletShell}
             hideCreateTextNote={useTabletShell}
             t={t}
@@ -288,7 +293,7 @@ export const InboxScreen = () => {
         progressLabel={batchProgressModal?.progressLabel}
       />
       <BlockingProgressModal
-        visible={isGeneratingSharePdf}
+        visible={isGeneratingSharePdf && !batchExportSheetVisible}
         title={t('share.generatingPdfTitle')}
         description={t('share.generatingPdfDescription')}
         total={0}
