@@ -1,7 +1,7 @@
 import React, { createContext, useContext } from 'react';
 
 import { ImportAudioProgressOverlay } from '../ui/ImportAudioProgressOverlay';
-import { ImportSubtitleConfirmSheet } from '../ui/ImportSubtitleConfirmSheet';
+import { ImportFileConfirmSheet } from '../ui/ImportFileConfirmSheet';
 import { useImportAudioFile } from './useImportAudioFile';
 
 type ImportAudioFileContextValue = ReturnType<typeof useImportAudioFile>;
@@ -19,12 +19,23 @@ export function ImportAudioFileProvider({ children }: ImportAudioFileProviderPro
     <ImportAudioFileContext.Provider value={value}>
       {children}
       <ImportAudioProgressOverlay visible={value.isImporting} phase={value.importPhase} />
-      <ImportSubtitleConfirmSheet
+      <ImportFileConfirmSheet
         visible={value.subtitleConfirmVisible}
         defaultTitle={value.pendingSubtitleImport?.defaultTitle ?? ''}
         durationMs={value.pendingSubtitleImport?.durationMs ?? 0}
+        sheetTitleKey="importAudio.subtitleImportTitle"
+        confirmLabelKey="importAudio.subtitleImportConfirm"
         onConfirm={value.confirmSubtitleImport}
         onCancel={value.cancelSubtitleImport}
+      />
+      <ImportFileConfirmSheet
+        visible={value.audioConfirmVisible}
+        defaultTitle={value.pendingAudioImport?.defaultTitle ?? ''}
+        durationMs={value.pendingAudioImport?.durationMs ?? 0}
+        sheetTitleKey="importAudio.audioImportTitle"
+        confirmLabelKey="importAudio.audioImportConfirm"
+        onConfirm={value.confirmAudioImport}
+        onCancel={value.cancelAudioImport}
       />
     </ImportAudioFileContext.Provider>
   );

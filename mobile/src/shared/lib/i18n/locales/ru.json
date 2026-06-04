@@ -1594,8 +1594,10 @@
     "unsupportedFormatTitle": "Формат не подходит",
     "unsupportedFormat": "Можно добавить аудио (M4A, MP3, WAV и др.) или субтитры VTT и SRT. Выберите подходящий файл.",
     "subtitleImportTitle": "Импорт субтитров",
-    "subtitleImportDuration": "Длительность: {{time}}",
-    "subtitleImportConfirm": "Добавить в заметки"
+    "subtitleImportConfirm": "Добавить в заметки",
+    "audioImportTitle": "Импорт аудио",
+    "audioImportConfirm": "Добавить в заметки",
+    "importDuration": "Длительность: {{time}}"
   },
   "cloudAiConsent": {
     "title": "Облачный ИИ и ваши заметки",
