@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next';
-import { Archive, ClipboardList, Command, Zap } from 'lucide-react-native';
+import { Archive, ClipboardList, Zap } from 'lucide-react-native';
 import React from 'react';
 import { Switch, View } from 'react-native';
 
@@ -22,7 +22,6 @@ type Props = {
   setAutoArchiveEnabled: (v: boolean) => void;
   autoArchiveAfterDays: AutoArchiveAfterDays;
   onAutoArchiveDelayPress: () => void;
-  onOpenSiriShortcuts: () => void;
   onLockedPress: (kind: AutomationFeatureKind) => void;
 };
 
@@ -38,22 +37,12 @@ export const SettingsAutomationSection = ({
   setAutoArchiveEnabled,
   autoArchiveAfterDays,
   onAutoArchiveDelayPress,
-  onOpenSiriShortcuts,
   onLockedPress,
 }: Props) => {
   const showArchiveDelayRow = !automationLocked && autoArchiveEnabled;
 
   return (
     <SettingsSection title={t('settings.automation')}>
-      {IS_IOS ? (
-        <SettingsRow
-          label={t('settings.siriShortcuts.entryTitle')}
-          subtitle={t('settings.siriShortcuts.entrySubtitle')}
-          leftIcon={<Command size={20} color={color.accent.transcript} strokeWidth={1.8} />}
-          onPress={onOpenSiriShortcuts}
-          isFirst
-        />
-      ) : null}
       <SettingsRow
         label={t('settings.autoTranscribeOnSave')}
         subtitle={t('settings.autoTranscribeOnSaveHint')}

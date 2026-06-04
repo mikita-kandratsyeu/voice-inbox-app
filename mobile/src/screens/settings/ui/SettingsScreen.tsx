@@ -147,15 +147,15 @@ export const SettingsScreen = () => {
               setAutoArchiveEnabled={settings.setAutoArchiveEnabled}
               autoArchiveAfterDays={settings.autoArchiveAfterDays}
               onAutoArchiveDelayPress={settings.handleAutoArchiveDelayPress}
-              onOpenSiriShortcuts={() => settings.navigation.navigate('SiriShortcuts')}
               onLockedPress={settings.setAutomationSheet}
             />
           )}
           {settings.digestAiEnabled ? (
             <SettingsDigestSection
               color={settings.color}
-              t={settings.t}
               onOpenDigest={() => settings.navigation.navigate('Digest')}
+              onOpenSiriShortcuts={() => settings.navigation.navigate('SiriShortcuts')}
+              t={settings.t}
             />
           ) : null}
           <SettingsAiProcessingSection
