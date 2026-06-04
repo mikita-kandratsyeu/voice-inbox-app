@@ -18,7 +18,7 @@ import {
   TabletSidebarSectionLabel,
 } from './TabletSidebarNavItem';
 import type { TabletSidebarTheme } from './tabletSidebarTheme';
-import { navigateMainTab, navigateSettingsStackScreen } from './tabletTabNavigation';
+import { navigateMainTab } from './tabletTabNavigation';
 import type { TabletSidebarNavCounts } from './useTabletSidebarNavCounts';
 
 function FolderSectionHeaderAction({
@@ -136,35 +136,15 @@ export function TabletSidebarFoldersSection({
 }: TabletSidebarFoldersSectionProps) {
   const { t } = useTranslation();
 
-  const openPrivateServerSettings = () => {
-    if (!isProActive) return;
-    hapticSelection();
-    navigateSettingsStackScreen('PrivateRemoteServer');
-  };
-
   if (!foldersEnabled) {
     return (
       <View>
         <TabletSidebarSectionDivider color={color} />
-        <Pressable
-          onPress={openPrivateServerSettings}
-          accessibilityRole="button"
-          accessibilityLabel={t('tablet.sidebar.privateFoldersCta')}
-          className="mt-3 rounded-[10px] px-3 py-3"
-          style={({ pressed }) => ({
-            backgroundColor: theme.surface,
-            opacity: pressed ? 0.85 : 1,
-          })}
-        >
+        <View className="mt-3 rounded-[10px] px-3 py-3" style={{ backgroundColor: theme.surface }}>
           <Text style={{ fontSize: 14, fontWeight: '500', color: color.text.primary }}>
             {t('tablet.sidebar.privateFoldersUnavailable')}
           </Text>
-          <Text
-            style={{ fontSize: 13, fontWeight: '500', color: color.accent.primary, marginTop: 6 }}
-          >
-            {t('tablet.sidebar.privateFoldersCta')}
-          </Text>
-        </Pressable>
+        </View>
       </View>
     );
   }
