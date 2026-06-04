@@ -2,7 +2,7 @@ import { BottomSheetScrollView, BottomSheetTextInput, BottomSheetView } from '@g
 import { ClipboardList, FileText, ListChecks, Mail, Music, UsersRound } from 'lucide-react-native';
 import React, { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Pressable, Text, TouchableOpacity, View } from 'react-native';
 
 import {
   getLastShareRecipientEmail,
@@ -20,24 +20,28 @@ function ShareExportFormatChip({
   label,
   onSelect,
   color,
+  disabled = false,
 }: {
   format: ShareRecordExportFormat;
   selectedFormat: ShareRecordExportFormat;
   label: string;
   onSelect: (format: ShareRecordExportFormat) => void;
   color: Colors;
+  disabled?: boolean;
 }) {
   const selected = selectedFormat === format;
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityState={{ selected }}
+      accessibilityState={{ selected, disabled }}
       accessibilityLabel={label}
+      disabled={disabled}
       onPress={() => onSelect(format)}
       className="min-h-[44px] min-w-0 flex-1 justify-center rounded-xl border-2 px-3.5 py-3"
       style={{
         borderColor: selected ? color.accent.primary : color.border.default,
         backgroundColor: color.background.tertiary,
+        opacity: disabled ? 0.55 : 1,
       }}
     >
       <Text
@@ -66,7 +70,10 @@ type ShareRecordSheetProps = {
   showSpeakerTurnsExport?: boolean;
   isSendingEmail?: boolean;
   onClose: () => void;
-  onShareText: (template: ShareBriefTemplate, format: ShareRecordExportFormat) => void;
+  onShareText: (
+    template: ShareBriefTemplate,
+    format: ShareRecordExportFormat,
+  ) => Promise<void> | void;
   onEmailRecord: (
     email: string,
     template: ShareBriefTemplate,
@@ -94,6 +101,7 @@ export const ShareRecordSheet = ({
   const [email, setEmail] = useState('');
   const [emailSendTemplate, setEmailSendTemplate] = useState<ShareBriefTemplate | null>(null);
   const [exportFormat, setExportFormat] = useState<ShareRecordExportFormat>('markdown');
+  const [sharingTemplate, setSharingTemplate] = useState<ShareBriefTemplate | null>(null);
   const trimmedEmail = email.trim();
   const emailValid = useMemo(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail), [trimmedEmail]);
 
@@ -103,32 +111,59 @@ export const ShareRecordSheet = ({
     setEmail('');
     setEmailSendTemplate(null);
     setExportFormat('markdown');
+    setSharingTemplate(null);
   }, [visible]);
 
+  const isSharing = sharingTemplate != null;
+
+  const handleShareText = useCallback(
+    async (template: ShareBriefTemplate) => {
+      if (isSharing) return;
+      setSharingTemplate(template);
+      try {
+        await onShareText(template, exportFormat);
+        onClose();
+      } finally {
+        setSharingTemplate(null);
+      }
+    },
+    [exportFormat, isSharing, onClose, onShareText],
+  );
+
   const handleShareNoteBrief = useCallback(() => {
-    onClose();
-    onShareText('noteBrief', exportFormat);
-  }, [exportFormat, onClose, onShareText]);
+    void handleShareText('noteBrief');
+  }, [handleShareText]);
 
   const handleShareEmailBrief = useCallback(() => {
-    onClose();
-    onShareText('emailBrief', exportFormat);
-  }, [exportFormat, onClose, onShareText]);
+    void handleShareText('emailBrief');
+  }, [handleShareText]);
 
   const handleShareMeetingBrief = useCallback(() => {
-    onClose();
-    onShareText('meetingBrief', exportFormat);
-  }, [exportFormat, onClose, onShareText]);
+    void handleShareText('meetingBrief');
+  }, [handleShareText]);
 
   const handleShareSpeakerTurns = useCallback(() => {
-    onClose();
-    onShareText('meetingSpeakerTurns', exportFormat);
-  }, [exportFormat, onClose, onShareText]);
+    void handleShareText('meetingSpeakerTurns');
+  }, [handleShareText]);
 
   const handleShareAudio = useCallback(() => {
+    if (isSharing) return;
     onClose();
     onShareAudio();
-  }, [onClose, onShareAudio]);
+  }, [isSharing, onClose, onShareAudio]);
+
+  const handleSelectExportFormat = useCallback(
+    (format: ShareRecordExportFormat) => {
+      if (isSharing) return;
+      setExportFormat(format);
+    },
+    [isSharing],
+  );
+
+  const handleClose = useCallback(() => {
+    if (isSharing) return;
+    onClose();
+  }, [isSharing, onClose]);
 
   const handleCancelEmail = useCallback(() => {
     Keyboard.dismiss();
@@ -143,6 +178,7 @@ export const ShareRecordSheet = ({
     description,
     onPress,
     disabled = false,
+    loading = false,
     selected = false,
     showSelectionBorder = false,
     accessibilityLabel,
@@ -152,17 +188,18 @@ export const ShareRecordSheet = ({
     description?: string;
     onPress: () => void;
     disabled?: boolean;
+    loading?: boolean;
     selected?: boolean;
     showSelectionBorder?: boolean;
     accessibilityLabel: string;
   }) => (
     <TouchableOpacity
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={disabled || loading ? 1 : 0.7}
       accessibilityRole="button"
       accessibilityState={{ selected, disabled }}
       accessibilityLabel={accessibilityLabel}
-      disabled={disabled}
+      disabled={disabled || loading}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -180,9 +217,11 @@ export const ShareRecordSheet = ({
         opacity: disabled ? 0.45 : 1,
       }}
     >
-      {icon}
+      {loading ? <ActivityIndicator size="small" color={color.accent.primary} /> : icon}
       <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>{title}</Text>
+        <Text style={{ fontSize: 16, color: color.text.primary, fontWeight: '500' }}>
+          {loading ? t('share.exportPreparing') : title}
+        </Text>
         {description ? (
           <Text style={{ fontSize: 13, color: color.text.muted, marginTop: 2 }}>{description}</Text>
         ) : null}
@@ -247,21 +286,22 @@ export const ShareRecordSheet = ({
     return emailSendTemplate;
   }, [emailFormatTemplates, emailSendTemplate]);
 
-  const canSendEmail = emailValid && resolvedEmailTemplate != null && !isSendingEmail;
+  const canSendEmail = emailValid && resolvedEmailTemplate != null && !isSendingEmail && !isSharing;
 
   const handleOpenEmail = useCallback(() => {
+    if (isSharing) return;
     setEmailSendTemplate(defaultEmailBodyTemplate);
     setEmail(getLastShareRecipientEmail() ?? '');
     setEmailVisible(true);
-  }, [defaultEmailBodyTemplate]);
+  }, [defaultEmailBodyTemplate, isSharing]);
 
   const handleSendEmail = useCallback(() => {
-    if (!canSendEmail || resolvedEmailTemplate == null) return;
+    if (!canSendEmail || resolvedEmailTemplate == null || isSharing) return;
     onEmailRecord(trimmedEmail, resolvedEmailTemplate, exportFormat);
-  }, [canSendEmail, exportFormat, onEmailRecord, resolvedEmailTemplate, trimmedEmail]);
+  }, [canSendEmail, exportFormat, isSharing, onEmailRecord, resolvedEmailTemplate, trimmedEmail]);
 
   return (
-    <AppBottomSheetModal visible={visible} onClose={onClose}>
+    <AppBottomSheetModal visible={visible} onClose={handleClose}>
       {emailVisible ? (
         <BottomSheetScrollView
           keyboardShouldPersistTaps="handled"
@@ -297,15 +337,17 @@ export const ShareRecordSheet = ({
               format="markdown"
               selectedFormat={exportFormat}
               label={t('batch.exportPackagingSingle')}
-              onSelect={setExportFormat}
+              onSelect={handleSelectExportFormat}
               color={color}
+              disabled={isSharing}
             />
             <ShareExportFormatChip
               format="pdf"
               selectedFormat={exportFormat}
               label={t('batch.exportPackagingPdf')}
-              onSelect={setExportFormat}
+              onSelect={handleSelectExportFormat}
               color={color}
+              disabled={isSharing}
             />
           </View>
           <Text className="text-[13px] leading-5" style={{ color: color.text.muted }}>
@@ -363,7 +405,7 @@ export const ShareRecordSheet = ({
             secondaryLabel={t('common.goBack')}
             onSecondaryPress={handleCancelEmail}
             onSecondaryPressIn={handleCancelEmail}
-            secondaryDisabled={isSendingEmail}
+            secondaryDisabled={isSendingEmail || isSharing}
           />
         </BottomSheetScrollView>
       ) : (
@@ -395,15 +437,17 @@ export const ShareRecordSheet = ({
               format="markdown"
               selectedFormat={exportFormat}
               label={t('batch.exportPackagingSingle')}
-              onSelect={setExportFormat}
+              onSelect={handleSelectExportFormat}
               color={color}
+              disabled={isSharing}
             />
             <ShareExportFormatChip
               format="pdf"
               selectedFormat={exportFormat}
               label={t('batch.exportPackagingPdf')}
-              onSelect={setExportFormat}
+              onSelect={handleSelectExportFormat}
               color={color}
+              disabled={isSharing}
             />
           </View>
           <Text style={{ fontSize: 13, color: color.text.muted, lineHeight: 17 }}>
@@ -416,6 +460,8 @@ export const ShareRecordSheet = ({
             description: t('share.noteBriefDescription'),
             accessibilityLabel: t('share.noteBrief'),
             onPress: handleShareNoteBrief,
+            disabled: isSharing && sharingTemplate !== 'noteBrief',
+            loading: sharingTemplate === 'noteBrief',
           })}
 
           {renderShareFormatRow({
@@ -424,6 +470,8 @@ export const ShareRecordSheet = ({
             description: t('share.emailBriefDescription'),
             accessibilityLabel: t('share.emailBrief'),
             onPress: handleShareEmailBrief,
+            disabled: isSharing && sharingTemplate !== 'emailBrief',
+            loading: sharingTemplate === 'emailBrief',
           })}
 
           {showSpeakerTurnsExport
@@ -433,6 +481,8 @@ export const ShareRecordSheet = ({
                 description: t('share.meetingBriefDescription'),
                 accessibilityLabel: t('share.meetingBrief'),
                 onPress: handleShareMeetingBrief,
+                disabled: isSharing && sharingTemplate !== 'meetingBrief',
+                loading: sharingTemplate === 'meetingBrief',
               })
             : null}
 
@@ -443,6 +493,8 @@ export const ShareRecordSheet = ({
                 description: t('share.speakerTurnsBriefDescription'),
                 accessibilityLabel: t('share.speakerTurnsBrief'),
                 onPress: handleShareSpeakerTurns,
+                disabled: isSharing && sharingTemplate !== 'meetingSpeakerTurns',
+                loading: sharingTemplate === 'meetingSpeakerTurns',
               })
             : null}
 
@@ -454,6 +506,7 @@ export const ShareRecordSheet = ({
             ),
             accessibilityLabel: t('share.emailNote'),
             onPress: handleOpenEmail,
+            disabled: isSharing,
           })}
 
           {renderShareFormatRow({
@@ -461,7 +514,7 @@ export const ShareRecordSheet = ({
             title: t('share.shareAudio'),
             description: hasAudio ? undefined : t('share.noAudio'),
             accessibilityLabel: t('share.shareAudio'),
-            disabled: !hasAudio,
+            disabled: !hasAudio || isSharing,
             onPress: handleShareAudio,
           })}
         </BottomSheetView>

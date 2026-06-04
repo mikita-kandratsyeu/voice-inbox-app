@@ -381,7 +381,7 @@ export function useInboxScreen() {
   const handleBatchExportTemplate = useCallback(
     (template: ShareBriefTemplate, packaging: BatchExportPackaging) => {
       const selectedRecords = filtered.filter((r) => batchSelect.selectedIds.has(r.id));
-      void batchExport(selectedRecords, template, packaging);
+      return batchExport(selectedRecords, template, packaging);
     },
     [batchExport, filtered, batchSelect.selectedIds],
   );

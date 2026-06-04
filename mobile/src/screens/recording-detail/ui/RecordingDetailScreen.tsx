@@ -345,7 +345,7 @@ export const RecordingDetailScreen = () => {
 
   const handleShare = useCallback(
     (template: ShareBriefTemplate, format: ShareRecordExportFormat) => {
-      void shareRecord(liveRecord, template, format).catch((err: unknown) => {
+      return shareRecord(liveRecord, template, format).catch((err: unknown) => {
         Alert.alert(t('recordingDetail.shareFailed'), toUserFacingFetchErrorFromUnknown(err));
       });
     },
@@ -647,7 +647,7 @@ export const RecordingDetailScreen = () => {
         onShareAudio={handleShareAudio}
       />
       <BlockingProgressModal
-        visible={isGeneratingSharePdf}
+        visible={isGeneratingSharePdf && !shareSheetVisible}
         title={t('share.generatingPdfTitle')}
         description={t('share.generatingPdfDescription')}
         total={0}

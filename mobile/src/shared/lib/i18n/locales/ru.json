@@ -584,6 +584,7 @@
     "shareAsTitle": "Поделиться",
     "exportPackagingHintMarkdown": "Заметка экспортируется в файл Markdown.",
     "exportPackagingHintPdf": "Заметка экспортируется в PDF на этом устройстве.",
+    "exportPreparing": "Готовим экспорт…",
     "generatingPdfTitle": "Готовим PDF",
     "generatingPdfDescription": "Форматируем текст с таймкодами и репликами по участникам. Это может занять немного времени.",
     "shareAsText": "Поделиться текстом",

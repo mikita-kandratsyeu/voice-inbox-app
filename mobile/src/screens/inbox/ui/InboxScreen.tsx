@@ -293,7 +293,7 @@ export const InboxScreen = () => {
         progressLabel={batchProgressModal?.progressLabel}
       />
       <BlockingProgressModal
-        visible={isGeneratingSharePdf}
+        visible={isGeneratingSharePdf && !batchExportSheetVisible}
         title={t('share.generatingPdfTitle')}
         description={t('share.generatingPdfDescription')}
         total={0}

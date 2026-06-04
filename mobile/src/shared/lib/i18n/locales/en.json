@@ -585,6 +585,7 @@
     "shareAsTitle": "Share",
     "exportPackagingHintMarkdown": "The note is exported as a Markdown file.",
     "exportPackagingHintPdf": "The note is exported as a PDF generated on this device.",
+    "exportPreparing": "Preparing export…",
     "generatingPdfTitle": "Preparing PDF",
     "generatingPdfDescription": "Formatting notes with timestamps and replies by participant. This may take a moment.",
     "shareAsText": "Share text",
