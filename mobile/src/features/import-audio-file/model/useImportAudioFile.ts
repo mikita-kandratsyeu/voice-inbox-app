@@ -36,21 +36,10 @@ import { isAudioImportFileName } from '../lib/isAudioImportFileName';
 import { isSubtitleImportFileName } from '../lib/isSubtitleImportFile';
 import { parseSubtitleFile } from '../lib/parseSubtitleFile';
 import { readPickedSubtitleUtf8 } from '../lib/readPickedSubtitleUtf8';
-import type { ImportFileConfirmOptions } from '../ui/ImportFileConfirmSheet';
-import type { ImportAudioPhase, PendingAudioImport, PendingSubtitleImport } from './types';
+import type { SubtitleImportConfirmOptions } from '../ui/ImportSubtitleConfirmSheet';
+import type { ImportAudioPhase, PendingSubtitleImport } from './types';
 
 type PickedCopy = { localUri: string; name: string | null };
-
-const unlinkImportedAudioIfOwned = async (destPath: string): Promise<void> => {
-  if (!destPath.startsWith(RECORDINGS_DIR)) return;
-  try {
-    await NitroFS.unlink(destPath);
-  } catch {
-    if (__DEV__) {
-      console.warn('[importAudioFile] Could not delete prepared audio file');
-    }
-  }
-};
 
 export function useImportAudioFile() {
   const { t } = useTranslation();
@@ -76,9 +65,6 @@ export function useImportAudioFile() {
     null,
   );
   const [subtitleConfirmVisible, setSubtitleConfirmVisible] = useState(false);
-  const [pendingAudioImport, setPendingAudioImport] = useState<PendingAudioImport | null>(null);
-  const [audioConfirmVisible, setAudioConfirmVisible] = useState(false);
-  const isImportBusy = isImporting || subtitleConfirmVisible || audioConfirmVisible;
 
   const titleFromFileName = useCallback((name: string | null | undefined): string => {
     const base = name?.replace(/\.[^.]+$/, '')?.trim();
@@ -90,47 +76,42 @@ export function useImportAudioFile() {
       setImportPhase('reading');
       setIsImporting(true);
 
+      let raw: string;
       try {
-        let raw: string;
-        try {
-          raw = await readPickedSubtitleUtf8(sourcePath, picked.localUri, picked.name);
-        } catch {
-          hapticError();
-          Alert.alert(t('importAudio.subtitleReadErrorTitle'), t('importAudio.subtitleReadError'));
-          return;
-        }
-
-        const parsed = parseSubtitleFile(raw, picked.name);
-        if (!parsed) {
-          hapticError();
-          Alert.alert(t('importAudio.subtitleInvalidTitle'), t('importAudio.subtitleInvalid'));
-          return;
-        }
-
-        const { transcript, segments, durationMs } = parsed;
-        if (durationMs > maxImportMs) {
-          hapticError();
-          Alert.alert(
-            t('importAudio.maxDurationTitle'),
-            t('importAudio.maxDurationMessage', {
-              max: Math.round(maxImportMs / (60 * 1000)),
-            }),
-            [{ text: t('common.ok') }],
-          );
-          return;
-        }
-
-        setPendingSubtitleImport({
-          transcript,
-          transcriptSegments: segments,
-          durationMs,
-          defaultTitle: titleFromFileName(picked.name),
-        });
-        setSubtitleConfirmVisible(true);
-      } finally {
-        setIsImporting(false);
-        setImportPhase(null);
+        raw = await readPickedSubtitleUtf8(sourcePath, picked.localUri, picked.name);
+      } catch {
+        hapticError();
+        Alert.alert(t('importAudio.subtitleReadErrorTitle'), t('importAudio.subtitleReadError'));
+        return;
       }
+
+      const parsed = parseSubtitleFile(raw, picked.name);
+      if (!parsed) {
+        hapticError();
+        Alert.alert(t('importAudio.subtitleInvalidTitle'), t('importAudio.subtitleInvalid'));
+        return;
+      }
+
+      const { transcript, segments, durationMs } = parsed;
+      if (durationMs > maxImportMs) {
+        hapticError();
+        Alert.alert(
+          t('importAudio.maxDurationTitle'),
+          t('importAudio.maxDurationMessage', {
+            max: Math.round(maxImportMs / (60 * 1000)),
+          }),
+          [{ text: t('common.ok') }],
+        );
+        return;
+      }
+
+      setPendingSubtitleImport({
+        transcript,
+        transcriptSegments: segments,
+        durationMs,
+        defaultTitle: titleFromFileName(picked.name),
+      });
+      setSubtitleConfirmVisible(true);
     },
     [t, maxImportMs, titleFromFileName],
   );
@@ -141,7 +122,7 @@ export function useImportAudioFile() {
   }, []);
 
   const confirmSubtitleImport = useCallback(
-    async ({ title, isMeetingMode }: ImportFileConfirmOptions) => {
+    async ({ title, isMeetingMode }: SubtitleImportConfirmOptions) => {
       const pending = pendingSubtitleImport;
       if (!pending) return;
 
@@ -186,65 +167,6 @@ export function useImportAudioFile() {
       applyAutoAi,
       isConnected,
       processRecord,
-      navigation,
-    ],
-  );
-
-  const cancelAudioImport = useCallback(() => {
-    const pending = pendingAudioImport;
-    setAudioConfirmVisible(false);
-    setPendingAudioImport(null);
-    if (pending) {
-      void unlinkImportedAudioIfOwned(pending.destPath);
-    }
-  }, [pendingAudioImport]);
-
-  const confirmAudioImport = useCallback(
-    async ({ title, isMeetingMode }: ImportFileConfirmOptions) => {
-      const pending = pendingAudioImport;
-      if (!pending) return;
-
-      setAudioConfirmVisible(false);
-      setPendingAudioImport(null);
-
-      const durationSec = Math.max(1, Math.floor(pending.durationMs / 1000));
-      const record: VoiceRecord = {
-        id: pending.recordId,
-        title: title.trim() || pending.defaultTitle,
-        transcript: '',
-        transcriptSegments: [],
-        summary: '',
-        tasks: [],
-        duration: formatTime(durationSec),
-        durationMs: Math.round(pending.durationMs),
-        createdAt: dayjs().toISOString(),
-        status: 'unread',
-        aiStatus: 'idle',
-        transcriptProgress: 0,
-        isPinned: false,
-        tags: [],
-        classification: isMeetingMode && isProActive ? 'meeting' : undefined,
-        audioPath: pending.destPath,
-      };
-
-      await addRecord(record);
-      hapticSuccess();
-
-      if (applyAutoTranscribe) {
-        const records = useRecordStore.getState().records;
-        if (!isTranscriptionBlockedForRecord(record.id, records)) {
-          startTranscription(record);
-        }
-      }
-
-      navigation.navigate('RecordingDetail', { record });
-    },
-    [
-      pendingAudioImport,
-      isProActive,
-      addRecord,
-      applyAutoTranscribe,
-      startTranscription,
       navigation,
     ],
   );
@@ -340,7 +262,13 @@ export function useImportAudioFile() {
             t('importAudio.durationUnknownMessage', { max: maxMinutes }),
             [{ text: t('common.ok') }],
           );
-          await unlinkImportedAudioIfOwned(destPath);
+          try {
+            await NitroFS.unlink(destPath);
+          } catch {
+            if (__DEV__) {
+              console.warn('[importAudioFile] Could not delete file after unknown duration');
+            }
+          }
           return;
         }
 
@@ -353,17 +281,46 @@ export function useImportAudioFile() {
             }),
             [{ text: t('common.ok') }],
           );
-          await unlinkImportedAudioIfOwned(destPath);
+          try {
+            await NitroFS.unlink(destPath);
+          } catch {
+            if (__DEV__) {
+              console.warn('[importAudioFile] Could not delete original file');
+            }
+          }
           return;
         }
 
-        setPendingAudioImport({
-          recordId,
-          destPath,
-          durationMs,
-          defaultTitle: titleFromFileName(picked.name),
-        });
-        setAudioConfirmVisible(true);
+        const durationSec = Math.floor(durationMs / 1000);
+        const record: VoiceRecord = {
+          id: recordId,
+          title: getAutoTitle(),
+          transcript: '',
+          transcriptSegments: [],
+          summary: '',
+          tasks: [],
+          duration: formatTime(durationSec),
+          durationMs: Math.round(durationMs),
+          createdAt: dayjs().toISOString(),
+          status: 'unread',
+          aiStatus: 'idle',
+          transcriptProgress: 0,
+          isPinned: false,
+          tags: [],
+          audioPath: destPath,
+        };
+
+        await addRecord(record);
+        hapticSuccess();
+
+        if (applyAutoTranscribe) {
+          const records = useRecordStore.getState().records;
+          if (!isTranscriptionBlockedForRecord(record.id, records)) {
+            startTranscription(record);
+          }
+        }
+
+        navigation.navigate('RecordingDetail', { record });
       } catch (err: unknown) {
         const code = (err as { code?: string })?.code;
         if (code !== 'OPERATION_CANCELED') {
@@ -378,12 +335,20 @@ export function useImportAudioFile() {
         setImportPhase(null);
       }
     },
-    [t, maxImportMs, titleFromFileName, runSubtitleImportFromPath],
+    [
+      t,
+      addRecord,
+      applyAutoTranscribe,
+      maxImportMs,
+      startTranscription,
+      navigation,
+      runSubtitleImportFromPath,
+    ],
   );
 
   const importAudioFromExternalUri = useCallback(
     async (uri: string, suggestedName: string | null) => {
-      if (isImportBusy) return;
+      if (isImporting) return;
 
       hapticMedium();
 
@@ -429,11 +394,11 @@ export function useImportAudioFile() {
         Alert.alert(t('importAudio.importErrorTitle'), t('importAudio.importError'));
       }
     },
-    [isImportBusy, t, runImportFromPickedCopy],
+    [isImporting, t, runImportFromPickedCopy],
   );
 
   const importAudioFile = useCallback(async () => {
-    if (isImportBusy) return;
+    if (isImporting) return;
 
     hapticMedium();
 
@@ -465,7 +430,7 @@ export function useImportAudioFile() {
       hapticError();
       Alert.alert(t('importAudio.importErrorTitle'), t('importAudio.importError'));
     }
-  }, [isImportBusy, t, runImportFromPickedCopy]);
+  }, [isImporting, t, runImportFromPickedCopy]);
 
   return {
     importAudioFile,
@@ -476,9 +441,5 @@ export function useImportAudioFile() {
     pendingSubtitleImport,
     confirmSubtitleImport,
     cancelSubtitleImport,
-    audioConfirmVisible,
-    pendingAudioImport,
-    confirmAudioImport,
-    cancelAudioImport,
   };
 }

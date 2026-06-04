@@ -1569,10 +1569,8 @@
     "unsupportedFormatTitle": "Format not supported",
     "unsupportedFormat": "You can import audio (M4A, MP3, WAV, and more) or VTT/SRT subtitles. Choose a matching file.",
     "subtitleImportTitle": "Import subtitles",
-    "subtitleImportConfirm": "Add to notes",
-    "audioImportTitle": "Import audio",
-    "audioImportConfirm": "Add to notes",
-    "importDuration": "Duration: {{time}}"
+    "subtitleImportDuration": "Duration: {{time}}",
+    "subtitleImportConfirm": "Add to notes"
   },
   "cloudAiConsent": {
     "title": "Cloud AI and your notes",

@@ -8,10 +8,3 @@ export type PendingSubtitleImport = {
   durationMs: number;
   defaultTitle: string;
 };
-
-export type PendingAudioImport = {
-  recordId: string;
-  destPath: string;
-  durationMs: number;
-  defaultTitle: string;
-};
