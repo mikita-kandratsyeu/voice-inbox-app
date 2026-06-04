@@ -1548,17 +1548,23 @@
     "title": "Export Voice Inbox AI data"
   },
   "importAudio": {
-    "preparingTitle": "Importing audio",
+    "preparingTitle": "Importing file",
     "phasePreparing": "Please wait…",
     "phaseCopying": "Copying file to the app…",
     "phaseConverting": "Converting to a supported format…",
     "phaseAnalyzing": "Reading duration — large files can take a while.",
+    "phaseParsingSubtitles": "Reading subtitle timings…",
     "maxDurationTitle": "File too long",
     "maxDurationMessage": "Recording must be no longer than {{ max }} minutes.",
     "durationUnknownTitle": "Could not read duration",
     "durationUnknownMessage": "The app could not read this file's length, so the {{ max }}-minute limit cannot be verified. Try WAV, M4A, or MP3, or re-export the file.",
     "importError": "Could not add the audio file. Try another format (e.g. WAV, M4A, MP3).",
-    "conversionError": "Could not convert the audio file. Try a different file or format."
+    "conversionError": "Could not convert the audio file. Try a different file or format.",
+    "subtitleImportTitle": "Import subtitles",
+    "subtitleImportDuration": "Transcript length: {{ time }}",
+    "subtitleImportConfirm": "Create note",
+    "subtitleImportErrorTitle": "Could not read subtitles",
+    "subtitleImportError": "Choose an SRT, VTT, SBV, or SUB file with subtitle timings."
   },
   "cloudAiConsent": {
     "title": "Cloud AI and your notes",

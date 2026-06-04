@@ -41,15 +41,15 @@ class MainActivity : ReactActivity() {
     try {
       when (action) {
         Intent.ACTION_SEND -> {
-          if (intent.type?.startsWith("audio/") != true) return
+          if (!isSupportedImportType(intent.type)) return
           val stream = getSendStreamUri(intent) ?: return
-          copyStreamToPending(stream)
+          copyStreamToPending(stream, intent.type)
         }
         Intent.ACTION_VIEW -> {
           val data = intent.data ?: return
           val type = intent.type ?: contentResolver.getType(data)
-          if (type?.startsWith("audio/") == true || looksLikeAudioPath(data)) {
-            copyStreamToPending(data)
+          if (isSupportedImportType(type) || looksLikeImportPath(data)) {
+            copyStreamToPending(data, type)
           }
         }
         else -> return
@@ -59,7 +59,15 @@ class MainActivity : ReactActivity() {
     }
   }
 
-  private fun looksLikeAudioPath(uri: Uri): Boolean {
+  private fun isSupportedImportType(type: String?): Boolean {
+    val normalized = type?.lowercase() ?: return false
+    return normalized.startsWith("audio/") ||
+      normalized.startsWith("text/") ||
+      normalized == "application/x-subrip" ||
+      normalized == "application/octet-stream"
+  }
+
+  private fun looksLikeImportPath(uri: Uri): Boolean {
     val path = uri.path?.lowercase() ?: return false
     return path.endsWith(".m4a") ||
       path.endsWith(".mp3") ||
@@ -69,7 +77,12 @@ class MainActivity : ReactActivity() {
       path.endsWith(".opus") ||
       path.endsWith(".flac") ||
       path.endsWith(".caf") ||
-      path.endsWith(".3gp")
+      path.endsWith(".3gp") ||
+      path.endsWith(".srt") ||
+      path.endsWith(".vtt") ||
+      path.endsWith(".sbv") ||
+      path.endsWith(".sub") ||
+      path.endsWith(".txt")
   }
 
   @Suppress("DEPRECATION")
@@ -81,9 +94,9 @@ class MainActivity : ReactActivity() {
     }
   }
 
-  private fun copyStreamToPending(uri: Uri) {
+  private fun copyStreamToPending(uri: Uri, mimeType: String?) {
     contentResolver.openInputStream(uri)?.use { input ->
-      val ext = guessExtension(uri)
+      val ext = guessExtension(uri, mimeType)
       val outFile = File(cacheDir, "shared-import-${System.currentTimeMillis()}$ext")
       FileOutputStream(outFile).use { output -> input.copyTo(output) }
       PendingAudioStore.setPendingPath(this, outFile.absolutePath)
@@ -91,7 +104,7 @@ class MainActivity : ReactActivity() {
       ?: Log.w("MainActivity", "Could not open stream for $uri")
   }
 
-  private fun guessExtension(uri: Uri): String {
+  private fun guessExtension(uri: Uri, mimeType: String?): String {
     val path = uri.path?.lowercase() ?: ""
     return when {
       path.endsWith(".mp3") -> ".mp3"
@@ -102,6 +115,14 @@ class MainActivity : ReactActivity() {
       path.endsWith(".flac") -> ".flac"
       path.endsWith(".caf") -> ".caf"
       path.endsWith(".3gp") || path.endsWith(".amr") -> ".m4a"
+      path.endsWith(".srt") -> ".srt"
+      path.endsWith(".vtt") -> ".vtt"
+      path.endsWith(".sbv") -> ".sbv"
+      path.endsWith(".sub") -> ".sub"
+      path.endsWith(".txt") -> ".txt"
+      mimeType?.lowercase() == "application/x-subrip" -> ".srt"
+      mimeType?.lowercase() == "text/vtt" || mimeType?.lowercase() == "text/webvtt" -> ".vtt"
+      mimeType?.lowercase()?.startsWith("text/") == true -> ".txt"
       else -> ".m4a"
     }
   }
