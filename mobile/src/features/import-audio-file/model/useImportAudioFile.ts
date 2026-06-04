@@ -57,8 +57,6 @@ type PendingAudioImport = {
 type PendingFileImport = PendingAudioImport | PendingSubtitleImport;
 
 const FALLBACK_SHARED_IMPORT_NAME = 'shared-import';
-const IMPORT_LOG_PREFIX = '[importAudioFile]';
-
 const AUDIO_PICKER_TYPES = [
   types.audio,
   'audio/mpeg',
