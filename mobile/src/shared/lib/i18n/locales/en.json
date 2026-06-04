@@ -373,7 +373,7 @@
     "meetingModeDisableMessage": "The participant breakdown will be hidden. Turn meeting mode back on and update the summary to bring it back.",
     "meetingModeDisableConfirm": "Turn off",
     "meetingSummaryTitle": "Meeting recap",
-    "meetingSummaryDescription": "Summary for meetings: decisions, tasks, and next steps.",
+    "meetingSummaryDescription": "Meeting minutes: brief recap, decisions, tasks, open questions, and next steps.",
     "meetingDialogueTitle": "Participants",
     "meetingDialogueTabCalloutTitle": "How to read this tab",
     "meetingDialogueDisclaimer": "Lines are grouped for easier reading. Participant labels are AI hints — not a verbatim transcript.",

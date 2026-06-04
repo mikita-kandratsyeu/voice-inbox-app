@@ -373,7 +373,7 @@
     "meetingModeDisableMessage": "Текущая разбивка по участникам скроется. Чтобы вернуть — включите режим снова и обновите сводку.",
     "meetingModeDisableConfirm": "Отключить",
     "meetingSummaryTitle": "Итоги встречи",
-    "meetingSummaryDescription": "Сводка для встречи: решения, задачи и следующие шаги.",
+    "meetingSummaryDescription": "Протокол встречи: коротко, решения, задачи, открытые вопросы и следующие шаги.",
     "meetingDialogueTitle": "По участникам",
     "meetingDialogueTabCalloutTitle": "Как читать эту вкладку",
     "meetingDialogueDisclaimer": "Реплики сгруппированы для удобного просмотра. Подписи участников — подсказка ИИ, где текст может не совпадать с записью дословно.",
