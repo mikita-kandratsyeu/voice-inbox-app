@@ -13,12 +13,18 @@ import { convertToWav } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
 
 import { getWhisperContext, resetWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
+import { resolveTranscriptionChunkProfile } from '../lib/resolveTranscriptionChunkProfile';
 import { transcribeAudio } from '../lib/transcribeAudio';
 import {
   getTranscriptionCheckpoint,
   removeTranscriptionCheckpoint,
   saveTranscriptionCheckpoint,
 } from '../lib/transcriptionCheckpoint';
+import {
+  getTranscriptionErrorCode,
+  isAbortTranscriptionError,
+  shouldQueueWhisperResetForError,
+} from '../lib/transcriptionErrors';
 import {
   cancelTranscriptionPausedNotification,
   showTranscriptionPausedNotification,
@@ -41,17 +47,20 @@ import {
   endTranscriptionSession,
   getActiveTranscriptionRecordId,
   getTranscriptionCheckpointSnapshot,
+  getTranscriptionRuntimeSnapshot,
   isNativeTranscriptionRunning,
   isTranscriptionBackgroundCancelled,
   persistTranscriptionCheckpointForBackground,
   registerActiveTranscription,
   rememberTranscriptionCheckpointSnapshot,
+  rememberWhisperResetResult,
   resetTranscriptionRuntimeForRestart,
+  setTranscriptionRuntimeState,
   unregisterActiveTranscription,
 } from './transcriptionRuntimeRegistry';
 
 const PROGRESS_THROTTLE_MS = 500;
-const CHECKPOINT_EVERY_N_CHUNKS = 2;
+const CHECKPOINT_MIN_INTERVAL_MS = 4_000;
 const DISCARD_RESET_UI_TIMEOUT_MS = 3_000;
 const pendingWhisperResetRecordIds = new Set<string>();
 
@@ -100,6 +109,18 @@ const wait = (ms: number): Promise<void> =>
     setTimeout(resolve, ms);
   });
 
+const shouldFullyResetWhisperBeforeStart = (record: VoiceRecord): boolean => {
+  const runtime = getTranscriptionRuntimeSnapshot();
+  return (
+    pendingWhisperResetRecordIds.has(record.id) ||
+    record.aiStatus === 'error' ||
+    runtime.consecutiveResetFailures > 0 ||
+    runtime.nativeBusyTimeouts > 0 ||
+    (runtime.recordId === record.id &&
+      (runtime.state === 'stopping' || runtime.state === 'resetting'))
+  );
+};
+
 export const useTranscription = () => {
   const updateAiStatus = useRecordStore((s) => s.updateAiStatus);
   const updateTranscript = useRecordStore((s) => s.updateTranscript);
@@ -138,24 +159,29 @@ export const useTranscription = () => {
 
       if (shouldResetBeforeStart) {
         try {
+          const needsFullReset = shouldFullyResetWhisperBeforeStart(record);
           await resetTranscriptionRuntimeForRestart(record.id);
-          const reset = await resetWhisperContext();
-          if (!reset) {
-            pendingWhisperResetRecordIds.add(record.id);
-            const canResume =
-              record.aiStatus === 'paused' ||
-              record.aiStatus === 'resumable' ||
-              (record.transcriptProgress ?? 0) > 0;
-            updateAiStatus(
-              record.id,
-              canResume ? 'resumable' : 'idle',
-              record.transcriptProgress ?? 0,
-            );
-            return;
+          if (needsFullReset) {
+            const reset = await resetWhisperContext();
+            rememberWhisperResetResult(reset);
+            if (!reset) {
+              pendingWhisperResetRecordIds.add(record.id);
+              const canResume =
+                record.aiStatus === 'paused' ||
+                record.aiStatus === 'resumable' ||
+                (record.transcriptProgress ?? 0) > 0;
+              updateAiStatus(
+                record.id,
+                canResume ? 'resumable' : 'idle',
+                record.transcriptProgress ?? 0,
+              );
+              return;
+            }
           }
           pendingWhisperResetRecordIds.delete(record.id);
         } catch (err) {
           if (__DEV__) console.warn('[transcription] restart reset failed', err);
+          rememberWhisperResetResult(false);
           pendingWhisperResetRecordIds.add(record.id);
           updateAiStatus(record.id, 'idle', record.transcriptProgress ?? 0);
           return;
@@ -228,8 +254,11 @@ export const useTranscription = () => {
         }
 
         updateAiStatus(record.id, 'processing', 0, undefined, null);
+        setTranscriptionRuntimeState('transcribing', record.id);
 
         const throttledProgress = createThrottledProgress(record.id, jobGen, updateAiStatus);
+        const chunkProfile = resolveTranscriptionChunkProfile();
+        let lastCheckpointPersistAt = 0;
         let transcribeInputPath = audioPath;
         if (!normalizedAudioPath.toLowerCase().endsWith('.wav')) {
           await ensureRecordingsDir();
@@ -284,6 +313,7 @@ export const useTranscription = () => {
             audioPath: transcribeInputPath,
             durationMs: record.durationMs ?? 0,
             language,
+            chunkProfile,
             onProgress: throttledProgress,
             resume: resumePayload,
             onChunkCompleted: ({ chunkIndex, totalChunks, fullText, segments }) => {
@@ -303,12 +333,15 @@ export const useTranscription = () => {
               };
               rememberTranscriptionCheckpointSnapshot(snapshot);
 
+              const now = Date.now();
               const shouldPersist =
-                (chunkIndex + 1) % CHECKPOINT_EVERY_N_CHUNKS === 0 || chunkIndex + 1 >= totalChunks;
+                now - lastCheckpointPersistAt >= CHECKPOINT_MIN_INTERVAL_MS ||
+                chunkIndex + 1 >= totalChunks;
               if (!shouldPersist) {
                 return;
               }
 
+              lastCheckpointPersistAt = now;
               saveTranscriptionCheckpoint(snapshot).catch((err) => {
                 if (__DEV__) console.warn('[transcription] checkpoint save failed', err);
               });
@@ -388,13 +421,15 @@ export const useTranscription = () => {
         currentRecordIdRef.current = null;
         unregisterActiveTranscription(record.id);
 
-        const msg = err instanceof Error ? err.message.toLowerCase() : '';
-        const isCancelled = msg.includes('abort') || msg.includes('cancel') || msg.includes('stop');
-
         const pausedForBackground = isTranscriptionBackgroundCancelled(record.id);
+        const errorCode = getTranscriptionErrorCode(err);
+        const isCancelled = isAbortTranscriptionError(err);
         keepCheckpointSnapshot = pausedForBackground;
 
         if (isCancelled || pausedForBackground) {
+          if (shouldQueueWhisperResetForError(err)) {
+            pendingWhisperResetRecordIds.add(record.id);
+          }
           if (!pausedForBackground) {
             await removeTranscriptionCheckpoint(record.id).catch(() => {});
           } else {
@@ -403,17 +438,18 @@ export const useTranscription = () => {
           updateAiStatus(record.id, pausedForBackground ? 'paused' : 'idle');
         } else {
           await removeTranscriptionCheckpoint(record.id).catch(() => {});
-          const msg = err instanceof Error ? err.message.toLowerCase() : '';
-          const isModelLoadFailure = msg.includes('failed to load the model');
-          if (isModelLoadFailure) {
+          if (errorCode === 'model_load_failed' || errorCode === 'model_missing') {
             setWhisperModelStatus(
               selectedWhisperModel,
               selectedWhisperModelFormat,
               'not_downloaded',
             );
           }
-          if (isFileNotFoundError(err)) {
+          if (errorCode === 'audio_missing' || isFileNotFoundError(err)) {
             await clearAudioPath(record.id).catch(() => {});
+          }
+          if (shouldQueueWhisperResetForError(err)) {
+            pendingWhisperResetRecordIds.add(record.id);
           }
           if (__DEV__) console.warn('[transcription] Failed:', err);
           updateAiStatus(record.id, 'error');
@@ -476,11 +512,24 @@ export const useTranscription = () => {
         const stop = stopRef.current;
         stopRef.current = null;
         updateAiStatus(recordId, 'cancelling', existing?.transcriptProgress ?? 0);
-        stop()
-          .catch(() => {})
-          .finally(() => {
+        setTranscriptionRuntimeState('stopping', recordId);
+        const stopTask = stop();
+        void (async () => {
+          try {
+            const finished = await Promise.race([
+              stopTask.then(() => true),
+              wait(DISCARD_RESET_UI_TIMEOUT_MS).then(() => false),
+            ]);
+            if (!finished) {
+              pendingWhisperResetRecordIds.add(recordId);
+              void stopTask.catch(() => {});
+            }
+          } catch {
+            pendingWhisperResetRecordIds.add(recordId);
+          } finally {
             updateAiStatus(recordId, nextStatus, hasTranscript ? 100 : 0);
-          });
+          }
+        })();
       } else {
         updateAiStatus(recordId, nextStatus, hasTranscript ? 100 : 0);
       }
@@ -508,6 +557,7 @@ export const useTranscription = () => {
       const resetTask = (async () => {
         await resetTranscriptionRuntimeForRestart(recordId);
         const reset = await resetWhisperContext();
+        rememberWhisperResetResult(reset);
         if (reset) {
           pendingWhisperResetRecordIds.delete(recordId);
         } else {
@@ -528,6 +578,7 @@ export const useTranscription = () => {
         }
       } catch (err) {
         if (__DEV__) console.warn('[transcription] discard reset failed', err);
+        rememberWhisperResetResult(false);
         pendingWhisperResetRecordIds.add(recordId);
       } finally {
         unregisterActiveTranscription(recordId);

@@ -1,7 +1,7 @@
 import { UsersRound } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Switch, Text, View } from 'react-native';
 
 import type { MeetingSummaryTemplate } from '@/entities/record';
 import type { Colors } from '@/shared/config';
@@ -53,36 +53,42 @@ export const RecordingMeetingModeSection = ({
       className="overflow-hidden rounded-2xl"
       style={{ backgroundColor: surfaceBackgroundColor }}
     >
-      <Pressable
-        accessibilityRole="switch"
-        accessibilityState={{ checked: isMeetingMode, disabled }}
-        accessibilityLabel={t('record.meetingMode')}
-        disabled={disabled}
-        onPress={onToggleMeetingMode}
+      <View
         className="flex-row items-center gap-3 px-4 py-3.5"
         style={{ opacity: disabled ? 0.55 : 1 }}
       >
-        {meetingIcon}
-        <View className="min-w-0 flex-1">
-          <Text className="text-[15px] font-semibold" style={{ color: color.text.primary }}>
-            {t('record.meetingMode')}
-          </Text>
-          <Text className="mt-0.5 text-[13px] leading-5" style={{ color: color.text.secondary }}>
-            {t('recordingDetail.meetingModeDetailHint')}
-          </Text>
-        </View>
-        <View
-          className="h-6 w-11 justify-center rounded-full px-0.5"
-          style={{
-            backgroundColor: isMeetingMode ? color.accent.primary : color.border.default,
-          }}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ disabled }}
+          accessibilityLabel={t('record.meetingMode')}
+          disabled={disabled}
+          onPress={onToggleMeetingMode}
+          className="min-w-0 flex-1 flex-row items-center gap-3"
         >
-          <View
-            className="h-5 w-5 rounded-full bg-white"
-            style={{ alignSelf: isMeetingMode ? 'flex-end' : 'flex-start' }}
-          />
-        </View>
-      </Pressable>
+          {meetingIcon}
+          <View className="min-w-0 flex-1">
+            <Text className="text-[15px] font-semibold" style={{ color: color.text.primary }}>
+              {t('record.meetingMode')}
+            </Text>
+            <Text className="mt-0.5 text-[13px] leading-5" style={{ color: color.text.secondary }}>
+              {t('recordingDetail.meetingModeDetailHint')}
+            </Text>
+          </View>
+        </Pressable>
+        <Switch
+          value={isMeetingMode}
+          disabled={disabled}
+          onValueChange={onToggleMeetingMode}
+          accessibilityLabel={t('record.meetingMode')}
+          style={{ alignSelf: 'center', transform: [{ translateY: 2 }] }}
+          trackColor={{
+            false: color.background.tertiary,
+            true: color.accent.primary,
+          }}
+          thumbColor={color.icon.onAccent}
+          ios_backgroundColor={color.background.tertiary}
+        />
+      </View>
       {isMeetingMode ? (
         <View className="gap-2 px-4 pb-4">
           <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>

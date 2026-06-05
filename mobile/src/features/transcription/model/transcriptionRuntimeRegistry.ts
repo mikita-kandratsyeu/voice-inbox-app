@@ -15,8 +15,53 @@ import { invalidateTranscriptionJob } from './transcriptionJobRegistry';
 import { requestTranscriptionResumePrompt } from './transcriptionResumePromptRequest';
 
 type CheckpointSnapshot = Omit<TranscriptionCheckpoint, 'schemaVersion' | 'updatedAt'>;
+export type TranscriptionRuntimeState =
+  | 'idle'
+  | 'preparing'
+  | 'transcribing'
+  | 'stopping'
+  | 'resetting'
+  | 'ready';
+
+type RuntimeSnapshot = {
+  recordId: string | null;
+  state: TranscriptionRuntimeState;
+  updatedAt: number;
+  nativeBusyTimeouts: number;
+  consecutiveResetFailures: number;
+};
 
 const checkpointSnapshotsByRecordId = new Map<string, CheckpointSnapshot>();
+const runtimeSnapshot: RuntimeSnapshot = {
+  recordId: null,
+  state: 'idle',
+  updatedAt: Date.now(),
+  nativeBusyTimeouts: 0,
+  consecutiveResetFailures: 0,
+};
+
+export function setTranscriptionRuntimeState(
+  state: TranscriptionRuntimeState,
+  recordId: string | null = runtimeSnapshot.recordId,
+): void {
+  runtimeSnapshot.state = state;
+  runtimeSnapshot.recordId = recordId;
+  runtimeSnapshot.updatedAt = Date.now();
+}
+
+export function getTranscriptionRuntimeSnapshot(): RuntimeSnapshot {
+  return { ...runtimeSnapshot };
+}
+
+export function rememberWhisperResetResult(success: boolean): void {
+  if (success) {
+    runtimeSnapshot.consecutiveResetFailures = 0;
+    runtimeSnapshot.nativeBusyTimeouts = 0;
+    return;
+  }
+  runtimeSnapshot.consecutiveResetFailures += 1;
+  runtimeSnapshot.nativeBusyTimeouts += 1;
+}
 
 export function rememberTranscriptionCheckpointSnapshot(snapshot: CheckpointSnapshot): void {
   checkpointSnapshotsByRecordId.set(snapshot.recordId, snapshot);
@@ -84,11 +129,15 @@ export function clearTranscriptionBackgroundCancelled(recordId: string): void {
 
 export function beginTranscriptionSession(recordId: string): void {
   sessionRecordId = recordId;
+  setTranscriptionRuntimeState('preparing', recordId);
 }
 
 export function endTranscriptionSession(recordId: string): void {
   if (sessionRecordId === recordId) {
     sessionRecordId = null;
+  }
+  if (runtimeSnapshot.recordId === recordId) {
+    setTranscriptionRuntimeState(activeRecordId === recordId ? 'ready' : 'idle', null);
   }
 }
 
@@ -102,12 +151,16 @@ export function isTranscriptionSessionActive(recordId?: string): boolean {
 export function registerActiveTranscription(recordId: string, stop: () => Promise<void>): void {
   activeRecordId = recordId;
   activeStop = stop;
+  setTranscriptionRuntimeState('transcribing', recordId);
 }
 
 export function unregisterActiveTranscription(recordId: string): void {
   if (activeRecordId === recordId) {
     activeRecordId = null;
     activeStop = null;
+  }
+  if (runtimeSnapshot.recordId === recordId && runtimeSnapshot.state === 'transcribing') {
+    setTranscriptionRuntimeState(sessionRecordId === recordId ? 'ready' : 'idle', null);
   }
 }
 
@@ -116,6 +169,7 @@ export function getActiveTranscriptionRecordId(): string | null {
 }
 
 export async function resetTranscriptionRuntimeForRestart(recordId: string): Promise<void> {
+  setTranscriptionRuntimeState('resetting', recordId);
   if (abortInFlight && abortRecordId === recordId) {
     await abortInFlight.catch(() => {});
   }
@@ -135,6 +189,7 @@ export async function resetTranscriptionRuntimeForRestart(recordId: string): Pro
   }
 
   if (stop) {
+    setTranscriptionRuntimeState('stopping', recordId);
     try {
       await stop();
     } catch {
@@ -142,6 +197,7 @@ export async function resetTranscriptionRuntimeForRestart(recordId: string): Pro
     }
     await waitForWhisperNativeIdleAfterAbort();
   }
+  setTranscriptionRuntimeState('ready', recordId);
 }
 
 /** True while a transcription session or native whisper_full may be active. */
@@ -170,6 +226,7 @@ export async function abortTranscriptionForAppBackground(): Promise<void> {
   abortInFlight = (async () => {
     // Before stop(): useTranscription catch checks backgroundCancelled to keep checkpoint.
     backgroundCancelledRecordIds.add(recordId);
+    setTranscriptionRuntimeState('stopping', recordId);
     markTranscriptionPausedForBackground(recordId);
     useRecordStore.getState().updateAiStatus(recordId, 'paused');
 
