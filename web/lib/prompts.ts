@@ -329,6 +329,14 @@ export type AiProcessingOptions = {
   taskStrictness?: 'strict' | 'balanced' | 'soft';
   outputLanguage?: 'same' | 'ru' | 'en';
   processingPreset?: 'meeting';
+  meetingSummaryTemplate?:
+    | 'general'
+    | 'standup'
+    | 'sales_call'
+    | 'one_on_one'
+    | 'interview'
+    | 'product_meeting'
+    | 'lecture';
   referenceDate?: string;
   existingTaskTexts?: string[];
   taskExtractionHint?: string;
@@ -420,6 +428,25 @@ const PROCESSING_PRESET_INSTRUCTIONS: Record<
     'For tasks[], extract concrete action items only when supported by the transcript.',
     'For nextSteps[], include high-level follow-ups that move the meeting forward and do not duplicate task titles.',
   ].join('\n'),
+};
+
+const MEETING_TEMPLATE_INSTRUCTIONS: Record<
+  NonNullable<AiProcessingOptions['meetingSummaryTemplate']>,
+  string
+> = {
+  general: '',
+  standup:
+    'Meeting template: Standup. Emphasize Yesterday/Done, Today/Next, Blockers, Owners. Keep decisions short.',
+  sales_call:
+    'Meeting template: Sales call. Emphasize customer needs, objections, buying signals, follow-up commitments, stakeholders, and next sales steps.',
+  one_on_one:
+    'Meeting template: 1:1. Emphasize feedback, concerns, goals, commitments, coaching points, and follow-ups.',
+  interview:
+    'Meeting template: Interview. Emphasize candidate/interviewee signals, questions asked, strengths, concerns, and follow-up evaluation points.',
+  product_meeting:
+    'Meeting template: Product meeting. Emphasize decisions, requirements, user problems, trade-offs, risks, metrics, and product next steps.',
+  lecture:
+    'Meeting template: Lecture. Emphasize key concepts, definitions, examples, open questions, and study/action items.',
 };
 
 const TASK_TYPE_SNIPPET = `
@@ -639,6 +666,10 @@ export function buildAiProcessingPrompt(
   const presetInstruction = processingPreset
     ? PROCESSING_PRESET_INSTRUCTIONS[processingPreset]
     : null;
+  const meetingTemplateInstruction =
+    processingPreset === 'meeting' && options?.meetingSummaryTemplate
+      ? MEETING_TEMPLATE_INSTRUCTIONS[options.meetingSummaryTemplate]
+      : '';
 
   const { existingTasksBlock, userHintBlock, recordingMarksBlock } =
     buildAiProcessingPromptAppendBlocks(options);
@@ -684,7 +715,9 @@ ${existingTasksBlock}${userHintBlock}${recordingMarksBlock}## Output Schema
 ${outputSchemaBlock}
 \`\`\`
 
-${presetInstruction ? `## Processing Preset\n${presetInstruction}\n` : ''}${pseudoBlock}
+${presetInstruction ? `## Processing Preset\n${presetInstruction}\n` : ''}${
+    meetingTemplateInstruction ? `## Meeting Template\n${meetingTemplateInstruction}\n` : ''
+  }${pseudoBlock}
 ## Global Rules
 - Output must pass JSON.parse() without preprocessing.
 - Never add fields outside the schema.

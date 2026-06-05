@@ -109,6 +109,9 @@ export async function runCloudSummaryTasks(
         taskStrictness: ctx.taskStrictness,
         outputLanguage: ctx.aiOutputLanguage,
         ...(request.processingPreset ? { processingPreset: request.processingPreset } : {}),
+        ...(request.meetingSummaryTemplate
+          ? { meetingSummaryTemplate: request.meetingSummaryTemplate }
+          : {}),
         ...(request.existingTaskTexts?.length
           ? { existingTaskTexts: request.existingTaskTexts }
           : {}),

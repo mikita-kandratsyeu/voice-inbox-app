@@ -10,7 +10,12 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import { FolderPickerSheet, useFolderStore } from '@/entities/folder';
-import { type RecordingMark, type RecordingStatus, useRecordStore } from '@/entities/record';
+import {
+  type MeetingSummaryTemplate,
+  type RecordingMark,
+  type RecordingStatus,
+  useRecordStore,
+} from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
 import {
   areFoldersEnabledInAiMode,
@@ -41,7 +46,7 @@ import { BlockingProgressModal } from '@/shared/ui';
 import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
-import { mergeSpeakerRename } from '../lib/meetingSpeakerLabels';
+import { renameSpeakerGroup } from '../lib/meetingSpeakerLabels';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { MeetingDialogueTab } from './MeetingDialogueTab';
 import { RecordingDetailCard } from './RecordingDetailCard';
@@ -490,11 +495,20 @@ export const RecordingDetailScreen = () => {
   );
 
   const handleRenameSpeaker = useCallback(
-    (originalLabel: string, displayName: string) => {
-      const next = mergeSpeakerRename(liveRecord.meetingSpeakerLabels, originalLabel, displayName);
+    (originalLabels: string[], displayName: string) => {
+      const next = renameSpeakerGroup(liveRecord.meetingSpeakerLabels, originalLabels, displayName);
       void updateAiExtras(liveRecord.id, { meetingSpeakerLabels: next ?? null });
     },
     [liveRecord.id, liveRecord.meetingSpeakerLabels, updateAiExtras],
+  );
+
+  const handleSelectMeetingSummaryTemplate = useCallback(
+    (template: MeetingSummaryTemplate) => {
+      void updateAiExtras(liveRecord.id, {
+        meetingSummaryTemplate: template === 'general' ? null : template,
+      });
+    },
+    [liveRecord.id, updateAiExtras],
   );
 
   const handleRegenerateMeetingDialogueOnly = useCallback(() => {
@@ -724,10 +738,12 @@ export const RecordingDetailScreen = () => {
           {showMeetingModeToggle ? (
             <RecordingMeetingModeSection
               isMeetingMode={isMeetingMode}
+              selectedTemplate={liveRecord.meetingSummaryTemplate ?? 'general'}
               disabled={aiBusy}
               color={color}
               surfaceBackgroundColor={tabPanelBackgroundColor}
               onToggleMeetingMode={handleToggleMeetingMode}
+              onSelectTemplate={handleSelectMeetingSummaryTemplate}
             />
           ) : null}
 

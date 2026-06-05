@@ -79,7 +79,7 @@ export function analyzeMeetingDialogueHeuristics(
   return {
     distinctLabeledSpeakers,
     unlabeledUtteranceCount,
-    showSingleSpeakerHint: utterances.length > 0 && distinctLabeledSpeakers <= 1,
+    showSingleSpeakerHint: utterances.length > 0 && distinctLabeledSpeakers === 1,
     showNoSpeakerLabelsHint:
       utterances.length > 0 &&
       distinctLabeledSpeakers === 0 &&
@@ -125,4 +125,16 @@ export function mergeSpeakerRename(
     next[key] = trimmed;
   }
   return Object.keys(next).length > 0 ? next : undefined;
+}
+
+export function renameSpeakerGroup(
+  labels: MeetingSpeakerLabels | undefined,
+  originalLabels: string[],
+  displayName: string,
+): MeetingSpeakerLabels | undefined {
+  let next = labels;
+  for (const originalLabel of originalLabels) {
+    next = mergeSpeakerRename(next, originalLabel, displayName);
+  }
+  return next;
 }

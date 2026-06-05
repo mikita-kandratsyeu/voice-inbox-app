@@ -9,6 +9,7 @@ import { isRecordAiOperating } from '../lib/isRecordAiOperating';
 import { recordRepository } from './repository';
 import type {
   MeetingDialogueLoadStatus,
+  MeetingSummaryTemplate,
   RecordClassification,
   RecordingMark,
   RecordingStatus,
@@ -59,6 +60,9 @@ const clearAiPersistDebounce = (id: string) => {
 
 const computeHasActiveAiJobs = (records: Array<VoiceRecord | RecordListItem>): boolean =>
   records.some(isRecordAiOperating);
+
+const isTerminalAiStatus = (status: RecordingStatus): boolean =>
+  status === 'idle' || status === 'done' || status === 'error' || status === 'resumable';
 
 const updateRecord = (
   records: RecordListItem[],
@@ -142,6 +146,7 @@ type RecordStore = {
       nextSteps?: string[];
       meetingDialogue?: string | null;
       meetingSpeakerLabels?: Record<string, string> | null;
+      meetingSummaryTemplate?: MeetingSummaryTemplate | null;
       cloudAiJobId?: string | null;
       summaryReasoning?: string | null;
       summaryAiModel?: string | null;
@@ -336,7 +341,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
       if (!existing) return s;
       const patch: Partial<RecordListItem> = { aiStatus };
       if (progress !== undefined) patch.transcriptProgress = progress;
-      const terminal = aiStatus === 'idle' || aiStatus === 'done' || aiStatus === 'error';
+      const terminal = isTerminalAiStatus(aiStatus);
       if (terminal) {
         patch.transcriptProgressLabel = undefined;
         patch.transcriptProgressSegments = undefined;
@@ -360,7 +365,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     }
 
     const p = updated.transcriptProgress ?? 0;
-    const terminal = aiStatus === 'idle' || aiStatus === 'error' || aiStatus === 'done';
+    const terminal = isTerminalAiStatus(aiStatus);
     schedulePersistAiState(id, aiStatus, p, terminal);
   },
 
@@ -493,6 +498,9 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
           data.meetingSpeakerLabels && Object.keys(data.meetingSpeakerLabels).length > 0
             ? data.meetingSpeakerLabels
             : undefined;
+      }
+      if (data.meetingSummaryTemplate !== undefined) {
+        patch.meetingSummaryTemplate = data.meetingSummaryTemplate ?? undefined;
       }
       if (data.cloudAiJobId !== undefined) {
         patch.cloudAiJobId = data.cloudAiJobId?.trim() ? data.cloudAiJobId.trim() : undefined;

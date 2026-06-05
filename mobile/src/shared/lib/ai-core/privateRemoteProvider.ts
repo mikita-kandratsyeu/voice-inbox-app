@@ -818,6 +818,7 @@ async function runPrivateRemoteSummaryPass(
       taskStrictness: ctx.taskStrictness,
       outputLanguage: ctx.aiOutputLanguage,
       processingPreset: request.processingPreset,
+      meetingSummaryTemplate: request.meetingSummaryTemplate,
       referenceDate: getLocalReferenceDateIsoLocal(),
       existingTaskTexts: request.existingTaskTexts,
       taskExtractionHint: request.taskExtractionHint,

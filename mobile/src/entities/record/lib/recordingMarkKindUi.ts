@@ -1,5 +1,13 @@
 import type { LucideIcon } from 'lucide-react-native';
-import { Bookmark, ListChecks, Quote, Star } from 'lucide-react-native';
+import {
+  Bookmark,
+  GitBranch,
+  HelpCircle,
+  ListChecks,
+  MessageSquareText,
+  Quote,
+  Star,
+} from 'lucide-react-native';
 
 import type { AccentColorId, ColorScheme } from '@/shared/config';
 import { getAccentPreviewHex } from '@/shared/config';
@@ -16,19 +24,28 @@ export type RecordingMarkKindUiConfig = {
     | 'record.markKind.important'
     | 'record.markKind.task'
     | 'record.markKind.quote'
-    | 'record.markKind.moment';
+    | 'record.markKind.moment'
+    | 'record.markKind.decision'
+    | 'record.markKind.question'
+    | 'record.markKind.topic';
   /** i18n key under `record.markKindDescription.*` */
   descriptionKey:
     | 'record.markKindDescription.important'
     | 'record.markKindDescription.task'
     | 'record.markKindDescription.quote'
-    | 'record.markKindDescription.moment';
+    | 'record.markKindDescription.moment'
+    | 'record.markKindDescription.decision'
+    | 'record.markKindDescription.question'
+    | 'record.markKindDescription.topic';
   /** i18n key under `recordingDetail.markUntitled.*` */
   untitledKey:
     | 'recordingDetail.markUntitled.important'
     | 'recordingDetail.markUntitled.task'
     | 'recordingDetail.markUntitled.quote'
-    | 'recordingDetail.markUntitled.moment';
+    | 'recordingDetail.markUntitled.moment'
+    | 'recordingDetail.markUntitled.decision'
+    | 'recordingDetail.markUntitled.question'
+    | 'recordingDetail.markUntitled.topic';
   sharePrefix: string;
 };
 
@@ -65,6 +82,30 @@ export const RECORDING_MARK_KIND_UI: Record<RecordingMarkKind, RecordingMarkKind
     untitledKey: 'recordingDetail.markUntitled.quote',
     sharePrefix: '❝',
   },
+  decision: {
+    Icon: GitBranch,
+    accentColorId: 'indigo',
+    recordA11yKey: 'record.markKind.decision',
+    descriptionKey: 'record.markKindDescription.decision',
+    untitledKey: 'recordingDetail.markUntitled.decision',
+    sharePrefix: '✓',
+  },
+  question: {
+    Icon: HelpCircle,
+    accentColorId: 'cyan',
+    recordA11yKey: 'record.markKind.question',
+    descriptionKey: 'record.markKindDescription.question',
+    untitledKey: 'recordingDetail.markUntitled.question',
+    sharePrefix: '?',
+  },
+  topic: {
+    Icon: MessageSquareText,
+    accentColorId: 'fuchsia',
+    recordA11yKey: 'record.markKind.topic',
+    descriptionKey: 'record.markKindDescription.topic',
+    untitledKey: 'recordingDetail.markUntitled.topic',
+    sharePrefix: '§',
+  },
 };
 
 export function getRecordingMarkKindUi(kind: RecordingMarkKind): RecordingMarkKindUiConfig {
@@ -76,6 +117,9 @@ export const RECORDING_MARK_PICKER_KINDS: RecordingMarkKind[] = [
   'moment',
   'important',
   'task',
+  'decision',
+  'question',
+  'topic',
   'quote',
 ];
 

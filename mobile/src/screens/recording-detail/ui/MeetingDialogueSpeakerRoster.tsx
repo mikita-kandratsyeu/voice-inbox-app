@@ -74,7 +74,7 @@ const SpeakerChip = ({
 type MeetingDialogueSpeakerRosterProps = {
   speakers: MeetingDialogueSpeakerRosterEntry[];
   color: Colors;
-  onRename: (originalLabel: string) => void;
+  onRename: (originalLabels: string[]) => void;
 };
 
 export function MeetingDialogueSpeakerRoster({
@@ -125,13 +125,13 @@ export function MeetingDialogueSpeakerRoster({
       >
         {speakers.map((speaker) => (
           <SpeakerChip
-            key={speaker.originalLabel}
+            key={speaker.originalLabels.join('\u0000')}
             speaker={speaker}
             color={color}
             surfaceDark={surfaceDark}
             renameA11yLabel={renameA11yFor(speaker.displayLabel)}
             renameHint={renameHint}
-            onPress={() => onRename(speaker.originalLabel)}
+            onPress={() => onRename(speaker.originalLabels)}
           />
         ))}
       </ScrollView>

@@ -111,15 +111,27 @@ export const POST = async (request: Request): Promise<NextResponse> => {
       taskExtractionHint: rawHint,
       recordingMarks: rawRecordingMarks,
       processingPreset: rawProcessingPreset,
+      meetingSummaryTemplate: rawMeetingSummaryTemplate,
       ...rest
     } = rawOptions;
     const existing = sanitizeExistingTaskTextsForPrompt(rawExisting);
     const hint = sanitizeTaskExtractionHint(rawHint);
     const recordingMarks = sanitizeRecordingMarksForPrompt(rawRecordingMarks);
     const processingPreset = rawProcessingPreset === 'meeting' ? 'meeting' : undefined;
+    const meetingSummaryTemplate =
+      rawMeetingSummaryTemplate === 'standup' ||
+      rawMeetingSummaryTemplate === 'sales_call' ||
+      rawMeetingSummaryTemplate === 'one_on_one' ||
+      rawMeetingSummaryTemplate === 'interview' ||
+      rawMeetingSummaryTemplate === 'product_meeting' ||
+      rawMeetingSummaryTemplate === 'lecture' ||
+      rawMeetingSummaryTemplate === 'general'
+        ? rawMeetingSummaryTemplate
+        : undefined;
     options = {
       ...rest,
       ...(processingPreset ? { processingPreset } : {}),
+      ...(meetingSummaryTemplate ? { meetingSummaryTemplate } : {}),
       ...(existing ? { existingTaskTexts: existing } : {}),
       ...(hint ? { taskExtractionHint: hint } : {}),
       ...(recordingMarks ? { recordingMarks } : {}),

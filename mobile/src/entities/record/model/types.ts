@@ -4,7 +4,24 @@ export type RecordStatus = 'unread' | 'read' | 'archived';
 
 export type RecordClassification = 'personal' | 'work' | 'meeting' | 'idea' | 'other';
 
-export type RecordingStatus = 'idle' | 'loading_model' | 'processing' | 'done' | 'error';
+export type MeetingSummaryTemplate =
+  | 'general'
+  | 'standup'
+  | 'sales_call'
+  | 'one_on_one'
+  | 'interview'
+  | 'product_meeting'
+  | 'lecture';
+
+export type RecordingStatus =
+  | 'idle'
+  | 'loading_model'
+  | 'processing'
+  | 'paused'
+  | 'resumable'
+  | 'cancelling'
+  | 'done'
+  | 'error';
 
 /** Speaker-breakdown tab lifecycle (cloud long meetings). */
 export type MeetingDialogueLoadStatus = 'idle' | 'processing' | 'done' | 'failed';
@@ -36,7 +53,15 @@ export type TaskItem = {
   source?: TaskSource;
 };
 
-export const RECORDING_MARK_KINDS = ['moment', 'important', 'task', 'quote'] as const;
+export const RECORDING_MARK_KINDS = [
+  'moment',
+  'important',
+  'task',
+  'quote',
+  'decision',
+  'question',
+  'topic',
+] as const;
 
 export type RecordingMarkKind = (typeof RECORDING_MARK_KINDS)[number];
 
@@ -90,6 +115,7 @@ export type VoiceRecord = {
   meetingDialogue?: string;
   /** Maps normalized AI speaker label → user display name. */
   meetingSpeakerLabels?: Record<string, string>;
+  meetingSummaryTemplate?: MeetingSummaryTemplate;
   /** Last cloud summarize Redis message id (for meeting-dialogue retry). */
   cloudAiJobId?: string;
   meetingDialogueStatus?: MeetingDialogueLoadStatus;

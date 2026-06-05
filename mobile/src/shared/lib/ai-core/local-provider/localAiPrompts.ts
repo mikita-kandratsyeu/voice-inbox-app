@@ -1,3 +1,4 @@
+import type { MeetingSummaryTemplate } from '@/entities/record';
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 
 import {
@@ -52,6 +53,22 @@ const LOCAL_MEETING_PRESET_HINT = [
   'tasks[] should contain concrete owner/action items only when supported; nextSteps should contain high-level follow-ups that do not duplicate tasks.',
 ].join(' ');
 
+const LOCAL_MEETING_TEMPLATE_HINT: Record<MeetingSummaryTemplate, string> = {
+  general: '',
+  standup:
+    'Meeting template: Standup. Emphasize done items, next work, blockers, owners, and short decisions.',
+  sales_call:
+    'Meeting template: Sales call. Emphasize customer needs, objections, buying signals, follow-ups, stakeholders, and next sales steps.',
+  one_on_one:
+    'Meeting template: 1:1. Emphasize feedback, concerns, goals, commitments, coaching points, and follow-ups.',
+  interview:
+    'Meeting template: Interview. Emphasize signals, questions, strengths, concerns, and evaluation follow-ups.',
+  product_meeting:
+    'Meeting template: Product meeting. Emphasize decisions, requirements, user problems, trade-offs, risks, metrics, and next steps.',
+  lecture:
+    'Meeting template: Lecture. Emphasize key concepts, definitions, examples, open questions, and study items.',
+};
+
 export const LOCAL_MEETING_PSEUDO_BASE = [
   'meetingDialogueMarkdown: plain text with line breaks; neutral speaker labels unless names/roles are stated in the transcript.',
   'This is NOT verified audio diarization. Do not invent turns.',
@@ -95,6 +112,7 @@ export function buildLocalSummaryUserContent(
   existingTaskTitles?: string[],
   taskExtractionHint?: string,
   processingPreset?: 'meeting',
+  meetingSummaryTemplate?: MeetingSummaryTemplate,
   recordingMarks?: RecordingMarkForPrompt[],
   options?: { includeMeetingDialogueField?: boolean },
 ): string {
@@ -110,6 +128,7 @@ export function buildLocalSummaryUserContent(
     LOCAL_SUMMARY_STYLE_HINT[ctx.summaryStyle],
     LOCAL_TASK_STRICTNESS_HINT[ctx.taskStrictness],
     isMeeting ? LOCAL_MEETING_PRESET_HINT : '',
+    isMeeting && meetingSummaryTemplate ? LOCAL_MEETING_TEMPLATE_HINT[meetingSummaryTemplate] : '',
   ]
     .filter(Boolean)
     .join('\n');

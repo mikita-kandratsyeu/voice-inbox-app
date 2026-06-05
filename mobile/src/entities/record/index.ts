@@ -14,8 +14,8 @@ export {
 export type { TrashedRecordListItem } from './model/repository';
 export { useRecordStore } from './model/store';
 export type {
-  isRecordingMarkKind,
   MeetingDialogueLoadStatus,
+  MeetingSummaryTemplate,
   RecordClassification,
   RecordHeavyFields,
   RecordingMark,
@@ -29,5 +29,5 @@ export type {
   VoiceRecord,
   WordToken,
 } from './model/types';
-export { RECORDING_MARK_KINDS } from './model/types';
+export { isRecordingMarkKind, RECORDING_MARK_KINDS } from './model/types';
 export { AiStatusPill, RecordCard, RecordingMarkKindCard } from './ui';

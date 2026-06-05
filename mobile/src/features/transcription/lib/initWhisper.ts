@@ -1,3 +1,4 @@
+import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import { initWhisper, releaseAllWhisper, type WhisperContext } from 'whisper.rn';
 
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
@@ -8,7 +9,11 @@ import {
   resolveWhisperContextInitOptions,
 } from '@/shared/lib/whisper';
 
-import { WHISPER_IDLE_RELEASE_MS } from '../config/constants';
+import {
+  WHISPER_IDLE_RELEASE_MS,
+  WHISPER_LOW_POWER_IDLE_RELEASE_MS,
+  WHISPER_WARM_IDLE_RELEASE_MS,
+} from '../config/constants';
 import { isNativeTranscriptionRunning } from '../model/transcriptionRuntimeRegistry';
 import {
   beginWhisperNativeWork,
@@ -72,16 +77,34 @@ const drainQueuedRelease = (): void => {
   });
 };
 
-export const scheduleIdleRelease = (): void => {
+type IdleReleaseReason = 'default' | 'completed';
+
+function getIdleReleaseDelay(reason: IdleReleaseReason): number {
+  try {
+    const powerState = DeviceInfoModule.getPowerState();
+    if (powerState.lowPowerMode || DeviceInfoModule.isLowBatteryLevel(0.2)) {
+      return WHISPER_LOW_POWER_IDLE_RELEASE_MS;
+    }
+  } catch {
+    // Device info is best-effort; keep normal caching if it is unavailable.
+  }
+
+  return reason === 'completed' ? WHISPER_WARM_IDLE_RELEASE_MS : WHISPER_IDLE_RELEASE_MS;
+}
+
+export const scheduleIdleRelease = (options?: { reason?: IdleReleaseReason }): void => {
   clearIdleTimer();
   if (!cachedContext || isNativeTranscriptionRunning()) {
     return;
   }
 
-  idleTimeoutId = setTimeout(() => {
-    idleTimeoutId = null;
-    releaseWhisperContext().catch(() => {});
-  }, WHISPER_IDLE_RELEASE_MS);
+  idleTimeoutId = setTimeout(
+    () => {
+      idleTimeoutId = null;
+      releaseWhisperContext().catch(() => {});
+    },
+    getIdleReleaseDelay(options?.reason ?? 'default'),
+  );
 };
 
 const loadWhisperContext = async (

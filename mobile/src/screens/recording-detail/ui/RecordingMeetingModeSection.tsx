@@ -3,22 +3,37 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, Text, View } from 'react-native';
 
+import type { MeetingSummaryTemplate } from '@/entities/record';
 import type { Colors } from '@/shared/config';
+
+const MEETING_TEMPLATES: MeetingSummaryTemplate[] = [
+  'general',
+  'standup',
+  'sales_call',
+  'one_on_one',
+  'interview',
+  'product_meeting',
+  'lecture',
+];
 
 type RecordingMeetingModeSectionProps = {
   isMeetingMode: boolean;
+  selectedTemplate?: MeetingSummaryTemplate;
   disabled?: boolean;
   color: Colors;
   surfaceBackgroundColor: string;
   onToggleMeetingMode: () => void;
+  onSelectTemplate?: (template: MeetingSummaryTemplate) => void;
 };
 
 export const RecordingMeetingModeSection = ({
   isMeetingMode,
+  selectedTemplate = 'general',
   disabled = false,
   color,
   surfaceBackgroundColor,
   onToggleMeetingMode,
+  onSelectTemplate,
 }: RecordingMeetingModeSectionProps) => {
   const { t } = useTranslation();
 
@@ -68,6 +83,39 @@ export const RecordingMeetingModeSection = ({
           />
         </View>
       </Pressable>
+      {isMeetingMode ? (
+        <View className="gap-2 px-4 pb-4">
+          <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+            {t('recordingDetail.meetingSummaryTemplateTitle')}
+          </Text>
+          <View className="flex-row flex-wrap gap-2">
+            {MEETING_TEMPLATES.map((template) => {
+              const selected = selectedTemplate === template;
+              return (
+                <Pressable
+                  key={template}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected, disabled }}
+                  disabled={disabled}
+                  onPress={() => onSelectTemplate?.(template)}
+                  className="rounded-full px-3 py-1.5"
+                  style={{
+                    opacity: disabled ? 0.55 : 1,
+                    backgroundColor: selected ? color.accent.primary : color.background.tertiary,
+                  }}
+                >
+                  <Text
+                    className="text-[13px] font-semibold"
+                    style={{ color: selected ? color.icon.onAccent : color.text.secondary }}
+                  >
+                    {t(`recordingDetail.meetingSummaryTemplates.${template}`)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 };

@@ -1,7 +1,7 @@
 import { AlertCircle, FileText, RefreshCw, UsersRound } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Switch, Text, View } from 'react-native';
 
 import type { RecordingStatus } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
@@ -28,7 +28,7 @@ import { TaskEditSheet } from './TaskEditSheet';
 type MeetingDialogueTabProps = {
   meetingDialogue?: string;
   speakerLabels?: MeetingSpeakerLabels;
-  onRenameSpeaker?: (originalLabel: string, displayName: string) => void;
+  onRenameSpeaker?: (originalLabels: string[], displayName: string) => void;
   hasTranscript: boolean;
   hasSummary?: boolean;
   /** Summary/tasks AI run in progress — block speaker breakdown actions. */
@@ -53,7 +53,7 @@ type MeetingDialogueTabProps = {
 };
 
 type SpeakerRenameTarget = {
-  originalLabel: string;
+  originalLabels: string[];
   initialDisplay: string;
 };
 
@@ -92,6 +92,7 @@ export const MeetingDialogueTab = ({
   const blockDialogueActions = disableByNetwork || summaryProcessing;
 
   const [renameTarget, setRenameTarget] = useState<SpeakerRenameTarget | null>(null);
+  const [speakerLabelsHidden, setSpeakerLabelsHidden] = useState(false);
 
   const rawUtterances = useMemo(
     () => parseMeetingDialogue(meetingDialogue ?? ''),
@@ -115,17 +116,49 @@ export const MeetingDialogueTab = ({
 
   const showSpeakerRoster = Boolean(onRenameSpeaker && speakerRoster.length > 0);
 
+  const dialogueCallout = useMemo(() => {
+    if (heuristics.showNoSpeakerLabelsHint) {
+      return {
+        titleKey: 'recordingDetail.meetingDialogueNoLabelsTitle' as const,
+        bodyKey: 'recordingDetail.meetingDialogueNoLabelsHint' as const,
+        icon: AlertCircle,
+        iconColor: color.accent.delete,
+      };
+    }
+    if (heuristics.showSingleSpeakerHint) {
+      return {
+        titleKey: 'recordingDetail.meetingDialogueSingleSpeakerTitle' as const,
+        bodyKey: 'recordingDetail.meetingDialogueSingleSpeakerHint' as const,
+        icon: UsersRound,
+        iconColor: color.accent.primary,
+      };
+    }
+    return null;
+  }, [color.accent.delete, color.accent.primary, heuristics]);
+
   const errMessage = useMemo(() => {
     return errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '');
   }, [errorMessage, showPrivateModeCta, t]);
 
   const openRename = useCallback(
-    (originalLabel: string) => {
-      if (!onRenameSpeaker) return;
-      const display = displaySpeakerLabel(originalLabel, speakerLabels) || originalLabel;
-      setRenameTarget({ originalLabel, initialDisplay: display });
+    (originalLabels: string[]) => {
+      if (!onRenameSpeaker || originalLabels.length === 0) return;
+      const display = displaySpeakerLabel(originalLabels[0], speakerLabels) || originalLabels[0];
+      setRenameTarget({ originalLabels, initialDisplay: display });
     },
     [onRenameSpeaker, speakerLabels],
+  );
+
+  const openRenameFromUtterance = useCallback(
+    (originalLabel: string) => {
+      const group = speakerRoster.find((speaker) =>
+        speaker.originalLabels.some(
+          (label) => normalizeSpeakerLabelKey(label) === normalizeSpeakerLabelKey(originalLabel),
+        ),
+      );
+      openRename(group?.originalLabels ?? [originalLabel]);
+    },
+    [openRename, speakerRoster],
   );
 
   const renameSheet = useMemo(
@@ -138,7 +171,7 @@ export const MeetingDialogueTab = ({
         onClose={() => setRenameTarget(null)}
         onSave={({ text }) => {
           if (!renameTarget || !onRenameSpeaker) return false;
-          onRenameSpeaker(renameTarget.originalLabel, text);
+          onRenameSpeaker(renameTarget.originalLabels, text);
           return true;
         }}
       />
@@ -257,28 +290,19 @@ export const MeetingDialogueTab = ({
     <View className="gap-3.5 p-4">
       <PrivateModeTranscriptLimitNotice color={color} transcriptCharCount={transcriptCharCount} />
       {showBanner && <AiTabErrorBanner message={errMessage} onDismiss={handleDismiss} />}
-      <MeetingTabInfoCallout
-        color={color}
-        icon={<UsersRound size={20} color={color.accent.primary} strokeWidth={2} />}
-        title={t('recordingDetail.meetingDialogueTabCalloutTitle')}
-      >
-        <MeetingTabInfoCalloutText color={color}>
-          {t('recordingDetail.meetingDialogueDisclaimer')}
-        </MeetingTabInfoCalloutText>
-        <MeetingTabInfoCalloutText color={color}>
-          {t('recordingDetail.meetingDialogueNotRealDiarization')}
-        </MeetingTabInfoCalloutText>
-        {heuristics.showSingleSpeakerHint ? (
-          <MeetingTabInfoCalloutText color={color} variant="muted">
-            {t('recordingDetail.meetingDialogueSingleSpeakerHint')}
+      {dialogueCallout ? (
+        <MeetingTabInfoCallout
+          color={color}
+          icon={
+            <dialogueCallout.icon size={20} color={dialogueCallout.iconColor} strokeWidth={2} />
+          }
+          title={t(dialogueCallout.titleKey)}
+        >
+          <MeetingTabInfoCalloutText color={color}>
+            {t(dialogueCallout.bodyKey)}
           </MeetingTabInfoCalloutText>
-        ) : null}
-        {heuristics.showNoSpeakerLabelsHint ? (
-          <MeetingTabInfoCalloutText color={color} variant="muted">
-            {t('recordingDetail.meetingDialogueNoLabelsHint')}
-          </MeetingTabInfoCalloutText>
-        ) : null}
-      </MeetingTabInfoCallout>
+        </MeetingTabInfoCallout>
+      ) : null}
       {showSpeakerRoster ? (
         <MeetingDialogueSpeakerRoster
           speakers={speakerRoster}
@@ -286,11 +310,40 @@ export const MeetingDialogueTab = ({
           onRename={openRename}
         />
       ) : null}
+      {speakerRoster.length > 0 ? (
+        <View
+          style={{
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: color.border.default,
+            backgroundColor: color.background.card,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
+        >
+          <Text style={{ color: color.text.secondary, fontSize: 13, lineHeight: 18, flex: 1 }}>
+            {t('recordingDetail.hideSpeakerLabels')}
+          </Text>
+          <Switch
+            value={speakerLabelsHidden}
+            onValueChange={setSpeakerLabelsHidden}
+            trackColor={{ false: color.background.tertiary, true: color.accent.primary }}
+            thumbColor={color.icon.onAccent}
+            accessibilityLabel={t('recordingDetail.hideSpeakerLabels')}
+          />
+        </View>
+      ) : null}
       <View className="gap-2.5">
         {utterances.map((u, index) => {
           const rawLabel = rawUtterances[index]?.speakerLabel?.trim() ?? '';
           const key = `${index}-${normalizeSpeakerLabelKey(rawLabel)}-${u.body.slice(0, 24)}`;
-          const showInlineSpeakerLabel = shouldShowInlineSpeakerLabel(rawUtterances, index);
+          const showInlineSpeakerLabel =
+            !speakerLabelsHidden &&
+            shouldShowInlineSpeakerLabel(rawUtterances, index, speakerLabels);
           const speakerLabelVariant = showSpeakerRoster
             ? ('subtle' as const)
             : ('emphasized' as const);
@@ -302,6 +355,7 @@ export const MeetingDialogueTab = ({
               color={color}
               showInlineSpeakerLabel={showInlineSpeakerLabel}
               speakerLabelVariant={speakerLabelVariant}
+              onRenameSpeaker={onRenameSpeaker ? openRenameFromUtterance : undefined}
             />
           );
         })}

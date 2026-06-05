@@ -14,6 +14,7 @@ import { runAutoArchiveReadNotesIfEligible } from '@/features/auto-archive/model
 import { initRevenueCatWhenReady } from '@/features/entitlements';
 import { getHasSeenOnboarding } from '@/features/onboarding/lib/onboardingStorage';
 import { syncAllTaskDeadlineNotifications } from '@/features/task-deadline-notifications';
+import { cleanupOrphanTranscriptionTempWavs } from '@/features/transcription/lib/transcriptionTempAudioCleanup';
 import { initRuntimeConfig } from '@/shared/config/runtimeConfig';
 import { initDB, isString } from '@/shared/lib';
 import { syncAnalyticsUserId } from '@/shared/lib/analytics';
@@ -113,6 +114,8 @@ export function useAppBootstrap(
         } catch {
           if (__DEV__) console.warn('[bootstrap] task deadline notification sync failed');
         }
+
+        void cleanupOrphanTranscriptionTempWavs(useRecordStore.getState().records);
 
         notifyReady();
 

@@ -5,6 +5,7 @@ import {
   mergeSpeakerRename,
   normalizeSpeakerLabelKey,
   pruneSpeakerLabelsForDialogue,
+  renameSpeakerGroup,
 } from '../meetingSpeakerLabels';
 import { parseMeetingDialogue } from '../parseMeetingDialogue';
 
@@ -19,6 +20,11 @@ describe('meetingSpeakerLabels', () => {
     expect(next).toEqual({ 'speaker 1': 'Anna' });
     expect(displaySpeakerLabel('Speaker 1', next)).toBe('Anna');
     expect(mergeSpeakerRename(next, 'Speaker 1', 'Speaker 1')).toBeUndefined();
+  });
+
+  it('renames speaker groups in one pass', () => {
+    const renamed = renameSpeakerGroup(undefined, ['Speaker 1', 'Speaker 2'], 'Anna');
+    expect(renamed).toEqual({ 'speaker 1': 'Anna', 'speaker 2': 'Anna' });
   });
 
   it('applies renames to utterances for export', () => {
@@ -44,7 +50,9 @@ describe('meetingSpeakerLabels', () => {
     expect(analyzeMeetingDialogueHeuristics(single).showSingleSpeakerHint).toBe(true);
 
     const none = parseMeetingDialogue('Just a wall of text without labels.');
-    expect(analyzeMeetingDialogueHeuristics(none).showNoSpeakerLabelsHint).toBe(true);
+    const noneHeuristics = analyzeMeetingDialogueHeuristics(none);
+    expect(noneHeuristics.showNoSpeakerLabelsHint).toBe(true);
+    expect(noneHeuristics.showSingleSpeakerHint).toBe(false);
   });
 
   it('parses Собеседник speaker labels', () => {

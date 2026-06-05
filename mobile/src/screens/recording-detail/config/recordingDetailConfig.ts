@@ -15,6 +15,9 @@ const AI_STATUS_COLORS: Record<RecordingStatus, { iconColor: string; bgColor: st
   idle: { iconColor: '#9ca3af', bgColor: '#f9fafb' },
   loading_model: { iconColor: '#f59e0b', bgColor: '#fffbeb' },
   processing: { iconColor: '#f59e0b', bgColor: '#fffbeb' },
+  paused: { iconColor: '#f59e0b', bgColor: '#fffbeb' },
+  resumable: { iconColor: '#f59e0b', bgColor: '#fffbeb' },
+  cancelling: { iconColor: '#f59e0b', bgColor: '#fffbeb' },
   done: { iconColor: '#22c55e', bgColor: '#f0fdf4' },
   error: { iconColor: '#ef4444', bgColor: '#fef2f2' },
 };

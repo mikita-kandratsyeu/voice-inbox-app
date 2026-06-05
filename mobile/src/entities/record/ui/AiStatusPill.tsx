@@ -1,4 +1,4 @@
-import { AlertCircle, MicOff } from 'lucide-react-native';
+import { AlertCircle, MicOff, RotateCcw } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
@@ -53,7 +53,8 @@ export const AiStatusPill = ({
     isAiError(askAiStatus) ||
     meetingDialogueFailed;
 
-  const isTranscriptionInProgress = aiStatus === 'loading_model' || aiStatus === 'processing';
+  const isTranscriptionInProgress =
+    aiStatus === 'loading_model' || aiStatus === 'processing' || aiStatus === 'cancelling';
 
   const processingSpinner = (
     <ActivityIndicator
@@ -71,12 +72,14 @@ export const AiStatusPill = ({
     const label =
       aiStatus === 'loading_model'
         ? t('aiStatus.loading_model')
-        : transcriptProgressSegments
-          ? t('transcription.progressInbox', {
-              current: transcriptProgressSegments.current,
-              total: transcriptProgressSegments.total,
-            })
-          : (transcriptProgressLabel ?? t('aiStatus.processing'));
+        : aiStatus === 'cancelling'
+          ? t('aiStatus.cancelling')
+          : transcriptProgressSegments
+            ? t('transcription.progressInbox', {
+                current: transcriptProgressSegments.current,
+                total: transcriptProgressSegments.total,
+              })
+            : (transcriptProgressLabel ?? t('aiStatus.processing'));
     return (
       <TouchableOpacity
         accessibilityRole="button"
@@ -88,6 +91,26 @@ export const AiStatusPill = ({
         activeOpacity={0.75}
       >
         {processingSpinner}
+        <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
+          {label}
+        </Text>
+      </TouchableOpacity>
+    );
+  }
+
+  if (aiStatus === 'paused' || aiStatus === 'resumable') {
+    const label = t(`aiStatus.${aiStatus}`);
+    return (
+      <TouchableOpacity
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+        className="flex-row items-center gap-1 rounded-full px-2.5 py-1"
+        style={{ backgroundColor: color.status.processing.bg }}
+        onPress={onPress}
+        activeOpacity={0.75}
+      >
+        <RotateCcw size={11} color={color.status.processing.text} strokeWidth={2.5} />
         <Text className="text-xs font-medium" style={{ color: color.status.processing.text }}>
           {label}
         </Text>

@@ -12,10 +12,12 @@ import {
   recordsTable,
 } from '@/shared/lib';
 import type { RecordForStats } from '@/shared/lib/async-storage/storage';
+import { isString } from '@/shared/lib/type-guards';
 
 import { sanitizeRecordingMark } from './normalizeRecordingMark';
 import { TRASH_RETENTION_DAYS } from './trashConfig';
 import type {
+  MeetingSummaryTemplate,
   RecordClassification,
   RecordHeavyFields,
   RecordingMark,
@@ -47,6 +49,24 @@ function parseRecordingMarks(raw: string | null | undefined): RecordingMark[] {
   } catch {
     return [];
   }
+}
+
+const MEETING_SUMMARY_TEMPLATES: readonly MeetingSummaryTemplate[] = [
+  'general',
+  'standup',
+  'sales_call',
+  'one_on_one',
+  'interview',
+  'product_meeting',
+  'lecture',
+];
+
+function sanitizeMeetingSummaryTemplate(
+  raw: string | null | undefined,
+): MeetingSummaryTemplate | undefined {
+  return isString(raw) && MEETING_SUMMARY_TEMPLATES.includes(raw as MeetingSummaryTemplate)
+    ? (raw as MeetingSummaryTemplate)
+    : undefined;
 }
 
 const logDb = (op: string, details?: Record<string, unknown>) => {
@@ -86,6 +106,7 @@ type RecordListQueryRow = {
   nextSteps: string | null;
   meetingDialogue: string | null;
   meetingSpeakerLabels: string | null;
+  meetingSummaryTemplate: string | null;
   cloudAiJobId: string | null;
   summaryReasoning: string | null;
   summaryAiModel: string | null;
@@ -131,6 +152,7 @@ const toRecord = (row: RecordRowRaw): VoiceRecord => {
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
     meetingDialogue: row.meetingDialogue?.trim() ? row.meetingDialogue.trim() : undefined,
     meetingSpeakerLabels: parseMeetingSpeakerLabelsJson(row.meetingSpeakerLabels),
+    meetingSummaryTemplate: sanitizeMeetingSummaryTemplate(row.meetingSummaryTemplate),
     cloudAiJobId: row.cloudAiJobId?.trim() ? row.cloudAiJobId.trim() : undefined,
     summaryReasoning: row.summaryReasoning?.trim() ? row.summaryReasoning.trim() : undefined,
     summaryAiModel: row.summaryAiModel?.trim() ? row.summaryAiModel.trim() : undefined,
@@ -188,6 +210,7 @@ const toRecordListItem = (row: RecordListQueryRow): RecordListItem => {
     nextSteps: JSON.parse(row.nextSteps ?? '[]') as string[],
     meetingDialogue: row.meetingDialogue?.trim() ? row.meetingDialogue.trim() : undefined,
     meetingSpeakerLabels: parseMeetingSpeakerLabelsJson(row.meetingSpeakerLabels),
+    meetingSummaryTemplate: sanitizeMeetingSummaryTemplate(row.meetingSummaryTemplate),
     cloudAiJobId: row.cloudAiJobId?.trim() ? row.cloudAiJobId.trim() : undefined,
     summaryReasoning: row.summaryReasoning?.trim() ? row.summaryReasoning.trim() : undefined,
     summaryAiModel: row.summaryAiModel?.trim() ? row.summaryAiModel.trim() : undefined,
@@ -241,6 +264,7 @@ const recordListColumns = {
   nextSteps: recordsTable.nextSteps,
   meetingDialogue: recordsTable.meetingDialogue,
   meetingSpeakerLabels: recordsTable.meetingSpeakerLabels,
+  meetingSummaryTemplate: recordsTable.meetingSummaryTemplate,
   cloudAiJobId: recordsTable.cloudAiJobId,
   summaryReasoning: recordsTable.summaryReasoning,
   summaryAiModel: recordsTable.summaryAiModel,
@@ -543,6 +567,7 @@ export const recordRepository = {
       nextSteps?: string[];
       meetingDialogue?: string | null;
       meetingSpeakerLabels?: Record<string, string> | null;
+      meetingSummaryTemplate?: MeetingSummaryTemplate | null;
       cloudAiJobId?: string | null;
       summaryReasoning?: string | null;
       summaryAiModel?: string | null;
@@ -572,6 +597,9 @@ export const recordRepository = {
         data.meetingSpeakerLabels && Object.keys(data.meetingSpeakerLabels).length > 0
           ? JSON.stringify(data.meetingSpeakerLabels)
           : null;
+    }
+    if (data.meetingSummaryTemplate !== undefined) {
+      updates.meetingSummaryTemplate = data.meetingSummaryTemplate ?? null;
     }
     if (data.cloudAiJobId !== undefined) {
       updates.cloudAiJobId = data.cloudAiJobId?.trim() ? data.cloudAiJobId.trim() : null;

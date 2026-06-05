@@ -262,13 +262,19 @@
       "important": "Important",
       "task": "Task",
       "quote": "Quote",
-      "moment": "Moment"
+      "moment": "Moment",
+      "decision": "Decision",
+      "question": "Question",
+      "topic": "Topic change"
     },
     "markKindDescription": {
       "important": "Key moment",
       "task": "Something to do",
       "quote": "Worth remembering",
-      "moment": "Notable beat"
+      "moment": "Notable beat",
+      "decision": "Decision made",
+      "question": "Open question",
+      "topic": "New topic"
     },
     "markHoldForLabel": "Hold to add a short label",
     "markAddLabelLink": "Add a label",
@@ -321,7 +327,10 @@
       "important": "Important moment",
       "task": "Task to extract",
       "quote": "Quote",
-      "moment": "Pinned moment"
+      "moment": "Pinned moment",
+      "decision": "Decision",
+      "question": "Question",
+      "topic": "Topic change"
     },
     "markOptionsTitle": "This pin",
     "markEdit": "Edit note",
@@ -372,14 +381,26 @@
     "meetingModeDisableTitle": "Turn off meeting mode?",
     "meetingModeDisableMessage": "The participant breakdown will be hidden. Turn meeting mode back on and update the summary to bring it back.",
     "meetingModeDisableConfirm": "Turn off",
+    "meetingSummaryTemplateTitle": "Summary format",
+    "meetingSummaryTemplates": {
+      "general": "General",
+      "standup": "Standup",
+      "sales_call": "Sales call",
+      "one_on_one": "1:1",
+      "interview": "Interview",
+      "product_meeting": "Product",
+      "lecture": "Lecture"
+    },
     "meetingSummaryTitle": "Meeting recap",
     "meetingSummaryDescription": "Meeting minutes: brief recap, decisions, and open questions.",
     "meetingDialogueTitle": "Participants",
     "meetingDialogueTabCalloutTitle": "How to read this tab",
     "meetingDialogueDisclaimer": "Lines are grouped for easier reading. Participant labels are AI hints — not a verbatim transcript.",
     "meetingDialogueNotRealDiarization": "We identify participants from the transcript, not from voice.",
-    "meetingDialogueSingleSpeakerHint": "Looks like one person spoke — or we couldn’t split the replies.",
-    "meetingDialogueNoLabelsHint": "We couldn’t split this by participant. Try again or update the summary.",
+    "meetingDialogueSingleSpeakerTitle": "One participant",
+    "meetingDialogueSingleSpeakerHint": "Looks like one person spoke. Labels are AI hints from the transcript.",
+    "meetingDialogueNoLabelsTitle": "Couldn't split speakers",
+    "meetingDialogueNoLabelsHint": "We couldn't split this by participant. Try again below.",
     "retryMeetingDialogue": "Refresh breakdown",
     "meetingDialogueSpeakersSection": "Participants",
     "meetingDialogueSpeakersSectionHint": "Tap a name to customize how they appear in this note",
@@ -387,6 +408,7 @@
     "renameSpeakerPlaceholder": "Anna, Client…",
     "renameSpeakerA11y": "Edit name: {{name}}",
     "renameSpeakerHint": "Set a custom name — it’s saved with this note",
+    "hideSpeakerLabels": "Hide participant labels in the text",
     "meetingDialogueTabEmptyTitle": "Nothing here yet",
     "meetingDialogueTabEmptyDesc": "You need a summary first — then we’ll split replies by participant. You can refresh the breakdown anytime.",
     "meetingDialogueTabEmptyDescNeedSummary": "One Smart run: summary plus replies split by participant.",
@@ -535,6 +557,9 @@
     "idle": "Awaiting processing",
     "loading_model": "Loading model…",
     "processing": "Transcribing...",
+    "paused": "Paused",
+    "resumable": "Continue transcription",
+    "cancelling": "Pausing...",
     "aiProcessing": "Generating summary...",
     "speakerTurnsProcessing": "Splitting by participant…",
     "askProcessing": "Answering…",
@@ -923,7 +948,7 @@
     "notificationsEnabledCount": "{{count}} on",
     "notificationsScreen": {
       "title": "Notifications",
-      "intro": "Allow notifications in system settings so Voice Inbox can tell you when transcripts or AI processing are ready. Task reminders are controlled separately below and run locally on this device.",
+      "intro": "Allow notifications in system settings so Voice Inbox can tell you when transcripts or AI processing are ready, and when an interrupted local transcription can be resumed. Task reminders are controlled separately below and run locally on this device.",
       "sectionTitle": "Notification types",
       "aiAlertsFollowsSystem": "System",
       "aiAlertsDeniedTitle": "Turn on notifications",
@@ -932,8 +957,10 @@
       "taskRemindersDeniedMessage": "Allow notifications for Voice Inbox in your device settings to receive task due-date reminders.",
       "systemDeniedHint": "Notifications are off in your device settings. Turn them on there, then come back to the app."
     },
+    "transcriptionRecoveryNotifications": "Transcription recovery",
+    "transcriptionRecoveryNotificationsHint": "Local alert when transcription pauses because the app was closed or sent to the background. Tap it to continue or discard saved progress.",
     "taskDeadlineNotifications": "Task reminders",
-    "taskDeadlineNotificationsHint": "Due dates on this device. They work offline and are not sent to the cloud.",
+    "taskDeadlineNotificationsHint": "Task due dates on this device. They work offline and are not sent to the cloud.",
     "taskDeadlineNotificationsChannel": "Voice Inbox reminders",
     "planStatus": {
       "freeTitle": "Free plan",
@@ -1806,7 +1833,11 @@
     "resumeTitle": "Continue transcription?",
     "resumeBody": "{{title}} was paused when you left the app. You can pick up where you left off.",
     "continue": "Continue",
-    "cancelResume": "Discard progress"
+    "cancelResume": "Discard progress",
+    "pausedNotificationChannel": "Transcription recovery",
+    "pausedNotificationTitle": "Transcription paused",
+    "pausedNotificationBody": "{{title}} is ready to continue when you reopen the app.",
+    "pausedNotificationBodyFallback": "You can continue from the saved progress when you reopen the app."
   },
   "batch": {
     "selectedCount_one": "{{count}} selected",

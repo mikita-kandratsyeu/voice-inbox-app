@@ -262,13 +262,19 @@
       "important": "Важное",
       "task": "Задача",
       "quote": "Цитата",
-      "moment": "Момент"
+      "moment": "Момент",
+      "decision": "Решение",
+      "question": "Вопрос",
+      "topic": "Смена темы"
     },
     "markKindDescription": {
       "important": "Ключевой момент",
       "task": "Нужно сделать",
       "quote": "Запомнить мысль",
-      "moment": "Важный момент"
+      "moment": "Важный момент",
+      "decision": "Принято решение",
+      "question": "Открытый вопрос",
+      "topic": "Новая тема"
     },
     "markHoldForLabel": "Удерживайте, чтобы добавить подпись",
     "markAddLabelLink": "Добавить подпись",
@@ -321,7 +327,10 @@
       "important": "Важный момент",
       "task": "Задача для извлечения",
       "quote": "Цитата",
-      "moment": "Момент без подписи"
+      "moment": "Момент без подписи",
+      "decision": "Решение",
+      "question": "Вопрос",
+      "topic": "Смена темы"
     },
     "markOptionsTitle": "Эта отметка",
     "markEdit": "Изменить текст",
@@ -372,14 +381,26 @@
     "meetingModeDisableTitle": "Отключить режим встречи?",
     "meetingModeDisableMessage": "Текущая разбивка по участникам скроется. Чтобы вернуть — включите режим снова и обновите сводку.",
     "meetingModeDisableConfirm": "Отключить",
+    "meetingSummaryTemplateTitle": "Формат сводки",
+    "meetingSummaryTemplates": {
+      "general": "Обычная",
+      "standup": "Стендап",
+      "sales_call": "Продажи",
+      "one_on_one": "1:1",
+      "interview": "Интервью",
+      "product_meeting": "Продукт",
+      "lecture": "Лекция"
+    },
     "meetingSummaryTitle": "Итоги встречи",
     "meetingSummaryDescription": "Протокол встречи: коротко, решения и открытые вопросы.",
     "meetingDialogueTitle": "По участникам",
     "meetingDialogueTabCalloutTitle": "Как читать эту вкладку",
     "meetingDialogueDisclaimer": "Реплики сгруппированы для удобного просмотра. Подписи участников — подсказка ИИ, где текст может не совпадать с записью дословно.",
     "meetingDialogueNotRealDiarization": "Участников определяем по тексту записи, а не по голосу.",
-    "meetingDialogueSingleSpeakerHint": "Похоже, говорил один человек — или не удалось разделить реплики.",
-    "meetingDialogueNoLabelsHint": "Не получилось разложить по участникам. Попробуйте ещё раз или обновите сводку.",
+    "meetingDialogueSingleSpeakerTitle": "Один участник",
+    "meetingDialogueSingleSpeakerHint": "Похоже, говорил один человек. Подписи — подсказка ИИ по тексту записи.",
+    "meetingDialogueNoLabelsTitle": "Не удалось разделить",
+    "meetingDialogueNoLabelsHint": "Не получилось разложить по участникам. Попробуйте ещё раз ниже.",
     "retryMeetingDialogue": "Обновить разбивку",
     "meetingDialogueSpeakersSection": "Участники",
     "meetingDialogueSpeakersSectionHint": "Нажмите на имя, чтобы задать своё отображение в этой заметке",
@@ -387,6 +408,7 @@
     "renameSpeakerPlaceholder": "Аня, Клиент…",
     "renameSpeakerA11y": "Изменить имя: {{name}}",
     "renameSpeakerHint": "Можно задать своё имя — оно сохранится в этой записи",
+    "hideSpeakerLabels": "Скрыть подписи участников в тексте",
     "meetingDialogueTabEmptyTitle": "Пока пусто",
     "meetingDialogueTabEmptyDesc": "Сначала нужна сводка — затем разложим реплики по участникам. Разбивку можно обновить отдельно в любой момент.",
     "meetingDialogueTabEmptyDescNeedSummary": "Сделаем сводку и разложим реплики по участникам за один запуск в Smart.",
@@ -535,6 +557,9 @@
     "idle": "Ожидает обработки",
     "loading_model": "Загрузка модели…",
     "processing": "Транскрипция...",
+    "paused": "Приостановлено",
+    "resumable": "Продолжить транскрипцию",
+    "cancelling": "Останавливаем...",
     "aiProcessing": "Создание сводки...",
     "speakerTurnsProcessing": "Разбираем по участникам…",
     "askProcessing": "Ответ генерируется…",
@@ -942,7 +967,7 @@
     "notificationsEnabledCount": "{{count}} вкл.",
     "notificationsScreen": {
       "title": "Уведомления",
-      "intro": "Разрешите уведомления в системе, чтобы Voice Inbox AI сообщал, когда готовы расшифровка или ИИ-обработка. Напоминания о задачах настраиваются отдельно ниже и работают локально на этом устройстве.",
+      "intro": "Разрешите уведомления в системе, чтобы Voice Inbox AI сообщал, когда готовы расшифровка или ИИ-обработка, а также когда прерванную локальную транскрипцию можно продолжить. Напоминания о задачах настраиваются отдельно ниже и работают локально на этом устройстве.",
       "sectionTitle": "Типы уведомлений",
       "aiAlertsFollowsSystem": "В системе",
       "aiAlertsDeniedTitle": "Включите уведомления",
@@ -951,6 +976,8 @@
       "taskRemindersDeniedMessage": "Разрешите уведомления для Voice Inbox в настройках устройства, чтобы получать напоминания о сроках задач.",
       "systemDeniedHint": "Уведомления выключены в настройках системы. Включите их там и вернитесь в приложение."
     },
+    "transcriptionRecoveryNotifications": "Восстановление транскрипции",
+    "transcriptionRecoveryNotificationsHint": "Локальное уведомление, если транскрипция остановилась из-за закрытия или сворачивания приложения. Нажмите его, чтобы продолжить или отменить сохранённый прогресс.",
     "taskDeadlineNotifications": "Напоминания о задачах",
     "taskDeadlineNotificationsHint": "Сроки задач на этом устройстве. Работают без интернета и не отправляются в облако.",
     "taskDeadlineNotificationsChannel": "Напоминания Voice Inbox",
@@ -1833,7 +1860,11 @@
     "resumeTitle": "Продолжить транскрипцию?",
     "resumeBody": "«{{title}}» остановилась, когда вы свернули приложение. Можно продолжить с того же места.",
     "continue": "Продолжить",
-    "cancelResume": "Отменить"
+    "cancelResume": "Отменить",
+    "pausedNotificationChannel": "Восстановление транскрипции",
+    "pausedNotificationTitle": "Транскрипция приостановлена",
+    "pausedNotificationBody": "«{{title}}» можно продолжить, когда вы вернётесь в приложение.",
+    "pausedNotificationBodyFallback": "Можно продолжить с сохранённого места, когда вы вернётесь в приложение."
   },
   "batch": {
     "selectedCount_one": "Выбрана {{count}} запись",
