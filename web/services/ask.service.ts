@@ -9,6 +9,10 @@ import type { RecordingMarkForPrompt } from '@/lib/recording-marks-prompt';
 import type { AskJobPayload } from '@/types/ai-job';
 import type { AskMessage, Message } from '@/types';
 
+type AskEvidenceMessageItem = NonNullable<
+  Extract<AskMessage, { status: 'done' }>['evidence']
+>[number];
+
 type CreateAskResult =
   | { created: true; syncToken?: string }
   | { created: false; limitExceeded: true; usage: import('@/lib/ai-rate-limit').AiUsage }
@@ -94,6 +98,9 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
     model?: string;
     modelLabel?: string;
     answer?: string;
+    answerKind?: unknown;
+    items?: unknown;
+    evidence?: unknown;
     error?: string;
   };
   if (!msg?.id || !msg?.status) return null;
@@ -117,10 +124,48 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
     return { id: msg.id, status: 'processing', ...modelFields };
   }
   if (msg.status === 'done' && typeof msg.answer === 'string') {
+    const answerKind =
+      msg.answerKind === 'plain' ||
+      msg.answerKind === 'list' ||
+      msg.answerKind === 'tasks' ||
+      msg.answerKind === 'decisions'
+        ? msg.answerKind
+        : undefined;
+    const items = Array.isArray(msg.items)
+      ? msg.items
+          .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+          .slice(0, 12)
+      : undefined;
+    const evidence = Array.isArray(msg.evidence)
+      ? msg.evidence
+          .map((item): AskEvidenceMessageItem | null => {
+            if (!item || typeof item !== 'object') return null;
+            const o = item as Record<string, unknown>;
+            const quote = typeof o.quote === 'string' ? o.quote.trim() : '';
+            if (!quote) return null;
+            return {
+              quote,
+              ...(typeof o.source === 'string'
+                ? { source: o.source as AskEvidenceMessageItem['source'] }
+                : {}),
+              ...(typeof o.offsetMs === 'number' && Number.isFinite(o.offsetMs)
+                ? { offsetMs: Math.max(0, Math.round(o.offsetMs)) }
+                : o.offsetMs === null
+                  ? { offsetMs: null }
+                  : {}),
+              ...(typeof o.label === 'string' && o.label.trim() ? { label: o.label.trim() } : {}),
+            };
+          })
+          .filter((item): item is AskEvidenceMessageItem => item !== null)
+          .slice(0, 5)
+      : undefined;
     return {
       id: msg.id,
       status: 'done',
       answer: msg.answer,
+      ...(answerKind ? { answerKind } : {}),
+      ...(items?.length ? { items } : {}),
+      ...(evidence?.length ? { evidence } : {}),
       ...modelFields,
     };
   }

@@ -170,7 +170,73 @@ async function callSummaryModel(
   return buildSummaryAiResult(content, message, raw, extractReasoningFn);
 }
 
-function extractAnswerFromResponse(responseContent: string): string {
+type AskAnswerKind = 'plain' | 'list' | 'tasks' | 'decisions';
+type AskEvidence = {
+  quote: string;
+  source?: 'transcript' | 'summary' | 'tasks' | 'recording_mark' | 'prior_conversation';
+  offsetMs?: number | null;
+  label?: string;
+};
+type AskAnswerResult = {
+  answer: string;
+  answerKind?: AskAnswerKind;
+  items?: string[];
+  evidence?: AskEvidence[];
+};
+
+const ASK_ANSWER_KINDS = new Set<AskAnswerKind>(['plain', 'list', 'tasks', 'decisions']);
+const ASK_ITEMS_MAX = 12;
+const ASK_ITEM_MAX_CHARS = 500;
+const ASK_EVIDENCE_MAX = 5;
+const ASK_EVIDENCE_QUOTE_MAX_CHARS = 500;
+const ASK_EVIDENCE_LABEL_MAX_CHARS = 120;
+
+function sanitizeAskAnswerKind(value: unknown): AskAnswerKind | undefined {
+  return typeof value === 'string' && ASK_ANSWER_KINDS.has(value as AskAnswerKind)
+    ? (value as AskAnswerKind)
+    : undefined;
+}
+
+function sanitizeAskItems(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out = value
+    .map((item) => (typeof item === 'string' ? item.replace(/\s+/g, ' ').trim() : ''))
+    .filter(Boolean)
+    .slice(0, ASK_ITEMS_MAX)
+    .map((item) => item.slice(0, ASK_ITEM_MAX_CHARS));
+  return out.length ? out : undefined;
+}
+
+function sanitizeAskEvidence(value: unknown): AskEvidence[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out: AskEvidence[] = [];
+  for (const item of value.slice(0, ASK_EVIDENCE_MAX)) {
+    if (!item || typeof item !== 'object') continue;
+    const o = item as Record<string, unknown>;
+    const quote = typeof o.quote === 'string' ? o.quote.replace(/\s+/g, ' ').trim() : '';
+    if (!quote) continue;
+    const source = typeof o.source === 'string' ? o.source : undefined;
+    const offsetMs =
+      typeof o.offsetMs === 'number' && Number.isFinite(o.offsetMs)
+        ? Math.max(0, Math.round(o.offsetMs))
+        : o.offsetMs === null
+          ? null
+          : undefined;
+    const label =
+      typeof o.label === 'string'
+        ? o.label.replace(/\s+/g, ' ').trim().slice(0, ASK_EVIDENCE_LABEL_MAX_CHARS)
+        : undefined;
+    out.push({
+      quote: quote.slice(0, ASK_EVIDENCE_QUOTE_MAX_CHARS),
+      ...(source ? { source: source as AskEvidence['source'] } : {}),
+      ...(offsetMs !== undefined ? { offsetMs } : {}),
+      ...(label ? { label } : {}),
+    });
+  }
+  return out.length ? out : undefined;
+}
+
+function extractAnswerFromResponse(responseContent: string): AskAnswerResult {
   const trimmed = responseContent.trim();
   if (!trimmed) {
     throw new Error('Invalid AI response: empty content');
@@ -184,19 +250,29 @@ function extractAnswerFromResponse(responseContent: string): string {
         const knownKeys = ['answer', 'response', 'text', 'content', 'result'];
         for (const key of knownKeys) {
           const val = obj[key];
-          if (typeof val === 'string' && val.length > 0) return val;
+          if (typeof val === 'string' && val.length > 0) {
+            const answerKind = sanitizeAskAnswerKind(obj.answerKind);
+            const items = sanitizeAskItems(obj.items);
+            const evidence = sanitizeAskEvidence(obj.evidence);
+            return {
+              answer: val,
+              ...(answerKind ? { answerKind } : {}),
+              ...(items ? { items } : {}),
+              ...(evidence ? { evidence } : {}),
+            };
+          }
         }
         const firstString = Object.values(obj).find((v) => typeof v === 'string' && v.length > 0);
-        if (typeof firstString === 'string') return firstString;
+        if (typeof firstString === 'string') return { answer: firstString };
       }
     } catch {
       console.warn('Invalid AI response: JSON parse failed', responseContent);
 
-      return trimmed;
+      return { answer: trimmed };
     }
   }
 
-  return trimmed;
+  return { answer: trimmed };
 }
 
 export async function processTranscript(
@@ -289,7 +365,7 @@ export async function processAskQuestion(
   clientUserAgent?: string | null,
   recordingMarks?: RecordingMarkForPrompt[],
   deviceId?: string | null,
-): Promise<{ answer: string }> {
+): Promise<AskAnswerResult> {
   const userContent = buildAskUserMessageContent(
     transcript,
     question,
@@ -299,7 +375,7 @@ export async function processAskQuestion(
     recordingMarks,
   );
 
-  const callAsk = async (m: string): Promise<{ answer: string }> => {
+  const callAsk = async (m: string): Promise<AskAnswerResult> => {
     const { content } = await sendAiChatCompletion({
       model: m,
       messages: [
@@ -312,7 +388,7 @@ export async function processAskQuestion(
       userId: deviceId,
     });
 
-    return { answer: extractAnswerFromResponse(content) };
+    return extractAnswerFromResponse(content);
   };
 
   const models = filterModelsForAiChat([model, ...USER_AI_MODEL_FALLBACK_CHAIN]);

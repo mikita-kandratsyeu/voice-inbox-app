@@ -16,6 +16,7 @@ import type { AiExecutionMode } from '@/entities/settings';
 import { type AskAIHistoryItem } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
 import { hapticSelection, IS_ANDROID } from '@/shared/lib';
+import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
 
 import { AskAiAnswerMarkdown } from './AskAiAnswerMarkdown';
 import { AskAiContextDisclosure } from './AskAiContextDisclosure';
@@ -89,16 +90,125 @@ type AnswerTurnBlockProps = {
   color: Colors;
   question: string;
   answer: string;
+  answerKind?: AskAnswerKind;
+  items?: string[];
+  evidence?: AskEvidence[];
   recordTitle: string;
   showDivider: boolean;
   onCopy: (text: string) => void;
   onShare: (text: string, title: string) => void;
 };
 
+function formatEvidenceOffset(offsetMs: number): string {
+  const totalSeconds = Math.max(0, Math.floor(offsetMs / 1000));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+const AnswerStructuredItems = ({
+  color,
+  answerKind,
+  items,
+}: {
+  color: Colors;
+  answerKind?: AskAnswerKind;
+  items?: string[];
+}) => {
+  const { t } = useTranslation();
+  if (!items?.length) return null;
+
+  const title =
+    answerKind === 'tasks'
+      ? t('recordingDetail.askStructuredTasks')
+      : answerKind === 'decisions'
+        ? t('recordingDetail.askStructuredDecisions')
+        : t('recordingDetail.askStructuredItems');
+
+  return (
+    <View
+      className="mt-1 gap-2 rounded-xl px-3 py-3"
+      style={{ backgroundColor: color.background.tertiary }}
+    >
+      <Text className="text-xs font-semibold" style={{ color: color.text.secondary }}>
+        {title}
+      </Text>
+      <View className="gap-2">
+        {items.map((item, index) => (
+          <View key={`${index}-${item}`} className="flex-row gap-2">
+            <Text className="text-[15px] leading-[22px]" style={{ color: color.accent.primary }}>
+              {index + 1}.
+            </Text>
+            <Text
+              className="flex-1 text-[15px] leading-[22px]"
+              style={{ color: color.text.primary }}
+            >
+              {item}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+const AnswerEvidence = ({ color, evidence }: { color: Colors; evidence?: AskEvidence[] }) => {
+  const { t } = useTranslation();
+  if (!evidence?.length) return null;
+
+  return (
+    <View className="mt-1 gap-2">
+      <Text className="text-xs font-semibold" style={{ color: color.text.secondary }}>
+        {t('recordingDetail.askEvidenceTitle')}
+      </Text>
+      <View className="gap-2">
+        {evidence.map((item, index) => {
+          const meta = [
+            item.label,
+            typeof item.offsetMs === 'number' ? formatEvidenceOffset(item.offsetMs) : null,
+          ].filter(Boolean);
+          return (
+            <View
+              key={`${index}-${item.quote}`}
+              className="gap-1 rounded-xl px-3 py-2"
+              style={{
+                backgroundColor: color.background.tertiary,
+              }}
+            >
+              <View
+                pointerEvents="none"
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  top: 10,
+                  bottom: 10,
+                  width: 3,
+                  backgroundColor: color.accent.primary,
+                }}
+              />
+              <Text className="text-[14px] leading-5" style={{ color: color.text.primary }}>
+                {item.quote}
+              </Text>
+              {meta.length > 0 ? (
+                <Text className="text-xs" style={{ color: color.text.secondary }}>
+                  {meta.join(' · ')}
+                </Text>
+              ) : null}
+            </View>
+          );
+        })}
+      </View>
+    </View>
+  );
+};
+
 export const AnswerTurnBlock = ({
   color,
   question,
   answer,
+  answerKind,
+  items,
+  evidence,
   recordTitle,
   showDivider,
   onCopy,
@@ -124,6 +234,8 @@ export const AnswerTurnBlock = ({
     >
       <AskTurnQuestion color={color} question={question} />
       <AskAiAnswerMarkdown color={color}>{answer}</AskAiAnswerMarkdown>
+      <AnswerStructuredItems color={color} answerKind={answerKind} items={items} />
+      <AnswerEvidence color={color} evidence={evidence} />
       <View className="mt-1 flex-row flex-wrap gap-2">
         <AskCopyTurnButton color={color} clipboardText={clipboardText} onCopy={onCopy} />
         <TouchableOpacity
@@ -163,6 +275,9 @@ type AnswerContentProps = {
   history: AskAIHistoryItem[];
   question: string;
   answer: string;
+  answerKind?: AskAnswerKind;
+  items?: string[];
+  evidence?: AskEvidence[];
   aiExecutionMode: AiExecutionMode;
   onCopy: (text: string) => void;
   onShare: (text: string, title: string) => void;
@@ -175,6 +290,9 @@ export const AnswerContent = ({
   history,
   question,
   answer,
+  answerKind,
+  items,
+  evidence,
   aiExecutionMode,
   onCopy,
   onShare,
@@ -184,8 +302,17 @@ export const AnswerContent = ({
   const followUpQuestions = useMemo(() => buildFollowUpQuestions(t, record), [t, record]);
 
   const turns = useMemo(
-    () => [...history, { question, answer } satisfies AskAIHistoryItem],
-    [history, question, answer],
+    () => [
+      ...history,
+      {
+        question,
+        answer,
+        ...(answerKind ? { answerKind } : {}),
+        ...(items?.length ? { items } : {}),
+        ...(evidence?.length ? { evidence } : {}),
+      } satisfies AskAIHistoryItem,
+    ],
+    [answer, answerKind, evidence, history, items, question],
   );
 
   return (
@@ -206,6 +333,9 @@ export const AnswerContent = ({
           color={color}
           question={item.question}
           answer={item.answer}
+          answerKind={item.answerKind}
+          items={item.items}
+          evidence={item.evidence}
           recordTitle={record.title}
           showDivider={index < turns.length - 1}
           onCopy={onCopy}

@@ -19,7 +19,11 @@ import type { AskPriorTurn } from '@/shared/lib/ai-core';
 import { AIOrchestrator } from '@/shared/lib/ai-core';
 import { releaseLocalLlmSession } from '@/shared/lib/ai-core/localLlmSession';
 import { sanitizeRecordingMarksForPrompt } from '@/shared/lib/ai-core/recordingMarksForPrompt';
-import type { AiLocalGenerationProgressEvent } from '@/shared/lib/ai-core/types';
+import type {
+  AiLocalGenerationProgressEvent,
+  AskAnswerKind,
+  AskEvidence,
+} from '@/shared/lib/ai-core/types';
 import {
   abortAiGeneration,
   registerAiGeneration,
@@ -34,7 +38,13 @@ import {
   saveAskAiSession,
 } from './askAiSessionDb';
 
-export type AskAIHistoryItem = { question: string; answer: string };
+export type AskAIHistoryItem = {
+  question: string;
+  answer: string;
+  answerKind?: AskAnswerKind;
+  items?: string[];
+  evidence?: AskEvidence[];
+};
 
 export type AskAIState = {
   isLoading: boolean;
@@ -42,6 +52,9 @@ export type AskAIState = {
   error: string | null;
   question: string | null;
   answer: string | null;
+  answerKind?: AskAnswerKind;
+  items?: string[];
+  evidence?: AskEvidence[];
   history: AskAIHistoryItem[];
   privateAskProgress: number;
   privateAskPhase: 'loading_model' | 'processing';
@@ -53,6 +66,9 @@ const INITIAL_ASK_AI_STATE: AskAIState = {
   error: null,
   question: null,
   answer: null,
+  answerKind: undefined,
+  items: undefined,
+  evidence: undefined,
   history: [],
   privateAskProgress: 0,
   privateAskPhase: 'loading_model',
@@ -79,6 +95,9 @@ function applyAskCancelState(s: AskAIState, revertPromotedTurn: boolean): AskAIS
       history: s.history.slice(0, -1),
       question: restored.question,
       answer: restored.answer,
+      answerKind: restored.answerKind,
+      items: restored.items,
+      evidence: restored.evidence,
       error: null,
       ...idleFields,
     };
@@ -88,6 +107,9 @@ function applyAskCancelState(s: AskAIState, revertPromotedTurn: boolean): AskAIS
     ...s,
     question: null,
     answer: null,
+    answerKind: undefined,
+    items: undefined,
+    evidence: undefined,
     error: null,
     ...idleFields,
   };
@@ -188,6 +210,9 @@ export const useAskAI = (
           history: restored.history,
           question: restored.question,
           answer: restored.answer,
+          answerKind: restored.answerKind,
+          items: restored.items,
+          evidence: restored.evidence,
           error: restored.error,
           isLoading: false,
           privateAskProgress: 0,
@@ -228,7 +253,16 @@ export const useAskAI = (
         const didPromoteCurrentTurn = Boolean(s.question && s.answer);
         promotedTurnPendingRevertRef.current = didPromoteCurrentTurn;
         const nextHistory = didPromoteCurrentTurn
-          ? [...s.history, { question: s.question!, answer: s.answer! }]
+          ? [
+              ...s.history,
+              {
+                question: s.question!,
+                answer: s.answer!,
+                ...(s.answerKind ? { answerKind: s.answerKind } : {}),
+                ...(s.items?.length ? { items: s.items } : {}),
+                ...(s.evidence?.length ? { evidence: s.evidence } : {}),
+              },
+            ]
           : s.history;
         const next: AskAIState = {
           ...s,
@@ -237,6 +271,9 @@ export const useAskAI = (
           error: null,
           question: trimmedQuestion,
           answer: null,
+          answerKind: undefined,
+          items: undefined,
+          evidence: undefined,
           privateAskProgress: aiExecutionMode === 'private_experimental' ? 0 : s.privateAskProgress,
           privateAskPhase:
             aiExecutionMode === 'private_experimental' &&
@@ -249,6 +286,9 @@ export const useAskAI = (
             history: next.history,
             question: next.question,
             answer: next.answer,
+            answerKind: next.answerKind,
+            items: next.items,
+            evidence: next.evidence,
             error: next.error,
             isLoading: true,
           });
@@ -329,6 +369,9 @@ export const useAskAI = (
               history: next.history,
               question: next.question,
               answer: next.answer,
+              answerKind: next.answerKind,
+              items: next.items,
+              evidence: next.evidence,
               error: next.error,
               isLoading: next.isLoading,
             });
@@ -339,7 +382,9 @@ export const useAskAI = (
       };
 
       const persistOutcome = (
-        patch: Partial<Pick<AskAIState, 'answer' | 'error' | 'isLoading'>>,
+        patch: Partial<
+          Pick<AskAIState, 'answer' | 'answerKind' | 'items' | 'evidence' | 'error' | 'isLoading'>
+        >,
       ) => {
         setState((s) => {
           const next: AskAIState = {
@@ -347,6 +392,9 @@ export const useAskAI = (
             isLoading: patch.isLoading ?? s.isLoading,
             error: patch.error !== undefined ? patch.error : s.error,
             answer: patch.answer !== undefined ? patch.answer : s.answer,
+            answerKind: patch.answerKind !== undefined ? patch.answerKind : s.answerKind,
+            items: patch.items !== undefined ? patch.items : s.items,
+            evidence: patch.evidence !== undefined ? patch.evidence : s.evidence,
             privateAskProgress: 0,
             privateAskPhase: 'loading_model',
           };
@@ -358,6 +406,9 @@ export const useAskAI = (
               history: next.history,
               question: next.question,
               answer: next.answer,
+              answerKind: next.answerKind,
+              items: next.items,
+              evidence: next.evidence,
               error: next.error,
               isLoading: next.isLoading,
             });
@@ -455,6 +506,9 @@ export const useAskAI = (
           isLoading: false,
           error: null,
           answer: runResult.result.answer,
+          answerKind: runResult.result.answerKind,
+          items: runResult.result.items,
+          evidence: runResult.result.evidence,
         });
         void logAnalyticsEvent('ai_action_success', {
           action: 'ask',
@@ -544,6 +598,9 @@ export const useAskAI = (
             history: next.history,
             question: next.question,
             answer: next.answer,
+            answerKind: next.answerKind,
+            items: next.items,
+            evidence: next.evidence,
             error: next.error,
             isLoading: false,
           });
@@ -591,6 +648,9 @@ export const useAskAI = (
         history: restored.history,
         question: restored.question,
         answer: restored.answer,
+        answerKind: restored.answerKind,
+        items: restored.items,
+        evidence: restored.evidence,
         error: restored.error,
         isLoading: isPending,
         isRestoringSession: false,
@@ -644,6 +704,9 @@ export const useAskAI = (
         history: state.history,
         question: state.question,
         answer: state.answer,
+        answerKind: state.answerKind,
+        items: state.items,
+        evidence: state.evidence,
         error: state.error,
         isLoading: state.isLoading,
       });
@@ -655,6 +718,9 @@ export const useAskAI = (
     state.history,
     state.question,
     state.answer,
+    state.answerKind,
+    state.items,
+    state.evidence,
     state.error,
     state.isLoading,
   ]);
@@ -672,12 +738,24 @@ export const useAskAI = (
     setState((s) => {
       const newHistory =
         s.question && s.answer
-          ? [...s.history, { question: s.question, answer: s.answer }]
+          ? [
+              ...s.history,
+              {
+                question: s.question,
+                answer: s.answer,
+                ...(s.answerKind ? { answerKind: s.answerKind } : {}),
+                ...(s.items?.length ? { items: s.items } : {}),
+                ...(s.evidence?.length ? { evidence: s.evidence } : {}),
+              },
+            ]
           : s.history;
       return {
         ...s,
         question: null,
         answer: null,
+        answerKind: undefined,
+        items: undefined,
+        evidence: undefined,
         history: newHistory,
       };
     });

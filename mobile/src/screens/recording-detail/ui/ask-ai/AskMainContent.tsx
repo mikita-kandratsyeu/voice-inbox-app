@@ -4,6 +4,7 @@ import type { VoiceRecord } from '@/entities/record';
 import type { AiExecutionMode, PrivateAiProvider } from '@/entities/settings';
 import type { AskAIHistoryItem } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
+import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
 
 import { AnswerContent } from './AnswerContent';
 import { EmptyState } from './EmptyState';
@@ -21,6 +22,9 @@ type AskMainContentProps = {
   error: string | null;
   question: string | null;
   answer: string | null;
+  answerKind?: AskAnswerKind;
+  items?: string[];
+  evidence?: AskEvidence[];
   history: AskAIHistoryItem[];
   privateAskProgress: number;
   privateAskPhase: 'loading_model' | 'processing';
@@ -43,6 +47,9 @@ export const AskMainContent = ({
   error,
   question,
   answer,
+  answerKind,
+  items,
+  evidence,
   history,
   privateAskProgress,
   privateAskPhase,
@@ -95,6 +102,9 @@ export const AskMainContent = ({
         history={history}
         question={question ?? ''}
         answer={answer}
+        answerKind={answerKind}
+        items={items}
+        evidence={evidence}
         aiExecutionMode={aiExecutionMode}
         onCopy={onCopy}
         onShare={onShare}

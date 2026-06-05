@@ -73,6 +73,30 @@ export type SummaryTaskRequest = {
 
 export type AskPriorTurn = { question: string; answer: string };
 
+export type AskAnswerKind = 'plain' | 'list' | 'tasks' | 'decisions';
+
+export type AskEvidenceSource =
+  | 'transcript'
+  | 'summary'
+  | 'tasks'
+  | 'recording_mark'
+  | 'prior_conversation';
+
+export type AskEvidence = {
+  quote: string;
+  source?: AskEvidenceSource;
+  offsetMs?: number | null;
+  label?: string;
+};
+
+export type AskAnswerResult = {
+  answer: string;
+  answerKind?: AskAnswerKind;
+  items?: string[];
+  evidence?: AskEvidence[];
+  model?: string;
+};
+
 export type AskRequest = {
   id: string;
   transcript: string;
@@ -106,4 +130,4 @@ export type AiOrchestratorFailure = {
 export type AiOrchestratorResult<T> = AiOrchestratorSuccess<T> | AiOrchestratorFailure;
 
 export type SummaryTaskResult = AiOrchestratorResult<AiProcessingResult>;
-export type AskTaskResult = AiOrchestratorResult<{ answer: string; model?: string }>;
+export type AskTaskResult = AiOrchestratorResult<AskAnswerResult>;

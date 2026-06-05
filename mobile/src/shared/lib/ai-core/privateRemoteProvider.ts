@@ -1126,19 +1126,19 @@ export async function runPrivateRemoteAsk(
       );
 
     let remote = await runOnce(userContent);
-    let answer = parseLocalAskResponse(remote.content);
-    if (!answer) {
+    let result = parseLocalAskResponse(remote.content);
+    if (!result) {
       remote = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
-      answer = parseLocalAskResponse(remote.content);
+      result = parseLocalAskResponse(remote.content);
     }
-    if (!answer) {
+    if (!result) {
       throw new Error(i18n.t('ai.privateModeEmptyAnswer'));
     }
     return {
       ok: true,
       provider: 'private_remote',
       mode: ctx.aiExecutionMode,
-      result: { answer, ...(remote.model ? { model: remote.model } : {}) },
+      result: { ...result, ...(remote.model ? { model: remote.model } : {}) },
     };
   } catch (err) {
     if (request.abortSignal?.aborted) {

@@ -53,6 +53,9 @@ export const AskAIScreen = () => {
     error,
     question,
     answer,
+    answerKind,
+    items,
+    evidence,
     history,
     privateAskProgress,
     privateAskPhase,
@@ -266,6 +269,9 @@ export const AskAIScreen = () => {
               error={error}
               question={question}
               answer={answer}
+              answerKind={answerKind}
+              items={items}
+              evidence={evidence}
               history={history}
               privateAskProgress={privateAskProgress}
               privateAskPhase={privateAskPhase}
