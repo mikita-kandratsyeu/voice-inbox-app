@@ -408,13 +408,14 @@ describe('parseLocalAskResponse', () => {
   it('reads structured ask metadata', () => {
     expect(
       parseLocalAskResponse(
-        '{"answer":"Do the launch prep.","answerKind":"tasks","items":["Write copy","Ship build"],"evidence":[{"quote":"We need to ship the build","source":"transcript"}]}',
+        '{"answer":"Do the launch prep.","answerKind":"tasks","items":["Write copy","Ship build"],"evidence":[{"quote":"We need to ship the build","source":"transcript"}],"suggestedFollowUps":["Who owns the build?"]}',
       ),
     ).toEqual({
       answer: 'Do the launch prep.',
       answerKind: 'tasks',
       items: ['Write copy', 'Ship build'],
       evidence: [{ quote: 'We need to ship the build', source: 'transcript' }],
+      suggestedFollowUps: ['Who owns the build?'],
     });
   });
 

@@ -94,6 +94,7 @@ export type AskAnswerResult = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  suggestedFollowUps?: string[];
   model?: string;
 };
 

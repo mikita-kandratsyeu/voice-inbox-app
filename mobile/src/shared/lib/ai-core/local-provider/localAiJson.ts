@@ -184,6 +184,8 @@ const ASK_ITEM_MAX_CHARS = 500;
 const ASK_EVIDENCE_MAX = 5;
 const ASK_EVIDENCE_QUOTE_MAX_CHARS = 500;
 const ASK_EVIDENCE_LABEL_MAX_CHARS = 120;
+const ASK_FOLLOW_UP_MAX = 3;
+const ASK_FOLLOW_UP_MAX_CHARS = 180;
 
 function sanitizeAskAnswerKind(value: unknown): AskAnswerKind | undefined {
   return isString(value) && ASK_ANSWER_KINDS.has(value as AskAnswerKind)
@@ -198,6 +200,16 @@ function sanitizeAskItems(value: unknown): string[] | undefined {
     .filter(Boolean)
     .slice(0, ASK_ITEMS_MAX)
     .map((item) => item.slice(0, ASK_ITEM_MAX_CHARS));
+  return out.length ? out : undefined;
+}
+
+function sanitizeAskFollowUps(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out = value
+    .map((item) => (isString(item) ? item.replace(/\s+/g, ' ').trim() : ''))
+    .filter(Boolean)
+    .slice(0, ASK_FOLLOW_UP_MAX)
+    .map((item) => item.slice(0, ASK_FOLLOW_UP_MAX_CHARS));
   return out.length ? out : undefined;
 }
 
@@ -252,11 +264,15 @@ function tryParseAskJsonAnswer(raw: string): AskAnswerResult | null {
           const answerKind = sanitizeAskAnswerKind((parsed as Record<string, unknown>).answerKind);
           const items = sanitizeAskItems((parsed as Record<string, unknown>).items);
           const evidence = sanitizeAskEvidence((parsed as Record<string, unknown>).evidence);
+          const suggestedFollowUps = sanitizeAskFollowUps(
+            (parsed as Record<string, unknown>).suggestedFollowUps,
+          );
           return {
             answer: a,
             ...(answerKind ? { answerKind } : {}),
             ...(items ? { items } : {}),
             ...(evidence ? { evidence } : {}),
+            ...(suggestedFollowUps ? { suggestedFollowUps } : {}),
           };
         }
       }

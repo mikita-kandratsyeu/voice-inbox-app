@@ -100,6 +100,7 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
     answer?: string;
     answerKind?: unknown;
     items?: unknown;
+    suggestedFollowUps?: unknown;
     evidence?: unknown;
     error?: string;
   };
@@ -136,6 +137,11 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
           .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
           .slice(0, 12)
       : undefined;
+    const suggestedFollowUps = Array.isArray(msg.suggestedFollowUps)
+      ? msg.suggestedFollowUps
+          .filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+          .slice(0, 3)
+      : undefined;
     const evidence = Array.isArray(msg.evidence)
       ? msg.evidence
           .map((item): AskEvidenceMessageItem | null => {
@@ -165,6 +171,7 @@ export const getAskById = async (id: string, syncToken?: string): Promise<AskMes
       answer: msg.answer,
       ...(answerKind ? { answerKind } : {}),
       ...(items?.length ? { items } : {}),
+      ...(suggestedFollowUps?.length ? { suggestedFollowUps } : {}),
       ...(evidence?.length ? { evidence } : {}),
       ...modelFields,
     };

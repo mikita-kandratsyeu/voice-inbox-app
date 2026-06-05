@@ -219,7 +219,8 @@ export function buildLocalAskSystemPrompt(): string {
     'For list/tasks/decisions, include items: an array of concise strings that mirror the answer. For plain, omit items unless a short list is clearly helpful.',
     'Include evidence: 0-5 short verbatim quotes from Transcript or Recording pins that support the answer. Do not invent quotes. If no direct support exists, use [].',
     'Evidence items: {quote, source, offsetMs, label}. source is transcript, recording_mark, summary, tasks, or prior_conversation. offsetMs only when supported by a recording pin.',
-    'No markdown. Return exactly one JSON object with answer plus optional answerKind, items, evidence.',
+    'Include suggestedFollowUps: 1-3 concise follow-up questions the user may naturally ask next, based on this answer and the same recording. Avoid duplicates of the current question.',
+    'No markdown. Return exactly one JSON object with answer plus optional answerKind, items, evidence, suggestedFollowUps.',
     'The answer value must be plain text only (no nested JSON, no code fences).',
   ].join(' ');
 }

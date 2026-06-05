@@ -182,6 +182,7 @@ type AskAnswerResult = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  suggestedFollowUps?: string[];
 };
 
 const ASK_ANSWER_KINDS = new Set<AskAnswerKind>(['plain', 'list', 'tasks', 'decisions']);
@@ -190,6 +191,8 @@ const ASK_ITEM_MAX_CHARS = 500;
 const ASK_EVIDENCE_MAX = 5;
 const ASK_EVIDENCE_QUOTE_MAX_CHARS = 500;
 const ASK_EVIDENCE_LABEL_MAX_CHARS = 120;
+const ASK_FOLLOW_UP_MAX = 3;
+const ASK_FOLLOW_UP_MAX_CHARS = 180;
 
 function sanitizeAskAnswerKind(value: unknown): AskAnswerKind | undefined {
   return typeof value === 'string' && ASK_ANSWER_KINDS.has(value as AskAnswerKind)
@@ -204,6 +207,16 @@ function sanitizeAskItems(value: unknown): string[] | undefined {
     .filter(Boolean)
     .slice(0, ASK_ITEMS_MAX)
     .map((item) => item.slice(0, ASK_ITEM_MAX_CHARS));
+  return out.length ? out : undefined;
+}
+
+function sanitizeAskFollowUps(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out = value
+    .map((item) => (typeof item === 'string' ? item.replace(/\s+/g, ' ').trim() : ''))
+    .filter(Boolean)
+    .slice(0, ASK_FOLLOW_UP_MAX)
+    .map((item) => item.slice(0, ASK_FOLLOW_UP_MAX_CHARS));
   return out.length ? out : undefined;
 }
 
@@ -254,11 +267,13 @@ function extractAnswerFromResponse(responseContent: string): AskAnswerResult {
             const answerKind = sanitizeAskAnswerKind(obj.answerKind);
             const items = sanitizeAskItems(obj.items);
             const evidence = sanitizeAskEvidence(obj.evidence);
+            const suggestedFollowUps = sanitizeAskFollowUps(obj.suggestedFollowUps);
             return {
               answer: val,
               ...(answerKind ? { answerKind } : {}),
               ...(items ? { items } : {}),
               ...(evidence ? { evidence } : {}),
+              ...(suggestedFollowUps ? { suggestedFollowUps } : {}),
             };
           }
         }

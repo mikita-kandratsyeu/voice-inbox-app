@@ -93,6 +93,7 @@ type AnswerTurnBlockProps = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  suggestedFollowUps?: string[];
   recordTitle: string;
   showDivider: boolean;
   onCopy: (text: string) => void;
@@ -278,6 +279,7 @@ type AnswerContentProps = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  suggestedFollowUps?: string[];
   aiExecutionMode: AiExecutionMode;
   onCopy: (text: string) => void;
   onShare: (text: string, title: string) => void;
@@ -293,13 +295,21 @@ export const AnswerContent = ({
   answerKind,
   items,
   evidence,
+  suggestedFollowUps,
   aiExecutionMode,
   onCopy,
   onShare,
   onFollowUpQuestion,
 }: AnswerContentProps) => {
   const { t } = useTranslation();
-  const followUpQuestions = useMemo(() => buildFollowUpQuestions(t, record), [t, record]);
+  const followUpQuestions = useMemo(() => {
+    const modelFollowUps = suggestedFollowUps
+      ?.map((prompt) => prompt.trim())
+      .filter((prompt) => prompt.length > 0)
+      .slice(0, 3)
+      .map((prompt) => ({ label: prompt, prompt }));
+    return modelFollowUps?.length ? modelFollowUps : buildFollowUpQuestions(t, record);
+  }, [record, suggestedFollowUps, t]);
 
   const turns = useMemo(
     () => [
@@ -310,9 +320,10 @@ export const AnswerContent = ({
         ...(answerKind ? { answerKind } : {}),
         ...(items?.length ? { items } : {}),
         ...(evidence?.length ? { evidence } : {}),
+        ...(suggestedFollowUps?.length ? { suggestedFollowUps } : {}),
       } satisfies AskAIHistoryItem,
     ],
-    [answer, answerKind, evidence, history, items, question],
+    [answer, answerKind, evidence, history, items, question, suggestedFollowUps],
   );
 
   return (
@@ -336,6 +347,7 @@ export const AnswerContent = ({
           answerKind={item.answerKind}
           items={item.items}
           evidence={item.evidence}
+          suggestedFollowUps={item.suggestedFollowUps}
           recordTitle={record.title}
           showDivider={index < turns.length - 1}
           onCopy={onCopy}

@@ -10,6 +10,7 @@ type AskTurn = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  suggestedFollowUps?: string[];
 };
 
 const PERSIST_VERSION = 1 as const;
@@ -51,6 +52,7 @@ type PersistedPayloadV1 = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  suggestedFollowUps?: string[];
   error: string | null;
   pendingAsk?: boolean;
 };
@@ -98,6 +100,12 @@ function parseEvidence(value: unknown): AskEvidence[] | undefined {
   return out.length ? out : undefined;
 }
 
+function parseSuggestedFollowUps(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out = value.filter((item): item is string => isString(item) && item.trim().length > 0);
+  return out.length ? out : undefined;
+}
+
 function readNullableStringField(value: unknown): string | null | false {
   if (value === undefined || value === null) {
     return null;
@@ -124,6 +132,9 @@ function parseHistoryField(value: unknown): AskTurn[] | null {
       : {}),
     ...(parseStringArray(item.items) ? { items: parseStringArray(item.items) } : {}),
     ...(parseEvidence(item.evidence) ? { evidence: parseEvidence(item.evidence) } : {}),
+    ...(parseSuggestedFollowUps(item.suggestedFollowUps)
+      ? { suggestedFollowUps: parseSuggestedFollowUps(item.suggestedFollowUps) }
+      : {}),
   }));
 }
 
@@ -173,6 +184,9 @@ function parsePayload(raw: string): PersistedPayloadV1 | null {
     ...(parseAskAnswerKind(o.answerKind) ? { answerKind: parseAskAnswerKind(o.answerKind) } : {}),
     ...(parseStringArray(o.items) ? { items: parseStringArray(o.items) } : {}),
     ...(parseEvidence(o.evidence) ? { evidence: parseEvidence(o.evidence) } : {}),
+    ...(parseSuggestedFollowUps(o.suggestedFollowUps)
+      ? { suggestedFollowUps: parseSuggestedFollowUps(o.suggestedFollowUps) }
+      : {}),
     error,
     pendingAsk,
   };
@@ -185,6 +199,7 @@ export type RestoredAskAiSession = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  suggestedFollowUps?: string[];
   error: string | null;
   pendingAsk: boolean;
 };
@@ -215,6 +230,7 @@ export async function loadAskAiSession(
     answerKind: parsed.answerKind,
     items: parsed.items,
     evidence: parsed.evidence,
+    suggestedFollowUps: parsed.suggestedFollowUps,
     error: parsed.error,
     pendingAsk: parsed.pendingAsk ?? false,
   };
@@ -275,6 +291,7 @@ export type AskAiSessionPersistInput = {
   answerKind?: AskAnswerKind;
   items?: string[];
   evidence?: AskEvidence[];
+  suggestedFollowUps?: string[];
   error: string | null;
   isLoading: boolean;
 };
@@ -322,6 +339,9 @@ export function saveAskAiSession(
       ...(snapshot.answerKind ? { answerKind: snapshot.answerKind } : {}),
       ...(snapshot.items?.length ? { items: snapshot.items } : {}),
       ...(snapshot.evidence?.length ? { evidence: snapshot.evidence } : {}),
+      ...(snapshot.suggestedFollowUps?.length
+        ? { suggestedFollowUps: snapshot.suggestedFollowUps }
+        : {}),
       error: snapshot.error,
       ...(pendingAsk ? { pendingAsk: true } : {}),
     };

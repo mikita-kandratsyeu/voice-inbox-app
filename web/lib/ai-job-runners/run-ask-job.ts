@@ -45,6 +45,9 @@ export async function runAskJob(payload: AskJobPayload): Promise<void> {
       ...(result.answerKind ? { answerKind: result.answerKind } : {}),
       ...(result.items?.length ? { items: result.items } : {}),
       ...(result.evidence?.length ? { evidence: result.evidence } : {}),
+      ...(result.suggestedFollowUps?.length
+        ? { suggestedFollowUps: result.suggestedFollowUps }
+        : {}),
     });
 
     await notifyAiJobComplete({
