@@ -1,5 +1,5 @@
 import { MenuView } from '@react-native-menu/menu';
-import { ChevronLeft, MessageSquare, MoreVertical, Pin } from 'lucide-react-native';
+import { ChevronLeft, MessageSquare, MoreVertical, Share } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
@@ -46,7 +46,6 @@ export const RecordingDetailHeader = ({
   const theme = useAppTheme();
   const isDark = theme === 'dark';
   const iconBtnBg = { backgroundColor: color.background.tertiary };
-  const pinActiveStyle = { backgroundColor: color.accent.primary + '1A' };
   const headerBackgroundColor = isPrivateMode
     ? color.background.primary
     : color.background.secondary;
@@ -76,20 +75,13 @@ export const RecordingDetailHeader = ({
           iconOnly
           variant="icon"
           size="md"
-          icon={
-            <Pin
-              size={18}
-              color={record.isPinned ? color.accent.pin : color.text.primary}
-              strokeWidth={2.2}
-              fill={record.isPinned ? color.accent.pin : 'transparent'}
-            />
-          }
+          icon={<Share size={18} color={color.text.primary} strokeWidth={2.2} />}
           color={color}
-          onPress={onTogglePin}
+          onPress={onShare}
           activeOpacity={0.7}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          containerStyle={record.isPinned ? pinActiveStyle : iconBtnBg}
-          accessibilityLabel={record.isPinned ? t('recordActions.unpin') : t('recordActions.pin')}
+          containerStyle={iconBtnBg}
+          accessibilityLabel={t('share.share')}
         />
         <HeaderIconButton
           iconOnly
@@ -108,9 +100,9 @@ export const RecordingDetailHeader = ({
           themeVariant={isDark ? 'dark' : 'light'}
           shouldOpenOnLongPress={false}
           onPressAction={({ nativeEvent }) => {
+            if (nativeEvent.event === 'togglePin') onTogglePin();
             if (nativeEvent.event === 'rename') onRename();
             if (nativeEvent.event === 'moveToFolder') onMoveToFolder();
-            if (nativeEvent.event === 'share') onShare();
             if (nativeEvent.event === 'archive') onArchive();
             if (nativeEvent.event === 'unarchive') onUnarchive();
             if (nativeEvent.event === 'delete') onDelete();
@@ -129,6 +121,13 @@ export const RecordingDetailHeader = ({
                 ]
               : []),
             {
+              id: 'togglePin',
+              title: record.isPinned ? t('recordActions.unpin') : t('recordActions.pin'),
+              image: 'pin',
+              imageColor: record.isPinned ? color.accent.pin : color.text.primary,
+              titleColor: color.text.primary,
+            },
+            {
               id: 'rename',
               title: t('recordActions.rename'),
               image: 'pencil',
@@ -146,13 +145,6 @@ export const RecordingDetailHeader = ({
                   },
                 ]
               : []),
-            {
-              id: 'share',
-              title: t('share.share'),
-              image: 'square.and.arrow.up',
-              imageColor: color.text.primary,
-              titleColor: color.text.primary,
-            },
             isArchived
               ? {
                   id: 'unarchive' as const,

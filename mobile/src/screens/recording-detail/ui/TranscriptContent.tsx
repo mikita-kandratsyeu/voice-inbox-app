@@ -23,6 +23,7 @@ type TranscriptContentProps = {
   color: Colors;
   currentPositionMs?: number;
   onTranscribe: () => void;
+  onDiscardResume?: () => void;
   onCancelTranscription: () => void;
   isPrivateMode?: boolean;
 };
@@ -32,6 +33,7 @@ export const TranscriptContent = ({
   color,
   currentPositionMs = 0,
   onTranscribe,
+  onDiscardResume,
   onCancelTranscription,
   isPrivateMode = false,
 }: TranscriptContentProps) => {
@@ -60,10 +62,15 @@ export const TranscriptContent = ({
     r.aiStatus === 'loading_model' ||
     r.aiStatus === 'cancelling' ||
     r.aiStatus === 'processing' ||
-    (registryInFlight && r.aiStatus !== 'done' && r.aiStatus !== 'error');
+    (registryInFlight &&
+      r.aiStatus !== 'done' &&
+      r.aiStatus !== 'error' &&
+      r.aiStatus !== 'paused' &&
+      r.aiStatus !== 'resumable');
 
   const processingPhase: 'loading_model' | 'processing' =
     r.aiStatus === 'loading_model' ? 'loading_model' : 'processing';
+  const isCancellingTranscription = r.aiStatus === 'cancelling';
 
   if (isTranscriptionUiActive) {
     return (
@@ -72,7 +79,8 @@ export const TranscriptContent = ({
         progressLabel={r.transcriptProgressLabel}
         phase={processingPhase}
         color={color}
-        onCancel={onCancelTranscription}
+        onCancel={isCancellingTranscription ? undefined : onCancelTranscription}
+        statusTitle={isCancellingTranscription ? t('aiStatus.cancelling') : undefined}
         durationMs={record.durationMs}
         transcriptionSegments={r.transcriptProgressSegments}
       />
@@ -148,12 +156,15 @@ export const TranscriptContent = ({
         color={color}
         hasAudio={!!r.audioPath}
         onTranscribe={onTranscribe}
+        onDiscardResume={onDiscardResume}
+        isDiscardingResume={isCancellingTranscription}
         onEditTranscript={() => navigation.navigate('EditTranscript', { record: r })}
         onTranslate={isTranscriptTooLongForTranslate ? undefined : handleTranslate}
         onDeleteTranslation={handleDeleteTranslation}
         isTranslating={isTranslating}
         isAiProcessing={isAiProcessing}
         isPrivateMode={isPrivateMode}
+        resumeAvailable={r.aiStatus === 'paused' || r.aiStatus === 'resumable'}
       />
     </>
   );

@@ -17,6 +17,7 @@ import {
   peekPendingTranscriptionResumeRecordId,
   subscribeTranscriptionResumePromptRequest,
 } from '../model/transcriptionResumePromptRequest';
+import { getTranscriptionCheckpointSnapshot } from '../model/transcriptionRuntimeRegistry';
 import { useTranscription } from '../model/useTranscription';
 
 const RESUME_CHECK_AFTER_FOREGROUND_MS = 400;
@@ -31,13 +32,15 @@ async function resolveInterruptedCheckpoints(): Promise<
   const pendingBackgroundId = peekPendingBackgroundTranscriptionRecord();
   if (!pendingBackgroundId) return listed;
 
-  const direct = await getTranscriptionCheckpoint(pendingBackgroundId);
+  const direct =
+    (await getTranscriptionCheckpoint(pendingBackgroundId)) ??
+    getTranscriptionCheckpointSnapshot(pendingBackgroundId);
   return direct ? [direct] : listed;
 }
 
 export const TranscriptionResumePrompt = () => {
   const { t } = useTranslation();
-  const { startTranscription, cancelTranscription } = useTranscription();
+  const { startTranscription, discardPausedTranscription } = useTranscription();
   const promptInFlightRef = useRef(false);
   const checkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingAbortRetriesRef = useRef(0);
@@ -97,8 +100,9 @@ export const TranscriptionResumePrompt = () => {
           text: t('transcription.cancelResume'),
           style: 'destructive',
           onPress: () => {
-            cancelTranscription(record.id);
-            promptInFlightRef.current = false;
+            discardPausedTranscription(record.id).finally(() => {
+              promptInFlightRef.current = false;
+            });
           },
         },
         {
@@ -112,7 +116,7 @@ export const TranscriptionResumePrompt = () => {
       ],
       { cancelable: false },
     );
-  }, [cancelTranscription, startTranscription, t]);
+  }, [discardPausedTranscription, startTranscription, t]);
 
   const scheduleResumeCheck = useCallback(
     (reason: string) => {

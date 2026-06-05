@@ -1,4 +1,5 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
+import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
 
 import { isString } from '../type-guards';
@@ -67,12 +68,31 @@ export type AskApiResult =
   | { ok: false; limitExceeded?: false; error: string };
 
 export type AskMessageResult =
-  | { ok: true; result: { answer: string; model?: string } }
+  | {
+      ok: true;
+      result: {
+        answer: string;
+        answerKind?: AskAnswerKind;
+        items?: string[];
+        suggestedFollowUps?: string[];
+        evidence?: AskEvidence[];
+        model?: string;
+      };
+    }
   | { ok: false; error: string };
 
 type AskResponse =
   | { id: string; status: 'processing'; model?: string }
-  | { id: string; status: 'done'; answer: string; model?: string }
+  | {
+      id: string;
+      status: 'done';
+      answer: string;
+      answerKind?: AskAnswerKind;
+      items?: string[];
+      suggestedFollowUps?: string[];
+      evidence?: AskEvidence[];
+      model?: string;
+    }
   | { id: string; status: 'error'; error: string; model?: string };
 
 export async function postAskQuestion(
@@ -155,7 +175,14 @@ export async function pollAskResult(
 
   const url = `${getWebApiUrl()}/api/ask/${id}`;
 
-  const result = await pollGetLoop<{ answer: string; model?: string }>(
+  const result = await pollGetLoop<{
+    answer: string;
+    answerKind?: AskAnswerKind;
+    items?: string[];
+    suggestedFollowUps?: string[];
+    evidence?: AskEvidence[];
+    model?: string;
+  }>(
     url,
     (json) => {
       const msg = json as AskResponse;
@@ -164,6 +191,12 @@ export async function pollAskResult(
           ok: true,
           result: {
             answer: msg.answer,
+            ...(msg.answerKind ? { answerKind: msg.answerKind } : {}),
+            ...(msg.items?.length ? { items: msg.items } : {}),
+            ...(msg.suggestedFollowUps?.length
+              ? { suggestedFollowUps: msg.suggestedFollowUps }
+              : {}),
+            ...(msg.evidence?.length ? { evidence: msg.evidence } : {}),
             ...(isString(msg.model) && msg.model.trim() ? { model: msg.model.trim() } : {}),
           },
         };

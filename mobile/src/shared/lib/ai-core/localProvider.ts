@@ -249,14 +249,14 @@ export async function runLocalAsk(
     };
 
     let raw = await runOnce(userContent);
-    let answer = parseLocalAskResponse(raw);
+    let result = parseLocalAskResponse(raw);
 
-    if (answer === null) {
+    if (result === null) {
       raw = await runOnce(`${userContent}\n\n${STRICT_JSON_TAIL}`);
-      answer = parseLocalAskResponse(raw);
+      result = parseLocalAskResponse(raw);
     }
 
-    if (!answer) {
+    if (!result) {
       throw new LocalAiError('empty_answer', 'Local answer is empty');
     }
 
@@ -264,7 +264,7 @@ export async function runLocalAsk(
       ok: true,
       provider: 'local',
       mode: ctx.aiExecutionMode,
-      result: { answer },
+      result,
     };
   } catch (err) {
     return {

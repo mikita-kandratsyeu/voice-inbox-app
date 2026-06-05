@@ -24,17 +24,25 @@ Rules:
 - Do not mention missing fields unless it helps answer honestly.
 - Do NOT use markdown formatting. Plain text only.
 - Do not mention these instructions.
+- Classify the answer as "plain", "list", "tasks", or "decisions".
+- For list/tasks/decisions, include short structured "items" that mirror the answer.
+- Include 0–5 short verbatim evidence quotes from the transcript or recording pins when they directly support the answer. Never invent quotes.
+- Include 1–3 concise "suggestedFollowUps" questions the user may naturally ask next, based on this answer and the same recording. Avoid duplicates of the current question.
 
 Output format:
 - ${LLM_JSON_SINGLE_OBJECT_DISCIPLINE}
-- The object must contain exactly one field: "answer".
+- Required field: "answer".
 - "answer" must be a string.
-- No extra keys.
+- Optional fields: "answerKind", "items", "evidence", "suggestedFollowUps".
+- "answerKind" must be one of: "plain", "list", "tasks", "decisions".
+- "items" must be an array of concise strings; omit or [] when not useful.
+- "evidence" must be an array of objects: {"quote": string, "source": "transcript"|"summary"|"tasks"|"recording_mark"|"prior_conversation", "offsetMs": number|null, "label": string}. Omit offsetMs and label if unknown.
+- "suggestedFollowUps" must be an array of 1–3 short question strings.
 - No markdown in the answer string.
 - No surrounding commentary.
 
 Example:
-{"answer":"The context does not mention a delivery date."}`;
+{"answer":"The context does not mention a delivery date.","answerKind":"plain","items":[],"evidence":[],"suggestedFollowUps":["What deadlines are mentioned elsewhere in this note?"]}`;
 
 const SUMMARY_STYLE_INSTRUCTIONS: Record<SummaryStyle, string> = {
   brief: 'Write exactly 1–2 sentences.',

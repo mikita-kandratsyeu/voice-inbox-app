@@ -9,7 +9,7 @@ export type MeetingUtterance = {
 };
 
 const KNOWN_SPEAKER_LABEL_HEAD =
-  '(?:Speaker|Участник|Спикер|Собеседник|Собеседница|Participant|Interviewer|Interviewee|Host|Guest|Модератор|Интервьюер|Ведущий|Клиент|Гость)(?:\\s+\\d+|\\s*\\d+)?';
+  '(?:Speaker|Участник|Участница|Спикер|Собеседник|Собеседница|Participant|Person|User|Interviewer|Interviewee|Host|Guest|Customer|Client|Moderator|Модератор|Интервьюер|Ведущий|Клиент|Гость|Пользователь)(?:\\s*(?:#|№)?\\s*\\d+)?';
 
 /** Transcript names/roles (e.g. "Алекс:", "Рассказчик:") when AI skips neutral labels. */
 const GENERIC_SPEAKER_LABEL = "[\\p{L}][\\p{L}\\p{N}\\s'\\-]{0,58}";
@@ -19,11 +19,17 @@ export const SPEAKER_LABEL_HEAD = `(?:${KNOWN_SPEAKER_LABEL_HEAD}|${GENERIC_SPEA
 const SPEAKER_LINE_FLAGS = 'iu';
 
 export const SPEAKER_LINE_RE = new RegExp(
-  `^\\s*(${SPEAKER_LABEL_HEAD})\\s*:\\s*(.*)$`,
+  `^\\s*(?:\\*\\*)?[\\[(]?(${SPEAKER_LABEL_HEAD})[\\])]?\\s*(?::\\s*(?:\\*\\*)?|\\*\\*\\s*:)\\s*(.*)$`,
   SPEAKER_LINE_FLAGS,
 );
 
 const BLOCKED_SPEAKER_LABELS = new Set(['http', 'https', 'ftp', 'mailto']);
+const MARKDOWN_LINE_PREFIX_RE = /^\s*(?:>\s*)?(?:[-*+]\s+|\d+[.)]\s+)?/u;
+const TABLE_SEPARATOR_CELL_RE = /^:?-{3,}:?$/;
+const KNOWN_SPEAKER_DASH_LINE_RE = new RegExp(
+  `^\\s*(?:\\*\\*)?[\\[(]?(${KNOWN_SPEAKER_LABEL_HEAD})[\\])]?\\s*(?:\\*\\*)?\\s+[-–—]\\s+(.*)$`,
+  SPEAKER_LINE_FLAGS,
+);
 
 export function isRecognizedSpeakerLabel(label: string): boolean {
   const trimmed = label.trim();
@@ -33,7 +39,7 @@ export function isRecognizedSpeakerLabel(label: string): boolean {
 
 /** Same as web `normalizeInlineSpeakerLabelsToParagraphBreaks` — keeps share/email readable. */
 const INLINE_SPEAKER_PARAGRAPH_BREAK = new RegExp(
-  `([^\\n\\r\\s])\\s*(${KNOWN_SPEAKER_LABEL_HEAD}\\s*:)`,
+  `([^\\n\\r\\s*])\\s*(${KNOWN_SPEAKER_LABEL_HEAD}\\s*:)`,
   'giu',
 );
 
@@ -44,6 +50,78 @@ const BOLD_SPEAKER_HEADING = new RegExp(
 
 function isBoldSpeakerHeadingLine(line: string): boolean {
   return BOLD_SPEAKER_HEADING.test(line.trim());
+}
+
+function stripMarkdownLinePrefix(line: string): string {
+  return line.replace(MARKDOWN_LINE_PREFIX_RE, '').trim();
+}
+
+function parseMarkdownTableSpeakerLine(
+  line: string,
+): { kind: 'speaker'; speakerLabel: string; body: string } | { kind: 'skip' } | null {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) {
+    return null;
+  }
+
+  const cells = trimmed
+    .slice(1, -1)
+    .split('|')
+    .map((cell) => cell.trim())
+    .filter(Boolean);
+  if (cells.length < 2) {
+    return null;
+  }
+  if (cells.some((cell) => TABLE_SEPARATOR_CELL_RE.test(cell))) {
+    return { kind: 'skip' };
+  }
+
+  const speakerMatch = cells[0]!.match(SPEAKER_LINE_RE);
+  const speakerLabel = speakerMatch ? speakerMatch[1]!.trim() : cells[0]!;
+  const normalizedHeader = `${speakerLabel.toLowerCase()}:${cells[1]!.toLowerCase()}`;
+  if (
+    /^(speaker|participant|участник|спикер):(text|dialogue|utterance|reply|реплика|текст)$/iu.test(
+      normalizedHeader,
+    )
+  ) {
+    return { kind: 'skip' };
+  }
+  if (!isRecognizedSpeakerLabel(speakerLabel) || !SPEAKER_LINE_RE.test(`${speakerLabel}:`)) {
+    return null;
+  }
+
+  return { kind: 'speaker', speakerLabel, body: cells.slice(1).join(' | ').trim() };
+}
+
+function parseSpeakerLine(
+  line: string,
+): { kind: 'speaker'; speakerLabel: string; body: string } | { kind: 'skip' } | null {
+  const normalizedLine = stripMarkdownLinePrefix(line);
+
+  const table = parseMarkdownTableSpeakerLine(normalizedLine);
+  if (table) {
+    return table;
+  }
+
+  const colonMatch = normalizedLine.match(SPEAKER_LINE_RE);
+  if (colonMatch && isRecognizedSpeakerLabel(colonMatch[1]!)) {
+    return {
+      kind: 'speaker',
+      speakerLabel: colonMatch[1]!.trim(),
+      body: (colonMatch[2] ?? '').trim(),
+    };
+  }
+
+  const dashMatch = normalizedLine.match(KNOWN_SPEAKER_DASH_LINE_RE);
+  if (dashMatch && isRecognizedSpeakerLabel(dashMatch[1]!)) {
+    return {
+      kind: 'speaker',
+      speakerLabel: dashMatch[1]!.trim(),
+      body: (dashMatch[2] ?? '').trim(),
+    };
+  }
+
+  return null;
 }
 
 /** Converts `**Участник 1**` / `**Собеседник 2**` blocks into `Label: body` lines (web parity). */
@@ -137,10 +215,12 @@ export function parseMeetingDialogue(raw: string): MeetingUtterance[] {
     const trimmed = line.trim();
     if (!trimmed) continue;
 
-    const m = trimmed.match(SPEAKER_LINE_RE);
-    if (m && isRecognizedSpeakerLabel(m[1])) {
-      const speakerLabel = m[1].trim();
-      const body = (m[2] ?? '').trim();
+    const speakerLine = parseSpeakerLine(trimmed);
+    if (speakerLine?.kind === 'skip') {
+      continue;
+    }
+    if (speakerLine) {
+      const { speakerLabel, body } = speakerLine;
       out.push({
         speakerLabel,
         body,

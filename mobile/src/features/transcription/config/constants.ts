@@ -7,3 +7,6 @@ export const WHISPER_NATIVE_SETTLE_MS = 500;
 
 /** Extra grace after background abort so in-flight whisper_full can finish stopping. */
 export const WHISPER_ABORT_SETTLE_MS = 2500;
+
+/** Upper bound for manual restart cleanup after a paused/error transcription. */
+export const WHISPER_RESTART_RESET_TIMEOUT_MS = 10_000;

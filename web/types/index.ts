@@ -48,7 +48,22 @@ export type Message =
 
 export type AskMessage =
   | { id: string; status: 'processing'; model?: string; modelLabel?: string }
-  | { id: string; status: 'done'; model?: string; modelLabel?: string; answer: string }
+  | {
+      id: string;
+      status: 'done';
+      model?: string;
+      modelLabel?: string;
+      answer: string;
+      answerKind?: 'plain' | 'list' | 'tasks' | 'decisions';
+      items?: string[];
+      suggestedFollowUps?: string[];
+      evidence?: Array<{
+        quote: string;
+        source?: 'transcript' | 'summary' | 'tasks' | 'recording_mark' | 'prior_conversation';
+        offsetMs?: number | null;
+        label?: string;
+      }>;
+    }
   | { id: string; status: 'error'; error: string; model?: string; modelLabel?: string };
 
 export type AutoOrganizeResult = {

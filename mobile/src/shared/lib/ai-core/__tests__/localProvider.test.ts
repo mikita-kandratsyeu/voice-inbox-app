@@ -402,15 +402,31 @@ describe('parseLocalSummaryResponse', () => {
 
 describe('parseLocalAskResponse', () => {
   it('reads JSON answer', () => {
-    expect(parseLocalAskResponse('{"answer":"hello"}')).toBe('hello');
+    expect(parseLocalAskResponse('{"answer":"hello"}')).toEqual({ answer: 'hello' });
+  });
+
+  it('reads structured ask metadata', () => {
+    expect(
+      parseLocalAskResponse(
+        '{"answer":"Do the launch prep.","answerKind":"tasks","items":["Write copy","Ship build"],"evidence":[{"quote":"We need to ship the build","source":"transcript"}],"suggestedFollowUps":["Who owns the build?"]}',
+      ),
+    ).toEqual({
+      answer: 'Do the launch prep.',
+      answerKind: 'tasks',
+      items: ['Write copy', 'Ship build'],
+      evidence: [{ quote: 'We need to ship the build', source: 'transcript' }],
+      suggestedFollowUps: ['Who owns the build?'],
+    });
   });
 
   it('reads answer from code fence', () => {
-    expect(parseLocalAskResponse('```json\n{"answer":"from fence"}\n```')).toBe('from fence');
+    expect(parseLocalAskResponse('```json\n{"answer":"from fence"}\n```')).toEqual({
+      answer: 'from fence',
+    });
   });
 
   it('trims JSON answer whitespace', () => {
-    expect(parseLocalAskResponse('{"answer":"  spaced  "}')).toBe('spaced');
+    expect(parseLocalAskResponse('{"answer":"  spaced  "}')).toEqual({ answer: 'spaced' });
   });
 
   it('returns null for empty JSON answer string', () => {
@@ -419,23 +435,29 @@ describe('parseLocalAskResponse', () => {
   });
 
   it('repairs trailing comma in ask JSON', () => {
-    expect(parseLocalAskResponse('{"answer":"ok",}')).toBe('ok');
+    expect(parseLocalAskResponse('{"answer":"ok",}')).toEqual({ answer: 'ok' });
   });
 
   it('recovers answer when JSON is truncated before closing quote', () => {
-    expect(parseLocalAskResponse('{"answer":"answer truncated')).toBe('answer truncated');
+    expect(parseLocalAskResponse('{"answer":"answer truncated')).toEqual({
+      answer: 'answer truncated',
+    });
   });
 
   it('recovers answer with escapes when truncated', () => {
-    expect(parseLocalAskResponse('{"answer":"line one\\nline two')).toBe('line one\nline two');
+    expect(parseLocalAskResponse('{"answer":"line one\\nline two')).toEqual({
+      answer: 'line one\nline two',
+    });
   });
 
   it('allows plain text when plausible', () => {
-    expect(parseLocalAskResponse('This is a normal reply.')).toBe('This is a normal reply.');
+    expect(parseLocalAskResponse('This is a normal reply.')).toEqual({
+      answer: 'This is a normal reply.',
+    });
   });
 
   it('allows Cyrillic plain text', () => {
-    expect(parseLocalAskResponse('Ответ на русском.')).toBe('Ответ на русском.');
+    expect(parseLocalAskResponse('Ответ на русском.')).toEqual({ answer: 'Ответ на русском.' });
   });
 
   it('rejects junk plain text', () => {

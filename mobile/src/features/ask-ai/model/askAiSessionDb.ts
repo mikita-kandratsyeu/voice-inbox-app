@@ -2,8 +2,16 @@ import dayjs from 'dayjs';
 import { eq } from 'drizzle-orm';
 
 import { getDB, isRecord, isString, recordAskAiTable } from '@/shared/lib';
+import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
 
-type AskTurn = { question: string; answer: string };
+type AskTurn = {
+  question: string;
+  answer: string;
+  answerKind?: AskAnswerKind;
+  items?: string[];
+  evidence?: AskEvidence[];
+  suggestedFollowUps?: string[];
+};
 
 const PERSIST_VERSION = 1 as const;
 const MAX_HISTORY_ITEMS = 25;
@@ -41,6 +49,10 @@ type PersistedPayloadV1 = {
   history: AskTurn[];
   question: string | null;
   answer: string | null;
+  answerKind?: AskAnswerKind;
+  items?: string[];
+  evidence?: AskEvidence[];
+  suggestedFollowUps?: string[];
   error: string | null;
   pendingAsk?: boolean;
 };
@@ -53,6 +65,45 @@ function isHistoryItem(x: unknown): x is AskTurn {
   const o = x;
 
   return isString(o.question) && isString(o.answer);
+}
+
+function parseAskAnswerKind(value: unknown): AskAnswerKind | undefined {
+  return value === 'plain' || value === 'list' || value === 'tasks' || value === 'decisions'
+    ? value
+    : undefined;
+}
+
+function parseStringArray(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out = value.filter((item): item is string => isString(item) && item.trim().length > 0);
+  return out.length ? out : undefined;
+}
+
+function parseEvidence(value: unknown): AskEvidence[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out: AskEvidence[] = [];
+  for (const item of value) {
+    if (!isRecord(item)) continue;
+    const quote = isString(item.quote) ? item.quote.trim() : '';
+    if (!quote) continue;
+    out.push({
+      quote,
+      ...(isString(item.source) ? { source: item.source as AskEvidence['source'] } : {}),
+      ...(typeof item.offsetMs === 'number' && Number.isFinite(item.offsetMs)
+        ? { offsetMs: Math.max(0, Math.round(item.offsetMs)) }
+        : item.offsetMs === null
+          ? { offsetMs: null }
+          : {}),
+      ...(isString(item.label) && item.label.trim() ? { label: item.label.trim() } : {}),
+    });
+  }
+  return out.length ? out : undefined;
+}
+
+function parseSuggestedFollowUps(value: unknown): string[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const out = value.filter((item): item is string => isString(item) && item.trim().length > 0);
+  return out.length ? out : undefined;
 }
 
 function readNullableStringField(value: unknown): string | null | false {
@@ -72,7 +123,19 @@ function parseHistoryField(value: unknown): AskTurn[] | null {
     return null;
   }
 
-  return value.every(isHistoryItem) ? value : null;
+  if (!value.every(isHistoryItem)) return null;
+  return value.map((item) => ({
+    question: item.question,
+    answer: item.answer,
+    ...(parseAskAnswerKind(item.answerKind)
+      ? { answerKind: parseAskAnswerKind(item.answerKind) }
+      : {}),
+    ...(parseStringArray(item.items) ? { items: parseStringArray(item.items) } : {}),
+    ...(parseEvidence(item.evidence) ? { evidence: parseEvidence(item.evidence) } : {}),
+    ...(parseSuggestedFollowUps(item.suggestedFollowUps)
+      ? { suggestedFollowUps: parseSuggestedFollowUps(item.suggestedFollowUps) }
+      : {}),
+  }));
 }
 
 function parsePayload(raw: string): PersistedPayloadV1 | null {
@@ -118,6 +181,12 @@ function parsePayload(raw: string): PersistedPayloadV1 | null {
     history,
     question,
     answer,
+    ...(parseAskAnswerKind(o.answerKind) ? { answerKind: parseAskAnswerKind(o.answerKind) } : {}),
+    ...(parseStringArray(o.items) ? { items: parseStringArray(o.items) } : {}),
+    ...(parseEvidence(o.evidence) ? { evidence: parseEvidence(o.evidence) } : {}),
+    ...(parseSuggestedFollowUps(o.suggestedFollowUps)
+      ? { suggestedFollowUps: parseSuggestedFollowUps(o.suggestedFollowUps) }
+      : {}),
     error,
     pendingAsk,
   };
@@ -127,6 +196,10 @@ export type RestoredAskAiSession = {
   history: AskTurn[];
   question: string | null;
   answer: string | null;
+  answerKind?: AskAnswerKind;
+  items?: string[];
+  evidence?: AskEvidence[];
+  suggestedFollowUps?: string[];
   error: string | null;
   pendingAsk: boolean;
 };
@@ -154,6 +227,10 @@ export async function loadAskAiSession(
     history: parsed.history,
     question: parsed.question,
     answer: parsed.answer,
+    answerKind: parsed.answerKind,
+    items: parsed.items,
+    evidence: parsed.evidence,
+    suggestedFollowUps: parsed.suggestedFollowUps,
     error: parsed.error,
     pendingAsk: parsed.pendingAsk ?? false,
   };
@@ -211,6 +288,10 @@ export type AskAiSessionPersistInput = {
   history: AskTurn[];
   question: string | null;
   answer: string | null;
+  answerKind?: AskAnswerKind;
+  items?: string[];
+  evidence?: AskEvidence[];
+  suggestedFollowUps?: string[];
   error: string | null;
   isLoading: boolean;
 };
@@ -255,6 +336,12 @@ export function saveAskAiSession(
       history: capHistory(snapshot.history),
       question: snapshot.question,
       answer: snapshot.answer,
+      ...(snapshot.answerKind ? { answerKind: snapshot.answerKind } : {}),
+      ...(snapshot.items?.length ? { items: snapshot.items } : {}),
+      ...(snapshot.evidence?.length ? { evidence: snapshot.evidence } : {}),
+      ...(snapshot.suggestedFollowUps?.length
+        ? { suggestedFollowUps: snapshot.suggestedFollowUps }
+        : {}),
       error: snapshot.error,
       ...(pendingAsk ? { pendingAsk: true } : {}),
     };

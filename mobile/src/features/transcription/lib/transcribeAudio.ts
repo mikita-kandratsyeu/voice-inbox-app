@@ -6,6 +6,7 @@ import type { AudioChunk } from '@/shared/lib/audio';
 import { splitAudioIntoChunks } from '@/shared/lib/audio';
 import { isArray, isRecord, isString } from '@/shared/lib/type-guards';
 
+import { TranscriptionError } from './transcriptionErrors';
 import { canRunWhisperGpuWork } from './whisperAppState';
 import { beginWhisperNativeWork, endWhisperNativeWork } from './whisperNativeLifecycle';
 
@@ -13,8 +14,15 @@ const MIN_DURATION_MS = 500;
 
 const CHUNK_THRESHOLD_MS = 30_000;
 
-const CHUNK_DURATION_SEC = 24;
-const CHUNK_OVERLAP_SEC = 3;
+export type TranscriptionChunkProfile = {
+  chunkDurationSec: number;
+  chunkOverlapSec: number;
+};
+
+const DEFAULT_CHUNK_PROFILE: TranscriptionChunkProfile = {
+  chunkDurationSec: 24,
+  chunkOverlapSec: 3,
+};
 
 const PROMPT_TAIL_LENGTH = 200;
 
@@ -23,6 +31,7 @@ export type TranscribeAudioOptions = {
   audioPath: string;
   durationMs: number;
   language?: string;
+  chunkProfile?: TranscriptionChunkProfile;
   onProgress?: (current: number, total: number) => void;
   resume?: {
     startChunkIndex: number;
@@ -125,6 +134,7 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
     audioPath,
     durationMs,
     language = 'auto',
+    chunkProfile = DEFAULT_CHUNK_PROFILE,
     onProgress,
     resume,
     onChunkCompleted,
@@ -153,7 +163,7 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
       await Promise.resolve();
 
       if (cancelled || !canRunWhisperGpuWork()) {
-        throw new Error('abort');
+        throw new TranscriptionError('native_abort');
       }
 
       if (durationMs < MIN_DURATION_MS) {
@@ -177,6 +187,7 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
         audioPath,
         language,
         totalDurationSec: durationMs / 1000,
+        chunkProfile,
         onProgress,
         resume,
         onChunkCompleted,
@@ -209,7 +220,7 @@ const transcribeShort = async ({
   setStop,
 }: ShortOptions): Promise<TranscribeAudioResult> => {
   if (cancelled() || !canRunWhisperGpuWork()) {
-    throw new Error('abort');
+    throw new TranscriptionError('native_abort');
   }
 
   beginWhisperNativeWork();
@@ -220,7 +231,7 @@ const transcribeShort = async ({
 
     if (cancelled()) {
       await stop();
-      throw new Error('abort');
+      throw new TranscriptionError('native_abort');
     }
 
     let raw: unknown;
@@ -228,14 +239,14 @@ const transcribeShort = async ({
       raw = await rawPromise;
     } catch (err) {
       if (cancelled() || !canRunWhisperGpuWork()) {
-        throw new Error('abort');
+        throw new TranscriptionError('native_abort');
       }
       throw err;
     }
     setStop(async () => {});
 
     if (cancelled()) {
-      throw new Error('abort');
+      throw new TranscriptionError('native_abort');
     }
 
     const result = normalizeResult(raw);
@@ -253,6 +264,7 @@ type LongOptions = {
   audioPath: string;
   language: string;
   totalDurationSec: number;
+  chunkProfile: TranscriptionChunkProfile;
   onProgress?: (current: number, total: number) => void;
   resume?: {
     startChunkIndex: number;
@@ -274,6 +286,7 @@ const transcribeLong = async ({
   audioPath,
   language,
   totalDurationSec,
+  chunkProfile,
   onProgress,
   resume,
   onChunkCompleted,
@@ -282,8 +295,8 @@ const transcribeLong = async ({
 }: LongOptions): Promise<TranscribeAudioResult> => {
   const chunks: AudioChunk[] = splitAudioIntoChunks(
     totalDurationSec,
-    CHUNK_DURATION_SEC,
-    CHUNK_OVERLAP_SEC,
+    chunkProfile.chunkDurationSec,
+    chunkProfile.chunkOverlapSec,
   );
 
   const total = chunks.length;
@@ -298,7 +311,7 @@ const transcribeLong = async ({
 
   for (let i = startChunkIndex; i < chunks.length; i++) {
     if (cancelled() || !canRunWhisperGpuWork()) {
-      throw new Error('abort');
+      throw new TranscriptionError('native_abort');
     }
 
     const chunk = chunks[i];
@@ -306,7 +319,7 @@ const transcribeLong = async ({
     const prompt = fullText.length > 0 ? fullText.slice(-PROMPT_TAIL_LENGTH) : undefined;
 
     if (!canRunWhisperGpuWork()) {
-      throw new Error('abort');
+      throw new TranscriptionError('native_abort');
     }
 
     beginWhisperNativeWork();
@@ -325,14 +338,14 @@ const transcribeLong = async ({
         raw = await rawPromise;
       } catch (chunkErr) {
         if (cancelled() || !canRunWhisperGpuWork()) {
-          throw new Error('abort');
+          throw new TranscriptionError('native_abort');
         }
         throw chunkErr;
       }
       setStop(async () => {});
 
       if (cancelled()) {
-        throw new Error('abort');
+        throw new TranscriptionError('native_abort');
       }
     } finally {
       endWhisperNativeWork();
@@ -347,13 +360,13 @@ const transcribeLong = async ({
     const chunkText = (result.result ?? '').trim();
     fullText = fullText.length > 0 ? `${fullText} ${chunkText}` : chunkText;
 
-    onProgress?.(i + 1, total);
     onChunkCompleted?.({
       chunkIndex: i,
       totalChunks: total,
       fullText,
       segments: allSegments,
     });
+    onProgress?.(i + 1, total);
 
     await new Promise<void>((resolve) => setTimeout(resolve, 200));
   }

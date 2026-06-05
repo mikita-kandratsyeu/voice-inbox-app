@@ -11,7 +11,8 @@ type TranscriptProcessingProps = {
   progressLabel?: string;
   phase: 'loading_model' | 'processing';
   color: Colors;
-  onCancel: () => void;
+  onCancel?: () => void;
+  statusTitle?: string;
   durationMs?: number;
   transcriptionSegments?: { current: number; total: number };
 };
@@ -22,6 +23,7 @@ export const TranscriptProcessing = ({
   phase,
   color,
   onCancel,
+  statusTitle,
   durationMs,
   transcriptionSegments,
 }: TranscriptProcessingProps) => {
@@ -35,6 +37,7 @@ export const TranscriptProcessing = ({
       color={color}
       onCancel={onCancel}
       context="transcription"
+      statusTitle={statusTitle}
       hintText={t('transcription.batteryHint')}
       leadingIcon={<RecordVoiceIcon size={22} color={color.accent.primary} strokeWidth={2.2} />}
       durationMs={durationMs}

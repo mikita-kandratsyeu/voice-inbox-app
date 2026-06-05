@@ -26,12 +26,15 @@ type TranscriptTabProps = {
   color: Colors;
   hasAudio: boolean;
   onTranscribe: () => void;
+  onDiscardResume?: () => void;
   onEditTranscript: () => void;
   onTranslate?: (targetLanguage: string) => Promise<boolean>;
   onDeleteTranslation?: () => void;
   isTranslating?: boolean;
   isAiProcessing?: boolean;
   isPrivateMode?: boolean;
+  resumeAvailable?: boolean;
+  isDiscardingResume?: boolean;
 };
 
 const MAX_PARAGRAPH_LENGTH = 360;
@@ -100,6 +103,8 @@ export const TranscriptTab = ({
   isTranslating = false,
   isAiProcessing = false,
   isPrivateMode = false,
+  resumeAvailable = false,
+  isDiscardingResume = false,
 }: TranscriptTabProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
@@ -126,7 +131,7 @@ export const TranscriptTab = ({
   );
   const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
   const transcriptionBlocked = useTranscriptionBlockedForRecord(recordId);
-  const transcribeDisabled = isAiProcessing || transcriptionBlocked;
+  const transcribeDisabled = isAiProcessing || transcriptionBlocked || isDiscardingResume;
 
   const showTranslation = hasTranslation && viewMode === 'translated';
   const translatedParagraphs = buildReadableParagraphs(translatedTranscript ?? '');
@@ -145,14 +150,25 @@ export const TranscriptTab = ({
     return (
       <TabEmptyState
         icon={<RecordVoiceIcon size={28} color={color.icon.muted} strokeWidth={1.9} />}
-        title={t('recordingDetail.transcriptNotCreated')}
-        description={t('recordingDetail.transcriptNotCreatedDesc')}
-        buttonLabel={t('recordingDetail.transcribe')}
+        title={
+          resumeAvailable
+            ? t('transcription.resumeTitle')
+            : t('recordingDetail.transcriptNotCreated')
+        }
+        description={
+          resumeAvailable
+            ? t('transcription.pausedNotificationBodyFallback')
+            : t('recordingDetail.transcriptNotCreatedDesc')
+        }
+        buttonLabel={
+          resumeAvailable ? t('transcription.continue') : t('recordingDetail.transcribe')
+        }
         buttonIcon={<RecordVoiceIcon size={18} color="#fff" strokeWidth={2.2} />}
         hint={hint}
         onPress={onTranscribe}
         hideButton={!hasAudio}
         disabled={transcribeDisabled}
+        loading={isDiscardingResume}
       />
     );
   }
