@@ -96,7 +96,6 @@ export const TranscriptTab = ({
   color,
   hasAudio,
   onTranscribe,
-  onDiscardResume,
   onEditTranscript,
   onTranslate,
   onDeleteTranslation,
@@ -165,9 +164,6 @@ export const TranscriptTab = ({
         buttonIcon={<RecordVoiceIcon size={18} color="#fff" strokeWidth={2.2} />}
         hint={hint}
         onPress={onTranscribe}
-        secondaryButtonLabel={resumeAvailable ? t('transcription.cancelResume') : undefined}
-        secondaryButtonVariant="danger"
-        onSecondaryPress={resumeAvailable ? onDiscardResume : undefined}
         hideButton={!hasAudio}
         disabled={transcribeDisabled}
       />

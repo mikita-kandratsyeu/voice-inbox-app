@@ -52,6 +52,7 @@ import {
 
 const PROGRESS_THROTTLE_MS = 500;
 const CHECKPOINT_EVERY_N_CHUNKS = 2;
+const pendingWhisperResetRecordIds = new Set<string>();
 
 const createThrottledProgress = (
   recordId: string,
@@ -114,12 +115,14 @@ export const useTranscription = () => {
     async (record: VoiceRecord, languageOverride?: string): Promise<void> => {
       void cancelTranscriptionPausedNotification(record.id).catch(() => {});
       const shouldResetBeforeStart =
+        pendingWhisperResetRecordIds.has(record.id) ||
         record.aiStatus === 'paused' ||
         record.aiStatus === 'resumable' ||
         record.aiStatus === 'error' ||
         currentRecordIdRef.current === record.id ||
         getActiveTranscriptionRecordId() === record.id ||
-        hasActiveTranscriptionJob(record.id);
+        hasActiveTranscriptionJob(record.id) ||
+        ((record.transcriptProgress ?? 0) > 0 && !record.transcript.trim());
 
       if (currentRecordIdRef.current === record.id && stopRef.current) {
         const prevStop = stopRef.current;
@@ -130,10 +133,25 @@ export const useTranscription = () => {
       if (shouldResetBeforeStart) {
         try {
           await resetTranscriptionRuntimeForRestart(record.id);
-          await resetWhisperContext();
+          const reset = await resetWhisperContext();
+          if (!reset) {
+            pendingWhisperResetRecordIds.add(record.id);
+            const canResume =
+              record.aiStatus === 'paused' ||
+              record.aiStatus === 'resumable' ||
+              (record.transcriptProgress ?? 0) > 0;
+            updateAiStatus(
+              record.id,
+              canResume ? 'resumable' : 'idle',
+              record.transcriptProgress ?? 0,
+            );
+            return;
+          }
+          pendingWhisperResetRecordIds.delete(record.id);
         } catch (err) {
           if (__DEV__) console.warn('[transcription] restart reset failed', err);
-          updateAiStatus(record.id, 'error');
+          pendingWhisperResetRecordIds.add(record.id);
+          updateAiStatus(record.id, 'idle', record.transcriptProgress ?? 0);
           return;
         }
       }
@@ -302,12 +320,6 @@ export const useTranscription = () => {
           transcriptionResult = await runTranscription(resume);
         } catch (resumeErr) {
           if (resume) {
-            if (__DEV__) {
-              console.warn('[transcription] resume failed, retrying from start', {
-                recordId: record.id,
-                err: resumeErr instanceof Error ? resumeErr.message : String(resumeErr),
-              });
-            }
             await removeTranscriptionCheckpoint(record.id).catch(() => {});
             transcriptionResult = await runTranscription(undefined);
           } else {
@@ -478,17 +490,33 @@ export const useTranscription = () => {
   );
 
   const discardPausedTranscription = useCallback(
-    (recordId: string): void => {
+    async (recordId: string): Promise<void> => {
       invalidateTranscriptionJob(recordId);
       currentRecordIdRef.current = null;
-      unregisterActiveTranscription(recordId);
-      endTranscriptionSession(recordId);
       clearTranscriptionBackgroundCancelled(recordId);
       clearTranscriptionCheckpointSnapshot(recordId);
-      removeTranscriptionCheckpoint(recordId).catch(() => {});
-      cancelTranscriptionPausedNotification(recordId).catch(() => {});
       clearPendingBackgroundTranscriptionRecord();
-      updateAiStatus(recordId, 'idle', 0);
+
+      try {
+        await resetTranscriptionRuntimeForRestart(recordId);
+        const reset = await resetWhisperContext();
+        if (reset) {
+          pendingWhisperResetRecordIds.delete(recordId);
+        } else {
+          pendingWhisperResetRecordIds.add(recordId);
+        }
+      } catch (err) {
+        if (__DEV__) console.warn('[transcription] discard reset failed', err);
+        pendingWhisperResetRecordIds.add(recordId);
+      } finally {
+        unregisterActiveTranscription(recordId);
+        endTranscriptionSession(recordId);
+        clearTranscriptionBackgroundCancelled(recordId);
+        clearTranscriptionCheckpointSnapshot(recordId);
+        await removeTranscriptionCheckpoint(recordId).catch(() => {});
+        await cancelTranscriptionPausedNotification(recordId).catch(() => {});
+        updateAiStatus(recordId, 'idle', 0);
+      }
     },
     [updateAiStatus],
   );

@@ -100,8 +100,9 @@ export const TranscriptionResumePrompt = () => {
           text: t('transcription.cancelResume'),
           style: 'destructive',
           onPress: () => {
-            discardPausedTranscription(record.id);
-            promptInFlightRef.current = false;
+            discardPausedTranscription(record.id).finally(() => {
+              promptInFlightRef.current = false;
+            });
           },
         },
         {

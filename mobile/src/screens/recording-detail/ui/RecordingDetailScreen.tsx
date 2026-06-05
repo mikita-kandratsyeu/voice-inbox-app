@@ -345,7 +345,9 @@ export const RecordingDetailScreen = () => {
         {
           text: t('transcription.cancelResume'),
           style: 'destructive',
-          onPress: () => discardPausedTranscription(liveRecord.id),
+          onPress: () => {
+            discardPausedTranscription(liveRecord.id).catch(() => {});
+          },
         },
       ],
     );

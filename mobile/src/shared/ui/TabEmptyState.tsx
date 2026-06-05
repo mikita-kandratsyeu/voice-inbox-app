@@ -17,9 +17,6 @@ type TabEmptyStateProps = {
   hintIcon?: React.ReactNode;
   icon: React.ReactNode;
   onPress?: () => void;
-  secondaryButtonLabel?: string;
-  secondaryButtonVariant?: 'secondary' | 'danger' | 'ghost';
-  onSecondaryPress?: () => void;
   title: string;
 };
 
@@ -34,9 +31,6 @@ export const TabEmptyState = ({
   hintIcon,
   icon,
   onPress,
-  secondaryButtonLabel,
-  secondaryButtonVariant = 'ghost',
-  onSecondaryPress,
   title,
 }: TabEmptyStateProps) => {
   const color = useColors();
@@ -70,17 +64,6 @@ export const TabEmptyState = ({
             disabled={disabled}
             className="mt-2"
           />
-          {secondaryButtonLabel && onSecondaryPress ? (
-            <Button
-              variant={secondaryButtonVariant}
-              size="md"
-              label={secondaryButtonLabel}
-              color={color}
-              onPress={onSecondaryPress}
-              activeOpacity={0.85}
-              className="mt-1"
-            />
-          ) : null}
         </>
       ) : (
         description.length > 0 && (

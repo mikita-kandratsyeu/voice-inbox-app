@@ -204,7 +204,7 @@ export const releaseWhisperContext = (): Promise<void> =>
     await releaseInFlight;
   });
 
-export const resetWhisperContext = (): Promise<void> =>
+export const resetWhisperContext = (): Promise<boolean> =>
   enqueueWhisperOperation(async () => {
     clearIdleTimer();
     releaseQueued = false;
@@ -218,7 +218,8 @@ export const resetWhisperContext = (): Promise<void> =>
 
     const nativeIdle = await waitForWhisperNativeIdleOrTimeout(WHISPER_RESTART_RESET_TIMEOUT_MS);
     if (!nativeIdle) {
-      throw new Error('whisper_native_busy_timeout');
+      releaseQueued = true;
+      return false;
     }
 
     beginWhisperNativeWork();
@@ -230,6 +231,7 @@ export const resetWhisperContext = (): Promise<void> =>
     } finally {
       endWhisperNativeWork();
     }
+    return true;
   });
 
 setWhisperNativeIdleListener(() => {
