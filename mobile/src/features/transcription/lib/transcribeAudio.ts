@@ -347,13 +347,13 @@ const transcribeLong = async ({
     const chunkText = (result.result ?? '').trim();
     fullText = fullText.length > 0 ? `${fullText} ${chunkText}` : chunkText;
 
-    onProgress?.(i + 1, total);
     onChunkCompleted?.({
       chunkIndex: i,
       totalChunks: total,
       fullText,
       segments: allSegments,
     });
+    onProgress?.(i + 1, total);
 
     await new Promise<void>((resolve) => setTimeout(resolve, 200));
   }

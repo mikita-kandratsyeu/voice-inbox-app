@@ -16,32 +16,40 @@ import { requestTranscriptionResumePrompt } from './transcriptionResumePromptReq
 
 type CheckpointSnapshot = Omit<TranscriptionCheckpoint, 'schemaVersion' | 'updatedAt'>;
 
-let lastCheckpointSnapshot: CheckpointSnapshot | null = null;
+const checkpointSnapshotsByRecordId = new Map<string, CheckpointSnapshot>();
 
 export function rememberTranscriptionCheckpointSnapshot(snapshot: CheckpointSnapshot): void {
-  lastCheckpointSnapshot = snapshot;
+  checkpointSnapshotsByRecordId.set(snapshot.recordId, snapshot);
 }
 
 export function clearTranscriptionCheckpointSnapshot(recordId: string): void {
-  if (lastCheckpointSnapshot?.recordId === recordId) {
-    lastCheckpointSnapshot = null;
-  }
+  checkpointSnapshotsByRecordId.delete(recordId);
 }
 
 async function flushTranscriptionCheckpointForBackground(recordId: string): Promise<boolean> {
   const existing = await getTranscriptionCheckpoint(recordId);
-  if (existing) return true;
-  if (lastCheckpointSnapshot?.recordId !== recordId) return false;
+  if (existing) {
+    return true;
+  }
 
-  await saveTranscriptionCheckpoint(lastCheckpointSnapshot);
-  return (await getTranscriptionCheckpoint(recordId)) != null;
+  const snapshot = checkpointSnapshotsByRecordId.get(recordId);
+  if (!snapshot) {
+    return false;
+  }
+
+  await saveTranscriptionCheckpoint(snapshot);
+  return true;
 }
 
 /** Persists in-memory checkpoint after background stop (call from abort / useTranscription finally). */
 export async function persistTranscriptionCheckpointForBackground(
   recordId: string,
 ): Promise<boolean> {
-  return flushTranscriptionCheckpointForBackground(recordId);
+  try {
+    return await flushTranscriptionCheckpointForBackground(recordId);
+  } catch {
+    return false;
+  }
 }
 
 const backgroundCancelledRecordIds = new Set<string>();
@@ -152,6 +160,19 @@ export async function abortTranscriptionForAppBackground(): Promise<void> {
     markTranscriptionPausedForBackground(recordId);
     useRecordStore.getState().updateAiStatus(recordId, 'paused');
 
+    const savedBeforeStop = await persistTranscriptionCheckpointForBackground(recordId);
+
+    if (savedBeforeStop) {
+      useRecordStore.getState().updateAiStatus(recordId, 'resumable');
+      const record = useRecordStore.getState().records.find((item) => item.id === recordId);
+      await showTranscriptionPausedNotification({
+        recordId,
+        recordTitle: record?.title ?? '',
+        checkpointVerified: true,
+      }).catch(() => {});
+      requestTranscriptionResumePrompt(recordId);
+    }
+
     if (stop) {
       try {
         await stop();
@@ -160,20 +181,21 @@ export async function abortTranscriptionForAppBackground(): Promise<void> {
       }
     }
 
-    const saved = await persistTranscriptionCheckpointForBackground(recordId);
+    const saved = savedBeforeStop || (await persistTranscriptionCheckpointForBackground(recordId));
 
     await waitForWhisperNativeIdleAfterAbort();
 
     invalidateTranscriptionJob(recordId);
-    if (saved || (await getTranscriptionCheckpoint(recordId))) {
+    if (!savedBeforeStop && (saved || (await getTranscriptionCheckpoint(recordId)))) {
       useRecordStore.getState().updateAiStatus(recordId, 'resumable');
       const record = useRecordStore.getState().records.find((item) => item.id === recordId);
       void showTranscriptionPausedNotification({
         recordId,
         recordTitle: record?.title ?? '',
+        checkpointVerified: true,
       }).catch(() => {});
       requestTranscriptionResumePrompt(recordId);
-    } else {
+    } else if (!saved) {
       useRecordStore.getState().updateAiStatus(recordId, 'idle');
     }
   })().finally(() => {

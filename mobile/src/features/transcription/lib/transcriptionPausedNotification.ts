@@ -1,4 +1,5 @@
 import notifee, { AndroidImportance, type Event, EventType } from '@notifee/react-native';
+import { AppState } from 'react-native';
 
 import { useRecordStore } from '@/entities/record';
 import { i18n } from '@/shared/lib/i18n';
@@ -19,7 +20,9 @@ function getTranscriptionPausedNotificationId(recordId: string): string {
 }
 
 async function ensureTranscriptionPausedNotificationChannel(): Promise<void> {
-  if (channelReady) return;
+  if (channelReady) {
+    return;
+  }
 
   await notifee.createChannel({
     id: TRANSCRIPTION_PAUSED_NOTIFICATION_CHANNEL_ID,
@@ -40,19 +43,33 @@ export async function cancelTranscriptionPausedNotification(recordId: string): P
 export async function showTranscriptionPausedNotification(input: {
   recordId: string;
   recordTitle: string;
+  checkpointVerified?: boolean;
 }): Promise<void> {
-  if (shownNotificationRecordIds.has(input.recordId)) return;
+  if (shownNotificationRecordIds.has(input.recordId)) {
+    return;
+  }
 
-  const checkpoint = await getTranscriptionCheckpoint(input.recordId);
-  if (!checkpoint) return;
+  if (AppState.currentState === 'active') {
+    return;
+  }
+
+  if (input.checkpointVerified !== true) {
+    const checkpoint = await getTranscriptionCheckpoint(input.recordId);
+    if (!checkpoint) {
+      return;
+    }
+  }
 
   const settings = await notifee.getNotificationSettings();
-  if (settings.authorizationStatus < 1) return;
+  if (settings.authorizationStatus < 1) {
+    return;
+  }
 
   await ensureTranscriptionPausedNotificationChannel();
   const recordTitle = input.recordTitle.trim();
+  const notificationId = getTranscriptionPausedNotificationId(input.recordId);
   await notifee.displayNotification({
-    id: getTranscriptionPausedNotificationId(input.recordId),
+    id: notificationId,
     title: i18n.t('transcription.pausedNotificationTitle'),
     body: recordTitle
       ? i18n.t('transcription.pausedNotificationBody', { title: recordTitle })

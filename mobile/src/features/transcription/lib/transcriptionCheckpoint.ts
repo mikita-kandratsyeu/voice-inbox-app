@@ -25,6 +25,12 @@ const getCheckpointPath = (recordId: string): string => `${CHECKPOINTS_DIR}/${re
 const normalizeAudioPath = (path: string): string =>
   path.startsWith('file://') ? path.slice(7) : path;
 
+const checkpointWriteInFlightByRecordId = new Map<string, Promise<void>>();
+
+const waitForCheckpointWrite = async (recordId: string): Promise<void> => {
+  await checkpointWriteInFlightByRecordId.get(recordId)?.catch(() => {});
+};
+
 const ensureCheckpointsDir = async (): Promise<void> => {
   const exists = await NitroFS.exists(CHECKPOINTS_DIR);
 
@@ -36,20 +42,40 @@ const ensureCheckpointsDir = async (): Promise<void> => {
 export const saveTranscriptionCheckpoint = async (
   checkpoint: Omit<TranscriptionCheckpoint, 'schemaVersion' | 'updatedAt'>,
 ): Promise<void> => {
-  await ensureCheckpointsDir();
-  const payload: TranscriptionCheckpoint = {
-    ...checkpoint,
-    schemaVersion: CHECKPOINT_SCHEMA_VERSION,
-    audioPath: normalizeAudioPath(checkpoint.audioPath),
-    updatedAt: Date.now(),
-  };
-  await NitroFS.writeFile(getCheckpointPath(checkpoint.recordId), JSON.stringify(payload), 'utf8');
+  const previousWrite = checkpointWriteInFlightByRecordId.get(checkpoint.recordId);
+  const write = (async () => {
+    await previousWrite?.catch(() => {});
+    await ensureCheckpointsDir();
+    const payload: TranscriptionCheckpoint = {
+      ...checkpoint,
+      schemaVersion: CHECKPOINT_SCHEMA_VERSION,
+      audioPath: normalizeAudioPath(checkpoint.audioPath),
+      updatedAt: Date.now(),
+    };
+    await NitroFS.writeFile(
+      getCheckpointPath(checkpoint.recordId),
+      JSON.stringify(payload),
+      'utf8',
+    );
+  })();
+
+  checkpointWriteInFlightByRecordId.set(checkpoint.recordId, write);
+
+  try {
+    await write;
+  } finally {
+    if (checkpointWriteInFlightByRecordId.get(checkpoint.recordId) === write) {
+      checkpointWriteInFlightByRecordId.delete(checkpoint.recordId);
+    }
+  }
 };
 
 export const getTranscriptionCheckpoint = async (
   recordId: string,
 ): Promise<TranscriptionCheckpoint | null> => {
   try {
+    await waitForCheckpointWrite(recordId);
+
     const path = getCheckpointPath(recordId);
     const exists = await NitroFS.exists(path);
 
@@ -93,6 +119,8 @@ export const getTranscriptionCheckpoint = async (
 };
 
 export const removeTranscriptionCheckpoint = async (recordId: string): Promise<void> => {
+  await waitForCheckpointWrite(recordId);
+
   const path = getCheckpointPath(recordId);
   const exists = await NitroFS.exists(path);
 
@@ -105,6 +133,10 @@ export const removeTranscriptionCheckpoint = async (recordId: string): Promise<v
 
 export const listTranscriptionCheckpoints = async (): Promise<TranscriptionCheckpoint[]> => {
   try {
+    await Promise.all(
+      [...checkpointWriteInFlightByRecordId.values()].map((write) => write.catch(() => {})),
+    );
+
     const exists = await NitroFS.exists(CHECKPOINTS_DIR);
 
     if (!exists) {
