@@ -57,13 +57,15 @@ export function parseAllowedAiModel(model: string): ParseAllowedAiModelResult {
 export async function parseAllowedAiModelForDevice(
   deviceId: string,
   model: string,
+  opts?: { isPro?: boolean },
 ): Promise<ParseAllowedAiModelResult> {
   const parsed = parseAllowedAiModel(model);
   if (!parsed.ok) {
     return parsed;
   }
 
-  if (isProOnlyAiModel(parsed.model) && !(await isProDevice(deviceId))) {
+  const isPro = opts?.isPro ?? (await isProDevice(deviceId));
+  if (isProOnlyAiModel(parsed.model) && !isPro) {
     return { ok: false, error: 'This model requires Pro', reason: 'pro_required' };
   }
 
@@ -97,10 +99,7 @@ export async function checkDeviceRateLimit(
 ): Promise<NextResponse | null> {
   const window = Math.floor(Date.now() / 1000 / RATE_LIMIT_DEVICE_WINDOW_SECONDS);
   const key = `${RATE_LIMIT_DEVICE_KEY_PREFIX}${deviceId}:${window}`;
-  const count = await redis.incr(key);
-  if (count === 1) {
-    await redis.expire(key, RATE_LIMIT_DEVICE_WINDOW_SECONDS);
-  }
+  const count = await redis.incrWithExpireOnFirst(key, RATE_LIMIT_DEVICE_WINDOW_SECONDS);
   if (count > RATE_LIMIT_DEVICE_MAX_REQUESTS) {
     if (opts?.pathname) {
       void recordApiError(opts.pathname, HttpStatus.TOO_MANY_REQUESTS);

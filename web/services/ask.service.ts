@@ -1,6 +1,6 @@
 import { sendLimitExceededPush } from '@/lib/push-tokens';
 import { MESSAGE_TTL_SECONDS } from '@/config/constants';
-import { checkAndIncrement } from '@/lib/ai-rate-limit';
+import { checkAndIncrement, type AiLimitContext } from '@/lib/ai-rate-limit';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
 import { aiModelResponseFields, enrichMessageWithModelLabel } from '@/lib/ai-model-display';
@@ -26,6 +26,7 @@ export const createAsk = async (
   clientUserAgent?: string | null,
   messageTtlSeconds: number = MESSAGE_TTL_SECONDS,
   recordingMarks?: RecordingMarkForPrompt[],
+  aiLimitContext?: AiLimitContext,
 ): Promise<CreateAskResult> => {
   const ttl = messageTtlSeconds;
 
@@ -46,7 +47,7 @@ export const createAsk = async (
     return { created: false };
   }
 
-  const limitResult = await checkAndIncrement(deviceId);
+  const limitResult = await checkAndIncrement(deviceId, aiLimitContext);
 
   if (!limitResult.allowed) {
     await saveAskMessage(id, {

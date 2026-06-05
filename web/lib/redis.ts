@@ -13,6 +13,7 @@ type KvClient = {
   setIfNotExists(key: string, value: string, options?: { ex?: number }): Promise<boolean>;
   get(key: string): Promise<string | null>;
   incr(key: string): Promise<number>;
+  incrWithExpireOnFirst(key: string, seconds: number): Promise<number>;
   decr(key: string): Promise<number>;
   expire(key: string, seconds: number): Promise<void>;
   del(key: string): Promise<void>;
@@ -46,6 +47,19 @@ const kv: KvClient = useMemoryStore
       },
       async incr(key) {
         return redisClient!.incr(key);
+      },
+      async incrWithExpireOnFirst(key, seconds) {
+        return redisClient!.eval<[string], number>(
+          `
+local count = redis.call("INCR", KEYS[1])
+if count == 1 then
+  redis.call("EXPIRE", KEYS[1], ARGV[1])
+end
+return count
+`,
+          [key],
+          [String(seconds)],
+        );
       },
       async decr(key) {
         return redisClient!.decr(key);

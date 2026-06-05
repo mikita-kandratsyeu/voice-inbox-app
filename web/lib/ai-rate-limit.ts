@@ -1,5 +1,5 @@
 import { AI_WEEKLY_KEY_PREFIX, WEEK_TTL_SECONDS } from '@/config/constants';
-import { getAiWeeklyLimits } from '@/lib/app-config';
+import { getAiWeeklyLimits, type AiWeeklyLimits } from '@/lib/app-config';
 import { isProDevice } from '@/lib/pro-entitlement';
 import { redis } from '@/lib/redis';
 
@@ -12,6 +12,10 @@ export type AiUsage = {
 };
 
 export type CheckResult = { allowed: true; usage: AiUsage } | { allowed: false; usage: AiUsage };
+export type AiLimitContext = {
+  isPro: boolean;
+  weeklyLimits: AiWeeklyLimits;
+};
 
 const getIsoWeek = (date: Date): { year: number; week: number } => {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -38,10 +42,20 @@ const formatResetAtUtc = (date: Date): string => {
   return `${y}-${m}-${d} ${h}:${min}:${s} UTC`;
 };
 
-export async function getWeeklyLimitForDevice(deviceId: string): Promise<number> {
-  const { freeWeeklyLimit, proWeeklyLimit } = await getAiWeeklyLimits();
-  const pro = await isProDevice(deviceId);
-  return pro ? proWeeklyLimit : freeWeeklyLimit;
+export function resolveWeeklyLimit(context: AiLimitContext): number {
+  return context.isPro ? context.weeklyLimits.proWeeklyLimit : context.weeklyLimits.freeWeeklyLimit;
+}
+
+export async function getWeeklyLimitForDevice(
+  deviceId: string,
+  context?: AiLimitContext,
+): Promise<number> {
+  if (context) {
+    return resolveWeeklyLimit(context);
+  }
+
+  const [weeklyLimits, pro] = await Promise.all([getAiWeeklyLimits(), isProDevice(deviceId)]);
+  return resolveWeeklyLimit({ isPro: pro, weeklyLimits });
 }
 
 const buildUsage = (used: number, resetAt: Date, limit: number): AiUsage => ({
@@ -63,24 +77,23 @@ export const getResetAt = (): Date => {
   return nextMonday;
 };
 
-export const getUsage = async (deviceId: string): Promise<AiUsage> => {
+export const getUsage = async (deviceId: string, context?: AiLimitContext): Promise<AiUsage> => {
   const key = getWeekKey(deviceId);
   const raw = await redis.get(key);
   const used = raw ? parseInt(raw, 10) : 0;
   const resetAt = getResetAt();
-  const limit = await getWeeklyLimitForDevice(deviceId);
+  const limit = await getWeeklyLimitForDevice(deviceId, context);
 
   return buildUsage(used, resetAt, limit);
 };
 
-export const checkAndIncrement = async (deviceId: string): Promise<CheckResult> => {
-  const limit = await getWeeklyLimitForDevice(deviceId);
+export const checkAndIncrement = async (
+  deviceId: string,
+  context?: AiLimitContext,
+): Promise<CheckResult> => {
+  const limit = await getWeeklyLimitForDevice(deviceId, context);
   const key = getWeekKey(deviceId);
-  const count = await redis.incr(key);
-
-  if (count === 1) {
-    await redis.expire(key, WEEK_TTL_SECONDS);
-  }
+  const count = await redis.incrWithExpireOnFirst(key, WEEK_TTL_SECONDS);
 
   const resetAt = getResetAt();
   const allowed = count <= limit;

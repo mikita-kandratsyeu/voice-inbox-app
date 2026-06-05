@@ -1,7 +1,8 @@
 import { ApiErrorCode } from '@/lib/api-error-codes';
 import { apiError, HttpStatus, requireAppAuth } from '@/lib/api';
+import { jsonWithEtag } from '@/lib/api/etag-response';
 import { getMessageById } from '@/services/message.service';
-import { NextResponse } from 'next/server';
+import type { NextResponse } from 'next/server';
 
 const SYNC_TOKEN_HEADERS = ['x-upstash-sync-token', 'upstash-sync-token'] as const;
 
@@ -36,5 +37,5 @@ export async function GET(request: Request, { params }: RouteContext): Promise<N
     });
   }
 
-  return NextResponse.json(message);
+  return jsonWithEtag(request, message);
 }

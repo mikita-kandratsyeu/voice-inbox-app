@@ -27,6 +27,7 @@ import {
 import { sanitizeRecordingMarksForPrompt } from '@/lib/recording-marks-prompt';
 import { setAppForeground } from '@/lib/push-tokens';
 import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
+import { getAiWeeklyLimits } from '@/lib/app-config';
 import { isProDevice } from '@/lib/pro-entitlement';
 import { createMessage, type MeetingDialogueAuxPayload } from '@/services/message.service';
 import { NextResponse } from 'next/server';
@@ -140,7 +141,15 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         })
       : model;
 
-  const modelParsed = await parseAllowedAiModelForDevice(deviceIdTrimmed, resolvedModel);
+  const [isPro, weeklyLimits] = await Promise.all([
+    isProDevice(deviceIdTrimmed),
+    getAiWeeklyLimits(),
+  ]);
+  const aiLimitContext = { isPro, weeklyLimits };
+
+  const modelParsed = await parseAllowedAiModelForDevice(deviceIdTrimmed, resolvedModel, {
+    isPro,
+  });
   if (!modelParsed.ok) {
     return apiError(modelParsed.error, HttpStatus.BAD_REQUEST, {
       pathname,
@@ -152,8 +161,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
   }
   resolvedModel = modelParsed.model;
 
-  const pseudoDiarizationEligible =
-    options?.processingPreset === 'meeting' && (await isProDevice(deviceIdTrimmed));
+  const pseudoDiarizationEligible = options?.processingPreset === 'meeting' && isPro;
 
   const resolvedSystemPrompt =
     options != null
@@ -196,6 +204,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     pseudoDiarizationEligible,
     meetingDialogueSystemPrompt,
     meetingDialogueAux,
+    aiLimitContext,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
