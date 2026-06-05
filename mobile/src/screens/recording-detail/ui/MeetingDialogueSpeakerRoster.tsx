@@ -1,4 +1,3 @@
-import { Link2 } from 'lucide-react-native';
 import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, Text, TouchableOpacity, View } from 'react-native';
@@ -15,12 +14,9 @@ type SpeakerChipProps = {
   speaker: MeetingDialogueSpeakerRosterEntry;
   color: Colors;
   surfaceDark: boolean;
-  showMerge: boolean;
   renameA11yLabel: string;
   renameHint: string;
-  mergeA11yLabel: string;
   onPress: () => void;
-  onMerge: () => void;
 };
 
 /** Pill chip aligned with {@link FolderChipBar} folder chips. */
@@ -28,12 +24,9 @@ const SpeakerChip = ({
   speaker,
   color,
   surfaceDark,
-  showMerge,
   renameA11yLabel,
   renameHint,
-  mergeA11yLabel,
   onPress,
-  onMerge,
 }: SpeakerChipProps) => {
   const stripe = utteranceStripeColor(color, speaker.colorSlot);
   const inactiveTint = surfaceDark ? 0.22 : 0.14;
@@ -41,7 +34,15 @@ const SpeakerChip = ({
   const label = speaker.displayLabel;
 
   return (
-    <View
+    <TouchableOpacity
+      onPress={() => {
+        hapticSelection();
+        onPress();
+      }}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={renameA11yLabel}
+      accessibilityHint={renameHint}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -55,45 +56,18 @@ const SpeakerChip = ({
         borderColor: withAlphaHex(stripe, inactiveBorder),
       }}
     >
-      <TouchableOpacity
-        onPress={() => {
-          hapticSelection();
-          onPress();
+      <Text
+        numberOfLines={1}
+        style={{
+          fontSize: 13,
+          fontWeight: '600',
+          color: color.text.primary,
+          flexShrink: 1,
         }}
-        activeOpacity={0.7}
-        accessibilityRole="button"
-        accessibilityLabel={renameA11yLabel}
-        accessibilityHint={renameHint}
-        style={{ flexShrink: 1 }}
       >
-        <Text
-          numberOfLines={1}
-          style={{
-            fontSize: 13,
-            fontWeight: '600',
-            color: color.text.primary,
-            flexShrink: 1,
-          }}
-        >
-          {label}
-        </Text>
-      </TouchableOpacity>
-      {showMerge ? (
-        <TouchableOpacity
-          onPress={() => {
-            hapticSelection();
-            onMerge();
-          }}
-          activeOpacity={0.7}
-          accessibilityRole="button"
-          accessibilityLabel={mergeA11yLabel}
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          style={{ marginLeft: 8 }}
-        >
-          <Link2 size={13} color={color.text.secondary} strokeWidth={2.2} />
-        </TouchableOpacity>
-      ) : null}
-    </View>
+        {label}
+      </Text>
+    </TouchableOpacity>
   );
 };
 
@@ -101,14 +75,12 @@ type MeetingDialogueSpeakerRosterProps = {
   speakers: MeetingDialogueSpeakerRosterEntry[];
   color: Colors;
   onRename: (originalLabels: string[]) => void;
-  onMerge: (originalLabels: string[]) => void;
 };
 
 export function MeetingDialogueSpeakerRoster({
   speakers,
   color,
   onRename,
-  onMerge,
 }: MeetingDialogueSpeakerRosterProps) {
   const { t } = useTranslation();
   const surfaceDark = isDarkSurfaceColor(color);
@@ -116,10 +88,6 @@ export function MeetingDialogueSpeakerRoster({
 
   const renameA11yFor = useCallback(
     (name: string) => t('recordingDetail.renameSpeakerA11y', { name }),
-    [t],
-  );
-  const mergeA11yFor = useCallback(
-    (name: string) => t('recordingDetail.mergeSpeakerA11y', { name }),
     [t],
   );
 
@@ -161,12 +129,9 @@ export function MeetingDialogueSpeakerRoster({
             speaker={speaker}
             color={color}
             surfaceDark={surfaceDark}
-            showMerge={speakers.length > 1}
             renameA11yLabel={renameA11yFor(speaker.displayLabel)}
             renameHint={renameHint}
-            mergeA11yLabel={mergeA11yFor(speaker.displayLabel)}
             onPress={() => onRename(speaker.originalLabels)}
-            onMerge={() => onMerge(speaker.originalLabels)}
           />
         ))}
       </ScrollView>

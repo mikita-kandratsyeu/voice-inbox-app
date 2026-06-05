@@ -1,7 +1,7 @@
 import { AlertCircle, FileText, RefreshCw, UsersRound } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Alert, Switch, Text, View } from 'react-native';
+import { Switch, Text, View } from 'react-native';
 
 import type { RecordingStatus } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
@@ -29,7 +29,6 @@ type MeetingDialogueTabProps = {
   meetingDialogue?: string;
   speakerLabels?: MeetingSpeakerLabels;
   onRenameSpeaker?: (originalLabels: string[], displayName: string) => void;
-  onMergeSpeaker?: (sourceLabels: string[], targetLabel: string) => void;
   hasTranscript: boolean;
   hasSummary?: boolean;
   /** Summary/tasks AI run in progress — block speaker breakdown actions. */
@@ -67,7 +66,6 @@ export const MeetingDialogueTab = ({
   meetingDialogue,
   speakerLabels,
   onRenameSpeaker,
-  onMergeSpeaker,
   onRegenerateDialogueOnly,
   canRegenerateDialogueOnly = false,
   onGenerate,
@@ -161,31 +159,6 @@ export const MeetingDialogueTab = ({
       openRename(group?.originalLabels ?? [originalLabel]);
     },
     [openRename, speakerRoster],
-  );
-
-  const openMerge = useCallback(
-    (sourceLabels: string[]) => {
-      if (!onMergeSpeaker || sourceLabels.length === 0) return;
-      const sourceKeys = new Set(sourceLabels.map((label) => normalizeSpeakerLabelKey(label)));
-      const candidates = speakerRoster.filter(
-        (speaker) =>
-          !speaker.originalLabels.some((label) => sourceKeys.has(normalizeSpeakerLabelKey(label))),
-      );
-      if (candidates.length === 0) return;
-
-      Alert.alert(
-        t('recordingDetail.mergeSpeakerTitle'),
-        t('recordingDetail.mergeSpeakerMessage'),
-        [
-          { text: t('common.cancel'), style: 'cancel' },
-          ...candidates.slice(0, 6).map((speaker) => ({
-            text: speaker.displayLabel,
-            onPress: () => onMergeSpeaker(sourceLabels, speaker.originalLabels[0]),
-          })),
-        ],
-      );
-    },
-    [onMergeSpeaker, speakerRoster, t],
   );
 
   const renameSheet = useMemo(
@@ -335,7 +308,6 @@ export const MeetingDialogueTab = ({
           speakers={speakerRoster}
           color={color}
           onRename={openRename}
-          onMerge={openMerge}
         />
       ) : null}
       {speakerRoster.length > 0 ? (

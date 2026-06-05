@@ -139,18 +139,3 @@ export function renameSpeakerGroup(
   return next;
 }
 
-export function mergeSpeakersIntoTarget(
-  labels: MeetingSpeakerLabels | undefined,
-  sourceLabels: string[],
-  targetLabel: string,
-): MeetingSpeakerLabels | undefined {
-  const targetDisplay = displaySpeakerLabel(targetLabel, labels) || targetLabel;
-  let next = labels;
-  for (const sourceLabel of sourceLabels) {
-    if (normalizeSpeakerLabelKey(sourceLabel) === normalizeSpeakerLabelKey(targetLabel)) {
-      continue;
-    }
-    next = mergeSpeakerRename(next, sourceLabel, targetDisplay);
-  }
-  return next;
-}

@@ -46,7 +46,7 @@ import { BlockingProgressModal } from '@/shared/ui';
 import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
-import { mergeSpeakersIntoTarget, renameSpeakerGroup } from '../lib/meetingSpeakerLabels';
+import { renameSpeakerGroup } from '../lib/meetingSpeakerLabels';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { MeetingDialogueTab } from './MeetingDialogueTab';
 import { RecordingDetailCard } from './RecordingDetailCard';
@@ -502,18 +502,6 @@ export const RecordingDetailScreen = () => {
     [liveRecord.id, liveRecord.meetingSpeakerLabels, updateAiExtras],
   );
 
-  const handleMergeSpeaker = useCallback(
-    (sourceLabels: string[], targetLabel: string) => {
-      const next = mergeSpeakersIntoTarget(
-        liveRecord.meetingSpeakerLabels,
-        sourceLabels,
-        targetLabel,
-      );
-      void updateAiExtras(liveRecord.id, { meetingSpeakerLabels: next ?? null });
-    },
-    [liveRecord.id, liveRecord.meetingSpeakerLabels, updateAiExtras],
-  );
-
   const handleSelectMeetingSummaryTemplate = useCallback(
     (template: MeetingSummaryTemplate) => {
       void updateAiExtras(liveRecord.id, {
@@ -831,7 +819,6 @@ export const RecordingDetailScreen = () => {
                   meetingDialogue={liveRecord.meetingDialogue}
                   speakerLabels={liveRecord.meetingSpeakerLabels}
                   onRenameSpeaker={handleRenameSpeaker}
-                  onMergeSpeaker={handleMergeSpeaker}
                   hasTranscript={Boolean(liveRecord.transcript)}
                   hasSummary={Boolean(liveRecord.summary?.trim())}
                   summaryProcessing={

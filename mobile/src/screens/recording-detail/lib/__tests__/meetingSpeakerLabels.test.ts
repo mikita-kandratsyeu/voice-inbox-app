@@ -3,7 +3,6 @@ import {
   applySpeakerLabelsToUtterances,
   displaySpeakerLabel,
   mergeSpeakerRename,
-  mergeSpeakersIntoTarget,
   normalizeSpeakerLabelKey,
   pruneSpeakerLabelsForDialogue,
   renameSpeakerGroup,
@@ -23,15 +22,9 @@ describe('meetingSpeakerLabels', () => {
     expect(mergeSpeakerRename(next, 'Speaker 1', 'Speaker 1')).toBeUndefined();
   });
 
-  it('renames and merges speaker groups in one pass', () => {
+  it('renames speaker groups in one pass', () => {
     const renamed = renameSpeakerGroup(undefined, ['Speaker 1', 'Speaker 2'], 'Anna');
     expect(renamed).toEqual({ 'speaker 1': 'Anna', 'speaker 2': 'Anna' });
-
-    const merged = mergeSpeakersIntoTarget(undefined, ['Speaker 2', 'Speaker 3'], 'Speaker 1');
-    expect(merged).toEqual({
-      'speaker 2': 'Speaker 1',
-      'speaker 3': 'Speaker 1',
-    });
   });
 
   it('applies renames to utterances for export', () => {
