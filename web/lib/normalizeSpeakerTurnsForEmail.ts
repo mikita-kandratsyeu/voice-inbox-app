@@ -6,15 +6,35 @@
  */
 import { replaceMarkdownSection, twoColumnMarkdownTable } from '@/lib/shareNoteEmailMarkdownTables';
 
-const SPEAKER_LABEL_HEAD =
+const KNOWN_SPEAKER_LABEL_HEAD =
   '(?:Speaker|Участник|Спикер|Собеседник|Собеседница|Participant|Interviewer|Interviewee|Host|Guest|Модератор|Интервьюер|Ведущий|Клиент|Гость)(?:\\s+\\d+|\\s*\\d+)?';
 
-const SPEAKER_LABEL_INLINE = new RegExp(`([^\\n\\r\\s])\\s*(${SPEAKER_LABEL_HEAD}\\s*:)`, 'gi');
+const GENERIC_SPEAKER_LABEL = "[\\p{L}][\\p{L}\\p{N}\\s'\\-]{0,58}";
 
-const SPEAKER_LINE = new RegExp(`^\\s*(${SPEAKER_LABEL_HEAD})\\s*:\\s*(.*)$`, 'i');
+const SPEAKER_LABEL_HEAD = `(?:${KNOWN_SPEAKER_LABEL_HEAD}|${GENERIC_SPEAKER_LABEL})`;
+
+const SPEAKER_LINE_FLAGS = 'iu';
+
+const SPEAKER_LABEL_INLINE = new RegExp(
+  `([^\\n\\r\\s])\\s*(${KNOWN_SPEAKER_LABEL_HEAD}\\s*:)`,
+  'giu',
+);
+
+const SPEAKER_LINE = new RegExp(`^\\s*(${SPEAKER_LABEL_HEAD})\\s*:\\s*(.*)$`, SPEAKER_LINE_FLAGS);
+
+const BLOCKED_SPEAKER_LABELS = new Set(['http', 'https', 'ftp', 'mailto']);
+
+function isRecognizedSpeakerLabel(label: string): boolean {
+  const trimmed = label.trim();
+  if (!trimmed) return false;
+  return !BLOCKED_SPEAKER_LABELS.has(trimmed.toLowerCase());
+}
 
 /** Mobile share/PDF export uses `**Участник 1**` blocks instead of `Участник 1: …` lines. */
-const BOLD_SPEAKER_HEADING = new RegExp(`^\\s*\\*\\*(${SPEAKER_LABEL_HEAD})\\*\\*\\s*$`, 'i');
+const BOLD_SPEAKER_HEADING = new RegExp(
+  `^\\s*\\*\\*(${SPEAKER_LABEL_HEAD})\\*\\*\\s*$`,
+  SPEAKER_LINE_FLAGS,
+);
 
 const SPEAKER_SECTION_HEADING = /^## (?:Реплики по спикерам|Speaker turns)\r?\n/im;
 
@@ -99,7 +119,7 @@ export function splitSpeakerTurnEntries(text: string): SpeakerTurnEntry[] {
     if (!line) continue;
 
     const match = line.match(SPEAKER_LINE);
-    if (match) {
+    if (match && isRecognizedSpeakerLabel(match[1])) {
       entries.push({ speaker: match[1].trim(), text: (match[2] ?? '').trim() });
       continue;
     }
@@ -118,7 +138,10 @@ function partitionSpeakerSectionBody(body: string): { prefix: string; speakerTex
   const lines = normalized.split(/\r?\n/);
   const firstSpeakerIdx = lines.findIndex((line) => {
     const trimmed = line.trim();
-    return SPEAKER_LINE.test(trimmed) || isBoldSpeakerHeadingLine(trimmed);
+    const match = trimmed.match(SPEAKER_LINE);
+    return (
+      (match != null && isRecognizedSpeakerLabel(match[1])) || isBoldSpeakerHeadingLine(trimmed)
+    );
   });
 
   if (firstSpeakerIdx === -1) {

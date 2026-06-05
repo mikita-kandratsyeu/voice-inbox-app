@@ -8,18 +8,39 @@ export type MeetingUtterance = {
   colorSlot: number;
 };
 
-const SPEAKER_LABEL_HEAD =
+const KNOWN_SPEAKER_LABEL_HEAD =
   '(?:Speaker|Участник|Спикер|Собеседник|Собеседница|Participant|Interviewer|Interviewee|Host|Guest|Модератор|Интервьюер|Ведущий|Клиент|Гость)(?:\\s+\\d+|\\s*\\d+)?';
 
-export const SPEAKER_LINE_RE = new RegExp(`^\\s*(${SPEAKER_LABEL_HEAD})\\s*:\\s*(.*)$`, 'i');
+/** Transcript names/roles (e.g. "Алекс:", "Рассказчик:") when AI skips neutral labels. */
+const GENERIC_SPEAKER_LABEL = "[\\p{L}][\\p{L}\\p{N}\\s'\\-]{0,58}";
+
+export const SPEAKER_LABEL_HEAD = `(?:${KNOWN_SPEAKER_LABEL_HEAD}|${GENERIC_SPEAKER_LABEL})`;
+
+const SPEAKER_LINE_FLAGS = 'iu';
+
+export const SPEAKER_LINE_RE = new RegExp(
+  `^\\s*(${SPEAKER_LABEL_HEAD})\\s*:\\s*(.*)$`,
+  SPEAKER_LINE_FLAGS,
+);
+
+const BLOCKED_SPEAKER_LABELS = new Set(['http', 'https', 'ftp', 'mailto']);
+
+export function isRecognizedSpeakerLabel(label: string): boolean {
+  const trimmed = label.trim();
+  if (!trimmed) return false;
+  return !BLOCKED_SPEAKER_LABELS.has(trimmed.toLowerCase());
+}
 
 /** Same as web `normalizeInlineSpeakerLabelsToParagraphBreaks` — keeps share/email readable. */
 const INLINE_SPEAKER_PARAGRAPH_BREAK = new RegExp(
-  `([^\\n\\r\\s])\\s*(${SPEAKER_LABEL_HEAD}\\s*:)`,
-  'gi',
+  `([^\\n\\r\\s])\\s*(${KNOWN_SPEAKER_LABEL_HEAD}\\s*:)`,
+  'giu',
 );
 
-const BOLD_SPEAKER_HEADING = new RegExp(`^\\s*\\*\\*(${SPEAKER_LABEL_HEAD})\\*\\*\\s*$`, 'i');
+const BOLD_SPEAKER_HEADING = new RegExp(
+  `^\\s*\\*\\*(${SPEAKER_LABEL_HEAD})\\*\\*\\s*$`,
+  SPEAKER_LINE_FLAGS,
+);
 
 function isBoldSpeakerHeadingLine(line: string): boolean {
   return BOLD_SPEAKER_HEADING.test(line.trim());
@@ -117,7 +138,7 @@ export function parseMeetingDialogue(raw: string): MeetingUtterance[] {
     if (!trimmed) continue;
 
     const m = trimmed.match(SPEAKER_LINE_RE);
-    if (m) {
+    if (m && isRecognizedSpeakerLabel(m[1])) {
       const speakerLabel = m[1].trim();
       const body = (m[2] ?? '').trim();
       out.push({

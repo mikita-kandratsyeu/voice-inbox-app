@@ -70,4 +70,36 @@ describe('meetingSpeakerLabels', () => {
     expect(utterances[0]?.body).toBe('Первая реплика');
     expect(utterances[1]?.speakerLabel).toBe('Собеседник 2');
   });
+
+  it('parses transcript names instead of neutral participant labels', () => {
+    const raw =
+      'Рассказчик: В мире, где форматы субтитров несовместимы.\n\n' +
+      'Алекс: Почему мои субтитры не могут просто работать везде?\n\n' +
+      'Джордан: Потому что технологическая индустрия решила, что нам нужно 47 форматов.\n\n' +
+      'Босс: Мне нужны субтитры в формате VTT к полудню!\n\n' +
+      'Алекс: [внутренний крик]';
+    const utterances = parseMeetingDialogue(raw);
+
+    expect(utterances).toHaveLength(5);
+    expect(utterances.map((u) => u.speakerLabel)).toEqual([
+      'Рассказчик',
+      'Алекс',
+      'Джордан',
+      'Босс',
+      'Алекс',
+    ]);
+    expect(utterances[4]?.body).toBe('[внутренний крик]');
+    expect(analyzeMeetingDialogueHeuristics(utterances).showNoSpeakerLabelsHint).toBe(false);
+  });
+
+  it('does not treat URL schemes or clock times as speaker labels', () => {
+    const utterances = parseMeetingDialogue(
+      'https: //example.com\n\n12:30 standup\n\nSpeaker 1: Real turn',
+    );
+    expect(utterances.some((u) => u.speakerLabel === 'https' || u.speakerLabel === 'ttps')).toBe(
+      false,
+    );
+    expect(utterances.at(-1)?.speakerLabel).toBe('Speaker 1');
+    expect(utterances.at(-1)?.body).toBe('Real turn');
+  });
 });

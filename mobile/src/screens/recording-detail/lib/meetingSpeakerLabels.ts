@@ -1,5 +1,9 @@
 import type { MeetingUtterance } from './parseMeetingDialogue';
-import { parseMeetingDialogue, SPEAKER_LINE_RE } from './parseMeetingDialogue';
+import {
+  isRecognizedSpeakerLabel,
+  parseMeetingDialogue,
+  SPEAKER_LINE_RE,
+} from './parseMeetingDialogue';
 
 export type MeetingSpeakerLabels = Record<string, string>;
 
@@ -91,7 +95,10 @@ export function analyzeMeetingDialogueHeuristics(
 export function rawMeetingDialogueHasSpeakerPrefixes(raw: string): boolean {
   const text = raw.trim();
   if (!text) return false;
-  return text.split(/\r?\n/).some((line) => SPEAKER_LINE_RE.test(line.trim()));
+  return text.split(/\r?\n/).some((line) => {
+    const m = line.trim().match(SPEAKER_LINE_RE);
+    return m != null && isRecognizedSpeakerLabel(m[1]);
+  });
 }
 
 /** Keep user renames only for speakers still present after a new AI breakdown. */
