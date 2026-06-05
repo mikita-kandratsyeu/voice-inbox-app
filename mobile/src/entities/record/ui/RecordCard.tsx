@@ -69,6 +69,9 @@ export const RecordCard = memo(function RecordCard({
   const showStatusPill =
     item.aiStatus === 'loading_model' ||
     item.aiStatus === 'processing' ||
+    item.aiStatus === 'paused' ||
+    item.aiStatus === 'resumable' ||
+    item.aiStatus === 'cancelling' ||
     item.aiStatus === 'error' ||
     (item.aiStatus === 'idle' && !hasTranscriptPreview) ||
     aiProcessing ||

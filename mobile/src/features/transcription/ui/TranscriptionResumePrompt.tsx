@@ -86,6 +86,7 @@ export const TranscriptionResumePrompt = () => {
 
     clearPendingTranscriptionResumePrompt();
     clearPendingBackgroundTranscriptionRecord();
+    useRecordStore.getState().updateAiStatus(checkpoint.recordId, 'resumable');
 
     promptInFlightRef.current = true;
     Alert.alert(

@@ -4,7 +4,15 @@ export type RecordStatus = 'unread' | 'read' | 'archived';
 
 export type RecordClassification = 'personal' | 'work' | 'meeting' | 'idea' | 'other';
 
-export type RecordingStatus = 'idle' | 'loading_model' | 'processing' | 'done' | 'error';
+export type RecordingStatus =
+  | 'idle'
+  | 'loading_model'
+  | 'processing'
+  | 'paused'
+  | 'resumable'
+  | 'cancelling'
+  | 'done'
+  | 'error';
 
 /** Speaker-breakdown tab lifecycle (cloud long meetings). */
 export type MeetingDialogueLoadStatus = 'idle' | 'processing' | 'done' | 'failed';

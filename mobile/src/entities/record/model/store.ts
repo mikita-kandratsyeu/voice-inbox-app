@@ -60,6 +60,9 @@ const clearAiPersistDebounce = (id: string) => {
 const computeHasActiveAiJobs = (records: Array<VoiceRecord | RecordListItem>): boolean =>
   records.some(isRecordAiOperating);
 
+const isTerminalAiStatus = (status: RecordingStatus): boolean =>
+  status === 'idle' || status === 'done' || status === 'error' || status === 'resumable';
+
 const updateRecord = (
   records: RecordListItem[],
   id: string,
@@ -336,7 +339,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
       if (!existing) return s;
       const patch: Partial<RecordListItem> = { aiStatus };
       if (progress !== undefined) patch.transcriptProgress = progress;
-      const terminal = aiStatus === 'idle' || aiStatus === 'done' || aiStatus === 'error';
+      const terminal = isTerminalAiStatus(aiStatus);
       if (terminal) {
         patch.transcriptProgressLabel = undefined;
         patch.transcriptProgressSegments = undefined;
@@ -360,7 +363,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
     }
 
     const p = updated.transcriptProgress ?? 0;
-    const terminal = aiStatus === 'idle' || aiStatus === 'error' || aiStatus === 'done';
+    const terminal = isTerminalAiStatus(aiStatus);
     schedulePersistAiState(id, aiStatus, p, terminal);
   },
 

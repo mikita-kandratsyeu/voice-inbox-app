@@ -11,7 +11,6 @@ import { useProEntitlement } from '@/features/pro-license';
 import { ensureRecordingsDir, i18n, RECORDINGS_DIR, useNetworkStatus } from '@/shared/lib';
 import { convertToWav } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
-import { getWhisperModelPath } from '@/shared/lib/whisper';
 
 import { getWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
 import { transcribeAudio } from '../lib/transcribeAudio';
@@ -24,6 +23,7 @@ import {
   cancelTranscriptionPausedNotification,
   showTranscriptionPausedNotification,
 } from '../lib/transcriptionPausedNotification';
+import { validateTranscriptionStart } from '../lib/validateTranscriptionStart';
 import { clearPendingBackgroundTranscriptionRecord } from './pendingBackgroundTranscriptionRecord';
 import { isTranscriptionBlockedForRecord } from './transcriptionConcurrency';
 import {
@@ -38,6 +38,7 @@ import {
   clearTranscriptionBackgroundCancelled,
   clearTranscriptionCheckpointSnapshot,
   endTranscriptionSession,
+  isNativeTranscriptionRunning,
   isTranscriptionBackgroundCancelled,
   persistTranscriptionCheckpointForBackground,
   registerActiveTranscription,
@@ -113,43 +114,7 @@ export const useTranscription = () => {
 
   const startTranscription = useCallback(
     async (record: VoiceRecord, languageOverride?: string): Promise<void> => {
-      if (AppState.currentState !== 'active') {
-        return;
-      }
-      if (!record.audioPath) {
-        devLog('aborted: no audio path', { recordId: record.id });
-        return;
-      }
       void cancelTranscriptionPausedNotification(record.id).catch(() => {});
-
-      const records = useRecordStore.getState().records;
-      if (isTranscriptionBlockedForRecord(record.id, records)) {
-        devLog('blocked: another transcription active', { recordId: record.id });
-        return;
-      }
-
-      const audioPath = record.audioPath;
-
-      const variantId = getWhisperModelVariantId(selectedWhisperModel, selectedWhisperModelFormat);
-      const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
-      if (modelStatus !== 'downloaded') {
-        devLog('model not downloaded', { model: selectedWhisperModel });
-        updateAiStatus(record.id, 'error');
-        return;
-      }
-
-      const modelPath = getWhisperModelPath(selectedWhisperModel, selectedWhisperModelFormat);
-      const hasModelFile = await NitroFS.exists(modelPath);
-      if (!hasModelFile) {
-        devLog('model file missing on disk', {
-          model: selectedWhisperModel,
-          format: selectedWhisperModelFormat,
-          modelPath,
-        });
-        setWhisperModelStatus(selectedWhisperModel, selectedWhisperModelFormat, 'not_downloaded');
-        updateAiStatus(record.id, 'error');
-        return;
-      }
 
       if (currentRecordIdRef.current === record.id && stopRef.current) {
         devLog('stopping previous run for same record', { recordId: record.id });
@@ -157,6 +122,43 @@ export const useTranscription = () => {
         stopRef.current = null;
         await prevStop().catch(() => {});
       }
+
+      const records = useRecordStore.getState().records;
+      const variantId = getWhisperModelVariantId(selectedWhisperModel, selectedWhisperModelFormat);
+      const modelStatus = whisperModelStatuses[variantId] ?? 'not_downloaded';
+      const preflight = await validateTranscriptionStart({
+        record,
+        modelId: selectedWhisperModel,
+        modelFormat: selectedWhisperModelFormat,
+        modelStatus,
+        appIsActive: AppState.currentState === 'active',
+        transcriptionBusy:
+          isTranscriptionBlockedForRecord(record.id, records) || isNativeTranscriptionRunning(),
+      });
+
+      if (!preflight.ok) {
+        devLog('preflight failed', {
+          recordId: record.id,
+          reason: preflight.reason,
+          model: selectedWhisperModel,
+          format: selectedWhisperModelFormat,
+          requiredBytes: preflight.requiredBytes,
+          availableBytes: preflight.availableBytes,
+        });
+
+        if (preflight.reason === 'model_file_missing') {
+          setWhisperModelStatus(selectedWhisperModel, selectedWhisperModelFormat, 'not_downloaded');
+        }
+        if (preflight.reason === 'audio_file_missing') {
+          await clearAudioPath(record.id).catch(() => {});
+        }
+
+        updateAiStatus(record.id, 'error');
+        return;
+      }
+
+      const normalizedAudioPath = preflight.normalizedAudioPath;
+      const audioPath = record.audioPath ?? normalizedAudioPath;
 
       clearTranscriptionBackgroundCancelled(record.id);
 
@@ -176,6 +178,7 @@ export const useTranscription = () => {
       let usedContext = false;
       let transcodeWavPath: string | null = null;
       let keepCheckpointSnapshot = false;
+      let completedSuccessfully = false;
 
       try {
         const context = await getWhisperContext(selectedWhisperModel, selectedWhisperModelFormat);
@@ -193,17 +196,13 @@ export const useTranscription = () => {
             jobGen,
           });
           keepCheckpointSnapshot = true;
-          updateAiStatus(record.id, 'idle');
+          updateAiStatus(record.id, 'paused');
           return;
         }
 
         updateAiStatus(record.id, 'processing', 0, undefined, null);
 
         const throttledProgress = createThrottledProgress(record.id, jobGen, updateAiStatus);
-        const normalizedAudioPath = audioPath.startsWith('file://')
-          ? audioPath.slice(7)
-          : audioPath;
-
         let transcribeInputPath = audioPath;
         if (!normalizedAudioPath.toLowerCase().endsWith('.wav')) {
           await ensureRecordingsDir();
@@ -226,7 +225,7 @@ export const useTranscription = () => {
           devLog('aborted after wav prep (stale job)', { recordId: record.id, jobGen });
           if (isTranscriptionBackgroundCancelled(record.id)) {
             keepCheckpointSnapshot = true;
-            updateAiStatus(record.id, 'idle');
+            updateAiStatus(record.id, 'paused');
           }
           return;
         }
@@ -357,12 +356,13 @@ export const useTranscription = () => {
         }
 
         devLog('job completed', { recordId: record.id, jobGen });
+        completedSuccessfully = true;
       } catch (err) {
         if (!isActiveTranscriptionJob(record.id, jobGen)) {
           devLog('catch ignored (stale job)', { recordId: record.id, jobGen, err });
           if (isTranscriptionBackgroundCancelled(record.id)) {
             keepCheckpointSnapshot = true;
-            updateAiStatus(record.id, 'idle');
+            updateAiStatus(record.id, 'paused');
           }
           unregisterActiveTranscription(record.id);
           return;
@@ -395,7 +395,7 @@ export const useTranscription = () => {
           } else {
             clearTranscriptionBackgroundCancelled(record.id);
           }
-          updateAiStatus(record.id, 'idle');
+          updateAiStatus(record.id, pausedForBackground ? 'paused' : 'idle');
         } else {
           await removeTranscriptionCheckpoint(record.id).catch(() => {});
           const msg = err instanceof Error ? err.message.toLowerCase() : '';
@@ -420,11 +420,14 @@ export const useTranscription = () => {
         if (keepCheckpointSnapshot) {
           const saved = await persistTranscriptionCheckpointForBackground(record.id);
           if (saved) {
+            updateAiStatus(record.id, 'resumable');
             void showTranscriptionPausedNotification({
               recordId: record.id,
               recordTitle: record.title,
             }).catch(() => {});
             requestTranscriptionResumePrompt(record.id);
+          } else {
+            updateAiStatus(record.id, 'idle');
           }
         } else {
           clearTranscriptionCheckpointSnapshot(record.id);
@@ -433,7 +436,7 @@ export const useTranscription = () => {
         endTranscriptionSession(record.id);
         unregisterActiveTranscription(record.id);
         if (usedContext) {
-          scheduleIdleRelease();
+          scheduleIdleRelease({ reason: completedSuccessfully ? 'completed' : 'default' });
         }
       }
     },
@@ -460,15 +463,18 @@ export const useTranscription = () => {
       currentRecordIdRef.current = null;
       const existing = useRecordStore.getState().records.find((r) => r.id === recordId);
       const hasTranscript = Boolean(existing?.transcript?.trim());
-      if (hasTranscript) {
-        updateAiStatus(recordId, 'done', 100);
-      } else {
-        updateAiStatus(recordId, 'idle');
-      }
+      const nextStatus = hasTranscript ? 'done' : 'idle';
       if (stopRef.current) {
         const stop = stopRef.current;
         stopRef.current = null;
-        stop().catch(() => {});
+        updateAiStatus(recordId, 'cancelling', existing?.transcriptProgress ?? 0);
+        stop()
+          .catch(() => {})
+          .finally(() => {
+            updateAiStatus(recordId, nextStatus, hasTranscript ? 100 : 0);
+          });
+      } else {
+        updateAiStatus(recordId, nextStatus, hasTranscript ? 100 : 0);
       }
       unregisterActiveTranscription(recordId);
       endTranscriptionSession(recordId);

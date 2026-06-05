@@ -120,6 +120,7 @@ export async function abortTranscriptionForAppBackground(): Promise<void> {
     // Before stop(): useTranscription catch checks backgroundCancelled to keep checkpoint.
     backgroundCancelledRecordIds.add(recordId);
     markTranscriptionPausedForBackground(recordId);
+    useRecordStore.getState().updateAiStatus(recordId, 'paused');
 
     if (stop) {
       try {
@@ -134,14 +135,16 @@ export async function abortTranscriptionForAppBackground(): Promise<void> {
     await waitForWhisperNativeIdleAfterAbort();
 
     invalidateTranscriptionJob(recordId);
-    useRecordStore.getState().updateAiStatus(recordId, 'idle');
     if (saved || (await getTranscriptionCheckpoint(recordId))) {
+      useRecordStore.getState().updateAiStatus(recordId, 'resumable');
       const record = useRecordStore.getState().records.find((item) => item.id === recordId);
       void showTranscriptionPausedNotification({
         recordId,
         recordTitle: record?.title ?? '',
       }).catch(() => {});
       requestTranscriptionResumePrompt(recordId);
+    } else {
+      useRecordStore.getState().updateAiStatus(recordId, 'idle');
     }
   })().finally(() => {
     activeRecordId = null;

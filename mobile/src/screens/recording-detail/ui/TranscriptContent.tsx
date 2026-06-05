@@ -58,6 +58,7 @@ export const TranscriptContent = ({
 
   const isTranscriptionUiActive =
     r.aiStatus === 'loading_model' ||
+    r.aiStatus === 'cancelling' ||
     r.aiStatus === 'processing' ||
     (registryInFlight && r.aiStatus !== 'done' && r.aiStatus !== 'error');
 

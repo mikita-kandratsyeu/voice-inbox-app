@@ -48,7 +48,12 @@ export const RecordScreen = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const addRecord = useRecordStore((s) => s.addRecord);
   const activeTranscriptionRecord = useRecordStore((s) =>
-    s.records.find((r) => r.aiStatus === 'loading_model' || r.aiStatus === 'processing'),
+    s.records.find(
+      (r) =>
+        r.aiStatus === 'loading_model' ||
+        r.aiStatus === 'processing' ||
+        r.aiStatus === 'cancelling',
+    ),
   );
   const autoTranscribeOnSave = useSettingsStore((s) => s.autoTranscribeOnSave);
   const aiExecutionMode = useSettingsStore((s) => s.aiExecutionMode);
