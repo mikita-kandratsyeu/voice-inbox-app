@@ -20,6 +20,10 @@ import {
   removeTranscriptionCheckpoint,
   saveTranscriptionCheckpoint,
 } from '../lib/transcriptionCheckpoint';
+import {
+  cancelTranscriptionPausedNotification,
+  showTranscriptionPausedNotification,
+} from '../lib/transcriptionPausedNotification';
 import { clearPendingBackgroundTranscriptionRecord } from './pendingBackgroundTranscriptionRecord';
 import { isTranscriptionBlockedForRecord } from './transcriptionConcurrency';
 import {
@@ -116,6 +120,7 @@ export const useTranscription = () => {
         devLog('aborted: no audio path', { recordId: record.id });
         return;
       }
+      void cancelTranscriptionPausedNotification(record.id).catch(() => {});
 
       const records = useRecordStore.getState().records;
       if (isTranscriptionBlockedForRecord(record.id, records)) {
@@ -331,6 +336,7 @@ export const useTranscription = () => {
         devLog('saving transcript', { recordId: record.id, segments: segments.length });
         await updateTranscript(record.id, fullText, segments);
         await removeTranscriptionCheckpoint(record.id).catch(() => {});
+        await cancelTranscriptionPausedNotification(record.id).catch(() => {});
         clearTranscriptionCheckpointSnapshot(record.id);
         const recordWithTranscript = {
           ...record,
@@ -414,6 +420,10 @@ export const useTranscription = () => {
         if (keepCheckpointSnapshot) {
           const saved = await persistTranscriptionCheckpointForBackground(record.id);
           if (saved) {
+            void showTranscriptionPausedNotification({
+              recordId: record.id,
+              recordTitle: record.title,
+            }).catch(() => {});
             requestTranscriptionResumePrompt(record.id);
           }
         } else {
@@ -465,6 +475,7 @@ export const useTranscription = () => {
       clearTranscriptionBackgroundCancelled(recordId);
       clearTranscriptionCheckpointSnapshot(recordId);
       removeTranscriptionCheckpoint(recordId).catch(() => {});
+      cancelTranscriptionPausedNotification(recordId).catch(() => {});
       clearPendingBackgroundTranscriptionRecord();
     },
     [updateAiStatus],

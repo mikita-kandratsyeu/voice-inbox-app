@@ -5,6 +5,7 @@ import {
   saveTranscriptionCheckpoint,
   type TranscriptionCheckpoint,
 } from '../lib/transcriptionCheckpoint';
+import { showTranscriptionPausedNotification } from '../lib/transcriptionPausedNotification';
 import {
   isWhisperNativeWorkActive,
   waitForWhisperNativeIdleAfterAbort,
@@ -135,6 +136,11 @@ export async function abortTranscriptionForAppBackground(): Promise<void> {
     invalidateTranscriptionJob(recordId);
     useRecordStore.getState().updateAiStatus(recordId, 'idle');
     if (saved || (await getTranscriptionCheckpoint(recordId))) {
+      const record = useRecordStore.getState().records.find((item) => item.id === recordId);
+      void showTranscriptionPausedNotification({
+        recordId,
+        recordTitle: record?.title ?? '',
+      }).catch(() => {});
       requestTranscriptionResumePrompt(recordId);
     }
   })().finally(() => {

@@ -923,7 +923,7 @@
     "notificationsEnabledCount": "{{count}} on",
     "notificationsScreen": {
       "title": "Notifications",
-      "intro": "Allow notifications in system settings so Voice Inbox can tell you when transcripts or AI processing are ready. Task reminders are controlled separately below and run locally on this device.",
+      "intro": "Allow notifications in system settings so Voice Inbox can tell you when transcripts or AI processing are ready, and when an interrupted local transcription can be resumed. Task reminders are controlled separately below and run locally on this device.",
       "sectionTitle": "Notification types",
       "aiAlertsFollowsSystem": "System",
       "aiAlertsDeniedTitle": "Turn on notifications",
@@ -932,8 +932,10 @@
       "taskRemindersDeniedMessage": "Allow notifications for Voice Inbox in your device settings to receive task due-date reminders.",
       "systemDeniedHint": "Notifications are off in your device settings. Turn them on there, then come back to the app."
     },
+    "transcriptionRecoveryNotifications": "Transcription recovery",
+    "transcriptionRecoveryNotificationsHint": "Local alert when transcription pauses because the app was closed or sent to the background. Tap it to continue or discard saved progress.",
     "taskDeadlineNotifications": "Task reminders",
-    "taskDeadlineNotificationsHint": "Due dates on this device. They work offline and are not sent to the cloud.",
+    "taskDeadlineNotificationsHint": "Task due dates on this device. They work offline and are not sent to the cloud.",
     "taskDeadlineNotificationsChannel": "Voice Inbox reminders",
     "planStatus": {
       "freeTitle": "Free plan",
@@ -1806,7 +1808,11 @@
     "resumeTitle": "Continue transcription?",
     "resumeBody": "{{title}} was paused when you left the app. You can pick up where you left off.",
     "continue": "Continue",
-    "cancelResume": "Discard progress"
+    "cancelResume": "Discard progress",
+    "pausedNotificationChannel": "Transcription recovery",
+    "pausedNotificationTitle": "Transcription paused",
+    "pausedNotificationBody": "{{title}} is ready to continue when you reopen the app.",
+    "pausedNotificationBodyFallback": "You can continue from the saved progress when you reopen the app."
   },
   "batch": {
     "selectedCount_one": "{{count}} selected",
