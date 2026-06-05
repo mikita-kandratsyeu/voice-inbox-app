@@ -1,7 +1,7 @@
 import { AlertCircle, FileText, RefreshCw, UsersRound } from 'lucide-react-native';
 import React, { useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View } from 'react-native';
+import { Alert, Switch, Text, View } from 'react-native';
 
 import type { RecordingStatus } from '@/entities/record';
 import { useSettingsStore } from '@/entities/settings';
@@ -29,6 +29,7 @@ type MeetingDialogueTabProps = {
   meetingDialogue?: string;
   speakerLabels?: MeetingSpeakerLabels;
   onRenameSpeaker?: (originalLabel: string, displayName: string) => void;
+  onMergeSpeaker?: (sourceLabel: string, targetLabel: string) => void;
   hasTranscript: boolean;
   hasSummary?: boolean;
   /** Summary/tasks AI run in progress — block speaker breakdown actions. */
@@ -66,6 +67,7 @@ export const MeetingDialogueTab = ({
   meetingDialogue,
   speakerLabels,
   onRenameSpeaker,
+  onMergeSpeaker,
   onRegenerateDialogueOnly,
   canRegenerateDialogueOnly = false,
   onGenerate,
@@ -92,6 +94,7 @@ export const MeetingDialogueTab = ({
   const blockDialogueActions = disableByNetwork || summaryProcessing;
 
   const [renameTarget, setRenameTarget] = useState<SpeakerRenameTarget | null>(null);
+  const [speakerLabelsHidden, setSpeakerLabelsHidden] = useState(false);
 
   const rawUtterances = useMemo(
     () => parseMeetingDialogue(meetingDialogue ?? ''),
@@ -126,6 +129,27 @@ export const MeetingDialogueTab = ({
       setRenameTarget({ originalLabel, initialDisplay: display });
     },
     [onRenameSpeaker, speakerLabels],
+  );
+
+  const openMerge = useCallback(
+    (sourceLabel: string) => {
+      if (!onMergeSpeaker) return;
+      const candidates = speakerRoster.filter((speaker) => speaker.originalLabel !== sourceLabel);
+      if (candidates.length === 0) return;
+
+      Alert.alert(
+        t('recordingDetail.mergeSpeakerTitle'),
+        t('recordingDetail.mergeSpeakerMessage'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          ...candidates.slice(0, 6).map((speaker) => ({
+            text: speaker.displayLabel,
+            onPress: () => onMergeSpeaker(sourceLabel, speaker.originalLabel),
+          })),
+        ],
+      );
+    },
+    [onMergeSpeaker, speakerRoster, t],
   );
 
   const renameSheet = useMemo(
@@ -284,13 +308,42 @@ export const MeetingDialogueTab = ({
           speakers={speakerRoster}
           color={color}
           onRename={openRename}
+          onMerge={openMerge}
         />
+      ) : null}
+      {speakerRoster.length > 0 ? (
+        <View
+          style={{
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor: color.border.default,
+            backgroundColor: color.background.card,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 12,
+          }}
+        >
+          <Text style={{ color: color.text.secondary, fontSize: 13, lineHeight: 18, flex: 1 }}>
+            {t('recordingDetail.hideSpeakerLabels')}
+          </Text>
+          <Switch
+            value={speakerLabelsHidden}
+            onValueChange={setSpeakerLabelsHidden}
+            trackColor={{ false: color.background.tertiary, true: color.accent.primary }}
+            thumbColor={color.icon.onAccent}
+            accessibilityLabel={t('recordingDetail.hideSpeakerLabels')}
+          />
+        </View>
       ) : null}
       <View className="gap-2.5">
         {utterances.map((u, index) => {
           const rawLabel = rawUtterances[index]?.speakerLabel?.trim() ?? '';
           const key = `${index}-${normalizeSpeakerLabelKey(rawLabel)}-${u.body.slice(0, 24)}`;
-          const showInlineSpeakerLabel = shouldShowInlineSpeakerLabel(rawUtterances, index);
+          const showInlineSpeakerLabel =
+            !speakerLabelsHidden && shouldShowInlineSpeakerLabel(rawUtterances, index);
           const speakerLabelVariant = showSpeakerRoster
             ? ('subtle' as const)
             : ('emphasized' as const);
@@ -302,6 +355,7 @@ export const MeetingDialogueTab = ({
               color={color}
               showInlineSpeakerLabel={showInlineSpeakerLabel}
               speakerLabelVariant={speakerLabelVariant}
+              onRenameSpeaker={onRenameSpeaker ? openRename : undefined}
             />
           );
         })}

@@ -262,13 +262,19 @@
       "important": "Important",
       "task": "Task",
       "quote": "Quote",
-      "moment": "Moment"
+      "moment": "Moment",
+      "decision": "Decision",
+      "question": "Question",
+      "topic": "Topic change"
     },
     "markKindDescription": {
       "important": "Key moment",
       "task": "Something to do",
       "quote": "Worth remembering",
-      "moment": "Notable beat"
+      "moment": "Notable beat",
+      "decision": "Decision made",
+      "question": "Open question",
+      "topic": "New topic"
     },
     "markHoldForLabel": "Hold to add a short label",
     "markAddLabelLink": "Add a label",
@@ -321,7 +327,10 @@
       "important": "Important moment",
       "task": "Task to extract",
       "quote": "Quote",
-      "moment": "Pinned moment"
+      "moment": "Pinned moment",
+      "decision": "Decision",
+      "question": "Question",
+      "topic": "Topic change"
     },
     "markOptionsTitle": "This pin",
     "markEdit": "Edit note",
@@ -372,6 +381,16 @@
     "meetingModeDisableTitle": "Turn off meeting mode?",
     "meetingModeDisableMessage": "The participant breakdown will be hidden. Turn meeting mode back on and update the summary to bring it back.",
     "meetingModeDisableConfirm": "Turn off",
+    "meetingSummaryTemplateTitle": "Summary format",
+    "meetingSummaryTemplates": {
+      "general": "General",
+      "standup": "Standup",
+      "sales_call": "Sales call",
+      "one_on_one": "1:1",
+      "interview": "Interview",
+      "product_meeting": "Product",
+      "lecture": "Lecture"
+    },
     "meetingSummaryTitle": "Meeting recap",
     "meetingSummaryDescription": "Meeting minutes: brief recap, decisions, and open questions.",
     "meetingDialogueTitle": "Participants",
@@ -387,6 +406,10 @@
     "renameSpeakerPlaceholder": "Anna, Client…",
     "renameSpeakerA11y": "Edit name: {{name}}",
     "renameSpeakerHint": "Set a custom name — it’s saved with this note",
+    "mergeSpeakerTitle": "Merge participants",
+    "mergeSpeakerMessage": "Choose which participant should keep these replies.",
+    "mergeSpeakerA11y": "Merge participant: {{name}}",
+    "hideSpeakerLabels": "Hide participant labels in the text",
     "meetingDialogueTabEmptyTitle": "Nothing here yet",
     "meetingDialogueTabEmptyDesc": "You need a summary first — then we’ll split replies by participant. You can refresh the breakdown anytime.",
     "meetingDialogueTabEmptyDescNeedSummary": "One Smart run: summary plus replies split by participant.",

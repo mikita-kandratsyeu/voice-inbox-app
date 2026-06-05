@@ -94,6 +94,8 @@ ALTER TABLE \`records\` ADD \`cloudAiJobId\` text;`;
 
 const migration0018 = `ALTER TABLE \`records\` ADD \`summaryAiModelLabel\` text;`;
 
+const migration0019 = `ALTER TABLE \`records\` ADD \`meetingSummaryTemplate\` text;`;
+
 export const migrationsConfig = {
   journal: {
     entries: journal.entries.map((e) => ({
@@ -123,5 +125,6 @@ export const migrationsConfig = {
     m0016: migration0016,
     m0017: migration0017,
     m0018: migration0018,
+    m0019: migration0019,
   } as Record<string, string>,
 };

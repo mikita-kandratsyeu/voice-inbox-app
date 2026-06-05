@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 
@@ -13,6 +13,7 @@ type MeetingDialogueUtteranceCardProps = {
   showInlineSpeakerLabel?: boolean;
   /** `subtle` when a participant chip row is shown above the transcript. */
   speakerLabelVariant?: 'subtle' | 'emphasized';
+  onRenameSpeaker?: (speakerLabel: string) => void;
 };
 
 export function MeetingDialogueUtteranceCard({
@@ -20,6 +21,7 @@ export function MeetingDialogueUtteranceCard({
   color,
   showInlineSpeakerLabel = false,
   speakerLabelVariant = 'emphasized',
+  onRenameSpeaker,
 }: MeetingDialogueUtteranceCardProps) {
   const { t } = useTranslation();
   const stripe = utteranceStripeColor(color, utterance.colorSlot);
@@ -53,20 +55,28 @@ export function MeetingDialogueUtteranceCard({
       />
       <View style={{ paddingVertical: 14, paddingRight: 14, paddingLeft: 13 }}>
         {hasSpeaker && showInlineSpeakerLabel ? (
-          <Text
-            numberOfLines={1}
-            style={{
-              fontSize: subtleLabel ? 12 : 13,
-              fontWeight: '600',
-              lineHeight: subtleLabel ? 16 : 18,
-              color: subtleLabel ? color.text.secondary : stripe,
-              marginBottom: 6,
-              alignSelf: 'flex-start',
-              maxWidth: '100%',
-            }}
+          <TouchableOpacity
+            activeOpacity={onRenameSpeaker ? 0.7 : 1}
+            disabled={!onRenameSpeaker}
+            onPress={() => onRenameSpeaker?.(utterance.speakerLabel)}
+            accessibilityRole={onRenameSpeaker ? 'button' : 'text'}
+            accessibilityLabel={utterance.speakerLabel}
           >
-            {utterance.speakerLabel}
-          </Text>
+            <Text
+              numberOfLines={1}
+              style={{
+                fontSize: subtleLabel ? 12 : 13,
+                fontWeight: '600',
+                lineHeight: subtleLabel ? 16 : 18,
+                color: subtleLabel ? color.text.secondary : stripe,
+                marginBottom: 6,
+                alignSelf: 'flex-start',
+                maxWidth: '100%',
+              }}
+            >
+              {utterance.speakerLabel}
+            </Text>
+          </TouchableOpacity>
         ) : !hasSpeaker ? (
           <Text
             selectable

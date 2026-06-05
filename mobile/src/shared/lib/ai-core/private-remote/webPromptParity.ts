@@ -1,3 +1,4 @@
+import type { MeetingSummaryTemplate } from '@/entities/record';
 import type { AiOutputLanguage, SummaryStyle, TaskStrictness } from '@/entities/settings';
 
 import {
@@ -75,6 +76,22 @@ const PROCESSING_PRESET_INSTRUCTIONS: Record<'meeting', string> = {
   ].join('\n'),
 };
 
+const MEETING_TEMPLATE_INSTRUCTIONS: Record<MeetingSummaryTemplate, string> = {
+  general: '',
+  standup:
+    'Meeting template: Standup. Emphasize Yesterday/Done, Today/Next, Blockers, Owners. Keep decisions short.',
+  sales_call:
+    'Meeting template: Sales call. Emphasize customer needs, objections, buying signals, follow-up commitments, stakeholders, and next sales steps.',
+  one_on_one:
+    'Meeting template: 1:1. Emphasize feedback, concerns, goals, commitments, coaching points, and follow-ups.',
+  interview:
+    'Meeting template: Interview. Emphasize candidate/interviewee signals, questions asked, strengths, concerns, and follow-up evaluation points.',
+  product_meeting:
+    'Meeting template: Product meeting. Emphasize decisions, requirements, user problems, trade-offs, risks, metrics, and product next steps.',
+  lecture:
+    'Meeting template: Lecture. Emphasize key concepts, definitions, examples, open questions, and study/action items.',
+};
+
 const PSEUDO_DIARIZATION_SECTION = `## Pseudo-diarization (meetingDialogueMarkdown)
 - meetingDialogueMarkdown is plain text (line breaks allowed). Do not use markdown tables or code fences.
 - Split the transcript into estimated speaker turns for easier reading only. This is NOT verified speaker diarization from audio.
@@ -90,6 +107,7 @@ type WebParityPromptOptions = {
   taskStrictness?: TaskStrictness;
   outputLanguage?: AiOutputLanguage;
   processingPreset?: 'meeting';
+  meetingSummaryTemplate?: MeetingSummaryTemplate;
   referenceDate?: string;
   existingTaskTexts?: string[];
   taskExtractionHint?: string;
@@ -192,6 +210,10 @@ export function buildWebParityAiProcessingPrompt(
   const presetInstruction = processingPreset
     ? PROCESSING_PRESET_INSTRUCTIONS[processingPreset]
     : null;
+  const meetingTemplateInstruction =
+    processingPreset === 'meeting' && options?.meetingSummaryTemplate
+      ? MEETING_TEMPLATE_INSTRUCTIONS[options.meetingSummaryTemplate]
+      : '';
 
   const { existingTasksBlock, userHintBlock, recordingMarksBlock } = buildAppendBlocks(options);
   const outputSchemaBlock = buildOutputSchemaSection(pseudoDiarizationEligible);
@@ -234,7 +256,9 @@ ${existingTasksBlock}${userHintBlock}${recordingMarksBlock}## Output Schema
 ${outputSchemaBlock}
 \`\`\`
 
-${presetInstruction ? `## Processing Preset\n${presetInstruction}\n` : ''}${pseudoBlock}
+${presetInstruction ? `## Processing Preset\n${presetInstruction}\n` : ''}${
+    meetingTemplateInstruction ? `## Meeting Template\n${meetingTemplateInstruction}\n` : ''
+  }${pseudoBlock}
 ## Global Rules
 - Output must pass JSON.parse() without preprocessing.
 - Never add fields outside the schema.

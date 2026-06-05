@@ -9,6 +9,7 @@ import { isRecordAiOperating } from '../lib/isRecordAiOperating';
 import { recordRepository } from './repository';
 import type {
   MeetingDialogueLoadStatus,
+  MeetingSummaryTemplate,
   RecordClassification,
   RecordingMark,
   RecordingStatus,
@@ -145,6 +146,7 @@ type RecordStore = {
       nextSteps?: string[];
       meetingDialogue?: string | null;
       meetingSpeakerLabels?: Record<string, string> | null;
+      meetingSummaryTemplate?: MeetingSummaryTemplate | null;
       cloudAiJobId?: string | null;
       summaryReasoning?: string | null;
       summaryAiModel?: string | null;
@@ -496,6 +498,9 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
           data.meetingSpeakerLabels && Object.keys(data.meetingSpeakerLabels).length > 0
             ? data.meetingSpeakerLabels
             : undefined;
+      }
+      if (data.meetingSummaryTemplate !== undefined) {
+        patch.meetingSummaryTemplate = data.meetingSummaryTemplate ?? undefined;
       }
       if (data.cloudAiJobId !== undefined) {
         patch.cloudAiJobId = data.cloudAiJobId?.trim() ? data.cloudAiJobId.trim() : undefined;

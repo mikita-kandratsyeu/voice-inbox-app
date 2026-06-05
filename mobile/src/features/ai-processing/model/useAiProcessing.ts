@@ -332,6 +332,8 @@ export const useAiProcessing = () => {
         );
         const recordIsMeeting = (snapshot?.classification ?? record.classification) === 'meeting';
         const includeMeetingPreset = isProActive && recordIsMeeting;
+        const meetingSummaryTemplate =
+          snapshot?.meetingSummaryTemplate ?? record.meetingSummaryTemplate;
         const shouldRefreshSpeakersOnRegen =
           aiExecutionMode !== 'private_experimental' &&
           (autoRefreshMeetingSpeakersOnRegen || !wasSummaryRegeneration);
@@ -461,6 +463,7 @@ export const useAiProcessing = () => {
             id: requestId,
             transcript: record.transcript,
             ...(includeMeetingPreset ? { processingPreset: 'meeting' as const } : {}),
+            ...(includeMeetingPreset && meetingSummaryTemplate ? { meetingSummaryTemplate } : {}),
             existingTaskTexts,
             ...(taskExtractionHint ? { taskExtractionHint } : {}),
             ...(transcriptSegmentsForCloud?.length

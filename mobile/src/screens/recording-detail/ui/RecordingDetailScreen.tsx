@@ -10,7 +10,12 @@ import { useShallow } from 'zustand/react/shallow';
 
 import type { RootStackParamList } from '@/app/navigation/types';
 import { FolderPickerSheet, useFolderStore } from '@/entities/folder';
-import { type RecordingMark, type RecordingStatus, useRecordStore } from '@/entities/record';
+import {
+  type MeetingSummaryTemplate,
+  type RecordingMark,
+  type RecordingStatus,
+  useRecordStore,
+} from '@/entities/record';
 import type { TranscriptionLanguage } from '@/entities/settings';
 import {
   areFoldersEnabledInAiMode,
@@ -41,7 +46,7 @@ import { BlockingProgressModal } from '@/shared/ui';
 import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
-import { mergeSpeakerRename } from '../lib/meetingSpeakerLabels';
+import { displaySpeakerLabel, mergeSpeakerRename } from '../lib/meetingSpeakerLabels';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { MeetingDialogueTab } from './MeetingDialogueTab';
 import { RecordingDetailCard } from './RecordingDetailCard';
@@ -497,6 +502,28 @@ export const RecordingDetailScreen = () => {
     [liveRecord.id, liveRecord.meetingSpeakerLabels, updateAiExtras],
   );
 
+  const handleMergeSpeaker = useCallback(
+    (sourceLabel: string, targetLabel: string) => {
+      const targetDisplay = displaySpeakerLabel(targetLabel, liveRecord.meetingSpeakerLabels);
+      const next = mergeSpeakerRename(
+        liveRecord.meetingSpeakerLabels,
+        sourceLabel,
+        targetDisplay || targetLabel,
+      );
+      void updateAiExtras(liveRecord.id, { meetingSpeakerLabels: next ?? null });
+    },
+    [liveRecord.id, liveRecord.meetingSpeakerLabels, updateAiExtras],
+  );
+
+  const handleSelectMeetingSummaryTemplate = useCallback(
+    (template: MeetingSummaryTemplate) => {
+      void updateAiExtras(liveRecord.id, {
+        meetingSummaryTemplate: template === 'general' ? null : template,
+      });
+    },
+    [liveRecord.id, updateAiExtras],
+  );
+
   const handleRegenerateMeetingDialogueOnly = useCallback(() => {
     regenerateMeetingDialogue(liveRecord).catch(() => {});
   }, [liveRecord, regenerateMeetingDialogue]);
@@ -724,10 +751,12 @@ export const RecordingDetailScreen = () => {
           {showMeetingModeToggle ? (
             <RecordingMeetingModeSection
               isMeetingMode={isMeetingMode}
+              selectedTemplate={liveRecord.meetingSummaryTemplate ?? 'general'}
               disabled={aiBusy}
               color={color}
               surfaceBackgroundColor={tabPanelBackgroundColor}
               onToggleMeetingMode={handleToggleMeetingMode}
+              onSelectTemplate={handleSelectMeetingSummaryTemplate}
             />
           ) : null}
 
@@ -803,6 +832,7 @@ export const RecordingDetailScreen = () => {
                   meetingDialogue={liveRecord.meetingDialogue}
                   speakerLabels={liveRecord.meetingSpeakerLabels}
                   onRenameSpeaker={handleRenameSpeaker}
+                  onMergeSpeaker={handleMergeSpeaker}
                   hasTranscript={Boolean(liveRecord.transcript)}
                   hasSummary={Boolean(liveRecord.summary?.trim())}
                   summaryProcessing={

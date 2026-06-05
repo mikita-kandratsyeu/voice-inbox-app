@@ -262,13 +262,19 @@
       "important": "Важное",
       "task": "Задача",
       "quote": "Цитата",
-      "moment": "Момент"
+      "moment": "Момент",
+      "decision": "Решение",
+      "question": "Вопрос",
+      "topic": "Смена темы"
     },
     "markKindDescription": {
       "important": "Ключевой момент",
       "task": "Нужно сделать",
       "quote": "Запомнить мысль",
-      "moment": "Важный момент"
+      "moment": "Важный момент",
+      "decision": "Принято решение",
+      "question": "Открытый вопрос",
+      "topic": "Новая тема"
     },
     "markHoldForLabel": "Удерживайте, чтобы добавить подпись",
     "markAddLabelLink": "Добавить подпись",
@@ -321,7 +327,10 @@
       "important": "Важный момент",
       "task": "Задача для извлечения",
       "quote": "Цитата",
-      "moment": "Момент без подписи"
+      "moment": "Момент без подписи",
+      "decision": "Решение",
+      "question": "Вопрос",
+      "topic": "Смена темы"
     },
     "markOptionsTitle": "Эта отметка",
     "markEdit": "Изменить текст",
@@ -372,6 +381,16 @@
     "meetingModeDisableTitle": "Отключить режим встречи?",
     "meetingModeDisableMessage": "Текущая разбивка по участникам скроется. Чтобы вернуть — включите режим снова и обновите сводку.",
     "meetingModeDisableConfirm": "Отключить",
+    "meetingSummaryTemplateTitle": "Формат сводки",
+    "meetingSummaryTemplates": {
+      "general": "Обычная",
+      "standup": "Стендап",
+      "sales_call": "Продажи",
+      "one_on_one": "1:1",
+      "interview": "Интервью",
+      "product_meeting": "Продукт",
+      "lecture": "Лекция"
+    },
     "meetingSummaryTitle": "Итоги встречи",
     "meetingSummaryDescription": "Протокол встречи: коротко, решения и открытые вопросы.",
     "meetingDialogueTitle": "По участникам",
@@ -387,6 +406,10 @@
     "renameSpeakerPlaceholder": "Аня, Клиент…",
     "renameSpeakerA11y": "Изменить имя: {{name}}",
     "renameSpeakerHint": "Можно задать своё имя — оно сохранится в этой записи",
+    "mergeSpeakerTitle": "Объединить участников",
+    "mergeSpeakerMessage": "Выберите участника, к которому перенести эти реплики.",
+    "mergeSpeakerA11y": "Объединить участника: {{name}}",
+    "hideSpeakerLabels": "Скрыть подписи участников в тексте",
     "meetingDialogueTabEmptyTitle": "Пока пусто",
     "meetingDialogueTabEmptyDesc": "Сначала нужна сводка — затем разложим реплики по участникам. Разбивку можно обновить отдельно в любой момент.",
     "meetingDialogueTabEmptyDescNeedSummary": "Сделаем сводку и разложим реплики по участникам за один запуск в Smart.",

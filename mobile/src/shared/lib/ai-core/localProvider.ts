@@ -141,6 +141,7 @@ export async function runLocalSummaryTasks(
       request.existingTaskTexts,
       request.taskExtractionHint,
       request.processingPreset,
+      request.meetingSummaryTemplate,
       request.recordingMarks,
       { includeMeetingDialogueField: includeDialogueInPass },
     );
