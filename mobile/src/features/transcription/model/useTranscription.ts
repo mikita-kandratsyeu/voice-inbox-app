@@ -158,6 +158,13 @@ export const useTranscription = () => {
       }
 
       if (shouldResetBeforeStart) {
+        updateAiStatus(
+          record.id,
+          'loading_model',
+          record.transcriptProgress ?? 0,
+          i18n.t('transcription.loadingModel'),
+          null,
+        );
         try {
           const needsFullReset = shouldFullyResetWhisperBeforeStart(record);
           await resetTranscriptionRuntimeForRestart(record.id);
@@ -172,7 +179,7 @@ export const useTranscription = () => {
                 (record.transcriptProgress ?? 0) > 0;
               updateAiStatus(
                 record.id,
-                canResume ? 'resumable' : 'idle',
+                canResume ? 'resumable' : 'error',
                 record.transcriptProgress ?? 0,
               );
               return;
@@ -183,7 +190,7 @@ export const useTranscription = () => {
           if (__DEV__) console.warn('[transcription] restart reset failed', err);
           rememberWhisperResetResult(false);
           pendingWhisperResetRecordIds.add(record.id);
-          updateAiStatus(record.id, 'idle', record.transcriptProgress ?? 0);
+          updateAiStatus(record.id, 'error', record.transcriptProgress ?? 0);
           return;
         }
       }

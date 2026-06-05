@@ -336,6 +336,7 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
   },
 
   updateAiStatus: (id, aiStatus, progress, progressLabel, transcriptionSegments) => {
+    let changed = false;
     set((s) => {
       const existing = s.records.find((r) => r.id === id);
       if (!existing) return s;
@@ -354,9 +355,35 @@ export const useRecordStore = create<RecordStore>((set, get) => ({
             transcriptionSegments === null ? undefined : transcriptionSegments;
         }
       }
+      const nextProgress = Object.prototype.hasOwnProperty.call(patch, 'transcriptProgress')
+        ? patch.transcriptProgress
+        : existing.transcriptProgress;
+      const nextProgressLabel = Object.prototype.hasOwnProperty.call(
+        patch,
+        'transcriptProgressLabel',
+      )
+        ? patch.transcriptProgressLabel
+        : existing.transcriptProgressLabel;
+      const nextProgressSegments = Object.prototype.hasOwnProperty.call(
+        patch,
+        'transcriptProgressSegments',
+      )
+        ? patch.transcriptProgressSegments
+        : existing.transcriptProgressSegments;
+      if (
+        existing.aiStatus === aiStatus &&
+        existing.transcriptProgress === nextProgress &&
+        existing.transcriptProgressLabel === nextProgressLabel &&
+        existing.transcriptProgressSegments === nextProgressSegments
+      ) {
+        return s;
+      }
+      changed = true;
       const next = updateRecord(s.records, id, patch);
       return { records: next, hasActiveAiJobs: computeHasActiveAiJobs(next) };
     });
+
+    if (!changed) return;
 
     const updated = get().records.find((r) => r.id === id);
     if (!updated) {
