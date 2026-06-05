@@ -6,7 +6,8 @@ import {
 import type { MeetingUtterance } from './parseMeetingDialogue';
 
 export type MeetingDialogueSpeakerRosterEntry = {
-  originalLabel: string;
+  /** AI speaker keys merged into one roster chip when they share a display name. */
+  originalLabels: string[];
   displayLabel: string;
   colorSlot: number;
 };
@@ -16,18 +17,29 @@ export function buildSpeakerRoster(
   rawUtterances: MeetingUtterance[],
   speakerLabels: MeetingSpeakerLabels | undefined,
 ): MeetingDialogueSpeakerRosterEntry[] {
-  const seen = new Set<string>();
+  const seenOriginal = new Set<string>();
   const out: MeetingDialogueSpeakerRosterEntry[] = [];
 
   for (const u of rawUtterances) {
     const raw = u.speakerLabel.trim();
     if (!raw) continue;
-    const key = normalizeSpeakerLabelKey(raw);
-    if (seen.has(key)) continue;
-    seen.add(key);
+    const originalKey = normalizeSpeakerLabelKey(raw);
+    if (seenOriginal.has(originalKey)) continue;
+    seenOriginal.add(originalKey);
+
+    const displayLabel = displaySpeakerLabel(raw, speakerLabels) || raw;
+    const displayKey = normalizeSpeakerLabelKey(displayLabel);
+    const existing = out.find(
+      (entry) => normalizeSpeakerLabelKey(entry.displayLabel) === displayKey,
+    );
+    if (existing) {
+      existing.originalLabels.push(raw);
+      continue;
+    }
+
     out.push({
-      originalLabel: raw,
-      displayLabel: displaySpeakerLabel(raw, speakerLabels) || raw,
+      originalLabels: [raw],
+      displayLabel,
       colorSlot: u.colorSlot,
     });
   }
@@ -39,10 +51,13 @@ export function buildSpeakerRoster(
 export function shouldShowInlineSpeakerLabel(
   rawUtterances: MeetingUtterance[],
   index: number,
+  speakerLabels?: MeetingSpeakerLabels,
 ): boolean {
   const raw = rawUtterances[index]?.speakerLabel?.trim() ?? '';
   if (!raw) return false;
   if (index === 0) return true;
-  const prev = rawUtterances[index - 1]?.speakerLabel?.trim() ?? '';
-  return normalizeSpeakerLabelKey(prev) !== normalizeSpeakerLabelKey(raw);
+  const prevRaw = rawUtterances[index - 1]?.speakerLabel?.trim() ?? '';
+  const prevDisplay = displaySpeakerLabel(prevRaw, speakerLabels) || prevRaw;
+  const display = displaySpeakerLabel(raw, speakerLabels) || raw;
+  return normalizeSpeakerLabelKey(prevDisplay) !== normalizeSpeakerLabelKey(display);
 }

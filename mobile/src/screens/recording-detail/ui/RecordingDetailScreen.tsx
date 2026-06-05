@@ -46,7 +46,7 @@ import { BlockingProgressModal } from '@/shared/ui';
 import { AudioPlayer, type AudioPlayerRef, usePlaybackPosition } from '@/widgets/audio-player';
 
 import type { Tab } from '../config';
-import { displaySpeakerLabel, mergeSpeakerRename } from '../lib/meetingSpeakerLabels';
+import { mergeSpeakersIntoTarget, renameSpeakerGroup } from '../lib/meetingSpeakerLabels';
 import { AudioLanguageSelector } from './AudioLanguageSelector';
 import { MeetingDialogueTab } from './MeetingDialogueTab';
 import { RecordingDetailCard } from './RecordingDetailCard';
@@ -495,20 +495,19 @@ export const RecordingDetailScreen = () => {
   );
 
   const handleRenameSpeaker = useCallback(
-    (originalLabel: string, displayName: string) => {
-      const next = mergeSpeakerRename(liveRecord.meetingSpeakerLabels, originalLabel, displayName);
+    (originalLabels: string[], displayName: string) => {
+      const next = renameSpeakerGroup(liveRecord.meetingSpeakerLabels, originalLabels, displayName);
       void updateAiExtras(liveRecord.id, { meetingSpeakerLabels: next ?? null });
     },
     [liveRecord.id, liveRecord.meetingSpeakerLabels, updateAiExtras],
   );
 
   const handleMergeSpeaker = useCallback(
-    (sourceLabel: string, targetLabel: string) => {
-      const targetDisplay = displaySpeakerLabel(targetLabel, liveRecord.meetingSpeakerLabels);
-      const next = mergeSpeakerRename(
+    (sourceLabels: string[], targetLabel: string) => {
+      const next = mergeSpeakersIntoTarget(
         liveRecord.meetingSpeakerLabels,
-        sourceLabel,
-        targetDisplay || targetLabel,
+        sourceLabels,
+        targetLabel,
       );
       void updateAiExtras(liveRecord.id, { meetingSpeakerLabels: next ?? null });
     },

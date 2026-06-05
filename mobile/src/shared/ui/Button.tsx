@@ -96,6 +96,12 @@ function iconOnlyContainerClass(size: ButtonSize, shape: ButtonShape): string {
 
 const DANGER_BG = { backgroundColor: 'transparent' };
 
+function withIconColor(icon: React.ReactNode, iconColor: string): React.ReactNode {
+  if (!icon || !React.isValidElement<{ color?: string }>(icon)) return icon;
+  if (icon.props.color === iconColor) return icon;
+  return React.cloneElement(icon, { color: iconColor });
+}
+
 export const Button = ({
   label,
   labelSuffix,
@@ -161,6 +167,8 @@ export const Button = ({
 
   const isDisabled = Boolean(disabled && !loading);
   const isDisabledPrimary = isDisabled && variantKey === 'primary';
+  const isMutedPrimaryChrome =
+    variantKey === 'primary' && (isDisabledPrimary || (loading && disabled));
 
   const textClassName = [textSizeClass, isDisabledPrimary ? '' : variantTextClass]
     .filter(Boolean)
@@ -181,6 +189,18 @@ export const Button = ({
     ...(loading ? { busy: true as const } : {}),
   };
 
+  const mutedPrimaryChromeColor = colorScheme.text.muted;
+  const resolvedIcon = isMutedPrimaryChrome ? withIconColor(icon, mutedPrimaryChromeColor) : icon;
+  const resolvedTrailingIcon = isMutedPrimaryChrome
+    ? withIconColor(trailingIcon, mutedPrimaryChromeColor)
+    : trailingIcon;
+  const activityIndicatorColor =
+    variantKey === 'primary'
+      ? isMutedPrimaryChrome
+        ? mutedPrimaryChromeColor
+        : colorScheme.icon.onAccent
+      : (textColor ?? colorScheme.text.primary);
+
   return (
     <TouchableOpacity
       accessibilityRole="button"
@@ -200,7 +220,7 @@ export const Button = ({
       disabled={disabled || loading}
       {...rest}
     >
-      {icon}
+      {resolvedIcon}
       {!isIconOnly && label && (
         <View
           className={[
@@ -262,37 +282,22 @@ export const Button = ({
                   { alignItems: 'center', justifyContent: 'center' },
                 ]}
               >
-                <ActivityIndicator
-                  size="small"
-                  color={
-                    variantKey === 'primary'
-                      ? colorScheme.icon.onAccent
-                      : (textColor ?? colorScheme.text.primary)
-                  }
-                />
+                <ActivityIndicator size="small" color={activityIndicatorColor} />
               </View>
             )}
           </View>
-          {!loading && trailingIcon ? (
+          {!loading && resolvedTrailingIcon ? (
             <View
               className={isStartAligned ? 'ml-auto shrink-0' : undefined}
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
             >
-              {trailingIcon}
+              {resolvedTrailingIcon}
             </View>
           ) : null}
         </View>
       )}
-      {!isIconOnly && !label && loading && (
-        <ActivityIndicator
-          color={
-            variantKey === 'primary'
-              ? colorScheme.icon.onAccent
-              : (textColor ?? colorScheme.text.primary)
-          }
-        />
-      )}
+      {!isIconOnly && !label && loading && <ActivityIndicator color={activityIndicatorColor} />}
     </TouchableOpacity>
   );
 };

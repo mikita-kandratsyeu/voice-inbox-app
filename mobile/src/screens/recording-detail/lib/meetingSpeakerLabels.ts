@@ -126,3 +126,31 @@ export function mergeSpeakerRename(
   }
   return Object.keys(next).length > 0 ? next : undefined;
 }
+
+export function renameSpeakerGroup(
+  labels: MeetingSpeakerLabels | undefined,
+  originalLabels: string[],
+  displayName: string,
+): MeetingSpeakerLabels | undefined {
+  let next = labels;
+  for (const originalLabel of originalLabels) {
+    next = mergeSpeakerRename(next, originalLabel, displayName);
+  }
+  return next;
+}
+
+export function mergeSpeakersIntoTarget(
+  labels: MeetingSpeakerLabels | undefined,
+  sourceLabels: string[],
+  targetLabel: string,
+): MeetingSpeakerLabels | undefined {
+  const targetDisplay = displaySpeakerLabel(targetLabel, labels) || targetLabel;
+  let next = labels;
+  for (const sourceLabel of sourceLabels) {
+    if (normalizeSpeakerLabelKey(sourceLabel) === normalizeSpeakerLabelKey(targetLabel)) {
+      continue;
+    }
+    next = mergeSpeakerRename(next, sourceLabel, targetDisplay);
+  }
+  return next;
+}

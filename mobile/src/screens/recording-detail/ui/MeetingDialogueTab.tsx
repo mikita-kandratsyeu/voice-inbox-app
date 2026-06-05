@@ -28,8 +28,8 @@ import { TaskEditSheet } from './TaskEditSheet';
 type MeetingDialogueTabProps = {
   meetingDialogue?: string;
   speakerLabels?: MeetingSpeakerLabels;
-  onRenameSpeaker?: (originalLabel: string, displayName: string) => void;
-  onMergeSpeaker?: (sourceLabel: string, targetLabel: string) => void;
+  onRenameSpeaker?: (originalLabels: string[], displayName: string) => void;
+  onMergeSpeaker?: (sourceLabels: string[], targetLabel: string) => void;
   hasTranscript: boolean;
   hasSummary?: boolean;
   /** Summary/tasks AI run in progress — block speaker breakdown actions. */
@@ -54,7 +54,7 @@ type MeetingDialogueTabProps = {
 };
 
 type SpeakerRenameTarget = {
-  originalLabel: string;
+  originalLabels: string[];
   initialDisplay: string;
 };
 
@@ -143,18 +143,34 @@ export const MeetingDialogueTab = ({
   }, [errorMessage, showPrivateModeCta, t]);
 
   const openRename = useCallback(
-    (originalLabel: string) => {
-      if (!onRenameSpeaker) return;
-      const display = displaySpeakerLabel(originalLabel, speakerLabels) || originalLabel;
-      setRenameTarget({ originalLabel, initialDisplay: display });
+    (originalLabels: string[]) => {
+      if (!onRenameSpeaker || originalLabels.length === 0) return;
+      const display = displaySpeakerLabel(originalLabels[0], speakerLabels) || originalLabels[0];
+      setRenameTarget({ originalLabels, initialDisplay: display });
     },
     [onRenameSpeaker, speakerLabels],
   );
 
+  const openRenameFromUtterance = useCallback(
+    (originalLabel: string) => {
+      const group = speakerRoster.find((speaker) =>
+        speaker.originalLabels.some(
+          (label) => normalizeSpeakerLabelKey(label) === normalizeSpeakerLabelKey(originalLabel),
+        ),
+      );
+      openRename(group?.originalLabels ?? [originalLabel]);
+    },
+    [openRename, speakerRoster],
+  );
+
   const openMerge = useCallback(
-    (sourceLabel: string) => {
-      if (!onMergeSpeaker) return;
-      const candidates = speakerRoster.filter((speaker) => speaker.originalLabel !== sourceLabel);
+    (sourceLabels: string[]) => {
+      if (!onMergeSpeaker || sourceLabels.length === 0) return;
+      const sourceKeys = new Set(sourceLabels.map((label) => normalizeSpeakerLabelKey(label)));
+      const candidates = speakerRoster.filter(
+        (speaker) =>
+          !speaker.originalLabels.some((label) => sourceKeys.has(normalizeSpeakerLabelKey(label))),
+      );
       if (candidates.length === 0) return;
 
       Alert.alert(
@@ -164,7 +180,7 @@ export const MeetingDialogueTab = ({
           { text: t('common.cancel'), style: 'cancel' },
           ...candidates.slice(0, 6).map((speaker) => ({
             text: speaker.displayLabel,
-            onPress: () => onMergeSpeaker(sourceLabel, speaker.originalLabel),
+            onPress: () => onMergeSpeaker(sourceLabels, speaker.originalLabels[0]),
           })),
         ],
       );
@@ -182,7 +198,7 @@ export const MeetingDialogueTab = ({
         onClose={() => setRenameTarget(null)}
         onSave={({ text }) => {
           if (!renameTarget || !onRenameSpeaker) return false;
-          onRenameSpeaker(renameTarget.originalLabel, text);
+          onRenameSpeaker(renameTarget.originalLabels, text);
           return true;
         }}
       />
@@ -354,7 +370,8 @@ export const MeetingDialogueTab = ({
           const rawLabel = rawUtterances[index]?.speakerLabel?.trim() ?? '';
           const key = `${index}-${normalizeSpeakerLabelKey(rawLabel)}-${u.body.slice(0, 24)}`;
           const showInlineSpeakerLabel =
-            !speakerLabelsHidden && shouldShowInlineSpeakerLabel(rawUtterances, index);
+            !speakerLabelsHidden &&
+            shouldShowInlineSpeakerLabel(rawUtterances, index, speakerLabels);
           const speakerLabelVariant = showSpeakerRoster
             ? ('subtle' as const)
             : ('emphasized' as const);
@@ -366,7 +383,7 @@ export const MeetingDialogueTab = ({
               color={color}
               showInlineSpeakerLabel={showInlineSpeakerLabel}
               speakerLabelVariant={speakerLabelVariant}
-              onRenameSpeaker={onRenameSpeaker ? openRename : undefined}
+              onRenameSpeaker={onRenameSpeaker ? openRenameFromUtterance : undefined}
             />
           );
         })}

@@ -15,6 +15,7 @@ type SpeakerChipProps = {
   speaker: MeetingDialogueSpeakerRosterEntry;
   color: Colors;
   surfaceDark: boolean;
+  showMerge: boolean;
   renameA11yLabel: string;
   renameHint: string;
   mergeA11yLabel: string;
@@ -27,6 +28,7 @@ const SpeakerChip = ({
   speaker,
   color,
   surfaceDark,
+  showMerge,
   renameA11yLabel,
   renameHint,
   mergeA11yLabel,
@@ -76,19 +78,21 @@ const SpeakerChip = ({
           {label}
         </Text>
       </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => {
-          hapticSelection();
-          onMerge();
-        }}
-        activeOpacity={0.7}
-        accessibilityRole="button"
-        accessibilityLabel={mergeA11yLabel}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        style={{ marginLeft: 8 }}
-      >
-        <Link2 size={13} color={color.text.secondary} strokeWidth={2.2} />
-      </TouchableOpacity>
+      {showMerge ? (
+        <TouchableOpacity
+          onPress={() => {
+            hapticSelection();
+            onMerge();
+          }}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={mergeA11yLabel}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          style={{ marginLeft: 8 }}
+        >
+          <Link2 size={13} color={color.text.secondary} strokeWidth={2.2} />
+        </TouchableOpacity>
+      ) : null}
     </View>
   );
 };
@@ -96,8 +100,8 @@ const SpeakerChip = ({
 type MeetingDialogueSpeakerRosterProps = {
   speakers: MeetingDialogueSpeakerRosterEntry[];
   color: Colors;
-  onRename: (originalLabel: string) => void;
-  onMerge: (originalLabel: string) => void;
+  onRename: (originalLabels: string[]) => void;
+  onMerge: (originalLabels: string[]) => void;
 };
 
 export function MeetingDialogueSpeakerRoster({
@@ -153,15 +157,16 @@ export function MeetingDialogueSpeakerRoster({
       >
         {speakers.map((speaker) => (
           <SpeakerChip
-            key={speaker.originalLabel}
+            key={speaker.originalLabels.join('\u0000')}
             speaker={speaker}
             color={color}
             surfaceDark={surfaceDark}
+            showMerge={speakers.length > 1}
             renameA11yLabel={renameA11yFor(speaker.displayLabel)}
             renameHint={renameHint}
             mergeA11yLabel={mergeA11yFor(speaker.displayLabel)}
-            onPress={() => onRename(speaker.originalLabel)}
-            onMerge={() => onMerge(speaker.originalLabel)}
+            onPress={() => onRename(speaker.originalLabels)}
+            onMerge={() => onMerge(speaker.originalLabels)}
           />
         ))}
       </ScrollView>
