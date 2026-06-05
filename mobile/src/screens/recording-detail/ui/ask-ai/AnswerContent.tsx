@@ -440,20 +440,20 @@ export const AnswerContent = ({
     return modelFollowUps?.length ? modelFollowUps : buildFollowUpQuestions(t, record);
   }, [record, suggestedFollowUps, t]);
 
-  const turns = useMemo(
-    () => [
-      ...history,
-      {
+  const turns = useMemo(() => {
+    const completedTurns = [...history];
+    if (question.trim() && answer.trim()) {
+      completedTurns.push({
         question,
         answer,
         ...(answerKind ? { answerKind } : {}),
         ...(items?.length ? { items } : {}),
         ...(evidence?.length ? { evidence } : {}),
         ...(suggestedFollowUps?.length ? { suggestedFollowUps } : {}),
-      } satisfies AskAIHistoryItem,
-    ],
-    [answer, answerKind, evidence, history, items, question, suggestedFollowUps],
-  );
+      } satisfies AskAIHistoryItem);
+    }
+    return completedTurns;
+  }, [answer, answerKind, evidence, history, items, question, suggestedFollowUps]);
 
   return (
     <View className="gap-4 pb-4">

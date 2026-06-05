@@ -373,6 +373,10 @@ export const useAskAI = (
 
       const persistCancelledAsk = () => {
         setState((s) => {
+          // cancelAsk already reverted UI + persistence; avoid racing it with revert=false.
+          if (!s.isLoading) {
+            return s;
+          }
           const next = applyAskCancelState(s, promotedTurnPendingRevertRef.current);
           promotedTurnPendingRevertRef.current = false;
           queueMicrotask(() => {

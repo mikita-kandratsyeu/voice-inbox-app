@@ -96,14 +96,14 @@ export const AskMainContent = ({
     );
   }
 
-  if (answer) {
+  if (answer || history.length > 0) {
     return (
       <AnswerContent
         color={color}
         record={liveRecord}
         history={history}
         question={question ?? ''}
-        answer={answer}
+        answer={answer ?? ''}
         answerKind={answerKind}
         items={items}
         evidence={evidence}
