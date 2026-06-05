@@ -118,6 +118,26 @@ export const MeetingDialogueTab = ({
 
   const showSpeakerRoster = Boolean(onRenameSpeaker && speakerRoster.length > 0);
 
+  const dialogueCallout = useMemo(() => {
+    if (heuristics.showNoSpeakerLabelsHint) {
+      return {
+        titleKey: 'recordingDetail.meetingDialogueNoLabelsTitle' as const,
+        bodyKey: 'recordingDetail.meetingDialogueNoLabelsHint' as const,
+        icon: AlertCircle,
+        iconColor: color.accent.delete,
+      };
+    }
+    if (heuristics.showSingleSpeakerHint) {
+      return {
+        titleKey: 'recordingDetail.meetingDialogueSingleSpeakerTitle' as const,
+        bodyKey: 'recordingDetail.meetingDialogueSingleSpeakerHint' as const,
+        icon: UsersRound,
+        iconColor: color.accent.primary,
+      };
+    }
+    return null;
+  }, [color.accent.delete, color.accent.primary, heuristics]);
+
   const errMessage = useMemo(() => {
     return errorMessage ?? (showPrivateModeCta ? t('recordingDetail.privateModeErrorHint') : '');
   }, [errorMessage, showPrivateModeCta, t]);
@@ -281,28 +301,19 @@ export const MeetingDialogueTab = ({
     <View className="gap-3.5 p-4">
       <PrivateModeTranscriptLimitNotice color={color} transcriptCharCount={transcriptCharCount} />
       {showBanner && <AiTabErrorBanner message={errMessage} onDismiss={handleDismiss} />}
-      <MeetingTabInfoCallout
-        color={color}
-        icon={<UsersRound size={20} color={color.accent.primary} strokeWidth={2} />}
-        title={t('recordingDetail.meetingDialogueTabCalloutTitle')}
-      >
-        <MeetingTabInfoCalloutText color={color}>
-          {t('recordingDetail.meetingDialogueDisclaimer')}
-        </MeetingTabInfoCalloutText>
-        <MeetingTabInfoCalloutText color={color}>
-          {t('recordingDetail.meetingDialogueNotRealDiarization')}
-        </MeetingTabInfoCalloutText>
-        {heuristics.showSingleSpeakerHint ? (
-          <MeetingTabInfoCalloutText color={color} variant="muted">
-            {t('recordingDetail.meetingDialogueSingleSpeakerHint')}
+      {dialogueCallout ? (
+        <MeetingTabInfoCallout
+          color={color}
+          icon={
+            <dialogueCallout.icon size={20} color={dialogueCallout.iconColor} strokeWidth={2} />
+          }
+          title={t(dialogueCallout.titleKey)}
+        >
+          <MeetingTabInfoCalloutText color={color}>
+            {t(dialogueCallout.bodyKey)}
           </MeetingTabInfoCalloutText>
-        ) : null}
-        {heuristics.showNoSpeakerLabelsHint ? (
-          <MeetingTabInfoCalloutText color={color} variant="muted">
-            {t('recordingDetail.meetingDialogueNoLabelsHint')}
-          </MeetingTabInfoCalloutText>
-        ) : null}
-      </MeetingTabInfoCallout>
+        </MeetingTabInfoCallout>
+      ) : null}
       {showSpeakerRoster ? (
         <MeetingDialogueSpeakerRoster
           speakers={speakerRoster}

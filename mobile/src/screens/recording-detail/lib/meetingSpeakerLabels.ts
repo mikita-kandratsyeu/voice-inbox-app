@@ -79,7 +79,7 @@ export function analyzeMeetingDialogueHeuristics(
   return {
     distinctLabeledSpeakers,
     unlabeledUtteranceCount,
-    showSingleSpeakerHint: utterances.length > 0 && distinctLabeledSpeakers <= 1,
+    showSingleSpeakerHint: utterances.length > 0 && distinctLabeledSpeakers === 1,
     showNoSpeakerLabelsHint:
       utterances.length > 0 &&
       distinctLabeledSpeakers === 0 &&

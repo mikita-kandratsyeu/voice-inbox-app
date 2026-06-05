@@ -44,7 +44,9 @@ describe('meetingSpeakerLabels', () => {
     expect(analyzeMeetingDialogueHeuristics(single).showSingleSpeakerHint).toBe(true);
 
     const none = parseMeetingDialogue('Just a wall of text without labels.');
-    expect(analyzeMeetingDialogueHeuristics(none).showNoSpeakerLabelsHint).toBe(true);
+    const noneHeuristics = analyzeMeetingDialogueHeuristics(none);
+    expect(noneHeuristics.showNoSpeakerLabelsHint).toBe(true);
+    expect(noneHeuristics.showSingleSpeakerHint).toBe(false);
   });
 
   it('parses Собеседник speaker labels', () => {
