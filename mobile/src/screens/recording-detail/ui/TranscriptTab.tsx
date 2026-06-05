@@ -26,12 +26,14 @@ type TranscriptTabProps = {
   color: Colors;
   hasAudio: boolean;
   onTranscribe: () => void;
+  onDiscardResume?: () => void;
   onEditTranscript: () => void;
   onTranslate?: (targetLanguage: string) => Promise<boolean>;
   onDeleteTranslation?: () => void;
   isTranslating?: boolean;
   isAiProcessing?: boolean;
   isPrivateMode?: boolean;
+  resumeAvailable?: boolean;
 };
 
 const MAX_PARAGRAPH_LENGTH = 360;
@@ -94,12 +96,14 @@ export const TranscriptTab = ({
   color,
   hasAudio,
   onTranscribe,
+  onDiscardResume,
   onEditTranscript,
   onTranslate,
   onDeleteTranslation,
   isTranslating = false,
   isAiProcessing = false,
   isPrivateMode = false,
+  resumeAvailable = false,
 }: TranscriptTabProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
@@ -145,12 +149,25 @@ export const TranscriptTab = ({
     return (
       <TabEmptyState
         icon={<RecordVoiceIcon size={28} color={color.icon.muted} strokeWidth={1.9} />}
-        title={t('recordingDetail.transcriptNotCreated')}
-        description={t('recordingDetail.transcriptNotCreatedDesc')}
-        buttonLabel={t('recordingDetail.transcribe')}
+        title={
+          resumeAvailable
+            ? t('transcription.resumeTitle')
+            : t('recordingDetail.transcriptNotCreated')
+        }
+        description={
+          resumeAvailable
+            ? t('transcription.pausedNotificationBodyFallback')
+            : t('recordingDetail.transcriptNotCreatedDesc')
+        }
+        buttonLabel={
+          resumeAvailable ? t('transcription.continue') : t('recordingDetail.transcribe')
+        }
         buttonIcon={<RecordVoiceIcon size={18} color="#fff" strokeWidth={2.2} />}
         hint={hint}
         onPress={onTranscribe}
+        secondaryButtonLabel={resumeAvailable ? t('transcription.cancelResume') : undefined}
+        secondaryButtonVariant="danger"
+        onSecondaryPress={resumeAvailable ? onDiscardResume : undefined}
         hideButton={!hasAudio}
         disabled={transcribeDisabled}
       />

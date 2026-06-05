@@ -40,6 +40,7 @@ import {
   clearTranscriptionCheckpointSnapshot,
   endTranscriptionSession,
   getActiveTranscriptionRecordId,
+  getTranscriptionCheckpointSnapshot,
   isNativeTranscriptionRunning,
   isTranscriptionBackgroundCancelled,
   persistTranscriptionCheckpointForBackground,
@@ -232,7 +233,9 @@ export const useTranscription = () => {
           return;
         }
 
-        const checkpoint = await getTranscriptionCheckpoint(record.id);
+        const checkpoint =
+          (await getTranscriptionCheckpoint(record.id)) ??
+          getTranscriptionCheckpointSnapshot(record.id);
         const canResumeFromCheckpoint =
           checkpoint &&
           checkpoint.audioPath === normalizedAudioPath &&
@@ -474,5 +477,21 @@ export const useTranscription = () => {
     [updateAiStatus],
   );
 
-  return { startTranscription, cancelTranscription };
+  const discardPausedTranscription = useCallback(
+    (recordId: string): void => {
+      invalidateTranscriptionJob(recordId);
+      currentRecordIdRef.current = null;
+      unregisterActiveTranscription(recordId);
+      endTranscriptionSession(recordId);
+      clearTranscriptionBackgroundCancelled(recordId);
+      clearTranscriptionCheckpointSnapshot(recordId);
+      removeTranscriptionCheckpoint(recordId).catch(() => {});
+      cancelTranscriptionPausedNotification(recordId).catch(() => {});
+      clearPendingBackgroundTranscriptionRecord();
+      updateAiStatus(recordId, 'idle', 0);
+    },
+    [updateAiStatus],
+  );
+
+  return { startTranscription, cancelTranscription, discardPausedTranscription };
 };

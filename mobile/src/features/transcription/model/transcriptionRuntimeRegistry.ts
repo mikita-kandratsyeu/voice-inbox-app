@@ -26,6 +26,19 @@ export function clearTranscriptionCheckpointSnapshot(recordId: string): void {
   checkpointSnapshotsByRecordId.delete(recordId);
 }
 
+export function getTranscriptionCheckpointSnapshot(
+  recordId: string,
+): TranscriptionCheckpoint | null {
+  const snapshot = checkpointSnapshotsByRecordId.get(recordId);
+  if (!snapshot) return null;
+
+  return {
+    ...snapshot,
+    schemaVersion: 1,
+    updatedAt: Date.now(),
+  };
+}
+
 async function flushTranscriptionCheckpointForBackground(recordId: string): Promise<boolean> {
   const existing = await getTranscriptionCheckpoint(recordId);
   if (existing) {

@@ -193,7 +193,8 @@ export const RecordingDetailScreen = () => {
     resumeCloudSummarizeForRecord(recordId);
   }, [recordId]);
 
-  const { startTranscription, cancelTranscription } = useTranscription();
+  const { startTranscription, cancelTranscription, discardPausedTranscription } =
+    useTranscription();
   const { generateSummary, extractTasks, cancelAiGeneration, regenerateMeetingDialogue } =
     useAiProcessing();
   const handleCancelAiGeneration = useCallback(() => {
@@ -334,6 +335,21 @@ export const RecordingDetailScreen = () => {
   const handleCancelTranscription = useCallback(() => {
     cancelTranscription(liveRecord.id);
   }, [liveRecord.id, cancelTranscription]);
+
+  const handleDiscardPausedTranscription = useCallback(() => {
+    Alert.alert(
+      t('transcription.resumeTitle'),
+      t('transcription.resumeBody', { title: liveRecord.title }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('transcription.cancelResume'),
+          style: 'destructive',
+          onPress: () => discardPausedTranscription(liveRecord.id),
+        },
+      ],
+    );
+  }, [discardPausedTranscription, liveRecord.id, liveRecord.title, t]);
 
   const handleGenerateSummary = useCallback(
     (options?: { taskExtractionHint?: string }) => {
@@ -766,6 +782,7 @@ export const RecordingDetailScreen = () => {
                   color={color}
                   currentPositionMs={currentPositionMs}
                   onTranscribe={handleRetranscribe}
+                  onDiscardResume={handleDiscardPausedTranscription}
                   onCancelTranscription={handleCancelTranscription}
                   isPrivateMode={isPrivateMode}
                 />
