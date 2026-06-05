@@ -1,6 +1,6 @@
 import { sendLimitExceededPush } from '@/lib/push-tokens';
 import { MESSAGE_TTL_SECONDS } from '@/config/constants';
-import { checkAndIncrement } from '@/lib/ai-rate-limit';
+import { checkAndIncrement, type AiLimitContext } from '@/lib/ai-rate-limit';
 import { clearAiJobCancelled } from '@/lib/ai-job-cancel';
 import { dispatchAiJob } from '@/lib/ai-job-dispatch';
 import { saveJobPayload } from '@/lib/ai-job-payload';
@@ -33,6 +33,7 @@ export const createMessage = async (
   pseudoDiarizationEligible: boolean = false,
   meetingDialogueSystemPrompt?: string,
   meetingDialogueAux?: MeetingDialogueAuxPayload,
+  aiLimitContext?: AiLimitContext,
 ): Promise<CreateMessageResult> => {
   const ttl = messageTtlSeconds;
   const created = await saveMessageIfNotExists(
@@ -44,7 +45,7 @@ export const createMessage = async (
     return { created: false };
   }
 
-  const limitResult = await checkAndIncrement(deviceId);
+  const limitResult = await checkAndIncrement(deviceId, aiLimitContext);
   if (!limitResult.allowed) {
     await saveMessage(
       id,

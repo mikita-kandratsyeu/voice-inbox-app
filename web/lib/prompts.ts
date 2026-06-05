@@ -458,10 +458,11 @@ function buildOutputSchemaSection(pseudoDiarizationEligible: boolean): string {
 const PSEUDO_DIARIZATION_SECTION = `## Pseudo-diarization (meetingDialogueMarkdown)
 - meetingDialogueMarkdown is plain text (line breaks allowed). Do not use markdown tables or code fences.
 - Split the transcript into estimated speaker turns for easier reading only. This is NOT verified speaker diarization from audio.
-- Use neutral labels such as "Speaker 1:", "Speaker 2:", or "Участник 1:" unless a name or role is clearly stated in the transcript.
+- Use neutral labels such as "Speaker 1:", "Speaker 2:", "Участник 1:", or "Собеседник 1:" (one label style per note) unless a name or role is clearly stated in the transcript.
 - Do not invent people, roles, or lines that are not grounded in the transcript.
 - Do not repeat task titles or copy long passages verbatim from tasks[] or nextSteps[].
-- If the transcript is too short, single-speaker, or unclear, set meetingDialogueMarkdown to an empty string.
+- If the transcript has enough content, produce at least one turn (single-speaker is allowed).
+- Set meetingDialogueMarkdown to an empty string only when the transcript is too short or unclear.
 `.trim();
 
 /**
@@ -501,7 +502,7 @@ ${PSEUDO_DIARIZATION_SECTION}
 - Never add keys outside the schema. The object must contain only "meetingDialogueMarkdown".
 
 ## Weak or messy transcripts
-If the transcript is too short, single-speaker, or unclear, return { "meetingDialogueMarkdown": "" }.
+If the transcript is too short or unclear, return { "meetingDialogueMarkdown": "" }.
 
 ## Quality check before answering
 - Is the JSON valid with only meetingDialogueMarkdown?

@@ -20,6 +20,8 @@ import {
 } from '@/lib/ai-model-router';
 import { setAppForeground } from '@/lib/push-tokens';
 import { clampMessageTtlSeconds } from '@/lib/message-kv-ttl';
+import { getAiWeeklyLimits } from '@/lib/app-config';
+import { isProDevice } from '@/lib/pro-entitlement';
 import { createAsk } from '@/services/ask.service';
 import { NextResponse } from 'next/server';
 
@@ -133,7 +135,15 @@ export const POST = async (request: Request): Promise<NextResponse> => {
         })
       : model;
 
-  const modelParsed = await parseAllowedAiModelForDevice(deviceIdTrimmed, resolvedModel);
+  const [isPro, weeklyLimits] = await Promise.all([
+    isProDevice(deviceIdTrimmed),
+    getAiWeeklyLimits(),
+  ]);
+  const aiLimitContext = { isPro, weeklyLimits };
+
+  const modelParsed = await parseAllowedAiModelForDevice(deviceIdTrimmed, resolvedModel, {
+    isPro,
+  });
   if (!modelParsed.ok) {
     return apiError(modelParsed.error, HttpStatus.BAD_REQUEST, {
       pathname,
@@ -161,6 +171,7 @@ export const POST = async (request: Request): Promise<NextResponse> => {
     req.headers.get('user-agent'),
     messageTtlSeconds,
     recordingMarksList,
+    aiLimitContext,
   );
 
   if (!result.created && 'limitExceeded' in result && result.limitExceeded) {
