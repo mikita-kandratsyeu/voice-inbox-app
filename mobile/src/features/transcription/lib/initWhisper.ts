@@ -12,6 +12,7 @@ import {
 import {
   WHISPER_IDLE_RELEASE_MS,
   WHISPER_LOW_POWER_IDLE_RELEASE_MS,
+  WHISPER_RESTART_RESET_TIMEOUT_MS,
   WHISPER_WARM_IDLE_RELEASE_MS,
 } from '../config/constants';
 import { isNativeTranscriptionRunning } from '../model/transcriptionRuntimeRegistry';
@@ -21,6 +22,7 @@ import {
   enqueueWhisperOperation,
   setWhisperNativeIdleListener,
   waitForWhisperNativeIdle,
+  waitForWhisperNativeIdleOrTimeout,
 } from './whisperNativeLifecycle';
 
 type CachedContext = {
@@ -200,6 +202,34 @@ export const releaseWhisperContext = (): Promise<void> =>
     });
 
     await releaseInFlight;
+  });
+
+export const resetWhisperContext = (): Promise<void> =>
+  enqueueWhisperOperation(async () => {
+    clearIdleTimer();
+    releaseQueued = false;
+
+    if (releaseInFlight) {
+      await releaseInFlight.catch(() => {});
+    }
+    if (initPromise) {
+      await initPromise.catch(() => {});
+    }
+
+    const nativeIdle = await waitForWhisperNativeIdleOrTimeout(WHISPER_RESTART_RESET_TIMEOUT_MS);
+    if (!nativeIdle) {
+      throw new Error('whisper_native_busy_timeout');
+    }
+
+    beginWhisperNativeWork();
+    cachedContext = null;
+    try {
+      await releaseAllWhisper();
+    } catch (e) {
+      if (__DEV__) console.warn('[whisper] reset failed:', e);
+    } finally {
+      endWhisperNativeWork();
+    }
   });
 
 setWhisperNativeIdleListener(() => {

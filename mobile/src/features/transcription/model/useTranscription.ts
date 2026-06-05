@@ -12,7 +12,7 @@ import { ensureRecordingsDir, i18n, RECORDINGS_DIR, useNetworkStatus } from '@/s
 import { convertToWav } from '@/shared/lib/audio';
 import { NitroFS } from '@/shared/lib/fs';
 
-import { getWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
+import { getWhisperContext, resetWhisperContext, scheduleIdleRelease } from '../lib/initWhisper';
 import { transcribeAudio } from '../lib/transcribeAudio';
 import {
   getTranscriptionCheckpoint,
@@ -43,6 +43,7 @@ import {
   persistTranscriptionCheckpointForBackground,
   registerActiveTranscription,
   rememberTranscriptionCheckpointSnapshot,
+  resetTranscriptionRuntimeForRestart,
   unregisterActiveTranscription,
 } from './transcriptionRuntimeRegistry';
 
@@ -115,12 +116,34 @@ export const useTranscription = () => {
   const startTranscription = useCallback(
     async (record: VoiceRecord, languageOverride?: string): Promise<void> => {
       void cancelTranscriptionPausedNotification(record.id).catch(() => {});
+      const shouldResetBeforeStart =
+        record.aiStatus === 'paused' ||
+        record.aiStatus === 'resumable' ||
+        record.aiStatus === 'error';
 
       if (currentRecordIdRef.current === record.id && stopRef.current) {
         devLog('stopping previous run for same record', { recordId: record.id });
         const prevStop = stopRef.current;
         stopRef.current = null;
         await prevStop().catch(() => {});
+      }
+
+      if (shouldResetBeforeStart) {
+        devLog('resetting previous run before restart', {
+          recordId: record.id,
+          status: record.aiStatus,
+        });
+        try {
+          await resetTranscriptionRuntimeForRestart(record.id);
+          await resetWhisperContext();
+        } catch (err) {
+          devLog('restart reset failed', {
+            recordId: record.id,
+            err: err instanceof Error ? err.message : String(err),
+          });
+          updateAiStatus(record.id, 'error');
+          return;
+        }
       }
 
       const records = useRecordStore.getState().records;

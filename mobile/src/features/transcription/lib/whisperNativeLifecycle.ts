@@ -66,6 +66,24 @@ export function waitForWhisperNativeIdle(): Promise<void> {
   });
 }
 
+export async function waitForWhisperNativeIdleOrTimeout(timeoutMs: number): Promise<boolean> {
+  if (nativeWorkDepth === 0 && !settleTimer) {
+    return true;
+  }
+
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  const idle = waitForWhisperNativeIdle().then(() => true);
+  const timeout = new Promise<false>((resolve) => {
+    timeoutId = setTimeout(() => resolve(false), timeoutMs);
+  });
+
+  const didBecomeIdle = await Promise.race([idle, timeout]);
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+  }
+  return didBecomeIdle;
+}
+
 /** Used after background abort — native Metal may outlive JS depth briefly. */
 export async function waitForWhisperNativeIdleAfterAbort(): Promise<void> {
   await waitForWhisperNativeIdle();

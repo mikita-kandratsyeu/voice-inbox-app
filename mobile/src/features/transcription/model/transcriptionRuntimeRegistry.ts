@@ -51,6 +51,7 @@ let sessionRecordId: string | null = null;
 let activeRecordId: string | null = null;
 let activeStop: (() => Promise<void>) | null = null;
 let abortInFlight: Promise<void> | null = null;
+let abortRecordId: string | null = null;
 
 export function isTranscriptionBackgroundCancelled(recordId: string): boolean {
   return backgroundCancelledRecordIds.has(recordId);
@@ -91,6 +92,35 @@ export function unregisterActiveTranscription(recordId: string): void {
 
 export function getActiveTranscriptionRecordId(): string | null {
   return activeRecordId ?? sessionRecordId;
+}
+
+export async function resetTranscriptionRuntimeForRestart(recordId: string): Promise<void> {
+  if (abortInFlight && abortRecordId === recordId) {
+    await abortInFlight.catch(() => {});
+  }
+
+  const shouldStopActive = activeRecordId === recordId;
+  const stop = shouldStopActive ? activeStop : null;
+
+  backgroundCancelledRecordIds.delete(recordId);
+  invalidateTranscriptionJob(recordId);
+
+  if (activeRecordId === recordId) {
+    activeRecordId = null;
+    activeStop = null;
+  }
+  if (sessionRecordId === recordId) {
+    sessionRecordId = null;
+  }
+
+  if (stop) {
+    try {
+      await stop();
+    } catch {
+      // Native cancel can reject while whisper.rn is unwinding; restart continues from checkpoint.
+    }
+    await waitForWhisperNativeIdleAfterAbort();
+  }
 }
 
 /** True while a transcription session or native whisper_full may be active. */
@@ -150,7 +180,9 @@ export async function abortTranscriptionForAppBackground(): Promise<void> {
     activeRecordId = null;
     activeStop = null;
     abortInFlight = null;
+    abortRecordId = null;
   });
+  abortRecordId = recordId;
 
   return abortInFlight;
 }
