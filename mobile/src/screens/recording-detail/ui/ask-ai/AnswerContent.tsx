@@ -1,5 +1,6 @@
-import { Copy, ShareIcon } from 'lucide-react-native';
-import React, { useMemo } from 'react';
+import { BottomSheetScrollView } from '@gorhom/bottom-sheet';
+import { ChevronRight, Copy, FileText, ShareIcon } from 'lucide-react-native';
+import React, { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
@@ -17,6 +18,7 @@ import { type AskAIHistoryItem } from '@/features/ask-ai';
 import type { Colors } from '@/shared/config';
 import { hapticSelection, IS_ANDROID } from '@/shared/lib';
 import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
+import { AppBottomSheetModal, useBottomSheetContentPadding } from '@/shared/ui';
 
 import { AskAiAnswerMarkdown } from './AskAiAnswerMarkdown';
 import { AskAiContextDisclosure } from './AskAiContextDisclosure';
@@ -107,6 +109,11 @@ function formatEvidenceOffset(offsetMs: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
+function formatEvidenceBadgeCount(count: number): string {
+  if (count > 99) return '99+';
+  return String(count);
+}
+
 const AnswerStructuredItems = ({
   color,
   answerKind,
@@ -155,50 +162,172 @@ const AnswerStructuredItems = ({
 
 const AnswerEvidence = ({ color, evidence }: { color: Colors; evidence?: AskEvidence[] }) => {
   const { t } = useTranslation();
+  const [sheetVisible, setSheetVisible] = useState(false);
+  const contentPadding = useBottomSheetContentPadding(20);
   if (!evidence?.length) return null;
+
+  const openSheet = () => {
+    hapticSelection();
+    setSheetVisible(true);
+  };
+
+  const closeSheet = () => {
+    setSheetVisible(false);
+  };
 
   return (
     <View className="mt-1 gap-2">
-      <Text className="text-xs font-semibold" style={{ color: color.text.secondary }}>
-        {t('recordingDetail.askEvidenceTitle')}
-      </Text>
-      <View className="gap-2">
-        {evidence.map((item, index) => {
-          const meta = [
-            item.label,
-            typeof item.offsetMs === 'number' ? formatEvidenceOffset(item.offsetMs) : null,
-          ].filter(Boolean);
-          return (
-            <View
-              key={`${index}-${item.quote}`}
-              className="gap-1 rounded-xl px-3 py-2"
+      <TouchableOpacity
+        onPress={openSheet}
+        activeOpacity={0.75}
+        accessibilityRole="button"
+        accessibilityLabel={t('recordingDetail.askEvidenceToggleA11y', {
+          count: evidence.length,
+        })}
+        className="flex-row items-center gap-3 rounded-2xl px-3 py-3"
+        style={{
+          backgroundColor: color.background.tertiary,
+          borderWidth: 1,
+          borderColor: color.border.default,
+        }}
+      >
+        <View
+          className="h-10 w-10 items-center justify-center rounded-xl"
+          style={{ backgroundColor: color.background.primary }}
+        >
+          <FileText size={19} color={color.accent.primary} strokeWidth={2.1} />
+        </View>
+        <View className="min-w-0 flex-1">
+          <Text
+            className="text-[15px] font-semibold leading-5"
+            style={{ color: color.text.primary }}
+            numberOfLines={1}
+          >
+            {t('recordingDetail.askEvidenceTitle')}
+          </Text>
+          <Text
+            className="text-[13px] leading-[18px]"
+            style={{ color: color.text.secondary }}
+            numberOfLines={1}
+          >
+            {t('recordingDetail.askEvidenceRowSubtitle', { count: evidence.length })}
+          </Text>
+        </View>
+        <View className="flex-row items-center gap-1">
+          <View
+            style={{
+              minWidth: 22,
+              paddingHorizontal: 6,
+              paddingVertical: 2,
+              borderRadius: 10,
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: color.background.card,
+              borderWidth: 1,
+              borderColor: color.border.default,
+            }}
+          >
+            <Text
               style={{
-                backgroundColor: color.background.tertiary,
+                fontSize: 12,
+                fontWeight: '600',
+                fontVariant: ['tabular-nums'],
+                color: color.text.secondary,
               }}
             >
-              <View
-                pointerEvents="none"
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 10,
-                  bottom: 10,
-                  width: 3,
-                  backgroundColor: color.accent.primary,
-                }}
-              />
-              <Text className="text-[14px] leading-5" style={{ color: color.text.primary }}>
-                {item.quote}
-              </Text>
-              {meta.length > 0 ? (
-                <Text className="text-xs" style={{ color: color.text.secondary }}>
-                  {meta.join(' · ')}
-                </Text>
-              ) : null}
-            </View>
-          );
-        })}
-      </View>
+              {formatEvidenceBadgeCount(evidence.length)}
+            </Text>
+          </View>
+          <ChevronRight size={18} color={color.icon.muted} strokeWidth={2.2} />
+        </View>
+      </TouchableOpacity>
+      <AppBottomSheetModal visible={sheetVisible} onClose={closeSheet}>
+        <BottomSheetScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{
+            paddingHorizontal: 20,
+            ...contentPadding,
+          }}
+        >
+          <Text
+            style={{
+              color: color.text.primary,
+              fontSize: 20,
+              fontWeight: '700',
+              lineHeight: 28,
+              marginTop: 4,
+              textAlign: 'center',
+            }}
+          >
+            {t('recordingDetail.askEvidenceSheetTitle')}
+          </Text>
+          <Text
+            style={{
+              color: color.text.secondary,
+              fontSize: 15,
+              lineHeight: 22,
+              marginBottom: 18,
+              marginTop: 6,
+              textAlign: 'center',
+            }}
+          >
+            {t('recordingDetail.askEvidenceSheetSubtitle', { count: evidence.length })}
+          </Text>
+          <View
+            style={{
+              backgroundColor: color.background.card,
+              borderColor: color.border.default,
+              borderRadius: 16,
+              borderWidth: 1,
+              overflow: 'hidden',
+            }}
+          >
+            {evidence.map((item, index) => {
+              const meta = [
+                item.label,
+                typeof item.offsetMs === 'number' ? formatEvidenceOffset(item.offsetMs) : null,
+              ].filter(Boolean);
+              return (
+                <View
+                  key={`${index}-${item.quote}`}
+                  className="gap-1 px-4 py-3"
+                  style={{
+                    borderBottomWidth: index < evidence.length - 1 ? 1 : 0,
+                    borderBottomColor: color.border.default,
+                  }}
+                >
+                  <View
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute',
+                      left: 16,
+                      top: 14,
+                      bottom: 14,
+                      width: 3,
+                      borderRadius: 999,
+                      backgroundColor: color.accent.primary,
+                    }}
+                  />
+                  <Text
+                    className="text-[15px] leading-[22px]"
+                    style={{ color: color.text.primary, paddingLeft: 12 }}
+                  >
+                    {item.quote}
+                  </Text>
+                  {meta.length > 0 ? (
+                    <Text
+                      className="text-[13px] leading-[18px]"
+                      style={{ color: color.text.secondary, paddingLeft: 12 }}
+                    >
+                      {meta.join(' · ')}
+                    </Text>
+                  ) : null}
+                </View>
+              );
+            })}
+          </View>
+        </BottomSheetScrollView>
+      </AppBottomSheetModal>
     </View>
   );
 };
