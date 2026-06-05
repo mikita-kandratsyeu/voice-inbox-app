@@ -373,7 +373,7 @@
     "summaryNotCreatedDesc": "Нажмите кнопку ниже, чтобы\nсгенерировать краткую сводку.",
     "generateSummary": "Создать сводку",
     "regenerateSummary": "Пересоздать",
-    "meetingModeDetailHint": "Сводка встречи, реплики по участникам и удобная отправка. Можно включить для уже сохранённой записи.",
+    "meetingModeDetailHint": "Сводка встречи, реплики по участникам и удобная отправка.",
     "meetingModeRegenerateTitle": "Обновить сводку?",
     "meetingModeRegenerateMessage": "Сначала обновим сводку — при необходимости разложим реплики по участникам.",
     "meetingModeRegenerateLater": "Не сейчас",

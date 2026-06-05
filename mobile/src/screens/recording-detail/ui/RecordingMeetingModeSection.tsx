@@ -1,7 +1,7 @@
 import { UsersRound } from 'lucide-react-native';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, Switch, Text, TouchableOpacity, View } from 'react-native';
 
 import type { MeetingSummaryTemplate } from '@/entities/record';
 import type { Colors } from '@/shared/config';
@@ -39,12 +39,12 @@ export const RecordingMeetingModeSection = ({
 
   const meetingIcon = (
     <View
-      className="h-9 w-9 items-center justify-center rounded-full"
+      className="h-8 w-8 items-center justify-center rounded-full"
       style={{
         backgroundColor: isMeetingMode ? color.accent.primary : color.background.tertiary,
       }}
     >
-      <UsersRound size={18} color={isMeetingMode ? '#fff' : color.text.secondary} strokeWidth={2} />
+      <UsersRound size={17} color={isMeetingMode ? '#fff' : color.text.secondary} strokeWidth={2} />
     </View>
   );
 
@@ -54,7 +54,7 @@ export const RecordingMeetingModeSection = ({
       style={{ backgroundColor: surfaceBackgroundColor }}
     >
       <View
-        className="flex-row items-center gap-3 px-4 py-3.5"
+        className="flex-row items-center gap-3 px-4 py-3"
         style={{ opacity: disabled ? 0.55 : 1 }}
       >
         <Pressable
@@ -63,14 +63,18 @@ export const RecordingMeetingModeSection = ({
           accessibilityLabel={t('record.meetingMode')}
           disabled={disabled}
           onPress={onToggleMeetingMode}
-          className="min-w-0 flex-1 flex-row items-center gap-3"
+          className="min-w-0 flex-1 flex-row items-center gap-2.5"
         >
           {meetingIcon}
           <View className="min-w-0 flex-1">
             <Text className="text-[15px] font-semibold" style={{ color: color.text.primary }}>
               {t('record.meetingMode')}
             </Text>
-            <Text className="mt-0.5 text-[13px] leading-5" style={{ color: color.text.secondary }}>
+            <Text
+              className="mt-0.5 text-[12px] leading-4"
+              numberOfLines={2}
+              style={{ color: color.text.secondary }}
+            >
               {t('recordingDetail.meetingModeDetailHint')}
             </Text>
           </View>
@@ -90,36 +94,52 @@ export const RecordingMeetingModeSection = ({
         />
       </View>
       {isMeetingMode ? (
-        <View className="gap-2 px-4 pb-4">
-          <Text className="text-[13px] font-semibold" style={{ color: color.text.secondary }}>
+        <View className="border-t pb-3 pt-3" style={{ borderColor: color.border.default }}>
+          <Text
+            className="mb-2 px-4 text-[12px] font-semibold"
+            style={{ color: color.text.secondary }}
+          >
             {t('recordingDetail.meetingSummaryTemplateTitle')}
           </Text>
-          <View className="flex-row flex-wrap gap-2">
-            {MEETING_TEMPLATES.map((template) => {
-              const selected = selectedTemplate === template;
-              return (
-                <Pressable
-                  key={template}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected, disabled }}
-                  disabled={disabled}
-                  onPress={() => onSelectTemplate?.(template)}
-                  className="rounded-full px-3 py-1.5"
-                  style={{
-                    opacity: disabled ? 0.55 : 1,
-                    backgroundColor: selected ? color.accent.primary : color.background.tertiary,
-                  }}
-                >
-                  <Text
-                    className="text-[13px] font-semibold"
-                    style={{ color: selected ? color.icon.onAccent : color.text.secondary }}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingHorizontal: 16 }}
+          >
+            <View className="flex-row flex-nowrap">
+              {MEETING_TEMPLATES.map((template) => {
+                const selected = selectedTemplate === template;
+                return (
+                  <TouchableOpacity
+                    key={template}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected, disabled }}
+                    disabled={disabled}
+                    activeOpacity={0.7}
+                    onPress={() => onSelectTemplate?.(template)}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      paddingHorizontal: 12,
+                      paddingVertical: 6,
+                      borderRadius: 20,
+                      marginRight: 8,
+                      opacity: disabled ? 0.55 : 1,
+                      backgroundColor: selected ? color.accent.primary : color.background.tertiary,
+                    }}
                   >
-                    {t(`recordingDetail.meetingSummaryTemplates.${template}`)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+                    <Text
+                      className="text-[13px] font-semibold"
+                      numberOfLines={1}
+                      style={{ color: selected ? color.icon.onAccent : color.text.primary }}
+                    >
+                      {t(`recordingDetail.meetingSummaryTemplates.${template}`)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </ScrollView>
         </View>
       ) : null}
     </View>

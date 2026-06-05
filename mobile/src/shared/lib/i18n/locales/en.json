@@ -373,7 +373,7 @@
     "summaryNotCreatedDesc": "Tap the button below to\ncreate a brief summary using AI.",
     "generateSummary": "Generate summary",
     "regenerateSummary": "Regenerate",
-    "meetingModeDetailHint": "Meeting summary, replies by participant, and easy sharing. Works for saved notes too.",
+    "meetingModeDetailHint": "Meeting summary, replies by participant, and easy sharing.",
     "meetingModeRegenerateTitle": "Update the summary?",
     "meetingModeRegenerateMessage": "We’ll update the summary first — then split replies by participant if needed.",
     "meetingModeRegenerateLater": "Not now",
