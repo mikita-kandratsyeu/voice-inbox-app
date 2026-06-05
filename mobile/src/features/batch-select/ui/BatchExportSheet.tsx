@@ -408,7 +408,6 @@ export const BatchExportSheet = ({
             color={color}
             primaryLabel={t('share.sendEmail')}
             onPrimaryPress={handleSendEmail}
-            onPrimaryPressIn={handleSendEmail}
             primaryDisabled={!canSendEmail}
             primaryLoading={isSendingEmail}
             primaryAccessibilityLabel={t('share.sendEmail')}

@@ -219,7 +219,6 @@ export const DigestShareSheet = ({
             color={color}
             primaryLabel={t('share.sendEmail')}
             onPrimaryPress={handleSendEmail}
-            onPrimaryPressIn={handleSendEmail}
             primaryDisabled={!emailValid || isSendingEmail || isSharing}
             primaryLoading={isSendingEmail}
             primaryAccessibilityLabel={t('share.sendEmail')}
