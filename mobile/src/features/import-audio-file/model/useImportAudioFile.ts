@@ -305,7 +305,9 @@ export function useImportAudioFile() {
         try {
           await NitroFS.copyFile(normalizedSource, destPath);
         } catch {
-          destPath = normalizedSource;
+          hapticError();
+          Alert.alert(t('common.error'), t('importAudio.importError'));
+          return;
         }
 
         const needsConversion = !/\.wav$/i.test(ext);

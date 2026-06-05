@@ -17,6 +17,8 @@ type RecordingMarkKindCardProps = {
   color: Colors;
   onPress: (kind: RecordingMarkKind) => void;
   onLongPress?: (kind: RecordingMarkKind) => void;
+  /** `fill` splits row width evenly; `scroll` sizes to label text for horizontal lists. */
+  layout?: 'fill' | 'scroll';
 };
 
 export function RecordingMarkKindCard({
@@ -24,6 +26,7 @@ export function RecordingMarkKindCard({
   color: c,
   onPress,
   onLongPress,
+  layout = 'fill',
 }: RecordingMarkKindCardProps) {
   const { t } = useTranslation();
   const theme = useAppTheme();
@@ -43,7 +46,7 @@ export function RecordingMarkKindCard({
       onPress={() => onPress(kind)}
       onLongPress={onLongPress ? () => onLongPress(kind) : undefined}
       delayLongPress={420}
-      className="flex-1 items-center justify-center gap-2.5 rounded-2xl px-2 py-4"
+      className={`items-center justify-center gap-2.5 rounded-2xl py-4 ${layout === 'fill' ? 'flex-1 px-2' : 'px-3'}`}
       style={({ pressed }) => ({
         backgroundColor: c.background.tertiary,
         opacity: pressed ? 0.82 : 1,
@@ -60,14 +63,14 @@ export function RecordingMarkKindCard({
         <Text
           className="text-center text-[15px] font-semibold leading-5"
           style={{ color: c.text.primary }}
-          numberOfLines={1}
+          numberOfLines={layout === 'fill' ? 1 : undefined}
         >
           {title}
         </Text>
         <Text
           className="text-center text-[12px] leading-4"
           style={{ color: c.text.muted }}
-          numberOfLines={2}
+          numberOfLines={layout === 'fill' ? 2 : undefined}
         >
           {description}
         </Text>

@@ -3,6 +3,7 @@ import { DeviceInfoModule } from 'react-native-nitro-device-info';
 import type { VoiceRecord } from '@/entities/record';
 import type { WhisperModelId, WhisperModelWeightsFormat } from '@/entities/settings';
 import { NitroFS } from '@/shared/lib/fs';
+import { resolveAudioPath } from '@/shared/lib/recordings';
 import { getWhisperModelPath } from '@/shared/lib/whisper';
 
 const MIN_FREE_SPACE_BUFFER_BYTES = 100 * 1024 * 1024;
@@ -30,7 +31,8 @@ export type TranscriptionStartValidationResult =
     };
 
 function normalizePath(path: string): string {
-  return path.startsWith('file://') ? path.slice(7) : path;
+  const resolved = resolveAudioPath(path);
+  return resolved.startsWith('file://') ? resolved.slice(7) : resolved;
 }
 
 function estimateRequiredTempBytes(record: VoiceRecord, normalizedAudioPath: string): number {

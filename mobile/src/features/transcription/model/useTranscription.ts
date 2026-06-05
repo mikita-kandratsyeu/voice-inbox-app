@@ -206,7 +206,8 @@ export const useTranscription = () => {
         let transcribeInputPath = audioPath;
         if (!normalizedAudioPath.toLowerCase().endsWith('.wav')) {
           await ensureRecordingsDir();
-          const wavOut = `${RECORDINGS_DIR}/${record.id}.wav`;
+          const wavOut = `${RECORDINGS_DIR}/${record.id}.transcode.wav`;
+
           const converted = await convertToWav(normalizedAudioPath, wavOut);
           if (!converted) {
             devLog('convert to wav failed (whisper input)', { recordId: record.id });
@@ -414,7 +415,10 @@ export const useTranscription = () => {
           updateAiStatus(record.id, 'error');
         }
       } finally {
-        if (transcodeWavPath) {
+        const transcodePathNorm = transcodeWavPath?.startsWith('file://')
+          ? transcodeWavPath.slice(7)
+          : transcodeWavPath;
+        if (transcodeWavPath && transcodePathNorm && transcodePathNorm !== normalizedAudioPath) {
           void NitroFS.unlink(transcodeWavPath).catch(() => {});
         }
         if (keepCheckpointSnapshot) {
