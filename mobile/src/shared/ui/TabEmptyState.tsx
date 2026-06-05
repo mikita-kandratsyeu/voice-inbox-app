@@ -16,6 +16,7 @@ type TabEmptyStateProps = {
   hint?: string;
   hintIcon?: React.ReactNode;
   icon: React.ReactNode;
+  loading?: boolean;
   onPress?: () => void;
   title: string;
 };
@@ -30,6 +31,7 @@ export const TabEmptyState = ({
   hint,
   hintIcon,
   icon,
+  loading = false,
   onPress,
   title,
 }: TabEmptyStateProps) => {
@@ -62,6 +64,7 @@ export const TabEmptyState = ({
             onPress={onPress}
             activeOpacity={0.85}
             disabled={disabled}
+            loading={loading}
             className="mt-2"
           />
         </>

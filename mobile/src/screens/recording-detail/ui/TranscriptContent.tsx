@@ -70,6 +70,7 @@ export const TranscriptContent = ({
 
   const processingPhase: 'loading_model' | 'processing' =
     r.aiStatus === 'loading_model' ? 'loading_model' : 'processing';
+  const isCancellingTranscription = r.aiStatus === 'cancelling';
 
   if (isTranscriptionUiActive) {
     return (
@@ -78,7 +79,8 @@ export const TranscriptContent = ({
         progressLabel={r.transcriptProgressLabel}
         phase={processingPhase}
         color={color}
-        onCancel={onCancelTranscription}
+        onCancel={isCancellingTranscription ? undefined : onCancelTranscription}
+        statusTitle={isCancellingTranscription ? t('aiStatus.cancelling') : undefined}
         durationMs={record.durationMs}
         transcriptionSegments={r.transcriptProgressSegments}
       />
@@ -155,6 +157,7 @@ export const TranscriptContent = ({
         hasAudio={!!r.audioPath}
         onTranscribe={onTranscribe}
         onDiscardResume={onDiscardResume}
+        isDiscardingResume={isCancellingTranscription}
         onEditTranscript={() => navigation.navigate('EditTranscript', { record: r })}
         onTranslate={isTranscriptTooLongForTranslate ? undefined : handleTranslate}
         onDeleteTranslation={handleDeleteTranslation}

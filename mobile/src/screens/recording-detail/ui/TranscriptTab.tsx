@@ -34,6 +34,7 @@ type TranscriptTabProps = {
   isAiProcessing?: boolean;
   isPrivateMode?: boolean;
   resumeAvailable?: boolean;
+  isDiscardingResume?: boolean;
 };
 
 const MAX_PARAGRAPH_LENGTH = 360;
@@ -103,6 +104,7 @@ export const TranscriptTab = ({
   isAiProcessing = false,
   isPrivateMode = false,
   resumeAvailable = false,
+  isDiscardingResume = false,
 }: TranscriptTabProps) => {
   const { t } = useTranslation();
   const theme = useAppTheme();
@@ -129,7 +131,7 @@ export const TranscriptTab = ({
   );
   const whisperStatus = whisperModelStatuses[whisperVariantId] ?? 'not_downloaded';
   const transcriptionBlocked = useTranscriptionBlockedForRecord(recordId);
-  const transcribeDisabled = isAiProcessing || transcriptionBlocked;
+  const transcribeDisabled = isAiProcessing || transcriptionBlocked || isDiscardingResume;
 
   const showTranslation = hasTranslation && viewMode === 'translated';
   const translatedParagraphs = buildReadableParagraphs(translatedTranscript ?? '');
@@ -166,6 +168,7 @@ export const TranscriptTab = ({
         onPress={onTranscribe}
         hideButton={!hasAudio}
         disabled={transcribeDisabled}
+        loading={isDiscardingResume}
       />
     );
   }

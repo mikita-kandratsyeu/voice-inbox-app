@@ -52,6 +52,7 @@ import {
 
 const PROGRESS_THROTTLE_MS = 500;
 const CHECKPOINT_EVERY_N_CHUNKS = 2;
+const DISCARD_RESET_UI_TIMEOUT_MS = 3_000;
 const pendingWhisperResetRecordIds = new Set<string>();
 
 const createThrottledProgress = (
@@ -93,6 +94,11 @@ const isFileNotFoundError = (err: unknown): boolean => {
     msg.includes('not found')
   );
 };
+
+const wait = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 export const useTranscription = () => {
   const updateAiStatus = useRecordStore((s) => s.updateAiStatus);
@@ -491,19 +497,34 @@ export const useTranscription = () => {
 
   const discardPausedTranscription = useCallback(
     async (recordId: string): Promise<void> => {
+      const existing = useRecordStore.getState().records.find((r) => r.id === recordId);
+      updateAiStatus(recordId, 'cancelling', existing?.transcriptProgress ?? 0);
       invalidateTranscriptionJob(recordId);
       currentRecordIdRef.current = null;
       clearTranscriptionBackgroundCancelled(recordId);
       clearTranscriptionCheckpointSnapshot(recordId);
       clearPendingBackgroundTranscriptionRecord();
 
-      try {
+      const resetTask = (async () => {
         await resetTranscriptionRuntimeForRestart(recordId);
         const reset = await resetWhisperContext();
         if (reset) {
           pendingWhisperResetRecordIds.delete(recordId);
         } else {
           pendingWhisperResetRecordIds.add(recordId);
+        }
+      })();
+
+      try {
+        const finished = await Promise.race([
+          resetTask.then(() => true),
+          wait(DISCARD_RESET_UI_TIMEOUT_MS).then(() => false),
+        ]);
+        if (!finished) {
+          pendingWhisperResetRecordIds.add(recordId);
+          void resetTask.catch((err) => {
+            if (__DEV__) console.warn('[transcription] discard reset failed', err);
+          });
         }
       } catch (err) {
         if (__DEV__) console.warn('[transcription] discard reset failed', err);
@@ -513,9 +534,9 @@ export const useTranscription = () => {
         endTranscriptionSession(recordId);
         clearTranscriptionBackgroundCancelled(recordId);
         clearTranscriptionCheckpointSnapshot(recordId);
-        await removeTranscriptionCheckpoint(recordId).catch(() => {});
-        await cancelTranscriptionPausedNotification(recordId).catch(() => {});
         updateAiStatus(recordId, 'idle', 0);
+        void removeTranscriptionCheckpoint(recordId).catch(() => {});
+        void cancelTranscriptionPausedNotification(recordId).catch(() => {});
       }
     },
     [updateAiStatus],
