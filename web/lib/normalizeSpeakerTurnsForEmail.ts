@@ -7,7 +7,7 @@
 import { replaceMarkdownSection, twoColumnMarkdownTable } from '@/lib/shareNoteEmailMarkdownTables';
 
 const KNOWN_SPEAKER_LABEL_HEAD =
-  '(?:Speaker|Участник|Спикер|Собеседник|Собеседница|Participant|Interviewer|Interviewee|Host|Guest|Модератор|Интервьюер|Ведущий|Клиент|Гость)(?:\\s+\\d+|\\s*\\d+)?';
+  '(?:Speaker|Участник|Участница|Спикер|Собеседник|Собеседница|Participant|Person|User|Interviewer|Interviewee|Host|Guest|Customer|Client|Moderator|Модератор|Интервьюер|Ведущий|Клиент|Гость|Пользователь)(?:\\s*(?:#|№)?\\s*\\d+)?';
 
 const GENERIC_SPEAKER_LABEL = "[\\p{L}][\\p{L}\\p{N}\\s'\\-]{0,58}";
 
@@ -16,13 +16,22 @@ const SPEAKER_LABEL_HEAD = `(?:${KNOWN_SPEAKER_LABEL_HEAD}|${GENERIC_SPEAKER_LAB
 const SPEAKER_LINE_FLAGS = 'iu';
 
 const SPEAKER_LABEL_INLINE = new RegExp(
-  `([^\\n\\r\\s])\\s*(${KNOWN_SPEAKER_LABEL_HEAD}\\s*:)`,
+  `([^\\n\\r\\s*])\\s*(${KNOWN_SPEAKER_LABEL_HEAD}\\s*:)`,
   'giu',
 );
 
-const SPEAKER_LINE = new RegExp(`^\\s*(${SPEAKER_LABEL_HEAD})\\s*:\\s*(.*)$`, SPEAKER_LINE_FLAGS);
+const SPEAKER_LINE = new RegExp(
+  `^\\s*(?:\\*\\*)?[\\[(]?(${SPEAKER_LABEL_HEAD})[\\])]?\\s*(?::\\s*(?:\\*\\*)?|\\*\\*\\s*:)\\s*(.*)$`,
+  SPEAKER_LINE_FLAGS,
+);
 
 const BLOCKED_SPEAKER_LABELS = new Set(['http', 'https', 'ftp', 'mailto']);
+const MARKDOWN_LINE_PREFIX_RE = /^\s*(?:>\s*)?(?:[-*+]\s+|\d+[.)]\s+)?/u;
+const TABLE_SEPARATOR_CELL_RE = /^:?-{3,}:?$/;
+const KNOWN_SPEAKER_DASH_LINE = new RegExp(
+  `^\\s*(?:\\*\\*)?[\\[(]?(${KNOWN_SPEAKER_LABEL_HEAD})[\\])]?\\s*(?:\\*\\*)?\\s+[-–—]\\s+(.*)$`,
+  SPEAKER_LINE_FLAGS,
+);
 
 function isRecognizedSpeakerLabel(label: string): boolean {
   const trimmed = label.trim();
@@ -48,6 +57,47 @@ function normalizeInlineSpeakerLabels(text: string): string {
     return text;
   }
   return text.replace(SPEAKER_LABEL_INLINE, '$1\n\n$2');
+}
+
+function stripMarkdownLinePrefix(line: string): string {
+  return line.replace(MARKDOWN_LINE_PREFIX_RE, '').trim();
+}
+
+function parseMarkdownTableSpeakerLine(
+  line: string,
+): { kind: 'speaker'; speaker: string; text: string } | { kind: 'skip' } | null {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith('|') || !trimmed.endsWith('|')) {
+    return null;
+  }
+
+  const cells = trimmed
+    .slice(1, -1)
+    .split('|')
+    .map((cell) => cell.trim())
+    .filter(Boolean);
+  if (cells.length < 2) {
+    return null;
+  }
+  if (cells.some((cell) => TABLE_SEPARATOR_CELL_RE.test(cell))) {
+    return { kind: 'skip' };
+  }
+
+  const speakerMatch = cells[0]!.match(SPEAKER_LINE);
+  const speaker = speakerMatch ? speakerMatch[1]!.trim() : cells[0]!;
+  const normalizedHeader = `${speaker.toLowerCase()}:${cells[1]!.toLowerCase()}`;
+  if (
+    /^(speaker|participant|участник|спикер):(text|dialogue|utterance|reply|реплика|текст)$/iu.test(
+      normalizedHeader,
+    )
+  ) {
+    return { kind: 'skip' };
+  }
+  if (!isRecognizedSpeakerLabel(speaker) || !SPEAKER_LINE.test(`${speaker}:`)) {
+    return null;
+  }
+
+  return { kind: 'speaker', speaker, text: cells.slice(1).join(' | ').trim() };
 }
 
 function isBoldSpeakerHeadingLine(line: string): boolean {
@@ -115,12 +165,27 @@ export function splitSpeakerTurnEntries(text: string): SpeakerTurnEntry[] {
   const entries: SpeakerTurnEntry[] = [];
 
   for (const rawLine of normalized.split(/\r?\n/)) {
-    const line = rawLine.trim();
+    const line = stripMarkdownLinePrefix(rawLine);
     if (!line) continue;
+
+    const table = parseMarkdownTableSpeakerLine(line);
+    if (table?.kind === 'skip') {
+      continue;
+    }
+    if (table) {
+      entries.push({ speaker: table.speaker, text: table.text });
+      continue;
+    }
 
     const match = line.match(SPEAKER_LINE);
     if (match && isRecognizedSpeakerLabel(match[1])) {
       entries.push({ speaker: match[1].trim(), text: (match[2] ?? '').trim() });
+      continue;
+    }
+
+    const dashMatch = line.match(KNOWN_SPEAKER_DASH_LINE);
+    if (dashMatch && isRecognizedSpeakerLabel(dashMatch[1])) {
+      entries.push({ speaker: dashMatch[1].trim(), text: (dashMatch[2] ?? '').trim() });
       continue;
     }
 

@@ -71,6 +71,47 @@ describe('meetingSpeakerLabels', () => {
     expect(utterances[1]?.speakerLabel).toBe('Собеседник 2');
   });
 
+  it('parses markdown list speaker turns from model output', () => {
+    const utterances = parseMeetingDialogue(
+      '- **Speaker 1:** First reply\n' +
+        '- **Speaker 2:** Second reply\n' +
+        '1. [Участник №3]: Третья реплика',
+    );
+
+    expect(utterances).toHaveLength(3);
+    expect(utterances.map((u) => u.speakerLabel)).toEqual([
+      'Speaker 1',
+      'Speaker 2',
+      'Участник №3',
+    ]);
+    expect(utterances[2]?.body).toBe('Третья реплика');
+  });
+
+  it('parses known speaker labels separated with dashes', () => {
+    const utterances = parseMeetingDialogue(
+      'Speaker #1 - Planning update\nParticipant 2 — I can take the next step\nУчастница 3 – Проверю завтра',
+    );
+
+    expect(utterances).toHaveLength(3);
+    expect(utterances.map((u) => u.speakerLabel)).toEqual([
+      'Speaker #1',
+      'Participant 2',
+      'Участница 3',
+    ]);
+    expect(utterances[1]?.body).toBe('I can take the next step');
+  });
+
+  it('parses simple markdown table speaker turns', () => {
+    const utterances = parseMeetingDialogue(
+      '| Speaker | Text |\n| --- | --- |\n| Speaker 1 | Hello |\n| Speaker 2 | Hi |',
+    );
+
+    expect(utterances).toHaveLength(2);
+    expect(utterances[0]?.speakerLabel).toBe('Speaker 1');
+    expect(utterances[0]?.body).toBe('Hello');
+    expect(utterances[1]?.speakerLabel).toBe('Speaker 2');
+  });
+
   it('parses transcript names instead of neutral participant labels', () => {
     const raw =
       'Рассказчик: В мире, где форматы субтитров несовместимы.\n\n' +
