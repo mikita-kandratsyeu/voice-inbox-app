@@ -37,6 +37,11 @@ import { AppBottomSheetModal, SheetFooterButtons, useBottomSheetContentPadding }
 const MARK_LABEL_MAX_CHARS = 280;
 const MARK_SHEET_KEYBOARD_BOTTOM_PADDING = 24;
 
+const MARK_PICKER_ROWS: RecordingMarkKind[][] = [
+  RECORDING_MARK_PICKER_KINDS.slice(0, 3),
+  RECORDING_MARK_PICKER_KINDS.slice(3, 6),
+];
+
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
@@ -183,29 +188,21 @@ export const AddRecordingMarkSheet = ({
               </Text>
             </View>
 
-            <View className="gap-2.5">
-              <View className="flex-row gap-2.5">
-                {RECORDING_MARK_PICKER_KINDS.slice(0, 2).map((kind) => (
-                  <RecordingMarkKindCard
-                    key={kind}
-                    kind={kind}
-                    color={c}
-                    onPress={handleKindPress}
-                    onLongPress={handleKindLongPress}
-                  />
-                ))}
-              </View>
-              <View className="flex-row gap-2.5">
-                {RECORDING_MARK_PICKER_KINDS.slice(2).map((kind) => (
-                  <RecordingMarkKindCard
-                    key={kind}
-                    kind={kind}
-                    color={c}
-                    onPress={handleKindPress}
-                    onLongPress={handleKindLongPress}
-                  />
-                ))}
-              </View>
+            <View className="gap-2">
+              {MARK_PICKER_ROWS.map((row, rowIndex) => (
+                <View key={rowIndex} className="flex-row items-stretch gap-2">
+                  {row.map((kind) => (
+                    <View key={kind} className="min-w-0 flex-1">
+                      <RecordingMarkKindCard
+                        kind={kind}
+                        color={c}
+                        onPress={handleKindPress}
+                        onLongPress={handleKindLongPress}
+                      />
+                    </View>
+                  ))}
+                </View>
+              ))}
             </View>
 
             <Pressable
@@ -231,7 +228,7 @@ export const AddRecordingMarkSheet = ({
               </Text>
             </View>
 
-            <View className="flex-row gap-2">
+            <View className="flex-row flex-wrap gap-2">
               {RECORDING_MARK_PICKER_KINDS.map((kind) => {
                 const { recordA11yKey } = getRecordingMarkKindUi(kind);
                 const { accent } = getRecordingMarkKindAccentColors(kind, theme, surfaceDark);
@@ -247,7 +244,7 @@ export const AddRecordingMarkSheet = ({
                       hapticSelection();
                       setPendingKind(kind);
                     }}
-                    className="min-h-[36px] flex-1 items-center justify-center rounded-xl px-2 py-2"
+                    className="min-h-[36px] items-center justify-center rounded-xl px-3 py-2"
                     style={{
                       backgroundColor: selected ? accent : c.background.tertiary,
                     }}
@@ -255,7 +252,6 @@ export const AddRecordingMarkSheet = ({
                     <Text
                       className="text-center text-[13px] font-semibold"
                       style={{ color: selected ? selectedFg : c.text.primary }}
-                      numberOfLines={1}
                     >
                       {t(recordA11yKey)}
                     </Text>

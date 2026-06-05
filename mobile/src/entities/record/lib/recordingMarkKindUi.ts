@@ -115,7 +115,6 @@ export function getRecordingMarkKindUi(kind: RecordingMarkKind): RecordingMarkKi
 /** Picker order: default kind (`moment`) is always first. */
 export const RECORDING_MARK_PICKER_KINDS: RecordingMarkKind[] = [
   'moment',
-  'important',
   'task',
   'decision',
   'question',

@@ -36,6 +36,7 @@ import {
   hapticLight,
   hapticSelection,
   hapticSuccess,
+  resolveAudioPath,
   resolveFolderListTintHex,
   useIsTablet,
   useTabletContentMaxWidth,
@@ -307,7 +308,7 @@ export const RecordingDetailScreen = () => {
 
     const path = liveRecord.audioPath;
     if (path?.trim()) {
-      const normalizedPath = path.startsWith('file://') ? path.slice(7) : path;
+      const normalizedPath = resolveAudioPath(path);
       const exists = await NitroFS.exists(normalizedPath);
 
       if (!exists) {

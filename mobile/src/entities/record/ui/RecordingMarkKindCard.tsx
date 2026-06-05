@@ -17,8 +17,6 @@ type RecordingMarkKindCardProps = {
   color: Colors;
   onPress: (kind: RecordingMarkKind) => void;
   onLongPress?: (kind: RecordingMarkKind) => void;
-  /** `fill` splits row width evenly; `scroll` sizes to label text for horizontal lists. */
-  layout?: 'fill' | 'scroll';
 };
 
 export function RecordingMarkKindCard({
@@ -26,7 +24,6 @@ export function RecordingMarkKindCard({
   color: c,
   onPress,
   onLongPress,
-  layout = 'fill',
 }: RecordingMarkKindCardProps) {
   const { t } = useTranslation();
   const theme = useAppTheme();
@@ -46,7 +43,7 @@ export function RecordingMarkKindCard({
       onPress={() => onPress(kind)}
       onLongPress={onLongPress ? () => onLongPress(kind) : undefined}
       delayLongPress={420}
-      className={`items-center justify-center gap-2.5 rounded-2xl py-4 ${layout === 'fill' ? 'flex-1 px-2' : 'px-3'}`}
+      className="h-full w-full flex-1 items-center gap-2 rounded-2xl px-1.5 py-3"
       style={({ pressed }) => ({
         backgroundColor: c.background.tertiary,
         opacity: pressed ? 0.82 : 1,
@@ -54,23 +51,23 @@ export function RecordingMarkKindCard({
       })}
     >
       <View
-        className="h-11 w-11 items-center justify-center rounded-full"
+        className="h-11 w-11 shrink-0 items-center justify-center rounded-full"
         style={{ backgroundColor: iconBackground }}
       >
         <Icon size={22} color={accent} strokeWidth={2} />
       </View>
-      <View className="w-full items-center gap-0.5 px-1">
+      <View className="w-full items-center gap-0.5">
         <Text
-          className="text-center text-[15px] font-semibold leading-5"
+          className="min-h-5 w-full text-center text-[14px] font-semibold leading-5"
           style={{ color: c.text.primary }}
-          numberOfLines={layout === 'fill' ? 1 : undefined}
+          numberOfLines={1}
         >
           {title}
         </Text>
         <Text
-          className="text-center text-[12px] leading-4"
+          className="min-h-8 w-full text-center text-[11px] leading-4"
           style={{ color: c.text.muted }}
-          numberOfLines={layout === 'fill' ? 2 : undefined}
+          numberOfLines={2}
         >
           {description}
         </Text>

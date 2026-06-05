@@ -76,9 +76,14 @@ export const RecordScreen = () => {
   const [title, setTitle] = useState('');
   const [recordingMarks, setRecordingMarks] = useState<RecordingMark[]>([]);
   const [markSheetVisible, setMarkSheetVisible] = useState(false);
+  const markSheetVisibleRef = useRef(false);
   const [markSheetOpenId, setMarkSheetOpenId] = useState(0);
   const [markSnapshotOffsetMs, setMarkSnapshotOffsetMs] = useState(0);
   const [appState, setAppState] = useState(AppState.currentState);
+
+  useEffect(() => {
+    markSheetVisibleRef.current = markSheetVisible;
+  }, [markSheetVisible]);
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', setAppState);
@@ -97,6 +102,7 @@ export const RecordScreen = () => {
     discardRecording,
   } = useRecording({
     maxRecordingMs,
+    routeChangeSuppressedRef: markSheetVisibleRef,
     onLimitReached: () => {
       void logAnalyticsEvent('recording_limit_hit');
       setMarkSheetVisible(false);

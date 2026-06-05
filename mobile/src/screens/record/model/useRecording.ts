@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { type MutableRefObject, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Alert, AppState, type AppStateStatus } from 'react-native';
 import type { AudioSet, RecordBackType } from 'react-native-nitro-sound';
@@ -55,6 +55,8 @@ type UseRecordingOptions = {
   onLimitReached?: () => void;
   onRecordingStoppedByAppLock?: (path: string, elapsed: number, elapsedMs: number) => void;
   onAudioRouteChange?: () => void;
+  /** When true, iOS position glitches (e.g. mark-sheet scroll) do not pause recording. */
+  routeChangeSuppressedRef?: MutableRefObject<boolean>;
 };
 
 export const useRecording = ({
@@ -62,6 +64,7 @@ export const useRecording = ({
   onLimitReached,
   onRecordingStoppedByAppLock,
   onAudioRouteChange,
+  routeChangeSuppressedRef,
 }: UseRecordingOptions = {}) => {
   const { t } = useTranslation();
   const [state, setState] = useState<RecordingState>('idle');
@@ -87,6 +90,8 @@ export const useRecording = ({
   onRecordingStoppedByAppLockRef.current = onRecordingStoppedByAppLock;
   const onAudioRouteChangeRef = useRef(onAudioRouteChange);
   onAudioRouteChangeRef.current = onAudioRouteChange;
+  const routeChangeSuppressedRefRef = useRef(routeChangeSuppressedRef);
+  routeChangeSuppressedRefRef.current = routeChangeSuppressedRef;
   const stateRef = useRef(state);
   stateRef.current = state;
 
@@ -114,7 +119,12 @@ export const useRecording = ({
       const { ms, routeChanged } = sanitizePosition(e.currentPosition, lastValidMsRef.current);
       lastValidMsRef.current = ms;
 
-      if (routeChanged && IS_IOS && Date.now() >= routeChangeSuppressedUntilRef.current) {
+      if (
+        routeChanged &&
+        IS_IOS &&
+        Date.now() >= routeChangeSuppressedUntilRef.current &&
+        !routeChangeSuppressedRefRef.current?.current
+      ) {
         const secs = Math.floor(ms / 1000);
         elapsedRef.current = secs;
         elapsedMsRef.current = ms;
