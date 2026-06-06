@@ -138,7 +138,7 @@ describe('transcribeAudio', () => {
   it('creates one temporary WAV per long chunk, transcribes chunk files, offsets timestamps, and cleans up', async () => {
     const onProgress = jest.fn();
     const onChunkCompleted = jest.fn();
-    const transcribe = jest.fn((path: string, options: { prompt?: string }) => ({
+    const transcribe = jest.fn((path: string, _options: { prompt?: string }) => ({
       stop: jest.fn().mockResolvedValue(undefined),
       promise: Promise.resolve({
         result: `text:${path.split('.chunk-')[1]}`,
