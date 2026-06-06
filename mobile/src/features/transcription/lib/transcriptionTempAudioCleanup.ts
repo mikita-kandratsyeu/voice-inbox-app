@@ -15,6 +15,10 @@ function recordIdFromWavName(name: string): string | null {
   return match?.[1] ?? null;
 }
 
+function isTranscriptionChunkWav(name: string): boolean {
+  return /\.wav\.chunk-\d+\.wav$/.test(name);
+}
+
 function isPermanentRecordWav(record: Pick<RecordListItem, 'id' | 'audioPath'>): boolean {
   if (!record.audioPath?.trim()) return false;
   const resolved = normalizePath(record.audioPath).toLowerCase();
@@ -49,6 +53,10 @@ export async function cleanupOrphanTranscriptionTempWavs(
 
     for (const entry of entries) {
       if (!entry.name.endsWith('.wav')) continue;
+      if (isTranscriptionChunkWav(entry.name)) {
+        await NitroFS.unlink(entry.path).catch(() => {});
+        continue;
+      }
 
       const entryPathNorm = normalizePath(entry.path);
       const recordIdFromName = recordIdFromWavName(entry.name);

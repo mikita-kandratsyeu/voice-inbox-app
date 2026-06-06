@@ -40,3 +40,36 @@ export async function convertToWav(inputPath: string, outputPath: string): Promi
     return null;
   }
 }
+
+export async function createWavChunk(
+  inputPath: string,
+  outputPath: string,
+  startMs: number,
+  durationMs: number,
+): Promise<string | null> {
+  if (!AudioConverter || typeof AudioConverter.createWavChunk !== 'function') {
+    if (__DEV__) {
+      console.warn('[createWavChunk] AudioConverter native module not available');
+    }
+    return null;
+  }
+  try {
+    const inArg = IS_IOS ? toFileUri(inputPath) : inputPath;
+    const outArg = IS_IOS ? toFileUri(outputPath) : outputPath;
+    const result = await AudioConverter.createWavChunk(inArg, outArg, startMs, durationMs);
+    return result ?? null;
+  } catch (e: unknown) {
+    if (__DEV__) {
+      const err = e as { code?: string; message?: string };
+      console.warn(
+        '[createWavChunk] Error:',
+        err?.message ?? String(e),
+        '| code:',
+        err?.code,
+        '| full:',
+        e,
+      );
+    }
+    return null;
+  }
+}

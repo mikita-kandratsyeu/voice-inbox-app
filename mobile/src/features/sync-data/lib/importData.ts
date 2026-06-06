@@ -4,9 +4,7 @@ import { isPasswordProtected, unzip, unzipWithPassword } from 'react-native-zip-
 import { z } from 'zod';
 
 import type { Folder } from '@/entities/folder';
-import { useFolderStore } from '@/entities/folder';
 import { DEFAULT_FOLDER_ICON_KEY } from '@/entities/folder/lib/folderLucideIcons';
-import { folderRepository } from '@/entities/folder/model/repository';
 import type { RecordClassification, RecordingMark, VoiceRecord } from '@/entities/record';
 import { sanitizeRecordingMark } from '@/entities/record';
 import { sanitizeMeetingSpeakerLabels } from '@/screens/recording-detail/lib/meetingSpeakerLabels';
@@ -136,7 +134,13 @@ export type ImportDataOptions = {
 };
 
 export type ImportResult =
-  | { success: true; records: VoiceRecord[]; exportedAt: string }
+  | {
+      success: true;
+      records: VoiceRecord[];
+      folders: Folder[];
+      legacyFolders: Folder[];
+      exportedAt: string;
+    }
   | { success: false; error: 'cancelled' | string }
   | { success: false; needsPassword: true; zipFsPath: string };
 
@@ -215,6 +219,40 @@ function normalizeRecord(raw: z.infer<typeof VoiceRecordSchema>): VoiceRecord {
     translationLanguage: isString(base.translationLanguage) ? base.translationLanguage : undefined,
     recordingMarks: normalizeRecordingMarks(base.recordingMarks),
   } as VoiceRecord;
+}
+
+function normalizeFolders(raw: readonly z.infer<typeof FolderSchema>[] | undefined): Folder[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw
+    .filter((f) => isString(f.id) && isString(f.name))
+    .map((f) => ({
+      id: f.id,
+      name: f.name,
+      color: isString(f.color) ? f.color : DEFAULT_FOLDER_BRAND_HEX,
+      icon: isString(f.icon) ? f.icon : DEFAULT_FOLDER_ICON_KEY,
+      sortOrder: isNumber(f.sortOrder) && Number.isFinite(f.sortOrder) ? f.sortOrder : 0,
+      createdAt: isString(f.createdAt) ? f.createdAt : dayjs().toISOString(),
+    }));
+}
+
+function buildLegacyFolders(records: readonly z.infer<typeof VoiceRecordSchema>[]): Folder[] {
+  const legacyFolderIds = Array.from(
+    new Set(
+      records.map((r) => r.folderId).filter((v): v is string => isString(v) && v.trim().length > 0),
+    ),
+  );
+
+  return legacyFolderIds.map((folderId, index) => ({
+    id: folderId,
+    name: `Imported folder ${index + 1}`,
+    color: DEFAULT_FOLDER_BRAND_HEX,
+    icon: DEFAULT_FOLDER_ICON_KEY,
+    sortOrder: index,
+    createdAt: dayjs().toISOString(),
+  }));
 }
 
 function isRelativeAudioPath(path: string): boolean {
@@ -429,68 +467,6 @@ async function importFromZip(fileUri: string, password?: string): Promise<Import
       return { success: false, error: i18n.t('importExport.invalidFormat') };
     }
 
-    if (payload.version === 3 && Array.isArray(payload.folders)) {
-      const foldersToRestore = payload.folders
-        .filter((f) => isString(f.id) && isString(f.name))
-        .map((f) => ({
-          id: f.id,
-          name: f.name,
-          color: isString(f.color) ? f.color : DEFAULT_FOLDER_BRAND_HEX,
-          icon: isString(f.icon) ? f.icon : DEFAULT_FOLDER_ICON_KEY,
-          sortOrder: isNumber(f.sortOrder) && Number.isFinite(f.sortOrder) ? f.sortOrder : 0,
-          createdAt: isString(f.createdAt) ? f.createdAt : dayjs().toISOString(),
-        })) satisfies Folder[];
-
-      for (const folder of foldersToRestore) {
-        await folderRepository.insert(folder);
-        await folderRepository.update(folder.id, {
-          name: folder.name,
-          color: folder.color,
-          icon: folder.icon,
-          sortOrder: folder.sortOrder,
-        });
-      }
-
-      await useFolderStore.getState().load();
-    }
-
-    if (payload.version !== 3) {
-      const legacyFolderIds = Array.from(
-        new Set(
-          payload.records
-            .map((r) => r.folderId)
-            .filter((v): v is string => isString(v) && v.trim().length > 0),
-        ),
-      );
-
-      for (const [index, folderId] of legacyFolderIds.entries()) {
-        const legacyFolder: Folder = {
-          id: folderId,
-          name: `Imported folder ${index + 1}`,
-          color: DEFAULT_FOLDER_BRAND_HEX,
-          icon: DEFAULT_FOLDER_ICON_KEY,
-          sortOrder: index,
-          createdAt: dayjs().toISOString(),
-        };
-
-        try {
-          await folderRepository.insert(legacyFolder);
-          await folderRepository.update(legacyFolder.id, {
-            name: legacyFolder.name,
-            color: legacyFolder.color,
-            icon: legacyFolder.icon,
-            sortOrder: legacyFolder.sortOrder,
-          });
-        } catch {
-          if (__DEV__) {
-            console.warn('[importFromZip] failed to insert legacy folder', legacyFolder);
-          }
-        }
-      }
-
-      await useFolderStore.getState().load();
-    }
-
     const records: VoiceRecord[] = [];
 
     for (const r of payload.records) {
@@ -518,6 +494,8 @@ async function importFromZip(fileUri: string, password?: string): Promise<Import
     return {
       success: true,
       records,
+      folders: payload.version === 3 ? normalizeFolders(payload.folders) : [],
+      legacyFolders: payload.version !== 3 ? buildLegacyFolders(payload.records) : [],
       exportedAt: payload.exportedAt,
     };
   } finally {
@@ -612,38 +590,19 @@ export const importData = async (options?: ImportDataOptions): Promise<ImportRes
       return { success: false, error: i18n.t('importExport.invalidFormat') };
     }
 
-    if (payload.version === 3 && Array.isArray(payload.folders)) {
-      const foldersToRestore = payload.folders
-        .filter((f) => isString(f.id) && isString(f.name))
-        .map((f) => ({
-          id: f.id,
-          name: f.name,
-          color: isString(f.color) ? f.color : DEFAULT_FOLDER_BRAND_HEX,
-          icon: isString(f.icon) ? f.icon : DEFAULT_FOLDER_ICON_KEY,
-          sortOrder: isNumber(f.sortOrder) && Number.isFinite(f.sortOrder) ? f.sortOrder : 0,
-          createdAt: isString(f.createdAt) ? f.createdAt : dayjs().toISOString(),
-        })) satisfies Folder[];
-
-      for (const folder of foldersToRestore) {
-        await folderRepository.insert(folder);
-        await folderRepository.update(folder.id, {
-          name: folder.name,
-          color: folder.color,
-          icon: folder.icon,
-          sortOrder: folder.sortOrder,
-        });
-      }
-
-      await useFolderStore.getState().load();
-    }
-
     const records = payload.records.map((r) => {
       const record = normalizeRecord(r) as VoiceRecord;
       delete (record as { audioPath?: string }).audioPath;
       return record;
     });
 
-    return { success: true, records, exportedAt: payload.exportedAt };
+    return {
+      success: true,
+      records,
+      folders: payload.version === 3 ? normalizeFolders(payload.folders) : [],
+      legacyFolders: payload.version !== 3 ? buildLegacyFolders(payload.records) : [],
+      exportedAt: payload.exportedAt,
+    };
   } catch (err: unknown) {
     const code = (err as { code?: string })?.code;
 

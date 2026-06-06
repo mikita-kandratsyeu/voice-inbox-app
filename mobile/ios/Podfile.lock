@@ -24,187 +24,174 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - AppMetricaAdSupport (6.0.0):
-    - AppMetricaCore (= 6.0.0)
-    - AppMetricaCoreExtension (= 6.0.0)
-  - AppMetricaCore (6.0.0):
-    - AppMetricaCoreUtils (= 6.0.0)
-    - AppMetricaEncodingUtils (= 6.0.0)
-    - AppMetricaFMDB (= 6.0.0)
-    - AppMetricaHostState (= 6.0.0)
-    - AppMetricaIdentifiers (= 6.0.0)
-    - AppMetricaKeychain (= 6.0.0)
-    - AppMetricaLog (= 6.0.0)
-    - AppMetricaNetwork (= 6.0.0)
-    - AppMetricaPlatform (= 6.0.0)
-    - AppMetricaProtobuf (= 6.0.0)
-    - AppMetricaProtobufUtils (= 6.0.0)
-    - AppMetricaStorageUtils (= 6.0.0)
-  - AppMetricaCoreExtension (6.0.0):
-    - AppMetricaCore (= 6.0.0)
-    - AppMetricaStorageUtils (= 6.0.0)
-  - AppMetricaCoreUtils (6.0.0):
-    - AppMetricaLog (= 6.0.0)
-  - AppMetricaEncodingUtils (6.0.0):
-    - AppMetricaCoreUtils (= 6.0.0)
-    - AppMetricaLog (= 6.0.0)
-    - AppMetricaPlatform (= 6.0.0)
-  - AppMetricaFMDB (6.0.0)
-  - AppMetricaHostState (6.0.0):
-    - AppMetricaCoreUtils (= 6.0.0)
-    - AppMetricaLog (= 6.0.0)
-  - AppMetricaIdentifiers (6.0.0):
-    - AppMetricaKeychain (= 6.0.0)
-    - AppMetricaLogSwift (= 6.0.0)
-    - AppMetricaPlatform (= 6.0.0)
-    - AppMetricaStorageUtils (= 6.0.0)
-    - AppMetricaSynchronization (= 6.0.0)
-  - AppMetricaIDSync (6.0.0):
-    - AppMetricaCore (= 6.0.0)
-    - AppMetricaCoreExtension (= 6.0.0)
-    - AppMetricaCoreUtils (= 6.0.0)
-    - AppMetricaLog (= 6.0.0)
-    - AppMetricaNetwork (= 6.0.0)
-    - AppMetricaPlatform (= 6.0.0)
-    - AppMetricaStorageUtils (= 6.0.0)
-  - AppMetricaKeychain (6.0.0):
-    - AppMetricaCoreUtils (= 6.0.0)
-    - AppMetricaLog (= 6.0.0)
-    - AppMetricaStorageUtils (= 6.0.0)
-  - AppMetricaLibraryAdapter (6.0.0):
-    - AppMetricaCore (= 6.0.0)
-    - AppMetricaCoreExtension (= 6.0.0)
-  - AppMetricaLog (6.0.0)
-  - AppMetricaLogSwift (6.0.0):
-    - AppMetricaLog (= 6.0.0)
-  - AppMetricaNetwork (6.0.0):
-    - AppMetricaCoreUtils (= 6.0.0)
-    - AppMetricaLog (= 6.0.0)
-    - AppMetricaPlatform (= 6.0.0)
-  - AppMetricaPlatform (6.0.0):
-    - AppMetricaCoreUtils (= 6.0.0)
-    - AppMetricaLog (= 6.0.0)
-  - AppMetricaProtobuf (6.0.0)
-  - AppMetricaProtobufUtils (6.0.0):
-    - AppMetricaProtobuf (= 6.0.0)
-  - AppMetricaStorageUtils (6.0.0):
-    - AppMetricaCoreUtils (= 6.0.0)
-    - AppMetricaLog (= 6.0.0)
-  - AppMetricaSynchronization (6.0.0):
-    - AppMetricaLogSwift (= 6.0.0)
-  - DivKit (32.46.0):
-    - DivKit_LayoutKit (= 32.46.0)
-    - DivKit_Serialization (= 32.46.0)
-    - VGSL (~> 7.21)
-  - DivKit_LayoutKit (32.46.0):
-    - DivKit_LayoutKitInterface (= 32.46.0)
-    - VGSL (~> 7.21)
-  - DivKit_LayoutKitInterface (32.46.0):
-    - VGSL (~> 7.21)
-  - DivKit_Serialization (32.46.0):
-    - VGSL (~> 7.21)
-  - DivKitBinaryCompatibilityFacade (5.2.2):
-    - DivKit (~> 32.14)
+  - AppMetricaAdSupport (6.3.0):
+    - AppMetricaCore (= 6.3.0)
+    - AppMetricaCoreExtension (= 6.3.0)
+  - AppMetricaCore (6.3.0):
+    - AppMetricaCoreUtils (= 6.3.0)
+    - AppMetricaEncodingUtils (= 6.3.0)
+    - AppMetricaFMDB (= 6.3.0)
+    - AppMetricaHostState (= 6.3.0)
+    - AppMetricaIdentifiers (= 6.3.0)
+    - AppMetricaKeychain (= 6.3.0)
+    - AppMetricaLog (= 6.3.0)
+    - AppMetricaNetwork (= 6.3.0)
+    - AppMetricaPlatform (= 6.3.0)
+    - AppMetricaProtobuf (= 6.3.0)
+    - AppMetricaProtobufUtils (= 6.3.0)
+    - AppMetricaStorageUtils (= 6.3.0)
+  - AppMetricaCoreExtension (6.3.0):
+    - AppMetricaCore (= 6.3.0)
+    - AppMetricaStorageUtils (= 6.3.0)
+  - AppMetricaCoreUtils (6.3.0):
+    - AppMetricaLog (= 6.3.0)
+  - AppMetricaEncodingUtils (6.3.0):
+    - AppMetricaCoreUtils (= 6.3.0)
+    - AppMetricaLog (= 6.3.0)
+    - AppMetricaPlatform (= 6.3.0)
+  - AppMetricaFMDB (6.3.0)
+  - AppMetricaHostState (6.3.0):
+    - AppMetricaCoreUtils (= 6.3.0)
+    - AppMetricaLog (= 6.3.0)
+  - AppMetricaIdentifiers (6.3.0):
+    - AppMetricaKeychain (= 6.3.0)
+    - AppMetricaLogSwift (= 6.3.0)
+    - AppMetricaPlatform (= 6.3.0)
+    - AppMetricaStorageUtils (= 6.3.0)
+    - AppMetricaSynchronization (= 6.3.0)
+  - AppMetricaIDSync (6.3.0):
+    - AppMetricaCore (= 6.3.0)
+    - AppMetricaCoreExtension (= 6.3.0)
+    - AppMetricaCoreUtils (= 6.3.0)
+    - AppMetricaLog (= 6.3.0)
+    - AppMetricaNetwork (= 6.3.0)
+    - AppMetricaPlatform (= 6.3.0)
+    - AppMetricaStorageUtils (= 6.3.0)
+  - AppMetricaKeychain (6.3.0):
+    - AppMetricaCoreUtils (= 6.3.0)
+    - AppMetricaLog (= 6.3.0)
+    - AppMetricaStorageUtils (= 6.3.0)
+  - AppMetricaLibraryAdapter (6.3.0):
+    - AppMetricaCore (= 6.3.0)
+    - AppMetricaCoreExtension (= 6.3.0)
+  - AppMetricaLog (6.3.0)
+  - AppMetricaLogSwift (6.3.0):
+    - AppMetricaLog (= 6.3.0)
+  - AppMetricaNetwork (6.3.0):
+    - AppMetricaCoreUtils (= 6.3.0)
+    - AppMetricaLog (= 6.3.0)
+    - AppMetricaPlatform (= 6.3.0)
+  - AppMetricaPlatform (6.3.0):
+    - AppMetricaCoreUtils (= 6.3.0)
+    - AppMetricaLog (= 6.3.0)
+  - AppMetricaProtobuf (6.3.0)
+  - AppMetricaProtobufUtils (6.3.0):
+    - AppMetricaProtobuf (= 6.3.0)
+  - AppMetricaStorageUtils (6.3.0):
+    - AppMetricaCoreUtils (= 6.3.0)
+    - AppMetricaLog (= 6.3.0)
+  - AppMetricaSynchronization (6.3.0):
+    - AppMetricaLogSwift (= 6.3.0)
   - FBLazyVector (0.84.1)
-  - Firebase/AppCheck (12.10.0):
+  - Firebase/AppCheck (12.11.0):
     - Firebase/CoreOnly
-    - FirebaseAppCheck (~> 12.10.0)
-  - Firebase/CoreOnly (12.10.0):
-    - FirebaseCore (~> 12.10.0)
-  - Firebase/Crashlytics (12.10.0):
+    - FirebaseAppCheck (~> 12.11.0)
+  - Firebase/CoreOnly (12.11.0):
+    - FirebaseCore (~> 12.11.0)
+  - Firebase/Crashlytics (12.11.0):
     - Firebase/CoreOnly
-    - FirebaseCrashlytics (~> 12.10.0)
-  - Firebase/Messaging (12.10.0):
+    - FirebaseCrashlytics (~> 12.11.0)
+  - Firebase/Messaging (12.11.0):
     - Firebase/CoreOnly
-    - FirebaseMessaging (~> 12.10.0)
-  - Firebase/RemoteConfig (12.10.0):
+    - FirebaseMessaging (~> 12.11.0)
+  - Firebase/RemoteConfig (12.11.0):
     - Firebase/CoreOnly
-    - FirebaseRemoteConfig (~> 12.10.0)
-  - FirebaseABTesting (12.10.0):
-    - FirebaseCore (~> 12.10.0)
-  - FirebaseAnalytics/Core (12.10.0):
-    - FirebaseCore (~> 12.10.0)
-    - FirebaseInstallations (~> 12.10.0)
-    - GoogleAppMeasurement/Core (= 12.10.0)
+    - FirebaseRemoteConfig (~> 12.11.0)
+  - FirebaseABTesting (12.11.0):
+    - FirebaseCore (~> 12.11.0)
+  - FirebaseAnalytics/Core (12.11.0):
+    - FirebaseCore (~> 12.11.0)
+    - FirebaseInstallations (~> 12.11.0)
+    - GoogleAppMeasurement/Core (= 12.11.0)
     - GoogleUtilities/AppDelegateSwizzler (~> 8.1)
     - GoogleUtilities/MethodSwizzler (~> 8.1)
     - GoogleUtilities/Network (~> 8.1)
     - "GoogleUtilities/NSData+zlib (~> 8.1)"
     - nanopb (~> 3.30910.0)
-  - FirebaseAnalytics/IdentitySupport (12.10.0):
-    - FirebaseCore (~> 12.10.0)
-    - FirebaseInstallations (~> 12.10.0)
-    - GoogleAppMeasurement/IdentitySupport (= 12.10.0)
+  - FirebaseAnalytics/IdentitySupport (12.11.0):
+    - FirebaseCore (~> 12.11.0)
+    - FirebaseInstallations (~> 12.11.0)
+    - GoogleAppMeasurement/IdentitySupport (= 12.11.0)
     - GoogleUtilities/AppDelegateSwizzler (~> 8.1)
     - GoogleUtilities/MethodSwizzler (~> 8.1)
     - GoogleUtilities/Network (~> 8.1)
     - "GoogleUtilities/NSData+zlib (~> 8.1)"
     - nanopb (~> 3.30910.0)
-  - FirebaseAppCheck (12.10.0):
+  - FirebaseAppCheck (12.11.0):
     - AppCheckCore (~> 11.0)
-    - FirebaseAppCheckInterop (~> 12.10.0)
-    - FirebaseCore (~> 12.10.0)
+    - FirebaseAppCheckInterop (~> 12.11.0)
+    - FirebaseCore (~> 12.11.0)
     - GoogleUtilities/Environment (~> 8.1)
     - GoogleUtilities/UserDefaults (~> 8.1)
-  - FirebaseAppCheckInterop (12.10.0)
-  - FirebaseCore (12.10.0):
-    - FirebaseCoreInternal (~> 12.10.0)
+  - FirebaseAppCheckInterop (12.11.0)
+  - FirebaseCore (12.11.0):
+    - FirebaseCoreInternal (~> 12.11.0)
     - GoogleUtilities/Environment (~> 8.1)
     - GoogleUtilities/Logger (~> 8.1)
-  - FirebaseCoreExtension (12.10.0):
-    - FirebaseCore (~> 12.10.0)
-  - FirebaseCoreInternal (12.10.0):
+  - FirebaseCoreExtension (12.11.0):
+    - FirebaseCore (~> 12.11.0)
+  - FirebaseCoreInternal (12.11.0):
     - "GoogleUtilities/NSData+zlib (~> 8.1)"
-  - FirebaseCrashlytics (12.10.0):
-    - FirebaseCore (~> 12.10.0)
-    - FirebaseInstallations (~> 12.10.0)
-    - FirebaseRemoteConfigInterop (~> 12.10.0)
-    - FirebaseSessions (~> 12.10.0)
+  - FirebaseCrashlytics (12.11.0):
+    - FirebaseCore (~> 12.11.0)
+    - FirebaseInstallations (~> 12.11.0)
+    - FirebaseRemoteConfigInterop (~> 12.11.0)
+    - FirebaseSessions (~> 12.11.0)
     - GoogleDataTransport (~> 10.1)
     - GoogleUtilities/Environment (~> 8.1)
     - nanopb (~> 3.30910.0)
     - PromisesObjC (~> 2.4)
-  - FirebaseInstallations (12.10.0):
-    - FirebaseCore (~> 12.10.0)
+  - FirebaseInstallations (12.11.0):
+    - FirebaseCore (~> 12.11.0)
     - GoogleUtilities/Environment (~> 8.1)
     - GoogleUtilities/UserDefaults (~> 8.1)
     - PromisesObjC (~> 2.4)
-  - FirebaseMessaging (12.10.0):
-    - FirebaseCore (~> 12.10.0)
-    - FirebaseInstallations (~> 12.10.0)
+  - FirebaseMessaging (12.11.0):
+    - FirebaseCore (~> 12.11.0)
+    - FirebaseInstallations (~> 12.11.0)
     - GoogleDataTransport (~> 10.1)
     - GoogleUtilities/AppDelegateSwizzler (~> 8.1)
     - GoogleUtilities/Environment (~> 8.1)
     - GoogleUtilities/Reachability (~> 8.1)
     - GoogleUtilities/UserDefaults (~> 8.1)
     - nanopb (~> 3.30910.0)
-  - FirebaseRemoteConfig (12.10.0):
-    - FirebaseABTesting (~> 12.10.0)
-    - FirebaseCore (~> 12.10.0)
-    - FirebaseInstallations (~> 12.10.0)
-    - FirebaseRemoteConfigInterop (~> 12.10.0)
-    - FirebaseSharedSwift (~> 12.10.0)
+  - FirebaseRemoteConfig (12.11.0):
+    - FirebaseABTesting (~> 12.11.0)
+    - FirebaseCore (~> 12.11.0)
+    - FirebaseInstallations (~> 12.11.0)
+    - FirebaseRemoteConfigInterop (~> 12.11.0)
+    - FirebaseSharedSwift (~> 12.11.0)
     - GoogleUtilities/Environment (~> 8.1)
     - "GoogleUtilities/NSData+zlib (~> 8.1)"
-  - FirebaseRemoteConfigInterop (12.10.0)
-  - FirebaseSessions (12.10.0):
-    - FirebaseCore (~> 12.10.0)
-    - FirebaseCoreExtension (~> 12.10.0)
-    - FirebaseInstallations (~> 12.10.0)
+  - FirebaseRemoteConfigInterop (12.11.0)
+  - FirebaseSessions (12.11.0):
+    - FirebaseCore (~> 12.11.0)
+    - FirebaseCoreExtension (~> 12.11.0)
+    - FirebaseInstallations (~> 12.11.0)
     - GoogleDataTransport (~> 10.1)
     - GoogleUtilities/Environment (~> 8.1)
     - GoogleUtilities/UserDefaults (~> 8.1)
     - nanopb (~> 3.30910.0)
     - PromisesSwift (~> 2.1)
-  - FirebaseSharedSwift (12.10.0)
-  - GoogleAppMeasurement/Core (12.10.0):
+  - FirebaseSharedSwift (12.11.0)
+  - GoogleAppMeasurement/Core (12.11.0):
     - GoogleUtilities/AppDelegateSwizzler (~> 8.1)
     - GoogleUtilities/MethodSwizzler (~> 8.1)
     - GoogleUtilities/Network (~> 8.1)
     - "GoogleUtilities/NSData+zlib (~> 8.1)"
     - nanopb (~> 3.30910.0)
-  - GoogleAppMeasurement/IdentitySupport (12.10.0):
-    - GoogleAppMeasurement/Core (= 12.10.0)
+  - GoogleAppMeasurement/IdentitySupport (12.11.0):
+    - GoogleAppMeasurement/Core (= 12.11.0)
     - GoogleUtilities/AppDelegateSwizzler (~> 8.1)
     - GoogleUtilities/MethodSwizzler (~> 8.1)
     - GoogleUtilities/Network (~> 8.1)
@@ -300,7 +287,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - llama-rn (0.12.1):
+  - llama-rn (0.12.4):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -447,7 +434,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - op-sqlite (16.0.0):
+  - op-sqlite (16.2.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -1989,7 +1976,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-safe-area-context (5.7.0):
+  - react-native-safe-area-context (5.8.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2000,8 +1987,8 @@ PODS:
     - React-graphics
     - React-ImageManager
     - React-jsi
-    - react-native-safe-area-context/common (= 5.7.0)
-    - react-native-safe-area-context/fabric (= 5.7.0)
+    - react-native-safe-area-context/common (= 5.8.0)
+    - react-native-safe-area-context/fabric (= 5.8.0)
     - React-NativeModulesApple
     - React-RCTFabric
     - React-renderercss
@@ -2012,7 +1999,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-safe-area-context/common (5.7.0):
+  - react-native-safe-area-context/common (5.8.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2033,7 +2020,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-safe-area-context/fabric (5.7.0):
+  - react-native-safe-area-context/fabric (5.8.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2520,9 +2507,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNFBAnalytics (24.0.0):
-    - FirebaseAnalytics/Core (= 12.10.0)
-    - FirebaseAnalytics/IdentitySupport (= 12.10.0)
+  - RNFBAnalytics (24.1.0):
+    - FirebaseAnalytics/Core (= 12.11.0)
+    - FirebaseAnalytics/IdentitySupport (= 12.11.0)
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2544,8 +2531,8 @@ PODS:
     - ReactNativeDependencies
     - RNFBApp
     - Yoga
-  - RNFBApp (24.0.0):
-    - Firebase/CoreOnly (= 12.10.0)
+  - RNFBApp (24.1.0):
+    - Firebase/CoreOnly (= 12.11.0)
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2566,8 +2553,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNFBAppCheck (24.0.0):
-    - Firebase/AppCheck (= 12.10.0)
+  - RNFBAppCheck (24.1.0):
+    - Firebase/AppCheck (= 12.11.0)
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2589,8 +2576,8 @@ PODS:
     - ReactNativeDependencies
     - RNFBApp
     - Yoga
-  - RNFBCrashlytics (24.0.0):
-    - Firebase/Crashlytics (= 12.10.0)
+  - RNFBCrashlytics (24.1.0):
+    - Firebase/Crashlytics (= 12.11.0)
     - FirebaseCoreExtension
     - hermes-engine
     - RCTRequired
@@ -2613,8 +2600,8 @@ PODS:
     - ReactNativeDependencies
     - RNFBApp
     - Yoga
-  - RNFBMessaging (24.0.0):
-    - Firebase/Messaging (= 12.10.0)
+  - RNFBMessaging (24.1.0):
+    - Firebase/Messaging (= 12.11.0)
     - FirebaseCoreExtension
     - hermes-engine
     - RCTRequired
@@ -2637,8 +2624,8 @@ PODS:
     - ReactNativeDependencies
     - RNFBApp
     - Yoga
-  - RNFBRemoteConfig (24.0.0):
-    - Firebase/RemoteConfig (= 12.10.0)
+  - RNFBRemoteConfig (24.1.0):
+    - Firebase/RemoteConfig (= 12.11.0)
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2774,7 +2761,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNReanimated (4.3.0):
+  - RNReanimated (4.3.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2795,11 +2782,11 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNReanimated/apple (= 4.3.0)
-    - RNReanimated/common (= 4.3.0)
+    - RNReanimated/apple (= 4.3.1)
+    - RNReanimated/common (= 4.3.1)
     - RNWorklets
     - Yoga
-  - RNReanimated/apple (4.3.0):
+  - RNReanimated/apple (4.3.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2822,7 +2809,7 @@ PODS:
     - ReactNativeDependencies
     - RNWorklets
     - Yoga
-  - RNReanimated/common (4.3.0):
+  - RNReanimated/common (4.3.1):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2847,7 +2834,7 @@ PODS:
     - Yoga
   - RNReminders (2.1.1):
     - React
-  - RNScreens (4.24.0):
+  - RNScreens (4.25.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2868,9 +2855,9 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNScreens/common (= 4.24.0)
+    - RNScreens/common (= 4.25.2)
     - Yoga
-  - RNScreens/common (4.24.0):
+  - RNScreens/common (4.25.2):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2935,7 +2922,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNWorklets (0.8.1):
+  - RNWorklets (0.8.3):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2956,10 +2943,10 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - RNWorklets/apple (= 0.8.1)
-    - RNWorklets/common (= 0.8.1)
+    - RNWorklets/apple (= 0.8.3)
+    - RNWorklets/common (= 0.8.3)
     - Yoga
-  - RNWorklets/apple (0.8.1):
+  - RNWorklets/apple (0.8.3):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2981,7 +2968,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - RNWorklets/common (0.8.1):
+  - RNWorklets/common (0.8.3):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3026,17 +3013,7 @@ PODS:
     - SSZipArchive (~> 2.5.5)
     - Yoga
   - SSZipArchive (2.5.5)
-  - VGSL (7.21.0):
-    - VGSLFundamentals (= 7.21.0)
-    - VGSLNetworking (= 7.21.0)
-    - VGSLUI (= 7.21.0)
-  - VGSLFundamentals (7.21.0)
-  - VGSLNetworking (7.21.0):
-    - VGSLFundamentals (= 7.21.0)
-    - VGSLUI (= 7.21.0)
-  - VGSLUI (7.21.0):
-    - VGSLFundamentals (= 7.21.0)
-  - whisper-rn (0.5.5):
+  - whisper-rn (0.6.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3059,7 +3036,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - yandex-mobile-ads (8.0.0):
+  - yandex-mobile-ads (8.1.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3079,14 +3056,13 @@ PODS:
     - ReactCommon/turbomodule/bridging
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
-    - YandexMobileAds (= 8.0.0-beta.1)
+    - YandexMobileAds (= 8.1.0)
     - Yoga
-  - YandexMobileAds (8.0.0-beta.1):
-    - AppMetricaAdSupport (~> 6.0.0)
-    - AppMetricaCore (~> 6.0.0)
-    - AppMetricaIDSync (~> 6.0.0)
-    - AppMetricaLibraryAdapter (~> 6.0.0)
-    - DivKitBinaryCompatibilityFacade (~> 5.2.1)
+  - YandexMobileAds (8.1.0):
+    - AppMetricaAdSupport (~> 6.3.0)
+    - AppMetricaCore (~> 6.3.0)
+    - AppMetricaIDSync (~> 6.3.0)
+    - AppMetricaLibraryAdapter (~> 6.3.0)
   - Yoga (0.0.0)
 
 DEPENDENCIES:
@@ -3236,11 +3212,6 @@ SPEC REPOS:
     - AppMetricaProtobufUtils
     - AppMetricaStorageUtils
     - AppMetricaSynchronization
-    - DivKit
-    - DivKit_LayoutKit
-    - DivKit_LayoutKitInterface
-    - DivKit_Serialization
-    - DivKitBinaryCompatibilityFacade
     - Firebase
     - FirebaseABTesting
     - FirebaseAnalytics
@@ -3267,10 +3238,6 @@ SPEC REPOS:
     - PurchasesHybridCommon
     - RevenueCat
     - SSZipArchive
-    - VGSL
-    - VGSLFundamentals
-    - VGSLNetworking
-    - VGSLUI
     - YandexMobileAds
 
 EXTERNAL SOURCES:
@@ -3521,53 +3488,48 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   AppCheckCore: cc8fd0a3a230ddd401f326489c99990b013f0c4f
   AppleLLM: 4cb53c57dd8bd59b24b82489212ace19b12e18ff
-  AppMetricaAdSupport: 43a4d1509cdbfe712fb3f009fe60d3a6481816a0
-  AppMetricaCore: dae62fe7f95cd665b142218f3d94cf63262c195b
-  AppMetricaCoreExtension: 72da13ba849d4676f276ab86ff429bdf700eadc3
-  AppMetricaCoreUtils: 5e7c91cbafe0225dec2ded2bb3a806256e2ef791
-  AppMetricaEncodingUtils: a67df57f752dbbb174beea18f1de52d24853d834
-  AppMetricaFMDB: a3d8e45a5a85bec23a997be4469b92ab355a4df5
-  AppMetricaHostState: 1ac2ab5880aa30a358f55a044e57354dd8f9062f
-  AppMetricaIdentifiers: 00061e0cdcb371b74343a5491f54adfc1d470b25
-  AppMetricaIDSync: 91b403172ad78da3574c691ed34c25f69c2296ee
-  AppMetricaKeychain: 9ec64d877b8a3f6e823f3bbeef5e4086aa456686
-  AppMetricaLibraryAdapter: 56fa0f988850051d10f9ac3b6b9ace7bb6aa8fd7
-  AppMetricaLog: edd74df81c7557439c36c566989982f4c735e4d6
-  AppMetricaLogSwift: 3d2d4a3cbc33a680389b416a1c6a82ef4134da10
-  AppMetricaNetwork: 3dc6d768d4e932c3697c9c2c9a768de54e62059b
-  AppMetricaPlatform: 041a7b251ea1689e26626d9db8f331af1afe5bad
-  AppMetricaProtobuf: 01b141a164fa7277f641a29f30d5e571ea3d471a
-  AppMetricaProtobufUtils: dc48c7b84f3a1ef86ea218bbd97480ea9da4d3bc
-  AppMetricaStorageUtils: 78071115b9f5468d9e3b8184c456428cd9ee1dbd
-  AppMetricaSynchronization: 909bab97c61c0c147a435ce1620e4c8069e2d6b3
-  DivKit: c66e0fa88b4671f832fb9ca3f142d6f56a56919d
-  DivKit_LayoutKit: e30d4d345034c2dfb356e5a891dd359ac79a5aff
-  DivKit_LayoutKitInterface: 320f0ef8c4f95bb8212b13400502adf0259c0b21
-  DivKit_Serialization: c5ba4f12034eca16960e80f369b689fd8cda95b0
-  DivKitBinaryCompatibilityFacade: 77c240b799c62d65c826aeb9c8f0081e1ffe7b56
+  AppMetricaAdSupport: d9d6516e5e21032f058b7aef3f17aefe9c7cc116
+  AppMetricaCore: 12186e7fca8c7e293bd45f66f0e18d64435f1ab7
+  AppMetricaCoreExtension: 71f4f4b7e993e963241a764790e07b0813926f18
+  AppMetricaCoreUtils: 88b1288644a44ddc2572483bcd64c2e62f6f76ba
+  AppMetricaEncodingUtils: a895862856ee06b9b22fdc02771157e4004b3819
+  AppMetricaFMDB: cc66f2b0c0e8d3d451313b0ac7174b111820f6ec
+  AppMetricaHostState: c6bbff91eb4e35a16da4cf721a729029db455d9b
+  AppMetricaIdentifiers: 7dd47f89a04955b8913c96a6be367c4dc739b3db
+  AppMetricaIDSync: 6799f35fd10a5616f4d214d896829136dc2b4533
+  AppMetricaKeychain: 743d4d2e1dadcce2e33c892b82409e5882e87da1
+  AppMetricaLibraryAdapter: b476a378a83c89e2b4e7b874f4a3874266989ee9
+  AppMetricaLog: a939df984c6564ac0007b6634ea6c24dc54df3a9
+  AppMetricaLogSwift: fa337df59c92edcd51bed406c4298ab1ce9ddd4b
+  AppMetricaNetwork: 1d7cb179c7dce7dbac5f54fb28cc378410b89e61
+  AppMetricaPlatform: 0732c0de92c8db13b25592c49e9bc82df1cc27eb
+  AppMetricaProtobuf: 4d554ca95b28d1d11c661ad4b6b8c6e5c647624a
+  AppMetricaProtobufUtils: f3bfe7f36e3d0b00552398e0c06bd2af515800dd
+  AppMetricaStorageUtils: 658dc0cd262a94c0a4ce450af11a50aef0809a82
+  AppMetricaSynchronization: d629fdefd72af0bb7768ae4d32fb107c42662811
   FBLazyVector: baf9d0492aa305444465c798e972f87e6a60dc69
-  Firebase: 99f203d3a114c6ba591f3b32263a9626e450af65
-  FirebaseABTesting: fae111fe5476bd9e249968d0c85cd036385404ba
-  FirebaseAnalytics: ef2970f65f3a2807e8f47a49cf3b8719d53e9fce
-  FirebaseAppCheck: 3cd5112c60c3b04e6207e41a864b6c3cb06f73ad
-  FirebaseAppCheckInterop: 2480ab50a070a6bc02e26e62733874361f017a11
-  FirebaseCore: f4428e22415ea3b3eca652c2098413dabf2a23a9
-  FirebaseCoreExtension: 3473a6ec16a91aee29fb75994a86c0220d2cddf3
-  FirebaseCoreInternal: e7bbaeb00ab73011298f35ed223aa7371e212948
-  FirebaseCrashlytics: cd1baeb80302ec5ea1012f732ab94df7d76f09f7
-  FirebaseInstallations: 047343aa91fd6a1ebfa3eb374ddecf36a8aaddfd
-  FirebaseMessaging: ed18fb50634e6e85b5d3e77e628c21e2c928cc53
-  FirebaseRemoteConfig: 684a4427fc0ce308cdb63f7b400e353809285b4e
-  FirebaseRemoteConfigInterop: a169873f4093b241eb5e27a4fbad91af36d64b8d
-  FirebaseSessions: dba7635960740ad77cc2f3387d90ff22a7942f82
-  FirebaseSharedSwift: 3d1e448b7202e36821a492941c84592d1308ea14
-  GoogleAppMeasurement: 57270ccc2b77472d7e85c4cbe45972564eff78bb
+  Firebase: 3c3a624c4eb42b091c32590a87678cfee193c9c5
+  FirebaseABTesting: ef75d7ea1fb735f22bafe0d0b3ecc13e093fe12a
+  FirebaseAnalytics: 2513f181a22ba7d5ba547ce0a65f82352cc8a0c9
+  FirebaseAppCheck: afe7e44c8a6b3f899957099973873697875a2cc4
+  FirebaseAppCheckInterop: d9b5acb52c1141697215d08f719c332ed4740d8e
+  FirebaseCore: 1b39aa6e67b4b4d5771045abf9c9a57a585ff1e7
+  FirebaseCoreExtension: dd75d774a2d9bc48a4e559c5b80b7c43e30d66dd
+  FirebaseCoreInternal: 26601b1134d192ef73e80c0c0110fb96477db687
+  FirebaseCrashlytics: 0752614319acf43e90df6210e7d8bcf644f5215f
+  FirebaseInstallations: 3b65e8f4faed02bad1abf5de40e8286c5b13073d
+  FirebaseMessaging: ff23938c6c1a1d0f5e22e915131d6e14c6a74b99
+  FirebaseRemoteConfig: f609dabaa5195c4b98475f5527cbfe2d06252e2d
+  FirebaseRemoteConfigInterop: 372ef310f177ee237dda0a695fe058848effb155
+  FirebaseSessions: 380475216987a33191364c241772d36b24e4e393
+  FirebaseSharedSwift: 3b009645c42263e13d7b320c3543f2938908ebe9
+  GoogleAppMeasurement: 937c97829050e8e83b17724cf873323270b26cb5
   GoogleDataTransport: aae35b7ea0c09004c3797d53c8c41f66f219d6a7
   GoogleUtilities: 00c88b9a86066ef77f0da2fab05f65d7768ed8e1
   hermes-engine: 0437e9839a87c1d737989c1116dd08492d271607
   HtmlToPdf: ec9d25cbf1ba0cedf6c05afe4edcfd3e63dcc21c
   InappbrowserNitro: e4e4ba49eb5e0cb1b6ed7ffe0224bfcaf5bd8d28
-  llama-rn: 1ac0a6063df0057d6ad39c56300c6f3f97bc947e
+  llama-rn: e4c793546113ee1247f32d2e0ae8b321be7bff60
   MMKVCore: 3d16ce9f7d411e135020915fde98a056859a1efa
   nanopb: fad817b59e0457d11a5dfbde799381cd727c1275
   NitroDeviceInfo: 2b461fd75ed6fdeba99d920fc1d88cbe8006d645
@@ -3576,7 +3538,7 @@ SPEC CHECKSUMS:
   NitroMmkv: 21968ae5bd91f4569b8a69b2e75357845dac2ca1
   NitroModules: 675efe9b98bac1359517fd33549c7191badebcbc
   NitroSound: 0179b5e66a465e303fb58d4d21db25215c22133a
-  op-sqlite: 801d96eacc60c4275cca4bbfeaa82c1ae26a3a04
+  op-sqlite: 123f8c93af12f5ead144112c460d5e7aa1c22d99
   OpenSSL-Universal: 9110d21982bb7e8b22a962b6db56a8aa805afde7
   PromisesObjC: f5707f49cb48b9636751c5b2e7d227e43fba9f47
   PromisesSwift: 9d77319bbe72ebf6d872900551f7eeba9bce2851
@@ -3627,7 +3589,7 @@ SPEC CHECKSUMS:
   react-native-menu: 2f87618b07c3ce5eeb0ef17d3ffee52e2575673b
   react-native-netinfo: c9fa0172bba6414449ea5b67fc92f2c99c20cb1d
   react-native-quick-base64: d141c938c88e6c2e6199d5f7c515fe8dc0c0120d
-  react-native-safe-area-context: 77b4164a2f78aba35dc07956dc448bea7f4bec7f
+  react-native-safe-area-context: c20a2b66c37a6fd0e6d448dbec5b6fe0cc53bb11
   react-native-slider: 04f5b66cb796c23d256c1a842fa801fe1768e2cd
   React-NativeModulesApple: 7dcb21dde521e4f5795447db38d0e5ed43cb8aac
   React-networking: 35e4b01a70356a5feccf1c4edb7aeb5c63e5cb3a
@@ -3668,12 +3630,12 @@ SPEC CHECKSUMS:
   RNCalendarEvents: 7e65eb4a94f53c1744d1e275f7fafcfaa619f7a3
   RNCClipboard: 26237d7fcfc6359e674655b02d03d6178d63d085
   RNDateTimePicker: 0e47a3a4b2c71c1625ff31d69c929e314c995fc1
-  RNFBAnalytics: f05e18f9ed262a66d00780f029c54ee75f63615f
-  RNFBApp: 0b6a22fb66b5eb9309d58a09fe732c4862d77927
-  RNFBAppCheck: 31ea1a4314c8606a9042e8084aa012fcdf823f14
-  RNFBCrashlytics: 13717d75f9238b081156efa2c18a84070a0e5aef
-  RNFBMessaging: d45ac79c980ce07de7ebbdaf422f728850a78968
-  RNFBRemoteConfig: 6f0497f067133ba59cb1028013b8da2482c67fde
+  RNFBAnalytics: 727b87044c2fcbf73b0ce2daa9530fb01a467ea6
+  RNFBApp: 9604b7b33c00b46981d471ecc3372c2adca65468
+  RNFBAppCheck: 23ddc5689965e9e78148f36538d803de5665ce87
+  RNFBCrashlytics: c03d2b42088a9ec25ee81c360c13fc0ebbadb0dd
+  RNFBMessaging: 97b91669d54650231caf9ce9586e487d9aada7ae
+  RNFBRemoteConfig: 458fc777d63aa1cdd846f325c7573dcfc5b94922
   RNGestureHandler: b40c9d33dc5cec2eea4e5ca83bffc8308fe916fa
   RNKeychain: 275ef633df968a177479fcdb2b5cec152af268da
   RNLocalize: 9fd075df3aaccb1b8a7039e805d36d121794ce86
@@ -3681,20 +3643,16 @@ SPEC CHECKSUMS:
   RNPermissions: 63a688f0b715732e2e7cdb7b465f596833853158
   RNPurchases: b5b781d0c2b67472f203e0aae59907a519d4369b
   RNReactNativeHapticFeedback: 50fb580f22705e3407d44d208fd113aab5f324bc
-  RNReanimated: 066bfc8c201f51f2176ff3d0a82ffb2f357a132d
+  RNReanimated: f219dbf93e54b1858a62e3e2dd7379e9ad3d9952
   RNReminders: e7bdf59616634b7ae180b18f6bf86dba531b0007
-  RNScreens: 4f8237da8f9f7aaac0f375bb61efe6011f5cd13b
+  RNScreens: cca7e1ec9184d91c7681160df11bdb7bf1ab0235
   RNSVG: 9fcdedc0159978b3a7bb25b3e1da4b0b4dd1b137
-  RNWorklets: c3a8a2118a0ba6bf46b285eb1c8ce568d8402e57
+  RNWorklets: ee6814ab289ae916049337d50d241baba955933a
   RNZipArchive: 071aee69059e0347cb7519c5354aa436b8a23e73
   SSZipArchive: c69881e8ac5521f0e622291387add5f60f30f3c4
-  VGSL: 0573c2b82b05aadcba4836398ce3778d271bfd13
-  VGSLFundamentals: 3a081684c1a5df5800bf88aca8a9bdff2c10cfd9
-  VGSLNetworking: 0ea8a335bc4f4eba3f6123ffe441cf1c08f267f2
-  VGSLUI: 249a16cccdb75f1a5a1733894d013bca76e27c5e
-  whisper-rn: 68f8cd0312d217aebb44b86dfd7c583fb81b3bc1
-  yandex-mobile-ads: 428117f1bb31b92c65a28dc33ca9f294a69b70b0
-  YandexMobileAds: 110d2a8906b7e09ff46d6d72a0abcfe7e087253a
+  whisper-rn: 2e0c586294fbc0c00e5ad4bbdbb8394c2fc902d0
+  yandex-mobile-ads: 0338956981fccce8200e11b57852f207d6809119
+  YandexMobileAds: 47d9d0ce6705e79e3801138e8c1d9898e4c79a51
   Yoga: 9e495ad6f457c4ff504a8328981496b5cf41dd7f
 
 PODFILE CHECKSUM: 1a2a16635328d2d3431b107a3b7b9f06c044e980

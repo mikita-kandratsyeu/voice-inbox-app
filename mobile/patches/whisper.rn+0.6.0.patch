@@ -1,0 +1,13 @@
+diff --git a/node_modules/whisper.rn/cpp/jsi/RNWhisperJSI.cpp b/node_modules/whisper.rn/cpp/jsi/RNWhisperJSI.cpp
+--- a/node_modules/whisper.rn/cpp/jsi/RNWhisperJSI.cpp
++++ b/node_modules/whisper.rn/cpp/jsi/RNWhisperJSI.cpp
+@@ -1170,7 +1170,8 @@ std::vector<SegmentData> readSegments(
+ 
+     segments.reserve(static_cast<size_t>(count - start));
+     for (int index = start; index < count; ++index) {
+-        std::string text = whisper_full_get_segment_text(context, index);
++        const char *textPtr = whisper_full_get_segment_text(context, index);
++        std::string text = textPtr != nullptr ? textPtr : "";
+         if (tdrzEnable && whisper_full_get_segment_speaker_turn_next(context, index)) {
+             text += " [SPEAKER_TURN]";
+         }

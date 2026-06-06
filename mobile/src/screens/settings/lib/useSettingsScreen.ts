@@ -319,7 +319,11 @@ export function useSettingsScreen() {
       }
       void releasePendingImportZip(pendingImportZipPath);
       setPendingImportZipPath(null);
-      navigation.navigate('ImportRecords', { records: result.records });
+      navigation.navigate('ImportRecords', {
+        records: result.records,
+        folders: result.folders,
+        legacyFolders: result.legacyFolders,
+      });
     },
     [navigation, pendingImportZipPath, releasePendingImportZip, t],
   );

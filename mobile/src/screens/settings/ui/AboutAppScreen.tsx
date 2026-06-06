@@ -32,6 +32,9 @@ const storeListingUrl = getStoreListingUrl();
 
 const LICENSE_KEY_EGG_TAPS = 8;
 const LICENSE_KEY_EGG_RESET_MS = 1400;
+const DIAGNOSTIC_LOGS_EGG_TAPS = 8;
+const DIAGNOSTIC_LOGS_EGG_RESET_MS = 1400;
+const DIAGNOSTIC_LOGS_STORE_DELAY_MS = 500;
 
 export const AboutAppScreen = () => {
   const { t } = useTranslation();
@@ -44,6 +47,11 @@ export const AboutAppScreen = () => {
   const [proLicenseModalVisible, setProLicenseModalVisible] = useState(false);
 
   const eggTapRef = useRef({ count: 0, timer: null as ReturnType<typeof setTimeout> | null });
+  const diagnosticLogsTapRef = useRef({
+    count: 0,
+    resetTimer: null as ReturnType<typeof setTimeout> | null,
+    storeTimer: null as ReturnType<typeof setTimeout> | null,
+  });
 
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
@@ -92,6 +100,47 @@ export const AboutAppScreen = () => {
       setProLicenseModalVisible(true);
     })();
   }, [isProActive]);
+
+  const handleVersionPress = useCallback(() => {
+    const st = diagnosticLogsTapRef.current;
+
+    if (st.resetTimer != null) {
+      clearTimeout(st.resetTimer);
+    }
+    if (st.storeTimer != null) {
+      clearTimeout(st.storeTimer);
+    }
+
+    st.count += 1;
+    st.resetTimer = setTimeout(() => {
+      st.count = 0;
+      st.resetTimer = null;
+      st.storeTimer = null;
+    }, DIAGNOSTIC_LOGS_EGG_RESET_MS);
+
+    if (storeListingUrl) {
+      st.storeTimer = setTimeout(() => {
+        void openStoreListing();
+      }, DIAGNOSTIC_LOGS_STORE_DELAY_MS);
+    }
+
+    if (st.count < DIAGNOSTIC_LOGS_EGG_TAPS) {
+      return;
+    }
+
+    st.count = 0;
+
+    if (st.resetTimer != null) {
+      clearTimeout(st.resetTimer);
+      st.resetTimer = null;
+    }
+    if (st.storeTimer != null) {
+      clearTimeout(st.storeTimer);
+      st.storeTimer = null;
+    }
+
+    navigation.navigate('DiagnosticLogs');
+  }, [navigation]);
 
   return (
     <View style={{ flex: 1, backgroundColor: color.background.secondary }}>
@@ -148,13 +197,7 @@ export const AboutAppScreen = () => {
               value={VERSION_DISPLAY}
               leftIcon={<Tag size={18} color={color.icon.muted} strokeWidth={1.8} />}
               showChevron={Boolean(storeListingUrl)}
-              onPress={
-                storeListingUrl
-                  ? () => {
-                      void openStoreListing();
-                    }
-                  : undefined
-              }
+              onPress={handleVersionPress}
               isFirst
             />
             {getWebsiteUrl().length > 0 && (

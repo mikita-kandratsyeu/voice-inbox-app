@@ -1,5 +1,6 @@
 import { useRecordStore } from '@/entities/record';
 
+import { WHISPER_RESTART_RESET_TIMEOUT_MS } from '../config/constants';
 import {
   getTranscriptionCheckpoint,
   saveTranscriptionCheckpoint,
@@ -118,6 +119,12 @@ let activeRecordId: string | null = null;
 let activeStop: (() => Promise<void>) | null = null;
 let abortInFlight: Promise<void> | null = null;
 let abortRecordId: string | null = null;
+const stopInFlightByRecordId = new Map<string, Promise<void>>();
+
+const wait = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 export function isTranscriptionBackgroundCancelled(recordId: string): boolean {
   return backgroundCancelledRecordIds.has(recordId);
@@ -154,6 +161,20 @@ export function registerActiveTranscription(recordId: string, stop: () => Promis
   setTranscriptionRuntimeState('transcribing', recordId);
 }
 
+export function rememberTranscriptionStopInFlight(
+  recordId: string,
+  stopPromise: Promise<void>,
+): void {
+  stopInFlightByRecordId.set(recordId, stopPromise);
+  void stopPromise
+    .catch(() => {})
+    .finally(() => {
+      if (stopInFlightByRecordId.get(recordId) === stopPromise) {
+        stopInFlightByRecordId.delete(recordId);
+      }
+    });
+}
+
 export function unregisterActiveTranscription(recordId: string): void {
   if (activeRecordId === recordId) {
     activeRecordId = null;
@@ -172,6 +193,16 @@ export async function resetTranscriptionRuntimeForRestart(recordId: string): Pro
   setTranscriptionRuntimeState('resetting', recordId);
   if (abortInFlight && abortRecordId === recordId) {
     await abortInFlight.catch(() => {});
+  }
+  const stopInFlight = stopInFlightByRecordId.get(recordId);
+  if (stopInFlight) {
+    const stopped = await Promise.race([
+      stopInFlight.then(() => true).catch(() => true),
+      wait(WHISPER_RESTART_RESET_TIMEOUT_MS).then(() => false),
+    ]);
+    if (!stopped) {
+      runtimeSnapshot.nativeBusyTimeouts += 1;
+    }
   }
 
   const shouldStopActive = activeRecordId === recordId;

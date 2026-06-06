@@ -11,6 +11,8 @@ import java.io.File
 import java.io.RandomAccessFile
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.math.min
+import kotlin.math.roundToLong
 
 class AudioConverterModule(reactContext: ReactApplicationContext) :
   ReactContextBaseJavaModule(reactContext) {
@@ -134,5 +136,145 @@ class AudioConverterModule(reactContext: ReactApplicationContext) :
     } catch (e: Exception) {
       promise.reject("E_CONVERT", e.message ?: "Conversion failed", e)
     }
+  }
+
+  @ReactMethod
+  fun createWavChunk(
+    inputPath: String,
+    outputPath: String,
+    startMs: Double,
+    durationMs: Double,
+    promise: Promise
+  ) {
+    try {
+      val input = if (inputPath.startsWith("file://")) inputPath.removePrefix("file://") else inputPath
+      val output = if (outputPath.startsWith("file://")) outputPath.removePrefix("file://") else outputPath
+
+      val outFile = File(output)
+      outFile.parentFile?.mkdirs()
+
+      RandomAccessFile(input, "r").use { inputFile ->
+        val riffHeader = ByteArray(12)
+        if (inputFile.read(riffHeader) != riffHeader.size ||
+          String(riffHeader, 0, 4, Charsets.US_ASCII) != "RIFF" ||
+          String(riffHeader, 8, 4, Charsets.US_ASCII) != "WAVE"
+        ) {
+          promise.reject("E_WAV_CHUNK", "Unsupported WAV header")
+          return
+        }
+
+        var audioFormat = 0
+        var channelCount = 0
+        var sampleRate = 0
+        var bitsPerSample = 0
+        var dataOffset = 0L
+        var dataSize = 0L
+
+        chunkLoop@ while (inputFile.filePointer + 8 <= inputFile.length()) {
+          val chunkHeader = ByteArray(8)
+          if (inputFile.read(chunkHeader) != chunkHeader.size) break
+          val chunkId = String(chunkHeader, 0, 4, Charsets.US_ASCII)
+          val chunkSize = readUInt32LE(chunkHeader, 4).toLong()
+          val chunkDataOffset = inputFile.filePointer
+
+          when (chunkId) {
+            "fmt " -> {
+              val fmt = ByteArray(chunkSize.toInt())
+              if (inputFile.read(fmt) != fmt.size || fmt.size < 16) {
+                promise.reject("E_WAV_CHUNK", "Invalid WAV fmt chunk")
+                return
+              }
+              audioFormat = readUInt16LE(fmt, 0)
+              channelCount = readUInt16LE(fmt, 2)
+              sampleRate = readUInt32LE(fmt, 4)
+              bitsPerSample = readUInt16LE(fmt, 14)
+              if (chunkSize % 2 != 0L) {
+                inputFile.seek(chunkDataOffset + chunkSize + 1)
+              }
+            }
+            "data" -> {
+              dataOffset = chunkDataOffset
+              dataSize = chunkSize
+              break@chunkLoop
+            }
+            else -> {
+              inputFile.seek(chunkDataOffset + chunkSize + (chunkSize % 2))
+            }
+          }
+        }
+
+        if (audioFormat != 1 || channelCount <= 0 || sampleRate <= 0 || bitsPerSample <= 0 || dataOffset <= 0) {
+          promise.reject("E_WAV_CHUNK", "Only PCM WAV chunks are supported")
+          return
+        }
+
+        val bytesPerFrame = channelCount * (bitsPerSample / 8)
+        val startFrame = (startMs * sampleRate / 1000.0).roundToLong()
+        val requestedFrames = (durationMs * sampleRate / 1000.0).roundToLong()
+        val availableFrames = dataSize / bytesPerFrame
+        if (startFrame >= availableFrames || requestedFrames <= 0) {
+          promise.reject("E_WAV_CHUNK", "Chunk is outside WAV data")
+          return
+        }
+
+        val framesToCopy = min(requestedFrames, availableFrames - startFrame)
+        val bytesToCopy = framesToCopy * bytesPerFrame
+        val readOffset = dataOffset + startFrame * bytesPerFrame
+
+        RandomAccessFile(outFile, "rw").use { outputFile ->
+          outputFile.setLength(0)
+          writeWavHeader(outputFile, sampleRate, channelCount, bitsPerSample, bytesToCopy.toInt())
+
+          inputFile.seek(readOffset)
+          val buffer = ByteArray(64 * 1024)
+          var remaining = bytesToCopy
+          while (remaining > 0) {
+            val read = inputFile.read(buffer, 0, min(buffer.size.toLong(), remaining).toInt())
+            if (read <= 0) break
+            outputFile.write(buffer, 0, read)
+            remaining -= read.toLong()
+          }
+        }
+      }
+
+      promise.resolve(output)
+    } catch (e: Exception) {
+      promise.reject("E_WAV_CHUNK", e.message ?: "Failed to create WAV chunk", e)
+    }
+  }
+
+  private fun readUInt16LE(bytes: ByteArray, offset: Int): Int =
+    (bytes[offset].toInt() and 0xff) or ((bytes[offset + 1].toInt() and 0xff) shl 8)
+
+  private fun readUInt32LE(bytes: ByteArray, offset: Int): Int =
+    (bytes[offset].toInt() and 0xff) or
+      ((bytes[offset + 1].toInt() and 0xff) shl 8) or
+      ((bytes[offset + 2].toInt() and 0xff) shl 16) or
+      ((bytes[offset + 3].toInt() and 0xff) shl 24)
+
+  private fun writeWavHeader(
+    raf: RandomAccessFile,
+    sampleRate: Int,
+    channelCount: Int,
+    bitsPerSample: Int,
+    dataSize: Int
+  ) {
+    val byteRate = sampleRate * channelCount * (bitsPerSample / 8)
+    val blockAlign = channelCount * (bitsPerSample / 8)
+    val chunkSize = 36 + dataSize
+
+    raf.write("RIFF".toByteArray(Charsets.US_ASCII))
+    raf.write(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(chunkSize).array())
+    raf.write("WAVE".toByteArray(Charsets.US_ASCII))
+    raf.write("fmt ".toByteArray(Charsets.US_ASCII))
+    raf.write(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(16).array())
+    raf.write(ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).putShort(1).array())
+    raf.write(ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).putShort(channelCount.toShort()).array())
+    raf.write(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(sampleRate).array())
+    raf.write(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(byteRate).array())
+    raf.write(ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).putShort(blockAlign.toShort()).array())
+    raf.write(ByteBuffer.allocate(2).order(ByteOrder.LITTLE_ENDIAN).putShort(bitsPerSample.toShort()).array())
+    raf.write("data".toByteArray(Charsets.US_ASCII))
+    raf.write(ByteBuffer.allocate(4).order(ByteOrder.LITTLE_ENDIAN).putInt(dataSize).array())
   }
 }

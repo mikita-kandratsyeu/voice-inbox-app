@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { Text, View } from 'react-native';
 
 import type { TranscriptSegment } from '@/entities/record';
 import type { Colors } from '@/shared/config';
@@ -48,31 +48,9 @@ export const TranscriptHighlight = ({
     () => findActive(segments, currentPositionMs),
     [segments, currentPositionMs],
   );
-  const scrollRef = useRef<ScrollView>(null);
-  const segmentYRef = useRef<Record<string, number>>({});
-
-  const handleSegmentLayout = useCallback((segmentId: string, y: number) => {
-    segmentYRef.current[segmentId] = y;
-  }, []);
-
-  useEffect(() => {
-    if (!active?.segmentId) return;
-    const y = segmentYRef.current[active.segmentId];
-    if (typeof y !== 'number') return;
-
-    scrollRef.current?.scrollTo({
-      y: Math.max(0, y - 80),
-      animated: true,
-    });
-  }, [active?.segmentId]);
 
   return (
-    <ScrollView
-      ref={scrollRef}
-      style={{ maxHeight: 380 }}
-      contentContainerStyle={{ gap: 12, padding: 16 }}
-      showsVerticalScrollIndicator={false}
-    >
+    <View style={{ gap: 12 }}>
       {segments.map((seg) => {
         const isActiveSegment = active?.segmentId === seg.id;
         const hasTokens = seg.tokens && seg.tokens.length > 0;
@@ -80,7 +58,6 @@ export const TranscriptHighlight = ({
         return (
           <View
             key={seg.id}
-            onLayout={(e) => handleSegmentLayout(seg.id, e.nativeEvent.layout.y)}
             style={{
               flexDirection: 'row',
               alignItems: 'flex-start',
@@ -147,6 +124,6 @@ export const TranscriptHighlight = ({
           </View>
         );
       })}
-    </ScrollView>
+    </View>
   );
 };
