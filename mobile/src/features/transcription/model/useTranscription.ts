@@ -317,6 +317,14 @@ export const useTranscription = () => {
         }) => {
           const transcribeHandle = transcribeAudio({
             context,
+            recycleContext: async () => {
+              const reset = await resetWhisperContext();
+              rememberWhisperResetResult(reset);
+              if (!reset) {
+                throw new Error('whisper_context_recycle_failed');
+              }
+              return getWhisperContext(selectedWhisperModel, selectedWhisperModelFormat);
+            },
             audioPath: transcribeInputPath,
             durationMs: record.durationMs ?? 0,
             language,

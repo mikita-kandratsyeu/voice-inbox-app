@@ -25,9 +25,11 @@ const DEFAULT_CHUNK_PROFILE: TranscriptionChunkProfile = {
 };
 
 const PROMPT_TAIL_LENGTH = 200;
+const LONG_TRANSCRIPTION_CONTEXT_RECYCLE_CHUNKS = 12;
 
 export type TranscribeAudioOptions = {
   context: WhisperContext;
+  recycleContext?: () => Promise<WhisperContext>;
   audioPath: string;
   durationMs: number;
   language?: string;
@@ -131,6 +133,7 @@ const resolveChunkTimestampOffsetMs = (
 export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudioHandle => {
   const {
     context,
+    recycleContext,
     audioPath,
     durationMs,
     language = 'auto',
@@ -182,8 +185,14 @@ export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudi
         });
       }
 
+      let currentContext = context;
       return transcribeLong({
-        context,
+        getContext: () => currentContext,
+        recycleContext: recycleContext
+          ? async () => {
+              currentContext = await recycleContext();
+            }
+          : undefined,
         audioPath,
         language,
         totalDurationSec: durationMs / 1000,
@@ -260,7 +269,8 @@ const transcribeShort = async ({
 };
 
 type LongOptions = {
-  context: WhisperContext;
+  getContext: () => WhisperContext;
+  recycleContext?: () => Promise<void>;
   audioPath: string;
   language: string;
   totalDurationSec: number;
@@ -282,7 +292,8 @@ type LongOptions = {
 };
 
 const transcribeLong = async ({
-  context,
+  getContext,
+  recycleContext,
   audioPath,
   language,
   totalDurationSec,
@@ -325,7 +336,7 @@ const transcribeLong = async ({
     beginWhisperNativeWork();
     let raw: unknown;
     try {
-      const { stop: chunkStop, promise: rawPromise } = context.transcribe(audioPath, {
+      const { stop: chunkStop, promise: rawPromise } = getContext().transcribe(audioPath, {
         language,
         prompt,
         offset: chunk.offsetMs,
@@ -367,6 +378,14 @@ const transcribeLong = async ({
       segments: allSegments,
     });
     onProgress?.(i + 1, total);
+
+    if (
+      recycleContext &&
+      i + 1 < chunks.length &&
+      (i + 1 - startChunkIndex) % LONG_TRANSCRIPTION_CONTEXT_RECYCLE_CHUNKS === 0
+    ) {
+      await recycleContext();
+    }
 
     await new Promise<void>((resolve) => setTimeout(resolve, 200));
   }
