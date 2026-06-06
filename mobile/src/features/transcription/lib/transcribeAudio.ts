@@ -3,7 +3,8 @@ import type { WhisperContext } from 'whisper.rn';
 
 import type { TranscriptSegment, WordToken } from '@/entities/record';
 import type { AudioChunk } from '@/shared/lib/audio';
-import { splitAudioIntoChunks } from '@/shared/lib/audio';
+import { createWavChunk, splitAudioIntoChunks } from '@/shared/lib/audio';
+import { NitroFS } from '@/shared/lib/fs';
 import { isArray, isRecord, isString } from '@/shared/lib/type-guards';
 
 import { TranscriptionError } from './transcriptionErrors';
@@ -110,25 +111,6 @@ const mapSegments = (
     text: (seg?.text ?? '').trim(),
     tokens: mapTokens(seg?.tokens, chunkOffsetMs),
   }));
-
-const resolveChunkTimestampOffsetMs = (
-  result: WhisperTranscribeResult,
-  chunkOffsetMs: number,
-): number => {
-  if (chunkOffsetMs <= 0) return 0;
-  if (!result.segments || result.segments.length === 0) return chunkOffsetMs;
-
-  const segmentStartMs = result.segments
-    .map((seg) => Number(seg?.t0 ?? 0) * CENTISECONDS_TO_MS)
-    .filter((value) => Number.isFinite(value));
-
-  if (segmentStartMs.length === 0) return chunkOffsetMs;
-
-  const minStartMs = Math.min(...segmentStartMs);
-  const ABSOLUTE_TS_TOLERANCE_MS = 1500;
-
-  return minStartMs >= chunkOffsetMs - ABSOLUTE_TS_TOLERANCE_MS ? 0 : chunkOffsetMs;
-};
 
 export const transcribeAudio = (options: TranscribeAudioOptions): TranscribeAudioHandle => {
   const {
@@ -335,12 +317,24 @@ const transcribeLong = async ({
 
     beginWhisperNativeWork();
     let raw: unknown;
+    const chunkAudioPath = `${audioPath}.chunk-${chunk.index}.wav`;
     try {
-      const { stop: chunkStop, promise: rawPromise } = getContext().transcribe(audioPath, {
+      const chunkPath = await createWavChunk(
+        audioPath,
+        chunkAudioPath,
+        chunk.offsetMs,
+        chunk.durationMs,
+      );
+      if (!chunkPath) {
+        throw new Error('wav_chunk_create_failed');
+      }
+      if (cancelled() || !canRunWhisperGpuWork()) {
+        throw new TranscriptionError('native_abort');
+      }
+
+      const { stop: chunkStop, promise: rawPromise } = getContext().transcribe(chunkPath, {
         language,
         prompt,
-        offset: chunk.offsetMs,
-        duration: chunk.durationMs,
       });
 
       setStop(chunkStop);
@@ -360,10 +354,11 @@ const transcribeLong = async ({
       }
     } finally {
       endWhisperNativeWork();
+      void NitroFS.unlink(chunkAudioPath).catch(() => {});
     }
 
     const result = normalizeResult(raw);
-    const timestampOffsetMs = resolveChunkTimestampOffsetMs(result, chunk.offsetMs);
+    const timestampOffsetMs = chunk.offsetMs;
     const chunkSegments = mapSegments(result, segmentOffset, timestampOffsetMs);
     allSegments.push(...chunkSegments);
     segmentOffset += chunkSegments.length;
