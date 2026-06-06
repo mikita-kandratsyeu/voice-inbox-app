@@ -53,6 +53,7 @@ import {
   persistTranscriptionCheckpointForBackground,
   registerActiveTranscription,
   rememberTranscriptionCheckpointSnapshot,
+  rememberTranscriptionStopInFlight,
   rememberWhisperResetResult,
   resetTranscriptionRuntimeForRestart,
   setTranscriptionRuntimeState,
@@ -158,13 +159,7 @@ export const useTranscription = () => {
       }
 
       if (shouldResetBeforeStart) {
-        updateAiStatus(
-          record.id,
-          'loading_model',
-          record.transcriptProgress ?? 0,
-          i18n.t('transcription.loadingModel'),
-          null,
-        );
+        updateAiStatus(record.id, 'loading_model', 0, i18n.t('transcription.loadingModel'), null);
         try {
           const needsFullReset = shouldFullyResetWhisperBeforeStart(record);
           await resetTranscriptionRuntimeForRestart(record.id);
@@ -529,6 +524,7 @@ export const useTranscription = () => {
         updateAiStatus(recordId, 'cancelling', existing?.transcriptProgress ?? 0);
         setTranscriptionRuntimeState('stopping', recordId);
         const stopTask = stop();
+        rememberTranscriptionStopInFlight(recordId, stopTask);
         void (async () => {
           try {
             const finished = await Promise.race([
@@ -542,7 +538,12 @@ export const useTranscription = () => {
           } catch {
             pendingWhisperResetRecordIds.add(recordId);
           } finally {
-            updateAiStatus(recordId, nextStatus, hasTranscript ? 100 : 0);
+            if (
+              !hasActiveTranscriptionJob(recordId) &&
+              getActiveTranscriptionRecordId() !== recordId
+            ) {
+              updateAiStatus(recordId, nextStatus, hasTranscript ? 100 : 0);
+            }
           }
         })();
       } else {
