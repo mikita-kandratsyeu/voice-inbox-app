@@ -1,5 +1,6 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
+import type { Folder } from '@/entities/folder';
 import type { VoiceRecord } from '@/entities/record';
 
 export type BottomTabParamList = {
@@ -48,5 +49,5 @@ export type SettingsStackParamList = {
   Support: undefined;
   AppLockSetup: undefined;
   Notifications: undefined;
-  ImportRecords: { records: VoiceRecord[] };
+  ImportRecords: { records: VoiceRecord[]; folders?: Folder[]; legacyFolders?: Folder[] };
 };

@@ -15,6 +15,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { SettingsStackParamList } from '@/app/navigation/types';
+import type { Folder } from '@/entities/folder';
+import { useFolderStore } from '@/entities/folder';
+import { folderRepository } from '@/entities/folder/model/repository';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
 import { recordRepository } from '@/entities/record/model/repository';
@@ -49,6 +52,13 @@ type ImportRecordRowProps = {
   language: string;
   /** When set, shown after the bullet instead of `item.duration` (e.g. Trash replace row). */
   detailSuffix?: string;
+};
+
+type ImportFolderRowProps = {
+  item: Folder;
+  isSelected: boolean;
+  onToggle: (id: string) => void;
+  color: Colors;
 };
 
 const ImportRecordRow = memo(function ImportRecordRow({
@@ -114,13 +124,100 @@ const ImportRecordRow = memo(function ImportRecordRow({
   );
 });
 
+const ImportFolderRow = memo(function ImportFolderRow({
+  item,
+  isSelected,
+  onToggle,
+  color,
+}: ImportFolderRowProps) {
+  const folderColor = item.color?.trim() || color.accent.primary;
+
+  return (
+    <TouchableOpacity
+      onPress={() => onToggle(item.id)}
+      activeOpacity={0.7}
+      accessibilityRole="checkbox"
+      accessibilityLabel={item.name}
+      accessibilityState={{ checked: isSelected }}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        minHeight: 52,
+        backgroundColor: color.background.card,
+      }}
+    >
+      <View style={{ marginRight: 12 }}>
+        {isSelected ? (
+          <View
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              backgroundColor: color.accent.primary,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Check size={14} color="#ffffff" strokeWidth={2.5} />
+          </View>
+        ) : (
+          <View
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 12,
+              borderWidth: 2,
+              borderColor: color.border.default,
+            }}
+          />
+        )}
+      </View>
+      <View
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: 8,
+          backgroundColor: `${folderColor}20`,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginRight: 12,
+        }}
+      >
+        <View
+          style={{
+            width: 12,
+            height: 12,
+            borderRadius: 6,
+            backgroundColor: folderColor,
+          }}
+        />
+      </View>
+      <Text style={{ flex: 1, fontSize: 16, color: color.text.primary }} numberOfLines={1}>
+        {item.name}
+      </Text>
+    </TouchableOpacity>
+  );
+});
+
+async function restoreFolder(folder: Folder): Promise<void> {
+  await folderRepository.insert(folder);
+  await folderRepository.update(folder.id, {
+    name: folder.name,
+    color: folder.color,
+    icon: folder.icon,
+    sortOrder: folder.sortOrder,
+  });
+}
+
 export const ImportRecordsScreen = () => {
   const { t, i18n } = useTranslation();
   const color = useColors();
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute<ImportRecordsRouteProp>();
-  const { records: fileRecords } = route.params;
+  const { records: fileRecords, folders: archiveFolders = [], legacyFolders = [] } = route.params;
 
   const existingRecords = useRecordStore((s) => s.records);
   const addRecord = useRecordStore((s) => s.addRecord);
@@ -177,11 +274,27 @@ export const ImportRecordsScreen = () => {
   }, [fileRecords, dbRecordIds, existingRecords]);
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const archiveFolderIdsKey = useMemo(
+    () =>
+      archiveFolders
+        .map((f) => f.id)
+        .slice()
+        .sort()
+        .join('|'),
+    [archiveFolders],
+  );
+  const [selectedFolderIds, setSelectedFolderIds] = useState<Set<string>>(
+    () => new Set(archiveFolders.map((f) => f.id)),
+  );
 
   useEffect(() => {
     if (!dbRecordIds) return;
     setSelectedIds(new Set(importable.map((r) => r.id)));
   }, [dbRecordIds, importable]);
+
+  useEffect(() => {
+    setSelectedFolderIds(new Set(archiveFolders.map((f) => f.id)));
+  }, [archiveFolderIdsKey, archiveFolders]);
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState<{ current: number; total: number }>({
     current: 0,
@@ -220,7 +333,20 @@ export const ImportRecordsScreen = () => {
     });
   }, []);
 
-  const selectedCount = selectedIds.size;
+  const toggleFolder = useCallback((id: string) => {
+    setSelectedFolderIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
+  const selectedRecordCount = selectedIds.size;
+  const selectedTotalCount = selectedRecordCount + selectedFolderIds.size;
 
   const allImportableSelected =
     importable.length > 0 && importable.every((r) => selectedIds.has(r.id));
@@ -234,13 +360,34 @@ export const ImportRecordsScreen = () => {
     const fromImportable = importable.filter((r) => selectedIds.has(r.id));
     const fromTrash = duplicatesTrash.filter((r) => selectedIds.has(r.id));
     const toProcess = [...fromImportable, ...fromTrash];
-    if (toProcess.length === 0) return;
+    const foldersToRestore = archiveFolders.filter((f) => selectedFolderIds.has(f.id));
+    if (toProcess.length === 0 && foldersToRestore.length === 0) return;
 
     setIsImporting(true);
     setImportProgress({ current: 0, total: toProcess.length });
     try {
+      for (const folder of [...legacyFolders, ...foldersToRestore]) {
+        try {
+          await restoreFolder(folder);
+        } catch {
+          if (__DEV__) {
+            console.warn('[ImportRecordsScreen] failed to restore folder', folder);
+          }
+        }
+      }
+      if (legacyFolders.length > 0 || foldersToRestore.length > 0) {
+        await useFolderStore.getState().load();
+      }
+
+      const restoredFolderIds = new Set(
+        [...legacyFolders, ...foldersToRestore].map((folder) => folder.id),
+      );
+
       for (let i = 0; i < toProcess.length; i += 1) {
-        const record = toProcess[i]!;
+        const record = { ...toProcess[i]! };
+        if (record.folderId && !restoredFolderIds.has(record.folderId)) {
+          record.folderId = null;
+        }
         if (trashIdsForReplace.has(record.id)) {
           const incomingAudio = record.audioPath?.trim();
           const trashedAudio = await recordRepository.peekAudioPathById(record.id);
@@ -270,18 +417,21 @@ export const ImportRecordsScreen = () => {
   }, [
     addRecord,
     adsAllowed,
+    archiveFolders,
     duplicatesTrash,
     importable,
+    legacyFolders,
     loadRecords,
     navigation,
     purgeRecordPermanently,
+    selectedFolderIds,
     selectedIds,
     t,
     trashIdsForReplace,
   ]);
 
   const handleImportPress = useCallback(() => {
-    if (selectedCount === 0) return;
+    if (selectedTotalCount === 0) return;
     const trashPicked = duplicatesTrash.filter((r) => selectedIds.has(r.id));
     if (trashPicked.length > 0) {
       Alert.alert(
@@ -300,7 +450,7 @@ export const ImportRecordsScreen = () => {
       return;
     }
     void performImport();
-  }, [duplicatesTrash, performImport, selectedCount, selectedIds, t]);
+  }, [duplicatesTrash, performImport, selectedIds, selectedTotalCount, t]);
 
   const contentMaxWidth = useTabletContentMaxWidth();
   const { width: windowWidth } = useWindowDimensions();
@@ -313,7 +463,8 @@ export const ImportRecordsScreen = () => {
         title={t('importExport.importSelectTitle')}
         onBack={() => navigation.goBack()}
         rightSlot={
-          dbRecordIds !== null && (importable.length > 0 || duplicatesTrash.length > 0) ? (
+          dbRecordIds !== null &&
+          (importable.length > 0 || duplicatesTrash.length > 0 || archiveFolders.length > 0) ? (
             <HeaderIconButton
               iconOnly
               variant="icon"
@@ -321,7 +472,7 @@ export const ImportRecordsScreen = () => {
               icon={<Check size={22} color={color.accent.primary} strokeWidth={2.5} />}
               color={color}
               onPress={handleImportPress}
-              disabled={selectedCount === 0 || isImporting}
+              disabled={selectedTotalCount === 0 || isImporting}
             />
           ) : null
         }
@@ -368,6 +519,50 @@ export const ImportRecordsScreen = () => {
                 inTrash: duplicatesTrash.length,
               })}
             </Text>
+          )}
+          {dbRecordIds !== null && archiveFolders.length > 0 && (
+            <View style={{ marginBottom: 24 }}>
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: '600',
+                  textTransform: 'uppercase',
+                  letterSpacing: 1,
+                  color: color.text.secondary,
+                  marginBottom: 8,
+                  paddingHorizontal: 4,
+                }}
+              >
+                {t('importExport.selectFolders')}
+              </Text>
+              <View
+                style={{
+                  borderRadius: 16,
+                  overflow: 'hidden',
+                  borderWidth: 1,
+                  borderColor: color.border.default,
+                  backgroundColor: color.background.card,
+                }}
+              >
+                {archiveFolders.map((item, index) => (
+                  <View
+                    key={item.id}
+                    style={
+                      index < archiveFolders.length - 1
+                        ? { borderBottomWidth: 1, borderBottomColor: color.border.default }
+                        : undefined
+                    }
+                  >
+                    <ImportFolderRow
+                      item={item}
+                      isSelected={selectedFolderIds.has(item.id)}
+                      onToggle={toggleFolder}
+                      color={color}
+                    />
+                  </View>
+                ))}
+              </View>
+            </View>
           )}
           {dbRecordIds !== null && importable.length > 0 && (
             <>
@@ -423,7 +618,8 @@ export const ImportRecordsScreen = () => {
                       flex: 1,
                       paddingVertical: 10,
                       paddingHorizontal: 16,
-                      backgroundColor: selectedCount === 0 ? color.accent.primary : 'transparent',
+                      backgroundColor:
+                        selectedRecordCount === 0 ? color.accent.primary : 'transparent',
                       borderRadius: 8,
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -433,7 +629,8 @@ export const ImportRecordsScreen = () => {
                       style={{
                         fontSize: 15,
                         fontWeight: '600',
-                        color: selectedCount === 0 ? color.icon.onAccent : color.text.secondary,
+                        color:
+                          selectedRecordCount === 0 ? color.icon.onAccent : color.text.secondary,
                       }}
                     >
                       {t('importExport.deselectAll')}
@@ -592,7 +789,8 @@ export const ImportRecordsScreen = () => {
           {dbRecordIds !== null &&
             importable.length === 0 &&
             duplicatesActive.length === 0 &&
-            duplicatesTrash.length === 0 && (
+            duplicatesTrash.length === 0 &&
+            archiveFolders.length === 0 && (
               <View style={{ flex: 1, justifyContent: 'center', paddingVertical: 48 }}>
                 <Text
                   style={{

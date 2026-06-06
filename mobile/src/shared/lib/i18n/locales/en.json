@@ -1631,6 +1631,7 @@
     "replaceTrashMessage_one": "You selected 1 note that is still in Trash. It’ll be deleted permanently, then we’ll add the version from your file. You can’t undo this.",
     "replaceTrashMessage_other": "You selected {{ count }} notes that are still in Trash. They’ll be deleted permanently, then we’ll add the versions from your file. You can’t undo this.",
     "replaceTrashConfirm": "Replace and import",
+    "selectFolders": "Folders",
     "selectRecords": "Notes",
     "selectAll": "Select all",
     "deselectAll": "Deselect all",
