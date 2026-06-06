@@ -1,8 +1,24 @@
 import { MenuView } from '@react-native-menu/menu';
-import { Eye, Languages, Pencil, RefreshCw, Trash2, Undo2 } from 'lucide-react-native';
+import {
+  AlignLeft,
+  ChevronDown,
+  Eye,
+  Languages,
+  Pencil,
+  RefreshCw,
+  Trash2,
+  Undo2,
+} from 'lucide-react-native';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ScrollView, Text, View } from 'react-native';
+import { LayoutAnimation, Pressable, ScrollView, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  FadeIn,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import type { TranscriptSegment } from '@/entities/record';
 import {
@@ -15,6 +31,7 @@ import { TranscriptHighlight } from '@/features/transcript-highlight';
 import { useTranscriptionBlockedForRecord } from '@/features/transcription';
 import type { Colors } from '@/shared/config';
 import { useAppTheme } from '@/shared/config';
+import { hapticSelection } from '@/shared/lib';
 import { Button, RecordVoiceIcon, TabEmptyState } from '@/shared/ui';
 
 type TranscriptTabProps = {
@@ -110,6 +127,8 @@ export const TranscriptTab = ({
   const theme = useAppTheme();
   const isDark = theme === 'dark';
   const [viewMode, setViewMode] = useState<'original' | 'translated'>('original');
+  const [transcriptExpanded, setTranscriptExpanded] = useState(true);
+  const chevronRotation = useSharedValue(0);
   const hasTranslation = Boolean(translatedTranscript?.trim());
 
   useEffect(() => {
@@ -121,6 +140,17 @@ export const TranscriptTab = ({
       setViewMode('original');
     }
   }, [hasTranslation]);
+
+  useEffect(() => {
+    chevronRotation.value = withTiming(transcriptExpanded ? 0 : -90, {
+      duration: 120,
+      easing: transcriptExpanded ? Easing.out(Easing.cubic) : Easing.in(Easing.cubic),
+    });
+  }, [chevronRotation, transcriptExpanded]);
+
+  const chevronAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ rotate: `${chevronRotation.value}deg` }],
+  }));
 
   const selectedWhisperModel = useSettingsStore((s) => s.selectedWhisperModel);
   const selectedWhisperModelFormat = useSettingsStore((s) => s.selectedWhisperModelFormat);
@@ -307,63 +337,114 @@ export const TranscriptTab = ({
           />
         )}
       </ScrollView>
-      {showTranslation ? (
-        <View className="px-4 pb-4">
-          <View
-            className="rounded-2xl p-4"
-            style={{
-              backgroundColor: color.background.secondary,
-              borderWidth: 1,
-              borderColor: color.border.default,
-            }}
-          >
-            {translatedParagraphs.map((paragraph, idx) => (
-              <Text
-                key={`${idx}-${paragraph.slice(0, 18)}`}
-                className="text-[15px] leading-7"
-                style={{
-                  color: color.text.primary,
-                  marginBottom: idx === translatedParagraphs.length - 1 ? 0 : 14,
-                }}
-                selectable
-              >
-                {paragraph}
+      <View className="px-4 pb-4">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: transcriptExpanded }}
+          accessibilityLabel={
+            transcriptExpanded
+              ? t('recordingDetail.transcriptCollapseA11y')
+              : t('recordingDetail.transcriptExpandA11y')
+          }
+          accessibilityHint={t('recordingDetail.transcriptSectionA11y', { count: segments.length })}
+          onPress={() => {
+            hapticSelection();
+            setTranscriptExpanded((v) => {
+              if (!v) {
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+              }
+              return !v;
+            });
+          }}
+          className="flex-row items-center justify-between gap-3 py-2 active:opacity-80"
+        >
+          <View className="min-w-0 flex-1 flex-row items-center gap-2" accessible={false}>
+            <AlignLeft size={18} color={color.icon.muted} strokeWidth={2} />
+            <View className="min-w-0 flex-1 gap-0.5">
+              <Text className="text-sm font-medium" style={{ color: color.text.primary }}>
+                {hasAudio ? t('recordingDetail.transcript') : t('recordingDetail.text')}
               </Text>
-            ))}
-          </View>
-        </View>
-      ) : hasAudio ? (
-        <TranscriptHighlight
-          segments={segments}
-          currentPositionMs={currentPositionMs}
-          color={color}
-        />
-      ) : (
-        <View className="px-4 pb-4">
-          <View
-            className="rounded-2xl p-4"
-            style={{
-              backgroundColor: color.background.secondary,
-              borderWidth: 1,
-              borderColor: color.border.default,
-            }}
-          >
-            {originalTextParagraphs.map((paragraph, idx) => (
-              <Text
-                key={`${idx}-${paragraph.slice(0, 18)}`}
-                className="text-[15px] leading-7"
-                style={{
-                  color: color.text.primary,
-                  marginBottom: idx === originalTextParagraphs.length - 1 ? 0 : 14,
-                }}
-                selectable
-              >
-                {paragraph}
+              <Text className="text-xs" style={{ color: color.text.secondary }}>
+                {t('recordingDetail.transcriptSegmentCount', { count: segments.length })}
               </Text>
-            ))}
+            </View>
           </View>
-        </View>
-      )}
+          <Animated.View
+            style={[
+              chevronAnimatedStyle,
+              {
+                width: 28,
+                height: 28,
+                flexShrink: 0,
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+            ]}
+          >
+            <ChevronDown size={16} color={color.text.secondary} strokeWidth={2} />
+          </Animated.View>
+        </Pressable>
+        {transcriptExpanded ? (
+          <Animated.View
+            entering={FadeIn.duration(200).easing(Easing.out(Easing.cubic))}
+            className="pt-1"
+          >
+            {showTranslation ? (
+              <View
+                className="rounded-2xl p-4"
+                style={{
+                  backgroundColor: color.background.secondary,
+                  borderWidth: 1,
+                  borderColor: color.border.default,
+                }}
+              >
+                {translatedParagraphs.map((paragraph, idx) => (
+                  <Text
+                    key={`${idx}-${paragraph.slice(0, 18)}`}
+                    className="text-[15px] leading-7"
+                    style={{
+                      color: color.text.primary,
+                      marginBottom: idx === translatedParagraphs.length - 1 ? 0 : 14,
+                    }}
+                    selectable
+                  >
+                    {paragraph}
+                  </Text>
+                ))}
+              </View>
+            ) : hasAudio ? (
+              <TranscriptHighlight
+                segments={segments}
+                currentPositionMs={currentPositionMs}
+                color={color}
+              />
+            ) : (
+              <View
+                className="rounded-2xl p-4"
+                style={{
+                  backgroundColor: color.background.secondary,
+                  borderWidth: 1,
+                  borderColor: color.border.default,
+                }}
+              >
+                {originalTextParagraphs.map((paragraph, idx) => (
+                  <Text
+                    key={`${idx}-${paragraph.slice(0, 18)}`}
+                    className="text-[15px] leading-7"
+                    style={{
+                      color: color.text.primary,
+                      marginBottom: idx === originalTextParagraphs.length - 1 ? 0 : 14,
+                    }}
+                    selectable
+                  >
+                    {paragraph}
+                  </Text>
+                ))}
+              </View>
+            )}
+          </Animated.View>
+        ) : null}
+      </View>
     </View>
   );
 };
