@@ -17,6 +17,7 @@ import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
 import type { SettingsStackParamList } from '@/app/navigation/types';
 import type { Folder } from '@/entities/folder';
 import { useFolderStore } from '@/entities/folder';
+import { FolderLucideIcon } from '@/entities/folder/lib/folderLucideIcons';
 import { folderRepository } from '@/entities/folder/model/repository';
 import type { VoiceRecord } from '@/entities/record';
 import { useRecordStore } from '@/entities/record';
@@ -185,14 +186,18 @@ const ImportFolderRow = memo(function ImportFolderRow({
           marginRight: 12,
         }}
       >
-        <View
-          style={{
-            width: 12,
-            height: 12,
-            borderRadius: 6,
-            backgroundColor: folderColor,
-          }}
-        />
+        {item.icon ? (
+          <FolderLucideIcon iconId={item.icon} size={14} color={folderColor} strokeWidth={2} />
+        ) : (
+          <View
+            style={{
+              width: 12,
+              height: 12,
+              borderRadius: 6,
+              backgroundColor: folderColor,
+            }}
+          />
+        )}
       </View>
       <Text style={{ flex: 1, fontSize: 16, color: color.text.primary }} numberOfLines={1}>
         {item.name}
