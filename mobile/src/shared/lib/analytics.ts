@@ -1,7 +1,6 @@
 import {
   getAnalytics,
   logEvent,
-  logScreenView,
   setAnalyticsCollectionEnabled,
   setUserId,
 } from '@react-native-firebase/analytics';
@@ -39,7 +38,7 @@ export async function logAnalyticsScreenView(screenName: string): Promise<void> 
   if (!isAnalyticsCollectionWanted() || !screenName.trim()) return;
 
   try {
-    await logScreenView(getAnalytics(), {
+    await logEvent(getAnalytics(), 'screen_view', {
       screen_name: screenName,
       screen_class: screenName,
     });
