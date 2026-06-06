@@ -1750,6 +1750,7 @@
     "title": "Diagnostic logs",
     "description": "Latest app log file from the device cache. Use this screen to review recent runtime events.",
     "size": "Log size: {{ size }}",
+    "widgetHint": "View recent app activity and refresh or clear the file as needed.",
     "refresh": "Refresh",
     "clear": "Clear logs",
     "share": "Share",

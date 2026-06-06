@@ -1,9 +1,9 @@
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { ShareIcon } from 'lucide-react-native';
+import { RefreshCcwIcon, ShareIcon, TrashIcon } from 'lucide-react-native';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, ScrollView, Share, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, Share, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { getFloatingTabBarScrollPaddingBottom } from '@/app/navigation/config';
@@ -11,7 +11,7 @@ import type { SettingsStackParamList } from '@/app/navigation/types';
 import { useColors } from '@/shared/config';
 import { formatFileSize } from '@/shared/lib';
 import { clearAppLogs, getAppLogSize, readAppLogTail } from '@/shared/lib/appLogger';
-import { HeaderIconButton, ScreenHeader } from '@/shared/ui';
+import { Button, HeaderIconButton, ScreenHeader } from '@/shared/ui';
 
 const MAX_TAIL_BYTES = 200 * 1024;
 
@@ -89,36 +89,39 @@ export const DiagnosticLogsScreen = () => {
           </Text>
 
           <View
-            className="mb-4 rounded-2xl border px-4 py-4"
+            className="mb-4 rounded-3xl border px-4 py-4"
             style={{
               borderColor: color.border.default,
               backgroundColor: color.background.tertiary,
             }}
           >
-            <Text className="mb-2 text-[13px] font-medium" style={{ color: color.text.primary }}>
-              {t('diagnosticLogs.size', { size: formatFileSize(logSize) })}
-            </Text>
-            <View className="flex-row gap-3">
-              <Pressable
-                onPress={loadLogs}
-                className="rounded-full border px-2.5 py-1.5"
-                style={{ borderColor: color.border.default }}
-              >
-                <Text className="text-[13px]" style={{ color: color.accent.primary }}>
-                  {t('diagnosticLogs.refresh')}
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={handleClearLogs}
-                disabled={actionLoading}
-                className="rounded-full border px-2.5 py-1.5"
-                style={{ borderColor: color.border.default, opacity: actionLoading ? 0.5 : 1 }}
-              >
-                <Text className="text-[13px]" style={{ color: color.accent.delete }}>
-                  {t('diagnosticLogs.clear')}
-                </Text>
-              </Pressable>
+            <View className="mb-3 flex-row items-center justify-between gap-2">
+              <Text className="text-[14px] font-semibold" style={{ color: color.text.primary }}>
+                {t('diagnosticLogs.size', { size: formatFileSize(logSize) })}
+              </Text>
+              <View className="flex-row items-center gap-1.5">
+                <Button
+                  accessibilityLabel={t('diagnosticLogs.refresh')}
+                  color={color}
+                  icon={<RefreshCcwIcon size={20} color={color.text.primary} strokeWidth={2} />}
+                  iconOnly
+                  onPress={loadLogs}
+                  variant="icon"
+                />
+                <Button
+                  accessibilityLabel={t('diagnosticLogs.clear')}
+                  color={color}
+                  icon={<TrashIcon size={20} color={color.accent.delete} strokeWidth={2} />}
+                  iconOnly
+                  loading={actionLoading}
+                  onPress={handleClearLogs}
+                  variant="icon"
+                />
+              </View>
             </View>
+            <Text className="text-[13px] leading-5" style={{ color: color.text.secondary }}>
+              {t('diagnosticLogs.widgetHint')}
+            </Text>
           </View>
 
           {loading ? (
