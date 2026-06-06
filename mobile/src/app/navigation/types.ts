@@ -50,4 +50,5 @@ export type SettingsStackParamList = {
   AppLockSetup: undefined;
   Notifications: undefined;
   ImportRecords: { records: VoiceRecord[]; folders?: Folder[]; legacyFolders?: Folder[] };
+  DiagnosticLogs: undefined;
 };

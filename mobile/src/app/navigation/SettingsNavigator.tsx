@@ -8,6 +8,7 @@ import {
   AiUsageDashboardScreen,
   AppearanceScreen,
   AppLockSetupScreen,
+  DiagnosticLogsScreen,
   DigestScreen,
   ImportRecordsScreen,
   NotificationsScreen,
@@ -97,6 +98,11 @@ export const SettingsNavigator = () => {
         <Stack.Screen
           name="AboutApp"
           component={AboutAppScreen}
+          options={{ animation: 'slide_from_right' }}
+        />
+        <Stack.Screen
+          name="DiagnosticLogs"
+          component={DiagnosticLogsScreen}
           options={{ animation: 'slide_from_right' }}
         />
         <Stack.Screen

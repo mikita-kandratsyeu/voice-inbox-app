@@ -1737,11 +1737,27 @@
     "logsLabel": "Extra details (optional)",
     "logsHint": "Paste error text, screenshots description, or anything else that helps.",
     "logsPlaceholder": "Optional",
+    "attachLogsLabel": "Attach recent app logs",
+    "attachLogsDescription": "Send the latest app logs with your request. We trim to 32 KB.",
+    "attachLogsLoading": "Loading log preview…",
     "send": "Send",
     "sending": "Sending…",
     "success": "Thanks — request received (ref. {{ id }}).",
     "errorTooShort": "Please write at least {{ min }} characters.",
     "apiNotConfigured": "Support form is unavailable in this build (API URL missing). Use email if shown on the previous screen."
+  },
+  "diagnosticLogs": {
+    "title": "Diagnostic logs",
+    "description": "Latest app log file from the device cache. Use this screen to review recent runtime events.",
+    "size": "Log size: {{ size }}",
+    "refresh": "Refresh",
+    "clear": "Clear logs",
+    "share": "Share",
+    "shareTitle": "App diagnostic logs",
+    "shareEmpty": "No logs available to share.",
+    "empty": "No logs available.",
+    "truncated": "Showing the most recent log lines.",
+    "cleared": "Logs cleared."
   },
   "tasks": {
     "addTask": "Add task",

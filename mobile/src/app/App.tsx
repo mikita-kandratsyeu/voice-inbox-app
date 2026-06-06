@@ -2,7 +2,7 @@ import '../../global.css';
 
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { NavigationContainer } from '@react-navigation/native';
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -39,6 +39,7 @@ import {
 } from '@/shared/config';
 import { i18n, NetworkStatusProvider } from '@/shared/lib';
 import { logAnalyticsScreenView } from '@/shared/lib/analytics';
+import { logInfo, setupAppLogger } from '@/shared/lib/appLogger';
 import { CloudAiThirdPartyConsentModal } from '@/shared/lib/cloud-ai-consent';
 import {
   type PushNotificationData,
@@ -107,6 +108,11 @@ const AppShell = ({ setBootSplashVisible }: AppShellProps) => {
   useResetAccentWhenNotPro({ enabled: !bootSplashVisible });
   useResetProOnlyAiModelWhenNotPro({ enabled: !bootSplashVisible });
   useResetPrivateAiServerWhenNotPro({ enabled: !bootSplashVisible });
+
+  useEffect(() => {
+    setupAppLogger();
+    logInfo('App startup');
+  }, []);
 
   const rootStyle = { flex: 1 };
   const safeAreaStyle = { backgroundColor: color.background.primary };

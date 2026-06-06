@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Text, TextInput, View } from 'react-native';
+import { Switch, Text, TextInput, View } from 'react-native';
 
 import type { Colors } from '@/shared/config';
 import { getInputFieldInputStyle } from '@/shared/ui';
@@ -22,6 +22,9 @@ export function SupportForm({ color, ...form }: Props) {
     setMessage,
     appLogs,
     setAppLogs,
+    attachLogs,
+    setAttachLogs,
+    attachLogsLoading,
     loading,
     error,
     successId,
@@ -114,13 +117,38 @@ export function SupportForm({ color, ...form }: Props) {
       <Text className="mb-2 text-[12px]" style={{ color: color.text.secondary }}>
         {t('support.messageHint', { min: messageMin })}
       </Text>
-      <Text className="mb-1.5 text-[13px] font-medium" style={{ color: color.text.secondary }}>
-        {t('support.logsLabel')}
-      </Text>
-      <Text className="mb-1 text-[12px] leading-4" style={{ color: color.text.secondary }}>
-        {t('support.logsHint')}
-      </Text>
-      <View className="flex flex-col gap-2">
+      <View
+        className="mb-4 rounded-2xl border px-4 py-4"
+        style={{ borderColor: color.border.default, backgroundColor: color.background.tertiary }}
+      >
+        <View className="mb-3 flex-row items-center justify-between">
+          <View className="flex-1 pr-3">
+            <Text className="text-[13px] font-medium" style={{ color: color.text.secondary }}>
+              {t('support.attachLogsLabel')}
+            </Text>
+            <Text className="text-[12px] leading-5" style={{ color: color.text.secondary }}>
+              {t('support.attachLogsDescription')}
+            </Text>
+          </View>
+          <Switch
+            trackColor={{ false: color.background.tertiary, true: color.accent.primary }}
+            thumbColor={attachLogs ? color.background.primary : color.background.secondary}
+            value={attachLogs}
+            onValueChange={setAttachLogs}
+            disabled={loading}
+          />
+        </View>
+        {attachLogsLoading ? (
+          <Text className="mb-3 text-[12px]" style={{ color: color.text.secondary }}>
+            {t('support.attachLogsLoading')}
+          </Text>
+        ) : null}
+        <Text className="mb-1.5 text-[13px] font-medium" style={{ color: color.text.secondary }}>
+          {t('support.logsLabel')}
+        </Text>
+        <Text className="mb-1 text-[12px] leading-4" style={{ color: color.text.secondary }}>
+          {t('support.logsHint')}
+        </Text>
         <TextInput
           className="rounded-xl border-2 px-3 py-2.5 text-[14px] font-mono"
           style={[...inputBase, { minHeight: 88, textAlignVertical: 'top' }]}
