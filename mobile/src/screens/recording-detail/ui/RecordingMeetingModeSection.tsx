@@ -106,7 +106,7 @@ export const RecordingMeetingModeSection = ({
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 16 }}
           >
-            <View className="flex-row flex-nowrap">
+            <View className="flex-row flex-nowrap pb-2">
               {MEETING_TEMPLATES.map((template) => {
                 const selected = selectedTemplate === template;
                 return (
