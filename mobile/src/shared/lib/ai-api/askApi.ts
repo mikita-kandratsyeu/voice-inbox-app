@@ -1,6 +1,7 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import type { AskAnswerKind, AskEvidence } from '@/shared/lib/ai-core/types';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 
 import { isString } from '../type-guards';
@@ -159,6 +160,7 @@ export async function postAskQuestion(
   }
 
   const data = successBody.data as AskApiSuccessResponse;
+  requestAiUsageRefresh();
 
   return { ok: true, data };
 }
@@ -215,6 +217,8 @@ export async function pollAskResult(
   if (!result.ok && result.error === 'Timeout waiting for AI result') {
     diagWarn('[AI] pollAskResult: timeout', { id });
   }
+
+  requestAiUsageRefresh();
 
   return result;
 }

@@ -1,5 +1,6 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { toUserFacingFetchErrorFromUnknown } from '@/shared/lib/fetch/userFacingFetchError';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
@@ -75,6 +76,8 @@ export async function generateDigest(
     if (!markdown) {
       return { ok: false, error: 'Invalid digest response' };
     }
+
+    requestAiUsageRefresh();
 
     const readStringArray = (value: unknown): string[] =>
       Array.isArray(value)

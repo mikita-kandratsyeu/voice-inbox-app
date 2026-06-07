@@ -1,6 +1,7 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { i18n } from '@/shared/lib';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
 import { headersForAiOperation } from './aiOperation';
@@ -92,6 +93,7 @@ export async function postAutoOrganizeFolders(body: RequestBody): Promise<AutoOr
   }
 
   const data = (await response.json()) as PostResponse;
+  requestAiUsageRefresh();
   return { ok: true, data };
 }
 
@@ -123,9 +125,16 @@ export async function pollAutoOrganizeFolders(
 
     if (!response.ok) continue;
     const msg = (await response.json()) as PollResponse;
-    if (msg.status === 'done') return { ok: true, result: msg.result };
-    if (msg.status === 'error') return { ok: false, error: msg.error };
+    if (msg.status === 'done') {
+      requestAiUsageRefresh();
+      return { ok: true, result: msg.result };
+    }
+    if (msg.status === 'error') {
+      requestAiUsageRefresh();
+      return { ok: false, error: msg.error };
+    }
   }
 
+  requestAiUsageRefresh();
   return { ok: false, error: 'Timeout waiting for AI result' };
 }

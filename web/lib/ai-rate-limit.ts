@@ -99,21 +99,12 @@ export const checkAndIncrement = async (
   const amount = Math.max(1, Math.floor(units));
   const limit = await getWeeklyLimitForDevice(deviceId, context);
   const key = getWeekKey(deviceId);
-  const count =
-    amount === 1
-      ? await redis.incrWithExpireOnFirst(key, WEEK_TTL_SECONDS)
-      : await redis.incrByWithExpireOnFirst(key, amount, WEEK_TTL_SECONDS);
+  const reservation = await redis.incrementWithinLimit(key, amount, limit, WEEK_TTL_SECONDS);
 
   const resetAt = getResetAt();
-  const allowed = count <= limit;
 
-  if (!allowed) {
-    if (amount === 1) {
-      await redis.decr(key);
-    } else {
-      await redis.decrBy(key, amount);
-    }
-    return { allowed: false, usage: buildUsage(count - amount, resetAt, limit) };
+  if (!reservation.allowed) {
+    return { allowed: false, usage: buildUsage(reservation.value, resetAt, limit) };
   }
 
   const ledgerEntryId = await recordAiUsageLedgerEntry({
@@ -126,7 +117,7 @@ export const checkAndIncrement = async (
     metadata: ledger?.metadata,
   });
 
-  return { allowed: true, usage: buildUsage(count, resetAt, limit), ledgerEntryId };
+  return { allowed: true, usage: buildUsage(reservation.value, resetAt, limit), ledgerEntryId };
 };
 
 export const decrement = async (deviceId: string, ledger?: AiUsageLedgerContext): Promise<void> => {
@@ -140,17 +131,13 @@ export const decrementBy = async (
 ): Promise<void> => {
   const amount = Math.max(1, Math.floor(units));
   const key = getWeekKey(deviceId);
-  if (amount === 1) {
-    await redis.decr(key);
-  } else {
-    await redis.decrBy(key, amount);
-  }
+  const refunded = (await redis.decrByWithFloor(key, amount)).delta;
 
   await recordAiUsageLedgerEntry({
     deviceId,
     kind: 'refund',
     operation: ledger?.operation,
-    amount,
+    amount: refunded,
     jobId: ledger?.jobId,
     description: ledger?.description,
     metadata: ledger?.metadata,
@@ -163,11 +150,8 @@ export const addBonus = async (
   ledger?: AiUsageLedgerContext,
 ): Promise<number> => {
   const key = getWeekKey(deviceId);
-  const raw = await redis.get(key);
-  const used = raw ? parseInt(raw, 10) : 0;
-  const newUsed = Math.max(0, used - amount);
-  await redis.set(key, String(newUsed), { ex: WEEK_TTL_SECONDS });
-  const credited = used - newUsed;
+  const bonusAmount = Number.isFinite(amount) ? Math.max(1, Math.floor(amount)) : 1;
+  const credited = (await redis.decrByWithFloor(key, bonusAmount)).delta;
 
   await recordAiUsageLedgerEntry({
     deviceId,

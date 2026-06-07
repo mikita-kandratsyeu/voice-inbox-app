@@ -11,6 +11,7 @@
 
 import 'dotenv/config';
 
+import type { Prisma } from '../generated/prisma/client';
 import { prisma } from '../lib/prisma';
 
 const DEFAULT_DEVICE_ID = 'a175c65e-d607-4641-bfe4-6d7c07eb62e2';
@@ -63,7 +64,7 @@ function buildMetadata(params: {
   seed: number;
   model: (typeof MODELS)[number];
   noteTitle: string;
-}): Record<string, unknown> {
+}): Prisma.InputJsonObject {
   const base = {
     model: params.model.model,
     modelLabel: params.model.modelLabel,

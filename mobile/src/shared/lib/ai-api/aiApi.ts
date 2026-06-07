@@ -1,5 +1,6 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { isNumber, isString } from '@/shared/lib/type-guards';
 
@@ -159,6 +160,7 @@ export async function postAiMessage(
   }
 
   const data = successBody.data as AiApiSuccessResponse;
+  requestAiUsageRefresh();
 
   return { ok: true, data };
 }
@@ -226,6 +228,8 @@ export async function postMeetingDialogueRetry(
   if (!successBody.ok) {
     return { ok: false, error: successBody.error };
   }
+
+  requestAiUsageRefresh();
 
   return { ok: true, data: successBody.data as AiApiSuccessResponse };
 }
@@ -458,6 +462,7 @@ export async function resumePollAiMessage(
       if (once.state.meetingDialogueStatus === 'processing') {
         // fall through to limited poll for speakers
       } else {
+        requestAiUsageRefresh();
         return {
           ok: true,
           result: once.state.result,
@@ -465,6 +470,7 @@ export async function resumePollAiMessage(
         };
       }
     } else if (once.state.kind === 'error') {
+      requestAiUsageRefresh();
       return { ok: false, error: once.state.error };
     }
   } else if ('notFound' in once && once.notFound) {
@@ -537,8 +543,11 @@ export async function pollAiMessage(
   }
 
   if (!result.ok) {
+    requestAiUsageRefresh();
     return result;
   }
+
+  requestAiUsageRefresh();
 
   return {
     ok: true,

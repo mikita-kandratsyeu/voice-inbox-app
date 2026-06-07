@@ -28,6 +28,11 @@ export async function markAiJobFailed(envelope: AiJobEnvelope, error: string): P
       : undefined;
 
   if (operation === 'meeting_dialogue') {
+    await decrement(deviceId, {
+      operation: 'meeting_dialogue',
+      jobId,
+      description: 'Meeting dialogue generation failed',
+    });
     if (existing?.status === 'done') {
       await saveMessage(
         jobId,

@@ -15,8 +15,15 @@ type KvClient = {
   incr(key: string): Promise<number>;
   incrWithExpireOnFirst(key: string, seconds: number): Promise<number>;
   incrByWithExpireOnFirst(key: string, amount: number, seconds: number): Promise<number>;
+  incrementWithinLimit(
+    key: string,
+    amount: number,
+    limit: number,
+    seconds: number,
+  ): Promise<{ allowed: boolean; value: number }>;
   decr(key: string): Promise<number>;
   decrBy(key: string, amount: number): Promise<number>;
+  decrByWithFloor(key: string, amount: number): Promise<{ value: number; delta: number }>;
   expire(key: string, seconds: number): Promise<void>;
   del(key: string): Promise<void>;
 };
@@ -80,6 +87,34 @@ return count
           [`${amount}:${seconds}`],
         );
       },
+      async incrementWithinLimit(key, amount, limit, seconds) {
+        const raw = await redisClient!.eval<[string], string>(
+          `
+local first = string.find(ARGV[1], ":")
+local second = string.find(ARGV[1], ":", first + 1)
+local amount = tonumber(string.sub(ARGV[1], 1, first - 1))
+local limit = tonumber(string.sub(ARGV[1], first + 1, second - 1))
+local seconds = tonumber(string.sub(ARGV[1], second + 1))
+local current = tonumber(redis.call("GET", KEYS[1]) or "0")
+if current + amount > limit then
+  return tostring(current) .. ":0"
+end
+local count = redis.call("INCRBY", KEYS[1], amount)
+if current == 0 then
+  redis.call("EXPIRE", KEYS[1], seconds)
+end
+return tostring(count) .. ":1"
+`,
+          [key],
+          [`${amount}:${limit}:${seconds}`],
+        );
+        const [valueRaw, allowedRaw] = raw.split(':');
+        const value = Number.parseInt(valueRaw ?? '0', 10);
+        return {
+          allowed: allowedRaw === '1',
+          value: Number.isFinite(value) ? value : 0,
+        };
+      },
       async decr(key) {
         return redisClient!.decr(key);
       },
@@ -103,6 +138,35 @@ return count
           [key],
           [String(amount)],
         );
+      },
+      async decrByWithFloor(key, amount) {
+        const raw = await redisClient!.eval<[string], string>(
+          `
+if redis.call("EXISTS", KEYS[1]) == 0 then
+  return "0:0"
+end
+local ttl = redis.call("TTL", KEYS[1])
+local previous = tonumber(redis.call("GET", KEYS[1]) or "0")
+local count = redis.call("DECRBY", KEYS[1], ARGV[1])
+if count < 0 then
+  redis.call("SET", KEYS[1], "0")
+  if ttl > 0 then
+    redis.call("EXPIRE", KEYS[1], ttl)
+  end
+  return "0:" .. tostring(previous)
+end
+return tostring(count) .. ":" .. tostring(previous - count)
+`,
+          [key],
+          [String(amount)],
+        );
+        const [valueRaw, deltaRaw] = raw.split(':');
+        const value = Number.parseInt(valueRaw ?? '0', 10);
+        const delta = Number.parseInt(deltaRaw ?? '0', 10);
+        return {
+          value: Number.isFinite(value) ? value : 0,
+          delta: Number.isFinite(delta) ? delta : 0,
+        };
       },
       async expire(key, seconds) {
         await redisClient!.expire(key, seconds);

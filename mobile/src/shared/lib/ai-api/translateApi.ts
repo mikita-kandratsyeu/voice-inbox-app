@@ -1,6 +1,7 @@
 import { getWebApiUrl } from '@/shared/config/runtimeConfig';
 import { i18n } from '@/shared/lib';
 import { fetchWithAuth } from '@/shared/lib/api-auth';
+import { requestAiUsageRefresh } from '@/shared/lib/aiUsageRefresh';
 import { devWarn, diagWarn } from '@/shared/lib/appLogger';
 import { ensureCloudAiThirdPartyConsent } from '@/shared/lib/cloud-ai-consent';
 
@@ -56,5 +57,6 @@ export async function postTranslate(
   }
 
   const data = (await response.json()) as { translatedText: string };
+  requestAiUsageRefresh();
   return { ok: true, translatedText: data.translatedText };
 }
