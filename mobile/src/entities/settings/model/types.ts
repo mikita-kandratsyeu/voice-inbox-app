@@ -4,14 +4,15 @@ export type AppTheme = 'light' | 'dark' | 'system';
 export type AppLanguage = 'system' | 'en' | 'ru';
 
 export type UserSelectableAIModelId =
-  | 'google/gemini-2.5-flash-lite'
-  | 'google/gemini-3.1-flash-lite'
-  | 'minimax/minimax-m3'
-  | 'minimax/minimax-m2.7'
   | 'deepseek/deepseek-v4-flash'
   | 'deepseek/deepseek-v4-pro'
-  | 'xiaomi/mimo-v2.5-pro'
-  | 'nvidia/nemotron-3-super-120b-a12b';
+  | 'google/gemini-2.5-flash-lite'
+  | 'google/gemini-3.1-flash-lite'
+  | 'minimax/minimax-m2.7'
+  | 'minimax/minimax-m3'
+  | 'nvidia/nemotron-3-super-120b-a12b'
+  | 'xiaomi/mimo-v2.5'
+  | 'xiaomi/mimo-v2.5-pro';
 export type LocalAiModelId =
   | 'local/qwen3-1.7b-q4_k_m'
   | 'local/gemma-2-2b-it-q4_k_m'
@@ -57,13 +58,14 @@ export type AIModel = {
 };
 
 export type AiModelTierLabelKey =
-  | 'aiModels.tierFast'
-  | 'aiModels.tierSmart'
-  | 'aiModels.tierPremium'
   | 'aiModels.tierDeepSeek'
   | 'aiModels.tierDeepSeekPro'
+  | 'aiModels.tierFast'
   | 'aiModels.tierMiMo'
-  | 'aiModels.tierNemotron';
+  | 'aiModels.tierMiMoPro'
+  | 'aiModels.tierNemotron'
+  | 'aiModels.tierPremium'
+  | 'aiModels.tierSmart';
 
 export type AiUserTierCode = 'fast' | 'smarter' | 'premium_experimental';
 export type AiModelRoutingMode = 'manual' | 'auto';

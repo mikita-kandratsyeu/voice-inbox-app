@@ -152,6 +152,7 @@ export const AI_MODEL_GPT_5_4_NANO = 'openai/gpt-5.4-nano';
 /** System micro-tasks (folder auto-organize, etc.). */
 export const SYSTEM_MICRO_TASK_MODEL = AI_MODEL_GPT_5_4_NANO;
 export const AI_MODEL_MIMO_V2_5_PRO = 'xiaomi/mimo-v2.5-pro';
+export const AI_MODEL_MIMO_V2_5 = 'xiaomi/mimo-v2.5';
 /** Current MiniMax on OpenRouter (not ZDR-routed). */
 export const AI_MODEL_MINIMAX_M3 = 'minimax/minimax-m3';
 /** Legacy MiniMax — kept for clients that selected it before M3. */
@@ -186,6 +187,7 @@ export const ALLOWED_AI_MODELS: string[] = [
   AI_MODEL_DEEPSEEK_V4_PRO,
   AI_MODEL_GPT_5_4_NANO,
   AI_MODEL_MIMO_V2_5_PRO,
+  AI_MODEL_MIMO_V2_5,
   AI_MODEL_NEMOTRON_3_SUPER,
 ];
 

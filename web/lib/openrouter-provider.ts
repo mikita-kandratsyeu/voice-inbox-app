@@ -1,5 +1,6 @@
 import {
   AI_MODEL_MINIMAX_M3,
+  AI_MODEL_MIMO_V2_5,
   LEGACY_AI_MODEL_MINIMAX_M2_7,
   normalizeIncomingAiModel,
 } from '@/config/constants';
@@ -16,8 +17,8 @@ export function openRouterProviderParamsForModel(model: string): Record<string, 
     return { only: ['OpenAI'] };
   }
 
-  /** MiniMax M3 is not offered on ZDR endpoints on OpenRouter. */
-  if (id === AI_MODEL_MINIMAX_M3) {
+  // No ZDR endpoint
+  if (id === AI_MODEL_MINIMAX_M3 || id === AI_MODEL_MIMO_V2_5) {
     return {};
   }
 
