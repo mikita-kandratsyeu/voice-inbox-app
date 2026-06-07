@@ -89,7 +89,7 @@ export const NotificationsScreen = () => {
               label={screen.t('settings.transcriptionRecoveryNotifications')}
               subtitle={screen.t('settings.transcriptionRecoveryNotificationsHint')}
               leftIcon={
-                <RotateCcw size={20} color={screen.color.accent.primary} strokeWidth={1.8} />
+                <RotateCcw size={20} color={screen.color.accent.transcript} strokeWidth={1.8} />
               }
               value={
                 permissionGranted
@@ -103,7 +103,7 @@ export const NotificationsScreen = () => {
               label={screen.t('settings.taskDeadlineNotifications')}
               subtitle={screen.t('settings.taskDeadlineNotificationsHint')}
               leftIcon={
-                <CalendarClock size={20} color={screen.color.accent.primary} strokeWidth={1.8} />
+                <CalendarClock size={20} color={screen.color.accent.cache} strokeWidth={1.8} />
               }
               rightSlot={
                 <Switch
@@ -125,7 +125,7 @@ export const NotificationsScreen = () => {
               label={screen.t('settings.backupReminderNotifications')}
               subtitle={screen.t('settings.backupReminderNotificationsHint')}
               leftIcon={
-                <UploadCloud size={20} color={screen.color.accent.primary} strokeWidth={1.8} />
+                <UploadCloud size={20} color={screen.color.accent.models} strokeWidth={1.8} />
               }
               rightSlot={
                 <Switch
