@@ -8,6 +8,7 @@ export default defineConfig({
     path: 'prisma/migrations',
   },
   datasource: {
-    url: env('DATABASE_URL'),
+    // Prisma 7: CLI/migrations use DIRECT_URL (Supabase session pooler); falls back to DATABASE_URL.
+    url: process.env.DIRECT_URL?.trim() || env('DATABASE_URL'),
   },
 });

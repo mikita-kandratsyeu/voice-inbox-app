@@ -14,7 +14,7 @@ yarn install
 cp .env.example .env
 ```
 
-1. Set **`DATABASE_URL`** (Neon Postgres recommended; see comment in `.env.example` for `uselibpqcompat`).
+1. Set **`DATABASE_URL`** and **`DIRECT_URL`** (Supabase Postgres; see `.env.example` for pooler URLs).
 2. Set **`JWT_SECRET`** and **`APP_SECRET`** (min 32 characters for JWT).
 3. Apply schema: `yarn db:push` (or `prisma migrate deploy` in production).
 4. Seed the first superadmin (empty `AdminUser` table only):
